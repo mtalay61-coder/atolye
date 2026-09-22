@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Atölye ERP</title>
+<!--
+  ================= BAŞLATICI =================
+
+  Kullanıcı (14 Eylül): "Uygulamayı Storage'dan doğrudan çalıştırmak, bu çok mantıklı."
+
+  SORUN: uygulamanın kendisi her sürümde yeni bir dosya. Herkese sabit bir adres verip o adresin
+  üstüne yazmak, tarayıcı ÖNBELLEĞİ yüzünden güvenilmez: kullanıcı günlerce eski sürümü görebilir.
+
+  ÇÖZÜM: bu küçük sayfa herkese verilen SABİT adres (telefonda ana ekrana kısayol olarak eklenir).
+  Açılınca Supabase'deki `surum` kaydını okur ve YAYINLANAN sürümün dosyasına yönlendirir. Her sürüm
+  Storage'a KENDİ ADIYLA yüklendiği için (atolye-erp-v1.280.0.html) önbellek sorunu yoktur: adres
+  değişince tarayıcı yeni dosyayı indirir.
+
+  Bu sayfa bilerek küçük ve bağımsız: uygulamanın kodundan hiçbir şey içermez, bir kez yüklenir ve
+  bir daha değiştirilmesi gerekmez.
+
+  KURULUM: aşağıdaki iki değeri uygulamadaki değerlerle aynı yapın (src/030-supabase.jsx başında
+  duruyorlar), dosyayı Storage'a `baslat.html` adıyla yükleyin, herkese o dosyanın genel adresini verin.
+-->
+<style>
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #F2E8D8; color: #33281C; font-family: -apple-system, "Segoe UI", sans-serif; }
+  .kutu { background: #fff; border: 1px solid #C9B99A; border-radius: 12px; padding: 28px 32px; max-width: 420px; text-align: center; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  p { font-size: 13px; color: #7A6A50; margin: 6px 0; }
+  a.btn { display: inline-block; margin-top: 12px; background: #8A3F1A; color: #fff; text-decoration: none;
+    padding: 9px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; }
+  .kucuk { font-size: 11px; color: #9B8B72; }
+</style>
+</head>
+<body>
+<div class="kutu">
+  <h1>Atölye ERP</h1>
+  <p id="durum">Güncel sürüm aranıyor…</p>
+  <div id="yedek" style="display:none">
+    <p id="ipucu" class="kucuk"></p>
+    <a class="btn" href="#" onclick="location.reload();return false;">Yeniden dene</a>
+  </div>
+  <p class="kucuk">Bu sayfa yalnızca yönlendirir; uygulamanın kendisi ayrı bir dosyadır.</p>
+</div>
+<script>
+  // Uygulamadakiyle AYNI olmalı (src/030-supabase.jsx).
+  var SUPABASE_URL = "https://mqdgucoomgqcvhvgixbl.supabase.co";
+  var SUPABASE_ANAHTAR = "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2";
+
+  // İKİ KAYNAK (14 Eylül, kullanıcı "Sürüm bilgisi alınamadı (HTTP 401)" gördü):
+  //   1) AYNI KLASÖRDEKİ surum.json  — Storage'dan okunur, veritabanına hiç bağlanmaz, yetki
+  //      sorunu çıkmaz. Önerilen yol.
+  //   2) Veritabanındaki `surum` tablosu — Tanımlar > Sürüm yayınla ile yazılan kayıt.
+  // Önce dosya denenir; yoksa tabloya düşülür. Böylece SQL çalıştırılmamış ya da tablo yetkisi
+  // kapalı olsa da başlatıcı çalışır.
+  var durumEl = document.getElementById("durum");
+
+  function yedegeDus(sebep, ipucu) {
+    durumEl.textContent = sebep || "";
+    document.getElementById("ipucu").textContent = ipucu || "";
+    document.getElementById("yedek").style.display = "block";
+  }
+
+  function git(v) {
+    if (!v || !v.url) return false;
+    durumEl.textContent = "Sürüm " + (v.surum || "") + " açılıyor…";
+    location.replace(v.url);   // `replace`: geri tuşu buraya dönüp döngü kurmasın
+    return true;
+  }
+
+  function dosyadanDene() {
+    // Göreli yol: başlatıcı hangi klasördeyse surum.json da orada.
+    return fetch("surum.json?t=" + Date.now(), { cache: "no-store" })
+      .then(function (y) { if (!y.ok) throw new Error("HTTP " + y.status); return y.json(); });
+  }
+
+  function tablodanDene() {
+    return fetch(SUPABASE_URL + "/rest/v1/surum?select=*", {
+      headers: { apikey: SUPABASE_ANAHTAR, Authorization: "Bearer " + SUPABASE_ANAHTAR },
+    }).then(function (y) {
+      if (!y.ok) throw new Error("HTTP " + y.status);
+      return y.json();
+    }).then(function (satirlar) {
+      return satirlar && satirlar[0] && satirlar[0].veri;
+    });
+  }
+
+  dosyadanDene()
+    .then(function (v) { if (!git(v)) throw new Error("surum.json içinde url yok"); })
+    .catch(function (dosyaHatasi) {
+      return tablodanDene()
+        .then(function (v) {
+          if (!git(v)) {
+            yedegeDus("Yayınlanmış sürüm yok.", "Yönetici: Tanımlar > Genel > Sürüm yayınla'dan sürüm no ve bağlantıyı girin.");
+          }
+        })
+        .catch(function (e) {
+          var m = String(e.message || e);
+          var ipucu = /401|403/.test(m)
+            ? "Veritabanındaki `surum` tablosuna erişilemiyor. En kolay çözüm: bu dosyanın yanına surum.json koyun (bkz. storage-kurulum.md)."
+            : /404/.test(m)
+              ? "`surum` tablosu yok (gorevler.sql çalıştırılmamış) ve surum.json da bulunamadı."
+              : "İnternet bağlantınızı kontrol edin.";
+          yedegeDus("Sürüm bilgisi alınamadı (" + m + ").", ipucu + " · surum.json: " + String(dosyaHatasi.message || dosyaHatasi));
+        });
+    });
+</script>
+</body>
+</html>
