@@ -1,0 +1,18 @@
+{
+ "depo": {
+  "ozet": "Paketlenmiş ve depoda Üretim 10099 · Bot Siyah: 5 × 3 koli = 15",
+  "secimKutulari": 3
+ },
+ "hatalar": [],
+ "kunye": "Üretim 10099 · Sipariş SAT-9099 · Müşteri B",
+ "once": {
+  "dugmeVar": true,
+  "satirVar": true
+ },
+ "sonuc": {
+  "herKoliBirSet": true,
+  "koliSayisi": 3,
+  "toplamKolilenen": 15
+ },
+ "topluYazdir": "Koli etiketlerini yazdır (3)"
+}

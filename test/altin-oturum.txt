@@ -1,0 +1,22 @@
+{
+ "basta": true,
+ "girisSonrasi": {
+  "ekranAcildi": true,
+  "kayit": {
+   "bulut": true,
+   "kullaniciId": "k1",
+   "sifreVarMi": false
+  }
+ },
+ "hatalar": [],
+ "suresiDolmus": {
+  "girisIstiyor": true,
+  "kayitSilindi": true
+ },
+ "yabanciKimlik": {
+  "girisIstiyor": true
+ },
+ "yenilemeSonrasi": {
+  "girisIstiyor": false
+ }
+}

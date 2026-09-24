@@ -1,0 +1,30 @@
+{
+ "bozukDepo": {
+  "bildirim": [
+   "Stok kartları"
+  ],
+  "cop": [
+   "cop1"
+  ],
+  "stok": [
+   "u-var"
+  ],
+  "toast": "⚠ \"Silinen Ürün\" geri yüklenemedi — bu bilgisayara yazılamadı. Kayıt çöpte duruyor."
+ },
+ "saglamDepo": {
+  "bildirim": [],
+  "cop": [],
+  "stok": [
+   "u-var",
+   "u-sil"
+  ],
+  "toast": "⚠ \"Silinen Ürün\" bu bilgisayarda geri yüklendi ama buluta yazılamadı (Failed to fetch) — bağlantı gelince kendiliğinden yeniden denenecek"
+ },
+ "yardimci": {
+  "bildirim": [
+   "Stok kartları"
+  ],
+  "ok": false,
+  "yerel": true
+ }
+}

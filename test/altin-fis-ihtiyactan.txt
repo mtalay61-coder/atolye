@@ -1,0 +1,27 @@
+{
+ "ayniTedarikcininDigerEksigiGirmedi": true,
+ "bilgiSeridi": "2 satır Depo'da tıkladığınız açık ihtiyaçtan dolduruldu",
+ "hatalar": [],
+ "kalemParaBirimleri": [
+  "USD",
+  "USD"
+ ],
+ "kalemSatirlari": [
+  "Deri · Siyah · 20",
+  "Deri · Taba · 7"
+ ],
+ "kartSonAlis": {
+  "satirlar": [
+   "<tarih> · Tedarikçi A · <fisno> · Siyah ·  · 10 metre · 0,25 $ · +13,6%"
+  ],
+  "sayi": "1"
+ },
+ "kurEksikUyarisiYok": true,
+ "sonAlisNotu": [
+  "Deri:son 0,25 $ · 01.09:ayni",
+  "Deri:son 0,25 $ · 01.09 (Siyah):ayni"
+ ],
+ "temizlemeVar": true,
+ "tiklananKalemGeldi": true,
+ "tiklananMiktarGeldi": true
+}

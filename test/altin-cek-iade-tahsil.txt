@@ -1,0 +1,69 @@
+{
+ "hatalar": [],
+ "iade": {
+  "cekDurumu": "İade Edildi",
+  "gecmisBagli": true,
+  "hareket": {
+   "cekId": "cA",
+   "odmFisi": true,
+   "paraBirimi": "TRY",
+   "tutar": 42000,
+   "yon": "Borç"
+  }
+ },
+ "iadeGeriAlma": {
+  "cekDurumu": "Portföyde",
+  "iadeHareketiKalmadi": true,
+  "sonSatir": "İade geri alındı"
+ },
+ "kilit": {
+  "bankayiSoyluyor": true,
+  "yoluSoyluyor": true
+ },
+ "tahsil": {
+  "bankaHareketleri": [
+   [
+    "Giriş",
+    42000,
+    "cC"
+   ],
+   [
+    "Giriş",
+    5000,
+    "cB"
+   ]
+  ],
+  "cariHareketSayisi": 4,
+  "durumlar": [
+   [
+    "77777",
+    "Tahsil Edildi"
+   ],
+   [
+    "55555",
+    "Tahsil Edildi"
+   ]
+  ],
+  "gecmisBagli": true,
+  "kasayaDokunulmadi": true,
+  "panelB": {
+   "sayiKutulari": [],
+   "tahsilHesabi": "Ziraat TL · TRY"
+  },
+  "panelC": {
+   "sayiKutulari": [
+    "42000",
+    "42"
+   ],
+   "tahsilHesabi": "Ziraat TL · TRY"
+  }
+ },
+ "tahsilGeriAlma": {
+  "cekDurumu": "Tahsilde",
+  "digerCek": "Tahsil Edildi",
+  "kalanBankaHareketleri": [
+   "cC"
+  ],
+  "sonSatir": "Tahsil geri alındı"
+ }
+}

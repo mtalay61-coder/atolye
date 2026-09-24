@@ -1,0 +1,75 @@
+{
+ "acilis": [
+  "Anasayfa",
+  "$ 48,00",
+  "€ 56,00"
+ ],
+ "anasayfaKapatmaDugmesi": true,
+ "donulenEkran": {
+  "aktifSekme": "(yok)"
+ },
+ "hatalar": [],
+ "kapatmaSonrasi": [
+  "Anasayfa",
+  "Stok",
+  "Cari",
+  "Üretim",
+  "$ 48,00",
+  "€ 56,00"
+ ],
+ "karsilamaBandi": {
+  "aciklamaKaldirildi": true,
+  "baslikBoyutu": "22px",
+  "yukseklik": 60,
+  "zemin": "rgb(47, 38, 32)"
+ },
+ "kaydirma": {
+  "basta": 0,
+  "menuEkrandaKaldi": true,
+  "menuYukariCikti": true,
+  "seritSabitKaldi": true
+ },
+ "kurPaneli": {
+  "acildi": true,
+  "gorunur": true
+ },
+ "kurRozeti": {
+  "menudenKaldirildi": true,
+  "sagUcaYakin": true,
+  "seridiTasmiyor": true,
+  "seritte": true
+ },
+ "mobilCubuk": {
+  "aktifYazi": "rgb(85, 112, 43)",
+  "aktifZemin": "rgb(188, 211, 181)",
+  "zemin": "rgb(251, 247, 241)"
+ },
+ "modulBasligi": {
+  "aciklamaKaldirildi": true,
+  "baslikBoyutu": "17px",
+  "ilkIcerikUstu": 198,
+  "kurMenude": false
+ },
+ "palet": {
+  "menuMetin": "rgb(232, 222, 209)",
+  "menuZemin": "rgb(47, 38, 32)",
+  "seritZemin": "rgb(251, 247, 241)"
+ },
+ "stokSekmesiniKapat": false,
+ "tekrarSonrasi": [
+  "Anasayfa",
+  "Stok",
+  "Cari",
+  "Üretim",
+  "$ 48,00",
+  "€ 56,00"
+ ],
+ "ucSayfa": [
+  "Anasayfa",
+  "Stok",
+  "Cari",
+  "Üretim",
+  "$ 48,00",
+  "€ 56,00"
+ ]
+}

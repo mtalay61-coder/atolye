@@ -1,0 +1,36 @@
+{
+ "cikisHareketleri": [
+  "Deri:3"
+ ],
+ "ekAlinanKutusu": 2,
+ "hatalar": [],
+ "teslimEkrani": {
+  "artanBolumu": true,
+  "kutular": [
+   [
+    "2",
+    "Verilen 8 metre · reçete 6 metre → artan 2"
+   ]
+  ]
+ },
+ "verilenEtiketi": "/8 (reçete 6",
+ "verilenKaydi": [
+  [
+   "Deri",
+   6,
+   8
+  ],
+  [
+   "Taban",
+   3,
+   3
+  ]
+ ],
+ "vermeEkrani": {
+  "alanVar": true,
+  "kutular": [
+   "6",
+   "3"
+  ]
+ }
+}

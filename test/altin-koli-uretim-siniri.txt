@@ -1,0 +1,41 @@
+{
+ "adimlar": [
+  {
+   "bekleyen": "25/17:17",
+   "kalanGosterildi": "25",
+   "koliSayisi": 1,
+   "uyari": null
+  },
+  {
+   "bekleyen": "25/9:9",
+   "kalanGosterildi": "17",
+   "koliSayisi": 2,
+   "uyari": null
+  },
+  {
+   "bekleyen": "25/1:1",
+   "kalanGosterildi": "9",
+   "koliSayisi": 3,
+   "uyari": null
+  },
+  {
+   "bekleyen": "25/1:1",
+   "kalanGosterildi": "1",
+   "koliSayisi": 3,
+   "uyari": "Üretim aşılıyor — Bot Siyah 41: kalan 1, girilen 8"
+  },
+  {
+   "bekleyen": "listede-yok",
+   "kalanGosterildi": "1",
+   "koliSayisi": 4,
+   "uyari": null
+  },
+  {
+   "bekleyen": "listede-yok",
+   "kalanGosterildi": "kutu-yok",
+   "koliSayisi": 4,
+   "uyari": null
+  }
+ ],
+ "hatalar": []
+}

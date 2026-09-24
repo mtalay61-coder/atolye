@@ -1,0 +1,25 @@
+{
+ "buyukYazma": {
+  "boyutMB": 8,
+  "yazildi": true
+ },
+ "gocSonrasi": {
+  "yabanciDuruyor": "baskasinin-verisi",
+  "yerelKalanAtolye": []
+ },
+ "hatalar": [],
+ "idbIcerik": [
+  "stok:items",
+  "tanimlar:data"
+ ],
+ "islemler": {
+  "liste": [
+   "cari:data",
+   "stok:items",
+   "tanimlar:data"
+  ],
+  "okundu": "[{\"id\":\"c1\"}]",
+  "silindiMi": true
+ },
+ "okuma": "[{\"id\":\"u1\",\"ad\":\"Deri\"}]"
+}

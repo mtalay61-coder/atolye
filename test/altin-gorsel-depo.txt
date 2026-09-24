@@ -1,0 +1,14 @@
+{
+ "gorselEkranda": true,
+ "hatalar": [],
+ "olcum": {
+  "gorselAnahtariVar": true,
+  "gorselAyriAnahtarda": true,
+  "stokBoyutuKB": 3,
+  "stokKaydindaGorselYok": true
+ },
+ "yenidenAcilis": {
+  "gorselGeriGeldi": true,
+  "stokKaydiHalaGorselsiz": true
+ }
+}

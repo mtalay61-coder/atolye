@@ -1,0 +1,5 @@
+node_modules/
+# Üretilen ara dosyalar (yap.sh / test/kosu.sh)
+atolye-erp.jsx
+test/erp.cjs
+test/test.html

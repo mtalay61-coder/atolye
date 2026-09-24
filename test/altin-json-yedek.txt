@@ -1,0 +1,26 @@
+{
+ "hatalar": [],
+ "icerik": {
+  "bolumler": [
+   "stok",
+   "siparisler",
+   "uretim",
+   "cariler",
+   "tanimlar",
+   "muhasebe",
+   "koliler",
+   "cekGorselleri"
+  ],
+  "cekSayisi": 1,
+  "gorselDahil": true,
+  "koliSayisi": 1,
+  "surum": 3
+ },
+ "sonra": {
+  "cari": 3,
+  "cek": 1,
+  "koli": 1,
+  "oncesiSaklandi": true,
+  "stok": 2
+ }
+}

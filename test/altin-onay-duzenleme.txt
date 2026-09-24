@@ -1,0 +1,11 @@
+{
+ "hatalar": [],
+ "ikinciSatir": 3,
+ "ilkSatir": 2,
+ "kalemEkleDugmesi": {
+  "gorunur": 1,
+  "kilitli": false
+ },
+ "onayAcildi": 1,
+ "onayKendiliginenKapandi": true
+}

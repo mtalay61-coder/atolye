@@ -1,0 +1,63 @@
+{
+ "cekSilmeSonrasi": {
+  "copTurleri": [
+   "cariHareketi",
+   "cariHareketi",
+   "cariHareketi",
+   "cek",
+   "cek"
+  ],
+  "kalanCekler": [],
+  "musteriHareketleri": []
+ },
+ "ciroFisi": {
+  "kilitRozeti": false,
+  "silDugmesi": true
+ },
+ "ciroSonrasi": {
+  "cekDurumu": "Portföyde",
+  "gecmis": [
+   [
+    "Ciro Et",
+    "Portföyde",
+    "Ciro Edildi",
+    null
+   ],
+   [
+    "Ciro geri alındı",
+    "Ciro Edildi",
+    "Portföyde",
+    "cekh-1"
+   ]
+  ],
+  "musteriHareketleri": [
+   "h-giris",
+   "h-giris2"
+  ],
+  "tedarikciHareketleri": []
+ },
+ "ekstreCiroluCek": {
+  "kilit": true,
+  "mesajCiroFisiniSoyluyor": true,
+  "silDugmesi": false
+ },
+ "ekstreTemizCek": {
+  "kilit": false,
+  "silDugmesi": true
+ },
+ "girisFisiOnce": {
+  "kilitMesajiCiroFisiniSoyluyor": true,
+  "kilitRozeti": true,
+  "silDugmesi": false
+ },
+ "girisFisiSonra": {
+  "kilitRozeti": false,
+  "silDugmesi": true
+ },
+ "hatalar": [],
+ "islemlerDugmesiSayisi": 2,
+ "temizCekFisi": {
+  "kilitRozeti": false,
+  "silDugmesi": true
+ }
+}

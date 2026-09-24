@@ -1,0 +1,65 @@
+{
+ "dosyaIndi": true,
+ "eposta": {
+  "dosyaIndi": true,
+  "dugme": "musteri@ornek.com",
+  "uyari": "posta programı açılıyor"
+ },
+ "fisAcildi": {
+  "fisGorunur": true,
+  "modul": "Fişler"
+ },
+ "hatalar": [],
+ "kaynakSatirlari": {
+  "bas": [
+   "41",
+   "Toplam"
+  ],
+  "hucreler": [
+   {
+    "ikonlar": [
+     "Satınalma:100:100 alış fişiyle stoğa girdi",
+     "Üretim:3:3 üretimden depoya girdi"
+    ],
+    "miktar": "103"
+   },
+   {
+    "ikonlar": [],
+    "miktar": "103 çift"
+   }
+  ]
+ },
+ "paylasim": {
+  "dosya": "SAT-1 - Müşteri B",
+  "eposta": "musteri@ornek.com",
+  "numara": "905321234567",
+  "yazdirVar": true
+ },
+ "planlamaCipi": "Alış Fişi Kesildi (5): AS-77 — Tedarikçi A · <fisno>",
+ "tedarik": {
+  "baslik": [
+   "Tarih",
+   "Kaynak",
+   "Fiş / Üretim",
+   "Ürün",
+   "Renk",
+   "41",
+   "42",
+   "Toplam",
+   ""
+  ],
+  "satirlar": [
+   "12.09.2026 · Alış Fişi · <fisno> · AS-77 · Bot · Siyah · 100 · 5 · 105 çift",
+   "13.09.2026 · Üretim · 10007-Kesim-2-Giriş · 10007 · Bot · Siyah · 3 · — · 3 çift"
+  ],
+  "sayi": "3"
+ },
+ "tedarikDetay": {
+  "eposta": true,
+  "metin": "Alış SiparişiAS-77Tedarikçi ATamamlandı · 5 çiftfiş <fisno> Yazdır PDF WhatsApp E-posta",
+  "pdf": true,
+  "whatsapp": true
+ },
+ "tedarikPdfIndi": true,
+ "whatsappAcildi": "https://wa.me/905321234567"
+}

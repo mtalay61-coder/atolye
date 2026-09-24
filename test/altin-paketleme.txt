@@ -1,0 +1,57 @@
+{
+ "asortiDugmesi": false,
+ "barkodsuzUyarisi": true,
+ "copaDustuMu": true,
+ "hatalar": [],
+ "ikinciKoli": {
+  "kalanKutuSayisi": 0,
+  "mesaj": true
+ },
+ "kaynaksiz": {
+  "urunKutusuVar": 0,
+  "yonlendirmeVar": true
+ },
+ "kodDurumu": {
+  "kodsuzOlcu": 0,
+  "kodsuzRenk": 0,
+  "stokNoBenzersiz": true,
+  "stokNosuzUrun": 0,
+  "tanimsizSebebiYazili": true
+ },
+ "koli": {
+  "durum": "Hazır",
+  "farkliUrunSayisi": 1,
+  "kalemSayisi": 2,
+  "kodBicimi": true,
+  "kullaniciYazildi": true,
+  "toplamAdet": 6
+ },
+ "koliEtiket": {
+  "bedenSutunlari": [
+   "Ürün",
+   "Renk",
+   "37",
+   "38",
+   "Top."
+  ],
+  "boyut": "150mm 100mm",
+  "gorselVar": 1,
+  "icerikSatiri": 1,
+  "musteriYazili": true,
+  "sayfaSayisi": 1
+ },
+ "kutuEtiket": {
+  "barkodVar": 6,
+  "boyut": "60mm 40mm",
+  "gorselVar": 6,
+  "sayfaSayisi": 6,
+  "sonEtikettePageBreak": ""
+ },
+ "okutmaSonrasi": {
+  "kutuSayisi": 2,
+  "mesaj": true,
+  "siparisteOlmayanGizli": true,
+  "siparistekiUrunVar": true
+ },
+ "silmeSonrasiKoliSayisi": 0
+}

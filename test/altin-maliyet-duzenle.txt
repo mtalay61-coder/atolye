@@ -1,0 +1,16 @@
+{
+ "hatalar": [],
+ "once": {
+  "fermuar": "Fermuar · Siyah · 50 cm | 1 Çift | ₺Boy fiyatı | 4,00 ₺ | 4,00 ₺",
+  "sapma": [
+   "10077 | Fermuar · Siyah · 50 cm | +0,2 Çift | +12 Çift"
+  ]
+ },
+ "sonra": {
+  "genelOzel": 25,
+  "kartFiyati": 0,
+  "kural": [
+   "50 cm:5"
+  ]
+ }
+}

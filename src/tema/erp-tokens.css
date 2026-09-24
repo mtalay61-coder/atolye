@@ -1,0 +1,122 @@
+/* ERP arayüz standardı — tek dosya token seti
+   Uygulamanın en üstünde, kendi CSS'inizden ÖNCE yükleyin. */
+
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&display=swap");
+
+:root {
+  /* Tipografi */
+  --erp-font: "Archivo", system-ui, sans-serif;
+
+  /* Arayüz nötrleri (sıcak) */
+  --erp-text: #24201b;
+  --erp-text-2: #6d6357;
+  --erp-text-3: #8b8073;
+  --erp-line: #c8bcac;
+  --erp-line-soft: #e0d6c7;
+
+  /* Arka plan katmanları */
+  --erp-shell: #2f2620;        /* yan menü */
+  --erp-shell-2: #3d332a;      /* aktif menü öğesi */
+  --erp-shell-ink: #e8ded1;    /* menü yazısı */
+  --erp-topbar: #fbf7f1;       /* üst çubuk */
+  --erp-page: #f6f1ea;         /* sayfa zemini */
+  --erp-panel: #fffdf9;        /* panel, tablo, kart */
+  --erp-zebra: #f2ece3;        /* şerit satır */
+  --erp-hover: #ece4d9;        /* satır hover */
+  --erp-head: #eee6da;         /* tablo başlığı */
+
+  /* Aksiyon */
+  --erp-accent: #ec3013;
+  --erp-accent-hover: #dd2b0f;
+  --erp-accent-press: #ae1800;
+  --erp-accent-tint: #ffe0d9;  /* seçili satır */
+
+  /* Durum */
+  --erp-ok: #55702b;   --erp-ok-tint: #e7ecd6;
+  --erp-wait: #a1651a; --erp-wait-tint: #f7e7cd;
+  --erp-info: #2f6b6b; --erp-info-tint: #dbe9e5;
+  --erp-idle: #4b4339; --erp-idle-tint: #eee6da;
+  --erp-void: #ae1800; --erp-void-tint: #ffe0d9;
+
+  /* Ölçü */
+  --erp-toolbar-h: 44px;
+  --erp-row-h: 30px;
+  --erp-icon-btn: 30px;
+  --erp-icon: 16px;
+  --erp-radius: 0px;
+}
+
+body { font-family: var(--erp-font); color: var(--erp-text); background: var(--erp-page); }
+
+/* İkon butonu — tüm aksiyon ikonlarının tek sınıfı */
+.erp-ib {
+  display: grid; place-items: center;
+  width: var(--erp-icon-btn); height: var(--erp-icon-btn);
+  padding: 0; border: 1px solid transparent; border-radius: var(--erp-radius);
+  background: transparent; color: var(--erp-text); cursor: pointer;
+}
+.erp-ib svg { width: var(--erp-icon); height: var(--erp-icon); }
+.erp-ib:hover { background: var(--erp-hover); }
+.erp-ib:active { background: var(--erp-line-soft); }
+.erp-ib:focus-visible { outline: 2px solid var(--erp-accent); outline-offset: 1px; }
+.erp-ib[disabled] { opacity: .35; cursor: not-allowed; }
+.erp-ib--primary { background: var(--erp-accent); color: #fff; }
+.erp-ib--primary:hover { background: var(--erp-accent-hover); }
+/* PENCERE BAŞLIĞINDA (koyu bordo/renkli şerit) DOLGULU KAYDET SIRITIYORDU (23 Eylül, v1.430.0 —
+   kullanıcı: "kaydet bordo renkte kırmızı sırıtıyor"). Başlık zaten renkli bir zemin; üstüne
+   ikinci bir kırmızı dolgu koymak iki kırmızıyı çakıştırıyor. Şeritte buton saydam duruyor,
+   ikon beyaz; üzerine gelince hafif beyaz perde. Sayfa içi çubuklarda dolgu aynen kalıyor. */
+.erp-pencere-baslik .erp-ib { color: #fff; }
+.erp-pencere-baslik .erp-ib--primary { background: rgba(255,255,255,0.16); color: #fff; }
+.erp-pencere-baslik .erp-ib--primary:hover { background: rgba(255,255,255,0.30); }
+.erp-pencere-baslik .erp-ib:hover { background: rgba(255,255,255,0.18); }
+.erp-ib--danger:hover { background: var(--erp-accent); color: #fff; }
+
+/* Araç çubuğu */
+.erp-toolbar {
+  display: flex; align-items: center; gap: 4px;
+  height: var(--erp-toolbar-h); padding: 0 8px;
+  background: var(--erp-topbar); border-bottom: 2px solid var(--erp-line);
+}
+.erp-toolbar__sep { width: 1px; height: 22px; background: var(--erp-line); margin: 0 6px; }
+.erp-toolbar__gap { flex: 1; }
+
+/* Tablo */
+.erp-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--erp-panel); }
+.erp-table th {
+  height: var(--erp-row-h); padding: 0 10px; text-align: left;
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--erp-head); border-bottom: 2px solid var(--erp-line);
+}
+.erp-table td { height: var(--erp-row-h); padding: 0 10px; border-bottom: 1px solid var(--erp-line-soft); }
+.erp-table tbody tr:nth-child(even) { background: var(--erp-zebra); }
+.erp-table tbody tr:hover { background: var(--erp-hover); }
+.erp-table tbody tr[aria-selected="true"] { background: var(--erp-accent-tint); }
+.erp-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Durum rozeti — renk + ikon + metin birlikte */
+.erp-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 7px; font-size: 11px; font-weight: 600;
+  background: var(--erp-idle-tint); color: var(--erp-idle);
+}
+.erp-badge svg { width: 12px; height: 12px; }
+.erp-badge--ok   { background: var(--erp-ok-tint);   color: var(--erp-ok); }
+.erp-badge--wait { background: var(--erp-wait-tint); color: var(--erp-wait); }
+.erp-badge--info { background: var(--erp-info-tint); color: var(--erp-info); }
+.erp-badge--void { background: var(--erp-void-tint); color: var(--erp-void); }
+
+/* Uygulama iskeleti */
+.erp-shell { display: grid; grid-template-columns: 176px minmax(0, 1fr); min-height: 100vh; }
+.erp-nav { background: var(--erp-shell); color: var(--erp-shell-ink); padding: 12px 0; }
+.erp-nav a { display: block; padding: 7px 12px; font-size: 12.5px; color: inherit; opacity: .72; text-decoration: none; }
+.erp-nav a:hover { opacity: 1; background: var(--erp-shell-2); }
+.erp-nav a[aria-current="page"] { opacity: 1; color: #fff; font-weight: 600; background: var(--erp-shell-2); box-shadow: inset 3px 0 0 var(--erp-accent); }
+.erp-main { background: var(--erp-page); }
+.erp-panel { background: var(--erp-panel); border: 1px solid var(--erp-line); }
+
+/* Mobil: dokunma ölçüsü */
+@media (max-width: 720px) {
+  :root { --erp-icon-btn: 44px; --erp-icon: 18px; --erp-row-h: 44px; --erp-toolbar-h: 52px; }
+  .erp-shell { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,5 @@
+{
+ "alisSatiri": "<fisno-001> · <tarih saat> Alış Fişi AS-1 · Tedarikçi A Siyah +6 br. 120 ₺ +6 metre 720",
+ "hatalar": [],
+ "uretimSatiri": "1001-Kesim · <tarih saat> Üretime Çıkış 1001 Siyah -3 -3 metre ACL"
+}

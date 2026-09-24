@@ -1,0 +1,66 @@
+{
+ "atomik": {
+  "defterSayisi": 4,
+  "siparisKarsilanan": [
+   0
+  ],
+  "uyari": true,
+  "varyant": [
+   "41:0"
+  ]
+ },
+ "defterBulgusu": "3",
+ "defterKayitSayisi": 4,
+ "defterOzeti": {
+  "cariHareketi": [
+   "Alacak:120"
+  ],
+  "fisNo": "<fisno-001>",
+  "iptal": false,
+  "kalem": [
+   "Bot/Siyah/41:6"
+  ],
+  "siparisNo": null,
+  "stokHareketi": [
+   "Siyah/41:6"
+  ],
+  "tip": "Alış"
+ },
+ "defterToplami": 17,
+ "fissizSonuc": {
+  "defterKaynaklari": [
+   "Açılış",
+   "Sayım",
+   "Üretim"
+  ],
+  "fissizKalan": 0,
+  "otomatikIsaretli": true,
+  "sayimFisOnEki": "SYM"
+ },
+ "hatalar": [],
+ "iptalDurumu": [
+  "<fisno-001>:iptal",
+  "<acilis-fisno>:aktif",
+  "<acilis-fisno>:aktif",
+  "1001-Kesim:aktif"
+ ],
+ "kurDugmesi": null,
+ "kurSonrasi": {
+  "kaldirildi": true,
+  "uyariVar": true
+ },
+ "otomatikDefter": {
+  "hareketiOlmayanKayit": 0,
+  "hepsiOtomatikIsaretli": true,
+  "kaynaklar": [
+   "Açılış",
+   "Üretim"
+  ]
+ },
+ "varyant": [
+  "41:6"
+ ],
+ "varyantSonra": [
+  "41:0"
+ ]
+}

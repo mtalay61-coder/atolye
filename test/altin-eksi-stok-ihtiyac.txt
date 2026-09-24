@@ -1,0 +1,12 @@
+{
+ "hatalar": [],
+ "olcumsuzTeshis": "↳ Bu hammadde için henüz üretim ölçümü yok; sebep söylenemez.",
+ "ortak": {
+  "eksiDegerdenMiktarTuremiyor": true,
+  "hammaddeGorunuyor": true,
+  "kayitDegeri": true,
+  "sifirKabulYazili": true,
+  "topluUyari": true
+ },
+ "receteSucluTeshis": "↳ Reçete fazla düşüyor olabilir. Bot: reçete 2 → ölçülen 1.7 (3 ölçüm) — reçeteyi düzeltmek"
+}

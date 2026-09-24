@@ -1,0 +1,31 @@
+{
+ "alisFiltresi": [
+  "Alış"
+ ],
+ "cokKalemliFis": {
+  "satir": "SF-TEST-1 · 3 kalem · Bot · Lacivert",
+  "tekrarSayisi": 1,
+  "toplamDogru": true
+ },
+ "devamiKalan": 0,
+ "hatalar": [],
+ "kapaliyken": {
+  "basliktaSayi": true,
+  "listeGizli": true,
+  "sonIslemOzeti": true
+ },
+ "panel": {
+  "alisGorunuyor": true,
+  "kesit": "Son İşlemler 11 kayıt Kapat Herkes Test Kullanıcısı Tümü (11) Açılış (5) Alış (2) Üretim (2) Alış siparişi (1) Satış (1) Test Kullanıcısı — 1 alış — — 1 alış <tarih saat> Alış Tedarikçi A · 4.320 ₺ <fisno-001> · 2 kalem · Deri · Siyah · Bot · Siyah Test Kul",
+  "kullaniciGorunuyor": true,
+  "ozetVar": true,
+  "panelVar": true
+ },
+ "sekmeler": [
+  "Tümü (11)",
+  "Alış (2)",
+  "Üretim (2)",
+  "Alış siparişi (1)",
+  "Satış (1)"
+ ]
+}

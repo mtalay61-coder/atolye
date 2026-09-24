@@ -1,0 +1,401 @@
+{
+ "acilanAyni": true,
+ "arama": {
+  "ozet": "1 satır · \"taba\" aramasıyla",
+  "renkler": [
+   "Taba"
+  ],
+  "satir": 1
+ },
+ "ayarlarKapaliGeldi": true,
+ "duz": {
+  "asamaIkonlari": [
+   "Teslim edildi:Truck",
+   "Saya'da:Shirt",
+   "Planlanmadı:Compass",
+   "Teslim edildi:Truck"
+  ],
+  "asamaSatirlari": [
+   "Teslim edildi:4",
+   "Saya'da:6",
+   "Planlanmadı:6",
+   "Teslim edildi:3"
+  ],
+  "ozet": "4 satır",
+  "satir": 4,
+  "sutun": 24
+ },
+ "excel": {
+  "baslik": [
+   "Resim",
+   "Sipariş No",
+   "Tarih",
+   "Teslim Tarihi",
+   "Cari",
+   "Sipariş Durumu",
+   "Müşteri Kodu",
+   "Ürün",
+   "Renk",
+   "Birim",
+   "Planlama",
+   "Üretim / Alış No",
+   "P.B.",
+   "41",
+   "42",
+   "Toplam Aşama Miktarı",
+   "Sipariş Miktarı",
+   "Teslim Edilen",
+   "Kalan",
+   "Birim Fiyat",
+   "Sipariş Tutarı",
+   "Teslim Edilen Tutar",
+   "Kalan Tutar",
+   "Aşama Tutarı"
+  ],
+  "hucreMetni": "10sipariş / 4giden / 6kalan / 4teslim edildi6saya'da",
+  "ilkSatir": [
+   "(resim)",
+   "SAT-1",
+   "01.09.2026",
+   "",
+   "Müşteri B",
+   "Bekliyor",
+   "",
+   "Bot",
+   "Siyah",
+   "çift",
+   "Üretim",
+   2001,
+   "USD",
+   "10sipariş / 4giden / 6kalan / 4teslim edildi6saya'da",
+   "",
+   10,
+   10,
+   4,
+   6,
+   25,
+   250,
+   100,
+   150,
+   250
+  ],
+  "satirSayisiAyni": true,
+  "toplam": [
+   "",
+   "Toplam",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   13,
+   6,
+   19,
+   19,
+   7,
+   12,
+   "",
+   481,
+   181,
+   300,
+   481
+  ]
+ },
+ "gruplu": {
+  "baslik": [
+   "Ürün",
+   "Renk",
+   "Aş.Mik.",
+   "Sipariş Tutarı",
+   "Teslim Edilen Tutar",
+   "Kalan Tutar",
+   "Aşama Tutarı",
+   "Kalan",
+   "Satır"
+  ],
+  "govde": [
+   [
+    "Bot",
+    "Siyah",
+    "16",
+    "400,00",
+    "100,00",
+    "300,00",
+    "400,00",
+    "12",
+    "3"
+   ],
+   [
+    "Bot",
+    "Taba",
+    "3",
+    "81,00",
+    "81,00",
+    "0,00",
+    "81,00",
+    "0",
+    "1"
+   ]
+  ],
+  "ozet": "2 grup (4 satır)",
+  "toplam": [
+   "Toplam",
+   "",
+   "19",
+   "481,00",
+   "181,00",
+   "300,00",
+   "481,00",
+   "12",
+   "4"
+  ]
+ },
+ "hatalar": [],
+ "kayit": {
+  "ad": "Renk bazında kalan",
+  "gruplar": [
+   "urun",
+   "renk"
+  ],
+  "kapsam": "ortak",
+  "modul": "siparis-satis",
+  "sutunAyarlari": {
+   "asamaMiktar": {
+    "ad": "Aş.Mik.",
+    "genislik": "60"
+   }
+  },
+  "sutunSayisi": 8
+ },
+ "kayitliVar": true,
+ "kolonAramasi": {
+  "asamalar": [
+   "Teslim edildi:4"
+  ],
+  "satir": 1
+ },
+ "matris": {
+  "baslik": [
+   "Resim",
+   "Sipariş No",
+   "Tarih",
+   "Teslim Tarihi",
+   "Cari",
+   "Sipariş Durumu",
+   "Müşteri Kodu",
+   "Ürün",
+   "Renk",
+   "Birim",
+   "Planlama",
+   "Üretim / Alış No",
+   "Aşama",
+   "P.B.",
+   "41",
+   "42",
+   "Toplam Aşama Miktarı",
+   "Sipariş Miktarı",
+   "Teslim Edilen",
+   "Kalan",
+   "Birim Fiyat",
+   "Sipariş Tutarı",
+   "Teslim Edilen Tutar",
+   "Kalan Tutar",
+   "Aşama Tutarı"
+  ],
+  "govde": [
+   [
+    "",
+    "SAT-1",
+    "01.09.2026",
+    "",
+    "Müşteri B",
+    "Bekliyor",
+    "",
+    "Bot",
+    "Siyah",
+    "çift",
+    "Üretim",
+    "2001",
+    "Teslim edildi",
+    "USD",
+    "10sipariş4giden6kalan",
+    "—",
+    "4",
+    "10",
+    "4",
+    "6",
+    "25,00",
+    "250,00",
+    "100,00",
+    "150,00",
+    "100,00"
+   ],
+   [
+    "",
+    "SAT-1",
+    "01.09.2026",
+    "",
+    "Müşteri B",
+    "Bekliyor",
+    "",
+    "Bot",
+    "Siyah",
+    "çift",
+    "Üretim",
+    "2001",
+    "Saya'da",
+    "USD",
+    "10sipariş4giden6kalan",
+    "—",
+    "6",
+    "10",
+    "4",
+    "6",
+    "25,00",
+    "250,00",
+    "100,00",
+    "150,00",
+    "150,00"
+   ],
+   [
+    "",
+    "SAT-1",
+    "01.09.2026",
+    "",
+    "Müşteri B",
+    "Bekliyor",
+    "",
+    "Bot",
+    "Siyah",
+    "çift",
+    "Planlanmadı",
+    "",
+    "Planlanmadı",
+    "USD",
+    "—",
+    "6sipariş0giden6kalan",
+    "6",
+    "6",
+    "0",
+    "6",
+    "25,00",
+    "150,00",
+    "0,00",
+    "150,00",
+    "150,00"
+   ],
+   [
+    "",
+    "SAT-1",
+    "01.09.2026",
+    "",
+    "Müşteri B",
+    "Bekliyor",
+    "",
+    "Bot",
+    "Taba",
+    "çift",
+    "Planlanmadı",
+    "",
+    "Teslim edildi",
+    "USD",
+    "3sipariş3giden0kalan",
+    "—",
+    "3",
+    "3",
+    "3",
+    "0",
+    "27,00",
+    "81,00",
+    "81,00",
+    "0,00",
+    "81,00"
+   ]
+  ],
+  "toplam": [
+   "",
+   "Toplam",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "",
+   "13",
+   "6",
+   "19",
+   "19",
+   "7",
+   "12",
+   "",
+   "481,00",
+   "181,00",
+   "300,00",
+   "481,00"
+  ]
+ },
+ "matrisTekSatir": [
+  {
+   "h41": "10 sipariş 4 giden 6 kalan 4 teslim edildi 6 saya'da",
+   "h42": "—",
+   "renk": "Siyah"
+  },
+  {
+   "h41": "—",
+   "h42": "6 sipariş 0 giden 6 kalan 6 planlanmadı",
+   "renk": "Siyah"
+  },
+  {
+   "h41": "3 sipariş 3 giden 0 kalan 3 teslim edildi",
+   "h42": "—",
+   "renk": "Taba"
+  }
+ ],
+ "raporSekmesiVar": true,
+ "resimler": [
+  "Siyah:renk",
+  "Siyah:renk",
+  "Siyah:renk",
+  "Taba:kapak"
+ ],
+ "sayacKorundu": true,
+ "secenekListeleri": {
+  "asamaMiktar": [
+   "3",
+   "4"
+  ],
+  "renk": [
+   "Siyah"
+  ],
+  "tarih": [
+   "01.09.2026"
+  ]
+ },
+ "sutunAyari": {
+  "baslik": [
+   "Ürün",
+   "Renk",
+   "Aş.Mik.",
+   "Sipariş Tutarı",
+   "Teslim Edilen Tutar",
+   "Kalan Tutar",
+   "Aşama Tutarı",
+   "Kalan",
+   "Satır"
+  ],
+  "genislik": 64
+ },
+ "varsayilanMatris": true
+}

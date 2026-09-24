@@ -1,0 +1,37 @@
+{
+ "acikSatiri": [
+  "·",
+  "3",
+  "3"
+ ],
+ "hatalar": [],
+ "kolideSatiri": [
+  "3",
+  "·",
+  "3"
+ ],
+ "sekmeler": {
+  "hammadde": true,
+  "mamul": true
+ },
+ "serbestSatiri": [
+  "7",
+  "4",
+  "11"
+ ],
+ "stokSatiri": [
+  "10",
+  "4",
+  "14"
+ ],
+ "talepSatiri": [
+  "6",
+  "9",
+  "15"
+ ],
+ "uretimdeSatiri": [
+  "·",
+  "2",
+  "2"
+ ]
+}

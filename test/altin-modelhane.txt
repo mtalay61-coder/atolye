@@ -1,0 +1,69 @@
+{
+ "acilis": {
+  "bosMesaj": true,
+  "ekranVar": true,
+  "suzgecler": [
+   "acik",
+   "fikir",
+   "cizim",
+   "kalip",
+   "numune",
+   "revizyon",
+   "onayli",
+   "koleksiyon",
+   "tumu"
+  ]
+ },
+ "anaSekmeler": [
+  "modeller",
+  "resimler"
+ ],
+ "eklendi": [
+  "M-512:512 Bağcıklı Bot:fikir"
+ ],
+ "hatalar": [],
+ "havuz": {
+  "havuzVar": true,
+  "resimSayisi": 1,
+  "tabanAlani": true
+ },
+ "kunye": {
+  "asama": "onayli",
+  "gecmisSayisi": 5,
+  "kalip": "Ç-38 klasik",
+  "taban": "Kauçuk 4 mm",
+  "teknikNot": "Saya dikişi 3 mm, astar deri"
+ },
+ "numune": {
+  "turSayisi": 1,
+  "uretildiYazisi": true
+ },
+ "numuneEmri": {
+  "model": "512 Bağcıklı Bot (NUMUNE)",
+  "receteSatiri": 1,
+  "urunIdBos": true,
+  "var": true
+ },
+ "numuneFark": 0.5,
+ "numuneUretim": {
+  "deriSonra": 10.5,
+  "hareket": "NUM-…:-0.5",
+  "mamuleGirdi": false
+ },
+ "recete": {
+  "satir": 1,
+  "toplam": "120 ₺"
+ },
+ "resimdenModel": [
+  "model:M-001:601 Sneaker:Kauçuk 4 mm EVA:kapak"
+ ],
+ "sonuc": {
+  "kunyeNotu": "M-512 · Sezon: 2027 Kış · Kalıp: Ç-38 klasik · Taban: Kauçuk 4 mm",
+  "modelAsamasi": "koleksiyon",
+  "modelSilinmedi": true,
+  "teknikNotTasindi": true,
+  "urunAdi": "512 Bağcıklı Bot",
+  "urunKategorisi": "Mamul",
+  "urunOlustu": true
+ }
+}

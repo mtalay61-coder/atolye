@@ -1,0 +1,38 @@
+{
+ "bulutBasarili": {
+  "denenenEposta": "mahmut@atolye.local",
+  "girisSonrasi": {
+   "girisEkraninda": false,
+   "girisHatasi": null,
+   "kart": null,
+   "rozet": false
+  },
+  "hatalar": [],
+  "kapatinca": null,
+  "rozeteDokununca": null
+ },
+ "onaylanmamis": {
+  "denenenEposta": "mahmut@atolye.local",
+  "girisSonrasi": {
+   "girisEkraninda": true,
+   "girisHatasi": "mahmut@atolye.local: Bulut hesabı onaylanmamış. Supabase > Authentication > Users'da kullanıcıyı onaylayın (Confirm).",
+   "kart": null,
+   "rozet": false
+  },
+  "hatalar": [],
+  "kapatinca": null,
+  "rozeteDokununca": null
+ },
+ "sifreTutmuyor": {
+  "denenenEposta": "mahmut@atolye.local",
+  "girisSonrasi": {
+   "girisEkraninda": true,
+   "girisHatasi": "mahmut@atolye.local: Kullanıcı adı ya da şifre hatalı (Supabase reddetti). Şifre Tanımlar > Kullanıcılar'dan yeniden verilebilir.",
+   "kart": null,
+   "rozet": false
+  },
+  "hatalar": [],
+  "kapatinca": null,
+  "rozeteDokununca": null
+ }
+}

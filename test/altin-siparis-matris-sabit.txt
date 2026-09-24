@@ -1,0 +1,8 @@
+{
+ "fazlaSevk": true,
+ "hatalar": [],
+ "matris": {
+  "kesit": "Siyah\t12\t6\t18\t900 ₺\t16.200 ₺\tFazla sevk (+3) | Anasayfa | Sipariş | $ 48,00 | € 56,00 | 5 "
+ },
+ "planlamaBos": null
+}

@@ -1,0 +1,7 @@
+{
+ "baslangicDepo": true,
+ "geriDonDugmesiVar": true,
+ "hatalar": [],
+ "kapattiktanSonraDepodaMi": true,
+ "kartAcik": true
+}

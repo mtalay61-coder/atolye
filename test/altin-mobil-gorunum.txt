@@ -1,0 +1,105 @@
+{
+ "altCubuk": [
+  "Cari",
+  "Sipariş",
+  "Alış Siparişi",
+  "Stok",
+  "Üretim",
+  "Depo",
+  "Tümü"
+ ],
+ "bolumKaydi": {
+  "siparis": {
+   "gizli": [
+    "tedarikGirisleri",
+    "ihtiyac"
+   ],
+   "sira": [
+    "planlama",
+    "rezervasyon",
+    "ihtiyac",
+    "tedarikGirisleri",
+    "fisGecmisi"
+   ]
+  }
+ },
+ "bolumler": [
+  "planlama",
+  "ihtiyac",
+  "rezervasyon",
+  "tedarikGirisleri",
+  "fisGecmisi"
+ ],
+ "dokununcaKapandi": true,
+ "ekranVar": true,
+ "eskiSureyiAsti": true,
+ "genisVarsayilan": {
+  "cubukGorunur": false,
+  "govde": "masaustu-duzen"
+ },
+ "hatalar": [],
+ "ilkOnizleme": [
+  "saha",
+  "anasayfa",
+  "siparis",
+  "satinalma",
+  "cari"
+ ],
+ "ilkSira": [
+  "anasayfa",
+  "siparis",
+  "satinalma",
+  "cari",
+  "stok"
+ ],
+ "kayit": {
+  "gizli": [
+   "anasayfa"
+  ],
+  "ilkDort": [
+   "anasayfa",
+   "cari",
+   "siparis",
+   "satinalma"
+  ]
+ },
+ "masaustuneDonus": {
+  "govde": "masaustu-duzen",
+  "menuGorunur": true,
+  "tercih": "kapali"
+ },
+ "onizleme": [
+  "saha",
+  "cari",
+  "siparis",
+  "satinalma",
+  "stok"
+ ],
+ "onizlemeAlti": 7,
+ "sifirlandi": {
+  "gizli": [],
+  "ilkUc": [
+   "anasayfa",
+   "siparis",
+   "satinalma"
+  ]
+ },
+ "tasindiktanSonra": [
+  "anasayfa",
+  "cari",
+  "siparis",
+  "satinalma"
+ ],
+ "tumuPaneli": {
+  "acik": true,
+  "masaustuDugmesi": true,
+  "moduller": 12
+ },
+ "uyariMetni": "Mobil görünüm varsayılana döndü",
+ "zorlaMobil": {
+  "cubukGorunur": true,
+  "govde": "mobil-duzen",
+  "menuGizli": true,
+  "tercih": "acik"
+ }
+}

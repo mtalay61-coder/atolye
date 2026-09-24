@@ -1,0 +1,27 @@
+{
+ "akisOzeti": {
+  "durum": "Kontrolde",
+  "yorumlar": [
+   "sistem: durum: Yapılacak → Kontrolde",
+   "Ali Usta: Kesim bitti, sayaya verildi"
+  ]
+ },
+ "aliListe": [
+  "10007 kesimini bitir:Yapılacak:1",
+  "Kalıpları teslim al:Yapılıyor:1"
+ ],
+ "aliRozet": "2",
+ "durumSonra1": "Yapılacak",
+ "hatalar": [],
+ "kapaliListe": [
+  "10007 kesimini bitir"
+ ],
+ "menuRozetiYonetici": "yok",
+ "sonDurum": "Tamamlandı",
+ "tamamlamaReddi": true,
+ "tamamlanmaVar": true,
+ "yoneticiEkran": {
+  "ilkBaslik": "10007 kesimini bitir",
+  "verdigimSayisi": 2
+ }
+}

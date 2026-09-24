@@ -1,0 +1,36 @@
+{
+ "cariHareketi": {
+  "fisiVar": true,
+  "hesapAd": "Çek No 12345",
+  "hesapPB": "TRY",
+  "hesapTutar": 42000,
+  "paraBirimi": "USD",
+  "tutar": 1000,
+  "yon": "Borç"
+ },
+ "cek": {
+  "durum": "Ciro Edildi"
+ },
+ "ciroDugmeSayisi": 1,
+ "ciroTutariVeKur": [
+  "1000",
+  "42"
+ ],
+ "gecmis": [
+  [
+   "Ciro Et",
+   "Portföyde",
+   "Ciro Edildi",
+   "Tedarikçi A"
+  ]
+ ],
+ "hatalar": [],
+ "menuIslemleri": [
+  "Ciro Et",
+  "İade Et",
+  "Bankaya Tahsile Ver",
+  "Tahsil Edildi",
+  "Karşılıksız Çıktı"
+ ],
+ "panelAcildi": true
+}

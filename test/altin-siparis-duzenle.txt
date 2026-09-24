@@ -1,0 +1,55 @@
+{
+ "baslik": {
+  "not": "düzeltilmiş not",
+  "teslimTarihi": "<tarih>"
+ },
+ "cariKilidi": true,
+ "cariKorundu": true,
+ "durumGosterimi": {
+  "rozet": "Onaylandı",
+  "seciciVar": false
+ },
+ "duzenlenebilirKalemSayisi": 2,
+ "eklemeModu": {
+  "baslikVar": true,
+  "dugmeAdi": true
+ },
+ "fiyatKutulari": [
+  "350"
+ ],
+ "fiyatSonrasi": [
+  [
+   "kd1",
+   400
+  ],
+  [
+   "kd2",
+   400
+  ],
+  [
+   "kd3",
+   375
+  ]
+ ],
+ "hatalar": [],
+ "kalemler": [
+  [
+   "kd1",
+   8
+  ],
+  [
+   "kd2",
+   4
+  ],
+  [
+   "kd3",
+   3
+  ]
+ ],
+ "kilitliKalemKorundu": true,
+ "modDisiKutu": {
+  "fiyat": 0,
+  "miktar": 0,
+  "sil": 0
+ }
+}

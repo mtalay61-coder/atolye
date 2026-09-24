@@ -1,0 +1,13 @@
+{
+ "hatalar": [],
+ "kurUyarisi": "GBP kuru girilmemiş — bu birimdeki fiyat",
+ "kurUyarisiYok": true,
+ "maliyet": {
+  "hammadde": "192,00 ₺",
+  "iscilik": "50,00 ₺",
+  "kar": "65,50 ₺",
+  "marjKutusu": true,
+  "satisOnerisi": "327,50 ₺",
+  "tamMaliyet": "262,00 ₺"
+ }
+}

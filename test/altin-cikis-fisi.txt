@@ -1,0 +1,10 @@
+{
+ "bedenKutusu": 3,
+ "fisAcildi": 1,
+ "hatalar": [],
+ "satirSayisi": {
+  "birinci": 1,
+  "ikinci": 2,
+  "ucuncu": 3
+ }
+}

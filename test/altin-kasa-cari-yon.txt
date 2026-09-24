@@ -1,0 +1,16 @@
+{
+ "cikis": {
+  "cariAciklama": "Ödeme",
+  "cariFisOnEki": "ODM",
+  "cariYonu": "Borç",
+  "hatalar": [],
+  "kasaYonu": "Çıkış"
+ },
+ "giris": {
+  "cariAciklama": "Tahsilat",
+  "cariFisOnEki": "THS",
+  "cariYonu": "Alacak",
+  "hatalar": [],
+  "kasaYonu": "Giriş"
+ }
+}

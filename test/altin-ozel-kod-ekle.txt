@@ -1,0 +1,23 @@
+{
+ "alanKaydi": {
+  "ad": "Kalınlık",
+  "kapsamAd": "Deri",
+  "kapsamTuru": "malzeme",
+  "kimlikVar": true
+ },
+ "bosDurum": {
+  "blokVar": true,
+  "ekleDugmesi": true,
+  "sebepYazili": true
+ },
+ "formdaGorundu": true,
+ "hatalar": [],
+ "karttaEkleme": {
+  "ekleDugmesi": true
+ },
+ "karttanEklenen": {
+  "ad": "Sezon Notu",
+  "kapsamTuru": "genel",
+  "kimlikVar": true
+ }
+}

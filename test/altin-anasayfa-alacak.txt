@@ -1,0 +1,11 @@
+{
+ "cokPB": {
+  "altSatir": "4.500 € · 3.000 $",
+  "anaSatir": "120.000 ₺"
+ },
+ "hatalar": [],
+ "tekPB": {
+  "altSatir": "3 cari kayıtlı",
+  "anaSatir": "120.000 ₺"
+ }
+}

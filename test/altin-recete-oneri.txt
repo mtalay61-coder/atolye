@@ -1,0 +1,18 @@
+{
+ "darEkran": {
+  "hatalar": [],
+  "olcum": {
+   "listeVar": true,
+   "listeYuksekligiVar": true,
+   "tamamiGorunuyor": true
+  }
+ },
+ "genisEkran": {
+  "hatalar": [],
+  "olcum": {
+   "listeVar": true,
+   "listeYuksekligiVar": true,
+   "tamamiGorunuyor": true
+  }
+ }
+}

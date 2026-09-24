@@ -1,0 +1,11 @@
+{
+ "buyudu": true,
+ "dugmeYazisi": "Şablondan reçete oluştur",
+ "hatalar": [],
+ "katalog": 1,
+ "renkSayisi": 1,
+ "satirSayisi": {
+  "birinci": 1,
+  "ikinciUygulamaSonrasi": 1
+ }
+}

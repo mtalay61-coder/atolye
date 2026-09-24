@@ -1,0 +1,27 @@
+{
+ "buAy": {
+  "brutKar": "3.500 ₺",
+  "giderler": "-20.000 ₺",
+  "iscilik": "-1.500 ₺",
+  "maliyet": "-4.000 ₺",
+  "netKar": "-16.500 ₺",
+  "satisGeliri": "9.000 ₺"
+ },
+ "dokum": {
+  "gruplar": [
+   "uretim",
+   "yonetim"
+  ],
+  "kartAdlariGorunuyor": true
+ },
+ "gecenAy": {
+  "brutKar": "0 ₺",
+  "giderler": "-0 ₺",
+  "iscilik": null,
+  "maliyet": "-0 ₺",
+  "netKar": "0 ₺",
+  "satisGeliri": "0 ₺"
+ },
+ "hatalar": [],
+ "kartsizUyari": true
+}

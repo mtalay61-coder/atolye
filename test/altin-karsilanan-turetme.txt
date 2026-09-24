@@ -1,0 +1,7 @@
+{
+ "hatalar": [],
+ "sonuc": {
+  "hareketliSiparis": 4,
+  "hareketsizSiparis": 5
+ }
+}

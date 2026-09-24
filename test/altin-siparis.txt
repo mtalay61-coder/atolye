@@ -1,0 +1,278 @@
+{
+ "cariler": [
+  {
+   "hareketler": [
+    {
+     "aciklama": "Cariden Alış fişi: Deri · Siyah · 4 metre",
+     "beden": "",
+     "birim": "metre",
+     "birimFiyat": 120,
+     "defter": "Genel",
+     "fisNo": "<fisno-001>",
+     "hamBirimFiyat": null,
+     "id": "#1",
+     "kalemId": "sk1",
+     "kalemParaBirimi": null,
+     "kullanici": "Test Kullanıcısı",
+     "kur": null,
+     "kurHedef": null,
+     "miktar": 4,
+     "odemeSekli": "Nakit",
+     "paraBirimi": "TRY",
+     "renk": "Siyah",
+     "siparisId": "s1",
+     "siparisNo": "AS-1",
+     "tarih": "<tarih>",
+     "tutar": 480,
+     "urunAd": "Deri",
+     "vade": "",
+     "yon": "Alacak",
+     "zaman": "<zaman>"
+    },
+    {
+     "aciklama": "Cariden Alış fişi: Bot · Siyah · 41 · 3 çift (25 USD × 48 = 1.200 TRY)",
+     "beden": "41",
+     "birim": "çift",
+     "birimFiyat": 1200,
+     "defter": "Genel",
+     "fisNo": "<fisno-001>",
+     "hamBirimFiyat": 25,
+     "id": "#2",
+     "kalemId": "sk2",
+     "kalemParaBirimi": "USD",
+     "kullanici": "Test Kullanıcısı",
+     "kur": 48,
+     "kurHedef": null,
+     "miktar": 3,
+     "odemeSekli": "Nakit",
+     "paraBirimi": "TRY",
+     "renk": "Siyah",
+     "siparisId": "s1",
+     "siparisNo": "AS-1",
+     "tarih": "<tarih>",
+     "tutar": 3600,
+     "urunAd": "Bot",
+     "vade": "",
+     "yon": "Alacak",
+     "zaman": "<zaman>"
+    }
+   ],
+   "unvan": "Tedarikçi A"
+  },
+  {
+   "hareketler": [],
+   "unvan": "Müşteri B"
+  },
+  {
+   "hareketler": [
+    {
+     "aciklama": "Kesim işçiliği · 3 çift",
+     "defter": "Genel",
+     "fisNo": "1001-Kesim-İşçilik",
+     "id": "h-iscilik",
+     "odemeSekli": "Nakit",
+     "paraBirimi": "TRY",
+     "siparisNo": "1001",
+     "tarih": "<tarih>",
+     "tutar": 30,
+     "uretimId": "up1",
+     "vade": "",
+     "yon": "Alacak",
+     "zaman": "<zaman>"
+    }
+   ],
+   "unvan": "Personel C"
+  }
+ ],
+ "hatalar": [],
+ "siparisler": [
+  {
+   "durum": "Kısmi Teslim",
+   "kalemler": [
+    {
+     "beden": "",
+     "birim": "metre",
+     "birimFiyat": 120,
+     "id": "sk1",
+     "karsilanan": 4,
+     "miktar": 6,
+     "paraBirimi": "TRY",
+     "renk": "Siyah",
+     "urunAd": "Deri",
+     "urunId": "u1"
+    },
+    {
+     "beden": "41",
+     "birim": "çift",
+     "birimFiyat": 25,
+     "id": "sk2",
+     "karsilanan": 3,
+     "miktar": 3,
+     "paraBirimi": "USD",
+     "renk": "Siyah",
+     "urunAd": "Bot",
+     "urunId": "u2"
+    }
+   ],
+   "no": "AS-1",
+   "teslimSayaci": 0
+  }
+ ],
+ "stok": [
+  {
+   "ad": "Deri",
+   "hareketler": [
+    {
+     "aciklama": "Alış fişi · <fisno-001>",
+     "beden": "",
+     "cariId": "c1",
+     "fazlaGonderim": false,
+     "fisNo": "<fisno-001>",
+     "id": "#1",
+     "kalemId": "sk1",
+     "kaynak": "Satınalma",
+     "miktar": 4,
+     "renk": "Siyah",
+     "rezervasyonSiparisId": null,
+     "siparisId": "s1",
+     "siparisNo": "AS-1",
+     "tarih": "<zaman>"
+    },
+    {
+     "beden": "",
+     "cariId": null,
+     "fisNo": "1001-Kesim",
+     "id": "#3",
+     "kaynak": "Üretim",
+     "miktar": -3,
+     "renk": "Siyah",
+     "siparisNo": "1001",
+     "tarih": "<zaman>",
+     "uretimId": "up1"
+    },
+    {
+     "aciklama": "Açılış: hareketsiz başlangıç miktarı fişe bağlandı (16 Eylül geçişi)",
+     "beden": "",
+     "fisNo": "<acilis-fisno>",
+     "id": "#4",
+     "kaynak": "Açılış",
+     "miktar": 10,
+     "renk": "Siyah",
+     "tarih": "<tarih>"
+    },
+    {
+     "aciklama": "Açılış: hareketsiz başlangıç miktarı fişe bağlandı (16 Eylül geçişi)",
+     "beden": "",
+     "fisNo": "<acilis-fisno>",
+     "id": "#5",
+     "kaynak": "Açılış",
+     "miktar": 4,
+     "renk": "Taba",
+     "tarih": "<tarih>"
+    }
+   ],
+   "variants": [
+    {
+     "beden": "",
+     "miktar": 11,
+     "minStok": 0,
+     "renk": "Siyah",
+     "renkId": "r1"
+    },
+    {
+     "beden": "",
+     "miktar": 4,
+     "minStok": 0,
+     "renk": "Taba",
+     "renkId": "r2"
+    }
+   ]
+  },
+  {
+   "ad": "Bot",
+   "hareketler": [
+    {
+     "aciklama": "Alış fişi · <fisno-001>",
+     "beden": "41",
+     "cariId": "c1",
+     "fazlaGonderim": false,
+     "fisNo": "<fisno-001>",
+     "id": "#2",
+     "kalemId": "sk2",
+     "kaynak": "Satınalma",
+     "miktar": 3,
+     "renk": "Siyah",
+     "rezervasyonSiparisId": null,
+     "siparisId": "s1",
+     "siparisNo": "AS-1",
+     "tarih": "<zaman>"
+    },
+    {
+     "beden": "41",
+     "cariId": null,
+     "fisNo": "1001-Kesim-Giriş",
+     "id": "#6",
+     "kaynak": "Üretim",
+     "miktar": 3,
+     "renk": "Siyah",
+     "siparisNo": "1001",
+     "tarih": "<zaman>",
+     "uretimId": "up1"
+    },
+    {
+     "aciklama": "Açılış: hareketsiz başlangıç miktarı fişe bağlandı (16 Eylül geçişi)",
+     "beden": "40",
+     "fisNo": "<acilis-fisno>",
+     "id": "#7",
+     "kaynak": "Açılış",
+     "miktar": 5,
+     "renk": "Siyah",
+     "tarih": "<tarih>"
+    },
+    {
+     "aciklama": "Açılış: hareketsiz başlangıç miktarı fişe bağlandı (16 Eylül geçişi)",
+     "beden": "41",
+     "fisNo": "<acilis-fisno>",
+     "id": "#8",
+     "kaynak": "Açılış",
+     "miktar": 6,
+     "renk": "Siyah",
+     "tarih": "<tarih>"
+    },
+    {
+     "aciklama": "Açılış: hareketsiz başlangıç miktarı fişe bağlandı (16 Eylül geçişi)",
+     "beden": "42",
+     "fisNo": "<acilis-fisno>",
+     "id": "#9",
+     "kaynak": "Açılış",
+     "miktar": 7,
+     "renk": "Siyah",
+     "tarih": "<tarih>"
+    }
+   ],
+   "variants": [
+    {
+     "beden": "40",
+     "miktar": 5,
+     "minStok": 0,
+     "renk": "Siyah",
+     "renkId": "r1"
+    },
+    {
+     "beden": "41",
+     "miktar": 12,
+     "minStok": 0,
+     "renk": "Siyah",
+     "renkId": "r1"
+    },
+    {
+     "beden": "42",
+     "miktar": 7,
+     "minStok": 0,
+     "renk": "Siyah",
+     "renkId": "r1"
+    }
+   ]
+  }
+ ]
+}

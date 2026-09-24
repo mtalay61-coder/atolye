@@ -1,0 +1,39 @@
+{
+ "aliMenuRozeti": "3",
+ "aliOkunmamis": [
+  "1"
+ ],
+ "aliTamamlamaReddi": true,
+ "anasayfaGorevleri": {
+  "gorevSayisi": 1,
+  "panelVar": true,
+  "stokKartiKaldirildi": true
+ },
+ "gorevAkisi": [
+  "durum: Yapılacak → Yapılıyor"
+ ],
+ "gorevDurumSon": "Yapılıyor",
+ "gorevKaydi": [
+  "Bu siparişin kesimini bugün bitir:k2:<tarih>:siparis"
+ ],
+ "hatalar": [],
+ "kanallar": [
+  "ekip",
+  "kisisel"
+ ],
+ "kayitAdaylari": [
+  "AS-1 (alış)"
+ ],
+ "mahmutAkis": [
+  {
+   "gorevDurum": "Yapılacak",
+   "hedef": "Sipariş: AS-1 (alış)",
+   "metin": "Bu siparişin kesimini bugün bitir"
+  }
+ ],
+ "whatsappBaglantisi": {
+  "gorevYazisi": true,
+  "varMi": true,
+  "wa": true
+ }
+}

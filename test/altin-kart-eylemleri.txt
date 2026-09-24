@@ -1,0 +1,37 @@
+{
+ "cari": {
+  "kapali": [
+   "duzenle",
+   "pasif",
+   "sil"
+  ]
+ },
+ "hatalar": [],
+ "kasa": {
+  "duzenlemede": [
+   "kaydet",
+   "vazgec"
+  ],
+  "kapali": [
+   "duzenle",
+   "sil"
+  ]
+ },
+ "siparis": {
+  "acik": [
+   "duzenle",
+   "sil"
+  ]
+ },
+ "urun": {
+  "duzenlemede": [
+   "kaydet",
+   "vazgec"
+  ],
+  "kapali": [
+   "duzenle",
+   "pasif",
+   "sil"
+  ]
+ }
+}

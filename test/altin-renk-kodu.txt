@@ -1,0 +1,14 @@
+{
+ "duzeltilmis": [
+  "Hammadde:101",
+  "Hammadde:102"
+ ],
+ "hatalar": [],
+ "sonKodlar": [
+  "Siyah/Hammadde:101",
+  "Taba/Hammadde:102",
+  "Bej/Hammadde:103"
+ ],
+ "uyariKalkti": true,
+ "uyariVar": "1"
+}

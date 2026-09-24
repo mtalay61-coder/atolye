@@ -1,0 +1,35 @@
+{
+ "acilis": {
+  "barkodAlani": false,
+  "duzenleDugmesi": true,
+  "hareketlerSekmesi": true,
+  "prosesSecimi": false,
+  "telefonAlani": false
+ },
+ "cariKodu": {
+  "kodRozetiVar": true
+ },
+ "duzenleme": {
+  "barkodAlani": true,
+  "duzenleDugmesi": true,
+  "hareketlerSekmesi": true,
+  "prosesSecimi": true,
+  "telefonAlani": true
+ },
+ "hatalar": [],
+ "odemeSekliGorunumu": {
+  "cekAyrintisiAciklamada": {
+   "aciklamaHucresindeVar": true,
+   "kesideciVar": true,
+   "tarihHucresindeYok": true
+  },
+  "fisteYok": true,
+  "tahsilattaVar": true
+ },
+ "sekmeSayilari": {
+  "genel": 3,
+  "resmi": 0,
+  "tumu": 3
+ },
+ "yeniCariParaBirimi": "USD"
+}

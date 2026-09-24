@@ -1,0 +1,8 @@
+{
+ "giris": true,
+ "hatalar": [],
+ "serit": {
+  "dugme": true,
+  "var": true
+ }
+}

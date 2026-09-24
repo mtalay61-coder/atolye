@@ -1,0 +1,11 @@
+{
+ "fisFiyati": {
+  "tlCari": "302.4",
+  "usdCari": "6.3"
+ },
+ "hatalar": [],
+ "kural": [
+  "fiyatGrubu:6.3:USD"
+ ],
+ "oneri": "6.3"
+}

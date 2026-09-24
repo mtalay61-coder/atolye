@@ -1,0 +1,88 @@
+{
+ "cariler": [
+  {
+   "fisler": [],
+   "unvan": "Tedarikçi A"
+  },
+  {
+   "fisler": [],
+   "unvan": "Müşteri B"
+  },
+  {
+   "fisler": [],
+   "unvan": "Personel C"
+  }
+ ],
+ "fislerEkrani": {
+  "kilitRozeti": true,
+  "silDugmesi": false
+ },
+ "hatalar": [],
+ "stok": [
+  {
+   "ad": "Deri",
+   "fisler": [
+    "<acilis-fisno>",
+    "<acilis-fisno>"
+   ],
+   "variants": [
+    {
+     "beden": "",
+     "miktar": 10,
+     "renk": "Siyah"
+    },
+    {
+     "beden": "",
+     "miktar": 4,
+     "renk": "Taba"
+    }
+   ]
+  },
+  {
+   "ad": "Bot",
+   "fisler": [
+    "<acilis-fisno>",
+    "<acilis-fisno>",
+    "<acilis-fisno>"
+   ],
+   "variants": [
+    {
+     "beden": "40",
+     "miktar": 5,
+     "renk": "Siyah"
+    },
+    {
+     "beden": "41",
+     "miktar": 6,
+     "renk": "Siyah"
+    },
+    {
+     "beden": "42",
+     "miktar": 7,
+     "renk": "Siyah"
+    }
+   ]
+  }
+ ],
+ "uretim": [
+  {
+   "asama": "Kesim",
+   "no": "1001",
+   "prosesler": [
+    {
+     "atamalar": [
+      {
+       "miktar": 3,
+       "tamamlandiMi": false
+      }
+     ],
+     "proses": "Kesim",
+     "tamamlandiMi": false,
+     "verildiMi": true
+    }
+   ],
+   "stogaEklendiMi": false
+  }
+ ]
+}
+sırasız özet: 18c11e7e2fd5

@@ -1,0 +1,33 @@
+{
+ "acikMetrik": "acikToplam",
+ "detayAcildi": true,
+ "hatalar": [],
+ "liste": {
+  "matrisYok": true,
+  "sutunlar": [
+   "RENK / ÖLÇÜ",
+   "STOK",
+   "AYRILAN",
+   "SERBEST",
+   "ALIŞ SİPARİŞİ",
+   "BEKLENEN SERBEST",
+   "TALEP",
+   "AÇIK"
+  ]
+ },
+ "matris": {
+  "bedenSutunlari": [
+   "RENK",
+   "40",
+   "41",
+   "42",
+   "TOP."
+  ],
+  "hucreler": [
+   "Siyah|40=5",
+   "Siyah|41=9",
+   "Siyah|42=7"
+  ],
+  "varsayilanMetrik": "stok"
+ }
+}

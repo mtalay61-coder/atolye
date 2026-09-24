@@ -1,0 +1,61 @@
+{
+ "bagliCari": 1,
+ "cariParaBirimi": [
+  "USD"
+ ],
+ "cekteGizli": true,
+ "cevrim": {
+  "alanVar": true,
+  "kurGosteriliyor": true
+ },
+ "ekstreGorunumu": {
+  "aciklamaTekrari": 1,
+  "hesapRozeti": [
+   "Nakit · TL Kasa"
+  ],
+  "rozetRenkleri": [
+   "rgb(85, 112, 43)"
+  ]
+ },
+ "hatalar": [],
+ "hesapAdiEkstrede": true,
+ "hesapAlaniVar": true,
+ "kasaHareketleri": [
+  [
+   "Giriş",
+   750,
+   true
+  ]
+ ],
+ "kurKaydi": {
+  "cariPB": "USD",
+  "cariTutari": 100,
+  "kasaTutari": 4200,
+  "kur": 42
+ },
+ "secenekler": {
+  "liste": [
+   "Peşin yok (açık hesap)",
+   "Kasa: TL Kasa"
+  ],
+  "varsayilan": ""
+ },
+ "seciciVar": true,
+ "sekmeRenkleri": [
+  {
+   "ad": "Müşteri",
+   "yazi": "rgb(85, 112, 43)",
+   "zemin": "color(srgb 0.333333 0.439216 0.168627 / 0.08)"
+  },
+  {
+   "ad": "Tedarikçi",
+   "yazi": "rgb(161, 101, 26)",
+   "zemin": "color(srgb 0.631373 0.396078 0.101961 / 0.08)"
+  },
+  {
+   "ad": "Personel",
+   "yazi": "rgb(47, 107, 107)",
+   "zemin": "color(srgb 0.184314 0.419608 0.419608 / 0.08)"
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "ardArdaIptal": {
+  "bellek": "X(iptal),Y(iptal),Z(iptal)",
+  "depo": "X(iptal),Y(iptal),Z(iptal)"
+ },
+ "basarisizYazma": {
+  "a": false,
+  "b": true,
+  "bellek": "B,ESKI",
+  "depo": "B,ESKI",
+  "uyari": true
+ },
+ "ciftTiklama": {
+  "bellek": "K",
+  "birinci": true,
+  "ikinci": false
+ },
+ "eskiKopya": {
+  "bellek": "YENI(iptal),ESKI",
+  "ciftKayitReddedildi": true
+ },
+ "geriAlmaOncesi": [
+  "1001-Kesim-Giriş:aktif",
+  "1001-Kesim:aktif"
+ ],
+ "geriAlmaSonrasi": [
+  "1001-Kesim-Giriş:iptal",
+  "1001-Kesim:iptal"
+ ],
+ "hatalar": []
+}

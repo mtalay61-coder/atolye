@@ -1,0 +1,22 @@
+{
+ "durum": "Kısmi Teslim",
+ "eklenenSatir": 5,
+ "fisler": {
+  "<fisno-001>": [
+   "125 Model Bej 40 ×10",
+   "125 Model Bej 41 ×10",
+   "SS Model Beyaz 40 ×8",
+   "SS Model Beyaz 41 ×8"
+  ]
+ },
+ "hatalar": [],
+ "karsilanan": [
+  "125 Model 40: 10/10",
+  "125 Model 41: 10/10",
+  "SS Model 40: 8/8",
+  "SS Model 41: 8/8",
+  "300 Model 40: 0/5"
+ ],
+ "satirSayisi": 4,
+ "ucuncuModelKaldiMi": false
+}

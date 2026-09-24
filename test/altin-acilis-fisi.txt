@@ -1,0 +1,15 @@
+{
+ "acilisPaneli": {
+  "acikBildiriliyor": false,
+  "miktarUyarisi": false,
+  "panelVar": true
+ },
+ "acilisSatirSayisi": 5,
+ "denetimSonrasi": true,
+ "fisNoBicimi": true,
+ "fisSayisi": 5,
+ "hatalar": [],
+ "hepsininFisiVar": true,
+ "miktarlarDegismedi": true,
+ "sonrakiPanel": true
+}

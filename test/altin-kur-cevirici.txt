@@ -1,0 +1,15 @@
+{
+ "hatalar": [],
+ "hedeftenKura": {
+  "hedef": "800",
+  "kur": "52.5"
+ },
+ "kurdanHedefe": {
+  "hedef": "1050",
+  "kur": "40"
+ },
+ "tutarSonrasi": {
+  "hedef": "1000",
+  "kur": "42"
+ }
+}

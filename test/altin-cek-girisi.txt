@@ -1,0 +1,39 @@
+{
+ "cekSecilince": {
+  "alanlar": [
+   "Çek No",
+   "Banka",
+   "Şube",
+   "IBAN / Hesap No",
+   "Çekin sahibi",
+   "Keşideci"
+  ],
+  "bolumVar": true,
+  "sahiplikSecenekleri": true
+ },
+ "cekSilindiMi": true,
+ "ceklerListesi": {
+  "banka": "Ziraat Bankası",
+  "cariBagi": true,
+  "cekNo": "0012345",
+  "durum": "Portföyde",
+  "hareketBagiVar": true,
+  "kesideci": "Kadir Tekstil",
+  "sahiplik": "Cirolu",
+  "tip": "Alınan",
+  "tutar": 2500
+ },
+ "ekstredeGorunuyor": true,
+ "hatalar": [],
+ "ibandanGelenBanka": "Ziraat Bankası",
+ "kayit": {
+  "banka": "Ziraat Bankası",
+  "cekNo": "0012345",
+  "iban": "TR330001000000000000000001",
+  "kesideci": "Kadir Tekstil",
+  "not": "",
+  "sahiplik": "Cirolu",
+  "sube": ""
+ },
+ "nakitkenCekAlanlariVar": false
+}
