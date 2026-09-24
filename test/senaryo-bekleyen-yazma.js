@@ -42,6 +42,9 @@ async function calistir() {
     await s2.route("**/rest/v1/urunler**", (route) => route.fulfill({ status: 200, contentType: "application/json",
       body: JSON.stringify([{ id: "u-eski", ad: "ESKİ BULUT ÜRÜNÜ", kategori: "Mamul", birim: "çift" }]) }));
   };
+  // İlk tarayıcı kapatılmadan üstüne yazılıyordu: açık kalan Chromium Node'u çıkmaktan alıkoyuyor,
+  // kosu.sh bu senaryoda sonsuza kadar bekliyordu.
+  await tarayici.close();
   const ikinci = await uygulamaAc(t2, { hataYaz: false, onceRota });
   sayfa = ikinci.sayfa; tarayici = ikinci.tarayici;
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
