@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.451.0** · 25 Eylül 2026
+Son sürüm: **v1.452.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde (kademe 4).** Bkz. "YENİ TASARIM" sonu.
+**Son iş (25 Eylül, v1.452.0): ürün kartında renk YAZARAK aranıp ekleniyor (`AramaliSecici`).** Bkz. "RENK YAZARAK EKLEME".
+Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
 Önceki (v1.450.0): üst menü ölçerek sığıyor + stok kategori şeritleri açık.
 Önceki (v1.449.0): YENİ TASARIM — yan kolon kalktı (üst menü), açık "A" paleti.
 Önceki (v1.448.0): yenilemede ekran korunuyor.
@@ -6102,6 +6103,28 @@ artır"). Bu oturumda iki kez sürüm artırılmadan derlenip yayındaki dosya e
 **Doğrulama:** `senaryo-yenileme-ekran` (YENİ): Stok + Sipariş sekmeleri ve SAT-Y1 penceresi açık →
 yenile → üçü de geri, pencere görünür; tohumdaki not değiştirilmiş → pencere yeni notu gösteriyor
 (veri yeniden okundu); kayda elle eklenen silinmiş-sipariş ve reçete pencereleri geri gelmiyor.
+
+## RENK YAZARAK EKLEME (25 Eylül, v1.452.0 — Claude Code oturumu)
+
+**Kullanıcı** (ürün kartı ekran görüntüsü, 12 renkli açılır liste): "Renk ekleme yazma ile seçici olsun,
+yazdıkça elensin liste."
+
+**`AramaliSecici` (005-urunsecici, GENEL):** `secenekler: [{deger, etiket}]`, `onSec(deger)`. Kendi
+listesini çiziyor — tarayıcının datalist'i telefonda tutarsız (liste çıkmıyor/süzme görünmüyor).
+Türkçe harf duyarsız; kelime başı eşleşenler önce ("siy" → Siyah Süet, Siyah Deri, Kırık Siyah),
+sonra kelime içi. Ok tuşları + Enter, dokunarak seçim (`onMouseDown` — blur'dan önce). Varsayılan
+`temizle`: seçimden sonra kutu boşalır ve odakta kalır (EKLEME kutusu; art arda renk). Seçenekler
+`data-aramali-secenek`, kutu `veriAdi` ile işaretlenebilir.
+
+**Bağlandığı yer (152-stok, yeni/düzenlenen ürün formu, MAMUL):** tek renk "Renk seçin… + Ekle" →
+`data-renk-ekle-arama`; model rengi (2+ renk) kombinasyon seçimi → `data-model-rengi-arama`. Seçim
+anında `toggleRenk`; eklenen renk `secilebilirRenkler`den zaten düşüyor. `mamulRenkSecimi` durumu
+kalktı. Hammadde formunda renkler düğme (çip) olarak kalıyor — dokunulmadı.
+Diğer "Renk seçin…" açılır listeleri (ürün kartı reçete eşlemesi 160, sipariş formu renk seçimi)
+aynı bileşene geçirilebilir — kullanıcı isterse.
+
+**Doğrulama:** `senaryo-renk-arama` (YENİ): Mamul sekmesi → Ürün Ekle; 6 renk; "siy" süzmesi, Enter
+ekler + kutu boşalır + listeden düşer, dokunarak ekleme, "eşleşen yok" mesajı, çipler.
 
 ## OTOMATİK SÜRÜM GEÇİŞİ (25 Eylül, v1.447.0 — Claude Code oturumu)
 
