@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.461.0** · 25 Eylül 2026
+Son sürüm: **v1.462.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.461.0): çek satırına dokununca özet — kimden alındı, şu an nerede, vade, yolculuk (`cekOzeti`).** Bkz. "ÇEK ÖZETİ".
+**Son iş (25 Eylül, v1.462.0): fişi kayıp cirolu çekte "Son İşlemi Geri Al" (`cekIslemHareketiBul`).** Bkz. "ÇEK: FİŞİ KAYIP İŞLEM". Önceki: v1.461.0 çek özeti.
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,24 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ÇEK: FİŞİ KAYIP İŞLEM — SON İŞLEMİ GERİ AL (25 Eylül, v1.462.0 — Claude Code oturumu)
+
+**Kullanıcı (ekran görüntüsü, "Kontrol"):** ciro edilmiş çek (06.09, Temizleme Cevval) → "Son
+İşlemi Geri Al" → "Bu işlemin cari hareketi bulunamadı — geri alınamadı"; silmek de reddediliyor
+("portföyden çıkmış çek silinemez"). Çek KİLİTLİ kalmıştı.
+
+- Teşhis: `gecmis[].hareketId` bulutta korunan bir alan (cari_hareketleri.id); Fişler/ekstre
+  silme yolları çeki `cekIslemGeriAl` ile döndürüyor (senaryolarla ölçülü). Yani fiş bir yoldan
+  carilerde hiç olmamış: büyük olasılıkla eski bir kayıtta cari yazması buluta ulaşmamış ya da
+  başka cihazın eski listesi üzerine yazmış ("Buluta gönderilemeyen kayıt" şeridi açıktı). Kullanıcı
+  verisine bakılmadı; kesin sebep bilinmiyor.
+- Çözüm `cekIslemHareketiBul(cek, satir, cariler, hareketId)`: "bulundu" → normal yol; "benzer"
+  (aynı cari, Çek, beklenen işlem tipi, tutar+birim, açıklamada çek no — TEK aday) → o kopya fiş
+  silinir ve çek `cekIslemGeriAl` ile AYRICA döner (kimlik tutmadığı için fiş silme çeki
+  tanımaz); "yok" → cariye dokunulmaz, yalnız çek döner, mesaj "ekstreyi kontrol edin" der;
+  "belirsiz" (birden çok aday) → hiçbir şey yapılmaz, fiş numaraları söylenir.
+- Test: `senaryo-cek-kayip-fis.js` (üç durum).
 
 ## ÇEK ÖZETİ — SATIRA DOKUNUNCA (25 Eylül, v1.461.0 — Claude Code oturumu)
 

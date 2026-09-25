@@ -455,9 +455,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.461.0";
+const SURUM = "1.462.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Cek satirina dokununca ozet: kimden alindi, simdi nerede, vade";
+const SURUM_NOTU = "Fisi kayip cirolu cekte Son Islemi Geri Al calisiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -466,6 +466,10 @@ const SURUM_NOTU = "Cek satirina dokununca ozet: kimden alindi, simdi nerede, va
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.462.0", tarih: "25.09.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Ciro fişi carilerde bulunamayan çekte 'Son İşlemi Geri Al' çalışmıyordu (\"cari hareketi bulunamadı\") ve çek kilitli kalıyordu — artık fiş yoksa çek portföye döner, kimliği farklı kalmış kopya fiş varsa o silinir"] },
   { surum: "1.461.0", tarih: "25.09.2026",
     eklenen: ["Çek satırına dokununca özet açılıyor: kimden alındı (tarih, fiş), şu an nerede (kime ciro edildi / hangi bankada / tahsil edildi), vadeye kalan gün ve adım adım yolculuk"],
     degisen: ["Çekteki 'Geçmiş' düğmesi 'Ayrıntı' oldu ve her çekte görünüyor"],

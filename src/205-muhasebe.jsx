@@ -342,9 +342,28 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
       return showToast("İşlemi geri almak için Kasa & Banka silme yetkisi gerekiyor — yöneticinize başvurun");
     }
     if (son.tur === "cari") {
-      if (!onCekCariHareketSil || !onCekCariHareketSil(son.hareketId)) {
-        showToast("Bu işlemin cari hareketi bulunamadı — geri alınamadı");
+      const bul = cekIslemHareketiBul(cek, son.satir, cariler, son.hareketId);
+      if (bul.sonuc === "belirsiz") {
+        return showToast(`Bu işlemin fişi kimlikle bulunamadı, benzer ${bul.fisNolar.length} fiş var (${bul.fisNolar.join(", ")}) — ` +
+          "hangisi olduğu tahmin edilmedi. Doğru fişi cari ekstresinden silin, sonra tekrar deneyin.");
       }
+      if (bul.sonuc === "bulundu") {
+        if (!onCekCariHareketSil || !onCekCariHareketSil(bul.hareketId)) showToast("Cari hareketi silinemedi — geri alınamadı");
+        return;
+      }
+      // "benzer": kimliği farklı kalmış kopya fiş silinir; çek o kimliği tanımadığı için durumu
+      // AYRICA geri alınıyor. "yok": cari tarafında silinecek bir şey yok, yalnız çek geri döner.
+      // İkisinde de geri alma `cekIslemGeriAl` ile — çekin kendi kaydındaki bağ kimliği veriliyor.
+      if (bul.sonuc === "benzer" && onCekCariHareketSil) onCekCariHareketSil(bul.hareketId);
+      const yeni = cekIslemGeriAl(cek, new Set([son.hareketId]), { kullanici: islemKullanicisiAd() });
+      if (!yeni) return showToast("İşlem geri alınamadı");
+      onSave({ ...muhasebe, cekler: cekler.map((c) => (c.id === id ? yeni : c)) });
+      gunlukYaz(`Çek işlemi geri alındı (${bul.sonuc === "benzer" ? "kopya fiş" : "fişi kayıp"}): ${cek.cekNo || "no yok"}`, "muhasebe",
+        { cekId: id, durum: yeni.durum, fisNo: bul.fisNo || null });
+      showToast(bul.sonuc === "benzer"
+        ? `${bul.fisNo || "Bağlı fiş"} silindi — ${cek.cekNo || "çek"} yeniden "${yeni.durum}"`
+        : `Bu işlemin cari fişi zaten yoktu (daha önce silinmiş ya da buluta hiç ulaşmamış) — cari hesaba dokunulmadı, ` +
+          `${cek.cekNo || "çek"} yeniden "${yeni.durum}". ${son.satir && son.satir.cariAd ? `${son.satir.cariAd} ekstresini kontrol edin.` : ""}`);
       return;
     }
     const yeni = cekDurumGeriAl(cek, { kullanici: islemKullanicisiAd() });

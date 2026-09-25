@@ -511,6 +511,34 @@ function cekSonIslemi(cek) {
   return null;
 }
 
+// İŞLEMİN CARİ HAREKETİNİ BUL (v1.462.0).
+//
+// Kullanıcı ekran görüntüsüyle bildirdi: ciro edilmiş çekte "Son İşlemi Geri Al" → "Bu işlemin cari
+// hareketi bulunamadı". Çek "Ciro Edildi" diyor ama bağlı ciro fişi carilerde YOK — eski bir
+// kayıtta cari yazması buluta ulaşmamış ya da başka bir cihazın eski listesi üzerine yazmış olabilir.
+// Çek bu durumda sonsuza dek kilitli kalıyordu: geri alınamıyor, silinemiyor.
+//   "bulundu"  — kimlikle bulundu (normal yol)
+//   "benzer"   — kimlik yok ama aynı caride aynı çek no + tutar + birimle TEK hareket var
+//                (kimliği farklı kalmış kopya); o silinir
+//   "yok"      — hiçbir iz yok: cari tarafında silinecek bir şey kalmamış, yalnız çek geri döner
+//   "belirsiz" — birden fazla aday: tahmin edilmiyor, fiş numaraları söyleniyor
+function cekIslemHareketiBul(cek, satir, cariler, hareketId) {
+  const tum = (cariler || []).flatMap((c) => (c.hareketler || []).map((h) => ({ cari: c, h })));
+  if (tum.some((x) => x.h.id === hareketId)) return { sonuc: "bulundu", hareketId };
+  const ciro = !satir || satir.yeniDurum === "Ciro Edildi";
+  const cariId = ciro ? (satir && satir.cariId) || cek.ciroCariId : cek.cariId;
+  const beklenenTip = ciro || (cek.tip || "Alınan") !== "Verilen" ? "Ödeme" : "Tahsilat";
+  const tutar = satir && satir.tutar != null ? satir.tutar : (cek.ciroTutar ?? cek.tutar);
+  const pb = (satir && satir.paraBirimi) || cek.ciroPB || cek.paraBirimi || "TRY";
+  const adaylar = tum.filter(({ cari, h }) => cari.id === cariId && h.odemeSekli === "Çek"
+    && (h.islemTipi || beklenenTip) === beklenenTip
+    && Math.abs((h.tutar || 0) - (tutar || 0)) < 0.005 && (h.paraBirimi || "TRY") === pb
+    && (!cek.cekNo || String(h.aciklama || "").includes(cek.cekNo)));
+  if (adaylar.length === 1) return { sonuc: "benzer", hareketId: adaylar[0].h.id, fisNo: adaylar[0].h.fisNo || null };
+  if (adaylar.length > 1) return { sonuc: "belirsiz", fisNolar: adaylar.map((a) => a.h.fisNo || "fiş no yok") };
+  return { sonuc: "yok" };
+}
+
 // KAYIT DOĞURMAYAN AŞAMALAR — yalnız durum geri döner (bkz. `cekSonIslemi`).
 const CEK_DURUM_GERI_ALMA = {
   "Tahsilde": { etiket: "Tahsile verme geri alındı" },
