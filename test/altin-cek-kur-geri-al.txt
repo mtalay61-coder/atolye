@@ -1,0 +1,59 @@
+{
+ "ciro": {
+  "aHareketi": "EUR",
+  "birim": "EUR",
+  "durum": "Ciro Edildi",
+  "tutar": "750"
+ },
+ "ciroGeri": {
+  "ciroFisiKaldi": false,
+  "durum": "Portföyde",
+  "girisHareketiDuruyor": true,
+  "onayYazisi": "Emin misiniz? Geri al"
+ },
+ "giris": {
+  "cariHareketi": {
+   "pb": "USD",
+   "tutar": 1000,
+   "yon": "Alacak"
+  },
+  "cariHesabi": "USD",
+  "cek": {
+   "pb": "TRY",
+   "tutar": 42000
+  },
+  "kur": "42",
+  "onerilen": "1000"
+ },
+ "hatalar": [],
+ "kart": {
+  "cek": {
+   "cariPB": "USD",
+   "cariTutar": 500,
+   "pb": "TRY",
+   "tutar": 21500
+  },
+  "hareket": {
+   "hesapPB": "TRY",
+   "hesapTutar": 21500,
+   "pb": "USD",
+   "tutar": 500
+  },
+  "onerilenCekTutari": "21000"
+ },
+ "tahsil": {
+  "bankaHareketi": 1,
+  "durum": "Tahsil Edildi",
+  "geriAlininca": {
+   "bankaHareketi": 0,
+   "durum": "Tahsilde"
+  }
+ },
+ "tahsile": {
+  "durum": "Tahsilde",
+  "geriAlininca": {
+   "banka": null,
+   "durum": "Portföyde"
+  }
+ }
+}

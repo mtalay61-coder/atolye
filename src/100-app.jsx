@@ -4071,6 +4071,13 @@ export default function AtolyeERP() {
               onCekIslem={cekIslemYap}
               onCekEkleIsle={cekEkleVeIsle}
               onCekHareketiyleSil={cekHareketiyleSil}
+              // SON İŞLEMİ GERİ AL (v1.459.0): ciro/iade fişini fiş silme kapısından siler; çek
+              // `cekIslemGeriAl` ile bir önceki durumuna döner. Hareket bulunamazsa false.
+              onCekCariHareketSil={(hareketId) => {
+                if (!cariler.some((c) => (c.hareketler || []).some((h) => h.id === hareketId))) return false;
+                removeHareketEverywhere(hareketId);
+                return true;
+              }}
               cekGorselleri={cekGorselleri}
               onCekGorselKaydet={cekGorselKaydet}
               muhasebe={muhasebe}

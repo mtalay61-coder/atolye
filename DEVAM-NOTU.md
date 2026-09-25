@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.458.0** · 25 Eylül 2026
+Son sürüm: **v1.459.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.458.0): Muhasebe → "Kasa & Banka", Finans altında "Çek & Senet", cari kartında yazılı Pasife Al.** Bkz. "KASA & BANKA / ÇEK & SENET".
+**Son iş (25 Eylül, v1.459.0): çek girişinde/ciroda cari birimine kur çevirici; çekte "Son İşlemi Geri Al".** Bkz. "ÇEKTE CARİ BİRİMİ VE SON İŞLEMİ GERİ AL".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,34 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ÇEKTE CARİ BİRİMİ VE SON İŞLEMİ GERİ AL (25 Eylül, v1.459.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Çek girişinde ve ciroda kur çevirici koyalım. TL çek alınıp USD hesabına
+izlenebilir. Ciro edilen çek geri iade alınabilir; bunun için son işlemi sil olsun — ciro edilen
+çekte veya bankaya tahsil için."
+
+- **İlke:** çek KENDİ biriminde (belgede ne yazıyorsa), cari hareketi CARİNİN biriminde. Karşı
+  taraf alanları (`hesapAd`/`hesapPB`/`hesapTutar`) ciro ve kasa hareketlerindekiyle aynı —
+  ekstre "Çek No … 42.000 ₺" gösteriyor. İade ters hareketi zaten GİRİŞİN aynası (cari birimi).
+- **Çek & Senet > Yeni Çek:** cari seçilince "Cari hesabı" (varsayılan carinin `paraBirimi`),
+  farklıysa "Cariye işlenecek" + Kur (çift yönlü). `cekEkleVeIsle` hareketi `cariTutar/cariPB`
+  ile yazıyor. TL cariye döviz çekte ayrı "TL Karşılığı" kutusu gizli: cariye işlenen TL o.
+  DİKKAT (yakalanan hata): kutu boşken güncel kurla ÖNERİLEN tutar görünüyor; dokunmadan
+  kaydedilirse kaydet önerilen değeri kullanıyor (önce `parseFloat("")` → sessiz ret).
+- **Cari kartı çek girişi:** Tutar carinin hesabına işlenen; çek kutusunda "Çek para birimi",
+  farklıysa "Çek tutarı" + Kur (`cekCevrim`). Çek kaydı çekin tutarı/biriminde, `cariTutar/cariPB`
+  bilgi olarak. `cekCevrim` `cariPB` TANIMINDAN SONRA olmalı (TDZ — önce kartı çökertti).
+- **Ciro:** kur çevirici zaten vardı ama birim çekin biriminde kalıyordu; alıcı cari seçilince
+  artık o carinin birimi + kurla çevrilmiş tutar geliyor.
+- **Son İşlemi Geri Al** (çek satırında, iki dokunuşlu): kural `cekSonIslemi` (200-cari-sabit).
+  Ciro/iade → bağlı cari fişi App'teki fiş silme kapısından (`onCekCariHareketSil` →
+  `removeHareketEverywhere`, çek `cekIslemGeriAl` ile döner); tahsil → bağlı kasa/banka hareketi
+  `hareketSil` ile (yetki/onay orada); tahsile verme ve karşılıksız → kayıt doğurmadığı için
+  yalnız durum (`cekDurumGeriAl`, `CEK_DURUM_GERI_ALMA`; tahsil bankası temizlenir). İKİNCİ bir
+  geri alma mantığı YAZILMADI. Ciro/iade/durum geri alması `muhasebe` silme yetkisi istiyor.
+  Kilit mesajı: Tahsilde/Karşılıksız çekin giriş hareketi silinmek istenirse "Son İşlemi Geri Al".
+- Test: yeni `senaryo-cek-kur-geri-al.js` (giriş, ciro, ciro/tahsile/tahsil geri alma, cari kartı).
 
 ## KASA & BANKA / ÇEK & SENET / CARİ PASİFE AL (25 Eylül, v1.458.0 — Claude Code oturumu)
 
