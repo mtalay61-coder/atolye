@@ -1579,25 +1579,36 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
               <div style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>
                 Sezon (opsiyonel)
               </div>
-              <select
-                value={form.sezon || ""}
-                onChange={(e) => setForm({ ...form, sezon: e.target.value })}
-                style={{ ...inputStyle, width: 180 }}
-              >
-                <option value="">Belirtilmemiş</option>
-                {SEZONLAR.map((sz) => <option key={sz} value={sz}>{sz}</option>)}
-              </select>
-              {/* YIL: "İlkbahar/Yaz" tek başına hangi koleksiyon olduğunu söylemiyor. Serbest
-                  sayı — sabit bir aralık yazmak birkaç yıl sonra eskirdi. */}
-              <input
-                type="number" min="2000" max="2100" step="1"
-                value={form.sezonYili || ""}
-                onChange={(e) => setForm({ ...form, sezonYili: e.target.value })}
-                placeholder="Yıl"
-                title="Sezon yılı (örn. 2027)"
-                className="mono"
-                style={{ ...inputStyle, width: 88, marginLeft: 6 }}
-              />
+              {/* SEZON VE YIL YAZARAK SEÇİLİYOR (25 Eylül, v1.457.0 — kullanıcı: "Mamul stokta sezon,
+                  yıl seçmeli olsun, özel kodlardaki gibi"). Sezon yalnız listeden (kapsam ekseni);
+                  yıl serbest sayı, öneriler diğer mamullerde girilmiş yıllar + bu yıl ve sonraki
+                  yıl — sabit bir aralık yazmak birkaç yıl sonra eskirdi. */}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <div style={{ width: 180 }}>
+                  <AramaliMetin
+                    veriAdi="data-sezon-arama"
+                    deger={form.sezon || ""}
+                    onDegis={(v) => setForm((f) => ({ ...f, sezon: v }))}
+                    oneriler={SEZONLAR}
+                    yalnizListeden
+                    placeholder="Sezon seçin…"
+                  />
+                </div>
+                <div style={{ width: 100 }}>
+                  <AramaliMetin
+                    veriAdi="data-sezon-yili-arama"
+                    deger={form.sezonYili || ""}
+                    onDegis={(v) => setForm((f) => ({ ...f, sezonYili: v.slice(0, 4) }))}
+                    oneriler={[
+                      ...(items || []).map((u) => u.sezonYili),
+                      String(new Date().getFullYear()), String(new Date().getFullYear() + 1),
+                    ]}
+                    sayisal
+                    placeholder="Yıl"
+                    stil={{ fontFamily: "\"IBM Plex Mono\", ui-monospace, monospace" }}
+                  />
+                </div>
+              </div>
             </div>
           )}
 

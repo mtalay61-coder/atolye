@@ -5,6 +5,7 @@
 // Ölçülenler:
 //   1. Depo ▸ Stok: hammadde görünüyor, mamul görünmüyor; kategori sekmelerinde "Mamul" yok.
 //   2. Depo ▸ Mamul Stok: yalnız mamul; kategori sekmesi yok; eklenen yeni ürün MAMUL.
+//   4. Sezon/yıl (v1.457.0): sezon yazarak listeden seçiliyor, yıl rakamla ve öneriyle.
 //   3. Şeritten mamul ürünün penceresine dönünce Mamul Stok'a geçiliyor (Stok'ta açık kalmıyor).
 const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
@@ -59,6 +60,33 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
   // Mamul formu: renk arama kutusu (hammaddede ayrı kutu) çiziliyor.
   const yeniUrunMamul = await sayfa.evaluate(() => !!document.querySelector("[data-renk-ekle-arama]") && !document.querySelector("[data-hammadde-renk-arama]"));
+
+  // 4. SEZON / YIL YAZARAK SEÇİM (v1.457.0): sezon yalnız listeden, yıl serbest sayı + öneri.
+  const sezon = sayfa.locator("[data-sezon-arama]").first();
+  const yil = sayfa.locator("[data-sezon-yili-arama]").first();
+  const oneriler = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-aramali-oneri]")].map((b) => b.getAttribute("data-aramali-oneri")));
+  const sezonYil = {};
+  await sezon.click(); await sayfa.waitForTimeout(150);
+  sezonYil.bosken = await oneriler();
+  await sezon.type("son"); await sayfa.waitForTimeout(150);
+  sezonYil.son = await oneriler();
+  await sayfa.locator('[data-aramali-oneri="Sonbahar/Kış"]').dispatchEvent("mousedown");
+  await sayfa.waitForTimeout(150);
+  sezonYil.secilen = await sezon.inputValue();
+  // Seçiliyken dokununca diğerleri de görünüyor (açılır liste gibi).
+  await yil.click(); await sayfa.waitForTimeout(250); await sezon.click(); await sayfa.waitForTimeout(150);
+  sezonYil.seciliykenListe = await oneriler();
+  // Yarım yazıp çıkınca ilk eşleşene oturuyor; eşleşmeyen yazım temizleniyor.
+  await sezon.fill("ilk"); await yil.click(); await sayfa.waitForTimeout(200);
+  sezonYil.yarimYazim = await sezon.inputValue();
+  await sezon.fill("xyz"); await yil.click(); await sayfa.waitForTimeout(200);
+  sezonYil.eslesmeyen = await sezon.inputValue();
+  // Yıl: harf kabul etmiyor, 4 haneyle sınırlı; öneride bu yıl ve sonraki yıl.
+  await yil.fill(""); await yil.type("2a02"); await sayfa.waitForTimeout(150);
+  sezonYil.yilOneri = await oneriler();
+  await yil.type("67"); await sayfa.waitForTimeout(150);
+  sezonYil.yil = await yil.inputValue();
+
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^(İptal|Vazgeç)$/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(500);
 
@@ -84,7 +112,7 @@ async function calistir() {
   });
 
   await tarayici.close();
-  return { hatalar, depoOgeleri, stok, mamul, yeniUrunMamul, seritDonusu };
+  return { hatalar, depoOgeleri, stok, mamul, yeniUrunMamul, sezonYil, seritDonusu };
 }
 
 if (require.main === module) {

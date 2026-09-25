@@ -453,9 +453,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.456.0";
+const SURUM = "1.457.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Yeni uygulama simgesi (ND logosu)";
+const SURUM_NOTU = "Mamul formunda sezon ve yil yazarak secilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -464,6 +464,11 @@ const SURUM_NOTU = "Yeni uygulama simgesi (ND logosu)";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.457.0", tarih: "25.09.2026",
+    eklenen: [],
+    degisen: ["Mamul ürün formunda Sezon ve Yıl, özel kod alanları gibi yazdıkça öneren kutular: sezon listeden seçilir, yıl için daha önce girilen yıllar önerilir",
+              "Arama kutularında seçili değer varken kutuya dokununca diğer seçenekler de listelenir"],
+    duzeltilen: [] },
   { surum: "1.456.0", tarih: "25.09.2026",
     eklenen: ["Tarayıcı sekmesinde uygulama simgesi görünüyor"],
     degisen: ["Uygulama simgesi yeni ND logosu oldu (ana ekran, masaüstü kısayolu, sekme)"],
