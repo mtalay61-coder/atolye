@@ -648,7 +648,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
         <div style={{ position: "relative" }}>
           {/* TARİH BAŞLIĞIN YANINA ALINDI: kendi satırında 21 piksel yer kaplıyordu, oysa tek
               kelimelik bir bilgi. */}
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 22, margin: 0, fontWeight: 700, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <h1 style={{ fontSize: 22, margin: 0, fontWeight: 700, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {(tanimlar.firmaBilgileri || {}).logo ? (
               <img src={tanimlar.firmaBilgileri.logo} alt="Logo" style={{ width: 30, height: 30, objectFit: "contain", borderRadius: "var(--erp-r-sm)", background: "#fff" }} />
             ) : (

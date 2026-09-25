@@ -20,7 +20,7 @@
  "karsilamaBandi": {
   "aciklamaKaldirildi": true,
   "baslikBoyutu": "22px",
-  "yukseklik": 60,
+  "yukseklik": 59,
   "zemin": "rgb(255, 255, 255)"
  },
  "kaydirma": {
