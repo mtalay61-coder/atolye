@@ -1,0 +1,31 @@
+{
+ "ayiklandi": {
+  "pencereler": [
+   "siparis-sy1"
+  ],
+  "seritteRecete": false,
+  "seritteSilinmis": false
+ },
+ "guncelNot": true,
+ "hatalar": [],
+ "once": {
+  "acikSekmeler": [
+   "anasayfa",
+   "stok",
+   "siparis"
+  ],
+  "aktifPencere": "siparis-sy1",
+  "siparisPenceresi": true,
+  "tab": "siparis"
+ },
+ "sonra": {
+  "acikSekmeler": [
+   "anasayfa",
+   "stok",
+   "siparis"
+  ],
+  "aktifPencere": "siparis-sy1",
+  "siparisPenceresi": true,
+  "tab": "siparis"
+ }
+}

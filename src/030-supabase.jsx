@@ -121,6 +121,49 @@ async function yayinlananSurumuOku() {
   }
 }
 
+// YAYINDAKİ SÜRÜM DOSYASI (25 Eylül, v1.447.0). Yayın artık GitHub'da birleştirmeyle yapılıyor ve
+// buluttaki `surum` kaydı güncellenmiyor; başlatıcının (index.html) okuduğu `surum.json` ise her
+// yayında güncel. Uygulama da aynı dosyayı, KENDİ KLASÖRÜNDEN okuyor. Yalnız http(s)'te: dosyadan
+// (file://) açılmışsa göreli adres okunamaz, sessizce null.
+async function yayinlananSurumuDosyadanOku() {
+  if (typeof location === "undefined" || !/^https?:$/.test(location.protocol)) return null;
+  try {
+    const y = await fetch(new URL("surum.json", location.href).href + "?t=" + Date.now(), { cache: "no-store" });
+    if (!y.ok) return null;
+    const v = await y.json();
+    return v && v.surum && v.url ? v : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// İKİ KAYNAKTAN YENİ OLANI: surum.json (GitHub yayını) ve buluttaki kayıt (eski "GitHub'a yayınla"
+// yolu). Hangisi daha yeni sürümü söylüyorsa o geçerli; biri okunamazsa diğeri.
+async function guncelSurumuOku() {
+  const [dosya, bulut] = await Promise.all([yayinlananSurumuDosyadanOku(), yayinlananSurumuOku()]);
+  if (dosya && bulut) return surumDahaYeniMi(bulut.surum, dosya.surum) ? bulut : dosya;
+  return dosya || bulut;
+}
+
+// OTOMATİK GEÇİŞ — kullanıcı (25 Eylül): "Yeni sürüm haber versin ve ona geçiş yapsın. Uygulama
+// olarak girdikleri için eski sürüm çıkabilir veya otomatik geçsin."
+// Geçiş yalnız http(s)'te ve yayındaki sürüm bizimkinden YENİYSE. DÖNGÜ KORUMASI: aynı sürüme bu
+// sekmede bir kez geçiliyor (sessionStorage). Yayın yanlış kurulmuşsa (surum.json 1.447 der ama
+// dosya içeride eski sürümse) sayfa kendini sonsuza kadar yenilemez; şerit çıkar, gerisi kullanıcıda.
+function surumeOtomatikGec(v, mevcutSurum) {
+  if (!v || !v.url || !surumDahaYeniMi(v.surum, mevcutSurum)) return false;
+  if (typeof location === "undefined" || !/^https?:$/.test(location.protocol)) return false;
+  const anahtar = "surumGecisi:" + v.surum;
+  try {
+    if (window.sessionStorage.getItem(anahtar)) return false;
+    window.sessionStorage.setItem(anahtar, "1");
+  } catch (e) {
+    return false;   // koruma kaydı yazılamıyorsa geçiş de yok — döngü riski alınmıyor
+  }
+  location.replace(v.url);   // `replace`: geri tuşu eski sürüme dönmesin
+  return true;
+}
+
 function yayinlananSurumuYaz(veri) {
   return tekilYaz("surum:data", "surum", veri);
 }

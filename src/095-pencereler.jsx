@@ -9,9 +9,64 @@
 //
 // KURAL: bir kayıt için tek pencere. Aynı ürün ikinci kez açılırsa yeni pencere açılmıyor, var
 // olan öne getiriliyor — yoksa aynı kartın iki kopyası düzenlenip biri diğerini eziyordu.
-function usePencereler() {
-const [acikPencereler, setAcikPencereler] = useState([]); // [{id, tip, baslik, veri}]
-const [aktifPencereId, setAktifPencereId] = useState(null);
+// ================= YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0) =================
+//
+// Kullanıcı: "Sayfayı yenilediğimizde her şeyi kapatıp ana sayfaya alıyor. Yenilemeyi aslında
+// açılan yeni renk vs. güncellensin diye yapıyorum."
+//
+// Yenileme veriyi buluttan TAM ve temiz okuyor (açılış yüklemesi, fark belleği, bekleyen yazma
+// kuralları) — veriyi sayfa açıkken yerinde tazelemek o kuralların hepsini ikinci bir yoldan
+// kurmak demekti, riskli. Onun yerine yenilemeden ÖNCEKİ ekran geri getiriliyor: açık modül
+// sekmeleri, etkin sekme ve CANLI pencereler.
+//
+// CANLI PENCERE = kaydın yalnız kimliğini tutan ve her çizimde güncel veriden kurulan pencere
+// (ürün, üretim, sipariş). Açıldığı andaki verinin KOPYASINI taşıyanlar (reçete, maliyet, fiş,
+// ekstre, satın al, fiş taslağı) geri getirilmiyor: yenilemeden sonra ESKİ veriyi gösterirlerdi —
+// yenilemenin amacının tam tersi. Silinmiş kaydın penceresi yükleme bitince ayıklanıyor (100-app).
+//
+// sessionStorage: sekmeye özel ve sekme kapanınca siliniyor. Yeni açılış ana sayfadan başlar;
+// yalnız YENİLEME (ve otomatik sürüm geçişi) kaldığı yerden devam eder. Çıkışta siliniyor.
+const ARAYUZ_ANAHTARI = "arayuz:durum";
+const CANLI_PENCERE_TIPLERI = ["urun", "uretim", "siparis"];
+
+function arayuzDurumuOku() {
+  try {
+    const d = JSON.parse(window.sessionStorage.getItem(ARAYUZ_ANAHTARI) || "null");
+    if (!d || typeof d.tab !== "string" || !Array.isArray(d.acikSekmeler)) return null;
+    const acikSekmeler = d.acikSekmeler.includes("anasayfa") ? d.acikSekmeler : ["anasayfa", ...d.acikSekmeler];
+    const pencereler = (Array.isArray(d.pencereler) ? d.pencereler : []).filter((p) => p && CANLI_PENCERE_TIPLERI.includes(p.tip) && p.kayitId);
+    return {
+      tab: acikSekmeler.includes(d.tab) ? d.tab : "anasayfa",
+      acikSekmeler,
+      sekmeGecmisi: Array.isArray(d.sekmeGecmisi) ? d.sekmeGecmisi.filter((k) => acikSekmeler.includes(k)) : [d.tab],
+      pencereler,
+      aktifPencereId: pencereler.some((p) => p.id === d.aktifPencereId) ? d.aktifPencereId : null,
+    };
+  } catch (e) {
+    return null;   // bozuk kayıt ya da depo kapalı: ana sayfadan açılır
+  }
+}
+
+function arayuzDurumuYaz({ tab, acikSekmeler, sekmeGecmisi, acikPencereler, aktifPencereId }) {
+  const pencereler = acikPencereler
+    .filter((p) => CANLI_PENCERE_TIPLERI.includes(p.tip))
+    // `gelinen` taşınmıyor: geldiği pencere kopya taşıyan türdense geri gelmeyecek.
+    .map((p) => ({ id: p.id, tip: p.tip, kayitId: p.kayitId, baslik: p.baslik, veri: p.veri || {}, gelinen: null }));
+  try {
+    window.sessionStorage.setItem(ARAYUZ_ANAHTARI, JSON.stringify({
+      tab, acikSekmeler, sekmeGecmisi, pencereler,
+      aktifPencereId: pencereler.some((p) => p.id === aktifPencereId) ? aktifPencereId : null,
+    }));
+  } catch (e) { /* depo kapalı: yenilemede ana sayfa — eski davranış */ }
+}
+
+function arayuzDurumuSil() {
+  try { window.sessionStorage.removeItem(ARAYUZ_ANAHTARI); } catch (e) { /* yok say */ }
+}
+
+function usePencereler(baslangic) {
+const [acikPencereler, setAcikPencereler] = useState(() => (baslangic ? baslangic.pencereler : [])); // [{id, tip, baslik, veri}]
+const [aktifPencereId, setAktifPencereId] = useState(() => (baslangic ? baslangic.aktifPencereId : null));
 // Açık ürün pencerelerinin ürün kimlikleri. Dizi kimliği her render'da değişmesin diye bellekte.
 const acikUrunIdleri = React.useMemo(
   () => acikPencereler.filter((p) => p.tip === "urun").map((p) => p.kayitId),

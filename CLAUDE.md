@@ -52,8 +52,11 @@ FARKLI; paralel koşuda birkaç senaryo oynak. FARKLI çıkanı tek başına yen
 4. `DEVAM-NOTU.md`: başlıktaki "Son sürüm" ve "Son iş" satırlarını güncelle, yapılanı ve
    kararları ilgili bölüme yaz.
 5. Yayın: yeni `atolye-erp-vX.Y.Z.html`'i commit'le ve `surum.json`'u güncelle
-   (`{"surum": "X.Y.Z", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-vX.Y.Z.html"}`).
-   `main`'e birleşince GitHub Pages 1-2 dakikada yayına alır.
+   (`{"surum": "X.Y.Z", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-vX.Y.Z.html", "not": "<SURUM_NOTU>"}`).
+   `main`'e birleşince GitHub Pages 1-2 dakikada yayına alır. Uygulama da bu dosyayı okuyor:
+   açılışta ve 10 dk'dan uzun arka plandan dönünce yeni sürüme kendiliğinden geçer, çalışırken
+   şerit gösterir (`surumeOtomatikGec`). `./yap.sh` aynı sürüm numarasıyla tekrar çalışırsa
+   yayınlanmış HTML'in üstüne yazar — yeni işe başlarken önce sürümü artır.
 
 ## Önemli kurallar (ayrıntısı DEVAM-NOTU.md'de)
 
