@@ -17,6 +17,12 @@ async function calistir() {
     .map((ad, i) => ({ id: `r${i}`, ad, tip: "Mamul", kod: String(10 + i) }));
   // Hammadde formu yalnız HAMMADDE tipli renkleri gösteriyor (malzeme tipi süzgeci).
   tanim.renkler.push(...["Siyah Deri H", "Taba Deri H", "Krem Astar"].map((ad, i) => ({ id: `h${i}`, ad, tip: "Hammadde", kod: String(50 + i) })));
+  // ÖZEL KOD ÖNERİSİ (v1.454.0): genel "Taban" alanı; iki üründe değer var.
+  tanim.ozelKodAlanlari = [{ id: "okTaban", ad: "Taban", kapsamTuru: "genel" }];
+  const stokT = JSON.parse(TOHUM["stok:items"]);
+  stokT[0].ozelKodlar = { okTaban: "147" };
+  stokT[1].ozelKodlar = { okTaban: "152" };
+  t["stok:items"] = JSON.stringify(stokT);
   t["tanimlar:data"] = JSON.stringify(tanim);
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = [];
@@ -31,6 +37,22 @@ async function calistir() {
   await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ürün Ekle/.test(x.textContent) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
+
+  // Özel kod: "14" yaz → yalnız "147" önerilir; dokununca kutuya yazılır.
+  const okKutu = sayfa.locator("[data-ozel-kod-arama]").first();
+  const ozelKod = { kutuVar: (await okKutu.count()) > 0 };
+  if (ozelKod.kutuVar) {
+    await okKutu.click();
+    await okKutu.type("14");
+    await sayfa.waitForTimeout(200);
+    ozelKod.oneriler = await sayfa.evaluate(() => [...document.querySelectorAll("[data-aramali-oneri]")].map((b) => b.getAttribute("data-aramali-oneri")));
+    await sayfa.locator('[data-aramali-oneri="147"]').dispatchEvent("mousedown");
+    await sayfa.waitForTimeout(200);
+    ozelKod.deger = await okKutu.inputValue();
+    // Serbest değer: listede olmayan yazılabiliyor.
+    await okKutu.fill("999X");
+    ozelKod.serbest = await okKutu.inputValue();
+  }
 
   const kutu = sayfa.locator("[data-renk-ekle-arama]").first();
   const kutuVar = (await kutu.count()) > 0;
@@ -89,7 +111,7 @@ async function calistir() {
   }
 
   await ikinci.tarayici.close();
-  return { hatalar, kutuVar, tumu, siy, enterSonrasi, eslesmeYok, cipler, hammadde };
+  return { hatalar, kutuVar, tumu, siy, enterSonrasi, eslesmeYok, cipler, hammadde, ozelKod };
 }
 
 if (require.main === module) {

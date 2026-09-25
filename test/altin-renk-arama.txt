@@ -33,6 +33,14 @@
  },
  "hatalar": [],
  "kutuVar": true,
+ "ozelKod": {
+  "deger": "147",
+  "kutuVar": true,
+  "oneriler": [
+   "147"
+  ],
+  "serbest": "999X"
+ },
  "siy": [
   "Siyah Süet",
   "Siyah Deri",
