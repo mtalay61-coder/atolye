@@ -1,0 +1,35 @@
+{
+ "cekSenet": {
+  "baslik": "Çek & Senet",
+  "cekEkrani": true,
+  "sekmeler": []
+ },
+ "donus": [
+  "Kasa",
+  "Banka",
+  "Kâr / Zarar"
+ ],
+ "finansOgeleri": [
+  "Cari",
+  "Kasa & Banka",
+  "Çek & Senet",
+  "Gelir / Gider",
+  "Fişler"
+ ],
+ "hatalar": [],
+ "kasaBanka": {
+  "baslik": "Kasa & Banka",
+  "sekmeler": [
+   "Kasa",
+   "Banka",
+   "Kâr / Zarar"
+  ]
+ },
+ "pasif": {
+  "aktifeAlVar": true,
+  "bildirim": true,
+  "dugmeVar": true,
+  "kayit": false,
+  "listedeKaldi": false
+ }
+}

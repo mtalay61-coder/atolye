@@ -1,4 +1,13 @@
 function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle }) {
+  // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
+  // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
+  // gittiği söylenmezse silindi sanılıyor.
+  const pasifDegistir = () => {
+    onFieldChange(cari.id, "pasif", !cari.pasif);
+    if (showToast) showToast(cari.pasif
+      ? `"${cari.unvan}" yeniden aktif — seçim listelerinde görünür`
+      : `"${cari.unvan}" pasife alındı — geçmişi duruyor, yeni işlemlerde seçilemez. Pasifler sekmesinden geri alınabilir`);
+  };
   const [kodAtamaProsesSecim, setKodAtamaProsesSecim] = useState("");
   // Açıklık durumu ARTIK ÜST BİLEŞENDE: aynı anda tek kart açık kalsın diye.
   const open = acik;
@@ -133,7 +142,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     // mutlaka bir hesaba girer ya da bir hesaptan çıkar.
     if (paraHareketi && !hForm.hesap) {
       showToast(uygunHesaplar.length === 0
-        ? `${hForm.paraBirimi} hesabı tanımlı değil — Muhasebe ekranından kasa/banka açın, sonra kaydedin`
+        ? `${hForm.paraBirimi} hesabı tanımlı değil — Kasa & Banka ekranından kasa/banka açın, sonra kaydedin`
         : `${hareketTipi === "Tahsilat" ? "Paranın girdiği" : "Paranın çıktığı"} kasayı/bankayı seçin`);
       return;
     }
@@ -473,7 +482,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         <button
           type="button"
           data-kart-eylem="pasif"
-          onClick={() => onFieldChange(cari.id, "pasif", !cari.pasif)}
+          onClick={pasifDegistir}
           title={
             cari.pasif
               ? "Cariyi yeniden kullanıma aç — seçim listelerinde tekrar görünür"
@@ -903,7 +912,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   <Field label={hareketTipi === "Tahsilat" ? "Hangi kasaya/bankaya girdi?" : "Hangi kasadan/bankadan çıktı?"}>
                     {uygunHesaplar.length === 0 ? (
                       <span style={{ fontSize: 11, color: "var(--erp-warn)", padding: "6px 0", display: "block" }}>
-                        {hForm.paraBirimi} hesabı tanımlı değil — Muhasebe ekranından kasa/banka
+                        {hForm.paraBirimi} hesabı tanımlı değil — Kasa & Banka ekranından kasa/banka
                         açın. Hesap seçilmeden ödeme/tahsilat kaydedilemez: para bir yere girmeli.
                       </span>
                     ) : (
@@ -1777,7 +1786,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             >
               <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
             </button>
-            {/* Pasife alma ve silme kart BAŞLIĞINA taşındı (ikon olarak) — burada tekrar edilmiyor. */}
+            {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun").
+                Özellik vardı ama yalnız başlıktaki yazısız arşiv ikonuydu; kullanıcı bulamadı.
+                İkon başlıkta kalıyor (kart kapalıyken de erişilsin), burada adıyla da duruyor.
+                Silme burada tekrar edilmiyor: son çare olan işlem göz önünde durmasın. */}
+            <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
           </div>
 
         </div>

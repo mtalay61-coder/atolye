@@ -169,7 +169,7 @@ async function calistir() {
   const girisFisiSonra = await fisSilmeDurumu();
 
   // ---- D. ÇEK LİSTESİNDEN SİLME → BAĞLI TAHSİLAT DA GİDER -----------------------------------------
-  await modulAc(sayfa, "Muhasebe");
+  await modulAc(sayfa, "Çek & Senet");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]

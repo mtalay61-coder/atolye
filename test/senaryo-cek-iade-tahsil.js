@@ -52,7 +52,8 @@ async function calistir() {
   await sayfa.waitForTimeout(2500);
 
   const muhasebeSekmesi = async (ad) => {
-    await modulAc(sayfa, "Muhasebe");
+    // v1.458.0: çekler "Çek & Senet"te, kasa/banka "Kasa & Banka"da.
+    await modulAc(sayfa, ad === "Çek" ? "Çek & Senet" : "Kasa & Banka");
     await sayfa.waitForTimeout(800);
     await sayfa.evaluate((ad) => {
       const b = [...document.querySelectorAll("button")]

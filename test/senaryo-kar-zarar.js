@@ -49,7 +49,7 @@ function tohum({ kartsiz } = {}) {
 }
 
 async function panelAc(sayfa) {
-  await modulAc(sayfa, "Muhasebe");
+  await modulAc(sayfa, "Kasa & Banka");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Kâr \/ Zarar/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(800);

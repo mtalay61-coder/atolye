@@ -1193,7 +1193,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                           setKayitKurlari((o) => ({ ...o, [yp]: Number.isFinite(n) && n > 0 ? n : e.target.value }));
                         }}
                         placeholder="kur?"
-                        title="Muhasebe'deki güncel kurdan öneriliyor — değiştirebilirsiniz"
+                        title="Güncel kurdan (üst şerit) öneriliyor — değiştirebilirsiniz"
                         className="mono"
                         style={{ width: 72, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}
                       />

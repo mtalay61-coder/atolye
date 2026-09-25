@@ -1,5 +1,9 @@
-function MuhasebeModule({ tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
-  const [altSekme, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek"
+function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
+  const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
+  // KAPSAM (v1.458.0): menüde "Kasa & Banka" ve "Çek & Senet" ayrı öğe; ikisi de bu tek örneği
+  // gösteriyor. Çek & Senet'te sekme şeridi yok, hep çek; Kasa & Banka'da Çek sekmesi yok — orada
+  // son seçim "cek" kaldıysa Kasa'ya düşülüyor (seçim silinmiyor, çeke dönünce sorun çıkmasın).
+  const altSekme = kapsam === "cek" ? "cek" : kapsam === "kasabanka" && altSekmeSecimi === "cek" ? "kasa" : altSekmeSecimi;
   const kasalar = muhasebe.kasalar || [];
   const bankalar = muhasebe.bankalar || [];
   const cekler = muhasebe.cekler || [];
@@ -391,15 +395,16 @@ function MuhasebeModule({ tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIs
         )}
       </div>
 
+      {kapsam !== "cek" && (
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         {[
           { key: "kasa", label: "Kasa", icon: <Wallet size={14} /> },
           { key: "banka", label: "Banka", icon: <Landmark size={14} /> },
-          { key: "cek", label: "Çek", icon: <Receipt size={14} /> },
+          kapsam !== "kasabanka" && { key: "cek", label: "Çek", icon: <Receipt size={14} /> },
           // KÂR / ZARAR (18 Eylül): gelir-gider kartlarının meyvesi. Kasa/banka/çek "para nerede"
           // sorusunu cevaplıyor; bu sekme "kazanıyor muyuz" sorusunu.
           { key: "karzarar", label: "Kâr / Zarar", icon: <FileText size={14} /> },
-        ].map((s) => (
+        ].filter(Boolean).map((s) => (
           <button
             key={s.key}
             onClick={() => setAltSekme(s.key)}
@@ -415,6 +420,7 @@ function MuhasebeModule({ tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIs
           </button>
         ))}
       </div>
+      )}
 
       {altSekme === "kasa" && (
         <HesapListesi

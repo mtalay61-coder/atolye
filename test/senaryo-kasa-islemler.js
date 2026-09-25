@@ -21,7 +21,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
-  await modulAc(sayfa, "Muhasebe");
+  await modulAc(sayfa, "Kasa & Banka");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
@@ -92,7 +92,7 @@ async function calistir() {
   const ikinci = await uygulamaAc(t2, { hataYaz: false });
   ikinci.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ikinci.sayfa.waitForTimeout(2400);
-  await modulAc(ikinci.sayfa, "Muhasebe");
+  await modulAc(ikinci.sayfa, "Kasa & Banka");
   await ikinci.sayfa.waitForTimeout(900);
   await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ikinci.sayfa.waitForTimeout(800);
@@ -122,7 +122,7 @@ async function calistir() {
   const ucuncu = await uygulamaAc(t3, { hataYaz: false });
   ucuncu.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ucuncu.sayfa.waitForTimeout(2400);
-  await modulAc(ucuncu.sayfa, "Muhasebe");
+  await modulAc(ucuncu.sayfa, "Kasa & Banka");
   await ucuncu.sayfa.waitForTimeout(900);
   await ucuncu.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ucuncu.sayfa.waitForTimeout(700);
@@ -149,7 +149,7 @@ async function calistir() {
   dorduncu.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   dorduncu.sayfa.on("dialog", (d) => d.accept());
   await dorduncu.sayfa.waitForTimeout(2400);
-  await modulAc(dorduncu.sayfa, "Muhasebe");
+  await modulAc(dorduncu.sayfa, "Kasa & Banka");
   await dorduncu.sayfa.waitForTimeout(900);
   await dorduncu.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await dorduncu.sayfa.waitForTimeout(800);

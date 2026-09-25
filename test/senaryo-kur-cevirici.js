@@ -28,7 +28,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
 
-  await modulAc(sayfa, "Muhasebe");
+  await modulAc(sayfa, "Kasa & Banka");
   await sayfa.waitForTimeout(1000);
   await sayfa.evaluate(() => {
     const e = [...document.querySelectorAll("*")]

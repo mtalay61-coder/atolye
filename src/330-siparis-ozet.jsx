@@ -168,7 +168,7 @@ function FisToplamCeviriPaneli({ pbToplamlari, kurlar, deger, onDegistir }) {
                 value={kurOverride[yabanci] !== undefined ? kurOverride[yabanci] : (onerilenKurBul(pb) ?? "")}
                 onChange={(e) => kurDegistir(yabanci, e.target.value)}
                 placeholder={onerilenKurBul(pb) == null ? "kur?" : ""}
-                title="Muhasebe'deki güncel kurdan otomatik öneriliyor — isterseniz değiştirebilirsiniz"
+                title="Güncel kurdan (üst şerit) otomatik öneriliyor — isterseniz değiştirebilirsiniz"
                 style={{ width: 60, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}
               />
               TRY

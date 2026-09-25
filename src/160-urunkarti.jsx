@@ -3910,7 +3910,7 @@ function ProductMatrixCard({
                     <span data-kur-eksik="1" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-void)",
                       background: "var(--erp-void-tint)", padding: "4px 8px", borderRadius: "var(--erp-r-sm)" }}>
                       {[...kuruEksikler].join(", ")} kuru girilmemiş — bu birimdeki fiyatlar çevrilmeden sayıldı,
-                      maliyet eksik. Muhasebe › kurlardan girin.
+                      maliyet eksik. üst şeritteki kur rozetinden girin.
                     </span>
                   )}
 
