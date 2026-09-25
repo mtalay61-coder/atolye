@@ -21,7 +21,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   // hedefe yönlendiriliyor: ürün seçici, asorti uygulama, barkod okutma, fiyat bulma, ölçü
   // matrisi — hepsi burada. İkinci bir form, ayrışacak ikinci bir form demekti.
   // Dolu olduğunda "Siparişi Kaydet" yerine "Bu Siparişe Ekle" çalışıyor.
-  const [ekleHedefiId, setEkleHedefiId] = useState(null);
+  // DÜZENLENEN SİPARİŞ (25 Eylül): doluysa form yeni sipariş değil, bu siparişin düzenlemesi.
+  const [duzenlenenId, setDuzenlenenId] = useState(null);
   const [tip, setTip] = useState("Satış");
   const [cariId, setCariId] = useState("");
   const [tarih, setTarih] = useState(bugunYerel());
@@ -276,7 +277,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     // TEK ÇİFT — 12 haneli kod. Aynı kodu tekrar okutmak miktarı artırıyor; kutuları tek tek
     // okutarak sipariş girmenin yolu bu.
     if (cozum.seviye === "beden") {
-      const i = kalemler.findIndex((k) => k.urunId === cozum.urun.id && k.renk === cozum.renk && k.beden === cozum.beden);
+      const i = kalemler.findIndex((k) => k.urunId === cozum.urun.id && k.renk === cozum.renk && k.beden === cozum.beden && !kalemKilitSebebi(k));
       if (i >= 0) setKalemler(kalemler.map((k, j) => (j === i ? { ...k, miktar: k.miktar + 1 } : k)));
       else setKalemler([...kalemler, {
         id: uid("kalem"), urunId: cozum.urun.id, urunAd: cozum.urun.ad, renk: cozum.renk,
@@ -292,7 +293,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
 
     let sonraki = [...kalemler];
     cozum.dagilim.forEach((d) => {
-      const i = sonraki.findIndex((k) => k.urunId === cozum.urun.id && k.renk === cozum.renk && k.beden === d.beden);
+      const i = sonraki.findIndex((k) => k.urunId === cozum.urun.id && k.renk === cozum.renk && k.beden === d.beden && !kalemKilitSebebi(k));
       if (i >= 0) sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: k.miktar + d.adet } : k));
       else sonraki.push({
         id: uid("kalem"), urunId: cozum.urun.id, urunAd: cozum.urun.ad, renk: cozum.renk,
@@ -325,7 +326,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     let sonrakiKalemler = [...kalemler];
     eklenecekler.forEach((x) => {
       const mevcutIndex = sonrakiKalemler.findIndex(
-        (k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden
+        // Düzenlemede kilitli (planlanmış/teslim alınmış) kalemin miktarı buradan ARTMAZ: yeni satır açılır.
+        (k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden && !kalemKilitSebebi(k)
       );
       if (mevcutIndex >= 0) {
         birlestirilenSayisi++;
@@ -362,14 +364,18 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     }
   }
 
+  // Kilitli kalem (düzenlemede planlanmış/teslim alınmış olan) formda da silinemez, değişmez —
+  // arayüz kutuyu hiç çizmiyor, bu kapı da ikinci güvence.
   function kalemSil(id) {
-    setKalemler(kalemler.filter((k) => k.id !== id));
+    const k = kalemler.find((x) => x.id === id);
+    if (k && kalemKilitSebebi(k)) return showToast(kalemKilitSebebi(k));
+    setKalemler(kalemler.filter((x) => x.id !== id));
   }
 
   // Bir kalemin miktarını ya da birim fiyatını, satırı silip yeniden eklemeye gerek kalmadan
   // doğrudan yerinde günceller.
   function kalemDuzenle(id, alan, deger) {
-    setKalemler(kalemler.map((k) => (k.id === id ? { ...k, [alan]: deger } : k)));
+    setKalemler(kalemler.map((k) => (k.id === id && !kalemKilitSebebi(k) ? { ...k, [alan]: deger } : k)));
   }
 
   // Sesli komuttan (Claude API ile ayrıştırılmış) dönen bilgiyi forma işler. Hiçbir şeyi otomatik
@@ -426,54 +432,118 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     showToast(mesajParcalari.length > 0 ? mesajParcalari.join(" · ") + " — kontrol edip ekleyin" : "Sesli komuttan bilgi çıkarılamadı");
   }
 
-  // Var olan siparişe kalem eklemeyi başlatır: form o siparişin tipi ve carisiyle açılır.
-  function sipariseKalemEklemeyeBasla(siparisId) {
+  // ---- KAYDEDİLMİŞ SİPARİŞİ DÜZENLEME — YENİ SİPARİŞ FORMUYLA (25 Eylül) ----------------------
+  //
+  // Kullanıcı: "Siparişte düzenleme düzgün çalışmıyor, düzenle deyince arkada yeni sipariş girişi
+  // gibi çalışıyor ve üstteki ekranı kapatman gerekiyor. Yeni sipariş gibi hareket edecek ama altta
+  // girilenler gösterecek ve girilenler de düzenlenebilir olacak: renk, adet, stok gibi
+  // değiştirilebilir (planlananlar değişemez)."
+  //
+  // Eskiden iki ayrı yol vardı: kartın içinde başlık kutuları (✎) ve formu kartın ARKASINDA açan
+  // "kalem ekle". Şimdi tek yol: form siparişin başlığı ve kalemleriyle dolu açılıyor, tam ekran
+  // kartın ÖNÜNDE duruyor; kaydedince sipariş yerinde güncelleniyor.
+  //
+  // KİLİT KURALI DEĞİŞMEDİ (`kalemKilitSebebi`): planlanmış ya da teslim alınmış kalem formda
+  // görünür ama değiştirilemez/silinemez. Kaydederken de kilitli kalem ASIL kayıttan alınıyor —
+  // ekranda bir şekilde değişmiş olsa bile karşı kaydı (üretim, alış, fiş) yalancı çıkaramaz.
+  function siparisDuzenlemeyiBaslat(siparisId) {
     const siparis = siparisler.find((s) => s.id === siparisId);
     if (!siparis) return;
-    // KAPALI DURUMDAKİ siparişe kalem eklemek, kapanmış bir işi yeniden açmak demek. Durum
-    // değiştirmek ayrı ve bilinçli bir eylem; buradan sessizce yapılmamalı.
-    if (siparis.durum === "Tamamlandı" || siparis.durum === "İptal") {
-      return showToast(`Sipariş "${siparis.durum}" durumunda — kalem eklemek için önce durumu değiştirin`);
-    }
-    setEkleHedefiId(siparisId);
+    resetForm();
+    setDuzenlenenId(siparisId);
     setTip(siparis.tip);
     setCariId(siparis.cariId || "");
-    setKalemler([]);
+    setTarih(siparis.tarih || bugunYerel());
+    setTeslimTarihi(siparis.teslimTarihi || "");
+    setNot(siparis.not || "");
+    setMusteriKodu(siparis.musteriKodu || "");
+    setSiparisDefter(siparis.defterTercihi || "Genel");
+    setKayitParaBirimi(siparis.kayitParaBirimi || null);
+    setKayitKurlari(siparis.kayitKurlari || {});
+    setKalemler((siparis.kalemler || []).map((k) => ({ ...k })));
     setShowForm(true);
-    showToast(`${siparis.siparisNo} siparişine kalem ekleniyor`);
   }
 
-  function ekleHedefindenCik() {
-    setEkleHedefiId(null);
+  function duzenlemedenCik() {
+    setDuzenlenenId(null);
     resetForm();
     setShowForm(false);
   }
 
-  // Hazırlanan kalemleri VAR OLAN siparişe ekler.
-  function hedefSipariseEkle() {
-    const siparis = siparisler.find((s) => s.id === ekleHedefiId);
-    if (!siparis) { setEkleHedefiId(null); return showToast("Hedef sipariş bulunamadı"); }
-    if (kalemler.length === 0) return showToast("En az 1 kalem ekleyin");
+  function siparisDuzenlemeKaydet() {
+    const siparis = siparisler.find((s) => s.id === duzenlenenId);
+    if (!siparis) { duzenlemedenCik(); return showToast("Düzenlenen sipariş bulunamadı — silinmiş olabilir"); }
+    if (!cariId) return showToast(tip === "Satış" ? "Müşteri seçin" : "Tedarikçi seçin");
+    // CARİ, TESLİMAT YAPILMIŞSA DEĞİŞMEZ: fişler o cariye kesildi; değiştirmek ekstre ile siparişi
+    // birbirinden koparırdı.
+    const teslimVar = (siparis.kalemler || []).some((k) => (k.karsilanan || 0) > 0);
+    if (teslimVar && cariId !== siparis.cariId) return showToast("Bu siparişten teslimat/fiş yapılmış — cari değiştirilemez");
 
-    // AYNI ÜRÜN+RENK+ÖLÇÜ zaten varsa yeni satır açılmıyor, MİKTARI ARTIYOR — yeni sipariş
-    // formundaki kuralın aynısı (aksi halde aynı beden için onlarca satır birikiyordu).
-    // Ama karşılanmış/planlanmış satıra dokunulmuyor: onun miktarını buradan artırmak,
-    // düzenleme kapılarını arkadan dolaşmak olurdu; o durumda ayrı satır açılıyor.
-    let birlesen = 0;
-    const sonraki = [...(siparis.kalemler || [])];
-    kalemler.forEach((yeni) => {
-      const i = sonraki.findIndex((k) =>
-        k.urunId === yeni.urunId && k.renk === yeni.renk && k.beden === yeni.beden
-        && !k.planlama && (k.karsilanan || 0) === 0);
-      if (i >= 0) { sonraki[i] = { ...sonraki[i], miktar: sonraki[i].miktar + yeni.miktar }; birlesen += 1; }
-      else sonraki.push(yeni);
+    const asillar = siparis.kalemler || [];
+    // KAPALI SİPARİŞE YENİ KALEM YOK (eski "kalem ekle" kuralı korunuyor): kapanmış bir işi yeni
+    // kalemle sessizce yeniden açmak olurdu. Var olan kalemlerin düzeltilmesi serbest.
+    const yeniKalemVar = kalemler.some((k) => !asillar.some((a) => a.id === k.id));
+    if (yeniKalemVar && (siparis.durum === "Tamamlandı" || siparis.durum === "İptal")) {
+      return showToast(`Sipariş "${siparis.durum}" durumunda — yeni kalem eklenemez`);
+    }
+    const kilitliAsil = asillar.filter((k) => kalemKilitSebebi(k));
+    const kilitliIdler = new Set(kilitliAsil.map((k) => k.id));
+    const serbest = kalemler.filter((k) => !kilitliIdler.has(k.id));
+    if (kilitliAsil.length + serbest.length === 0) return showToast("En az 1 kalem olmalı — siparişi kaldırmak için Sil'i kullanın");
+    for (const k of serbest) {
+      if (!(k.miktar > 0)) return showToast(`${k.urunAd} · ${k.renk || "—"} · ${k.beden}: miktar sıfır olamaz`);
+      const urun = (stok || []).find((u) => u.id === k.urunId);
+      // Yalnız BOŞ renk engelleniyor (ürün değişince renk boşalıyor). Kayıtlı ama üründen sonradan
+      // kalkmış bir renk engellenmiyor: dokunulmamış eski bir satır yüzünden sipariş kaydedilemez
+      // olmamalı; seçicide "(listede yok)" olarak görünüyor.
+      if (urunRenkleri(urun).length > 0 && !k.renk) return showToast(`${k.urunAd}: renk seçin`);
+    }
+    // Form siparişin kopyasıyla açıldığı için sıra korunuyor. Kilitli kalem ASIL kayıttan alınıyor;
+    // formdan bir şekilde düşmüşse de sona geri ekleniyor — kilitli kalem bu yoldan silinemez.
+    const sonKalemler = kalemler.map((k) => (kilitliIdler.has(k.id) ? asillar.find((a) => a.id === k.id) : k));
+    kilitliAsil.forEach((k) => { if (!kalemler.some((x) => x.id === k.id)) sonKalemler.push(k); });
+
+    onSave(siparisler.map((s) => (s.id !== siparis.id ? s : {
+      ...s,
+      cariId, tarih, teslimTarihi, not: not.trim(), musteriKodu: musteriKodu.trim(),
+      defterTercihi: siparisDefter, kayitParaBirimi, kayitKurlari,
+      kalemler: sonKalemler,
+    })));
+    showToast(`${siparis.siparisNo} güncellendi`);
+    duzenlemedenCik();
+  }
+
+  // Ürünün seçilebilir renkleri (varyantlardan). Renksiz ürünlerde boş liste döner.
+  function urunRenkleri(urun) {
+    return Array.from(new Set(((urun && urun.variants) || []).map((v) => v.renk).filter(Boolean)));
+  }
+
+  // FORMDAKİ BİR SATIRI (ürün+renk grubu) DEĞİŞTİRME — ürün ya da renk. Yalnız kilitsiz kalemlere
+  // uygulanıyor. Değişiklikten sonra aynı ürün+renk+ölçüye düşen kilitsiz kalemler TEK SATIRDA
+  // birleşiyor (miktarlar toplanıyor): aynı hücrede iki kalem dururken biri ekranda görünmezdi.
+  function grupDegistir(grupKalemIdleri, degisiklik) {
+    const idler = new Set(grupKalemIdleri);
+    const degismis = kalemler.map((k) => (idler.has(k.id) && !kalemKilitSebebi(k) ? { ...k, ...degisiklik } : k));
+    const sonuc = [];
+    degismis.forEach((k) => {
+      if (kalemKilitSebebi(k)) { sonuc.push(k); return; }
+      const i = sonuc.findIndex((x) => !kalemKilitSebebi(x) && x.urunId === k.urunId && x.renk === k.renk && x.beden === k.beden);
+      if (i >= 0) sonuc[i] = { ...sonuc[i], miktar: sonuc[i].miktar + k.miktar };
+      else sonuc.push(k);
     });
+    if (sonuc.length < degismis.length) showToast("Aynı ürün/renk/ölçüdeki satırlar birleştirildi (miktarlar toplandı)");
+    setKalemler(sonuc);
+  }
 
-    onSave(siparisler.map((s) => (s.id === siparis.id ? { ...s, kalemler: sonraki } : s)));
-    showToast(birlesen > 0
-      ? `${siparis.siparisNo}: ${kalemler.length} kalem eklendi (${birlesen} tanesi var olan satırla birleşti)`
-      : `${siparis.siparisNo}: ${kalemler.length} kalem eklendi`);
-    ekleHedefindenCik();
+  function grupUrunDegistir(grupKalemIdleri, urunId) {
+    const urun = urunUygun.find((u) => u.id === urunId);
+    if (!urun) return;
+    const ilk = kalemler.find((k) => k.id === grupKalemIdleri[0]);
+    // Renk yeni üründe de varsa korunuyor; yoksa boşalıyor ve satır "renk seçin" diye işaretleniyor.
+    // Başka bir renge sessizce atamak, yanlış rengin siparişe girmesi demekti.
+    const renk = ilk && urunRenkleri(urun).includes(ilk.renk) ? ilk.renk : "";
+    // Kutu (ambalaj) tercihi ürüne özgü; ürün değişince geçersiz.
+    grupDegistir(grupKalemIdleri, { urunId: urun.id, urunAd: urun.ad, birim: urun.birim, renk, ambalaj: null });
   }
 
   function siparisKaydet() {
@@ -522,9 +592,6 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     showToast(`${oncekiSayi - birlesmis.length} tekrar eden kalem birleştirildi`);
   }
 
-  // Var olan (kaydedilmiş) bir siparişteki tek bir kalemi siler ya da düzenler — SADECE o kalem henüz
-  // planlanmamışsa (k.planlama boşsa). Planlanmış bir kalem, üretim ya da satın alma siparişine bağlı
-  // olduğu için silinip/değiştirilirse o bağlantı tutarsız hale gelir; bu yüzden engellenir.
   // ---- KAYDEDİLMİŞ SİPARİŞİ DÜZENLEME ---------------------------------------------------------
   //
   // Kullanıcı (6 Eylül): "Kaydedilmiş siparişi düzenlemek yok, düzenleme ekleyelim."
@@ -541,58 +608,6 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     if ((kalem.karsilanan || 0) > 0) return "Bu kalem için teslimat/üretim girilmiş — düzenlenemez";
     return "";
   }
-
-  // Kalemin miktarını / birim fiyatını / para birimini yerinde günceller.
-  function siparisKalemiGuncelle(siparisId, kalemId, alan, deger) {
-    const siparis = siparisler.find((s) => s.id === siparisId);
-    if (!siparis) return;
-    const kalem = (siparis.kalemler || []).find((k) => k.id === kalemId);
-    const sebep = kalemKilitSebebi(kalem);
-    if (sebep) return showToast(sebep);
-
-    let yeniDeger = deger;
-    if (alan === "miktar" || alan === "birimFiyat") {
-      const sayi = parseFloat(deger);
-      if (!(sayi >= 0)) return;
-      // SIFIR MİKTAR KALEM SİLMEK DEĞİLDİR. Sıfırlanmış bir satır siparişte durur ve "bu neden
-      // burada" sorusunu doğurur; silmek ayrı bir eylem ve kendi onayı var.
-      if (alan === "miktar" && sayi <= 0) return showToast("Miktar sıfır olamaz — kalemi silmek için çöp kutusu düğmesini kullanın");
-      yeniDeger = sayi;
-    }
-    onSave(siparisler.map((s) => (s.id !== siparisId ? s : {
-      ...s,
-      kalemler: (s.kalemler || []).map((k) => (k.id === kalemId ? { ...k, [alan]: yeniDeger } : k)),
-    })));
-  }
-
-  // Sipariş BAŞLIĞI: cari, tarihler, müşteri sipariş kodu, not.
-  function siparisBasligiGuncelle(siparisId, degisiklikler) {
-    const siparis = siparisler.find((s) => s.id === siparisId);
-    if (!siparis) return;
-
-    // CARİ DEĞİŞİKLİĞİ ÖZEL: bu siparişten fiş kesilmişse fişler O CARİYE yazıldı. Cariyi
-    // değiştirmek, kesilmiş fişlerle siparişin başka kişileri göstermesi demek — ekstre ile
-    // sipariş bir daha örtüşmez.
-    if (degisiklikler.cariId && degisiklikler.cariId !== siparis.cariId) {
-      const islenmis = (siparis.kalemler || []).some((k) => (k.karsilanan || 0) > 0);
-      if (islenmis) return showToast("Bu siparişten teslimat/fiş yapılmış — cari değiştirilemez");
-    }
-    onSave(siparisler.map((s) => (s.id === siparisId ? { ...s, ...degisiklikler } : s)));
-    showToast("Sipariş güncellendi");
-  }
-
-  function siparisKalemiSil(siparisId, kalemId) {
-    const siparis = siparisler.find((s) => s.id === siparisId);
-    if (!siparis) return;
-    const kalem = siparis.kalemler.find((k) => k.id === kalemId);
-    if (!kalem) return;
-    if (kalem.planlama) return showToast("Bu kalem planlanmış — önce planlamayı temizlemeniz gerekiyor.");
-    if ((kalem.karsilanan || 0) > 0) return showToast("Bu kalem için zaten teslimat/üretim girilmiş — silinemiyor.");
-    onSave(siparisler.map((s) =>
-      s.id === siparisId ? { ...s, kalemler: s.kalemler.filter((k) => k.id !== kalemId) } : s
-    ));
-  }
-
 
   function siparisSil(id) {
     const siparis = siparisler.find((s) => s.id === id);
@@ -829,12 +844,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 onAsortiOlustur={onAsortiOlustur}
                 firmaBilgileri={firmaBilgileri}
                 onPencereAc={onPencereAc}
-                onKalemSil={siparisKalemiSil}
-                onKalemGuncelle={siparisKalemiGuncelle}
-                onBaslikGuncelle={siparisBasligiGuncelle}
-                onKalemEklemeyeBasla={sipariseKalemEklemeyeBasla}
+                onDuzenle={siparisDuzenlemeyiBaslat}
                 onFiseGitNo={onFiseGitNo}
-                cariUygun={cariUygun}
                 kurlar={kurlar}
                 onKayitParaGuncelle={siparisKayitParaGuncelle}
                 onKalemleriBirlestir={siparisKalemleriniBirlestir}
@@ -845,32 +856,55 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         );
         })}
 
-      {showForm && ekleHedefiId && (() => {
-        const hedef = siparisler.find((s) => s.id === ekleHedefiId);
-        if (!hedef) return null;
-        // HANGİ SİPARİŞE EKLENDİĞİ FORMUN EN ÜSTÜNDE. Form birebir "yeni sipariş" formuna
-        // benziyor; hangi modda olduğunu söylemeyen bir ekran, yanlış yere kalem eklenmesine
-        // yol açardı.
-        return (
-          <div style={{ border: "1.5px solid #3D6B8A", background: "#EAF0F4", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: -4, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <b style={{ fontSize: 13, color: "#2E5670" }}>{hedef.siparisNo} siparişine kalem ekleniyor</b>
-            <span style={{ fontSize: 12, color: "#2E5670" }}>
-              Cari ve tip bu siparişten geliyor, değiştirilemez.
-            </span>
-            <button className="btn-ghost" style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 12 }} onClick={ekleHedefindenCik}>
-              Vazgeç
-            </button>
-          </div>
-        );
-      })()}
 
       {showForm && (
-        <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
+        // DÜZENLEMEDE FORM ÖNDE (25 Eylül): düzenleme tam ekran sipariş kartından başlıyor. Form
+        // modülün normal yerinde açılınca kartın ARKASINDA kalıyordu ve kullanıcı kartı kapatmak
+        // zorundaydı. Düzenlemede form, kartla aynı konumda ve onun üstünde (zIndex) çiziliyor;
+        // kaydedince/vazgeçince kapanıyor ve kart güncel hâliyle yerinde duruyor.
+        <div
+          data-siparis-duzenleme={duzenlenenId || undefined}
+          style={duzenlenenId ? {
+            position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: "var(--menu-genislik, 0px)", right: 0, bottom: 0,
+            zIndex: 110, background: "var(--erp-panel-2)", overflowY: "auto", padding: "0 0 16px",
+          } : undefined}
+        >
+        {duzenlenenId && (() => {
+          const hedef = siparisler.find((s) => s.id === duzenlenenId) || {};
+          // Başlık şeridi tam ekran kartınkiyle aynı: kullanıcı hangi siparişte olduğunu ve
+          // DÜZENLEMEDE olduğunu (yeni sipariş değil) ilk bakışta görmeli.
+          return (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", marginBottom: 12,
+              background: hedef.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)", color: "var(--erp-panel-2)",
+              position: "sticky", top: 0, zIndex: 1,
+            }}>
+              <Pencil size={18} />
+              <span style={{ display: "flex", flexDirection: "column", minWidth: 0, lineHeight: 1.25 }}>
+                <span className="mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.75 }}>
+                  {hedef.tip === "Alış" ? "Alış siparişi düzenleniyor" : "Satış siparişi düzenleniyor"}
+                </span>
+                <span style={{ fontSize: 17, fontWeight: 700, overflowWrap: "anywhere" }}>
+                  {(cariler.find((c) => c.id === hedef.cariId) || {}).unvan || "—"}
+                  <span className="mono" style={{ fontSize: 12, fontWeight: 500, marginLeft: 8, opacity: 0.85 }}>{hedef.siparisNo}</span>
+                </span>
+              </span>
+              <button
+                className="btn-ghost"
+                style={{ marginLeft: "auto", padding: "6px 12px", fontSize: 12, background: "rgba(255,255,255,.14)", borderColor: "rgba(255,255,255,.35)", color: "var(--erp-panel-2)" }}
+                onClick={duzenlemedenCik}
+              >
+                <X size={14} /> Vazgeç
+              </button>
+            </div>
+          );
+        })()}
+        <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20, ...(duzenlenenId ? { margin: "0 16px" } : {}) }}>
           {/* TİP SEÇİCİ — YALNIZ SABİT TİP YOKKEN. Alış ve satış siparişleri AYRI ana sekmelere
               bölündüğünde (`sabitTip`) bu satır İKİNCİ bir seçim noktası oluyordu: kullanıcı
               "Alış Siparişi" sekmesinden girip formda "Satış"a basabiliyordu ve hangisinin
               geçerli olduğu belirsizdi. Kullanıcı (6 Eylül): "nereden girmiş isek o kalsın." */}
-          <div style={{ display: sabitTip ? "none" : "flex", gap: 8, marginBottom: 12 }}>
+          <div style={{ display: sabitTip || duzenlenenId ? "none" : "flex", gap: 8, marginBottom: 12 }}>
             {[{ t: "Satış", Icon: Truck, renk: "var(--erp-info)" }, { t: "Alış", Icon: PackageCheck, renk: "var(--erp-brown)" }].map(({ t, Icon, renk }) => (
               <button
                 key={t}
@@ -892,10 +926,20 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
 
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr 0.8fr", gap: 10 }}>
             <Field label={tip === "Satış" ? "Müşteri" : "Tedarikçi"}>
-              <select value={cariId} onChange={(e) => setCariId(e.target.value)} style={inputStyle}>
-                <option value="">Seçin…</option>
-                {cariUygun.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
-              </select>
+              {/* Düzenlemede teslimat yapılmışsa CARİ KİLİTLİ: fişler o cariye kesildi. Sebep
+                  yanında yazılı — kaydedince reddedilmek yerine baştan görünsün. */}
+              {(() => {
+                const cariKilitli = duzenlenenId && kalemler.some((k) => (k.karsilanan || 0) > 0);
+                return (
+                  <>
+                    <select value={cariId} onChange={(e) => setCariId(e.target.value)} style={inputStyle} disabled={cariKilitli} data-siparis-cari="1">
+                      <option value="">Seçin…</option>
+                      {cariUygun.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+                    </select>
+                    {cariKilitli && <span style={{ fontSize: 10, color: "var(--erp-brown)" }}>teslimat yapılmış, değiştirilemez</span>}
+                  </>
+                );
+              })()}
             </Field>
             <Field label="Sipariş Tarihi">
               <input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} style={inputStyle} />
@@ -1381,6 +1425,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             type="number"
                             min="0"
                             value={kMiktarlar[b] || ""}
+                            data-olcu-miktar={b}
                             onChange={(e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value })}
                             style={{ ...inputStyle, width: 56, textAlign: "center", padding: "5px" }}
                           />
@@ -1435,11 +1480,16 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             // için farklı bedenler tek satırda yan yana görünür — kart kart / satır satır tekrar etmez.
             const gruplar = [];
             const grupIndex = {};
+            // KİLİTLİ KALEMLER AYRI SATIRDA (düzenleme, 25 Eylül): planlanmış/teslim alınmış bir
+            // kalemle bekleyen bir kalem aynı ürün+renkte olabilir; tek satırda dursalar ürün/renk
+            // seçicisi kilitliyi de değiştirecekmiş gibi görünürdü.
             kalemler.forEach((k) => {
-              const key = `${k.urunAd}__${k.renk}`;
+              const kilit = kalemKilitSebebi(k);
+              // Kilit SEBEBİ anahtarda: planlanmış ile teslim alınmış ayrı satırda, etiketi doğru kalsın.
+              const key = `${k.urunId || k.urunAd}__${k.renk}__${kilit || "serbest"}`;
               if (!(key in grupIndex)) {
                 grupIndex[key] = gruplar.length;
-                gruplar.push({ key, urunAd: k.urunAd, renk: k.renk, kalemler: [] });
+                gruplar.push({ key, urunId: k.urunId, urunAd: k.urunAd, renk: k.renk, kilit, kalemler: [] });
               }
               gruplar[grupIndex[key]].kalemler.push(k);
             });
@@ -1464,18 +1514,58 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     {gruplar.map((g) => {
                       const birimFiyatlarFarkli = new Set(g.kalemler.map((k) => k.birimFiyat)).size > 1;
                       const grupTutar = g.kalemler.reduce((s, k) => s + k.miktar * k.birimFiyat, 0);
-                      const urun = urunUygun.find((p) => p.ad === g.urunAd);
+                      const urun = urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
                       const gorsel = urun ? ((urun.renkResimleri || {})[g.renk] || urun.kapakResmi) : null;
+                      const idler = g.kalemler.map((k) => k.id);
+                      const renkSecenekleri = urunRenkleri(urun);
+                      const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
                       return (
-                        <tr key={g.key} style={{ borderTop: "1px solid #E4D8C0" }}>
+                        <tr key={g.key} data-form-kalem-satiri={g.kilit ? "kilitli" : "serbest"} style={{ borderTop: "1px solid #E4D8C0", background: g.kilit ? "var(--erp-panel-2)" : undefined }}>
                           <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                               <ColorSwatch src={gorsel} editable={false} size={26} />
-                              {g.urunAd}
+                              {/* ÜRÜN (STOK) DEĞİŞTİRİLEBİLİR — yalnız kilitsiz satırda. Kilitli satırda
+                                  kilit ikonu ve sebebi (planlanmış / teslim alınmış) ipucunda. */}
+                              {g.kilit ? (
+                                <span title={g.kilit} data-kilitli-kalem="1" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                                  {g.urunAd}
+                                  {/* NEDEN KİLİTLİ, satırın üstünde yazıyor: ikon tek başına "neden
+                                      değiştiremiyorum" sorusunu cevaplamıyordu. */}
+                                  <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, color: "var(--erp-brown)", background: "#8A5A3818", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" }}>
+                                    <Lock size={10} />
+                                    {g.kalemler.some((k) => k.planlama) ? "planlandı" : "teslim alındı"}
+                                  </span>
+                                </span>
+                              ) : (
+                                <select
+                                  value={urun ? urun.id : ""}
+                                  onChange={(e) => grupUrunDegistir(idler, e.target.value)}
+                                  data-form-kalem-urun="1"
+                                  title="Ürünü değiştir — renk yeni üründe yoksa yeniden seçilmeli"
+                                  style={{ padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", maxWidth: 200 }}
+                                >
+                                  {!urun && <option value="">{g.urunAd} (listede yok)</option>}
+                                  {urunUygun.map((u) => <option key={u.id} value={u.id}>{u.ad}</option>)}
+                                </select>
+                              )}
                             </span>
                           </td>
                           <td className="mono" style={{ padding: "6px 8px", fontSize: 12, whiteSpace: "nowrap" }}>
-                            {olcuGoster(g.renk)}
+                            {g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (
+                              <select
+                                value={g.renk || ""}
+                                onChange={(e) => e.target.value && grupDegistir(idler, { renk: e.target.value })}
+                                data-form-kalem-renk="1"
+                                title="Rengi değiştir — bu satırdaki bütün ölçülere uygulanır"
+                                style={{ padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "#C9B99A"}`, borderRadius: "var(--erp-r-sm)" }}
+                              >
+                                {renkEksik && <option value="">Renk seçin…</option>}
+                                {/* Kayıtlı renk üründe artık yoksa "(listede yok)" olarak kalıyor — yoksa
+                                    tarayıcı ilk seçeneği gösterir ve kayıt sessizce başka renge döner. */}
+                                {g.renk && !renkSecenekleri.includes(g.renk) && <option value={g.renk}>{olcuGoster(g.renk)} (listede yok)</option>}
+                                {renkSecenekleri.map((r) => <option key={r} value={r}>{olcuGoster(r)}</option>)}
+                              </select>
+                            )}
                             {/* Kutu rozeti taslak listede de görünür: kalem eklendikten sonra
                                 hangisine hangi kutunun atandığını kontrol etmek, siparişi
                                 kaydetmeden önce yapılabilmeli. */}
@@ -1496,6 +1586,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                           {tumBedenler.map((b) => {
                             const k = g.kalemler.find((x) => x.beden === b);
                             if (!k) return <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}><span style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span></td>;
+                            if (g.kilit) {
+                              return (
+                                <td key={b} className="mono" title={g.kilit} style={{ padding: "4px 6px", textAlign: "center", fontSize: 12, fontWeight: 600 }}>
+                                  {k.miktar}
+                                </td>
+                              );
+                            }
                             return (
                               <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
@@ -1523,7 +1620,11 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             );
                           })}
                           <td style={{ padding: "6px 8px", textAlign: "right", borderLeft: "1px dashed #C9B99A" }}>
-                            {birimFiyatlarFarkli ? (
+                            {g.kilit ? (
+                              <span className="mono" title={g.kilit} style={{ fontSize: 12 }}>
+                                {birimFiyatlarFarkli ? "farklı" : `${g.kalemler[0].birimFiyat} ${g.kalemler[0].paraBirimi || "TRY"}`}
+                              </span>
+                            ) : birimFiyatlarFarkli ? (
                               <span title="Bu gruptaki bedenler farklı birim fiyatlara sahip — hücre bazında düzenleyin" style={{ fontSize: 10, color: "var(--erp-warn)" }}>
                                 farklı
                               </span>
@@ -1621,13 +1722,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             </Field>
           </div>
 
-          {/* HEDEF VARSA DÜĞME BAŞKA İŞ YAPAR. Aynı formun iki sonucu olduğu için düğmenin adı
+          {/* DÜZENLEMEDE DÜĞME BAŞKA İŞ YAPAR. Aynı formun iki sonucu olduğu için düğmenin adı
               da değişiyor: "Siparişi Kaydet"e basıp var olan siparişe eklendiğini fark etmek
               (ya da tersi) geri alınması zahmetli bir sürpriz olurdu. */}
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            {ekleHedefiId ? (
-              <button className="btn-primary btn-save" onClick={hedefSipariseEkle}>
-                <Plus size={14} /> {(siparisler.find((s) => s.id === ekleHedefiId) || {}).siparisNo} Siparişine Ekle
+            {duzenlenenId ? (
+              <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1">
+                <Save size={14} /> {(siparisler.find((s) => s.id === duzenlenenId) || {}).siparisNo} Değişikliklerini Kaydet
               </button>
             ) : (
               <button className="btn-primary btn-save" onClick={siparisKaydet}>
@@ -1635,10 +1736,11 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               </button>
             )}
             <button
-                          className="btn-ghost" onClick={() => (ekleHedefiId ? ekleHedefindenCik() : (setShowForm(false), resetForm()))}>
+                          className="btn-ghost" onClick={() => (duzenlenenId ? duzenlemedenCik() : (setShowForm(false), resetForm()))}>
               <X size={14} /> Vazgeç
             </button>
           </div>
+        </div>
         </div>
       )}
 
@@ -1915,12 +2017,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       onAsortiOlustur={onAsortiOlustur}
                       firmaBilgileri={firmaBilgileri}
                       onPencereAc={onPencereAc}
-                      onKalemSil={siparisKalemiSil}
-                onKalemGuncelle={siparisKalemiGuncelle}
-                onBaslikGuncelle={siparisBasligiGuncelle}
-                onKalemEklemeyeBasla={sipariseKalemEklemeyeBasla}
                 onFiseGitNo={onFiseGitNo}
-                cariUygun={cariUygun}
                       kurlar={kurlar}
                       onKayitParaGuncelle={siparisKayitParaGuncelle}
                       onKalemleriBirlestir={siparisKalemleriniBirlestir}
@@ -1988,12 +2085,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       onAsortiOlustur={onAsortiOlustur}
                       firmaBilgileri={firmaBilgileri}
                       onPencereAc={onPencereAc}
-                      onKalemSil={siparisKalemiSil}
-                onKalemGuncelle={siparisKalemiGuncelle}
-                onBaslikGuncelle={siparisBasligiGuncelle}
-                onKalemEklemeyeBasla={sipariseKalemEklemeyeBasla}
                 onFiseGitNo={onFiseGitNo}
-                cariUygun={cariUygun}
                       kurlar={kurlar}
                       onKayitParaGuncelle={siparisKayitParaGuncelle}
                       onKalemleriBirlestir={siparisKalemleriniBirlestir}

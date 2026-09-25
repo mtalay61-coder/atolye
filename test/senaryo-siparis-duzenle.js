@@ -1,21 +1,31 @@
-// SENARYO — KAYDEDİLMİŞ SİPARİŞİ DÜZENLEME.
+// SENARYO — KAYDEDİLMİŞ SİPARİŞİ DÜZENLEME (sipariş formuyla, v1.446.0).
 //
 // Kullanıcı (6 Eylül): "Kaydedilmiş siparişi düzenlemek yok, düzenleme ekleyelim."
+// Kullanıcı (25 Eylül): "Düzenle deyince arkada yeni sipariş girişi gibi çalışıyor ve üstteki
+// ekranı kapatman gerekiyor. Yeni sipariş gibi hareket edecek ama altta girilenler gösterecek ve
+// girilenler de düzenlenebilir olacak: renk, adet, stok gibi değiştirilebilir (planlananlar
+// değişemez)."
 //
-// Asıl mesele düzenlemeyi eklemek değil, KAPILARI doğru koymak. Sipariş tek başına duran bir
-// kayıt değil: karşılanan miktar fişten geliyor, planlama üretim/alış siparişine bağlı. Bunlardan
-// biri varken kalemi değiştirmek, karşı taraftaki kaydı sessizce yalancı çıkarır.
-//
-// Ölçülen üç şey:
-//   1. TEMİZ kalemin miktarı değiştirilebiliyor ve kayda geçiyor.
-//   2. KARŞILANMIŞ kalem düzenlenemiyor (giriş kutusu hiç çizilmiyor).
-//   3. Başlık (tarih, müşteri kodu, not) düzenlenebiliyor; teslimat yapılmışsa CARİ kilitli.
+// Ölçülenler:
+//   0. Kartın kendisinde düzenleme kutusu YOK (düzenleme formda).
+//   1. ✎ Düzenle formu tam ekran kartın ÖNÜNDE açıyor (ekranın ortasındaki öğe forma ait).
+//   2. Form başlığı siparişten dolu; teslimat yapılmış siparişte cari KİLİTLİ.
+//   3. Girilmiş kalemler altta: kilitli (karşılanmış) satır ayrı ve salt okunur; serbest
+//      satırlarda ürün/renk seçicisi, miktar ve fiyat kutusu var.
+//   4. Serbest kalemde miktar, fiyat, ÜRÜN ve RENK değişiyor; yeni ürün aynı formdan ekleniyor.
+//   5. Kaydedince: sipariş yerinde güncelleniyor, kilitli kalem ve cari aynen korunuyor, form
+//      kapanıyor ve tam ekran kart görünür kalıyor.
 const { uygulamaAc, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function calistir() {
   const t = { ...TOHUM };
+  const stok = JSON.parse(TOHUM["stok:items"]);
+  // Ürün değiştirmeyi ölçmek için ikinci bir mamul: Taba'sı YOK, Kahve'si var.
+  stok.push({ id: "u3", ad: "Çizme", kategori: "Mamul", birim: "çift", birimFiyat: 500, hareketler: [],
+    variants: [{ renk: "Siyah", beden: "40", miktar: 0 }, { renk: "Kahve", beden: "40", miktar: 0 }, { renk: "Kahve", beden: "41", miktar: 0 }] });
+  t["stok:items"] = JSON.stringify(stok);
   t["siparis:data"] = JSON.stringify([
     {
       id: "sd1", siparisNo: "SAT-D1", tip: "Satış", cariId: "c2", durum: "Onaylandı",
@@ -25,7 +35,7 @@ async function calistir() {
         { id: "kd1", urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "40", miktar: 5, karsilanan: 0, birim: "çift", birimFiyat: 400, paraBirimi: "TRY" },
         // KARŞILANMIŞ kalem — kilitli olmalı.
         { id: "kd2", urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "41", miktar: 4, karsilanan: 2, birim: "çift", birimFiyat: 400, paraBirimi: "TRY" },
-        // TAMAMEN TEMİZ renk grubu — fiyat kutusu YALNIZ burada çıkmalı.
+        // TEMİZ, ürün kartında artık olmayan renk (Taba) — "(listede yok)" olarak görünmeli.
         { id: "kd3", urunId: "u2", urunAd: "Bot", renk: "Taba", beden: "40", miktar: 3, karsilanan: 0, birim: "çift", birimFiyat: 350, paraBirimi: "TRY" },
       ],
     },
@@ -39,15 +49,12 @@ async function calistir() {
   await sayfa.getByRole("button", { name: "Sipariş", exact: true }).first().click();
   await sayfa.waitForTimeout(600);
   // Durum süzgeci varsayılan "Bekliyor"; sipariş "Onaylandı" olduğu için önce "Tümü" seçiliyor.
-  // "Tümü" birden çok ekranda geçiyor, o yüzden GÖRÜNÜR olanı ve sayaç ekiyle olanı seçiyoruz.
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
       .find((x) => /^Tümü\s*\(/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0);
     if (b) b.click();
   });
   await sayfa.waitForTimeout(600);
-  // Sipariş özet satırı: metniyle değil GÖRÜNÜRLÜĞÜYLE seçiliyor — "SAT-D1" birçok ata ögenin
-  // metninde geçiyor ve `.last()` görünmeyen bir sarmalayıcıya düşüyordu.
   await sayfa.evaluate(() => {
     const d = [...document.querySelectorAll("div")]
       .filter((x) => x.textContent.includes("SAT-D1") && x.getBoundingClientRect().width > 0)
@@ -58,136 +65,137 @@ async function calistir() {
   await sayfa.locator('button[title^="Tam ekran aç"]:visible').first().click();
   await sayfa.waitForTimeout(800);
 
-  // 0. DÜZENLEME MODU DIŞINDA KUTU YOK (kullanıcı, 12 Eylül: "düzelt tuşuna tıklamadan düzeltmeye
-  //    izin vermesin"). Miktar/fiyat kutuları ve kalem silme çarpısı yalnız ✎ ile açılan modda.
-  const modDisiKutu = await sayfa.evaluate(() => ({
-    miktar: document.querySelectorAll('input[title^="Sipariş miktarı"]').length,
-    fiyat: document.querySelectorAll('input[title^="Birim fiyat"]').length,
-    sil: [...document.querySelectorAll('button[title="Bu kalemi sil"]')].length,
+  // 0. KARTTA KUTU YOK.
+  const kartKutusu = await sayfa.evaluate(() => ({
+    miktar: document.querySelectorAll('[data-siparis-karti] input[title^="Sipariş miktarı"]').length,
+    fiyat: document.querySelectorAll('[data-siparis-karti] input[title^="Birim fiyat"]').length,
+    sil: document.querySelectorAll('[data-siparis-karti] button[title="Bu kalemi sil"]').length,
   }));
-  await sayfa.evaluate(() => {
-    const b = [...document.querySelectorAll("button")]
-      .find((x) => (x.getAttribute("title") || "").startsWith("Düzenle") && x.getBoundingClientRect().width > 0);
-    if (b) b.click();
-  });
-  await sayfa.waitForTimeout(500);
 
-  // 1 + 2. Miktar kutuları: yalnız TEMİZ kalem için çizilmeli (düzenleme modunda).
-  const kutular = await sayfa.evaluate(() =>
-    [...document.querySelectorAll('input[title^="Sipariş miktarı"]')].map((i) => i.value));
-
-  // Temiz kalemin miktarını 5 → 8 yap.
-  const kutu = sayfa.locator('input[title^="Sipariş miktarı"]:visible').first();
-  await kutu.fill("8");
-  await kutu.press("Enter");
-  await sayfa.waitForTimeout(900);
-
-  const sipSonrasi = await depoOku(sayfa, "siparis:data");
-  const sip = (sipSonrasi || []).find((x) => x.id === "sd1") || {};
-  const kalemler = (sip.kalemler || []).map((k) => [k.id, k.miktar]);
-
-  // 3. Başlık düzenleme.
-  // EYLEMLER BAŞLIKTAKİ ŞERİTTE, İKON OLARAK (v1.203.0): metin yerine `title` ile bulunuyor.
-  // Kullanıcı (7 Eylül) eylemlerin tek yerde ve ikon olmasını istedi; senaryo da metne değil
-  // ANLAMA bağlanmalı, yoksa her görsel değişiklikte kırılır.
+  // 1. ✎ Düzenle → form ÖNDE.
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
       .find((x) => /^Düzenle/.test(x.title || "") && x.getBoundingClientRect().width > 0);
     if (b) b.click();
   });
-  await sayfa.waitForTimeout(500);
+  await sayfa.waitForTimeout(600);
+  const formOnde = await sayfa.evaluate(() => {
+    const form = document.querySelector('[data-siparis-duzenleme="sd1"]');
+    if (!form) return { formVar: false };
+    const orta = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+    return {
+      formVar: true,
+      ortadakiFormda: form.contains(orta),
+      baslik: /Satış siparişi düzenleniyor/.test(form.textContent) && /SAT-D1/.test(form.textContent),
+      kaydetDugmesi: !!form.querySelector("[data-siparis-duzenle-kaydet]"),
+    };
+  });
 
-  const cariKilidi = await sayfa.evaluate(() =>
-    /teslimat yapılmış, değiştirilemez/.test(document.body.innerText));
+  // 2. Başlık dolu, cari kilitli.
+  const baslikDolu = await sayfa.evaluate(() => {
+    const form = document.querySelector('[data-siparis-duzenleme="sd1"]');
+    const cari = form.querySelector("[data-siparis-cari]");
+    return {
+      cari: cari.value, cariKilitli: cari.disabled,
+      tarihler: [...form.querySelectorAll('input[type="date"]')].map((i) => i.value),
+      notVar: [...form.querySelectorAll("input")].some((i) => i.value === "ilk not"),
+    };
+  });
 
-  await sayfa.locator('input[type="date"]:visible').last().fill("2026-10-15");
-  await sayfa.waitForTimeout(200);
-  const kodKutusu = sayfa.locator('input:visible').nth(0);
+  // 3. Satırlar.
+  const satirlar = await sayfa.evaluate(() => [...document.querySelectorAll("[data-form-kalem-satiri]")].map((tr) => ({
+    tur: tr.getAttribute("data-form-kalem-satiri"),
+    urunSecici: !!tr.querySelector("[data-form-kalem-urun]"),
+    renk: (tr.querySelector("[data-form-kalem-renk]") || {}).value || null,
+    renkSecenekleri: [...((tr.querySelector("[data-form-kalem-renk]") || {}).options || [])].map((o) => o.textContent),
+    miktarKutusu: tr.querySelectorAll('input[type="number"]').length,
+    silDugmesi: tr.querySelectorAll('button[title="Bu bedeni sil"]').length,
+  })));
+
+  // 4a. Siyah (serbest) satırda miktar 5 → 8.
+  const siyahSerbest = sayfa.locator('tr[data-form-kalem-satiri="serbest"]').first();
+  const miktarKutusu = siyahSerbest.locator('input[type="number"]').first();
+  await miktarKutusu.fill("8");
+  await miktarKutusu.blur();
+  await sayfa.waitForTimeout(300);
+
+  // 4b. Taba satırı: ÜRÜN → Çizme (Taba Çizme'de yok → renk boşalır), sonra renk → Kahve, fiyat 375.
+  const tabaSatiri = sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1);
+  await tabaSatiri.locator("[data-form-kalem-urun]").selectOption("u3");
+  await sayfa.waitForTimeout(300);
+  const renkBosaldi = await sayfa.evaluate(() => {
+    const tr = document.querySelectorAll('tr[data-form-kalem-satiri="serbest"]')[1];
+    return (tr.querySelector("[data-form-kalem-renk]") || {}).value;
+  });
+  // Renk seçilmeden kaydetmek reddedilmeli.
+  await sayfa.locator("[data-siparis-duzenle-kaydet]").click();
+  await sayfa.waitForTimeout(400);
+  const renksizRed = await sayfa.evaluate(() => /Çizme: renk seçin/.test(document.body.innerText));
+  const renksizKayitYok = ((await depoOku(sayfa, "siparis:data")) || [])[0].kalemler.every((k) => k.urunId === "u2");
+  await sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1).locator("[data-form-kalem-renk]").selectOption("Kahve");
+  await sayfa.waitForTimeout(300);
+  const fiyatKutusu = sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1).locator('input[type="number"]').last();
+  await fiyatKutusu.fill("375");
+  await fiyatKutusu.blur();
+  await sayfa.waitForTimeout(300);
+
+  // 4c. YENİ ÜRÜN aynı formdan: Çizme · Siyah · 40 × 2.
+  await sayfa.locator('[data-siparis-duzenleme] input[placeholder="Model ara…"]').first().click();
+  await sayfa.waitForTimeout(300);
+  // Seçim `onMouseDown`da: gerçek fare tıklaması gerekiyor.
+  await sayfa.locator("[data-siparis-duzenleme] button", { hasText: "Çizme" }).first().click();
+  await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => {
-    const t2 = [...document.querySelectorAll("textarea")].pop();
-    if (t2) {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
-      setter.call(t2, "düzeltilmiş not");
-      t2.dispatchEvent(new Event("input", { bubbles: true }));
-    }
+    const sel = [...document.querySelectorAll("[data-siparis-duzenleme] select")]
+      .find((s) => [...s.options].some((o) => o.textContent === "Seçin…") && !s.disabled && !s.hasAttribute("data-siparis-cari"));
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
+    setter.call(sel, "Siyah");
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await sayfa.waitForTimeout(300);
-  await sayfa.locator('button:has-text("Kaydet"):visible').first().click();
-  await sayfa.waitForTimeout(1000);
+  await sayfa.locator('[data-olcu-miktar="40"]').fill("2");
+  await sayfa.locator("[data-kalemlere-ekle]:visible").first().click();
+  await sayfa.waitForTimeout(400);
 
+  // Başlık: teslim tarihi ve not.
+  await sayfa.locator('[data-siparis-duzenleme] input[type="date"]').last().fill("2026-10-15");
+  const notKutusu = sayfa.locator('[data-siparis-duzenleme] input[placeholder="Opsiyonel"]').first();
+  await notKutusu.fill("düzeltilmiş not");
+  await sayfa.waitForTimeout(200);
+
+  // 5. Kaydet.
+  await sayfa.locator("[data-siparis-duzenle-kaydet]").click();
+  await sayfa.waitForTimeout(1000);
+  const sonra = await sayfa.evaluate(() => ({
+    formKapandi: !document.querySelector("[data-siparis-duzenleme]"),
+    kartGorunur: [...document.querySelectorAll('[data-siparis-karti="sd1"]')].some((d) => d.getBoundingClientRect().width > 0),
+  }));
   const sipSon = ((await depoOku(sayfa, "siparis:data")) || []).find((x) => x.id === "sd1") || {};
 
-  // ---- BİRİM FİYAT DÜZENLEME -------------------------------------------------------------------
-  // Yalnız TEMİZ ve tek fiyatlı renk grubunda kutu çizilmeli. Bu siparişte "Siyah" grubunda biri
-  // karşılanmış iki kalem var, yani kutu ÇIKMAMALI — karışık kilit durumunda tek kutu, kilitli
-  // satırı da değiştirecekmiş gibi görünürdü.
-  // Başlık kaydedilince düzenleme modu kapandı; fiyat için yeniden ✎.
-  await sayfa.evaluate(() => {
-    const b = [...document.querySelectorAll("button")]
-      .find((x) => /^Düzenle/.test(x.title || "") && x.getBoundingClientRect().width > 0);
-    if (b) b.click();
-  });
-  await sayfa.waitForTimeout(500);
-  const fiyatKutulari = await sayfa.evaluate(() =>
-    [...document.querySelectorAll('input[title^="Birim fiyat"]')].map((i) => i.value));
-
-  // Temiz gruptaki fiyatı 350 → 375 yap; o rengin BÜTÜN ölçülerine uygulanmalı.
-  const fiyatKutusu = sayfa.locator('input[title^="Birim fiyat"]:visible').first();
-  await fiyatKutusu.fill("375");
-  await fiyatKutusu.press("Enter");
-  await sayfa.waitForTimeout(900);
-  const fiyatSonrasi = ((await depoOku(sayfa, "siparis:data")) || [])
-    .find((x) => x.id === "sd1").kalemler.map((k) => [k.id, k.birimFiyat]);
-
-  // ---- VAR OLAN SİPARİŞE KALEM EKLEME ----------------------------------------------------------
-  await sayfa.evaluate(() => {
-    const b = [...document.querySelectorAll("button")]
-      .find((x) => /Bu siparişe yeni kalem ekle/.test(x.title || "") && x.getBoundingClientRect().width > 0);
-    if (b) b.click();
-  });
-  await sayfa.waitForTimeout(900);
-  const eklemeModu = await sayfa.evaluate(() => ({
-    baslikVar: /SAT-D1 siparişine kalem ekleniyor/.test(document.body.innerText),
-    // Düğmenin adı da değişmeli: "Siparişi Kaydet"e basıp var olana eklendiğini fark etmek
-    // geri alınması zahmetli bir sürpriz olurdu.
-    dugmeAdi: [...document.querySelectorAll("button")].some((b) => /SAT-D1 Siparişine Ekle/.test(b.textContent)),
-  }));
-
-  // DURUM ARTIK SEÇİLMİYOR, GÖSTERİLİYOR (kullanıcı, 7 Eylül: "sipariş durumu manuel kaldıralım,
-  // gerek yok çünkü sipariş hareketi ile durum belirleniyor").
-  //
-  // Elle seçim hareketlerin hesapladığı durumla ÇELİŞEBİLİYORDU: "Tamamlandı" seçilse de teslim
-  // edilmemiş kalem duruyorsa liste onu bekleyen sayıyordu. İki kaynak varsa biri yalan söyler.
+  // DURUM GÖSTERİLİYOR, SEÇİLMİYOR (7 Eylül).
   const durumGosterimi = await sayfa.evaluate(() => ({
-    // Açılır liste KALMAMALI.
     seciciVar: [...document.querySelectorAll("select")]
       .some((x) => [...x.options].some((o) => /Kısmi Teslim/.test(o.textContent))),
-    // Rozet olarak duruyor ve neye dayandığı ipucunda yazılı.
     rozet: (() => {
-      const r = [...document.querySelectorAll("span")]
-        .find((x) => /hareketlerinden hesaplan/.test(x.title || ""));
+      const r = [...document.querySelectorAll("span")].find((x) => /hareketlerinden hesaplan/.test(x.title || ""));
       return r ? r.textContent.trim() : null;
     })(),
   }));
 
-
   await tarayici.close();
   return {
-    modDisiKutu,
-    durumGosterimi,
     hatalar,
-    // Kutu SAYISI önemli: karışık kilitli "Siyah" grubunda çıkmamalı, temiz "Taba"da çıkmalı.
-    fiyatKutulari,
-    fiyatSonrasi,
-    eklemeModu,
-    // İki kalem var ama YALNIZ BİRİ düzenlenebilir.
-    duzenlenebilirKalemSayisi: kutular.length,
-    kalemler,
-    cariKilidi,
+    kartKutusu,
+    formOnde,
+    baslikDolu,
+    satirlar,
+    renkBosaldi,
+    renksizRed,
+    renksizKayitYok,
+    sonra,
+    durumGosterimi,
+    kalemler: (sipSon.kalemler || []).map((k) => `${k.id.startsWith("kd") ? k.id : "yeni"}:${k.urunAd}:${k.renk}:${k.beden}:${k.miktar}:${k.birimFiyat}:${k.karsilanan || 0}`),
     baslik: { teslimTarihi: sipSon.teslimTarihi, not: sipSon.not },
-    // Kilitli kalem DEĞİŞMEMİŞ olmalı.
-    kilitliKalemKorundu: ((sipSon.kalemler || []).find((k) => k.id === "kd2") || {}).miktar === 4,
-    // Cari de değişmemiş olmalı.
     cariKorundu: sipSon.cariId === "c2",
   };
 }

@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.445.0** · 24 Eylül 2026
+Son sürüm: **v1.446.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (24 Eylül, v1.445.0): YEREL ŞİFRE YEDEĞİ KALDIRILDI — giriş yalnız bulut hesabıyla.** Bkz. "YEREL ŞİFRE YEDEĞİ — TAMAMLANDI".
+**Son iş (25 Eylül, v1.446.0): SİPARİŞ DÜZENLEME SİPARİŞ FORMUNDA — form önde, kalemler altta düzenlenebilir (ürün/renk/miktar/fiyat), kilitliler salt okunur.** Bkz. "SİPARİŞ DÜZENLEME FORMDA".
+Önceki (v1.445.0): yerel şifre yedeği kaldırıldı — giriş yalnız bulut hesabıyla.
 **⚠ PAKET EKSİKLERİ (v1.444.0 zip'inde yoktu) — bkz. "PAKET EKSİKLERİ" bölümü. Asıl dosyalar bulunursa yerleştir.**
 **PROJE ARTIK GIT DEPOSUNDA (24 Eylül, v1.445.0 üzerinde):** kaynak `mtalay61-coder/atolye` deposunda, Claude Code ile geliştiriliyor; zip taşımaya gerek yok. Bkz. "GIT DEPOSUNA TAŞINDI" bölümü ve `CLAUDE.md`.
 Önceki (v1.444.0): yerel şifre yedeğini kaldırma denendi, geri alındı; giriş ekranına test işareti.
@@ -5992,6 +5993,47 @@ Kullanıcının yüklediği `atolye-erp-src-v1_444_0.zip` EKSİKTİ (önceki otu
   paketi başka dizine açınca `ln -sfn <paket> /home/claude/erp` gerekiyor.
 - **Paketlerken:** zip'i `src/` + `test/` + kök dosyaların TAMAMIYLA oluştur; paketledikten sonra
   `.satir-haritasi.json` ile `src/` dosya listesini ve `kosu.sh` listesiyle `test/`i karşılaştır.
+
+## SİPARİŞ DÜZENLEME FORMDA (25 Eylül, v1.446.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Siparişte düzenleme düzgün çalışmıyor, düzenle deyince arkada yeni sipariş girişi
+gibi çalışıyor ve üstteki ekranı kapatman gerekiyor. Yeni sipariş gibi hareket edecek ama altta
+girilenler gösterecek ve girilenler de düzenlenebilir olacak: renk, adet, stok gibi değiştirilebilir
+(planlananlar değişemez)."
+
+**Sorun:** iki ayrı yol vardı. ✎ kartın içinde başlık kutuları + satır içi miktar/fiyat açıyordu;
+"+" ve düzenlemedeki "Ürün Ekle" ise sipariş formunu modülün normal yerinde, yani tam ekran kartın
+(zIndex 100) ARKASINDA açıyordu (`ekleHedefiId` akışı).
+
+**Yeni akış (tek yol):** kartta ✎ → `siparisDuzenlemeyiBaslat(id)` formu siparişin başlığı
+(cari, tarihler, müşteri kodu, not, defter, kayıt para birimi) ve KALEMLERİN KOPYASIYLA doldurur.
+Form düzenlemede `position: fixed; zIndex: 110` ile kartın önünde, kart şeridiyle aynı renkte
+"… siparişi düzenleniyor" başlığıyla çiziliyor (`data-siparis-duzenleme`). Düğme "SAT-… Değişikliklerini
+Kaydet" (`siparisDuzenlemeKaydet`); kaydedince/vazgeçince form kapanıyor, kart güncel hâliyle duruyor.
+Tip seçici gizli; teslimat yapılmışsa cari seçici kilitli ve sebebi yanında.
+
+**Kalem tablosu (form altı):** satır = ürün + renk + KİLİT SEBEBİ. Kilitli satırlar (planlanmış
+ya da karşılanan > 0 — `kalemKilitSebebi`, kural DEĞİŞMEDİ) salt okunur, 🔒 "planlandı"/"teslim
+alındı" etiketli. Serbest satırlarda: ÜRÜN seçici (`grupUrunDegistir` — renk yeni üründe yoksa
+boşalır, kaydetmede "renk seçin" reddi; ambalaj tercihi sıfırlanır), RENK seçici (`grupDegistir`),
+miktar, fiyat, sil. Değişiklik sonrası aynı ürün+renk+ölçüye düşen serbest kalemler birleşiyor.
+Kayıtlı ama üründen sonradan kalkmış renk "(listede yok)" olarak gösteriliyor ve kaydı ENGELLEMİYOR
+(hata kalıbı 2). Yeni ürün aynı formun "Kalem Ekle" alanından; `kalemEkle`/barkod birleştirmesi
+kilitli kaleme miktar EKLEMİYOR (yeni satır açıyor).
+
+**Kaydetme güvencesi:** kilitli kalem ASIL kayıttan alınıyor; formdan düşmüşse geri ekleniyor —
+kilitli kalem bu yoldan değişemez/silinemez. `kalemSil`/`kalemDuzenle` de kilitliyi reddediyor.
+"Tamamlandı"/"İptal" siparişe YENİ kalem eklenemiyor (eski `sipariseKalemEklemeyeBasla` kuralı, artık kaydetmede).
+
+**Kaldırılanlar (ölü kod):** kartta `baslikDuzenle`/`baslikForm`, satır içi miktar/fiyat kutuları ve
+"+" düğmesi; modülde `ekleHedefiId`, `sipariseKalemEklemeyeBasla`, `hedefSipariseEkle`,
+`siparisKalemiGuncelle`, `siparisBasligiGuncelle`, `siparisKalemiSil`. Karta tek prop: `onDuzenle`.
+
+**Doğrulama:** `senaryo-siparis-duzenle` yeni akışa göre YENİDEN yazıldı (altın güncellendi): kartta
+kutu yok; form önde (`elementFromPoint`); başlık dolu, cari kilitli; kilitli satırda kutu/silme yok;
+miktar 5→8, Taba satırı ürün Bot→Çizme (renk boşaldı, renksiz kayıt reddedildi) → Kahve, fiyat
+350→375; yeni ürün eklendi; kaydedince kilitli kalem (4, karşılanan 2) ve cari korundu, form kapandı,
+kart görünür. Formun ölçü miktar kutularına test işareti `data-olcu-miktar` eklendi.
 
 ## GIT DEPOSUNA TAŞINDI (24 Eylül, v1.445.0 üzerinde — Claude Code oturumu)
 

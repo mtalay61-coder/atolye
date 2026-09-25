@@ -62,11 +62,9 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onKalemSil, onKalemGuncelle, onBaslikGuncelle, onKalemEklemeyeBasla, cariUygun, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc }) {
   const [open, setOpen] = useState(!!baslangicAcik);
-  const [baslikDuzenle, setBaslikDuzenle] = useState(false);
   const [tedarikAcik, setTedarikAcik] = useState(true);
-  const [baslikForm, setBaslikForm] = useState(null);
   const [showTeslim, setShowTeslim] = useState(false);
   const [teslimMiktarlar, setTeslimMiktarlar] = useState({});
   // ÇIKIŞ FORMU — ÜSTTE SEÇ, ALTA SATIR EKLE.
@@ -328,32 +326,14 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           </span>
           {!saltOkunur && (
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {/* KALEM EKLEME de burada: siparişe ait bir eylem, kartın ortasında değil.
-                  Adı "Kalem Ekle" İÇERMİYOR — fiş formunun kendi "Kalem Ekle" düğmesi de aynı
-                  kartta duruyor ve FİŞE satır ekliyor. Aynı ekranda aynı adla iki farklı iş,
-                  yanlış düğmeye basılması demek. */}
-              {open && onKalemEklemeyeBasla && (
-                <button
-                  type="button"
-                  className="btn-ikon"
-                  title="Bu siparişe yeni kalem ekle — form siparişin carisi ve tipiyle açılır"
-                  onClick={() => onKalemEklemeyeBasla(siparis.id)}
-                >
-                  <Plus size={15} />
-                </button>
-              )}
+              {/* DÜZENLE = SİPARİŞ FORMU (25 Eylül — kullanıcı: "düzenle deyince arkada yeni sipariş
+                  girişi gibi çalışıyor ve üstteki ekranı kapatman gerekiyor"). Eskiden ✎ kartın içinde
+                  başlık kutuları açıyor, "+" / "Ürün Ekle" ise formu tam ekran kartın ARKASINDA
+                  açıyordu. Artık tek yol: form önde açılıyor, girilmiş kalemler altta düzenlenebilir
+                  (planlanmış/teslim alınmış olanlar kilitli), ürün ekleme de aynı formda. */}
               <KayitEylemleri
-                onDuzenle={open ? () => {
-                  setBaslikForm({
-                    cariId: siparis.cariId || "",
-                    tarih: siparis.tarih || "",
-                    teslimTarihi: siparis.teslimTarihi || "",
-                    musteriKodu: siparis.musteriKodu || "",
-                    not: siparis.not || "",
-                  });
-                  setBaslikDuzenle(true);
-                } : undefined}
-                duzenleBaslik="Düzenle — cari, tarihler, not; kalem miktarı ve fiyatı da bu moddayken değişir"
+                onDuzenle={open && onDuzenle ? () => onDuzenle(siparis.id) : undefined}
+                duzenleBaslik="Düzenle — sipariş formunda açılır: başlık, ürün ekleme, bekleyen kalemlerde ürün/renk/miktar/fiyat"
                 onSil={() => { setOpen(true); setSiparisSilOnayGoster(true); }}
                 silBaslik="Siparişi sil"
               />
@@ -437,95 +417,12 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           {/* Tarih / teslim / toplam adet / tutar, kartın ÜST BAŞLIĞINDA zaten var — burada tekrar
               etmek hem yer kaplıyor hem aynı bilgiyi iki kez okutuyordu.
               NOT ise başlıkta yok; yalnızca o gösterilir. */}
-          {/* ---- SİPARİŞ BAŞLIĞI DÜZENLEME ------------------------------------------------------
-              Kullanıcı: "Kaydedilmiş siparişi düzenlemek yok, düzenleme ekleyelim."
-              Kalem miktarları satırında yerinde düzenleniyor; BAŞLIK (cari, tarihler, müşteri
-              kodu, not) burada. Salt okunur önizlemede kapalı — düzenleme tam ekranda yapılır. */}
-          {!saltOkunur && onBaslikGuncelle && (
-            baslikDuzenle && baslikForm ? (
-              <div style={{ border: "1px solid #C9B99A", background: "var(--erp-panel)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 10, display: "grid", gap: 8 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 8 }}>
-                  <label style={{ display: "grid", gap: 3, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
-                    {siparis.tip === "Alış" ? "Tedarikçi" : "Müşteri"}
-                    {/* CARİ, TESLİMAT YAPILMIŞSA KİLİTLİ: fişler o cariye kesildi; değiştirmek
-                        ekstre ile siparişi birbirinden koparırdı. Sebebi burada yazılı, kullanıcı
-                        kaydettikten sonra reddedilmesin. */}
-                    {(siparis.kalemler || []).some((k) => (k.karsilanan || 0) > 0) ? (
-                      <span style={{ fontSize: 12, color: "var(--erp-brown)" }}>
-                        {(cariler.find((c) => c.id === siparis.cariId) || {}).unvan || "—"}
-                        <span style={{ fontSize: 10, marginLeft: 6 }}>teslimat yapılmış, değiştirilemez</span>
-                      </span>
-                    ) : (
-                      <select
-                        value={baslikForm.cariId || ""}
-                        onChange={(e) => setBaslikForm({ ...baslikForm, cariId: e.target.value })}
-                        style={{ ...inputStyle, padding: "6px 8px", fontSize: 12 }}
-                      >
-                        {(cariUygun || cariler || []).map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
-                      </select>
-                    )}
-                  </label>
-                  <label style={{ display: "grid", gap: 3, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
-                    Sipariş Tarihi
-                    <input type="date" value={baslikForm.tarih || ""} onChange={(e) => setBaslikForm({ ...baslikForm, tarih: e.target.value })} style={{ ...inputStyle, padding: "6px 8px", fontSize: 12 }} />
-                  </label>
-                  <label style={{ display: "grid", gap: 3, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
-                    Teslim Tarihi
-                    <input type="date" value={baslikForm.teslimTarihi || ""} onChange={(e) => setBaslikForm({ ...baslikForm, teslimTarihi: e.target.value })} style={{ ...inputStyle, padding: "6px 8px", fontSize: 12 }} />
-                  </label>
-                  <label style={{ display: "grid", gap: 3, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
-                    Müşteri Sipariş Kodu
-                    <input value={baslikForm.musteriKodu || ""} onChange={(e) => setBaslikForm({ ...baslikForm, musteriKodu: e.target.value })} style={{ ...inputStyle, padding: "6px 8px", fontSize: 12 }} />
-                  </label>
-                </div>
-                <label style={{ display: "grid", gap: 3, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
-                  Not
-                  <textarea value={baslikForm.not || ""} onChange={(e) => setBaslikForm({ ...baslikForm, not: e.target.value })} rows={2} style={{ ...inputStyle, padding: "6px 8px", fontSize: 12 }} />
-                </label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    className="btn-primary btn-save"
-                    style={{ padding: "5px 12px", fontSize: 12 }}
-                    onClick={() => { onBaslikGuncelle(siparis.id, baslikForm); setBaslikDuzenle(false); }}
-                  >
-                    <Save size={13} /> Kaydet
-                  </button>
-                  <button
-                          data-kalemlere-ekle="1" className="btn-ghost" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => setBaslikDuzenle(false)}>
-                    <X size={13} /> Vazgeç
-                  </button>
-                  {/* ÜRÜN EKLE, DÜZENLEME FORMUNUN İÇİNDE (24 Eylül, v1.442.0 — kullanıcı: "sipariş
-                      düzenle deyince stok ekleme de olsun; yarın kalan sipariş üzerine devam etmek
-                      için önemli"). Eylem zaten vardı ama başlıktaki eylem şeridinde, YAZISIZ bir
-                      "+" ikonuydu — düzenlemedeyken gözden kaçıyordu. Aynı işi yapıyor
-                      (`onKalemEklemeyeBasla`): form siparişin carisi ve tipiyle açılıyor, eklenen
-                      kalem bu siparişe yazılıyor. İkinci bir ekleme yolu DEĞİL, aynı kapının
-                      görünür kısayolu. */}
-                  {onKalemEklemeyeBasla && (
-                    <button
-                      type="button" className="btn-ghost" data-siparis-urun-ekle="1"
-                      style={{ padding: "5px 12px", fontSize: 12, marginLeft: "auto" }}
-                      title="Bu siparişe yeni ürün/renk ekle — form siparişin carisi ve tipiyle açılır"
-                      onClick={() => { setBaslikDuzenle(false); onKalemEklemeyeBasla(siparis.id); }}
-                    >
-                      <Plus size={13} /> Ürün Ekle
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* DÜZENLE VE YENİ KALEM DÜĞMELERİ BURADAN ALINDI → başlıktaki eylem şeridine
-                 (kullanıcı, 7 Eylül: "kullanıcı ekranda silme/kaydetme aramasın, hepsi sağ üstte").
-                 Siparişin eylemleri iki yere dağılmıştı: silme başlıkta, düzenleme ve kalem ekleme
-                 kartın ortasında, notun yanında. Burada artık yalnız NOT duruyor — o bir eylem
-                 değil, siparişin kendi bilgisi. */
-              siparis.not ? (
-                <div style={{ display: "flex", gap: 6, marginBottom: 10, fontSize: 12, color: "var(--erp-text-2)", alignItems: "flex-start", flexWrap: "wrap" }}>
-                  <FileText size={13} style={{ flexShrink: 0, marginTop: 1 }} />
-                  <NotKaynakla not={siparis.not} tumSiparisler={tumSiparisler} onSiparisGit={onSiparisGit} />
-                </div>
-              ) : null
-            )
+          {/* NOT. Başlık düzenleme kartın içinde değil, sipariş formunda (✎ Düzenle). */}
+          {!saltOkunur && siparis.not && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 10, fontSize: 12, color: "var(--erp-text-2)", alignItems: "flex-start", flexWrap: "wrap" }}>
+              <FileText size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+              <NotKaynakla not={siparis.not} tumSiparisler={tumSiparisler} onSiparisGit={onSiparisGit} />
+            </div>
           )}
           {saltOkunur && siparis.not && (
             <div style={{ display: "flex", gap: 6, marginBottom: 10, fontSize: 12, color: "var(--erp-text-2)", alignItems: "flex-start" }}>
@@ -761,41 +658,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                   return (
                                     <td key={b} style={{ padding: "5px 6px", textAlign: "center" }}>
                                       <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
-                                        {/* MİKTAR YERİNDE DÜZENLENİYOR. Kilitli kalemler yukarıda ayrılıyor;
-                                            buraya düşen kalemin ne planlaması ne teslimatı var, yani
-                                            değiştirmek hiçbir karşı kaydı yalancı çıkarmıyor.
-                                            `onBlur`: her tuşta kaydetmek, "12"yi yazarken önce "1" olarak
-                                            kaydedip sipariş geçmişini gürültüye boğardı. */}
-                                        {/* YALNIZ DÜZENLEME MODUNDA (kullanıcı, 12 Eylül: "düzelt tuşuna
-                                            tıklamadan düzeltmeye izin vermesin, yanlışlıkla tıklama için").
-                                            Kutu her zaman açıktı; telefonda tabloya dokunurken miktar
-                                            değişebiliyordu. Kalem yazan kalem düzenlemesi de kalem silme de
-                                            kalemin (✎) açtığı moda bağlı. */}
-                                        {onKalemGuncelle && baslikDuzenle ? (
-                                          <input
-                                            type="number" step="any" min="0"
-                                            defaultValue={k.miktar}
-                                            key={`${k.id}-${k.miktar}`}
-                                            onBlur={(e) => {
-                                              const yeni = parseFloat(e.target.value);
-                                              if (yeni === k.miktar) return;
-                                              onKalemGuncelle(siparis.id, k.id, "miktar", e.target.value);
-                                            }}
-                                            onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                                            title="Sipariş miktarı — değiştirmek için yazıp Enter"
-                                            className="mono"
-                                            style={{ width: 52, padding: "2px 4px", fontSize: 12, fontWeight: 600, textAlign: "center", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
-                                          />
-                                        ) : k.miktar}
-                                        {baslikDuzenle && (
-                                        <button
-                                          onClick={() => onKalemSil(siparis.id, k.id)}
-                                          title="Bu kalemi sil"
-                                          style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex", padding: 0 }}
-                                        >
-                                          <X size={10} />
-                                        </button>
-                                        )}
+                                        {/* Miktar burada yalnız GÖSTERİLİR; değiştirmek ✎ Düzenle ile sipariş formunda. */}
+                                        {k.miktar}
                                       </span>
                                     </td>
                                   );
@@ -811,36 +675,6 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     const fiyatlar = Array.from(new Set(rg.kalemler.map((k) => k.birimFiyat || 0)));
                                     const sembol = PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi;
                                     const yaz = (x) => x.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
-                                    // FİYAT YERİNDE DÜZENLENİYOR — ama yalnız bütün grup DÜZENLENEBİLİR
-                                    // ve TEK FİYATTAYSA. Karışık fiyatlı bir gruba tek kutu koymak,
-                                    // hangi bedenin fiyatının değiştiğini belirsiz bırakırdı; kilitli
-                                    // kalem varsa da kutu, dokunulamayan satırları da değiştirecekmiş
-                                    // gibi görünürdü.
-                                    const grupDuzenlenebilir = !saltOkunur && onKalemGuncelle
-                                      && rg.kalemler.every((k) => !k.planlama && (k.karsilanan || 0) === 0);
-                                    if (grupDuzenlenebilir && baslikDuzenle && fiyatlar.length === 1) {
-                                      return (
-                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                                          <input
-                                            type="number" step="any" min="0"
-                                            defaultValue={fiyatlar[0]}
-                                            key={`${rg.kalemler.map((k) => k.id).join("-")}-${fiyatlar[0]}`}
-                                            onBlur={(e) => {
-                                              const yeni = parseFloat(e.target.value);
-                                              if (!(yeni >= 0) || yeni === fiyatlar[0]) return;
-                                              // Renk grubundaki HER kaleme uygulanıyor: ekranda tek
-                                              // fiyat gösteriliyor, tek kutu da tek anlam taşımalı.
-                                              rg.kalemler.forEach((k) => onKalemGuncelle(siparis.id, k.id, "birimFiyat", e.target.value));
-                                            }}
-                                            onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                                            title="Birim fiyat — bu rengin tüm ölçülerine uygulanır"
-                                            className="mono"
-                                            style={{ width: 74, padding: "2px 4px", fontSize: 13, fontWeight: 700, textAlign: "right", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
-                                          />
-                                          {sembol}
-                                        </span>
-                                      );
-                                    }
                                     return fiyatlar.length === 1
                                       ? `${yaz(fiyatlar[0])} ${sembol}`
                                       : `${yaz(Math.min(...fiyatlar))}–${yaz(Math.max(...fiyatlar))} ${sembol}`;

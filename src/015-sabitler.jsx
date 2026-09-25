@@ -451,9 +451,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.445.0";
-const SURUM_TARIHI = "2026-09-24";
-const SURUM_NOTU = "Giris yalniz bulut hesabiyla; yerel sifre yedegi kaldirildi";
+const SURUM = "1.446.0";
+const SURUM_TARIHI = "2026-09-25";
+const SURUM_NOTU = "Siparis duzenleme siparis formunda: kalemler altta, urun/renk/miktar degisir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -462,6 +462,10 @@ const SURUM_NOTU = "Giris yalniz bulut hesabiyla; yerel sifre yedegi kaldirildi"
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.446.0", tarih: "25.09.2026",
+    eklenen: ["Sipariş düzenlemede girilmiş kalemlerin ÜRÜNÜ ve RENGİ de değiştirilebiliyor (miktar ve fiyatın yanında); planlanmış ya da teslim alınmış kalemler kilitli (🔒) ve değişmiyor"],
+    degisen: ["Sipariş kartında ✎ Düzenle artık yeni sipariş formunu açıyor: başlık bilgileri dolu gelir, girilmiş kalemler altta listelenir, yeni ürün de aynı formdan eklenir; 'Değişikliklerini Kaydet' ile sipariş güncellenir"],
+    duzeltilen: ["Sipariş düzenleme / ürün ekleme formu tam ekran sipariş kartının ARKASINDA açılıyordu ve kartı kapatmak gerekiyordu — artık önde açılıyor"] },
   { surum: "1.445.0", tarih: "24.09.2026",
     eklenen: [],
     degisen: ["Giriş artık YALNIZ bulut hesabıyla yapılıyor: bulut girişi olmazsa eskisi gibi kayıtlı şifreyle içeri alınmıyor, giriş ekranında kalınıyor ve sebebi (şifre hatalı, hesap onaysız, bağlantı yok…) ekranda yazıyor",
