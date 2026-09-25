@@ -451,9 +451,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.449.0";
+const SURUM = "1.450.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Yeni tasarim: ust menu, acik renkler";
+const SURUM_NOTU = "Ust menu tablette sigiyor; stok kategori seritleri acik renk";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -462,6 +462,10 @@ const SURUM_NOTU = "Yeni tasarim: ust menu, acik renkler";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.450.0", tarih: "25.09.2026",
+    eklenen: [],
+    degisen: ["Stok listesindeki kategori şeritleri (Hammadde, Mamul…) koyu dolgu yerine açık renkte"],
+    duzeltilen: ["Tablette üst menü sığmıyor, 'Finans' sağdaki ikonların altına giriyordu — menü artık sığmazsa kendini sıkıştırıyor (önce ikonlar, sonra yazılar gizlenir)"] },
   { surum: "1.449.0", tarih: "25.09.2026",
     eklenen: [],
     degisen: ["YENİ TASARIM: koyu yan kolon kalktı; modüller üstte yatay menüde, açık sekmeler hemen altında — ekranın tamamı içeriğe kalıyor",

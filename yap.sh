@@ -17,6 +17,9 @@ SURUM="$(node -e 'console.log(require("fs").readFileSync("atolye-erp.jsx","utf8"
 CIKTI="atolye-erp-v${SURUM}.html"
 # YAYINLANMIŞ SÜRÜMÜN ÜSTÜNE YAZMA (25 Eylül): sürüm artırılmadan derlenince yayındaki dosya
 # sessizce değişiyordu — telefonlarda o adresi açan herkes habersiz yeni kodu alırdı.
+# Önce sunucudan tazele: PR telefondan birleştirilince yerel origin/main eski kalıyordu ve koruma
+# yayındaki v1.449'u tanımadı (25 Eylül). Ağ yoksa yerel bilgiyle devam.
+git fetch -q origin main 2>/dev/null || true
 if git cat-file -e "origin/main:$CIKTI" 2>/dev/null; then
   echo "── DUR: $CIKTI zaten yayında (origin/main). Önce src/015-sabitler.jsx'te SURUM'u artır. ──"
   exit 1

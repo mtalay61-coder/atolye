@@ -88,7 +88,8 @@ async function calistir() {
     return sayfa.evaluate(() => {
       // Satır türü rozetleri: filtreden sonra hepsi aynı tür olmalı.
       const rozetler = [...document.querySelectorAll("span")]
-        .filter((e) => e.getBoundingClientRect().width > 0 && /^(Alış|Satış|Ödeme|Tahsilat|Üretim)$/.test((e.textContent || "").trim()))
+        // Üst menüdeki etiketler ("Üretim" grubu) satır rozeti değil — sayılmıyor (v1.450.0).
+        .filter((e) => !e.closest(".ust-menu") && e.getBoundingClientRect().width > 0 && /^(Alış|Satış|Ödeme|Tahsilat|Üretim)$/.test((e.textContent || "").trim()))
         .map((e) => e.textContent.trim());
       return Array.from(new Set(rozetler));
     });

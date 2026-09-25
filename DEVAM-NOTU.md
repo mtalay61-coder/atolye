@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.449.0** · 25 Eylül 2026
+Son sürüm: **v1.450.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.449.0): YENİ TASARIM — yan kolon kalktı (üst menü), açık "A" paleti.** Bkz. "YENİ TASARIM".
+**Son iş (25 Eylül, v1.450.0): üst menü ÖLÇEREK sığıyor (kademeli sıkışma) + stok kategori şeritleri açık.** Bkz. "YENİ TASARIM" sonu.
+Önceki (v1.449.0): YENİ TASARIM — yan kolon kalktı (üst menü), açık "A" paleti.
 Önceki (v1.448.0): yenilemede ekran korunuyor.
 Önceki (v1.447.0): yeni sürüme otomatik geçiş (surum.json).
 Önceki (v1.446.0): SİPARİŞ DÜZENLEME SİPARİŞ FORMUNDA — form önde, kalemler altta düzenlenebilir (ürün/renk/miktar/fiyat), kilitliler salt okunur.** Bkz. "SİPARİŞ DÜZENLEME FORMDA".
@@ -6046,8 +6047,25 @@ A açık-nötr (beyaz menü), B sıcak-kum, C üst menü/yan kolonsuz. **Karar: 
 **Ekran görüntüsü tekniği (bu ortamda esm.sh kapalı):** test paketi + npm'den `lucide-react@0.383.0`
 gömülü, yazı tipleri curl ile rotalanıyor (`/tmp` betikleri; tekrar gerekirse aynı yol).
 
-**AÇIK:** renkli vurgular (eski turuncu #E1611F 40, #C97B3D, #B8860B…), stok kategori şeritlerinin
-koyu dolguları, pencere başlık bantları — kullanıcı geri bildirimine göre ikinci tur.
+**AÇIK:** renkli vurgular (eski turuncu #E1611F 40, #C97B3D, #B8860B…), pencere başlık bantları
+(sipariş mavisi, ürün penceresinin kategori rengi) — kullanıcı geri bildirimine göre.
+
+### v1.450.0 — MENÜ SIĞDIRMA + AÇIK KATEGORİ ŞERİTLERİ (25 Eylül)
+**Kullanıcı** (tablet ekran görüntüsü): "Finans" ve "Siparişler" sağdaki ikonların altına giriyordu.
+Test ortamında 900px'te sığıyordu — cihazın yazı boyutu ayarı metni büyütüyor, **genişlik eşiği
+güvenilmez**. Çözüm ölçüm: `ustMenuSigdir` (100-app) her çizimde, ekran boyutu değişince ve
+`document.fonts.ready`'de menü kabının `scrollWidth > clientWidth` olup olmadığına bakıp kademeyi
+DOM sınıfıyla ayarlıyor (React durumu değil — yoksa ölç/çiz döngüsü): `sik-1` grup ikonları gizli,
+`sik-2` yalnız ikon (etiketler `.ust-menu-etiket` gizli; erişilebilir ad aria-label/title'dan),
+`sik-3` Anasayfa düğmesi de gizli (logo anasayfaya gidiyor). Anasayfa düğmesine ev ikonu eklendi.
+Ölçüldü: 1000→normal, 900→sik-1, 820/760→sik-2.
+
+**Stok kategori şeritleri** (kullanıcı: "stok kategori şeritlerini de açık renk yap"): dolu koyu
+bant + beyaz yazı → kategori renginin %8 tonu, 1px %20 kenar, yazı/ikon kategori renginde
+(`data-stok-kategori-bandi`). Ürün penceresinin kategori renkli başlığına dokunulmadı (bant değil).
+
+**yap.sh:** koruma artık önce `git fetch origin main` yapıyor. PR telefondan birleştirildiğinde
+yerel origin/main eski kalmış, v1.449 yayındayken üstüne derlenmişti (commit öncesi geri alındı).
 
 ## YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0 — Claude Code oturumu)
 

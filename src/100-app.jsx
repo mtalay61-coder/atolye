@@ -149,6 +149,28 @@ export default function AtolyeERP() {
   // kaydırma çubuğuna düşürüyordu. Menü ikonlarla çalışmaya devam eder, tek tıkla genişletilir.
   // Üst menüde açık olan açılır liste: grup adı ya da "kullanici" (v1.449.0 — yan menü kalktı).
   const [acikUstMenu, setAcikUstMenu] = useState(null);
+  // ÜST MENÜ SIĞDIRMA: menü taşarsa kademeli sıkışır (CSS: .ust-menu.sik-N). Ölçüm DOM sınıfıyla,
+  // React durumu olmadan: durumla yapılsa her ölçüm yeniden çizim → yeniden ölçüm döngüsü olurdu.
+  const ustMenuRef = useRef(null);
+  const ustMenuNavRef = useRef(null);
+  const ustMenuSigdir = useCallback(() => {
+    const menu = ustMenuRef.current, nav = ustMenuNavRef.current;
+    if (!menu || !nav) return;
+    for (let k = 0; k <= 3; k++) {
+      menu.classList.remove("sik-1", "sik-2", "sik-3");
+      if (k > 0) menu.classList.add(`sik-${k}`);
+      // Taşma: içerik, ayrılan alandan geniş. (overflow görünür olsa da scrollWidth taşanı sayar.)
+      if (nav.scrollWidth <= nav.clientWidth + 1) return;
+    }
+  }, []);
+  // Her çizimden sonra (etkin sekme kalınlaşınca, yetkiyle öğe eklenince genişlik değişir), ekran
+  // boyutu değişince ve yazı tipi yüklenince (DM Sans gelince yazılar genişler) yeniden ölçülür.
+  React.useLayoutEffect(() => { ustMenuSigdir(); });
+  useEffect(() => {
+    window.addEventListener("resize", ustMenuSigdir);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ustMenuSigdir).catch(() => {});
+    return () => window.removeEventListener("resize", ustMenuSigdir);
+  }, [ustMenuSigdir]);
   // Bekleyen yazma şeridinde ayrıntısı açık olan kayıt (19 Eylül).
   const [bekleyenAcikAnahtar, setBekleyenAcikAnahtar] = useState(null);
   // Pencere başlığındaki eylem çubuğu modül tarafından bildiriliyor; bildirim gelince başlığın
@@ -2952,7 +2974,13 @@ export default function AtolyeERP() {
         /* UST MENU DAR EKRANDA (tablet dikey ~900px): once firma adi, sonra grup ikonlari gizlenir
            ki menu sagdaki ikonlarin altina girmesin. Kaydirma cozum degil: acilir listeler kirpilir. */
         @media (max-width: 1100px) { .ust-menu-unvan { display: none; } }
-        @media (max-width: 880px) { .ust-menu-grup-ikon { display: none; } }
+        /* SIKISIKLIK KADEMELERI (25 Eylul, kullanici tabletinde "Finans" ikonlarin altina girdi):
+           genislik esigi yetmiyor, cihazin yazi boyutu ayari menuyu genisletiyor. Kademeyi olcum
+           belirliyor (ustMenuSigdir): 1 grup ikonlari gizli, 2 yalniz ikon (yazilar gizli),
+           3 ek olarak Anasayfa dugmesi gizli (logo zaten anasayfaya goturuyor). */
+        .ust-menu.sik-1 .ust-menu-grup-ikon { display: none !important; }
+        .ust-menu.sik-2 .ust-menu-etiket, .ust-menu.sik-3 .ust-menu-etiket { display: none; }
+        .ust-menu.sik-3 [data-nav="Anasayfa"] { display: none !important; }
         body.masaustu-duzen .mobile-tabs { display: none !important; }
 
         /* MATRIS TABLO GORUNUMU (15 Eylul): baslik zemini, ince dikey cizgiler, zebra satir.
@@ -3138,7 +3166,7 @@ export default function AtolyeERP() {
             <div style={{ position: "relative", flexShrink: 0 }}>
               <button type="button" data-nav-grup={ad} aria-label={`${ad} menüsü`} aria-expanded={acik}
                 onClick={() => grupAc(ad)} style={ustDugme(icindeAktif)}>
-                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}>{ikon}</span>{ad}{acik ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}>{ikon}</span><span className="ust-menu-etiket">{ad}</span>{acik ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
               </button>
               <div data-ust-menu-liste={ad} style={{
                 display: acik ? "flex" : "none", flexDirection: "column", gap: 2, position: "absolute", top: 42, left: 0, zIndex: 20,
@@ -3154,7 +3182,7 @@ export default function AtolyeERP() {
           <NavItem icon={icon} label={label} active={tab === anahtar} onClick={() => git(anahtar)} renk={MODUL_RENK[anahtar]} />
         );
         return (
-          <header className="ust-menu" style={{
+          <header className="ust-menu" ref={ustMenuRef} style={{
             // `display` burada YOK, CSS'te (.ust-menu): satır içi stil mobilde gizleyen kuralı ezerdi.
             position: "fixed", top: 0, left: 0, right: 0, zIndex: 510, height: UST_MENU_YUKSEKLIGI,
             alignItems: "center", gap: 2, padding: "0 12px",
@@ -3177,8 +3205,10 @@ export default function AtolyeERP() {
                 {(tanimlar.firmaBilgileri || {}).unvan || "Atölye ERP"}
               </span>
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, position: "relative", zIndex: 2 }}>
-              <button type="button" data-nav="Anasayfa" title="Anasayfa" onClick={() => git("anasayfa")} style={ustDugme(tab === "anasayfa")}>Anasayfa</button>
+            <div ref={ustMenuNavRef} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, position: "relative", zIndex: 2 }}>
+              <button type="button" data-nav="Anasayfa" title="Anasayfa" onClick={() => git("anasayfa")} style={ustDugme(tab === "anasayfa")}>
+                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}><Home size={15} /></span><span className="ust-menu-etiket">Anasayfa</span>
+              </button>
               <Grup ad="Depo" ikon={<Layers size={15} />} sekmeler={["stok", "depo", "paketleme"]}>
                 {oge("stok", "Stok", <Boxes size={16} />)}
                 {oge("depo", "Depo", <Layers size={16} />)}
@@ -3190,7 +3220,7 @@ export default function AtolyeERP() {
               </Grup>
               {/* PLANLAMA GRUPSUZ (kullanıcı, 17 Eylül: "planlama başlı başına sekme olsun"). */}
               <button type="button" data-nav="Planlama" title="Planlama" onClick={() => git("planlama")} style={ustDugme(tab === "planlama")}>
-                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}><Compass size={15} /></span>Planlama
+                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}><Compass size={15} /></span><span className="ust-menu-etiket">Planlama</span>
               </button>
               <Grup ad="Siparişler" ikon={<ClipboardList size={15} />} sekmeler={["siparis", "satinalma"]}>
                 {oge("siparis", "Sipariş", <ClipboardList size={16} />)}
