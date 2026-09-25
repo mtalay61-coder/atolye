@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.452.0** · 25 Eylül 2026
+Son sürüm: **v1.453.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.452.0): ürün kartında renk YAZARAK aranıp ekleniyor (`AramaliSecici`).** Bkz. "RENK YAZARAK EKLEME".
+**Son iş (25 Eylül, v1.453.0): hammadde/yarı mamul formunda da renk tek arama kutusu + seçilen etiketleri.** Bkz. "RENK YAZARAK EKLEME".
+Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
 Önceki (v1.450.0): üst menü ölçerek sığıyor + stok kategori şeritleri açık.
 Önceki (v1.449.0): YENİ TASARIM — yan kolon kalktı (üst menü), açık "A" paleti.
@@ -6125,6 +6126,14 @@ aynı bileşene geçirilebilir — kullanıcı isterse.
 
 **Doğrulama:** `senaryo-renk-arama` (YENİ): Mamul sekmesi → Ürün Ekle; 6 renk; "siy" süzmesi, Enter
 ekler + kutu boşalır + listeden düşer, dokunarak ekleme, "eşleşen yok" mesajı, çipler.
+
+**v1.453.0 — HAMMADDE FORMU** (kullanıcı, ekran görüntüsü: bütün renkler düğme dizisi): "bu tek liste
+olsun, az önceki gibi kutu boş gelsin, yazdıkça liste daralsın". Düğme dizisi → `AramaliSecici`
+(`data-hammadde-renk-arama`); süzgeç AYNI (kombinasyon etiketi olmayanlar + hammaddede
+`renkTipeUygunMu` malzeme tipi); aynı adlı renkler tekilleştiriliyor. Seçilenler altta etiket
+(`data-secili-renkler`, × ile çıkar — mamuldeki etiket görünümü). "Yeni Renk" satırı yerinde.
+`senaryo-renk-arama` ikinci sayfada hammadde formunu ölçüyor (boş başlıyor, "der" süzmesi, Enter,
+etiket, ×). NOT: aynı sayfada mamul formu açıkken "Ürün Ekle" formu kapattığı için ayrı sayfa.
 
 ## OTOMATİK SÜRÜM GEÇİŞİ (25 Eylül, v1.447.0 — Claude Code oturumu)
 

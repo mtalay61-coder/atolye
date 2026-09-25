@@ -10,16 +10,34 @@
    "Taba Süet",
    "Siyah Deri",
    "Nohut Deri",
-   "Kırık Siyah"
+   "Kırık Siyah",
+   "Siyah Deri H",
+   "Taba Deri H",
+   "Krem Astar"
   ]
  },
  "eslesmeYok": true,
+ "hammadde": {
+  "bosBasliyor": true,
+  "cikarildi": true,
+  "der": [
+   "Siyah Deri",
+   "Nohut Deri",
+   "Siyah Deri H",
+   "Taba Deri H"
+  ],
+  "etiketler": [
+   "Siyah Deri"
+  ],
+  "kutuVar": true
+ },
  "hatalar": [],
  "kutuVar": true,
  "siy": [
   "Siyah Süet",
   "Siyah Deri",
-  "Kırık Siyah"
+  "Kırık Siyah",
+  "Siyah Deri H"
  ],
  "tumu": [
   "Siyah Süet",
@@ -27,6 +45,9 @@
   "Taba Süet",
   "Siyah Deri",
   "Nohut Deri",
-  "Kırık Siyah"
+  "Kırık Siyah",
+  "Siyah Deri H",
+  "Taba Deri H",
+  "Krem Astar"
  ]
 }
