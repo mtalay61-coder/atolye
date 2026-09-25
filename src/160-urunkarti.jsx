@@ -706,7 +706,7 @@ function ProductMatrixCard({
     <div
       style={{
         background: "var(--erp-panel)",
-        border: `1px solid ${(CAT_COLORS[product.kategori] || "var(--erp-border-2)")}55`,
+        border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-border-2)"), "55")}`,
         borderTop: `4px solid ${CAT_COLORS[product.kategori] || "var(--erp-border-2)"}`,
         borderRadius: "var(--erp-r-md)",
         // `overflow: hidden` DEĞİL. Köşeleri kırpmak için konmuştu ama kartın içindeki açılır
@@ -739,7 +739,7 @@ function ProductMatrixCard({
                 width: 44, height: 44, borderRadius: "var(--erp-r-md)", flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "18"),
-                border: `1px solid ${(CAT_COLORS[product.kategori] || "var(--erp-text-2)")}33`,
+                border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
               }}
             >
               <KategoriIkonu kategori={product.kategori} size={21} />
@@ -883,7 +883,7 @@ function ProductMatrixCard({
                       value={editForm.alisParaBirimi}
                       onChange={(e) => setEditForm({ ...editForm, alisParaBirimi: e.target.value })}
                       className="mono"
-                      style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
+                      style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
                     >
                       {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                     </select>
@@ -905,7 +905,7 @@ function ProductMatrixCard({
                       value={editForm.satisParaBirimi}
                       onChange={(e) => setEditForm({ ...editForm, satisParaBirimi: e.target.value })}
                       className="mono"
-                      style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
+                      style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
                     >
                       {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                     </select>
@@ -939,11 +939,11 @@ function ProductMatrixCard({
                   className="mono"
                   style={{
                     display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
-                    background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-pill)", padding: "3px 7px",
+                    background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "3px 7px",
                   }}
                 >
                   {f.tip === "Alış" ? "Alış" : "Satış"}: {f.paraBirimi}{f.tutar}
-                  <button onClick={() => onEkFiyatSil(product.id, f.id)} style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex" }}>
+                  <button onClick={() => onEkFiyatSil(product.id, f.id)} style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" }}>
                     <X size={10} />
                   </button>
                 </span>
@@ -966,7 +966,7 @@ function ProductMatrixCard({
                       value={editForm.alisParaBirimi}
                       onChange={(e) => setEditForm({ ...editForm, alisParaBirimi: e.target.value })}
                       className="mono"
-                      style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
+                      style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
                     >
                       {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                     </select>
@@ -991,7 +991,7 @@ function ProductMatrixCard({
                       value={editForm.satisParaBirimi}
                       onChange={(e) => setEditForm({ ...editForm, satisParaBirimi: e.target.value })}
                       className="mono"
-                      style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
+                      style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "2px 3px", fontSize: 12, background: "#fff" }}
                     >
                       {PARA_BIRIMLERI.map((p) => <option key={p}>{p}</option>)}
                     </select>
@@ -1040,7 +1040,7 @@ function ProductMatrixCard({
                       <select
                         value={editForm.malzemeTipi}
                         onChange={(e) => setEditForm({ ...editForm, malzemeTipi: e.target.value })}
-                        style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "4px 6px", fontSize: 12, background: "#fff", fontWeight: 400 }}
+                        style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "4px 6px", fontSize: 12, background: "#fff", fontWeight: 400 }}
                       >
                         <option value="">Genel</option>
                         {/* Kayıtlı tip listeden silinmişse seçenek olarak KALIR: aksi halde tarayıcı
@@ -1060,7 +1060,7 @@ function ProductMatrixCard({
                       value={editForm.varsayilanProses}
                       onChange={(e) => setEditForm({ ...editForm, varsayilanProses: e.target.value })}
                       className="mono"
-                      style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "4px 6px", fontSize: 12, background: "#fff", fontWeight: 400 }}
+                      style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "4px 6px", fontSize: 12, background: "#fff", fontWeight: 400 }}
                     >
                       <option value="">—</option>
                       {(tanimlarProsesler || []).map((p) => <option key={p.id} value={p.ad}>{p.ad}</option>)}
@@ -1114,11 +1114,11 @@ function ProductMatrixCard({
                   className="mono"
                   style={{
                     display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
-                    background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-pill)", padding: "3px 7px",
+                    background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "3px 7px",
                   }}
                 >
                   {f.tip === "Satış" ? "Satış" : "Alış"}: {f.paraBirimi}{f.tutar}
-                  <button onClick={() => onEkFiyatSil(product.id, f.id)} style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex" }}>
+                  <button onClick={() => onEkFiyatSil(product.id, f.id)} style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" }}>
                     <X size={10} />
                   </button>
                 </span>
@@ -1396,7 +1396,7 @@ function ProductMatrixCard({
           onClick={() => setStokMatrisAcik((v) => !v)}
           style={{
             width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-            background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", cursor: "pointer", textAlign: "left",
+            background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", cursor: "pointer", textAlign: "left",
             marginBottom: stokMatrisAcik ? 10 : 0,
           }}
         >
@@ -1469,7 +1469,7 @@ function ProductMatrixCard({
 
       <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
         {addingRenk ? (
-          <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12, minWidth: 280 }}>
+          <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, minWidth: 280 }}>
             {isMamul && (
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <span style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>Kaç renkli?</span>
@@ -1835,7 +1835,7 @@ function ProductMatrixCard({
               Reçeteye eklenebilecek Hammadde/Yarı Mamul ürünü yok — önce Stok'a ekleyin.
             </div>
           ) : (
-            <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 14 }}>
+            <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 10 }}>Yeni Reçete Satırı Ekle</div>
               {/* Tek satırda toplanan giriş alanları. Miktar ve toplu beden ataması eskiden AŞAĞIDA,
                   ayrı bir kutuda duruyordu; hammadde seçtikten sonra göz aşağı inip yukarı dönüyordu.
@@ -1987,7 +1987,7 @@ function ProductMatrixCard({
 
                   <div
                     style={{
-                      border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10, background: "#fff",
+                      border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "#fff",
                       display: "flex", alignItems: "center", gap: 8, flexWrap: "nowrap", overflowX: "auto",
                     }}
                   >
@@ -2024,7 +2024,7 @@ function ProductMatrixCard({
                       Oysa ambalaj tipinde birden çok malzeme var ve hepsi siparişe bağlı değil:
                       kutu müşteriye göre değişir, koruyucu poşet modelin sabit parçasıdır. */}
                   {!!seciliHammadde && (
-                    <div style={{ display: "grid", gap: 8, border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: "10px 12px", background: "#FBF0E2" }}>
+                    <div style={{ display: "grid", gap: 8, border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: "10px 12px", background: "var(--erp-hover)" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#7A3B22" }}>
                         <PackageCheck size={13} color="#8A6A2E" style={{ verticalAlign: "-2px", marginRight: 5 }} />
                         "{seciliHammadde.ad}" — bu satırda rengi kim belirlesin?
@@ -2042,7 +2042,7 @@ function ProductMatrixCard({
                             onClick={() => setRAmbalajDegisken(o.deger)}
                             style={{
                               flex: "1 1 240px", textAlign: "left", cursor: "pointer",
-                              border: rAmbalajDegisken === o.deger ? "1.5px solid #8A6A2E" : "1px solid #C9B99A",
+                              border: rAmbalajDegisken === o.deger ? "1.5px solid #8A6A2E" : "1px solid var(--erp-line)",
                               background: rAmbalajDegisken === o.deger ? "#fff" : "transparent",
                               borderRadius: "var(--erp-r-md)", padding: "8px 10px",
                             }}
@@ -2082,7 +2082,7 @@ function ProductMatrixCard({
                                   style={{
                                     fontSize: 11, fontWeight: 700, cursor: "pointer",
                                     padding: "3px 10px", borderRadius: "var(--erp-r-pill)",
-                                    border: secili ? "1.5px solid #8A6A2E" : "1px solid #C9B99A",
+                                    border: secili ? "1.5px solid #8A6A2E" : "1px solid var(--erp-line)",
                                     background: secili ? "#8A6A2E" : "#fff",
                                     color: secili ? "#fff" : "var(--erp-text-2)",
                                   }}
@@ -2199,7 +2199,7 @@ function ProductMatrixCard({
                       <div
                         key={mr}
                         style={{
-                          border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10, background: "#fff",
+                          border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "#fff",
                           display: "flex", flexDirection: cokluPozisyon ? "column" : "row", alignItems: cokluPozisyon ? "stretch" : "center",
                           gap: 8, flexWrap: cokluPozisyon ? "nowrap" : "wrap", overflowX: cokluPozisyon ? "hidden" : "auto",
                         }}
@@ -2300,17 +2300,17 @@ function ProductMatrixCard({
                                 >
                                   <span
                                     className="mono"
-                                    style={{ fontSize: 13, width: 130, flexShrink: 0, color: otomatikBulundu ? "var(--erp-text-2)" : "#221B14", fontWeight: otomatikBulundu ? 400 : 700 }}
+                                    style={{ fontSize: 13, width: 130, flexShrink: 0, color: otomatikBulundu ? "var(--erp-text-2)" : "var(--erp-text)", fontWeight: otomatikBulundu ? 400 : 700 }}
                                   >
                                     {p}. Renk{pozisyonRengi ? ` (${pozisyonRengi})` : ""}
                                   </span>
-                                  <ArrowRight size={12} color={otomatikBulundu ? "var(--erp-text-3)" : "#221B14"} style={{ flexShrink: 0 }} />
+                                  <ArrowRight size={12} color={otomatikBulundu ? "var(--erp-text-3)" : "var(--erp-text)"} style={{ flexShrink: 0 }} />
                                   <select
                                     value={(rMap[mr] || {})[p] || ""}
                                     onChange={(e) => renkEslesmesiDegistir(mr, p, e.target.value)}
                                     style={{
                                       ...inputStyle, width: 150, flexShrink: 0,
-                                      borderColor: otomatikBulundu ? "var(--erp-primary)" : "#221B14",
+                                      borderColor: otomatikBulundu ? "var(--erp-primary)" : "var(--erp-text)",
                                       borderWidth: otomatikBulundu ? 1 : 2,
                                       fontWeight: otomatikBulundu ? 400 : 700,
                                     }}
@@ -2321,7 +2321,7 @@ function ProductMatrixCard({
                                   {otomatikBulundu ? (
                                     <span title="İsim eşleşmesiyle otomatik bulundu" style={{ fontSize: 12, color: "var(--erp-primary)" }}>✓ otomatik</span>
                                   ) : (
-                                    <span title="Otomatik eşleşme bulunamadı — elle seçim gerekiyor" style={{ fontSize: 12, color: "#3A291D", fontWeight: 700 }}>
+                                    <span title="Otomatik eşleşme bulunamadı — elle seçim gerekiyor" style={{ fontSize: 12, color: "var(--erp-text)", fontWeight: 700 }}>
                                       ⚠ eşleşmedi
                                     </span>
                                   )}
@@ -2368,13 +2368,13 @@ function ProductMatrixCard({
                           const otomatikBulundu = !!(rMap[mr] || {})[1];
                           return (
                           <>
-                            <ArrowRight size={13} color={otomatikBulundu ? "var(--erp-text-3)" : "#221B14"} style={{ flexShrink: 0 }} />
+                            <ArrowRight size={13} color={otomatikBulundu ? "var(--erp-text-3)" : "var(--erp-text)"} style={{ flexShrink: 0 }} />
                             <select
                               value={(rMap[mr] || {})[1] || ""}
                               onChange={(e) => renkEslesmesiDegistir(mr, 1, e.target.value)}
                               style={{
                                 ...inputStyle, width: 150, flexShrink: 0,
-                                borderColor: otomatikBulundu ? "var(--erp-primary)" : "#221B14",
+                                borderColor: otomatikBulundu ? "var(--erp-primary)" : "var(--erp-text)",
                                 borderWidth: otomatikBulundu ? 1 : 2,
                                 fontWeight: otomatikBulundu ? 400 : 700,
                               }}
@@ -2385,7 +2385,7 @@ function ProductMatrixCard({
                             {otomatikBulundu ? (
                               <span title="İsim eşleşmesiyle otomatik bulundu" style={{ fontSize: 12, color: "var(--erp-primary)" }}>✓ otomatik</span>
                             ) : (
-                              <span title="Otomatik eşleşme bulunamadı — elle seçim gerekiyor" style={{ fontSize: 12, color: "#3A291D", fontWeight: 700 }}>
+                              <span title="Otomatik eşleşme bulunamadı — elle seçim gerekiyor" style={{ fontSize: 12, color: "var(--erp-text)", fontWeight: 700 }}>
                                 ⚠ eşleşmedi
                               </span>
                             )}
@@ -2472,7 +2472,7 @@ function ProductMatrixCard({
                     // Prosesin kendi rengiyle çerçeve + aynı renkte şeffaf zemin. Sol kenar kalın:
                     // uzun listede dikey tarama yaparken grubun nerede başlayıp bittiğini çerçevenin
                     // tamamını görmeden ayırt etmeyi sağlar.
-                    border: `1px solid ${prosesRengi(pg.proses, pg.sira)}55`,
+                    border: `1px solid ${alfaEkle(prosesRengi(pg.proses, pg.sira), "55")}`,
                     borderLeft: `4px solid ${prosesRengi(pg.proses, pg.sira)}`,
                     background: prosesZemini(pg.proses, pg.sira),
                     borderRadius: "var(--erp-r-md)",
@@ -2563,7 +2563,7 @@ function ProductMatrixCard({
                           onBlur={(e) => onProsesUcretGuncelle(product.id, pg.proses, parseFloat(e.target.value) || 0)}
                           placeholder="0"
                           className="mono"
-                          style={{ width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                          style={{ width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                         />
                       </label>
                     )}
@@ -2688,7 +2688,7 @@ function ProductMatrixCard({
                           onReceteGrubuGuncelle(product.id, [satir.id], [{ ...rest, renk: yeniRenk }]);
                         };
                         return (
-                          <div key={g.key} style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
+                          <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                               <ColorSwatch
                                 src={(() => {
@@ -2755,7 +2755,7 @@ function ProductMatrixCard({
                                     style={{
                                       fontSize: 11, fontWeight: 700, color: pRenk, background: alfaEkle(pRenk, "1A"),
                                       padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap",
-                                      border: mevcut ? `1px solid ${pRenk}44` : `1px dashed ${pRenk}`,
+                                      border: mevcut ? `1px solid ${alfaEkle(pRenk, "44")}` : `1px dashed ${pRenk}`,
                                       cursor: "pointer", maxWidth: 190,
                                     }}
                                   >
@@ -2801,7 +2801,7 @@ function ProductMatrixCard({
                                   type="text" inputMode="decimal"
                                   defaultValue={ortakMiktarBu}
                                   className="mono"
-                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                   title="Hesap yazabilirsiniz: 1/8, 120/14"
                                   onBlur={(e) => {
                                     // Reçetedeki her miktar alanı hesap kabul ediyor; toplu
@@ -2816,7 +2816,7 @@ function ProductMatrixCard({
                                     onReceteGrubuGuncelle(product.id, kaynakSatirlar.map((r) => r.id), guncellenecekler);
                                   }}
                                   className="mono"
-                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
+                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
                                 />
                                 <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>{ortakBirimBu}</span>
                               </div>
@@ -2897,7 +2897,7 @@ function ProductMatrixCard({
                                                 onReceteGrubuGuncelle(product.id, satirlarBu.map((r) => r.id), guncellenecekler);
                                               }}
                                               className="mono"
-                                              style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
+                                              style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
                                             />
                                             <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{satirOrtakBirim}</span>
                                           </div>
@@ -2919,7 +2919,7 @@ function ProductMatrixCard({
                                                     onChange={(e) => bedensizRenkDegistir(r, e.target.value)}
                                                     className="mono"
                                                     title={poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
-                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
                                                   >
                                                     {bedensizRenkSecenekleri.length === 0 && <option value={r.renk}>{r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
@@ -2932,7 +2932,7 @@ function ProductMatrixCard({
                                                   onChange={(e) => bedensizRenkDegistir(r, e.target.value)}
                                                   className="mono"
                                                   title={poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
-                                                  style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                                  style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
                                                 >
                                                   {bedensizRenkSecenekleri.length === 0 && <option value={r.renk}>{r.renk}</option>}
                                                   {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
@@ -2998,7 +2998,7 @@ function ProductMatrixCard({
                               // yorumu ({/* ... */}) burada GEÇERSİZDİR, çünkü boş bir nesne değişmezi
                               // olarak ayrıştırılır ve ardından gelen JSX'i bozar. Bu konumda yalnızca
                               // // ya da /* */ biçimindeki JS yorumları kullanılabilir.
-                              <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px dashed #C9B99A" }}>
+                              <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px dashed var(--erp-line)" }}>
                                 {(() => {
                                   const tekliMiktarlar = new Set(tekliSatirlar.map((r) => r.miktar));
                                   const tekliMiktarSabit = tekliMiktarlar.size === 1;
@@ -3026,7 +3026,7 @@ function ProductMatrixCard({
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          <tr style={{ borderTop: "2px solid #4A3B28" }}>
+                                          <tr style={{ borderTop: "2px solid var(--erp-text)" }}>
                                             <td style={{ padding: "6px 8px", fontSize: 13, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap" }}>
                                               Hammadde Rengi
                                               {tekliMiktarSabit && (
@@ -3056,7 +3056,7 @@ function ProductMatrixCard({
                                                     onChange={(e) => bedensizRenkDegistir(r, e.target.value)}
                                                     className="mono"
                                                     title="Hammadde rengini değiştir"
-                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
                                                   >
                                                     {bedensizRenkSecenekleri.length === 0 && <option value={r.renk}>{r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
@@ -3143,7 +3143,7 @@ function ProductMatrixCard({
                         const bedenHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
                         const bedenHammaddeRenkSecenekleri = bedenHammadde ? Array.from(new Set(bedenHammadde.variants.map((v) => v.renk))) : [];
                         return (
-                          <div key={g.key} style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
+                          <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                               <ColorSwatch
                                 src={(() => {
@@ -3210,7 +3210,7 @@ function ProductMatrixCard({
                                     style={{
                                       fontSize: 11, fontWeight: 700, color: pRenk, background: alfaEkle(pRenk, "1A"),
                                       padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap",
-                                      border: mevcut ? `1px solid ${pRenk}44` : `1px dashed ${pRenk}`,
+                                      border: mevcut ? `1px solid ${alfaEkle(pRenk, "44")}` : `1px dashed ${pRenk}`,
                                       cursor: "pointer", maxWidth: 190,
                                     }}
                                   >
@@ -3281,7 +3281,7 @@ function ProductMatrixCard({
                                           onReceteGrubuGuncelle(product.id, tumSatirlar.map((r) => r.id), guncellenecekler);
                                         }}
                                         className="mono"
-                                        style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
+                                        style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
                                       />
                                       <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>{ortakBirim}</span>
                                     </span>
@@ -3327,7 +3327,7 @@ function ProductMatrixCard({
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    <tr style={{ borderTop: "2px solid #4A3B28" }}>
+                                    <tr style={{ borderTop: "2px solid var(--erp-text)" }}>
                                       {/* Sol hücre, Astar bloğundaki düzenle AYNI: satır etiketi + o satırın
                                           miktarı. Miktarı yalnızca üstteki özet satırında göstermek, tabloya
                                           bakarken "bu satır kaç birim?" sorusunu cevapsız bırakıyordu ve üç
@@ -3353,7 +3353,7 @@ function ProductMatrixCard({
                                                   onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                                 }}
                                                 className="mono"
-                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
+                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
                                               >
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
                                               </select>
@@ -3375,7 +3375,7 @@ function ProductMatrixCard({
                                                   onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                                 }}
                                                 className="mono"
-                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
+                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
                                               >
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
                                               </select>
@@ -3393,7 +3393,7 @@ function ProductMatrixCard({
                                                     onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                                   }}
                                                   className="mono"
-                                                  style={{ width: 44, padding: "4px 7px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                                  style={{ width: 44, padding: "4px 7px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                                 />
                                                 <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{ms.birim}</span>
                                               </div>
@@ -3500,7 +3500,7 @@ function ProductMatrixCard({
                       }
 
                       return (
-                      <div key={g.key} style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)" }}>
+                      <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)" }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                           <ColorSwatch
                             src={(() => {
@@ -3576,7 +3576,7 @@ function ProductMatrixCard({
                             return matrisSatirlari.map((ms) => {
                             const tekBeden = ms.satirlar.length === 1 && ms.satirlar[0].mamulBeden === "Tüm Bedenler";
                             return (
-                            <div key={ms.key} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
+                            <div key={ms.key} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: tekBeden ? 0 : 6 }}>
                                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--erp-text)" }}>{ms.mamulRenk}</span>
                                 <ArrowRight size={13} color="var(--erp-text-3)" />
@@ -3600,7 +3600,7 @@ function ProductMatrixCard({
                                     onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                   }}
                                   className="mono"
-                                  style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
+                                  style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
                                 >
                                   {belirtilmemisRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
                                 </select>
@@ -3618,7 +3618,7 @@ function ProductMatrixCard({
                                         onReceteGrubuGuncelle(product.id, [r.id], [{ ...rest, miktar: yeni }]);
                                       }}
                                       className="mono"
-                                      style={{ width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                      style={{ width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                     />
                                     <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-3)" }}>{ms.birim}</span>
                                   </>
@@ -3636,7 +3636,7 @@ function ProductMatrixCard({
                                       key={r.id}
                                       style={{
                                         display: "flex", alignItems: "center", gap: 4, background: "var(--erp-panel)",
-                                        border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", padding: "3px 6px",
+                                        border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "3px 6px",
                                       }}
                                     >
                                       <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>
@@ -3715,7 +3715,7 @@ function ProductMatrixCard({
             satirlar.sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
             const yuvarla = (v) => (Math.round((v || 0) * 1000) / 1000).toLocaleString("tr-TR");
             return (
-              <div data-uretim-sapmalari="1" style={{ background: "#FBF3E4", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 12 }}>
+              <div data-uretim-sapmalari="1" style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 12 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", marginBottom: 6 }}>
                   Üretimde reçeteden sapma <span style={{ fontWeight: 400, color: "var(--erp-text-2)" }}>· yalnız farkı olan üretimler</span>
                 </div>
@@ -4156,7 +4156,7 @@ function ProductMatrixCard({
         const kapsamAd = product.kategori === "Mamul" ? (product.mamulTipi || "") : (product.malzemeTipi || "");
         const eklenecekKapsam = kapsamAd ? kapsamTuru : "genel";
         return (
-        <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12 }}>
+        <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Özel Kodlar</span>
             <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>
@@ -4298,14 +4298,14 @@ function ProductMatrixCard({
                   title="Bu ürünün reçetesini aç"
                   style={{
                     display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left",
-                    background: "#fff", border: "1px solid #E4D8C0", borderLeft: `4px solid ${CAT_COLORS[k.urun.kategori] || "var(--erp-text-3)"}`,
+                    background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `4px solid ${CAT_COLORS[k.urun.kategori] || "var(--erp-text-3)"}`,
                     borderRadius: "var(--erp-r-md)", padding: 10, cursor: "pointer",
                   }}
                 >
                   <ColorSwatch src={k.urun.kapakResmi} editable={false} size={34} />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: "#221B14" }}>{k.urun.ad}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)" }}>{k.urun.ad}</span>
                       <KategoriIkonu kategori={k.urun.kategori} size={13} />
                     </span>
                     <span style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5 }}>
@@ -4346,7 +4346,7 @@ function ProductMatrixCard({
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
               {(product.teknikCizimler || []).map((c, i) => (
                 <div key={c.id || i} data-teknik-gorsel={c.id || i}
-                  style={{ width: 150, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+                  style={{ width: 150, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
                   <img src={c.gorsel} alt={c.baslik || "teknik çizim"}
                     onClick={() => onTeknikCizimAc && onTeknikCizimAc(c)}
                     title="Büyütmek için dokunun"
@@ -4357,7 +4357,7 @@ function ProductMatrixCard({
                       data-teknik-baslik={c.id || i}
                       placeholder="Başlık (örn. Kalıp)"
                       onChange={(e) => onTeknikCizimGuncelle(product.id, c.id, { baslik: e.target.value })}
-                      style={{ flex: 1, minWidth: 0, border: "none", borderBottom: "1px solid #E4D8C0", fontSize: 11, padding: "2px 0", background: "transparent" }} />
+                      style={{ flex: 1, minWidth: 0, border: "none", borderBottom: "1px solid var(--erp-line-soft)", fontSize: 11, padding: "2px 0", background: "transparent" }} />
                     <SilOnayButonu onConfirm={() => onTeknikCizimSil(product.id, c.id)} boyut={11} />
                   </div>
                 </div>
@@ -4385,7 +4385,7 @@ function ProductMatrixCard({
               placeholder={"Örn.\n• Taban: 4 mm kauçuk, 38 numara kalıp 265 mm\n• Saya dikişi: 3 mm, çift iğne\n• Astar: deri, jarse takviyeli\n• Kalıp notu: 41 numaradan sonra genişlik +2 mm"}
               rows={8}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", fontSize: 13, lineHeight: 1.6,
-                border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", background: "#fff", fontFamily: "inherit", resize: "vertical" }} />
+                border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff", fontFamily: "inherit", resize: "vertical" }} />
             <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 4 }}>
               Yazdıkça kaydedilir. Alan yapısı (taban, saya, astar, kalıp…) netleştiğinde ayrı
               kutulara bölünecek — şimdilik serbest yazın.
@@ -4403,7 +4403,7 @@ function ProductMatrixCard({
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--erp-text-2)" }}>
             <span>Şema: <b className="mono">90 · stok no · renk kodu · ölçü kodu / asorti kodu</b></span>
             <span className="mono" style={{
-              background: product.stokNo ? "#EEF4F8" : "#FBF0E2", border: "1px solid #C9B99A",
+              background: product.stokNo ? "#EEF4F8" : "var(--erp-hover)", border: "1px solid var(--erp-line)",
               borderRadius: "var(--erp-r-sm)", padding: "1px 6px", fontWeight: 700,
               color: product.stokNo ? "var(--erp-info)" : "var(--erp-warn)",
             }}>
@@ -4436,7 +4436,7 @@ function ProductMatrixCard({
           {/* ASORTİ BARKODLARI — her renk × asorti için bir kod. Sipariş ekranında okutulunca
               asortinin beden dağılımı kalem olarak ekleniyor. */}
           {(asortiler || []).length > 0 && (
-            <div style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", padding: 10 }}>
+            <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", padding: 10 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 6 }}>
                 Asorti barkodları — sipariş ekranında okutulur
               </div>
@@ -4463,7 +4463,7 @@ function ProductMatrixCard({
                         <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>{renk}</span>
                         <span>{a.ad}</span>
                         <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{adet} çift</span>
-                        <span className="mono" style={{ fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" }}>{kod}</span>
+                        <span className="mono" style={{ fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" }}>{kod}</span>
                         <button
                           className="btn-ikon"
                           title="Bu asortinin barkod etiketini bas (6×4 cm)"
@@ -4490,7 +4490,7 @@ function ProductMatrixCard({
               bir kez seçip kopya vermek. */}
           {seciliEtiketler.length > 0 && (
             <div data-etiket-serit="1" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
-              padding: "6px 10px", marginBottom: 6, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)" }}>
+              padding: "6px 10px", marginBottom: 6, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" }}>
               <b style={{ fontSize: 12 }}>{seciliEtiketler.length} satır seçili</b>
               <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}>
                 Kopya
@@ -4547,7 +4547,7 @@ function ProductMatrixCard({
                   const olcuKod = bedenKoduBul(barkodTanimlari, v.beden, product.olcuTipi);
                   const kod = varyantinBarkodu(product, v, barkodTanimlari);
                   return (
-                    <tr key={`${v.renk}|${v.beden}|${i}`} style={{ borderTop: "1px solid #F0E7D5" }}>
+                    <tr key={`${v.renk}|${v.beden}|${i}`} style={{ borderTop: "1px solid var(--erp-head)" }}>
                       <td style={{ padding: "5px 6px", textAlign: "center" }}>
                         <input
                           type="checkbox"
@@ -4645,7 +4645,7 @@ function ProductMatrixCard({
                 style={{
                   padding: "4px 7px", fontSize: 13, minWidth: 110, flex: "1 1 110px", maxWidth: 190,
                   border: `1px solid ${hareketFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
-                  background: hareketFiltre[alan].trim() ? "#FBF0E2" : "#fff",
+                  background: hareketFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
                   borderRadius: "var(--erp-r-sm)", boxSizing: "border-box",
                 }}
               />
@@ -4672,7 +4672,7 @@ function ProductMatrixCard({
                 </div>
 
                 {/* ---- SÜZÜLEN TOPLAM ---- */}
-                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", padding: "6px 10px", background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", marginBottom: 10 }}>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", padding: "6px 10px", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", marginBottom: 10 }}>
                   <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>
                     {hareketFiltreAktif || hareketKaynakFiltre !== "Tümü" ? "SÜZÜLEN TOPLAM" : "TOPLAM"}
                   </span>
@@ -4704,7 +4704,7 @@ function ProductMatrixCard({
                   const fark = stokYuvarla(bakiye - defterNet);
                   if (Math.abs(fark) < 0.000001) return null;
                   return (
-                    <div style={{ background: "#FBF0E2", border: "1.5px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 10 }}>
+                    <div style={{ background: "var(--erp-hover)", border: "1.5px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 10 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
                         <AlertTriangle size={14} color="var(--erp-brown)" />
                         <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-brown)" }}>
@@ -4915,7 +4915,7 @@ function ProductMatrixCard({
                             {gToplamAdet > 0 ? "+" : ""}{gToplamAdet} {product.birim || ""}
                           </span>
                           {fisFiyatlari && (
-                            <span style={{ fontWeight: 700, color: "#3A291D" }}>
+                            <span style={{ fontWeight: 700, color: "var(--erp-text)" }}>
                               {fisFiyatlari.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {fisFiyatlari.sembol}
                             </span>
                           )}
@@ -4945,7 +4945,7 @@ function ProductMatrixCard({
                               ))}
                               {/* Renk satırının kendi toplamı ve fiyatı: çok renkli fişte "bu renkten
                                   kaç adet, kaça" sorusu matristen tek tek toplanarak cevaplanıyordu. */}
-                              <th className="mono" style={{ fontSize: 13, textAlign: "right", borderLeft: "1px dashed #C9B99A", paddingLeft: 8 }}>Toplam</th>
+                              <th className="mono" style={{ fontSize: 13, textAlign: "right", borderLeft: "1px dashed var(--erp-line)", paddingLeft: 8 }}>Toplam</th>
                               {fisFiyatlari && <th className="mono" style={{ fontSize: 13, textAlign: "right", paddingLeft: 8 }}>Br. Fiyat</th>}
                               {fisFiyatlari && <th className="mono" style={{ fontSize: 13, textAlign: "right", paddingLeft: 8 }}>Tutar</th>}
                             </tr>
@@ -5000,7 +5000,7 @@ function ProductMatrixCard({
                                   const rf = fisFiyatlari ? fisFiyatlari.renkFiyati(r) : null;
                                   return (
                                     <>
-                                      <td className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", borderLeft: "1px dashed #C9B99A", padding: "3px 8px", color: renkToplam < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
+                                      <td className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", borderLeft: "1px dashed var(--erp-line)", padding: "3px 8px", color: renkToplam < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
                                         {renkToplam > 0 ? "+" : ""}{renkToplam}
                                       </td>
                                       {fisFiyatlari && (
@@ -5055,7 +5055,7 @@ function ProductMatrixCard({
               const kartFiyati = product.alisFiyati || 0;
               const kartPB = paraKoduna(product.alisParaBirimi) || "TRY";
               return (
-                <div data-son-alislar={alislar.length} style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 14 }}>
+                <div data-son-alislar={alislar.length} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                     <b style={{ fontSize: 12 }}>Son alış fiyatları</b>
                     <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>gerçekleşen alış fişlerinden · karttaki alış fiyatıyla fark</span>
@@ -5079,7 +5079,7 @@ function ProductMatrixCard({
                           const ayniBirim = a.paraBirimi === kartPB && kartFiyati > 0;
                           const fark = ayniBirim ? Math.round(((a.fiyat - kartFiyati) / kartFiyati) * 1000) / 10 : null;
                           return (
-                            <tr key={`${a.fisNo}-${i}`} data-son-alis-satir={a.fisNo} style={{ borderTop: "1px solid #E4D8C0" }}>
+                            <tr key={`${a.fisNo}-${i}`} data-son-alis-satir={a.fisNo} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                               <td className="mono" style={{ fontSize: 11, padding: "3px 6px" }}>{a.tarih}</td>
                               <td style={{ fontSize: 11, padding: "3px 6px" }}>{a.cariAd}</td>
                               <td className="mono" style={{ fontSize: 11, padding: "3px 6px" }}>{a.fisNo}</td>
@@ -5122,7 +5122,7 @@ function ProductMatrixCard({
               ))}
             </div>
 
-            <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 }}>
+            <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8 }}>Yeni Özel Fiyat Ekle</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                 {[
@@ -5227,7 +5227,7 @@ function ProductMatrixCard({
                           {tumBedenler.map((b) => (
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{b}</th>
                           ))}
-                          <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed #C9B99A" }}>
+                          <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" }}>
                             Tek Fiyat (renk)
                           </th>
                         </tr>
@@ -5237,7 +5237,7 @@ function ProductMatrixCard({
                           const renkKilitli = !!tekFiyatRenkAcikMi(r);
                           const renkKurali = kuralBul("renk", r);
                           return (
-                            <tr key={r} style={{ borderTop: "1px solid #E4D8C0" }}>
+                            <tr key={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                               <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{r}</td>
                               {tumBedenler.map((b) => {
                                 const deger = `${r}|${b}`;
@@ -5257,13 +5257,13 @@ function ProductMatrixCard({
                                           fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni);
                                         }}
                                         className="mono"
-                                        style={{ width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
+                                        style={{ width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
                                       />
                                     )}
                                   </td>
                                 );
                               })}
-                              <td style={{ padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed #C9B99A" }}>
+                              <td style={{ padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed var(--erp-line)" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
                                   <input type="checkbox" checked={renkKilitli} onChange={() => renkTekFiyatToggle(r)} title="Bu rengin tüm bedenlerine tek fiyat uygula" />
                                   {renkKilitli && (
@@ -5285,7 +5285,7 @@ function ProductMatrixCard({
                             </tr>
                           );
                         })}
-                        <tr style={{ borderTop: "2px solid #C9B99A" }}>
+                        <tr style={{ borderTop: "2px solid var(--erp-line)" }}>
                           <td className="mono" style={{ padding: "6px 8px", fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>Tek Fiyat (beden)</td>
                           {tumBedenler.map((b) => {
                             const bedenKilitli = !!fkTekFiyatBedenler[b];
@@ -5312,7 +5312,7 @@ function ProductMatrixCard({
                               </td>
                             );
                           })}
-                          <td style={{ borderLeft: "1px dashed #C9B99A" }}></td>
+                          <td style={{ borderLeft: "1px dashed var(--erp-line)" }}></td>
                         </tr>
                       </tbody>
                     </table>
@@ -5328,13 +5328,13 @@ function ProductMatrixCard({
             {kurallarGorunen.length === 0 ? (
               <EmptyState text={`Bu ürün için ${fkTip} tarafında özel fiyat tanımlanmadı — genel fiyat kullanılıyor.`} />
             ) : (
-              <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff", marginBottom: 16 }}>
+              <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff", marginBottom: 16 }}>
                 {kurallarGorunen.map((k, i, arr) => (
                   <div
                     key={k.id}
                     style={{
                       display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
-                      borderBottom: i === arr.length - 1 ? "none" : "1px solid #E4D8C0",
+                      borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                     }}
                   >
                     <span style={{ fontSize: 13, flex: 1 }}>{k.etiket}</span>
@@ -5352,13 +5352,13 @@ function ProductMatrixCard({
               (product.fiyatGecmisi || []).length === 0 ? (
                 <EmptyState text="Henüz fiyat değişikliği kaydedilmedi." />
               ) : (
-                <div style={{ marginTop: 8, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+                <div style={{ marginTop: 8, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
                   {product.fiyatGecmisi.map((log, i, arr) => (
                     <div
                       key={log.id}
                       style={{
                         display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", fontSize: 12,
-                        borderBottom: i === arr.length - 1 ? "none" : "1px solid #E4D8C0",
+                        borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                       }}
                     >
                       <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)", width: 130 }}>
@@ -5394,7 +5394,7 @@ function ProductMatrixCard({
           return <EmptyState text="Bu ürün henüz hiçbir siparişte geçmiyor." />;
         }
         return (
-          <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+          <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
             {ilgiliSiparisler.map((s, i) => {
               const tipRenk = s.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)";
               const durumRenk = SIPARIS_DURUM_RENK[s.durum] || "var(--erp-text-2)";
@@ -5408,7 +5408,7 @@ function ProductMatrixCard({
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 12px",
                     background: "transparent", border: "none", cursor: "pointer", textAlign: "left", flexWrap: "wrap",
-                    borderBottom: i === ilgiliSiparisler.length - 1 ? "none" : "1px solid #E4D8C0",
+                    borderBottom: i === ilgiliSiparisler.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                   }}
                 >
                   <span

@@ -227,7 +227,7 @@ function GorselIleBul({ havuz, onSec, acikMi, onKapat, altBilgi, showToast }) {
         <button type="button" className="btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => galeriRef.current && galeriRef.current.click()}>
           <ImageIcon size={13} /> Galeriden seç
         </button>
-        {foto ? <img src={foto} alt="" style={{ width: 46, height: 46, objectFit: "cover", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)" }} /> : null}
+        {foto ? <img src={foto} alt="" style={{ width: 46, height: 46, objectFit: "cover", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" }} /> : null}
         {calisiyor ? <span style={{ fontSize: 12, color: "#2E5670" }}>Karşılaştırılıyor…</span> : null}
       </div>
 
@@ -249,12 +249,12 @@ function GorselIleBul({ havuz, onSec, acikMi, onKapat, altBilgi, showToast }) {
               onClick={() => onSec(s)}
               style={{
                 display: "flex", alignItems: "center", gap: 10, textAlign: "left", cursor: "pointer",
-                background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: "6px 10px",
+                background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "6px 10px",
               }}
             >
               {s.gorsel
                 ? <img src={s.gorsel} alt="" style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-sm)", flex: "none" }} />
-                : <span style={{ width: 40, height: 40, borderRadius: "var(--erp-r-sm)", background: "#F0E7D5", flex: "none" }} />}
+                : <span style={{ width: 40, height: 40, borderRadius: "var(--erp-r-sm)", background: "var(--erp-head)", flex: "none" }} />}
               <span style={{ display: "grid", gap: 2, minWidth: 0 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>{s.urunAd}</span>
                 <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{s.renk}{s.etiket ? ` · ${s.etiket}` : ""}</span>

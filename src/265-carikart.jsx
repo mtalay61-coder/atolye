@@ -274,7 +274,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const subeOnerileri = bilinenSubeler(gecmisCekler, hForm.cek && hForm.cek.banka);
 
   return (
-    <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <div
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 10, padding: 14,
@@ -310,7 +310,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           <img
             src={cari.resim}
             alt=""
-            style={{ width: 38, height: 38, borderRadius: "var(--erp-r-md)", objectFit: "cover", flexShrink: 0, border: "1px solid #C9B99A" }}
+            style={{ width: 38, height: 38, borderRadius: "var(--erp-r-md)", objectFit: "cover", flexShrink: 0, border: "1px solid var(--erp-line)" }}
           />
         ) : (
           <div style={{
@@ -328,12 +328,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 onChange={(e) => setDuzenleUnvan(e.target.value)}
                 autoFocus
                 className="mono"
-                style={{ fontWeight: 700, fontSize: 14, padding: "3px 6px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", minWidth: 140 }}
+                style={{ fontWeight: 700, fontSize: 14, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", minWidth: 140 }}
               />
               <select
                 value={duzenleTip}
                 onChange={(e) => setDuzenleTip(e.target.value)}
-                style={{ fontSize: 12, padding: "3px 6px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
               >
                 {["Müşteri", "Tedarikçi", "Her İkisi", "Personel"].map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
@@ -341,7 +341,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 value={duzenleParaBirimi}
                 onChange={(e) => setDuzenleParaBirimi(e.target.value)}
                 title="Bu carinin hesabı hangi para biriminde tutuluyor"
-                style={{ fontSize: 12, padding: "3px 6px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
               >
                 {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
               </select>
@@ -376,7 +376,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   setDuzenleModu(false);
                 }}
                 title="Vazgeç"
-                style={{ border: "none", background: "none", color: "#A6957A", borderRadius: "var(--erp-r-sm)", padding: 4, display: "flex", cursor: "pointer" }}
+                style={{ border: "none", background: "none", color: "var(--erp-text-3)", borderRadius: "var(--erp-r-sm)", padding: 4, display: "flex", cursor: "pointer" }}
               >
                 <X size={14} />
               </button>
@@ -461,7 +461,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             }}
             data-kart-eylem="duzenle"
             title="Düzenle · F2 — ad, tip, telefon, adres"
-            style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex", padding: 4, flexShrink: 0 }}
+            style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, flexShrink: 0 }}
           >
             <Pencil size={15} />
           </button>
@@ -848,7 +848,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           {cardTab === "hareketler" && (
           <>
           {showHareket ? (
-            <div style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
+            <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                 <span
                   className="mono"
@@ -984,7 +984,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   bankası, numarası ve keşidecisi olmadan takip edilemez. Eskiden yalnızca vade
                   tarihi soruluyordu; çekin kimden geldiği açıklama satırına elle yazılıyordu. */}
               {cekSenet && (
-                <div style={{ marginTop: 10, border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", background: "#FBF0E2", padding: 10 }}>
+                <div style={{ marginTop: 10, border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", background: "var(--erp-hover)", padding: 10 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#7A3B22", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                     <FileText size={13} /> {hForm.odemeSekli} bilgileri
                   </div>
@@ -1323,7 +1323,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 style={{
                   width: "100%", minWidth: sayisalMi ? 62 : 80, padding: "3px 6px", fontSize: 11,
                   border: `1px solid ${kolonFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
-                  background: kolonFiltre[alan].trim() ? "#FBF0E2" : "#fff",
+                  background: kolonFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
                   borderRadius: "var(--erp-r-sm)", textAlign: sayisalMi ? "right" : "left", boxSizing: "border-box",
                 }}
               />
@@ -1351,7 +1351,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 )}
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
-                    <tr style={{ borderBottom: "1.5px solid #C9B99A" }}>
+                    <tr style={{ borderBottom: "1.5px solid var(--erp-line)" }}>
                       <th style={{ textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" }}>Tarih</th>
                       <th style={{ textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" }}>Açıklama</th>
                       <th style={{ textAlign: "right", padding: "4px 6px", color: "var(--erp-warn)" }}>Borç</th>
@@ -1363,7 +1363,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                         Her kutu kendi sütununda arar. Metin kutuları içerik araması, tutar kutuları
                         "en az şu kadar" eşiği yapar. Bakiye sütununda kutu YOKTUR: bakiye türetilmiş
                         bir değerdir, onu filtrelemek ekstrenin akışını anlamsızlaştırırdı. */}
-                    <tr style={{ borderBottom: "1px solid #E4D8C0" }}>
+                    <tr style={{ borderBottom: "1px solid var(--erp-line-soft)" }}>
                       <th style={{ padding: "3px 6px" }}>{filtreKutusu("tarih", "tarih…")}</th>
                       <th style={{ padding: "3px 6px" }}>{filtreKutusu("aciklama", "fiş no, ürün, açıklama…")}</th>
                       <th style={{ padding: "3px 6px" }}>{filtreKutusu("borc", "≥", true)}</th>
@@ -1383,7 +1383,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                     {gorunenSatirlar.map(({ g, ilk, toplamTutar, defterEtiketi, urunGruplari, yapisizHareketler, grupPB, kosanBakiye }) => {
                       const sembolG = PARA_SEMBOLU[grupPB] || grupPB;
                       return (
-                        <tr key={g.key} style={{ borderTop: "1px solid #E4D8C0", verticalAlign: "top" }}>
+                        <tr key={g.key} style={{ borderTop: "1px solid var(--erp-line-soft)", verticalAlign: "top" }}>
                           {/* KİMLİK BİLGİLERİ TARİHİN ALTINDA.
                               Eskiden fiş no + fiş türü + ödeme şekli, matrisin ÜSTÜNDE ayrı bir
                               satır kaplıyordu: her fiş üç satır oluyordu (kimlik, tablo başlığı,
@@ -1413,7 +1413,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                               {hareketIslemTipi(ilk) === "İşçilik" && (
                                 <span data-hareket-rozet="İşçilik" className="mono" style={{
                                   fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
-                                  background: `${HAREKET_TIPI_RENK["İşçilik"]}18`, color: HAREKET_TIPI_RENK["İşçilik"],
+                                  background: `${alfaEkle(HAREKET_TIPI_RENK["İşçilik"], "18")}`, color: HAREKET_TIPI_RENK["İşçilik"],
                                 }}>İŞÇİLİK</span>
                               )}
                               {g.fisNo && (
@@ -1511,7 +1511,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                   // Rozet daha önce her hareket tipinde aynı kahverengiydi; ekstreye
                                   // bakan kişi paranın hangi yöne gittiğini ancak tutar sütununa
                                   // bakarak anlıyordu.
-                                  background: `${HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)"}14`,
+                                  background: `${alfaEkle(HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)", "14")}`,
                                   color: HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)",
                                 }}
                               >
@@ -1649,7 +1649,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                           const sembolT = PARA_SEMBOLU[pbx] || pbx;
                           const netT = t.borc - t.alacak;
                           return (
-                            <tr key={pbx} style={{ borderTop: i === 0 ? "2px solid #C9B99A" : "1px solid #E4D8C0", background: "var(--erp-panel)" }}>
+                            <tr key={pbx} style={{ borderTop: i === 0 ? "2px solid var(--erp-line)" : "1px solid var(--erp-line-soft)", background: "var(--erp-panel)" }}>
                               <td style={{ padding: "6px 6px", fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>
                                 {kolonFiltreAktif ? "SÜZÜLEN TOPLAM" : "TOPLAM"}
                               </td>
@@ -1692,7 +1692,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               return <EmptyState text="Bu cariye ait sipariş yok." />;
             }
             return (
-              <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+              <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
                 {ilgiliSiparisler.map((s, i) => {
                   const tipRenk = s.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)";
                   const durumRenk = SIPARIS_DURUM_RENK[s.durum] || "var(--erp-text-2)";
@@ -1725,7 +1725,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                         borderLeft: s.durum === "Tamamlandı" ? `3px solid ${tipRenk}` : "3px solid transparent",
                         opacity: s.durum === "Tamamlandı" ? 0.72 : 1,
                         cursor: "pointer", textAlign: "left", flexWrap: "wrap",
-                        borderBottom: i === ilgiliSiparisler.length - 1 ? "none" : "1px solid #E4D8C0",
+                        borderBottom: i === ilgiliSiparisler.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                       }}
                     >
                       <span

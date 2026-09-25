@@ -706,21 +706,21 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
     </div>
 
     <div style={{ position: "relative", maxWidth: 340, marginBottom: 20 }}>
-      <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "#A6957A" }} />
+      <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" }} />
       <input
         value={aramaSorgusu}
         onChange={(e) => setAramaSorgusu(e.target.value)}
         placeholder="Tanımlarda ara — renk, beden, birim, proses…"
         style={{
           width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)",
-          border: "1px solid #C9B99A", background: "var(--erp-panel)", fontSize: 14,
+          border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14,
         }}
       />
       {aramaSorgusu && (
         <button
           type="button"
           onClick={() => setAramaSorgusu("")}
-          style={{ position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex" }}
+          style={{ position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" }}
         >
           <X size={15} />
         </button>
@@ -737,7 +737,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
         (bağlantı yazma) KALDIRILDI: GitHub'a yayınla aynı kaydı kendi tazeliyor. */}
     {aktifTanimSekme === "firma" && (
     <>
-    <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
+    <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Firma Bilgileri</h3>
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Logonuz ve firma bilgileriniz; Anasayfa'da, sol menüde, Cari Ekstre'de ve yazdırılan fişlerde
@@ -749,7 +749,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
             <img
               src={tanimlar.firmaBilgileri.logo}
               alt="Firma logosu"
-              style={{ width: 120, height: 60, objectFit: "contain", background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 6 }}
+              style={{ width: 120, height: 60, objectFit: "contain", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 6 }}
             />
           )}
           <label className="btn-ghost" style={{ cursor: "pointer", fontSize: 12 }}>
@@ -813,7 +813,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
           const e = (tanimlar.firmaBilgileri || {}).eposta || {};
           const guncelle = (alan, deger) => firmaBilgisiGuncelle("eposta", { ...e, [alan]: deger });
           return (
-            <div data-eposta-ayarlari="1" style={{ marginTop: 14, borderTop: "1px solid #E4D8C0", paddingTop: 12 }}>
+            <div data-eposta-ayarlari="1" style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>E-posta gönderim ayarları <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>— isteğe bağlı</span></div>
               <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>
                 Boş bırakılırsa "E-posta" düğmesi telefonun paylaşım menüsünü PDF ekli açar (WhatsApp'la aynı),
@@ -874,7 +874,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
             <button className="btn-primary" onClick={addFireSebep}><Plus size={14} /></button>
           </div>
           {(tanimlar.fireSebepleri || []).length === 0 && (
-            <div style={{ background: "#FBF0E2", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9, marginBottom: 10, fontSize: 11, color: "#7A3B22", lineHeight: 1.6 }}>
+            <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9, marginBottom: 10, fontSize: 11, color: "#7A3B22", lineHeight: 1.6 }}>
               Sebep tanımlanmadı. Bu durumda teslim alma ekranında varsayılan liste kullanılır:
               Malzeme hatası, İşçilik hatası, Kalıp / ölçü, Makine arızası, İkinci kalite.
               Kendi sebeplerinizi ekleyerek bu listeyi değiştirebilirsiniz.
@@ -1032,7 +1032,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
               <div style={{ display: "grid", gap: 4 }}>
                 {[...kullanilan.entries()].map(([ad, sayi]) => (
                   <div key={ad} data-tanimsiz-olcu={ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
-                    background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
+                    background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
                     <b className="mono" style={{ fontSize: 13 }}>{ad}</b>
                     <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{sayi} kayıtta</span>
                     <button type="button" className="btn-ghost" data-tanimsiz-ekle={ad} style={{ padding: "3px 9px", fontSize: 11 }}
@@ -1111,7 +1111,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                   <div style={{ display: "grid", gap: 4 }}>
                     {gruplar.map((g) => (
                       <div key={g.id} data-beden-grup={g.ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
-                        background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
+                        background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
                         <b style={{ fontSize: 13 }}>{g.ad}</b>
                         <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{(g.bedenler || []).join(" · ")}</span>
                         <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({(g.bedenler || []).length} beden)</span>
@@ -1218,7 +1218,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
           )).sort((a, b) => a.localeCompare(b, "tr"));
           if (eksikler.length === 0) return null;
           return (
-            <div style={{ background: "#FBF0E2", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12 }}>
+            <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12 }}>
               <div style={{ fontSize: 11, color: "#7A3B22", lineHeight: 1.6, marginBottom: 7 }}>
                 Şu birimler ürünlerde kullanılıyor ama bu listede yok. Eklenmezse o ürünlerin
                 kartında birim yanlış görünür.
@@ -1261,7 +1261,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
       {asortilerGorunen.length > 0 && (
         <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
           {asortilerGorunen.map((a) => (
-            <div key={a.id} style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10 }}>
+            <div key={a.id} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <span style={{ fontWeight: 700, fontSize: 13 }}>{a.ad}</span>
                 {/* BARKOD KODU — sistem atar, değiştirilemez. Asorti barkodunun son üç hanesi bu. */}
@@ -1287,7 +1287,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                     key={i}
                     className="mono"
                     style={{
-                      fontSize: 12, fontWeight: 600, background: "#fff", border: "1px solid #E4D8C0",
+                      fontSize: 12, fontWeight: 600, background: "#fff", border: "1px solid var(--erp-line-soft)",
                       borderRadius: "var(--erp-r-pill)", padding: "3px 9px",
                     }}
                   >
@@ -1333,13 +1333,13 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
       {(tanimlar.fiyatGruplari || []).length === 0 ? (
         <EmptyState text="Henüz fiyat grubu tanımlanmadı." />
       ) : (
-        <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+        <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
           {(tanimlar.fiyatGruplari || []).filter((g) => ara(g.ad)).map((g, i, arr) => (
             <div
               key={g.id}
               style={{
                 display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
-                borderBottom: i === arr.length - 1 ? "none" : "1px solid #E4D8C0",
+                borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
               }}
             >
               <span
@@ -1380,7 +1380,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
       )}
     </div>
     <div style={{ marginTop: 28 }}>
-    <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
+    <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Özel Kod Alanları</h3>
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Alan <b>başlıkları</b> burada tanımlanır, <b>değerler</b> her ürünün kendi kartındaki
@@ -1450,7 +1450,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                 </div>
                 <div style={{ display: "grid", gap: 6 }}>
                   {alanlar.map((a) => (
-                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "6px 10px" }}>
+                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "6px 10px" }}>
                       <input
                         defaultValue={a.ad}
                         // Boş bırakılan ad kaydedilmiyor: adsız bir alan, değerini okunamaz kılar.
@@ -1483,7 +1483,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
               .filter((a) => !gecerli.has(`${a.kapsamTuru || "genel"}|${a.kapsamAd || ""}`));
             if (oksuz.length === 0) return null;
             return (
-              <div style={{ border: "1px solid #C9A063", background: "#FBF0E2", borderRadius: "var(--erp-r-md)", padding: 10 }}>
+              <div style={{ border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#7A3B22", marginBottom: 6 }}>
                   Tipi silinmiş alanlar — hiçbir üründe görünmüyor
                 </div>
@@ -1529,7 +1529,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
         {(tanimlar.prosesler || []).length === 0 ? (
           <EmptyState text="Henüz proses tanımlanmadı." />
         ) : (
-          <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+          <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
             {[...tanimlar.prosesler].sort((a, b) => a.sira - b.sira).map((p, i, arr) => (
               // Proses rengi SIRAYA göre belirlenir; uygulamanın her yerinde (üretim kartı,
               // reçete rozetleri, atölye ekranı) aynı fonksiyon kullanılıyor. Tanımlar listesinin
@@ -1541,7 +1541,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                   display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
                   borderLeft: `4px solid ${prosesRengi(p.ad, i)}`,
                   background: prosesZemini(p.ad, i),
-                  borderBottom: i === arr.length - 1 ? "none" : "1px solid #E4D8C0",
+                  borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                   opacity: ara(p.ad) ? 1 : 0.3,
                 }}
               >
@@ -1569,7 +1569,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                   title="Bu prosesin ikonu — üretim kartında, reçetede ve atölye ekranında görünür"
                   style={{
                     width: 34, height: 26, padding: "0 2px", fontSize: 11, cursor: "pointer",
-                    border: `1px solid ${prosesRengi(p.ad, i)}55`, borderRadius: "var(--erp-r-sm)",
+                    border: `1px solid ${alfaEkle(prosesRengi(p.ad, i), "55")}`, borderRadius: "var(--erp-r-sm)",
                     background: alfaEkle(prosesRengi(p.ad, i), "14"), color: prosesRengi(p.ad, i), flexShrink: 0,
                   }}
                 >
@@ -1588,7 +1588,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                     defaultValue={p.baslangicNo ?? 1000}
                     onBlur={(e) => prosesBaslangicNoGuncelle(p.id, e.target.value)}
                     className="mono"
-                    style={{ width: 60, padding: "2px 5px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                    style={{ width: 60, padding: "2px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                   />
                 </label>
                 <button
@@ -1607,7 +1607,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                 >
                   <ChevronDown size={16} />
                 </button>
-                <button onClick={() => removeProses(p.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "#A6957A", display: "flex" }}>
+                <button onClick={() => removeProses(p.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex" }}>
                   <X size={14} />
                 </button>
               </div>
@@ -1658,7 +1658,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
         {(tanimlar.araProsesler || []).length === 0 ? (
           <EmptyState text="Henüz ara proses tanımlanmadı." />
         ) : (
-          <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+          <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
             {tanimlar.araProsesler.map((p, i, arr) => {
               const cariAdi = ((cariler || []).find((c) => c.id === p.cariId) || {}).unvan;
               return (
@@ -1671,7 +1671,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                     // Ayrı bir renk ailesi, bu farkı hatırlatır.
                     borderLeft: "4px solid #8A6A2E",
                     background: "#8A6A2E0F",
-                    borderBottom: i === arr.length - 1 ? "none" : "1px solid #E4D8C0",
+                    borderBottom: i === arr.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                     opacity: ara(p.ad) ? 1 : 0.3,
                   }}
                 >
@@ -1684,11 +1684,11 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                       onBlur={(e) => araProsesUcretGuncelle(p.id, e.target.value)}
                       placeholder="0"
                       className="mono"
-                      style={{ width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                      style={{ width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                     />
                     <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>₺/adet</span>
                   </label>
-                  <button onClick={() => araProsesSil(p.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "#A6957A", display: "flex" }}>
+                  <button onClick={() => araProsesSil(p.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex" }}>
                     <X size={14} />
                   </button>
                 </div>
@@ -1872,7 +1872,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
               {tanimlar.kullanicilar.map((k) => {
                 const yetkiAcik = acikYetkiKullaniciId === k.id;
                 return (
-                  <div key={k.id} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10 }}>
+                  <div key={k.id} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <span style={{ fontSize: 13, fontWeight: 700 }}>{k.ad}</span>
                       <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>@{k.kullaniciAdi}</span>
@@ -1911,7 +1911,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                         onClick={() => kullaniciSil(k.id)}
                         disabled={!!bulutIslemi}
                         title="Kullanıcıyı ve bulut hesabını sil"
-                        style={{ border: "none", background: "none", cursor: "pointer", color: "#A6957A", display: "flex", marginLeft: "auto" }}
+                        style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex", marginLeft: "auto" }}
                       >
                         <X size={14} />
                       </button>
@@ -1922,7 +1922,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                             Şablon BAŞLANGIÇ, kilit değil — uygulandıktan sonra kutular elle
                             değiştirilebilir. */}
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 10,
-                          background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 8 }}>
+                          background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
                           <Field label="Rol şablonu">
                             <select value={k.rol || ""} data-rol-sablonu={k.kullaniciAdi}
                               onChange={(e) => rolSablonuUygula(k.id, e.target.value)}
@@ -1992,7 +1992,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
     {aktifTanimSekme === "gorunum" && (
     <>
       {/* MOBİL GÖRÜNÜM DÜZENLEYİCİ (14 Eylül) — telefon düzenini kullanıcı kuruyor. */}
-      <div style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
+      <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
         <MobilGorunumDuzenleyici tanimlar={tanimlar} onSave={onSave} showToast={showToast}
           mobilDuzenKipi={mobilDuzenKipi} onMobilDuzenKipi={onMobilDuzenKipi} mobilDuzenAktif={mobilDuzenAktif} />
       </div>
@@ -2014,7 +2014,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
 
     {aktifTanimSekme === "yedek" && (
     <>
-    <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
+    <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Veri Yedekleme</h3>
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Tüm atölye verinizin (stok ve görselleri, sipariş, üretim, cari, tanımlar, kasa/banka/çek, koliler)
@@ -2099,7 +2099,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
 
       return (
         <div>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14 }}>
             <Trash2 size={16} color="var(--erp-brown)" style={{ flexShrink: 0, marginTop: 1 }} />
             <div style={{ fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.7 }}>
               Silinen kayıtların tam kopyası burada tutulur — kim, ne zaman, neyi sildi.
@@ -2157,7 +2157,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                 const acik = acikCopId === k.id;
                 const renk = TUR_RENK[k.tur] || "var(--erp-text-2)";
                 return (
-                  <div key={k.id} style={{ background: "#fff", border: "1px solid #E4D8C0", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+                  <div key={k.id} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", flexWrap: "wrap" }}>
                       <span className="mono" style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "1A"), color: renk, whiteSpace: "nowrap" }}>
                         {TUR_ADLARI[k.tur] || k.tur}
@@ -2200,7 +2200,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                     </div>
 
                     {acik && (
-                      <div style={{ borderTop: "1px solid #E4D8C0", background: "var(--erp-panel)", padding: 10 }}>
+                      <div style={{ borderTop: "1px solid var(--erp-line-soft)", background: "var(--erp-panel)", padding: 10 }}>
                         {/* Ham içerik: kaydın silinmeden önceki tam hâli. Otomatik geri yüklenemeyen
                             türlerde (hareketler) kullanıcının değerleri okuyup elle girebilmesi için. */}
                         <pre className="mono" style={{ margin: 0, fontSize: 10, color: "var(--erp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" }}>
@@ -2239,7 +2239,7 @@ function KullaniciSifreKutusu({ etiket, kilitli, onUygula }) {
     <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
       <input type="password" value={sifre} data-sifre-kutusu="1" placeholder="Yeni şifre (en az 6)" autoFocus
         onChange={(e) => setSifre(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") gonder(); }}
-        style={{ padding: "3px 6px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", width: 150 }} />
+        style={{ padding: "3px 6px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", width: 150 }} />
       <button type="button" className="btn-primary" data-sifre-uygula="1" disabled={kilitli} style={{ padding: "3px 8px", fontSize: 11 }} onClick={gonder}>Uygula</button>
       <button type="button" className="btn-ghost" style={{ padding: "3px 6px", fontSize: 11 }} onClick={() => { setAcik(false); setSifre(""); }}><X size={10} /></button>
     </span>

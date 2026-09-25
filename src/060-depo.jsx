@@ -52,7 +52,12 @@ function secenekEtiketi(kayit, ad) {
 // Tam ekran açılan pencereler inset:0 ile başladığında kendi başlık çubukları bu şeridin ALTINDA
 // kalıyor ve Kapat/küçült düğmeleri erişilemez oluyordu. Bu yüzden tam ekran pencereler şeridin
 // yüksekliği kadar aşağıdan başlar. Tek yerde tanımlı ki şerit yüksekliği değişirse hepsi uyar.
-const PENCERE_SERIT_YUKSEKLIGI = 40;
+// ÜST BÖLGE YÜKSEKLİĞİ (v1.449.0): tam ekran pencereler bunun ALTINDAN başlıyor. Masaüstünde
+// üst menü (UST_MENU_YUKSEKLIGI) + sekme şeridi; mobilde üst menü gizli, yalnız şerit. Menü
+// yüksekliği CSS değişkeninde (100-app yazıyor), o yüzden değer bir calc() dizesi.
+const SEKME_SERIDI_YUKSEKLIGI = 40;
+const UST_MENU_YUKSEKLIGI = 56;
+const PENCERE_SERIT_YUKSEKLIGI = `calc(var(--ust-menu-h, 0px) + ${SEKME_SERIDI_YUKSEKLIGI}px)`;
 
 // Pencere başlığındaki "−" ve "Kapat" düğmelerinin ortak görünümü. Başlık şeridi koyu renkli
 // olduğu için düğmeler saydam-açık kalıyor; her pencerede elle tekrarlanınca biri diğerinden

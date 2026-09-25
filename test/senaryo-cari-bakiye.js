@@ -6,7 +6,7 @@
 //
 // Ölçülen: tek para birimli caride doğru sembol, KARIŞIK para birimli caride sayıların
 // toplanmayıp ayrı ayrı yazılması.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -27,7 +27,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(800);
 
   const ekran = await sayfa.evaluate(() => {

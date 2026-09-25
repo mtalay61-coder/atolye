@@ -241,7 +241,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
 
 
       {showForm && (
-        <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
+        <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr", gap: 10 }}>
             <Field label="Ürün (Mamul)">
               <select
@@ -437,14 +437,14 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
           <>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
               <div style={{ position: "relative", flex: "1 1 260px", maxWidth: 340 }}>
-                <Search size={15} style={{ position: "absolute", left: 10, top: 9, color: "#A6957A" }} />
+                <Search size={15} style={{ position: "absolute", left: 10, top: 9, color: "var(--erp-text-3)" }} />
                 <input
                   value={uretimArama}
                   onChange={(e) => setUretimArama(e.target.value)}
                   placeholder="Model, sipariş no, renk ara…"
                   style={{
                     width: "100%", padding: "7px 10px 7px 32px", borderRadius: "var(--erp-r-md)",
-                    border: "1px solid #C9B99A", background: "var(--erp-panel)", fontSize: 13,
+                    border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13,
                   }}
                 />
               </div>
@@ -515,7 +515,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                       const henuzVerilmemis = buProsesteBekleyen.length - verilmis.length;
                       const toplamAdetBu = buProsesteBekleyen.reduce((s, o) => s + (o.adet || 0), 0);
                       return (
-                        <div key={prosesAdi} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12 }}>
+                        <div key={prosesAdi} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
                             <span style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)" }}>{prosesAdi}</span>
                             <span className="mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-purple)" }}>

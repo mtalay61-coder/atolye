@@ -4,13 +4,13 @@
   "YESIL": "rgb(78, 107, 78)"
  },
  "ekstreRenkleri": {
-  "kosanBakiye": "rgb(85, 112, 43)",
-  "toplamNet": "rgb(85, 112, 43)"
+  "kosanBakiye": "rgb(47, 125, 74)",
+  "toplamNet": "rgb(47, 125, 74)"
  },
  "hatalar": [],
  "listeRenkleri": {
-  "+1.500 ₺": "rgb(85, 112, 43)",
-  "-30 ₺": "rgb(161, 101, 26)",
-  "-900 ₺": "rgb(161, 101, 26)"
+  "+1.500 ₺": "rgb(47, 125, 74)",
+  "-30 ₺": "rgb(161, 92, 7)",
+  "-900 ₺": "rgb(161, 92, 7)"
  }
 }

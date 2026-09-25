@@ -12,7 +12,7 @@
 //   1. Tutar girilince kur ÖN DOLUYOR ve hedef tutar hesaplanıyor.
 //   2. HEDEF TUTAR yazılınca kur geri hesaplanıyor.
 //   3. KUR yazılınca hedef tutar yeniden hesaplanıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -28,7 +28,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
 
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(1000);
   await sayfa.evaluate(() => {
     const e = [...document.querySelectorAll("*")]

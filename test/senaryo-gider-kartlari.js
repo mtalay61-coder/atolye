@@ -8,7 +8,7 @@
 // Ölçülen: (1) Tanımlar'da kart açılıyor, hazır kartlarla başlanabiliyor; (2) kasa formunda kart
 // karşı taraf olarak seçilebiliyor; (3) karşı taraf seçilmeden kayıt REDDEDİLİYOR; (4) kaydedilen
 // hareket kartın adını ve GRUBUNU taşıyor (kârlılık raporu bu gruplardan çıkacak).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -56,7 +56,7 @@ async function calistir() {
   const ikinci = await uygulamaAc(t2, { hataYaz: false });
   ikinci.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ikinci.sayfa.waitForTimeout(2400);
-  await ikinci.sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(ikinci.sayfa, "Muhasebe");
   await ikinci.sayfa.waitForTimeout(900);
   await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ikinci.sayfa.waitForTimeout(700);

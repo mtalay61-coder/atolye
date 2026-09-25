@@ -6,7 +6,7 @@
 // Akış AYRI BİR GÜNLÜK TABLOSUNDAN değil, mevcut veriden türetiliyor (cari hareketleri, stok
 // hareketleri, siparişler). Ayrı günlük tutmak her yeni işlem yolunda "oraya da yaz"ı hatırlamayı
 // gerektirirdi; bu projede tam olarak o tür ikili yazımlardan hata çıktı.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -31,7 +31,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2200);
 
   // Bir alış fişi kes ki akışta "kim ne yaptı" görünsün.
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);
@@ -41,7 +41,7 @@ async function calistir() {
   await sayfa.waitForTimeout(500);
   await alisSiparisindenTeslimEt(sayfa);
 
-  await sayfa.getByRole("button", { name: "Anasayfa", exact: true }).click();
+  await modulAc(sayfa, "Anasayfa");
   await sayfa.waitForTimeout(900);
 
   // KAPALI AÇILMALI: ana sayfa bir özet ekranı, akış onu aşağı itmemeli.

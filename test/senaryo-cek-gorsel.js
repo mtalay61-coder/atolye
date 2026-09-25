@@ -9,7 +9,7 @@
 //            uygulamanın kayıt başına 5 MB sınırına çek başına iki fotoğrafla hızla çarpmaktı.
 //
 // `tabloYaz`ın dördüncü parametresi bunu mümkün kılıyor: buluta tam liste, yerele boş liste.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -25,7 +25,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
 
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]

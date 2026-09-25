@@ -9,7 +9,7 @@
 //
 // Ölçülen: ödeme şekli "Çek" seçilince alanlar çıkıyor, girilen bilgiler kayda `cek` nesnesi
 // olarak yazılıyor ve ekstre satırında görünüyor. Nakit seçiliyken alanlar YOK.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -18,7 +18,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   await sayfa.locator('button:has-text("Müşteri B"):visible').last().click();
   await sayfa.waitForTimeout(600);

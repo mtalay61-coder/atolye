@@ -6,7 +6,7 @@
 // Aynı ürün/renk/bedende iki giriş: 100 satın alma (AF-…), 3 üretim (10007-Kesim-2-Giriş). 103 çift
 // sevk edildi. Ölçülen: sevk satırı iki kaynağı MİKTARIYLA gösteriyor (eskiden hepsi "üretimden");
 // Tedarik Girişleri bölümü iki satır; alış satırına tıklayınca Fişler'de o fiş açılıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -42,7 +42,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(500);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);
@@ -112,7 +112,7 @@ async function calistir() {
 
   // YAZDIR + WHATSAPP (13 Eylül): kartta iki düğme; WhatsApp bağlantısı cari kartındaki numaraya
   // (Müşteri B'ye whatsapp 0532… verildi) ve sipariş özeti metnini taşıyor; Yazdır dosya indiriyor.
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(500);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);

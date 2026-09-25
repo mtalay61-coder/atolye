@@ -130,7 +130,7 @@ function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, onGoToSi
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, borderBottom: "1px solid #E4D8C0", paddingBottom: 10 }}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, borderBottom: "1px solid var(--erp-line-soft)", paddingBottom: 10 }}>
         {ALT_SEKMELER.map((s) => {
           const aktif = altSekme === s.key;
           const renk = "#B8860B"; // MODUL_RENK.planlama ile aynı — bu bileşen ana bileşenin dışında olduğu için sabit tekrarlanır
@@ -302,7 +302,7 @@ function FireRaporu({ uretimler, cariler }) {
                 const toplam = s.hurda + s.tamir;
                 const pay = toplamHurda + toplamTamir > 0 ? toplam / (toplamHurda + toplamTamir) : 0;
                 return (
-                  <tr key={i} style={{ borderTop: "1px solid #E4D8C0" }}>
+                  <tr key={i} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                     <td style={{ fontSize: 12, fontWeight: 600, padding: "5px 8px" }}>{s.anahtar}</td>
                     <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, color: s.hurda > 0 ? "var(--erp-warn)" : "var(--erp-border)" }}>{s.hurda || "—"}</td>
                     <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, color: s.tamir > 0 ? "#B8860B" : "var(--erp-border)" }}>{s.tamir || "—"}</td>
@@ -396,7 +396,7 @@ function RezervasyonDeposu({ siparisler, stok, stokRezervasyonlari, uretim, cari
 
           Depo iki soruya bakar: "elimde ne var, kime söz verilmiş" ve "ne kadarını kaybediyoruz".
           İkisi de malzemenin akıbetiyle ilgili; ayrı modüllere bölmek yerine sekme yeterli. */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid #E4D8C0", alignItems: "center", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid var(--erp-line-soft)", alignItems: "center", flexWrap: "wrap" }}>
         {[
           // DEPO İKİYE AYRILDI. Hammadde "ne almalıyım", mamul "ne üretmeliyim" sorusunu
           // cevaplıyor; ikisi aynı listede karışınca bakan kişi hangi soruya baktığını

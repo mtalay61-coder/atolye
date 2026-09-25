@@ -5,7 +5,7 @@
 // ÖNCE: iade, çıkışla AYNI fiş numarasını taşıyordu. Fiş listesinde tek satır ve NET görünüyordu
 // (-168); +8'lik iade hiçbir fişte ayrı görünmüyordu.
 // ŞİMDİ: iade kendi fişinde (`…-İade`), fiş listesinde ayrı satır. Geri alma da onu tanıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -35,7 +35,7 @@ async function calistir() {
   sayfa.on("dialog", (d) => d.accept());
   await sayfa.waitForTimeout(2500);
 
-  await sayfa.getByRole("button", { name: "Üretim", exact: true }).click();
+  await modulAc(sayfa, "Üretim");
   await sayfa.waitForTimeout(700);
   await sayfa.getByText("1002", { exact: true }).last().click();
   await sayfa.waitForTimeout(900);

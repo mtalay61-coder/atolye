@@ -8,6 +8,7 @@
   "cariSecimiVar": true,
   "fisEkraniAcildi": true,
   "gorunen": [
+   "Anasayfa Depo Üretim Planlama Siparişler Finans TK",
    "Anasayfa Depo Alış Fişi: Cari seçin $ 48,00 € 56,00",
    "CARİ · ALIŞ FİŞİ Cari seçin − Kapat Cariden Alış Fişi mal stoğa girer, cariye borç yazılır"
   ],
@@ -44,6 +45,7 @@
   "basliktaUndefinedYok": true,
   "bulunamadiBildirimiYok": true,
   "gorunen": [
+   "Anasayfa Depo Üretim Planlama Siparişler Finans TK",
    "Anasayfa Depo Satın Al: Deri $ 48,00 € 56,00",
    "DEPO · HAMMADDE İHTİYAÇ Deri − Kapat Bekleyen (henüz tam karşılanmamış) satış si"
   ],

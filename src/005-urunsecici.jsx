@@ -128,7 +128,7 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
             position: "absolute", left: 0, zIndex: 60,
             ...(yerlesim.yukari ? { bottom: "calc(100% + 3px)" } : { top: "calc(100% + 3px)" }),
             minWidth: "100%", width: "max-content", maxWidth: 420,
-            background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)",
+            background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)",
             boxShadow: "none",
             maxHeight: yerlesim.maksYukseklik, overflowY: "auto",
           }}
@@ -146,7 +146,7 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
               }}
               style={{
                 display: "flex", alignItems: "center", gap: 7, width: "100%", textAlign: "left",
-                padding: "9px 12px", border: "none", borderBottom: "1px solid #E4D8C0",
+                padding: "9px 12px", border: "none", borderBottom: "1px solid var(--erp-line-soft)",
                 background: "#F0F5EE", color: "#2F6B4F", fontSize: 12, fontWeight: 700, cursor: "pointer",
               }}
             >
@@ -169,8 +169,8 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
                 // en kolay yer burası — liste karışık geliyor ve isimler benzeyebiliyor.
                 style={{
                   width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "7px 10px",
-                  background: i === vurgulu ? "#FBF0E2" : "transparent",
-                  border: "none", borderBottom: "1px solid #F2E8D8",
+                  background: i === vurgulu ? "var(--erp-hover)" : "transparent",
+                  border: "none", borderBottom: "1px solid var(--erp-head)",
                   borderLeft: `4px solid ${CAT_COLORS[u.kategori] || "var(--erp-border)"}`,
                   cursor: "pointer", textAlign: "left",
                 }}

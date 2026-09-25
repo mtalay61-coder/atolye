@@ -7,14 +7,14 @@
 // İki cari: USD çalışan (fiyat olduğu gibi) ve TL çalışan (kurla ÇEVRİLMİŞ).
 //
 // ÖNCE: kural para birimi taşımıyordu — "Toptan USD" grubunun 6,30'u TL cariye 6,30 ₺ gidiyordu.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function fisFiyati(t, cariAd) {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   await sayfa.waitForTimeout(2500);
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   // Cari kartını aç: kart başlığındaki ada tıkla (satır bir div).
   await sayfa.evaluate((ad) => {

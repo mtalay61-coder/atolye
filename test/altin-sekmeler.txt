@@ -21,12 +21,12 @@
   "aciklamaKaldirildi": true,
   "baslikBoyutu": "22px",
   "yukseklik": 60,
-  "zemin": "rgb(47, 38, 32)"
+  "zemin": "rgb(255, 255, 255)"
  },
  "kaydirma": {
-  "basta": 0,
+  "basta": 56,
   "menuEkrandaKaldi": true,
-  "menuYukariCikti": true,
+  "menuSabitKaldi": true,
   "seritSabitKaldi": true
  },
  "kurPaneli": {
@@ -40,20 +40,20 @@
   "seritte": true
  },
  "mobilCubuk": {
-  "aktifYazi": "rgb(85, 112, 43)",
-  "aktifZemin": "rgb(188, 211, 181)",
-  "zemin": "rgb(251, 247, 241)"
+  "aktifYazi": "rgb(196, 50, 26)",
+  "aktifZemin": "rgb(253, 236, 234)",
+  "zemin": "rgb(255, 255, 255)"
  },
  "modulBasligi": {
   "aciklamaKaldirildi": true,
-  "baslikBoyutu": "17px",
-  "ilkIcerikUstu": 198,
+  "baslikBoyutu": "22px",
+  "ilkIcerikUstu": 235,
   "kurMenude": false
  },
  "palet": {
-  "menuMetin": "rgb(232, 222, 209)",
-  "menuZemin": "rgb(47, 38, 32)",
-  "seritZemin": "rgb(251, 247, 241)"
+  "menuMetin": "rgb(29, 33, 41)",
+  "menuZemin": "rgb(255, 255, 255)",
+  "seritZemin": "rgb(245, 246, 248)"
  },
  "stokSekmesiniKapat": false,
  "tekrarSonrasi": [

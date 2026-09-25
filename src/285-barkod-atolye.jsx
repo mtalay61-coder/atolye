@@ -322,7 +322,7 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
   // (kullanıcı bildirdi, 6 Eylül). Diğer tam ekran paneller zaten `top: PENCERE_SERIT_YUKSEKLIGI`
   // kullanıyordu; bu ikisi o kuralın dışında kalmıştı.
   return (
-    <div style={{ position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: 0, right: 0, bottom: 0, background: "#3A291D", zIndex: 200, display: "flex", flexDirection: "column", padding: 16, overflowY: "auto" }}>
+    <div style={{ position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: 0, right: 0, bottom: 0, background: "var(--erp-text)", zIndex: 200, display: "flex", flexDirection: "column", padding: 16, overflowY: "auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <ScanLine size={20} color="var(--erp-panel-2)" />
         <span style={{ fontSize: 18, fontWeight: 700, color: "var(--erp-panel-2)" }}>Barkodla Atölye</span>
@@ -338,7 +338,7 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
       {/* HİÇ BARKOD TANIMLI DEĞİLSE bunu ekranda söyle. Okutup tepki alamayan kullanıcının ilk
           düşüneceği şey "uygulama bozuk" oluyor; oysa sebep çoğu zaman kodun hiç atanmamış olması. */}
       {barkodluPersonelSayisi === 0 && (
-        <div style={{ background: "#FBF0E2", border: "2px solid #B85C2E", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12, fontSize: 13, color: "#7A3B22" }}>
+        <div style={{ background: "var(--erp-hover)", border: "2px solid #B85C2E", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12, fontSize: 13, color: "#7A3B22" }}>
           <b>Hiçbir personelin barkod kodu tanımlı değil.</b> Cari → personel kartı → Düzenle →
           Barkod Kodu alanından kod verin (ya da "Kod Ata" ile otomatik üretin). Kod olmadan bu
           ekranda okutma çalışmaz.
@@ -416,7 +416,7 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
               const adet = kalan.reduce((t, k) => t + k.miktar, 0);
               const urun = (stok || []).find((x) => x.id === u.urunId);
               return (
-                <div key={`${u.id}|${adim.proses}|${parcaKod || ""}`} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid #E4D8C0", fontSize: 13 }}>
+                <div key={`${u.id}|${adim.proses}|${parcaKod || ""}`} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid var(--erp-line-soft)", fontSize: 13 }}>
                   {/* Bölünmüş üretimde PARÇA kodu görünür; ana kod artık kapalı. */}
                   <span className="mono" style={{ fontWeight: 700 }}>{parcaKod || u.takipKodu}</span>
                   <span>{(urun && urun.ad) || u.model || ""} · {adim.proses}</span>
@@ -434,7 +434,7 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
             ) : elindekiler.map(({ uretim: u, adim, atama }) => {
               const adet = Object.values(atama.bedenMiktarlari || {}).reduce((t, m) => t + (m || 0), 0);
               return (
-                <div key={atama.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid #E4D8C0", fontSize: 13 }}>
+                <div key={atama.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid var(--erp-line-soft)", fontSize: 13 }}>
                   <span className="mono" style={{ fontWeight: 700 }}>{atama.barkod || u.takipKodu}</span>
                   <span>{adim.proses}</span>
                   <span className="mono" style={{ marginLeft: "auto", fontWeight: 700 }}>{adet} çift</span>
@@ -458,7 +458,7 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
           </div>
           <div style={{ background: "var(--erp-panel-2)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
             {teslimEdilenler.map((x, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", fontSize: 12, borderTop: i ? "1px solid #E4D8C0" : "none" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 8px", fontSize: 12, borderTop: i ? "1px solid var(--erp-line-soft)" : "none" }}>
                 <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)", minWidth: 44 }}>
                   {x.zaman.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
                 </span>

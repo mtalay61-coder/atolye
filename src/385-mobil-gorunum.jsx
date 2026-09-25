@@ -187,8 +187,8 @@ function MobilGorunumDuzenleyici({ tanimlar, onSave, showToast, mobilDuzenKipi, 
       {/* Alt çubuk önizlemesi: sıradaki ilk görünür modüller. */}
       <div style={{ background: "#EDF2EC", border: "1px solid #AFCAA8", borderRadius: "var(--erp-r-lg)", padding: "8px 10px", marginBottom: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 11, color: "#455A40" }}>Telefonda alt çubuk şöyle görünecek:</span>
-          <label style={{ marginLeft: "auto", fontSize: 11, color: "#455A40", display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Telefonda alt çubuk şöyle görünecek:</span>
+          <label style={{ marginLeft: "auto", fontSize: 11, color: "var(--erp-text-2)", display: "inline-flex", alignItems: "center", gap: 4 }}>
             kaç modül:
             <select value={altCubukSayisi} data-mobil-altcubuk-sayisi="1"
               onChange={(e) => { const n = Number(e.target.value); setAltCubukSayisi(n); kaydet(sira, gizli, { altCubukSayisi: n }); }}
@@ -231,7 +231,7 @@ function MobilGorunumDuzenleyici({ tanimlar, onSave, showToast, mobilDuzenKipi, 
                 disabled={(MOBIL_BOLUMLER[k] || []).length === 0}
                 title={(MOBIL_BOLUMLER[k] || []).length ? "İçindeki bölümleri düzenle" : "Bu modülde ayarlanabilir bölüm yok"}
                 style={{ border: "none", background: "none", cursor: (MOBIL_BOLUMLER[k] || []).length ? "pointer" : "default",
-                  padding: 0, fontSize: 13, fontWeight: 700, color: gizliMi(k) ? "var(--erp-text-3)" : "#33281C",
+                  padding: 0, fontSize: 13, fontWeight: 700, color: gizliMi(k) ? "var(--erp-text-3)" : "var(--erp-text)",
                   textDecoration: gizliMi(k) ? "line-through" : "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
                 {ad(k)}
                 {(MOBIL_BOLUMLER[k] || []).length > 0 && (
@@ -269,15 +269,15 @@ function MobilGorunumDuzenleyici({ tanimlar, onSave, showToast, mobilDuzenKipi, 
           bolumKaydet(acikModul, yeni, [...bc.gizli]);
         };
         return (
-          <div data-mobil-bolumler={acikModul} style={{ marginTop: 10, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)" }}>
+          <div data-mobil-bolumler={acikModul} style={{ marginTop: 10, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)" }}>
             <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>{ad(acikModul)} — telefonda görünecek bölümler</div>
             <div style={{ display: "grid", gap: 4 }}>
               {bc.sira.map((bk, i) => {
                 const kapali = bc.gizli.has(bk);
                 return (
                   <div key={bk} data-mobil-bolum={bk} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px",
-                    background: kapali ? "#F6F1E7" : "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)" }}>
-                    <b style={{ fontSize: 12, color: kapali ? "var(--erp-text-3)" : "#33281C", textDecoration: kapali ? "line-through" : "none" }}>{bAd(bk)}</b>
+                    background: kapali ? "#F6F1E7" : "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" }}>
+                    <b style={{ fontSize: 12, color: kapali ? "var(--erp-text-3)" : "var(--erp-text)", textDecoration: kapali ? "line-through" : "none" }}>{bAd(bk)}</b>
                     <span style={{ marginLeft: "auto", display: "flex", gap: 2 }}>
                       <button type="button" className="btn-ghost" data-mobil-bolum-yukari={bk} onClick={() => bTasi(i, -1)} disabled={i === 0} style={{ padding: "2px 6px", fontSize: 11 }}>↑</button>
                       <button type="button" className="btn-ghost" data-mobil-bolum-asagi={bk} onClick={() => bTasi(i, 1)} disabled={i === bc.sira.length - 1} style={{ padding: "2px 6px", fontSize: 11 }}>↓</button>

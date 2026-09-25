@@ -140,7 +140,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
 
   const satir = (etiket, deger, renk, kalin, ipucu) => (
     <div title={ipucu} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-      borderBottom: "1px solid #F2E8D8", background: kalin ? "var(--erp-panel)" : "transparent" }}>
+      borderBottom: "1px solid var(--erp-head)", background: kalin ? "var(--erp-panel)" : "transparent" }}>
       <span style={{ flex: 1, fontSize: kalin ? 14 : 13, fontWeight: kalin ? 700 : 500, color: "var(--erp-text)" }}>{etiket}</span>
       <span className="mono" style={{ fontSize: kalin ? 15 : 13, fontWeight: 700, color: renk || "var(--erp-text)" }}>{para(deger)}</span>
     </div>
@@ -166,7 +166,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
         </div>
       )}
 
-      <div style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+      <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
         {satir("Satış geliri", sonuc.satisGeliri, "var(--erp-primary)", false, "Dönemdeki satış fişlerinin tutarı")}
         {satir("− Satılan malın maliyeti", -sonuc.smm, "var(--erp-warn)", false, "Satılan ürünlerin kart alış fiyatıyla değeri (yaklaşık)")}
         {sonuc.uretimIscilik > 0 && satir("− Üretim işçiliği", -sonuc.uretimIscilik, "var(--erp-warn)", false,
@@ -181,14 +181,14 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
           karşılıkları gibi rapor alabiliriz"). Doğan ücret ile ödenen ücret farklı şeyler —
           burada DOĞAN görünüyor, ödenen kasa tarafında. */}
       {sonuc.uretimIscilik > 0 && (
-        <div data-iscilik-dokumu="1" style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
-          <div style={{ padding: "8px 12px", background: "#F6EEDD", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
+        <div data-iscilik-dokumu="1" style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+          <div style={{ padding: "8px 12px", background: "var(--erp-hover)", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
             Üretim işçiliği — kime ne kadar hak edildi
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", padding: "8px 12px" }}>
             {Object.entries(sonuc.iscilikDetay).sort((a2, b2) => b2[1] - a2[1]).map(([ad, tutar]) => (
               <span key={ad} className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)",
-                border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-pill)", padding: "2px 9px" }}>
+                border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "2px 9px" }}>
                 {ad} · {para(tutar)}
               </span>
             ))}
@@ -198,15 +198,15 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
 
       {/* GİDER DÖKÜMÜ — grup grup, altında kartlar. "Nereye gitti" sorusunun cevabı. */}
       {sonuc.giderToplam > 0 && (
-        <div style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
-          <div style={{ padding: "8px 12px", background: "#F6EEDD", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
+        <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+          <div style={{ padding: "8px 12px", background: "var(--erp-hover)", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
             Giderlerin dağılımı
           </div>
           {giderGelirGruplari(tanimlar).filter((g) => sonuc.gruplar[g.key]).map((g) => {
             const veri = sonuc.gruplar[g.key];
             const oran = sonuc.giderToplam > 0 ? (veri.toplam / sonuc.giderToplam) * 100 : 0;
             return (
-              <div key={g.key} data-kz-grup={g.key} style={{ borderBottom: "1px solid #F2E8D8", padding: "8px 12px" }}>
+              <div key={g.key} data-kz-grup={g.key} style={{ borderBottom: "1px solid var(--erp-head)", padding: "8px 12px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>{g.ad}</span>
                   <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>%{oran.toFixed(0)}</span>
@@ -219,7 +219,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
                   {Object.entries(veri.kartlar).sort((a, b) => b[1] - a[1]).map(([ad, tutar]) => (
                     <span key={ad} className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)",
-                      border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-pill)", padding: "2px 9px" }}>
+                      border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "2px 9px" }}>
                       {ad} · {para(tutar)}
                     </span>
                   ))}

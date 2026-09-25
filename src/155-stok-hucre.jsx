@@ -22,7 +22,7 @@ function StokGirisHucre({ qty, low, minStok, onMinStokChange, rezerve, onGoToSip
           (rezToplam > 0 ? ` · Gerçek: ${qty} — Rezerve: ${rezToplam} — Müsait: ${musait}` : "")
         }
         className="mono"
-        style={{ fontWeight: 600, color: low ? "var(--erp-warn)" : "#221B14", minWidth: 24, textAlign: "center", cursor: "default" }}
+        style={{ fontWeight: 600, color: low ? "var(--erp-warn)" : "var(--erp-text)", minWidth: 24, textAlign: "center", cursor: "default" }}
       >
         {qty}
       </span>
@@ -50,7 +50,7 @@ function StokGirisHucre({ qty, low, minStok, onMinStokChange, rezerve, onGoToSip
           <div
             style={{
               position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", marginTop: 4, zIndex: 50,
-              background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 8,
+              background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8,
               minWidth: 160, boxShadow: "none",
             }}
           >
@@ -71,7 +71,7 @@ function StokGirisHucre({ qty, low, minStok, onMinStokChange, rezerve, onGoToSip
                   style={{
                     display: "flex", flexDirection: "column", alignItems: "stretch", gap: 1,
                     fontSize: 11, fontWeight: 600,
-                    border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", padding: "3px 7px", background: "var(--erp-panel)",
+                    border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "3px 7px", background: "var(--erp-panel)",
                     color: "var(--erp-info)", cursor: "pointer", whiteSpace: "nowrap",
                   }}
                 >
@@ -158,7 +158,7 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
         // Küçük bir ikon, uzun bir listede hızlı tararken yeterince ayırt edici değildi —
         // hammadde ile mamulü karıştırmak sipariş ve reçetede pahalı bir hata.
         background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "0D"),
-        border: `1px solid ${(CAT_COLORS[product.kategori] || "var(--erp-text-2)")}33`,
+        border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
         borderLeft: `5px solid ${CAT_COLORS[product.kategori] || "var(--erp-text-2)"}`,
         borderRadius: "var(--erp-r-md)",
         cursor: "pointer", textAlign: "left",
@@ -175,14 +175,14 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
             width: 40, height: 40, borderRadius: "var(--erp-r-md)", flexShrink: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
             background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "18"),
-            border: `1px solid ${(CAT_COLORS[product.kategori] || "var(--erp-text-2)")}33`,
+            border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
           }}
         >
           <KategoriIkonu kategori={product.kategori} size={19} />
         </div>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: "#3A291D", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: "var(--erp-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {product.ad}
         </div>
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -239,7 +239,7 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
           )}
         </div>
       </div>
-      <span className="mono" style={{ fontWeight: 700, fontSize: 15, color: kritik ? "var(--erp-warn)" : "#221B14" }}>
+      <span className="mono" style={{ fontWeight: 700, fontSize: 15, color: kritik ? "var(--erp-warn)" : "var(--erp-text)" }}>
         {total}
       </span>
       {kritik && <AlertTriangle size={15} color="var(--erp-warn)" />}

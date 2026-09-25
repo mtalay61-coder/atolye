@@ -227,7 +227,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
   return (
     <div>
       {stokBilinmeyenler.length > 0 && (
-        <div style={{ background: "#FBF3E4", border: "1.5px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
+        <div style={{ background: "var(--erp-hover)", border: "1.5px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
             <AlertTriangle size={15} color="var(--erp-brown)" />
             <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-brown)" }}>
@@ -323,12 +323,12 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
       </div>
 
       <div style={{ position: "relative", marginBottom: 10, maxWidth: 320 }}>
-        <Search size={14} style={{ position: "absolute", left: 9, top: 9, color: "#A6957A" }} />
+        <Search size={14} style={{ position: "absolute", left: 9, top: 9, color: "var(--erp-text-3)" }} />
         <input
           value={arama}
           onChange={(e) => setArama(e.target.value)}
           placeholder="Hammadde veya renk ara…"
-          style={{ width: "100%", padding: "7px 10px 7px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid #C9B99A", background: "var(--erp-panel)", fontSize: 13 }}
+          style={{ width: "100%", padding: "7px 10px 7px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 }}
         />
       </div>
 
@@ -525,13 +525,13 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                           <th style={{ position: "sticky", left: 0, background: "#fff", zIndex: 2 }}></th>
                           <th
                             colSpan={tumBedenler.length}
-                            style={{ fontSize: 9, letterSpacing: 0.6, textAlign: "center", padding: "2px 8px 3px", color: "var(--erp-text-2)", fontWeight: 700, borderBottom: "1px solid #E4D8C0" }}
+                            style={{ fontSize: 9, letterSpacing: 0.6, textAlign: "center", padding: "2px 8px 3px", color: "var(--erp-text-2)", fontWeight: 700, borderBottom: "1px solid var(--erp-line-soft)" }}
                           >
                             STOK FARKI (mevcut − gereken)
                           </th>
                           <th
                             colSpan={onPlanlaHammaddeSatinAlma ? 2 : 1}
-                            style={{ fontSize: 9, letterSpacing: 0.6, textAlign: "center", padding: "2px 8px 3px", color: "var(--erp-text-2)", fontWeight: 700, borderLeft: "1px dashed #C9B99A", borderBottom: "1px solid #E4D8C0" }}
+                            style={{ fontSize: 9, letterSpacing: 0.6, textAlign: "center", padding: "2px 8px 3px", color: "var(--erp-text-2)", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)", borderBottom: "1px solid var(--erp-line-soft)" }}
                           >
                             ÖZET
                           </th>
@@ -541,7 +541,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                           {tumBedenler.map((b) => (
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>{b}</th>
                           ))}
-                          <th style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700, borderLeft: "1px dashed #C9B99A" }}>Toplam</th>
+                          <th style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
                           {onPlanlaHammaddeSatinAlma && (
                             <th style={{ fontSize: 10, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", color: "var(--erp-text-2)" }}>Satın Alma</th>
                           )}
@@ -578,7 +578,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                           const satirTamSecili = satirEksikHucreler.length > 0 &&
                             satirEksikHucreler.every((r) => topluSecim[`${g.hammaddeUrunId}|${rg.renk}|${r.beden}`]);
                           return (
-                            <tr key={rg.renk} style={{ borderTop: "1px solid #E4D8C0" }}>
+                            <tr key={rg.renk} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                               <td style={{ fontSize: 11, fontWeight: 600, padding: "5px 8px", whiteSpace: "nowrap", position: "sticky", left: 0, background: "#fff", zIndex: 1 }}>{rg.renk}</td>
                               {tumBedenler.map((b) => {
                                 const r = rg.bedenIndex[b];
@@ -623,11 +623,11 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                   </td>
                                 );
                               })}
-                              <td className="mono" style={{ padding: "3px 8px", textAlign: "center", fontSize: 11, fontWeight: 700, borderLeft: "1px dashed #C9B99A", color: satirToplamFark < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
+                              <td className="mono" style={{ padding: "3px 8px", textAlign: "center", fontSize: 11, fontWeight: 700, borderLeft: "1px dashed var(--erp-line)", color: satirToplamFark < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
                                 {satirToplamFark < 0 ? `−${Math.abs(satirToplamFark)}` : `+${satirToplamFark}`}
                               </td>
                               {onPlanlaHammaddeSatinAlma && (
-                                <td style={{ padding: "3px 8px", borderLeft: "1px dashed #C9B99A", whiteSpace: "nowrap" }}>
+                                <td style={{ padding: "3px 8px", borderLeft: "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>
                                   <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
                                     {satirAcikFisler.map((f) => (
                                       <button
@@ -700,7 +700,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                         const genelYolda = Math.round(g.sonuclar.reduce((s, r) => s + r.satinAlma.yolda, 0) * 100) / 100;
                         return (
                           <tfoot>
-                            <tr style={{ borderTop: "2px solid #C9B99A", background: "var(--erp-panel)" }}>
+                            <tr style={{ borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" }}>
                               <td style={{ fontSize: 10, fontWeight: 700, padding: "5px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--erp-panel)", zIndex: 1 }}>
                                 TÜM RENKLER
                               </td>
@@ -712,7 +712,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                   </td>
                                 );
                               })}
-                              <td className="mono" style={{ fontSize: 11, fontWeight: 700, textAlign: "center", padding: "5px 8px", borderLeft: "1px dashed #C9B99A", color: genelFark < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
+                              <td className="mono" style={{ fontSize: 11, fontWeight: 700, textAlign: "center", padding: "5px 8px", borderLeft: "1px dashed var(--erp-line)", color: genelFark < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
                                 {genelFark < 0 ? `−${Math.abs(genelFark)}` : `+${genelFark}`}
                               </td>
                               {onPlanlaHammaddeSatinAlma && (
@@ -790,7 +790,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                             </thead>
                             <tbody>
                               {satirlar.map((x) => (
-                                <tr key={x.anahtar} style={{ borderTop: "1px solid #E4D8C0" }}>
+                                <tr key={x.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                                   {cokRenk && <td style={{ fontSize: 11, fontWeight: 700, padding: "4px 8px", whiteSpace: "nowrap" }}>{x.renk}</td>}
                                   <td style={{ fontSize: 11, fontWeight: 700, padding: "4px 8px", whiteSpace: "nowrap" }}>{x.r.beden}</td>
                                   <td className="mono" style={{ fontSize: 11, textAlign: "center", padding: "4px 8px" }}>{x.r.gereken}</td>
@@ -808,7 +808,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                       onChange={(e) => setSatinAlmaMiktarlari({ ...satinAlmaMiktarlari, [x.anahtar]: e.target.value })}
                                       className="mono"
                                       placeholder="0"
-                                      style={{ width: 72, padding: "4px 5px", textAlign: "center", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
+                                      style={{ width: 72, padding: "4px 5px", textAlign: "center", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
                                     />
                                   </td>
                                   <td style={{ padding: "4px 8px" }}>
@@ -864,7 +864,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                               <select
                                 value={satinAlmaCariId}
                                 onChange={(e) => setSatinAlmaCariId(e.target.value)}
-                                style={{ padding: "5px 7px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff", minWidth: 170 }}
+                                style={{ padding: "5px 7px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff", minWidth: 170 }}
                               >
                                 <option value="">Tedarikçi seçin…</option>
                                 {tedarikciler.filter((c) => !c.pasif).map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
@@ -913,7 +913,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                       if (acikHammadde !== anahtar) return null;
                       const r = rg.bedenIndex[b];
                       return (
-                        <div key={anahtar} style={{ marginTop: 10, borderTop: "1px dashed #E4D8C0", paddingTop: 8 }}>
+                        <div key={anahtar} style={{ marginTop: 10, borderTop: "1px dashed var(--erp-line-soft)", paddingTop: 8 }}>
                           <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>
                             {rg.renk} · Beden {b} — Gereken: {r.gereken} {r.birim} · Stok: {r.mevcutStok} {r.birim} — bu ihtiyaca katkı sağlayan sipariş kalemleri:
                           </div>
@@ -941,7 +941,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                       {tumMamulBedenler.map((mb) => (
                                         <th key={mb} style={{ fontSize: 10, textAlign: "center", padding: "3px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{mb}</th>
                                       ))}
-                                      <th style={{ fontSize: 10, textAlign: "center", padding: "3px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap", fontWeight: 700, borderLeft: "1px dashed #C9B99A" }}>Toplam</th>
+                                      <th style={{ fontSize: 10, textAlign: "center", padding: "3px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
                                       {onGoToUretim && <th style={{ fontSize: 10, padding: "3px 8px" }}></th>}
                                     </tr>
                                   </thead>
@@ -949,7 +949,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                     {satirGruplari.map((sg) => {
                                       const satirToplami = Math.round(tumMamulBedenler.reduce((s, mb) => s + (sg.bedenler[mb] || 0), 0) * 100) / 100;
                                       return (
-                                        <tr key={sg.anahtar} style={{ borderTop: "1px solid #E4D8C0" }}>
+                                        <tr key={sg.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                                           <td style={{ padding: "5px 8px", position: "sticky", left: 0, background: "#fff", zIndex: 1 }}>
                                             <button
                                               type="button"
@@ -970,7 +970,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                               {sg.bedenler[mb] != null ? sg.bedenler[mb] : "—"}
                                             </td>
                                           ))}
-                                          <td className="mono" style={{ padding: "5px 8px", textAlign: "center", fontSize: 11, fontWeight: 700, borderLeft: "1px dashed #C9B99A" }}>
+                                          <td className="mono" style={{ padding: "5px 8px", textAlign: "center", fontSize: 11, fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>
                                             {satirToplami}
                                           </td>
                                           {onGoToUretim && (

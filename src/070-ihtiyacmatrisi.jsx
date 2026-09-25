@@ -91,8 +91,8 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
   (tanimlarProsesler || []).forEach((pr, pi) => { siraMap[pr.ad] = pi; });
   gruplar.sort((a, b) => (a.proses ? (siraMap[a.proses] ?? 900) : 999) - (b.proses ? (siraMap[b.proses] ?? 900) : 999));
 
-  const hucreStil = { fontSize: 13, padding: "5px 8px", textAlign: "center", borderLeft: "1px solid #EFE5D2", whiteSpace: "nowrap" };
-  const baslikStil = { fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", padding: "4px 8px", textAlign: "center", borderLeft: "1px solid #EFE5D2", whiteSpace: "nowrap" };
+  const hucreStil = { fontSize: 13, padding: "5px 8px", textAlign: "center", borderLeft: "1px solid var(--erp-head)", whiteSpace: "nowrap" };
+  const baslikStil = { fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", padding: "4px 8px", textAlign: "center", borderLeft: "1px solid var(--erp-head)", whiteSpace: "nowrap" };
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
@@ -105,7 +105,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
           Array.from(new Set(matris.flatMap((r) => Object.keys(r.hucreler))))
         );
         return (
-          <div key={g.proses || "yok"} style={{ border: `1px solid ${renk}44`, borderLeft: `4px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+          <div key={g.proses || "yok"} style={{ border: `1px solid ${alfaEkle(renk, "44")}`, borderLeft: `4px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "7px 10px", background: alfaEkle(renk, "12") }}>
               {g.proses ? (
                 <>
@@ -130,13 +130,13 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                       <th style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 10px" }}>MALZEME</th>
                       <th style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 8px" }}>RENK</th>
                       {bedenler.map((b) => <th key={b} className="mono" style={baslikStil}>{b}</th>)}
-                      <th className="mono" style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid #E4D8C0" }}>TOPLAM</th>
+                      <th className="mono" style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid var(--erp-line-soft)" }}>TOPLAM</th>
                       {satirSonuBaslik && <th style={{ ...baslikStil, textAlign: "right" }}>{satirSonuBaslik}</th>}
                     </tr>
                   </thead>
                   <tbody>
                     {matris.map((r, ri) => (
-                      <tr key={ri} style={{ borderTop: "1px solid #E4D8C0" }}>
+                      <tr key={ri} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                         <td style={{ fontSize: 13, fontWeight: 600, padding: "5px 10px" }}>{r.ad}</td>
                         <td className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)", padding: "5px 8px" }}>{r.renk}</td>
                         {bedenler.map((b) => (
@@ -144,7 +144,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                             ...hucreStil,
                             // Boş hücre "0" değil, "bu bedende bu malzeme kullanılmıyor" demektir.
                             // Sıfır yazmak ikisini karıştırır; tire ise soluk ve sessiz kalır.
-                            color: r.hucreler[b] === undefined ? "#CFC2A8" : "#221B14",
+                            color: r.hucreler[b] === undefined ? "var(--erp-line-soft)" : "var(--erp-text)",
                             fontWeight: r.hucreler[b] === undefined ? 400 : 600,
                           }}>
                             {r.hucreler[b] === undefined
@@ -152,7 +152,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                               : (hucreCiz ? hucreCiz(r.kaynaklar[b], r.hucreler[b]) : r.hucreler[b])}
                           </td>
                         ))}
-                        <td className="mono" style={{ ...hucreStil, textAlign: "right", borderLeft: "2px solid #E4D8C0", fontWeight: 700, fontSize: 14 }}>
+                        <td className="mono" style={{ ...hucreStil, textAlign: "right", borderLeft: "2px solid var(--erp-line-soft)", fontWeight: 700, fontSize: 14 }}>
                           {!r.cakisti && r.birimMiktar != null && r.adet > 0 && (
                             <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>
                               {r.adet} × {r.birimMiktar} ={" "}
@@ -176,12 +176,12 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                   {tekil.map((r, ri) => {
                     const tekBeden = Object.keys(r.hucreler)[0];
                     return (
-                      <tr key={ri} style={{ borderTop: "1px solid #E4D8C0" }}>
+                      <tr key={ri} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                         <td style={{ fontSize: 13, fontWeight: 600, padding: "5px 10px" }}>{r.ad}</td>
                         <td className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)", padding: "5px 8px" }}>
                           {r.renk}{tekBeden && tekBeden !== "Standart" ? ` · ${tekBeden}` : ""}
                         </td>
-                        <td className="mono" style={{ fontSize: 14, fontWeight: 700, textAlign: "right", padding: "5px 10px", color: "#221B14", whiteSpace: "nowrap" }}>
+                        <td className="mono" style={{ fontSize: 14, fontWeight: 700, textAlign: "right", padding: "5px 10px", color: "var(--erp-text)", whiteSpace: "nowrap" }}>
                           {/* HESABI GÖSTER: "88 Desi" tek başına doğrulanamaz; "8 × 11 = 88 Desi"
                               yanlışsa hangi çarpanın hatalı olduğu anlaşılır. Çarpan bedene göre
                               değişiyorsa (cakisti) gösterilmiyor — tek bir çarpan yok, uydurmak

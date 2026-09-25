@@ -7,7 +7,7 @@
 //
 // Eskiden hammadde YALNIZCA teslim alırken, reçeteye göre düşülüyordu; "gerçekte ne verildi"
 // bilgisi sistemde hiç yoktu. Artan kutusu da boş başlıyor, kullanıcı farkı kafadan hesaplıyordu.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -19,7 +19,7 @@ const ACIK_URETIM = [{
 }];
 
 async function kartiAc(sayfa) {
-  await sayfa.getByRole("button", { name: "Üretim", exact: true }).first().click();
+  await modulAc(sayfa, "Üretim");
   await sayfa.waitForTimeout(1200);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("*")]

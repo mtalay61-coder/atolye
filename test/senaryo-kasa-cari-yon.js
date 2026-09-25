@@ -6,7 +6,7 @@
 // düşüyordu — iki ekran aynı olayı ters kaydediyordu.
 //
 // KURAL (tek yerde, `hareketYonu`): kasa GİRİŞ = tahsilat → "Alacak"; kasa ÇIKIŞ = ödeme → "Borç".
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -17,7 +17,7 @@ async function kasaHareketi(yon, tutar) {
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2400);
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ana Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(800);

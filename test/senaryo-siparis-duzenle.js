@@ -15,7 +15,7 @@
 //   4. Serbest kalemde miktar, fiyat, ÜRÜN ve RENK değişiyor; yeni ürün aynı formdan ekleniyor.
 //   5. Kaydedince: sipariş yerinde güncelleniyor, kilitli kalem ve cari aynen korunuyor, form
 //      kapanıyor ve tam ekran kart görünür kalıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -46,7 +46,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
 
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).first().click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(600);
   // Durum süzgeci varsayılan "Bekliyor"; sipariş "Onaylandı" olduğu için önce "Tümü" seçiliyor.
   await sayfa.evaluate(() => {

@@ -70,7 +70,7 @@ async function calistir() {
   const zorlaMobil = await sayfa.evaluate(() => ({
     govde: document.body.className,
     cubukGorunur: getComputedStyle(document.querySelector(".mobile-tabs")).display !== "none",
-    menuGizli: getComputedStyle(document.querySelector(".sidebar")).display === "none",
+    menuGizli: getComputedStyle(document.querySelector(".ust-menu")).display === "none",
     tercih: window.localStorage.getItem("mobil:duzen"),
   }));
   await sayfa.evaluate(() => { const b = document.querySelector('[data-mobil-kip-sec="oto"]'); if (b) b.click(); });
@@ -92,7 +92,7 @@ async function calistir() {
   const masaustuneDonus = await sayfa.evaluate(() => ({
     govde: document.body.className,
     tercih: window.localStorage.getItem("mobil:duzen"),
-    menuGorunur: getComputedStyle(document.querySelector(".sidebar")).display !== "none",
+    menuGorunur: getComputedStyle(document.querySelector(".ust-menu")).display !== "none",
   }));
 
   // Varsayılana dön.

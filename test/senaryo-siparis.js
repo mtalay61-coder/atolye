@@ -1,6 +1,6 @@
 // SENARYO — Alış siparişinden TESLİM ALMA (`siparisGerceklestir` yolu).
 // Kullanımı senaryo-fis.js ile aynı: çalıştır, çıktıyı refaktör öncesi/sonrası karşılaştır.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -11,7 +11,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2000);
 
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);

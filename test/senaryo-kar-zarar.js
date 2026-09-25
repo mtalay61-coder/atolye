@@ -7,7 +7,7 @@
 // Ölçülen: (1) rakamlar doğru toplanıyor; (2) gider dökümü gruplara ayrılıyor ve kart adları
 // görünüyor; (3) dönem süzgeci çalışıyor (geçen ayda bu ayın hareketleri yok); (4) gider kartı
 // tanımlı değilse uyarı çıkıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -49,7 +49,7 @@ function tohum({ kartsiz } = {}) {
 }
 
 async function panelAc(sayfa) {
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Kâr \/ Zarar/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(800);

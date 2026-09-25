@@ -453,7 +453,7 @@ function PaketlemeModule({
       </div>
 
       {barkodsuzSayisi > 0 && (
-        <div style={{ border: "1px solid #C9A063", background: "#FBF0E2", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12, fontSize: 12, color: "#7A3B22", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12, fontSize: 12, color: "#7A3B22", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           {/* Etiket basmadan önce uyarı: barkodsuz varyantın kutu etiketi basılamaz. */}
           <div style={{ width: "100%" }}>
             <b>{barkodsuzSayisi} renk/bedende çift barkodu kurulamıyor.</b>{" "}
@@ -503,7 +503,7 @@ function PaketlemeModule({
       />
 
       {acikForm && (
-        <div style={{ border: "1.5px solid #8A5A38", borderRadius: "var(--erp-r-md)", background: "#F5EDE3", padding: 12, marginBottom: 14 }}>
+        <div style={{ border: "1.5px solid #8A5A38", borderRadius: "var(--erp-r-md)", background: "var(--erp-hover)", padding: 12, marginBottom: 14 }}>
           {/* KAYNAK SEÇİMİ — ÜÇ YOL, TEK SONUÇ.
               Bu ekranı personel kullanıyor: önüne bütün stok listesi değil, YALNIZCA o siparişin
               ya da o üretimin içindekiler çıkmalı. Kaynak seçilmeden ürün listesi hiç açılmıyor.
@@ -593,7 +593,7 @@ function PaketlemeModule({
           })()}
 
           {kaynakMesaji && (
-            <div style={{ fontSize: 11, color: "#7A3B22", background: "#FBF0E2", border: "1px solid #C9A063", borderRadius: "var(--erp-r-sm)", padding: "5px 8px", marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: "#7A3B22", background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-sm)", padding: "5px 8px", marginBottom: 8 }}>
               {kaynakMesaji}
             </div>
           )}
@@ -612,11 +612,11 @@ function PaketlemeModule({
               {/* HER ÜRÜN+RENK BİR SATIR, BEDENLER YAN YANA. Personelin tıklaması gereken şey yok:
                   kaynak seçilir seçilmez içerik önüne dökülüyor, sadece adetleri yazıyor. */}
               {kaynakKalemleri.map((satir) => (
-                <div key={satir.anahtar} style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 8 }}>
+                <div key={satir.anahtar} style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                     {satir.gorsel
-                      ? <img src={satir.gorsel} alt="" style={{ width: 26, height: 26, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid #E4D8C0" }} />
-                      : <span style={{ width: 26, height: 26, borderRadius: "var(--erp-r-sm)", background: "#F0E7D5" }} />}
+                      ? <img src={satir.gorsel} alt="" style={{ width: 26, height: 26, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)" }} />
+                      : <span style={{ width: 26, height: 26, borderRadius: "var(--erp-r-sm)", background: "var(--erp-head)" }} />}
                     <b style={{ fontSize: 13, color: "var(--erp-text)" }}>{satir.urunAd}</b>
                     <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text-2)" }}>{satir.renk}</span>
                     <button
@@ -674,9 +674,9 @@ function PaketlemeModule({
           )}
 
           {kalemler.length > 0 && (
-            <div style={{ marginTop: 10, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
+            <div style={{ marginTop: 10, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
               {kalemler.map((k, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", fontSize: 12, borderTop: i ? "1px solid #F0E7D5" : "none" }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", fontSize: 12, borderTop: i ? "1px solid var(--erp-head)" : "none" }}>
                   <span style={{ fontWeight: 600 }}>{k.urunAd}</span>
                   <span className="mono" style={{ color: "var(--erp-text-2)" }}>{k.renk} {k.beden}</span>
                   <span className="mono" style={{ fontWeight: 700 }}>{k.adet} çift</span>
@@ -685,7 +685,7 @@ function PaketlemeModule({
                   </button>
                 </div>
               ))}
-              <div style={{ padding: "6px 8px", borderTop: "1px solid #E4D8C0", fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>
+              <div style={{ padding: "6px 8px", borderTop: "1px solid var(--erp-line-soft)", fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>
                 Koli içi toplam: {toplamAdet} çift · {kalemler.length} kalem
               </div>
             </div>
@@ -714,7 +714,7 @@ function PaketlemeModule({
           Personel çoğu zaman önce etiketleri basıp kutulara yapıştırıyor, koliyi sonra kuruyor.
           Buradaki iki düğme o iki yolu da açıyor: doğrudan barkod ya da bu üretimden koli kur. */}
       {hazirUretimler.length > 0 && (
-        <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", marginBottom: 14 }}>
+        <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", marginBottom: 14 }}>
           <button
             type="button"
             onClick={() => setUretimListesiAcik(!uretimListesiAcik)}
@@ -728,15 +728,15 @@ function PaketlemeModule({
             </span>
           </button>
           {uretimListesiAcik && (
-            <div style={{ borderTop: "1px solid #E4D8C0" }}>
+            <div style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
               {hazirUretimler.map(({ u, toplam, kalan }) => {
                 const urun = (stok || []).find((x) => x.id === u.urunId);
                 const gorsel = gorselBul(u.urunId, u.renk);
                 return (
-                  <div key={u.id} data-bekleyen-uretim={u.siparisNo} data-toplam={toplam} data-kalan={kalan} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderTop: "1px solid #F0E7D5", flexWrap: "wrap" }}>
+                  <div key={u.id} data-bekleyen-uretim={u.siparisNo} data-toplam={toplam} data-kalan={kalan} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderTop: "1px solid var(--erp-head)", flexWrap: "wrap" }}>
                     {gorsel
-                      ? <img src={gorsel} alt="" style={{ width: 24, height: 24, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid #E4D8C0" }} />
-                      : <span style={{ width: 24, height: 24, borderRadius: "var(--erp-r-sm)", background: "#F0E7D5" }} />}
+                      ? <img src={gorsel} alt="" style={{ width: 24, height: 24, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)" }} />
+                      : <span style={{ width: 24, height: 24, borderRadius: "var(--erp-r-sm)", background: "var(--erp-head)" }} />}
                     <span className="mono" style={{ fontSize: 12, fontWeight: 700 }}>{u.siparisNo}</span>
                     <span style={{ fontSize: 12, color: "var(--erp-text)" }}>{(urun && urun.ad) || u.model || "?"}</span>
                     <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{u.renk}</span>
@@ -856,7 +856,7 @@ function PaketlemeModule({
             const adet = (k.kalemler || []).reduce((t, x) => t + (x.adet || 0), 0);
             const sevkEdildi = (k.durum || "Hazır") === "Sevk edildi";
             return (
-              <div key={k.id} style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 10 }}>
+              <div key={k.id} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <input type="checkbox" checked={kSecili} data-koli-sec={k.kod}
                     onChange={() => setSeciliKoliler(kSecili
@@ -864,7 +864,7 @@ function PaketlemeModule({
                       : [...seciliKoliler, k.id])}
                     style={{ width: 16, height: 16, cursor: "pointer" }} />
                   <span className="mono" style={{ fontWeight: 700, fontSize: 13, color: "var(--erp-text)" }}>{k.kod}</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 8px", borderRadius: "var(--erp-r-pill)", color: sevkEdildi ? "var(--erp-primary)" : "var(--erp-brown)", background: alfaEkle((sevkEdildi ? "var(--erp-primary)" : "var(--erp-brown)"), "1A"), border: `1px solid ${(sevkEdildi ? "var(--erp-primary)" : "var(--erp-brown)")}44` }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 8px", borderRadius: "var(--erp-r-pill)", color: sevkEdildi ? "var(--erp-primary)" : "var(--erp-brown)", background: alfaEkle((sevkEdildi ? "var(--erp-primary)" : "var(--erp-brown)"), "1A"), border: `1px solid ${alfaEkle((sevkEdildi ? "var(--erp-primary)" : "var(--erp-brown)"), "44")}` }}>
                     {k.durum || "Hazır"}
                   </span>
                   {cari && <span style={{ fontSize: 12, color: "var(--erp-info)" }}>{cari.unvan}</span>}
@@ -893,27 +893,27 @@ function PaketlemeModule({
                             {bedenler.map((b) => (
                               <th key={b} className="mono" style={{ fontSize: 10, padding: "3px 8px" }}>{b}</th>
                             ))}
-                            <th className="mono" style={{ fontSize: 10, padding: "3px 8px", borderLeft: "1px dashed #C9B99A" }}>Top.</th>
+                            <th className="mono" style={{ fontSize: 10, padding: "3px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Top.</th>
                           </tr>
                         </thead>
                         <tbody>
                           {satirlar.map((r) => (
-                            <tr key={r.anahtar} style={{ borderTop: "1px solid #F0E7D5" }}>
+                            <tr key={r.anahtar} style={{ borderTop: "1px solid var(--erp-head)" }}>
                               <td style={{ padding: "3px 6px", fontSize: 12, whiteSpace: "nowrap" }}>
                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                                   {r.gorsel
-                                    ? <img src={r.gorsel} alt="" style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid #E4D8C0" }} />
-                                    : <span style={{ width: 22, height: 22, borderRadius: "var(--erp-r-sm)", background: "#F0E7D5", display: "inline-block" }} />}
+                                    ? <img src={r.gorsel} alt="" style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)" }} />
+                                    : <span style={{ width: 22, height: 22, borderRadius: "var(--erp-r-sm)", background: "var(--erp-head)", display: "inline-block" }} />}
                                   <b>{r.urunAd}</b>
                                   <span className="mono" style={{ color: "var(--erp-text-2)" }}>{r.renk}</span>
                                 </span>
                               </td>
                               {bedenler.map((b) => (
-                                <td key={b} className="mono" style={{ padding: "3px 8px", textAlign: "center", fontSize: 12, fontWeight: r.adetler[b] ? 700 : 400, color: r.adetler[b] ? "#221B14" : "var(--erp-border)" }}>
+                                <td key={b} className="mono" style={{ padding: "3px 8px", textAlign: "center", fontSize: 12, fontWeight: r.adetler[b] ? 700 : 400, color: r.adetler[b] ? "var(--erp-text)" : "var(--erp-border)" }}>
                                   {r.adetler[b] || "·"}
                                 </td>
                               ))}
-                              <td className="mono" style={{ padding: "3px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, borderLeft: "1px dashed #C9B99A" }}>{r.toplam}</td>
+                              <td className="mono" style={{ padding: "3px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>{r.toplam}</td>
                             </tr>
                           ))}
                         </tbody>

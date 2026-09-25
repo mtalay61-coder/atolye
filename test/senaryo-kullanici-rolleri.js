@@ -81,7 +81,7 @@ async function calistir() {
   await ikinci.sayfa.waitForTimeout(2500);
   await girisYap(ikinci.sayfa, "kalfa", "123456");
   const panel = await ikinci.sayfa.evaluate(() => ({
-    menuCizilmedi: !document.querySelector(".sidebar"),
+    menuCizilmedi: !document.querySelector(".ust-menu"),
     barkodEkraniAcik: /Barkod|Personel barkodu/i.test(document.body.innerText),
     fisMenusuYok: !document.querySelector('[data-nav="Fişler"]'),
   }));

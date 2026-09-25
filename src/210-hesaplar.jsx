@@ -123,7 +123,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
       </div>
 
       {showYeni && (
-        <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
           {ekleAlanlari.map((a) => (
             <label key={a.key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               {a.label}
@@ -138,7 +138,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 list={`hesap-oneri-${a.key}`}
                 onChange={(e) => setYeniForm({ ...yeniForm, [a.key]: e.target.value })}
                 placeholder={a.placeholder}
-                style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}
+                style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}
               />
               <datalist id={`hesap-oneri-${a.key}`}>
                 {[...new Set((tumHesaplar || hesaplar || []).map((h) => String(h[a.key] || "").trim()).filter(Boolean))]
@@ -151,7 +151,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
             <select
               value={yeniForm.paraBirimi || "TRY"}
               onChange={(e) => setYeniForm({ ...yeniForm, paraBirimi: e.target.value })}
-              style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}
+              style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}
             >
               {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
             </select>
@@ -218,8 +218,8 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
         return (
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
           {/* ---------- SOL PANEL: hesap listesi ---------- */}
-          <div style={{ width: 300, minWidth: 260, flexShrink: 0, background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderBottom: "1px solid #E4D8C0", background: "var(--erp-panel)" }}>
+          <div style={{ width: 300, minWidth: 260, flexShrink: 0, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderBottom: "1px solid var(--erp-line-soft)", background: "var(--erp-panel)" }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", flex: 1 }}>{birimAdi} Listesi</span>
               <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{gorunenHesaplar.length} kayıt</span>
             </div>
@@ -241,7 +241,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "8px 10px",
                       background: secili ? alfaEkle(MUHASEBE_RENK, "14") : "transparent",
                       borderLeft: `3px solid ${secili ? MUHASEBE_RENK : "transparent"}`,
-                      borderTop: "none", borderRight: "none", borderBottom: "1px solid #F2E8D8",
+                      borderTop: "none", borderRight: "none", borderBottom: "1px solid var(--erp-head)",
                       cursor: "pointer", textAlign: "left",
                     }}
                   >
@@ -274,7 +274,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
             {/* ---- DİPNOT TOPLAM SATIRI ----
                 Liste ne kadar uzun olursa olsun kaydırmadan etkilenmez; her para birimi ayrı satırdır
                 (farklı para birimlerini toplamak anlamsız olurdu). */}
-            <div style={{ borderTop: "2px solid #E4D8C0", background: "var(--erp-panel)", padding: "6px 10px" }}>
+            <div style={{ borderTop: "2px solid var(--erp-line-soft)", background: "var(--erp-panel)", padding: "6px 10px" }}>
               {Object.keys(gorunenPBToplamlari).length === 0 ? (
                 <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>—</span>
               ) : (
@@ -305,8 +305,8 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
               // gövde, akordeon sürümünden DEĞİŞTİRİLMEDEN devralındığı için bu bayrak korunur.
               const acik = true;
               return (
-                <div key={h.id} style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, borderBottom: "1px solid #E4D8C0" }}>
+                <div key={h.id} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, borderBottom: "1px solid var(--erp-line-soft)" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, overflowWrap: "anywhere" }}>
                         {h.ad}
@@ -328,7 +328,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       type="button"
                       onClick={() => setAcikHesap(null)}
                       title="Seçimi kaldır"
-                      style={{ border: "1px solid #E4D8C0", background: "#fff", borderRadius: "var(--erp-r-md)", padding: "4px 6px", cursor: "pointer", color: "var(--erp-text-2)", display: "flex", flexShrink: 0 }}
+                      style={{ border: "1px solid var(--erp-line-soft)", background: "#fff", borderRadius: "var(--erp-r-md)", padding: "4px 6px", cursor: "pointer", color: "var(--erp-text-2)", display: "flex", flexShrink: 0 }}
                     >
                       <X size={13} />
                     </button>
@@ -352,7 +352,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         }}
                         style={{ padding: "8px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
                           border: `1.5px solid ${islem === x.k ? x.renk : "var(--erp-border)"}`,
-                          background: islem === x.k ? `${x.renk}1A` : "#fff",
+                          background: islem === x.k ? `${alfaEkle(x.renk, "1A")}` : "#fff",
                           color: islem === x.k ? x.renk : "var(--erp-text)" }}>
                         {x.ad}
                       </button>
@@ -501,10 +501,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         ? (cevrimVarMi ? kurUygula(girilenTutar, parseFloat(kurGosterilecek), kurSoru.bolme) : girilenTutar)
                         : null;
                       return (
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 10, background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 10 }}>
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 10, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
                           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
                             Yön
-                            <select value={hForm.yon} onChange={(e) => setHForm({ ...hForm, yon: e.target.value })} style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
+                            <select value={hForm.yon} onChange={(e) => setHForm({ ...hForm, yon: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
                               <option value="Giriş">Giriş (+)</option>
                               <option value="Çıkış">Çıkış (−)</option>
                             </select>
@@ -514,7 +514,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                 ZORUNLU (v1.314.0); serbest kayıtta ise karşı taraf GİDER/GELİR KARTI
                                 olabiliyor. Kart seçimi aşağıda; ikisinden biri dolu olmalı. */}
                             {islem === "serbest" ? "Cari (kart seçerseniz boş bırakın)" : "Cari"}
-                            <select value={hForm.cariId} onChange={(e) => setHForm({ ...hForm, cariId: e.target.value, giderKartId: e.target.value ? "" : hForm.giderKartId })} style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 130 }}>
+                            <select value={hForm.cariId} onChange={(e) => setHForm({ ...hForm, cariId: e.target.value, giderKartId: e.target.value ? "" : hForm.giderKartId })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 130 }}>
                               <option value="">Seçin…</option>
                               {secilebilirler(cariler, hForm.cariId).map((c) => <option key={c.id} value={c.id}>{secenekEtiketi(c, c.unvan)}</option>)}
                             </select>
@@ -527,7 +527,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               Gider / gelir kartı
                               <select value={hForm.giderKartId || ""} data-gider-kart-sec="1"
                                 onChange={(e) => setHForm({ ...hForm, giderKartId: e.target.value, cariId: e.target.value ? "" : hForm.cariId })}
-                                style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 150 }}>
+                                style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 150 }}>
                                 <option value="">Seçin…</option>
                                 {(giderKartlari || []).map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
                               </select>
@@ -540,12 +540,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               value={hForm.tutar}
                               onChange={(e) => setHForm({ ...hForm, tutar: e.target.value })}
                               title="Bu tutar, hesabın kendi para biriminde (P.Birimi), ÇEVRİMSİZ olarak kasa/banka bakiyesine işlenir"
-                              style={{ width: 85, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                              style={{ width: 85, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                             />
                           </label>
                           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
                             P.Birimi
-                            <select value={pb} disabled title="Bu hesabın kendi para birimi — sabittir, değiştirilemez. Tutar bu para biriminde kasaya işlenir." style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: "var(--erp-panel-2)", color: "var(--erp-text-2)" }}>
+                            <select value={pb} disabled title="Bu hesabın kendi para birimi — sabittir, değiştirilemez. Tutar bu para biriminde kasaya işlenir." style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: "var(--erp-panel-2)", color: "var(--erp-text-2)" }}>
                               <option value={pb}>{pb}</option>
                             </select>
                           </label>
@@ -556,7 +556,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               disabled={!cariSeciliMi}
                               onChange={(e) => setHForm({ ...hForm, donusturulecekPB: e.target.value === pb ? null : e.target.value, kur: "", hedefTutar: "" })}
                               title={cariSeciliMi ? "Seçili cariye HANGİ para biriminde işleneceğini seçin — kasanınkinden farklıysa Kur ile çevrilir" : "Önce bir Cari seçin"}
-                              style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: cariSeciliMi ? "#fff" : "var(--erp-panel-2)" }}
+                              style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: cariSeciliMi ? "#fff" : "var(--erp-panel-2)" }}
                             >
                               {MUHASEBE_PARA_BIRIMLERI.map((mpb) => <option key={mpb} value={mpb}>{mpb}</option>)}
                             </select>
@@ -575,7 +575,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               onChange={(e) => setHForm({ ...hForm, kur: e.target.value, hedefTutar: "" })}
                               placeholder={cevrimVarMi && (!kurSoru || kurSoru.onerilen == null) ? "Elle girin" : ""}
                               title={cevrimVarMi ? "Otomatik olarak Muhasebe'deki güncel kurdan öneriliyor — isterseniz sadece bu işlem için değiştirebilirsiniz" : "Aynı para birimi olduğu için (ya da cari seçilmediği için) kur 1'dir"}
-                              style={{ width: 75, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: cevrimVarMi ? "#fff" : "var(--erp-panel-2)" }}
+                              style={{ width: 75, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: cevrimVarMi ? "#fff" : "var(--erp-panel-2)" }}
                             />
                           </label>
                           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: cariSeciliMi ? "var(--erp-primary)" : "var(--erp-border)", fontWeight: 700 }}>
@@ -627,7 +627,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           </label>
                           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
                             Defter
-                            <select value={hForm.defter} onChange={(e) => setHForm({ ...hForm, defter: e.target.value })} style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
+                            <select value={hForm.defter} onChange={(e) => setHForm({ ...hForm, defter: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
                               <option value="Genel">Genel</option>
                               <option value="Resmi">Resmi</option>
                               <option value="Muhasebe">Muhasebe (ikisine de)</option>
@@ -635,7 +635,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           </label>
                           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600, flex: 1, minWidth: 130 }}>
                             Açıklama
-                            <input value={hForm.aciklama} onChange={(e) => setHForm({ ...hForm, aciklama: e.target.value })} placeholder="Opsiyonel" style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
+                            <input value={hForm.aciklama} onChange={(e) => setHForm({ ...hForm, aciklama: e.target.value })} placeholder="Opsiyonel" style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
                           </label>
                           <button className="btn-primary" onClick={() => hareketiKaydet(h.id, pb)}><Plus size={13} /> Ekle</button>
                         </div>
@@ -647,7 +647,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 {/* DÜZENLEME PANELİ: seçilen hareketin üstünde açılıyor. */}
                 {acik && duzenle && duzenle.hesapId === h.id && (
                   <div data-duzenle-paneli="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
-                    padding: "10px 12px", background: "#F6EEDD", borderTop: "1px solid #E4D8C0", borderBottom: "1px solid #E4D8C0" }}>
+                    padding: "10px 12px", background: "var(--erp-hover)", borderTop: "1px solid var(--erp-line-soft)", borderBottom: "1px solid var(--erp-line-soft)" }}>
                     <Field label="Tarih">
                       <input type="date" value={duzenle.tarih} data-duzenle-tarih="1"
                         onChange={(e) => setDuzenle({ ...duzenle, tarih: e.target.value })} style={{ ...inputStyle, width: 150 }} />
@@ -734,7 +734,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           style={{
                             width: "100%", minWidth: sayisalMi ? 58 : 80, padding: "3px 6px", fontSize: 11,
                             border: `1px solid ${kolonFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
-                            background: kolonFiltre[alan].trim() ? "#FBF0E2" : "#fff",
+                            background: kolonFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
                             borderRadius: "var(--erp-r-sm)", textAlign: sayisalMi ? "right" : "left", boxSizing: "border-box",
                           }}
                         />
@@ -768,7 +768,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           <div style={{ overflowX: "auto" }}>
                           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                             <thead>
-                              <tr style={{ borderBottom: "1.5px solid #C9B99A" }}>
+                              <tr style={{ borderBottom: "1.5px solid var(--erp-line)" }}>
                                 <th style={{ textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" }}>Tarih</th>
                                 <th style={{ textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" }}>Açıklama</th>
                                 <th style={{ textAlign: "right", padding: "4px 6px", color: "var(--erp-primary)" }}>Giriş</th>
@@ -777,7 +777,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                 <th style={{ width: 20 }}></th>
                               </tr>
                               {/* Sütun filtre satırı. Bakiye sütununda kutu yok — türetilmiş değer. */}
-                              <tr style={{ borderBottom: "1px solid #E4D8C0" }}>
+                              <tr style={{ borderBottom: "1px solid var(--erp-line-soft)" }}>
                                 <th style={{ padding: "3px 6px" }}>{kFiltreKutusu("tarih", "tarih…")}</th>
                                 <th style={{ padding: "3px 6px" }}>{kFiltreKutusu("aciklama", "cari, açıklama…")}</th>
                                 <th style={{ padding: "3px 6px" }}>{kFiltreKutusu("giris", "≥", true)}</th>
@@ -797,7 +797,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               {gorunenSatirlar.map(({ hr, kosanBakiye: kb }) => {
                                 const cari = hr.cariId ? (cariler || []).find((c) => c.id === hr.cariId) : null;
                                 return (
-                                  <tr key={hr.id} style={{ borderTop: "1px solid #E4D8C0" }}>
+                                  <tr key={hr.id} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                                     <td className="mono" style={{ padding: "5px 6px", color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>{tarihYaz(hr.tarih, true)}</td>
                                     <td style={{ padding: "5px 6px", color: "var(--erp-text)" }}>
                                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -821,7 +821,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                           return (
                                             <span className="mono" style={{
                                               fontSize: 9, fontWeight: 700, color: renk,
-                                              background: `${renk}1A`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
+                                              background: `${alfaEkle(renk, "1A")}`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
                                             }}>
                                               {tip}
                                             </span>
@@ -876,7 +876,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                 kendi para birimi tek olduğu için burada para birimi ayrımına gerek yok. */}
                             {gorunenSatirlar.length > 0 && (
                               <tfoot>
-                                <tr style={{ borderTop: "2px solid #C9B99A", background: "var(--erp-panel)" }}>
+                                <tr style={{ borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" }}>
                                   <td style={{ padding: "6px 6px", fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>
                                     {kolonFiltreAktif ? "SÜZÜLEN TOPLAM" : "TOPLAM"}
                                   </td>
@@ -915,7 +915,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               data-hesap-duzenle={a2.key}
                               placeholder={a2.placeholder}
                               onChange={(e) => setDuzenForm({ ...duzenForm, [a2.key]: e.target.value })}
-                              style={{ padding: "5px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 }} />
+                              style={{ padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 }} />
                           ))}
                           <button data-kart-eylem="kaydet" title="Kaydet · Ctrl+S" type="button" className="btn-primary" style={{ fontSize: 12, padding: "5px 12px" }}
                             onClick={() => { if (onHesapGuncelle) onHesapGuncelle(h.id, duzenForm); setDuzenlenen(null); }}>
@@ -1101,10 +1101,10 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
       </div>
 
       {showYeni && (
-        <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Tip
-            <select value={form.tip} onChange={(e) => setForm({ ...form, tip: e.target.value })} style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
+            <select value={form.tip} onChange={(e) => setForm({ ...form, tip: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
               {/* "Verilen" YETERSİZ BİR AD: kullanıcı (6 Eylül) "verilende kendimiz çek
                   yazmışız demektir, onu da şahsi çek çıkışı olarak isimlendir" dedi. Alınan çek
                   başkasının kefaletiyle gelir, verilen çek BİZİM imzamızdır — ikisi farklı risk.
@@ -1115,11 +1115,11 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Çek No
-            <input value={form.cekNo} onChange={(e) => setForm({ ...form, cekNo: e.target.value })} style={{ width: 100, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
+            <input value={form.cekNo} onChange={(e) => setForm({ ...form, cekNo: e.target.value })} style={{ width: 100, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Cari
-            <select value={form.cariId} onChange={(e) => setForm({ ...form, cariId: e.target.value })} style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 140 }}>
+            <select value={form.cariId} onChange={(e) => setForm({ ...form, cariId: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 140 }}>
               <option value="">Seçin…</option>
               {secilebilirler(cariler, form.cariId).map((c) => <option key={c.id} value={c.id}>{secenekEtiketi(c, c.unvan)}</option>)}
             </select>
@@ -1128,7 +1128,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
             {/* PARA BİRİMİ SEÇİLEN BİRİMDEN OKUNUYOR. Etikette "₺" SABİT yazılıydı: dolar çeki
                 girerken bile "Tutar (₺)" görünüyordu (kullanıcı bildirdi, 6 Eylül). */}
             Tutar ({PARA_SEMBOLU[form.paraBirimi || "TRY"] || form.paraBirimi})
-            <input type="number" step="any" min="0" value={form.tutar} onChange={(e) => setForm({ ...form, tutar: e.target.value })} style={{ width: 100, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
+            <input type="number" step="any" min="0" value={form.tutar} onChange={(e) => setForm({ ...form, tutar: e.target.value })} style={{ width: 100, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Para Birimi
@@ -1141,7 +1141,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                 const on = yeniSoru && t > 0 ? kurUygula(t, yeniSoru.onerilen, yeniSoru.bolme) : null;
                 setForm({ ...form, paraBirimi: e.target.value, tlKarsiligi: on != null ? String(on) : "", kur: "" });
               }}
-              style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+              style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
             >
               {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
             </select>
@@ -1164,7 +1164,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     value={form.tlKarsiligi}
                     onChange={(e) => setForm({ ...form, tlKarsiligi: e.target.value, kur: "" })}
                     title="Çekin giriş günündeki TL değeri — vade geldiğinde kur değişmiş olacak"
-                    style={{ width: 110, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, textAlign: "right" }}
+                    style={{ width: 110, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, textAlign: "right" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
@@ -1176,7 +1176,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                       const yeniTl = kurUygula(tutar, parseFloat(e.target.value), soru.bolme);
                       setForm({ ...form, kur: e.target.value, tlKarsiligi: yeniTl != null ? String(yeniTl) : form.tlKarsiligi });
                     }}
-                    style={{ width: 90, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                    style={{ width: 90, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                   />
                 </label>
               </>
@@ -1184,10 +1184,10 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
           })()}
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Vade Tarihi
-            <input type="date" value={form.vadeTarihi} onChange={(e) => setForm({ ...form, vadeTarihi: e.target.value })} style={{ padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
+            <input type="date" value={form.vadeTarihi} onChange={(e) => setForm({ ...form, vadeTarihi: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }} />
           </label>
           {(() => {
-            const kutu = { padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 };
+            const kutu = { padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 };
             const etiket = { display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 };
             return (
               <>
@@ -1265,7 +1265,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
             const cari = c.cariId ? (cariler || []).find((x) => x.id === c.cariId) : null;
             const renk = CEK_DURUM_RENK[c.durum] || "var(--erp-text-2)";
             return (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", flexWrap: "wrap" }}>
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", flexWrap: "wrap" }}>
                 <span className="mono" style={{ fontWeight: 700, fontSize: 12, color: c.tip === "Alınan" ? "var(--erp-primary)" : "var(--erp-warn)" }}>{c.tip}</span>
                 <span className="mono" style={{ fontSize: 12 }}>{c.cekNo || "—"}</span>
                 {cari && <span style={{ fontSize: 12, color: "var(--erp-info)" }}>{cari.unvan}</span>}
@@ -1362,7 +1362,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                 {/* GEÇMİŞ — aşama aşama, eskiden yeniye. Geçmiş EKLENİR, üzerine yazılmaz:
                     çekin nereden geçtiği sorusunun tek cevabı burası. */}
                 {gecmisCekId === c.id && (
-                  <div style={{ flexBasis: "100%", marginTop: 8, padding: 10, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", display: "grid", gap: 4 }}>
+                  <div style={{ flexBasis: "100%", marginTop: 8, padding: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", display: "grid", gap: 4 }}>
                     {(c.gecmis || []).map((g) => (
                       <div key={g.id} className="mono" style={{ fontSize: 11, color: "var(--erp-text)", display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span style={{ color: "var(--erp-text-3)" }}>{tarihYaz(g.tarih)}</span>
@@ -1477,7 +1477,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                       <select
                         value={islemForm.cariId}
                         onChange={(e) => setIslemForm({ ...islemForm, cariId: e.target.value })}
-                        style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                        style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                       >
                         <option value="">Seçin…</option>
                         {/* Çeki VEREN cariye geri ciro anlamsız — o işlemin adı "İade Et". */}
@@ -1499,7 +1499,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                         <select
                           value={islemForm.bankaId}
                           onChange={(e) => setIslemForm({ ...islemForm, bankaId: e.target.value })}
-                          style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                          style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                         >
                           <option value="">Seçin…</option>
                           {(bankalar || []).map((b) => <option key={b.id} value={b.id}>{b.ad}</option>)}
@@ -1527,7 +1527,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                             const h = (tur === "kasa" ? (kasalar || []) : (bankalar || [])).find((x) => x.id === id);
                             setIslemForm({ ...islemForm, hesapSecim: e.target.value, tutar: h ? tahsilTutarOnerisi(h) : islemForm.tutar, kurGirdi: "" });
                           }}
-                          style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                          style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                         >
                           <option value="">Seçin…</option>
                           {(kasalar || []).map((k) => <option key={k.id} value={`kasa:${k.id}`}>Kasa: {k.ad} ({k.paraBirimi || "TRY"})</option>)}
@@ -1553,7 +1553,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                             type="number" step="any" min="0"
                             value={islemForm.tutar}
                             onChange={(e) => setIslemForm({ ...islemForm, tutar: e.target.value, kurGirdi: "" })}
-                            style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 110, textAlign: "right" }}
+                            style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 110, textAlign: "right" }}
                           />
                           {/* Tahsilde birim HESABIN birimi, seçilemez: başka bir birimde yazmak hesabın
                               bakiyesini bozardı. */}
@@ -1567,7 +1567,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                               const on = yeniSoru ? kurUygula(c.tutar, yeniSoru.onerilen, yeniSoru.bolme) : c.tutar;
                               setIslemForm({ ...islemForm, paraBirimi: e.target.value, tutar: on != null ? String(on) : String(c.tutar), kurGirdi: "" });
                             }}
-                            style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                            style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                           >
                             {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                           </select>
@@ -1584,7 +1584,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                               const yeniTutar = kurUygula(c.tutar, parseFloat(e.target.value), soru.bolme);
                               setIslemForm({ ...islemForm, kurGirdi: e.target.value, tutar: yeniTutar != null ? String(yeniTutar) : islemForm.tutar });
                             }}
-                            style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 100 }}
+                            style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 100 }}
                           />
                         </label>
                       )}
@@ -1596,7 +1596,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     <input
                       value={islemForm.not}
                       onChange={(e) => setIslemForm({ ...islemForm, not: e.target.value })}
-                      style={{ padding: "6px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                      style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                     />
                   </label>
 

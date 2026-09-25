@@ -7,7 +7,7 @@
 //   2. Fiş kaydedilince koli "Sevk edildi"ye geçiyor ve hangi fişle çıktığını saklıyor.
 //   3. FİŞ GERİ ALININCA koli yeniden "Hazır" oluyor — değişmez kuralın gereği. Aksi halde mal
 //      depoya döner ama koli sevk edilmiş görünür ve bir daha okutulamazdı.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -45,7 +45,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(500);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);
@@ -85,7 +85,7 @@ async function calistir() {
   const karsilanan = ((await depoOku(sayfa, "siparis:data")) || [])[0].kalemler.map((k) => `${k.beden}=${k.karsilanan || 0}`).join(",");
 
   // 3) FİŞİ GERİ AL — koli "Hazır"a dönmeli
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   await sayfa.locator('button:has-text("Müşteri B"):visible').last().click();
   await sayfa.waitForTimeout(700);

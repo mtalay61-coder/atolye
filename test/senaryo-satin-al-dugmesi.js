@@ -13,7 +13,7 @@
 //   satın al  → ALIŞ SİPARİŞİ girişi
 // İkisi aynı ekrana çıkmamalı. Artık malzeme bu ekrana miktarsız bir satır olarak ekleniyor;
 // kullanıcı miktarı yazıp alış SİPARİŞİNİ buradan oluşturuyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -41,7 +41,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Depo", exact: true }).click();
+  await modulAc(sayfa, "Depo");
   await sayfa.waitForTimeout(800);
   // SIKI BAŞLIK (kullanıcı, 12 Eylül: "Depo'nun yarısına yakını arama, sekme vs."): üst şeritte
   // "Depo" başlığı var (eskiden boştu) ve ilk tablo satırı başlığa 200px'den yakın (900px genişlikte;
@@ -166,7 +166,7 @@ async function calistir() {
   // açılmalı; ikinci basışta YENİ form değil, yarım kalan form geri gelmeli.
   await sayfa.locator('button[title^="Bu pencereyi kapat"], button:has-text("Kapat"):visible').first().click().catch(() => {});
   await sayfa.waitForTimeout(600);
-  await sayfa.getByRole("button", { name: "Depo", exact: true }).click();
+  await modulAc(sayfa, "Depo");
   await sayfa.waitForTimeout(700);
   // AÇIĞI OLAN satırın düğmesine basılıyor: miktar ön dolumu ancak açık varsa ölçülebilir.
   await sayfa.evaluate(() => {

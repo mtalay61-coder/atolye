@@ -8,7 +8,7 @@
 // ORTAK FİŞ EKRANINA TAŞINDI (23 Eylül, v1.431.0): alış da tek ekranda. Yeni yolda "Siparişten seç"
 // siparişin TAMAMINI getiriyor; fişte kalmasını istemediğin modelin satırları tek tek çıkarılıyor.
 // Ölçülen davranış aynı: iki model tek fiş numarasında, üçüncüsü siparişte bekliyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -42,7 +42,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(500);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);

@@ -99,7 +99,7 @@ function GunlukPaneli({ showToast }) {
 
       {gorunum === "mesai" && !yukleniyor && (
         <div style={{ display: "grid", gap: 4 }}>
-          <div style={{ fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "7px 10px", lineHeight: 1.6 }}>
+          <div style={{ fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "7px 10px", lineHeight: 1.6 }}>
             <b>Bu bir puantaj değildir.</b> Gösterdiği şey işe geliş-gidiş saati değil, uygulamadaki
             ilk ve son işlem. Atölyede olup uygulamaya dokunmayan burada görünmez; akşam evden tek
             kayıt giren birinin aralığı olduğundan uzun çıkar. Kaba bir etkinlik göstergesi olarak okuyun.
@@ -108,12 +108,12 @@ function GunlukPaneli({ showToast }) {
           {mesai.map((m) => (
             <div key={`${m.gun}|${m.ad}`} style={{
               display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
-              background: "#fff", border: "1px solid #E4D8C0", borderLeft: "3px solid #7A5C8A",
+              background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: "3px solid #7A5C8A",
               borderRadius: "var(--erp-r-md)", padding: "7px 10px",
             }}>
               <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>{m.gun}</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", minWidth: 90 }}>{m.ad}</span>
-              <span className="mono" style={{ fontSize: 12, color: "#221B14", whiteSpace: "nowrap" }}>
+              <span className="mono" style={{ fontSize: 12, color: "var(--erp-text)", whiteSpace: "nowrap" }}>
                 {saatMetni(m.ilk)} – {saatMetni(m.son)}
               </span>
               <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: "#7A5C8A", whiteSpace: "nowrap" }}>
@@ -164,7 +164,7 @@ function GunlukPaneli({ showToast }) {
             return (
               <div key={k.id} style={{
                 display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap",
-                background: "#fff", border: "1px solid #E4D8C0", borderLeft: `3px solid ${renk}`,
+                background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`,
                 borderRadius: "var(--erp-r-md)", padding: "6px 10px",
               }}>
                 <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>
@@ -173,7 +173,7 @@ function GunlukPaneli({ showToast }) {
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap" }}>
                   {k.kullanici_ad || "Bilinmeyen"}
                 </span>
-                <span style={{ fontSize: 12, color: "#221B14" }}>{k.eylem}</span>
+                <span style={{ fontSize: 12, color: "var(--erp-text)" }}>{k.eylem}</span>
                 {k.kapsam && (
                   <span className="mono" style={{ fontSize: 10, color: renk, background: alfaEkle(renk, "18"), borderRadius: "var(--erp-r-pill)", padding: "1px 7px" }}>
                     {k.kapsam}

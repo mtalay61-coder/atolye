@@ -284,14 +284,14 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: "1 1 220px" }}>
-          <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "#A6957A" }} />
+          <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Cari, telefon veya vergi no ara…"
             style={{
               width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)",
-              border: "1px solid #C9B99A", background: "var(--erp-panel)", fontSize: 14,
+              border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14,
             }}
           />
         </div>
@@ -311,7 +311,7 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
       </div>
 
       {showForm && (
-        <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
+        <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: 10 }}>
             <Field label="Unvan / Ad Soyad">
               <input value={form.unvan} onChange={(e) => setForm({ ...form, unvan: e.target.value })} placeholder="Örn. Deniz Ayakkabıcılık" style={inputStyle} />
@@ -457,7 +457,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
             {bedenliMi && tumBedenler.map((b) => (
               <th key={b} className="mono" style={{ ...bh, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
             ))}
-            <th style={{ ...bh, textAlign: "right", borderLeft: "1px dashed #C9B99A" }}>TOPLAM</th>
+            <th style={{ ...bh, textAlign: "right", borderLeft: "1px dashed var(--erp-line)" }}>TOPLAM</th>
             <th style={{ ...bh, textAlign: "right" }}>BR. FİYAT</th>
             {kurVarMi && <th style={{ ...bh, textAlign: "right" }}>KUR</th>}
             <th style={{ ...bh, textAlign: "right" }}>TUTAR</th>
@@ -505,7 +505,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
               bedenIndex[h.beden] = (bedenIndex[h.beden] || 0) + h.miktar;
             });
             return (
-              <tr key={ug.key} style={{ borderTop: "1px solid #E4D8C0" }}>
+              <tr key={ug.key} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                 <td style={{ ...td, fontWeight: 600 }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
                     <ColorSwatch src={gorsel} editable={false} size={kompakt ? 16 : 20} />
@@ -515,17 +515,17 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
                 <td className="mono" style={{ ...td, color: "var(--erp-text-2)" }}>{olcuGoster(ug.renk)}</td>
                 {bedenliMi && tumBedenler.map((b) => {
                   const m = bedenIndex[b];
-                  if (m == null) return <td key={b} style={{ ...td, textAlign: "center", color: "#CFC2A8" }}>—</td>;
+                  if (m == null) return <td key={b} style={{ ...td, textAlign: "center", color: "var(--erp-line-soft)" }}>—</td>;
                   return (
                     <td key={b} className="mono" style={{ ...td, textAlign: "center", fontWeight: 700, color: m < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
                       {stokYuvarla(m)}
                     </td>
                   );
                 })}
-                <td className="mono" style={{ ...td, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed #C9B99A" }}>
+                <td className="mono" style={{ ...td, textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>
                   {miktarVar
                     ? <>{toplamAdet} <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>{ug.birim || ""}</span></>
-                    : <span style={{ fontWeight: 400, color: "#CFC2A8" }} title="Bu eski kayıtta miktar bilgisi saklanmamış">—</span>}
+                    : <span style={{ fontWeight: 400, color: "var(--erp-line-soft)" }} title="Bu eski kayıtta miktar bilgisi saklanmamış">—</span>}
                 </td>
                 {/* GİRİLEN fiyat, girildiği para biriminde. */}
                 <td className="mono" style={{ ...td, textAlign: "right" }}>
@@ -533,7 +533,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
                     ? `${tekGirilen.toLocaleString("tr-TR", { maximumFractionDigits: 4 })} ${girilenSembol}`
                     : girilenler.length > 1
                       ? <span style={{ color: "var(--erp-warn)" }} title="Bedenler farklı birim fiyatta">farklı</span>
-                      : <span style={{ color: "#CFC2A8" }} title="Bu eski kayıtta birim fiyat saklanmamış">—</span>}
+                      : <span style={{ color: "var(--erp-line-soft)" }} title="Bu eski kayıtta birim fiyat saklanmamış">—</span>}
                 </td>
                 {/* İŞLEM AÇIKÇA YAZILIR: "× 48,1 = 12,03 ₺". Kur sözleşmesi "1 yabancı = X TRY"
                     olduğu için yabancıdan TL'ye ÇARPILIR, TL'den yabancıya BÖLÜNÜR; iki yabancı
@@ -563,7 +563,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
                 <td className="mono" style={{ ...td, textAlign: "right", fontWeight: 700 }}>
                   {(tutarBilinen || toplamTutar > 0)
                     ? <>{toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {sembol}</>
-                    : <span style={{ fontWeight: 400, color: "#CFC2A8" }}>—</span>}
+                    : <span style={{ fontWeight: 400, color: "var(--erp-line-soft)" }}>—</span>}
                 </td>
               </tr>
             );

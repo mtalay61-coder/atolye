@@ -6,7 +6,7 @@
 // Üretim 41 bedenden 25 çift, stoğa eklenmiş. "Getir" ile üretim no okutulup 8'li koli kuruluyor:
 // 1. koliden sonra kalan 17, 2.'den sonra 9, 3.'ten sonra 1; 4. koli (8) REDDEDİLİR, kalan 1'lik
 // koli kabul edilir ve beden listeden düşer.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -29,7 +29,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Paketleme", exact: true }).click();
+  await modulAc(sayfa, "Paketleme");
   await sayfa.waitForTimeout(600);
   // Bekleyen üretimler listesini aç (kapalı gelir).
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Paketlemeyi bekleyen üretimler/.test(x.textContent)); if (b) b.click(); });

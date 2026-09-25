@@ -7,7 +7,7 @@
 //
 // Bu senaryonun ASIL İDDİASI o "ince nokta": ürünün cariye özel fiyatı VAR ve katalogda
 // GÖRÜNMEMELİ. Bir müşteriye başka bir müşterinin fiyatını göstermek, geri alınamayan bir hata.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -102,7 +102,7 @@ async function calistir() {
     };
   });
 
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(800);
 
   // SIKI BAŞLIK (kullanıcı, 12 Eylül: "ekranın yarısına yakını arama, sekme vs."): Liste/Katalog
@@ -278,7 +278,7 @@ async function calistir() {
   // Özel kod yalnız Stok'ta aransaydı "taban 147'yi Stok'ta buluyorum ama siparişte bulamıyorum"
   // olurdu. Aynı havuz ürün seçicisine de verildi; eşleşme SEBEBİ de rozetle gösteriliyor,
   // yoksa kullanıcı o satırın neden geldiğini bilemezdi.
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).first().click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(700);
   await sayfa.locator("[data-yeni-siparis]:visible").first().click();
   await sayfa.waitForTimeout(700);

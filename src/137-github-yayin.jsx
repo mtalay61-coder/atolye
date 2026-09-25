@@ -259,7 +259,7 @@ function GitHubYayin({ showToast, onSurumYayinla, yayinSurum }) {
         }
         setMesgul(false);
     };
-    return (React.createElement("div", { "data-github-yayin": "1", style: { border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
+    return (React.createElement("div", { "data-github-yayin": "1", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
         React.createElement("div", { style: { fontSize: 12, fontWeight: 700, marginBottom: 4 } }, "GitHub'a yay\u0131nla"),
         React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 } },
             "Yeni HTML dosyas\u0131n\u0131 se\u00E7in; uygulama dosyay\u0131 ve ",
@@ -271,7 +271,7 @@ function GitHubYayin({ showToast, onSurumYayinla, yayinSurum }) {
             yayinSurum && yayinSurum.surum ? React.createElement(React.Fragment, null,
                 " \u00B7 yay\u0131nda ",
                 React.createElement("b", { className: "mono" }, yayinSurum.surum)) : null),
-        !anahtar && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)", border: "1px solid #E4D8C0",
+        !anahtar && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)",
                 borderRadius: "var(--erp-r-md)", padding: 8, marginBottom: 8 } },
             React.createElement("b", null, "Anahtar nas\u0131l al\u0131n\u0131r:"),
             " GitHub > Settings > Developer settings > Personal access tokens > Fine-grained tokens > Generate new token. Repository access: ",
@@ -311,7 +311,7 @@ function GitHubYayin({ showToast, onSurumYayinla, yayinSurum }) {
                 Math.round(dosya.size / 1024),
                 " KB")),
         durum && React.createElement("div", { "data-gh-durum": "1", style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 } }, durum),
-        sonuc && (React.createElement("div", { "data-gh-sonuc": "1", style: { fontSize: 11, marginTop: 8, padding: 8, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)" } },
+        sonuc && (React.createElement("div", { "data-gh-sonuc": "1", style: { fontSize: 11, marginTop: 8, padding: 8, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" } },
             React.createElement("b", null,
                 "S\u00FCr\u00FCm ",
                 sonuc.no,
@@ -351,7 +351,7 @@ function SurumGecmisi() {
         SURUM_GECMISI.map((k) => {
             const acikMi = acik.has(k.surum);
             const toplam = k.eklenen.length + k.degisen.length + k.duzeltilen.length;
-            return (React.createElement("div", { key: k.surum, "data-surum-kaydi": k.surum, style: { border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: "8px 12px" } },
+            return (React.createElement("div", { key: k.surum, "data-surum-kaydi": k.surum, style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: "8px 12px" } },
                 React.createElement("button", { type: "button", onClick: () => setAcik((o) => { const n = new Set(o); if (n.has(k.surum))
                         n.delete(k.surum);
                     else

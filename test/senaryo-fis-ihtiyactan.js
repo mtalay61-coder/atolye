@@ -14,7 +14,7 @@
 //   2. Aynı tedarikçinin DİĞER eksikleri de geliyor.
 //   3. BAŞKA tedarikçinin eksiği GELMİYOR — fiş tek cariye kesiliyor, başkasının malını o fişe
 //      koymak borcu yanlış yere yazardı.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -84,7 +84,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
 
-  await sayfa.getByRole("button", { name: "Depo", exact: true }).click();
+  await modulAc(sayfa, "Depo");
   await sayfa.waitForTimeout(1000);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
@@ -115,7 +115,7 @@ async function calistir() {
       .map((x) => x.value));
 
   // STOK KARTI → Fiyatlandırma: son alış listesi ve kart farkı (0,25 vs kart 0,22 → +13,6%).
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

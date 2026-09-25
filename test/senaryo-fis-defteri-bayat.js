@@ -8,7 +8,7 @@
 //     o arada yazılan tam defterle depoya girmiş kalıyordu.
 // 2-4 kancanın kendisiyle ölçülür (küçük bir bileşen içinde, gerçek React ve sahte depoyla):
 // eşzamanlılığı arayüzden sıraya koymak mümkün değil.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -28,7 +28,7 @@ async function calistir() {
   const kesimDurumu = async () => ((await depoOku(sayfa, "fisdefter:data")) || [])
     .filter((f) => /^1001-Kesim/.test(f.fisNo)).map((f) => `${f.fisNo}:${f.iptal ? "iptal" : "aktif"}`).sort();
   const geriAlmaOncesi = await kesimDurumu();
-  await sayfa.getByRole("button", { name: "Üretim", exact: true }).click();
+  await modulAc(sayfa, "Üretim");
   await sayfa.waitForTimeout(600);
   await sayfa.getByText("1001", { exact: true }).last().click();
   await sayfa.waitForTimeout(700);

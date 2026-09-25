@@ -70,7 +70,7 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
     <React.Fragment key={g.anahtar}>
       <tr
         onClick={() => setAcikGrup(acikGrup === g.anahtar ? null : g.anahtar)}
-        style={{ borderTop: "1px solid #E4D8C0", cursor: "pointer", ...(g.acikToplam > 0 ? { background: "#FCE7DA55" } : {}) }}
+        style={{ borderTop: "1px solid var(--erp-line-soft)", cursor: "pointer", ...(g.acikToplam > 0 ? { background: "#FCE7DA55" } : {}) }}
       >
         <td style={{ padding: "5px 8px", whiteSpace: "nowrap" }}>
           <span
@@ -83,13 +83,13 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
           {/* Renk artık satırda değil, detayda: tek ürün tek satır. */}
         </td>
         {hucreCiz}
-        <td className="mono" style={{ fontSize: 12, textAlign: "right", padding: "5px 8px", borderLeft: "2px solid #E4D8C0", whiteSpace: "nowrap" }}>
+        <td className="mono" style={{ fontSize: 12, textAlign: "right", padding: "5px 8px", borderLeft: "2px solid var(--erp-line-soft)", whiteSpace: "nowrap" }}>
           {sayi(g.stok, "var(--erp-text)", true)} <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{g.birim}</span>
         </td>
         <td style={{ fontSize: 12, textAlign: "right", padding: "5px 8px" }}>{sayi(g.rezerve, "var(--erp-brown)", true)}</td>
         <td style={{ fontSize: 12, textAlign: "right", padding: "5px 8px" }}>{sayi(g.serbest, g.serbest < 0 ? "var(--erp-warn)" : "var(--erp-primary)", true)}</td>
         <td style={{ fontSize: 12, textAlign: "right", padding: "5px 8px" }}>{sayi(g.toplamTalep, "var(--erp-text)")}</td>
-        <td className="mono" style={{ fontSize: 13, textAlign: "right", padding: "5px 8px", borderLeft: "2px solid #E4D8C0", whiteSpace: "nowrap" }}>
+        <td className="mono" style={{ fontSize: 13, textAlign: "right", padding: "5px 8px", borderLeft: "2px solid var(--erp-line-soft)", whiteSpace: "nowrap" }}>
           {g.acikToplam > 0
             ? <span style={{ fontWeight: 700, color: "#6B3FA0" }}>{g.acikToplam} <span style={{ fontSize: 10, fontWeight: 400, color: "var(--erp-text-3)" }}>{g.birim}</span></span>
             : <span style={{ color: "var(--erp-primary)", fontWeight: 700 }}>✓</span>}
@@ -106,7 +106,7 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
         {butonlarVar && (
           /* Tıklama satırın açılıp kapanmasını tetiklemesin: buradaki iki buton başka ekrana
              götürüyor, satırı açmak istemiyor. */
-          <td onClick={(e) => e.stopPropagation()} style={{ padding: "3px 6px", whiteSpace: "nowrap", borderLeft: "1px dashed #E4D8C0" }}>
+          <td onClick={(e) => e.stopPropagation()} style={{ padding: "3px 6px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line-soft)" }}>
             <div style={{ display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center" }}>
               {/* DURUM ROZETİ — hangi yol izlendiyse o yazar, diğer düğme kalkar.
                   Kullanıcı: "Satınalma veya alış fişi hangisi yapılır ise rozet ekle ve diğerini
@@ -234,7 +234,7 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
             oldukları söylenmiyordu; kullanıcı alttakini "gerçek ihtiyaç" diye kendisi çözmüştü. */}
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", fontSize: 11, color: "var(--erp-text-2)" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-            <span className="mono" style={{ fontWeight: 700, color: "#221B14" }}>12</span>
+            <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>12</span>
             elde olan (stok)
           </span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -250,18 +250,18 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
                 {[].map((b) => (
                   <th key={b} className="mono" style={{ ...baslikStil, textAlign: "center", fontWeight: 700 }}>{b}</th>
                 ))}
-                <th style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid #E4D8C0" }} title="Elde fiilen duran toplam">STOK</th>
+                <th style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid var(--erp-line-soft)" }} title="Elde fiilen duran toplam">STOK</th>
                 <th style={{ ...baslikStil, textAlign: "right", color: "var(--erp-brown)" }} title="Stoğun siparişlere ayrılmış kısmı — stok yoksa 0 olur">AYRILAN</th>
                 <th style={{ ...baslikStil, textAlign: "right", color: "var(--erp-primary)" }} title="stok − rezerve">SERBEST</th>
                 <th style={{ ...baslikStil, textAlign: "right" }} title="Siparişlerin istediği toplam">TALEP</th>
                 <th
-                  style={{ ...baslikStil, textAlign: "right", color: "#6B3FA0", fontWeight: 700, borderLeft: "2px solid #E4D8C0" }}
+                  style={{ ...baslikStil, textAlign: "right", color: "#6B3FA0", fontWeight: 700, borderLeft: "2px solid var(--erp-line-soft)" }}
                   title={"Satın alınması gereken miktar.\n\n" +
                          "Ham çıkarma (talep − stok) DEĞİL: yoldaki alımlar da düşülüyor. 40 talep, " +
                          "10 stok, 20'si sipariş edilip yolda ise ihtiyaç 10'dur — yoldakini ikinci " +
                          "kez sipariş etmemek için."}
                 >İHTİYAÇ</th>
-                {butonlarVar && <th style={{ ...baslikStil, textAlign: "right", borderLeft: "1px dashed #E4D8C0" }} />}
+                {butonlarVar && <th style={{ ...baslikStil, textAlign: "right", borderLeft: "1px dashed var(--erp-line-soft)" }} />}
                 <th style={{ width: 24 }} />
               </tr>
             </thead>
@@ -276,7 +276,7 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
                     <td
                       className="mono"
 
-                      style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", borderLeft: "1px solid #EFE5D2", color: "var(--erp-text-3)", whiteSpace: "nowrap" }}
+                      style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", borderLeft: "1px solid var(--erp-head)", color: "var(--erp-text-3)", whiteSpace: "nowrap" }}
                     >
                       {(() => {
                         const renkSayisi = new Set(g.satirlar.map((x) => x.renk)).size;
@@ -297,12 +297,12 @@ function StokDurumuMatrisi({ satirlar, onGoToSiparis, onGoToUrun, onSatinAlPlanl
             <thead>
               <tr>
                 <th style={{ ...baslikStil, textAlign: "left" }}>BEDENSİZ MALZEME</th>
-                <th style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid #E4D8C0" }}>STOK</th>
+                <th style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid var(--erp-line-soft)" }}>STOK</th>
                 <th style={{ ...baslikStil, textAlign: "right", color: "var(--erp-brown)" }} title="Stoğun siparişlere ayrılmış kısmı — stok yoksa 0 olur">AYRILAN</th>
                 <th style={{ ...baslikStil, textAlign: "right", color: "var(--erp-primary)" }}>SERBEST</th>
                 <th style={{ ...baslikStil, textAlign: "right" }}>TALEP</th>
-                <th style={{ ...baslikStil, textAlign: "right", color: "#6B3FA0", fontWeight: 700, borderLeft: "2px solid #E4D8C0" }}>İHTİYAÇ</th>
-                {butonlarVar && <th style={{ ...baslikStil, textAlign: "right", borderLeft: "1px dashed #E4D8C0" }} />}
+                <th style={{ ...baslikStil, textAlign: "right", color: "#6B3FA0", fontWeight: 700, borderLeft: "2px solid var(--erp-line-soft)" }}>İHTİYAÇ</th>
+                {butonlarVar && <th style={{ ...baslikStil, textAlign: "right", borderLeft: "1px dashed var(--erp-line-soft)" }} />}
                 <th style={{ width: 24 }} />
               </tr>
             </thead>
@@ -388,7 +388,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
               <button key={m.key} type="button" data-stok-metrik={m.key} onClick={() => setMetrik(m.key)}
                 style={{ padding: "3px 9px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 600, cursor: "pointer",
                   border: `1px solid ${metrik === m.key ? m.renk : "var(--erp-border-2)"}`,
-                  background: metrik === m.key ? `${m.renk}1A` : "#fff", color: metrik === m.key ? m.renk : "var(--erp-text-2)" }}>
+                  background: metrik === m.key ? `${alfaEkle(m.renk, "1A")}` : "#fff", color: metrik === m.key ? m.renk : "var(--erp-text-2)" }}>
                 {m.ad}
               </button>
             ))}
@@ -406,14 +406,14 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
               {bedenler.map((b) => (
                 <th key={b} className="mono" style={{ fontSize: 11, padding: "5px 8px", textAlign: "center", color: "var(--erp-text-2)" }}>{b || "—"}</th>
               ))}
-              <th className="mono" style={{ fontSize: 10, padding: "5px 8px", textAlign: "center", color: "var(--erp-text-2)", borderLeft: "1px dashed #C9B99A" }}>TOP.</th>
+              <th className="mono" style={{ fontSize: 10, padding: "5px 8px", textAlign: "center", color: "var(--erp-text-2)", borderLeft: "1px dashed var(--erp-line)" }}>TOP.</th>
             </tr>
           </thead>
           <tbody>
             {matrisSatirlari.map((r) => {
               const satirToplam = bedenler.reduce((t, b) => t + ((r.hucre[b] || {})[aktifMetrik.key] || 0), 0);
               return (
-                <tr key={r.anahtar} style={{ borderTop: "1px solid #E4D8C0" }}>
+                <tr key={r.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                   <td style={{ fontSize: 12, padding: "5px 8px", whiteSpace: "nowrap" }}>
                     {urunSutunu && <b>{r.urunAd} </b>}
                     <span className="mono" style={{ color: "var(--erp-text-2)" }}>{r.renk}</span>
@@ -433,7 +433,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
                     );
                   })}
                   <td className="mono" style={{ fontSize: 13, padding: "6px 8px", textAlign: "center", fontWeight: 700,
-                    borderLeft: "1px dashed #C9B99A", color: satirToplam < 0 ? "var(--erp-warn)" : aktifMetrik.renk }}>
+                    borderLeft: "1px dashed var(--erp-line)", color: satirToplam < 0 ? "var(--erp-warn)" : aktifMetrik.renk }}>
                     {satirToplam}
                   </td>
                 </tr>
@@ -472,7 +472,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
               <React.Fragment key={i}>
                 <tr
                   onClick={() => setAcikSatir(acik ? null : anahtar)}
-                  style={{ borderTop: "1px solid #E4D8C0", cursor: "pointer", ...(s.acikToplam > 0 ? { background: "#FCE7DA55" } : {}) }}
+                  style={{ borderTop: "1px solid var(--erp-line-soft)", cursor: "pointer", ...(s.acikToplam > 0 ? { background: "#FCE7DA55" } : {}) }}
                 >
                   {urunSutunu && (
                     <td style={{ padding: "5px 8px", whiteSpace: "nowrap" }}>
@@ -534,7 +534,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
                             stoktan ayrılan + yoldan tahsisli + açık. Denklemi yazmak, üç sütunun
                             birbiriyle ilişkisini tek bakışta gösteriyor. */}
                         {s.toplamTalep > 0 && (
-                          <div className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", padding: "4px 8px" }}>
+                          <div className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "4px 8px" }}>
                             talep <b style={{ color: "var(--erp-text)" }}>{s.toplamTalep}</b>
                             {" = "}stoktan ayrılan <b style={{ color: "var(--erp-brown)" }}>{s.rezerve}</b>
                             {" + "}yoldan tahsisli <b style={{ color: "var(--erp-info)" }}>{s.yoldaRezerve}</b>
@@ -562,7 +562,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
                                       fazla yapmış" gibi). Talebin hangi üretimden geldiği yazılınca
                                       hem ayırt ediliyor hem gerçek bir çift kayıt varsa görünür oluyor. */}
                                   {t.uretimNo && (
-                                    <span className="mono" style={{ fontSize: 10, color: "var(--erp-brown)", background: "#F5EDE3", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", padding: "0 5px" }}>
+                                    <span className="mono" style={{ fontSize: 10, color: "var(--erp-brown)", background: "var(--erp-hover)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "0 5px" }}>
                                       üretim {t.uretimNo}
                                     </span>
                                   )}
@@ -615,7 +615,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
         </tbody>
         {satirlar.length > 1 && (
           <tfoot>
-            <tr style={{ borderTop: "2px solid #C9B99A", background: "var(--erp-panel)" }}>
+            <tr style={{ borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" }}>
               <td colSpan={urunSutunu ? 2 : 1} style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", padding: "7px 8px" }}>
                 Toplam {birim ? `(${birim})` : ""}
               </td>

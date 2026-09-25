@@ -9,7 +9,7 @@
 //   C. Kilit kalkıyor: giriş fişi artık silinebilir.
 //   D. Çek listesinden silinen çek, DOĞDUĞU tahsilat hareketini de götürüyor — hem cirosu geri
 //      alınmış çekte hem hiç işlem görmemiş çekte.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -72,7 +72,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2500);
 
   const fisAc = async (fisNo) => {
-    await sayfa.getByRole("button", { name: "Fişler", exact: true }).first().click();
+    await modulAc(sayfa, "Fişler");
     await sayfa.waitForTimeout(800);
     // Fiş satırı AÇ/KAPA düğmesi: aynı fişe ikinci kez gelindiğinde tıklama onu KAPATIYOR.
     // Açık olup olmadığı detay bölümünün metninden anlaşılıyor; kapandıysa bir kez daha tıklanıyor.
@@ -115,7 +115,7 @@ async function calistir() {
   const ciroFisi = await fisSilmeDurumu();
 
   // Ekstrede de: Müşteri B'nin iki çek satırından YALNIZ ciro edilenin girişi kilitli.
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).first().click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(800);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
@@ -169,7 +169,7 @@ async function calistir() {
   const girisFisiSonra = await fisSilmeDurumu();
 
   // ---- D. ÇEK LİSTESİNDEN SİLME → BAĞLI TAHSİLAT DA GİDER -----------------------------------------
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]

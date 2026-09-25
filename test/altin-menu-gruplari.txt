@@ -1,8 +1,8 @@
 {
  "aktifGrupAcikKaldi": true,
  "daraltilmis": {
-  "grupSayisi": 0,
-  "navSayisi": 15
+  "grupSayisi": 4,
+  "navSayisi": 4
  },
  "depoAcik": [
   "Anasayfa",
@@ -10,10 +10,6 @@
   "Depo",
   "Paketleme",
   "Planlama",
-  "Cari",
-  "Muhasebe",
-  "Gelir / Gider",
-  "Fişler",
   "Sohbet",
   "Günlük"
  ],

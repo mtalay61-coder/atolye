@@ -468,7 +468,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
         const toplamKalem = acik.length;
         return (
           <div style={{
-            background: toplamKalem > 0 ? "#FBF0E2" : "#F0F5F0",
+            background: toplamKalem > 0 ? "var(--erp-hover)" : "#F0F5F0",
             border: `1px solid ${toplamKalem > 0 ? "#C9A063" : "#B9CDB9"}`,
             borderRadius: "var(--erp-r-md)", padding: 14,
           }}>
@@ -507,7 +507,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
         );
       })()}
 
-      <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 14 }}>
+      <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginBottom: 4 }}>Veri Tutarlılık Denetimi</div>
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 10, lineHeight: 1.5 }}>
           Kayıtların birbirini tutup tutmadığını denetler: siparişlerin teslim miktarları stok
@@ -531,7 +531,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
               { ad: "Cari hareketi", n: sonuc.ozet.denetlenen.cariHareketi, renk: "var(--erp-text-2)" },
               { ad: "Sipariş kalemi", n: sonuc.ozet.denetlenen.siparisKalemi, renk: "var(--erp-text-2)" },
             ].map((x) => (
-              <div key={x.ad} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "8px 14px", minWidth: 110 }}>
+              <div key={x.ad} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 14px", minWidth: 110 }}>
                 <div className="mono" style={{ fontSize: 20, fontWeight: 800, color: x.renk }}>{x.n}</div>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--erp-text-3)" }}>{x.ad}</div>
               </div>
@@ -559,7 +559,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
                       className="mono"
                       style={{
                         fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)",
-                        background: `${agirlikRenk[g.agirlik]}1A`, color: agirlikRenk[g.agirlik],
+                        background: `${alfaEkle(agirlikRenk[g.agirlik], "1A")}`, color: agirlikRenk[g.agirlik],
                       }}
                     >
                       {agirlikAd[g.agirlik]}

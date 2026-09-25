@@ -126,7 +126,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
         title={kilit.mesaj}
         style={{
           display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700,
-          color: "var(--erp-text-2)", background: "var(--erp-panel-2)", border: "1px solid #C9B99A",
+          color: "var(--erp-text-2)", background: "var(--erp-panel-2)", border: "1px solid var(--erp-line)",
           borderRadius: "var(--erp-r-pill)", padding: "2px 8px",
         }}
       >
@@ -170,14 +170,14 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
     <div>
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: "1 1 220px" }}>
-          <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "#A6957A" }} />
+          <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Fiş no, sipariş no veya cari adı ara…"
             style={{
               width: "100%", padding: "9px 12px 9px 32px", borderRadius: "var(--erp-r-md)",
-              border: "1px solid #C9B99A", fontSize: 14, background: "#fff",
+              border: "1px solid var(--erp-line)", fontSize: 14, background: "#fff",
             }}
           />
         </div>
@@ -235,7 +235,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
             const yapisizHareketler = cariHareketleri.filter((h) => !h.urunAd);
             const renk = FIS_TIP_RENK[f.tip] || "var(--erp-text-2)";
             return (
-              <div key={f.key} style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+              <div key={f.key} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                 <button
                   type="button"
                   onClick={() => setAcikFis(acik ? null : f.key)}
@@ -315,7 +315,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                     </button>
                     <div data-fis-islem-menusu={islemlerAcik === f.key ? "acik" : "kapali"}
                       style={{ display: islemlerAcik === f.key ? "flex" : "none", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
-                      background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
+                      background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
                       {/* Cari kartına gidiş de burada: başlıktaki ada dokunmak da aynı yere götürür,
                           ama menüde arandığında bulunabilsin. */}
                       {f.cariAd && (
@@ -357,7 +357,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                               title="Üretim prosesleri sondan geriye doğru geri alınır. Bu fişi silmek için üretim kartındaki ilgili prosesin 'teslim almayı geri al' düğmesini kullanın."
                               style={{
                                 display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700,
-                                color: "var(--erp-text-2)", background: "var(--erp-panel-2)", border: "1px solid #C9B99A",
+                                color: "var(--erp-text-2)", background: "var(--erp-panel-2)", border: "1px solid var(--erp-line)",
                                 borderRadius: "var(--erp-r-pill)", padding: "2px 8px",
                               }}
                             >
@@ -401,7 +401,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                           title="Bu alış/üretim, aşağıdaki satış siparişini karşılamak için Tedarik Planlama'dan oluşturulmuştur"
                           style={{
                             display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700,
-                            color: "#C97B3D", background: "#FBF3EA", border: "1px solid #C97B3D", borderRadius: "var(--erp-r-pill)",
+                            color: "#C97B3D", background: "var(--erp-hover)", border: "1px solid #C97B3D", borderRadius: "var(--erp-r-pill)",
                             padding: "2px 8px", cursor: "pointer",
                           }}
                         >

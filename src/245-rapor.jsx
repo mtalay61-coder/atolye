@@ -375,8 +375,8 @@ function raporExcelAktar(tabloKapId, ad) {
 
 // Küçük resim; yoksa boş kutu. Dokununca büyük görünsün diye `title` yok — yazdırmada da basılıyor.
 function RaporResim({ src }) {
-  if (!src) return <span style={{ display: "inline-block", width: 36, height: 36, borderRadius: "var(--erp-r-sm)", background: "var(--erp-panel-2)", border: "1px dashed #C9B99A" }} />;
-  return <img src={src} alt="" style={{ width: 36, height: 36, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid #E4D8C0", display: "block" }} />;
+  if (!src) return <span style={{ display: "inline-block", width: 36, height: 36, borderRadius: "var(--erp-r-sm)", background: "var(--erp-panel-2)", border: "1px dashed var(--erp-line)" }} />;
+  return <img src={src} alt="" style={{ width: 36, height: 36, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", display: "block" }} />;
 }
 
 // ---- EKRAN ---------------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
     border: `1.5px solid ${aktif ? renk : "var(--erp-border)"}`, background: aktif ? alfaEkle(renk, "1A") : "#fff",
     color: aktif ? renk : "var(--erp-text-2)",
   });
-  const kutu = { padding: "5px 7px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" };
+  const kutu = { padding: "5px 7px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" };
 
   return (
     <div data-rapor-sekmesi={modulAnahtari}>
@@ -511,7 +511,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
 
       {/* AYARLAR PANELİ (kapalı gelir) */}
       <div data-rapor-ayar-paneli={kurucuAcik ? "acik" : "kapali"} style={{ display: kurucuAcik ? undefined : "none", background: "#fff", border: "1px solid #8A5A38", borderRadius: "var(--erp-r-md)", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid #E4D8C0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--erp-line-soft)" }}>
           <b style={{ fontSize: 13 }}>{seciliId ? tanim.ad : "Yeni rapor"}</b>
           <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
             {sonuc.sutunlar.length} sütun · {(tanim.suzgecler || []).filter((s) => s.alan).length + Object.values(tanim.kolonAramalari || {}).filter((v) => String(v || "").trim()).length} süzgeç
@@ -626,7 +626,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
               </div>
             </div>
             {/* SÜTUN AYARLARI: sıra, kısa başlık, genişlik */}
-        <div data-sutun-ayarlari="1" style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
+        <div data-sutun-ayarlari="1" style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 6 }}>
             SÜTUN AYARLARI <span style={{ fontWeight: 400 }}>— sıra, kısa başlık, genişlik (px, boş = kendiliğinden). Rapor kaydedilince bunlar da saklanır.</span>
           </div>
@@ -662,7 +662,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
         </div>
 
             {/* KAYDET */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid #E4D8C0", paddingTop: 10 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid var(--erp-line-soft)", paddingTop: 10 }}>
               <input value={tanim.ad} placeholder="Rapor adı" data-rapor-ad="1" style={{ ...kutu, width: 220 }} onChange={(e) => degistir({ ad: e.target.value })} />
               <select value={tanim.kapsam} style={kutu} onChange={(e) => degistir({ kapsam: e.target.value })}>
                 <option value="ortak">Ortak — herkes görür</option>
@@ -677,14 +677,14 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
         )}
       </div>
 
-      <div id={yazdirId} style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10, overflowX: "auto" }}>
+      <div id={yazdirId} style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, overflowX: "auto" }}>
         <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{tanim.ad || baslik} <span className="mono" style={{ fontWeight: 400, color: "var(--erp-text-3)", fontSize: 11 }}>{bugunYerel()}</span></div>
         {sonuc.sutunlar.length === 0 && !sonuc.matris ? (
           <EmptyState text="Hiç sütun seçili değil — yukarıdan en az bir sütun seçin." />
         ) : sonuc.matris ? (() => {
           const m = sonuc.matris;
           const degerAlan = alanIndex[m.degerAnahtar];
-          const th = (metin, sag, ek, k) => <th title={metin} style={{ fontSize: 11, padding: "4px 8px", color: "var(--erp-text-2)", textAlign: sag ? "right" : "left", borderBottom: "2px solid #4A3B28", whiteSpace: "nowrap", ...(k ? sutunStil(k) : {}), ...(ek || {}) }}>{k ? sutunAdi(k, metin) : metin}</th>;
+          const th = (metin, sag, ek, k) => <th title={metin} style={{ fontSize: 11, padding: "4px 8px", color: "var(--erp-text-2)", textAlign: sag ? "right" : "left", borderBottom: "2px solid var(--erp-text)", whiteSpace: "nowrap", ...(k ? sutunStil(k) : {}), ...(ek || {}) }}>{k ? sutunAdi(k, metin) : metin}</th>;
           return (
             <table data-rapor-tablo="1" data-rapor-matris="1" style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -692,7 +692,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
                   {m.resimSutunlari.map((k) => <React.Fragment key={k}>{th(alanIndex[k].ad, false, null, k)}</React.Fragment>)}
                   {m.anahtarlar.map((k) => <React.Fragment key={k}>{th(alanIndex[k].ad, false, null, k)}</React.Fragment>)}
                   {m.bedenler.map((b) => <React.Fragment key={`b-${b}`}>{th(b || "—", true, { textAlign: "center" })}</React.Fragment>)}
-                  {th(`Toplam ${degerAlan.ad}`, true, { borderLeft: "1px dashed #C9B99A" }, "_toplam")}
+                  {th(`Toplam ${degerAlan.ad}`, true, { borderLeft: "1px dashed var(--erp-line)" }, "_toplam")}
                   {m.digerSutunlar.map((k) => <React.Fragment key={k}>{th(alanIndex[k].ad, rSayiMi(alanIndex[k].tip), null, k)}</React.Fragment>)}
                 </tr>
                 <tr data-rapor-kolon-arama="1" className="no-print">
@@ -711,7 +711,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
               </thead>
               <tbody>
                 {sonuc.satirlar.map((r, i) => (
-                  <tr key={i} style={{ borderTop: "1px solid #E4D8C0" }}>
+                  <tr key={i} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                     {m.resimSutunlari.map((k) => <td key={k} style={{ padding: "2px 6px", ...sutunStil(k) }}><RaporResim src={r[k]} /></td>)}
                     {m.anahtarlar.map((k) => (
                       <td key={k} title={raporDegerYaz(alanIndex[k], r[k])} style={{ fontSize: 12, padding: "4px 8px", whiteSpace: "nowrap", ...sutunStil(k) }}>
@@ -743,7 +743,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
                             </div>
                           ))}
                           {Array.isArray(v) && v.length > 0 && (
-                            <div style={{ marginTop: ozet ? 3 : 0, paddingTop: ozet ? 3 : 0, borderTop: ozet ? "1px dotted #E4D8C0" : "none" }}>
+                            <div style={{ marginTop: ozet ? 3 : 0, paddingTop: ozet ? 3 : 0, borderTop: ozet ? "1px dotted var(--erp-line-soft)" : "none" }}>
                               {v.map((x) => (
                                 <div key={x.etiket} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                   <span style={{ color: "var(--erp-brown)", display: "inline-flex" }}><AsamaIkonu asama={x.etiket} proses={x.proses} tanimlarProsesler={tanimlarProsesler} /></span>
@@ -759,7 +759,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
                         </td>
                       );
                     })}
-                    <td className="mono" style={{ fontSize: 12, padding: "4px 8px", textAlign: "right", fontWeight: 700, borderLeft: "1px dashed #C9B99A" }}>{raporDegerYaz(degerAlan, r[m.degerAnahtar])}</td>
+                    <td className="mono" style={{ fontSize: 12, padding: "4px 8px", textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>{raporDegerYaz(degerAlan, r[m.degerAnahtar])}</td>
                     {m.digerSutunlar.map((k) => (
                       <td key={k} className={rSayiMi(alanIndex[k].tip) ? "mono" : undefined} style={{ fontSize: 12, padding: "4px 8px", textAlign: rSayiMi(alanIndex[k].tip) ? "right" : "left", whiteSpace: "nowrap" }}>{raporDegerYaz(alanIndex[k], r[k])}</td>
                     ))}
@@ -767,11 +767,11 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
                 ))}
               </tbody>
               <tfoot>
-                <tr data-rapor-toplam="1" style={{ borderTop: "2px solid #4A3B28", fontWeight: 700 }}>
+                <tr data-rapor-toplam="1" style={{ borderTop: "2px solid var(--erp-text)", fontWeight: 700 }}>
                   {m.resimSutunlari.map((k) => <td key={k} />)}
                   {m.anahtarlar.map((k, i) => <td key={k} style={{ fontSize: 12, padding: "5px 8px" }}>{i === 0 ? "Toplam" : ""}</td>)}
                   {m.bedenler.map((b) => <td key={`b-${b}`} className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "center" }}>{m.bedenToplam[b] ? raporDegerYaz(degerAlan, m.bedenToplam[b]) : ""}</td>)}
-                  <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", borderLeft: "1px dashed #C9B99A" }}>{raporDegerYaz(degerAlan, sonuc.toplam[m.degerAnahtar])}</td>
+                  <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", borderLeft: "1px dashed var(--erp-line)" }}>{raporDegerYaz(degerAlan, sonuc.toplam[m.degerAnahtar])}</td>
                   {m.digerSutunlar.map((k) => <td key={k} className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: rSayiMi(alanIndex[k].tip) ? "right" : "left" }}>{k in sonuc.toplam ? raporDegerYaz(alanIndex[k], sonuc.toplam[k]) : ""}</td>)}
                 </tr>
               </tfoot>
@@ -782,9 +782,9 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
             <thead>
               <tr>
                 {sonuc.sutunlar.map((k) => (
-                  <th key={k} title={alanIndex[k].ad} style={{ fontSize: 11, padding: "4px 8px", color: "var(--erp-text-2)", textAlign: rSayiMi(alanIndex[k].tip) ? "right" : "left", borderBottom: "2px solid #4A3B28", whiteSpace: "nowrap", ...sutunStil(k) }}>{sutunAdi(k)}</th>
+                  <th key={k} title={alanIndex[k].ad} style={{ fontSize: 11, padding: "4px 8px", color: "var(--erp-text-2)", textAlign: rSayiMi(alanIndex[k].tip) ? "right" : "left", borderBottom: "2px solid var(--erp-text)", whiteSpace: "nowrap", ...sutunStil(k) }}>{sutunAdi(k)}</th>
                 ))}
-                {(tanim.gruplar || []).length > 0 && <th style={{ fontSize: 11, padding: "4px 8px", color: "var(--erp-text-2)", textAlign: "right", borderBottom: "2px solid #4A3B28" }}>Satır</th>}
+                {(tanim.gruplar || []).length > 0 && <th style={{ fontSize: 11, padding: "4px 8px", color: "var(--erp-text-2)", textAlign: "right", borderBottom: "2px solid var(--erp-text)" }}>Satır</th>}
               </tr>
               {/* SÜTUN ARAMALARI: her sütunun altında kutu; hepsi birden. Sayıda ">5", "5-10" gibi.
                   Gruplanmış rapor da satırlara (gruplama öncesi) uygulanıyor — sayı sütununda arama
@@ -829,7 +829,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
             </thead>
             <tbody>
               {sonuc.satirlar.map((r, i) => (
-                <tr key={i} style={{ borderTop: "1px solid #E4D8C0" }}>
+                <tr key={i} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                   {sonuc.sutunlar.map((k) => (
                     <td key={k} className={rSayiMi(alanIndex[k].tip) ? "mono" : undefined} title={alanIndex[k].tip === "resim" ? undefined : raporDegerYaz(alanIndex[k], r[k])}
                       style={{ fontSize: 12, padding: alanIndex[k].tip === "resim" ? "2px 6px" : "4px 8px", textAlign: rSayiMi(alanIndex[k].tip) ? "right" : "left", whiteSpace: "nowrap", ...sutunStil(k) }}>
@@ -847,7 +847,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
             </tbody>
             {Object.keys(sonuc.toplam).length > 0 && (
               <tfoot>
-                <tr data-rapor-toplam="1" style={{ borderTop: "2px solid #4A3B28", fontWeight: 700 }}>
+                <tr data-rapor-toplam="1" style={{ borderTop: "2px solid var(--erp-text)", fontWeight: 700 }}>
                   {sonuc.sutunlar.map((k, i) => (
                     <td key={k} className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: rSayiMi(alanIndex[k].tip) ? "right" : "left" }}>
                       {i === 0 && !(k in sonuc.toplam) ? "Toplam" : (k in sonuc.toplam ? raporDegerYaz(alanIndex[k], sonuc.toplam[k]) : "")}

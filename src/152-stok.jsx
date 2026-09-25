@@ -918,9 +918,9 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
           .sort((a, b) => String(a.beden).localeCompare(String(b.beden), "tr", { numeric: true }));
         const dolular = ozelKodCiftleri(p, ozelKodAlanlari);
         return (
-          <div style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-lg)", background: "#fff", padding: 16, marginBottom: 16 }}>
+          <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-lg)", background: "#fff", padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-              <h3 style={{ margin: 0, fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, color: "#3A291D" }}>{p.ad}</h3>
+              <h3 style={{ margin: 0, fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, color: "var(--erp-text)" }}>{p.ad}</h3>
               <KategoriIkonu kategori={p.kategori} size={16} />
               <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{p.kategori}{p.mamulTipi ? ` · ${p.mamulTipi}` : ""}{p.sezon ? ` · ${p.sezon}` : ""}</span>
               <button className="btn-ghost" style={{ marginLeft: "auto", padding: "4px 12px", fontSize: 12 }} onClick={() => setKatalogUrunId(null)}>
@@ -933,7 +933,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
               <div style={{ display: "grid", gap: 8, flex: "0 0 auto" }}>
                 <div style={{
                   width: 280, height: 280, borderRadius: "var(--erp-r-lg)", overflow: "hidden",
-                  border: "1px solid #E4D8C0", background: "var(--erp-panel)",
+                  border: "1px solid var(--erp-line-soft)", background: "var(--erp-panel)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                 }}>
                   {/* RESME TIKLAYINCA TAM EKRAN (kullanıcı, 10 Eylül). 280 pikselik kutuda
@@ -1000,7 +1000,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                         className="mono"
                         style={{
                           fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: "var(--erp-r-pill)",
-                          border: "1px solid #E4D8C0",
+                          border: "1px solid var(--erp-line-soft)",
                           background: (v.miktar || 0) > 0 ? "#EEF4F8" : "var(--erp-panel)",
                           color: (v.miktar || 0) > 0 ? "var(--erp-info)" : "var(--erp-text-3)",
                         }}
@@ -1146,7 +1146,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
           {bagliOlmayanGoster && (
             <div style={{ display: "grid", gap: 6, marginTop: 10 }}>
               {bagliOlmayanHareketler.map((h) => (
-                <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "6px 10px", fontSize: 12 }}>
+                <div key={h.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "6px 10px", fontSize: 12 }}>
                   <span className="mono" style={{ color: "var(--erp-text-3)" }}>{h.tarih ? tarihYaz(h.tarih) : "—"}</span>
                   <span style={{ fontWeight: 700 }}>{h.urunAd}</span>
                   {/* matris-muaf: bu bir denetim listesi, miktar dökümü değil. Her satır tek bir
@@ -1168,7 +1168,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
           düğmeler kısa; telefonda iki satıra sarılsa da liste bir ekran yukarı geldi. */}
       <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: "1 1 200px" }}>
-          <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "#A6957A" }} />
+          <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -1178,7 +1178,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
               width: "100%",
               padding: "6px 8px 6px 28px",
               borderRadius: "var(--erp-r-md)",
-              border: "1px solid #C9B99A",
+              border: "1px solid var(--erp-line)",
               background: "var(--erp-panel)",
               fontSize: 13,
             }}
@@ -1250,7 +1250,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
         />
       )}
 
-      <div style={{ display: "flex", gap: 2, marginBottom: 8, borderBottom: "1px solid #E4D8C0", flexWrap: "wrap", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 2, marginBottom: 8, borderBottom: "1px solid var(--erp-line-soft)", flexWrap: "wrap", alignItems: "center" }}>
         {/* PASİF SEKMESİ — pasife alınan kartlar buradan görülür ve geri alınabilir.
             Sayı sıfırsa sekme hiç gösterilmez: hiç pasif kaydı olmayan bir kullanıcıya boş bir
             sekme sunmak, arayüzü sebepsiz kalabalıklaştırırdı. */}
@@ -1359,7 +1359,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
 
 
       {showForm && (
-        <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
+        <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 }}>
             <div>
               <div style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 4 }}>Kapak Resmi</div>
@@ -1382,7 +1382,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
               <div
                 className="mono"
                 style={{
-                  padding: "8px 10px", borderRadius: "var(--erp-r-md)", border: "1px solid #E4D8C0", background: "var(--erp-panel-2)",
+                  padding: "8px 10px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line-soft)", background: "var(--erp-panel-2)",
                   fontSize: 14, fontWeight: 700, color: CAT_COLORS[form.kategori] || "var(--erp-text)",
                 }}
                 title="Kategori, hangi sekmede olduğunuza göre otomatik belirlenir"
@@ -1882,7 +1882,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                       }))
                       .filter((k) => !selRenkler.includes(k.etiket));
                     return (
-                      <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 8 }}>
+                      <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 8 }}>
                         {!yeniModelRengiModuStok ? (
                           <div>
                             {uygunKombinasyonlarStok.length > 0 ? (
@@ -2063,7 +2063,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                   type="button"
                   onClick={() => setYeniRenkGiris(true)}
                   style={{
-                    padding: "6px 12px", borderRadius: "var(--erp-r-pill)", border: "1.5px dashed #C9B99A",
+                    padding: "6px 12px", borderRadius: "var(--erp-r-pill)", border: "1.5px dashed var(--erp-line)",
                     background: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "var(--erp-purple)",
                     display: "flex", alignItems: "center", gap: 4,
                   }}
@@ -2379,7 +2379,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                       : <KategoriIkonu kategori={p.kategori} size={28} />}
                   </div>
                   <div style={{ padding: "0 10px 10px", display: "grid", gap: 3 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#3A291D", lineHeight: 1.25 }}>{p.ad}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 }}>{p.ad}</span>
                     <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-info)" }}>
                       {fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "—"}
                     </span>

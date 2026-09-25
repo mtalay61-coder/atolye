@@ -13,7 +13,7 @@ function Field({ label, children, genislik }) {
 const inputStyle = {
   padding: "8px 10px",
   borderRadius: "var(--erp-r-md)",
-  border: "1px solid #C9B99A",
+  border: "1px solid var(--erp-line)",
   background: "#fff",
   fontSize: 14,
   width: "100%",
@@ -25,7 +25,7 @@ function EmptyState({ text, mesaj }) {
   text = text || mesaj;
   return (
     <div style={{
-      textAlign: "center", padding: "48px 20px", color: "var(--erp-text-3)", border: "1px dashed #C9B99A",
+      textAlign: "center", padding: "48px 20px", color: "var(--erp-text-3)", border: "1px dashed var(--erp-line)",
       borderRadius: "var(--erp-r-md)", fontSize: 14,
     }}>
       {text}

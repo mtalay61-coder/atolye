@@ -57,7 +57,7 @@ function kaynakRenkStili(kaynak) {
   return {
     background: alfaEkle(kod, "14"),           // ~%8 opaklık: yazı okunaklı kalsın
     borderLeft: `4px solid ${kod}`,   // sol kenar kalın — dikey tararken göze çarpan yer
-    border: `1px solid ${kod}55`,
+    border: `1px solid ${alfaEkle(kod, "55")}`,
   };
 }
 

@@ -700,7 +700,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                             barkodun kendisi yalnızca kodu taşır, geri kalanı gözle okunur. */}
                         {a.barkod && (
                           <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                            <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-brown)", background: "#F5EDE3", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" }}>
+                            <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-hover)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" }}>
                               {a.barkod}
                             </span>
                             <button
@@ -831,7 +831,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                   [p.proses]: { ...secim, bedenMiktarlar: { ...bedenGirisleri, [bd.beden]: e.target.value } },
                                 })}
                                 className="mono"
-                                style={{ width: 52, padding: "4px 5px", fontSize: 11, textAlign: "center", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                style={{ width: 52, padding: "4px 5px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                               />
                               <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>kalan {bd.kalan}</span>
                             </label>
@@ -842,7 +842,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                             Üstte, küçük bir açılır liste olarak durduğunda gözden kaçıyordu ve iş
                             yanlışlıkla personelsiz veriliyordu. Sıra da mantıksızdı: önce "kaç tane",
                             sonra "kime" — kullanıcı zaten miktarları girdikten sonra karar veriyor. */}
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4, paddingTop: 10, borderTop: "1px solid #E4D8C0" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--erp-line-soft)" }}>
                           {personelListesi.length > 0 ? (
                             <>
                               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Kime:</span>
@@ -868,7 +868,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                               Aynı hammaddeler, aynı düzen: kullanıcı verirken ne verdiğini yazıyor,
                               teslim alırken fark kendiliğinden geliyor. */}
                           {verilecekHammaddeler.length > 0 && (
-                            <div style={{ flexBasis: "100%", background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
+                            <div style={{ flexBasis: "100%", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6, flexWrap: "wrap" }}>
                                 <Layers size={13} color="var(--erp-brown)" />
                                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-brown)" }}>Verilen hammadde</span>
@@ -891,7 +891,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                           placeholder={String(h2.beklenen)}
                                           title={`Reçeteye göre ${h2.beklenen} ${h2.birim} gerekiyor`}
                                           className="mono"
-                                          style={{ width: 84, padding: "4px 6px", fontSize: 12, fontWeight: 700, textAlign: "right", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                          style={{ width: 84, padding: "4px 6px", fontSize: 12, fontWeight: 700, textAlign: "right", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                         />
                                         <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>/{h2.beklenen} {h2.birim}</span>
                                       </span>
@@ -948,7 +948,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                         Bu karşılaştırma olmadan eksik tüketim (reçete kapsamı eksikse ya da bir
                         atama henüz teslim alınmadıysa) hiçbir yerde görünmüyordu. */}
                     {beklenenler.length > 0 && (
-                      <div style={{ marginBottom: 10, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 8 }}>
+                      <div style={{ marginBottom: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
                         <span style={{ color: "var(--erp-text-2)", fontWeight: 600, fontSize: 11 }}>
                           Reçeteye göre beklenen (tüm sipariş için):
                         </span>
@@ -995,7 +995,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                           const renkler = Array.from(new Set(g.hareketler.map((h) => h.renk)));
                           const bedenler = Array.from(new Set(g.hareketler.map((h) => h.beden)));
                           return (
-                            <div key={g.urunId} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 8 }}>
+                            <div key={g.urunId} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
                               <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>{g.urunAd}</div>
                               <div style={{ overflowX: "auto" }}>
                                 <table style={{ width: "auto", minWidth: "100%" }}>
@@ -1211,7 +1211,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                     </thead>
                     <tbody>
                       {satirlar.map((x, xi) => (
-                        <tr key={xi} style={{ borderTop: "1px solid #E4D8C0" }}>
+                        <tr key={xi} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                           <td style={{ padding: "6px 8px" }}>
                             <span className="mono" style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: x.tur === "Hurda" ? "#B85C2E22" : "#B8860B22", color: x.tur === "Hurda" ? "var(--erp-warn)" : "#B8860B" }}>
                               {x.tur}

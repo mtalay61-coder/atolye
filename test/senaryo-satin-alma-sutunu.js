@@ -6,7 +6,7 @@
 //
 // Sebep: sütun yalnızca REZERVESİZ yoldaki miktarı sayıyordu. Alış siparişi bir satış siparişine
 // rezerveli açıldıysa sütun boş kalıyor, bilgi yalnızca detayda duruyordu.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -32,7 +32,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

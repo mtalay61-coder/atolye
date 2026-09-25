@@ -155,7 +155,7 @@ function FisToplamCeviriPaneli({ pbToplamlari, kurlar, deger, onDegistir }) {
         <span style={{ fontSize: 10, color: "var(--erp-purple)", fontWeight: 700, whiteSpace: "nowrap" }} title="Ürün satırları değişmez; bu seçim siparişte kalıcı olarak saklanır">
           Fiş P.Birimi:
         </span>
-        <select value={hedefPB} onChange={(e) => hedefPBDegistir(e.target.value)} style={{ padding: "3px 5px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}>
+        <select value={hedefPB} onChange={(e) => hedefPBDegistir(e.target.value)} style={{ padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}>
           {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
         </select>
         {digerPbler.map((pb) => {
@@ -169,7 +169,7 @@ function FisToplamCeviriPaneli({ pbToplamlari, kurlar, deger, onDegistir }) {
                 onChange={(e) => kurDegistir(yabanci, e.target.value)}
                 placeholder={onerilenKurBul(pb) == null ? "kur?" : ""}
                 title="Muhasebe'deki güncel kurdan otomatik öneriliyor — isterseniz değiştirebilirsiniz"
-                style={{ width: 60, padding: "3px 5px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}
+                style={{ width: 60, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}
               />
               TRY
             </label>
@@ -280,10 +280,10 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAc(); } }}
       style={{
         width: "100%", display: "flex", alignItems: "center", gap: 10, padding: 14,
-        background: bagliSatisNo ? "#FBF3EA" : "var(--erp-panel)",
+        background: bagliSatisNo ? "var(--erp-hover)" : "var(--erp-panel)",
         // Kenarlık ve köşe yuvarlaması DIŞ çerçeveye ait; burada yalnızca açıkken alt ayraç çizilir.
         border: "none",
-        borderBottom: acikMi ? "1px solid #D9C9AC" : "none",
+        borderBottom: acikMi ? "1px solid var(--erp-line-soft)" : "none",
         borderLeft: bagliSatisNo ? "3px solid #C97B3D" : "3px solid transparent",
         cursor: "pointer", textAlign: "left", flexWrap: "wrap",
       }}

@@ -213,7 +213,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   }
 
   return (
-    <div style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <div
         role={baslangicAcik ? undefined : "button"}
         tabIndex={baslangicAcik ? undefined : 0}
@@ -536,7 +536,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   //
                   // Şimdi resim ve ad, başlık satırı + renk satırları boyunca uzanan TEK hücrede.
                   // Hem yer kazanılıyor hem aidiyet bir bakışta belli oluyor.
-                  <div key={ug.urunId} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+                  <div key={ug.urunId} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                     <div style={{ overflowX: "auto" }}>
                       {/* TABLO GÖRÜNÜMÜ (kullanıcı, 15 Eylül: "listeyi tablo şeklinde yapalım, daha
                           renkli ve tabloyu andıran"). Matris çizgisizdi: hücreler yalnız boşlukla
@@ -562,13 +562,13 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                   ikinci kez gösteriyordu — birim fiyat ve tutar zaten satırlarda var,
                                   adet de beden hücrelerinin toplamı. */}
                               <ColorSwatch src={urun ? urun.kapakResmi : null} editable={false} size={92} />
-                              <div style={{ fontSize: 14, fontWeight: 700, color: "#221B14", marginTop: 6, lineHeight: 1.3 }}>
+                              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginTop: 6, lineHeight: 1.3 }}>
                                 {ug.urunAd}
                               </div>
                             </td>
                             <th style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" }}>Renk</th>
                             {tumBedenler.map((b) => (
-                              <th key={b} className="mono" style={{ fontSize: 14, fontWeight: 700, color: "#221B14", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" }}>{b}</th>
+                              <th key={b} className="mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" }}>{b}</th>
                             ))}
                             {/* ADET sütunu: bu rengin toplam miktarı. Beden hücrelerini toplamak
                                 zorunda kalmak, en sık bakılan sayıyı en zor ulaşılan yere koyuyordu. */}
@@ -603,12 +603,12 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               mevcut.parcalar.push(k);
                             });
                             return (
-                              <tr key={rg.renk} style={{ borderTop: "1px solid #E4D8C0" }}>
+                              <tr key={rg.renk} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                                 {/* KÜÇÜK RESİM KALDIRILDI: hemen solda ürünün 92 piksellik görseli
                                     duruyor. Aynı ürünün küçük bir kopyasını her renk satırında
                                     tekrarlamak yer kaplıyor ve renk adını sağa itiyordu.
                                     Renk adı artık ortalanmış ve tek başına. */}
-                                <td style={{ padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", textAlign: "center", color: "#221B14" }}>
+                                <td style={{ padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", textAlign: "center", color: "var(--erp-text)" }}>
                                   {rg.renk}
                                 </td>
                                 {tumBedenler.map((b) => {
@@ -627,7 +627,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                         <span
                                           className="mono"
                                           title={`${karsilanan}/${k.miktar} karşılandı · ` + (k.planlama ? "Planlanmış, düzenlenemez" : karsilanan > 0 ? "Kısmen işlenmiş, düzenlenemez" : "")}
-                                          style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", color: "#221B14" }}
+                                          style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", color: "var(--erp-text)" }}
                                         >
                                           {/* SADE HÜCRE (kullanıcı, 15 Eylül; ikinci kez: "hâlâ
                                               görünüyor"). Kesir YALNIZ KISMİ karşılamada anlamlı:
@@ -664,13 +664,13 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     </td>
                                   );
                                 })}
-                                <td className="mono" style={{ padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "#221B14" }}>
+                                <td className="mono" style={{ padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
                                   {rg.kalemler.reduce((t, k) => t + (k.miktar || 0), 0)} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>{ug.birim}</span>
                                 </td>
                                 {/* BİRİM FİYAT — bu rengin çift/adet başına fiyatı.
                                     Aynı renkte farklı bedenler farklı fiyatta olabiliyor; öyleyse
                                     aralık gösterilir, tek bir sayı uydurmak yanlış olurdu. */}
-                                <td className="mono" style={{ padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "#221B14" }}>
+                                <td className="mono" style={{ padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
                                   {(() => {
                                     const fiyatlar = Array.from(new Set(rg.kalemler.map((k) => k.birimFiyat || 0)));
                                     const sembol = PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi;
@@ -682,7 +682,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                 </td>
                                 {/* SATIR TUTARI — bu rengin toplam bedeli. Sipariş toplamının
                                     hangi renkten geldiğini görmek, fiyat tartışmasında gerekli. */}
-                                <td className="mono" style={{ padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "#221B14" }}>
+                                <td className="mono" style={{ padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
                                   {rg.kalemler
                                     .reduce((t, k) => t + (k.miktar || 0) * (k.birimFiyat || 0), 0)
                                     .toLocaleString("tr-TR", { maximumFractionDigits: 2 })}{" "}
@@ -765,18 +765,18 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               bedeli. Resmin altında dururken resmi küçültüyordu; tablonun sonu
                               hem doğru yeri hem de renk satırlarıyla aynı hizada. */}
                           {renkGruplari.length > 1 && (
-                            <tr style={{ borderTop: "2px solid #C9B99A", background: "var(--erp-panel)" }}>
+                            <tr style={{ borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" }}>
                               <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>Toplam</td>
                               {tumBedenler.map((b) => (
                                 <td key={b} className="mono" style={{ padding: "6px 6px", textAlign: "center", fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>
                                   {ug.kalemler.filter((k) => k.beden === b).reduce((t, k) => t + (k.miktar || 0), 0) || ""}
                                 </td>
                               ))}
-                              <td className="mono" style={{ padding: "6px 10px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "#221B14" }}>
+                              <td className="mono" style={{ padding: "6px 10px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
                                 {toplamAdet} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>{ug.birim}</span>
                               </td>
                               <td></td>
-                              <td className="mono" style={{ padding: "6px 10px", textAlign: "right", fontSize: 14, fontWeight: 700, color: "#221B14" }}>
+                              <td className="mono" style={{ padding: "6px 10px", textAlign: "right", fontSize: 14, fontWeight: 700, color: "var(--erp-text)" }}>
                                 {toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}{" "}
                                 {PARA_SEMBOLU[ug.kalemler[0].paraBirimi || "TRY"] || ug.kalemler[0].paraBirimi}
                               </td>
@@ -887,7 +887,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             const aktifKey = sekmeler.some((x) => x.key === kartSekme) ? kartSekme : sekmeler[0].key;
 
             return (
-              <div style={{ marginTop: 14, borderTop: "1px solid #E4D8C0", paddingTop: 12 }}>
+              <div style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12 }}>
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
                   {sekmeler.map((x) => {
                     const aktif = aktifKey === x.key;
@@ -994,7 +994,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                   }
                                   style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.25, cursor: "help" }}
                                 >
-                                  <span style={{ color: x.eksik > 0 ? "var(--erp-warn)" : "#221B14", fontWeight: 700 }}>{deger}</span>
+                                  <span style={{ color: x.eksik > 0 ? "var(--erp-warn)" : "var(--erp-text)", fontWeight: 700 }}>{deger}</span>
                                   {x.eksik > 0 && (
                                     <span style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)" }}>−{x.eksik}</span>
                                   )}
@@ -1007,7 +1007,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                           />
                           {/* Özet şerit: tabloda satır satır aranmasın diye toplam eksik ve
                               parasal karşılığı tek yerde. */}
-                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "7px 10px", background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "7px 10px", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
                             <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>
                               {ihtiyac.kalemler.length} hammadde kalemi
                             </span>
@@ -1055,7 +1055,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 };
                 return (
                   mobilBolumGizliMi(mobilBolumAyari, "tedarikGirisleri") ? null : (
-                  <div data-tedarik-girisleri={girisler.length} style={{ marginTop: 14, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+                  <div data-tedarik-girisleri={girisler.length} style={{ marginTop: 14, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                     <div onClick={() => setAcik(!acik)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", background: "var(--erp-panel-2)", cursor: "pointer" }}>
                       <PackageCheck size={13} color="var(--erp-primary)" />
                       <b className="mono" style={{ fontSize: 12 }}>Tedarik Girişleri</b>
@@ -1077,7 +1077,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         gr.toplam += g.miktar;
                       });
                       const bedenler = bedenSirala([...new Set(girisler.map((g) => g.beden))]);
-                      const th = (metin, ek) => <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "3px 8px", textAlign: "left", borderBottom: "1px solid #E4D8C0", whiteSpace: "nowrap", ...(ek || {}) }}>{metin}</th>;
+                      const th = (metin, ek) => <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "3px 8px", textAlign: "left", borderBottom: "1px solid var(--erp-line-soft)", whiteSpace: "nowrap", ...(ek || {}) }}>{metin}</th>;
                       return (
                         <div style={{ overflowX: "auto" }}>
                           <table data-tedarik-matris="1" style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse", background: "#fff" }}>
@@ -1085,8 +1085,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               <tr>
                                 {th("Tarih")}{th("Kaynak")}{th("Fiş / Üretim")}{th("Ürün")}{th("Renk")}
                                 {bedenler.map((b) => <React.Fragment key={b}>{th(b || "—", { textAlign: "center" })}</React.Fragment>)}
-                                {th("Toplam", { textAlign: "right", borderLeft: "1px dashed #C9B99A" })}
-                                <th style={{ borderBottom: "1px solid #E4D8C0" }} />
+                                {th("Toplam", { textAlign: "right", borderLeft: "1px dashed var(--erp-line)" })}
+                                <th style={{ borderBottom: "1px solid var(--erp-line-soft)" }} />
                               </tr>
                             </thead>
                             <tbody>
@@ -1094,7 +1094,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                 const g = gr.ornek;
                                 return (
                                   <tr key={gr.anahtar} data-tedarik-giris={g.fisNo || g.siparisNo} onClick={() => git(g)} title={g.kaynak === "Üretim" ? "Üretim kartına git" : "Alış fişine git"}
-                                    style={{ borderTop: "1px solid #F2E8D8", cursor: "pointer" }}>
+                                    style={{ borderTop: "1px solid var(--erp-head)", cursor: "pointer" }}>
                                     <td className="mono" style={{ fontSize: 11, padding: "4px 8px", whiteSpace: "nowrap" }}>{tarihYaz(g.tarih)}</td>
                                     <td style={{ fontSize: 11, padding: "4px 8px", fontWeight: 700, whiteSpace: "nowrap", color: g.kaynak === "Üretim" ? "var(--erp-primary)" : "var(--erp-brown)" }}>{g.kaynak === "Üretim" ? "Üretim" : "Alış Fişi"}</td>
                                     <td className="mono" style={{ fontSize: 11, padding: "4px 8px", whiteSpace: "nowrap" }}>{g.fisNo || "—"}{g.siparisNo && g.siparisNo !== g.fisNo ? ` · ${g.siparisNo}` : ""}</td>
@@ -1105,7 +1105,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                         {gr.hucreler[b] || "—"}
                                       </td>
                                     ))}
-                                    <td className="mono" style={{ fontSize: 12, padding: "4px 8px", textAlign: "right", fontWeight: 700, borderLeft: "1px dashed #C9B99A", whiteSpace: "nowrap" }}>{gr.toplam} {g.birim}</td>
+                                    <td className="mono" style={{ fontSize: 12, padding: "4px 8px", textAlign: "right", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>{gr.toplam} {g.birim}</td>
                                     <td style={{ padding: "4px 8px", color: "var(--erp-text-2)" }}><ArrowRight size={11} /></td>
                                   </tr>
                                 );
@@ -1269,7 +1269,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             key={g.key}
                             style={{
                               padding: "9px 12px",
-                              borderBottom: i === gruplar.length - 1 ? "none" : "1px solid #E4D8C0",
+                              borderBottom: i === gruplar.length - 1 ? "none" : "1px solid var(--erp-line-soft)",
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
@@ -1316,7 +1316,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                 const urun = (stok || []).find((p) => p.ad === ug.urunAd);
                                 const resim = urun ? ((urun.renkResimleri || {})[ug.renk] || urun.kapakResmi) : null;
                                 return (
-                                  <div key={ug.key} style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 8 }}>
+                                  <div key={ug.key} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" }}>
                                       <ColorSwatch src={resim} editable={false} size={24} />
                                       <span style={{ fontWeight: 700, fontSize: 12 }}>
@@ -1379,8 +1379,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                           <table data-sevk-matris={ug.key} style={{ borderCollapse: "collapse", minWidth: "100%" }}>
                                             <thead>
                                               <tr>
-                                                {bedenler.map((b) => <th key={b} className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 8px", textAlign: "center", borderBottom: "1px solid #E4D8C0" }}>{b || "—"}</th>)}
-                                                <th className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 8px", textAlign: "right", borderBottom: "1px solid #E4D8C0", borderLeft: "1px dashed #C9B99A" }}>Toplam</th>
+                                                {bedenler.map((b) => <th key={b} className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 8px", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>{b || "—"}</th>)}
+                                                <th className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 8px", textAlign: "right", borderBottom: "1px solid var(--erp-line-soft)", borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
                                               </tr>
                                             </thead>
                                             <tbody>
@@ -1398,7 +1398,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                     </td>
                                                   );
                                                 })}
-                                                <td className="mono" style={{ padding: "4px 8px", textAlign: "right", fontSize: 12, fontWeight: 700, borderLeft: "1px dashed #C9B99A", verticalAlign: "top" }}>{grupToplamAdet} {ug.birim}</td>
+                                                <td className="mono" style={{ padding: "4px 8px", textAlign: "right", fontSize: 12, fontWeight: 700, borderLeft: "1px dashed var(--erp-line)", verticalAlign: "top" }}>{grupToplamAdet} {ug.birim}</td>
                                               </tr>
                                             </tbody>
                                           </table>
@@ -1442,7 +1442,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             if (alisRez.length === 0 && hamAlislar.length === 0) return null;
 
             return (
-              <div style={{ marginBottom: 10, padding: 12, background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)" }}>
+              <div style={{ marginBottom: 10, padding: 12, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" }}>
                 {/* Başlık, sekme adında zaten var; burada yalnızca AÇIKLAMA satırı kalır — ne
                     anlama geldiğini ilk kez gören kullanıcı için. */}
                 <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8, lineHeight: 1.6 }}>
@@ -1548,7 +1548,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             const hazir = sk.filter((kl) => (kl.durum || "Hazır") === "Hazır");
             const sevk = sk.filter((kl) => kl.durum === "Sevk edildi");
             return (
-              <div data-siparis-kolileri={siparis.siparisNo} style={{ marginBottom: 10, fontSize: 12, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: "8px 10px" }}>
+              <div data-siparis-kolileri={siparis.siparisNo} style={{ marginBottom: 10, fontSize: 12, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: "8px 10px" }}>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
                   <b>Koliler</b>
                   <span className="mono">{sk.length} koli · {sk.reduce((t, kl) => t + cift(kl), 0)} çift</span>
@@ -1558,8 +1558,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
                   {sk.map((kl) => (
                     <span key={kl.id} data-siparis-koli={kl.kod} title={kl.elleKapatildi ? `Elle kapatıldı: ${kl.elleKapatildi.sebep}` : undefined}
-                      style={{ padding: "2px 6px", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)",
-                        background: kl.durum === "Sevk edildi" ? "#EEF3EA" : "#FBF3E4" }}>
+                      style={{ padding: "2px 6px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)",
+                        background: kl.durum === "Sevk edildi" ? "#EEF3EA" : "var(--erp-hover)" }}>
                       <b className="mono">{kl.kod}</b> · {cift(kl)} çift · {kl.durum === "Sevk edildi"
                         ? (kl.sevkFisNo ? `sevk ${kl.sevkFisNo}` : "elle kapatıldı")
                         : "hazır"}
@@ -1625,13 +1625,13 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                   <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Renk</th>
                                   <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Kaynak</th>
                                   {bedenler.map((b) => <th key={b} className="mono" style={{ ...hucreStil, fontSize: 10, color: "var(--erp-text-2)" }}>{b || "—"}</th>)}
-                                  <th style={{ ...hucreStil, fontSize: 10, color: "var(--erp-text-2)", borderLeft: "1px dashed #C9B99A" }}>Toplam</th>
+                                  <th style={{ ...hucreStil, fontSize: 10, color: "var(--erp-text-2)", borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
                                   <th />
                                 </tr>
                               </thead>
                               <tbody>
                                 {gruplar.map((g) => (
-                                  <tr key={g.anahtar} data-hazir-satir={g.anahtar} style={{ borderTop: "1px solid #E4D8C0" }}>
+                                  <tr key={g.anahtar} data-hazir-satir={g.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                                     <td style={{ fontSize: 12, padding: "3px 6px", fontWeight: 600 }}>{g.urunAd}</td>
                                     <td className="mono" style={{ fontSize: 11, padding: "3px 6px" }}>{g.renk}</td>
                                     <td style={{ fontSize: 11, padding: "3px 6px", color: "var(--erp-text-2)" }}>{g.kaynaklar.join(" / ")}</td>
@@ -1647,7 +1647,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                         </td>
                                       );
                                     })}
-                                    <td className="mono" style={{ ...hucreStil, fontWeight: 700, color: "var(--erp-info)", borderLeft: "1px dashed #C9B99A" }}>{g.toplam}</td>
+                                    <td className="mono" style={{ ...hucreStil, fontWeight: 700, color: "var(--erp-info)", borderLeft: "1px dashed var(--erp-line)" }}>{g.toplam}</td>
                                     <td style={{ padding: "3px 6px", textAlign: "right" }}>
                                       <button className="btn-ghost" style={{ padding: "2px 8px", fontSize: 11, whiteSpace: "nowrap" }} onClick={() => hazirlariDoldur(g.anahtar)}>
                                         <Plus size={10} /> Fişe koy
@@ -1698,7 +1698,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   <StitchDivider color={siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"} />
                   <div
                     style={{
-                      background: siparis.tip === "Alış" ? "#F5EDE3" : "#EAF0F4",
+                      background: siparis.tip === "Alış" ? "var(--erp-hover)" : "#EAF0F4",
                       border: `1.5px solid ${siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`,
                       borderRadius: "var(--erp-r-md)", padding: 12,
                     }}
@@ -1956,7 +1956,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             </div>
                           )}
 
-                          <div style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+                          <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
                             <label style={{ display: "grid", gap: 3 }}>
                               <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>Model</span>
                               <select
@@ -2014,7 +2014,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                       r.hucre[k.beden || ""] = (r.hucre[k.beden || ""] || 0) + (k.miktar - (k.karsilanan || 0));
                                     });
                                     return (
-                                      <div key={s.id} data-siparisten-sec-siparis={s.siparisNo} style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
+                                      <div key={s.id} data-siparisten-sec-siparis={s.siparisNo} style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                                           <b className="mono" style={{ fontSize: 12 }}>{s.siparisNo}</b>
                                           <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{tarihYaz(s.tarih)} · {s.durum} · kalan {bekleyen.reduce((t, k) => t + (k.miktar - (k.karsilanan || 0)), 0)}</span>
@@ -2061,7 +2061,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                 satırın içinde ayrı bir asorti kutusu vardı; tablo düzenine geçince
                                 satır başına kutu koymak tabloyu bozardı. Asorti burada seçilir ve
                                 SEÇİLİ model+renge uygulanır; satır ekli değilse aynı anda eklenir. */}
-                            <div style={{ flexBasis: "100%", borderTop: "1px dashed #C9B99A", paddingTop: 8, marginTop: 2 }}>
+                            <div style={{ flexBasis: "100%", borderTop: "1px dashed var(--erp-line)", paddingTop: 8, marginTop: 2 }}>
                               <div style={{ fontSize: 10, color: "var(--erp-text-2)", marginBottom: 4 }}>
                                 Asorti ile doldur — "{(urunler.find((u) => u.id === uId) || {}).ad} · {renk}"
                               </div>
@@ -2106,7 +2106,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             const hucreStil = { padding: "4px 6px", textAlign: "center" };
 
                             return (
-                              <div style={{ overflowX: "auto", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
+                              <div style={{ overflowX: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
                                 <table className="matris-tablo" style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
                                   <thead>
                                     <tr style={{ background: "var(--erp-panel)" }}>
@@ -2115,7 +2115,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                       {tumBedenler.map((b) => (
                                         <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "5px 8px", whiteSpace: "nowrap" }}>{b || "—"}</th>
                                       ))}
-                                      <th style={{ fontSize: 11, textAlign: "right", padding: "5px 8px", borderLeft: "1px dashed #C9B99A" }}>Toplam</th>
+                                      <th style={{ fontSize: 11, textAlign: "right", padding: "5px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
                                       {/* FİYAT + P.B. (kullanıcı, 14 Eylül): fişte gerçekleşen fiyat yazılabilsin. */}
                                       <th style={{ fontSize: 11, textAlign: "right", padding: "5px 8px" }}>Birim Fiyat</th>
                                       <th style={{ fontSize: 11, textAlign: "left", padding: "5px 8px" }}>P.B.</th>
@@ -2126,7 +2126,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     {satirlar.map((s) => {
                                       const toplam = s.kalemler.reduce((t, k) => t + (parseFloat(teslimMiktarlar[k.id]) || 0), 0);
                                       return (
-                                        <tr key={s.anahtar} style={{ borderTop: "1px solid #E4D8C0" }}>
+                                        <tr key={s.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                                           <td style={{ padding: "5px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{s.urunAd}</td>
                                           <td className="mono" style={{ padding: "5px 8px", fontSize: 12, whiteSpace: "nowrap" }}>{s.renk}</td>
                                           {tumBedenler.map((b) => {
@@ -2149,7 +2149,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                   style={{
                                                     ...inputStyle, width: 62, padding: "4px 5px", textAlign: "center",
                                                     borderColor: fazla || yetersiz ? "var(--erp-warn)" : "var(--erp-border)",
-                                                    color: fazla || yetersiz ? "var(--erp-warn)" : "#221B14",
+                                                    color: fazla || yetersiz ? "var(--erp-warn)" : "var(--erp-text)",
                                                     fontWeight: fazla || yetersiz ? 700 : 400,
                                                   }}
                                                 />
@@ -2160,7 +2160,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                               </td>
                                             );
                                           })}
-                                          <td className="mono" style={{ padding: "5px 8px", fontSize: 12, fontWeight: 700, textAlign: "right", borderLeft: "1px dashed #C9B99A" }}>
+                                          <td className="mono" style={{ padding: "5px 8px", fontSize: 12, fontWeight: 700, textAlign: "right", borderLeft: "1px dashed var(--erp-line)" }}>
                                             {toplam}
                                           </td>
                                           {(() => {
@@ -2180,7 +2180,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                     placeholder={String(siparisFiyat)}
                                                     title={`Boş bırakılırsa siparişteki fiyat kullanılır: ${siparisFiyat} ${siparisPB}`}
                                                     onChange={(e) => setTeslimFiyatlar({ ...teslimFiyatlar, [anahtar]: e.target.value })}
-                                                    style={{ width: 80, padding: "3px 5px", fontSize: 12, textAlign: "right", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                                    style={{ width: 80, padding: "3px 5px", fontSize: 12, textAlign: "right", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                                   />
                                                 </td>
                                                 <td style={{ padding: "2px 4px" }}>
@@ -2188,7 +2188,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                     data-teslim-pb={anahtar}
                                                     value={teslimPBler[anahtar] || siparisPB}
                                                     onChange={(e) => setTeslimPBler({ ...teslimPBler, [anahtar]: e.target.value })}
-                                                    style={{ width: 70, padding: "3px 5px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                                    style={{ width: 70, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                                   >
                                                     {["TRY", "USD", "EUR"].map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                                                   </select>
@@ -2293,7 +2293,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                             <span className="mono" style={{ fontSize: 11, fontWeight: 400, color: "#7A3B22" }}> · {r.renk}</span>
                                           </td>
                                           {bedenler.map((b) => (
-                                            <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "2px 7px", color: r.hucreler[b] ? "#221B14" : "var(--erp-border)", fontWeight: r.hucreler[b] ? 700 : 400 }}>
+                                            <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "2px 7px", color: r.hucreler[b] ? "var(--erp-text)" : "var(--erp-border)", fontWeight: r.hucreler[b] ? 700 : 400 }}>
                                               {r.hucreler[b] ? `${isaret}${r.hucreler[b].miktar}` : "–"}
                                             </td>
                                           ))}

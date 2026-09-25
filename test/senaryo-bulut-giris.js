@@ -9,7 +9,7 @@
 // v1.445.0: YEREL ŞİFRE YEDEĞİ KALDIRILDI. Bulut reddedince artık içeri GİRİLMİYOR (kayıtta düz
 // metin şifre olsa bile) — giriş ekranında kalınıyor, sebep kalıcı kutuda (`data-giris-hatasi`).
 // Eskiden bu senaryo "yerel şifreyle girildi" kartını ölçüyordu; o kart artık hiç açılmamalı.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -56,7 +56,7 @@ async function girisDene(authCevabi) {
     kapatinca = (await durum()).kart;
     // Rozet modül başlık şeridinde; Ana Sayfa'da o şerit yok. Kart bu yüzden girişte kendiliğinden
     // açılıyor — giriş Ana Sayfa'ya düşüyor ve rozet orada görünmüyor.
-    await sayfa.getByRole("button", { name: "Cari", exact: true }).first().click();
+    await modulAc(sayfa, "Cari");
     await sayfa.waitForTimeout(500);
     await sayfa.locator("[data-yerel-giris]").first().click();
     await sayfa.waitForTimeout(300);

@@ -4,7 +4,7 @@
 // Ölçülen: Raporlar sekmesi var; kurucuda gruplama seçilince tablo gruplu ve toplam satırı doğru;
 // rapor adıyla KAYDEDİLİYOR ve yenilemeden sonra kayıtlı rapor listede duruyor, açılınca aynı
 // tabloyu veriyor (tanım saklanıyor, veri değil).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -59,7 +59,7 @@ async function calistir() {
     };
   });
 
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).first().click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(700);
   const raporSekmesiVar = await tik('[data-ust-sekme="raporlar"]');
   await sayfa.waitForTimeout(600);
@@ -189,7 +189,7 @@ async function calistir() {
   const ikinci = await uygulamaAc(depo, { hataYaz: false });
   const sayfa2 = ikinci.sayfa;
   await sayfa2.waitForTimeout(2200);
-  await sayfa2.getByRole("button", { name: "Sipariş", exact: true }).first().click();
+  await modulAc(sayfa2, "Sipariş");
   await sayfa2.waitForTimeout(700);
   const tik2 = (sel) => sayfa2.evaluate((sel) => { const b = document.querySelector(sel); if (b) b.click(); return !!b; }, sel);
   await tik2('[data-ust-sekme="raporlar"]');

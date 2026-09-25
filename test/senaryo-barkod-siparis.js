@@ -10,7 +10,7 @@
 //
 // Dört seviyenin ikisi kalem üretiyor (asorti, tek çift), ikisi ÜRETMEMELİ (stok, renk) —
 // "hangi renk/hangi beden" belli değilken satır yazmak, karşılığı üretilemeyecek sipariş demek.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -44,7 +44,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2200);
 
   // ---- 1. KODLARI ATA (Paketleme ekranındaki toplu düğme) -------------------------------------
-  await sayfa.getByRole("button", { name: "Paketleme", exact: true }).click();
+  await modulAc(sayfa, "Paketleme");
   await sayfa.waitForTimeout(700);
   await sayfa.locator('button:has-text("Eksik kodları ata"):visible').click();
   await sayfa.waitForTimeout(1200);
@@ -70,7 +70,7 @@ async function calistir() {
   };
 
   // ---- 2. SİPARİŞ EKRANINDA OKUT --------------------------------------------------------------
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).first().click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(700);
   await sayfa.locator("[data-yeni-siparis]:visible").first().click();
   await sayfa.waitForTimeout(700);

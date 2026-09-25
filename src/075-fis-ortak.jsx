@@ -450,7 +450,7 @@ async function htmldenPdfBlob(govdeHTML) {
   if (!kut) return null;
   const kap = document.createElement("div");
   // A4 genişliği (96dpi ≈ 794px); ekran dışında ama çizilebilir (display:none çizilmez).
-  kap.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;padding:24px;background:#fff;color:#33281C;font-family:-apple-system,'Segoe UI',sans-serif;";
+  kap.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;padding:24px;background:#fff;color:var(--erp-text);font-family:-apple-system,'Segoe UI',sans-serif;";
   kap.innerHTML = `<style>table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px}.mono{font-family:'Courier New',monospace}img{max-width:100%}</style>${govdeHTML}`;
   document.body.appendChild(kap);
   try {

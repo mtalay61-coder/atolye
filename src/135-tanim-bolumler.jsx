@@ -7,7 +7,7 @@
 // Renk ve beden tanımlarının arasına koymak yanlıştı: bu bir VERİ ALTYAPISI ayarı, atölye tanımı değil.
 function SupabaseBolumu({ supabaseBagli, gocDurumu, onSupabaseyeGoc }) {
   return (
-    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #E4D8C0" }}>
+    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--erp-line-soft)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>Bulut Veritabanı</span>
         <span
@@ -31,7 +31,7 @@ function SupabaseBolumu({ supabaseBagli, gocDurumu, onSupabaseyeGoc }) {
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.7 }}>
           Bağlantı tanımlı değil. Uygulama tarayıcı deposuyla çalışıyor — veriler yalnızca bu
           bilgisayarda duruyor ve başka kullanıcılar göremiyor.
-          <div style={{ marginTop: 8, background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10 }}>
+          <div style={{ marginTop: 8, background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
             Bağlamak için kodun başındaki <b className="mono">SUPABASE_URL</b> ve{" "}
             <b className="mono">SUPABASE_ANAHTAR</b> alanlarını Supabase panelindeki{" "}
             <b>Settings → API Keys</b> değerleriyle doldurun.
@@ -45,7 +45,7 @@ function SupabaseBolumu({ supabaseBagli, gocDurumu, onSupabaseyeGoc }) {
           </p>
 
           {/* Göç TEK SEFERLİKTİR ama tekrarı zarar vermez: kayıtlar id üzerinden upsert edilir. */}
-          <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12 }}>
+          <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 6 }}>
               Mevcut veriyi buluta taşı
             </div>
@@ -102,7 +102,7 @@ function DefterOnarimBolumu({ stok, onOnar }) {
   if (bozuklar.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #E4D8C0" }}>
+    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--erp-line-soft)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
         <AlertTriangle size={14} color="var(--erp-warn)" />
         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>Defter Onarımı</span>
@@ -177,7 +177,7 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
 
 
   return (
-    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #E4D8C0" }}>
+    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--erp-line-soft)" }}>
       <button
         type="button"
         onClick={() => setAcik((v) => !v)}
@@ -207,14 +207,14 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
       )}
 
       {acik && kullanim && (
-        <div style={{ marginTop: 10, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+        <div style={{ marginTop: 10, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
           <div style={{ background: "var(--erp-panel)", padding: "6px 10px", fontSize: 11, fontWeight: 700, color: "var(--erp-text)" }}>
             Tarayıcı deposu — kayıt bazında ({boyutMetni(kullanim.toplam)})
           </div>
           {/* DOLULUK KARAKTER ÜZERİNDEN. `navigator.storage.estimate()` localStorage'ı KAPSAMIYOR —
               bildirilen olayda "0 B / 10240 MB" döndürdü, yani depo dolmuşken bomboş gösterdi.
               O yüzden buradaki ölçü tarayıcının rakamı değil, bizim saydığımız karakter. */}
-          <div style={{ padding: "8px 10px", fontSize: 11, color: "var(--erp-text)", borderTop: "1px solid #F0E7D5", lineHeight: 1.7 }}>
+          <div style={{ padding: "8px 10px", fontSize: 11, color: "var(--erp-text)", borderTop: "1px solid var(--erp-head)", lineHeight: 1.7 }}>
             {/* ASIL DEPO ARTIK INDEXEDDB. Kotası localStorage'ınkiyle kıyaslanamayacak kadar büyük
                 ve `estimate()` onu doğru ölçüyor. Aşağıdaki localStorage bölümü yalnızca ESKİ
                 kayıtlar ve başka uygulamalar için duruyor. */}
@@ -248,7 +248,7 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
             )}
           </div>
           {kullanim.kayitlar.slice(0, 8).map((k) => (
-            <div key={k.anahtar} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "4px 10px", fontSize: 11, borderTop: "1px solid #F0E7D5" }}>
+            <div key={k.anahtar} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "4px 10px", fontSize: 11, borderTop: "1px solid var(--erp-head)" }}>
               <span className="mono" style={{ color: k.bizeAitMi ? "var(--erp-text)" : "var(--erp-warn)" }}>
                 {k.anahtar}
                 {!k.bizeAitMi && <span style={{ fontSize: 9, marginLeft: 6, fontWeight: 700 }}>başka uygulama</span>}
@@ -256,7 +256,7 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
               <span className="mono" style={{ color: "var(--erp-text-2)", fontWeight: 600 }}>{boyutMetni(k.bayt)}</span>
             </div>
           ))}
-          <div style={{ padding: "6px 10px", fontSize: 10, color: "var(--erp-text-2)", borderTop: "1px solid #F0E7D5", lineHeight: 1.5 }}>
+          <div style={{ padding: "6px 10px", fontSize: 10, color: "var(--erp-text-2)", borderTop: "1px solid var(--erp-head)", lineHeight: 1.5 }}>
             <b>cop</b> çöp kutusudur — silinen kayıtların tam kopyasını tutar ve en hızlı yer açılan
             yerdir (Tanımlar &gt; Çöp Kutusu). <b>stok</b> içindeki yükün çoğu ürün görselleridir.
           </div>
@@ -296,7 +296,7 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
               </thead>
               <tbody>
                 {urunler.slice(0, 12).map((u, i) => (
-                  <tr key={i} style={{ borderTop: "1px solid #E4D8C0" }}>
+                  <tr key={i} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                     <td style={{ fontSize: 11, padding: "4px 8px", overflowWrap: "anywhere" }}>{u.ad}</td>
                     <td className="mono" style={{ fontSize: 11, padding: "4px 8px", textAlign: "right", color: u.gorselBayt > 200 * 1024 ? "var(--erp-warn)" : "var(--erp-text-2)" }}>
                       {u.gorselBayt > 0 ? boyutMetni(u.gorselBayt) : "—"}
@@ -347,7 +347,7 @@ function OtomatikYedekBolumu({ sonYedekTarihi, onSimdiYedekle, onGeriYukle }) {
   const bugunAlindiMi = sonYedekTarihi === bugun;
 
   return (
-    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid #E4D8C0" }}>
+    <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--erp-line-soft)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>Otomatik Yedek</span>
         <span
@@ -439,7 +439,7 @@ function VeritabaniSifirlaBolumu({ onVeritabaniSifirla, supabaseBagli }) {
         <div>
           {/* Ne silineceği AÇIKÇA yazılır. "Veritabanını sıfırla" ifadesi, tanımların da
               (renkler, bedenler, prosesler, firma bilgileri) gideceğini yeterince anlatmıyordu. */}
-          <div style={{ fontSize: 11, color: "#7A3B22", lineHeight: 1.7, marginBottom: 10, background: "#FBF0E2", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9 }}>
+          <div style={{ fontSize: 11, color: "#7A3B22", lineHeight: 1.7, marginBottom: 10, background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9 }}>
             Silinecekler: <b>ürünler ve stok hareketleri</b>, <b>cariler ve hareketleri</b>,{" "}
             <b>siparişler</b>, <b>üretim emirleri</b>, <b>rezervasyonlar</b>, <b>çöp kutusu</b> ve{" "}
             <b>tüm tanımlar</b> (renkler, bedenler, prosesler, birimler, fire sebepleri, firma
@@ -643,7 +643,7 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
                             {kullanimGetir && <KullanimGosterge urunler={kullanimGetir(k.id)} />}
                             <button
                               onClick={() => onSil(k.id)}
-                              style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex", padding: 4 }}
+                              style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4 }}
                             >
                               <X size={14} />
                             </button>

@@ -128,7 +128,7 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
   return (
     <div data-genel-gider="1" style={{ display: "grid", gap: 12 }}>
       {/* HEDEF: bölen burada. Hedefsiz çift başı maliyet hesaplanamaz. */}
-      <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: "10px 12px",
+      <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "10px 12px",
         display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <Field label="Aylık üretim hedefi (çift)" genislik={180}>
           <input type="number" min="0" step="1" data-uretim-hedefi="1"
@@ -141,7 +141,7 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
             yapacak"). Aşağıdaki kutuda da var ama karar burada veriliyor: hedefi yazarken
             geçen ayın gerçeğini görmek gerekiyor. */}
         <Field label="Bu ay gerçekleşen (çift)" genislik={170}>
-          <div className="mono" style={{ padding: "8px 10px", borderRadius: "var(--erp-r-md)", border: "1px solid #C9B99A",
+          <div className="mono" style={{ padding: "8px 10px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)",
             background: "#fff", fontSize: 14, fontWeight: 700,
             color: hedef > 0 && gerceklesen < hedef ? "var(--erp-warn)" : "var(--erp-primary-2)" }}>
             {gerceklesen}
@@ -183,7 +183,7 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
           gruplarından geliyor, ayrı bir liste tutulmuyor. Tek kaynak — "kesim işçilik gideri"
           kartı hangi gruptaysa, genel gider kalemi de orada. */}
       {/* KALEM EKLEME */}
-      <div style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12 }}>
+      <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 8 }}>Gider kalemi ekle</div>
         {/* KART SEÇEREK EKLEME (kullanıcı, 20 Eylül: "gider eklerken gider alt kalemleri
             listelensin, oradan seçip eklemek yeterli"). Kartı seçince ad, grup ve gerçekleşen
@@ -228,7 +228,7 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
       {kalemler.length === 0 ? (
         <EmptyState text="Henüz sabit gider kalemi yok. Kira, elektrik, maaşlı personel gibi aylık giderleri ekleyin." />
       ) : (
-        <div style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+        <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
           {/* ESKİ GRUPLU KALEMLER KAYBOLMASIN (20 Eylül): gruplar kart gruplarına çevrilince,
               eski "isletme/personel/resmi…" gruplu kalemler hiçbir başlığa girmiyor ve ekrandan
               SİLİNMİŞ gibi görünüyordu. Tanımlı gruba girmeyen her kalem "Gruplanmamış" başlığı
@@ -244,19 +244,19 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
             const grupToplam = grupKalemleri.reduce((t, k) => t + (parseFloat(k.aylikTutar) || 0), 0);
             return (
               <div key={g.key} data-gg-grup={g.key}>
-                <div style={{ padding: "6px 12px", background: "#F6EEDD", fontSize: 12, fontWeight: 700, color: "var(--erp-text)",
+                <div style={{ padding: "6px 12px", background: "var(--erp-hover)", fontSize: 12, fontWeight: 700, color: "var(--erp-text)",
                   display: "flex", justifyContent: "space-between" }}>
                   <span>{g.ad}</span>
                   <span className="mono">{para(grupToplam)}{hedef > 0 ? ` · çift başı ${para(grupToplam / hedef)}` : ""}</span>
                 </div>
                 {grupKalemleri.map((k) => (
                   <div key={k.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px",
-                    borderBottom: "1px solid #F2E8D8", flexWrap: "wrap" }}>
+                    borderBottom: "1px solid var(--erp-head)", flexWrap: "wrap" }}>
                     <input value={k.ad} onChange={(e) => kalemGuncelle(k.id, { ad: e.target.value })}
-                      style={{ flex: "1 1 160px", padding: "4px 8px", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", fontSize: 13 }} />
+                      style={{ flex: "1 1 160px", padding: "4px 8px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }} />
                     <input type="number" min="0" step="any" value={k.aylikTutar}
                       onChange={(e) => kalemGuncelle(k.id, { aylikTutar: e.target.value })}
-                      style={{ width: 110, padding: "4px 8px", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", fontSize: 13,
+                      style={{ width: 110, padding: "4px 8px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", fontSize: 13,
                         textAlign: "right", fontWeight: 700 }} />
                     <span className="mono" style={{ fontSize: 12, color: "var(--erp-info)", fontWeight: 700, minWidth: 92, textAlign: "right" }}>
                       {hedef > 0 ? `${para((parseFloat(k.aylikTutar) || 0) / hedef)}/çift` : "—"}
@@ -265,7 +265,7 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
                     <select value={k.giderKartId || ""} data-gg-kart={k.id}
                       onChange={(e) => kalemGuncelle(k.id, { giderKartId: e.target.value || null })}
                       title="Bu kalemin gerçekleşen ödemesi hangi gider kartından okunacak"
-                      style={{ width: 150, padding: "3px 6px", fontSize: 11, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)" }}>
+                      style={{ width: 150, padding: "3px 6px", fontSize: 11, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)" }}>
                       <option value="">— karta bağlı değil —</option>
                       {(tanimlar.giderKartlari || []).map((kk) => <option key={kk.id} value={kk.id}>{kk.ad}</option>)}
                     </select>

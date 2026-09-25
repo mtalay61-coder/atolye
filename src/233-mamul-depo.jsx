@@ -168,11 +168,11 @@ function MamulDeposu({ stok, siparisler, uretim, koliler, onGoToUrun }) {
             const bedenler = Object.keys(s.hucreler)
               .sort((a, b) => String(a).localeCompare(String(b), "tr", { numeric: true }));
             return (
-              <div key={s.anahtar} style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 10 }}>
+              <div key={s.anahtar} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                   {s.gorsel
-                    ? <img src={s.gorsel} alt="" style={{ width: 26, height: 26, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid #E4D8C0" }} />
-                    : <span style={{ width: 26, height: 26, borderRadius: "var(--erp-r-sm)", background: "#F0E7D5" }} />}
+                    ? <img src={s.gorsel} alt="" style={{ width: 26, height: 26, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)" }} />
+                    : <span style={{ width: 26, height: 26, borderRadius: "var(--erp-r-sm)", background: "var(--erp-head)" }} />}
                   <button
                     type="button"
                     onClick={() => onGoToUrun && onGoToUrun(s.urunId)}
@@ -197,19 +197,19 @@ function MamulDeposu({ stok, siparisler, uretim, koliler, onGoToUrun }) {
                         {bedenler.map((b) => (
                           <th key={b} className="mono" style={{ fontSize: 10, padding: "3px 8px" }}>{b || "—"}</th>
                         ))}
-                        <th className="mono" style={{ fontSize: 10, padding: "3px 8px", borderLeft: "1px dashed #C9B99A" }}>Top.</th>
+                        <th className="mono" style={{ fontSize: 10, padding: "3px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Top.</th>
                       </tr>
                     </thead>
                     <tbody>
                       {[
-                        { ad: "Stok", alan: "stok", renk: "#221B14" },
+                        { ad: "Stok", alan: "stok", renk: "var(--erp-text)" },
                         { ad: "Kolide", alan: "kolide", renk: "var(--erp-brown)" },
                         { ad: "Serbest", alan: "serbest", renk: "var(--erp-primary)" },
                         { ad: "Üretimde", alan: "uretimde", renk: "var(--erp-info)" },
                         { ad: "Talep", alan: "talep", renk: "var(--erp-text-2)" },
                         { ad: "Açık", alan: "acik", renk: "#6B3FA0" },
                       ].map((satirTipi) => (
-                        <tr key={satirTipi.alan} style={{ borderTop: "1px solid #F0E7D5" }}>
+                        <tr key={satirTipi.alan} style={{ borderTop: "1px solid var(--erp-head)" }}>
                           <td style={{ fontSize: 11, padding: "3px 8px", color: satirTipi.renk, fontWeight: 700, whiteSpace: "nowrap" }}>
                             {satirTipi.ad}
                           </td>
@@ -225,7 +225,7 @@ function MamulDeposu({ stok, siparisler, uretim, koliler, onGoToUrun }) {
                               </td>
                             );
                           })}
-                          <td className="mono" style={{ fontSize: 12, padding: "3px 8px", textAlign: "center", fontWeight: 700, color: satirTipi.renk, borderLeft: "1px dashed #C9B99A" }}>
+                          <td className="mono" style={{ fontSize: 12, padding: "3px 8px", textAlign: "center", fontWeight: 700, color: satirTipi.renk, borderLeft: "1px dashed var(--erp-line)" }}>
                             {s.toplam[satirTipi.alan] || "·"}
                           </td>
                         </tr>
