@@ -1,4 +1,4 @@
-function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
+function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [filterCat, setFilterCat] = useState("Tümü");
@@ -794,8 +794,18 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
     onSave(next);
   }
 
-  const aktifItems = items.filter((p) => !p.pasif);
-  const pasifSayisi = items.length - aktifItems.length;
+  // KAPSAM (25 Eylül, v1.455.0 — kullanıcı: "stokta mamul stoğunu ayıralım, sekme şeklinde değil,
+  // deponun alt sekmesi olsun"). Aynı modül iki menü öğesinden açılıyor: "Stok" hammadde / yarı
+  // mamul / hizmet, "Mamul Stok" yalnız mamul. TEK modül, iki kopya değil: ürün pencereleri, formlar
+  // ve kurallar tek yerde; iki kopya aynı ürünü iki pencerede açıp birbirini ezerdi.
+  // `items` yine TÜM stok (reçete, ad çakışması, kullanılan yerler); yalnız LİSTE kapsama göre.
+  const kapsamKategorileri = kapsam === "mamul" ? ["Mamul"] : kapsam === "hammadde" ? KATEGORILER.filter((k) => k !== "Mamul") : KATEGORILER;
+  const kapsamItems = items.filter((p) => kapsamKategorileri.includes(p.kategori));
+  // Kapsam değişince kategori süzgeci sıfırlanıyor; mamulde tek kategori olduğundan "Mamul"
+  // (yeni ürün de mamul açılsın diye — `yeniKategori` bu süzgeçten okuyor).
+  useEffect(() => { setFilterCat(kapsam === "mamul" ? "Mamul" : "Tümü"); }, [kapsam]);
+  const aktifItems = kapsamItems.filter((p) => !p.pasif);
+  const pasifSayisi = kapsamItems.length - aktifItems.length;
 
   function pasifDegistir(id, yeniDurum) {
     const urun = items.find((p) => p.id === id);
@@ -813,7 +823,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
   // `const` sırasına bakmadığı için bunu yakalamadı, tarayıcı senaryosu yakaladı.
   const ozelKodAlanlari = tanimlar.ozelKodAlanlari || [];
 
-  const filtered = items.filter((p) => {
+  const filtered = kapsamItems.filter((p) => {
     // Pasifler ayrı sekmede. Varsayılan görünüm yalnızca aktifleri gösterir — pasifi de listelemek,
     // "pasife alma"nın işe yaramaması demek olurdu.
     if (pasifSekme ? !p.pasif : !!p.pasif) return false;
@@ -1267,7 +1277,8 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
             Pasifler ({pasifSayisi})
           </button>
         )}
-        {["Tümü", ...KATEGORILER].map((k) => {
+        {/* Mamul Stok'ta tek kategori var: kategori sekmeleri gösterilmiyor. */}
+        {(kapsam === "mamul" ? [] : ["Tümü", ...kapsamKategorileri]).map((k) => {
           const sayi = k === "Tümü" ? aktifItems.length : aktifItems.filter((p) => p.kategori === k).length;
           const aktif = filterCat === k;
           const renk = k === "Tümü" ? "var(--erp-text)" : (CAT_COLORS[k] || "var(--erp-text-2)");
@@ -2357,7 +2368,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
 
       {katalogMod && (
         filtered.length === 0 ? (
-          <EmptyState text={items.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok."} />
+          <EmptyState text={kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok."} />
         ) : (
           // IZGARA — vitrin düzeni. Kart başına TEK görsel: kapak ya da ilk rengin görseli.
           // Renklerin hepsi ızgarada gösterilseydi tek model onlarca kutu kaplar ve "gezinme"
@@ -2414,7 +2425,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
 
       {!katalogMod && (
       filtered.length === 0 ? (
-        <EmptyState text={items.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok."} />
+        <EmptyState text={kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok."} />
       ) : filterCat !== "Tümü" ? (
         // Belirli bir kategori sekmesindeyken tek düz liste — başlık gereksiz, sekme zaten kategoriyi gösteriyor.
         <div style={{ display: "grid", gap: 8 }}>
@@ -2424,7 +2435,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
         </div>
       ) : (
         <div style={{ display: "grid", gap: 28 }}>
-          {KATEGORILER.map((kat) => {
+          {kapsamKategorileri.map((kat) => {
             const grup = filtered.filter((p) => p.kategori === kat);
             if (grup.length === 0) return null;
             return (

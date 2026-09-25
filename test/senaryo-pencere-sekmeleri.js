@@ -89,6 +89,8 @@ async function calistir() {
 
   // 2. İki ürün: Deri küçültülmüşken Bot açılıp küçültülür; şeritten Deri'ye dönülür.
   await kucult();
+  // MAMUL STOK AYRI (v1.455.0): Bot mamul, Stok listesinde değil — Depo ▸ Mamul Stok'ta.
+  await modul("Mamul Stok");
   await listedenAc("Bot");
   await kucult();
   await seritSekmesi("Ürün: Deri");
@@ -113,7 +115,7 @@ async function calistir() {
   // 5. KART DURUMU KORUNUYOR: Bot'ta Reçete sekmesi açılır, Deri'ye geçilip Bot'a dönülür — Bot
   //    yeniden kurulsaydı Stok Bilgileri'ne (ilk sekme) düşerdi.
   await kucult();
-  await modul("Stok");
+  await modul("Mamul Stok");
   await listedenAc("Bot");
   await sayfa.locator('button:has-text("Reçete"):visible').first().click();
   await sayfa.waitForTimeout(600);

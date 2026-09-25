@@ -11,7 +11,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Bot" && e.children.length === 0);

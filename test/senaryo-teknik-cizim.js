@@ -12,7 +12,7 @@ const { normalles } = require("./senaryo-fis.js");
 const NOKTA_GORSEL = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
 
 async function urunAc(sayfa, ad) {
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
   await sayfa.evaluate((a) => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === a && e.children.length === 0);

@@ -35,7 +35,7 @@ async function calistir() {
   const grup = ((await depoOku(sayfa, "tanimlar:data")).bedenGruplari || []).map((g) => `${g.ad}:${(g.bedenler || []).join(",")}`);
 
   // 2) Ürün kartında grup düğmesiyle bedenleri ekle.
-  await modulAc(sayfa, "Stok");
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Bot" && e.children.length === 0);
@@ -51,7 +51,7 @@ async function calistir() {
 
   // 2b) YENİ ÜRÜN formunda grup kısayolu (14 Eylül): grup düğmesi bedenleri işaretliyor, ürün o
   //     bedenlerle kuruluyor. İkinci dokunuş seçimi kaldırıyor.
-  await modulAc(sayfa, "Stok");
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ürün Ekle/.test(x.textContent) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(600);

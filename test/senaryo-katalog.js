@@ -102,7 +102,7 @@ async function calistir() {
     };
   });
 
-  await modulAc(sayfa, "Stok");
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(800);
 
   // SIKI BAŞLIK (kullanıcı, 12 Eylül: "ekranın yarısına yakını arama, sekme vs."): Liste/Katalog
@@ -117,7 +117,8 @@ async function calistir() {
     const kart = [...document.querySelectorAll("button")].find((b) => /renk\/beden/.test(b.textContent) && gorunur(b));
     const h1 = document.querySelector("h1");
     return {
-      anahtarSekmelerleAyniSatirda: !!(liste && tumu) && Math.abs(liste.getBoundingClientRect().top - tumu.getBoundingClientRect().top) < 12,
+      // Mamul Stok'ta (v1.455.0) kategori sekmesi yok — tek kategori; anahtar tek başına duruyor.
+      anahtarSekmelerleAyniSatirda: tumu ? !!liste && Math.abs(liste.getBoundingClientRect().top - tumu.getBoundingClientRect().top) < 12 : !!liste,
       ilkKartBasligaYakin: !!(kart && h1) && (kart.getBoundingClientRect().top - h1.getBoundingClientRect().top) < 200,
     };
   });
@@ -210,17 +211,19 @@ async function calistir() {
 
   const listeRozeti = await sayfa.evaluate(() => {
     const m = document.body.innerText;
-    // Hammaddenin satış fiyatı KENDİ biriminde listeleniyor; önceden yalnız mamulde ve hep "₺".
-    const hammaddeSatisi = /120 ₺/.test(m);
     // Etiketiyle birlikte: çıplak bir "İtalya", hangi alana ait olduğunu söylemiyordu.
     return {
       etiketliRozet: /Menşei: İtalya/.test(m) && /Taban: Kauçuk/.test(m),
       // Sezona bağlı alan YALNIZ yazlık üründe rozet oluyor; kışlık üründe kod hiç yok.
       sezonAlaniYazlikta: /Yazlık Taban: TPU/.test(m),
       sezonAlaniKislikta: /Yazlık Taban: Deri/.test(m),
-      hammaddeSatisi,
     };
   });
+  // MAMUL STOK AYRI (v1.455.0): hammaddeler Depo ▸ Stok listesinde; buradan sonrası orada.
+  await modulAc(sayfa, "Stok");
+  await sayfa.waitForTimeout(800);
+  // Hammaddenin satış fiyatı KENDİ biriminde listeleniyor; önceden yalnız mamulde ve hep "₺".
+  listeRozeti.hammaddeSatisi = await sayfa.evaluate(() => /120 ₺/.test(document.body.innerText));
 
   // HAMMADDE KARTINDA SATIŞ FİYATI. Eskiden bu alan hammaddede hiç çizilmiyordu ve yeni ürün
   // formunda girilen değer kayıt sırasında sıfıra çekiliyordu.
@@ -235,6 +238,8 @@ async function calistir() {
   });
   await sayfa.locator('button:has-text("Kapat"):visible').first().click();
   await sayfa.waitForTimeout(600);
+  await modulAc(sayfa, "Mamul Stok");
+  await sayfa.waitForTimeout(800);
 
   // ARAMA: etikete göre. "taban" yazmak, taban kodu dolu olan ürünleri getirmeli.
   const arama = sayfa.locator('input[placeholder^="Ara: ürün"]:visible').first();

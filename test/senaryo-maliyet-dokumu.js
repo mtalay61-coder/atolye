@@ -18,7 +18,7 @@ const r=(h,ad,m,b)=>({hammaddeUrunId:h,hammaddeAd:ad,mamulRenk:"Siyah",renk:"",b
 bot.recete=[r("h1","Süet Deri",1.3,"desi"),r("h2","Takviye Bezi",0.25,"m"),r("h3","Dana Astar",2.2,"desi"),r("h4","Taban",1,"çift"),r("h5","Yapıştırıcı",0.3,"adet")];
 t["stok:items"]=JSON.stringify(st);
 const {tarayici,sayfa}=await uygulamaAc(t,{hataYaz:false});const hatalar=[];const h=hatalar;sayfa.on("pageerror",e=>h.push(e.message.slice(0,150)));await sayfa.setViewportSize({width:1100,height:900});await sayfa.waitForTimeout(2500);
-await sayfa.evaluate(()=>{const b=document.querySelector("[data-nav=\"Stok\"]");if(b)b.click();});await sayfa.waitForTimeout(900);
+await sayfa.evaluate(()=>{const b=document.querySelector("[data-nav=\"Mamul Stok\"]");if(b)b.click();});await sayfa.waitForTimeout(900);
 await sayfa.evaluate(()=>{const el=[...document.querySelectorAll("*")].find(e=>e.children.length===0&&(e.textContent||"").trim()==="Bot"&&e.getBoundingClientRect().width>0);let p=el;for(let i=0;i<8&&p;i++,p=p.parentElement){if(p.onclick||p.tagName==="BUTTON"){p.click();return;}}});await sayfa.waitForTimeout(1200);
 await sayfa.evaluate(()=>{const b=[...document.querySelectorAll("button")].find(x=>x.textContent.trim() === "Maliyet"&&x.offsetParent);if(b)b.click();});await sayfa.waitForTimeout(900);
 // Birim fiyat hücresi artık düzenlenebilir kutu (21 Eylül): değeri kutudan okunuyor.

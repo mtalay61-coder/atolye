@@ -29,12 +29,9 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
 
-  await modulAc(sayfa, "Stok");
+  // Yeni ürünün kategorisi açık listeden geliyor: Mamul Stok'tan (v1.455.0) eklenen ürün mamul.
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(600);
-  // Yeni ürünün kategorisi seçili liste sekmesinden geliyor; renk arama kutusu MAMUL formunda
-  // (hammaddede renkler düğme olarak çiziliyor).
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Mamul\s*\d*$/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
-  await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ürün Ekle/.test(x.textContent) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
 

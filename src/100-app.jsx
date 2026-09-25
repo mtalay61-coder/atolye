@@ -219,6 +219,19 @@ export default function AtolyeERP() {
   // `variants[].miktar` ile `hareketler[]` ayrışamaz — tek sayı var, kaynağı hareketler.
   // Çağıranlar değişmedi; hepsi eskisi gibi `setStok(next)` diyor.
   const [stok, setStokHam] = useState([]);
+  // Stok modülünün kapsamı: son açılan stok sekmesine göre (Stok → hammadde, Mamul Stok → mamul).
+  const stokKapsamRef = useRef("hammadde");
+  if (tab === "stok") stokKapsamRef.current = "hammadde";
+  if (tab === "mamulstok") stokKapsamRef.current = "mamul";
+  // Bir ürüne gidilince (uruneGit — sipariş, reçete, anasayfa…) doğru stok sekmesi: mamul ürün
+  // "Mamul Stok"ta, diğerleri "Stok"ta açılsın; yoksa ürün penceresinin arkasında yanlış liste kalır.
+  useEffect(() => {
+    if (!stokHedefUrunId || (tab !== "stok" && tab !== "mamulstok")) return;
+    const u = stok.find((x) => x.id === stokHedefUrunId);
+    if (!u) return;
+    const dogru = u.kategori === "Mamul" ? "mamulstok" : "stok";
+    if (dogru !== tab) setTab(dogru);
+  }, [stokHedefUrunId, tab, stok, setTab]);
   // PARÇA 2 (16 Eylül): stok yazımı TEK geçit olduğu için yeni hareketler burada toplanıp deftere
   // gönderiliyor — üretim, açılış, elle giriş, onarım; hangi kapıdan gelirse gelsin.
   // Güncelleyici saf kalsın diye hareketler bir ref'e biriktiriliyor, deftere yazma effect'te.
@@ -2667,6 +2680,7 @@ export default function AtolyeERP() {
     anasayfa: "Atölye ERP",
     tanimlar: "Tanımlar",
     stok: "Stok Yönetimi",
+    mamulstok: "Mamul Stok",
     uretim: "Üretim Takibi",
     cari: "Cari Hesaplar",
     siparis: "Sipariş Yönetimi",
@@ -3218,7 +3232,10 @@ export default function AtolyeERP() {
                 const menu = [
                   { tek: "anasayfa", ad: "Anasayfa", ikon: <Home size={15} /> },
                   { ad: "Depo", ikon: <Layers size={15} />, ogeler: [
-                    ["stok", "Stok", <Boxes size={16} />], ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />]] },
+                    // MAMUL STOK ayrı öğe (v1.455.0, kullanıcı: "stokta mamul stoğunu ayıralım, deponun
+                    // alt sekmesi olsun"): Stok hammadde/yarı mamul/hizmet, Mamul Stok yalnız mamul.
+                    ["stok", "Stok", <Boxes size={16} />], ["mamulstok", "Mamul Stok", <Package size={16} />],
+                    ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />]] },
                   { ad: "Üretim", ikon: <Hammer size={15} />, ogeler: [
                     yetki("uretim") && ["uretim", "Üretim", <Hammer size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
                   { tek: "planlama", ad: "Planlama", ikon: <Compass size={15} /> },
@@ -3690,8 +3707,12 @@ export default function AtolyeERP() {
               kullaniciYetkisiVar={kullaniciYetkisiVar}
             />
           )}
-          <div style={{ display: tab === "stok" ? undefined : "none" }}>
+          {/* STOK + MAMUL STOK TEK MODÜL (v1.455.0): iki menü öğesi aynı modülü farklı KAPSAMLA
+              gösteriyor. Kapsam yalnız bu iki sekmeden birindeyken güncelleniyor; başka modüle
+              geçince son hâli korunuyor (gizli modülün süzgeci boş yere sıfırlanmasın). */}
+          <div style={{ display: tab === "stok" || tab === "mamulstok" ? undefined : "none" }}>
             <StokModule
+              kapsam={stokKapsamRef.current}
               kurlar={muhasebe.kurlar || {}}
               onFiseGitNo={fiseGit}
               stokRezervasyonlari={stokRezervasyonlari}
@@ -4175,7 +4196,8 @@ export default function AtolyeERP() {
                     // (`siparis-s1`) kayıt kimliği sanılıyor, sipariş bulunamıyor, Alış siparişinde
                     // bile SATIŞ ekranına gidiliyordu — kart hiç görünmüyordu. Üretimde de aynı
                     // kimlik hedef olarak veriliyor ve hiçbir karta uymuyordu.
-                    if (p.tip === "urun") setTab("stok");
+                    // Ürün penceresi: mamulse "Mamul Stok", değilse "Stok" sekmesi (v1.455.0).
+                    if (p.tip === "urun") setTab(((stok.find((x) => x.id === p.kayitId) || {}).kategori === "Mamul") ? "mamulstok" : "stok");
                     else if (p.tip === "siparis") {
                       const kayit = siparisler.find((x) => x.id === p.kayitId);
                       const sahipTip = (p.veri && p.veri.sahipTip) || (kayit && kayit.tip);

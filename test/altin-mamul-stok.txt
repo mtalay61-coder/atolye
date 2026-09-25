@@ -1,0 +1,31 @@
+{
+ "depoOgeleri": [
+  "Stok",
+  "Mamul Stok",
+  "Depo",
+  "Paketleme"
+ ],
+ "hatalar": [],
+ "mamul": {
+  "baslik": "Mamul Stok",
+  "bot": true,
+  "deri": false,
+  "kategoriSekmeleri": []
+ },
+ "seritDonusu": {
+  "kart": "Bot",
+  "tab": "mamulstok"
+ },
+ "stok": {
+  "baslik": "Stok Yönetimi",
+  "bot": false,
+  "deri": true,
+  "kategoriSekmeleri": [
+   "Tümü",
+   "Hammadde",
+   "Yarı Mamul",
+   "Hizmet"
+  ]
+ },
+ "yeniUrunMamul": true
+}

@@ -52,7 +52,7 @@ async function calistir() {
   await sayfa.waitForTimeout(1200);
 
   // Ürün kartı > Barkodlar
-  await modulAc(sayfa, "Stok");
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.getByText("125 Model", { exact: true }).first().click();
   await sayfa.waitForTimeout(900);

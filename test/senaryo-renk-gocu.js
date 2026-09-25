@@ -24,7 +24,7 @@ async function calistir() {
   const kombi = ((goc.renkKombinasyonlari || [])[0] || {}).renkIdler;
 
   // Ürün kartı (mamul Bot) → Renkler: eklenebilir renk listesi tek havuz (Siyah zaten ekli, Kahve eklenebilir).
-  await modulAc(sayfa, "Stok");
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Bot" && e.children.length === 0);

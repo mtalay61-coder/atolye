@@ -49,11 +49,11 @@ async function calistir() {
   sayfa = ikinci.sayfa; tarayici = ikinci.tarayici;
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2600);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
   const yerelKazandi = await sayfa.evaluate(() => {
     const m = document.body.innerText;
-    return { eskiBulutGorunuyor: /ESKİ BULUT ÜRÜNÜ/.test(m), yerelUrunGorunuyor: /\bBot\b/.test(m) && /\bDeri\b/.test(m) };
+    return { eskiBulutGorunuyor: /ESKİ BULUT ÜRÜNÜ/.test(m), yerelUrunGorunuyor: /\bBot\b/.test(m) };
   });
   await tarayici.close();
 
