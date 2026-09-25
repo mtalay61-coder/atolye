@@ -12,7 +12,7 @@ const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function receteyiAc(sayfa) {
-  await modulAc(sayfa, "Stok");
+  await modulAc(sayfa, "Mamul Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

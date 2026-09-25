@@ -28,7 +28,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2500);
 
   // ÜRÜN KARTI: aç → başlıkta düzenle/pasif/sil; düzenleye bas → başlıkta kaydet/vazgeç.
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   // Stok listesi hücre gösterir; kartı açmak için ürüne tıklanır.
   await sayfa.evaluate(() => {

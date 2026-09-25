@@ -47,7 +47,7 @@ async function calistir() {
   const grupPb = ((await depoOku(sayfa, "tanimlar:data")).fiyatGruplari.find((g) => g.id === "fg1") || {}).paraBirimi;
 
   // 2) Ürün › Maliyet: uyarı ve eşitleme
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0);

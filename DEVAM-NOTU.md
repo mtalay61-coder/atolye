@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.454.0** · 25 Eylül 2026
+Son sürüm: **v1.455.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.454.0): özel kod alanlarında yazarken öneri (`AramaliMetin`).** Bkz. "RENK YAZARAK EKLEME" sonu.
+**Son iş (25 Eylül, v1.455.0): Mamul Stok ayrı menü öğesi (Depo ▸ Mamul Stok).** Bkz. "MAMUL STOK AYRI".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,28 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## MAMUL STOK AYRI (25 Eylül, v1.455.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Stokta mamul stoğunu ayıralım; sekme şeklinde değil, Depo'nun alt sekmesi olsun."
+Seçenek soruldu → "Üst menüde Depo altında" seçildi.
+
+- Depo ▾ artık: **Stok** (Hammadde / Yarı Mamul / Hizmet), **Mamul Stok** (yalnız mamul), Depo, Paketleme.
+  Stok listesindeki "Mamul" kategori sekmesi kalktı; Mamul Stok'ta kategori sekmesi hiç yok.
+- **Tek bileşen, iki kapsam:** `StokModule({ kapsam })` — `"hammadde"` / `"mamul"` / `"genel"`.
+  Ayrı bir modül kopyası AÇILMADI: kart, reçete, pencere, matris hepsi aynı kod. App'te tek
+  `StokModule` örneği iki sekmede görünür (`tab === "stok" || tab === "mamulstok"`); kapsam
+  `stokKapsamRef` ile son görünen sekmeden gelir (diğer sekmeye geçince gizli kalan örnek
+  kapsamını korusun, açık kart/pencere durumu kaybolmasın diye örnek tek).
+- Kapsam değişince `filterCat` sıfırlanır (mamulde "Mamul", değilse "Tümü"); yeni ürünün kategorisi
+  seçili sekmeden → Mamul Stok'tan eklenen ürün mamul.
+- **Ürüne gidiş doğru sekmeye:** şeritteki "Ürün: X" penceresi ve `stokHedefUrunId` (başka
+  modülden ürüne atlama) ürünün kategorisine göre `stok` ya da `mamulstok` sekmesini seçer —
+  aksi hâlde mamul kartı hammadde listesinin üstünde açılıyordu.
+- Testler: Stok'tan "Bot" (mamul) açan ~20 senaryo `modulAc(sayfa, "Mamul Stok")`'a çevrildi
+  (altınları AYNI kaldı); `katalog` hammadde bölümünde Stok'a geçiyor; `pencere-sekmeleri` Deri'yi
+  Stok'tan, Bot'u Mamul Stok'tan açıp şeritten sekmeler arası dönüşü ölçüyor; `menu-gruplari`
+  altını "Mamul Stok" ile güncellendi (bilerek). Yeni: `senaryo-mamul-stok.js`.
 
 ## OTOMATİK SÜRÜM GEÇİŞİ (25 Eylül, v1.447.0 — Claude Code oturumu)
 

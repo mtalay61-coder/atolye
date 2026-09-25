@@ -246,6 +246,7 @@ const MODUL_RENK = {
   anasayfa: "var(--erp-orange)",   // tape-orange — genel/nötr
   tanimlar: "#6B7A8F",   // terzi tebeşiri mavi-gri
   stok: "var(--erp-brown)",       // saddle — deri
+  mamulstok: "var(--erp-primary)", // mamul — atölye yeşili (stok kategorisi rengiyle aynı)
   uretim: "var(--erp-primary)",     // atölye yeşili
   cari: "var(--erp-info)",       // defter mavisi
   siparis: "#9C3D3D",    // mühür/fiş bordosu — SATIŞ tarafı
@@ -262,6 +263,7 @@ const SEKME_BILGISI = {
   anasayfa: { ad: "Anasayfa" },
   tanimlar: { ad: "Tanımlar" },
   stok: { ad: "Stok" },
+  mamulstok: { ad: "Mamul Stok" },
   uretim: { ad: "Üretim" },
   cari: { ad: "Cari" },
   siparis: { ad: "Sipariş" },
@@ -451,9 +453,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.454.0";
+const SURUM = "1.455.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Ozel kod alanlarinda yazarken oneri";
+const SURUM_NOTU = "Mamul Stok ayri menu ogesi (Depo altinda)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -462,6 +464,11 @@ const SURUM_NOTU = "Ozel kod alanlarinda yazarken oneri";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.455.0", tarih: "25.09.2026",
+    eklenen: ["Üst menüde Depo altında ayrı 'Mamul Stok': yalnız mamuller listeleniyor, yeni ürün mamul olarak açılıyor"],
+    degisen: ["'Stok' artık hammadde, yarı mamul ve hizmeti gösteriyor; içindeki 'Mamul' sekmesi kalktı",
+              "Bir ürüne gidilince (sipariş, reçete…) mamul ürün 'Mamul Stok'ta, diğerleri 'Stok'ta açılıyor"],
+    duzeltilen: [] },
   { surum: "1.454.0", tarih: "25.09.2026",
     eklenen: ["Özel kod alanlarında (Taban, Kalıp…) yazarken öneri: o alana diğer ürünlerde girilmiş değerler yazdıkça süzülerek listeleniyor, dokununca yazılıyor; yeni değer de yazılabiliyor"],
     degisen: [],
