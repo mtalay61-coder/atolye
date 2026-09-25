@@ -24,6 +24,13 @@ if git cat-file -e "origin/main:$CIKTI" 2>/dev/null; then
   echo "── DUR: $CIKTI zaten yayında (origin/main). Önce src/015-sabitler.jsx'te SURUM'u artır. ──"
   exit 1
 fi
+# COMMIT'LENMİŞ SÜRÜM + YENİ KOD (25 Eylül): aynı dalda art arda iki iş yapılırken ikinci iş sürüm
+# artırılmadan derlendi ve henüz birleşmemiş (origin/main'de olmayan) ama commit'lenmiş v1.457'nin
+# üstüne yazdı. Çıktı HEAD'de kayıtlıysa ve src/ HEAD'den farklıysa bu yeni bir iş demek → dur.
+if git cat-file -e "HEAD:$CIKTI" 2>/dev/null && ! git diff --quiet HEAD -- src/ ':!src/.satir-haritasi.json'; then
+  echo "── DUR: $CIKTI commit'lenmiş, src/ ise değişmiş. Önce src/015-sabitler.jsx'te SURUM'u artır. ──"
+  exit 1
+fi
 node paketle.js atolye-erp.jsx "$CIKTI"
 
 # Paketlenen dosya GERÇEKTEN derleniyor mu — import satırları çıkarılıp gövde Function'a veriliyor.

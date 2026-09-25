@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.456.0** · 25 Eylül 2026
+Son sürüm: **v1.458.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.456.0): uygulama simgesi kullanıcının ND logosu oldu.** Bkz. "UYGULAMA SİMGESİ: ND LOGOSU". Önceki: v1.455.0 Mamul Stok ayrı menü öğesi.
+**Son iş (25 Eylül, v1.458.0): Muhasebe → "Kasa & Banka", Finans altında "Çek & Senet", cari kartında yazılı Pasife Al.** Bkz. "KASA & BANKA / ÇEK & SENET".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,43 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## KASA & BANKA / ÇEK & SENET / CARİ PASİFE AL (25 Eylül, v1.458.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Muhasebe olan adı Kasa & Banka olarak değiştirelim. Finans altına Çek & Senet
+ekleyelim." · "Cari pasife alma olsun."
+
+- Finans ▾: Cari, **Kasa & Banka** (eski Muhasebe), **Çek & Senet** (yeni), Gelir / Gider, Fişler.
+- Mamul Stok deseni: TEK `MuhasebeModule` örneği iki sekmede (`tab === "muhasebe" || "cekler"`),
+  `kapsam` = `muhasebeKapsamRef` ("kasabanka" / "cek"). Kasa & Banka'da Çek sekmesi yok (seçim
+  "cek" kalmışsa Kasa gösterilir), Çek & Senet'te sekme şeridi yok. Varsayılan `kapsam="genel"`
+  eski davranış. Sekme anahtarı `muhasebe` DEĞİŞMEDİ (yetki anahtarı, kayıtlı arayüz durumu,
+  `muhasebe:data` tablosu) — yalnız görünen ad. "Muhasebe" DEFTER adı (Genel/Resmi/Muhasebe) ve
+  "Muhasebe" KULLANICI ROLÜ ayrı şeyler, dokunulmadı.
+- Görünen metinler: çek geri alma mesajı "Kasa & Banka > Kasa > …"; carikart "Kasa & Banka
+  ekranından"; kur ipuçları "Muhasebe'deki kur" yerine üst şerit (kur zaten orada).
+- **Cari pasife alma zaten vardı** (başlıkta yazısız arşiv ikonu; pasifler "Pasifler" sekmesinde,
+  seçim listelerinden düşüyor) ama kullanıcı bulamadı. Kart altına, Ekstre Yazdır'ın yanına
+  yazılı `PasifButonu` ("Pasife Al / Aktife Al") eklendi; ikisi aynı `pasifDegistir` yolundan,
+  bildirimle ("… Pasifler sekmesinden geri alınabilir").
+- `yap.sh` koruması genişledi: çıktı dosyası HEAD'de commit'liyse ve `src/` HEAD'den farklıysa
+  DUR (aynı dalda ikinci iş sürüm artırılmadan derlenip commit'li v1.457'nin üstüne yazmıştı;
+  git'ten geri alındı).
+- Testler: "Muhasebe"ye giden senaryolar "Kasa & Banka"/"Çek & Senet"e çevrildi (altınlar AYNI);
+  `menu-gruplari` altını bilerek güncellendi; yeni `senaryo-finans-menu.js`.
+
+## SEZON VE YIL YAZARAK SEÇİM (25 Eylül, v1.457.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Mamul stokta sezon, yıl seçmeli olsun, özel kodlardaki gibi."
+
+- Ürün formunda (mamul) Sezon `<select>`'ti, Yıl düz sayı kutusuydu → ikisi de `AramaliMetin`.
+- `AramaliMetin`'e iki seçenek: `yalnizListeden` — kutudan çıkınca değer listede yoksa ilk
+  eşleşene oturur, eşleşen yoksa temizlenir (sezon özel kod KAPSAM EKSENİ; serbest yazım hiçbir
+  kapsamla eşleşmezdi). `sayisal` — yalnız rakam, telefonda sayı klavyesi. Yıl 4 haneyle sınırlı.
+- Yıl önerileri: diğer ürünlerde girilmiş yıllar + bu yıl + sonraki yıl.
+- Genel davranış değişikliği: kutudaki değer bir önerinin TAM kendisiyse liste süzülmüyor, diğer
+  seçenekler görünüyor (açılır liste gibi; özel kod alanlarında da geçerli).
+- Test: `senaryo-mamul-stok.js` → `sezonYil` bölümü.
 
 ## UYGULAMA SİMGESİ: ND LOGOSU (25 Eylül, v1.456.0 — Claude Code oturumu)
 

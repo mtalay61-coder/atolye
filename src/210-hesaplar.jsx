@@ -574,7 +574,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               // eski hedef tutar ekranda kalır, kurla tutmazdı.
                               onChange={(e) => setHForm({ ...hForm, kur: e.target.value, hedefTutar: "" })}
                               placeholder={cevrimVarMi && (!kurSoru || kurSoru.onerilen == null) ? "Elle girin" : ""}
-                              title={cevrimVarMi ? "Otomatik olarak Muhasebe'deki güncel kurdan öneriliyor — isterseniz sadece bu işlem için değiştirebilirsiniz" : "Aynı para birimi olduğu için (ya da cari seçilmediği için) kur 1'dir"}
+                              title={cevrimVarMi ? "Otomatik olarak güncel kurdan (üst şerit) öneriliyor — isterseniz sadece bu işlem için değiştirebilirsiniz" : "Aynı para birimi olduğu için (ya da cari seçilmediği için) kur 1'dir"}
                               style={{ width: 75, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, background: cevrimVarMi ? "#fff" : "var(--erp-panel-2)" }}
                             />
                           </label>

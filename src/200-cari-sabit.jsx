@@ -392,7 +392,7 @@ function cekHareketKilidi(hareketIdler, { cariler, muhasebe }) {
       const tur = satir.hesapTur === "kasa" ? "Kasa" : "Banka";
       const hesapAd = satir.hesapAd || satir.bankaAd || "ilgili hesap";
       mesaj = `${cekAdi} ${hesapAd} hesabına tahsil edilmiş — bu hareket silinemez. Önce tahsili geri alın: ` +
-        `Muhasebe > ${tur} > ${hesapAd} hareketlerinden bu çekin tahsil kaydını silin, çek "${satir.oncekiDurum}" durumuna döner.`;
+        `Kasa & Banka > ${tur} > ${hesapAd} hareketlerinden bu çekin tahsil kaydını silin, çek "${satir.oncekiDurum}" durumuna döner.`;
     } else if (geriAlma && (satir ? satir.hareketId : cek.ciroHareketId)) {
       // CİRO / İADE: bir cariye hareket yazıldı. Geri alma yolu o fişi silmek; hangi caride hangi
       // fiş olduğunu söylüyoruz.

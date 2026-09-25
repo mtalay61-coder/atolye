@@ -16,6 +16,28 @@
   "kart": "Bot",
   "tab": "mamulstok"
  },
+ "sezonYil": {
+  "bosken": [
+   "İlkbahar/Yaz",
+   "Sonbahar/Kış",
+   "Tüm Sezon"
+  ],
+  "eslesmeyen": "",
+  "secilen": "Sonbahar/Kış",
+  "seciliykenListe": [
+   "İlkbahar/Yaz",
+   "Tüm Sezon"
+  ],
+  "son": [
+   "Sonbahar/Kış"
+  ],
+  "yarimYazim": "İlkbahar/Yaz",
+  "yil": "2026",
+  "yilOneri": [
+   "2026",
+   "2027"
+  ]
+ },
  "stok": {
   "baslik": "Stok Yönetimi",
   "bot": false,

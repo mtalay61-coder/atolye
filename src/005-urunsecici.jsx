@@ -329,15 +329,24 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 // değer SERBEST — yeni bir taban numarası yazılabilmeli. Kutu değeri tutuyor (`deger`/`onDegis`);
 // yazdıkça altında daha önce girilmiş değerler (`oneriler`) süzülüyor, dokununca kutuya yazılıyor.
 // Aynı değerin farklı yazımları (147 / 147A) bu sayede azalıyor — süzgeç ve arama da temizleşiyor.
-function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil }) {
+//
+// `yalnizListeden` (v1.457.0, sezon için): değer listedekilerden biri olmak ZORUNDA — sezon özel kod
+// kapsamının ekseni, "ilkbahar" gibi serbest bir yazım hiçbir kapsamla eşleşmez. Kutudan çıkınca
+// yazılan listede yoksa ilk eşleşen öneriye oturtulur, eşleşen de yoksa temizlenir.
+// `sayisal` (yıl için): yalnız rakam kabul edilir, telefonda sayı klavyesi açılır.
+function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false }) {
   const [acik, setAcik] = useState(false);
   const [vurgulu, setVurgulu] = useState(-1);
   const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
   const tekil = Array.from(new Set((oneriler || []).map((o) => String(o).trim()).filter(Boolean)))
     .sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
   // Kutudaki değerin kendisi öneri olarak tekrar gösterilmiyor; başı eşleşenler önce.
+  // Kutudaki değer bir önerinin TAM kendisiyse (seçim yapılmış) liste süzülmüyor, diğerleri
+  // gösteriliyor: seçimi değiştirmek için önce kutuyu silmek gerekmesin (açılır liste gibi).
+  const tamEslesme = tekil.some((o) => o.toLocaleLowerCase("tr-TR") === q);
   const sonuclar = (() => {
     if (!q) return tekil;
+    if (tamEslesme) return tekil.filter((o) => o.toLocaleLowerCase("tr-TR") !== q);
     const bas = [], ic = [];
     tekil.forEach((o) => {
       const e = o.toLocaleLowerCase("tr-TR");
@@ -352,9 +361,14 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil }) 
       <input
         {...(veriAdi ? { [veriAdi]: "1" } : {})}
         value={deger || ""}
-        onChange={(e) => { onDegis(e.target.value); setAcik(true); setVurgulu(-1); }}
+        onChange={(e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }}
         onFocus={() => setAcik(true)}
-        onBlur={() => setTimeout(() => setAcik(false), 150)}
+        onBlur={() => {
+          setTimeout(() => setAcik(false), 150);
+          if (yalnizListeden && q && !tamEslesme) onDegis(sonuclar[0] || "");
+          else if (yalnizListeden && tamEslesme) onDegis(tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q));
+        }}
+        {...(sayisal ? { inputMode: "numeric" } : {})}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") { e.preventDefault(); setAcik(true); setVurgulu((v) => Math.min(v + 1, sonuclar.length - 1)); }
           else if (e.key === "ArrowUp") { e.preventDefault(); setVurgulu((v) => Math.max(v - 1, -1)); }

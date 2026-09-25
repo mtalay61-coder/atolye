@@ -17,7 +17,7 @@ async function kasaHareketi(yon, tutar) {
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2400);
-  await modulAc(sayfa, "Muhasebe");
+  await modulAc(sayfa, "Kasa & Banka");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ana Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(800);

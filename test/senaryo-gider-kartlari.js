@@ -56,7 +56,7 @@ async function calistir() {
   const ikinci = await uygulamaAc(t2, { hataYaz: false });
   ikinci.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ikinci.sayfa.waitForTimeout(2400);
-  await modulAc(ikinci.sayfa, "Muhasebe");
+  await modulAc(ikinci.sayfa, "Kasa & Banka");
   await ikinci.sayfa.waitForTimeout(900);
   await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ikinci.sayfa.waitForTimeout(700);

@@ -223,6 +223,13 @@ export default function AtolyeERP() {
   const stokKapsamRef = useRef("hammadde");
   if (tab === "stok") stokKapsamRef.current = "hammadde";
   if (tab === "mamulstok") stokKapsamRef.current = "mamul";
+  // KASA & BANKA / ÇEK & SENET (v1.458.0, kullanıcı: "Muhasebe olan adı Kasa & Banka olsun, Finans
+  // altına Çek & Senet ekleyelim"): Mamul Stok ile aynı desen — TEK MuhasebeModule örneği iki menü
+  // öğesinde görünür, kapsam son görünen sekmeden. Ayrı örnek açılsaydı çek formu/kur durumu
+  // ikisinde ayrı tutulur, çek işlemi (onaylı işlem) yanlış örneğe düşebilirdi.
+  const muhasebeKapsamRef = useRef("kasabanka");
+  if (tab === "muhasebe") muhasebeKapsamRef.current = "kasabanka";
+  if (tab === "cekler") muhasebeKapsamRef.current = "cek";
   // Bir ürüne gidilince (uruneGit — sipariş, reçete, anasayfa…) doğru stok sekmesi: mamul ürün
   // "Mamul Stok"ta, diğerleri "Stok"ta açılsın; yoksa ürün penceresinin arkasında yanlış liste kalır.
   useEffect(() => {
@@ -2691,7 +2698,8 @@ export default function AtolyeERP() {
     modelhane: "Modelhane",
     fisler: "Fişler",
     gelirgider: "Gelir / Gider Kartları",
-    muhasebe: "Muhasebe",
+    muhasebe: "Kasa & Banka",
+    cekler: "Çek & Senet",
     planlama: "Planlama",
     // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
     // çizgi duruyor, modül kendi büyük başlığını bir daha basıyordu. Başlık buraya, modülünki kalktı.
@@ -3242,7 +3250,8 @@ export default function AtolyeERP() {
                   { ad: "Siparişler", ikon: <ClipboardList size={15} />, ogeler: [
                     ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
-                    yetki("cari") && ["cari", "Cari", <Users size={16} />], yetki("muhasebe") && ["muhasebe", "Muhasebe", <Wallet size={16} />],
+                    yetki("cari") && ["cari", "Cari", <Users size={16} />], yetki("muhasebe") && ["muhasebe", "Kasa & Banka", <Wallet size={16} />],
+                    yetki("muhasebe") && ["cekler", "Çek & Senet", <Receipt size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
                     yetki("muhasebe") && ["gelirgider", "Gelir / Gider", <FileText size={16} />], yetki("fisler") && ["fisler", "Fişler", <FileText size={16} />]] },
                 ].map((g) => (g.ogeler ? { ...g, ogeler: g.ogeler.filter(Boolean) } : g));
@@ -4050,11 +4059,12 @@ export default function AtolyeERP() {
             )
           )}
 
-          <div style={{ display: tab === "muhasebe" ? undefined : "none" }}>
+          <div style={{ display: tab === "muhasebe" || tab === "cekler" ? undefined : "none" }}>
             {!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (
-              <EmptyState text="Muhasebe modülünü görüntüleme yetkiniz yok. Erişim için yöneticinize başvurun." />
+              <EmptyState text="Kasa & Banka ekranını görüntüleme yetkiniz yok. Erişim için yöneticinize başvurun." />
             ) : (
             <MuhasebeModule
+              kapsam={muhasebeKapsamRef.current}
               tanimlar={tanimlar}
               stok={stok}
               giderKartlari={tanimlar.giderKartlari || []}

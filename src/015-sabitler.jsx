@@ -253,7 +253,8 @@ const MODUL_RENK = {
   satinalma: "var(--erp-brown)",  // saddle — alış tarafı, stok/hammadde ile aynı dil
   depo: "#5A6B4E",       // depo yeşili — stoğa yakın ama ondan ayrı bir bakış
   fisler: "var(--erp-purple)",     // damga moru
-  muhasebe: "#2F6B4F",   // hesap defteri koyu yeşili
+  muhasebe: "#2F6B4F",
+  cekler: "#2F6B4F",     // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
   planlama: "#B8860B",
   gorevler: "var(--erp-purple)",  // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
   gunluk: "#7A5C8A",     // mürekkep moru — defter/kayıt dili
@@ -272,7 +273,8 @@ const SEKME_BILGISI = {
   paketleme: { ad: "Paketleme" },
   planlama: { ad: "Planlama" },
   fisler: { ad: "Fişler" },
-  muhasebe: { ad: "Muhasebe" },
+  muhasebe: { ad: "Kasa & Banka" },
+  cekler: { ad: "Çek & Senet" },
   atolye: { ad: "Atölye" },
 };
 
@@ -453,9 +455,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.456.0";
+const SURUM = "1.458.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Yeni uygulama simgesi (ND logosu)";
+const SURUM_NOTU = "Kasa & Banka, Cek & Senet menuleri; cari pasife al dugmesi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -464,6 +466,17 @@ const SURUM_NOTU = "Yeni uygulama simgesi (ND logosu)";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.458.0", tarih: "25.09.2026",
+    eklenen: ["Finans altında 'Çek & Senet' menü öğesi: çekler ayrı ekranda",
+              "Cari kartında yazılı 'Pasife Al / Aktife Al' düğmesi (Ekstre Yazdır'ın yanında); pasife alınca bildirim"],
+    degisen: ["'Muhasebe' menüsünün adı 'Kasa & Banka' oldu; içindeki Çek sekmesi Çek & Senet'e taşındı",
+              "Kur ipuçları artık 'Muhasebe'deki kur' yerine üst şeritteki kuru gösteriyor"],
+    duzeltilen: [] },
+  { surum: "1.457.0", tarih: "25.09.2026",
+    eklenen: [],
+    degisen: ["Mamul ürün formunda Sezon ve Yıl, özel kod alanları gibi yazdıkça öneren kutular: sezon listeden seçilir, yıl için daha önce girilen yıllar önerilir",
+              "Arama kutularında seçili değer varken kutuya dokununca diğer seçenekler de listelenir"],
+    duzeltilen: [] },
   { surum: "1.456.0", tarih: "25.09.2026",
     eklenen: ["Tarayıcı sekmesinde uygulama simgesi görünüyor"],
     degisen: ["Uygulama simgesi yeni ND logosu oldu (ana ekran, masaüstü kısayolu, sekme)"],

@@ -58,7 +58,7 @@ async function calistir() {
   const siparisAcik = await kartEylemleri(sayfa);
 
   // KASA/BANKA KARTI: hesap kartı başlığında Düzenle · Sil; düzenlemede Kaydet · Vazgeç.
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Muhasebe"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Kasa & Banka"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   // Kart, listeden hesap seçilince açılıyor ("Soldan bir kasa seçin").
   await sayfa.locator('[data-hesap-satir="k1"]').first().click();
