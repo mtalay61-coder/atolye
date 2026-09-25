@@ -15,6 +15,12 @@ node birlestir.js src atolye-erp.jsx
 
 SURUM="$(node -e 'console.log(require("fs").readFileSync("atolye-erp.jsx","utf8").match(/const SURUM = "([^"]+)"/)[1])')"
 CIKTI="atolye-erp-v${SURUM}.html"
+# YAYINLANMIŞ SÜRÜMÜN ÜSTÜNE YAZMA (25 Eylül): sürüm artırılmadan derlenince yayındaki dosya
+# sessizce değişiyordu — telefonlarda o adresi açan herkes habersiz yeni kodu alırdı.
+if git cat-file -e "origin/main:$CIKTI" 2>/dev/null; then
+  echo "── DUR: $CIKTI zaten yayında (origin/main). Önce src/015-sabitler.jsx'te SURUM'u artır. ──"
+  exit 1
+fi
 node paketle.js atolye-erp.jsx "$CIKTI"
 
 # Paketlenen dosya GERÇEKTEN derleniyor mu — import satırları çıkarılıp gövde Function'a veriliyor.

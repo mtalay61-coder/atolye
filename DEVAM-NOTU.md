@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.447.0** · 25 Eylül 2026
+Son sürüm: **v1.448.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.447.0): YENİ SÜRÜME OTOMATİK GEÇİŞ (surum.json).** Bkz. "OTOMATİK SÜRÜM GEÇİŞİ".
+**Son iş (25 Eylül, v1.448.0): YENİLEMEDE EKRAN KORUNUYOR — sekmeler + canlı pencereler geri geliyor.** Bkz. "YENİLEMEDE EKRAN KORUNUYOR".
+Önceki (v1.447.0): yeni sürüme otomatik geçiş (surum.json).
 Önceki (v1.446.0): SİPARİŞ DÜZENLEME SİPARİŞ FORMUNDA — form önde, kalemler altta düzenlenebilir (ürün/renk/miktar/fiyat), kilitliler salt okunur.** Bkz. "SİPARİŞ DÜZENLEME FORMDA".
 Önceki (v1.445.0): yerel şifre yedeği kaldırıldı — giriş yalnız bulut hesabıyla.
 **⚠ PAKET EKSİKLERİ (v1.444.0 zip'inde yoktu) — bkz. "PAKET EKSİKLERİ" bölümü. Asıl dosyalar bulunursa yerleştir.**
@@ -5994,6 +5995,32 @@ Kullanıcının yüklediği `atolye-erp-src-v1_444_0.zip` EKSİKTİ (önceki otu
   paketi başka dizine açınca `ln -sfn <paket> /home/claude/erp` gerekiyor.
 - **Paketlerken:** zip'i `src/` + `test/` + kök dosyaların TAMAMIYLA oluştur; paketledikten sonra
   `.satir-haritasi.json` ile `src/` dosya listesini ve `kosu.sh` listesiyle `test/`i karşılaştır.
+
+## YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Sayfayı yenilediğimizde her şeyi kapatıp ana sayfaya alıyor. Yenilemeyi aslında açılan
+yeni renk vs. güncellensin diye yapıyorum."
+
+**Karar:** veriyi sayfa açıkken yerinde tazelemek (bir "Buluttan yenile" düğmesi) açılış yüklemesini,
+fark belleğini (`tabloBaslangicTam`), iyimser kilit sürümlerini ve bekleyen yazma kuralını İKİNCİ bir
+yoldan kurmak demekti — yanlış kurulursa veri kaybı. Onun yerine yenileme tam ve temiz yükleme
+yapmaya devam ediyor, EKRAN geri getiriliyor.
+
+**Nasıl (095-pencereler + 100-app):** `sessionStorage["arayuz:durum"]` = etkin sekme, açık sekmeler,
+sekme geçmişi, CANLI pencereler (`urun`, `uretim`, `siparis` — yalnız kayıt kimliği taşıyan, her
+çizimde güncel veriden kurulanlar) ve etkin pencere. Her değişimde yazılıyor, açılışta `useState`
+ilk değerleri buradan. KOPYA taşıyan pencereler (reçete, maliyet, fiş, ekstre, depo-satınal, stok-fişi
+taslağı) geri getirilmiyor — yenilemeden sonra eski veriyi gösterirlerdi. Yükleme bitince kaydı
+silinmiş pencereler bir kez ayıklanıyor. sessionStorage sekmeye özel: yeni açılış ana sayfadan başlar;
+yenileme ve otomatik sürüm geçişi kaldığı yerden sürer. Çıkışta (`kullaniciCikisYap`) siliniyor.
+Modüllerin iç durumu (alt sekme, süzgeç, yarım form) geri gelmiyor.
+
+**yap.sh KORUMASI:** çıktı dosyası `origin/main`'de zaten varsa derleme DURUYOR ("önce SURUM'u
+artır"). Bu oturumda iki kez sürüm artırılmadan derlenip yayındaki dosya ezildi (commit'ten önce geri alındı).
+
+**Doğrulama:** `senaryo-yenileme-ekran` (YENİ): Stok + Sipariş sekmeleri ve SAT-Y1 penceresi açık →
+yenile → üçü de geri, pencere görünür; tohumdaki not değiştirilmiş → pencere yeni notu gösteriyor
+(veri yeniden okundu); kayda elle eklenen silinmiş-sipariş ve reçete pencereleri geri gelmiyor.
 
 ## OTOMATİK SÜRÜM GEÇİŞİ (25 Eylül, v1.447.0 — Claude Code oturumu)
 

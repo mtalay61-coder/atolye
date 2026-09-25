@@ -12,11 +12,14 @@ export default function AtolyeERP() {
   //
   // `setTab` sarmalandı: her çağrı sekmeyi listeye ekliyor ve geçmişe yazıyor. Uygulamada
   // ~50 `setTab` çağrısı var; her birini elle değiştirmek, birini atlamak demekti.
-  const [tab, setTabHam] = useState("anasayfa");
-  const [acikSekmeler, setAcikSekmeler] = useState(["anasayfa"]);
+  // YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0 — bkz. `arayuzDurumuOku`): sekmeler ve canlı
+  // pencereler sayfa yenilenince geri geliyor. İlk değerler kayıttan; kayıt yoksa ana sayfa.
+  const kayitliArayuz = useRef(arayuzDurumuOku()).current;
+  const [tab, setTabHam] = useState(kayitliArayuz ? kayitliArayuz.tab : "anasayfa");
+  const [acikSekmeler, setAcikSekmeler] = useState(kayitliArayuz ? kayitliArayuz.acikSekmeler : ["anasayfa"]);
   // Ziyaret sırası. Sekme kapatılınca ÖNCEKİNE dönmek için gerekiyor: liste sırası "hangi sırayla
   // açıldı"yı söyler, "en son neredeydim"i değil.
-  const sekmeGecmisi = useRef(["anasayfa"]);
+  const sekmeGecmisi = useRef(kayitliArayuz ? kayitliArayuz.sekmeGecmisi : ["anasayfa"]);
 
   const setTab = useCallback((anahtar) => {
     if (!anahtar) return;
@@ -315,7 +318,31 @@ export default function AtolyeERP() {
     acikPencereler, setAcikPencereler, aktifPencereId, setAktifPencereId,
     acikUrunIdleri, acikUretimIdleri, acikSiparisPencereleri,
     pencereAc, pencereKapat, pencereKucult,
-  } = usePencereler();
+  } = usePencereler(kayitliArayuz);
+
+  // Ekranın hâli her değişimde kaydediliyor; yenilemede geri gelsin (bkz. 095-pencereler).
+  useEffect(() => {
+    arayuzDurumuYaz({ tab, acikSekmeler, sekmeGecmisi: sekmeGecmisi.current, acikPencereler, aktifPencereId });
+  }, [tab, acikSekmeler, acikPencereler, aktifPencereId]);
+
+  // GERİ GELEN PENCERENİN KAYDI SİLİNMİŞ OLABİLİR (başka bilgisayardan silindi, yenileme de tam
+  // bunun için yapıldı). Yükleme bitince bir kez ayıklanıyor: kaydı olmayan pencere şeritte boş
+  // bir sekme olarak kalmasın.
+  const pencereAyiklandi = useRef(false);
+  useEffect(() => {
+    if (loading || pencereAyiklandi.current) return;
+    pencereAyiklandi.current = true;
+    const kayitVar = (p) => {
+      if (p.tip === "urun") return stok.some((x) => x.id === p.kayitId);
+      if (p.tip === "uretim") return uretim.some((x) => x.id === p.kayitId);
+      if (p.tip === "siparis") return siparisler.some((x) => x.id === p.kayitId);
+      return true;
+    };
+    if (acikPencereler.every(kayitVar)) return;
+    const kalan = acikPencereler.filter(kayitVar);
+    setAcikPencereler(kalan);
+    if (!kalan.some((p) => p.id === aktifPencereId)) setAktifPencereId(null);
+  }, [loading, stok, uretim, siparisler, acikPencereler, aktifPencereId, setAcikPencereler, setAktifPencereId]);
 
   // KISAYOLLAR (ERP standardı): aktif pencerenin çubuğundaki işlere bağlı. Ctrl+S tarayıcının
   // "sayfayı kaydet" penceresini, F5 yenilemeyi açmasın diye varsayılan engelleniyor — ama
@@ -2655,6 +2682,7 @@ export default function AtolyeERP() {
     // sanan kullanıcının oturumunun açık kalması demekti.
     supabaseCikis();
     oturumTemizle();
+    arayuzDurumuSil();   // sonraki kullanıcı yenileyince bu kişinin ekranları açılmasın
     setBulutKimligi(false);
     setBulutGirisAyrinti(null);
     setBulutAyrintiAcik(false);
