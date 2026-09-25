@@ -783,6 +783,42 @@ function hesapBakiyesi(hesap, defter) {
 }
 
 const MUHASEBE_RENK = "#2F6B4F";
+// ---- TUTAR YAZIYLA (25 Eylül, v1.460.0) ------------------------------------------------------
+//
+// Çek bordrosu/makbuzunda tutar rakamın yanında yazıyla da basılıyor ("Yalnız kırk iki bin TL"):
+// sonradan elle eklenen bir rakamın belgeyle çelişmesini gösteren olağan önlem. Türkçe kurallar:
+// "bir yüz" değil "yüz", "bir bin" değil "bin" (ama "yüz bir bin", "iki yüz bir bin"); kelimeler
+// bitişik yazılır (belge alışkanlığı: "kırkikibin"). Kuruş iki haneye yuvarlanıyor.
+const PARA_YAZI_ADLARI = { TRY: ["TL", "kuruş"], USD: ["ABD Doları", "sent"], EUR: ["Avro", "sent"] };
+function sayiYaziyla(n) {
+  const birler = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"];
+  const onlar = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"];
+  const basamaklar = ["", "bin", "milyon", "milyar", "trilyon"];
+  const ucluk = (x) => {
+    const y = Math.floor(x / 100), o = Math.floor((x % 100) / 10), b = x % 10;
+    return (y ? (y === 1 ? "" : birler[y]) + "yüz" : "") + onlar[o] + birler[b];
+  };
+  n = Math.floor(Math.abs(n));
+  if (n === 0) return "sıfır";
+  let sonuc = "", i = 0;
+  while (n > 0 && i < basamaklar.length) {
+    const parca = n % 1000;
+    if (parca) {
+      // Yalnız "1000" tek başına "bin" (bir bin değil); 101.000 = "yüzbirbin".
+      const metin = i === 1 && parca === 1 ? "" : ucluk(parca);
+      sonuc = metin + basamaklar[i] + sonuc;
+    }
+    n = Math.floor(n / 1000); i += 1;
+  }
+  return sonuc;
+}
+function tutarYaziyla(tutar, paraBirimi) {
+  const t = Math.round(Math.abs(Number(tutar) || 0) * 100);
+  const tam = Math.floor(t / 100), kurus = t % 100;
+  const [ana, alt] = PARA_YAZI_ADLARI[paraBirimi || "TRY"] || [paraBirimi || "", ""];
+  return `${sayiYaziyla(tam)} ${ana}${kurus ? ` ${sayiYaziyla(kurus)} ${alt}` : ""}`;
+}
+
 const MUHASEBE_PARA_BIRIMLERI = ["TRY", "USD", "EUR"];
 const PARA_SEMBOLU = { TRY: "₺", USD: "$", EUR: "€" };
 

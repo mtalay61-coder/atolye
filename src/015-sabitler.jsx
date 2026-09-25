@@ -455,9 +455,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.459.0";
+const SURUM = "1.460.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Cek girisinde ve ciroda cari birimine kur cevirici; cekte son islemi geri al";
+const SURUM_NOTU = "Cek islemlerinde yazdir: giris, ciro, tahsil bordrosu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -466,6 +466,11 @@ const SURUM_NOTU = "Cek girisinde ve ciroda cari birimine kur cevirici; cekte so
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.460.0", tarih: "25.09.2026",
+    eklenen: ["Çek & Senet'te 'Yazdır': çek giriş bordrosu, ciro/iade/tahsile verme bordrosu, tahsil makbuzu — tutar yazıyla, imza alanları, çek fotoğrafı; PDF ve paylaşım",
+              "Çek geçmişinde her işlemin kendi yazdır düğmesi"],
+    degisen: [],
+    duzeltilen: [] },
   { surum: "1.459.0", tarih: "25.09.2026",
     eklenen: ["Çek girişinde kur çevirici: TL çek dolar carisine $ olarak işlenebilir (Çek & Senet'te 'Cari hesabı' birimi; cari kartında çekin kendi para birimi ve tutarı)",
               "Çek listesinde 'Son İşlemi Geri Al': ciro, iade, tahsil, bankaya tahsile verme ve karşılıksız geri alınır, çek önceki durumuna döner"],
