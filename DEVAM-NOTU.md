@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.462.0** · 25 Eylül 2026
+Son sürüm: **v1.463.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.462.0): fişi kayıp cirolu çekte "Son İşlemi Geri Al" (`cekIslemHareketiBul`).** Bkz. "ÇEK: FİŞİ KAYIP İŞLEM". Önceki: v1.461.0 çek özeti.
+**Son iş (25 Eylül, v1.463.0): Finans ▸ Finans Raporu — varlık özeti, iki defter, tarih itibarıyla, kayıtlı raporlar (`248-finans-rapor`).** Bkz. "FİNANS RAPORU".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,47 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## FİNANS RAPORU — VARLIK / YÜKÜMLÜLÜK (25 Eylül, v1.463.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Finans raporu ekleyelim. Birden fazla rapor, sipariş raporu gibi kaydederiz. Varlık
+raporu örnek: alacaklar, borçlar, hammadde stok mali değeri, mamul stok değeri, portföydeki çekler,
+yazılan çekler… çok detaylı. 2 defter için ayrı filtreleyerek rapor şablonu. Büyük uygulamalardan
+esinlen."
+
+- Menü: Finans ▸ **Finans Raporu** (sekme `finansrapor`, yetki `muhasebe`). Dosya `248-finans-rapor`.
+- **Satır üretici** `finansRaporSatirlari({cariler, muhasebe, stok, kurlar, defter, tarih,
+  mamulDegerleme})`: her para kalemi bir satır — kasa/banka hesabı, carinin PB başına bakiyesi
+  (+ → Ticari Alacaklar, − → Ticari Borçlar; kalem cari tipinden "Müşteri alacağı" vb.), çek
+  (alınan: Portföydeki / Bankada tahsildeki / Karşılıksız (şüpheli) = Varlık; ciro edilmiş ve
+  vadesi gelmemiş = **Bilgi** (nazım/risk, net varlığa girmez); şahsi çek Portföyde/Tahsilde =
+  Yükümlülük "Ödenecek şahsi çek"), stok varyantı (Hammadde/Yarı Mamul: `hammaddeBirimFiyati`;
+  Mamul: `finansMamulBirimDegeri` — reçete hammadde maliyeti [işçilik/genel gider YOK] ya da satış
+  ya da kart alış fiyatı). Hizmet stok dışı.
+- Alanlar: Taraf, Grup, Kalem, Ad, Ayrıntı, Defter, P.B., Tutar, TL Karşılığı, **Net Etki (TL)**
+  (varlık +, yükümlülük −, bilgi 0 — hangi süzgeçle toplanırsa toplansın net varlığı verir), Miktar,
+  Birim Değer, Vade, Vade Ayı, Vade Durumu (geçmiş/0-30/31-60/61-90/90+), Son Hareket, Not.
+- **Defter:** cari/kasa hareketi kendi defteri (`defterKapsar`, Muhasebe = ikisine de); çek giriş
+  hareketinin defteri (yoksa Genel); **stok deftersiz** (stok hareketi defter taşımıyor) — her
+  defterde aynı, ekranda yazılı. "Genel · Resmi yan yana": iki defterin satırları + özet iki sütun
+  ve fark.
+- **Tarih itibarıyla:** hareket tarihi ≤ seçilen gün; çek durumu geçmiş satırları oynatılarak
+  (geri alma satırları da `yeniDurum` taşıdığı için doğru). Bugün/boşsa çekin kayıtlı durumu.
+- **Kur:** `muhasebe.kurlar`; kuru olmayan birim TL karşılığı null, net 0, notta "kuru yok",
+  özetin altında uyarı — sessizce 1:1 sayılmıyor. Fiyatı/maliyeti olmayan stok 0 + uyarı.
+- **Üstte Varlık Özeti** (`finansOzet`): grup toplamları, toplam varlık/yükümlülük, NET VARLIK;
+  yazdır düğmesi.
+- **Kayıtlı raporlar:** sipariş raporunun motoru (`RaporSekmesi`, modül "finans"). Hazır şablonlar
+  kodda (`FINANS_HAZIR_RAPORLAR`, sabit kimlik): Varlık Raporu (yalnız Net Etki — TL karşılığı
+  toplamı varlıkla borcu toplardı), Alacaklar ve Borçlar, Çekler ve Vadeler, Stok Değeri, Döviz
+  Pozisyonu, Nakit Takvimi (çek vadeleri, vade ayına göre). Kaydederken DOKUNULMAMIŞ hazırlar
+  veriye yazılmıyor (nesne kimliğiyle süzülüyor); değiştirilip kaydedilen hazır aynı kimlikle
+  yazılır ve geçerli olur; silinen hazır şablon yeniden görünür.
+- Sonraki adım fikirleri (yapılmadı): alacak yaşlandırma (FIFO ile fatura bazlı), işçilik/genel
+  giderli mamul maliyeti, nakit akış projeksiyonuna açık sipariş vadeleri, dönem karşılaştırma
+  (iki tarih yan yana).
+- Test: `birim-finans-rapor.js` (defter, tarih, çek durumları, stok değeri, kur yok, özet),
+  `senaryo-finans-rapor.js`; `menu-gruplari`/`finans-menu` altınları "Finans Raporu" ile.
 
 ## ÇEK: FİŞİ KAYIP İŞLEM — SON İŞLEMİ GERİ AL (25 Eylül, v1.462.0 — Claude Code oturumu)
 

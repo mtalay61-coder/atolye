@@ -20,6 +20,7 @@
   "Cari",
   "Kasa & Banka",
   "Çek & Senet",
+  "Finans Raporu",
   "Gelir / Gider",
   "Fişler",
   "Sohbet",
