@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.450.0** · 25 Eylül 2026
+Son sürüm: **v1.451.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.450.0): üst menü ÖLÇEREK sığıyor (kademeli sıkışma) + stok kategori şeritleri açık.** Bkz. "YENİ TASARIM" sonu.
+**Son iş (25 Eylül, v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde (kademe 4).** Bkz. "YENİ TASARIM" sonu.
+Önceki (v1.450.0): üst menü ölçerek sığıyor + stok kategori şeritleri açık.
 Önceki (v1.449.0): YENİ TASARIM — yan kolon kalktı (üst menü), açık "A" paleti.
 Önceki (v1.448.0): yenilemede ekran korunuyor.
 Önceki (v1.447.0): yeni sürüme otomatik geçiş (surum.json).
@@ -6066,6 +6067,15 @@ bant + beyaz yazı → kategori renginin %8 tonu, 1px %20 kenar, yazı/ikon kate
 
 **yap.sh:** koruma artık önce `git fetch origin main` yapıyor. PR telefondan birleştirildiğinde
 yerel origin/main eski kalmış, v1.449 yayındayken üstüne derlenmişti (commit öncesi geri alındı).
+
+### v1.451.0 — ☰ MENÜ KADEMESİ (25 Eylül)
+**Kullanıcı** (telefon ekran görüntüsü, ~430px, "Masaüstü görünümü" seçili — `body.masaustu-duzen`
+üst menüyü 720px altında da gösteriyor): kademe 3'te bile ikonlar üst üste biniyordu. **Kademe 4**
+(`sik-4`): normal menü (`.ust-menu-normal`) gizli, tek "Menü" düğmesi (`.ust-menu-dar`, aria-label
+"Menü") — açılır listede bütün modüller grup başlıklarıyla. Menü tanımı artık TEK TABLO (100-app,
+`menu` dizisi): normal menü ve ☰ listesi aynı tablodan, yetki koşulları aynı. ☰ öğeleri `data-nav`
+DEĞİL `data-nav-dar` taşıyor (aynı ad iki düğmede olmasın). Ölçüldü: 430px masaüstü kipinde sik-4,
+taşma yok, öğe seçince liste kapanıp modül açılıyor. Anasayfa başlığı Space Grotesk → tema yazı tipi.
 
 ## YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0 — Claude Code oturumu)
 

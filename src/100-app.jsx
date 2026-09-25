@@ -156,8 +156,8 @@ export default function AtolyeERP() {
   const ustMenuSigdir = useCallback(() => {
     const menu = ustMenuRef.current, nav = ustMenuNavRef.current;
     if (!menu || !nav) return;
-    for (let k = 0; k <= 3; k++) {
-      menu.classList.remove("sik-1", "sik-2", "sik-3");
+    for (let k = 0; k <= 4; k++) {
+      menu.classList.remove("sik-1", "sik-2", "sik-3", "sik-4");
       if (k > 0) menu.classList.add(`sik-${k}`);
       // Taşma: içerik, ayrılan alandan geniş. (overflow görünür olsa da scrollWidth taşanı sayar.)
       if (nav.scrollWidth <= nav.clientWidth + 1) return;
@@ -2977,10 +2977,14 @@ export default function AtolyeERP() {
         /* SIKISIKLIK KADEMELERI (25 Eylul, kullanici tabletinde "Finans" ikonlarin altina girdi):
            genislik esigi yetmiyor, cihazin yazi boyutu ayari menuyu genisletiyor. Kademeyi olcum
            belirliyor (ustMenuSigdir): 1 grup ikonlari gizli, 2 yalniz ikon (yazilar gizli),
-           3 ek olarak Anasayfa dugmesi gizli (logo zaten anasayfaya goturuyor). */
+           3 ek olarak Anasayfa dugmesi gizli (logo zaten anasayfaya goturuyor), 4 butun gruplar tek
+           "Menu" dugmesinde (telefon masaustu gorunumunde 3 bile sigmadi, 25 Eylul). */
         .ust-menu.sik-1 .ust-menu-grup-ikon { display: none !important; }
         .ust-menu.sik-2 .ust-menu-etiket, .ust-menu.sik-3 .ust-menu-etiket { display: none; }
         .ust-menu.sik-3 [data-nav="Anasayfa"] { display: none !important; }
+        .ust-menu-dar { display: none; }
+        .ust-menu.sik-4 .ust-menu-normal { display: none !important; }
+        .ust-menu.sik-4 .ust-menu-dar { display: block; }
         body.masaustu-duzen .mobile-tabs { display: none !important; }
 
         /* MATRIS TABLO GORUNUMU (15 Eylul): baslik zemini, ince dikey cizgiler, zebra satir.
@@ -3206,33 +3210,72 @@ export default function AtolyeERP() {
               </span>
             </button>
             <div ref={ustMenuNavRef} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, position: "relative", zIndex: 2 }}>
-              <button type="button" data-nav="Anasayfa" title="Anasayfa" onClick={() => git("anasayfa")} style={ustDugme(tab === "anasayfa")}>
-                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}><Home size={15} /></span><span className="ust-menu-etiket">Anasayfa</span>
-              </button>
-              <Grup ad="Depo" ikon={<Layers size={15} />} sekmeler={["stok", "depo", "paketleme"]}>
-                {oge("stok", "Stok", <Boxes size={16} />)}
-                {oge("depo", "Depo", <Layers size={16} />)}
-                {oge("paketleme", "Paketleme", <PackageCheck size={16} />)}
-              </Grup>
-              <Grup ad="Üretim" ikon={<Hammer size={15} />} sekmeler={["uretim", "modelhane"]}>
-                {kullaniciYetkisiVar("uretim", "goruntuleme") && oge("uretim", "Üretim", <Hammer size={16} />)}
-                {kullaniciYetkisiVar("stok", "goruntuleme") && oge("modelhane", "Modelhane", <Palette size={16} />)}
-              </Grup>
-              {/* PLANLAMA GRUPSUZ (kullanıcı, 17 Eylül: "planlama başlı başına sekme olsun"). */}
-              <button type="button" data-nav="Planlama" title="Planlama" onClick={() => git("planlama")} style={ustDugme(tab === "planlama")}>
-                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}><Compass size={15} /></span><span className="ust-menu-etiket">Planlama</span>
-              </button>
-              <Grup ad="Siparişler" ikon={<ClipboardList size={15} />} sekmeler={["siparis", "satinalma"]}>
-                {oge("siparis", "Sipariş", <ClipboardList size={16} />)}
-                {oge("satinalma", "Alış Siparişi", <PackageCheck size={16} />)}
-              </Grup>
-              <Grup ad="Finans" ikon={<Wallet size={15} />} sekmeler={["muhasebe", "fisler", "cari", "gelirgider"]}>
-                {kullaniciYetkisiVar("cari", "goruntuleme") && oge("cari", "Cari", <Users size={16} />)}
-                {kullaniciYetkisiVar("muhasebe", "goruntuleme") && oge("muhasebe", "Muhasebe", <Wallet size={16} />)}
-                {/* GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde. */}
-                {kullaniciYetkisiVar("muhasebe", "goruntuleme") && oge("gelirgider", "Gelir / Gider", <FileText size={16} />)}
-                {kullaniciYetkisiVar("fisler", "goruntuleme") && oge("fisler", "Fişler", <FileText size={16} />)}
-              </Grup>
+              {(() => {
+                // MENÜ TANIMI TEK YERDE: normal menü ve dar ekrandaki ☰ listesi aynı tablodan
+                // çiziliyor — biri güncellenip öteki unutulmasın. Gruplar ve yetki koşulları
+                // eski yan menüyle aynı (17 Eylül kararları; Planlama grupsuz).
+                const yetki = (m) => kullaniciYetkisiVar(m, "goruntuleme");
+                const menu = [
+                  { tek: "anasayfa", ad: "Anasayfa", ikon: <Home size={15} /> },
+                  { ad: "Depo", ikon: <Layers size={15} />, ogeler: [
+                    ["stok", "Stok", <Boxes size={16} />], ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />]] },
+                  { ad: "Üretim", ikon: <Hammer size={15} />, ogeler: [
+                    yetki("uretim") && ["uretim", "Üretim", <Hammer size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
+                  { tek: "planlama", ad: "Planlama", ikon: <Compass size={15} /> },
+                  { ad: "Siparişler", ikon: <ClipboardList size={15} />, ogeler: [
+                    ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
+                  { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
+                    yetki("cari") && ["cari", "Cari", <Users size={16} />], yetki("muhasebe") && ["muhasebe", "Muhasebe", <Wallet size={16} />],
+                    // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
+                    yetki("muhasebe") && ["gelirgider", "Gelir / Gider", <FileText size={16} />], yetki("fisler") && ["fisler", "Fişler", <FileText size={16} />]] },
+                ].map((g) => (g.ogeler ? { ...g, ogeler: g.ogeler.filter(Boolean) } : g));
+                return (
+                  <>
+                    <div className="ust-menu-normal" style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      {menu.map((g) => (g.tek ? (
+                        <button key={g.tek} type="button" data-nav={g.ad} title={g.ad} onClick={() => git(g.tek)} style={ustDugme(tab === g.tek)}>
+                          <span className="ust-menu-grup-ikon" style={{ display: "flex" }}>{g.ikon}</span><span className="ust-menu-etiket">{g.ad}</span>
+                        </button>
+                      ) : (
+                        <Grup key={g.ad} ad={g.ad} ikon={g.ikon} sekmeler={g.ogeler.map((o) => o[0])}>
+                          {g.ogeler.map(([anahtar, label, icon]) => <React.Fragment key={anahtar}>{oge(anahtar, label, icon)}</React.Fragment>)}
+                        </Grup>
+                      )))}
+                    </div>
+                    {/* ☰ MENÜ — en dar kademe (sik-4): en sıkışık hâl bile sığmayınca (telefon masaüstü
+                        görünümünde, kullanıcı ekran görüntüsü 25 Eylül) bütün modüller tek listede.
+                        Öğeler `data-nav` TAŞIMIYOR: aynı ad iki düğmede olmasın (testler ve kısayollar
+                        ilkini bulur); tıklama aynı `git`e gidiyor. */}
+                    <div className="ust-menu-dar" style={{ position: "relative" }}>
+                      <button type="button" aria-label="Menü" title="Menü" aria-expanded={acikUstMenu === "dar"} onClick={() => grupAc("dar")}
+                        style={{ ...ustDugme(false), gap: 6 }}>
+                        <Menu size={18} /> <span>Menü</span>
+                      </button>
+                      <div style={{
+                        display: acikUstMenu === "dar" ? "flex" : "none", flexDirection: "column", gap: 2, position: "absolute", top: 42, left: 0, zIndex: 20,
+                        width: 240, maxHeight: "calc(100vh - 80px)", overflowY: "auto", padding: 6, background: "var(--erp-panel)",
+                        border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-lg)", boxShadow: "0 12px 32px rgba(16, 24, 40, 0.12)",
+                      }}>
+                        {menu.map((g) => (g.tek ? (
+                          <button key={g.tek} type="button" data-nav-dar={g.ad} onClick={() => git(g.tek)} style={{ ...ustDugme(tab === g.tek), width: "100%", justifyContent: "flex-start", fontWeight: tab === g.tek ? 700 : 500 }}>
+                            {g.ikon}{g.ad}
+                          </button>
+                        ) : g.ogeler.length > 0 && (
+                          <div key={g.ad} style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--erp-text-3)", padding: "4px 10px 2px" }}>{g.ad}</div>
+                            {g.ogeler.map(([anahtar, label, icon]) => (
+                              <button key={anahtar} type="button" data-nav-dar={label} onClick={() => git(anahtar)}
+                                style={{ ...ustDugme(tab === anahtar), width: "100%", justifyContent: "flex-start", fontWeight: tab === anahtar ? 700 : 500 }}>
+                                {icon}{label}
+                              </button>
+                            ))}
+                          </div>
+                        )))}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 2 }}>
               {/* SOHBET: her an lazım, ikon + rozet. */}
