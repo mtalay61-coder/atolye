@@ -1,0 +1,28 @@
+{
+ "belirsiz": {
+  "durum": "Ciro Edildi",
+  "mesaj": "Bu işlemin fişi kimlikle bulunamadı, benzer 2 fiş var (ODM-0906003, ODM-0906004) — hangisi olduğu tahmin edilmedi. Doğru fişi cari ekstresinden silin, sonra tekrar deneyin.",
+  "tedarikciCiroFisleri": [
+   "ODM-0906003",
+   "ODM-0906004"
+  ]
+ },
+ "hatalar": [],
+ "kayip": {
+  "durum": "Portföyde",
+  "mesaj": "Bu işlemin cari fişi zaten yoktu (daha önce silinmiş ya da buluta hiç ulaşmamış) — cari hesaba dokunulmadı, K1 yeniden \"Portföyde\". Tedarikçi A ekstresini kontrol edin.",
+  "tedarikciCiroFisleri": [
+   "ODM-0906002",
+   "ODM-0906003",
+   "ODM-0906004"
+  ]
+ },
+ "kopya": {
+  "durum": "Portföyde",
+  "mesaj": "ODM-0906002 silindi — K2 yeniden \"Portföyde\"",
+  "tedarikciCiroFisleri": [
+   "ODM-0906003",
+   "ODM-0906004"
+  ]
+ }
+}

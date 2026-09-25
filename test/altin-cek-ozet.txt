@@ -1,0 +1,65 @@
+{
+ "ac": {
+  "dokununcaAcildi": true,
+  "dugmeKapatmadi": true,
+  "tekrarDokununcaKapandi": true
+ },
+ "ciro": {
+  "kimden": [
+   "KİMDEN ALINDI",
+   "Müşteri B",
+   "10.09.2026 · THS-0910001"
+  ],
+  "nerede": [
+   "ŞU AN",
+   "Ciro edildi → Tedarikçi A",
+   "15.09.2026 · ODM-0915001",
+   "Karşı tarafa işlenen: 1.000 $"
+  ],
+  "vade": [],
+  "yolculuk": [
+   {
+    "cizili": false,
+    "metin": "10.09.2026 Çek alındı Müşteri B THS-0910001"
+   },
+   {
+    "cizili": false,
+    "metin": "15.09.2026 Ciro Et Tedarikçi A ODM-0915001"
+   }
+  ]
+ },
+ "hatalar": [],
+ "tahsilde": {
+  "kimden": [
+   "KİMDEN ALINDI",
+   "Müşteri B",
+   "12.09.2026 · THS-0912001"
+  ],
+  "nerede": [
+   "ŞU AN",
+   "Bankada tahsilde → Ziraat TL",
+   "16.09.2026"
+  ],
+  "vade": [
+   "Vadeye 5 gün var"
+  ],
+  "yolculuk": [
+   {
+    "cizili": false,
+    "metin": "12.09.2026 Çek alındı Müşteri B THS-0912001"
+   },
+   {
+    "cizili": true,
+    "metin": "13.09.2026 Bankaya Tahsile Ver Ziraat TL geri alındı"
+   },
+   {
+    "cizili": false,
+    "metin": "14.09.2026 Tahsile verme geri alındı"
+   },
+   {
+    "cizili": false,
+    "metin": "16.09.2026 Bankaya Tahsile Ver Ziraat TL"
+   }
+  ]
+ }
+}

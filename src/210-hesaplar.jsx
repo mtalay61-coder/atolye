@@ -1350,7 +1350,18 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
             const cari = c.cariId ? (cariler || []).find((x) => x.id === c.cariId) : null;
             const renk = CEK_DURUM_RENK[c.durum] || "var(--erp-text-2)";
             return (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", flexWrap: "wrap" }}>
+              <div
+                key={c.id}
+                data-cek-satir={c.id}
+                // SATIRA DOKUNUNCA ÖZET AÇILIR (v1.461.0 — kullanıcı: "çekin üzerine tıklayınca kimden
+                // alıp kime ciro ettiğimiz veya son durumu açılsın"). Satırdaki düğme, görsel ve
+                // özet panelinin içi kendi işini yapıyor; yalnız boş alana/yazıya dokunuş açıp kapatır.
+                onClick={(e) => {
+                  if (e.target.closest("button, a, input, select, img, [data-cek-ozet]")) return;
+                  setGecmisCekId(gecmisCekId === c.id ? null : c.id);
+                }}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#fff", border: `1px solid ${gecmisCekId === c.id ? "var(--erp-accent)" : "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)", flexWrap: "wrap", cursor: "pointer" }}
+              >
                 <span className="mono" style={{ fontWeight: 700, fontSize: 12, color: c.tip === "Alınan" ? "var(--erp-primary)" : "var(--erp-warn)" }}>{c.tip}</span>
                 <span className="mono" style={{ fontSize: 12 }}>{c.cekNo || "—"}</span>
                 {cari && <span style={{ fontSize: 12, color: "var(--erp-info)" }}>{cari.unvan}</span>}
@@ -1408,16 +1419,15 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     </button>
                   );
                 })()}
-                {(c.gecmis || []).length > 0 && (
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    style={{ padding: "3px 10px", fontSize: 11, color: "var(--erp-text-2)" }}
-                    onClick={() => setGecmisCekId(gecmisCekId === c.id ? null : c.id)}
-                  >
-                    <FileText size={12} /> Geçmiş ({(c.gecmis || []).length})
-                  </button>
-                )}
+                <button
+                  type="button"
+                  data-cek-ayrinti={c.id}
+                  className="btn-ghost"
+                  style={{ padding: "3px 10px", fontSize: 11, color: "var(--erp-text-2)" }}
+                  onClick={() => setGecmisCekId(gecmisCekId === c.id ? null : c.id)}
+                >
+                  <FileText size={12} /> Ayrıntı{(c.gecmis || []).length > 0 ? ` · Geçmiş (${(c.gecmis || []).length})` : ""}
+                </button>
                 {/* ÇEK RESMİ — ön ve arka. Fotoğraf ÇEKİN KENDİSİNİN kanıtı: numara, keşideci ve
                     banka elle girilirken yanlış yazılabilir, fotoğraf yazılamaz. Küçük önizleme
                     satırda; büyütmek ve değiştirmek için tıklanıyor. */}
@@ -1489,41 +1499,71 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                   </button>
                 )}
                 <SilOnayButonu onConfirm={() => onSil(c.id)} boyut={12} />
-                {/* GEÇMİŞ — aşama aşama, eskiden yeniye. Geçmiş EKLENİR, üzerine yazılmaz:
-                    çekin nereden geçtiği sorusunun tek cevabı burası. */}
-                {gecmisCekId === c.id && (
-                  <div style={{ flexBasis: "100%", marginTop: 8, padding: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", display: "grid", gap: 4 }}>
-                    {/* Girişin kendi satırı: giriş bordrosu geçmişten de basılabilsin. */}
-                    {onYazdir && (
-                      <div className="mono" style={{ fontSize: 11, color: "var(--erp-text)", display: "flex", gap: 8 }}>
-                        <b>Giriş</b><span style={{ color: "var(--erp-text-2)" }}>çek defterine kayıt</span>
-                        <button type="button" data-cek-giris-yazdir={c.id} className="btn-ghost" title="Giriş bordrosunu yazdır"
-                          style={{ padding: "0 6px", fontSize: 10, marginLeft: "auto" }} onClick={() => onYazdir(c.id, null)}>
-                          <Printer size={11} />
-                        </button>
+                {/* ÇEK ÖZETİ + GEÇMİŞ (v1.461.0). Üstte üç soru cümleyle: kimden geldi, şimdi nerede,
+                    vadesine ne kadar var (kural `cekOzeti`). Altta yolculuk: giriş + her işlem,
+                    eskiden yeniye; geri alınan işlem üstü çizili. Geçmiş EKLENİR, üzerine yazılmaz. */}
+                {gecmisCekId === c.id && (() => {
+                  const oz = cekOzeti(c, { cariler });
+                  const renk = CEK_DURUM_RENK[c.durum] || "var(--erp-text-2)";
+                  const para = (t, p) => `${Number(t || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[p] || p}`;
+                  const kutu = { padding: "8px 10px", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", display: "grid", gap: 2, fontSize: 12 };
+                  const baslik = { fontSize: 10, fontWeight: 700, color: "var(--erp-text-3)", textTransform: "uppercase", letterSpacing: ".04em" };
+                  return (
+                    <div data-cek-ozet={c.id} style={{ flexBasis: "100%", marginTop: 8, padding: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", display: "grid", gap: 10, cursor: "default" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8 }}>
+                        <div style={kutu} data-cek-ozet-kimden="1">
+                          <span style={baslik}>{oz.kimden.etiket}</span>
+                          <b style={{ color: "var(--erp-info)" }}>{oz.kimden.ad || "—"}</b>
+                          <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>
+                            {oz.kimden.tarih ? tarihYaz(oz.kimden.tarih) : "tarih yok"}{oz.kimden.fisNo ? ` · ${oz.kimden.fisNo}` : ""}
+                          </span>
+                          {oz.kimden.islenen && (
+                            <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Cariye işlenen: <b className="mono">{para(oz.kimden.islenen.tutar, oz.kimden.islenen.pb)}</b></span>
+                          )}
+                        </div>
+                        <div style={{ ...kutu, borderColor: renk }} data-cek-ozet-nerede="1">
+                          <span style={baslik}>Şu an</span>
+                          <b style={{ color: renk }}>{oz.nerede.cumle}</b>
+                          {(oz.nerede.tarih || oz.nerede.fisNo) && (
+                            <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>
+                              {oz.nerede.tarih ? tarihYaz(oz.nerede.tarih) : ""}{oz.nerede.fisNo ? ` · ${oz.nerede.fisNo}` : ""}
+                            </span>
+                          )}
+                          {oz.nerede.islenen && (
+                            <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Karşı tarafa işlenen: <b className="mono">{para(oz.nerede.islenen.tutar, oz.nerede.islenen.pb)}</b></span>
+                          )}
+                        </div>
+                        <div style={kutu} data-cek-ozet-vade="1">
+                          <span style={baslik}>Vade</span>
+                          <b className="mono">{c.vadeTarihi ? tarihYaz(c.vadeTarihi) : "—"}</b>
+                          {oz.vade && (
+                            <span style={{ fontSize: 11, fontWeight: 700, color: oz.vade.gun < 0 ? "var(--erp-warn)" : oz.vade.gun <= 7 ? "#B7791F" : "var(--erp-text-2)" }}>{oz.vade.metin}</span>
+                          )}
+                          <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{para(c.tutar, c.paraBirimi || "TRY")}{c.banka ? ` · ${c.banka}` : ""}</span>
+                        </div>
                       </div>
-                    )}
-                    {(c.gecmis || []).map((g) => (
-                      <div key={g.id} className="mono" style={{ fontSize: 11, color: "var(--erp-text)", display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <span style={{ color: "var(--erp-text-3)" }}>{tarihYaz(g.tarih)}</span>
-                        <b>{g.islem}</b>
-                        <span style={{ color: "var(--erp-text-2)" }}>{g.oncekiDurum} → {g.yeniDurum}</span>
-                        {g.cariAd && <span style={{ color: "var(--erp-info)" }}>{g.cariAd}</span>}
-                        {g.bankaAd && <span style={{ color: "var(--erp-info)" }}>{g.bankaAd}</span>}
-                        {g.tutar != null && g.paraBirimi && (
-                          <span>{g.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[g.paraBirimi] || g.paraBirimi}</span>
-                        )}
-                        {g.kullanici && <span style={{ color: "var(--erp-text-3)" }}>· {g.kullanici}</span>}
-                        {onYazdir && (
-                          <button type="button" data-cek-gecmis-yazdir={g.id} className="btn-ghost" title={`${g.islem} belgesini yazdır`}
-                            style={{ padding: "0 6px", fontSize: 10, marginLeft: "auto" }} onClick={() => onYazdir(c.id, g.id)}>
-                            <Printer size={11} />
-                          </button>
-                        )}
+                      <div style={{ display: "grid", gap: 4 }}>
+                        <span style={baslik}>Yolculuk</span>
+                        {oz.adimlar.map((a, i) => (
+                          <div key={a.id || "giris"} data-cek-adim={i} className="mono" style={{ fontSize: 11, color: a.iptal || a.geriAlma ? "var(--erp-text-3)" : "var(--erp-text)", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ color: "var(--erp-text-3)", minWidth: 70 }}>{a.tarih ? tarihYaz(a.tarih) : "—"}</span>
+                            <b style={{ textDecoration: a.iptal ? "line-through" : "none" }}>{a.baslik}</b>
+                            {a.ayrinti && <span style={{ color: "var(--erp-info)" }}>{a.ayrinti}</span>}
+                            {a.fisNo && <span style={{ color: "var(--erp-text-2)" }}>{a.fisNo}</span>}
+                            {a.iptal && <span style={{ fontSize: 10, color: "var(--erp-warn)" }}>geri alındı</span>}
+                            {onYazdir && (
+                              <button type="button" {...(a.id ? { "data-cek-gecmis-yazdir": a.id } : { "data-cek-giris-yazdir": c.id })} className="btn-ghost"
+                                title={`${a.baslik} belgesini yazdır`} style={{ padding: "0 6px", fontSize: 10, marginLeft: "auto" }}
+                                onClick={() => onYazdir(c.id, a.id)}>
+                                <Printer size={11} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}

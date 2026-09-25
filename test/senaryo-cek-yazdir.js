@@ -97,7 +97,7 @@ async function calistir() {
   await sayfa.waitForTimeout(1200);
   const geriAlindiktanSonraDurum = ((((await depoOku(sayfa, "muhasebe:data")) || {}).cekler || [])[0] || {}).durum;
   // Geçmiş: giriş + ciro + geri alma satırları, her birinin yazdır düğmesi.
-  await sayfa.evaluate(() => [...document.querySelectorAll("button")].find((x) => /^.?\s*Geçmiş/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0).click());
+  await sayfa.locator('[data-cek-ayrinti="ck1"]').click();   // v1.461.0: "Geçmiş" → "Ayrıntı"
   await sayfa.waitForTimeout(400);
   const gecmisYazdirDugmeleri = await sayfa.evaluate(() => ({
     giris: document.querySelectorAll("[data-cek-giris-yazdir]").length,

@@ -2700,6 +2700,7 @@ export default function AtolyeERP() {
     gelirgider: "Gelir / Gider Kartları",
     muhasebe: "Kasa & Banka",
     cekler: "Çek & Senet",
+    finansrapor: "Finans Raporu",
     planlama: "Planlama",
     // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
     // çizgi duruyor, modül kendi büyük başlığını bir daha basıyordu. Başlık buraya, modülünki kalktı.
@@ -3252,6 +3253,8 @@ export default function AtolyeERP() {
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
                     yetki("cari") && ["cari", "Cari", <Users size={16} />], yetki("muhasebe") && ["muhasebe", "Kasa & Banka", <Wallet size={16} />],
                     yetki("muhasebe") && ["cekler", "Çek & Senet", <Receipt size={16} />],
+                    // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
+                    yetki("muhasebe") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
                     yetki("muhasebe") && ["gelirgider", "Gelir / Gider", <FileText size={16} />], yetki("fisler") && ["fisler", "Fişler", <FileText size={16} />]] },
                 ].map((g) => (g.ogeler ? { ...g, ogeler: g.ogeler.filter(Boolean) } : g));
@@ -4041,6 +4044,24 @@ export default function AtolyeERP() {
               sekmede duran veri, ağ sekmesini açan herkese görünür olurdu. */}
           {tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (
             <GunlukPaneli showToast={showToast} />
+          )}
+          {/* FİNANS RAPORU (v1.463.0): varlık özeti + kayıtlı finans raporları (248-finans-rapor).
+              Yalnız açıkken çiziliyor — bütün cari/stok/çek verisini dolaşan ağır bir hesap. */}
+          {tab === "finansrapor" && (
+            !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (
+              <EmptyState text="Finans raporunu görüntüleme yetkiniz yok." />
+            ) : (
+              <FinansRaporu
+                cariler={cariler}
+                muhasebe={muhasebe}
+                stok={stok}
+                raporlar={tanimlar.raporlar || []}
+                onRaporlarKaydet={raporlariKaydet}
+                aktifKullanici={aktifKullanici}
+                showToast={showToast}
+                firmaBilgileri={tanimlar.firmaBilgileri}
+              />
+            )
           )}
           {/* GELİR / GİDER EKRANI (20 Eylül): sekme vardı ama ekran bağlı değildi — menüden
               tıklanınca boş sayfa açılıyordu. */}
