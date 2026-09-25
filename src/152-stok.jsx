@@ -2421,23 +2421,32 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
             if (grup.length === 0) return null;
             return (
               <div key={kat}>
-                {/* Kategori başlığı, dolu bir bant. Düz yazı başlık listede bir "ayraç" gibi
-                    okunmuyordu; bant, iki kategori arasındaki sınırı tartışmasız hale getirir. */}
-                <div
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
-                    background: CAT_COLORS[kat] || "var(--erp-text-2)", color: "var(--erp-panel-2)",
-                    padding: "7px 12px", borderRadius: "var(--erp-r-md)",
-                  }}
-                >
-                  <KategoriIkonu kategori={kat} size={16} renkSabit="var(--erp-panel-2)" />
-                  <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 14, fontWeight: 700, letterSpacing: ".02em" }}>
-                    {kat}
-                  </span>
-                  <span className="mono" style={{ fontSize: 11, fontWeight: 700, padding: "1px 8px", borderRadius: "var(--erp-r-pill)", background: "rgba(255,255,255,.2)" }}>
-                    {grup.length}
-                  </span>
-                </div>
+                {/* Kategori başlığı bir bant: düz yazı başlık listede "ayraç" gibi okunmuyordu.
+                    AÇIK BANT (kullanıcı, 25 Eylül: "stok kategori şeritlerini de açık renk yap"):
+                    dolu koyu zemin + beyaz yazı yerine kategori renginin açık tonu, yazı ve ikon
+                    kategori renginde. Kategoriler yine renginden ayırt ediliyor, sayfa sakinleşiyor. */}
+                {(() => {
+                  const renk = CAT_COLORS[kat] || "var(--erp-text-2)";
+                  return (
+                    <div
+                      data-stok-kategori-bandi={kat}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+                        background: alfaEkle(renk, "14"), color: renk,
+                        border: `1px solid ${alfaEkle(renk, "33")}`,
+                        padding: "7px 12px", borderRadius: "var(--erp-r-md)",
+                      }}
+                    >
+                      <KategoriIkonu kategori={kat} size={16} renkSabit={renk} />
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>
+                        {kat}
+                      </span>
+                      <span className="mono" style={{ fontSize: 11, fontWeight: 700, padding: "1px 8px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22") }}>
+                        {grup.length}
+                      </span>
+                    </div>
+                  );
+                })()}
                 <div style={{ display: "grid", gap: 8 }}>
                   {grup.map((p) => (
                     <UrunOzetSatiri
