@@ -8,7 +8,9 @@ const { chromium } = require("playwright");
 // okumasını taklit etmek gerekiyorsa). Uygulama ilk render'da buluta gider; sonradan kurulan rota
 // o istekleri yakalayamaz.
 // `tarayiciArgs`: Chromium bayrakları — örn. sahte kamera (`--use-file-for-fake-video-capture`).
-async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [] } = {}) {
+// `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
+// test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
+async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null } = {}) {
   const tarayici = await chromium.launch({ args: tarayiciArgs });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
   const sayfa = await tarayici.newPage({ viewport: { width: 1400, height: 950 } });
@@ -29,7 +31,7 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
   }, tohum);
   if (onceRota) await onceRota(sayfa);
   // HTML yolu değiştirilebilir: refaktör ÖNCESİ ve SONRASI paketleri aynı senaryoyla karşılaştırmak için.
-  await sayfa.goto("file://" + (process.env.TEST_HTML || path.join(__dirname, "test.html")));
+  await sayfa.goto(adres || ("file://" + (process.env.TEST_HTML || path.join(__dirname, "test.html"))));
   await sayfa.evaluate(() => {
     const kok = window.__ReactDOMClient.createRoot(document.getElementById("kok"));
     kok.render(window.__React.createElement(window.__App));

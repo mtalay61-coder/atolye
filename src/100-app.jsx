@@ -614,16 +614,33 @@ export default function AtolyeERP() {
     return () => { clearInterval(z); window.removeEventListener("online", cevrimici); };
   }, [loading, Object.keys(bekleyenYazmalar).length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sürüm kontrolü: açılışta bir kez, sonra 30 dakikada bir (uzun açık kalan ekranlar için).
+  // SÜRÜM KONTROLÜ VE OTOMATİK GEÇİŞ (25 Eylül, v1.447.0 — bkz. `surumeOtomatikGec`).
+  //   • AÇILIŞTA: yeni sürüm varsa sormadan geçilir. Henüz bir şey girilmedi, kaybolacak iş yok.
+  //   • UZUN SÜRE ARKA PLANDA KALIP GERİ GELİNCE (telefonda "uygulama" olarak açılan ekran böyle
+  //     döner — sayfa yeniden yüklenmez, eski sürüm bellekte kalır): 10 dakikadan uzun gizli
+  //     kaldıysa geçilir. Kısa süreli geçişte (WhatsApp'a bakıp dönmek) GEÇİLMEZ: yarım form kaybolurdu.
+  //   • ÇALIŞIRKEN (10 dakikada bir bakılır): geçilmez, üstte "Yeni sürüm — Güncelle" şeridi çıkar.
+  // Yerel veri ve bekleyen yazmalar aynı adresin deposunda; yeni sürüm onları aynen görür.
   useEffect(() => {
     let durduruldu = false;
-    const bak = async () => {
-      const v = await yayinlananSurumuOku();
-      if (!durduruldu) setYayinSurum(v);
+    let gizlenme = null;
+    const esik = window.__surumGeriDonusEsigiMs || 10 * 60 * 1000;   // test kancası
+    const bak = async (gecisSerbest) => {
+      const v = await guncelSurumuOku();
+      if (durduruldu) return;
+      if (gecisSerbest && surumeOtomatikGec(v, SURUM)) return;
+      setYayinSurum(v);
     };
-    bak();
-    const z = setInterval(bak, 30 * 60 * 1000);
-    return () => { durduruldu = true; clearInterval(z); };
+    bak(true);
+    const z = setInterval(() => bak(false), 10 * 60 * 1000);
+    const gorunurluk = () => {
+      if (document.visibilityState === "hidden") { gizlenme = Date.now(); return; }
+      const uzunSure = gizlenme !== null && Date.now() - gizlenme >= esik;
+      gizlenme = null;
+      bak(uzunSure);
+    };
+    document.addEventListener("visibilitychange", gorunurluk);
+    return () => { durduruldu = true; clearInterval(z); document.removeEventListener("visibilitychange", gorunurluk); };
   }, []);
 
   // ---- Kullanıcı yetkilendirme ve onay sistemi ----

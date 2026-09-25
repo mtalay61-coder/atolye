@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.446.0** · 25 Eylül 2026
+Son sürüm: **v1.447.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.446.0): SİPARİŞ DÜZENLEME SİPARİŞ FORMUNDA — form önde, kalemler altta düzenlenebilir (ürün/renk/miktar/fiyat), kilitliler salt okunur.** Bkz. "SİPARİŞ DÜZENLEME FORMDA".
+**Son iş (25 Eylül, v1.447.0): YENİ SÜRÜME OTOMATİK GEÇİŞ (surum.json).** Bkz. "OTOMATİK SÜRÜM GEÇİŞİ".
+Önceki (v1.446.0): SİPARİŞ DÜZENLEME SİPARİŞ FORMUNDA — form önde, kalemler altta düzenlenebilir (ürün/renk/miktar/fiyat), kilitliler salt okunur.** Bkz. "SİPARİŞ DÜZENLEME FORMDA".
 Önceki (v1.445.0): yerel şifre yedeği kaldırıldı — giriş yalnız bulut hesabıyla.
 **⚠ PAKET EKSİKLERİ (v1.444.0 zip'inde yoktu) — bkz. "PAKET EKSİKLERİ" bölümü. Asıl dosyalar bulunursa yerleştir.**
 **PROJE ARTIK GIT DEPOSUNDA (24 Eylül, v1.445.0 üzerinde):** kaynak `mtalay61-coder/atolye` deposunda, Claude Code ile geliştiriliyor; zip taşımaya gerek yok. Bkz. "GIT DEPOSUNA TAŞINDI" bölümü ve `CLAUDE.md`.
@@ -5993,6 +5994,35 @@ Kullanıcının yüklediği `atolye-erp-src-v1_444_0.zip` EKSİKTİ (önceki otu
   paketi başka dizine açınca `ln -sfn <paket> /home/claude/erp` gerekiyor.
 - **Paketlerken:** zip'i `src/` + `test/` + kök dosyaların TAMAMIYLA oluştur; paketledikten sonra
   `.satir-haritasi.json` ile `src/` dosya listesini ve `kosu.sh` listesiyle `test/`i karşılaştır.
+
+## OTOMATİK SÜRÜM GEÇİŞİ (25 Eylül, v1.447.0 — Claude Code oturumu)
+
+**Kullanıcı:** (v1.446 birleştirildikten sonra) "Hâlâ 443." → "Yeni sürüm haber versin ve ona geçiş
+yapsın kullanıcılar. Uygulama olarak girdikleri için eski sürüm çıkabilir veya otomatik geçsin."
+
+**Sebep:** yayın artık GitHub PR birleştirmesiyle (`main` → Pages). Başlatıcı `surum.json`'u okuyup
+doğru sürüme gidiyordu, ama AÇIK uygulamanın "yeni sürüm" şeridi yalnız buluttaki `surum` kaydına
+bakıyordu ve o kaydı yalnız uygulama içi "GitHub'a yayınla" güncelliyordu → şerit hiç çıkmadı.
+Telefonda "uygulama" olarak açılan ekran arka plandan dönünce yeniden yüklenmiyor; eski sürüm
+bellekte kalıyor.
+
+**Çözüm (030-supabase + 100-app):** `guncelSurumuOku()` = `surum.json` (uygulamanın kendi
+klasöründen, yalnız http(s), `no-store`) + bulut kaydı; hangisi yeniyse. `surumeOtomatikGec(v, SURUM)`
+`location.replace(url)` yapar. Ne zaman:
+- AÇILIŞTA → sormadan geçiş (kaybolacak iş yok).
+- `visibilitychange` ile geri gelince, **10 dk'dan uzun** gizli kaldıysa → geçiş. Kısa süreli
+  geçişte (WhatsApp'a bakıp dönmek) geçiş YOK — yarım form kaybolurdu; şerit çıkar.
+- Çalışırken (10 dk'da bir) → yalnız şerit.
+**DÖNGÜ KORUMASI:** aynı sürüme sekme başına bir kez (`sessionStorage` `surumGecisi:<sürüm>`);
+yazılamıyorsa hiç geçilmez. Yerel veri ve bekleyen yazmalar aynı adresin deposunda, yeni sürüm aynen görür.
+`surum.json`'a `not` alanı eklendi (şeritte görünür). Test kancası: `window.__surumGeriDonusEsigiMs`.
+
+**GEÇİŞ DÖNEMİ:** v1.446 ve öncesinde bu kod yok. O sürümde açık kalan ekranlar v1.447'ye ancak
+başlatıcıdan (ana adres / ana ekran kısayolu) yeniden açılınca geçer; v1.447'den sonrası otomatik.
+
+**Doğrulama:** `senaryo-surum-otomatik` (YENİ; `ortak.js`'e `adres` seçeneği — uygulama http'den
+açılıyor, `surum.json` rota ile): açılışta geçiş; döngü yok (ikinci açılışta şerit 9.9.9); eski sürümde
+ne geçiş ne şerit; kısa arka plan → şerit, uzun → geçiş. `surum-duyuru` (bulut kaydı yolu) AYNI.
 
 ## SİPARİŞ DÜZENLEME FORMDA (25 Eylül, v1.446.0 — Claude Code oturumu)
 

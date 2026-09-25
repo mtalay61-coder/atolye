@@ -1,0 +1,23 @@
+{
+ "acilis": {
+  "adres": "<kok>/yeni.html",
+  "yeniSayfa": true
+ },
+ "dongu": {
+  "ilkAdres": "<kok>/yeni.html",
+  "serit": "9.9.9",
+  "sonAdres": "<kok>/yeni.html"
+ },
+ "eski": {
+  "adres": "<kok>/uygulama.html",
+  "serit": null
+ },
+ "kisa": {
+  "adres": "<kok>/uygulama.html",
+  "serit": "9.9.9"
+ },
+ "uzun": {
+  "adres": "<kok>/yeni.html",
+  "yeniSayfa": true
+ }
+}

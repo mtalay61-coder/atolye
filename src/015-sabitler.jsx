@@ -451,9 +451,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.446.0";
+const SURUM = "1.447.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Siparis duzenleme siparis formunda: kalemler altta, urun/renk/miktar degisir";
+const SURUM_NOTU = "Yeni surume otomatik gecis";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -462,6 +462,10 @@ const SURUM_NOTU = "Siparis duzenleme siparis formunda: kalemler altta, urun/ren
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.447.0", tarih: "25.09.2026",
+    eklenen: ["Yeni sürüme OTOMATİK GEÇİŞ: uygulama açılırken yeni sürüm yayınlanmışsa sormadan ona geçiyor; telefonda uygulama 10 dakikadan uzun arka planda kalıp yeniden açılınca da geçiyor"],
+    degisen: ["Çalışırken yeni sürüm çıkarsa yarım kalan iş kaybolmasın diye otomatik geçilmiyor; üstte 'Yeni sürüm — Güncelle' şeridi çıkıyor (artık 10 dakikada bir bakılıyor)"],
+    duzeltilen: ["GitHub'dan birleştirilerek yayınlanan sürümler uygulamada 'yeni sürüm' olarak görünmüyordu — artık yayın dosyası (surum.json) da okunuyor"] },
   { surum: "1.446.0", tarih: "25.09.2026",
     eklenen: ["Sipariş düzenlemede girilmiş kalemlerin ÜRÜNÜ ve RENGİ de değiştirilebiliyor (miktar ve fiyatın yanında); planlanmış ya da teslim alınmış kalemler kilitli (🔒) ve değişmiyor"],
     degisen: ["Sipariş kartında ✎ Düzenle artık yeni sipariş formunu açıyor: başlık bilgileri dolu gelir, girilmiş kalemler altta listelenir, yeni ürün de aynı formdan eklenir; 'Değişikliklerini Kaydet' ile sipariş güncellenir"],
