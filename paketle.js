@@ -98,7 +98,11 @@ const html = `<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Atölye ERP">
-<link rel="apple-touch-icon" href="ikon-192.png">
+<!-- UYGULAMA SİMGESİ (25 Eylül, v1.456.0 — kullanıcının "ND" logosu). Sekme simgesi (favicon)
+     yoktu, tarayıcı sekmesi boş/varsayılan görünüyordu; iOS ana ekranı 180 px bekliyor. -->
+<link rel="icon" type="image/png" sizes="64x64" href="ikon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ikon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="ikon-apple-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">

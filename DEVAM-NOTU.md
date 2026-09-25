@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.455.0** · 25 Eylül 2026
+Son sürüm: **v1.456.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.455.0): Mamul Stok ayrı menü öğesi (Depo ▸ Mamul Stok).** Bkz. "MAMUL STOK AYRI".
+**Son iş (25 Eylül, v1.456.0): uygulama simgesi kullanıcının ND logosu oldu.** Bkz. "UYGULAMA SİMGESİ: ND LOGOSU". Önceki: v1.455.0 Mamul Stok ayrı menü öğesi.
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,23 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## UYGULAMA SİMGESİ: ND LOGOSU (25 Eylül, v1.456.0 — Claude Code oturumu)
+
+**Kullanıcı:** (bej, kabartmalı "ND" logosu görseli) "Uygulama simgesi bu olsun."
+
+- `ikon-192.png`, `ikon-512.png` (logo kenarın %84'ü), `ikon-maskeli-512.png` (%62 — Android
+  maskesi daire/yuvarlak kare keser, güvenli alan ortadaki ~%80), yeni `ikon-64.png` (sekme simgesi)
+  ve `ikon-apple-180.png` (iOS ana ekranı). Hepsi BEYAZ zemin: logo açık bej, gönderilen görsel de
+  beyaz zeminliydi; saydam bırakılsa iOS siyaha boyuyor.
+- Üretim: ortamda görüntü aracı yok (PIL/ImageMagick yok); Chromium canvas ile logo kutusu
+  (beyaz olmayan piksellerin sınırı) bulunup ortalanarak çizildi. Kaynak görsel depoda değil;
+  yeniden üretmek gerekirse aynı yöntem.
+- `paketle.js` ve `index.html` başlığına `rel="icon"` (önceden favicon hiç yoktu) ve 180 px
+  `apple-touch-icon` eklendi. `manifest.json` `background_color` #FFFFFF (açılış ekranı simgeyle
+  aynı zemin).
+- Kurulu uygulamalarda simge hemen değişmeyebilir: Android/Chrome manifesti birkaç gün içinde
+  yeniden okur; iOS'ta kısayolu silip yeniden eklemek gerekir.
 
 ## MAMUL STOK AYRI (25 Eylül, v1.455.0 — Claude Code oturumu)
 
