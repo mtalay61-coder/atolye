@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.459.0** · 25 Eylül 2026
+Son sürüm: **v1.460.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.459.0): çek girişinde/ciroda cari birimine kur çevirici; çekte "Son İşlemi Geri Al".** Bkz. "ÇEKTE CARİ BİRİMİ VE SON İŞLEMİ GERİ AL".
+**Son iş (25 Eylül, v1.460.0): çek işlemlerinde yazdır — giriş/ciro/iade/tahsile verme bordrosu, tahsil makbuzu (`CekYazdir`).** Bkz. "ÇEK BORDROSU YAZDIR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,27 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ÇEK BORDROSU YAZDIR (25 Eylül, v1.460.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Çek işlemlerinde yazdır ekranı olsun. Çek girişi, ciro vs. çıktı alalım."
+
+- `CekYazdir` (275-yazdir), `CariEkstre` kalıbında pencere: Yazdır (`indirYazdirilabilirHTML`),
+  PaylasSeridi (PDF/WhatsApp/e-posta), küçült, kapat. Pencere tipi `cek`, kimlik
+  `cekId` ya da `cekId|satirId`; veri YALNIZ kimlikler — çek her çizimde güncel `muhasebe`den
+  okunuyor (bayat pencere dersi). Yenilemede geri gelmiyor (CANLI listesinde değil, ekstre gibi).
+- Belge adı işlemden (`CEK_BELGE_ADLARI`): satır yoksa "Çek Giriş Bordrosu" / "Şahsi Çek Çıkış
+  Bordrosu"; Ciro/İade/Tahsile Verme bordrosu, Tahsil Makbuzu, Karşılıksız Tutanağı; geri alma
+  satırı "Çek İşlem İptali — …". Belge no = işlemin cari fişi (giriş THS/ODM, ciro ODM…).
+- İçerik: firma başlığı, karşı taraf, çeki veren, çek tablosu (no, banka/şube, keşideci, vade,
+  tutar), **tutar yazıyla** (`tutarYaziyla`/`sayiYaziyla`, 200-cari-sabit; "bir yüz/bir bin"
+  denmez, binlerde 1 başka rakamla söylenir — `birim-tutar-yaziyla.js`), karşı tarafa başka
+  birimde işlendiyse o tutar, TL karşılığı, not, çek fotoğrafları, Teslim Eden/Alan imza alanları
+  (giriş, ciro, iade, tahsile verme; tahsil/karşılıksız/iptal el değiştirme değil → imza yok).
+- Düğmeler: çek satırında "Yazdır" (son etkin işlemin belgesi, işlem yoksa giriş); Geçmiş
+  panelinde "Giriş" satırı ve her işlem satırında yazdır ikonu.
+- Test: `senaryo-cek-yazdir.js` (giriş bordrosu, ciro bordrosu + fiş no + $ işlenen, geri alma
+  sonrası geçmiş düğmeleri ve iptal belgesi).
 
 ## ÇEKTE CARİ BİRİMİ VE SON İŞLEMİ GERİ AL (25 Eylül, v1.459.0 — Claude Code oturumu)
 

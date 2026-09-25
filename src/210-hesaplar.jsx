@@ -975,7 +975,7 @@ const CEK_DURUM_RENK = {
 
 // `onDurumGuncelle` KALDIRILDI: durum artık listeden seçilmiyor, işlemler penceresinden geçiyor.
 // Kullanılmayan bir prop, "buradan da değiştirilebilir" izlenimi bırakırdı.
-function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onEkle, onSil, onIslem, onSonIslemiGeriAl, onGorselKaydet }) {
+function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onEkle, onSil, onIslem, onSonIslemiGeriAl, onYazdir, onGorselKaydet }) {
   // "Son İşlemi Geri Al" iki adımlı: ilk dokunuş sorar, ikincisi yapar (fiş/hesap kaydı siliniyor).
   const [geriAlOnayId, setGeriAlOnayId] = useState(null);
   const [showYeni, setShowYeni] = useState(false);
@@ -1389,6 +1389,25 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     <ArrowRight size={12} /> İşlemler
                   </button>
                 )}
+                {/* YAZDIR (v1.460.0 — kullanıcı: "çek işlemlerinde yazdır ekranı olsun; çek girişi,
+                    ciro vs. çıktı alalım"). Satırdaki düğme SON işlemin belgesini açar (işlem yoksa
+                    giriş bordrosu); geçmişteki her satırın da kendi yazdır düğmesi var. */}
+                {onYazdir && (() => {
+                  const etkin = cekEtkinGecmis(c);
+                  const son = etkin.length ? etkin[etkin.length - 1] : null;
+                  return (
+                    <button
+                      type="button"
+                      data-cek-yazdir={c.id}
+                      className="btn-ghost"
+                      style={{ padding: "3px 10px", fontSize: 11, color: "var(--erp-text-2)" }}
+                      title={son ? `${son.islem} belgesini yazdır` : "Çek giriş bordrosunu yazdır"}
+                      onClick={() => onYazdir(c.id, son ? son.id : null)}
+                    >
+                      <Printer size={12} /> Yazdır
+                    </button>
+                  );
+                })()}
                 {(c.gecmis || []).length > 0 && (
                   <button
                     type="button"
@@ -1474,6 +1493,16 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     çekin nereden geçtiği sorusunun tek cevabı burası. */}
                 {gecmisCekId === c.id && (
                   <div style={{ flexBasis: "100%", marginTop: 8, padding: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", display: "grid", gap: 4 }}>
+                    {/* Girişin kendi satırı: giriş bordrosu geçmişten de basılabilsin. */}
+                    {onYazdir && (
+                      <div className="mono" style={{ fontSize: 11, color: "var(--erp-text)", display: "flex", gap: 8 }}>
+                        <b>Giriş</b><span style={{ color: "var(--erp-text-2)" }}>çek defterine kayıt</span>
+                        <button type="button" data-cek-giris-yazdir={c.id} className="btn-ghost" title="Giriş bordrosunu yazdır"
+                          style={{ padding: "0 6px", fontSize: 10, marginLeft: "auto" }} onClick={() => onYazdir(c.id, null)}>
+                          <Printer size={11} />
+                        </button>
+                      </div>
+                    )}
                     {(c.gecmis || []).map((g) => (
                       <div key={g.id} className="mono" style={{ fontSize: 11, color: "var(--erp-text)", display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span style={{ color: "var(--erp-text-3)" }}>{tarihYaz(g.tarih)}</span>
@@ -1485,6 +1514,12 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                           <span>{g.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[g.paraBirimi] || g.paraBirimi}</span>
                         )}
                         {g.kullanici && <span style={{ color: "var(--erp-text-3)" }}>· {g.kullanici}</span>}
+                        {onYazdir && (
+                          <button type="button" data-cek-gecmis-yazdir={g.id} className="btn-ghost" title={`${g.islem} belgesini yazdır`}
+                            style={{ padding: "0 6px", fontSize: 10, marginLeft: "auto" }} onClick={() => onYazdir(c.id, g.id)}>
+                            <Printer size={11} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

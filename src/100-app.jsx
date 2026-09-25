@@ -4073,6 +4073,14 @@ export default function AtolyeERP() {
               onCekHareketiyleSil={cekHareketiyleSil}
               // SON İŞLEMİ GERİ AL (v1.459.0): ciro/iade fişini fiş silme kapısından siler; çek
               // `cekIslemGeriAl` ile bir önceki durumuna döner. Hareket bulunamazsa false.
+              // ÇEK BORDROSU (v1.460.0): pencere yalnız çek + işlem satırı kimliğini taşıyor, çek
+              // her çizimde güncel `muhasebe`den okunuyor (CekYazdir). Satır yoksa giriş bordrosu.
+              onCekYazdir={(cekId, satirId) => {
+                const ck = (muhasebe.cekler || []).find((x) => x.id === cekId);
+                const st = satirId && ck ? (ck.gecmis || []).find((g) => g.id === satirId) : null;
+                pencereAc("cek", satirId ? `${cekId}|${satirId}` : cekId,
+                  `${st ? st.islem : "Çek girişi"}: ${(ck && ck.cekNo) || "çek"}`, { cekId, satirId: satirId || null });
+              }}
               onCekCariHareketSil={(hareketId) => {
                 if (!cariler.some((c) => (c.hareketler || []).some((h) => h.id === hareketId))) return false;
                 removeHareketEverywhere(hareketId);
@@ -4299,6 +4307,20 @@ export default function AtolyeERP() {
                 onMinimize={() => setAktifPencereId(null)}
               />
             )}
+            {aktifPencere && aktifPencere.tip === "cek" && (() => {
+              const ck = (muhasebe.cekler || []).find((x) => x.id === aktifPencere.veri.cekId) || null;
+              return (
+                <CekYazdir
+                  cek={ck}
+                  satir={ck && aktifPencere.veri.satirId ? (ck.gecmis || []).find((g) => g.id === aktifPencere.veri.satirId) || null : null}
+                  cariler={cariler}
+                  gorsel={(cekGorselleri || []).find((g) => g.id === aktifPencere.veri.cekId) || null}
+                  firmaBilgileri={tanimlar.firmaBilgileri}
+                  onClose={() => pencereKapat(aktifPencere.id)}
+                  onMinimize={() => setAktifPencereId(null)}
+                />
+              );
+            })()}
             {aktifPencere && aktifPencere.tip === "ekstre" && (
               <CariEkstre
                 cari={aktifPencere.veri.cari}

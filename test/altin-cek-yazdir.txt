@@ -1,0 +1,35 @@
+{
+ "ciro": {
+  "ad": "Çek Ciro Bordrosu",
+  "belgeNo": "ODM-0925001",
+  "belgeNoCiroFisi": true,
+  "imza": [
+   "Teslim Eden: Test Atölye",
+   "Teslim Alan: Tedarikçi A"
+  ],
+  "islenen": "1.000,00 $",
+  "karsiTaraf": "Tedarikçi A",
+  "yaziyla": "Yalnız: kırkikibin TL"
+ },
+ "gecmisYazdirDugmeleri": {
+  "giris": 1,
+  "islemler": 2
+ },
+ "geriAlindiktanSonraDurum": "Portföyde",
+ "giris": {
+  "ad": "Çek Giriş Bordrosu",
+  "belgeNo": "THS-20260920-001",
+  "imza": [
+   "Teslim Eden: Müşteri B",
+   "Teslim Alan: Test Atölye"
+  ],
+  "islenen": null,
+  "karsiTaraf": "Müşteri B",
+  "yaziyla": "Yalnız: kırkikibin TL"
+ },
+ "hatalar": [],
+ "iptal": {
+  "ad": "Çek İşlem İptali — Ciro geri alındı",
+  "imzaVar": false
+ }
+}

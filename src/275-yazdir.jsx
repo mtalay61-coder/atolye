@@ -763,3 +763,177 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
     </div>
   );
 }
+
+// ================= ÇEK BORDROSU / MAKBUZU (25 Eylül, v1.460.0) =================
+//
+// Kullanıcı: "Çek işlemlerinde yazdır ekranı olsun. Çek girişi, ciro vs. çıktı alalım."
+//
+// Çek elden ele geçen bir BELGE: alınırken, ciro edilirken, bankaya verilirken karşı tarafa imzalı
+// bir kâğıt verilir ("şu numaralı çeki teslim aldım/ettim"). Tek bileşen, belge adı işlemden:
+// `satir` yoksa GİRİŞ (çek defterine ilk giriş), varsa geçmişteki o işlem satırı.
+//
+// CANLI VERİ: pencere yalnız çek kimliğini ve satır kimliğini taşıyor; çek her çizimde güncel
+// `muhasebe`den okunuyor (App). Kopya taşısaydı işlem geri alındıktan sonra açık kalan pencere
+// eski durumu basardı (bkz. `pencereAc` — bayat ekstre dersi).
+//
+// Tutar YAZIYLA da basılıyor: el yazısıyla düzeltilen rakama karşı belgelerdeki olağan önlem.
+const CEK_BELGE_ADLARI = {
+  "Ciro Et": "Çek Ciro Bordrosu",
+  "İade Et": "Çek İade Bordrosu",
+  "Bankaya Tahsile Ver": "Çek Tahsile Verme Bordrosu",
+  "Tahsil Edildi": "Çek Tahsil Makbuzu",
+  "Karşılıksız Çıktı": "Karşılıksız Çek Tutanağı",
+};
+
+function CekYazdir({ cek, satir, cariler, gorsel, firmaBilgileri, onClose, onMinimize }) {
+  if (!cek) {
+    return (
+      <div style={{ position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(34,27,20,.55)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "#fff", borderRadius: "var(--erp-r-lg)", padding: 24 }}>
+          Çek kaydı bulunamadı (silinmiş olabilir). <button className="btn-ghost" onClick={onClose}><X size={14} /> Kapat</button>
+        </div>
+      </div>
+    );
+  }
+  const verilen = (cek.tip || "Alınan") === "Verilen";
+  const giris = !satir;
+  const belgeAdi = giris
+    ? (verilen ? "Şahsi Çek Çıkış Bordrosu" : "Çek Giriş Bordrosu")
+    : satir.geriAlma ? `Çek İşlem İptali — ${satir.islem}` : (CEK_BELGE_ADLARI[satir.islem] || `Çek İşlemi — ${satir.islem}`);
+  const tumHareketler = (cariler || []).flatMap((c) => (c.hareketler || []).map((h) => ({ cari: c, h })));
+  const hareketBul = (id) => (id ? tumHareketler.find((x) => x.h.id === id) || null : null);
+  // Belge numarası: işlemin doğurduğu cari fişi (giriş THS/ODM, ciro ODM, iade…). Tahsilde hesap
+  // hareketi fiş taşımıyor; o zaman belge numarası yok.
+  const bagli = giris ? hareketBul(cek.hareketId) : hareketBul(satir.hareketId);
+  const fisNo = (bagli && bagli.h.fisNo) || (giris ? cek.fisNo : null) || null;
+  const girisCarisi = (cariler || []).find((c) => c.id === cek.cariId) || null;
+  const karsiCari = giris ? girisCarisi : ((cariler || []).find((c) => c.id === satir.cariId) || null);
+  const karsiAd = giris ? (girisCarisi ? girisCarisi.unvan : "—")
+    : (satir.cariAd || (karsiCari && karsiCari.unvan) || satir.hesapAd || satir.bankaAd || "—");
+  // TESLİM EDEN / ALAN: alınan çekte giriş = cari teslim eder, biz alırız; ciro/iade = biz teslim
+  // ederiz; bankaya verme = bankaya teslim. Tahsil ve karşılıksız bir el değiştirme değil.
+  const firmaAd = (firmaBilgileri || {}).unvan || "Firmamız";
+  const imza = (() => {
+    if (giris) return verilen ? [firmaAd, karsiAd] : [karsiAd, firmaAd];
+    if (["Ciro Et", "İade Et", "Bankaya Tahsile Ver"].includes(satir.islem) && !satir.geriAlma) return [firmaAd, karsiAd];
+    return null;
+  })();
+  const pb = cek.paraBirimi || "TRY";
+  const para = (t, p) => `${Number(t || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${PARA_SEMBOLU[p] || p}`;
+  // Karşı tarafa işlenen tutar çekten farklı birimdeyse (kur çevirici) ikisi de basılıyor.
+  const islenen = giris
+    ? (bagli ? { tutar: bagli.h.tutar, pb: bagli.h.paraBirimi || "TRY" } : null)
+    : (satir.tutar != null && satir.paraBirimi ? { tutar: satir.tutar, pb: satir.paraBirimi } : null);
+  const islenenFarkli = islenen && (islenen.pb !== pb || Math.abs(islenen.tutar - cek.tutar) > 0.005);
+  const tarih = giris ? ((bagli && bagli.h.tarih) || cek.tarih || "") : satir.tarih;
+  const bugun = new Date().toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
+  const alan = (ad, deger) => (deger ? <div><b>{ad}:</b> {deger}</div> : null);
+
+  return (
+    <div
+      style={{
+        position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: "var(--menu-genislik, 0px)", right: 0, bottom: 0,
+        zIndex: 100, background: "rgba(34,27,20,.55)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+      }}
+    >
+      <div style={{ background: "#fff", borderRadius: "var(--erp-r-lg)", maxWidth: 720, width: "100%", maxHeight: "90vh", overflow: "auto" }}>
+        <div id="cek-yazdir-alani" data-cek-belge={belgeAdi} style={{ padding: 28 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18, gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {(firmaBilgileri || {}).logo && (
+                <img src={firmaBilgileri.logo} alt="Logo" style={{ width: 40, height: 40, objectFit: "contain" }} />
+              )}
+              <div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--erp-text)" }}>
+                  {(firmaBilgileri || {}).unvan || "Atölye ERP"}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text-2)" }}>{belgeAdi}</div>
+                {(firmaBilgileri || {}).telefon && <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{firmaBilgileri.telefon}</div>}
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--erp-text-2)", textAlign: "right", display: "grid", gap: 2 }}>
+              {fisNo && <div>Belge No: <span className="mono">{fisNo}</span></div>}
+              <div>İşlem Tarihi: <span className="mono">{tarih ? tarihYaz(tarih) : "—"}</span></div>
+              <div style={{ fontSize: 10, color: "var(--erp-text-3)" }}>Basım: {bugun}</div>
+            </div>
+          </div>
+
+          <StitchDivider />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14, fontSize: 13 }}>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <b>{giris ? (verilen ? "Çekin verildiği cari" : "Çeki veren cari") : satir.islem === "Tahsil Edildi" ? "Tahsil hesabı" : satir.islem === "Bankaya Tahsile Ver" ? "Banka" : "Karşı taraf"}:</b> {karsiAd}
+            </div>
+            {!giris && satir.islem !== "Tahsil Edildi" && girisCarisi && alan("Çeki veren", girisCarisi.unvan)}
+            {!giris && alan("İşlem", `${satir.islem} (${satir.oncekiDurum} → ${satir.yeniDurum})`)}
+          </div>
+
+          <table style={{ width: "100%" }}>
+            <thead>
+              <tr><th>Çek No</th><th>Banka / Şube</th><th>Keşideci</th><th>Vade</th><th style={{ textAlign: "right" }}>Tutar</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="mono" style={{ fontSize: 12 }}>{cek.cekNo || "—"}</td>
+                <td style={{ fontSize: 12 }}>{cek.banka || "—"}{cek.sube ? ` / ${cek.sube}` : ""}</td>
+                <td style={{ fontSize: 12 }}>{cek.kesideci || (girisCarisi && !verilen ? girisCarisi.unvan : "—")}{cek.sahiplik === "Cirolu" ? " (cirolu)" : ""}</td>
+                <td className="mono" style={{ fontSize: 12 }}>{cek.vadeTarihi ? tarihYaz(cek.vadeTarihi) : "—"}</td>
+                <td className="mono" style={{ fontSize: 13, fontWeight: 700, textAlign: "right" }}>{para(cek.tutar, pb)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style={{ display: "grid", gap: 4, marginTop: 10, fontSize: 12 }}>
+            <div data-cek-yaziyla="1"><b>Yalnız:</b> {tutarYaziyla(cek.tutar, pb)}</div>
+            {cek.iban && <div><b>IBAN / Hesap:</b> <span className="mono">{cek.iban}</span></div>}
+            {islenenFarkli && (
+              <div><b>{giris ? "Cari hesaba işlenen" : "Karşı tarafa işlenen"}:</b> <span className="mono">{para(islenen.tutar, islenen.pb)}</span></div>
+            )}
+            {cek.tlKarsiligi > 0 && pb !== "TRY" && <div><b>Giriş günü TL karşılığı:</b> <span className="mono">{para(cek.tlKarsiligi, "TRY")}</span></div>}
+            {(satir && satir.not) || (giris && cek.not) ? <div><b>Not:</b> {satir ? satir.not : cek.not}</div> : null}
+          </div>
+
+          {/* Çekin fotoğrafı varsa belgeye giriyor: numara/keşideci elle yanlış yazılabilir,
+              fotoğraf yazılamaz — teslim tutanağının asıl kanıtı. */}
+          {gorsel && (gorsel.on || gorsel.arka) && (
+            <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+              {gorsel.on && <img src={gorsel.on} alt="Çekin ön yüzü" style={{ maxWidth: 300, maxHeight: 150, objectFit: "contain", border: "1px solid #ddd" }} />}
+              {gorsel.arka && <img src={gorsel.arka} alt="Çekin arka yüzü" style={{ maxWidth: 300, maxHeight: 150, objectFit: "contain", border: "1px solid #ddd" }} />}
+            </div>
+          )}
+
+          {imza && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginTop: 36, fontSize: 12 }}>
+              {[["Teslim Eden", imza[0]], ["Teslim Alan", imza[1]]].map(([baslik, ad]) => (
+                <div key={baslik} style={{ textAlign: "center" }}>
+                  <div style={{ fontWeight: 700 }}>{baslik}</div>
+                  <div style={{ color: "var(--erp-text-2)" }}>{ad}</div>
+                  <div style={{ borderTop: "1px solid #999", marginTop: 44, paddingTop: 4, color: "var(--erp-text-3)" }}>İmza</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="no-print" style={{ display: "flex", gap: 8, padding: "0 28px 24px", flexWrap: "wrap" }}>
+          <button className="btn-primary" onClick={() => indirYazdirilabilirHTML("#cek-yazdir-alani", `${belgeAdi}-${cek.cekNo || "cek"}`)}><Printer size={14} /> Yazdır</button>
+          <PaylasSeridi
+            govdeSecici="#cek-yazdir-alani"
+            dosyaAdi={`${belgeAdi} - ${cek.cekNo || "çek"}`}
+            cari={karsiCari || girisCarisi}
+            konu={`${belgeAdi} — ${cek.cekNo || ""}`.trim()}
+            ozet={`${belgeAdi}\nÇek No: ${cek.cekNo || "—"} · ${cek.banka || ""}\nTutar: ${para(cek.tutar, pb)} · Vade: ${cek.vadeTarihi || "—"}\n${karsiAd}`}
+            firmaBilgileri={firmaBilgileri}
+          />
+          {onMinimize && (
+            <button className="btn-ghost" onClick={onMinimize} title="Sekmede bırak, kapatma">
+              <span style={{ fontWeight: 900, fontSize: 16, lineHeight: 1 }}>−</span>
+            </button>
+          )}
+          <button className="btn-ghost" onClick={onClose}><X size={14} /> Kapat</button>
+        </div>
+      </div>
+    </div>
+  );
+}
