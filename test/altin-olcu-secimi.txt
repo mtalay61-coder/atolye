@@ -1,0 +1,36 @@
+{
+ "beden": {
+  "miktarKutusuSayisi": 4,
+  "olcuSeciciYok": true
+ },
+ "boyutOnce": {
+  "miktarKutusuSayisi": 1,
+  "olcuSecenekleri": [
+   "120 cm",
+   "130 cm",
+   "140 cm",
+   "150 cm",
+   "160 cm"
+  ]
+ },
+ "boyutSonra": {
+  "miktarKutusuSayisi": 2
+ },
+ "eklemeSonrasi": {
+  "fiyatBos": true,
+  "kalemListede": true,
+  "renkKutusuGizli": true,
+  "urunKutusuBos": true
+ },
+ "escKapatti": true,
+ "eylemCubugu": {
+  "cubukVar": true,
+  "eylemler": [
+   "kaydet:pasif"
+  ]
+ },
+ "hatalar": [],
+ "kisayolBaslik": [
+  "Önce cari ve en az bir kalem gerekli"
+ ]
+}

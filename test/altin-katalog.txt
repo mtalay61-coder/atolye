@@ -1,0 +1,76 @@
+{
+ "anahtarVar": true,
+ "aramaSuzgeci": {
+  "acilirSuzgecSayisi": 0
+ },
+ "cokKelime": {
+  "digeriElendi": true,
+  "dogruUrun": true
+ },
+ "degerleAra": {
+  "digeriElendi": true,
+  "dogruUrun": true
+ },
+ "detay": {
+  "alisBirimiDogru": true,
+  "alisFiyatiGorunuyor": true,
+  "anaSatisFiyati": true,
+  "buyukGorselVar": true,
+  "ozelFiyatSizdi": false,
+  "ozelKodGorunuyor": true,
+  "satisBirimiDogru": true,
+  "varyantGorselSayisi": 2
+ },
+ "detayKonumu": {
+  "detayKartinAltinda": true
+ },
+ "etiketleAra": {
+  "ikisiDeVar": true,
+  "tipiTutmayanElendi": true
+ },
+ "hammaddeKarti": {
+  "alisHalaVar": true,
+  "satisGorunuyor": true
+ },
+ "hatalar": [],
+ "izgara": {
+  "anaFiyatGorunuyor": true,
+  "ozelFiyatSizdi": false,
+  "urunGorunuyor": true
+ },
+ "listeRozeti": {
+  "etiketliRozet": true,
+  "hammaddeSatisi": true,
+  "sezonAlaniKislikta": false,
+  "sezonAlaniYazlikta": true
+ },
+ "musteri": {
+  "alisFiyatiGizlendi": true,
+  "dugmeDegisti": true,
+  "olcuBasligiDegisti": true,
+  "ozelFiyatSizdi": false,
+  "satisFiyatiHalaVar": true
+ },
+ "sikiBaslik": {
+  "anahtarSekmelerleAyniSatirda": true,
+  "ilkKartBasligaYakin": true
+ },
+ "siparisAramasi": {
+  "digeriElendi": true,
+  "dogruUrun": true,
+  "sebepGorunuyor": true
+ },
+ "sirasizAyniSonuc": true,
+ "tanimEkrani": {
+  "alanSayisi": 3,
+  "basliklar": [
+   "Menşei",
+   "Taban",
+   "Yazlık Taban"
+  ],
+  "genelGrubuVar": true,
+  "sezonGrubuVar": true,
+  "tipGrubuVar": true,
+  "yolTarifiVar": true
+ }
+}

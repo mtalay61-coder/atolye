@@ -1,0 +1,14 @@
+{
+ "artanKutusu": true,
+ "hareketler": [
+  "1002-Kesim-İade:2",
+  "1002-Kesim:-8",
+  "1001-Kesim:-3",
+  "<acilis-fisno>:10",
+  "<acilis-fisno>:4"
+ ],
+ "hatalar": [],
+ "iadeFisi": [
+  "1002-Kesim-İade:2"
+ ]
+}

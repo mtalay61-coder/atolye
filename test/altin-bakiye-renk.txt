@@ -1,0 +1,16 @@
+{
+ "beklenen": {
+  "KIRMIZI": "rgb(184, 92, 46)",
+  "YESIL": "rgb(78, 107, 78)"
+ },
+ "ekstreRenkleri": {
+  "kosanBakiye": "rgb(85, 112, 43)",
+  "toplamNet": "rgb(85, 112, 43)"
+ },
+ "hatalar": [],
+ "listeRenkleri": {
+  "+1.500 ₺": "rgb(85, 112, 43)",
+  "-30 ₺": "rgb(161, 101, 26)",
+  "-900 ₺": "rgb(161, 101, 26)"
+ }
+}

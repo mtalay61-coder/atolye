@@ -1,0 +1,17 @@
+{
+ "hammaddedeSekme": false,
+ "hatalar": [],
+ "kayit": {
+  "cizimler": [
+   "Kalıp:görsel"
+  ],
+  "not": "Taban: 4 mm kauçuk · Saya dikişi: 3 mm"
+ },
+ "mamuldeSekme": true,
+ "panel": {
+  "cizimSayisi": 1,
+  "notKutusu": true,
+  "panelVar": true,
+  "sekmeEtiketi": "Teknik Çizim (1)"
+ }
+}

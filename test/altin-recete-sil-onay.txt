@@ -1,0 +1,15 @@
+{
+ "grupSilDugmesi": [
+  "Deri hammaddesine ait tüm satırları (2) sil",
+  "Taban hammaddesine ait tüm satırları (2) sil"
+ ],
+ "hatalar": [],
+ "ikinciDokunus": {
+  "receteSatiri": 2
+ },
+ "onceReceteSatiri": 4,
+ "tekDokunus": {
+  "onaySoruluyor": true,
+  "receteSatiri": 4
+ }
+}

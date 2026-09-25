@@ -1,0 +1,28 @@
+{
+ "bosAcildi": true,
+ "fisMiktarlari": [
+  "41=10",
+  "42=5",
+  "43=4"
+ ],
+ "hatalar": [],
+ "hazirSatirlari": {
+  "baslik": [
+   "Ürün",
+   "Renk",
+   "Kaynak",
+   "41",
+   "42",
+   "Toplam",
+   ""
+  ],
+  "satirlar": [
+   "Bot · Siyah · Üretildi / Alış fişi · 6 / 6 · 3 / 3 · 9"
+  ]
+ },
+ "karsilananlar": [
+  "41:10",
+  "42:5",
+  "43:4"
+ ]
+}

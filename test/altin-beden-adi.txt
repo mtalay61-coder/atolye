@@ -1,0 +1,44 @@
+{
+ "birlesmeSonrasi": {
+  "kalanTanimsiz": [],
+  "varyant": [
+   "41 numara"
+  ]
+ },
+ "duzenlenebilir": true,
+ "hatalar": [],
+ "son": {
+  "asorti": [
+   "41 numara"
+  ],
+  "hareket": [
+   "41 numara",
+   "3840"
+  ],
+  "koli": [
+   "41 numara"
+  ],
+  "recete": [
+   "41 numara"
+  ],
+  "siparis": [
+   "41 numara"
+  ],
+  "tanim": [
+   "41 numara"
+  ],
+  "uretim": [
+   "41 numara"
+  ],
+  "uretimAtama": [
+   "41 numara"
+  ],
+  "varyant": [
+   "41 numara",
+   "3840"
+  ]
+ },
+ "tanimsizGorundu": [
+  "3840"
+ ]
+}

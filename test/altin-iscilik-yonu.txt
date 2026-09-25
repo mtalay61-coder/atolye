@@ -1,0 +1,18 @@
+{
+ "bizBorcluyuz": true,
+ "formVar": true,
+ "hatalar": [],
+ "karZararIscilik": {
+  "detay": {
+   "Personel C": 135
+  },
+  "uretimIscilik": 135
+ },
+ "personelBakiyesi": -35,
+ "yeniIscilik": {
+  "adet": 3,
+  "birimFiyat": 35,
+  "tutar": 105,
+  "yon": "Alacak"
+ }
+}

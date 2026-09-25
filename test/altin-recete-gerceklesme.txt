@@ -1,0 +1,8 @@
+{
+ "hatalar": [],
+ "oneriliOzet": "Üretimde reçeteden sapma · yalnız farkı olan üretimler ÜRETİM STOK FARK (ÇİFT BAŞI) FARK (TOPLAM) 3 ölçüm ort. Deri · Siyah +0,3 metre — → Deri · Siyah: 3 ölçümün ortalaması 2.3 metre(reçete 2) — reçeteyi 2.3 yapmayı değerlendirin Kırmızı: reçeteden fazla harcandı · yeşil: az.",
+ "tekOlcum": {
+  "metin": "Üretimde reçeteden sapma · yalnız farkı olan üretimler ÜRETİM STOK FARK (ÇİFT BAŞI) FARK (TOPLAM) 1 ölçüm ort. Deri · Siyah +0,3 metre — Kırmızı: reçeteden fazla harcandı · yeşil: az.",
+  "oneriYok": true
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "hatalar": [],
+ "kayit": {
+  "boyutKB": 1,
+  "kaydedildi": true,
+  "veriUrlMi": true
+ },
+ "panel": {
+  "dosyaGirdileri": [
+   {
+    "accept": "image/*",
+    "capture": null
+   },
+   {
+    "accept": "image/*",
+    "capture": null
+   },
+   {
+    "accept": "image/*",
+    "capture": "environment"
+   }
+  ],
+  "galeriDugmesi": true,
+  "kameraDugmesi": true,
+  "yapistirmaSeceneği": true
+ }
+}

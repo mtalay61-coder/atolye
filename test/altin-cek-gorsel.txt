@@ -1,0 +1,44 @@
+{
+ "alinanCek": {
+  "aciklama": "Müşteri çeki",
+  "fisOnEki": "THS",
+  "tutar": 5000,
+  "yon": "Alacak"
+ },
+ "bulutAnahtariBos": true,
+ "cekEkrani": {
+  "defterler": [
+   "Alınan Çekler (1)",
+   "Şahsi Çek Çıkışı (0)"
+  ],
+  "durumSecicisiVar": false
+ },
+ "ceklerBagli": [
+  [
+   "Alınan",
+   true
+  ],
+  [
+   "Verilen",
+   true
+  ]
+ ],
+ "formDoviz": {
+  "kurAlani": true,
+  "tlKarsiligi": true,
+  "tutarEtiketi": "Tutar ($)"
+ },
+ "hatalar": [],
+ "kutuSayisi": 2,
+ "sahsiCek": {
+  "aciklama": "Şahsi çek çıkışı",
+  "fisOnEki": "ODM",
+  "tutar": 5000,
+  "yon": "Borç"
+ },
+ "tutarEtiketiTL": "Tutar (₺)",
+ "yerelAnahtar": [
+  "cekgorsel:c1"
+ ],
+ "yerelDolu": true
+}

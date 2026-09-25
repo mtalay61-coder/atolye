@@ -1,0 +1,50 @@
+{
+ "baskaModuldenDonus": {
+  "kart": "Deri",
+  "seritteEtkin": "Ürün: Deri"
+ },
+ "botKapatildiktanSonra": {
+  "kart": "Deri",
+  "seritteEtkin": "Ürün: Deri"
+ },
+ "botaDonunceReceteSekmesiDuruyor": {
+  "kart": "Bot",
+  "receteAcik": true,
+  "seritteEtkin": "Ürün: Bot"
+ },
+ "hatalar": [],
+ "ikiUrunBotaDonus": {
+  "kart": "Bot",
+  "seritteEtkin": "Ürün: Bot"
+ },
+ "ikiUrunDeriyeDonus": {
+  "kart": "Deri",
+  "seritteEtkin": "Ürün: Deri"
+ },
+ "kapatmadanSonraDeriyeDonus": {
+  "kart": "Deri",
+  "seritteEtkin": "Ürün: Deri"
+ },
+ "siparisIkiliOncekine": {
+  "ekran": "Alış Siparişi",
+  "kart": "s1"
+ },
+ "siparisIkiliSonrakine": {
+  "kart": "s2"
+ },
+ "siparisTek": {
+  "ekran": "Alış Siparişi",
+  "kart": "s1"
+ },
+ "tekUrun": {
+  "kart": "Deri",
+  "seritteEtkin": "Ürün: Deri"
+ },
+ "uretimIkiliOncekine": {
+  "acilanlar": [
+   "up1",
+   "up2"
+  ],
+  "kart": "up1"
+ }
+}

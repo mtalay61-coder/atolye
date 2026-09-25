@@ -1,0 +1,14 @@
+{
+ "bas": 1,
+ "hatalar": [],
+ "ilkDokunustaSonra": 1,
+ "pencere": {
+  "acik": true,
+  "dugmeYazisi": "Sil"
+ },
+ "silSonra": 0,
+ "vazgecSonra": {
+  "pencere": false,
+  "sayi": 1
+ }
+}

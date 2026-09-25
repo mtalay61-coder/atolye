@@ -1,0 +1,17 @@
+{
+ "acilis": {
+  "bulutGirisEkrani": true,
+  "ilkKurulumYok": true,
+  "yerelListeYok": true
+ },
+ "anahtarlaOkumaReddedildi": true,
+ "girisSonrasi": {
+  "bulutGirisEkraniKapandi": true,
+  "icerde": true,
+  "ikinciGirisEkraniYok": true,
+  "yerelRozetYok": true
+ },
+ "hatalar": [],
+ "jetonluOkuma": true,
+ "yanlisSifre": "mahmut@atolye.local: Kullanıcı adı ya da şifre hatalı (Supabase reddetti). Şifre Tanımlar > Kullanıcılar'dan yeniden verilebilir."
+}

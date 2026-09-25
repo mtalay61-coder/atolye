@@ -1,0 +1,53 @@
+{
+ "depoYolu": {
+  "formdaListelenen": [
+   "AS-1",
+   "AS-2"
+  ],
+  "formdaSec": true,
+  "hareket": [
+   "41:10:AS-1"
+  ],
+  "rozet": [
+   "AS-1"
+  ],
+  "sonrasi": [
+   "AS-1:Tamamlandı:10",
+   "AS-2:Bekliyor:0"
+  ]
+ },
+ "digerCariyeAitListelendi": false,
+ "fisNolar": [
+  "<fisno-001>"
+ ],
+ "fiyatSonuc": {
+  "fisFiyatlari": [
+   "41:17.5",
+   "42:17.5"
+  ],
+  "fiyatKutusuVar": true,
+  "siparisFiyati": [
+   15,
+   15
+  ]
+ },
+ "geriAlSonrasi": [
+  "AS-1:Bekliyor:0",
+  "AS-2:Bekliyor:0"
+ ],
+ "hareketler": [
+  "41:10:<fisno-001>:AS-1",
+  "42:5:<fisno-001>:AS-2"
+ ],
+ "hatalar": [],
+ "kaynakBaglantisi": "SAT-9",
+ "kutular": 2,
+ "listelenen": [
+  "AS-1",
+  "AS-2"
+ ],
+ "siparislerSonra": [
+  "AS-1:Tamamlandı:10",
+  "AS-2:Tamamlandı:5"
+ ]
+}

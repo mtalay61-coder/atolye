@@ -1,0 +1,15 @@
+{
+ "girisAcilmadi": true,
+ "girisSonrasi": {
+  "rol": "Yönetici",
+  "tanimlarMenude": true
+ },
+ "hatalar": [],
+ "hesapYokken": {
+  "diyalog": "Kullanıcı EKLENMEDİ: bulut oturumu yok ve veli@atolye.local hesabıyla giriş denenemedi.",
+  "kayitlar": 0
+ },
+ "ilkKullanici": [
+  "Veli:Yönetici:bulut:sifresiz"
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "acikGorunum": {
+  "detayAcildi": true
+ },
+ "baslikGuncellendi": true,
+ "dugmeVar": 1,
+ "fisEkrani": {
+  "cariSecimiVar": true,
+  "fisEkraniAcildi": true,
+  "gorunen": [
+   "Anasayfa Depo Alış Fişi: Cari seçin $ 48,00 € 56,00",
+   "CARİ · ALIŞ FİŞİ Cari seçin − Kapat Cariden Alış Fişi mal stoğa girer, cariye borç yazılır"
+  ],
+  "miktarOnDolu": true,
+  "siparisFormuAcilmadi": true,
+  "urunKalemOlarakGeldi": true
+ },
+ "hatalar": [],
+ "hepsiListeleniyor": {
+  "deriSatirSayisi": 1,
+  "hareketsizVar": true,
+  "ozetHucresi": true
+ },
+ "satirDurumu": {
+  "acigiOlmayan": {
+   "alisFisiDugmesi": false,
+   "karsilandiRozeti": true,
+   "satinAlDugmesi": false,
+   "siparisRozeti": false
+  },
+  "acikOlan": {
+   "alisFisiDugmesi": true,
+   "karsilandiRozeti": false,
+   "satinAlDugmesi": true,
+   "siparisRozeti": false
+  }
+ },
+ "sikiBaslik": {
+  "baslik": "Depo",
+  "ilkSatirYakin": true
+ },
+ "sonuc": {
+  "alisFisiAcilmadi": true,
+  "basliktaUndefinedYok": true,
+  "bulunamadiBildirimiYok": true,
+  "gorunen": [
+   "Anasayfa Depo Satın Al: Deri $ 48,00 € 56,00",
+   "DEPO · HAMMADDE İHTİYAÇ Deri − Kapat Bekleyen (henüz tam karşılanmamış) satış si"
+  ],
+  "ihtiyacEkraniAcildi": true,
+  "malzemeListede": true,
+  "panelSatirlari": [
+   "Siyah ·  · 13",
+   "Taba ·  · 3"
+  ],
+  "satinAlMiktarOnDolu": true
+ }
+}

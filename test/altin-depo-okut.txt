@@ -1,0 +1,80 @@
+{
+ "elle": {
+  "beden": {
+   "basliklar": [
+    "Beden",
+    "Stok",
+    "Kolide",
+    "Serbest",
+    "Üretimde",
+    "Talep",
+    "Açık"
+   ],
+   "satirlar": [
+    "36|4|·|4|·|·|·",
+    "37|4|·|4|·|·|·",
+    "38|10|·|10|·|3|· ◀",
+    "39|4|·|4|·|·|·",
+    "40|4|·|4|·|·|·"
+   ],
+   "siparisler": [
+    "SAT-OKUTMüşteri BSiyah · 383 çift"
+   ],
+   "urun": "125 Model"
+  },
+  "hammadde": {
+   "basliklar": [
+    "Beden",
+    "Stok",
+    "Rezerve",
+    "Serbest",
+    "Yolda"
+   ],
+   "satirlar": [
+    "—|7|·|7|6"
+   ],
+   "siparisler": [],
+   "urun": "Deri"
+  },
+  "koli": {
+   "tanimsiz": "K-20260922-001 — Bu bir KOLİ barkodu. Koliyi Paketleme ekranında okutun; depoda ürün etiketini okutun."
+  },
+  "renk": {
+   "basliklar": [
+    "Beden",
+    "Stok",
+    "Kolide",
+    "Serbest",
+    "Üretimde",
+    "Talep",
+    "Açık"
+   ],
+   "satirlar": [
+    "36|4|·|4|·|·|·",
+    "37|4|·|4|·|·|·",
+    "38|10|·|10|·|3|·",
+    "39|4|·|4|·|·|·",
+    "40|4|·|4|·|·|·"
+   ],
+   "siparisler": [
+    "SAT-OKUTMüşteri BSiyah · 383 çift"
+   ],
+   "urun": "125 Model"
+  },
+  "yok": {
+   "tanimsiz": "909999 — Barkod ürün şemasına uyuyor ama bu kodda bir ürün/renk/beden yok — ürün silinmiş ya da etiket eski olabilir."
+  }
+ },
+ "hatalar": [],
+ "kamera": {
+  "hata": null,
+  "okunanUrun": "m125",
+  "sayfaHatalari": [],
+  "yontem": "yerleşik okuyucu"
+ },
+ "kodUzunluklari": [
+  10,
+  12
+ ],
+ "saltOkuma": true
+}

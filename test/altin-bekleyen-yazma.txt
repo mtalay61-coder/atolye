@@ -1,0 +1,151 @@
+{
+ "bulguOnce": "1",
+ "defter": {
+  "cari:data": {
+   "deneme": 1,
+   "hata": "Failed to fetch",
+   "tablo": "cariler",
+   "zaman": "<zaman>"
+  },
+  "fisdefter:data": {
+   "deneme": 1,
+   "hata": "Failed to fetch",
+   "tablo": "fis_defteri",
+   "zaman": "<zaman>"
+  },
+  "stok:items": {
+   "deneme": 1,
+   "hata": "Failed to fetch",
+   "tablo": "urunler",
+   "zaman": "<zaman>"
+  },
+  "tanimlar:data": {
+   "deneme": 6,
+   "hata": "Failed to fetch",
+   "tablo": "tanimlar",
+   "zaman": "<zaman>"
+  }
+ },
+ "hatalar": [],
+ "onarim": {
+  "kaldirildi": true
+ },
+ "serit": 4,
+ "yerelKazandi": {
+  "eskiBulutGorunuyor": false,
+  "yerelUrunGorunuyor": true
+ },
+ "yerelTanimlar": {
+  "acilisGocuYapildi": true,
+  "araProsesler": [],
+  "asortiler": [],
+  "bedenler": [
+   {
+    "ad": "40",
+    "barkodKodu": 1,
+    "id": "b1",
+    "tip": "Beden"
+   },
+   {
+    "ad": "41",
+    "barkodKodu": 2,
+    "id": "b2",
+    "tip": "Beden"
+   },
+   {
+    "ad": "42",
+    "barkodKodu": 3,
+    "id": "b3",
+    "tip": "Beden"
+   }
+  ],
+  "birimler": [
+   {
+    "ad": "adet",
+    "id": "birim-adet"
+   },
+   {
+    "ad": "çift",
+    "id": "birim-çift"
+   },
+   {
+    "ad": "metre",
+    "id": "birim-metre"
+   }
+  ],
+  "fireSebepleri": [],
+  "firmaBilgileri": {
+   "adres": "",
+   "email": "",
+   "logo": "",
+   "telefon": "",
+   "unvan": "Test Atölye",
+   "vergiNo": "",
+   "website": ""
+  },
+  "fiyatGruplari": [],
+  "girisAktifMi": false,
+  "hammaddeTipleri": [],
+  "kodSayaclari": {
+   "beden": 3,
+   "cari": 3,
+   "renk": 3
+  },
+  "kullanicilar": [
+   {
+    "ad": "Test",
+    "id": "k1",
+    "sifre": "",
+    "yetkiler": {}
+   }
+  ],
+  "mamulTipleri": [],
+  "ozelKodAlanlari": [
+   {
+    "ad": "Özel Kod 1",
+    "id": "#1",
+    "kapsamAd": "",
+    "kapsamTuru": "genel"
+   }
+  ],
+  "ozelKodEtiketleri": [
+   "Özel Kod 1"
+  ],
+  "prosesler": [
+   {
+    "ad": "Kesim",
+    "id": "p1",
+    "sira": 1
+   }
+  ],
+  "renkKombinasyonlari": [],
+  "renkler": [
+   {
+    "ad": "Siyah",
+    "barkodKodu": 1,
+    "id": "r1",
+    "kod": "",
+    "malzemeTipleri": [],
+    "renkKodu": "#C9B99A",
+    "tip": "Hammadde"
+   },
+   {
+    "ad": "Taba",
+    "barkodKodu": 2,
+    "id": "r2",
+    "kod": "",
+    "malzemeTipleri": [],
+    "renkKodu": "#C9B99A",
+    "tip": "Hammadde"
+   },
+   {
+    "ad": "Bordo",
+    "barkodKodu": 3,
+    "id": "#2",
+    "kod": "101",
+    "renkKodu": "#C9B99A",
+    "tip": "Hammadde"
+   }
+  ]
+ }
+}

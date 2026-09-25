@@ -1,0 +1,24 @@
+{
+ "dugmeMetni": "Seçilenleri bas (6 etiket)",
+ "hatalar": [],
+ "seritMetni": "3 satır seçiliKopya Seçilenleri bas (3 etiket)Seçimi temizle",
+ "tek": {
+  "adet": 1,
+  "hepsindeBarkodVar": true,
+  "ilk": "125 Model Siyah · 38 900003000103",
+  "metinler": [
+   "125 Model Siyah · 38 900003000103"
+  ]
+ },
+ "toplu": {
+  "adet": 6,
+  "hepsindeBarkodVar": true,
+  "ilk": "125 Model Siyah · 36 900003000101",
+  "metinler": [
+   "125 Model Siyah · 36 900003000101",
+   "125 Model Siyah · 37 900003000102",
+   "125 Model Siyah · 38 900003000103"
+  ]
+ },
+ "tumSecili": "4 satır seçiliKopya Seçilenleri bas (8 etiket)Seçimi temizle"
+}

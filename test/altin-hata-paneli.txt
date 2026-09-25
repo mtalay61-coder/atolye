@@ -1,0 +1,13 @@
+{
+ "hatalar": [],
+ "panel": {
+  "enBuyukKayitListelendi": true,
+  "kaydedilmediUyarisi": true,
+  "kopyalaDugmesi": true,
+  "kotaTeshisi": true,
+  "panelAcik": true,
+  "toplamKullanimYazili": true,
+  "yabanciKayitListelendi": true
+ },
+ "panelHalaAcik": true
+}

@@ -1,0 +1,15 @@
+{
+  "name": "atolye-erp",
+  "private": true,
+  "description": "Atölye ERP — derleme ve test araçları (uygulamanın kendisi tek HTML dosyası, CDN'den React yüklüyor)",
+  "scripts": {
+    "yap": "./yap.sh",
+    "test": "./test/kosu.sh"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "6.0.2"
+  }
+}

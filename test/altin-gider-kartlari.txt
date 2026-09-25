@@ -1,0 +1,21 @@
+{
+ "bosDurum": {
+  "hazirDugmesi": true,
+  "kartYok": true
+ },
+ "hatalar": [],
+ "karsiliksizReddedildi": true,
+ "kartSecici": true,
+ "kayit": [
+  "Çıkış:12000:İşyeri kirası:yonetim"
+ ],
+ "tanimlar": {
+  "elleEklenen": [
+   "Numune giderleri:uretim:gider"
+  ],
+  "hazirSayisi": 11,
+  "kiraKarti": [
+   "yonetim:770"
+  ]
+ }
+}

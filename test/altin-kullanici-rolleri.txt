@@ -1,0 +1,21 @@
+{
+ "hatalar": [],
+ "panel": {
+  "barkodEkraniAcik": true,
+  "fisMenusuYok": true,
+  "menuCizilmedi": true
+ },
+ "sablonSecici": [
+  "Yönetici",
+  "Üretim",
+  "Muhasebe",
+  "Üretim + Muhasebe",
+  "Panel"
+ ],
+ "uretim": {
+  "cariGormez": true,
+  "muhasebeGormez": true,
+  "rol": "Üretim",
+  "uretimGorur": true
+ }
+}

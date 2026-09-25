@@ -1,0 +1,19 @@
+{
+ "hatalar": [],
+ "sonuc": {
+  "adlar": [
+   "Üretim maliyeti",
+   "Satış ve pazarlama",
+   "Genel yönetim",
+   "Finansman",
+   "Diğer gelir",
+   "Fason işçilik",
+   "Hurda satışı"
+  ],
+  "baslangicSayisi": 5,
+  "turler": [
+   "Fason işçilik:gider",
+   "Hurda satışı:gelir"
+  ]
+ }
+}

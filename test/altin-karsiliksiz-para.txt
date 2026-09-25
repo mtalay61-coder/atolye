@@ -1,0 +1,9 @@
+{
+ "bulgular": {
+  "bagiKopuk": true,
+  "giderKartliGecmiyor": true,
+  "karsiliksiz": true,
+  "virmanTekAyak": true
+ },
+ "hatalar": []
+}

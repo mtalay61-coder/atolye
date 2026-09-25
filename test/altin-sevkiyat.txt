@@ -1,0 +1,19 @@
+{
+ "acilanPencere": true,
+ "bosAcildi": true,
+ "geriAlmaSonrasi": {
+  "durum": "Hazır",
+  "fisNoTemizlendi": true
+ },
+ "hatalar": [],
+ "okutmaSonrasi": {
+  "koliOzeti": "1 koli · 8 çift",
+  "koliVar": true,
+  "mesaj": "K-20260901-001 eklendi · 2 satır · SAT-9 (koli)"
+ },
+ "sevkSonrasi": {
+  "durum": "Sevk edildi",
+  "fisNoVar": true,
+  "karsilanan": "37=3,38=5"
+ }
+}

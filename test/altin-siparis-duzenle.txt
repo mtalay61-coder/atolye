@@ -1,0 +1,76 @@
+{
+ "baslik": {
+  "not": "düzeltilmiş not",
+  "teslimTarihi": "<tarih>"
+ },
+ "baslikDolu": {
+  "cari": "c2",
+  "cariKilitli": true,
+  "notVar": true,
+  "tarihler": [
+   "<tarih>",
+   "<tarih>"
+  ]
+ },
+ "cariKorundu": true,
+ "durumGosterimi": {
+  "rozet": "Onaylandı",
+  "seciciVar": false
+ },
+ "formOnde": {
+  "baslik": true,
+  "formVar": true,
+  "kaydetDugmesi": true,
+  "ortadakiFormda": true
+ },
+ "hatalar": [],
+ "kalemler": [
+  "kd1:Bot:Siyah:40:8:400:0",
+  "kd2:Bot:Siyah:41:4:400:2",
+  "kd3:Çizme:Kahve:40:3:375:0",
+  "yeni:Çizme:Siyah:40:2:0:0"
+ ],
+ "kartKutusu": {
+  "fiyat": 0,
+  "miktar": 0,
+  "sil": 0
+ },
+ "renkBosaldi": "",
+ "renksizKayitYok": true,
+ "renksizRed": true,
+ "satirlar": [
+  {
+   "miktarKutusu": 2,
+   "renk": "Siyah",
+   "renkSecenekleri": [
+    "Siyah"
+   ],
+   "silDugmesi": 1,
+   "tur": "serbest",
+   "urunSecici": true
+  },
+  {
+   "miktarKutusu": 0,
+   "renk": null,
+   "renkSecenekleri": [],
+   "silDugmesi": 0,
+   "tur": "kilitli",
+   "urunSecici": false
+  },
+  {
+   "miktarKutusu": 2,
+   "renk": "Taba",
+   "renkSecenekleri": [
+    "Taba (listede yok)",
+    "Siyah"
+   ],
+   "silDugmesi": 1,
+   "tur": "serbest",
+   "urunSecici": true
+  }
+ ],
+ "sonra": {
+  "formKapandi": true,
+  "kartGorunur": true
+ }
+}

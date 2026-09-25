@@ -1,0 +1,73 @@
+{
+ "adimTamamlandiMi": false,
+ "akordeon": {
+  "birinciAcik": 1,
+  "ikinciAcik": 1
+ },
+ "girisSonrasi": {
+  "alinabilir": false,
+  "elindeki": true,
+  "kisiGorunuyor": true
+ },
+ "hatalar": [],
+ "ilkParcaBarkodu": "2001-1",
+ "ilkParcaMiktari": 12,
+ "isEmri": {
+  "barkodVar": 1,
+  "bedenDagilimi": true,
+  "bedenSutunlari": [
+   "Hammadde",
+   "Renk",
+   "41",
+   "42",
+   "Toplam",
+   "Hammadde",
+   "Renk",
+   "41",
+   "42",
+   "Toplam"
+  ],
+  "bosProsesAciklamasi": true,
+  "boyut": "210mm 297mm",
+  "hammaddeSatirSayisi": 4,
+  "hammaddeYazili": true,
+  "kesimBasligi": true,
+  "sayaBasligi": true,
+  "tabanHucreleri": "Taban | Siyah | 20 (41) | 12 (42) | 32 adet",
+  "tabanSatirSayisi": 1
+ },
+ "kalaniAlma": true,
+ "kismiAlma": {
+  "elindeki": true,
+  "halaAlinabilir": true,
+  "kalanUyarisi": true,
+  "mesaj": true
+ },
+ "parcaBarkodlari": [
+  "2001-1",
+  "2001-2"
+ ],
+ "parcaKodlariMesajda": true,
+ "parcaMiktarlari": [
+  12,
+  20
+ ],
+ "sayaKodu": "2001-1",
+ "sayaMiktari": 12,
+ "teslimEdildiMi": true,
+ "teslimSonrasi": {
+  "elindeki": true,
+  "mesaj": true
+ },
+ "uretimEtiketi": {
+  "barkodVar": 1,
+  "boyut": "60mm 40mm",
+  "kodYazili": true,
+  "sayfaSayisi": 1
+ },
+ "yerlesim": {
+  "alabilecegiSolda": true,
+  "oturumOzetiAltta": true,
+  "toplamYazili": true
+ }
+}

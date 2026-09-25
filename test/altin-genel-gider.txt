@@ -1,0 +1,11 @@
+{
+ "hatalar": [],
+ "ozet": {
+  "grupBasligi": true,
+  "hedefeGore": "20,7 ₺",
+  "kartSecici": true,
+  "sapma": true,
+  "soforCiftBasi": true,
+  "toplam": "62.100 ₺"
+ }
+}

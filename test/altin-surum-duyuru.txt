@@ -1,0 +1,38 @@
+{
+ "baslatici": {
+  "adres": "<sunucu>/uygulama/atolye-erp-v1.280.0.html",
+  "icerik": true
+ },
+ "baslaticiHata": {
+  "durum": "Sürüm bilgisi alınamadı (HTTP 401).",
+  "ipucuVar": true
+ },
+ "baslaticiJson": {
+  "adres": "<sunucu>/u/app.html",
+  "icerik": true
+ },
+ "eskiSurum": null,
+ "formVar": true,
+ "gecmis": {
+  "acikMaddeler": true,
+  "buSurumIsareti": true,
+  "enAz17Kayit": true,
+  "ilkKayitBuSurum": true,
+  "sirali": true
+ },
+ "hatalar": [],
+ "kapatildi": true,
+ "kayitYok": null,
+ "yayinSonrasiSerit": "9.9.9",
+ "yazilan": {
+  "not": "",
+  "surum": "9.9.9",
+  "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v9.9.9.html"
+ },
+ "yeniSurum": {
+  "dugme": "indir",
+  "etiket": "İndir",
+  "surum": "9.9.9",
+  "url": "https://ornek.test/atolye-erp.html"
+ }
+}

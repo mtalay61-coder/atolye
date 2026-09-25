@@ -1,0 +1,56 @@
+{
+ "aktifGrupAcikKaldi": true,
+ "daraltilmis": {
+  "grupSayisi": 0,
+  "navSayisi": 15
+ },
+ "depoAcik": [
+  "Anasayfa",
+  "Stok",
+  "Depo",
+  "Paketleme",
+  "Planlama",
+  "Cari",
+  "Muhasebe",
+  "Gelir / Gider",
+  "Fişler",
+  "Sohbet",
+  "Günlük"
+ ],
+ "finansAltinda": [
+  "Anasayfa",
+  "Planlama",
+  "Cari",
+  "Muhasebe",
+  "Gelir / Gider",
+  "Fişler",
+  "Sohbet",
+  "Günlük"
+ ],
+ "fisKarti": {
+  "cariAdiTiklanabilir": true,
+  "ikinciCariDugmesiYok": true,
+  "islemlerDugmesi": true,
+  "menuKapaliBasliyor": true
+ },
+ "genis": {
+  "gruplar": [
+   "Depo",
+   "Üretim",
+   "Siparişler",
+   "Finans"
+  ],
+  "grupsuzlar": [
+   "Anasayfa",
+   "Planlama",
+   "Sohbet",
+   "Günlük"
+  ]
+ },
+ "hatalar": [],
+ "menuAcik": true,
+ "paraFisleri": {
+  "basligi": false,
+  "uretimFisiYok": false
+ }
+}

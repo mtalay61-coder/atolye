@@ -1,0 +1,10 @@
+{
+ "ekran": {
+  "karisikAyriYazildi": true,
+  "karisikToplandi": false,
+  "musteriEUR": true,
+  "musteriYanlisTL": false,
+  "ozet": "Alacak: 1.000 ₺ · 50 $ · 2.124,21 €"
+ },
+ "hatalar": []
+}

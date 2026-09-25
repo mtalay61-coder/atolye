@@ -1,0 +1,96 @@
+{
+ "basarili": {
+  "cagri": {
+   "eposta": "ayse@atolye.local",
+   "islem": "ekle",
+   "sifre": "sifre123",
+   "yetki": "Bearer jeton-a"
+  },
+  "kayitlar": [
+   {
+    "bulut": true,
+    "eposta": "mahmut@atolye.local",
+    "ka": "Mahmut",
+    "sifreVar": false
+   },
+   {
+    "bulut": false,
+    "eposta": null,
+    "ka": "Veli",
+    "sifreVar": true
+   },
+   {
+    "bulut": true,
+    "eposta": "ayse@atolye.local",
+    "ka": "Ayşe",
+    "sifreVar": false
+   }
+  ]
+ },
+ "diyalogSayisi": 5,
+ "hatalar": [],
+ "reddedildi": {
+  "diyalog": "Kullanıcı EKLENMEDİ: bulut hesabı açılamadı.",
+  "diyalogAdedi": 1,
+  "eklenmedi": true,
+  "formDoluKaldi": "Zeki",
+  "kayitlar": [
+   {
+    "bulut": true,
+    "eposta": "mahmut@atolye.local",
+    "ka": "Mahmut",
+    "sifreVar": false
+   },
+   {
+    "bulut": false,
+    "eposta": null,
+    "ka": "Veli",
+    "sifreVar": true
+   },
+   {
+    "bulut": true,
+    "eposta": "ayse@atolye.local",
+    "ka": "Ayşe",
+    "sifreVar": false
+   }
+  ]
+ },
+ "sablon": {
+  "eklenmedi": true,
+  "mesaj": "Supabase'deki `kullanici` fonksiyonu ŞABLON kodla çalışıyor — dosya içeriği (#1.ts) yapıştırılıp Deploy edilmemiş."
+ },
+ "silindi": {
+  "cagri": {
+   "eposta": "ayse@atolye.local",
+   "islem": "sil",
+   "yetki": "Bearer jeton-a"
+  },
+  "kayitlar": [
+   {
+    "bulut": true,
+    "eposta": "mahmut@atolye.local",
+    "ka": "Mahmut",
+    "sifreVar": false
+   },
+   {
+    "bulut": false,
+    "eposta": null,
+    "ka": "Veli",
+    "sifreVar": true
+   }
+  ]
+ },
+ "silmeReddi": {
+  "kaldi": true
+ },
+ "yerelSilindi": {
+  "kayitlar": [
+   {
+    "bulut": true,
+    "eposta": "mahmut@atolye.local",
+    "ka": "Mahmut",
+    "sifreVar": false
+   }
+  ]
+ }
+}

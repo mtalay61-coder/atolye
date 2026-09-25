@@ -1,0 +1,18 @@
+{
+ "hatalar": [],
+ "kartRenkSecenekleri": [
+  "Kahve"
+ ],
+ "kombi": [
+  "r-h",
+  "r-k"
+ ],
+ "renkler": [
+  "Siyah:Hammadde:r-h",
+  "Kahve:Hammadde:r-k"
+ ],
+ "tanimlarEkrani": {
+  "mamulBolumuYok": true,
+  "renklerBolumu": true
+ }
+}

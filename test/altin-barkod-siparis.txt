@@ -1,0 +1,48 @@
+{
+ "asortiMesaji": true,
+ "bilinmeyenKodReddedildi": true,
+ "hatalar": [],
+ "kalemler": [
+  {
+   "beden": "36",
+   "miktar": 2
+  },
+  {
+   "beden": "37",
+   "miktar": 4
+  },
+  {
+   "beden": "38",
+   "miktar": 5
+  },
+  {
+   "beden": "39",
+   "miktar": 4
+  },
+  {
+   "beden": "40",
+   "miktar": 2
+  }
+ ],
+ "kodlar": {
+  "asorti": "9000030001001",
+  "beden": "900003000103",
+  "hepsiRakam": true,
+  "renk": "9000030001",
+  "stok": "900003",
+  "uzunluklar": [
+   6,
+   10,
+   12,
+   13
+  ]
+ },
+ "seviyeUyarilari": {
+  "renkSeviyesiReddedildi": true,
+  "stokSeviyesiReddedildi": true
+ },
+ "toplamCift": 17,
+ "yerlesim": {
+  "renkSeciciOkunabilir": true
+ }
+}

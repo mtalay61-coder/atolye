@@ -1,0 +1,8 @@
+{
+ "ekran": {
+  "kartSayisi": 1,
+  "toplamGorunuyor": true
+ },
+ "ekstre": "10.09.2026 | TL Kasa | Eylül kirası | −12.000 | 10.08.2026 | TL Kasa | Ağustos kirası | −12.000",
+ "hatalar": []
+}

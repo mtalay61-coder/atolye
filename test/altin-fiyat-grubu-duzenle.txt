@@ -1,0 +1,9 @@
+{
+ "grupPb": "USD",
+ "hatalar": [],
+ "kural": [
+  "fg1:6.3:USD"
+ ],
+ "uyari": true,
+ "uyariSonra": false
+}

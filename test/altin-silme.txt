@@ -1,0 +1,180 @@
+{
+ "cop": [
+  {
+   "ozet": "Alacak 3600 TRY — Cariden Alış fişi: Bot · Siyah · 41 · 3 çift (25 USD × 48 = 1.200 TRY) · <fisno-001>",
+   "tur": "cariHareketi"
+  },
+  {
+   "ozet": "Alacak 480 TRY — Cariden Alış fişi: Deri · Siyah · 4 metre · <fisno-001>",
+   "tur": "cariHareketi"
+  }
+ ],
+ "hatalar": [],
+ "silmeSonrasi": {
+  "cariler": [
+   {
+    "hareketSayisi": 0,
+    "unvan": "Tedarikçi A"
+   },
+   {
+    "hareketSayisi": 0,
+    "unvan": "Müşteri B"
+   },
+   {
+    "hareketSayisi": 1,
+    "unvan": "Personel C"
+   }
+  ],
+  "siparisler": [
+   {
+    "durum": "Bekliyor",
+    "kalemler": [
+     {
+      "karsilanan": 0,
+      "miktar": 6,
+      "urunAd": "Deri"
+     },
+     {
+      "karsilanan": 0,
+      "miktar": 3,
+      "urunAd": "Bot"
+     }
+    ],
+    "no": "AS-1"
+   }
+  ],
+  "stok": [
+   {
+    "ad": "Deri",
+    "hareketSayisi": 3,
+    "variants": [
+     {
+      "beden": "",
+      "miktar": 7,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     },
+     {
+      "beden": "",
+      "miktar": 4,
+      "minStok": 0,
+      "renk": "Taba",
+      "renkId": "r2"
+     }
+    ]
+   },
+   {
+    "ad": "Bot",
+    "hareketSayisi": 4,
+    "variants": [
+     {
+      "beden": "40",
+      "miktar": 5,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     },
+     {
+      "beden": "41",
+      "miktar": 9,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     },
+     {
+      "beden": "42",
+      "miktar": 7,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     }
+    ]
+   }
+  ]
+ },
+ "teslimSonrasi": {
+  "cariler": [
+   {
+    "hareketSayisi": 2,
+    "unvan": "Tedarikçi A"
+   },
+   {
+    "hareketSayisi": 0,
+    "unvan": "Müşteri B"
+   },
+   {
+    "hareketSayisi": 1,
+    "unvan": "Personel C"
+   }
+  ],
+  "siparisler": [
+   {
+    "durum": "Kısmi Teslim",
+    "kalemler": [
+     {
+      "karsilanan": 4,
+      "miktar": 6,
+      "urunAd": "Deri"
+     },
+     {
+      "karsilanan": 3,
+      "miktar": 3,
+      "urunAd": "Bot"
+     }
+    ],
+    "no": "AS-1"
+   }
+  ],
+  "stok": [
+   {
+    "ad": "Deri",
+    "hareketSayisi": 4,
+    "variants": [
+     {
+      "beden": "",
+      "miktar": 11,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     },
+     {
+      "beden": "",
+      "miktar": 4,
+      "minStok": 0,
+      "renk": "Taba",
+      "renkId": "r2"
+     }
+    ]
+   },
+   {
+    "ad": "Bot",
+    "hareketSayisi": 5,
+    "variants": [
+     {
+      "beden": "40",
+      "miktar": 5,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     },
+     {
+      "beden": "41",
+      "miktar": 12,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     },
+     {
+      "beden": "42",
+      "miktar": 7,
+      "minStok": 0,
+      "renk": "Siyah",
+      "renkId": "r1"
+     }
+    ]
+   }
+  ]
+ }
+}
+sırasız özet: 4c214d5dd84b

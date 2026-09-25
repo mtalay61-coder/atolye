@@ -1,0 +1,17 @@
+{
+ "eksiVeSifir": {
+  "ekranToplami": "-104"
+ },
+ "gecis": {
+  "hareket": [
+   "Açılış:104:ACL"
+  ],
+  "varyant": [
+   "41:104"
+  ]
+ },
+ "hatalar": [],
+ "turetme": {
+  "ekranToplami": "8"
+ }
+}

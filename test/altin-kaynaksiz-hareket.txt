@@ -1,0 +1,8 @@
+{
+ "hatalar": [],
+ "sonuc": {
+  "cariBulgusu": true,
+  "onarimDugmesiSayisi": 0,
+  "stokBulgusu": true
+ }
+}
