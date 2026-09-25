@@ -1,10 +1,13 @@
 // SENARYO — MENÜ GRUPLARI (kullanıcı, 17 Eylül: "soldaki bar çok uzayacak, birleştirelim; mesela
 // Depo ana başlık olsun, altına Stok eklensin").
 //
-// 14 modül tek düzlemdeydi. Artık dört grup: Depo · Üretim · Ticaret · Finans. Anasayfa, Sohbet ve
-// Günlük grupsuz. Menü DARALTILMIŞKEN grup başlığı gösterilmiyor (64 piksele başlık sığmaz),
-// ikonlar doğrudan alt alta.
-const { uygulamaAc } = require("./ortak.js");
+// 14 modül tek düzlemdeydi. Artık dört grup: Depo · Üretim · Siparişler · Finans. Anasayfa,
+// Planlama, Sohbet ve Günlük grupsuz.
+//
+// ÜST MENÜ (v1.449.0): yan menü kalktı, gruplar üstte açılır liste. "daraltilmis" ölçümü artık
+// menünün İLK hâli: 4 grup düğmesi + 4 grupsuz öğe görünür, grup içerikleri kapalı. "Genişlet"
+// düğmesi yok (tıklama boşa düşüyor); grup açılınca içindekiler görünür.
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -64,7 +67,7 @@ async function calistir() {
 
   // FİŞ KARTI İŞLEMLER MENÜSÜ (18 Eylül): bağlantı düğmeleri açıkta duruyordu, artık tek
   // düğmenin arkasında; cari adı başlıkta tıklanabilir ve alttaki ikinci "carisine git" kalktı.
-  await sayfa.getByRole("button", { name: "Fişler", exact: true }).first().click();
+  await modulAc(sayfa, "Fişler");
   await sayfa.waitForTimeout(1000);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /1001-Kesim/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(700);

@@ -4,7 +4,7 @@
 // Ölçülen: (1) fiş kesilince deftere TEK kayıt düşüyor — kalemler, stok hareketleri ve cari
 // hareketi bir arada; (2) defterden hesaplanan stok toplamı ürünün varyantıyla aynı (türev
 // tutarlı); (3) fiş geri alınınca defterde kayıt SİLİNMİYOR, `iptal: true` oluyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -26,7 +26,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2200);
 
   // Alış siparişinden fiş kes.
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "ALS-5" && e.children.length === 0);
@@ -53,7 +53,7 @@ async function calistir() {
     .reduce((t2, h) => t2 + (h.miktar || 0), 0);
 
   // Geri al: cari ekstresinden fiş grubunu sil.
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   await sayfa.locator('button:has-text("Tedarikçi A"):visible').last().click();
   await sayfa.waitForTimeout(700);
@@ -82,7 +82,7 @@ async function calistir() {
   s2.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   s2.on("dialog", (d) => d.accept());
   await s2.waitForTimeout(2300);
-  await s2.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(s2, "Alış Siparişi");
   await s2.waitForTimeout(600);
   await s2.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "ALS-5" && e.children.length === 0);

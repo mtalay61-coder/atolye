@@ -7,7 +7,7 @@
 //   - "Fişi Oluştur" fiş PENCERESİNİ açar (23 Eylül, v1.431.0: alış da ortak fiş ekranında).
 //   - Aynı modelin başka rengi ve başka bir model, AYNI fişe ayrı satır olarak eklenir.
 //   - Her satır kendi bedenlerini taşır; toplam kutu sayısı satırların bedenlerinin toplamıdır.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -31,7 +31,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);

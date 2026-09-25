@@ -7,7 +7,7 @@
 //   1. Açık modül sekmeleri, etkin sekme ve açık sipariş penceresi yenilemeden sonra geri geliyor.
 //   2. Veri yenilemede buluttan/depodan YENİDEN okunuyor (pencere güncel kaydı gösteriyor).
 //   3. Kaydı olmayan pencere ve kopya taşıyan pencere türü (reçete) geri getirilmiyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -42,9 +42,9 @@ async function calistir() {
   await sayfa.waitForTimeout(2300);
 
   // Stok sekmesi açılıyor, sonra Sipariş; SAT-Y1 tam ekran.
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(500);
-  await sayfa.getByRole("button", { name: "Sipariş", exact: true }).first().click();
+  await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => {
     const d = [...document.querySelectorAll("div")].filter((x) => x.textContent.includes("SAT-Y1") && x.getBoundingClientRect().width > 0).pop();

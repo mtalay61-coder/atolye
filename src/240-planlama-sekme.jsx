@@ -70,7 +70,7 @@ function PlanlanmisSekmesi({ siparisler, uretim, cariler, onGoToSiparis, onGoToU
           });
           const tumBedenler = Array.from(new Set(planliKalemler.map((k) => k.beden)));
           return (
-            <div key={s.id} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+            <div key={s.id} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
               <button
                 type="button"
                 onClick={() => onGoToSiparis && onGoToSiparis(s.id)}
@@ -92,7 +92,7 @@ function PlanlanmisSekmesi({ siparisler, uretim, cariler, onGoToSiparis, onGoToU
                   </thead>
                   <tbody>
                     {renkGruplari.map((g) => (
-                      <tr key={g.anahtar} style={{ borderTop: "1px solid #F2E8D8" }}>
+                      <tr key={g.anahtar} style={{ borderTop: "1px solid var(--erp-head)" }}>
                         <td style={{ fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" }}>
                           <span style={{ fontWeight: 600 }}>{g.urunAd}</span>
                           <span className="mono" style={{ color: "var(--erp-text-2)" }}> · {g.renk}</span>
@@ -319,7 +319,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
             // gönderilmemiş) kalemler gösterilir — planlanmış olanlar artık burada tekrar görünmez.
             const bekleyenKalemler = s.kalemler.filter((k) => k.miktar - (k.karsilanan || 0) > 0 && !k.planlama);
             return (
-              <div key={s.id} style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+              <div key={s.id} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                 <button
                   type="button"
                   onClick={() => onGoToSiparis && onGoToSiparis(s.id)}
@@ -363,7 +363,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
                             const uretimde = satirSeciliMi(uretimSecilenler, secim);
                             const satinalmada = satirSeciliMi(satinalmaSecilenler, secim);
                             return (
-                            <tr key={g.anahtar} style={{ borderTop: "1px solid #F2E8D8" }}>
+                            <tr key={g.anahtar} style={{ borderTop: "1px solid var(--erp-head)" }}>
                               <td style={{ fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" }}>
                                 <span style={{ fontWeight: 600 }}>{g.urunAd}</span>
                                 <span className="mono" style={{ color: "var(--erp-text-2)" }}> · {g.renk}</span>

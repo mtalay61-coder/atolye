@@ -1,83 +1,29 @@
-// `rozet`: sayı > 0 ise ikonun yanında küçük bir sayaç (Görevler'de kişinin açık görevi, 14 Eylül).
-// MENÜ GRUBU (kullanıcı, 17 Eylül: "soldaki bar çok uzayacak, birleştirelim; mesela Depo ana
-// başlık olsun, altına Stok eklensin").
-//
-// 14 modül tek düzlemde diziliydi ve yeni modül (Modelhane) ile liste ekranı aşmaya başladı.
-// Gruplar konuya göre: açılır/kapanır başlık, altında ilgili modüller. İÇİNDE AKTİF MODÜL OLAN
-// GRUP KENDİLİĞİNDEN AÇIK — kullanıcı her açılışta grubu elle açmak zorunda kalmasın.
-//
-// Menü DARALTILMIŞKEN (yalnız ikonlar) grup başlığı gösterilmiyor: 64 piksele başlık sığmaz,
-// ikonlar doğrudan alt alta diziliyor; o kipte liste uzunluğu zaten sorun değil.
-function NavGrubu({ baslik, ikon, cocuklar, acikMi, onAcKapa, daraltilmis, icindeAktif }) {
-  if (daraltilmis) return <>{cocuklar}</>;
-  const acik = acikMi || icindeAktif;
-  return (
-    <div style={{ marginBottom: 2 }}>
-      <button
-        type="button"
-        data-nav-grup={baslik}
-        onClick={onAcKapa}
-        title={`${baslik} — ${acik ? "kapat" : "aç"}`}
-        style={{
-          display: "flex", alignItems: "center", gap: 8, width: "100%", border: "none",
-          background: icindeAktif ? "#F6EEDD" : "none", cursor: "pointer",
-          padding: "7px 10px", borderRadius: "var(--erp-r-md)", textAlign: "left",
-          fontSize: 11, fontWeight: 700, letterSpacing: .4, textTransform: "uppercase",
-          color: icindeAktif ? "var(--erp-text)" : "var(--erp-text-2)",
-        }}
-      >
-        {ikon}
-        <span style={{ flex: 1 }}>{baslik}</span>
-        {acik ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-      </button>
-      {acik && <div style={{ paddingLeft: 10 }}>{cocuklar}</div>}
-    </div>
-  );
-}
-
-function NavItem({ icon, label, active, onClick, renk = "var(--erp-orange)", daraltilmis, rozet }) {
-  // `title` HER ZAMAN yazılıyor: menü daraldığında yalnız ikon kalıyor ve düğmenin adı ne
-  // kullanıcıya ne de testlere görünüyordu (14 Eylül).
+function NavItem({ icon, label, active, onClick, renk = "var(--erp-orange)", rozet }) {
+  // `title` HER ZAMAN yazılıyor: düğmenin adı testlere ve ekran okuyuculara görünsün (14 Eylül).
+  // YENİ TASARIM (v1.449.0): üst menünün açılır listesindeki öğe. Seçili öğe açık kırmızı zemin +
+  // kırmızı yazı (tek vurgu rengi); ikon modülün kendi renginde, modüller ayırt edilebilsin.
   return (
     <button
+      type="button"
       title={label}
       data-nav={label}
       onClick={onClick}
       style={{
-        width: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: daraltilmis ? "center" : "flex-start",
-        gap: 10,
-        padding: daraltilmis ? "10px 0" : "10px 12px",
-        borderRadius: "var(--erp-r-md)",
-        border: "none",
-        borderLeft: active ? `3px solid ${renk}` : "3px solid transparent",
-        // AÇIK MENÜ (7 Eylül): seçili öge zeminden bir ton KOYU. Eskiden tersiydi —
-        // koyu menüde seçili olan daha koyu bir kahveydi ve metin kremdi. Zemin açılınca
-        // ikisi de tersine döndü, yoksa seçili öge okunmaz hâle gelirdi.
-        // TEMA (21 Eylül): standart menü — aktif öğe --erp-shell-2 zemin, beyaz yazı, sol
-        // kenarda aksiyon rengi çizgi; pasif öğe açık yazı, biraz soluk.
-        background: active ? "var(--erp-shell-2)" : "transparent",
-        color: active ? "#fff" : "var(--erp-shell-ink)",
-        opacity: active ? 1 : 0.8,
-        boxShadow: active ? "inset 3px 0 0 var(--erp-accent)" : "none",
-        fontSize: 14,
-        fontWeight: active ? 600 : 500,
-        cursor: "pointer",
-        marginBottom: 2,
-        textAlign: "left",
+        width: "100%", display: "flex", alignItems: "center", gap: 10,
+        height: 38, padding: "0 10px", border: "none", borderRadius: "var(--erp-r-md)",
+        background: active ? "var(--erp-accent-tint)" : "transparent",
+        color: active ? "var(--erp-accent)" : "var(--erp-text)",
+        fontSize: 14, fontWeight: active ? 700 : 500, cursor: "pointer", textAlign: "left", whiteSpace: "nowrap",
       }}
     >
-      <span style={{ display: "flex", color: active ? renk : "inherit" }}>{icon}</span>
-      {!daraltilmis && label}
+      <span style={{ display: "flex", color: active ? "var(--erp-accent)" : renk }}>{icon}</span>
+      {label}
       {rozet > 0 && (
         <span className="mono" data-nav-rozet={rozet} title={`${rozet} açık`}
-          style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, padding: "0 6px", borderRadius: "var(--erp-r-pill)", background: renk, color: "#fff" }}>
+          style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, padding: "0 6px", borderRadius: "var(--erp-r-pill)", background: "var(--erp-accent)", color: "#fff" }}>
           {rozet}
         </span>
       )}
-      {!daraltilmis && active && <ChevronRight size={14} style={{ marginLeft: "auto", color: renk }} />}
     </button>
   );
 }
@@ -230,7 +176,7 @@ function GecikenIslerPaneli({ siparisler, uretim, stok, cariler, muhasebe, onGoT
                     disabled={!k.tikla}
                     style={{
                       display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", width: "100%",
-                      background: gecikti ? "var(--erp-orange-bg)" : bugunMu ? "#FBF0E2" : "var(--erp-panel)",
+                      background: gecikti ? "var(--erp-orange-bg)" : bugunMu ? "var(--erp-hover)" : "var(--erp-panel)",
                       border: `1px solid ${gecikti ? "#E0B4A4" : "var(--erp-border-2)"}`,
                       borderLeft: `3px solid ${k.renk}`,
                       borderRadius: "var(--erp-r-md)", cursor: k.tikla ? "pointer" : "default", textAlign: "left",
@@ -436,7 +382,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
   const sonOlay = olaylar[0];
 
   return (
-    <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", background: "#fff", padding: 14, marginBottom: 28 }}>
+    <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", background: "#fff", padding: 14, marginBottom: 28 }}>
       {/* BAŞLIK AYNI ZAMANDA DÜĞME. Kapalıyken bile son işlemi özetliyor: açmadan da
           "en son ne oldu" sorusu cevaplanıyor. */}
       <button
@@ -497,7 +443,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
 
       {/* TÜR SEKMELERİ */}
       {turler.length > 1 && (
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10, borderBottom: "1px solid #E4D8C0", paddingBottom: 8 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10, borderBottom: "1px solid var(--erp-line-soft)", paddingBottom: 8 }}>
           <button
             type="button"
             onClick={() => setTurSuzgec("")}
@@ -535,7 +481,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
       {/* KİŞİ ÖZETİ: "kullanıcı bu kadar fatura kesti, bu kadar ödeme girdi" sorusunun cevabı. */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         {Object.entries(ozet).map(([kisi, sayilar]) => (
-          <span key={kisi} style={{ fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "4px 8px" }}>
+          <span key={kisi} style={{ fontSize: 11, color: "var(--erp-text-2)", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "4px 8px" }}>
             <b style={{ color: "var(--erp-text)" }}>{kisi}</b>
             {" — "}
             {Object.entries(sayilar).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${n} ${t.toLowerCase()}`).join(" · ")}
@@ -553,7 +499,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
             <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)", minWidth: 108 }}>
               {o.zaman ? tarihYaz(o.zaman, true) : "—"}
             </span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: o.renk, background: alfaEkle(o.renk, "1A"), border: `1px solid ${o.renk}44`, borderRadius: "var(--erp-r-pill)", padding: "1px 7px", whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: o.renk, background: alfaEkle(o.renk, "1A"), border: `1px solid ${alfaEkle(o.renk, "44")}`, borderRadius: "var(--erp-r-pill)", padding: "1px 7px", whiteSpace: "nowrap" }}>
               {o.tur}
             </span>
             <span style={{ fontSize: 12, color: "var(--erp-text)", fontWeight: 600 }}>{o.metin}</span>
@@ -746,7 +692,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
                 {benim.slice(0, 6).map((g) => (
                   <button key={g.id} type="button" data-anasayfa-gorev={g.id}
                     onClick={() => onGoreveGit && onGoreveGit(g)}
-                    style={{ display: "flex", gap: 10, alignItems: "center", border: "none", borderTop: "1px solid #F2E8D8",
+                    style={{ display: "flex", gap: 10, alignItems: "center", border: "none", borderTop: "1px solid var(--erp-head)",
                       background: "none", cursor: "pointer", padding: "9px 16px", textAlign: "left", flexWrap: "wrap" }}>
                     <span style={{ fontSize: 13, color: "var(--erp-text)", flex: 1, minWidth: 140 }}>{g.metin}</span>
                     {g.sonTarih && (
@@ -760,7 +706,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
               </div>
               {benim.length > 6 && (
                 <button type="button" onClick={() => onNavigate("gorevler")}
-                  style={{ width: "100%", border: "none", borderTop: "1px solid #F2E8D8", background: "var(--erp-panel)",
+                  style={{ width: "100%", border: "none", borderTop: "1px solid var(--erp-head)", background: "var(--erp-panel)",
                     cursor: "pointer", padding: "7px 16px", fontSize: 12, color: "var(--erp-purple)", fontWeight: 700 }}>
                   {benim.length - 6} görev daha — hepsini aç
                 </button>
@@ -774,14 +720,14 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
             <div
               key={s.label}
               style={{
-                background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 16,
+                background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16,
                 borderTop: `3px solid ${s.renk}`,
               }}
             >
               <div style={{ fontSize: 11, color: "var(--erp-text-3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" }}>
                 {s.label}
               </div>
-              <div className="mono" style={{ fontSize: 24, fontWeight: 700, color: "#3A291D", marginTop: 4 }}>
+              <div className="mono" style={{ fontSize: 24, fontWeight: 700, color: "var(--erp-text)", marginTop: 4 }}>
                 {s.value}
               </div>
               {s.alt && <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 2 }}>{s.alt}</div>}
@@ -820,7 +766,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
               onClick={() => onNavigate(m.key)}
               style={{
                 display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10,
-                background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 20,
+                background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 20,
                 cursor: "pointer", textAlign: "left", transition: "border-color .15s, transform .1s",
               }}
               // Kenarlık vurgusu da modül rengiyle: kart hangi modülse onu söylesin.
@@ -834,13 +780,13 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
                   söylüyor — menüdeki ve şeritteki modül renkleriyle aynı dil. */}
               <div style={{
                 width: 44, height: 44, borderRadius: "var(--erp-r-lg)",
-                background: `${MODUL_RENK[m.key] || "var(--erp-orange)"}22`,
+                background: `${alfaEkle(MODUL_RENK[m.key] || "var(--erp-orange)", "22")}`,
                 color: MODUL_RENK[m.key] || "var(--erp-orange)",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {m.icon}
               </div>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "#3A291D" }}>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--erp-text)" }}>
                 {m.baslik}
               </div>
               <div style={{ fontSize: 13, color: "var(--erp-text-2)", lineHeight: 1.5 }}>{m.aciklama}</div>

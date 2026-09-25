@@ -14,7 +14,7 @@
 // İki kural birlikte ölçülüyor:
 //   SIFIR SAY → hesapta eksi değer 0; eksi değerden satın alma miktarı TÜREMİYOR.
 //   İŞARETLE  → satır ve liste başı "stok bilinmiyor, sayım gerekli" diye damgalanıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -45,7 +45,7 @@ async function birDurum(receteFazla) {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
 
-  await sayfa.getByRole("button", { name: "Planlama", exact: true }).first().click();
+  await modulAc(sayfa, "Planlama");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find((x) => /^Hammadde İhtiyaç/.test(x.textContent.trim()));

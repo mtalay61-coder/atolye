@@ -6,7 +6,7 @@
 // Dönüş mekanizması (`donusHedefi`) zaten vardı ama Depo ekranı onu GEÇMİYORDU: `uruneGit(id)`
 // çağrısı dönüş hedefi olmadan yapılıyordu. Sekmeler `display:none` ile duruyor, yani dönünce
 // Depo'nun kaydırma konumu ve açık satırları yerinde kalıyor — tek eksik hedefi vermekti.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -15,7 +15,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Depo", exact: true }).click();
+  await modulAc(sayfa, "Depo");
   await sayfa.waitForTimeout(900);
   // Açıklama cümlesi v1.251.0'da kaldırıldı (Depo başlığı sıkılaştırıldı); Depo, üst şeritteki
   // başlıktan ve görünür "Hammadde Deposu" sekmesinden tanınıyor.

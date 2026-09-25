@@ -9,7 +9,7 @@
 // Bu senaryo mamul tarafının hesabını kilitliyor. En kritik iddia: HAZIR KOLİDEKİ mal serbest
 // sayılmamalı — fiziken depoda ama sözü verilmiş. Serbest saymak aynı çifti iki müşteriye
 // satmaya yol açardı (koli sınır denetiminde aynı hata yaşanmıştı, bkz. 3z).
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -47,7 +47,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Depo", exact: true }).click();
+  await modulAc(sayfa, "Depo");
   await sayfa.waitForTimeout(700);
   const sekmeler = await sayfa.evaluate(() => {
     const t2 = document.body.innerText;

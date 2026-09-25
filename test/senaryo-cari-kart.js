@@ -2,7 +2,7 @@
 // Kart günlük işte HAREKETLER için açılıyor; telefon/vergi no/adres/fotoğraf ve personelin barkod
 // + proses ayarları kayıt sırasında giriliyor. Bu yüzden düzenleme alanları AÇILIŞTA GİZLİ,
 // "Düzenle" ile açılıyor. Bu senaryo iki durumu da doğruluyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -44,7 +44,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   await sayfa.locator('button:has-text("Personel C"):visible').last().click();
   await sayfa.waitForTimeout(700);

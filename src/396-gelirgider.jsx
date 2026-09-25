@@ -56,7 +56,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
     ) : (
     <>
     {/* GELİR / GİDER KARTLARI (17 Eylül) — para hareketinin cari dışındaki karşı tarafı. */}
-    <div style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
+    <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Gelir / Gider Kartları</h3>
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px", lineHeight: 1.5 }}>
         Kira, elektrik, personel, nakliye gibi <b>alışı olmayan</b> giderlerin yazıldığı kartlar.
@@ -75,14 +75,14 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
                 
                 KARTI OLAN GRUP SİLİNMİYOR: altındaki kartlar sahipsiz kalır ve hiçbir ekranda
                 görünmezdi. Ad DEĞİŞTİRİLEBİLİR — anahtar sabit kaldığı için kartlar bağlı kalıyor. */}
-            <div style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10 }}>
+            <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 6 }}>
                 Gruplar <span style={{ fontWeight: 400, fontSize: 11 }}>— kartların ana başlıkları; kâr-zarar dökümü de bunlara göre</span>
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                 {gruplar.map((g) => (
                   <span key={g.key} style={{ display: "inline-flex", alignItems: "center", gap: 4,
-                    background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-pill)", padding: "2px 4px 2px 10px" }}>
+                    background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "2px 4px 2px 10px" }}>
                     <input value={g.ad} data-gider-grup-ad={g.key}
                       onChange={(e) => onSave({
                         ...tanimlar,
@@ -102,16 +102,16 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
               <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                 <input value={yeniGrupAdi} data-gider-yeni-grup="1" placeholder="Yeni grup: Fason işçilik…"
                   onChange={(e) => setYeniGrupAdi(e.target.value)}
-                  style={{ width: 220, padding: "5px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 13 }} />
+                  style={{ width: 220, padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }} />
                 <input value={yeniGrupKod} data-gider-yeni-kod="1" placeholder="TDHP (ops.)"
                   onChange={(e) => setYeniGrupKod(e.target.value)}
-                  style={{ width: 110, padding: "5px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 13 }} />
+                  style={{ width: 110, padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }} />
                 {/* TÜR SEÇİMİ (kullanıcı, 20 Eylül): yeni grup hep "gider" olarak açılıyordu;
                     gelir başlığı ("İhracat primi", "Hurda satışı") kurulamıyordu. Kâr-zarar
                     raporu türe göre ayırıyor: gider brüt kârdan düşer, gelir eklenir. */}
                 <select value={yeniGrupTur} data-gider-yeni-tur="1"
                   onChange={(e) => setYeniGrupTur(e.target.value)}
-                  style={{ width: 110, padding: "5px 8px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}>
+                  style={{ width: 110, padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 13 }}>
                   <option value="gider">Gider</option>
                   <option value="gelir">Gelir</option>
                 </select>
@@ -191,7 +191,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
                       </div>
                       {grubun.map((k) => (
                         <div key={k.id} data-gider-kart={k.ad} style={{ display: "flex", alignItems: "center", gap: 8,
-                          background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: "5px 10px", marginBottom: 3 }}>
+                          background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px", marginBottom: 3 }}>
                           <b style={{ fontSize: 13 }}>{k.ad}</b>
                           {k.tdhp && <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{k.tdhp}</span>}
                           {/* KART EKSTRESİ (kullanıcı, 20 Eylül: "gider kartlarını da cari gibi
@@ -214,7 +214,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
                       )).concat([])}
                       {grubun.filter((k) => acikKart === k.id).map((k) => (
                         <div key={`ekstre-${k.id}`} data-kart-hareketleri={k.ad}
-                          style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 6 }}>
+                          style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 6 }}>
                           {kartHareketleri(k.id).length === 0 ? (
                             <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>
                               Bu karta henüz hareket yazılmamış. Kasa/banka işleminde karşı taraf olarak seçince burada görünür.

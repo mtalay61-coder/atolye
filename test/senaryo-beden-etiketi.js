@@ -7,7 +7,7 @@
 // Yazdırma gerçek yazıcıya gitmez: `etiketYazdir` gizli bir iframe'e sayfayı yazıp `print()` çağırır.
 // Senaryo `print`i devre dışı bırakıp iframe'in İÇERİĞİNİ ölçüyor: kaç etiket çıktı, üstünde ne var,
 // barkodu olmayan varyant basıldı mı.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -46,13 +46,13 @@ async function calistir() {
   await sayfa.evaluate(() => { window.print = () => {}; });
 
   // Kodları ata (etiket ancak kodu olan varyanta basılır).
-  await sayfa.getByRole("button", { name: "Paketleme", exact: true }).click();
+  await modulAc(sayfa, "Paketleme");
   await sayfa.waitForTimeout(700);
   await sayfa.locator('button:has-text("Eksik kodları ata"):visible').click();
   await sayfa.waitForTimeout(1200);
 
   // Ürün kartı > Barkodlar
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.getByText("125 Model", { exact: true }).first().click();
   await sayfa.waitForTimeout(900);

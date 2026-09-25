@@ -13,7 +13,7 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
     return (
       <div style={{ marginTop: 16 }} data-planlama-bos="1">
         <StitchDivider color="#C97B3D" />
-        <div style={{ border: "1px dashed #C9B99A", borderRadius: "var(--erp-r-md)", padding: "12px 14px", background: "var(--erp-panel)",
+        <div style={{ border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "12px 14px", background: "var(--erp-panel)",
           fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.6 }}>
           <b style={{ color: "var(--erp-text)" }}>Planlanacak kalem yok.</b>{" "}
           Siparişin {toplam} adedinin tamamı karşılandı
@@ -39,7 +39,7 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
   return (
     <div style={{ marginTop: 16 }}>
       <StitchDivider color="#C97B3D" />
-      <div style={{ border: "1.5px solid #C97B3D", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#FBF3EA" }}>
+      <div style={{ border: "1.5px solid #C97B3D", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "var(--erp-hover)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "10px 12px", borderBottom: "1px solid #E8D4BE" }}>
           <ClipboardList size={14} color="#C97B3D" />
           <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: "#C97B3D" }}>
@@ -104,7 +104,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
 
   const satirStil = {
     padding: "9px 12px",
-    borderBottom: sonSatir ? "none" : "1px solid #E4D8C0",
+    borderBottom: sonSatir ? "none" : "1px solid var(--erp-line-soft)",
   };
 
   const planlanmisKalemler = grup.kalemler.filter((k) => k.planlama);
@@ -221,7 +221,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                                       title={`Elde: ${stok2}`}
                                       style={{
                                         fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: "var(--erp-r-pill)",
-                                        background: "var(--erp-panel)", border: "1px solid #E4D8C0",
+                                        background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)",
                                         color: stok2 < kal ? "var(--erp-warn)" : "var(--erp-primary)", whiteSpace: "nowrap",
                                       }}
                                     >
@@ -302,7 +302,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                 .filter((h) => h.kaynak === "Satınalma" && h.miktar > 0 && h.siparisNo === r.no && h.fisNo).map((h) => h.fisNo))];
               const durum = alis ? alis.durum : ur ? (ur.stogaEklendiMi ? "Üretildi" : (ur.durum || "Üretimde")) : "Kayıt yok";
               return (
-                <div key={r.no} data-tedarik-detay-satir={r.no} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 11, padding: "4px 8px", background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)" }}>
+                <div key={r.no} data-tedarik-detay-satir={r.no} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 11, padding: "4px 8px", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 700, color: r.tip === "Satınalma" ? "var(--erp-info)" : "var(--erp-brown)" }}>
                     {r.tip === "Satınalma" ? <PackageCheck size={11} /> : <Hammer size={11} />}
                     {r.tip === "Satınalma" ? "Alış Siparişi" : "Üretim"}
@@ -335,7 +335,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
       })()}
 
       {bekleyenKalemler.length > 0 && (
-        <div style={{ marginTop: 8, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 8 }}>
+        <div style={{ marginTop: 8, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
           <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>
             Her renk için ayrı ayrı "Üretim" ya da "Alış Siparişi" seçip miktarları düzenleyin:
           </div>
@@ -372,13 +372,13 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                       const kalemBedenIndex = {};
                       g.kalemler.forEach((k) => { kalemBedenIndex[k.beden] = k; });
                       return (
-                        <tr key={g.renk} style={{ borderTop: "1px solid #E4D8C0" }}>
+                        <tr key={g.renk} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                           <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--erp-panel)", zIndex: 1 }}>{g.renk}</td>
                           <td style={{ padding: "6px 8px", position: "sticky", left: 60, background: "var(--erp-panel)", zIndex: 1, boxShadow: "none", }}>
                             <select
                               value={ortakTip}
                               onChange={(e) => renkTipiDegistir(g.kalemler, e.target.value || null)}
-                              style={{ padding: "4px 6px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 11, fontWeight: 600 }}
+                              style={{ padding: "4px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11, fontWeight: 600 }}
                             >
                               <option value="">Seçin…</option>
                               <option value="Uretim">Üretilecek</option>

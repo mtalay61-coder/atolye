@@ -14,7 +14,7 @@ function AsortiOlusturucu({ bedenler, onKaydet }) {
   }
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 14, maxWidth: 640 }}>
+    <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14, maxWidth: 640 }}>
       <Field label="Asorti Adı">
         <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder="Örn. Standart Asorti" style={{ ...inputStyle, marginBottom: 10 }} />
       </Field>

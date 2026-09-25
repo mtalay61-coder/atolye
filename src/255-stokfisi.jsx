@@ -455,12 +455,12 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             <select value={paraBirimi} data-fis-pb="1"
               onChange={(e) => { setParaBirimi(e.target.value); setKParaBirimi(e.target.value); setParaBirimiElle(true); }}
               title="Fiş cariye bu para biriminde yazılır; farklı para birimindeki satırlar buna çevrilir"
-              style={{ padding: "3px 6px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
+              style={{ padding: "3px 6px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
               {Object.keys(PARA_SEMBOLU).map((pb) => <option key={pb} value={pb}>{pb} {PARA_SEMBOLU[pb]}</option>)}
             </select>
             <select value={defter} data-fis-defter="1" onChange={(e) => setDefter(e.target.value)}
               title="Fişin yazılacağı cari defteri"
-              style={{ padding: "3px 6px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
+              style={{ padding: "3px 6px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
               <option value="Genel">Genel</option>
               <option value="Resmi">Resmi</option>
               <option value="Muhasebe">Muhasebe (ikisine de)</option>
@@ -646,7 +646,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                       // TEK SATIRA SIĞSIN (kullanıcı, 18 Eylül: "miktar da boyutun yanında olsun,
                       // tek satıra sığsın hepsi, gerekirse yazıları küçült"). Kutu 62→52,
                       // yazı 12→11; beden tipinde 5-6 kutu yan yana artık sarmalanmıyor.
-                      style={{ width: 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                      style={{ width: 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                     />
                     <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>stok: {stokMiktari(kRenk, b)}</span>
                   </span>
@@ -729,11 +729,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               });
               const toplam = [...gruplar.values()].reduce((t, g) => t + g.cift, 0);
               return (
-                <div data-fis-koliler="1" style={{ fontSize: 11, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: "6px 8px" }}>
+                <div data-fis-koliler="1" style={{ fontSize: 11, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: "6px 8px" }}>
                   <b>{gruplar.size} koli · {stokYuvarla(toplam)} çift</b>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
                     {[...gruplar.entries()].map(([id, g]) => (
-                      <span key={id} data-fis-koli={g.kod} style={{ display: "inline-flex", gap: 4, alignItems: "center", padding: "2px 6px", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)" }}>
+                      <span key={id} data-fis-koli={g.kod} style={{ display: "inline-flex", gap: 4, alignItems: "center", padding: "2px 6px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)" }}>
                         <b className="mono">{g.kod}</b> · {g.cift} çift
                         <span style={{ color: "var(--erp-text-3)" }}>({g.bedenler.join(" ")})</span>
                         <button type="button" title="Bu koliyi fişten çıkar" data-fis-koli-cikar={g.kod}
@@ -782,7 +782,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                   r.hucre[k.beden || ""] = (r.hucre[k.beden || ""] || 0) + kalan;
                 });
                 return (
-                  <div key={s.id} data-siparisten-sec-siparis={s.siparisNo} style={{ border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
+                  <div key={s.id} data-siparisten-sec-siparis={s.siparisNo} style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <b className="mono" style={{ fontSize: 12 }}>{s.siparisNo}</b>
                       <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{s.durum} · kalan {stokYuvarla(bekleyen.reduce((t, x) => t + x.kalan, 0))}</span>
@@ -842,7 +842,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                               const adet = koliAdetleri[g.imza] === undefined ? "" : koliAdetleri[g.imza];
                               const ekleAdet = Math.max(1, Math.min(g.koliler.length, parseInt(adet, 10) || g.koliler.length));
                               return (
-                                <div key={g.imza} data-koli-grup={g.imza} style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", padding: "4px 8px", background: "#fff" }}>
+                                <div key={g.imza} data-koli-grup={g.imza} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "4px 8px", background: "#fff" }}>
                                   <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", fontSize: 11 }}>
                                     <b>{g.koliler.length} koli</b>
                                     <span className="mono" style={{ color: "var(--erp-text-2)" }}>{g.cift} çift/koli</span>
@@ -871,7 +871,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                       {g.koliler.map((kl) => (
                                         <button key={kl.id} type="button" data-siparis-koli-ekle={kl.kod} onClick={() => koliyiFiseEkle(kl)}
                                           style={{ display: "inline-flex", gap: 3, alignItems: "center", padding: "2px 6px", fontSize: 11,
-                                            border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff", cursor: "pointer" }}>
+                                            border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff", cursor: "pointer" }}>
                                           <Plus size={9} /><b className="mono">{kl.kod}</b>
                                         </button>
                                       ))}
@@ -991,11 +991,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                     ))}
                     {kolililerVarMi && (
                       <>
-                        <th className="mono" style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-danger)", borderLeft: "1px dashed #C9B99A", whiteSpace: "nowrap" }}>KOLİ İÇ. MİK.</th>
+                        <th className="mono" style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-danger)", borderLeft: "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>KOLİ İÇ. MİK.</th>
                         <th className="mono" style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-danger)", whiteSpace: "nowrap" }}>KOLİ ADET</th>
                       </>
                     )}
-                    <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)", borderLeft: kolililerVarMi ? undefined : "1px dashed #C9B99A", whiteSpace: "nowrap" }}>TOP. ADET</th>
+                    <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)", borderLeft: kolililerVarMi ? undefined : "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>TOP. ADET</th>
                     <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>BİRİM FİYAT</th>
                     <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", color: "var(--erp-text-2)" }}>P.B.</th>
                     <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)" }}>TUTAR</th>
@@ -1022,7 +1022,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                       const grupPBler = Array.from(new Set(alt.kalemler.map((k) => k.paraBirimi || "TRY")));
                       const grupPB = grupPBler.length === 1 ? grupPBler[0] : "";
                       return (
-                      <tr key={alt.key} style={{ borderTop: "1px solid #E4D8C0" }}>
+                      <tr key={alt.key} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                         <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                           {g.urunAd}
                           {/* Siparişe bağlı satır rozeti (9b): hangi alış siparişinin teslimi. */}
@@ -1035,7 +1035,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         {tumBedenler.map((b) => {
                           if (alt.tip === "koli") {
                             const m = alt.bedenler.get(b);
-                            if (m === undefined) return <td key={b} style={{ padding: "4px 6px", textAlign: "center", color: "#CFC2A8", fontSize: 11 }}>—</td>;
+                            if (m === undefined) return <td key={b} style={{ padding: "4px 6px", textAlign: "center", color: "var(--erp-line-soft)", fontSize: 11 }}>—</td>;
                             // KOLİ İÇERİĞİ SALT OKUNUR (23 Eylül, v1.424.0): bu değer fiziksel kolinin
                             // içeriği — düzenlenirse fiş kolinin gerçek içeriğinden kopardı. Değiştirmek
                             // için koliyi üstteki listeden çıkarıp elle satır eklenir.
@@ -1043,14 +1043,14 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                               <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                                 <span className="mono" title={`${alt.koliAdet} kolinin her birinde ${m}`}
                                   style={{ display: "inline-block", minWidth: 40, padding: "3px 4px", fontSize: 11,
-                                    border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-sm)", background: "#F7F1E3", color: "var(--erp-text-2)" }}>
+                                    border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", background: "#F7F1E3", color: "var(--erp-text-2)" }}>
                                   {m}
                                 </span>
                               </td>
                             );
                           }
                           const k = alt.kalemler.find((x) => x.beden === b);
-                          if (!k) return <td key={b} style={{ padding: "4px 6px", textAlign: "center", color: "#CFC2A8", fontSize: 11 }}>—</td>;
+                          if (!k) return <td key={b} style={{ padding: "4px 6px", textAlign: "center", color: "var(--erp-line-soft)", fontSize: 11 }}>—</td>;
                           return (
                             <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
@@ -1066,10 +1066,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                     kalemDuzenle(k.id, "miktar", yeni);
                                   }}
                                   className="mono"
-                                  style={{ width: 52, padding: "3px 4px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
+                                  style={{ width: 52, padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
                                 />
                                 <button onClick={() => kalemSil(k.id)} title="Bu bedeni fişten çıkar"
-                                  style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex", padding: 0 }}>
+                                  style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 0 }}>
                                   <X size={10} />
                                 </button>
                               </div>
@@ -1081,7 +1081,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                             düz satırda "—" — o satırın koli karşılığı yok. */}
                         {kolililerVarMi && (
                           <>
-                            <td className="mono" style={{ padding: "6px 8px", textAlign: "right", color: "var(--erp-text-2)", borderLeft: "1px dashed #C9B99A", whiteSpace: "nowrap" }}>
+                            <td className="mono" style={{ padding: "6px 8px", textAlign: "right", color: "var(--erp-text-2)", borderLeft: "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>
                               {alt.tip === "koli" ? alt.koliIcMik : "—"}
                             </td>
                             <td className="mono" style={{ padding: "6px 8px", textAlign: "right", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}
@@ -1094,7 +1094,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                             her beden ayrı hücrede duruyor; "bu maldan toplam kaç aldım"
                             sorusunun cevabı için kullanıcı hücreleri kafadan toplamak
                             zorundaydı. */}
-                        <td className="mono" style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap", borderLeft: kolililerVarMi ? undefined : "1px dashed #C9B99A" }}>
+                        <td className="mono" style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap", borderLeft: kolililerVarMi ? undefined : "1px dashed var(--erp-line)" }}>
                           {alt.tip === "koli" ? alt.toplamAdet : stokYuvarla(alt.kalemler.reduce((t, k) => t + k.miktar, 0))} {g.birim}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "right" }}>
@@ -1112,7 +1112,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                 alt.kalemler.forEach((k) => kalemDuzenle(k.id, "birimFiyat", yeni));
                               }}
                               className="mono"
-                              style={{ width: 70, padding: "3px 5px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
+                              style={{ width: 70, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
                             />
                           )}
                           {/* SON ALIŞ NOTU (kullanıcı, 12 Eylül): bu ürün+renk son ne kadara alındı.
@@ -1145,7 +1145,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                               value={grupPB}
                               onChange={(e) => alt.kalemler.forEach((k) => kalemDuzenle(k.id, "paraBirimi", e.target.value))}
                               className="mono"
-                              style={{ padding: "3px 4px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
+                              style={{ padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
                             >
                               {Object.keys(PARA_SEMBOLU).map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                             </select>
@@ -1195,7 +1195,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         placeholder="kur?"
                         title="Muhasebe'deki güncel kurdan öneriliyor — değiştirebilirsiniz"
                         className="mono"
-                        style={{ width: 72, padding: "3px 5px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}
+                        style={{ width: 72, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 11 }}
                       />
                       TRY
                     </label>
@@ -1220,7 +1220,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         );
       })()}
 
-      <div style={{ background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 14 }}>
+      <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14 }}>
         <Field label="Açıklama">
           <input
             value={aciklama}
@@ -1294,7 +1294,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                               {r.ad}<span className="mono" style={{ fontSize: 11, fontWeight: 400, color: "#7A3B22" }}> · {r.renk}</span>
                             </td>
                             {bedenler.map((b) => (
-                              <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "2px 7px", color: r.hucreler[b] ? "#221B14" : "#B9A88C" }}>
+                              <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "2px 7px", color: r.hucreler[b] ? "var(--erp-text)" : "#B9A88C" }}>
                                 {r.hucreler[b] ? `${isaret}${r.hucreler[b]}` : "–"}
                               </td>
                             ))}

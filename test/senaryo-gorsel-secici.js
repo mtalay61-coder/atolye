@@ -6,7 +6,7 @@
 //
 // Ölçülen: görsel kutusuna basınca iki düğme (Galeriden / Fotoğraf Çek) ve arkalarında iki AYRI
 // dosya girdisi var — biri galeri, diğeri `capture="environment"` ile doğrudan kamera.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -14,7 +14,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(TOHUM, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

@@ -146,7 +146,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
               <Hammer size={14} /> TAMİR
             </span>
           )}
-          <span style={{ fontSize: 17, fontWeight: 700, color: "#3A291D" }}>{is.urunAd}</span>
+          <span style={{ fontSize: 17, fontWeight: 700, color: "var(--erp-text)" }}>{is.urunAd}</span>
           <span style={{ fontSize: 15, color: "var(--erp-text-2)" }}>{is.renk}</span>
         </span>
         {/* Proses adı rozette: hangi işlem olduğunu renk+konum da anlatır. */}
@@ -167,9 +167,9 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
                   <>
                     <tr>
                       {satir.map(([b]) => (
-                        <td key={b} className="mono" style={{ padding: "1px 10px", fontSize: 13, color: "var(--erp-text-3)", textAlign: "center", borderBottom: "1px solid #E4D8C0" }}>{b}</td>
+                        <td key={b} className="mono" style={{ padding: "1px 10px", fontSize: 13, color: "var(--erp-text-3)", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>{b}</td>
                       ))}
-                      <td className="mono" style={{ padding: "1px 12px", fontSize: 12, color: "var(--erp-border)", textAlign: "center", borderBottom: "1px solid #E4D8C0" }}>Σ</td>
+                      <td className="mono" style={{ padding: "1px 12px", fontSize: 12, color: "var(--erp-border)", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>Σ</td>
                     </tr>
                     <tr>
                       {satir.map(([b, m]) => (
@@ -266,7 +266,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
                   onChange={(e) => setBarkod(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") barkodOku(barkod); }}
                   onBlur={() => { if (barkodRef.current) setTimeout(() => barkodRef.current && barkodRef.current.focus(), 100); }}
-                  style={{ width: "100%", padding: "14px 16px", fontSize: 24, fontWeight: 700, borderRadius: "var(--erp-r-lg)", border: "2px solid #C9B99A", background: "var(--erp-panel)" }}
+                  style={{ width: "100%", padding: "14px 16px", fontSize: 24, fontWeight: 700, borderRadius: "var(--erp-r-lg)", border: "2px solid var(--erp-line)", background: "var(--erp-panel)" }}
                 />
               </span>
             </div>
@@ -284,7 +284,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
                   <button
                     key={c.id}
                     onClick={() => setPersonelId(c.id)}
-                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 9, padding: 16, background: "#fff", border: "2px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", cursor: "pointer" }}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 9, padding: 16, background: "#fff", border: "2px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", cursor: "pointer" }}
                   >
                     <Avatar kisi={c} boyut={84} />
                     <span style={{ fontSize: 16, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>{c.unvan}</span>
@@ -343,7 +343,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
                   bakılma sıklığı düşük. */}
               {teslimEttikleri.length > 0 && (
                 <div style={{ marginTop: 18 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10, background: "#8FA888", color: "#3A291D", padding: "8px 14px", borderRadius: "var(--erp-r-lg)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 10, background: "#8FA888", color: "var(--erp-text)", padding: "8px 14px", borderRadius: "var(--erp-r-lg)" }}>
                     <Check size={20} />
                     <span style={{ fontSize: 16, fontWeight: 700 }}>Bugün Teslim Ettiklerim</span>
                     <span className="mono" style={{ marginLeft: "auto", fontSize: 18, fontWeight: 700 }}>{teslimEttikleri.length}</span>
@@ -356,7 +356,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
                           : <span style={{ width: 48, height: 48, borderRadius: "var(--erp-r-md)", background: "#E4E9E2", flexShrink: 0 }} />}
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                            <span style={{ fontSize: 15, fontWeight: 700, color: "#3A291D" }}>{t.urunAd}</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: "var(--erp-text)" }}>{t.urunAd}</span>
                             <span style={{ fontSize: 13, color: "var(--erp-text-2)" }}>{t.renk}</span>
                             <span className="mono" style={{ fontSize: 11, color: "var(--erp-panel-2)", background: prosesRengi(t.proses), padding: "1px 8px", borderRadius: "var(--erp-r-pill)" }}>{t.proses}</span>
                             <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{t.saat}</span>
@@ -473,13 +473,13 @@ function AtolyeIsAlmaEkrani({ is, onGonder }) {
     <div>
       <AtolyeIsBasligi is={is} />
 
-      <div style={{ overflowX: "auto", background: "#fff", border: "2px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 12 }}>
+      <div style={{ overflowX: "auto", background: "#fff", border: "2px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 12 }}>
         <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
           <thead>
             <tr>
               <th style={{ padding: "6px 10px" }} />
               {is.bedenler.map((x) => (
-                <th key={x.beden} className="mono" style={{ padding: "6px 10px", fontSize: 20, fontWeight: 700, color: "#3A291D", textAlign: "center" }}>
+                <th key={x.beden} className="mono" style={{ padding: "6px 10px", fontSize: 20, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>
                   {x.beden}
                 </th>
               ))}
@@ -498,7 +498,7 @@ function AtolyeIsAlmaEkrani({ is, onGonder }) {
               <td className="mono" style={{ padding: "8px 14px", fontSize: 20, textAlign: "center", color: "var(--erp-text-3)" }}>{tumToplam}</td>
             </tr>
             {/* Alınan satırı: dokunmatik +/− hücre içinde. */}
-            <tr style={{ borderTop: "1px solid #E4D8C0" }}>
+            <tr style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
               <td style={{ padding: "8px 10px", fontSize: 15, fontWeight: 700, color: "var(--erp-info)", whiteSpace: "nowrap" }}>alınan</td>
               {is.bedenler.map((x) => (
                 <td key={x.beden} style={{ padding: "8px 6px", textAlign: "center" }}>
@@ -532,7 +532,7 @@ function AtolyeIsAlmaEkrani({ is, onGonder }) {
         <button onClick={() => hepsi(true)} style={{ padding: "12px 22px", fontSize: 17, fontWeight: 700, borderRadius: "var(--erp-r-lg)", border: "2px solid #3D6B8A", background: "#fff", color: "var(--erp-info)", cursor: "pointer" }}>
           Hepsi
         </button>
-        <button onClick={() => hepsi(false)} style={{ padding: "12px 22px", fontSize: 17, fontWeight: 700, borderRadius: "var(--erp-r-lg)", border: "2px solid #C9B99A", background: "#fff", color: "var(--erp-text-2)", cursor: "pointer" }}>
+        <button onClick={() => hepsi(false)} style={{ padding: "12px 22px", fontSize: 17, fontWeight: 700, borderRadius: "var(--erp-r-lg)", border: "2px solid var(--erp-line)", background: "#fff", color: "var(--erp-text-2)", cursor: "pointer" }}>
           Sıfırla
         </button>
         <button
@@ -558,7 +558,7 @@ function AtolyeIsBasligi({ is }) {
     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
       {is.resim && <img src={is.resim} alt="" style={{ width: 72, height: 72, borderRadius: "var(--erp-r-lg)", objectFit: "cover" }} />}
       <span>
-        <span style={{ display: "block", fontSize: 22, fontWeight: 700, color: "#3A291D" }}>{is.urunAd}</span>
+        <span style={{ display: "block", fontSize: 22, fontWeight: 700, color: "var(--erp-text)" }}>{is.urunAd}</span>
         <span style={{ fontSize: 18, color: "var(--erp-text-2)" }}>{is.renk}</span>
       </span>
       <span style={{ fontSize: 16, fontWeight: 700, color: "var(--erp-panel-2)", background: prosesRengi(is.proses), padding: "5px 16px", borderRadius: "var(--erp-r-pill)" }}>
@@ -642,7 +642,7 @@ function AtolyeTeslimEkrani({ is, onGonder }) {
           <button
             onClick={() => degistir(beden, tur, -1)}
             disabled={deger === 0}
-            style={{ width: 52, height: 38, borderRadius: "var(--erp-r-lg)", border: `2px solid ${renk}55`, background: "#fff", color: renk, fontSize: 22, fontWeight: 700, cursor: "pointer", opacity: deger === 0 ? 0.25 : 1 }}
+            style={{ width: 52, height: 38, borderRadius: "var(--erp-r-lg)", border: `2px solid ${alfaEkle(renk, "55")}`, background: "#fff", color: renk, fontSize: 22, fontWeight: 700, cursor: "pointer", opacity: deger === 0 ? 0.25 : 1 }}
           >
             −
           </button>
@@ -664,13 +664,13 @@ function AtolyeTeslimEkrani({ is, onGonder }) {
     <div>
       <AtolyeIsBasligi is={is} />
 
-      <div style={{ overflowX: "auto", background: "#fff", border: "2px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 12 }}>
+      <div style={{ overflowX: "auto", background: "#fff", border: "2px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 12 }}>
         <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
           <thead>
             <tr>
               <th style={{ padding: "6px 10px" }} />
               {bedenler.map((b) => (
-                <th key={b} className="mono" style={{ padding: "6px 10px", fontSize: 20, fontWeight: 700, color: "#3A291D", textAlign: "center" }}>{b}</th>
+                <th key={b} className="mono" style={{ padding: "6px 10px", fontSize: 20, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>{b}</th>
               ))}
               <th className="mono" style={{ padding: "6px 14px", fontSize: 16, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "center" }}>Σ</th>
             </tr>
@@ -684,7 +684,7 @@ function AtolyeTeslimEkrani({ is, onGonder }) {
               <td className="mono" style={{ padding: "8px 14px", fontSize: 20, textAlign: "center", color: "var(--erp-text-3)" }}>{toplamVerilen}</td>
             </tr>
 
-            <tr style={{ borderTop: "1px solid #E4D8C0", background: "#F0F5EE" }}>
+            <tr style={{ borderTop: "1px solid var(--erp-line-soft)", background: "#F0F5EE" }}>
               {satirBasligi(Check, "sağlam", "var(--erp-primary)")}
               {bedenler.map((b) => (
                 <td key={b} className="mono" style={{ padding: "10px", fontSize: 30, fontWeight: 700, textAlign: "center", color: "var(--erp-primary)" }}>{saglam(b)}</td>
@@ -692,13 +692,13 @@ function AtolyeTeslimEkrani({ is, onGonder }) {
               <td className="mono" style={{ padding: "10px 14px", fontSize: 30, fontWeight: 700, textAlign: "center", color: "var(--erp-primary)" }}>{toplamSaglam}</td>
             </tr>
 
-            <tr style={{ borderTop: "1px solid #E4D8C0" }}>
+            <tr style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
               {satirBasligi(Hammer, "tamir", "#B8860B")}
               {bedenler.map((b) => sayacHucresi(b, "tamir", "#B8860B"))}
               <td className="mono" style={{ padding: "6px 14px", fontSize: 26, fontWeight: 700, textAlign: "center", color: toplamTamir > 0 ? "#B8860B" : "var(--erp-border)" }}>{toplamTamir}</td>
             </tr>
 
-            <tr style={{ borderTop: "1px solid #E4D8C0" }}>
+            <tr style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
               {satirBasligi(Trash2, "hurda", "var(--erp-warn)")}
               {bedenler.map((b) => sayacHucresi(b, "hurda", "var(--erp-warn)"))}
               <td className="mono" style={{ padding: "6px 14px", fontSize: 26, fontWeight: 700, textAlign: "center", color: toplamHurda > 0 ? "var(--erp-warn)" : "var(--erp-border)" }}>{toplamHurda}</td>

@@ -5,7 +5,7 @@
 //
 // KOLİ YENİ BİR DEFTER → notun başındaki değişmez kural: yazma, silme, çöp ve SİLME TESTİ birlikte.
 // Bu senaryo "eklendi mi"nin yanında "silinince gitti mi"yi de ölçüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -45,7 +45,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Paketleme", exact: true }).click();
+  await modulAc(sayfa, "Paketleme");
   await sayfa.waitForTimeout(700);
 
   // KOD EKSİĞİ UYARISI VE TOPLU KOD ATAMA.

@@ -7,7 +7,7 @@
 // Şeritte hangi sekmenin etkin göründüğü de ölçülüyor — şerit ile ekran aynı şeyi söylemeli.
 // Aynı hata sınıfı sipariş ve üretim pencerelerinde de vardı (tek bir "açık kart" değeri); onlar da
 // ölçülüyor. Sipariş sekmesi Alış siparişinde bile SATIŞ ekranına götürüyordu.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -24,7 +24,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2200);
 
   const modul = async (ad) => {
-    await sayfa.getByRole("button", { name: ad, exact: true }).first().click();
+    await modulAc(sayfa, ad);   // üst menü (v1.449.0): açılır listedeki düğmeye doğrudan
     await sayfa.waitForTimeout(700);
   };
   // Stok listesinde ürün satırını aç.

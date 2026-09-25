@@ -294,7 +294,7 @@ function DepoOkut({ stok, siparisler, uretim, koliler, cariler, stokRezervasyonl
             React.createElement("b", { className: "mono" }, kod),
             " \u2014 ",
             tanimsizSebep(kod))),
-        sonuc && (React.createElement("div", { "data-depo-okut-sonuc": sonuc.urun.id, style: { border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, display: "grid", gap: 10 } },
+        sonuc && (React.createElement("div", { "data-depo-okut-sonuc": sonuc.urun.id, style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, display: "grid", gap: 10 } },
             React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" } },
                 (sonuc.urun.renkResimleri || {})[sonuc.bolumler[0] && sonuc.bolumler[0].renk] || sonuc.urun.kapakResmi ? (React.createElement("img", { alt: "", src: (sonuc.urun.renkResimleri || {})[sonuc.bolumler[0].renk] || sonuc.urun.kapakResmi, style: { width: 48, height: 48, objectFit: "cover", borderRadius: 6 } })) : React.createElement(Package, { size: 28, style: { color: "var(--erp-text-3)" } }),
                 React.createElement("div", { style: { flex: 1, minWidth: 160 } },

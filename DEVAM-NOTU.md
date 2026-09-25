@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.448.0** · 25 Eylül 2026
+Son sürüm: **v1.449.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.448.0): YENİLEMEDE EKRAN KORUNUYOR — sekmeler + canlı pencereler geri geliyor.** Bkz. "YENİLEMEDE EKRAN KORUNUYOR".
+**Son iş (25 Eylül, v1.449.0): YENİ TASARIM — yan kolon kalktı (üst menü), açık "A" paleti.** Bkz. "YENİ TASARIM".
+Önceki (v1.448.0): yenilemede ekran korunuyor.
 Önceki (v1.447.0): yeni sürüme otomatik geçiş (surum.json).
 Önceki (v1.446.0): SİPARİŞ DÜZENLEME SİPARİŞ FORMUNDA — form önde, kalemler altta düzenlenebilir (ürün/renk/miktar/fiyat), kilitliler salt okunur.** Bkz. "SİPARİŞ DÜZENLEME FORMDA".
 Önceki (v1.445.0): yerel şifre yedeği kaldırıldı — giriş yalnız bulut hesabıyla.
@@ -5995,6 +5996,58 @@ Kullanıcının yüklediği `atolye-erp-src-v1_444_0.zip` EKSİKTİ (önceki otu
   paketi başka dizine açınca `ln -sfn <paket> /home/claude/erp` gerekiyor.
 - **Paketlerken:** zip'i `src/` + `test/` + kök dosyaların TAMAMIYLA oluştur; paketledikten sonra
   `.satir-haritasi.json` ile `src/` dosya listesini ve `kosu.sh` listesiyle `test/`i karşılaştır.
+
+## YENİ TASARIM (25 Eylül, v1.449.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Tasarımımız çok eski. Birkaç kere uğraştık ama olmadı. Siyah kolon hoş değil, güncel
+tasarım lazım." Sipariş ekranı üzerinden üç yön çizildi (Tasarım tuvali, claude.ai artifact):
+A açık-nötr (beyaz menü), B sıcak-kum, C üst menü/yan kolonsuz. **Karar: "C'nin yerleşimi, A'nın renkleri."**
+
+**Önceki denemeler neden tutmadı:** kodda **1.188 sabit hex** vardı (çoğu bej/kahve: #E4D8C0 238,
+#C9B99A 220…). Yalnız token değiştirmek ekranın çoğunu eski tonda bırakıyordu.
+
+**Yapılanlar:**
+- **Renk katmanı `ERP_TEMA`** (015-sabitler): kullanıcının erp-tokens.css'i DEĞİŞMEDİ; köprüden sonra
+  gelen son katman. Açık gri sayfa (#F5F6F8), beyaz panel, çizgiler #DCE0E5/#E8EBEF, metin #1D2129,
+  tek vurgu marka kırmızısı #C4321A (yalnız ana eylem + seçili öğe), DM Sans. Eski görünüme dönmek =
+  tabloyu boşaltmak. Bildirim kutusu koyu kalıyor (`--erp-toast`).
+- **Sabit renkler temaya bağlandı (633 dize):** yalnız DÜZ dize literalleri, TS ayrıştırıcıyla
+  (betik mantığı: `#E4D8C0/CFC2A8/D9C9AC→line-soft`, `#C9B99A/C8BCAC→line`, koyu kahveler→text,
+  `#7A6A50/#455A40→text-2`, `#A6957A→text-3`, açık kremler→hover/head). **Şablon dizeleri (backtick)
+  DOKUNULMADI**: yazdırma/PDF belgeleri ayrı pencerede, token yok. `<`/`>` içeren dizeler de dışarıda.
+  Renkli vurgular (turuncu, mor, durum renkleri) yerinde — ayrı tur.
+- **VERİ GERİ ALINDI:** betik renk KODU varsayılanlarını da çevirmişti (`renkKodu: "#C9B99A"` —
+  veritabanına yazılan değer, `type="color"` kutusu) ve yazdırma yedeği `ERP_TOKENLARI`'nı. Dördü +
+  tablo elle hex'e döndü; `bekleyen-yazma` senaryosu yakaladı. **Ders: sabit→token eşlemesi yalnız
+  stil bağlamında; veri alanları (renkKodu, value=) ve yedek tablolar hariç.**
+- **`${renk}XX` saydamlık birleştirmeleri → `alfaEkle(renk, "XX")`** (27 yer). Token değerine iki hane
+  eklemek geçersiz CSS'ti; bazıları (`var(--erp-text-2)33`) zaten bozuktu — kategori/proses kenarları
+  görünmüyordu (sürüm notunda "düzeltilen").
+- **Yan menü → ÜST MENÜ** (100-app, `<header className="ust-menu">`, 56px): logo+firma adı, Anasayfa,
+  Depo▾, Üretim▾, Planlama, Siparişler▾, Finans▾; sağda Sohbet (rozet), Günlük, Onay (rozet),
+  Tanımlar (dişli), kullanıcı menüsü (ad, rol, test modu notu, sürüm, Çıkış). Gruplar ve yetki
+  koşulları yan menüyle AYNI. Açılır listenin içeriği kapalıyken de DOM'da (`display:none`) —
+  `data-nav` her zaman bulunuyor. Dışarı tıklama kapatır. Dar ekranda (≤1100) firma adı, (≤880)
+  grup ikonları gizlenir; menü kaydırılmıyor (açılır listeler kırpılırdı). `NavGrubu` kaldırıldı,
+  `NavItem` açık zemine göre yeniden çizildi. `sidebarDaraltilmis`, `acikNavGruplari` → `acikUstMenu`.
+- **Yükseklikler:** `PENCERE_SERIT_YUKSEKLIGI` artık `calc(var(--ust-menu-h) + 40px)` dizesi
+  (060-depo); `--ust-menu-h` masaüstünde 56px, mobilde 0 (100-app efekti). `--menu-genislik` hep 0.
+  Sekme şeridi menünün altında (`top: var(--ust-menu-h)`), sayfa zemininde; etkin sekme beyaz kart.
+- **Mobil:** üst menü CSS ile gizli (`.ust-menu { display:flex }` sınıfta — satır içi display
+  mobil gizlemeyi eziyordu, ekran görüntüsünde yakalandı); alt çubuk aynen, seçili öğe yeni renkte.
+- Modül başlığı: renkli nokta + kesikli çizgi (`StitchDivider`) kalktı, 22px sade başlık.
+
+**Testler:** `ortak.js`'e `modulAc(sayfa, ad)` (data-nav'a doğrudan); 85 menü tıklaması çevrildi.
+`.sidebar` → `.ust-menu`; `sekmeler`in kaydırma ölçümü yeni yerleşime göre (şerit ve menü sabit, menü
+şeridin üstünde). Altını güncellenenler (yalnız tasarım farkı): `bakiye-renk`, `pesin-tahsilat`
+(renk değerleri), `sekmeler` (renk, başlık boyutu, konumlar), `satin-al-dugmesi` (sabit öğe listesinde
+üst menü), `menu-gruplari` (ilk hâl 4 grup + 4 öğe).
+
+**Ekran görüntüsü tekniği (bu ortamda esm.sh kapalı):** test paketi + npm'den `lucide-react@0.383.0`
+gömülü, yazı tipleri curl ile rotalanıyor (`/tmp` betikleri; tekrar gerekirse aynı yol).
+
+**AÇIK:** renkli vurgular (eski turuncu #E1611F 40, #C97B3D, #B8860B…), stok kategori şeritlerinin
+koyu dolguları, pencere başlık bantları — kullanıcı geri bildirimine göre ikinci tur.
 
 ## YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0 — Claude Code oturumu)
 

@@ -11,7 +11,7 @@
 //   2. Seçilince kasa hareket ediyor ve yönü doğru (alışta çıkış).
 //   3. Peşin tutar fiş toplamını AŞAMIYOR.
 //   4. Cari borcu peşin kadar kapanıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -33,7 +33,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2300);
 
   // Cari kartından alış fişi kes.
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).first().click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(700);
 
 

@@ -77,7 +77,7 @@ function KayitSecici({ siparisler, uretim, stok, secili, onSec }) {
         <ClipboardList size={11} /> Kayıt bağla
       </button>
       {acik && (
-        <span style={{ position: "absolute", top: "100%", left: 0, zIndex: 30, background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 8, width: 280, boxShadow: "none", display: "grid", gap: 6 }}>
+        <span style={{ position: "absolute", top: "100%", left: 0, zIndex: 30, background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, width: 280, boxShadow: "none", display: "grid", gap: 6 }}>
           <span style={{ display: "flex", gap: 4 }}>
             {[{ k: "siparis", ad: "Sipariş" }, { k: "uretim", ad: "Üretim" }, { k: "urun", ad: "Ürün" }].map((x) => (
               <button key={x.k} type="button" data-kayit-tip={x.k} onClick={() => setTip(x.k)}
@@ -205,10 +205,10 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
       {/* Sıkı başlık (8o/8x ile aynı düzen): arama + süzgeç + Yeni Görev tek satırda. */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 380 }}>
-          <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "#A6957A" }} />
+          <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" }} />
           <input value={arama} onChange={(e) => setArama(e.target.value)} data-gorev-arama="1"
             placeholder="Görev, kişi, kayıt ara…"
-            style={{ width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid #C9B99A", background: "var(--erp-panel)", fontSize: 13 }} />
+            style={{ width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 }} />
         </div>
         <button className="btn-primary" data-gorev-yeni="1" style={{ marginLeft: "auto", padding: "5px 12px", fontSize: 12 }}
           onClick={() => setYeniAcik(!yeniAcik)}><Plus size={14} /> Yeni Görev</button>
@@ -226,7 +226,7 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
       </div>
 
       {yeniAcik && (
-        <div data-gorev-form="1" style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 10, display: "grid", gap: 8 }}>
+        <div data-gorev-form="1" style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 10, display: "grid", gap: 8 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
             <Field label="Görev">
               <input value={form.baslik} data-gorev-baslik="1" onChange={(e) => setForm({ ...form, baslik: e.target.value })}
@@ -300,7 +300,7 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
                 </div>
 
                 {acik && (
-                  <div style={{ marginTop: 8, borderTop: "1px solid #F2E8D8", paddingTop: 8, display: "grid", gap: 8 }}>
+                  <div style={{ marginTop: 8, borderTop: "1px solid var(--erp-head)", paddingTop: 8, display: "grid", gap: 8 }}>
                     {g.aciklama && <div style={{ fontSize: 12, color: "var(--erp-text)", whiteSpace: "pre-wrap" }}>{g.aciklama}</div>}
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
                       <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Durum:</span>
@@ -310,7 +310,7 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
                           title={d === "Tamamlandı" ? "Yalnız görevi veren ya da Yönetici" : ""}
                           style={{ padding: "2px 8px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 600, cursor: d === g.durum ? "default" : "pointer",
                             border: `1.5px solid ${d === g.durum ? GOREV_DURUM_RENK[d] : "var(--erp-border-2)"}`,
-                            background: d === g.durum ? `${GOREV_DURUM_RENK[d]}1A` : "#fff",
+                            background: d === g.durum ? `${alfaEkle(GOREV_DURUM_RENK[d], "1A")}` : "#fff",
                             color: d === g.durum ? GOREV_DURUM_RENK[d] : "var(--erp-text-2)" }}>
                           {d}
                         </button>
@@ -324,7 +324,7 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
                       {(g.yorumlar || []).map((y) => (
                         <div key={y.id} data-gorev-yorum={y.sistem ? "sistem" : "kisi"}
                           style={{ fontSize: 11, color: y.sistem ? "var(--erp-text-3)" : "var(--erp-text)", background: y.sistem ? "transparent" : "var(--erp-panel)",
-                            border: y.sistem ? "none" : "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: y.sistem ? "1px 2px" : "5px 8px" }}>
+                            border: y.sistem ? "none" : "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: y.sistem ? "1px 2px" : "5px 8px" }}>
                           <b style={{ fontWeight: 700 }}>{y.kullaniciAd}</b>{" "}
                           <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{tarihYaz(y.zaman, true)}</span>
                           <div style={{ whiteSpace: "pre-wrap" }}>{y.metin}</div>

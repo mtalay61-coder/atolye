@@ -12,7 +12,7 @@
 //   4. Tahsil edilmiş çekin giriş fişi kilitli, kilit hangi bankadan neyin silineceğini söylüyor.
 //   5. İade fişi silinince çek portföye dönüyor.
 //   6. Banka hareketi silinince çek Tahsilde'ye dönüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -52,7 +52,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2500);
 
   const muhasebeSekmesi = async (ad) => {
-    await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+    await modulAc(sayfa, "Muhasebe");
     await sayfa.waitForTimeout(800);
     await sayfa.evaluate((ad) => {
       const b = [...document.querySelectorAll("button")]
@@ -131,7 +131,7 @@ async function calistir() {
   };
 
   // ---- 4. KİLİT MESAJI -----------------------------------------------------------------------------
-  await sayfa.getByRole("button", { name: "Fişler", exact: true }).first().click();
+  await modulAc(sayfa, "Fişler");
   await sayfa.waitForTimeout(800);
   await sayfa.getByText("THS-20260910-002", { exact: true }).filter({ visible: true }).first().click();
   await sayfa.waitForTimeout(700);

@@ -147,9 +147,8 @@ export default function AtolyeERP() {
   // Sol menü VARSAYILAN OLARAK DARALTILMIŞ açılır. Bu uygulamanın asıl içeriği (stok matrisleri,
   // reçete tabloları, ekstreler) yatayda geniş; 220px'lik menü sürekli yer kaplayıp tabloları
   // kaydırma çubuğuna düşürüyordu. Menü ikonlarla çalışmaya devam eder, tek tıkla genişletilir.
-  const [sidebarDaraltilmis, setSidebarDaraltilmis] = useState(true);
-  // Elle açılan menü grupları (aktif modülün grubu ayrıca kendiliğinden açık).
-  const [acikNavGruplari, setAcikNavGruplari] = useState([]);
+  // Üst menüde açık olan açılır liste: grup adı ya da "kullanici" (v1.449.0 — yan menü kalktı).
+  const [acikUstMenu, setAcikUstMenu] = useState(null);
   // Bekleyen yazma şeridinde ayrıntısı açık olan kayıt (19 Eylül).
   const [bekleyenAcikAnahtar, setBekleyenAcikAnahtar] = useState(null);
   // Pencere başlığındaki eylem çubuğu modül tarafından bildiriliyor; bildirim gelince başlığın
@@ -172,8 +171,10 @@ export default function AtolyeERP() {
     const uygula = () => {
       // 720px, CSS'teki .sidebar { display: none } kırılma noktasıyla AYNI olmalı; farklı
       // olursa menü gizliyken pencere hâlâ boşluk bırakır ya da tersi.
-      const genislik = mobilDuzenRef.current ? 0 : (sidebarDaraltilmis ? 64 : 220);
-      document.documentElement.style.setProperty("--menu-genislik", `${genislik}px`);
+      // YAN MENÜ YOK (v1.449.0): pencereler soldan 0'dan başlıyor. Yükseklik farkı artık ÜSTTE:
+      // masaüstünde üst menü + sekme şeridi, mobilde yalnız şerit (menü gizli, alt çubuk var).
+      document.documentElement.style.setProperty("--menu-genislik", "0px");
+      document.documentElement.style.setProperty("--ust-menu-h", mobilDuzenRef.current ? "0px" : `${UST_MENU_YUKSEKLIGI}px`);
     };
     uygula();
     window.addEventListener("resize", uygula);
@@ -181,7 +182,7 @@ export default function AtolyeERP() {
     // `mobilDuzen` bileşenin aşağısında hesaplanıyor (TDZ); ref üzerinden okunuyor ve mobil düzen
     // değişince ayrıca çağrılıyor (aşağıdaki etki). Sınıfa bakmak yanlıştı: sınıf DOM'a effect
     // sırasında giriyor, ilk hesap 0 çıkıp sol menü sıfır genişlikte kalıyordu (15 Eylül).
-  }, [sidebarDaraltilmis, mobilDuzenSurumu]);
+  }, [mobilDuzenSurumu]);
   const [onaylar, setOnaylar] = useState([]);
   // "muhasebe" listeye SONRADAN eklendi. Mevcut kullanıcıların yetki nesnesinde bu anahtar yok;
   // kullaniciYetkisiVar tanımsız yetkiyi "yok" saydığı için, eskiden beri var olan kullanıcılar
@@ -2845,7 +2846,7 @@ export default function AtolyeERP() {
         // görünür, aşağısı düz kalırdı.
         backgroundAttachment: "fixed",
         minHeight: "100vh",
-        color: "#3A291D",
+        color: "var(--erp-text)",
         display: "flex",
         // Şerit `absolute` olduğu için akıştan çıkıyor; sayfanın en üstündeki içerik onun altında
         // kalmasın diye boşluk yine gerekli. Fark şu: bu boşluk SAYFANIN BAŞINDA, ekranın değil —
@@ -2867,7 +2868,7 @@ export default function AtolyeERP() {
         input:focus-visible, select:focus-visible, button:focus-visible {
           outline: 2px solid var(--modul-renk, #E1611F); outline-offset: 1px;
         }
-        ::placeholder { color: #A6957A; }
+        ::placeholder { color: var(--erp-text-3); }
         .mono { font-family: 'IBM Plex Mono', monospace; }
         /* ---- BUTON DİLİ ----
            Üç anlam, üç görünüm. Renk burada süs değil, İŞLEVİN KENDİSİ: kullanıcı butonu okumadan,
@@ -2924,9 +2925,9 @@ export default function AtolyeERP() {
         .btn-ikon.tehlike:hover { background: #A63D2B; color: #fff; border-color: #A63D2B; }
         table { border-collapse: collapse; width: 100%; }
         th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-             color: #7A6A50; font-weight: 600; padding: 10px 12px; border-bottom: 2px solid #221B14; }
-        td { padding: 12px; border-bottom: 1px solid #E4D8C0; font-size: 14px; }
-        tr:hover td { background: #FBF6EC; }
+             color: var(--erp-text-2); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--erp-line); }
+        td { padding: 12px; border-bottom: 1px solid var(--erp-line-soft); font-size: 14px; }
+        tr:hover td { background: var(--erp-hover); }
         /* MOBIL DUZEN SINIFLA DA ACILABILIR (kullanici, 15 Eylul: "alt cubuk mobilde gorunmuyor,
            tanimlarda yaptigim duzenleme cikmiyor"). SEBEP: kurallar yalniz 720px genislik esigine
            bagliydi; genis telefonlar/tabletler ve "masaustu site" kipi 720'nin ustunde kaliyor, bu
@@ -2934,7 +2935,8 @@ export default function AtolyeERP() {
            mobil-duzen sinifi konunca ayni kurallar genislikten bagimsiz gecerli; masaustu-duzen
            sinifi ise dar ekranda bile masaustu duzenini zorluyor.
            NOT: bu blok bir sablon dizesi icinde — yorumlarda ters tirnak KULLANILMAZ. */
-        body.mobil-duzen .sidebar { display: none; }
+        .ust-menu { display: flex; }
+        body.mobil-duzen .sidebar, body.mobil-duzen .ust-menu { display: none; }
         body.mobil-duzen .mobile-tabs { display: flex !important; }
         body.mobil-duzen .main-area { padding: 16px !important; padding-bottom: 84px !important; max-width: 100% !important; }
         body.mobil-duzen .main-area.no-pad { padding: 0 0 84px !important; }
@@ -2946,18 +2948,23 @@ export default function AtolyeERP() {
            duzeni bozuyor ve dugmeler sifir genislige dusuyordu (15 Eylul). Yalnizca dar ekran
            media sorgusunun gizlemesini geri aliyoruz. */
         body.masaustu-duzen .sidebar { display: revert !important; }
+        body.masaustu-duzen .ust-menu { display: flex !important; }
+        /* UST MENU DAR EKRANDA (tablet dikey ~900px): once firma adi, sonra grup ikonlari gizlenir
+           ki menu sagdaki ikonlarin altina girmesin. Kaydirma cozum degil: acilir listeler kirpilir. */
+        @media (max-width: 1100px) { .ust-menu-unvan { display: none; } }
+        @media (max-width: 880px) { .ust-menu-grup-ikon { display: none; } }
         body.masaustu-duzen .mobile-tabs { display: none !important; }
 
         /* MATRIS TABLO GORUNUMU (15 Eylul): baslik zemini, ince dikey cizgiler, zebra satir.
            Tek yerde duruyor ki butun matrisler ayni gorunsun (siparis, planlama, fis, tedarik). */
-        .matris-tablo th { background: #EFE6D5; }
-        .matris-tablo th, .matris-tablo td { border-right: 1px solid #E4D8C0; }
+        .matris-tablo th { background: var(--erp-head); }
+        .matris-tablo th, .matris-tablo td { border-right: 1px solid var(--erp-line-soft); }
         .matris-tablo th:last-child, .matris-tablo td:last-child { border-right: none; }
-        .matris-tablo tbody tr:nth-child(even) > td { background: #FBF6EC; }
-        .matris-tablo tbody tr:hover > td { background: #F4EADA; }
+        .matris-tablo tbody tr:nth-child(even) > td { background: var(--erp-zebra); }
+        .matris-tablo tbody tr:hover > td { background: var(--erp-hover); }
 
         @media (max-width: 720px) {
-          .sidebar { display: none; }
+          .sidebar, .ust-menu { display: none; }
           .mobile-tabs { display: flex !important; }
           .main-area { padding: 16px !important; padding-bottom: 84px !important; max-width: 100% !important; }
           .main-area.no-pad { padding: 0 0 84px !important; }
@@ -3018,17 +3025,18 @@ export default function AtolyeERP() {
             style={{
               flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
               padding: "6px 4px", borderRadius: "var(--erp-r-md)", border: "none",
-              borderTop: tab === t.key ? `2px solid ${MODUL_RENK[t.key]}` : "2px solid transparent",
+              borderTop: "2px solid transparent",
               // SEÇİLİ ÖGE ZEMİNİ — palet değişikliğinde ATLANMIŞTI (kullanıcı ekran görüntüsüyle
               // bildirdi, 7 Eylül): koyu kahve kutu açık mor çubuğun içinde duruyor, üzerindeki
               // mor yazı okunmuyordu. Sol menüdeki `NavItem` ile aynı ton.
-              background: tab === t.key ? "#BCD3B5" : "transparent",
-              color: tab === t.key ? MODUL_RENK[t.key] : "#455A40",
+              // YENİ TASARIM (v1.449.0): üst menüyle aynı dil — açık kırmızı zemin, kırmızı ikon.
+              background: tab === t.key ? "var(--erp-accent-tint)" : "transparent",
+              color: tab === t.key ? "var(--erp-accent)" : "var(--erp-text-2)",
               fontSize: 11, fontWeight: 600, cursor: "pointer",
             }}
           >
             {t.icon}
-            <span style={{ color: tab === t.key ? "var(--erp-primary-2)" : "#455A40" }}>{t.label}</span>
+            <span style={{ color: tab === t.key ? "var(--erp-accent)" : "var(--erp-text-2)" }}>{t.label}</span>
           </button>
         ))}
 
@@ -3041,7 +3049,7 @@ export default function AtolyeERP() {
           onClick={() => setMobilMenuAcik(true)}
           style={{
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
-            border: "none", background: "transparent", color: "#455A40",
+            border: "none", background: "transparent", color: "var(--erp-text-2)",
             fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "4px 2px",
           }}
         >
@@ -3069,7 +3077,7 @@ export default function AtolyeERP() {
                 <button key={k} type="button" data-mobil-menu-modul={k}
                   onClick={() => { setTab(k); setMobilMenuAcik(false); }}
                   style={{ padding: "12px 10px", borderRadius: "var(--erp-r-lg)", border: `1px solid ${tab === k ? "var(--erp-text)" : "var(--erp-border)"}`,
-                    background: tab === k ? "#F6EEDD" : "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", textAlign: "left" }}>
+                    background: tab === k ? "var(--erp-hover)" : "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", textAlign: "left" }}>
                   {(MOBIL_MODULLER.find((m) => m.key === k) || {}).ad || k}
                 </button>
               ))}
@@ -3084,262 +3092,186 @@ export default function AtolyeERP() {
         </div>
       )}
 
-      {/* Sidebar — PANEL kullanıcısında hiç çizilmiyor: menü yoksa yanlış ekrana gidilemez.
-          Görünmez yapmak (display:none) yerine hiç render etmemek, klavye ve ekran okuyucuyla
-          da erişilemeyeceği anlamına geliyor. */}
-      {!panelKullanicisi && (
-      <aside
-        className="sidebar"
-        style={{
-          width: sidebarDaraltilmis ? 64 : 176, // standart .erp-shell: 176px
-          // Genişlik CSS değişkenine yazılır: tam ekran pencereler sol menüyü ÖRTMESİN diye
-          // buradan okurlar. Sabit sayı yazmak, menü daraldığında pencerenin yanlış yerde
-          // başlamasına yol açardı.
-          transition: "width .15s ease",
-          // AÇIK ADAÇAYI YEŞİLİ (kullanıcı, 7 Eylül — önce mor denendi, uygulamanın kendi
-          // yeşilleriyle uyumlu bulunmadı). Zemin açılınca metin de koyulaşmak zorunda: eski krem
-          // (#F2E8D8) bu zeminde okunmuyordu.
-          // TEMA KABUĞU (21 Eylül): standart yan menüyü KOYU (--erp-shell) ve yazısını açık
-          // (--erp-shell-ink) tanımlıyor. Gradyan efekti kaldırıldı.
-          background: "var(--erp-shell)",
-          color: "var(--erp-shell-ink)",
-          padding: sidebarDaraltilmis ? "24px 8px" : "24px 16px",
-          // MENÜ EKRANDA KALIYOR (kullanıcı bildirdi, 6 Eylül: "sol sekme barı kayıp").
-          //
-          // Menü akışta duruyordu ve `minHeight: 100vh` ile sayfa boyunca uzuyordu; ama İÇİNDEKİ
-          // ikonlar en üstteydi. Aşağı kaydırınca ekranda yalnız boş kahverengi bir şerit
-          // kalıyordu — menü "vardı" ama kullanılamıyordu.
-          //
-          // Üst sekme şeridi sabitken bu fark edilmiyordu: gezinme oradan yapılabiliyordu. Şerit
-          // de kaydırılabilir olunca (7z-19) ekranda HİÇBİR gezinme aracı kalmadı. Yani kusur
-          // eskiydi, yeni değişiklik onu görünür kıldı.
-          //
-          // `sticky`: menü kendi yerinde başlıyor ama kaydırma sırasında ekranın tepesinde
-          // kalıyor. `fixed` yapmak, akıştan çıkarıp içeriğin altına kaymasına yol açardı —
-          // genişliği CSS değişkeninden okuyan tam ekran pencereler de yanlış hizalanırdı.
-          position: "sticky",
-          // ŞERİDİN ALTINDAN: şerit `fixed` ve `zIndex: 500` ile tepede duruyor. Menü `top: 0`
-          // ile yapışsaydı ilk ikonu şeridin ALTINDA kalırdı — görünür ama tıklanamaz.
-          top: PENCERE_SERIT_YUKSEKLIGI,
-          // `minHeight` DEĞİL `height`: sticky bir öge, kapsayıcı kadar uzunsa hiç yapışmaz —
-          // yapışacak bir boşluk kalmaz. Şeridin kapladığı pay düşülüyor ki menünün ALTI da
-          // ekran dışına taşmasın.
-          height: `calc(100vh - ${PENCERE_SERIT_YUKSEKLIGI}px)`,
-          alignSelf: "flex-start",
-          // Menü ekrandan uzunsa (dar ekran, çok modül) kendi içinde kayabilsin.
-          overflowY: "auto",
-          flexShrink: 0,
-        }}
-      >
-        <button
-          onClick={() => setSidebarDaraltilmis((v) => !v)}
-          title={sidebarDaraltilmis ? "Menüyü genişlet" : "Menüyü daralt"}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "100%", marginBottom: 16, padding: "5px 0", borderRadius: "var(--erp-r-md)",
-            border: "1px solid var(--erp-shell-2)", background: "none", color: "var(--erp-shell-ink)", cursor: "pointer",
-          }}
-        >
-          {sidebarDaraltilmis ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
+      {/* ---- ÜST MENÜ (25 Eylül, v1.449.0) ----
+          Kullanıcı: "Tasarımımız çok eski… siyah kolon hoş değil, güncel tasarım lazım." Üç yön
+          gösterildi, seçim "C'nin yerleşimi, A'nın renkleri": YAN KOLON YOK. Modüller üstte yatay
+          menüde, gruplar açılır liste; açık sekmeler hemen altındaki şeritte. Tablette ekranın
+          tamamı içeriğe kalıyor (yan kolon genişliğin dörtte birini yiyordu).
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: sidebarDaraltilmis ? "center" : "flex-start", gap: 8, marginBottom: 4 }}>
-          {(tanimlar.firmaBilgileri || {}).logo ? (
-            <img src={tanimlar.firmaBilgileri.logo} alt="Logo" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: "var(--erp-r-sm)", background: "#fff", flexShrink: 0 }} />
-          ) : (
-            <Hammer size={20} color="var(--erp-orange)" />
-          )}
-          {!sidebarDaraltilmis && (
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 17 }}>
-              {(tanimlar.firmaBilgileri || {}).unvan || "Atölye ERP"}
-            </span>
-          )}
-        </div>
-        {!sidebarDaraltilmis && (
-          <div style={{ fontSize: 11, color: "#455A40", marginBottom: 24, letterSpacing: ".04em" }}>
-            AYAKKABI ÜRETİM SİSTEMİ
-          </div>
-        )}
-        {sidebarDaraltilmis && <div style={{ marginBottom: 20 }} />}
+          Menü grupları ve yetki koşulları eski yan menüyle AYNI (17 Eylül kararları): Anasayfa ve
+          Planlama grupsuz; Depo, Üretim, Siparişler, Finans açılır. Sohbet, Günlük, Onay ve
+          Tanımlar sağda ikon; kullanıcı, sürüm ve çıkış kullanıcı menüsünde.
 
-        {/* MENÜ GRUPLARI (17 Eylül): 14 modül tek düzlemdeydi ve Modelhane ile liste ekranı
-            aşmaya başladı. Gruplar konuya göre: Depo (stok tarafı), Üretim, Ticaret, Finans.
-            Anasayfa, Sohbet, Günlük ve Tanımlar grupsuz — biri giriş, ikisi her an lazım,
-            Tanımlar ayrı düğmede. İçinde aktif modül olan grup kendiliğinden açık. */}
-        <NavItem icon={<Home size={16} />} label="Anasayfa" active={tab === "anasayfa"} onClick={() => setTab("anasayfa")} renk={MODUL_RENK.anasayfa} daraltilmis={sidebarDaraltilmis} />
-        <NavGrubu
-          baslik="Depo"
-          ikon={<Layers size={14} />}
-          daraltilmis={sidebarDaraltilmis}
-          acikMi={acikNavGruplari.includes("Depo")}
-          icindeAktif={["stok", "depo", "paketleme"].includes(tab)}
-          onAcKapa={() => setAcikNavGruplari((o) => (o.includes("Depo") ? o.filter((x) => x !== "Depo") : [...o, "Depo"]))}
-          cocuklar={<>
-              <NavItem icon={<Boxes size={16} />} label="Stok" active={tab === "stok"} onClick={() => setTab("stok")} renk={MODUL_RENK.stok} daraltilmis={sidebarDaraltilmis} />
-              <NavItem icon={<Layers size={16} />} label="Depo" active={tab === "depo"} onClick={() => setTab("depo")} renk={MODUL_RENK.depo} daraltilmis={sidebarDaraltilmis} />
-              <NavItem icon={<PackageCheck size={16} />} label="Paketleme" active={tab === "paketleme"} onClick={() => setTab("paketleme")} renk={MODUL_RENK.depo} daraltilmis={sidebarDaraltilmis} />
-          </>}
-        />
-        <NavGrubu
-          baslik="Üretim"
-          ikon={<Hammer size={14} />}
-          daraltilmis={sidebarDaraltilmis}
-          acikMi={acikNavGruplari.includes("Üretim")}
-          icindeAktif={["uretim", "modelhane"].includes(tab)}
-          onAcKapa={() => setAcikNavGruplari((o) => (o.includes("Üretim") ? o.filter((x) => x !== "Üretim") : [...o, "Üretim"]))}
-          cocuklar={<>
-          {kullaniciYetkisiVar("uretim", "goruntuleme") && (
-            <NavItem icon={<Hammer size={16} />} label="Üretim" active={tab === "uretim"} onClick={() => setTab("uretim")} renk={MODUL_RENK.uretim} daraltilmis={sidebarDaraltilmis} />
-          )}
-          {kullaniciYetkisiVar("stok", "goruntuleme") && (
-            <NavItem icon={<Palette size={16} />} label="Modelhane" active={tab === "modelhane"} onClick={() => setTab("modelhane")} renk={MODUL_RENK.stok} daraltilmis={sidebarDaraltilmis} />
-          )}
-                    </>}
-        />
-        {/* PLANLAMA GRUPSUZ (kullanıcı, 17 Eylül: "planlama başlı başına sekme olsun, orası
-            büyüyecek: stok planlama, sipariş planlama vs."). Bir grubun altına saklanmıyor. */}
-        <NavItem icon={<Compass size={16} />} label="Planlama" active={tab === "planlama"} onClick={() => setTab("planlama")} renk={MODUL_RENK.planlama} daraltilmis={sidebarDaraltilmis} />
-        <NavGrubu
-          baslik="Siparişler"
-          ikon={<ClipboardList size={14} />}
-          daraltilmis={sidebarDaraltilmis}
-          acikMi={acikNavGruplari.includes("Siparişler")}
-          icindeAktif={["siparis", "satinalma"].includes(tab)}
-          onAcKapa={() => setAcikNavGruplari((o) => (o.includes("Siparişler") ? o.filter((x) => x !== "Siparişler") : [...o, "Siparişler"]))}
-          cocuklar={<>
-              <NavItem icon={<ClipboardList size={16} />} label="Sipariş" active={tab === "siparis"} onClick={() => setTab("siparis")} renk={MODUL_RENK.siparis} daraltilmis={sidebarDaraltilmis} />
-              <NavItem icon={<PackageCheck size={16} />} label="Alış Siparişi" active={tab === "satinalma"} onClick={() => setTab("satinalma")} renk={MODUL_RENK.satinalma} daraltilmis={sidebarDaraltilmis} />
-          </>}
-        />
-        <NavGrubu
-          baslik="Finans"
-          ikon={<Wallet size={14} />}
-          daraltilmis={sidebarDaraltilmis}
-          acikMi={acikNavGruplari.includes("Finans")}
-          icindeAktif={["muhasebe", "fisler", "cari", "gelirgider"].includes(tab)}
-          onAcKapa={() => setAcikNavGruplari((o) => (o.includes("Finans") ? o.filter((x) => x !== "Finans") : [...o, "Finans"]))}
-          cocuklar={<>
-          {kullaniciYetkisiVar("cari", "goruntuleme") && (
-            <NavItem icon={<Users size={16} />} label="Cari" active={tab === "cari"} onClick={() => setTab("cari")} renk={MODUL_RENK.cari} daraltilmis={sidebarDaraltilmis} />
-          )}
-          {kullaniciYetkisiVar("muhasebe", "goruntuleme") && (
-            <NavItem icon={<Wallet size={16} />} label="Muhasebe" active={tab === "muhasebe"} onClick={() => setTab("muhasebe")} renk={MODUL_RENK.muhasebe} daraltilmis={sidebarDaraltilmis} />
-          )}
-              {/* GELİR / GİDER (20 Eylül): Tanımlar'dan buraya taşındı — her gün kullanılan bir
-                  defter, kurulum ekranında değil finansın içinde durmalı. */}
-          {kullaniciYetkisiVar("muhasebe", "goruntuleme") && (
-              <NavItem icon={<FileText size={16} />} label="Gelir / Gider" active={tab === "gelirgider"} onClick={() => setTab("gelirgider")} renk={MODUL_RENK.muhasebe} daraltilmis={sidebarDaraltilmis} />
-          )}
-          {kullaniciYetkisiVar("fisler", "goruntuleme") && (
-            <NavItem icon={<FileText size={16} />} label="Fişler" active={tab === "fisler"} onClick={() => setTab("fisler")} renk={MODUL_RENK.fisler} daraltilmis={sidebarDaraltilmis} />
-          )}
-          </>}
-        />
-        {/* SOHBET grupsuz: her an lazım, bir grubun içine saklanmasın. */}
-        <NavItem icon={<MessageCircle size={16} />} label="Sohbet" active={tab === "gorevler"} onClick={() => setTab("gorevler")} renk={MODUL_RENK.gorevler} daraltilmis={sidebarDaraltilmis}
-          {...(() => {
-            // ROZET = açık görevlerim + okunmamış mesajlar. İkisi de "bana bir şey var" demek;
-            // menüde iki ayrı sayı göstermek yerine toplanıyor.
-            const benId = aktifKullanici ? aktifKullanici.id : null;
-            const gorevSayisi = benId ? acikGorevSayisi(gorevler, benId) : 0;
-            // Kanallar sabit değil: "ekip" artı her ikili özel akış ("k1|k2"). Bu yüzden kanal
-            // listesi mesajlardan çıkarılıyor; benim görmediğim bir kanal varsa da sayılır.
-            const mesajSayisi = benId
-              ? [...new Set((mesajlar || []).map((m) => m.kanal))]
-                .filter((k) => k === "ekip" || String(k).split("|").includes(benId))
-                .reduce((t, k) => t + okunmamisSayisi(mesajlar, k, (mesajOkumalari || {})[k], benId), 0)
-              : 0;
-            const toplam = gorevSayisi + mesajSayisi;
-            return { rozet: toplam > 0 ? toplam : null };
-          })()} />
-        {kullaniciYetkisiVar("tanimlar", "goruntuleme") && (
-          <NavItem icon={<ScrollText size={16} />} label="Günlük" active={tab === "gunluk"} onClick={() => setTab("gunluk")} renk={MODUL_RENK.gunluk} daraltilmis={sidebarDaraltilmis} />
-        )}
-        {kullaniciYetkisiVar("tanimlar", "goruntuleme") && (
-          <button
-            onClick={() => setTab("tanimlar")}
-            title={sidebarDaraltilmis ? "Tanımlar / Ayarlar" : undefined}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: sidebarDaraltilmis ? "center" : "flex-start", gap: 6,
-              width: "100%", marginBottom: 10,
-              padding: sidebarDaraltilmis ? "6px 0" : "5px 4px", border: "none", background: "none", cursor: "pointer",
-              fontSize: 11, color: tab === "tanimlar" ? MODUL_RENK.tanimlar : "#455A40",
-              fontWeight: tab === "tanimlar" ? 700 : 400,
-            }}
-          >
-            <Palette size={12} /> {!sidebarDaraltilmis && "Tanımlar / Ayarlar"}
-          </button>
-        )}
-        {/* SÜRÜM — bir hata bildirilirken hangi paketin kullanıldığı bilinmezse,
-            düzeltilmiş bir hatayı yeniden aramakla vakit kaybedilir. */}
-        <div
-          title={`${SURUM_NOTU}\n${SURUM_TARIHI}`}
-          className="mono"
-          style={{
-            fontSize: 9, color: "var(--erp-text-2)", marginBottom: 10,
-            textAlign: sidebarDaraltilmis ? "center" : "left", cursor: "help",
-          }}
-        >
-          {sidebarDaraltilmis ? SURUM : `v${SURUM} · ${SURUM_TARIHI}`}
-        </div>
-        {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
-          <button
-            onClick={() => setOnayPaneliAcik(true)}
-            title={sidebarDaraltilmis ? "Onay Bekleyenler" : undefined}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: sidebarDaraltilmis ? "center" : "space-between", gap: 8,
-              width: "100%", marginBottom: 12, padding: sidebarDaraltilmis ? "8px 0" : "8px 10px", borderRadius: "var(--erp-r-md)", cursor: "pointer",
-              border: `1px solid ${bekleyenOnaylar.length > 0 ? "var(--erp-orange)" : "var(--erp-border-2)"}`,
-              background: bekleyenOnaylar.length > 0 ? "var(--erp-orange-bg)" : "#fff",
-              position: "relative",
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, color: bekleyenOnaylar.length > 0 ? "var(--erp-warn)" : "var(--erp-text-2)" }}>
-              <AlertTriangle size={13} /> {!sidebarDaraltilmis && "Onay Bekleyenler"}
-            </span>
-            {bekleyenOnaylar.length > 0 && (
-              <span
-                className="mono"
-                style={{
-                  fontSize: 11, fontWeight: 700, color: "#fff", background: "var(--erp-orange)", borderRadius: "var(--erp-r-pill)", padding: "1px 7px",
-                  position: sidebarDaraltilmis ? "absolute" : "static", top: sidebarDaraltilmis ? -6 : "auto", right: sidebarDaraltilmis ? -6 : "auto",
-                }}
-              >
-                {bekleyenOnaylar.length}
-              </span>
-            )}
-          </button>
-        )}
-        {!sidebarDaraltilmis && (
-          <>
-            <div style={{ fontSize: 11, color: "var(--erp-text-2)", lineHeight: 1.5, marginBottom: 12 }}>
-              Veriler tüm kullanıcılar arasında paylaşılır. Ekip üyeleri aynı liste ve stokları görür.
+          AÇILIR LİSTE İÇERİĞİ KAPALIYKEN DE DOM'DA (display:none): modül düğmeleri `data-nav` ile
+          her an bulunabiliyor (testler ve klavye kısayolları aynı düğmeye basıyor).
+
+          PANEL kullanıcısında hiç çizilmiyor: menü yoksa yanlış ekrana gidilemez. Mobilde de
+          gizli (CSS): orada alt sekme çubuğu var. */}
+      {!panelKullanicisi && (() => {
+        const grupAc = (ad) => setAcikUstMenu((o) => (o === ad ? null : ad));
+        const git = (anahtar) => { setTab(anahtar); setAcikUstMenu(null); };
+        const benId = aktifKullanici ? aktifKullanici.id : null;
+        // ROZET = açık görevlerim + okunmamış mesajlar (eski yan menüdeki hesap, aynen).
+        const sohbetRozeti = (() => {
+          if (!benId) return 0;
+          const gorevSayisi = acikGorevSayisi(gorevler, benId);
+          const mesajSayisi = [...new Set((mesajlar || []).map((m) => m.kanal))]
+            .filter((k) => k === "ekip" || String(k).split("|").includes(benId))
+            .reduce((t, k) => t + okunmamisSayisi(mesajlar, k, (mesajOkumalari || {})[k], benId), 0);
+          return gorevSayisi + mesajSayisi;
+        })();
+        const ustDugme = (etkin) => ({
+          height: 36, display: "flex", alignItems: "center", gap: 5, padding: "0 11px", border: "none",
+          borderRadius: "var(--erp-r-md)", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+          fontSize: 13.5, fontWeight: etkin ? 700 : 600,
+          background: etkin ? "var(--erp-accent-tint)" : "transparent",
+          color: etkin ? "var(--erp-accent)" : "var(--erp-text-2)",
+        });
+        const ikonDugme = { width: 38, height: 38, position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
+          border: "none", borderRadius: "var(--erp-r-md)", background: "transparent", cursor: "pointer", color: "var(--erp-text-2)", flexShrink: 0 };
+        const rozetStili = { position: "absolute", top: 2, right: 2, minWidth: 16, height: 16, padding: "0 4px", borderRadius: "var(--erp-r-pill)",
+          background: "var(--erp-accent)", color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" };
+        const Grup = ({ ad, ikon, sekmeler, children }) => {
+          const icindeAktif = sekmeler.includes(tab);
+          const acik = acikUstMenu === ad;
+          return (
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <button type="button" data-nav-grup={ad} aria-label={`${ad} menüsü`} aria-expanded={acik}
+                onClick={() => grupAc(ad)} style={ustDugme(icindeAktif)}>
+                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}>{ikon}</span>{ad}{acik ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              </button>
+              <div data-ust-menu-liste={ad} style={{
+                display: acik ? "flex" : "none", flexDirection: "column", gap: 2, position: "absolute", top: 42, left: 0, zIndex: 20,
+                minWidth: 200, padding: 6, background: "var(--erp-panel)", border: "1px solid var(--erp-line)",
+                borderRadius: "var(--erp-r-lg)", boxShadow: "0 12px 32px rgba(16, 24, 40, 0.12)",
+              }}>
+                {children}
+              </div>
             </div>
-            {aktifKullanici && girisSistemiAktif && (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <div style={{ overflow: "hidden" }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{aktifKullanici.ad}</div>
-                  <div style={{ fontSize: 11, color: "#455A40" }}>{aktifKullanici.rol}</div>
-                </div>
-                <button
-                  onClick={kullaniciCikisYap}
-                  title="Çıkış Yap"
-                  style={{ border: "1px solid #E4D8C0", background: "#fff", borderRadius: "var(--erp-r-md)", padding: "5px 8px", cursor: "pointer", color: "var(--erp-text-2)", display: "flex", flexShrink: 0 }}
-                >
-                  <X size={13} />
+          );
+        };
+        const oge = (anahtar, label, icon) => (
+          <NavItem icon={icon} label={label} active={tab === anahtar} onClick={() => git(anahtar)} renk={MODUL_RENK[anahtar]} />
+        );
+        return (
+          <header className="ust-menu" style={{
+            // `display` burada YOK, CSS'te (.ust-menu): satır içi stil mobilde gizleyen kuralı ezerdi.
+            position: "fixed", top: 0, left: 0, right: 0, zIndex: 510, height: UST_MENU_YUKSEKLIGI,
+            alignItems: "center", gap: 2, padding: "0 12px",
+            background: "var(--erp-topbar)", borderBottom: "1px solid var(--erp-line-soft)",
+          }}>
+            {/* Açık liste varken dışarı tıklamak kapatır (sayfanın geri kalanı tıklamayı almaz). */}
+            {acikUstMenu && (
+              <div onClick={() => setAcikUstMenu(null)} style={{ position: "fixed", inset: 0, zIndex: 1 }} aria-hidden="true" />
+            )}
+            <button type="button" onClick={() => git("anasayfa")} title="Anasayfa"
+              style={{ display: "flex", alignItems: "center", gap: 9, marginRight: 10, padding: 0, border: "none", background: "none", cursor: "pointer", flexShrink: 0 }}>
+              {(tanimlar.firmaBilgileri || {}).logo ? (
+                <img src={tanimlar.firmaBilgileri.logo} alt="Logo" style={{ width: 32, height: 32, objectFit: "contain", borderRadius: "var(--erp-r-md)", background: "#fff" }} />
+              ) : (
+                <span style={{ width: 32, height: 32, borderRadius: "var(--erp-r-md)", background: "var(--erp-accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Hammer size={17} color="#fff" />
+                </span>
+              )}
+              <span className="ust-menu-unvan" style={{ fontWeight: 800, fontSize: 15, color: "var(--erp-text)", letterSpacing: "-0.01em" }}>
+                {(tanimlar.firmaBilgileri || {}).unvan || "Atölye ERP"}
+              </span>
+            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, position: "relative", zIndex: 2 }}>
+              <button type="button" data-nav="Anasayfa" title="Anasayfa" onClick={() => git("anasayfa")} style={ustDugme(tab === "anasayfa")}>Anasayfa</button>
+              <Grup ad="Depo" ikon={<Layers size={15} />} sekmeler={["stok", "depo", "paketleme"]}>
+                {oge("stok", "Stok", <Boxes size={16} />)}
+                {oge("depo", "Depo", <Layers size={16} />)}
+                {oge("paketleme", "Paketleme", <PackageCheck size={16} />)}
+              </Grup>
+              <Grup ad="Üretim" ikon={<Hammer size={15} />} sekmeler={["uretim", "modelhane"]}>
+                {kullaniciYetkisiVar("uretim", "goruntuleme") && oge("uretim", "Üretim", <Hammer size={16} />)}
+                {kullaniciYetkisiVar("stok", "goruntuleme") && oge("modelhane", "Modelhane", <Palette size={16} />)}
+              </Grup>
+              {/* PLANLAMA GRUPSUZ (kullanıcı, 17 Eylül: "planlama başlı başına sekme olsun"). */}
+              <button type="button" data-nav="Planlama" title="Planlama" onClick={() => git("planlama")} style={ustDugme(tab === "planlama")}>
+                <span className="ust-menu-grup-ikon" style={{ display: "flex" }}><Compass size={15} /></span>Planlama
+              </button>
+              <Grup ad="Siparişler" ikon={<ClipboardList size={15} />} sekmeler={["siparis", "satinalma"]}>
+                {oge("siparis", "Sipariş", <ClipboardList size={16} />)}
+                {oge("satinalma", "Alış Siparişi", <PackageCheck size={16} />)}
+              </Grup>
+              <Grup ad="Finans" ikon={<Wallet size={15} />} sekmeler={["muhasebe", "fisler", "cari", "gelirgider"]}>
+                {kullaniciYetkisiVar("cari", "goruntuleme") && oge("cari", "Cari", <Users size={16} />)}
+                {kullaniciYetkisiVar("muhasebe", "goruntuleme") && oge("muhasebe", "Muhasebe", <Wallet size={16} />)}
+                {/* GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde. */}
+                {kullaniciYetkisiVar("muhasebe", "goruntuleme") && oge("gelirgider", "Gelir / Gider", <FileText size={16} />)}
+                {kullaniciYetkisiVar("fisler", "goruntuleme") && oge("fisler", "Fişler", <FileText size={16} />)}
+              </Grup>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 2, position: "relative", zIndex: 2 }}>
+              {/* SOHBET: her an lazım, ikon + rozet. */}
+              <button type="button" data-nav="Sohbet" aria-label="Sohbet" title="Sohbet" onClick={() => git("gorevler")}
+                style={{ ...ikonDugme, ...(tab === "gorevler" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) }}>
+                <MessageCircle size={18} />
+                {sohbetRozeti > 0 && <span className="mono" data-nav-rozet={sohbetRozeti} style={rozetStili}>{sohbetRozeti}</span>}
+              </button>
+              {kullaniciYetkisiVar("tanimlar", "goruntuleme") && (
+                <button type="button" data-nav="Günlük" aria-label="Günlük" title="Günlük" onClick={() => git("gunluk")}
+                  style={{ ...ikonDugme, ...(tab === "gunluk" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) }}>
+                  <ScrollText size={18} />
                 </button>
+              )}
+              {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
+                <button type="button" aria-label="Onay Bekleyenler" title="Onay Bekleyenler" onClick={() => setOnayPaneliAcik(true)}
+                  style={{ ...ikonDugme, color: bekleyenOnaylar.length > 0 ? "var(--erp-wait)" : "var(--erp-text-2)" }}>
+                  <AlertTriangle size={18} />
+                  {bekleyenOnaylar.length > 0 && <span className="mono" style={{ ...rozetStili, background: "var(--erp-wait)" }}>{bekleyenOnaylar.length}</span>}
+                </button>
+              )}
+              {kullaniciYetkisiVar("tanimlar", "goruntuleme") && (
+                <button type="button" aria-label="Tanımlar / Ayarlar" title="Tanımlar / Ayarlar" onClick={() => git("tanimlar")}
+                  style={{ ...ikonDugme, ...(tab === "tanimlar" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) }}>
+                  <Settings size={18} />
+                </button>
+              )}
+              {/* KULLANICI MENÜSÜ: ad, rol, sürüm (hata bildirirken hangi paket), çıkış. */}
+              <div style={{ position: "relative", marginLeft: 4 }}>
+                <button type="button" aria-label="Kullanıcı menüsü" title={aktifKullanici ? aktifKullanici.ad : "Kullanıcı"}
+                  onClick={() => grupAc("kullanici")}
+                  style={{ width: 34, height: 34, border: "none", borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+                    background: "var(--erp-text)", color: "#fff", fontSize: 12, fontWeight: 700 }}>
+                  {((aktifKullanici && aktifKullanici.ad) || "?").split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toLocaleUpperCase("tr-TR")}
+                </button>
+                <div style={{
+                  display: acikUstMenu === "kullanici" ? "flex" : "none", flexDirection: "column", gap: 8, position: "absolute", top: 42, right: 0, zIndex: 20,
+                  width: 250, padding: 14, background: "var(--erp-panel)", border: "1px solid var(--erp-line)",
+                  borderRadius: "var(--erp-r-lg)", boxShadow: "0 12px 32px rgba(16, 24, 40, 0.12)",
+                }}>
+                  {aktifKullanici && (
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>{aktifKullanici.ad}</div>
+                      <div style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{aktifKullanici.rol}</div>
+                    </div>
+                  )}
+                  {!girisSistemiAktif && (
+                    <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontStyle: "italic" }}>Test modu — kullanıcı girişi pasif</div>
+                  )}
+                  <div style={{ fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 }}>
+                    Veriler tüm kullanıcılar arasında paylaşılır. Ekip üyeleri aynı liste ve stokları görür.
+                  </div>
+                  {/* SÜRÜM — hata bildirilirken hangi paketin kullanıldığı bilinmeli. */}
+                  <div className="mono" title={`${SURUM_NOTU}\n${SURUM_TARIHI}`} style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
+                    v{SURUM} · {SURUM_TARIHI}
+                  </div>
+                  {aktifKullanici && girisSistemiAktif && (
+                    <button type="button" onClick={() => { setAcikUstMenu(null); kullaniciCikisYap(); }} title="Çıkış Yap"
+                      style={{ display: "flex", alignItems: "center", gap: 8, height: 36, padding: "0 10px", border: "1px solid var(--erp-line)",
+                        borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", color: "var(--erp-text)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                      <LogOut size={15} /> Çıkış yap
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-            {!girisSistemiAktif && (
-              <div style={{ fontSize: 11, color: "#455A40", fontStyle: "italic" }}>
-                Test modu — kullanıcı girişi pasif
-              </div>
-            )}
-          </>
-        )}
-
-      </aside>
-      )}
+            </div>
+          </header>
+        );
+      })()}
 
       {/* Content */}
       <main
@@ -3484,8 +3416,9 @@ export default function AtolyeERP() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
               {/* BAŞLIK 24 → 17: modül adı bir yön levhası, manşet değil. Zaten sekme şeridinde ve
                   sol menüde de yazıyor; üçüncü kez büyük puntoyla tekrar etmesi gereksiz. */}
-              <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 17, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: MODUL_RENK[tab], flexShrink: 0 }} />
+              {/* YENİ TASARIM (v1.449.0): renkli nokta ve kesikli çizgi kalktı; başlık temanın
+                  yazı tipinde, sade. Modül adı üst menüde ve sekmede de yazıyor — manşet değil. */}
+              <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "var(--erp-text)" }}>
                 {TAB_TITLES[tab]}
               </h1>
               {/* VERİ KAYNAĞI ROZETİ — yalnızca bulut okunamadığında görünür.
@@ -3547,7 +3480,7 @@ export default function AtolyeERP() {
                 "Tanımlı renk/bedenlerden seçerek ürün matrisi oluşturun…" gibi cümleler ilk gün
                 işe yarar; her açılışta iki satır yer kaplamaları bilgiyi aşağı itiyordu.
                 Ne olduğu başlığın kendisinde zaten yazılı. */}
-            <StitchDivider color={MODUL_RENK[tab]} />
+            <div style={{ height: 14 }} />
           </>
         )}
 
@@ -3813,7 +3746,7 @@ export default function AtolyeERP() {
             {/* SOHBET + GÖREVLER TEK EKRAN (kullanıcı, 14 Eylül: "sohbette olsun, kullanıcıyla aynı
                 bu ekrandan devam etsin; sohbete görev ekleme gibi hepsi sohbetin parçası olsun").
                 Sohbet ana sekme; görev listesi (süzgeç, kontrol, yazışma) ikinci sekmede, aynı veri. */}
-            <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid #C9B99A", alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid var(--erp-line)", alignItems: "center" }}>
               {[{ k: "sohbet", ad: "Sohbet" }, { k: "liste", ad: `Görevler${aktifKullanici && acikGorevSayisi(gorevler, aktifKullanici.id) ? ` (${acikGorevSayisi(gorevler, aktifKullanici.id)})` : ""}` }].map((x) => (
                 <button key={x.k} type="button" data-gorev-sekme={x.k} onClick={() => setGorevSekmesi(x.k)}
                   style={{ padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", background: "none", border: "none",
@@ -4092,8 +4025,9 @@ export default function AtolyeERP() {
                 //
                 // Bedeli ekranın 40 pikseli; karşılığı her an gezinebilmek. Kullanıcı bu dengeyi
                 // deneyerek seçti — iki hâli de gördü.
-                position: "fixed", top: 0, left: 0, right: 0, zIndex: 500,
-                height: PENCERE_SERIT_YUKSEKLIGI, boxSizing: "border-box",
+                // v1.449.0: şerit üst menünün ALTINDA (masaüstü); mobilde menü gizli, top 0.
+                position: "fixed", top: "var(--ust-menu-h, 0px)", left: 0, right: 0, zIndex: 500,
+                height: SEKME_SERIDI_YUKSEKLIGI, boxSizing: "border-box",
                 // İKİ BÖLGE: solda kaydırılabilir sekmeler, sağda SABİT kur rozeti.
                 // Kaydırma dış kapta olsaydı rozet de sekmelerle birlikte kayar, çok sekme
                 // açıldığında ekrandan çıkardı — oysa kur her an görünmeli.
@@ -4101,7 +4035,8 @@ export default function AtolyeERP() {
                 // `overflow: hidden` KALDIRILDI: kur rozetinin açılır paneli (elle giriş + kur
                 // geçmişi) şeridin İÇİNDE `absolute` konumlu ve kırpılıyordu — panel açılıyor ama
                 // görünmüyordu (kullanıcı bildirdi, 7 Eylül). Kaydırma zaten iç sarmalda.
-                background: "var(--erp-topbar)", 
+                // Şerit sayfa zemininde; etkin sekme beyaz kart olarak öne çıkıyor.
+                background: "var(--erp-page)", borderBottom: "1px solid var(--erp-line-soft)",
                 boxShadow: "none",
               }}
             >
@@ -4122,12 +4057,14 @@ export default function AtolyeERP() {
                     onClick={() => { setTab(k); setAktifPencereId(null); }}
                     title={bilgi.ad}
                     style={{
-                      display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "6px 6px 0 0",
-                      background: aktifMi ? "var(--erp-panel)" : "#BCD3B5",
+                      display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "var(--erp-r-md) var(--erp-r-md) 0 0",
+                      // YENİ TASARIM (v1.449.0): pasif sekme zeminsiz, etkin sekme beyaz kart gibi.
+                      background: aktifMi ? "var(--erp-panel)" : "transparent",
+                      border: `1px solid ${aktifMi ? "var(--erp-line-soft)" : "transparent"}`, borderBottom: "none",
                       // AKTİF SEKMENİN YAZISI DA PALETTEN (kullanıcı, 7 Eylül: "turuncu yazılar iyi
                       // ama siyah çok sırıtıyor"). `#221B14` neredeyse siyahtı ve açık şeridin
                       // içinde tek başına kalıyordu. Menüdeki seçili öge yazısıyla aynı ton.
-                      color: aktifMi ? "var(--erp-primary-2)" : "#465A41",
+                      color: aktifMi ? "var(--erp-text)" : "var(--erp-text-2)",
                       fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                     }}
                   >
@@ -4145,7 +4082,7 @@ export default function AtolyeERP() {
                 );
               })}
               {acikPencereler.length > 0 && (
-                <span style={{ width: 1, alignSelf: "stretch", background: "#AFCAA8", margin: "6px 6px 0", flexShrink: 0 }} />
+                <span style={{ width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "6px 6px 0", flexShrink: 0 }} />
               )}
               {acikPencereler.map((p) => (
                 <div
@@ -4175,8 +4112,8 @@ export default function AtolyeERP() {
                   }}
                   style={{
                     display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "6px 6px 0 0",
-                    background: aktifPencere && p.id === aktifPencere.id ? "var(--erp-panel)" : "#BCD3B5",
-                    color: aktifPencere && p.id === aktifPencere.id ? "var(--erp-primary-2)" : "#465A41",
+                    background: aktifPencere && p.id === aktifPencere.id ? "var(--erp-panel)" : "transparent",
+                    color: aktifPencere && p.id === aktifPencere.id ? "var(--erp-text)" : "var(--erp-text-2)",
                     fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                   }}
                 >
@@ -4437,7 +4374,7 @@ export default function AtolyeERP() {
         <div
           style={{
             position: "fixed", left: 12, right: 12, bottom: 12, zIndex: 400,
-            background: "#FBF0E2", border: "2px solid #B85C2E", borderRadius: "var(--erp-r-md)",
+            background: "var(--erp-hover)", border: "2px solid #B85C2E", borderRadius: "var(--erp-r-md)",
             padding: 14, boxShadow: "none", maxWidth: 620, margin: "0 auto",
             maxHeight: "60vh", overflowY: "auto",
           }}
@@ -4562,7 +4499,7 @@ export default function AtolyeERP() {
             ) : (
               <div style={{ display: "grid", gap: 10 }}>
                 {bekleyenOnaylar.map((istek) => (
-                  <div key={istek.id} style={{ background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 12 }}>
+                  <div key={istek.id} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
                       <span
                         className="mono"
@@ -4575,7 +4512,7 @@ export default function AtolyeERP() {
                         {new Date(istek.tarih).toLocaleString("tr-TR")}
                       </span>
                     </div>
-                    <div style={{ fontSize: 13, color: "#3A291D", marginBottom: 10 }}>{istek.aciklama}</div>
+                    <div style={{ fontSize: 13, color: "var(--erp-text)", marginBottom: 10 }}>{istek.aciklama}</div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button className="btn-primary" style={{ padding: "5px 12px", fontSize: 12 }} onClick={() => onayaKarar(istek.id, "Onaylandı")}>
                         Onayla

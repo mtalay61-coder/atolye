@@ -9,7 +9,7 @@ import {
   ScrollText, Lock, Camera,
   // Rapor sekmesi (245-rapor): kurucu, dışa aktarma, kapsam rozetleri.
   Settings, Download, User,
-  MessageCircle, Mail,
+  MessageCircle, Mail, LogOut,
 } from "lucide-react";
 
 /* ---------------------------------------------------------

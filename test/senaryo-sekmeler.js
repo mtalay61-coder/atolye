@@ -6,7 +6,7 @@
 //
 // Kural olduğu için testi de var: ileride bir ekran eklendiğinde sekme şeridine girmezse ya da
 // kapatma önceki sayfaya dönmezse burada kırılsın.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -21,7 +21,7 @@ async function calistir() {
   // Bir gün önce tersi denenmişti; şerit kayınca ekranda hiçbir gezinme aracı kalmadığı görüldü.
   const seritMetni = () => sayfa.evaluate(() => {
     const s = [...document.querySelectorAll("div")]
-      .filter((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .filter((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent))[0];
     return s ? s.innerText.split("\n").map((x) => x.trim()).filter(Boolean) : [];
   });
@@ -29,14 +29,15 @@ async function calistir() {
   // KAYDIRMA DAVRANIŞI: şerit de sol menü de kaydırma boyunca EKRANDA KALIYOR.
   const seritUstu = () => sayfa.evaluate(() => {
     const s = [...document.querySelectorAll("div")]
-      .filter((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .filter((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent))[0];
     return s ? Math.round(s.getBoundingClientRect().top) : null;
   });
 
   const acilis = await seritMetni();
 
-  const menu = (ad) => sayfa.getByRole("button", { name: ad, exact: true }).first();
+  // Üst menü (v1.449.0): modül düğmeleri açılır listede, `modulAc` ile doğrudan.
+  const menu = (ad) => ({ click: () => modulAc(sayfa, ad) });
   await menu("Stok").click();
   await sayfa.waitForTimeout(400);
   await menu("Cari").click();
@@ -56,7 +57,7 @@ async function calistir() {
   // Stok kapatılınca en son bulunulan AÇIK sayfaya, yani Üretim'e dönmeli.
   const stokSekmesiniKapat = await sayfa.evaluate(() => {
     const serit = [...document.querySelectorAll("div")]
-      .filter((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .filter((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent))[0];
     if (!serit) return false;
     const sekme = [...serit.children].find((c) => c.textContent.trim().startsWith("Stok"));
@@ -73,7 +74,7 @@ async function calistir() {
   // benziyor ve metne bakmak kırılgan olurdu. Aktif sekmenin zemini açık renk.
   const donulenEkran = await sayfa.evaluate(() => {
     const serit = [...document.querySelectorAll("div")]
-      .filter((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .filter((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent))[0];
     const aktif = [...serit.children].find((c) => c.style && getComputedStyle(c).backgroundColor === "rgb(251, 246, 236)");
     return { aktifSekme: aktif ? aktif.textContent.trim() : "(yok)" };
@@ -82,7 +83,7 @@ async function calistir() {
   // ANASAYFA KAPATILAMAZ: dönülecek bir yer hep kalmalı.
   const anasayfaKapatmaDugmesi = await sayfa.evaluate(() => {
     const serit = [...document.querySelectorAll("div")]
-      .filter((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .filter((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent))[0];
     const sekme = [...serit.children].find((c) => c.textContent.trim().startsWith("Anasayfa"));
     return sekme ? !!sekme.querySelector("button") : null;
@@ -91,9 +92,9 @@ async function calistir() {
   // SOL MENÜ EKRANDA KALMALI (kullanıcı bildirdi, 6 Eylül: "sol sekme barı kayıp").
   // Şerit kaydırılabilir olunca (7z-19) menü de kaybolursa ekranda HİÇBİR gezinme aracı kalmıyor.
   const menuKonumu = async () => sayfa.evaluate(() => {
-    const n = document.querySelector(".sidebar");
+    const n = document.querySelector(".ust-menu");
     if (!n) return null;
-    const ikon = [...n.querySelectorAll("button")].find((b) => /Stok/.test(b.title || b.textContent));
+    const ikon = n.querySelector('[data-nav-grup="Depo"]');   // üst menü: Stok açılır listede, grup düğmesi ölçülüyor
     return ikon ? Math.round(ikon.getBoundingClientRect().top) : null;
   });
   const menuBasta = await menuKonumu();
@@ -162,7 +163,7 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
   const modulBasligi = await sayfa.evaluate(() => {
     const h1 = [...document.querySelectorAll("h1")].find((x) => /Stok Yönetimi/.test(x.textContent));
-    const menu = document.querySelector(".sidebar");
+    const menu = document.querySelector(".ust-menu");
     const arama = [...document.querySelectorAll("input")].find((i) => /^Ara: ürün/.test(i.placeholder || ""));
     return {
       baslikBoyutu: h1 ? getComputedStyle(h1).fontSize : null,
@@ -180,12 +181,12 @@ async function calistir() {
   // menü dibi ekranın en az bakılan köşesi. Şerit hem her ekranda görünür hem yatay.
   const kurRozeti = await sayfa.evaluate(() => {
     const serit = [...document.querySelectorAll("div")]
-      .find((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .find((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent));
     if (!serit) return null;
     const kutu = [...serit.querySelectorAll("div")]
       .find((d) => /\$|€/.test(d.textContent) && d.getBoundingClientRect().height > 0);
-    const menu = document.querySelector(".sidebar");
+    const menu = document.querySelector(".ust-menu");
     const sr = serit.getBoundingClientRect();
     return {
       seritte: !!kutu,
@@ -227,9 +228,9 @@ async function calistir() {
   await sayfa.waitForTimeout(400);
 
   const palet = await sayfa.evaluate(() => {
-    const menu = document.querySelector(".sidebar");
+    const menu = document.querySelector(".ust-menu");
     const serit = [...document.querySelectorAll("div")]
-      .find((d) => d.style && d.style.position === "fixed" && d.style.top === "0px"
+      .find((d) => d.style && d.style.position === "fixed" && /ust-menu-h/.test(d.style.top)
         && /Anasayfa/.test(d.textContent));
     return {
       menuZemin: getComputedStyle(menu).backgroundColor,
@@ -262,13 +263,15 @@ async function calistir() {
     modulBasligi,
     karsilamaBandi,
     mobilCubuk,
+    // ÜST MENÜ (v1.449.0): yan menü kalktı. Menü en üstte, şerit onun ALTINDA; ikisi de sabit.
+    // Kullanıcının 6-7 Eylül kuralı aynen ölçülüyor: kaydırınca hiçbir gezinme aracı kaybolmaz.
     kaydirma: {
       basta: seritBasta,
-      // Şerit tepede sabit: kaydırınca da 0'da.
-      seritSabitKaldi: seritKaydirinca === 0,
-      // Menü ikonu kaydırmadan sonra da ekranda VE şeridin altında (üstüne binmiyor).
-      menuEkrandaKaldi: menuKaydirinca !== null && menuKaydirinca >= 40 && menuKaydirinca < 500,
-      menuYukariCikti: menuKaydirinca < menuBasta,
+      // Şerit sabit: kaydırınca yeri değişmiyor.
+      seritSabitKaldi: seritKaydirinca === seritBasta,
+      // Menü kaydırmadan sonra da ekranda VE şeridin üstünde (ona binmiyor).
+      menuEkrandaKaldi: menuKaydirinca !== null && menuKaydirinca >= 0 && menuKaydirinca < seritBasta,
+      menuSabitKaldi: menuKaydirinca === menuBasta,
     },
   };
 }

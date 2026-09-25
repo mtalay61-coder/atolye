@@ -451,9 +451,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.448.0";
+const SURUM = "1.449.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Sayfa yenilenince acik sekmeler ve pencereler korunuyor";
+const SURUM_NOTU = "Yeni tasarim: ust menu, acik renkler";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -462,6 +462,11 @@ const SURUM_NOTU = "Sayfa yenilenince acik sekmeler ve pencereler korunuyor";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.449.0", tarih: "25.09.2026",
+    eklenen: [],
+    degisen: ["YENİ TASARIM: koyu yan kolon kalktı; modüller üstte yatay menüde, açık sekmeler hemen altında — ekranın tamamı içeriğe kalıyor",
+              "Açık ve sade renkler: beyaz paneller, açık gri zemin, marka kırmızısı yalnız ana düğmelerde; yeni yazı tipi"],
+    duzeltilen: ["Bazı renkli kenarlık ve zeminler (kategori, proses, durum rozetleri) geçersiz renk yüzünden görünmüyordu"] },
   { surum: "1.448.0", tarih: "25.09.2026",
     eklenen: [],
     degisen: ["Sayfa yenilenince (ya da yeni sürüme geçilince) ekran ana sayfaya dönmüyor: açık modül sekmeleri, bulunulan ekran ve açık ürün / üretim / sipariş pencereleri geri geliyor; veriler buluttan güncel okunuyor",
@@ -664,9 +669,35 @@ const ERP_KOPRU = {
   // Koyu bildirim kutusu zemini (tema köprüsünün kapsamadığı eski kahve tonu).
   "--erp-toast": "var(--erp-shell)",
 };
+// ---- YENİ TASARIM: "A" PALETİ (25 Eylül, v1.449.0) ----
+// Kullanıcı: "Tasarımımız çok eski. Birkaç kere uğraştık ama olmadı. Siyah kolon hoş değil, güncel
+// tasarım lazım." Üç yön gösterildi; seçim: "C'nin yerleşimi, A'nın renkleri" — yan kolon yok (üst
+// menü, 110-navigasyon), açık nötr zemin, beyaz paneller, marka kırmızısı YALNIZ ana eylemde.
+// Kullanıcının erp-tokens.css'i DEĞİŞTİRİLMEDİ: bu tablo onun ÜZERİNE yazan son katman. Eski
+// görünüme dönmek = bu tabloyu boşaltmak.
+const ERP_TEMA = {
+  "--erp-font": "\"DM Sans\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
+  "--erp-text": "#1D2129", "--erp-text-2": "#5B6270", "--erp-text-3": "#8A919E",
+  "--erp-line": "#DCE0E5", "--erp-line-soft": "#E8EBEF",
+  "--erp-shell": "#FFFFFF", "--erp-shell-2": "#FDECEA", "--erp-shell-ink": "#3C4350",
+  "--erp-topbar": "#FFFFFF", "--erp-page": "#F5F6F8", "--erp-panel": "#FFFFFF",
+  "--erp-zebra": "#F8F9FA", "--erp-hover": "#F1F3F6", "--erp-head": "#F3F4F6",
+  "--erp-accent": "#C4321A", "--erp-accent-hover": "#A92A15", "--erp-accent-press": "#8E2311", "--erp-accent-tint": "#FDECEA",
+  "--erp-ok": "#2F7D4A", "--erp-ok-tint": "#E6F4EA",
+  "--erp-wait": "#A15C07", "--erp-wait-tint": "#FFF4E5",
+  "--erp-info": "#1C6DB5", "--erp-info-tint": "#E7F1FB",
+  "--erp-idle": "#4B5260", "--erp-idle-tint": "#F1F2F5",
+  "--erp-void": "#B42318", "--erp-void-tint": "#FDECEA",
+  "--erp-r-sm": "5px", "--erp-r-md": "8px", "--erp-r-lg": "12px",
+  // Bildirim kutusu koyu kalıyor: açık zemin üstünde okunur olmalı (menü artık beyaz).
+  "--erp-toast": "#1D2129",
+};
+const ERP_TEMA_FONT = "@import url(\"https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap\");\n";
 function erpTokenCss() {
-  // Ekran: kullanıcının CSS'i + köprü. Yazdırma çerçevesi de aynı ikisini gömüyor.
-  return ERP_TOKENS_CSS + "\n:root{" + Object.entries(ERP_KOPRU).map(([k, v]) => `${k}:${v}`).join(";") + "}";
+  // Ekran: kullanıcının CSS'i + köprü + yeni tema. Yazdırma çerçevesi de aynısını gömüyor.
+  // @import en başta olmalı (sonra gelen @import tarayıcıda yok sayılır).
+  const blok = (t) => ":root{" + Object.entries(t).map(([k, v]) => `${k}:${v}`).join(";") + "}";
+  return ERP_TEMA_FONT + ERP_TOKENS_CSS + "\n" + blok(ERP_KOPRU) + "\n" + blok(ERP_TEMA);
 }
 // Yalnız hex tablo (tema dosyası yoksa geriye dönüş / dışa aktarım için).
 function erpTokenHexCss() {

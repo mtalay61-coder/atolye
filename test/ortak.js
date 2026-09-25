@@ -47,4 +47,16 @@ const depoOku = (sayfa, anahtar) => sayfa.evaluate((a) => {
 
 const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
 
-module.exports = { uygulamaAc, depoOku, bekle };
+// MODÜL AÇ (v1.449.0): yan menü kalktı, modüller üst menünün AÇILIR listelerinde. Liste kapalıyken
+// düğme görünmez ama DOM'da (`data-nav`); testler modüle adıyla doğrudan gidiyor, menüyü açıp
+// kapatmak senaryonun konusu değil.
+const modulAc = async (sayfa, ad) => {
+  const bulundu = await sayfa.evaluate((a) => {
+    const b = document.querySelector(`[data-nav="${a}"]`);
+    if (b) b.click();
+    return !!b;
+  }, ad);
+  if (!bulundu) throw new Error(`Menüde "${ad}" yok`);
+};
+
+module.exports = { uygulamaAc, depoOku, bekle, modulAc };

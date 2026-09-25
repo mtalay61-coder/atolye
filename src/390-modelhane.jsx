@@ -123,7 +123,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
     });
   }
 
-  const inputStil = { padding: "8px 10px", fontSize: 13, borderRadius: "var(--erp-r-md)", border: "1px solid #C9B99A", background: "#fff" };
+  const inputStil = { padding: "8px 10px", fontSize: 13, borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "#fff" };
 
   return (
     <div data-modelhane="1">
@@ -148,7 +148,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
             {ilhamlar.map((g) => (
-              <div key={g.id} data-ilham={g.id} style={{ width: 190, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+              <div key={g.id} data-ilham={g.id} style={{ width: 190, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
                 <img src={g.gorsel} alt={g.not || "ilham"}
                   style={{ width: "100%", height: 150, objectFit: "cover", background: "var(--erp-panel)", display: "block" }} />
                 <div style={{ padding: 8, display: "grid", gap: 6 }}>
@@ -195,7 +195,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
 
       {yeniAcik && (
         <div data-model-yeni-form="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
-          background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
+          background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
           <Field label="Model kodu">
             <input value={yeni.kod} data-model-kod="1" placeholder="boş = otomatik"
               onChange={(e) => setYeni({ ...yeni, kod: e.target.value })} style={{ ...inputStil, width: 130 }} />
@@ -242,7 +242,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
             <button key={a.key} type="button" data-model-suzgec={a.key} onClick={() => setAsamaSuzgec(a.key)}
               style={{ padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 600, cursor: "pointer",
                 border: `1.5px solid ${secili ? (a.renk || "var(--erp-text)") : "var(--erp-border)"}`,
-                background: secili ? `${a.renk || "var(--erp-text)"}1A` : "#fff",
+                background: secili ? `${alfaEkle(a.renk || "var(--erp-text)", "1A")}` : "#fff",
                 color: secili ? (a.renk || "var(--erp-text)") : "var(--erp-text-2)" }}>
               {a.ad} ({sayi})
             </button>
@@ -294,13 +294,13 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
                     cursor: "pointer", padding: "10px 12px", textAlign: "left", flexWrap: "wrap" }}>
                   {(m.kapakResmi || (m.tasarimGorselleri || [])[0]) && (
                     <img src={m.kapakResmi || (m.tasarimGorselleri || [])[0].gorsel} alt=""
-                      style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-md)", border: "1px solid #E4D8C0" }} />
+                      style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line-soft)" }} />
                   )}
                   <b className="mono" style={{ fontSize: 13 }}>{m.kod}</b>
                   <span style={{ fontSize: 14, fontWeight: 700 }}>{m.ad}</span>
                   {m.sezon && <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{m.sezon}</span>}
                   <span style={{ marginLeft: "auto", fontSize: 11, fontWeight: 700, color: asama.renk,
-                    background: `${asama.renk}1A`, borderRadius: "var(--erp-r-pill)", padding: "2px 10px" }}>
+                    background: `${alfaEkle(asama.renk, "1A")}`, borderRadius: "var(--erp-r-pill)", padding: "2px 10px" }}>
                     {asama.ad}
                   </span>
                   {acik ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -336,7 +336,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
   // Karttaki resimleri büyütme (21 Eylül).
   const [buyukResimKart, setBuyukResimKart] = useState(null);
   const [sekme, setSekme] = useState("kunye");
-  const inputStil = { padding: "8px 10px", fontSize: 13, borderRadius: "var(--erp-r-md)", border: "1px solid #C9B99A", background: "#fff" };
+  const inputStil = { padding: "8px 10px", fontSize: 13, borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "#fff" };
 
   const gorselEkle = (alan, url) => {
     if (!url) return;
@@ -351,14 +351,14 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{etiket}</div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
         {(model[alan] || []).map((g) => (
-          <div key={g.id} data-model-gorsel={g.id} style={{ width: 150, border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
+          <div key={g.id} data-model-gorsel={g.id} style={{ width: 150, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff" }}>
             <img src={g.gorsel} alt={g.baslik || etiket} data-model-gorsel-buyut={g.id}
               onClick={() => setBuyukResimKart({ url: g.gorsel, ad: g.baslik || etiket })}
               style={{ width: "100%", height: 110, objectFit: "contain", background: "var(--erp-panel)", display: "block", cursor: "zoom-in" }} />
             <div style={{ padding: "6px 8px", display: "flex", alignItems: "center", gap: 6 }}>
               <input value={g.baslik || ""} placeholder="Başlık"
                 onChange={(e) => gorselBaslik(alan, g.id, e.target.value)}
-                style={{ flex: 1, minWidth: 0, border: "none", borderBottom: "1px solid #E4D8C0", fontSize: 11, padding: "2px 0", background: "transparent" }} />
+                style={{ flex: 1, minWidth: 0, border: "none", borderBottom: "1px solid var(--erp-line-soft)", fontSize: 11, padding: "2px 0", background: "transparent" }} />
               <SilOnayButonu onConfirm={() => gorselSil(alan, g.id)} boyut={11} />
             </div>
           </div>
@@ -371,7 +371,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
   );
 
   return (
-    <div style={{ borderTop: "1px solid #E4D8C0", padding: 12, display: "grid", gap: 14 }}>
+    <div style={{ borderTop: "1px solid var(--erp-line-soft)", padding: 12, display: "grid", gap: 14 }}>
       <ResimBuyutucu resim={buyukResimKart} onKapat={() => setBuyukResimKart(null)} />
       {/* AŞAMA ŞERİDİ: modelin nerede olduğunu değiştirmenin tek yeri. */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
@@ -380,7 +380,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
           <button key={a.key} type="button" data-model-asama={a.key} onClick={() => onAsamaDegistir(a.key)}
             style={{ padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
               border: `1.5px solid ${model.asama === a.key ? a.renk : "var(--erp-border-2)"}`,
-              background: model.asama === a.key ? `${a.renk}1A` : "#fff",
+              background: model.asama === a.key ? `${alfaEkle(a.renk, "1A")}` : "#fff",
               color: model.asama === a.key ? a.renk : "var(--erp-text-3)" }}>
             {a.ad}
           </button>
@@ -421,7 +421,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
           <button key={t.key} type="button" data-model-sekme={t.key} onClick={() => setSekme(t.key)}
             style={{ padding: "6px 12px", borderRadius: "var(--erp-r-md)", fontSize: 12, fontWeight: 700, cursor: "pointer",
               border: `1px solid ${sekme === t.key ? "var(--erp-text)" : "var(--erp-border-2)"}`,
-              background: sekme === t.key ? "#F6EEDD" : "#fff", color: "var(--erp-text)" }}>
+              background: sekme === t.key ? "var(--erp-hover)" : "#fff", color: "var(--erp-text)" }}>
             {t.ad}
           </button>
         ))}
@@ -699,7 +699,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
       {sekme === "gecmis" && (
         <div style={{ display: "grid", gap: 4 }}>
           {[...(model.gecmis || [])].reverse().map((g, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, fontSize: 12, borderBottom: "1px solid #F2E8D8", padding: "4px 0" }}>
+            <div key={i} style={{ display: "flex", gap: 8, fontSize: 12, borderBottom: "1px solid var(--erp-head)", padding: "4px 0" }}>
               <span className="mono" style={{ color: "var(--erp-text-3)" }}>{tarihYaz(g.zaman)}</span>
               <span>{g.olay}</span>
             </div>

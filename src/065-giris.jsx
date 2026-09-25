@@ -32,7 +32,7 @@ function IlkKurulumEkrani({ onOlustur }) {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--erp-panel-2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 32, width: 380 }}>
+      <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 32, width: 380 }}>
         <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Atölye ERP — İlk Kurulum</div>
         <p style={{ fontSize: 13, color: "var(--erp-text-2)", margin: "0 0 20px" }}>
           Sistemi ilk kez kuruyorsunuz. Önce Supabase panelinde kendinize bir hesap açın
@@ -113,7 +113,7 @@ function GirisEkrani({ kullanicilar, onGiris, showToast }) {
 
   return (
     <div data-giris-ekrani="1" style={{ minHeight: "100vh", background: "var(--erp-panel-2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 32, width: 340 }}>
+      <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 32, width: 340 }}>
         <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Atölye ERP</div>
         <div style={{ display: "grid", gap: 12 }}>
           <Field label="Kullanıcı Adı">
@@ -181,7 +181,7 @@ function BulutGirisEkrani({ sebep, onGiris, showToast }) {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--erp-panel-2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', sans-serif" }}>
-      <div data-bulut-giris-ekrani="1" style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-lg)", padding: 32, width: 360 }}>
+      <div data-bulut-giris-ekrani="1" style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 32, width: 360 }}>
         <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 6 }}>Atölye ERP</div>
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 18 }}>
           Bulut kimliğiyle giriş — veriler yalnız giriş yapmış kullanıcıya açık.

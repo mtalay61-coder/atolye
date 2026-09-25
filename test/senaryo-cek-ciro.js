@@ -12,7 +12,7 @@
 //   2. Kur çevirici çalışıyor: 42.000 ₺'lik çek USD seçilince 1000 $ oluyor.
 //   3. Çek "Ciro Edildi" oluyor ve kime verildiği kaydediliyor.
 //   4. Cariye ÖDEME yönünde hareket yazılıyor ve ekstrede çekin kendi tutarı görünüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -32,7 +32,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
 
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]

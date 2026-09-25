@@ -5,7 +5,7 @@
 // Ölçülen: (1) hesap açılınca form DEĞİL hareketler görünüyor, üstte dört işlem düğmesi var;
 // (2) virman kaynaktan çıkış, hedefe giriş yazıyor, VRM fişiyle; (3) farklı para biriminde hedefe
 // geçen tutar ayrıca soruluyor (kur tahmin edilmiyor).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -21,7 +21,7 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
-  await sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(sayfa, "Muhasebe");
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
@@ -92,7 +92,7 @@ async function calistir() {
   const ikinci = await uygulamaAc(t2, { hataYaz: false });
   ikinci.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ikinci.sayfa.waitForTimeout(2400);
-  await ikinci.sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(ikinci.sayfa, "Muhasebe");
   await ikinci.sayfa.waitForTimeout(900);
   await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ikinci.sayfa.waitForTimeout(800);
@@ -122,7 +122,7 @@ async function calistir() {
   const ucuncu = await uygulamaAc(t3, { hataYaz: false });
   ucuncu.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ucuncu.sayfa.waitForTimeout(2400);
-  await ucuncu.sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(ucuncu.sayfa, "Muhasebe");
   await ucuncu.sayfa.waitForTimeout(900);
   await ucuncu.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ucuncu.sayfa.waitForTimeout(700);
@@ -149,7 +149,7 @@ async function calistir() {
   dorduncu.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   dorduncu.sayfa.on("dialog", (d) => d.accept());
   await dorduncu.sayfa.waitForTimeout(2400);
-  await dorduncu.sayfa.getByRole("button", { name: "Muhasebe", exact: true }).first().click();
+  await modulAc(dorduncu.sayfa, "Muhasebe");
   await dorduncu.sayfa.waitForTimeout(900);
   await dorduncu.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await dorduncu.sayfa.waitForTimeout(800);

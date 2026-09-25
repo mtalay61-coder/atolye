@@ -14,7 +14,7 @@
    "Nakit · TL Kasa"
   ],
   "rozetRenkleri": [
-   "rgb(85, 112, 43)"
+   "rgb(47, 125, 74)"
   ]
  },
  "hatalar": [],
@@ -44,18 +44,18 @@
  "sekmeRenkleri": [
   {
    "ad": "Müşteri",
-   "yazi": "rgb(85, 112, 43)",
-   "zemin": "color(srgb 0.333333 0.439216 0.168627 / 0.08)"
+   "yazi": "rgb(47, 125, 74)",
+   "zemin": "color(srgb 0.184314 0.490196 0.290196 / 0.08)"
   },
   {
    "ad": "Tedarikçi",
-   "yazi": "rgb(161, 101, 26)",
-   "zemin": "color(srgb 0.631373 0.396078 0.101961 / 0.08)"
+   "yazi": "rgb(161, 92, 7)",
+   "zemin": "color(srgb 0.631373 0.360784 0.027451 / 0.08)"
   },
   {
    "ad": "Personel",
-   "yazi": "rgb(47, 107, 107)",
-   "zemin": "color(srgb 0.184314 0.419608 0.419608 / 0.08)"
+   "yazi": "rgb(28, 109, 181)",
+   "zemin": "color(srgb 0.109804 0.427451 0.709804 / 0.08)"
   }
  ]
 }

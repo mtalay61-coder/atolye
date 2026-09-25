@@ -5,7 +5,7 @@
 // Ürün kartının reçete sekmesindeki çöp kutuları `onReceteSilToplu`yu DOĞRUDAN çağırıyordu: bir
 // hammaddenin bütün satırları tek dokunuşla gidiyordu. Uygulamanın geri kalanındaki silmeler
 // `SilOnayButonu` (iki dokunuş) kullanıyor. Ölçülen: tek dokunuş SİLMİYOR, ikinci dokunuş siliyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -21,7 +21,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

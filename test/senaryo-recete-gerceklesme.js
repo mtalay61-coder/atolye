@@ -7,12 +7,12 @@
 // Reçete bir TAHMİNDİR; gerçek tüketim ancak iş bitince belli olur (verilen − iade).
 // Rakamlar HER ZAMAN gösteriliyor, ama "reçeteni değiştir" önerisi yeterli ölçüm VE anlamlı
 // fark birlikteyken çıkıyor — tek üretimde deri kötü çıkmış olabilir.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function receteyiAc(sayfa) {
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

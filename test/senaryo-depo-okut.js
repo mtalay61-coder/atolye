@@ -12,7 +12,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -65,7 +65,7 @@ async function calistir() {
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Paketleme", exact: true }).click();
+  await modulAc(sayfa, "Paketleme");
   await sayfa.waitForTimeout(700);
   await sayfa.locator('button:has-text("Eksik kodları ata"):visible').click();
   await sayfa.waitForTimeout(1200);
@@ -81,7 +81,7 @@ async function calistir() {
   const kodDeri = `90${hane(deri.stokNo, 4)}${hane(siyah, 4)}`;
 
   const oncekiDepo = JSON.stringify(await sayfa.evaluate(() => window.__depo));
-  await sayfa.getByRole("button", { name: "Depo", exact: true }).click();
+  await modulAc(sayfa, "Depo");
   await sayfa.waitForTimeout(600);
   await sayfa.locator('button:has-text("Okut"):visible').first().click();
   await sayfa.waitForTimeout(500);
@@ -132,7 +132,7 @@ async function calistir() {
     s3.on("pageerror", (e) => h3.push(e.message.split("\n")[0]));
     await s3.context().grantPermissions(["camera"]).catch(() => {});
     await s3.waitForTimeout(2200);
-    await s3.getByRole("button", { name: "Depo", exact: true }).click();
+    await modulAc(s3, "Depo");
     await s3.waitForTimeout(600);
     await s3.locator('button:has-text("Okut"):visible').first().click();
     await s3.waitForTimeout(400);

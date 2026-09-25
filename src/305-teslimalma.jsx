@@ -102,7 +102,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
       onChange={(e) => setSatirlar({ ...satirlar, [b]: { ...satirlar[b], [alan]: e.target.value } })}
       style={{
         width: 58, padding: "4px 6px", fontSize: 12, textAlign: "center", fontWeight: 700,
-        border: `1px solid ${renk}66`, borderRadius: "var(--erp-r-sm)", color: renk, background: "#fff",
+        border: `1px solid ${alfaEkle(renk, "66")}`, borderRadius: "var(--erp-r-sm)", color: renk, background: "#fff",
       }}
     />
   );
@@ -133,7 +133,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                     className="mono"
                     style={{
                       fontSize: 14, fontWeight: 700, padding: "4px 6px", textAlign: "center",
-                      color: hatali ? "var(--erp-warn)" : "#221B14", whiteSpace: "nowrap",
+                      color: hatali ? "var(--erp-warn)" : "var(--erp-text)", whiteSpace: "nowrap",
                     }}
                   >
                     {b}
@@ -144,7 +144,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
             </tr>
           </thead>
           <tbody>
-            <tr style={{ borderTop: "1px solid #E4D8C0" }}>
+            <tr style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
               <td style={{ fontSize: 11, padding: "5px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>VERİLEN</td>
               {bedenler.map((b) => (
                 <td key={b} className="mono" style={{ fontSize: 13, padding: "5px 6px", textAlign: "center", color: "var(--erp-text-2)" }}>
@@ -160,7 +160,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
               { anahtar: "tamir", etiket: "TAMİR", renk: "#B8860B" },
               { anahtar: "hurda", etiket: "HURDA", renk: "var(--erp-warn)" },
             ].map((satir) => (
-              <tr key={satir.anahtar} style={{ borderTop: "1px solid #E4D8C0" }}>
+              <tr key={satir.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                 <td style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", color: satir.renk, whiteSpace: "nowrap" }}>
                   {satir.etiket}
                 </td>

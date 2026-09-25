@@ -899,7 +899,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             </div>
           );
         })()}
-        <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20, ...(duzenlenenId ? { margin: "0 16px" } : {}) }}>
+        <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20, ...(duzenlenenId ? { margin: "0 16px" } : {}) }}>
           {/* TİP SEÇİCİ — YALNIZ SABİT TİP YOKKEN. Alış ve satış siparişleri AYRI ana sekmelere
               bölündüğünde (`sabitTip`) bu satır İKİNCİ bir seçim noktası oluyordu: kullanıcı
               "Alış Siparişi" sekmesinden girip formda "Satış"a basabiliyordu ve hangisinin
@@ -1163,7 +1163,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 )}
 
                 {gruplar.length > 0 && (
-                  <div style={{ background: "#fff", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", padding: 8, marginBottom: 10 }}>
+                  <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8, marginBottom: 10 }}>
                     <div style={{ fontSize: 10, color: "var(--erp-text-2)", fontWeight: 700, marginBottom: 6 }}>
                       Kopyalanacak reçete — hammadde renklerini yeni renge göre ayarlayın
                     </div>
@@ -1388,7 +1388,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 Ölçülere göre miktar girin (birden fazla ölçüye birden girebilirsiniz)
               </div>
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
-                <div style={{ borderRight: "1px dashed #C9B99A", paddingRight: 14 }}>
+                <div style={{ borderRight: "1px dashed var(--erp-line)", paddingRight: 14 }}>
                   <AsortiUygulaKontrolu
                     asortiler={asortiler}
                     bedenSecenekleri={bedenSecenekleri}
@@ -1401,7 +1401,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   <thead>
                     <tr>
                       {bedenSecenekleri.map((b) => (
-                        <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)", padding: "3px 8px", textAlign: "center", borderBottom: "1px solid #E4D8C0" }}>
+                        <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)", padding: "3px 8px", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>
                           {b}
                         </th>
                       ))}
@@ -1506,7 +1506,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       {tumBedenler.map((b) => (
                         <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                       ))}
-                      <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", borderLeft: "1px dashed #C9B99A" }}>Birim Fiyat</th>
+                      <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Birim Fiyat</th>
                       <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px" }}>Tutar</th>
                     </tr>
                   </thead>
@@ -1520,7 +1520,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       const renkSecenekleri = urunRenkleri(urun);
                       const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
                       return (
-                        <tr key={g.key} data-form-kalem-satiri={g.kilit ? "kilitli" : "serbest"} style={{ borderTop: "1px solid #E4D8C0", background: g.kilit ? "var(--erp-panel-2)" : undefined }}>
+                        <tr key={g.key} data-form-kalem-satiri={g.kilit ? "kilitli" : "serbest"} style={{ borderTop: "1px solid var(--erp-line-soft)", background: g.kilit ? "var(--erp-panel-2)" : undefined }}>
                           <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                               <ColorSwatch src={gorsel} editable={false} size={26} />
@@ -1542,7 +1542,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                   onChange={(e) => grupUrunDegistir(idler, e.target.value)}
                                   data-form-kalem-urun="1"
                                   title="Ürünü değiştir — renk yeni üründe yoksa yeniden seçilmeli"
-                                  style={{ padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", maxWidth: 200 }}
+                                  style={{ padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", maxWidth: 200 }}
                                 >
                                   {!urun && <option value="">{g.urunAd} (listede yok)</option>}
                                   {urunUygun.map((u) => <option key={u.id} value={u.id}>{u.ad}</option>)}
@@ -1557,7 +1557,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 onChange={(e) => e.target.value && grupDegistir(idler, { renk: e.target.value })}
                                 data-form-kalem-renk="1"
                                 title="Rengi değiştir — bu satırdaki bütün ölçülere uygulanır"
-                                style={{ padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "#C9B99A"}`, borderRadius: "var(--erp-r-sm)" }}
+                                style={{ padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)" }}
                               >
                                 {renkEksik && <option value="">Renk seçin…</option>}
                                 {/* Kayıtlı renk üründe artık yoksa "(listede yok)" olarak kalıyor — yoksa
@@ -1606,12 +1606,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                       kalemDuzenle(k.id, "miktar", yeni);
                                     }}
                                     className="mono"
-                                    style={{ width: 48, padding: "3px 4px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
+                                    style={{ width: 48, padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
                                   />
                                   <button
                                     onClick={() => kalemSil(k.id)}
                                     title="Bu bedeni sil"
-                                    style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex", padding: 0 }}
+                                    style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 0 }}
                                   >
                                     <X size={10} />
                                   </button>
@@ -1619,7 +1619,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                               </td>
                             );
                           })}
-                          <td style={{ padding: "6px 8px", textAlign: "right", borderLeft: "1px dashed #C9B99A" }}>
+                          <td style={{ padding: "6px 8px", textAlign: "right", borderLeft: "1px dashed var(--erp-line)" }}>
                             {g.kilit ? (
                               <span className="mono" title={g.kilit} style={{ fontSize: 12 }}>
                                 {birimFiyatlarFarkli ? "farklı" : `${g.kalemler[0].birimFiyat} ${g.kalemler[0].paraBirimi || "TRY"}`}
@@ -1641,13 +1641,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                     g.kalemler.forEach((k) => kalemDuzenle(k.id, "birimFiyat", yeni));
                                   }}
                                   className="mono"
-                                  style={{ width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
+                                  style={{ width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
                                 />
                                 <select
                                   value={g.kalemler[0].paraBirimi || "TRY"}
                                   onChange={(e) => g.kalemler.forEach((k) => kalemDuzenle(k.id, "paraBirimi", e.target.value))}
                                   className="mono"
-                                  style={{ width: 56, padding: "3px 2px", fontSize: 11, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)" }}
+                                  style={{ width: 56, padding: "3px 2px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                 >
                                   {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                                 </select>
@@ -1748,21 +1748,21 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           "Yeni Sipariş" tek satırda; modül alt başlığı sekme satırına küçük metin olarak; dolgular küçük. */}
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
       <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 420 }}>
-        <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "#A6957A" }} />
+        <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" }} />
         <input
           value={siparisArama}
           onChange={(e) => setSiparisArama(e.target.value)}
           placeholder={ustSekme === "raporlar" ? "Raporda ara — cari, ürün, renk, sipariş no, aşama…" : "Cari, ürün, renk, sipariş no veya müşteri kodu ara…"}
           style={{
             width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)",
-            border: "1px solid #C9B99A", background: "var(--erp-panel)", fontSize: 13,
+            border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13,
           }}
         />
         {siparisArama && (
           <button
             type="button"
             onClick={() => setSiparisArama("")}
-            style={{ position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex" }}
+            style={{ position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" }}
           >
             <X size={14} />
           </button>
@@ -1791,7 +1791,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
       </div>
 
       {/* ÜST SEKME: Liste · Raporlar — sağda modül alt başlığı (20px h2 yerine küçük metin) */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid #C9B99A", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid var(--erp-line)", alignItems: "center" }}>
         {[{ key: "liste", ad: "Liste" }, { key: "raporlar", ad: "Raporlar" }].map((t) => (
           <button key={t.key} type="button" data-ust-sekme={t.key} onClick={() => setUstSekme(t.key)}
             style={{
@@ -1902,7 +1902,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             style={{
               padding: "4px 7px", fontSize: 11, minWidth: 110, flex: "1 1 110px", maxWidth: 200,
               border: `1px solid ${siparisKolonFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
-              background: siparisKolonFiltre[alan].trim() ? "#FBF0E2" : "#fff",
+              background: siparisKolonFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
               borderRadius: "var(--erp-r-sm)", boxSizing: "border-box",
             }}
           />
@@ -1928,7 +1928,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 </button>
               )}
             {aktifListe.length > 0 && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", padding: "4px 8px", background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", marginLeft: "auto" }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", padding: "4px 8px", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", marginLeft: "auto" }}>
                 <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)" }}>
                   {suzulduMu ? "SÜZÜLEN TOPLAM" : "TOPLAM"}
                 </span>
@@ -1973,7 +1973,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               <div
                 key={s.id}
                 style={{
-                  border: `1px solid ${acikSiparisId === s.id ? (s.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "#D9C9AC"}`,
+                  border: `1px solid ${acikSiparisId === s.id ? (s.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-line-soft)"}`,
                   borderRadius: "var(--erp-r-lg)",
                   overflow: "hidden",
                   boxShadow: acikSiparisId === s.id ? "0 2px 10px rgba(34,27,20,.12)" : "none",
@@ -2041,7 +2041,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               <div
                 key={s.id}
                 style={{
-                  border: `1px solid ${acikSiparisId === s.id ? "var(--erp-brown)" : "#D9C9AC"}`,
+                  border: `1px solid ${acikSiparisId === s.id ? "var(--erp-brown)" : "var(--erp-line-soft)"}`,
                   borderRadius: "var(--erp-r-lg)",
                   overflow: "hidden",
                   boxShadow: acikSiparisId === s.id ? "0 2px 10px rgba(34,27,20,.12)" : "none",

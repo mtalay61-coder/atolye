@@ -2,7 +2,7 @@
 // Eski veri: Mamul "Siyah" (r-m) + Hammadde "Siyah" (r-h) + yalnız mamul "Kahve" (r-k), kombinasyon
 // r-m/r-k. Ölçülen: açılışta tek "Siyah" kalır, kombinasyon r-h/r-k'ya çevrilir, her renk tek tip;
 // ürün kartında mamul için renk listesi tek havuz; Tanımlar'da "Mamul Renkleri" bölümü yok.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -24,7 +24,7 @@ async function calistir() {
   const kombi = ((goc.renkKombinasyonlari || [])[0] || {}).renkIdler;
 
   // Ürün kartı (mamul Bot) → Renkler: eklenebilir renk listesi tek havuz (Siyah zaten ekli, Kahve eklenebilir).
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Bot" && e.children.length === 0);

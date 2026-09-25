@@ -74,8 +74,8 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
           // kenarlık geri geliyor: o üç durum GÖRÜLMELİ, sessizce geçilmemeli.
           border: !varMi ? "1px solid #E1611F"
             : bayat ? "1px solid #C9A063"
-            : !resmiMi ? `1px solid ${kaynakRenk}66`
-            : (serit ? "1px solid #BCD3B5" : "1px solid #E4D8C0"),
+            : !resmiMi ? `1px solid ${alfaEkle(kaynakRenk, "66")}`
+            : (serit ? "1px solid #BCD3B5" : "1px solid var(--erp-line-soft)"),
           background: varMi ? (serit ? "var(--erp-panel)" : "#fff") : "var(--erp-orange-bg)",
         }}
         title={
@@ -122,7 +122,7 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
           onClick={elleAcik ? () => setElleAcik(false) : elleAc}
           title="Kuru elle gir"
           style={{
-            border: "1px solid #E4D8C0", background: elleAcik ? "var(--erp-border-2)" : "var(--erp-panel)", borderRadius: "var(--erp-r-md)",
+            border: "1px solid var(--erp-line-soft)", background: elleAcik ? "var(--erp-border-2)" : "var(--erp-panel)", borderRadius: "var(--erp-r-md)",
             padding: (dar || serit) ? "2px 4px" : "4px 6px", cursor: "pointer", color: "var(--erp-text-2)", display: "flex", flexShrink: 0,
           }}
         >
@@ -137,7 +137,7 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
           disabled={yukleniyor}
           title="TCMB'den güncelle"
           style={{
-            border: "1px solid #E4D8C0", background: "var(--erp-panel)", borderRadius: "var(--erp-r-md)",
+            border: "1px solid var(--erp-line-soft)", background: "var(--erp-panel)", borderRadius: "var(--erp-r-md)",
             padding: (dar || serit) ? "2px 4px" : "4px 6px",
             cursor: yukleniyor ? "default" : "pointer", color: "var(--erp-text-2)", display: "flex", flexShrink: 0,
           }}
@@ -153,7 +153,7 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
             // zIndex 600 > şeridin 500'ü: panel şeritten AŞAĞI taşıyor ve altındaki içeriğin
             // üzerinde durması gerekiyor. 400 iken sayfanın kendi ögelerinin altında kalıyordu.
             position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 600,
-            background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 10,
+            background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10,
             boxShadow: "none", minWidth: 230,
           }}
         >
@@ -169,7 +169,7 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
                   onKeyDown={(e) => { if (e.key === "Enter") elleKaydet(); }}
                   className="mono"
                   placeholder="0,0000"
-                  style={{ flex: 1, padding: "5px 7px", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
+                  style={{ flex: 1, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                 />
                 <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>₺</span>
               </label>
@@ -190,7 +190,7 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
 
           {/* KUR GEÇMİŞİ — katlanmış: her açılışta göze girmesin ama arandığında bulunsun. */}
           {(kurGecmisi || []).length > 0 && (
-            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #E4D8C0" }}>
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid var(--erp-line-soft)" }}>
               <button
                 type="button"
                 onClick={() => setGecmisAcik((v) => !v)}
@@ -204,7 +204,7 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <tbody>
                       {kurGecmisi.map((g) => (
-                        <tr key={g.id} style={{ borderTop: "1px solid #E4D8C0" }}>
+                        <tr key={g.id} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                           <td className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)", padding: "3px 4px", whiteSpace: "nowrap" }}>
                             {String(g.tarih || "").slice(8, 10)}.{String(g.tarih || "").slice(5, 7)} {String(g.tarih || "").slice(11, 16)}
                           </td>

@@ -107,7 +107,7 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         }}
         title={!editable ? "" : (baslik || (src ? "Görseli değiştir" : "Bu ürünün rengine görsel ekle"))}
         style={{
-          width: size, height: size, borderRadius: "var(--erp-r-md)", border: "1px solid #C9B99A",
+          width: size, height: size, borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)",
           overflow: "hidden", padding: 0, cursor: editable ? "pointer" : "default",
           background: src ? "transparent" : "#EFE4CE",
           display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
@@ -123,7 +123,7 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
             }}
           />
         ) : (
-          <ImageIcon size={14} color="#A6957A" />
+          <ImageIcon size={14} color="var(--erp-text-3)" />
         )}
       </button>
 
@@ -149,7 +149,7 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         <div
           style={{
             position: "absolute", top: size + 6, left: 0, zIndex: 20, background: "#fff",
-            border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 12, width: 260,
+            border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, width: 260,
             boxShadow: "none",
           }}
         >
@@ -263,7 +263,7 @@ function KullanimGosterge({ urunler }) {
         <div
           style={{
             position: "absolute", top: "100%", right: 0, marginTop: 4, zIndex: 20,
-            background: "#fff", border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", padding: 8,
+            background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8,
             boxShadow: "none", minWidth: 160, maxWidth: 260,
           }}
         >
@@ -318,7 +318,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
       style={{
         width: genislik, padding: "3px 6px", fontSize: 11, boxSizing: "border-box",
         border: `1px solid ${kolonFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
-        background: kolonFiltre[alan].trim() ? "#FBF0E2" : "#fff",
+        background: kolonFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
         borderRadius: "var(--erp-r-sm)",
       }}
     />
@@ -326,7 +326,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
 
   if (list.length === 0) return <EmptyState text={emptyText} />;
   return (
-    <div style={{ border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "var(--erp-panel)" }}>
+    <div style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "var(--erp-panel)" }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -342,9 +342,9 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
         {open ? <ChevronDown size={15} color="var(--erp-text-3)" /> : <ChevronRight size={15} color="var(--erp-text-3)" />}
       </button>
       {open && (
-        <div style={{ borderTop: "1px solid #E4D8C0" }}>
+        <div style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
           {onRenkTonKoduChange && (
-            <div style={{ display: "flex", alignItems: "center", padding: "6px 12px", background: "var(--erp-panel-2)", borderBottom: "1px solid #E4D8C0" }}>
+            <div style={{ display: "flex", alignItems: "center", padding: "6px 12px", background: "var(--erp-panel-2)", borderBottom: "1px solid var(--erp-line-soft)" }}>
               <span style={{ flex: 1, fontSize: 10, fontWeight: 700, color: "var(--erp-text-3)", textTransform: "uppercase", letterSpacing: 0.3 }}>Renk</span>
               <span style={{ width: 100, fontSize: 10, fontWeight: 700, color: "var(--erp-text-3)", textTransform: "uppercase", letterSpacing: 0.3 }}>Renk Kodu</span>
               {onMalzemeTipiToggle && <span style={{ width: 130, marginLeft: 6, fontSize: 10, fontWeight: 700, color: "var(--erp-text-3)", textTransform: "uppercase", letterSpacing: 0.3 }}>Tip</span>}
@@ -353,7 +353,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
           )}
 
           {filtreliMi && (
-            <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "5px 12px", background: "var(--erp-panel)", borderBottom: "1px solid #E4D8C0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "5px 12px", background: "var(--erp-panel)", borderBottom: "1px solid var(--erp-line-soft)" }}>
               <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6 }}>
                 <Search size={12} color="var(--erp-text-3)" style={{ flexShrink: 0 }} />
                 {filtreKutusu("ad", "ada göre ara…", "100%")}
@@ -388,7 +388,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
               style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "8px 12px", fontSize: 14, fontWeight: 600,
-                borderBottom: i < gorunen.length - 1 ? "1px solid #E4D8C0" : "none",
+                borderBottom: i < gorunen.length - 1 ? "1px solid var(--erp-line-soft)" : "none",
               }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
@@ -399,7 +399,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                     onChange={(e) => onRenkKoduChange(item.id, e.target.value)}
                     title="Renk tonunu (görsel) değiştir"
                     style={{
-                      width: 20, height: 20, padding: 0, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)",
+                      width: 20, height: 20, padding: 0, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)",
                       cursor: "pointer", background: "none", flexShrink: 0,
                     }}
                   />
@@ -417,9 +417,9 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                     title={adIpucu || "Adı değiştirmek için tıklayıp düzenleyin — bağlı kayıtlar otomatik güncellenir"}
                     style={{
                       border: "1px solid transparent", background: "transparent", fontSize: 14, fontWeight: 600,
-                      color: "#3A291D", padding: "2px 4px", borderRadius: "var(--erp-r-sm)", minWidth: 0, flex: 1,
+                      color: "var(--erp-text)", padding: "2px 4px", borderRadius: "var(--erp-r-sm)", minWidth: 0, flex: 1,
                     }}
-                    onFocus={(e) => { e.target.style.border = "1px solid #C9B99A"; e.target.style.background = "#fff"; }}
+                    onFocus={(e) => { e.target.style.border = "1px solid var(--erp-line)"; e.target.style.background = "#fff"; }}
                   />
                 ) : (
                   item.ad
@@ -452,7 +452,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                   title="Aynı isimli farklı tonları ayırt etmek için serbest bir kod girin"
                   style={{
                     width: 100, fontSize: 12, fontWeight: 600, padding: "4px 7px",
-                    border: "1px solid #C9B99A", borderRadius: "var(--erp-r-sm)", color: "var(--erp-text)", background: "#fff",
+                    border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", color: "var(--erp-text)", background: "#fff",
                   }}
                 />
               )}
@@ -513,7 +513,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                 return (
                   <button
                     onClick={() => onRemove(item.id)}
-                    style={{ border: "none", background: "none", color: "#A6957A", cursor: "pointer", display: "flex", padding: 4, marginLeft: 8 }}
+                    style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, marginLeft: 8 }}
                   >
                     <X size={14} />
                   </button>

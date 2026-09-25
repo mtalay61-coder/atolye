@@ -5,7 +5,7 @@
 // birden kapsıyor: stok miktarı geri düşmeli, cari borcu silinmeli, siparişin `karsilanan`ı ve
 // durumu geri dönmeli. v1.40.0'ın kök sebebi tam olarak buydu (fiş silinince sipariş "Tamamlandı"
 // kalıyor, kalem bir daha teslim alınamıyordu).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -17,7 +17,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2000);
 
   // ---- 1) Teslim al (fiş oluşsun) ----
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);
@@ -34,7 +34,7 @@ async function calistir() {
   };
 
   // ---- 2) Fişi cari ekstresinden sil ----
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   await sayfa.locator(`button:has-text("Tedarikçi A"):visible`).last().click();
   await sayfa.waitForTimeout(700);

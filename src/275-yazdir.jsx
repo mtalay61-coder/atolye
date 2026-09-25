@@ -65,7 +65,7 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
                 <img src={firmaBilgileri.logo} alt="Logo" style={{ width: 40, height: 40, objectFit: "contain" }} />
               )}
               <div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#3A291D" }}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--erp-text)" }}>
                   {(firmaBilgileri || {}).unvan || "Atölye ERP"}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Ürün Reçetesi</div>
@@ -87,7 +87,7 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
                 <img
                   src={receteResmi}
                   alt={product.ad}
-                  style={{ width: 72, height: 72, objectFit: "cover", borderRadius: "var(--erp-r-md)", border: "1px solid #E4D8C0", flexShrink: 0 }}
+                  style={{ width: 72, height: 72, objectFit: "cover", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line-soft)", flexShrink: 0 }}
                 />
               ) : null;
             })()}
@@ -241,7 +241,7 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
                 <img src={firmaBilgileri.logo} alt="Logo" style={{ width: 40, height: 40, objectFit: "contain" }} />
               )}
               <div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#3A291D" }}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--erp-text)" }}>
                   {(firmaBilgileri || {}).unvan || "Atölye ERP"}
                 </div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: tipRenk }}>
@@ -251,7 +251,7 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
               </div>
             </div>
             <div style={{ fontSize: 12, color: "var(--erp-text-2)", textAlign: "right" }}>
-              <div>Fiş No: <span className="mono" style={{ fontWeight: 700, color: "#3A291D" }}>{fis.fisNo || "—"}</span></div>
+              <div>Fiş No: <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>{fis.fisNo || "—"}</span></div>
               {/* SAAT DE YAZILIR. `tarihYaz` saat VARSA gösterir, gün damgasında göstermez — bu
                   yüzden olmayan bir saat uydurulmuş olmuyor. Aynı gün birden çok fiş kesildiğinde
                   yalnızca gün yazmak, elde iki kâğıt varken hangisinin sonra kesildiğini
@@ -272,13 +272,13 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", fontSize: 12, padding: "6px 8px", borderBottom: "2px solid #C9B99A" }}>Ürün / Renk</th>
+                  <th style={{ textAlign: "left", fontSize: 12, padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>Ürün / Renk</th>
                   {tumBedenler.map((b) => (
-                    <th key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid #C9B99A" }}>{b}</th>
+                    <th key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>{b}</th>
                   ))}
-                  <th className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid #C9B99A" }}>Toplam</th>
-                  <th className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "2px solid #C9B99A", borderLeft: "1px dashed #C9B99A" }}>Birim Fiyat</th>
-                  <th className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "2px solid #C9B99A" }}>Tutar</th>
+                  <th className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>Toplam</th>
+                  <th className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)", borderLeft: "1px dashed var(--erp-line)" }}>Birim Fiyat</th>
+                  <th className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>Tutar</th>
                 </tr>
               </thead>
               <tbody>
@@ -287,29 +287,29 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
                   const fiyat = satirFiyatBilgisi(g);
                   return (
                     <tr key={g.key}>
-                      <td style={{ padding: "6px 8px", borderBottom: "1px solid #E4D8C0" }}>
+                      <td style={{ padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <ColorSwatch src={g.gorsel} editable={false} size={32} />
                           <div>
-                            <div style={{ fontSize: 12, fontWeight: 700, color: "#3A291D" }}>{g.urunAd}</div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>{g.urunAd}</div>
                             <div style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{g.renk}</div>
                           </div>
                         </div>
                       </td>
                       {tumBedenler.map((b) => (
-                        <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "1px solid #E4D8C0" }}>
+                        <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)" }}>
                           {g.bedenler[b] || "—"}
                         </td>
                       ))}
-                      <td className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "center", padding: "6px 8px", borderBottom: "1px solid #E4D8C0" }}>
+                      <td className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "center", padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)" }}>
                         {satirToplam} {g.birim}
                       </td>
-                      <td className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "1px solid #E4D8C0", borderLeft: "1px dashed #C9B99A", whiteSpace: "nowrap" }}>
+                      <td className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)", borderLeft: "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>
                         {fiyat.birimFiyat == null
                           ? <span style={{ color: "var(--erp-text-2)" }}>karışık</span>
                           : `${fiyat.birimFiyat.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${fiyat.sembol}`}
                       </td>
-                      <td className="mono" style={{ fontSize: 12, fontWeight: 600, textAlign: "right", padding: "6px 8px", borderBottom: "1px solid #E4D8C0", whiteSpace: "nowrap" }}>
+                      <td className="mono" style={{ fontSize: 12, fontWeight: 600, textAlign: "right", padding: "6px 8px", borderBottom: "1px solid var(--erp-line-soft)", whiteSpace: "nowrap" }}>
                         {fiyat.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {fiyat.sembol}
                       </td>
                     </tr>
@@ -431,7 +431,7 @@ function CariEkstre({ cari, onClose, onMinimize, firmaBilgileri, defterFiltre })
                 <img src={firmaBilgileri.logo} alt="Logo" style={{ width: 40, height: 40, objectFit: "contain" }} />
               )}
               <div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#3A291D" }}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--erp-text)" }}>
                   {(firmaBilgileri || {}).unvan || "Atölye ERP"}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
@@ -667,7 +667,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
     .map((k) => ({ ad: ((fiyatGruplari || []).find((g) => g.id === k.deger) || {}).ad || k.etiket || k.deger, fiyat: k.fiyat, pb: k.paraBirimi || "TRY" }));
   if (parseFloat(product.satisFiyati) > 0) grupFiyatlari.unshift({ ad: "Genel", fiyat: parseFloat(product.satisFiyati), pb: alisPbKodu({ alisParaBirimi: product.satisParaBirimi }) });
 
-  const th = { fontSize: 10, textTransform: "uppercase", letterSpacing: ".04em", padding: "5px 8px", borderBottom: "2px solid #C8BCAC", textAlign: "right" };
+  const th = { fontSize: 10, textTransform: "uppercase", letterSpacing: ".04em", padding: "5px 8px", borderBottom: "2px solid var(--erp-line)", textAlign: "right" };
   const td = { fontSize: 12, padding: "4px 8px", borderBottom: "1px solid #E0D6C7", textAlign: "right" };
 
   return (
@@ -679,13 +679,13 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {(firmaBilgileri || {}).logo && <img src={firmaBilgileri.logo} alt="Logo" style={{ width: 40, height: 40, objectFit: "contain" }} />}
               <div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#3A291D" }}>{(firmaBilgileri || {}).unvan || "Atölye ERP"}</div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--erp-text)" }}>{(firmaBilgileri || {}).unvan || "Atölye ERP"}</div>
                 <div style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Ürün Maliyeti · {PB_SIMGE[hedefPb]} {hedefPb}{hedefPb !== "TRY" ? ` · 1 ${PB_SIMGE[hedefPb]} = ${para(hedefKur, "TRY")}` : ""}</div>
               </div>
             </div>
             <div style={{ fontSize: 12, color: "var(--erp-text-2)", textAlign: "right" }}>
               Tarih: <span className="mono">{bugun}</span>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#3A291D", marginTop: 4 }}>{product.ad}{product.kod ? ` · ${product.kod}` : ""}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--erp-text)", marginTop: 4 }}>{product.ad}{product.kod ? ` · ${product.kod}` : ""}</div>
               {receteVarRenk && <div style={{ fontSize: 11 }}>Reçete rengi: {receteVarRenk}</div>}
             </div>
           </div>
@@ -741,11 +741,11 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
             <span>İşçilik</span><span className="mono" style={{ textAlign: "right", fontWeight: 600 }}>{yaz(isciligToplami)}</span>
             <span>Genel gider (çift başı){hedefAdet > 0 ? <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}> · {yaz(aylikGenel)} / {hedefAdet} çift</span> : null}</span>
             <span className="mono" style={{ textAlign: "right", fontWeight: 600 }}>{hedefAdet > 0 ? yaz(ciftBasiGenel) : "—"}</span>
-            <span style={{ borderTop: "1px solid #C8BCAC", paddingTop: 4, fontWeight: 700 }}>Tam maliyet</span>
-            <span className="mono" style={{ borderTop: "1px solid #C8BCAC", paddingTop: 4, textAlign: "right", fontWeight: 700 }}>{yaz(tamMaliyet)}</span>
+            <span style={{ borderTop: "1px solid var(--erp-line)", paddingTop: 4, fontWeight: 700 }}>Tam maliyet</span>
+            <span className="mono" style={{ borderTop: "1px solid var(--erp-line)", paddingTop: 4, textAlign: "right", fontWeight: 700 }}>{yaz(tamMaliyet)}</span>
             <span>Kâr %{marj}</span><span className="mono" style={{ textAlign: "right", fontWeight: 600 }}>{yaz(satisFiyati - tamMaliyet)}</span>
-            <span style={{ borderTop: "2px solid #24201b", paddingTop: 6, fontSize: 14, fontWeight: 700 }}>Toplam fiyat</span>
-            <span className="mono" data-maliyet-yazdir-toplam="1" style={{ borderTop: "2px solid #24201b", paddingTop: 6, textAlign: "right", fontSize: 16, fontWeight: 700 }}>{yaz(satisFiyati)}</span>
+            <span style={{ borderTop: "2px solid var(--erp-text)", paddingTop: 6, fontSize: 14, fontWeight: 700 }}>Toplam fiyat</span>
+            <span className="mono" data-maliyet-yazdir-toplam="1" style={{ borderTop: "2px solid var(--erp-text)", paddingTop: 6, textAlign: "right", fontSize: 16, fontWeight: 700 }}>{yaz(satisFiyati)}</span>
           </div>
 
           {/* Kayıtlı satış fiyatları yazdırmadan KALDIRILDI (kullanıcı, 21 Eylül: "maliyet yazdırırken

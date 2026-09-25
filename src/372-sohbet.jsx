@@ -123,8 +123,8 @@ function SohbetModule({ mesajlar, gorevler, kullanicilar, aktifKullanici, onMesa
       </div>
 
       {/* AKIŞ */}
-      <div style={{ flex: "1 1 380px", minWidth: 280, border: "1px solid #C9B99A", borderRadius: "var(--erp-r-md)", background: "#fff", display: "grid", gridTemplateRows: "auto 1fr auto", maxHeight: 560 }}>
-        <div style={{ padding: "6px 12px", borderBottom: "1px solid #E4D8C0", fontSize: 12, fontWeight: 700 }}>
+      <div style={{ flex: "1 1 380px", minWidth: 280, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff", display: "grid", gridTemplateRows: "auto 1fr auto", maxHeight: 560 }}>
+        <div style={{ padding: "6px 12px", borderBottom: "1px solid var(--erp-line-soft)", fontSize: 12, fontWeight: 700 }}>
           {kanalAdi(kanal)}
           <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}> · {kanalMesajlari.length} mesaj</span>
         </div>
@@ -141,7 +141,7 @@ function SohbetModule({ mesajlar, gorevler, kullanicilar, aktifKullanici, onMesa
                 <div style={{ fontSize: 10, color: "var(--erp-text-3)" }}>
                   <b style={{ color: "var(--erp-text-2)" }}>{m.kullaniciAd}</b> · <span className="mono">{tarihYaz(m.zaman, true)}</span>
                 </div>
-                <div style={{ fontSize: 12, whiteSpace: "pre-wrap", color: "#33281C" }}>{m.metin}</div>
+                <div style={{ fontSize: 12, whiteSpace: "pre-wrap", color: "var(--erp-text)" }}>{m.metin}</div>
                 {m.hedef && (
                   <button type="button" data-mesaj-hedef={m.hedef.tip} onClick={() => onKaydaGit && onKaydaGit(m.hedef)}
                     title="Bağlı kaydı aç"
@@ -152,7 +152,7 @@ function SohbetModule({ mesajlar, gorevler, kullanicilar, aktifKullanici, onMesa
                 {/* GÖREV KARTI: mesaj bir görev doğurduysa durumu burada görünür ve değiştirilebilir. */}
                 {g && (
                   <div data-sohbet-gorev={g.id} data-sohbet-gorev-durum={g.durum}
-                    style={{ marginTop: 5, borderTop: "1px dashed #C9B99A", paddingTop: 5, display: "grid", gap: 4 }}>
+                    style={{ marginTop: 5, borderTop: "1px dashed var(--erp-line)", paddingTop: 5, display: "grid", gap: 4 }}>
                     <div style={{ fontSize: 11, color: "var(--erp-text-2)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                       <span style={{ fontWeight: 700, color: GOREV_DURUM_RENK[g.durum] }}>GÖREV · {g.durum}</span>
                       <span>{((kullanicilar || []).find((k) => k.id === g.atananId) || {}).ad || "—"}</span>
@@ -192,7 +192,7 @@ function SohbetModule({ mesajlar, gorevler, kullanicilar, aktifKullanici, onMesa
                           onClick={() => durumDegistir(g, d)}
                           style={{ padding: "1px 7px", borderRadius: "var(--erp-r-pill)", fontSize: 10, fontWeight: 600, cursor: d === g.durum ? "default" : "pointer",
                             border: `1px solid ${d === g.durum ? GOREV_DURUM_RENK[d] : "var(--erp-border-2)"}`,
-                            background: d === g.durum ? `${GOREV_DURUM_RENK[d]}1A` : "#fff",
+                            background: d === g.durum ? `${alfaEkle(GOREV_DURUM_RENK[d], "1A")}` : "#fff",
                             color: d === g.durum ? GOREV_DURUM_RENK[d] : "var(--erp-text-2)" }}>
                           {d}
                         </button>
@@ -206,7 +206,7 @@ function SohbetModule({ mesajlar, gorevler, kullanicilar, aktifKullanici, onMesa
         </div>
 
         {/* YAZMA ALANI: kayıt bağla · görev olarak ver · gönder */}
-        <div style={{ borderTop: "1px solid #E4D8C0", padding: 8, display: "grid", gap: 6 }}>
+        <div style={{ borderTop: "1px solid var(--erp-line-soft)", padding: 8, display: "grid", gap: 6 }}>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <KayitSecici siparisler={siparisler} uretim={uretim} stok={stok} secili={hedef} onSec={setHedef} />
             <button type="button" className="btn-ghost" data-sohbet-gorev-modu={gorevModu ? "acik" : "kapali"}

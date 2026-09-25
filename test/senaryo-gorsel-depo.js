@@ -8,7 +8,7 @@
 //   1. `stok:items` görselsiz yazılıyor (asıl kazanç).
 //   2. Görseller ayrı anahtarlarda ve ürüne geri BİRLEŞİYOR — ekranda görünüyorlar.
 //   3. Yeniden yüklemede kaybolmuyorlar.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -28,7 +28,7 @@ async function calistir() {
 
   // Bir kaydetme tetikle: stok ekranından ürüne dokunmadan, tohumdaki görselli ürünü açıp kapat
   // yetmez — yazma yolu ancak saveStok çağrılınca çalışır. Ürün adını değiştirmek en kısa yol.
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const satir = [...document.querySelectorAll("button")]
@@ -80,7 +80,7 @@ async function calistir() {
 
   const ikinci = await uygulamaAc(bolunmusDepo, { hataYaz: false });
   await ikinci.sayfa.waitForTimeout(2400);
-  await ikinci.sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(ikinci.sayfa, "Stok");
   await ikinci.sayfa.waitForTimeout(700);
   await ikinci.sayfa.evaluate(() => {
     const satir = [...document.querySelectorAll("button")]

@@ -5,7 +5,7 @@
 // Stok hareketi fiyat TAŞIMAZ; fiyat aynı fiş numarasına yazılmış CARİ hareketinden okunuyor.
 // Cari karşılığı olmayan fişlerde (üretim çıkışı/girişi) fiyat sütunları hiç çıkmamalı — o fişin
 // bir tutarı yok, "0 ₺" yazmak yanlış olurdu.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -15,7 +15,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
   // Alış fişi kes (fiyatlı cari hareketi oluşsun)
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-durum-cip=\"Tümü\"]:visible").first().click();
   await sayfa.waitForTimeout(400);
@@ -25,7 +25,7 @@ async function calistir() {
   await sayfa.waitForTimeout(500);
   await alisSiparisindenTeslimEt(sayfa);
   // Ürün kartı → Stok Hareketleri
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(800);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) =>

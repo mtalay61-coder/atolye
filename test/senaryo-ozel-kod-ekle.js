@@ -7,7 +7,7 @@
 //   1. Blok HER ZAMAN görünüyor — hiç alan tanımlanmamışken bile. Önceden boşsa hiç çizilmiyordu
 //      ve özellik yok sanılıyordu; yeni bir kurulumda tam olarak bu oluyor.
 //   2. Buradan eklenen alan SEÇİLİ TİPE ait oluyor; tip seçilmemişse Genel.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -24,7 +24,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
 
-  await sayfa.getByRole("button", { name: "Stok", exact: true }).first().click();
+  await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(600);
   await sayfa.locator('button:has-text("Ürün Ekle"):visible').first().click();
   await sayfa.waitForTimeout(600);

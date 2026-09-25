@@ -5,7 +5,7 @@
 // üçünün de geri alınması, üretim ilerlemesinin sıfırlanması ve mamulün stoktan düşmesi bekleniyor.
 //
 // Bu yol artık TEK yol: aynı fişler Fişler ekranından ve cari ekstresinden kilitli (v1.46.0).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -16,7 +16,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2200);
 
   // ÖNCE KİLİT: aynı fişler Fişler ekranından silinemiyor olmalı.
-  await sayfa.getByRole("button", { name: "Fişler", exact: true }).click();
+  await modulAc(sayfa, "Fişler");
   await sayfa.waitForTimeout(800);
   // Silme düğmesi fişin AÇILMIŞ hâlinde görünüyor — önce fişi aç.
   await sayfa.getByText("1001-Kesim", { exact: true }).first().click();
@@ -34,7 +34,7 @@ async function calistir() {
     };
   });
 
-  await sayfa.getByRole("button", { name: "Üretim", exact: true }).click();
+  await modulAc(sayfa, "Üretim");
   await sayfa.waitForTimeout(600);
   await sayfa.getByText("1001", { exact: true }).last().click();
   await sayfa.waitForTimeout(700);

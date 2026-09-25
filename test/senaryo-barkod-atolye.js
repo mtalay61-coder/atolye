@@ -7,7 +7,7 @@
 //
 // Bu senaryo o akışı uçtan uca yürütüyor: personel okut → iş al → tekrar okut → teslim et.
 // Bir önceki sürümde bu ekran yalnızca birim testleriyle kapsanmıştı ve hata tam oradan sızdı.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -40,7 +40,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
-  await sayfa.getByRole("button", { name: "Üretim", exact: true }).click();
+  await modulAc(sayfa, "Üretim");
   await sayfa.waitForTimeout(600);
 
   // ÜRETİM BARKODU ÜRETİM KARTINDAN BASILIYOR — işin başında bir kez.

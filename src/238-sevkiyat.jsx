@@ -111,7 +111,7 @@ function SevkiyatEkrani({ koliler, siparisler, cariler, stok, tanimlar, uretim, 
                     " Hepsinin fi\u015Fini a\u00E7 (",
                     gruplar.length,
                     " cari)"))))),
-        sonGonderi && (React.createElement("div", { "data-sevk-sonuc": "1", style: { fontSize: 12, padding: 8, background: "var(--erp-panel)", border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)" } },
+        sonGonderi && (React.createElement("div", { "data-sevk-sonuc": "1", style: { fontSize: 12, padding: 8, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" } },
             React.createElement("b", null, sonGonderi.cari),
             " i\u00E7in sat\u0131\u015F fi\u015Fi a\u00E7\u0131ld\u0131 \u00B7 ",
             sonGonderi.koli,
@@ -121,7 +121,7 @@ function SevkiyatEkrani({ koliler, siparisler, cariler, stok, tanimlar, uretim, 
         gruplar.map((g) => {
             const grupCift = g.satirlar.reduce((x, s) => x + s.miktar, 0);
             const bagli = g.satirlar.filter((s) => s.kalemId).length;
-            return (React.createElement("div", { key: g.cariId, "data-sevk-grup": (g.cari && g.cari.unvan) || g.cariId, style: { border: "1px solid #E4D8C0", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 10, display: "grid", gap: 8 } },
+            return (React.createElement("div", { key: g.cariId, "data-sevk-grup": (g.cari && g.cari.unvan) || g.cariId, style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 10, display: "grid", gap: 8 } },
                 React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
                     React.createElement("b", { style: { fontSize: 14 } }, (g.cari && g.cari.unvan) || "—"),
                     [...g.siparisler].map((no) => React.createElement("span", { key: no, className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)" } }, no)),

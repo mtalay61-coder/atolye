@@ -7,7 +7,7 @@
 // kartından Alış Fişi Oluştur → "Siparişten seç" → AS-2'nin kalemleri fişe → tek fiş kaydedilir.
 // Ölçülen: tek fiş (AS-1-F1) iki kalem; AS-1 ve AS-2 ikisi de Tamamlandı (karşılanan kendi
 // kaydında); 42 bedenin stok hareketi AS-2'yi taşıyor; fiş silinince iki sipariş de geri dönüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -34,7 +34,7 @@ async function calistir() {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   sayfa.on("dialog", (d) => d.accept());
   await sayfa.waitForTimeout(2200);
-  await sayfa.getByRole("button", { name: "Alış Siparişi", exact: true }).click();
+  await modulAc(sayfa, "Alış Siparişi");
   await sayfa.waitForTimeout(600);
   await sayfa.locator('button:has-text("Tümü (3)"):visible').first().click().catch(() => {});
   await sayfa.waitForTimeout(300);
@@ -89,7 +89,7 @@ async function calistir() {
 
   // GERİ ALMA: Fişler'de fişi sil → iki siparişin karşılananı da geri dönmeli.
   // Cari ekstresinden fiş grubunu sil (iki aşamalı) — senaryo-silme ile aynı yol.
-  await sayfa.getByRole("button", { name: "Cari", exact: true }).click();
+  await modulAc(sayfa, "Cari");
   await sayfa.waitForTimeout(500);
   await sayfa.locator('button:has-text("Tedarikçi A"):visible').last().click();
   await sayfa.waitForTimeout(700);
