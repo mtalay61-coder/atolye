@@ -1978,32 +1978,33 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                 </div>
               );
             })() : (
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {tanimlar.renkler.filter((r) => (r.tip || "Mamul") === "Hammadde" && (form.kategori !== "Hammadde" || renkTipeUygunMu(r, form.malzemeTipi))).length === 0 && (
                 <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>
                   Hammadde rengi tanımlanmadı — önce Tanımlar ekranından ekleyin.
                 </span>
               )}
-              {tanimlar.renkler
-                .filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad) && (form.kategori !== "Hammadde" || renkTipeUygunMu(r, form.malzemeTipi)))
-                .map((r) => {
-                  const active = selRenkler.includes(r.ad);
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => toggleRenk(r.ad)}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
-                        borderRadius: "var(--erp-r-pill)", border: `1.5px solid ${active ? "var(--erp-orange)" : "var(--erp-border)"}`,
-                        background: active ? "var(--erp-orange-bg)" : "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600,
-                      }}
-                    >
-                      {r.ad}
-                      {active && <Check size={13} color="var(--erp-orange)" />}
-                    </button>
-                  );
-                })}
+              {/* TEK LİSTE, YAZARAK SEÇ (kullanıcı, 25 Eylül: "bu tek liste olsun, az önceki gibi kutu
+                  boş gelsin, yazdıkça liste daralsın"). Eskiden BÜTÜN renkler düğme olarak diziliyordu;
+                  renk sayısı arttıkça form ekranı kaplıyordu. Artık mamuldeki gibi arama kutusu —
+                  seçilen renk hemen eklenir ve listeden düşer; seçilenler aşağıda etiket olarak durur
+                  ve × ile çıkarılır. Malzeme tipi süzgeci aynen geçerli. */}
+              {(() => {
+                const uygunRenkler = tanimlar.renkler
+                  .filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad) && (form.kategori !== "Hammadde" || renkTipeUygunMu(r, form.malzemeTipi)));
+                const secilebilir = Array.from(new Map(uygunRenkler.map((r) => [r.ad, r])).values()).filter((r) => !selRenkler.includes(r.ad));
+                return secilebilir.length > 0 ? (
+                  <AramaliSecici
+                    veriAdi="data-hammadde-renk-arama"
+                    secenekler={secilebilir.map((r) => ({ deger: r.ad, etiket: r.ad }))}
+                    onSec={(ad) => toggleRenk(ad)}
+                    placeholder="Renk yazın ya da seçin…"
+                  />
+                ) : uygunRenkler.length > 0 ? (
+                  <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Uygun renklerin tamamı eklendi.</span>
+                ) : null;
+              })()}
               {yeniRenkGiris ? (
                 <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <input
@@ -2057,6 +2058,24 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                 </button>
               )}
             </div>
+            {/* Seçilen renkler: mamuldeki etiketlerle aynı görünüm, × ile çıkarılır. */}
+            {selRenkler.length > 0 && (
+              <div data-secili-renkler="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+                {selRenkler.map((ad) => (
+                  <span key={ad} className="mono" style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "5px 10px",
+                    borderRadius: "var(--erp-r-pill)", border: "1.5px solid #E1611F", background: "var(--erp-orange-bg)", fontSize: 13, fontWeight: 600,
+                  }}>
+                    {ad}
+                    <button type="button" aria-label={`${ad} rengini çıkar`} onClick={() => toggleRenk(ad)}
+                      style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-warn)", display: "flex" }}>
+                      <X size={13} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            </>
             )}
           </div>
 
