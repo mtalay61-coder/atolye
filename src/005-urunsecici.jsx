@@ -227,3 +227,99 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
   );
 }
 
+
+// ---- ARAMALI SEÇİCİ (genel) — 25 Eylül, v1.452.0 ----
+// Kullanıcı: "Renk ekleme yazma ile seçici olsun, yazdıkça elensin liste." Açılır liste (select)
+// 12+ renkte kaydırma istiyordu; tarayıcının datalist'i ise telefonda tutarsız (bazı cihazda liste
+// hiç çıkmıyor, süzme görünmüyor). Bu bileşen kendi listesini çiziyor: yazdıkça süzer (Türkçe
+// büyük/küçük harf duyarsız, kelimenin içinden de eşleşir), ok tuşları + Enter, dokunarak seçim.
+//
+// `temizle`: seçimden sonra kutu boşalır ve odakta kalır — art arda birden fazla öğe eklemek için
+// (renk ekleme). Seçim `onSec(deger)` ile bildiriliyor; hangi değerin "seçili" durduğunu tutmak
+// çağıranın işi değil, bu kip bir EKLEME kutusu.
+function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi, genislik = 220 }) {
+  const [acik, setAcik] = useState(false);
+  const [sorgu, setSorgu] = useState("");
+  const [vurgulu, setVurgulu] = useState(0);
+  const inputRef = React.useRef(null);
+  const q = sorgu.trim().toLocaleLowerCase("tr-TR");
+  // Başı eşleşenler önce ("siy" → "Siyah Süet", sonra "Kırık Siyah"): aranan çoğunlukla odur.
+  const sonuclar = (() => {
+    if (!q) return secenekler;
+    const bas = [], ic = [];
+    secenekler.forEach((s) => {
+      const e = String(s.etiket).toLocaleLowerCase("tr-TR");
+      if (e.startsWith(q) || e.split(/\s+/).some((k) => k.startsWith(q))) bas.push(s);
+      else if (e.includes(q)) ic.push(s);
+    });
+    return [...bas, ...ic];
+  })();
+
+  function sec(s) {
+    onSec(s.deger);
+    setVurgulu(0);
+    if (temizle) {
+      setSorgu("");
+      // Odak kutuda kalıyor, liste açık: sıradaki öğe hemen yazılabilsin.
+      if (inputRef.current) inputRef.current.focus();
+    } else {
+      setSorgu(s.etiket);
+      setAcik(false);
+    }
+  }
+
+  return (
+    <div style={{ position: "relative", width: genislik, maxWidth: "100%" }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6, boxSizing: "border-box", padding: "7px 10px",
+        borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-accent)" : "var(--erp-line)"}`, background: "#fff",
+      }}>
+        <Search size={14} color="var(--erp-text-3)" style={{ flexShrink: 0 }} />
+        <input
+          ref={inputRef}
+          {...(veriAdi ? { [veriAdi]: "1" } : {})}
+          value={sorgu}
+          onChange={(e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }}
+          onFocus={() => setAcik(true)}
+          onBlur={() => setTimeout(() => setAcik(false), 150)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") { e.preventDefault(); setAcik(true); setVurgulu((v) => Math.min(v + 1, sonuclar.length - 1)); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); setVurgulu((v) => Math.max(v - 1, 0)); }
+            else if (e.key === "Enter") { e.preventDefault(); if (sonuclar[vurgulu]) sec(sonuclar[vurgulu]); }
+            else if (e.key === "Escape") { setAcik(false); setSorgu(""); }
+          }}
+          placeholder={placeholder || "Yazın ya da seçin…"}
+          autoComplete="off" autoCorrect="off" spellCheck={false}
+          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, padding: 0 }}
+        />
+      </div>
+      {acik && (
+        <div role="listbox" style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 60, minWidth: "100%", maxHeight: 280, overflowY: "auto",
+          background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 10px 28px rgba(16, 24, 40, 0.12)", padding: 4,
+        }}>
+          {sonuclar.length === 0 ? (
+            <div style={{ padding: "9px 10px", fontSize: 13, color: "var(--erp-text-3)" }}>"{sorgu}" ile eşleşen yok</div>
+          ) : sonuclar.map((s, i) => (
+            <button
+              key={s.deger}
+              type="button"
+              role="option"
+              aria-selected={i === vurgulu}
+              data-aramali-secenek={s.deger}
+              // mousedown: blur'dan ÖNCE seçilsin (click'te liste kapanmış olurdu).
+              onMouseDown={(e) => { e.preventDefault(); sec(s); }}
+              onMouseEnter={() => setVurgulu(i)}
+              style={{
+                display: "block", width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
+                background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 14, cursor: "pointer",
+              }}
+            >
+              {s.etiket}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

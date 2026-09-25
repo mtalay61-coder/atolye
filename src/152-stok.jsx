@@ -136,7 +136,6 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
   const [yeniMamulTipiAdi, setYeniMamulTipiAdi] = useState("");
   const [yeniRenkGiris, setYeniRenkGiris] = useState(false);
   const [yeniRenkAdi, setYeniRenkAdi] = useState("");
-  const [mamulRenkSecimi, setMamulRenkSecimi] = useState("");
   const [renkDegiskenSayisi, setRenkDegiskenSayisi] = useState(1);
   const [kombiRenkSecimleri, setKombiRenkSecimleri] = useState({}); // { [pozisyon]: renkAdi }
   const [yeniModelRengiModuStok, setYeniModelRengiModuStok] = useState(false);
@@ -1783,7 +1782,7 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                       <button
                         key={n}
                         type="button"
-                        onClick={() => { setRenkDegiskenSayisi(n); setKombiRenkSecimleri({}); setYeniModelRengiModuStok(false); setMamulRenkSecimi(""); }}
+                        onClick={() => { setRenkDegiskenSayisi(n); setKombiRenkSecimleri({}); setYeniModelRengiModuStok(false); }}
                         style={{
                           width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${renkDegiskenSayisi === n ? "var(--erp-purple)" : "var(--erp-border)"}`,
                           background: renkDegiskenSayisi === n ? "#EDE7F2" : "#fff", color: renkDegiskenSayisi === n ? "var(--erp-purple)" : "var(--erp-text-2)",
@@ -1802,23 +1801,16 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 8 }}>
                     {secilebilirRenkler.length > 0 ? (
                       <>
-                        <select
-                          value={mamulRenkSecimi}
-                          onChange={(e) => setMamulRenkSecimi(e.target.value)}
-                          style={{ ...inputStyle, width: 180 }}
-                        >
-                          <option value="">Renk seçin…</option>
-                          {secilebilirRenkler.map((r) => <option key={r.id} value={r.ad}>{r.ad}</option>)}
-                        </select>
-                        <button
-                          type="button"
-                          className="btn-primary"
-                          style={{ padding: "6px 14px" }}
-                          disabled={!mamulRenkSecimi}
-                          onClick={() => { toggleRenk(mamulRenkSecimi); setMamulRenkSecimi(""); }}
-                        >
-                          <Plus size={13} /> Ekle
-                        </button>
+                        {/* YAZARAK SEÇ (kullanıcı, 25 Eylül: "renk ekleme yazma ile seçici olsun,
+                            yazdıkça elensin liste"). Seçilen renk HEMEN eklenir, kutu boşalıp odakta
+                            kalır — art arda renk eklemek "seç → Ekle" iki adımından tek adıma iner.
+                            Eklenmiş renkler listeden zaten düşüyor (`secilebilirRenkler`). */}
+                        <AramaliSecici
+                          veriAdi="data-renk-ekle-arama"
+                          secenekler={secilebilirRenkler.map((r) => ({ deger: r.ad, etiket: r.ad }))}
+                          onSec={(ad) => toggleRenk(ad)}
+                          placeholder="Renk yazın ya da seçin…"
+                        />
                       </>
                     ) : (
                       <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>
@@ -1887,22 +1879,14 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                           <div>
                             {uygunKombinasyonlarStok.length > 0 ? (
                               <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-                                <select
-                                  value={mamulRenkSecimi}
-                                  onChange={(e) => setMamulRenkSecimi(e.target.value)}
-                                  style={{ ...inputStyle, width: 200 }}
-                                >
-                                  <option value="">Seçin…</option>
-                                  {uygunKombinasyonlarStok.map((k) => <option key={k.id} value={k.etiket}>{k.etiket}</option>)}
-                                </select>
-                                <button
-                                  type="button"
-                                  className="btn-primary"
-                                  disabled={!mamulRenkSecimi}
-                                  onClick={() => { toggleRenk(mamulRenkSecimi); setMamulRenkSecimi(""); }}
-                                >
-                                  <Plus size={13} /> Ekle
-                                </button>
+                                {/* Tek renkteki gibi yazarak seçilir ve seçince hemen eklenir. */}
+                                <AramaliSecici
+                                  veriAdi="data-model-rengi-arama"
+                                  genislik={260}
+                                  secenekler={uygunKombinasyonlarStok.map((k) => ({ deger: k.etiket, etiket: k.etiket }))}
+                                  onSec={(etiket) => toggleRenk(etiket)}
+                                  placeholder="Model rengi yazın ya da seçin…"
+                                />
                               </div>
                             ) : (
                               <div style={{ fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 }}>

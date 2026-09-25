@@ -1,0 +1,32 @@
+{
+ "cipler": [
+  "Siyah Süet",
+  "Nohut Deri"
+ ],
+ "enterSonrasi": {
+  "kutuBos": true,
+  "liste": [
+   "Kahve Süet",
+   "Taba Süet",
+   "Siyah Deri",
+   "Nohut Deri",
+   "Kırık Siyah"
+  ]
+ },
+ "eslesmeYok": true,
+ "hatalar": [],
+ "kutuVar": true,
+ "siy": [
+  "Siyah Süet",
+  "Siyah Deri",
+  "Kırık Siyah"
+ ],
+ "tumu": [
+  "Siyah Süet",
+  "Kahve Süet",
+  "Taba Süet",
+  "Siyah Deri",
+  "Nohut Deri",
+  "Kırık Siyah"
+ ]
+}
