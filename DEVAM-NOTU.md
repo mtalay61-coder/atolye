@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.460.0** · 25 Eylül 2026
+Son sürüm: **v1.461.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.460.0): çek işlemlerinde yazdır — giriş/ciro/iade/tahsile verme bordrosu, tahsil makbuzu (`CekYazdir`).** Bkz. "ÇEK BORDROSU YAZDIR".
+**Son iş (25 Eylül, v1.461.0): çek satırına dokununca özet — kimden alındı, şu an nerede, vade, yolculuk (`cekOzeti`).** Bkz. "ÇEK ÖZETİ".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,25 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ÇEK ÖZETİ — SATIRA DOKUNUNCA (25 Eylül, v1.461.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Çekin üzerine tıklayınca çeki kimden alıp kime ciro ettiğimiz veya son durumu ile
+alakalı açılım yapsın."
+
+- Satıra (boş alan/yazı) dokunmak özeti açıp kapatıyor; düğme, görsel, input ve panelin içi
+  (`[data-cek-ozet]`) hariç (`closest` süzgeci). "Geçmiş" düğmesi "Ayrıntı · Geçmiş (n)" oldu ve
+  her çekte görünüyor (işlemsiz çekte de kimden/vade bilgisi anlamlı).
+- Kural saf fonksiyonda: `cekOzeti(cek, { cariler, bugun })` (200-cari-sabit) →
+  `kimden` (giriş carisi, tarih/fiş giriş hareketinden, kur çevrimi varsa cariye işlenen),
+  `nerede` (şimdiki durumu doğuran etkin satırdan cümle + tarih + fiş + karşı tarafa işlenen),
+  `vade` (yalnız Portföyde/Tahsilde; kalan/geçen gün), `adimlar` (giriş + geçmiş; geri alınan
+  satır `iptal` → üstü çizili, geri alma satırı soluk).
+- Cümlelerde karşı taraf ok ile: "Ciro edildi → Tedarikçi A" — adın sonuna ek ("'ya/'e")
+  addan güvenle çıkarılamıyor.
+- Her yolculuk adımında yazdır ikonu (v1.460 düğme kimlikleri korundu).
+- Test: `senaryo-cek-ozet.js` (vade bugüne göreli kuruluyor ki altın her gün aynı kalsın);
+  `senaryo-cek-yazdir.js` "Geçmiş" yerine `[data-cek-ayrinti]`.
 
 ## ÇEK BORDROSU YAZDIR (25 Eylül, v1.460.0 — Claude Code oturumu)
 

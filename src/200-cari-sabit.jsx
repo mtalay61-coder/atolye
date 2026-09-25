@@ -544,6 +544,79 @@ function cekDurumGeriAl(cek, { tarih, kullanici } = {}) {
   };
 }
 
+// ---- ÇEK ÖZETİ — "BU ÇEK NEREDEN GELDİ, ŞİMDİ NEREDE" (25 Eylül, v1.461.0) --------------------
+//
+// Kullanıcı: "Çekin üzerine tıklayınca çeki kimden alıp kime ciro ettiğimiz veya son durumu ile
+// alakalı açılım yapsın."
+//
+// Geçmiş satırları vardı ama ham ("Ciro Et · Portföyde → Ciro Edildi · Tedarikçi A"); asıl sorular
+// cümleyle cevaplanmıyordu: kimden geldi, şimdi kimde/nerede, vadesine ne kadar var. Özet çekin
+// kendi kaydından + bağlı cari fişlerinden kuruluyor; ekran yalnız çiziyor.
+//   kimden   — giriş carisi, giriş tarihi ve fişi, cariye işlenen tutar (kur çevrimi varsa)
+//   nerede   — ŞİMDİKİ durumu doğuran etkin satırdan tek cümle (+ karşı taraf, tarih, fiş)
+//   vade     — kalan/geçen gün (yalnız çek hâlâ bizdeyken ya da tahsildeyken anlamlı)
+//   adimlar  — giriş + geçmiş, eskiden yeniye; geri alınan işlem ve geri alma satırı işaretli
+function cekOzeti(cek, { cariler, bugun } = {}) {
+  if (!cek) return null;
+  const verilen = (cek.tip || "Alınan") === "Verilen";
+  const durum = cek.durum || "Portföyde";
+  const hareketler = (cariler || []).flatMap((c) => (c.hareketler || []).map((h) => ({ cari: c, h })));
+  const bul = (id) => (id ? hareketler.find((x) => x.h.id === id) || null : null);
+  const giris = bul(cek.hareketId);
+  const girisCarisi = (cariler || []).find((c) => c.id === cek.cariId) || (giris && giris.cari) || null;
+  const kimden = {
+    etiket: verilen ? "Kime verildi" : "Kimden alındı",
+    ad: girisCarisi ? girisCarisi.unvan : null,
+    tarih: (giris && giris.h.tarih) || cek.tarih || null,
+    fisNo: (giris && giris.h.fisNo) || cek.fisNo || null,
+    islenen: giris && ((giris.h.paraBirimi || "TRY") !== (cek.paraBirimi || "TRY") || Math.abs((giris.h.tutar || 0) - (cek.tutar || 0)) > 0.005)
+      ? { tutar: giris.h.tutar, pb: giris.h.paraBirimi || "TRY" } : null,
+  };
+  const etkin = cekEtkinGecmis(cek);
+  const satir = [...etkin].reverse().find((g) => g.yeniDurum === durum) || null;
+  const karsi = satir ? (satir.cariAd || (bul(satir.hareketId) || {}).cari?.unvan || null) : null;
+  const yer = satir ? (satir.hesapAd || satir.bankaAd || cek.tahsilBankaAd || null) : (cek.tahsilBankaAd || null);
+  // Karşı taraf adın SONUNA ek getirmeden yazılıyor ("Tedarikçi A'ya" mı "…'e" mi, addan
+  // çıkarılamaz); ok işaretiyle "Ciro edildi → Tedarikçi A".
+  const ok = (ad) => (ad ? ` → ${ad}` : "");
+  const CUMLE = {
+    "Portföyde": verilen ? "Ödenmeyi bekliyor (vadesi gelmedi)" : "Elimizde — portföyde",
+    "Ciro Edildi": `Ciro edildi${ok(karsi)}`,
+    "Tahsilde": `Bankada tahsilde${ok(yer)}`,
+    "Tahsil Edildi": verilen ? `Ödendi — hesaptan çıktı${ok(yer)}` : `Tahsil edildi — hesaba girdi${ok(yer)}`,
+    "İade Edildi": `İade edildi${ok(karsi || (girisCarisi && girisCarisi.unvan))}`,
+    "Karşılıksız": "Karşılıksız çıktı",
+  };
+  const bagli = satir ? bul(satir.hareketId) : null;
+  const nerede = {
+    durum,
+    cumle: CUMLE[durum] || durum,
+    tarih: satir ? satir.tarih : null,
+    fisNo: bagli ? bagli.h.fisNo || null : null,
+    islenen: satir && satir.tutar != null && satir.paraBirimi
+      && (satir.paraBirimi !== (cek.paraBirimi || "TRY") || Math.abs(satir.tutar - (cek.tutar || 0)) > 0.005)
+      ? { tutar: satir.tutar, pb: satir.paraBirimi } : null,
+  };
+  // Vade: çek elden çıkmışsa (ciro, iade, tahsil) bizim takip ettiğimiz bir vade kalmadı.
+  let vade = null;
+  if (cek.vadeTarihi && ["Portföyde", "Tahsilde"].includes(durum)) {
+    const gun = (t) => Date.UTC(+t.slice(0, 4), +t.slice(5, 7) - 1, +t.slice(8, 10));
+    const fark = Math.round((gun(cek.vadeTarihi) - gun(bugun || bugunYerel())) / 86400000);
+    vade = { gun: fark, metin: fark > 0 ? `Vadeye ${fark} gün var` : fark === 0 ? "Vadesi bugün" : `Vadesi ${-fark} gün geçti` };
+  }
+  const geriAlinanlar = new Set((cek.gecmis || []).map((g) => g.geriAlinanSatirId).filter(Boolean));
+  const adimlar = [
+    { id: null, tarih: kimden.tarih, baslik: verilen ? "Şahsi çek yazıldı" : "Çek alındı", ayrinti: kimden.ad, fisNo: kimden.fisNo, iptal: false, geriAlma: false },
+    ...(cek.gecmis || []).map((g) => ({
+      id: g.id, tarih: g.tarih, baslik: g.islem,
+      ayrinti: g.cariAd || g.hesapAd || g.bankaAd || null,
+      fisNo: (bul(g.hareketId) || { h: {} }).h.fisNo || null,
+      iptal: geriAlinanlar.has(g.id), geriAlma: !!g.geriAlma,
+    })),
+  ];
+  return { kimden, nerede, vade, adimlar };
+}
+
 // ---- ÇEK İADESİ — CARİ HAREKETİ ----------------------------------------------------------------
 //
 // Kullanıcı (10 Eylül): "İade cari hareket doğurur, düzeltmen gereken."
