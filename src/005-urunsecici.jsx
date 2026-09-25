@@ -323,3 +323,65 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
     </div>
   );
 }
+
+// ---- ARAMALI METİN (serbest değer + öneri) — 25 Eylül, v1.454.0 ----
+// Kullanıcı (özel kod alanları Taban/Kalıp için): "Bu alanlarda aynı şekilde olsun." Renkten farkı:
+// değer SERBEST — yeni bir taban numarası yazılabilmeli. Kutu değeri tutuyor (`deger`/`onDegis`);
+// yazdıkça altında daha önce girilmiş değerler (`oneriler`) süzülüyor, dokununca kutuya yazılıyor.
+// Aynı değerin farklı yazımları (147 / 147A) bu sayede azalıyor — süzgeç ve arama da temizleşiyor.
+function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil }) {
+  const [acik, setAcik] = useState(false);
+  const [vurgulu, setVurgulu] = useState(-1);
+  const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
+  const tekil = Array.from(new Set((oneriler || []).map((o) => String(o).trim()).filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
+  // Kutudaki değerin kendisi öneri olarak tekrar gösterilmiyor; başı eşleşenler önce.
+  const sonuclar = (() => {
+    if (!q) return tekil;
+    const bas = [], ic = [];
+    tekil.forEach((o) => {
+      const e = o.toLocaleLowerCase("tr-TR");
+      if (e === q) return;
+      if (e.startsWith(q)) bas.push(o); else if (e.includes(q)) ic.push(o);
+    });
+    return [...bas, ...ic];
+  })().slice(0, 50);
+  const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); };
+  return (
+    <div style={{ position: "relative" }}>
+      <input
+        {...(veriAdi ? { [veriAdi]: "1" } : {})}
+        value={deger || ""}
+        onChange={(e) => { onDegis(e.target.value); setAcik(true); setVurgulu(-1); }}
+        onFocus={() => setAcik(true)}
+        onBlur={() => setTimeout(() => setAcik(false), 150)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowDown") { e.preventDefault(); setAcik(true); setVurgulu((v) => Math.min(v + 1, sonuclar.length - 1)); }
+          else if (e.key === "ArrowUp") { e.preventDefault(); setVurgulu((v) => Math.max(v - 1, -1)); }
+          // Enter yalnız bir öneri VURGULUYSA onu seçer; yoksa yazılan değer olduğu gibi kalır.
+          else if (e.key === "Enter" && vurgulu >= 0 && sonuclar[vurgulu]) { e.preventDefault(); sec(sonuclar[vurgulu]); }
+          else if (e.key === "Escape") setAcik(false);
+        }}
+        placeholder={placeholder}
+        autoComplete="off" autoCorrect="off" spellCheck={false}
+        style={{ ...inputStyle, width: "100%", ...(stil || {}) }}
+      />
+      {acik && sonuclar.length > 0 && (
+        <div role="listbox" style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 60, minWidth: "100%", maxHeight: 240, overflowY: "auto",
+          background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 10px 28px rgba(16, 24, 40, 0.12)", padding: 4,
+        }}>
+          {sonuclar.map((o, i) => (
+            <button key={o} type="button" role="option" aria-selected={i === vurgulu} data-aramali-oneri={o}
+              onMouseDown={(e) => { e.preventDefault(); sec(o); }}
+              onMouseEnter={() => setVurgulu(i)}
+              style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
+                background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 13, cursor: "pointer" }}>
+              {o}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

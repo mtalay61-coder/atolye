@@ -4235,16 +4235,20 @@ function ProductMatrixCard({
                   )}
                 </span>
                 {showEdit ? (
-                  <input
-                    value={(editForm.ozelKodlar || {})[alan.id] || ""}
-                    onChange={(e) => setEditForm({
-                      ...editForm,
+                  <AramaliMetin
+                    veriAdi="data-ozel-kod-arama"
+                    deger={(editForm.ozelKodlar || {})[alan.id] || ""}
+                    onDegis={(v) => setEditForm((f) => ({
+                      ...f,
                       // Değer ALAN KİMLİĞİNE yazılıyor. Sıraya yazılsaydı, ürünün tipi
                       // değiştiğinde alan listesi de değişeceği için değer başka bir alanda
                       // görünürdü — sessiz ve fark edilmesi zor bir bozulma.
-                      ozelKodlar: { ...(editForm.ozelKodlar || {}), [alan.id]: e.target.value },
-                    })}
-                    style={{ ...inputStyle, fontSize: 12, padding: "6px 8px" }}
+                      ozelKodlar: { ...(f.ozelKodlar || {}), [alan.id]: v },
+                    }))}
+                    // Öneriler: bu alana DİĞER ürünlerde girilmiş değerler (25 Eylül).
+                    oneriler={(tumUrunler || []).filter((u) => u.id !== product.id).map((u) => (u.ozelKodlar || {})[alan.id])}
+                    placeholder="Yazın ya da seçin…"
+                    stil={{ fontSize: 12, padding: "6px 8px" }}
                   />
                 ) : (
                   <span style={{ fontSize: 12, color: "var(--erp-text)", fontWeight: 600, padding: "6px 0" }}>

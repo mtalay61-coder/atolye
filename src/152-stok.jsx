@@ -1675,10 +1675,15 @@ function StokModule({ onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, h
                           <span className="mono" style={{ fontSize: 9, marginLeft: 5, color: "var(--erp-text-3)" }}>{alan.kapsamAd}</span>
                         )}
                       </span>
-                      <input
-                        value={(form.ozelKodlar || {})[alan.id] || ""}
-                        onChange={(e) => setForm({ ...form, ozelKodlar: { ...(form.ozelKodlar || {}), [alan.id]: e.target.value } })}
-                        style={{ ...inputStyle, fontSize: 12, padding: "6px 8px" }}
+                      {/* YAZARKEN ÖNERİ (25 Eylül): bu alana diğer ürünlerde girilmiş değerler süzülerek
+                          öneriliyor; yeni değer de yazılabiliyor (serbest alan). */}
+                      <AramaliMetin
+                        veriAdi="data-ozel-kod-arama"
+                        deger={(form.ozelKodlar || {})[alan.id] || ""}
+                        onDegis={(v) => setForm((f) => ({ ...f, ozelKodlar: { ...(f.ozelKodlar || {}), [alan.id]: v } }))}
+                        oneriler={(items || []).map((u) => (u.ozelKodlar || {})[alan.id])}
+                        placeholder="Yazın ya da seçin…"
+                        stil={{ fontSize: 12, padding: "6px 8px" }}
                       />
                     </label>
                   ))}

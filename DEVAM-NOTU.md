@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.453.0** · 25 Eylül 2026
+Son sürüm: **v1.454.0** · 25 Eylül 2026
 
 ---
 
@@ -16,7 +16,8 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.453.0): hammadde/yarı mamul formunda da renk tek arama kutusu + seçilen etiketleri.** Bkz. "RENK YAZARAK EKLEME".
+**Son iş (25 Eylül, v1.454.0): özel kod alanlarında yazarken öneri (`AramaliMetin`).** Bkz. "RENK YAZARAK EKLEME" sonu.
+Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
 Önceki (v1.450.0): üst menü ölçerek sığıyor + stok kategori şeritleri açık.
@@ -6134,6 +6135,15 @@ olsun, az önceki gibi kutu boş gelsin, yazdıkça liste daralsın". Düğme di
 (`data-secili-renkler`, × ile çıkar — mamuldeki etiket görünümü). "Yeni Renk" satırı yerinde.
 `senaryo-renk-arama` ikinci sayfada hammadde formunu ölçüyor (boş başlıyor, "der" süzmesi, Enter,
 etiket, ×). NOT: aynı sayfada mamul formu açıkken "Ürün Ekle" formu kapattığı için ayrı sayfa.
+
+**v1.454.0 — ÖZEL KOD ÖNERİSİ** (kullanıcı, Taban/Kalıp alanlarının ekran görüntüsü: "bu alanlarda aynı
+şekilde olsun"). Renkten farkı: değer SERBEST (yeni taban no yazılabilmeli) → ayrı bileşen
+`AramaliMetin` (005): kutu değeri tutuyor (`deger`/`onDegis`), altında `oneriler` süzülüyor (başı
+eşleşen önce, sayısal sıralı, kutudaki değerin kendisi hariç, en çok 50). Enter yalnız bir öneri
+VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğer ürünlerde girilmiş
+değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
+`tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
+Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
 
 ## OTOMATİK SÜRÜM GEÇİŞİ (25 Eylül, v1.447.0 — Claude Code oturumu)
 
