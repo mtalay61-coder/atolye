@@ -70,6 +70,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       // doğuruyordu. Tek nesne hâlinde `ek.cek` olarak saklanıyor — bulut şemasında yeni sütun
       // gerekmiyor, `ek` zaten JSON.
       cek: { banka: "", sube: "", cekNo: "", iban: "", kesideci: "", sahiplik: "Kendi", not: "" },
+      // ÇEKİN KENDİ BİRİMİ (v1.459.0 — kullanıcı: "TL çek alınıp USD hesabına izlenebilir").
+      // Boşsa çek hareketle aynı birimde; farklıysa çekin tutarı ayrıca girilir (ya da kurla).
+      cekPB: "", cekTutar: "", cekKurGirdi: "",
     };
   }
 
@@ -87,6 +90,17 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const tutar = parseFloat(hForm.tutar);
     if (!tutar || tutar <= 0) return;
     const cekAyrintiliMi = cekSenet && !!(hForm.cek.cekNo || hForm.cek.banka || hForm.cek.kesideci);
+    if (cekSenet && cekCevrim.farkli && !(cekCevrim.cekTutar > 0)) {
+      if (showToast) showToast(`Çek ${cekCevrim.cekPB}, hareket ${cariPB} — çekin tutarını yazın`);
+      return;
+    }
+    // Çek başka birimdeyse karşı taraf olarak hareketin üstünde (ekstre "Çek No … 42.000 ₺" gösterir;
+    // ciro ve kasa hareketlerindeki alanların aynısı).
+    const cekKarsiTaraf = cekSenet && cekCevrim.farkli ? {
+      hesapAd: `${hForm.odemeSekli}${hForm.cek.cekNo ? ` No ${hForm.cek.cekNo}` : ""}`,
+      hesapPB: cekCevrim.cekPB,
+      hesapTutar: cekCevrim.cekTutar,
+    } : {};
     const ortak = {
       tarih: hForm.tarih,
       // YÖN TEK KURALDAN: form "Ödeme/Tahsilat/Alış/Satış" diyor, yönü `hareketYonu` çeviriyor.
@@ -97,7 +111,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       odemeSekli: hForm.odemeSekli,
       // Yalnızca çek/senet hareketinde yazılıyor: boş bir `cek` nesnesini her harekete iliştirmek
       // kaydı şişirir ve "çeki var mı" sorusunu belirsizleştirirdi.
-      cek: cekAyrintiliMi ? { ...hForm.cek } : undefined,
+      cek: cekAyrintiliMi ? { ...hForm.cek, ...(cekCevrim.farkli ? { tutar: cekCevrim.cekTutar, paraBirimi: cekCevrim.cekPB } : {}) } : undefined,
+      ...cekKarsiTaraf,
       vade: hForm.vade,
       // Kullanıcının yazdığı numara (tedarikçinin gerçek fiş numarası) varsa o korunur.
       // BOŞSA BURADA ÜRETİLMEZ: numara sıralı ve işlem tipine göre ön ekli (THS-, ODM-…) olacak,
@@ -202,8 +217,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         // biri çek alır, diğeri çek verir. Yönle türetmeye çalışmak Tahsilat'ı "Verilen" yapıyordu.
         tip: hareketTipi === "Tahsilat" || hareketTipi === "Satış" ? "Alınan" : "Verilen",
         cariId: cari.id,
-        tutar,
-        paraBirimi: hForm.paraBirimi,
+        // Çek KENDİ biriminde; cariye işlenen tutar ayrıca bilgi olarak (v1.459.0).
+        tutar: cekCevrim.farkli ? cekCevrim.cekTutar : tutar,
+        paraBirimi: cekCevrim.cekPB,
+        ...(cekCevrim.farkli ? { cariTutar: tutar, cariPB } : {}),
         vadeTarihi: hForm.vade || hForm.tarih,
         cekNo: hForm.cek.cekNo,
         banka: hForm.cek.banka,
@@ -248,6 +265,20 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const cariPB = hForm.paraBirimi || "TRY";
   // ÇEVRİM GEREKİYOR MU: hesabın para birimi cari hareketinkinden farklıysa.
   const cevrimGerekli = !!seciliHesap && seciliHesap.pb !== cariPB;
+  // ÇEK ↔ CARİ ÇEVRİMİ (v1.459.0). Hareket carinin biriminde (Tutar alanı), çek kendi biriminde.
+  // Çek tutarı kutusu boşken güncel kurla dolu görünür; kur kutusu iki tutardan türetilir ya da
+  // yazılınca tutarı hesaplar (çift yönlü, 7z-6). Kayıtta da AYNI hesap kullanılıyor.
+  const cekCevrim = (() => {
+    const cekPB = hForm.cekPB || cariPB;
+    if (cekPB === cariPB) return { cekPB, farkli: false };
+    const soru = kurSorusu(cariPB, cekPB, kurlar);
+    const t = parseFloat(hForm.tutar);
+    const onerilen = soru && t > 0 ? kurUygula(t, soru.onerilen, soru.bolme) : null;
+    const tutarKutusu = hForm.cekTutar !== "" ? hForm.cekTutar : (onerilen != null ? String(onerilen) : "");
+    const kurKutusu = hForm.cekKurGirdi !== "" ? hForm.cekKurGirdi
+      : soru ? (kurTersHesapla(t, parseFloat(tutarKutusu), soru.bolme) ?? (soru.onerilen != null ? soru.onerilen : "")) : "";
+    return { cekPB, farkli: true, soru, tutarKutusu, kurKutusu, cekTutar: parseFloat(tutarKutusu) };
+  })();
 
   // HESABA İŞLENECEK TUTAR KULLANICIDAN, kur ondan TÜRETİLİYOR — tersi değil.
   // Pratikte iki tutar da biliniyor ("750 dolarlık borcuna 25.000 TL ödedi"); kuru yazdırıp
@@ -1001,6 +1032,44 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                     <Field label={`${hForm.odemeSekli} No`}>
                       <input value={hForm.cek.cekNo} onChange={(e) => setHForm({ ...hForm, cek: { ...hForm.cek, cekNo: e.target.value } })} placeholder="Belge üzerindeki numara" style={inputStyle} />
                     </Field>
+                    {/* ÇEKİN BİRİMİ — KUR ÇEVİRİCİ (v1.459.0). Yukarıdaki Tutar carinin hesabına
+                        işlenen tutar; çek başka birimdeyse (TL çek, dolar cari) burada seçilir. */}
+                    <Field label={`${hForm.odemeSekli} para birimi`}>
+                      <select
+                        data-cek-pb="1"
+                        value={cekCevrim.cekPB}
+                        onChange={(e) => setHForm({ ...hForm, cekPB: e.target.value, cekTutar: "", cekKurGirdi: "" })}
+                        style={inputStyle}
+                      >
+                        {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
+                      </select>
+                    </Field>
+                    {cekCevrim.farkli && (
+                      <Field label={`${hForm.odemeSekli} tutarı (${PARA_SEMBOLU[cekCevrim.cekPB] || cekCevrim.cekPB})`}>
+                        <input
+                          data-cek-tutar="1"
+                          type="number" step="any" min="0"
+                          value={cekCevrim.tutarKutusu}
+                          onChange={(e) => setHForm({ ...hForm, cekTutar: e.target.value, cekKurGirdi: "" })}
+                          title="Belgenin üzerinde yazan tutar"
+                          style={inputStyle}
+                        />
+                      </Field>
+                    )}
+                    {cekCevrim.farkli && cekCevrim.soru && (
+                      <Field label={`Kur (1 ${cekCevrim.soru.a} = ? ${cekCevrim.soru.b})`}>
+                        <input
+                          data-cek-kur="1"
+                          type="number" step="any" min="0"
+                          value={cekCevrim.kurKutusu}
+                          onChange={(e) => {
+                            const yeni = kurUygula(parseFloat(hForm.tutar), parseFloat(e.target.value), cekCevrim.soru.bolme);
+                            setHForm({ ...hForm, cekKurGirdi: e.target.value, cekTutar: yeni != null ? String(yeni) : hForm.cekTutar });
+                          }}
+                          style={inputStyle}
+                        />
+                      </Field>
+                    )}
                     <Field label="Banka">
                       {/* HAZIR LİSTE + elle yazma. `list` ile açılır öneri: listede olmayan banka
                           da yazılabiliyor, seçenekler kilitli değil. */}

@@ -1,4 +1,4 @@
-function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
+function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
   const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
   // KAPSAM (v1.458.0): menüde "Kasa & Banka" ve "Çek & Senet" ayrı öğe; ikisi de bu tek örneği
   // gösteriyor. Çek & Senet'te sekme şeridi yok, hep çek; Kasa & Banka'da Çek sekmesi yok — orada
@@ -329,6 +329,31 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onayliIslem]);
 
+  // SON İŞLEMİ GERİ AL (v1.459.0) — kural `cekSonIslemi`de. Burada yalnız doğru kapıya yönlendirme:
+  // tahsil → hesap hareketi silme (`hareketSil`, yetki/onay orada), ciro/iade → cari hareketi silme
+  // (App'teki fiş silme kapısı), kayıt doğurmayan aşama → yalnız durum.
+  function cekSonIslemiGeriAl(id) {
+    const cek = cekler.find((c) => c.id === id);
+    const son = cekSonIslemi(cek);
+    if (!son) return showToast("Bu çekte geri alınacak bir işlem yok");
+    if (son.tur === "hesap") return hareketSil(son.hesapTur, son.hesapId, son.hareketId);
+    // Cari fişi silmek bir SİLME işlemi: kasa hareketi silmedeki yetki kuralının aynısı.
+    if (kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme")) {
+      return showToast("İşlemi geri almak için Kasa & Banka silme yetkisi gerekiyor — yöneticinize başvurun");
+    }
+    if (son.tur === "cari") {
+      if (!onCekCariHareketSil || !onCekCariHareketSil(son.hareketId)) {
+        showToast("Bu işlemin cari hareketi bulunamadı — geri alınamadı");
+      }
+      return;
+    }
+    const yeni = cekDurumGeriAl(cek, { kullanici: islemKullanicisiAd() });
+    if (!yeni) return;
+    onSave({ ...muhasebe, cekler: cekler.map((c) => (c.id === id ? yeni : c)) });
+    gunlukYaz(`Çek işlemi geri alındı: ${cek.cekNo || "no yok"}`, "muhasebe", { cekId: id, durum: yeni.durum });
+    showToast(`${CEK_DURUM_GERI_ALMA[son.durum].etiket} — ${cek.cekNo || "çek"} yeniden "${yeni.durum}"`);
+  }
+
   function cekSil(id, onaylandi) {
     const cek = cekler.find((c) => c.id === id);
     // AŞAMA GEÇMİŞİ OLAN ÇEK SİLİNMEZ (kullanıcı, 6 Eylül: "ciro edilen çek silinememeli, aşama
@@ -478,7 +503,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
       )}
 
       {altSekme === "cek" && (
-        <CekListesi cekler={cekler} cariler={cariler} kurlar={kurlar} onEkle={cekEkle} onSil={cekSil} onIslem={onCekIslem} bankalar={bankalar} kasalar={kasalar} gorseller={cekGorselleri} onGorselKaydet={onCekGorselKaydet} />
+        <CekListesi cekler={cekler} cariler={cariler} kurlar={kurlar} onEkle={cekEkle} onSil={cekSil} onIslem={onCekIslem} onSonIslemiGeriAl={cekSonIslemiGeriAl} bankalar={bankalar} kasalar={kasalar} gorseller={cekGorselleri} onGorselKaydet={onCekGorselKaydet} />
       )}
     </div>
   );

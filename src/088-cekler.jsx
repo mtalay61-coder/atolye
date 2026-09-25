@@ -62,8 +62,10 @@ const cekEkleVeIsle = useCallback((veri) => {
       tarih: bugunYerel(),
       zaman: new Date().toISOString(),
       yon: hareketYonu(islemTipi),
-      tutar: cek.tutar,
-      paraBirimi: cek.paraBirimi || "TRY",
+      // CARİNİN HESAP BİRİMİNDE (v1.459.0): TL çek dolar carisine $ olarak işlenebilir; form
+      // çevrimi `cariTutar`/`cariPB` ile getiriyor. Yoksa çekin kendi tutarı ve birimi.
+      tutar: veri.cariPB && veri.cariTutar > 0 ? veri.cariTutar : cek.tutar,
+      paraBirimi: veri.cariPB && veri.cariTutar > 0 ? veri.cariPB : (cek.paraBirimi || "TRY"),
       odemeSekli: "Çek",
       vade: cek.vadeTarihi || "",
       fisNo: fisNoSiradaki(fisOnEki(islemTipi), tumFisNumaralari(cariler)),

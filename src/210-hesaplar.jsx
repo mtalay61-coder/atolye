@@ -975,7 +975,9 @@ const CEK_DURUM_RENK = {
 
 // `onDurumGuncelle` KALDIRILDI: durum artık listeden seçilmiyor, işlemler penceresinden geçiyor.
 // Kullanılmayan bir prop, "buradan da değiştirilebilir" izlenimi bırakırdı.
-function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onEkle, onSil, onIslem, onGorselKaydet }) {
+function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onEkle, onSil, onIslem, onSonIslemiGeriAl, onGorselKaydet }) {
+  // "Son İşlemi Geri Al" iki adımlı: ilk dokunuş sorar, ikincisi yapar (fiş/hesap kaydı siliniyor).
+  const [geriAlOnayId, setGeriAlOnayId] = useState(null);
   const [showYeni, setShowYeni] = useState(false);
   // İŞLEMLER AÇILIR PENCEREDE (kullanıcı, 6 Eylül: "onlar için ekran kalabalık olur, İşlemler
   // diye buton ekle, tıklayınca seçtir, açılır pencere olduğu gibi"). Beş işlem × her satır,
@@ -989,7 +991,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
   // nereden girildiğine göre eksik kalmasına yol açardı.
   // `tlKarsiligi` + `kur`: dövizli çekin kayıt anındaki TL değeri. Vade geldiğinde kur değişmiş
   // olacak; çekin GİRİLDİĞİ günkü karşılığı ayrı bir bilgi ve sonradan hesaplanamaz.
-  const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "" };
+  const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "" };
   const [form, setForm] = useState(BOS_CEK);
   const [filtre, setFiltre] = useState("Tümü");
   // KENDİ ÇEK DEFTERİMİZ (kullanıcı, 6 Eylül: "verilen çek için kendi çek defterimiz olması
@@ -1006,10 +1008,27 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
     // TL karşılığı ve kur SAYI olarak saklanıyor; boşsa hiç yazılmıyor (TRY çeklerde anlamsız).
     const tl = parseFloat(form.tlKarsiligi);
     const kurSayi = parseFloat(form.kur);
+    // CARİYE İŞLENECEK TUTAR (v1.459.0 — kullanıcı: "TL çek alınıp USD hesabına izlenebilir").
+    // Çek kendi biriminde kalır; cari hareketi carinin hesap biriminde yazılır. Birimler aynıysa
+    // çevrim yok. Farklıysa tutar ZORUNLU: çekin tutarını başka birimdeki hesaba olduğu gibi
+    // yazmak bakiyeyi sessizce bozardı.
+    const cekPB = form.paraBirimi || "TRY";
+    const cariPB = form.cariId ? (form.cariPB || cekPB) : cekPB;
+    // Kutu boşken ekranda güncel kurla ÖNERİLEN tutar görünüyor; kullanıcı dokunmadan kaydederse
+    // o değer geçerli (görünen ile kaydedilen aynı olmalı — yoksa kaydet sessizce reddederdi).
+    const cariSoru = cariPB !== cekPB ? kurSorusu(cekPB, cariPB, kurlar) : null;
+    const cariTutar = cariPB === cekPB ? tutar
+      : form.cariTutar !== "" ? parseFloat(form.cariTutar)
+      : (cariSoru ? kurUygula(tutar, cariSoru.onerilen, cariSoru.bolme) : null);
+    if (form.cariId && cariPB !== cekPB && !(cariTutar > 0)) return;
+    // TL cariye döviz çek: cariye işlenen TL, çekin TL karşılığıdır — ikinci kez sorulmadı.
+    const tlDeger = tl > 0 ? tl : (cariPB === "TRY" && cekPB !== "TRY" ? cariTutar : 0);
+    const { cariKur, ...kalanForm } = form;
     onEkle({
-      ...form, tutar,
-      tlKarsiligi: tl > 0 ? tl : undefined,
-      kur: kurSayi > 0 ? kurSayi : (tl > 0 && tutar > 0 ? Math.round((tl / tutar) * 10000) / 10000 : undefined),
+      ...kalanForm, tutar,
+      cariPB, cariTutar,
+      tlKarsiligi: tlDeger > 0 ? tlDeger : undefined,
+      kur: kurSayi > 0 ? kurSayi : (tlDeger > 0 && tutar > 0 ? Math.round((tlDeger / tutar) * 10000) / 10000 : undefined),
     });
     setForm(BOS_CEK);
     setShowYeni(false);
@@ -1119,7 +1138,15 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Cari
-            <select value={form.cariId} onChange={(e) => setForm({ ...form, cariId: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 140 }}>
+            <select
+              value={form.cariId}
+              onChange={(e) => {
+                // Carinin HESAP BİRİMİ varsayılan: dolarla çalışan cariye TL çek → cariye $ işlenir.
+                const cr = (cariler || []).find((x) => x.id === e.target.value);
+                setForm({ ...form, cariId: e.target.value, cariPB: (cr && cr.paraBirimi) || form.paraBirimi || "TRY", cariTutar: "", cariKur: "" });
+              }}
+              style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 140 }}
+            >
               <option value="">Seçin…</option>
               {secilebilirler(cariler, form.cariId).map((c) => <option key={c.id} value={c.id}>{secenekEtiketi(c, c.unvan)}</option>)}
             </select>
@@ -1149,7 +1176,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
           {/* KUR ÇEVİRİCİ — kullanıcı (6 Eylül): "Çek girişi yaparken de kur çevirici gerekli.
               Bunu para olan HER YERDE yap mutlaka."
               Çift yönlü (7z-6'daki kural): TL karşılığına ya da kura yazılabiliyor. */}
-          {(form.paraBirimi || "TRY") !== "TRY" && (() => {
+          {(form.paraBirimi || "TRY") !== "TRY" && !(form.cariId && (form.cariPB || form.paraBirimi) === "TRY") && (() => {
             const soru = kurSorusu(form.paraBirimi, "TRY", kurlar);
             const tutar = parseFloat(form.tutar);
             const tl = parseFloat(form.tlKarsiligi);
@@ -1179,6 +1206,64 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     style={{ width: 90, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                   />
                 </label>
+              </>
+            );
+          })()}
+          {/* CARİYE İŞLENECEK — KUR ÇEVİRİCİ (v1.459.0). Cari seçiliyse carinin hesap birimi
+              seçilebiliyor (varsayılan carinin kendi birimi); çekten farklıysa tutar ve kur, çift
+              yönlü (7z-6 kuralı: birine yazınca öteki hesaplanır). Alan boşken güncel kurla dolu. */}
+          {form.cariId && (() => {
+            const cekPB = form.paraBirimi || "TRY";
+            const cariPB = form.cariPB || cekPB;
+            const soru = cariPB !== cekPB ? kurSorusu(cekPB, cariPB, kurlar) : null;
+            const tutar = parseFloat(form.tutar);
+            const onerilen = soru && tutar > 0 ? kurUygula(tutar, soru.onerilen, soru.bolme) : null;
+            const cariTutarKutusu = form.cariTutar !== "" ? form.cariTutar : (onerilen != null ? String(onerilen) : "");
+            const kurKutusu = form.cariKur !== "" ? form.cariKur
+              : soru ? (kurTersHesapla(tutar, parseFloat(cariTutarKutusu), soru.bolme) ?? (soru.onerilen != null ? soru.onerilen : "")) : "";
+            const lbl = { display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 };
+            const kutu = { padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 };
+            return (
+              <>
+                <label style={lbl}>
+                  Cari hesabı
+                  <select
+                    data-cek-cari-pb="1"
+                    value={cariPB}
+                    onChange={(e) => setForm({ ...form, cariPB: e.target.value, cariTutar: "", cariKur: "" })}
+                    style={kutu}
+                  >
+                    {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
+                  </select>
+                </label>
+                {soru && (
+                  <>
+                    <label style={lbl}>
+                      {`Cariye işlenecek (${PARA_SEMBOLU[cariPB] || cariPB})`}
+                      <input
+                        data-cek-cari-tutar="1"
+                        type="number" step="any" min="0"
+                        value={cariTutarKutusu}
+                        onChange={(e) => setForm({ ...form, cariTutar: e.target.value, cariKur: "" })}
+                        title="Carinin hesabına bu çek karşılığında işlenecek tutar"
+                        style={{ ...kutu, width: 110, textAlign: "right" }}
+                      />
+                    </label>
+                    <label style={lbl}>
+                      {`Kur (1 ${soru.a} = ? ${soru.b})`}
+                      <input
+                        data-cek-cari-kur="1"
+                        type="number" step="any" min="0"
+                        value={kurKutusu}
+                        onChange={(e) => {
+                          const yeni = kurUygula(tutar, parseFloat(e.target.value), soru.bolme);
+                          setForm({ ...form, cariKur: e.target.value, cariTutar: yeni != null ? String(yeni) : form.cariTutar });
+                        }}
+                        style={{ ...kutu, width: 90 }}
+                      />
+                    </label>
+                  </>
+                )}
               </>
             );
           })()}
@@ -1358,6 +1443,32 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                 >
                   {c.durum}
                 </span>
+                {/* SON İŞLEMİ GERİ AL (v1.459.0 — kullanıcı: "ciro edilen çek geri iade alınabilir,
+                    son işlemi sil olsun"). Ciro/iade fişi, tahsil hesap kaydı ya da tahsile verme
+                    geri alınır; çek bir önceki durumuna döner. Kural `cekSonIslemi`de. */}
+                {onSonIslemiGeriAl && cekSonIslemi(c) && (
+                  <button
+                    type="button"
+                    data-cek-geri-al={c.id}
+                    className="btn-ghost"
+                    style={{ padding: "3px 10px", fontSize: 11, color: geriAlOnayId === c.id ? "#fff" : "var(--erp-warn)",
+                      background: geriAlOnayId === c.id ? "var(--erp-warn)" : undefined, borderColor: "var(--erp-warn)" }}
+                    title={(() => {
+                      const son = cekSonIslemi(c);
+                      return son.tur === "cari" ? "Ciro/iade fişi silinir, çek önceki durumuna döner"
+                        : son.tur === "hesap" ? "Kasa/bankadaki tahsil kaydı silinir, çek önceki durumuna döner"
+                        : "Çek önceki durumuna döner";
+                    })()}
+                    onClick={() => {
+                      if (geriAlOnayId !== c.id) { setGeriAlOnayId(c.id); return; }
+                      setGeriAlOnayId(null);
+                      onSonIslemiGeriAl(c.id);
+                    }}
+                    onBlur={() => setTimeout(() => setGeriAlOnayId((v) => (v === c.id ? null : v)), 200)}
+                  >
+                    <RefreshCw size={12} /> {geriAlOnayId === c.id ? "Emin misiniz? Geri al" : "Son İşlemi Geri Al"}
+                  </button>
+                )}
                 <SilOnayButonu onConfirm={() => onSil(c.id)} boyut={12} />
                 {/* GEÇMİŞ — aşama aşama, eskiden yeniye. Geçmiş EKLENİR, üzerine yazılmaz:
                     çekin nereden geçtiği sorusunun tek cevabı burası. */}
@@ -1476,7 +1587,15 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                       Kime ciro ediliyor
                       <select
                         value={islemForm.cariId}
-                        onChange={(e) => setIslemForm({ ...islemForm, cariId: e.target.value })}
+                        onChange={(e) => {
+                          // ALICI CARİNİN HESAP BİRİMİ varsayılan (v1.459.0): TL çek dolar carisine
+                          // ciro edilince tutar güncel kurla $'a çevrilmiş gelir; değiştirilebilir.
+                          const cr = (cariler || []).find((x) => x.id === e.target.value);
+                          const pb = (cr && cr.paraBirimi) || cekPB;
+                          const sr = kurSorusu(cekPB, pb, kurlar);
+                          const on = sr ? kurUygula(c.tutar, sr.onerilen, sr.bolme) : c.tutar;
+                          setIslemForm({ ...islemForm, cariId: e.target.value, paraBirimi: pb, tutar: on != null ? String(on) : String(c.tutar), kurGirdi: "" });
+                        }}
                         style={{ padding: "6px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}
                       >
                         <option value="">Seçin…</option>

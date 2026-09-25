@@ -455,9 +455,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.458.0";
+const SURUM = "1.459.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Kasa & Banka, Cek & Senet menuleri; cari pasife al dugmesi";
+const SURUM_NOTU = "Cek girisinde ve ciroda cari birimine kur cevirici; cekte son islemi geri al";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -466,6 +466,11 @@ const SURUM_NOTU = "Kasa & Banka, Cek & Senet menuleri; cari pasife al dugmesi";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.459.0", tarih: "25.09.2026",
+    eklenen: ["Çek girişinde kur çevirici: TL çek dolar carisine $ olarak işlenebilir (Çek & Senet'te 'Cari hesabı' birimi; cari kartında çekin kendi para birimi ve tutarı)",
+              "Çek listesinde 'Son İşlemi Geri Al': ciro, iade, tahsil, bankaya tahsile verme ve karşılıksız geri alınır, çek önceki durumuna döner"],
+    degisen: ["Ciroda alıcı cari seçilince tutar o carinin para birimine güncel kurla çevrilmiş gelir"],
+    duzeltilen: [] },
   { surum: "1.458.0", tarih: "25.09.2026",
     eklenen: ["Finans altında 'Çek & Senet' menü öğesi: çekler ayrı ekranda",
               "Cari kartında yazılı 'Pasife Al / Aktife Al' düğmesi (Ekstre Yazdır'ın yanında); pasife alınca bildirim"],

@@ -403,6 +403,9 @@ function cekHareketKilidi(hareketIdler, { cariler, muhasebe }) {
       mesaj = `${cekAdi} ${karsi} carisine ${geriAlma.fiil} — bu hareket silinemez. Önce ${geriAlma.isim} geri alın: ` +
         `${karsi} ekstresinden ${fisNo ? `${fisNo} fişini` : `${geriAlma.isim} hareketini`} silin, ` +
         `çek "${(satir && satir.oncekiDurum) || "Portföyde"}" durumuna döner.`;
+    } else if (durum !== "Portföyde" && CEK_DURUM_GERI_ALMA[durum]) {
+      mesaj = `${cekAdi} "${durum}" aşamasında — giriş hareketi silinemez. Önce Çek & Senet ekranında ` +
+        `çekin "Son İşlemi Geri Al" düğmesiyle çeki portföye döndürün.`;
     } else if (durum !== "Portföyde") {
       mesaj = `${cekAdi} "${durum}" aşamasında — bu aşamanın geri alma yolu olmadığı için çekin giriş ` +
         `hareketi silinemez.`;
@@ -473,6 +476,70 @@ function cekIslemGeriAl(cek, silinenIdler, { tarih, kullanici } = {}) {
       geriAlma: true,
       kullanici: kullanici || null,
       not: tanim.not,
+    }],
+  };
+}
+
+// ---- SON İŞLEMİ GERİ AL (25 Eylül, v1.459.0) ----------------------------------------------------
+//
+// Kullanıcı: "Ciro edilen çek geri iade alınabilir, bunun için son işlemi sil olsun — ciro edilen
+// çekte veya bankaya tahsil için."
+//
+// Geri alma yolu zaten vardı ama DOLAYLIYDI: ciroyu geri almak için alıcı carinin ekstresinde ciro
+// fişini bulup silmek, tahsili geri almak için banka hareketlerinde tahsil kaydını bulmak gerekiyordu
+// (kilit mesajı bunu tarif ediyordu). Çekin üstünde tek düğme artık AYNI kapıyı çağırıyor — ikinci
+// bir geri alma mantığı yazılmadı:
+//   "cari"  → ciro/iade: bağlı cari hareketi silinir (fiş silme kapısı, `cekIslemGeriAl` çalışır)
+//   "hesap" → tahsil: bağlı kasa/banka hareketi silinir (hesap hareketi silme, aynı kural)
+//   "durum" → tahsile verme / karşılıksız: kayıt DOĞURMAYAN aşamalar; yalnız durum geri döner
+//             (`cekDurumGeriAl`). Eskiden bunların hiç geri alma yolu yoktu: yanlış bankaya
+//             verilen çek orada kalıyordu.
+// Geri alınabilecek bir şey yoksa null (Portföyde, ya da eski kayıtta bağ bulunamadı).
+function cekSonIslemi(cek) {
+  if (!cek) return null;
+  const durum = cek.durum || "Portföyde";
+  if (durum === "Portföyde") return null;
+  const satir = [...cekEtkinGecmis(cek)].reverse().find((g) => g.yeniDurum === durum) || null;
+  if (CEK_GERI_ALMA[durum]) {
+    if (satir && satir.hesapHareketId) {
+      return { tur: "hesap", durum, satir, hareketId: satir.hesapHareketId, hesapTur: satir.hesapTur || "banka", hesapId: satir.hesapId || satir.bankaId };
+    }
+    const hareketId = (satir && satir.hareketId) || (!satir && durum === "Ciro Edildi" ? cek.ciroHareketId : null);
+    return hareketId ? { tur: "cari", durum, satir, hareketId } : null;
+  }
+  if (CEK_DURUM_GERI_ALMA[durum] && satir) return { tur: "durum", durum, satir };
+  return null;
+}
+
+// KAYIT DOĞURMAYAN AŞAMALAR — yalnız durum geri döner (bkz. `cekSonIslemi`).
+const CEK_DURUM_GERI_ALMA = {
+  "Tahsilde": { etiket: "Tahsile verme geri alındı" },
+  "Karşılıksız": { etiket: "Karşılıksız geri alındı" },
+};
+
+function cekDurumGeriAl(cek, { tarih, kullanici } = {}) {
+  const son = cekSonIslemi(cek);
+  if (!son || son.tur !== "durum") return null;
+  const tanim = CEK_DURUM_GERI_ALMA[son.durum];
+  const yeniDurum = son.satir.oncekiDurum || "Portföyde";
+  return {
+    ...cek,
+    durum: yeniDurum,
+    // Tahsile verme geri alınınca çek artık o bankada beklemiyor.
+    tahsilBankaId: son.durum === "Tahsilde" ? null : cek.tahsilBankaId || null,
+    tahsilBankaAd: son.durum === "Tahsilde" ? null : cek.tahsilBankaAd || null,
+    gecmis: [...(cek.gecmis || []), {
+      id: uid("cekh"),
+      islem: tanim.etiket,
+      oncekiDurum: son.durum,
+      yeniDurum,
+      tarih: tarih || bugunYerel(),
+      bankaId: son.satir.bankaId || null,
+      bankaAd: son.satir.bankaAd || null,
+      geriAlinanSatirId: son.satir.id,
+      geriAlma: true,
+      kullanici: kullanici || null,
+      not: "Son işlem geri alındı",
     }],
   };
 }
