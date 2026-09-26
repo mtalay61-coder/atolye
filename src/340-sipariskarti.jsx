@@ -610,6 +610,13 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     Renk adı artık ortalanmış ve tek başına. */}
                                 <td style={{ padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", textAlign: "center", color: "var(--erp-text)" }}>
                                   {rg.renk}
+                                  {/* Renk bazlı açıklama (v1.470.0, sipariş formunda girilir). */}
+                                  {(() => {
+                                    const aciklama = (rg.kalemler.find((k) => k.aciklama) || {}).aciklama;
+                                    return aciklama ? (
+                                      <div data-kart-kalem-aciklama="1" style={{ fontSize: 11, fontWeight: 500, color: "var(--erp-text-2)", whiteSpace: "normal", maxWidth: 200, margin: "2px auto 0" }}>{aciklama}</div>
+                                    ) : null;
+                                  })()}
                                 </td>
                                 {tumBedenler.map((b) => {
                                   const k = kalemBedenIndex[b];

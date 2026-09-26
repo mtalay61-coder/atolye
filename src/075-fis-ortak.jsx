@@ -360,6 +360,7 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
     let g = gruplar.find((x) => x.anahtar === anahtar);
     if (!g) g = { anahtar, urunAd: k.urunAd, renk: k.renk || "", hucreler: {}, toplam: 0, birim: k.birim || "", birimFiyat: k.birimFiyat, paraBirimi: k.paraBirimi || "TRY", tutar: 0 }, gruplar.push(g);
     g.hucreler[k.beden || ""] = (g.hucreler[k.beden || ""] || 0) + (k.miktar || 0);
+    if (!g.aciklama && k.aciklama) g.aciklama = k.aciklama;   // renk bazlı açıklama (v1.470.0)
     g.toplam += k.miktar || 0;
     g.tutar += (k.miktar || 0) * (k.birimFiyat || 0);
     if (g.birimFiyat !== k.birimFiyat) g.birimFiyat = null; // farklı fiyatlar → "çeşitli"
@@ -397,7 +398,7 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
       <tbody>
         ${gruplar.map((g) => `<tr style="border-bottom:1px solid #ddd">
           <td>${resimBul(g) ? `<img src="${resimBul(g)}" style="width:32px;height:32px;object-fit:cover;border-radius:4px" />` : ""}</td>
-          <td style="font-weight:700">${esc(g.urunAd)}</td><td class="mono">${esc(g.renk)}</td>
+          <td style="font-weight:700">${esc(g.urunAd)}</td><td class="mono">${esc(g.renk)}${g.aciklama ? `<div style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:10px;color:#7A6A50">${esc(g.aciklama)}</div>` : ""}</td>
           ${bedenler.map((b) => `<td class="mono" style="text-align:center">${g.hucreler[b] || "—"}</td>`).join("")}
           <td class="mono" style="text-align:right;font-weight:700;border-left:1px dashed #999">${g.toplam} ${esc(g.birim)}</td>
           <td class="mono" style="text-align:right">${g.birimFiyat == null ? "çeşitli" : para(g.birimFiyat, g.paraBirimi)}</td>

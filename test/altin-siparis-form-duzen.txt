@@ -1,0 +1,41 @@
+{
+ "barkod": {
+  "acilista": {
+   "dugme": true,
+   "kutu": false
+  },
+  "kapatinca": {
+   "kutu": false
+  },
+  "tiklayinca": {
+   "kutu": true
+  }
+ },
+ "duzen": {
+  "asortiAciklamaEkleAyniSatirda": true,
+  "ekleAdi": "Ekle",
+  "ekleMatrisinUstunde": true,
+  "ekleYesil": "rgb(47, 143, 70)",
+  "fiyatUrunleAyniSatirda": true,
+  "kalemlereEkleYazisiYok": true
+ },
+ "eklemeSonrasi": [
+  "Siyah: (boş)",
+  "Taba: sert taban"
+ ],
+ "formSifirlandi": "kutu gizli",
+ "hatalar": [],
+ "kartta": [
+  "fermuarlı",
+  "sert taban"
+ ],
+ "kayit": [
+  "Siyah 40 × 5: fermuarlı",
+  "Taba 40 × 3: sert taban",
+  "Taba 41 × 1: sert taban"
+ ],
+ "satirdaDuzeltince": [
+  "Siyah: fermuarlı",
+  "Taba: sert taban"
+ ]
+}

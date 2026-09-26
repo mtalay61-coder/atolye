@@ -101,6 +101,9 @@ async function calistir() {
   if (eskiGorunum) await sayfa.setViewportSize(eskiGorunum);
   await sayfa.waitForTimeout(300);
 
+  // v1.470.0: barkod paneli katlanır, kapalı geliyor — önce açılıyor.
+  await sayfa.locator("[data-barkod-paneli-ac]:visible").first().click();
+  await sayfa.waitForTimeout(200);
   const kutu = sayfa.locator('input[title="Barkod"]:visible').first();
   const kalemSayisi = async () => sayfa.evaluate(() =>
     document.querySelectorAll('input[title^="Sipariş miktarı"], input[title^="Miktar"]').length);

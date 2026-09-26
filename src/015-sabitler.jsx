@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.469.0";
-const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Sipariste renk yazarak ve resimli seciliyor";
+const SURUM = "1.470.0";
+const SURUM_TARIHI = "2026-09-26";
+const SURUM_NOTU = "Siparis formu sadelesti: fiyat ust satirda, yesil Ekle, renk bazli aciklama";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Sipariste renk yazarak ve resimli seciliyor";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.470.0", tarih: "26.09.2026",
+    eklenen: ["Sipariş kalemlerine renk bazlı açıklama: eklerken yazılıyor, listede satırda düzeltiliyor; sipariş kartında ve çıktısında görünüyor"],
+    degisen: ["Sipariş formunda birim fiyat ve para birimi ürün/renk satırında", "Asorti seçimi, açıklama ve yeşil 'Ekle' düğmesi tek satırda; ölçü matrisi altında", "Barkod/kamera/ses/fotoğraf paneli tıklayınca açılıyor (son tercih hatırlanıyor)"],
+    duzeltilen: [] },
   { surum: "1.469.0", tarih: "26.09.2026",
     eklenen: ["Siparişte renk seçerken ürünün renk resimleri listede ve seçili rengin kutusunda görünüyor"],
     degisen: ["Siparişte renk seçimi ve '+ Renk' ile yeni model rengi pozisyonları yazdıkça daralan listeden"],

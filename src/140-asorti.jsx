@@ -153,7 +153,8 @@ function urunOlcuTipi(stok, urunId) {
 //      hiçbir şey yapamaz. Çağıran `olcuTipi` vermeyi unutsa bile bu süzgeç tutar.
 // Kural bileşenin İÇİNDE: her çağrı yerinde tekrarlansaydı, yeni eklenen bir ekranda
 // unutulurdu. Ayrıca `asortidenetim.js` her çağrı yerinde `olcuTipi` verilmesini zorunlu tutar.
-function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi, kalanlar, onBilgi, onAsortiliKoliler }) {
+// `satirIci`: başka kontrollerle aynı satırda duruyor (sipariş formu, v1.470.0) — alt boşluğu yok.
+function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi, kalanlar, onBilgi, onAsortiliKoliler, satirIci = false }) {
   // Varsayılan olarak listedeki ilk asorti seçili gelir — kullanıcı isterse değiştirebilir.
   const [asortiId, setAsortiId] = useState((asortiler && asortiler[0]) ? asortiler[0].id : "");
   const [setSayisi, setSetSayisi] = useState("1");
@@ -226,7 +227,7 @@ function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi,
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: satirIci ? 0 : 8 }}>
       <select value={asortiId} onChange={(e) => setAsortiId(e.target.value)} style={{ ...inputStyle, width: 160, fontSize: 12 }}>
         <option value="">Asorti seçin (opsiyonel)…</option>
         {asortiler.map((a) => <option key={a.id} value={a.id}>{a.ad}</option>)}
