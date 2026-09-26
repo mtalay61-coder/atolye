@@ -1001,9 +1001,9 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                 <table style={{ width: "auto", minWidth: "100%" }}>
                                   <thead>
                                     <tr>
-                                      <th style={{ fontSize: 10 }}>Renk \ Beden</th>
+                                      <th style={{ fontSize: 10 }}>{matrisKoseBasligi(renkler, bedenler)}</th>
                                       {bedenler.map((b) => (
-                                        <th key={b} className="mono" style={{ fontSize: 10, textAlign: "center" }}>{b}</th>
+                                        <th key={b} className="mono" style={{ fontSize: 10, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
                                       ))}
                                     </tr>
                                   </thead>
@@ -1014,7 +1014,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                       // stok ekstresinde göründüğü renkte burada da görünür.
                                       <tr key={r} style={kaynakRenkStili("Üretim")}>
                                         <td style={{ fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", padding: "3px 6px" }}>
-                                          <ColorSwatch src={g.renkResimleri[r]} editable={false} size={18} /> {r}
+                                          <ColorSwatch src={g.renkResimleri[r]} editable={false} size={18} /> {olcuGoster(r)}
                                         </td>
                                         {bedenler.map((b) => {
                                           // HATA DÜZELTMESİ: burada `find` kullanılıyordu ve aynı renk/beden için

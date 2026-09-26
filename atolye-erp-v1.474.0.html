@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.471.0</title>
+<title>Atölye ERP 1.474.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1318,6 +1318,14 @@ function olcuGoster(deger, bos = "") {
     const d = deger == null ? "" : String(deger).trim();
     return d === "Standart" ? bos : d;
 }
+// Matris tablosunun köşe başlığı (v1.474.0). "Renk \ Beden" yalnız ikisi de gerçekse; renksiz
+// üründe "Beden", bedensiz üründe "Renk", ikisi de yer tutucuysa boş — satır/sütunda "Standart"
+// yazılmadığı (`olcuGoster`) hâlde köşede "Renk \ Beden" kalınca olmayan eksenleri anlatıyordu.
+function matrisKoseBasligi(renkler, bedenler) {
+    const renkVar = (renkler || []).some((r) => olcuGoster(r));
+    const bedenVar = (bedenler || []).some((b) => olcuGoster(b));
+    return [renkVar ? "Renk" : null, bedenVar ? "Beden" : null].filter(Boolean).join(" \\ ");
+}
 // "Standart" yer tutucusu ile boş dize aynı varyantı gösteriyor (078-fisyaz'daki kuralın aynısı).
 function stokAnahtarNrm(x) {
     const d = x == null ? "" : String(x).trim();
@@ -1919,9 +1927,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.471.0";
+const SURUM = "1.474.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Hammadde renkleri malzeme tipine baglaniyor, ortak renk isaretli";
+const SURUM_NOTU = "Renksiz/bedensiz tabloda Renk Beden basligi yazmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1929,6 +1937,18 @@ const SURUM_NOTU = "Hammadde renkleri malzeme tipine baglaniyor, ortak renk isar
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.474.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: ["Stok matrislerinin köşe başlığı eksene göre: renk ve beden varsa 'Renk \\ Beden', yalnız biri varsa 'Renk' ya da 'Beden', hiçbiri yoksa boş"],
+        duzeltilen: ["Üretim kartındaki çıkış matrisinde de 'Standart' yazmıyor"] },
+    { surum: "1.473.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Ürün kartı özetinde bedensiz renkli üründe '2 renk × 0 beden' yerine '2 renk'"] },
+    { surum: "1.472.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Renk/beden seçilmeyen üründe yeni ürün formu matrisinde, ürün kartında ve kart fiş matrislerinde 'Standart' yazmıyor (özet: 'tek stok kalemi')"] },
     { surum: "1.471.0", tarih: "26.09.2026",
         eklenen: ["Başka malzeme tipinin rengi yazınca bulunuyor ve seçilince iki tipin ortak rengi oluyor; ortak renkler etiketli"],
         degisen: ["Hammadde açarken/ürün kartında seçilen renkler ürünün malzeme tipine bağlanıyor (genel renkler dahil)", "Renk listesinde önce bu tipin renkleri, sonra genel renkler"],
@@ -22402,15 +22422,15 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                 React.createElement("button", { className: "btn-ghost", onClick: buildMatrix }, "Matris Olu\u015Ftur")),
             matrix && (React.createElement("div", { style: { marginTop: 16, overflowX: "auto" } },
                 React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 8, fontWeight: 600 } }, "Her renk sat\u0131r\u0131n\u0131n solundaki kutuya bu \u00FCr\u00FCne \u00F6zel g\u00F6rsel ekleyebilirsiniz. Ba\u015Flang\u0131\u00E7 miktarlar\u0131 0'd\u0131r \u2014 stok giri\u015Fleri kaydettikten sonra \u00DCretim veya Sat\u0131nalma kayna\u011F\u0131yla yap\u0131l\u0131r."),
-                React.createElement("table", { style: { width: "auto", minWidth: "100%" } },
+                React.createElement("table", { "data-stok-matrisi": "form", style: { width: "auto", minWidth: "100%" } },
                     React.createElement("thead", null,
                         React.createElement("tr", null,
-                            React.createElement("th", null, "Renk \\ Beden"),
-                            matrix.bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { textAlign: "center" } }, b))))),
+                            React.createElement("th", null, matrisKoseBasligi(matrix.renkler, matrix.bedenler)),
+                            matrix.bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { textAlign: "center" } }, olcuGoster(b, "Miktar")))))),
                     React.createElement("tbody", null, matrix.renkler.map((r) => (React.createElement("tr", { key: r },
                         React.createElement("td", { style: { fontWeight: 600, whiteSpace: "nowrap" } },
                             React.createElement(ColorSwatch, { src: matrix.renkResimleri[r], onUrlSave: (url) => setMatrixRenkResmi(r, url), onRemove: () => removeMatrixRenkResmi(r), size: 26 }),
-                            r),
+                            olcuGoster(r)),
                         matrix.bedenler.map((b) => (React.createElement("td", { key: b, className: "mono", style: { textAlign: "center", color: "var(--erp-text-3)" } }, "0")))))))))),
             React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 14 } },
                 React.createElement("button", { className: "btn-primary btn-save", onClick: saveProduct, disabled: !matrix },
@@ -23762,25 +23782,26 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                             marginBottom: stokMatrisAcik ? 10 : 0,
                         } },
                         React.createElement("span", { style: { fontWeight: 700, fontSize: 13, color: "var(--erp-text)" } }, "Renkler ve Bedenler"),
-                        React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } },
-                            renkler.length,
-                            " renk \u00D7 ",
-                            bedenler.length,
-                            " beden"),
+                        React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } }, (() => {
+                            const rs = renkler.filter((r) => olcuGoster(r)).length;
+                            const bs = bedenler.filter((b) => olcuGoster(b)).length;
+                            // Sıfır olan taraf yazılmıyor: bedensiz renkli üründe "2 renk × 0 beden" garip duruyordu.
+                            return rs && bs ? `${rs} renk × ${bs} beden` : rs ? `${rs} renk` : bs ? `${bs} beden` : "tek stok kalemi";
+                        })()),
                         React.createElement("span", { style: { marginLeft: "auto", display: "flex" } }, stokMatrisAcik ? React.createElement(ChevronDown, { size: 18, color: "var(--erp-text-3)" }) : React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" }))),
                     stokMatrisAcik && (React.createElement("div", { style: { overflowX: "auto" } },
-                        React.createElement("table", { style: { width: "auto", minWidth: "100%" } },
+                        React.createElement("table", { "data-stok-matrisi": "kart", style: { width: "auto", minWidth: "100%" } },
                             React.createElement("thead", null,
                                 React.createElement("tr", null,
-                                    React.createElement("th", null, "Renk \\ Beden"),
+                                    React.createElement("th", null, matrisKoseBasligi(renkler, bedenler)),
                                     bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { textAlign: "center", position: "relative" } },
-                                        b,
+                                        olcuGoster(b, "Miktar"),
                                         React.createElement(SilOnayButonu, { onConfirm: () => onRemoveBeden(product.id, b), boyut: 12, baslikNormal: `${b} ölçüsü bu üründen kaldırılsın mı?` })))),
                                     React.createElement("th", null))),
                             React.createElement("tbody", null, renkler.map((r) => (React.createElement("tr", { key: r },
                                 React.createElement("td", { style: { fontWeight: 600, whiteSpace: "nowrap" } },
                                     React.createElement(ColorSwatch, { src: (product.renkResimleri || {})[r] || product.kapakResmi, onUrlSave: (url) => onRenkResmiChange(product.id, r, url), onRemove: () => onRenkResmiRemove(product.id, r), size: 26 }),
-                                    r,
+                                    olcuGoster(r),
                                     React.createElement(SilOnayButonu, { onConfirm: () => onRemoveRenk(product.id, r), boyut: 12, baslikNormal: `${r} rengi bu üründen kaldırılsın mı?` })),
                                 bedenler.map((b) => {
                                     const qty = getQty(r, b);
@@ -24793,7 +24814,7 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                                 React.createElement("thead", null,
                                                     React.createElement("tr", null,
                                                         React.createElement("th", { style: { fontSize: 13, textAlign: "left", padding: "4px 8px" } }, "Mamul \u2192 Hammadde Rengi"),
-                                                        tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, b))))),
+                                                        tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))))),
                                                 React.createElement("tbody", null, matrisSatirlari.map((ms) => (React.createElement("tr", { key: ms.key },
                                                     React.createElement("td", { style: { padding: "4px 8px", whiteSpace: "nowrap" } },
                                                         React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text)" } }, ms.mamulRenk),
@@ -25718,8 +25739,8 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                 React.createElement("table", { style: { width: "auto", minWidth: "100%" } },
                                     React.createElement("thead", null,
                                         React.createElement("tr", null,
-                                            React.createElement("th", { style: { fontSize: 13 } }, "Renk \\ Beden"),
-                                            gBedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 13, textAlign: "center" } }, b))),
+                                            React.createElement("th", { style: { fontSize: 13 } }, matrisKoseBasligi(gRenkler, gBedenler)),
+                                            gBedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 13, textAlign: "center" } }, olcuGoster(b, "Miktar")))),
                                             React.createElement("th", { className: "mono", style: { fontSize: 13, textAlign: "right", borderLeft: "1px dashed var(--erp-line)", paddingLeft: 8 } }, "Toplam"),
                                             fisFiyatlari && React.createElement("th", { className: "mono", style: { fontSize: 13, textAlign: "right", paddingLeft: 8 } }, "Br. Fiyat"),
                                             fisFiyatlari && React.createElement("th", { className: "mono", style: { fontSize: 13, textAlign: "right", paddingLeft: 8 } }, "Tutar"))),
@@ -25727,7 +25748,7 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                         React.createElement("td", { style: { fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", padding: "3px 6px" } },
                                             React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } },
                                                 React.createElement(ColorSwatch, { src: (product.renkResimleri || {})[r] || product.kapakResmi, editable: false, size: 28 }),
-                                                r)),
+                                                olcuGoster(r))),
                                         gBedenler.map((b) => {
                                             // Aynı fişte AYNI renk/beden için birden fazla hareket olabilir
                                             // (üretim tüketiminde her mamul beden ayrı satır yazar). `find` ile
@@ -25873,15 +25894,15 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                             React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
                                 React.createElement("thead", null,
                                     React.createElement("tr", null,
-                                        React.createElement("th", { style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, "Renk \\ Beden"),
-                                        tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, b))),
+                                        React.createElement("th", { style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, matrisKoseBasligi(tumRenkler, tumBedenler)),
+                                        tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))),
                                         React.createElement("th", { style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" } }, "Tek Fiyat (renk)"))),
                                 React.createElement("tbody", null,
                                     tumRenkler.map((r) => {
                                         const renkKilitli = !!tekFiyatRenkAcikMi(r);
                                         const renkKurali = kuralBul("renk", r);
                                         return (React.createElement("tr", { key: r, style: { borderTop: "1px solid var(--erp-line-soft)" } },
-                                            React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } }, r),
+                                            React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } }, olcuGoster(r)),
                                             tumBedenler.map((b) => {
                                                 const deger = `${r}|${b}`;
                                                 const kural = kuralBul("renkBeden", deger);
@@ -39129,13 +39150,13 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                                 React.createElement("table", { style: { width: "auto", minWidth: "100%" } },
                                                     React.createElement("thead", null,
                                                         React.createElement("tr", null,
-                                                            React.createElement("th", { style: { fontSize: 10 } }, "Renk \\ Beden"),
-                                                            bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 10, textAlign: "center" } }, b))))),
+                                                            React.createElement("th", { style: { fontSize: 10 } }, matrisKoseBasligi(renkler, bedenler)),
+                                                            bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 10, textAlign: "center" } }, olcuGoster(b, "Miktar")))))),
                                                     React.createElement("tbody", null, renkler.map((r) => (React.createElement("tr", { key: r, style: kaynakRenkStili("Üretim") },
                                                         React.createElement("td", { style: { fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", padding: "3px 6px" } },
                                                             React.createElement(ColorSwatch, { src: g.renkResimleri[r], editable: false, size: 18 }),
                                                             " ",
-                                                            r),
+                                                            olcuGoster(r)),
                                                         bedenler.map((b) => {
                                                             // HATA DÜZELTMESİ: burada `find` kullanılıyordu ve aynı renk/beden için
                                                             // birden fazla hareket varsa YALNIZCA İLKİ gösteriliyordu.
@@ -45830,7 +45851,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.471.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.474.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

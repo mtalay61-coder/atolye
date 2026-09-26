@@ -8,6 +8,7 @@
 //   1. Renk/beden seçmeden oluşturulan matriste "Standart" yazmıyor (başlık "Miktar").
 //   2. Kayıt değişmedi: varyant yine Standart/Standart (yer tutucu yalnız gösterimde gizli).
 //   3. Ürün kartında matris başlığı ve satırı "Standart" yazmıyor; özet "tek stok kalemi".
+//   4. (v1.474.0) Renk ve beden yokken köşede "Renk \ Beden" de yazmıyor.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -31,7 +32,8 @@ async function calistir() {
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.getBoundingClientRect().width > 0 && /Matris Oluştur/.test(x.textContent)); if (b) b.click(); });
   await sayfa.waitForTimeout(400);
   const tabloMetni = () => sayfa.evaluate(() => {
-    const t = [...document.querySelectorAll("table")].find((x) => x.getBoundingClientRect().width > 0 && /Renk \\ Beden/i.test(x.textContent));
+    // v1.474.0: köşe başlığı artık eksene göre değişiyor; tablo kendi işaretiyle bulunuyor.
+    const t = [...document.querySelectorAll("[data-stok-matrisi]")].find((x) => x.getBoundingClientRect().width > 0);
     return t ? t.innerText.replace(/\s+/g, " ").trim() : null;
   });
   const formMatrisi = await tabloMetni();

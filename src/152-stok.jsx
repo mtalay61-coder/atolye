@@ -2378,10 +2378,10 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                 Her renk satırının solundaki kutuya bu ürüne özel görsel ekleyebilirsiniz. Başlangıç miktarları 0'dır —
                 stok girişleri kaydettikten sonra Üretim veya Satınalma kaynağıyla yapılır.
               </div>
-              <table style={{ width: "auto", minWidth: "100%" }}>
+              <table data-stok-matrisi="form" style={{ width: "auto", minWidth: "100%" }}>
                 <thead>
                   <tr>
-                    <th>Renk \ Beden</th>
+                    <th>{matrisKoseBasligi(matrix.renkler, matrix.bedenler)}</th>
                     {/* "Standart" yer tutucusu yazılmıyor (v1.472.0, `olcuGoster` — tablolardaki kuralın
                         aynısı, kullanıcı: "standart beden renk olayını halletmiştik, hâlâ çıkıyor"). */}
                     {matrix.bedenler.map((b) => (
