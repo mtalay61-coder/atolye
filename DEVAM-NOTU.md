@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.466.0** · 26 Eylül 2026
+Son sürüm: **v1.467.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.466.0): Model Rengi pozisyonları ve ürün kartı renk seçimi yazarak aranıyor (`AramaliMetin` yalnizListeden).** Bkz. "MODEL RENGİ YAZARAK SEÇİM".
+**Son iş (26 Eylül, v1.467.0): açılan her renge/ölçüye/asortiye otomatik barkod kodu (`tanimlarKodluYaz`), Standart yer tutucu kalkıyor, ürün seçicide resim.** Bkz. "RENK KODU, STANDART, SEÇİCİDE RESİM".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,30 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## RENK KODU, STANDART, SEÇİCİDE RESİM (26 Eylül, v1.467.0 — Claude Code oturumu)
+
+**Kullanıcı (üç ekran görüntüsü):** "Renk kodunu otomatik veriyor, burada vermemiş; stok kartı
+içerisinden açılan renk bu, tüm açılan renklere otomatik renk kodu versin. Standart'ı kaldırmıştık,
+burada yine çıktı. Siparişte ürün girerken resimde göstersin."
+
+- **Renk kodu (barkod `barkodKodu`, ton kodu `kod` değil):** `saveTanimlar` `kodlariAta` ile kod
+  veriyordu ama App'teki kısa yollar (`yeniRenkKaydet`, malzeme/mamul tipi, `yeniOlcuKaydet`, özel kod
+  alanı, `kombinasyonOlusturGlobal`, `asortiOlustur`…) tanımları doğrudan `tekilYaz` ile yazıyordu.
+  Hepsi `tanimlarKodluYaz(next)` yardımcısından geçiyor (kodlariAta → setTanimlar → yazım; bağımlılık
+  dizilerine eklendi, bayat denetimi istedi). Eski kodsuz kayıtlar: 090-yukleme buluttan okuyunca bir
+  kez `kodlariAta([], t)` (renk/ölçü/asorti), sessiz. Çevrimdışı açılışta yapılmıyor (sayaç bayat
+  olabilir). Kalan doğrudan yazımlar: açılış göçü damgası, yükleme, sıfırlama, cari kodu (kod
+  gerektirmeyen ya da kendi kodunu atan yollar).
+- **Standart:** ürüne önce renk eklenince beden "Standart" yer tutucusu doğuyor, sonra gerçek beden
+  eklenince sütun kalıyordu (tersi: renk satırı). `standartYerTutucuyuKaldir(urun, eksen)` (152-stok)
+  `addRenkToProduct`/`bedeniUrunEkle` sonunda: başka değer varsa ve Standart'ın silme engeli yoksa
+  (`renkBedenSilmeEngelleri` + eksende boş dize taşıyan hareket) Standart varyantları kaldırılır.
+  Üzerinde iş olan Standart kalır (kullanıcı çöp ikonuyla karar verir). Var olan ürünlerde kalmış
+  boş Standart sütunu çöp ikonuyla ya da bir sonraki beden eklemede kalkar.
+- **Ürün seçicide resim** (`AramaliUrunSecici`, sipariş/reçete/fiş ortak): kapak resmi → ilk renk
+  resmi → kategori ikonu; 36 px, `data-urun-secici-resim`.
+- Test: `senaryo-renk-kodu-standart.js`.
 
 ## MODEL RENGİ YAZARAK SEÇİM (26 Eylül, v1.466.0 — Claude Code oturumu)
 

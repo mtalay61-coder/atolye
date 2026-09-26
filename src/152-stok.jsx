@@ -477,7 +477,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
       // ilk andan itibaren güvenilir çalışır.
       const yeniRenkId = renkKimligiBul(renk, (tanimlar.renkler || []));
       const newVariants = bedenler.map((b) => ({ renk, renkId: yeniRenkId, beden: b, miktar: 0, minStok: varsayilanMinStok }));
-      return { ...p, variants: [...p.variants, ...newVariants] };
+      return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "renk");
     });
     onSave(next);
     showToast("Renk eklendi");
@@ -509,9 +509,26 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
       const renkler = Array.from(new Set(p.variants.map((v) => v.renk)));
       if (p.variants.some((v) => v.beden === beden)) return p;
       const newVariants = renkler.map((r) => ({ renk: r, renkId: renkKimligiBul(r, (tanimlar.renkler || [])), beden, miktar: 0, minStok: varsayilanMinStok }));
-      return { ...p, variants: [...p.variants, ...newVariants] };
+      return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "beden");
     });
     return next[0];
+  }
+
+  // "STANDART" YER TUTUCUSU GERÇEK DEĞER GELİNCE KALKAR (26 Eylül, v1.467.0 — kullanıcı: "standart
+  // rengi kaldırmıştık, burada yine çıktı"). Ürüne önce renk eklenince bedeni "Standart" bir satır
+  // doğuyor; sonra 36–40 eklenince o sütun kalıyordu (tersi: önce beden, sonra renk → "Standart"
+  // renk satırı). Placeholder durumu (`placeholderMi`) yalnız TEK Standart/Standart satırını
+  // kapsıyordu. Artık gerçek bir beden/renk eklendiğinde Standart sütun/satır kaldırılıyor — ama
+  // YALNIZ silme kuralları izin veriyorsa (stok, hareket, sipariş, üretim, reçete bağı yok):
+  // üzerinde iş olan bir Standart kaydı sessizce silinmez, kullanıcı kendisi karar verir.
+  function standartYerTutucuyuKaldir(urun, eksen) {
+    const baskaVar = (urun.variants || []).some((v) => v[eksen] !== "Standart");
+    const standartVar = (urun.variants || []).some((v) => v[eksen] === "Standart");
+    if (!baskaVar || !standartVar) return urun;
+    if (renkBedenSilmeEngelleri(urun, { [eksen]: "Standart" }).length > 0) return urun;
+    // Hareketlerde "Standart" boş dize olarak da yazılabiliyor (`stokAnahtarNrm`): o da iş sayılır.
+    if ((urun.hareketler || []).some((h) => stokAnahtarNrm(h[eksen]) === "")) return urun;
+    return { ...urun, variants: urun.variants.filter((v) => v[eksen] !== "Standart") };
   }
 
   // Bir renk/beden satır ya da sütununun silinmesini ENGELLEYEN nedenleri toplar.

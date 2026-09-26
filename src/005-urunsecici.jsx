@@ -181,7 +181,18 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
                     "3454 Taban" ise "3..." olarak görünüyordu — yani listeden ürün SEÇİLEMİYORDU.
                     Kategori rozeti kaldırıldı; sol kenardaki renkli şerit ve ikon zaten aynı bilgiyi
                     veriyor. Malzeme tipi ve birim küçültülüp ada yer açıldı. */}
-                <KategoriIkonu kategori={u.kategori} size={14} />
+                {/* ÜRÜN RESMİ (26 Eylül, v1.467.0 — kullanıcı: "siparişte ürün girerken resimde
+                    göstersin"). Model adları birbirine benziyor (27322 D / 27325 D); resim, adı okumadan
+                    doğru modeli seçtiriyor. Kapak resmi yoksa ilk renk resmi, o da yoksa kategori ikonu. */}
+                {(() => {
+                  const resim = u.kapakResmi || Object.values(u.renkResimleri || {}).find(Boolean) || "";
+                  return resim ? (
+                    <img src={resim} alt="" data-urun-secici-resim="1" loading="lazy"
+                      style={{ width: 36, height: 36, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", flexShrink: 0, background: "#fff" }} />
+                  ) : (
+                    <span style={{ width: 36, display: "inline-flex", justifyContent: "center", flexShrink: 0 }}><KategoriIkonu kategori={u.kategori} size={14} /></span>
+                  );
+                })()}
                 <span style={{ flex: 1, minWidth: 90, fontSize: 14, fontWeight: 600, color: "var(--erp-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {u.ad}{u.pasif ? " (pasif)" : ""}
                 </span>

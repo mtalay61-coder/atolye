@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.466.0";
+const SURUM = "1.467.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Model rengi pozisyonlari ve kart renk secimi yazarak aranir";
+const SURUM_NOTU = "Yeni renklere otomatik renk kodu, Standart yer tutucu kalkiyor, urun seciminde resim";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,11 @@ const SURUM_NOTU = "Model rengi pozisyonlari ve kart renk secimi yazarak aranir"
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.467.0", tarih: "26.09.2026",
+    eklenen: ["Sipariş, reçete ve fişlerde ürün seçerken listede ürünün resmi görünüyor"],
+    degisen: [],
+    duzeltilen: ["Stok kartından, siparişten açılan renk / ölçü / model rengi / asortiye barkod renk kodu verilmiyordu — artık hepsine otomatik; kodsuz kalmış eski kayıtlar açılışta tamamlanıyor",
+                 "Ürüne gerçek beden (ya da renk) eklenince 'Standart' sütunu (satırı) kalıyordu — üzerinde stok/hareket/bağlantı yoksa artık kalkıyor"] },
   { surum: "1.466.0", tarih: "26.09.2026",
     eklenen: [],
     degisen: ["Ürün kartında renk ekleme ve çok renkli Model Rengi oluşturmada (1./2./3. Renk) renkler yazdıkça daralan listeden seçiliyor; yeni ürün formundaki pozisyonlar da"],

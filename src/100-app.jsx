@@ -2057,6 +2057,18 @@ export default function AtolyeERP() {
     setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
   });
 
+  // TANIMLARI KODLU YAZ (26 Eylül, v1.467.0 — kullanıcı: "renk kodunu otomatik veriyor, burada
+  // vermemiş; stok kartı içerisinden açılan renk bu, tüm açılan renklere otomatik renk kodu versin").
+  // Barkod kodunu `saveTanimlar` atıyordu (`kodlariAta`), ama stok kartından/siparişten renk, beden,
+  // model rengi açan kısa yollar tanımları DOĞRUDAN yazıyordu — kod adımını atlayıp. Artık hepsi bu
+  // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
+  const tanimlarKodluYaz = useCallback((next) => {
+    const kodlu = kodlariAta([], next).tanimlar;
+    setTanimlar(kodlu);
+    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
+    return kodlu;
+  }, []);
+
   // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
   // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
   // tanımlıysa dokunmaz.
@@ -2078,8 +2090,7 @@ export default function AtolyeERP() {
           r.id === mevcut.id ? { ...r, malzemeTipleri: [...mevcutTipler, malzemeTipi], malzemeTipi: undefined } : r
         ),
       };
-      setTanimlar(nextT);
-      yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextT), "Tanımlar", nextT);
+      tanimlarKodluYaz(nextT);
       showToast(`"${temizAd}" rengine "${malzemeTipi}" tipi eklendi`);
       return;
     }
@@ -2105,9 +2116,8 @@ export default function AtolyeERP() {
     const otomatikKod = String(sonrakiKod);
     const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
     const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
-  }, [tanimlar, showToast]);
+    tanimlarKodluYaz(nextTanimlar);
+  }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   // Stok ekranında ürün eklerken/düzenlerken, listede olmayan bir Malzeme Tipi (deri, taban, bağcık…)
   // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniRenkKaydet ile aynı desen.
@@ -2119,10 +2129,9 @@ export default function AtolyeERP() {
     if (zatenVarOlan) return zatenVarOlan.ad;
     const yeniTip = { id: uid("htip"), ad: temizAd };
     const nextTanimlar = { ...tanimlar, hammaddeTipleri: [...mevcut, yeniTip] };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+    tanimlarKodluYaz(nextTanimlar);
     return yeniTip.ad;
-  }, [tanimlar]);
+  }, [tanimlar, tanimlarKodluYaz]);
 
   // Stok ekranında ürün eklerken, listede olmayan bir ölçü (beden/boyut) gerekiyorsa Tanımlar'a
   // gitmeden burada tanımlanabilir.
@@ -2151,8 +2160,7 @@ export default function AtolyeERP() {
           b.id === zatenVar.id ? { ...b, malzemeTipleri: [...mevcutTipler, malzemeTipi] } : b
         ),
       };
-      setTanimlar(nextT);
-      yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextT), "Tanımlar", nextT);
+      tanimlarKodluYaz(nextT);
       showToast(`"${temizAd}" ölçüsüne "${malzemeTipi}" tipi eklendi`);
       return zatenVar.ad;
     }
@@ -2160,15 +2168,14 @@ export default function AtolyeERP() {
     const yeni = { id: uid("olcu"), ad: temizAd, tip };
     if (tip === "Boyut" && malzemeTipi) yeni.malzemeTipleri = [malzemeTipi];
     const nextTanimlar = { ...tanimlar, bedenler: [...mevcut, yeni] };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+    tanimlarKodluYaz(nextTanimlar);
     showToast(
       tip === "Boyut" && malzemeTipi
         ? `"${temizAd}" boyutu "${malzemeTipi}" tipine eklendi`
         : `"${temizAd}" ${tip.toLocaleLowerCase("tr-TR")} olarak eklendi`
     );
     return yeni.ad;
-  }, [tanimlar, showToast]);
+  }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   // Stok ekranında Mamul ürün eklerken, listede olmayan bir Mamul Tipi (Spor Ayakkabı, Sandalet…)
   // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniMalzemeTipiKaydet ile aynı desen.
@@ -2193,10 +2200,9 @@ export default function AtolyeERP() {
     if (zatenVar) return zatenVar.id;
     const yeni = { id: uid("oka"), ad: temizAd, kapsamTuru: tur, kapsamAd: kapsam };
     const nextTanimlar = { ...tanimlar, ozelKodAlanlari: [...mevcut, yeni] };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+    tanimlarKodluYaz(nextTanimlar);
     return yeni.id;
-  }, [tanimlar]);
+  }, [tanimlar, tanimlarKodluYaz]);
 
   const yeniMamulTipiKaydet = useCallback((ad) => {
     const temizAd = (ad || "").trim();
@@ -2206,10 +2212,9 @@ export default function AtolyeERP() {
     if (zatenVarOlan) return zatenVarOlan.ad;
     const yeniTip = { id: uid("mtip"), ad: temizAd };
     const nextTanimlar = { ...tanimlar, mamulTipleri: [...mevcut, yeniTip] };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+    tanimlarKodluYaz(nextTanimlar);
     return yeniTip.ad;
-  }, [tanimlar]);
+  }, [tanimlar, tanimlarKodluYaz]);
 
   // Stok'ta ürün eklerken, Mamul rengi birden fazla renk bileşeninden (örn. gövde + taban rengi)
   // oluşuyorsa, seçilen renk adlarından bir "Model Rengi" kombinasyonu oluşturur (ya da aynı renk
@@ -2238,11 +2243,10 @@ export default function AtolyeERP() {
     const otomatikKod = String((mevcutKodlar.length > 0 ? Math.max(...mevcutKodlar) : 1000) + 1);
     const yeniKombi = { id: uid("kombi"), kod: otomatikKod, renkIdler };
     const nextTanimlar = { ...tanimlar, renkKombinasyonlari: [...mevcut, yeniKombi] };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+    tanimlarKodluYaz(nextTanimlar);
     showToast(`Model rengi ${otomatikKod} olarak oluşturuldu`);
     return `${otomatikKod} - ${renkAdlari.join("/")}`;
-  }, [tanimlar, showToast]);
+  }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   // Sipariş ekranından MODEL RENGİ oluşturup ürüne ekler ve reçetesini kurar.
   //
@@ -2277,10 +2281,9 @@ export default function AtolyeERP() {
       ...tanimlar,
       asortiler: [...(tanimlar.asortiler || []), { id: uid("asorti"), ad: temizAd, oranlar }],
     };
-    setTanimlar(nextTanimlar);
-    yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+    tanimlarKodluYaz(nextTanimlar);   // asortinin barkod kodu da anında (v1.467.0)
     showToast(`"${temizAd}" asortisi oluşturuldu`);
-  }, [tanimlar, showToast]);
+  }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   const addCariHareketFromStok = useCallback((cariId, hareketVeyaDizi) => {
     setCariler((prev) => {

@@ -1,0 +1,24 @@
+{
+ "hatalar": [],
+ "renkKodlari": {
+  "eskiKodsuz": "var",
+  "yeniRenk": "var"
+ },
+ "secici": [
+  "Yeni Model: resim",
+  "Stoklu Model: ikon"
+ ],
+ "standart": {
+  "stokluModel": [
+   "Standart",
+   "36",
+   "37",
+   "38"
+  ],
+  "yeniModel": [
+   "36",
+   "37",
+   "38"
+  ]
+ }
+}
