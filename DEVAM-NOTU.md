@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.477.0** · 26 Eylül 2026
+Son sürüm: **v1.478.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.477.0): bir prosesin altına birden çok ara proses; ara prosesin hammaddesi normal proses gibi (rezervasyon dahil). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "ARA PROSES — BİRDEN ÇOK, HAMMADDELİ".
+**Son iş (26 Eylül, v1.478.0): renksiz üründe (boş renk / varyantsız) fiş ve siparişte renk sorulmuyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "RENKSİZ ÜRÜNDE RENK SORULMUYOR (GENİŞ TANIM)".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,21 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## RENKSİZ ÜRÜNDE RENK SORULMUYOR (GENİŞ TANIM) (26 Eylül, v1.478.0 — Claude Code oturumu)
+
+Kullanıcı (Cariden Alış Fişi, ürün "Deri", Renk kutusu boş): "Renk olmadığı için alış giremiyorum.
+Renksiz stoklarda renk seçici açılmayacak."
+
+- v1.432'deki kural yalnız TEK rengi tam "Standart" olan ürünü renksiz sayıyordu. Rengi BOŞ ("")
+  kaydedilmiş varyant ya da HİÇ varyantı olmayan ürün (renk/beden seçmeden açılan hammadde) renk
+  kutusunu boş gösteriyordu; kutu boşken miktar kutuları açılmıyordu → fiş girilemiyordu.
+- Fiş (255) ve sipariş (325): `renksizUrun` = bütün renk değerleri yer tutucu (`olcuGoster` boş) ya da
+  hiç yok. Renk sorulmaz, kendiliğinden "Standart" seçilir (boş dize "seçilmedi" sayılıyordu). Varyant
+  eşleşmeleri (`bedenSecenekleri`, `stokMiktari`) `stokAnahtarNrm` ile — "" = "Standart". Varyantsız
+  üründe tek "Standart" miktar kutusu; fiş yazımı eksik varyantı kendisi açıyor (078-fisyaz).
+- Test: yeni `senaryo-renksiz-alis` (boş renkli, varyantsız, Standart — üçünde renk kutusu yok, stok
+  doğru varyanta ekleniyor, çift satır yok).
 
 ## ARA PROSES — BİRDEN ÇOK, HAMMADDELİ (26 Eylül, v1.477.0 — Claude Code oturumu)
 
