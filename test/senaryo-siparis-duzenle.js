@@ -145,13 +145,12 @@ async function calistir() {
   // Seçim `onMouseDown`da: gerçek fare tıklaması gerekiyor.
   await sayfa.locator("[data-siparis-duzenleme] button", { hasText: "Çizme" }).first().click();
   await sayfa.waitForTimeout(400);
-  await sayfa.evaluate(() => {
-    const sel = [...document.querySelectorAll("[data-siparis-duzenleme] select")]
-      .find((s) => [...s.options].some((o) => o.textContent === "Seçin…") && !s.disabled && !s.hasAttribute("data-siparis-cari"));
-    const setter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set;
-    setter.call(sel, "Siyah");
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  // v1.469.0: renk yazarak seçiliyor (resimli liste) — yaz, öneriye dokun.
+  const renkKutusu = sayfa.locator("[data-siparis-duzenleme] [data-siparis-renk-arama]").first();
+  await renkKutusu.click();
+  await renkKutusu.fill("siy");
+  await sayfa.waitForTimeout(200);
+  await sayfa.locator('[data-siparis-duzenleme] [data-aramali-oneri="Siyah"]').first().dispatchEvent("mousedown");
   await sayfa.waitForTimeout(300);
   await sayfa.locator('[data-olcu-miktar="40"]').fill("2");
   await sayfa.locator("[data-kalemlere-ekle]:visible").first().click();

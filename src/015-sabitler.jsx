@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.468.0";
+const SURUM = "1.469.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Eski surum dosyalari otomatik temizleniyor (son 3 kalir)";
+const SURUM_NOTU = "Sipariste renk yazarak ve resimli seciliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Eski surum dosyalari otomatik temizleniyor (son 3 kalir)";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.469.0", tarih: "26.09.2026",
+    eklenen: ["Siparişte renk seçerken ürünün renk resimleri listede ve seçili rengin kutusunda görünüyor"],
+    degisen: ["Siparişte renk seçimi ve '+ Renk' ile yeni model rengi pozisyonları yazdıkça daralan listeden"],
+    duzeltilen: [] },
   { surum: "1.468.0", tarih: "26.09.2026",
     eklenen: [],
     degisen: ["Eski sürüm dosyaları her yayında otomatik siliniyor, son 3 sürüm kalıyor (depo şişmesin)"],

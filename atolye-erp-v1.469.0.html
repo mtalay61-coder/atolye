@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.466.0</title>
+<title>Atölye ERP 1.469.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -537,7 +537,11 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
                     borderLeft: `4px solid ${CAT_COLORS[u.kategori] || "var(--erp-border)"}`,
                     cursor: "pointer", textAlign: "left",
                 } },
-                React.createElement(KategoriIkonu, { kategori: u.kategori, size: 14 }),
+                (() => {
+                    const resim = u.kapakResmi || Object.values(u.renkResimleri || {}).find(Boolean) || "";
+                    return resim ? (React.createElement("img", { src: resim, alt: "", "data-urun-secici-resim": "1", loading: "lazy", style: { width: 36, height: 36, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", flexShrink: 0, background: "#fff" } })) : (React.createElement("span", { style: { width: 36, display: "inline-flex", justifyContent: "center", flexShrink: 0 } },
+                        React.createElement(KategoriIkonu, { kategori: u.kategori, size: 14 })));
+                })(),
                 React.createElement("span", { style: { flex: 1, minWidth: 90, fontSize: 14, fontWeight: 600, color: "var(--erp-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
                     u.ad,
                     u.pasif ? " (pasif)" : ""),
@@ -645,7 +649,10 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 // kapsamının ekseni, "ilkbahar" gibi serbest bir yazım hiçbir kapsamla eşleşmez. Kutudan çıkınca
 // yazılan listede yoksa ilk eşleşen öneriye oturtulur, eşleşen de yoksa temizlenir.
 // `sayisal` (yıl için): yalnız rakam kabul edilir, telefonda sayı klavyesi açılır.
-function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false }) {
+// `resimler` (v1.469.0, sipariş renk seçimi): { öneri: resimAdresi } — varsa listede her önerinin
+// yanında ve seçili değer kutudayken kutunun solunda küçük resim. Renk adları benzeşiyor (Taba Süet /
+// Taba Deri); resim, okumadan doğru rengi seçtiriyor.
+function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false }) {
     const [acik, setAcik] = useState(false);
     const [vurgulu, setVurgulu] = useState(-1);
     const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
@@ -673,8 +680,10 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
         return [...bas, ...ic];
     })().slice(0, 50);
     const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); };
+    const kutuResmi = resimler && tamEslesme ? resimler[tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q)] : null;
     return (React.createElement("div", { style: { position: "relative" } },
-        React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), value: deger || "", onChange: (e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }, onFocus: () => setAcik(true), onBlur: () => {
+        kutuResmi && (React.createElement("img", { src: kutuResmi, alt: "", "data-aramali-kutu-resim": "1", style: { position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 26, height: 26, objectFit: "cover", borderRadius: 4, pointerEvents: "none" } })),
+        React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), disabled: disabled, value: deger || "", onChange: (e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }, onFocus: () => setAcik(true), onBlur: () => {
                 setTimeout(() => setAcik(false), 150);
                 if (yalnizListeden && q && !tamEslesme)
                     onDegis(sonuclar[0] || "");
@@ -697,12 +706,16 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
                 }
                 else if (e.key === "Escape")
                     setAcik(false);
-            }, placeholder: placeholder, autoComplete: "off", autoCorrect: "off", spellCheck: false, style: { ...inputStyle, width: "100%", ...(stil || {}) } }),
+            }, placeholder: placeholder, autoComplete: "off", autoCorrect: "off", spellCheck: false, style: { ...inputStyle, width: "100%", ...(stil || {}), ...(kutuResmi ? { paddingLeft: 38 } : {}) } }),
         acik && sonuclar.length > 0 && (React.createElement("div", { role: "listbox", style: {
                 position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 60, minWidth: "100%", maxHeight: 240, overflowY: "auto",
                 background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 10px 28px rgba(16, 24, 40, 0.12)", padding: 4,
-            } }, sonuclar.map((o, i) => (React.createElement("button", { key: o, type: "button", role: "option", "aria-selected": i === vurgulu, "data-aramali-oneri": o, onMouseDown: (e) => { e.preventDefault(); sec(o); }, onMouseEnter: () => setVurgulu(i), style: { display: "block", width: "100%", textAlign: "left", padding: "7px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
-                background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 13, cursor: "pointer" } }, o)))))));
+            } }, sonuclar.map((o, i) => (React.createElement("button", { key: o, type: "button", role: "option", "aria-selected": i === vurgulu, "data-aramali-oneri": o, onMouseDown: (e) => { e.preventDefault(); sec(o); }, onMouseEnter: () => setVurgulu(i), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: resimler ? "5px 8px" : "7px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
+                background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 13, cursor: "pointer" } },
+            resimler && (resimler[o]
+                ? React.createElement("img", { src: resimler[o], alt: "", "data-aramali-oneri-resim": "1", loading: "lazy", style: { width: 34, height: 34, objectFit: "cover", borderRadius: 4, border: "1px solid var(--erp-line-soft)", flexShrink: 0 } })
+                : React.createElement("span", { style: { width: 34, height: 34, borderRadius: 4, background: "var(--erp-zebra)", flexShrink: 0 } })),
+            React.createElement("span", null, o))))))));
 }
 // ================= ÖZEL KOD ALANLARI =================
 //
@@ -1899,9 +1912,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.466.0";
+const SURUM = "1.469.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Model rengi pozisyonlari ve kart renk secimi yazarak aranir";
+const SURUM_NOTU = "Sipariste renk yazarak ve resimli seciliyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1909,6 +1922,19 @@ const SURUM_NOTU = "Model rengi pozisyonlari ve kart renk secimi yazarak aranir"
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.469.0", tarih: "26.09.2026",
+        eklenen: ["Siparişte renk seçerken ürünün renk resimleri listede ve seçili rengin kutusunda görünüyor"],
+        degisen: ["Siparişte renk seçimi ve '+ Renk' ile yeni model rengi pozisyonları yazdıkça daralan listeden"],
+        duzeltilen: [] },
+    { surum: "1.468.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: ["Eski sürüm dosyaları her yayında otomatik siliniyor, son 3 sürüm kalıyor (depo şişmesin)"],
+        duzeltilen: [] },
+    { surum: "1.467.0", tarih: "26.09.2026",
+        eklenen: ["Sipariş, reçete ve fişlerde ürün seçerken listede ürünün resmi görünüyor"],
+        degisen: [],
+        duzeltilen: ["Stok kartından, siparişten açılan renk / ölçü / model rengi / asortiye barkod renk kodu verilmiyordu — artık hepsine otomatik; kodsuz kalmış eski kayıtlar açılışta tamamlanıyor",
+            "Ürüne gerçek beden (ya da renk) eklenince 'Standart' sütunu (satırı) kalıyordu — üzerinde stok/hareket/bağlantı yoksa artık kalkıyor"] },
     { surum: "1.466.0", tarih: "26.09.2026",
         eklenen: [],
         degisen: ["Ürün kartında renk ekleme ve çok renkli Model Rengi oluşturmada (1./2./3. Renk) renkler yazdıkça daralan listeden seçiliyor; yeni ürün formundaki pozisyonlar da"],
@@ -11227,6 +11253,17 @@ function useAcilisYukleme(d) {
                                 yazimiIzle(tabloYaz("stok:items", "urunler", kodGoc.stok), "Stok kartları", kodGoc.stok);
                             }
                         }
+                        // EKSİK BARKOD KODLARI (v1.467.0) — renk / ölçü / asorti. Stok kartından ya da siparişten
+                        // açılan tanımlar kodsuz kalıyordu (kısa yollar `saveTanimlar`ı atlıyordu, bkz. 100-app
+                        // `tanimlarKodluYaz`). Eski kayıtlar burada bir kez, sessizce tamamlanıyor; kodu olana
+                        // dokunulmuyor. Yalnız BULUTTAN okununca: çevrimdışı açılışta sayaç bayat olabilir.
+                        const barkodKod = kodlariAta([], t);
+                        if (barkodKod.atanan.renk + barkodKod.atanan.beden + barkodKod.atanan.asorti > 0) {
+                            t = barkodKod.tanimlar;
+                            setTanimlar(t);
+                            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+                            console.info(`Eksik barkod kodları atandı: renk ${barkodKod.atanan.renk}, ölçü ${barkodKod.atanan.beden}, asorti ${barkodKod.atanan.asorti}`);
+                        }
                         setStok(acilisGocuUygula(kodGoc.stok, t));
                         // Bulut kaynak olduğu için görseller ürünlerin İÇİNDE geldi. Yerel kopyayı da
                         // tazeliyoruz ki internetsiz açılışta görseller kaybolmasın. Önce mevcut anahtarlar
@@ -14596,6 +14633,17 @@ function AtolyeERP() {
         tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
         setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
     });
+    // TANIMLARI KODLU YAZ (26 Eylül, v1.467.0 — kullanıcı: "renk kodunu otomatik veriyor, burada
+    // vermemiş; stok kartı içerisinden açılan renk bu, tüm açılan renklere otomatik renk kodu versin").
+    // Barkod kodunu `saveTanimlar` atıyordu (`kodlariAta`), ama stok kartından/siparişten renk, beden,
+    // model rengi açan kısa yollar tanımları DOĞRUDAN yazıyordu — kod adımını atlayıp. Artık hepsi bu
+    // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
+    const tanimlarKodluYaz = useCallback((next) => {
+        const kodlu = kodlariAta([], next).tanimlar;
+        setTanimlar(kodlu);
+        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
+        return kodlu;
+    }, []);
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
@@ -14616,8 +14664,7 @@ function AtolyeERP() {
                 ...tanimlar,
                 renkler: tanimlar.renkler.map((r) => r.id === mevcut.id ? { ...r, malzemeTipleri: [...mevcutTipler, malzemeTipi], malzemeTipi: undefined } : r),
             };
-            setTanimlar(nextT);
-            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextT), "Tanımlar", nextT);
+            tanimlarKodluYaz(nextT);
             showToast(`"${temizAd}" rengine "${malzemeTipi}" tipi eklendi`);
             return;
         }
@@ -14644,9 +14691,8 @@ function AtolyeERP() {
         const otomatikKod = String(sonrakiKod);
         const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
         const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
-    }, [tanimlar, showToast]);
+        tanimlarKodluYaz(nextTanimlar);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     // Stok ekranında ürün eklerken/düzenlerken, listede olmayan bir Malzeme Tipi (deri, taban, bağcık…)
     // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniRenkKaydet ile aynı desen.
     const yeniMalzemeTipiKaydet = useCallback((ad) => {
@@ -14659,10 +14705,9 @@ function AtolyeERP() {
             return zatenVarOlan.ad;
         const yeniTip = { id: uid("htip"), ad: temizAd };
         const nextTanimlar = { ...tanimlar, hammaddeTipleri: [...mevcut, yeniTip] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         return yeniTip.ad;
-    }, [tanimlar]);
+    }, [tanimlar, tanimlarKodluYaz]);
     // Stok ekranında ürün eklerken, listede olmayan bir ölçü (beden/boyut) gerekiyorsa Tanımlar'a
     // gitmeden burada tanımlanabilir.
     //
@@ -14689,8 +14734,7 @@ function AtolyeERP() {
                 ...tanimlar,
                 bedenler: mevcut.map((b) => b.id === zatenVar.id ? { ...b, malzemeTipleri: [...mevcutTipler, malzemeTipi] } : b),
             };
-            setTanimlar(nextT);
-            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextT), "Tanımlar", nextT);
+            tanimlarKodluYaz(nextT);
             showToast(`"${temizAd}" ölçüsüne "${malzemeTipi}" tipi eklendi`);
             return zatenVar.ad;
         }
@@ -14698,13 +14742,12 @@ function AtolyeERP() {
         if (tip === "Boyut" && malzemeTipi)
             yeni.malzemeTipleri = [malzemeTipi];
         const nextTanimlar = { ...tanimlar, bedenler: [...mevcut, yeni] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         showToast(tip === "Boyut" && malzemeTipi
             ? `"${temizAd}" boyutu "${malzemeTipi}" tipine eklendi`
             : `"${temizAd}" ${tip.toLocaleLowerCase("tr-TR")} olarak eklendi`);
         return yeni.ad;
-    }, [tanimlar, showToast]);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     // Stok ekranında Mamul ürün eklerken, listede olmayan bir Mamul Tipi (Spor Ayakkabı, Sandalet…)
     // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniMalzemeTipiKaydet ile aynı desen.
     // ÖZEL KOD ALANINI YERİNDE AÇMA — kullanıcı (6 Eylül): "Özel kodu burada stok açarken de
@@ -14729,10 +14772,9 @@ function AtolyeERP() {
             return zatenVar.id;
         const yeni = { id: uid("oka"), ad: temizAd, kapsamTuru: tur, kapsamAd: kapsam };
         const nextTanimlar = { ...tanimlar, ozelKodAlanlari: [...mevcut, yeni] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         return yeni.id;
-    }, [tanimlar]);
+    }, [tanimlar, tanimlarKodluYaz]);
     const yeniMamulTipiKaydet = useCallback((ad) => {
         const temizAd = (ad || "").trim();
         if (!temizAd)
@@ -14743,10 +14785,9 @@ function AtolyeERP() {
             return zatenVarOlan.ad;
         const yeniTip = { id: uid("mtip"), ad: temizAd };
         const nextTanimlar = { ...tanimlar, mamulTipleri: [...mevcut, yeniTip] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         return yeniTip.ad;
-    }, [tanimlar]);
+    }, [tanimlar, tanimlarKodluYaz]);
     // Stok'ta ürün eklerken, Mamul rengi birden fazla renk bileşeninden (örn. gövde + taban rengi)
     // oluşuyorsa, seçilen renk adlarından bir "Model Rengi" kombinasyonu oluşturur (ya da aynı renk
     // seti zaten bir kombinasyon olarak tanımlıysa onu yeniden kullanır) ve mamul varyantlarında
@@ -14773,11 +14814,10 @@ function AtolyeERP() {
         const otomatikKod = String((mevcutKodlar.length > 0 ? Math.max(...mevcutKodlar) : 1000) + 1);
         const yeniKombi = { id: uid("kombi"), kod: otomatikKod, renkIdler };
         const nextTanimlar = { ...tanimlar, renkKombinasyonlari: [...mevcut, yeniKombi] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         showToast(`Model rengi ${otomatikKod} olarak oluşturuldu`);
         return `${otomatikKod} - ${renkAdlari.join("/")}`;
-    }, [tanimlar, showToast]);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     // Sipariş ekranından MODEL RENGİ oluşturup ürüne ekler ve reçetesini kurar.
     //
     // Serbest metinle renk yazmak yerine Tanımlar'daki Model Rengi mantığı kullanılır: pozisyon
@@ -14815,10 +14855,9 @@ function AtolyeERP() {
             ...tanimlar,
             asortiler: [...(tanimlar.asortiler || []), { id: uid("asorti"), ad: temizAd, oranlar }],
         };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar); // asortinin barkod kodu da anında (v1.467.0)
         showToast(`"${temizAd}" asortisi oluşturuldu`);
-    }, [tanimlar, showToast]);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     const addCariHareketFromStok = useCallback((cariId, hareketVeyaDizi) => {
         setCariler((prev) => {
             const gelenler = Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi];
@@ -21182,7 +21221,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
             // ilk andan itibaren güvenilir çalışır.
             const yeniRenkId = renkKimligiBul(renk, (tanimlar.renkler || []));
             const newVariants = bedenler.map((b) => ({ renk, renkId: yeniRenkId, beden: b, miktar: 0, minStok: varsayilanMinStok }));
-            return { ...p, variants: [...p.variants, ...newVariants] };
+            return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "renk");
         });
         onSave(next);
         showToast("Renk eklendi");
@@ -21215,9 +21254,28 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
             if (p.variants.some((v) => v.beden === beden))
                 return p;
             const newVariants = renkler.map((r) => ({ renk: r, renkId: renkKimligiBul(r, (tanimlar.renkler || [])), beden, miktar: 0, minStok: varsayilanMinStok }));
-            return { ...p, variants: [...p.variants, ...newVariants] };
+            return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "beden");
         });
         return next[0];
+    }
+    // "STANDART" YER TUTUCUSU GERÇEK DEĞER GELİNCE KALKAR (26 Eylül, v1.467.0 — kullanıcı: "standart
+    // rengi kaldırmıştık, burada yine çıktı"). Ürüne önce renk eklenince bedeni "Standart" bir satır
+    // doğuyor; sonra 36–40 eklenince o sütun kalıyordu (tersi: önce beden, sonra renk → "Standart"
+    // renk satırı). Placeholder durumu (`placeholderMi`) yalnız TEK Standart/Standart satırını
+    // kapsıyordu. Artık gerçek bir beden/renk eklendiğinde Standart sütun/satır kaldırılıyor — ama
+    // YALNIZ silme kuralları izin veriyorsa (stok, hareket, sipariş, üretim, reçete bağı yok):
+    // üzerinde iş olan bir Standart kaydı sessizce silinmez, kullanıcı kendisi karar verir.
+    function standartYerTutucuyuKaldir(urun, eksen) {
+        const baskaVar = (urun.variants || []).some((v) => v[eksen] !== "Standart");
+        const standartVar = (urun.variants || []).some((v) => v[eksen] === "Standart");
+        if (!baskaVar || !standartVar)
+            return urun;
+        if (renkBedenSilmeEngelleri(urun, { [eksen]: "Standart" }).length > 0)
+            return urun;
+        // Hareketlerde "Standart" boş dize olarak da yazılabiliyor (`stokAnahtarNrm`): o da iş sayılır.
+        if ((urun.hareketler || []).some((h) => stokAnahtarNrm(h[eksen]) === ""))
+            return urun;
+        return { ...urun, variants: urun.variants.filter((v) => v[eksen] !== "Standart") };
     }
     // Bir renk/beden satır ya da sütununun silinmesini ENGELLEYEN nedenleri toplar.
     // Neden gerekli: silme işlemi variants dizisinden ilgili kayıtları çıkarır — yani üzerindeki
@@ -40121,6 +40179,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     const [yrRenkSayisi, setYrRenkSayisi] = useState(1);
     const [yrPozisyonlar, setYrPozisyonlar] = useState({}); // { pozisyonNo: renkId }
     const [yrKaynakRenk, setYrKaynakRenk] = useState("");
+    // Pozisyon kutularında yazılan metin (v1.469.0); seçim `yrPozisyonlar`da kimlikle.
+    const [yrPozisyonYazi, setYrPozisyonYazi] = useState({});
     const [yrHammaddeRenkleri, setYrHammaddeRenkleri] = useState({});
     // Panel içinden yeni mamul rengi oluşturma: hangi pozisyon için ve hangi ad.
     const [yrYeniPozisyon, setYrYeniPozisyon] = useState(null);
@@ -40139,6 +40199,18 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     // cihazın içinde yapılıyor — dışarıya hiçbir şey gitmiyor, uydurma ürün üretilemez.
     const [fotoAcik, setFotoAcik] = useState(false);
     const [kRenk, setKRenk] = useState("");
+    // Renk kutusunda YAZILAN metin (v1.469.0): seçim `kRenk`, yazı bu. Dışarıdan değişen seçim
+    // (barkod, ürün değişimi, kalem eklendikten sonra sıfırlama) kutuya yansıtılıyor; yarım yazım
+    // (listede olmayan) seçimi boşaltır ama yazıyı silmez.
+    const [kRenkYazi, setKRenkYazi] = useState("");
+    const oncekiKRenk = useRef("");
+    useEffect(() => {
+        const onceki = oncekiKRenk.current;
+        oncekiKRenk.current = kRenk;
+        // Seçim geldiyse kutuya yazılır; seçim DIŞARIDAN boşaldıysa (kutuda hâlâ eski renk yazıyor)
+        // kutu da boşalır. Yazarken boşalan seçimde kutudaki yarım metin korunur.
+        setKRenkYazi((y) => (kRenk ? kRenk : (y === onceki ? "" : y)));
+    }, [kRenk]);
     const [kMiktarlar, setKMiktarlar] = useState({}); // { beden: miktarString }
     useEffect(() => {
         if (!hedefSiparisId)
@@ -40834,6 +40906,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         if (Object.keys(cozulen).length === 0)
             return;
         setYrPozisyonlar((onceki) => ({ ...onceki, ...cozulen }));
+        setYrPozisyonYazi({});
         setYrBekleyenAdlar(kalan);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tanimlarRenkler, yrBekleyenAdlar]);
@@ -40982,7 +41055,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 " Kapat")),
                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
                             React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } }, "Ka\u00E7 renkten olu\u015Fuyor?"),
-                            [1, 2, 3, 4].map((n) => (React.createElement("button", { key: n, type: "button", onClick: () => { setYrRenkSayisi(n); setYrPozisyonlar({}); }, style: {
+                            [1, 2, 3, 4].map((n) => (React.createElement("button", { key: n, type: "button", onClick: () => { setYrRenkSayisi(n); setYrPozisyonlar({}); setYrPozisyonYazi({}); }, style: {
                                     width: 26, height: 26, borderRadius: "50%",
                                     border: `1.5px solid ${yrRenkSayisi === n ? "var(--erp-purple)" : "var(--erp-border)"}`,
                                     background: yrRenkSayisi === n ? "#EDE7F2" : "#fff",
@@ -40993,19 +41066,20 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                                 poz,
                                 ". Renk"),
-                            React.createElement("select", { value: yrPozisyonlar[poz] || "", onChange: (e) => {
-                                    if (e.target.value === "__yeni__") {
-                                        setYrYeniPozisyon(poz);
-                                        setYrYeniAd("");
-                                        return;
-                                    }
-                                    setYrPozisyonlar({ ...yrPozisyonlar, [poz]: e.target.value });
-                                }, style: { ...inputStyle, width: 145 } },
-                                React.createElement("option", { value: "" }, mamulRenkSecenekleri.length === 0 ? "Renk tanımlı değil" : "Seçin…"),
-                                mamulRenkSecenekleri.map((r) => (React.createElement("option", { key: r.id, value: r.id },
-                                    r.ad,
-                                    r.kod ? ` (${r.kod})` : ""))),
-                                onYeniRenkKaydet && React.createElement("option", { value: "__yeni__" }, "+ Yeni renk olu\u015Ftur\u2026")),
+                            (() => {
+                                const etiket = (r) => `${r.ad}${r.kod ? ` (${r.kod})` : ""}`;
+                                const secili = mamulRenkSecenekleri.find((r) => r.id === yrPozisyonlar[poz]);
+                                return (React.createElement("span", { style: { display: "flex", gap: 4, alignItems: "center" } },
+                                    React.createElement("span", { style: { width: 170 } },
+                                        React.createElement(AramaliMetin, { veriAdi: "data-siparis-yeni-renk-poz", deger: yrPozisyonYazi[poz] != null ? yrPozisyonYazi[poz] : (secili ? etiket(secili) : ""), onDegis: (v) => {
+                                                setYrPozisyonYazi((y) => ({ ...y, [poz]: v }));
+                                                const bulunan = mamulRenkSecenekleri.find((r) => etiket(r) === v);
+                                                setYrPozisyonlar((p) => ({ ...p, [poz]: bulunan ? bulunan.id : "" }));
+                                            }, oneriler: mamulRenkSecenekleri.map(etiket), yalnizListeden: true, placeholder: mamulRenkSecenekleri.length === 0 ? "Renk tanımlı değil" : "Yazın ya da seçin…" })),
+                                    onYeniRenkKaydet && (React.createElement("button", { type: "button", className: "btn-ghost", title: "Listede olmayan rengi olu\u015Ftur", style: { padding: "5px 7px", fontSize: 11, whiteSpace: "nowrap" }, onClick: () => { setYrYeniPozisyon(poz); setYrYeniAd(""); } },
+                                        React.createElement(Plus, { size: 11 }),
+                                        " Yeni"))));
+                            })(),
                             yrYeniPozisyon === poz && (React.createElement("span", { style: { display: "flex", gap: 4, marginTop: 3 } },
                                 React.createElement("input", { autoFocus: true, value: yrYeniAd, onChange: (e) => setYrYeniAd(e.target.value), onKeyDown: (e) => {
                                         if (e.key === "Escape") {
@@ -41092,6 +41166,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 setKMiktarlar({});
                                 setYeniRenkPaneli(false);
                                 setYrPozisyonlar({});
+                                setYrPozisyonYazi({});
                                 setYrHammaddeRenkleri({});
                             } },
                             React.createElement(Save, { size: 13 }),
@@ -41128,13 +41203,20 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             React.createElement(AramaliUrunSecici, { urunler: urunUygun, seciliId: kUrunId, onSec: urunSec, placeholder: tip === "Alış" ? "Ürün ara…" : "Model ara…", ozelKodAlanlari: tanimlarOzelKodAlanlari })),
                         !renkSorulmaz && (React.createElement(Field, { label: "Renk" },
                             React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap" } },
-                                React.createElement("select", { value: kRenk, onChange: (e) => { setKRenk(e.target.value); setKMiktarlar({}); }, style: { ...inputStyle, flex: "1 1 120px", minWidth: 110 }, disabled: !seciliUrun },
-                                    React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                    renkSecenekleri.map((r) => React.createElement("option", { key: r }, r))),
+                                React.createElement("div", { style: { flex: "1 1 160px", minWidth: 140 } },
+                                    React.createElement(AramaliMetin, { veriAdi: "data-siparis-renk-arama", deger: kRenkYazi, onDegis: (v) => {
+                                            setKRenkYazi(v);
+                                            const gecerli = renkSecenekleri.includes(v) ? v : "";
+                                            if (gecerli !== kRenk) {
+                                                setKRenk(gecerli);
+                                                setKMiktarlar({});
+                                            }
+                                        }, oneriler: renkSecenekleri, resimler: (seciliUrun && seciliUrun.renkResimleri) || {}, yalnizListeden: true, disabled: !seciliUrun, placeholder: seciliUrun ? "Renk yazın ya da seçin…" : "Önce ürün seçin" })),
                                 seciliUrun && seciliUrun.kategori === "Mamul" && onModelRengiVeRecete && (React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "8px 9px", fontSize: 11, whiteSpace: "nowrap", flex: "0 0 auto" }, title: "Bu \u00FCr\u00FCne yeni renk ekle ve re\u00E7etesini mevcut bir renkten kopyala", onClick: () => {
                                         setYeniRenkPaneli((v) => !v);
                                         setYrRenkSayisi(1);
                                         setYrPozisyonlar({});
+                                        setYrPozisyonYazi({});
                                         setYrKaynakRenk(renkSecenekleri[0] || "");
                                         setYrHammaddeRenkleri({});
                                     } },
@@ -45598,7 +45680,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.466.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.469.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

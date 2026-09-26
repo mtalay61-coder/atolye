@@ -345,7 +345,10 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 // kapsamının ekseni, "ilkbahar" gibi serbest bir yazım hiçbir kapsamla eşleşmez. Kutudan çıkınca
 // yazılan listede yoksa ilk eşleşen öneriye oturtulur, eşleşen de yoksa temizlenir.
 // `sayisal` (yıl için): yalnız rakam kabul edilir, telefonda sayı klavyesi açılır.
-function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false }) {
+// `resimler` (v1.469.0, sipariş renk seçimi): { öneri: resimAdresi } — varsa listede her önerinin
+// yanında ve seçili değer kutudayken kutunun solunda küçük resim. Renk adları benzeşiyor (Taba Süet /
+// Taba Deri); resim, okumadan doğru rengi seçtiriyor.
+function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false }) {
   const [acik, setAcik] = useState(false);
   const [vurgulu, setVurgulu] = useState(-1);
   const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
@@ -367,10 +370,16 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
     return [...bas, ...ic];
   })().slice(0, 50);
   const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); };
+  const kutuResmi = resimler && tamEslesme ? resimler[tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q)] : null;
   return (
     <div style={{ position: "relative" }}>
+      {kutuResmi && (
+        <img src={kutuResmi} alt="" data-aramali-kutu-resim="1"
+          style={{ position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 26, height: 26, objectFit: "cover", borderRadius: 4, pointerEvents: "none" }} />
+      )}
       <input
         {...(veriAdi ? { [veriAdi]: "1" } : {})}
+        disabled={disabled}
         value={deger || ""}
         onChange={(e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }}
         onFocus={() => setAcik(true)}
@@ -389,7 +398,7 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
         }}
         placeholder={placeholder}
         autoComplete="off" autoCorrect="off" spellCheck={false}
-        style={{ ...inputStyle, width: "100%", ...(stil || {}) }}
+        style={{ ...inputStyle, width: "100%", ...(stil || {}), ...(kutuResmi ? { paddingLeft: 38 } : {}) }}
       />
       {acik && sonuclar.length > 0 && (
         <div role="listbox" style={{
@@ -400,9 +409,12 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
             <button key={o} type="button" role="option" aria-selected={i === vurgulu} data-aramali-oneri={o}
               onMouseDown={(e) => { e.preventDefault(); sec(o); }}
               onMouseEnter={() => setVurgulu(i)}
-              style={{ display: "block", width: "100%", textAlign: "left", padding: "7px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
+              style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: resimler ? "5px 8px" : "7px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
                 background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 13, cursor: "pointer" }}>
-              {o}
+              {resimler && (resimler[o]
+                ? <img src={resimler[o]} alt="" data-aramali-oneri-resim="1" loading="lazy" style={{ width: 34, height: 34, objectFit: "cover", borderRadius: 4, border: "1px solid var(--erp-line-soft)", flexShrink: 0 }} />
+                : <span style={{ width: 34, height: 34, borderRadius: 4, background: "var(--erp-zebra)", flexShrink: 0 }} />)}
+              <span>{o}</span>
             </button>
           ))}
         </div>
