@@ -26,6 +26,7 @@ node birim-cek.js || HATA=1
 node birim-recete-gerceklesme.js || HATA=1
 node birim-tutar-yaziyla.js || HATA=1
 node birim-finans-rapor.js || HATA=1
+node birim-finans-ek.js || HATA=1
 node birim-gorsel-depo.js || HATA=1
 node birim-acilis-fisi.js || HATA=1
 node birim-cek-bag.js || HATA=1

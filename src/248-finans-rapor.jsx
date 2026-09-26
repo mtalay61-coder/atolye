@@ -381,9 +381,7 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
     if (!kapsar(girisDefteri)) return;
     const girisTarihi = finansGun((giris && giris.h.tarih) || cek.tarih || ((cek.gecmis || [])[0] || {}).tarih || "");
     if (girisTarihi && girisTarihi > bugun) return;
-    let durum = "Portföyde";
-    (cek.gecmis || []).forEach((g) => { if (!g.tarih || finansGun(g.tarih) <= bugun) durum = g.yeniDurum || durum; });
-    if (bugunMu) durum = cek.durum || durum;
+    const durum = finansCekDurumu(cek, bugun, bugunMu);
     const verilen = (cek.tip || "Alınan") === "Verilen";
     const cari = (cariler || []).find((c) => c.id === cek.cariId);
     const ortak = {
@@ -466,6 +464,206 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
   return satirlar;
 }
 
+// Çekin verilen günkü durumu: geçmiş satırları o güne kadar oynatılıyor (geri alma satırları da
+// durum değiştirdiği için doğru sonuç); bugün için kayıttaki durum esas.
+function finansCekDurumu(cek, bugun, bugunMu) {
+  let durum = "Portföyde";
+  (cek.gecmis || []).forEach((g) => { if (!g.tarih || finansGun(g.tarih) <= bugun) durum = g.yeniDurum || durum; });
+  return bugunMu ? (cek.durum || durum) : durum;
+}
+
+// ---- DÖNEM KARŞILAŞTIRMASI (26 Eylül, v1.475.0) --------------------------------------------------
+//
+// Kullanıcı (finans raporu eklemelerinden seçti): "dönem karşılaştırma". Büyük programların
+// "karşılaştırmalı bilanço"su: aynı varlık özeti İKİ TARİHTE, grup grup, fark ve yüzde. Her iki taraf
+// `finansRaporSatirlari`ndan — tarih itibarıyla kuralları (hareket ≤ gün, çek geçmişi oynatma) aynen.
+// SINIR: fiyat ve kur GÜNCEL (geçmiş fiyat tutulmuyor): stok farkı MİKTAR değişimini gösterir, fiyat
+// değişimini değil. Ekranda yazılı.
+function finansDonemKarsilastir({ tarihA, tarihB, ...ortak } = {}) {
+  const a = finansOzet(finansRaporSatirlari({ ...ortak, tarih: tarihA }));
+  const b = finansOzet(finansRaporSatirlari({ ...ortak, tarih: tarihB }));
+  const yuv = (x) => Math.round(x * 100) / 100;
+  const gruplar = FINANS_GRUP_SIRASI.filter((g) => a.gruplar[g] || b.gruplar[g]).map((g) => {
+    const va = a.gruplar[g] ? a.gruplar[g].toplam : 0;
+    const vb = b.gruplar[g] ? b.gruplar[g].toplam : 0;
+    return { grup: g, taraf: (a.gruplar[g] || b.gruplar[g]).taraf, a: va, b: vb, fark: yuv(vb - va), yuzde: va ? Math.round(((vb - va) / Math.abs(va)) * 1000) / 10 : null };
+  });
+  const toplamlar = ["varlik", "yukumluluk", "net"].map((k) => ({ anahtar: k, a: a[k], b: b[k], fark: yuv(b[k] - a[k]),
+    yuzde: a[k] ? Math.round(((b[k] - a[k]) / Math.abs(a[k])) * 1000) / 10 : null }));
+  return { a, b, gruplar, toplamlar };
+}
+
+// ---- NAKİT AKIŞ PROJEKSİYONU (26 Eylül, v1.475.0) ------------------------------------------------
+//
+// "Önümüzdeki haftalarda/aylarda kasaya ne girecek, ne çıkacak, nakit nereye düşer?" Başlangıç =
+// kasa + banka (TL karşılığı). Beklenen hareketler VADESİNE göre dönemlere:
+//   • Çek girişi   — alınan çek, portföyde ya da bankada tahsilde (ciro edilen/karşılıksız girmez).
+//   • Alacak tahsili — carilerin AÇIK alacak kalemleri (yaşlandırmayla aynı FIFO; müşteri çek
+//     verdiyse o tutar zaten carinin alacağından düşmüş, çift sayılmaz).
+//   • Çek ödemesi  — verilen şahsi çek (portföyde = verildi, vadesinde hesaptan çıkacak).
+//   • Borç ödemesi — carilere AÇIK borç kalemleri (tedarikçi, personel…).
+// Vadesiz kalem yaşlandırmadaki gibi tarih + varsayılan vade. Vadesi GEÇMİŞ kalemler ayrı "Vadesi
+// geçmiş" satırında (bugün beklenen); isteğe göre birikimli nakde katılmaz. Son dönemden sonrası
+// "Sonrası" satırında. Kuru olmayan birim dışarıda, sayısı yazılı.
+function finansNakitAkisi({ cariler, muhasebe, kurlar, defter = "Tümü", tarih, varsayilanVade = 0, aralik = "hafta", donemSayisi = 8, gecikmisDahil = true } = {}) {
+  const bugun = tarih || bugunYerel();
+  const bugunMu = !tarih || tarih >= bugunYerel();
+  const kurTablosu = kurlar || (muhasebe && muhasebe.kurlar) || {};
+  const kur = (pb) => ((pb || "TRY") === "TRY" ? 1 : parseFloat(kurTablosu[pb]) || 0);
+  const yuv = (x) => Math.round((x || 0) * 100) / 100;
+  const kapsar = (d) => defterKapsar(d, defter);
+  const kurYok = new Set();
+  let baslangic = 0;
+  [["kasalar"], ["bankalar"]].forEach(([anahtar]) => ((muhasebe && muhasebe[anahtar]) || []).forEach((h) => {
+    const bakiye = (h.hareketler || []).filter((x) => kapsar(x.defter) && finansGun(x.tarih) <= bugun)
+      .reduce((t, x) => t + (x.yon === "Giriş" ? (x.tutar || 0) : -(x.tutar || 0)), 0);
+    const k = kur(h.paraBirimi);
+    if (!k) { if (Math.abs(bakiye) > 0.004) kurYok.add(h.paraBirimi); return; }
+    baslangic += bakiye * k;
+  }));
+  // Dönemler: hafta = bugünden 7'şer gün; ay = takvim ayı (ilki bugünden ay sonuna).
+  const donemler = [];
+  for (let i = 0; i < Math.max(1, donemSayisi); i++) {
+    if (aralik === "ay") {
+      const y = +bugun.slice(0, 4), m = +bugun.slice(5, 7) - 1 + i;
+      const ilk = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+      const son = new Date(Date.UTC(y, m + 1, 0)).toISOString().slice(0, 10);
+      donemler.push({ anahtar: ilk.slice(0, 7), bas: i === 0 ? bugun : ilk, son });
+    } else {
+      donemler.push({ anahtar: `h${i + 1}`, bas: finansGunEkle(bugun, 7 * i), son: finansGunEkle(bugun, 7 * i + 6) });
+    }
+  }
+  const bos = () => ({ cekGiris: 0, alacak: 0, cekCikis: 0, borc: 0, kalemler: [] });
+  const gecikmis = { anahtar: "gecikmis", ...bos() };
+  const sonrasi = { anahtar: "sonrasi", bas: finansGunEkle(donemler[donemler.length - 1].son, 1), son: "", ...bos() };
+  donemler.forEach((d) => Object.assign(d, bos()));
+  const ekle = (tur, vade, tutar, pb, ad, ayrinti) => {
+    const k = kur(pb);
+    if (!k) { kurYok.add(pb); return; }
+    const v = finansGun(vade) || bugun;
+    const kova = v < bugun ? gecikmis : (donemler.find((d) => v <= d.son) || sonrasi);
+    const tl = tutar * k;
+    kova[tur] += tl;
+    kova.kalemler.push({ tur, vade: v, tl: yuv(tl), tutar: yuv(tutar), pb: pb || "TRY", ad, ayrinti });
+  };
+  // Çekler.
+  const girisler = new Map();
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => girisler.set(h.id, h)));
+  ((muhasebe && muhasebe.cekler) || []).forEach((cek) => {
+    const giris = cek.hareketId ? girisler.get(cek.hareketId) : null;
+    if (!kapsar((giris && giris.defter) || "Genel")) return;
+    const girisTarihi = finansGun((giris && giris.tarih) || cek.tarih || "");
+    if (girisTarihi && girisTarihi > bugun) return;
+    const durum = finansCekDurumu(cek, bugun, bugunMu);
+    if (durum !== "Portföyde" && durum !== "Tahsilde") return;
+    const cari = (cariler || []).find((c) => c.id === cek.cariId);
+    const verilen = (cek.tip || "Alınan") === "Verilen";
+    ekle(verilen ? "cekCikis" : "cekGiris", cek.vadeTarihi, cek.tutar || 0, cek.paraBirimi || "TRY",
+      `Çek ${cek.cekNo || "numarasız"}${cek.banka ? ` · ${cek.banka}` : ""}`, cari ? cari.unvan : "");
+  });
+  // Cari açık kalemleri.
+  (cariler || []).forEach((c) => cariYaslandirma(c, { defter, tarih: bugun, varsayilanVade }).forEach((y) => {
+    y.acikKalemler.forEach((k) => ekle(y.yon === "alacak" ? "alacak" : "borc", k.vade, k.kalan, y.pb, c.unvan, [k.fisNo, k.aciklama].filter(Boolean).join(" · ")));
+  }));
+  const sonuclandir = (d) => {
+    ["cekGiris", "alacak", "cekCikis", "borc"].forEach((k) => { d[k] = yuv(d[k]); });
+    d.giris = yuv(d.cekGiris + d.alacak); d.cikis = yuv(d.cekCikis + d.borc); d.net = yuv(d.giris - d.cikis);
+    d.kalemler.sort((x, y) => x.vade.localeCompare(y.vade) || y.tl - x.tl);
+    return d;
+  };
+  let kumulatif = baslangic + (gecikmisDahil ? sonuclandir(gecikmis).net : (sonuclandir(gecikmis), 0));
+  gecikmis.kumulatif = yuv(kumulatif);
+  donemler.forEach((d) => { sonuclandir(d); kumulatif += d.net; d.kumulatif = yuv(kumulatif); });
+  sonuclandir(sonrasi); sonrasi.kumulatif = yuv(kumulatif + sonrasi.net);
+  // En düşük nakit: hangi dönemde eksiye düşülüyor — tablonun asıl sorusu.
+  // Vadesi geçenler bugün bekleniyorsa o satır da aday: ilk gün açığı orada görünür.
+  const enDusuk = [...(gecikmisDahil && gecikmis.kalemler.length ? [gecikmis] : []), ...donemler]
+    .reduce((m, d) => (m == null || d.kumulatif < m.kumulatif ? d : m), null);
+  return { baslangic: yuv(baslangic), gecikmis, donemler, sonrasi, enDusuk, kurYok: [...kurYok], bugun };
+}
+
+// ---- KART MALİYETİ vs GERÇEKLEŞEN (26 Eylül, v1.475.0) -------------------------------------------
+//
+// "Bu üretim reçeteye göre kaça çıkmalıydı, kaça çıktı?" Her üretim için:
+//   • KART: reçete hammaddesi × adet × GÜNCEL birim fiyat + kartın proses/ara proses ücretleri × adet
+//     (`finansMamulBirimDegeri` ile aynı eşleşme: mamul rengi + "Tüm Bedenler" ya da o beden).
+//   • GERÇEKLEŞEN: üretime bağlı (`uretimId`) hammadde hareketlerinin NET çıkışı × aynı fiyat + üretime
+//     bağlı "-İşçilik" cari fişleri (finansUretimDegerleri ile aynı kaynak).
+//   • ESAS ADET: tamamlanan işte STOĞA GİREN çiftler (fire/eksik çıkan çift "fazla harcama" olarak
+//     farka yansısın); devam edende planlanan adet — o yüzden devam edenlerde fark "şimdiye kadar
+//     harcanan − tamamının kartı"dır, eksi görünmesi normal (ekranda yazılı).
+// Fiyat iki tarafta AYNI (güncel) — fark yalnız MİKTAR sapmasını ve işçilik sapmasını gösterir;
+// fiyat oynaması karşılaştırmayı kirletmez. Hammadde bazında ayrıntı: reçetede olmayan (ek malzeme)
+// ve hiç kullanılmayan kalemler de görünür.
+function finansMaliyetFarki({ uretim, stok, cariler, kurlar, tarih, araProsesler, yalnizTamamlanan = true } = {}) {
+  const bugun = tarih || bugunYerel();
+  const kurTablosu = kurlar || {};
+  const yuv = (x) => Math.round((x || 0) * 100) / 100;
+  const nrm = stokAnahtarNrm;
+  const iscilikler = new Map();
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    if (!h.uretimId || !/-İşçilik$/.test(h.fisNo || "") || finansGun(h.tarih) > bugun) return;
+    iscilikler.set(h.uretimId, (iscilikler.get(h.uretimId) || 0) + Math.abs(h.tutar || 0));
+  }));
+  const sonuc = [];
+  (uretim || []).forEach((u) => {
+    if (!u) return;
+    const tamamlandi = u.asama === "Tamamlandı";
+    if (yalnizTamamlanan && !tamamlandi) return;
+    const urun = (stok || []).find((p) => p.id === u.urunId);
+    if (!urun) return;
+    const gercek = new Map();   // hmId|renk|beden → net çıkış miktarı
+    const giren = new Map();    // beden → stoğa giren çift
+    let kurYok = null;
+    (stok || []).forEach((p) => (p.hareketler || []).forEach((h) => {
+      if (h.uretimId !== u.id || finansGun(h.tarih) > bugun) return;
+      if (p.id === urun.id) { giren.set(nrm(h.beden), (giren.get(nrm(h.beden)) || 0) + (Number(h.miktar) || 0)); return; }
+      const k = `${p.id}|${nrm(h.renk)}|${nrm(h.beden)}`;
+      gercek.set(k, (gercek.get(k) || 0) - (Number(h.miktar) || 0));
+    }));
+    const girenCift = [...giren.values()].reduce((t, x) => t + x, 0);
+    const plan = (u.bedenMiktarlari || []).filter((b) => Number(b.miktar) > 0);
+    const esas = tamamlandi && girenCift > 0
+      ? [...giren.entries()].filter(([, m]) => m > 0).map(([beden, miktar]) => ({ beden, miktar }))
+      : (plan.length ? plan.map((b) => ({ beden: nrm(b.beden), miktar: Number(b.miktar) })) : [{ beden: "", miktar: Number(u.adet) || 0 }]);
+    const esasAdet = esas.reduce((t, b) => t + b.miktar, 0);
+    const kart = new Map();     // hmId|renk|beden → beklenen miktar
+    esas.forEach((b) => (urun.recete || []).forEach((r) => {
+      if (nrm(r.mamulRenk) !== nrm(u.renk)) return;
+      if (r.mamulBeden && r.mamulBeden !== "Tüm Bedenler" && nrm(r.mamulBeden) !== b.beden) return;
+      const k = `${r.hammaddeUrunId}|${nrm(r.renk)}|${nrm(r.beden)}`;
+      kart.set(k, (kart.get(k) || 0) + (parseFloat(r.miktar) || 0) * b.miktar);
+    }));
+    const kalemler = [...new Set([...kart.keys(), ...gercek.keys()])].map((k) => {
+      const [hmId, renk, beden] = k.split("|");
+      const hm = (stok || []).find((p) => p.id === hmId);
+      const bf = hammaddeBirimFiyati(hm, renk, beden, kurTablosu);
+      if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0) kurYok = bf.pb;
+      const km = stokYuvarla(kart.get(k) || 0), gm = stokYuvarla(gercek.get(k) || 0);
+      return { ad: (hm && hm.ad) || "?", renk: olcuGoster(renk), beden: olcuGoster(beden), birim: (hm && hm.birim) || "",
+        kartMiktar: km, gercekMiktar: gm, birimFiyat: yuv(bf.tl), kartTL: yuv(km * bf.tl), gercekTL: yuv(gm * bf.tl), farkTL: yuv((gm - km) * bf.tl),
+        receteDisi: !kart.has(k) };
+    }).filter((x) => Math.abs(x.kartMiktar) > 0.0005 || Math.abs(x.gercekMiktar) > 0.0005)
+      .sort((x, y) => Math.abs(y.farkTL) - Math.abs(x.farkTL));
+    const kartHammadde = kalemler.reduce((t, x) => t + x.kartTL, 0);
+    const gercekHammadde = kalemler.reduce((t, x) => t + x.gercekTL, 0);
+    const kartIscilik = finansIscilikBirim(urun, araProsesler) * esasAdet;
+    const gercekIscilik = iscilikler.get(u.id) || 0;
+    if (!(gercekHammadde > 0.004 || gercekIscilik > 0.004 || girenCift > 0)) return;   // hiç başlamamış
+    const kartToplam = kartHammadde + kartIscilik, gercekToplam = gercekHammadde + gercekIscilik;
+    sonuc.push({
+      uretim: u, urunAd: urun.ad, renk: u.renk || "", tamamlandi, esasAdet, girenCift: stokYuvarla(girenCift),
+      planAdet: plan.reduce((t, b) => t + Number(b.miktar), 0) || Number(u.adet) || 0,
+      kartHammadde: yuv(kartHammadde), gercekHammadde: yuv(gercekHammadde), kartIscilik: yuv(kartIscilik), gercekIscilik: yuv(gercekIscilik),
+      kartToplam: yuv(kartToplam), gercekToplam: yuv(gercekToplam), fark: yuv(gercekToplam - kartToplam),
+      farkYuzde: kartToplam > 0 ? Math.round(((gercekToplam - kartToplam) / kartToplam) * 1000) / 10 : null,
+      birimKart: esasAdet ? yuv(kartToplam / esasAdet) : null, birimGercek: esasAdet ? yuv(gercekToplam / esasAdet) : null,
+      kalemler, kurYok, iscilikKartYok: !(finansIscilikBirim(urun, araProsesler) > 0),
+    });
+  });
+  return sonuc.sort((a, b) => Math.abs(b.fark) - Math.abs(a.fark));
+}
+
 // BİLANÇO ÖZETİ — grup toplamları (TL) ve net varlık. Kuru olmayan satırlar toplam dışı, sayılıyor.
 function finansOzet(satirlar) {
   const gruplar = {};
@@ -534,7 +732,7 @@ function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar,
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-end", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
         <div style={{ display: "grid", gap: 4 }}>
           <span style={etiket}>Görünüm</span>
-          {secim(gorunum, setGorunum, [["ozet", "Varlık Özeti"], ["yas", "Yaşlandırma"]])}
+          {secim(gorunum, setGorunum, [["ozet", "Varlık Özeti"], ["yas", "Yaşlandırma"], ["donem", "Dönem Karşılaştırma"], ["nakit", "Nakit Akışı"], ["maliyet", "Maliyet Farkı"]])}
         </div>
         <div style={{ display: "grid", gap: 4 }}>
           <span style={etiket}>Defter</span>
@@ -550,7 +748,7 @@ function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar,
           <span style={etiket}>Varsayılan vade (gün)</span>
           <input type="number" min="0" step="1" data-finans-vade="1" value={varsayilanVade} onChange={(e) => setVarsayilanVade(e.target.value)} style={{ ...inputStyle, width: 90 }} />
         </label>
-        {gorunum === "ozet" && <div style={{ display: "grid", gap: 4 }}>
+        {(gorunum === "ozet" || gorunum === "donem") && <div style={{ display: "grid", gap: 4 }}>
           <span style={etiket}>Mamul değerleme</span>
           {secim(mamulDegerleme, setMamulDegerleme, [["maliyet", "Hammadde + işçilik"], ["hammadde", "Yalnız hammadde"], ["satis", "Satış fiyatı"], ["alis", "Kart alış fiyatı"]])}
         </div>}
@@ -574,6 +772,11 @@ function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar,
           ))}
         </div>
       )}
+
+      {/* YENİ GÖRÜNÜMLER (v1.475.0). "Yan yana" defter seçimi bunlarda tek tabloya sığmıyor: Tümü sayılıyor. */}
+      {gorunum === "donem" && <DonemKarsilastirmaGorunumu ortak={{ ...ortak, defter: defter === "YanYana" ? "Tümü" : defter }} tarih={tarih} yanYana={defter === "YanYana"} />}
+      {gorunum === "nakit" && <NakitAkisiGorunumu cariler={cariler} muhasebe={muhasebe} kurlar={kurlar} defter={defter === "YanYana" ? "Tümü" : defter} tarih={tarih} varsayilanVade={vadeGun} yanYana={defter === "YanYana"} />}
+      {gorunum === "maliyet" && <MaliyetFarkiGorunumu uretim={uretim} stok={stok} cariler={cariler} kurlar={kurlar} tarih={tarih} araProsesler={araProsesler} />}
 
       {gorunum === "ozet" && <div id="finans-ozet-yazdir" data-finans-ozet="1" style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -788,6 +991,290 @@ function YaslandirmaTablosu({ cariler, defter, tarih, varsayilanVade, yon, kurla
         )}
       </div>
       {kursuz.size > 0 && <span style={{ fontSize: 11, color: "var(--erp-warn)" }}>⚠ {[...kursuz].join(", ")} kuru yok — TL toplamına ve çubuğa girmedi (tabloda kendi biriminde).</span>}
+    </div>
+  );
+}
+
+// ---- ORTAK: sayı biçimi ve seçim düğmeleri (v1.475.0 görünümleri) --------------------------------
+const finansTL = (v) => `${(Math.round((v || 0) * 100) / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`;
+const finansYuzde = (v) => (v == null ? "—" : `${v > 0 ? "+" : v < 0 ? "−" : ""}%${Math.abs(v).toLocaleString("tr-TR")}`);
+function FinansSecim({ deger, onDegis, secenekler, veriAdi }) {
+  return (
+    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+      {secenekler.map(([d, ad]) => (
+        <button key={d} type="button" onClick={() => onDegis(d)} {...{ [veriAdi || "data-finans-secim"]: d }}
+          style={{ padding: "4px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+            border: `1.5px solid ${deger === d ? "var(--erp-primary)" : "var(--erp-line)"}`,
+            background: deger === d ? "var(--erp-primary)" : "#fff", color: deger === d ? "#fff" : "var(--erp-text-2)" }}>
+          {ad}
+        </button>
+      ))}
+    </div>
+  );
+}
+const FINANS_KAP = { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10 };
+const FINANS_HUCRE = { padding: "5px 8px", fontSize: 12, borderBottom: "1px solid var(--erp-line-soft)" };
+// Tutarlar sarılmıyor: dar ekranda "230,00 ₺" iki satıra bölünüyordu; tablo kendi kabında kayar.
+const FINANS_SAG = { ...FINANS_HUCRE, textAlign: "right", whiteSpace: "nowrap" };
+const finansFarkRengi = (v, iyiYon = 1) => (!v ? undefined : v * iyiYon > 0 ? "#3F7D3A" : "var(--erp-warn)");
+
+// ---- DÖNEM KARŞILAŞTIRMA GÖRÜNÜMÜ --------------------------------------------------------------
+function DonemKarsilastirmaGorunumu({ ortak, tarih, yanYana }) {
+  const b = tarih || bugunYerel();
+  // Hazır karşılaştırma noktaları: geçen ay sonu (varsayılan), geçen yıl sonu, 30 gün önce.
+  const gecenAySonu = new Date(Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, 0)).toISOString().slice(0, 10);
+  const gecenYilSonu = `${+b.slice(0, 4) - 1}-12-31`;
+  const otuzGunOnce = finansGunEkle(b, -30);
+  const [tarihA, setTarihA] = useState(gecenAySonu);
+  const k = finansDonemKarsilastir({ ...ortak, tarihA, tarihB: b });
+  const taraflar = [["Varlık", "VARLIKLAR"], ["Yükümlülük", "YÜKÜMLÜLÜKLER"], ["Bilgi", "BİLGİ (net varlığa girmez)"]];
+  const toplamAdi = { varlik: "Toplam varlık", yukumluluk: "Toplam yükümlülük", net: "NET VARLIK" };
+  return (
+    <div id="finans-donem-yazdir" data-finans-donem="1" style={FINANS_KAP}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 15 }}>Dönem Karşılaştırma</b>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+          Karşılaştırılan tarih
+          <input type="date" data-finans-donem-a="1" value={tarihA} onChange={(e) => setTarihA(e.target.value || gecenAySonu)} style={{ ...inputStyle, width: 150, padding: "5px 8px" }} />
+        </label>
+        <FinansSecim deger={tarihA} onDegis={setTarihA} veriAdi="data-finans-donem-hazir"
+          secenekler={[[gecenAySonu, "Geçen ay sonu"], [otuzGunOnce, "30 gün önce"], [gecenYilSonu, "Geçen yıl sonu"]]} />
+        <button type="button" className="btn-ghost no-print" style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 12 }}
+          onClick={() => indirYazdirilabilirHTML("#finans-donem-yazdir", `Donem-Karsilastirma-${tarihA}-${b}`)}>
+          <Printer size={13} /> Yazdır
+        </button>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              {["Grup", tarihYaz(tarihA), tarihYaz(b), "Değişim", "%"].map((h, i) => (
+                <th key={i} style={{ ...FINANS_HUCRE, fontSize: 11, color: "var(--erp-text-2)", textAlign: i ? "right" : "left", borderBottom: "2px solid var(--erp-text)" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {taraflar.map(([taraf, baslik]) => {
+              const liste = k.gruplar.filter((g) => g.taraf === taraf);
+              if (!liste.length) return null;
+              // Yükümlülükte artış kötü: renk yönü ters.
+              const yon = taraf === "Yükümlülük" ? -1 : 1;
+              return (
+                <React.Fragment key={taraf}>
+                  <tr><td colSpan={5} style={{ fontSize: 11, fontWeight: 800, color: "var(--erp-text-3)", paddingTop: 10 }}>{baslik}</td></tr>
+                  {liste.map((g) => (
+                    <tr key={g.grup} data-finans-donem-grup={g.grup}>
+                      <td style={FINANS_HUCRE}>{g.grup}</td>
+                      <td className="mono" style={FINANS_SAG}>{finansTL(g.a)}</td>
+                      <td className="mono" style={FINANS_SAG}>{finansTL(g.b)}</td>
+                      <td className="mono" style={{ ...FINANS_SAG, fontWeight: 700, color: taraf === "Bilgi" ? undefined : finansFarkRengi(g.fark, yon) }}>{finansTL(g.fark)}</td>
+                      <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansYuzde(g.yuzde)}</td>
+                    </tr>
+                  ))}
+                </React.Fragment>
+              );
+            })}
+            {k.toplamlar.map((t) => (
+              <tr key={t.anahtar} data-finans-donem-toplam={t.anahtar} style={{ borderTop: "2px solid var(--erp-line)" }}>
+                <td style={{ ...FINANS_HUCRE, fontWeight: 800 }}>{toplamAdi[t.anahtar]}</td>
+                <td className="mono" style={{ ...FINANS_SAG, fontWeight: 700 }}>{finansTL(t.a)}</td>
+                <td className="mono" style={{ ...FINANS_SAG, fontWeight: 700 }}>{finansTL(t.b)}</td>
+                <td className="mono" style={{ ...FINANS_SAG, fontWeight: 800, color: finansFarkRengi(t.fark, t.anahtar === "yukumluluk" ? -1 : 1) }}>{finansTL(t.fark)}</td>
+                <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansYuzde(t.yuzde)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontSize: 11, color: "var(--erp-text-2)", display: "grid", gap: 2 }}>
+        <span>Her iki tarih o güne kadarki hareketlerle hesaplanır. Stok ve döviz GÜNCEL fiyat/kurla değerlenir — stoktaki değişim miktar değişimidir, fiyat değişimi değil.</span>
+        {yanYana && <span>"Yan yana" seçimi bu görünümde tüm defterleri birlikte sayar; defter ayırmak için Genel ya da Resmi seçin.</span>}
+      </div>
+    </div>
+  );
+}
+
+// ---- NAKİT AKIŞI GÖRÜNÜMÜ ----------------------------------------------------------------------
+const NAKIT_TURLERI = [["cekGiris", "Çek girişi", 1], ["alacak", "Alacak tahsili", 1], ["cekCikis", "Çek ödemesi", -1], ["borc", "Borç ödemesi", -1]];
+function NakitAkisiGorunumu({ cariler, muhasebe, kurlar, defter, tarih, varsayilanVade, yanYana }) {
+  const [aralik, setAralik] = useState("hafta");
+  const [gecikmisDahil, setGecikmisDahil] = useState(true);
+  const [acik, setAcik] = useState(null);
+  const n = finansNakitAkisi({ cariler, muhasebe, kurlar, defter, tarih, varsayilanVade, aralik, donemSayisi: aralik === "ay" ? 6 : 8, gecikmisDahil });
+  const AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+  const donemAdi = (d) => (d.anahtar === "gecikmis" ? "Vadesi geçmiş"
+    : d.anahtar === "sonrasi" ? `${tarihYaz(d.bas)} sonrası`
+    : aralik === "ay" ? `${AYLAR[+d.bas.slice(5, 7) - 1]} ${d.bas.slice(0, 4)}`
+    : `${tarihYaz(d.bas).slice(0, 5)} – ${tarihYaz(d.son).slice(0, 5)}`);
+  const satirlar = [n.gecikmis, ...n.donemler, n.sonrasi].filter((d) => d.anahtar !== "gecikmis" && d.anahtar !== "sonrasi" || d.kalemler.length);
+  const sayi = (v) => (v ? finansTL(v) : "");
+  return (
+    <div id="finans-nakit-yazdir" data-finans-nakit="1" style={FINANS_KAP}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 15 }}>Nakit Akışı</b>
+        <FinansSecim deger={aralik} onDegis={setAralik} veriAdi="data-finans-nakit-aralik" secenekler={[["hafta", "Haftalık (8 hafta)"], ["ay", "Aylık (6 ay)"]]} />
+        <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}>
+          <input type="checkbox" data-finans-nakit-gecikmis="1" checked={gecikmisDahil} onChange={(e) => setGecikmisDahil(e.target.checked)} />
+          Vadesi geçenleri bugün bekle
+        </label>
+        <button type="button" className="btn-ghost no-print" style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 12 }}
+          onClick={() => indirYazdirilabilirHTML("#finans-nakit-yazdir", `Nakit-Akisi-${n.bugun}`)}>
+          <Printer size={13} /> Yazdır
+        </button>
+      </div>
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13 }}>
+        <span data-finans-nakit-baslangic="1">Başlangıç (kasa + banka): <b className="mono">{finansTL(n.baslangic)}</b></span>
+        {n.enDusuk && (
+          <span data-finans-nakit-en-dusuk="1" style={{ color: n.enDusuk.kumulatif < 0 ? "var(--erp-warn)" : undefined }}>
+            En düşük nakit: <b className="mono">{finansTL(n.enDusuk.kumulatif)}</b> ({donemAdi(n.enDusuk)}){n.enDusuk.kumulatif < 0 ? " — nakit açığı" : ""}
+          </span>
+        )}
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              {["Dönem", ...NAKIT_TURLERI.map(([, ad]) => ad), "Net", "Birikimli nakit"].map((h, i) => (
+                <th key={h} style={{ ...FINANS_HUCRE, fontSize: 11, color: "var(--erp-text-2)", textAlign: i ? "right" : "left", borderBottom: "2px solid var(--erp-text)", whiteSpace: "nowrap" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {satirlar.map((d) => (
+              <React.Fragment key={d.anahtar}>
+                <tr data-finans-nakit-donem={d.anahtar} onClick={() => setAcik(acik === d.anahtar ? null : d.anahtar)}
+                  style={{ cursor: d.kalemler.length ? "pointer" : "default", background: d.anahtar === "gecikmis" ? "#FBF1E6" : undefined }}>
+                  <td style={{ ...FINANS_HUCRE, fontWeight: 600, whiteSpace: "nowrap" }}>{donemAdi(d)}{d.kalemler.length ? <span style={{ color: "var(--erp-text-3)", fontWeight: 400 }}> · {d.kalemler.length}</span> : null}</td>
+                  {NAKIT_TURLERI.map(([t, , y]) => <td key={t} className="mono" style={{ ...FINANS_SAG, color: d[t] ? (y > 0 ? "#3F7D3A" : "var(--erp-warn)") : undefined }}>{sayi(d[t])}</td>)}
+                  <td className="mono" style={{ ...FINANS_SAG, fontWeight: 700, color: finansFarkRengi(d.net) }}>{finansTL(d.net)}</td>
+                  <td className="mono" style={{ ...FINANS_SAG, fontWeight: 800, color: d.kumulatif < 0 ? "var(--erp-warn)" : undefined }}>
+                    {d.anahtar === "gecikmis" && !gecikmisDahil ? "—" : finansTL(d.kumulatif)}
+                  </td>
+                </tr>
+                {acik === d.anahtar && d.kalemler.length > 0 && (
+                  <tr className="no-print" data-finans-nakit-kalemler={d.anahtar}>
+                    <td colSpan={7} style={{ padding: "6px 8px 10px 20px", background: "var(--erp-panel)" }}>
+                      {d.kalemler.map((k, i) => (
+                        <div key={i} className="mono" style={{ fontSize: 11, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                          <span style={{ color: "var(--erp-text-3)", minWidth: 74 }}>{tarihYaz(k.vade)}</span>
+                          <span style={{ minWidth: 96, color: k.tur === "cekGiris" || k.tur === "alacak" ? "#3F7D3A" : "var(--erp-warn)" }}>{(NAKIT_TURLERI.find((x) => x[0] === k.tur) || [])[1]}</span>
+                          <span style={{ flex: 1, minWidth: 140 }}>{k.ad}{k.ayrinti ? <span style={{ color: "var(--erp-text-2)" }}> · {k.ayrinti}</span> : null}</span>
+                          <b>{k.pb === "TRY" ? finansTL(k.tl) : `${k.tutar.toLocaleString("tr-TR")} ${k.pb} (${finansTL(k.tl)})`}</b>
+                        </div>
+                      ))}
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ fontSize: 11, color: "var(--erp-text-2)", display: "grid", gap: 2 }}>
+        <span>Girişler: portföydeki/tahsildeki alınan çekler ve açık alacaklar; çıkışlar: verilen çekler ve açık borçlar — hepsi vadesine göre. Vadesiz kalem tarih + varsayılan vade ({varsayilanVade || 0} gün). Ciro edilen ve karşılıksız çek girmez. Satıra dokununca kalemler açılır.</span>
+        {n.kurYok.length > 0 && <span style={{ color: "var(--erp-warn)" }}>⚠ {n.kurYok.join(", ")} kuru yok — bu birimdeki kalemler hesaba girmedi.</span>}
+        {yanYana && <span>"Yan yana" seçimi bu görünümde tüm defterleri birlikte sayar.</span>}
+      </div>
+    </div>
+  );
+}
+
+// ---- MALİYET FARKI GÖRÜNÜMÜ --------------------------------------------------------------------
+function MaliyetFarkiGorunumu({ uretim, stok, cariler, kurlar, tarih, araProsesler }) {
+  const [kapsam, setKapsam] = useState("tamamlanan");
+  const [acik, setAcik] = useState(null);
+  const liste = finansMaliyetFarki({ uretim, stok, cariler, kurlar, tarih, araProsesler, yalnizTamamlanan: kapsam === "tamamlanan" });
+  const top = (k) => liste.reduce((t, x) => t + (x[k] || 0), 0);
+  const kartT = top("kartToplam"), gercekT = top("gercekToplam");
+  return (
+    <div id="finans-maliyet-yazdir" data-finans-maliyet="1" style={FINANS_KAP}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <b style={{ fontSize: 15 }}>Kart Maliyeti ve Gerçekleşen</b>
+        <FinansSecim deger={kapsam} onDegis={setKapsam} veriAdi="data-finans-maliyet-kapsam" secenekler={[["tamamlanan", "Tamamlanan üretimler"], ["tumu", "Devam edenler dahil"]]} />
+        <button type="button" className="btn-ghost no-print" style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 12 }}
+          onClick={() => indirYazdirilabilirHTML("#finans-maliyet-yazdir", `Maliyet-Farki-${tarih || bugunYerel()}`)}>
+          <Printer size={13} /> Yazdır
+        </button>
+      </div>
+      {liste.length > 0 && (
+        <div data-finans-maliyet-ozet="1" style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 13 }}>
+          <span>Kart: <b className="mono">{finansTL(kartT)}</b></span>
+          <span>Gerçekleşen: <b className="mono">{finansTL(gercekT)}</b></span>
+          <span>Fark: <b className="mono" style={{ color: finansFarkRengi(gercekT - kartT, -1) }}>{finansTL(gercekT - kartT)}</b> ({finansYuzde(kartT ? Math.round(((gercekT - kartT) / kartT) * 1000) / 10 : null)})</span>
+        </div>
+      )}
+      <div style={{ overflowX: "auto" }}>
+        {liste.length === 0 ? (
+          <div style={{ fontSize: 13, color: "var(--erp-text-3)", padding: 10 }}>
+            {kapsam === "tamamlanan" ? "Tamamlanmış üretim yok — \"Devam edenler dahil\" ile açık işlere bakabilirsiniz." : "Maliyet harcanmış üretim yok."}
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                {/* Sonuç sütunları önde (dar ekranda kaydırmadan görünsün), hammadde/işçilik ayrımı arkada. */}
+                {["Üretim", "Adet", "Kart toplam", "Gerçekleşen", "Fark", "%", "Çift başı kart / gerçek", "Kart hammadde", "Gerçek hammadde", "Kart işçilik", "Gerçek işçilik"].map((h, i) => (
+                  <th key={h} style={{ ...FINANS_HUCRE, fontSize: 11, color: "var(--erp-text-2)", textAlign: i ? "right" : "left", borderBottom: "2px solid var(--erp-text)", whiteSpace: "nowrap" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {liste.map((x) => (
+                <React.Fragment key={x.uretim.id}>
+                  <tr data-finans-maliyet-satir={x.uretim.siparisNo || x.uretim.id} onClick={() => setAcik(acik === x.uretim.id ? null : x.uretim.id)} style={{ cursor: "pointer" }}>
+                    <td style={{ ...FINANS_HUCRE, fontWeight: 600, whiteSpace: "nowrap" }}>
+                      {x.uretim.siparisNo || "—"} · {x.urunAd}{x.renk ? ` · ${x.renk}` : ""}
+                      {!x.tamamlandi && <span style={{ fontSize: 10, color: "var(--erp-purple)", fontWeight: 700 }}> · devam ediyor</span>}
+                    </td>
+                    <td className="mono" style={FINANS_SAG} title={x.tamamlandi ? "Stoğa giren çift" : "Planlanan adet"}>{x.esasAdet}{x.tamamlandi && x.planAdet && x.planAdet !== x.esasAdet ? ` / ${x.planAdet}` : ""}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, fontWeight: 700 }}>{finansTL(x.kartToplam)}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, fontWeight: 700 }}>{finansTL(x.gercekToplam)}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, fontWeight: 800, color: finansFarkRengi(x.fark, -1) }}>{finansTL(x.fark)}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansYuzde(x.farkYuzde)}</td>
+                    <td className="mono" style={FINANS_SAG}>{x.birimKart == null ? "—" : `${finansTL(x.birimKart)} / ${finansTL(x.birimGercek)}`}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansTL(x.kartHammadde)}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansTL(x.gercekHammadde)}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansTL(x.kartIscilik)}</td>
+                    <td className="mono" style={{ ...FINANS_SAG, color: "var(--erp-text-2)" }}>{finansTL(x.gercekIscilik)}</td>
+                  </tr>
+                  {acik === x.uretim.id && (
+                    <tr className="no-print" data-finans-maliyet-kalemler={x.uretim.siparisNo || x.uretim.id}>
+                      <td colSpan={11} style={{ padding: "6px 8px 10px 20px", background: "var(--erp-panel)" }}>
+                        <table style={{ width: "auto", borderCollapse: "collapse" }}>
+                          <thead>
+                            <tr>{["Hammadde", "Kart miktar", "Gerçek miktar", "Birim fiyat", "Kart", "Gerçek", "Fark"].map((h, i) => (
+                              <th key={h} style={{ ...FINANS_HUCRE, fontSize: 10, color: "var(--erp-text-2)", textAlign: i ? "right" : "left" }}>{h}</th>))}</tr>
+                          </thead>
+                          <tbody>
+                            {x.kalemler.map((k, i) => (
+                              <tr key={i} data-finans-maliyet-kalem={k.ad}>
+                                <td style={{ ...FINANS_HUCRE, fontSize: 11 }}>{k.ad}{[k.renk, k.beden].filter(Boolean).length ? ` · ${[k.renk, k.beden].filter(Boolean).join(" · ")}` : ""}
+                                  {k.receteDisi && <span style={{ fontSize: 10, color: "var(--erp-purple)", fontWeight: 700 }}> · reçetede yok</span>}</td>
+                                <td className="mono" style={{ ...FINANS_SAG, fontSize: 11 }}>{k.kartMiktar} {k.birim}</td>
+                                <td className="mono" style={{ ...FINANS_SAG, fontSize: 11 }}>{k.gercekMiktar} {k.birim}</td>
+                                <td className="mono" style={{ ...FINANS_SAG, fontSize: 11 }}>{finansTL(k.birimFiyat)}</td>
+                                <td className="mono" style={{ ...FINANS_SAG, fontSize: 11 }}>{finansTL(k.kartTL)}</td>
+                                <td className="mono" style={{ ...FINANS_SAG, fontSize: 11 }}>{finansTL(k.gercekTL)}</td>
+                                <td className="mono" style={{ ...FINANS_SAG, fontSize: 11, fontWeight: 700, color: finansFarkRengi(k.farkTL, -1) }}>{finansTL(k.farkTL)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {x.iscilikKartYok && <div style={{ fontSize: 11, color: "#B7791F", marginTop: 4 }}>⚠ Ürün kartında proses ücreti yok — kart işçiliği 0.</div>}
+                        {x.kurYok && <div style={{ fontSize: 11, color: "var(--erp-warn)", marginTop: 4 }}>⚠ {x.kurYok} kuru yok — o hammaddenin fiyatı kur çevrilmeden alındı.</div>}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: "var(--erp-text-2)", display: "grid", gap: 2 }}>
+        <span>Kart = reçete hammaddesi × adet + ürün kartındaki proses ücretleri × adet. Gerçekleşen = üretime bağlı net hammadde çıkışı + personele yazılan işçilik fişleri. İki tarafta da GÜNCEL fiyat: fark yalnız miktar ve işçilik sapmasıdır.</span>
+        <span>Tamamlanan işte adet = stoğa giren çift (fire farka yansır). Devam eden işte adet = planlanan; harcama sürdüğü için fark eksi görünebilir. Satıra dokununca hammadde ayrıntısı açılır.</span>
+      </div>
     </div>
   );
 }

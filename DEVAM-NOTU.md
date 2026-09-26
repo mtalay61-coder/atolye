@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.474.0** · 26 Eylül 2026
+Son sürüm: **v1.475.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.474.0): stok matrislerinin köşe başlığı eksene göre ("Renk \ Beden" / "Renk" / "Beden" / boş). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "STANDART — YENİ ÜRÜN FORMU VE ÜRÜN KARTI".
+**Son iş (26 Eylül, v1.475.0): Finans Raporu'na Dönem Karşılaştırma, Nakit Akışı ve Maliyet Farkı görünümleri. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "FİNANS — DÖNEM, NAKİT AKIŞI, MALİYET FARKI".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,28 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## FİNANS — DÖNEM, NAKİT AKIŞI, MALİYET FARKI (26 Eylül, v1.475.0 — Claude Code oturumu)
+
+Kullanıcı (önerilen sıradaki işlerden 2. maddeyi seçti: "2 de olsun"): dönem karşılaştırması, nakit
+akış projeksiyonu, kart maliyeti ile gerçekleşen maliyet farkı. Üçü de Finans Raporu'nun "Görünüm"
+seçiminde (248); defter ve "tarih itibarıyla" seçimleri geçerli ("yan yana" bunlarda Tümü sayılır).
+
+- **Dönem Karşılaştırma** (`finansDonemKarsilastir`, `DonemKarsilastirmaGorunumu`): iki tarihte
+  `finansRaporSatirlari` → `finansOzet`; grup, toplam, değişim, yüzde. Hazır noktalar: geçen ay sonu
+  (varsayılan), 30 gün önce, geçen yıl sonu. SINIR: fiyat/kur güncel — stok farkı miktar farkıdır.
+- **Nakit Akışı** (`finansNakitAkisi`, `NakitAkisiGorunumu`): başlangıç kasa+banka (TL); vadesine göre
+  alınan çek (portföy/tahsilde), açık alacak (yaşlandırma FIFO'su), verilen çek, açık borç. Haftalık
+  (8) / aylık (6, ilk ay bugünden). "Vadesi geçmiş" ayrı satır (isteğe göre birikimliye katılır,
+  katılınca "en düşük nakit" adayı), son dönemden sonrası "Sonrası". Satıra dokununca kalemler.
+  Kuru olmayan birim dışarıda, uyarı yazılı. Çek durumu ortak yardımcıya taşındı (`finansCekDurumu`).
+- **Maliyet Farkı** (`finansMaliyetFarki`, `MaliyetFarkiGorunumu`): üretim başına KART (reçete × adet ×
+  güncel fiyat + proses ücretleri × adet) ve GERÇEKLEŞEN (uretimId'li net hammadde çıkışı × aynı fiyat
+  + "-İşçilik" fişleri). Esas adet: tamamlanan işte stoğa giren çift (fire farka yansır), devam edende
+  planlanan (fark eksi görünebilir, ekranda yazılı). Hammadde bazında kart/gerçek miktar ve fark;
+  reçete dışı malzeme etiketli. Varsayılan "Tamamlanan üretimler", "Devam edenler dahil" seçilebilir.
+  Sonuç sütunları önde (dar ekranda Fark görünsün).
+- Test: `birim-finans-ek.js` (hesaplar), `senaryo-finans-ek.js` (ekran; tarih 26.09.2026'ya sabit).
 
 ## STANDART — YENİ ÜRÜN FORMU VE ÜRÜN KARTI (26 Eylül, v1.472.0 — Claude Code oturumu)
 
