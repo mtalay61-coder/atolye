@@ -1406,7 +1406,8 @@ function ProductMatrixCard({
             {(() => {
               const rs = renkler.filter((r) => olcuGoster(r)).length;
               const bs = bedenler.filter((b) => olcuGoster(b)).length;
-              return rs || bs ? `${rs} renk × ${bs} beden` : "tek stok kalemi";
+              // Sıfır olan taraf yazılmıyor: bedensiz renkli üründe "2 renk × 0 beden" garip duruyordu.
+              return rs && bs ? `${rs} renk × ${bs} beden` : rs ? `${rs} renk` : bs ? `${bs} beden` : "tek stok kalemi";
             })()}
           </span>
           <span style={{ marginLeft: "auto", display: "flex" }}>
