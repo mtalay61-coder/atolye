@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.471.0** · 26 Eylül 2026
+Son sürüm: **v1.472.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.471.0): hammadde renkleri ürünün malzeme tipine bağlanıyor; başka tipin rengi yazınca bulunup ortak renk oluyor.** Bkz. "MALZEME TİPİNE GÖRE RENK".
+**Son iş (26 Eylül, v1.472.0): yeni ürün formunda ve ürün kartında "Standart" yer tutucusu yazmıyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "STANDART — YENİ ÜRÜN FORMU VE ÜRÜN KARTI".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,21 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## STANDART — YENİ ÜRÜN FORMU VE ÜRÜN KARTI (26 Eylül, v1.472.0 — Claude Code oturumu)
+
+Kullanıcı (Stok ▸ yeni hammadde "Silme Suyu", renk/beden seçmeden Matris Oluştur; tabloda
+"STANDART" başlığı ve "Standart" satırı): "Standart beden renk olayını halletmiştik sanıyorum, hâlâ
+önüme çıkıyor."
+
+- v1.437'deki `olcuGoster` kuralı (yer tutucu yazılmaz, beden başlığı "Miktar") yalnız sipariş/fiş
+  tablolarına uygulanmıştı. Şimdi: yeni ürün formu matris önizlemesi (152), ürün kartı "Renkler ve
+  Bedenler" matrisi, kart içi fiş matrisi, mamul→hammadde rengi tablosu ve fiyat grubu tablosu (160).
+  Kart özeti yer tutucuyu saymıyor ("1 renk × 1 beden" yerine "tek stok kalemi").
+- KAYIT DEĞİŞMEDİ: varyant yine `Standart/Standart`.
+- **İş akışı (kullanıcı, 26 Eylül: "Evet birleştir"):** bundan sonra PR'ı Claude açıp testler temizse
+  kendisi birleştiriyor (merge); sorun görürse kullanıcıya söylüyor.
+- Test: yeni `senaryo-standart-form`.
 
 ## MALZEME TİPİNE GÖRE RENK (26 Eylül, v1.471.0 — Claude Code oturumu)
 

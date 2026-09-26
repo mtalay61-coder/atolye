@@ -1,0 +1,11 @@
+{
+ "formMatrisi": "RENK \\ BEDEN MİKTAR 0",
+ "formdaStandartYok": true,
+ "hatalar": [],
+ "kartMatrisi": "RENK \\ BEDEN MİKTAR 0 min: 0",
+ "karttaStandartYok": true,
+ "kayit": [
+  "Standart/Standart"
+ ],
+ "ozet": "tek stok kalemi"
+}

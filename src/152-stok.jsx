@@ -2382,8 +2382,10 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                 <thead>
                   <tr>
                     <th>Renk \ Beden</th>
+                    {/* "Standart" yer tutucusu yazılmıyor (v1.472.0, `olcuGoster` — tablolardaki kuralın
+                        aynısı, kullanıcı: "standart beden renk olayını halletmiştik, hâlâ çıkıyor"). */}
                     {matrix.bedenler.map((b) => (
-                      <th key={b} className="mono" style={{ textAlign: "center" }}>{b}</th>
+                      <th key={b} className="mono" style={{ textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
                     ))}
                   </tr>
                 </thead>
@@ -2397,7 +2399,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                           onRemove={() => removeMatrixRenkResmi(r)}
                           size={26}
                         />
-                        {r}
+                        {olcuGoster(r)}
                       </td>
                       {matrix.bedenler.map((b) => (
                         <td key={b} className="mono" style={{ textAlign: "center", color: "var(--erp-text-3)" }}>
