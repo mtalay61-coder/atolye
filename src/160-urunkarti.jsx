@@ -1,5 +1,15 @@
 // Stok Hareketleri'ni de Stok Bilgileri'ndeki renk×beden matrisiyle aynı düzende gösterir.
 // Her hücre o renk/bedene ait net hareketi gösterir, tıklanınca o hücrenin fiş geçmişi açılır.
+// Fiyat kutusuna yazılan metin → sayı (v1.481.0). Telefonda virgülle yazılıyor ("0,18"); number kutusu
+// virgülü atıp ",18" gösteriyordu. Virgül varsa ondalık virgülüdür, noktalar binlik ayırıcıdır
+// ("1.250,5" → 1250.5); virgül yoksa nokta ondalıktır ("0.18").
+function fiyatSayisi(v) {
+  const t = String(v == null ? "" : v).trim().replace(/\s/g, "");
+  if (!t) return NaN;
+  return parseFloat(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
+}
+const fiyatYazi = (n) => (n == null || n === "" ? "" : String(n).replace(".", ","));
+
 function ProductMatrixCard({
   kurlar, receteSablonlari, onReceteSablonuKaydet,
   tanimlarAylikUretimHedefi, tanimlarGenelGiderler,
@@ -95,6 +105,12 @@ function ProductMatrixCard({
   const [fkGrupId, setFkGrupId] = useState("");
   const [fkCariId, setFkCariId] = useState("");
   const [fkFiyat, setFkFiyat] = useState("");
+  // PARA BİRİMİ (v1.481.0 — kullanıcı: "fiyatlandırmada para birimi olsun, daha anlaşılır fiyat
+  // girelim"). Kural `paraBirimi` taşıyabiliyordu (fiyatBul okuyor, 21 Eylül) ama ekran hiç yazmıyor ve
+  // her yerde "₺" gösteriyordu — dolarla alınan derinin 0,18 $'lık renk fiyatı TL sanılıyordu. Seçim
+  // Alış/Satış sekmesi değişince kartın o taraftaki para birimine döner (en olası birim).
+  const kartPb = (tip) => alisPbKodu({ alisParaBirimi: tip === "Alış" ? product.alisParaBirimi : product.satisParaBirimi });
+  const [fkParaBirimi, setFkParaBirimi] = useState(() => kartPb("Satış"));
   // Renk+Beden matrisinde bir satırı (renk) ya da sütunu (beden) "tek fiyat"a kilitleyip kilitlemediğimizi
   // tutar — kilitliyken o satır/sütunun tüm hücreleri yerine TEK bir ortak fiyat kutusu kullanılır.
   // TEK FİYAT VARSAYILAN AÇIK (kullanıcı, 17 Eylül: "varsayılanda renk beden için aynı fiyat
@@ -457,13 +473,14 @@ function ProductMatrixCard({
     const eskiKural = mevcutKurallar.find((k) => k.tip === fkTip && k.kapsam === kapsam && k.deger === deger
       && (k.renk || null) === ((ek && ek.renk) || null) && (k.beden || null) === ((ek && ek.beden) || null));
     const yeniKural = { id: eskiKural ? eskiKural.id : uid("fkural"), kapsam, deger, tip: fkTip, fiyat, etiket,
-      renk: (ek && ek.renk) || null, beden: (ek && ek.beden) || null };
+      renk: (ek && ek.renk) || null, beden: (ek && ek.beden) || null, paraBirimi: fkParaBirimi };
     const yeniKurallar = eskiKural
       ? mevcutKurallar.map((k) => (k.id === eskiKural.id ? yeniKural : k))
       : [...mevcutKurallar, yeniKural];
     const log = {
       id: uid("flog"), tarih: new Date().toISOString(), tip: fkTip, etiket,
       eskiFiyat: eskiKural ? eskiKural.fiyat : null, yeniFiyat: fiyat,
+      eskiParaBirimi: eskiKural ? (eskiKural.paraBirimi || kartPb(fkTip)) : null, paraBirimi: fkParaBirimi,
     };
     onUrunGuncelle(product.id, {
       fiyatKurallari: yeniKurallar,
@@ -472,7 +489,7 @@ function ProductMatrixCard({
   }
 
   function fiyatKuraliKaydet() {
-    const fiyat = parseFloat(fkFiyat);
+    const fiyat = fiyatSayisi(fkFiyat);
     if (!fiyat || fiyat <= 0) return;
     let kapsam = fkKapsam;
     let deger, etiket;
@@ -511,7 +528,7 @@ function ProductMatrixCard({
     if (!kural) return;
     const log = {
       id: uid("flog"), tarih: new Date().toISOString(), tip: kural.tip, etiket: `${kural.etiket} (silindi)`,
-      eskiFiyat: kural.fiyat, yeniFiyat: null,
+      eskiFiyat: kural.fiyat, yeniFiyat: null, eskiParaBirimi: kural.paraBirimi || kartPb(kural.tip),
     };
     onUrunGuncelle(product.id, {
       fiyatKurallari: (product.fiyatKurallari || []).filter((k) => k.id !== kuralId),
@@ -5177,7 +5194,7 @@ function ProductMatrixCard({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => setFkTip(t)}
+                  onClick={() => { setFkTip(t); setFkParaBirimi(kartPb(t)); }}
                   style={{
                     padding: "5px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     border: `1.5px solid ${fkTip === t ? (t === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-border)"}`,
@@ -5185,13 +5202,27 @@ function ProductMatrixCard({
                     color: fkTip === t ? (t === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-text-2)",
                   }}
                 >
-                  {t} Fiyatı ({t === "Alış" ? (product.alisFiyati || 0) : (product.satisFiyati || 0)} ₺ genel)
+                  {t} Fiyatı ({fiyatYazi(t === "Alış" ? (product.alisFiyati || 0) : (product.satisFiyati || 0))} {PARA_SEMBOLU[kartPb(t)] || kartPb(t)} genel)
                 </button>
               ))}
             </div>
 
             <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8 }}>Yeni Özel Fiyat Ekle</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Yeni Özel Fiyat Ekle</span>
+                {/* PARA BİRİMİ SEÇİCİ (v1.481.0): aşağıda girilen her fiyat bu birimle kaydedilir. */}
+                <span data-fk-para-birimi={fkParaBirimi} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
+                  <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Para birimi:</span>
+                  {MUHASEBE_PARA_BIRIMLERI.map((pb) => (
+                    <button key={pb} type="button" data-fk-pb={pb} onClick={() => setFkParaBirimi(pb)}
+                      style={{ padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                        border: `1.5px solid ${fkParaBirimi === pb ? "var(--erp-primary)" : "var(--erp-line)"}`,
+                        background: fkParaBirimi === pb ? "var(--erp-primary)" : "#fff", color: fkParaBirimi === pb ? "#fff" : "var(--erp-text-2)" }}>
+                      {PARA_SEMBOLU[pb] || pb} {pb}
+                    </button>
+                  ))}
+                </span>
+              </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                 {[
                   { key: "renkBeden", label: "Renk + Beden" },
@@ -5263,8 +5294,9 @@ function ProductMatrixCard({
                 )}
                 {(fkKapsam === "fiyatGrubu" || fkKapsam === "cari") && (
                   <>
-                    <Field label="Fiyat (₺)">
-                      <input type="number" step="any" min="0" value={fkFiyat} onChange={(e) => setFkFiyat(e.target.value)} style={{ ...inputStyle, width: 100 }} />
+                    <Field label={`Fiyat (${PARA_SEMBOLU[fkParaBirimi] || fkParaBirimi})`}>
+                      <input type="text" inputMode="decimal" value={fkFiyat} onChange={(e) => setFkFiyat(e.target.value)} placeholder="0,00"
+                        data-fk-fiyat="1" className="mono" style={{ ...inputStyle, width: 110, textAlign: "right" }} />
                     </Field>
                     <button className="btn-primary" onClick={fiyatKuraliKaydet}><Plus size={14} /> Ekle</button>
                   </>
@@ -5278,6 +5310,35 @@ function ProductMatrixCard({
                 const tumRenkler = renkSecenekleriFk;
                 const tumBedenler = bedenSirala(Array.from(new Set(product.variants.map((v) => v.beden))));
                 const kuralBul = (kapsam, deger) => (product.fiyatKurallari || []).find((k) => k.tip === fkTip && k.kapsam === kapsam && k.deger === deger);
+
+                const pbSembol = PARA_SEMBOLU[fkParaBirimi] || fkParaBirimi;
+                // FİYAT KUTUSU (v1.481.0): metin kutusu (virgül kabul), 84 px, sağında kuralın KENDİ para
+                // birimi — seçili birimden farklıysa turuncu (kaydedilince seçili birime geçer).
+                const fiyatKutusu = ({ kural, kaydet, veri, vurgu }) => {
+                  const kPb = kural ? (kural.paraBirimi || kartPb(fkTip)) : fkParaBirimi;
+                  return (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                      <input
+                        key={kural ? `${kural.fiyat}|${kPb}` : "bos"}
+                        type="text" inputMode="decimal"
+                        defaultValue={kural ? fiyatYazi(kural.fiyat) : ""}
+                        placeholder="—"
+                        data-fk-hucre={veri}
+                        onBlur={(e) => {
+                          const yeni = fiyatSayisi(e.target.value);
+                          if (!(yeni > 0) || (kural && yeni === kural.fiyat && kPb === fkParaBirimi)) return;
+                          kaydet(yeni);
+                        }}
+                        className="mono"
+                        style={{ width: 84, padding: "4px 6px", fontSize: 13, border: `1px solid ${vurgu ? "#6B4E8A" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
+                      />
+                      <span className="mono" title={kural && kPb !== fkParaBirimi ? `Bu fiyat ${kPb} — değiştirirseniz ${fkParaBirimi} olarak kaydedilir` : undefined}
+                        style={{ fontSize: 11, fontWeight: 700, color: kural && kPb !== fkParaBirimi ? "#B7791F" : "var(--erp-text-3)" }}>
+                        {PARA_SEMBOLU[kPb] || kPb}
+                      </span>
+                    </span>
+                  );
+                };
 
                 function renkTekFiyatToggle(r) {
                   setFkTekFiyatRenkler((prev) => ({ ...prev, [r]: !tekFiyatRenkAcikMi(r) }));
@@ -5296,7 +5357,7 @@ function ProductMatrixCard({
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}
                           <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" }}>
-                            Tek Fiyat (renk)
+                            Tek fiyat (bu rengin tümü)
                           </th>
                         </tr>
                       </thead>
@@ -5314,47 +5375,21 @@ function ProductMatrixCard({
                                   <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                                     {renkKilitli ? (
                                       <span style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span>
-                                    ) : (
-                                      <input
-                                        type="number" step="any" min="0"
-                                        defaultValue={kural ? kural.fiyat : ""}
-                                        placeholder="—"
-                                        onBlur={(e) => {
-                                          const yeni = parseFloat(e.target.value);
-                                          if (!(yeni > 0) || (kural && yeni === kural.fiyat)) return;
-                                          fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni);
-                                        }}
-                                        className="mono"
-                                        style={{ width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
-                                      />
-                                    )}
+                                    ) : fiyatKutusu({ kural, veri: deger, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni) })}
                                   </td>
                                 );
                               })}
                               <td style={{ padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed var(--erp-line)" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
                                   <input type="checkbox" checked={renkKilitli} onChange={() => renkTekFiyatToggle(r)} title="Bu rengin tüm bedenlerine tek fiyat uygula" />
-                                  {renkKilitli && (
-                                    <input
-                                      type="number" step="any" min="0"
-                                      defaultValue={renkKurali ? renkKurali.fiyat : ""}
-                                      placeholder="Fiyat"
-                                      onBlur={(e) => {
-                                        const yeni = parseFloat(e.target.value);
-                                        if (!(yeni > 0) || (renkKurali && yeni === renkKurali.fiyat)) return;
-                                        fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni);
-                                      }}
-                                      className="mono"
-                                      style={{ width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid #6B4E8A", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
-                                    />
-                                  )}
+                                  {renkKilitli && fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni) })}
                                 </div>
                               </td>
                             </tr>
                           );
                         })}
                         <tr style={{ borderTop: "2px solid var(--erp-line)" }}>
-                          <td className="mono" style={{ padding: "6px 8px", fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>Tek Fiyat (beden)</td>
+                          <td className="mono" style={{ padding: "6px 8px", fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>Tek fiyat (bu ölçünün tümü)</td>
                           {tumBedenler.map((b) => {
                             const bedenKilitli = !!fkTekFiyatBedenler[b];
                             const bedenKurali = kuralBul("beden", b);
@@ -5362,20 +5397,7 @@ function ProductMatrixCard({
                               <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                                   <input type="checkbox" checked={bedenKilitli} onChange={() => bedenTekFiyatToggle(b)} title="Bu bedenin tüm renklerine tek fiyat uygula" />
-                                  {bedenKilitli && (
-                                    <input
-                                      type="number" step="any" min="0"
-                                      defaultValue={bedenKurali ? bedenKurali.fiyat : ""}
-                                      placeholder="Fiyat"
-                                      onBlur={(e) => {
-                                        const yeni = parseFloat(e.target.value);
-                                        if (!(yeni > 0) || (bedenKurali && yeni === bedenKurali.fiyat)) return;
-                                        fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni);
-                                      }}
-                                      className="mono"
-                                      style={{ width: 56, padding: "3px 5px", fontSize: 11, border: "1px solid #6B4E8A", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
-                                    />
-                                  )}
+                                  {bedenKilitli && fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni) })}
                                 </div>
                               </td>
                             );
@@ -5384,9 +5406,10 @@ function ProductMatrixCard({
                         </tr>
                       </tbody>
                     </table>
-                    <p style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 6 }}>
-                      Bir rengi ya da bedeni "Tek Fiyat"a kilitlerseniz, o satır/sütundaki tekil hücreler yerine
-                      tek bir ortak fiyat kullanılır (öncelik sırası: Renk+Beden &gt; Renk &gt; Beden &gt; Genel).
+                    <p style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 }}>
+                      Fiyatı kutuya yazıp kutudan çıkın — kaydedilir. Virgülle yazabilirsiniz (0,18). Birim: <b>{pbSembol} {fkParaBirimi}</b> (yukarıdan değiştirin).
+                      Bir rengin tamamına tek fiyat için sağdaki kutuyu işaretleyin; ölçünün tamamı için alttaki kutuyu
+                      (öncelik: Renk+Ölçü &gt; Renk &gt; Ölçü &gt; Genel).
                     </p>
                   </div>
                 );
@@ -5406,7 +5429,9 @@ function ProductMatrixCard({
                     }}
                   >
                     <span style={{ fontSize: 13, flex: 1 }}>{k.etiket}</span>
-                    <span className="mono" style={{ fontSize: 13, fontWeight: 700 }}>{(k.fiyat || 0).toLocaleString("tr-TR")} ₺</span>
+                    <span className="mono" data-fk-kural={k.etiket} style={{ fontSize: 13, fontWeight: 700 }}>
+                      {(k.fiyat || 0).toLocaleString("tr-TR", { maximumFractionDigits: 4 })} {PARA_SEMBOLU[k.paraBirimi || kartPb(k.tip)] || k.paraBirimi || kartPb(k.tip)}
+                    </span>
                     <SilOnayButonu onConfirm={() => fiyatKuraliSil(k.id)} boyut={12} baslikNormal="Fiyat kuralı silinsin mi?" />
                   </div>
                 ))}
@@ -5443,7 +5468,7 @@ function ProductMatrixCard({
                       </span>
                       <span style={{ flex: 1 }}>{log.etiket}</span>
                       <span className="mono" style={{ color: "var(--erp-text-2)" }}>
-                        {log.eskiFiyat != null ? `${log.eskiFiyat} ₺` : "—"} → {log.yeniFiyat != null ? `${log.yeniFiyat} ₺` : "silindi"}
+                        {log.eskiFiyat != null ? `${fiyatYazi(log.eskiFiyat)} ${PARA_SEMBOLU[log.eskiParaBirimi || log.paraBirimi] || "₺"}` : "—"} → {log.yeniFiyat != null ? `${fiyatYazi(log.yeniFiyat)} ${PARA_SEMBOLU[log.paraBirimi] || "₺"}` : "silindi"}
                       </span>
                     </div>
                   ))}
