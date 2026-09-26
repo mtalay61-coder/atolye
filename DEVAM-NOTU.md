@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.467.0** · 26 Eylül 2026
+Son sürüm: **v1.468.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.467.0): açılan her renge/ölçüye/asortiye otomatik barkod kodu (`tanimlarKodluYaz`), Standart yer tutucu kalkıyor, ürün seçicide resim.** Bkz. "RENK KODU, STANDART, SEÇİCİDE RESİM".
+**Son iş (26 Eylül, v1.468.0): eski sürüm dosyaları `yap.sh` sonunda otomatik siliniyor, son 3 kalıyor.** Bkz. "ESKİ SÜRÜM DOSYALARI TEMİZLİĞİ".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,18 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ESKİ SÜRÜM DOSYALARI TEMİZLİĞİ (26 Eylül, v1.468.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Şişmesin diye eski kayıtları siliyorum (main'de v1.440–1.446'yı elle sildi),
+otomatik yapalım; son 3 kayıt hariç diğerleri silinsin."
+
+- `yap.sh` sonu: `ls atolye-erp-v*.html | sort -V | head -n -3` → git'te kayıtlıysa `git rm`, değilse
+  `rm`; yeni derlenen dosya asla silinmez. Silmeler commit'e kendiliğinden girer (sahnelenmiş).
+- Neden güvenli: başlatıcı (index.html) ve uygulama (`surumeOtomatikGec`) yalnız `surum.json`daki
+  son sürümü açıyor; eski dosyaya bağlı kod/test yok (surum-duyuru sahte adres kullanıyor).
+  Silinen dosyalar git geçmişinde: `git checkout <commit> -- atolye-erp-vX.html`.
+- CLAUDE.md dizin açıklaması güncellendi.
 
 ## RENK KODU, STANDART, SEÇİCİDE RESİM (26 Eylül, v1.467.0 — Claude Code oturumu)
 

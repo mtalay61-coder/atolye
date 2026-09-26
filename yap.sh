@@ -44,3 +44,19 @@ catch (e) { console.log("── DERLEME HATASI: " + e.message + " ──"); proc
 ' "$CIKTI"
 
 echo "── hazır: $CIKTI ──"
+
+# ESKİ SÜRÜM DOSYALARI TEMİZLİĞİ (26 Eylül, v1.468.0 — kullanıcı: "şişmesin diye eski kayıtları
+# siliyorum, otomatik yapalım; son 3 kayıt hariç diğerleri silinsin").
+# Her derlemede en yeni 3 sürüm (sürüm numarasına göre, `sort -V`) kalır, eskiler silinir.
+# 3 tane neden: yayındaki + bir önceki (geri dönmek gerekirse elde) + bir fazlası. Kullanıcılar eski
+# dosyada takılmaz: başlatıcı (index.html) ve uygulama `surum.json`dan hep SON sürümü açar.
+# Silinen dosyalar git geçmişinde durur; gerekirse `git checkout <commit> -- dosya` ile döner.
+# Git'te kayıtlıysa `git rm` (silme commit'e girsin), değilse düz `rm`.
+SAKLA=3
+ESKILER=$(ls atolye-erp-v*.html 2>/dev/null | sort -V | head -n -"$SAKLA")
+for f in $ESKILER; do
+  [ "$f" = "$CIKTI" ] && continue
+  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then git rm -q "$f"; else rm -f "$f"; fi
+done
+[ -n "$ESKILER" ] && echo "── eski sürüm dosyaları silindi (son $SAKLA kaldı): $(echo $ESKILER | wc -w) dosya ──"
+exit 0

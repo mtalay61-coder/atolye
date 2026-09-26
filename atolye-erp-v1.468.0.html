@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.461.0</title>
+<title>Atölye ERP 1.468.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -537,7 +537,11 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
                     borderLeft: `4px solid ${CAT_COLORS[u.kategori] || "var(--erp-border)"}`,
                     cursor: "pointer", textAlign: "left",
                 } },
-                React.createElement(KategoriIkonu, { kategori: u.kategori, size: 14 }),
+                (() => {
+                    const resim = u.kapakResmi || Object.values(u.renkResimleri || {}).find(Boolean) || "";
+                    return resim ? (React.createElement("img", { src: resim, alt: "", "data-urun-secici-resim": "1", loading: "lazy", style: { width: 36, height: 36, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", flexShrink: 0, background: "#fff" } })) : (React.createElement("span", { style: { width: 36, display: "inline-flex", justifyContent: "center", flexShrink: 0 } },
+                        React.createElement(KategoriIkonu, { kategori: u.kategori, size: 14 })));
+                })(),
                 React.createElement("span", { style: { flex: 1, minWidth: 90, fontSize: 14, fontWeight: 600, color: "var(--erp-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
                     u.ad,
                     u.pasif ? " (pasif)" : ""),
@@ -1708,7 +1712,8 @@ const MODUL_RENK = {
     depo: "#5A6B4E", // depo yeşili — stoğa yakın ama ondan ayrı bir bakış
     fisler: "var(--erp-purple)", // damga moru
     muhasebe: "#2F6B4F",
-    cekler: "#2F6B4F", // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
+    cekler: "#2F6B4F",
+    finansrapor: "#2F6B4F", // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
     planlama: "#B8860B",
     gorevler: "var(--erp-purple)", // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
     gunluk: "#7A5C8A", // mürekkep moru — defter/kayıt dili
@@ -1728,6 +1733,7 @@ const SEKME_BILGISI = {
     fisler: { ad: "Fişler" },
     muhasebe: { ad: "Kasa & Banka" },
     cekler: { ad: "Çek & Senet" },
+    finansrapor: { ad: "Finans Raporu" },
     atolye: { ad: "Atölye" },
 };
 const SEZONLAR = ["İlkbahar/Yaz", "Sonbahar/Kış", "Tüm Sezon"];
@@ -1897,9 +1903,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.461.0";
+const SURUM = "1.468.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Cek satirina dokununca ozet: kimden alindi, simdi nerede, vade";
+const SURUM_NOTU = "Eski surum dosyalari otomatik temizleniyor (son 3 kalir)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1907,6 +1913,41 @@ const SURUM_NOTU = "Cek satirina dokununca ozet: kimden alindi, simdi nerede, va
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.468.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: ["Eski sürüm dosyaları her yayında otomatik siliniyor, son 3 sürüm kalıyor (depo şişmesin)"],
+        duzeltilen: [] },
+    { surum: "1.467.0", tarih: "26.09.2026",
+        eklenen: ["Sipariş, reçete ve fişlerde ürün seçerken listede ürünün resmi görünüyor"],
+        degisen: [],
+        duzeltilen: ["Stok kartından, siparişten açılan renk / ölçü / model rengi / asortiye barkod renk kodu verilmiyordu — artık hepsine otomatik; kodsuz kalmış eski kayıtlar açılışta tamamlanıyor",
+            "Ürüne gerçek beden (ya da renk) eklenince 'Standart' sütunu (satırı) kalıyordu — üzerinde stok/hareket/bağlantı yoksa artık kalkıyor"] },
+    { surum: "1.466.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: ["Ürün kartında renk ekleme ve çok renkli Model Rengi oluşturmada (1./2./3. Renk) renkler yazdıkça daralan listeden seçiliyor; yeni ürün formundaki pozisyonlar da"],
+        duzeltilen: [] },
+    { surum: "1.465.0", tarih: "26.09.2026",
+        eklenen: ["Finans Raporu'nda üretimdeki mallar (yarı mamul): açık her üretimin o ana kadar gerçekten harcanan hammaddesi + yazılan işçiliği, stoğa giren bitmiş çiftler düşülerek",
+            "İşçilik ödenen / ödenmemiş ayrımı (personel ödemeleri en eski işçilik fişini kapatır)",
+            "Mamul değerlemede 'Hammadde + işçilik' (varsayılan) ve 'Yalnız hammadde'; stok satırlarında hammadde ve işçilik payı"],
+        degisen: ["Mamul stok değeri artık proses ücretlerini (işçilik) de içeriyor"],
+        duzeltilen: [] },
+    { surum: "1.464.0", tarih: "26.09.2026",
+        eklenen: ["Finans Raporu ▸ Yaşlandırma: alacak ve borçların yaşa göre dağılımı (vadesi gelmemiş, 0-30, 31-60, 61-90, 91-180, 180+ gün) — ödemeler en eski kalemi kapatır (FIFO); cariye dokununca açık fişler, kaç gündür beklediği",
+            "Varsayılan vade (gün) ayarı, ortalama gecikme ve en eski kalem; Excel ve yazdır",
+            "Hazır şablonlar: Alacak Yaşlandırma, Borç Yaşlandırma"],
+        degisen: [],
+        duzeltilen: [] },
+    { surum: "1.463.0", tarih: "25.09.2026",
+        eklenen: ["Finans ▸ Finans Raporu: varlık özeti (kasa, banka, alacaklar, borçlar, portföydeki/tahsildeki çekler, ödenecek şahsi çekler, hammadde/yarı mamul/mamul stok değeri) ve NET VARLIK",
+            "Defter seçimi (Tümü / Genel / Resmi / Genel · Resmi yan yana, fark sütunuyla), tarih itibarıyla rapor, mamul değerleme yöntemi (reçete maliyeti / satış / alış fiyatı)",
+            "Sipariş raporu gibi kaydedilebilen finans raporları; hazır şablonlar: Varlık Raporu, Alacaklar ve Borçlar, Çekler ve Vadeler, Stok Değeri, Döviz Pozisyonu, Nakit Takvimi"],
+        degisen: [],
+        duzeltilen: [] },
+    { surum: "1.462.0", tarih: "25.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Ciro fişi carilerde bulunamayan çekte 'Son İşlemi Geri Al' çalışmıyordu (\"cari hareketi bulunamadı\") ve çek kilitli kalıyordu — artık fiş yoksa çek portföye döner, kimliği farklı kalmış kopya fiş varsa o silinir"] },
     { surum: "1.461.0", tarih: "25.09.2026",
         eklenen: ["Çek satırına dokununca özet açılıyor: kimden alındı (tarih, fiş), şu an nerede (kime ciro edildi / hangi bankada / tahsil edildi), vadeye kalan gün ve adım adım yolculuk"],
         degisen: ["Çekteki 'Geçmiş' düğmesi 'Ayrıntı' oldu ve her çekte görünüyor"],
@@ -11199,6 +11240,17 @@ function useAcilisYukleme(d) {
                                 yazimiIzle(tabloYaz("stok:items", "urunler", kodGoc.stok), "Stok kartları", kodGoc.stok);
                             }
                         }
+                        // EKSİK BARKOD KODLARI (v1.467.0) — renk / ölçü / asorti. Stok kartından ya da siparişten
+                        // açılan tanımlar kodsuz kalıyordu (kısa yollar `saveTanimlar`ı atlıyordu, bkz. 100-app
+                        // `tanimlarKodluYaz`). Eski kayıtlar burada bir kez, sessizce tamamlanıyor; kodu olana
+                        // dokunulmuyor. Yalnız BULUTTAN okununca: çevrimdışı açılışta sayaç bayat olabilir.
+                        const barkodKod = kodlariAta([], t);
+                        if (barkodKod.atanan.renk + barkodKod.atanan.beden + barkodKod.atanan.asorti > 0) {
+                            t = barkodKod.tanimlar;
+                            setTanimlar(t);
+                            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+                            console.info(`Eksik barkod kodları atandı: renk ${barkodKod.atanan.renk}, ölçü ${barkodKod.atanan.beden}, asorti ${barkodKod.atanan.asorti}`);
+                        }
                         setStok(acilisGocuUygula(kodGoc.stok, t));
                         // Bulut kaynak olduğu için görseller ürünlerin İÇİNDE geldi. Yerel kopyayı da
                         // tazeliyoruz ki internetsiz açılışta görseller kaybolmasın. Önce mevcut anahtarlar
@@ -14568,6 +14620,17 @@ function AtolyeERP() {
         tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
         setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
     });
+    // TANIMLARI KODLU YAZ (26 Eylül, v1.467.0 — kullanıcı: "renk kodunu otomatik veriyor, burada
+    // vermemiş; stok kartı içerisinden açılan renk bu, tüm açılan renklere otomatik renk kodu versin").
+    // Barkod kodunu `saveTanimlar` atıyordu (`kodlariAta`), ama stok kartından/siparişten renk, beden,
+    // model rengi açan kısa yollar tanımları DOĞRUDAN yazıyordu — kod adımını atlayıp. Artık hepsi bu
+    // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
+    const tanimlarKodluYaz = useCallback((next) => {
+        const kodlu = kodlariAta([], next).tanimlar;
+        setTanimlar(kodlu);
+        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
+        return kodlu;
+    }, []);
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
@@ -14588,8 +14651,7 @@ function AtolyeERP() {
                 ...tanimlar,
                 renkler: tanimlar.renkler.map((r) => r.id === mevcut.id ? { ...r, malzemeTipleri: [...mevcutTipler, malzemeTipi], malzemeTipi: undefined } : r),
             };
-            setTanimlar(nextT);
-            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextT), "Tanımlar", nextT);
+            tanimlarKodluYaz(nextT);
             showToast(`"${temizAd}" rengine "${malzemeTipi}" tipi eklendi`);
             return;
         }
@@ -14616,9 +14678,8 @@ function AtolyeERP() {
         const otomatikKod = String(sonrakiKod);
         const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
         const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
-    }, [tanimlar, showToast]);
+        tanimlarKodluYaz(nextTanimlar);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     // Stok ekranında ürün eklerken/düzenlerken, listede olmayan bir Malzeme Tipi (deri, taban, bağcık…)
     // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniRenkKaydet ile aynı desen.
     const yeniMalzemeTipiKaydet = useCallback((ad) => {
@@ -14631,10 +14692,9 @@ function AtolyeERP() {
             return zatenVarOlan.ad;
         const yeniTip = { id: uid("htip"), ad: temizAd };
         const nextTanimlar = { ...tanimlar, hammaddeTipleri: [...mevcut, yeniTip] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         return yeniTip.ad;
-    }, [tanimlar]);
+    }, [tanimlar, tanimlarKodluYaz]);
     // Stok ekranında ürün eklerken, listede olmayan bir ölçü (beden/boyut) gerekiyorsa Tanımlar'a
     // gitmeden burada tanımlanabilir.
     //
@@ -14661,8 +14721,7 @@ function AtolyeERP() {
                 ...tanimlar,
                 bedenler: mevcut.map((b) => b.id === zatenVar.id ? { ...b, malzemeTipleri: [...mevcutTipler, malzemeTipi] } : b),
             };
-            setTanimlar(nextT);
-            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextT), "Tanımlar", nextT);
+            tanimlarKodluYaz(nextT);
             showToast(`"${temizAd}" ölçüsüne "${malzemeTipi}" tipi eklendi`);
             return zatenVar.ad;
         }
@@ -14670,13 +14729,12 @@ function AtolyeERP() {
         if (tip === "Boyut" && malzemeTipi)
             yeni.malzemeTipleri = [malzemeTipi];
         const nextTanimlar = { ...tanimlar, bedenler: [...mevcut, yeni] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         showToast(tip === "Boyut" && malzemeTipi
             ? `"${temizAd}" boyutu "${malzemeTipi}" tipine eklendi`
             : `"${temizAd}" ${tip.toLocaleLowerCase("tr-TR")} olarak eklendi`);
         return yeni.ad;
-    }, [tanimlar, showToast]);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     // Stok ekranında Mamul ürün eklerken, listede olmayan bir Mamul Tipi (Spor Ayakkabı, Sandalet…)
     // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniMalzemeTipiKaydet ile aynı desen.
     // ÖZEL KOD ALANINI YERİNDE AÇMA — kullanıcı (6 Eylül): "Özel kodu burada stok açarken de
@@ -14701,10 +14759,9 @@ function AtolyeERP() {
             return zatenVar.id;
         const yeni = { id: uid("oka"), ad: temizAd, kapsamTuru: tur, kapsamAd: kapsam };
         const nextTanimlar = { ...tanimlar, ozelKodAlanlari: [...mevcut, yeni] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         return yeni.id;
-    }, [tanimlar]);
+    }, [tanimlar, tanimlarKodluYaz]);
     const yeniMamulTipiKaydet = useCallback((ad) => {
         const temizAd = (ad || "").trim();
         if (!temizAd)
@@ -14715,10 +14772,9 @@ function AtolyeERP() {
             return zatenVarOlan.ad;
         const yeniTip = { id: uid("mtip"), ad: temizAd };
         const nextTanimlar = { ...tanimlar, mamulTipleri: [...mevcut, yeniTip] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         return yeniTip.ad;
-    }, [tanimlar]);
+    }, [tanimlar, tanimlarKodluYaz]);
     // Stok'ta ürün eklerken, Mamul rengi birden fazla renk bileşeninden (örn. gövde + taban rengi)
     // oluşuyorsa, seçilen renk adlarından bir "Model Rengi" kombinasyonu oluşturur (ya da aynı renk
     // seti zaten bir kombinasyon olarak tanımlıysa onu yeniden kullanır) ve mamul varyantlarında
@@ -14745,11 +14801,10 @@ function AtolyeERP() {
         const otomatikKod = String((mevcutKodlar.length > 0 ? Math.max(...mevcutKodlar) : 1000) + 1);
         const yeniKombi = { id: uid("kombi"), kod: otomatikKod, renkIdler };
         const nextTanimlar = { ...tanimlar, renkKombinasyonlari: [...mevcut, yeniKombi] };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar);
         showToast(`Model rengi ${otomatikKod} olarak oluşturuldu`);
         return `${otomatikKod} - ${renkAdlari.join("/")}`;
-    }, [tanimlar, showToast]);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     // Sipariş ekranından MODEL RENGİ oluşturup ürüne ekler ve reçetesini kurar.
     //
     // Serbest metinle renk yazmak yerine Tanımlar'daki Model Rengi mantığı kullanılır: pozisyon
@@ -14787,10 +14842,9 @@ function AtolyeERP() {
             ...tanimlar,
             asortiler: [...(tanimlar.asortiler || []), { id: uid("asorti"), ad: temizAd, oranlar }],
         };
-        setTanimlar(nextTanimlar);
-        yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", nextTanimlar), "Tanımlar", nextTanimlar);
+        tanimlarKodluYaz(nextTanimlar); // asortinin barkod kodu da anında (v1.467.0)
         showToast(`"${temizAd}" asortisi oluşturuldu`);
-    }, [tanimlar, showToast]);
+    }, [tanimlar, showToast, tanimlarKodluYaz]);
     const addCariHareketFromStok = useCallback((cariId, hareketVeyaDizi) => {
         setCariler((prev) => {
             const gelenler = Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi];
@@ -15181,6 +15235,7 @@ function AtolyeERP() {
         gelirgider: "Gelir / Gider Kartları",
         muhasebe: "Kasa & Banka",
         cekler: "Çek & Senet",
+        finansrapor: "Finans Raporu",
         planlama: "Planlama",
         // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
         // çizgi duruyor, modül kendi büyük başlığını bir daha basıyordu. Başlık buraya, modülünki kalktı.
@@ -15644,6 +15699,8 @@ function AtolyeERP() {
                         { ad: "Finans", ikon: React.createElement(Wallet, { size: 15 }), ogeler: [
                                 yetki("cari") && ["cari", "Cari", React.createElement(Users, { size: 16 })], yetki("muhasebe") && ["muhasebe", "Kasa & Banka", React.createElement(Wallet, { size: 16 })],
                                 yetki("muhasebe") && ["cekler", "Çek & Senet", React.createElement(Receipt, { size: 16 })],
+                                // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
+                                yetki("muhasebe") && ["finansrapor", "Finans Raporu", React.createElement(TrendingUp, { size: 16 })],
                                 // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
                                 yetki("muhasebe") && ["gelirgider", "Gelir / Gider", React.createElement(FileText, { size: 16 })], yetki("fisler") && ["fisler", "Fişler", React.createElement(FileText, { size: 16 })]
                             ] },
@@ -15919,6 +15976,7 @@ function AtolyeERP() {
                 React.createElement("div", { style: { display: tab === "fisler" ? undefined : "none" } },
                     React.createElement(FislerModule, { muhasebe: muhasebe, hedefFisNo: hedefFisNo, onHedefTuketildi: () => setHedefFisNo(null), cariler: cariler, stok: stok, siparisler: siparisler, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYetimFisTemizle: yetimFisTemizle })),
                 tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement(GunlukPaneli, { showToast: showToast })),
+                tab === "finansrapor" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Finans raporunu g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(FinansRaporu, { cariler: cariler, muhasebe: muhasebe, stok: stok, uretim: uretim, araProsesler: tanimlar.araProsesler || [], raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, showToast: showToast, firmaBilgileri: tanimlar.firmaBilgileri }))),
                 tab === "gelirgider" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Gelir / Gider ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(GelirGiderEkrani, { stok: stok, tanimlar: tanimlar, onSave: saveTanimlar, muhasebe: muhasebe, cariler: cariler, showToast: showToast }))),
                 React.createElement("div", { style: { display: tab === "muhasebe" || tab === "cekler" ? undefined : "none" } }, !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Kasa & Banka ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok. Eri\u015Fim i\u00E7in y\u00F6neticinize ba\u015Fvurun." })) : (React.createElement(MuhasebeModule, { kapsam: muhasebeKapsamRef.current, tanimlar: tanimlar, stok: stok, giderKartlari: tanimlar.giderKartlari || [], onCekIslem: cekIslemYap, onCekEkleIsle: cekEkleVeIsle, onCekHareketiyleSil: cekHareketiyleSil, 
                     // SON İŞLEMİ GERİ AL (v1.459.0): ciro/iade fişini fiş silme kapısından siler; çek
@@ -21150,7 +21208,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
             // ilk andan itibaren güvenilir çalışır.
             const yeniRenkId = renkKimligiBul(renk, (tanimlar.renkler || []));
             const newVariants = bedenler.map((b) => ({ renk, renkId: yeniRenkId, beden: b, miktar: 0, minStok: varsayilanMinStok }));
-            return { ...p, variants: [...p.variants, ...newVariants] };
+            return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "renk");
         });
         onSave(next);
         showToast("Renk eklendi");
@@ -21183,9 +21241,28 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
             if (p.variants.some((v) => v.beden === beden))
                 return p;
             const newVariants = renkler.map((r) => ({ renk: r, renkId: renkKimligiBul(r, (tanimlar.renkler || [])), beden, miktar: 0, minStok: varsayilanMinStok }));
-            return { ...p, variants: [...p.variants, ...newVariants] };
+            return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "beden");
         });
         return next[0];
+    }
+    // "STANDART" YER TUTUCUSU GERÇEK DEĞER GELİNCE KALKAR (26 Eylül, v1.467.0 — kullanıcı: "standart
+    // rengi kaldırmıştık, burada yine çıktı"). Ürüne önce renk eklenince bedeni "Standart" bir satır
+    // doğuyor; sonra 36–40 eklenince o sütun kalıyordu (tersi: önce beden, sonra renk → "Standart"
+    // renk satırı). Placeholder durumu (`placeholderMi`) yalnız TEK Standart/Standart satırını
+    // kapsıyordu. Artık gerçek bir beden/renk eklendiğinde Standart sütun/satır kaldırılıyor — ama
+    // YALNIZ silme kuralları izin veriyorsa (stok, hareket, sipariş, üretim, reçete bağı yok):
+    // üzerinde iş olan bir Standart kaydı sessizce silinmez, kullanıcı kendisi karar verir.
+    function standartYerTutucuyuKaldir(urun, eksen) {
+        const baskaVar = (urun.variants || []).some((v) => v[eksen] !== "Standart");
+        const standartVar = (urun.variants || []).some((v) => v[eksen] === "Standart");
+        if (!baskaVar || !standartVar)
+            return urun;
+        if (renkBedenSilmeEngelleri(urun, { [eksen]: "Standart" }).length > 0)
+            return urun;
+        // Hareketlerde "Standart" boş dize olarak da yazılabiliyor (`stokAnahtarNrm`): o da iş sayılır.
+        if ((urun.hareketler || []).some((h) => stokAnahtarNrm(h[eksen]) === ""))
+            return urun;
+        return { ...urun, variants: urun.variants.filter((v) => v[eksen] !== "Standart") };
     }
     // Bir renk/beden satır ya da sütununun silinmesini ENGELLEYEN nedenleri toplar.
     // Neden gerekli: silme işlemi variants dizisinden ilgili kayıtları çıkarır — yani üzerindeki
@@ -22063,12 +22140,11 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                                         React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                                             poz,
                                             ". Renk"),
-                                        React.createElement("select", { value: kombiRenkSecimleri[poz] || "", onChange: (e) => setKombiRenkSecimleri({ ...kombiRenkSecimleri, [poz]: e.target.value }), style: { ...inputStyle, width: 140 } },
-                                            React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                            mamulRenkTanimli.map((r) => React.createElement("option", { key: r.id, value: r.ad }, r.ad)))));
+                                        React.createElement("div", { style: { width: 170 } },
+                                            React.createElement(AramaliMetin, { veriAdi: "data-model-rengi-poz", deger: kombiRenkSecimleri[poz] || "", onDegis: (v) => setKombiRenkSecimleri((s) => ({ ...s, [poz]: v })), oneriler: mamulRenkTanimli.map((r) => r.ad), yalnizListeden: true, placeholder: "Yaz\u0131n ya da se\u00E7in\u2026" }))));
                                 })),
                                 React.createElement("div", { style: { display: "flex", gap: 8 } },
-                                    React.createElement("button", { type: "button", className: "btn-primary", disabled: Array.from({ length: renkDegiskenSayisi }, (_, i) => i + 1).some((poz) => !kombiRenkSecimleri[poz]), onClick: () => {
+                                    React.createElement("button", { type: "button", className: "btn-primary", disabled: Array.from({ length: renkDegiskenSayisi }, (_, i) => i + 1).some((poz) => !mamulRenkTanimli.some((r) => r.ad === kombiRenkSecimleri[poz])), onClick: () => {
                                             const renkAdlari = Array.from({ length: renkDegiskenSayisi }, (_, i) => kombiRenkSecimleri[i + 1]);
                                             const etiket = onKombinasyonOlustur(renkAdlari);
                                             if (etiket) {
@@ -23649,10 +23725,13 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                 : eklenebilirKombinasyonlar.filter((k) => k.renkIdler.length === renkEkleSayisi);
                             return (React.createElement("div", null,
                                 uygunSecenekler.length > 0 ? (React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 8 } },
-                                    React.createElement("select", { value: newRenk, onChange: (e) => setNewRenk(e.target.value), style: { ...inputStyle, width: 180 } },
-                                        React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                        uygunSecenekler.map((s) => React.createElement("option", { key: s.id, value: s.etiket }, s.etiket))),
-                                    React.createElement("button", { className: "btn-primary", disabled: !newRenk, onClick: () => {
+                                    React.createElement("div", { style: { width: 240 } },
+                                        React.createElement(AramaliMetin, { veriAdi: "data-kart-renk-arama", deger: newRenk, onDegis: setNewRenk, oneriler: uygunSecenekler.map((s) => s.etiket), yalnizListeden: true, placeholder: "Renk yaz\u0131n ya da se\u00E7in\u2026" })),
+                                    React.createElement("button", { className: "btn-primary", 
+                                        // Yazarken kutuda yarım metin olabilir: yalnız listedeki bir değer eklenir.
+                                        disabled: !uygunSecenekler.some((s) => s.etiket === newRenk), onClick: () => {
+                                            if (!uygunSecenekler.some((s) => s.etiket === newRenk))
+                                                return;
                                             onAddRenk(product.id, newRenk);
                                             setNewRenk("");
                                             setAddingRenk(false);
@@ -23687,14 +23766,11 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                     React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                                         poz,
                                         ". Renk"),
-                                    React.createElement("select", { value: ymrPozisyonSecimleri[poz] || "", onChange: (e) => setYmrPozisyonSecimleri({ ...ymrPozisyonSecimleri, [poz]: e.target.value }), style: { ...inputStyle, width: 130 } },
-                                        React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                        Array.from(new Map(tanimlarRenkler
-                                            .filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad))
-                                            .map((r) => [r.ad, r])).values()).map((r) => React.createElement("option", { key: r.id, value: r.ad }, r.ad)))));
+                                    React.createElement("div", { style: { width: 170 } },
+                                        React.createElement(AramaliMetin, { veriAdi: "data-model-rengi-poz", deger: ymrPozisyonSecimleri[poz] || "", onDegis: (v) => setYmrPozisyonSecimleri((s) => ({ ...s, [poz]: v })), oneriler: tanimlarRenkler.filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad)).map((r) => r.ad), yalnizListeden: true, placeholder: "Yaz\u0131n ya da se\u00E7in\u2026" }))));
                             })),
                             React.createElement("div", { style: { display: "flex", gap: 8 } },
-                                React.createElement("button", { type: "button", className: "btn-primary", disabled: Array.from({ length: renkEkleSayisi }, (_, i) => i + 1).some((poz) => !ymrPozisyonSecimleri[poz]), onClick: () => {
+                                React.createElement("button", { type: "button", className: "btn-primary", disabled: Array.from({ length: renkEkleSayisi }, (_, i) => i + 1).some((poz) => !tanimlarRenkler.some((r) => r.ad === ymrPozisyonSecimleri[poz])), onClick: () => {
                                         const renkAdlari = Array.from({ length: renkEkleSayisi }, (_, i) => ymrPozisyonSecimleri[i + 1]);
                                         const etiket = onKombinasyonOlustur(renkAdlari);
                                         if (etiket) {
@@ -26328,6 +26404,36 @@ function cekSonIslemi(cek) {
         return { tur: "durum", durum, satir };
     return null;
 }
+// İŞLEMİN CARİ HAREKETİNİ BUL (v1.462.0).
+//
+// Kullanıcı ekran görüntüsüyle bildirdi: ciro edilmiş çekte "Son İşlemi Geri Al" → "Bu işlemin cari
+// hareketi bulunamadı". Çek "Ciro Edildi" diyor ama bağlı ciro fişi carilerde YOK — eski bir
+// kayıtta cari yazması buluta ulaşmamış ya da başka bir cihazın eski listesi üzerine yazmış olabilir.
+// Çek bu durumda sonsuza dek kilitli kalıyordu: geri alınamıyor, silinemiyor.
+//   "bulundu"  — kimlikle bulundu (normal yol)
+//   "benzer"   — kimlik yok ama aynı caride aynı çek no + tutar + birimle TEK hareket var
+//                (kimliği farklı kalmış kopya); o silinir
+//   "yok"      — hiçbir iz yok: cari tarafında silinecek bir şey kalmamış, yalnız çek geri döner
+//   "belirsiz" — birden fazla aday: tahmin edilmiyor, fiş numaraları söyleniyor
+function cekIslemHareketiBul(cek, satir, cariler, hareketId) {
+    const tum = (cariler || []).flatMap((c) => (c.hareketler || []).map((h) => ({ cari: c, h })));
+    if (tum.some((x) => x.h.id === hareketId))
+        return { sonuc: "bulundu", hareketId };
+    const ciro = !satir || satir.yeniDurum === "Ciro Edildi";
+    const cariId = ciro ? (satir && satir.cariId) || cek.ciroCariId : cek.cariId;
+    const beklenenTip = ciro || (cek.tip || "Alınan") !== "Verilen" ? "Ödeme" : "Tahsilat";
+    const tutar = satir && satir.tutar != null ? satir.tutar : (cek.ciroTutar ?? cek.tutar);
+    const pb = (satir && satir.paraBirimi) || cek.ciroPB || cek.paraBirimi || "TRY";
+    const adaylar = tum.filter(({ cari, h }) => cari.id === cariId && h.odemeSekli === "Çek"
+        && (h.islemTipi || beklenenTip) === beklenenTip
+        && Math.abs((h.tutar || 0) - (tutar || 0)) < 0.005 && (h.paraBirimi || "TRY") === pb
+        && (!cek.cekNo || String(h.aciklama || "").includes(cek.cekNo)));
+    if (adaylar.length === 1)
+        return { sonuc: "benzer", hareketId: adaylar[0].h.id, fisNo: adaylar[0].h.fisNo || null };
+    if (adaylar.length > 1)
+        return { sonuc: "belirsiz", fisNolar: adaylar.map((a) => a.h.fisNo || "fiş no yok") };
+    return { sonuc: "yok" };
+}
 // KAYIT DOĞURMAYAN AŞAMALAR — yalnız durum geri döner (bkz. `cekSonIslemi`).
 const CEK_DURUM_GERI_ALMA = {
     "Tahsilde": { etiket: "Tahsile verme geri alındı" },
@@ -27172,9 +27278,30 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
             return showToast("İşlemi geri almak için Kasa & Banka silme yetkisi gerekiyor — yöneticinize başvurun");
         }
         if (son.tur === "cari") {
-            if (!onCekCariHareketSil || !onCekCariHareketSil(son.hareketId)) {
-                showToast("Bu işlemin cari hareketi bulunamadı — geri alınamadı");
+            const bul = cekIslemHareketiBul(cek, son.satir, cariler, son.hareketId);
+            if (bul.sonuc === "belirsiz") {
+                return showToast(`Bu işlemin fişi kimlikle bulunamadı, benzer ${bul.fisNolar.length} fiş var (${bul.fisNolar.join(", ")}) — ` +
+                    "hangisi olduğu tahmin edilmedi. Doğru fişi cari ekstresinden silin, sonra tekrar deneyin.");
             }
+            if (bul.sonuc === "bulundu") {
+                if (!onCekCariHareketSil || !onCekCariHareketSil(bul.hareketId))
+                    showToast("Cari hareketi silinemedi — geri alınamadı");
+                return;
+            }
+            // "benzer": kimliği farklı kalmış kopya fiş silinir; çek o kimliği tanımadığı için durumu
+            // AYRICA geri alınıyor. "yok": cari tarafında silinecek bir şey yok, yalnız çek geri döner.
+            // İkisinde de geri alma `cekIslemGeriAl` ile — çekin kendi kaydındaki bağ kimliği veriliyor.
+            if (bul.sonuc === "benzer" && onCekCariHareketSil)
+                onCekCariHareketSil(bul.hareketId);
+            const yeni = cekIslemGeriAl(cek, new Set([son.hareketId]), { kullanici: islemKullanicisiAd() });
+            if (!yeni)
+                return showToast("İşlem geri alınamadı");
+            onSave({ ...muhasebe, cekler: cekler.map((c) => (c.id === id ? yeni : c)) });
+            gunlukYaz(`Çek işlemi geri alındı (${bul.sonuc === "benzer" ? "kopya fiş" : "fişi kayıp"}): ${cek.cekNo || "no yok"}`, "muhasebe", { cekId: id, durum: yeni.durum, fisNo: bul.fisNo || null });
+            showToast(bul.sonuc === "benzer"
+                ? `${bul.fisNo || "Bağlı fiş"} silindi — ${cek.cekNo || "çek"} yeniden "${yeni.durum}"`
+                : `Bu işlemin cari fişi zaten yoktu (daha önce silinmiş ya da buluta hiç ulaşmamış) — cari hesaba dokunulmadı, ` +
+                    `${cek.cekNo || "çek"} yeniden "${yeni.durum}". ${son.satir && son.satir.cariAd ? `${son.satir.cariAd} ekstresini kontrol edin.` : ""}`);
             return;
         }
         const yeni = cekDurumGeriAl(cek, { kullanici: islemKullanicisiAd() });
@@ -32068,6 +32195,770 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
             " hesaplan\u0131yor (parti bazl\u0131 ger\u00E7ek maliyet de\u011Fil) \u2014 at\u00F6lye i\u00E7in yakla\u015F\u0131k ama tutarl\u0131 bir \u00F6l\u00E7\u00FC. D\u00F6viz tutarlar\u0131 ",
             React.createElement("b", null, "bug\u00FCnk\u00FC kurla"),
             " TL'ye \u00E7evriliyor; ge\u00E7mi\u015F d\u00F6nemde i\u015Flem an\u0131ndaki kur farkl\u0131 olabilir. \u00DCretim maliyeti (i\u015F\u00E7ilik, fire) hen\u00FCz bu tabloda de\u011Fil.")));
+}
+// ================= FİNANS RAPORU — VARLIK / YÜKÜMLÜLÜK (25 Eylül, v1.463.0) =================
+//
+// Kullanıcı: "Finans raporu ekleyelim. Birden fazla rapor yapabileceğimiz, sipariş raporu gibi
+// istediklerimizi kaydederiz. Varlık raporu örnek olarak: alacaklarımız, borçlarımız, hammadde stok
+// mali değeri, mamul stok değeri, portföydeki çekler toplamı, yazılan çekler toplamı… çok detaylı.
+// 2 defter için ayrı filtreleyerek rapor şablonu yapalım. Büyük uygulamalardan da esinlen."
+//
+// TASARIM (büyük ERP'lerin bilanço / varlık-kaynak raporundan):
+//   • Her para kalemi TEK SATIR: bir kasa, bir banka hesabı, bir carinin bir para birimindeki
+//     bakiyesi, bir çek, bir stok varyantı. Satırlar sipariş raporunun motoruna (`RaporSekmesi`)
+//     veriliyor — süzgeç, gruplama, sıralama, Excel, yazdırma ve KAYITLI RAPORLAR hazır; ikinci bir
+//     rapor mantığı yazılmadı. Hazır şablonlar (Varlık Raporu, Alacak/Borç, Çek vadeleri, Stok
+//     değeri, Döviz pozisyonu, Nakit takvimi) kullanıcı raporu gibi açılıp değiştirilebiliyor.
+//   • Üstte BİLANÇO ÖZETİ: varlıklar / yükümlülükler grup toplamları ve NET VARLIK (özkaynak
+//     karşılığı). "Genel · Resmi yan yana" seçilince iki defter ve farkı aynı tabloda.
+//   • DEFTER: cari ve kasa/banka hareketleri kendi defterinde ("Muhasebe" = ikisine de,
+//     `defterKapsar`). Çek, doğduğu giriş hareketinin defterinde. STOK DEFTERSİZ: mal fiziksel ve
+//     tek — stok hareketleri defter taşımıyor; her iki defterde de aynı stok görünür (ekranda yazılı).
+//   • TARİH İTİBARIYLA: bakiyeler o güne kadarki hareketlerden; çek durumu geçmiş satırları o güne
+//     kadar oynatılarak bulunuyor (geri alma satırları da durum değiştirdiği için doğru sonuç).
+//   • TL KARŞILIĞI güncel kurla (`muhasebe.kurlar`); kuru olmayan birim toplamlara girmiyor ve
+//     satırda "kur yok" yazıyor — sessizce 1:1 saymak raporu yanıltırdı (bkz. alisKuruEksik dersi).
+//   • İŞARETLİ "Net Etki (TL)": varlık +, yükümlülük −, bilgi satırı 0. Bu sütunu toplayan her
+//     rapor (hangi süzgeçle olursa olsun) doğrudan NET VARLIĞI verir.
+const FINANS_RAPOR_ALANLARI = [
+    { anahtar: "taraf", ad: "Taraf", tip: "metin", secenekler: ["Varlık", "Yükümlülük", "Bilgi"] },
+    { anahtar: "grup", ad: "Grup", tip: "metin", secenekler: ["Hazır Değerler", "Ticari Alacaklar", "Alınan Çekler", "Stoklar", "Ticari Borçlar", "Verilen Çekler", "Ciro Edilen Çekler (risk)"] },
+    { anahtar: "kalem", ad: "Kalem", tip: "metin" },
+    { anahtar: "ad", ad: "Hesap / Cari / Ürün", tip: "metin" },
+    { anahtar: "ayrinti", ad: "Ayrıntı", tip: "metin" },
+    { anahtar: "defter", ad: "Defter", tip: "metin", secenekler: ["Tümü", "Genel", "Resmi"] },
+    { anahtar: "paraBirimi", ad: "P.B.", tip: "metin", secenekler: ["TRY", "USD", "EUR"] },
+    { anahtar: "tutar", ad: "Tutar", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "tlKarsiligi", ad: "TL Karşılığı", tip: "para" },
+    { anahtar: "netEtki", ad: "Net Etki (TL)", tip: "para" },
+    { anahtar: "miktar", ad: "Miktar", tip: "sayi" },
+    { anahtar: "birimDeger", ad: "Birim Değer (TL)", tip: "para", toplanmaz: true },
+    { anahtar: "vade", ad: "Vade", tip: "tarih" },
+    { anahtar: "vadeAy", ad: "Vade Ayı", tip: "metin" },
+    { anahtar: "vadeDurumu", ad: "Vade Durumu", tip: "metin", secenekler: ["Vadesi geçmiş", "0-30 gün", "31-60 gün", "61-90 gün", "90+ gün"] },
+    { anahtar: "sonHareket", ad: "Son Hareket", tip: "tarih" },
+    // YAŞLANDIRMA (v1.464.0) — yalnız cari satırlarında dolu; carinin kendi para biriminde.
+    { anahtar: "yasVadesiGelmemis", ad: "Vadesi gelmemiş", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "yas0_30", ad: "0-30 gün", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "yas31_60", ad: "31-60 gün", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "yas61_90", ad: "61-90 gün", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "yas91_180", ad: "91-180 gün", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "yas180", ad: "180+ gün", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "vadesiGecen", ad: "Vadesi geçen", tip: "para", paraBirimiAlani: "paraBirimi" },
+    { anahtar: "ortalamaGecikme", ad: "Ort. gecikme (gün)", tip: "sayi", toplanmaz: true },
+    { anahtar: "enEskiGun", ad: "En eski (gün)", tip: "sayi", toplanmaz: true },
+    // MALİYET AYRIMI (v1.465.0) — stok satırlarında: değerin hammadde ve işçilik payı; üretimdeki
+    // mallarda işçiliğin ödenen / ödenmemiş kısmı.
+    { anahtar: "hammaddeDegeri", ad: "Hammadde payı", tip: "para" },
+    { anahtar: "iscilikDegeri", ad: "İşçilik payı", tip: "para" },
+    { anahtar: "iscilikOdenen", ad: "İşçilik ödenen", tip: "para" },
+    { anahtar: "iscilikOdenmemis", ad: "İşçilik ödenmemiş", tip: "para" },
+    // Üretimdeki malda: harcananın stoğa giren bitmiş çiftlere geçen kısmı (değer = hammadde + işçilik − bu).
+    { anahtar: "aktarilan", ad: "Mamule aktarılan", tip: "para" },
+    { anahtar: "not", ad: "Not", tip: "metin" },
+];
+const FINANS_GRUP_SIRASI = ["Hazır Değerler", "Ticari Alacaklar", "Alınan Çekler", "Stoklar", "Ticari Borçlar", "Verilen Çekler", "Ciro Edilen Çekler (risk)"];
+// HAZIR ŞABLONLAR. Kayıtlı rapor biçiminde (245-rapor `kaydet` ile aynı alanlar); kimlikleri sabit.
+// Kullanıcı birini değiştirip kaydederse aynı kimlikle `tanimlar.raporlar`a yazılır ve onunki
+// geçerli olur. Silinen hazır şablon yeniden görünür — hazırlar kod ile gelir, veri değildir.
+const FINANS_HAZIR_RAPORLAR = [
+    { id: "hazir-finans-varlik", ad: "Varlık Raporu", tanim: {
+            // Yalnız işaretli Net Etki: TL karşılığı sütununun toplamı varlıkla borcu toplardı.
+            sutunlar: ["taraf", "grup", "kalem", "netEtki"], gruplar: ["taraf", "grup", "kalem"],
+            suzgecler: [], siralama: { alan: "taraf", yon: "artan" }
+        } },
+    { id: "hazir-finans-alacak-borc", ad: "Alacaklar ve Borçlar", tanim: {
+            sutunlar: ["kalem", "ad", "ayrinti", "defter", "paraBirimi", "tutar", "tlKarsiligi", "sonHareket"], gruplar: [],
+            suzgecler: [{ alan: "grup", islem: "icerir", deger: "Ticari" }], siralama: { alan: "tlKarsiligi", yon: "azalan" }
+        } },
+    // YAŞLANDIRMA ŞABLONLARI (v1.464.0): ayrıntılı ekran "Yaşlandırma" görünümünde; bunlar Excel ve
+    // kendi süzgeçlerini kurmak isteyenler için aynı sayılar.
+    { id: "hazir-finans-alacak-yas", ad: "Alacak Yaşlandırma", tanim: {
+            sutunlar: ["ad", "paraBirimi", "tutar", "yasVadesiGelmemis", "yas0_30", "yas31_60", "yas61_90", "yas91_180", "yas180", "ortalamaGecikme"], gruplar: [],
+            suzgecler: [{ alan: "grup", islem: "esit", deger: "Ticari Alacaklar" }], siralama: { alan: "tutar", yon: "azalan" }
+        } },
+    { id: "hazir-finans-borc-yas", ad: "Borç Yaşlandırma", tanim: {
+            sutunlar: ["ad", "paraBirimi", "tutar", "yasVadesiGelmemis", "yas0_30", "yas31_60", "yas61_90", "yas91_180", "yas180", "ortalamaGecikme"], gruplar: [],
+            suzgecler: [{ alan: "grup", islem: "esit", deger: "Ticari Borçlar" }], siralama: { alan: "tutar", yon: "azalan" }
+        } },
+    { id: "hazir-finans-cekler", ad: "Çekler ve Vadeler", tanim: {
+            sutunlar: ["kalem", "ad", "ayrinti", "vade", "vadeDurumu", "paraBirimi", "tutar", "tlKarsiligi"], gruplar: [],
+            suzgecler: [{ alan: "grup", islem: "icerir", deger: "Çek" }], siralama: { alan: "vade", yon: "artan" }
+        } },
+    { id: "hazir-finans-stok", ad: "Stok Değeri", tanim: {
+            sutunlar: ["kalem", "ad", "miktar", "hammaddeDegeri", "iscilikDegeri", "iscilikOdenmemis", "aktarilan", "tlKarsiligi"], gruplar: ["kalem", "ad"],
+            suzgecler: [{ alan: "grup", islem: "esit", deger: "Stoklar" }], siralama: { alan: "tlKarsiligi", yon: "azalan" }
+        } },
+    { id: "hazir-finans-doviz", ad: "Döviz Pozisyonu", tanim: {
+            sutunlar: ["paraBirimi", "taraf", "tutar", "tlKarsiligi", "netEtki"], gruplar: ["paraBirimi", "taraf"],
+            suzgecler: [{ alan: "grup", islem: "farkli", deger: "Stoklar" }], siralama: { alan: "paraBirimi", yon: "artan" }
+        } },
+    { id: "hazir-finans-nakit-takvimi", ad: "Nakit Takvimi (çek vadeleri)", tanim: {
+            sutunlar: ["vadeAy", "taraf", "kalem", "netEtki"], gruplar: ["vadeAy", "taraf", "kalem"],
+            suzgecler: [{ alan: "grup", islem: "icerir", deger: "Çek" }, { alan: "taraf", islem: "farkli", deger: "Bilgi" }], siralama: { alan: "vadeAy", yon: "artan" }
+        } },
+].map((r) => ({ ...r, modul: "finans", kapsam: "ortak", sahip: null, hazir: true,
+    tanim: { kolonAramalari: {}, matris: false, sutunAyarlari: {}, ...r.tanim } }));
+// Tarih karşılaştırması gün düzeyinde ("2026-09-25" ya da ISO zaman damgası).
+function finansGun(t) { return String(t || "").slice(0, 10); }
+function finansVadeDurumu(vade, bugun) {
+    if (!vade)
+        return { vadeDurumu: "", vadeAy: "" };
+    const gun = (t) => Date.UTC(+t.slice(0, 4), +t.slice(5, 7) - 1, +t.slice(8, 10));
+    const fark = Math.round((gun(finansGun(vade)) - gun(bugun)) / 86400000);
+    const vadeDurumu = fark < 0 ? "Vadesi geçmiş" : fark <= 30 ? "0-30 gün" : fark <= 60 ? "31-60 gün" : fark <= 90 ? "61-90 gün" : "90+ gün";
+    return { vadeDurumu, vadeAy: finansGun(vade).slice(0, 7) };
+}
+// MAMULÜN BİRİM DEĞERİ (v1.465.0 — kullanıcı: "şu an için olan stok, yarı mamul, mamul tüm değerler
+// göstersin"; işçilik dahil). Yöntemler:
+//   "maliyet"  — hammadde + işçilik (VARSAYILAN): reçetedeki hammaddeler güncel alış fiyatıyla +
+//                ürün kartındaki proses ücretleri + ara proses ücretleri (maliyet ekranının işçiliği).
+//                Genel gider GİRMEZ: stok değeri üretim maliyetidir, idari gider dönem gideridir.
+//   "hammadde" — yalnız reçete hammaddesi (v1.463 davranışı)
+//   "satis" / "alis" — kart fiyatları
+// Reçete satırı ürün kartındaki kuralla eşleşiyor (mamul rengi + "Tüm Bedenler" ya da o beden).
+function finansIscilikBirim(urun, araProsesler) {
+    let t = Object.values((urun && urun.prosesUcretleri) || {}).reduce((x, u) => x + (parseFloat(u) || 0), 0);
+    Object.values((urun && urun.araProsesEklentileri) || {}).forEach((apId) => {
+        if (!apId)
+            return;
+        const ap = (araProsesler || []).find((x) => x.id === apId);
+        const u = (urun.araProsesUcretleri || {})[apId] != null ? urun.araProsesUcretleri[apId] : (ap ? ap.ucret : 0);
+        t += parseFloat(u) || 0;
+    });
+    return t;
+}
+function finansMamulBirimDegeri(urun, renk, beden, yontem, stok, kurlar, araProsesler) {
+    if (yontem === "satis" || yontem === "alis") {
+        const fiyat = parseFloat(yontem === "satis" ? urun.satisFiyati : urun.alisFiyati) || 0;
+        const pb = alisPbKodu({ alisParaBirimi: yontem === "satis" ? urun.satisParaBirimi : urun.alisParaBirimi });
+        const kur = pb === "TRY" ? 1 : parseFloat((kurlar || {})[pb]) || 0;
+        return { tl: kur ? fiyat * kur : 0, hammadde: null, iscilik: null, kurYok: !kur && fiyat > 0 ? pb : null, fiyatsiz: !(fiyat > 0) };
+    }
+    const satirlar = (urun.recete || []).filter((r) => stokAnahtarNrm(r.mamulRenk) === stokAnahtarNrm(renk)
+        && (!r.mamulBeden || r.mamulBeden === "Tüm Bedenler" || stokAnahtarNrm(r.mamulBeden) === stokAnahtarNrm(beden)));
+    let hammadde = 0;
+    let kurYok = null;
+    satirlar.forEach((r) => {
+        const hm = (stok || []).find((p) => p.id === r.hammaddeUrunId);
+        if (!hm)
+            return;
+        const bf = hammaddeBirimFiyati(hm, r.renk, r.beden, kurlar);
+        if (bf.pb !== "TRY" && !(parseFloat((kurlar || {})[bf.pb]) > 0))
+            kurYok = bf.pb;
+        hammadde += (parseFloat(r.miktar) || 0) * bf.tl;
+    });
+    const iscilik = yontem === "hammadde" ? 0 : finansIscilikBirim(urun, araProsesler);
+    const tl = hammadde + iscilik;
+    return { tl, hammadde, iscilik, kurYok, fiyatsiz: !(tl > 0), iscilikYok: yontem !== "hammadde" && !(iscilik > 0) };
+}
+// ---- ÜRETİMDEKİ MALLAR — GERÇEKLEŞEN MALİYET (v1.465.0) -----------------------------------------
+//
+// Kullanıcı: "Ödenen ve ödenmeyen işçilik olarak ayırmak lazım. Örnek: mamulün yarısı üretildi ve
+// stok değeri 1000 TL oldu; toplam değeri 1500 olması gerekirken üretimde o kadar hammadde ve
+// işçilik üretti. Bunu 1000 TL olarak hesaplar. Gerçekleşen o anki durumu göstermesi gerekir."
+//
+// Açık her üretim için DEĞER = gerçekten harcanan − bitmiş mala aktarılan:
+//   • Hammadde: üretime bağlı (`uretimId`) stok hareketlerinin NET çıkışı (teslimde düşülen reçete
+//     malzemesi, ek malzeme, eksi iade) × güncel birim fiyat. Hareketlerde fiyat yok (fiş fiyatsız
+//     yazılıyor); stok değerlemesiyle aynı fiyat kullanılıyor ki iki taraf tutsun.
+//   • İşçilik: üretime bağlı "-İşçilik" cari fişlerinin tutarı (personele yazılan, tahakkuk).
+//   • Aktarılan: bu üretimden stoğa GİREN mamul çiftleri × mamulün birim maliyeti (hammadde+işçilik)
+//     — o çiftler artık "Mamul" satırında sayılıyor; iki kez sayılmasın. Negatife düşmez.
+// Tamamlanmış üretim listede yok (kalan fark bitmiş malın içinde). Numune de dahil (stoğa girmez).
+//
+// ÖDENEN / ÖDENMEMİŞ İŞÇİLİK: personel carisinde ödemeler EN ESKİ işçilik fişini kapatır (FIFO,
+// `cariYaslandirma` — yaşlandırmayla aynı kural). Açık kalan işçilik fişleri ödenmemiş kısım; o
+// tutar zaten "Personel borcu" olarak Ticari Borçlar'da duruyor (yükümlülük), burada bilgi olarak.
+function finansUretimDegerleri({ uretim, stok, cariler, kurlar, tarih, araProsesler } = {}) {
+    const bugun = tarih || bugunYerel();
+    const bugunMu = !tarih || tarih >= bugunYerel();
+    const kurTablosu = kurlar || {};
+    const yuv = (x) => Math.round((x || 0) * 100) / 100;
+    // Ödenmemiş işçilik: işçilik hareketi kimliği → açık kalan (personel carisinin borç yaşlandırması).
+    const odenmemis = new Map();
+    (cariler || []).forEach((c) => {
+        if (!(c.hareketler || []).some((h) => /-İşçilik$/.test(h.fisNo || "")))
+            return;
+        cariYaslandirma(c, { defter: "Tümü", tarih: bugun }).forEach((y) => {
+            if (y.yon !== "borc")
+                return;
+            y.acikKalemler.forEach((k) => odenmemis.set(k.id, k.kalan));
+        });
+    });
+    const iscilikHareketleri = new Map(); // uretimId → [{tutar, odenmemis}]
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+        if (!h.uretimId || !/-İşçilik$/.test(h.fisNo || "") || finansGun(h.tarih) > bugun)
+            return;
+        const liste = iscilikHareketleri.get(h.uretimId) || [];
+        liste.push({ tutar: Math.abs(h.tutar || 0), odenmemis: odenmemis.get(h.id) || 0, personel: c.unvan });
+        iscilikHareketleri.set(h.uretimId, liste);
+    }));
+    const sonuc = [];
+    (uretim || []).forEach((u) => {
+        if (!u)
+            return;
+        if (bugunMu && u.asama === "Tamamlandı")
+            return;
+        const urun = (stok || []).find((p) => p.id === u.urunId) || null;
+        let hammadde = 0;
+        let kurYok = null;
+        let girenCift = 0;
+        let aktarilan = 0;
+        let sonHareket = "";
+        (stok || []).forEach((p) => (p.hareketler || []).forEach((h) => {
+            if (h.uretimId !== u.id || finansGun(h.tarih) > bugun)
+                return;
+            if (finansGun(h.tarih) > sonHareket)
+                sonHareket = finansGun(h.tarih);
+            if (urun && p.id === urun.id) {
+                // Bu üretimden stoğa giren bitmiş çift: maliyeti mamul satırına geçti.
+                const m = Number(h.miktar) || 0;
+                girenCift += m;
+                const d = finansMamulBirimDegeri(urun, h.renk, h.beden, "maliyet", stok, kurTablosu, araProsesler);
+                aktarilan += m * d.tl;
+                return;
+            }
+            const bf = hammaddeBirimFiyati(p, h.renk, h.beden, kurTablosu);
+            if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0)
+                kurYok = bf.pb;
+            hammadde += -(Number(h.miktar) || 0) * bf.tl;
+        }));
+        const isc = iscilikHareketleri.get(u.id) || [];
+        const iscilik = isc.reduce((t, x) => t + x.tutar, 0);
+        const iscilikOdenmemis = isc.reduce((t, x) => t + x.odenmemis, 0);
+        if (!(Math.abs(hammadde) > 0.004 || iscilik > 0.004))
+            return; // henüz hiçbir şey harcanmamış
+        // BÜTÜN ÇİFTLERİ STOĞA GİRMİŞ iş açık değil (aşaması henüz "Tamamlandı"ya çekilmemiş ya da geçmiş
+        // tarihte bitmiş olabilir): kalan fark bitmiş malın içinde. Değeri sıfıra inen iş de listelenmez.
+        const toplamAdet = (u.bedenMiktarlari || []).reduce((t, b) => t + (Number(b.miktar) || 0), 0) || Number(u.adet) || 0;
+        if (toplamAdet > 0 && girenCift >= toplamAdet)
+            return;
+        const deger = Math.max(0, hammadde + iscilik - aktarilan);
+        if (deger <= 0.004)
+            return;
+        sonuc.push({
+            uretim: u, urunAd: (urun && urun.ad) || u.model || "?", renk: u.renk || "", toplamAdet, girenCift: stokYuvarla(girenCift),
+            hammadde: yuv(hammadde), iscilik: yuv(iscilik), iscilikOdenmemis: yuv(iscilikOdenmemis), iscilikOdenen: yuv(iscilik - iscilikOdenmemis),
+            aktarilan: yuv(Math.min(aktarilan, hammadde + iscilik)), deger: yuv(deger), kurYok, sonHareket,
+            personeller: [...new Set(isc.map((x) => x.personel))],
+        });
+    });
+    return sonuc;
+}
+// ---- ALACAK / BORÇ YAŞLANDIRMA (26 Eylül, v1.464.0) ----------------------------------------------
+//
+// Kullanıcı: "Alacak yaşlandırma yapalım."
+//
+// Büyük muhasebe programlarının yöntemi — FIFO KAPATMA: carinin karşı yöndeki hareketleri
+// (tahsilat, iade, çek girişi…) EN ESKİ açık kalemden başlayarak kapatır; geriye kalan kalemler
+// açık kalemdir ve her biri kendi yaşıyla dilime girer. Toplam bakiye yalnız "ne kadar" der;
+// yaşlandırma "ne kadarı ne zamandan beri ödenmiyor" sorusunu cevaplar.
+//
+//   • Para birimi başına ayrı: dolar tahsilatı TL faturayı kapatmaz (bakiye de PB bazında).
+//   • Yön bakiyeden: + bakiye (cari bize borçlu) → açık kalemler Borç hareketleri (satış…);
+//     − bakiye (biz borçluyuz) → açık kalemler Alacak hareketleri (alış…). Aynı fonksiyon borç
+//     yaşlandırmasını da veriyor.
+//   • Yaşın başlangıcı: hareketin VADESİ, yoksa tarih + `varsayilanVade` gün. Vade tarihi rapor
+//     gününden sonraysa "vadesi gelmemiş"; değilse geçen gün sayısıyla dilim.
+//   • Defter ve tarih itibarıyla: finans raporuyla aynı kural (`defterKapsar`, tarih ≤ gün).
+const YAS_DILIMLERI = [
+    { anahtar: "yasVadesiGelmemis", ad: "Vadesi gelmemiş" },
+    { anahtar: "yas0_30", ad: "0-30 gün", ust: 30 },
+    { anahtar: "yas31_60", ad: "31-60 gün", ust: 60 },
+    { anahtar: "yas61_90", ad: "61-90 gün", ust: 90 },
+    { anahtar: "yas91_180", ad: "91-180 gün", ust: 180 },
+    { anahtar: "yas180", ad: "180+ gün", ust: Infinity },
+];
+function finansGunFarki(a, b) {
+    const gun = (t) => Date.UTC(+t.slice(0, 4), +t.slice(5, 7) - 1, +t.slice(8, 10));
+    return Math.round((gun(finansGun(a)) - gun(finansGun(b))) / 86400000);
+}
+function finansGunEkle(t, n) {
+    const d = new Date(Date.UTC(+t.slice(0, 4), +t.slice(5, 7) - 1, +t.slice(8, 10) + (n || 0)));
+    return d.toISOString().slice(0, 10);
+}
+function cariYaslandirma(cari, { defter = "Tümü", tarih, varsayilanVade = 0 } = {}) {
+    const bugun = tarih || bugunYerel();
+    const hareketler = ((cari && cari.hareketler) || [])
+        .filter((h) => defterKapsar(h.defter, defter) && finansGun(h.tarih) && finansGun(h.tarih) <= bugun)
+        .sort((a, b) => finansGun(a.tarih).localeCompare(finansGun(b.tarih)) || String(a.zaman || "").localeCompare(String(b.zaman || "")));
+    const pbler = [...new Set(hareketler.map((h) => h.paraBirimi || "TRY"))];
+    const yuv = (x) => Math.round(x * 100) / 100;
+    return pbler.map((pb) => {
+        const liste = hareketler.filter((h) => (h.paraBirimi || "TRY") === pb);
+        const borc = liste.filter((h) => h.yon === "Borç");
+        const alacak = liste.filter((h) => h.yon !== "Borç");
+        const toplamBorc = borc.reduce((t, h) => t + (h.tutar || 0), 0);
+        const toplamAlacak = alacak.reduce((t, h) => t + (h.tutar || 0), 0);
+        const bakiye = yuv(toplamBorc - toplamAlacak);
+        const yon = bakiye > 0 ? "alacak" : bakiye < 0 ? "borc" : "kapali";
+        // Açık kalemler: bakiye yönündeki hareketler, karşı yöndeki toplam en eskiden düşülerek.
+        const kalemler = yon === "alacak" ? borc : yon === "borc" ? alacak : [];
+        let kapatan = yon === "alacak" ? toplamAlacak : toplamBorc;
+        const acik = [];
+        kalemler.forEach((h) => {
+            const t = h.tutar || 0;
+            const dusen = Math.min(t, kapatan);
+            kapatan -= dusen;
+            const kalan = yuv(t - dusen);
+            if (kalan <= 0.004)
+                return;
+            const vade = h.vade ? finansGun(h.vade) : finansGunEkle(finansGun(h.tarih), varsayilanVade);
+            const gecikme = finansGunFarki(bugun, vade); // + = vadesi geçen gün
+            acik.push({ id: h.id, tarih: finansGun(h.tarih), vade, fisNo: h.fisNo || "", aciklama: h.aciklama || h.islemTipi || "",
+                tutar: t, kalan, gun: gecikme, kismen: dusen > 0.004 });
+        });
+        const kovalar = Object.fromEntries(YAS_DILIMLERI.map((d) => [d.anahtar, 0]));
+        acik.forEach((k) => {
+            const d = k.gun < 0 ? YAS_DILIMLERI[0] : YAS_DILIMLERI.slice(1).find((x) => k.gun <= x.ust);
+            kovalar[d.anahtar] = yuv(kovalar[d.anahtar] + k.kalan);
+        });
+        const vadesiGecen = acik.filter((k) => k.gun >= 0);
+        const gecenToplam = vadesiGecen.reduce((t, k) => t + k.kalan, 0);
+        return {
+            pb, bakiye, yon, acikKalemler: acik, kovalar,
+            // Ağırlıklı ortalama gecikme: vadesi geçen tutarın ortalama kaç gündür beklediği.
+            ortalamaGecikme: gecenToplam > 0 ? Math.round(vadesiGecen.reduce((t, k) => t + k.kalan * k.gun, 0) / gecenToplam) : 0,
+            enEskiGun: acik.length ? Math.max(...acik.map((k) => k.gun)) : null,
+            vadesiGecen: yuv(gecenToplam),
+        };
+    }).filter((x) => x.yon !== "kapali");
+}
+// ANA FONKSİYON — düz satırlar. `defter`: "Tümü" | "Genel" | "Resmi"; `tarih`: "YYYY-AA-GG"
+// (boşsa bugün). `mamulDegerleme`: "maliyet" | "satis" | "alis".
+function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, kurlar, defter = "Tümü", tarih, mamulDegerleme = "maliyet", varsayilanVade = 0 } = {}) {
+    const bugun = tarih || bugunYerel();
+    const bugunMu = !tarih || tarih >= bugunYerel();
+    const kurTablosu = kurlar || (muhasebe && muhasebe.kurlar) || {};
+    const tl = (tutar, pb) => {
+        if ((pb || "TRY") === "TRY")
+            return { tl: tutar, kurYok: null };
+        const kur = parseFloat(kurTablosu[pb]);
+        return kur > 0 ? { tl: Math.round(tutar * kur * 100) / 100, kurYok: null } : { tl: null, kurYok: pb };
+    };
+    const yuv = (x) => Math.round((x || 0) * 100) / 100;
+    const defterEtiketi = defter === "Tümü" ? "Tümü" : defter;
+    const satirlar = [];
+    const ekle = (s) => {
+        const cevrim = s.tlKarsiligi !== undefined ? { tl: s.tlKarsiligi, kurYok: s.kurYok || null } : tl(s.tutar, s.paraBirimi);
+        const isaret = s.taraf === "Varlık" ? 1 : s.taraf === "Yükümlülük" ? -1 : 0;
+        satirlar.push({
+            defter: defterEtiketi, ayrinti: "", vade: "", vadeAy: "", vadeDurumu: "", sonHareket: "", miktar: null, birimDeger: null,
+            ...s,
+            tutar: yuv(s.tutar),
+            tlKarsiligi: cevrim.tl == null ? null : yuv(cevrim.tl),
+            netEtki: cevrim.tl == null ? 0 : yuv(cevrim.tl * isaret),
+            not: [s.not, cevrim.kurYok ? `${cevrim.kurYok} kuru yok — toplamlara girmedi` : ""].filter(Boolean).join(" · "),
+        });
+    };
+    const kapsar = (d) => defterKapsar(d, defter);
+    // ---- HAZIR DEĞERLER: kasa ve banka ----
+    [["kasalar", "Kasa"], ["bankalar", "Banka"]].forEach(([anahtar, kalem]) => {
+        ((muhasebe && muhasebe[anahtar]) || []).forEach((h) => {
+            const hareketler = (h.hareketler || []).filter((x) => kapsar(x.defter) && finansGun(x.tarih) <= bugun);
+            const bakiye = hareketler.reduce((t, x) => t + (x.yon === "Giriş" ? (x.tutar || 0) : -(x.tutar || 0)), 0);
+            if (Math.abs(bakiye) < 0.005 && h.pasif)
+                return;
+            ekle({ taraf: "Varlık", grup: "Hazır Değerler", kalem, ad: h.ad, ayrinti: h.banka || "", paraBirimi: h.paraBirimi || "TRY", tutar: bakiye,
+                sonHareket: hareketler.reduce((m, x) => (finansGun(x.tarih) > m ? finansGun(x.tarih) : m), ""),
+                not: bakiye < 0 ? "eksi bakiye" : "" });
+        });
+    });
+    // ---- CARİLER: para birimi başına bakiye. + alacak (varlık), − borç (yükümlülük) ----
+    // Cari tipine göre kalem: müşteriye verilen avans da "alacak", tedarikçinin bize borcu da.
+    (cariler || []).forEach((c) => {
+        // Son hareket PB başına; bakiye ve yaş dilimleri yaşlandırmadan (aynı süzgeç, aynı toplam).
+        const pbSon = {};
+        (c.hareketler || []).filter((h) => kapsar(h.defter) && finansGun(h.tarih) <= bugun).forEach((h) => {
+            const pb = h.paraBirimi || "TRY";
+            if (finansGun(h.tarih) > (pbSon[pb] || ""))
+                pbSon[pb] = finansGun(h.tarih);
+        });
+        cariYaslandirma(c, { defter, tarih: bugun, varsayilanVade }).forEach((y) => {
+            const tip = c.tip || "Müşteri";
+            const alacak = y.yon === "alacak";
+            ekle({
+                taraf: alacak ? "Varlık" : "Yükümlülük",
+                grup: alacak ? "Ticari Alacaklar" : "Ticari Borçlar",
+                kalem: `${tip} ${alacak ? "alacağı" : "borcu"}`,
+                ad: c.unvan, ayrinti: tip + (c.pasif ? " · pasif" : ""), paraBirimi: y.pb, tutar: Math.abs(y.bakiye), sonHareket: pbSon[y.pb] || "",
+                ...y.kovalar, vadesiGecen: y.vadesiGecen, ortalamaGecikme: y.ortalamaGecikme, enEskiGun: y.enEskiGun,
+            });
+        });
+    });
+    // ---- ÇEKLER — durum o tarihe kadarki geçmişten ----
+    const tumHareketler = new Map();
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => tumHareketler.set(h.id, { cari: c, h })));
+    ((muhasebe && muhasebe.cekler) || []).forEach((cek) => {
+        const giris = cek.hareketId ? tumHareketler.get(cek.hareketId) : null;
+        const girisDefteri = (giris && giris.h.defter) || "Genel";
+        if (!kapsar(girisDefteri))
+            return;
+        const girisTarihi = finansGun((giris && giris.h.tarih) || cek.tarih || ((cek.gecmis || [])[0] || {}).tarih || "");
+        if (girisTarihi && girisTarihi > bugun)
+            return;
+        let durum = "Portföyde";
+        (cek.gecmis || []).forEach((g) => { if (!g.tarih || finansGun(g.tarih) <= bugun)
+            durum = g.yeniDurum || durum; });
+        if (bugunMu)
+            durum = cek.durum || durum;
+        const verilen = (cek.tip || "Alınan") === "Verilen";
+        const cari = (cariler || []).find((c) => c.id === cek.cariId);
+        const ortak = {
+            ad: `${cek.cekNo || "numarasız"}${cek.banka ? ` · ${cek.banka}` : ""}`,
+            ayrinti: cari ? cari.unvan : "", paraBirimi: cek.paraBirimi || "TRY", tutar: cek.tutar || 0, vade: cek.vadeTarihi || "",
+            ...finansVadeDurumu(cek.vadeTarihi, bugun),
+        };
+        if (!verilen) {
+            if (durum === "Portföyde")
+                ekle({ ...ortak, taraf: "Varlık", grup: "Alınan Çekler", kalem: "Portföydeki çek" });
+            else if (durum === "Tahsilde")
+                ekle({ ...ortak, taraf: "Varlık", grup: "Alınan Çekler", kalem: "Bankada tahsildeki çek", not: cek.tahsilBankaAd || "" });
+            else if (durum === "Karşılıksız")
+                ekle({ ...ortak, taraf: "Varlık", grup: "Alınan Çekler", kalem: "Karşılıksız (şüpheli) çek" });
+            // CİRO RİSKİ (nazım hesap): ciro ettiğimiz çek vadesinde ödenmezse bize döner. Vadesi
+            // geçmemiş cirolu çek bilgi olarak listelenir, net varlığa girmez.
+            else if (durum === "Ciro Edildi" && (!cek.vadeTarihi || finansGun(cek.vadeTarihi) >= bugun)) {
+                const son = [...cekEtkinGecmis(cek)].reverse().find((g) => g.yeniDurum === "Ciro Edildi");
+                ekle({ ...ortak, taraf: "Bilgi", grup: "Ciro Edilen Çekler (risk)", kalem: "Ciro edilen, vadesi gelmemiş", not: son && son.cariAd ? `→ ${son.cariAd}` : "" });
+            }
+        }
+        else if (durum === "Portföyde" || durum === "Tahsilde") {
+            // Şahsi çek "Portföyde" = verildi, henüz ödenmedi: vadesinde hesaptan çıkacak BORÇ.
+            ekle({ ...ortak, taraf: "Yükümlülük", grup: "Verilen Çekler", kalem: "Ödenecek şahsi çek" });
+        }
+    });
+    // ---- STOKLAR — defter taşımıyor, her defterde aynı ----
+    (stok || []).forEach((p) => {
+        if (!p || p.kategori === "Hizmet")
+            return;
+        const mamul = p.kategori === "Mamul";
+        const miktarlar = new Map();
+        if ((p.hareketler || []).length) {
+            p.hareketler.filter((h) => finansGun(h.tarih) <= bugun).forEach((h) => {
+                const k = `${stokAnahtarNrm(h.renk)}|${stokAnahtarNrm(h.beden)}`;
+                miktarlar.set(k, (miktarlar.get(k) || 0) + (Number(h.miktar) || 0));
+            });
+        }
+        else if (bugunMu) {
+            (p.variants || []).forEach((v) => {
+                const k = `${stokAnahtarNrm(v.renk)}|${stokAnahtarNrm(v.beden)}`;
+                miktarlar.set(k, (miktarlar.get(k) || 0) + (Number(v.miktar) || 0));
+            });
+        }
+        miktarlar.forEach((miktar, k) => {
+            miktar = stokYuvarla(miktar);
+            if (Math.abs(miktar) < 0.0005)
+                return;
+            const [renk, beden] = k.split("|");
+            let birim = 0;
+            let kurYok = null;
+            let fiyatsiz = false;
+            let pay = null;
+            let iscilikYok = false;
+            if (mamul) {
+                const d = finansMamulBirimDegeri(p, renk, beden, mamulDegerleme, stok, kurTablosu, araProsesler);
+                birim = d.tl;
+                kurYok = d.kurYok;
+                fiyatsiz = d.fiyatsiz;
+                iscilikYok = d.iscilikYok;
+                if (d.hammadde != null)
+                    pay = { hammaddeDegeri: yuv(miktar * d.hammadde), iscilikDegeri: yuv(miktar * d.iscilik) };
+            }
+            else {
+                const bf = hammaddeBirimFiyati(p, renk, beden, kurTablosu);
+                birim = bf.tl;
+                fiyatsiz = !(bf.kendiFiyat > 0);
+                if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0)
+                    kurYok = bf.pb;
+            }
+            const deger = kurYok ? null : miktar * birim;
+            ekle({
+                taraf: "Varlık", grup: "Stoklar", kalem: p.kategori || "Hammadde", ad: p.ad,
+                ayrinti: [olcuGoster(renk), olcuGoster(beden)].filter(Boolean).join(" · "),
+                paraBirimi: "TRY", tutar: deger || 0, tlKarsiligi: deger, kurYok, miktar, birimDeger: kurYok ? null : yuv(birim),
+                ...(pay || (!mamul && deger != null ? { hammaddeDegeri: yuv(deger), iscilikDegeri: 0 } : {})),
+                not: [fiyatsiz ? "fiyat/maliyet yok — değer 0" : "", iscilikYok && !fiyatsiz ? "proses ücreti yok — işçilik 0" : "", miktar < 0 ? "eksi stok" : ""].filter(Boolean).join(" · "),
+            });
+        });
+    });
+    // ---- ÜRETİMDEKİ MALLAR (yarı mamul) — gerçekleşen maliyet, deftersiz (stok gibi) ----
+    finansUretimDegerleri({ uretim, stok, cariler, kurlar: kurTablosu, tarih: bugun, araProsesler }).forEach((w) => {
+        ekle({
+            taraf: "Varlık", grup: "Stoklar", kalem: "Üretimdeki mal (yarı mamul)",
+            ad: `Üretim ${w.uretim.siparisNo || ""} · ${w.urunAd}`.trim(),
+            ayrinti: [w.renk, w.toplamAdet ? `${w.girenCift}/${w.toplamAdet} çift stoğa girdi` : "", w.uretim.asama || ""].filter(Boolean).join(" · "),
+            paraBirimi: "TRY", tutar: w.kurYok ? 0 : w.deger, tlKarsiligi: w.kurYok ? null : w.deger, kurYok: w.kurYok,
+            miktar: w.toplamAdet ? stokYuvarla(w.toplamAdet - w.girenCift) : null,
+            hammaddeDegeri: w.hammadde, iscilikDegeri: w.iscilik, iscilikOdenen: w.iscilikOdenen, iscilikOdenmemis: w.iscilikOdenmemis, aktarilan: w.aktarilan,
+            sonHareket: w.sonHareket,
+            not: [w.aktarilan > 0 ? `bitmiş mala aktarılan ${w.aktarilan.toLocaleString("tr-TR")} ₺ düşüldü` : "",
+                w.iscilikOdenmemis > 0 ? `ödenmemiş işçilik ${w.iscilikOdenmemis.toLocaleString("tr-TR")} ₺ (${w.personeller.join(", ")}) — personel borcunda` : ""].filter(Boolean).join(" · "),
+        });
+    });
+    return satirlar;
+}
+// BİLANÇO ÖZETİ — grup toplamları (TL) ve net varlık. Kuru olmayan satırlar toplam dışı, sayılıyor.
+function finansOzet(satirlar) {
+    const gruplar = {};
+    let varlik = 0, yukumluluk = 0, bilgi = 0, kurYok = 0;
+    (satirlar || []).forEach((s) => {
+        if (s.tlKarsiligi == null) {
+            kurYok += 1;
+            return;
+        }
+        gruplar[s.grup] = gruplar[s.grup] || { taraf: s.taraf, toplam: 0, adet: 0 };
+        gruplar[s.grup].toplam += s.tlKarsiligi;
+        gruplar[s.grup].adet += 1;
+        if (s.taraf === "Varlık")
+            varlik += s.tlKarsiligi;
+        else if (s.taraf === "Yükümlülük")
+            yukumluluk += s.tlKarsiligi;
+        else
+            bilgi += s.tlKarsiligi;
+    });
+    const yuv = (x) => Math.round(x * 100) / 100;
+    Object.values(gruplar).forEach((g) => { g.toplam = yuv(g.toplam); });
+    return { gruplar, varlik: yuv(varlik), yukumluluk: yuv(yukumluluk), net: yuv(varlik - yukumluluk), bilgi: yuv(bilgi), kurYok };
+}
+// GRID TAŞMASI: grid öğesinin varsayılan min-width'i içeriği kadar; geniş tablo (yaşlandırma,
+// 20+ sütunlu rapor) kabı büyütüp bütün sayfayı yana kaydırıyordu (ekran görüntüsünde ölçüldü).
+// Kaplar `minmax(0, 1fr)` ile daraltılıyor; tablo kendi kabında kayıyor.
+function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar, onRaporlarKaydet, aktifKullanici, showToast, firmaBilgileri }) {
+    const [defter, setDefter] = useState("Tümü"); // "Tümü" | "Genel" | "Resmi" | "YanYana"
+    const [tarih, setTarih] = useState("");
+    const [mamulDegerleme, setMamulDegerleme] = useState("maliyet");
+    // GÖRÜNÜM (v1.464.0): "ozet" varlık özeti · "yas" alacak/borç yaşlandırma. Kayıtlı raporlar ikisinde de.
+    const [gorunum, setGorunum] = useState("ozet");
+    const [yasYon, setYasYon] = useState("alacak");
+    const [varsayilanVade, setVarsayilanVade] = useState("0");
+    const kurlar = (muhasebe && muhasebe.kurlar) || {};
+    const vadeGun = Math.max(0, parseInt(varsayilanVade, 10) || 0);
+    const ortak = { cariler, muhasebe, stok, uretim, araProsesler, kurlar, tarih, mamulDegerleme, varsayilanVade: vadeGun };
+    // YAN YANA: iki defterin satırları birlikte (Defter sütunu ayırır); özet iki sütunlu.
+    const satirlar = defter === "YanYana"
+        ? [...finansRaporSatirlari({ ...ortak, defter: "Genel" }), ...finansRaporSatirlari({ ...ortak, defter: "Resmi" })]
+        : finansRaporSatirlari({ ...ortak, defter });
+    const ozetler = defter === "YanYana"
+        ? [["Genel", finansOzet(satirlar.filter((s) => s.defter === "Genel"))], ["Resmi", finansOzet(satirlar.filter((s) => s.defter === "Resmi"))]]
+        : [[defter === "Tümü" ? "Tüm defterler" : defter, finansOzet(satirlar)]];
+    const para = (v) => `${(v || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`;
+    const fiyatsizSayisi = satirlar.filter((s) => s.grup === "Stoklar" && /fiyat\/maliyet yok/.test(s.not || "")).length;
+    const kurYokSayisi = satirlar.filter((s) => s.tlKarsiligi == null).length;
+    // Hazır şablonlar + kayıtlılar. Kaydedilen (değiştirilmiş) hazır şablon kendi kimliğiyle geçerli.
+    const kayitli = raporlar || [];
+    const gorunenRaporlar = [...FINANS_HAZIR_RAPORLAR.filter((h) => !kayitli.some((r) => r.id === h.id)), ...kayitli];
+    // Kaydederken DOKUNULMAMIŞ hazır şablonlar veriye yazılmıyor (nesne kimliğiyle ayırt ediliyor).
+    const raporlariKaydet = (liste) => onRaporlarKaydet((liste || []).filter((r) => !FINANS_HAZIR_RAPORLAR.includes(r)));
+    const secim = (deger, set, secenekler) => (React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap" } }, secenekler.map(([d, ad]) => (React.createElement("button", { key: d, type: "button", onClick: () => set(d), "data-finans-secim": d, style: { padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+            border: `1.5px solid ${deger === d ? "var(--erp-primary)" : "var(--erp-line)"}`,
+            background: deger === d ? "var(--erp-primary)" : "#fff", color: deger === d ? "#fff" : "var(--erp-text-2)" } }, ad)))));
+    const etiket = { fontSize: 11, fontWeight: 700, color: "var(--erp-text-3)", textTransform: "uppercase", letterSpacing: ".04em" };
+    const gruplar = FINANS_GRUP_SIRASI.filter((g) => ozetler.some(([, o]) => o.gruplar[g]));
+    const taraflar = [["Varlık", "VARLIKLAR"], ["Yükümlülük", "YÜKÜMLÜLÜKLER"], ["Bilgi", "BİLGİ (net varlığa girmez)"]];
+    return (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 14 } },
+        React.createElement("div", { style: { display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-end", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12 } },
+            React.createElement("div", { style: { display: "grid", gap: 4 } },
+                React.createElement("span", { style: etiket }, "G\u00F6r\u00FCn\u00FCm"),
+                secim(gorunum, setGorunum, [["ozet", "Varlık Özeti"], ["yas", "Yaşlandırma"]])),
+            React.createElement("div", { style: { display: "grid", gap: 4 } },
+                React.createElement("span", { style: etiket }, "Defter"),
+                secim(defter, setDefter, [["Tümü", "Tümü"], ["Genel", "Genel"], ["Resmi", "Resmi"], ["YanYana", "Genel · Resmi yan yana"]])),
+            React.createElement("label", { style: { display: "grid", gap: 4 } },
+                React.createElement("span", { style: etiket }, "Tarih itibar\u0131yla"),
+                React.createElement("input", { type: "date", "data-finans-tarih": "1", value: tarih, onChange: (e) => setTarih(e.target.value), style: { ...inputStyle, width: 160 } })),
+            React.createElement("label", { style: { display: "grid", gap: 4 } },
+                React.createElement("span", { style: etiket }, "Varsay\u0131lan vade (g\u00FCn)"),
+                React.createElement("input", { type: "number", min: "0", step: "1", "data-finans-vade": "1", value: varsayilanVade, onChange: (e) => setVarsayilanVade(e.target.value), style: { ...inputStyle, width: 90 } })),
+            gorunum === "ozet" && React.createElement("div", { style: { display: "grid", gap: 4 } },
+                React.createElement("span", { style: etiket }, "Mamul de\u011Ferleme"),
+                secim(mamulDegerleme, setMamulDegerleme, [["maliyet", "Hammadde + işçilik"], ["hammadde", "Yalnız hammadde"], ["satis", "Satış fiyatı"], ["alis", "Kart alış fiyatı"]]))),
+        gorunum === "yas" && (React.createElement("div", { id: "finans-yas-yazdir", style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 14 } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+                secim(yasYon, setYasYon, [["alacak", "Alacaklar"], ["borc", "Borçlar"]]),
+                React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                    tarih ? `${tarihYaz(tarih)} itibarıyla` : "bugün itibarıyla",
+                    " \u00B7 FIFO: \u00F6demeler en eski kalemi kapat\u0131r",
+                    vadeGun ? ` · vadesiz kalemler ${vadeGun} gün vadeli` : ""),
+                React.createElement("button", { type: "button", className: "btn-ghost no-print", style: { marginLeft: "auto", padding: "4px 10px", fontSize: 12 }, onClick: () => indirYazdirilabilirHTML("#finans-yas-yazdir", `${yasYon === "alacak" ? "Alacak" : "Borc"}-Yaslandirma-${tarih || bugunYerel()}`) },
+                    React.createElement(Printer, { size: 13 }),
+                    " Yazd\u0131r")),
+            (defter === "YanYana" ? ["Genel", "Resmi"] : [defter]).map((d) => (React.createElement(YaslandirmaTablosu, { key: d, cariler: cariler, defter: d, tarih: tarih, varsayilanVade: vadeGun, yon: yasYon, kurlar: kurlar, baslik: `${yasYon === "alacak" ? "Alacak" : "Borç"} Yaşlandırma${d === "Tümü" ? "" : ` — ${d} defter`}` }))))),
+        gorunum === "ozet" && React.createElement("div", { id: "finans-ozet-yazdir", "data-finans-ozet": "1", style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10 } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+                React.createElement("b", { style: { fontSize: 15 } },
+                    "Varl\u0131k \u00D6zeti",
+                    (firmaBilgileri || {}).unvan ? ` — ${firmaBilgileri.unvan}` : ""),
+                React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                    tarih ? `${tarihYaz(tarih)} itibarıyla` : "bugün itibarıyla",
+                    " \u00B7 kurlar: ",
+                    Object.entries(kurlar).filter(([k, v]) => /^[A-Z]{3}$/.test(k) && v).map(([k, v]) => `${k} ${v}`).join(", ") || "yok"),
+                React.createElement("button", { type: "button", className: "btn-ghost no-print", style: { marginLeft: "auto", padding: "4px 10px", fontSize: 12 }, onClick: () => indirYazdirilabilirHTML("#finans-ozet-yazdir", `Varlik-Ozeti-${tarih || bugunYerel()}`) },
+                    React.createElement(Printer, { size: 13 }),
+                    " Yazd\u0131r")),
+            React.createElement("table", { style: { width: "100%" } },
+                React.createElement("thead", null,
+                    React.createElement("tr", null,
+                        React.createElement("th", { style: { textAlign: "left" } }, "Grup"),
+                        ozetler.map(([ad]) => React.createElement("th", { key: ad, style: { textAlign: "right" } }, ad)),
+                        ozetler.length === 2 && React.createElement("th", { style: { textAlign: "right" } }, "Fark (Genel \u2212 Resmi)"))),
+                React.createElement("tbody", null,
+                    taraflar.map(([taraf, baslik]) => {
+                        const tarafGruplari = gruplar.filter((g) => ozetler.some(([, o]) => o.gruplar[g] && o.gruplar[g].taraf === taraf));
+                        if (tarafGruplari.length === 0)
+                            return null;
+                        return (React.createElement(React.Fragment, { key: taraf },
+                            React.createElement("tr", null,
+                                React.createElement("td", { colSpan: ozetler.length + 2, style: { fontSize: 11, fontWeight: 800, color: "var(--erp-text-3)", paddingTop: 10 } }, baslik)),
+                            tarafGruplari.map((g) => {
+                                const deger = (o) => (o.gruplar[g] ? o.gruplar[g].toplam : 0);
+                                return (React.createElement("tr", { key: g, "data-finans-ozet-grup": g },
+                                    React.createElement("td", null, g),
+                                    ozetler.map(([ad, o]) => React.createElement("td", { key: ad, className: "mono", style: { textAlign: "right" } }, para(deger(o)))),
+                                    ozetler.length === 2 && React.createElement("td", { className: "mono", style: { textAlign: "right", color: "var(--erp-text-2)" } }, para(deger(ozetler[0][1]) - deger(ozetler[1][1])))));
+                            })));
+                    }),
+                    [["Toplam varlık", "varlik"], ["Toplam yükümlülük", "yukumluluk"], ["NET VARLIK", "net"]].map(([ad, k]) => (React.createElement("tr", { key: k, "data-finans-ozet-toplam": k, style: { borderTop: "2px solid var(--erp-line)" } },
+                        React.createElement("td", { style: { fontWeight: 800 } }, ad),
+                        ozetler.map(([d, o]) => (React.createElement("td", { key: d, className: "mono", style: { textAlign: "right", fontWeight: 800, color: k === "net" ? (o.net >= 0 ? "var(--erp-primary)" : "var(--erp-warn)") : undefined } }, para(o[k])))),
+                        ozetler.length === 2 && React.createElement("td", { className: "mono", style: { textAlign: "right", fontWeight: 700 } }, para(ozetler[0][1][k] - ozetler[1][1][k]))))))),
+            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", display: "grid", gap: 2 } },
+                React.createElement("span", null,
+                    "Stok defter ay\u0131rmaz (mal fiziksel ve tek) \u2014 her iki defterde ayn\u0131 stok de\u011Feri g\u00F6r\u00FCn\u00FCr.",
+                    mamulDegerleme === "maliyet" ? " Mamul = reçete hammaddesi (güncel alış fiyatı) + kartın proses ücretleri; genel gider stok değerine girmez." : mamulDegerleme === "hammadde" ? " Mamul = yalnız reçete hammaddesi; işçilik dahil değil." : ""),
+                (() => {
+                    const wip = satirlar.filter((x) => x.kalem === "Üretimdeki mal (yarı mamul)" && (defter !== "YanYana" || x.defter === "Genel"));
+                    if (wip.length === 0)
+                        return null;
+                    const t = (k) => wip.reduce((a, x) => a + (x[k] || 0), 0);
+                    return (React.createElement("span", { "data-finans-uretim-ozet": "1" },
+                        "\u00DCretimdeki mallar (",
+                        wip.length,
+                        " \u00FCretim): ",
+                        React.createElement("b", { className: "mono" }, para(t("tlKarsiligi"))),
+                        " \u2014 ger\u00E7ekle\u015Fen hammadde ",
+                        para(t("hammaddeDegeri")),
+                        " + i\u015F\u00E7ilik ",
+                        para(t("iscilikDegeri")),
+                        " (\u00F6denen ",
+                        para(t("iscilikOdenen")),
+                        " \u00B7 ",
+                        React.createElement("b", null,
+                            "\u00F6denmemi\u015F ",
+                            para(t("iscilikOdenmemis"))),
+                        ", personel bor\u00E7lar\u0131nda), bitmi\u015F mala aktar\u0131lan d\u00FC\u015F\u00FClerek."));
+                })(),
+                fiyatsizSayisi > 0 && React.createElement("span", { style: { color: "#B7791F" } },
+                    "\u26A0 ",
+                    fiyatsizSayisi,
+                    " stok kaleminin fiyat\u0131/maliyeti yok \u2014 de\u011Feri 0 say\u0131ld\u0131 (\"Stok De\u011Feri\" raporunda Not s\u00FCtununda)."),
+                kurYokSayisi > 0 && React.createElement("span", { style: { color: "var(--erp-warn)" } },
+                    "\u26A0 ",
+                    kurYokSayisi,
+                    " kalemin para biriminde kur yok \u2014 toplamlara girmedi. \u00DCst \u015Feritteki kur rozetinden girin."))),
+        React.createElement(RaporSekmesi, { modulAnahtari: "finans", baslik: "Finans Raporu", alanlar: FINANS_RAPOR_ALANLARI, satirlar: satirlar, raporlar: gorunenRaporlar, onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, showToast: showToast, arama: "" })));
+}
+// ---- YAŞLANDIRMA GÖRÜNÜMÜ (v1.464.0) ----------------------------------------------------------
+// Üstte dilim toplamları (TL) ve yığılmış çubuk; altında cari başına tablo. Satıra dokununca o
+// carinin AÇIK KALEMLERİ (hangi fiş, ne kadarı kaldı, kaç gündür) açılıyor — "neden 90+ gün?"
+// sorusunun cevabı. Para birimi başına ayrı satır; TL toplamı kurla (kur yoksa dışarıda, yazılı).
+const YAS_RENKLERI = ["#5B8C5A", "#9DB35A", "#D6B24C", "#E0913F", "#D0643A", "#A8322D"];
+function YaslandirmaTablosu({ cariler, defter, tarih, varsayilanVade, yon, kurlar, baslik }) {
+    const [acikId, setAcikId] = useState(null);
+    const kurTL = (pb) => (pb === "TRY" ? 1 : parseFloat((kurlar || {})[pb]) || 0);
+    const satirlar = (cariler || []).flatMap((c) => cariYaslandirma(c, { defter, tarih, varsayilanVade })
+        .filter((y) => y.yon === yon)
+        .map((y) => ({ ...y, cari: c, anahtar: `${c.id}|${y.pb}`, tl: kurTL(y.pb) ? Math.abs(y.bakiye) * kurTL(y.pb) : null })))
+        .sort((a, b) => (b.tl || 0) - (a.tl || 0));
+    const tlDilim = Object.fromEntries(YAS_DILIMLERI.map((d) => [d.anahtar, 0]));
+    let tlToplam = 0;
+    const kursuz = new Set();
+    satirlar.forEach((s) => {
+        const k = kurTL(s.pb);
+        if (!k) {
+            kursuz.add(s.pb);
+            return;
+        }
+        YAS_DILIMLERI.forEach((d) => { tlDilim[d.anahtar] += s.kovalar[d.anahtar] * k; });
+        tlToplam += Math.abs(s.bakiye) * k;
+    });
+    const pbToplam = {};
+    satirlar.forEach((s) => {
+        const t = (pbToplam[s.pb] = pbToplam[s.pb] || { bakiye: 0, ...Object.fromEntries(YAS_DILIMLERI.map((d) => [d.anahtar, 0])) });
+        t.bakiye += Math.abs(s.bakiye);
+        YAS_DILIMLERI.forEach((d) => { t[d.anahtar] += s.kovalar[d.anahtar]; });
+    });
+    const sayi = (v) => (v ? (Math.round(v * 100) / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "");
+    const tlYaz = (v) => `${(Math.round(v * 100) / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`;
+    const hucre = { padding: "5px 8px", fontSize: 12, borderBottom: "1px solid var(--erp-line-soft)" };
+    const sag = { ...hucre, textAlign: "right" };
+    const kapId = `finans-yas-${yon}-${defter}`;
+    const gecenOran = tlToplam > 0 ? Math.round(((tlToplam - tlDilim.yasVadesiGelmemis) / tlToplam) * 100) : 0;
+    return (React.createElement("div", { "data-finans-yas": `${yon}|${defter}`, style: { display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" } },
+            React.createElement("b", { style: { fontSize: 14 } }, baslik),
+            React.createElement("span", { className: "mono", style: { fontSize: 12 }, "data-finans-yas-toplam": "1" },
+                "Toplam ",
+                tlYaz(tlToplam),
+                " \u00B7 vadesi ge\u00E7en %",
+                gecenOran),
+            React.createElement("button", { type: "button", className: "btn-ghost no-print", style: { marginLeft: "auto", padding: "4px 10px", fontSize: 12 }, onClick: () => raporExcelAktar(kapId, `${baslik}`) },
+                React.createElement(Download, { size: 13 }),
+                " Excel")),
+        tlToplam > 0 && (React.createElement("div", { style: { display: "grid", gap: 6 } },
+            React.createElement("div", { style: { display: "flex", height: 14, borderRadius: 7, overflow: "hidden", border: "1px solid var(--erp-line-soft)" } }, YAS_DILIMLERI.map((d, i) => (tlDilim[d.anahtar] > 0 ? (React.createElement("div", { key: d.anahtar, title: `${d.ad}: ${tlYaz(tlDilim[d.anahtar])}`, style: { width: `${(tlDilim[d.anahtar] / tlToplam) * 100}%`, background: YAS_RENKLERI[i] } })) : null))),
+            React.createElement("div", { style: { display: "flex", gap: 12, flexWrap: "wrap", fontSize: 11 } }, YAS_DILIMLERI.map((d, i) => (React.createElement("span", { key: d.anahtar, "data-finans-yas-dilim": d.anahtar, style: { display: "inline-flex", gap: 5, alignItems: "center" } },
+                React.createElement("span", { style: { width: 10, height: 10, borderRadius: 2, background: YAS_RENKLERI[i] } }),
+                d.ad,
+                ": ",
+                React.createElement("b", { className: "mono" }, tlYaz(tlDilim[d.anahtar])),
+                React.createElement("span", { style: { color: "var(--erp-text-3)" } },
+                    "(%",
+                    Math.round((tlDilim[d.anahtar] / tlToplam) * 100),
+                    ")"))))))),
+        React.createElement("div", { id: kapId, style: { overflowX: "auto" } }, satirlar.length === 0 ? (React.createElement("div", { style: { fontSize: 13, color: "var(--erp-text-3)", padding: 10 } }, yon === "alacak" ? "Açık alacak yok." : "Açık borç yok.")) : (React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+            React.createElement("thead", null,
+                React.createElement("tr", null, ["Cari", "P.B.", "Bakiye", ...YAS_DILIMLERI.map((d) => d.ad), "Ort. gecikme", "En eski"].map((b, i) => (React.createElement("th", { key: b, style: { ...hucre, fontSize: 11, color: "var(--erp-text-2)", textAlign: i < 2 ? "left" : "right", borderBottom: "2px solid var(--erp-text)", whiteSpace: "nowrap" } }, b))))),
+            React.createElement("tbody", null, satirlar.map((s) => (React.createElement(React.Fragment, { key: s.anahtar },
+                React.createElement("tr", { "data-finans-yas-satir": s.cari.unvan, onClick: () => setAcikId(acikId === s.anahtar ? null : s.anahtar), style: { cursor: "pointer" } },
+                    React.createElement("td", { style: { ...hucre, fontWeight: 600 } },
+                        s.cari.unvan,
+                        s.cari.pasif ? React.createElement("span", { style: { fontSize: 10, color: "var(--erp-purple)" } }, " \u00B7 pasif") : null),
+                    React.createElement("td", { className: "mono", style: hucre }, s.pb),
+                    React.createElement("td", { className: "mono", style: { ...sag, fontWeight: 700 } }, sayi(Math.abs(s.bakiye))),
+                    YAS_DILIMLERI.map((d, i) => (React.createElement("td", { key: d.anahtar, className: "mono", style: { ...sag, color: s.kovalar[d.anahtar] ? YAS_RENKLERI[i] : undefined, fontWeight: s.kovalar[d.anahtar] && i >= 3 ? 700 : 400 } }, sayi(s.kovalar[d.anahtar])))),
+                    React.createElement("td", { className: "mono", style: sag }, s.ortalamaGecikme ? `${s.ortalamaGecikme} gün` : ""),
+                    React.createElement("td", { className: "mono", style: sag }, s.enEskiGun != null && s.enEskiGun >= 0 ? `${s.enEskiGun} gün` : "")),
+                acikId === s.anahtar && (React.createElement("tr", { className: "no-print", "data-finans-yas-kalemler": s.cari.unvan },
+                    React.createElement("td", { colSpan: 5 + YAS_DILIMLERI.length, style: { padding: "6px 8px 10px 20px", background: "var(--erp-panel)" } },
+                        React.createElement("div", { style: { display: "grid", gap: 3 } }, s.acikKalemler.map((k) => (React.createElement("div", { key: k.id, className: "mono", style: { fontSize: 11, display: "flex", gap: 10, flexWrap: "wrap" } },
+                            React.createElement("span", { style: { color: "var(--erp-text-3)", minWidth: 74 } }, tarihYaz(k.tarih)),
+                            React.createElement("span", { style: { minWidth: 110 } }, k.fisNo || "fiş no yok"),
+                            React.createElement("span", { style: { color: "var(--erp-text-2)", flex: 1, minWidth: 120 } }, k.aciklama),
+                            React.createElement("span", null,
+                                "vade ",
+                                tarihYaz(k.vade)),
+                            React.createElement("b", null,
+                                sayi(k.kalan),
+                                " ",
+                                PARA_SEMBOLU[s.pb] || s.pb),
+                            k.kismen && React.createElement("span", { style: { color: "var(--erp-text-3)" } },
+                                "(",
+                                sayi(k.tutar),
+                                " tutar\u0131n kalan\u0131)"),
+                            React.createElement("span", { style: { color: k.gun < 0 ? YAS_RENKLERI[0] : k.gun > 90 ? YAS_RENKLERI[5] : YAS_RENKLERI[3], fontWeight: 700 } }, k.gun < 0 ? `vadeye ${-k.gun} gün` : `${k.gun} gün gecikmiş`)))))))))))),
+            React.createElement("tfoot", null, Object.entries(pbToplam).map(([pb, t]) => (React.createElement("tr", { key: pb, "data-finans-yas-pb-toplam": pb, style: { fontWeight: 700, borderTop: "2px solid var(--erp-text)" } },
+                React.createElement("td", { style: hucre }, "Toplam"),
+                React.createElement("td", { className: "mono", style: hucre }, pb),
+                React.createElement("td", { className: "mono", style: sag }, sayi(t.bakiye)),
+                YAS_DILIMLERI.map((d) => React.createElement("td", { key: d.anahtar, className: "mono", style: sag }, sayi(t[d.anahtar]))),
+                React.createElement("td", { style: hucre }),
+                React.createElement("td", { style: hucre })))))))),
+        kursuz.size > 0 && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-warn)" } },
+            "\u26A0 ",
+            [...kursuz].join(", "),
+            " kuru yok \u2014 TL toplam\u0131na ve \u00E7ubu\u011Fa girmedi (tabloda kendi biriminde).")));
 }
 // `hedefFisNo`: başka bir ekrandan "şu fişe git" denildiğinde gelen fiş numarası (kullanıcı,
 // 10 Eylül: "kesilmiş fişin içine girsin; fiş ekranına tıklayınca fişe gitsin").
@@ -44752,7 +45643,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.461.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.468.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
