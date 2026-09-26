@@ -1,7 +1,7 @@
 {
  "ciro": {
   "ad": "Çek Ciro Bordrosu",
-  "belgeNo": "ODM-0925001",
+  "belgeNo": "ODM-…",
   "belgeNoCiroFisi": true,
   "imza": [
    "Teslim Eden: Test Atölye",

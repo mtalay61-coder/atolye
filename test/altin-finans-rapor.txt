@@ -3,6 +3,8 @@
  "hazirlar": [
   "Varlık Raporu",
   "Alacaklar ve Borçlar",
+  "Alacak Yaşlandırma",
+  "Borç Yaşlandırma",
   "Çekler ve Vadeler",
   "Stok Değeri",
   "Döviz Pozisyonu",

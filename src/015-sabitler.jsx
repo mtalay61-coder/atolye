@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.463.0";
+const SURUM = "1.464.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Finans Raporu: varlik ozeti, iki defter, kayitli raporlar";
+const SURUM_NOTU = "Finans Raporu: alacak ve borc yaslandirma";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,12 @@ const SURUM_NOTU = "Finans Raporu: varlik ozeti, iki defter, kayitli raporlar";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.464.0", tarih: "26.09.2026",
+    eklenen: ["Finans Raporu ▸ Yaşlandırma: alacak ve borçların yaşa göre dağılımı (vadesi gelmemiş, 0-30, 31-60, 61-90, 91-180, 180+ gün) — ödemeler en eski kalemi kapatır (FIFO); cariye dokununca açık fişler, kaç gündür beklediği",
+              "Varsayılan vade (gün) ayarı, ortalama gecikme ve en eski kalem; Excel ve yazdır",
+              "Hazır şablonlar: Alacak Yaşlandırma, Borç Yaşlandırma"],
+    degisen: [],
+    duzeltilen: [] },
   { surum: "1.463.0", tarih: "25.09.2026",
     eklenen: ["Finans ▸ Finans Raporu: varlık özeti (kasa, banka, alacaklar, borçlar, portföydeki/tahsildeki çekler, ödenecek şahsi çekler, hammadde/yarı mamul/mamul stok değeri) ve NET VARLIK",
               "Defter seçimi (Tümü / Genel / Resmi / Genel · Resmi yan yana, fark sütunuyla), tarih itibarıyla rapor, mamul değerleme yöntemi (reçete maliyeti / satış / alış fiyatı)",

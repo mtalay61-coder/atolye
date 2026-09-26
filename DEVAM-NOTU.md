@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.463.0** · 25 Eylül 2026
+Son sürüm: **v1.464.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.463.0): Finans ▸ Finans Raporu — varlık özeti, iki defter, tarih itibarıyla, kayıtlı raporlar (`248-finans-rapor`).** Bkz. "FİNANS RAPORU".
+**Son iş (26 Eylül, v1.464.0): Finans Raporu ▸ Yaşlandırma — alacak/borç yaşlandırma, FIFO (`cariYaslandirma`).** Bkz. "ALACAK / BORÇ YAŞLANDIRMA".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,32 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ALACAK / BORÇ YAŞLANDIRMA (26 Eylül, v1.464.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Alacak yaşlandırma yapalım." (v1.463 sonrası önerilerden 1. madde)
+
+- `cariYaslandirma(cari, {defter, tarih, varsayilanVade})` (248-finans-rapor): PB başına; bakiye
+  yönündeki hareketler açık kalem adayı, karşı yöndeki TOPLAM en eski kalemden başlayarak düşülür
+  (**FIFO**). Kalan kalemler: `{tarih, vade, fisNo, kalan, gun, kismen}`; yaş = rapor günü − vade
+  (vade yoksa tarih + `varsayilanVade`); vade ileride → "Vadesi gelmemiş". Dilimler
+  `YAS_DILIMLERI`: vadesi gelmemiş / 0-30 / 31-60 / 61-90 / 91-180 / 180+. Ayrıca ağırlıklı
+  ortalama gecikme, en eski kalem günü, vadesi geçen tutar. − bakiyede aynı yöntem → BORÇ
+  yaşlandırması.
+- Satış fişlerinde `vade` çoğunlukla boş (yalnız çek/senette dolu) → ekranda "Varsayılan vade
+  (gün)" kutusu (varsayılan 0 = fiş tarihinden yaşlanır).
+- Finans Raporu'na **Görünüm** anahtarı: Varlık Özeti | Yaşlandırma. Yaşlandırmada Alacaklar/
+  Borçlar, dilim çubuğu (TL, kurla), cari başına tablo (PB başına satır, TL karşılığına göre
+  sıralı), satıra dokununca açık fişler (kısmen kapanan "… tutarın kalanı"), PB toplam satırları,
+  Excel (`raporExcelAktar`; açık kalem satırları `no-print`, girmez), Yazdır. "Yan yana" seçiliyse
+  Genel ve Resmi için iki tablo. Defter/tarih seçimleri ortak.
+- Cari satırlarına dilim alanları eklendi (`yas…`, `vadesiGecen`, `ortalamaGecikme`, `enEskiGun`);
+  hazır şablonlar "Alacak Yaşlandırma", "Borç Yaşlandırma" — kendi süzgeci/Excel'i için.
+- Grid taşması: geniş tablo grid öğesini büyütüp sayfayı yana kaydırıyordu → kaplara
+  `gridTemplateColumns: "minmax(0, 1fr)"`.
+- Test: `birim-finans-rapor.js` (FIFO, kısmi kapanış, dilimler, varsayılan vade, borç yönü, rapor
+  satırı), `senaryo-finans-yaslandirma.js` (tarihler bugüne göreli). `senaryo-cek-yazdir.js`
+  düzeltildi: ciro fiş no'su bugünün tarihini taşıdığı için altın her gün değişiyordu → yalnız önek.
 
 ## FİNANS RAPORU — VARLIK / YÜKÜMLÜLÜK (25 Eylül, v1.463.0 — Claude Code oturumu)
 
