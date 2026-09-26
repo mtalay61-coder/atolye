@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.477.0";
+const SURUM = "1.478.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Ara proses: bir prosese birden cok, hammaddesi normal proses gibi";
+const SURUM_NOTU = "Renksiz urunde renk sorulmuyor (bos renkli ve varyantsiz urunler dahil)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Ara proses: bir prosese birden cok, hammaddesi normal proses
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.478.0", tarih: "26.09.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Alış/satış fişinde ve siparişte rengi boş kayıtlı ya da hiç varyantı olmayan renksiz üründe renk kutusu açılıp miktar girilemiyordu — artık renk sorulmuyor, miktar kutusu doğrudan açılıyor"] },
   { surum: "1.477.0", tarih: "26.09.2026",
     eklenen: ["Bir prosesin altına birden çok ara proses (sırayla tamamlanır; her birinin ürüne özel ücreti ve carisi ayrı)"],
     degisen: [

@@ -180,13 +180,26 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   //   • tek renk varsa  → kendiliğinden seçilir
   //   • o renk "Standart" ise → alan hiç çizilmez, doğrudan miktara geçilir
   //   • gerçekten çok renkliyse → eskisi gibi seçtirilir
-  const tekRenk = renkSecenekleri.length === 1 ? renkSecenekleri[0] : "";
-  const renkSorulmaz = !!tekRenk && tekRenk === "Standart";
+  // RENKSİZ ÜRÜN GENİŞ TANIMLI (26 Eylül, v1.478.0 — kullanıcı: "renk olmadığı için alış giremiyorum,
+  // renksiz stoklarda renk seçici açılmayacak"). Yalnız tek rengi tam "Standart" olan ürün renksiz
+  // sayılıyordu; rengi BOŞ ("") kaydedilmiş ya da HİÇ varyantı olmayan ürün (renk/beden seçmeden
+  // açılan hammadde) renk kutusunu boş gösteriyor, kutu boş kalınca miktar da açılmıyordu. Artık bütün
+  // renk değerleri yer tutucuysa (`olcuGoster` boş) ya da hiç yoksa renk sorulmaz; renk kendiliğinden
+  // seçilir (varyant yoksa "Standart" — fiş yazımı eksik varyantı kendisi açıyor, bkz. 078-fisyaz).
+  const renksizUrun = !!seciliUrun && renkSecenekleri.every((r) => !olcuGoster(r));
+  // Boş renk "Standart" olarak seçilir: boş dize "seçilmedi" sayılıyor ve miktar kutularını kapatıyordu;
+  // varyant eşleşmesi `stokAnahtarNrm` ile ("" = "Standart").
+  const tekRenk = renksizUrun ? "Standart" : (renkSecenekleri.length === 1 ? renkSecenekleri[0] : "");
+  const renkSorulmaz = renksizUrun;
   useEffect(() => {
     if (tekRenk && kRenk !== tekRenk) { setKRenk(tekRenk); setKMiktarlar({}); setKSeciliOlcu(""); }
   }, [tekRenk]);   // eslint-disable-line react-hooks/exhaustive-deps
+  // Varyantı hiç olmayan renksiz üründe tek bir "Standart" kutusu (v1.478.0) — yoksa miktar girilemezdi.
   const bedenSecenekleri = seciliUrun && kRenk
-    ? bedenSirala(Array.from(new Set(seciliUrun.variants.filter((v) => v.renk === kRenk).map((v) => v.beden))))
+    ? (() => {
+        const l = bedenSirala(Array.from(new Set(seciliUrun.variants.filter((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(kRenk)).map((v) => v.beden))));
+        return l.length ? l : (renksizUrun ? ["Standart"] : []);
+      })()
     : [];
 
   // ÖLÇÜ SEÇMELİ (kullanıcı, 18 Eylül: "boyut olan ürünlerde tüm boyutlar gelmesin, seçim ile
@@ -222,7 +235,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
 
   function stokMiktari(renk, beden) {
     if (!seciliUrun) return 0;
-    const v = seciliUrun.variants.find((x) => x.renk === renk && x.beden === beden);
+    // "" ile "Standart" aynı varyant (renksiz ürün, v1.478.0).
+    const v = seciliUrun.variants.find((x) => stokAnahtarNrm(x.renk) === stokAnahtarNrm(renk) && stokAnahtarNrm(x.beden) === stokAnahtarNrm(beden));
     return v ? v.miktar : 0;
   }
 

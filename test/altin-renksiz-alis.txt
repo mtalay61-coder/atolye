@@ -1,0 +1,35 @@
+{
+ "form": {
+  "Astar Boş": {
+   "miktarKutulari": [
+    "tek"
+   ],
+   "renkKutusu": false
+  },
+  "Silme Suyu": {
+   "miktarKutulari": [
+    "Standart"
+   ],
+   "renkKutusu": false
+  },
+  "Tutkal": {
+   "miktarKutulari": [
+    "Standart"
+   ],
+   "renkKutusu": false
+  }
+ },
+ "hatalar": [],
+ "kalemSayisi": "3",
+ "varyantlar": {
+  "Astar Boş": [
+   "(boş)/(boş): 9"
+  ],
+  "Silme Suyu": [
+   "Standart/Standart: 6"
+  ],
+  "Tutkal": [
+   "Standart/Standart: 3"
+  ]
+ }
+}
