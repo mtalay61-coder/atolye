@@ -255,8 +255,11 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
   const inputRef = React.useRef(null);
   const q = sorgu.trim().toLocaleLowerCase("tr-TR");
   // Başı eşleşenler önce ("siy" → "Siyah Süet", sonra "Kırık Siyah"): aranan çoğunlukla odur.
+  // `ek` (v1.471.0): seçeneğin yanında soluk açıklama ("Deri · ortak olur"); aramaya katılmaz.
+  // `yalnizAramada`: kutu boşken listede yok, yazınca bulunur — varsayılan liste dar kalsın,
+  // istisna (başka malzeme tipinin rengi) yine de seçilebilsin.
   const sonuclar = (() => {
-    if (!q) return secenekler;
+    if (!q) return secenekler.filter((s) => !s.yalnizAramada);
     const bas = [], ic = [];
     secenekler.forEach((s) => {
       const e = String(s.etiket).toLocaleLowerCase("tr-TR");
@@ -327,6 +330,7 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
               }}
             >
               {s.etiket}
+              {s.ek && <span data-aramali-ek="1" style={{ marginLeft: 8, fontSize: 11, color: "var(--erp-text-3)" }}>{s.ek}</span>}
             </button>
           ))}
         </div>

@@ -1,4 +1,4 @@
-function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
+function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [filterCat, setFilterCat] = useState("Tümü");
@@ -274,6 +274,8 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
       renkResimleri: matrix.renkResimleri || {},
     };
     onSave([product, ...items]);
+    // Seçilen renkler ürünün malzeme tipine bağlanıyor (v1.471.0, bkz. `renkleriTipeBagla`).
+    if (product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla(matrix.renkler, product.malzemeTipi);
     setForm(emptyForm());
     setSelRenkler([]);
     setSelBedenler([]);
@@ -2028,7 +2030,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
             })() : (
             <>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-              {tanimlar.renkler.filter((r) => (r.tip || "Mamul") === "Hammadde" && (form.kategori !== "Hammadde" || renkTipeUygunMu(r, form.malzemeTipi))).length === 0 && (
+              {tanimlar.renkler.filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad)).length === 0 && (
                 <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>
                   Hammadde rengi tanımlanmadı — önce Tanımlar ekranından ekleyin.
                 </span>
@@ -2038,16 +2040,40 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                   renk sayısı arttıkça form ekranı kaplıyordu. Artık mamuldeki gibi arama kutusu —
                   seçilen renk hemen eklenir ve listeden düşer; seçilenler aşağıda etiket olarak durur
                   ve × ile çıkarılır. Malzeme tipi süzgeci aynen geçerli. */}
+              {/* MALZEME TİPİNE GÖRE SIRA (v1.471.0 — kullanıcı: "malzeme tipini seçip renk eklendiğinde
+                  renkler o malzeme tipine ait olsun, ortak renk varsa onu da işaretlesin"):
+                    1. bu tipin renkleri (başka tipte de kullanılıyorsa "ortak" yazıyor),
+                    2. genel (tipsiz) renkler — "genel",
+                    3. başka tiplerin renkleri — kutu boşken görünmez, YAZINCA bulunur, yanında tipi.
+                  Eskiden 3. grup hiç seçilemiyordu: Deri'nin "Kahve"si astar olarak kullanılamıyor,
+                  aynı renk ikinci kez açılıyordu. Kaydedince seçilenlerin hepsi bu tipe bağlanıyor
+                  (`renkleriTipeBagla`); başka tipin rengi iki tipi birden taşıyan ORTAK renk oluyor. */}
               {(() => {
-                const uygunRenkler = tanimlar.renkler
-                  .filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad) && (form.kategori !== "Hammadde" || renkTipeUygunMu(r, form.malzemeTipi)));
-                const secilebilir = Array.from(new Map(uygunRenkler.map((r) => [r.ad, r])).values()).filter((r) => !selRenkler.includes(r.ad));
+                const tip = form.kategori === "Hammadde" ? (form.malzemeTipi || "") : "";
+                const tumu = Array.from(new Map(tanimlar.renkler
+                  .filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad))
+                  .map((r) => [r.ad, r])).values());
+                const uygunRenkler = tumu.filter((r) => renkTipeUygunMu(r, tip));
+                const grup = (r) => (!tip ? 0 : renkTipleri(r).includes(tip) ? 0 : renkTipleri(r).length === 0 ? 1 : 2);
+                const secilebilir = tumu
+                  .filter((r) => !selRenkler.includes(r.ad))
+                  .map((r, i) => ({ r, i, g: grup(r) }))
+                  .sort((a, b) => a.g - b.g || a.i - b.i)
+                  .map(({ r, g }) => {
+                    const tipler = renkTipleri(r);
+                    const ek = !tip ? (tipler.length ? tipler.join(", ") : "")
+                      : g === 0 ? (tipler.length > 1 ? `ortak: ${tipler.join(", ")}` : "")
+                      : g === 1 ? `genel · ${tip} olur`
+                      : `${tipler.join(", ")} · ortak olur`;
+                    return { deger: r.ad, etiket: r.ad, ek, yalnizAramada: g === 2 };
+                  });
                 return secilebilir.length > 0 ? (
                   <AramaliSecici
                     veriAdi="data-hammadde-renk-arama"
-                    secenekler={secilebilir.map((r) => ({ deger: r.ad, etiket: r.ad }))}
+                    secenekler={secilebilir}
                     onSec={(ad) => toggleRenk(ad)}
-                    placeholder="Renk yazın ya da seçin…"
+                    placeholder={tip ? `Renk yazın ya da seçin (${tip})…` : "Renk yazın ya da seçin…"}
+                    genislik={260}
                   />
                 ) : uygunRenkler.length > 0 ? (
                   <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Uygun renklerin tamamı eklendi.</span>
@@ -2115,6 +2141,19 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                     borderRadius: "var(--erp-r-pill)", border: "1.5px solid #E1611F", background: "var(--erp-orange-bg)", fontSize: 13, fontWeight: 600,
                   }}>
                     {ad}
+                    {/* ORTAK İŞARETİ (v1.471.0): kaydedince birden çok malzeme tipinin rengi olacak. */}
+                    {(() => {
+                      const tip = form.kategori === "Hammadde" ? (form.malzemeTipi || "") : "";
+                      const r = tanimlar.renkler.find((x) => x.ad === ad);
+                      const tipler = r ? renkTipleri(r) : [];
+                      const sonra = tip && !tipler.includes(tip) ? [...tipler, tip] : tipler;
+                      return sonra.length > 1 ? (
+                        <span data-ortak-renk="1" title={`Ortak renk: ${sonra.join(", ")}`}
+                          style={{ fontSize: 10, fontWeight: 700, fontFamily: "var(--erp-font, sans-serif)", color: "var(--erp-purple)", background: "#EDE7F2", padding: "1px 6px", borderRadius: "var(--erp-r-pill)" }}>
+                          ortak
+                        </span>
+                      ) : null;
+                    })()}
                     <button type="button" aria-label={`${ad} rengini çıkar`} onClick={() => toggleRenk(ad)}
                       style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-warn)", display: "flex" }}>
                       <X size={13} />
@@ -2620,6 +2659,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                   tanimlarBedenler={tanimlar.bedenler}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
                   onAddRenk={addRenkToProduct}
+                  onRenkleriTipeBagla={onRenkleriTipeBagla}
                   onAddBeden={addBedenToProduct}
                   onRemoveRenk={removeRenkFromProduct}
                   onRemoveBeden={removeBedenFromProduct}

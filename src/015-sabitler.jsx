@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.470.0";
+const SURUM = "1.471.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Siparis formu sadelesti: fiyat ust satirda, yesil Ekle, renk bazli aciklama";
+const SURUM_NOTU = "Hammadde renkleri malzeme tipine baglaniyor, ortak renk isaretli";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis formu sadelesti: fiyat ust satirda, yesil Ekle, renk
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.471.0", tarih: "26.09.2026",
+    eklenen: ["Başka malzeme tipinin rengi yazınca bulunuyor ve seçilince iki tipin ortak rengi oluyor; ortak renkler etiketli"],
+    degisen: ["Hammadde açarken/ürün kartında seçilen renkler ürünün malzeme tipine bağlanıyor (genel renkler dahil)", "Renk listesinde önce bu tipin renkleri, sonra genel renkler"],
+    duzeltilen: [] },
   { surum: "1.470.0", tarih: "26.09.2026",
     eklenen: ["Sipariş kalemlerine renk bazlı açıklama: eklerken yazılıyor, listede satırda düzeltiliyor; sipariş kartında ve çıktısında görünüyor"],
     degisen: ["Sipariş formunda birim fiyat ve para birimi ürün/renk satırında", "Asorti seçimi, açıklama ve yeşil 'Ekle' düğmesi tek satırda; ölçü matrisi altında", "Barkod/kamera/ses/fotoğraf paneli tıklayınca açılıyor (son tercih hatırlanıyor)"],

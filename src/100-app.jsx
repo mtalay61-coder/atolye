@@ -2119,6 +2119,31 @@ export default function AtolyeERP() {
     tanimlarKodluYaz(nextTanimlar);
   }, [tanimlar, showToast, tanimlarKodluYaz]);
 
+  // RENKLER MALZEME TİPİNE AİT OLSUN (26 Eylül, v1.471.0 — kullanıcı: "Stok açarken malzeme tipini
+  // seçip renk eklendiğinde renkler o malzeme tipine ait olsun. Ortak renk varsa onu da işaretlesin.
+  // Mantık o şekilde idi.") Yalnız YENİ açılan renk tipe bağlanıyordu (`yeniRenkKaydet`); listeden
+  // seçilen genel (tipsiz) ya da başka tipin rengi ürüne girip tipsiz / o tipte kalıyordu — Tanımlar'da
+  // "Astar" süzgecinde görünmüyordu, bir sonraki Astar ürününde listenin başına gelmiyordu.
+  //
+  // Üyelik EKLENİR, hiçbir tip SİLİNMEZ: "Deri" rengi Astar'da da kullanılınca ikisini birden taşır
+  // (ortak renk). Tek `tanimlarKodluYaz`: renkler tek tek yazılsaydı her çağrı eski `tanimlar`dan
+  // başlayıp öncekini ezerdi.
+  const renkleriTipeBagla = useCallback((adlar, malzemeTipi) => {
+    if (!malzemeTipi || !(adlar || []).length) return;
+    const istenen = new Set(adlar.map((a) => String(a || "").trim().toLocaleLowerCase("tr-TR")));
+    let degisen = 0;
+    const renkler = tanimlar.renkler.map((r) => {
+      if (!istenen.has(String(r.ad || "").trim().toLocaleLowerCase("tr-TR"))) return r;
+      const tipler = renkTipleri(r);
+      if (tipler.includes(malzemeTipi)) return r;
+      degisen++;
+      return { ...r, malzemeTipleri: [...tipler, malzemeTipi], malzemeTipi: undefined };
+    });
+    if (!degisen) return;
+    tanimlarKodluYaz({ ...tanimlar, renkler });
+    showToast(`${degisen} renk "${malzemeTipi}" tipine bağlandı`);
+  }, [tanimlar, showToast, tanimlarKodluYaz]);
+
   // Stok ekranında ürün eklerken/düzenlerken, listede olmayan bir Malzeme Tipi (deri, taban, bağcık…)
   // gerekiyorsa Tanımlar'a gitmeden doğrudan burada tanımlanabilir — yeniRenkKaydet ile aynı desen.
   const yeniMalzemeTipiKaydet = useCallback((ad) => {
@@ -3753,6 +3778,7 @@ export default function AtolyeERP() {
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onYeniRenkKaydet={yeniRenkKaydet}
               onHizliCariEkle={hizliCariEkle}
+              onRenkleriTipeBagla={renkleriTipeBagla}
               onYeniMalzemeTipiKaydet={yeniMalzemeTipiKaydet}
               onYeniOlcuKaydet={yeniOlcuKaydet}
               onReceteSablonuKaydet={receteSablonuKaydet}

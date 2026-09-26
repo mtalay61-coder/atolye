@@ -9,7 +9,7 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   const [yeniKodAlaniGiris, setYeniKodAlaniGiris] = useState(false);
   const [yeniKodAlaniAdi, setYeniKodAlaniAdi] = useState("");
@@ -1492,8 +1492,14 @@ function ProductMatrixCard({
 
             {!yeniModelRengiModu ? (() => {
               // Seçilen "kaç renkli" değerine uygun, ZATEN TANIMLI (bu ürüne henüz eklenmemiş) renk/kombinasyonları listeler.
+              // BAŞKA TİPİN RENGİ YAZINCA BULUNUR (v1.471.0): hammaddede liste ürünün malzeme tipine göre
+              // dar, ama başka tipin rengi yazılınca öneriye giriyor — seçilince bu tipe de bağlanıp
+              // ORTAK renk oluyor (`renkleriTipeBagla`). Yeni ürün formundaki kuralın aynısı.
+              const digerTipRenkleri = !isMamul && product.malzemeTipi && newRenk.trim()
+                ? tanimlarRenkler.filter((r) => !renkler.includes(r.ad) && !renkTipeUygunMu(r, product.malzemeTipi) && !kombinasyonEtiketiFormatindaMi(r.ad))
+                : [];
               const uygunSecenekler = !isMamul || renkEkleSayisi === 1
-                ? eklenebilirRenkler.map((r) => ({ id: r.id, etiket: r.ad }))
+                ? [...eklenebilirRenkler, ...digerTipRenkleri].map((r) => ({ id: r.id, etiket: r.ad }))
                 : eklenebilirKombinasyonlar.filter((k) => k.renkIdler.length === renkEkleSayisi);
               return (
                 <div>
@@ -1517,6 +1523,9 @@ function ProductMatrixCard({
                         onClick={() => {
                           if (!uygunSecenekler.some((s) => s.etiket === newRenk)) return;
                           onAddRenk(product.id, newRenk);
+                          // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
+                          // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
+                          if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla([newRenk], product.malzemeTipi);
                           setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
                         }}
                       >

@@ -1,0 +1,43 @@
+{
+ "hatalar": [],
+ "kart": {
+  "bosken": [
+   "Kahve"
+  ],
+  "kutuVar": true,
+  "tabaYazinca": [
+   "Taba Deri"
+  ]
+ },
+ "liste": {
+  "bosken": [
+   "Krem",
+   "Kahveortak: Astar, Deri",
+   "Beyazgenel · Astar olur"
+  ],
+  "nubYazinca": [
+   "Nubuk SiyahDeri · ortak olur"
+  ]
+ },
+ "secilenler": [
+  "Beyaz",
+  "Nubuk Siyahortak",
+  "Krem",
+  "Ham Bej"
+ ],
+ "tipler": {
+  "Beyaz": "Astar",
+  "Ham Bej": "Astar",
+  "Kahve": "Astar+Deri",
+  "Krem": "Astar",
+  "Nubuk Siyah": "Deri+Astar",
+  "Taba Deri": "Deri+Astar"
+ },
+ "urunRenkleri": [
+  "Beyaz",
+  "Ham Bej",
+  "Krem",
+  "Nubuk Siyah",
+  "Taba Deri"
+ ]
+}
