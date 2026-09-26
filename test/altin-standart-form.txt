@@ -1,8 +1,8 @@
 {
- "formMatrisi": "RENK \\ BEDEN MİKTAR 0",
+ "formMatrisi": "MİKTAR 0",
  "formdaStandartYok": true,
  "hatalar": [],
- "kartMatrisi": "RENK \\ BEDEN MİKTAR 0 min: 0",
+ "kartMatrisi": "MİKTAR 0 min: 0",
  "karttaStandartYok": true,
  "kayit": [
   "Standart/Standart"

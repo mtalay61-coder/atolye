@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.473.0** · 26 Eylül 2026
+Son sürüm: **v1.474.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.472.0): yeni ürün formunda ve ürün kartında "Standart" yer tutucusu yazmıyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "STANDART — YENİ ÜRÜN FORMU VE ÜRÜN KARTI".
+**Son iş (26 Eylül, v1.474.0): stok matrislerinin köşe başlığı eksene göre ("Renk \ Beden" / "Renk" / "Beden" / boş). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "STANDART — YENİ ÜRÜN FORMU VE ÜRÜN KARTI".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6156,6 +6156,7 @@ Kullanıcı (Stok ▸ yeni hammadde "Silme Suyu", renk/beden seçmeden Matris Ol
   Bedenler" matrisi, kart içi fiş matrisi, mamul→hammadde rengi tablosu ve fiyat grubu tablosu (160).
   Kart özeti yer tutucuyu saymıyor ("1 renk × 1 beden" yerine "tek stok kalemi").
 - v1.473.0: özet sıfır olan tarafı yazmıyor ("2 renk", "3 beden") — tam koşuda `satin-alma-sutunu` "2 renk × 0 beden" yakaladı, altını güncellendi.
+- v1.474.0 (kullanıcı seçti: "renksiz tabloda Renk \ Beden başlığı da kalksın"): `matrisKoseBasligi(renkler, bedenler)` (012) — yeni ürün formu, ürün kartı matrisleri (160) ve üretim kartı çıkış matrisi (310, orada `olcuGoster` da eklendi). Form ve kart matrisleri `data-stok-matrisi` ile işaretli (test bunu kullanıyor).
 - KAYIT DEĞİŞMEDİ: varyant yine `Standart/Standart`.
 - **İş akışı (kullanıcı, 26 Eylül: "Evet birleştir"):** bundan sonra PR'ı Claude açıp testler temizse
   kendisi birleştiriyor (merge); sorun görürse kullanıcıya söylüyor.

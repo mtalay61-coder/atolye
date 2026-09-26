@@ -1417,10 +1417,10 @@ function ProductMatrixCard({
 
         {stokMatrisAcik && (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "auto", minWidth: "100%" }}>
+            <table data-stok-matrisi="kart" style={{ width: "auto", minWidth: "100%" }}>
               <thead>
                 <tr>
-                  <th>Renk \ Beden</th>
+                  <th>{matrisKoseBasligi(renkler, bedenler)}</th>
                   {bedenler.map((b) => (
                     <th key={b} className="mono" style={{ textAlign: "center", position: "relative" }}>
                       {/* "Standart" yer tutucusu yazılmıyor (v1.472.0, `olcuGoster`). */}
@@ -4966,7 +4966,7 @@ function ProductMatrixCard({
                         <table style={{ width: "auto", minWidth: "100%" }}>
                           <thead>
                             <tr>
-                              <th style={{ fontSize: 13 }}>Renk \ Beden</th>
+                              <th style={{ fontSize: 13 }}>{matrisKoseBasligi(gRenkler, gBedenler)}</th>
                               {gBedenler.map((b) => (
                                 <th key={b} className="mono" style={{ fontSize: 13, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
                               ))}
@@ -5250,7 +5250,7 @@ function ProductMatrixCard({
                     <table style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr>
-                          <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>Renk \ Beden</th>
+                          <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>{matrisKoseBasligi(tumRenkler, tumBedenler)}</th>
                           {tumBedenler.map((b) => (
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}

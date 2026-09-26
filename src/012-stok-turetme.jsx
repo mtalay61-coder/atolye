@@ -74,6 +74,15 @@ function olcuGoster(deger, bos = "") {
   return d === "Standart" ? bos : d;
 }
 
+// Matris tablosunun köşe başlığı (v1.474.0). "Renk \ Beden" yalnız ikisi de gerçekse; renksiz
+// üründe "Beden", bedensiz üründe "Renk", ikisi de yer tutucuysa boş — satır/sütunda "Standart"
+// yazılmadığı (`olcuGoster`) hâlde köşede "Renk \ Beden" kalınca olmayan eksenleri anlatıyordu.
+function matrisKoseBasligi(renkler, bedenler) {
+  const renkVar = (renkler || []).some((r) => olcuGoster(r));
+  const bedenVar = (bedenler || []).some((b) => olcuGoster(b));
+  return [renkVar ? "Renk" : null, bedenVar ? "Beden" : null].filter(Boolean).join(" \\ ");
+}
+
 // "Standart" yer tutucusu ile boş dize aynı varyantı gösteriyor (078-fisyaz'daki kuralın aynısı).
 function stokAnahtarNrm(x) {
   const d = x == null ? "" : String(x).trim();
