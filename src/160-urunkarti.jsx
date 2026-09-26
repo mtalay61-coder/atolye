@@ -1402,7 +1402,12 @@ function ProductMatrixCard({
         >
           <span style={{ fontWeight: 700, fontSize: 13, color: "var(--erp-text)" }}>Renkler ve Bedenler</span>
           <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
-            {renkler.length} renk × {bedenler.length} beden
+            {/* Yer tutucu sayılmıyor: renksiz-ölçüsüz üründe "1 renk × 1 beden" yanıltıyordu. */}
+            {(() => {
+              const rs = renkler.filter((r) => olcuGoster(r)).length;
+              const bs = bedenler.filter((b) => olcuGoster(b)).length;
+              return rs || bs ? `${rs} renk × ${bs} beden` : "tek stok kalemi";
+            })()}
           </span>
           <span style={{ marginLeft: "auto", display: "flex" }}>
             {stokMatrisAcik ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
@@ -1417,7 +1422,8 @@ function ProductMatrixCard({
                   <th>Renk \ Beden</th>
                   {bedenler.map((b) => (
                     <th key={b} className="mono" style={{ textAlign: "center", position: "relative" }}>
-                      {b}
+                      {/* "Standart" yer tutucusu yazılmıyor (v1.472.0, `olcuGoster`). */}
+                      {olcuGoster(b, "Miktar")}
                       <SilOnayButonu onConfirm={() => onRemoveBeden(product.id, b)} boyut={12} baslikNormal={`${b} ölçüsü bu üründen kaldırılsın mı?`} />
                     </th>
                   ))}
@@ -1434,7 +1440,7 @@ function ProductMatrixCard({
                         onRemove={() => onRenkResmiRemove(product.id, r)}
                         size={26}
                       />
-                      {r}
+                      {olcuGoster(r)}
                       <SilOnayButonu onConfirm={() => onRemoveRenk(product.id, r)} boyut={12} baslikNormal={`${r} rengi bu üründen kaldırılsın mı?`} />
                     </td>
                     {bedenler.map((b) => {
@@ -3458,7 +3464,7 @@ function ProductMatrixCard({
                                   <tr>
                                     <th style={{ fontSize: 13, textAlign: "left", padding: "4px 8px" }}>Mamul → Hammadde Rengi</th>
                                     {tumBedenler.map((b) => (
-                                      <th key={b} style={{ fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{b}</th>
+                                      <th key={b} style={{ fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                                     ))}
                                   </tr>
                                 </thead>
@@ -4961,7 +4967,7 @@ function ProductMatrixCard({
                             <tr>
                               <th style={{ fontSize: 13 }}>Renk \ Beden</th>
                               {gBedenler.map((b) => (
-                                <th key={b} className="mono" style={{ fontSize: 13, textAlign: "center" }}>{b}</th>
+                                <th key={b} className="mono" style={{ fontSize: 13, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
                               ))}
                               {/* Renk satırının kendi toplamı ve fiyatı: çok renkli fişte "bu renkten
                                   kaç adet, kaça" sorusu matristen tek tek toplanarak cevaplanıyordu. */}
@@ -4979,7 +4985,7 @@ function ProductMatrixCard({
                                 <td style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", padding: "3px 6px" }}>
                                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                                     <ColorSwatch src={(product.renkResimleri || {})[r] || product.kapakResmi} editable={false} size={28} />
-                                    {r}
+                                    {olcuGoster(r)}
                                   </span>
                                 </td>
                                 {gBedenler.map((b) => {
@@ -5245,7 +5251,7 @@ function ProductMatrixCard({
                         <tr>
                           <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>Renk \ Beden</th>
                           {tumBedenler.map((b) => (
-                            <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{b}</th>
+                            <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}
                           <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" }}>
                             Tek Fiyat (renk)
@@ -5258,7 +5264,7 @@ function ProductMatrixCard({
                           const renkKurali = kuralBul("renk", r);
                           return (
                             <tr key={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
-                              <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{r}</td>
+                              <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{olcuGoster(r)}</td>
                               {tumBedenler.map((b) => {
                                 const deger = `${r}|${b}`;
                                 const kural = kuralBul("renkBeden", deger);
