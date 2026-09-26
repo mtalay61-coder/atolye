@@ -596,9 +596,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     const liste = [];
     recetedekiler.forEach((p) => {
       liste.push(p);
-      const araId = ((urun && urun.araProsesEklentileri) || {})[p];
-      const ara = araId && (tanimlarAraProsesler || []).find((x) => x.id === araId);
-      if (ara && !liste.includes(ara.ad)) liste.push(ara.ad);
+      araProsesIdleri(urun, p).forEach((araId) => {   // v1.477.0: birden çok ara proses
+        const ara = (tanimlarAraProsesler || []).find((x) => x.id === araId);
+        if (ara && !liste.includes(ara.ad)) liste.push(ara.ad);
+      });
     });
     (tanimlarProsesler || []).map((p) => p.ad).sort((a, b) => (sira[a] ?? 999) - (sira[b] ?? 999))
       .forEach((p) => { if (!liste.includes(p)) liste.push(p); });

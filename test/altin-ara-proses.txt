@@ -1,0 +1,30 @@
+{
+ "adimlar": [
+  "Kesim: tamam",
+  "Boya (ara): tamam",
+  "Temizleme (ara): tamam",
+  "Saya: verildi"
+ ],
+ "hatalar": [],
+ "iscilik": [
+  "1001-Boya-İşçilik · 6 ₺",
+  "1001-Temizleme-İşçilik · 3 ₺"
+ ],
+ "posetCikis": [
+  "-3 · 1001-Temizleme"
+ ],
+ "posetStok": 47,
+ "recete": {
+  "araGruplari": [
+   "Temizleme"
+  ],
+  "eklenebilir": [],
+  "kesimAltindakiAralar": [
+   "Boya",
+   "Temizleme"
+  ]
+ },
+ "rez": [
+  "Poşet: 3/3"
+ ]
+}

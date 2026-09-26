@@ -34,7 +34,7 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
     .sort((a, b) => (prosesSiraMap[a.proses] ?? 999) - (prosesSiraMap[b.proses] ?? 999));
   // Ara proses ücretleri (bir ana prosesten sonra otomatik tamamlanan küçük işçilik kalemleri) ayrı
   // satırlar olarak eklenir — bunlar da toplam üretim maliyetinin bir parçasıdır, eksik bırakılmaz.
-  Object.entries(product.araProsesEklentileri || {}).forEach(([anaProses, araProsesId]) => {
+  araProsesCiftleri(product).forEach(([anaProses, araProsesId]) => {
     if (!araProsesId) return;
     const tanimliAp = (tanimlarAraProsesler || []).find((ap) => ap.id === araProsesId);
     if (!tanimliAp) return;
@@ -647,7 +647,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
   }
   // İşçilik
   const iscilik = Object.entries(product.prosesUcretleri || {}).filter(([, u]) => (u || 0) > 0).map(([p, u]) => ({ proses: p, ucret: u }));
-  Object.entries(product.araProsesEklentileri || {}).forEach(([anaProses, apId]) => {
+  araProsesCiftleri(product).forEach(([anaProses, apId]) => {
     if (!apId) return;
     const ap = (tanimlarAraProsesler || []).find((x) => x.id === apId);
     const ucret = (product.araProsesUcretleri || {})[apId] != null ? product.araProsesUcretleri[apId] : (ap ? (ap.ucret || 0) : 0);

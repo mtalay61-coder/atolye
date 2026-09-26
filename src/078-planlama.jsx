@@ -47,20 +47,13 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
     // SİLİNENLER DE SAYILIYOR: numara serbest kalmıyor, çöpteki üretimin numarası yeniden
     // verilmiyor. Aksi halde eski etiket ve parça barkodları yeni üretime aitmiş gibi görünürdü.
     let sayac = enBuyukUretimNo(uretim, cop) - URETIM_NO_TABAN;
-    const siraMap = {};
-    (tanimlar.prosesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
     Object.entries(renkGruplari).forEach(([renk, satirlar]) => {
       sayac++;
       const uretimNo = String(URETIM_NO_TABAN + sayac);
       const urun = stok.find((p) => p.id === satirlar[0].urunId);
-      const kullanilanProsesler = urun
-        ? Array.from(new Set((urun.recete || []).filter((r) => r.mamulRenk === renk && r.proses).map((r) => r.proses)))
-        : [];
-      const prosesIlerleme = kullanilanProsesler.length > 0
-        ? kullanilanProsesler
-            .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null }))
-            .sort((a, b) => a.sira - b.sira)
-        : [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null }];
+      // Elle açılan üretimle AYNI adım kuralı (v1.477.0, `uretimProsesAdimlari`): ara prosesler baştan
+      // yerinde (önceden iş verilirken sonradan ekleniyordu) ve ara proses adı normal adım olmuyor.
+      const prosesIlerleme = uretimProsesAdimlari(urun, renk, tanimlar);
       yeniUretimler.push({
         id: uid("uretim"),
         siparisNo: uretimNo,

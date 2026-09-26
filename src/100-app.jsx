@@ -1025,7 +1025,7 @@ export default function AtolyeERP() {
   // kuralına göre üretilir (aşağıda).
   // PROSESE İŞ VERME AYRI DOSYADA (19 Eylül, 2. madde, 10. tur): `080-proses-ver.jsx`.
   const uretimProsesVer = useProsesVer({
-    uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari,
+    uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari, setSiparisler,
   });
 
   // "Verildi" ama henüz "teslim alınmadı" bir ATAMAYI geri alır — örn. yanlış personele/miktarla iş
@@ -1113,12 +1113,12 @@ export default function AtolyeERP() {
     // Kaynak, silinen NEGATİF stok hareketleri (tüketim); iade, tüketimin TERSİ sırayla yapılır:
     // önce alış rezervasyonu, sonra stok rezervasyonu.
     //
-    // Yalnızca ATAMALI prosesler için — eski davranış birebir korundu. Ara proseslerde iade hiç
-    // yapılmıyordu; buraya taşımak rezervasyon sayılarını değiştirirdi (bkz. DEVAM-NOTU, ayrışma 10).
+    // ARA PROSES DE (v1.477.0): ara prosesin hammaddesi artık rezervasyondan düşüyor (normal proses
+    // gibi), geri alınınca da iade ediliyor — ayrışma 10 kapandı.
     let nextSiparislerRez = siparisler;
     let nextStokRezGeri = stokRezervasyonlari;
     let iadeEdilenRez = 0;
-    if (!araProsesMi && siparis.rezervasyonSiparisId) {
+    if (siparis.rezervasyonSiparisId) {
       sonuc.silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
         if (h.miktar >= 0) return;
         const miktar = Math.abs(h.miktar);
@@ -1155,7 +1155,8 @@ export default function AtolyeERP() {
 
     showToast(
       araProsesMi
-        ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı`
+        ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı` +
+          (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
         : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
     );

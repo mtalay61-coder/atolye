@@ -10,10 +10,57 @@
 //     ayırmak serbest stoğu olduğundan az gösterirdi.
 //   • Ara proses işçiliği AYRI FİŞ: iki farklı kişiye iki farklı ücret ödeniyor, tek fişte
 //     toplamak "kime ne ödendi" sorusunu cevapsız bırakırdı.
+// ================= ARA PROSESLER — BİRDEN ÇOK, HAMMADDELİ (26 Eylül, v1.477.0) =================
+//
+// Kullanıcı: "Ara prosese de hammadde eklenebilir olmalı, normal proses gibi hareket edecek ve bir
+// prosesin altına birden fazla ara proses eklenebilmeli." (Seçim: hammaddesi normal proses gibi;
+// ara proses yine kendiliğinden tamamlanır — fasoncu.)
+//
+// `urun.araProsesEklentileri[asılProses]` artık DİZİ (eski kayıtta tek kimlik — ikisi de okunur).
+// Üretim adımları tek fonksiyondan (`uretimProsesAdimlari`): hem elle açılan üretim (300) hem
+// planlamadan doğan (078) aynı sırayı kuruyor. Önceden planlama ara adımı hiç eklemiyordu (iş
+// verilirken sonradan yerleştiriliyordu) ve reçetede ara proses adına bağlı hammadde satırı varsa
+// o ad İKİNCİ KEZ normal adım olarak açılıyordu — ara proses adları normal adımdan çıkarıldı.
+function araProsesIdleri(urun, asilProses) {
+  const v = ((urun && urun.araProsesEklentileri) || {})[asilProses];
+  return (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
+}
+// Ürünün bütün (asıl proses, ara proses kimliği) çiftleri — maliyet ve baskı listeleri için.
+function araProsesCiftleri(urun) {
+  return Object.keys((urun && urun.araProsesEklentileri) || {}).flatMap((asil) => araProsesIdleri(urun, asil).map((id) => [asil, id]));
+}
+function uretimProsesAdimlari(urun, renk, tanimlar) {
+  const siraMap = {};
+  ((tanimlar && tanimlar.prosesler) || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
+  const araTanimlari = (tanimlar && tanimlar.araProsesler) || [];
+  const araAdlari = new Set(araTanimlari.map((ap) => ap.ad));
+  const asillar = Array.from(new Set(((urun && urun.recete) || [])
+    .filter((r) => r.mamulRenk === renk && r.proses && !araAdlari.has(r.proses)).map((r) => r.proses)));
+  if (asillar.length === 0) {
+    return [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }];
+  }
+  const sonuc = [];
+  asillar
+    .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }))
+    .sort((a, b) => a.sira - b.sira)
+    .forEach((adim) => {
+      sonuc.push(adim);
+      // Ara adım kendisinden SONRAKİ asıl proses işe verilince otomatik tamamlanır; personel/verme
+      // alanları boş doğar, yalnız hangi ara proses ve sabit carisi işaretli.
+      araProsesIdleri(urun, adim.proses).forEach((id, i) => {
+        const ap = araTanimlari.find((x) => x.id === id);
+        if (!ap || sonuc.some((x) => x.proses === ap.ad)) return;   // aynı ad iki kez adım olmasın
+        sonuc.push({ proses: ap.ad, sira: adim.sira + 0.5 + i * 0.01, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null,
+          araProsesMi: true, araProsesId: ap.id, araProsesCariId: ap.cariId, atamalar: [] });
+      });
+    });
+  return sonuc;
+}
+
 function useProsesVer(d) {
   const {
     uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast,
-    setUretim, setStok, setCariler, setStokRezervasyonlari,
+    setUretim, setStok, setCariler, setStokRezervasyonlari, setSiparisler,
   } = d;
 
 const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMiktarlariHam, parcaBarkod, verilenHammaddeler) => {
@@ -31,25 +78,24 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   // "İyileştirme": bu üretim siparişi, ara proses ürüne bağlanmadan ÖNCE oluşturulmuş olabilir —
   // o zaman prosesIlerleme dizisinde ara proses adımı hiç yoktur. Hemen önceki GERÇEK adımın
   // ardına, ÜRÜNÜN GÜNCEL tanımına göre bağlı bir ara proses varsa, burada eksikse diziye ekleriz.
+  // v1.477.0: birden çok ara proses — önceki ASIL adıma bağlı olup dizide olmayanların hepsi, hedef
+  // adımın hemen önüne (varolan ara adımlardan sonra) ekleniyor.
   let calismaProsesIlerleme = siparis.prosesIlerleme;
-  if (urun && adimIndex > 0) {
-    const hemenOnceki = calismaProsesIlerleme[adimIndex - 1];
-    if (!hemenOnceki.araProsesMi) {
-      const araId = (urun.araProsesEklentileri || {})[hemenOnceki.proses];
-      if (araId) {
-        const araTanimIyilestir = (tanimlar.araProsesler || []).find((ap) => ap.id === araId);
-        if (araTanimIyilestir) {
-          const yeniAdim = {
-            proses: araTanimIyilestir.ad, sira: (hemenOnceki.sira ?? 0) + 0.5, tamamlandiMi: false,
-            personelId: null, tamamlanmaTarihi: null, verildiMi: false, verilmeTarihi: null,
-            araProsesMi: true, araProsesId: araTanimIyilestir.id, araProsesCariId: araTanimIyilestir.cariId,
-          };
-          calismaProsesIlerleme = [
-            ...calismaProsesIlerleme.slice(0, adimIndex),
-            yeniAdim,
-            ...calismaProsesIlerleme.slice(adimIndex),
-          ];
-        }
+  if (urun && adimIndex > 0 && !calismaProsesIlerleme[adimIndex].araProsesMi) {
+    let k = adimIndex - 1;
+    while (k >= 0 && calismaProsesIlerleme[k].araProsesMi) k--;
+    const asil = k >= 0 ? calismaProsesIlerleme[k] : null;
+    if (asil) {
+      const eksikler = araProsesIdleri(urun, asil.proses)
+        .map((id) => (tanimlar.araProsesler || []).find((ap) => ap.id === id))
+        .filter((ap) => ap && !calismaProsesIlerleme.some((x) => x.araProsesId === ap.id || x.proses === ap.ad));
+      if (eksikler.length) {
+        const yeniAdimlar = eksikler.map((ap, i) => ({
+          proses: ap.ad, sira: (asil.sira ?? 0) + 0.5 + (adimIndex - 1 - k + i) * 0.01, tamamlandiMi: false,
+          personelId: null, tamamlanmaTarihi: null, verildiMi: false, verilmeTarihi: null,
+          araProsesMi: true, araProsesId: ap.id, araProsesCariId: ap.cariId,
+        }));
+        calismaProsesIlerleme = [...calismaProsesIlerleme.slice(0, adimIndex), ...yeniAdimlar, ...calismaProsesIlerleme.slice(adimIndex)];
       }
     }
   }
@@ -62,8 +108,15 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   // otomatik olarak tamamlanır — kendi sabit cariye (personele) işçiliği işlenir. Bu SADECE bu adıma
   // İLK KEZ bir atama yapılırken (yani adım daha önce hiç iş görmemişken) tetiklenir.
   const ilkAtamaMi = mevcutAtamalar.length === 0;
-  const oncekiAdim = gercekAdimIndex > 0 ? calismaProsesIlerleme[gercekAdimIndex - 1] : null;
-  const araProsesOtomatikTamamlanacakMi = ilkAtamaMi && oncekiAdim && oncekiAdim.araProsesMi && !oncekiAdim.tamamlandiMi;
+  // Birden çok ara proses (v1.477.0): hedefin hemen önündeki ARDIŞIK ara adımların tamamlanmamış
+  // olanları, sırayla.
+  const tamamlanacakAralar = [];
+  if (ilkAtamaMi) {
+    for (let k = gercekAdimIndex - 1; k >= 0 && calismaProsesIlerleme[k].araProsesMi; k--) {
+      if (!calismaProsesIlerleme[k].tamamlandiMi) tamamlanacakAralar.unshift(calismaProsesIlerleme[k]);
+    }
+  }
+  const araProsesOtomatikTamamlanacakMi = tamamlanacakAralar.length > 0;
 
   // "Önceki adımdan akan miktar" hesaplanır — ara proses adımları (araProsesMi) zaten kendi
   // doğaları gereği her zaman tam akış sağlar (bkz. oncekiAdimdanMevcutBedenler içindeki not),
@@ -160,7 +213,11 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
 
   let nextStok = stok;
 
-  if (araProsesOtomatikTamamlanacakMi) {
+  // Ara prosesin hammaddesi REZERVASYONDAN da düşer (v1.477.0 — normal proses gibi): teslimdeki
+  // `rezervasyonDusulecek` ile aynı biçim, aşağıda aynı sırayla (önce stok, sonra alış rezervasyonu).
+  const araRezervasyonDusulecek = [];
+  const araMesajlari = [];
+  tamamlanacakAralar.forEach((oncekiAdim) => {
     // Ara prosesin ücreti, önce BU ÜRÜNE ÖZEL bir geçersiz kılma (override) var mı diye bakılır;
     // yoksa Tanımlar'da o ara proses için tanımlanmış GENEL/varsayılan ücret kullanılır.
     const araTanim = (tanimlar.araProsesler || []).find((ap) => ap.id === oncekiAdim.araProsesId)
@@ -177,7 +234,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
     // hammaddeleri tüketir — tek seferde TÜM sipariş adedi için (ara proses parçalı atama desteklemez).
     const hareketOzetAra = [];
     if (urun && urun.recete) {
-      nextStok = stok.map((p) => {
+      nextStok = nextStok.map((p) => {
         let pDegisti = false;
         let variants = p.variants;
         const yeniHareketler = [];
@@ -198,6 +255,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
             );
             pDegisti = true;
             hareketOzetAra.push(`${r.hammaddeAd} -${tuketilecek} ${r.birim}`);
+            araRezervasyonDusulecek.push({ hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd, renk: etkinRenk, beden: r.beden, miktar: tuketilecek, birim: r.birim });
             yeniHareketler.push({
               id: uid("hrk"), tarih: new Date().toISOString(),
               renk: etkinRenk, beden: r.beden, miktar: -tuketilecek,
@@ -210,7 +268,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
     }
 
     if (araCariId && araTutar > 0) {
-      nextCariler = cariler.map((c) =>
+      nextCariler = nextCariler.map((c) =>
         c.id === araCariId
           ? {
               ...c,
@@ -242,17 +300,31 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
             }
           : c
       );
-      araMesaj = ` — "${oncekiAdim.proses}" ara prosesi otomatik tamamlandı (${araTutar.toLocaleString("tr-TR")} ₺)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`;
+      araMesajlari.push(` — "${oncekiAdim.proses}" ara prosesi otomatik tamamlandı (${araTutar.toLocaleString("tr-TR")} ₺)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`);
     } else if (!araCariId) {
-      araMesaj = ` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (cari tanımlı değil)`;
+      araMesajlari.push(` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (cari tanımlı değil)`);
     } else if (!araTanim) {
-      araMesaj = ` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (tanımı bulunamadı — Tanımlar'dan kontrol edin)`;
+      araMesajlari.push(` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (tanımı bulunamadı — Tanımlar'dan kontrol edin)`);
     } else {
-      araMesaj = ` — "${oncekiAdim.proses}" ara prosesi tamamlandı (ücreti 0 ₺ olduğu için cariye işlem yapılmadı)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`;
+      araMesajlari.push(` — "${oncekiAdim.proses}" ara prosesi tamamlandı (ücreti 0 ₺ olduğu için cariye işlem yapılmadı)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`);
     }
     nextProsesIlerleme = nextProsesIlerleme.map((p) =>
       p === oncekiAdim ? { ...p, tamamlandiMi: true, verildiMi: true, personelId: araCariId, tamamlanmaTarihi: new Date().toISOString() } : p
     );
+  });
+  araMesaj = araMesajlari.join("");
+
+  let nextSiparislerRez = siparisler;
+  let nextStokRez = stokRezervasyonlari;
+  if (siparis.rezervasyonSiparisId && araRezervasyonDusulecek.length > 0) {
+    araRezervasyonDusulecek.forEach((d) => {
+      const stokSonuc = stokRezervasyonTuket(nextStokRez, siparis.rezervasyonSiparisId, d.hammaddeUrunId, d.renk, d.beden, d.miktar, -1);
+      nextStokRez = stokSonuc.defter;
+      if (stokSonuc.kalanIhtiyac > 0.0001) {
+        const sonuc = rezervasyonTuket(nextSiparislerRez, siparis.rezervasyonSiparisId, d.hammaddeUrunId, d.renk, d.beden, stokSonuc.kalanIhtiyac, -1);
+        nextSiparislerRez = sonuc.yeniSiparisler;
+      }
+    });
   }
 
   const nextUretim = uretim.map((o) => (o.id === uretimId ? { ...o, prosesIlerleme: nextProsesIlerleme } : o));
@@ -264,6 +336,14 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   if (araProsesOtomatikTamamlanacakMi) {
     yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
     yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
+  }
+  if (nextStokRez !== stokRezervasyonlari) {
+    setStokRezervasyonlari(nextStokRez);
+    yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
+  }
+  if (nextSiparislerRez !== siparisler && setSiparisler) {
+    setSiparisler(nextSiparislerRez);
+    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
   }
   yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   const personelAdi = ((cariler || []).find((c) => c.id === personelId) || {}).unvan || "personel";
