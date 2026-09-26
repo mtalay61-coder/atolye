@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.463.0** · 25 Eylül 2026
+Son sürüm: **v1.467.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (25 Eylül, v1.463.0): Finans ▸ Finans Raporu — varlık özeti, iki defter, tarih itibarıyla, kayıtlı raporlar (`248-finans-rapor`).** Bkz. "FİNANS RAPORU".
+**Son iş (26 Eylül, v1.467.0): açılan her renge/ölçüye/asortiye otomatik barkod kodu (`tanimlarKodluYaz`), Standart yer tutucu kalkıyor, ürün seçicide resim.** Bkz. "RENK KODU, STANDART, SEÇİCİDE RESİM".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,104 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## RENK KODU, STANDART, SEÇİCİDE RESİM (26 Eylül, v1.467.0 — Claude Code oturumu)
+
+**Kullanıcı (üç ekran görüntüsü):** "Renk kodunu otomatik veriyor, burada vermemiş; stok kartı
+içerisinden açılan renk bu, tüm açılan renklere otomatik renk kodu versin. Standart'ı kaldırmıştık,
+burada yine çıktı. Siparişte ürün girerken resimde göstersin."
+
+- **Renk kodu (barkod `barkodKodu`, ton kodu `kod` değil):** `saveTanimlar` `kodlariAta` ile kod
+  veriyordu ama App'teki kısa yollar (`yeniRenkKaydet`, malzeme/mamul tipi, `yeniOlcuKaydet`, özel kod
+  alanı, `kombinasyonOlusturGlobal`, `asortiOlustur`…) tanımları doğrudan `tekilYaz` ile yazıyordu.
+  Hepsi `tanimlarKodluYaz(next)` yardımcısından geçiyor (kodlariAta → setTanimlar → yazım; bağımlılık
+  dizilerine eklendi, bayat denetimi istedi). Eski kodsuz kayıtlar: 090-yukleme buluttan okuyunca bir
+  kez `kodlariAta([], t)` (renk/ölçü/asorti), sessiz. Çevrimdışı açılışta yapılmıyor (sayaç bayat
+  olabilir). Kalan doğrudan yazımlar: açılış göçü damgası, yükleme, sıfırlama, cari kodu (kod
+  gerektirmeyen ya da kendi kodunu atan yollar).
+- **Standart:** ürüne önce renk eklenince beden "Standart" yer tutucusu doğuyor, sonra gerçek beden
+  eklenince sütun kalıyordu (tersi: renk satırı). `standartYerTutucuyuKaldir(urun, eksen)` (152-stok)
+  `addRenkToProduct`/`bedeniUrunEkle` sonunda: başka değer varsa ve Standart'ın silme engeli yoksa
+  (`renkBedenSilmeEngelleri` + eksende boş dize taşıyan hareket) Standart varyantları kaldırılır.
+  Üzerinde iş olan Standart kalır (kullanıcı çöp ikonuyla karar verir). Var olan ürünlerde kalmış
+  boş Standart sütunu çöp ikonuyla ya da bir sonraki beden eklemede kalkar.
+- **Ürün seçicide resim** (`AramaliUrunSecici`, sipariş/reçete/fiş ortak): kapak resmi → ilk renk
+  resmi → kategori ikonu; 36 px, `data-urun-secici-resim`.
+- Test: `senaryo-renk-kodu-standart.js`.
+
+## MODEL RENGİ YAZARAK SEÇİM (26 Eylül, v1.466.0 — Claude Code oturumu)
+
+**Kullanıcı (ürün kartı ekran görüntüsü, Kaç renkli? 3 · 1./2./3. Renk "Seçin…"):** "Buradaki renkleri
+de arama ile liste daralsın."
+
+- Üç `<select>` → `AramaliMetin` + `yalnizListeden` (sezon kutusuyla aynı kalıp):
+  ürün kartı çok renkli yeni Model Rengi pozisyonları (`data-model-rengi-poz`, tanımlı tekli renkler,
+  kombinasyon etiketleri hariç), ürün kartı "Renk Ekle" tanımlı renk/model rengi seçimi
+  (`data-kart-renk-arama`), yeni ürün formundaki pozisyonlar (152-stok, `mamulRenkTanimli`).
+  Yeni üründe model rengi seçimi zaten `AramaliSecici` idi (v1.452).
+- Yarım yazım kutudan çıkınca ilk eşleşene oturur, eşleşmeyen temizlenir; "Ekle" / "Model Rengi
+  Olarak Ekle" yalnız LİSTEDEKİ değerlerle açık (yazarken kutuda yarım metin olabildiği için
+  `disabled` artık "dolu mu" değil "listede mi" diye bakıyor, tıklamada da kontrol).
+- Test: `senaryo-model-rengi-arama.js`; `senaryo-renk-gocu.js` kart seçeneklerini kutuya odaklanıp
+  öneri listesinden okuyor (altın AYNI).
+
+## ÜRETİMDEKİ MAL VE İŞÇİLİK — FİNANS RAPORU (26 Eylül, v1.465.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Ödenen ve ödenmeyen işçilik olarak ayırmak lazım. Örnek: mamulün yarısı üretildi ve
+stok değeri 1000 TL oldu; toplam değeri 1500 olması gerekirken üretimde o kadar hammadde ve işçilik
+üretti. Bunu 1000 TL olarak hesaplar. Gerçekleşen o anki durumu göstermeli. Şu an için olan stok,
+yarı mamul, mamul tüm değerler göstersin." (Önce "işçilik nasıl olacak" soruldu; standart/tam
+maliyet önerisi yerine GERÇEKLEŞEN maliyet istendi.)
+
+- Üretim veri modeli (keşif): hammadde TESLİMDE, proses başına, reçeteyle düşülüyor (stok hareketi
+  `uretimId`, `kaynak: "Üretim"`, fiyatsız); işçilik teslimde personele `…-İşçilik` cari fişi
+  (`uretimId`, yön Alacak = biz borçluyuz); ödeme ayrı Ödeme hareketi; mamul girişi son proseste
+  `…-Giriş` (fiyatsız). DİKKAT: DEVAM-NOTU 3501 "çıkış iş verilirken" diyor, kod teslimde düşüyor
+  (ara proses istisnası: sonraki ana prosesin ilk atamasında bütün reçete).
+- `finansUretimDegerleri({uretim, stok, cariler, kurlar, tarih, araProsesler})`: açık her üretim için
+  hammadde = üretime bağlı stok hareketlerinin NET çıkışı × `hammaddeBirimFiyati` (stok değerlemesiyle
+  aynı fiyat); işçilik = üretime bağlı `-İşçilik` fişleri; aktarılan = bu üretimden stoğa giren mamul
+  çiftleri × mamul birim maliyeti (hammadde + işçilik); DEĞER = max(0, hammadde + işçilik − aktarılan).
+  Tamamlanan (bugün), bütün çiftleri stoğa girmiş ya da değeri 0 olan iş listelenmez.
+- **Ödenen / ödenmemiş işçilik:** personel carisinin borç yaşlandırması (`cariYaslandirma`, FIFO) →
+  açık kalan işçilik fişleri ödenmemiş. Ödenmemiş kısım zaten "Personel borcu" (Ticari Borçlar);
+  üretim satırında bilgi olarak, özetin altında toplam satırı (`data-finans-uretim-ozet`).
+- **Mamul değerleme:** "Hammadde + işçilik" (varsayılan, `maliyet`; işçilik = `prosesUcretleri` +
+  ara proses ücretleri, `finansIscilikBirim`), "Yalnız hammadde" (`hammadde`, v1.463 davranışı),
+  satış, alış. Genel gider stok değerine GİRMEZ (dönem gideri).
+- Yeni alanlar: Hammadde payı, İşçilik payı, İşçilik ödenen, İşçilik ödenmemiş, Mamule aktarılan.
+  "Stok Değeri" şablonuna eklendi. Üretim satırı: kalem "Üretimdeki mal (yarı mamul)", miktar = kalan
+  çift, ayrıntı "4/10 çift stoğa girdi · aşama".
+- Bilinen yaklaşıklık: aktarılan, standart birim maliyetle (kart ücreti + reçete); gerçekleşen ile
+  standart farkı üretim açıkken yarı mamulde kalır, üretim bitince görünmez (fark raporu yok).
+- Test: `birim-finans-rapor.js` (kullanıcının örneği: yalnız kesimde 1.100, 4/10 çift çıkınca 750 =
+  1.080 + 350 − 680; ödenen 60 / ödenmemiş 290), `senaryo-finans-uretim.js`.
+
+## ALACAK / BORÇ YAŞLANDIRMA (26 Eylül, v1.464.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Alacak yaşlandırma yapalım." (v1.463 sonrası önerilerden 1. madde)
+
+- `cariYaslandirma(cari, {defter, tarih, varsayilanVade})` (248-finans-rapor): PB başına; bakiye
+  yönündeki hareketler açık kalem adayı, karşı yöndeki TOPLAM en eski kalemden başlayarak düşülür
+  (**FIFO**). Kalan kalemler: `{tarih, vade, fisNo, kalan, gun, kismen}`; yaş = rapor günü − vade
+  (vade yoksa tarih + `varsayilanVade`); vade ileride → "Vadesi gelmemiş". Dilimler
+  `YAS_DILIMLERI`: vadesi gelmemiş / 0-30 / 31-60 / 61-90 / 91-180 / 180+. Ayrıca ağırlıklı
+  ortalama gecikme, en eski kalem günü, vadesi geçen tutar. − bakiyede aynı yöntem → BORÇ
+  yaşlandırması.
+- Satış fişlerinde `vade` çoğunlukla boş (yalnız çek/senette dolu) → ekranda "Varsayılan vade
+  (gün)" kutusu (varsayılan 0 = fiş tarihinden yaşlanır).
+- Finans Raporu'na **Görünüm** anahtarı: Varlık Özeti | Yaşlandırma. Yaşlandırmada Alacaklar/
+  Borçlar, dilim çubuğu (TL, kurla), cari başına tablo (PB başına satır, TL karşılığına göre
+  sıralı), satıra dokununca açık fişler (kısmen kapanan "… tutarın kalanı"), PB toplam satırları,
+  Excel (`raporExcelAktar`; açık kalem satırları `no-print`, girmez), Yazdır. "Yan yana" seçiliyse
+  Genel ve Resmi için iki tablo. Defter/tarih seçimleri ortak.
+- Cari satırlarına dilim alanları eklendi (`yas…`, `vadesiGecen`, `ortalamaGecikme`, `enEskiGun`);
+  hazır şablonlar "Alacak Yaşlandırma", "Borç Yaşlandırma" — kendi süzgeci/Excel'i için.
+- Grid taşması: geniş tablo grid öğesini büyütüp sayfayı yana kaydırıyordu → kaplara
+  `gridTemplateColumns: "minmax(0, 1fr)"`.
+- Test: `birim-finans-rapor.js` (FIFO, kısmi kapanış, dilimler, varsayılan vade, borç yönü, rapor
+  satırı), `senaryo-finans-yaslandirma.js` (tarihler bugüne göreli). `senaryo-cek-yazdir.js`
+  düzeltildi: ciro fiş no'su bugünün tarihini taşıdığı için altın her gün değişiyordu → yalnız önek.
 
 ## FİNANS RAPORU — VARLIK / YÜKÜMLÜLÜK (25 Eylül, v1.463.0 — Claude Code oturumu)
 

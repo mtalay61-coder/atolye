@@ -1,0 +1,14 @@
+{
+ "hatalar": [],
+ "ozetSatiri": "Üretimdeki mallar (1 üretim): 750,00 ₺ — gerçekleşen hammadde 1.080,00 ₺ + işçilik 350,00 ₺ (ödenen 60,00 ₺ · ödenmemiş 290,00 ₺, personel borçlarında), bitmiş mala aktarılan düşülerek.",
+ "stokRaporu": [
+  "Hammadde | Deri | 80 | 4.000,00 | 0,00 | 0,00 | 0,00 | 4.000,00 | 1",
+  "Hammadde | Taban | 46 | 920,00 | 0,00 | 0,00 | 0,00 | 920,00 | 1",
+  "Üretimdeki mal (yarı mamul) | Üretim 10001 · Bot | 6 | 1.080,00 | 350,00 | 290,00 | 680,00 | 750,00 | 1",
+  "Mamul | Bot | 4 | 480,00 | 200,00 | 0,00 | 0,00 | 680,00 | 1"
+ ],
+ "stoklar": [
+  "Stoklar",
+  "6.350,00 ₺"
+ ]
+}

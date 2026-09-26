@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.463.0";
+const SURUM = "1.467.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Finans Raporu: varlik ozeti, iki defter, kayitli raporlar";
+const SURUM_NOTU = "Yeni renklere otomatik renk kodu, Standart yer tutucu kalkiyor, urun seciminde resim";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,27 @@ const SURUM_NOTU = "Finans Raporu: varlik ozeti, iki defter, kayitli raporlar";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.467.0", tarih: "26.09.2026",
+    eklenen: ["Sipariş, reçete ve fişlerde ürün seçerken listede ürünün resmi görünüyor"],
+    degisen: [],
+    duzeltilen: ["Stok kartından, siparişten açılan renk / ölçü / model rengi / asortiye barkod renk kodu verilmiyordu — artık hepsine otomatik; kodsuz kalmış eski kayıtlar açılışta tamamlanıyor",
+                 "Ürüne gerçek beden (ya da renk) eklenince 'Standart' sütunu (satırı) kalıyordu — üzerinde stok/hareket/bağlantı yoksa artık kalkıyor"] },
+  { surum: "1.466.0", tarih: "26.09.2026",
+    eklenen: [],
+    degisen: ["Ürün kartında renk ekleme ve çok renkli Model Rengi oluşturmada (1./2./3. Renk) renkler yazdıkça daralan listeden seçiliyor; yeni ürün formundaki pozisyonlar da"],
+    duzeltilen: [] },
+  { surum: "1.465.0", tarih: "26.09.2026",
+    eklenen: ["Finans Raporu'nda üretimdeki mallar (yarı mamul): açık her üretimin o ana kadar gerçekten harcanan hammaddesi + yazılan işçiliği, stoğa giren bitmiş çiftler düşülerek",
+              "İşçilik ödenen / ödenmemiş ayrımı (personel ödemeleri en eski işçilik fişini kapatır)",
+              "Mamul değerlemede 'Hammadde + işçilik' (varsayılan) ve 'Yalnız hammadde'; stok satırlarında hammadde ve işçilik payı"],
+    degisen: ["Mamul stok değeri artık proses ücretlerini (işçilik) de içeriyor"],
+    duzeltilen: [] },
+  { surum: "1.464.0", tarih: "26.09.2026",
+    eklenen: ["Finans Raporu ▸ Yaşlandırma: alacak ve borçların yaşa göre dağılımı (vadesi gelmemiş, 0-30, 31-60, 61-90, 91-180, 180+ gün) — ödemeler en eski kalemi kapatır (FIFO); cariye dokununca açık fişler, kaç gündür beklediği",
+              "Varsayılan vade (gün) ayarı, ortalama gecikme ve en eski kalem; Excel ve yazdır",
+              "Hazır şablonlar: Alacak Yaşlandırma, Borç Yaşlandırma"],
+    degisen: [],
+    duzeltilen: [] },
   { surum: "1.463.0", tarih: "25.09.2026",
     eklenen: ["Finans ▸ Finans Raporu: varlık özeti (kasa, banka, alacaklar, borçlar, portföydeki/tahsildeki çekler, ödenecek şahsi çekler, hammadde/yarı mamul/mamul stok değeri) ve NET VARLIK",
               "Defter seçimi (Tümü / Genel / Resmi / Genel · Resmi yan yana, fark sütunuyla), tarih itibarıyla rapor, mamul değerleme yöntemi (reçete maliyeti / satış / alış fiyatı)",

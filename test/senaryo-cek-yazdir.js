@@ -84,6 +84,9 @@ async function calistir() {
   const ciroFisi = ((((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c1") || {}).hareketler || [])
     .find((h) => /Çek cirosu/.test(h.aciklama || "")) || {};
   ciro.belgeNoCiroFisi = !!ciro.belgeNo && ciro.belgeNo === ciroFisi.fisNo;
+  // Ciro fiş numarası bugünün tarihini taşıyor (ODM-AAGG…): altın her gün değişmesin diye yalnız
+  // öneki yazılıyor; doğru fiş olduğu yukarıda kimlikle ölçüldü.
+  ciro.belgeNo = ciro.belgeNo ? ciro.belgeNo.split("-")[0] + "-…" : null;
 
   // 3. Pencereyi küçült, ciroyu geri al; şeritten dönünce pencere güncel çeki gösteriyor.
   await sayfa.evaluate(() => {

@@ -1499,14 +1499,23 @@ function ProductMatrixCard({
                 <div>
                   {uygunSecenekler.length > 0 ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
-                      <select value={newRenk} onChange={(e) => setNewRenk(e.target.value)} style={{ ...inputStyle, width: 180 }}>
-                        <option value="">Seçin…</option>
-                        {uygunSecenekler.map((s) => <option key={s.id} value={s.etiket}>{s.etiket}</option>)}
-                      </select>
+                      {/* Tanımlı renk / model rengi de yazarak süzülüyor (v1.466.0). */}
+                      <div style={{ width: 240 }}>
+                        <AramaliMetin
+                          veriAdi="data-kart-renk-arama"
+                          deger={newRenk}
+                          onDegis={setNewRenk}
+                          oneriler={uygunSecenekler.map((s) => s.etiket)}
+                          yalnizListeden
+                          placeholder="Renk yazın ya da seçin…"
+                        />
+                      </div>
                       <button
                         className="btn-primary"
-                        disabled={!newRenk}
+                        // Yazarken kutuda yarım metin olabilir: yalnız listedeki bir değer eklenir.
+                        disabled={!uygunSecenekler.some((s) => s.etiket === newRenk)}
                         onClick={() => {
+                          if (!uygunSecenekler.some((s) => s.etiket === newRenk)) return;
                           onAddRenk(product.id, newRenk);
                           setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
                         }}
@@ -1580,20 +1589,18 @@ function ProductMatrixCard({
                     return (
                       <label key={poz} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                         <span style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>{poz}. Renk</span>
-                        <select
-                          value={ymrPozisyonSecimleri[poz] || ""}
-                          onChange={(e) => setYmrPozisyonSecimleri({ ...ymrPozisyonSecimleri, [poz]: e.target.value })}
-                          style={{ ...inputStyle, width: 130 }}
-                        >
-                          <option value="">Seçin…</option>
-                          {Array.from(
-                            new Map(
-                              tanimlarRenkler
-                                .filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad))
-                                .map((r) => [r.ad, r])
-                            ).values()
-                          ).map((r) => <option key={r.id} value={r.ad}>{r.ad}</option>)}
-                        </select>
+                        {/* YAZARAK SEÇİM (v1.466.0 — kullanıcı: "buradaki renkleri de arama ile liste
+                            daralsın"). Yalnız tanımlı tekli renkler (kombinasyon etiketleri hariç). */}
+                        <div style={{ width: 170 }}>
+                          <AramaliMetin
+                            veriAdi="data-model-rengi-poz"
+                            deger={ymrPozisyonSecimleri[poz] || ""}
+                            onDegis={(v) => setYmrPozisyonSecimleri((s) => ({ ...s, [poz]: v }))}
+                            oneriler={tanimlarRenkler.filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad)).map((r) => r.ad)}
+                            yalnizListeden
+                            placeholder="Yazın ya da seçin…"
+                          />
+                        </div>
                       </label>
                     );
                   })}
@@ -1602,7 +1609,7 @@ function ProductMatrixCard({
                   <button
                     type="button"
                     className="btn-primary"
-                    disabled={Array.from({ length: renkEkleSayisi }, (_, i) => i + 1).some((poz) => !ymrPozisyonSecimleri[poz])}
+                    disabled={Array.from({ length: renkEkleSayisi }, (_, i) => i + 1).some((poz) => !tanimlarRenkler.some((r) => r.ad === ymrPozisyonSecimleri[poz]))}
                     onClick={() => {
                       const renkAdlari = Array.from({ length: renkEkleSayisi }, (_, i) => ymrPozisyonSecimleri[i + 1]);
                       const etiket = onKombinasyonOlustur(renkAdlari);

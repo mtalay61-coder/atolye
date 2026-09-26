@@ -89,6 +89,17 @@ useEffect(() => {
               yazimiIzle(tabloYaz("stok:items", "urunler", kodGoc.stok), "Stok kartları", kodGoc.stok);
             }
           }
+          // EKSİK BARKOD KODLARI (v1.467.0) — renk / ölçü / asorti. Stok kartından ya da siparişten
+          // açılan tanımlar kodsuz kalıyordu (kısa yollar `saveTanimlar`ı atlıyordu, bkz. 100-app
+          // `tanimlarKodluYaz`). Eski kayıtlar burada bir kez, sessizce tamamlanıyor; kodu olana
+          // dokunulmuyor. Yalnız BULUTTAN okununca: çevrimdışı açılışta sayaç bayat olabilir.
+          const barkodKod = kodlariAta([], t);
+          if (barkodKod.atanan.renk + barkodKod.atanan.beden + barkodKod.atanan.asorti > 0) {
+            t = barkodKod.tanimlar;
+            setTanimlar(t);
+            yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", t), "Tanımlar", t);
+            console.info(`Eksik barkod kodları atandı: renk ${barkodKod.atanan.renk}, ölçü ${barkodKod.atanan.beden}, asorti ${barkodKod.atanan.asorti}`);
+          }
           setStok(acilisGocuUygula(kodGoc.stok, t));
           // Bulut kaynak olduğu için görseller ürünlerin İÇİNDE geldi. Yerel kopyayı da
           // tazeliyoruz ki internetsiz açılışta görseller kaybolmasın. Önce mevcut anahtarlar

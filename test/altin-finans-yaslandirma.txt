@@ -1,0 +1,46 @@
+{
+ "alacak": [
+  {
+   "dilimler": [
+    "0-30 gün: 500,00 ₺(%50)",
+    "61-90 gün: 500,00 ₺(%50)"
+   ],
+   "satirlar": [
+    "Müşteri B | TRY | 1.000,00 | 500,00 | 500,00 | 43 gün | 75 gün"
+   ],
+   "tablo": "alacak|Tümü",
+   "toplam": "Toplam 1.000,00 ₺ · vadesi geçen %100"
+  }
+ ],
+ "borc": [
+  {
+   "dilimler": [
+    "31-60 gün: 500,00 ₺(%100)"
+   ],
+   "satirlar": [
+    "Tedarikçi A | TRY | 500,00 | 500,00 | 40 gün | 40 gün"
+   ],
+   "tablo": "borc|Tümü",
+   "toplam": "Toplam 500,00 ₺ · vadesi geçen %100"
+  }
+ ],
+ "hatalar": [],
+ "kalemler": [
+  "T | SAT-2 | SAT-2 | vade T | 500,00 ₺ | (800,00 tutarın kalanı) | 75 gün gecikmiş",
+  "T | SAT-3 | SAT-3 | vade T | 500,00 ₺ | 10 gün gecikmiş"
+ ],
+ "vade30": [
+  "Vadesi gelmemiş: 500,00 ₺(%50)",
+  "31-60 gün: 500,00 ₺(%50)"
+ ],
+ "yanYana": [
+  [
+   "alacak|Genel",
+   "Toplam 500,00 ₺ · vadesi geçen %100"
+  ],
+  [
+   "alacak|Resmi",
+   "Toplam 500,00 ₺ · vadesi geçen %100"
+  ]
+ ]
+}
