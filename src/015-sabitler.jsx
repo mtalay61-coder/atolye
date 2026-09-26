@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.475.0";
+const SURUM = "1.476.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Finans: donem karsilastirma, nakit akisi, maliyet farki";
+const SURUM_NOTU = "Siparis notlari prosese yazilip uretimde o proseste gorunuyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,13 @@ const SURUM_NOTU = "Finans: donem karsilastirma, nakit akisi, maliyet farki";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.476.0", tarih: "26.09.2026",
+    eklenen: [
+      "Sipariş kalemine proses bazlı not: 'Kesim: deriyi iyi yerinden kes', 'Temizleme: her tek poşete konacak' — bir renge birden çok not",
+      "Üretim kartında not kendi prosesinin satırında, iş emrinde proses başlığının altında, atölye ekranında iş kartında; genel not kartın başında",
+    ],
+    degisen: ["Planlanmış (kilitli) kaleme de not eklenebiliyor; üretim notu siparişten canlı okuyor", "Sipariş kartı ve çıktısında notlar proses etiketiyle"],
+    duzeltilen: [] },
   { surum: "1.475.0", tarih: "26.09.2026",
     eklenen: [
       "Finans Raporu ▸ Dönem Karşılaştırma: iki tarihteki varlık özeti grup grup, değişim ve yüzde (geçen ay sonu / 30 gün önce / geçen yıl sonu)",

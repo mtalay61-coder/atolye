@@ -222,6 +222,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
           cariler={cariler}
           orders={orders}
           stok={stok}
+          siparisler={siparisler}
           onProsesTamamla={onProsesTamamla}
           onProsesVer={onProsesVer}
           onClose={() => setAtolyeEkraniAcik(false)}

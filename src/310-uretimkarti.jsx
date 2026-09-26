@@ -237,6 +237,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
           <div style="font-size:12px;font-weight:700;border-bottom:0.4mm solid #000;padding-bottom:1mm">
             ${i + 1}. ${p.proses}${p.tamamlandiMi ? " · tamamlandı" : ""}
           </div>
+          ${prosesNotu(p.proses).map((n) => `<div style="margin-top:1mm;padding:1mm 2mm;border:0.3mm solid #000;font-size:12px;font-weight:700">NOT: ${htmlKacis(n.metin)}</div>`).join("")}
           <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:1mm">
             <thead><tr style="border-bottom:0.2mm solid #999">
               <th style="text-align:left">Hammadde</th><th style="text-align:left">Renk</th>
@@ -265,6 +266,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
           ${barkodSvg(kod, { birim: 2, yukseklik: 40 })}
         </div>
       </div>
+      ${genelNotlar.length ? `<div style="margin-top:2mm;padding:1.5mm 2mm;border:0.4mm solid #000;font-size:12px"><b>SİPARİŞ NOTU:</b> ${genelNotlar.map((n) => htmlKacis(notEtiketi(n))).join(" · ")}</div>` : ""}
       ${prosesBloklari}
     `], { genislikMM: 210, yukseklikMM: 297, ustHizali: true });
   }
@@ -351,6 +353,13 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
     s.tip === "Satış" && s.kalemler.some((k) => k.planlama && k.planlama.tip === "Üretim" && k.planlama.referansNo === o.siparisNo)
   );
   const bagliMusteri = bagliSatisSiparisi ? (cariler || []).find((c) => c.id === bagliSatisSiparisi.cariId) : null;
+  // SİPARİŞ NOTLARI (v1.476.0): bağlı satış kalemlerinden CANLI (planlamadan sonra eklenen de gelir).
+  // Genel notlar kartın başında, proses notları kendi prosesinin satırında ve iş emrinde.
+  const siparisNotlari = uretimSiparisNotlari(o, siparisler);
+  const prosesNotu = (proses) => siparisNotlari.filter((n) => n.proses === proses);
+  const bilinenProsesler = new Set((o.prosesIlerleme || []).map((p) => p.proses));
+  // Üretimde olmayan bir prosese yazılmış not (reçete sonradan değişmiş) kaybolmasın: genelde görünür.
+  const genelNotlar = siparisNotlari.filter((n) => !n.proses || !bilinenProsesler.has(n.proses));
 
   return (
     <div
@@ -413,6 +422,15 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
               {o.adet} çift{o.beden ? ` · ${o.beden}` : ""}{o.termin ? ` · Termin: ${o.termin}` : ""}
             </div>
             {o.not && <div style={{ fontSize: 12, color: "var(--erp-text-3)", marginTop: 2 }}>{o.not}</div>}
+            {siparisNotlari.length > 0 && (
+              <div data-uretim-siparis-notlari="1" style={{ marginTop: 4, display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#8A6A2E" }}>Sipariş notu:</span>
+                <KalemNotDuzenleyici notlar={genelNotlar} salt kucuk veriAdi="data-uretim-genel-notlar" />
+                {siparisNotlari.length > genelNotlar.length && (
+                  <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>+ {siparisNotlari.length - genelNotlar.length} proses notu (proses satırlarında)</span>
+                )}
+              </div>
+            )}
             {o.stogaEklendiMi && (
               <div style={{ fontSize: 11, color: "var(--erp-primary)", fontWeight: 600, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
                 <PackageCheck size={12} /> Stoğa eklendi
@@ -659,6 +677,13 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                   </span>
                 )}
               </div>
+              {/* PROSES NOTU (v1.476.0) — siparişte bu prosese yazılan not, satırın hemen altında. */}
+              {prosesNotu(p.proses).length > 0 && (
+                <div data-uretim-proses-notu={p.proses} style={{ margin: "3px 0 2px 34px", padding: "5px 9px", fontSize: 12, fontWeight: 600,
+                  background: "#FFF4DC", border: "1px solid #E3C77A", borderRadius: "var(--erp-r-sm)", color: "#5C4A1E", display: "grid", gap: 2 }}>
+                  {prosesNotu(p.proses).map((n) => <span key={n.metin}>📝 {n.metin}</span>)}
+                </div>
+              )}
 
               {/* Gerçek (ara olmayan) prosesin atama listesi + yeni atama ekleme formu — sadece
                   tamamlanmamışken ve sıradaki adımken gösterilir. */}

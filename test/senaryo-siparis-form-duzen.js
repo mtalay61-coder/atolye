@@ -100,7 +100,8 @@ async function calistir() {
     const renk = form.querySelector("[data-siparis-renk-arama]");
     const fiyat = form.querySelector("[data-siparis-birim-fiyat]");
     const ekle = form.querySelector("[data-kalemlere-ekle]");
-    const aciklama = form.querySelector("[data-siparis-kalem-aciklama]");
+    // v1.476.0: açıklama kutusu proses bazlı not düzenleyicisi oldu (metin kutusu ölçülüyor).
+    const aciklama = form.querySelector("[data-siparis-kalem-notlari] [data-kalem-not-metin]");
     const uygula = [...form.querySelectorAll("button")].find((b) => b.textContent.trim() === "Uygula");
     const matris = form.querySelector("[data-olcu-miktar]");
     return {
@@ -115,10 +116,16 @@ async function calistir() {
     };
   }, FORM);
 
-  // 4. Açıklamalı ekleme: Taba 40 × 2, 41 × 1, açıklama "sert taban".
+  // 4. Notlu ekleme: Taba 40 × 2, 41 × 1. v1.476.0: önce "Kesim" prosesine not "+" ile, sonra genel
+  // not yazılıp "+"lanmadan Ekle — yazılı kalan taslak da kaleme gitmeli.
   await sayfa.locator(`${FORM} [data-olcu-miktar="40"]`).fill("2");
   await sayfa.locator(`${FORM} [data-olcu-miktar="41"]`).fill("1");
-  await sayfa.locator(`${FORM} [data-siparis-kalem-aciklama]`).fill("sert taban");
+  const formNot = sayfa.locator(`${FORM} [data-siparis-kalem-notlari]`);
+  await formNot.locator("[data-kalem-not-proses]").selectOption("Kesim");
+  await formNot.locator("[data-kalem-not-metin]").fill("deriyi iyi yerinden kes");
+  await formNot.locator("[data-kalem-not-ekle]").click();
+  await formNot.locator("[data-kalem-not-proses]").selectOption("");
+  await formNot.locator("[data-kalem-not-metin]").fill("sert taban");
   await sayfa.locator(`${FORM} [data-kalemlere-ekle]`).click();
   await sayfa.waitForTimeout(400);
   // Açıklamasız ikinci ekleme aynı renge: miktar artar, açıklama kalır.
@@ -129,19 +136,20 @@ async function calistir() {
   await sayfa.waitForTimeout(400);
   const satirAciklamalari = () => sayfa.evaluate((F) => [...document.querySelectorAll(`${F} [data-form-kalem-satiri]`)].map((tr) => {
     const renk = (tr.querySelector("[data-form-kalem-renk]") || {}).value;
-    const a = tr.querySelector("[data-form-kalem-aciklama]");
-    return `${renk}: ${a ? a.value || "(boş)" : "kutu yok"}`;
+    const notlar = [...tr.querySelectorAll("[data-form-kalem-notlari] [data-kalem-not]")].map((n) => n.getAttribute("data-kalem-not"));
+    return `${renk}: ${notlar.join(" | ") || "(boş)"}`;
   }), FORM);
   const eklemeSonrasi = await satirAciklamalari();
   const formSifirlandi = await sayfa.evaluate((F) => {
-    const a = document.querySelector(`${F} [data-siparis-kalem-aciklama]`);
-    return a ? a.value === "" : "kutu gizli";
+    const d = document.querySelector(`${F} [data-siparis-kalem-notlari]`);
+    if (!d) return "kutu gizli";
+    return d.querySelectorAll("[data-kalem-not]").length === 0 && d.querySelector("[data-kalem-not-metin]").value === "";
   }, FORM);
 
   // Siyah satırın açıklamasını satırda yaz.
-  const siyahAciklama = sayfa.locator(`${FORM} [data-form-kalem-satiri="serbest"]`).first().locator("[data-form-kalem-aciklama]");
+  const siyahAciklama = sayfa.locator(`${FORM} [data-form-kalem-satiri="serbest"]`).first().locator("[data-form-kalem-notlari] [data-kalem-not-metin]");
   await siyahAciklama.fill("fermuarlı");
-  await siyahAciklama.blur();
+  await siyahAciklama.press("Enter");
   await sayfa.waitForTimeout(300);
   const satirdaDuzeltince = await satirAciklamalari();
 
@@ -149,7 +157,7 @@ async function calistir() {
   await sayfa.locator("[data-siparis-duzenle-kaydet]").click();
   await sayfa.waitForTimeout(1000);
   const sip = ((await depoOku(sayfa, "siparis:data")) || []).find((x) => x.id === "sf1") || {};
-  const kayit = (sip.kalemler || []).map((k) => `${k.renk} ${k.beden} × ${k.miktar}: ${k.aciklama || "—"}`).sort();
+  const kayit = (sip.kalemler || []).map((k) => `${k.renk} ${k.beden} × ${k.miktar}: ${(k.notlar || []).map((n) => (n.proses ? `${n.proses}: ` : "") + n.metin).join(" | ") || k.aciklama || "—"}`).sort();
   const kartta = await sayfa.evaluate(() => [...document.querySelectorAll("[data-kart-kalem-aciklama]")]
     .filter((d) => d.getBoundingClientRect().width > 0).map((d) => d.textContent.trim()));
 
