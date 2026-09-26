@@ -4000,6 +4000,7 @@ export default function AtolyeERP() {
               tanimlarBedenler={tanimlar.bedenler || []}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
               tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
+                            tanimlarAraProsesler={tanimlar.araProsesler || []}
               kurlar={muhasebe.kurlar || {}}
             />
           </div>
@@ -4050,6 +4051,7 @@ export default function AtolyeERP() {
               tanimlarBedenler={tanimlar.bedenler || []}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
               tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
+                            tanimlarAraProsesler={tanimlar.araProsesler || []}
               kurlar={muhasebe.kurlar || {}}
             />
           </div>
@@ -4542,6 +4544,8 @@ export default function AtolyeERP() {
                             tanimlarBedenler={tanimlar.bedenler || []}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
                             tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
+                            tanimlarProsesler={tanimlar.prosesler || []}
+                            tanimlarAraProsesler={tanimlar.araProsesler || []}
                             kurlar={muhasebe.kurlar || {}}
                             hedefYeniAlis={p.veri.taslak}
                             onYeniAlisTuketildi={() => {}}

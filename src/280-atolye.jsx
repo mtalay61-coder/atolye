@@ -1,4 +1,7 @@
-function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onClose }) {
+function AtolyeEkrani({ cariler, orders, stok, siparisler, onProsesTamamla, onProsesVer, onClose }) {
+  // PROSES NOTU (v1.476.0): siparişte bu prosese yazılan not ("deriyi iyi yerinden kes") iş kartında
+  // ve iş alma/teslim ekranının başlığında. Siparişten canlı okunur (`uretimSiparisNotlari`).
+  const prosesNotlari = (o, proses) => uretimSiparisNotlari(o, siparisler).filter((n) => n.proses === proses).map((n) => n.metin);
   const [personelId, setPersonelId] = useState(null);
   const [secilenIs, setSecilenIs] = useState(null);   // teslim edilecek iş
   const [alinacakIs, setAlinacakIs] = useState(null); // alınacak iş
@@ -35,7 +38,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
         if (a.personelId !== personelId || !a.verildiMi || a.tamamlandiMi) return;
         const urun = (stok || []).find((x) => x.id === o.urunId);
         elindekiIsler.push({
-          uretimId: o.id, proses: p.proses, atama: a, uretim: o,
+          uretimId: o.id, proses: p.proses, atama: a, uretim: o, notlar: prosesNotlari(o, p.proses),
           urunAd: o.model, renk: o.renk,
           resim: urun ? ((urun.renkResimleri || {})[o.renk] || urun.kapakResmi) : null,
           tamirMi: !!a.tamirMi,
@@ -97,7 +100,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
       if (alinabilir.length === 0) return;
       const urun = (stok || []).find((x) => x.id === o.urunId);
       alinabilirIsler.push({
-        uretimId: o.id, proses: p.proses, uretim: o,
+        uretimId: o.id, proses: p.proses, uretim: o, notlar: prosesNotlari(o, p.proses),
         urunAd: o.model, renk: o.renk,
         resim: urun ? ((urun.renkResimleri || {})[o.renk] || urun.kapakResmi) : null,
         bedenler: alinabilir.map((d) => ({ beden: d.beden, kalan: d.kalan })),
@@ -153,6 +156,7 @@ function AtolyeEkrani({ cariler, orders, stok, onProsesTamamla, onProsesVer, onC
         <span style={{ display: "inline-block", marginTop: 5, fontSize: 13, fontWeight: 700, color: "var(--erp-panel-2)", background: prosesRengi(is.proses), padding: "2px 10px", borderRadius: "var(--erp-r-pill)" }}>
           {is.proses}
         </span>
+        {(is.notlar || []).length > 0 && <AtolyeNotu notlar={is.notlar} />}
         {/* Beden dağılımı MATRİS olarak: üst satır beden, alt satır adet. Uygulamanın her yerinde
             beden sütun başlığıdır; kartta da aynı düzen olunca göz aynı yerde arıyor. */}
         <span style={{ display: "block", marginTop: 8, overflowX: "auto" }}>
@@ -553,6 +557,16 @@ function AtolyeIsAlmaEkrani({ is, onGonder }) {
 }
 
 // İki ekranın ortak başlığı: ürün fotoğrafı, model, renk, proses rozeti.
+// Atölye ekranında not: büyük, sarı, simgeli — okuma zorluğu olan personel de gözden kaçırmasın.
+function AtolyeNotu({ notlar, buyuk = false }) {
+  return (
+    <span data-atolye-proses-notu="1" style={{ display: "block", marginTop: 6, padding: buyuk ? "8px 12px" : "4px 9px", background: "#FFF4DC", border: "2px solid #E3C77A",
+      borderRadius: "var(--erp-r-md)", color: "#5C4A1E", fontSize: buyuk ? 18 : 14, fontWeight: 700, flexBasis: "100%" }}>
+      {notlar.map((n) => <span key={n} style={{ display: "block" }}>📝 {n}</span>)}
+    </span>
+  );
+}
+
 function AtolyeIsBasligi({ is }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
@@ -569,6 +583,7 @@ function AtolyeIsBasligi({ is }) {
           <Hammer size={18} /> TAMİR
         </span>
       )}
+      {(is.notlar || []).length > 0 && <AtolyeNotu notlar={is.notlar} buyuk />}
     </div>
   );
 }

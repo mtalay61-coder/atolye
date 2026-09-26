@@ -108,3 +108,96 @@ const EKLE_DUGMESI = {
   color: "#fff", background: "#2F8F46", border: "1px solid #257238",
   borderRadius: "var(--erp-r-md)", cursor: "pointer", whiteSpace: "nowrap",
 };
+
+// ================= KALEM NOTLARI — PROSES BAZLI (26 Eylül, v1.476.0) =================
+//
+// Kullanıcı: "Not girdiğimizde üretime not varsa üretimin hangi prosesine ait onu da yazıp o proseste
+// gösterecek. Örnek: kesim için 'deriyi iyi yerinden kes', temizleme için 'her tek poşete konacak'."
+//
+// Kalemde `notlar: [{ proses, metin }]` — proses "" = GENEL not (v1.470'teki renk bazlı açıklama).
+// Bir renk satırının bütün ölçüleri aynı notları taşır. Eski `aciklama` alanı genel not olarak
+// okunur (`kalemNotlari`); düzenlenince `notlar`a taşınır.
+//
+// ÜRETİM notları KOPYALAMAZ, siparişten CANLI okur (`uretimSiparisNotlari`): kalemin
+// `planlama.referansNo`su üretim numarası. Böylece planlamadan SONRA eklenen not da atölyeye düşer,
+// eski planlanmış işler de göç gerektirmeden notlarını gösterir. (Kutu rengi kopyalanıyor çünkü
+// hammadde tüketimini değiştiriyor; not yalnız bilgi.)
+function kalemNotlari(k) {
+  if (!k) return [];
+  const liste = [];
+  if (k.aciklama) liste.push({ proses: "", metin: String(k.aciklama) });
+  (k.notlar || []).forEach((n) => { if (n && String(n.metin || "").trim()) liste.push({ proses: n.proses || "", metin: String(n.metin).trim() }); });
+  return notlariTekille(liste);
+}
+function notlariTekille(liste) {
+  const gorulen = new Set();
+  return (liste || []).filter((n) => { const a = `${n.proses}|${n.metin}`; if (gorulen.has(a)) return false; gorulen.add(a); return true; });
+}
+// Bir renk satırındaki (aynı ürün+renk, farklı ölçüler) kalemlerin notları.
+function grupNotlari(kalemler) { return notlariTekille((kalemler || []).flatMap(kalemNotlari)); }
+// Üretime bağlı satış kalemlerinin notları (üretim no = kalemin planlama referansı).
+function uretimSiparisNotlari(u, siparisler) {
+  if (!u || !u.siparisNo) return [];
+  const kalemler = [];
+  (siparisler || []).forEach((s) => (s.kalemler || []).forEach((k) => {
+    if (k.planlama && k.planlama.tip === "Üretim" && k.planlama.referansNo === u.siparisNo) kalemler.push(k);
+  }));
+  return grupNotlari(kalemler);
+}
+const notEtiketi = (n) => (n.proses ? `${n.proses}: ${n.metin}` : n.metin);
+
+// Not listesi + ekleyici. `onTaslak`: yazılan ama henüz eklenmemiş not (sipariş formunda "Ekle"
+// basılınca o da kaleme gitsin — "+"ya basmayı unutmak notu kaybettirmesin).
+function KalemNotDuzenleyici({ notlar, prosesler, onDegis, onTaslak, salt = false, kucuk = false, veriAdi = "data-kalem-notlari" }) {
+  const [proses, setProses] = useState("");
+  const [metin, setMetin] = useState("");
+  const ekle = () => {
+    const m = metin.trim();
+    if (!m) return;
+    onDegis(notlariTekille([...(notlar || []), { proses, metin: m }]));
+    setMetin(""); if (onTaslak) onTaslak(null);
+  };
+  const fs = kucuk ? 11 : 12;
+  return (
+    <div {...{ [veriAdi]: "1" }} style={{ display: "flex", flexWrap: "wrap", gap: 4, alignItems: "center", fontFamily: "var(--erp-font, sans-serif)" }}>
+      {(notlar || []).map((n, i) => (
+        <span key={`${n.proses}|${n.metin}`} data-kalem-not={notEtiketi(n)}
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: fs, padding: "1px 7px", borderRadius: "var(--erp-r-pill)",
+            background: n.proses ? "#FFF4DC" : "var(--erp-panel-2)", border: `1px solid ${n.proses ? "#E3C77A" : "var(--erp-line)"}`, whiteSpace: "normal" }}>
+          {n.proses && <b style={{ color: "#8A6A2E" }}>{n.proses}:</b>}
+          {n.metin}
+          {!salt && (
+            <button type="button" title="Notu sil" onClick={() => onDegis((notlar || []).filter((_, j) => j !== i))}
+              style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", padding: 0, display: "flex" }}>
+              <X size={10} />
+            </button>
+          )}
+        </span>
+      ))}
+      {!salt && (
+        <span style={{ display: "inline-flex", gap: 3, alignItems: "center", flex: "1 1 180px", minWidth: 150 }}>
+          <select value={proses} onChange={(e) => { setProses(e.target.value); if (onTaslak && metin.trim()) onTaslak({ proses: e.target.value, metin: metin.trim() }); }}
+            data-kalem-not-proses="1" title="Notun ait olduğu proses — üretimde o proseste gösterilir"
+            style={{ fontSize: fs, padding: "3px 2px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", maxWidth: 110 }}>
+            <option value="">Genel</option>
+            {(prosesler || []).map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <input value={metin} data-kalem-not-metin="1"
+            onChange={(e) => { setMetin(e.target.value); if (onTaslak) onTaslak(e.target.value.trim() ? { proses, metin: e.target.value.trim() } : null); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ekle(); } }}
+            placeholder={proses ? `${proses} notu…` : "Not…"}
+            style={{ flex: 1, minWidth: 80, fontSize: fs, padding: "3px 6px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "transparent", fontFamily: "inherit" }} />
+          <button type="button" data-kalem-not-ekle="1" onClick={ekle} disabled={!metin.trim()} title="Notu ekle"
+            style={{ border: "1px solid var(--erp-line)", background: "#fff", borderRadius: "var(--erp-r-sm)", cursor: "pointer", padding: "2px 5px", display: "flex" }}>
+            <Plus size={11} />
+          </button>
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Basılı belgelere (iş emri, teslim fişi) serbest metin yazarken: "<" gibi karakterler HTML'i bozmasın.
+function htmlKacis(v) {
+  return String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
+}

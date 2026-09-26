@@ -1,6 +1,6 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSilCascade, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler }) {
+function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSilCascade, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
@@ -87,8 +87,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   // (barkod, ürün değişimi, kalem eklendikten sonra sıfırlama) kutuya yansıtılıyor; yarım yazım
   // (listede olmayan) seçimi boşaltır ama yazıyı silmez.
   const [kRenkYazi, setKRenkYazi] = useState("");
-  // Eklenecek kalemin RENK BAZLI açıklaması (v1.470.0): "Ekle" ile bu ürün+rengin bütün ölçülerine yazılır.
-  const [kAciklama, setKAciklama] = useState("");
+  // Eklenecek kalemin RENK BAZLI notları (v1.470.0 açıklama → v1.476.0 proses bazlı notlar): "Ekle" ile
+  // bu ürün+rengin bütün ölçülerine yazılır. `kNotTaslak`: yazılıp "+"lanmamış not (o da eklenir).
+  // `kNotAnahtar`: Ekle'den sonra not düzenleyicisini sıfırlamak için (iç yazı durumu temizlensin).
+  const [kNotlar, setKNotlar] = useState([]);
+  const [kNotTaslak, setKNotTaslak] = useState(null);
+  const [kNotAnahtar, setKNotAnahtar] = useState(0);
   const oncekiKRenk = useRef("");
   useEffect(() => {
     const onceki = oncekiKRenk.current;
@@ -220,7 +224,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
 
   function resetForm() {
     setCariId(""); setTarih(bugunYerel()); setTeslimTarihi(""); setNot("");
-    setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKAciklama(""); setSiparisDefter("Genel");
+    setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1); setSiparisDefter("Genel");
     setMusteriKodu(""); setKayitParaBirimi(null); setKayitKurlari({});
     setKAmbalajRenk("");
   }
@@ -338,7 +342,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   function kalemEkle() {
     if (!seciliUrun || !kRenk) return showToast("Ürün ve renk seçin");
     const fiyat = parseFloat(kFiyat) || 0;
-    const aciklama = kAciklama.trim();
+    const notlar = notlariTekille([...kNotlar, ...(kNotTaslak ? [kNotTaslak] : [])]);
     const eklenecekler = bedenSecenekleri
       .map((b) => ({ beden: b, miktar: parseFloat(kMiktarlar[b]) || 0 }))
       .filter((x) => x.miktar > 0);
@@ -360,10 +364,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         birlestirilenSayisi++;
         sonrakiKalemler = sonrakiKalemler.map((k, i) =>
           i === mevcutIndex
-            // Açıklama boş bırakıldıysa eskisi korunur: ikinci "Ekle" miktar artırmak içindir,
-            // önce yazılan notu sessizce silmesin.
+            // Notlar EKLENİR (eskiler korunur): ikinci "Ekle" miktar artırmak içindir, önce yazılan
+            // notu sessizce silmesin.
             ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
-                ...(aciklama ? { aciklama } : {}) }
+                ...(notlar.length ? { notlar: notlariTekille([...kalemNotlari(k), ...notlar]), aciklama: undefined } : {}) }
             : k
         );
       } else {
@@ -378,13 +382,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             // urunId tutulmaz: hangi ambalaj ürünü olduğu reçeteden gelir, burada yalnızca renk sapması saklanır.
             ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : null,
             // Boşsa alan hiç yazılmıyor (eski kayıtlarla aynı biçim).
-            ...(aciklama ? { aciklama } : {}),
+            ...(notlar.length ? { notlar } : {}),
           },
         ];
       }
     });
     setKalemler(sonrakiKalemler);
-    setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKAciklama("");
+    setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1);
     // Kullanıcıya AÇIKÇA geri bildirim: eğer birleştirme olduysa bunu belirtiyoruz — böylece "hiçbir şey
     // olmadı" sanıp tekrar tıklama isteği duyulmaz, tam tersi netlik sağlanır.
     if (birlestirilenSayisi > 0 && eklenenSayisi > 0) {
@@ -532,7 +536,14 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     }
     // Form siparişin kopyasıyla açıldığı için sıra korunuyor. Kilitli kalem ASIL kayıttan alınıyor;
     // formdan bir şekilde düşmüşse de sona geri ekleniyor — kilitli kalem bu yoldan silinemez.
-    const sonKalemler = kalemler.map((k) => (kilitliIdler.has(k.id) ? asillar.find((a) => a.id === k.id) : k));
+    // NOTLAR istisna (v1.476.0): kilitli kalemin miktarı/fiyatı asıldan, NOTU formdan — notlar
+    // üretimde canlı okunuyor, planlanmış işe not eklemek bu yüzden serbest (`grupNotDegistir`).
+    const sonKalemler = kalemler.map((k) => {
+      if (!kilitliIdler.has(k.id)) return k;
+      const asil = asillar.find((a) => a.id === k.id);
+      const notlar = kalemNotlari(k);
+      return { ...asil, notlar: notlar.length ? notlar : undefined, aciklama: undefined };
+    });
     kilitliAsil.forEach((k) => { if (!kalemler.some((x) => x.id === k.id)) sonKalemler.push(k); });
 
     onSave(siparisler.map((s) => (s.id !== siparis.id ? s : {
@@ -565,6 +576,33 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     });
     if (sonuc.length < degismis.length) showToast("Aynı ürün/renk/ölçüdeki satırlar birleştirildi (miktarlar toplandı)");
     setKalemler(sonuc);
+  }
+
+  // NOTLAR KİLİTLİ SATIRDA DA DEĞİŞİR (v1.476.0): planlanmış kalemin miktarı/fiyatı donuk, ama nota
+  // üretim sürerken de ihtiyaç doğuyor ("temizlemede her tek poşete") — üretim notu siparişten canlı
+  // okuduğu için buraya yazılan hemen atölyeye düşer. Birleştirme yok: yalnız not alanı değişiyor.
+  function grupNotDegistir(grupKalemIdleri, notlar) {
+    const idler = new Set(grupKalemIdleri);
+    setKalemler(kalemler.map((k) => (idler.has(k.id) ? { ...k, notlar: notlar.length ? notlar : undefined, aciklama: undefined } : k)));
+  }
+  // Notun proses seçenekleri — üretim emrinin kuracağı sırayla: ürünün o rengi için reçetedeki
+  // prosesler, her birinin ardına ürün kartında bağlı ARA proses ("Temizleme" gibi, üretimde ayrı
+  // satır olur). Sonra tanımlı diğer prosesler: reçete sonradan genişleyebilir, not kaybolmasın.
+  function notProsesleri(urun, renk) {
+    const sira = {};
+    (tanimlarProsesler || []).forEach((p, i) => { sira[p.ad] = p.sira != null ? p.sira : 100 + i; });
+    const recetedekiler = [...new Set(((urun && urun.recete) || []).filter((r) => r.proses && (!renk || r.mamulRenk === renk)).map((r) => r.proses))]
+      .sort((a, b) => (sira[a] ?? 999) - (sira[b] ?? 999));
+    const liste = [];
+    recetedekiler.forEach((p) => {
+      liste.push(p);
+      const araId = ((urun && urun.araProsesEklentileri) || {})[p];
+      const ara = araId && (tanimlarAraProsesler || []).find((x) => x.id === araId);
+      if (ara && !liste.includes(ara.ad)) liste.push(ara.ad);
+    });
+    (tanimlarProsesler || []).map((p) => p.ad).sort((a, b) => (sira[a] ?? 999) - (sira[b] ?? 999))
+      .forEach((p) => { if (!liste.includes(p)) liste.push(p); });
+    return liste;
   }
 
   function grupUrunDegistir(grupKalemIdleri, urunId) {
@@ -1499,14 +1537,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
                   satirIci
                 />
-                <input
-                  value={kAciklama}
-                  onChange={(e) => setKAciklama(e.target.value)}
-                  data-siparis-kalem-aciklama="1"
-                  placeholder={`Açıklama (${kRenk}) — isteğe bağlı`}
-                  title="Bu renge özel not: bu rengin bütün ölçülerine yazılır"
-                  style={{ ...inputStyle, flex: "1 1 160px", minWidth: 120, fontSize: 12, padding: "6px 8px" }}
-                />
+                {/* PROSES BAZLI NOT (v1.476.0 — kullanıcı: "kesim için 'deriyi iyi yerinden kes', temizleme
+                    için 'her tek poşete konacak'"). Proses "Genel" ya da reçetedeki bir proses; üretimde
+                    o prosesin satırında görünür. Birden çok not "+" ile eklenir. */}
+                <div data-siparis-kalem-notlari="1" style={{ flex: "1 1 240px", minWidth: 200 }}>
+                  <KalemNotDuzenleyici key={kNotAnahtar} notlar={kNotlar} prosesler={notProsesleri(seciliUrun, kRenk)}
+                    onDegis={setKNotlar} onTaslak={setKNotTaslak} />
+                </div>
                 <button type="button" data-kalemlere-ekle="1" onClick={kalemEkle} style={EKLE_DUGMESI}>
                   <PackagePlus size={15} /> Ekle
                 </button>
@@ -1698,30 +1735,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 </span>
                               );
                             })()}
-                            {/* RENK BAZLI AÇIKLAMA SATIRDA (v1.470.0): bu ürün+rengin bütün ölçülerine
-                                yazılır. Kilitli satırda salt okunur — planlanmış kalemin notu fişe geçti. */}
-                            {(() => {
-                              const aciklama = (g.kalemler.find((x) => x.aciklama) || {}).aciklama || "";
-                              if (g.kilit) {
-                                return aciklama ? <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontFamily: "var(--erp-font, sans-serif)", whiteSpace: "normal", marginTop: 3 }}>{aciklama}</div> : null;
-                              }
-                              return (
-                                <input
-                                  key={`${g.key}-${aciklama}`}
-                                  defaultValue={aciklama}
-                                  data-form-kalem-aciklama="1"
-                                  placeholder="açıklama…"
-                                  title="Bu renge özel açıklama — bu satırdaki bütün ölçülere yazılır"
-                                  onBlur={(e) => {
-                                    const yeni = e.target.value.trim();
-                                    if (yeni === aciklama) return;
-                                    grupDegistir(idler, { aciklama: yeni || undefined });
-                                  }}
-                                  style={{ display: "block", marginTop: 3, width: "100%", minWidth: 120, padding: "2px 5px", fontSize: 11, fontFamily: "var(--erp-font, sans-serif)",
-                                    border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "transparent" }}
-                                />
-                              );
-                            })()}
+                            {/* RENK BAZLI NOTLAR SATIRDA (v1.470.0 → v1.476.0 proses bazlı): bu ürün+rengin bütün
+                                ölçülerine yazılır. Kilitli (planlanmış) satırda da düzenlenir — üretim notu
+                                siparişten canlı okuyor (`grupNotDegistir`). */}
+                            <div data-form-kalem-notlari="1" style={{ marginTop: 3, minWidth: 200, whiteSpace: "normal" }}>
+                              <KalemNotDuzenleyici notlar={grupNotlari(g.kalemler)} prosesler={notProsesleri(urun, g.renk)}
+                                onDegis={(yeni) => grupNotDegistir(idler, yeni)} kucuk />
+                            </div>
                           </td>
                           {tumBedenler.map((b) => {
                             const k = g.kalemler.find((x) => x.beden === b);

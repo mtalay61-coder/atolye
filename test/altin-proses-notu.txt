@@ -1,0 +1,52 @@
+{
+ "atolye": [
+  "📝 deriyi iyi yerinden kes"
+ ],
+ "hatalar": [],
+ "kart": {
+  "genel": [
+   "acil"
+  ],
+  "ozet": "Sipariş notu:acil+ 2 proses notu (proses satırlarında)",
+  "prosesNotlari": {
+   "Kesim": "📝 deriyi iyi yerinden kes",
+   "Temizleme": "📝 her tek poşete konacak"
+  }
+ },
+ "kayit": [
+  {
+   "beden": "40",
+   "miktar": 2,
+   "notlar": [
+    "Temizleme: her tek poşete konacak",
+    "acil",
+    "Kesim: deriyi iyi yerinden kes"
+   ],
+   "planlama": "1001"
+  },
+  {
+   "beden": "41",
+   "miktar": 1,
+   "notlar": [
+    "Temizleme: her tek poşete konacak",
+    "acil",
+    "Kesim: deriyi iyi yerinden kes"
+   ],
+   "planlama": "1001"
+  }
+ ],
+ "kilitliSatir": {
+  "notlar": [
+   "Temizleme: her tek poşete konacak",
+   "acil",
+   "Kesim: deriyi iyi yerinden kes"
+  ],
+  "prosesSecenekleri": [
+   "Genel",
+   "Kesim",
+   "Temizleme"
+  ],
+  "var": true
+ },
+ "uretimKaydindaNotYok": true
+}

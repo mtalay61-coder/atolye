@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.475.0** · 26 Eylül 2026
+Son sürüm: **v1.476.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.475.0): Finans Raporu'na Dönem Karşılaştırma, Nakit Akışı ve Maliyet Farkı görünümleri. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "FİNANS — DÖNEM, NAKİT AKIŞI, MALİYET FARKI".
+**Son iş (26 Eylül, v1.476.0): sipariş notları prosese yazılıyor, üretimde o proseste görünüyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "PROSES BAZLI SİPARİŞ NOTLARI".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,34 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## PROSES BAZLI SİPARİŞ NOTLARI (26 Eylül, v1.476.0 — Claude Code oturumu)
+
+Kullanıcı (sıradaki işlerden 1. madde — "sipariş açıklamasını üretime taşımak" — şöyle olsun):
+"Not girdiğimizde üretime not var ise üretimin hangi prosesine ait onu da yazıp o proseste gösterecek.
+Örnek: kesim için 'deriyi iyi yerinden kes', temizleme için 'her tek poşete konacak'."
+
+- **Veri:** kalemde `notlar: [{ proses, metin }]` (proses "" = genel). v1.470'in `aciklama`sı genel not
+  olarak okunuyor (`kalemNotlari`), düzenlenince `notlar`a taşınıyor. Yardımcılar 320'de:
+  `kalemNotlari`, `grupNotlari`, `notlariTekille`, `uretimSiparisNotlari`, `notEtiketi`, `htmlKacis`,
+  bileşen `KalemNotDuzenleyici` (çipler + proses seçici + metin + "+"; `salt` gösterim).
+- **Sipariş formu (325):** Ekle satırında not düzenleyicisi; yazılıp "+"lanmamış not da Ekle'de
+  kaleme gidiyor (`kNotTaslak`). Kalem listesinde her renk satırında düzenleyici — KİLİTLİ
+  (planlanmış) satırda da (`grupNotDegistir`); kaydetme kilitli kalemi asıldan alırken NOTU formdan
+  alıyor. Proses seçenekleri: reçetedeki prosesler (tanım sırası) + her birinin ardına ürünün bağlı ara
+  prosesi + tanımlı diğer prosesler (`notProsesleri`; SiparisModule'e `tanimlarAraProsesler` geçiyor,
+  satın alma sayfasındaki örneğe `tanimlarProsesler` de eklendi — yoktu).
+- **Üretim CANLI okur, kopyalamaz** (`uretimSiparisNotlari`: kalemin `planlama.referansNo` = üretim
+  no). Planlamadan sonra eklenen not da atölyeye düşer; eski işler göç istemez. (Kutu rengi
+  kopyalanıyor çünkü tüketimi değiştiriyor; not yalnız bilgi.)
+- **Gösterim:** üretim kartı (310) başında genel not + "N proses notu", her proses satırının altında
+  sarı not kutusu (`data-uretim-proses-notu`); iş emrinde proses başlığı altında "NOT: …" ve başta
+  "SİPARİŞ NOTU"; atölye ekranında (280) iş kartında ve iş alma/teslim başlığında büyük sarı not.
+  Üretimde olmayan prosese yazılmış not genel notlarda görünür (kaybolmasın). Sipariş kartı (340) ve
+  çıktısı (075) notları "Kesim: …" etiketiyle gösteriyor. Teslim fişine not basılmıyor (iş bittikten
+  sonra basılıyor).
+- Test: yeni `senaryo-proses-notu` (kilitli kaleme not → kayıt, üretim kartı, atölye); 
+  `senaryo-siparis-form-duzen` not düzenleyicisine uyarlandı.
 
 ## FİNANS — DÖNEM, NAKİT AKIŞI, MALİYET FARKI (26 Eylül, v1.475.0 — Claude Code oturumu)
 
