@@ -2502,7 +2502,7 @@ function ProductMatrixCard({
                     padding: 10,
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                     {pg.proses !== "Belirtilmemiş" && (() => {
                       // Tanımlar'daki genel proses sırası çoğu ürün için doğru, ama bazı istisnai
                       // ürünlerde farklı olması gerekebilir. Bu oklar, o ürüne ÖZEL bir sıra farkı
@@ -2577,7 +2577,14 @@ function ProductMatrixCard({
                       ) : ""}
                       {pg.proses}{pg.ozelSiraMi ? " ★" : ""}
                     </div>
-                    {pg.proses !== "Belirtilmemiş" && (
+                    {/* ARA PROSES ADINA BAĞLI GRUP (v1.477.0): hammaddesi normal proses gibi burada, ama işçiliği
+                        ara prosesin kendi ücreti (asıl prosesin satırında) — burada ikinci bir işçilik girilirse
+                        maliyette iki kez sayılırdı. Ara prosesin altına ara proses eklenmez. */}
+                    {(tanimlarAraProsesler || []).some((ap) => ap.ad === pg.proses) ? (
+                      <span data-recete-ara-grup={pg.proses} style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-purple)", background: "#F2E7F5", padding: "2px 9px", borderRadius: "var(--erp-r-pill)" }}>
+                        Ara proses · hammaddesi otomatik tamamlanırken düşer
+                      </span>
+                    ) : pg.proses !== "Belirtilmemiş" && (
                       <label style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
                         <span style={{ fontSize: 13, color: "var(--erp-text-2)" }}>İşçilik (₺/adet):</span>
                         <input
@@ -2590,70 +2597,79 @@ function ProductMatrixCard({
                         />
                       </label>
                     )}
-                    {pg.proses !== "Belirtilmemiş" && (tanimlarAraProsesler || []).length > 0 && (
-                      <label style={{ display: "flex", alignItems: "center", gap: 4 }} title="Bu prosesten sonra, ardından gelen asıl proses işe verildiğinde otomatik tamamlanacak küçük bir işçilik kalemi seçin. Ücreti Tanımlar'da o ara proses için sabit olarak belirlenir.">
-                        <span style={{ fontSize: 13, color: "var(--erp-purple)" }}>Ara Proses:</span>
-                        <select
-                          value={(product.araProsesEklentileri || {})[pg.proses] || ""}
-                          onChange={(e) => onUrunGuncelle(product.id, {
-                            araProsesEklentileri: { ...(product.araProsesEklentileri || {}), [pg.proses]: e.target.value || undefined },
+                    {/* BİRDEN ÇOK ARA PROSES (v1.477.0 — kullanıcı: "bir prosesin altına birden fazla ara proses
+                        eklenebilmeli"). `araProsesEklentileri[proses]` artık dizi (eski tek kimlik de okunur,
+                        `araProsesIdleri`). Sıra = eklenme sırası = üretimde adım sırası. Her birinin ürüne özel
+                        ücreti ve carisi ayrı. Ara prosesin hammaddesi: reçeteye satır eklerken proses olarak ara
+                        prosesi seçin — o grup yukarıdaki "Ara proses" rozetiyle görünür. */}
+                    {pg.proses !== "Belirtilmemiş" && (tanimlarAraProsesler || []).length > 0 && !(tanimlarAraProsesler || []).some((ap) => ap.ad === pg.proses) && (() => {
+                      const idler = araProsesIdleri(product, pg.proses);
+                      const yaz = (yeniIdler) => onUrunGuncelle(product.id, {
+                        araProsesEklentileri: { ...(product.araProsesEklentileri || {}), [pg.proses]: yeniIdler.length ? yeniIdler : undefined },
+                      });
+                      // Aynı ara proses üründe tek yerde: üretimde adım adıyla bulunuyor, iki kez olamaz.
+                      const baskaYerdeKullanilan = new Set(Object.entries(product.araProsesEklentileri || {})
+                        .filter(([asil]) => asil !== pg.proses).flatMap(([asil]) => araProsesIdleri(product, asil)));
+                      const eklenebilir = tanimlarAraProsesler.filter((ap) => !idler.includes(ap.id) && !baskaYerdeKullanilan.has(ap.id));
+                      const personelListesiKart = (cariler || []).filter((c) => c.tip === "Personel" || c.tip === "Her İkisi");
+                      return (
+                        <div data-ara-prosesler={pg.proses} style={{ flexBasis: "100%", display: "grid", gap: 4 }}>
+                          {idler.map((id, sira) => {
+                            const secili = tanimlarAraProsesler.find((ap) => ap.id === id);
+                            if (!secili) return null;
+                            // Ürüne özel ücret/cari — Tanımlar'daki genel değeri ETKİLEMEZ.
+                            const ozelUcret = (product.araProsesUcretleri || {})[secili.id];
+                            const ozelCariId = (product.araProsesCariOverride || {})[secili.id];
+                            const varsayilanPersonel = (cariler || []).find((c) => c.id === secili.cariId);
+                            return (
+                              <div key={id} data-ara-proses={secili.ad} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", paddingLeft: 8, borderLeft: "2px solid #B79ACB" }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-purple)" }}>↳ {sira + 1}. ara: {secili.ad}</span>
+                                <span style={{ display: "flex", alignItems: "center", gap: 3 }} title="Bu ürüne özel ücret — boş bırakırsanız Tanımlar'daki genel ücret kullanılır">
+                                  <input
+                                    type="number" step="any" min="0"
+                                    defaultValue={ozelUcret ?? ""}
+                                    onBlur={(e) => onUrunGuncelle(product.id, {
+                                      araProsesUcretleri: { ...(product.araProsesUcretleri || {}), [secili.id]: e.target.value === "" ? undefined : (parseFloat(e.target.value) || 0) },
+                                    })}
+                                    placeholder={String(secili.ucret || 0)}
+                                    className="mono"
+                                    style={{ width: 50, padding: "4px 7px", fontSize: 12, border: `1px solid ${ozelUcret != null ? "var(--erp-brown)" : "var(--erp-border)"}`, borderRadius: "var(--erp-r-sm)" }}
+                                  />
+                                  <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-3)" }}>₺/adet {ozelUcret != null ? "— ürüne özel" : "— genel"}</span>
+                                </span>
+                                <select
+                                  value={ozelCariId || ""}
+                                  title="Bu ürüne özel cari (personel) — boş bırakırsanız Tanımlar'daki genel cari kullanılır"
+                                  onChange={(e) => onUrunGuncelle(product.id, {
+                                    araProsesCariOverride: { ...(product.araProsesCariOverride || {}), [secili.id]: e.target.value || undefined },
+                                  })}
+                                  style={{ ...inputStyle, width: 130, padding: "4px 7px", fontSize: 12, border: `1px solid ${ozelCariId ? "var(--erp-brown)" : "var(--erp-border)"}` }}
+                                >
+                                  <option value="">{varsayilanPersonel ? `${varsayilanPersonel.unvan} (genel)` : "Genel cari"}</option>
+                                  {personelListesiKart.map((per) => <option key={per.id} value={per.id}>{per.unvan}</option>)}
+                                </select>
+                                <button type="button" className="btn-ghost" data-ara-proses-kaldir={secili.ad} title="Bu ara prosesi bu prosesten kaldır"
+                                  style={{ padding: "2px 6px", fontSize: 11 }} onClick={() => yaz(idler.filter((x) => x !== id))}>
+                                  <X size={11} />
+                                </button>
+                              </div>
+                            );
                           })}
-                          style={{ ...inputStyle, width: 120, padding: "3px 5px", fontSize: 13 }}
-                        >
-                          <option value="">Yok</option>
-                          {tanimlarAraProsesler.map((ap) => <option key={ap.id} value={ap.id}>{ap.ad}</option>)}
-                        </select>
-                        {(product.araProsesEklentileri || {})[pg.proses] && (() => {
-                          const secili = tanimlarAraProsesler.find((ap) => ap.id === (product.araProsesEklentileri || {})[pg.proses]);
-                          if (!secili) return null;
-                          // Bu üründe özel bir ücret girilmişse onu, girilmemişse Tanımlar'daki genel ücreti gösterir.
-                          // Burada değiştirmek SADECE bu ürüne özel bir geçersiz kılma (override) kaydeder —
-                          // Tanımlar'daki genel/varsayılan ücreti ETKİLEMEZ.
-                          const ozelUcret = (product.araProsesUcretleri || {})[secili.id];
-                          return (
-                            <span style={{ display: "flex", alignItems: "center", gap: 3 }} title="Bu ürüne özel ücret — boş bırakırsanız Tanımlar'daki genel ücret kullanılır">
-                              <input
-                                type="number" step="any" min="0"
-                                defaultValue={ozelUcret ?? ""}
-                                onBlur={(e) => onUrunGuncelle(product.id, {
-                                  araProsesUcretleri: { ...(product.araProsesUcretleri || {}), [secili.id]: e.target.value === "" ? undefined : (parseFloat(e.target.value) || 0) },
-                                })}
-                                placeholder={String(secili.ucret || 0)}
-                                className="mono"
-                                style={{ width: 50, padding: "4px 7px", fontSize: 12, border: `1px solid ${ozelUcret != null ? "var(--erp-brown)" : "var(--erp-border)"}`, borderRadius: "var(--erp-r-sm)" }}
-                              />
-                              <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-3)" }}>
-                                ₺/adet {ozelUcret != null ? "— ürüne özel" : "— genel"}
-                              </span>
-                            </span>
-                          );
-                        })()}
-                        {(product.araProsesEklentileri || {})[pg.proses] && (() => {
-                          const secili = tanimlarAraProsesler.find((ap) => ap.id === (product.araProsesEklentileri || {})[pg.proses]);
-                          if (!secili) return null;
-                          const ozelCariId = (product.araProsesCariOverride || {})[secili.id];
-                          const personelListesiKart = (cariler || []).filter((c) => c.tip === "Personel" || c.tip === "Her İkisi");
-                          const varsayilanPersonel = (cariler || []).find((c) => c.id === secili.cariId);
-                          return (
-                            <label style={{ display: "flex", alignItems: "center", gap: 3 }} title="Bu ürüne özel cari (personel) — boş bırakırsanız Tanımlar'daki genel cari kullanılır">
-                              <select
-                                value={ozelCariId || ""}
-                                onChange={(e) => onUrunGuncelle(product.id, {
-                                  araProsesCariOverride: { ...(product.araProsesCariOverride || {}), [secili.id]: e.target.value || undefined },
-                                })}
-                                style={{
-                                  ...inputStyle, width: 110, padding: "4px 7px", fontSize: 12,
-                                  border: `1px solid ${ozelCariId ? "var(--erp-brown)" : "var(--erp-border)"}`,
-                                }}
-                              >
-                                <option value="">{varsayilanPersonel ? `${varsayilanPersonel.unvan} (genel)` : "Genel cari"}</option>
-                                {personelListesiKart.map((per) => <option key={per.id} value={per.id}>{per.unvan}</option>)}
+                          {eklenebilir.length > 0 && (
+                            <label style={{ display: "flex", alignItems: "center", gap: 4, paddingLeft: 8 }}
+                              title="Bu prosesten sonra, ardından gelen asıl proses işe verildiğinde otomatik tamamlanacak işçilik kalemi. Birden çok eklenebilir; sırayla tamamlanır.">
+                              <span style={{ fontSize: 13, color: "var(--erp-purple)" }}>+ Ara proses:</span>
+                              <select value="" data-ara-proses-ekle={pg.proses}
+                                onChange={(e) => { if (e.target.value) yaz([...idler, e.target.value]); }}
+                                style={{ ...inputStyle, width: 140, padding: "3px 5px", fontSize: 13 }}>
+                                <option value="">Seçin…</option>
+                                {eklenebilir.map((ap) => <option key={ap.id} value={ap.id}>{ap.ad}</option>)}
                               </select>
                             </label>
-                          );
-                        })()}
-                      </label>
-                    )}
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div style={{ display: "grid", gap: 10 }}>
                     {receteGrupla(pg.satirlar).map((g) => {
@@ -3781,7 +3797,7 @@ function ProductMatrixCard({
             // Ara proses ücretleri (bir ana prosesten sonra otomatik tamamlanan küçük işçilik kalemleri)
             // ana proses işçiliğine dahil DEĞİLDİR ve ayrı tutulur — bu yüzden toplam maliyete de
             // ayrıca eklenmesi gerekir; aksi halde reçetenin gerçek üretim maliyeti eksik hesaplanır.
-            const araProsesIscilik = Object.entries(product.araProsesEklentileri || {}).reduce((s, [, araProsesId]) => {
+            const araProsesIscilik = araProsesCiftleri(product).reduce((s, [, araProsesId]) => {
               if (!araProsesId) return s;
               const ozelUcret = (product.araProsesUcretleri || {})[araProsesId];
               if (ozelUcret != null) return s + ozelUcret;
@@ -3981,7 +3997,7 @@ function ProductMatrixCard({
                           </span>
                         </React.Fragment>
                       ))}
-                      {Object.entries(product.araProsesEklentileri || {}).filter(([, apId]) => apId).map(([anaProses, apId]) => {
+                      {araProsesCiftleri(product).map(([anaProses, apId]) => {
                         const ozel = (product.araProsesUcretleri || {})[apId];
                         const tanimli = (tanimlarAraProsesler || []).find((ap) => ap.id === apId);
                         const ucret = ozel != null ? ozel : (tanimli ? (tanimli.ucret || 0) : 0);

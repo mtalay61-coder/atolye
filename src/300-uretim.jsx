@@ -39,37 +39,10 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
 
   // Ürünün reçetesinde bu renk için tanımlı prosesleri, tanımlı proses sırasına göre bulur.
   // Reçetede hiç proses belirtilmemişse tek adımlı "Üretim" akışına düşer.
+  // Ortak kural (080 `uretimProsesAdimlari`): reçetedeki asıl prosesler tanım sırasıyla, her birinin
+  // ardına ürüne bağlı ara prosesler (v1.477.0: birden çok). Planlamadan doğan üretim de aynısını kurar.
   function prosesIlerlemeOlustur(urun, renk) {
-    const siraMap = {};
-    (tanimlar.prosesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
-    const kullanilanProsesler = Array.from(
-      new Set((urun.recete || []).filter((r) => r.mamulRenk === renk && r.proses).map((r) => r.proses))
-    );
-    if (kullanilanProsesler.length === 0) {
-      return [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }];
-    }
-    const siraliAsilProsesler = kullanilanProsesler
-      .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }))
-      .sort((a, b) => a.sira - b.sira);
-
-    // Her asıl prosesin ardına (varsa) bağlı Ara Proses eklenir. Ara proses, kendisinden SONRAKİ asıl
-    // proses işe verildiğinde otomatik tamamlanacağı için kendi personel/verme/tamamlama alanları
-    // başlangıçta boş kalır, sadece hangi ara proses olduğu ve sabit cariId'si işaretlenir.
-    const araEklentileri = urun.araProsesEklentileri || {};
-    const araProsesTanimlari = tanimlar.araProsesler || [];
-    const sonuc = [];
-    siraliAsilProsesler.forEach((adim) => {
-      sonuc.push(adim);
-      const araId = araEklentileri[adim.proses];
-      if (!araId) return;
-      const araTanim = araProsesTanimlari.find((ap) => ap.id === araId);
-      if (!araTanim) return;
-      sonuc.push({
-        proses: araTanim.ad, sira: adim.sira + 0.5, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null,
-        araProsesMi: true, araProsesId: araTanim.id, araProsesCariId: araTanim.cariId,
-      });
-    });
-    return sonuc;
+    return uretimProsesAdimlari(urun, renk, tanimlar);
   }
 
   function addOrder() {

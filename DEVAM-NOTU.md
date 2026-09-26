@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.476.0** · 26 Eylül 2026
+Son sürüm: **v1.477.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.476.0): sipariş notları prosese yazılıyor, üretimde o proseste görünüyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "PROSES BAZLI SİPARİŞ NOTLARI".
+**Son iş (26 Eylül, v1.477.0): bir prosesin altına birden çok ara proses; ara prosesin hammaddesi normal proses gibi (rezervasyon dahil). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "ARA PROSES — BİRDEN ÇOK, HAMMADDELİ".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,35 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ARA PROSES — BİRDEN ÇOK, HAMMADDELİ (26 Eylül, v1.477.0 — Claude Code oturumu)
+
+Kullanıcı: "Ara prosese de hammadde eklenebilir olmalı, normal proses gibi hareket edecek ve bir
+prosesin altına birden fazla ara proses eklenebilmeli." Soruldu — **seçim: "hammaddesi normal proses
+gibi"**; ara proses YİNE kendiliğinden tamamlanıyor (fasoncu, sonraki asıl proses işe verilince),
+ayrıca verilip teslim alınmıyor.
+
+- **Veri:** `urun.araProsesEklentileri[asılProses]` artık DİZİ; eski tek kimlik de okunur
+  (`araProsesIdleri`). Maliyet/baskı listeleri `araProsesCiftleri(urun)` ile (160 maliyet, 248
+  `finansIscilikBirim`, 275 iki baskı, 325 not prosesleri). Aynı ara proses üründe tek yere bağlanır
+  (üretimde adım ADIYLA bulunuyor).
+- **Adım kurulumu tek fonksiyon** `uretimProsesAdimlari` (080, hook dışında): 300'deki elle açılan
+  üretim ve 078 planlama aynı kuralı kullanıyor. Önceden: planlama ara adımı hiç eklemiyordu (iş
+  verilirken sonradan yerleştiriliyordu); reçetede ara proses adına hammadde satırı varsa o ad İKİNCİ
+  KEZ normal adım oluyordu (adla bulunduğu için karışıklık) — ara adları asıl adımlardan çıkarıldı.
+- **İş verme (080):** geç yerleştirme önceki ASIL adıma bağlı eksik ara adımların hepsini ekliyor;
+  hedefin önündeki ARDIŞIK tamamlanmamış ara adımların hepsi sırayla otomatik tamamlanıyor (her biri
+  kendi hammaddesi `{üretimNo}-{araAd}` ve işçiliği `…-İşçilik` fişiyle). Ara hammaddesi artık
+  REZERVASYONDAN da düşüyor (stok rezervasyonu → alış rezervasyonu, teslimdeki sırayla;
+  `useProsesVer`e `setSiparisler` geçiyor). Geri almada (100-app) ara proses de rezervasyon iadesi
+  alıyor — DEVAM ayrışma 10 KAPANDI.
+- **Ürün kartı reçetesi (160):** proses grubunun başlığında ara prosesler alt alta ("↳ 1. ara: Boya"),
+  her birinin ürüne özel ücreti/carisi ve kaldır düğmesi; "+ Ara proses" ile ekleme. Ara prosesin
+  hammaddesi: reçeteye satır eklerken proses olarak ara prosesi seçmek (seçicide zaten "Ara Prosesler"
+  grubu vardı). O grup "Ara proses · hammaddesi otomatik tamamlanırken düşer" rozetiyle; işçilik kutusu
+  ve ara ekleme o grupta yok (işçilik ara prosesin kendi ücreti — çift sayılmasın).
+- Test: `birim-ara-proses.js`, `senaryo-ara-proses` (eski biçim üretimde Saya verilince Boya+Temizleme
+  yerleşip tamamlanıyor, poşet stoktan ve rezervasyondan düşüyor, iki işçilik fişi).
 
 ## PROSES BAZLI SİPARİŞ NOTLARI (26 Eylül, v1.476.0 — Claude Code oturumu)
 

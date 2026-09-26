@@ -118,7 +118,7 @@ function finansVadeDurumu(vade, bugun) {
 // Reçete satırı ürün kartındaki kuralla eşleşiyor (mamul rengi + "Tüm Bedenler" ya da o beden).
 function finansIscilikBirim(urun, araProsesler) {
   let t = Object.values((urun && urun.prosesUcretleri) || {}).reduce((x, u) => x + (parseFloat(u) || 0), 0);
-  Object.values((urun && urun.araProsesEklentileri) || {}).forEach((apId) => {
+  araProsesCiftleri(urun).map(([, id]) => id).forEach((apId) => {   // v1.477.0: proses başına birden çok
     if (!apId) return;
     const ap = (araProsesler || []).find((x) => x.id === apId);
     const u = (urun.araProsesUcretleri || {})[apId] != null ? urun.araProsesUcretleri[apId] : (ap ? ap.ucret : 0);
