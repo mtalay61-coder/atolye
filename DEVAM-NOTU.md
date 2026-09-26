@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.470.0** · 26 Eylül 2026
+Son sürüm: **v1.471.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.470.0): sipariş formu sadeleşti (fiyat üst satırda, asorti + açıklama + yeşil "Ekle" tek satırda, barkod paneli katlanır) ve kalemlere renk bazlı açıklama.** Bkz. "SİPARİŞ FORMU DÜZENİ VE RENK BAZLI AÇIKLAMA".
+**Son iş (26 Eylül, v1.471.0): hammadde renkleri ürünün malzeme tipine bağlanıyor; başka tipin rengi yazınca bulunup ortak renk oluyor.** Bkz. "MALZEME TİPİNE GÖRE RENK".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,32 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## MALZEME TİPİNE GÖRE RENK (26 Eylül, v1.471.0 — Claude Code oturumu)
+
+Kullanıcı (Stok ▸ yeni hammadde "Astar Taytüyü", Malzeme Tipi "Astar"): "Stok açarken malzeme tipini
+seçip renk eklendiğinde renkler o malzeme tipine ait olsun. Ortak renk varsa onu da işaretlesin.
+Mantık o şekilde idi, kontrol et yine."
+
+**Bulunan:** yalnız "Yeni Renk" ile AÇILAN renk tipe bağlanıyordu (`yeniRenkKaydet(ad, "Hammadde",
+malzemeTipi)`). Listeden SEÇİLEN genel (tipsiz) renk ürüne girip tipsiz kalıyordu; başka tipin rengi
+(Deri'nin "Taba Deri"si) listede hiç çıkmıyordu, ortak kullanılamıyordu.
+
+- `renkleriTipeBagla(adlar, malzemeTipi)` (100-app): seçilen renklere tipi EKLER (üyelik; hiçbir tip
+  silinmez), tek `tanimlarKodluYaz`. Çağıranlar: `saveProduct` (152, yeni ürün) ve ürün kartında var
+  olan renk ekleme (160, hammadde + malzeme tipi varsa).
+- Yeni ürün formu (152) renk listesi sırası: bu tipin renkleri (birden çok tipi varsa ek "ortak: …"),
+  genel renkler (ek "genel · Astar olur"), başka tiplerin renkleri (ek "Deri · ortak olur") — sonuncular
+  kutu boşken GİZLİ, yazınca bulunur (`AramaliSecici` seçeneğine `ek` ve `yalnizAramada` eklendi).
+  Seçili renk etiketinde kaydedince birden çok tipi olacaksa mor "ortak" rozeti (`data-ortak-renk`).
+- Ürün kartı (160): hammaddede liste yine tipe göre dar; kutuya yazınca başka tipin renkleri de
+  öneriye giriyor.
+- **Karar:** genel (tipsiz) renk seçildiğinde de tipe bağlanıyor (kullanıcı: "renkler o malzeme tipine
+  ait olsun"). Sonucu: o renk artık diğer tiplerin varsayılan listesinde değil, ama yazınca bulunuyor
+  ve orada da seçilince o tipi de kazanıyor — renkler kullanıldıkça tiplerine oturuyor.
+  `renkTipeUygunMu` başka yerde yalnız 160'ta kullanılıyor (orada da yazınca bulunuyor), reçete/fiş
+  renk seçimleri tip süzmüyor — kayıp yok.
+- Test: yeni `senaryo-malzeme-tipi-renk`.
 
 ## SİPARİŞ FORMU DÜZENİ VE RENK BAZLI AÇIKLAMA (26 Eylül, v1.470.0 — Claude Code oturumu)
 
