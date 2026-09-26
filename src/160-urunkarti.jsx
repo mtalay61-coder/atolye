@@ -116,6 +116,10 @@ function ProductMatrixCard({
   const [newBeden, setNewBeden] = useState("");
   const [rHammaddeId, setRHammaddeId] = useState("");
   const [rMap, setRMap] = useState({}); // { [mamulRenk]: hammaddeRenk }
+  // GEÇMİŞTEN GELEN EŞLEŞME İŞARETİ (v1.480.0): { [mamulRenk]: { [pozisyon]: true } }. Otomatik doldurma
+  // geçmiş reçetelerden geldiyse kırmızı "kontrol edin" uyarısı; kullanıcı o seçiciye dokununca kalkar.
+  // Kaydetmeyi ENGELLEMEZ (kullanıcı: "müdahale edilmeden kaydedilenler olsun").
+  const [rGecmis, setRGecmis] = useState({});
   const [rBedenEslesme, setRBedenEslesme] = useState({}); // { [mamulBeden]: hammaddeBeden } — tüm renkler için ortak
   const [rMiktar, setRMiktar] = useState(""); // tüm renk/bedenler için ortak miktar
   // AMBALAJ SATIRI DEĞİŞKEN Mİ — reçete satırı bazında.
@@ -303,7 +307,7 @@ function ProductMatrixCard({
     setRAmbalajDegisken(ambalajUrunuMu(yeni));
     setRAmbalajRenkler([]);
     const h = yeni;
-    if (!h) { setRMap({}); setRBedenEslesme({}); setRMiktar(""); return; }
+    if (!h) { setRMap({}); setRGecmis({}); setRBedenEslesme({}); setRMiktar(""); return; }
     // PROSES SEÇİMİ KORUNUR.
     //
     // Önceden hammadde seçilince proses, o hammaddenin varsayılanıyla EZİLİYORDU. Kullanıcı
@@ -351,16 +355,25 @@ function ProductMatrixCard({
     const hRenkler = Array.from(new Set(h.variants.map((v) => v.renk)));
     // Her mamul renk için: kombinasyonsa HER POZİSYONU, kendi gerçek renk adıyla eşleştirir.
     // Kombinasyon değilse pozisyon 1 üzerinden aynı mantık uygulanır.
+    // GEÇMİŞ (v1.480.0): isim birebir tutmazsa, daha önce reçetelerde bu mamul rengine hangi hammadde
+    // rengi bağlandıysa o (`gecmisRenkOnerisi`) — "Standart"/tek seçenek kurallarından ÖNCE, çünkü
+    // kullanıcının kendi kararı. Geçmişten gelenler işaretlenir (kırmızı uyarı).
+    const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler);
     const yeniMap = {};
+    const yeniGecmis = {};
     renkler.forEach((mr) => {
       const n = pozisyonSayisi(mr);
       yeniMap[mr] = {};
       for (let p = 1; p <= n; p++) {
         const pozisyonRengi = kombinasyonRengiCoz(mr, p) || mr; // kombinasyon değilse mr'in kendisi
-        yeniMap[mr][p] = otomatikEsle(pozisyonRengi, hRenkler);
+        const isim = hRenkler.find((a) => normalize(a) === normalize(pozisyonRengi));
+        const gecmis = isim ? "" : gecmisRenkOnerisi(gecmisHarita, pozisyonRengi, h.id, hRenkler);
+        if (gecmis) (yeniGecmis[mr] = yeniGecmis[mr] || {})[p] = true;
+        yeniMap[mr][p] = isim || gecmis || otomatikEsle(pozisyonRengi, hRenkler);
       }
     });
     setRMap(yeniMap);
+    setRGecmis(yeniGecmis);
   }
 
   function ortakBedenDegistir(mamulBeden, deger) {
@@ -382,7 +395,10 @@ function ProductMatrixCard({
 
   function renkEslesmesiDegistir(mamulRenk, pozisyonNo, yeniHammaddeRenk) {
     setRMap({ ...rMap, [mamulRenk]: { ...(rMap[mamulRenk] || {}), [pozisyonNo]: yeniHammaddeRenk } });
+    // Kullanıcı seçti: artık geçmiş önerisi değil, onun kararı — uyarı kalkar.
+    setRGecmis((g) => ({ ...g, [mamulRenk]: { ...(g[mamulRenk] || {}), [pozisyonNo]: false } }));
   }
+  const gecmistenMi = (mr, p) => !!((rGecmis[mr] || {})[p]);
 
   // "Tüm modelleri tek renge bağla": seçilen bir hammadde rengini, listedeki TÜM mamul renklerine
   // (ürünün tüm renk varyantlarına) tek seferde uygular. Aktif "Renk Pozisyonu" filtresine göre:
@@ -413,6 +429,7 @@ function ProductMatrixCard({
       yeniRMap[mr] = mevcut;
     });
     setRMap(yeniRMap);
+    setRGecmis({});   // toplu atama kullanıcının kararı
     return uygulanan;
   }
 
@@ -694,7 +711,7 @@ function ProductMatrixCard({
     // PROSES SEÇİLİ KALIR. Reçete kurarken aynı proses için arka arkaya birkaç hammadde eklenir
     // (kesimde deri, astar, takviye). Her seferinde prosesi yeniden seçtirmek gereksiz tekrar,
     // üstelik seçmeyi unutunca satır "Belirtilmemiş" grubuna düşüyordu.
-    setRHammaddeId(""); setRMap({}); setRBedenEslesme({}); setRMiktar(""); setRAciklama("");
+    setRHammaddeId(""); setRMap({}); setRGecmis({}); setRBedenEslesme({}); setRMiktar(""); setRAciklama("");
     setTumModellerRenk(""); setTopluUygulamaBilgi("");
     setTumBedenlerBeden(""); setTopluBedenBilgi("");
   }
@@ -2259,6 +2276,7 @@ function ProductMatrixCard({
                                     const yeni = {};
                                     for (let p = 1; p <= n; p++) yeni[p] = e.target.value;
                                     setRMap({ ...rMap, [mr]: yeni });
+                                    setRGecmis((g) => ({ ...g, [mr]: {} }));
                                   }}
                                   style={{ ...inputStyle, width: 150, flexShrink: 0 }}
                                 >
@@ -2287,6 +2305,7 @@ function ProductMatrixCard({
                                           const yeni = {};
                                           for (let p = 1; p <= n; p++) yeni[p] = ad;
                                           setRMap({ ...rMap, [mr]: yeni });
+                                          setRGecmis((g) => ({ ...g, [mr]: {} }));
                                         }
                                         setYeniHammaddeRenkAdi(""); setYeniHammaddeRenkGiris(null);
                                       }}
@@ -2331,17 +2350,20 @@ function ProductMatrixCard({
                                   <select
                                     value={(rMap[mr] || {})[p] || ""}
                                     onChange={(e) => renkEslesmesiDegistir(mr, p, e.target.value)}
+                                    data-recete-renk-eslesme={`${mr}|${p}`}
                                     style={{
                                       ...inputStyle, width: 150, flexShrink: 0,
-                                      borderColor: otomatikBulundu ? "var(--erp-primary)" : "var(--erp-text)",
-                                      borderWidth: otomatikBulundu ? 1 : 2,
+                                      borderColor: gecmistenMi(mr, p) ? "var(--erp-danger, #B3261E)" : otomatikBulundu ? "var(--erp-primary)" : "var(--erp-text)",
+                                      borderWidth: otomatikBulundu && !gecmistenMi(mr, p) ? 1 : 2,
                                       fontWeight: otomatikBulundu ? 400 : 700,
                                     }}
                                   >
                                     <option value="">Renk seçin…</option>
                                     {Array.from(new Set(seciliHammadde.variants.map((v) => v.renk))).map((r) => <option key={r}>{r}</option>)}
                                   </select>
-                                  {otomatikBulundu ? (
+                                  {gecmistenMi(mr, p) ? (
+                                    <span data-recete-gecmis-uyari={`${mr}|${p}`} title="Daha önceki reçetelerde bu renge bu hammadde rengi bağlanmıştı — doğruysa dokunmadan ekleyebilirsiniz" style={{ fontSize: 12, color: "var(--erp-danger, #B3261E)", fontWeight: 700 }}>⚠ geçmişten · kontrol edin</span>
+                                  ) : otomatikBulundu ? (
                                     <span title="İsim eşleşmesiyle otomatik bulundu" style={{ fontSize: 12, color: "var(--erp-primary)" }}>✓ otomatik</span>
                                   ) : (
                                     <span title="Otomatik eşleşme bulunamadı — elle seçim gerekiyor" style={{ fontSize: 12, color: "var(--erp-text)", fontWeight: 700 }}>
@@ -2395,17 +2417,20 @@ function ProductMatrixCard({
                             <select
                               value={(rMap[mr] || {})[1] || ""}
                               onChange={(e) => renkEslesmesiDegistir(mr, 1, e.target.value)}
+                              data-recete-renk-eslesme={`${mr}|1`}
                               style={{
                                 ...inputStyle, width: 150, flexShrink: 0,
-                                borderColor: otomatikBulundu ? "var(--erp-primary)" : "var(--erp-text)",
-                                borderWidth: otomatikBulundu ? 1 : 2,
+                                borderColor: gecmistenMi(mr, 1) ? "var(--erp-danger, #B3261E)" : otomatikBulundu ? "var(--erp-primary)" : "var(--erp-text)",
+                                borderWidth: otomatikBulundu && !gecmistenMi(mr, 1) ? 1 : 2,
                                 fontWeight: otomatikBulundu ? 400 : 700,
                               }}
                             >
                               <option value="">Renk seçin…</option>
                               {Array.from(new Set(seciliHammadde.variants.map((v) => v.renk))).map((r) => <option key={r}>{r}</option>)}
                             </select>
-                            {otomatikBulundu ? (
+                            {gecmistenMi(mr, 1) ? (
+                              <span data-recete-gecmis-uyari={`${mr}|1`} title="Daha önceki reçetelerde bu renge bu hammadde rengi bağlanmıştı — doğruysa dokunmadan ekleyebilirsiniz" style={{ fontSize: 12, color: "var(--erp-danger, #B3261E)", fontWeight: 700 }}>⚠ geçmişten · kontrol edin</span>
+                            ) : otomatikBulundu ? (
                               <span title="İsim eşleşmesiyle otomatik bulundu" style={{ fontSize: 12, color: "var(--erp-primary)" }}>✓ otomatik</span>
                             ) : (
                               <span title="Otomatik eşleşme bulunamadı — elle seçim gerekiyor" style={{ fontSize: 12, color: "var(--erp-text)", fontWeight: 700 }}>

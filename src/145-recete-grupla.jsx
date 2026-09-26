@@ -202,3 +202,47 @@ function uretimKaynakEtiketi(gruplar) {
   if (cikis > 0 && giris === 0) return "Üretime Çıkış";
   return "Üretim";   // karışıksa yön iddia edilmiyor
 }
+
+// ================= GEÇMİŞ RENK EŞLEŞTİRMELERİ (26 Eylül, v1.480.0) =================
+//
+// Kullanıcı: "Reçete renk eşleştirmede geçmişte yapılan eşleştirmeleri hatırlama olsun; hangi renk
+// ile hangi renk eşleşiyorsa sonraki eşleştirmelerde otomatik eşleştirsin ama kırmızı uyarı versin
+// kontrol için. Müdahale edilmeden kaydedilenler olsun, değişecekse zaten değişecek."
+//
+// Kaynak: BÜTÜN ürünlerin reçete satırları — bir satır bir karar: "mamulün şu rengi (kombinasyonda o
+// POZİSYONUN rengi) → hammaddenin şu rengi". Ayrı bir hafıza tablosu tutulmuyor: reçete zaten kararın
+// kendisi; satır silinince/değişince hafıza da kendiliğinden güncel kalıyor.
+//
+// Öneri sırası (`gecmisRenkOnerisi`):
+//   1. AYNI hammaddede bu mamul rengi için verilmiş EN SON karar (eklemeTarihi),
+//   2. yoksa BAŞKA hammaddelerdeki en son karar — yalnız bu hammaddede o renk varsa.
+// Ambalajda değişken satır atlanıyor (rengi yer tutucu, siparişte seçiliyor).
+// Satırın eşleştiği mamul rengi: kombinasyon satırında ("2. Renk") o pozisyonun gerçek rengi, değilse
+// mamul renginin kendisi — reçete formu da eşleştirmeyi bu adla yapıyor (`kombinasyonRengiCoz || mr`).
+function receteSatirPozisyonRengi(r) {
+  const poz = parseInt((String((r && r.aciklama) || "").match(/^(\d+)\. Renk$/) || [])[1] || "", 10);
+  return (poz && kombinasyonRengiCoz(r.mamulRenk, poz)) || r.mamulRenk;
+}
+function gecmisRenkEslesmeleri(urunler) {
+  const nrm = (s) => String(s || "").trim().toLocaleLowerCase("tr-TR");
+  const harita = new Map();   // nrm(mamul pozisyon rengi) → [{ hammaddeId, renk, tarih }]
+  (urunler || []).forEach((u) => (u.recete || []).forEach((r) => {
+    if (!r || !r.hammaddeUrunId || !r.renk || r.ambalajDegisken) return;
+    const anahtar = nrm(receteSatirPozisyonRengi(r));
+    if (!anahtar) return;
+    const liste = harita.get(anahtar) || [];
+    liste.push({ hammaddeId: r.hammaddeUrunId, renk: r.renk, tarih: String(r.eklemeTarihi || "") });
+    harita.set(anahtar, liste);
+  }));
+  return harita;
+}
+function gecmisRenkOnerisi(harita, mamulPozisyonRengi, hammaddeId, hammaddeRenkleri) {
+  const nrm = (s) => String(s || "").trim().toLocaleLowerCase("tr-TR");
+  const liste = (harita && harita.get(nrm(mamulPozisyonRengi))) || [];
+  const var_ = (r) => (hammaddeRenkleri || []).find((x) => nrm(x) === nrm(r));
+  const enSon = (l) => l.reduce((m, x) => (m == null || x.tarih > m.tarih ? x : m), null);
+  const ayni = enSon(liste.filter((x) => x.hammaddeId === hammaddeId && var_(x.renk)));
+  if (ayni) return var_(ayni.renk);
+  const baska = enSon(liste.filter((x) => x.hammaddeId !== hammaddeId && var_(x.renk)));
+  return baska ? var_(baska.renk) : "";
+}
