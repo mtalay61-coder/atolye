@@ -24,7 +24,8 @@ kalıpları" bölümlerini, ayrıca dokunacağın konunun bölümünü oku (`gre
 - `*.sql`, `supabase-*.ts` — Supabase şeması ve fonksiyonları (kullanıcı elle çalıştırır).
 - `index.html` — başlatıcı: `surum.json`'u okuyup yayındaki sürüme yönlendirir. `manifest.json`,
   `sw.js`, `ikon-*.png` — kurulabilir uygulama (PWA).
-- `atolye-erp-vX.Y.Z.html` — yayınlanmış sürümler (ÜRETİLEN dosyalar).
+- `atolye-erp-vX.Y.Z.html` — yayınlanmış sürümler (ÜRETİLEN dosyalar). `yap.sh` her derlemede yalnız
+  en yeni 3 tanesini bırakır, eskileri `git rm` ile siler (depo şişmesin; geçmişte dururlar).
 
 ## Komutlar
 

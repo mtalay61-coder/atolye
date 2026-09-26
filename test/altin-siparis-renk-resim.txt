@@ -1,0 +1,30 @@
+{
+ "cikinca": {
+  "kutu": "Siyah",
+  "kutuResmi": true,
+  "matris": true
+ },
+ "hatalar": [],
+ "hepsi": [
+  "Kahve Süet",
+  "Siyah (resim)"
+ ],
+ "kahveSecilince": {
+  "kutu": "Kahve Süet",
+  "kutuResmi": false,
+  "matris": true
+ },
+ "pozKutusu": true,
+ "pozSecilen": "Taba Deri (72)",
+ "pozTaba": [
+  "Taba",
+  "Taba Deri (72)",
+  "Taba Süet (71)"
+ ],
+ "sueYazinca": [
+  "Kahve Süet"
+ ],
+ "yarimYazimda": {
+  "matris": false
+ }
+}

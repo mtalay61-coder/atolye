@@ -52,6 +52,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   const [yrRenkSayisi, setYrRenkSayisi] = useState(1);
   const [yrPozisyonlar, setYrPozisyonlar] = useState({}); // { pozisyonNo: renkId }
   const [yrKaynakRenk, setYrKaynakRenk] = useState("");
+  // Pozisyon kutularında yazılan metin (v1.469.0); seçim `yrPozisyonlar`da kimlikle.
+  const [yrPozisyonYazi, setYrPozisyonYazi] = useState({});
   const [yrHammaddeRenkleri, setYrHammaddeRenkleri] = useState({});
   // Panel içinden yeni mamul rengi oluşturma: hangi pozisyon için ve hangi ad.
   const [yrYeniPozisyon, setYrYeniPozisyon] = useState(null);
@@ -71,6 +73,18 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   // cihazın içinde yapılıyor — dışarıya hiçbir şey gitmiyor, uydurma ürün üretilemez.
   const [fotoAcik, setFotoAcik] = useState(false);
   const [kRenk, setKRenk] = useState("");
+  // Renk kutusunda YAZILAN metin (v1.469.0): seçim `kRenk`, yazı bu. Dışarıdan değişen seçim
+  // (barkod, ürün değişimi, kalem eklendikten sonra sıfırlama) kutuya yansıtılıyor; yarım yazım
+  // (listede olmayan) seçimi boşaltır ama yazıyı silmez.
+  const [kRenkYazi, setKRenkYazi] = useState("");
+  const oncekiKRenk = useRef("");
+  useEffect(() => {
+    const onceki = oncekiKRenk.current;
+    oncekiKRenk.current = kRenk;
+    // Seçim geldiyse kutuya yazılır; seçim DIŞARIDAN boşaldıysa (kutuda hâlâ eski renk yazıyor)
+    // kutu da boşalır. Yazarken boşalan seçimde kutudaki yarım metin korunur.
+    setKRenkYazi((y) => (kRenk ? kRenk : (y === onceki ? "" : y)));
+  }, [kRenk]);
   const [kMiktarlar, setKMiktarlar] = useState({}); // { beden: miktarString }
 
   useEffect(() => {
@@ -742,6 +756,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     });
     if (Object.keys(cozulen).length === 0) return;
     setYrPozisyonlar((onceki) => ({ ...onceki, ...cozulen }));
+    setYrPozisyonYazi({});
     setYrBekleyenAdlar(kalan);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tanimlarRenkler, yrBekleyenAdlar]);
@@ -1069,7 +1084,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     <button
                       key={n}
                       type="button"
-                      onClick={() => { setYrRenkSayisi(n); setYrPozisyonlar({}); }}
+                      onClick={() => { setYrRenkSayisi(n); setYrPozisyonlar({}); setYrPozisyonYazi({}); }}
                       style={{
                         width: 26, height: 26, borderRadius: "50%",
                         border: `1.5px solid ${yrRenkSayisi === n ? "var(--erp-purple)" : "var(--erp-border)"}`,
@@ -1091,22 +1106,37 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                           için mamul listesi boş kalabiliyor; o durumda kullanıcı Tanımlar'a gidip renk
                           açmadan sipariş giremiyordu — tam da bu tıkanma yaşandı.
                           Aradığı renk listede yoksa buradan oluşturuyor; "Mamul" tipiyle kaydedilir. */}
-                      <select
-                        value={yrPozisyonlar[poz] || ""}
-                        onChange={(e) => {
-                          if (e.target.value === "__yeni__") { setYrYeniPozisyon(poz); setYrYeniAd(""); return; }
-                          setYrPozisyonlar({ ...yrPozisyonlar, [poz]: e.target.value });
-                        }}
-                        style={{ ...inputStyle, width: 145 }}
-                      >
-                        <option value="">
-                          {mamulRenkSecenekleri.length === 0 ? "Renk tanımlı değil" : "Seçin…"}
-                        </option>
-                        {mamulRenkSecenekleri.map((r) => (
-                          <option key={r.id} value={r.id}>{r.ad}{r.kod ? ` (${r.kod})` : ""}</option>
-                        ))}
-                        {onYeniRenkKaydet && <option value="__yeni__">+ Yeni renk oluştur…</option>}
-                      </select>
+                      {/* YAZARAK SEÇİM (v1.469.0). Etiket "Ad (ton kodu)"; seçim kimlikle tutuluyor.
+                          "+ Yeni" düğmesi listede olmayan rengi oluşturuyor (eski "+ Yeni renk oluştur…"). */}
+                      {(() => {
+                        const etiket = (r) => `${r.ad}${r.kod ? ` (${r.kod})` : ""}`;
+                        const secili = mamulRenkSecenekleri.find((r) => r.id === yrPozisyonlar[poz]);
+                        return (
+                          <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <span style={{ width: 170 }}>
+                              <AramaliMetin
+                                veriAdi="data-siparis-yeni-renk-poz"
+                                deger={yrPozisyonYazi[poz] != null ? yrPozisyonYazi[poz] : (secili ? etiket(secili) : "")}
+                                onDegis={(v) => {
+                                  setYrPozisyonYazi((y) => ({ ...y, [poz]: v }));
+                                  const bulunan = mamulRenkSecenekleri.find((r) => etiket(r) === v);
+                                  setYrPozisyonlar((p) => ({ ...p, [poz]: bulunan ? bulunan.id : "" }));
+                                }}
+                                oneriler={mamulRenkSecenekleri.map(etiket)}
+                                yalnizListeden
+                                placeholder={mamulRenkSecenekleri.length === 0 ? "Renk tanımlı değil" : "Yazın ya da seçin…"}
+                              />
+                            </span>
+                            {onYeniRenkKaydet && (
+                              <button type="button" className="btn-ghost" title="Listede olmayan rengi oluştur"
+                                style={{ padding: "5px 7px", fontSize: 11, whiteSpace: "nowrap" }}
+                                onClick={() => { setYrYeniPozisyon(poz); setYrYeniAd(""); }}>
+                                <Plus size={11} /> Yeni
+                              </button>
+                            )}
+                          </span>
+                        );
+                      })()}
                       {yrYeniPozisyon === poz && (
                         <span style={{ display: "flex", gap: 4, marginTop: 3 }}>
                           <input
@@ -1247,7 +1277,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     setKRenk(etiket);
                     setKMiktarlar({});
                     setYeniRenkPaneli(false);
-                    setYrPozisyonlar({}); setYrHammaddeRenkleri({});
+                    setYrPozisyonlar({}); setYrPozisyonYazi({}); setYrHammaddeRenkleri({});
                   }}
                 >
                   <Save size={13} /> Model rengini ve reçetesini ekle
@@ -1311,10 +1341,26 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 {/* Düğme KIRILABİLİR: sığmazsa seçiciyi ezmek yerine alt satıra geçiyor.
                     Seçicinin alt sınırı var, çünkü asıl iş onda. */}
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                  <select value={kRenk} onChange={(e) => { setKRenk(e.target.value); setKMiktarlar({}); }} style={{ ...inputStyle, flex: "1 1 120px", minWidth: 110 }} disabled={!seciliUrun}>
-                    <option value="">Seçin…</option>
-                    {renkSecenekleri.map((r) => <option key={r}>{r}</option>)}
-                  </select>
+                  {/* RENK YAZARAK + RESİMLİ (v1.469.0 — kullanıcı: "stok renk resimleri tanımlı ise renk
+                      içinde resim göstersin, yazdıkça daralan liste"). Kutudaki metin ayrı tutuluyor
+                      (`kRenkYazi`); `kRenk` yalnız listedeki bir renk seçilince değişiyor — yarım
+                      yazım miktar matrisini ve kalemi bozmasın. */}
+                  <div style={{ flex: "1 1 160px", minWidth: 140 }}>
+                    <AramaliMetin
+                      veriAdi="data-siparis-renk-arama"
+                      deger={kRenkYazi}
+                      onDegis={(v) => {
+                        setKRenkYazi(v);
+                        const gecerli = renkSecenekleri.includes(v) ? v : "";
+                        if (gecerli !== kRenk) { setKRenk(gecerli); setKMiktarlar({}); }
+                      }}
+                      oneriler={renkSecenekleri}
+                      resimler={(seciliUrun && seciliUrun.renkResimleri) || {}}
+                      yalnizListeden
+                      disabled={!seciliUrun}
+                      placeholder={seciliUrun ? "Renk yazın ya da seçin…" : "Önce ürün seçin"}
+                    />
+                  </div>
                   {/* Aranan renk stokta yoksa sipariş girişini bırakıp Stok ekranına gitmek, oradan
                       renk ekleyip reçetesini kurmak ve geri dönmek gerekiyordu. Bu düğme aynı işi
                       sipariş ekranından yaptırır — renk ve reçete TEK adımda kurulur. */}
@@ -1328,6 +1374,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                         setYeniRenkPaneli((v) => !v);
                         setYrRenkSayisi(1);
                         setYrPozisyonlar({});
+                        setYrPozisyonYazi({});
                         setYrKaynakRenk(renkSecenekleri[0] || "");
                         setYrHammaddeRenkleri({});
                       }}
