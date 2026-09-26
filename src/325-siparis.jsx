@@ -1604,7 +1604,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     </tr>
                     <tr>
                       {bedenSecenekleri.map((b) => {
-                        const { fiyat: bedenFiyati, kaynak: bedenKaynak } = fiyatBul(seciliUrun, kRenk, b, cariId, tip, cariler);
+                        const { fiyat: bedenFiyati, kaynak: bedenKaynak, paraBirimi: bedenPb } = fiyatBul(seciliUrun, kRenk, b, cariId, tip, cariler);
+                        const bedenSembol = PARA_SEMBOLU[bedenPb] || bedenPb || "₺";   // kuralın kendi birimi (v1.481.0)
                         const girilenFiyat = parseFloat(kFiyat) || 0;
                         const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati !== girilenFiyat;
                         return (
@@ -1612,12 +1613,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             {fiyatFarkli && (
                               <button
                                 type="button"
-                                title={`${bedenKaynak} kuralına göre bu beden için özel fiyat: ${bedenFiyati} ₺. Uygulamak için tıklayın.`}
-                                onClick={() => setKFiyat(String(bedenFiyati))}
+                                title={`${bedenKaynak} kuralına göre bu beden için özel fiyat: ${bedenFiyati} ${bedenSembol}. Uygulamak için tıklayın.`}
+                                onClick={() => { setKFiyat(String(bedenFiyati)); if (bedenPb) setKParaBirimi(bedenPb); }}
                                 className="mono"
                                 style={{ fontSize: 9, fontWeight: 700, color: "#8A6A2E", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                               >
-                                özel: {bedenFiyati}₺
+                                özel: {bedenFiyati}{bedenSembol}
                               </button>
                             )}
                           </td>

@@ -1,0 +1,19 @@
+{
+ "dokununca": {
+  "Kahve Süet|1": "Taba",
+  "Siyah|1": "Siyah"
+ },
+ "hatalar": [],
+ "ilk": {
+  "Kahve Süet|1": "Taba ⚠ geçmişten",
+  "Siyah|1": "Siyah"
+ },
+ "recete": [
+  "Kahve Süet → Taba",
+  "Siyah → Siyah"
+ ],
+ "yenidenSecince": {
+  "Kahve Süet|1": "Taba ⚠ geçmişten",
+  "Siyah|1": "Siyah"
+ }
+}

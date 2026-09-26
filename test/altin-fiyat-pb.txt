@@ -1,0 +1,16 @@
+{
+ "baslangic": {
+  "alisBasligi": "Alış Fiyatı (2 $ genel)",
+  "pb": "USD"
+ },
+ "hatalar": [],
+ "kayit": [
+  "Alış · renk Siyah: 0.18 USD",
+  "Alış · renk Taba: 12.5 TRY"
+ ],
+ "liste": [
+  "Renk: Siyah: 0,18 $",
+  "Renk: Taba: 12,5 ₺"
+ ],
+ "siyahKutuBirimi": "0,18 $"
+}

@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.479.0** · 26 Eylül 2026
+Son sürüm: **v1.481.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.479.0): renksiz üründe fiş ve siparişte renk sorulmuyor ve miktar kutusunda "Standart" yazmıyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "RENKSİZ ÜRÜNDE RENK SORULMUYOR (GENİŞ TANIM)".
+**Son iş (26 Eylül, v1.481.0): fiyatlandırmada para birimi ve virgüllü fiyat girişi. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "FİYATLANDIRMADA PARA BİRİMİ".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,42 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
+
+Kullanıcı (Deri ▸ Fiyatlandırma, renk tek fiyatı ",18", her yerde ₺): "Fiyatlandırmada para birimi
+olsun. Daha anlaşılır şekilde fiyat girebilelim."
+
+- Kural `paraBirimi` taşıyabiliyordu (`fiyatBul` okuyor, 21 Eylül) ama ürün kartı (160) hiç
+  yazmıyordu. Şimdi `fkParaBirimi` (varsayılan kartın o taraftaki birimi, `kartPb`; Alış/Satış
+  sekmesi değişince döner) — "Yeni Özel Fiyat Ekle" başlığında ₺/$/€ düğmeleri (`data-fk-pb`). Her kayıt
+  (`fiyatKuraliKaydetDogrudan`) `paraBirimi` yazıyor; geçmiş kaydı `paraBirimi`/`eskiParaBirimi`.
+- Fiyat kutuları `fiyatKutusu` (84 px, metin + `inputMode=decimal`, virgül kabul — `fiyatSayisi`),
+  yanında kuralın KENDİ birimi; seçili birimden farklıysa turuncu (değiştirilirse seçili birime geçer).
+  Başlıklar "Tek fiyat (bu rengin tümü / bu ölçünün tümü)", altında nasıl girileceği yazılı.
+- Kural listesi, geçmiş, "Alış/Satış Fiyatı (… genel)" başlığı ve sipariş formundaki "özel: …" ipucu
+  (325; dokununca birimi de seçiyor) doğru sembolü gösteriyor. Eski kurallar (birimsiz) kartın
+  birimiyle gösteriliyor — `fiyatBul` da zaten öyle hesaplıyordu.
+- Test: yeni `senaryo-fiyat-pb`.
+
+## REÇETEDE GEÇMİŞ RENK EŞLEŞTİRMESİ (26 Eylül, v1.480.0 — Claude Code oturumu)
+
+Kullanıcı (ürün kartı ▸ Reçete ▸ hammadde ekle, "Mamul: Kahve Süet → Kahve ✓ otomatik"): "Reçete
+renk eşleştirmede geçmişte yapılan eşleştirmeleri hatırlama olsun; hangi renk ile hangi renk
+eşleşiyorsa sonraki eşleştirmelerde otomatik eşleştirme ama kırmızı uyarı versin kontrol için.
+Müdahale edilmeden kaydedilenler olsun. Değişecekse zaten değişecek."
+
+- **Hafıza = reçetelerin kendisi** (ayrı tablo yok): `gecmisRenkEslesmeleri(tumUrunler)` (145) bütün
+  ürünlerin reçete satırlarından "mamul (pozisyon) rengi → hammadde rengi" kararlarını topluyor.
+  Kombinasyon satırında ("2. Renk") o pozisyonun gerçek rengi anahtar (`receteSatirPozisyonRengi`);
+  değişken ambalaj satırı atlanıyor (rengi yer tutucu).
+- **Öneri** (`gecmisRenkOnerisi`): aynı hammaddede en son karar; yoksa başka hammaddelerde bu
+  hammaddede bulunan renklerden en son karar.
+- **Sıra** (160 `hammaddeSec`): 1. isim birebir (✓ otomatik, uyarısız) → 2. GEÇMİŞ (kırmızı çerçeve +
+  "⚠ geçmişten · kontrol edin", `rGecmis`) → 3. "Standart" → 4. tek seçenek. Seçiciye dokununca,
+  toplu atamada ya da hammadde değişince işaret kalkıyor/yeniden kuruluyor. Kaydetmeyi ENGELLEMİYOR.
+- Test: `birim-gecmis-renk.js`, `senaryo-gecmis-renk` (Bot'ta Kahve Süet → Taba kararı; Çizme'de
+  Deri eklenince Taba uyarılı geliyor, Siyah uyarısız; dokunmadan ekleyince satırlar Taba ile yazılıyor).
 
 ## RENKSİZ ÜRÜNDE RENK SORULMUYOR (GENİŞ TANIM) (26 Eylül, v1.478.0 — Claude Code oturumu)
 
