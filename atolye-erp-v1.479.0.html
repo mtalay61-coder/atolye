@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.476.0</title>
+<title>Atölye ERP 1.479.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1927,9 +1927,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.476.0";
+const SURUM = "1.479.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Siparis notlari prosese yazilip uretimde o proseste gorunuyor";
+const SURUM_NOTU = "Fis ve siparis miktar kutularinda Standart yazmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1937,6 +1937,22 @@ const SURUM_NOTU = "Siparis notlari prosese yazilip uretimde o proseste gorunuyo
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.479.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Fiş formunda renksiz/ölçüsüz ürünün miktar kutusunun üstünde, fiş kalem tablolarında ve sipariş miktar matrisinde 'Standart' yazmıyor"] },
+    { surum: "1.478.0", tarih: "26.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Alış/satış fişinde ve siparişte rengi boş kayıtlı ya da hiç varyantı olmayan renksiz üründe renk kutusu açılıp miktar girilemiyordu — artık renk sorulmuyor, miktar kutusu doğrudan açılıyor"] },
+    { surum: "1.477.0", tarih: "26.09.2026",
+        eklenen: ["Bir prosesin altına birden çok ara proses (sırayla tamamlanır; her birinin ürüne özel ücreti ve carisi ayrı)"],
+        degisen: [
+            "Ara prosesin hammaddesi normal proses gibi: stoktan düşerken rezervasyondan da düşüyor, geri alınınca rezervasyon iade ediliyor",
+            "Planlamadan açılan üretimde ara prosesler baştan yerinde (önceden iş verilirken ekleniyordu)",
+            "Reçetede ara proses grubu 'Ara proses' rozetiyle; o grupta ayrıca işçilik girilmiyor (çift sayılmasın)",
+        ],
+        duzeltilen: ["Reçetede ara proses adına hammadde bağlıyken üretimde o ad ikinci kez normal adım olarak açılıyordu"] },
     { surum: "1.476.0", tarih: "26.09.2026",
         eklenen: [
             "Sipariş kalemine proses bazlı not: 'Kesim: deriyi iyi yerinden kes', 'Temizleme: her tek poşete konacak' — bir renge birden çok not",
@@ -8265,20 +8281,13 @@ function usePlanlama(d) {
             // SİLİNENLER DE SAYILIYOR: numara serbest kalmıyor, çöpteki üretimin numarası yeniden
             // verilmiyor. Aksi halde eski etiket ve parça barkodları yeni üretime aitmiş gibi görünürdü.
             let sayac = enBuyukUretimNo(uretim, cop) - URETIM_NO_TABAN;
-            const siraMap = {};
-            (tanimlar.prosesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
             Object.entries(renkGruplari).forEach(([renk, satirlar]) => {
                 sayac++;
                 const uretimNo = String(URETIM_NO_TABAN + sayac);
                 const urun = stok.find((p) => p.id === satirlar[0].urunId);
-                const kullanilanProsesler = urun
-                    ? Array.from(new Set((urun.recete || []).filter((r) => r.mamulRenk === renk && r.proses).map((r) => r.proses)))
-                    : [];
-                const prosesIlerleme = kullanilanProsesler.length > 0
-                    ? kullanilanProsesler
-                        .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null }))
-                        .sort((a, b) => a.sira - b.sira)
-                    : [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null }];
+                // Elle açılan üretimle AYNI adım kuralı (v1.477.0, `uretimProsesAdimlari`): ara prosesler baştan
+                // yerinde (önceden iş verilirken sonradan ekleniyordu) ve ara proses adı normal adım olmuyor.
+                const prosesIlerleme = uretimProsesAdimlari(urun, renk, tanimlar);
                 yeniUretimler.push({
                     id: uid("uretim"),
                     siparisNo: uretimNo,
@@ -9583,8 +9592,55 @@ function useUretimTeslim(d) {
 //     ayırmak serbest stoğu olduğundan az gösterirdi.
 //   • Ara proses işçiliği AYRI FİŞ: iki farklı kişiye iki farklı ücret ödeniyor, tek fişte
 //     toplamak "kime ne ödendi" sorusunu cevapsız bırakırdı.
+// ================= ARA PROSESLER — BİRDEN ÇOK, HAMMADDELİ (26 Eylül, v1.477.0) =================
+//
+// Kullanıcı: "Ara prosese de hammadde eklenebilir olmalı, normal proses gibi hareket edecek ve bir
+// prosesin altına birden fazla ara proses eklenebilmeli." (Seçim: hammaddesi normal proses gibi;
+// ara proses yine kendiliğinden tamamlanır — fasoncu.)
+//
+// `urun.araProsesEklentileri[asılProses]` artık DİZİ (eski kayıtta tek kimlik — ikisi de okunur).
+// Üretim adımları tek fonksiyondan (`uretimProsesAdimlari`): hem elle açılan üretim (300) hem
+// planlamadan doğan (078) aynı sırayı kuruyor. Önceden planlama ara adımı hiç eklemiyordu (iş
+// verilirken sonradan yerleştiriliyordu) ve reçetede ara proses adına bağlı hammadde satırı varsa
+// o ad İKİNCİ KEZ normal adım olarak açılıyordu — ara proses adları normal adımdan çıkarıldı.
+function araProsesIdleri(urun, asilProses) {
+    const v = ((urun && urun.araProsesEklentileri) || {})[asilProses];
+    return (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean);
+}
+// Ürünün bütün (asıl proses, ara proses kimliği) çiftleri — maliyet ve baskı listeleri için.
+function araProsesCiftleri(urun) {
+    return Object.keys((urun && urun.araProsesEklentileri) || {}).flatMap((asil) => araProsesIdleri(urun, asil).map((id) => [asil, id]));
+}
+function uretimProsesAdimlari(urun, renk, tanimlar) {
+    const siraMap = {};
+    ((tanimlar && tanimlar.prosesler) || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
+    const araTanimlari = (tanimlar && tanimlar.araProsesler) || [];
+    const araAdlari = new Set(araTanimlari.map((ap) => ap.ad));
+    const asillar = Array.from(new Set(((urun && urun.recete) || [])
+        .filter((r) => r.mamulRenk === renk && r.proses && !araAdlari.has(r.proses)).map((r) => r.proses)));
+    if (asillar.length === 0) {
+        return [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }];
+    }
+    const sonuc = [];
+    asillar
+        .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }))
+        .sort((a, b) => a.sira - b.sira)
+        .forEach((adim) => {
+        sonuc.push(adim);
+        // Ara adım kendisinden SONRAKİ asıl proses işe verilince otomatik tamamlanır; personel/verme
+        // alanları boş doğar, yalnız hangi ara proses ve sabit carisi işaretli.
+        araProsesIdleri(urun, adim.proses).forEach((id, i) => {
+            const ap = araTanimlari.find((x) => x.id === id);
+            if (!ap || sonuc.some((x) => x.proses === ap.ad))
+                return; // aynı ad iki kez adım olmasın
+            sonuc.push({ proses: ap.ad, sira: adim.sira + 0.5 + i * 0.01, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null,
+                araProsesMi: true, araProsesId: ap.id, araProsesCariId: ap.cariId, atamalar: [] });
+        });
+    });
+    return sonuc;
+}
 function useProsesVer(d) {
-    const { uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari, } = d;
+    const { uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari, setSiparisler, } = d;
     const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMiktarlariHam, parcaBarkod, verilenHammaddeler) => {
         const siparis = uretim.find((o) => o.id === uretimId);
         if (!siparis || !siparis.prosesIlerleme)
@@ -9600,25 +9656,25 @@ function useProsesVer(d) {
         // "İyileştirme": bu üretim siparişi, ara proses ürüne bağlanmadan ÖNCE oluşturulmuş olabilir —
         // o zaman prosesIlerleme dizisinde ara proses adımı hiç yoktur. Hemen önceki GERÇEK adımın
         // ardına, ÜRÜNÜN GÜNCEL tanımına göre bağlı bir ara proses varsa, burada eksikse diziye ekleriz.
+        // v1.477.0: birden çok ara proses — önceki ASIL adıma bağlı olup dizide olmayanların hepsi, hedef
+        // adımın hemen önüne (varolan ara adımlardan sonra) ekleniyor.
         let calismaProsesIlerleme = siparis.prosesIlerleme;
-        if (urun && adimIndex > 0) {
-            const hemenOnceki = calismaProsesIlerleme[adimIndex - 1];
-            if (!hemenOnceki.araProsesMi) {
-                const araId = (urun.araProsesEklentileri || {})[hemenOnceki.proses];
-                if (araId) {
-                    const araTanimIyilestir = (tanimlar.araProsesler || []).find((ap) => ap.id === araId);
-                    if (araTanimIyilestir) {
-                        const yeniAdim = {
-                            proses: araTanimIyilestir.ad, sira: (hemenOnceki.sira ?? 0) + 0.5, tamamlandiMi: false,
-                            personelId: null, tamamlanmaTarihi: null, verildiMi: false, verilmeTarihi: null,
-                            araProsesMi: true, araProsesId: araTanimIyilestir.id, araProsesCariId: araTanimIyilestir.cariId,
-                        };
-                        calismaProsesIlerleme = [
-                            ...calismaProsesIlerleme.slice(0, adimIndex),
-                            yeniAdim,
-                            ...calismaProsesIlerleme.slice(adimIndex),
-                        ];
-                    }
+        if (urun && adimIndex > 0 && !calismaProsesIlerleme[adimIndex].araProsesMi) {
+            let k = adimIndex - 1;
+            while (k >= 0 && calismaProsesIlerleme[k].araProsesMi)
+                k--;
+            const asil = k >= 0 ? calismaProsesIlerleme[k] : null;
+            if (asil) {
+                const eksikler = araProsesIdleri(urun, asil.proses)
+                    .map((id) => (tanimlar.araProsesler || []).find((ap) => ap.id === id))
+                    .filter((ap) => ap && !calismaProsesIlerleme.some((x) => x.araProsesId === ap.id || x.proses === ap.ad));
+                if (eksikler.length) {
+                    const yeniAdimlar = eksikler.map((ap, i) => ({
+                        proses: ap.ad, sira: (asil.sira ?? 0) + 0.5 + (adimIndex - 1 - k + i) * 0.01, tamamlandiMi: false,
+                        personelId: null, tamamlanmaTarihi: null, verildiMi: false, verilmeTarihi: null,
+                        araProsesMi: true, araProsesId: ap.id, araProsesCariId: ap.cariId,
+                    }));
+                    calismaProsesIlerleme = [...calismaProsesIlerleme.slice(0, adimIndex), ...yeniAdimlar, ...calismaProsesIlerleme.slice(adimIndex)];
                 }
             }
         }
@@ -9630,8 +9686,16 @@ function useProsesVer(d) {
         // otomatik olarak tamamlanır — kendi sabit cariye (personele) işçiliği işlenir. Bu SADECE bu adıma
         // İLK KEZ bir atama yapılırken (yani adım daha önce hiç iş görmemişken) tetiklenir.
         const ilkAtamaMi = mevcutAtamalar.length === 0;
-        const oncekiAdim = gercekAdimIndex > 0 ? calismaProsesIlerleme[gercekAdimIndex - 1] : null;
-        const araProsesOtomatikTamamlanacakMi = ilkAtamaMi && oncekiAdim && oncekiAdim.araProsesMi && !oncekiAdim.tamamlandiMi;
+        // Birden çok ara proses (v1.477.0): hedefin hemen önündeki ARDIŞIK ara adımların tamamlanmamış
+        // olanları, sırayla.
+        const tamamlanacakAralar = [];
+        if (ilkAtamaMi) {
+            for (let k = gercekAdimIndex - 1; k >= 0 && calismaProsesIlerleme[k].araProsesMi; k--) {
+                if (!calismaProsesIlerleme[k].tamamlandiMi)
+                    tamamlanacakAralar.unshift(calismaProsesIlerleme[k]);
+            }
+        }
+        const araProsesOtomatikTamamlanacakMi = tamamlanacakAralar.length > 0;
         // "Önceki adımdan akan miktar" hesaplanır — ara proses adımları (araProsesMi) zaten kendi
         // doğaları gereği her zaman tam akış sağlar (bkz. oncekiAdimdanMevcutBedenler içindeki not),
         // bu yüzden burada ekstra bir "sanki tamamlanmış" varsayımına gerek yoktur.
@@ -9720,7 +9784,11 @@ function useProsesVer(d) {
             return { ...p, atamalar: yeniAtamalar, verildiMi: hepsiDagitildi };
         });
         let nextStok = stok;
-        if (araProsesOtomatikTamamlanacakMi) {
+        // Ara prosesin hammaddesi REZERVASYONDAN da düşer (v1.477.0 — normal proses gibi): teslimdeki
+        // `rezervasyonDusulecek` ile aynı biçim, aşağıda aynı sırayla (önce stok, sonra alış rezervasyonu).
+        const araRezervasyonDusulecek = [];
+        const araMesajlari = [];
+        tamamlanacakAralar.forEach((oncekiAdim) => {
             // Ara prosesin ücreti, önce BU ÜRÜNE ÖZEL bir geçersiz kılma (override) var mı diye bakılır;
             // yoksa Tanımlar'da o ara proses için tanımlanmış GENEL/varsayılan ücret kullanılır.
             const araTanim = (tanimlar.araProsesler || []).find((ap) => ap.id === oncekiAdim.araProsesId)
@@ -9736,7 +9804,7 @@ function useProsesVer(d) {
             // hammaddeleri tüketir — tek seferde TÜM sipariş adedi için (ara proses parçalı atama desteklemez).
             const hareketOzetAra = [];
             if (urun && urun.recete) {
-                nextStok = stok.map((p) => {
+                nextStok = nextStok.map((p) => {
                     let pDegisti = false;
                     let variants = p.variants;
                     const yeniHareketler = [];
@@ -9756,6 +9824,7 @@ function useProsesVer(d) {
                         variants = variants.map((v) => v.renk === etkinRenk && v.beden === r.beden ? { ...v, miktar: stokYuvarla(v.miktar - tuketilecek) } : v);
                         pDegisti = true;
                         hareketOzetAra.push(`${r.hammaddeAd} -${tuketilecek} ${r.birim}`);
+                        araRezervasyonDusulecek.push({ hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd, renk: etkinRenk, beden: r.beden, miktar: tuketilecek, birim: r.birim });
                         yeniHareketler.push({
                             id: uid("hrk"), tarih: new Date().toISOString(),
                             renk: etkinRenk, beden: r.beden, miktar: -tuketilecek,
@@ -9768,7 +9837,7 @@ function useProsesVer(d) {
                 });
             }
             if (araCariId && araTutar > 0) {
-                nextCariler = cariler.map((c) => c.id === araCariId
+                nextCariler = nextCariler.map((c) => c.id === araCariId
                     ? {
                         ...c,
                         hareketler: [{
@@ -9798,18 +9867,31 @@ function useProsesVer(d) {
                             }, ...(c.hareketler || [])],
                     }
                     : c);
-                araMesaj = ` — "${oncekiAdim.proses}" ara prosesi otomatik tamamlandı (${araTutar.toLocaleString("tr-TR")} ₺)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`;
+                araMesajlari.push(` — "${oncekiAdim.proses}" ara prosesi otomatik tamamlandı (${araTutar.toLocaleString("tr-TR")} ₺)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`);
             }
             else if (!araCariId) {
-                araMesaj = ` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (cari tanımlı değil)`;
+                araMesajlari.push(` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (cari tanımlı değil)`);
             }
             else if (!araTanim) {
-                araMesaj = ` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (tanımı bulunamadı — Tanımlar'dan kontrol edin)`;
+                araMesajlari.push(` — ⚠ "${oncekiAdim.proses}" ara prosesi tamamlandı AMA cariye işlenemedi (tanımı bulunamadı — Tanımlar'dan kontrol edin)`);
             }
             else {
-                araMesaj = ` — "${oncekiAdim.proses}" ara prosesi tamamlandı (ücreti 0 ₺ olduğu için cariye işlem yapılmadı)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`;
+                araMesajlari.push(` — "${oncekiAdim.proses}" ara prosesi tamamlandı (ücreti 0 ₺ olduğu için cariye işlem yapılmadı)${hareketOzetAra.length ? ` · ${hareketOzetAra.join(", ")}` : ""}`);
             }
             nextProsesIlerleme = nextProsesIlerleme.map((p) => p === oncekiAdim ? { ...p, tamamlandiMi: true, verildiMi: true, personelId: araCariId, tamamlanmaTarihi: new Date().toISOString() } : p);
+        });
+        araMesaj = araMesajlari.join("");
+        let nextSiparislerRez = siparisler;
+        let nextStokRez = stokRezervasyonlari;
+        if (siparis.rezervasyonSiparisId && araRezervasyonDusulecek.length > 0) {
+            araRezervasyonDusulecek.forEach((d) => {
+                const stokSonuc = stokRezervasyonTuket(nextStokRez, siparis.rezervasyonSiparisId, d.hammaddeUrunId, d.renk, d.beden, d.miktar, -1);
+                nextStokRez = stokSonuc.defter;
+                if (stokSonuc.kalanIhtiyac > 0.0001) {
+                    const sonuc = rezervasyonTuket(nextSiparislerRez, siparis.rezervasyonSiparisId, d.hammaddeUrunId, d.renk, d.beden, stokSonuc.kalanIhtiyac, -1);
+                    nextSiparislerRez = sonuc.yeniSiparisler;
+                }
+            });
         }
         const nextUretim = uretim.map((o) => (o.id === uretimId ? { ...o, prosesIlerleme: nextProsesIlerleme } : o));
         setStok(nextStok);
@@ -9818,6 +9900,14 @@ function useProsesVer(d) {
         if (araProsesOtomatikTamamlanacakMi) {
             yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
             yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
+        }
+        if (nextStokRez !== stokRezervasyonlari) {
+            setStokRezervasyonlari(nextStokRez);
+            yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
+        }
+        if (nextSiparislerRez !== siparisler && setSiparisler) {
+            setSiparisler(nextSiparislerRez);
+            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
         }
         yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
         const personelAdi = ((cariler || []).find((c) => c.id === personelId) || {}).unvan || "personel";
@@ -13649,7 +13739,7 @@ function AtolyeERP() {
     // kuralına göre üretilir (aşağıda).
     // PROSESE İŞ VERME AYRI DOSYADA (19 Eylül, 2. madde, 10. tur): `080-proses-ver.jsx`.
     const uretimProsesVer = useProsesVer({
-        uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari,
+        uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari, setSiparisler,
     });
     // "Verildi" ama henüz "teslim alınmadı" bir ATAMAYI geri alır — örn. yanlış personele/miktarla iş
     // verilmişse, hiçbir stok/cari etkisi henüz oluşmadığı için bu tamamen zararsız, basit bir geri
@@ -13739,12 +13829,12 @@ function AtolyeERP() {
         // Kaynak, silinen NEGATİF stok hareketleri (tüketim); iade, tüketimin TERSİ sırayla yapılır:
         // önce alış rezervasyonu, sonra stok rezervasyonu.
         //
-        // Yalnızca ATAMALI prosesler için — eski davranış birebir korundu. Ara proseslerde iade hiç
-        // yapılmıyordu; buraya taşımak rezervasyon sayılarını değiştirirdi (bkz. DEVAM-NOTU, ayrışma 10).
+        // ARA PROSES DE (v1.477.0): ara prosesin hammaddesi artık rezervasyondan düşüyor (normal proses
+        // gibi), geri alınınca da iade ediliyor — ayrışma 10 kapandı.
         let nextSiparislerRez = siparisler;
         let nextStokRezGeri = stokRezervasyonlari;
         let iadeEdilenRez = 0;
-        if (!araProsesMi && siparis.rezervasyonSiparisId) {
+        if (siparis.rezervasyonSiparisId) {
             sonuc.silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
                 if (h.miktar >= 0)
                     return;
@@ -13775,7 +13865,8 @@ function AtolyeERP() {
             yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRezGeri), "Stok rezervasyonları", nextStokRezGeri);
         }
         showToast(araProsesMi
-            ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı`
+            ? `"${prosesAdi}" ara prosesinin otomatik tamamlanması geri alındı — hammadde ve işçilik geri alındı` +
+                (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
             : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
                 (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : ""));
     }, [uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
@@ -24323,7 +24414,7 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                 borderRadius: "var(--erp-r-md)",
                                 padding: 10,
                             } },
-                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } },
+                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" } },
                                 pg.proses !== "Belirtilmemiş" && (() => {
                                     // Tanımlar'daki genel proses sırası çoğu ürün için doğru, ama bazı istisnai
                                     // ürünlerde farklı olması gerekebilir. Bu oklar, o ürüne ÖZEL bir sıra farkı
@@ -24368,49 +24459,56 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                         ".")) : "",
                                     pg.proses,
                                     pg.ozelSiraMi ? " ★" : ""),
-                                pg.proses !== "Belirtilmemiş" && (React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" } },
+                                (tanimlarAraProsesler || []).some((ap) => ap.ad === pg.proses) ? (React.createElement("span", { "data-recete-ara-grup": pg.proses, style: { marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-purple)", background: "#F2E7F5", padding: "2px 9px", borderRadius: "var(--erp-r-pill)" } }, "Ara proses \u00B7 hammaddesi otomatik tamamlan\u0131rken d\u00FC\u015Fer")) : pg.proses !== "Belirtilmemiş" && (React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" } },
                                     React.createElement("span", { style: { fontSize: 13, color: "var(--erp-text-2)" } }, "\u0130\u015F\u00E7ilik (\u20BA/adet):"),
                                     React.createElement("input", { type: "number", step: "any", min: "0", defaultValue: (product.prosesUcretleri || {})[pg.proses] || "", onBlur: (e) => onProsesUcretGuncelle(product.id, pg.proses, parseFloat(e.target.value) || 0), placeholder: "0", className: "mono", style: { width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }))),
-                                pg.proses !== "Belirtilmemiş" && (tanimlarAraProsesler || []).length > 0 && (React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4 }, title: "Bu prosesten sonra, ard\u0131ndan gelen as\u0131l proses i\u015Fe verildi\u011Finde otomatik tamamlanacak k\u00FC\u00E7\u00FCk bir i\u015F\u00E7ilik kalemi se\u00E7in. \u00DCcreti Tan\u0131mlar'da o ara proses i\u00E7in sabit olarak belirlenir." },
-                                    React.createElement("span", { style: { fontSize: 13, color: "var(--erp-purple)" } }, "Ara Proses:"),
-                                    React.createElement("select", { value: (product.araProsesEklentileri || {})[pg.proses] || "", onChange: (e) => onUrunGuncelle(product.id, {
-                                            araProsesEklentileri: { ...(product.araProsesEklentileri || {}), [pg.proses]: e.target.value || undefined },
-                                        }), style: { ...inputStyle, width: 120, padding: "3px 5px", fontSize: 13 } },
-                                        React.createElement("option", { value: "" }, "Yok"),
-                                        tanimlarAraProsesler.map((ap) => React.createElement("option", { key: ap.id, value: ap.id }, ap.ad))),
-                                    (product.araProsesEklentileri || {})[pg.proses] && (() => {
-                                        const secili = tanimlarAraProsesler.find((ap) => ap.id === (product.araProsesEklentileri || {})[pg.proses]);
-                                        if (!secili)
-                                            return null;
-                                        // Bu üründe özel bir ücret girilmişse onu, girilmemişse Tanımlar'daki genel ücreti gösterir.
-                                        // Burada değiştirmek SADECE bu ürüne özel bir geçersiz kılma (override) kaydeder —
-                                        // Tanımlar'daki genel/varsayılan ücreti ETKİLEMEZ.
-                                        const ozelUcret = (product.araProsesUcretleri || {})[secili.id];
-                                        return (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 3 }, title: "Bu \u00FCr\u00FCne \u00F6zel \u00FCcret \u2014 bo\u015F b\u0131rak\u0131rsan\u0131z Tan\u0131mlar'daki genel \u00FCcret kullan\u0131l\u0131r" },
-                                            React.createElement("input", { type: "number", step: "any", min: "0", defaultValue: ozelUcret ?? "", onBlur: (e) => onUrunGuncelle(product.id, {
-                                                    araProsesUcretleri: { ...(product.araProsesUcretleri || {}), [secili.id]: e.target.value === "" ? undefined : (parseFloat(e.target.value) || 0) },
-                                                }), placeholder: String(secili.ucret || 0), className: "mono", style: { width: 50, padding: "4px 7px", fontSize: 12, border: `1px solid ${ozelUcret != null ? "var(--erp-brown)" : "var(--erp-border)"}`, borderRadius: "var(--erp-r-sm)" } }),
-                                            React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-3)" } },
-                                                "\u20BA/adet ",
-                                                ozelUcret != null ? "— ürüne özel" : "— genel")));
-                                    })(),
-                                    (product.araProsesEklentileri || {})[pg.proses] && (() => {
-                                        const secili = tanimlarAraProsesler.find((ap) => ap.id === (product.araProsesEklentileri || {})[pg.proses]);
-                                        if (!secili)
-                                            return null;
-                                        const ozelCariId = (product.araProsesCariOverride || {})[secili.id];
-                                        const personelListesiKart = (cariler || []).filter((c) => c.tip === "Personel" || c.tip === "Her İkisi");
-                                        const varsayilanPersonel = (cariler || []).find((c) => c.id === secili.cariId);
-                                        return (React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 3 }, title: "Bu \u00FCr\u00FCne \u00F6zel cari (personel) \u2014 bo\u015F b\u0131rak\u0131rsan\u0131z Tan\u0131mlar'daki genel cari kullan\u0131l\u0131r" },
-                                            React.createElement("select", { value: ozelCariId || "", onChange: (e) => onUrunGuncelle(product.id, {
-                                                    araProsesCariOverride: { ...(product.araProsesCariOverride || {}), [secili.id]: e.target.value || undefined },
-                                                }), style: {
-                                                    ...inputStyle, width: 110, padding: "4px 7px", fontSize: 12,
-                                                    border: `1px solid ${ozelCariId ? "var(--erp-brown)" : "var(--erp-border)"}`,
-                                                } },
-                                                React.createElement("option", { value: "" }, varsayilanPersonel ? `${varsayilanPersonel.unvan} (genel)` : "Genel cari"),
-                                                personelListesiKart.map((per) => React.createElement("option", { key: per.id, value: per.id }, per.unvan)))));
-                                    })()))),
+                                pg.proses !== "Belirtilmemiş" && (tanimlarAraProsesler || []).length > 0 && !(tanimlarAraProsesler || []).some((ap) => ap.ad === pg.proses) && (() => {
+                                    const idler = araProsesIdleri(product, pg.proses);
+                                    const yaz = (yeniIdler) => onUrunGuncelle(product.id, {
+                                        araProsesEklentileri: { ...(product.araProsesEklentileri || {}), [pg.proses]: yeniIdler.length ? yeniIdler : undefined },
+                                    });
+                                    // Aynı ara proses üründe tek yerde: üretimde adım adıyla bulunuyor, iki kez olamaz.
+                                    const baskaYerdeKullanilan = new Set(Object.entries(product.araProsesEklentileri || {})
+                                        .filter(([asil]) => asil !== pg.proses).flatMap(([asil]) => araProsesIdleri(product, asil)));
+                                    const eklenebilir = tanimlarAraProsesler.filter((ap) => !idler.includes(ap.id) && !baskaYerdeKullanilan.has(ap.id));
+                                    const personelListesiKart = (cariler || []).filter((c) => c.tip === "Personel" || c.tip === "Her İkisi");
+                                    return (React.createElement("div", { "data-ara-prosesler": pg.proses, style: { flexBasis: "100%", display: "grid", gap: 4 } },
+                                        idler.map((id, sira) => {
+                                            const secili = tanimlarAraProsesler.find((ap) => ap.id === id);
+                                            if (!secili)
+                                                return null;
+                                            // Ürüne özel ücret/cari — Tanımlar'daki genel değeri ETKİLEMEZ.
+                                            const ozelUcret = (product.araProsesUcretleri || {})[secili.id];
+                                            const ozelCariId = (product.araProsesCariOverride || {})[secili.id];
+                                            const varsayilanPersonel = (cariler || []).find((c) => c.id === secili.cariId);
+                                            return (React.createElement("div", { key: id, "data-ara-proses": secili.ad, style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", paddingLeft: 8, borderLeft: "2px solid #B79ACB" } },
+                                                React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-purple)" } },
+                                                    "\u21B3 ",
+                                                    sira + 1,
+                                                    ". ara: ",
+                                                    secili.ad),
+                                                React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 3 }, title: "Bu \u00FCr\u00FCne \u00F6zel \u00FCcret \u2014 bo\u015F b\u0131rak\u0131rsan\u0131z Tan\u0131mlar'daki genel \u00FCcret kullan\u0131l\u0131r" },
+                                                    React.createElement("input", { type: "number", step: "any", min: "0", defaultValue: ozelUcret ?? "", onBlur: (e) => onUrunGuncelle(product.id, {
+                                                            araProsesUcretleri: { ...(product.araProsesUcretleri || {}), [secili.id]: e.target.value === "" ? undefined : (parseFloat(e.target.value) || 0) },
+                                                        }), placeholder: String(secili.ucret || 0), className: "mono", style: { width: 50, padding: "4px 7px", fontSize: 12, border: `1px solid ${ozelUcret != null ? "var(--erp-brown)" : "var(--erp-border)"}`, borderRadius: "var(--erp-r-sm)" } }),
+                                                    React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-3)" } },
+                                                        "\u20BA/adet ",
+                                                        ozelUcret != null ? "— ürüne özel" : "— genel")),
+                                                React.createElement("select", { value: ozelCariId || "", title: "Bu \u00FCr\u00FCne \u00F6zel cari (personel) \u2014 bo\u015F b\u0131rak\u0131rsan\u0131z Tan\u0131mlar'daki genel cari kullan\u0131l\u0131r", onChange: (e) => onUrunGuncelle(product.id, {
+                                                        araProsesCariOverride: { ...(product.araProsesCariOverride || {}), [secili.id]: e.target.value || undefined },
+                                                    }), style: { ...inputStyle, width: 130, padding: "4px 7px", fontSize: 12, border: `1px solid ${ozelCariId ? "var(--erp-brown)" : "var(--erp-border)"}` } },
+                                                    React.createElement("option", { value: "" }, varsayilanPersonel ? `${varsayilanPersonel.unvan} (genel)` : "Genel cari"),
+                                                    personelListesiKart.map((per) => React.createElement("option", { key: per.id, value: per.id }, per.unvan))),
+                                                React.createElement("button", { type: "button", className: "btn-ghost", "data-ara-proses-kaldir": secili.ad, title: "Bu ara prosesi bu prosesten kald\u0131r", style: { padding: "2px 6px", fontSize: 11 }, onClick: () => yaz(idler.filter((x) => x !== id)) },
+                                                    React.createElement(X, { size: 11 }))));
+                                        }),
+                                        eklenebilir.length > 0 && (React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, paddingLeft: 8 }, title: "Bu prosesten sonra, ard\u0131ndan gelen as\u0131l proses i\u015Fe verildi\u011Finde otomatik tamamlanacak i\u015F\u00E7ilik kalemi. Birden \u00E7ok eklenebilir; s\u0131rayla tamamlan\u0131r." },
+                                            React.createElement("span", { style: { fontSize: 13, color: "var(--erp-purple)" } }, "+ Ara proses:"),
+                                            React.createElement("select", { value: "", "data-ara-proses-ekle": pg.proses, onChange: (e) => { if (e.target.value)
+                                                    yaz([...idler, e.target.value]); }, style: { ...inputStyle, width: 140, padding: "3px 5px", fontSize: 13 } },
+                                                React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
+                                                eklenebilir.map((ap) => React.createElement("option", { key: ap.id, value: ap.id }, ap.ad)))))));
+                                })()),
                             React.createElement("div", { style: { display: "grid", gap: 10 } }, receteGrupla(pg.satirlar).map((g) => {
                                 const hepsiBedensiz = g.satirlar.every((r) => r.mamulBeden === "Tüm Bedenler");
                                 // Pozisyonu OLAN satırlar (bir Model Rengi kombinasyonunun "1. Renk", "2. Renk"...
@@ -24996,7 +25094,7 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                     // Ara proses ücretleri (bir ana prosesten sonra otomatik tamamlanan küçük işçilik kalemleri)
                     // ana proses işçiliğine dahil DEĞİLDİR ve ayrı tutulur — bu yüzden toplam maliyete de
                     // ayrıca eklenmesi gerekir; aksi halde reçetenin gerçek üretim maliyeti eksik hesaplanır.
-                    const araProsesIscilik = Object.entries(product.araProsesEklentileri || {}).reduce((s, [, araProsesId]) => {
+                    const araProsesIscilik = araProsesCiftleri(product).reduce((s, [, araProsesId]) => {
                         if (!araProsesId)
                             return s;
                         const ozelUcret = (product.araProsesUcretleri || {})[araProsesId];
@@ -25164,7 +25262,7 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                             sayiKutusu(hedefe(u || 0), (v) => onUrunGuncelle(product.id, { prosesUcretleri: { ...(product.prosesUcretleri || {}), [pAd]: Math.round(tlye(v) * 100) / 100 } }), `isc-${pAd}`, 70),
                                             " ",
                                             PB_SIMGE[hedefPb])))),
-                                    Object.entries(product.araProsesEklentileri || {}).filter(([, apId]) => apId).map(([anaProses, apId]) => {
+                                    araProsesCiftleri(product).map(([anaProses, apId]) => {
                                         const ozel = (product.araProsesUcretleri || {})[apId];
                                         const tanimli = (tanimlarAraProsesler || []).find((ap) => ap.id === apId);
                                         const ucret = ozel != null ? ozel : (tanimli ? (tanimli.ucret || 0) : 0);
@@ -32448,7 +32546,7 @@ function finansVadeDurumu(vade, bugun) {
 // Reçete satırı ürün kartındaki kuralla eşleşiyor (mamul rengi + "Tüm Bedenler" ya da o beden).
 function finansIscilikBirim(urun, araProsesler) {
     let t = Object.values((urun && urun.prosesUcretleri) || {}).reduce((x, u) => x + (parseFloat(u) || 0), 0);
-    Object.values((urun && urun.araProsesEklentileri) || {}).forEach((apId) => {
+    araProsesCiftleri(urun).map(([, id]) => id).forEach((apId) => {
         if (!apId)
             return;
         const ap = (araProsesler || []).find((x) => x.id === apId);
@@ -34018,8 +34116,17 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     //   • tek renk varsa  → kendiliğinden seçilir
     //   • o renk "Standart" ise → alan hiç çizilmez, doğrudan miktara geçilir
     //   • gerçekten çok renkliyse → eskisi gibi seçtirilir
-    const tekRenk = renkSecenekleri.length === 1 ? renkSecenekleri[0] : "";
-    const renkSorulmaz = !!tekRenk && tekRenk === "Standart";
+    // RENKSİZ ÜRÜN GENİŞ TANIMLI (26 Eylül, v1.478.0 — kullanıcı: "renk olmadığı için alış giremiyorum,
+    // renksiz stoklarda renk seçici açılmayacak"). Yalnız tek rengi tam "Standart" olan ürün renksiz
+    // sayılıyordu; rengi BOŞ ("") kaydedilmiş ya da HİÇ varyantı olmayan ürün (renk/beden seçmeden
+    // açılan hammadde) renk kutusunu boş gösteriyor, kutu boş kalınca miktar da açılmıyordu. Artık bütün
+    // renk değerleri yer tutucuysa (`olcuGoster` boş) ya da hiç yoksa renk sorulmaz; renk kendiliğinden
+    // seçilir (varyant yoksa "Standart" — fiş yazımı eksik varyantı kendisi açıyor, bkz. 078-fisyaz).
+    const renksizUrun = !!seciliUrun && renkSecenekleri.every((r) => !olcuGoster(r));
+    // Boş renk "Standart" olarak seçilir: boş dize "seçilmedi" sayılıyor ve miktar kutularını kapatıyordu;
+    // varyant eşleşmesi `stokAnahtarNrm` ile ("" = "Standart").
+    const tekRenk = renksizUrun ? "Standart" : (renkSecenekleri.length === 1 ? renkSecenekleri[0] : "");
+    const renkSorulmaz = renksizUrun;
     useEffect(() => {
         if (tekRenk && kRenk !== tekRenk) {
             setKRenk(tekRenk);
@@ -34027,8 +34134,12 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             setKSeciliOlcu("");
         }
     }, [tekRenk]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Varyantı hiç olmayan renksiz üründe tek bir "Standart" kutusu (v1.478.0) — yoksa miktar girilemezdi.
     const bedenSecenekleri = seciliUrun && kRenk
-        ? bedenSirala(Array.from(new Set(seciliUrun.variants.filter((v) => v.renk === kRenk).map((v) => v.beden))))
+        ? (() => {
+            const l = bedenSirala(Array.from(new Set(seciliUrun.variants.filter((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(kRenk)).map((v) => v.beden))));
+            return l.length ? l : (renksizUrun ? ["Standart"] : []);
+        })()
         : [];
     // ÖLÇÜ SEÇMELİ (kullanıcı, 18 Eylül: "boyut olan ürünlerde tüm boyutlar gelmesin, seçim ile
     // girelim").
@@ -34066,7 +34177,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     function stokMiktari(renk, beden) {
         if (!seciliUrun)
             return 0;
-        const v = seciliUrun.variants.find((x) => x.renk === renk && x.beden === beden);
+        // "" ile "Standart" aynı varyant (renksiz ürün, v1.478.0).
+        const v = seciliUrun.variants.find((x) => stokAnahtarNrm(x.renk) === stokAnahtarNrm(renk) && stokAnahtarNrm(x.beden) === stokAnahtarNrm(beden));
         return v ? v.miktar : 0;
     }
     function kalemEkle() {
@@ -34378,7 +34490,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         kRenk && gosterilecekOlculer.length > 0 && (React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                             "Miktar",
                             React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, gosterilecekOlculer.map((b) => (React.createElement("span", { key: b, style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
-                                React.createElement("span", { className: "mono", style: { fontSize: 10, fontWeight: 700, color: "var(--erp-text)" } }, b || "—"),
+                                (olcuGoster(b) || gosterilecekOlculer.length > 1) && (React.createElement("span", { className: "mono", style: { fontSize: 10, fontWeight: 700, color: "var(--erp-text)" } }, olcuGoster(b) || "—")),
                                 React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-miktar": b || "tek", value: kMiktarlar[b] ?? "", onChange: (e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value }), className: "mono", 
                                     // TEK SATIRA SIĞSIN (kullanıcı, 18 Eylül: "miktar da boyutun yanında olsun,
                                     // tek satıra sığsın hepsi, gerekirse yazıları küçült"). Kutu 62→52,
@@ -34553,7 +34665,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                             React.createElement("tr", null,
                                                 React.createElement("th", { style: { fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" } }, "\u00DCr\u00FCn"),
                                                 React.createElement("th", { style: { fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" } }, "Renk"),
-                                                bedenler.map((b) => React.createElement("th", { key: b, className: "mono", style: { fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "center" } }, b || "—")))),
+                                                bedenler.map((b) => React.createElement("th", { key: b, className: "mono", style: { fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "center" } }, olcuGoster(b, "Miktar"))))),
                                         React.createElement("tbody", null, satirlar.map((r) => (React.createElement("tr", { key: r.a },
                                             React.createElement("td", { style: { fontSize: 11, padding: "2px 6px", fontWeight: 600 } }, r.urunAd),
                                             React.createElement("td", { className: "mono", style: { fontSize: 11, padding: "2px 6px" } }, olcuGoster(r.renk)),
@@ -34788,7 +34900,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                 React.createElement("thead", null,
                                     React.createElement("tr", null,
                                         React.createElement("th", { style: { fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "left", padding: "2px 8px 2px 0" } }, "\u00DCR\u00DCN"),
-                                        bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" } }, b || "—"))),
+                                        bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" } }, olcuGoster(b, "Miktar")))),
                                         React.createElement("th", { className: "mono", style: { fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "right", padding: "2px 0 2px 10px" } }, "TOP."))),
                                 React.createElement("tbody", null, matris.map((r, ri) => (React.createElement("tr", { key: ri, "data-fis-onay-satir": r.ad },
                                     React.createElement("td", { style: { fontSize: 12, fontWeight: 700, padding: "2px 8px 2px 0", whiteSpace: "nowrap" } },
@@ -36524,7 +36636,7 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
         .sort((a, b) => (prosesSiraMap[a.proses] ?? 999) - (prosesSiraMap[b.proses] ?? 999));
     // Ara proses ücretleri (bir ana prosesten sonra otomatik tamamlanan küçük işçilik kalemleri) ayrı
     // satırlar olarak eklenir — bunlar da toplam üretim maliyetinin bir parçasıdır, eksik bırakılmaz.
-    Object.entries(product.araProsesEklentileri || {}).forEach(([anaProses, araProsesId]) => {
+    araProsesCiftleri(product).forEach(([anaProses, araProsesId]) => {
         if (!araProsesId)
             return;
         const tanimliAp = (tanimlarAraProsesler || []).find((ap) => ap.id === araProsesId);
@@ -37036,7 +37148,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
     }
     // İşçilik
     const iscilik = Object.entries(product.prosesUcretleri || {}).filter(([, u]) => (u || 0) > 0).map(([p, u]) => ({ proses: p, ucret: u }));
-    Object.entries(product.araProsesEklentileri || {}).forEach(([anaProses, apId]) => {
+    araProsesCiftleri(product).forEach(([anaProses, apId]) => {
         if (!apId)
             return;
         const ap = (tanimlarAraProsesler || []).find((x) => x.id === apId);
@@ -38235,36 +38347,10 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
     }
     // Ürünün reçetesinde bu renk için tanımlı prosesleri, tanımlı proses sırasına göre bulur.
     // Reçetede hiç proses belirtilmemişse tek adımlı "Üretim" akışına düşer.
+    // Ortak kural (080 `uretimProsesAdimlari`): reçetedeki asıl prosesler tanım sırasıyla, her birinin
+    // ardına ürüne bağlı ara prosesler (v1.477.0: birden çok). Planlamadan doğan üretim de aynısını kurar.
     function prosesIlerlemeOlustur(urun, renk) {
-        const siraMap = {};
-        (tanimlar.prosesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
-        const kullanilanProsesler = Array.from(new Set((urun.recete || []).filter((r) => r.mamulRenk === renk && r.proses).map((r) => r.proses)));
-        if (kullanilanProsesler.length === 0) {
-            return [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }];
-        }
-        const siraliAsilProsesler = kullanilanProsesler
-            .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }))
-            .sort((a, b) => a.sira - b.sira);
-        // Her asıl prosesin ardına (varsa) bağlı Ara Proses eklenir. Ara proses, kendisinden SONRAKİ asıl
-        // proses işe verildiğinde otomatik tamamlanacağı için kendi personel/verme/tamamlama alanları
-        // başlangıçta boş kalır, sadece hangi ara proses olduğu ve sabit cariId'si işaretlenir.
-        const araEklentileri = urun.araProsesEklentileri || {};
-        const araProsesTanimlari = tanimlar.araProsesler || [];
-        const sonuc = [];
-        siraliAsilProsesler.forEach((adim) => {
-            sonuc.push(adim);
-            const araId = araEklentileri[adim.proses];
-            if (!araId)
-                return;
-            const araTanim = araProsesTanimlari.find((ap) => ap.id === araId);
-            if (!araTanim)
-                return;
-            sonuc.push({
-                proses: araTanim.ad, sira: adim.sira + 0.5, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null,
-                araProsesMi: true, araProsesId: araTanim.id, araProsesCariId: araTanim.cariId,
-            });
-        });
-        return sonuc;
+        return uretimProsesAdimlari(urun, renk, tanimlar);
     }
     function addOrder() {
         if (!seciliUrun)
@@ -40993,8 +41079,17 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     const renkSecenekleri = seciliUrun ? Array.from(new Set(seciliUrun.variants.map((v) => v.renk))) : [];
     // TEK SEÇENEK SORULMAZ (23 Eylül, v1.432.0) — fiş ekranındaki (255) kuralın aynısı: tek renk
     // varsa kendiliğinden seçilir; o renk "Standart" (renksiz yer tutucu) ise alan hiç çizilmez.
-    const tekRenk = renkSecenekleri.length === 1 ? renkSecenekleri[0] : "";
-    const renkSorulmaz = !!tekRenk && tekRenk === "Standart";
+    // RENKSİZ ÜRÜN GENİŞ TANIMLI (26 Eylül, v1.478.0 — kullanıcı: "renk olmadığı için alış giremiyorum,
+    // renksiz stoklarda renk seçici açılmayacak"). Yalnız tek rengi tam "Standart" olan ürün renksiz
+    // sayılıyordu; rengi BOŞ ("") kaydedilmiş ya da HİÇ varyantı olmayan ürün (renk/beden seçmeden
+    // açılan hammadde) renk kutusunu boş gösteriyor, kutu boş kalınca miktar da açılmıyordu. Artık bütün
+    // renk değerleri yer tutucuysa (`olcuGoster` boş) ya da hiç yoksa renk sorulmaz; renk kendiliğinden
+    // seçilir (varyant yoksa "Standart" — fiş yazımı eksik varyantı kendisi açıyor, bkz. 078-fisyaz).
+    const renksizUrun = !!seciliUrun && renkSecenekleri.every((r) => !olcuGoster(r));
+    // Boş renk "Standart" olarak seçilir: boş dize "seçilmedi" sayılıyor ve miktar kutularını kapatıyordu;
+    // varyant eşleşmesi `stokAnahtarNrm` ile ("" = "Standart").
+    const tekRenk = renksizUrun ? "Standart" : (renkSecenekleri.length === 1 ? renkSecenekleri[0] : "");
+    const renkSorulmaz = renksizUrun;
     useEffect(() => {
         if (tekRenk && kRenk !== tekRenk) {
             setKRenk(tekRenk);
@@ -41007,8 +41102,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     // "40 36 37 38 39" diye çıkıyordu. Beden bir SIRA ifade eder; ekleme sırası değil sayısal sıra
     // beklenir. `bedenSirala` sayıyı sayı gibi sıralıyor ("10" > "9"), sayısal olmayanları
     // (S/M/L gibi) alfabetik bırakıyor.
+    // Varyantı hiç olmayan renksiz üründe tek bir "Standart" kutusu (v1.478.0, fiş ekranıyla aynı).
     const bedenSecenekleri = seciliUrun
-        ? bedenSirala(Array.from(new Set(seciliUrun.variants.filter((v) => v.renk === kRenk).map((v) => v.beden))))
+        ? (() => {
+            const l = bedenSirala(Array.from(new Set(seciliUrun.variants.filter((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(kRenk)).map((v) => v.beden))));
+            return l.length ? l : (renksizUrun && kRenk ? ["Standart"] : []);
+        })()
         : [];
     // Seçili mamul rengin reçetesi var mı? Yeni bir renk eklendiğinde reçete satırları otomatik
     // oluşmaz — o renk için eşleştirme yapılmadan sipariş girilirse hammadde ihtiyacı SIFIR çıkar ve
@@ -41036,7 +41135,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     function stokMiktari(urun, renk, beden) {
         if (!urun)
             return 0;
-        const v = urun.variants.find((x) => x.renk === renk && x.beden === beden);
+        // "" ile "Standart" aynı varyant (renksiz ürün, v1.478.0).
+        const v = urun.variants.find((x) => stokAnahtarNrm(x.renk) === stokAnahtarNrm(renk) && stokAnahtarNrm(x.beden) === stokAnahtarNrm(beden));
         return v ? v.miktar : 0;
     }
     function resetForm() {
@@ -41444,10 +41544,11 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         const liste = [];
         recetedekiler.forEach((p) => {
             liste.push(p);
-            const araId = ((urun && urun.araProsesEklentileri) || {})[p];
-            const ara = araId && (tanimlarAraProsesler || []).find((x) => x.id === araId);
-            if (ara && !liste.includes(ara.ad))
-                liste.push(ara.ad);
+            araProsesIdleri(urun, p).forEach((araId) => {
+                const ara = (tanimlarAraProsesler || []).find((x) => x.id === araId);
+                if (ara && !liste.includes(ara.ad))
+                    liste.push(ara.ad);
+            });
         });
         (tanimlarProsesler || []).map((p) => p.ad).sort((a, b) => (sira[a] ?? 999) - (sira[b] ?? 999))
             .forEach((p) => { if (!liste.includes(p))
@@ -42010,7 +42111,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                         React.createElement("div", { style: { overflowX: "auto" } },
                             React.createElement("table", { style: { borderCollapse: "collapse", width: "auto" } },
                                 React.createElement("thead", null,
-                                    React.createElement("tr", null, bedenSecenekleri.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-text)", padding: "3px 8px", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" } }, b)))),
+                                    React.createElement("tr", null, bedenSecenekleri.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-text)", padding: "3px 8px", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" } }, olcuGoster(b, "Miktar"))))),
                                     React.createElement("tr", null, bedenSecenekleri.map((b) => {
                                         const mevcutStok = stokMiktari(seciliUrun, kRenk, b);
                                         return (React.createElement("td", { key: b, className: "mono", style: { fontSize: 9, fontWeight: 600, color: mevcutStok <= 0 ? "var(--erp-warn)" : "var(--erp-text-3)", padding: "2px 8px", textAlign: "center" } },
@@ -46452,7 +46553,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.476.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.479.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

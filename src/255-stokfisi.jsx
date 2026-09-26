@@ -650,7 +650,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {gosterilecekOlculer.map((b) => (
                   <span key={b} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text)" }}>{b || "—"}</span>
+                    {/* "Standart" yer tutucusu yazılmıyor (v1.479.0, `olcuGoster`): renksiz/ölçüsüz üründe
+                        kutunun üstünde "Standart" yazıyordu; tek kutuda etiket de gereksiz. */}
+                    {(olcuGoster(b) || gosterilecekOlculer.length > 1) && (
+                      <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text)" }}>{olcuGoster(b) || "—"}</span>
+                    )}
                     <input
                       type="number" step="any" min="0"
                       data-kalem-miktar={b || "tek"}
@@ -903,7 +907,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                       <thead><tr>
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Ürün</th>
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Renk</th>
-                        {bedenler.map((b) => <th key={b} className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "center" }}>{b || "—"}</th>)}
+                        {bedenler.map((b) => <th key={b} className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>)}
                       </tr></thead>
                       <tbody>{satirlar.map((r) => (
                         <tr key={r.a}>
@@ -1296,7 +1300,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         <tr>
                           <th style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "left", padding: "2px 8px 2px 0" }}>ÜRÜN</th>
                           {bedenler.map((b) => (
-                            <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" }}>{b || "—"}</th>
+                            <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}
                           <th className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "right", padding: "2px 0 2px 10px" }}>TOP.</th>
                         </tr>

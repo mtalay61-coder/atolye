@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.478.0** · 26 Eylül 2026
+Son sürüm: **v1.479.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.478.0): renksiz üründe (boş renk / varyantsız) fiş ve siparişte renk sorulmuyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "RENKSİZ ÜRÜNDE RENK SORULMUYOR (GENİŞ TANIM)".
+**Son iş (26 Eylül, v1.479.0): renksiz üründe fiş ve siparişte renk sorulmuyor ve miktar kutusunda "Standart" yazmıyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "RENKSİZ ÜRÜNDE RENK SORULMUYOR (GENİŞ TANIM)".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6157,6 +6157,7 @@ Renksiz stoklarda renk seçici açılmayacak."
   hiç yok. Renk sorulmaz, kendiliğinden "Standart" seçilir (boş dize "seçilmedi" sayılıyordu). Varyant
   eşleşmeleri (`bedenSecenekleri`, `stokMiktari`) `stokAnahtarNrm` ile — "" = "Standart". Varyantsız
   üründe tek "Standart" miktar kutusu; fiş yazımı eksik varyantı kendisi açıyor (078-fisyaz).
+- v1.479.0 (kullanıcı: "Standart neden yazıyor hâlâ?"): fiş formunda miktar kutusunun üstündeki beden etiketi, fişin iki kalem tablosu başlığı ve sipariş formu miktar matrisi başlığı `olcuGoster`dan geçiyor; tek kutuda etiket hiç çizilmiyor.
 - Test: yeni `senaryo-renksiz-alis` (boş renkli, varyantsız, Standart — üçünde renk kutusu yok, stok
   doğru varyanta ekleniyor, çift satır yok).
 

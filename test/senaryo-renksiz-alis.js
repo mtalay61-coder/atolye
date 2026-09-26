@@ -50,6 +50,8 @@ async function calistir() {
     form[ad] = await sayfa.evaluate(() => ({
       renkKutusu: [...document.querySelectorAll("[data-renk-arama]")].some((x) => x.offsetParent),
       miktarKutulari: [...document.querySelectorAll("[data-kalem-miktar]")].filter((x) => x.offsetParent).map((x) => x.getAttribute("data-kalem-miktar")),
+      // v1.479.0: kutunun üstünde "Standart" etiketi yazmıyor.
+      kutuEtiketi: [...document.querySelectorAll("[data-kalem-miktar]")].filter((x) => x.offsetParent).map((x) => (x.parentElement.innerText || "").trim()).join(" | ") || "(yok)",
     }));
     await sayfa.locator("[data-kalem-fiyat]:visible").first().fill("10");
     await sayfa.locator("[data-kalem-miktar]:visible").first().fill(miktar);

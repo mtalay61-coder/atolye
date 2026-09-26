@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.478.0";
+const SURUM = "1.479.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Renksiz urunde renk sorulmuyor (bos renkli ve varyantsiz urunler dahil)";
+const SURUM_NOTU = "Fis ve siparis miktar kutularinda Standart yazmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Renksiz urunde renk sorulmuyor (bos renkli ve varyantsiz uru
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.479.0", tarih: "26.09.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Fiş formunda renksiz/ölçüsüz ürünün miktar kutusunun üstünde, fiş kalem tablolarında ve sipariş miktar matrisinde 'Standart' yazmıyor"] },
   { surum: "1.478.0", tarih: "26.09.2026",
     eklenen: [],
     degisen: [],

@@ -1572,7 +1572,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     <tr>
                       {bedenSecenekleri.map((b) => (
                         <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)", padding: "3px 8px", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>
-                          {b}
+                          {olcuGoster(b, "Miktar")}
                         </th>
                       ))}
                     </tr>
