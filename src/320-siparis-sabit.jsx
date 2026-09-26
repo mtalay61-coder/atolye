@@ -97,3 +97,14 @@ Mevcut ürünler: ${urunListesi}
   );
 }
 
+
+// Sipariş formunun "Ekle" düğmesi (v1.470.0 — kullanıcı: "kalemlere ekle'nin adını Ekle yap, rengi
+// yeşil olsun, güzel bir ikonu da olabilir"). Hayalet düğme formdaki onca kutunun arasında
+// kayboluyordu; kalemi listeye geçiren tek eylem olduğu için dolu ve yeşil. Sabit yeşil (tema
+// değil): koyu temada da beyaz yazıyla okunuyor, "Kaydet"in kırmızısıyla karışmıyor.
+const EKLE_DUGMESI = {
+  display: "inline-flex", alignItems: "center", gap: 6,
+  padding: "7px 16px", fontSize: 13, fontWeight: 700,
+  color: "#fff", background: "#2F8F46", border: "1px solid #257238",
+  borderRadius: "var(--erp-r-md)", cursor: "pointer", whiteSpace: "nowrap",
+};

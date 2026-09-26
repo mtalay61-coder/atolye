@@ -65,6 +65,16 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   const [kalemler, setKalemler] = useState([]);
   // Asorti barkodu okutma kutusu (fuar akışı).
   const [barkodGirisi, setBarkodGirisi] = useState("");
+  // BARKOD PANELİ KATLANIR (v1.470.0 — kullanıcı: "barkod okutu da tıklayınca açılsın, kullanmayınca
+  // çok yer kaplıyor"). Kapalıyken tek ince düğme. Son tercih bu cihazda hatırlanıyor: fuarda
+  // okutarak çalışan açık bırakır, elle giren kapalı — her sipariş açılışında yeniden tıklamasın.
+  const [barkodPaneli, setBarkodPaneli] = useState(() => {
+    try { return window.localStorage.getItem("siparis:barkodPaneli") === "acik"; } catch (e) { return false; }
+  });
+  const barkodPaneliDegistir = (acik) => {
+    setBarkodPaneli(acik);
+    try { window.localStorage.setItem("siparis:barkodPaneli", acik ? "acik" : "kapali"); } catch (e) { /* özel pencere: yalnız bu oturum */ }
+  };
 
   const [kUrunId, setKUrunId] = useState("");
   // FOTOĞRAFTAN ÜRÜN TANIMA (24 Eylül, v1.439.0 — kullanıcı: "kamera ile ürün okuma da olsun,
@@ -77,6 +87,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   // (barkod, ürün değişimi, kalem eklendikten sonra sıfırlama) kutuya yansıtılıyor; yarım yazım
   // (listede olmayan) seçimi boşaltır ama yazıyı silmez.
   const [kRenkYazi, setKRenkYazi] = useState("");
+  // Eklenecek kalemin RENK BAZLI açıklaması (v1.470.0): "Ekle" ile bu ürün+rengin bütün ölçülerine yazılır.
+  const [kAciklama, setKAciklama] = useState("");
   const oncekiKRenk = useRef("");
   useEffect(() => {
     const onceki = oncekiKRenk.current;
@@ -208,7 +220,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
 
   function resetForm() {
     setCariId(""); setTarih(bugunYerel()); setTeslimTarihi(""); setNot("");
-    setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setSiparisDefter("Genel");
+    setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKAciklama(""); setSiparisDefter("Genel");
     setMusteriKodu(""); setKayitParaBirimi(null); setKayitKurlari({});
     setKAmbalajRenk("");
   }
@@ -326,6 +338,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   function kalemEkle() {
     if (!seciliUrun || !kRenk) return showToast("Ürün ve renk seçin");
     const fiyat = parseFloat(kFiyat) || 0;
+    const aciklama = kAciklama.trim();
     const eklenecekler = bedenSecenekleri
       .map((b) => ({ beden: b, miktar: parseFloat(kMiktarlar[b]) || 0 }))
       .filter((x) => x.miktar > 0);
@@ -347,7 +360,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         birlestirilenSayisi++;
         sonrakiKalemler = sonrakiKalemler.map((k, i) =>
           i === mevcutIndex
-            ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj }
+            // Açıklama boş bırakıldıysa eskisi korunur: ikinci "Ekle" miktar artırmak içindir,
+            // önce yazılan notu sessizce silmesin.
+            ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
+                ...(aciklama ? { aciklama } : {}) }
             : k
         );
       } else {
@@ -361,12 +377,14 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             // yanıltıcı bir durum kalmasın.
             // urunId tutulmaz: hangi ambalaj ürünü olduğu reçeteden gelir, burada yalnızca renk sapması saklanır.
             ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : null,
+            // Boşsa alan hiç yazılmıyor (eski kayıtlarla aynı biçim).
+            ...(aciklama ? { aciklama } : {}),
           },
         ];
       }
     });
     setKalemler(sonrakiKalemler);
-    setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat("");
+    setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKAciklama("");
     // Kullanıcıya AÇIKÇA geri bildirim: eğer birleştirme olduysa bunu belirtiyoruz — böylece "hiçbir şey
     // olmadı" sanıp tekrar tıklama isteği duyulmaz, tam tersi netlik sağlanır.
     if (birlestirilenSayisi > 0 && eklenenSayisi > 0) {
@@ -982,9 +1000,26 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           {/* BARKOD OKUT — fuarda en hızlı yol: müşteriyi seç, kodları okut, kaydet.
               Asorti barkodu dağılımı toptan ekliyor, çift barkodu tek çift ekliyor; ikisi de
               aynı kutudan geçiyor çünkü personel eline hangi etiketin geldiğini seçmiyor. */}
+          {!barkodPaneli ? (
+            <button type="button" data-barkod-paneli-ac="1" onClick={() => barkodPaneliDegistir(true)}
+              title="Barkod okutma, kamera, sesli giriş ve fotoğraftan bulma"
+              style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", marginBottom: 10, padding: "6px 10px", fontSize: 12, fontWeight: 700,
+                color: "#2E5670", background: "#EAF0F4", border: "1px dashed #3D6B8A", borderRadius: "var(--erp-r-md)", cursor: "pointer" }}>
+              <ScanLine size={14} /> Barkod okut · kamera · ses · fotoğraf
+              <ChevronDown size={14} style={{ marginLeft: "auto" }} />
+            </button>
+          ) : (
           <div style={{ border: "1.5px solid #3D6B8A", borderRadius: "var(--erp-r-md)", padding: 10, background: "#EAF0F4", marginBottom: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
             <label style={{ display: "grid", gap: 3, flex: 1, minWidth: 200 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#2E5670" }}>Barkod okut (asorti ya da tek çift)</span>
+              <span style={{ display: "flex", alignItems: "center", fontSize: 11, fontWeight: 700, color: "#2E5670" }}>
+                Barkod okut (asorti ya da tek çift)
+                {/* Kapat düğmesi etiketin içinde ama label'a tıklamayı kutuya odaklamaya çevirmesin. */}
+                <button type="button" data-barkod-paneli-kapat="1" title="Barkod panelini kapat"
+                  onClick={(e) => { e.preventDefault(); barkodPaneliDegistir(false); }}
+                  style={{ marginLeft: "auto", border: "none", background: "none", color: "#2E5670", cursor: "pointer", display: "flex", alignItems: "center", gap: 2, padding: 0, fontSize: 11, fontWeight: 600 }}>
+                  Gizle <ChevronUp size={14} />
+                </button>
+              </span>
               <input
                 value={barkodGirisi}
                 onChange={(e) => setBarkodGirisi(e.target.value)}
@@ -1022,6 +1057,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               <KameraOkuyucu onKod={(kod) => asortiBarkodOkut(kod)} />
             </div>
           </div>
+          )}
 
           <GorselIleBul
             havuz={fotoHavuzu}
@@ -1321,10 +1357,15 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 okunamıyordu (kullanıcı bildirdi, 6 Eylül).
                 `auto-fit` + `minmax`: her sütunun bir ALT SINIRI var; sığmayınca sütun daralmıyor,
                 ALT SATIRA iniyor. Geniş ekranda üçü yan yana, dar ekranda alt alta. */}
+            {/* FİYAT DA ÜST SATIRDA (v1.470.0 — kullanıcı: "birim fiyatı, para tipini üst satıra al,
+                gerekirse yazıları ufalt"). Eşit sütunlu ızgara fiyatı ürün/renk kadar geniş istiyordu ve
+                tablet genişliğinde üçüncü sütun alt satıra düşüyordu. Esnek satır: ürün ve renk geniş,
+                fiyat dar (alt sınırları var); sığmayan yine alt satıra iner, telefonda alt alta. */}
             <div style={{
               flex: "1 1 320px", minWidth: 0,
-              display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 8,
+              display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-start",
             }}>
+              <div style={{ flex: "1.5 1 180px", minWidth: 0 }}>
               <Field label="Ürün">
                 {/* Sipariş girişinde de aramalı seçici: stok büyüdükçe açılır listeden ürün bulmak
                     reçetedeki kadar yavaşlıyor ve sipariş girişi seri yapılan bir iş. */}
@@ -1336,7 +1377,9 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   ozelKodAlanlari={tanimlarOzelKodAlanlari}
                 />
               </Field>
+              </div>
               {!renkSorulmaz && (
+              <div style={{ flex: "1.5 1 180px", minWidth: 0 }}>
               <Field label="Renk">
                 {/* Düğme KIRILABİLİR: sığmazsa seçiciyi ezmek yerine alt satıra geçiyor.
                     Seçicinin alt sınırı var, çünkü asıl iş onda. */}
@@ -1384,15 +1427,21 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   )}
                 </div>
               </Field>
+              </div>
               )}
-              <Field label="Birim Fiyat (tüm ölçüler için)">
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <input type="number" step="0.01" min="0" value={kFiyat} onChange={(e) => setKFiyat(e.target.value)} style={{ ...inputStyle, flex: "1 1 80px", minWidth: 70 }} />
-                  <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 72, flex: "0 0 auto" }}>
+              <div style={{ flex: "0.8 1 140px", minWidth: 0 }}>
+              <Field label={<span title="Bu kalemin bütün ölçüleri için">Birim Fiyat</span>}>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <input type="number" step="0.01" min="0" value={kFiyat} onChange={(e) => setKFiyat(e.target.value)}
+                    data-siparis-birim-fiyat="1" placeholder="0"
+                    style={{ ...inputStyle, flex: "1 1 60px", minWidth: 50, fontSize: 13, padding: "8px 6px" }} />
+                  <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)}
+                    style={{ ...inputStyle, width: 62, flex: "0 0 auto", fontSize: 12, padding: "8px 4px" }}>
                     {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                   </select>
                 </div>
               </Field>
+              </div>
 
               {/* KUTU — ürün/renk seçimiyle AYNI satırda. Kutu, modele ve renge göre değişen bir
                   tercihtir: aynı siparişte iki farklı model iki farklı kutuya girebilir. Bu yüzden
@@ -1402,6 +1451,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   Kutu ürünü seçtirmek gereksiz bir adımdı: reçete zaten hangi kutunun kullanıldığını
                   biliyor, değişen tek şey rengi. */}
               {tip === "Satış" && kAmbalajRenkleri.length > 0 && (
+                <div style={{ flex: "1 1 160px", minWidth: 0 }}>
                 <Field label="Kutu rengi (bu kalem için)">
                   <select
                     value={kAmbalajRenk}
@@ -1413,6 +1463,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     {kAmbalajRenkleri.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </Field>
+                </div>
               )}
             </div>
             {/* Ürün resmi küçük ve sağ üstte — önceden 144px ile çok yer kaplıyor, form alanlarının
@@ -1434,17 +1485,37 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>
                 Ölçülere göre miktar girin (birden fazla ölçüye birden girebilirsiniz)
               </div>
-              <div style={{ display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
-                <div style={{ borderRight: "1px dashed var(--erp-line)", paddingRight: 14 }}>
-                  <AsortiUygulaKontrolu
-                    asortiler={asortiler}
-                    bedenSecenekleri={bedenSecenekleri}
-                    olcuTipi={seciliUrun && seciliUrun.olcuTipi}
-                    onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
-                  />
-                </div>
+              {/* ASORTİ + AÇIKLAMA + EKLE TEK SATIRDA (v1.470.0 — kullanıcı: "asorti ve asorti seçiciyi
+                  tek satıra topla, kalemlere ekle'nin adını Ekle yap, rengi yeşil olsun"). Asorti eskiden
+                  matrisin solunda kesikli çizgiyle ayrı bir sütundu; dar ekranda matris onun altına,
+                  "Kalemlere Ekle" de en sağ alta düşüyordu. Şimdi üstte tek satır, matris altında tam
+                  genişlikte. Açıklama RENK BAZINDA (kullanıcı: "renk bazlı açıklama girebilelim, tek
+                  tek"): bu ürün+rengin bütün ölçülerine yazılıyor, kalem listesinde satırda düzeltiliyor. */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
+                <AsortiUygulaKontrolu
+                  asortiler={asortiler}
+                  bedenSecenekleri={bedenSecenekleri}
+                  olcuTipi={seciliUrun && seciliUrun.olcuTipi}
+                  onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
+                  satirIci
+                />
+                <input
+                  value={kAciklama}
+                  onChange={(e) => setKAciklama(e.target.value)}
+                  data-siparis-kalem-aciklama="1"
+                  placeholder={`Açıklama (${kRenk}) — isteğe bağlı`}
+                  title="Bu renge özel not: bu rengin bütün ölçülerine yazılır"
+                  style={{ ...inputStyle, flex: "1 1 160px", minWidth: 120, fontSize: 12, padding: "6px 8px" }}
+                />
+                <button type="button" data-kalemlere-ekle="1" onClick={kalemEkle} style={EKLE_DUGMESI}>
+                  <PackagePlus size={15} /> Ekle
+                </button>
+              </div>
+              <div>
                 <div style={{ overflowX: "auto" }}>
-                <table style={{ borderCollapse: "collapse" }}>
+                {/* `width: auto`: eskiden esnek satırın içinde kendiliğinden daralıyordu; tek başına
+                    kalınca genel tablo kuralıyla tam genişliğe yayılıp hücreleri birbirinden koparıyordu. */}
+                <table style={{ borderCollapse: "collapse", width: "auto" }}>
                   <thead>
                     <tr>
                       {bedenSecenekleri.map((b) => (
@@ -1504,8 +1575,6 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   </tbody>
                 </table>
                 </div>
-                <button
-                          data-kalemlere-ekle="1" className="btn-ghost" style={{ alignSelf: "flex-end" }} onClick={kalemEkle}><Plus size={13} /> Kalemlere Ekle</button>
               </div>
               <AsortiOlusturTeklifi
                 degerler={kMiktarlar}
@@ -1518,7 +1587,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
 
           {!(kRenk && bedenSecenekleri.length > 0) && (
             <div style={{ marginTop: 10 }}>
-              <button className="btn-ghost" onClick={kalemEkle}><Plus size={13} /> Kalemlere Ekle</button>
+              <button type="button" onClick={kalemEkle} style={EKLE_DUGMESI}><PackagePlus size={15} /> Ekle</button>
             </div>
           )}
 
@@ -1627,6 +1696,30 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 >
                                   {kutu.renk}
                                 </span>
+                              );
+                            })()}
+                            {/* RENK BAZLI AÇIKLAMA SATIRDA (v1.470.0): bu ürün+rengin bütün ölçülerine
+                                yazılır. Kilitli satırda salt okunur — planlanmış kalemin notu fişe geçti. */}
+                            {(() => {
+                              const aciklama = (g.kalemler.find((x) => x.aciklama) || {}).aciklama || "";
+                              if (g.kilit) {
+                                return aciklama ? <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontFamily: "var(--erp-font, sans-serif)", whiteSpace: "normal", marginTop: 3 }}>{aciklama}</div> : null;
+                              }
+                              return (
+                                <input
+                                  key={`${g.key}-${aciklama}`}
+                                  defaultValue={aciklama}
+                                  data-form-kalem-aciklama="1"
+                                  placeholder="açıklama…"
+                                  title="Bu renge özel açıklama — bu satırdaki bütün ölçülere yazılır"
+                                  onBlur={(e) => {
+                                    const yeni = e.target.value.trim();
+                                    if (yeni === aciklama) return;
+                                    grupDegistir(idler, { aciklama: yeni || undefined });
+                                  }}
+                                  style={{ display: "block", marginTop: 3, width: "100%", minWidth: 120, padding: "2px 5px", fontSize: 11, fontFamily: "var(--erp-font, sans-serif)",
+                                    border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "transparent" }}
+                                />
                               );
                             })()}
                           </td>

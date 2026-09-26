@@ -10,6 +10,8 @@ import {
   // Rapor sekmesi (245-rapor): kurucu, dışa aktarma, kapsam rozetleri.
   Settings, Download, User,
   MessageCircle, Mail, LogOut, Menu,
+  // Sipariş formu "Ekle" düğmesi (v1.470.0).
+  PackagePlus,
 } from "lucide-react";
 
 /* ---------------------------------------------------------

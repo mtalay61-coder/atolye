@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.469.0** · 26 Eylül 2026
+Son sürüm: **v1.470.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.469.0): siparişte renk kutusu yazdıkça daralıyor ve stok renk resimlerini gösteriyor; "+ Renk" pozisyonları da aramalı.** Bkz. "SİPARİŞTE RENK YAZARAK VE RESİMLİ".
+**Son iş (26 Eylül, v1.470.0): sipariş formu sadeleşti (fiyat üst satırda, asorti + açıklama + yeşil "Ekle" tek satırda, barkod paneli katlanır) ve kalemlere renk bazlı açıklama.** Bkz. "SİPARİŞ FORMU DÜZENİ VE RENK BAZLI AÇIKLAMA".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,33 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## SİPARİŞ FORMU DÜZENİ VE RENK BAZLI AÇIKLAMA (26 Eylül, v1.470.0 — Claude Code oturumu)
+
+Kullanıcı (sipariş düzenleme ekran görüntüsü): "Birim fiyatı, para tipini üst satıra al, gerekirse
+yazıları ufalt. Asorti ve asorti seçiciyi tek satıra topla, kalemlere ekle'nin adını Ekle yap ve rengi
+yeşil olsun, güzel bir ikon da olabilir. Barkod okutu da tıklayınca açılsın, kullanmayınca çok yer
+kaplıyor. Eklerken açıklama satırda olsun, renk bazlı açıklama girebilelim, tek tek."
+
+- **Üst satır:** Ürün / Renk / Birim Fiyat + para birimi eşit sütunlu ızgara yerine esnek satır
+  (ürün ve renk `1.5 1 180px`, fiyat `0.8 1 140px`, kutu rengi `1 1 160px`). Etiket kısaldı
+  ("Birim Fiyat", "tüm ölçüler için" ipucunda), fiyat kutusu ve para birimi küçük yazılı. Dar
+  ekranda yine alt alta iner.
+- **Asorti + açıklama + Ekle tek satır, matris altında tam genişlik.** `AsortiUygulaKontrolu`na
+  `satirIci` (alt boşluk yok). Matris tablosu `width: auto` — tek başına kalınca genel tablo
+  kuralıyla yayılıyordu.
+- **"Ekle" düğmesi:** `EKLE_DUGMESI` (320), sabit yeşil #2F8F46 + beyaz yazı + `PackagePlus`
+  ikonu (000'da içe aktarıldı). `data-kalemlere-ekle` korundu (testler).
+- **Barkod paneli katlanır:** kapalıyken tek ince kesikli düğme (`data-barkod-paneli-ac`), açıkken
+  etiketin sağında "Gizle" (`data-barkod-paneli-kapat`; testte ikonlar boş çizildiği için yazılı).
+  Tercih cihazda `localStorage["siparis:barkodPaneli"]` — fuarda okutan açık bırakır.
+- **Renk bazlı açıklama:** `kalem.aciklama` (boşsa alan yok). Formda `kAciklama`; "Ekle" o rengin
+  bütün ölçülerine yazar; aynı satıra açıklamasız ikinci "Ekle" eskisini SİLMEZ (miktar artırmak
+  için). Kalem listesinde renk hücresinin altında satır içi kutu (`data-form-kalem-aciklama`,
+  `grupDegistir` ile satırın bütün ölçülerine); kilitli satırda salt okunur yazı. Sipariş kartında
+  renk adının altında (`data-kart-kalem-aciklama`), sipariş çıktısında (`siparisCiktisiHTML`) renk
+  hücresinde. Üretim fişine/planlamaya henüz taşınmıyor.
+- Test: yeni `senaryo-siparis-form-duzen`.
 
 ## SİPARİŞTE RENK YAZARAK VE RESİMLİ (26 Eylül, v1.469.0 — Claude Code oturumu)
 
