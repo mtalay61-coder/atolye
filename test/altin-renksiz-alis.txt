@@ -1,18 +1,21 @@
 {
  "form": {
   "Astar Boş": {
+   "kutuEtiketi": "stok: 5",
    "miktarKutulari": [
     "tek"
    ],
    "renkKutusu": false
   },
   "Silme Suyu": {
+   "kutuEtiketi": "stok: 0",
    "miktarKutulari": [
     "Standart"
    ],
    "renkKutusu": false
   },
   "Tutkal": {
+   "kutuEtiketi": "stok: 2",
    "miktarKutulari": [
     "Standart"
    ],
