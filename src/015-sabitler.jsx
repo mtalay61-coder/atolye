@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.480.0";
+const SURUM = "1.481.0";
 const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Recetede gecmis renk eslestirmeleri hatirlaniyor (kirmizi uyariyla)";
+const SURUM_NOTU = "Fiyatlandirmada para birimi ve virgullu fiyat girisi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Recetede gecmis renk eslestirmeleri hatirlaniyor (kirmizi uy
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.481.0", tarih: "26.09.2026",
+    eklenen: ["Ürün kartı ▸ Fiyatlandırma: para birimi seçimi (₺/$/€, varsayılan kartın alış/satış birimi); özel fiyatlar kendi birimiyle kaydediliyor"],
+    degisen: ["Fiyat kutuları geniş, virgülle yazılıyor (0,18); yanında fiyatın birimi", "Kural listesi, fiyat geçmişi, başlık ve siparişteki 'özel' ipucu doğru para birimini gösteriyor"],
+    duzeltilen: [] },
   { surum: "1.480.0", tarih: "26.09.2026",
     eklenen: ["Reçetede hammadde eklerken renk eşleştirmesi geçmiş reçetelerden hatırlanıyor: isim tutmazsa daha önce bu mamul rengine bağlanan hammadde rengi seçili gelir, kırmızı 'geçmişten · kontrol edin' uyarısıyla; dokunmadan eklenebilir"],
     degisen: [],

@@ -45,7 +45,7 @@ async function calistir() {
   const tekFiyatAc = (renk) => sayfa.evaluate((renk) => {
     const tr = [...document.querySelectorAll("tr")].find((x) => x.offsetParent && (x.querySelector("td") || {}).textContent === renk);
     const c = tr && tr.querySelector('input[type="checkbox"]');
-    if (c) c.click();
+    if (c && !c.checked) c.click();   // renk tek fiyatı varsayılan açık
   }, renk);
   const yaz = async (veri, deger) => {
     const k = sayfa.locator(`[data-fk-hucre="${veri}"]`).first();
