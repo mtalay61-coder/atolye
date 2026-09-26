@@ -3,7 +3,7 @@
 // Varlık raporunun iddiaları: defter ayrımı ("Muhasebe" ikisine de), tarih itibarıyla bakiye,
 // çek durumunun geçmişten oynatılması, alınan/verilen çek tarafları, stok değeri (hammadde alış
 // fiyatı, mamul reçete maliyeti), kuru olmayan birimin toplam dışı kalması, net varlık.
-const { finansRaporSatirlari, finansOzet, cariYaslandirma } = require("./erp.cjs");
+const { finansRaporSatirlari, finansOzet, cariYaslandirma, finansUretimDegerleri } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -109,5 +109,44 @@ bekle("borç yaşlandırma", [b.yon, b.bakiye, b.acikKalemler.map((k) => [k.kala
 const ySatir = finansRaporSatirlari({ cariler: [yc], muhasebe: { kurlar: { USD: 40 } }, stok: [], defter: "Genel", tarih: "2026-09-30" })
   .find((s) => s.paraBirimi === "TRY");
 bekle("rapor satırında dilimler", [ySatir.tutar, ySatir.yas31_60, ySatir.yasVadesiGelmemis, ySatir.ortalamaGecikme], [600, 300, 300, 60]);
+
+// ---- ÜRETİMDEKİ MAL — GERÇEKLEŞEN MALİYET (v1.465.0) ----
+// Bot: Kesim'de 2 m deri (50 ₺/m), Montaj'da 1 taban (20 ₺); proses ücretleri Kesim 10, Saya 15,
+// Montaj 25 → standart çift maliyeti 120 hammadde + 50 işçilik = 170 ₺. 10 çiftlik üretim:
+// Kesim ve Saya bitti, Montaj'dan 4 çift çıkıp stoğa girdi. Personele 60 ₺ ödendi.
+const uStok = [
+  { id: "deri", ad: "Deri", kategori: "Hammadde", alisFiyati: 50, hareketler: [
+    { tarih: "2026-09-01", renk: "Siyah", beden: "", miktar: 100 },
+    { tarih: "2026-09-10", renk: "Siyah", beden: "", miktar: -20, kaynak: "Üretim", uretimId: "u1" }] },
+  { id: "taban", ad: "Taban", kategori: "Hammadde", alisFiyati: 20, hareketler: [
+    { tarih: "2026-09-01", renk: "", beden: "", miktar: 50 },
+    { tarih: "2026-09-20", renk: "", beden: "", miktar: -4, kaynak: "Üretim", uretimId: "u1" }] },
+  { id: "bot", ad: "Bot", kategori: "Mamul", prosesUcretleri: { Kesim: 10, Saya: 15, Montaj: 25 },
+    recete: [
+      { proses: "Kesim", hammaddeUrunId: "deri", renk: "Siyah", beden: "", mamulRenk: "Siyah", mamulBeden: "Tüm Bedenler", miktar: 2 },
+      { proses: "Montaj", hammaddeUrunId: "taban", renk: "", beden: "", mamulRenk: "Siyah", mamulBeden: "Tüm Bedenler", miktar: 1 }],
+    hareketler: [{ tarih: "2026-09-20", renk: "Siyah", beden: "40", miktar: 4, kaynak: "Üretim", uretimId: "u1" }] },
+];
+const uCariler = [{ id: "p", unvan: "Usta", tip: "Personel", hareketler: [
+  { id: "i1", tarih: "2026-09-10", yon: "Alacak", tutar: 100, fisNo: "10001-Kesim-İşçilik", uretimId: "u1" },
+  { id: "i2", tarih: "2026-09-15", yon: "Alacak", tutar: 150, fisNo: "10001-Saya-İşçilik", uretimId: "u1" },
+  { id: "i3", tarih: "2026-09-20", yon: "Alacak", tutar: 100, fisNo: "10001-Montaj-İşçilik", uretimId: "u1" },
+  { id: "o1", tarih: "2026-09-21", yon: "Borç", tutar: 60, fisNo: "ODM-1" }] }];
+const uUretim = [{ id: "u1", siparisNo: "10001", urunId: "bot", renk: "Siyah", asama: "Montaj", bedenMiktarlari: [{ beden: "40", miktar: 10 }] }];
+const [w] = finansUretimDegerleri({ uretim: uUretim, stok: uStok, cariler: uCariler, tarih: "2026-09-30" });
+// Harcanan: deri 1000 + taban 80 + işçilik 350 = 1430; aktarılan 4 × 170 = 680 → 750.
+// Kalan 6 çiftin standart payı: 6 × (100 deri + 10 + 15) = 750 — gerçekleşen ile tutuyor.
+bekle("üretimdeki mal gerçekleşen değer", [w.hammadde, w.iscilik, w.aktarilan, w.deger, w.girenCift], [1080, 350, 680, 750, 4]);
+bekle("işçilik ödenen / ödenmemiş (FIFO)", [w.iscilikOdenen, w.iscilikOdenmemis], [60, 290]);
+// Yalnız Kesim bitmişken (15 Eylül öncesi): 1000 deri + 100 işçilik — 1.500 değil gerçekleşen.
+const [w0] = finansUretimDegerleri({ uretim: uUretim, stok: uStok, cariler: uCariler, tarih: "2026-09-12" });
+bekle("yalnız kesim bitmişken", [w0.hammadde, w0.iscilik, w0.deger, w0.iscilikOdenmemis], [1000, 100, 1100, 100]);
+const uSatir = finansRaporSatirlari({ cariler: uCariler, muhasebe: {}, stok: uStok, uretim: uUretim, tarih: "2026-09-30" });
+const mamulSatir = uSatir.find((x) => x.ad === "Bot");
+bekle("mamul stok: hammadde + işçilik payı", [mamulSatir.tlKarsiligi, mamulSatir.hammaddeDegeri, mamulSatir.iscilikDegeri], [680, 480, 200]);
+bekle("üretim satırı raporda", uSatir.filter((x) => x.kalem === "Üretimdeki mal (yarı mamul)").map((x) => [x.ad, x.tlKarsiligi, x.miktar, x.iscilikOdenmemis]), [["Üretim 10001 · Bot", 750, 6, 290]]);
+bekle("yalnız hammadde yöntemi", finansRaporSatirlari({ cariler: uCariler, muhasebe: {}, stok: uStok, uretim: uUretim, tarih: "2026-09-30", mamulDegerleme: "hammadde" })
+  .find((x) => x.ad === "Bot").tlKarsiligi, 480);
+bekle("tamamlanan üretim listede yok", finansUretimDegerleri({ uretim: [{ ...uUretim[0], asama: "Tamamlandı" }], stok: uStok, cariler: uCariler }).length, 0);
 
 process.exit(hata);

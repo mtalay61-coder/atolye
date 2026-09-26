@@ -4055,6 +4055,8 @@ export default function AtolyeERP() {
                 cariler={cariler}
                 muhasebe={muhasebe}
                 stok={stok}
+                uretim={uretim}
+                araProsesler={tanimlar.araProsesler || []}
                 raporlar={tanimlar.raporlar || []}
                 onRaporlarKaydet={raporlariKaydet}
                 aktifKullanici={aktifKullanici}

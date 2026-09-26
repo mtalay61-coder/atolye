@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.464.0** · 26 Eylül 2026
+Son sürüm: **v1.465.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.464.0): Finans Raporu ▸ Yaşlandırma — alacak/borç yaşlandırma, FIFO (`cariYaslandirma`).** Bkz. "ALACAK / BORÇ YAŞLANDIRMA".
+**Son iş (26 Eylül, v1.465.0): Finans Raporu — üretimdeki mal gerçekleşen maliyetle, işçilik ödenen/ödenmemiş, mamul hammadde+işçilik (`finansUretimDegerleri`).** Bkz. "ÜRETİMDEKİ MAL VE İŞÇİLİK".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,38 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## ÜRETİMDEKİ MAL VE İŞÇİLİK — FİNANS RAPORU (26 Eylül, v1.465.0 — Claude Code oturumu)
+
+**Kullanıcı:** "Ödenen ve ödenmeyen işçilik olarak ayırmak lazım. Örnek: mamulün yarısı üretildi ve
+stok değeri 1000 TL oldu; toplam değeri 1500 olması gerekirken üretimde o kadar hammadde ve işçilik
+üretti. Bunu 1000 TL olarak hesaplar. Gerçekleşen o anki durumu göstermeli. Şu an için olan stok,
+yarı mamul, mamul tüm değerler göstersin." (Önce "işçilik nasıl olacak" soruldu; standart/tam
+maliyet önerisi yerine GERÇEKLEŞEN maliyet istendi.)
+
+- Üretim veri modeli (keşif): hammadde TESLİMDE, proses başına, reçeteyle düşülüyor (stok hareketi
+  `uretimId`, `kaynak: "Üretim"`, fiyatsız); işçilik teslimde personele `…-İşçilik` cari fişi
+  (`uretimId`, yön Alacak = biz borçluyuz); ödeme ayrı Ödeme hareketi; mamul girişi son proseste
+  `…-Giriş` (fiyatsız). DİKKAT: DEVAM-NOTU 3501 "çıkış iş verilirken" diyor, kod teslimde düşüyor
+  (ara proses istisnası: sonraki ana prosesin ilk atamasında bütün reçete).
+- `finansUretimDegerleri({uretim, stok, cariler, kurlar, tarih, araProsesler})`: açık her üretim için
+  hammadde = üretime bağlı stok hareketlerinin NET çıkışı × `hammaddeBirimFiyati` (stok değerlemesiyle
+  aynı fiyat); işçilik = üretime bağlı `-İşçilik` fişleri; aktarılan = bu üretimden stoğa giren mamul
+  çiftleri × mamul birim maliyeti (hammadde + işçilik); DEĞER = max(0, hammadde + işçilik − aktarılan).
+  Tamamlanan (bugün), bütün çiftleri stoğa girmiş ya da değeri 0 olan iş listelenmez.
+- **Ödenen / ödenmemiş işçilik:** personel carisinin borç yaşlandırması (`cariYaslandirma`, FIFO) →
+  açık kalan işçilik fişleri ödenmemiş. Ödenmemiş kısım zaten "Personel borcu" (Ticari Borçlar);
+  üretim satırında bilgi olarak, özetin altında toplam satırı (`data-finans-uretim-ozet`).
+- **Mamul değerleme:** "Hammadde + işçilik" (varsayılan, `maliyet`; işçilik = `prosesUcretleri` +
+  ara proses ücretleri, `finansIscilikBirim`), "Yalnız hammadde" (`hammadde`, v1.463 davranışı),
+  satış, alış. Genel gider stok değerine GİRMEZ (dönem gideri).
+- Yeni alanlar: Hammadde payı, İşçilik payı, İşçilik ödenen, İşçilik ödenmemiş, Mamule aktarılan.
+  "Stok Değeri" şablonuna eklendi. Üretim satırı: kalem "Üretimdeki mal (yarı mamul)", miktar = kalan
+  çift, ayrıntı "4/10 çift stoğa girdi · aşama".
+- Bilinen yaklaşıklık: aktarılan, standart birim maliyetle (kart ücreti + reçete); gerçekleşen ile
+  standart farkı üretim açıkken yarı mamulde kalır, üretim bitince görünmez (fark raporu yok).
+- Test: `birim-finans-rapor.js` (kullanıcının örneği: yalnız kesimde 1.100, 4/10 çift çıkınca 750 =
+  1.080 + 350 − 680; ödenen 60 / ödenmemiş 290), `senaryo-finans-uretim.js`.
 
 ## ALACAK / BORÇ YAŞLANDIRMA (26 Eylül, v1.464.0 — Claude Code oturumu)
 

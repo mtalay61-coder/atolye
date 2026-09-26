@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.464.0";
+const SURUM = "1.465.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Finans Raporu: alacak ve borc yaslandirma";
+const SURUM_NOTU = "Finans Raporu: uretimdeki mal gerceklesen maliyet, iscilik odenen/odenmemis";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,12 @@ const SURUM_NOTU = "Finans Raporu: alacak ve borc yaslandirma";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.465.0", tarih: "26.09.2026",
+    eklenen: ["Finans Raporu'nda üretimdeki mallar (yarı mamul): açık her üretimin o ana kadar gerçekten harcanan hammaddesi + yazılan işçiliği, stoğa giren bitmiş çiftler düşülerek",
+              "İşçilik ödenen / ödenmemiş ayrımı (personel ödemeleri en eski işçilik fişini kapatır)",
+              "Mamul değerlemede 'Hammadde + işçilik' (varsayılan) ve 'Yalnız hammadde'; stok satırlarında hammadde ve işçilik payı"],
+    degisen: ["Mamul stok değeri artık proses ücretlerini (işçilik) de içeriyor"],
+    duzeltilen: [] },
   { surum: "1.464.0", tarih: "26.09.2026",
     eklenen: ["Finans Raporu ▸ Yaşlandırma: alacak ve borçların yaşa göre dağılımı (vadesi gelmemiş, 0-30, 31-60, 61-90, 91-180, 180+ gün) — ödemeler en eski kalemi kapatır (FIFO); cariye dokununca açık fişler, kaç gündür beklediği",
               "Varsayılan vade (gün) ayarı, ortalama gecikme ve en eski kalem; Excel ve yazdır",
