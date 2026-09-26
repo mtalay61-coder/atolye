@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.472.0** · 26 Eylül 2026
+Son sürüm: **v1.473.0** · 26 Eylül 2026
 
 ---
 
@@ -6155,6 +6155,7 @@ Kullanıcı (Stok ▸ yeni hammadde "Silme Suyu", renk/beden seçmeden Matris Ol
   tablolarına uygulanmıştı. Şimdi: yeni ürün formu matris önizlemesi (152), ürün kartı "Renkler ve
   Bedenler" matrisi, kart içi fiş matrisi, mamul→hammadde rengi tablosu ve fiyat grubu tablosu (160).
   Kart özeti yer tutucuyu saymıyor ("1 renk × 1 beden" yerine "tek stok kalemi").
+- v1.473.0: özet sıfır olan tarafı yazmıyor ("2 renk", "3 beden") — tam koşuda `satin-alma-sutunu` "2 renk × 0 beden" yakaladı, altını güncellendi.
 - KAYIT DEĞİŞMEDİ: varyant yine `Standart/Standart`.
 - **İş akışı (kullanıcı, 26 Eylül: "Evet birleştir"):** bundan sonra PR'ı Claude açıp testler temizse
   kendisi birleştiriyor (merge); sorun görürse kullanıcıya söylüyor.
