@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.465.0";
+const SURUM = "1.466.0";
 const SURUM_TARIHI = "2026-09-25";
-const SURUM_NOTU = "Finans Raporu: uretimdeki mal gerceklesen maliyet, iscilik odenen/odenmemis";
+const SURUM_NOTU = "Model rengi pozisyonlari ve kart renk secimi yazarak aranir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Finans Raporu: uretimdeki mal gerceklesen maliyet, iscilik o
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.466.0", tarih: "26.09.2026",
+    eklenen: [],
+    degisen: ["Ürün kartında renk ekleme ve çok renkli Model Rengi oluşturmada (1./2./3. Renk) renkler yazdıkça daralan listeden seçiliyor; yeni ürün formundaki pozisyonlar da"],
+    duzeltilen: [] },
   { surum: "1.465.0", tarih: "26.09.2026",
     eklenen: ["Finans Raporu'nda üretimdeki mallar (yarı mamul): açık her üretimin o ana kadar gerçekten harcanan hammaddesi + yazılan işçiliği, stoğa giren bitmiş çiftler düşülerek",
               "İşçilik ödenen / ödenmemiş ayrımı (personel ödemeleri en eski işçilik fişini kapatır)",

@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.465.0** · 26 Eylül 2026
+Son sürüm: **v1.466.0** · 26 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.465.0): Finans Raporu — üretimdeki mal gerçekleşen maliyetle, işçilik ödenen/ödenmemiş, mamul hammadde+işçilik (`finansUretimDegerleri`).** Bkz. "ÜRETİMDEKİ MAL VE İŞÇİLİK".
+**Son iş (26 Eylül, v1.466.0): Model Rengi pozisyonları ve ürün kartı renk seçimi yazarak aranıyor (`AramaliMetin` yalnizListeden).** Bkz. "MODEL RENGİ YAZARAK SEÇİM".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,22 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## MODEL RENGİ YAZARAK SEÇİM (26 Eylül, v1.466.0 — Claude Code oturumu)
+
+**Kullanıcı (ürün kartı ekran görüntüsü, Kaç renkli? 3 · 1./2./3. Renk "Seçin…"):** "Buradaki renkleri
+de arama ile liste daralsın."
+
+- Üç `<select>` → `AramaliMetin` + `yalnizListeden` (sezon kutusuyla aynı kalıp):
+  ürün kartı çok renkli yeni Model Rengi pozisyonları (`data-model-rengi-poz`, tanımlı tekli renkler,
+  kombinasyon etiketleri hariç), ürün kartı "Renk Ekle" tanımlı renk/model rengi seçimi
+  (`data-kart-renk-arama`), yeni ürün formundaki pozisyonlar (152-stok, `mamulRenkTanimli`).
+  Yeni üründe model rengi seçimi zaten `AramaliSecici` idi (v1.452).
+- Yarım yazım kutudan çıkınca ilk eşleşene oturur, eşleşmeyen temizlenir; "Ekle" / "Model Rengi
+  Olarak Ekle" yalnız LİSTEDEKİ değerlerle açık (yazarken kutuda yarım metin olabildiği için
+  `disabled` artık "dolu mu" değil "listede mi" diye bakıyor, tıklamada da kontrol).
+- Test: `senaryo-model-rengi-arama.js`; `senaryo-renk-gocu.js` kart seçeneklerini kutuya odaklanıp
+  öneri listesinden okuyor (altın AYNI).
 
 ## ÜRETİMDEKİ MAL VE İŞÇİLİK — FİNANS RAPORU (26 Eylül, v1.465.0 — Claude Code oturumu)
 

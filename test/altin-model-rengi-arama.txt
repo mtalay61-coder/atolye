@@ -1,0 +1,21 @@
+{
+ "botRenkleri": [
+  "Siyah",
+  "1001 - Taba Süet/Siyah Deri/Altın"
+ ],
+ "degerler": [
+  "Taba Süet",
+  "Siyah Deri",
+  ""
+ ],
+ "eksikkenEkleAcik": false,
+ "hatalar": [],
+ "kutuSayisi": 3,
+ "sueYazinca": [
+  "Bej Süet",
+  "Siyah Süet",
+  "Taba Süet"
+ ],
+ "tabaDYazinca": [],
+ "tamamkenEkleAcik": true
+}

@@ -34,6 +34,9 @@ async function calistir() {
   // "Renk Ekle" açılınca seçeneklerde eski mamul rengi "Kahve" tek havuzdan geliyor.
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && x.textContent.trim() === "Renk Ekle"); if (b) b.click(); });
   await sayfa.waitForTimeout(400);
+  // v1.466.0: seçim açılır liste değil, yazarak süzülen kutu — dokununca öneriler açılıyor.
+  await sayfa.evaluate(() => { const k = document.querySelector("[data-kart-renk-arama]"); if (k) k.focus(); });
+  await sayfa.waitForTimeout(200);
   const kartRenkSecenekleri = await sayfa.evaluate(() => [...document.querySelectorAll("select option, button")]
     .filter((o) => o.offsetParent !== null || o.tagName === "OPTION")
     .map((o) => o.textContent.trim()).filter((x) => /^(\+ )?(Kahve|Siyah)$/.test(x)));

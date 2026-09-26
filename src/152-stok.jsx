@@ -1939,14 +1939,18 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                                 return (
                                   <label key={poz} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                                     <span style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>{poz}. Renk</span>
-                                    <select
-                                      value={kombiRenkSecimleri[poz] || ""}
-                                      onChange={(e) => setKombiRenkSecimleri({ ...kombiRenkSecimleri, [poz]: e.target.value })}
-                                      style={{ ...inputStyle, width: 140 }}
-                                    >
-                                      <option value="">Seçin…</option>
-                                      {mamulRenkTanimli.map((r) => <option key={r.id} value={r.ad}>{r.ad}</option>)}
-                                    </select>
+                                    {/* YAZARAK SEÇİM (v1.466.0 — kullanıcı: "buradaki renkleri de arama ile liste
+                                        daralsın"). Yalnız tanımlı renkler: serbest yazım model rengi kurmazdı. */}
+                                    <div style={{ width: 170 }}>
+                                      <AramaliMetin
+                                        veriAdi="data-model-rengi-poz"
+                                        deger={kombiRenkSecimleri[poz] || ""}
+                                        onDegis={(v) => setKombiRenkSecimleri((s) => ({ ...s, [poz]: v }))}
+                                        oneriler={mamulRenkTanimli.map((r) => r.ad)}
+                                        yalnizListeden
+                                        placeholder="Yazın ya da seçin…"
+                                      />
+                                    </div>
                                   </label>
                                 );
                               })}
@@ -1955,7 +1959,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
                               <button
                                 type="button"
                                 className="btn-primary"
-                                disabled={Array.from({ length: renkDegiskenSayisi }, (_, i) => i + 1).some((poz) => !kombiRenkSecimleri[poz])}
+                                disabled={Array.from({ length: renkDegiskenSayisi }, (_, i) => i + 1).some((poz) => !mamulRenkTanimli.some((r) => r.ad === kombiRenkSecimleri[poz]))}
                                 onClick={() => {
                                   const renkAdlari = Array.from({ length: renkDegiskenSayisi }, (_, i) => kombiRenkSecimleri[i + 1]);
                                   const etiket = onKombinasyonOlustur(renkAdlari);
