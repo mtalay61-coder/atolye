@@ -218,6 +218,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   const gosterilecekOlculer = olcuSecmeli
     ? bedenSecenekleri.filter((b) => b === kSeciliOlcu)
     : bedenSecenekleri;
+  // Ekle düğmesi satırda mı (v1.488.0): bedenli üründe (birden çok miktar kutusu) alt satırda.
+  const ekleSatirda = gosterilecekOlculer.length <= 1;
 
   function urunSec(urunId) {
     setKUrunId(urunId);
@@ -629,9 +631,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               }}
               // TEK SATIRA SIĞSIN (v1.487.0). Kullanıcı (telefon, Boyut seçmeli üründe fiyat alt satıra
               // düşmüş): "Satır aşağı kayıyor yine." Ürün 190 + renk 130 + boyut 130 + fiyat 90+74
-              // ≈ 720 px, telefonda kutu içi ~690 px. Genişlikler daraltıldı (≈640 px); ad uzunsa
+              // ≈ 720 px, telefonda kutu içi ~690 px. Genişlikler daraltıldı (v1.488.0: Ekle da satırda — ürün 150, renk 104); ad uzunsa
               // kutuda kayar, seçilen ürün zaten altta renk/ölçü ile teyit ediliyor.
-              style={{ ...inputStyle, width: 165 }}
+              style={{ ...inputStyle, width: 150 }}
             />
             <datalist id="fis-urun-listesi">
               {secilebilirler(stok, kUrunId).map((p) => (
@@ -648,7 +650,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 list="fis-renk-listesi"
                 placeholder="Renk yazın ya da seçin"
                 onChange={(e) => { setKRenk(e.target.value); setKMiktarlar({}); setKSeciliOlcu(""); }}
-                style={{ ...inputStyle, width: 112 }}
+                style={{ ...inputStyle, width: 104 }}
               />
               <datalist id="fis-renk-listesi">
                 {renkSecenekleri.map((r) => <option key={r} value={r} />)}
@@ -725,6 +727,17 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               </select>
             </div>
           </Field>
+          {/* EKLE AYNI SATIRDA (v1.488.0). Kullanıcı: "Ekle butonu da aynı satırda olsun. Bedenli üründe
+              sadece alt satıra geçsin." Tek miktar kutusu varken (ölçüsüz ya da ölçü seçmeli) düğme
+              satırın sonunda; birden çok beden kutusu varken satır zaten uzun — düğme altta kalır.
+              Boş etiket, düğmeyi kutularla aynı hizaya indiriyor. */}
+          {ekleSatirda && (
+            <Field label={"\u00a0"}>
+              <button type="button" data-kalemlere-ekle="1" style={{ ...EKLE_DUGMESI, padding: "8px 12px" }} onClick={kalemEkle}>
+                <PackagePlus size={15} /> Ekle
+              </button>
+            </Field>
+          )}
 
           {/* MİKTAR, ürün/renk/fiyat ile AYNI SATIRDA. Ayrı bir bloktaydı: tek ölçülü malzemede
               (desi, kilo, adet) tek bir kutu için koca bir satır açılıyor, kullanıcı ekranda
@@ -745,9 +758,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
 
         {/* YEŞİL "EKLE" (v1.486.0, siparişteki `EKLE_DUGMESI` ile aynı): kalem ekleme bütün formlarda
             aynı görünsün — kullanıcı fiş ile sipariş arasında düğmeyi yeniden aramasın. */}
-        <button type="button" data-kalemlere-ekle="1" style={{ ...EKLE_DUGMESI, alignSelf: "flex-start" }} onClick={kalemEkle}>
-          <PackagePlus size={15} /> Ekle
-        </button>
+        {!ekleSatirda && (
+          <button type="button" data-kalemlere-ekle="1" style={{ ...EKLE_DUGMESI, alignSelf: "flex-start" }} onClick={kalemEkle}>
+            <PackagePlus size={15} /> Ekle
+          </button>
+        )}
         </div>
 
         {/* SAĞ SÜTUN: hazır kaynaklardan ekleme (koli okut, fişteki koliler, siparişten seç).
