@@ -1,0 +1,21 @@
+{
+ "alanEtiketi": "Kalınlık",
+ "hatalar": [],
+ "karisik": {
+  "araBasliklar": [
+   "KALINLIK",
+   "RENK"
+  ],
+  "sutun": "KALINLIK / RENK"
+ },
+ "kartMatrisi": {
+  "bolum": "Kalınlık ve Bedenler 2 kalınlık",
+  "dugme": "Kalınlık Ekle",
+  "kose": "Kalınlık"
+ },
+ "kayit": "Kalınlık",
+ "tekBaslik": {
+  "araBasliklar": [],
+  "sutun": "KALINLIK"
+ }
+}

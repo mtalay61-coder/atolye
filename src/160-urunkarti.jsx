@@ -239,6 +239,7 @@ function ProductMatrixCard({
       birim: product.birim,
       minStokTumu: "",
       olcuTipi: product.olcuTipi || "Beden",
+      renkBasligi: renkBasligi(product),
       alisFiyati: String(alisFiyati),
       alisParaBirimi: product.alisParaBirimi || "₺",
       satisParaBirimi: product.satisParaBirimi || "₺",
@@ -266,6 +267,8 @@ function ProductMatrixCard({
       ad: editForm.ad.trim(),
       birim: editForm.birim,
       olcuTipi: editForm.olcuTipi,
+      // "Renk" varsayılanı kayda yazılmaz (boş = Renk); eski kayıtlarla aynı görünür.
+      renkBasligi: ((editForm.renkBasligi || "").trim() === "Renk" ? "" : (editForm.renkBasligi || "").trim()),
       alisFiyati: Math.max(0, parseFloat(editForm.alisFiyati) || 0),
       alisParaBirimi: editForm.alisParaBirimi,
       satisParaBirimi: editForm.satisParaBirimi,
@@ -1355,6 +1358,22 @@ function ProductMatrixCard({
                 </select>
               </Field>
             )}
+            {/* RENK ALANININ BAŞLIĞI (v1.494.0): bu stokta "renk" ekseni ne anlama geliyor — Baskı,
+                Kalınlık, Tip, Marka, Cins… Değerler yine renk alanında; yalnız her yerde bu ad yazar.
+                Öneriler listeden, istenen ad serbest yazılır. */}
+            <Field label="Renk alanının başlığı">
+              <input
+                list="renk-baslik-onerileri"
+                data-renk-basligi-duzenle="1"
+                value={editForm.renkBasligi || ""}
+                onChange={(e) => setEditForm({ ...editForm, renkBasligi: e.target.value })}
+                placeholder="Renk"
+                style={inputStyle}
+              />
+              <datalist id="renk-baslik-onerileri">
+                {RENK_BASLIK_ONERILERI.map((o) => <option key={o} value={o} />)}
+              </datalist>
+            </Field>
             <Field label="Tüm Renk/Bedenlere Min. Stok Uygula (opsiyonel)">
               <input
                 type="number" value={editForm.minStokTumu}
@@ -1508,14 +1527,16 @@ function ProductMatrixCard({
             marginBottom: stokMatrisAcik ? 10 : 0,
           }}
         >
-          <span style={{ fontWeight: 700, fontSize: 13, color: "var(--erp-text)" }}>Renkler ve Bedenler</span>
+          {/* Başlık ürünün renk başlığıyla (v1.494.0): "Kalınlık ve Bedenler", "Baskı ve Bedenler". */}
+          <span style={{ fontWeight: 700, fontSize: 13, color: "var(--erp-text)" }}>{renkBasligi(product) === "Renk" ? "Renkler" : renkBasligi(product)} ve {(product.olcuTipi || "Beden") === "Boyut" ? "Boyutlar" : "Bedenler"}</span>
           <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
             {/* Yer tutucu sayılmıyor: renksiz-ölçüsüz üründe "1 renk × 1 beden" yanıltıyordu. */}
             {(() => {
               const rs = renkler.filter((r) => olcuGoster(r)).length;
               const bs = bedenler.filter((b) => olcuGoster(b)).length;
               // Sıfır olan taraf yazılmıyor: bedensiz renkli üründe "2 renk × 0 beden" garip duruyordu.
-              return rs && bs ? `${rs} renk × ${bs} beden` : rs ? `${rs} renk` : bs ? `${bs} beden` : "tek stok kalemi";
+              const ra = renkBasligi(product).toLocaleLowerCase("tr-TR");
+              return rs && bs ? `${rs} ${ra} × ${bs} beden` : rs ? `${rs} ${ra}` : bs ? `${bs} beden` : "tek stok kalemi";
             })()}
           </span>
           <span style={{ marginLeft: "auto", display: "flex" }}>
@@ -1528,7 +1549,7 @@ function ProductMatrixCard({
             <table data-stok-matrisi="kart" style={{ width: "auto", minWidth: "100%" }}>
               <thead>
                 <tr>
-                  <th>{matrisKoseBasligi(renkler, bedenler)}</th>
+                  <th>{matrisKoseBasligi(renkler, bedenler, renkBasligi(product), product.olcuTipi || "Beden")}</th>
                   {bedenler.map((b) => (
                     <th key={b} className="mono" style={{ textAlign: "center", position: "relative" }}>
                       {/* "Standart" yer tutucusu yazılmıyor (v1.472.0, `olcuGoster`). */}
@@ -1762,7 +1783,7 @@ function ProductMatrixCard({
             </button>
           </div>
         ) : (
-          <button className="btn-ghost" onClick={() => { setAddingRenk(true); setYeniModelRengiModu(false); setRenkEkleSayisi(1); setYeniTekliRenkGiris(false); }}><Plus size={13} /> Renk Ekle</button>
+          <button className="btn-ghost" onClick={() => { setAddingRenk(true); setYeniModelRengiModu(false); setRenkEkleSayisi(1); setYeniTekliRenkGiris(false); }}><Plus size={13} /> {renkBasligi(product)} Ekle</button>
         )}
 
         {addingBeden ? (
@@ -2292,7 +2313,7 @@ function ProductMatrixCard({
                               onChange={(e) => { setTumModellerRenk(e.target.value); setTopluUygulamaBilgi(""); }}
                               style={{ ...inputStyle, width: 132, padding: "5px 6px", fontSize: 12 }}
                             >
-                              <option value="">Renk…</option>
+                              <option value="">{renkBasligi(seciliHammadde)}…</option>
                               {Array.from(new Set(seciliHammadde.variants.map((v) => v.renk))).map((r) => <option key={r}>{r}</option>)}
                             </select>
                             {/* Uygulama select'in onChange'ine BAĞLI DEĞİL, ayrı bir eylem: aynı rengi
@@ -2379,7 +2400,7 @@ function ProductMatrixCard({
                                   }}
                                   style={{ ...inputStyle, width: 150, flexShrink: 0 }}
                                 >
-                                  <option value="">Renk seçin…</option>
+                                  <option value="">{renkBasligi(seciliHammadde)} seçin…</option>
                                   {Array.from(new Set(seciliHammadde.variants.map((v) => v.renk))).map((r) => <option key={r}>{r}</option>)}
                                 </select>
                                 {(rMap[mr] || {})[1] && (
@@ -2457,7 +2478,7 @@ function ProductMatrixCard({
                                       fontWeight: otomatikBulundu ? 400 : 700,
                                     }}
                                   >
-                                    <option value="">Renk seçin…</option>
+                                    <option value="">{renkBasligi(seciliHammadde)} seçin…</option>
                                     {Array.from(new Set(seciliHammadde.variants.map((v) => v.renk))).map((r) => <option key={r}>{r}</option>)}
                                   </select>
                                   {gecmistenMi(mr, p) ? (
@@ -2524,7 +2545,7 @@ function ProductMatrixCard({
                                 fontWeight: otomatikBulundu ? 400 : 700,
                               }}
                             >
-                              <option value="">Renk seçin…</option>
+                              <option value="">{renkBasligi(seciliHammadde)} seçin…</option>
                               {Array.from(new Set(seciliHammadde.variants.map((v) => v.renk))).map((r) => <option key={r}>{r}</option>)}
                             </select>
                             {gecmistenMi(mr, 1) ? (
@@ -4699,7 +4720,7 @@ function ProductMatrixCard({
                       onChange={(e) => setSeciliEtiketler(e.target.checked ? barkodluVaryantlar.map(etiketKimlik) : [])}
                     />
                   </th>
-                  <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>RENK</th>
+                  <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>{renkBasligi(product).toLocaleUpperCase("tr-TR")}</th>
                   <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>RENK KODU</th>
                   <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>ÖLÇÜ</th>
                   <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>ÖLÇÜ KODU</th>
@@ -5106,7 +5127,7 @@ function ProductMatrixCard({
                         <table style={{ width: "auto", minWidth: "100%" }}>
                           <thead>
                             <tr>
-                              <th style={{ fontSize: 13 }}>{matrisKoseBasligi(gRenkler, gBedenler)}</th>
+                              <th style={{ fontSize: 13 }}>{matrisKoseBasligi(gRenkler, gBedenler, renkBasligi(product), product.olcuTipi || "Beden")}</th>
                               {gBedenler.map((b) => (
                                 <th key={b} className="mono" style={{ fontSize: 13, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
                               ))}
@@ -5236,7 +5257,7 @@ function ProductMatrixCard({
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr>
-                          {["Tarih", "Tedarikçi", "Fiş", "Renk", "Ölçü", "Miktar", "Fiyat", "Kart farkı"].map((b, i) => (
+                          {["Tarih", "Tedarikçi", "Fiş", renkBasligi(product), "Ölçü", "Miktar", "Fiyat", "Kart farkı"].map((b, i) => (
                             <th key={b} style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: i >= 5 ? "right" : "left" }}>{b}</th>
                           ))}
                         </tr>
@@ -5507,7 +5528,7 @@ function ProductMatrixCard({
                     <table style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr>
-                          <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>{matrisKoseBasligi(tumRenkler, tumBedenler)}</th>
+                          <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>{matrisKoseBasligi(tumRenkler, tumBedenler, renkBasligi(product), product.olcuTipi || "Beden")}</th>
                           {tumBedenler.map((b) => (
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}

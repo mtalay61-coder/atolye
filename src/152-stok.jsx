@@ -154,6 +154,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
       ad: "", kategori: "Hammadde", birim: ilkBirim, minStok: "",
       alisFiyati: "", alisParaBirimi: "₺", satisFiyati: "", satisParaBirimi: "₺", tedarikciId: "", kapakResmi: "",
       olcuTipi: "Beden", varsayilanProses: "", malzemeTipi: "", mamulTipi: "", sezon: "", sezonYili: "",
+      renkBasligi: "",
     };
   }
 
@@ -240,6 +241,8 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
       tedarikciId: isMamul ? "" : (form.tedarikciId || ""),
       kapakResmi: form.kapakResmi || "",
       olcuTipi: form.olcuTipi,
+      // Renk alanının başlığı (v1.494.0): "Renk" varsayılanı kayda yazılmaz.
+      renkBasligi: ((form.renkBasligi || "").trim() === "Renk" ? "" : (form.renkBasligi || "").trim()),
       varsayilanProses: form.varsayilanProses || "",
       malzemeTipi: form.kategori === "Hammadde" ? (form.malzemeTipi || "") : "",
       mamulTipi: form.kategori === "Mamul" ? (form.mamulTipi || "") : "",
@@ -2034,6 +2037,17 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
               );
             })() : (
             <>
+            {/* RENK ALANININ BAŞLIĞI (v1.494.0 — kullanıcı: "renk alanını bazen tip, bazen marka, bazen
+                cins olarak kullanıyoruz"): stok açılırken seçilir, kartta sonradan değiştirilir. */}
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 8 }}>
+              Bu stokta renk alanının başlığı
+              <input list="yeni-stok-renk-baslik" data-yeni-stok-renk-basligi="1" value={form.renkBasligi || ""}
+                onChange={(e) => setForm({ ...form, renkBasligi: e.target.value })} placeholder="Renk"
+                style={{ ...inputStyle, width: 140, padding: "5px 8px", fontSize: 13 }} />
+              <datalist id="yeni-stok-renk-baslik">
+                {RENK_BASLIK_ONERILERI.map((o) => <option key={o} value={o} />)}
+              </datalist>
+            </label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {tanimlar.renkler.filter((r) => !kombinasyonEtiketiFormatindaMi(r.ad)).length === 0 && (
                 <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>
@@ -2386,7 +2400,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
               <table data-stok-matrisi="form" style={{ width: "auto", minWidth: "100%" }}>
                 <thead>
                   <tr>
-                    <th>{matrisKoseBasligi(matrix.renkler, matrix.bedenler)}</th>
+                    <th>{matrisKoseBasligi(matrix.renkler, matrix.bedenler, renkBasligi(form), form.olcuTipi || "Beden")}</th>
                     {/* "Standart" yer tutucusu yazılmıyor (v1.472.0, `olcuGoster` — tablolardaki kuralın
                         aynısı, kullanıcı: "standart beden renk olayını halletmiştik, hâlâ çıkıyor"). */}
                     {matrix.bedenler.map((b) => (

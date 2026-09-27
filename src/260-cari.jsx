@@ -443,6 +443,15 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
   const bedenliMi = tumBedenler.length > 0;
   const kurVarMi = urunGruplari.some((ug) => (ug.items || []).some((h) => h.kalemParaBirimi));
 
+  // RENK SÜTUNUNUN BAŞLIĞI (v1.494.0 — kullanıcı: "stok hareketlerinde ortak isim olduğunda üst başlık
+  // ortak olsun, değişince ayrı satır eklesin"). Ürünün `renkBasligi` (Baskı, Kalınlık…): hepsi aynıysa
+  // sütun başlığı o; karışıksa başlıklar birlikte yazar ve başlık değiştiği her yerde ara satır açılır.
+  const ugUrunu = (ug) => (stok || []).find((p) => p.ad === ug.urunAd);
+  const ugBaslik = (ug) => renkBasligi(ugUrunu(ug));
+  const ortakBaslik = ortakRenkBasligi(urunGruplari.map((ug) => ugUrunu(ug) || {}));
+  const renkSutunBasligi = ortakBaslik || Array.from(new Set(urunGruplari.map(ugBaslik))).join(" / ");
+  const sutunSayisi = 2 + tumBedenler.length + 3 + (kurVarMi ? 1 : 0);
+
   const yazi = kompakt ? 10 : 11;
   const bh = { fontSize: yazi - 1, fontWeight: 700, color: "var(--erp-text-2)", padding: "3px 6px", whiteSpace: "nowrap" };
   const td = { fontSize: yazi, padding: "4px 6px", whiteSpace: "nowrap" };
@@ -453,7 +462,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
         <thead>
           <tr>
             <th style={{ ...bh, textAlign: "left" }}>ÜRÜN</th>
-            <th style={{ ...bh, textAlign: "left" }}>RENK</th>
+            <th data-fis-kalem-renk-sutunu="1" style={{ ...bh, textAlign: "left" }}>{renkSutunBasligi.toLocaleUpperCase("tr-TR")}</th>
             {bedenliMi && tumBedenler.map((b) => (
               <th key={b} className="mono" style={{ ...bh, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
             ))}
@@ -464,7 +473,8 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
           </tr>
         </thead>
         <tbody>
-          {urunGruplari.map((ug) => {
+          {urunGruplari.map((ug, ugi) => {
+            const araBaslikVar = !ortakBaslik && (ugi === 0 || ugBaslik(urunGruplari[ugi - 1]) !== ugBaslik(ug));
             const items = ug.items || [];
             const miktarVar = items.some((h) => h.miktar != null);
             const toplamAdet = stokYuvarla(items.reduce((t, h) => t + (h.miktar || 0), 0));
@@ -505,6 +515,14 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
               bedenIndex[h.beden] = (bedenIndex[h.beden] || 0) + h.miktar;
             });
             return (
+              <React.Fragment key={ug.key}>
+              {araBaslikVar && (
+                <tr data-fis-kalem-ara-baslik={ugBaslik(ug)}>
+                  <td colSpan={sutunSayisi} style={{ ...td, fontSize: yazi - 1, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
+                    {ugBaslik(ug).toLocaleUpperCase("tr-TR")}
+                  </td>
+                </tr>
+              )}
               <tr key={ug.key} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                 <td style={{ ...td, fontWeight: 600 }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -566,6 +584,7 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
                     : <span style={{ fontWeight: 400, color: "var(--erp-line-soft)" }}>—</span>}
                 </td>
               </tr>
+              </React.Fragment>
             );
           })}
         </tbody>

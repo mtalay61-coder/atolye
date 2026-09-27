@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.493.0";
+const SURUM = "1.494.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Renksiz/bedensiz hammadde receteye eklenebiliyor; tek kural";
+const SURUM_NOTU = "Renk alaninin basligi stoga gore (Baski, Kalinlik, Tip...)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Renksiz/bedensiz hammadde receteye eklenebiliyor; tek kural"
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.494.0", tarih: "27.09.2026",
+    eklenen: ["Stok kartında ve stok açarken 'renk alanının başlığı': Renk yerine Baskı, Kalınlık, Tip, Marka, Cins ya da serbest ad; kart, fiş, sipariş, reçete ve fiş listelerinde o ad yazar"],
+    degisen: ["Farklı başlıklı ürünlerin karıştığı fiş/sipariş kalem tablolarında ve Fişler/ekstre listesinde: başlık ortaksa sütunda o, farklıysa başlık değiştiği yerde ara başlık satırı"],
+    duzeltilen: ["Fiş kalem tablosunda 'Standart' ve boş bedenli ürünler iki ayrı miktar sütunu açıyordu"] },
   { surum: "1.493.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: ["Renksiz/bedensiz ürün kararı tek yerde: bütün renk (beden) değerleri boş ya da yer tutucuysa ya da hiç yoksa ürün renksiz (bedensiz); fiş, sipariş, reçete ve stok aynı kuralı kullanıyor"],
