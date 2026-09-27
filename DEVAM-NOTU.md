@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.498.0** · 27 Eylül 2026
+Son sürüm: **v1.499.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.498.0): kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.499.0): maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6423,9 +6423,31 @@ servis istisnası onayıyla. Şimdilik (kullanıcı: "1 ve 2'yi yap"), dışarı
   `tutar`, cari `paraBirimi`nden TL'ye). Cari ayağı yoksa stoktaki fiyat; o da yoksa 0 ve `fiyatsizSatir`
   (`data-kz-fiyatsiz` uyarısı). Eski fişler de düzeldi, göç yok.
 - Test: `birim-karzarar` (gerçek `fisYaz` çıktısıyla: KDV'siz, KDV'li → matrah, USD, cari ayağı yok).
-- **AÇIK (kullanıcıya soruldu):** SMM ürünün kart `alisFiyati`ndan; üretilen mamulde bu alan çoğu zaman boş →
-  mamul satışında SMM 0, brüt kâr şişkin. Seçenek: mamulde reçete hammadde maliyeti (işçilik zaten ayrı
-  satırda — çift sayılmamalı).
+- ~~AÇIK: SMM kart alış fiyatından~~ → v1.499.0 (aşağıda).
+
+**v1.499.0 — maliyet son alışlardan.** Kullanıcı: "Şu an test verisindeyiz, maliyet ilk olarak son hammadde
+rengin alış fiyatlarının ortalamasından çeksin." Sorulanlar: kapsam → **her yerde**; pencere → "Son alış ama
+son alış eski ise dikkate almasın; TL ise o gün USD'ye çevirip USD olarak ortalama [≈ aşağı yukarı] bu değer
+olurdu desin. Son alışlar 3 aydan eski ise bu şekilde davransın."
+- **077-alis-ortalama.jsx:** `sonAlisMaliyeti(hm, renk, beden, kurlar, baglam)` — `baglam` { cariler, kurGecmisi,
+  bugun? }. (1) Son 3 ay (`aylarOnce`), o renk (`stokAnahtarNrm`), boy yazılıysa o boy ("Tüm Bedenler" boy
+  sayılmaz), `AF-` fişli cari hareketleri → MİKTAR AĞIRLIKLI ortalama (ağırlık kararı Claude'un — kullanıcı
+  "ortalama" dedi; tek küçük alış bozmasın diye). Hepsi aynı PB ise o PB'de, karışıksa TL. (2) Yoksa EN SON
+  alış: TL ise `gunKuru(kurGecmisi, tarih, "USD")` ile dolara, bugünkü kurla TL'ye (`pb: "USD"`); kur geçmişi o
+  güne yetmiyorsa olduğu gibi + kaynakta "güncellenemedi". Dövizli eski alış kendi biriminde. (3) Alış yoksa
+  null → `hammaddeBirimFiyati` eski yolu (kural → kart). Alışlar ürün adına göre dizinleniyor (WeakMap, cariler
+  dizisi başına bir kez). Rapor tarihinden sonraki alış sayılmaz (`bugun`).
+- **015 `hammaddeBirimFiyati(…, baglam)`:** 5. parametre; verilmezse eski davranış.
+- **Bağlanan yerler:** ürün kartı Maliyet sekmesi (160; `kurGecmisi` prop'u 100 → StokModule →
+  ProductMatrixCard), MaliyetYazdir (275), modelhane reçetesi (390; ModelhaneModule → ModelKarti `cariler`,
+  `kurGecmisi`), finans: `finansMamulBirimDegeri(…, baglam)`, `finansUretimDegerleri`/`finansMaliyetFarki`
+  (`kurGecmisi` parametresi), `finansRaporSatirlari` (muhasebe.kurGecmisi, rapor tarihi), kâr/zarar.
+- **Kâr/zarar SMM (247 `kzBirimMaliyet`):** mamul → `finansMamulBirimDegeri(…, "hammadde", …)` (işçilik HARİÇ —
+  "Üretim işçiliği" satırı ayrıca sayıyor), reçetesiz ya da 0 ise kart alış fiyatı; diğer kategoriler →
+  `hammaddeBirimFiyati(…, baglam)`. Ürün|renk|boy başına önbellek.
+- **Maliyet dökümü (160):** alıştan gelen satırda fiyat kutusu YOK (`alisKaynakli`) — yazılan karta/kurala
+  giderdi ama ekranda alış ortalaması kalırdı. Kaynak yazısı `data-fiyat-kaynagi` (`data-alis-kaynakli`).
+- Test: `birim-alis-ortalama`, `senaryo-maliyet-son-alis` (tarihler bugüne göre göreli).
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

@@ -127,7 +127,8 @@ function finansIscilikBirim(urun, araProsesler) {
   return t;
 }
 
-function finansMamulBirimDegeri(urun, renk, beden, yontem, stok, kurlar, araProsesler) {
+// `baglam` (v1.499.0): { cariler, kurGecmisi, bugun } — hammadde fiyatı önce son alışlardan (077-alis-ortalama).
+function finansMamulBirimDegeri(urun, renk, beden, yontem, stok, kurlar, araProsesler, baglam) {
   if (yontem === "satis" || yontem === "alis") {
     const fiyat = parseFloat(yontem === "satis" ? urun.satisFiyati : urun.alisFiyati) || 0;
     const pb = alisPbKodu({ alisParaBirimi: yontem === "satis" ? urun.satisParaBirimi : urun.alisParaBirimi });
@@ -140,7 +141,7 @@ function finansMamulBirimDegeri(urun, renk, beden, yontem, stok, kurlar, araPros
   satirlar.forEach((r) => {
     const hm = (stok || []).find((p) => p.id === r.hammaddeUrunId);
     if (!hm) return;
-    const bf = hammaddeBirimFiyati(hm, r.renk, r.beden, kurlar);
+    const bf = hammaddeBirimFiyati(hm, r.renk, r.beden, kurlar, baglam);
     if (bf.pb !== "TRY" && !(parseFloat((kurlar || {})[bf.pb]) > 0)) kurYok = bf.pb;
     hammadde += (parseFloat(r.miktar) || 0) * bf.tl;
   });
@@ -167,10 +168,11 @@ function finansMamulBirimDegeri(urun, renk, beden, yontem, stok, kurlar, araPros
 // ÖDENEN / ÖDENMEMİŞ İŞÇİLİK: personel carisinde ödemeler EN ESKİ işçilik fişini kapatır (FIFO,
 // `cariYaslandirma` — yaşlandırmayla aynı kural). Açık kalan işçilik fişleri ödenmemiş kısım; o
 // tutar zaten "Personel borcu" olarak Ticari Borçlar'da duruyor (yükümlülük), burada bilgi olarak.
-function finansUretimDegerleri({ uretim, stok, cariler, kurlar, tarih, araProsesler } = {}) {
+function finansUretimDegerleri({ uretim, stok, cariler, kurlar, kurGecmisi, tarih, araProsesler } = {}) {
   const bugun = tarih || bugunYerel();
   const bugunMu = !tarih || tarih >= bugunYerel();
   const kurTablosu = kurlar || {};
+  const maliyetBaglami = { cariler, kurGecmisi, bugun };
   const yuv = (x) => Math.round((x || 0) * 100) / 100;
   // Ödenmemiş işçilik: işçilik hareketi kimliği → açık kalan (personel carisinin borç yaşlandırması).
   const odenmemis = new Map();
@@ -201,11 +203,11 @@ function finansUretimDegerleri({ uretim, stok, cariler, kurlar, tarih, araProses
         // Bu üretimden stoğa giren bitmiş çift: maliyeti mamul satırına geçti.
         const m = Number(h.miktar) || 0;
         girenCift += m;
-        const d = finansMamulBirimDegeri(urun, h.renk, h.beden, "maliyet", stok, kurTablosu, araProsesler);
+        const d = finansMamulBirimDegeri(urun, h.renk, h.beden, "maliyet", stok, kurTablosu, araProsesler, maliyetBaglami);
         aktarilan += m * d.tl;
         return;
       }
-      const bf = hammaddeBirimFiyati(p, h.renk, h.beden, kurTablosu);
+      const bf = hammaddeBirimFiyati(p, h.renk, h.beden, kurTablosu, maliyetBaglami);
       if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0) kurYok = bf.pb;
       hammadde += -(Number(h.miktar) || 0) * bf.tl;
     }));
@@ -316,6 +318,8 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
   const bugun = tarih || bugunYerel();
   const bugunMu = !tarih || tarih >= bugunYerel();
   const kurTablosu = kurlar || (muhasebe && muhasebe.kurlar) || {};
+  // Hammadde fiyatı önce son alışlardan (v1.499.0); rapor tarihi itibarıyla — sonraki alışlar sayılmaz.
+  const maliyetBaglami = { cariler, kurGecmisi: muhasebe && muhasebe.kurGecmisi, bugun };
   const tl = (tutar, pb) => {
     if ((pb || "TRY") === "TRY") return { tl: tutar, kurYok: null };
     const kur = parseFloat(kurTablosu[pb]);
@@ -427,11 +431,11 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
       const [renk, beden] = k.split("|");
       let birim = 0; let kurYok = null; let fiyatsiz = false; let pay = null; let iscilikYok = false;
       if (mamul) {
-        const d = finansMamulBirimDegeri(p, renk, beden, mamulDegerleme, stok, kurTablosu, araProsesler);
+        const d = finansMamulBirimDegeri(p, renk, beden, mamulDegerleme, stok, kurTablosu, araProsesler, maliyetBaglami);
         birim = d.tl; kurYok = d.kurYok; fiyatsiz = d.fiyatsiz; iscilikYok = d.iscilikYok;
         if (d.hammadde != null) pay = { hammaddeDegeri: yuv(miktar * d.hammadde), iscilikDegeri: yuv(miktar * d.iscilik) };
       } else {
-        const bf = hammaddeBirimFiyati(p, renk, beden, kurTablosu);
+        const bf = hammaddeBirimFiyati(p, renk, beden, kurTablosu, maliyetBaglami);
         birim = bf.tl; fiyatsiz = !(bf.kendiFiyat > 0);
         if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0) kurYok = bf.pb;
       }
@@ -447,7 +451,7 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
   });
 
   // ---- ÜRETİMDEKİ MALLAR (yarı mamul) — gerçekleşen maliyet, deftersiz (stok gibi) ----
-  finansUretimDegerleri({ uretim, stok, cariler, kurlar: kurTablosu, tarih: bugun, araProsesler }).forEach((w) => {
+  finansUretimDegerleri({ uretim, stok, cariler, kurlar: kurTablosu, kurGecmisi: muhasebe && muhasebe.kurGecmisi, tarih: bugun, araProsesler }).forEach((w) => {
     ekle({
       taraf: "Varlık", grup: "Stoklar", kalem: "Üretimdeki mal (yarı mamul)",
       ad: `Üretim ${w.uretim.siparisNo || ""} · ${w.urunAd}`.trim(),
@@ -595,9 +599,10 @@ function finansNakitAkisi({ cariler, muhasebe, kurlar, defter = "Tümü", tarih,
 // Fiyat iki tarafta AYNI (güncel) — fark yalnız MİKTAR sapmasını ve işçilik sapmasını gösterir;
 // fiyat oynaması karşılaştırmayı kirletmez. Hammadde bazında ayrıntı: reçetede olmayan (ek malzeme)
 // ve hiç kullanılmayan kalemler de görünür.
-function finansMaliyetFarki({ uretim, stok, cariler, kurlar, tarih, araProsesler, yalnizTamamlanan = true } = {}) {
+function finansMaliyetFarki({ uretim, stok, cariler, kurlar, kurGecmisi, tarih, araProsesler, yalnizTamamlanan = true } = {}) {
   const bugun = tarih || bugunYerel();
   const kurTablosu = kurlar || {};
+  const maliyetBaglami = { cariler, kurGecmisi, bugun };
   const yuv = (x) => Math.round((x || 0) * 100) / 100;
   const nrm = stokAnahtarNrm;
   const iscilikler = new Map();
@@ -637,7 +642,7 @@ function finansMaliyetFarki({ uretim, stok, cariler, kurlar, tarih, araProsesler
     const kalemler = [...new Set([...kart.keys(), ...gercek.keys()])].map((k) => {
       const [hmId, renk, beden] = k.split("|");
       const hm = (stok || []).find((p) => p.id === hmId);
-      const bf = hammaddeBirimFiyati(hm, renk, beden, kurTablosu);
+      const bf = hammaddeBirimFiyati(hm, renk, beden, kurTablosu, maliyetBaglami);
       if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0) kurYok = bf.pb;
       const km = stokYuvarla(kart.get(k) || 0), gm = stokYuvarla(gercek.get(k) || 0);
       return { ad: (hm && hm.ad) || "?", renk: olcuGoster(renk), beden: olcuGoster(beden), birim: (hm && hm.birim) || "",
@@ -776,7 +781,7 @@ function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar,
       {/* YENİ GÖRÜNÜMLER (v1.475.0). "Yan yana" defter seçimi bunlarda tek tabloya sığmıyor: Tümü sayılıyor. */}
       {gorunum === "donem" && <DonemKarsilastirmaGorunumu ortak={{ ...ortak, defter: defter === "YanYana" ? "Tümü" : defter }} tarih={tarih} yanYana={defter === "YanYana"} />}
       {gorunum === "nakit" && <NakitAkisiGorunumu cariler={cariler} muhasebe={muhasebe} kurlar={kurlar} defter={defter === "YanYana" ? "Tümü" : defter} tarih={tarih} varsayilanVade={vadeGun} yanYana={defter === "YanYana"} />}
-      {gorunum === "maliyet" && <MaliyetFarkiGorunumu uretim={uretim} stok={stok} cariler={cariler} kurlar={kurlar} tarih={tarih} araProsesler={araProsesler} />}
+      {gorunum === "maliyet" && <MaliyetFarkiGorunumu uretim={uretim} stok={stok} cariler={cariler} kurlar={kurlar} kurGecmisi={muhasebe && muhasebe.kurGecmisi} tarih={tarih} araProsesler={araProsesler} />}
 
       {gorunum === "ozet" && <div id="finans-ozet-yazdir" data-finans-ozet="1" style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -1180,10 +1185,10 @@ function NakitAkisiGorunumu({ cariler, muhasebe, kurlar, defter, tarih, varsayil
 }
 
 // ---- MALİYET FARKI GÖRÜNÜMÜ --------------------------------------------------------------------
-function MaliyetFarkiGorunumu({ uretim, stok, cariler, kurlar, tarih, araProsesler }) {
+function MaliyetFarkiGorunumu({ uretim, stok, cariler, kurlar, kurGecmisi, tarih, araProsesler }) {
   const [kapsam, setKapsam] = useState("tamamlanan");
   const [acik, setAcik] = useState(null);
-  const liste = finansMaliyetFarki({ uretim, stok, cariler, kurlar, tarih, araProsesler, yalnizTamamlanan: kapsam === "tamamlanan" });
+  const liste = finansMaliyetFarki({ uretim, stok, cariler, kurlar, kurGecmisi, tarih, araProsesler, yalnizTamamlanan: kapsam === "tamamlanan" });
   const top = (k) => liste.reduce((t, x) => t + (x[k] || 0), 0);
   const kartT = top("kartToplam"), gercekT = top("gercekToplam");
   return (

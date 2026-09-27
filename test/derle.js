@@ -19,7 +19,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 const DISA_AKTAR = [
   "fiyatBul",   // fiyat çözümleme: cari/renk/beden kırılımı (18 Eylül)
   "useFisDefteriYazma",   // fiş defteri yazma kancası — bayat okuma senaryosu (22 Eylül)
-  "karZararHesapla",      // işçilik yönü senaryosu: rapor işçiliği saymaya devam ediyor mu (22 Eylül)
+  "karZararHesapla", "hammaddeBirimFiyati", "sonAlisMaliyeti", "aylarOnce", "gunKuru",      // işçilik yönü senaryosu: rapor işçiliği saymaya devam ediyor mu (22 Eylül)
   "useCopKutusu", "yazimiIzle", "tabloYaz",   // yazma hatası senaryosu (22 Eylül, v1.410.0)
   "code128Cubuklar", "code128SatirdanCoz", "kameraKaresiCoz",   // kamera çözücüsü (22 Eylül)
   "fisYaz", "fisGeriAl",
