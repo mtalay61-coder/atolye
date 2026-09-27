@@ -240,6 +240,8 @@ function ProductMatrixCard({
       minStokTumu: "",
       olcuTipi: product.olcuTipi || "Beden",
       renkBasligi: renkBasligi(product),
+      // KDV oranı (v1.496.0): "" = Tanımlar'daki varsayılan.
+      kdvOrani: product.kdvOrani != null && product.kdvOrani !== "" ? String(product.kdvOrani) : "",
       alisFiyati: String(alisFiyati),
       alisParaBirimi: product.alisParaBirimi || "₺",
       satisParaBirimi: product.satisParaBirimi || "₺",
@@ -269,6 +271,10 @@ function ProductMatrixCard({
       olcuTipi: editForm.olcuTipi,
       // "Renk" varsayılanı kayda yazılmaz (boş = Renk); eski kayıtlarla aynı görünür.
       renkBasligi: ((editForm.renkBasligi || "").trim() === "Renk" ? "" : (editForm.renkBasligi || "").trim()),
+      // Yalnız seçildiyse ya da önceden varsa yazılır: `kdv_orani` sütunu `kdv-orani.sql` ile açılıyor;
+      // oranı olmayan ürünler bu alanı hiç taşımasın ki SQL çalıştırılmadan onların kaydı etkilenmesin.
+      ...((editForm.kdvOrani || "") !== "" || (product.kdvOrani != null && product.kdvOrani !== "")
+        ? { kdvOrani: (editForm.kdvOrani || "") === "" ? null : Number(editForm.kdvOrani) } : {}),
       alisFiyati: Math.max(0, parseFloat(editForm.alisFiyati) || 0),
       alisParaBirimi: editForm.alisParaBirimi,
       satisParaBirimi: editForm.satisParaBirimi,
@@ -1373,6 +1379,13 @@ function ProductMatrixCard({
               <datalist id="renk-baslik-onerileri">
                 {RENK_BASLIK_ONERILERI.map((o) => <option key={o} value={o} />)}
               </datalist>
+            </Field>
+            <Field label="KDV oranı">
+              <select value={editForm.kdvOrani || ""} data-urun-kdv-orani="1"
+                onChange={(e) => setEditForm({ ...editForm, kdvOrani: e.target.value })} style={inputStyle}>
+                <option value="">Varsayılan (%{varsayilanKdvOrani(product, firmaBilgileri)})</option>
+                {KDV_ORANLARI.map((o) => <option key={o} value={String(o)}>%{o}</option>)}
+              </select>
             </Field>
             <Field label="Tüm Renk/Bedenlere Min. Stok Uygula (opsiyonel)">
               <input

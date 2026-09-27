@@ -55,6 +55,9 @@ const TABLO_SEMA = {
       // Sütun eklenmeden önce `barkod-semasi.sql` çalıştırılmalı. Okuma tarafı otomatik:
       // `stok_no` -> `stokNo` (bkz. alanAdi).
       stok_no: u.stokNo || null,
+      // KDV ORANI (v1.496.0) — ürüne özel; yoksa Tanımlar'daki varsayılan. Alan YALNIZ ürün taşıyorsa
+      // gönderilir: `kdv-orani.sql` çalıştırılmadan oranı olmayan ürünlerin kaydı etkilenmesin.
+      ...("kdvOrani" in u ? { kdv_orani: u.kdvOrani ?? null } : {}),
     }),
     cocuklar: [
       {
@@ -95,7 +98,13 @@ const TABLO_SEMA = {
       kod: c.kod || null,
       bagli_prosesler: c.bagliProsesler || [], fiyat_grubu: c.fiyatGrubu || null,
       // WhatsApp numarası (13 Eylül): tabloda sütunu yok, `ek`te; okuma tarafı kök alana açıyor.
-      pasif: !!c.pasif, ek: { ...(c.whatsapp ? { whatsapp: c.whatsapp } : {}), ...(c.eposta ? { eposta: c.eposta } : {}) },
+      // E-FATURA ALICI BİLGİLERİ (v1.496.0): vergi dairesi, TC kimlik no (şahıs), il, ilçe — `ek`te,
+      // sütun (SQL göçü) gerekmiyor; okuma tarafı `ek`i kök alana açıyor.
+      pasif: !!c.pasif, ek: {
+        ...(c.whatsapp ? { whatsapp: c.whatsapp } : {}), ...(c.eposta ? { eposta: c.eposta } : {}),
+        ...(c.vergiDairesi ? { vergiDairesi: c.vergiDairesi } : {}), ...(c.tckn ? { tckn: c.tckn } : {}),
+        ...(c.il ? { il: c.il } : {}), ...(c.ilce ? { ilce: c.ilce } : {}),
+      },
     }),
     cocuklar: [{
       tablo: "cari_hareketleri",
@@ -120,6 +129,8 @@ const TABLO_SEMA = {
           beden: h.beden ?? null, miktar: h.miktar ?? null, birim: h.birim || null,
           birimFiyat: h.birimFiyat ?? null, kalemParaBirimi: h.kalemParaBirimi || null,
           hamBirimFiyat: h.hamBirimFiyat ?? null, kur: h.kur ?? null, kurHedef: h.kurHedef ?? null,
+          // KDV (v1.496.0): matrah + oran + KDV tutarı; `tutar` KDV dahil. Sütun değil `ek` — SQL göçü yok.
+          matrah: h.matrah ?? null, kdvOrani: h.kdvOrani ?? null, kdvTutari: h.kdvTutari ?? null,
           esId: h.esId || null, siparisId: h.siparisId || null, kalemId: h.kalemId || null,
           cariAd: h.cariAd || null,
           // KİMİN YAPTIĞI. Ana sayfadaki işlem akışı "kim ne yaptı" diye soruyor; kayıtta bu bilgi

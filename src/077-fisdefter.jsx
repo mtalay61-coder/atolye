@@ -53,6 +53,8 @@ function fisDefterKaydiKur(fis, sonuc, ek) {
     kalemler: (fis.kalemler || []).map((k) => ({
       urunId: k.urunId, urunAd: k.urunAd, renk: k.renk, beden: k.beden, birim: k.birim,
       miktar: k.miktar, birimFiyat: k.birimFiyat, paraBirimi: k.paraBirimi,
+      // KDV oranı (v1.496.0): yalnız KDV'li fişte; fatura taslağı defterden oranı okuyacak.
+      ...(typeof k.kdvOrani === "number" ? { kdvOrani: k.kdvOrani } : {}),
       kalemId: k.kalemId || null,
       hareketId: (sonuc.kimlikler && sonuc.kimlikler.get(k)) || null,
     })),

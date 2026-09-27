@@ -325,8 +325,10 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
   // ---- 5) TUTAR ↔ MİKTAR × BİRİM FİYAT ----------------------------------------------------
   cariHareketleri.forEach((h) => {
     if (h.miktar == null || h.birimFiyat == null) return;
+    // KDV'li fişte (v1.496.0) `tutar` KDV dahil: karşılaştırılan MATRAH; ayrıca matrah + KDV = tutar.
     const beklenen = h.miktar * h.birimFiyat;
-    if (yakinMi(beklenen, h.tutar)) return;
+    const kdvli = h.matrah != null && h.kdvTutari != null;
+    if (kdvli ? (yakinMi(beklenen, h.matrah) && yakinMi(h.matrah + h.kdvTutari, h.tutar)) : yakinMi(beklenen, h.tutar)) return;
     ekle("orta", "tutar-uyumsuz", "Tutar, miktar × birim fiyat ile uyuşmuyor",
       `${h.cariUnvan} · ${h.fisNo} · ${h.urunAd} — kayıtta ${h.tutar}, hesapta ${stokYuvarla(beklenen)}`,
       "Fiyat sonradan değişmiş ya da tutar elle düzenlenmiş olabilir.");

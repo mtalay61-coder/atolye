@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.495.0** · 27 Eylül 2026
+Son sürüm: **v1.496.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.495.0): renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.496.0): fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6354,6 +6354,47 @@ düşüp stok hareketlerden kuruluyor ve Tamamlandı üretim (u2) yarı mamul sa
 6 850). Test saati `sayfa.clock.setFixedTime` ile 26.09'a sabitlendi. **AÇIK:** geçmiş tarihte
 tamamlanmış üretimin yarı mamul sayılması — üretimde tamamlanma tarihi tutulmadığı için bilinmiyor;
 kullanıcı sorarsa ele alınacak.
+
+## E-FATURA YOL HARİTASI VE KDV (27 Eylül, v1.496.0 — Claude Code oturumu)
+
+Kullanıcı: "Şu anda kullandığım ERP'de e-fatura vs. tek yerde kullanıyorum. Bundan öyle kullanmak
+istiyorum… E-fatura kurabilecek miyiz? İleride olacak güncellemelere adapte olabilecek miyiz? Geri dönüşü
+yok bunun." Durum: True Bilişim My Muhasebe ERP kullanıyor, faturayı **QNB eFinans** entegratör kesiyor,
+**e-fatura mükellefi**; defterler mevcut ERP'de ve mali müşavirde. KDV HARİÇ fiyatla fatura kesiliyor,
+**tevkifat yok**; arada yurt içine **döviz faturası** kesiliyor.
+
+**Karar (soruldu):** yeni fişlerde cariye **KDV DAHİL** tutar (eski fişler aynen); alışta da KDV.
+
+**Aşamalar:**
+1. (v1.496.0, bitti) KDV altyapısı + cari/firma vergi bilgileri — tamamen uygulama içinde, dışarı veri yok.
+2. Fatura taslağı/önizleme (UBL-TR alanları: seri/sıra, ETTN, alıcı VKN/TCKN, satır KDV, döviz + kur),
+   e-Fatura / e-Arşiv ayrımı (alıcı mükellef mi — eFinans sorgusu).
+3. Supabase edge function → eFinans (kullanıcı adı/şifre YALNIZ Supabase secrets'ta; sohbete yazılmaz).
+   Önce eFinans test ortamı ve AYRI bir fatura serisi (True ile çakışmasın). **Dış servis istisnası:**
+   7a kararı (dışarı veri gönderen entegrasyon yok) e-fatura için yasal zorunluluk gereği istisna — kullanıcının
+   açık onayı Aşama 3 öncesi alınacak.
+4. Gelen faturalar, True ile paralel dönem (1–2 ay faturaları ve cari listesi karşılaştırılır), geçiş.
+
+**KDV tasarımı (077-kdv.jsx):**
+- `firmaBilgileri.kdvAktif` varsayılan KAPALI — açılana kadar hiçbir fiş değişmez (kalem `kdvOrani` taşımaz).
+  Tanımlar > Firma `data-kdv-ayarlari`: `data-kdv-aktif`, `data-kdv-varsayilan="kdvMamul"|"kdvDiger"`.
+- Oran önceliği: fiş satırında seçilen → ürün kartı `kdvOrani` (`data-urun-kdv-orani`) → Tanımlar varsayılanı
+  (mamul / diğer; girilmemişse %20). `KDV_ORANLARI = [0, 1, 10, 20]`.
+- `birimFiyat` ve matrah KDV hariç (stok maliyeti, kâr, sipariş raporları, son alış fiyatı bunu okur);
+  cari hareket `tutar` KDV DAHİL (bakiye, yaşlandırma, nakit akışı, ekstre). Harekette ayrıca `matrah`,
+  `kdvOrani`, `kdvTutari` (`ek` JSON'unda — SQL gerekmez). KDV satır bazında, kuruşa yuvarlanır (`kuruslaYuvarla`).
+- `fisYaz` (078): kalemde sayısal `kdvOrani` varsa matrah+KDV yazar. Stok fişi (255): KDV sütunu
+  (`data-fis-kdv-sutunu`, grup başına `data-fis-satir-kdv`), dip dökümü `data-fis-kdv-dokumu`; peşin tavanı
+  KDV dahil toplamdan. Fişler/ekstre `FisKalemMatrisi` (260) KDV sütunu; `FisYazdir` (275) Matrah/KDV satırları.
+- Veri denetimi (125) KDV'li satırda miktar×fiyat ↔ matrah, matrah+KDV ↔ tutar.
+- **Ürüne özel oran için `kdv-orani.sql` çalıştırılmalı** (`urunler.kdv_orani`); 035 bu sütunu yalnız
+  `kdvOrani` alanı olan üründe gönderir — SQL çalıştırılmadan kimse oran seçmezse yazım bozulmaz.
+- Cari kartı (265): vergi dairesi, TCKN, il, ilçe (`data-cari-vergi-alani`, `ek`'te). Firma: Vergi Dairesi
+  ayrı alan (`data-firma-vergi-dairesi`), İl/İlçe.
+- Döviz: satır PB'si ne ise KDV de o PB'de (fisYaz dövizli tutarı da matrah+KDV'ye çevirir).
+- **AÇIK (bulgu, düzeltilmedi):** kâr/zarar raporunda stok hareketlerinde `birimFiyat` olmadığından gelir
+  testler dışında 0 görünebiliyor — ayrı iş.
+- Test: `birim-kdv`, `senaryo-kdv-fis`.
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

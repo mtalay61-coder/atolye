@@ -199,6 +199,17 @@ function fisYaz(stok, cariler, fis) {
     if (fis.kullanici) ortak.kullanici = fis.kullanici;
     ortak.yon = fis.yon;
     ortak.tutar = c.tutar;
+    // KDV (v1.496.0, 077-kdv): kalem oran taşıyorsa (KDV açıkken fiş formu koyar) cariye KDV DAHİL
+    // tutar yazılır; matrah ve KDV ayrı alanlarda. `birimFiyat` yukarıda matrahtan hesaplandı —
+    // KDV'yi ondan SONRA eklemek şart (sipariş yolu birim fiyatı tutar/miktar'dan buluyor).
+    // Oran yoksa hiçbir şey değişmez (KDV kapalı, eski fişler, sipariş teslim yolu).
+    if (typeof k.kdvOrani === "number" && Number.isFinite(k.kdvOrani) && k.kdvOrani >= 0) {
+      const kdv = kdvHesapla(c.tutar, k.kdvOrani);
+      ortak.matrah = c.tutar;
+      ortak.kdvOrani = k.kdvOrani;
+      ortak.kdvTutari = kdv;
+      ortak.tutar = kuruslaYuvarla(c.tutar + kdv);
+    }
     ortak.paraBirimi = c.hedefPB;
     ortak.odemeSekli = fis.odemeSekli || "Nakit";
     ortak.vade = fis.vade || "";

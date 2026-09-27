@@ -22,7 +22,7 @@
 // Depo'dan tek ürünle geliniyordu; o tedarikçiden alınacak DİĞER eksikler ekranda görünmüş olsa
 // bile fişe tek tek yazılıyordu. Aynı tedarikçiye zaten fiş kesiliyorsa, onun bütün eksiklerini
 // aynı fişe koymak işin doğal hâli.
-function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortiler, kurlar, muhasebe, onKaydet, onVazgec, showToast, baslangicKalemler, onCariDegisti, siparisler, koliler, uretim }) {
+function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortiler, kurlar, muhasebe, onKaydet, onVazgec, showToast, baslangicKalemler, onCariDegisti, siparisler, koliler, uretim, firmaBilgileri }) {
   // CARİ SEÇİMİ FORMUN İÇİNDE.
   //
   // Fiş, cari kartından açıldığında cari zaten belliydi ve seçim gerekmiyordu. Ama Depo'dan
@@ -334,15 +334,22 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // KALEM KALEM çevrilir, para birimi başına toplayıp öyle değil. Cariye de kalem kalem
   // yazılıyor; önce toplayıp sonra çevirseydik buradaki toplam ile ekstredeki satırların
   // toplamı yuvarlama kadar ayrışır, "satırlar toplanmıyor" görünürdü.
+  // KDV (v1.496.0, 077-kdv): Tanımlar'da açıksa satır matrahından KDV; `toplam` KDV DAHİL olur (peşin
+  // sınırı ve "Fiş Toplamı" cariye yazılacak tutarla aynı olsun). Kapalıyken eskisi gibi.
+  const kdvAktif = kdvAktifMi(firmaBilgileri);
+  const kalemOrani = (k) => kalemKdvOrani(k, stok, firmaBilgileri);
   const cevrimSonucu = (() => {
     let toplam = 0;
     const eksikler = new Set();
+    const satirlar = [];
     kalemler.forEach((k) => {
       const c = paraCevirGenel(k.miktar * k.birimFiyat, k.paraBirimi || paraBirimi, paraBirimi, birlesikKurlar);
       if (c == null) { eksikler.add(k.paraBirimi || paraBirimi); return; }
       toplam += stokYuvarla(c);
+      satirlar.push({ matrah: stokYuvarla(c), kdvOrani: kalemOrani(k) });
     });
-    return { toplam: stokYuvarla(toplam), eksikler: [...eksikler] };
+    const kdv = kdvAktif ? kdvOzeti(satirlar) : null;
+    return { toplam: kdv ? kdv.genelToplam : stokYuvarla(toplam), matrah: stokYuvarla(toplam), kdv, eksikler: [...eksikler] };
   })();
   const cevrimEksik = cevrimSonucu.eksikler.length > 0;
 
@@ -385,7 +392,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       tarih, fisNo: fisNo.trim(), odemeSekli, vade: cekSenet ? vade : "",
       // `paraBirimi` fişin KAYIT para birimi; satırlar kendi para birimini taşımaya devam eder.
       // `kayitKurlari` da gönderilir: kayıt anındaki kur, fişin bir parçasıdır.
-      paraBirimi, kayitKurlari: birlesikKurlar, defter, aciklama: aciklama.trim(), kalemler,
+      paraBirimi, kayitKurlari: birlesikKurlar, defter, aciklama: aciklama.trim(),
+      // KDV açıksa her kalem oranını TAŞIR (anlık kopya): ürünün oranı sonradan değişse de fiş değişmez.
+      kalemler: kdvAktif ? kalemler.map((k) => ({ ...k, kdvOrani: kalemOrani(k) })) : kalemler,
       // Seçilen cari fişin bir parçası: pencere hangi cariyle açılmış olursa olsun, KAYIT
       // kullanıcının seçtiğine yazılır.
       cariId: seciliCariId,
@@ -1041,7 +1050,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         // ayrı satır. Koliye bağlı olmayan kalemler eskisi gibi tek, düzenlenebilir satırda kalıyor.
         const kolililerVarMi = kalemler.some((k) => k.koliId);
         // Ara başlık satırı bütün sütunları kaplasın (ürün, renk, bedenler, koli×2, toplam, fiyat, P.B., tutar, sil).
-        const sutunSayisi = 2 + tumBedenler.length + (kolililerVarMi ? 2 : 0) + 5;
+        const sutunSayisi = 2 + tumBedenler.length + (kolililerVarMi ? 2 : 0) + 5 + (kdvAktif ? 1 : 0);
         function grubuBol(g) {
           const koliliKalemler = g.kalemler.filter((k) => k.koliId);
           const duzKalemler = g.kalemler.filter((k) => !k.koliId);
@@ -1107,7 +1116,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                     <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)", borderLeft: kolililerVarMi ? undefined : "1px dashed var(--erp-line)", whiteSpace: "nowrap" }}>TOP. ADET</th>
                     <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>BİRİM FİYAT</th>
                     <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", color: "var(--erp-text-2)" }}>P.B.</th>
-                    <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)" }}>TUTAR</th>
+                    {kdvAktif && <th data-fis-kdv-sutunu="1" style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", color: "var(--erp-text-2)" }}>KDV</th>}
+                    <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)" }}>{kdvAktif ? "TUTAR (KDV HARİÇ)" : "TUTAR"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1274,6 +1284,26 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                             <span title="Bu gruptaki bedenler farklı para biriminde" style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>
                           )}
                         </td>
+                        {/* KDV ORANI SATIR BAZINDA (v1.496.0): ürünün oranı (kart / Tanımlar varsayılanı) önerilir,
+                            bu fiş için değiştirilebilir. Grup içinde farklıysa "karışık" — tek kutu iki değeri
+                            birden temsil etmesin (para birimiyle aynı kural). */}
+                        {kdvAktif && (() => {
+                          const oranlar = Array.from(new Set(alt.kalemler.map(kalemOrani)));
+                          return (
+                            <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                              {alt.kalemler.length === 0 ? null : oranlar.length === 1 ? (
+                                <select value={oranlar[0]} data-fis-satir-kdv={alt.key}
+                                  onChange={(e) => alt.kalemler.forEach((k) => kalemDuzenle(k.id, "kdvOrani", Number(e.target.value)))}
+                                  className="mono"
+                                  style={{ padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
+                                  {Array.from(new Set([...KDV_ORANLARI, oranlar[0]])).sort((a, b) => a - b).map((o) => <option key={o} value={o}>%{o}</option>)}
+                                </select>
+                              ) : (
+                                <span title="Bu gruptaki bedenler farklı KDV oranında" style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>
+                              )}
+                            </td>
+                          );
+                        })()}
                         <td className="mono" style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
                           {grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {grupPB ? (PARA_SEMBOLU[grupPB] || grupPB) : "—"}
                         </td>
@@ -1327,6 +1357,21 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               <div className="mono" style={{ marginTop: 6, fontSize: 15, fontWeight: 700, color: cevrimEksik ? "var(--erp-warn)" : ana }}>
                 {cevrimEksik ? (
                   <>Kur eksik: {cevrimSonucu.eksikler.join(", ")} → {paraBirimi}</>
+                ) : cevrimSonucu.kdv ? (
+                  // KDV DÖKÜMÜ (v1.496.0): matrah, oran başına KDV, genel toplam — faturadaki dip toplamla aynı.
+                  // Cariye yazılan GENEL TOPLAM (KDV dahil).
+                  <div data-fis-kdv-dokumu="1" style={{ display: "inline-grid", gridTemplateColumns: "auto auto", columnGap: 14, rowGap: 2, textAlign: "right", fontSize: 12, fontWeight: 600, color: "var(--erp-text-2)" }}>
+                    <span>Matrah (KDV hariç)</span>
+                    <span data-fis-matrah="1">{cevrimSonucu.kdv.matrah.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {pbSembol}</span>
+                    {cevrimSonucu.kdv.oranlar.map((o) => (
+                      <React.Fragment key={o.oran}>
+                        <span>KDV %{o.oran}</span>
+                        <span data-fis-kdv-oran={o.oran}>{o.kdv.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {pbSembol}</span>
+                      </React.Fragment>
+                    ))}
+                    <span style={{ fontSize: 15, fontWeight: 700, color: ana }}>Fiş Toplamı (KDV dahil)</span>
+                    <span data-fis-genel-toplam="1" style={{ fontSize: 15, fontWeight: 700, color: ana }}>{cevrimSonucu.toplam.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {pbSembol}</span>
+                  </div>
                 ) : (
                   <>Fiş Toplamı: {cevrimSonucu.toplam.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {pbSembol}</>
                 )}
