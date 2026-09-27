@@ -172,6 +172,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // seferinde yeniden seçtirmek gereksiz iş olurdu.
   const [kParaBirimi, setKParaBirimi] = useState((cari && cari.paraBirimi) || "TRY");
   const kPbSembol = PARA_SEMBOLU[kParaBirimi] || kParaBirimi;
+  // KDV ORANI SATIR EKLENİRKEN (v1.501.0 — kullanıcı: "KDV satır eklerken girilsin, eklendikten sonra değil.
+  // Satır eklerken KDV oranı girilir ve kaydedilir."). Boş = ürünün oranı (kart ya da Tanımlar varsayılanı);
+  // kullanıcı seçerse o. Ürün değişince boşa döner — önceki ürünün elle seçilen oranı yenisine taşınmasın.
+  const [kKdv, setKKdv] = useState("");
 
   const cekSenet = odemeSekli === "Çek" || odemeSekli === "Senet";
   const seciliUrun = (stok || []).find((p) => p.id === kUrunId);
@@ -190,6 +194,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // renk değerleri yer tutucuysa (`olcuGoster` boş) ya da hiç yoksa renk sorulmaz; renk kendiliğinden
   // seçilir (varyant yoksa "Standart" — fiş yazımı eksik varyantı kendisi açıyor, bkz. 078-fisyaz).
   const renksizUrun = urunRenksizMi(seciliUrun);   // ortak kural (012, v1.493.0)
+  const kKdvDeger = kKdv === "" ? urunKdvOrani(seciliUrun, firmaBilgileri) : Number(kKdv);
+  useEffect(() => { setKKdv(""); }, [kUrunId]);
   // Boş renk "Standart" olarak seçilir: boş dize "seçilmedi" sayılıyor ve miktar kutularını kapatıyordu;
   // varyant eşleşmesi `stokAnahtarNrm` ile ("" = "Standart").
   const tekRenk = renksizUrun ? "Standart" : (renkSecenekleri.length === 1 ? renkSecenekleri[0] : "");
@@ -288,7 +294,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden);
       if (i >= 0) {
         birlesen++;
-        sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + x.miktar), birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi } : k));
+        // Birleşen satırın oranı da son girilene döner (fiyat ve para birimiyle aynı kural).
+        sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + x.miktar), birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi, ...(kdvAktif ? { kdvOrani: kKdvDeger } : {}) } : k));
       } else {
         yeni++;
         sonraki = [...sonraki, {
@@ -297,6 +304,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           // Satır kendi para birimini TAŞIR. Fişin ayarına bakıp sonradan çözmek, o ayar
           // değişince eski satırların anlamının da değişmesi demekti.
           paraBirimi: kParaBirimi,
+          // Oran satırla birlikte YAZILIR (v1.501.0): eklendikten sonra değiştirilmez; yanlışsa satır silinip yeniden eklenir.
+          ...(kdvAktif ? { kdvOrani: kKdvDeger } : {}),
         }];
       }
     });
@@ -772,6 +781,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               </select>
             </div>
           </Field>
+          {kdvAktif && (
+            <Field label="KDV">
+              <select value={kKdvDeger} data-kalem-kdv="1" onChange={(e) => setKKdv(e.target.value)} className="mono"
+                title={kKdv === "" ? "Ürünün oranı (ürün kartı ya da Tanımlar varsayılanı)" : "Bu satır için seçildi"}
+                style={{ ...inputStyle, width: 64, padding: "8px 2px" }}>
+                {Array.from(new Set([...KDV_ORANLARI, kKdvDeger])).sort((a, b) => a - b).map((o) => <option key={o} value={o}>%{o}</option>)}
+              </select>
+            </Field>
+          )}
           {/* TUTAR (v1.490.0). Kullanıcı: "alt satır asorti, bedenler, toplam, beden fiyat, p.tipi, tutar
               ve ekle butonu." Eklenecek miktar × ölçünün birim fiyatı (`olcuBirimFiyati`). */}
           {kRenk && gosterilecekOlculer.length > 0 && (
@@ -1284,20 +1302,14 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                             <span title="Bu gruptaki bedenler farklı para biriminde" style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>
                           )}
                         </td>
-                        {/* KDV ORANI SATIR BAZINDA (v1.496.0): ürünün oranı (kart / Tanımlar varsayılanı) önerilir,
-                            bu fiş için değiştirilebilir. Grup içinde farklıysa "karışık" — tek kutu iki değeri
-                            birden temsil etmesin (para birimiyle aynı kural). */}
+                        {/* KDV ORANI SATIRDA YALNIZ GÖSTERİLİR (v1.501.0): oran satır EKLENİRKEN seçilir (kullanıcı:
+                            "eklendikten sonra değil"). Grup içinde farklıysa "karışık". */}
                         {kdvAktif && (() => {
                           const oranlar = Array.from(new Set(alt.kalemler.map(kalemOrani)));
                           return (
                             <td style={{ padding: "4px 6px", textAlign: "center" }}>
                               {alt.kalemler.length === 0 ? null : oranlar.length === 1 ? (
-                                <select value={oranlar[0]} data-fis-satir-kdv={alt.key}
-                                  onChange={(e) => alt.kalemler.forEach((k) => kalemDuzenle(k.id, "kdvOrani", Number(e.target.value)))}
-                                  className="mono"
-                                  style={{ padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
-                                  {Array.from(new Set([...KDV_ORANLARI, oranlar[0]])).sort((a, b) => a - b).map((o) => <option key={o} value={o}>%{o}</option>)}
-                                </select>
+                                <span data-fis-satir-kdv={alt.key} className="mono" style={{ fontSize: 12, fontWeight: 700 }}>%{oranlar[0]}</span>
                               ) : (
                                 <span title="Bu gruptaki bedenler farklı KDV oranında" style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>
                               )}

@@ -5,20 +5,17 @@
    "Deri 3 × 50 → tutar 150 (matrah 150, %0, KDV 0)"
   ],
   "ilk": {
-   "dokum": "Matrah (KDV hariç) 350,00 ₺ KDV %10 20,00 ₺ KDV %20 30,00 ₺ Fiş Toplamı (KDV dahil) 400,00 ₺",
-   "kdvSutunu": true,
-   "satirOranlari": [
-    "10",
-    "20"
-   ]
-  },
-  "sifir": {
    "dokum": "Matrah (KDV hariç) 350,00 ₺ KDV %0 0,00 ₺ KDV %10 20,00 ₺ Fiş Toplamı (KDV dahil) 370,00 ₺",
    "kdvSutunu": true,
    "satirOranlari": [
-    "10",
-    "0"
+    "yazı %10",
+    "yazı %0"
    ]
+  },
+  "sonrakiUrun": "20",
+  "varsayilanlar": {
+   "Bot": "10",
+   "Deri": "20"
   }
  },
  "ayar": {
@@ -45,6 +42,10 @@
    "kdvSutunu": false,
    "satirOranlari": []
   },
-  "sifir": null
+  "sonrakiUrun": null,
+  "varsayilanlar": {
+   "Bot": null,
+   "Deri": null
+  }
  }
 }
