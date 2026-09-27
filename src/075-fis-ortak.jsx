@@ -875,9 +875,9 @@ function sonAlisFiyatlari(cariler, urunAd, { renk = null, sinir = 20 } = {}) {
 function fiyatBul(urun, renk, beden, cariId, tip, cariler) {
   // PARA BİRİMİ (21 Eylül): kural artık kendi para birimini taşıyor (`paraBirimi`); yoksa ürün
   // kartındaki birim, o da yoksa TRY. Çağıran taraf fişin birimine çevirir (`fiyatFiseCevir`).
+  if (!urun) return { fiyat: 0, kaynak: "Genel", paraBirimi: "TRY" };
   const varsayilan = tip === "Satış" ? (urun.satisFiyati || 0) : (urun.alisFiyati || 0);
   const varsayilanPb = alisPbKodu({ alisParaBirimi: tip === "Satış" ? urun.satisParaBirimi : urun.alisParaBirimi });
-  if (!urun) return { fiyat: varsayilan, kaynak: "Genel", paraBirimi: varsayilanPb };
   const kurallar = (urun.fiyatKurallari || []).filter((k) => k.tip === tip);
   if (kurallar.length === 0) return { fiyat: varsayilan, kaynak: "Genel", paraBirimi: varsayilanPb };
 
@@ -919,6 +919,17 @@ function fiyatBul(urun, renk, beden, cariId, tip, cariler) {
 // FİYATI FİŞİN BİRİMİNE ÇEVİR (21 Eylül): "Toptan USD" grubunun 12 $'ı TL çalışan cariye
 // kesilen fişte 12 ₺ olarak geçiyordu — kural para birimi taşımıyordu. Önce TL'ye, sonra fişin
 // birimine; kur yoksa çevirmeden bırakır ve `cevrilemedi` der (çağıran uyarır).
+// ÖLÇÜ BAŞINA KURAL FİYATI, fişin/formun biriminde (27 Eylül, v1.482.0 — kullanıcı: "bedenlere fiyat
+// girildi ama satışta çekmedi"). Fiş ve sipariş formu fiyatı ürün seçilince ÖLÇÜSÜZ arıyordu
+// (`fiyatBul(p, null, null)`) ve o tek fiyatı bütün ölçülere yazıyordu — "Beden: 36 → 21 ₺" gibi
+// kurallar hiç devreye girmiyordu. Kullanıcı fiyatı elle yazmadıysa her ölçü bununla fiyatlanır.
+function olcuKuralFiyati(urun, renk, beden, cariId, tip, cariler, hedefPb, kurlar) {
+  if (!urun) return { fiyat: 0, kaynak: "", cevrilemedi: false };
+  const b = fiyatBul(urun, renk || null, beden || null, cariId || "", tip, cariler || []);
+  const c = fiyatFiseCevir(b.fiyat, b.paraBirimi, hedefPb, kurlar);
+  return { fiyat: c.fiyat || 0, kaynak: b.kaynak, cevrilemedi: c.cevrilemedi, paraBirimi: b.paraBirimi };
+}
+
 function fiyatFiseCevir(fiyat, kaynakPb, fisPb, kurlar) {
   const kPb = alisPbKodu({ alisParaBirimi: kaynakPb }); const hPb = alisPbKodu({ alisParaBirimi: fisPb });
   if (!(fiyat > 0) || kPb === hPb) return { fiyat, cevrilemedi: false };

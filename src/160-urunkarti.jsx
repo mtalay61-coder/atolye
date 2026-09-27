@@ -5314,7 +5314,7 @@ function ProductMatrixCard({
                 const pbSembol = PARA_SEMBOLU[fkParaBirimi] || fkParaBirimi;
                 // FİYAT KUTUSU (v1.481.0): metin kutusu (virgül kabul), 84 px, sağında kuralın KENDİ para
                 // birimi — seçili birimden farklıysa turuncu (kaydedilince seçili birime geçer).
-                const fiyatKutusu = ({ kural, kaydet, veri, vurgu }) => {
+                const fiyatKutusu = ({ kural, kaydet, veri, vurgu, ipucu }) => {
                   const kPb = kural ? (kural.paraBirimi || kartPb(fkTip)) : fkParaBirimi;
                   return (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
@@ -5322,7 +5322,8 @@ function ProductMatrixCard({
                         key={kural ? `${kural.fiyat}|${kPb}` : "bos"}
                         type="text" inputMode="decimal"
                         defaultValue={kural ? fiyatYazi(kural.fiyat) : ""}
-                        placeholder="—"
+                        placeholder={ipucu || "—"}
+                        title={ipucu ? `Boş — satışta ${ipucu} uygulanıyor (renk/ölçü fiyatından)` : undefined}
                         data-fk-hucre={veri}
                         onBlur={(e) => {
                           const yeni = fiyatSayisi(e.target.value);
@@ -5340,12 +5341,39 @@ function ProductMatrixCard({
                   );
                 };
 
+                // KUTULARIN VARSAYILANI KAYITLI KURALDAN (v1.482.0). Kullanıcı: "Bedenlere fiyat girildi
+                // ... listede beden tek fiyat girildiğinde orada durmalı yine. Renk tek fiyat duruyor.
+                // İkisi de işaretli olduğunda mantıkta sorun var." Kutu durumu yalnız ekranda tutuluyordu:
+                // beden kutusu varsayılan KAPALI → sekmeye dönünce girilen beden fiyatları kayboluyor
+                // (kural duruyor ama kutu görünmüyor); renk kutusu varsayılan AÇIK ve BOŞ → "renk fiyatı
+                // bedeni ezecek mi" belirsizdi. Artık:
+                //   - kuralı olan kutu işaretli gelir (beden de renk de);
+                //   - kuralı olmayan renk kutusu, üründe beden/renk+beden fiyatı varsa KAPALI gelir (o
+                //     rengin hücreleri görünür, beden fiyatları hücrelerde yazar); hiç ölçü fiyatı yoksa
+                //     eskisi gibi açık (en sık durum: bütün renkler tek fiyat).
+                const olcuFiyatiVar = tumBedenler.some((b) => kuralBul("beden", b));
+                const renkAcik = (r) => {
+                  if (fkTekFiyatRenkler[r] !== undefined) return !!fkTekFiyatRenkler[r];
+                  if (kuralBul("renk", r)) return true;
+                  if (olcuFiyatiVar || tumBedenler.some((b) => kuralBul("renkBeden", `${r}|${b}`))) return false;
+                  return tekFiyatRenkAcikMi(r);
+                };
+                const bedenAcik = (b) => (fkTekFiyatBedenler[b] !== undefined ? !!fkTekFiyatBedenler[b] : !!kuralBul("beden", b));
                 function renkTekFiyatToggle(r) {
-                  setFkTekFiyatRenkler((prev) => ({ ...prev, [r]: !tekFiyatRenkAcikMi(r) }));
+                  setFkTekFiyatRenkler((prev) => ({ ...prev, [r]: !renkAcik(r) }));
                 }
                 function bedenTekFiyatToggle(b) {
-                  setFkTekFiyatBedenler((prev) => ({ ...prev, [b]: !prev[b] }));
+                  setFkTekFiyatBedenler((prev) => ({ ...prev, [b]: !bedenAcik(b) }));
                 }
+                // HÜCREDE GEÇERLİ FİYAT: kutu kapalı/boş olsa da o renk×ölçü satışta hangi fiyatla
+                // yazılacak — `fiyatBul` ile (fişin kullandığı fonksiyon), kaynağıyla birlikte.
+                const gecerli = (r, b) => fiyatBul(product, r, b, "", fkTip, []);
+                const gecerliYazi = (g) => (g.fiyat > 0 ? `${fiyatYazi(g.fiyat)} ${PARA_SEMBOLU[g.paraBirimi] || g.paraBirimi}` : "");
+                // Kutu kapalı ama kural duruyor: kural hâlâ geçerli — gizli kalmasın.
+                const kapaliKuralNotu = (kural) => kural ? (
+                  <span className="mono" data-fk-kapali-kural="1" title="Kutu kapalı ama bu kural kayıtlı ve geçerli — kaldırmak için aşağıdaki listeden silin"
+                    style={{ fontSize: 10, color: "#B7791F" }}>{fiyatYazi(kural.fiyat)} {PARA_SEMBOLU[kural.paraBirimi || kartPb(fkTip)] || ""} geçerli</span>
+                ) : null;
 
                 return (
                   <div style={{ overflowX: "auto", maxWidth: "100%" }}>
@@ -5363,7 +5391,7 @@ function ProductMatrixCard({
                       </thead>
                       <tbody>
                         {tumRenkler.map((r) => {
-                          const renkKilitli = !!tekFiyatRenkAcikMi(r);
+                          const renkKilitli = renkAcik(r);
                           const renkKurali = kuralBul("renk", r);
                           return (
                             <tr key={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
@@ -5373,16 +5401,19 @@ function ProductMatrixCard({
                                 const kural = kuralBul("renkBeden", deger);
                                 return (
                                   <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
-                                    {renkKilitli ? (
-                                      <span style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span>
-                                    ) : fiyatKutusu({ kural, veri: deger, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni) })}
+                                    {renkKilitli ? (() => {
+                                      // Kilitli satırda "—" yerine GEÇERLİ fiyat (v1.482.0): renk fiyatı
+                                      // boşsa beden fiyatı ya da genel fiyat — hangisi uygulanıyorsa.
+                                      const g = gecerli(r, b);
+                                      return <span className="mono" data-fk-gecerli={deger} title={`Satışta uygulanan: ${g.kaynak}`} style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{gecerliYazi(g) || "—"}</span>;
+                                    })() : fiyatKutusu({ kural, veri: deger, ipucu: kural ? "" : gecerliYazi(gecerli(r, b)), kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni) })}
                                   </td>
                                 );
                               })}
                               <td style={{ padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed var(--erp-line)" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
                                   <input type="checkbox" checked={renkKilitli} onChange={() => renkTekFiyatToggle(r)} title="Bu rengin tüm bedenlerine tek fiyat uygula" />
-                                  {renkKilitli && fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni) })}
+                                  {renkKilitli ? fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni) }) : kapaliKuralNotu(renkKurali)}
                                 </div>
                               </td>
                             </tr>
@@ -5391,13 +5422,13 @@ function ProductMatrixCard({
                         <tr style={{ borderTop: "2px solid var(--erp-line)" }}>
                           <td className="mono" style={{ padding: "6px 8px", fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>Tek fiyat (bu ölçünün tümü)</td>
                           {tumBedenler.map((b) => {
-                            const bedenKilitli = !!fkTekFiyatBedenler[b];
+                            const bedenKilitli = bedenAcik(b);
                             const bedenKurali = kuralBul("beden", b);
                             return (
                               <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                                   <input type="checkbox" checked={bedenKilitli} onChange={() => bedenTekFiyatToggle(b)} title="Bu bedenin tüm renklerine tek fiyat uygula" />
-                                  {bedenKilitli && fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni) })}
+                                  {bedenKilitli ? fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni) }) : kapaliKuralNotu(bedenKurali)}
                                 </div>
                               </td>
                             );
@@ -5408,8 +5439,10 @@ function ProductMatrixCard({
                     </table>
                     <p style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 }}>
                       Fiyatı kutuya yazıp kutudan çıkın — kaydedilir. Virgülle yazabilirsiniz (0,18). Birim: <b>{pbSembol} {fkParaBirimi}</b> (yukarıdan değiştirin).
-                      Bir rengin tamamına tek fiyat için sağdaki kutuyu işaretleyin; ölçünün tamamı için alttaki kutuyu
-                      (öncelik: Renk+Ölçü &gt; Renk &gt; Ölçü &gt; Genel).
+                      Bir rengin tamamına tek fiyat için sağdaki kutuyu işaretleyin; ölçünün tamamı için alttaki kutuyu.
+                      İkisi birden doluysa <b>renk fiyatı o rengin bütün ölçülerinde geçer</b>; ölçü fiyatı yalnız renk fiyatı
+                      girilmemiş renklerde uygulanır (öncelik: Renk+Ölçü &gt; Renk &gt; Ölçü &gt; Genel). Gri yazılar satışta
+                      uygulanacak fiyattır.
                     </p>
                   </div>
                 );

@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.481.0** · 26 Eylül 2026
+Son sürüm: **v1.482.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (26 Eylül, v1.481.0): fiyatlandırmada para birimi ve virgüllü fiyat girişi. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "FİYATLANDIRMADA PARA BİRİMİ".
+**Son iş (27 Eylül, v1.482.0): beden fiyatları fişe/siparişe çekiliyor, Fiyatlandırma kutuları kayıtlı kuraldan açılıyor. Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6144,6 +6144,48 @@ VURGULUYSA seçer; yoksa yazılan kalır. Öneriler = o ALAN KİMLİĞİNE diğe
 değerler. Bağlandığı yerler: yeni ürün formu (152, `items`) ve ürün kartı düzenleme (160,
 `tumUrunler`, ürünün kendisi hariç). `setForm`/`setEditForm` fonksiyonlu (bayat okuma kuralı).
 Senaryo: `renk-arama`ya `ozelKod` (öneri "147", seçim, serbest "999X").
+
+## BEDEN FİYATI FİŞE ÇEKİLİYOR (27 Eylül, v1.482.0 — Claude Code oturumu)
+
+Kullanıcı (Satış fişi Mt276 Siyah fiyat 0; Fiyatlandırma'da Beden 36–40 = 21–25 ₺ ama beden kutuları
+boş, renk "tek fiyat" kutuları işaretli ve boş): "Bedenlere fiyat girildi ama satışta çekmedi
+fiyatları; fiyatlar girildiği gibi kalmalı, listede beden tek fiyat girildiğinde orada durmalı yine.
+Renk tek fiyat duruyor. İkisi de işaretli olduğunda mantıkta sorun var gibi, kontrol edelim."
+
+**Kök neden (fiş):** ürün seçilince `fiyatBul(urun, null, null)` ile TEK fiyat alınıyor ve kalem eklerken
+bu tek fiyat bütün bedenlere yazılıyordu. Beden kuralı yalnız renk+beden verilince bulunur; beden
+verilmiyordu → Genel (0). Sipariş formunda aynısı ("özel:" ipucu vardı ama tıklanmadıkça uygulanmıyordu).
+
+**Çözüm:**
+- `olcuKuralFiyati(urun, renk, beden, cariId, tip, cariler, hedefPb, kurlar)` (075): kural + kalemin
+  birimine çevrim tek yerde.
+- Fiş (255) ve sipariş (325): `kFiyatElle` bayrağı. Fiyat elle yazılmadıysa her beden kendi kural
+  fiyatını alır (kaynak "Genel" değilse ve >0), yazıldıysa elle fiyat bütün bedenlere (kullanıcının
+  kararı kurala üstün). Ürün seçimi/kalem ekleme bayrağı sıfırlar. Fişte renk seçilince renk kuralı
+  kutuya gelir. Miktar kutusunun altında bedenin kural fiyatı (`data-olcu-fiyat`), fiş satırında
+  "farklı" yerine döküm "40: 21 · 41: 22" (`data-fis-satir-fiyat-farkli`). Siparişte ipucu artık
+  çevrilmiş fiyatı gösterir; elle fiyat varken "özel:" önekiyle, tıklayınca kurala döner.
+- Siparişte ürün seçilince kuralın para birimi kalemin birimine çevriliyor (önce $ kuralı ₺ yazılıyordu).
+- Fiyatlandırma (160): kutuların varsayılanı KAYITLI KURALDAN: beden kuralı olan beden işaretli; renk
+  kuralı olan renk işaretli; renk kuralı yok ama üründe beden/renk+beden fiyatı varsa renk kutusu
+  kapalı (hücreler görünür); hiç ölçü fiyatı yoksa eski varsayılan (açık). Kilitli hücrelerde "—"
+  yerine `fiyatBul` ile satışta uygulanacak fiyat (gri, `data-fk-gecerli`, title kaynak); boş hücre
+  kutusunun placeholder'ı da geçerli fiyat. Kutusu kapatılmış ama kaydı duran kural "X ₺ geçerli"
+  diye görünür (kapatmak kuralı silmez — silme listeden). Açıklama: renk fiyatı o rengin BÜTÜN
+  bedenlerinde geçer; ölçü fiyatı yalnız renk fiyatı girilmemiş renklerde.
+- `fiyatBul`: `!urun` kontrolü `urun.satisFiyati` okumasından önceye alındı.
+
+**Karar:** Öncelik sırası değişmedi (Cari > Fiyat grubu > Renk+Beden > Renk > Beden > Genel). "İkisi
+işaretli" belirsizliği sıralamayı değiştirerek değil, geçerli fiyatı hücrede göstererek çözüldü.
+
+Test: `senaryo-olcu-fiyat` (Fiyatlandırma kutuları + satış fişi kuraldan / elle fiyat).
+
+**Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
+itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine
+düşüp stok hareketlerden kuruluyor ve Tamamlandı üretim (u2) yarı mamul sayılıyor (Stoklar 6 620 →
+6 850). Test saati `sayfa.clock.setFixedTime` ile 26.09'a sabitlendi. **AÇIK:** geçmiş tarihte
+tamamlanmış üretimin yarı mamul sayılması — üretimde tamamlanma tarihi tutulmadığı için bilinmiyor;
+kullanıcı sorarsa ele alınacak.
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 
