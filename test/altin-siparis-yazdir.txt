@@ -1,0 +1,36 @@
+{
+ "hatalar": [],
+ "serit": {
+  "dosyaAdi": "SAT-9001 - Müşteri B",
+  "dugmeler": [
+   "Yazdır",
+   "PDF",
+   "WhatsApp",
+   "E-posta"
+  ],
+  "yazdirKilitlenebilir": false,
+  "yazdirPdfinSolunda": true
+ },
+ "yazdirma": {
+  "anaPencereCagrisi": 0,
+  "baskaSiparisYok": true,
+  "baslik": "SAT-9001 - Müşteri B",
+  "cerceveCagrisi": 1,
+  "kalemVar": true,
+  "menuYok": true,
+  "metin": [
+   "Test Atölye",
+   "SATIŞ SİPARİŞİ",
+   "SAT-9001",
+   "Tarih: <tarih> · Teslim: <tarih>",
+   "Müşteri",
+   "Müşteri B",
+   "Ürün\tRenk\t40\t41\tToplam\tBirim Fiyat\tTutar",
+   "Bot\tSiyah\t4\t2\t6 çift\t900 ₺\t5.400 ₺",
+   "Toplam\t6\t\t5.400 ₺",
+   "Atölye ERP · <bugün>"
+  ],
+  "musteriVar": true,
+  "siparisNoVar": true
+ }
+}

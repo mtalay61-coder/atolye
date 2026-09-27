@@ -948,7 +948,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                     {tip === "Satış" && (() => {
                       const siparisKolileri = (koliler || []).filter((kl) => (kl.durum || "Hazır") === "Hazır"
                         && !kalemler.some((f) => f.koliId === kl.id)
-                        && (koliSiparisiniCoz(kl, siparisler, uretim).siparis || {}).id === s.id);
+                        && (koliSiparisiniCoz(kl, siparisler, uretim).siparis || {}).id === s.id)
+                        // KOD SIRASI (v1.505.0): "Tümünü ekle", gruplar ve "N koli ekle" hep koda göre (doğal: K-2 < K-10).
+                        // "N koli ekle" ilk N'i alıyor; notta "kod sırasıyla" yazıyordu ama depodaki sırayla alıyordu
+                        // (yeniden yazılan senaryo yakaladı).
+                        .slice().sort((a, b) => String(a.kod || "").localeCompare(String(b.kod || ""), "tr", { numeric: true }));
                       if (!siparisKolileri.length) return null;
                       const cift = (kl) => stokYuvarla((kl.kalemler || []).reduce((t, x) => t + (x.adet || 0), 0));
                       const koliIcerigi = (kl) => bedenSirala([...new Set((kl.kalemler || []).map((x) => x.beden))])

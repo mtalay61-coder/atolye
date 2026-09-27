@@ -1,0 +1,132 @@
+{
+ "baslangic": {
+  "defter": [],
+  "karsilanan": "37=0 38=0",
+  "koliler": [
+   "K-001 Hazır",
+   "K-002 Hazır",
+   "K-003 Hazır",
+   "K-004 Sevk edildi (<fisno-007>)"
+  ],
+  "stok": "37=20 38=20"
+ },
+ "cariFisi": {
+  "baskaCari": "K-002 başka bir carinin kolisi (Tedarikçi A) — bu fişe eklenmedi",
+  "fisteKoliler": [
+   "K-001"
+  ],
+  "k001": "K-001 eklendi · 2 satır · SAT-9 (üretim)",
+  "kayitSonrasi": {
+   "defter": [
+    "<fisno-001>"
+   ],
+   "karsilanan": "37=3 38=5",
+   "koliler": [
+    "K-001 Sevk edildi (<fisno-001>)",
+    "K-002 Hazır",
+    "K-003 Hazır",
+    "K-004 Sevk edildi (<fisno-007>)"
+   ],
+   "stok": "37=17 38=15"
+  },
+  "silindiktenSonra": {
+   "defter": [
+    "<fisno-001> iptal"
+   ],
+   "karsilanan": "37=0 38=0",
+   "koliler": [
+    "K-001 Hazır",
+    "K-002 Hazır",
+    "K-003 Hazır",
+    "K-004 Sevk edildi (<fisno-007>)"
+   ],
+   "stok": "37=20 38=20"
+  }
+ },
+ "hatalar": [],
+ "musteriB": {
+  "defter": [
+   "<fisno-001>"
+  ],
+  "fisPenceresi": {
+   "koliOzeti": "1 koli · 8 çift",
+   "koliler": [
+    "K-001"
+   ]
+  },
+  "karsilanan": "37=3 38=5",
+  "koliler": [
+   "K-001 Sevk edildi (<fisno-001>)",
+   "K-002 Hazır",
+   "K-003 Hazır",
+   "K-004 Sevk edildi (<fisno-007>)"
+  ],
+  "pencereAcikkenKayitDegismedi": true,
+  "stok": "37=17 38=15"
+ },
+ "musteriBSonrasiEkran": {
+  "carisiz": "Carisi belli olmayan koliler: K-003 listeden çıkar",
+  "gruplar": [
+   {
+    "baslik": "Tedarikçi A 1 koli · 2 çift · 0/1 satır siparişe bağlı Satış fişini aç",
+    "cari": "Tedarikçi A",
+    "satirlar": [
+     "K-002 | 125 Model | Bej | 37 | 2 | serbest"
+    ]
+   }
+  ],
+  "hepsiDugmesi": false,
+  "sonuc": "Müşteri B için satış fişi açıldı · 1 koli · 8 çift. Fişi kontrol edip kaydedin; kaydedilmezse koliler \"Hazır\" kalır, yeniden okutabilirsiniz."
+ },
+ "okutmaSonrasi": {
+  "carisiz": "Carisi belli olmayan koliler: K-003 listeden çıkar",
+  "gruplar": [
+   {
+    "baslik": "Müşteri B SAT-9 1 koli · 8 çift · 2/2 satır siparişe bağlı Satış fişini aç",
+    "cari": "Müşteri B",
+    "satirlar": [
+     "K-001 | 125 Model | Bej | 37 | 3 | SAT-9",
+     "K-001 | 125 Model | Bej | 38 | 5 | SAT-9"
+    ]
+   },
+   {
+    "baslik": "Tedarikçi A 1 koli · 2 çift · 0/1 satır siparişe bağlı Satış fişini aç",
+    "cari": "Tedarikçi A",
+    "satirlar": [
+     "K-002 | 125 Model | Bej | 37 | 2 | serbest"
+    ]
+   }
+  ],
+  "hepsiDugmesi": true,
+  "sonuc": null
+ },
+ "sonEkran": {
+  "carisiz": "Carisi belli olmayan koliler: K-003 listeden çıkar",
+  "gruplar": [],
+  "hepsiDugmesi": false,
+  "sonuc": "Tedarikçi A için satış fişi açıldı · 1 koli · 2 çift. Fişi kontrol edip kaydedin; kaydedilmezse koliler \"Hazır\" kalır, yeniden okutabilirsiniz."
+ },
+ "tedarikciA": {
+  "defter": [
+   "<fisno-002>",
+   "<fisno-001>"
+  ],
+  "karsilanan": "37=3 38=5",
+  "koliler": [
+   "K-001 Sevk edildi (<fisno-001>)",
+   "K-002 Sevk edildi (<fisno-002>)",
+   "K-003 Hazır",
+   "K-004 Sevk edildi (<fisno-007>)"
+  ],
+  "stok": "37=15 38=15"
+ },
+ "tepkiler": {
+  "bilinmeyen": "Koli bulunamadı: K-999",
+  "k001": "K-001 eklendi",
+  "k001Tekrar": "K-001 zaten listede",
+  "k002": "K-002 eklendi",
+  "k003": "K-003 eklendi",
+  "sevkEdilmis": "K-004 zaten sevk edilmiş (<fisno-007>)",
+  "urunEtiketi": "Bu bir ÜRÜN etiketi — sevkiyatta koli barkodu okutulur (Paketleme'de koli kurun ya da sipariş kartından fiş kesin)"
+ }
+}

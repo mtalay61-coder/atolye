@@ -1,0 +1,62 @@
+{
+ "acilis": {
+  "baslik": "Cariden Alış Fişi",
+  "bosAcildi": true,
+  "siparistenSec": true
+ },
+ "alisSonrasi": {
+  "cari": [
+   "Alacak 300 TRY · <fisno-001> · Deri Siyah 25 × 12"
+  ],
+  "cariHareket": 1,
+  "deriSiyah": 32,
+  "karsilanan": 25,
+  "siparisDurum": "Tamamlandı"
+ },
+ "ctrlS": {
+  "depo": {
+   "cariHareket": 0,
+   "deriSiyah": 7,
+   "karsilanan": 0
+  },
+  "onayAcildi": true
+ },
+ "fisSatiri": 1,
+ "hatalar": [],
+ "onay": {
+  "baslik": "Şunu onaylıyor musunuz? Aşağıdaki ürünlerin stoğu değişecek:",
+  "cari": "Tedarikçi A · Cari hareketi Genel defterine işlenecek.",
+  "evetAktif": true,
+  "satirlar": [
+   "Deri · Siyah: +25 metre"
+  ]
+ },
+ "onayAnindaDepo": {
+  "cariHareket": 0,
+  "deriSiyah": 7,
+  "karsilanan": 0
+ },
+ "satis": {
+  "bot40": "5→3",
+  "cari": [
+   "Borç 1800 · <fisno-001>"
+  ],
+  "onay": {
+   "baslik": "Şunu onaylıyor musunuz? Aşağıdaki ürünlerin stoğu değişecek:",
+   "cari": "Müşteri B · Cari hareketi Genel defterine işlenecek.",
+   "evetAktif": true,
+   "satirlar": [
+    "Bot · Siyah: -2 çift"
+   ]
+  }
+ },
+ "vazgecSonrasi": {
+  "depo": {
+   "cariHareket": 0,
+   "deriSiyah": 7,
+   "karsilanan": 0
+  },
+  "fisSatiri": 1,
+  "onayKapandi": true
+ }
+}

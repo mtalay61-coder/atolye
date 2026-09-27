@@ -1616,7 +1616,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                   birim fiyat ve tutar sağdaki tabloda; prosesin adı fiş numarasında
                                   ("10003-Saya"); türü rozet söylüyor. Tablo YOKSA (ürünsüz işçilik
                                   kaydı) açıklama tek bilgi kaynağı olduğu için yazılmaya devam ediyor. */}
-                              {ilk.aciklama && hareketIslemTipi(ilk) === "İşçilik" && urunGruplari.length === 0 && (
+                              {/* v1.505.0: ürünsüz işçilikte açıklama sağdaki açıklama sütununda (`yapisizHareketler`) zaten
+                                  yazılıyor — burada da yazılınca İKİ KEZ görünüyordu (yeniden yazılan senaryo yakaladı).
+                                  Yalnız o liste boşsa burada. */}
+                              {ilk.aciklama && hareketIslemTipi(ilk) === "İşçilik" && urunGruplari.length === 0 && yapisizHareketler.length === 0 && (
                                 <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{ilk.aciklama}</span>
                               )}
                               {ilk.aciklama && hareketIslemTipi(ilk) !== "İşçilik" && urunGruplari.length > 0 && (
@@ -1653,8 +1656,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                               <div
                                 className="mono"
                                 style={{
-                                  display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap",
-                                  fontSize: 10, fontWeight: 700, marginBottom: 3,
+                                  display: "inline-flex", alignItems: "center", gap: 4, flexWrap: sadeGorunum ? "nowrap" : "wrap",
+                                  // SADE KİPTE TEK SATIR (v1.505.0): rozet ile özet yan yana — rozet kendi satırına
+                                  // düşünce ödeme satırı ürün satırlarının iki katı yüksekliğe çıkıyordu.
+                                  fontSize: 10, fontWeight: 700, marginBottom: sadeGorunum ? 0 : 3, marginRight: sadeGorunum ? 6 : 0,
+                                  verticalAlign: "middle",
                                   padding: "2px 8px", borderRadius: "var(--erp-r-pill)",
                                   // TAHSİLAT YEŞİL, ÖDEME KİREMİT (bkz. HAREKET_TIPI_RENK).
                                   // Rozet daha önce her hareket tipinde aynı kahverengiydi; ekstreye
@@ -1701,7 +1707,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 hareketlerin tek tek dökümü yerine bir özet satırı. Bilgi atılmıyor,
                                 sıkıştırılıyor (bkz. `hareketSadeOzet`); ayrıntı için Detaylı görünüm. */}
                             {sadeGorunum ? (
-                              <div data-ekstre-sade-ozet="1" style={{ fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                              <div data-ekstre-sade-ozet="1" style={{ display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                                 {hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g)}
                               </div>
                             ) : (

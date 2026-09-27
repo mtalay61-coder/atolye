@@ -1,0 +1,33 @@
+{
+ "depo": {
+  "kodlu": {
+   "sonuc": "fm1",
+   "urun": "Foto Model A"
+  },
+  "kodsuz": {
+   "deriAday": true,
+   "ilkSirada": "Foto Model A|Siyah",
+   "sonuc": null,
+   "uyari": "Foto Model A · Siyah bulundu ama barkod kodu atanmamış — Paketleme'de \"Eksik kodları ata\""
+  }
+ },
+ "hatalar": [],
+ "siparis": {
+  "adaylar": [
+   "Foto Model A|Siyah",
+   "Foto Model B|Taba",
+   "Bot|Siyah (görseli yok)"
+  ],
+  "bildirim": "Foto Model A · Siyah seçildi — miktarı girip ekleyin",
+  "dugmeKapaliPanelde": 0,
+  "formKalemSatiri": 0,
+  "ilkSirada": "Foto Model A|Siyah",
+  "miktarKutulari": [
+   "40",
+   "41"
+  ],
+  "panelKapandi": true,
+  "renkAlani": "Siyah",
+  "urunAlani": "Foto Model A"
+ }
+}

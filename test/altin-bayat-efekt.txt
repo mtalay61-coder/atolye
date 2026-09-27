@@ -1,0 +1,38 @@
+{
+ "baglantiGelince": {
+  "onlineOncesi": {
+   "cari": [
+    "BIR",
+    "IKI"
+   ],
+   "stok": [
+    "BIR",
+    "IKI"
+   ]
+  },
+  "onlineSonrasi": {
+   "cari": [
+    "BIR",
+    "IKI"
+   ],
+   "stok": [
+    "BIR",
+    "IKI"
+   ]
+  }
+ },
+ "baslikKaydet": {
+  "beklenenOdeme": "Havale/EFT",
+  "cariHareket": [
+   {
+    "fisNo": "SONRADAN-NO",
+    "odeme": "Havale/EFT"
+   }
+  ],
+  "onayAcildi": true,
+  "stokFisNo": [
+   "SONRADAN-NO"
+  ]
+ },
+ "hatalar": []
+}

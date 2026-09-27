@@ -1,0 +1,38 @@
+{
+ "ekran": {
+  "iscilikEkiGorunuyor": false,
+  "rozetSayisi": 2,
+  "satirlar": [
+   {
+    "aciklamaTekrari": null,
+    "kimlik": "<fisno-003> ‖ Cariden Alış fişi",
+    "rozet": false,
+    "tablo": [
+     "ÜRÜN | RENK | TOPLAM | BR. FİYAT | TUTAR",
+     "Deri | Siyah | 5 metre | 100 ₺ | 500 ₺"
+    ]
+   },
+   {
+    "aciklamaTekrari": null,
+    "kimlik": "İŞÇİLİK ‖ 10003-Üste ‖ Sipariş: 10003",
+    "rozet": true,
+    "tablo": [
+     "ÜRÜN | RENK | TOPLAM | BR. FİYAT | TUTAR",
+     "102 Bayan Bot | Siyah Süet | 152 adet | 120 ₺ | 18.240 ₺"
+    ]
+   },
+   {
+    "aciklamaTekrari": 1,
+    "kimlik": "İŞÇİLİK ‖ 1001-Kesim ‖ Sipariş: 1001",
+    "rozet": true,
+    "tablo": null
+   }
+  ]
+ },
+ "hatalar": [],
+ "kayit": [
+  "10003-Üste-İşçilik · islemTipi (yok)",
+  "1001-Kesim-İşçilik · islemTipi (yok)",
+  "<fisno-003> · islemTipi (yok)"
+ ]
+}
