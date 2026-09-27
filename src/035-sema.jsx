@@ -104,6 +104,8 @@ const TABLO_SEMA = {
         ...(c.whatsapp ? { whatsapp: c.whatsapp } : {}), ...(c.eposta ? { eposta: c.eposta } : {}),
         ...(c.vergiDairesi ? { vergiDairesi: c.vergiDairesi } : {}), ...(c.tckn ? { tckn: c.tckn } : {}),
         ...(c.il ? { il: c.il } : {}), ...(c.ilce ? { ilce: c.ilce } : {}),
+        // E-FATURA (v1.500.0): alıcı mükellef mi ("evet"/"hayir"; boş = bilinmiyor) ve posta kutusu etiketi.
+        ...(c.efaturaMukellef ? { efaturaMukellef: c.efaturaMukellef } : {}), ...(c.efaturaEtiket ? { efaturaEtiket: c.efaturaEtiket } : {}),
       },
     }),
     cocuklar: [{

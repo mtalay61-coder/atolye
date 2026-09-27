@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.499.0** · 27 Eylül 2026
+Son sürüm: **v1.500.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.499.0): maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.500.0): e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6448,6 +6448,41 @@ olurdu desin. Son alışlar 3 aydan eski ise bu şekilde davransın."
 - **Maliyet dökümü (160):** alıştan gelen satırda fiyat kutusu YOK (`alisKaynakli`) — yazılan karta/kurala
   giderdi ama ekranda alış ortalaması kalırdı. Kaynak yazısı `data-fiyat-kaynagi` (`data-alis-kaynakli`).
 - Test: `birim-alis-ortalama`, `senaryo-maliyet-son-alis` (tarihler bugüne göre göreli).
+
+**v1.500.0 — E-FATURA ALTYAPISI (Aşama 2).** Kullanıcı: "E-fatura altyapısı hazır olsun. Sonra bağlanacağız."
+Hiçbir yere bağlanmıyor.
+- **080-efatura.jsx (saf):** `faturaKur({ fis, cari, firma, kurlar, kayit, faturalar, bugun })` — fiş grubundan
+  (`tumFisleriTopla`) fatura; satırlar = ürünlü/miktarlı cari satırları (peşin tahsilat hariç, kimliğe göre
+  tekil); matrah/KDV/toplam FİŞTEN (yeniden hesap yok → cari ile kuruşu kuruşuna aynı); birim fiyat×miktar
+  matrahı tutmazsa fiyat matrahtan türetilir. `faturaDogrula` → [{seviye engel|uyari, alan, mesaj}]:
+  KDV'siz fiş (engel — fatura yalnız KDV'li fişten), senaryo bilinmiyor, seri, satıcı/alıcı VKN-TCKN (077
+  kontrolü)/daire (VKN'de)/adres-il-ilçe, %0 KDV istisna kodu, döviz kuru, toplam≠cari, bilinmeyen birim
+  (uyarı, C62), e-Arşiv'de e-posta yok (uyarı), senaryo↔mükellefiyet çelişkisi (uyarı), 7 gün kuralı (uyarı).
+  `ublTrXml(f)` — UBL-TR 1.2 (TR1.2, ProfileID, 16 hane ID, UUID=ETTN, SATIS, Note'larda yazıyla tutar ve fiş
+  no, VKN/TCKN şeması, TCKN'de Person ad/soyad, PricingExchangeRate, oran bazında TaxSubtotal 0015,
+  LegalMonetaryTotal, InvoiceLine); İMZA YOK (ext boş — eFinans atar). `faturaNoBicimi` (seri3+yıl4+sıra9),
+  `sonrakiFaturaSirasi` (yalnız numaralı kayıtlar), `ettnUret` (UUID v4), `efaturaBirimKodu` (UN/ECE: çift PR,
+  desi DMK, metre MTR…), `faturaTutarYaziyla` (200 `tutarYaziyla` — çek bordrosuyla aynı; ilk denemede aynı
+  adla ikinci fonksiyon yazılmıştı, denetim 3 yakaladı).
+- **Tasarım kararları:** taslak kaydında YALNIZ seçimler (senaryo, tarih, not, kur, istisnaKodu, ettn); içerik
+  her açılışta fiş+cari+Tanımlar'dan kurulur (cari düzeltilince taslağa yansısın). Gönderimde (Aşama 3) kurulan
+  hâl `donmus` olarak kayda yazılacak. NUMARA TASLAKTA VERİLMEZ (GİB boşluksuz sıra; silinen taslak boşluk
+  bırakırdı) — önizleme "sıradaki"ni gösterir. Senaryo tahmin edilmez: cari `efaturaMukellef` boşsa engel.
+- **Depo:** `faturalar` tekil tablo, anahtar `fatura:data` (090 iki yol, 100 `faturaKaydet(kayit, sil)` —
+  fonksiyonel set; numaralı fatura silinmez; bekleyen yazma; 093 yedek/geri yükleme). **`faturalar.sql`**
+  yalnız `authenticated` politikası kurar (rls-kimlik ile aynı ad `giris_yapmis_hersey`, anon revoke) —
+  "herkese açık" politika KURULMADI (faturada müşteri vergi no/adres).
+- **Arayüz:** 277 `FaturaPenceresi` (pencere tipi "fatura"; seçimler, eksikler, TASLAK filigranlı önizleme,
+  kaydet/güncelle, XML indir (engel varken kapalı), yazdır, gönder (kapalı), taslağı sil). Fişler (250):
+  İşlemler'de `data-fis-fatura`, başlıkta `data-fis-fatura-rozet`. Tanımlar > Firma `data-efatura-ayarlari`
+  (seri büyük harf/3 karakter, profil, gönderici etiketi, MERSİS, sicil; bağlantı rozeti). Cari kartı
+  `data-cari-efatura-mukellef` ("evet"/"hayir"/""), mükellefse `data-cari-efatura-etiket` (035 `ek`).
+- **AŞAMA 3'TE YAPILACAK:** eFinans test ortamında XML doğrulama (birim kodları, e-Arşiv ek alanları, sipariş
+  referansı), Supabase edge function (kimlik bilgisi YALNIZ secrets), mükellef sorgusu (unvan + e-fatura
+  listesi → cari `efaturaMukellef`/`efaturaEtiket`), numara verme + `donmus` içerik, durum takibi, iptal/iade;
+  **faturası kesilmiş fişin geri alınmasını `fisGeriAl`'da engelleme** (şimdi numaralı fatura olmadığı için
+  gerekmedi), gelen faturalar.
+- Test: `birim-efatura` (42 iddia, gerçek `fisYaz` çıktısıyla), `senaryo-efatura`.
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

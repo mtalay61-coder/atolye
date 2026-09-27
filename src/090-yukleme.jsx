@@ -19,6 +19,7 @@ function useAcilisYukleme(d) {
     setFisDefteri, setGorevler, setKoliler, setLoading, setMesajOkumalari, setMesajlar, setModeller,
     setMuhasebe, setOnaylar, setSiparisler, setStok, setStokRezervasyonlari, setStorageOk,
     setTanimlar, setUretim, setVeriKaynagi, setVeriKilidiSebep,
+    setFaturalar,
   } = d;
 
 // ---- yükleme ----
@@ -197,6 +198,22 @@ useEffect(() => {
               const okuma = await guvenliOku("model:data", null);
               if (okuma.deger) setModeller(JSON.parse(okuma.deger));
             } catch (e2) { /* modelhane boş başlar */ }
+          }
+
+          // FATURALAR (v1.500.0) — aynı kalıp. Tablo yoksa (faturalar.sql çalıştırılmadıysa) yerel kopya;
+          // yazma uyarısı ekranda görünür, veri kaybolmaz.
+          try {
+            const ftSatir = await supabaseTumSatirlar("faturalar");
+            if (ftSatir[0] && ftSatir[0].veri) setFaturalar(ftSatir[0].veri);
+            else {
+              const okuma = await guvenliOku("fatura:data", null);
+              if (okuma.deger) setFaturalar(JSON.parse(okuma.deger));
+            }
+          } catch (e) {
+            try {
+              const okuma = await guvenliOku("fatura:data", null);
+              if (okuma.deger) setFaturalar(JSON.parse(okuma.deger));
+            } catch (e2) { /* faturalar boş başlar */ }
           }
 
           try {
@@ -625,6 +642,8 @@ useEffect(() => {
       try {
         const okumaMd = await guvenliOku("model:data", anahtarKumesi);
         if (okumaMd.deger) { try { setModeller(JSON.parse(okumaMd.deger)); } catch (e) { /* bozuksa boş */ } }
+        const okumaFt = await guvenliOku("fatura:data", anahtarKumesi);
+        if (okumaFt.deger) { try { setFaturalar(JSON.parse(okumaFt.deger)); } catch (e) { /* bozuksa boş */ } }
         const okumaF = await guvenliOku("fisdefter:data", anahtarKumesi);
         if (okumaF.deger) { try { setFisDefteri(JSON.parse(okumaF.deger)); } catch (e) { /* bozuksa boş */ } }
         const okumaG = await guvenliOku("gorev:data", anahtarKumesi);

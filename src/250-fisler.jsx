@@ -16,7 +16,7 @@
 // ilgilendiriyor — onu iki listede göstermek, aynı belgeyi iki yerde aramak demek. Ayrım kalktı,
 // yerine tip süzgeçleri geldi: tek liste, isteyen çipiyle daraltıyor.
 
-function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi }) {
+function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi, faturalar, onFaturaAc }) {
   const [filtreTip, setFiltreTip] = useState("Tümü");
   const [query, setQuery] = useState("");
   const [acikFis, setAcikFis] = useState(null);
@@ -285,6 +285,18 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                       <FileText size={10} /> {f.odemeSekli}{f.vade ? ` · ${f.vade}` : ""}
                     </span>
                   )}
+                  {/* Faturası olan fiş listede belli olsun (v1.500.0): taslak mı, numara almış mı. */}
+                  {(() => {
+                    const ft = fisinFaturasi(faturalar, f.fisNo);
+                    if (!ft) return null;
+                    return (
+                      <span data-fis-fatura-rozet={ft.faturaNo ? "kesildi" : "taslak"} className="mono"
+                        style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, padding: "1px 6px",
+                          borderRadius: "var(--erp-r-pill)", background: "#3D6B8A14", color: "var(--erp-info)" }}>
+                        <Receipt size={10} /> {ft.faturaNo ? `Fatura ${ft.faturaNo}` : "Fatura taslağı"}
+                      </span>
+                    );
+                  })()}
                   <span className="mono" style={{ marginLeft: "auto", fontWeight: 700, fontSize: 14 }}>
                     {f.toplam.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[f.paraBirimi] || f.paraBirimi}
                   </span>
@@ -332,6 +344,14 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                       )}
                       {f.siparisNo && f.siparisNo !== f.fisNo && (
                         <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Sipariş: {f.siparisNo}</span>
+                      )}
+                      {/* FATURA (v1.500.0): yalnız satış fişinde. Taslak/önizleme penceresi (277-fatura). */}
+                      {onFaturaAc && faturaKesilebilirFisMi(f) && (
+                        <button type="button" data-fis-fatura={f.fisNo} onClick={() => onFaturaAc(f.fisNo)}
+                          style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700,
+                            color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                          <Receipt size={12} /> {fisinFaturasi(faturalar, f.fisNo) ? "Fatura taslağını aç" : "Fatura taslağı"}
+                        </button>
                       )}
                       {baglanti ? (
                         <>
