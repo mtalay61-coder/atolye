@@ -1,0 +1,37 @@
+{
+ "form": {
+  "baslik": "Satış siparişi düzenleniyor",
+  "eskiAyriDugme": 0,
+  "kalemEkleAlani": true,
+  "siparisNo": true
+ },
+ "formSatirlari": {
+  "once": [
+   "Bot · Siyah: 5"
+  ],
+  "sonra": [
+   "Bot · Siyah: 5",
+   "Bot · Taba: 3"
+  ]
+ },
+ "hatalar": [],
+ "kayit": {
+  "formKapandi": true,
+  "sat7001": [
+   "ke1 Bot · Siyah · 40 × 5",
+   "yeni Bot · Taba · 41 × 3"
+  ],
+  "siparisNolari": [
+   "SAT-7001",
+   "SAT-7002"
+  ],
+  "siparisSayisi": 2
+ },
+ "tamamlandi": {
+  "formAcikKaldi": true,
+  "sat7002": [
+   "ke2 Bot · Siyah · 41 × 2"
+  ],
+  "uyari": "Sipariş \"Tamamlandı\" durumunda — yeni kalem eklenemez"
+ }
+}

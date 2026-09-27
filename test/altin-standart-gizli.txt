@@ -1,0 +1,35 @@
+{
+ "hatalar": [],
+ "kayit": {
+  "kalipHareketleri": [
+   "Standart/Standart: 4"
+  ],
+  "kalipVaryantlari": [
+   "Standart/Standart: 6"
+  ]
+ },
+ "tablo": {
+  "basliklar": [
+   "ÜRÜN",
+   "RENK",
+   "Miktar",
+   "TOP. ADET",
+   "BİRİM FİYAT",
+   "P.B.",
+   "TUTAR"
+  ],
+  "satirlar": [
+   {
+    "miktar": "4",
+    "renk": "",
+    "urun": "Kalıp"
+   },
+   {
+    "miktar": "3",
+    "renk": "Siyah",
+    "urun": "Deri"
+   }
+  ],
+  "standartGeciyor": false
+ }
+}

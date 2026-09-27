@@ -1,0 +1,30 @@
+{
+ "formMiktarlari": {
+  "okununca": [
+   "1"
+  ],
+  "tekrarSonrasi": [
+   "1"
+  ]
+ },
+ "hatalar": [],
+ "kamera": {
+  "bildirim": "125 Model · Siyah · 38: 1 eklendi",
+  "hata": null,
+  "okundu": true,
+  "yontem": "yerleşik okuyucu"
+ },
+ "kayit": [
+  "125 Model · Siyah · 38 × 1"
+ ],
+ "kodUzunlugu": 12,
+ "panel": {
+  "acikken": 1,
+  "barkodKutusuYaninda": true,
+  "kapaliyken": 0
+ },
+ "yerlesim": {
+  "goruntuKutununAltinda": true,
+  "kutuEzilmedi": true
+ }
+}
