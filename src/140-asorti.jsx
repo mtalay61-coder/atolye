@@ -154,7 +154,7 @@ function urunOlcuTipi(stok, urunId) {
 // Kural bileşenin İÇİNDE: her çağrı yerinde tekrarlansaydı, yeni eklenen bir ekranda
 // unutulurdu. Ayrıca `asortidenetim.js` her çağrı yerinde `olcuTipi` verilmesini zorunlu tutar.
 // `satirIci`: başka kontrollerle aynı satırda duruyor (sipariş formu, v1.470.0) — alt boşluğu yok.
-function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi, kalanlar, onBilgi, onAsortiliKoliler, satirIci = false }) {
+function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi, kalanlar, onBilgi, onAsortiliKoliler, satirIci = false, dar = false }) {
   // Varsayılan olarak listedeki ilk asorti seçili gelir — kullanıcı isterse değiştirebilir.
   const [asortiId, setAsortiId] = useState((asortiler && asortiler[0]) ? asortiler[0].id : "");
   const [setSayisi, setSetSayisi] = useState("1");
@@ -224,6 +224,30 @@ function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi,
     });
     onUygula(sonuc);
     if (onBilgi) onBilgi(`${setAdedi} set asorti dolduruldu — artan adetler boşta bırakıldı`);
+  }
+
+  // DAR KİP (v1.489.0, fiş formu). Kullanıcı: "Asortiyi miktarın sağına alalım ve daralsın." Tek
+  // satırlık kontrol (≈330 px) miktar kutularının yanına sığmıyordu. Dar kipte iki kat: üstte seçici,
+  // altta "× [set] Uygula" — 100 px, beden kutularıyla aynı yükseklikte bir sütun.
+  if (dar) {
+    return (
+      <label data-asorti-dar="1" style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, width: 100 }}>
+        Asorti
+        <select value={asortiId} onChange={(e) => setAsortiId(e.target.value)} title="Asorti"
+          style={{ ...inputStyle, width: 100, fontSize: 11, padding: "5px 2px" }}>
+          <option value="">Seçin…</option>
+          {asortiler.map((a) => <option key={a.id} value={a.id}>{a.ad}</option>)}
+        </select>
+        <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <span style={{ fontSize: 11 }}>×</span>
+          <input type="number" min="1" value={setSayisi} onChange={(e) => setSetSayisi(e.target.value)} title="Set sayısı"
+            style={{ ...inputStyle, width: 38, fontSize: 11, padding: "4px 2px", textAlign: "center" }} />
+          <button type="button" className="btn-ghost" data-asorti-uygula="1" style={{ fontSize: 11, padding: "4px 8px", flex: 1 }} disabled={!asortiId} onClick={uygula}>
+            Uygula
+          </button>
+        </span>
+      </label>
+    );
   }
 
   return (
