@@ -111,7 +111,8 @@ async function calistir() {
 
   const kalemParaBirimleri = await sayfa.evaluate(() =>
     [...document.querySelectorAll("select")]
-      .filter((x) => [...x.options].map((o) => o.textContent).join() === "TRY,USD,EUR")
+      // Kalem EKLEME formundaki seçici (v1.487.0, seçenekte yalnız kod) sayılmaz: yalnız kalem satırları.
+      .filter((x) => !x.hasAttribute("data-kalem-pb") && [...x.options].map((o) => o.textContent).join() === "TRY,USD,EUR")
       .map((x) => x.value));
 
   // STOK KARTI → Fiyatlandırma: son alış listesi ve kart farkı (0,25 vs kart 0,22 → +13,6%).
