@@ -11,6 +11,7 @@
 //   B. Satış fişi: miktar kutularının altında her bedenin kural fiyatı; kalemler beden beden 21/22/23
 //      ile ekleniyor; fiş satırında "farklı" yerine döküm.
 //   C. Fiyat elle yazılınca (30) hepsi 30 — kullanıcının fiyatı kurala üstün.
+//   D. (v1.483.0) Fiyat kutusu boşaltılınca kural silinir; kapalı kutunun kuralı × ile silinir.
 const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -55,6 +56,29 @@ async function fiyatlandirma(hatalar) {
   });
   await sayfa.waitForTimeout(300);
   durum.renkKilitliHucreler = await sayfa.evaluate(() => [...document.querySelectorAll("[data-fk-gecerli]")].map((x) => `${x.getAttribute("data-fk-gecerli")}: ${x.textContent} (${x.title})`));
+
+  // D (v1.483.0). Kullanıcı: "Renk fiyat girip fiyatı silsen bile eski fiyatı hatırlıyor." Renk fiyatı
+  // 33 yazılıp kutu boşaltılınca kural silinmeli; kutu boş kalmalı, hücreler beden fiyatına dönmeli.
+  const kutuYaz = async (veri, deger) => {
+    const k = sayfa.locator(`[data-fk-hucre="${veri}"]`).first();
+    await k.fill(deger); await k.blur(); await sayfa.waitForTimeout(400);
+  };
+  const kurallar = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-fk-kural]")].map((x) => `${x.getAttribute("data-fk-kural")}: ${x.textContent.replace(/\s+/g, " ").trim()}`));
+  await kutuYaz("renk|Siyah", "33");
+  durum.renkYazilinca = { kurallar: await kurallar(), hucre40: await sayfa.evaluate(() => document.querySelector('[data-fk-gecerli="Siyah|40"]').textContent) };
+  await kutuYaz("renk|Siyah", "");
+  durum.renkSilinince = {
+    kurallar: await kurallar(),
+    kutu: await sayfa.evaluate(() => document.querySelector('[data-fk-hucre="renk|Siyah"]').value),
+    hucre40: await sayfa.evaluate(() => document.querySelector('[data-fk-gecerli="Siyah|40"]').textContent),
+  };
+  // Beden kutusu kapatılınca kural "geçerli" notuyla kalır; × ile silinir.
+  await sayfa.evaluate(() => { const b = [...document.querySelectorAll('input[type="checkbox"]')].filter((x) => x.offsetParent); const c = b.find((x) => x.closest("td") && x.closest("td").querySelector('[data-fk-hucre="beden|42"]')); if (c) c.click(); });
+  await sayfa.waitForTimeout(300);
+  durum.bedenKapaninca = await sayfa.evaluate(() => { const n = document.querySelector("[data-fk-kapali-kural]"); return n ? n.textContent : "not yok"; });
+  await sayfa.locator('[data-fk-kural-sil="42"]').click();
+  await sayfa.waitForTimeout(400);
+  durum.xIleSilinince = await kurallar();
   await tarayici.close();
   return durum;
 }

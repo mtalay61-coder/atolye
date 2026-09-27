@@ -8,6 +8,7 @@
   "satir": "tek: 30"
  },
  "fiyatlandirmaEkrani": {
+  "bedenKapaninca": "23 ₺ geçerli",
   "bedenler": {
    "40": "kutu 21",
    "41": "kutu 22",
@@ -23,7 +24,29 @@
    "Siyah|41: 22 ₺ (Satışta uygulanan: Beden)",
    "Siyah|42: 23 ₺ (Satışta uygulanan: Beden)"
   ],
-  "renkTekFiyat": "kapalı"
+  "renkSilinince": {
+   "hucre40": "21 ₺",
+   "kurallar": [
+    "Beden: 40: 21 ₺",
+    "Beden: 41: 22 ₺",
+    "Beden: 42: 23 ₺"
+   ],
+   "kutu": ""
+  },
+  "renkTekFiyat": "kapalı",
+  "renkYazilinca": {
+   "hucre40": "33 ₺",
+   "kurallar": [
+    "Beden: 40: 21 ₺",
+    "Beden: 41: 22 ₺",
+    "Beden: 42: 23 ₺",
+    "Renk: Siyah: 33 ₺"
+   ]
+  },
+  "xIleSilinince": [
+   "Beden: 40: 21 ₺",
+   "Beden: 41: 22 ₺"
+  ]
  },
  "hatalar": [],
  "kuraldan": {

@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.482.0";
+const SURUM = "1.483.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Beden fiyatlari fis ve siparise cekiliyor, fiyatlandirma kutulari kayitli fiyati gosteriyor";
+const SURUM_NOTU = "Fiyatlandirmada kutuyu bosaltmak fiyati siliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Beden fiyatlari fis ve siparise cekiliyor, fiyatlandirma kut
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.483.0", tarih: "27.09.2026",
+    eklenen: ["Fiyatlandırmada kutusu kapalı ama kayıtlı fiyatın yanında × ile silme"],
+    degisen: [],
+    duzeltilen: ["Fiyatlandırmada fiyat kutusu boşaltılınca fiyat silinmiyordu, eski fiyat geri geliyordu; artık kutuyu boşaltıp çıkmak (ya da 0 yazmak) o fiyatı siliyor"] },
   { surum: "1.482.0", tarih: "27.09.2026",
     eklenen: ["Fiş formunda miktar kutularının altında her bedenin fiyatlandırma fiyatı; fiş satırında 'farklı' yerine beden beden fiyat dökümü", "Fiyatlandırma matrisinde kilitli hücrelerde ve boş kutularda satışta uygulanacak fiyat (gri) ve kaynağı"],
     degisen: ["Fiyatlandırmada 'tek fiyat' kutuları kayıtlı kuraldan açılıyor: beden fiyatı olan beden işaretli, renk fiyatı olmayan renk (ölçü fiyatı varken) kapalı; kutusu kapalı ama kayıtlı kural 'geçerli' diye görünüyor", "Öncelik açıklaması: renk fiyatı o rengin bütün bedenlerinde geçer"],

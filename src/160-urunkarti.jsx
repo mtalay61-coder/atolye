@@ -5326,7 +5326,13 @@ function ProductMatrixCard({
                         title={ipucu ? `Boş — satışta ${ipucu} uygulanıyor (renk/ölçü fiyatından)` : undefined}
                         data-fk-hucre={veri}
                         onBlur={(e) => {
+                          // KUTUYU BOŞALTMAK = FİYATI SİLMEK (v1.483.0). Kullanıcı: "Renk fiyat girip fiyatı
+                          // silsen bile eski fiyatı hatırlıyor." Boş değer "değişiklik yok" sayılıyordu: kural
+                          // kayıtta kalıyor, kutu yeniden çizilince eski fiyat geri geliyordu. Artık boş (ya da
+                          // 0) bırakılan kutunun kuralı siliniyor — geçmişe "silindi" diye yazılır.
+                          if (kural && e.target.value.trim() === "") { fiyatKuraliSil(kural.id); return; }
                           const yeni = fiyatSayisi(e.target.value);
+                          if (kural && yeni === 0 && e.target.value.trim() !== "") { fiyatKuraliSil(kural.id); return; }
                           if (!(yeni > 0) || (kural && yeni === kural.fiyat && kPb === fkParaBirimi)) return;
                           kaydet(yeni);
                         }}
@@ -5370,9 +5376,14 @@ function ProductMatrixCard({
                 const gecerli = (r, b) => fiyatBul(product, r, b, "", fkTip, []);
                 const gecerliYazi = (g) => (g.fiyat > 0 ? `${fiyatYazi(g.fiyat)} ${PARA_SEMBOLU[g.paraBirimi] || g.paraBirimi}` : "");
                 // Kutu kapalı ama kural duruyor: kural hâlâ geçerli — gizli kalmasın.
+                // Yanında × ile doğrudan silinebilir (v1.483.0) — listeye inmeden.
                 const kapaliKuralNotu = (kural) => kural ? (
-                  <span className="mono" data-fk-kapali-kural="1" title="Kutu kapalı ama bu kural kayıtlı ve geçerli — kaldırmak için aşağıdaki listeden silin"
-                    style={{ fontSize: 10, color: "#B7791F" }}>{fiyatYazi(kural.fiyat)} {PARA_SEMBOLU[kural.paraBirimi || kartPb(fkTip)] || ""} geçerli</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    <span className="mono" data-fk-kapali-kural="1" title="Kutu kapalı ama bu kural kayıtlı ve geçerli — × ile silin"
+                      style={{ fontSize: 10, color: "#B7791F" }}>{fiyatYazi(kural.fiyat)} {PARA_SEMBOLU[kural.paraBirimi || kartPb(fkTip)] || ""} geçerli</span>
+                    <button type="button" data-fk-kural-sil={kural.deger} title="Bu fiyatı sil" onClick={() => fiyatKuraliSil(kural.id)}
+                      style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--erp-danger)", fontSize: 13, lineHeight: 1 }}>×</button>
+                  </span>
                 ) : null;
 
                 return (
@@ -5438,7 +5449,7 @@ function ProductMatrixCard({
                       </tbody>
                     </table>
                     <p style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 }}>
-                      Fiyatı kutuya yazıp kutudan çıkın — kaydedilir. Virgülle yazabilirsiniz (0,18). Birim: <b>{pbSembol} {fkParaBirimi}</b> (yukarıdan değiştirin).
+                      Fiyatı kutuya yazıp kutudan çıkın — kaydedilir; kutuyu boşaltıp çıkarsanız fiyat silinir. Virgülle yazabilirsiniz (0,18). Birim: <b>{pbSembol} {fkParaBirimi}</b> (yukarıdan değiştirin).
                       Bir rengin tamamına tek fiyat için sağdaki kutuyu işaretleyin; ölçünün tamamı için alttaki kutuyu.
                       İkisi birden doluysa <b>renk fiyatı o rengin bütün ölçülerinde geçer</b>; ölçü fiyatı yalnız renk fiyatı
                       girilmemiş renklerde uygulanır (öncelik: Renk+Ölçü &gt; Renk &gt; Ölçü &gt; Genel). Gri yazılar satışta
