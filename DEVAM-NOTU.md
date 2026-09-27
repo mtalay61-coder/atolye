@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.493.0** · 27 Eylül 2026
+Son sürüm: **v1.494.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.493.0): renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.494.0): renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6310,6 +6310,29 @@ ve bedenli olarak mı görüyor? Düzeltmede mantığı nasıl düzelttin?" Aç�
   tarihi (26.09) bugünden önce olunca durum geçmişten kuruluyor → "Portföyde". Test verisine ciro geçmişi eklendi.
 - Test: `birim-renksiz` (üç biçim, tek eksen, stok eşleşmesi), `senaryo-renksiz-recete` (dört hammadde:
   Standart, boş, varyantsız, renksiz-bedenli).
+
+**v1.494.0 — RENK ALANININ BAŞLIĞI.** Kullanıcı: "Renk alanını bazen tip, bazen marka adı, bazen cins olarak
+kullanıyoruz. Renk adı stoğa göre değiştirilebilir de olsun. Stok hareketlerinde ortak isim olduğunda üst
+başlık ortak olsun, değişince ayrı satır eklesin. Örnek: ambalaj üzerindeki baskı değişikliği; takviye bezi
+kalınlığı." Seçim (soruldu): "Alanın başlığı" (değerin adını değiştirmek değil) + karışık listede "ortaksa
+tek başlık, değilse ara başlık satırı".
+- **Veri:** `urun.renkBasligi` (boş = "Renk"; "Renk" yazılırsa boş kaydedilir). Değerler yine `renk`
+  alanında — stok/reçete/fiş eşleşmesi değişmedi. Bedenin karşılığı `olcuTipi`.
+- **012:** `RENK_BASLIK_ONERILERI`, `renkBasligi(urun)`, `ortakRenkBasligi(urunler)` (aynıysa o, değilse
+  null), `matrisKoseBasligi(r, b, renkAdi, bedenAdi)`. `olcuGoster(d, bos)` boş değerde de `bos` döner
+  (yalnız 12 "Miktar" sütun başlığında kullanılıyordu).
+- **Giriş:** kart düzenleme (`data-renk-basligi-duzenle`, öneri listesi + serbest) ve stok açma formu
+  (`data-yeni-stok-renk-basligi`).
+- **Gösterim:** kart bölüm başlığı ("Kalınlık ve Bedenler · 2 kalınlık"), "{başlık} Ekle", matris köşeleri,
+  barkod ve son alış tabloları; reçete hammadde seçicileri ("Kalınlık seçin…"); fiş/sipariş form etiketi.
+- **Karışık liste:** fiş formu kalemleri (255, `data-fis-renk-sutunu` / `data-fis-renk-ara-baslik`), sipariş
+  formu kalemleri (325, `data-siparis-renk-...`), Fişler/cari ekstresi ortak `FisKalemMatrisi` (260,
+  `data-fis-kalem-...`). Ortaksa sütunda o; karışıksa sütunda "KALINLIK / RENK" ve başlık DEĞİŞTİĞİ her
+  yerde ara satır (sıra korunuyor, gruplar yeniden dizilmiyor).
+- **Yan düzeltme:** 255 kalem tablosu sütunları `stokAnahtarNrm` ile — "Standart" ve "" iki sütun açıyordu.
+- **AÇIK:** üretim kartı, planlama, depo, paketleme ekranlarında hâlâ "Renk" yazıyor (çoğu mamul — mamulde
+  renk gerçekten renk). İhtiyaç olursa aynı `renkBasligi` ile genişletilir.
+- Test: `senaryo-renk-basligi`.
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine

@@ -1566,7 +1566,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               </div>
               {!renkSorulmaz && (
               <div style={{ flex: "1.5 1 180px", minWidth: 0 }}>
-              <Field label="Renk">
+              <Field label={renkBasligi(seciliUrun)}>
                 {/* Düğme KIRILABİLİR: sığmazsa seçiciyi ezmek yerine alt satıra geçiyor.
                     Seçicinin alt sınırı var, çünkü asıl iş onda. */}
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
@@ -1587,7 +1587,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       resimler={(seciliUrun && seciliUrun.renkResimleri) || {}}
                       yalnizListeden
                       disabled={!seciliUrun}
-                      placeholder={seciliUrun ? "Renk yazın ya da seçin…" : "Önce ürün seçin"}
+                      placeholder={seciliUrun ? `${renkBasligi(seciliUrun)} yazın ya da seçin…` : "Önce ürün seçin"}
                     />
                   </div>
                   {/* Aranan renk stokta yoksa sipariş girişini bırakıp Stok ekranına gitmek, oradan
@@ -1697,6 +1697,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               gruplar[grupIndex[key]].kalemler.push(k);
             });
             const tumBedenler = Array.from(new Set(kalemler.map((k) => k.beden)));
+            // RENK SÜTUNUNUN BAŞLIĞI (v1.494.0, fiş kalem tablosuyla aynı kural): ürünlerin renk başlığı
+            // ortaksa sütunda o; karışıksa başlıklar birlikte ve başlık değiştiği her yerde ara satır.
+            const grupUrunu = (g) => urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
+            const grupRenkBasligi = (g) => renkBasligi(grupUrunu(g));
+            const ortakBaslik = ortakRenkBasligi(gruplar.map((g) => grupUrunu(g) || {}));
+            const renkSutunBasligi = ortakBaslik || Array.from(new Set(gruplar.map(grupRenkBasligi))).join(" / ");
 
             return (
             <div style={{ marginTop: 12 }}>
@@ -1705,7 +1711,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                   <thead>
                     <tr>
                       <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>Ürün</th>
-                      <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>Renk</th>
+                      <th data-siparis-renk-sutunu="1" style={{ fontSize: 11, textAlign: "left", padding: "4px 8px" }}>{renkSutunBasligi}</th>
                       {tumBedenler.map((b) => (
                         <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                       ))}
@@ -1714,7 +1720,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     </tr>
                   </thead>
                   <tbody>
-                    {gruplar.map((g) => {
+                    {gruplar.map((g, gi) => {
+                      const araBaslikVar = !ortakBaslik && (gi === 0 || grupRenkBasligi(gruplar[gi - 1]) !== grupRenkBasligi(g));
                       const birimFiyatlarFarkli = new Set(g.kalemler.map((k) => k.birimFiyat)).size > 1;
                       const grupTutar = g.kalemler.reduce((s, k) => s + k.miktar * k.birimFiyat, 0);
                       const urun = urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
@@ -1723,6 +1730,14 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       const renkSecenekleri = urunRenkleri(urun);
                       const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
                       return (
+                        <React.Fragment key={g.key}>
+                        {araBaslikVar && (
+                          <tr data-siparis-renk-ara-baslik={grupRenkBasligi(g)}>
+                            <td colSpan={tumBedenler.length + 5} style={{ padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
+                              {grupRenkBasligi(g).toLocaleUpperCase("tr-TR")}
+                            </td>
+                          </tr>
+                        )}
                         <tr key={g.key} data-form-kalem-satiri={g.kilit ? "kilitli" : "serbest"} style={{ borderTop: "1px solid var(--erp-line-soft)", background: g.kilit ? "var(--erp-panel-2)" : undefined }}>
                           <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -1868,6 +1883,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             {grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[g.kalemler[0].paraBirimi || "TRY"] || g.kalemler[0].paraBirimi}
                           </td>
                         </tr>
+                        </React.Fragment>
                       );
                     })}
                   </tbody>

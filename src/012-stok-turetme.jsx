@@ -69,18 +69,38 @@ function urunHareketToplami(urun) {
 // renk seçilmeyince varyanta bu yazılıyor; 077-barkod'da ayrılmış kodu var). Veri tarafında zaten
 // boş dizeyle aynı sayılıyor (`stokAnahtarNrm`); eksik olan GÖSTERİM tarafıydı: tablolarda renk
 // hücresi ve beden sütun başlığı "Standart" diye doluyordu. Kayıt DEĞİŞMİYOR, yalnız gösterim.
+// v1.494.0: boş değer de yer tutucu gibi `bos` döner (yalnız "Miktar" sütun başlıklarında kullanılıyor;
+// boş kayıtlı bedenin sütunu başlıksız kalıyordu).
 function olcuGoster(deger, bos = "") {
   const d = deger == null ? "" : String(deger).trim();
-  return d === "Standart" ? bos : d;
+  return d === "Standart" || d === "" ? bos : d;
 }
 
 // Matris tablosunun köşe başlığı (v1.474.0). "Renk \ Beden" yalnız ikisi de gerçekse; renksiz
 // üründe "Beden", bedensiz üründe "Renk", ikisi de yer tutucuysa boş — satır/sütunda "Standart"
 // yazılmadığı (`olcuGoster`) hâlde köşede "Renk \ Beden" kalınca olmayan eksenleri anlatıyordu.
-function matrisKoseBasligi(renkler, bedenler) {
+// v1.494.0: eksen adları verilebilir (ürünün renk başlığı — "Baskı", "Kalınlık"… — ve ölçü tipi).
+function matrisKoseBasligi(renkler, bedenler, renkAdi = "Renk", bedenAdi = "Beden") {
   const renkVar = (renkler || []).some((r) => olcuGoster(r));
   const bedenVar = (bedenler || []).some((b) => olcuGoster(b));
-  return [renkVar ? "Renk" : null, bedenVar ? "Beden" : null].filter(Boolean).join(" \\ ");
+  return [renkVar ? renkAdi : null, bedenVar ? bedenAdi : null].filter(Boolean).join(" \\ ");
+}
+
+// RENK ALANININ BAŞLIĞI STOĞA GÖRE (27 Eylül, v1.494.0). Kullanıcı: "Renk alanını bazen tip, bazen
+// marka adı, bazen cins olarak kullanıyoruz. Renk adı stoğa göre değiştirilebilir de olsun. Örnek:
+// ambalaj üzerindeki baskı değişikliği; takviye bezi kalınlığı." Veri modeli DEĞİŞMİYOR — değerler yine
+// `renk` alanında (stok, reçete, fiş eşleşmesi aynı); yalnız o eksenin ADI ürün kartında seçiliyor
+// (`urun.renkBasligi`, boşsa "Renk"). Bedenin karşılığı `olcuTipi` (Beden/Boyut).
+const RENK_BASLIK_ONERILERI = ["Renk", "Baskı", "Kalınlık", "Tip", "Marka", "Cins", "Model"];
+function renkBasligi(urun) {
+  const b = urun && typeof urun.renkBasligi === "string" ? urun.renkBasligi.trim() : "";
+  return b || "Renk";
+}
+// Karışık listede (fiş/sipariş kalemleri) başlık: hepsi aynıysa o, değilse null (çağıran ara başlık açar).
+function ortakRenkBasligi(urunler) {
+  const s = new Set((urunler || []).filter(Boolean).map(renkBasligi));
+  if (s.size === 0) return "Renk";
+  return s.size === 1 ? [...s][0] : null;
 }
 
 // RENKSİZ / BEDENSİZ ÜRÜN — TEK KURAL (27 Eylül, v1.493.0). Kullanıcı (reçetede renksiz "Monta Çivisi"

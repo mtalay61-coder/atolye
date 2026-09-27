@@ -649,13 +649,13 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             </datalist>
           </Field>
           {seciliUrun && !renkSorulmaz && (
-            <Field label="Renk">
+            <Field label={renkBasligi(seciliUrun)}>
               {/* Renk de yazarak aranıyor: çok renkli hammaddede (deri) liste uzuyor. */}
               <input
                 value={kRenk}
                 data-renk-arama="1"
                 list="fis-renk-listesi"
-                placeholder="Renk yazın ya da seçin"
+                placeholder={`${renkBasligi(seciliUrun)} yazın ya da seçin`}
                 onChange={(e) => { setKRenk(e.target.value); setKMiktarlar({}); setKSeciliOlcu(""); }}
                 style={{ ...inputStyle, width: 104 }}
               />
@@ -1025,13 +1025,23 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           }
           gruplar[index[anahtar]].kalemler.push(k);
         });
-        const tumBedenler = bedenSirala(Array.from(new Set(kalemler.map((k) => k.beden))));
+        // Yer tutucu tek sütun (v1.494.0): "Standart" ile boş ("") aynı anlam (`stokAnahtarNrm`); ikisi
+        // ayrı sütun açıyordu (renksiz Takviye "Standart", Deri "" → yan yana iki "Miktar").
+        const tumBedenler = bedenSirala(Array.from(new Set(kalemler.map((k) => stokAnahtarNrm(k.beden)))));
+        // RENK SÜTUNUNUN BAŞLIĞI (v1.494.0 — kullanıcı: "ortak isim olduğunda üst başlık ortak olsun,
+        // değişince ayrı satır eklesin"). Ürünün `renkBasligi` (Baskı, Kalınlık…); hepsi aynıysa sütun
+        // başlığı o, karışıksa sütunda başlıklar birlikte yazar ve başlık değiştiği her yerde ara satır.
+        const grupRenkBasligi = (g) => renkBasligi((stok || []).find((p) => p.id === (g.kalemler[0] || {}).urunId));
+        const ortakBaslik = ortakRenkBasligi(gruplar.map((g) => (stok || []).find((p) => p.id === (g.kalemler[0] || {}).urunId) || {}));
+        const renkSutunBasligi = ortakBaslik || Array.from(new Set(gruplar.map(grupRenkBasligi))).join(" / ");
         // KOLİDEN GELEN SATIRLAR AYRI GÖSTERİLİYOR (23 Eylül, v1.424.0 — kullanıcı: "koli içi miktar
         // ve koli adedi olarak detaylı; farklı asorti oldugunda alt satırda toplasın"). Her ürün+renk
         // grubu, koli içeriğindeki BEDEN DAĞILIMINA (asorti imzası) göre alt satırlara bölünüyor: aynı
         // dağılımdaki koliler TEK satırda toplanıyor (koli içi miktar × koli adet), farklı dağılım
         // ayrı satır. Koliye bağlı olmayan kalemler eskisi gibi tek, düzenlenebilir satırda kalıyor.
         const kolililerVarMi = kalemler.some((k) => k.koliId);
+        // Ara başlık satırı bütün sütunları kaplasın (ürün, renk, bedenler, koli×2, toplam, fiyat, P.B., tutar, sil).
+        const sutunSayisi = 2 + tumBedenler.length + (kolililerVarMi ? 2 : 0) + 5;
         function grubuBol(g) {
           const koliliKalemler = g.kalemler.filter((k) => k.koliId);
           const duzKalemler = g.kalemler.filter((k) => !k.koliId);
@@ -1039,7 +1049,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           koliliKalemler.forEach((k) => {
             if (!koliMap.has(k.koliId)) koliMap.set(k.koliId, { kod: k.koliKod, bedenler: new Map(), kalemler: [] });
             const kk = koliMap.get(k.koliId);
-            kk.bedenler.set(k.beden || "", (kk.bedenler.get(k.beden || "") || 0) + (k.miktar || 0));
+            kk.bedenler.set(stokAnahtarNrm(k.beden), (kk.bedenler.get(stokAnahtarNrm(k.beden)) || 0) + (k.miktar || 0));
             kk.kalemler.push(k);
           });
           const asortiGruplari = new Map();   // imza → { bedenler, koliKodlari, kalemler }
@@ -1084,7 +1094,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 <thead>
                   <tr>
                     <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px", color: "var(--erp-text-2)" }}>ÜRÜN</th>
-                    <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px", color: "var(--erp-text-2)" }}>RENK</th>
+                    <th data-fis-renk-sutunu="1" style={{ fontSize: 11, textAlign: "left", padding: "4px 8px", color: "var(--erp-text-2)" }}>{renkSutunBasligi.toLocaleUpperCase("tr-TR")}</th>
                     {tumBedenler.map((b) => (
                       <th key={b} className="mono" style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                     ))}
@@ -1101,7 +1111,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                   </tr>
                 </thead>
                 <tbody>
-                  {gruplar.flatMap((g) => {
+                  {gruplar.flatMap((g, gi) => {
+                    // ARA BAŞLIK (v1.494.0): başlıklar karışıksa, başlık değiştiği her yerde ayrı satır.
+                    const araBaslik = !ortakBaslik && (gi === 0 || grupRenkBasligi(gruplar[gi - 1]) !== grupRenkBasligi(g)) ? (
+                      <tr key={`${g.anahtar}|baslik`} data-fis-renk-ara-baslik={grupRenkBasligi(g)}>
+                        <td colSpan={sutunSayisi} style={{ padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
+                          {grupRenkBasligi(g).toLocaleUpperCase("tr-TR")}
+                        </td>
+                      </tr>
+                    ) : null;
                     const { koliAsortiGruplari, duzKalemler } = grubuBol(g);
                     const altSatirlar = [];
                     koliAsortiGruplari.forEach((ag, i) => {
@@ -1115,7 +1133,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                     if (duzKalemler.length > 0 || altSatirlar.length === 0) {
                       altSatirlar.push({ tip: "duz", key: `${g.anahtar}|duz`, kalemler: duzKalemler });
                     }
-                    return altSatirlar.map((alt) => {
+                    return [araBaslik, ...altSatirlar.map((alt) => {
                       const fiyatlarFarkli = new Set(alt.kalemler.map((k) => k.birimFiyat)).size > 1;
                       const grupTutar = stokYuvarla(alt.kalemler.reduce((t, k) => t + k.miktar * k.birimFiyat, 0));
                       const grupPBler = Array.from(new Set(alt.kalemler.map((k) => k.paraBirimi || "TRY")));
@@ -1148,7 +1166,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                               </td>
                             );
                           }
-                          const k = alt.kalemler.find((x) => x.beden === b);
+                          const k = alt.kalemler.find((x) => stokAnahtarNrm(x.beden) === b);
                           if (!k) return <td key={b} style={{ padding: "4px 6px", textAlign: "center", color: "var(--erp-line-soft)", fontSize: 11 }}>—</td>;
                           return (
                             <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
@@ -1261,7 +1279,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         </td>
                       </tr>
                       );
-                    });
+                    })].filter(Boolean);
                   })}
                 </tbody>
               </table>
