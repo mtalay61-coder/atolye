@@ -12,8 +12,12 @@
 //      ile ekleniyor; fiş satırında "farklı" yerine döküm.
 //   C. Fiyat elle yazılınca (30) hepsi 30 — kullanıcının fiyatı kurala üstün.
 //   E. (v1.484.0) Bedenlerin fiyatı aynıysa fiyat kutusu kendiliğinden dolar (ipucu yok).
+//   F. (v1.485.0) Uygulanan fiyat kırmızı (data-fk-uygulanan): ezilen beden fiyatı normal renkte.
+//   G. (v1.485.0) "P.birimi üstten değişince bedenler değişmiyor ve kapatınca eski halini alıyor":
+//      USD seçince var olan fiyatlar için soru çıkar; "aynı rakamla" → kurallar USD; kart kapanıp
+//      açılınca seçim USD kalır. Kurla çevir ayrı ölçülür (tohum kuru 48: 21 ₺ → 0,4375 $).
 //   D. (v1.483.0) Fiyat kutusu boşaltılınca kural silinir; kapalı kutunun kuralı × ile silinir.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -65,8 +69,13 @@ async function fiyatlandirma(hatalar) {
     await k.fill(deger); await k.blur(); await sayfa.waitForTimeout(400);
   };
   const kurallar = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-fk-kural]")].map((x) => `${x.getAttribute("data-fk-kural")}: ${x.textContent.replace(/\s+/g, " ").trim()}`));
+  // F (v1.485.0): uygulanan fiyat kırmızı — renk fiyatı varken renk kutusu kırmızı, beden kutuları
+  // (ezildiği için) normal; hücreler kırmızı.
+  const kirmizilar = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-fk-uygulanan]")].filter((x) => x.offsetParent)
+    .map((x) => x.getAttribute("data-fk-hucre") || x.getAttribute("data-fk-gecerli")).sort());
+  durum.kirmiziBedenFiyatiyla = await kirmizilar();
   await kutuYaz("renk|Siyah", "33");
-  durum.renkYazilinca = { kurallar: await kurallar(), hucre40: await sayfa.evaluate(() => document.querySelector('[data-fk-gecerli="Siyah|40"]').textContent) };
+  durum.renkYazilinca = { kurallar: await kurallar(), hucre40: await sayfa.evaluate(() => document.querySelector('[data-fk-gecerli="Siyah|40"]').textContent), kirmizi: await kirmizilar() };
   await kutuYaz("renk|Siyah", "");
   durum.renkSilinince = {
     kurallar: await kurallar(),
@@ -82,6 +91,42 @@ async function fiyatlandirma(hatalar) {
   durum.xIleSilinince = await kurallar();
   await tarayici.close();
   return durum;
+}
+
+async function kartiAc(sayfa) {
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(900);
+  await sayfa.evaluate(() => {
+    const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0);
+    let p = el; for (let i = 0; i < 8 && p; i++, p = p.parentElement) { if (p.onclick || p.tagName === "BUTTON") { p.click(); return; } }
+  });
+  await sayfa.waitForTimeout(1000);
+  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Fiyatlandırma/.test(x.textContent.trim()) && x.offsetParent); if (b) b.click(); });
+  await sayfa.waitForTimeout(600);
+}
+
+async function paraBirimi(hatalar, yol) {
+  const t = tohum();
+  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
+  sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
+  await sayfa.waitForTimeout(2300);
+  await kartiAc(sayfa);
+  await sayfa.locator('[data-fk-pb="USD"]').click();
+  await sayfa.waitForTimeout(300);
+  const soru = await sayfa.evaluate(() => { const x = document.querySelector("[data-fk-pb-soru]"); return x ? x.innerText.replace(/\s+/g, " ").trim() : "soru yok"; });
+  const b = sayfa.locator(`[data-fk-pb-uygula="${yol}"]`);
+  const kurDugmesiAcik = await sayfa.locator('[data-fk-pb-uygula="kur"]').isEnabled().catch(() => null);
+  await b.click();
+  await sayfa.waitForTimeout(500);
+  const kutular = await sayfa.evaluate(() => ["40", "41", "42"].map((b) => { const i = document.querySelector(`[data-fk-hucre="beden|${b}"]`); return `${b}: ${i.value} ${i.nextElementSibling.textContent}`; }));
+  // Kartı kapatıp yeniden aç: seçim kalıcı mı?
+  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && x.textContent.trim() === "Kapat"); if (b) b.click(); });
+  await sayfa.waitForTimeout(600);
+  await kartiAc(sayfa);
+  const yenidenAcinca = await sayfa.evaluate(() => document.querySelector("[data-fk-para-birimi]").getAttribute("data-fk-para-birimi"));
+  const bot = ((await depoOku(sayfa, "stok:items")) || []).find((p) => p.id === "u2") || {};
+  await tarayici.close();
+  return { soru, kurDugmesiAcik, kutular, yenidenAcinca, kayit: (bot.fiyatKurallari || []).map((k) => `${k.deger}: ${k.fiyat} ${k.paraBirimi}`), fiyatParaBirimi: bot.fiyatParaBirimi || null };
 }
 
 async function satisFisi(hatalar, elleFiyat, fiyatlar) {
@@ -130,7 +175,9 @@ async function calistir() {
   const kuraldan = await satisFisi(hatalar, null);
   const elle = await satisFisi(hatalar, "30");
   const ayniFiyat = await satisFisi(hatalar, null, [["40", 25], ["41", 25], ["42", 25]]);
-  return { hatalar, fiyatlandirmaEkrani, kuraldan, elle, ayniFiyat };
+  const pbAyniRakam = await paraBirimi(hatalar, "ayni");
+  const pbKurla = await paraBirimi(hatalar, "kur");
+  return { hatalar, fiyatlandirmaEkrani, kuraldan, elle, ayniFiyat, pbAyniRakam, pbKurla };
 }
 
 if (require.main === module) {

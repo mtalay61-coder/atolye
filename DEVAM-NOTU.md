@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.484.0** · 27 Eylül 2026
+Son sürüm: **v1.485.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.484.0): fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.485.0): Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6192,6 +6192,22 @@ kutusu boş, miktar altında kırmızı "20 ₺"): "Fiyat miktarın altında kı
 gerekmez mi?" Kalem zaten 20 ile ekleniyordu ama kutu boştu. Fiş (255) ve sipariş (325): renk/görünen
 ölçüler/para birimi (siparişte cari/tip de) değişince, fiyat elle yazılmadıysa görünen ölçülerin kural
 fiyatı TEK ise kutuya o; farklıysa renk/genel fiyatı ve miktar altında ipucu. Senaryo E bölümü.
+
+**v1.485.0 — uygulanan fiyat kırmızı.** Kullanıcı: "Stok fiyatlandırmada geçerli olacak fiyat kırmızı
+olsun, hangisi geçerli sayıldığı daha rahat anlaşılsın." Hücrelerdeki geçerli fiyat (kilitli satır
+yazısı ve boş kutunun placeholder'ı, `.fk-uygulanan::placeholder` 100-app CSS'inde) kırmızı; kural
+kutuları en az bir hücrede uygulanıyorsa (`renkUygulaniyor`/`bedenUygulaniyor`, `fiyatBul` kaynağıyla)
+kırmızı yazı + `--erp-void-tint` zemin, ezilen kural normal renkte. `data-fk-uygulanan`. Senaryo F.
+
+Aynı sürümde para birimi (kullanıcı, iş sürerken: "P.birimi üstten değişince bedenler değişmiyor ve
+kapatınca eski halini alıyor. Renkler değişmiş gibi görünüyor ama o da değişmiyor"): seçici yalnız
+YENİ fiyatların birimiydi ve ekran durumuydu. Artık: seçim ürüne yazılıyor (`fiyatParaBirimi:
+{Satış, Alış}`, varsayılan kartın birimi — `fkPbVarsayilan`); o sekmede başka birimde kural varsa
+soru çubuğu (`data-fk-pb-soru`): "aynı rakamla" (yalnız birim değişir), "kurla çevir"
+(`fiyatFiseCevir`, kur yoksa kapalı), "dokunma". Toplu işlem geçmişe tek satır (`toplu: true`).
+"Renkler değişmiş gibi": boş hücre placeholder'ında "12 ₺" varken yanında seçili birim "$" yazıyordu —
+placeholder varken birim gizli. **Karar:** sessiz dönüşüm yok (16 ₺ ile 16 $ arasında 48 kat fark);
+her zaman soruluyor. Senaryo G.
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine

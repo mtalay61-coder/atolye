@@ -2943,6 +2943,8 @@ export default function AtolyeERP() {
           outline: 2px solid var(--modul-renk, #E1611F); outline-offset: 1px;
         }
         ::placeholder { color: var(--erp-text-3); }
+        /* Fiyatlandırma matrisinde boş hücrenin gösterdiği UYGULANAN fiyat kırmızı (v1.485.0). */
+        .fk-uygulanan::placeholder { color: var(--erp-void); font-weight: 700; opacity: 1; }
         .mono { font-family: 'IBM Plex Mono', monospace; }
         /* ---- BUTON DİLİ ----
            Üç anlam, üç görünüm. Renk burada süs değil, İŞLEVİN KENDİSİ: kullanıcı butonu okumadan,
