@@ -4640,13 +4640,16 @@ export default function AtolyeERP() {
           title="Kapatmak için dokunun"
           style={{
             position: "fixed",
-            // SOL ALT (ERP standardı). Mobilde iki kenara yayılır.
-            bottom: 24,
-            left: 24,
-            // Dar ekranda alt çubuğun üstünde ve tam genişlikte: köşede kalan küçük bir kutu
-            // telefonda hem görünmüyor hem okunmuyordu.
+            // ÜST ORTA (v1.487.0). Kullanıcı (fiş, "1 kalem eklendi" Kaydet düğmesinin üstünde):
+            // "Bilgi butonların üzerini kapatıyor." Sol alttaydı — fiş/sipariş formlarında Kaydet ve
+            // Vazgeç tam orada. Üstte yalnız menü çubuğunu birkaç saniye örter; o sırada zaten
+            // yapılan işe bakılıyor, menüye değil. Dokununca kapanır.
+            top: 10,
+            left: mobilDuzen ? 12 : "50%",
             right: mobilDuzen ? 12 : undefined,
-            maxWidth: mobilDuzen ? undefined : 420,
+            transform: mobilDuzen ? undefined : "translateX(-50%)",
+            width: mobilDuzen ? undefined : "max-content",
+            maxWidth: mobilDuzen ? undefined : 480,
             zIndex: 300,
             background: "var(--erp-toast)",
             color: "var(--erp-panel-2)",

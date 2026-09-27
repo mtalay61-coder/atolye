@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.486.0";
+const SURUM = "1.487.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fis formunda para birimi fiyatin yaninda, yesil Ekle dugmesi";
+const SURUM_NOTU = "Fis kalem satiri telefonda tek satir, bilgi mesaji ustte";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fis formunda para birimi fiyatin yaninda, yesil Ekle dugmesi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.487.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: ["Bilgi mesajları (\"1 kalem eklendi\" gibi) ekranın üstünde çıkıyor"],
+    duzeltilen: ["Fiş formunda ölçü seçmeli üründe (Boyut) fiyat telefonda alt satıra kayıyordu; ürün/renk/ölçü/fiyat kutuları daraltıldı, tek satıra sığıyor", "Bilgi mesajı sol altta Kaydet/Vazgeç düğmelerinin üstünü kapatıyordu"] },
   { surum: "1.486.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: ["Fiş formunda para birimi fiyatla aynı alanda, üst satırda (sipariş formundaki gibi)", "Fiş formunda 'Kalemlere Ekle' yerine yeşil 'Ekle' düğmesi (siparişle aynı)"],

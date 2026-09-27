@@ -627,7 +627,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 if (bulunan) urunSec(bulunan.id);
                 else if (kUrunId) { setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKSeciliOlcu(""); }
               }}
-              style={{ ...inputStyle, width: 190 }}
+              // TEK SATIRA SIĞSIN (v1.487.0). Kullanıcı (telefon, Boyut seçmeli üründe fiyat alt satıra
+              // düşmüş): "Satır aşağı kayıyor yine." Ürün 190 + renk 130 + boyut 130 + fiyat 90+74
+              // ≈ 720 px, telefonda kutu içi ~690 px. Genişlikler daraltıldı (≈640 px); ad uzunsa
+              // kutuda kayar, seçilen ürün zaten altta renk/ölçü ile teyit ediliyor.
+              style={{ ...inputStyle, width: 165 }}
             />
             <datalist id="fis-urun-listesi">
               {secilebilirler(stok, kUrunId).map((p) => (
@@ -644,7 +648,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 list="fis-renk-listesi"
                 placeholder="Renk yazın ya da seçin"
                 onChange={(e) => { setKRenk(e.target.value); setKMiktarlar({}); setKSeciliOlcu(""); }}
-                style={{ ...inputStyle, width: 130 }}
+                style={{ ...inputStyle, width: 112 }}
               />
               <datalist id="fis-renk-listesi">
                 {renkSecenekleri.map((r) => <option key={r} value={r} />)}
@@ -663,7 +667,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                   setKMiktarlar({});
                   setKSeciliOlcu(e.target.value);
                 }}
-                style={{ ...inputStyle, width: 130 }}>
+                style={{ ...inputStyle, width: 100, padding: "8px 4px" }}>
                 <option value="">{(seciliUrun.olcuTipi || "Ölçü").toLocaleLowerCase("tr-TR")} seçin</option>
                 {bedenSecenekleri.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
@@ -713,10 +717,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             <div style={{ display: "flex", gap: 4 }}>
               {/* step="any": reçete miktarları gibi kesirli birim fiyatlar (0,0125) `0.01` adımında
                   reddediliyordu. */}
-              <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 90 }} />
-              <select value={kParaBirimi} data-kalem-pb="1" onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 74, padding: "8px 4px" }}>
+              <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 78, padding: "8px 6px" }} />
+              <select value={kParaBirimi} data-kalem-pb="1" onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 66, padding: "8px 2px" }}>
                 {Object.keys(PARA_SEMBOLU).map((pb) => (
-                  <option key={pb} value={pb}>{pb} {PARA_SEMBOLU[pb]}</option>
+                  <option key={pb} value={pb}>{pb}</option>
                 ))}
               </select>
             </div>
