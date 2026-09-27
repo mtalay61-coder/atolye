@@ -237,6 +237,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     setKFiyatElle(false);
   }
   const kuralFiyati = (renk, beden) => olcuKuralFiyati(seciliUrun, renk, beden, cari ? cari.id : "", tip, cariler, kParaBirimi, birlesikKurlar);
+  // Ölçünün kalemde alacağı birim fiyat: elle yazıldıysa o, yazılmadıysa ölçünün kuralı (yoksa
+  // kutudaki). Kalem eklerken de formdaki TUTAR (v1.490.0) hesabında da AYNI fonksiyon — ekranda
+  // görünen tutar ile eklenen kalemlerin toplamı ayrışmasın.
+  const olcuBirimFiyati = (b) => {
+    const fiyat = parseFloat(kFiyat) || 0;
+    if (kFiyatElle) return fiyat;
+    const k = kuralFiyati(kRenk, b);
+    return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
+  };
   // FİYAT KUTUSU KURALDAN DOLAR (v1.484.0). Kullanıcı (Fermuar, boyut 20 cm, fiyat kutusu boş, miktarın
   // altında kırmızı "20 ₺"): "Fiyat miktarın altında kırmızı yazıyor, otomatik çekmesi gerekmez mi?"
   // v1.482'de yalnız renk seçilince renk kuralına bakılıyordu; ölçü fiyatı yalnız ipucuydu (kalem yine
@@ -263,11 +272,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     if (!seciliUrun || !kRenk) return showToast("Ürün ve renk seçin");
     const fiyat = parseFloat(kFiyat) || 0;
     // Ölçü başına fiyat: elle yazıldıysa o, yazılmadıysa ölçünün kuralı (yoksa kutudaki fiyat).
-    const olcuFiyati = (b) => {
-      if (kFiyatElle) return fiyat;
-      const k = kuralFiyati(kRenk, b);
-      return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
-    };
+    const olcuFiyati = olcuBirimFiyati;
     // GÖSTERİLEN ölçüler üzerinden: çip seçimi kaldırılmış bir ölçünün eski miktarı kalemlere
     // sızmasın (ekranda görünmeyen bir satır eklenmesi, fişi sessizce bozardı).
     const eklenecekler = gosterilecekOlculer
@@ -605,8 +610,12 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           ekranda (<900px) tek sütuna iniyor — `minmax` + `auto-fit` ile, medya sorgusu olmadan. */}
       <div style={{ background: "#fff", border: BOLUM_KENAR, borderRadius: "var(--erp-r-md)", padding: 14, boxShadow: BOLUM_GOLGE }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 10 }}>Kalem Ekle</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 18, alignItems: "start" }}>
-        <div>
+        {/* IZGARA → ESNEK (v1.489.0): eşit iki sütunda kalem satırı 559 px'e sıkışıyor, miktar + asorti +
+            fiyat + Ekle sığmıyordu. Sol taraf geniş (960 px temel: ürün+renk+asorti…Ekle ≈950 px, "ekran büyükse
+            tümü tek satırda" — v1.490.0), koli sütunu dar (300 px temel);
+            yan yana sığmazsa koli sütunu alta iner. */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "flex-start" }}>
+        <div style={{ flex: "1 1 960px", minWidth: 0 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10, alignItems: "flex-start" }}>
           {/* ÜRÜN — YAZARAK ARANIR (kullanıcı, 18 Eylül: "stok ve renk seçmeli ve yazarak da
               aratmak gerek"). Açılır listede 18 ürün varken bile aranan şeyi bulmak kaydırmayla
@@ -680,6 +689,18 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               ürün+renk üstte, miktar…Ekle altta); fiyat/Ekle kutulardan kopup üçüncü satıra düşmez.
               Çok bedenli üründe (7+) grup da sığmazsa içeride sarar. */}
           <div data-kalem-grup="1" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
+          {/* ASORTİ MİKTARIN SOLUNDA, DAR (v1.489.0). Kullanıcı: "Asortiyi miktarın sağına alalım ve
+              daralsın", ardından "Miktarın solu, yanlış yazdım. İlerleme soldan sağa": önce asorti
+              seçilir, kutular dolar, sonra fiyat ve Ekle. Önce grubun altında tam genişlik bir satırdı. */}
+          {kRenk && bedenSecenekleri.length > 0 && (asortiler || []).length > 0 && (
+            <AsortiUygulaKontrolu
+              dar
+              asortiler={asortiler}
+              bedenSecenekleri={bedenSecenekleri}
+              olcuTipi={seciliUrun && seciliUrun.olcuTipi}
+              onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
+            />
+          )}
           {kRenk && gosterilecekOlculer.length > 0 && (
             <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               Miktar
@@ -701,7 +722,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                       // tek satıra sığsın hepsi, gerekirse yazıları küçült"). Kutu 62→52,
                       // yazı 12→11; beden tipinde 5-6 kutu yan yana artık sarmalanmıyor.
                       // 7+ bedende 52→44 (v1.489.0): fiyat ve Ekle yanına sığsın.
-                      style={{ width: gosterilecekOlculer.length > 6 ? 44 : 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
+                      style={{ width: gosterilecekOlculer.length > 6 ? 42 : 46, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                     />
                     <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>stok: {stokMiktari(kRenk, b)}</span>
                     {/* ÖLÇÜNÜN KURAL FİYATI (v1.482.0). Kullanıcı: "Bedenlere fiyat girildi ama satışta
@@ -734,18 +755,27 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             <div style={{ display: "flex", gap: 4 }}>
               {/* step="any": reçete miktarları gibi kesirli birim fiyatlar (0,0125) `0.01` adımında
                   reddediliyordu. */}
-              <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 72, padding: "8px 6px" }} />
-              <select value={kParaBirimi} data-kalem-pb="1" onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 66, padding: "8px 2px" }}>
+              <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 64, padding: "8px 5px" }} />
+              <select value={kParaBirimi} data-kalem-pb="1" onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 60, padding: "8px 2px" }}>
                 {Object.keys(PARA_SEMBOLU).map((pb) => (
                   <option key={pb} value={pb}>{pb}</option>
                 ))}
               </select>
             </div>
           </Field>
+          {/* TUTAR (v1.490.0). Kullanıcı: "alt satır asorti, bedenler, toplam, beden fiyat, p.tipi, tutar
+              ve ekle butonu." Eklenecek miktar × ölçünün birim fiyatı (`olcuBirimFiyati`). */}
+          {kRenk && gosterilecekOlculer.length > 0 && (
+            <Field label="Tutar">
+              <span className="mono" data-kalem-tutar="1" style={{ display: "inline-block", minWidth: 52, padding: "8px 0", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap" }}>
+                {gosterilecekOlculer.reduce((t, b) => t + (parseFloat(kMiktarlar[b]) || 0) * olcuBirimFiyati(b), 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {kPbSembol}
+              </span>
+            </Field>
+          )}
           {/* EKLE AYNI SATIRDA (v1.488.0; v1.489.0'dan beri bedenli üründe de, grubun sonunda).
               Boş etiket, düğmeyi kutularla aynı hizaya indiriyor. */}
           <Field label={"\u00a0"}>
-            <button type="button" data-kalemlere-ekle="1" style={{ ...EKLE_DUGMESI, padding: "8px 12px" }} onClick={kalemEkle}>
+            <button type="button" data-kalemlere-ekle="1" style={{ ...EKLE_DUGMESI, padding: "8px 10px" }} onClick={kalemEkle}>
               <PackagePlus size={15} /> Ekle
             </button>
           </Field>
@@ -757,23 +787,13 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               geçiyor — dar ekranda da bozulmuyor. */}
         </div>
 
-        {/* Asorti KENDİ SATIRINDA kaldı: seçici + set sayısı + düğmeden oluşuyor, miktar
-            kutularının yanına sıkıştırılsaydı ikisi de okunmaz olurdu. */}
-        {kRenk && bedenSecenekleri.length > 0 && (asortiler || []).length > 0 && (
-          <AsortiUygulaKontrolu
-            asortiler={asortiler}
-            bedenSecenekleri={bedenSecenekleri}
-            olcuTipi={seciliUrun && seciliUrun.olcuTipi}
-            onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
-          />
-        )}
 
         </div>
 
         {/* SAĞ SÜTUN: hazır kaynaklardan ekleme (koli okut, fişteki koliler, siparişten seç).
             Başlık, soldaki "Kalem Ekle" ile aynı hizada — sütunun ne işe yaradığı ilk bakışta
             anlaşılsın; boş kaldığında da sütun boş bir alan gibi durmasın. */}
-        <div style={{ display: "grid", gap: 8, alignContent: "start" }}>
+        <div style={{ display: "grid", gap: 8, alignContent: "start", flex: "1 1 300px", minWidth: 0 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>
             {tip === "Satış" ? "Koliden / siparişten ekle" : "Siparişten ekle"}
           </div>

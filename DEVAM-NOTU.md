@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.489.0** · 27 Eylül 2026
+Son sürüm: **v1.490.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.489.0): fiş formunda miktar+toplam+fiyat+Ekle tek grup, asorti altta; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.490.0): fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6233,6 +6233,21 @@ kullanalım." 255: miktar kutuları + "Top." (`data-kalem-toplam`) + fiyat/P.B. 
 "bedenli üründe Ekle altta" kuralı kalktı (`ekleSatirda` silindi). 7+ bedende kutu 52→44; iç boşluk 6,
 fiyat 72. Ölçüm (5 beden): grup 552 px; 1200 px'de sol sütun 559 (koli sağda) → tek satır; 750'de
 ürün/renk üstte, grup altta tek satır; 400'de fiyat+Ekle grubun içinde sarar.
+
+**v1.490.0.** Kullanıcı: "Asortiyi miktarın sağına alalım ve daralsın", hemen ardından "Miktarın solu,
+yanlış yazdım. İlerleme soldan sağa." `AsortiUygulaKontrolu` `dar` kipi (140): 108 px iki katlı
+sütun (`data-asorti-dar`; seçici, altında × set + Uygula). Fişte grubun BAŞINDA: asorti → miktar →
+Top. → fiyat → Ekle. Kalem Ekle ızgarası (eşit iki sütun, minmax 420) esnek yapıya çevrildi: sol
+`1 1 680px`, koli sütunu `1 1 300px` — 1200 px'de sol 749 px, grup (670 px) tek satır. 750 px'de
+ürün/renk üstte, grup altta tek satır (~16 px pay). Diğer asorti kullanımları (sipariş, üretim…)
+değişmedi.
+Aynı sürümde (kullanıcı, iş sürerken): "Bedenli stok için üst satır stok ve renk, alt satır asorti
+bedenler toplam beden fiyat p.tipi tutar ve ekle butonu" + "Ekran büyük ise tümü tek satırda olsun."
+TUTAR alanı (`data-kalem-tutar`) = Σ miktar × `olcuBirimFiyati(b)` — kalemEkle de AYNI fonksiyonu
+kullanıyor (ekrandaki tutar = eklenen kalemler). Sığsın diye: beden kutusu 46 (7+ bedende 42), fiyat
+64, P.B. 60, asorti 100, Ekle padding 10. Sol alan temeli 960 px: 1100 px ve üstünde tek satır (koli
+sütunu gerekirse alta iner), 750'de iki satır (grup 676/686 px). Ölçü seçmeli üründe de grup artık
+ikinci satırda (tutar eklendi).
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine
