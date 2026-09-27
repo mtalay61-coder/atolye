@@ -13,7 +13,7 @@
 function useSiparisTeslim(d) {
   const {
     siparisler, stok, cariler, muhasebe, koliler, showToast, aktifKullanici, saveKoliler,
-    fisDefterineKayitYaz, setSiparisler, setStok, setCariler,
+    fisDefterineKayitYaz, setSiparisler, setStok, setCariler, tanimlar,
   } = d;
 
 const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "Genel", koliIdler = []) => {
@@ -53,6 +53,10 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
         birimFiyat: t.birimFiyat != null && t.birimFiyat !== "" ? Number(t.birimFiyat) : kalem.birimFiyat,
         paraBirimi: t.paraBirimi || kalem.paraBirimi || "TRY",
         kalemId: kalem.id, kalan, fazlaGonderim: t.miktar > kalan,
+        // KDV (v1.502.0): Tanımlar'da açıksa siparişte satırla girilen oran fişe geçer; oransız eski
+        // kalemde ürünün oranı. Kapalıysa oran taşınmaz — fiş eskisi gibi KDV'siz (anahtar tek yerde).
+        ...(kdvAktifMi(tanimlar && tanimlar.firmaBilgileri)
+          ? { kdvOrani: kalemKdvOrani(kalem, stok, tanimlar.firmaBilgileri) } : {}),
         _siparisId: kaynakSiparis.id,
         ...(kaynakSiparis.id !== siparis.id
           ? { siparis: { id: kaynakSiparis.id, siparisNo: kaynakSiparis.siparisNo, rezervasyonSiparisId: kaynakSiparis.rezervasyonSiparisId } }
@@ -277,7 +281,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
   })();
   showToast(bildirim);
   return true;
-}, [siparisler, stok, cariler, showToast, muhasebe, aktifKullanici, koliler, saveKoliler, fisDefterineKayitYaz]);
+}, [siparisler, stok, cariler, showToast, muhasebe, aktifKullanici, koliler, saveKoliler, fisDefterineKayitYaz, tanimlar]);
 
   return siparisGerceklestir;
 }

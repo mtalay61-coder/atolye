@@ -479,7 +479,12 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       const c = (cariler || []).find((x) => x.id === koliCari);
       return showToast(`${koli.kod} başka bir carinin kolisi (${c ? c.unvan : "?"}) — bu fişe eklenmedi`);
     }
-    const { satirlar, siparis, yol, uyarilar } = koliKalemleriniFisSatirinaCevir(koli, { siparisler, uretim, stok, mevcutKalemler: kalemler });
+    const { satirlar: koliSatirlari, siparis, yol, uyarilar } = koliKalemleriniFisSatirinaCevir(koli, { siparisler, uretim, stok, mevcutKalemler: kalemler });
+    // Siparişe bağlı koli satırı siparişte girilen KDV oranını taşır (v1.502.0). 237 derlenmiş dosya — oran burada eklenir.
+    const satirlar = koliSatirlari.map((x) => {
+      const sk = x.kalemId && x.siparis ? (((siparisler || []).find((sp) => sp.id === x.siparis.id) || {}).kalemler || []).find((k) => k.id === x.kalemId) : null;
+      return sk && typeof sk.kdvOrani === "number" ? { ...x, kdvOrani: sk.kdvOrani } : x;
+    });
     if (!satirlar.length) return showToast(`${koli.kod} boş`);
     // SİPARİŞTEN YÜKLÜ SATIRLAR "KALAN"DIR (23 Eylül, v1.422.0): sipariş kartından açılan fişte
     // kalan kalemler hazır geliyor; koli aynı sipariş satırını karşılıyorsa o satırdan DÜŞÜLÜR,
@@ -918,6 +923,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                           setKalemler((o) => [...o, ...bekleyen.map(({ k, kalan }) => ({
                             id: uid("fkalem"), urunId: k.urunId, urunAd: k.urunAd, birim: k.birim || "", renk: k.renk || "", beden: k.beden || "",
                             miktar: kalan, birimFiyat: k.birimFiyat || 0, paraBirimi: k.paraBirimi || "TRY",
+                            // Siparişte satırla girilen KDV oranı fişe geçer (v1.502.0); yoksa ürünün oranı (kalemOrani).
+                            ...(typeof k.kdvOrani === "number" ? { kdvOrani: k.kdvOrani } : {}),
                             kalemId: k.id, siparis: { id: s.id, siparisNo: s.siparisNo, rezervasyonSiparisId: s.rezervasyonSiparisId || null },
                           }))]);
                           showToast(`${s.siparisNo}: ${bekleyen.length} kalem fişe eklendi (siparişe bağlı)`);
