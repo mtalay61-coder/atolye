@@ -1,0 +1,9 @@
+{
+ "dokum": "Matrah (KDV hariç) 800,00 ₺ KDV %10 50,00 ₺ KDV %20 60,00 ₺ Fiş Toplamı (KDV dahil) 910,00 ₺",
+ "hareketler": [
+  "37 3 × 100 → tutar 360 (%20, KDV 60)",
+  "38 5 × 100 → tutar 550 (%10, KDV 50)"
+ ],
+ "hatalar": [],
+ "koliDurumu": "Sevk edildi"
+}

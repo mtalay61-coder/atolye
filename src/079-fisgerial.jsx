@@ -35,6 +35,7 @@
 // ENGEL (hiçbir şey değişmeden döner):
 //   "uretim-fisi" — üretim fişi yalnız üretim kartından geri alınır
 //   "cek-islemde" — işlem görmüş çekin giriş hareketi silinmez (mesaj ne yapılacağını söyler)
+//   "fatura-kesildi" — numara almış (gönderilmiş) faturası olan fiş geri alınmaz (v1.504.0)
 //
 // ÇIKTI
 //   { engel, stok, cariler, siparisler, uretim, muhasebe, silinenCekler, geriAlinanCekler, cekDegisti,
@@ -106,7 +107,7 @@ function uretimFisAilesi(u, fisNo) {
 }
 
 function fisGeriAl(veri, secenekler = {}) {
-  const { stok, cariler, siparisler, uretim, muhasebe, koliler } = veri;
+  const { stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar } = veri;
   // `esId` KÜMEYE GİRER: Muhasebe defterinde bir kayıt Genel+Resmi olarak İKİ satır yazılır.
   // Yalnızca birini silmek diğerini yetim bırakır ve bakiyeyi bozar. Kümeyi burada genişletmek,
   // çağıranın bunu hatırlamasına bağlı olmaktan çıkarır.
@@ -182,6 +183,22 @@ function fisGeriAl(veri, secenekler = {}) {
       uretimNo: ilk.uretim.siparisNo,
       proses: (ilk.uretim.prosesIlerleme || [])[ilk.adimIndex] && (ilk.uretim.prosesIlerleme || [])[ilk.adimIndex].proses,
     });
+  }
+
+  // ---- KİLİT: FATURASI KESİLMİŞ FİŞ GERİ ALINMAZ (v1.504.0 — e-fatura) -------------------------
+  // Numara almış (entegratöre gönderilmiş) fatura yasal belgedir: fişi silmek cariyi ve stoğu geri alır
+  // ama GİB'deki fatura yerinde kalır — iki kayıt birbirinden kopar. Doğru yol faturayı iptal etmek ya da
+  // iade faturası kesmektir (Aşama 3). TASLAK (numarasız) engel değil: fatura henüz yok.
+  // `faturalar` verilmezse (eski çağrı) kilit uygulanmaz — kapı eskisi gibi çalışır.
+  if (Array.isArray(faturalar) && faturalar.length) {
+    const fisNolar = new Set(tumHareketler.filter((h) => idler.has(h.id) && h.fisNo).map((h) => h.fisNo));
+    const kesilmis = faturalar.find((f) => f && f.faturaNo && f.durum !== "İptal" && fisNolar.has(f.fisNo));
+    if (kesilmis) {
+      return engelliSonuc({
+        sebep: "fatura-kesildi", fisNo: kesilmis.fisNo, faturaNo: kesilmis.faturaNo,
+        mesaj: `${kesilmis.fisNo} fişinin faturası kesildi (${kesilmis.faturaNo}) — fiş silinemez. Önce faturayı iptal edin ya da iade faturası kesin.`,
+      });
+    }
   }
 
   // İzin verildiyse (üretim kartından gelen geri alma) fişin AİLESİ birlikte gider.

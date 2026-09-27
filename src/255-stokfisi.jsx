@@ -129,7 +129,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     // GELEN LİSTENİN KENDİ İÇİNDEKİ KOPYALAR da ayıklanıyor (bkz. `hazirKalemleriTekille`). Eskiden
     // yalnız formda ZATEN olan satırlarla karşılaştırılıyordu; aynı ihtiyacın iki kaynaktan
     // (tıklanan satır + MRP) gelmesi iki satır olarak listeye düşüyordu.
-    const tekil = hazirKalemleriTekille(baslangicKalemler);
+    // Depo > Sevkiyat'tan gelen koli satırları da siparişin KDV oranını taşısın (v1.504.0).
+    const tekil = hazirKalemleriTekille(baslangicKalemler).map(siparisOraniniTasi);
     setKalemler((onceki) => {
       // Zaten eklenmiş satır TEKRAR EKLENMİYOR: form yeniden çizilirse (cari değişimi, pencere
       // geri gelmesi) miktarlar ikiye katlanırdı.
@@ -346,6 +347,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // KDV (v1.496.0, 077-kdv): Tanımlar'da açıksa satır matrahından KDV; `toplam` KDV DAHİL olur (peşin
   // sınırı ve "Fiş Toplamı" cariye yazılacak tutarla aynı olsun). Kapalıyken eskisi gibi.
   const kdvAktif = kdvAktifMi(firmaBilgileri);
+  // SİPARİŞİN KDV ORANI FİŞE (v1.502.0 / v1.504.0): siparişe bağlı satır (kalemId + siparis) oranı taşımıyorsa
+  // sipariş kaleminden alınır — koli okutma (237 derlenmiş dosya, oran burada eklenir) ve Depo > Sevkiyat'ın
+  // açtığı fiş (başlangıç satırları) aynı yoldan. Satırda oran zaten varsa ona dokunulmaz.
+  function siparisOraniniTasi(x) {
+    if (!x || typeof x.kdvOrani === "number" || !x.kalemId || !x.siparis) return x;
+    const sp = (siparisler || []).find((o) => o.id === x.siparis.id);
+    const sk = sp ? (sp.kalemler || []).find((k) => k.id === x.kalemId) : null;
+    return sk && typeof sk.kdvOrani === "number" ? { ...x, kdvOrani: sk.kdvOrani } : x;
+  }
   const kalemOrani = (k) => kalemKdvOrani(k, stok, firmaBilgileri);
   const cevrimSonucu = (() => {
     let toplam = 0;
@@ -480,11 +490,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       return showToast(`${koli.kod} başka bir carinin kolisi (${c ? c.unvan : "?"}) — bu fişe eklenmedi`);
     }
     const { satirlar: koliSatirlari, siparis, yol, uyarilar } = koliKalemleriniFisSatirinaCevir(koli, { siparisler, uretim, stok, mevcutKalemler: kalemler });
-    // Siparişe bağlı koli satırı siparişte girilen KDV oranını taşır (v1.502.0). 237 derlenmiş dosya — oran burada eklenir.
-    const satirlar = koliSatirlari.map((x) => {
-      const sk = x.kalemId && x.siparis ? (((siparisler || []).find((sp) => sp.id === x.siparis.id) || {}).kalemler || []).find((k) => k.id === x.kalemId) : null;
-      return sk && typeof sk.kdvOrani === "number" ? { ...x, kdvOrani: sk.kdvOrani } : x;
-    });
+    const satirlar = koliSatirlari.map(siparisOraniniTasi);
     if (!satirlar.length) return showToast(`${koli.kod} boş`);
     // SİPARİŞTEN YÜKLÜ SATIRLAR "KALAN"DIR (23 Eylül, v1.422.0): sipariş kartından açılan fişte
     // kalan kalemler hazır geliyor; koli aynı sipariş satırını karşılıyorsa o satırdan DÜŞÜLÜR,

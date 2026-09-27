@@ -1140,7 +1140,7 @@ export default function AtolyeERP() {
     // Stok, cari ve üretim ilerlemesinin geri alınması `fisGeriAl`da. Fiş numarası ailesi de orada
     // kuruluyor (`uretimFisAdlari`) — teslim almadaki formülün tek kopyası. Burada kalan iş
     // rezervasyon iadesi, yazma ve bildirim.
-    const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler }, {
+    const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar }, {
       uretimHedefi: { uretimId, prosesAdi, atamaId: araProsesMi ? null : atamaId },
       uretimeIzinVer: true,
     });
@@ -1200,7 +1200,7 @@ export default function AtolyeERP() {
         : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
           (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
     );
-  }, [uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
+  }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
 
   // Bir üretim siparişini siler; bu üretime bağlı (Tedarik Planlama ile oluşmuş) bir satış kalemi varsa
   // o kalemin planlama referansını temizleyerek yeniden planlanabilir hale getirir.
@@ -2461,12 +2461,18 @@ export default function AtolyeERP() {
     // TEK KAPI: geri almanın kendisi `fisGeriAl`da. Burada kalan iş çöp kaydı, yazma ve bildirim.
     // `cariHareketindenSiparisDus`: bu yol tek bir hareketi siler ve o hareket yalnızca cari
     // tarafında duruyor olabilir (ürünsüz kayıt); sipariş bağı oradan okunur.
-    const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler }, {
+    const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar }, {
       hareketIdler: [hareketId],
       cariHareketindenSiparisDus: true,
       kullanici: (aktifKullanici && aktifKullanici.ad) || null,
     });
 
+    // FATURA KİLİDİ (v1.504.0): faturası kesilmiş fiş silinmez.
+    if (sonuc.engel && sonuc.engel.sebep === "fatura-kesildi") {
+      showToast(sonuc.engel.mesaj);
+      gunlukYaz(`Faturalı fişin hareketi silinmek istendi (reddedildi): ${sonuc.engel.fisNo} · ${sonuc.engel.faturaNo}`, "cari", { fisNo: sonuc.engel.fisNo });
+      return;
+    }
     // ÇEK KİLİDİ: işlem görmüş çekin giriş hareketi silinmez. Mesaj ne yapılacağını söylüyor.
     if (sonuc.engel && sonuc.engel.sebep === "cek-islemde") {
       showToast(sonuc.engel.mesaj);
@@ -2563,7 +2569,7 @@ export default function AtolyeERP() {
         " kayıtlarından birlikte silindi"
       );
     }
-  }, [showToast, copaAt, stok, cariler, siparisler, uretim, muhasebe, saveMuhasebe, koliler, saveKoliler, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
+  }, [faturalar, showToast, copaAt, stok, cariler, siparisler, uretim, muhasebe, saveMuhasebe, koliler, saveKoliler, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
 
   // ÇEKİ BAĞLI GİRİŞ HAREKETİYLE BİRLİKTE SİL.
   //
@@ -2622,10 +2628,16 @@ export default function AtolyeERP() {
 
     // TEK KAPI: geri almanın kendisi `fisGeriAl`da (sipariş `karsilanan` düşümü ve `esId` kardeş
     // kaydının silinmesi dahil). Burada kalan iş çöp kaydı, yazma ve bildirim.
-    const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler }, {
+    const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar }, {
       hareketIdler, kullanici: (aktifKullanici && aktifKullanici.ad) || null,
     });
 
+    // FATURA KİLİDİ — bkz. removeHareketEverywhere.
+    if (sonuc.engel && sonuc.engel.sebep === "fatura-kesildi") {
+      showToast(sonuc.engel.mesaj);
+      gunlukYaz(`Faturalı fiş silinmek istendi (reddedildi): ${sonuc.engel.fisNo} · ${sonuc.engel.faturaNo}`, "cari", { fisNo: sonuc.engel.fisNo });
+      return;
+    }
     // ÇEK KİLİDİ — bkz. removeHareketEverywhere.
     if (sonuc.engel && sonuc.engel.sebep === "cek-islemde") {
       showToast(sonuc.engel.mesaj);
@@ -2729,7 +2741,7 @@ export default function AtolyeERP() {
       (sonuc.etkilenenUretimler.size > 0 ? ", üretim ilerlemesi geri alındı" : "") +
       (sonuc.geriAlinanCekler.length > 0 ? `, ${sonuc.geriAlinanCekler.length} çekin işlemi geri alındı (önceki durumuna döndü)` : "")
     );
-  }, [stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
+  }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
   // Toast'taki "Geri al" düğmesi fiş numarasıyla buraya gelir.
   useEffect(() => {
     fisGeriAlRef.current = (fisNo, hareketIdler) => {

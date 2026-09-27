@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.503.0";
+const SURUM = "1.504.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Siparis kaleminde notlar rengin yaninda";
+const SURUM_NOTU = "Sevkiyatta siparis KDV orani; faturasi kesilmis fis silinemez";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis kaleminde notlar rengin yaninda";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.504.0", tarih: "27.09.2026",
+    eklenen: ["Faturası kesilmiş (numara almış) fiş geri alınamaz/silinemez; Fişler listesinde 'Faturası kesildi' kilidi (e-fatura bağlantısına hazırlık)"],
+    degisen: [],
+    duzeltilen: ["Depo > Sevkiyat'tan koli okutularak açılan satış fişi siparişte seçilen KDV oranını değil ürünün oranını kullanıyordu"] },
   { surum: "1.503.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: ["Sipariş formunun kalem tablosunda notlar rengin altında değil yanında"],

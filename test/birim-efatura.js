@@ -9,7 +9,7 @@
 //   • UBL-TR XML: zorunlu alanlar, oran bazında KDV, döviz kuru, TCKN'li alıcıda ad/soyad, özel karakter kaçışı.
 //   • Birim kodları ve tutarın yazıyla gösterimi.
 const { fisYaz, tumFisleriTopla, faturaKur, faturaDogrula, faturaEngelVarMi, ublTrXml, efaturaBirimKodu, faturaNoBicimi,
-  sonrakiFaturaSirasi, faturaSeriGecerliMi, ettnUret, efaturaVarsayilanSenaryo, faturaTutarYaziyla } = require("./erp.cjs");
+  sonrakiFaturaSirasi, faturaSeriGecerliMi, ettnUret, efaturaVarsayilanSenaryo, faturaTutarYaziyla, fisGeriAl } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -108,5 +108,17 @@ bekle("birim kodları", ["Adet", "çift", "metre", "desi", "kg", "koli", "top"].
   [{ kod: "C62", bilinen: true }, { kod: "PR", bilinen: true }, { kod: "MTR", bilinen: true }, { kod: "DMK", bilinen: true }, { kod: "KGM", bilinen: true }, { kod: "CT", bilinen: true }, { kod: "C62", bilinen: false }]);
 bekle("tutar yazıyla (çek bordrosuyla aynı yardımcı)", [faturaTutarYaziyla(400, "TRY"), faturaTutarYaziyla(1250.5, "TRY")],
   ["Yalnız dörtyüz TL", "Yalnız binikiyüzelli TL elli kuruş"]);
+
+console.log("Faturalı fiş kilidi (v1.504.0)");
+{
+  const r = fisYaz(JSON.parse(JSON.stringify(stok0)), [JSON.parse(JSON.stringify(cari0))], fisGovde([kalemBot]));
+  const idler = r.cariHareketleri.map((h) => h.id);
+  const veri = (faturalar) => ({ stok: r.stok, cariler: r.cariler, siparisler: [], uretim: [], muhasebe: {}, koliler: [], faturalar });
+  const kesilmis = fisGeriAl(veri([{ fisNo: "SF-0001", faturaNo: "ATL2026000000001", durum: "Gönderildi" }]), { hareketIdler: idler });
+  bekle("numaralı fatura → engel, hiçbir şey değişmez", [kesilmis.engel && kesilmis.engel.sebep, kesilmis.cariler === r.cariler], ["fatura-kesildi", true]);
+  bekle("taslak (numarasız) engel değil", fisGeriAl(veri([{ fisNo: "SF-0001", faturaNo: null, durum: "Taslak" }]), { hareketIdler: idler }).engel, null);
+  bekle("iptal edilmiş fatura engel değil", fisGeriAl(veri([{ fisNo: "SF-0001", faturaNo: "ATL2026000000001", durum: "İptal" }]), { hareketIdler: idler }).engel, null);
+  bekle("faturalar verilmeyen eski çağrı", fisGeriAl({ ...veri(undefined) }, { hareketIdler: idler }).engel, null);
+}
 
 process.exit(hata);
