@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.481.0</title>
+<title>Atölye ERP 1.484.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1927,9 +1927,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.481.0";
-const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Fiyatlandirmada para birimi ve virgullu fiyat girisi";
+const SURUM = "1.484.0";
+const SURUM_TARIHI = "2026-09-27";
+const SURUM_NOTU = "Fis ve sipariste fiyat kutusu beden fiyatindan kendiliginden doluyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1937,6 +1937,18 @@ const SURUM_NOTU = "Fiyatlandirmada para birimi ve virgullu fiyat girisi";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.484.0", tarih: "27.09.2026",
+        eklenen: [],
+        degisen: ["Fiş ve sipariş formunda fiyat kutusu renk/ölçü seçilince fiyatlandırmadan kendiliğinden doluyor: seçili ölçülerin fiyatı tek ise o yazılıyor; farklıysa miktar altında ölçü ölçü görünüyor"],
+        duzeltilen: ["Tek boyut seçilince fiyat kutusu boş kalıyor, fiyat yalnız miktarın altında kırmızı ipucu olarak görünüyordu"] },
+    { surum: "1.483.0", tarih: "27.09.2026",
+        eklenen: ["Fiyatlandırmada kutusu kapalı ama kayıtlı fiyatın yanında × ile silme"],
+        degisen: [],
+        duzeltilen: ["Fiyatlandırmada fiyat kutusu boşaltılınca fiyat silinmiyordu, eski fiyat geri geliyordu; artık kutuyu boşaltıp çıkmak (ya da 0 yazmak) o fiyatı siliyor"] },
+    { surum: "1.482.0", tarih: "27.09.2026",
+        eklenen: ["Fiş formunda miktar kutularının altında her bedenin fiyatlandırma fiyatı; fiş satırında 'farklı' yerine beden beden fiyat dökümü", "Fiyatlandırma matrisinde kilitli hücrelerde ve boş kutularda satışta uygulanacak fiyat (gri) ve kaynağı"],
+        degisen: ["Fiyatlandırmada 'tek fiyat' kutuları kayıtlı kuraldan açılıyor: beden fiyatı olan beden işaretli, renk fiyatı olmayan renk (ölçü fiyatı varken) kapalı; kutusu kapalı ama kayıtlı kural 'geçerli' diye görünüyor", "Öncelik açıklaması: renk fiyatı o rengin bütün bedenlerinde geçer"],
+        duzeltilen: ["Bedenlere girilen fiyatlar satış/alış fişine ve siparişe çekilmiyordu (tek fiyat bütün bedenlere yazılıyordu); elle fiyat yazılmadıkça her beden kendi fiyatını alıyor", "Siparişte ürün seçilince kuralın para birimi kalemin birimine çevriliyor"] },
     { surum: "1.481.0", tarih: "26.09.2026",
         eklenen: ["Ürün kartı ▸ Fiyatlandırma: para birimi seçimi (₺/$/€, varsayılan kartın alış/satış birimi); özel fiyatlar kendi birimiyle kaydediliyor"],
         degisen: ["Fiyat kutuları geniş, virgülle yazılıyor (0,18); yanında fiyatın birimi", "Kural listesi, fiyat geçmişi, başlık ve siparişteki 'özel' ipucu doğru para birimini gösteriyor"],
@@ -6605,10 +6617,10 @@ function sonAlisFiyatlari(cariler, urunAd, { renk = null, sinir = 20 } = {}) {
 function fiyatBul(urun, renk, beden, cariId, tip, cariler) {
     // PARA BİRİMİ (21 Eylül): kural artık kendi para birimini taşıyor (`paraBirimi`); yoksa ürün
     // kartındaki birim, o da yoksa TRY. Çağıran taraf fişin birimine çevirir (`fiyatFiseCevir`).
+    if (!urun)
+        return { fiyat: 0, kaynak: "Genel", paraBirimi: "TRY" };
     const varsayilan = tip === "Satış" ? (urun.satisFiyati || 0) : (urun.alisFiyati || 0);
     const varsayilanPb = alisPbKodu({ alisParaBirimi: tip === "Satış" ? urun.satisParaBirimi : urun.alisParaBirimi });
-    if (!urun)
-        return { fiyat: varsayilan, kaynak: "Genel", paraBirimi: varsayilanPb };
     const kurallar = (urun.fiyatKurallari || []).filter((k) => k.tip === tip);
     if (kurallar.length === 0)
         return { fiyat: varsayilan, kaynak: "Genel", paraBirimi: varsayilanPb };
@@ -6646,6 +6658,17 @@ function fiyatBul(urun, renk, beden, cariId, tip, cariler) {
 // FİYATI FİŞİN BİRİMİNE ÇEVİR (21 Eylül): "Toptan USD" grubunun 12 $'ı TL çalışan cariye
 // kesilen fişte 12 ₺ olarak geçiyordu — kural para birimi taşımıyordu. Önce TL'ye, sonra fişin
 // birimine; kur yoksa çevirmeden bırakır ve `cevrilemedi` der (çağıran uyarır).
+// ÖLÇÜ BAŞINA KURAL FİYATI, fişin/formun biriminde (27 Eylül, v1.482.0 — kullanıcı: "bedenlere fiyat
+// girildi ama satışta çekmedi"). Fiş ve sipariş formu fiyatı ürün seçilince ÖLÇÜSÜZ arıyordu
+// (`fiyatBul(p, null, null)`) ve o tek fiyatı bütün ölçülere yazıyordu — "Beden: 36 → 21 ₺" gibi
+// kurallar hiç devreye girmiyordu. Kullanıcı fiyatı elle yazmadıysa her ölçü bununla fiyatlanır.
+function olcuKuralFiyati(urun, renk, beden, cariId, tip, cariler, hedefPb, kurlar) {
+    if (!urun)
+        return { fiyat: 0, kaynak: "", cevrilemedi: false };
+    const b = fiyatBul(urun, renk || null, beden || null, cariId || "", tip, cariler || []);
+    const c = fiyatFiseCevir(b.fiyat, b.paraBirimi, hedefPb, kurlar);
+    return { fiyat: c.fiyat || 0, kaynak: b.kaynak, cevrilemedi: c.cevrilemedi, paraBirimi: b.paraBirimi };
+}
 function fiyatFiseCevir(fiyat, kaynakPb, fisPb, kurlar) {
     const kPb = alisPbKodu({ alisParaBirimi: kaynakPb });
     const hPb = alisPbKodu({ alisParaBirimi: fisPb });
@@ -26103,23 +26126,69 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                         const pbSembol = PARA_SEMBOLU[fkParaBirimi] || fkParaBirimi;
                         // FİYAT KUTUSU (v1.481.0): metin kutusu (virgül kabul), 84 px, sağında kuralın KENDİ para
                         // birimi — seçili birimden farklıysa turuncu (kaydedilince seçili birime geçer).
-                        const fiyatKutusu = ({ kural, kaydet, veri, vurgu }) => {
+                        const fiyatKutusu = ({ kural, kaydet, veri, vurgu, ipucu }) => {
                             const kPb = kural ? (kural.paraBirimi || kartPb(fkTip)) : fkParaBirimi;
                             return (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
-                                React.createElement("input", { key: kural ? `${kural.fiyat}|${kPb}` : "bos", type: "text", inputMode: "decimal", defaultValue: kural ? fiyatYazi(kural.fiyat) : "", placeholder: "\u2014", "data-fk-hucre": veri, onBlur: (e) => {
+                                React.createElement("input", { key: kural ? `${kural.fiyat}|${kPb}` : "bos", type: "text", inputMode: "decimal", defaultValue: kural ? fiyatYazi(kural.fiyat) : "", placeholder: ipucu || "—", title: ipucu ? `Boş — satışta ${ipucu} uygulanıyor (renk/ölçü fiyatından)` : undefined, "data-fk-hucre": veri, onBlur: (e) => {
+                                        // KUTUYU BOŞALTMAK = FİYATI SİLMEK (v1.483.0). Kullanıcı: "Renk fiyat girip fiyatı
+                                        // silsen bile eski fiyatı hatırlıyor." Boş değer "değişiklik yok" sayılıyordu: kural
+                                        // kayıtta kalıyor, kutu yeniden çizilince eski fiyat geri geliyordu. Artık boş (ya da
+                                        // 0) bırakılan kutunun kuralı siliniyor — geçmişe "silindi" diye yazılır.
+                                        if (kural && e.target.value.trim() === "") {
+                                            fiyatKuraliSil(kural.id);
+                                            return;
+                                        }
                                         const yeni = fiyatSayisi(e.target.value);
+                                        if (kural && yeni === 0 && e.target.value.trim() !== "") {
+                                            fiyatKuraliSil(kural.id);
+                                            return;
+                                        }
                                         if (!(yeni > 0) || (kural && yeni === kural.fiyat && kPb === fkParaBirimi))
                                             return;
                                         kaydet(yeni);
                                     }, className: "mono", style: { width: 84, padding: "4px 6px", fontSize: 13, border: `1px solid ${vurgu ? "#6B4E8A" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", textAlign: "right" } }),
                                 React.createElement("span", { className: "mono", title: kural && kPb !== fkParaBirimi ? `Bu fiyat ${kPb} — değiştirirseniz ${fkParaBirimi} olarak kaydedilir` : undefined, style: { fontSize: 11, fontWeight: 700, color: kural && kPb !== fkParaBirimi ? "#B7791F" : "var(--erp-text-3)" } }, PARA_SEMBOLU[kPb] || kPb)));
                         };
+                        // KUTULARIN VARSAYILANI KAYITLI KURALDAN (v1.482.0). Kullanıcı: "Bedenlere fiyat girildi
+                        // ... listede beden tek fiyat girildiğinde orada durmalı yine. Renk tek fiyat duruyor.
+                        // İkisi de işaretli olduğunda mantıkta sorun var." Kutu durumu yalnız ekranda tutuluyordu:
+                        // beden kutusu varsayılan KAPALI → sekmeye dönünce girilen beden fiyatları kayboluyor
+                        // (kural duruyor ama kutu görünmüyor); renk kutusu varsayılan AÇIK ve BOŞ → "renk fiyatı
+                        // bedeni ezecek mi" belirsizdi. Artık:
+                        //   - kuralı olan kutu işaretli gelir (beden de renk de);
+                        //   - kuralı olmayan renk kutusu, üründe beden/renk+beden fiyatı varsa KAPALI gelir (o
+                        //     rengin hücreleri görünür, beden fiyatları hücrelerde yazar); hiç ölçü fiyatı yoksa
+                        //     eskisi gibi açık (en sık durum: bütün renkler tek fiyat).
+                        const olcuFiyatiVar = tumBedenler.some((b) => kuralBul("beden", b));
+                        const renkAcik = (r) => {
+                            if (fkTekFiyatRenkler[r] !== undefined)
+                                return !!fkTekFiyatRenkler[r];
+                            if (kuralBul("renk", r))
+                                return true;
+                            if (olcuFiyatiVar || tumBedenler.some((b) => kuralBul("renkBeden", `${r}|${b}`)))
+                                return false;
+                            return tekFiyatRenkAcikMi(r);
+                        };
+                        const bedenAcik = (b) => (fkTekFiyatBedenler[b] !== undefined ? !!fkTekFiyatBedenler[b] : !!kuralBul("beden", b));
                         function renkTekFiyatToggle(r) {
-                            setFkTekFiyatRenkler((prev) => ({ ...prev, [r]: !tekFiyatRenkAcikMi(r) }));
+                            setFkTekFiyatRenkler((prev) => ({ ...prev, [r]: !renkAcik(r) }));
                         }
                         function bedenTekFiyatToggle(b) {
-                            setFkTekFiyatBedenler((prev) => ({ ...prev, [b]: !prev[b] }));
+                            setFkTekFiyatBedenler((prev) => ({ ...prev, [b]: !bedenAcik(b) }));
                         }
+                        // HÜCREDE GEÇERLİ FİYAT: kutu kapalı/boş olsa da o renk×ölçü satışta hangi fiyatla
+                        // yazılacak — `fiyatBul` ile (fişin kullandığı fonksiyon), kaynağıyla birlikte.
+                        const gecerli = (r, b) => fiyatBul(product, r, b, "", fkTip, []);
+                        const gecerliYazi = (g) => (g.fiyat > 0 ? `${fiyatYazi(g.fiyat)} ${PARA_SEMBOLU[g.paraBirimi] || g.paraBirimi}` : "");
+                        // Kutu kapalı ama kural duruyor: kural hâlâ geçerli — gizli kalmasın.
+                        // Yanında × ile doğrudan silinebilir (v1.483.0) — listeye inmeden.
+                        const kapaliKuralNotu = (kural) => kural ? (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
+                            React.createElement("span", { className: "mono", "data-fk-kapali-kural": "1", title: "Kutu kapal\u0131 ama bu kural kay\u0131tl\u0131 ve ge\u00E7erli \u2014 \u00D7 ile silin", style: { fontSize: 10, color: "#B7791F" } },
+                                fiyatYazi(kural.fiyat),
+                                " ",
+                                PARA_SEMBOLU[kural.paraBirimi || kartPb(fkTip)] || "",
+                                " ge\u00E7erli"),
+                            React.createElement("button", { type: "button", "data-fk-kural-sil": kural.deger, title: "Bu fiyat\u0131 sil", onClick: () => fiyatKuraliSil(kural.id), style: { background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--erp-danger)", fontSize: 13, lineHeight: 1 } }, "\u00D7"))) : null;
                         return (React.createElement("div", { style: { overflowX: "auto", maxWidth: "100%" } },
                             React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
                                 React.createElement("thead", null,
@@ -26129,38 +26198,45 @@ function ProductMatrixCard({ kurlar, receteSablonlari, onReceteSablonuKaydet, ta
                                         React.createElement("th", { style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" } }, "Tek fiyat (bu rengin t\u00FCm\u00FC)"))),
                                 React.createElement("tbody", null,
                                     tumRenkler.map((r) => {
-                                        const renkKilitli = !!tekFiyatRenkAcikMi(r);
+                                        const renkKilitli = renkAcik(r);
                                         const renkKurali = kuralBul("renk", r);
                                         return (React.createElement("tr", { key: r, style: { borderTop: "1px solid var(--erp-line-soft)" } },
                                             React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } }, olcuGoster(r)),
                                             tumBedenler.map((b) => {
                                                 const deger = `${r}|${b}`;
                                                 const kural = kuralBul("renkBeden", deger);
-                                                return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } }, renkKilitli ? (React.createElement("span", { style: { fontSize: 11, color: "var(--erp-border)" } }, "\u2014")) : fiyatKutusu({ kural, veri: deger, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni) })));
+                                                return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } }, renkKilitli ? (() => {
+                                                    // Kilitli satırda "—" yerine GEÇERLİ fiyat (v1.482.0): renk fiyatı
+                                                    // boşsa beden fiyatı ya da genel fiyat — hangisi uygulanıyorsa.
+                                                    const g = gecerli(r, b);
+                                                    return React.createElement("span", { className: "mono", "data-fk-gecerli": deger, title: `Satışta uygulanan: ${g.kaynak}`, style: { fontSize: 11, color: "var(--erp-text-3)" } }, gecerliYazi(g) || "—");
+                                                })() : fiyatKutusu({ kural, veri: deger, ipucu: kural ? "" : gecerliYazi(gecerli(r, b)), kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni) })));
                                             }),
                                             React.createElement("td", { style: { padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed var(--erp-line)" } },
                                                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, justifyContent: "center" } },
                                                     React.createElement("input", { type: "checkbox", checked: renkKilitli, onChange: () => renkTekFiyatToggle(r), title: "Bu rengin t\u00FCm bedenlerine tek fiyat uygula" }),
-                                                    renkKilitli && fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni) })))));
+                                                    renkKilitli ? fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni) }) : kapaliKuralNotu(renkKurali)))));
                                     }),
                                     React.createElement("tr", { style: { borderTop: "2px solid var(--erp-line)" } },
                                         React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" } }, "Tek fiyat (bu \u00F6l\u00E7\u00FCn\u00FCn t\u00FCm\u00FC)"),
                                         tumBedenler.map((b) => {
-                                            const bedenKilitli = !!fkTekFiyatBedenler[b];
+                                            const bedenKilitli = bedenAcik(b);
                                             const bedenKurali = kuralBul("beden", b);
                                             return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
                                                 React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3 } },
                                                     React.createElement("input", { type: "checkbox", checked: bedenKilitli, onChange: () => bedenTekFiyatToggle(b), title: "Bu bedenin t\u00FCm renklerine tek fiyat uygula" }),
-                                                    bedenKilitli && fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni) }))));
+                                                    bedenKilitli ? fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, kaydet: (yeni) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni) }) : kapaliKuralNotu(bedenKurali))));
                                         }),
                                         React.createElement("td", { style: { borderLeft: "1px dashed var(--erp-line)" } })))),
                             React.createElement("p", { style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 } },
-                                "Fiyat\u0131 kutuya yaz\u0131p kutudan \u00E7\u0131k\u0131n \u2014 kaydedilir. Virg\u00FClle yazabilirsiniz (0,18). Birim: ",
+                                "Fiyat\u0131 kutuya yaz\u0131p kutudan \u00E7\u0131k\u0131n \u2014 kaydedilir; kutuyu bo\u015Falt\u0131p \u00E7\u0131karsan\u0131z fiyat silinir. Virg\u00FClle yazabilirsiniz (0,18). Birim: ",
                                 React.createElement("b", null,
                                     pbSembol,
                                     " ",
                                     fkParaBirimi),
-                                " (yukar\u0131dan de\u011Fi\u015Ftirin). Bir rengin tamam\u0131na tek fiyat i\u00E7in sa\u011Fdaki kutuyu i\u015Faretleyin; \u00F6l\u00E7\u00FCn\u00FCn tamam\u0131 i\u00E7in alttaki kutuyu (\u00F6ncelik: Renk+\u00D6l\u00E7\u00FC > Renk > \u00D6l\u00E7\u00FC > Genel).")));
+                                " (yukar\u0131dan de\u011Fi\u015Ftirin). Bir rengin tamam\u0131na tek fiyat i\u00E7in sa\u011Fdaki kutuyu i\u015Faretleyin; \u00F6l\u00E7\u00FCn\u00FCn tamam\u0131 i\u00E7in alttaki kutuyu. \u0130kisi birden doluysa ",
+                                React.createElement("b", null, "renk fiyat\u0131 o rengin b\u00FCt\u00FCn \u00F6l\u00E7\u00FClerinde ge\u00E7er"),
+                                "; \u00F6l\u00E7\u00FC fiyat\u0131 yaln\u0131z renk fiyat\u0131 girilmemi\u015F renklerde uygulan\u0131r (\u00F6ncelik: Renk+\u00D6l\u00E7\u00FC > Renk > \u00D6l\u00E7\u00FC > Genel). Gri yaz\u0131lar sat\u0131\u015Fta uygulanacak fiyatt\u0131r.")));
                     })()),
                 kurallarGorunen.length === 0 ? (React.createElement(EmptyState, { text: `Bu ürün için ${fkTip} tarafında özel fiyat tanımlanmadı — genel fiyat kullanılıyor.` })) : (React.createElement("div", { style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden", background: "#fff", marginBottom: 16 } }, kurallarGorunen.map((k, i, arr) => (React.createElement("div", { key: k.id, style: {
                         display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
@@ -34208,6 +34284,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     // Ürün arama kutusunun metni (seçili ürünün etiketiyle eşitleniyor).
     const [kUrunArama, setKUrunArama] = useState("");
     const [kFiyat, setKFiyat] = useState("");
+    // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her ölçü kendi kural fiyatını alır (`olcuKuralFiyati`);
+    // yazıldıysa kullanıcının fiyatı bütün ölçülere — onun kararı kurala üstün.
+    const [kFiyatElle, setKFiyatElle] = useState(false);
     // KALEM PARA BİRİMİ — fiyatın hemen yanında seçilir. Eskiden yalnızca üstteki kayıt para
     // biriminden geliyordu: dolar fiyatlı bir kalem eklemek için önce yukarı çıkıp fişin para
     // birimini değiştirmek, sonra geri inmek gerekiyordu. Fiyat ile para birimi tek bir bilgidir;
@@ -34283,7 +34362,24 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         if (cevrim.cevrilemedi)
             showToast && showToast(`${bulunan.paraBirimi} → ${kParaBirimi} kuru yok — fiyat çevrilmedi`);
         setKFiyat(cevrim.fiyat ? String(cevrim.fiyat) : "");
+        setKFiyatElle(false);
     }
+    const kuralFiyati = (renk, beden) => olcuKuralFiyati(seciliUrun, renk, beden, cari ? cari.id : "", tip, cariler, kParaBirimi, birlesikKurlar);
+    // FİYAT KUTUSU KURALDAN DOLAR (v1.484.0). Kullanıcı (Fermuar, boyut 20 cm, fiyat kutusu boş, miktarın
+    // altında kırmızı "20 ₺"): "Fiyat miktarın altında kırmızı yazıyor, otomatik çekmesi gerekmez mi?"
+    // v1.482'de yalnız renk seçilince renk kuralına bakılıyordu; ölçü fiyatı yalnız ipucuydu (kalem yine
+    // doğru fiyatla ekleniyordu ama kutu boş görünüyordu). Artık renk/ölçü/para birimi değişince —
+    // fiyat elle yazılmadıysa — görünen ölçülerin kural fiyatları TEK ise kutuya o yazılır; ölçüler
+    // farklı fiyattaysa kutu renk/genel fiyatında kalır, farklı olanlar miktar altında ipucu olarak durur.
+    const gorunenOlcuAnahtari = gosterilecekOlculer.join("|");
+    useEffect(() => {
+        if (!seciliUrun || !kRenk || kFiyatElle)
+            return;
+        const olcuFiyatlari = gosterilecekOlculer.map((b) => kuralFiyati(kRenk, b)).filter((k) => k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0).map((k) => k.fiyat);
+        const tekFiyat = olcuFiyatlari.length === gosterilecekOlculer.length && new Set(olcuFiyatlari).size === 1 ? olcuFiyatlari[0] : null;
+        const f = tekFiyat != null ? tekFiyat : kuralFiyati(kRenk, null).fiyat;
+        setKFiyat(f ? String(f) : "");
+    }, [kRenk, gorunenOlcuAnahtari, kParaBirimi]); // eslint-disable-line react-hooks/exhaustive-deps
     function stokMiktari(renk, beden) {
         if (!seciliUrun)
             return 0;
@@ -34295,6 +34391,13 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         if (!seciliUrun || !kRenk)
             return showToast("Ürün ve renk seçin");
         const fiyat = parseFloat(kFiyat) || 0;
+        // Ölçü başına fiyat: elle yazıldıysa o, yazılmadıysa ölçünün kuralı (yoksa kutudaki fiyat).
+        const olcuFiyati = (b) => {
+            if (kFiyatElle)
+                return fiyat;
+            const k = kuralFiyati(kRenk, b);
+            return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
+        };
         // GÖSTERİLEN ölçüler üzerinden: çip seçimi kaldırılmış bir ölçünün eski miktarı kalemlere
         // sızmasın (ekranda görünmeyen bir satır eklenmesi, fişi sessizce bozardı).
         const eklenecekler = gosterilecekOlculer
@@ -34310,13 +34413,13 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden);
             if (i >= 0) {
                 birlesen++;
-                sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + x.miktar), birimFiyat: fiyat, paraBirimi: kParaBirimi } : k));
+                sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + x.miktar), birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi } : k));
             }
             else {
                 yeni++;
                 sonraki = [...sonraki, {
                         id: uid("fkalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim || "",
-                        renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: fiyat,
+                        renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: olcuFiyati(x.beden),
                         // Satır kendi para birimini TAŞIR. Fişin ayarına bakıp sonradan çözmek, o ayar
                         // değişince eski satırların anlamının da değişmesi demekti.
                         paraBirimi: kParaBirimi,
@@ -34334,6 +34437,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         setKMiktarlar({});
         setKSeciliOlcu("");
         setKFiyat("");
+        setKFiyatElle(false);
         if (birlesen > 0 && yeni > 0)
             showToast(`${yeni} kalem eklendi, ${birlesen} kalem birleştirildi`);
         else if (birlesen > 0)
@@ -34608,9 +34712,18 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                     style: { width: 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
                                 React.createElement("span", { className: "mono", style: { fontSize: 9, color: "var(--erp-text-3)" } },
                                     "stok: ",
-                                    stokMiktari(kRenk, b)))))))),
+                                    stokMiktari(kRenk, b)),
+                                !kFiyatElle && (() => {
+                                    const k = kuralFiyati(kRenk, b);
+                                    if (!k.kaynak || k.kaynak === "Genel" || !(k.fiyat > 0) || String(k.fiyat) === String(kFiyat))
+                                        return null;
+                                    return React.createElement("span", { className: "mono", "data-olcu-fiyat": b || "tek", title: `Fiyatlandırma: ${k.kaynak}`, style: { fontSize: 9, fontWeight: 700, color: "var(--erp-accent)" } },
+                                        fiyatYazi(k.fiyat),
+                                        " ",
+                                        kPbSembol);
+                                })())))))),
                         React.createElement(Field, { label: `Birim Fiyat (${kPbSembol})${seciliUrun && seciliUrun.birim ? ` / ${seciliUrun.birim}` : ""}` },
-                            React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-fiyat": "1", value: kFiyat, onChange: (e) => setKFiyat(e.target.value), style: { ...inputStyle, width: 120, width: 110 } })),
+                            React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-fiyat": "1", value: kFiyat, onChange: (e) => { setKFiyat(e.target.value); setKFiyatElle(true); }, style: { ...inputStyle, width: 110 } })),
                         React.createElement(Field, { label: "P.B." },
                             React.createElement("select", { value: kParaBirimi, onChange: (e) => setKParaBirimi(e.target.value), style: { ...inputStyle, width: 92 } }, Object.keys(PARA_SEMBOLU).map((pb) => (React.createElement("option", { key: pb, value: pb },
                                 pb,
@@ -34906,7 +35019,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                         " ",
                                         g.birim),
                                     React.createElement("td", { style: { padding: "6px 8px", textAlign: "right" } },
-                                        alt.kalemler.length === 0 ? "—" : fiyatlarFarkli ? (React.createElement("span", { title: "Bu gruptaki bedenler farkl\u0131 birim fiyatta \u2014 h\u00FCcreleri ayr\u0131 ayr\u0131 d\u00FCzenleyin", style: { fontSize: 10, color: "var(--erp-warn)" } }, "farkl\u0131")) : (React.createElement("input", { key: `${alt.key}-${alt.kalemler[0].birimFiyat}`, type: "number", step: "any", min: "0", "data-fis-satir-fiyat": alt.key, defaultValue: alt.kalemler[0].birimFiyat, onBlur: (e) => {
+                                        alt.kalemler.length === 0 ? "—" : fiyatlarFarkli ? (React.createElement("span", { "data-fis-satir-fiyat-farkli": alt.key, title: "Bu gruptaki bedenler farkl\u0131 birim fiyatta \u2014 h\u00FCcreleri ayr\u0131 ayr\u0131 d\u00FCzenleyin", className: "mono", style: { fontSize: 10, color: "var(--erp-warn)", whiteSpace: "normal" } }, alt.kalemler.map((k) => `${olcuGoster(k.beden) || "—"}: ${fiyatYazi(k.birimFiyat)}`).join(" · "))) : (React.createElement("input", { key: `${alt.key}-${alt.kalemler[0].birimFiyat}`, type: "number", step: "any", min: "0", "data-fis-satir-fiyat": alt.key, defaultValue: alt.kalemler[0].birimFiyat, onBlur: (e) => {
                                                 const yeni = parseFloat(e.target.value);
                                                 if (!(yeni >= 0) || yeni === alt.kalemler[0].birimFiyat)
                                                     return;
@@ -41138,6 +41251,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     }, [hedefSiparisId]);
     const [kFiyat, setKFiyat] = useState("");
     const [kParaBirimi, setKParaBirimi] = useState("TRY");
+    // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her beden kendi kural fiyatını alır; yazıldıysa
+    // kullanıcının fiyatı bütün bedenlere. Eskiden kutudaki TEK fiyat bütün bedenlere yazılıyordu:
+    // Fiyatlandırma'da bedenlere ayrı fiyat girilmiş üründe beden fiyatları hiç çekilmiyordu.
+    const [kFiyatElle, setKFiyatElle] = useState(false);
     // DEPO'DAN GELEN ALIŞ TASLAĞI — Depo matrisindeki "Alış Fişi" butonu buraya düşer.
     // Yeni bir ekran tasarlanmadı: var olan alış formu, kalem girişi ÖN DOLGULU açılıyor.
     // Kalem otomatik EKLENMİYOR — miktar ve fiyat tedarikçiye göre değişir; kullanıcı görüp
@@ -41219,6 +41336,19 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             return l.length ? l : (renksizUrun && kRenk ? ["Standart"] : []);
         })()
         : [];
+    // FİYAT KUTUSU KURALDAN (v1.484.0, fiş formuyla aynı): renk/para birimi değişince — fiyat elle
+    // yazılmadıysa — bedenlerin kural fiyatı TEK ise kutuya o; farklıysa renk/genel fiyatı, farklı
+    // bedenler matrisin altında. Eskiden kutu ürün seçilirken bir kez doluyordu, beden fiyatı görünmüyordu.
+    const bedenAnahtari = bedenSecenekleri.join("|");
+    useEffect(() => {
+        if (!seciliUrun || !kRenk || kFiyatElle)
+            return;
+        const kf = (b) => olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+        const olcu = bedenSecenekleri.map(kf).filter((k) => k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0).map((k) => k.fiyat);
+        const tek = olcu.length && olcu.length === bedenSecenekleri.length && new Set(olcu).size === 1 ? olcu[0] : null;
+        const f = tek != null ? tek : kf(null).fiyat;
+        setKFiyat(f ? String(f) : "");
+    }, [seciliUrun, kRenk, bedenAnahtari, kParaBirimi, cariId, tip, cariler, kurlar]); // eslint-disable-line react-hooks/exhaustive-deps
     // Seçili mamul rengin reçetesi var mı? Yeni bir renk eklendiğinde reçete satırları otomatik
     // oluşmaz — o renk için eşleştirme yapılmadan sipariş girilirse hammadde ihtiyacı SIFIR çıkar ve
     // eksik sessizce fark edilmez. Bu yüzden sipariş ekranında, kalem eklenmeden ÖNCE uyarılır.
@@ -41290,8 +41420,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         setKMiktarlar({});
         const p = urunUygun.find((u) => u.id === urunId);
         if (p) {
-            const { fiyat } = fiyatBul(p, null, null, cariId, tip, cariler);
+            // Kuralın kendi para birimi (v1.481.0) kalemin birimine çevrilir — dolar kuralı TL diye yazılmasın.
+            const { fiyat } = olcuKuralFiyati(p, null, null, cariId, tip, cariler, kParaBirimi, kurlar);
             setKFiyat(String(fiyat || ""));
+            setKFiyatElle(false);
             // ALIŞ siparişinde: ürünün varsayılan tedarikçisi henüz cari seçilmemişse otomatik doldurulur.
             // Zaten bir cari seçiliyse DOKUNULMAZ — kullanıcının bilinçli seçimini ezmek, farklı bir
             // tedarikçiden alım yaparken sessizce yanlış cariye kayıt açardı.
@@ -41382,6 +41514,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         if (!seciliUrun || !kRenk)
             return showToast("Ürün ve renk seçin");
         const fiyat = parseFloat(kFiyat) || 0;
+        // Beden başına fiyat (v1.482.0): elle yazıldıysa o, yazılmadıysa bedenin kuralı (yoksa kutudaki).
+        const olcuFiyati = (b) => {
+            if (kFiyatElle)
+                return fiyat;
+            const k = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+            return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
+        };
         const notlar = notlariTekille([...kNotlar, ...(kNotTaslak ? [kNotTaslak] : [])]);
         const eklenecekler = bedenSecenekleri
             .map((b) => ({ beden: b, miktar: parseFloat(kMiktarlar[b]) || 0 }))
@@ -41405,7 +41544,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 sonrakiKalemler = sonrakiKalemler.map((k, i) => i === mevcutIndex
                     // Notlar EKLENİR (eskiler korunur): ikinci "Ekle" miktar artırmak içindir, önce yazılan
                     // notu sessizce silmesin.
-                    ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
+                    ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
                         ...(notlar.length ? { notlar: notlariTekille([...kalemNotlari(k), ...notlar]), aciklama: undefined } : {}) }
                     : k);
             }
@@ -41415,7 +41554,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     ...sonrakiKalemler,
                     {
                         id: uid("kalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim,
-                        renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi,
+                        renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi,
                         // Kutu tercihi kaleme yazılır. Boşsa alan hiç oluşmaz; "seçildi ama rengi yok" gibi
                         // yanıltıcı bir durum kalmasın.
                         // urunId tutulmaz: hangi ambalaj ürünü olduğu reçeteden gelir, burada yalnızca renk sapması saklanır.
@@ -41431,6 +41570,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         setKRenk("");
         setKMiktarlar({});
         setKFiyat("");
+        setKFiyatElle(false);
         setKNotlar([]);
         setKNotTaslak(null);
         setKNotAnahtar((x) => x + 1);
@@ -42196,7 +42336,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                         React.createElement("div", { style: { flex: "0.8 1 140px", minWidth: 0 } },
                             React.createElement(Field, { label: React.createElement("span", { title: "Bu kalemin b\u00FCt\u00FCn \u00F6l\u00E7\u00FCleri i\u00E7in" }, "Birim Fiyat") },
                                 React.createElement("div", { style: { display: "flex", gap: 4 } },
-                                    React.createElement("input", { type: "number", step: "0.01", min: "0", value: kFiyat, onChange: (e) => setKFiyat(e.target.value), "data-siparis-birim-fiyat": "1", placeholder: "0", style: { ...inputStyle, flex: "1 1 60px", minWidth: 50, fontSize: 13, padding: "8px 6px" } }),
+                                    React.createElement("input", { type: "number", step: "0.01", min: "0", value: kFiyat, onChange: (e) => { setKFiyat(e.target.value); setKFiyatElle(true); }, "data-siparis-birim-fiyat": "1", placeholder: "0", style: { ...inputStyle, flex: "1 1 60px", minWidth: 50, fontSize: 13, padding: "8px 6px" } }),
                                     React.createElement("select", { value: kParaBirimi, onChange: (e) => setKParaBirimi(e.target.value), style: { ...inputStyle, width: 62, flex: "0 0 auto", fontSize: 12, padding: "8px 4px" } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb)))))),
                         tip === "Satış" && kAmbalajRenkleri.length > 0 && (React.createElement("div", { style: { flex: "1 1 160px", minWidth: 0 } },
                             React.createElement(Field, { label: "Kutu rengi (bu kalem i\u00E7in)" },
@@ -42232,14 +42372,18 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                     React.createElement("tr", null, bedenSecenekleri.map((b) => (React.createElement("td", { key: b, style: { padding: "3px 8px", textAlign: "center" } },
                                         React.createElement("input", { type: "number", min: "0", value: kMiktarlar[b] || "", "data-olcu-miktar": b, onChange: (e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value }), style: { ...inputStyle, width: 56, textAlign: "center", padding: "5px" } }))))),
                                     React.createElement("tr", null, bedenSecenekleri.map((b) => {
-                                        const { fiyat: bedenFiyati, kaynak: bedenKaynak, paraBirimi: bedenPb } = fiyatBul(seciliUrun, kRenk, b, cariId, tip, cariler);
-                                        const bedenSembol = PARA_SEMBOLU[bedenPb] || bedenPb || "₺"; // kuralın kendi birimi (v1.481.0)
+                                        // v1.482.0: fiyat kalemin birimine ÇEVRİLMİŞ gösteriliyor ve elle fiyat
+                                        // yazılmadıysa kalem eklenirken bu beden BU fiyatı alır (ipucu değil, uygulanan).
+                                        const { fiyat: bedenFiyati, kaynak: bedenKaynak } = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+                                        const bedenPb = kParaBirimi;
+                                        const bedenSembol = PARA_SEMBOLU[bedenPb] || bedenPb || "₺";
                                         const girilenFiyat = parseFloat(kFiyat) || 0;
-                                        const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati !== girilenFiyat;
-                                        return (React.createElement("td", { key: b, style: { padding: "2px 8px", textAlign: "center" } }, fiyatFarkli && (React.createElement("button", { type: "button", title: `${bedenKaynak} kuralına göre bu beden için özel fiyat: ${bedenFiyati} ${bedenSembol}. Uygulamak için tıklayın.`, onClick: () => { setKFiyat(String(bedenFiyati)); if (bedenPb)
-                                                setKParaBirimi(bedenPb); }, className: "mono", style: { fontSize: 9, fontWeight: 700, color: "#8A6A2E", background: "none", border: "none", cursor: "pointer", padding: 0 } },
-                                            "\u00F6zel: ",
-                                            bedenFiyati,
+                                        const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati > 0 && bedenFiyati !== girilenFiyat;
+                                        return (React.createElement("td", { key: b, style: { padding: "2px 8px", textAlign: "center" } }, fiyatFarkli && (React.createElement("button", { type: "button", "data-olcu-fiyat": b, title: kFiyatElle
+                                                ? `${bedenKaynak} kuralına göre bu bedenin fiyatı ${bedenFiyati} ${bedenSembol}; elle fiyat yazıldığı için o kullanılacak. Kurala dönmek için tıklayın.`
+                                                : `${bedenKaynak} kuralı — bu beden ${bedenFiyati} ${bedenSembol} fiyatla eklenecek.`, onClick: () => { setKFiyat(""); setKFiyatElle(false); }, className: "mono", style: { fontSize: 9, fontWeight: 700, color: "#8A6A2E", background: "none", border: "none", cursor: "pointer", padding: 0 } },
+                                            kFiyatElle ? "özel: " : "",
+                                            fiyatYazi(bedenFiyati),
                                             bedenSembol))));
                                     })))))),
                     React.createElement(AsortiOlusturTeklifi, { degerler: kMiktarlar, bedenSecenekleri: bedenSecenekleri, asortiler: asortiler, onOlustur: onAsortiOlustur }))),
@@ -46665,7 +46809,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.481.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.484.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

@@ -11,17 +11,18 @@
 //   B. Satış fişi: miktar kutularının altında her bedenin kural fiyatı; kalemler beden beden 21/22/23
 //      ile ekleniyor; fiş satırında "farklı" yerine döküm.
 //   C. Fiyat elle yazılınca (30) hepsi 30 — kullanıcının fiyatı kurala üstün.
+//   E. (v1.484.0) Bedenlerin fiyatı aynıysa fiyat kutusu kendiliğinden dolar (ipucu yok).
 //   D. (v1.483.0) Fiyat kutusu boşaltılınca kural silinir; kapalı kutunun kuralı × ile silinir.
 const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
-function tohum() {
+function tohum(fiyatlar = [["40", 21], ["41", 22], ["42", 23]]) {
   const t = { ...TOHUM };
   const st = JSON.parse(TOHUM["stok:items"]);
   const bot = st.find((p) => p.id === "u2");
   bot.satisFiyati = 0;
-  bot.fiyatKurallari = [["40", 21], ["41", 22], ["42", 23]].map(([b, f]) => ({ id: `fk${b}`, tip: "Satış", kapsam: "beden", deger: b, fiyat: f, paraBirimi: "TRY", etiket: `Beden: ${b}` }));
+  bot.fiyatKurallari = fiyatlar.map(([b, f]) => ({ id: `fk${b}`, tip: "Satış", kapsam: "beden", deger: b, fiyat: f, paraBirimi: "TRY", etiket: `Beden: ${b}` }));
   t["stok:items"] = JSON.stringify(st);
   return t;
 }
@@ -83,8 +84,8 @@ async function fiyatlandirma(hatalar) {
   return durum;
 }
 
-async function satisFisi(hatalar, elleFiyat) {
-  const { tarayici, sayfa } = await uygulamaAc(tohum(), { hataYaz: false });
+async function satisFisi(hatalar, elleFiyat, fiyatlar) {
+  const { tarayici, sayfa } = await uygulamaAc(tohum(fiyatlar), { hataYaz: false });
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
   await modulAc(sayfa, "Cari");
@@ -103,6 +104,8 @@ async function satisFisi(hatalar, elleFiyat) {
   });
   await sayfa.locator("[data-urun-arama]").first().fill(etiket);
   await sayfa.waitForTimeout(600);
+  // E (v1.484.0): bedenlerin fiyatı aynıysa kutu kendiliğinden dolar; farklıysa boş (genel 0) kalır.
+  const kutu = await sayfa.evaluate(() => { const i = document.querySelector("[data-kalem-fiyat]"); return i ? i.value : null; });
   const ipuclari = await sayfa.evaluate(() => Object.fromEntries([...document.querySelectorAll("[data-olcu-fiyat]")].filter((x) => x.offsetParent).map((x) => [x.getAttribute("data-olcu-fiyat"), `${x.textContent} (${x.title})`])));
   for (const b of ["40", "41", "42"]) {
     const k = sayfa.locator(`[data-kalem-miktar="${b}"]:visible`).first();
@@ -118,7 +121,7 @@ async function satisFisi(hatalar, elleFiyat) {
     return i ? `tek: ${i.value}` : "satır yok";
   });
   await tarayici.close();
-  return { ipuclari, satir };
+  return { kutu, ipuclari, satir };
 }
 
 async function calistir() {
@@ -126,7 +129,8 @@ async function calistir() {
   const fiyatlandirmaEkrani = await fiyatlandirma(hatalar);
   const kuraldan = await satisFisi(hatalar, null);
   const elle = await satisFisi(hatalar, "30");
-  return { hatalar, fiyatlandirmaEkrani, kuraldan, elle };
+  const ayniFiyat = await satisFisi(hatalar, null, [["40", 25], ["41", 25], ["42", 25]]);
+  return { hatalar, fiyatlandirmaEkrani, kuraldan, elle, ayniFiyat };
 }
 
 if (require.main === module) {

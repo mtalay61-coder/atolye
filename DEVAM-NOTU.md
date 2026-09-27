@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.483.0** · 27 Eylül 2026
+Son sürüm: **v1.484.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.483.0): Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.484.0): fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6186,6 +6186,12 @@ hatırlıyor." `fiyatKutusu` onBlur boş değeri "değişiklik yok" sayıyordu �
 yeniden çizilince geri geliyordu. Artık kuralı olan kutu boş ya da 0 bırakılınca `fiyatKuraliSil`
 (geçmişe "silindi" yazar). Kapalı kutunun "X ₺ geçerli" notunun yanında × ile silme
 (`data-fk-kural-sil`). Senaryo `olcu-fiyat` D bölümü.
+
+**v1.484.0 — fiyat kutusu kuraldan dolar.** Kullanıcı (Fermuar Metal Diş, Boyut 20 cm seçili, fiyat
+kutusu boş, miktar altında kırmızı "20 ₺"): "Fiyat miktarın altında kırmızı yazıyor, otomatik çekmesi
+gerekmez mi?" Kalem zaten 20 ile ekleniyordu ama kutu boştu. Fiş (255) ve sipariş (325): renk/görünen
+ölçüler/para birimi (siparişte cari/tip de) değişince, fiyat elle yazılmadıysa görünen ölçülerin kural
+fiyatı TEK ise kutuya o; farklıysa renk/genel fiyatı ve miktar altında ipucu. Senaryo E bölümü.
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine

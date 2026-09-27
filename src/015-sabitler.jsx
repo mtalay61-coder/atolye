@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.483.0";
+const SURUM = "1.484.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fiyatlandirmada kutuyu bosaltmak fiyati siliyor";
+const SURUM_NOTU = "Fis ve sipariste fiyat kutusu beden fiyatindan kendiliginden doluyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fiyatlandirmada kutuyu bosaltmak fiyati siliyor";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.484.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: ["Fiş ve sipariş formunda fiyat kutusu renk/ölçü seçilince fiyatlandırmadan kendiliğinden doluyor: seçili ölçülerin fiyatı tek ise o yazılıyor; farklıysa miktar altında ölçü ölçü görünüyor"],
+    duzeltilen: ["Tek boyut seçilince fiyat kutusu boş kalıyor, fiyat yalnız miktarın altında kırmızı ipucu olarak görünüyordu"] },
   { surum: "1.483.0", tarih: "27.09.2026",
     eklenen: ["Fiyatlandırmada kutusu kapalı ama kayıtlı fiyatın yanında × ile silme"],
     degisen: [],

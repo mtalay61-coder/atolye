@@ -210,6 +210,19 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
       })()
     : [];
 
+  // FİYAT KUTUSU KURALDAN (v1.484.0, fiş formuyla aynı): renk/para birimi değişince — fiyat elle
+  // yazılmadıysa — bedenlerin kural fiyatı TEK ise kutuya o; farklıysa renk/genel fiyatı, farklı
+  // bedenler matrisin altında. Eskiden kutu ürün seçilirken bir kez doluyordu, beden fiyatı görünmüyordu.
+  const bedenAnahtari = bedenSecenekleri.join("|");
+  useEffect(() => {
+    if (!seciliUrun || !kRenk || kFiyatElle) return;
+    const kf = (b) => olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+    const olcu = bedenSecenekleri.map(kf).filter((k) => k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0).map((k) => k.fiyat);
+    const tek = olcu.length && olcu.length === bedenSecenekleri.length && new Set(olcu).size === 1 ? olcu[0] : null;
+    const f = tek != null ? tek : kf(null).fiyat;
+    setKFiyat(f ? String(f) : "");
+  }, [seciliUrun, kRenk, bedenAnahtari, kParaBirimi, cariId, tip, cariler, kurlar]);   // eslint-disable-line react-hooks/exhaustive-deps
+
   // Seçili mamul rengin reçetesi var mı? Yeni bir renk eklendiğinde reçete satırları otomatik
   // oluşmaz — o renk için eşleştirme yapılmadan sipariş girilirse hammadde ihtiyacı SIFIR çıkar ve
   // eksik sessizce fark edilmez. Bu yüzden sipariş ekranında, kalem eklenmeden ÖNCE uyarılır.
