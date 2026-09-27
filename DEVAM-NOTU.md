@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.496.0** · 27 Eylül 2026
+Son sürüm: **v1.497.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.496.0): fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.497.0): vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6395,6 +6395,25 @@ yok bunun." Durum: True Bilişim My Muhasebe ERP kullanıyor, faturayı **QNB eF
 - **AÇIK (bulgu, düzeltilmedi):** kâr/zarar raporunda stok hareketlerinde `birimFiyat` olmadığından gelir
   testler dışında 0 görünebiliyor — ayrı iş.
 - Test: `birim-kdv`, `senaryo-kdv-fis`.
+
+**v1.497.0 — vergi no kontrolü.** Kullanıcı: "Cari açarken vergi no girip cari bilgilerinin otomatik çekilmesini
+sağlayabiliriz. GİB vs. sitelerden çekebiliriz." Cevap: GİB sorgu ekranları captcha/giriş istiyor, açık servis
+yok; sayfa kazımak koşullara aykırı ve kırılgan. Doğru yol eFinans'ın mükellef sorgusu (unvan, e-fatura
+mükellefi mi, posta kutusu etiketi; adres/vergi dairesi dönüyor mu eFinans'a sorulacak) — Aşama 3'te, dış
+servis istisnası onayıyla. Şimdilik (kullanıcı: "1 ve 2'yi yap"), dışarıya bir şey göndermeden:
+- **077-vergino.jsx:** `vknGecerliMi` (GİB algoritması), `tcknGecerliMi`, `vergiNoKontrol` (Vergi No alanı: 10
+  hane VKN, 11 hane TCKN; boşluk/nokta/tire yok sayılır), `tcknKontrol`, `ayniVergiNoluCariler` (vergiNo ya da
+  tckn alanında; düzenlenen cari hariç, pasif dahil), `vergiNoUyarilari`, `vergiNoKaydedilecek` (geçerliyse
+  yalın rakam).
+- **Engellemez, sorar** (`window.confirm`): yurt dışı cari, aynı firmanın hem müşteri hem tedarikçi kaydı olabilir.
+- Cari Ekle formu (260): `data-yeni-cari-vergi-no` + `VergiNoUyarisi` (yazarken 1–9 hanede sessiz; kırmızı
+  hatalı `data-vergi-no-hatali`, turuncu `data-vergi-no-mukerrer`, yeşil `data-vergi-no-gecerli`).
+- Cari kartı (265): `data-cari-vergi-no` onBlur'da sorar, vazgeçilirse kutu eski değere döner; TCKN alanı
+  hatalıysa kaydedilir ama `data-cari-tckn-hatali` kırmızı yazar.
+- Tanımlar > Firma: firmanın kendi vergi no'su da kontrol (eski kayıtta dairesiyle tek kutuya yazılmışsa
+  "yalnız rakam" uyarısı ayırmayı hatırlatır).
+- Sıradaki (onay bekliyor): True'dan cari listesi aktarımı (vergi no / daire / adres eşleştirme).
+- Test: `birim-vergino`, `senaryo-vergi-no`.
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

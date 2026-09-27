@@ -656,11 +656,28 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               Vergi No
-              <input
-                defaultValue={cari.vergiNo}
-                onBlur={(e) => onFieldChange(cari.id, "vergiNo", e.target.value)}
-                style={{ ...inputStyle, width: 110, padding: "4px 6px", fontWeight: 400 }}
-              />
+              <span style={{ display: "inline-flex", flexDirection: "column" }}>
+                {/* Cari açma formundaki kontrolün aynısı (077-vergino): hatalı ya da başka caride kayıtlı numara
+                    sorulur; vazgeçilirse kutu eski değere döner. Uyarı kayıtlı değere göre altta kalır. */}
+                <input
+                  defaultValue={cari.vergiNo}
+                  inputMode="numeric"
+                  data-cari-vergi-no="1"
+                  onBlur={(e) => {
+                    const yeni = vergiNoKaydedilecek(e.target.value);
+                    if (vergiNoNormal(yeni) === vergiNoNormal(cari.vergiNo)) return;
+                    const uyarilar = vergiNoUyarilari(tumCariler, yeni, cari.id);
+                    if (uyarilar.length && !window.confirm(`${uyarilar.join("\n")}\n\nYine de kaydedilsin mi?`)) {
+                      e.target.value = cari.vergiNo || "";
+                      return;
+                    }
+                    e.target.value = yeni;
+                    onFieldChange(cari.id, "vergiNo", yeni);
+                  }}
+                  style={{ ...inputStyle, width: 110, padding: "4px 6px", fontWeight: 400 }}
+                />
+                <VergiNoUyarisi cariler={tumCariler} no={cari.vergiNo} haricId={cari.id} />
+              </span>
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               Adres
@@ -688,6 +705,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   onBlur={(e) => onFieldChange(cari.id, alan, e.target.value.trim())}
                   style={{ ...inputStyle, width: gen, padding: "4px 6px", fontWeight: 400 }}
                 />
+                {/* TCKN yanlışsa kaydedilir ama kırmızı yazar — e-fatura bu numarayla reddedilir. */}
+                {alan === "tckn" && cari.tckn && !tcknKontrol(cari.tckn).gecerli && (
+                  <span data-cari-tckn-hatali="1" style={{ color: "var(--erp-danger)", fontSize: 11 }}>{tcknKontrol(cari.tckn).mesaj}</span>
+                )}
               </label>
             ))}
             {/* Fotoğraf yalnızca PERSONEL için sorulur — atölye ekranında kişinin kendini tanıması

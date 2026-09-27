@@ -1,0 +1,36 @@
+{
+ "form": {
+  "bozuk": "Vergi no hatalı (kontrol basamağı tutmuyor)",
+  "hane": "Vergi no 10, TC kimlik no 11 hane olmalı (12 hane girildi)",
+  "mukerrer": "✓ Vergi no geçerli Bu numarayla kayıtlı: Tedarikçi A (Tedarikçi)",
+  "tckn": "✓ TC kimlik no geçerli",
+  "yazarken": ""
+ },
+ "hatalar": [],
+ "kart": {
+  "bozukTckn": {
+   "kayit": "10000000147",
+   "uyari": "TC kimlik no hatalı"
+  },
+  "bozukVazgec": {
+   "kayit": "",
+   "kutu": ""
+  },
+  "gecerli": {
+   "kayit": "1234567890",
+   "uyari": "✓ Vergi no geçerli",
+   "yeniSoru": 0
+  }
+ },
+ "kayit": {
+  "onaylayinca": 4,
+  "once": 3,
+  "vazgecince": 3,
+  "vergiNo": "3230512384"
+ },
+ "sorular": [
+  "Bu numarayla kayıtlı cari var: Tedarikçi A (Tedarikçi) Yine de kaydedilsin mi?",
+  "Bu numarayla kayıtlı cari var: Tedarikçi A (Tedarikçi) Yine de kaydedilsin mi?",
+  "Vergi no hatalı (kontrol basamağı tutmuyor) Yine de kaydedilsin mi?"
+ ]
+}
