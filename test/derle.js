@@ -36,7 +36,7 @@ let kaynak = fs.readFileSync(girdi, "utf8");
 // lucide-react ve xlsx testte hiç çizilmiyor; her ikon adı için boş bir bileşen yeterli.
 kaynak = kaynak.replace(/^import React[\s\S]*?from "react";/m,
   'const React = require("react");\n' +
-  'const { useState, useEffect, useCallback, useRef } = React;');
+  'const { useState, useEffect, useLayoutEffect, useCallback, useRef } = React;');
 // XLSX sahte: dosya yazmıyor, ama `raporExcelAktar` çağrılabilsin (çıktı `window.__sonRaporExcel`e düşüyor).
 kaynak = kaynak.replace(/^import \* as XLSX from "xlsx";/m, "const XLSX = { utils: { book_new: () => ({}), aoa_to_sheet: (a) => a, json_to_sheet: (a) => a, book_append_sheet: () => {} }, writeFile: () => {} };");
 kaynak = kaynak.replace(/^import \{[\s\S]*?\} from "lucide-react";/m, (blok) => {

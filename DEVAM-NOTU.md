@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.490.0** · 27 Eylül 2026
+Son sürüm: **v1.491.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.490.0): fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.491.0): siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6248,6 +6248,29 @@ kullanıyor (ekrandaki tutar = eklenen kalemler). Sığsın diye: beden kutusu 4
 64, P.B. 60, asorti 100, Ekle padding 10. Sol alan temeli 960 px: 1100 px ve üstünde tek satır (koli
 sütunu gerekirse alta iner), 750'de iki satır (grup 676/686 px). Ölçü seçmeli üründe de grup artık
 ikinci satırda (tutar eklendi).
+
+**v1.491.0.** Kullanıcı: "Siparişte de aynı düzeni yapalım. İlave olarak ekranı yenileyince eski tema
+geliyor gibi, alt tarafta titreme oluyor, onu da kontrol edelim."
+- **Sipariş (325):** `kalemGrubu` (gövde değişkeni; `kg*` adları) = asorti `dar` → beden kutuları
+  (başlık, stok, beden fiyatı ipucu) → Top. (`data-siparis-kalem-toplam`) → Birim Fiyat + P.B. →
+  Tutar (`data-siparis-kalem-tutar`) → Ekle. Dış esnek satırda ürün/renk ve resimden SONRA — geniş
+  ekranda tek satır, sığmazsa bütün olarak alta (resimle paylaşılan iç satırda 5 bedende ~100 px
+  eksik kalıyordu). Fiyat üst satırdan kalktı. Notlar + "asorti olarak kaydet" grubun altında.
+  `olcuBirimFiyati` gövdeye çıkarıldı (kalemEkle ve tutar aynı hesap). Ölçüm: 750 px 5 beden grup
+  666/684; 1400 px hepsi tek satır. `senaryo-siparis-form-duzen` yeni düzeni ölçüyor (grupTekSatirda,
+  siraSoldanSaga, notlarSatirinAltinda, toplam) — v1.470 ölçümleri (fiyat ürünle aynı satırda,
+  asorti+açıklama+Ekle matrisin üstünde) bilerek kaldırıldı.
+- **Eski tema:** paketle.js başlığı (React tema CSS'i basmadan önce görünen tek şey) hâlâ bej zemin
+  #F2E8D8, kahve yazı, kahve `theme-color` #4B3625, turuncu düğme taşıyordu → ERP_TEMA değerleri
+  (#F5F6F8 / #1D2129 / #FFFFFF / #C4321A, DM Sans). index.html başlatıcı ve manifest.json
+  `theme_color` da aynı. **Tema değişirse bu üç yer de elle güncellenmeli** (gömülü değil).
+- **Titreme (ölçüldü, layout-shift gözlemcisiyle, 752 px dokunmatik öykünme):** `otoMobil` `false`
+  başlayıp efektte düzeliyordu → telefonda ilk kare MASAÜSTÜ (ana alan 48→104→48, CLS 0,13; alt
+  sekme çubuğu `body.mobil-duzen` sınıfı efektte geldiği için sonradan). Düzeltme: başlangıç değeri
+  `matchMedia` ile, gövde sınıfı `useLayoutEffect` (000-cekirdek ve test/derle.js import'una eklendi).
+  Ayrıca üst menü `Grup` render içinde tanımlı bileşendi, `<Grup>` her çizimde yeni tür → 4 grup her
+  veri yüklemesinde sökülüp kuruluyordu; işlev çağrısına çevrildi. Kalan küçük kaymalar test ortamına
+  özgü (bulut şeridi).
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine

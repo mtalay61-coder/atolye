@@ -2810,11 +2810,19 @@ export default function AtolyeERP() {
     setMobilDuzenKipi(kip);
     try { window.localStorage.setItem("mobil:duzen", kip); } catch (e) { /* özel sekme */ }
   }, []);
-  const [otoMobil, setOtoMobil] = useState(false);
+  // İLK KAREDE DOĞRU KİP (v1.491.0). Kullanıcı: "Ekranı yenileyince eski tema geliyor gibi, alt
+  // tarafta titreme oluyor." `false` ile başlayıp efektte düzeltiliyordu: telefonda ilk kare
+  // MASAÜSTÜ düzenle çiziliyor (üstte pencere şeridi, alt sekme çubuğu yok), bir sonraki karede
+  // mobile geçiyordu — ana alan 56 px inip çıkıyor, alt çubuk sonradan beliriyordu (ölçüldü:
+  // layout-shift 0,13). Sorgu artık başlangıç değerinde de çalışıyor.
+  const OTO_MOBIL_SORGUSU = "(max-width: 720px), (pointer: coarse) and (max-width: 1180px)";
+  const [otoMobil, setOtoMobil] = useState(() => {
+    try { return window.matchMedia(OTO_MOBIL_SORGUSU).matches; } catch (e) { return false; }
+  });
   useEffect(() => {
     // Dokunmatik geniş telefon/tablet de mobil sayılıyor: parmakla kullanılan bir ekranda sol menü
     // ve yoğun tablolar 900px'te de zor.
-    const sorgu = window.matchMedia("(max-width: 720px), (pointer: coarse) and (max-width: 1180px)");
+    const sorgu = window.matchMedia(OTO_MOBIL_SORGUSU);
     const uygula = () => setOtoMobil(sorgu.matches);
     uygula();
     if (sorgu.addEventListener) sorgu.addEventListener("change", uygula);
@@ -2825,7 +2833,9 @@ export default function AtolyeERP() {
     };
   }, []);
   const mobilDuzen = mobilDuzenKipi === "acik" ? true : mobilDuzenKipi === "kapali" ? false : otoMobil;
-  useEffect(() => {
+  // useLayoutEffect: gövde sınıfı (alt sekme çubuğunu CSS ile açan `mobil-duzen`) ekran ÇİZİLMEDEN
+  // uygulanır; useEffect'te çizimden sonra geliyordu ve alt çubuk bir kare geç beliriyordu.
+  useLayoutEffect(() => {
     const g = document.body;
     g.classList.toggle("mobil-duzen", mobilDuzen);
     g.classList.toggle("masaustu-duzen", !mobilDuzen);
@@ -3297,9 +3307,14 @@ export default function AtolyeERP() {
                           <span className="ust-menu-grup-ikon" style={{ display: "flex" }}>{g.ikon}</span><span className="ust-menu-etiket">{g.ad}</span>
                         </button>
                       ) : (
-                        <Grup key={g.ad} ad={g.ad} ikon={g.ikon} sekmeler={g.ogeler.map((o) => o[0])}>
-                          {g.ogeler.map(([anahtar, label, icon]) => <React.Fragment key={anahtar}>{oge(anahtar, label, icon)}</React.Fragment>)}
-                        </Grup>
+                        // İŞLEV ÇAĞRISI, <Grup> DEĞİL (v1.491.0): `Grup` render içinde tanımlı; JSX etiketi
+                        // olarak kullanılınca her çizimde YENİ bir bileşen türü sayılıyor ve React bütün
+                        // grubu söküp yeniden kuruyordu (ölçüldü: her veri yüklemesinde 4 grup silinip
+                        // eklendi). Düz çağrıda yalnız DOM öğeleri kalır, yerinde güncellenir.
+                        <React.Fragment key={g.ad}>
+                          {Grup({ ad: g.ad, ikon: g.ikon, sekmeler: g.ogeler.map((o) => o[0]),
+                            children: g.ogeler.map(([anahtar, label, icon]) => <React.Fragment key={anahtar}>{oge(anahtar, label, icon)}</React.Fragment>) })}
+                        </React.Fragment>
                       )))}
                     </div>
                     {/* ☰ MENÜ — en dar kademe (sik-4): en sıkışık hâl bile sığmayınca (telefon masaüstü

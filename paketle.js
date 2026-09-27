@@ -93,7 +93,12 @@ const html = `<!doctype html>
      start_url "./" : kısayol SÜRÜMLÜ dosyayı değil KÖK adresi açsın — başlatıcı her zaman
      yayındaki son sürüme gider, kısayol eskimez. -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4B3625">
+<!-- TEMA RENGİ YENİ TEMAYLA AYNI (v1.491.0). Kullanıcı: "Ekranı yenileyince eski tema geliyor gibi."
+     Bu başlık, React tema CSS'ini (erpTokenCss) basana kadar görünen tek şey: eski bej zemin (#F2E8D8),
+     kahve yazı ve kahve tarayıcı çubuğu burada sabit kalmıştı — her açılışta bir an eski tema
+     görünüyordu. Değerler ERP_TEMA'dan (015-sabitler): zemin --erp-page, yazı --erp-text, üst çubuk
+     --erp-topbar, ana düğme --erp-accent. -->
+<meta name="theme-color" content="#FFFFFF">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -105,19 +110,19 @@ const html = `<!doctype html>
 <link rel="apple-touch-icon" sizes="180x180" href="ikon-apple-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #F2E8D8; }
-  body { font-family: Inter, system-ui, sans-serif; color: #4B3625; }
+  html, body { margin: 0; padding: 0; background: #F5F6F8; }
+  body { font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: #1D2129; }
   .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
   .btn-primary {
-    display: inline-flex; align-items: center; gap: 6px; background: #E1611F; color: #fff;
+    display: inline-flex; align-items: center; gap: 6px; background: #C4321A; color: #fff;
     border: 0; border-radius: 6px; padding: 8px 14px; font-size: 14px; font-weight: 600;
     cursor: pointer; font-family: inherit;
   }
-  .btn-primary:hover { background: #C9531A; }
-  #yukleniyor { padding: 40px; text-align: center; color: #9B8B72; font-size: 14px; }
+  .btn-primary:hover { background: #A92A15; }
+  #yukleniyor { padding: 40px; text-align: center; color: #8A919E; font-size: 14px; }
 </style>
 <script type="importmap">
 {

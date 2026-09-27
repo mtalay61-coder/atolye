@@ -12,12 +12,13 @@
   }
  },
  "duzen": {
-  "asortiAciklamaEkleAyniSatirda": true,
   "ekleAdi": "Ekle",
-  "ekleMatrisinUstunde": true,
   "ekleYesil": "rgb(47, 143, 70)",
-  "fiyatUrunleAyniSatirda": true,
-  "kalemlereEkleYazisiYok": true
+  "grupTekSatirda": true,
+  "kalemlereEkleYazisiYok": true,
+  "notlarSatirinAltinda": true,
+  "siraSoldanSaga": true,
+  "toplam": "3"
  },
  "eklemeSonrasi": [
   "Siyah: (boş)",
