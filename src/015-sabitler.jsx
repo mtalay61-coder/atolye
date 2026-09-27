@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.488.0";
+const SURUM = "1.489.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fis formunda Ekle dugmesi ayni satirda (bedenli urunde altta)";
+const SURUM_NOTU = "Fis formunda miktar yaninda toplam, fiyat ve Ekle; asorti altta";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fis formunda Ekle dugmesi ayni satirda (bedenli urunde altta
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.489.0", tarih: "27.09.2026",
+    eklenen: ["Fiş formunda beden kutularının yanında toplam miktar"],
+    degisen: ["Fiş formunda miktar kutuları, toplam, birim fiyat ve Ekle tek grup: ürün/renk yanına sığmazsa hep birlikte alt satıra iniyor, asorti bir altında"],
+    duzeltilen: [] },
   { surum: "1.488.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: ["Fiş formunda Ekle düğmesi ürün/renk/ölçü/fiyat ile aynı satırda; bedenli üründe (birden çok miktar kutusu) alt satırda"],
