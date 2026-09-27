@@ -1794,6 +1794,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                             </span>
                           </td>
                           <td className="mono" style={{ padding: "6px 8px", fontSize: 12, whiteSpace: "nowrap" }}>
+                            {/* NOTLAR RENGİN YANINDA (v1.503.0 — kullanıcı: "sipariş notu renk ile alt alta olmasın, yanında
+                                olsun"). Solda renk (+ kutu rozeti), sağda notlar. Sarmaz: dar ekranda tablo yatay kayar (kapsayıcı overflowX). */}
+                            <div data-form-kalem-renk-notlar="1" style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "nowrap" }}>
+                            <span style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
                             {g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (
                               <select
                                 value={g.renk || ""}
@@ -1825,12 +1829,14 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 </span>
                               );
                             })()}
+                            </span>
                             {/* RENK BAZLI NOTLAR SATIRDA (v1.470.0 → v1.476.0 proses bazlı): bu ürün+rengin bütün
                                 ölçülerine yazılır. Kilitli (planlanmış) satırda da düzenlenir — üretim notu
                                 siparişten canlı okuyor (`grupNotDegistir`). */}
-                            <div data-form-kalem-notlari="1" style={{ marginTop: 3, minWidth: 200, whiteSpace: "normal" }}>
+                            <div data-form-kalem-notlari="1" style={{ flex: 1, minWidth: 200, whiteSpace: "normal" }}>
                               <KalemNotDuzenleyici notlar={grupNotlari(g.kalemler)} prosesler={notProsesleri(urun, g.renk)}
                                 onDegis={(yeni) => grupNotDegistir(idler, yeni)} kucuk />
+                            </div>
                             </div>
                           </td>
                           {tumBedenler.map((b) => {
