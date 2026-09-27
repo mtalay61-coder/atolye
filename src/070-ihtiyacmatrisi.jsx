@@ -76,7 +76,11 @@ function bedenSirala(liste) {
 
 // hucreCiz / satirSonu: sipariş kartı hücrede eksik durumunu, sağda stok özetini gösteriyor.
 // Verilmezse sade sayı çizilir — üretim kartının ihtiyacı bu kadar.
-function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik, satirSonuCiz }) {
+// `stok` (v1.495.0, isteğe bağlı): malzemenin renk başlığı (Kalınlık, Baskı…) için. Verilmezse "Renk".
+function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik, satirSonuCiz, stok }) {
+  // RENK BAŞLIĞI (v1.495.0 — kullanıcı: "üretim ve planlamada da başlık görünsün"). Fiş listesindeki
+  // kural: satırların başlığı ortaksa sütunda o; karışıksa sütunda hepsi, başlık değiştiği yerde ara satır.
+  const malzemeBasligi = (r) => renkBasligi((stok || []).find((p) => p.ad === r.ad));
   if (!kalemler || kalemler.length === 0) return null;
 
   // Prosese göre grupla — atölyede sorulan soru "toplam ne tüketilecek" değil, "kesime ne çıkacak".
@@ -128,7 +132,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                   <thead>
                     <tr style={{ background: "var(--erp-panel)" }}>
                       <th style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 10px" }}>MALZEME</th>
-                      <th style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 8px" }}>RENK</th>
+                      <th data-ihtiyac-renk-sutunu="1" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 8px" }}>{(ortakRenkBasligi(matris.map((r) => (stok || []).find((p) => p.ad === r.ad) || {})) || Array.from(new Set(matris.map(malzemeBasligi))).join(" / ")).toLocaleUpperCase("tr-TR")}</th>
                       {bedenler.map((b) => <th key={b} className="mono" style={baslikStil}>{b}</th>)}
                       <th className="mono" style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid var(--erp-line-soft)" }}>TOPLAM</th>
                       {satirSonuBaslik && <th style={{ ...baslikStil, textAlign: "right" }}>{satirSonuBaslik}</th>}
@@ -136,9 +140,17 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                   </thead>
                   <tbody>
                     {matris.map((r, ri) => (
-                      <tr key={ri} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                      <React.Fragment key={ri}>
+                      {!ortakRenkBasligi(matris.map((x) => (stok || []).find((p) => p.ad === x.ad) || {})) && (ri === 0 || malzemeBasligi(matris[ri - 1]) !== malzemeBasligi(r)) && (
+                        <tr data-ihtiyac-renk-ara-baslik={malzemeBasligi(r)}>
+                          <td colSpan={bedenler.length + 3 + (satirSonuBaslik ? 1 : 0)} style={{ padding: "5px 10px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
+                            {malzemeBasligi(r).toLocaleUpperCase("tr-TR")}
+                          </td>
+                        </tr>
+                      )}
+                      <tr style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                         <td style={{ fontSize: 13, fontWeight: 600, padding: "5px 10px" }}>{r.ad}</td>
-                        <td className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)", padding: "5px 8px" }}>{r.renk}</td>
+                        <td className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)", padding: "5px 8px" }}>{olcuGoster(r.renk)}</td>
                         {bedenler.map((b) => (
                           <td key={b} className="mono" style={{
                             ...hucreStil,
@@ -164,6 +176,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                           <td className="mono" style={{ ...hucreStil, textAlign: "right" }}>{satirSonuCiz(r)}</td>
                         )}
                       </tr>
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -179,7 +192,8 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                       <tr key={ri} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                         <td style={{ fontSize: 13, fontWeight: 600, padding: "5px 10px" }}>{r.ad}</td>
                         <td className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)", padding: "5px 8px" }}>
-                          {r.renk}{tekBeden && tekBeden !== "Standart" ? ` · ${tekBeden}` : ""}
+                          {malzemeBasligi(r) !== "Renk" && olcuGoster(r.renk) ? <span style={{ color: "var(--erp-text-3)" }}>{malzemeBasligi(r)}: </span> : null}
+                          {olcuGoster(r.renk)}{tekBeden && tekBeden !== "Standart" ? ` · ${tekBeden}` : ""}
                         </td>
                         <td className="mono" style={{ fontSize: 14, fontWeight: 700, textAlign: "right", padding: "5px 10px", color: "var(--erp-text)", whiteSpace: "nowrap" }}>
                           {/* HESABI GÖSTER: "88 Desi" tek başına doğrulanamaz; "8 × 11 = 88 Desi"

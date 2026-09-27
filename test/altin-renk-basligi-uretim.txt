@@ -1,0 +1,22 @@
+{
+ "hatalar": [],
+ "ihtiyacAraBasliklar": [
+  "RENK",
+  "KALINLIK"
+ ],
+ "ihtiyacSutunu": [
+  "RENK / KALINLIK"
+ ],
+ "kartOzeti": [
+  "Baskı"
+ ],
+ "planlamaBasligi": [
+  "Baskı",
+  "Baskı"
+ ],
+ "tekilSatirlar": [
+  "Taba",
+  "2 mm",
+  "Siyah"
+ ]
+}
