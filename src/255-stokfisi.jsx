@@ -237,12 +237,20 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     setKFiyatElle(false);
   }
   const kuralFiyati = (renk, beden) => olcuKuralFiyati(seciliUrun, renk, beden, cari ? cari.id : "", tip, cariler, kParaBirimi, birlesikKurlar);
-  // Renk seçilince (fiyat elle yazılmadıysa) renk kuralı da görünsün: "Renk: Siyah → 0,18 $" gibi.
+  // FİYAT KUTUSU KURALDAN DOLAR (v1.484.0). Kullanıcı (Fermuar, boyut 20 cm, fiyat kutusu boş, miktarın
+  // altında kırmızı "20 ₺"): "Fiyat miktarın altında kırmızı yazıyor, otomatik çekmesi gerekmez mi?"
+  // v1.482'de yalnız renk seçilince renk kuralına bakılıyordu; ölçü fiyatı yalnız ipucuydu (kalem yine
+  // doğru fiyatla ekleniyordu ama kutu boş görünüyordu). Artık renk/ölçü/para birimi değişince —
+  // fiyat elle yazılmadıysa — görünen ölçülerin kural fiyatları TEK ise kutuya o yazılır; ölçüler
+  // farklı fiyattaysa kutu renk/genel fiyatında kalır, farklı olanlar miktar altında ipucu olarak durur.
+  const gorunenOlcuAnahtari = gosterilecekOlculer.join("|");
   useEffect(() => {
     if (!seciliUrun || !kRenk || kFiyatElle) return;
-    const f = kuralFiyati(kRenk, null).fiyat;
+    const olcuFiyatlari = gosterilecekOlculer.map((b) => kuralFiyati(kRenk, b)).filter((k) => k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0).map((k) => k.fiyat);
+    const tekFiyat = olcuFiyatlari.length === gosterilecekOlculer.length && new Set(olcuFiyatlari).size === 1 ? olcuFiyatlari[0] : null;
+    const f = tekFiyat != null ? tekFiyat : kuralFiyati(kRenk, null).fiyat;
     setKFiyat(f ? String(f) : "");
-  }, [kRenk]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [kRenk, gorunenOlcuAnahtari, kParaBirimi]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   function stokMiktari(renk, beden) {
     if (!seciliUrun) return 0;

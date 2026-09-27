@@ -1,10 +1,16 @@
 {
+ "ayniFiyat": {
+  "ipuclari": {},
+  "kutu": "25",
+  "satir": "tek: 25"
+ },
  "elle": {
   "ipuclari": {
    "40": "21 ₺ (Fiyatlandırma: Beden)",
    "41": "22 ₺ (Fiyatlandırma: Beden)",
    "42": "23 ₺ (Fiyatlandırma: Beden)"
   },
+  "kutu": "",
   "satir": "tek: 30"
  },
  "fiyatlandirmaEkrani": {
@@ -55,6 +61,7 @@
    "41": "22 ₺ (Fiyatlandırma: Beden)",
    "42": "23 ₺ (Fiyatlandırma: Beden)"
   },
+  "kutu": "",
   "satir": "farklı: 40: 21 · 41: 22 · 42: 23"
  }
 }
