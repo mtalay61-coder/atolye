@@ -864,6 +864,53 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
           );
         })()}
 
+        {/* E-FATURA (v1.500.0 — e-fatura yol haritası, Aşama 2). Seri ve etiketler QNB eFinans'tan alınır; burada
+            yalnız yazılır. BAĞLANTI YOK: kullanıcı adı/şifre bu ekranda SORULMAZ — Aşama 3'te Supabase
+            secrets'a girilecek (tarayıcıda, Tanımlar kaydında durursa veritabanını okuyan herkes görürdü). */}
+        {(() => {
+          const fb = tanimlar.firmaBilgileri || {};
+          const metin = (alan, etiket, ipucu, ek = {}) => (
+            <Field label={etiket}>
+              <input value={fb[alan] || ""} placeholder={ipucu || ""} data-efatura-alan={alan}
+                onChange={(e) => firmaBilgisiGuncelle(alan, ek.buyuk ? e.target.value.toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]/g, "").slice(0, 3) : e.target.value)}
+                style={{ ...inputStyle, ...(ek.genislik ? { width: ek.genislik } : {}) }} />
+            </Field>
+          );
+          const seriUyari = (alan) => fb[alan] && !faturaSeriGecerliMi(fb[alan])
+            ? <div style={{ fontSize: 11, color: "var(--erp-danger)" }}>3 harf/rakam olmalı</div> : null;
+          return (
+            <div data-efatura-ayarlari="1" style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>E-Fatura</div>
+                <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Entegratör: <b>QNB eFinans</b></span>
+                <span data-efatura-baglanti="yok" style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)",
+                  background: "var(--erp-panel-2)", color: "var(--erp-text-2)", border: "1px solid var(--erp-line)" }}>
+                  Bağlantı kurulmadı — taslak ve önizleme çalışır, gönderim yok
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" }}>
+                <div>{metin("efaturaSeri", "e-Fatura serisi", "Ör. ATL", { buyuk: true, genislik: 90 })}{seriUyari("efaturaSeri")}</div>
+                <div>{metin("earsivSeri", "e-Arşiv serisi", "Ör. ARS", { buyuk: true, genislik: 90 })}{seriUyari("earsivSeri")}</div>
+                <Field label="e-Fatura senaryosu">
+                  <select value={fb.efaturaProfil || "TEMELFATURA"} data-efatura-alan="efaturaProfil"
+                    onChange={(e) => firmaBilgisiGuncelle("efaturaProfil", e.target.value)} style={{ ...inputStyle, width: 170 }}>
+                    {EFATURA_SENARYOLARI.filter((x) => x.key !== "EARSIVFATURA").map((x) => <option key={x.key} value={x.key}>{x.ad}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
+                {metin("efaturaGondericiEtiketi", "Gönderici birim etiketi", "urn:mail:defaultgb@…")}
+                {metin("mersisNo", "MERSİS no", "Opsiyonel")}
+                {metin("ticaretSicilNo", "Ticaret sicil no", "Opsiyonel")}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 }}>
+                Seriyi ve etiketi eFinans'tan alın; True'daki seriden <b>farklı</b> olmalı (iki program aynı seriden numara verirse çakışır).
+                Fatura taslağı Fişler ekranında satış fişinin "İşlemler" menüsünden açılır. Fatura yalnız <b>KDV'li</b> kesilmiş fişten çıkar.
+              </div>
+            </div>
+          );
+        })()}
+
         {/* E-POSTA GÖNDERİM AYARLARI (kullanıcı, 13 Eylül: "kullanıcı mail bilgilerini girsin, o mail
             ile PDF gönderelim"). Gönderimi Supabase `eposta` fonksiyonu yapıyor; ayarları buradan
             (Tanımlar kaydı) okuyor. Şifre burada tutuluyor — 2. aşama bitmeden veritabanı anahtarla

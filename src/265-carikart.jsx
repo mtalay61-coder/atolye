@@ -711,6 +711,36 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 )}
               </label>
             ))}
+            {/* E-FATURA ALICISI (v1.500.0): mükellefse fatura e-Fatura, değilse e-Arşiv olarak kesilir. Şimdilik
+                elle; eFinans bağlanınca (Aşama 3) vergi no'dan sorgulanıp buraya yazılacak. Bilinmiyorsa fatura
+                taslağı senaryo sorar — tahmin edilmez, yanlış senaryoyla giden fatura reddedilir. */}
+            {cari.tip !== "Personel" && (
+              <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+                e-Fatura
+                <select
+                  defaultValue={cari.efaturaMukellef || ""}
+                  data-cari-efatura-mukellef="1"
+                  onChange={(e) => onFieldChange(cari.id, "efaturaMukellef", e.target.value)}
+                  style={{ ...inputStyle, width: 150, padding: "4px 6px", fontWeight: 400 }}
+                >
+                  <option value="">Bilinmiyor</option>
+                  <option value="evet">Mükellef (e-Fatura)</option>
+                  <option value="hayir">Değil (e-Arşiv)</option>
+                </select>
+              </label>
+            )}
+            {cari.tip !== "Personel" && cari.efaturaMukellef === "evet" && (
+              <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+                Posta kutusu
+                <input
+                  defaultValue={cari.efaturaEtiket || ""}
+                  placeholder="urn:mail:defaultpk@…"
+                  data-cari-efatura-etiket="1"
+                  onBlur={(e) => onFieldChange(cari.id, "efaturaEtiket", e.target.value.trim())}
+                  style={{ ...inputStyle, width: 190, padding: "4px 6px", fontWeight: 400 }}
+                />
+              </label>
+            )}
             {/* Fotoğraf yalnızca PERSONEL için sorulur — atölye ekranında kişinin kendini tanıması
                 buna bağlı. Müşteri/tedarikçi carilerinde böyle bir ihtiyaç yok, alanı göstermek
                 formu gereksiz kalabalıklaştırırdı. */}

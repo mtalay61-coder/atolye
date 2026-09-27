@@ -84,6 +84,9 @@ export default function AtolyeERP() {
   const [fisDefteri, setFisDefteri] = useState([]);
   // MODELHANE (17 Eylül): koleksiyona girmemiş modeller. Stok ürünü DEĞİL — ayrı tablo.
   const [modeller, setModeller] = useState([]);
+  // FATURALAR (27 Eylül, v1.500.0 — e-fatura Aşama 2): tekil tablo (`faturalar`), görevlerle aynı kalıp.
+  // Taslakta yalnız kullanıcı seçimleri durur; içerik fişten kurulur (bkz. 080-efatura).
+  const [faturalar, setFaturalar] = useState([]);
   const [gorevler, setGorevler] = useState([]);
   const [hedefGorevId, setHedefGorevId] = useState(null);
   // SOHBET (14 Eylül): mesajlar görevlerle aynı kalıpta tekil tablo. `okumalar` kanal başına son
@@ -645,6 +648,7 @@ export default function AtolyeERP() {
   useAcilisYukleme({
     yuklemeSayaci, acilisGocuUygula, showToast,
     setBekleyenYazmalar, setBulutGirisGerekli, setCariler, setCekGorselleri, setCop, setFisDefteri, setGorevler, setKoliler, setLoading, setMesajOkumalari, setMesajlar, setModeller, setMuhasebe, setOnaylar, setSiparisler, setStok, setStokRezervasyonlari, setStorageOk, setTanimlar, setUretim, setVeriKaynagi, setVeriKilidiSebep,
+    setFaturalar,
   });
 
   // YÖNETİCİSİZ LİSTE KİLİDİ (kullanıcı, 13 Eylül: sıfırladıktan sonra "Kullanıcı" rolüyle ekleyip
@@ -695,10 +699,11 @@ export default function AtolyeERP() {
     if (d["koli:data"]) isler.push(tekilYaz("koli:data", "koliler", koliler));
     if (d["gorev:data"]) isler.push(tekilYaz("gorev:data", "gorevler", gorevler));
     if (d["mesaj:data"]) isler.push(tekilYaz("mesaj:data", "mesajlar", mesajlar));
+    if (d["fatura:data"]) isler.push(tekilYaz("fatura:data", "faturalar", faturalar));
     await Promise.all(isler.map((p2) => Promise.resolve(p2).catch(() => {})));
     const kalan = Object.keys(bekleyenYazmalariOku()).length;
     if (!sessiz || kalan === 0) showToast(kalan === 0 ? "Bekleyen kayıtların hepsi buluta gönderildi" : `${kalan} tablo hâlâ gönderilemedi — "Hata" düğmesinden sebebini okuyun`);
-  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, showToast]);
+  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
   // Bağlantı gelince ve açılıştan kısa süre sonra kendiliğinden dene.
   // Kendiliğinden deneme: bağlantı geri gelince ve dakikada bir — SESSİZ (toast yok), yalnız
   // başarı bildirilir. Her açılışta hemen denemek, ağ yokken sürekli hata üretirdi.
@@ -1303,6 +1308,21 @@ export default function AtolyeERP() {
   // Hazır kayıt yazan sürüm (sipariş yolu kaydı kendisi kuruyor).
   // FİŞ DEFTERİ YAZMA YOLLARI AYRI DOSYADA (19 Eylül, 2. madde): `091-fisdefter-yaz.jsx`.
   // Kancanın çağrısı YUKARIDA, üretim teslim geri almadan önce (bkz. orada).
+
+  // FATURA TASLAĞI YAZIMI (v1.500.0). Tek kayıt ekler/günceller ya da siler; liste her zaman en güncel
+  // hâlden (fonksiyonel set) kurulur — iki pencerede aynı anda kaydedilen taslak birbirini ezmesin.
+  // Gönderilmiş (numaralı) fatura SİLİNMEZ — yasal belge; iptal/iade ayrı işlem (Aşama 3).
+  const faturaKaydet = useCallback((kayit, sil) => {
+    setFaturalar((onceki) => {
+      const mevcut = (onceki || []).find((f) => f.id === kayit.id);
+      if (sil && mevcut && mevcut.faturaNo) { showToast("Numara almış fatura silinemez"); return onceki; }
+      const next = sil
+        ? (onceki || []).filter((f) => f.id !== kayit.id)
+        : mevcut ? onceki.map((f) => (f.id === kayit.id ? { ...f, ...kayit } : f)) : [kayit, ...(onceki || [])];
+      yazimiIzle(tekilYaz("fatura:data", "faturalar", next), "Faturalar", next);
+      return next;
+    });
+  }, [showToast]);
 
   const saveModeller = useCallback((next) => {
     setModeller(next);
@@ -2072,10 +2092,10 @@ export default function AtolyeERP() {
     verileriJsonYedekle, verileriExcelAktar,
   } = useYedekleme({
     loading,
-    stok, cariler, siparisler, uretim, muhasebe, tanimlar, gorevler, mesajlar, koliler,
+    stok, cariler, siparisler, uretim, muhasebe, tanimlar, gorevler, mesajlar, koliler, faturalar,
     cekGorselleri, showToast,
     setStok, setCariler, setSiparisler, setUretim, setMuhasebe, setTanimlar, setGorevler,
-    setMesajlar, setKoliler, setCekGorselleri, setSonYedekTarihi,
+    setMesajlar, setKoliler, setFaturalar, setCekGorselleri, setSonYedekTarihi,
   });
 
 
@@ -4124,6 +4144,8 @@ export default function AtolyeERP() {
               onGoToSiparis={sipariseGit}
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onYetimFisTemizle={yetimFisTemizle}
+              faturalar={faturalar}
+              onFaturaAc={(fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo })}
             />
           </div>
           {/* Menüyü gizlemek TEK BAŞINA yeterli değil (bkz. muhasebe): gövde de yetkiye bağlı.
@@ -4415,6 +4437,22 @@ export default function AtolyeERP() {
                 cari={aktifPencere.veri.cari}
                 stok={aktifPencere.veri.stok}
                 firmaBilgileri={aktifPencere.veri.firmaBilgileri}
+                onClose={() => pencereKapat(aktifPencere.id)}
+                onMinimize={() => setAktifPencereId(null)}
+              />
+            )}
+            {aktifPencere && aktifPencere.tip === "fatura" && (
+              <FaturaPenceresi
+                key={aktifPencere.id}
+                fisNo={aktifPencere.veri.fisNo}
+                faturalar={faturalar}
+                cariler={cariler}
+                stok={stok}
+                tanimlar={tanimlar}
+                muhasebe={muhasebe}
+                aktifKullanici={aktifKullanici}
+                onKaydet={faturaKaydet}
+                showToast={showToast}
                 onClose={() => pencereKapat(aktifPencere.id)}
                 onMinimize={() => setAktifPencereId(null)}
               />

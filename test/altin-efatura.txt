@@ -1,0 +1,73 @@
+{
+ "ayar": {
+  "baglanti": "Bağlantı kurulmadı — taslak ve önizleme çalışır, gönderim yok",
+  "kayit": "AB1",
+  "kutu": "AB1"
+ },
+ "eksik": {
+  "alici": "SAYIN Tedarikçi A — — VKN/TCKN: —",
+  "baslik": "e-FATURA",
+  "durum": "Kaydedilmedi",
+  "eksikler": "engel",
+  "engeller": [
+   "senaryo",
+   "alici",
+   "alici"
+  ],
+  "gonderAcik": false,
+  "kdv": [
+   "Hesaplanan KDV (%10) 10,00 ₺"
+  ],
+  "no": "ATLYYYY000000001",
+  "odenecek": "110,00 ₺",
+  "satirlar": [
+   "1 | Bot Siyah 41 | 1 çift | 100,00 | %10 | 10,00 ₺ | 100,00 ₺"
+  ],
+  "xmlAcik": false,
+  "yaziyla": "Yalnız yüzon TL"
+ },
+ "hatalar": [],
+ "kayit": {
+  "adet": 1,
+  "durum": "Taslak",
+  "ettnVar": true,
+  "faturaNo": null,
+  "fisNo": "SF-0001",
+  "not": "Teşekkür ederiz",
+  "senaryo": "TEMELFATURA"
+ },
+ "rozet": [
+  "taslak:Fatura taslağı"
+ ],
+ "sonrasi": {
+  "durum": "Taslak kayıtlı"
+ },
+ "tam": {
+  "alici": "SAYIN Müşteri B Çarşı Cd. 5 Beşiktaş / İstanbul Beşiktaş V.D. · VKN: 1234567890",
+  "baslik": "e-FATURA",
+  "durum": "Kaydedilmedi",
+  "eksikler": "tamam",
+  "engeller": [],
+  "gonderAcik": false,
+  "kdv": [
+   "Hesaplanan KDV (%10) 20,00 ₺",
+   "Hesaplanan KDV (%20) 30,00 ₺"
+  ],
+  "no": "ATLYYYY000000001",
+  "odenecek": "400,00 ₺",
+  "satirlar": [
+   "1 | Bot Siyah 40 | 2 çift | 100,00 | %10 | 20,00 ₺ | 200,00 ₺",
+   "2 | Deri Siyah | 3 desi | 50,00 | %20 | 30,00 ₺ | 150,00 ₺"
+  ],
+  "xmlAcik": true,
+  "yaziyla": "Yalnız dörtyüz TL"
+ },
+ "xml": {
+  "dosya": "TASLAK-SF-0001.xml",
+  "ettnKayittaki": true,
+  "not": true,
+  "numara": "ATLYYYY000000001",
+  "odenecek": "400.00",
+  "satir": 2
+ }
+}

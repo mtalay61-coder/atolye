@@ -20,10 +20,10 @@ function useYedekleme(d) {
   const yedekDenendi = useRef(false);
   const {
     loading,
-    stok, cariler, siparisler, uretim, muhasebe, tanimlar, gorevler, mesajlar, koliler,
+    stok, cariler, siparisler, uretim, muhasebe, tanimlar, gorevler, mesajlar, koliler, faturalar,
     cekGorselleri, showToast,
     setStok, setCariler, setSiparisler, setUretim, setMuhasebe, setTanimlar, setGorevler,
-    setMesajlar, setKoliler, setCekGorselleri, setSonYedekTarihi,
+    setMesajlar, setKoliler, setFaturalar, setCekGorselleri, setSonYedekTarihi,
   } = d;
 
 const otomatikYedekAl = useCallback(async (sessiz) => {
@@ -48,6 +48,8 @@ const otomatikYedekAl = useCallback(async (sessiz) => {
     surum: 2,
     gorsellerHaric: true,
     stok: gorselsizStok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar,
+    // Faturalar (v1.500.0): gönderilmiş faturanın yasal kopyası entegratörde; burada taslaklar ve durum.
+    faturalar: faturalar || [],
   };
 
   const yedekMetni = JSON.stringify(yedek);
@@ -77,7 +79,7 @@ const otomatikYedekAl = useCallback(async (sessiz) => {
     if (!sessiz) showToast("Yedek alınamadı");
     return false;
   }
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
 
 // Günde BİR kez, veriler yüklendikten sonra. Ref ile korunuyor: her render'da tekrar denemek
 // gereksiz yazma trafiği üretirdi.
@@ -108,7 +110,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   // bir hata olmasın. Ayrı bir anahtara yazılır ki günlük yedeğin üzerine binmesin.
   await guvenliYaz("yedek:geri-yukleme-oncesi", JSON.stringify({
     olusturulmaTarihi: new Date().toISOString(), surum: 3,
-    stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler,
+    stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, faturalar: faturalar || [],
   }), true);
 
   // Yedek görselsiz alındıysa, geri yüklerken MEVCUT görselleri koruyoruz — aksi halde yedeğe
@@ -129,6 +131,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (Array.isArray(y.koliler)) setKoliler(y.koliler);
   if (Array.isArray(y.gorevler)) setGorevler(y.gorevler);
   if (Array.isArray(y.mesajlar)) setMesajlar(y.mesajlar);
+  if (Array.isArray(y.faturalar) && setFaturalar) setFaturalar(y.faturalar);
 
   // Geri yükleme TOPLU yazar: yedekteki hâl bütünüyle geçerli olmalı, kayıt kayıt fark almak
   // burada anlamsız. Katmanın "son bilinen hâl" belleği de yenilenir.
@@ -141,6 +144,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (Array.isArray(y.koliler)) await tekilYaz("koli:data", "koliler", y.koliler);
   if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
   if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar);
+  if (Array.isArray(y.faturalar)) await tekilYaz("fatura:data", "faturalar", y.faturalar);
   // Çek görselleri (varsa): toplu tablo yazımı + yerel kopya (cekGorselKaydet'in yaptığı iş,
   // burada toplu — o fonksiyon daha aşağıda tanımlı, bağımlılığa alınamaz).
   if (Array.isArray(y.cekGorselleri)) {
@@ -151,7 +155,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   }
   showToast(`${kaynakAd} geri yüklendi — geri yükleme öncesi hâl de ayrıca saklandı`);
   return true;
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
 
 // JSON DOSYASINDAN geri yükleme: Tanımlar > Veri Yedekleme > "JSON Yedeğinden Geri Yükle".
 const jsonDosyasindanGeriYukle = useCallback(async (dosya) => {
