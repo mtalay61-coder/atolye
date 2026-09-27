@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.486.0</title>
+<title>Atölye ERP 1.489.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1927,9 +1927,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.486.0";
+const SURUM = "1.489.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fis formunda para birimi fiyatin yaninda, yesil Ekle dugmesi";
+const SURUM_NOTU = "Fis formunda miktar yaninda toplam, fiyat ve Ekle; asorti altta";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1937,6 +1937,18 @@ const SURUM_NOTU = "Fis formunda para birimi fiyatin yaninda, yesil Ekle dugmesi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.489.0", tarih: "27.09.2026",
+        eklenen: ["Fiş formunda beden kutularının yanında toplam miktar"],
+        degisen: ["Fiş formunda miktar kutuları, toplam, birim fiyat ve Ekle tek grup: ürün/renk yanına sığmazsa hep birlikte alt satıra iniyor, asorti bir altında"],
+        duzeltilen: [] },
+    { surum: "1.488.0", tarih: "27.09.2026",
+        eklenen: [],
+        degisen: ["Fiş formunda Ekle düğmesi ürün/renk/ölçü/fiyat ile aynı satırda; bedenli üründe (birden çok miktar kutusu) alt satırda"],
+        duzeltilen: [] },
+    { surum: "1.487.0", tarih: "27.09.2026",
+        eklenen: [],
+        degisen: ["Bilgi mesajları (\"1 kalem eklendi\" gibi) ekranın üstünde çıkıyor"],
+        duzeltilen: ["Fiş formunda ölçü seçmeli üründe (Boyut) fiyat telefonda alt satıra kayıyordu; ürün/renk/ölçü/fiyat kutuları daraltıldı, tek satıra sığıyor", "Bilgi mesajı sol altta Kaydet/Vazgeç düğmelerinin üstünü kapatıyordu"] },
     { surum: "1.486.0", tarih: "27.09.2026",
         eklenen: [],
         degisen: ["Fiş formunda para birimi fiyatla aynı alanda, üst satırda (sipariş formundaki gibi)", "Fiş formunda 'Kalemlere Ekle' yerine yeşil 'Ekle' düğmesi (siparişle aynı)"],
@@ -16419,13 +16431,16 @@ function AtolyeERP() {
                     React.createElement("b", null, bulutGirisAyrinti.sebep)))) : (React.createElement("div", { style: { fontSize: 12 } }, "Bulut giri\u015Fi denenmedi (Supabase ba\u011Flant\u0131s\u0131 tan\u0131ml\u0131 de\u011Fil).")))),
         toast && (React.createElement("div", { "data-toast": "1", onClick: toastKapat, title: "Kapatmak i\u00E7in dokunun", style: {
                 position: "fixed",
-                // SOL ALT (ERP standardı). Mobilde iki kenara yayılır.
-                bottom: 24,
-                left: 24,
-                // Dar ekranda alt çubuğun üstünde ve tam genişlikte: köşede kalan küçük bir kutu
-                // telefonda hem görünmüyor hem okunmuyordu.
+                // ÜST ORTA (v1.487.0). Kullanıcı (fiş, "1 kalem eklendi" Kaydet düğmesinin üstünde):
+                // "Bilgi butonların üzerini kapatıyor." Sol alttaydı — fiş/sipariş formlarında Kaydet ve
+                // Vazgeç tam orada. Üstte yalnız menü çubuğunu birkaç saniye örter; o sırada zaten
+                // yapılan işe bakılıyor, menüye değil. Dokununca kapanır.
+                top: 10,
+                left: mobilDuzen ? 12 : "50%",
                 right: mobilDuzen ? 12 : undefined,
-                maxWidth: mobilDuzen ? undefined : 420,
+                transform: mobilDuzen ? undefined : "translateX(-50%)",
+                width: mobilDuzen ? undefined : "max-content",
+                maxWidth: mobilDuzen ? undefined : 480,
                 zIndex: 300,
                 background: "var(--erp-toast)",
                 color: "var(--erp-panel-2)",
@@ -34779,10 +34794,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                         setKMiktarlar({});
                                         setKSeciliOlcu("");
                                     }
-                                }, style: { ...inputStyle, width: 190 } }),
+                                }, 
+                                // TEK SATIRA SIĞSIN (v1.487.0). Kullanıcı (telefon, Boyut seçmeli üründe fiyat alt satıra
+                                // düşmüş): "Satır aşağı kayıyor yine." Ürün 190 + renk 130 + boyut 130 + fiyat 90+74
+                                // ≈ 720 px, telefonda kutu içi ~690 px. Genişlikler daraltıldı (v1.488.0: Ekle da satırda — ürün 150, renk 104); ad uzunsa
+                                // kutuda kayar, seçilen ürün zaten altta renk/ölçü ile teyit ediliyor.
+                                style: { ...inputStyle, width: 150 } }),
                             React.createElement("datalist", { id: "fis-urun-listesi" }, secilebilirler(stok, kUrunId).map((p) => (React.createElement("option", { key: p.id, value: secenekEtiketi(p, p.ad) }))))),
                         seciliUrun && !renkSorulmaz && (React.createElement(Field, { label: "Renk" },
-                            React.createElement("input", { value: kRenk, "data-renk-arama": "1", list: "fis-renk-listesi", placeholder: "Renk yaz\u0131n ya da se\u00E7in", onChange: (e) => { setKRenk(e.target.value); setKMiktarlar({}); setKSeciliOlcu(""); }, style: { ...inputStyle, width: 130 } }),
+                            React.createElement("input", { value: kRenk, "data-renk-arama": "1", list: "fis-renk-listesi", placeholder: "Renk yaz\u0131n ya da se\u00E7in", onChange: (e) => { setKRenk(e.target.value); setKMiktarlar({}); setKSeciliOlcu(""); }, style: { ...inputStyle, width: 104 } }),
                             React.createElement("datalist", { id: "fis-renk-listesi" }, renkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }))))),
                         kRenk && olcuSecmeli && (React.createElement(Field, { label: seciliUrun.olcuTipi || "Ölçü" },
                             React.createElement("select", { value: kSeciliOlcu, "data-olcu-secici": "1", onChange: (e) => {
@@ -34790,43 +34810,47 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                     // görünmez bir yerde beklemesin.
                                     setKMiktarlar({});
                                     setKSeciliOlcu(e.target.value);
-                                }, style: { ...inputStyle, width: 130 } },
+                                }, style: { ...inputStyle, width: 100, padding: "8px 4px" } },
                                 React.createElement("option", { value: "" },
                                     (seciliUrun.olcuTipi || "Ölçü").toLocaleLowerCase("tr-TR"),
                                     " se\u00E7in"),
                                 bedenSecenekleri.map((b) => React.createElement("option", { key: b, value: b }, b))))),
-                        kRenk && gosterilecekOlculer.length > 0 && (React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
-                            "Miktar",
-                            React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, gosterilecekOlculer.map((b) => (React.createElement("span", { key: b, style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
-                                (olcuGoster(b) || gosterilecekOlculer.length > 1) && (React.createElement("span", { className: "mono", style: { fontSize: 10, fontWeight: 700, color: "var(--erp-text)" } }, olcuGoster(b) || "—")),
-                                React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-miktar": b || "tek", value: kMiktarlar[b] ?? "", onChange: (e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value }), className: "mono", 
-                                    // TEK SATIRA SIĞSIN (kullanıcı, 18 Eylül: "miktar da boyutun yanında olsun,
-                                    // tek satıra sığsın hepsi, gerekirse yazıları küçült"). Kutu 62→52,
-                                    // yazı 12→11; beden tipinde 5-6 kutu yan yana artık sarmalanmıyor.
-                                    style: { width: 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
-                                React.createElement("span", { className: "mono", style: { fontSize: 9, color: "var(--erp-text-3)" } },
-                                    "stok: ",
-                                    stokMiktari(kRenk, b)),
-                                !kFiyatElle && (() => {
-                                    const k = kuralFiyati(kRenk, b);
-                                    if (!k.kaynak || k.kaynak === "Genel" || !(k.fiyat > 0) || String(k.fiyat) === String(kFiyat))
-                                        return null;
-                                    return React.createElement("span", { className: "mono", "data-olcu-fiyat": b || "tek", title: `Fiyatlandırma: ${k.kaynak}`, style: { fontSize: 9, fontWeight: 700, color: "var(--erp-accent)" } },
-                                        fiyatYazi(k.fiyat),
-                                        " ",
-                                        kPbSembol);
-                                })())))))),
-                        React.createElement(Field, { label: `Birim Fiyat${seciliUrun && seciliUrun.birim ? ` / ${seciliUrun.birim}` : ""}` },
-                            React.createElement("div", { style: { display: "flex", gap: 4 } },
-                                React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-fiyat": "1", value: kFiyat, onChange: (e) => { setKFiyat(e.target.value); setKFiyatElle(true); }, style: { ...inputStyle, width: 90 } }),
-                                React.createElement("select", { value: kParaBirimi, "data-kalem-pb": "1", onChange: (e) => setKParaBirimi(e.target.value), style: { ...inputStyle, width: 74, padding: "8px 4px" } }, Object.keys(PARA_SEMBOLU).map((pb) => (React.createElement("option", { key: pb, value: pb },
-                                    pb,
-                                    " ",
-                                    PARA_SEMBOLU[pb]))))))),
-                    kRenk && bedenSecenekleri.length > 0 && (asortiler || []).length > 0 && (React.createElement(AsortiUygulaKontrolu, { asortiler: asortiler, bedenSecenekleri: bedenSecenekleri, olcuTipi: seciliUrun && seciliUrun.olcuTipi, onUygula: (sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc }) })),
-                    React.createElement("button", { type: "button", "data-kalemlere-ekle": "1", style: { ...EKLE_DUGMESI, alignSelf: "flex-start" }, onClick: kalemEkle },
-                        React.createElement(PackagePlus, { size: 15 }),
-                        " Ekle")),
+                        React.createElement("div", { "data-kalem-grup": "1", style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" } },
+                            kRenk && gosterilecekOlculer.length > 0 && (React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
+                                "Miktar",
+                                React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } },
+                                    gosterilecekOlculer.map((b) => (React.createElement("span", { key: b, style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
+                                        (olcuGoster(b) || gosterilecekOlculer.length > 1) && (React.createElement("span", { className: "mono", style: { fontSize: 10, fontWeight: 700, color: "var(--erp-text)" } }, olcuGoster(b) || "—")),
+                                        React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-miktar": b || "tek", value: kMiktarlar[b] ?? "", onChange: (e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value }), className: "mono", 
+                                            // TEK SATIRA SIĞSIN (kullanıcı, 18 Eylül: "miktar da boyutun yanında olsun,
+                                            // tek satıra sığsın hepsi, gerekirse yazıları küçült"). Kutu 62→52,
+                                            // yazı 12→11; beden tipinde 5-6 kutu yan yana artık sarmalanmıyor.
+                                            // 7+ bedende 52→44 (v1.489.0): fiyat ve Ekle yanına sığsın.
+                                            style: { width: gosterilecekOlculer.length > 6 ? 44 : 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
+                                        React.createElement("span", { className: "mono", style: { fontSize: 9, color: "var(--erp-text-3)" } },
+                                            "stok: ",
+                                            stokMiktari(kRenk, b)),
+                                        !kFiyatElle && (() => {
+                                            const k = kuralFiyati(kRenk, b);
+                                            if (!k.kaynak || k.kaynak === "Genel" || !(k.fiyat > 0) || String(k.fiyat) === String(kFiyat))
+                                                return null;
+                                            return React.createElement("span", { className: "mono", "data-olcu-fiyat": b || "tek", title: `Fiyatlandırma: ${k.kaynak}`, style: { fontSize: 9, fontWeight: 700, color: "var(--erp-accent)" } },
+                                                fiyatYazi(k.fiyat),
+                                                " ",
+                                                kPbSembol);
+                                        })()))),
+                                    gosterilecekOlculer.length > 1 && (React.createElement("span", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingLeft: 6, borderLeft: "1px dashed var(--erp-line)" } },
+                                        React.createElement("span", { className: "mono", style: { fontSize: 10, fontWeight: 700, color: "var(--erp-text)" } }, "Top."),
+                                        React.createElement("span", { className: "mono", "data-kalem-toplam": "1", style: { minWidth: 30, padding: "5px 2px", fontSize: 12, fontWeight: 700, textAlign: "center", color: "var(--erp-text)" } }, stokYuvarla(gosterilecekOlculer.reduce((t, b) => t + (parseFloat(kMiktarlar[b]) || 0), 0)))))))),
+                            React.createElement(Field, { label: `Birim Fiyat${seciliUrun && seciliUrun.birim ? ` / ${seciliUrun.birim}` : ""}` },
+                                React.createElement("div", { style: { display: "flex", gap: 4 } },
+                                    React.createElement("input", { type: "number", step: "any", min: "0", "data-kalem-fiyat": "1", value: kFiyat, onChange: (e) => { setKFiyat(e.target.value); setKFiyatElle(true); }, style: { ...inputStyle, width: 72, padding: "8px 6px" } }),
+                                    React.createElement("select", { value: kParaBirimi, "data-kalem-pb": "1", onChange: (e) => setKParaBirimi(e.target.value), style: { ...inputStyle, width: 66, padding: "8px 2px" } }, Object.keys(PARA_SEMBOLU).map((pb) => (React.createElement("option", { key: pb, value: pb }, pb)))))),
+                            React.createElement(Field, { label: "\u00a0" },
+                                React.createElement("button", { type: "button", "data-kalemlere-ekle": "1", style: { ...EKLE_DUGMESI, padding: "8px 12px" }, onClick: kalemEkle },
+                                    React.createElement(PackagePlus, { size: 15 }),
+                                    " Ekle")))),
+                    kRenk && bedenSecenekleri.length > 0 && (asortiler || []).length > 0 && (React.createElement(AsortiUygulaKontrolu, { asortiler: asortiler, bedenSecenekleri: bedenSecenekleri, olcuTipi: seciliUrun && seciliUrun.olcuTipi, onUygula: (sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc }) }))),
                 React.createElement("div", { style: { display: "grid", gap: 8, alignContent: "start" } },
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, tip === "Satış" ? "Koliden / siparişten ekle" : "Siparişten ekle"),
                     tip === "Satış" && (React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
@@ -46903,7 +46927,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.486.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.489.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
