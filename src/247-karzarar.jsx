@@ -52,15 +52,37 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
   // ---- 1) SATIŞ GELİRİ ve SMM — stok hareketlerinden.
   // Cari hareketinden değil stok hareketinden okunuyor: fişin PARA ayağı cari defterinde,
   // MAL ayağı stokta. Satılan malın maliyetini bilmek için hangi üründen kaç adet çıktığı gerekiyor.
+  //
+  // GELİR CARİ AYAĞINDAN (27 Eylül, v1.498.0). Rapor fiyatı stok hareketinin `birimFiyat`ından
+  // okuyordu; `fisYaz` (078) ise fiyatı YALNIZ cari hareketine yazıyor — stok hareketinde fiyat hiç
+  // yok. Sonuç: gerçek veride satış geliri 0, brüt ve net kâr eksi görünüyordu (senaryo tohumu stok
+  // hareketine fiyat koyduğu için test yakalamadı; KDV çalışmasında fark edildi).
+  // Fişin iki ayağı AYNI kimliği taşıyor (078: "Kimlik stok hareketiyle ORTAK") — mal stoktan (ürün,
+  // adet → maliyet), para cariden (tutar → gelir) okunuyor. Eski fişler de böylece düzeliyor; göç yok.
+  // KDV'li fişte gelir MATRAHTIR: KDV devlete ödenecek para, satışın geliri değil (cari `tutar`ı KDV dahil).
+  // Cari ayağı bulunamazsa (çok eski/elle kayıt) stoktaki fiyat varsa o; o da yoksa gelir 0 ve satır
+  // "fiyatı bulunamadı" sayılır — ekranda sayısı yazıyor, sessizce eksik göstermiyoruz.
+  const cariAyagi = new Map();
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => { if (h && h.id) cariAyagi.set(h.id, h); }));
   let satisGeliri = 0;
   let smm = 0;
+  let fiyatsizSatir = 0;
   const satisKalemleri = [];
   (stok || []).forEach((p) => {
     (p.hareketler || []).forEach((h) => {
       if (h.kaynak !== "Satış" || (h.miktar || 0) >= 0) return;
       if (!kzTarihUygun(h.tarih, aralik)) return;
       const adet = Math.abs(h.miktar || 0);
-      const gelir = kzTL((h.birimFiyat || 0) * adet, h.paraBirimi, kurlar);
+      const ch = cariAyagi.get(h.id);
+      let gelir = 0;
+      if (ch) {
+        const net = typeof ch.matrah === "number" ? ch.matrah : (ch.tutar || 0);
+        gelir = kzTL(net, ch.paraBirimi, kurlar);
+      } else if (h.birimFiyat) {
+        gelir = kzTL(h.birimFiyat * adet, h.paraBirimi, kurlar);
+      } else {
+        fiyatsizSatir += 1;
+      }
       // ALAN ADI DÜZELTİLDİ (20 Eylül): ürün kartı `alisParaBirimi` yazıyor, burada `alisPB`
       // okunuyordu — hiç eşleşmediği için dolarlık alış fiyatı TL sayılıyor, SMM 20-50 kat düşük
       // çıkıyordu. Aynı yardımcı (alisFiyatiTL) üç ekranda ortak.
@@ -126,7 +148,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
   const brutKar = satisGeliri - smm - uretimIscilik;
   const netKar = brutKar - giderToplam + digerGelir;
   return {
-    aralik, satisGeliri, smm, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar,
+    aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar,
     gruplar, satisKalemleri,
     // Gider kartı hiç yoksa kullanıcıya yol göstermek için.
     kartYok: (giderKartlari || []).length === 0,
@@ -159,6 +181,12 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
         ))}
       </div>
 
+      {sonuc.fiyatsizSatir > 0 && (
+        <div data-kz-fiyatsiz="1" style={{ background: "#FFF4E6", border: "1px solid #E1A03F", borderRadius: "var(--erp-r-md)", padding: "10px 12px", fontSize: 12, color: "#7A5A28" }}>
+          {sonuc.fiyatsizSatir} satış satırının fiyatı bulunamadı (cari kaydı yok) — satış gelirine 0 olarak girdi.
+        </div>
+      )}
+
       {sonuc.kartYok && (
         <div style={{ background: "#FFF4E6", border: "1px solid #E1A03F", borderRadius: "var(--erp-r-md)", padding: "10px 12px", fontSize: 12, color: "#7A5A28" }}>
           Gider kartı tanımlı değil: kira, elektrik, personel gibi kalemler hesaba girmiyor.
@@ -167,7 +195,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
       )}
 
       <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
-        {satir("Satış geliri", sonuc.satisGeliri, "var(--erp-primary)", false, "Dönemdeki satış fişlerinin tutarı")}
+        {satir("Satış geliri", sonuc.satisGeliri, "var(--erp-primary)", false, "Dönemdeki satış fişlerinin tutarı (KDV hariç)")}
         {satir("− Satılan malın maliyeti", -sonuc.smm, "var(--erp-warn)", false, "Satılan ürünlerin kart alış fiyatıyla değeri (yaklaşık)")}
         {sonuc.uretimIscilik > 0 && satir("− Üretim işçiliği", -sonuc.uretimIscilik, "var(--erp-warn)", false,
           "Dönemde doğan işçilik ücretleri (ödenmiş olsun olmasın) — malın maliyetine girer")}

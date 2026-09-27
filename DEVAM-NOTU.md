@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.497.0** · 27 Eylül 2026
+Son sürüm: **v1.498.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.497.0): vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.498.0): kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6392,8 +6392,7 @@ yok bunun." Durum: True Bilişim My Muhasebe ERP kullanıyor, faturayı **QNB eF
 - Cari kartı (265): vergi dairesi, TCKN, il, ilçe (`data-cari-vergi-alani`, `ek`'te). Firma: Vergi Dairesi
   ayrı alan (`data-firma-vergi-dairesi`), İl/İlçe.
 - Döviz: satır PB'si ne ise KDV de o PB'de (fisYaz dövizli tutarı da matrah+KDV'ye çevirir).
-- **AÇIK (bulgu, düzeltilmedi):** kâr/zarar raporunda stok hareketlerinde `birimFiyat` olmadığından gelir
-  testler dışında 0 görünebiliyor — ayrı iş.
+- ~~AÇIK: kâr/zarar raporunda gelir 0~~ → v1.498.0'da düzeltildi (aşağıda).
 - Test: `birim-kdv`, `senaryo-kdv-fis`.
 
 **v1.497.0 — vergi no kontrolü.** Kullanıcı: "Cari açarken vergi no girip cari bilgilerinin otomatik çekilmesini
@@ -6414,6 +6413,19 @@ servis istisnası onayıyla. Şimdilik (kullanıcı: "1 ve 2'yi yap"), dışarı
   "yalnız rakam" uyarısı ayırmayı hatırlatır).
 - Sıradaki (onay bekliyor): True'dan cari listesi aktarımı (vergi no / daire / adres eşleştirme).
 - Test: `birim-vergino`, `senaryo-vergi-no`.
+
+**v1.498.0 — kâr/zarar satış geliri.** Kullanıcı "Ne var başka?" listesinden 1'i seçti.
+- **Kök:** `karZararHesapla` (247) geliri stok hareketinin `birimFiyat × adet`'inden okuyordu; `fisYaz` (078)
+  fiyatı yalnız CARİ hareketine yazıyor (stok hareketinde `birimFiyat`/`paraBirimi` hiç yok). Gerçek veride
+  satış geliri 0, brüt/net kâr eksi. `senaryo-kar-zarar` tohumu fiyatı stok hareketine koyduğu için
+  yakalamadı — tohum gerçek biçime çevrildi (fiyat Müşteri B'nin aynı kimlikli cari hareketinde), altın aynı.
+- **Çözüm:** iki ayak aynı kimliği taşıyor → gelir cari ayağından (`matrah` varsa o — KDV gelir değil — yoksa
+  `tutar`, cari `paraBirimi`nden TL'ye). Cari ayağı yoksa stoktaki fiyat; o da yoksa 0 ve `fiyatsizSatir`
+  (`data-kz-fiyatsiz` uyarısı). Eski fişler de düzeldi, göç yok.
+- Test: `birim-karzarar` (gerçek `fisYaz` çıktısıyla: KDV'siz, KDV'li → matrah, USD, cari ayağı yok).
+- **AÇIK (kullanıcıya soruldu):** SMM ürünün kart `alisFiyati`ndan; üretilen mamulde bu alan çoğu zaman boş →
+  mamul satışında SMM 0, brüt kâr şişkin. Seçenek: mamulde reçete hammadde maliyeti (işçilik zaten ayrı
+  satırda — çift sayılmamalı).
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

@@ -32,6 +32,7 @@ node birim-gecmis-renk.js || HATA=1
 node birim-renksiz.js || HATA=1
 node birim-kdv.js || HATA=1
 node birim-vergino.js || HATA=1
+node birim-karzarar.js || HATA=1
 node birim-gorsel-depo.js || HATA=1
 node birim-acilis-fisi.js || HATA=1
 node birim-cek-bag.js || HATA=1
