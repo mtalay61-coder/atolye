@@ -25,6 +25,14 @@
    "41: 22 ₺",
    "42: 23 ₺"
   ],
+  "kirmiziBedenFiyatiyla": [
+   "Siyah|40",
+   "Siyah|41",
+   "Siyah|42",
+   "beden|40",
+   "beden|41",
+   "beden|42"
+  ],
   "renkKilitliHucreler": [
    "Siyah|40: 21 ₺ (Satışta uygulanan: Beden)",
    "Siyah|41: 22 ₺ (Satışta uygulanan: Beden)",
@@ -42,6 +50,12 @@
   "renkTekFiyat": "kapalı",
   "renkYazilinca": {
    "hucre40": "33 ₺",
+   "kirmizi": [
+    "Siyah|40",
+    "Siyah|41",
+    "Siyah|42",
+    "renk|Siyah"
+   ],
    "kurallar": [
     "Beden: 40: 21 ₺",
     "Beden: 41: 22 ₺",
@@ -63,5 +77,41 @@
   },
   "kutu": "",
   "satir": "farklı: 40: 21 · 41: 22 · 42: 23"
+ },
+ "pbAyniRakam": {
+  "fiyatParaBirimi": {
+   "Satış": "USD"
+  },
+  "kayit": [
+   "40: 21 USD",
+   "41: 22 USD",
+   "42: 23 USD"
+  ],
+  "kurDugmesiAcik": true,
+  "kutular": [
+   "40: 21 $",
+   "41: 22 $",
+   "42: 23 $"
+  ],
+  "soru": "Bu sekmede 3 fiyat başka birimde. Hepsi $ olsun mu? Aynı rakamla (21 ₺ → 21 $) Kurla çevir (21 ₺ → 0,4375 $) Dokunma, yalnız yeni fiyatlar",
+  "yenidenAcinca": "USD"
+ },
+ "pbKurla": {
+  "fiyatParaBirimi": {
+   "Satış": "USD"
+  },
+  "kayit": [
+   "40: 0.4375 USD",
+   "41: 0.4583 USD",
+   "42: 0.4792 USD"
+  ],
+  "kurDugmesiAcik": true,
+  "kutular": [
+   "40: 0,4375 $",
+   "41: 0,4583 $",
+   "42: 0,4792 $"
+  ],
+  "soru": "Bu sekmede 3 fiyat başka birimde. Hepsi $ olsun mu? Aynı rakamla (21 ₺ → 21 $) Kurla çevir (21 ₺ → 0,4375 $) Dokunma, yalnız yeni fiyatlar",
+  "yenidenAcinca": "USD"
  }
 }

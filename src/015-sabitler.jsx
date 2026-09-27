@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.484.0";
+const SURUM = "1.485.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fis ve sipariste fiyat kutusu beden fiyatindan kendiliginden doluyor";
+const SURUM_NOTU = "Fiyatlandirmada gecerli fiyat kirmizi, para birimi kalici ve var olan fiyatlara uygulanabiliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,11 @@ const SURUM_NOTU = "Fis ve sipariste fiyat kutusu beden fiyatindan kendiliginden
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.485.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: ["Fiyatlandırma matrisinde fişe gelecek (uygulanan) fiyat kırmızı: hücrelerdeki fiyat kırmızı yazıyor, uygulanan renk/beden/renk+beden fiyat kutusu kırmızı zeminli; başka fiyatın altında kalan (uygulanmayan) fiyat normal renkte",
+      "Fiyatlandırmada para birimi değişince var olan fiyatlar için soru: aynı rakamla yeni birim, kurla çevir ya da dokunma"],
+    duzeltilen: ["Fiyatlandırmada seçilen para birimi kart kapanınca eski hâline dönüyordu; artık ürüne kaydediliyor", "Boş hücrelerde '12 ₺ $' gibi iki birim yan yana yazmıyor"] },
   { surum: "1.484.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: ["Fiş ve sipariş formunda fiyat kutusu renk/ölçü seçilince fiyatlandırmadan kendiliğinden doluyor: seçili ölçülerin fiyatı tek ise o yazılıyor; farklıysa miktar altında ölçü ölçü görünüyor"],
