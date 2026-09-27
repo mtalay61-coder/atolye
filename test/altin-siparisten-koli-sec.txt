@@ -1,0 +1,128 @@
+{
+ "acilis": {
+  "durumKalan": "Onaylandı · kalan 154",
+  "fistekiKodlar": [],
+  "fistekiKoliler": null,
+  "gruplar": [
+   "19 koli · 36:1 37:2 38:2 39:2 40:1 · düğme \"19 koli ekle\""
+  ],
+  "kodDugmesi": 0,
+  "ozet": "Hazır koliler: 19 koli · 152 çift",
+  "siparisListede": true,
+  "tumunuEkle": true
+ },
+ "adetYazilinca": "3 koli ekle",
+ "fisSatirlari": 1,
+ "hatalar": [],
+ "kayit": {
+  "durumlar": {
+   "Sevk edildi": 19
+  },
+  "karsilanan": "36=21 37=38 38=38 39=38 40=19",
+  "sevkFisSayisi": 1,
+  "sevkFisi": "<fisno-001>",
+  "siparisDurum": "Tamamlandı",
+  "stokSonra": "36=29 37=12 38=12 39=12 40=31"
+ },
+ "kolisizSonrasi": {
+  "durumKalan": null,
+  "fistekiKodlar": [
+   "K-05",
+   "K-01",
+   "K-02",
+   "K-03",
+   "K-04",
+   "K-06",
+   "K-07",
+   "K-08",
+   "K-09",
+   "K-10",
+   "K-11",
+   "K-12",
+   "K-13",
+   "K-14",
+   "K-15",
+   "K-16",
+   "K-17",
+   "K-18",
+   "K-19"
+  ],
+  "fistekiKoliler": "19 koli · 152 çift",
+  "gruplar": [],
+  "kalanMatris": [],
+  "kodDugmesi": 0,
+  "kolisizDugme": null,
+  "ozet": null,
+  "siparisListede": false,
+  "tumunuEkle": false
+ },
+ "tekKoliSonrasi": {
+  "durumKalan": "Onaylandı · kalan 146",
+  "fistekiKodlar": [
+   "K-05"
+  ],
+  "fistekiKoliler": "1 koli · 8 çift",
+  "gruplar": [
+   "18 koli · 36:1 37:2 38:2 39:2 40:1 · düğme \"18 koli ekle\""
+  ],
+  "kodDugmesi": 18,
+  "ozet": "Hazır koliler: 18 koli · 144 çift",
+  "siparisListede": true,
+  "tumunuEkle": true
+ },
+ "tekTekAcik": {
+  "kodDugmesi": 19
+ },
+ "tumuSonrasi": {
+  "durumKalan": "Onaylandı · kalan 2",
+  "fistekiKodlar": [
+   "K-05",
+   "K-01",
+   "K-02",
+   "K-03",
+   "K-04",
+   "K-06",
+   "K-07",
+   "K-08",
+   "K-09",
+   "K-10",
+   "K-11",
+   "K-12",
+   "K-13",
+   "K-14",
+   "K-15",
+   "K-16",
+   "K-17",
+   "K-18",
+   "K-19"
+  ],
+  "fistekiKoliler": "19 koli · 152 çift",
+  "gruplar": [],
+  "kalanMatris": [
+   "Ürün | Renk | 36",
+   "102 Bayan Bot | Siyah | 2"
+  ],
+  "kodDugmesi": 0,
+  "kolisizDugme": "Kolisiz kalanı ekle",
+  "ozet": null,
+  "siparisListede": true,
+  "tumunuEkle": false
+ },
+ "ucKoliSonrasi": {
+  "durumKalan": "Onaylandı · kalan 122",
+  "fistekiKodlar": [
+   "K-05",
+   "K-01",
+   "K-02",
+   "K-03"
+  ],
+  "fistekiKoliler": "4 koli · 32 çift",
+  "gruplar": [
+   "15 koli · 36:1 37:2 38:2 39:2 40:1 · düğme \"15 koli ekle\""
+  ],
+  "kodDugmesi": 15,
+  "ozet": "Hazır koliler: 15 koli · 120 çift",
+  "siparisListede": true,
+  "tumunuEkle": true
+ }
+}

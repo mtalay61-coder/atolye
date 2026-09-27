@@ -1,0 +1,73 @@
+{
+ "boyKarsilastirma": {
+  "sadeTablolulardanKisa": true,
+  "sadeUrunluAyniBoy": true,
+  "sadeUrunluTekSatir": true
+ },
+ "detayli": {
+  "dugme": "detayli · \"Sade görünüm\"",
+  "ozetSayisi": 0,
+  "satirlar": [
+   {
+    "kimlik": "ODM-TEST",
+    "ozet": null,
+    "tablolu": false
+   },
+   {
+    "kimlik": "İŞÇİLİK ‖ 10003-Üste ‖ Sipariş: 10003",
+    "ozet": null,
+    "tablolu": true
+   },
+   {
+    "kimlik": "<fisno-001> ‖ Cariye Satış fişi",
+    "ozet": null,
+    "tablolu": true
+   },
+   {
+    "kimlik": "<fisno-001> ‖ Cariden Alış fişi",
+    "ozet": null,
+    "tablolu": true
+   }
+  ],
+  "tercih": null
+ },
+ "donunce": {
+  "dugme": "sade · \"Detaylı görünüm\"",
+  "ozetSayisi": 4,
+  "tercih": "1"
+ },
+ "geriDetayli": {
+  "dugme": "detayli · \"Sade görünüm\"",
+  "ozetSayisi": 0,
+  "tablolu": 3,
+  "tercih": "0"
+ },
+ "hatalar": [],
+ "sade": {
+  "dugme": "sade · \"Detaylı görünüm\"",
+  "ozetSayisi": 4,
+  "satirlar": [
+   {
+    "kimlik": "ODM-TEST",
+    "ozet": "—",
+    "tablolu": false
+   },
+   {
+    "kimlik": "İŞÇİLİK ‖ 10003-Üste ‖ Sipariş: 10003",
+    "ozet": "102 Bayan Bot · Siyah Süet · 152 adet × 120",
+    "tablolu": false
+   },
+   {
+    "kimlik": "<fisno-001> ‖ Cariye Satış fişi",
+    "ozet": "Bot · 2 renk · 9 çift",
+    "tablolu": false
+   },
+   {
+    "kimlik": "<fisno-001> ‖ Cariden Alış fişi",
+    "ozet": "Deri · Siyah · 11 metre × 12,21",
+    "tablolu": false
+   }
+  ],
+  "tercih": "1"
+ }
+}

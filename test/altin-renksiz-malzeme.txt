@@ -1,0 +1,50 @@
+{
+ "astar": {
+  "eklendiKalem": 2,
+  "kutuEtiketi": "(yok)",
+  "miktarKutulari": [
+   "tek"
+  ],
+  "renkAlani": true,
+  "renkDegeri": "Bej",
+  "renkEtiketi": "Renk"
+ },
+ "deri": {
+  "eklendiKalem": 3,
+  "kutuEtiketi": "(yok)",
+  "miktarKutulari": [],
+  "renkAlani": true,
+  "renkDegeri": "(boş)",
+  "renkEtiketi": "Renk",
+  "siyahYazilinca": {
+   "kutuEtiketi": "(yok)",
+   "miktarKutulari": [
+    "tek"
+   ],
+   "renkAlani": true,
+   "renkDegeri": "Siyah",
+   "renkEtiketi": "Renk"
+  }
+ },
+ "hatalar": [],
+ "varyantlar": {
+  "Astar": [
+   "Bej/(boş): 9"
+  ],
+  "Deri": [
+   "Siyah/(boş): 9",
+   "Taba/(boş): 4"
+  ],
+  "Yapıştırıcı": [
+   "Standart/Standart: 5"
+  ]
+ },
+ "yapistirici": {
+  "eklendiKalem": 1,
+  "kutuEtiketi": "(yok)",
+  "miktarKutulari": [
+   "Standart"
+  ],
+  "renkAlani": false
+ }
+}
