@@ -4,10 +4,11 @@
 // Karar: yeni fişlerde cariye KDV DAHİL tutar; alışta da KDV; açma anahtarı Tanımlar'da (varsayılan kapalı).
 //
 // Kurulum: KDV açık, varsayılan mamul %10, diğer %20. Satış fişi (Müşteri B): Bot 40 × 2 @ 100 (mamul →
-// %10), Deri Siyah × 3 @ 50 (hammadde → %20); sonra Deri satırı %0'a çekiliyor (satır bazında değişim).
+// %10), Deri Siyah × 3 @ 50 (hammadde → kutuda %20 önerilir) satır EKLENİRKEN %0 seçilerek (v1.501.0 —
+// kullanıcı: "KDV satır eklerken girilsin, eklendikten sonra değil"; altın bu yüzden değişti).
 // Ölçülenler:
-//   1. Kalem tablosunda KDV sütunu ve satır oranları (%10, %20).
-//   2. Dip döküm: matrah 350, KDV %10 = 20, %20 = 30, toplam 400 → Deri %0 yapılınca toplam 370.
+//   1. Giriş satırındaki KDV kutusu ürünün oranıyla gelir (Bot 10, Deri 20); eklenen satırda oran yalnız yazı.
+//   2. Dip döküm: matrah 350, KDV %0 = 0, %10 = 20, toplam 370; Ekle'den sonra yeni ürün kendi oranıyla gelir.
 //   3. Kaydedince cari hareketleri: tutar KDV dahil, matrah / oran / KDV ayrı; birim fiyat KDV hariç.
 //   4. KDV KAPALI iken (ayrı açılış) aynı fiş eskisi gibi: KDV sütunu yok, cariye 350.
 //   5. Tanımlar > Firma'dan KDV açılıyor (varsayılan kapalı); cari kartında vergi dairesi / TCKN / il / ilçe
@@ -34,34 +35,41 @@ async function fisKes(kdvAcik, hatalar) {
   await sayfa.locator('[data-cari-fis-ac="Satış"]').first().click();
   await sayfa.waitForTimeout(700);
   await sayfa.locator('input[placeholder="Boşsa sistem üretir"]').fill("SF-KDV");
-  const ekle = async (ad, renk, olcu, miktar, fiyat) => {
+  // KDV SATIR EKLENİRKEN (v1.501.0): ürün seçilince giriş satırındaki KDV kutusu ürünün oranını gösterir;
+  // `kdv` verilirse Ekle'den önce o seçilir. `varsayilanlar`: ürün seçildiğinde kutuda görünen oran.
+  const varsayilanlar = {};
+  const ekle = async (ad, renk, olcu, miktar, fiyat, kdv) => {
     const et = await sayfa.evaluate((a) => { const dl = document.getElementById("fis-urun-listesi"); const o = dl ? [...dl.options].find((x) => x.value.startsWith(a)) : null; return o ? o.value : a; }, ad);
     await sayfa.locator("[data-urun-arama]").first().fill(et);
     await sayfa.waitForTimeout(400);
     if (renk) { const r = sayfa.locator("[data-renk-arama]:visible"); if (await r.count()) { await r.first().fill(renk); await sayfa.waitForTimeout(250); } }
     await sayfa.locator(`[data-kalem-miktar="${olcu}"]:visible`).first().fill(miktar);
     await sayfa.locator("[data-kalem-fiyat]:visible").first().fill(fiyat);
+    const kutu = sayfa.locator("[data-kalem-kdv]:visible");
+    varsayilanlar[ad] = (await kutu.count()) ? await kutu.first().inputValue() : null;
+    if (kdv != null && (await kutu.count())) await kutu.first().selectOption(String(kdv));
     await sayfa.locator("[data-kalemlere-ekle]:visible").first().click();
     await sayfa.waitForTimeout(400);
   };
   await ekle("Bot", "Siyah", "40", "2", "100");
-  await ekle("Deri", "Siyah", "tek", "3", "50");
+  await ekle("Deri", "Siyah", "tek", "3", "50", kdvAcik ? 0 : null);
   const dip = () => sayfa.evaluate(() => {
     const m = document.querySelector("[data-fis-kdv-dokumu]");
     return {
       kdvSutunu: !!document.querySelector("[data-fis-kdv-sutunu]"),
-      satirOranlari: [...document.querySelectorAll("[data-fis-satir-kdv]")].map((s) => s.value),
+      // Eklenmiş satırda oran YALNIZ YAZI (seçici yok — "eklendikten sonra değil").
+      satirOranlari: [...document.querySelectorAll("[data-fis-satir-kdv]")].map((s) => `${s.tagName === "SELECT" ? "seçici" : "yazı"} ${s.innerText.trim()}`),
       dokum: m ? m.innerText.replace(/\s+/g, " ").trim() : null,
     };
   });
   const ilk = await dip();
-  let sifir = null;
-  if (kdvAcik) {
-    const secici = sayfa.locator("[data-fis-satir-kdv]").nth(1);
-    await secici.selectOption("0");
-    await sayfa.waitForTimeout(300);
-    sifir = await dip();
-  }
+  // Ekle'den sonra giriş satırı sıfırlanır: yeni ürün kendi oranıyla gelir (önceki seçim taşınmaz).
+  const sonrakiUrun = kdvAcik ? await (async () => {
+    const et = await sayfa.evaluate(() => { const dl = document.getElementById("fis-urun-listesi"); const o = dl ? [...dl.options].find((x) => x.value.startsWith("Deri")) : null; return o ? o.value : "Deri"; });
+    await sayfa.locator("[data-urun-arama]").first().fill(et);
+    await sayfa.waitForTimeout(400);
+    return sayfa.locator("[data-kalem-kdv]:visible").first().inputValue();
+  })() : null;
   await sayfa.locator("[data-fis-kaydet]").first().click();
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-fis-onay-evet]").first().click();
@@ -70,7 +78,7 @@ async function fisKes(kdvAcik, hatalar) {
   const hareketler = (cari.hareketler || []).filter((h) => h.fisNo === "SF-KDV")
     .map((h) => `${h.urunAd} ${h.miktar} × ${h.birimFiyat} → tutar ${h.tutar}` + (h.kdvTutari != null ? ` (matrah ${h.matrah}, %${h.kdvOrani}, KDV ${h.kdvTutari})` : ""));
   await tarayici.close();
-  return { ilk, sifir, hareketler };
+  return { varsayilanlar, ilk, sonrakiUrun, hareketler };
 }
 
 async function ayarlar(hatalar) {
