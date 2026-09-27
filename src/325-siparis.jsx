@@ -174,6 +174,15 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   const cariUygun = cariler.filter((c) => c.tip === (tip === "Satış" ? "Müşteri" : "Tedarikçi") || c.tip === "Her İkisi");
   const urunUygun = tip === "Satış" ? stok.filter((p) => p.kategori === "Mamul") : stok;
   const seciliUrun = urunUygun.find((p) => p.id === kUrunId);
+  // KDV ORANI SATIR EKLENİRKEN (v1.502.0 — kullanıcı: "siparişte de satır eklerken KDV girilsin"; fişle aynı
+  // kural, v1.501.0). Boş = ürünün oranı; ürün değişince boşa döner. Oran kaleme yazılır ve teslimde kesilen
+  // fişe (081) aynen geçer — siparişten kesilen satış da KDV'li olur, faturası çıkar.
+  const kdvAktif = kdvAktifMi(firmaBilgileri);
+  const [kKdv, setKKdv] = useState("");
+  const kKdvDeger = kKdv === "" ? urunKdvOrani(seciliUrun, firmaBilgileri) : Number(kKdv);
+  useEffect(() => { setKKdv(""); }, [kUrunId]);
+  // Eski (oransız) kalemde teslimin kullanacağı oran: ürününki.
+  const kalemKdv = (k) => kalemKdvOrani(k, urunUygun, firmaBilgileri);
   // Liste artık STOKTAKİ TÜM ambalaj renkleri değil, bu modelin reçetesinde izin verilenler.
   // Kullanıcı reçetede o satır için hangi renkleri işaretlediyse siparişte onlar çıkıyor;
   // işaretlemediyse o hammaddenin tüm renkleri. Reçetede değişken ambalaj yoksa liste boş kalır
@@ -317,6 +326,15 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           </span>
         </Field>
       )}
+      {kdvAktif && (
+        <Field label="KDV">
+          <select value={kKdvDeger} data-siparis-kalem-kdv="1" onChange={(e) => setKKdv(e.target.value)} className="mono"
+            title={kKdv === "" ? "Ürünün oranı (ürün kartı ya da Tanımlar varsayılanı)" : "Bu satır için seçildi"}
+            style={{ ...inputStyle, width: 64, fontSize: 12, padding: "8px 2px" }}>
+            {Array.from(new Set([...KDV_ORANLARI, kKdvDeger])).sort((a, b) => a - b).map((o) => <option key={o} value={o}>%{o}</option>)}
+          </select>
+        </Field>
+      )}
       <Field label={"\u00a0"}>
         <button type="button" data-kalemlere-ekle="1" onClick={kalemEkle} style={{ ...EKLE_DUGMESI, padding: "8px 10px" }}>
           <PackagePlus size={15} /> Ekle
@@ -458,6 +476,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         id: uid("kalem"), urunId: cozum.urun.id, urunAd: cozum.urun.ad, renk: cozum.renk,
         beden: cozum.beden, miktar: 1, karsilanan: 0, birim: cozum.urun.birim || "çift",
         birimFiyat: fiyat, paraBirimi: kParaBirimi,
+        // Barkodla eklenen satır ürünün oranını alır (okuturken oran sorulmaz).
+        ...(kdvAktif ? { kdvOrani: urunKdvOrani(cozum.urun, firmaBilgileri) } : {}),
       }]);
       setBarkodGirisi("");
       showToast(`${cozum.urun.ad} · ${cozum.renk} · ${cozum.beden}: 1 eklendi`);
@@ -474,6 +494,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         id: uid("kalem"), urunId: cozum.urun.id, urunAd: cozum.urun.ad, renk: cozum.renk,
         beden: d.beden, miktar: d.adet, karsilanan: 0, birim: cozum.urun.birim || "çift",
         birimFiyat: fiyat, paraBirimi: kParaBirimi,
+        ...(kdvAktif ? { kdvOrani: urunKdvOrani(cozum.urun, firmaBilgileri) } : {}),
       });
     });
     setKalemler(sonraki);
@@ -514,6 +535,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             // Notlar EKLENİR (eskiler korunur): ikinci "Ekle" miktar artırmak içindir, önce yazılan
             // notu sessizce silmesin.
             ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
+                ...(kdvAktif ? { kdvOrani: kKdvDeger } : {}),
                 ...(notlar.length ? { notlar: notlariTekille([...kalemNotlari(k), ...notlar]), aciklama: undefined } : {}) }
             : k
         );
@@ -524,6 +546,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           {
             id: uid("kalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim,
             renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi,
+            // KDV oranı satırla birlikte yazılır (v1.502.0); eklendikten sonra değişmez.
+            ...(kdvAktif ? { kdvOrani: kKdvDeger } : {}),
             // Kutu tercihi kaleme yazılır. Boşsa alan hiç oluşmaz; "seçildi ama rengi yok" gibi
             // yanıltıcı bir durum kalmasın.
             // urunId tutulmaz: hangi ambalaj ürünü olduğu reçeteden gelir, burada yalnızca renk sapması saklanır.
@@ -1716,7 +1740,8 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                         <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                       ))}
                       <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Birim Fiyat</th>
-                      <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px" }}>Tutar</th>
+                      {kdvAktif && <th data-siparis-kdv-sutunu="1" style={{ fontSize: 11, textAlign: "center", padding: "4px 8px" }}>KDV</th>}
+                      <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px" }}>{kdvAktif ? "Tutar (KDV hariç)" : "Tutar"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1733,7 +1758,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                         <React.Fragment key={g.key}>
                         {araBaslikVar && (
                           <tr data-siparis-renk-ara-baslik={grupRenkBasligi(g)}>
-                            <td colSpan={tumBedenler.length + 5} style={{ padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
+                            <td colSpan={tumBedenler.length + 5 + (kdvAktif ? 1 : 0)} style={{ padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
                               {grupRenkBasligi(g).toLocaleUpperCase("tr-TR")}
                             </td>
                           </tr>
@@ -1879,6 +1904,18 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                               </div>
                             )}
                           </td>
+                          {/* KDV — yalnız gösterilir (oran satır eklenirken seçildi). Oransız eski kalemde ürünün oranı
+                              (teslimde o kullanılacak) soluk yazılır. */}
+                          {kdvAktif && (() => {
+                            const oranlar = Array.from(new Set(g.kalemler.map(kalemKdv)));
+                            const tahmini = g.kalemler.some((k) => typeof k.kdvOrani !== "number");
+                            return (
+                              <td data-siparis-satir-kdv={g.key} className="mono" title={tahmini ? "Ürünün oranı — satırda oran kayıtlı değil" : undefined}
+                                style={{ padding: "6px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined }}>
+                                {oranlar.length === 1 ? `%${oranlar[0]}` : <span style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>}
+                              </td>
+                            );
+                          })()}
                           <td className="mono" style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
                             {grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[g.kalemler[0].paraBirimi || "TRY"] || g.kalemler[0].paraBirimi}
                           </td>
@@ -1921,6 +1958,18 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                           Seçim, form seviyesindeki state'e (kayitParaBirimi/kayitKurlari) yazılır ve
                           "Sipariş Kaydet" ile birlikte GERÇEKTEN siparişe kaydedilir — artık sadece bu
                           ekran açıkken geçerli olan, kaydedince kaybolan geçici bir önizleme DEĞİLDİR. */}
+                      {/* KDV DÖKÜMÜ (v1.502.0): tek para birimindeyse oran bazında KDV ve KDV dahil toplam — teslimde
+                          kesilecek fişin cariye yazacağıyla aynı hesap (satır bazında, kuruşa yuvarlı). */}
+                      {kdvAktif && pbler.length === 1 && (() => {
+                        const oz = kdvOzeti(kalemler.map((k) => ({ matrah: k.miktar * k.birimFiyat, kdvOrani: kalemKdv(k) })));
+                        const yaz = (x) => `${x.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+                        return (
+                          <div data-siparis-kdv-dokumu="1" style={{ fontSize: 12, fontWeight: 600, color: "var(--erp-text-2)", marginTop: 2 }}>
+                            {oz.oranlar.map((o) => <span key={o.oran} style={{ marginLeft: 10 }}>KDV %{o.oran}: <span className="mono">{yaz(o.kdv)}</span></span>)}
+                            <span style={{ marginLeft: 10, color: "var(--erp-text)", fontWeight: 700 }}>KDV dahil: <span className="mono" data-siparis-kdv-dahil="1">{yaz(oz.genelToplam)}</span></span>
+                          </div>
+                        );
+                      })()}
                       <FisToplamCeviriPaneli
                         pbToplamlari={pbToplamlari}
                         kurlar={kurlar}

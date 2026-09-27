@@ -1,0 +1,24 @@
+{
+ "fisOranlari": [
+  "%10",
+  "%20"
+ ],
+ "girisVarsayilan": "10",
+ "hareketler": [
+  "Siyah 40 5 × 400 → tutar 2200 (matrah 2000, %10, KDV 200)",
+  "Taba 40 2 × 400 → tutar 960 (matrah 800, %20, KDV 160)"
+ ],
+ "hatalar": [],
+ "kayit": [
+  "Siyah 40 × 5: oran yok",
+  "Taba 40 × 2: %20"
+ ],
+ "tablo": {
+  "dokum": "KDV %10: 200,00 ₺KDV %20: 160,00 ₺KDV dahil: 3.160,00 ₺",
+  "hucreler": [
+   "yazı %10 (kayıtlı değil)",
+   "yazı %20"
+  ],
+  "sutun": true
+ }
+}
