@@ -134,6 +134,21 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
       </span>
     );
   }
+  // FATURA KİLİDİ (v1.504.0): numara almış faturası olan fiş silinmez — asıl kilit `fisGeriAl`da, burası
+  // "Sil"e basıp reddedilmeden ÖNCE söylüyor (çek kilidiyle aynı yaklaşım).
+  function faturaKilidi(f) {
+    const ft = fisinFaturasi(faturalar, f.fisNo);
+    return ft && ft.faturaNo && ft.durum !== "İptal" ? ft : null;
+  }
+  function faturaKilitRozeti(ft) {
+    return (
+      <span data-fatura-kilidi="1" title={`Faturası kesildi (${ft.faturaNo}) — fiş silinemez; faturayı iptal edin ya da iade faturası kesin`}
+        style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)",
+          background: "var(--erp-panel-2)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-pill)", padding: "2px 8px" }}>
+        <Lock size={10} /> Faturası kesildi
+      </span>
+    );
+  }
   function uretimKilidiVarMi(f, baglanti) {
     return URETIM_FIS_TIPLERI.includes(f.tip) && !!baglanti && baglanti.tip === "uretim";
   }
@@ -383,7 +398,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                             >
                               <Lock size={10} /> Üretimden geri alınır
                             </span>
-                          ) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (
+                          ) : faturaKilidi(f) ? faturaKilitRozeti(faturaKilidi(f)) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (
                             <button
                               data-fis-sil="1"
                               type="button"
@@ -401,7 +416,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                           <span style={{ fontSize: 11, color: "var(--erp-warn)", fontStyle: "italic" }}>
                             ⚠ Bu fiş için kaynak bağlantısı bulunamadı
                           </span>
-                          {onYetimFisTemizle && (cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (
+                          {onYetimFisTemizle && (faturaKilidi(f) ? faturaKilitRozeti(faturaKilidi(f)) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (
                             <button
                               type="button"
                               className="btn-ghost"
