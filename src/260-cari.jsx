@@ -26,12 +26,16 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
 
   function addCari() {
     if (!form.unvan.trim()) return showToast("Cari unvanı gerekli");
+    // Hatalı ya da başka caride kayıtlı vergi no: engellenmez, sorulur (077-vergino — yurt dışı cari,
+    // aynı firmanın hem müşteri hem tedarikçi kaydı gibi bilinçli durumlar olabilir).
+    const vergiUyarilari = vergiNoUyarilari(cariler, form.vergiNo);
+    if (vergiUyarilari.length && !window.confirm(`${vergiUyarilari.join("\n")}\n\nYine de kaydedilsin mi?`)) return;
     const cari = {
       id: uid("cari"),
       unvan: form.unvan.trim(),
       tip: form.tip,
       telefon: form.telefon.trim(),
-      vergiNo: form.vergiNo.trim(),
+      vergiNo: vergiNoKaydedilecek(form.vergiNo),
       adres: form.adres.trim(),
       notlar: form.notlar.trim(),
       paraBirimi: form.paraBirimi || "TRY",
@@ -324,8 +328,9 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
             <Field label="Telefon">
               <input value={form.telefon} onChange={(e) => setForm({ ...form, telefon: e.target.value })} placeholder="05xx xxx xx xx" style={inputStyle} />
             </Field>
-            <Field label="Vergi No">
-              <input value={form.vergiNo} onChange={(e) => setForm({ ...form, vergiNo: e.target.value })} placeholder="Opsiyonel" style={inputStyle} />
+            <Field label="Vergi No / TCKN">
+              <input value={form.vergiNo} onChange={(e) => setForm({ ...form, vergiNo: e.target.value })} placeholder="Opsiyonel" inputMode="numeric" data-yeni-cari-vergi-no="1" style={inputStyle} />
+              <VergiNoUyarisi cariler={cariler} no={form.vergiNo} />
             </Field>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
@@ -623,3 +628,26 @@ function urunRenkGrupla(hareketler) {
   return g;
 }
 
+
+// Vergi no kutusunun altındaki anlık uyarı (yazarken): hatalı numara kırmızı, aynı numaralı cari turuncu,
+// geçerliyse türü (VKN / TCKN) yeşil. Kayıt sırasında aynı kontrol bir kez daha sorulur (addCari).
+function VergiNoUyarisi({ cariler, no, haricId }) {
+  const n = vergiNoNormal(no);
+  if (!n) return null;
+  const k = vergiNoKontrol(n);
+  // Yazma sürerken (10 haneden az) kırmızı göstermek gürültü olur; eksik hane mesajı ancak 10+ hanede.
+  const yaziliyor = /^\d{1,9}$/.test(n);
+  const ayni = ayniVergiNoluCariler(cariler, n, haricId);
+  const satir = { fontSize: 11, marginTop: 3, lineHeight: 1.3 };
+  return (
+    <div data-vergi-no-uyarisi="1">
+      {!k.gecerli && !yaziliyor && <div style={{ ...satir, color: "var(--erp-danger)", fontWeight: 600 }} data-vergi-no-hatali="1">{k.mesaj}</div>}
+      {k.gecerli && <div style={{ ...satir, color: "var(--erp-primary)" }} data-vergi-no-gecerli={k.tur}>✓ {k.tur === "tckn" ? "TC kimlik no" : "Vergi no"} geçerli</div>}
+      {ayni.length > 0 && (
+        <div style={{ ...satir, color: "var(--erp-orange)", fontWeight: 600 }} data-vergi-no-mukerrer="1">
+          Bu numarayla kayıtlı: {ayni.map((c) => `${c.unvan} (${c.tip})`).join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}

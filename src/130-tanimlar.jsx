@@ -795,8 +795,12 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
             <input
               value={(tanimlar.firmaBilgileri || {}).vergiNo || ""}
               onChange={(e) => firmaBilgisiGuncelle("vergiNo", e.target.value)}
+              data-firma-vergi-no="1"
               style={inputStyle}
             />
+            {/* Firmanın kendi numarası da aynı kontrolden geçer (077-vergino); eski kayıtta dairesiyle tek
+                kutuya yazılmışsa "yalnız rakam" uyarısı ayırmayı hatırlatır. */}
+            <VergiNoUyarisi cariler={[]} no={(tanimlar.firmaBilgileri || {}).vergiNo} />
           </Field>
           <Field label="Vergi Dairesi">
             <input

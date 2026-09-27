@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.496.0";
+const SURUM = "1.497.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fislerde KDV (acma anahtari), cari vergi bilgileri";
+const SURUM_NOTU = "Vergi no / TCKN kontrolu ve ayni numarali cari uyarisi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fislerde KDV (acma anahtari), cari vergi bilgileri";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.497.0", tarih: "27.09.2026",
+    eklenen: ["Cari açarken ve cari kartında vergi no / TC kimlik no kontrol basamağıyla doğrulanıyor (yazarken altta uyarı; hatalıysa kaydederken soruluyor)", "Aynı vergi no ya da TCKN ile kayıtlı cari varsa uyarı ve kaydederken soru", "Tanımlar > Firma'da firmanın kendi vergi no'su da kontrol ediliyor"],
+    degisen: ["Geçerli vergi no boşluk/nokta/tire olmadan yalın rakam olarak kaydediliyor"],
+    duzeltilen: [] },
   { surum: "1.496.0", tarih: "27.09.2026",
     eklenen: ["Fişlerde KDV (e-fatura hazırlığı, Aşama 1): Tanımlar > Firma'da 'Fişlerde KDV uygula' anahtarı (varsayılan kapalı) ve mamul/diğer varsayılan oranları; ürün kartında ürüne özel oran; satış ve alış fişinde satır bazında KDV sütunu ve dipte matrah / oran bazında KDV / KDV dahil toplam; cariye KDV dahil tutar, matrah ve KDV ayrı saklanır; fiş çıktısında matrah ve KDV satırları", "Cari kartında vergi dairesi, TCKN, il ve ilçe; firma bilgilerinde vergi dairesi ayrı alan, il/ilçe"],
     degisen: ["Veri denetimi KDV'li fiş satırında tutarı matrah + KDV ile karşılaştırıyor"],
