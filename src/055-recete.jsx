@@ -38,7 +38,7 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
       if (!(anahtar in index)) {
         index[anahtar] = sonuc.length;
         const hm = (stok || []).find((p) => p.id === r.hammaddeUrunId);
-        const varyant = hm ? hm.variants.find((v) => v.renk === etkinRenk && v.beden === r.beden) : null;
+        const varyant = hm ? (hm.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(etkinRenk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(r.beden)) : null;
         sonuc.push({
           hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd,
           renk: etkinRenk, beden: r.beden, birim: hammaddeBirimi(r.hammaddeUrunId, stok, r.birim), proses: r.proses || "",

@@ -36,7 +36,11 @@ const muhasebe = { kurlar: { USD: 40 }, kasalar: [{ id: "k", ad: "Kasa", paraBir
   cekler: [
     { id: "c1", tip: "Alınan", durum: "Portföyde", cekNo: "A1", cariId: "m", tutar: 5000, paraBirimi: "TRY", vadeTarihi: "2026-10-05" },
     { id: "c2", tip: "Verilen", durum: "Portföyde", cekNo: "S1", cariId: "t", tutar: 2000, paraBirimi: "TRY", vadeTarihi: "2026-10-01" },
-    { id: "c3", tip: "Alınan", durum: "Ciro Edildi", cekNo: "A2", cariId: "m", tutar: 9999, paraBirimi: "TRY", vadeTarihi: "2026-10-01" }] };
+    // `gecmis` (27 Eylül): rapor tarihi bugünden önceyse çekin o günkü durumu geçmişten kuruluyor
+    // (`finansCekDurumu`); geçmişsiz çek 27 Eylül'den itibaren "Portföyde" sayılıp nakde giriyordu —
+    // test tarihe bağlıydı. Uygulamada ciro işlemi geçmişe bu satırı zaten yazıyor.
+    { id: "c3", tip: "Alınan", durum: "Ciro Edildi", cekNo: "A2", cariId: "m", tutar: 9999, paraBirimi: "TRY", vadeTarihi: "2026-10-01",
+      gecmis: [{ tarih: "2026-09-15", yeniDurum: "Ciro Edildi" }] }] };
 const n = finansNakitAkisi({ cariler, muhasebe, kurlar: muhasebe.kurlar, tarih: "2026-09-26", varsayilanVade: 30, aralik: "hafta", donemSayisi: 8 });
 const ozetle = (x) => [x.anahtar, x.cekGiris, x.alacak, x.cekCikis, x.borc, x.net, x.kumulatif];
 bekle("nakit: başlangıç kasa", n.baslangic, 1000);

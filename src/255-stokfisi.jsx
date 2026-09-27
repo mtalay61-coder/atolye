@@ -189,7 +189,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // açılan hammadde) renk kutusunu boş gösteriyor, kutu boş kalınca miktar da açılmıyordu. Artık bütün
   // renk değerleri yer tutucuysa (`olcuGoster` boş) ya da hiç yoksa renk sorulmaz; renk kendiliğinden
   // seçilir (varyant yoksa "Standart" — fiş yazımı eksik varyantı kendisi açıyor, bkz. 078-fisyaz).
-  const renksizUrun = !!seciliUrun && renkSecenekleri.every((r) => !olcuGoster(r));
+  const renksizUrun = urunRenksizMi(seciliUrun);   // ortak kural (012, v1.493.0)
   // Boş renk "Standart" olarak seçilir: boş dize "seçilmedi" sayılıyor ve miktar kutularını kapatıyordu;
   // varyant eşleşmesi `stokAnahtarNrm` ile ("" = "Standart").
   const tekRenk = renksizUrun ? "Standart" : (renkSecenekleri.length === 1 ? renkSecenekleri[0] : "");

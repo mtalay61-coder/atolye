@@ -43,7 +43,9 @@ const rezervasyonKalan = (r) => Math.max(0, (r.miktar || 0) - (r.tuketilen || 0)
 //          yoldaToplam, acikToplam, serbestStok }
 function rezervasyonKarsilama(urunId, renk, beden, tumSiparisler, stokRez, stokListesi) {
   const urun = (stokListesi || []).find((p) => p.id === urunId);
-  const varyant = urun ? (urun.variants || []).find((v) => v.renk === renk && v.beden === beden) : null;
+  // `stokAnahtarNrm` (v1.493.0): reçete renksiz hammaddeyi "Standart" yazar, hammaddenin kaydı ""
+  // olabilir — birebir karşılaştırmada stok 0 görünüyordu (MRP 230, planlama 335, reçete 055 aynı).
+  const varyant = urun ? (urun.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(beden)) : null;
   const stok = varyant ? varyant.miktar : 0;
 
   // Talepler: stok rezervasyon defteri (üretim kararında yazılan tam ihtiyaç).
