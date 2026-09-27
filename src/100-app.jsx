@@ -153,14 +153,30 @@ export default function AtolyeERP() {
   // React durumu olmadan: durumla yapılsa her ölçüm yeniden çizim → yeniden ölçüm döngüsü olurdu.
   const ustMenuRef = useRef(null);
   const ustMenuNavRef = useRef(null);
+  // SON KADEME HATIRLANIYOR (v1.492.0). Kullanıcı: "Yenileyince sekmeler açılıp daralıyor." İlk
+  // ölçüm DM Sans inmeden, dar yedek yazı tipiyle yapılıyordu: yazılar sığıyor → açık çiziliyor, yazı
+  // tipi gelince taşıyor → simgeye daralıyor. Yazı tipi hazır olana kadar ölçüm son bilinen kademeden
+  // AŞAĞI inmiyor (yalnız daha sıkışık olabilir); hazır olunca tam ölçülüp kademe saklanıyor.
+  const ustMenuKademeRef = useRef((() => {
+    try { return Math.min(4, Math.max(0, parseInt(window.localStorage.getItem("ustMenu:kademe"), 10) || 0)); } catch (e) { return 0; }
+  })());
   const ustMenuSigdir = useCallback(() => {
     const menu = ustMenuRef.current, nav = ustMenuNavRef.current;
     if (!menu || !nav) return;
-    for (let k = 0; k <= 4; k++) {
+    // Önce yerleşimi zorla: yazı tipi indirmesi ilk yerleşim hesabında başlar; ondan önce sorulursa
+    // `status` henüz "loaded" döner (bekleyen yok) ve yedek yazı tipiyle ölçülürdü.
+    void nav.scrollWidth;
+    const yaziHazir = !document.fonts || document.fonts.status === "loaded";
+    let secilen = 4;
+    for (let k = yaziHazir ? 0 : ustMenuKademeRef.current; k <= 4; k++) {
       menu.classList.remove("sik-1", "sik-2", "sik-3", "sik-4");
       if (k > 0) menu.classList.add(`sik-${k}`);
       // Taşma: içerik, ayrılan alandan geniş. (overflow görünür olsa da scrollWidth taşanı sayar.)
-      if (nav.scrollWidth <= nav.clientWidth + 1) return;
+      if (nav.scrollWidth <= nav.clientWidth + 1) { secilen = k; break; }
+    }
+    if (yaziHazir && secilen !== ustMenuKademeRef.current) {
+      ustMenuKademeRef.current = secilen;
+      try { window.localStorage.setItem("ustMenu:kademe", String(secilen)); } catch (e) { /* özel sekme */ }
     }
   }, []);
   // Her çizimden sonra (etkin sekme kalınlaşınca, yetkiyle öğe eklenince genişlik değişir), ekran
@@ -213,7 +229,26 @@ export default function AtolyeERP() {
   const MODULLER = ["tanimlar", "stok", "uretim", "siparis", "cari", "fisler", "muhasebe"];
   const MODUL_ADLARI = { tanimlar: "Tanımlar", stok: "Stok", uretim: "Üretim", siparis: "Sipariş", cari: "Cari", fisler: "Fişler", muhasebe: "Muhasebe" };
 
-  const [tanimlar, setTanimlar] = useState({ renkler: [], bedenler: [], birimler: BIRIMLER.map((ad) => ({ id: `birim-${ad}`, ad })), prosesler: [], asortiler: [], ozelKodAlanlari: [], renkKombinasyonlari: [], hammaddeTipleri: [], araProsesler: [], kullanicilar: [], firmaBilgileri: { logo: VARSAYILAN_LOGO, unvan: "", telefon: "", adres: "", email: "", website: "", vergiNo: "" }, girisAktifMi: false });
+  // AÇILIŞTA SON GÖRÜLEN LOGO (v1.492.0). Kullanıcı: "Yenileyince kısa bir süre eski logo görünüyor,
+  // sol üst logo yerinde." Tanımlar depodan birkaç yüz ms'de geliyor; o arada başlangıç değerindeki
+  // VARSAYILAN_LOGO çiziliyordu. Firma logosu ve unvanı bu cihazda saklanıyor (`firma:gorunum`,
+  // aşağıdaki efekt yazar) ve başlangıç değeri oradan; hiç saklanmamışsa (ilk açılış) eskisi gibi.
+  const [tanimlar, setTanimlar] = useState(() => {
+    let onbellek = null;
+    try { onbellek = JSON.parse(window.localStorage.getItem("firma:gorunum") || "null"); } catch (e) { /* özel sekme */ }
+    return { renkler: [], bedenler: [], birimler: BIRIMLER.map((ad) => ({ id: `birim-${ad}`, ad })), prosesler: [], asortiler: [], ozelKodAlanlari: [], renkKombinasyonlari: [], hammaddeTipleri: [], araProsesler: [], kullanicilar: [],
+      firmaBilgileri: { logo: onbellek ? (onbellek.logo || "") : VARSAYILAN_LOGO, unvan: (onbellek && onbellek.unvan) || "", telefon: "", adres: "", email: "", website: "", vergiNo: "" }, girisAktifMi: false };
+  });
+  // Görünen logo/unvan değişince cihazda sakla (bir sonraki açılışın ilk karesi için). Büyük logo
+  // (≈1,5 MB üstü) saklanmaz: localStorage kotası küçük, başka tercihler de orada.
+  const firmaLogosu = (tanimlar.firmaBilgileri || {}).logo || "";
+  const firmaUnvani = (tanimlar.firmaBilgileri || {}).unvan || "";
+  useEffect(() => {
+    try {
+      if (firmaLogosu.length > 1500000) window.localStorage.removeItem("firma:gorunum");
+      else window.localStorage.setItem("firma:gorunum", JSON.stringify({ logo: firmaLogosu, unvan: firmaUnvani }));
+    } catch (e) { /* kota dolu / özel sekme: açılışta varsayılan görünür, iş etkilenmez */ }
+  }, [firmaLogosu, firmaUnvani]);
   // STOK MİKTARI TÜRETİLİR (16 Eylül, Parça 1). `setStok` artık doğrudan state'i yazmıyor: gelen
   // liste önce `stokMiktarlariniHesapla` ile hareketlerden yeniden hesaplanıyor. Böylece
   // `variants[].miktar` ile `hareketler[]` ayrışamaz — tek sayı var, kaynağı hareketler.

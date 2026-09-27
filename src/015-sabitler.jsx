@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.491.0";
+const SURUM = "1.492.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Sipariste fis duzeni; yenilemede eski tema ve titreme giderildi";
+const SURUM_NOTU = "Yenilemede eski logo ve menunun acilip daralmasi giderildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Sipariste fis duzeni; yenilemede eski tema ve titreme gideri
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.492.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Yenileyince sol üstte bir an varsayılan (eski) logo görünüyordu: son görülen firma logosu ve adı cihazda saklanıyor, açılış ilk kareden onlarla", "Yenileyince üst menü sekmeleri açılıp daralıyordu (yazı tipi inmeden ölçülüyordu): son sığdırma kademesi hatırlanıyor, yazı tipi gelmeden daha açığa geçilmiyor"] },
   { surum: "1.491.0", tarih: "27.09.2026",
     eklenen: ["Sipariş formunda beden kutularının yanında toplam ve tutar"],
     degisen: ["Sipariş formu fişle aynı düzende: ürün/renk, ardından asorti (dar) → bedenler → toplam → birim fiyat → P.B. → tutar → Ekle; geniş ekranda tek satır, telefonda ürün/renk üstte; proses notları altında"],

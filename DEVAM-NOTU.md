@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.491.0** · 27 Eylül 2026
+Son sürüm: **v1.492.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.491.0): siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.492.0): yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6271,6 +6271,19 @@ geliyor gibi, alt tarafta titreme oluyor, onu da kontrol edelim."
   Ayrıca üst menü `Grup` render içinde tanımlı bileşendi, `<Grup>` her çizimde yeni tür → 4 grup her
   veri yüklemesinde sökülüp kuruluyordu; işlev çağrısına çevrildi. Kalan küçük kaymalar test ortamına
   özgü (bulut şeridi).
+
+**v1.492.0.** Kullanıcı: "Eski renkler gitti; şu anda sadece yenileyince kısa bir süre eski logo görünüyor
+sol üst logo yerinde ve sekmeler açılıp daralıyor." (ardından: "Sorun devam ediyor" — v1.491 yayındaydı,
+bu düzeltme henüz yayınlanmamıştı.)
+- **Logo:** `tanimlar` başlangıç değerinde `firmaBilgileri.logo = VARSAYILAN_LOGO` vardı; depo yüklenene
+  kadar (~250 kare) o çiziliyordu. Firma logosu + unvanı `localStorage["firma:gorunum"]`'da (efekt yazar,
+  1,5 MB üstü logo saklanmaz); başlangıç değeri oradan. Ölçüm (400 ms geciktirilmiş depo, yenileme):
+  önce 254 kare varsayılan → şimdi ilk kareden firma logosu.
+- **Menü:** `ustMenuSigdir` DM Sans inmeden yedek yazı tipiyle ölçüyordu → sığıyor/açık, yazı tipi
+  gelince taşıyor/daralıyor. Son kademe `localStorage["ustMenu:kademe"]`; yazı tipi hazır değilken ölçüm
+  o kademeden AŞAĞI inmiyor, hazır olunca tam ölçüp saklıyor. `status` okunmadan önce `nav.scrollWidth`
+  ile yerleşim zorlanıyor (indirme ilk yerleşimde başlar). Test ortamında Google Fonts kapalı olduğu için
+  yazı tipi gecikmesi burada birebir üretilemedi; kademenin yenilemede sabit kaldığı ölçüldü.
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine
