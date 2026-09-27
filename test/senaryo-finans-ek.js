@@ -56,6 +56,10 @@ async function calistir() {
   t["stokrez:data"] = "[]";
 
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
+  // SAAT DE 26.09.2026'YA SABİT (27 Eylül): yalnız "tarih itibarıyla" kutusu sabitti; rapor seçilen
+  // tarihi "bugün" ile karşılaştırıp (`bugunMu`) geçmiş tarihte stoğu hareketlerden yeniden kuruyor.
+  // Ertesi gün aynı veri "geçmiş tarih" kipine düşüp Stoklar farklı çıkıyordu — test tarihe bağlıydı.
+  await sayfa.clock.setFixedTime(new Date("2026-09-26T12:00:00"));
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);

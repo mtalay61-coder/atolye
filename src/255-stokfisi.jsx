@@ -161,6 +161,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // Ürün arama kutusunun metni (seçili ürünün etiketiyle eşitleniyor).
   const [kUrunArama, setKUrunArama] = useState("");
   const [kFiyat, setKFiyat] = useState("");
+  // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her ölçü kendi kural fiyatını alır (`olcuKuralFiyati`);
+  // yazıldıysa kullanıcının fiyatı bütün ölçülere — onun kararı kurala üstün.
+  const [kFiyatElle, setKFiyatElle] = useState(false);
   // KALEM PARA BİRİMİ — fiyatın hemen yanında seçilir. Eskiden yalnızca üstteki kayıt para
   // biriminden geliyordu: dolar fiyatlı bir kalem eklemek için önce yukarı çıkıp fişin para
   // birimini değiştirmek, sonra geri inmek gerekiyordu. Fiyat ile para birimi tek bir bilgidir;
@@ -231,7 +234,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     const cevrim = fiyatFiseCevir(bulunan.fiyat, bulunan.paraBirimi, kParaBirimi, birlesikKurlar);
     if (cevrim.cevrilemedi) showToast && showToast(`${bulunan.paraBirimi} → ${kParaBirimi} kuru yok — fiyat çevrilmedi`);
     setKFiyat(cevrim.fiyat ? String(cevrim.fiyat) : "");
+    setKFiyatElle(false);
   }
+  const kuralFiyati = (renk, beden) => olcuKuralFiyati(seciliUrun, renk, beden, cari ? cari.id : "", tip, cariler, kParaBirimi, birlesikKurlar);
+  // Renk seçilince (fiyat elle yazılmadıysa) renk kuralı da görünsün: "Renk: Siyah → 0,18 $" gibi.
+  useEffect(() => {
+    if (!seciliUrun || !kRenk || kFiyatElle) return;
+    const f = kuralFiyati(kRenk, null).fiyat;
+    setKFiyat(f ? String(f) : "");
+  }, [kRenk]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   function stokMiktari(renk, beden) {
     if (!seciliUrun) return 0;
@@ -243,6 +254,12 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   function kalemEkle() {
     if (!seciliUrun || !kRenk) return showToast("Ürün ve renk seçin");
     const fiyat = parseFloat(kFiyat) || 0;
+    // Ölçü başına fiyat: elle yazıldıysa o, yazılmadıysa ölçünün kuralı (yoksa kutudaki fiyat).
+    const olcuFiyati = (b) => {
+      if (kFiyatElle) return fiyat;
+      const k = kuralFiyati(kRenk, b);
+      return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
+    };
     // GÖSTERİLEN ölçüler üzerinden: çip seçimi kaldırılmış bir ölçünün eski miktarı kalemlere
     // sızmasın (ekranda görünmeyen bir satır eklenmesi, fişi sessizce bozardı).
     const eklenecekler = gosterilecekOlculer
@@ -258,12 +275,12 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden);
       if (i >= 0) {
         birlesen++;
-        sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + x.miktar), birimFiyat: fiyat, paraBirimi: kParaBirimi } : k));
+        sonraki = sonraki.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + x.miktar), birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi } : k));
       } else {
         yeni++;
         sonraki = [...sonraki, {
           id: uid("fkalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim || "",
-          renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: fiyat,
+          renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: olcuFiyati(x.beden),
           // Satır kendi para birimini TAŞIR. Fişin ayarına bakıp sonradan çözmek, o ayar
           // değişince eski satırların anlamının da değişmesi demekti.
           paraBirimi: kParaBirimi,
@@ -275,7 +292,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     // kalem başka ürün olabilir"). `kUrunId` sıfırlanıyordu ama ARAMA KUTUSUNUN METNİ ve seçili
     // ölçü kalıyordu: ekranda hâlâ eski ürünün adı yazıyor, altında renk alanı yok — kullanıcı
     // "ürün seçili mi değil mi" diye bakmak zorunda kalıyordu.
-    setKUrunId(""); setKUrunArama(""); setKRenk(""); setKMiktarlar({}); setKSeciliOlcu(""); setKFiyat("");
+    setKUrunId(""); setKUrunArama(""); setKRenk(""); setKMiktarlar({}); setKSeciliOlcu(""); setKFiyat(""); setKFiyatElle(false);
     if (birlesen > 0 && yeni > 0) showToast(`${yeni} kalem eklendi, ${birlesen} kalem birleştirildi`);
     else if (birlesen > 0) showToast(`${birlesen} kalem var olan satırla birleştirildi`);
     else showToast(`${yeni} kalem eklendi`);
@@ -667,6 +684,15 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                       style={{ width: 52, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                     />
                     <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>stok: {stokMiktari(kRenk, b)}</span>
+                    {/* ÖLÇÜNÜN KURAL FİYATI (v1.482.0). Kullanıcı: "Bedenlere fiyat girildi ama satışta
+                        çekmedi." Tek fiyat kutusu yalnız ürün/renk fiyatını gösteriyordu; beden fiyatı
+                        kalem eklenirken ölçü ölçü uygulanıyor, burada da görünsün ki "hangi fiyattan
+                        yazılacak" sorusu kalmasın. Elle fiyat yazılınca ipucu kalkar (elle yazılan geçer). */}
+                    {!kFiyatElle && (() => {
+                      const k = kuralFiyati(kRenk, b);
+                      if (!k.kaynak || k.kaynak === "Genel" || !(k.fiyat > 0) || String(k.fiyat) === String(kFiyat)) return null;
+                      return <span className="mono" data-olcu-fiyat={b || "tek"} title={`Fiyatlandırma: ${k.kaynak}`} style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-accent)" }}>{fiyatYazi(k.fiyat)} {kPbSembol}</span>;
+                    })()}
                   </span>
                 ))}
               </div>
@@ -675,7 +701,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           <Field label={`Birim Fiyat (${kPbSembol})${seciliUrun && seciliUrun.birim ? ` / ${seciliUrun.birim}` : ""}`}>
             {/* step="any": reçete miktarları gibi kesirli birim fiyatlar (0,0125) `0.01` adımında
                 reddediliyordu. */}
-            <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => setKFiyat(e.target.value)} style={{ ...inputStyle, width: 120, width: 110 }} />
+            <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 110 }} />
           </Field>
           {/* Para birimi FİYATIN YANINDA: ikisi tek bir bilgidir. */}
           <Field label="P.B.">
@@ -1117,7 +1143,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "right" }}>
                           {alt.kalemler.length === 0 ? "—" : fiyatlarFarkli ? (
-                            <span title="Bu gruptaki bedenler farklı birim fiyatta — hücreleri ayrı ayrı düzenleyin" style={{ fontSize: 10, color: "var(--erp-warn)" }}>farklı</span>
+                            // Beden beden döküm (v1.482.0): yalnız "farklı" yazmak, beden fiyatlarının
+                            // gerçekten çekilip çekilmediğini göstermiyordu.
+                            <span data-fis-satir-fiyat-farkli={alt.key} title="Bu gruptaki bedenler farklı birim fiyatta — hücreleri ayrı ayrı düzenleyin" className="mono" style={{ fontSize: 10, color: "var(--erp-warn)", whiteSpace: "normal" }}>
+                              {alt.kalemler.map((k) => `${olcuGoster(k.beden) || "—"}: ${fiyatYazi(k.birimFiyat)}`).join(" · ")}
+                            </span>
                           ) : (
                             <input
                               key={`${alt.key}-${alt.kalemler[0].birimFiyat}`}

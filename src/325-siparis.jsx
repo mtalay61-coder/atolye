@@ -129,6 +129,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   }, [hedefSiparisId]);
   const [kFiyat, setKFiyat] = useState("");
   const [kParaBirimi, setKParaBirimi] = useState("TRY");
+  // Fiyat ELLE mi yazıldı (v1.482.0)? Yazılmadıysa her beden kendi kural fiyatını alır; yazıldıysa
+  // kullanıcının fiyatı bütün bedenlere. Eskiden kutudaki TEK fiyat bütün bedenlere yazılıyordu:
+  // Fiyatlandırma'da bedenlere ayrı fiyat girilmiş üründe beden fiyatları hiç çekilmiyordu.
+  const [kFiyatElle, setKFiyatElle] = useState(false);
 
   // DEPO'DAN GELEN ALIŞ TASLAĞI — Depo matrisindeki "Alış Fişi" butonu buraya düşer.
   // Yeni bir ekran tasarlanmadı: var olan alış formu, kalem girişi ÖN DOLGULU açılıyor.
@@ -267,8 +271,10 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     setKRenk(""); setKMiktarlar({});
     const p = urunUygun.find((u) => u.id === urunId);
     if (p) {
-      const { fiyat } = fiyatBul(p, null, null, cariId, tip, cariler);
+      // Kuralın kendi para birimi (v1.481.0) kalemin birimine çevrilir — dolar kuralı TL diye yazılmasın.
+      const { fiyat } = olcuKuralFiyati(p, null, null, cariId, tip, cariler, kParaBirimi, kurlar);
       setKFiyat(String(fiyat || ""));
+      setKFiyatElle(false);
 
       // ALIŞ siparişinde: ürünün varsayılan tedarikçisi henüz cari seçilmemişse otomatik doldurulur.
       // Zaten bir cari seçiliyse DOKUNULMAZ — kullanıcının bilinçli seçimini ezmek, farklı bir
@@ -356,6 +362,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   function kalemEkle() {
     if (!seciliUrun || !kRenk) return showToast("Ürün ve renk seçin");
     const fiyat = parseFloat(kFiyat) || 0;
+    // Beden başına fiyat (v1.482.0): elle yazıldıysa o, yazılmadıysa bedenin kuralı (yoksa kutudaki).
+    const olcuFiyati = (b) => {
+      if (kFiyatElle) return fiyat;
+      const k = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+      return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
+    };
     const notlar = notlariTekille([...kNotlar, ...(kNotTaslak ? [kNotTaslak] : [])]);
     const eklenecekler = bedenSecenekleri
       .map((b) => ({ beden: b, miktar: parseFloat(kMiktarlar[b]) || 0 }))
@@ -380,7 +392,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           i === mevcutIndex
             // Notlar EKLENİR (eskiler korunur): ikinci "Ekle" miktar artırmak içindir, önce yazılan
             // notu sessizce silmesin.
-            ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
+            ? { ...k, miktar: k.miktar + x.miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi, ambalaj: kAmbalajRenk ? { renk: kAmbalajRenk } : k.ambalaj,
                 ...(notlar.length ? { notlar: notlariTekille([...kalemNotlari(k), ...notlar]), aciklama: undefined } : {}) }
             : k
         );
@@ -390,7 +402,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           ...sonrakiKalemler,
           {
             id: uid("kalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim,
-            renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi,
+            renk: kRenk, beden: x.beden, miktar: x.miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi,
             // Kutu tercihi kaleme yazılır. Boşsa alan hiç oluşmaz; "seçildi ama rengi yok" gibi
             // yanıltıcı bir durum kalmasın.
             // urunId tutulmaz: hangi ambalaj ürünü olduğu reçeteden gelir, burada yalnızca renk sapması saklanır.
@@ -402,7 +414,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
       }
     });
     setKalemler(sonrakiKalemler);
-    setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1);
+    setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKFiyatElle(false); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1);
     // Kullanıcıya AÇIKÇA geri bildirim: eğer birleştirme olduysa bunu belirtiyoruz — böylece "hiçbir şey
     // olmadı" sanıp tekrar tıklama isteği duyulmaz, tam tersi netlik sağlanır.
     if (birlestirilenSayisi > 0 && eklenenSayisi > 0) {
@@ -1485,7 +1497,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               <div style={{ flex: "0.8 1 140px", minWidth: 0 }}>
               <Field label={<span title="Bu kalemin bütün ölçüleri için">Birim Fiyat</span>}>
                 <div style={{ display: "flex", gap: 4 }}>
-                  <input type="number" step="0.01" min="0" value={kFiyat} onChange={(e) => setKFiyat(e.target.value)}
+                  <input type="number" step="0.01" min="0" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }}
                     data-siparis-birim-fiyat="1" placeholder="0"
                     style={{ ...inputStyle, flex: "1 1 60px", minWidth: 50, fontSize: 13, padding: "8px 6px" }} />
                   <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)}
@@ -1604,21 +1616,27 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                     </tr>
                     <tr>
                       {bedenSecenekleri.map((b) => {
-                        const { fiyat: bedenFiyati, kaynak: bedenKaynak, paraBirimi: bedenPb } = fiyatBul(seciliUrun, kRenk, b, cariId, tip, cariler);
-                        const bedenSembol = PARA_SEMBOLU[bedenPb] || bedenPb || "₺";   // kuralın kendi birimi (v1.481.0)
+                        // v1.482.0: fiyat kalemin birimine ÇEVRİLMİŞ gösteriliyor ve elle fiyat
+                        // yazılmadıysa kalem eklenirken bu beden BU fiyatı alır (ipucu değil, uygulanan).
+                        const { fiyat: bedenFiyati, kaynak: bedenKaynak } = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+                        const bedenPb = kParaBirimi;
+                        const bedenSembol = PARA_SEMBOLU[bedenPb] || bedenPb || "₺";
                         const girilenFiyat = parseFloat(kFiyat) || 0;
-                        const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati !== girilenFiyat;
+                        const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati > 0 && bedenFiyati !== girilenFiyat;
                         return (
                           <td key={b} style={{ padding: "2px 8px", textAlign: "center" }}>
                             {fiyatFarkli && (
                               <button
                                 type="button"
-                                title={`${bedenKaynak} kuralına göre bu beden için özel fiyat: ${bedenFiyati} ${bedenSembol}. Uygulamak için tıklayın.`}
-                                onClick={() => { setKFiyat(String(bedenFiyati)); if (bedenPb) setKParaBirimi(bedenPb); }}
+                                data-olcu-fiyat={b}
+                                title={kFiyatElle
+                                  ? `${bedenKaynak} kuralına göre bu bedenin fiyatı ${bedenFiyati} ${bedenSembol}; elle fiyat yazıldığı için o kullanılacak. Kurala dönmek için tıklayın.`
+                                  : `${bedenKaynak} kuralı — bu beden ${bedenFiyati} ${bedenSembol} fiyatla eklenecek.`}
+                                onClick={() => { setKFiyat(""); setKFiyatElle(false); }}
                                 className="mono"
                                 style={{ fontSize: 9, fontWeight: 700, color: "#8A6A2E", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                               >
-                                özel: {bedenFiyati}{bedenSembol}
+                                {kFiyatElle ? "özel: " : ""}{fiyatYazi(bedenFiyati)}{bedenSembol}
                               </button>
                             )}
                           </td>

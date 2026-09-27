@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.481.0";
-const SURUM_TARIHI = "2026-09-26";
-const SURUM_NOTU = "Fiyatlandirmada para birimi ve virgullu fiyat girisi";
+const SURUM = "1.482.0";
+const SURUM_TARIHI = "2026-09-27";
+const SURUM_NOTU = "Beden fiyatlari fis ve siparise cekiliyor, fiyatlandirma kutulari kayitli fiyati gosteriyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fiyatlandirmada para birimi ve virgullu fiyat girisi";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.482.0", tarih: "27.09.2026",
+    eklenen: ["Fiş formunda miktar kutularının altında her bedenin fiyatlandırma fiyatı; fiş satırında 'farklı' yerine beden beden fiyat dökümü", "Fiyatlandırma matrisinde kilitli hücrelerde ve boş kutularda satışta uygulanacak fiyat (gri) ve kaynağı"],
+    degisen: ["Fiyatlandırmada 'tek fiyat' kutuları kayıtlı kuraldan açılıyor: beden fiyatı olan beden işaretli, renk fiyatı olmayan renk (ölçü fiyatı varken) kapalı; kutusu kapalı ama kayıtlı kural 'geçerli' diye görünüyor", "Öncelik açıklaması: renk fiyatı o rengin bütün bedenlerinde geçer"],
+    duzeltilen: ["Bedenlere girilen fiyatlar satış/alış fişine ve siparişe çekilmiyordu (tek fiyat bütün bedenlere yazılıyordu); elle fiyat yazılmadıkça her beden kendi fiyatını alıyor", "Siparişte ürün seçilince kuralın para birimi kalemin birimine çevriliyor"] },
   { surum: "1.481.0", tarih: "26.09.2026",
     eklenen: ["Ürün kartı ▸ Fiyatlandırma: para birimi seçimi (₺/$/€, varsayılan kartın alış/satış birimi); özel fiyatlar kendi birimiyle kaydediliyor"],
     degisen: ["Fiyat kutuları geniş, virgülle yazılıyor (0,18); yanında fiyatın birimi", "Kural listesi, fiyat geçmişi, başlık ve siparişteki 'özel' ipucu doğru para birimini gösteriyor"],

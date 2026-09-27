@@ -1,0 +1,37 @@
+{
+ "elle": {
+  "ipuclari": {
+   "40": "21 ₺ (Fiyatlandırma: Beden)",
+   "41": "22 ₺ (Fiyatlandırma: Beden)",
+   "42": "23 ₺ (Fiyatlandırma: Beden)"
+  },
+  "satir": "tek: 30"
+ },
+ "fiyatlandirmaEkrani": {
+  "bedenler": {
+   "40": "kutu 21",
+   "41": "kutu 22",
+   "42": "kutu 23"
+  },
+  "hucreIpuclari": [
+   "40: 21 ₺",
+   "41: 22 ₺",
+   "42: 23 ₺"
+  ],
+  "renkKilitliHucreler": [
+   "Siyah|40: 21 ₺ (Satışta uygulanan: Beden)",
+   "Siyah|41: 22 ₺ (Satışta uygulanan: Beden)",
+   "Siyah|42: 23 ₺ (Satışta uygulanan: Beden)"
+  ],
+  "renkTekFiyat": "kapalı"
+ },
+ "hatalar": [],
+ "kuraldan": {
+  "ipuclari": {
+   "40": "21 ₺ (Fiyatlandırma: Beden)",
+   "41": "22 ₺ (Fiyatlandırma: Beden)",
+   "42": "23 ₺ (Fiyatlandırma: Beden)"
+  },
+  "satir": "farklı: 40: 21 · 41: 22 · 42: 23"
+ }
+}
