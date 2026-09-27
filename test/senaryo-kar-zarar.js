@@ -29,15 +29,20 @@ function tohum({ kartsiz } = {}) {
   const bot = st.find((p) => p.id === "u2");
   bot.alisFiyati = 400;
   bot.hareketler = [...(bot.hareketler || []),
-    { id: "hs1", tarih: BUGUN, renk: "Siyah", beden: "41", miktar: -10, kaynak: "Satış", birimFiyat: 900, paraBirimi: "TRY", fisNo: "SF-0918001" }];
+    { id: "hs1", tarih: BUGUN, renk: "Siyah", beden: "41", miktar: -10, kaynak: "Satış", fisNo: "SF-0918001" }];
   t["stok:items"] = JSON.stringify(st);
 
   // Gider: 12.000 kira (genel yönetim) + 8.000 personel (üretim).
   // ÜRETİM İŞÇİLİĞİ (20 Eylül): `-İşçilik` fişli cari borcu, malın maliyetine girer.
+  // GERÇEK VERİ BİÇİMİ (v1.498.0): `fisYaz` fiyatı stok hareketine DEĞİL, aynı kimlikli cari hareketine
+  // yazıyor. Tohum eskiden fiyatı stok hareketine koyuyordu — rapor bu yüzden testte doğru, gerçekte 0 çıktı.
   t["cari:data"] = JSON.stringify(JSON.parse(TOHUM["cari:data"]).map((c) => (c.id === "c3" || c.tip === "Personel")
     ? { ...c, hareketler: [{ id: "hi1", tarih: BUGUN, yon: "Borç", tutar: 1500, paraBirimi: "TRY",
         fisNo: "10001-Kesim-İşçilik", aciklama: "Kesim işçilik ücreti", defter: "Genel" }] }
-    : c));
+    : c.id === "c2"
+      ? { ...c, hareketler: [{ id: "hs1", tarih: BUGUN, yon: "Borç", tutar: 9000, paraBirimi: "TRY", fisNo: "SF-0918001",
+          urunAd: "Bot", renk: "Siyah", beden: "41", miktar: 10, birimFiyat: 900, defter: "Genel" }] }
+      : c));
   t["muhasebe:data"] = JSON.stringify({
     hesaplar: [], bankalar: [], cekler: [], defter: [], kurlar: { USD: 48, EUR: 56 },
     kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: kartsiz ? [] : [
