@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.492.0";
+const SURUM = "1.493.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Yenilemede eski logo ve menunun acilip daralmasi giderildi";
+const SURUM_NOTU = "Renksiz/bedensiz hammadde receteye eklenebiliyor; tek kural";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Yenilemede eski logo ve menunun acilip daralmasi giderildi";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.493.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: ["Renksiz/bedensiz ürün kararı tek yerde: bütün renk (beden) değerleri boş ya da yer tutucuysa ya da hiç yoksa ürün renksiz (bedensiz); fiş, sipariş, reçete ve stok aynı kuralı kullanıyor"],
+    duzeltilen: ["Reçetede renksiz hammadde (renk/beden boş kayıtlı ya da hiç varyantı olmayan) eklenemiyordu: boş renk kutuları, 'eşleşmedi' uyarısı ve beden eşleştirmesi çıkıyordu; artık renk eşleştirmesi ve ambalaj sorusu yok, mamul renk başına tek satır yazılıyor", "Reçete, rezervasyon, MRP ve planlamada renksiz hammaddenin stoğu (boş kayıtlı varyant) 0 görünebiliyordu", "Stokta gerçek renk/beden eklenince boş kayıtlı yer tutucu satır da kaldırılıyor (üzerinde iş yoksa)"] },
   { surum: "1.492.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: [],

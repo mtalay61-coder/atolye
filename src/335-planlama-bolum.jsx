@@ -112,7 +112,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
   const formAcikMi = Object.values(kalemTipleri).some((t) => t);
 
   function mevcutStok(renk, beden) {
-    return urun ? ((urun.variants.find((v) => v.renk === renk && v.beden === beden) || {}).miktar || 0) : 0;
+    return urun ? (((urun.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(beden)) || {}).miktar || 0) : 0;
   }
 
   function kalan(k) {

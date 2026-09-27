@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.492.0** · 27 Eylül 2026
+Son sürüm: **v1.493.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.492.0): yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.493.0): renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6284,6 +6284,32 @@ bu düzeltme henüz yayınlanmamıştı.)
   o kademeden AŞAĞI inmiyor, hazır olunca tam ölçüp saklıyor. `status` okunmadan önce `nav.scrollWidth`
   ile yerleşim zorlanıyor (indirme ilk yerleşimde başlar). Test ortamında Google Fonts kapalı olduğu için
   yazı tipi gecikmesi burada birebir üretilemedi; kademenin yenilemede sabit kaldığı ölçüldü.
+
+**v1.493.0 — RENKSİZ/BEDENSİZ TEK KURAL.** Kullanıcı (reçete ▸ "Monta Çivisi": her mamul rengi için boş
+"Renk seçin…" + "⚠ eşleşmedi", "Beden Eşleştirme 36 → —", "rengi kim belirlesin?"): "Renksiz bedensiz
+stok için sıkıntı devam ediyor. Önce mantığı netleştirelim. Uygulama renksiz bedensiz stoğu standart renk
+ve bedenli olarak mı görüyor? Düzeltmede mantığı nasıl düzelttin?" Açıklandı, onay: "Evet, bu şekilde ilerle".
+- **Mantık:** "Standart" renk/beden değil, yer tutucu. Renksiz malzeme kayıtta üç biçimde: "Standart",
+  "" ya da hiç varyant. Veri eşleşmesi `stokAnahtarNrm` ("Standart" = ""), gösterim `olcuGoster`.
+  v1.478 fiş/sipariş formlarında geniş kurala geçmişti ama karar her ekranda ayrıydı; reçete (160) eski
+  kuralda kaldı: bedensiz = yalnız tek "Standart" beden, renksizlik hiç kontrol edilmiyor → renk listesi
+  boş, "eşleşmedi", beden eşleşmesi seçilemeyince "Reçeteye Ekle" engelleniyordu.
+- **Tek kural (012):** `urunRenksizMi(urun)` / `urunBedensizMi(urun)` — bütün değerler yer tutucu ya da
+  varyant yok. 255 ve 325 `renksizUrun`, 160 `hammaddeBedensizMi`/`hammaddeRenksizMi` ve `hammaddeSec`
+  bunu kullanıyor. **Yeni ekran "renksiz mi" kararını kendisi vermemeli — bu iki fonksiyon.**
+- **Reçete (160):** renksiz hammaddede renk eşleştirme kurulmuyor (`rMap` boş, ambalaj değişken kapalı),
+  arayüzde renk satırları/"Hepsi →"/ambalaj sorusu yerine tek satır bilgi (`data-recete-renksiz`).
+  `receteEkle`: renksizse mamul renk başına TEK satır, renk "Standart" (bedensizse "Tüm Bedenler",
+  bedenliyse beden eşleşmesiyle). Kombinasyon renklerde pozisyon başına satır AÇILMIYOR (tüketim katlanırdı).
+- **Stok eşleşmesi:** 020 rezervasyon, 055 reçete, 230 MRP (×2), 335 planlama birebir `v.renk === renk`
+  arıyordu → reçetenin "Standart" satırı "" kayıtlı varyantı bulamıyor, stok 0. `stokAnahtarNrm` ile.
+- **152 stok:** `placeholderMi` tek satırın renk+bedeni yer tutucuysa (boş dahil); `standartYerTutucuyuKaldir`
+  boş kayıtlı yer tutucuyu da kaldırıyor (engel kontrolü her yazımla; "" ile kontrol bütün satırları
+  kapsadığından stok/hareket varsa kaldırmaz — güvenli taraf).
+- `birim-finans-ek` 27 Eylül'de 5 nakit maddesi kırıldı (main'de de): ciro edilmiş çek `gecmis`siz; rapor
+  tarihi (26.09) bugünden önce olunca durum geçmişten kuruluyor → "Portföyde". Test verisine ciro geçmişi eklendi.
+- Test: `birim-renksiz` (üç biçim, tek eksen, stok eşleşmesi), `senaryo-renksiz-recete` (dört hammadde:
+  Standart, boş, varyantsız, renksiz-bedenli).
 
 **Yan bulgu (test):** `senaryo-finans-ek` 27 Eylül'de FARKLI çıktı (main'de de): rapor "tarih
 itibarıyla" kutusunu gerçek bugünle karşılaştırıyor (`bugunMu`); ertesi gün aynı tarih "geçmiş" kipine

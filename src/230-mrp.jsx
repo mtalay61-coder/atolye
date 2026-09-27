@@ -102,13 +102,13 @@ function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli) {
 
   return Object.values(ihtiyacGruplari).map((g) => {
     const hammaddeUrun = stok.find((p) => p.id === g.hammaddeUrunId);
-    const hamStok = hammaddeUrun ? ((hammaddeUrun.variants.find((v) => v.renk === g.renk && v.beden === g.beden) || {}).miktar || 0) : 0;
+    const hamStok = hammaddeUrun ? (((hammaddeUrun.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(g.renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(g.beden)) || {}).miktar || 0) : 0;
     // EKSİ STOK SIFIR SAYILIR (bkz. yukarıdaki gerekçe). Ham değer ayrıca taşınıyor: ekranda
     // "kaydın kaç eksiye düştüğü" gösterilecek, çünkü sayımı yapacak kişi o sayıyı arayacak.
     const stokBilinmiyor = hamStok < 0;
     const mevcutStok = stokBilinmiyor ? 0 : hamStok;
     const alisFiyati = (hammaddeUrun && hammaddeUrun.alisFiyati) || 0;
-    const minStok = hammaddeUrun ? ((hammaddeUrun.variants.find((v) => v.renk === g.renk && v.beden === g.beden) || {}).minStok || 0) : 0;
+    const minStok = hammaddeUrun ? (((hammaddeUrun.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(g.renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(g.beden)) || {}).minStok || 0) : 0;
     const fark = Math.round((mevcutStok - g.gereken) * 100) / 100;
     const eksikMiktar = fark < 0 ? Math.abs(fark) : 0;
     return {

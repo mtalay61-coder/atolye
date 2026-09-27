@@ -301,9 +301,13 @@ function ProductMatrixCard({
     return bedenSirala(Array.from(new Set(seciliHammadde.variants.map((v) => v.beden))));
   }
 
+  // Ortak kural (012 `urunBedensizMi`/`urunRenksizMi`, v1.493.0): yalnız tek "Standart" bedenli değil,
+  // bedeni BOŞ kayıtlı ya da hiç varyantı olmayan hammadde de bedensiz/renksiz.
   function hammaddeBedensizMi() {
-    const hb = hammaddeBedenleriTumu();
-    return hb.length === 1 && hb[0] === "Standart";
+    return urunBedensizMi(seciliHammadde);
+  }
+  function hammaddeRenksizMi() {
+    return urunRenksizMi(seciliHammadde);
   }
 
   // Mamul rengin kaç "pozisyonu" (Model Rengi kombinasyonundaki tekil renk sayısı) olduğunu hesaplar.
@@ -363,8 +367,8 @@ function ProductMatrixCard({
       return "";
     };
 
-    const hBedenlerTumu = bedenSirala(Array.from(new Set(h.variants.map((v) => v.beden))));
-    const bedensiz = hBedenlerTumu.length === 1 && hBedenlerTumu[0] === "Standart";
+    const hBedenlerTumu = bedenSirala(Array.from(new Set((h.variants || []).map((v) => v.beden))));
+    const bedensiz = urunBedensizMi(h);
     const bedenEslesme = {};
     if (bedensiz) {
       // Tek "Standart" bedeni olan hammadde, tüm mamul bedenleri için ortak tek satır üretir.
@@ -374,7 +378,15 @@ function ProductMatrixCard({
     }
     setRBedenEslesme(bedenEslesme);
 
-    const hRenkler = Array.from(new Set(h.variants.map((v) => v.renk)));
+    // RENKSİZ HAMMADDE (v1.493.0): renk eşleştirmesi kurulmaz — satırlar "Standart" yer tutucusuyla
+    // doğrudan üretilir (receteEkle). "Rengi kim belirlesin" (ambalaj) sorusu da anlamsız: sabit.
+    if (urunRenksizMi(h)) {
+      setRAmbalajDegisken(false);
+      setRMap({});
+      setRGecmis({});
+      return;
+    }
+    const hRenkler = Array.from(new Set((h.variants || []).map((v) => v.renk)));
     // Her mamul renk için: kombinasyonsa HER POZİSYONU, kendi gerçek renk adıyla eşleştirir.
     // Kombinasyon değilse pozisyon 1 üzerinden aynı mantık uygulanır.
     // GEÇMİŞ (v1.480.0): isim birebir tutmazsa, daha önce reçetelerde bu mamul rengine hangi hammadde
@@ -590,10 +602,12 @@ function ProductMatrixCard({
     if (!(miktar > 0)) { uyar("Miktar girin — 0'dan büyük bir değer olmalı (hesap da yazabilirsiniz: 1/8)"); return; }
 
     const bedensiz = hammaddeBedensizMi();
+    const renksiz = hammaddeRenksizMi();
     // Ambalaj kontrolü, doğrulamalardan ÖNCE belirlenir: hem beden hem renk eşleştirme
     // muafiyeti buna bağlı.
     // Kararı SATIR veriyor, ürünün malzeme tipi değil. Tip yalnızca varsayılanı belirledi.
-    const ambalajMi = rAmbalajDegisken;
+    // Renksiz hammaddede "değişken ambalaj" olamaz (seçilecek renk yok).
+    const ambalajMi = rAmbalajDegisken && !renksiz;
 
     // Beden eşleşmesi kontrolü: hammaddenin bedenleri mamulün bedenleriyle isim olarak eşleşmiyorsa
     // (ör. mamul 37/38/39, fermuar 15cm/18cm) otomatik eşleşme boş kalır ve HİÇBİR satır üretilmez.
@@ -616,7 +630,7 @@ function ProductMatrixCard({
     // AMBALAJ HARİÇ: kutu rengi siparişte seçiliyor, reçetede atanan renk zaten kullanılmıyor
     // (bkz. ambalajRengiUygula). Kullanıcıyı hiç işe yaramayacak bir eşleştirmeye zorlamak,
     // reçeteyi eklemesini engellemekten başka bir şey yapmıyordu.
-    if (!ambalajMi) {
+    if (!ambalajMi && !renksiz) {
       const renkAtanmisMi = renkler.some((mr) => {
         const poz = rMap[mr] || {};
         return Object.values(poz).some((v) => !!v);
@@ -634,6 +648,31 @@ function ProductMatrixCard({
 
     const yeniSatirlar = [];
     renkler.forEach((mr) => {
+      // RENKSİZ HAMMADDE (v1.493.0): mamul renk başına TEK satır, renk "Standart" (yer tutucu; stok
+      // eşleşmesi "" ile aynı). Pozisyonlu (kombinasyon) mamul renkte de tek satır — pozisyon başına
+      // satır açılsaydı aynı çivi her pozisyon için ayrı sayılır, tüketim katlanırdı.
+      if (renksiz) {
+        if (bedensiz) {
+          yeniSatirlar.push({
+            mamulRenk: mr, mamulBeden: "Tüm Bedenler",
+            hammaddeUrunId: seciliHammadde.id, hammaddeAd: seciliHammadde.ad,
+            renk: "Standart", beden: "Standart", miktar, birim: seciliHammadde.birim,
+            proses: seciliProses, aciklama: rAciklama, eklemeId, eklemeTarihi,
+          });
+          return;
+        }
+        bedenler.forEach((mb) => {
+          const hb = rBedenEslesme[mb];
+          if (!hb) return;
+          yeniSatirlar.push({
+            mamulRenk: mr, mamulBeden: mb,
+            hammaddeUrunId: seciliHammadde.id, hammaddeAd: seciliHammadde.ad,
+            renk: "Standart", beden: hb, miktar, birim: seciliHammadde.birim,
+            proses: seciliProses, aciklama: rAciklama, eklemeId, eklemeTarihi,
+          });
+        });
+        return;
+      }
       // AMBALAJ: renk eşleştirme yapılmadığı için `rMap` boş kalıyor ve aşağıdaki
       // `Object.entries(pozisyonMapHam)` döngüsü hiç çalışmıyordu — sonuçta hiçbir satır
       // üretilmiyor ve "Eklenecek satır oluşmadı" hatası çıkıyordu.
@@ -2115,7 +2154,7 @@ function ProductMatrixCard({
                       tanımlanan HER malzeme otomatik "rengi siparişten gelir" davranıyordu.
                       Oysa ambalaj tipinde birden çok malzeme var ve hepsi siparişe bağlı değil:
                       kutu müşteriye göre değişir, koruyucu poşet modelin sabit parçasıdır. */}
-                  {!!seciliHammadde && (
+                  {!!seciliHammadde && !hammaddeRenksizMi() && (
                     <div style={{ display: "grid", gap: 8, border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: "10px 12px", background: "var(--erp-hover)" }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#7A3B22" }}>
                         <PackageCheck size={13} color="#8A6A2E" style={{ verticalAlign: "-2px", marginRight: 5 }} />
@@ -2209,6 +2248,14 @@ function ProductMatrixCard({
                     // (yukarıda) "sabit" derse buraya düşülür ve satır sıradan bir malzeme gibi
                     // renk eşleştirmesi ister.
                     if (rAmbalajDegisken) return null;
+                    // Renksiz hammaddede renk eşleştirmesi yok (v1.493.0) — yerine tek satır bilgi.
+                    if (hammaddeRenksizMi()) {
+                      return (
+                        <div data-recete-renksiz="1" style={{ fontSize: 12, color: "var(--erp-text-2)", padding: "8px 10px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
+                          Renksiz malzeme — renk eşleştirmesi gerekmez; bütün mamul renklerine aynı malzeme yazılır.
+                        </div>
+                      );
+                    }
                     const maxPozisyon = Math.max(1, ...renkler.map((mr) => pozisyonSayisi(mr)));
                     const pozisyonVar = maxPozisyon >= 2;
                     if (!pozisyonVar && renkler.length === 0) return null;
@@ -2281,7 +2328,7 @@ function ProductMatrixCard({
                   {/* DEĞİŞKEN ambalajda mamul renk satırları gizlenir — hepsi "eşleşmedi" uyarısı
                       gösterir ve hiçbiri kullanılmaz. SABİT seçildiyse gösterilir: o satırın rengi
                       reçetede belirlenir. */}
-                  {!rAmbalajDegisken && renkler.map((mr) => {
+                  {!rAmbalajDegisken && !hammaddeRenksizMi() && renkler.map((mr) => {
                     const n = pozisyonSayisi(mr);
                     const cokluPozisyon = n > 1;
                     const gosterilecekPozisyonlar = (cokluPozisyon && rPozisyonFiltre !== "Tümü")

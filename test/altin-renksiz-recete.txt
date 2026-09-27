@@ -1,0 +1,51 @@
+{
+ "hatalar": [],
+ "sonuc": {
+  "Taban Bedenli": {
+   "ambalajSorusu": false,
+   "beden": "Beden Eşleştirme",
+   "eslesmediUyarisi": false,
+   "renkKutusu": 0,
+   "renksizBilgisi": true,
+   "satirlar": [
+    "Kahve Süet/40 → Standart/40 × 2",
+    "Kahve Süet/41 → Standart/41 × 2",
+    "Siyah/40 → Standart/40 × 2",
+    "Siyah/41 → Standart/41 × 2"
+   ]
+  },
+  "Çivi Boş Kayıt": {
+   "ambalajSorusu": false,
+   "beden": "Bedensiz",
+   "eslesmediUyarisi": false,
+   "renkKutusu": 0,
+   "renksizBilgisi": true,
+   "satirlar": [
+    "Kahve Süet/Tüm Bedenler → Standart/Standart × 2",
+    "Siyah/Tüm Bedenler → Standart/Standart × 2"
+   ]
+  },
+  "Çivi Standart": {
+   "ambalajSorusu": false,
+   "beden": "Bedensiz",
+   "eslesmediUyarisi": false,
+   "renkKutusu": 0,
+   "renksizBilgisi": true,
+   "satirlar": [
+    "Kahve Süet/Tüm Bedenler → Standart/Standart × 2",
+    "Siyah/Tüm Bedenler → Standart/Standart × 2"
+   ]
+  },
+  "Çivi Varyantsız": {
+   "ambalajSorusu": false,
+   "beden": "Bedensiz",
+   "eslesmediUyarisi": false,
+   "renkKutusu": 0,
+   "renksizBilgisi": true,
+   "satirlar": [
+    "Kahve Süet/Tüm Bedenler → Standart/Standart × 2",
+    "Siyah/Tüm Bedenler → Standart/Standart × 2"
+   ]
+  }
+ }
+}

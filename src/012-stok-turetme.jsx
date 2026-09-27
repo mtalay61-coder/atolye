@@ -83,6 +83,22 @@ function matrisKoseBasligi(renkler, bedenler) {
   return [renkVar ? "Renk" : null, bedenVar ? "Beden" : null].filter(Boolean).join(" \\ ");
 }
 
+// RENKSİZ / BEDENSİZ ÜRÜN — TEK KURAL (27 Eylül, v1.493.0). Kullanıcı (reçetede renksiz "Monta Çivisi"
+// için boş "Renk seçin…" kutuları ve "Beden Eşleştirme"): "Uygulama renksiz bedensiz stoğu standart
+// renk ve bedenli olarak mı görüyor? Önce mantığı netleştirelim." Renksiz malzeme kayıtta üç biçimde
+// duruyor: renk "Standart" (stok açılırken seçilmedi), renk "" (eski kayıt) ya da HİÇ varyant yok
+// (hareket görmemiş). Üçü aynı anlam. v1.478'de fiş/sipariş formları geniş kurala geçti ama kararı her
+// ekran kendisi veriyordu; reçete eski dar kuralda kaldı (yalnız tek "Standart" bedensiz, renk hiç
+// kontrol edilmiyor) ve renksiz hammadde reçeteye eklenemiyordu. Karar artık YALNIZ BURADA:
+// bütün renk (beden) değerleri yer tutucuysa (`olcuGoster` boş) ya da hiç yoksa ürün renksizdir
+// (bedensizdir). Kayıtta yazılan yer tutucu yine "Standart" — stok eşleşmesi `stokAnahtarNrm` ile.
+function urunRenksizMi(urun) {
+  return !!urun && (urun.variants || []).every((v) => !olcuGoster(v.renk));
+}
+function urunBedensizMi(urun) {
+  return !!urun && (urun.variants || []).every((v) => !olcuGoster(v.beden));
+}
+
 // "Standart" yer tutucusu ile boş dize aynı varyantı gösteriyor (078-fisyaz'daki kuralın aynısı).
 function stokAnahtarNrm(x) {
   const d = x == null ? "" : String(x).trim();

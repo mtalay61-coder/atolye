@@ -459,7 +459,8 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
   // Kullanıcı düğmeye basıyor, hiçbir şey olmuyor ve sebebi de görünmüyordu.
   function placeholderMi(p) {
     if (!p.variants || p.variants.length === 0) return true;
-    return p.variants.length === 1 && p.variants[0].renk === "Standart" && p.variants[0].beden === "Standart";
+    // Tek satırın rengi VE bedeni yer tutucu ("Standart" ya da boş — v1.493.0, `olcuGoster` ortak kural).
+    return p.variants.length === 1 && !olcuGoster(p.variants[0].renk) && !olcuGoster(p.variants[0].beden);
   }
 
   function addRenkToProduct(productId, renk) {
@@ -523,14 +524,18 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
   // kapsıyordu. Artık gerçek bir beden/renk eklendiğinde Standart sütun/satır kaldırılıyor — ama
   // YALNIZ silme kuralları izin veriyorsa (stok, hareket, sipariş, üretim, reçete bağı yok):
   // üzerinde iş olan bir Standart kaydı sessizce silinmez, kullanıcı kendisi karar verir.
+  // v1.493.0: yer tutucu = "Standart" YA DA boş dize (`olcuGoster` ortak kural); boş kayıtlı eski satır
+  // gerçek değer eklenince de kalıyordu. Engel kontrolü her iki yazımla ayrı ayrı yapılıyor.
   function standartYerTutucuyuKaldir(urun, eksen) {
-    const baskaVar = (urun.variants || []).some((v) => v[eksen] !== "Standart");
-    const standartVar = (urun.variants || []).some((v) => v[eksen] === "Standart");
+    const yerTutucu = (v) => !olcuGoster(v[eksen]);
+    const baskaVar = (urun.variants || []).some((v) => !yerTutucu(v));
+    const standartVar = (urun.variants || []).some(yerTutucu);
     if (!baskaVar || !standartVar) return urun;
-    if (renkBedenSilmeEngelleri(urun, { [eksen]: "Standart" }).length > 0) return urun;
+    const yazimlar = Array.from(new Set((urun.variants || []).filter(yerTutucu).map((v) => v[eksen] == null ? "" : v[eksen])));
+    if (yazimlar.some((y) => renkBedenSilmeEngelleri(urun, { [eksen]: y }).length > 0)) return urun;
     // Hareketlerde "Standart" boş dize olarak da yazılabiliyor (`stokAnahtarNrm`): o da iş sayılır.
     if ((urun.hareketler || []).some((h) => stokAnahtarNrm(h[eksen]) === "")) return urun;
-    return { ...urun, variants: urun.variants.filter((v) => v[eksen] !== "Standart") };
+    return { ...urun, variants: urun.variants.filter((v) => !yerTutucu(v)) };
   }
 
   // Bir renk/beden satır ya da sütununun silinmesini ENGELLEYEN nedenleri toplar.
