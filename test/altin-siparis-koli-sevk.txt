@@ -1,0 +1,88 @@
+{
+ "baslangic": {
+  "karsilanan": "37=0/8 38=0/8",
+  "koliler": [
+   "K-A Hazır",
+   "K-B Hazır"
+  ],
+  "mamulDepo": "kolide 16 · talep 16",
+  "stok": [
+   "Bej 37=8",
+   "Bej 38=8"
+  ]
+ },
+ "duzSatis": {
+  "duzSatisSonrasi": {
+   "karsilanan": "37=0/8 38=0/8",
+   "koliler": [
+    "K-A Hazır",
+    "K-B Hazır"
+   ],
+   "stok": [
+    "Bej 37=4",
+    "Bej 38=8"
+   ]
+  },
+  "elleKapatma": {
+   "karsilanan": "37=0/8 38=0/8",
+   "kart": {
+    "koliler": [
+     "K-A · 8 çift · elle kapatıldı [Elle kapatıldı: Düz satırla satıldı]",
+     "K-B · 8 çift · hazır"
+    ],
+    "ozet": "Koliler | 2 koli · 16 çift | hazır 1 (8 çift) | sevk 1 (8 çift)"
+   },
+   "koliler": [
+    "K-A Sevk edildi elle: \"Düz satırla satıldı\" kim=var zaman=var",
+    "K-B Hazır"
+   ],
+   "sorular": [
+    "1 koli \"Sevk edildi\" olarak kapatılacak. Stok ve cari DEĞİŞMEZ."
+   ],
+   "stok": [
+    "Bej 37=4",
+    "Bej 38=8"
+   ]
+  },
+  "stokDegismedi": true,
+  "uyari": "⚠ Bu mal kolide. Koliyi okutmadan düz satarsanız stok düşer ama koliler \"Hazır\" kalır. 125 Model Bej 37: 4 çift düz satırda, serbest 0 (kolide 8)"
+ },
+ "hatalar": [],
+ "kartOnce": {
+  "koliler": [
+   "K-A · 8 çift · hazır",
+   "K-B · 8 çift · hazır"
+  ],
+  "ozet": "Koliler | 2 koli · 16 çift | hazır 2 (16 çift) | sevk 0 (0 çift)"
+ },
+ "siparistenSevk": {
+  "bosAcildi": true,
+  "fis": {
+   "koliOzeti": "2 koli · 16 çift",
+   "koliUyarisi": false,
+   "koliler": [
+    "K-A",
+    "K-B"
+   ]
+  },
+  "kartSonra": {
+   "koliler": [
+    "K-A · 8 çift · sevk <fisno-001>",
+    "K-B · 8 çift · sevk <fisno-001>"
+   ],
+   "ozet": "Koliler | 2 koli · 16 çift | hazır 0 (0 çift) | sevk 2 (16 çift)"
+  },
+  "kayit": {
+   "karsilanan": "37=8/8 38=8/8",
+   "koliler": [
+    "K-A Sevk edildi (<fisno-001>)",
+    "K-B Sevk edildi (<fisno-001>)"
+   ],
+   "stok": [
+    "Bej 37=0",
+    "Bej 38=0"
+   ]
+  },
+  "mamulDepo": "kolide 0 · talep 0 · açık 0"
+ }
+}

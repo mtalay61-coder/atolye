@@ -1,0 +1,107 @@
+{
+ "anahtarToast": "Anahtar bu cihaza kaydedildi",
+ "anahtarYeri": {
+  "anahtarGecenDepoKayitlari": [
+   "github:token"
+  ],
+  "localStorage": "github_pat_TEST",
+  "tanimlardaVar": false,
+  "yerelDepo": "github_pat_TEST"
+ },
+ "basarili": {
+  "agac": {
+   "taban": "eski-agac",
+   "yollar": [
+    "atolye-erp-v9.8.7.html 100644 blob blob-1",
+    "surum.json 100644 blob blob-2"
+   ]
+  },
+  "blobSayisi": 2,
+  "bloblarBase64": true,
+  "commit": {
+   "message": "Sürüm 9.8.7",
+   "parents": [
+    "eski-commit"
+   ],
+   "tree": "yeni-agac"
+  },
+  "commitSayisi": 1,
+  "dalGuncelleme": [
+   {
+    "sha": "yeni-commit"
+   }
+  ],
+  "ekran": {
+   "kutuDolu": true,
+   "rozet": "kayitli",
+   "sonuc": "Sürüm 9.8.7 yayınlandı. GitHub yayını 1-2 dakikada yeniler; sonra https://mtalay61-coder.github.io/atolye/ adresi yeni sürümü açar.Dosya: https://mtalay61-coder.github.io/atolye/atolye-erp-v9.8.7.html",
+   "surum": "9.8.7"
+  },
+  "hepsiAnahtarli": true,
+  "htmlIcerigiAyni": true,
+  "sira": [
+   "GET /git/ref/heads/main",
+   "GET /git/commits/eski-commit",
+   "POST /git/blobs",
+   "POST /git/blobs",
+   "POST /git/trees",
+   "POST /git/commits",
+   "PATCH /git/refs/heads/main"
+  ],
+  "surumJson": {
+   "surum": "9.8.7",
+   "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v9.8.7.html"
+  },
+  "toast": "Sürüm 9.8.7 yayınlandı — GitHub 1-2 dakika içinde yayına alır",
+  "yazilanKayit": {
+   "not": "",
+   "surum": "9.8.7",
+   "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v9.8.7.html",
+   "zamanVar": true
+  }
+ },
+ "basliktanSurum": "1.416.0",
+ "formVar": true,
+ "hata401": {
+  "istekler": [
+   "GET /git/ref/heads/main"
+  ],
+  "sonucSeridi": null,
+  "surumKaydi": "9.8.7",
+  "toast": "Yayınlanamadı: Anahtar geçersiz ya da süresi dolmuş — GitHub'da yeni anahtar oluşturun."
+ },
+ "hata404": {
+  "istekler": [
+   "GET /git/ref/heads/yanlis-dal"
+  ],
+  "sonucSeridi": null,
+  "surumKaydi": "9.8.7",
+  "toast": "Yayınlanamadı: Depo ya da dal bulunamadı. Kullanıcı adı, depo adı ve dal adını kontrol edin (büyük/küçük harf önemli)."
+ },
+ "hatalar": [],
+ "htmlDegil": {
+  "istekSayisi": 0,
+  "surum": "",
+  "toast": "Bu bir HTML dosyası değil (yedek.json) — uygulamanın .html dosyasını seçin",
+  "yayinlaDenenince": "Yüklenecek HTML dosyasını seçin"
+ },
+ "ilkEkran": {
+  "kutuDolu": false,
+  "rozet": "yok",
+  "sonuc": null,
+  "surum": ""
+ },
+ "secimSonrasi": {
+  "kutuDolu": true,
+  "rozet": "kayitli",
+  "sonuc": null,
+  "surum": "9.8.7"
+ },
+ "yenidenAcilinca": {
+  "kapaliyken": false,
+  "kutuDolu": true,
+  "rozet": "kayitli",
+  "sonuc": null,
+  "surum": ""
+ }
+}

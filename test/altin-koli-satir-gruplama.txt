@@ -1,0 +1,76 @@
+{
+ "fis": {
+  "koliOzeti": "4 koli · 28 çift",
+  "koliler": [
+   "K-1",
+   "K-2",
+   "K-3",
+   "K-4"
+  ]
+ },
+ "hatalar": [],
+ "kayit": {
+  "cariToplam": 25200,
+  "karsilanan": "36=5/5 37=8/8 38=6/6 39=6/6 40=3/3",
+  "koliler": [
+   "K-1 Sevk edildi",
+   "K-2 Sevk edildi",
+   "K-3 Sevk edildi",
+   "K-4 Sevk edildi"
+  ],
+  "stok": "36=5 37=2 38=4 39=4 40=7",
+  "tekFis": true,
+  "varyantSayisi": 5
+ },
+ "tablo": {
+  "basliklar": [
+   "ÜRÜN",
+   "RENK",
+   "36",
+   "37",
+   "38",
+   "39",
+   "40",
+   "KOLİ İÇ. MİK.",
+   "KOLİ ADET",
+   "TOP. ADET",
+   "BİRİM FİYAT",
+   "P.B.",
+   "TUTAR"
+  ],
+  "satirlar": [
+   {
+    "36": "1",
+    "37": "2",
+    "38": "2",
+    "39": "2",
+    "40": "1",
+    "BİRİM FİYAT": "girdi:900",
+    "KOLİ ADET": "3",
+    "KOLİ KODLARI": "K-1, K-2, K-3",
+    "KOLİ İÇ. MİK.": "8",
+    "P.B.": "secim:TRY",
+    "RENK": "Siyah",
+    "TOP. ADET": "24 çift",
+    "TUTAR": "21.600 ₺",
+    "ÜRÜN": "125 Model [sipariş SAT-9]"
+   },
+   {
+    "36": "2",
+    "37": "2",
+    "38": "—",
+    "39": "—",
+    "40": "—",
+    "BİRİM FİYAT": "girdi:900",
+    "KOLİ ADET": "1",
+    "KOLİ KODLARI": "K-4",
+    "KOLİ İÇ. MİK.": "4",
+    "P.B.": "secim:TRY",
+    "RENK": "Siyah",
+    "TOP. ADET": "4 çift",
+    "TUTAR": "3.600 ₺",
+    "ÜRÜN": "125 Model [sipariş SAT-9]"
+   }
+  ]
+ }
+}
