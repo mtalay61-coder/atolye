@@ -223,6 +223,108 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     setKFiyat(f ? String(f) : "");
   }, [seciliUrun, kRenk, bedenAnahtari, kParaBirimi, cariId, tip, cariler, kurlar]);   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // KALEM SATIRI — FİŞ FORMUYLA AYNI DÜZEN (v1.491.0). Kullanıcı: "Siparişte de aynı düzeni
+  // yapalım" (fiş v1.490.0: "üst satır stok ve renk, alt satır asorti, bedenler, toplam, beden
+  // fiyat, p.tipi, tutar ve ekle butonu; ekran büyükse tümü tek satırda"). Soldan sağa iş sırası:
+  // asorti seç → kutular dolsun → toplamı gör → fiyat → tutar → Ekle. Grup bütün olarak sarar;
+  // geniş ekranda ürün/renk ile aynı satıra, telefonda onun altına. Önceki düzende asorti + not +
+  // Ekle bir satır, beden tablosu altında ayrı bir blok, fiyat en üstteydi — göz üç yere gidiyordu.
+  // Proses notları grubun ALTINDA (serbest metin, genişliğe ihtiyacı var).
+  const kgBedenli = !!(kRenk && bedenSecenekleri.length > 0);
+  const kgOlculer = kgBedenli ? bedenSecenekleri : [];
+  const kgKutuGen = kgOlculer.length > 6 ? 42 : kgOlculer.length > 4 ? 44 : 46;
+  const kgToplam = kgOlculer.reduce((t, b) => t + (parseFloat(kMiktarlar[b]) || 0), 0);
+  const kgTutar = kgOlculer.reduce((t, b) => t + (parseFloat(kMiktarlar[b]) || 0) * olcuBirimFiyati(b), 0);
+  const kgPbSembol = PARA_SEMBOLU[kParaBirimi] || kParaBirimi;
+  const kalemGrubu = (
+    <div data-siparis-kalem-grup="1" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start" }}>
+      {kgBedenli && (
+        <AsortiUygulaKontrolu
+          dar
+          asortiler={asortiler}
+          bedenSecenekleri={bedenSecenekleri}
+          olcuTipi={seciliUrun && seciliUrun.olcuTipi}
+          onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
+        />
+      )}
+      {kgBedenli && (
+        <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+          Miktar
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {kgOlculer.map((b) => {
+              const mevcutStok = stokMiktari(seciliUrun, kRenk, b);
+              // v1.482.0: fiyat kalemin birimine ÇEVRİLMİŞ gösteriliyor ve elle fiyat
+              // yazılmadıysa kalem eklenirken bu beden BU fiyatı alır (ipucu değil, uygulanan).
+              const { fiyat: bedenFiyati, kaynak: bedenKaynak } = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+              const girilenFiyat = parseFloat(kFiyat) || 0;
+              const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati > 0 && bedenFiyati !== girilenFiyat;
+              return (
+                <span key={b} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text)" }}>{olcuGoster(b, "Miktar")}</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={kMiktarlar[b] || ""}
+                    data-olcu-miktar={b}
+                    onChange={(e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value })}
+                    className="mono"
+                    style={{ width: kgKutuGen, padding: "5px 4px", fontSize: 11, textAlign: "center", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
+                  />
+                  <span className="mono" style={{ fontSize: 9, fontWeight: 600, color: mevcutStok <= 0 ? "var(--erp-warn)" : "var(--erp-text-3)" }}>stok: {mevcutStok}</span>
+                  {fiyatFarkli && (
+                    <button
+                      type="button"
+                      data-olcu-fiyat={b}
+                      title={kFiyatElle
+                        ? `${bedenKaynak} kuralına göre bu bedenin fiyatı ${bedenFiyati} ${kgPbSembol}; elle fiyat yazıldığı için o kullanılacak. Kurala dönmek için tıklayın.`
+                        : `${bedenKaynak} kuralı — bu beden ${bedenFiyati} ${kgPbSembol} fiyatla eklenecek.`}
+                      onClick={() => { setKFiyat(""); setKFiyatElle(false); }}
+                      className="mono"
+                      style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-accent)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      {kFiyatElle ? "özel: " : ""}{fiyatYazi(bedenFiyati)} {kgPbSembol}
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+            {kgOlculer.length > 1 && (
+              <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, paddingLeft: 6, borderLeft: "1px dashed var(--erp-line)" }}>
+                <span className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text)" }}>Top.</span>
+                <span className="mono" data-siparis-kalem-toplam="1" style={{ minWidth: 30, padding: "5px 2px", fontSize: 12, fontWeight: 700, textAlign: "center", color: "var(--erp-text)" }}>
+                  {stokYuvarla(kgToplam)}
+                </span>
+              </span>
+            )}
+          </div>
+        </label>
+      )}
+      <Field label={<span title="Bu kalemin bütün ölçüleri için">Birim Fiyat</span>}>
+        <div style={{ display: "flex", gap: 4 }}>
+          <input type="number" step="0.01" min="0" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }}
+            data-siparis-birim-fiyat="1" placeholder="0"
+            style={{ ...inputStyle, width: 64, fontSize: 13, padding: "8px 5px" }} />
+          <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)}
+            style={{ ...inputStyle, width: 60, fontSize: 12, padding: "8px 2px" }}>
+            {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
+          </select>
+        </div>
+      </Field>
+      {kgBedenli && (
+        <Field label="Tutar">
+          <span className="mono" data-siparis-kalem-tutar="1" style={{ display: "inline-block", minWidth: 52, padding: "8px 0", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap" }}>
+            {kgTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {kgPbSembol}
+          </span>
+        </Field>
+      )}
+      <Field label={"\u00a0"}>
+        <button type="button" data-kalemlere-ekle="1" onClick={kalemEkle} style={{ ...EKLE_DUGMESI, padding: "8px 10px" }}>
+          <PackagePlus size={15} /> Ekle
+        </button>
+      </Field>
+    </div>
+  );
+
   // Seçili mamul rengin reçetesi var mı? Yeni bir renk eklendiğinde reçete satırları otomatik
   // oluşmaz — o renk için eşleştirme yapılmadan sipariş girilirse hammadde ihtiyacı SIFIR çıkar ve
   // eksik sessizce fark edilmez. Bu yüzden sipariş ekranında, kalem eklenmeden ÖNCE uyarılır.
@@ -245,6 +347,16 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     return { durum: "tamam", satirSayisi: buRenk.length };
   })();
 
+
+  // Bedenin kalemde alacağı birim fiyat (v1.491.0'da kalemEkle'den çıkarıldı): elle yazıldıysa o,
+  // yazılmadıysa bedenin kuralı (yoksa kutudaki). Formdaki TUTAR da bununla — ekranda görünen tutar
+  // ile eklenen kalemlerin toplamı ayrışmasın (fiş formuyla aynı).
+  function olcuBirimFiyati(b) {
+    const fiyat = parseFloat(kFiyat) || 0;
+    if (kFiyatElle) return fiyat;
+    const k = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
+    return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
+  }
 
   function stokMiktari(urun, renk, beden) {
     if (!urun) return 0;
@@ -376,11 +488,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     if (!seciliUrun || !kRenk) return showToast("Ürün ve renk seçin");
     const fiyat = parseFloat(kFiyat) || 0;
     // Beden başına fiyat (v1.482.0): elle yazıldıysa o, yazılmadıysa bedenin kuralı (yoksa kutudaki).
-    const olcuFiyati = (b) => {
-      if (kFiyatElle) return fiyat;
-      const k = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
-      return k.kaynak && k.kaynak !== "Genel" && k.fiyat > 0 ? k.fiyat : fiyat;
-    };
+    const olcuFiyati = olcuBirimFiyati;
     const notlar = notlariTekille([...kNotlar, ...(kNotTaslak ? [kNotTaslak] : [])]);
     const eklenecekler = bedenSecenekleri
       .map((b) => ({ beden: b, miktar: parseFloat(kMiktarlar[b]) || 0 }))
@@ -1507,19 +1615,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               </Field>
               </div>
               )}
-              <div style={{ flex: "0.8 1 140px", minWidth: 0 }}>
-              <Field label={<span title="Bu kalemin bütün ölçüleri için">Birim Fiyat</span>}>
-                <div style={{ display: "flex", gap: 4 }}>
-                  <input type="number" step="0.01" min="0" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }}
-                    data-siparis-birim-fiyat="1" placeholder="0"
-                    style={{ ...inputStyle, flex: "1 1 60px", minWidth: 50, fontSize: 13, padding: "8px 6px" }} />
-                  <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)}
-                    style={{ ...inputStyle, width: 62, flex: "0 0 auto", fontSize: 12, padding: "8px 4px" }}>
-                    {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
-                  </select>
-                </div>
-              </Field>
-              </div>
+              {/* BİRİM FİYAT buradan alt satırdaki gruba taşındı (v1.491.0, fiş formuyla aynı düzen). */}
 
               {/* KUTU — ürün/renk seçimiyle AYNI satırda. Kutu, modele ve renge göre değişen bir
                   tercihtir: aynı siparişte iki farklı model iki farklı kutuya girebilir. Bu yüzden
@@ -1556,109 +1652,22 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 <span style={{ fontSize: 10, color: "var(--erp-text-2)", textAlign: "center", maxWidth: 90 }}>{seciliUrun.ad}{kRenk ? ` · ${kRenk}` : ""}</span>
               </div>
             )}
+            {/* KALEM GRUBU aynı esnek satırda (v1.491.0): geniş ekranda ürün/renk ve resmin yanında tek
+                satır; sığmazsa BÜTÜN OLARAK alt satıra iner ve tam genişliği kullanır (resimle paylaşılan
+                iç satırda kalsaydı telefonda 5 bedenlik grup ~100 px eksik kalıyordu). */}
+            {kalemGrubu}
           </div>
 
+          {/* Notlar ve "asorti olarak kaydet" önerisi kalem satırının ALTINDA (grup ürün/renk ile aynı
+              esnek satırda — bkz. `kalemGrubu`). */}
           {kRenk && bedenSecenekleri.length > 0 && (
-            <div style={{ marginTop: 10 }}>
-              <div style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>
-                Ölçülere göre miktar girin (birden fazla ölçüye birden girebilirsiniz)
-              </div>
-              {/* ASORTİ + AÇIKLAMA + EKLE TEK SATIRDA (v1.470.0 — kullanıcı: "asorti ve asorti seçiciyi
-                  tek satıra topla, kalemlere ekle'nin adını Ekle yap, rengi yeşil olsun"). Asorti eskiden
-                  matrisin solunda kesikli çizgiyle ayrı bir sütundu; dar ekranda matris onun altına,
-                  "Kalemlere Ekle" de en sağ alta düşüyordu. Şimdi üstte tek satır, matris altında tam
-                  genişlikte. Açıklama RENK BAZINDA (kullanıcı: "renk bazlı açıklama girebilelim, tek
-                  tek"): bu ürün+rengin bütün ölçülerine yazılıyor, kalem listesinde satırda düzeltiliyor. */}
-              <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-                <AsortiUygulaKontrolu
-                  asortiler={asortiler}
-                  bedenSecenekleri={bedenSecenekleri}
-                  olcuTipi={seciliUrun && seciliUrun.olcuTipi}
-                  onUygula={(sonuc) => setKMiktarlar({ ...kMiktarlar, ...sonuc })}
-                  satirIci
-                />
-                {/* PROSES BAZLI NOT (v1.476.0 — kullanıcı: "kesim için 'deriyi iyi yerinden kes', temizleme
-                    için 'her tek poşete konacak'"). Proses "Genel" ya da reçetedeki bir proses; üretimde
-                    o prosesin satırında görünür. Birden çok not "+" ile eklenir. */}
-                <div data-siparis-kalem-notlari="1" style={{ flex: "1 1 240px", minWidth: 200 }}>
-                  <KalemNotDuzenleyici key={kNotAnahtar} notlar={kNotlar} prosesler={notProsesleri(seciliUrun, kRenk)}
-                    onDegis={setKNotlar} onTaslak={setKNotTaslak} />
-                </div>
-                <button type="button" data-kalemlere-ekle="1" onClick={kalemEkle} style={EKLE_DUGMESI}>
-                  <PackagePlus size={15} /> Ekle
-                </button>
-              </div>
-              <div>
-                <div style={{ overflowX: "auto" }}>
-                {/* `width: auto`: eskiden esnek satırın içinde kendiliğinden daralıyordu; tek başına
-                    kalınca genel tablo kuralıyla tam genişliğe yayılıp hücreleri birbirinden koparıyordu. */}
-                <table style={{ borderCollapse: "collapse", width: "auto" }}>
-                  <thead>
-                    <tr>
-                      {bedenSecenekleri.map((b) => (
-                        <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)", padding: "3px 8px", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>
-                          {olcuGoster(b, "Miktar")}
-                        </th>
-                      ))}
-                    </tr>
-                    <tr>
-                      {bedenSecenekleri.map((b) => {
-                        const mevcutStok = stokMiktari(seciliUrun, kRenk, b);
-                        return (
-                          <td key={b} className="mono" style={{ fontSize: 9, fontWeight: 600, color: mevcutStok <= 0 ? "var(--erp-warn)" : "var(--erp-text-3)", padding: "2px 8px", textAlign: "center" }}>
-                            stok: {mevcutStok}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {bedenSecenekleri.map((b) => (
-                        <td key={b} style={{ padding: "3px 8px", textAlign: "center" }}>
-                          <input
-                            type="number"
-                            min="0"
-                            value={kMiktarlar[b] || ""}
-                            data-olcu-miktar={b}
-                            onChange={(e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value })}
-                            style={{ ...inputStyle, width: 56, textAlign: "center", padding: "5px" }}
-                          />
-                        </td>
-                      ))}
-                    </tr>
-                    <tr>
-                      {bedenSecenekleri.map((b) => {
-                        // v1.482.0: fiyat kalemin birimine ÇEVRİLMİŞ gösteriliyor ve elle fiyat
-                        // yazılmadıysa kalem eklenirken bu beden BU fiyatı alır (ipucu değil, uygulanan).
-                        const { fiyat: bedenFiyati, kaynak: bedenKaynak } = olcuKuralFiyati(seciliUrun, kRenk, b, cariId, tip, cariler, kParaBirimi, kurlar);
-                        const bedenPb = kParaBirimi;
-                        const bedenSembol = PARA_SEMBOLU[bedenPb] || bedenPb || "₺";
-                        const girilenFiyat = parseFloat(kFiyat) || 0;
-                        const fiyatFarkli = bedenKaynak !== "Genel" && bedenFiyati > 0 && bedenFiyati !== girilenFiyat;
-                        return (
-                          <td key={b} style={{ padding: "2px 8px", textAlign: "center" }}>
-                            {fiyatFarkli && (
-                              <button
-                                type="button"
-                                data-olcu-fiyat={b}
-                                title={kFiyatElle
-                                  ? `${bedenKaynak} kuralına göre bu bedenin fiyatı ${bedenFiyati} ${bedenSembol}; elle fiyat yazıldığı için o kullanılacak. Kurala dönmek için tıklayın.`
-                                  : `${bedenKaynak} kuralı — bu beden ${bedenFiyati} ${bedenSembol} fiyatla eklenecek.`}
-                                onClick={() => { setKFiyat(""); setKFiyatElle(false); }}
-                                className="mono"
-                                style={{ fontSize: 9, fontWeight: 700, color: "#8A6A2E", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                              >
-                                {kFiyatElle ? "özel: " : ""}{fiyatYazi(bedenFiyati)}{bedenSembol}
-                              </button>
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tbody>
-                </table>
-                </div>
+            <div style={{ marginTop: 2 }}>
+              {/* PROSES BAZLI NOT (v1.476.0 — kullanıcı: "kesim için 'deriyi iyi yerinden kes', temizleme
+                  için 'her tek poşete konacak'"). Proses "Genel" ya da reçetedeki bir proses; üretimde
+                  o prosesin satırında görünür. Birden çok not "+" ile eklenir. */}
+              <div data-siparis-kalem-notlari="1" style={{ marginTop: 8, maxWidth: 560 }}>
+                <KalemNotDuzenleyici key={kNotAnahtar} notlar={kNotlar} prosesler={notProsesleri(seciliUrun, kRenk)}
+                  onDegis={setKNotlar} onTaslak={setKNotTaslak} />
               </div>
               <AsortiOlusturTeklifi
                 degerler={kMiktarlar}
@@ -1666,12 +1675,6 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 asortiler={asortiler}
                 onOlustur={onAsortiOlustur}
               />
-            </div>
-          )}
-
-          {!(kRenk && bedenSecenekleri.length > 0) && (
-            <div style={{ marginTop: 10 }}>
-              <button type="button" onClick={kalemEkle} style={EKLE_DUGMESI}><PackagePlus size={15} /> Ekle</button>
             </div>
           )}
 

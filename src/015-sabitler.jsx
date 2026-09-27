@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.490.0";
+const SURUM = "1.491.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fis formunda asorti, bedenler, toplam, fiyat, tutar ve Ekle tek satirda";
+const SURUM_NOTU = "Sipariste fis duzeni; yenilemede eski tema ve titreme giderildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fis formunda asorti, bedenler, toplam, fiyat, tutar ve Ekle 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.491.0", tarih: "27.09.2026",
+    eklenen: ["Sipariş formunda beden kutularının yanında toplam ve tutar"],
+    degisen: ["Sipariş formu fişle aynı düzende: ürün/renk, ardından asorti (dar) → bedenler → toplam → birim fiyat → P.B. → tutar → Ekle; geniş ekranda tek satır, telefonda ürün/renk üstte; proses notları altında"],
+    duzeltilen: ["Sayfa yenilenince bir an eski tema (bej zemin, kahve üst çubuk) görünüyordu: açılış ekranı, başlatıcı ve uygulama simgesi ayarı yeni temanın renklerinde", "Telefonda açılışta ilk kare masaüstü düzeniyle çiziliyordu (üstte şerit girip çıkıyor, alt sekme çubuğu sonradan beliriyordu); mobil düzen ilk karede uygulanıyor", "Üst menü grupları her veri yüklemesinde söküp yeniden kuruluyordu"] },
   { surum: "1.490.0", tarih: "27.09.2026",
     eklenen: ["Fiş formunda eklenecek kalemlerin tutarı (miktar × beden fiyatı)"],
     degisen: ["Fiş formunda sıra soldan sağa: asorti (dar, iki katlı) → bedenler → toplam → fiyat → P.B. → tutar → Ekle; telefonda üstte ürün/renk, altta bu grup; geniş ekranda hepsi tek satır", "Fiş formunda koli/sipariş sütunu geniş ekranda sağda dar, daha dar ekranda altta"],

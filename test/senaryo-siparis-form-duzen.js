@@ -7,8 +7,10 @@
 //
 // Ölçülenler:
 //   1. Barkod paneli kapalı gelir (tek ince düğme), tıklayınca açılır, kapatılabilir.
-//   2. Birim fiyat ürün ve renkle AYNI satırda.
-//   3. Asorti, açıklama ve "Ekle" (yeşil, adı yalnız "Ekle") tek satırda, matrisin üstünde.
+//   2-3. (v1.491.0'dan beri, fiş formuyla aynı düzen — kullanıcı: "Siparişte de aynı düzeni yapalım")
+//      Soldan sağa TEK SATIR: asorti (dar) → beden kutuları → Top. → birim fiyat + P.B. → Tutar →
+//      "Ekle" (yeşil). Proses notları bu satırın ALTINDA. (v1.470'te fiyat ürünle aynı satırdaydı,
+//      asorti + açıklama + Ekle matrisin üstünde ayrı satırdı.)
 //   4. Eklerken yazılan açıklama o rengin bütün ölçülerine gidiyor; satırda düzeltilebiliyor;
 //      ikinci "Ekle" (açıklamasız) önceki açıklamayı silmiyor.
 //   5. Kaydedince açıklamalar siparişte ve sipariş kartında.
@@ -94,24 +96,24 @@ async function calistir() {
   // 2 + 3. Yerleşim.
   const duzen = await sayfa.evaluate((F) => {
     const form = document.querySelector(F);
-    // Alanların ETİKETLERİ karşılaştırılıyor: arama kutusunun iç çerçevesi birkaç piksel farklı.
-    const ust = (el) => (el ? Math.round((el.closest("label") || el).getBoundingClientRect().top) : null);
-    const urun = form.querySelector('input[placeholder="Model ara…"]');
-    const renk = form.querySelector("[data-siparis-renk-arama]");
+    const r = (el) => (el ? el.getBoundingClientRect() : null);
+    // Alanların ETİKETLERİ (label) karşılaştırılıyor: hepsi aynı hizada başlıyor.
+    const etiket = (el) => (el ? (el.closest("label") || el) : null);
+    const asorti = form.querySelector("[data-asorti-dar]");
+    const miktar = form.querySelector("[data-olcu-miktar]");
     const fiyat = form.querySelector("[data-siparis-birim-fiyat]");
+    const tutar = form.querySelector("[data-siparis-kalem-tutar]");
     const ekle = form.querySelector("[data-kalemlere-ekle]");
-    // v1.476.0: açıklama kutusu proses bazlı not düzenleyicisi oldu (metin kutusu ölçülüyor).
-    const aciklama = form.querySelector("[data-siparis-kalem-notlari] [data-kalem-not-metin]");
-    const uygula = [...form.querySelectorAll("button")].find((b) => b.textContent.trim() === "Uygula");
-    const matris = form.querySelector("[data-olcu-miktar]");
+    const notlar = form.querySelector("[data-siparis-kalem-notlari]");
+    const parcalar = [asorti, etiket(miktar), etiket(fiyat), etiket(tutar), etiket(ekle)];
+    const tepeler = parcalar.map((p) => (p ? Math.round(r(p).top) : null));
+    const soller = parcalar.map((p) => (p ? Math.round(r(p).left) : null));
     return {
-      fiyatUrunleAyniSatirda: Math.abs(ust(fiyat) - ust(urun)) <= 6 && Math.abs(ust(fiyat) - ust(renk)) <= 6,
+      grupTekSatirda: tepeler.every((t) => t != null && Math.abs(t - tepeler[0]) <= 6),
+      siraSoldanSaga: soller.every((x, i) => x != null && (i === 0 || x > soller[i - 1])),
+      notlarSatirinAltinda: !!(notlar && ekle) && r(notlar).top >= r(ekle).bottom,
       ekleAdi: ekle && ekle.textContent.trim(),
       ekleYesil: ekle && getComputedStyle(ekle).backgroundColor,
-      asortiAciklamaEkleAyniSatirda: !!(uygula && aciklama && ekle)
-        && Math.abs(uygula.getBoundingClientRect().top + uygula.getBoundingClientRect().height / 2 - (ekle.getBoundingClientRect().top + ekle.getBoundingClientRect().height / 2)) <= 6
-        && Math.abs(aciklama.getBoundingClientRect().top + aciklama.getBoundingClientRect().height / 2 - (ekle.getBoundingClientRect().top + ekle.getBoundingClientRect().height / 2)) <= 6,
-      ekleMatrisinUstunde: !!(ekle && matris) && ekle.getBoundingClientRect().bottom <= matris.getBoundingClientRect().top,
       kalemlereEkleYazisiYok: !/Kalemlere Ekle/.test(form.textContent),
     };
   }, FORM);
@@ -120,6 +122,7 @@ async function calistir() {
   // not yazılıp "+"lanmadan Ekle — yazılı kalan taslak da kaleme gitmeli.
   await sayfa.locator(`${FORM} [data-olcu-miktar="40"]`).fill("2");
   await sayfa.locator(`${FORM} [data-olcu-miktar="41"]`).fill("1");
+  duzen.toplam = await sayfa.evaluate((F) => (document.querySelector(`${F} [data-siparis-kalem-toplam]`) || {}).textContent, FORM);
   const formNot = sayfa.locator(`${FORM} [data-siparis-kalem-notlari]`);
   await formNot.locator("[data-kalem-not-proses]").selectOption("Kesim");
   await formNot.locator("[data-kalem-not-metin]").fill("deriyi iyi yerinden kes");
