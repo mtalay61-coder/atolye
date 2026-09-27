@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.485.0";
+const SURUM = "1.486.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Fiyatlandirmada gecerli fiyat kirmizi, para birimi kalici ve var olan fiyatlara uygulanabiliyor";
+const SURUM_NOTU = "Fis formunda para birimi fiyatin yaninda, yesil Ekle dugmesi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fiyatlandirmada gecerli fiyat kirmizi, para birimi kalici ve
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.486.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: ["Fiş formunda para birimi fiyatla aynı alanda, üst satırda (sipariş formundaki gibi)", "Fiş formunda 'Kalemlere Ekle' yerine yeşil 'Ekle' düğmesi (siparişle aynı)"],
+    duzeltilen: [] },
   { surum: "1.485.0", tarih: "27.09.2026",
     eklenen: [],
     degisen: ["Fiyatlandırma matrisinde fişe gelecek (uygulanan) fiyat kırmızı: hücrelerdeki fiyat kırmızı yazıyor, uygulanan renk/beden/renk+beden fiyat kutusu kırmızı zeminli; başka fiyatın altında kalan (uygulanmayan) fiyat normal renkte",

@@ -706,18 +706,20 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               </div>
             </label>
           )}
-          <Field label={`Birim Fiyat (${kPbSembol})${seciliUrun && seciliUrun.birim ? ` / ${seciliUrun.birim}` : ""}`}>
-            {/* step="any": reçete miktarları gibi kesirli birim fiyatlar (0,0125) `0.01` adımında
-                reddediliyordu. */}
-            <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 110 }} />
-          </Field>
-          {/* Para birimi FİYATIN YANINDA: ikisi tek bir bilgidir. */}
-          <Field label="P.B.">
-            <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 92 }}>
-              {Object.keys(PARA_SEMBOLU).map((pb) => (
-                <option key={pb} value={pb}>{pb} {PARA_SEMBOLU[pb]}</option>
-              ))}
-            </select>
+          {/* Para birimi FİYATLA AYNI KUTUDA (v1.486.0, sipariş formundaki gibi). Kullanıcı: "P.birimini
+              üst satıra al." Ayrı bir "P.B." alanıydı; dar ekranda tek başına alt satıra düşüyor,
+              fiyattan kopuk görünüyordu. İkisi tek bir bilgi: yan yana, tek etiket altında. */}
+          <Field label={`Birim Fiyat${seciliUrun && seciliUrun.birim ? ` / ${seciliUrun.birim}` : ""}`}>
+            <div style={{ display: "flex", gap: 4 }}>
+              {/* step="any": reçete miktarları gibi kesirli birim fiyatlar (0,0125) `0.01` adımında
+                  reddediliyordu. */}
+              <input type="number" step="any" min="0" data-kalem-fiyat="1" value={kFiyat} onChange={(e) => { setKFiyat(e.target.value); setKFiyatElle(true); }} style={{ ...inputStyle, width: 90 }} />
+              <select value={kParaBirimi} data-kalem-pb="1" onChange={(e) => setKParaBirimi(e.target.value)} style={{ ...inputStyle, width: 74, padding: "8px 4px" }}>
+                {Object.keys(PARA_SEMBOLU).map((pb) => (
+                  <option key={pb} value={pb}>{pb} {PARA_SEMBOLU[pb]}</option>
+                ))}
+              </select>
+            </div>
           </Field>
 
           {/* MİKTAR, ürün/renk/fiyat ile AYNI SATIRDA. Ayrı bir bloktaydı: tek ölçülü malzemede
@@ -737,9 +739,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           />
         )}
 
-        <button
-                          data-kalemlere-ekle="1" className="btn-primary" style={{ background: ana }} onClick={kalemEkle}>
-          <Plus size={14} /> Kalemlere Ekle
+        {/* YEŞİL "EKLE" (v1.486.0, siparişteki `EKLE_DUGMESI` ile aynı): kalem ekleme bütün formlarda
+            aynı görünsün — kullanıcı fiş ile sipariş arasında düğmeyi yeniden aramasın. */}
+        <button type="button" data-kalemlere-ekle="1" style={{ ...EKLE_DUGMESI, alignSelf: "flex-start" }} onClick={kalemEkle}>
+          <PackagePlus size={15} /> Ekle
         </button>
         </div>
 
