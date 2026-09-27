@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.504.0** · 27 Eylül 2026
+Son sürüm: **v1.505.0** · 27 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (27 Eylül, v1.504.0): sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (27 Eylül, v1.505.0): kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6519,6 +6519,24 @@ yine alta sardı; tablo zaten yatay kaydığı için sarma kapatıldı.
   100'deki üç çağrı `faturalar` geçiyor (bağımlılıklar denetim 18 ile eklendi); removeHareketEverywhere ve
   yetimFisTemizle mesaj + günlük. Fişler (250) `faturaKilidi`/`data-fatura-kilidi` rozeti "Sil" yerine.
   Test: `birim-efatura` sonuna 4 iddia.
+
+**v1.505.0 — KAYIP 15 SENARYO YENİDEN YAZILDI.** ("GIT DEPOSUNA TAŞINDI" bölümündeki boşluk kapandı.) bayat-efekt,
+github-yayin (api.github.com `sayfa.route` ile taklit), depo-sevkiyat, siparis-koli-sevk, koli-satir-gruplama,
+siparisten-koli-sec, alis-tek-ekran, renksiz-malzeme, iscilik-gorunum, ekstre-sade, standart-gizli, siparis-kamera
+(sahte kamera y4m; `y4mYaz` artık bu dosyada — notta senaryo-depo-okut'tan dışa aktarıldığı yazıyordu, değil),
+foto-ile-urun, siparis-yazdir, siparise-urun-ekle (v1.446'dan beri ayrı düğme yok; düzenleme formundaki "Kalem
+Ekle" ölçülüyor). Notlardaki tanımlardan GÜNCEL davranışa göre; her biri 2 kez + paralel koşuda aynı. Tam koşu:
+FARKLI yalnız `tedarik-girisleri` (ağ). CLAUDE.md'deki "15 senaryo kayıp" notu güncellendi.
+**Senaryoların yakaladığı hatalar (düzeltildi):**
+- Ekstre sade kipte ödeme/tahsilat satırı 2 satır (rozet `inline-flex` div + blok özet) → sade kipte rozet nowrap,
+  özet `inline-block`; `senaryo-ekstre-sade` `sadeOdemeDahil*` ölçüyor.
+- Ürünsüz işçilikte açıklama kimlik satırında ve `yapisizHareketler`de iki kez → kimlik satırında yalnız liste boşsa;
+  `senaryo-iscilik-gorunum` `aciklamaTekrari: 1`.
+- 255 "Siparişten seç" kolileri: `siparisKolileri` koda göre doğal sıralı (K-2 < K-10) — "N koli ekle" (ilk N) ve
+  "Tümünü ekle" kod sırasıyla; senaryo artık TERS sıralı tohumla aynı altını veriyor.
+**AÇIK (kullanıcıya soruldu):** (1) Mamul Deposu "açık" = talep − serbest − üretimde: aynı sipariş için koliye
+girmiş mal hâlâ "açık" sayılıyor (233). (2) Sipariş kartı açılışında (koli eklenmeden) "Kolisiz kalanı ekle" koli
+içeriğini de sayıyor — kolilerin bir kısmı elle eklenirse fazla eklenebilir.
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

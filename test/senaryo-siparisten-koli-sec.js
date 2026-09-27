@@ -48,10 +48,9 @@ async function calistir() {
       miktar: siparisMiktar[b], karsilanan: 0, birim: "çift", birimFiyat: 500, paraBirimi: "TRY",
     })),
   }]);
-  // 19 koli, depoda KOD SIRASIYLA (paketlemenin ürettiği gerçek düzen). NOT: "adet kadar ekle"
-  // kolileri depodaki sırayla alıyor, koda göre SIRALAMIYOR; karışık sıralı tohumla ölçülmedi —
-  // not ve koddaki yorum "kod sırasına göre" diyor, bkz. 27 Eylül raporu.
-  const kodlar = Array.from({ length: 19 }, (_, i) => `K-${String(i + 1).padStart(2, "0")}`);
+  // 19 koli, depoda KARIŞIK SIRADA (tersten): "adet kadar ekle" kolileri KOD sırasıyla almalı (v1.505.0'da
+  // düzeltildi — önce depodaki sırayla alıyordu). Beklenen yine K-01..K-03.
+  const kodlar = Array.from({ length: 19 }, (_, i) => `K-${String(19 - i).padStart(2, "0")}`);
   t["koli:data"] = JSON.stringify(kodlar.map((kod) => ({
     id: "koli-" + kod, kod, durum: "Hazır", olusturma: "2026-09-01T08:00:00.000Z",
     siparisId: "s1001", cariId: "c2", uretimId: "", not: "",

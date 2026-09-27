@@ -92,15 +92,17 @@ async function calistir() {
   await sayfa.locator("[data-ekstre-gorunum]:visible").first().click();
   await sayfa.waitForTimeout(400);
   const sade = await ekstre();
-  // ÖDEME SATIRI BOY ÖLÇÜMÜNDEN HARİÇ: sade kipte "Nakit" rozeti açıklama sütununda kendi satırında,
-  // "—" özeti onun altında duruyor → satır iki satır boyunda (≈50 px, ürünlü satırlar ≈30 px).
-  // Not "dört tip tek satıra iniyor" diyor; bu sapma 27 Eylül raporunda bildirildi, altına gömülmedi.
+  // ÖDEME SATIRI DA TEK SATIR (v1.505.0): sade kipte "Nakit" rozeti ile özet yan yana; önce rozet kendi
+  // satırına düşüyor, satır iki satır boyuna çıkıyordu (≈50 px / ≈30 px).
   const sadeUrunlu = sade.satirlar.filter((r) => !/^ODM-/.test(r.kimlik)).map((r) => r.boy);
+  const sadeTumu = sade.satirlar.map((r) => r.boy);
   const detayliTablolu = detayli.satirlar.filter((r) => r.tablolu).map((r) => r.boy);
   const boyKarsilastirma = {
     // Rozet/bağlantı yazı tipi 1-2 px oynatıyor; "aynı boy" 3 px toleransla.
     sadeUrunluAyniBoy: Math.max(...sadeUrunlu) - Math.min(...sadeUrunlu) <= 3,
     sadeUrunluTekSatir: sadeUrunlu.every((b) => b < 40),
+    sadeOdemeDahilAyniBoy: Math.max(...sadeTumu) - Math.min(...sadeTumu) <= 3,
+    sadeOdemeDahilTekSatir: sadeTumu.every((b) => b < 40),
     sadeTablolulardanKisa: Math.max(...sadeUrunlu) < Math.min(...detayliTablolu),
   };
 

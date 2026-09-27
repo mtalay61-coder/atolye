@@ -62,12 +62,14 @@ async function calistir() {
       return {
         rozet: !!kimlikTd.querySelector("[data-hareket-rozet]"),
         kimlik: parcalar.slice(1).join(" ‖ "),
-        // Tablonun yalnız satırları (başlık hep aynı). Ürünsüz kayıtta açıklama sütunu ÖLÇÜLMÜYOR:
-        // orada açıklama hem kimlik satırında hem sütunda yazılıyor (çift gösterim — 27 Eylül
-        // raporunda soru olarak iletildi, altına gömülmedi).
+        // Tablonun yalnız satırları (başlık hep aynı).
         tablo: aciklamaTd.querySelector("table")
           ? [...aciklamaTd.querySelectorAll("table tbody tr")].map((r) => [...r.children].map((c) => c.textContent.trim()).join(" | "))
           : null,
+        // Ürünsüz kayıtta açıklama satırda KAÇ KEZ yazıyor (v1.505.0: bir kez — önce kimlik satırında ve
+        // açıklama sütununda iki kez görünüyordu).
+        aciklamaTekrari: aciklamaTd.querySelector("table") ? null
+          : (() => { const a = "Kesim işçiliği · 3 çift"; const m = tr.innerText.split(a).length - 1; return m || null; })(),
       };
     });
     return {

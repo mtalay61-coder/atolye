@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.504.0";
+const SURUM = "1.505.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Sevkiyatta siparis KDV orani; faturasi kesilmis fis silinemez";
+const SURUM_NOTU = "Kayip testler yeniden yazildi; ekstre ve koli secimi duzeltmeleri";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Sevkiyatta siparis KDV orani; faturasi kesilmis fis silineme
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.505.0", tarih: "27.09.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Cari ekstresi sade görünümde ödeme/tahsilat satırı iki satır yüksekliğindeydi (ödeme rozeti kendi satırına düşüyordu); artık tek satır", "Ürünsüz işçilik kaydında açıklama ekstrede iki kez yazıyordu", "Fişte 'Siparişten seç' kolilerinde 'N koli ekle' ve 'Tümünü ekle' kolileri depodaki kayıt sırasıyla alıyordu; artık koli koduna göre (K-2, K-10'dan önce)"] },
   { surum: "1.504.0", tarih: "27.09.2026",
     eklenen: ["Faturası kesilmiş (numara almış) fiş geri alınamaz/silinemez; Fişler listesinde 'Faturası kesildi' kilidi (e-fatura bağlantısına hazırlık)"],
     degisen: [],

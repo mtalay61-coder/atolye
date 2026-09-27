@@ -1,5 +1,7 @@
 {
  "boyKarsilastirma": {
+  "sadeOdemeDahilAyniBoy": true,
+  "sadeOdemeDahilTekSatir": true,
   "sadeTablolulardanKisa": true,
   "sadeUrunluAyniBoy": true,
   "sadeUrunluTekSatir": true
