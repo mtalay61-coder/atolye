@@ -789,12 +789,30 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
               style={inputStyle}
             />
           </Field>
-          <Field label="Vergi No / Dairesi">
+          {/* Vergi no ve dairesi AYRI (v1.496.0): e-faturada satıcının VKN'si ve vergi dairesi ayrı alanlar.
+              Eski kayıtlarda ikisi tek kutuya yazılmış olabilir — kutu olduğu gibi duruyor. */}
+          <Field label="Vergi No">
             <input
               value={(tanimlar.firmaBilgileri || {}).vergiNo || ""}
               onChange={(e) => firmaBilgisiGuncelle("vergiNo", e.target.value)}
               style={inputStyle}
             />
+          </Field>
+          <Field label="Vergi Dairesi">
+            <input
+              value={(tanimlar.firmaBilgileri || {}).vergiDairesi || ""}
+              data-firma-vergi-dairesi="1"
+              onChange={(e) => firmaBilgisiGuncelle("vergiDairesi", e.target.value)}
+              style={inputStyle}
+            />
+          </Field>
+          <Field label="İl / İlçe">
+            <div style={{ display: "flex", gap: 6 }}>
+              <input value={(tanimlar.firmaBilgileri || {}).il || ""} placeholder="İl"
+                onChange={(e) => firmaBilgisiGuncelle("il", e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 0 }} />
+              <input value={(tanimlar.firmaBilgileri || {}).ilce || ""} placeholder="İlçe"
+                onChange={(e) => firmaBilgisiGuncelle("ilce", e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 0 }} />
+            </div>
           </Field>
           <Field label="Adres">
             <input
@@ -804,6 +822,43 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
             />
           </Field>
         </div>
+
+        {/* KDV (v1.496.0 — e-fatura yol haritası, Aşama 1). Açma anahtarı VARSAYILAN KAPALI: açılınca yeni
+            fişlerde satır KDV'si hesaplanır ve cariye KDV DAHİL tutar yazılır (eski fişler değişmez). Oranlar
+            mali müşavirle teyit edilmeden açılmamalı — bu yüzden uyarı metni anahtarın hemen yanında. */}
+        {(() => {
+          const fb = tanimlar.firmaBilgileri || {};
+          const oranSec = (alan) => (
+            <select value={fb[alan] ?? 20} data-kdv-varsayilan={alan}
+              onChange={(e) => firmaBilgisiGuncelle(alan, Number(e.target.value))} style={{ ...inputStyle, width: 90 }}>
+              {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
+            </select>
+          );
+          return (
+            <div data-kdv-ayarlari="1" style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>KDV</div>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, cursor: "pointer" }}>
+                <input type="checkbox" data-kdv-aktif="1" checked={!!fb.kdvAktif}
+                  onChange={(e) => firmaBilgisiGuncelle("kdvAktif", e.target.checked)} style={{ marginTop: 3 }} />
+                <span>
+                  <b>Fişlerde KDV uygula</b>
+                  <span style={{ display: "block", fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 }}>
+                    Açıkken yeni alış/satış fişlerinde satır KDV'si hesaplanır ve cariye <b>KDV dahil</b> tutar yazılır.
+                    Birim fiyatlar KDV hariç girilir; stok maliyeti ve kâr KDV hariç kalır. Önceki fişler değişmez.
+                    Oranları mali müşavirinizle teyit etmeden açmayın.
+                  </span>
+                </span>
+              </label>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                <Field label="Varsayılan KDV — mamul">{oranSec("kdvMamul")}</Field>
+                <Field label="Varsayılan KDV — hammadde ve diğer">{oranSec("kdvDiger")}</Field>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
+                Farklı oranlı ürün için ürün kartında KDV oranı seçilebilir; fişte satır bazında da değiştirilebilir.
+              </div>
+            </div>
+          );
+        })()}
 
         {/* E-POSTA GÖNDERİM AYARLARI (kullanıcı, 13 Eylül: "kullanıcı mail bilgilerini girsin, o mail
             ile PDF gönderelim"). Gönderimi Supabase `eposta` fonksiyonu yapıyor; ayarları buradan

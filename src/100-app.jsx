@@ -4516,6 +4516,7 @@ export default function AtolyeERP() {
                           <StokFisiFormu
                             pencereId={p.id}
                             muhasebe={muhasebe}
+                            firmaBilgileri={tanimlar.firmaBilgileri}
                             tip={p.veri.tip}
                             cari={cariler.find((c) => c.id === p.veri.cariId) || null}
                             baslangicKalemler={p.veri.baslangicKalemler}

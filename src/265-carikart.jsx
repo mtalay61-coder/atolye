@@ -670,6 +670,26 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 style={{ ...inputStyle, width: 160, padding: "4px 6px", fontWeight: 400 }}
               />
             </label>
+            {/* E-FATURA ALICI BİLGİLERİ (v1.496.0 — e-fatura yol haritası, Aşama 1): faturada alıcının vergi
+                dairesi, şahıs ise TC kimlik no ve il/ilçe zorunlu. Müşteri ve tedarikçide sorulur. */}
+            {cari.tip !== "Personel" && [
+              ["vergiDairesi", "Vergi Dairesi", 120, ""],
+              ["tckn", "TC Kimlik No", 110, "şahıs ise"],
+              ["il", "İl", 90, ""],
+              ["ilce", "İlçe", 90, ""],
+            ].map(([alan, etiket, gen, ipucu]) => (
+              <label key={alan} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+                {etiket}
+                <input
+                  defaultValue={cari[alan] || ""}
+                  placeholder={ipucu}
+                  data-cari-vergi-alani={alan}
+                  inputMode={alan === "tckn" ? "numeric" : undefined}
+                  onBlur={(e) => onFieldChange(cari.id, alan, e.target.value.trim())}
+                  style={{ ...inputStyle, width: gen, padding: "4px 6px", fontWeight: 400 }}
+                />
+              </label>
+            ))}
             {/* Fotoğraf yalnızca PERSONEL için sorulur — atölye ekranında kişinin kendini tanıması
                 buna bağlı. Müşteri/tedarikçi carilerinde böyle bir ihtiyaç yok, alanı göstermek
                 formu gereksiz kalabalıklaştırırdı. */}

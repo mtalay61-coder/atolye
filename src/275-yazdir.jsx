@@ -332,8 +332,23 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 24, fontSize: 13 }}>
             <div>Toplam Adet: <span className="mono" style={{ fontWeight: 700 }}>{toplamAdet}</span></div>
+            {/* KDV'Lİ FİŞ (v1.496.0): matrah ve KDV ayrı, toplam KDV dahil (cariye yazılan). */}
+            {tekilHareketler.some((h) => h.kdvTutari != null) && (() => {
+              const pbMatrah = {}; const pbKdv = {};
+              tekilHareketler.forEach((h) => {
+                const pb = h.paraBirimi || "TRY";
+                pbMatrah[pb] = (pbMatrah[pb] || 0) + (h.matrah != null ? h.matrah : (h.tutar || 0));
+                pbKdv[pb] = (pbKdv[pb] || 0) + (h.kdvTutari || 0);
+              });
+              const yaz = (m) => Object.entries(m).map(([pb, t], i) => (
+                <span key={pb} className="mono" style={{ fontWeight: 700, marginLeft: i ? 10 : 0 }}>
+                  {t.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {PARA_SEMBOLU[pb] || pb}
+                </span>
+              ));
+              return (<><div data-fis-yazdir-matrah="1">Matrah: {yaz(pbMatrah)}</div><div data-fis-yazdir-kdv="1">KDV: {yaz(pbKdv)}</div></>);
+            })()}
             <div>
-              Toplam Tutar:{" "}
+              {tekilHareketler.some((h) => h.kdvTutari != null) ? "Toplam Tutar (KDV dahil):" : "Toplam Tutar:"}{" "}
               {Object.entries(pbToplam).map(([pb, t], i) => (
                 <span key={pb} className="mono" style={{ fontWeight: 700, marginLeft: i ? 10 : 0 }}>
                   {t.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[pb] || pb}

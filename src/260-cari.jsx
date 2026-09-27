@@ -450,7 +450,9 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
   const ugBaslik = (ug) => renkBasligi(ugUrunu(ug));
   const ortakBaslik = ortakRenkBasligi(urunGruplari.map((ug) => ugUrunu(ug) || {}));
   const renkSutunBasligi = ortakBaslik || Array.from(new Set(urunGruplari.map(ugBaslik))).join(" / ");
-  const sutunSayisi = 2 + tumBedenler.length + 3 + (kurVarMi ? 1 : 0);
+  // KDV'Lİ FİŞ (v1.496.0): `tutar` KDV dahil yazılıyor; KDV ayrı sütunda görünür, TUTAR başlığı bunu söyler.
+  const kdvVarMi = urunGruplari.some((ug) => (ug.items || []).some((h) => h.kdvTutari != null));
+  const sutunSayisi = 2 + tumBedenler.length + 3 + (kurVarMi ? 1 : 0) + (kdvVarMi ? 1 : 0);
 
   const yazi = kompakt ? 10 : 11;
   const bh = { fontSize: yazi - 1, fontWeight: 700, color: "var(--erp-text-2)", padding: "3px 6px", whiteSpace: "nowrap" };
@@ -469,7 +471,8 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
             <th style={{ ...bh, textAlign: "right", borderLeft: "1px dashed var(--erp-line)" }}>TOPLAM</th>
             <th style={{ ...bh, textAlign: "right" }}>BR. FİYAT</th>
             {kurVarMi && <th style={{ ...bh, textAlign: "right" }}>KUR</th>}
-            <th style={{ ...bh, textAlign: "right" }}>TUTAR</th>
+            {kdvVarMi && <th data-fis-kalem-kdv-sutunu="1" style={{ ...bh, textAlign: "right" }}>KDV</th>}
+            <th style={{ ...bh, textAlign: "right" }}>{kdvVarMi ? "TUTAR (KDV DAHİL)" : "TUTAR"}</th>
           </tr>
         </thead>
         <tbody>
@@ -578,6 +581,17 @@ function FisKalemMatrisi({ urunGruplari, stok, kompakt }) {
                     ) : "—"}
                   </td>
                 )}
+                {kdvVarMi && (() => {
+                  const kdvToplam = stokYuvarla(items.reduce((t, h) => t + (h.kdvTutari || 0), 0));
+                  const oranlar = Array.from(new Set(items.filter((h) => h.kdvOrani != null).map((h) => h.kdvOrani)));
+                  return (
+                    <td className="mono" data-fis-kalem-kdv={ug.key} style={{ ...td, textAlign: "right" }}>
+                      {items.some((h) => h.kdvTutari != null)
+                        ? <>{oranlar.length === 1 ? <span style={{ color: "var(--erp-text-3)" }}>%{oranlar[0]} </span> : null}{kdvToplam.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {sembol}</>
+                        : <span style={{ color: "var(--erp-line-soft)" }}>—</span>}
+                    </td>
+                  );
+                })()}
                 <td className="mono" style={{ ...td, textAlign: "right", fontWeight: 700 }}>
                   {(tutarBilinen || toplamTutar > 0)
                     ? <>{toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {sembol}</>
