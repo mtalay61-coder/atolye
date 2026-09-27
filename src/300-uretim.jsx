@@ -237,7 +237,8 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
 
           {seciliUrun && (
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>Renk</div>
+              {/* Ürünün renk başlığı (v1.495.0): Renk / Baskı / Tip… */}
+              <div style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 }}>{renkBasligi(seciliUrun)}</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {renkSecenekleri.map((r) => (
                   <button

@@ -537,7 +537,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                           </th>
                         </tr>
                         <tr>
-                          <th style={{ fontSize: 10, textAlign: "left", padding: "3px 8px", color: "var(--erp-text-2)", position: "sticky", left: 0, background: "#fff", zIndex: 1 }}>Renk</th>
+                          <th style={{ fontSize: 10, textAlign: "left", padding: "3px 8px", color: "var(--erp-text-2)", position: "sticky", left: 0, background: "#fff", zIndex: 1 }}>{renkBasligi((stok || []).find((p) => p.id === g.hammaddeUrunId))}</th>
                           {tumBedenler.map((b) => (
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>{b}</th>
                           ))}
@@ -767,7 +767,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                           <Truck size={14} color="var(--erp-brown)" />
                           <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>
-                            Hammadde Satın Alma — {g.hammaddeAd} · {cokRenk ? `${seciliRenkler.length} renk` : seciliRenkler[0].renk}
+                            Hammadde Satın Alma — {g.hammaddeAd} · {cokRenk ? `${seciliRenkler.length} ${renkBasligi((stok || []).find((p) => p.id === g.hammaddeUrunId)).toLocaleLowerCase("tr-TR")}` : seciliRenkler[0].renk}
                           </span>
                           <button type="button" className="btn-ghost" style={{ fontSize: 10, padding: "3px 8px", marginLeft: "auto" }} onClick={satinAlmaKapat}>
                             <X size={11} /> Kapat
@@ -778,7 +778,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                           <table style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
                             <thead>
                               <tr>
-                                {cokRenk && <th style={{ fontSize: 10, textAlign: "left", padding: "3px 8px", color: "var(--erp-text-2)" }}>Renk</th>}
+                                {cokRenk && <th style={{ fontSize: 10, textAlign: "left", padding: "3px 8px", color: "var(--erp-text-2)" }}>{renkBasligi((stok || []).find((p) => p.id === g.hammaddeUrunId))}</th>}
                                 <th style={{ fontSize: 10, textAlign: "left", padding: "3px 8px", color: "var(--erp-text-2)" }}>Beden</th>
                                 <th style={{ fontSize: 10, textAlign: "center", padding: "3px 8px", color: "var(--erp-text-2)" }}>Gereken</th>
                                 <th style={{ fontSize: 10, textAlign: "center", padding: "3px 8px", color: "var(--erp-text-2)" }}>Stok</th>

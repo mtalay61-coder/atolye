@@ -566,7 +566,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                 {ug.urunAd}
                               </div>
                             </td>
-                            <th style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" }}>Renk</th>
+                            {/* Ürünün renk başlığı (v1.495.0): Renk / Baskı / Tip… */}
+                            <th data-siparis-kart-renk-basligi="1" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" }}>{renkBasligi(urun)}</th>
                             {tumBedenler.map((b) => (
                               <th key={b} className="mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" }}>{b}</th>
                             ))}
@@ -985,6 +986,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               _k: x,
                             }))}
                             tanimlarProsesler={[]}
+                            stok={stok}
                             hucreCiz={(kaynak, deger) => {
                               const x = kaynak && kaynak._k;
                               if (!x) return deger;
@@ -1974,7 +1976,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               </select>
                             </label>
                             <label style={{ display: "grid", gap: 3 }}>
-                              <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>Renk</span>
+                              <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{renkBasligi(urunler.find((u) => u.id === uId))}</span>
                               <select
                                 value={renk}
                                 onChange={(e) => setCikisRenk(e.target.value)}

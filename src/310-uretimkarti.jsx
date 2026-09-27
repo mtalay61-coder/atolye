@@ -217,9 +217,15 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
     const isEmriBedenleri = bedenler.map((b) => b.beden);
     const prosesBloklari = (o.prosesIlerleme || []).map((p, i) => {
       const satirlar = isEmriHammaddeMatrisi(p.proses, isEmriBedenleri);
+      // RENK BAŞLIĞI (v1.495.0 — "üretim ve planlamada da başlık görünsün"): malzemenin başlığı
+      // (Kalınlık, Baskı…). Ortaksa sütunda o; karışıksa sütunda hepsi, başlık değiştiği yerde ara satır.
+      const kBaslik = (k) => renkBasligi((stok || []).find((x) => x.ad === k.ad));
+      const ortakB = ortakRenkBasligi(satirlar.map((k) => (stok || []).find((x) => x.ad === k.ad) || {}));
+      const sutunB = ortakB || Array.from(new Set(satirlar.map(kBaslik))).join(" / ");
       const govde = satirlar.length === 0
         ? `<tr><td colspan="${isEmriBedenleri.length + 3}" style="color:#555">Bu proseste hammadde çıkışı yok</td></tr>`
-        : satirlar.map((k) => `<tr>
+        : satirlar.map((k, ki) => `${!ortakB && (ki === 0 || kBaslik(satirlar[ki - 1]) !== kBaslik(k))
+            ? `<tr><td colspan="${isEmriBedenleri.length + 3}" style="font-size:9px;font-weight:700;letter-spacing:.04em;padding-top:1mm">${htmlKacis(kBaslik(k).toLocaleUpperCase("tr-TR"))}</td></tr>` : ""}<tr>
             <td style="text-align:left">${k.ad}${k.tekBeden ? ` <span style="color:#555">(${k.tekBeden})</span>` : ""}</td>
             <td style="text-align:left">${k.renk || "—"}</td>
             ${isEmriBedenleri.map((bd) => {
@@ -240,7 +246,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
           ${prosesNotu(p.proses).map((n) => `<div style="margin-top:1mm;padding:1mm 2mm;border:0.3mm solid #000;font-size:12px;font-weight:700">NOT: ${htmlKacis(n.metin)}</div>`).join("")}
           <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:1mm">
             <thead><tr style="border-bottom:0.2mm solid #999">
-              <th style="text-align:left">Hammadde</th><th style="text-align:left">Renk</th>
+              <th style="text-align:left">Hammadde</th><th style="text-align:left">${htmlKacis(sutunB || "Renk")}</th>
               ${isEmriBedenleri.map((bd) => `<th style="text-align:center">${bd}</th>`).join("")}
               <th style="text-align:right;border-left:0.2mm solid #999">Toplam</th>
             </tr></thead>
@@ -1026,7 +1032,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                 <table style={{ width: "auto", minWidth: "100%" }}>
                                   <thead>
                                     <tr>
-                                      <th style={{ fontSize: 10 }}>{matrisKoseBasligi(renkler, bedenler)}</th>
+                                      <th style={{ fontSize: 10 }}>{matrisKoseBasligi(renkler, bedenler, renkBasligi((stok || []).find((p) => p.id === g.urunId)))}</th>
                                       {bedenler.map((b) => (
                                         <th key={b} className="mono" style={{ fontSize: 10, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
                                       ))}
@@ -1204,7 +1210,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
               }
               // Matris görünümü ayrı bir bileşende: aynı düzen sipariş kartında ve ihtiyaç
               // planlamada da kullanılıyor, üç yerde kopyalanan bir tablo üçe ayrışır.
-              return <IhtiyacMatrisi kalemler={liste} tanimlarProsesler={tanimlarProsesler} />;
+              return <IhtiyacMatrisi kalemler={liste} tanimlarProsesler={tanimlarProsesler} stok={stok} />;
             })()}
 
             {/* FİRE VE TAMİR — hangi proseste, kim, kaç çift, hangi sebeple. */}

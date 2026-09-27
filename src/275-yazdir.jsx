@@ -1,4 +1,6 @@
 function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProsesler, onClose, onMinimize, firmaBilgileri }) {
+  // Satırın hammadde kaydı (renk başlığı için, v1.495.0): önce kimlikle, yoksa adla.
+  const hmUrunu = (x) => (tumUrunler || []).find((p) => p.id === x.hammaddeUrunId) || (tumUrunler || []).find((p) => p.ad === x.hammaddeAd) || {};
   const renkler = Array.from(new Set(product.variants.map((v) => v.renk)));
   // Basım anı SAATLİ: aynı gün birden çok kez basılan bir belgede hangisinin güncel olduğu
 // yalnızca günle anlaşılmıyordu.
@@ -107,16 +109,23 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
                 {/* FİYAT SÜTUNLARI KALDIRILDI (kullanıcı, 21 Eylül: "reçetedeki yazdır kurları TL
                     çekiyor... fiyatları kaldırabiliriz, maliyette var"). Reçete atölyeye gider:
                     ne kadar malzeme. Fiyat "Maliyet Yazdır"da, seçili para biriminde. */}
-                <tr><th>Proses</th><th>Hammadde</th><th>Renk</th><th>Miktar</th></tr>
+                {/* RENK BAŞLIĞI (v1.495.0): malzemenin başlığı (Kalınlık, Baskı…); ortaksa sütunda o,
+                    karışıksa sütunda hepsi ve başlık değiştiği yerde ara satır (fiş listesiyle aynı kural). */}
+                <tr><th>Proses</th><th>Hammadde</th><th>{ortakRenkBasligi(hammaddeSatirlari.map(hmUrunu)) || Array.from(new Set(hammaddeSatirlari.map((x) => renkBasligi(hmUrunu(x))))).join(" / ")}</th><th>Miktar</th></tr>
               </thead>
               <tbody>
                 {hammaddeSatirlari.map((s, i) => (
-                  <tr key={i}>
+                  <React.Fragment key={i}>
+                  {!ortakRenkBasligi(hammaddeSatirlari.map(hmUrunu)) && (i === 0 || renkBasligi(hmUrunu(hammaddeSatirlari[i - 1])) !== renkBasligi(hmUrunu(s))) && (
+                    <tr><td colSpan={4} style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)" }}>{renkBasligi(hmUrunu(s)).toLocaleUpperCase("tr-TR")}</td></tr>
+                  )}
+                  <tr>
                     <td style={{ fontSize: 12 }}>{s.proses}</td>
                     <td style={{ fontSize: 12 }}>{s.hammaddeAd}</td>
-                    <td style={{ fontSize: 12 }}>{s.renk}</td>
+                    <td style={{ fontSize: 12 }}>{olcuGoster(s.renk)}</td>
                     <td className="mono" style={{ fontSize: 12 }}>{s.miktar} {s.birim}</td>
                   </tr>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
