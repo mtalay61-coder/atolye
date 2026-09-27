@@ -1,0 +1,34 @@
+{
+ "hatalar": [],
+ "satirlar": [
+  {
+   "ad": "Süet Deri",
+   "fiyat": "2,75 $",
+   "kaynak": "Son 3 ay 2 alış ortalaması",
+   "kutu": false,
+   "tl": "267,85 ₺"
+  },
+  {
+   "ad": "Takviye Bezi",
+   "fiyat": "1.2",
+   "kaynak": null,
+   "kutu": true,
+   "tl": "67,08 ₺"
+  },
+  {
+   "ad": "Yapıştırıcı",
+   "fiyat": "2,00 $",
+   "kaynak": "Son alış GG.AA.YYYY (3 aydan eski): 64 ₺ o günün kuruyla 2 $",
+   "kutu": false,
+   "tl": "97,40 ₺"
+  },
+  {
+   "ad": "Toplam",
+   "fiyat": "",
+   "kaynak": null,
+   "kutu": false,
+   "tl": ""
+  }
+ ],
+ "yazdirToplam": "562,03 ₺"
+}

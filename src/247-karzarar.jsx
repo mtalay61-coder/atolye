@@ -62,6 +62,30 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
   // KDV'li fişte gelir MATRAHTIR: KDV devlete ödenecek para, satışın geliri değil (cari `tutar`ı KDV dahil).
   // Cari ayağı bulunamazsa (çok eski/elle kayıt) stoktaki fiyat varsa o; o da yoksa gelir 0 ve satır
   // "fiyatı bulunamadı" sayılır — ekranda sayısı yazıyor, sessizce eksik göstermiyoruz.
+  // SATILAN MALIN MALİYETİ (v1.499.0 — kullanıcı: "maliyet ilk olarak son hammadde rengin alış fiyatlarının
+  // ortalamasından çeksin"). Önce yalnız kart alış fiyatı okunuyordu; üretilen mamulde o alan çoğu zaman
+  // boş → SMM 0, brüt kâr şişkin. Artık:
+  //   • Mamul: reçetedeki hammaddeler × son alış ortalaması (o renk; 077-alis-ortalama). İŞÇİLİK YOK —
+  //     aşağıda "Üretim işçiliği" satırı ayrıca sayıyor; ikisini toplamak çift sayım olurdu.
+  //     Reçetesi yoksa kart alış fiyatı (dışarıdan alınıp satılan mamul).
+  //   • Hammadde vb. (doğrudan satılan): kendi son alış ortalaması → kural → kart.
+  // Fiyat BUGÜNÜN maliyeti (satış günününki değil) — ekrandaki açıklama bunu söylüyor.
+  // ALAN ADI (20 Eylül): kart `alisParaBirimi` yazıyor — `alisFiyatiTL` onu okuyor.
+  const maliyetBaglami = { cariler, kurGecmisi: muhasebe && muhasebe.kurGecmisi };
+  const birimMaliyetOnbellek = new Map();
+  const kzBirimMaliyet = (p, h) => {
+    const anahtar = `${p.id}|${stokAnahtarNrm(h.renk)}|${stokAnahtarNrm(h.beden)}`;
+    if (birimMaliyetOnbellek.has(anahtar)) return birimMaliyetOnbellek.get(anahtar);
+    let deger;
+    if (p.kategori === "Mamul") {
+      const d = (p.recete || []).length ? finansMamulBirimDegeri(p, h.renk, h.beden, "hammadde", stok, kurlar, [], maliyetBaglami) : null;
+      deger = d && d.hammadde > 0 ? d.hammadde : alisFiyatiTL(p, kurlar);
+    } else {
+      deger = hammaddeBirimFiyati(p, h.renk, h.beden, kurlar, maliyetBaglami).tl;
+    }
+    birimMaliyetOnbellek.set(anahtar, deger);
+    return deger;
+  };
   const cariAyagi = new Map();
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => { if (h && h.id) cariAyagi.set(h.id, h); }));
   let satisGeliri = 0;
@@ -83,10 +107,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
       } else {
         fiyatsizSatir += 1;
       }
-      // ALAN ADI DÜZELTİLDİ (20 Eylül): ürün kartı `alisParaBirimi` yazıyor, burada `alisPB`
-      // okunuyordu — hiç eşleşmediği için dolarlık alış fiyatı TL sayılıyor, SMM 20-50 kat düşük
-      // çıkıyordu. Aynı yardımcı (alisFiyatiTL) üç ekranda ortak.
-      const maliyet = alisFiyatiTL(p, kurlar) * adet;
+      const maliyet = kzBirimMaliyet(p, h) * adet;
       satisGeliri += gelir;
       smm += maliyet;
       satisKalemleri.push({ urun: p.ad, renk: h.renk, beden: h.beden, adet, gelir, maliyet, tarih: h.tarih, fisNo: h.fisNo });
@@ -196,7 +217,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
 
       <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
         {satir("Satış geliri", sonuc.satisGeliri, "var(--erp-primary)", false, "Dönemdeki satış fişlerinin tutarı (KDV hariç)")}
-        {satir("− Satılan malın maliyeti", -sonuc.smm, "var(--erp-warn)", false, "Satılan ürünlerin kart alış fiyatıyla değeri (yaklaşık)")}
+        {satir("− Satılan malın maliyeti", -sonuc.smm, "var(--erp-warn)", false, "Mamulde reçete hammaddesi, diğerlerinde kendisi — son alış fiyatlarıyla (yaklaşık)")}
         {sonuc.uretimIscilik > 0 && satir("− Üretim işçiliği", -sonuc.uretimIscilik, "var(--erp-warn)", false,
           "Dönemde doğan işçilik ücretleri (ödenmiş olsun olmasın) — malın maliyetine girer")}
         {satir("= Brüt kâr", sonuc.brutKar, sonuc.brutKar >= 0 ? "var(--erp-primary-2)" : "var(--erp-danger)", true)}
@@ -259,10 +280,10 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
       )}
 
       <div style={{ fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 }}>
-        Satılan malın maliyeti ürünün <b>kart alış fiyatıyla</b> hesaplanıyor (parti bazlı gerçek
-        maliyet değil) — atölye için yaklaşık ama tutarlı bir ölçü. Döviz tutarları <b>bugünkü
-        kurla</b> TL'ye çevriliyor; geçmiş dönemde işlem anındaki kur farklı olabilir.
-        Üretim maliyeti (işçilik, fire) henüz bu tabloda değil.
+        Satılan malın maliyeti: mamulde <b>reçetedeki hammaddeler</b>, diğer ürünlerde kendisi — fiyat
+        <b>son 3 ayın alış ortalaması</b> (o renk); son alış daha eskiyse o günün dolar kuruyla bugüne
+        taşınmış hâli; alış yoksa kart fiyatı. Bugünün maliyeti — parti bazlı gerçek maliyet değil.
+        İşçilik ayrı satırda. Döviz tutarları <b>bugünkü kurla</b> TL'ye çevriliyor.
       </div>
     </div>
   );

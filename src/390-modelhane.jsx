@@ -27,7 +27,7 @@ function modelAsamasi(key) {
   return MODEL_ASAMALARI.find((a) => a.key === key) || MODEL_ASAMALARI[0];
 }
 
-function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok, onNumuneUret, onNumuneUretimi, modeller, onSave, onKoleksiyonaAl, showToast, kullaniciYetkisiVar }) {
+function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cariler, kurGecmisi, stok, onNumuneUret, onNumuneUretimi, modeller, onSave, onKoleksiyonaAl, showToast, kullaniciYetkisiVar }) {
   // Liste / katalog ve resim büyütme (21 Eylül).
   const [katalogMod, setKatalogMod] = useState(false);
   const [buyukResim, setBuyukResim] = useState(null);
@@ -311,6 +311,8 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
                   onReceteSablonuKaydet={onReceteSablonuKaydet}
                   stok={stok}
                   kurlar={kurlar}
+                  cariler={cariler}
+                  kurGecmisi={kurGecmisi}
                   onNumuneUretimi={onNumuneUretimi}
                   onNumuneUret={onNumuneUret}
                   model={m}
@@ -332,7 +334,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, stok
 }
 
 // Model kartı: künye, tasarım, teknik. Reçete ve numune turları sonraki turda.
-function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showToast, stok, kurlar, onNumuneUret, onNumuneUretimi, receteSablonlari, onReceteSablonuKaydet }) {
+function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showToast, stok, kurlar, cariler, kurGecmisi, onNumuneUret, onNumuneUretimi, receteSablonlari, onReceteSablonuKaydet }) {
   // Karttaki resimleri büyütme (21 Eylül).
   const [buyukResimKart, setBuyukResimKart] = useState(null);
   const [sekme, setSekme] = useState("kunye");
@@ -483,7 +485,8 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
         const satirlar = model.recete || [];
         // PARA BİRİMİ (20 Eylül): USD/EUR alış fiyatı kurla TL'ye.
         // Renk ve boy dahil (21 Eylül) — ürün kartıyla aynı yardımcı.
-        const fiyatR = (r) => hammaddeBirimFiyati(hammaddeler.find((u) => u.id === r.hammaddeUrunId), r.renk, r.beden, kurlar).tl;
+        // Son alış önce (v1.499.0, 077-alis-ortalama) — ürün kartıyla aynı maliyet.
+        const fiyatR = (r) => hammaddeBirimFiyati(hammaddeler.find((u) => u.id === r.hammaddeUrunId), r.renk, r.beden, kurlar, { cariler, kurGecmisi }).tl;
         const fiyat = (id) => alisFiyatiTL(hammaddeler.find((u) => u.id === id), kurlar);
         const birim = (id) => { const h = hammaddeler.find((u) => u.id === id); return h ? (h.birim || "") : ""; };
         const toplam = satirlar.reduce((t, r) => t + (parseFloat(r.miktar) || 0) * fiyatR(r), 0);

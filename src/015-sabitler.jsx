@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.498.0";
+const SURUM = "1.499.0";
 const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Kar/zarar raporunda satis geliri duzeltildi";
+const SURUM_NOTU = "Maliyet son alislardan: 3 ay ortalamasi, eskiyse USD ile guncel";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Kar/zarar raporunda satis geliri duzeltildi";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.499.0", tarih: "27.09.2026",
+    eklenen: ["Hammadde maliyeti önce son alışlardan: o rengin (boy yazılıysa o boyun) son 3 aydaki alışlarının miktar ağırlıklı ortalaması; son alış 3 aydan eskiyse TL fiyat o günün dolar kuruyla dolara çevrilip bugünkü kurla güncelleniyor; alış yoksa eskisi gibi kural/kart fiyatı", "Maliyet dökümünde fiyatın kaynağı yazıyor (ör. 'Son 3 ay 2 alış ortalaması')"],
+    degisen: ["Ürün kartı Maliyet sekmesi ve çıktısı, kâr/zarar, stok değeri, üretimdeki mal, maliyet farkı ve modelhane aynı maliyeti kullanıyor", "Kâr/zarar: satılan mamulün maliyeti reçetedeki hammaddelerden (işçilik ayrı satırda), reçetesizse kart fiyatı", "Alıştan gelen birim fiyat maliyet dökümünde elle değiştirilmiyor (fiyatı alış fişi belirliyor)"],
+    duzeltilen: ["Kâr/zarar raporunda üretilen mamulün maliyeti kart alış fiyatı boş olduğu için 0 sayılıyordu"] },
   { surum: "1.498.0", tarih: "27.09.2026",
     eklenen: ["Kâr/zarar raporunda fiyatı bulunamayan satış satırı varsa sayısıyla uyarı"],
     degisen: ["Kâr/zarar satış geliri KDV hariç (KDV'li fişte matrah)"],
@@ -1029,8 +1033,14 @@ function bulutHatasiAciklamasi(hata) {
 // için 0 çıkıyordu. Fişlerin kullandığı `fiyatBul` kullanılıyor — ekranda ne kesilirse maliyet de
 // onu görür. Kural yoksa kart fiyatına düşer.
 // Döner: { kendiFiyat, pb, tl, kaynak } — kendi biriminde fiyat, birim kodu, TL karşılığı.
-function hammaddeBirimFiyati(hammadde, renk, beden, kurlar) {
+//
+// SON ALIŞ ÖNCE (v1.499.0, 077-alis-ortalama): `baglam` ({ cariler, kurGecmisi }) verilirse önce son 3 ayın
+// alış ortalaması, yoksa eski son alış (USD ile bugüne taşınmış); alış hiç yoksa aşağıdaki kural/kart.
+// `baglam` verilmeyen çağrı eskisi gibi çalışır.
+function hammaddeBirimFiyati(hammadde, renk, beden, kurlar, baglam) {
   if (!hammadde) return { kendiFiyat: 0, pb: "TRY", tl: 0, kaynak: "yok" };
+  const alis = baglam ? sonAlisMaliyeti(hammadde, renk, beden, kurlar, baglam) : null;
+  if (alis) return alis;
   let bulunan = null;
   try { bulunan = fiyatBul(hammadde, renk || null, beden || null, "", "Alış", []); } catch (e) { bulunan = null; }
   const kuralVar = bulunan && bulunan.kaynak && bulunan.kaynak !== "Genel" && parseFloat(bulunan.fiyat) > 0;

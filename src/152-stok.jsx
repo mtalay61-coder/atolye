@@ -1,4 +1,4 @@
-function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
+function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [filterCat, setFilterCat] = useState("Tümü");
@@ -2664,6 +2664,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, onFiseGit
               <div style={{ padding: "12px 16px 16px", flex: 1, overflowY: "auto", minWidth: 0 }}>
                 <ProductMatrixCard
                   kurlar={kurlar}
+                  kurGecmisi={kurGecmisi}
                   tanimlarAylikUretimHedefi={tanimlar.aylikUretimHedefi}
                   tanimlarGenelGiderler={tanimlar.genelGiderler}
                   onFiseGitNo={onFiseGitNo}

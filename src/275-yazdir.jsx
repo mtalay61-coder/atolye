@@ -633,7 +633,7 @@ function teslimFisiHTML({ personelAdi, urunAd, renk, proses, sonuc, atamaMiktar,
 // fiyat burada.
 //
 // Hesap ürün kartıyla AYNI yardımcılardan (alisFiyatiTL, alisPbKodu); ikinci bir formül yok.
-function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProsesler, kurlar,
+function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProsesler, kurlar, cariler, kurGecmisi,
   aylikUretimHedefi, genelGiderler, fiyatGruplari, onClose, onMinimize, firmaBilgileri }) {
   const bugun = new Date().toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" });
   const PB_SIMGE = { TRY: "₺", USD: "$", EUR: "€", GBP: "£" };
@@ -656,8 +656,8 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
       receteMaliyetGrupla(pg.satirlar).forEach((g) => {
         const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);
         const miktar = g.satirlar[0].miktar || 0;
-        // Renk ve boy dahil (21 Eylül) — ürün kartıyla aynı yardımcı.
-        const bf = hammaddeBirimFiyati(hammadde, g.satirlar[0].renk, g.satirlar[0].beden, kurlar);
+        // Renk ve boy dahil (21 Eylül) — ürün kartıyla aynı yardımcı; son alış önce (v1.499.0).
+        const bf = hammaddeBirimFiyati(hammadde, g.satirlar[0].renk, g.satirlar[0].beden, kurlar, { cariler, kurGecmisi });
         const tl = miktar * bf.tl;
         const pb = bf.pb;
         const kendiFiyat = bf.kendiFiyat;

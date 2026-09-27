@@ -3791,6 +3791,8 @@ export default function AtolyeERP() {
               onReceteSablonuKaydet={receteSablonuKaydet}
               stok={stok}
               kurlar={muhasebe.kurlar || {}}
+              cariler={cariler}
+              kurGecmisi={muhasebe.kurGecmisi}
               onNumuneUret={numuneUret}
               modeller={modeller}
               onSave={saveModeller}
@@ -3807,6 +3809,7 @@ export default function AtolyeERP() {
             <StokModule
               kapsam={stokKapsamRef.current}
               kurlar={muhasebe.kurlar || {}}
+              kurGecmisi={muhasebe.kurGecmisi}
               onFiseGitNo={fiseGit}
               stokRezervasyonlari={stokRezervasyonlari}
               stokRezervasyonlari={stokRezervasyonlari}
@@ -4395,6 +4398,8 @@ export default function AtolyeERP() {
                 tanimlarProsesler={tanimlar.prosesler}
                 tanimlarAraProsesler={tanimlar.araProsesler}
                 kurlar={muhasebe.kurlar || {}}
+                cariler={cariler}
+                kurGecmisi={muhasebe.kurGecmisi}
                 aylikUretimHedefi={tanimlar.aylikUretimHedefi}
                 genelGiderler={tanimlar.genelGiderler}
                 fiyatGruplari={tanimlar.fiyatGruplari}

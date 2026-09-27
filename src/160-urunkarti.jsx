@@ -11,7 +11,7 @@ function fiyatSayisi(v) {
 const fiyatYazi = (n) => (n == null || n === "" ? "" : String(n).replace(".", ","));
 
 function ProductMatrixCard({
-  kurlar, receteSablonlari, onReceteSablonuKaydet,
+  kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet,
   tanimlarAylikUretimHedefi, tanimlarGenelGiderler,
   onFiseGitNo,
   product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onDefterDuzeltmeYaz, baslangicSekme,
@@ -3979,7 +3979,8 @@ function ProductMatrixCard({
                   const miktar = g.satirlar[0].miktar || 0;
                   // PARA BİRİMİ (20 Eylül): USD/EUR alış fiyatı kurla TL'ye çevriliyor.
                   // RENK VE BOY DAHİL fiyat (21 Eylül): boy kuralındaki fiyat da okunuyor.
-                  const bf = hammaddeBirimFiyati(hammadde, g.satirlar[0].renk, g.satirlar[0].beden, kurlar);
+                  // SON ALIŞ ÖNCE (v1.499.0, 077-alis-ortalama): son 3 ayın alış ortalaması / eski alış USD ile.
+                  const bf = hammaddeBirimFiyati(hammadde, g.satirlar[0].renk, g.satirlar[0].beden, kurlar, { cariler, kurGecmisi });
                   const fiyat = bf.tl;
                   if (bf.kendiFiyat > 0 && bf.pb !== "TRY" && !(parseFloat((kurlar || {})[bf.pb]) > 0)) kuruEksikler.add(bf.pb);
                   hammaddeToplami += miktar * fiyat;
@@ -3989,6 +3990,7 @@ function ProductMatrixCard({
                     renk: g.satirlar[0].renk || "", boy: g.satirlar[0].beden || "",
                     miktar, birim: g.satirlar[0].birim || (hammadde && hammadde.birim) || "",
                     pb: bf.pb, kendiFiyat: bf.kendiFiyat, kendiTutar: bf.kendiFiyat * miktar, tl: miktar * fiyat, kaynak: bf.kaynak,
+                    alisKaynakli: !!bf.alisSayisi,
                   });
                 });
               });
@@ -4064,10 +4066,12 @@ function ProductMatrixCard({
                               {(Math.round(d.miktar * 1000) / 1000).toLocaleString("tr-TR")} {d.birim}
                             </td>
                             <td className="mono" style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>
-                              {d.hammaddeId
+                              {/* Alıştan gelen fiyat DÜZENLENMEZ: kutuya yazılan karta/kurala giderdi ama ekranda yine
+                                  alış ortalaması görünürdü — kullanıcı değişikliğinin tutmadığını sanırdı. Fiyatı alış fişi belirler. */}
+                              {d.hammaddeId && !d.alisKaynakli
                                 ? <>{sayiKutusu(d.kendiFiyat, (v) => birimFiyatKaydet(d, v), `hm-${d.hammaddeId}-${d.renk}-${d.boy}`)} {PB_SIMGE[d.pb] || d.pb}</>
                                 : para(d.kendiFiyat, d.pb)}
-                              {d.kaynak && d.kaynak !== "Kart" && <div data-fiyat-kaynagi="1" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>{d.kaynak.replace("Renk+Beden", "Renk+boy").replace("Beden", "Boy")} fiyatı</div>}
+                              {d.kaynak && d.kaynak !== "Kart" && <div data-fiyat-kaynagi="1" data-alis-kaynakli={d.alisKaynakli ? "1" : undefined} style={{ fontSize: 9, color: "var(--erp-text-3)", whiteSpace: "normal", maxWidth: 200, marginLeft: "auto" }}>{d.alisKaynakli ? d.kaynak : `${d.kaynak.replace("Renk+Beden", "Renk+boy").replace("Beden", "Boy")} fiyatı`}</div>}
                             </td>
                             <td className="mono" style={{ padding: "4px 8px", textAlign: "right" }}>{para(d.kendiTutar, d.pb)}</td>
                             <td className="mono" style={{ padding: "4px 8px", textAlign: "right" }}>{para(d.tl, "TRY")}</td>
