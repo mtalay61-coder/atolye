@@ -1,0 +1,11 @@
+{
+ "farkliSatirdaFiyatKutusuVar": true,
+ "fiyatlar": [
+  "Siyah:39:1×550",
+  "Siyah:40:2×550",
+  "Siyah:41:2×550",
+  "Kahve:40:1×500",
+  "Kahve:41:3×500"
+ ],
+ "hatalar": []
+}
