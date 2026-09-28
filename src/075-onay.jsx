@@ -54,10 +54,9 @@ function onayUygula(istek) {
   } else if (tip === "cariSil") {
     islerRef.current.cariSilCascade(p.cariId);
   } else if (tip === "siparisSil") {
-    // ONAY YOLU DA SİLME ZİNCİRİNDEN GEÇER (v1.509.0). Önce yalnız sipariş listeden çıkarılıyordu: bağlı stok
-    // ve cari hareketleri "bağlı sipariş silinmiş" yetimleri olarak kalıyor, stok miktarı yanlış kalıyordu.
-    // `siparisSilCascade` çöp kaydını da alıyor (onay yolunda ayrıca alınınca çöpte iki kayıt olurdu).
-    islerRef.current.siparisSilCascade(p.siparisId);
+    // ONAY YOLU DA KARTLA AYNI KAPIDAN GEÇER (v1.509.0 / v1.512.0): `siparisKapat` işlem görmüş siparişi
+    // İPTAL eder (fişler bağımsız kalır, ayrılan serbest kalır), boş siparişi siler; çöp kaydını da o alır.
+    islerRef.current.siparisKapat(p.siparisId);
   } else if (tip === "uretimSil") {
     islerRef.current.uretimSil(p.uretimId, p.cascade);
   } else if (tip === "muhasebeHareketSil" || tip === "muhasebeHesapSil" || tip === "muhasebeCekSil") {

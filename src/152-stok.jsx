@@ -1119,7 +1119,10 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   items.forEach((p) => {
     (p.hareketler || []).forEach((h) => {
       const sorunlar = [];
-      if (h.siparisId && !(siparisler || []).some((s) => s.id === h.siparisId)) sorunlar.push("bağlı sipariş silinmiş");
+      // "Bağlı sipariş silinmiş" ARTIK SORUN DEĞİL (v1.512.0 — kullanıcı: "sipariş silindiğinde fişler
+      // silinmez, bağımsız fiş olur"). Hareket doğru; kalan kimlik kalıntısını Tanımlar > Veri Denetimi
+      // "Bağları çöz" temizler. Burada listelemek, yanındaki çöp simgesiyle YALNIZ stok tarafını silmeye
+      // (cari tarafı kalır, fiş yarım kalır) davet ediyordu.
       if (h.uretimId && !(uretim || []).some((o) => o.id === h.uretimId)) sorunlar.push("bağlı üretim silinmiş");
       if (h.cariId && !(cariler || []).some((c) => c.id === h.cariId)) sorunlar.push("bağlı cari silinmiş");
       if (sorunlar.length > 0) {

@@ -348,10 +348,13 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
 
   // ---- 7) YETİM REFERANSLAR ---------------------------------------------------------------
   stokHareketleri.forEach((h) => {
+    // Siparişi silinmiş fiş HATA DEĞİL (v1.512.0 — kullanıcı kuralı: sipariş silinince fişler bağımsız
+    // kalır). Kalan yalnız kimlik kalıntısı; "Dikkat" değil "Bilgi". Onarım yukarıdaki panelde: kimlik
+    // kaldırılır, fiş/miktar/tutar aynı kalır.
     if (h.siparisId && !siparisIndex.has(h.siparisId)) {
-      ekle("orta", "yetim-siparis", "Hareket, olmayan bir siparişe bağlı",
+      ekle("dusuk", "yetim-siparis", "Fişin siparişi silinmiş (fiş bağımsız, bağ kalıntısı var)",
         `${h.urunAd} · ${h.fisNo} · sipariş ${h.siparisNo || h.siparisId}`,
-        "Sipariş silinmiş ama hareketi kalmış.");
+        "Fiş doğru, stok ve cari doğru; yalnız silinmiş siparişin kimliği harekette duruyor. Üstteki 'Bağları çöz' temizler.");
     }
     if (h.cariId && !cariIndex.has(h.cariId)) {
       ekle("orta", "yetim-cari", "Hareket, olmayan bir cariye bağlı",
@@ -419,7 +422,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
 // Tutarlılık bulgularını gösteren ekran. Denetim İSTEK ÜZERİNE çalışır, kendiliğinden değil:
 // bütün hareketleri tarıyor ve büyük veride pahalı; her ekran açılışında koşturmak uygulamayı
 // yavaşlatırdı.
-function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muhasebe, onKarsilananOnar, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes, onEksikHareketOnar, onDefterdenYenidenKur }) {
+function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muhasebe, onKarsilananOnar, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes, onEksikHareketOnar, onDefterdenYenidenKur }) {
   const [sonuc, setSonuc] = useState(null);
   const [calisiyor, setCalisiyor] = useState(false);
   const [acikKod, setAcikKod] = useState(null);
@@ -505,6 +508,28 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
                 </button>
               </>
             )}
+          </div>
+        );
+      })()}
+
+      {/* ---- SİLİNMİŞ SİPARİŞİN BAĞ KALINTISI (v1.512.0) --------------------------------------------
+          Eski sürümde silinen siparişin fişleri kaldı (kurala göre doğru) ama hareketleri hâlâ onun
+          kimliğini taşıyor; stok ekranı bunu "bağlı sipariş silinmiş" diye gösteriyordu. Panel yalnız
+          kalıntı varken görünür. */}
+      {(() => {
+        const y = yetimSiparisBaglariniCoz(stok, cariler, siparisler);
+        if (y.sayi === 0 || !onYetimSiparisBagiCoz) return null;
+        return (
+          <div data-yetim-siparis-paneli="1" style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginBottom: 4 }}>Silinmiş siparişlerin fişleri</div>
+            <div style={{ fontSize: 12, color: "#7A3B22", marginBottom: 10, lineHeight: 1.5 }}>
+              <b className="mono">{y.siparisNolar.join(", ")}</b> silinmiş; fişleri bağımsız fiş olarak duruyor (doğru).
+              {" "}{y.sayi} stok/cari hareketinde yalnız eski siparişin kimliği kalmış. "Bağları çöz" bu kimliği kaldırır —
+              fişler, stok miktarları ve cari tutarları DEĞİŞMEZ.
+            </div>
+            <button className="btn-primary" data-yetim-siparis-coz="1" onClick={() => onYetimSiparisBagiCoz()}>
+              Bağları çöz ({y.sayi} hareket)
+            </button>
           </div>
         );
       })()}

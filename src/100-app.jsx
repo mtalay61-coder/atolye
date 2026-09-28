@@ -805,6 +805,26 @@ export default function AtolyeERP() {
   }, [setStokRezervasyonlari, showToast]);
 
 
+  // SİLİNMİŞ SİPARİŞİN BAĞ KALINTISI (v1.512.0). v1.512.0 öncesi doğrudan silme yolu siparişi siliyor,
+  // fişlerini bırakıyordu. Kullanıcının kuralına göre bu DOĞRU sonuç (fiş bağımsız kalır) — yanlış olan
+  // yalnız hareketlerde kalan sipariş kimliği ("bağlı sipariş silinmiş" uyarısı). Temizlik yalnız kimliği
+  // kaldırır, numarayı "(iptal)" yapar; miktar, tutar, stok DEĞİŞMEZ (bkz. 088 `yetimSiparisBaglariniCoz`).
+  const yetimSiparisBaglariniTemizle = useCallback(async () => {
+    const r = yetimSiparisBaglariniCoz(stok, cariler, siparisler);
+    if (r.sayi === 0) { showToast("Silinmiş siparişe bağlı hareket yok"); return; }
+    // Değişim bayrakları beklemeden ÖNCE hesaplanıyor (bekleme sonrası state fotoğrafı okunmasın).
+    const stokDegisti = r.stok.some((x, i) => x !== stok[i]);
+    const cariDegisti = r.cariler.some((x, i) => x !== cariler[i]);
+    const sonuclar = [];
+    if (stokDegisti) { setStok(r.stok); sonuclar.push(await yazimiIzle(tabloYaz("stok:items", "urunler", r.stok), "Stok kartları", r.stok)); }
+    if (cariDegisti) { setCariler(r.cariler); sonuclar.push(await yazimiIzle(tabloYaz("cari:data", "cariler", r.cariler), "Cari kartları", r.cariler)); }
+    const basarisiz = sonuclar.filter((x) => x && x.ok === false);
+    gunlukYaz(`Silinmiş sipariş bağları çözüldü: ${r.siparisNolar.join(", ")}`, "veri", { hareket: r.sayi, basarisizYazma: basarisiz.length });
+    showToast(basarisiz.length
+      ? `⚠ Bağlar bu bilgisayarda çözüldü ama buluta yazılamadı (${basarisiz[0].hata})`
+      : `${r.sayi} hareketin silinmiş sipariş bağı çözüldü (${r.siparisNolar.join(", ")}) — fişler bağımsız, stok ve cari değişmedi`);
+  }, [stok, cariler, siparisler, showToast]);
+
   const karsilananOnar = useCallback((kayitlar) => {
     if (!kayitlar || kayitlar.length === 0) return;
     setSiparisler((onceki) => onceki.map((sp) => {
@@ -1105,7 +1125,7 @@ export default function AtolyeERP() {
   // `fisDefterindeIptal`i istiyor; dizi çizim anında okunduğu için ad ÖNCE tanımlı olmalı
   // (aşağıda tanımlıyken uygulama "before initialization" ile açılmıyordu). Eksik bağımlılığın
   // asıl sebebi de bu sıralamaydı.
-  const { fisDefterineKayitYaz, fisDefterineYaz, fisDefterindeIptal } = useFisDefteriYazma({
+  const { fisDefterineKayitYaz, fisDefterineYaz, fisDefterindeIptal, fisDefteriniDonustur } = useFisDefteriYazma({
     fisDefteri, setFisDefteri, showToast, kaydetmeHatasiBildir, aktifKullanici,
   });
 
@@ -2490,7 +2510,7 @@ export default function AtolyeERP() {
       return;
     }
 
-    // Çöp kayıtları state güncellemesinden ÖNCE alınır (sebep için bkz. siparisSilCascade).
+    // Çöp kayıtları state güncellemesinden ÖNCE alınır (sebep için bkz. 087 silme zincirleri).
     // Hareketler otomatik geri yüklenemez: geri koymak stok/bakiye düzeltmesi de gerektirir ve o
     // arada başka hareketler girmiş olabilir. Kayıt yine de değerli — "bu tutar/miktar nereden
     // gelip nereye gitti?" sorusunun tek cevabı burasıdır.
@@ -2604,14 +2624,14 @@ export default function AtolyeERP() {
   // sildiremez. Aksi halde yetkisiz kullanıcı, doğrudan yapamadığı silmeyi onay üzerinden
   // yaptırarak politikayı dolanabilirdi — ürün tarafında da aynı arka kapı kapatıldı.
   // SİLME ZİNCİRLERİ AYRI DOSYADA (19 Eylül, 2. madde, 7. tur): `087-silme-zinciri.jsx`.
-  const { cariSilCascade, urunSilCascade, siparisSilCascade } = useSilmeZincirleri({
-    cariler, copaAt, showToast, siparisler, stok, uretim,
-    setCariler, setStok, setSiparisler,
+  const { cariSilCascade, urunSilCascade, siparisKapat } = useSilmeZincirleri({
+    cariler, copaAt, showToast, siparisler, stok, uretim, koliler, stokRezervasyonlari, aktifKullanici,
+    fisDefteriniDonustur, setCariler, setStok, setSiparisler, setUretim, setKoliler, setStokRezervasyonlari,
   });
 
   // ONAY SİSTEMİNİN İŞ KANCALARI: zincirler ve üretim silme burada hazır olduğuna göre ref
   // doldurulabilir. Onay ekranından "onayla" denince hook bunları ref üzerinden çağırıyor.
-  onayIsleriRef.current = { urunSilCascade, cariSilCascade, siparisSilCascade, uretimSil, copaAt };
+  onayIsleriRef.current = { urunSilCascade, cariSilCascade, siparisKapat, uretimSil, copaAt };
 
   // Kaynağı (sipariş/üretim) artık var olmayan "yetim" bir fişi tamamen temizler — o fişe ait TÜM
   // stok ve cari hareketlerini siler, stok miktarlarını da (o hareketlerin etkisini geri alarak) düzeltir.
@@ -3805,6 +3825,7 @@ export default function AtolyeERP() {
               onDefterdenYenidenKur={defterdenYenidenKur}
               onEksikHareketOnar={eksikHareketOnar}
               onKarsilananOnar={karsilananOnar}
+              onYetimSiparisBagiCoz={yetimSiparisBaglariniTemizle}
               muhasebe={muhasebe}
               mobilDuzenKipi={mobilDuzenKipi}
               onMobilDuzenKipi={mobilDuzenKipiAyarla}
@@ -4063,7 +4084,7 @@ export default function AtolyeERP() {
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
-              onSilCascade={siparisSilCascade}
+              onSiparisKapat={siparisKapat}
               onCopaAt={copaAt}
               onPlanlaUretim={planlaUretim}
               onPlanlaSatinAlma={planlaSatinAlma}
@@ -4114,7 +4135,7 @@ export default function AtolyeERP() {
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
-              onSilCascade={siparisSilCascade}
+              onSiparisKapat={siparisKapat}
               onCopaAt={copaAt}
               onPlanlaUretim={planlaUretim}
               onPlanlaSatinAlma={planlaSatinAlma}
@@ -4639,7 +4660,7 @@ export default function AtolyeERP() {
                             onGoToUretim={(id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }}
                             onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
-                            onSilCascade={siparisSilCascade}
+                            onSiparisKapat={siparisKapat}
                             onCopaAt={copaAt}
                             onPlanlaUretim={planlaUretim}
                             onPlanlaSatinAlma={planlaSatinAlma}

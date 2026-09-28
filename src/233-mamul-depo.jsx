@@ -72,6 +72,10 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
     if ((ko.durum || "Hazır") !== "Hazır") return;
     let sp = null;
     try { sp = (koliSiparisiniCoz(ko, siparisler, uretim) || {}).siparis || null; } catch (e) { sp = null; }
+    // SİPARİŞİ İPTAL EDİLMİŞ KOLİ (v1.512.0 — kullanıcı: "oluşan stok serbest stoğa düşer"): koli
+    // fiziken duruyor ama artık kimseye söz verilmemiş; içindeki mal SERBEST. Carinin başka açık
+    // siparişine eşleşirse (237, içerik yolu) yine o siparişin kolisi sayılır.
+    if (!sp && ko.iptalSiparisNo) return;
     (ko.kalemler || []).forEach((k) => {
       const h = hucre(k.urunId, k.renk, k.beden);
       if (!h) return;
