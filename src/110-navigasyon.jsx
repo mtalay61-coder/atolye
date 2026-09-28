@@ -216,7 +216,7 @@ function GecikenIslerPaneli({ siparisler, uretim, stok, cariler, muhasebe, onGoT
                     type="button"
                     onClick={() => onGoToUrun && onGoToUrun(k.urun.id)}
                     className="mono"
-                    title={`${k.urun.ad} · ${k.renk} · ${k.beden} — mevcut ${k.miktar}, minimum ${k.minStok}`}
+                    title={`${olcuMetni([k.urun.ad, k.renk, k.beden])} — mevcut ${k.miktar}, minimum ${k.minStok}`}
                     style={{
                       fontSize: 10, fontWeight: 700, padding: "4px 9px", borderRadius: "var(--erp-r-pill)",
                       border: "1px solid #E0B4A4", background: "var(--erp-orange-bg)", color: "var(--erp-warn)", cursor: "pointer",

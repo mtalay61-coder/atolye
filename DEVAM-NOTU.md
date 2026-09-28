@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.506.0** · 28 Eylül 2026
+Son sürüm: **v1.507.0** · 28 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (28 Eylül, v1.506.0): Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (28 Eylül, v1.507.0): "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6544,6 +6544,20 @@ o siparişin kalanı kadarı `koliyleAyrilan`; `acik = talep − koliyleAyrilan 
 `stok − kolide` (başka siparişe satılmaz). Aşan kısım ve çözülemeyen koli açığı kapatmaz. 236 depo-okut da aynı
 fonksiyonu kullanıyor. Test: `birim-mamul-depo` (8 iddia); `senaryo-siparis-koli-sevk` artık sevk öncesi
 "açık 0"ı da ölçüyor (altın değişti).
+
+**v1.507.0 — "Standart" her yerde (28 Eylül).** Kullanıcı (Astar Dana ekran görüntüleri: Stok Hareketleri "Kahve Standart
+-100", Stok Durumu matrisinde "STANDART" sütunu): "Standart yazısı buralarda da var, düzeltelim."
+- 012 yeni yardımcılar: `olcuMetni(parcalar, ayrac=" · ")` (olcuGoster'dan geçir, boşları at, birleştir) ve
+  `olcuMiktarMetni(beden, miktar)` ("38:5"; bedensizde "5").
+- Beden başlıkları `olcuGoster(b, "Miktar")`: 010 matris (+ renk hücresi), 070, 150, 235, 240 (×2), 275, 280 (×2),
+  300, 305, 315 (JSX + HTML çıktı), 335 (×2), 340 (×2). Tek tek: 152 hareket ipucu, 160 tek renkli hareket satırı
+  ve etiket HTML'i, 315 koli satırı, 275 cari ekstre çıktısı.
+- Metinler `olcuMetni`/`olcuMiktarMetni`: 081 cari açıklama + uyarılar, 110 kritik stok ipucu, 125 veri denetimi (6),
+  160 (üretim listesi, reçete önerisi), 235, 255 koli bedenleri, 300/310 beden özetleri ve iş emri HTML'i, 315
+  paketleme uyarıları (5), 325 toast'lar, 340 (ipucu, eşleşmeyen), 390, 078/084 planlama beden metni.
+- DOKUNULMADI: 236-depo-okut.jsx:342 (derlenmiş dosya — tek satır için JSX'e çevrilmedi; Depo > Okut sonucunda
+  bedensiz üründe "· Standart" görünebilir). Genel sütun başlığı dizileri (160:5278, 248:942) beden değil.
+- Test: `senaryo-standart-kart` (kartta iki sekmede "Standart" yok, matris başlığı "MİKTAR", hareket "Kahve -100").
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

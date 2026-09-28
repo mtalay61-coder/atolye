@@ -171,7 +171,7 @@ function AtolyeEkrani({ cariler, orders, stok, siparisler, onProsesTamamla, onPr
                   <>
                     <tr>
                       {satir.map(([b]) => (
-                        <td key={b} className="mono" style={{ padding: "1px 10px", fontSize: 13, color: "var(--erp-text-3)", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>{b}</td>
+                        <td key={b} className="mono" style={{ padding: "1px 10px", fontSize: 13, color: "var(--erp-text-3)", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>{olcuGoster(b, "Miktar")}</td>
                       ))}
                       <td className="mono" style={{ padding: "1px 12px", fontSize: 12, color: "var(--erp-border)", textAlign: "center", borderBottom: "1px solid var(--erp-line-soft)" }}>Σ</td>
                     </tr>
@@ -685,7 +685,7 @@ function AtolyeTeslimEkrani({ is, onGonder }) {
             <tr>
               <th style={{ padding: "6px 10px" }} />
               {bedenler.map((b) => (
-                <th key={b} className="mono" style={{ padding: "6px 10px", fontSize: 20, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>{b}</th>
+                <th key={b} className="mono" style={{ padding: "6px 10px", fontSize: 20, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
               ))}
               <th className="mono" style={{ padding: "6px 14px", fontSize: 16, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "center" }}>Σ</th>
             </tr>

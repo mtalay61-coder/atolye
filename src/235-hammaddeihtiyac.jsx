@@ -255,7 +255,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                 <div key={`${r.hammaddeUrunId}|${r.renk}|${r.beden}`}>
                   <div className="mono" style={{ fontSize: 12, color: "var(--erp-text)" }}>
                     <b>{r.hammaddeAd}</b>
-                    <span style={{ color: "var(--erp-text-2)" }}> {r.renk}{r.beden ? ` · ${r.beden}` : ""}</span>
+                    <span style={{ color: "var(--erp-text-2)" }}> {olcuMetni([r.renk, r.beden])}</span>
                     <span style={{ color: "var(--erp-warn)", fontWeight: 700, marginLeft: 8 }}>kayıt: {r.hamStok} {r.birim}</span>
                   </div>
                   {sebep.tur === "recete" && (
@@ -539,7 +539,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                         <tr>
                           <th style={{ fontSize: 10, textAlign: "left", padding: "3px 8px", color: "var(--erp-text-2)", position: "sticky", left: 0, background: "#fff", zIndex: 1 }}>{renkBasligi((stok || []).find((p) => p.id === g.hammaddeUrunId))}</th>
                           {tumBedenler.map((b) => (
-                            <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>{b}</th>
+                            <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700 }}>{olcuGoster(b, "Miktar")}</th>
                           ))}
                           <th style={{ fontSize: 11, textAlign: "center", padding: "3px 8px", whiteSpace: "nowrap", fontWeight: 700, borderLeft: "1px dashed var(--erp-line)" }}>Toplam</th>
                           {onPlanlaHammaddeSatinAlma && (

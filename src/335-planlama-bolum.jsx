@@ -196,7 +196,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                   <tr>
                     <th style={{ fontSize: 10, textAlign: "left", padding: "2px 8px", color: "var(--erp-text-2)", position: "sticky", left: 0, background: "var(--erp-panel)", zIndex: 1 }}>{renkBasligi(urun)}</th>
                     {tumBedenler.map((b) => (
-                      <th key={b} style={{ fontSize: 10, textAlign: "center", padding: "2px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{b}</th>
+                      <th key={b} style={{ fontSize: 10, textAlign: "center", padding: "2px 8px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                     ))}
                   </tr>
                 </thead>
@@ -361,7 +361,7 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                       <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px", position: "sticky", left: 0, background: "var(--erp-panel)", zIndex: 1 }}>{renkBasligi(urun)}</th>
                       <th style={{ fontSize: 11, textAlign: "left", padding: "4px 8px", position: "sticky", left: 60, background: "var(--erp-panel)", zIndex: 1, boxShadow: "none", }}>Tip</th>
                       {tumBedenler.map((b) => (
-                        <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{b}</th>
+                        <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                       ))}
                     </tr>
                   </thead>

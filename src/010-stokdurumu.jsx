@@ -404,7 +404,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
                 {urunSutunu ? "HAMMADDE / RENK" : "RENK"}
               </th>
               {bedenler.map((b) => (
-                <th key={b} className="mono" style={{ fontSize: 11, padding: "5px 8px", textAlign: "center", color: "var(--erp-text-2)" }}>{b || "—"}</th>
+                <th key={b} className="mono" style={{ fontSize: 11, padding: "5px 8px", textAlign: "center", color: "var(--erp-text-2)" }}>{olcuGoster(b, "Miktar")}</th>
               ))}
               <th className="mono" style={{ fontSize: 10, padding: "5px 8px", textAlign: "center", color: "var(--erp-text-2)", borderLeft: "1px dashed var(--erp-line)" }}>TOP.</th>
             </tr>
@@ -416,7 +416,7 @@ function StokDurumuTablosu({ satirlar, urunSutunu, onGoToSiparis, onGoToUrun, bi
                 <tr key={r.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                   <td style={{ fontSize: 12, padding: "5px 8px", whiteSpace: "nowrap" }}>
                     {urunSutunu && <b>{r.urunAd} </b>}
-                    <span className="mono" style={{ color: "var(--erp-text-2)" }}>{r.renk}</span>
+                    <span className="mono" style={{ color: "var(--erp-text-2)" }}>{olcuGoster(r.renk)}</span>
                   </td>
                   {bedenler.map((b) => {
                     const hucreSatiri = r.hucre[b];

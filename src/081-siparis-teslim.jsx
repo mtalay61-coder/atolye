@@ -99,7 +99,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
       siparis: { id: siparis.id, siparisNo: siparis.siparisNo, rezervasyonSiparisId: siparis.rezervasyonSiparisId },
       kalemler: fisKalemleri,
       cariAciklama: (k, c) =>
-        `${siparis.tip} Siparişi ${(k.siparis && k.siparis.siparisNo) || siparis.siparisNo}: ${k.urunAd} · ${k.renk} · ${k.beden} · ${k.miktar} ${k.birim}${k.fazlaGonderim ? " (sipariş fazlası)" : ""}`
+        `${siparis.tip} Siparişi ${(k.siparis && k.siparis.siparisNo) || siparis.siparisNo}: ${olcuMetni([k.urunAd, k.renk, k.beden])} · ${k.miktar} ${k.birim}${k.fazlaGonderim ? " (sipariş fazlası)" : ""}`
         + (c.cevrildiMi ? ` (${c.hamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${c.kalemPB} karşılığı)` : ""),
     };
     const sonuc = fisYaz(stok, cariler, fisGovdesi2);
@@ -129,7 +129,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
     const fazlalar = islenenler.filter((k) => k.fazlaGonderim)
       .map((k) => ({ ad: k.urunAd, renk: k.renk, beden: k.beden, fazla: k.miktar - k.kalan }));
     if (fazlalar.length > 0) {
-      showToast(`Sipariş aşılıyor — ${fazlalar.map((f) => `${f.ad} ${f.renk} ${f.beden}: ${f.fazla} fazla`).join(" · ")}`);
+      showToast(`Sipariş aşılıyor — ${fazlalar.map((f) => `${olcuMetni([f.ad, f.renk, f.beden], " ")}: ${f.fazla} fazla`).join(" · ")}`);
       return null;
     }
 
@@ -144,7 +144,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
       if (!urun) return;
       const v = (urun.variants || []).find((x) => (x.renk || "") === (k.renk || "") && (x.beden || "") === (k.beden || ""));
       const mevcut = v ? (v.miktar || 0) : 0;
-      if (k.miktar > mevcut) stokAsanlar.push(`${k.urunAd} ${k.renk} ${k.beden}: stok ${mevcut}, sevk ${k.miktar}`);
+      if (k.miktar > mevcut) stokAsanlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: stok ${mevcut}, sevk ${k.miktar}`);
     });
     if (stokAsanlar.length > 0) {
       showToast(`Stokta yok — ${stokAsanlar.join(" · ")}`);
@@ -208,7 +208,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
     }
 
     return { nextSiparisler, nextStok, nextCariler, bildirim: fazlalar.length > 0
-      ? `${fisNo} · Sipariş fazlası gönderildi: ${fazlalar.map((f) => `${f.ad} ${f.renk} ${f.beden} (+${f.fazla})`).join(", ")}${rezervasyonUyarisi}`
+      ? `${fisNo} · Sipariş fazlası gönderildi: ${fazlalar.map((f) => `${olcuMetni([f.ad, f.renk, f.beden], " ")} (+${f.fazla})`).join(", ")}${rezervasyonUyarisi}`
       : `${fisNo} kaydedildi — ${tumuTam ? "Sipariş tamamlandı" : "Kısmi teslim/tahsil işlendi, eksik var"}${rezervasyonUyarisi}` };
   })();
 

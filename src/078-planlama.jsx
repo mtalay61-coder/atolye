@@ -79,7 +79,7 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
         })(),
         model: satirlar[0].urunAd,
         adet: satirlar.reduce((s, x) => s + x.miktar, 0),
-        beden: `${renk} · ${satirlar.map((x) => `${x.beden}:${x.miktar}`).join(", ")}`,
+        beden: `${olcuGoster(renk) ? `${olcuGoster(renk)} · ` : ""}${satirlar.map((x) => `${olcuMiktarMetni(x.beden, x.miktar)}`).join(", ")}`,
         urunId: satirlar[0].urunId,
         renk,
         bedenMiktarlari: satirlar.map((x) => ({ beden: x.beden, miktar: x.miktar })),

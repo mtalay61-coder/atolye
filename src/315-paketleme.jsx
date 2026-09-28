@@ -311,9 +311,9 @@ function PaketlemeModule({
       const asimlar = [];
       kalemler.forEach((k) => {
         const kalem = ((sp && sp.kalemler) || []).find((x) => x.urunId === k.urunId && x.renk === k.renk && x.beden === k.beden);
-        if (!kalem) { asimlar.push(`${k.urunAd} ${k.renk} ${k.beden}: siparişte yok`); return; }
+        if (!kalem) { asimlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: siparişte yok`); return; }
         const kalan = kalem.miktar - (kalem.karsilanan || 0) - (bekleyen[`${k.urunId}|${k.renk}|${k.beden}`] || 0);
-        if (k.adet > kalan) asimlar.push(`${k.urunAd} ${k.renk} ${k.beden}: kalan ${kalan}, girilen ${k.adet}`);
+        if (k.adet > kalan) asimlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: kalan ${kalan}, girilen ${k.adet}`);
       });
       if (asimlar.length > 0) {
         showToast(`Sipariş aşılıyor — ${asimlar.join(" · ")}`);
@@ -328,9 +328,9 @@ function PaketlemeModule({
       const asimlar = [];
       kalemler.forEach((k) => {
         const b = bedenler.find((x) => String(x.beden || "") === String(k.beden || ""));
-        if (!ur || k.urunId !== ur.urunId || k.renk !== ur.renk || !b) { asimlar.push(`${k.urunAd} ${k.renk} ${k.beden}: üretimde yok`); return; }
+        if (!ur || k.urunId !== ur.urunId || k.renk !== ur.renk || !b) { asimlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: üretimde yok`); return; }
         const kalan = (b.miktar || 0) - (kolilenen[`${k.urunId}|${k.renk}|${k.beden}`] || 0);
-        if (k.adet > kalan) asimlar.push(`${k.urunAd} ${k.renk} ${k.beden}: kalan ${kalan}, girilen ${k.adet}`);
+        if (k.adet > kalan) asimlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: kalan ${kalan}, girilen ${k.adet}`);
       });
       if (asimlar.length > 0) {
         showToast(`Üretim aşılıyor — ${asimlar.join(" · ")}`);
@@ -361,7 +361,7 @@ function PaketlemeModule({
         const zatenKoli = kolideBekleyen[`${k.urunId}|${k.renk}|${k.beden}`] || 0;
         const serbest = mevcut - zatenKoli;
         if (k.adet > serbest) {
-          asimlar.push(`${k.urunAd} ${k.renk} ${k.beden}: stok ${mevcut}, kolide bekleyen ${zatenKoli}, girilen ${k.adet}`);
+          asimlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: stok ${mevcut}, kolide bekleyen ${zatenKoli}, girilen ${k.adet}`);
         }
       });
       if (asimlar.length > 0) {
@@ -678,7 +678,7 @@ function PaketlemeModule({
               {kalemler.map((k, i) => (
                 <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 8px", fontSize: 12, borderTop: i ? "1px solid var(--erp-head)" : "none" }}>
                   <span style={{ fontWeight: 600 }}>{k.urunAd}</span>
-                  <span className="mono" style={{ color: "var(--erp-text-2)" }}>{k.renk} {k.beden}</span>
+                  <span className="mono" style={{ color: "var(--erp-text-2)" }}>{[olcuGoster(k.renk), olcuGoster(k.beden)].filter(Boolean).join(" ")}</span>
                   <span className="mono" style={{ fontWeight: 700 }}>{k.adet} çift</span>
                   <button className="btn-ikon" title="Çıkar" style={{ marginLeft: "auto" }} onClick={() => girisAyarla(k.urunId, k.renk, k.beden, 0)}>
                     <X size={13} />
@@ -891,7 +891,7 @@ function PaketlemeModule({
                           <tr style={{ background: "var(--erp-panel)" }}>
                             <th style={{ fontSize: 10, textAlign: "left", padding: "3px 6px" }}>Ürün / Renk</th>
                             {bedenler.map((b) => (
-                              <th key={b} className="mono" style={{ fontSize: 10, padding: "3px 8px" }}>{b}</th>
+                              <th key={b} className="mono" style={{ fontSize: 10, padding: "3px 8px" }}>{olcuGoster(b, "Miktar")}</th>
                             ))}
                             <th className="mono" style={{ fontSize: 10, padding: "3px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Top.</th>
                           </tr>
@@ -993,7 +993,7 @@ function koliEtiketiIcerigi(koli, stok, cariler, siparisler, tanimlar) {
   const cari = (cariler || []).find((c) => c.id === koli.cariId);
   const sip = (siparisler || []).find((x) => x.id === koli.siparisId);
 
-  const basliklar = bedenler.map((b) => `<th>${b}</th>`).join("");
+  const basliklar = bedenler.map((b) => `<th>${olcuGoster(b, "Miktar")}</th>`).join("");
   const govde = satirlar.map((r) => `
     <tr>
       <td style="text-align:left;width:9mm">${r.gorsel ? `<img src="${r.gorsel}" style="width:8mm;height:8mm;object-fit:cover;border:0.3mm solid #000" />` : ""}</td>

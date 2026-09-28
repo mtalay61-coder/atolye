@@ -86,7 +86,7 @@ function PlanlanmisSekmesi({ siparisler, uretim, cariler, onGoToSiparis, onGoToU
                     <tr>
                       <th style={{ fontSize: 10, textAlign: "left", padding: "4px 10px", color: "var(--erp-text-2)" }}>Stok / Renk</th>
                       {tumBedenler.map((b) => (
-                        <th key={b} style={{ fontSize: 10, textAlign: "center", padding: "4px 6px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{b}</th>
+                        <th key={b} style={{ fontSize: 10, textAlign: "center", padding: "4px 6px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                       ))}
                     </tr>
                   </thead>
@@ -352,7 +352,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
                           <tr>
                             <th style={{ fontSize: 10, textAlign: "left", padding: "4px 10px", color: "var(--erp-text-2)" }}>Stok / Renk</th>
                             {tumBedenler.map((b) => (
-                              <th key={b} style={{ fontSize: 10, textAlign: "center", padding: "4px 6px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{b}</th>
+                              <th key={b} style={{ fontSize: 10, textAlign: "center", padding: "4px 6px", color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                             ))}
                             <th style={{ fontSize: 10, textAlign: "right", padding: "4px 10px", color: "var(--erp-text-2)" }}></th>
                           </tr>

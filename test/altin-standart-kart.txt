@@ -1,0 +1,23 @@
+{
+ "bilgiler": {
+  "matrisBasliklari": [
+   "RENK",
+   "MİKTAR",
+   "TOP."
+  ],
+  "standartGeciyor": false
+ },
+ "hareketler": {
+  "satir": "<fisno-002> · 27.09.2026 20:56 Satış Fişi · Müşteri B Kahve -100 ",
+  "standartGeciyor": false
+ },
+ "hatalar": [],
+ "kayit": [
+  {
+   "beden": "Standart",
+   "miktar": -100,
+   "minStok": 0,
+   "renk": "Kahve"
+  }
+ ]
+}
