@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.509.0";
+const SURUM = "1.510.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Siparis silme: bagli fis hareketi varsa her zaman bagli kayitlarla birlikte";
+const SURUM_NOTU = "Siparis ciktisi model model gruplu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis silme: bagli fis hareketi varsa her zaman bagli kayi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.510.0", tarih: "28.09.2026",
+    eklenen: ["Sipariş çıktısında çok renkli modelin altında model ara toplamı (adet ve tutar)"],
+    degisen: ["Sipariş çıktısı (yazdır, PDF, WhatsApp, e-posta) model model gruplu: model adı ve resmi bir kez, renkler altında; beden başlığında 'Standart' yazmıyor, renk sütununda ürünün renk başlığı"],
+    duzeltilen: [] },
   { surum: "1.509.0", tarih: "28.09.2026",
     eklenen: [],
     degisen: ["Sipariş silinirken bağlı fiş hareketi (stok ya da cari) varsa sipariş her zaman bağlı kayıtlarıyla birlikte siliniyor; onaylı silme de aynı yoldan"],
