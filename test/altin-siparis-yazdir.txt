@@ -25,9 +25,10 @@
    "Tarih: <tarih> · Teslim: <tarih>",
    "Müşteri",
    "Müşteri B",
-   "Ürün\tRenk\t40\t41\tToplam\tBirim Fiyat\tTutar",
-   "Bot\tSiyah\t4\t2\t6 çift\t900 ₺\t5.400 ₺",
-   "Toplam\t6\t\t5.400 ₺",
+   "Bot",
+   "Renk\t40\t41\tAdet\tBirim\tTutar",
+   "Siyah\t4\t2\t6 çift\t900 ₺\t5.400 ₺",
+   "Genel toplam\t6 çift\t5.400 ₺",
    "Atölye ERP · <bugün>"
   ],
   "musteriVar": true,

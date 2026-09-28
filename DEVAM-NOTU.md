@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.510.0** · 28 Eylül 2026
+Son sürüm: **v1.511.0** · 28 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (28 Eylül, v1.510.0): sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (28 Eylül, v1.511.0): sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6591,6 +6591,17 @@ resmi tekrar): "Siparişteki gibi model model gruplandırarak yazsın." 075 `sip
 e-posta ortak): renk grupları `modeller`e toplanıyor (ilk görünüş sırası); model resmi (kapak, yoksa ilk rengin
 resmi) ve adı `rowspan` ile bir kez; çok renkli modelin altında `data-model-toplam` ara toplam satırı (adet + PB
 bazında tutar). Beden başlığı `olcuGoster(b, "Miktar")`, renk `olcuGoster`, renk sütun başlığı `ortakRenkBasligi`.
+
+**v1.511.0 — sipariş çıktısı sipariş kartı düzeninde (28 Eylül).** Kullanıcı v1.510.0 PDF'ini ve ekrandaki
+sipariş kartını yan yana gösterip: "Yazdırı bu şekilde yapsak olmuyor mu". `siparisCiktisiHTML` (075) artık
+tek büyük tablo değil, MODEL BAŞINA ÇERÇEVELİ BLOK (`data-model-blok`): solda rowspan'lı hücrede 100px resim +
+model adı, sağda Renk (ürünün renk başlığı) | modelin KENDİ bedenleri | Adet | Birim | Tutar; çok renkli
+modelde beden beden "Toplam" satırı (`data-model-toplam`) — kartla (340) aynı. Sonda "Genel toplam · N model"
+(`data-genel-toplam`). Kararlar: Durum sütunu çıktıya girmedi (müşteriye/tedarikçiye giden belge, üretim
+durumu iç bilgi); düzen flex/grid değil tablo (PDF html2canvas ile çiziliyor); `break-inside:avoid` yazdırmada
+bloğu bölmüyor (PDF resmi dilimlediği için orada etkisiz). Müşteri satırında adres yokken baştaki "·" giderildi.
+Test: birim-siparis-ciktisi yeni düzene göre (blok bir kez, rowspan 4, beden beden toplam 13/6/19, Durum yok,
+tek renkli modelde toplam satırı yok). altin-siparis-yazdir yeni düzene göre güncellendi (model adı ayrı hücre, Adet/Birim, Genel toplam).
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 
