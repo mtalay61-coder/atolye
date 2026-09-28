@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.503.0</title>
+<title>Atölye ERP 1.506.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1967,9 +1967,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.503.0";
-const SURUM_TARIHI = "2026-09-27";
-const SURUM_NOTU = "Siparis kaleminde notlar rengin yaninda";
+const SURUM = "1.506.0";
+const SURUM_TARIHI = "2026-09-28";
+const SURUM_NOTU = "Mamul deposu: siparisin kendi kolisi acigi kapatiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1977,6 +1977,18 @@ const SURUM_NOTU = "Siparis kaleminde notlar rengin yaninda";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.506.0", tarih: "28.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Mamul Deposu'nda bir sipariş için koliye konmuş (henüz sevk edilmemiş) mal o siparişin 'açık' / 'üretilmeli' rakamında sayılıyordu; artık siparişin kendi kolisi açığı kapatıyor (başka siparişler için yine serbest sayılmıyor)"] },
+    { surum: "1.505.0", tarih: "27.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Cari ekstresi sade görünümde ödeme/tahsilat satırı iki satır yüksekliğindeydi (ödeme rozeti kendi satırına düşüyordu); artık tek satır", "Ürünsüz işçilik kaydında açıklama ekstrede iki kez yazıyordu", "Fişte 'Siparişten seç' kolilerinde 'N koli ekle' ve 'Tümünü ekle' kolileri depodaki kayıt sırasıyla alıyordu; artık koli koduna göre (K-2, K-10'dan önce)"] },
+    { surum: "1.504.0", tarih: "27.09.2026",
+        eklenen: ["Faturası kesilmiş (numara almış) fiş geri alınamaz/silinemez; Fişler listesinde 'Faturası kesildi' kilidi (e-fatura bağlantısına hazırlık)"],
+        degisen: [],
+        duzeltilen: ["Depo > Sevkiyat'tan koli okutularak açılan satış fişi siparişte seçilen KDV oranını değil ürünün oranını kullanıyordu"] },
     { surum: "1.503.0", tarih: "27.09.2026",
         eklenen: [],
         degisen: ["Sipariş formunun kalem tablosunda notlar rengin altında değil yanında"],
@@ -9156,6 +9168,7 @@ function usePlanlama(d) {
 // ENGEL (hiçbir şey değişmeden döner):
 //   "uretim-fisi" — üretim fişi yalnız üretim kartından geri alınır
 //   "cek-islemde" — işlem görmüş çekin giriş hareketi silinmez (mesaj ne yapılacağını söyler)
+//   "fatura-kesildi" — numara almış (gönderilmiş) faturası olan fiş geri alınmaz (v1.504.0)
 //
 // ÇIKTI
 //   { engel, stok, cariler, siparisler, uretim, muhasebe, silinenCekler, geriAlinanCekler, cekDegisti,
@@ -9228,7 +9241,7 @@ function uretimFisAilesi(u, fisNo) {
     return null;
 }
 function fisGeriAl(veri, secenekler = {}) {
-    const { stok, cariler, siparisler, uretim, muhasebe, koliler } = veri;
+    const { stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar } = veri;
     // `esId` KÜMEYE GİRER: Muhasebe defterinde bir kayıt Genel+Resmi olarak İKİ satır yazılır.
     // Yalnızca birini silmek diğerini yetim bırakır ve bakiyeyi bozar. Kümeyi burada genişletmek,
     // çağıranın bunu hatırlamasına bağlı olmaktan çıkarır.
@@ -9306,6 +9319,21 @@ function fisGeriAl(veri, secenekler = {}) {
             uretimNo: ilk.uretim.siparisNo,
             proses: (ilk.uretim.prosesIlerleme || [])[ilk.adimIndex] && (ilk.uretim.prosesIlerleme || [])[ilk.adimIndex].proses,
         });
+    }
+    // ---- KİLİT: FATURASI KESİLMİŞ FİŞ GERİ ALINMAZ (v1.504.0 — e-fatura) -------------------------
+    // Numara almış (entegratöre gönderilmiş) fatura yasal belgedir: fişi silmek cariyi ve stoğu geri alır
+    // ama GİB'deki fatura yerinde kalır — iki kayıt birbirinden kopar. Doğru yol faturayı iptal etmek ya da
+    // iade faturası kesmektir (Aşama 3). TASLAK (numarasız) engel değil: fatura henüz yok.
+    // `faturalar` verilmezse (eski çağrı) kilit uygulanmaz — kapı eskisi gibi çalışır.
+    if (Array.isArray(faturalar) && faturalar.length) {
+        const fisNolar = new Set(tumHareketler.filter((h) => idler.has(h.id) && h.fisNo).map((h) => h.fisNo));
+        const kesilmis = faturalar.find((f) => f && f.faturaNo && f.durum !== "İptal" && fisNolar.has(f.fisNo));
+        if (kesilmis) {
+            return engelliSonuc({
+                sebep: "fatura-kesildi", fisNo: kesilmis.fisNo, faturaNo: kesilmis.faturaNo,
+                mesaj: `${kesilmis.fisNo} fişinin faturası kesildi (${kesilmis.faturaNo}) — fiş silinemez. Önce faturayı iptal edin ya da iade faturası kesin.`,
+            });
+        }
     }
     // İzin verildiyse (üretim kartından gelen geri alma) fişin AİLESİ birlikte gider.
     uretimEslesmeleri.forEach((eslesme, uretimId) => {
@@ -14750,7 +14778,7 @@ function AtolyeERP() {
         // Stok, cari ve üretim ilerlemesinin geri alınması `fisGeriAl`da. Fiş numarası ailesi de orada
         // kuruluyor (`uretimFisAdlari`) — teslim almadaki formülün tek kopyası. Burada kalan iş
         // rezervasyon iadesi, yazma ve bildirim.
-        const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler }, {
+        const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar }, {
             uretimHedefi: { uretimId, prosesAdi, atamaId: araProsesMi ? null : atamaId },
             uretimeIzinVer: true,
         });
@@ -14805,7 +14833,7 @@ function AtolyeERP() {
                 (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : "")
             : `"${prosesAdi}" için ${atama.miktar} adetlik teslim alma işlemi geri alındı — hammadde ve işçilik geri alındı` +
                 (iadeEdilenRez > 0 ? " · rezervasyon payları serbest bırakıldı" : ""));
-    }, [uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
+    }, [faturalar, uretim, stok, cariler, siparisler, stokRezervasyonlari, showToast, muhasebe, koliler, fisDefterindeIptal]);
     // Bir üretim siparişini siler; bu üretime bağlı (Tedarik Planlama ile oluşmuş) bir satış kalemi varsa
     // o kalemin planlama referansını temizleyerek yeniden planlanabilir hale getirir.
     // cascade=true ise: bu üretimin tamamlanmış proseslerinde stoktan düşülen hammaddeleri geri ekler,
@@ -16067,11 +16095,17 @@ function AtolyeERP() {
         // TEK KAPI: geri almanın kendisi `fisGeriAl`da. Burada kalan iş çöp kaydı, yazma ve bildirim.
         // `cariHareketindenSiparisDus`: bu yol tek bir hareketi siler ve o hareket yalnızca cari
         // tarafında duruyor olabilir (ürünsüz kayıt); sipariş bağı oradan okunur.
-        const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler }, {
+        const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar }, {
             hareketIdler: [hareketId],
             cariHareketindenSiparisDus: true,
             kullanici: (aktifKullanici && aktifKullanici.ad) || null,
         });
+        // FATURA KİLİDİ (v1.504.0): faturası kesilmiş fiş silinmez.
+        if (sonuc.engel && sonuc.engel.sebep === "fatura-kesildi") {
+            showToast(sonuc.engel.mesaj);
+            gunlukYaz(`Faturalı fişin hareketi silinmek istendi (reddedildi): ${sonuc.engel.fisNo} · ${sonuc.engel.faturaNo}`, "cari", { fisNo: sonuc.engel.fisNo });
+            return;
+        }
         // ÇEK KİLİDİ: işlem görmüş çekin giriş hareketi silinmez. Mesaj ne yapılacağını söylüyor.
         if (sonuc.engel && sonuc.engel.sebep === "cek-islemde") {
             showToast(sonuc.engel.mesaj);
@@ -16162,7 +16196,7 @@ function AtolyeERP() {
                 (sonuc.etkilenenUretimler.size > 0 ? ", üretim" : "") +
                 " kayıtlarından birlikte silindi");
         }
-    }, [showToast, copaAt, stok, cariler, siparisler, uretim, muhasebe, saveMuhasebe, koliler, saveKoliler, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
+    }, [faturalar, showToast, copaAt, stok, cariler, siparisler, uretim, muhasebe, saveMuhasebe, koliler, saveKoliler, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
     // ÇEKİ BAĞLI GİRİŞ HAREKETİYLE BİRLİKTE SİL.
     //
     // Çek ekranından silinen çekin DOĞDUĞU cari hareketi (tahsilat/ödeme) caride kalıyordu: çek
@@ -16218,9 +16252,15 @@ function AtolyeERP() {
         }
         // TEK KAPI: geri almanın kendisi `fisGeriAl`da (sipariş `karsilanan` düşümü ve `esId` kardeş
         // kaydının silinmesi dahil). Burada kalan iş çöp kaydı, yazma ve bildirim.
-        const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler }, {
+        const sonuc = fisGeriAl({ stok, cariler, siparisler, uretim, muhasebe, koliler, faturalar }, {
             hareketIdler, kullanici: (aktifKullanici && aktifKullanici.ad) || null,
         });
+        // FATURA KİLİDİ — bkz. removeHareketEverywhere.
+        if (sonuc.engel && sonuc.engel.sebep === "fatura-kesildi") {
+            showToast(sonuc.engel.mesaj);
+            gunlukYaz(`Faturalı fiş silinmek istendi (reddedildi): ${sonuc.engel.fisNo} · ${sonuc.engel.faturaNo}`, "cari", { fisNo: sonuc.engel.fisNo });
+            return;
+        }
         // ÇEK KİLİDİ — bkz. removeHareketEverywhere.
         if (sonuc.engel && sonuc.engel.sebep === "cek-islemde") {
             showToast(sonuc.engel.mesaj);
@@ -16317,7 +16357,7 @@ function AtolyeERP() {
             (Object.keys(sonuc.kalemDusumu).length > 0 ? `, ${Object.keys(sonuc.kalemDusumu).length} sipariş kalemi geri alındı` : "") +
             (sonuc.etkilenenUretimler.size > 0 ? ", üretim ilerlemesi geri alındı" : "") +
             (sonuc.geriAlinanCekler.length > 0 ? `, ${sonuc.geriAlinanCekler.length} çekin işlemi geri alındı (önceki durumuna döndü)` : ""));
-    }, [stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
+    }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
     // Toast'taki "Geri al" düğmesi fiş numarasıyla buraya gelir.
     useEffect(() => {
         fisGeriAlRef.current = (fisNo, hareketIdler) => {
@@ -30971,7 +31011,14 @@ function RezervasyonDeposu({ siparisler, stok, stokRezervasyonlari, uretim, cari
 //   serbest   → stok − kolide
 //   üretimde  → henüz stoğa girmemiş, üretimi süren
 //   talep     → satış siparişlerinde karşılanmamış kalan
-//   açık      → talep − serbest − üretimde  (pozitifse ÜRETİLMESİ gereken)
+//   açık      → talep − (o siparişin kolisindeki) − serbest − üretimde  (pozitifse ÜRETİLMESİ gereken)
+//
+// SİPARİŞİN KENDİ KOLİSİ AÇIĞI KAPATIR (v1.506.0 — kullanıcı onayı): koliye konan mal serbestten düşüyor
+// ama siparişin talebinden ancak SEVKTE düşüyordu → "SAT-9: 16 çift kolide hazır" iken ekran "16
+// üretilmeli" diyordu; bu rakama bakıp gereksiz üretim açılabilirdi. Artık koli hangi siparişe aitse
+// (`koliSiparisiniCoz` — fiş ve sevkiyatla aynı çözüm) o siparişin kalanı kadar açıktan düşer. BAŞKA
+// siparişler için hâlâ serbest SAYILMAZ (aynı çifti iki müşteriye vermemek için). Siparişi çözülemeyen
+// koli ya da siparişin kalanını aşan koli içeriği açığı kapatmaz.
 //
 // "Kolide" ayrı tutuluyor çünkü o mal fiziken orada ama SÖZÜ VERİLMİŞ. Serbest saymak, aynı çifti
 // iki müşteriye satmaya yol açardı — koli sınır denetiminde (v1.87.0) aynı hata yaşanmıştı.
@@ -30990,7 +31037,7 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
                 };
                 satirlar.push(satir);
             }
-            satir.hucreler[v.beden] = { stok: v.miktar || 0, kolide: 0, uretimde: 0, talep: 0 };
+            satir.hucreler[v.beden] = { stok: v.miktar || 0, kolide: 0, uretimde: 0, talep: 0, koliyleAyrilan: 0 };
         });
     });
     const hucre = (urunId, renk, beden) => {
@@ -30998,10 +31045,13 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
         if (!satir)
             return null;
         if (!satir.hucreler[beden])
-            satir.hucreler[beden] = { stok: 0, kolide: 0, uretimde: 0, talep: 0 };
+            satir.hucreler[beden] = { stok: 0, kolide: 0, uretimde: 0, talep: 0, koliyleAyrilan: 0 };
         return satir.hucreler[beden];
     };
-    // TALEP: satış siparişlerinde karşılanmamış kalan.
+    // TALEP: satış siparişlerinde karşılanmamış kalan. Sipariş başına kalan ayrıca tutuluyor: kolinin
+    // açığa sayılacak kısmı o siparişin kalanıyla sınırlı.
+    const siparisKalani = new Map(); // `${siparisId}|${urunId}|${renk}|${beden}` → kalan
+    const kalanAnahtari = (spId, urunId, renk, beden) => `${spId}|${urunId}|${stokAnahtarNrm(renk)}|${stokAnahtarNrm(beden)}`;
     (siparisler || []).forEach((sp) => {
         if (sp.tip !== "Satış" || sp.durum === "İptal")
             return;
@@ -31012,16 +31062,34 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
             const h = hucre(k.urunId, k.renk, k.beden);
             if (h)
                 h.talep += kalan;
+            const a = kalanAnahtari(sp.id, k.urunId, k.renk, k.beden);
+            siparisKalani.set(a, (siparisKalani.get(a) || 0) + kalan);
         });
     });
     // KOLİDE: yalnızca HAZIR koliler. Sevk edilmiş koli zaten stoktan düşmüştür.
     (koliler || []).forEach((ko) => {
         if ((ko.durum || "Hazır") !== "Hazır")
             return;
+        let sp = null;
+        try {
+            sp = (koliSiparisiniCoz(ko, siparisler, uretim) || {}).siparis || null;
+        }
+        catch (e) {
+            sp = null;
+        }
         (ko.kalemler || []).forEach((k) => {
             const h = hucre(k.urunId, k.renk, k.beden);
-            if (h)
-                h.kolide += k.adet || 0;
+            if (!h)
+                return;
+            h.kolide += k.adet || 0;
+            if (sp && sp.tip === "Satış") {
+                const a = kalanAnahtari(sp.id, k.urunId, k.renk, k.beden);
+                const ayrilan = Math.min(k.adet || 0, siparisKalani.get(a) || 0);
+                if (ayrilan > 0) {
+                    h.koliyleAyrilan += ayrilan;
+                    siparisKalani.set(a, (siparisKalani.get(a) || 0) - ayrilan);
+                }
+            }
         });
     });
     // ÜRETİMDE: stoğa henüz eklenmemiş üretimler.
@@ -31041,7 +31109,7 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
         satir.toplam = { stok: 0, kolide: 0, serbest: 0, uretimde: 0, talep: 0, acik: 0 };
         Object.values(satir.hucreler).forEach((h) => {
             h.serbest = stokYuvarla(h.stok - h.kolide);
-            h.acik = Math.max(0, stokYuvarla(h.talep - h.serbest - h.uretimde));
+            h.acik = Math.max(0, stokYuvarla(h.talep - h.koliyleAyrilan - h.serbest - h.uretimde));
             satir.toplam.stok += h.stok;
             satir.toplam.kolide += h.kolide;
             satir.toplam.serbest += h.serbest;
@@ -35196,6 +35264,18 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
             React.createElement(Lock, { size: 10 }),
             " \u00C7ek i\u015Flemde"));
     }
+    // FATURA KİLİDİ (v1.504.0): numara almış faturası olan fiş silinmez — asıl kilit `fisGeriAl`da, burası
+    // "Sil"e basıp reddedilmeden ÖNCE söylüyor (çek kilidiyle aynı yaklaşım).
+    function faturaKilidi(f) {
+        const ft = fisinFaturasi(faturalar, f.fisNo);
+        return ft && ft.faturaNo && ft.durum !== "İptal" ? ft : null;
+    }
+    function faturaKilitRozeti(ft) {
+        return (React.createElement("span", { "data-fatura-kilidi": "1", title: `Faturası kesildi (${ft.faturaNo}) — fiş silinemez; faturayı iptal edin ya da iade faturası kesin`, style: { display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)",
+                background: "var(--erp-panel-2)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-pill)", padding: "2px 8px" } },
+            React.createElement(Lock, { size: 10 }),
+            " Faturas\u0131 kesildi"));
+    }
     function uretimKilidiVarMi(f, baglanti) {
         return URETIM_FIS_TIPLERI.includes(f.tip) && !!baglanti && baglanti.tip === "uretim";
     }
@@ -35364,11 +35444,11 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                                         borderRadius: "var(--erp-r-pill)", padding: "2px 8px",
                                     } },
                                     React.createElement(Lock, { size: 10 }),
-                                    " \u00DCretimden geri al\u0131n\u0131r")) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (React.createElement("button", { "data-fis-sil": "1", type: "button", className: "btn-ghost", title: "Bu fi\u015Fin kayna\u011F\u0131 (sipari\u015F/\u00FCretim) h\u00E2l\u00E2 var \u2014 silerseniz o kay\u0131tla tutars\u0131z hale gelebilir, dikkatli kullan\u0131n", style: { padding: "2px 8px", fontSize: 11, borderColor: "var(--erp-text-3)", color: "var(--erp-text-2)" }, onClick: () => setTemizlemeOnayi(f.key) },
+                                    " \u00DCretimden geri al\u0131n\u0131r")) : faturaKilidi(f) ? faturaKilitRozeti(faturaKilidi(f)) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (React.createElement("button", { "data-fis-sil": "1", type: "button", className: "btn-ghost", title: "Bu fi\u015Fin kayna\u011F\u0131 (sipari\u015F/\u00FCretim) h\u00E2l\u00E2 var \u2014 silerseniz o kay\u0131tla tutars\u0131z hale gelebilir, dikkatli kullan\u0131n", style: { padding: "2px 8px", fontSize: 11, borderColor: "var(--erp-text-3)", color: "var(--erp-text-2)" }, onClick: () => setTemizlemeOnayi(f.key) },
                                     React.createElement(Trash2, { size: 11 }),
                                     " Sil"))))) : (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
                                 React.createElement("span", { style: { fontSize: 11, color: "var(--erp-warn)", fontStyle: "italic" } }, "\u26A0 Bu fi\u015F i\u00E7in kaynak ba\u011Flant\u0131s\u0131 bulunamad\u0131"),
-                                onYetimFisTemizle && (cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "2px 8px", fontSize: 11, borderColor: "var(--erp-warn)", color: "var(--erp-warn)" }, onClick: () => setTemizlemeOnayi(f.key) },
+                                onYetimFisTemizle && (faturaKilidi(f) ? faturaKilitRozeti(faturaKilidi(f)) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "2px 8px", fontSize: 11, borderColor: "var(--erp-warn)", color: "var(--erp-warn)" }, onClick: () => setTemizlemeOnayi(f.key) },
                                     React.createElement(Trash2, { size: 11 }),
                                     " Bu Fi\u015Fi Temizle"))))),
                             ilgiliSatis && (React.createElement("button", { type: "button", className: "mono", onClick: () => onGoToSiparis && onGoToSiparis(ilgiliSatis.id), title: "Bu al\u0131\u015F/\u00FCretim, a\u015Fa\u011F\u0131daki sat\u0131\u015F sipari\u015Fini kar\u015F\u0131lamak i\u00E7in Tedarik Planlama'dan olu\u015Fturulmu\u015Ftur", style: {
@@ -35522,7 +35602,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         // GELEN LİSTENİN KENDİ İÇİNDEKİ KOPYALAR da ayıklanıyor (bkz. `hazirKalemleriTekille`). Eskiden
         // yalnız formda ZATEN olan satırlarla karşılaştırılıyordu; aynı ihtiyacın iki kaynaktan
         // (tıklanan satır + MRP) gelmesi iki satır olarak listeye düşüyordu.
-        const tekil = hazirKalemleriTekille(baslangicKalemler);
+        // Depo > Sevkiyat'tan gelen koli satırları da siparişin KDV oranını taşısın (v1.504.0).
+        const tekil = hazirKalemleriTekille(baslangicKalemler).map(siparisOraniniTasi);
         setKalemler((onceki) => {
             // Zaten eklenmiş satır TEKRAR EKLENMİYOR: form yeniden çizilirse (cari değişimi, pencere
             // geri gelmesi) miktarlar ikiye katlanırdı.
@@ -35751,6 +35832,16 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     // KDV (v1.496.0, 077-kdv): Tanımlar'da açıksa satır matrahından KDV; `toplam` KDV DAHİL olur (peşin
     // sınırı ve "Fiş Toplamı" cariye yazılacak tutarla aynı olsun). Kapalıyken eskisi gibi.
     const kdvAktif = kdvAktifMi(firmaBilgileri);
+    // SİPARİŞİN KDV ORANI FİŞE (v1.502.0 / v1.504.0): siparişe bağlı satır (kalemId + siparis) oranı taşımıyorsa
+    // sipariş kaleminden alınır — koli okutma (237 derlenmiş dosya, oran burada eklenir) ve Depo > Sevkiyat'ın
+    // açtığı fiş (başlangıç satırları) aynı yoldan. Satırda oran zaten varsa ona dokunulmaz.
+    function siparisOraniniTasi(x) {
+        if (!x || typeof x.kdvOrani === "number" || !x.kalemId || !x.siparis)
+            return x;
+        const sp = (siparisler || []).find((o) => o.id === x.siparis.id);
+        const sk = sp ? (sp.kalemler || []).find((k) => k.id === x.kalemId) : null;
+        return sk && typeof sk.kdvOrani === "number" ? { ...x, kdvOrani: sk.kdvOrani } : x;
+    }
     const kalemOrani = (k) => kalemKdvOrani(k, stok, firmaBilgileri);
     const cevrimSonucu = (() => {
         let toplam = 0;
@@ -35888,11 +35979,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             return showToast(`${koli.kod} başka bir carinin kolisi (${c ? c.unvan : "?"}) — bu fişe eklenmedi`);
         }
         const { satirlar: koliSatirlari, siparis, yol, uyarilar } = koliKalemleriniFisSatirinaCevir(koli, { siparisler, uretim, stok, mevcutKalemler: kalemler });
-        // Siparişe bağlı koli satırı siparişte girilen KDV oranını taşır (v1.502.0). 237 derlenmiş dosya — oran burada eklenir.
-        const satirlar = koliSatirlari.map((x) => {
-            const sk = x.kalemId && x.siparis ? (((siparisler || []).find((sp) => sp.id === x.siparis.id) || {}).kalemler || []).find((k) => k.id === x.kalemId) : null;
-            return sk && typeof sk.kdvOrani === "number" ? { ...x, kdvOrani: sk.kdvOrani } : x;
-        });
+        const satirlar = koliSatirlari.map(siparisOraniniTasi);
         if (!satirlar.length)
             return showToast(`${koli.kod} boş`);
         // SİPARİŞTEN YÜKLÜ SATIRLAR "KALAN"DIR (23 Eylül, v1.422.0): sipariş kartından açılan fişte
@@ -36142,7 +36229,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                     tip === "Satış" && (() => {
                                         const siparisKolileri = (koliler || []).filter((kl) => (kl.durum || "Hazır") === "Hazır"
                                             && !kalemler.some((f) => f.koliId === kl.id)
-                                            && (koliSiparisiniCoz(kl, siparisler, uretim).siparis || {}).id === s.id);
+                                            && (koliSiparisiniCoz(kl, siparisler, uretim).siparis || {}).id === s.id)
+                                            // KOD SIRASI (v1.505.0): "Tümünü ekle", gruplar ve "N koli ekle" hep koda göre (doğal: K-2 < K-10).
+                                            // "N koli ekle" ilk N'i alıyor; notta "kod sırasıyla" yazıyordu ama depodaki sırayla alıyordu
+                                            // (yeniden yazılan senaryo yakaladı).
+                                            .slice().sort((a, b) => String(a.kod || "").localeCompare(String(b.kod || ""), "tr", { numeric: true }));
                                         if (!siparisKolileri.length)
                                             return null;
                                         const cift = (kl) => stokYuvarla((kl.kalemler || []).reduce((t, x) => t + (x.adet || 0), 0));
@@ -37974,7 +38065,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                                     ilk.siparisNo && ilk.siparisNo !== g.fisNo && (React.createElement("span", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-3)" } },
                                                         "Sipari\u015F: ",
                                                         ilk.siparisNo)),
-                                                    ilk.aciklama && hareketIslemTipi(ilk) === "İşçilik" && urunGruplari.length === 0 && (React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, ilk.aciklama)),
+                                                    ilk.aciklama && hareketIslemTipi(ilk) === "İşçilik" && urunGruplari.length === 0 && yapisizHareketler.length === 0 && (React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, ilk.aciklama)),
                                                     ilk.aciklama && hareketIslemTipi(ilk) !== "İşçilik" && urunGruplari.length > 0 && (React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, String(ilk.aciklama).split(":")[0])),
                                                     defterEtiketi !== "Genel" && (React.createElement("span", { className: "mono", style: {
                                                             fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
@@ -37983,8 +38074,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                                         } }, defterEtiketi)))),
                                             React.createElement("td", { style: { padding: "6px 6px" } },
                                                 g.odemeSekli && (g.odemeSekli === "Çek" || g.odemeSekli === "Senet" || paraHareketiMi(ilk)) && (React.createElement("div", { className: "mono", style: {
-                                                        display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap",
-                                                        fontSize: 10, fontWeight: 700, marginBottom: 3,
+                                                        display: "inline-flex", alignItems: "center", gap: 4, flexWrap: sadeGorunum ? "nowrap" : "wrap",
+                                                        // SADE KİPTE TEK SATIR (v1.505.0): rozet ile özet yan yana — rozet kendi satırına
+                                                        // düşünce ödeme satırı ürün satırlarının iki katı yüksekliğe çıkıyordu.
+                                                        fontSize: 10, fontWeight: 700, marginBottom: sadeGorunum ? 0 : 3, marginRight: sadeGorunum ? 6 : 0,
+                                                        verticalAlign: "middle",
                                                         padding: "2px 8px", borderRadius: "var(--erp-r-pill)",
                                                         // TAHSİLAT YEŞİL, ÖDEME KİREMİT (bkz. HAREKET_TIPI_RENK).
                                                         // Rozet daha önce her hareket tipinde aynı kahverengiydi; ekstreye
@@ -38009,7 +38103,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                                         ilk.cek.kesideci ? `keşideci ${ilk.cek.kesideci}` : "",
                                                     ].filter(Boolean).map((p2) => ` · ${p2}`).join(""))),
                                                 ilk.aciklama && urunGruplari.length === 0 && yapisizHareketler.length === 0 && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 3 } }, ilk.aciklama)),
-                                                sadeGorunum ? (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g))) : (React.createElement(React.Fragment, null,
+                                                sadeGorunum ? (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g))) : (React.createElement(React.Fragment, null,
                                                     urunGruplari.length > 0 && (React.createElement(FisKalemMatrisi, { urunGruplari: urunGruplari, stok: stok, kompakt: true })),
                                                     yapisizHareketler.map((h) => {
                                                         let urunAdiIcin = h.urunAd || null;
@@ -48570,7 +48664,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.503.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.506.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

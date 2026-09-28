@@ -5,7 +5,7 @@
    "K-A Hazır",
    "K-B Hazır"
   ],
-  "mamulDepo": "kolide 16 · talep 16",
+  "mamulDepo": "kolide 16 · talep 16 · açık 0",
   "stok": [
    "Bej 37=8",
    "Bej 38=8"

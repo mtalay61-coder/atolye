@@ -35,6 +35,7 @@ node birim-vergino.js || HATA=1
 node birim-karzarar.js || HATA=1
 node birim-alis-ortalama.js || HATA=1
 node birim-efatura.js || HATA=1
+node birim-mamul-depo.js || HATA=1
 node birim-gorsel-depo.js || HATA=1
 node birim-acilis-fisi.js || HATA=1
 node birim-cek-bag.js || HATA=1

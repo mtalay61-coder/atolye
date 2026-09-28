@@ -13,7 +13,14 @@
 //   serbest   → stok − kolide
 //   üretimde  → henüz stoğa girmemiş, üretimi süren
 //   talep     → satış siparişlerinde karşılanmamış kalan
-//   açık      → talep − serbest − üretimde  (pozitifse ÜRETİLMESİ gereken)
+//   açık      → talep − (o siparişin kolisindeki) − serbest − üretimde  (pozitifse ÜRETİLMESİ gereken)
+//
+// SİPARİŞİN KENDİ KOLİSİ AÇIĞI KAPATIR (v1.506.0 — kullanıcı onayı): koliye konan mal serbestten düşüyor
+// ama siparişin talebinden ancak SEVKTE düşüyordu → "SAT-9: 16 çift kolide hazır" iken ekran "16
+// üretilmeli" diyordu; bu rakama bakıp gereksiz üretim açılabilirdi. Artık koli hangi siparişe aitse
+// (`koliSiparisiniCoz` — fiş ve sevkiyatla aynı çözüm) o siparişin kalanı kadar açıktan düşer. BAŞKA
+// siparişler için hâlâ serbest SAYILMAZ (aynı çifti iki müşteriye vermemek için). Siparişi çözülemeyen
+// koli ya da siparişin kalanını aşan koli içeriği açığı kapatmaz.
 //
 // "Kolide" ayrı tutuluyor çünkü o mal fiziken orada ama SÖZÜ VERİLMİŞ. Serbest saymak, aynı çifti
 // iki müşteriye satmaya yol açardı — koli sınır denetiminde (v1.87.0) aynı hata yaşanmıştı.
@@ -33,18 +40,21 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
         };
         satirlar.push(satir);
       }
-      satir.hucreler[v.beden] = { stok: v.miktar || 0, kolide: 0, uretimde: 0, talep: 0 };
+      satir.hucreler[v.beden] = { stok: v.miktar || 0, kolide: 0, uretimde: 0, talep: 0, koliyleAyrilan: 0 };
     });
   });
 
   const hucre = (urunId, renk, beden) => {
     const satir = satirlar.find((x) => x.anahtar === anahtarla(urunId, renk));
     if (!satir) return null;
-    if (!satir.hucreler[beden]) satir.hucreler[beden] = { stok: 0, kolide: 0, uretimde: 0, talep: 0 };
+    if (!satir.hucreler[beden]) satir.hucreler[beden] = { stok: 0, kolide: 0, uretimde: 0, talep: 0, koliyleAyrilan: 0 };
     return satir.hucreler[beden];
   };
 
-  // TALEP: satış siparişlerinde karşılanmamış kalan.
+  // TALEP: satış siparişlerinde karşılanmamış kalan. Sipariş başına kalan ayrıca tutuluyor: kolinin
+  // açığa sayılacak kısmı o siparişin kalanıyla sınırlı.
+  const siparisKalani = new Map();   // `${siparisId}|${urunId}|${renk}|${beden}` → kalan
+  const kalanAnahtari = (spId, urunId, renk, beden) => `${spId}|${urunId}|${stokAnahtarNrm(renk)}|${stokAnahtarNrm(beden)}`;
   (siparisler || []).forEach((sp) => {
     if (sp.tip !== "Satış" || sp.durum === "İptal") return;
     (sp.kalemler || []).forEach((k) => {
@@ -52,15 +62,25 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
       if (kalan <= 0) return;
       const h = hucre(k.urunId, k.renk, k.beden);
       if (h) h.talep += kalan;
+      const a = kalanAnahtari(sp.id, k.urunId, k.renk, k.beden);
+      siparisKalani.set(a, (siparisKalani.get(a) || 0) + kalan);
     });
   });
 
   // KOLİDE: yalnızca HAZIR koliler. Sevk edilmiş koli zaten stoktan düşmüştür.
   (koliler || []).forEach((ko) => {
     if ((ko.durum || "Hazır") !== "Hazır") return;
+    let sp = null;
+    try { sp = (koliSiparisiniCoz(ko, siparisler, uretim) || {}).siparis || null; } catch (e) { sp = null; }
     (ko.kalemler || []).forEach((k) => {
       const h = hucre(k.urunId, k.renk, k.beden);
-      if (h) h.kolide += k.adet || 0;
+      if (!h) return;
+      h.kolide += k.adet || 0;
+      if (sp && sp.tip === "Satış") {
+        const a = kalanAnahtari(sp.id, k.urunId, k.renk, k.beden);
+        const ayrilan = Math.min(k.adet || 0, siparisKalani.get(a) || 0);
+        if (ayrilan > 0) { h.koliyleAyrilan += ayrilan; siparisKalani.set(a, (siparisKalani.get(a) || 0) - ayrilan); }
+      }
     });
   });
 
@@ -80,7 +100,7 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
     satir.toplam = { stok: 0, kolide: 0, serbest: 0, uretimde: 0, talep: 0, acik: 0 };
     Object.values(satir.hucreler).forEach((h) => {
       h.serbest = stokYuvarla(h.stok - h.kolide);
-      h.acik = Math.max(0, stokYuvarla(h.talep - h.serbest - h.uretimde));
+      h.acik = Math.max(0, stokYuvarla(h.talep - h.koliyleAyrilan - h.serbest - h.uretimde));
       satir.toplam.stok += h.stok;
       satir.toplam.kolide += h.kolide;
       satir.toplam.serbest += h.serbest;
