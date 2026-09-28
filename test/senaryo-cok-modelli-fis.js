@@ -73,7 +73,9 @@ async function calistir() {
       return ilk && /300 Model/.test(ilk.textContent) && tr.querySelector("[data-fis-miktar]");
     });
     if (!satir) return;
-    [...satir.querySelectorAll('button[title="Bu bedeni fişten çıkar"]')].forEach((b) => b.click());
+    // Satırı TEK düğmeyle sil (v1.514.0 — kullanıcı: "satır silme yok burada, eklensin"); önce beden beden ×.
+    const sil = satir.querySelector("[data-fis-satir-sil]");
+    if (sil) sil.click();
   });
   await sayfa.waitForTimeout(500);
   const satirSayisi = await sayfa.locator("[data-fis-miktar]:visible").count();

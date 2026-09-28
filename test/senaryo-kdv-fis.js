@@ -57,12 +57,15 @@ async function fisKes(kdvAcik, hatalar) {
     const m = document.querySelector("[data-fis-kdv-dokumu]");
     return {
       kdvSutunu: !!document.querySelector("[data-fis-kdv-sutunu]"),
-      // Eklenmiş satırda oran YALNIZ YAZI (seçici yok — "eklendikten sonra değil").
-      satirOranlari: [...document.querySelectorAll("[data-fis-satir-kdv]")].map((s) => `${s.tagName === "SELECT" ? "seçici" : "yazı"} ${s.innerText.trim()}`),
+      // Eklenmiş satırda oran SEÇİCİ (v1.514.0 — kullanıcı: "satırda KDV düzenleme de olsun"; v1.501.0'da yalnız yazıydı).
+      satirOranlari: [...document.querySelectorAll("[data-fis-satir-kdv]")].map((s) => (s.tagName === "SELECT" ? `seçici %${s.value}` : `yazı ${s.innerText.trim()}`)),
       dokum: m ? m.innerText.replace(/\s+/g, " ").trim() : null,
     };
   });
   const ilk = await dip();
+  // SATIRDA KDV DEĞİŞTİR (v1.514.0): Bot satırı %10 → %20; kayıtta Bot'un KDV'si 40 olmalı.
+  if (kdvAcik) { await sayfa.locator("[data-fis-satir-kdv]").first().selectOption("20"); await sayfa.waitForTimeout(300); }
+  const satirdaDegisti = kdvAcik ? await dip() : null;
   // Ekle'den sonra giriş satırı sıfırlanır: yeni ürün kendi oranıyla gelir (önceki seçim taşınmaz).
   const sonrakiUrun = kdvAcik ? await (async () => {
     const et = await sayfa.evaluate(() => { const dl = document.getElementById("fis-urun-listesi"); const o = dl ? [...dl.options].find((x) => x.value.startsWith("Deri")) : null; return o ? o.value : "Deri"; });
@@ -78,7 +81,7 @@ async function fisKes(kdvAcik, hatalar) {
   const hareketler = (cari.hareketler || []).filter((h) => h.fisNo === "SF-KDV")
     .map((h) => `${h.urunAd} ${h.miktar} × ${h.birimFiyat} → tutar ${h.tutar}` + (h.kdvTutari != null ? ` (matrah ${h.matrah}, %${h.kdvOrani}, KDV ${h.kdvTutari})` : ""));
   await tarayici.close();
-  return { varsayilanlar, ilk, sonrakiUrun, hareketler };
+  return { varsayilanlar, ilk, satirdaDegisti, sonrakiUrun, hareketler };
 }
 
 async function ayarlar(hatalar) {

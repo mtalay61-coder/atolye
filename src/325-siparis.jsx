@@ -1885,15 +1885,35 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                               </div>
                             )}
                           </td>
-                          {/* KDV — yalnız gösterilir (oran satır eklenirken seçildi). Oransız eski kalemde ürünün oranı
-                              (teslimde o kullanılacak) soluk yazılır. */}
+                          {/* KDV — satır eklenirken seçilir ve SATIRDA DEĞİŞTİRİLEBİLİR (v1.514.0 — kullanıcı: "satırda KDV
+                              düzenleme de olsun"); seçilen oran satırın bütün bedenlerine yazılır. Kilitli (planlanmış/
+                              teslim alınmış) satırda yalnız gösterilir. Oransız eski kalemde ürünün oranı (teslimde o
+                              kullanılacak) soluk yazılır. */}
                           {kdvAktif && (() => {
                             const oranlar = Array.from(new Set(g.kalemler.map(kalemKdv)));
                             const tahmini = g.kalemler.some((k) => typeof k.kdvOrani !== "number");
+                            const tek = oranlar.length === 1 ? oranlar[0] : null;
+                            if (g.kilit) {
+                              return (
+                                <td data-siparis-satir-kdv={g.key} className="mono" title={tahmini ? "Ürünün oranı — satırda oran kayıtlı değil" : g.kilit}
+                                  style={{ padding: "6px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined }}>
+                                  {tek != null ? `%${tek}` : <span style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>}
+                                </td>
+                              );
+                            }
                             return (
-                              <td data-siparis-satir-kdv={g.key} className="mono" title={tahmini ? "Ürünün oranı — satırda oran kayıtlı değil" : undefined}
-                                style={{ padding: "6px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined }}>
-                                {oranlar.length === 1 ? `%${oranlar[0]}` : <span style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>}
+                              <td data-siparis-satir-kdv={g.key} style={{ padding: "4px 6px", textAlign: "center" }}>
+                                <select
+                                  data-siparis-satir-kdv-sec={g.key}
+                                  value={tek == null ? "" : String(tek)}
+                                  title={tahmini ? "Ürünün oranı — satırda oran kayıtlı değil; seçerseniz satıra yazılır" : "KDV oranı — satırın bütün bedenlerine uygulanır"}
+                                  onChange={(e) => { const oran = Number(e.target.value); if (Number.isFinite(oran) && e.target.value !== "") kalemDuzenle(idler, "kdvOrani", oran); }}
+                                  className="mono"
+                                  style={{ padding: "3px 4px", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined, border: `1px solid ${tek == null ? "var(--erp-warn)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", background: "#fff" }}
+                                >
+                                  {tek == null && <option value="">karışık</option>}
+                                  {Array.from(new Set([...KDV_ORANLARI, ...oranlar])).sort((a, b) => a - b).map((o) => <option key={o} value={String(o)}>%{o}</option>)}
+                                </select>
                               </td>
                             );
                           })()}

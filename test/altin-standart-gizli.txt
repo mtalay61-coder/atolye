@@ -16,7 +16,8 @@
    "TOP. ADET",
    "BİRİM FİYAT",
    "P.B.",
-   "TUTAR"
+   "TUTAR",
+   ""
   ],
   "satirlar": [
    {
