@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.513.0";
+const SURUM = "1.514.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Siparis formunda satir fiyati butun bedenlere uygulaniyor";
+const SURUM_NOTU = "Fiste satir silme ve satirda KDV degistirme";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis formunda satir fiyati butun bedenlere uygulaniyor";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.514.0", tarih: "28.09.2026",
+    eklenen: ["Fiş formunda satır sonunda 'satırı sil' düğmesi: satırın bütün bedenleri (koli satırında o koliler) tek tıkla fişten çıkar", "Fişte ve sipariş formunda eklenmiş satırın KDV oranı değiştirilebiliyor; seçilen oran satırın bütün bedenlerine uygulanır (kilitli sipariş satırında yalnız gösterilir)"],
+    degisen: [],
+    duzeltilen: [] },
   { surum: "1.513.0", tarih: "28.09.2026",
     eklenen: ["Sipariş formunda bedenleri farklı fiyatlı satırda da fiyat kutusu: yazılan fiyat satırın bütün bedenlerine uygulanır"],
     degisen: [],

@@ -16,8 +16,8 @@
  "tablo": {
   "dokum": "KDV %10: 200,00 ₺KDV %20: 160,00 ₺KDV dahil: 3.160,00 ₺",
   "hucreler": [
-   "yazı %10 (kayıtlı değil)",
-   "yazı %20"
+   "seçici %10 (kayıtlı değil)",
+   "seçici %20"
   ],
   "sutun": true
  }

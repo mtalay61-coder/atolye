@@ -72,7 +72,8 @@ async function calistir() {
   await sayfa.waitForTimeout(400);
   const tablo = await sayfa.evaluate((F) => ({
     sutun: !!document.querySelector(`${F} [data-siparis-kdv-sutunu]`),
-    hucreler: [...document.querySelectorAll(`${F} [data-siparis-satir-kdv]`)].map((e) => `${e.tagName === "TD" && !e.querySelector("select") ? "yazı" : "seçici"} ${e.innerText.trim()}${e.title ? " (kayıtlı değil)" : ""}`),
+    // v1.514.0: kilitsiz satırda oran SEÇİCİ (kullanıcı: "satırda KDV düzenleme de olsun"); kayıtsız oran başlıkta belirtilir.
+    hucreler: [...document.querySelectorAll(`${F} [data-siparis-satir-kdv]`)].map((e) => { const sec = e.querySelector("select"); return sec ? `seçici %${sec.value}${/kayıtlı değil/.test(sec.title) ? " (kayıtlı değil)" : ""}` : `yazı ${e.innerText.trim()}${e.title ? " (kayıtlı değil)" : ""}`; }),
     dokum: ((document.querySelector(`${F} [data-siparis-kdv-dokumu]`) || {}).innerText || "").replace(/\s+/g, " ").trim(),
   }), FORM);
   await sayfa.locator("[data-siparis-duzenle-kaydet]").click();
@@ -87,7 +88,7 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   await sayfa.locator('[data-siparisten-ekle="SAT-F1"]:visible').first().click();
   await sayfa.waitForTimeout(400);
-  const fisOranlari = await sayfa.evaluate(() => [...document.querySelectorAll("[data-fis-satir-kdv]")].map((e) => e.innerText.trim()));
+  const fisOranlari = await sayfa.evaluate(() => [...document.querySelectorAll("[data-fis-satir-kdv]")].map((e) => (e.tagName === "SELECT" ? `%${e.value}` : e.innerText.trim())));
   await sayfa.locator("[data-fis-kaydet]:visible").first().click();
   await sayfa.waitForTimeout(400);
   await sayfa.locator("[data-fis-onay-evet]").first().click();

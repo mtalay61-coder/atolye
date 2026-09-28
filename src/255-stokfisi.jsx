@@ -1128,6 +1128,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         // ayrı satır. Koliye bağlı olmayan kalemler eskisi gibi tek, düzenlenebilir satırda kalıyor.
         const kolililerVarMi = kalemler.some((k) => k.koliId);
         // Ara başlık satırı bütün sütunları kaplasın (ürün, renk, bedenler, koli×2, toplam, fiyat, P.B., tutar, sil).
+        // Beden dışı sütunlar: TOP. ADET, BİRİM FİYAT, P.B., TUTAR ve satır sil (v1.514.0) = 5.
         const sutunSayisi = 2 + tumBedenler.length + (kolililerVarMi ? 2 : 0) + 5 + (kdvAktif ? 1 : 0);
         function grubuBol(g) {
           const koliliKalemler = g.kalemler.filter((k) => k.koliId);
@@ -1196,6 +1197,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                     <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", color: "var(--erp-text-2)" }}>P.B.</th>
                     {kdvAktif && <th data-fis-kdv-sutunu="1" style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", color: "var(--erp-text-2)" }}>KDV</th>}
                     <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", color: "var(--erp-text-2)" }}>{kdvAktif ? "TUTAR (KDV HARİÇ)" : "TUTAR"}</th>
+                    <th aria-label="Satırı sil" style={{ width: 28 }}></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1362,22 +1364,55 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                             <span title="Bu gruptaki bedenler farklı para biriminde" style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>
                           )}
                         </td>
-                        {/* KDV ORANI SATIRDA YALNIZ GÖSTERİLİR (v1.501.0): oran satır EKLENİRKEN seçilir (kullanıcı:
-                            "eklendikten sonra değil"). Grup içinde farklıysa "karışık". */}
+                        {/* KDV ORANI: satır EKLENİRKEN seçilir (v1.501.0 — kullanıcı: "satır eklerken girilsin") ve
+                            SATIRDA DA DEĞİŞTİRİLEBİLİR (v1.514.0 — kullanıcı: "satırda KDV düzenleme de olsun").
+                            Seçilen oran satırın BÜTÜN bedenlerine yazılır; bedenler farklı oranda kalmışsa seçici
+                            "karışık" gösterir, bir oran seçilince hepsi o olur. */}
                         {kdvAktif && (() => {
                           const oranlar = Array.from(new Set(alt.kalemler.map(kalemOrani)));
+                          const tek = oranlar.length === 1 ? oranlar[0] : null;
                           return (
                             <td style={{ padding: "4px 6px", textAlign: "center" }}>
-                              {alt.kalemler.length === 0 ? null : oranlar.length === 1 ? (
-                                <span data-fis-satir-kdv={alt.key} className="mono" style={{ fontSize: 12, fontWeight: 700 }}>%{oranlar[0]}</span>
-                              ) : (
-                                <span title="Bu gruptaki bedenler farklı KDV oranında" style={{ fontSize: 10, color: "var(--erp-warn)" }}>karışık</span>
+                              {alt.kalemler.length === 0 ? null : (
+                                <select
+                                  data-fis-satir-kdv={alt.key}
+                                  value={tek == null ? "" : String(tek)}
+                                  title={tek == null ? "Bu satırın bedenleri farklı KDV oranında — seçilen oran hepsine uygulanır" : "KDV oranı — satırın bütün bedenlerine uygulanır"}
+                                  onChange={(e) => {
+                                    const oran = Number(e.target.value);
+                                    if (!Number.isFinite(oran)) return;
+                                    const idler = new Set(alt.kalemler.map((k) => k.id));
+                                    setKalemler((onceki) => onceki.map((x) => (idler.has(x.id) ? { ...x, kdvOrani: oran } : x)));
+                                  }}
+                                  className="mono"
+                                  style={{ padding: "3px 4px", fontSize: 12, fontWeight: 700, border: `1px solid ${tek == null ? "var(--erp-warn)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", background: "#fff" }}
+                                >
+                                  {tek == null && <option value="">karışık</option>}
+                                  {Array.from(new Set([...KDV_ORANLARI, ...oranlar])).sort((a, b) => a - b).map((o) => <option key={o} value={String(o)}>%{o}</option>)}
+                                </select>
                               )}
                             </td>
                           );
                         })()}
                         <td className="mono" style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
                           {grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {grupPB ? (PARA_SEMBOLU[grupPB] || grupPB) : "—"}
+                        </td>
+                        {/* SATIRI SİL (v1.514.0 — kullanıcı: "satır silme yok burada, eklensin"). Yalnız beden
+                            başına × vardı; 5 bedenli satırı kaldırmak 5 tıklamaydı. Satırın BÜTÜN kalemleri çıkar:
+                            koli satırında o koliler fişten çıkar (koli kaydına dokunulmaz, yeniden okutulabilir),
+                            siparişten gelen satırda sipariş etkilenmez — fiş henüz kaydedilmedi. */}
+                        <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                          {alt.kalemler.length > 0 && (
+                            <button
+                              type="button"
+                              data-fis-satir-sil={alt.key}
+                              title={alt.tip === "koli" ? `Bu satırı fişten çıkar (${alt.koliAdet} koli)` : "Bu satırı fişten çıkar (bütün bedenler)"}
+                              onClick={() => { const idler = new Set(alt.kalemler.map((k) => k.id)); setKalemler((onceki) => onceki.filter((x) => !idler.has(x.id))); }}
+                              style={{ border: "1px solid var(--erp-line)", background: "#fff", color: "var(--erp-danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: "var(--erp-r-sm)" }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                       );
