@@ -14,8 +14,11 @@
 //      bekleyen listesinden DÜŞMEMELİ (panel açık, sipariş listede, kalan 146).
 //   3. Adet kutusuna 3 → düğme "3 koli ekle" → fişte 4 koli · 32 çift, grup satırı "15 koli".
 //      Koliler sıradan alınıyor (tek tek eklenen K-05 atlanıyor → K-01..K-03).
+//   0. (v1.508.0) Başlıkta "kalan 154 = kolide 152 + kolisiz 2"; kolisiz tablo baştan yalnız 36:2.
 //   4. "Tümünü ekle" → grup satırı kalmıyor; yalnız "Kolisiz kalanı ekle" ve 36 bedeninde 2 çiftlik
 //      kalan matrisi görünüyor. Kolisiz kalan da eklenir.
+//   6. Ayrı oturum: önce "Kolisiz kalanı ekle" yalnız 2 çift ekler, sonra "Tümünü ekle" ile kalan kapanır
+//      (sipariş listeden düşer) — aynı mal iki kez eklenmez.
 //   5. Kaydet + onay → 19 kolinin hepsi "Sevk edildi" (aynı fiş no), stok her bedende tam düşüyor,
 //      karşılanan 36=21 37=38 38=38 39=38 40=19, sipariş Tamamlandı.
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
@@ -57,8 +60,11 @@ async function calistir() {
     kalemler: BEDENLER.map((b) => ({ urunId: "m102", urunAd: "102 Bayan Bot", renk: "Siyah", beden: b, adet: ASORTI[b] })),
   })));
 
+  const hatalar = [];
+  // Sipariş kartından satış fişini açıp "Siparişten seç"i açar (iki oturumda aynı yol).
+  const fisiAc = async () => {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
-  const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
+  sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
 
   await modulAc(sayfa, "Sipariş");
@@ -77,11 +83,13 @@ async function calistir() {
   await sayfa.waitForTimeout(900);
   await sayfa.locator("[data-siparisten-sec]:visible").first().click();
   await sayfa.waitForTimeout(400);
+  return { tarayici, sayfa };
+  };
+  let { tarayici, sayfa } = await fisiAc();
 
-  // Paneldeki durumun özeti — her adımdan sonra aynı gözle bakılıyor. `kalanli`: altta duran
-  // matris + "Kolisiz kalanı ekle" de alınsın mı. Koliler eklenmeden ÖNCE o matris kolilerin
-  // içeriğini de sayıyor (bekleyen = sipariş kalanı − fişteki); "yalnız kolisiz kalan" anlamını
-  // koliler fişe girdikten sonra kazanıyor. O yüzden yalnız 4. adımdan sonra ölçülüyor.
+  // Paneldeki durumun özeti — her adımdan sonra aynı gözle bakılıyor. `kalanli`: altta duran KOLİSİZ
+  // matris + "Kolisiz kalanı ekle" de alınsın mı. v1.508.0: kolide ve kolisiz AYRI (kullanıcı: "ikisinin
+  // toplamı toplam adedi versin") — matris açılışta da yalnız kolisiz 2 çifti gösteriyor.
   const panel = (kalanli = false) => sayfa.evaluate((kalanli) => {
     const sip = document.querySelector('[data-siparisten-sec-siparis="SAT-1001"]');
     const ozet = sip ? ([...sip.querySelectorAll("span")].find((e) => /^Hazır koliler/.test(e.textContent.trim())) || {}).textContent : null;
@@ -104,7 +112,7 @@ async function calistir() {
     };
   }, kalanli);
 
-  const acilis = await panel();
+  const acilis = await panel(true);
 
   // 2) tek tek seç → bir koli
   await sayfa.locator("[data-koli-grup-ac]:visible").first().click();
@@ -147,8 +155,21 @@ async function calistir() {
   const karsilanan = (sip.kalemler || []).map((k) => `${k.beden}=${k.karsilanan || 0}`).join(" ");
 
   await tarayici.close();
+
+  // 6) YENİ OTURUM — KOLİSİZ ÖNCE (v1.508.0): hiç koli eklenmeden "Kolisiz kalanı ekle" yalnız 2 çifti eklemeli;
+  // ardından "Tümünü ekle" kolileri ekleyince sipariş kalanı tam kapanmalı (önce 154 + 152 = çift ekleniyordu).
+  ({ tarayici, sayfa } = await fisiAc());
+  await sayfa.locator('[data-siparisten-ekle="SAT-1001"]:visible').first().click();
+  await sayfa.waitForTimeout(500);
+  const kolisizOnce = { sonra: await panel(true) };
+  await sayfa.locator("[data-siparis-koli-tumu]:visible").first().click();
+  await sayfa.waitForTimeout(600);
+  kolisizOnce.tumuSonrasi = await panel(true);
+  await tarayici.close();
+
   return {
     hatalar,
+    kolisizOnce,
     acilis, tekTekAcik: { kodDugmesi: tekTekAcik.kodDugmesi },
     tekKoliSonrasi, adetYazilinca, ucKoliSonrasi, tumuSonrasi, kolisizSonrasi, fisSatirlari,
     kayit: { durumlar, sevkFisSayisi: sevkFisleri.length, sevkFisi: sevkFisleri[0], stokSonra, karsilanan, siparisDurum: sip.durum },

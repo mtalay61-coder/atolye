@@ -495,11 +495,26 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     // SİPARİŞTEN YÜKLÜ SATIRLAR "KALAN"DIR (23 Eylül, v1.422.0): sipariş kartından açılan fişte
     // kalan kalemler hazır geliyor; koli aynı sipariş satırını karşılıyorsa o satırdan DÜŞÜLÜR,
     // ikinci kez eklenmez (testte 2+2=4 satır, çift teslim çıkmıştı).
+    // YALNIZ TAŞAN KADAR (v1.508.0): önce koli satırının miktarı aynı kalemin kolisiz satırından HER ZAMAN
+    // düşülüyordu. Kolide/kolisiz ayrımıyla "Kolisiz kalanı ekle" artık yalnız kolisiz payı ekliyor; sonra
+    // koliler eklenince o gerçek kolisiz satır da siliniyor, kalan yeniden görünüyordu (senaryo yakaladı).
+    // Artık kalem toplamı siparişin kalanını AŞARSA yalnız aşan kadar düşülür (fiş kalanın tamamıyla dolu
+    // açıldığında eski davranışın aynısı).
+    const siparisKalemKalani = (r) => {
+      const sp = r.siparis ? (siparisler || []).find((o) => o.id === r.siparis.id) : null;
+      const k = sp ? (sp.kalemler || []).find((x) => x.id === r.kalemId) : null;
+      return k ? stokYuvarla((k.miktar || 0) - (k.karsilanan || 0)) : null;
+    };
     setKalemler((o) => {
+      const tumu = [...o, ...satirlar];
       const kalan = o.map((r) => {
         if (r.koliId || !r.kalemId) return r;
         const dusen = satirlar.filter((x) => x.kalemId === r.kalemId).reduce((t, x) => t + x.miktar, 0);
-        return dusen > 0 ? { ...r, miktar: stokYuvarla(r.miktar - dusen) } : r;
+        if (!(dusen > 0)) return r;
+        const sinir = siparisKalemKalani(r);
+        const toplam = tumu.filter((x) => x.kalemId === r.kalemId).reduce((t, x) => t + (x.miktar || 0), 0);
+        const tasan = sinir == null ? dusen : Math.max(0, stokYuvarla(toplam - sinir));
+        return tasan > 0 ? { ...r, miktar: stokYuvarla(r.miktar - Math.min(tasan, r.miktar)) } : r;
       }).filter((r) => r.miktar > 0);
       return [...kalan, ...satirlar];
     });
@@ -909,7 +924,31 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 <ClipboardList size={12} /> Siparişten seç ({acikSiparisler.length} açık {tip === "Alış" ? "alış" : "satış"} siparişi)
               </button>
               {siparistenSecAcik && acikSiparisler.map((s) => {
-                const bekleyen = (s.kalemler || []).map((k) => ({ k, kalan: kalemKalani(k) })).filter((x) => x.kalan > 0);
+                // KOLİDE / KOLİSİZ AYRI (v1.508.0 — kullanıcı: "Kolilenmiş malları ayrı listelesin, kolisiz malları
+                // ayrı listelesin; ikisinin toplamı toplam adedi versin. Kolilenmiş ayrı bir stokta durur,
+                // kolilenmemiş ayrı bir stokta durur."). Önce "Kolisiz kalanı ekle" siparişin BÜTÜN kalanını
+                // ekliyordu — koliler henüz eklenmemişken koli içindekiler de gidiyor, sonra koli okutulunca
+                // aynı mal iki kez fişe düşüyordu. Artık siparişin hazır kolileri kalemlere DAĞITILIYOR
+                // (ürün+renk+beden, kalemin kalanıyla sınırlı, sırayla): kalem kalanı = koli payı + kolisiz pay.
+                const hazirKoliler = tip === "Satış" ? (koliler || []).filter((kl) => (kl.durum || "Hazır") === "Hazır"
+                  && !kalemler.some((f) => f.koliId === kl.id)
+                  && (koliSiparisiniCoz(kl, siparisler, uretim).siparis || {}).id === s.id)
+                  .slice().sort((a, b) => String(a.kod || "").localeCompare(String(b.kod || ""), "tr", { numeric: true })) : [];
+                const koliStogu = new Map();   // ürün|renk|beden → hazır kolilerdeki adet (dağıtılmamış)
+                const koliAnahtari = (x) => `${x.urunId}|${stokAnahtarNrm(x.renk)}|${stokAnahtarNrm(x.beden)}`;
+                hazirKoliler.forEach((kl) => (kl.kalemler || []).forEach((x) => koliStogu.set(koliAnahtari(x), (koliStogu.get(koliAnahtari(x)) || 0) + (x.adet || 0))));
+                const tumKalan = (s.kalemler || []).map((k) => {
+                  const kalan = kalemKalani(k);
+                  if (kalan <= 0) return { k, kalan: 0, kolide: 0, kolisiz: 0 };
+                  const a = koliAnahtari(k);
+                  const kolide = Math.min(kalan, koliStogu.get(a) || 0);
+                  if (kolide > 0) koliStogu.set(a, (koliStogu.get(a) || 0) - kolide);
+                  return { k, kalan, kolide: stokYuvarla(kolide), kolisiz: stokYuvarla(kalan - kolide) };
+                });
+                const toplamKalan = stokYuvarla(tumKalan.reduce((t, x) => t + x.kalan, 0));
+                const toplamKolide = stokYuvarla(tumKalan.reduce((t, x) => t + x.kolide, 0));
+                // Aşağıdaki tablo ve "Kolisiz kalanı ekle" yalnız KOLİSİZ payı kullanır.
+                const bekleyen = tumKalan.map((x) => ({ k: x.k, kalan: x.kolisiz })).filter((x) => x.kalan > 0);
                 const bedenler = bedenSirala([...new Set(bekleyen.map((x) => x.k.beden || ""))]);
                 const satirlar = [];
                 bekleyen.forEach(({ k, kalan }) => {
@@ -922,7 +961,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                   <div key={s.id} data-siparisten-sec-siparis={s.siparisNo} style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                       <b className="mono" style={{ fontSize: 12 }}>{s.siparisNo}</b>
-                      <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{s.durum} · kalan {stokYuvarla(bekleyen.reduce((t, x) => t + x.kalan, 0))}</span>
+                      <span className="mono" data-siparisten-sec-ozet={s.siparisNo} style={{ fontSize: 11, color: "var(--erp-text-2)" }}>
+                        {s.durum} · kalan {toplamKalan}
+                        {tip === "Satış" && toplamKolide > 0 && <> = kolide <b>{toplamKolide}</b> + kolisiz <b>{stokYuvarla(toplamKalan - toplamKolide)}</b></>}
+                      </span>
                       {bekleyen.length > 0 && (
                       <button type="button" className="btn-primary" data-siparisten-ekle={s.siparisNo} style={{ marginLeft: "auto", padding: "3px 9px", fontSize: 11 }}
                         onClick={() => {
@@ -933,7 +975,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                             ...(typeof k.kdvOrani === "number" ? { kdvOrani: k.kdvOrani } : {}),
                             kalemId: k.id, siparis: { id: s.id, siparisNo: s.siparisNo, rezervasyonSiparisId: s.rezervasyonSiparisId || null },
                           }))]);
-                          showToast(`${s.siparisNo}: ${bekleyen.length} kalem fişe eklendi (siparişe bağlı)`);
+                          showToast(`${s.siparisNo}: ${tip === "Satış" && toplamKolide > 0 ? "kolisiz " : ""}${stokYuvarla(bekleyen.reduce((t, x) => t + x.kalan, 0))} fişe eklendi (siparişe bağlı)${tip === "Satış" && toplamKolide > 0 ? " — kolidekiler koli olarak eklenir" : ""}`);
                         }}>
                         <Plus size={11} /> {tip === "Satış" ? "Kolisiz kalanı ekle" : "Bu siparişin kalemlerini ekle"}
                       </button>
@@ -946,13 +988,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         matris artık yalnız KOLİYE GİRMEMİŞ (kolisiz) kalanı gösteriyor: eklenen her
                         koli `kalemId` taşıyor, `bekleyen` listesi onu otomatik düşürüyor. */}
                     {tip === "Satış" && (() => {
-                      const siparisKolileri = (koliler || []).filter((kl) => (kl.durum || "Hazır") === "Hazır"
-                        && !kalemler.some((f) => f.koliId === kl.id)
-                        && (koliSiparisiniCoz(kl, siparisler, uretim).siparis || {}).id === s.id)
-                        // KOD SIRASI (v1.505.0): "Tümünü ekle", gruplar ve "N koli ekle" hep koda göre (doğal: K-2 < K-10).
-                        // "N koli ekle" ilk N'i alıyor; notta "kod sırasıyla" yazıyordu ama depodaki sırayla alıyordu
-                        // (yeniden yazılan senaryo yakaladı).
-                        .slice().sort((a, b) => String(a.kod || "").localeCompare(String(b.kod || ""), "tr", { numeric: true }));
+                      // KOD SIRASI (v1.505.0): "Tümünü ekle", gruplar ve "N koli ekle" hep koda göre (doğal: K-2 < K-10) —
+                      // sıralama yukarıda (`hazirKoliler`).
+                      const siparisKolileri = hazirKoliler;
                       if (!siparisKolileri.length) return null;
                       const cift = (kl) => stokYuvarla((kl.kalemler || []).reduce((t, x) => t + (x.adet || 0), 0));
                       const koliIcerigi = (kl) => bedenSirala([...new Set((kl.kalemler || []).map((x) => x.beden))])
@@ -1027,8 +1065,13 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         </div>
                       );
                     })()}
+                    {bekleyen.length > 0 && tip === "Satış" && toplamKolide > 0 && (
+                      <div data-kolisiz-baslik={s.siparisNo} style={{ fontSize: 11, color: "var(--erp-text-3)", margin: "4px 0 2px" }}>
+                        Kolisiz: <b>{stokYuvarla(bekleyen.reduce((t, x) => t + x.kalan, 0))}</b> çift
+                      </div>
+                    )}
                     {bekleyen.length > 0 && (
-                    <table style={{ borderCollapse: "collapse" }}>
+                    <table data-kolisiz-tablo={s.siparisNo} style={{ borderCollapse: "collapse" }}>
                       <thead><tr>
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Ürün</th>
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Renk</th>
