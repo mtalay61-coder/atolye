@@ -115,9 +115,9 @@ async function calistir() {
     const { tarayici, sayfa } = await uygulamaAc(tohumKur(), { hataYaz: false });
     sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
     await sayfa.waitForTimeout(2300);
-    // Başlangıçta "açık" ÖLÇÜLMÜYOR: formül (talep − serbest − üretimde) bu siparişe ayrılmış kolideki
-    // malı da açık sayıyor (16). Tasarım gereği mi, eksik mi belli değil — altına gömülmedi.
-    sonuc.baslangic = { ...(await durum(sayfa)), mamulDepo: String(await mamulOzeti(sayfa)).replace(/ · açık \d+$/, "") };
+    // Başlangıçta "açık" 0 olmalı (v1.506.0, kullanıcı onayı): siparişin KENDİ kolisindeki mal o siparişin
+    // açığını kapatır. Önce 16 görünüyordu — hazır mal "üretilmeli" sayılıyordu.
+    sonuc.baslangic = { ...(await durum(sayfa)), mamulDepo: await mamulOzeti(sayfa) };
     await siparisKartiAc(sayfa);
     sonuc.kartOnce = await kartKolileri(sayfa);
     await sayfa.locator("[data-fis-olustur]:visible").first().click();
