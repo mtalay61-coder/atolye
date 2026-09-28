@@ -1704,6 +1704,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                       <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px", borderLeft: "1px dashed var(--erp-line)" }}>Birim Fiyat</th>
                       {kdvAktif && <th data-siparis-kdv-sutunu="1" style={{ fontSize: 11, textAlign: "center", padding: "4px 8px" }}>KDV</th>}
                       <th style={{ fontSize: 11, textAlign: "right", padding: "4px 8px" }}>{kdvAktif ? "Tutar (KDV hariç)" : "Tutar"}</th>
+                      <th aria-label="Satırı sil" style={{ width: 28 }}></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1720,7 +1721,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                         <React.Fragment key={g.key}>
                         {araBaslikVar && (
                           <tr data-siparis-renk-ara-baslik={grupRenkBasligi(g)}>
-                            <td colSpan={tumBedenler.length + 5 + (kdvAktif ? 1 : 0)} style={{ padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
+                            <td colSpan={tumBedenler.length + 5 + (kdvAktif ? 1 : 0)} /* ürün, renk, fiyat, tutar, sil */ style={{ padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" }}>
                               {grupRenkBasligi(g).toLocaleUpperCase("tr-TR")}
                             </td>
                           </tr>
@@ -1919,6 +1920,22 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                           })()}
                           <td className="mono" style={{ padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
                             {grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[g.kalemler[0].paraBirimi || "TRY"] || g.kalemler[0].paraBirimi}
+                          </td>
+                          {/* SATIRI SİL (v1.515.0 — kullanıcı: "sipariş formunda da satır silme olsun"; fiş formunda
+                              v1.514.0). Satırın bütün bedenleri tek tıkla çıkar; kaydedilene kadar sipariş değişmez.
+                              Kilitli (planlanmış/teslim alınmış) satırda düğme yok — `kalemKilitSebebi` kapısıyla aynı. */}
+                          <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                            {!g.kilit && (
+                              <button
+                                type="button"
+                                data-form-kalem-satir-sil={g.key}
+                                title="Bu satırı siparişten çıkar (bütün bedenler)"
+                                onClick={() => { const kume = new Set(idler); setKalemler((onceki) => onceki.filter((x) => !kume.has(x.id) || kalemKilitSebebi(x))); }}
+                                style={{ border: "1px solid var(--erp-line)", background: "#fff", color: "var(--erp-danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: "var(--erp-r-sm)" }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
                           </td>
                         </tr>
                         </React.Fragment>
