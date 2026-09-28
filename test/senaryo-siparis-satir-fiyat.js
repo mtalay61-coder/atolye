@@ -6,7 +6,8 @@
 // aldı. Ardından satır "farklı" görünüyor ve fiyat kutusu kayboluyordu.
 // Ölçülen:
 //   1) aynı fiyatlı satır (3 beden, 0 ₺) → 550 → kaydet → üç bedenin hepsi 550;
-//   2) fiyatları farklı satır (0 / 550) → "farklı" kutusuna 500 → kaydet → iki beden de 500.
+//   2) fiyatları farklı satır (0 / 550) → "farklı" kutusuna 500 → kaydet → iki beden de 500;
+//   3) Taba satırı "satırı sil" düğmesiyle iki bedeniyle birlikte çıkıyor (v1.515.0).
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -19,6 +20,8 @@ async function calistir() {
     kalemler: [
       kalem("a1", "Siyah", "39", 1, 0), kalem("a2", "Siyah", "40", 2, 0), kalem("a3", "Siyah", "41", 2, 0),
       kalem("b1", "Kahve", "40", 1, 0), kalem("b2", "Kahve", "41", 3, 550),
+      // v1.515.0: satır sil düğmesiyle çıkarılacak satır (iki beden).
+      kalem("c1", "Taba", "40", 4, 300), kalem("c2", "Taba", "41", 4, 300),
     ],
   }]);
 
@@ -46,6 +49,10 @@ async function calistir() {
   const kahveFiyat = kahve.locator("[data-form-kalem-farkli-fiyat]");
   await kahveFiyat.fill("500");
   await kahveFiyat.blur();
+  await sayfa.waitForTimeout(300);
+  // SATIRI SİL (v1.515.0 — kullanıcı: "sipariş formunda da satır silme olsun").
+  const taba = satirlar.filter({ has: sayfa.locator('[data-form-kalem-renk] option:checked', { hasText: "Taba" }) }).first();
+  await taba.locator("[data-form-kalem-satir-sil]").click();
   await sayfa.waitForTimeout(300);
   await sayfa.locator("[data-siparis-duzenle-kaydet]").click();
   await sayfa.waitForTimeout(1000);
