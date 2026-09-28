@@ -576,13 +576,20 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   function kalemSil(id) {
     const k = kalemler.find((x) => x.id === id);
     if (k && kalemKilitSebebi(k)) return showToast(kalemKilitSebebi(k));
-    setKalemler(kalemler.filter((x) => x.id !== id));
+    setKalemler((onceki) => onceki.filter((x) => x.id !== id));
   }
 
   // Bir kalemin miktarını ya da birim fiyatını, satırı silip yeniden eklemeye gerek kalmadan
-  // doğrudan yerinde günceller.
+  // doğrudan yerinde günceller. `id` tek kimlik ya da kimlik dizisi (satırın bütün bedenleri).
+  //
+  // FONKSİYONLU GÜNCELLEME ŞART (v1.513.0 — kullanıcı ekran görüntüsü: alış siparişinde fiyat 550 yazıldı,
+  // sonuç "0–550 ₺", toplam 550). Satır fiyatı bedenlere `forEach(kalemDuzenle)` ile dağıtılıyordu ve her
+  // çağrı AYNI çizimin `kalemler` fotoğrafından kuruyordu: her yazma bir öncekini ezdi, yalnız SON beden
+  // fiyatı aldı. Satır sonra "farklı" görünüp fiyat kutusu da kayboluyordu (düzeltmenin yolu kalmıyordu).
+  // Fiş formunda (255) aynı fonksiyon baştan fonksiyonluydu; hata yalnız sipariş formundaydı.
   function kalemDuzenle(id, alan, deger) {
-    setKalemler(kalemler.map((k) => (k.id === id && !kalemKilitSebebi(k) ? { ...k, [alan]: deger } : k)));
+    const idler = new Set(Array.isArray(id) ? id : [id]);
+    setKalemler((onceki) => onceki.map((k) => (idler.has(k.id) && !kalemKilitSebebi(k) ? { ...k, [alan]: deger } : k)));
   }
 
   // Sesli komuttan (Claude API ile ayrıştırılmış) dönen bilgiyi forma işler. Hiçbir şeyi otomatik
@@ -754,7 +761,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   // okuduğu için buraya yazılan hemen atölyeye düşer. Birleştirme yok: yalnız not alanı değişiyor.
   function grupNotDegistir(grupKalemIdleri, notlar) {
     const idler = new Set(grupKalemIdleri);
-    setKalemler(kalemler.map((k) => (idler.has(k.id) ? { ...k, notlar: notlar.length ? notlar : undefined, aciklama: undefined } : k)));
+    setKalemler((onceki) => onceki.map((k) => (idler.has(k.id) ? { ...k, notlar: notlar.length ? notlar : undefined, aciklama: undefined } : k)));
   }
   // Notun proses seçenekleri — üretim emrinin kuracağı sırayla: ürünün o rengi için reçetedeki
   // prosesler, her birinin ardına ürün kartında bağlı ARA proses ("Temizleme" gibi, üretimde ayrı
@@ -1836,9 +1843,22 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                 {birimFiyatlarFarkli ? "farklı" : `${g.kalemler[0].birimFiyat} ${g.kalemler[0].paraBirimi || "TRY"}`}
                               </span>
                             ) : birimFiyatlarFarkli ? (
-                              <span title="Bu gruptaki bedenler farklı birim fiyatlara sahip — hücre bazında düzenleyin" style={{ fontSize: 10, color: "var(--erp-warn)" }}>
-                                farklı
-                              </span>
+                              // FARKLI FİYATLI SATIR DA DÜZENLENEBİLİR (v1.513.0): önce yalnız "farklı" yazıyor ve "hücre
+                              // bazında düzenleyin" diyordu ama hücrede fiyat kutusu yok — satır kilitli kalıyordu. Yazılan
+                              // fiyat satırın bütün bedenlerine uygulanır; boş bırakılırsa hiçbir şey değişmez.
+                              <input
+                                key={`${g.key}-farkli-${g.kalemler.map((k) => k.birimFiyat).join("|")}`}
+                                type="number" step="0.01" min="0" placeholder="farklı"
+                                data-form-kalem-farkli-fiyat="1"
+                                title={`Bedenlerin fiyatı farklı (${Array.from(new Set(g.kalemler.map((k) => k.birimFiyat || 0))).join(" / ")}) — yazılan fiyat bütün bedenlere uygulanır`}
+                                onBlur={(e) => {
+                                  const yeni = parseFloat(e.target.value);
+                                  if (!(yeni >= 0)) return;
+                                  kalemDuzenle(g.kalemler.map((k) => k.id), "birimFiyat", yeni);
+                                }}
+                                className="mono"
+                                style={{ width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-warn)", borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
+                              />
                             ) : (
                               <div style={{ display: "flex", gap: 3, justifyContent: "flex-end" }}>
                                 <input
@@ -1849,14 +1869,14 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                                     const yeni = parseFloat(e.target.value);
                                     if (!(yeni >= 0) || yeni === g.kalemler[0].birimFiyat) return;
                                     // Bu gruptaki (aynı ürün+renk) TÜM bedenlerin birim fiyatı tek seferde güncellenir.
-                                    g.kalemler.forEach((k) => kalemDuzenle(k.id, "birimFiyat", yeni));
+                                    kalemDuzenle(g.kalemler.map((k) => k.id), "birimFiyat", yeni);
                                   }}
                                   className="mono"
                                   style={{ width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "right" }}
                                 />
                                 <select
                                   value={g.kalemler[0].paraBirimi || "TRY"}
-                                  onChange={(e) => g.kalemler.forEach((k) => kalemDuzenle(k.id, "paraBirimi", e.target.value))}
+                                  onChange={(e) => kalemDuzenle(g.kalemler.map((k) => k.id), "paraBirimi", e.target.value)}
                                   className="mono"
                                   style={{ width: 56, padding: "3px 2px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                                 >

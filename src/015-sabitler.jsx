@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.512.0";
+const SURUM = "1.513.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Siparis iptali: fisler bagimsiz kalir, ayrilan serbest stoga duser";
+const SURUM_NOTU = "Siparis formunda satir fiyati butun bedenlere uygulaniyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis iptali: fisler bagimsiz kalir, ayrilan serbest stoga
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.513.0", tarih: "28.09.2026",
+    eklenen: ["Sipariş formunda bedenleri farklı fiyatlı satırda da fiyat kutusu: yazılan fiyat satırın bütün bedenlerine uygulanır"],
+    degisen: [],
+    duzeltilen: ["Sipariş düzenlerken satır fiyatı yalnız son bedene yazılıyordu (ör. 550 yazıldı, kart '0–550 ₺' ve toplam 550 gösterdi); artık bütün bedenlere uygulanıyor. Para birimi değişikliği de aynı hatadan etkileniyordu"] },
   { surum: "1.512.0", tarih: "28.09.2026",
     eklenen: ["Sipariş İPTALİ: işlem görmüş sipariş silinmez, 'İptal' durumunda kalır; onayda hangi fişlerin bağımsız kalacağı, hangi alış/üretimin devam edeceği, kaç koli ve ne kadar ayrılmış malzemenin serbest kalacağı gösteriliyor", "Veri Denetimi: silinmiş siparişlerin fişlerindeki bağ kalıntısını çözen 'Bağları çöz' (fiş, stok, cari değişmez)"],
     degisen: ["Sipariş silinirken/iptal edilirken fişler artık SİLİNMİYOR: stok ve cari hareketleri bağımsız fiş olarak kalır, sipariş numarası '(iptal)' ekiyle bilgi olarak durur", "Satış siparişine bağlı alış siparişi ve üretim emri devam ediyor, yalnız bağı kopuyor (önce 'önce bağlı alışı silin' deniyordu); gelen/üretilen mal serbest stoğa giriyor", "İptal edilen siparişin hammadde rezervasyonları ve alış kalemlerindeki payı kalkıyor; kolileri siparişsiz kalıyor ve Mamul Deposu'nda serbest sayılıyor", "Stok ekranında 'bağlı sipariş silinmiş' artık sorun olarak listelenmiyor"],
