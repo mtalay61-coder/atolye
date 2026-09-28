@@ -32,7 +32,10 @@ console.log("çıktı HTML (matris)");
 const html = siparisCiktisiHTML(siparis, cari, { unvan: "Atölye A.Ş." }, []);
 bekle("firma, sipariş no, cari", [/Atölye A\.Ş\./.test(html), /SAT-1002/.test(html), /Serdar Özemen/.test(html)], [true, true, true]);
 bekle("beden sütunları", (html.match(/<th class="mono" style="text-align:center">(\d+)<\/th>/g) || []).length, 2);
-bekle("ürün+renk satırı (2 grup)", (html.match(/<tr style="border-bottom:1px solid #ddd">/g) || []).length, 2);
+bekle("ürün+renk satırı (2 grup)", (html.match(/data-cikti-renk-satiri="1"/g) || []).length, 2);
+// Model gruplu (v1.510.0): aynı modelin renkleri tek blokta, model adı bir kez (rowspan).
+bekle("model adı bir kez, iki renk satırını kapsıyor", [(html.match(/>Bot<\/td>/g) || []).length, /rowspan="2"[^>]*>Bot<\/td>/.test(html)], [1, true]);
+bekle("model ara toplamı (2 renk, 19 çift)", [/data-model-toplam="Bot"/.test(html), /Bot · 2 renk<\/td>\s*<td[^>]*>19 çift/.test(html)], [true, true]);
 bekle("toplam adet", /<td class="mono" style="text-align:right;border-left:1px dashed #999">19<\/td>/.test(html), true);
 bekle("tutar dolar (400 + 81 = 481)", /400 \$/.test(html) && /81 \$/.test(html) && /481 \$/.test(html), true);
 bekle("HTML kaçışı", /<script>/.test(siparisCiktisiHTML({ ...siparis, not: "<script>" }, cari, {}, [])), false);

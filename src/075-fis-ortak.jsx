@@ -371,6 +371,19 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
   const pbToplam = {};
   gruplar.forEach((g) => { pbToplam[g.paraBirimi] = (pbToplam[g.paraBirimi] || 0) + g.tutar; });
   const resimBul = (g) => { const u = (stok || []).find((x) => x.ad === g.urunAd); return u ? (((u.renkResimleri || {})[g.renk]) || u.kapakResmi || "") : ""; };
+  // MODEL MODEL GRUPLU (v1.510.0 — kullanıcı: "Siparişteki gibi model model gruplandırarak yazsın").
+  // Model adı ve resmi her renk satırında tekrar ediyordu. Artık renk satırları modele göre toplanıyor
+  // (ilk görünüş sırası korunur): model adı + resmi bloğun ilk satırında BİR KEZ (rowspan), birden çok
+  // renkli modelin altında model ara toplamı. Resim modelin kapağı (yoksa ilk rengin resmi).
+  const modeller = [];
+  gruplar.forEach((g) => {
+    let m = modeller.find((x) => x.urunAd === g.urunAd);
+    if (!m) { m = { urunAd: g.urunAd, renkler: [] }; modeller.push(m); }
+    m.renkler.push(g);
+  });
+  const modelResmi = (m) => { const u = (stok || []).find((x) => x.ad === m.urunAd); return (u && u.kapakResmi) || resimBul(m.renkler[0]) || ""; };
+  const modelPbToplam = (m) => { const t = {}; m.renkler.forEach((g) => { t[g.paraBirimi] = (t[g.paraBirimi] || 0) + g.tutar; }); return Object.entries(t).map(([pb, v]) => para(v, pb)).join(" + "); };
+  const renkBasligiMetni = ortakRenkBasligi(modeller.map((m) => (stok || []).find((x) => x.ad === m.urunAd) || {})) || "Renk";
   return `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #33281C;padding-bottom:8px;margin-bottom:12px">
       <div>
@@ -391,19 +404,23 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
     </div>
     <table>
       <thead><tr style="border-bottom:2px solid #33281C">
-        <th></th><th>Ürün</th><th>Renk</th>
-        ${bedenler.map((b) => `<th class="mono" style="text-align:center">${esc(b || "—")}</th>`).join("")}
+        <th></th><th>Ürün</th><th>${esc(renkBasligiMetni)}</th>
+        ${bedenler.map((b) => `<th class="mono" style="text-align:center">${esc(olcuGoster(b, "Miktar"))}</th>`).join("")}
         <th style="text-align:right;border-left:1px dashed #999">Toplam</th><th style="text-align:right">Birim Fiyat</th><th style="text-align:right">Tutar</th>
       </tr></thead>
       <tbody>
-        ${gruplar.map((g) => `<tr style="border-bottom:1px solid #ddd">
-          <td>${resimBul(g) ? `<img src="${resimBul(g)}" style="width:32px;height:32px;object-fit:cover;border-radius:4px" />` : ""}</td>
-          <td style="font-weight:700">${esc(g.urunAd)}</td><td class="mono">${esc(g.renk)}${notlariTekille(g.notlar || []).map((n) => `<div style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:10px;color:#7A6A50">${n.proses ? `<b>${esc(n.proses)}:</b> ` : ""}${esc(n.metin)}</div>`).join("")}</td>
+        ${modeller.map((m) => m.renkler.map((g, i) => `<tr data-cikti-renk-satiri="1" style="border-bottom:1px solid ${i === m.renkler.length - 1 ? "#bbb" : "#eee"}">
+          ${i === 0 ? `<td rowspan="${m.renkler.length}" style="vertical-align:top">${modelResmi(m) ? `<img src="${modelResmi(m)}" style="width:40px;height:40px;object-fit:cover;border-radius:4px" />` : ""}</td>
+          <td rowspan="${m.renkler.length}" style="font-weight:700;vertical-align:top">${esc(m.urunAd)}</td>` : ""}<td class="mono">${esc(olcuGoster(g.renk))}${notlariTekille(g.notlar || []).map((n) => `<div style="font-family:-apple-system,'Segoe UI',sans-serif;font-size:10px;color:#7A6A50">${n.proses ? `<b>${esc(n.proses)}:</b> ` : ""}${esc(n.metin)}</div>`).join("")}</td>
           ${bedenler.map((b) => `<td class="mono" style="text-align:center">${g.hucreler[b] || "—"}</td>`).join("")}
           <td class="mono" style="text-align:right;font-weight:700;border-left:1px dashed #999">${g.toplam} ${esc(g.birim)}</td>
           <td class="mono" style="text-align:right">${g.birimFiyat == null ? "çeşitli" : para(g.birimFiyat, g.paraBirimi)}</td>
           <td class="mono" style="text-align:right">${para(g.tutar, g.paraBirimi)}</td>
-        </tr>`).join("")}
+        </tr>`).join("") + (m.renkler.length > 1 ? `<tr data-model-toplam="${esc(m.urunAd)}" style="background:#F6F1E8;border-bottom:1px solid #bbb;font-weight:700">
+          <td></td><td colspan="${2 + bedenler.length}" style="text-align:right;font-size:11px;color:#7A6A50">${esc(m.urunAd)} · ${m.renkler.length} renk</td>
+          <td class="mono" style="text-align:right;border-left:1px dashed #999">${m.renkler.reduce((t, g) => t + g.toplam, 0)} ${esc(m.renkler[0].birim)}</td><td></td>
+          <td class="mono" style="text-align:right">${modelPbToplam(m)}</td>
+        </tr>` : "")).join("")}
       </tbody>
       <tfoot><tr style="border-top:2px solid #33281C;font-weight:700">
         <td colspan="${3 + bedenler.length}" style="text-align:right">Toplam</td>
