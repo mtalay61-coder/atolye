@@ -1,0 +1,39 @@
+{
+ "eklendiktenSonraGirisBos": true,
+ "fisHareketleri": [
+  "Kahve 40 +4 → k40",
+  "Kahve 41 +1 → k41a",
+  "Kahve 41 +5 → k41b (fazla)",
+  "Siyah 40 +2 → y40",
+  "Siyah 41 +1 → y41"
+ ],
+ "hatalar": [],
+ "kahveYuklendi": {
+  "bag": "AS-S1",
+  "fiyat": "80",
+  "miktarlar": {
+   "40": "4",
+   "41": "4"
+  },
+  "renk": "Kahve",
+  "urun": "Bot"
+ },
+ "karsilanan": [
+  "y40: 2/2",
+  "y41: 1/3",
+  "k40: 4/4",
+  "k41a: 1/1",
+  "k41b: 5/3"
+ ],
+ "siyahYuklendi": {
+  "bag": "AS-S1",
+  "fiyat": "80",
+  "miktarlar": {
+   "40": "2",
+   "41": "3",
+   "42": ""
+  },
+  "renk": "Siyah",
+  "urun": "Bot"
+ }
+}

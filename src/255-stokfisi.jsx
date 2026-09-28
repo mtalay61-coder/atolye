@@ -196,7 +196,18 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   // seçilir (varyant yoksa "Standart" — fiş yazımı eksik varyantı kendisi açıyor, bkz. 078-fisyaz).
   const renksizUrun = urunRenksizMi(seciliUrun);   // ortak kural (012, v1.493.0)
   const kKdvDeger = kKdv === "" ? urunKdvOrani(seciliUrun, firmaBilgileri) : Number(kKdv);
-  useEffect(() => { setKKdv(""); }, [kUrunId]);
+  // Sipariş satırından yüklemede (v1.516.0) oran ürün değişiminden SONRA gelmeli: bu efekt ürün değişince
+  // oranı boşaltıyor, bekleyen oran varsa onu koyuyor.
+  const bekleyenKdvRef = useRef(null);
+  useEffect(() => { setKKdv(bekleyenKdvRef.current != null ? String(bekleyenKdvRef.current) : ""); bekleyenKdvRef.current = null; }, [kUrunId]);
+  // SİPARİŞ SATIRINDAN EKLEME (v1.516.0 — kullanıcı: "Bu siparişin kalemlerini ekle'yi satır bazlı ve adet
+  // yerlerini de girerek yapabilelim, satırın sağında Ekle butonu olsun. Ekle'ye basınca asorti, manuel giriş
+  // vs. ekleme standartlarımızda ekleyebilelim."). Siparişten seç tablosundaki satırın "Ekle"si o ürün+rengi
+  // STANDART giriş alanına yükler (kalan adetler kutularda, siparişin fiyatı/para birimi/KDV'si dolu); kullanıcı
+  // asorti ya da elle değiştirip yeşil Ekle'ye basar. Bu bağ, eklenen satırları siparişin kalemlerine bağlar.
+  // { siparis: {id, siparisNo, rezervasyonSiparisId}, urunId, renk, bedenler: { beden → [{kalemId, kalan, birimFiyat, paraBirimi, kdvOrani}] } }
+  const [kSiparisBag, setKSiparisBag] = useState(null);
+  const kalemEkleAlaniRef = useRef(null);
   // Boş renk "Standart" olarak seçilir: boş dize "seçilmedi" sayılıyor ve miktar kutularını kapatıyordu;
   // varyant eşleşmesi `stokAnahtarNrm` ile ("" = "Standart").
   const tekRenk = renksizUrun ? "Standart" : (renkSecenekleri.length === 1 ? renkSecenekleri[0] : "");
@@ -286,6 +297,51 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       .map((b) => ({ beden: b, miktar: parseFloat(kMiktarlar[b]) || 0 }))
       .filter((x) => x.miktar > 0);
     if (eklenecekler.length === 0) return showToast("En az bir ölçüye miktar girin");
+
+    // SİPARİŞE BAĞLI EKLEME (v1.516.0): giriş alanı bir sipariş satırından yüklendiyse (ve ürün/renk hâlâ o
+    // satırınsa) her beden o bedenin sipariş kalemine bağlanır. Birden çok kalem aynı bedeni taşıyorsa (planlamada
+    // bölünmüş) sırayla kalanları kadar dağıtılır; kalanı aşan miktar son kaleme "sipariş fazlası" olarak yazılır
+    // (teslim yolundaki `fazlaGonderim` ile aynı). Siparişte olmayan bir bedene girilen miktar SERBEST satır olur.
+    const bag = kSiparisBag && kSiparisBag.urunId === seciliUrun.id && stokAnahtarNrm(kSiparisBag.renk) === stokAnahtarNrm(kRenk) ? kSiparisBag : null;
+    if (bag) {
+      let sonrakiB = [...kalemler];
+      let bagli = 0, serbest = 0;
+      const satirEkle = (x, miktar, ek) => {
+        const kimlik = ek && ek.kalemId;
+        const i = sonrakiB.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden && (k.kalemId || null) === (kimlik || null) && !k.koliId);
+        if (i >= 0) {
+          sonrakiB = sonrakiB.map((k, j) => (j === i ? { ...k, miktar: stokYuvarla(k.miktar + miktar), birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi,
+            ...(kdvAktif ? { kdvOrani: kKdvDeger } : {}), ...(ek && ek.fazlaGonderim ? { fazlaGonderim: true } : {}) } : k));
+          return;
+        }
+        sonrakiB = [...sonrakiB, {
+          id: uid("fkalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim || "",
+          renk: kRenk, beden: x.beden, miktar, birimFiyat: olcuFiyati(x.beden), paraBirimi: kParaBirimi,
+          ...(kdvAktif ? { kdvOrani: kKdvDeger } : {}), ...(ek || {}),
+        }];
+      };
+      eklenecekler.forEach((x) => {
+        const hedefler = bag.bedenler[x.beden] || [];
+        if (!hedefler.length) { satirEkle(x, x.miktar, null); serbest++; return; }
+        let kalan = x.miktar;
+        hedefler.forEach((h, hi) => {
+          if (kalan <= 0) return;
+          // Fişte bu kaleme zaten eklenmiş miktar düşülür (aynı satır iki kez yüklenirse fazla sayılmasın).
+          const fisteki = sonrakiB.filter((k) => k.kalemId === h.kalemId).reduce((t, k) => t + (k.miktar || 0), 0);
+          const bos = Math.max(0, stokYuvarla(h.kalan - fisteki));
+          const son = hi === hedefler.length - 1;
+          const pay = son ? kalan : Math.min(kalan, bos);
+          if (pay <= 0) return;
+          satirEkle(x, stokYuvarla(pay), { kalemId: h.kalemId, siparis: bag.siparis, ...(pay > bos ? { fazlaGonderim: true } : {}) });
+          kalan = stokYuvarla(kalan - pay);
+          bagli++;
+        });
+      });
+      setKalemler(sonrakiB);
+      setKUrunId(""); setKUrunArama(""); setKRenk(""); setKMiktarlar({}); setKSeciliOlcu(""); setKFiyat(""); setKFiyatElle(false); setKSiparisBag(null);
+      showToast(`${bag.siparis.siparisNo}: ${bagli} beden siparişe bağlı eklendi${serbest ? `, ${serbest} beden siparişte yok — serbest eklendi` : ""}`);
+      return;
+    }
 
     // Aynı ürün+renk+beden ikinci kez eklenirse YENİ SATIR açılmaz, miktar ARTIRILIR. Sipariş
     // formunda da aynı kural var; ayrışması, aynı fişte aynı bedenin iki kez görünmesi demekti.
@@ -659,7 +715,17 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             tümü tek satırda" — v1.490.0), koli sütunu dar (300 px temel);
             yan yana sığmazsa koli sütunu alta iner. */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "flex-start" }}>
-        <div style={{ flex: "1 1 960px", minWidth: 0 }}>
+        <div ref={kalemEkleAlaniRef} style={{ flex: "1 1 960px", minWidth: 0 }}>
+        {/* SİPARİŞ SATIRINDAN YÜKLENDİ (v1.516.0): hangi siparişin hangi satırının girildiği ve bağın kaldırılabildiği
+            şerit. Ürün ya da renk değişirse bağ uygulanmaz (şerit de kaybolur) — başka bir mal o siparişe yazılmasın. */}
+        {kSiparisBag && seciliUrun && kSiparisBag.urunId === seciliUrun.id && stokAnahtarNrm(kSiparisBag.renk) === stokAnahtarNrm(kRenk) && (
+          <div data-kalem-siparis-bagi={kSiparisBag.siparis.siparisNo} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", fontSize: 11, marginBottom: 8, padding: "5px 8px", borderRadius: "var(--erp-r-sm)", background: "#3D6B8A1A", color: "var(--erp-info)" }}>
+            <ClipboardList size={12} />
+            <span><b className="mono">{kSiparisBag.siparis.siparisNo}</b> satırından: kalan adetler kutularda — asorti ya da elle değiştirip Ekle'ye basın, satırlar siparişe bağlı eklenir</span>
+            <button type="button" className="btn-ghost" data-kalem-siparis-bagi-kaldir="1" style={{ marginLeft: "auto", padding: "1px 8px", fontSize: 11 }}
+              onClick={() => setKSiparisBag(null)}>bağı kaldır</button>
+          </div>
+        )}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10, alignItems: "flex-start" }}>
           {/* ÜRÜN — YAZARAK ARANIR (kullanıcı, 18 Eylül: "stok ve renk seçmeli ve yazarak da
               aratmak gerek"). Açılır listede 18 ürün varken bile aranan şeyi bulmak kaydırmayla
@@ -954,9 +1020,31 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 bekleyen.forEach(({ k, kalan }) => {
                   const a = `${k.urunId}|${k.renk || ""}`;
                   let r = satirlar.find((x) => x.a === a);
-                  if (!r) { r = { a, urunAd: k.urunAd, renk: k.renk || "", hucre: {} }; satirlar.push(r); }
+                  if (!r) { r = { a, urunId: k.urunId, urunAd: k.urunAd, renk: k.renk || "", hucre: {}, kalemler: [] }; satirlar.push(r); }
                   r.hucre[k.beden || ""] = (r.hucre[k.beden || ""] || 0) + kalan;
+                  r.kalemler.push({ k, kalan });
                 });
+                // SATIRI GİRİŞ ALANINA YÜKLE (v1.516.0): ürün, renk, kalan adetler, siparişin fiyatı/para birimi/KDV'si.
+                const satiriYukle = (r) => {
+                  const bedenler = {};
+                  r.kalemler.forEach(({ k, kalan }) => {
+                    const b = k.beden || "";
+                    (bedenler[b] = bedenler[b] || []).push({ kalemId: k.id, kalan });
+                  });
+                  const ilk = r.kalemler[0].k;
+                  const kdv = r.kalemler.map(({ k }) => k.kdvOrani).find((x) => typeof x === "number");
+                  urunSec(r.urunId);
+                  setKUrunArama((() => { const p = (stok || []).find((x) => x.id === r.urunId); return p ? secenekEtiketi(p, p.ad) : r.urunAd; })());
+                  setKRenk(r.renk || "Standart");
+                  setKMiktarlar(Object.fromEntries(Object.entries(r.hucre).map(([b, m]) => [b, String(m)])));
+                  // Ölçü seçmeli üründe (boyut) tek ölçülü satır o ölçüyle açılır; çok ölçülüde kullanıcı seçer.
+                  setKSeciliOlcu(Object.keys(r.hucre).length === 1 ? Object.keys(r.hucre)[0] : "");
+                  setKFiyat(String(ilk.birimFiyat || 0)); setKFiyatElle(true);
+                  setKParaBirimi(ilk.paraBirimi || "TRY");
+                  if (typeof kdv === "number") { bekleyenKdvRef.current = kdv; setKKdv(String(kdv)); }
+                  setKSiparisBag({ siparis: { id: s.id, siparisNo: s.siparisNo, rezervasyonSiparisId: s.rezervasyonSiparisId || null }, urunId: r.urunId, renk: r.renk || "Standart", bedenler });
+                  setTimeout(() => { try { kalemEkleAlaniRef.current && kalemEkleAlaniRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* */ } }, 50);
+                };
                 return (
                   <div key={s.id} data-siparisten-sec-siparis={s.siparisNo} style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -1076,12 +1164,21 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Ürün</th>
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Renk</th>
                         {bedenler.map((b) => <th key={b} className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>)}
+                        <th></th>
                       </tr></thead>
                       <tbody>{satirlar.map((r) => (
                         <tr key={r.a}>
                           <td style={{ fontSize: 11, padding: "2px 6px", fontWeight: 600 }}>{r.urunAd}</td>
                           <td className="mono" style={{ fontSize: 11, padding: "2px 6px" }}>{olcuGoster(r.renk)}</td>
                           {bedenler.map((b) => <td key={b} className="mono" style={{ fontSize: 11, padding: "2px 6px", textAlign: "center" }}>{r.hucre[b] || "—"}</td>)}
+                          <td style={{ padding: "2px 6px", textAlign: "right" }}>
+                            <button type="button" className="btn-primary" data-siparis-satir-ekle={`${s.siparisNo}|${r.urunAd}|${r.renk}`}
+                              title="Bu satırı Kalem Ekle alanına yükle — adetleri asorti ya da elle değiştirip ekleyin (siparişe bağlı)"
+                              onClick={() => satiriYukle(r)}
+                              style={{ padding: "2px 8px", fontSize: 11, whiteSpace: "nowrap" }}>
+                              <Plus size={10} /> Ekle
+                            </button>
+                          </td>
                         </tr>
                       ))}</tbody>
                     </table>

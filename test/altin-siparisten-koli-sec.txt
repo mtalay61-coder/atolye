@@ -7,8 +7,8 @@
    "19 koli · 36:1 37:2 38:2 39:2 40:1 · düğme \"19 koli ekle\""
   ],
   "kalanMatris": [
-   "Ürün | Renk | 36",
-   "102 Bayan Bot | Siyah | 2"
+   "Ürün | Renk | 36 | ",
+   "102 Bayan Bot | Siyah | 2 | Ekle"
   ],
   "kodDugmesi": 0,
   "kolisizDugme": "Kolisiz kalanı ekle",
@@ -152,8 +152,8 @@
   "fistekiKoliler": "19 koli · 152 çift",
   "gruplar": [],
   "kalanMatris": [
-   "Ürün | Renk | 36",
-   "102 Bayan Bot | Siyah | 2"
+   "Ürün | Renk | 36 | ",
+   "102 Bayan Bot | Siyah | 2 | Ekle"
   ],
   "kodDugmesi": 0,
   "kolisizDugme": "Kolisiz kalanı ekle",
