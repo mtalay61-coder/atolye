@@ -1,0 +1,8 @@
+{
+ "cariHareketi": false,
+ "hatalar": [],
+ "siparisVar": false,
+ "stok4040": 10,
+ "stokHareketi": false,
+ "yetimUyarisi": false
+}

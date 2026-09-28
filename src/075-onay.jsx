@@ -54,18 +54,10 @@ function onayUygula(istek) {
   } else if (tip === "cariSil") {
     islerRef.current.cariSilCascade(p.cariId);
   } else if (tip === "siparisSil") {
-    // Onay yoluyla silme de çöpe düşer — yetkisiz kullanıcının isteği onaylandığında kaydın
-    // izsiz kaybolması, doğrudan silmeye göre DAHA az denetlenebilir bir sonuç doğururdu.
-    const silinecek = siparisler.find((x) => x.id === p.siparisId);
-    if (silinecek) {
-      islerRef.current.copaAt("siparis", `${silinecek.tip} ${silinecek.siparisNo}`, silinecek, {
-        ozet: `${(silinecek.kalemler || []).length} kalem — durum: ${silinecek.durum} (onayla silindi)`,
-        yanEtkiliMi: false,
-      });
-    }
-    const nextSiparisler = siparisler.filter((x) => x.id !== p.siparisId);
-    setSiparisler(nextSiparisler);
-    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
+    // ONAY YOLU DA SİLME ZİNCİRİNDEN GEÇER (v1.509.0). Önce yalnız sipariş listeden çıkarılıyordu: bağlı stok
+    // ve cari hareketleri "bağlı sipariş silinmiş" yetimleri olarak kalıyor, stok miktarı yanlış kalıyordu.
+    // `siparisSilCascade` çöp kaydını da alıyor (onay yolunda ayrıca alınınca çöpte iki kayıt olurdu).
+    islerRef.current.siparisSilCascade(p.siparisId);
   } else if (tip === "uretimSil") {
     islerRef.current.uretimSil(p.uretimId, p.cascade);
   } else if (tip === "muhasebeHareketSil" || tip === "muhasebeHesapSil" || tip === "muhasebeCekSil") {

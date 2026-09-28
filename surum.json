@@ -1,5 +1,5 @@
 {
-  "surum": "1.508.0",
-  "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.508.0.html",
-  "not": "Siparişte kolide ve kolisiz mal ayrı; kolisiz ekle yalnız kolisizi ekliyor"
+  "surum": "1.509.0",
+  "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.509.0.html",
+  "not": "Sipariş silme: bağlı fiş hareketi varsa her zaman bağlı kayıtlarla birlikte"
 }
