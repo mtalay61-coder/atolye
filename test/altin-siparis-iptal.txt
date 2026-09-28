@@ -1,0 +1,31 @@
+{
+ "alisDevam": {
+  "durum": "Bekliyor",
+  "not": "Kaynak: SAT-Y (iptal)",
+  "zincir": null
+ },
+ "fisCariHareketi": {
+  "bagli": false,
+  "siparisNo": "SAT-Y (iptal)",
+  "tutar": 400
+ },
+ "fisStokHareketi": {
+  "bagli": false,
+  "fisNo": "SF-Y",
+  "miktar": -4,
+  "siparisNo": "SAT-Y (iptal)"
+ },
+ "hatalar": [],
+ "ikinciOnayKipi": "sil",
+ "ikinciSilmedenSonraFisVar": true,
+ "ikinciSilmedenSonraSiparisVar": false,
+ "iptalOnayi": {
+  "alisGorunuyor": true,
+  "fisGorunuyor": true,
+  "kip": "iptal"
+ },
+ "rezervasyonKaldi": false,
+ "siparisDurumu": "İptal",
+ "stok4040": 6,
+ "yetimUyarisi": false
+}

@@ -1,6 +1,6 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSilCascade, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
+function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
@@ -851,64 +851,14 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     return "";
   }
 
+  // SİPARİŞ SİL / İPTAL ET (v1.512.0). Karar ve işin tamamı App'te (`siparisKapat`, 087): işlem görmüş sipariş
+  // İPTAL edilir — fişler bağımsız kalır, alış/üretim devam eder, ayrılan serbest stoğa düşer; işlem görmemiş
+  // (ya da zaten iptal) sipariş silinip çöpe gider. Burada ayrı bir yol yok: iki yol vardı ve biri (doğrudan
+  // silme) fişleri yetim bırakıyor, öteki (zincir) fişleri siliyordu — ikisi de kullanıcının kuralına aykırıydı.
+  // "Önce bağlı alışı silin" engeli de kalktı: kurala göre alış devam eder, yalnız bağı kopar.
   function siparisSil(id) {
-    const siparis = siparisler.find((s) => s.id === id);
-    if (!siparis) return;
-
-    // Bu bir Satış siparişiyse ve Tedarik Planlama üzerinden ona bağlı, HÂLÂ VAR OLAN bir Alış siparişi
-    // varsa, silmeye izin verme — önce o Alış siparişinin (ve varsa fişlerinin) silinmesi gerekir.
-    if (siparis.tip === "Satış") {
-      const bagliAlisNolari = Array.from(new Set(
-        siparis.kalemler
-          .filter((k) => k.planlama && k.planlama.tip === "Satınalma")
-          .map((k) => k.planlama.referansNo)
-      ));
-      const varOlanBagliAlislar = bagliAlisNolari.filter((no) =>
-        siparisler.some((s) => s.tip === "Alış" && s.siparisNo === no)
-      );
-      if (varOlanBagliAlislar.length > 0) {
-        return showToast(
-          `Silinemiyor — önce bağlı ${varOlanBagliAlislar.join(", ")} alış siparişini (varsa fişleriyle birlikte) silmeniz gerekiyor.`
-        );
-      }
-    }
-
-    // İŞLENMİŞ = teslim sayacı VEYA siparişe bağlı stok/cari hareketi (v1.509.0). Yalnız sayaca bakılıyordu:
-    // sayaç 0 ama siparişe bağlı fiş hareketi olan sipariş "teslimatsız" sanılıp DOĞRUDAN siliniyor, fişin
-    // hareketleri "bağlı sipariş silinmiş" yetimleri olarak stokta kalıyordu (kullanıcı ekran görüntüsü, 28 Eylül).
-    const bagliHareketVar = (stok || []).some((p) => (p.hareketler || []).some((h) => h.siparisId === id))
-      || (cariler || []).some((c) => (c.hareketler || []).some((h) => h.siparisId === id));
-    const islenmis = bagliHareketVar || siparis.kalemler.some((k) => (k.karsilanan || 0) > 0);
-    if (islenmis) {
-      // Bu yol siparisSilCascade'e gider ve çöp kaydını orası oluşturur.
-      onSilCascade(id);
-    } else {
-      // İŞLENMEMİŞ sipariş doğrudan siliniyor — çöp kaydı BURADA alınmalı. Silmelerin çöpte
-      // görünmemesinin sebebi buydu: teslimatı olmayan siparişler (yani çoğu silinen sipariş)
-      // cascade yoluna hiç uğramıyordu. Ürün silmede de aynı çift-yol vardı.
-      // Teslimatı olmadığı için stok/cari yan etkisi yok; sorunsuz geri yüklenebilir.
-      if (onCopaAt) {
-        onCopaAt("siparis", `${siparis.tip} ${siparis.siparisNo}`, siparis, {
-          ozet: `${(siparis.kalemler || []).length} kalem — teslimatsız, durum: ${siparis.durum}`,
-          yanEtkiliMi: false,
-        });
-      }
-      const nextSiparisler = siparisler
-        .filter((s) => s.id !== id)
-        .map((s) => {
-          if (s.tip !== "Satış" || siparis.tip !== "Alış") return s;
-          const etkilenen = s.kalemler.some((k) => k.planlama && k.planlama.referansNo === siparis.siparisNo);
-          if (!etkilenen) return s;
-          return {
-            ...s,
-            kalemler: bekleyenKalemleriBirlestir(s.kalemler.map((k) =>
-              k.planlama && k.planlama.referansNo === siparis.siparisNo ? { ...k, planlama: null } : k
-            )),
-          };
-        });
-      onSave(nextSiparisler);
-      showToast("Sipariş silindi — Tanımlar > Çöp Kutusu'ndan geri alınabilir");
-    }
+    if (!siparisler.some((s) => s.id === id)) return;
+    onSiparisKapat(id);
   }
 
   const siparisSirala = (a, b) => new Date(b.tarih || 0) - new Date(a.tarih || 0) || new Date(b.olusturuldu || 0) - new Date(a.olusturuldu || 0);

@@ -80,5 +80,16 @@ const fisDefterindeIptal = useCallback((fisNo) => {
   yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", defter), "Fiş defteri", defter);
 }, []);
 
-  return { fisDefterineKayitYaz, fisDefterineYaz, fisDefterindeIptal };
+// Defterin tamamına bir dönüşüm uygular (sipariş iptalinde fişlerin sipariş bağı çözülürken, v1.512.0).
+// Aynı ref üzerinden: arada yazılan fiş kaybolmasın. Dönüşüm bir şey değiştirmediyse yazılmaz.
+const fisDefteriniDonustur = useCallback((donustur) => {
+  const once = defterRef.current || [];
+  const sonra = donustur(once);
+  if (!sonra || sonra === once) return Promise.resolve({ ok: true });
+  defterRef.current = sonra;
+  setFisDefteri(() => sonra);
+  return yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", sonra), "Fiş defteri", sonra);
+}, []);
+
+  return { fisDefterineKayitYaz, fisDefterineYaz, fisDefterindeIptal, fisDefteriniDonustur };
 }

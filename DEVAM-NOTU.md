@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.511.0** · 28 Eylül 2026
+Son sürüm: **v1.512.0** · 28 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (28 Eylül, v1.511.0): sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (28 Eylül, v1.512.0): SİPARİŞ İPTALİ — fişler bağımsız kalır, ayrılan serbest stoğa düşer (bkz. "SİPARİŞ İPTAL KURALI"); v1.511.0 sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6602,6 +6602,41 @@ durumu iç bilgi); düzen flex/grid değil tablo (PDF html2canvas ile çiziliyor
 bloğu bölmüyor (PDF resmi dilimlediği için orada etkisiz). Müşteri satırında adres yokken baştaki "·" giderildi.
 Test: birim-siparis-ciktisi yeni düzene göre (blok bir kez, rowspan 4, beden beden toplam 13/6/19, Durum yok,
 tek renkli modelde toplam satırı yok). altin-siparis-yazdir yeni düzene göre güncellendi (model adı ayrı hücre, Adet/Birim, Genel toplam).
+
+**v1.512.0 — SİPARİŞ İPTAL KURALI (28 Eylül).** Kullanıcı (yetim hareket incelemesinden sonra): *"Fişsiz hiç bir
+kayıt olamaz. Cari satış yaptığımızda satış fişi oluşturacak ve cari hareketi satış fişinden çekecek; sipariş ayrı
+konu, sipariş satış demek değil. Sipariş silindiğinde fişler silinmez, bağlı fişler bağımsız fiş olur. Müşteri
+siparişi iptal ettiğinde alım vs. varsa bunlar yok olmaz, sadece o siparişten bağlantısı kalmaz, oluşan stok serbest
+stoğa düşer."* Üç karar (kullanıcı onayı, önerilen seçenekler): (1) işlem görmüş sipariş SİLİNMEZ, İPTAL edilir
+(kayıt "İptal" durumunda kalır), hiç işlem görmemiş / zaten iptal sipariş silinir ve çöpe gider; (2) iptal edilen
+siparişin hazır kolisi fiziken kalır, siparişsiz koli olur, içeriği serbest sayılır (carinin başka açık siparişine
+okutmada eşleşebilir); (3) açık alış siparişleri ve üretim emirleri devam eder, onay penceresinde listelenir.
+- **Eski davranışın hatası:** `siparisSilCascade` (087) siparişe bağlı fişlerin stok+cari hareketlerini siliyordu
+  (teslim edilmiş mal stoğa dönüyor, müşteri borcu siliniyordu; `fisGeriAl`ın fatura/çek/kasa kilitlerini atlıyordu);
+  ayırmaları (hammadde rezervasyonu, alış kalemi rezervasyonu, koli) bırakıyordu. 325'teki doğrudan silme yolu ise
+  fişleri bırakıyor ama kimliği sarkıtıyordu — AF-0928001/SF-0928002 "bağlı sipariş silinmiş" uyarısının kaynağı
+  (kurala göre sonuç DOĞRU, yalnız kimlik kalıntısı yanlıştı).
+- **Yeni çekirdek `088-siparis-iptal.jsx` (SAF):** `siparisBaglariniCoz(veri, siparisId, {sil, kullanici})` — fiş
+  hareketlerinde (stok+cari) `siparisId/kalemId` kalkar, `siparisNo` "SAT-X (iptal)" olur (sütun var, SQL yok; düz
+  numara bırakılmadı çünkü 340/082 kimliksiz harekette numaraya bakıp yeniden bağlardı); fiş defteri kaydı ve içindeki
+  hareket kopyaları aynı; `rezervasyonSiparisId` zinciri (mamul/alış hareketleri, üretim emri, alış siparişi) boşalır;
+  alış kalemindeki bu siparişin rezervasyon payı ve `stokRezervasyonlari` satırları silinir; koli `siparisId: null,
+  iptalSiparisNo`; "Kaynak: SAT-X" notları "(iptal)" (tam numara eşleşmesi — SAT-10 iptali SAT-1001'e dokunmaz);
+  iptal edilen ALIŞ, onu planlamış satış kalemlerinin planlamasını boşaltır (`bekleyenKalemleriBirlestir`).
+  `siparisIptalOzeti` aynı hesaptan önizleme; `siparisIslemGormusMu` iptal/sil kararı (bağ var ya da karşılanan>0 ya
+  da planlama var → iptal). `yetimSiparisBaglariniCoz`: sipariş zaten yoksa kimlik kalıntısını temizler.
+- **App:** `siparisKapat` (087, eski `siparisSilCascade`in yerine) kararı kendisi verir, yazmaları BEKLER (sipariş
+  en son), günlüğe fiş/alış/üretim/serbest miktarı yazar. Kart, 325 ve onay yolu (075) hepsi buradan geçiyor; 325'teki
+  "önce bağlı alışı silin" engeli ve doğrudan silme dalı kalktı. Fiş defteri `fisDefteriniDonustur` (091, ref üzerinden).
+- **Kart (340):** onay kutusu `data-siparis-kapat-onayi="iptal|sil"`; iptalde fişler, devam eden alış/üretim,
+  koli, serbest kalacak miktar ve planlaması boşalacak satışlar listeleniyor; düğme "Evet, İptal Et".
+- **Mamul Deposu (233):** `iptalSiparisNo` işaretli ve siparişe çözülemeyen koli "kolide" sayılmıyor → serbest.
+- **Stok (152):** "bağlı sipariş silinmiş" artık bağlantısız hareket sorunu değil (yanındaki çöp simgesi fişin
+  yalnız stok tarafını silmeye davet ediyordu). **Veri Denetimi (125):** kural "Bilgi" düzeyine indi; kalıntı varsa
+  "Silinmiş siparişlerin fişleri" paneli + "Bağları çöz" (`yetimSiparisBaglariniTemizle`, 100-app).
+- Test: `birim-siparis-iptal` (yeni); `senaryo-siparis-sil-yetim` → `senaryo-siparis-iptal` (davranış bilerek
+  değişti: fiş kalıyor, stok 6 kalıyor, alış devam, rezervasyon kalkıyor; ikinci silmede iptal sipariş listeden çıkıyor).
+- **Kullanıcıya:** mevcut AF-0928001/SF-0928002 için Tanımlar > Veri Denetimi > "Bağları çöz".
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

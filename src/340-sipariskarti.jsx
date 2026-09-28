@@ -335,7 +335,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 onDuzenle={open && onDuzenle ? () => onDuzenle(siparis.id) : undefined}
                 duzenleBaslik="Düzenle — sipariş formunda açılır: başlık, ürün ekleme, bekleyen kalemlerde ürün/renk/miktar/fiyat"
                 onSil={() => { setOpen(true); setSiparisSilOnayGoster(true); }}
-                silBaslik="Siparişi sil"
+                silBaslik={siparis.durum === "İptal" ? "Siparişi sil" : "Siparişi iptal et / sil — işlem görmüşse iptal edilir, fişler kalır"}
               />
             </span>
           )}
@@ -369,43 +369,47 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
               onay da görüş alanında olmalı. Altta kalsaydı uzun bir siparişte kullanıcı silme
               ikonuna basıp hiçbir şey olmamış gibi görürdü. */}
           {siparisSilOnayGoster && (() => {
-            // Bu siparişe (kalemleri üzerinden Tedarik Planlama ile) bağlı, hâlâ var olan Üretim ya da
-            // Alış siparişlerini bulur — bunlardan biri varsa kullanıcıyı bilgilendirip onay ister.
-            const bagliUretimler = (uretimSiparisleri || []).filter((o) =>
-              siparis.kalemler.some((k) => k.planlama && k.planlama.tip === "Üretim" && k.planlama.referansNo === o.siparisNo)
+            // İPTAL Mİ SİLME Mİ (v1.512.0) — karar App'teki `siparisKapat`ın kararıyla AYNI hesaptan
+            // (`siparisBaglariniCoz` önizlemesi): burada "silinecek" deyip orada iptal etmek olmasın.
+            // Kullanıcının kuralı: fişler silinmez, bağımsız kalır; alış/üretim devam eder; ayrılan serbest kalır.
+            const liste = [siparis, ...(tumSiparisler || []).filter((s) => s.id !== siparis.id)];
+            const oz = siparisIptalOzeti({ stok, cariler, siparisler: liste, uretim: uretimSiparisleri, koliler, stokRezervasyonlari }, siparis.id);
+            const iptal = siparis.durum !== "İptal" && siparisIslemGormusMu(oz, siparis);
+            const madde = (baslik, icerik) => (
+              <div style={{ display: "flex", gap: 6, fontSize: 12, lineHeight: 1.45 }}>
+                <span style={{ color: "var(--erp-text-2)", minWidth: 118, flexShrink: 0 }}>{baslik}</span>
+                <span>{icerik}</span>
+              </div>
             );
-            const bagliAlislar = (tumSiparisler || []).filter((s) =>
-              s.tip === "Alış" && siparis.kalemler.some((k) => k.planlama && k.planlama.tip === "Satınalma" && k.planlama.referansNo === s.siparisNo)
-            );
-            const bagliVarMi = bagliUretimler.length > 0 || bagliAlislar.length > 0;
             return (
-              <div style={{ background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: 10, marginTop: 10 }}>
-                {bagliVarMi ? (
+              <div data-siparis-kapat-onayi={iptal ? "iptal" : "sil"} style={{ background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: 10, marginTop: 10 }}>
+                {iptal ? (
                   <>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 6 }}>
-                      ⚠ Bu sipariş için üretim ve/veya satın alma işlemi yapılmış:
-                    </div>
-                    <div style={{ display: "grid", gap: 3, marginBottom: 8, fontSize: 12 }}>
-                      {bagliUretimler.map((o) => (
-                        <div key={o.id}>• Üretim: <span className="mono" style={{ fontWeight: 700 }}>{o.siparisNo}</span> ({o.model}, {o.stogaEklendiMi ? "tamamlandı" : "devam ediyor"})</div>
-                      ))}
-                      {bagliAlislar.map((s) => (
-                        <div key={s.id}>• Alış Siparişi: <span className="mono" style={{ fontWeight: 700 }}>{s.siparisNo}</span> ({s.durum})</div>
-                      ))}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 4 }}>
+                      {siparis.siparisNo} işlem görmüş — silinmez, İPTAL edilir
                     </div>
                     <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 8 }}>
-                      Bu siparişi silmek, bu bağlantıları etkileyebilir. Önce ilgili üretim/alış kayıtlarını
-                      kontrol etmenizi öneririz. Yine de devam etmek istiyor musunuz?
+                      Sipariş "İptal" durumunda kalır. Hiçbir fiş, stok miktarı ya da cari tutarı değişmez; yalnız siparişle bağlar kopar.
+                    </div>
+                    <div style={{ display: "grid", gap: 3, marginBottom: 8 }}>
+                      {oz.fisNolar.length > 0 && madde("Fişler", <><b className="mono">{oz.fisNolar.join(", ")}</b> — bağımsız fiş olarak kalır</>)}
+                      {oz.alislar.length > 0 && madde("Alış siparişleri", <><b className="mono">{oz.alislar.map((x) => x.siparisNo).join(", ")}</b> — devam eder; gelen mal serbest stoğa girer</>)}
+                      {oz.uretimler.length > 0 && madde("Üretimler", <><b className="mono">{oz.uretimler.map((x) => x.siparisNo).join(", ")}</b> — devam eder; üretilen mal serbest stoğa girer</>)}
+                      {oz.koliler.length > 0 && madde("Koliler", <>{oz.koliler.length} koli siparişsiz kalır, içindeki mal serbest sayılır</>)}
+                      {oz.rezervasyonMiktari > 0 && madde("Ayrılmış malzeme", <>{oz.rezervasyonMiktari} birim ayrılmışlıktan çıkar (serbest stok)</>)}
+                      {oz.planlamasiBosalan.length > 0 && madde("Satış siparişleri", <><b className="mono">{oz.planlamasiBosalan.join(", ")}</b> — bu alışa bağlı planlaması boşalır, yeniden planlanabilir</>)}
                     </div>
                   </>
                 ) : (
                   <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 8 }}>
-                    Bu siparişi silmek istediğinize emin misiniz?
+                    {siparis.durum === "İptal"
+                      ? "Bu iptal edilmiş siparişi silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"
+                      : "Bu sipariş hiç işlem görmemiş. Silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"}
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn-primary" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => { onSil(siparis.id); setSiparisSilOnayGoster(false); }}>
-                    Evet, Sil
+                    {iptal ? "Evet, İptal Et" : "Evet, Sil"}
                   </button>
                   <button className="btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => setSiparisSilOnayGoster(false)}>
                     Vazgeç

@@ -12,8 +12,8 @@
 // cari, aylarca sürmüş bir ekstrenin kaybolması demek; geri alınamayan silme, kullanıcıya
 // "emin misiniz" diye sormaktan daha tehlikelidir.
 function useSilmeZincirleri(d) {
-  const { cariler, copaAt, showToast, siparisler, stok, uretim,
-    setCariler, setStok, setSiparisler } = d;
+  const { cariler, copaAt, showToast, siparisler, stok, uretim, koliler, stokRezervasyonlari, aktifKullanici,
+    fisDefteriniDonustur, setCariler, setStok, setSiparisler, setUretim, setKoliler, setStokRezervasyonlari } = d;
 
 const cariSilCascade = useCallback((cariId) => {
   const cari = cariler.find((c) => c.id === cariId);
@@ -94,105 +94,78 @@ const urunSilCascade = useCallback((urunId) => {
 }, [stok, uretim, siparisler, showToast, copaAt]);
 
 
-// Bir siparişi silerken, o siparişten doğan tüm stok ve cari hareketlerini de geri alır (miktarları düzeltir).
-// GERÇEK KİMLİK (siparisId) ile eşleştirilir — sadece siparisNo (metin) kullanmak, veritabanı sıfırlandıktan
-// sonra sayaç yeniden başlayıp AYNI numara başka bir siparişe de atandığında, o farklı siparişin hareketlerini
-// de YANLIŞLIKLA silme/geri alma riski taşırdı.
-const siparisSilCascade = useCallback((siparisId) => {
-  // Yazma SÖZLERİ toplanıyor. Bu fonksiyonda yazmalar `setX` güncelleyicilerinin içinde
-  // olduğu için sıralı `await` kurulamıyor; ama sonucu görmezden gelmek de kabul edilemez.
-  // Sözler biriktirilip başarı mesajı EN SONA, hepsinin sonucu bilindikten sonra bırakılıyor.
-  // Böylece "silindi" yazısı bir olgu oluyor, temenni değil.
-  const yazmalar = [];
-  // HATA DÜZELTMESİ: çöp kaydı eskiden setSiparisler'in güncelleyicisinin İÇİNDEN alınıyordu.
-  // React'te bir state güncelleyicisi SAF olmalıdır; içinden başka bir state'i güncellemek
-  // (setCop) güvenilir değildir — React güncelleyiciyi iki kez çağırabilir ya da içteki
-  // setState'i yok sayabilir. Sipariş silmelerinin çöpte hiç görünmemesinin sebebi buydu.
-  const silinecek = siparisler.find((s) => s.id === siparisId);
-  if (silinecek) {
-    copaAt("siparis", `${silinecek.tip} ${silinecek.siparisNo}`, silinecek, {
-      ozet: `${(silinecek.kalemler || []).length} kalem — durum: ${silinecek.durum}`,
-      yanEtkiliMi: true,
+// SİPARİŞİ KAPAT: İPTAL ya da SİL (v1.512.0 — kullanıcı kuralı, bkz. 088-siparis-iptal).
+//
+// ESKİDEN (siparisSilCascade) siparişe bağlı fişlerin stok ve cari hareketlerini SİLİYORDU: teslim
+// edilmiş malın satış fişi yok oluyor, stok geri dönüyor, müşterinin borcu siliniyordu; fatura/çek/kasa
+// kilitlerini de (fisGeriAl) atlıyordu. Kullanıcı: "Sipariş silindiğinde fişler silinmez, bağımsız fiş
+// olur; alım vs. yok olmaz, bağlantısı kalmaz, oluşan stok serbest stoğa düşer."
+//
+// KARAR (kendisi verir — kart, onay ekranı ve eski çağrılar aynı sonuca varsın):
+//   · Sipariş bir şeye bağlıysa (fiş, planlama, koli, rezervasyon, teslim sayacı) → İPTAL: kayıt
+//     "İptal" durumunda kalır, bütün bağlar çözülür, hiçbir fişe/miktara/tutara dokunulmaz.
+//   · Hiçbir şeye bağlı değilse (yanlış açılmış) ya da zaten İptal ise → SİL: listeden çıkar, çöpe gider.
+//     Zaten iptal edilmiş siparişte kalıntı bağ varsa (eski sürümün bıraktığı) önce o da çözülür.
+// Yazmalar beklenir; "iptal edildi" ancak hepsinin sonucu bilinince söylenir.
+const siparisKapat = useCallback(async (siparisId) => {
+  const siparis = siparisler.find((s) => s.id === siparisId);
+  if (!siparis) return;
+  const no = siparis.siparisNo;
+  const zatenIptal = siparis.durum === "İptal";
+  const veri = { stok, cariler, siparisler, uretim, koliler, stokRezervasyonlari };
+  const onizleme = siparisBaglariniCoz(veri, siparisId);
+  const sil = zatenIptal || !siparisIslemGormusMu(onizleme.ozet, siparis);
+  const r = siparisBaglariniCoz(veri, siparisId, {
+    sil, kullanici: (aktifKullanici && aktifKullanici.ad) || "",
+  });
+  const ozet = r.ozet;
+  const nextSiparisler = sil ? r.siparisler.filter((s) => s.id !== siparisId) : r.siparisler;
+  if (sil) {
+    copaAt("siparis", `${siparis.tip} ${no}`, siparis, {
+      ozet: `${(siparis.kalemler || []).length} kalem — ${zatenIptal ? "iptal edilmiş" : "işlem görmemiş"}, durum: ${siparis.durum}`,
+      yanEtkiliMi: false,
     });
   }
-  setSiparisler((prevSiparisler) => {
-    const siparis = prevSiparisler.find((s) => s.id === siparisId);
-    if (!siparis) return prevSiparisler;
-    const siparisNo = siparis.siparisNo;
-    const hareketAit = (h) => (h.siparisId ? h.siparisId === siparisId : h.siparisNo === siparisNo);
 
-    setStok((prevStok) => {
-      let touched = false;
-      const next = prevStok.map((p) => {
-        const ilgili = (p.hareketler || []).filter(hareketAit);
-        if (ilgili.length === 0) return p;
-        touched = true;
-        let variants = p.variants;
-        ilgili.forEach((h) => {
-          variants = variants.map((v) =>
-            v.renk === h.renk && v.beden === h.beden ? { ...v, miktar: stokYuvarla(v.miktar - h.miktar) } : v
-          );
-        });
-        return {
-          ...p,
-          variants,
-          hareketler: (p.hareketler || []).filter((h) => !hareketAit(h)),
-        };
-      });
-      if (touched) yazmalar.push(tabloYaz("stok:items", "urunler", next));
-      return touched ? next : prevStok;
-    });
+  const sonuclar = [];
+  const yaz = async (degisti, set, sonrasi, soz) => { if (!degisti) return; set(sonrasi); sonuclar.push(await soz(sonrasi)); };
+  await yaz(r.degisenler.stok, setStok, r.stok, (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
+  await yaz(r.degisenler.cariler, setCariler, r.cariler, (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
+  sonuclar.push(await fisDefteriniDonustur((defter) => {
+    // Yalnız hedef sipariş yeter (defterin bağı ona göre çözülüyor); bekleme öncesi listeyi okumaya gerek yok.
+    const d = siparisBaglariniCoz({ siparisler: [siparis], fisDefteri: defter }, siparisId);
+    return d ? d.fisDefteri : defter;
+  }));
+  await yaz(r.degisenler.uretim, setUretim, r.uretim, (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
+  await yaz(r.degisenler.koliler, setKoliler, r.koliler, (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
+  await yaz(r.degisenler.stokRezervasyonlari, setStokRezervasyonlari, r.stokRezervasyonlari,
+    (x) => yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", x), "Stok rezervasyonları", x));
+  // Sipariş EN SONA: bağlar çözülmeden sipariş "İptal"/silinmiş görünmesin.
+  await yaz(true, setSiparisler, nextSiparisler, (x) => yazimiIzle(tabloYaz("siparis:data", "siparisler", x), "Siparişler", x));
 
-    setCariler((prevCariler) => {
-      let touched = false;
-      const next = prevCariler.map((c) => {
-        const has = (c.hareketler || []).some(hareketAit);
-        if (!has) return c;
-        touched = true;
-        return {
-          ...c,
-          hareketler: (c.hareketler || []).filter((h) => !hareketAit(h)),
-        };
-      });
-      if (touched) yazmalar.push(tabloYaz("cari:data", "cariler", next));
-      return touched ? next : prevCariler;
-    });
+  const basarisiz = sonuclar.filter((x) => x && x.ok === false);
+  const eylem = sil ? "silindi" : "iptal edildi";
+  gunlukYaz(
+    basarisiz.length ? `Sipariş ${eylem} ama YARIM KALDI: ${no}` : `Sipariş ${eylem}: ${no}`,
+    "siparis",
+    { siparisNo: no, tip: siparis.tip, fisler: ozet.fisNolar, alislar: ozet.alislar.map((a) => a.siparisNo),
+      uretimler: ozet.uretimler.map((u) => u.siparisNo), koliler: ozet.koliler.length,
+      serbesteDonen: ozet.rezervasyonMiktari, basarisizYazma: basarisiz.length }
+  );
+  if (basarisiz.length > 0) {
+    showToast(`⚠ ${no} bu bilgisayarda ${eylem} ama ${basarisiz.length} kayıt BULUTA YAZILAMADI (${basarisiz[0].hata}). ` +
+      `Diğer bilgisayarlarda eski hâli görünür; sayfayı yenileyip tekrar deneyin.`);
+    return;
+  }
+  if (sil) { showToast(`${no} silindi — Tanımlar > Çöp Kutusu'ndan geri alınabilir`); return; }
+  const parcalar = [];
+  if (ozet.fisNolar.length) parcalar.push(`${ozet.fisNolar.length} fiş bağımsız kaldı (stok ve cari değişmedi)`);
+  const devam = [...ozet.alislar.map((a) => a.siparisNo), ...ozet.uretimler.map((u) => u.siparisNo)];
+  if (devam.length) parcalar.push(`${devam.join(", ")} devam ediyor`);
+  if (ozet.koliler.length) parcalar.push(`${ozet.koliler.length} koli siparişsiz kaldı`);
+  if (ozet.rezervasyonMiktari > 0) parcalar.push(`${ozet.rezervasyonMiktari} birim ayrılmış malzeme serbest kaldı`);
+  showToast(`${no} iptal edildi${parcalar.length ? " — " + parcalar.join(" · ") : ""}`);
+}, [siparisler, stok, cariler, uretim, koliler, stokRezervasyonlari, aktifKullanici, showToast, copaAt, fisDefteriniDonustur]);
 
-    const nextSiparisler = prevSiparisler
-      .filter((s) => s.id !== siparisId)
-      .map((s) => {
-        if (s.tip !== "Satış" || siparis.tip !== "Alış") return s;
-        const etkilenen = s.kalemler.some((k) => k.planlama && k.planlama.referansNo === siparisNo);
-        if (!etkilenen) return s;
-        return {
-          ...s,
-          kalemler: bekleyenKalemleriBirlestir(s.kalemler.map((k) =>
-            k.planlama && k.planlama.referansNo === siparisNo ? { ...k, planlama: null } : k
-          )),
-        };
-      });
-    yazmalar.push(tabloYaz("siparis:data", "siparisler", nextSiparisler));
-    // Mesaj burada değil, sözler çözüldükten SONRA veriliyor.
-    Promise.all(yazmalar).then((sonuclar) => {
-      const basarisiz = sonuclar.filter((r) => r && r.ok === false);
-      gunlukYaz(
-        basarisiz.length ? `Sipariş silme YARIM KALDI: ${siparisNo}` : `Sipariş silindi: ${siparisNo}`,
-        "siparis",
-        { siparisNo, tip: siparis.tip, basarisizYazma: basarisiz.length }
-      );
-      if (basarisiz.length > 0) {
-        showToast(
-          `⚠ Sipariş bu bilgisayarda silindi ama ${basarisiz.length} kayıt BULUTA YAZILAMADI ` +
-          `(${basarisiz[0].hata}). Diğer bilgisayarlarda eski hâli görünmeye devam eder. ` +
-          `Sayfayı yenileyip tekrar deneyin.`
-        );
-      } else {
-        showToast("Sipariş ve bağlı stok/cari hareketleri silindi");
-      }
-    });
-    return nextSiparisler;
-  });
-}, [showToast, copaAt, siparisler]);
-
-  return { cariSilCascade, urunSilCascade, siparisSilCascade };
+  return { cariSilCascade, urunSilCascade, siparisKapat };
 }
