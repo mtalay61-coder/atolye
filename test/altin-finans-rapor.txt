@@ -1,4 +1,29 @@
 {
+ "alacakBorc": {
+  "basliklar": [
+   "Kalem",
+   "Hesap / Cari / Ürün",
+   "Defter",
+   "P.B.",
+   "Bakiye (+alacak / −borç)",
+   "Alacak (TL)",
+   "Borç (TL)",
+   "Net Etki (TL)",
+   "Son Hareket"
+  ],
+  "satirlar": [
+   "Müşteri alacağı | Müşteri B | Tümü | TRY | 13.000,00 | 13.000,00 |  | 13.000,00 | 02.09.2026",
+   "Personel borcu | Personel C | Tümü | TRY | -30,00 |  | -30,00 | -30,00 | 30.08.2026",
+   "Tedarikçi borcu | Tedarikçi A | Tümü | TRY | -2.000,00 |  | -2.000,00 | -2.000,00 | 03.09.2026"
+  ],
+  "toplam": [
+   "Toplam",
+   "10.970,00",
+   "13.000,00",
+   "-2.030,00",
+   "10.970,00"
+  ]
+ },
  "hatalar": [],
  "hazirlar": [
   "Varlık Raporu",

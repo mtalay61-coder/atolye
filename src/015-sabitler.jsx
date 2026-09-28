@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.516.0";
+const SURUM = "1.517.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Fiste siparisten satir bazinda ekleme";
+const SURUM_NOTU = "Alacaklar ve Borclar: alacak + borc - ayri sutun, net toplam";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fiste siparisten satir bazinda ekleme";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.517.0", tarih: "28.09.2026",
+    eklenen: ["Finans raporlarına 'Alacak (TL)' (+), 'Borç (TL)' (−) ve kendi para biriminde işaretli 'Bakiye' sütunları"],
+    degisen: ["Alacaklar ve Borçlar raporu: alacak ve borç ayrı sütunda, alt toplamda Net Etki = alacak − borç (ör. 300 bin alacak, 250 bin borç → 50 bin net alacak); sıralama önce alacaklar"],
+    duzeltilen: ["Alacaklar ve Borçlar raporunun toplamı alacakla borcu birbirine ekliyordu (TL Karşılığı işaretsizdi)"] },
   { surum: "1.516.0", tarih: "28.09.2026",
     eklenen: ["Fişte 'Siparişten seç' tablosunda her satırın sağında Ekle: satır Kalem Ekle alanına yüklenir (ürün, renk, kalan adetler, siparişin fiyatı ve KDV'si); adetler asorti ya da elle değiştirilip eklenir, satırlar siparişe bağlı yazılır. Kalanı aşan miktar 'sipariş fazlası', siparişte olmayan beden serbest satır olur"],
     degisen: [],
