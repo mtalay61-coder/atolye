@@ -33,6 +33,14 @@ const FINANS_RAPOR_ALANLARI = [
   { anahtar: "paraBirimi", ad: "P.B.", tip: "metin", secenekler: ["TRY", "USD", "EUR"] },
   { anahtar: "tutar", ad: "Tutar", tip: "para", paraBirimiAlani: "paraBirimi" },
   { anahtar: "tlKarsiligi", ad: "TL Karşılığı", tip: "para" },
+  // ALACAK / BORÇ AYRI SÜTUN (v1.517.0 — kullanıcı: "alacak ve borç ayrı sütunlara girilmesi gerekir, + ve − olarak;
+  // altta toplarken bunları hesaba katarak toplaması gerek: 300 bin alacak, 250 bin borç → 50 bin net alacak").
+  // "TL Karşılığı" işaretsizdi; alacakla borcu aynı sütunda TOPLUYORDU (567.938 alacak + 901.889 borç = 1.469.827).
+  // Alacak (TL) +, Borç (TL) − yazılır; "Net Etki (TL)" ikisinin toplamı = net alacak (+) / net borç (−).
+  // Kendi para biriminde İŞARETLİ bakiye: alacak +, borç −. "Tutar" işaretsiz — toplandığında alacakla borcu ekliyordu.
+  { anahtar: "bakiye", ad: "Bakiye (+alacak / −borç)", tip: "para", paraBirimiAlani: "paraBirimi" },
+  { anahtar: "alacakTl", ad: "Alacak (TL)", tip: "para" },
+  { anahtar: "borcTl", ad: "Borç (TL)", tip: "para" },
   { anahtar: "netEtki", ad: "Net Etki (TL)", tip: "para" },
   { anahtar: "miktar", ad: "Miktar", tip: "sayi" },
   { anahtar: "birimDeger", ad: "Birim Değer (TL)", tip: "para", toplanmaz: true },
@@ -72,8 +80,10 @@ const FINANS_HAZIR_RAPORLAR = [
     sutunlar: ["taraf", "grup", "kalem", "netEtki"], gruplar: ["taraf", "grup", "kalem"],
     suzgecler: [], siralama: { alan: "taraf", yon: "artan" } } },
   { id: "hazir-finans-alacak-borc", ad: "Alacaklar ve Borçlar", tanim: {
-    sutunlar: ["kalem", "ad", "ayrinti", "defter", "paraBirimi", "tutar", "tlKarsiligi", "sonHareket"], gruplar: [],
-    suzgecler: [{ alan: "grup", islem: "icerir", deger: "Ticari" }], siralama: { alan: "tlKarsiligi", yon: "azalan" } } },
+    // v1.517.0: Alacak (+) ve Borç (−) ayrı sütunda, Net Etki toplamı net alacak/borcu verir. Sıralama nete göre:
+    // önce alacaklar (büyükten), sonra borçlar. Bakiye carinin kendi para biriminde, işaretli (döviz satırı için).
+    sutunlar: ["kalem", "ad", "defter", "paraBirimi", "bakiye", "alacakTl", "borcTl", "netEtki", "sonHareket"], gruplar: [],
+    suzgecler: [{ alan: "grup", islem: "icerir", deger: "Ticari" }], siralama: { alan: "netEtki", yon: "azalan" } } },
   // YAŞLANDIRMA ŞABLONLARI (v1.464.0): ayrıntılı ekran "Yaşlandırma" görünümünde; bunlar Excel ve
   // kendi süzgeçlerini kurmak isteyenler için aynı sayılar.
   { id: "hazir-finans-alacak-yas", ad: "Alacak Yaşlandırma", tanim: {
@@ -337,6 +347,10 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
       tutar: yuv(s.tutar),
       tlKarsiligi: cevrim.tl == null ? null : yuv(cevrim.tl),
       netEtki: cevrim.tl == null ? 0 : yuv(cevrim.tl * isaret),
+      // Varlık → Alacak (+), yükümlülük → Borç (−); bilgi satırı ikisine de girmez. Kuru olmayan satır boş.
+      bakiye: isaret === 0 ? null : yuv((s.tutar || 0) * isaret),
+      alacakTl: cevrim.tl == null || isaret !== 1 ? null : yuv(cevrim.tl),
+      borcTl: cevrim.tl == null || isaret !== -1 ? null : yuv(-cevrim.tl),
       not: [s.not, cevrim.kurYok ? `${cevrim.kurYok} kuru yok — toplamlara girmedi` : ""].filter(Boolean).join(" · "),
     });
   };

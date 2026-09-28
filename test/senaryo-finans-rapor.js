@@ -8,6 +8,7 @@
 //   1. Finans ▸ Finans Raporu açılıyor; varlık özeti grupları ve NET VARLIK.
 //   2. Hazır şablonlar listede; "Varlık Raporu" gruplu tablo ve Net Etki toplamı = net varlık.
 //   3. Defter "Genel · Resmi yan yana": özet iki sütun + fark; Resmi'de yalnız Resmi/Muhasebe kayıtları.
+//   2b. "Alacaklar ve Borçlar" (v1.517.0): Alacak (TL) +, Borç (TL) −, Net Etki toplamı = alacak − borç.
 //   4. Yeni rapor kaydedilince `tanimlar.raporlar`a YALNIZ o yazılıyor (hazır şablonlar değil).
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
@@ -59,6 +60,19 @@ async function calistir() {
     return { satirlar, toplam };
   });
 
+  // ALACAKLAR VE BORÇLAR (v1.517.0 — kullanıcı: "alacak ve borç ayrı sütunlarda, + ve −; altta net"): Müşteri B
+  // 10.000 + 3.000 alacak, Tedarikçi A 2.000 borç → Alacak 13.000, Borç −2.000, Net 11.000.
+  await sayfa.locator('[data-kayitli-rapor="Alacaklar ve Borçlar"]').click();
+  await sayfa.waitForTimeout(500);
+  const alacakBorc = await sayfa.evaluate(() => {
+    const tablo = document.querySelector("[data-rapor-tablo]");
+    return {
+      basliklar: [...tablo.querySelectorAll("thead tr:first-child th")].map((th) => th.textContent.trim()),
+      satirlar: [...tablo.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")].map((td) => td.textContent.trim()).join(" | ")),
+      toplam: [...tablo.querySelectorAll("[data-rapor-toplam] td")].map((td) => td.textContent.trim()).filter(Boolean),
+    };
+  });
+
   await sayfa.locator('[data-finans-secim="YanYana"]').click();
   await sayfa.waitForTimeout(600);
   const yanYana = await ozet();
@@ -75,7 +89,7 @@ async function calistir() {
   const kaydedilen = ((tanim && tanim.raporlar) || []).filter((r) => r.modul === "finans").map((r) => r.ad);
 
   await tarayici.close();
-  return { hatalar, tumu, hazirlar, varlikRaporu, yanYana, kaydedilen };
+  return { hatalar, tumu, hazirlar, varlikRaporu, alacakBorc, yanYana, kaydedilen };
 }
 
 if (require.main === module) {

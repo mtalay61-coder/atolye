@@ -61,6 +61,17 @@ bekle("şahsi çek yükümlülük", bul(tum, (s) => s.grup === "Verilen Çekler"
 // Deri 6 m × 2 $ × 40 = 480; Bot 2 × (3 × 80) = 480; hizmet yok.
 bekle("stok değerleri", bul(tum, (s) => s.grup === "Stoklar"), [["Hammadde", "Deri", "TRY", 480, 480, 480], ["Mamul", "Bot", "TRY", 480, 480, 480]]);
 
+// ALACAK (+) / BORÇ (−) AYRI SÜTUN (v1.517.0 — kullanıcı: "300 bin alacak, 250 bin borç → 50 bin net alacak").
+const ticari = tum.filter((s) => /^Ticari/.test(s.grup) && s.tlKarsiligi != null);
+const topla = (alan) => Math.round(ticari.reduce((t, s) => t + (s[alan] || 0), 0) * 100) / 100;
+bekle("alacak satırı yalnız Alacak sütununda, borç satırı yalnız Borç sütununda (eksi)",
+  [ticari.find((s) => s.paraBirimi === "USD").alacakTl, ticari.find((s) => s.paraBirimi === "USD").borcTl,
+   ticari.find((s) => s.grup === "Ticari Borçlar" && s.ad === "Müşteri").alacakTl, ticari.find((s) => s.grup === "Ticari Borçlar" && s.ad === "Müşteri").borcTl],
+  [4000, null, null, -40300]);
+bekle("Alacak + Borç = Net", [topla("alacakTl"), topla("borcTl"), topla("netEtki"), Math.round((topla("alacakTl") + topla("borcTl")) * 100) / 100 === topla("netEtki")],
+  [topla("alacakTl"), topla("borcTl"), topla("netEtki"), true]);
+bekle("bilgi satırı Alacak/Borç'a girmez", [tum.find((s) => s.taraf === "Bilgi").alacakTl, tum.find((s) => s.taraf === "Bilgi").borcTl], [null, null]);
+
 const genel = finansRaporSatirlari({ cariler, muhasebe, stok, defter: "Genel", tarih: "2026-09-30" });
 const resmi = finansRaporSatirlari({ cariler, muhasebe, stok, defter: "Resmi", tarih: "2026-09-30" });
 bekle("Resmi: 500 + Muhasebe 200", bul(resmi, (s) => s.ad === "Müşteri"), [["Müşteri alacağı", "Müşteri", "TRY", 700, 700, 700]]);
