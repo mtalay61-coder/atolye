@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.508.0";
+const SURUM = "1.509.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Sipariste kolide ve kolisiz mal ayri; kolisiz ekle yalniz kolisizi ekliyor";
+const SURUM_NOTU = "Siparis silme: bagli fis hareketi varsa her zaman bagli kayitlarla birlikte";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Sipariste kolide ve kolisiz mal ayri; kolisiz ekle yalniz ko
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.509.0", tarih: "28.09.2026",
+    eklenen: [],
+    degisen: ["Sipariş silinirken bağlı fiş hareketi (stok ya da cari) varsa sipariş her zaman bağlı kayıtlarıyla birlikte siliniyor; onaylı silme de aynı yoldan"],
+    duzeltilen: [] },
   { surum: "1.508.0", tarih: "28.09.2026",
     eklenen: ["Fişte 'Siparişten seç': siparişin kalanı 'kolide' ve 'kolisiz' olarak ayrı gösteriliyor (kalan = kolide + kolisiz); kolisiz tablo yalnız koliye girmemiş malı gösteriyor"],
     degisen: ["'Kolisiz kalanı ekle' artık yalnız koliye girmemiş malı ekliyor (önce siparişin bütün kalanını ekliyordu)"],

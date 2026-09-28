@@ -873,7 +873,12 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
       }
     }
 
-    const islenmis = siparis.kalemler.some((k) => (k.karsilanan || 0) > 0);
+    // İŞLENMİŞ = teslim sayacı VEYA siparişe bağlı stok/cari hareketi (v1.509.0). Yalnız sayaca bakılıyordu:
+    // sayaç 0 ama siparişe bağlı fiş hareketi olan sipariş "teslimatsız" sanılıp DOĞRUDAN siliniyor, fişin
+    // hareketleri "bağlı sipariş silinmiş" yetimleri olarak stokta kalıyordu (kullanıcı ekran görüntüsü, 28 Eylül).
+    const bagliHareketVar = (stok || []).some((p) => (p.hareketler || []).some((h) => h.siparisId === id))
+      || (cariler || []).some((c) => (c.hareketler || []).some((h) => h.siparisId === id));
+    const islenmis = bagliHareketVar || siparis.kalemler.some((k) => (k.karsilanan || 0) > 0);
     if (islenmis) {
       // Bu yol siparisSilCascade'e gider ve çöp kaydını orası oluşturur.
       onSilCascade(id);
