@@ -41,7 +41,7 @@ const hurdaTelafiUretimiAc = useCallback((kaynakUretimId, bedenMiktarlari) => {
     ambalaj: kaynak.ambalaj || null,
     model: kaynak.model,
     adet: toplam,
-    beden: `${kaynak.renk} · ${satirlar.map((x) => `${x.beden}:${x.miktar}`).join(", ")}`,
+    beden: `${olcuGoster(kaynak.renk) ? `${olcuGoster(kaynak.renk)} · ` : ""}${satirlar.map((x) => `${olcuMiktarMetni(x.beden, x.miktar)}`).join(", ")}`,
     urunId: kaynak.urunId,
     renk: kaynak.renk,
     bedenMiktarlari: satirlar,

@@ -9,7 +9,7 @@ function uretimEtiketiYazdir(uretim, stok) {
     ? uretim.bedenMiktarlari
     : [{ beden: uretim.beden || "", miktar: uretim.adet || 0 }])
     .filter((b) => (b.miktar || 0) > 0)
-    .map((b) => `${b.beden}: ${b.miktar}`).join("   ");
+    .map((b) => `${olcuMiktarMetni(b.beden, b.miktar, ": ")}`).join("   ");
   const adet = ((uretim.bedenMiktarlari || []).length
     ? uretim.bedenMiktarlari.reduce((t, b) => t + (b.miktar || 0), 0)
     : uretim.adet || 0);
@@ -207,7 +207,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
       ? (cariler || []).find((c) => c.id === bagliSatisSiparisi.cariId)
       : null;
 
-    const bedenSatiri = bedenler.map((b) => `<b>${b.beden}</b>: ${b.miktar}`).join(" &nbsp; ");
+    const bedenSatiri = bedenler.map((b) => `${olcuGoster(b.beden) ? `<b>${olcuGoster(b.beden)}</b>: ` : ""}${b.miktar}`).join(" &nbsp; ");
 
     // PROSES BAZLI HAMMADDE — MATRİS.
     //
@@ -425,7 +425,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
               </button>
             )}
             <div style={{ fontSize: 13, color: "var(--erp-text-2)", marginTop: 2 }}>
-              {o.adet} çift{o.beden ? ` · ${o.beden}` : ""}{o.termin ? ` · Termin: ${o.termin}` : ""}
+              {o.adet} çift{olcuGoster(o.beden) ? ` · ${olcuGoster(o.beden)}` : ""}{o.termin ? ` · Termin: ${o.termin}` : ""}
             </div>
             {o.not && <div style={{ fontSize: 12, color: "var(--erp-text-3)", marginTop: 2 }}>{o.not}</div>}
             {siparisNotlari.length > 0 && (

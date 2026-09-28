@@ -76,6 +76,18 @@ function olcuGoster(deger, bos = "") {
   return d === "Standart" || d === "" ? bos : d;
 }
 
+// RENK/BEDEN METNİ (v1.507.0 — kullanıcı: "Standart yazısı buralarda da var, düzeltelim"). Mesaj, uyarı,
+// açıklama ve çıktılarda "Bot · Siyah · Standart" yerine "Bot · Siyah": yer tutucu ve boş parçalar atlanır.
+// `ayrac` birleştirme işareti. Hepsi boşsa "".
+function olcuMetni(parcalar, ayrac = " · ") {
+  return (parcalar || []).map((x) => olcuGoster(x)).filter(Boolean).join(ayrac);
+}
+// "38:5, 39:3" gibi beden:miktar özeti; bedensizde yalnız miktar ("5").
+function olcuMiktarMetni(beden, miktar, ayrac = ":") {
+  const b = olcuGoster(beden);
+  return b ? `${b}${ayrac}${miktar}` : `${miktar}`;
+}
+
 // Matris tablosunun köşe başlığı (v1.474.0). "Renk \ Beden" yalnız ikisi de gerçekse; renksiz
 // üründe "Beden", bedensiz üründe "Renk", ikisi de yer tutucuysa boş — satır/sütunda "Standart"
 // yazılmadığı (`olcuGoster`) hâlde köşede "Renk \ Beden" kalınca olmayan eksenleri anlatıyordu.

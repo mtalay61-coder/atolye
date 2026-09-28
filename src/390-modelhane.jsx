@@ -656,7 +656,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
                 {n.uretim ? (
                   <div className="mono" style={{ fontSize: 12, color: "var(--erp-primary-2)", background: "var(--erp-panel-2)",
                     padding: "6px 10px", display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    <b>Üretildi</b> {n.uretim.miktar} çift{n.uretim.beden ? ` · ${n.uretim.beden}` : ""}
+                    <b>Üretildi</b> {n.uretim.miktar} çift{olcuGoster(n.uretim.beden) ? ` · ${olcuGoster(n.uretim.beden)}` : ""}
                     <span>fiş {n.uretim.fisNo}</span>
                     <span>hammadde {(n.uretim.maliyet || 0).toLocaleString("tr-TR")} ₺</span>
                   </div>

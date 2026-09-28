@@ -569,7 +569,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             {/* Ürünün renk başlığı (v1.495.0): Renk / Baskı / Tip… */}
                             <th data-siparis-kart-renk-basligi="1" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" }}>{renkBasligi(urun)}</th>
                             {tumBedenler.map((b) => (
-                              <th key={b} className="mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" }}>{b}</th>
+                              <th key={b} className="mono" style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                             ))}
                             {/* ADET sütunu: bu rengin toplam miktarı. Beden hücrelerini toplamak
                                 zorunda kalmak, en sık bakılan sayıyı en zor ulaşılan yere koyuyordu. */}
@@ -993,7 +993,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               return (
                                 <span
                                   title={
-                                    `${x.hammaddeAd} · ${x.renk} · ${x.beden}\n` +
+                                    `${olcuMetni([x.hammaddeAd, x.renk, x.beden])}\n` +
                                     `Gereken: ${x.gereken} ${x.birim}\n` +
                                     `Stok: ${x.mevcutStok}${x.varyantYok ? " (bu renk/ölçü hammadde kartında TANIMSIZ)" : ""}\n` +
                                     (x.rezerve > 0
@@ -1826,7 +1826,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         const gruplar = [];
                         (koli.kalemler || []).forEach((kk) => {
                           const kalem = bekleyenler.find((b) => b.urunId === kk.urunId && b.renk === kk.renk && b.beden === kk.beden);
-                          if (!kalem) { eslesmeyen.push(`${kk.urunAd} ${kk.renk} ${kk.beden}`); return; }
+                          if (!kalem) { eslesmeyen.push(`${olcuMetni([kk.urunAd, kk.renk, kk.beden], " ")}`); return; }
                           eklenecek[kalem.id] = (eklenecek[kalem.id] || 0) + kk.adet;
                           const a = `${kalem.urunId}|${kalem.renk}`;
                           if (!gruplar.includes(a)) gruplar.push(a);
@@ -2288,7 +2288,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                       <tr>
                                         <th style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "left", padding: "2px 8px 2px 0" }}>ÜRÜN</th>
                                         {bedenler.map((b) => (
-                                          <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" }}>{b}</th>
+                                          <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" }}>{olcuGoster(b, "Miktar")}</th>
                                         ))}
                                         <th className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "right", padding: "2px 0 2px 10px" }}>TOPLAM</th>
                                       </tr>

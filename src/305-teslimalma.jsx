@@ -388,7 +388,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                         <tr>
                           <th style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-primary)", textAlign: "left", padding: "2px 6px" }}>MALZEME</th>
                           {iadeBedenleri.map((b) => (
-                            <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-primary)", textAlign: "center", padding: "2px 4px" }}>{b}</th>
+                            <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-primary)", textAlign: "center", padding: "2px 4px" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}
                         </tr>
                       </thead>

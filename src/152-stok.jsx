@@ -1188,7 +1188,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                   {/* matris-muaf: bu bir denetim listesi, miktar dökümü değil. Her satır tek bir
                       BOZUK HAREKET kaydı ve tek tek silinebiliyor; birleştirmek silme hedefini
                       belirsizleştirirdi. */}
-                  <span className="mono">{h.renk} · {h.beden}</span>
+                  <span className="mono">{[olcuGoster(h.renk), olcuGoster(h.beden)].filter(Boolean).join(" · ") || "—"}</span>
                   <span className="mono" style={{ fontWeight: 700, color: h.miktar >= 0 ? "var(--erp-primary)" : "var(--erp-warn)" }}>{h.miktar > 0 ? "+" : ""}{h.miktar}</span>
                   {h.fisNo && <span className="mono" style={{ color: "var(--erp-text-2)" }}>Fiş: {h.fisNo}</span>}
                   <span style={{ color: "var(--erp-warn)", fontStyle: "italic" }}>{h.sorunlar.join(", ")}</span>

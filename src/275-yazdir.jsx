@@ -283,7 +283,7 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
                 <tr>
                   <th style={{ textAlign: "left", fontSize: 12, padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>Ürün / Renk</th>
                   {tumBedenler.map((b) => (
-                    <th key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>{b}</th>
+                    <th key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>{olcuGoster(b, "Miktar")}</th>
                   ))}
                   <th className="mono" style={{ fontSize: 12, textAlign: "center", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)" }}>Toplam</th>
                   <th className="mono" style={{ fontSize: 12, textAlign: "right", padding: "6px 8px", borderBottom: "2px solid var(--erp-line)", borderLeft: "1px dashed var(--erp-line)" }}>Birim Fiyat</th>
@@ -496,7 +496,7 @@ function CariEkstre({ cari, onClose, onMinimize, firmaBilgileri, defterFiltre })
                     <td style={{ fontSize: 12 }}>
                       {g.urunGruplari.map((ug) => (
                         <div key={ug.key} style={{ marginBottom: 2 }}>
-                          <b>{ug.urunAd}</b> · {ug.renk} — {ug.items.map((h) => `${h.beden}:${h.miktar}`).join(", ")} {ug.birim}
+                          <b>{ug.urunAd}</b> {olcuGoster(ug.renk) ? ` · ${olcuGoster(ug.renk)}` : ""} — {ug.items.map((h) => (olcuGoster(h.beden) ? `${olcuGoster(h.beden)}:${h.miktar}` : `${h.miktar}`)).join(", ")} {ug.birim}
                         </div>
                       ))}
                       {g.yapisizHareketler.map((h) => (

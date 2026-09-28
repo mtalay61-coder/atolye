@@ -862,7 +862,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 if (!gruplar.has(k.koliId)) gruplar.set(k.koliId, { kod: k.koliKod, cift: 0, bedenler: [] });
                 const g = gruplar.get(k.koliId);
                 g.cift = stokYuvarla(g.cift + (k.miktar || 0));
-                g.bedenler.push(`${k.beden}:${k.miktar}`);
+                g.bedenler.push(`${olcuMiktarMetni(k.beden, k.miktar)}`);
               });
               const toplam = [...gruplar.values()].reduce((t, g) => t + g.cift, 0);
               return (

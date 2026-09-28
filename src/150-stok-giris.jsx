@@ -98,7 +98,7 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
               const varyant = urun.variants.find((v) => v.renk === renk && v.beden === b);
               return (
                 <label key={b} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                  <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)" }}>{b}</span>
+                  <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)" }}>{olcuGoster(b, "Miktar")}</span>
                   <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>mevcut: {varyant ? varyant.miktar : 0}</span>
                   <input
                     type="number"

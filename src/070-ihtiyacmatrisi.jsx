@@ -133,7 +133,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                     <tr style={{ background: "var(--erp-panel)" }}>
                       <th style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 10px" }}>MALZEME</th>
                       <th data-ihtiyac-renk-sutunu="1" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textAlign: "left", padding: "4px 8px" }}>{(ortakRenkBasligi(matris.map((r) => (stok || []).find((p) => p.ad === r.ad) || {})) || Array.from(new Set(matris.map(malzemeBasligi))).join(" / ")).toLocaleUpperCase("tr-TR")}</th>
-                      {bedenler.map((b) => <th key={b} className="mono" style={baslikStil}>{b}</th>)}
+                      {bedenler.map((b) => <th key={b} className="mono" style={baslikStil}>{olcuGoster(b, "Miktar")}</th>)}
                       <th className="mono" style={{ ...baslikStil, textAlign: "right", borderLeft: "2px solid var(--erp-line-soft)" }}>TOPLAM</th>
                       {satirSonuBaslik && <th style={{ ...baslikStil, textAlign: "right" }}>{satirSonuBaslik}</th>}
                     </tr>

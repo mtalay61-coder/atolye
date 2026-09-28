@@ -480,7 +480,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
         ...(kdvAktif ? { kdvOrani: urunKdvOrani(cozum.urun, firmaBilgileri) } : {}),
       }]);
       setBarkodGirisi("");
-      showToast(`${cozum.urun.ad} · ${cozum.renk} · ${cozum.beden}: 1 eklendi`);
+      showToast(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`);
       return;
     }
 
@@ -698,7 +698,7 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
     const serbest = kalemler.filter((k) => !kilitliIdler.has(k.id));
     if (kilitliAsil.length + serbest.length === 0) return showToast("En az 1 kalem olmalı — siparişi kaldırmak için Sil'i kullanın");
     for (const k of serbest) {
-      if (!(k.miktar > 0)) return showToast(`${k.urunAd} · ${k.renk || "—"} · ${k.beden}: miktar sıfır olamaz`);
+      if (!(k.miktar > 0)) return showToast(`${olcuMetni([k.urunAd, k.renk, k.beden])}: miktar sıfır olamaz`);
       const urun = (stok || []).find((u) => u.id === k.urunId);
       // Yalnız BOŞ renk engelleniyor (ürün değişince renk boşalıyor). Kayıtlı ama üründen sonradan
       // kalkmış bir renk engellenmiyor: dokunulmamış eski bir satır yüzünden sipariş kaydedilemez

@@ -45,7 +45,7 @@ function ProductMatrixCard({
   // etiket çıkmasın.
   const bedenEtiketiGovde = (v, kod) => `
     <div style="font-size:12px;font-weight:700">${product.ad}</div>
-    <div style="font-size:11px">${v.renk || ""}${v.beden ? ` · ${v.beden}` : ""}</div>
+    <div style="font-size:11px">${olcuMetni([v.renk, v.beden])}</div>
     ${barkodSvg(kod, { birim: 2, yukseklik: 30 })}
   `;
   const barkodluVaryantlar = (product.variants || []).filter((v) => varyantinBarkodu(product, v, barkodTanimlari));
@@ -3926,7 +3926,7 @@ function ProductMatrixCard({
                     {satirlar.slice(0, 50).map((x, k) => (
                       <tr key={k} data-sapma-satir={x.uretimNo} style={{ borderBottom: "1px solid var(--erp-border-2)" }}>
                         <td className="mono" style={{ padding: "4px 8px", fontWeight: 700 }}>{x.uretimNo}</td>
-                        <td style={{ padding: "4px 8px" }}>{x.ad}<span style={{ color: "var(--erp-text-3)" }}>{x.renk ? ` · ${x.renk}` : ""}{x.beden ? ` · ${x.beden}` : ""}</span></td>
+                        <td style={{ padding: "4px 8px" }}>{x.ad}<span style={{ color: "var(--erp-text-3)" }}>{olcuMetni([x.renk, x.beden]) ? ` · ${olcuMetni([x.renk, x.beden])}` : ""}</span></td>
                         <td className="mono" style={{ padding: "4px 8px", textAlign: "right", fontWeight: 700, color: x.birimFark > 0 ? "var(--erp-void)" : "var(--erp-ok)" }}>
                           {x.birimFark > 0 ? "+" : ""}{yuvarla(x.birimFark)} {x.birim}
                         </td>
@@ -3939,7 +3939,7 @@ function ProductMatrixCard({
                 </table>}
                 {oneriler.map((o, k) => (
                   <div key={`o${k}`} data-recete-onerisi="1" style={{ fontSize: 11, color: "var(--erp-brown)", fontStyle: "italic", marginTop: 4 }}>
-                    → {o.ad}{o.renk ? ` · ${o.renk}` : ""}{o.beden ? ` · ${o.beden}` : ""}: {o.olcum} ölçümün ortalaması {o.ortalama} {o.birim}
+                    → {o.ad}{olcuMetni([o.renk, o.beden]) ? ` · ${olcuMetni([o.renk, o.beden])}` : ""}: {o.olcum} ölçümün ortalaması {o.ortalama} {o.birim}
                     (reçete {o.planlanan}) — reçeteyi {o.ortalama} yapmayı değerlendirin
                   </div>
                 ))}
@@ -5087,7 +5087,7 @@ function ProductMatrixCard({
                             tablo yalnızca ÇOK renkli fişlerde açılıyor. */}
                         {gRenkler.length === 1 && (
                           <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                            <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-2)" }}>{gRenkler[0]}</span>
+                            <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-2)" }}>{olcuGoster(gRenkler[0])}</span>
                             {gBedenler.map((b) => {
                               const eslesenler = g.hareketler.filter((x) => x.renk === gRenkler[0] && x.beden === b);
                               if (eslesenler.length === 0) return null;
@@ -5099,7 +5099,7 @@ function ProductMatrixCard({
                                   title={eslesenler.length > 1 ? `${eslesenler.length} hareketin toplamı` : undefined}
                                   style={{ display: "inline-flex", alignItems: "baseline", gap: 3, fontSize: 13 }}
                                 >
-                                  <span style={{ color: "var(--erp-text-3)" }}>{b}</span>
+                                  <span style={{ color: "var(--erp-text-3)" }}>{olcuGoster(b)}</span>
                                   <span style={{ fontWeight: 700, color: toplam < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
                                     {toplam > 0 ? "+" : ""}{toplam}
                                   </span>

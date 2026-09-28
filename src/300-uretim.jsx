@@ -53,7 +53,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
       .filter((x) => x.miktar > 0);
     if (bedenMiktarlari.length === 0) return showToast("En az bir ölçüye miktar girin");
     const toplamAdet = bedenMiktarlari.reduce((s, b) => s + b.miktar, 0);
-    const bedenOzet = bedenMiktarlari.map((b) => `${b.beden}:${b.miktar}`).join(", ");
+    const bedenOzet = bedenMiktarlari.map((b) => `${olcuMiktarMetni(b.beden, b.miktar)}`).join(", ");
 
     const order = {
       id: uid("uretim"),
@@ -282,7 +282,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {bedenSecenekleri.map((b) => (
                   <label key={b} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                    <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)" }}>{b}</span>
+                    <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)" }}>{olcuGoster(b, "Miktar")}</span>
                     <input
                       type="number"
                       min="0"

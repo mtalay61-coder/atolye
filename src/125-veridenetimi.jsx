@@ -50,7 +50,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
         ekle(
           "uyari", "hayalet-karsilanan",
           "Karşılanan miktar hareketlerden fazla",
-          `${sp.siparisNo} · ${k.urunAd} ${k.renk} ${k.beden}: kayıtlı karşılanan ${kayitli}, `
+          `${sp.siparisNo} · ${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: kayıtlı karşılanan ${kayitli}, `
           + `stok hareketlerinde ${gercek} — aradaki ${kayitli - gercek} adet planlanamıyor.`,
           "Sevkiyat ya da üretim silindiğinde sayaç geri alınmamış. Onarım, karşılananı gerçek sevk miktarına çeker.",
           { siparisId: sp.id, kalemId: k.id, gercek }
@@ -69,7 +69,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
   // denetlenebilir. Kodda yasak (12. denetim), ama eski kayıtlarda kalmış olabilir.
   stokHareketleri.filter((h) => !h.fisNo).forEach((h) => {
     ekle("yuksek", "fissiz-stok", "Fişsiz stok hareketi",
-      `${h.urunAd} · ${h.renk} · ${h.beden} · ${h.miktar}`,
+      `${olcuMetni([h.urunAd, h.renk, h.beden])} · ${h.miktar}`,
       "Bu hareket hiçbir fişe bağlı değil; iptal edilemez ve izlenemez.");
   });
   cariHareketleri.filter((h) => !h.fisNo).forEach((h) => {
@@ -94,7 +94,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
       const yazan = k.karsilanan || 0;
       if (yakinMi(beklenen, yazan)) return;
       ekle("yuksek", "siparis-karsilanan", "Sipariş karşılananı hareketlerle uyuşmuyor",
-        `${sip.siparisNo} · ${k.urunAd} · ${k.renk} · ${k.beden} — siparişte ${yazan}, stok hareketlerinde ${beklenen}`,
+        `${olcuMetni([sip.siparisNo, k.urunAd, k.renk])} · ${k.beden} — siparişte ${yazan}, stok hareketlerinde ${beklenen}`,
         yazan > beklenen
           ? "Teslim kaydı silinmiş ya da buluta yazılamamış: siparişte var, stokta yok. \"Fişten yeniden yaz\" eksik hareketi siparişin fişinden üretir."
           : "Stokta bu kaleme ait fazladan hareket var: kalem iki kez teslim alınmış olabilir.",
@@ -113,7 +113,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
     (f.stokHareketleri || []).forEach((h) => {
       if (!h.id || stokHareketIdleri.has(h.id)) return;
       ekle("yuksek", "defter-eksik-hareket", "Fiş defterinde var, stokta yok",
-        `${f.fisNo} · ${h.urunAd || h.urunId} · ${h.renk} · ${h.beden} — ${h.miktar}`,
+        `${f.fisNo} · ${olcuMetni([h.urunAd || h.urunId, h.renk, h.beden])} — ${h.miktar}`,
         "Defterdeki fiş kaydı bu hareketi içeriyor ama stok hareketlerinde yok. \"Defterden yeniden kur\" hareketi birebir geri yazar (tahmin değil, kayıttan).",
         { fisNo: f.fisNo, hareket: h });
     });
@@ -393,7 +393,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
   // yok). Bu yüzden bulgu, "açılış fişi kesin" tavsiyesiyle birlikte veriliyor.
   acilisAcigi(stok).forEach((a) => {
     ekle("orta", "STOK_DEFTER_AYRISMASI", "Stok miktarının hareket karşılığı yok",
-      `${a.urunAd} · ${a.renk || "—"}${a.beden ? ` · ${a.beden}` : ""}: ${a.fark > 0 ? "+" : ""}${a.fark}`,
+      `${a.urunAd} · ${olcuMetni([a.renk, a.beden]) || "—"}: ${a.fark > 0 ? "+" : ""}${a.fark}`,
       "Ekrandaki miktar ile hareketlerin toplamı ayrışıyor. Uygulamaya geçmeden önceki bakiyeler ya da elle girilmiş miktarlar böyle görünür — Açılış Fişi ile tek satıra dökülebilir.");
   });
 
@@ -491,7 +491,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
                 <div style={{ display: "grid", gap: 3, maxHeight: 220, overflowY: "auto", marginBottom: 10 }}>
                   {acik.slice(0, 50).map((a, i) => (
                     <div key={i} className="mono" style={{ fontSize: 11, color: "var(--erp-text)", background: "#fff", borderRadius: "var(--erp-r-sm)", padding: "4px 8px" }}>
-                      {a.urunAd} · {a.renk || "—"}{a.beden ? ` · ${a.beden}` : ""} → {a.fark > 0 ? "+" : ""}{a.fark}
+                      {a.urunAd} · {olcuMetni([a.renk, a.beden]) || "—"} → {a.fark > 0 ? "+" : ""}{a.fark}
                     </div>
                   ))}
                   {acik.length > 50 && (
