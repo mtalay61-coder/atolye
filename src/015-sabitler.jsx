@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.529.0";
+const SURUM = "1.531.0";
 const SURUM_TARIHI = "2026-09-29";
-const SURUM_NOTU = "Siparis karti: eylemler, fis para birimi, toplam ve duzen ikonu tek mor ust seritte";
+const SURUM_NOTU = "Tedarik planlamada coklu secim ve toplu uretim/alis + toplu yazdir/PDF/WhatsApp; urun karti seridi tek blok";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,14 @@ const SURUM_NOTU = "Siparis karti: eylemler, fis para birimi, toplam ve duzen ik
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.531.0", tarih: "29.09.2026",
+    eklenen: ["Tedarik planlamada çoklu seçim: satırlar (ürün + renk) işaretlenip toplu olarak üretime (her satır ayrı üretim) ya da tek tedarikçiye alış siparişine (her satır ayrı sipariş ya da tek siparişte topla) gönderilir", "Toplu işlemden sonra oluşan iş emirleri / alış siparişleri tek belgede: Yazdır, PDF, WhatsApp, E-posta"],
+    degisen: ["Üretim planlaması ürün + renk bazında gruplanıyor (farklı modellerin aynı adlı rengi tek üretime karışmıyor)", "Ürün kartı şeridi: ad, düzenlenebilir kapak görseli, kategori, toplam ve alış/satış/stok değeri tek blokta (önce ad ayrı satırda, altında ikinci bir görselle bilgi satırı vardı)"],
+    duzeltilen: [] },
+  { surum: "1.530.0", tarih: "29.09.2026",
+    eklenen: [],
+    degisen: ["Cari kartı: açıkken başlık mor şerit — ad, alacak/borç, düzenle/pasif/sil; alt satırında Genel/Resmi bakiye, Ekstre Yazdır, Pasife Al ve düzen ikonu (bakiye özeti ve ekstre artık gövdede ayrı blok değil)", "Ürün kartı: açıkken başlık mor şerit, düzen ikonu şeritte (sekme düzeni ve Stok Bilgileri blok düzeni birlikte açılır)"],
+    duzeltilen: [] },
   { surum: "1.529.0", tarih: "29.09.2026",
     eklenen: [],
     degisen: ["Sipariş kartı üst şeridi: durum, düzenle/sil, yazdır/PDF/WhatsApp/e-posta, fiş para birimi + toplam ve düzen ikonu tek mor şeritte (önce üç ayrı satırdı); para birimi artık ayrı düzen bloğu değil"],

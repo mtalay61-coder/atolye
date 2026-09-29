@@ -5,7 +5,7 @@
 //   • cariHareketler (Hareketler sekmesi): Fiş ve işlem düğmeleri / Defter-para birimi seçimi / Hareket listesi (gizlenemez).
 // Ölçülen:
 //   1) Tedarikçi A kartında varsayılan sıralar; kipte gizlenebilen bloklar;
-//   2) kart: Ekstre en üste, Bakiye gizli → Kaydet → sıra uygulanmış, bakiye yok;
+//   2) (v1.530.0) kart düzeyi düzen kaldırıldı: bakiye, ekstre, pasife al ve düzen ikonu mor üst şeritte;
 //   3) Hareketler: liste filtrelerin üstüne, işlem düğmeleri "Yarım" → Kaydet;
 //   4) düzenden sonra fiş düğmeleri hâlâ çalışıyor (Alış Fişi formu açılıyor); kayıt tanimlar'da.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
@@ -32,31 +32,22 @@ async function calistir(ekranGoruntusu) {
     return [...k.querySelectorAll(":scope > .duzen-alani > [data-duzen-blok]")].map((b) => `${b.getAttribute("data-duzen-blok")}:${b.getAttribute("data-duzen-genislik-deger")}`);
   }, E);
   const gozler = (E) => sayfa.evaluate((E) => [...document.querySelectorAll(`${E} > .duzen-alani > [data-duzen-blok] > [data-duzen-cubugu] [data-duzen-gizle]`)].map((b) => b.getAttribute("data-duzen-gizle")), E);
-  const kartVarsayilan = await durum(K);
   const hareketVarsayilan = await durum(H);
-
-  // 2) Kart düzeni.
-  await sayfa.locator(`${K} [data-duzen-ac="cariKarti"]`).click();
-  await sayfa.waitForTimeout(300);
-  const kartGozler = await gozler(K);
-  await sayfa.locator(`${K} [data-duzen-yukari="ekstre"]`).click();
-  await sayfa.waitForTimeout(100);
-  await sayfa.locator(`${K} [data-duzen-yukari="ekstre"]`).click();
-  await sayfa.locator(`${K} [data-duzen-gizle="bakiye"]`).click();
-  await sayfa.waitForTimeout(150);
-  await sayfa.locator(`${K} [data-duzen-kaydet="cariKarti"]`).click();
-  await sayfa.waitForTimeout(900);
-  const kartKaydi = await durum(K);
-  const bakiyeGorunur = await sayfa.evaluate((K) => !!document.querySelector(`${K} [data-duzen-blok="bakiye"]`), K);
+  // v1.530.0: kart düzeyi düzen yok; bakiye, ekstre ve düzen ikonu mor üst şeritte.
+  const ustSerit = await sayfa.evaluate((K) => {
+    const s = [...document.querySelectorAll("[data-cari-ust-serit]")].find((x) => x.getBoundingClientRect().width > 0);
+    const alt = s && s.querySelector("[data-cari-serit-alt]");
+    return s ? { altSatir: alt ? (alt.textContent || "").replace(/\s+/g, " ").trim() : null, duzenIkonu: !!s.querySelector('[data-duzen-ac="cariHareketler"]'), kartDuzeniYok: !document.querySelector(K) } : null;
+  }, K);
 
   // 3) Hareketler düzeni.
-  await sayfa.locator(`${H} [data-duzen-ac="cariHareketler"]`).click();
+  await sayfa.locator('[data-duzen-ac="cariHareketler"]:visible').first().click();
   await sayfa.waitForTimeout(300);
   const hareketGozler = await gozler(H);
   await sayfa.locator(`${H} [data-duzen-yukari="liste"]`).click();
   await sayfa.locator(`${H} [data-duzen-genislik="islem:yarim"]`).click();
   await sayfa.waitForTimeout(150);
-  if (ekranGoruntusu) await sayfa.locator(K).screenshot({ path: ekranGoruntusu });
+  if (ekranGoruntusu) await sayfa.locator("[data-cari-ust-serit]").first().locator("xpath=..").screenshot({ path: ekranGoruntusu });
   await sayfa.locator(`${H} [data-duzen-kaydet="cariHareketler"]`).click();
   await sayfa.waitForTimeout(900);
   const hareketKaydi = await durum(H);
@@ -71,9 +62,9 @@ async function calistir(ekranGoruntusu) {
   const yaz = (l) => (l || []).map((x) => `${x.id}:${x.genislik}${x.gizli ? "(gizli)" : ""}`);
   return {
     hatalar,
-    kartVarsayilan, hareketVarsayilan, kartGozler, hareketGozler,
-    kartKaydi, bakiyeGorunur, hareketKaydi, fisFormuAcildi,
-    kayitKart: yaz(kayit.cariKarti), kayitHareket: yaz(kayit.cariHareketler),
+    ustSerit, hareketVarsayilan, hareketGozler,
+    hareketKaydi, fisFormuAcildi,
+    kayitHareket: yaz(kayit.cariHareketler),
   };
 }
 

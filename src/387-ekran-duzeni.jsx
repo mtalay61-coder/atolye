@@ -246,11 +246,10 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
 const DUZENLI_EKRANLAR = [
   { ekran: "siparisFormu", ad: "Sipariş formu", yer: "Sipariş / Alış Siparişi → Yeni sipariş ya da ✎ Düzenle" },
   { ekran: "fisFormu", ad: "Fiş formu", yer: "Cari kartı → Alış Fişi / Satış Fişi" },
-  { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → sekmelerin sağındaki düzen ikonu" },
+  { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → üst şeritteki düzen ikonu" },
   { ekran: "urunKartiStok", ad: "Ürün kartı — Stok Bilgileri", yer: "Stok → ürün kartı → Stok Bilgileri sekmesi" },
-  { ekran: "cariKarti", ad: "Cari kartı", yer: "Cari → cari kartı (bakiye, sekmeler, ekstre)" },
   { ekran: "siparisKarti", ad: "Sipariş kartı", yer: "Sipariş / Alış Siparişi → siparişi tam ekran aç" },
-  { ekran: "cariHareketler", ad: "Cari kartı — Hareketler", yer: "Cari → cari kartı → Hareketler sekmesi" },
+  { ekran: "cariHareketler", ad: "Cari kartı — Hareketler", yer: "Cari → cari kartı → üst şeritteki düzen ikonu (Hareketler sekmesindeyken)" },
 ];
 function EkranDuzeniTanimlari() {
   const baglam = React.useContext(EkranDuzeniBaglami);
@@ -288,7 +287,8 @@ function EkranDuzeniTanimlari() {
 // SEKMELERİN kendisi düzenlenmek istenir (en çok kullanılan öne, hiç kullanılmayan gizli). Aynı kayıt biçimi
 // (`ekranDuzenleri[ekran] = [{ id, gizli }]`) ve aynı çözücü (`ekranDuzeniCoz`); yalnız yerleşim yatay.
 // `sekmeler`: [{ key, label, gizlenemez? }] — koşullu sekmeler (Reçete yalnız mamulde) listede olmayabilir.
-function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec }) {
+// `acRef` + `disIkon` (v1.530.0): DuzenAlani'daki gibi — ikon kartın üst şeridinde.
+function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false }) {
   const baglam = React.useContext(EkranDuzeniBaglami);
   const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
   const bloklar = (sekmeler || []).map((t) => ({ id: t.key, gizlenemez: !!t.gizlenemez }));
@@ -304,6 +304,7 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec }) {
   useEffect(() => { if (aktifGizli && gorunenler[0]) onSec(gorunenler[0].id); }, [aktifGizli]);
 
   const kiptenCik = () => { setKip(false); setTaslak(null); setSuruklenen(null); };
+  if (acRef) acRef.current = () => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); };
   const kaydet = () => {
     const liste = taslak || duzen;
     // BU ÜRÜNDE OLMAYAN sekmelerin kaydı korunur: hammadde kartında kaydedilen sıra Reçete/Maliyet'i silmesin.
@@ -394,7 +395,7 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec }) {
           </button>
         );
       })}
-      {baglam && baglam.yetkili && (
+      {baglam && baglam.yetkili && !disIkon && (
         <button type="button" className="btn-ikon" data-duzen-ac={ekran} onClick={() => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); }}
           title="Sekme düzeni — sırasını değiştir, kullanılmayanları gizle" style={{ marginLeft: "auto" }}>
           <LayoutGrid size={14} />

@@ -43,6 +43,142 @@ function parcaEtiketiYazdir(uretim, adim, atama, stok) {
   `], { genislikMM: 60, yukseklikMM: 40 });
 }
 
+// İŞ EMRİ HTML'İ — SAF (v1.532.0). Önce kartın içindeki `isEmriYazdir` idi; toplu planlamada (20 renk → 20 üretim)
+// hepsinin iş emrini TEK belgede basmak / PDF / WhatsApp için karttan bağımsız gerekiyordu. Kart da bunu çağırıyor —
+// tek iş emri ile toplu iş emri aynı koddan çıkıyor.
+function isEmriHTML(o, { stok, siparisler, cariler }) {
+  const urun = uretimUrunu(o, stok);
+  const urunGorseli = urun ? ((urun.renkResimleri || {})[o.renk] || urun.kapakResmi) : null;
+  const bagliSatisSiparisi = (siparisler || []).find((s) =>
+    s.tip === "Satış" && s.kalemler.some((k) => k.planlama && k.planlama.tip === "Üretim" && k.planlama.referansNo === o.siparisNo)
+  );
+  const siparisNotlari = uretimSiparisNotlari(o, siparisler);
+  const prosesNotu = (proses) => siparisNotlari.filter((n) => n.proses === proses);
+  const bilinenProsesler = new Set((o.prosesIlerleme || []).map((p) => p.proses));
+  const genelNotlar = siparisNotlari.filter((n) => !n.proses || !bilinenProsesler.has(n.proses));
+  const isEmriHammaddeMatrisi = (prosesAdi, mamulBedenleri) => isEmriHammaddeMatrisiHesapla(o, stok, prosesAdi, mamulBedenleri);
+  const kod = o.takipKodu || o.siparisNo;
+  const bedenler = ((o.bedenMiktarlari || []).length
+    ? o.bedenMiktarlari
+    : [{ beden: o.beden || "", miktar: o.adet || 0 }]).filter((b) => (b.miktar || 0) > 0);
+  const toplamAdet = bedenler.reduce((t, b) => t + (b.miktar || 0), 0);
+  const musteri = bagliSatisSiparisi
+    ? (cariler || []).find((c) => c.id === bagliSatisSiparisi.cariId)
+    : null;
+
+  const bedenSatiri = bedenler.map((b) => `${olcuGoster(b.beden) ? `<b>${olcuGoster(b.beden)}</b>: ` : ""}${b.miktar}`).join(" &nbsp; ");
+
+  // PROSES BAZLI HAMMADDE — MATRİS.
+  //
+  // Önce her hammadde × beden ayrı satırdı; 5 bedenli bir modelde tek hammadde 5 satır
+  // kaplıyordu ve tablo A4'e sığmıyordu. Artık uygulamanın her yerindeki düzen: satır =
+  // hammadde, sütun = beden. Aynı bilgi, beşte bir yer.
+  const isEmriBedenleri = bedenler.map((b) => b.beden);
+  const prosesBloklari = (o.prosesIlerleme || []).map((p, i) => {
+    const satirlar = isEmriHammaddeMatrisi(p.proses, isEmriBedenleri);
+    // RENK BAŞLIĞI (v1.495.0 — "üretim ve planlamada da başlık görünsün"): malzemenin başlığı
+    // (Kalınlık, Baskı…). Ortaksa sütunda o; karışıksa sütunda hepsi, başlık değiştiği yerde ara satır.
+    const kBaslik = (k) => renkBasligi((stok || []).find((x) => x.ad === k.ad));
+    const ortakB = ortakRenkBasligi(satirlar.map((k) => (stok || []).find((x) => x.ad === k.ad) || {}));
+    const sutunB = ortakB || Array.from(new Set(satirlar.map(kBaslik))).join(" / ");
+    const govde = satirlar.length === 0
+      ? `<tr><td colspan="${isEmriBedenleri.length + 3}" style="color:#555">Bu proseste hammadde çıkışı yok</td></tr>`
+      : satirlar.map((k, ki) => `${!ortakB && (ki === 0 || kBaslik(satirlar[ki - 1]) !== kBaslik(k))
+          ? `<tr><td colspan="${isEmriBedenleri.length + 3}" style="font-size:9px;font-weight:700;letter-spacing:.04em;padding-top:1mm">${htmlKacis(kBaslik(k).toLocaleUpperCase("tr-TR"))}</td></tr>` : ""}<tr>
+          <td style="text-align:left">${k.ad}${k.tekBeden ? ` <span style="color:#555">(${k.tekBeden})</span>` : ""}</td>
+          <td style="text-align:left">${k.renk || "—"}</td>
+          ${isEmriBedenleri.map((bd) => {
+            if (!k.adetler[bd]) return `<td style="text-align:center">·</td>`;
+            // Beden-beden eşleşmesinde hammaddenin bedeni miktarın YANINDA: aynı satırda ikisi de görünür.
+            // PARANTEZ ŞART. Parantezsiz "20 41" iki ayrı sayı gibi okunuyordu; "20 (41)" ise
+            // "20 adet, 41 numara" diye tek bakışta anlaşılıyor.
+            const hb = k.bedenDegisken && k.hbedenler[bd] ? ` <span style="color:#555;font-size:9px">(${k.hbedenler[bd]})</span>` : "";
+            return `<td style="text-align:center">${k.adetler[bd]}${hb}</td>`;
+          }).join("")}
+          <td style="text-align:right;border-left:0.2mm solid #999"><b>${k.toplam}</b> ${k.birim || ""}</td>
+        </tr>`).join("");
+    return `
+      <div style="margin-top:3mm;page-break-inside:avoid">
+        <div style="font-size:12px;font-weight:700;border-bottom:0.4mm solid #000;padding-bottom:1mm">
+          ${i + 1}. ${p.proses}${p.tamamlandiMi ? " · tamamlandı" : ""}
+        </div>
+        ${prosesNotu(p.proses).map((n) => `<div style="margin-top:1mm;padding:1mm 2mm;border:0.3mm solid #000;font-size:12px;font-weight:700">NOT: ${htmlKacis(n.metin)}</div>`).join("")}
+        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:1mm">
+          <thead><tr style="border-bottom:0.2mm solid #999">
+            <th style="text-align:left">Hammadde</th><th style="text-align:left">${htmlKacis(sutunB || "Renk")}</th>
+            ${isEmriBedenleri.map((bd) => `<th style="text-align:center">${bd}</th>`).join("")}
+            <th style="text-align:right;border-left:0.2mm solid #999">Toplam</th>
+          </tr></thead>
+          <tbody>${govde}</tbody>
+        </table>
+      </div>`;
+  }).join("");
+
+  return `
+    <div style="display:flex;gap:4mm;align-items:flex-start;border-bottom:0.6mm solid #000;padding-bottom:3mm">
+      ${urunGorseli ? `<img src="${urunGorseli}" style="width:28mm;height:28mm;object-fit:cover;border:0.3mm solid #000" />` : ""}
+      <div style="flex:1">
+        <div style="font-size:20px;font-weight:700;line-height:1.1">${o.model || (urun && urun.ad) || ""}</div>
+        <div style="font-size:15px;font-weight:700">${o.renk || ""}</div>
+        <div style="font-size:12px;margin-top:1mm">${bedenSatiri} &nbsp;·&nbsp; <b>${toplamAdet} çift</b></div>
+        <div style="font-size:11px;margin-top:1mm">
+          ${musteri ? `Müşteri: <b>${musteri.unvan}</b><br/>` : ""}
+          ${bagliSatisSiparisi ? `Sipariş: ${bagliSatisSiparisi.siparisNo}` : ""}
+          ${o.teslimTarihi ? ` · Teslim: ${o.teslimTarihi}` : ""}
+        </div>
+      </div>
+      <div style="text-align:center">
+        ${barkodSvg(kod, { birim: 2, yukseklik: 40 })}
+      </div>
+    </div>
+    ${genelNotlar.length ? `<div style="margin-top:2mm;padding:1.5mm 2mm;border:0.4mm solid #000;font-size:12px"><b>SİPARİŞ NOTU:</b> ${genelNotlar.map((n) => htmlKacis(notEtiketi(n))).join(" · ")}</div>` : ""}
+    ${prosesBloklari}`;
+}
+
+function isEmriHammaddeMatrisiHesapla(o, stok, prosesAdi, mamulBedenleri) {
+  const urunKaydi = uretimUrunu(o, stok);
+  if (!urunKaydi || !Array.isArray(urunKaydi.recete)) return [];
+  const satirlar = [];
+  const yuvarla = (n) => Math.round(n * 1000) / 1000;
+  urunKaydi.recete
+    .filter((r) => r.proses === prosesAdi && r.mamulRenk === o.renk)
+    .forEach((r) => {
+      const etkinRenk = ambalajRengiUygula(r, o, stok);
+      // ANAHTARDA HAMMADDE BEDENİ YOK.
+      //
+      // Beden-beden eşleşmesinde (mamul 40 → taban 40, mamul 41 → taban 41) hammaddenin bedeni
+      // her satırda değişiyor; anahtara katılınca her beden AYRI SATIR oluyordu ve matris yine
+      // aşağı doğru uzuyordu — kullanıcının bildirdiği durum buydu. Artık hammadde tek satır,
+      // hammaddenin bedeni HÜCRENİN İÇİNDE yazılıyor: "1 (40)".
+      const anahtar = `${r.hammaddeUrunId}|${etkinRenk}`;
+      let satir = satirlar.find((x) => x.anahtar === anahtar);
+      if (!satir) {
+        satir = { anahtar, ad: r.hammaddeAd, renk: etkinRenk, birim: r.birim, adetler: {}, hbedenler: {}, toplam: 0 };
+        satirlar.push(satir);
+      }
+      (mamulBedenleri || []).forEach((bd) => {
+        // "Tüm Bedenler" satırı HER bedene uygulanır; beden adı yazılı satır yalnızca kendine.
+        if (r.mamulBeden !== "Tüm Bedenler" && r.mamulBeden !== bd) return;
+        const bm = (o.bedenMiktarlari || []).find((x) => x.beden === bd);
+        const adet = bm ? bm.miktar || 0 : 0;
+        if (!adet) return;
+        const m = yuvarla((r.miktar || 0) * adet);
+        satir.adetler[bd] = yuvarla((satir.adetler[bd] || 0) + m);
+        if (r.beden) satir.hbedenler[bd] = r.beden;
+        satir.toplam = yuvarla(satir.toplam + m);
+      });
+    });
+  // Hammadde bedeni BÜTÜN hücrelerde aynıysa satır adının yanında bir kez yazılır; değişiyorsa
+  // (beden-beden eşleşmesi) her hücrede kendi bedeni görünür. Aynı bilgiyi her hücrede tekrar
+  // etmek tabloyu gereksiz kalabalıklaştırırdı.
+  satirlar.forEach((satir) => {
+    const farkli = Array.from(new Set(Object.values(satir.hbedenler)));
+    satir.tekBeden = farkli.length === 1 ? farkli[0] : "";
+    satir.bedenDegisken = farkli.length > 1;
+  });
+  return satirlar;
+}
+
 function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan, onAcKapa, tumUretimler, stok, cariler, personelListesi, tanimlarFireSebepleri, tanimlarProsesler, onHurdaTelafi, onGoToCari, onProsesTamamla, onProsesVer, onProsesVerGeriAl, onProsesTeslimGeriAl, onRemove, siparisler, onGoToSiparis, hedefli, onHedefGoruldu, asortiler }) {
   const [seciliPersonel, setSeciliPersonel] = useState({}); // { [proses]: personelId }
   // GERÇEKTE VERİLEN HAMMADDE — "urunId|renk|beden" -> girilen dize.
@@ -198,83 +334,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
   //   - iş emri (A4)          → personele verilir, ne yapacağını anlatır
   // Barkod iş emrinin de üstünde: kâğıdı eline alan kişi doğrudan okutabilsin.
   function isEmriYazdir() {
-    const kod = o.takipKodu || o.siparisNo;
-    const bedenler = ((o.bedenMiktarlari || []).length
-      ? o.bedenMiktarlari
-      : [{ beden: o.beden || "", miktar: o.adet || 0 }]).filter((b) => (b.miktar || 0) > 0);
-    const toplamAdet = bedenler.reduce((t, b) => t + (b.miktar || 0), 0);
-    const musteri = bagliSatisSiparisi
-      ? (cariler || []).find((c) => c.id === bagliSatisSiparisi.cariId)
-      : null;
-
-    const bedenSatiri = bedenler.map((b) => `${olcuGoster(b.beden) ? `<b>${olcuGoster(b.beden)}</b>: ` : ""}${b.miktar}`).join(" &nbsp; ");
-
-    // PROSES BAZLI HAMMADDE — MATRİS.
-    //
-    // Önce her hammadde × beden ayrı satırdı; 5 bedenli bir modelde tek hammadde 5 satır
-    // kaplıyordu ve tablo A4'e sığmıyordu. Artık uygulamanın her yerindeki düzen: satır =
-    // hammadde, sütun = beden. Aynı bilgi, beşte bir yer.
-    const isEmriBedenleri = bedenler.map((b) => b.beden);
-    const prosesBloklari = (o.prosesIlerleme || []).map((p, i) => {
-      const satirlar = isEmriHammaddeMatrisi(p.proses, isEmriBedenleri);
-      // RENK BAŞLIĞI (v1.495.0 — "üretim ve planlamada da başlık görünsün"): malzemenin başlığı
-      // (Kalınlık, Baskı…). Ortaksa sütunda o; karışıksa sütunda hepsi, başlık değiştiği yerde ara satır.
-      const kBaslik = (k) => renkBasligi((stok || []).find((x) => x.ad === k.ad));
-      const ortakB = ortakRenkBasligi(satirlar.map((k) => (stok || []).find((x) => x.ad === k.ad) || {}));
-      const sutunB = ortakB || Array.from(new Set(satirlar.map(kBaslik))).join(" / ");
-      const govde = satirlar.length === 0
-        ? `<tr><td colspan="${isEmriBedenleri.length + 3}" style="color:#555">Bu proseste hammadde çıkışı yok</td></tr>`
-        : satirlar.map((k, ki) => `${!ortakB && (ki === 0 || kBaslik(satirlar[ki - 1]) !== kBaslik(k))
-            ? `<tr><td colspan="${isEmriBedenleri.length + 3}" style="font-size:9px;font-weight:700;letter-spacing:.04em;padding-top:1mm">${htmlKacis(kBaslik(k).toLocaleUpperCase("tr-TR"))}</td></tr>` : ""}<tr>
-            <td style="text-align:left">${k.ad}${k.tekBeden ? ` <span style="color:#555">(${k.tekBeden})</span>` : ""}</td>
-            <td style="text-align:left">${k.renk || "—"}</td>
-            ${isEmriBedenleri.map((bd) => {
-              if (!k.adetler[bd]) return `<td style="text-align:center">·</td>`;
-              // Beden-beden eşleşmesinde hammaddenin bedeni miktarın YANINDA: aynı satırda ikisi de görünür.
-              // PARANTEZ ŞART. Parantezsiz "20 41" iki ayrı sayı gibi okunuyordu; "20 (41)" ise
-              // "20 adet, 41 numara" diye tek bakışta anlaşılıyor.
-              const hb = k.bedenDegisken && k.hbedenler[bd] ? ` <span style="color:#555;font-size:9px">(${k.hbedenler[bd]})</span>` : "";
-              return `<td style="text-align:center">${k.adetler[bd]}${hb}</td>`;
-            }).join("")}
-            <td style="text-align:right;border-left:0.2mm solid #999"><b>${k.toplam}</b> ${k.birim || ""}</td>
-          </tr>`).join("");
-      return `
-        <div style="margin-top:3mm;page-break-inside:avoid">
-          <div style="font-size:12px;font-weight:700;border-bottom:0.4mm solid #000;padding-bottom:1mm">
-            ${i + 1}. ${p.proses}${p.tamamlandiMi ? " · tamamlandı" : ""}
-          </div>
-          ${prosesNotu(p.proses).map((n) => `<div style="margin-top:1mm;padding:1mm 2mm;border:0.3mm solid #000;font-size:12px;font-weight:700">NOT: ${htmlKacis(n.metin)}</div>`).join("")}
-          <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:1mm">
-            <thead><tr style="border-bottom:0.2mm solid #999">
-              <th style="text-align:left">Hammadde</th><th style="text-align:left">${htmlKacis(sutunB || "Renk")}</th>
-              ${isEmriBedenleri.map((bd) => `<th style="text-align:center">${bd}</th>`).join("")}
-              <th style="text-align:right;border-left:0.2mm solid #999">Toplam</th>
-            </tr></thead>
-            <tbody>${govde}</tbody>
-          </table>
-        </div>`;
-    }).join("");
-
-    etiketYazdir([`
-      <div style="display:flex;gap:4mm;align-items:flex-start;border-bottom:0.6mm solid #000;padding-bottom:3mm">
-        ${urunGorseli ? `<img src="${urunGorseli}" style="width:28mm;height:28mm;object-fit:cover;border:0.3mm solid #000" />` : ""}
-        <div style="flex:1">
-          <div style="font-size:20px;font-weight:700;line-height:1.1">${o.model || (urun && urun.ad) || ""}</div>
-          <div style="font-size:15px;font-weight:700">${o.renk || ""}</div>
-          <div style="font-size:12px;margin-top:1mm">${bedenSatiri} &nbsp;·&nbsp; <b>${toplamAdet} çift</b></div>
-          <div style="font-size:11px;margin-top:1mm">
-            ${musteri ? `Müşteri: <b>${musteri.unvan}</b><br/>` : ""}
-            ${bagliSatisSiparisi ? `Sipariş: ${bagliSatisSiparisi.siparisNo}` : ""}
-            ${o.teslimTarihi ? ` · Teslim: ${o.teslimTarihi}` : ""}
-          </div>
-        </div>
-        <div style="text-align:center">
-          ${barkodSvg(kod, { birim: 2, yukseklik: 40 })}
-        </div>
-      </div>
-      ${genelNotlar.length ? `<div style="margin-top:2mm;padding:1.5mm 2mm;border:0.4mm solid #000;font-size:12px"><b>SİPARİŞ NOTU:</b> ${genelNotlar.map((n) => htmlKacis(notEtiketi(n))).join(" · ")}</div>` : ""}
-      ${prosesBloklari}
-    `], { genislikMM: 210, yukseklikMM: 297, ustHizali: true });
+    etiketYazdir([isEmriHTML(o, { stok, siparisler, cariler })], { genislikMM: 210, yukseklikMM: 297, ustHizali: true });
   }
 
   // İŞ EMRİ HAMMADDE MATRİSİ: satır = hammadde (+renk), sütun = mamul bedeni.
@@ -282,49 +342,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
   // `beklenenTuketim` beden kırılımını TOPLAYIP tek sayı veriyor; iş emrinde ise personelin hangi
   // bedene ne kadar malzeme alacağını görmesi gerekiyor. İki hesap da aynı reçeteden ve aynı
   // ambalaj renk kuralından besleniyor — ayrı bir "gerçek" üretmiyor, yalnızca kırılımı koruyor.
-  function isEmriHammaddeMatrisi(prosesAdi, mamulBedenleri) {
-    const urunKaydi = uretimUrunu(o, stok);
-    if (!urunKaydi || !Array.isArray(urunKaydi.recete)) return [];
-    const satirlar = [];
-    const yuvarla = (n) => Math.round(n * 1000) / 1000;
-    urunKaydi.recete
-      .filter((r) => r.proses === prosesAdi && r.mamulRenk === o.renk)
-      .forEach((r) => {
-        const etkinRenk = ambalajRengiUygula(r, o, stok);
-        // ANAHTARDA HAMMADDE BEDENİ YOK.
-        //
-        // Beden-beden eşleşmesinde (mamul 40 → taban 40, mamul 41 → taban 41) hammaddenin bedeni
-        // her satırda değişiyor; anahtara katılınca her beden AYRI SATIR oluyordu ve matris yine
-        // aşağı doğru uzuyordu — kullanıcının bildirdiği durum buydu. Artık hammadde tek satır,
-        // hammaddenin bedeni HÜCRENİN İÇİNDE yazılıyor: "1 (40)".
-        const anahtar = `${r.hammaddeUrunId}|${etkinRenk}`;
-        let satir = satirlar.find((x) => x.anahtar === anahtar);
-        if (!satir) {
-          satir = { anahtar, ad: r.hammaddeAd, renk: etkinRenk, birim: r.birim, adetler: {}, hbedenler: {}, toplam: 0 };
-          satirlar.push(satir);
-        }
-        (mamulBedenleri || []).forEach((bd) => {
-          // "Tüm Bedenler" satırı HER bedene uygulanır; beden adı yazılı satır yalnızca kendine.
-          if (r.mamulBeden !== "Tüm Bedenler" && r.mamulBeden !== bd) return;
-          const bm = (o.bedenMiktarlari || []).find((x) => x.beden === bd);
-          const adet = bm ? bm.miktar || 0 : 0;
-          if (!adet) return;
-          const m = yuvarla((r.miktar || 0) * adet);
-          satir.adetler[bd] = yuvarla((satir.adetler[bd] || 0) + m);
-          if (r.beden) satir.hbedenler[bd] = r.beden;
-          satir.toplam = yuvarla(satir.toplam + m);
-        });
-      });
-    // Hammadde bedeni BÜTÜN hücrelerde aynıysa satır adının yanında bir kez yazılır; değişiyorsa
-    // (beden-beden eşleşmesi) her hücrede kendi bedeni görünür. Aynı bilgiyi her hücrede tekrar
-    // etmek tabloyu gereksiz kalabalıklaştırırdı.
-    satirlar.forEach((satir) => {
-      const farkli = Array.from(new Set(Object.values(satir.hbedenler)));
-      satir.tekBeden = farkli.length === 1 ? farkli[0] : "";
-      satir.bedenDegisken = farkli.length > 1;
-    });
-    return satirlar;
-  }
+  function isEmriHammaddeMatrisi(prosesAdi, mamulBedenleri) { return isEmriHammaddeMatrisiHesapla(o, stok, prosesAdi, mamulBedenleri); }
 
   function beklenenTuketim(prosesAdi) {
     const urun = uretimUrunu(o, stok);

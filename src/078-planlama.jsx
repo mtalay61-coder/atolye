@@ -25,7 +25,10 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
     const satisSiparis = prevSiparisler.find((s) => s.id === satisSiparisId);
     if (!satisSiparis) return prevSiparisler;
 
-    // Aynı renkteki kalemleri tek üretim siparişinde topla
+    // Aynı ÜRÜN + RENKTEKİ kalemleri tek üretim siparişinde topla.
+    // ANAHTARDA ÜRÜN DE VAR (v1.532.0 — toplu planlama): eskiden yalnız renkti; çağrı hep TEK ürünün
+    // satırlarıyla geldiği için yetiyordu. Toplu planlamada farklı modellerin aynı adlı rengi (iki modelde
+    // "Siyah") tek üretime karışırdı. Her grup bir üretim: 20 satır seçildiyse 20 üretim.
     const renkGruplari = {};
     girdiListesi.forEach((g) => {
       const k = satisSiparis.kalemler.find((x) => x.id === g.kalemId);
@@ -33,8 +36,9 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
       const kalan = k.miktar - (k.karsilanan || 0);
       const miktar = g.miktar != null ? Math.min(g.miktar, kalan) : kalan;
       if (miktar <= 0) return;
-      if (!renkGruplari[k.renk]) renkGruplari[k.renk] = [];
-      renkGruplari[k.renk].push({ kalemId: k.id, beden: k.beden, miktar, urunAd: k.urunAd, urunId: k.urunId, ambalaj: k.ambalaj || null });
+      const grupAnahtari = `${k.urunId}|${k.renk}`;
+      if (!renkGruplari[grupAnahtari]) renkGruplari[grupAnahtari] = [];
+      renkGruplari[grupAnahtari].push({ renk: k.renk, kalemId: k.id, beden: k.beden, miktar, urunAd: k.urunAd, urunId: k.urunId, ambalaj: k.ambalaj || null });
     });
 
     const yeniUretimler = [];
@@ -47,7 +51,8 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
     // SİLİNENLER DE SAYILIYOR: numara serbest kalmıyor, çöpteki üretimin numarası yeniden
     // verilmiyor. Aksi halde eski etiket ve parça barkodları yeni üretime aitmiş gibi görünürdü.
     let sayac = enBuyukUretimNo(uretim, cop) - URETIM_NO_TABAN;
-    Object.entries(renkGruplari).forEach(([renk, satirlar]) => {
+    Object.values(renkGruplari).forEach((satirlar) => {
+      const renk = satirlar[0].renk;
       sayac++;
       const uretimNo = String(URETIM_NO_TABAN + sayac);
       const urun = stok.find((p) => p.id === satirlar[0].urunId);
@@ -219,7 +224,11 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
 
 // Bir veya birden fazla kalemi (farklı renk/beden dahil) TEK bir Alış siparişinde, seçilen TEK tedarikçiye planlar.
 // girdiler: kalemId string dizisi (kalan tam miktar) YA DA {kalemId, miktar} çiftleri (özel adet).
-const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId) => {
+// `secenek.ayriAyri` (v1.532.0 — toplu planlama, kullanıcı: "20 alış siparişini tek tedarikçiden WhatsApp'tan
+// gönderebilelim"): her ürün+renk satırı AYRI bir alış siparişi olur (aynı tedarikçi). Numaralar tek güncellemede
+// art arda verilir — ayrı ayrı çağırmak aynı `prev` üzerinden aynı numarayı üretebilirdi.
+const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId, secenek) => {
+  const ayriAyri = !!(secenek && secenek.ayriAyri);
   const girdiListesi = (Array.isArray(girdiler) ? girdiler : [girdiler])
     .map((x) => (typeof x === "string" ? { kalemId: x, miktar: null } : x));
   setSiparisler((prevSiparisler) => {
@@ -228,6 +237,7 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId) => {
 
     const alisKalemleri = [];
     const referanslar = {}; // kalemId -> bu çağrıda planlanan miktar (0'dan büyükse referans oluşur)
+    const kalemGrubu = {}; // kalemId -> alış grubu anahtarı (ayriAyri'da ürün|renk, değilse tek grup)
     girdiListesi.forEach((g) => {
       const k = satisSiparis.kalemler.find((x) => x.id === g.kalemId);
       if (!k) return;
@@ -235,17 +245,29 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId) => {
       const miktar = g.miktar != null ? Math.min(g.miktar, kalan) : kalan;
       if (miktar <= 0) return;
       const urun = stok.find((p) => p.id === k.urunId);
+      const grup = ayriAyri ? `${k.urunId}|${k.renk}` : "tek";
       alisKalemleri.push({
         id: uid("kalem"), urunId: k.urunId, urunAd: k.urunAd, birim: k.birim,
         renk: k.renk, beden: k.beden, miktar, birimFiyat: (urun && urun.alisFiyati) || 0, karsilanan: 0,
+        _grup: grup,
       });
       referanslar[k.id] = miktar;
+      kalemGrubu[k.id] = grup;
     });
     if (alisKalemleri.length === 0) return prevSiparisler;
 
-    const alisNo = sonrakiSiparisNo(prevSiparisler, "ALS-");
+    // Grup başına bir alış siparişi; numaralar sırayla (önce üretilen sonrakinin "prev"inde sayılır).
+    const grupSirasi = [];
+    alisKalemleri.forEach((x) => { if (!grupSirasi.includes(x._grup)) grupSirasi.push(x._grup); });
+    const yeniAlislar = [];
+    const grupNo = {};
+    grupSirasi.forEach((g) => {
+      const alisNo = sonrakiSiparisNo([...yeniAlislar, ...prevSiparisler], "ALS-");
+      grupNo[g] = alisNo;
+      yeniAlislar.push(alisSiparisiKur(alisNo, alisKalemleri.filter((x) => x._grup === g).map(({ _grup, ...x }) => x)));
+    });
 
-    const yeniAlisSiparisi = {
+    function alisSiparisiKur(alisNo, kalemler) { return {
       id: uid("sip"),
       siparisNo: alisNo,
       tip: "Alış", cariId,
@@ -256,13 +278,13 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId) => {
       // sorusu artık tahmine değil, kesin bir zincire dayanır.
       rezervasyonSiparisId: satisSiparisId,
       durum: "Bekliyor",
-      kalemler: alisKalemleri,
+      kalemler,
       teslimSayaci: 0,
       // Bağlı satış siparişinde daha önce bir defter tercihi seçildiyse, oluşan alış siparişi de
       // aynı tercihle başlar — kullanıcı tekrar seçmek zorunda kalmaz.
       defterTercihi: satisSiparis.defterTercihi || "",
       olusturuldu: new Date().toISOString(),
-    };
+    }; }
 
     // ÖNEMLİ: bir kalemin SADECE BİR KISMI planlanmışsa, kalemi olduğu gibi "planlandı" işaretlemek
     // YANLIŞTIR — geri kalan (planlanmamış) miktar sessizce kaybolur. Bunun yerine kalem İKİYE
@@ -275,6 +297,7 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId) => {
       s.kalemler.forEach((k) => {
         const planlananMiktar = referanslar[k.id];
         if (!planlananMiktar) { yeniKalemler.push(k); return; }
+        const alisNo = grupNo[kalemGrubu[k.id]];
         const kalanOncesi = k.miktar - (k.karsilanan || 0);
         if (planlananMiktar >= kalanOncesi) {
           yeniKalemler.push({ ...k, planlama: { tip: "Satınalma", referansNo: alisNo } });
@@ -285,9 +308,11 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId) => {
       });
       return { ...s, kalemler: yeniKalemler };
     });
-    const nextSiparisler = [yeniAlisSiparisi, ...nextKalemli];
+    const nextSiparisler = [...yeniAlislar.slice().reverse(), ...nextKalemli];
     yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
-    showToast(`${alisNo} alış siparişi oluşturuldu (${alisKalemleri.length} kalem)`);
+    showToast(yeniAlislar.length === 1
+      ? `${yeniAlislar[0].siparisNo} alış siparişi oluşturuldu (${alisKalemleri.length} kalem)`
+      : `${yeniAlislar.length} alış siparişi oluşturuldu (${yeniAlislar[0].siparisNo} – ${yeniAlislar[yeniAlislar.length - 1].siparisNo})`);
     return nextSiparisler;
   });
 }, [stok, showToast]);

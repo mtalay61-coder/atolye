@@ -34,6 +34,10 @@ function ProductMatrixCard({
   const gecerliBaslangicSekme =
     baslangicSekme === "recete" && product.kategori !== "Mamul" ? "stok" : baslangicSekme;
   const [cardTab, setCardTab] = useState(gecerliBaslangicSekme || "stok");
+  // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
+  const sekmeAcRef = useRef(null);
+  const stokAcRef = useRef(null);
+  const duzenBaglami = React.useContext(EkranDuzeniBaglami);
   // BEDEN ETİKETİ BASMA (22 Eylül, v1.413.0 — kullanıcı: "o düğmeyi ekle ve seçili bedenler için
   // toplu basım da koy"). Depoda okutulan asıl etiket beden etiketi; Barkodlar sekmesinde kodlar
   // görünüyordu ama basılamıyordu. Seçim varyantın KİMLİĞİYLE (renk|beden) tutuluyor, sıra
@@ -838,103 +842,28 @@ function ProductMatrixCard({
       {/* Başlık şeridi: aç/kapa alanı ile eylem ikonları YAN YANA ama AYRI düğmeler.
           İkonları aç/kapa düğmesinin içine koymak iç içe <button> üretirdi — geçersiz HTML olur ve
           ikona tıklamak kartı da açıp kapatırdı. */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 16px 16px 16px" }}>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          style={{
-            flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12,
-            background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0,
-          }}
-        >
-          {product.kapakResmi ? (
-            <ColorSwatch src={product.kapakResmi} editable={false} size={44} />
-          ) : (
-            <div
-              title={product.kategori}
-              style={{
-                width: 44, height: 44, borderRadius: "var(--erp-r-md)", flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "18"),
-                border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
-              }}
-            >
-              <KategoriIkonu kategori={product.kategori} size={21} />
-            </div>
-          )}
-          <span style={{ fontWeight: 700, fontSize: 16, flex: 1, overflowWrap: "anywhere", color: product.pasif ? "var(--erp-text-3)" : undefined }}>
-            {product.ad}
-            {product.pasif && (
-              <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>pasif</span>
-            )}
-          </span>
-          {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
-        </button>
-
-        {/* DÜZENLEME MODUNDA BAŞLIK EYLEMLERİ (20 Eylül): Kaydet · Vazgeç. */}
-        {showEdit && editForm && (
-          <>
-            <button type="button" className="btn-primary btn-save" data-kart-eylem="kaydet"
-              title="Kaydet · Ctrl+S" onClick={(e) => { e.stopPropagation(); editKaydet(); }}
-              style={{ padding: "5px 12px", fontSize: 12 }}>
-              <Save size={13} /> Kaydet
-            </button>
-            <button type="button" className="btn-ghost" data-kart-eylem="vazgec"
-              title="Vazgeç · Esc" onClick={(e) => { e.stopPropagation(); setShowEdit(false); setEditForm(null); }}
-              style={{ padding: "5px 12px", fontSize: 12 }}>
-              <X size={13} /> Vazgeç
-            </button>
-          </>
-        )}
-        {!showEdit && (<>
-        <button
-          type="button"
-          data-kart-eylem="duzenle"
-          onClick={() => { setOpen(true); editAc(); }}
-          title="Ürünü düzenle"
-          className="btn-ikon"
-          style={{ flexShrink: 0 }}
-        >
-          <Pencil size={15} />
-        </button>
-        <button
-          type="button"
-          data-kart-eylem="pasif"
-          onClick={() => onPasifDegistir(product.id, !product.pasif)}
-          title={
-            product.pasif
-              ? "Ürünü yeniden kullanıma aç — seçim listelerinde tekrar görünür"
-              : "Ürünü kullanımdan kaldır. Kayıt, stok ve geçmişi durur; sadece YENİ işlemlerde seçilemez."
-          }
-          className="btn-ikon"
-          style={{ color: product.pasif ? "var(--erp-primary)" : "var(--erp-purple)", flexShrink: 0 }}
-        >
-          {product.pasif ? <Check size={15} /> : <Archive size={15} />}
-        </button>
-        <button
-          type="button"
-          data-kart-eylem="sil"
-          onClick={() => { setOpen(true); setUrunSilOnay(true); }}
-          title="Ürünü sil"
-          className="btn-ikon tehlike"
-          style={{ flexShrink: 0 }}
-        >
-          <Trash2 size={15} />
-        </button>
-        </>)}
-      </div>
-
-      {open && (
-        <div style={{ padding: "0 16px 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+      {/* TEK ÜST ŞERİT (v1.530.0 — kullanıcı: "Cari ve ürün kartında da aynı şeridi yap"): açık kartta başlık mor şerit;
+          düzen ikonu şeridin sonunda (sekme düzeni + Stok Bilgileri sekmesindeyken blok düzeni birlikte açılır). */}
+      {/* Şerit = başlık satırı + ürün bilgi satırı (kategori, toplam, alış/satış/stok değeri) tek mor kutuda. */}
+      <div data-urun-ust-serit={open ? "1" : undefined}
+        style={open ? { margin: "10px 14px 10px", padding: "8px 10px 0", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : undefined}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: open ? "0 0 8px" : "16px 16px 16px 16px" }}>
+        {open && (
+      <div data-urun-serit-bilgi="1" style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <ColorSwatch
             src={product.kapakResmi}
             onUrlSave={(url) => onKapakResmiChange(product.id, url)}
             onRemove={() => onKapakResmiChange(product.id, "")}
             size={52}
           />
-          <div>
+          <div style={{ minWidth: 0 }}>
+          {/* AD BİLGİ SÜTUNUNUN BAŞINDA (v1.531.0 — kullanıcı: "alt satırı buraya toplayalım"): açık kartta ad ile
+              kategori/toplam/fiyat satırları tek blok; başlıktaki ikinci (düzenlenemez) görsel ve ad yok. */}
+          <div data-urun-serit-ad="1" style={{ fontWeight: 700, fontSize: 16, overflowWrap: "anywhere", marginBottom: 4, color: product.pasif ? "var(--erp-text-3)" : undefined }}>
+            {product.ad}
+          </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <select
               value={product.kategori}
@@ -1250,6 +1179,102 @@ function ProductMatrixCard({
         </div>
         {/* Düzenle / pasife al / sil ikonları kart BAŞLIĞINA taşındı — burada tekrar edilmiyor. */}
       </div>
+      </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            flex: open ? "0 0 auto" : 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12,
+            background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0,
+          }}
+        >
+          {open ? null : product.kapakResmi ? (
+            <ColorSwatch src={product.kapakResmi} editable={false} size={44} />
+          ) : (
+            <div
+              title={product.kategori}
+              style={{
+                width: 44, height: 44, borderRadius: "var(--erp-r-md)", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "18"),
+                border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
+              }}
+            >
+              <KategoriIkonu kategori={product.kategori} size={21} />
+            </div>
+          )}
+          {!open && <span style={{ fontWeight: 700, fontSize: 16, flex: 1, overflowWrap: "anywhere", color: product.pasif ? "var(--erp-text-3)" : undefined }}>
+            {product.ad}
+            {product.pasif && (
+              <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>pasif</span>
+            )}
+          </span>}
+          {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
+        </button>
+
+        {/* DÜZENLEME MODUNDA BAŞLIK EYLEMLERİ (20 Eylül): Kaydet · Vazgeç. */}
+        {showEdit && editForm && (
+          <>
+            <button type="button" className="btn-primary btn-save" data-kart-eylem="kaydet"
+              title="Kaydet · Ctrl+S" onClick={(e) => { e.stopPropagation(); editKaydet(); }}
+              style={{ padding: "5px 12px", fontSize: 12 }}>
+              <Save size={13} /> Kaydet
+            </button>
+            <button type="button" className="btn-ghost" data-kart-eylem="vazgec"
+              title="Vazgeç · Esc" onClick={(e) => { e.stopPropagation(); setShowEdit(false); setEditForm(null); }}
+              style={{ padding: "5px 12px", fontSize: 12 }}>
+              <X size={13} /> Vazgeç
+            </button>
+          </>
+        )}
+        {!showEdit && (<>
+        <button
+          type="button"
+          data-kart-eylem="duzenle"
+          onClick={() => { setOpen(true); editAc(); }}
+          title="Ürünü düzenle"
+          className="btn-ikon"
+          style={{ flexShrink: 0 }}
+        >
+          <Pencil size={15} />
+        </button>
+        <button
+          type="button"
+          data-kart-eylem="pasif"
+          onClick={() => onPasifDegistir(product.id, !product.pasif)}
+          title={
+            product.pasif
+              ? "Ürünü yeniden kullanıma aç — seçim listelerinde tekrar görünür"
+              : "Ürünü kullanımdan kaldır. Kayıt, stok ve geçmişi durur; sadece YENİ işlemlerde seçilemez."
+          }
+          className="btn-ikon"
+          style={{ color: product.pasif ? "var(--erp-primary)" : "var(--erp-purple)", flexShrink: 0 }}
+        >
+          {product.pasif ? <Check size={15} /> : <Archive size={15} />}
+        </button>
+        <button
+          type="button"
+          data-kart-eylem="sil"
+          onClick={() => { setOpen(true); setUrunSilOnay(true); }}
+          title="Ürünü sil"
+          className="btn-ikon tehlike"
+          style={{ flexShrink: 0 }}
+        >
+          <Trash2 size={15} />
+        </button>
+        {open && duzenBaglami && duzenBaglami.yetkili && (
+          <button type="button" className="btn-ikon" data-duzen-ac="urunKarti" title="Ekran düzeni — sekmelerin sırası/gizlenmesi; Stok Bilgileri'nde bölümlerin yeri ve genişliği"
+            onClick={() => { if (sekmeAcRef.current) sekmeAcRef.current(); if (cardTab === "stok" && stokAcRef.current) stokAcRef.current(); }} style={{ flexShrink: 0 }}>
+            <LayoutGrid size={15} />
+          </button>
+        )}
+        </>)}
+      </div>
+      </div>
+
+      {open && (
+        <div style={{ padding: "0 16px 16px" }}>
 
       {urunSilOnay && (() => {
         const bagliUretimler = (uretim || []).filter((o) => o.urunId === product.id);
@@ -1457,13 +1482,13 @@ function ProductMatrixCard({
           },
         ];
         // SEKME SIRASI / GİZLEME (v1.524.0): sıra ve gizlilik Tanımlar'da (bulutta) — her ürün kartında aynı.
-        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} />;
+        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} acRef={sekmeAcRef} disIkon />;
       })()}
 
       {/* EKRAN DÜZENİ (v1.524.0 — kullanıcı: "Ürün kartına da düzen ekle"): Stok Bilgileri sekmesinin üç bölümü
           blok. Aralık 0: bölümler kendi kenar boşluklarını zaten taşıyor, ızgara boşluğu ikiye katlardı. */}
       {cardTab === "stok" && (
-      <DuzenAlani ekran="urunKartiStok" aralik={0} bloklar={[
+      <DuzenAlani ekran="urunKartiStok" aralik={0} acRef={stokAcRef} disIkon bloklar={[
       { id: "stokDurumu", ad: "Stok durumu", icerik: (<>
       {/* ---- STOK DURUMU ----
           Beş büyüklük ve ilişkileri (sütun başlıklarında da açıklanıyor):
