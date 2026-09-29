@@ -652,11 +652,12 @@ export default function AtolyeERP() {
   });
 
   // PEŞİN ÖDEME YÖNÜ GÖÇÜ (v1.537.0 — son denetim): alış fişinden peşin ödenen tutar cariye yanlış yönle
-  // yazılmıştı (bkz. 078-fisyaz `pesinOdemeYonuDuzelt`). Veri yüklendikten sonra BİR KEZ (damga tanımlarda —
-  // açılış göçüyle aynı karar: veri ortak, göç hesap başına bir kez), hem cari hareketinde hem fiş defterindeki
-  // kopyasında düzeltilir. Veri kilidi (salt okuma) varken çalışmaz.
+  // yazılmıştı (bkz. 078-fisyaz `pesinOdemeYonuDuzelt`). Veri yüklendikten sonra hem cari hareketinde hem fiş
+  // defterindeki kopyasında düzeltilir. DAMGA YOK: onarım kendini sınırlıyor (düzelen kayıt "Borç" olur, bir daha
+  // eşleşmez); yalnız düzeltilecek kayıt varsa yazar — damga her hesaba gereksiz bir tanımlar yazması eklerdi.
+  // Veri kilidi (salt okuma) varken çalışmaz.
   useEffect(() => {
-    if (loading || veriKilidiSebep || tanimlar.pesinYonGocuYapildi) return;
+    if (loading || veriKilidiSebep) return;
     let sayi = 0;
     const yeniCariler = (cariler || []).map((c) => {
       let degisti = false;
@@ -677,13 +678,8 @@ export default function AtolyeERP() {
       gunlukYaz(`Peşin ödeme yönü onarıldı: ${sayi} alış peşin kaydı (tedarikçi borcu iki kat görünüyordu)`, "cari", { sayi });
       setTimeout(() => showToast(`${sayi} peşin ödeme kaydı düzeltildi — tedarikçi bakiyeleri artık doğru`), 1800);
     }
-    setTanimlar((onceki) => {
-      const yeniT = { ...onceki, pesinYonGocuYapildi: true };
-      yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", yeniT), "Tanımlar", yeniT);
-      return yeniT;
-    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, veriKilidiSebep, tanimlar.pesinYonGocuYapildi, showToast]);
+  }, [loading, veriKilidiSebep, showToast]);
 
   // YÖNETİCİSİZ LİSTE KİLİDİ (kullanıcı, 13 Eylül: sıfırladıktan sonra "Kullanıcı" rolüyle ekleyip
   // girişi açtı, kısıtlı girdi). Kısıtlı kullanıcı Tanımlar'ı bile göremediği için hiçbir ekrandan

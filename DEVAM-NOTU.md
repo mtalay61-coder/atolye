@@ -6889,7 +6889,7 @@ yer var mı, gereksiz yer var mı; son kontrolleri yapalım, kullanıma geçece�
 KRİTİK (ikisi de gerçek): (1) **Peşin ödemeli alış** — `fisYaz` peşin kaydı her fişte `yon: "Tahsilat"` yazıyordu;
 bakiyede yalnız "Borç" artı, alışta fiş −X + peşin −P → tedarikçi borcu iki kat. Artık alışta `hareketYonu("Ödeme")`
 + `islemTipi`; mevcut veri için `pesinOdemeYonuDuzelt` (imza: `muhasebeBagId` + "Tahsilat" + açıklama "Ödeme (")
-açılışta BİR KEZ (damga `tanimlar.pesinYonGocuYapildi`) hem cari hareketinde hem fiş defteri kopyasında. Birim testi
+açılışta (damgasız — onarım kendini sınırlıyor, yalnız hatalı kayıt varsa yazar) hem cari hareketinde hem fiş defteri kopyasında. Birim testi
 eskiden hatayı sabitliyordu ("Tahsilat" bekliyordu) — düzeltildi, bakiye farkı +500 ölçülüyor. (2) **Kısmi teslim** —
 atama tüm miktarıyla tamamlanıyor, `kalanBedenleri` hesaplanıp kullanılmıyordu: "ustada kaldı, sonra teslim edilecek"
 denen çiftler için iş yoktu, adım/üretim eksik miktarla bitiyordu. Artık teslim alınan atama teslim edilen miktara iner,
