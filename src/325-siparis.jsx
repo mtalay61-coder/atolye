@@ -1,6 +1,6 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
+function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
@@ -863,6 +863,13 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
   // (ya da zaten iptal) sipariş silinip çöpe gider. Burada ayrı bir yol yok: iki yol vardı ve biri (doğrudan
   // silme) fişleri yetim bırakıyor, öteki (zincir) fişleri siliyordu — ikisi de kullanıcının kuralına aykırıydı.
   // "Önce bağlı alışı silin" engeli de kalktı: kurala göre alış devam eder, yalnız bağı kopar.
+  // Başlık yuvası yalnız ETKİN sekmede kullanılır: modül sekmeler arasında `display:none` ile açık kalıyor,
+  // gizli bir sekmenin açık formu başlığa ikinci bir Kaydet düğmesi çizmesin.
+  const [baslikYuvasi, setBaslikYuvasi] = useState(null);
+  useLayoutEffect(() => {
+    setBaslikYuvasi(aktifSekme && showForm && typeof document !== "undefined" ? document.getElementById("modul-baslik-eylemleri") : null);
+  }, [aktifSekme, showForm]);
+
   function siparisSil(id) {
     if (!siparisler.some((s) => s.id === id)) return;
     onSiparisKapat(id);
@@ -1112,22 +1119,31 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
               formun başında, kalem girişinden uzak. Düzenlemede Vazgeç turuncu başlıkta zaten var — burada yalnız Kaydet.
               DÜZENLEMEDE DÜĞMENİN ADI DEĞİŞİR: "Siparişi Kaydet"e basıp var olan siparişe eklendiğini fark etmek
               (ya da tersi) geri alınması zahmetli bir sürpriz olurdu. */}
-          <div data-siparis-form-eylemler="1" style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap", marginBottom: 12, paddingBottom: 10, borderBottom: "1px dashed var(--erp-line)" }}>
+          {(() => {
+            // BAŞLIĞIN SAĞINDA (v1.520.0 — kullanıcı: "Kaydet ve Vazgeç Alış Siparişi yazısının sağına gelsin").
+            // Yeni siparişte düğmeler modül başlığının yuvasına çiziliyor (100-app `modul-baslik-eylemleri`); yuva
+            // yoksa (pencere içinde, başka ekranda) ya da düzenlemedeyse formun başında kalıyor.
+            const dugmeler = (
+              <div data-siparis-form-eylemler="1" style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "nowrap", ...(baslikYuvasi && !duzenlenenId ? {} : { marginBottom: 12, paddingBottom: 10, borderBottom: "1px dashed var(--erp-line)" }) }}>
+
             {duzenlenenId ? (
               <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1">
                 <Save size={14} /> {(siparisler.find((s) => s.id === duzenlenenId) || {}).siparisNo} Değişikliklerini Kaydet
               </button>
             ) : (
               <>
-                <button className="btn-primary btn-save" onClick={siparisKaydet} data-siparis-kaydet="1">
+                <button className="btn-primary btn-save" onClick={siparisKaydet} data-siparis-kaydet="1" style={{ padding: "6px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
                   <Save size={14} /> {tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet"}
                 </button>
-                <button className="btn-ghost" onClick={() => { setShowForm(false); resetForm(); }}>
+                <button className="btn-ghost" onClick={() => { setShowForm(false); resetForm(); }} style={{ padding: "6px 12px", fontSize: 13 }}>
                   <X size={14} /> Vazgeç
                 </button>
               </>
             )}
-          </div>
+              </div>
+            );
+            return baslikYuvasi && !duzenlenenId ? createPortal(dugmeler, baslikYuvasi) : dugmeler;
+          })()}
 
           {/* TİP SEÇİCİ — YALNIZ SABİT TİP YOKKEN. Alış ve satış siparişleri AYRI ana sekmelere
               bölündüğünde (`sabitTip`) bu satır İKİNCİ bir seçim noktası oluyordu: kullanıcı

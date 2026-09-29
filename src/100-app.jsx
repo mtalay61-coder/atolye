@@ -3649,14 +3649,18 @@ export default function AtolyeERP() {
 
         {tab !== "anasayfa" && (
           <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2, flexWrap: "wrap", rowGap: 6 }}>
               {/* BAŞLIK 24 → 17: modül adı bir yön levhası, manşet değil. Zaten sekme şeridinde ve
                   sol menüde de yazıyor; üçüncü kez büyük puntoyla tekrar etmesi gereksiz. */}
               {/* YENİ TASARIM (v1.449.0): renkli nokta ve kesikli çizgi kalktı; başlık temanın
                   yazı tipinde, sade. Modül adı üst menüde ve sekmede de yazıyor — manşet değil. */}
-              <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "var(--erp-text)" }}>
+              <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "var(--erp-text)", whiteSpace: "nowrap" }}>
                 {TAB_TITLES[tab]}
               </h1>
+              {/* BAŞLIK EYLEM YUVASI (v1.520.0 — kullanıcı: "Kaydet ve Vazgeç Alış Siparişi yazısının sağına gelsin, hem
+                  ekran toparlanır"). Açık bir kayıt formu Kaydet/Vazgeç düğmelerini buraya çizer (createPortal); böylece
+                  düğmeler başlıkla aynı satırda ve formun kendi içinde yer kaplamıyor. Boşken görünmez. */}
+              <div id="modul-baslik-eylemleri" data-modul-baslik-eylemleri="1" style={{ display: "flex", gap: 8, alignItems: "center", marginLeft: 12, flexShrink: 0 }} />
               {/* VERİ KAYNAĞI ROZETİ — yalnızca bulut okunamadığında görünür.
                   Her şey yolundayken rozet göstermek gürültü olur; ama eski veriyle çalışıldığında
                   kullanıcının bunu BİLMESİ şart, yoksa farkında olmadan yanlış karar verir. */}
@@ -4068,6 +4072,7 @@ export default function AtolyeERP() {
           </div>
           <div style={{ display: tab === "siparis" ? undefined : "none" }}>
             <SiparisModule
+              aktifSekme={tab === "siparis"}
               onSiparisGitGlobal={sipariseGit}
               mobilBolumAyari={mobilBolumCoz(tanimlar.mobilGorunum, "siparis")}
               onFiseGitNo={fiseGit}
@@ -4119,6 +4124,7 @@ export default function AtolyeERP() {
               diğerine taşınmamasına yol açardı. */}
           <div style={{ display: tab === "satinalma" ? undefined : "none" }}>
             <SiparisModule
+              aktifSekme={tab === "satinalma"}
               onSiparisGitGlobal={sipariseGit}
               mobilBolumAyari={mobilBolumCoz(tanimlar.mobilGorunum, "satinalma")}
               onFiseGitNo={fiseGit}
