@@ -624,22 +624,6 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </div>
             );
           })()}
-          <div style={{ display: "flex", gap: 16, marginBottom: 10, padding: "8px 10px", background: "var(--erp-panel-2)", borderRadius: "var(--erp-r-md)", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
-              Genel: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(genelBakiye)) }}>
-                {bakiyeMetni(genelBakiye)}
-              </span>
-            </span>
-            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
-              Resmi: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(resmiBakiye)) }}>
-                {bakiyeMetni(resmiBakiye)}
-              </span>
-            </span>
-            {/* İKİNCİ "DÜZENLE" KALDIRILDI (kullanıcı, 20 Eylül: "düzenleme tuşu caride iki kere
-                var, bunları tek tipe almamız lazım"). Başlıktaki kalem ad/tipi, buradaki
-                telefon/adresi açıyordu — iki düğme, iki mod, aynı yazı. Artık tek düzenleme
-                modu: başlıktaki kalem hepsini birden açar. */}
-          </div>
           {duzenleAcik && (
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
@@ -954,7 +938,31 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </div>
             </div>
           )}
+          {/* EKRAN DÜZENİ (v1.525.0 — kullanıcı: "Cari kartına da düzen ekle"): bakiye özeti, sekmeler ve ekstre
+              düğmeleri blok. Düzenleme panelleri (ad/tip, fiyat grubu, personel) düzenin DIŞINDA ve üstte: düzenleme
+              anında görünmeleri gereken geçici paneller, yerleri ayarlanacak bölüm değil. */}
+          <DuzenAlani ekran="cariKarti" aralik={0} bloklar={[
+          { id: "bakiye", ad: "Bakiye özeti", icerik: (
+          <div style={{ display: "flex", gap: 16, marginBottom: 10, padding: "8px 10px", background: "var(--erp-panel-2)", borderRadius: "var(--erp-r-md)", alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
+              Genel: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(genelBakiye)) }}>
+                {bakiyeMetni(genelBakiye)}
+              </span>
+            </span>
+            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
+              Resmi: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(resmiBakiye)) }}>
+                {bakiyeMetni(resmiBakiye)}
+              </span>
+            </span>
+            {/* İKİNCİ "DÜZENLE" KALDIRILDI (kullanıcı, 20 Eylül: "düzenleme tuşu caride iki kere
+                var, bunları tek tipe almamız lazım"). Başlıktaki kalem ad/tipi, buradaki
+                telefon/adresi açıyordu — iki düğme, iki mod, aynı yazı. Artık tek düzenleme
+                modu: başlıktaki kalem hepsini birden açar. */}
+          </div>
 
+
+          ) },
+          { id: "sekmeler", ad: "Sekmeler (hareketler / siparişler)", gizlenemez: true, icerik: (<>
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             {[
               { key: "hareketler", label: "Hareketler" },
@@ -974,8 +982,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             ))}
           </div>
 
+          {/* EKRAN DÜZENİ (v1.525.0): Hareketler sekmesinin üç bölümü blok — fiş düğmeleri / filtreler / liste. */}
           {cardTab === "hareketler" && (
-          <>
+          <DuzenAlani ekran="cariHareketler" aralik={0} bloklar={[
+          { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (<>
           {showHareket ? (
             <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -1295,6 +1305,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           )}
 
 
+          </>) },
+          { id: "filtre", ad: "Defter ve para birimi seçimi", icerik: (<>
           {(cari.hareketler || []).length > 0 && (
             <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
               {["Tümü", "Genel", "Resmi"].map((d) => {
@@ -1386,6 +1398,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             );
           })()}
 
+          </>) },
+          { id: "liste", ad: "Hareket listesi", gizlenemez: true, icerik: (<>
           {(() => {
             // "Muhasebe" kaydı iki defterde de listeleniyor (bkz. defterKapsar).
             const defterUygulanmis = defterFiltre === "Tümü"
@@ -1854,7 +1868,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             );
           })();
           })()}
-          </>
+          </>) },
+          ]} />
           )}
 
           {cardTab === "siparisler" && (() => {
@@ -1933,6 +1948,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             );
           })()}
 
+          </>) },
+          { id: "ekstre", ad: "Ekstre ve pasife al", icerik: (
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
             <button
               className="btn-ghost"
@@ -1956,6 +1973,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 Silme burada tekrar edilmiyor: son çare olan işlem göz önünde durmasın. */}
             <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
           </div>
+          ) },
+          ]} />
 
         </div>
       )}

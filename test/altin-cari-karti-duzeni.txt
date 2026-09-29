@@ -1,0 +1,42 @@
+{
+ "bakiyeGorunur": false,
+ "fisFormuAcildi": true,
+ "hareketGozler": [
+  "islem",
+  "filtre"
+ ],
+ "hareketKaydi": [
+  "islem:yarim",
+  "liste:tam",
+  "filtre:tam"
+ ],
+ "hareketVarsayilan": [
+  "islem:tam",
+  "filtre:tam",
+  "liste:tam"
+ ],
+ "hatalar": [],
+ "kartGozler": [
+  "bakiye",
+  "ekstre"
+ ],
+ "kartKaydi": [
+  "ekstre:tam",
+  "sekmeler:tam"
+ ],
+ "kartVarsayilan": [
+  "bakiye:tam",
+  "sekmeler:tam",
+  "ekstre:tam"
+ ],
+ "kayitHareket": [
+  "islem:yarim",
+  "liste:tam",
+  "filtre:tam"
+ ],
+ "kayitKart": [
+  "ekstre:tam",
+  "bakiye:tam(gizli)",
+  "sekmeler:tam"
+ ]
+}
