@@ -848,107 +848,22 @@ function ProductMatrixCard({
       <div data-urun-ust-serit={open ? "1" : undefined}
         style={open ? { margin: "10px 14px 10px", padding: "8px 10px 0", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : undefined}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: open ? "0 0 8px" : "16px 16px 16px 16px" }}>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          style={{
-            flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12,
-            background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0,
-          }}
-        >
-          {product.kapakResmi ? (
-            <ColorSwatch src={product.kapakResmi} editable={false} size={44} />
-          ) : (
-            <div
-              title={product.kategori}
-              style={{
-                width: 44, height: 44, borderRadius: "var(--erp-r-md)", flexShrink: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "18"),
-                border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
-              }}
-            >
-              <KategoriIkonu kategori={product.kategori} size={21} />
-            </div>
-          )}
-          <span style={{ fontWeight: 700, fontSize: 16, flex: 1, overflowWrap: "anywhere", color: product.pasif ? "var(--erp-text-3)" : undefined }}>
-            {product.ad}
-            {product.pasif && (
-              <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>pasif</span>
-            )}
-          </span>
-          {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
-        </button>
-
-        {/* DÜZENLEME MODUNDA BAŞLIK EYLEMLERİ (20 Eylül): Kaydet · Vazgeç. */}
-        {showEdit && editForm && (
-          <>
-            <button type="button" className="btn-primary btn-save" data-kart-eylem="kaydet"
-              title="Kaydet · Ctrl+S" onClick={(e) => { e.stopPropagation(); editKaydet(); }}
-              style={{ padding: "5px 12px", fontSize: 12 }}>
-              <Save size={13} /> Kaydet
-            </button>
-            <button type="button" className="btn-ghost" data-kart-eylem="vazgec"
-              title="Vazgeç · Esc" onClick={(e) => { e.stopPropagation(); setShowEdit(false); setEditForm(null); }}
-              style={{ padding: "5px 12px", fontSize: 12 }}>
-              <X size={13} /> Vazgeç
-            </button>
-          </>
-        )}
-        {!showEdit && (<>
-        <button
-          type="button"
-          data-kart-eylem="duzenle"
-          onClick={() => { setOpen(true); editAc(); }}
-          title="Ürünü düzenle"
-          className="btn-ikon"
-          style={{ flexShrink: 0 }}
-        >
-          <Pencil size={15} />
-        </button>
-        <button
-          type="button"
-          data-kart-eylem="pasif"
-          onClick={() => onPasifDegistir(product.id, !product.pasif)}
-          title={
-            product.pasif
-              ? "Ürünü yeniden kullanıma aç — seçim listelerinde tekrar görünür"
-              : "Ürünü kullanımdan kaldır. Kayıt, stok ve geçmişi durur; sadece YENİ işlemlerde seçilemez."
-          }
-          className="btn-ikon"
-          style={{ color: product.pasif ? "var(--erp-primary)" : "var(--erp-purple)", flexShrink: 0 }}
-        >
-          {product.pasif ? <Check size={15} /> : <Archive size={15} />}
-        </button>
-        <button
-          type="button"
-          data-kart-eylem="sil"
-          onClick={() => { setOpen(true); setUrunSilOnay(true); }}
-          title="Ürünü sil"
-          className="btn-ikon tehlike"
-          style={{ flexShrink: 0 }}
-        >
-          <Trash2 size={15} />
-        </button>
-        {open && duzenBaglami && duzenBaglami.yetkili && (
-          <button type="button" className="btn-ikon" data-duzen-ac="urunKarti" title="Ekran düzeni — sekmelerin sırası/gizlenmesi; Stok Bilgileri'nde bölümlerin yeri ve genişliği"
-            onClick={() => { if (sekmeAcRef.current) sekmeAcRef.current(); if (cardTab === "stok" && stokAcRef.current) stokAcRef.current(); }} style={{ flexShrink: 0 }}>
-            <LayoutGrid size={15} />
-          </button>
-        )}
-        </>)}
-      </div>
-      {open && (
-      <div data-urun-serit-bilgi="1" style={{ borderTop: "1px solid #C9B3D9", paddingTop: 8 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+        {open && (
+      <div data-urun-serit-bilgi="1" style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <ColorSwatch
             src={product.kapakResmi}
             onUrlSave={(url) => onKapakResmiChange(product.id, url)}
             onRemove={() => onKapakResmiChange(product.id, "")}
             size={52}
           />
-          <div>
+          <div style={{ minWidth: 0 }}>
+          {/* AD BİLGİ SÜTUNUNUN BAŞINDA (v1.531.0 — kullanıcı: "alt satırı buraya toplayalım"): açık kartta ad ile
+              kategori/toplam/fiyat satırları tek blok; başlıktaki ikinci (düzenlenemez) görsel ve ad yok. */}
+          <div data-urun-serit-ad="1" style={{ fontWeight: 700, fontSize: 16, overflowWrap: "anywhere", marginBottom: 4, color: product.pasif ? "var(--erp-text-3)" : undefined }}>
+            {product.ad}
+          </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <select
               value={product.kategori}
@@ -1265,7 +1180,97 @@ function ProductMatrixCard({
         {/* Düzenle / pasife al / sil ikonları kart BAŞLIĞINA taşındı — burada tekrar edilmiyor. */}
       </div>
       </div>
-      )}
+        )}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            flex: open ? "0 0 auto" : 1, minWidth: 0, display: "flex", alignItems: "center", gap: 12,
+            background: "transparent", border: "none", cursor: "pointer", textAlign: "left", padding: 0,
+          }}
+        >
+          {open ? null : product.kapakResmi ? (
+            <ColorSwatch src={product.kapakResmi} editable={false} size={44} />
+          ) : (
+            <div
+              title={product.kategori}
+              style={{
+                width: 44, height: 44, borderRadius: "var(--erp-r-md)", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "18"),
+                border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-text-2)"), "33")}`,
+              }}
+            >
+              <KategoriIkonu kategori={product.kategori} size={21} />
+            </div>
+          )}
+          {!open && <span style={{ fontWeight: 700, fontSize: 16, flex: 1, overflowWrap: "anywhere", color: product.pasif ? "var(--erp-text-3)" : undefined }}>
+            {product.ad}
+            {product.pasif && (
+              <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>pasif</span>
+            )}
+          </span>}
+          {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
+        </button>
+
+        {/* DÜZENLEME MODUNDA BAŞLIK EYLEMLERİ (20 Eylül): Kaydet · Vazgeç. */}
+        {showEdit && editForm && (
+          <>
+            <button type="button" className="btn-primary btn-save" data-kart-eylem="kaydet"
+              title="Kaydet · Ctrl+S" onClick={(e) => { e.stopPropagation(); editKaydet(); }}
+              style={{ padding: "5px 12px", fontSize: 12 }}>
+              <Save size={13} /> Kaydet
+            </button>
+            <button type="button" className="btn-ghost" data-kart-eylem="vazgec"
+              title="Vazgeç · Esc" onClick={(e) => { e.stopPropagation(); setShowEdit(false); setEditForm(null); }}
+              style={{ padding: "5px 12px", fontSize: 12 }}>
+              <X size={13} /> Vazgeç
+            </button>
+          </>
+        )}
+        {!showEdit && (<>
+        <button
+          type="button"
+          data-kart-eylem="duzenle"
+          onClick={() => { setOpen(true); editAc(); }}
+          title="Ürünü düzenle"
+          className="btn-ikon"
+          style={{ flexShrink: 0 }}
+        >
+          <Pencil size={15} />
+        </button>
+        <button
+          type="button"
+          data-kart-eylem="pasif"
+          onClick={() => onPasifDegistir(product.id, !product.pasif)}
+          title={
+            product.pasif
+              ? "Ürünü yeniden kullanıma aç — seçim listelerinde tekrar görünür"
+              : "Ürünü kullanımdan kaldır. Kayıt, stok ve geçmişi durur; sadece YENİ işlemlerde seçilemez."
+          }
+          className="btn-ikon"
+          style={{ color: product.pasif ? "var(--erp-primary)" : "var(--erp-purple)", flexShrink: 0 }}
+        >
+          {product.pasif ? <Check size={15} /> : <Archive size={15} />}
+        </button>
+        <button
+          type="button"
+          data-kart-eylem="sil"
+          onClick={() => { setOpen(true); setUrunSilOnay(true); }}
+          title="Ürünü sil"
+          className="btn-ikon tehlike"
+          style={{ flexShrink: 0 }}
+        >
+          <Trash2 size={15} />
+        </button>
+        {open && duzenBaglami && duzenBaglami.yetkili && (
+          <button type="button" className="btn-ikon" data-duzen-ac="urunKarti" title="Ekran düzeni — sekmelerin sırası/gizlenmesi; Stok Bilgileri'nde bölümlerin yeri ve genişliği"
+            onClick={() => { if (sekmeAcRef.current) sekmeAcRef.current(); if (cardTab === "stok" && stokAcRef.current) stokAcRef.current(); }} style={{ flexShrink: 0 }}>
+            <LayoutGrid size={15} />
+          </button>
+        )}
+        </>)}
+      </div>
       </div>
 
       {open && (

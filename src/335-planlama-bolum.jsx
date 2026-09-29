@@ -1,5 +1,39 @@
 function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisleri, onPlanlaUretim, onPlanlaSatinAlma, onSiparisGit, onGoToUretim, onFiseGitNo, onPlanlamaTemizle, asortiler, varsayilanTip, sonrasindaYonlendir, firmaBilgileri, showToast }) {
   const planlanacaklar = siparis.kalemler.filter((k) => k.miktar - (k.karsilanan || 0) > 0);
+  // ÇOKLU SEÇİM (v1.532.0 — kullanıcı: "Tedarik planlama çoktan seçmeli yapalım, çoklu halde alış veya üretime
+  // gönderebilelim; çoklu yapılan işlemler için yazdır, PDF, WhatsApp da aktif olsun. 20 satır için 20 ayrı üretim
+  // oluştursun ve 20 üretim fişi çıkarsın, veya 20 alış siparişini tek tedarikçiden WhatsApp'tan gönderebilelim").
+  // Seçim birimi satır = ürün + renk ("urunId|renk"); satırın BÜTÜN bekleyen bedenleri kalan miktarıyla gider (miktar
+  // düzeltmek isteyen satırın kendi Tip/miktar formunu kullanır). Üretim: her satır bir üretim (planlaUretim ürün+renk
+  // gruplar). Alış: tek tedarikçi; her satır ayrı alış siparişi ya da "tek siparişte topla".
+  const [secili, setSecili] = useState({});
+  const [topluCariId, setTopluCariId] = useState("");
+  const [tekAlis, setTekAlis] = useState(false);
+  // Son toplu işlemin sonucu: { tip: "Üretim" | "Satınalma", kalemIdler } — oluşan kayıtlar planlama referansından
+  // bulunur (planlama güncellemesi durum güncellemesi olduğu için numaralar burada anında bilinmiyor).
+  const [topluSonuc, setTopluSonuc] = useState(null);
+  const bekleyenSatirlar = [];
+  planlanacaklar.filter((k) => !k.planlama).forEach((k) => {
+    const anahtar = `${k.urunId}|${k.renk}`;
+    let sat = bekleyenSatirlar.find((x) => x.anahtar === anahtar);
+    if (!sat) { sat = { anahtar, kalemler: [] }; bekleyenSatirlar.push(sat); }
+    sat.kalemler.push(k);
+  });
+  const seciliSatirlar = bekleyenSatirlar.filter((x) => secili[x.anahtar]);
+  const tumuSecili = bekleyenSatirlar.length > 0 && seciliSatirlar.length === bekleyenSatirlar.length;
+  const secimDegistir = (anahtar, deger) => setSecili((o) => { const y = { ...o }; if (deger) y[anahtar] = true; else delete y[anahtar]; return y; });
+  const tedarikcilerToplu = (cariler || []).filter((c) => (c.tip === "Tedarikçi" || c.tip === "Her İkisi") && !c.pasif);
+  function topluGonder(tip) {
+    const girdiler = seciliSatirlar.flatMap((x) => x.kalemler.map((k) => ({ kalemId: k.id, miktar: k.miktar - (k.karsilanan || 0) })));
+    if (girdiler.length === 0) return;
+    if (tip === "Uretim") onPlanlaUretim(siparis.id, girdiler);
+    else {
+      if (!topluCariId) { if (showToast) showToast("Önce tedarikçi seçin"); return; }
+      onPlanlaSatinAlma(siparis.id, girdiler, topluCariId, { ayriAyri: !tekAlis });
+    }
+    setTopluSonuc({ tip: tip === "Uretim" ? "Üretim" : "Satınalma", kalemIdler: girdiler.map((g) => g.kalemId) });
+    setSecili({});
+  }
 
   // BOŞKEN SEBEBİNİ SÖYLE (kullanıcı, 19 Eylül: "eksik kalan tedarik planlama yine yok").
   //
@@ -46,7 +80,76 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
             Tedarik Planlama
           </span>
           <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({gruplar.length} ürün henüz karşılanmadı)</span>
+          {bekleyenSatirlar.length > 0 && (
+            <label data-planlama-tumunu-sec="1" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, color: "var(--erp-text-2)", cursor: "pointer" }}>
+              <input type="checkbox" checked={tumuSecili}
+                onChange={(e) => setSecili(e.target.checked ? Object.fromEntries(bekleyenSatirlar.map((x) => [x.anahtar, true])) : {})} />
+              Tümünü seç ({bekleyenSatirlar.length} satır)
+            </label>
+          )}
         </div>
+        {seciliSatirlar.length > 0 && (
+          <div data-planlama-toplu-cubuk={seciliSatirlar.length} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 12px", background: "#FFF4E8", borderBottom: "1px solid #E8D4BE", position: "sticky", top: 0, zIndex: 3 }}>
+            <b style={{ fontSize: 12, color: "#C97B3D" }}>{seciliSatirlar.length} satır seçili</b>
+            <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>· kalan miktarların tamamı</span>
+            <button type="button" className="btn-primary" data-planlama-toplu-uretim="1" style={{ padding: "5px 10px", fontSize: 12 }} onClick={() => topluGonder("Uretim")}>
+              <Hammer size={12} /> Üretime gönder ({seciliSatirlar.length} üretim)
+            </button>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "2px 8px", borderLeft: "1px solid #E8D4BE" }}>
+              <select data-planlama-toplu-tedarikci="1" value={topluCariId} onChange={(e) => setTopluCariId(e.target.value)} style={{ ...inputStyle, width: 170, padding: "4px 6px", fontSize: 12 }}>
+                <option value="">Tedarikçi seçin…</option>
+                {tedarikcilerToplu.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+              </select>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--erp-text-2)", cursor: "pointer" }}>
+                <input type="checkbox" data-planlama-tek-alis="1" checked={tekAlis} onChange={(e) => setTekAlis(e.target.checked)} /> tek siparişte topla
+              </label>
+              <button type="button" className="btn-primary" data-planlama-toplu-alis="1" disabled={!topluCariId}
+                style={{ padding: "5px 10px", fontSize: 12, background: "var(--erp-info)", borderColor: "var(--erp-info)" }} onClick={() => topluGonder("Satinalma")}>
+                <PackageCheck size={12} /> Alış siparişine gönder ({tekAlis ? 1 : seciliSatirlar.length} sipariş)
+              </button>
+            </span>
+            <button type="button" className="btn-ghost" style={{ padding: "4px 8px", fontSize: 11, marginLeft: "auto" }} onClick={() => setSecili({})}>Seçimi temizle</button>
+          </div>
+        )}
+        {topluSonuc && (() => {
+          // Oluşan kayıtlar: gönderilen kalemlerin (bölünse de ilk parça aynı id'yi taşır) planlama referansları.
+          const idler = new Set(topluSonuc.kalemIdler);
+          const nolar = [];
+          (siparis.kalemler || []).forEach((k) => {
+            if (idler.has(k.id) && k.planlama && k.planlama.tip === topluSonuc.tip && !nolar.includes(k.planlama.referansNo)) nolar.push(k.planlama.referansNo);
+          });
+          const uretimler = topluSonuc.tip === "Üretim" ? nolar.map((no) => (uretimSiparisleri || []).find((u) => u.siparisNo === no)).filter(Boolean) : [];
+          const alislar = topluSonuc.tip === "Satınalma" ? nolar.map((no) => (tumSiparisler || []).find((x) => x.siparisNo === no)).filter(Boolean) : [];
+          const kayitlar = topluSonuc.tip === "Üretim" ? uretimler : alislar;
+          if (kayitlar.length === 0) return null;
+          const sayfa = (html, i) => `<div style="${i < kayitlar.length - 1 ? "page-break-after:always;" : ""}padding:2mm 0">${html}</div>`;
+          const tedarikci = alislar.length ? (cariler || []).find((c) => c.id === alislar[0].cariId) : null;
+          const govdeHTML = topluSonuc.tip === "Üretim"
+            ? uretimler.map((u, i) => sayfa(isEmriHTML(u, { stok, siparisler: tumSiparisler, cariler }), i)).join("")
+            : alislar.map((a, i) => sayfa(siparisCiktisiHTML(a, tedarikci, firmaBilgileri, stok), i)).join("");
+          const noListesi = kayitlar.map((x) => x.siparisNo).join(", ");
+          return (
+            <div data-planlama-toplu-sonuc={topluSonuc.tip} data-planlama-toplu-sayi={kayitlar.length}
+              style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 12px", background: "#EEF6EE", borderBottom: "1px solid #CFE3CF" }}>
+              <Check size={13} color="var(--erp-primary)" />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-primary)" }}>
+                {kayitlar.length} {topluSonuc.tip === "Üretim" ? "üretim" : "alış siparişi"} oluşturuldu
+              </span>
+              <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{noListesi}{tedarikci ? ` — ${tedarikci.unvan}` : ""}</span>
+              <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6, alignItems: "center" }}>
+                <PaylasSeridi kucuk
+                  govdeHTML={govdeHTML}
+                  dosyaAdi={topluSonuc.tip === "Üretim" ? `Is emirleri ${siparis.siparisNo}` : `Alis siparisleri ${siparis.siparisNo} - ${(tedarikci && tedarikci.unvan) || "tedarikci"}`}
+                  cari={tedarikci}
+                  konu={topluSonuc.tip === "Üretim" ? `İş emirleri — ${siparis.siparisNo}` : `Alış siparişleri ${noListesi} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim()}
+                  ozet={topluSonuc.tip === "Üretim" ? `İş emirleri (${kayitlar.length}): ${noListesi}` : `Alış siparişleri (${kayitlar.length}): ${noListesi}`}
+                  showToast={showToast} firmaBilgileri={firmaBilgileri}
+                />
+                <button type="button" className="btn-ikon" title="Kapat" onClick={() => setTopluSonuc(null)}><X size={13} /></button>
+              </span>
+            </div>
+          );
+        })()}
         <div style={{ background: "#fff" }}>
         {gruplar.map((g, i) => (
           <PlanlamaSatiri
@@ -69,6 +172,8 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
             asortiler={asortiler}
             varsayilanTip={varsayilanTip}
             sonrasindaYonlendir={sonrasindaYonlendir}
+            secili={secili}
+            onSec={secimDegistir}
           />
         ))}
         </div>
@@ -77,7 +182,7 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
   );
 }
 
-function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSiparisleri, onPlanlaUretim, onPlanlaSatinAlma, sonSatir, onSiparisGit, onGoToUretim, onFiseGitNo, onPlanlamaTemizle, asortiler, varsayilanTip, sonrasindaYonlendir, firmaBilgileri, showToast }) {
+function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSiparisleri, onPlanlaUretim, onPlanlaSatinAlma, sonSatir, onSiparisGit, onGoToUretim, onFiseGitNo, onPlanlamaTemizle, asortiler, varsayilanTip, sonrasindaYonlendir, firmaBilgileri, showToast, secili, onSec }) {
   // ESKİDEN: tek bir "secim" (Uretim/Satınalma), TÜM bekleyen kalemlere BİRDEN uygulanıyordu — yani
   // aynı ürünün Kırmızı rengi Satınalma'ya, Siyah rengi Üretim'e AYRI AYRI planlanamıyordu. Artık HER
   // RENK SATIRININ kendi tip seçimi var: kalemTipleri = { [kalemId]: "Uretim" | "Satınalma" }.
@@ -373,7 +478,16 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                       g.kalemler.forEach((k) => { kalemBedenIndex[k.beden] = k; });
                       return (
                         <tr key={g.renk} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
-                          <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--erp-panel)", zIndex: 1 }}>{g.renk}</td>
+                          <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", whiteSpace: "nowrap", position: "sticky", left: 0, background: "var(--erp-panel)", zIndex: 1 }}>
+                            {onSec ? (
+                              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                                <input type="checkbox" data-planlama-satir-sec={`${grup.urunAd}|${g.renk}`}
+                                  checked={!!(secili && secili[`${grup.urunId}|${g.renk}`])}
+                                  onChange={(e) => onSec(`${grup.urunId}|${g.renk}`, e.target.checked)} />
+                                {g.renk}
+                              </label>
+                            ) : g.renk}
+                          </td>
                           <td style={{ padding: "6px 8px", position: "sticky", left: 60, background: "var(--erp-panel)", zIndex: 1, boxShadow: "none", }}>
                             <select
                               value={ortakTip}
