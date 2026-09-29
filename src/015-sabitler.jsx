@@ -457,7 +457,7 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.533.0";
+const SURUM = "1.534.0";
 const SURUM_TARIHI = "2026-09-29";
 const SURUM_NOTU = "Kasa/banka: ekran duzeni ve tek mor ust serit; duzenle/pasif/sil kucuk ikon";
 
@@ -468,7 +468,7 @@ const SURUM_NOTU = "Kasa/banka: ekran duzeni ve tek mor ust serit; duzenle/pasif
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
-  { surum: "1.533.0", tarih: "29.09.2026",
+  { surum: "1.534.0", tarih: "29.09.2026",
     eklenen: ["Kasa ve banka detayında ekran düzeni: İşlem düğmeleri + formlar ve Hareket listesi blokları (kasa ve banka ayrı düzen)"],
     degisen: ["Kasa/banka detayı başlığı mor şerit; Düzenle, Pasife Al ve Sil alttaki yazılı düğmeler yerine şeritte küçük ikon (cari/ürün kartıyla aynı)"],
     duzeltilen: [] },

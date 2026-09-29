@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.533.0</title>
+<title>Atölye ERP 1.534.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1982,7 +1982,7 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.533.0";
+const SURUM = "1.534.0";
 const SURUM_TARIHI = "2026-09-29";
 const SURUM_NOTU = "Kasa/banka: ekran duzeni ve tek mor ust serit; duzenle/pasif/sil kucuk ikon";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
@@ -1992,7 +1992,7 @@ const SURUM_NOTU = "Kasa/banka: ekran duzeni ve tek mor ust serit; duzenle/pasif
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
-    { surum: "1.533.0", tarih: "29.09.2026",
+    { surum: "1.534.0", tarih: "29.09.2026",
         eklenen: ["Kasa ve banka detayında ekran düzeni: İşlem düğmeleri + formlar ve Hareket listesi blokları (kasa ve banka ayrı düzen)"],
         degisen: ["Kasa/banka detayı başlığı mor şerit; Düzenle, Pasife Al ve Sil alttaki yazılı düğmeler yerine şeritte küçük ikon (cari/ürün kartıyla aynı)"],
         duzeltilen: [] },
@@ -29963,7 +29963,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                         setDuzenlenen(h.id);
                                     } },
                                     React.createElement(Pencil, { size: 14 }))),
-                                React.createElement("button", { type: "button", className: "btn-ikon", "data-kart-eylem": "pasif", "data-hesap-pasif": h.id, title: h.pasif ? `${birimAdi}'ı yeniden kullanıma aç` : `${birimAdi}'ı pasife al — hareketleri durur, yeni işlemde seçilemez`, onClick: () => onHesapPasifDegistir(h.id, !h.pasif), style: { color: h.pasif ? "var(--erp-primary)" : "var(--erp-purple)" } }, h.pasif ? React.createElement(Check, { size: 14 }) : React.createElement(Archive, { size: 14 })),
+                                duzenlenen !== h.id && (React.createElement("button", { type: "button", className: "btn-ikon", "data-kart-eylem": "pasif", "data-hesap-pasif": h.id, title: h.pasif ? `${birimAdi}'ı yeniden kullanıma aç` : `${birimAdi}'ı pasife al — hareketleri durur, yeni işlemde seçilemez`, onClick: () => onHesapPasifDegistir(h.id, !h.pasif), style: { color: h.pasif ? "var(--erp-primary)" : "var(--erp-purple)" } }, h.pasif ? React.createElement(Check, { size: 14 }) : React.createElement(Archive, { size: 14 }))),
                                 duzenlenen !== h.id && (React.createElement(SilOnayButonu, { kartEylemi: true, onConfirm: () => onHesapSil(h.id), boyut: 14, baslikNormal: (h.hareketler || []).length > 0
                                         ? `${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`
                                         : silmeYetkisiVar === false
@@ -50109,7 +50109,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.533.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.534.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

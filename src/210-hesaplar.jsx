@@ -356,12 +356,15 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         <Pencil size={14} />
                       </button>
                     )}
+                    {/* Kart kalıbı: düzenlemede yalnız Kaydet · Vazgeç — pasif ve sil de gizli. */}
+                    {duzenlenen !== h.id && (
                     <button type="button" className="btn-ikon" data-kart-eylem="pasif" data-hesap-pasif={h.id}
                       title={h.pasif ? `${birimAdi}'ı yeniden kullanıma aç` : `${birimAdi}'ı pasife al — hareketleri durur, yeni işlemde seçilemez`}
                       onClick={() => onHesapPasifDegistir(h.id, !h.pasif)}
                       style={{ color: h.pasif ? "var(--erp-primary)" : "var(--erp-purple)" }}>
                       {h.pasif ? <Check size={14} /> : <Archive size={14} />}
                     </button>
+                    )}
                     {duzenlenen !== h.id && (
                       <SilOnayButonu kartEylemi
                         onConfirm={() => onHesapSil(h.id)}
