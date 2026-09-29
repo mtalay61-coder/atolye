@@ -6,7 +6,9 @@
 //   1) şeritte düzenle · pasif · sil · düzen ikonları; altta yazılı Düzenle / Pasife Al düğmesi YOK;
 //   2) düzen ikonu → kip; "Hareket listesi" gizlenemez (göz yok), "İşlem düğmeleri" gizlenebilir;
 //      Hareket listesi yukarı → Kaydet → sıra hareketler, islem; kayıt tanimlar.ekranDuzenleri.kasaDetay;
-//   3) ✎ → alttaki düzenleme formu (ad kutusu + Kaydet/Vazgeç) açılıyor, şeritte ✎ ve 🗑 gizleniyor.
+//   3) (v1.535.0) liste uzunken (31 hareket) kipte önizleme ≤ 220 px; en üstteki liste sürüklenerek en alta iniyor;
+//      Tahsilat / Ödeme düğmeleri kendi renginde;
+//   4) ✎ → alttaki düzenleme formu (ad kutusu + Kaydet/Vazgeç) açılıyor, şeritte ✎ ve 🗑 gizleniyor.
 const { uygulamaAc, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -16,10 +18,12 @@ async function calistir(ekranGoruntusu) {
   t["muhasebe:data"] = JSON.stringify({ hesaplar: [], bankalar: [], cekler: [], defter: [], kurlar: { USD: 48 },
     kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [
       { id: "h1", tarih: "2026-09-28", yon: "Giriş", tutar: 500, cariId: "c2", aciklama: "Tahsilat · Müşteri B · Tahsilat (TL Kasa)", defter: "Genel" },
+      // v1.535.0: uzun liste — "Hareket listesi alta inmiyor" hatası ancak liste ekranı taşırınca görünüyordu.
+      ...Array.from({ length: 30 }, (_, i) => ({ id: `u${i}`, tarih: "2026-09-20", yon: "Giriş", tutar: 1, cariId: "c2", aciklama: "", defter: "Genel" })),
     ] }] });
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
-  await sayfa.setViewportSize({ width: 1150, height: 900 });
+  await sayfa.setViewportSize({ width: 1150, height: 700 });
   await sayfa.waitForTimeout(2300);
   await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Kasa & Banka"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
@@ -46,6 +50,21 @@ async function calistir(ekranGoruntusu) {
   await sayfa.waitForTimeout(900);
   const kayittanSonra = await sira();
 
+  // 4) (v1.535.0) Hareket listesi en üstteyken SÜRÜKLEYEREK aşağı: kipte bloklar kısa önizleme, kenarda kaydırma.
+  await sayfa.locator('[data-duzen-ac="kasaDetay"]:visible').first().click();
+  await sayfa.waitForTimeout(300);
+  const onizlemeYuksekligi = await sayfa.evaluate((E) => Math.round(document.querySelector(`${E} [data-duzen-blok="hareketler"] [data-duzen-onizleme]`).getBoundingClientRect().height), E);
+  const ad = await sayfa.locator(`${E} [data-duzen-cubugu="hareketler"] b`).boundingBox();
+  await sayfa.mouse.move(ad.x + 10, ad.y + ad.height / 2); await sayfa.mouse.down();
+  await sayfa.mouse.move(ad.x + 10, 690, { steps: 10 });
+  for (let i = 0; i < 20; i++) { await sayfa.mouse.move(ad.x + 10 + (i % 2), 695); await sayfa.waitForTimeout(40); }
+  await sayfa.mouse.up();
+  await sayfa.waitForTimeout(200);
+  const asagiSurukleyince = await sira();
+  await sayfa.locator(`${E} [data-duzen-vazgec]`).click();
+  await sayfa.waitForTimeout(300);
+  // Kasa işlem düğmelerinin rengi (v1.535.0): Tahsilat/Ödeme kendi renginde.
+  const dugmeRenkleri = await sayfa.evaluate(() => Object.fromEntries(["tahsilat", "odeme"].map((k) => { const b = document.querySelector(`[data-islem="${k}"]`); return [k, b ? getComputedStyle(b).color : null]; })));
   await sayfa.locator("[data-hesap-duzenle-ac]:visible").first().click();
   await sayfa.waitForTimeout(400);
   const duzenlemede = { serit: await serit(), form: await sayfa.locator("[data-hesap-duzenle-formu] [data-hesap-duzenle]:visible").count() };
@@ -53,6 +72,7 @@ async function calistir(ekranGoruntusu) {
   await tarayici.close();
   return {
     hatalar, seritIkonlari, altYaziliDugme, sadeAciklamaSayisi: aciklama, varsayilan, gozler, kayittanSonra, duzenlemede,
+    onizlemeKisa: onizlemeYuksekligi <= 220, asagiSurukleyince, dugmeRenkleri,
     kayit: (((tanim && tanim.ekranDuzenleri) || {}).kasaDetay || []).map((x) => x.id),
   };
 }
