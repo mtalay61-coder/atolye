@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.528.0";
+const SURUM = "1.529.0";
 const SURUM_TARIHI = "2026-09-29";
-const SURUM_NOTU = "Duzen: genislik fareyle kenardan cekilerek (1-12 sutun), blok cubugun her yerinden suruklenir";
+const SURUM_NOTU = "Siparis karti: eylemler, fis para birimi, toplam ve duzen ikonu tek mor ust seritte";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Duzen: genislik fareyle kenardan cekilerek (1-12 sutun), blo
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.529.0", tarih: "29.09.2026",
+    eklenen: [],
+    degisen: ["Sipariş kartı üst şeridi: durum, düzenle/sil, yazdır/PDF/WhatsApp/e-posta, fiş para birimi + toplam ve düzen ikonu tek mor şeritte (önce üç ayrı satırdı); para birimi artık ayrı düzen bloğu değil"],
+    duzeltilen: [] },
   { surum: "1.528.0", tarih: "29.09.2026",
     eklenen: ["Düzenleme kipinde blok genişliği fareyle/parmakla sağ kenardan çekilerek ayarlanır (12 sütunluk ızgarada 1–12 sütun); yan yana sığan bloklar aynı satıra geçer"],
     degisen: ["Blok mor çubuğunun her yerinden tutulup sürüklenir (önce yalnız küçük ⠿ ikonundan)", "Düzenleme çubuğu inceldi; genişlik 'N/12' olarak görünür"],

@@ -81,7 +81,9 @@ function duzenTasi(liste, id, hedefId) {
 // `bloklar`: [{ id, ad, icerik, genislik?, gizlenemez? }] — `icerik` bloğun JSX'i (form durumuna bağlı, her çizimde taze).
 // `aralik`: bloklar arası boşluk (px).
 // `kilitli`: düzen ikonu çıkmaz (salt-okunur önizleme gibi yerler); kayıtlı düzen yine uygulanır.
-function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
+// `acRef` + `disIkon` (v1.529.0): ikon ekranın kendi başlık şeridinde duruyorsa (sipariş kartı) alan kendi ikon satırını
+// çizmez; başlıktaki ikon `acRef.current()` ile kipi açar. Kip araç çubuğu (Kaydet/Vazgeç) yine alanın üstünde çıkar.
+function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIkon = false }) {
   const baglam = React.useContext(EkranDuzeniBaglami);
   const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
   const [kip, setKip] = useState(false);
@@ -97,6 +99,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
   const blokBul = (id) => (bloklar || []).find((b) => b.id === id);
 
   const kipeGir = () => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); };
+  if (acRef) acRef.current = kipeGir;
   const kiptenCik = () => { setKip(false); setTaslak(null); setSuruklenen(null); setBoyutlanan(null); boyutRef.current = null; };
   const guncelle = (id, degisim) => setTaslak((o) => (o || duzen).map((x) => (x.id === id ? { ...x, ...degisim } : x)));
   const kaydet = () => {
@@ -184,7 +187,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
   const genislikSinifi = (g) => `duzen-blok duzen-blok-${DUZEN_SUTUN[g] ? g : "sayi"}`;
   return (
     <div data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
-      {baglam && baglam.yetkili && !kilitli && (
+      {baglam && baglam.yetkili && !kilitli && (kip || !disIkon) && (
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 }}>
           {!kip ? (
             // KÜÇÜK İKON (v1.525.0 — kullanıcı: "Düzen için küçük ayar tutuyorsun, onunla yapılsın; kapatma ve silme

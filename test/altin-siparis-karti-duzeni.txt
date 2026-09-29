@@ -2,7 +2,6 @@
  "genislikEtiketi": "3/12",
  "gozler": [
   "not",
-  "paraBirimi",
   "tedarik",
   "koliler",
   "teslim"
@@ -10,8 +9,7 @@
  "hatalar": [],
  "ikonSayisi": 1,
  "kayit": [
-  "not:tam(gizli)",
-  "paraBirimi:3",
+  "not:3(gizli)",
   "tedarik:tam",
   "kalemler:tam",
   "teslim:tam",
@@ -20,18 +18,21 @@
  "kayittanSonra": {
   "notGorunur": false,
   "sira": [
-   "paraBirimi",
    "tedarik",
    "kalemler",
    "teslim",
    "koliler"
   ]
  },
+ "ustSerit": {
+  "duzenIkonu": true,
+  "metin": "Bekliyor Yazdır PDF WhatsApp E-postaFiş P.Birimi:TRYUSDEURToplam: 500 ₺",
+  "pbPaneli": true
+ },
  "varsayilan": {
   "notGorunur": true,
   "sira": [
    "not",
-   "paraBirimi",
    "kalemler",
    "tedarik",
    "koliler",
