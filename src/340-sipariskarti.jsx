@@ -422,6 +422,11 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
               etmek hem yer kaplıyor hem aynı bilgiyi iki kez okutuyordu.
               NOT ise başlıkta yok; yalnızca o gösterilir. */}
           {/* NOT. Başlık düzenleme kartın içinde değil, sipariş formunda (✎ Düzenle). */}
+          {/* EKRAN DÜZENİ (v1.527.0 — kullanıcı: "Sipariş kartına da düzen ekle"): kart gövdesi altı blok. Silme/iptal
+              onayı düzenin DIŞINDA ve en üstte (geçici panel). Önizlemede (saltOkunur) düzen ikonu çıkmaz: liste içinde
+              açılan kısa görünüm, düzenlemenin yeri tam ekran kart. Boş kalan blok (notu olmayan sipariş) yer tutmaz. */}
+          <DuzenAlani ekran="siparisKarti" aralik={0} kilitli={saltOkunur} bloklar={[
+          { id: "not", ad: "Not", icerik: (<>
           {!saltOkunur && siparis.not && (
             <div style={{ display: "flex", gap: 6, marginBottom: 10, fontSize: 12, color: "var(--erp-text-2)", alignItems: "flex-start", flexWrap: "wrap" }}>
               <FileText size={13} style={{ flexShrink: 0, marginTop: 1 }} />
@@ -436,6 +441,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           )}
 
 
+          </>) },
+          { id: "paraBirimi", ad: "Para birimi çevirisi", icerik: (<>
           {Object.keys(pbToplamlariHam).length > 0 && (
             !saltOkunur && <FisToplamCeviriPaneli
               pbToplamlari={pbToplamlariHam}
@@ -446,6 +453,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           )}
 
 
+          </>) },
+          { id: "kalemler", ad: "Kalemler", gizlenemez: true, icerik: (<>
           {/* Kalemler artık bir SEKME DEĞİL, kartın gövdesi. Siparişin ne olduğu her zaman
               görünmeli; sekmeler kalemlerin ALTINDA, ek bilgi katmanı olarak durur. */}
           {/* (kalem listesi — kartın gövdesi, sekme değil) */}
@@ -803,6 +812,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             })()}
           </div>
 
+          </>) },
+          { id: "tedarik", ad: "Tedarik ve fiş geçmişi (sekmeler)", icerik: (<>
           {/* SIRA: kalemler → tedarik durumu (sekmeler) → sevk/alış fişi geçmişi.
               Fiş geçmişi EN ALTTA: siparişin nasıl karşılandığı, ne planlandığı bilindikten
               sonra bakılan bir kayıttır. Üstte durduğunda tedarik sekmelerini aşağı itiyor ve
@@ -1548,6 +1559,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
 
 
 
+          </>) },
+          { id: "koliler", ad: "Koliler", icerik: (<>
           {/* Teslim alma da bir DEĞİŞİKLİK işlemidir (stok ve cari hareketi yaratır) — önizlemede gizli. */}
           {/* SİPARİŞİN KOLİLERİ (23 Eylül, v1.423.0 — kullanıcı: "siparişe bağlı kolilerin de siparişte
               bilinmesi gerekli, sipariş raporunda kullanabiliriz"). TÜRETİLİYOR, ayrı kayıt yok: koli
@@ -1582,6 +1595,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             );
           })()}
 
+          </>) },
+          { id: "teslim", ad: "Teslim alma / sevk", icerik: (<>
           {!saltOkunur && eksikVar && siparis.durum !== "İptal" && (
             <div style={{ marginTop: 16 }}>
               {/* DÜĞME FİŞİN ÜSTÜNDE, HER ZAMAN GÖRÜNÜR. Eskiden düğme ile fiş birbirinin yerine
@@ -2367,6 +2382,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
               )}
             </div>
           )}
+          </>) },
+          ]} />
 
           {/* Durum ve sil, kart BAŞLIĞINA taşındı — burada tekrar edilmiyor. */}
 

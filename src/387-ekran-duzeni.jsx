@@ -63,7 +63,8 @@ function duzenTasi(liste, id, hedefId) {
 
 // `bloklar`: [{ id, ad, icerik, genislik?, gizlenemez? }] — `icerik` bloğun JSX'i (form durumuna bağlı, her çizimde taze).
 // `aralik`: bloklar arası boşluk (px).
-function DuzenAlani({ ekran, bloklar, aralik = 12 }) {
+// `kilitli`: düzen ikonu çıkmaz (salt-okunur önizleme gibi yerler); kayıtlı düzen yine uygulanır.
+function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
   const baglam = React.useContext(EkranDuzeniBaglami);
   const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
   const [kip, setKip] = useState(false);
@@ -139,7 +140,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12 }) {
   const genislikSinifi = (g) => `duzen-blok duzen-blok-${g || "tam"}`;
   return (
     <div data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
-      {baglam && baglam.yetkili && (
+      {baglam && baglam.yetkili && !kilitli && (
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 }}>
           {!kip ? (
             // KÜÇÜK İKON (v1.525.0 — kullanıcı: "Düzen için küçük ayar tutuyorsun, onunla yapılsın; kapatma ve silme
@@ -192,6 +193,7 @@ const DUZENLI_EKRANLAR = [
   { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → sekmelerin sağındaki düzen ikonu" },
   { ekran: "urunKartiStok", ad: "Ürün kartı — Stok Bilgileri", yer: "Stok → ürün kartı → Stok Bilgileri sekmesi" },
   { ekran: "cariKarti", ad: "Cari kartı", yer: "Cari → cari kartı (bakiye, sekmeler, ekstre)" },
+  { ekran: "siparisKarti", ad: "Sipariş kartı", yer: "Sipariş / Alış Siparişi → siparişi tam ekran aç" },
   { ekran: "cariHareketler", ad: "Cari kartı — Hareketler", yer: "Cari → cari kartı → Hareketler sekmesi" },
 ];
 function EkranDuzeniTanimlari() {
