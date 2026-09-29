@@ -1408,7 +1408,7 @@ function ProductMatrixCard({
           (u) => u.id !== product.id && (u.recete || []).some((r) => r.hammaddeUrunId === product.id)
         ).length;
         const sekmeler = [
-          { key: "stok", label: "Stok Bilgileri" },
+          { key: "stok", label: "Stok Bilgileri", gizlenemez: true },
           // Sayı, HAM satır sayısı değil ekranda görünen SATIR (hammadde girişi) sayısıdır.
           // Ham sayı yanıltıcıydı: reçete her mamul renk × beden için ayrı kayıt tuttuğu için
           // 5 hammaddelik bir reçete "131" gibi görünüyor ve hiçbir şey ifade etmiyordu.
@@ -1456,27 +1456,15 @@ function ProductMatrixCard({
             })(),
           },
         ];
-        return (
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-            {sekmeler.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setCardTab(t.key)}
-                style={{
-                  padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 12, cursor: "pointer",
-                  border: `1.5px solid ${cardTab === t.key ? "var(--erp-orange)" : "var(--erp-border)"}`,
-                  background: cardTab === t.key ? "var(--erp-orange-bg)" : "#fff",
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        );
+        // SEKME SIRASI / GİZLEME (v1.524.0): sıra ve gizlilik Tanımlar'da (bulutta) — her ürün kartında aynı.
+        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} />;
       })()}
 
+      {/* EKRAN DÜZENİ (v1.524.0 — kullanıcı: "Ürün kartına da düzen ekle"): Stok Bilgileri sekmesinin üç bölümü
+          blok. Aralık 0: bölümler kendi kenar boşluklarını zaten taşıyor, ızgara boşluğu ikiye katlardı. */}
       {cardTab === "stok" && (
-      <>
+      <DuzenAlani ekran="urunKartiStok" aralik={0} bloklar={[
+      { id: "stokDurumu", ad: "Stok durumu", icerik: (<>
       {/* ---- STOK DURUMU ----
           Beş büyüklük ve ilişkileri (sütun başlıklarında da açıklanıyor):
             serbest         = stok − rezerve
@@ -1528,6 +1516,8 @@ function ProductMatrixCard({
           </div>
         );
       })()}
+      </>) },
+      { id: "renkBeden", ad: "Renkler ve bedenler", gizlenemez: true, icerik: (
 
       <div>
         {/* Tek bir başlık: "Renkler ve Bedenler" — tıklanınca TÜM renk×beden matrisi birlikte açılır/kapanır. */}
@@ -1614,7 +1604,8 @@ function ProductMatrixCard({
             </table>
           </div>
         )}
-      </div>
+      </div>) },
+      { id: "renkBedenEkle", ad: "Renk / beden ekle", icerik: (
 
       <div style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
         {addingRenk ? (
@@ -1883,10 +1874,10 @@ function ProductMatrixCard({
             )}
           </>
         )}
-      </div>
+      </div>) },
+      ]} />
 
 
-      </>
       )}
 
       {isMamul && cardTab === "recete" && (
