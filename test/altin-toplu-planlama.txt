@@ -1,0 +1,42 @@
+{
+ "alisNolariFarkli": true,
+ "alisSonucu": {
+  "sayi": "2",
+  "tip": "Satınalma",
+  "whatsapp": "905321112233"
+ },
+ "alislar": [
+  "c1 · Beyaz 42:1",
+  "c1 · Taba 41:2"
+ ],
+ "hatalar": [],
+ "kutular": [
+  "Bot|Siyah",
+  "Bot|Kahve",
+  "Bot|Taba",
+  "Bot|Beyaz"
+ ],
+ "planlama": [
+  "Siyah 40: Üretim",
+  "Siyah 41: Üretim",
+  "Kahve 40: Üretim",
+  "Taba 41: Satınalma",
+  "Beyaz 42: Satınalma"
+ ],
+ "tumuSecilince": "4",
+ "uretimNolariFarkli": true,
+ "uretimSonucu": {
+  "paylas": [
+   "Yazdır",
+   "PDF",
+   "WhatsApp",
+   "E-posta"
+  ],
+  "sayi": "2",
+  "tip": "Üretim"
+ },
+ "uretimler": [
+  "Bot Kahve: 40:3",
+  "Bot Siyah: 40:2 41:1"
+ ]
+}
