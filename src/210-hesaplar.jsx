@@ -712,7 +712,39 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 )}
 
                 </>) },
-                { id: "hareketler", ad: "Hareket listesi", gizlenemez: true, icerik: (<>
+                { id: "defter", ad: "Defter seçimi (Tümü / Genel / Resmi)", icerik: (() => {
+                  // AYRI BLOK (v1.536.0 — kullanıcı, kasa düzen kipi ekran görüntüsü: "Hareket listesi aşağı inmiyor, ekstrenin
+                  // de altına inmesini istiyorum"). Tümü/Genel/Resmi seçimi hareket tablosunun içindeydi; tablo tek blok
+                  // olduğu için seçim onunla birlikte hep üstte kalıyordu. Artık kendi bloğu — tablonun altına da taşınabilir.
+                  const tumHareketler = h.hareketler || [];
+                  if (tumHareketler.length === 0) return null;
+                  const genelSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Genel")).length;
+                  const resmiSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Resmi")).length;
+                  return (
+                  <div data-hesap-defter-secimi="1" style={{ display: "flex", gap: 5, margin: "8px 12px" }}>
+                    {[
+                      { key: "Tümü", sayi: tumHareketler.length },
+                      { key: "Genel", sayi: genelSayi },
+                      { key: "Resmi", sayi: resmiSayi },
+                    ].map((s) => (
+                      <button
+                        key={s.key}
+                        type="button"
+                        onClick={() => setDefterFiltre(s.key)}
+                        style={{
+                          padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                          border: `1.5px solid ${defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-border)"}`,
+                          background: defterFiltre === s.key ? "#8A5A381A" : "#fff",
+                          color: defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-text-2)",
+                        }}
+                      >
+                        {s.key} <span className="mono" style={{ fontWeight: 400 }}>({s.sayi})</span>
+                      </button>
+                    ))}
+                  </div>
+                  );
+                })() },
+                { id: "hareketler", ad: "Hareket listesi (ekstre)", gizlenemez: true, icerik: (<>
                 {/* DÜZENLEME PANELİ: seçilen hareketin üstünde açılıyor. */}
                 {acik && duzenle && duzenle.hesapId === h.id && (
                   <div data-duzenle-paneli="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
@@ -758,8 +790,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       // etiketi zaten "ikisine de" diyor. Sayaçlar ve liste aynı kuraldan
                       // (`defterKapsar`) geçiyor; ayrı yazılsalardı biri sayıp diğeri
                       // göstermeyebilirdi.
-                      const genelSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Genel")).length;
-                      const resmiSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Resmi")).length;
+                      // Tümü/Genel/Resmi sayaçları "defter" bloğunda (v1.536.0), aynı `defterKapsar` kuralıyla.
                       const filtrelenmis = tumHareketler.filter((hr) => defterKapsar(hr.defter, defterFiltre));
                       // Ekstre mantığıyla aynı: hareketler ESKİDEN YENİYE sıralanır ve koşan bakiye HER
                       // SATIRDA hesaplanır — SADECE seçili defterin (Tümü/Genel/Resmi) hareketleri
@@ -810,27 +841,6 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       );
                       return (
                         <>
-                          <div style={{ display: "flex", gap: 5, marginBottom: 8 }}>
-                            {[
-                              { key: "Tümü", sayi: tumHareketler.length },
-                              { key: "Genel", sayi: genelSayi },
-                              { key: "Resmi", sayi: resmiSayi },
-                            ].map((s) => (
-                              <button
-                                key={s.key}
-                                type="button"
-                                onClick={() => setDefterFiltre(s.key)}
-                                style={{
-                                  padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                                  border: `1.5px solid ${defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-border)"}`,
-                                  background: defterFiltre === s.key ? "#8A5A381A" : "#fff",
-                                  color: defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-text-2)",
-                                }}
-                              >
-                                {s.key} <span className="mono" style={{ fontWeight: 400 }}>({s.sayi})</span>
-                              </button>
-                            ))}
-                          </div>
                           {satirlar.length === 0 ? (
                             <div style={{ fontSize: 12, color: "var(--erp-text-3)" }}>{defterFiltre} defterinde hareket yok.</div>
                           ) : (
