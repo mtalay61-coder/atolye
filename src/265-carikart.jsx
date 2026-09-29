@@ -24,6 +24,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   // Tek düzenleme modu (20 Eylül): iletişim alanları da başlıktaki kalemle açılır.
   const duzenleAcik = duzenleModu;
   const [defterFiltre, setDefterFiltre] = useState("Genel"); // "Tümü" | "Genel" | "Resmi"
+  // Düzen ikonu üst şeritte (v1.530.0); Hareketler sekmesinin düzen kipini açar.
+  const duzenAcRef = useRef(null);
+  const duzenBaglami = React.useContext(EkranDuzeniBaglami);
   // SÜTUN BAZLI FİLTRE — başlıkların altındaki arama satırı. Üstteki defter/para birimi sekmeleri
   // "hangi hareket kümesine bakıyorum" sorusunu, bu satır ise "o küme içinde neyi arıyorum"u çözer.
   // İkisi ayrı katmandır ve birlikte çalışır.
@@ -316,9 +319,14 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   return (
     <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <div
+        data-cari-ust-serit={open ? "1" : undefined}
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 10, padding: 14,
           background: "transparent", border: "none", textAlign: "left",
+          // TEK ÜST ŞERİT (v1.530.0 — kullanıcı: "Cari ve ürün kartında da aynı şeridi yap"; sipariş kartındaki gibi).
+          // Açık kartta başlık mor şerit: ad/tip · alacak/borç · ✎ pasif sil, alt satırında Genel/Resmi bakiye ·
+          // Ekstre Yazdır · Pasife Al · düzen ikonu. Önce bakiye özeti ve ekstre düğmeleri gövdede ayrı bloklardı.
+          ...(open ? { width: "auto", margin: "10px 14px 10px", padding: "8px 10px", flexWrap: "wrap", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : {}),
         }}
       >
         {/* Düzenleme modunda aç/kapa düğmesi <div>'e döner. Sebep: düzenleme alanları (input,
@@ -552,6 +560,50 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         >
           <Trash2 size={15} />
         </button>
+        {open && (
+          <div data-cari-serit-alt="1" style={{ flex: "1 1 100%", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid #C9B3D9", paddingTop: 6 }}>
+            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
+              Genel: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(genelBakiye)) }}>
+                {bakiyeMetni(genelBakiye)}
+              </span>
+            </span>
+            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
+              Resmi: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(resmiBakiye)) }}>
+                {bakiyeMetni(resmiBakiye)}
+              </span>
+            </span>
+            <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                <button
+                  className="btn-ghost"
+                  style={{ padding: "4px 10px", fontSize: 12 }}
+                  onClick={() => onPencereAc(
+                    "ekstre",
+                    `${cari.id}-${defterFiltre}`,
+                    `Ekstre: ${cari.unvan}${defterFiltre !== "Tümü" ? ` (${defterFiltre})` : ""}`,
+                    {
+                      cari,
+                      bakiye: defterFiltre === "Genel" ? genelBakiye : defterFiltre === "Resmi" ? resmiBakiye : bakiye,
+                      firmaBilgileri,
+                      defterFiltre,
+                    }
+                  )}
+                >
+                  <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
+                </button>
+                {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun").
+                    Özellik vardı ama yalnız başlıktaki yazısız arşiv ikonuydu; kullanıcı bulamadı.
+                    İkon başlıkta kalıyor (kart kapalıyken de erişilsin), burada adıyla da duruyor.
+                    Silme burada tekrar edilmiyor: son çare olan işlem göz önünde durmasın. */}
+                <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
+              {cardTab === "hareketler" && duzenBaglami && duzenBaglami.yetkili && (
+                <button type="button" className="btn-ikon" data-duzen-ac="cariHareketler" title="Ekran düzeni — hareketler bölümlerini sırala, genişliğini ayarla, gizle"
+                  onClick={() => { if (duzenAcRef.current) duzenAcRef.current(); }}>
+                  <LayoutGrid size={14} />
+                </button>
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
       {open && (
@@ -938,31 +990,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </div>
             </div>
           )}
-          {/* EKRAN DÜZENİ (v1.525.0 — kullanıcı: "Cari kartına da düzen ekle"): bakiye özeti, sekmeler ve ekstre
-              düğmeleri blok. Düzenleme panelleri (ad/tip, fiyat grubu, personel) düzenin DIŞINDA ve üstte: düzenleme
-              anında görünmeleri gereken geçici paneller, yerleri ayarlanacak bölüm değil. */}
-          <DuzenAlani ekran="cariKarti" aralik={0} bloklar={[
-          { id: "bakiye", ad: "Bakiye özeti", icerik: (
-          <div style={{ display: "flex", gap: 16, marginBottom: 10, padding: "8px 10px", background: "var(--erp-panel-2)", borderRadius: "var(--erp-r-md)", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
-              Genel: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(genelBakiye)) }}>
-                {bakiyeMetni(genelBakiye)}
-              </span>
-            </span>
-            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
-              Resmi: <span className="mono" style={{ fontWeight: 700, color: bakiyeRengi(bakiyeYonu(resmiBakiye)) }}>
-                {bakiyeMetni(resmiBakiye)}
-              </span>
-            </span>
-            {/* İKİNCİ "DÜZENLE" KALDIRILDI (kullanıcı, 20 Eylül: "düzenleme tuşu caride iki kere
-                var, bunları tek tipe almamız lazım"). Başlıktaki kalem ad/tipi, buradaki
-                telefon/adresi açıyordu — iki düğme, iki mod, aynı yazı. Artık tek düzenleme
-                modu: başlıktaki kalem hepsini birden açar. */}
-          </div>
-
-
-          ) },
-          { id: "sekmeler", ad: "Sekmeler (hareketler / siparişler)", gizlenemez: true, icerik: (<>
+          {/* v1.530.0: kart düzeyi düzen (cariKarti: bakiye / sekmeler / ekstre) KALDIRILDI — bakiye özeti ve ekstre
+              düğmeleri üst şeride taşındı, geriye taşınacak tek blok kalmadı. Düzen yalnız Hareketler sekmesinin içinde. */}
+          <>
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             {[
               { key: "hareketler", label: "Hareketler" },
@@ -984,7 +1014,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
           {/* EKRAN DÜZENİ (v1.525.0): Hareketler sekmesinin üç bölümü blok — fiş düğmeleri / filtreler / liste. */}
           {cardTab === "hareketler" && (
-          <DuzenAlani ekran="cariHareketler" aralik={0} bloklar={[
+          <DuzenAlani ekran="cariHareketler" aralik={0} acRef={duzenAcRef} disIkon bloklar={[
           { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (<>
           {showHareket ? (
             <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
@@ -1948,33 +1978,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             );
           })()}
 
-          </>) },
-          { id: "ekstre", ad: "Ekstre ve pasife al", icerik: (
-          <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-            <button
-              className="btn-ghost"
-              onClick={() => onPencereAc(
-                "ekstre",
-                `${cari.id}-${defterFiltre}`,
-                `Ekstre: ${cari.unvan}${defterFiltre !== "Tümü" ? ` (${defterFiltre})` : ""}`,
-                {
-                  cari,
-                  bakiye: defterFiltre === "Genel" ? genelBakiye : defterFiltre === "Resmi" ? resmiBakiye : bakiye,
-                  firmaBilgileri,
-                  defterFiltre,
-                }
-              )}
-            >
-              <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
-            </button>
-            {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun").
-                Özellik vardı ama yalnız başlıktaki yazısız arşiv ikonuydu; kullanıcı bulamadı.
-                İkon başlıkta kalıyor (kart kapalıyken de erişilsin), burada adıyla da duruyor.
-                Silme burada tekrar edilmiyor: son çare olan işlem göz önünde durmasın. */}
-            <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
-          </div>
-          ) },
-          ]} />
+          </>
 
         </div>
       )}

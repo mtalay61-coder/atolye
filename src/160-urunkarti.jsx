@@ -34,6 +34,10 @@ function ProductMatrixCard({
   const gecerliBaslangicSekme =
     baslangicSekme === "recete" && product.kategori !== "Mamul" ? "stok" : baslangicSekme;
   const [cardTab, setCardTab] = useState(gecerliBaslangicSekme || "stok");
+  // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
+  const sekmeAcRef = useRef(null);
+  const stokAcRef = useRef(null);
+  const duzenBaglami = React.useContext(EkranDuzeniBaglami);
   // BEDEN ETİKETİ BASMA (22 Eylül, v1.413.0 — kullanıcı: "o düğmeyi ekle ve seçili bedenler için
   // toplu basım da koy"). Depoda okutulan asıl etiket beden etiketi; Barkodlar sekmesinde kodlar
   // görünüyordu ama basılamıyordu. Seçim varyantın KİMLİĞİYLE (renk|beden) tutuluyor, sıra
@@ -838,7 +842,12 @@ function ProductMatrixCard({
       {/* Başlık şeridi: aç/kapa alanı ile eylem ikonları YAN YANA ama AYRI düğmeler.
           İkonları aç/kapa düğmesinin içine koymak iç içe <button> üretirdi — geçersiz HTML olur ve
           ikona tıklamak kartı da açıp kapatırdı. */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 16px 16px 16px" }}>
+      {/* TEK ÜST ŞERİT (v1.530.0 — kullanıcı: "Cari ve ürün kartında da aynı şeridi yap"): açık kartta başlık mor şerit;
+          düzen ikonu şeridin sonunda (sekme düzeni + Stok Bilgileri sekmesindeyken blok düzeni birlikte açılır). */}
+      {/* Şerit = başlık satırı + ürün bilgi satırı (kategori, toplam, alış/satış/stok değeri) tek mor kutuda. */}
+      <div data-urun-ust-serit={open ? "1" : undefined}
+        style={open ? { margin: "10px 14px 10px", padding: "8px 10px 0", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : undefined}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: open ? "0 0 8px" : "16px 16px 16px 16px" }}>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
@@ -921,11 +930,16 @@ function ProductMatrixCard({
         >
           <Trash2 size={15} />
         </button>
+        {open && duzenBaglami && duzenBaglami.yetkili && (
+          <button type="button" className="btn-ikon" data-duzen-ac="urunKarti" title="Ekran düzeni — sekmelerin sırası/gizlenmesi; Stok Bilgileri'nde bölümlerin yeri ve genişliği"
+            onClick={() => { if (sekmeAcRef.current) sekmeAcRef.current(); if (cardTab === "stok" && stokAcRef.current) stokAcRef.current(); }} style={{ flexShrink: 0 }}>
+            <LayoutGrid size={15} />
+          </button>
+        )}
         </>)}
       </div>
-
       {open && (
-        <div style={{ padding: "0 16px 16px" }}>
+      <div data-urun-serit-bilgi="1" style={{ borderTop: "1px solid #C9B3D9", paddingTop: 8 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
           <ColorSwatch
@@ -1250,6 +1264,12 @@ function ProductMatrixCard({
         </div>
         {/* Düzenle / pasife al / sil ikonları kart BAŞLIĞINA taşındı — burada tekrar edilmiyor. */}
       </div>
+      </div>
+      )}
+      </div>
+
+      {open && (
+        <div style={{ padding: "0 16px 16px" }}>
 
       {urunSilOnay && (() => {
         const bagliUretimler = (uretim || []).filter((o) => o.urunId === product.id);
@@ -1457,13 +1477,13 @@ function ProductMatrixCard({
           },
         ];
         // SEKME SIRASI / GİZLEME (v1.524.0): sıra ve gizlilik Tanımlar'da (bulutta) — her ürün kartında aynı.
-        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} />;
+        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} acRef={sekmeAcRef} disIkon />;
       })()}
 
       {/* EKRAN DÜZENİ (v1.524.0 — kullanıcı: "Ürün kartına da düzen ekle"): Stok Bilgileri sekmesinin üç bölümü
           blok. Aralık 0: bölümler kendi kenar boşluklarını zaten taşıyor, ızgara boşluğu ikiye katlardı. */}
       {cardTab === "stok" && (
-      <DuzenAlani ekran="urunKartiStok" aralik={0} bloklar={[
+      <DuzenAlani ekran="urunKartiStok" aralik={0} acRef={stokAcRef} disIkon bloklar={[
       { id: "stokDurumu", ad: "Stok durumu", icerik: (<>
       {/* ---- STOK DURUMU ----
           Beş büyüklük ve ilişkileri (sütun başlıklarında da açıklanıyor):

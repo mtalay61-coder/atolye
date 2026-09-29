@@ -11,6 +11,7 @@
   ]
  },
  "hatalar": [],
+ "ikisiBirden": true,
  "kayitSekmeler": [
   "siparisler",
   "recete",
@@ -102,6 +103,10 @@
   "renkBeden",
   "renkBedenEkle"
  ],
+ "ustSerit": {
+  "duzenIkonu": true,
+  "sekmeSatirindaIkonYok": true
+ },
  "varsayilan": {
   "kip": false,
   "sira": [

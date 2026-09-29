@@ -41,7 +41,12 @@ async function calistir(ekranGoruntusu) {
   const varsayilan = await sekmeler();
   await sayfa.locator('[data-kart-sekme="barkodlar"]:visible').first().click();
   await sayfa.waitForTimeout(300);
-  await sayfa.locator(`${S} [data-duzen-ac]:visible`).first().click();
+  // v1.530.0: düzen ikonu kartın mor üst şeridinde.
+  const ustSerit = await sayfa.evaluate(() => {
+    const s = [...document.querySelectorAll("[data-urun-ust-serit]")].find((x) => x.getBoundingClientRect().width > 0);
+    return s ? { duzenIkonu: !!s.querySelector('[data-duzen-ac="urunKarti"]'), sekmeSatirindaIkonYok: !document.querySelector('[data-duzen-ac="urunKartiSekmeleri"]') } : null;
+  });
+  await sayfa.locator('[data-duzen-ac="urunKarti"]:visible').first().click();
   await sayfa.waitForTimeout(300);
   const kipte = await sekmeler();
   for (let i = 0; i < 3; i++) { await sayfa.locator(`${S} [data-duzen-yukari="siparisler"]`).first().click(); await sayfa.waitForTimeout(100); }
@@ -59,8 +64,12 @@ async function calistir(ekranGoruntusu) {
   const E = '[data-duzen-ekran="urunKartiStok"]';
   const bloklar = () => sayfa.evaluate((E) => [...document.querySelector(E).querySelectorAll("[data-duzen-blok]")].map((b) => b.getAttribute("data-duzen-blok")), E);
   const stokVarsayilan = await bloklar();
-  await sayfa.locator(`${E} [data-duzen-ac]`).click();
+  // Stok sekmesinde şeritteki ikon sekme düzenini VE blok düzenini birlikte açar; sekme kipi burada vazgeçilir.
+  await sayfa.locator('[data-duzen-ac="urunKarti"]:visible').first().click();
   await sayfa.waitForTimeout(300);
+  const ikisiBirden = await sayfa.evaluate((S) => !!document.querySelector(`${S}[data-duzen-kip="1"]`), S);
+  await sayfa.locator(`${S} [data-duzen-vazgec]`).first().click();
+  await sayfa.waitForTimeout(150);
   const stokGozler = await sayfa.evaluate((E) => [...document.querySelectorAll(`${E} [data-duzen-gizle]`)].map((b) => b.getAttribute("data-duzen-gizle")), E);
   await sayfa.locator(`${E} [data-duzen-yukari="renkBedenEkle"]`).click();
   await sayfa.waitForTimeout(100);
@@ -77,8 +86,10 @@ async function calistir(ekranGoruntusu) {
   await sayfa.waitForTimeout(700);
   await ac("Deri");
   const deri = await sekmeler();
-  await sayfa.locator(`${S} [data-duzen-ac]:visible`).first().click();
+  await sayfa.locator('[data-duzen-ac="urunKarti"]:visible').first().click();
   await sayfa.waitForTimeout(300);
+  // Deri de Stok sekmesinde açılıyor: blok kipi de açıldı — vazgeç.
+  await sayfa.locator('[data-duzen-ekran="urunKartiStok"] [data-duzen-vazgec]').first().click();
   await sayfa.locator(`${S} [data-duzen-asagi="stok"]:visible`).first().click();
   await sayfa.locator(`${S} [data-duzen-kaydet]:visible`).first().click();
   await sayfa.waitForTimeout(900);
@@ -88,7 +99,7 @@ async function calistir(ekranGoruntusu) {
   const yaz = (l) => (l || []).map((x) => x.id + (x.gizli ? "(gizli)" : ""));
   return {
     hatalar,
-    varsayilan, kipte, kipteSonra, sekmeKaydi,
+    varsayilan, ustSerit, ikisiBirden, kipte, kipteSonra, sekmeKaydi,
     stokVarsayilan, stokGozler, stokKaydi,
     deri,
     kayitSekmeler: yaz(kayit.urunKartiSekmeleri),

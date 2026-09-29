@@ -1,5 +1,4 @@
 {
- "bakiyeGorunur": false,
  "fisFormuAcildi": true,
  "hareketGozler": [
   "islem",
@@ -16,27 +15,14 @@
   "liste:tam"
  ],
  "hatalar": [],
- "kartGozler": [
-  "bakiye",
-  "ekstre"
- ],
- "kartKaydi": [
-  "ekstre:tam",
-  "sekmeler:tam"
- ],
- "kartVarsayilan": [
-  "bakiye:tam",
-  "sekmeler:tam",
-  "ekstre:tam"
- ],
  "kayitHareket": [
   "islem:yarim",
   "liste:tam",
   "filtre:tam"
  ],
- "kayitKart": [
-  "ekstre:tam",
-  "bakiye:tam(gizli)",
-  "sekmeler:tam"
- ]
+ "ustSerit": {
+  "altSatir": "Genel: 0 ₺Resmi: 0 ₺ Ekstre Yazdır (PDF) — Genel Pasife Al",
+  "duzenIkonu": true,
+  "kartDuzeniYok": true
+ }
 }
