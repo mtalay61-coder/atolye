@@ -1169,6 +1169,12 @@ function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFise
             ))}
           </div>
 
+          {/* EKRAN DÜZENİ (v1.522.0 — kullanıcı: "sürükle gibi yerini taşıyabileceğimiz, boyutlarını değiştirebileceğimiz").
+              Form dört bloktan oluşuyor; "Düzen" düğmesiyle sıralanır, genişliği (Dar/Yarım/Tam) seçilir, gizlenir
+              (387 `DuzenAlani`, kayıt tanimlar.ekranDuzenleri.siparisFormu — bütün cihazlar). Kaydet/Vazgeç başlıkta
+              sabit; düzen onlara dokunmaz. Başlık ve kalemler gizlenemez (siparişin kendisi). */}
+          <DuzenAlani ekran="siparisFormu" bloklar={[
+            { id: "baslik", ad: "Sipariş bilgileri", gizlenemez: true, icerik: (<>
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr 0.8fr", gap: 10 }}>
             <Field label={tip === "Satış" ? "Müşteri" : "Tedarikçi"}>
               {/* Düzenlemede teslimat yapılmışsa CARİ KİLİTLİ: fişler o cariye kesildi. Sebep
@@ -1221,8 +1227,8 @@ function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFise
                 seviyesi zaten daha güçlü — aynı siparişte farklı modeller farklı kutuya girebilir. */}
           </div>
 
-          <StitchDivider />
-
+            </>) },
+            { id: "barkod", ad: "Barkod · kamera · ses · fotoğraf", icerik: (<>
           {/* BARKOD OKUT — fuarda en hızlı yol: müşteriyi seç, kodları okut, kaydet.
               Asorti barkodu dağılımı toptan ekliyor, çift barkodu tek çift ekliyor; ikisi de
               aynı kutudan geçiyor çünkü personel eline hangi etiketin geldiğini seçmiyor. */}
@@ -1298,6 +1304,8 @@ function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFise
               </div>
             )}
           />
+            </>) },
+            { id: "kalemEkle", ad: "Kalem ekle", icerik: (<>
           <div style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 700, marginBottom: 8 }}>Kalem Ekle</div>
           {/* YENİ MODEL RENGİ PANELİ — Tanımlar'daki Model Rengi mantığının aynısı.
               Renk adı serbest yazılmaz: kaç pozisyondan oluştuğu seçilir (1-4), her pozisyona
@@ -1718,6 +1726,8 @@ function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFise
             </div>
           )}
 
+            </>) },
+            { id: "kalemler", ad: "Kalemler ve toplam", gizlenemez: true, icerik: (<>
           {kalemler.length > 0 && (() => {
             // Satırlar = Ürün+Renk grubu, sütunlar = o gruptaki tüm bedenlerin birleşimi. Aynı ürün+renk
             // için farklı bedenler tek satırda yan yana görünür — kart kart / satır satır tekrar etmez.
@@ -2055,6 +2065,8 @@ function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFise
             </div>
             );
           })()}
+            </>) },
+          ]} />
 
         </div>
         </div>

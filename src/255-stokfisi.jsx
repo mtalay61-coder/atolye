@@ -695,6 +695,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         })()}
       </div>
       )}
+      {/* EKRAN DÜZENİ (v1.522.0): fiş dört bloktan oluşuyor — sıralanır, genişliği seçilir, gizlenir (387 `DuzenAlani`,
+          tanimlar.ekranDuzenleri.fisFormu). Üstteki onay/koli uyarısı düzen dışında: kaydetmenin sonucu hep en üstte. */}
+      <DuzenAlani ekran="fisFormu" aralik={16} bloklar={[
+        { id: "baslik", ad: "Fiş bilgileri", gizlenemez: true, icerik: (<>
       <div style={{ background: "var(--erp-panel)", border: `2px solid ${ana}`, borderRadius: "var(--erp-r-md)", padding: "10px 12px", boxShadow: BOLUM_GOLGE }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
           <Receipt size={16} color={ana} />
@@ -826,6 +830,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         </div>
       </div>
 
+        </>) },
+        { id: "aciklama", ad: "Açıklama", icerik: (<>
       {/* AÇIKLAMA FİŞ BİLGİLERİNİN ALTINDA (v1.520.0): belgenin kendi bilgisi, kalemlerden önce (sipariş formuyla aynı standart). */}
       <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "8px 14px" }}>
         <Field label="Açıklama">
@@ -838,6 +844,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         </Field>
       </div>
 
+        </>) },
+        { id: "kalemEkle", ad: "Kalem ekle · siparişten seç", icerik: (<>
       {/* ---- KALEM EKLEME ----
           İKİ SÜTUN (23 Eylül, v1.427.0 — kullanıcı: "masaüstü için ekran alt alta yığılmış, sağ
           taraf boş, toparla"). Geniş ekranda SOL sütun elle kalem girişi (ürün/renk/ölçü/fiyat →
@@ -1329,6 +1337,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         </div>
       </div>
 
+        </>) },
+        { id: "kalemler", ad: "Fiş kalemleri ve toplam", gizlenemez: true, icerik: (<>
       {/* ---- FİŞ KALEMLERİ ----
           MATRİS: satır = ürün+renk, sütun = beden. Düz liste aynı malzemeyi her beden için
           tekrar ederdi; beş bedenli bir alışta tek malzeme beş satır kaplardı. */}
@@ -1725,6 +1735,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
           </div>
         );
       })()}
+        </>) },
+      ]} />
 
 
     </div>

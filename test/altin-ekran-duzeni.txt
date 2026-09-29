@@ -1,0 +1,93 @@
+{
+ "fis": {
+  "bloklar": [
+   "baslik",
+   "aciklama",
+   "kalemEkle",
+   "kalemler"
+  ],
+  "duzenDugmesi": true
+ },
+ "hatalar": [],
+ "icerikTiklanamaz": "none",
+ "kayit": [
+  {
+   "genislik": "tam",
+   "gizli": true,
+   "id": "barkod"
+  },
+  {
+   "genislik": "yarim",
+   "gizli": false,
+   "id": "baslik"
+  },
+  {
+   "genislik": "tam",
+   "gizli": false,
+   "id": "kalemEkle"
+  },
+  {
+   "genislik": "tam",
+   "gizli": false,
+   "id": "kalemler"
+  }
+ ],
+ "kayittanSonra": {
+  "cubuk": 0,
+  "gozler": [],
+  "kip": false,
+  "sira": [
+   "baslik:yarim",
+   "kalemEkle:tam",
+   "kalemler:tam"
+  ]
+ },
+ "kipte": {
+  "cubuk": 4,
+  "gozler": [
+   "barkod",
+   "kalemEkle"
+  ],
+  "kip": true,
+  "sira": [
+   "baslik:tam",
+   "barkod:tam",
+   "kalemEkle:tam",
+   "kalemler:tam"
+  ]
+ },
+ "oklaSonra": [
+  "baslik:tam",
+  "kalemEkle:tam",
+  "barkod:tam",
+  "kalemler:tam"
+ ],
+ "surukleyinceSonra": [
+  "barkod:tam",
+  "baslik:tam",
+  "kalemEkle:tam",
+  "kalemler:tam"
+ ],
+ "varsayilan": {
+  "cubuk": 0,
+  "gozler": [],
+  "kip": false,
+  "sira": [
+   "baslik:tam",
+   "barkod:tam",
+   "kalemEkle:tam",
+   "kalemler:tam"
+  ]
+ },
+ "varsayilanaDonus": [
+  "baslik:tam",
+  "barkod:tam",
+  "kalemEkle:tam",
+  "kalemler:tam"
+ ],
+ "vazgecSonra": [
+  "baslik:yarim",
+  "kalemEkle:tam",
+  "kalemler:tam"
+ ]
+}
