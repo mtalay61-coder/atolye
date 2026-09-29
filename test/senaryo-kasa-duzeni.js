@@ -8,7 +8,8 @@
 //      Hareket listesi yukarı → Kaydet → sıra hareketler, islem; kayıt tanimlar.ekranDuzenleri.kasaDetay;
 //   3) (v1.535.0) liste uzunken (31 hareket) kipte önizleme ≤ 220 px; en üstteki liste sürüklenerek en alta iniyor;
 //      Tahsilat / Ödeme düğmeleri kendi renginde;
-//   4) ✎ → alttaki düzenleme formu (ad kutusu + Kaydet/Vazgeç) açılıyor, şeritte ✎ ve 🗑 gizleniyor.
+//   4) (v1.536.0) Tümü/Genel/Resmi ayrı blok ("defter"), okla tablonun altına iniyor ve kayıtta kalıyor;
+//   5) ✎ → alttaki düzenleme formu (ad kutusu + Kaydet/Vazgeç) açılıyor, şeritte ✎ ve 🗑 gizleniyor.
 const { uygulamaAc, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -61,8 +62,16 @@ async function calistir(ekranGoruntusu) {
   await sayfa.mouse.up();
   await sayfa.waitForTimeout(200);
   const asagiSurukleyince = await sira();
-  await sayfa.locator(`${E} [data-duzen-vazgec]`).click();
-  await sayfa.waitForTimeout(300);
+  // 5) (v1.536.0) "Defter seçimi" (Tümü/Genel/Resmi) ayrı blok: aşağı okla hareket tablosunun (ekstre) altına.
+  await sayfa.locator(`${E} [data-duzen-asagi="defter"]`).click();
+  await sayfa.waitForTimeout(150);
+  await sayfa.locator(`${E} [data-duzen-kaydet]`).click();
+  await sayfa.waitForTimeout(800);
+  const defterAltta = await sira();
+  const defterTablonunAltinda = await sayfa.evaluate(() => {
+    const d = document.querySelector("[data-hesap-defter-secimi]"); const t = document.querySelector('[data-duzen-blok="hareketler"] table');
+    return !!(d && t && d.getBoundingClientRect().top > t.getBoundingClientRect().bottom);
+  });
   // Kasa işlem düğmelerinin rengi (v1.535.0): Tahsilat/Ödeme kendi renginde.
   const dugmeRenkleri = await sayfa.evaluate(() => Object.fromEntries(["tahsilat", "odeme"].map((k) => { const b = document.querySelector(`[data-islem="${k}"]`); return [k, b ? getComputedStyle(b).color : null]; })));
   await sayfa.locator("[data-hesap-duzenle-ac]:visible").first().click();
@@ -72,7 +81,7 @@ async function calistir(ekranGoruntusu) {
   await tarayici.close();
   return {
     hatalar, seritIkonlari, altYaziliDugme, sadeAciklamaSayisi: aciklama, varsayilan, gozler, kayittanSonra, duzenlemede,
-    onizlemeKisa: onizlemeYuksekligi <= 220, asagiSurukleyince, dugmeRenkleri,
+    onizlemeKisa: onizlemeYuksekligi <= 220, asagiSurukleyince, dugmeRenkleri, defterAltta, defterTablonunAltinda,
     kayit: (((tanim && tanim.ekranDuzenleri) || {}).kasaDetay || []).map((x) => x.id),
   };
 }

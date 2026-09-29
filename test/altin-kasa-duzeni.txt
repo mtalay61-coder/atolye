@@ -2,8 +2,15 @@
  "altYaziliDugme": 0,
  "asagiSurukleyince": [
   "islem",
+  "defter",
   "hareketler"
  ],
+ "defterAltta": [
+  "islem",
+  "hareketler",
+  "defter"
+ ],
+ "defterTablonunAltinda": true,
  "dugmeRenkleri": {
   "odeme": "rgb(161, 92, 7)",
   "tahsilat": "rgb(47, 125, 74)"
@@ -15,16 +22,19 @@
   ]
  },
  "gozler": [
-  "islem"
+  "islem",
+  "defter"
  ],
  "hatalar": [],
  "kayit": [
+  "islem",
   "hareketler",
-  "islem"
+  "defter"
  ],
  "kayittanSonra": [
+  "islem",
   "hareketler",
-  "islem"
+  "defter"
  ],
  "onizlemeKisa": true,
  "sadeAciklamaSayisi": 0,
@@ -36,6 +46,7 @@
  ],
  "varsayilan": [
   "islem",
+  "defter",
   "hareketler"
  ]
 }
