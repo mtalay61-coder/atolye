@@ -590,11 +590,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 >
                   <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
                 </button>
-                {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun").
-                    Özellik vardı ama yalnız başlıktaki yazısız arşiv ikonuydu; kullanıcı bulamadı.
-                    İkon başlıkta kalıyor (kart kapalıyken de erişilsin), burada adıyla da duruyor.
-                    Silme burada tekrar edilmiyor: son çare olan işlem göz önünde durmasın. */}
-                <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
+                {/* PASİFE AL YAZILI DÜĞMESİ KALDIRILDI (v1.537.0 — son denetim): v1.530'dan beri aynı mor şeritte başlığın
+                    arşiv ikonuyla yan yana iki kontrol duruyordu. Kasada (v1.533) aynı gerekçeyle yazılı düğme kalkmıştı;
+                    kalıp: seyrek işlem küçük ikon. */}
               {cardTab === "hareketler" && duzenBaglami && duzenBaglami.yetkili && (
                 <button type="button" className="btn-ikon" data-duzen-ac="cariHareketler" title="Ekran düzeni — hareketler bölümlerini sırala, genişliğini ayarla, gizle"
                   onClick={() => { if (duzenAcRef.current) duzenAcRef.current(); }}>
@@ -1336,7 +1334,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
 
           </>) },
-          { id: "filtre", ad: "Defter ve para birimi seçimi", icerik: (<>
+          // GİZLENEMEZ (v1.537.0 — son denetim): gizlenince defter "Genel"de takılı kalıyor, Tümü/Resmi'ye geçecek düğme
+          // kalmıyordu — Resmi hareketler bütün cihazlarda "yok" gibi görünürdü.
+          { id: "filtre", ad: "Defter ve para birimi seçimi", gizlenemez: true, icerik: (<>
           {(cari.hareketler || []).length > 0 && (
             <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
               {["Tümü", "Genel", "Resmi"].map((d) => {

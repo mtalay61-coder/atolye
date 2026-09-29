@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.536.0";
+const SURUM = "1.537.0";
 const SURUM_TARIHI = "2026-09-29";
-const SURUM_NOTU = "Kasa/banka: Tumu/Genel/Resmi secimi ayri duzen blogu, hareket tablosunun altina tasinabilir";
+const SURUM_NOTU = "Son denetim: pesin odemeli alis cari yonu, kismi teslim, veri ve arayuz duzeltmeleri";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Kasa/banka: Tumu/Genel/Resmi secimi ayri duzen blogu, hareke
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.537.0", tarih: "29.09.2026",
+    eklenen: [],
+    degisen: ["Cari kartı şeridindeki yazılı 'Pasife Al' kaldırıldı (şeritteki arşiv ikonu aynı işi yapıyor)", "Planlama sekmesinde [X] geçerli planlamayı geri almıyor; yalnız bağlı kaydı silinmiş planlamayı temizliyor (geri almak için üretimi / alışı kendi ekranından silin)", "Kasa/banka: hesap düzenleme formu şeridin altında; hareketli hesapta sil ikonu pasif; virman hedefinde pasif hesaplar yok", "Ürün kartında sekme ve Stok Bilgileri blok düzeni tek 'Düzeni kaydet' çubuğuyla kaydediliyor", "Tümü/Genel/Resmi seçimi (kasa) ve defter/para birimi seçimi (cari) gizlenemez blok", "Kullanılmayan onarım fonksiyonları kaldırıldı"],
+    duzeltilen: ["Peşin ödemeli ALIŞ fişi tedarikçi borcunu iki katına çıkarıyordu (peşin ödeme cariye 'Tahsilat' yönüyle yazılıyordu); düzeltildi ve mevcut kayıtlar açılışta bir kez onarılıyor", "Proseste kısmi teslimde kalan çiftler kayboluyordu: kalan kısım artık aynı ustada açık iş olarak kalıyor, adım ve üretim eksik miktarla bitmiş sayılmıyor", "Peşinli fiş cari ekstresinde, Fişler listesinde ve fiş çıktısında fiş + peşin toplanıyordu (1000 ₺ fiş 2000 ₺ görünüyordu)", "Şahsi çek ciro edilebiliyor / tahsile verilebiliyordu (ikinci cariye de ödeme yazılıyordu)", "Silinen siparişin numarası yeni siparişe veriliyordu (çöpteki numaralar artık sayılıyor)", "Fişte elle eklenen miktar siparişe ya da koliye bağlı satıra karışıyordu", "Üretim teslimindeki malzeme iadesi alış rezervasyonuna kaydedilmiyordu", "Planlama geri almada çok bedenli satırda yalnız son beden temizleniyordu", "Mamul deposunda son proseste teslim alınan çiftler hem stokta hem üretimde sayılıyordu", "Kasa koşan bakiyesi tarihe göre değil giriş sırasına göre hesaplanıyordu", "Kasa hareketi düzenlenince cari hareketin açıklaması (fiş no dahil) eziliyordu", "Excel özetinde cari bakiyesi para birimleri karıştırılarak toplanıyordu", "Düzen kipinde sürükleme blok yer değiştirdikten sonra takılı kalabiliyordu", "Aynı anda kaydedilen iki ekran düzeninden biri kayboluyordu", "Modelhane numune tarihi gece yarısından sonra önceki güne düşüyordu", "Kasa açıklamasında kur bilgisi yanlışlıkla gizlenebiliyordu", "Test koşusu hiç var olmayan bir birim testini çağırıyordu (her koşu 'davranış değişti' bitiyordu)"] },
   { surum: "1.536.0", tarih: "29.09.2026",
     eklenen: ["Kasa/banka ekran düzeninde yeni blok: 'Defter seçimi (Tümü / Genel / Resmi)' — hareket tablosunun (ekstre) altına da taşınabilir"],
     degisen: [],

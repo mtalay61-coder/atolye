@@ -242,8 +242,11 @@ async function mevcutAnahtarlar() {
 // İki kaydın aynı numarayı taşıması, numaraya göre kurulmuş her bağlantıyı (planlama referansı,
 // rezervasyon, cari fiş eşleşmesi) bozar. Bu yüzden sayım değil, KULLANILMIŞ EN BÜYÜK numara esas
 // alınır — silinen numara bir daha asla geri dönmez.
-function sonrakiSiparisNo(mevcutListe, onEk) {
-  const enBuyuk = (mevcutListe || []).reduce((enb, s) => {
+// ÇÖP DE SAYILIR (v1.537.0 — son denetim): yorum "asla geri dönmez" diyordu ama yalnız canlı liste okunuyordu; en
+// son sipariş silinip çöpe gidince numarası YENİ siparişe veriliyor, eskisi çöpten geri yüklenince aynı numaralı iki
+// sipariş oluşuyordu (planlama referansı ilk bulunana gider). Üretim numarası bunu zaten yapıyor (`enBuyukUretimNo`).
+function sonrakiSiparisNo(mevcutListe, onEk, cop) {
+  const enBuyuk = [...(mevcutListe || []), ...((cop || []).filter((k) => k && k.tur === "siparis" && k.veri).map((k) => k.veri))].reduce((enb, s) => {
     if (!s || typeof s.siparisNo !== "string" || !s.siparisNo.startsWith(onEk)) return enb;
     const n = parseInt(s.siparisNo.slice(onEk.length), 10);
     return Number.isFinite(n) && n > enb ? n : enb;

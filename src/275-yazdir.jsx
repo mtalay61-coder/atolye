@@ -179,7 +179,11 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
   // Muhasebe defterinde aynı fişte hem Genel hem Resmi kaydı oluşabilir (aynı tutar) — çift saymamak
   // için tekilleştiriyoruz.
   const gorulmusImzalar = new Set();
-  const tekilHareketler = fis.hareketler.filter((h) => {
+  // Peşin tahsilat/ödeme satırı (kasaya bağlı, fişle aynı numara) fiş toplamına ve KDV matrahına girmez
+  // (v1.537.0 — son denetim); fişin kendi satırı yoksa (kasadan girilen tahsilat/ödeme fişi) o satır kalır.
+  const fisinKendi = fis.hareketler.filter((h) => !h.muhasebeBagId);
+  const yazilacaklar = fisinKendi.length > 0 ? fisinKendi : fis.hareketler;
+  const tekilHareketler = yazilacaklar.filter((h) => {
     const imza = `${h.tutar}|${h.urunAd || ""}|${h.renk || ""}|${h.beden || ""}|${h.miktar || ""}`;
     if ((h.defter || "Genel") === "Resmi" && gorulmusImzalar.has(imza)) return false;
     gorulmusImzalar.add(imza);

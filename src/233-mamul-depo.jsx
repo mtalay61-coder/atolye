@@ -94,9 +94,19 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
     const bedenler = (o.bedenMiktarlari || []).length
       ? o.bedenMiktarlari
       : [{ beden: o.beden || "", miktar: o.adet || 0 }];
+    // SON PROSESTE TESLİM ALINAN DÜŞÜLÜR (v1.537.0 — son denetim): son prosesin kısmi teslimleri stoğa HEMEN
+    // giriyor (sağlam) ya da gidiyor (hurda); yine de bütün miktar "üretimde" sayılıyordu — 56 çiftin 32'si
+    // stoktayken ekranda stok 32 + üretimde 56, açık 32 eksik çıkıyordu.
+    const adimlar = o.prosesIlerleme || [];
+    const son = adimlar.length ? adimlar[adimlar.length - 1] : null;
+    const cikan = {};
+    ((son && son.atamalar) || []).filter((a) => a.tamamlandiMi && a.sonuc).forEach((a) => {
+      Object.entries(a.sonuc.saglam || {}).forEach(([bd, m]) => { cikan[bd] = (cikan[bd] || 0) + (m || 0); });
+      (a.sonuc.hurda || []).forEach((x) => { cikan[x.beden] = (cikan[x.beden] || 0) + (x.miktar || 0); });
+    });
     bedenler.forEach((b) => {
       const h = hucre(o.urunId, o.renk, b.beden);
-      if (h) h.uretimde += b.miktar || 0;
+      if (h) h.uretimde += Math.max(0, stokYuvarla((b.miktar || 0) - (cikan[b.beden] || 0)));
     });
   });
 

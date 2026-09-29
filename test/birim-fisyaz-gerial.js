@@ -1,7 +1,7 @@
 // BİRİM TESTİ — `fisGeriAl`, `fisYaz`ın TERSİ olmalı.
 // Tarayıcı gerekmiyor: ikisi de saf fonksiyon. Fiş yazılır, sonra geri alınır; sonuç başlangıç
 // durumuyla BİREBİR aynı olmalı (miktarlar, hareket listeleri, siparişin karşılananı ve durumu).
-const { fisYaz, fisGeriAl } = require("./erp.cjs");
+const { fisYaz, fisGeriAl, cariBakiyeleri, pesinOdemeYonuDuzelt } = require("./erp.cjs");
 
 const kopya = (x) => JSON.parse(JSON.stringify(x));
 let hata = 0;
@@ -122,13 +122,30 @@ function fisKur(ek = {}) {
   bekle("cariye kapatan kay\u0131t yaz\u0131ld\u0131", kapatan.length, 1);
   bekle("ba\u011f ayn\u0131", kapatan[0].muhasebeBagId, yazildi.pesinHareket.bagId);
   bekle("kapatan kayd\u0131n fi\u015f numaras\u0131 var", !!kapatan[0].fisNo, true);
-  bekle("kapatan kay\u0131t Tahsilat y\u00f6n\u00fcnde", kapatan[0].yon, "Tahsilat");
+  // v1.537.0: ALIŞTA peşin bir ÖDEMEDİR — "Borç" (+) yönünde; eskiden "Tahsilat" yazılıyor ve tedarikçi borcu iki katına çıkıyordu.
+  bekle("al\u0131\u015fta kapatan kay\u0131t \u00d6deme (Bor\u00e7) y\u00f6n\u00fcnde", [kapatan[0].yon, kapatan[0].islemTipi], ["Bor\u00e7", "\u00d6deme"]);
+  // Peşin ödeme cari bakiyeyi +500 yönünde değiştirmeli (borcu KAPATIR); eskiden −500 yönündeydi (borç ikiye katlanıyordu).
+  const pesinYok = fisYaz(kopya(stok0), kopya(cariler0), fisKur());
+  const bak = (sonuc) => (cariBakiyeleri(sonuc.cariler.find((c) => c.id === "c1")).TRY || 0);
+  bekle("pe\u015fin \u00f6deme cari bakiyeyi +500 de\u011fi\u015ftirir", Math.round(bak(yazildi) - bak(pesinYok)), 500);
 
   // FİŞ GERİ ALININCA kasa hareketi de gitmeli — `fisGeriAl` bağı topluyor.
   const geri = fisGeriAl({ stok: yazildi.stok, cariler: yazildi.cariler, siparisler: kopya(siparisler0), uretim: [] },
     { hareketIdler: [...yazildi.kimlikler.values()] });
   bekle("geri al\u0131nca kasa ba\u011f\u0131 bildirildi", geri.muhasebeBagIdler, [yazildi.pesinHareket.bagId]);
   bekle("geri al\u0131nca cariler ba\u015flang\u0131ca d\u00f6nd\u00fc", geri.cariler, cariler0);
+}
+
+// ---- 2b) Peşin ödeme yönü onarımı (v1.537.0 göçü): yalnız hatalı imzayı düzeltir ----
+{
+  const hatali = { id: "p1", muhasebeBagId: "b1", yon: "Tahsilat", tutar: 500, aciklama: "Ödeme (TL Kasa) · AF-1" };
+  bekle("hatal\u0131 al\u0131\u015f pe\u015fini d\u00fczelir", [pesinOdemeYonuDuzelt(hatali).yon, pesinOdemeYonuDuzelt(hatali).islemTipi], ["Bor\u00e7", "\u00d6deme"]);
+  const satisPesin = { id: "p2", muhasebeBagId: "b2", yon: "Tahsilat", tutar: 500, aciklama: "Tahsilat (TL Kasa) · SF-1" };
+  bekle("sat\u0131\u015f pe\u015fine dokunulmaz", pesinOdemeYonuDuzelt(satisPesin), satisPesin);
+  const normalOdeme = { id: "p3", muhasebeBagId: "b3", yon: "Bor\u00e7", tutar: 500, aciklama: "\u00d6deme (TL Kasa)" };
+  bekle("zaten do\u011fru kay\u0131t ayn\u0131 kal\u0131r", pesinOdemeYonuDuzelt(normalOdeme), normalOdeme);
+  const bagsiz = { id: "p4", yon: "Tahsilat", tutar: 1, aciklama: "\u00d6deme (x)" };
+  bekle("ba\u011fs\u0131z kay\u0131t dokunulmaz", pesinOdemeYonuDuzelt(bagsiz), bagsiz);
 }
 
 // ---- 3) Tek hareketi geri alma: yalnızca o kalem etkilenmeli ----

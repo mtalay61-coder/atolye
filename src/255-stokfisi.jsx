@@ -348,7 +348,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     let sonraki = [...kalemler];
     let yeni = 0, birlesen = 0;
     eklenecekler.forEach((x) => {
-      const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden);
+      // SERBEST satır yalnız SERBEST satırla birleşir (v1.537.0 — son denetim): siparişe ya da koliye bağlı satıra
+      // eklenirse elle girilen miktar o sipariş kalemine sayılıyordu (karşılanan 15/10, "fazla" işareti yok) ya da
+      // koli içeriğini şişiriyordu. Bağlı yoldaki (yukarıda) eşleşme kuralının aynısı.
+      const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden && !k.kalemId && !k.koliId);
       if (i >= 0) {
         birlesen++;
         // Birleşen satırın oranı da son girilene döner (fiyat ve para birimiyle aynı kural).

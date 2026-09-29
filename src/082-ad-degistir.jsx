@@ -140,86 +140,7 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
   showToast(`"${eskiAd}" → "${yeniAd}" · kayıtlar hizalandı`);
 }, [stok, siparisler, uretim, koliler, showToast]);
 
-// EKSİK STOK HAREKETİNİ FİŞTEN YENİDEN YAZ (15 Eylül — Veri Denetimi onarımı).
-//
-// Durum: siparişin kalemi "karşılandı" (fiş kesildi, cari hareketi var) ama stok hareketi yok —
-// bulut yazımı yarım kalmış ya da kayıt silinmişti. Fişin kimliği cari hareketlerinden
-// (siparisId eşleşen, fişli) bulunur; eksik kadar hareket AYNI fiş numarasıyla yazılır ve varyant
-// miktarı düzeltilir. Yalnız "siparişte var, stokta yok" yönü onarılır: fazla hareket hangisinin
-// mükerrer olduğunu bilmeyi gerektirir, o elle bakılacak iş.
-const eksikHareketOnar = useCallback((eksikler) => {
-  let nextStok = stok;
-  let yazilan = 0;
-  const gunlukSatirlari = [];
-  eksikler.forEach(({ siparisId, kalemId, eksik }) => {
-    const sip = siparisler.find((x) => x.id === siparisId);
-    const kalem = sip && (sip.kalemler || []).find((k) => k.id === kalemId);
-    if (!sip || !kalem || !(eksik > 0)) return;
-    const cari = cariler.find((c) => c.id === sip.cariId);
-    // Fiş: bu siparişe bağlı en son fişli cari hareketi; yoksa sipariş numarasından türetilen ad.
-    const fisliHareket = ((cari && cari.hareketler) || [])
-      .filter((h) => h.fisNo && (h.siparisId ? h.siparisId === sip.id : h.siparisNo === sip.siparisNo))
-      .sort((x, y) => String(y.tarih || "").localeCompare(String(x.tarih || "")))[0];
-    const fisNo = (fisliHareket && fisliHareket.fisNo) || `${sip.siparisNo}-F${sip.teslimSayaci || 1}`;
-    const tarih = (fisliHareket && fisliHareket.tarih) || bugunYerel();
-    const alisMi = sip.tip === "Alış";
-    nextStok = nextStok.map((p) => {
-      if (p.id !== kalem.urunId) return p;
-      const hareket = {
-        id: uid("hrk"), tarih, renk: kalem.renk, beden: kalem.beden,
-        miktar: alisMi ? eksik : -eksik,
-        kaynak: alisMi ? "Satınalma" : "Satış",
-        cariId: sip.cariId, fisNo, siparisNo: sip.siparisNo, siparisId: sip.id, kalemId: kalem.id,
-        aciklama: "Onarım: eksik hareket fişten yeniden yazıldı",
-      };
-      const variants = (p.variants || []).some((v) => v.renk === kalem.renk && v.beden === kalem.beden)
-        ? (p.variants || []).map((v) => (v.renk === kalem.renk && v.beden === kalem.beden ? { ...v, miktar: stokYuvarla((v.miktar || 0) + hareket.miktar) } : v))
-        : [...(p.variants || []), { renk: kalem.renk, beden: kalem.beden, miktar: hareket.miktar }];
-      yazilan++;
-      gunlukSatirlari.push(`${sip.siparisNo} ${kalem.urunAd} ${kalem.renk}/${kalem.beden} ${hareket.miktar}`);
-      return { ...p, variants, hareketler: [...(p.hareketler || []), hareket] };
-    });
-  });
-  if (yazilan === 0) { showToast("Onarılacak eksik hareket bulunamadı"); return; }
-  setStok(nextStok);
-  yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
-  gunlukYaz(`Onarım: ${yazilan} eksik stok hareketi fişten yeniden yazıldı`, "denetim", { satirlar: gunlukSatirlari });
-  showToast(`${yazilan} eksik stok hareketi fişten yeniden yazıldı; stok düzeltildi`);
-}, [stok, siparisler, cariler, showToast]);
 
-// DEFTERDEN YENİDEN KUR (Adım 2, 15 Eylül). Defter doğruluğun kaynağı: iptal edilmemiş bir fişin
-// stok hareketi stokta yoksa BİREBİR geri yazılır — miktar, tarih, fiş no, sipariş bağı, hareket
-// kimliği dahil. "Fişten yeniden yaz" (21) siparişin fişinden TÜRETİYORDU; bu ise kayıttan
-// kopyalıyor, tahmin yok. Varyant miktarı da hareketin yönüne göre düzeltilir.
-//
-// Sipariş `karsilanan`ına DOKUNULMAZ: bu onarım kayıp hareketi geri koyar; karşılanan zaten
-// hareketlerle karşılaştırılıp ayrıca denetleniyor (2. kural). İki onarımın aynı sayıyı iki kez
-// düzeltmesi, eksik bırakmaktan daha tehlikeli olurdu.
-const defterdenYenidenKur = useCallback((kayitlar) => {
-  let nextStok = stok;
-  let yazilan = 0;
-  const gunluk = [];
-  kayitlar.forEach(({ fisNo, hareket }) => {
-    if (!hareket || !hareket.urunId) return;
-    nextStok = nextStok.map((p) => {
-      if (p.id !== hareket.urunId) return p;
-      if ((p.hareketler || []).some((h) => h.id === hareket.id)) return p;   // zaten var
-      const { urunId, urunAd, ...temiz } = hareket;
-      const variants = (p.variants || []).some((v) => v.renk === hareket.renk && v.beden === hareket.beden)
-        ? (p.variants || []).map((v) => (v.renk === hareket.renk && v.beden === hareket.beden
-            ? { ...v, miktar: stokYuvarla((v.miktar || 0) + (hareket.miktar || 0)) } : v))
-        : [...(p.variants || []), { renk: hareket.renk, beden: hareket.beden, miktar: hareket.miktar || 0 }];
-      yazilan++;
-      gunluk.push(`${fisNo} ${p.ad} ${hareket.renk}/${hareket.beden} ${hareket.miktar}`);
-      return { ...p, variants, hareketler: [...(p.hareketler || []), temiz] };
-    });
-  });
-  if (yazilan === 0) { showToast("Geri yazılacak hareket bulunamadı (hepsi zaten yerinde)"); return; }
-  setStok(nextStok);
-  yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
-  gunlukYaz(`Defterden yeniden kuruldu: ${yazilan} stok hareketi`, "denetim", { satirlar: gunluk });
-  showToast(`${yazilan} hareket fiş defterinden birebir geri yazıldı`);
-}, [stok, showToast]);
 
 const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
   const yeniAd = yeniAdHam.trim();
@@ -376,6 +297,6 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
   // aynı aileden — "kayıtlar birbirini tutmuyorsa düzelt" işi.
   return {
     olcuAdDegistir, kullanimdakiOlculer, hammaddeRenkAdDegistir,
-    defterdenYenidenKur, eksikHareketOnar, tanimsizOlcuCevir,
+    tanimsizOlcuCevir,
   };
 }

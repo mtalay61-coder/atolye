@@ -11,7 +11,8 @@ function kasaAciklamaSade(aciklama, cariAdi, tip) {
     if (cariAdi && x === cariAdi) return true;
     if (tip && x === tip) return true;
     if (/^(Tahsilat|Ödeme|Virman|Giriş|Çıkış)$/.test(x)) return true;
-    if (/^(Tahsilat|Ödeme)\s*\([^)]*\)$/.test(x)) return true;
+    // Parantez içinde "=" varsa kur bilgisidir ("Ödeme (1.000 ₺, 1 USD = 40 TRY kuruyla)") — gizlenmez (v1.537.0).
+    if (/^(Tahsilat|Ödeme)\s*\([^)=]*\)$/.test(x)) return true;
     return false;
   };
   return String(aciklama).split(" · ").filter((p) => !tekrar(p)).join(" · ").trim();
@@ -365,7 +366,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       {h.pasif ? <Check size={14} /> : <Archive size={14} />}
                     </button>
                     )}
-                    {duzenlenen !== h.id && (
+                    {/* Hareketli hesap silinemez: ikon hiç çıkmaz (v1.537.0) — önce onay penceresi "silinemez" başlığı ve kırmızı
+                        Sil düğmesiyle açılıyor, sonra reddediliyordu. Neden silinemediği ipucunda. */}
+                    {duzenlenen !== h.id && (h.hareketler || []).length > 0 && (
+                      <span className="btn-ikon" title={`${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`} style={{ opacity: 0.35, cursor: "not-allowed" }}><Trash2 size={14} /></span>
+                    )}
+                    {duzenlenen !== h.id && (h.hareketler || []).length === 0 && (
                       <SilOnayButonu kartEylemi
                         onConfirm={() => onHesapSil(h.id)}
                         boyut={14}
@@ -393,6 +399,34 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       <X size={13} />
                     </button>
                   </div>
+                    {/* KÜÇÜK EYLEMLER ÜST ŞERİTTE (v1.533.0 — kullanıcı: "altta sil, pasife al, düzenle daha ufalsın; daha önce
+                        yaptıklarımızdan kontrol et"): cari/ürün kartındaki gibi ✎ · pasif · 🗑 başlıkta ikon. Burada yalnız
+                        düzenleme açıkken ad/banka/IBAN kutuları ve Kaydet · Vazgeç kalıyor. ŞERİDİN HEMEN ALTINDA (v1.537.0 — son denetim):
+                        önce hareket tablosunun en altındaydı; uzun listede ✎ basınca üstte hiçbir şey değişmiyor gibi görünüyordu. */}
+                    {duzenlenen === h.id && (
+                    <div data-hesap-duzenle-formu="1" style={{ margin: "8px 12px 0", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                      {/* DÜZENLEME (kullanıcı, 19 Eylül: "banka listesi düzenleme olsun"). Hesap
+                          adı, banka ve IBAN yanlış girildiğinde tek yol hesabı silip yeniden
+                          açmaktı — hareketi olan hesap silinemediği için bu da mümkün değildi;
+                          yanlış ad kalıcı oluyordu. Para birimi düzenlenmiyor: hareketler o
+                          birimde yazıldı, sonradan değiştirmek geçmişi yanlış gösterirdi. */}
+                        <>
+                          {ekleAlanlari.map((a2) => (
+                            <input key={a2.key} value={duzenForm[a2.key] || ""}
+                              data-hesap-duzenle={a2.key}
+                              placeholder={a2.placeholder}
+                              onChange={(e) => setDuzenForm({ ...duzenForm, [a2.key]: e.target.value })}
+                              style={{ padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 }} />
+                          ))}
+                          <button data-kart-eylem="kaydet" title="Kaydet · Ctrl+S" type="button" className="btn-primary" style={{ fontSize: 12, padding: "5px 12px" }}
+                            onClick={() => { if (onHesapGuncelle) onHesapGuncelle(h.id, duzenForm); setDuzenlenen(null); }}>
+                            Kaydet
+                          </button>
+                          <button type="button" className="btn-ghost" data-kart-eylem="vazgec" title="Vazgeç · Esc" style={{ fontSize: 12, padding: "5px 12px" }}
+                            onClick={() => setDuzenlenen(null)}>Vazgeç</button>
+                        </>
+                    </div>
+                    )}
                 {/* EKRAN DÜZENİ (v1.533.0 — kullanıcı: "Kasada da ekran düzenleme olsun"): işlem düğmeleri + formlar ve hareket
                     listesi iki blok; düzen ikonu başlık şeridinde. Kasa ve banka ayrı düzen tutar. */}
                 <DuzenAlani ekran={birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay"} aralik={0} acRef={hesapDuzenAcRef} disIkon bloklar={[
@@ -436,7 +470,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                     <Field label="Nereye">
                       <select value={virman.hedef} data-virman-hedef="1" onChange={(e) => setVirman({ ...virman, hedef: e.target.value })} style={inputStyle}>
                         <option value="">Seçin…</option>
-                        {(tumHesaplar || []).filter((x) => x.id !== h.id).map((x) => (
+                        {(tumHesaplar || []).filter((x) => x.id !== h.id && !x.pasif).map((x) => (
                           <option key={x.id} value={x.id}>{x.ad} ({x.paraBirimi || "TRY"})</option>
                         ))}
                       </select>
@@ -712,7 +746,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 )}
 
                 </>) },
-                { id: "defter", ad: "Defter seçimi (Tümü / Genel / Resmi)", icerik: (() => {
+                { id: "defter", ad: "Defter seçimi (Tümü / Genel / Resmi)", gizlenemez: true, icerik: (() => {
                   // AYRI BLOK (v1.536.0 — kullanıcı, kasa düzen kipi ekran görüntüsü: "Hareket listesi aşağı inmiyor, ekstrenin
                   // de altına inmesini istiyorum"). Tümü/Genel/Resmi seçimi hareket tablosunun içindeydi; tablo tek blok
                   // olduğu için seçim onunla birlikte hep üstte kalıyordu. Artık kendi bloğu — tablonun altına da taşınabilir.
@@ -795,7 +829,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       // Ekstre mantığıyla aynı: hareketler ESKİDEN YENİYE sıralanır ve koşan bakiye HER
                       // SATIRDA hesaplanır — SADECE seçili defterin (Tümü/Genel/Resmi) hareketleri
                       // üzerinden, aktif sekmeye göre AYRI bir bakiye akışı takip edilir.
-                      const eskidenYeniye = [...filtrelenmis].reverse();
+                      // TARİHE GÖRE (v1.537.0 — son denetim): liste giriş sırasıyla ters çevriliyordu; geçmiş tarihli ya da
+                      // tarihi düzenlenmiş hareket en üstte kalıyor, bakiye sütunu o tarihteki bakiyeyi göstermiyordu. Aynı
+                      // tarihliler giriş sırasını korur (kararlı sıralama). Cari ekstresi de tarihe göre sıralıyor.
+                      const eskidenYeniye = [...filtrelenmis].reverse().sort((a, b) => String(a.tarih || "").slice(0, 10).localeCompare(String(b.tarih || "").slice(0, 10)));
                       let kosanBakiye = 0;
                       const satirlar = eskidenYeniye.map((hr) => {
                         kosanBakiye += hr.yon === "Giriş" ? hr.tutar : -hr.tutar;
@@ -987,33 +1024,6 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         </>
                       );
                     })()}
-                    {/* KÜÇÜK EYLEMLER ÜST ŞERİTTE (v1.533.0 — kullanıcı: "altta sil, pasife al, düzenle daha ufalsın; daha önce
-                        yaptıklarımızdan kontrol et"): cari/ürün kartındaki gibi ✎ · pasif · 🗑 başlıkta ikon. Burada yalnız
-                        düzenleme açıkken ad/banka/IBAN kutuları ve Kaydet · Vazgeç kalıyor. */}
-                    {duzenlenen === h.id && (
-                    <div data-hesap-duzenle-formu="1" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                      {/* DÜZENLEME (kullanıcı, 19 Eylül: "banka listesi düzenleme olsun"). Hesap
-                          adı, banka ve IBAN yanlış girildiğinde tek yol hesabı silip yeniden
-                          açmaktı — hareketi olan hesap silinemediği için bu da mümkün değildi;
-                          yanlış ad kalıcı oluyordu. Para birimi düzenlenmiyor: hareketler o
-                          birimde yazıldı, sonradan değiştirmek geçmişi yanlış gösterirdi. */}
-                        <>
-                          {ekleAlanlari.map((a2) => (
-                            <input key={a2.key} value={duzenForm[a2.key] || ""}
-                              data-hesap-duzenle={a2.key}
-                              placeholder={a2.placeholder}
-                              onChange={(e) => setDuzenForm({ ...duzenForm, [a2.key]: e.target.value })}
-                              style={{ padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 }} />
-                          ))}
-                          <button data-kart-eylem="kaydet" title="Kaydet · Ctrl+S" type="button" className="btn-primary" style={{ fontSize: 12, padding: "5px 12px" }}
-                            onClick={() => { if (onHesapGuncelle) onHesapGuncelle(h.id, duzenForm); setDuzenlenen(null); }}>
-                            Kaydet
-                          </button>
-                          <button type="button" className="btn-ghost" data-kart-eylem="vazgec" title="Vazgeç · Esc" style={{ fontSize: 12, padding: "5px 12px" }}
-                            onClick={() => setDuzenlenen(null)}>Vazgeç</button>
-                        </>
-                    </div>
-                    )}
                   </div>
                 )}
                 </>) },

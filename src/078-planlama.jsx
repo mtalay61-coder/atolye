@@ -262,7 +262,7 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId, secenek) 
     const yeniAlislar = [];
     const grupNo = {};
     grupSirasi.forEach((g) => {
-      const alisNo = sonrakiSiparisNo([...yeniAlislar, ...prevSiparisler], "ALS-");
+      const alisNo = sonrakiSiparisNo([...yeniAlislar, ...prevSiparisler], "ALS-", cop);
       grupNo[g] = alisNo;
       yeniAlislar.push(alisSiparisiKur(alisNo, alisKalemleri.filter((x) => x._grup === g).map(({ _grup, ...x }) => x)));
     });
@@ -315,7 +315,7 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId, secenek) 
       : `${yeniAlislar.length} alış siparişi oluşturuldu (${yeniAlislar[0].siparisNo} – ${yeniAlislar[yeniAlislar.length - 1].siparisNo})`);
     return nextSiparisler;
   });
-}, [stok, showToast]);
+}, [stok, showToast, cop]);
 
 // HAMMADDE SATIN ALMA — Planlama > Sipariş İhtiyaç Planlama ekranından çağrılır.
 // planlaSatinAlma'dan (mamul satın alma) BİLİNÇLİ OLARAK ayrı tutulmuştur; ikisi farklı şeylerdir:
@@ -338,7 +338,7 @@ const planlaHammaddeSatinAlma = useCallback((talepler, cariId) => {
   if (!cariId) { showToast("Önce bir tedarikçi seçin"); return; }
 
   setSiparisler((prev) => {
-    const alisNo = sonrakiSiparisNo(prev, "ALS-");
+    const alisNo = sonrakiSiparisNo(prev, "ALS-", cop);
     const tumKaynakIdler = new Set();
     const kaynakNolar = new Set();
 
@@ -403,7 +403,7 @@ const planlaHammaddeSatinAlma = useCallback((talepler, cariId) => {
     );
     return next;
   });
-}, [stok, showToast]);
+}, [stok, showToast, cop]);
 
   return { planlaUretim, planlaSatinAlma, planlaHammaddeSatinAlma };
 }

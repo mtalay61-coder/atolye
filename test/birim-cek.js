@@ -61,6 +61,9 @@ bekle("banka bilgisi korunuyor", tahsilEdildi.tahsilBankaAd, "Ziraat");
 // İZİN VERİLMEYEN GEÇİŞ SESSİZCE UYGULANMIYOR.
 bekle("ciro edilmi\u015fi tekrar ciro etmek null", cekIslemUygula({ durum: "Ciro Edildi" }, "ciro", {}), null);
 bekle("bilinmeyen i\u015flem null", cekIslemUygula(portfoyde, "yokboyle", {}), null);
+// v1.537.0: ŞAHSİ (Verilen) çek ciro edilemez, tahsile verilemez — çıkışında cariye ödeme zaten yazıldı.
+bekle("\u015fahsi \u00e7ekte ciro/tahsile yok", cekIzinliIslemler({ durum: "Portf\u00f6yde", tip: "Verilen" }).map((i) => i.anahtar), ["iade", "tahsil", "karsiliksiz"]);
+bekle("\u015fahsi \u00e7eki ciro etme reddedilir", cekIslemUygula({ durum: "Portf\u00f6yde", tip: "Verilen" }, "ciro", { cariId: "c2" }), null);
 
 console.log(hata ? "\n\u2500\u2500 \u00c7EK TEST\u0130 BA\u015eARISIZ \u2500\u2500" : "\n\u2500\u2500 \u00e7ek testi temiz \u2500\u2500");
 process.exit(hata);

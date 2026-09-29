@@ -1,0 +1,22 @@
+{
+ "hatalar": [],
+ "ilkTeslimSonrasi": {
+  "adimTamam": false,
+  "atamalar": [
+   "2 çift · tamamlandı · usta c3 · {\"41\":2}",
+   "1 çift · açık · usta c3 · {\"41\":1}"
+  ],
+  "stogaEklendi": false,
+  "stokArtisi": 2
+ },
+ "kalanTeslimSonrasi": {
+  "adimTamam": true,
+  "atamalar": [
+   "2 çift · tamamlandı · usta c3 · {\"41\":2}",
+   "1 çift · tamamlandı · usta c3 · {\"41\":1}"
+  ],
+  "stogaEklendi": true,
+  "stokArtisi": 3
+ },
+ "ustadaKaliyorBilgisi": true
+}

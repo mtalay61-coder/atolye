@@ -1,4 +1,4 @@
-function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muhasebe, onKarsilananOnar, onYetimSiparisBagiCoz, fisDefteri, onDefterdenYenidenKur, onEksikHareketOnar, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
   const [yeniRenkHammadde, setYeniRenkHammadde] = useState("");
   const [yeniFireSebep, setYeniFireSebep] = useState("");
   const [yeniBeden, setYeniBeden] = useState("");
@@ -2180,7 +2180,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
 
     {aktifTanimSekme === "bakim" && (
     <>
-      <VeriDenetimiEkrani uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} onRezervasyonTemizle={onRezervasyonTemizle} muhasebe={muhasebe} onKarsilananOnar={onKarsilananOnar} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} onDefterdenYenidenKur={onDefterdenYenidenKur} onEksikHareketOnar={onEksikHareketOnar} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
+      <VeriDenetimiEkrani uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
     <div style={{ marginTop: 20 }}>
       <DefterOnarimBolumu stok={stok} onOnar={onDefterTopluOnar} />
     </div>

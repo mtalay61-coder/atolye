@@ -62,10 +62,8 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
                                 //   ayağı (`muhasebeyePesinIsle`) ve çek tahsili buradan geçiyor
   // — ONARIM —
   "defterTopluOnar",            // eksik defter alanını toplu doldurma
-  "eksikHareketOnar",           // Veri Denetimi: siparişte var stokta yok → fişten yeniden yaz (15 Eylül)
   "acilisFarklariniHareketeCevir",  // geçiş: hareketsiz başlangıç miktarını açılış hareketine bağlar (16 Eylül)
   "virmanYap",                  // kasalar/bankalar arası aktarım: kaynaktan çıkış, hedefe giriş (17 Eylül)
-  "defterdenYenidenKur",        // Veri Denetimi: fiş defterindeki kaydı stoğa birebir geri yaz (Adım 2)
   "defterDuzeltmeYaz",          // tek kaydın defterini düzeltme
   // — AÇILIŞ —
   // Bu kapı BİR KEREYE mahsus: stok önbelleğinin hareketlerle açıklanamayan kısmını tek satıra

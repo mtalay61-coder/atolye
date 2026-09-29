@@ -265,11 +265,17 @@ function fisYaz(stok, cariler, fis) {
     const cariAciklama = `${alis ? "Ödeme" : "Tahsilat"} (${pesin.hesapAd || "hesap"}) · ${fis.fisNo}`;
 
     // Cari tarafı: fişin açtığı borcu/alacağı KAPATAN kayıt.
+    // YÖN HATASI (v1.537.0 — son denetim): kayıt her fişte `yon: "Tahsilat"` idi. Cari bakiyesinde yalnız "Borç"
+    // artı sayıldığı için SATIŞTA doğru (fiş +X, peşin −P) ama ALIŞTA yanlıştı: fiş −X (Alacak), peşin de −P →
+    // 1000 ₺'lik alışı peşin ödeyen tedarikçi 0 yerine −2000 görünüyordu. Alışta peşin bir ÖDEMEDİR:
+    // `hareketYonu("Ödeme")` = "Borç" (+). Satış tarafı aynı kalıyor ("Tahsilat" eksi sayılıyor). `islemTipi`
+    // de yazılıyor: fiş numarası "AF-" olduğu için tip çıkarımı aksi halde onu "Alış" sanıyordu.
     cariHareketleri.push({
       id: uid("hrk"),
       tarih: fis.cariTarihi,
       zaman: fis.zaman,
-      yon: "Tahsilat",
+      yon: alis ? hareketYonu("Ödeme") : "Tahsilat",
+      islemTipi: alis ? "Ödeme" : "Tahsilat",
       tutar: pesin.tutar,
       paraBirimi: pesin.paraBirimi || fis.kayitParaBirimi,
       odemeSekli: pesin.hesapTur === "kasa" ? "Nakit" : "Havale/EFT",
@@ -310,3 +316,13 @@ function fisYaz(stok, cariler, fis) {
 
   return { stok: yeniStok, cariler: yeniCariler, cariHareketleri, kimlikler, atlananlar, cevrilemeyenler, pesinHareket, yazilmadi: false };
 }
+
+// PEŞİN ÖDEME YÖNÜ ONARIMI (v1.537.0): v1.160.0–v1.536.0 arasında ALIŞ fişinden peşin ödenen tutar cariye
+// `yon: "Tahsilat"` ile yazıldı (bkz. fisYaz'daki yön notu) ve tedarikçi borcunu iki katına çıkardı. İmza kesin:
+// fişe bağlı (`muhasebeBagId`) + "Tahsilat" yönü + açıklaması "Ödeme (" ile başlıyor — satış peşini "Tahsilat (",
+// kasadan girilen normal tahsilat ise `muhasebeBagId` taşısa da açıklaması "Ödeme (" ile başlamaz. Saf; birim testli.
+function pesinOdemeYonuDuzelt(h) {
+  if (!h || !h.muhasebeBagId || h.yon !== "Tahsilat" || !/^Ödeme \(/.test(String(h.aciklama || ""))) return h;
+  return { ...h, yon: "Borç", islemTipi: "Ödeme" };
+}
+
