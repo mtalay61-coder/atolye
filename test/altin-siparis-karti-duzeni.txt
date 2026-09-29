@@ -1,0 +1,40 @@
+{
+ "gozler": [
+  "not",
+  "paraBirimi",
+  "tedarik",
+  "koliler",
+  "teslim"
+ ],
+ "hatalar": [],
+ "ikonSayisi": 1,
+ "kayit": [
+  "not:tam(gizli)",
+  "paraBirimi:tam",
+  "tedarik:tam",
+  "kalemler:tam",
+  "koliler:tam",
+  "teslim:tam"
+ ],
+ "kayittanSonra": {
+  "notGorunur": false,
+  "sira": [
+   "paraBirimi",
+   "tedarik",
+   "kalemler",
+   "koliler",
+   "teslim"
+  ]
+ },
+ "varsayilan": {
+  "notGorunur": true,
+  "sira": [
+   "not",
+   "paraBirimi",
+   "kalemler",
+   "tedarik",
+   "koliler",
+   "teslim"
+  ]
+ }
+}
