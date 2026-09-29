@@ -17,10 +17,11 @@
 // CİHAZ BAŞINA (localStorage): telefonla bilgisayarın ihtiyacı farklı — telefonda büyük düğme, bilgisayarda
 // sık ekran. Buluta yazılsaydı bir cihazda yapılan ayar diğerini bozardı (mobil düzen kipiyle aynı karar).
 
+// "ÇOK KÜÇÜK" (v1.522.0 — kullanıcı: "Çok küçük de olsun, küçük ekranlar için"): telefonda daha çok şey sığsın.
 const BOYUT_SECENEKLERI = {
-  genel: [{ k: "kucuk", ad: "Küçük", o: 0.9 }, { k: "normal", ad: "Normal", o: 1 }, { k: "buyuk", ad: "Büyük", o: 1.1 }, { k: "cokBuyuk", ad: "Çok büyük", o: 1.25 }],
-  dugme: [{ k: "kucuk", ad: "Küçük", o: 0.85 }, { k: "normal", ad: "Normal", o: 1 }, { k: "buyuk", ad: "Büyük", o: 1.15 }, { k: "cokBuyuk", ad: "Çok büyük", o: 1.3 }],
-  kutu: [{ k: "kucuk", ad: "Küçük", o: 0.9 }, { k: "normal", ad: "Normal", o: 1 }, { k: "buyuk", ad: "Büyük", o: 1.12 }, { k: "cokBuyuk", ad: "Çok büyük", o: 1.25 }],
+  genel: [{ k: "cokKucuk", ad: "Çok küçük", o: 0.8 }, { k: "kucuk", ad: "Küçük", o: 0.9 }, { k: "normal", ad: "Normal", o: 1 }, { k: "buyuk", ad: "Büyük", o: 1.1 }, { k: "cokBuyuk", ad: "Çok büyük", o: 1.25 }],
+  dugme: [{ k: "cokKucuk", ad: "Çok küçük", o: 0.72 }, { k: "kucuk", ad: "Küçük", o: 0.85 }, { k: "normal", ad: "Normal", o: 1 }, { k: "buyuk", ad: "Büyük", o: 1.15 }, { k: "cokBuyuk", ad: "Çok büyük", o: 1.3 }],
+  kutu: [{ k: "cokKucuk", ad: "Çok küçük", o: 0.8 }, { k: "kucuk", ad: "Küçük", o: 0.9 }, { k: "normal", ad: "Normal", o: 1 }, { k: "buyuk", ad: "Büyük", o: 1.12 }, { k: "cokBuyuk", ad: "Çok büyük", o: 1.25 }],
 };
 const BOYUT_AYAR_ANAHTARI = "gorunum:boyut";
 const BOYUT_VARSAYILAN = { genel: "normal", dugme: "normal", kutu: "normal" };

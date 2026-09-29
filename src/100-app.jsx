@@ -3004,7 +3004,18 @@ export default function AtolyeERP() {
     }
   }
 
+  // EKRAN DÜZENİ BAĞLAMI (v1.522.0, 387): düzenleme kipindeki ekranlar kayıtlı düzeni buradan okur ve buraya
+  // yazar (tanimlar.ekranDuzenleri — bulut, bütün cihazlar). Düzeni değiştirme yetkisi Tanımlar'ı görebilene.
+  const ekranDuzeniDegeri = {
+    duzenler: tanimlar.ekranDuzenleri || {},
+    yetkili: kullaniciYetkisiVar("tanimlar", "goruntuleme"),
+    kaydet: (ekran, liste) => {
+      saveTanimlar({ ...tanimlar, ekranDuzenleri: { ...(tanimlar.ekranDuzenleri || {}), [ekran]: (liste || []).map(({ id, genislik, gizli }) => ({ id, genislik, gizli: !!gizli })) } });
+      showToast("Ekran düzeni kaydedildi — bütün cihazlarda geçerli");
+    },
+  };
   return (
+    <EkranDuzeniBaglami.Provider value={ekranDuzeniDegeri}>
     <div
       style={{
         // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu
@@ -3043,6 +3054,13 @@ export default function AtolyeERP() {
         html { zoom: var(--olcek-genel, 1); }
         .btn-primary, .btn-ghost, .btn-save, .btn-danger { zoom: var(--olcek-dugme, 1); }
         input:not([type="checkbox"]):not([type="radio"]), select, textarea { zoom: var(--olcek-kutu, 1); }
+        /* ---- EKRAN DÜZENİ (v1.522.0, 387) — blok ızgarası: Dar = 4/12, Yarım = 6/12, Tam = 12/12.
+           Dar ekranda Dar/Yarım bloklar tam genişliğe iner: telefonda yan yana üç blok okunmaz. */
+        .duzen-alani { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
+        .duzen-blok { grid-column: span 12; min-width: 0; }
+        .duzen-blok-yarim { grid-column: span 6; }
+        .duzen-blok-dar { grid-column: span 4; }
+        @media (max-width: 760px) { .duzen-blok-yarim, .duzen-blok-dar { grid-column: span 12; } }
         input:focus-visible, select:focus-visible, button:focus-visible {
           outline: 2px solid var(--modul-renk, #E1611F); outline-offset: 1px;
         }
@@ -4865,6 +4883,7 @@ export default function AtolyeERP() {
         </div>
       )}
     </div>
+    </EkranDuzeniBaglami.Provider>
   );
 }
 

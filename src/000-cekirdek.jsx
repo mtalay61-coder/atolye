@@ -14,6 +14,8 @@ import {
   MessageCircle, Mail, LogOut, Menu,
   // Sipariş formu "Ekle" düğmesi (v1.470.0).
   PackagePlus,
+  // Ekran düzeni (v1.522.0, 387): tutamak, göster/gizle, düzen düğmesi.
+  GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw,
 } from "lucide-react";
 
 /* ---------------------------------------------------------

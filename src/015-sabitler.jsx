@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.521.0";
+const SURUM = "1.522.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Tanimlar > Gorunum > Boyut: genel olcek, dugme ve kutu boyutu";
+const SURUM_NOTU = "Ekran duzeni: siparis ve fis formunda bloklari surukle, genislik, gizle; Cok kucuk boyut";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Tanimlar > Gorunum > Boyut: genel olcek, dugme ve kutu boyut
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.522.0", tarih: "29.09.2026",
+    eklenen: ["Ekran düzeni: sipariş formunda ve fiş formunda 'Düzen' düğmesi — bloklar sürüklenerek (ya da oklarla) sıralanır, genişliği Dar / Yarım / Tam seçilir, gizlenir; Varsayılana dön; düzen bütün cihazlarda geçerli (Tanımlar yetkisi olan değiştirir)", "Boyut ayarlarına 'Çok küçük' seçeneği (küçük ekranlar için)"],
+    degisen: [],
+    duzeltilen: [] },
   { surum: "1.521.0", tarih: "29.09.2026",
     eklenen: ["Tanımlar > Görünüm > Boyut: genel ölçek, düğme boyutu ve giriş kutusu boyutu (Küçük / Normal / Büyük / Çok büyük) — bütün ekranlarda anında geçerli, cihaz başına saklanır; Varsayılana dön"],
     degisen: [],

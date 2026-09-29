@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.521.0** · 28 Eylül 2026
+Son sürüm: **v1.522.0** · 28 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (29 Eylül, v1.521.0): Tanımlar > Görünüm > Boyut (genel/düğme/kutu ölçeği, cihaz başına); v1.520.0 Kaydet/Vazgeç başlık satırında (sipariş: modül başlığının sağı, fiş: fiş başlık satırı); v1.519.0 sipariş formunda Kaydet/Vazgeç üstte, Not + Cari Defteri başlıkta; v1.518.0 Cari Hesaplar listesinde alacak/borç ayrı sütun + dip net toplam; v1.517.0 Alacaklar ve Borçlar raporunda alacak + / borç − ayrı sütun, net toplam; v1.516.0 fişte siparişten satır bazında ekleme; v1.515.0 sipariş formunda satır silme; v1.514.0 fişte satır silme + satırda KDV değiştirme; v1.513.0 sipariş formunda satır fiyatı yalnız son bedene yazılıyordu (düzeltildi); v1.512.0 SİPARİŞ İPTALİ — fişler bağımsız kalır, ayrılan serbest stoğa düşer (bkz. "SİPARİŞ İPTAL KURALI"); v1.511.0 sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (29 Eylül, v1.522.0): EKRAN DÜZENİ (düzenleme kipi) sipariş ve fiş formunda + "Çok küçük" boyut; v1.521.0 Tanımlar > Görünüm > Boyut (genel/düğme/kutu ölçeği, cihaz başına); v1.520.0 Kaydet/Vazgeç başlık satırında (sipariş: modül başlığının sağı, fiş: fiş başlık satırı); v1.519.0 sipariş formunda Kaydet/Vazgeç üstte, Not + Cari Defteri başlıkta; v1.518.0 Cari Hesaplar listesinde alacak/borç ayrı sütun + dip net toplam; v1.517.0 Alacaklar ve Borçlar raporunda alacak + / borç − ayrı sütun, net toplam; v1.516.0 fişte siparişten satır bazında ekleme; v1.515.0 sipariş formunda satır silme; v1.514.0 fişte satır silme + satırda KDV değiştirme; v1.513.0 sipariş formunda satır fiyatı yalnız son bedene yazılıyordu (düzeltildi); v1.512.0 SİPARİŞ İPTALİ — fişler bağımsız kalır, ayrılan serbest stoğa düşer (bkz. "SİPARİŞ İPTAL KURALI"); v1.511.0 sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6740,6 +6740,26 @@ genişlik dar/yarım/tam, gizle; önce sipariş ve fiş formu). Kullanıcı: *"E
   bildirilirse oraya bak.
 - Test: `senaryo-boyut-ayari` (düğme 1.3 kat, kutu değişmedi, kayıt, varsayılana dönüş).
 - SIRADAKİ (2. adım, kullanıcı onayı bekliyor değil — sözü verildi): sipariş ve fiş formunda blok "düzenleme kipi".
+
+**v1.522.0 — EKRAN DÜZENİ: düzenleme kipi (29 Eylül).** Kullanıcı: *"Evet, 2. adıma başla"*; araya *"Çok küçük de
+olsun, küçük ekranlar için"* (386'ya `cokKucuk`: genel 0.8, düğme 0.72, kutu 0.8).
+- `387-ekran-duzeni.jsx`: `EkranDuzeniBaglami` (React context), `ekranDuzeniCoz(bloklar, kayit)` (saf: kayıtlı sıra +
+  genişlik + gizli; kodda olmayan kayıt yok sayılır, yeni blok sona; `gizlenemez` blok gizlenmez), `duzenTasi`,
+  `DuzenAlani({ ekran, bloklar, aralik })`. Kip: "Düzen" düğmesi (yalnız yetkili) → her blokta çubuk: ⠿ tutamak
+  (pointer olayları + `setPointerCapture`; SALINIM KİLİDİ `sonHedefRef` — takastan sonra işaretçi eski hedefe
+  düşünce blok geri kaçıyordu, senaryo yakaladı), ↑ ↓, Dar/Yarım/Tam, göz; Varsayılana dön / Vazgeç / Düzeni kaydet.
+  Kipte içerik `pointer-events: none`. Gizli blok kipte soluk ve kısaltılmış.
+- Izgara (100-app genel stil): `.duzen-alani` 12 sütun; `.duzen-blok-dar` 4, `-yarim` 6, tam 12; ≤760 px dar/yarım → 12.
+- App: `EkranDuzeniBaglami.Provider` kökte; `duzenler = tanimlar.ekranDuzenleri`, `yetkili = kullaniciYetkisiVar
+  ("tanimlar","goruntuleme")`, `kaydet(ekran, liste)` → `saveTanimlar` (BULUT — bütün cihazlar; boyut ise cihaz başına).
+- Sipariş formu (325) bloklar: `baslik` (gizlenemez), `barkod`, `kalemEkle`, `kalemler` (gizlenemez); Kaydet/Vazgeç
+  başlık yuvasında, düzen dışı. Fiş formu (255): `baslik` (gizlenemez), `aciklama`, `kalemEkle` (siparişten seç
+  dahil), `kalemler` (gizlenemez); onay/koli uyarısı düzen dışı, hep üstte.
+- 000'a ikonlar: GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw.
+- Test: `birim-ekran-duzeni` (çözüm, taşıma, boyut normalleme), `senaryo-ekran-duzeni` (ok, sürükleme, yarım, gizle,
+  kayıt, vazgeç, varsayılan, fiş formunda Düzen); `satin-al-dugmesi` altınına "Düzen" yazısı girdi.
+- YENİ EKRAN EKLEMEK: bölümleri `<DuzenAlani ekran="..." bloklar={[{ id, ad, icerik, genislik?, gizlenemez? }]} />`
+  içine al; blok kimliklerini DEĞİŞTİRME (kayıtlı düzenler kimlikle eşleşiyor).
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 
