@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.520.0** · 28 Eylül 2026
+Son sürüm: **v1.521.0** · 28 Eylül 2026
 
 ---
 
@@ -16,7 +16,7 @@ ve neyin AÇIK kaldığı orada.
 **`barkod-semasi.sql` ÇALIŞTIRILDI** (kullanıcı bildirdi, 6 Eylül). Stok noları artık buluta
 gidiyor. **Bir daha sorma.**
 
-**Son iş (29 Eylül, v1.520.0): Kaydet/Vazgeç başlık satırında (sipariş: modül başlığının sağı, fiş: fiş başlık satırı); v1.519.0 sipariş formunda Kaydet/Vazgeç üstte, Not + Cari Defteri başlıkta; v1.518.0 Cari Hesaplar listesinde alacak/borç ayrı sütun + dip net toplam; v1.517.0 Alacaklar ve Borçlar raporunda alacak + / borç − ayrı sütun, net toplam; v1.516.0 fişte siparişten satır bazında ekleme; v1.515.0 sipariş formunda satır silme; v1.514.0 fişte satır silme + satırda KDV değiştirme; v1.513.0 sipariş formunda satır fiyatı yalnız son bedene yazılıyordu (düzeltildi); v1.512.0 SİPARİŞ İPTALİ — fişler bağımsız kalır, ayrılan serbest stoğa düşer (bkz. "SİPARİŞ İPTAL KURALI"); v1.511.0 sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
+**Son iş (29 Eylül, v1.521.0): Tanımlar > Görünüm > Boyut (genel/düğme/kutu ölçeği, cihaz başına); v1.520.0 Kaydet/Vazgeç başlık satırında (sipariş: modül başlığının sağı, fiş: fiş başlık satırı); v1.519.0 sipariş formunda Kaydet/Vazgeç üstte, Not + Cari Defteri başlıkta; v1.518.0 Cari Hesaplar listesinde alacak/borç ayrı sütun + dip net toplam; v1.517.0 Alacaklar ve Borçlar raporunda alacak + / borç − ayrı sütun, net toplam; v1.516.0 fişte siparişten satır bazında ekleme; v1.515.0 sipariş formunda satır silme; v1.514.0 fişte satır silme + satırda KDV değiştirme; v1.513.0 sipariş formunda satır fiyatı yalnız son bedene yazılıyordu (düzeltildi); v1.512.0 SİPARİŞ İPTALİ — fişler bağımsız kalır, ayrılan serbest stoğa düşer (bkz. "SİPARİŞ İPTAL KURALI"); v1.511.0 sipariş çıktısı sipariş kartı düzeninde; v1.510.0 sipariş çıktısı model model gruplu; v1.509.0 yetim sipariş hareketleri incelemesi (sebep kullanıcıya soruldu); v1.508.0 Siparişten seç — kolide/kolisiz ayrı; v1.507.0 "Standart" her yerde gizlendi; v1.506.0 Mamul Deposu açığı siparişin kendi kolisini düşüyor; v1.505.0 kayıp 15 senaryo yeniden yazıldı + bulduğu 3 hata; v1.504.0 sevkiyatta sipariş KDV oranı + faturalı fiş kilidi; v1.503.0 sipariş kaleminde notlar rengin yanında; v1.502.0 siparişte KDV satır eklenirken + teslime geçiyor; v1.501.0 fişte KDV oranı satır eklenirken; v1.500.0 e-fatura altyapısı (Aşama 2, bağlantı yok) — bkz. "E-FATURA YOL HARİTASI"; v1.499.0 maliyet son alışlardan (3 ay ortalaması, eskiyse USD ile güncel) — her yerde; v1.498.0 kâr/zarar satış geliri 0 hatası; v1.497.0 vergi no / TCKN kontrolü + aynı numaralı cari uyarısı; v1.496.0 fişlerde KDV (açma anahtarı, e-fatura Aşama 1) + cari vergi bilgileri — bkz. "E-FATURA YOL HARİTASI"; v1.495.0 renk başlığı üretim ve planlamada; v1.494.0 renk alanının başlığı stoğa göre; v1.493.0 renksiz/bedensiz tek kural + reçetede renksiz hammadde; v1.492.0 yenilemede eski logo + menü açılıp daralma; v1.491.0 siparişte fiş düzeni + yenilemede eski tema/titreme; v1.490.0 fiş formunda asorti · bedenler · toplam · fiyat · tutar · Ekle tek grup, geniş ekranda tek satır; v1.489.0 miktar+toplam+fiyat+Ekle tek grup; v1.488.0 Ekle aynı satırda; v1.487.0 fiş kalem satırı telefonda tek satır + toast üstte; v1.486.0 fiş formunda P.B. fiyatın yanında + yeşil Ekle; v1.485.0 Fiyatlandırmada uygulanan fiyat kırmızı, para birimi kalıcı + var olan fiyatlara uygulama sorusu; v1.484.0 fiş/sipariş fiyat kutusu beden fiyatından kendiliğinden doluyor; v1.483.0 Fiyatlandırmada kutuyu boşaltmak fiyatı siliyor (önce v1.482.0: beden fiyatları fişe/siparişe çekiliyor). Birleştirmeyi artık Claude yapıyor (kullanıcı onayı, 26 Eylül).** Bkz. "BEDEN FİYATI FİŞE ÇEKİLİYOR".
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
@@ -6722,6 +6722,24 @@ bi düzen getirelim."*
   bilgileri (tarih, no, not, defter, açıklama) kalemlerden önce; kalem girişinin "Ekle"si kayıt düğmesinden ayrı.
 - Kullanıcı sordu: *"Tasarımı yapmak için araç yok mu, sürükle bırak gibi?"* — yok; cevap verildi (uygulama içi
   sürükle-bırak form tasarımcısı büyük iş; kısa vadede bu standart + ekran görüntüsüyle istek).
+
+**v1.521.0 — Görünüm: Boyut ayarları (29 Eylül).** Kullanıcı: *"Sürükle gibi butonların yerini taşıyabileceğimiz,
+boyutlarını değiştirebileceğimiz, tüm uygulama için. Çok mu zor olur?"* Cevap: tamamen serbest sürükle-bırak her
+ekranın bildirimsel yeniden yazımı demek (100+ parça, telefon/masaüstü ayrı düzen, test edilemezlik) — önerilmedi.
+İki adım önerildi: (1) bütün uygulamada boyut ayarları, (2) ekran ekran blok düzeni ("düzenleme kipi": sürükle-sırala,
+genişlik dar/yarım/tam, gizle; önce sipariş ve fiş formu). Kullanıcı: *"Evet başla 1"*.
+- `386-boyut-ayari.jsx`: `BOYUT_SECENEKLERI` (genel 0.9/1/1.1/1.25, düğme 0.85/1/1.15/1.3, kutu 0.9/1/1.12/1.25),
+  `boyutAyariOku/Uygula/Kaydet`, `BoyutAyarlari` bileşeni (Tanımlar > Görünüm, Mobil Görünüm'ün üstünde; örnek düğme +
+  kutu; Varsayılana dön). Paket yüklenirken bir kez uygulanıyor (ilk kare doğru boyutta).
+- NASIL: CSS `zoom` — satır içi piksel stilleri de ölçekliyor; yüzlerce ekrana dokunmadan. 100-app genel stil:
+  `html { zoom: var(--olcek-genel) }`, `.btn-primary/.btn-ghost/.btn-save/.btn-danger { zoom: var(--olcek-dugme) }`,
+  `input(onay/radyo hariç)/select/textarea { zoom: var(--olcek-kutu) }`. Değişkenler kök öğede; yoksa 1.
+- CİHAZ BAŞINA (localStorage `gorunum:boyut`) — telefon/bilgisayar ayrı (mobil düzen kipiyle aynı karar).
+- DİKKAT: sınıfsız (satır içi stilli) düğmeler yalnız genel ölçekle büyür; yeni düğmelerde `btn-*` sınıfı kullan.
+  Genel ölçek ≠ 1 iken sürükleme kodları (385 mobil görünüm) tarayıcının zoom koordinatlarına güveniyor — sorun
+  bildirilirse oraya bak.
+- Test: `senaryo-boyut-ayari` (düğme 1.3 kat, kutu değişmedi, kayıt, varsayılana dönüş).
+- SIRADAKİ (2. adım, kullanıcı onayı bekliyor değil — sözü verildi): sipariş ve fiş formunda blok "düzenleme kipi".
 
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 

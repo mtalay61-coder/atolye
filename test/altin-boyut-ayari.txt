@@ -1,0 +1,31 @@
+{
+ "cihazaKaydedildi": {
+  "dugme": "cokBuyuk",
+  "genel": "buyuk",
+  "kutu": "normal"
+ },
+ "dugmeCokBuyuk": {
+  "dugme": "1.3",
+  "dugmeOrani": 1.3,
+  "kutuDegismedi": true
+ },
+ "genelBuyuk": {
+  "genel": "1.1"
+ },
+ "hatalar": [],
+ "once": {
+  "dugme": "1",
+  "genel": "1",
+  "kutu": "1",
+  "secili": [
+   "genel:normal",
+   "dugme:normal",
+   "kutu:normal"
+  ]
+ },
+ "varsayilan": {
+  "dugme": "1",
+  "genel": "1",
+  "kutu": "1"
+ }
+}
