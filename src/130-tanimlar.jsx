@@ -2101,6 +2101,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
       <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
         <BoyutAyarlari showToast={showToast} />
       </div>
+      {/* EKRAN DÜZENİ (v1.523.0) — hangi ekranda nasıl değiştirildiği + kayıtlı düzeni sıfırlama. */}
+      <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
+        <EkranDuzeniTanimlari />
+      </div>
       {/* MOBİL GÖRÜNÜM DÜZENLEYİCİ (14 Eylül) — telefon düzenini kullanıcı kuruyor. */}
       <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
         <MobilGorunumDuzenleyici tanimlar={tanimlar} onSave={onSave} showToast={showToast}

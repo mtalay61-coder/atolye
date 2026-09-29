@@ -10,7 +10,7 @@
   "gorunen": [
    "Anasayfa Depo Üretim Planlama Siparişler Finans TK",
    "Anasayfa Depo Alış Fişi: Cari seçin $ 48,00 € 56,00",
-   "CARİ · ALIŞ FİŞİ Cari seçin − Kapat Düzen Cariden Alış Fişi mal stoğa girer, cariye borç y"
+   "CARİ · ALIŞ FİŞİ Cari seçin − Kapat Düzeni değiştir Cariden Alış Fişi mal stoğa girer, car"
   ],
   "miktarOnDolu": true,
   "siparisFormuAcilmadi": true,

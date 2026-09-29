@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.522.0";
+const SURUM = "1.523.0";
 const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Ekran duzeni: siparis ve fis formunda bloklari surukle, genislik, gizle; Cok kucuk boyut";
+const SURUM_NOTU = "Duzeni degistir dugmesi belirgin; Tanimlar > Gorunum > Ekran Duzeni";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Ekran duzeni: siparis ve fis formunda bloklari surukle, geni
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.523.0", tarih: "29.09.2026",
+    eklenen: ["Tanımlar > Görünüm > Ekran Düzeni: düzeni değiştirilebilen ekranlar, nerede oldukları ve kayıtlı düzeni varsayılana döndürme"],
+    degisen: ["Sipariş ve fiş formundaki 'Düzen' düğmesi belirgin: mor çerçeveli 'Düzeni değiştir' (önce küçük gri yazıydı, görünmüyordu)"],
+    duzeltilen: [] },
   { surum: "1.522.0", tarih: "29.09.2026",
     eklenen: ["Ekran düzeni: sipariş formunda ve fiş formunda 'Düzen' düğmesi — bloklar sürüklenerek (ya da oklarla) sıralanır, genişliği Dar / Yarım / Tam seçilir, gizlenir; Varsayılana dön; düzen bütün cihazlarda geçerli (Tanımlar yetkisi olan değiştirir)", "Boyut ayarlarına 'Çok küçük' seçeneği (küçük ekranlar için)"],
     degisen: [],

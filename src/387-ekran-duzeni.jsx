@@ -142,9 +142,12 @@ function DuzenAlani({ ekran, bloklar, aralik = 12 }) {
       {baglam && baglam.yetkili && (
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 2 }}>
           {!kip ? (
+            // GÖRÜNÜR DÜĞME (v1.523.0 — kullanıcı: "Düzen tuşunu göremedim"). 11 px gri, çerçevesiz bir yazıydı; formun
+            // köşesinde kayboluyordu. Artık çerçeveli, mor (düzen kipinin rengi) ve adı ne yaptığını söylüyor.
             <button type="button" data-duzen-ac={ekran} onClick={kipeGir} title="Bu ekranın bloklarını sırala, genişliğini ayarla, gizle"
-              style={{ border: "none", background: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--erp-text-3)", padding: 2 }}>
-              <LayoutGrid size={12} /> Düzen
+              style={{ border: "1.5px solid var(--erp-purple)", background: "#6B4E8A12", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5,
+                fontSize: 12, fontWeight: 700, color: "var(--erp-purple)", padding: "4px 10px", borderRadius: "var(--erp-r-pill)" }}>
+              <LayoutGrid size={14} /> Düzeni değiştir
             </button>
           ) : (
             <>
@@ -176,6 +179,45 @@ function DuzenAlani({ ekran, bloklar, aralik = 12 }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// TANIMLAR > GÖRÜNÜM > EKRAN DÜZENİ (v1.523.0 — kullanıcı: "Düzen tuşunu göremedim"). Düzenin NEREDE değiştirildiğini
+// söyler ve kayıtlı düzenleri tek tek varsayılana döndürür (yanlış bir düzen kaydedilip form kullanılmaz hâle gelirse
+// buradan kurtarılsın).
+const DUZENLI_EKRANLAR = [
+  { ekran: "siparisFormu", ad: "Sipariş formu", yer: "Sipariş / Alış Siparişi → Yeni sipariş ya da ✎ Düzenle" },
+  { ekran: "fisFormu", ad: "Fiş formu", yer: "Cari kartı → Alış Fişi / Satış Fişi" },
+];
+function EkranDuzeniTanimlari() {
+  const baglam = React.useContext(EkranDuzeniBaglami);
+  const duzenler = (baglam && baglam.duzenler) || {};
+  return (
+    <div data-ekran-duzeni-tanimlari="1">
+      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Ekran Düzeni</h3>
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
+        Aşağıdaki ekranlarda sağ üstteki mor <b>“Düzeni değiştir”</b> düğmesiyle bloklar sürüklenip sıralanır, genişliği
+        (Dar / Yarım / Tam) seçilir, gizlenir. Düzen bütün cihazlarda geçerlidir.
+      </p>
+      {DUZENLI_EKRANLAR.map((x) => {
+        const kayitli = Array.isArray(duzenler[x.ekran]) && duzenler[x.ekran].length > 0;
+        return (
+          <div key={x.ekran} data-ekran-duzeni-satiri={x.ekran} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "6px 0", borderBottom: "1px solid var(--erp-line-soft)" }}>
+            <div style={{ minWidth: 150 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>{x.ad}</div>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{x.yer}</div>
+            </div>
+            <span style={{ fontSize: 12, color: kayitli ? "var(--erp-purple)" : "var(--erp-text-3)" }}>{kayitli ? "özel düzen kayıtlı" : "varsayılan düzen"}</span>
+            {kayitli && baglam && baglam.yetkili && (
+              <button type="button" className="btn-ghost" data-ekran-duzeni-sifirla={x.ekran} style={{ padding: "3px 10px", fontSize: 12, marginLeft: "auto" }}
+                onClick={() => baglam.kaydet(x.ekran, [])}>
+                <RotateCcw size={12} /> Varsayılana dön
+              </button>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
