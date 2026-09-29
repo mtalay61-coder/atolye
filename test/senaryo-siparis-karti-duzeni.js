@@ -6,7 +6,8 @@
 // Ölçülen:
 //   1) varsayılan sıra; düzen ikonu tek (tam ekran kartta); kipte gizlenebilen bloklar (Kalemler yok);
 //   2) Tedarik bloğu Kalemler'in üstüne, Not gizli → Kaydet → sıra uygulanmış, not metni görünmüyor;
-//   3) (v1.528.0) Para birimi bloğunun sağ kenarı fareyle 9 sütun sola çekilir → 3/12 (sayı olarak kaydedilir);
+//   1b) (v1.529.0) üst şerit: fiş para birimi paneli ve düzen ikonu şeridin içinde; para birimi ayrı blok değil (boş);
+//   3) (v1.528.0) Not bloğunun sağ kenarı fareyle 9 sütun sola çekilir → 3/12 (sayı olarak kaydedilir);
 //      Teslim bloğu çubuğunun adından tutulup Koliler'in üstüne sürüklenir;
 //   4) kayıt tanimlar.ekranDuzenleri.siparisKarti.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
@@ -41,8 +42,13 @@ async function calistir(ekranGoruntusu) {
     };
   }, K);
   const varsayilan = await durum();
+  // TEK ÜST ŞERİT (v1.529.0): durum, paylaş düğmeleri, fiş para birimi ve düzen ikonu aynı şeritte.
+  const ustSerit = await sayfa.evaluate(() => {
+    const s = [...document.querySelectorAll("[data-siparis-ust-serit]")].find((x) => x.getBoundingClientRect().width > 0);
+    return s ? { pbPaneli: !!s.querySelector('[data-fis-pb-paneli="gomulu"]'), duzenIkonu: !!s.querySelector('[data-duzen-ac="siparisKarti"]'), metin: (s.textContent || "").replace(/\s+/g, " ").trim() } : null;
+  });
   const ikonSayisi = await sayfa.locator('[data-duzen-ac="siparisKarti"]:visible').count();
-  await sayfa.locator(`${gorunur} [data-duzen-ac="siparisKarti"]`).first().click();
+  await sayfa.locator('[data-duzen-ac="siparisKarti"]:visible').first().click();
   await sayfa.waitForTimeout(300);
   const gozler = await sayfa.evaluate((K) => {
     const k = [...document.querySelectorAll(K)].find((x) => x.getBoundingClientRect().width > 0);
@@ -51,15 +57,15 @@ async function calistir(ekranGoruntusu) {
   await sayfa.locator(`${gorunur} [data-duzen-yukari="tedarik"]`).first().click();
   await sayfa.locator(`${gorunur} [data-duzen-gizle="not"]`).first().click();
   await sayfa.waitForTimeout(150);
-  // FAREYLE GENİŞLİK (v1.528.0): Para birimi bloğunun sağ kenar tutamağı 9 sütun sola çekilir → 3/12.
+  // FAREYLE GENİŞLİK (v1.528.0): Not bloğunun (v1.529.0'dan beri para birimi üst şeritte) sağ kenar tutamağı 9 sütun sola çekilir → 3/12.
   const alanGenisligi = await sayfa.evaluate((K) => [...document.querySelectorAll(`${K} > .duzen-alani`)].find((x) => x.getBoundingClientRect().width > 0).getBoundingClientRect().width, K);
-  const tut = await sayfa.locator(`${gorunur} [data-duzen-boyut="paraBirimi"]`).first().boundingBox();
+  const tut = await sayfa.locator(`${gorunur} [data-duzen-boyut="not"]`).first().boundingBox();
   await sayfa.mouse.move(tut.x + tut.width / 2, tut.y + tut.height / 2);
   await sayfa.mouse.down();
   await sayfa.mouse.move(tut.x + tut.width / 2 - alanGenisligi * 9 / 12, tut.y + tut.height / 2, { steps: 10 });
   await sayfa.mouse.up();
   await sayfa.waitForTimeout(150);
-  const genislikEtiketi = await sayfa.locator(`${gorunur} [data-duzen-sutun-etiketi="paraBirimi"]`).first().textContent();
+  const genislikEtiketi = await sayfa.locator(`${gorunur} [data-duzen-sutun-etiketi="not"]`).first().textContent();
   // ÇUBUKTAN SÜRÜKLE (v1.528.0): Teslim bloğu, ⠿ değil çubuğunun ADINDAN tutulup Koliler'in üstüne.
   const ad = await sayfa.locator(`${gorunur} [data-duzen-cubugu="teslim"] b`).first().boundingBox();
   const hedef = await sayfa.locator(`${gorunur} [data-duzen-blok="koliler"]`).first().boundingBox();
@@ -76,7 +82,7 @@ async function calistir(ekranGoruntusu) {
   const kayit = ((tanim && tanim.ekranDuzenleri) || {}).siparisKarti || [];
   await tarayici.close();
   return {
-    hatalar, varsayilan, ikonSayisi, gozler, genislikEtiketi, kayittanSonra,
+    hatalar, varsayilan, ustSerit, ikonSayisi, gozler, genislikEtiketi, kayittanSonra,
     kayit: kayit.map((x) => `${x.id}:${x.genislik}${x.gizli ? "(gizli)" : ""}`),
   };
 }

@@ -65,7 +65,8 @@ function siparisTedarikDurumuHesapla(siparis, tumSiparisler, uretimSiparisleri) 
 // GENEL toplamını (pbToplamlari — her para birimindeki toplam), seçilen tek bir hedef para birimine,
 // kur üzerinden çevirip GÖSTERİR. Salt görüntüleme/hesaplama amaçlıdır; hiçbir kalem satırına geri
 // yazılmaz — Kasa/Banka'daki mantığın aksine, burada kaynak veri asla mutasyona uğramaz.
-function FisToplamCeviriPaneli({ pbToplamlari, kurlar, deger, onDegistir }) {
+// `gomulu` (v1.529.0): çerçevesiz, yalnız satır — sipariş kartının üst şeridine oturur (şerit zaten mor kutu).
+function FisToplamCeviriPaneli({ pbToplamlari, kurlar, deger, onDegistir, gomulu }) {
   const pbler = Object.keys(pbToplamlari);
   // Bu bileşen TAMAMEN "kontrollü" (controlled) çalışır — kendi kalıcılığını KENDİSİ yönetmez, dışarıdan
   // gelen `deger` ({kayitParaBirimi, kayitKurlari}) ile başlar, her değişiklikte `onDegistir` ile dışarı
@@ -150,7 +151,7 @@ function FisToplamCeviriPaneli({ pbToplamlari, kurlar, deger, onDegistir }) {
   const digerPbler = pbler.filter((pb) => pb !== hedefPB);
 
   return (
-    <div style={{ background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)", padding: "6px 8px", marginTop: 8, textAlign: "left" }}>
+    <div data-fis-pb-paneli={gomulu ? "gomulu" : "kutu"} style={gomulu ? { flex: "1 1 260px", minWidth: 0, textAlign: "left" } : { background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)", padding: "6px 8px", marginTop: 8, textAlign: "left" }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <span style={{ fontSize: 10, color: "var(--erp-purple)", fontWeight: 700, whiteSpace: "nowrap" }} title="Ürün satırları değişmez; bu seçim siparişte kalıcı olarak saklanır">
           Fiş P.Birimi:

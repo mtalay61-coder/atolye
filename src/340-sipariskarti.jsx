@@ -64,6 +64,9 @@ function mobilBolumGizliMi(ayar, bolumKey) {
 
 function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc }) {
   const [open, setOpen] = useState(!!baslangicAcik);
+  // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
+  const duzenAcRef = useRef(null);
+  const duzenBaglami = React.useContext(EkranDuzeniBaglami);
   const [tedarikAcik, setTedarikAcik] = useState(true);
   const [showTeslim, setShowTeslim] = useState(false);
   const [teslimMiktarlar, setTeslimMiktarlar] = useState({});
@@ -222,9 +225,15 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           width: "100%", display: "flex", alignItems: "center", gap: 10,
           // Liste içinde bu şerit yalnızca iki küçük kontrol taşır; 14px'lik dolgu boş bir bant
           // gibi görünüyordu.
-          padding: baslangicAcik ? "10px 14px 0" : 14,
+          padding: baslangicAcik ? "6px 8px" : 14,
           background: "transparent", border: "none", cursor: baslangicAcik ? "default" : "pointer", textAlign: "left", flexWrap: "wrap",
+          // TEK ÜST ŞERİT (v1.529.0 — kullanıcı: "mor çubuğu tam yapıp üzerindekileri üzerine oturtsak, bütünlük olsun,
+          // üst bilgi gibi"). Açık kartta durum · düzenle/sil · yazdır/paylaş · fiş para birimi + toplam · düzen ikonu
+          // tek mor şeritte. Önce eylemler şeridin üstünde, para birimi ayrı bir mor kutuda (düzende ayrı blok), düzen
+          // ikonu kendi satırındaydı — üç satır, arada boşluk.
+          ...(baslangicAcik ? { margin: "10px 14px 8px", width: "auto", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : {}),
         }}
+        data-siparis-ust-serit={baslangicAcik ? "1" : undefined}
       >
         {/* Kart bir listenin İÇİNDE açıldığında (baslangicAcik) bu başlık, hemen üstündeki özet
             satırının birebir tekrarıdır: aynı sipariş no, aynı cari, aynı durum, aynı tutar. Tekrar,
@@ -361,6 +370,23 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             </span>
           )}
         </span>
+        {baslangicAcik && open && !saltOkunur && Object.keys(pbToplamlariHam).length > 0 && (
+          <span onClick={(e) => e.stopPropagation()} style={{ display: "contents" }}>
+            <FisToplamCeviriPaneli
+              gomulu
+              pbToplamlari={pbToplamlariHam}
+              kurlar={kurlar}
+              deger={{ kayitParaBirimi: siparis.kayitParaBirimi, kayitKurlari: siparis.kayitKurlari }}
+              onDegistir={(yeni) => onKayitParaGuncelle && onKayitParaGuncelle(siparis.id, yeni.kayitParaBirimi, yeni.kayitKurlari)}
+            />
+          </span>
+        )}
+        {baslangicAcik && open && !saltOkunur && duzenBaglami && duzenBaglami.yetkili && (
+          <button type="button" className="btn-ikon" data-duzen-ac="siparisKarti" title="Ekran düzeni — blokları sırala, genişliğini ayarla, gizle"
+            onClick={(e) => { e.stopPropagation(); if (duzenAcRef.current) duzenAcRef.current(); }} style={{ marginLeft: Object.keys(pbToplamlariHam).length > 0 ? 0 : "auto" }}>
+            <LayoutGrid size={14} />
+          </button>
+        )}
       </div>
 
       {open && (
@@ -425,7 +451,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           {/* EKRAN DÜZENİ (v1.527.0 — kullanıcı: "Sipariş kartına da düzen ekle"): kart gövdesi altı blok. Silme/iptal
               onayı düzenin DIŞINDA ve en üstte (geçici panel). Önizlemede (saltOkunur) düzen ikonu çıkmaz: liste içinde
               açılan kısa görünüm, düzenlemenin yeri tam ekran kart. Boş kalan blok (notu olmayan sipariş) yer tutmaz. */}
-          <DuzenAlani ekran="siparisKarti" aralik={0} kilitli={saltOkunur} bloklar={[
+          <DuzenAlani ekran="siparisKarti" aralik={0} kilitli={saltOkunur} acRef={duzenAcRef} disIkon={!!baslangicAcik} bloklar={[
           { id: "not", ad: "Not", icerik: (<>
           {!saltOkunur && siparis.not && (
             <div style={{ display: "flex", gap: 6, marginBottom: 10, fontSize: 12, color: "var(--erp-text-2)", alignItems: "flex-start", flexWrap: "wrap" }}>
@@ -442,8 +468,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
 
 
           </>) },
+          // Açık kartta (baslangicAcik) para birimi üst şeritte; blok yalnız liste içi kapalı-açılır kartta dolu.
           { id: "paraBirimi", ad: "Para birimi çevirisi", icerik: (<>
-          {Object.keys(pbToplamlariHam).length > 0 && (
+          {!baslangicAcik && Object.keys(pbToplamlariHam).length > 0 && (
             !saltOkunur && <FisToplamCeviriPaneli
               pbToplamlari={pbToplamlariHam}
               kurlar={kurlar}
@@ -2383,7 +2410,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             </div>
           )}
           </>) },
-          ]} />
+          ].filter((b) => !(baslangicAcik && b.id === "paraBirimi"))} />
 
           {/* Durum ve sil, kart BAŞLIĞINA taşındı — burada tekrar edilmiyor. */}
 
