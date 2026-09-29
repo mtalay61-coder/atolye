@@ -1,0 +1,23 @@
+{
+ "hatalar": [],
+ "musteri": {
+  "kartlar": [
+   "Müşteri B: alacak +300.000 ₺ · borç —"
+  ],
+  "toplam": [
+   "Toplam · 1 cari Alacak +300.000 ₺ Borç 0 ₺ Net alacak +300.000 ₺"
+  ],
+  "ustNet": "Net: +49.970 ₺"
+ },
+ "tumu": {
+  "kartlar": [
+   "Tedarikçi A: alacak — · borç -250.000 ₺",
+   "Müşteri B: alacak +300.000 ₺ · borç —",
+   "Personel C: alacak — · borç -30 ₺"
+  ],
+  "toplam": [
+   "Toplam · 3 cari Alacak +300.000 ₺ Borç -250.030 ₺ Net alacak +49.970 ₺"
+  ],
+  "ustNet": "Net: +49.970 ₺"
+ }
+}

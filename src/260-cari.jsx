@@ -305,7 +305,11 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               Alacak: {bakiyeMetni(toplamAlacak, false)}
             </span>
             <span className="mono" style={{ fontSize: 13, color: "var(--erp-warn)", fontWeight: 600 }}>
-              Borç: {bakiyeMetni(toplamBorc, false)}
+              Borç: {bakiyeMetni(Object.fromEntries(Object.entries(toplamBorc).map(([pb, t]) => [pb, -t])))}
+            </span>
+            {/* NET (v1.518.0): alacak − borç, para birimi başına. */}
+            <span className="mono" data-cari-ozet-net="1" style={{ fontSize: 13, fontWeight: 700, color: bakiyeRengi(bakiyeYonu(bakiyeleriTopla([toplamAlacak, Object.fromEntries(Object.entries(toplamBorc).map(([pb, t]) => [pb, -t]))]))) }}>
+              Net: {bakiyeMetni(bakiyeleriTopla([toplamAlacak, Object.fromEntries(Object.entries(toplamBorc).map(([pb, t]) => [pb, -t]))]))}
             </span>
           </>
         )}
@@ -402,6 +406,37 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               onPencereAc={onPencereAc}
             />
           ))}
+          {/* DİP TOPLAM (v1.518.0 — kullanıcı: alacak ve borç ayrı, altta net). LİSTELENEN carilerin (sekme + arama
+              süzgeci uygulanmış) toplamı: Alacak (+), Borç (−), Net = ikisinin toplamı. Para birimleri ayrı satırda
+              — farklı birimleri toplamak yapılmamış bir kur çevrimi olurdu. */}
+          {(() => {
+            const ayrik = filtered.map((c) => bakiyeAyir(cariBakiyeleri(c)));
+            const alacakT = bakiyeleriTopla(ayrik.map((x) => x.alacak));
+            const borcT = bakiyeleriTopla(ayrik.map((x) => x.borc));
+            const netT = bakiyeleriTopla([alacakT, borcT]);
+            const pbler = Array.from(new Set([...Object.keys(alacakT), ...Object.keys(borcT)]));
+            if (!pbler.length) return null;
+            return (
+              <div data-cari-liste-toplam="1" style={{ background: "var(--erp-panel)", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "10px 16px", display: "grid", gap: 6 }}>
+                {pbler.map((pb) => {
+                  const a = alacakT[pb] || 0; const b = borcT[pb] || 0; const n = netT[pb] || 0;
+                  const para = (x) => `${x > 0 ? "+" : ""}${x.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+                  return (
+                    <div key={pb} data-cari-liste-toplam-pb={pb} style={{ display: "flex", gap: 16, alignItems: "baseline", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", marginRight: "auto" }}>
+                        Toplam · {filtered.length} cari{pbler.length > 1 ? ` · ${pb}` : ""}
+                      </span>
+                      <span className="mono" style={{ fontSize: 13 }}>Alacak <b style={{ color: "var(--erp-primary)" }}>{para(a)}</b></span>
+                      <span className="mono" style={{ fontSize: 13 }}>Borç <b style={{ color: "var(--erp-warn)" }}>{para(b)}</b></span>
+                      <span className="mono" data-cari-liste-net={pb} style={{ fontSize: 14 }}>
+                        Net {n > 0 ? "alacak" : n < 0 ? "borç" : ""} <b style={{ color: bakiyeRengi(n) }}>{para(n)}</b>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
