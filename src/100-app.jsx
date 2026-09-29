@@ -2944,6 +2944,11 @@ export default function AtolyeERP() {
     setMobilDuzenSurumu((n) => n + 1);   // menü genişliği yeniden hesaplansın
   }, [mobilDuzen]);
 
+  // Ekran düzeni kaydı için en güncel tanımlar (bkz. ekranDuzeniDegeri). KANCA BURADA — aşağıdaki erken dönüşlerden
+  // (giriş ekranları) ÖNCE; sonrasında olsaydı çizimler arasında kanca sayısı değişir, uygulama çökerdi.
+  const ekranTanimRef = useRef(tanimlar);
+  ekranTanimRef.current = tanimlar;
+
   // BULUT ÖN GİRİŞ (2. aşama): veri okunamadıysa her şeyden önce.
   //
   if (!loading && bulutGirisGerekli) {
@@ -3019,8 +3024,6 @@ export default function AtolyeERP() {
 
   // EKRAN DÜZENİ BAĞLAMI (v1.522.0, 387): düzenleme kipindeki ekranlar kayıtlı düzeni buradan okur ve buraya
   // yazar (tanimlar.ekranDuzenleri — bulut, bütün cihazlar). Düzeni değiştirme yetkisi Tanımlar'ı görebilene.
-  const ekranTanimRef = useRef(tanimlar);
-  ekranTanimRef.current = tanimlar;
   const ekranDuzeniDegeri = {
     duzenler: tanimlar.ekranDuzenleri || {},
     yetkili: kullaniciYetkisiVar("tanimlar", "goruntuleme"),
