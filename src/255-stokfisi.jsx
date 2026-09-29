@@ -581,6 +581,120 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
+      {/* KAYDET / VAZGEÇ ÜSTTE (v1.520.0 — kullanıcı: "Fiş formunda da kaydet vazgeç üstte olsun"; sipariş
+          formunda v1.519.0). Kaydetmeden önceki ONAY PANELİ ve koli uyarısı da burada: "Kaydet"e basan kişi
+          sonucu düğmenin olduğu yerde görür, sayfanın dibine kaydırmaz. Kalem girişindeki yeşil "Ekle" ile
+          kayıt düğmesi artık yan yana gelmiyor. */}
+      {(koliUyarilari.length > 0 || onayGoster) && (
+      <div data-fis-eylemler="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        {koliUyarilari.length > 0 && (
+          <div data-fis-koli-uyarisi="1" style={{ flexBasis: "100%", fontSize: 12, color: "var(--erp-danger)", background: "#FBEFEA", border: "1px solid #E4B8A8", borderRadius: "var(--erp-r-md)", padding: "6px 10px" }}>
+            ⚠ Bu mal kolide. Koliyi okutmadan düz satarsanız stok düşer ama koliler "Hazır" kalır.
+            {" "}{koliUyarilari.join(" · ")}
+          </div>
+        )}
+        {/* ONAY PANELİ (23 Eylül, v1.431.0): kaydetmeden önce stok etkisinin özeti. Sipariş
+            kartındaki alış teslim formundan taşındı — orada kullanıcının isteğiyle konmuştu ve
+            alış tek ekrana geçerken kaybolmaması istendi. Matris (ürün satır, beden sütun) proje
+            kuralı: düz liste beş bedenli modeli beş kez yazar, asıl soru tekrarın altında kaybolur.
+            VERİ HATASI BARİYERİ: kalemin ürünü stokta tam olarak bir kez bulunmuyorsa kayıt
+            engelleniyor — yoksa hareket hiçbir karta işlemez ya da yanlış karta işler. */}
+        {onayGoster && (() => {
+          const isaret = alisMi ? "+" : "-";
+          const kontrollu = kalemler.map((k) => ({
+            k, eslesenSayisi: (stok || []).filter((p) => p.id === k.urunId).length,
+          }));
+          const hataliVarMi = kontrollu.some((x) => x.eslesenSayisi !== 1);
+          const ix = {};
+          const satirlar = [];
+          kontrollu.forEach(({ k }) => {
+            const a = `${k.urunId}|${k.renk || ""}`;
+            if (!(a in ix)) { ix[a] = satirlar.length; satirlar.push({ ad: k.urunAd, renk: k.renk || "", birim: k.birim || "", hucreler: {}, toplam: 0 }); }
+            const st = satirlar[ix[a]];
+            st.hucreler[k.beden || ""] = stokYuvarla((st.hucreler[k.beden || ""] || 0) + (k.miktar || 0));
+            st.toplam = stokYuvarla(st.toplam + (k.miktar || 0));
+          });
+          const matris = satirlar.filter((r) => Object.keys(r.hucreler).length > 1);
+          const tekil = satirlar.filter((r) => Object.keys(r.hucreler).length <= 1);
+          const bedenler = bedenSirala(Array.from(new Set(matris.flatMap((r) => Object.keys(r.hucreler)))));
+          const hatalilar = kontrollu.filter((x) => x.eslesenSayisi !== 1);
+          return (
+            <div data-fis-onay="1" style={{ flexBasis: "100%", background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F",
+              borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 6 }}>
+                Şunu onaylıyor musunuz? Aşağıdaki ürünlerin stoğu değişecek:
+              </div>
+              {cari && (
+                <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 6 }}>
+                  <b>{cari.unvan}</b> · Cari hareketi <b>{defter === "Muhasebe" ? "hem Genel hem Resmi deftere" : `${defter} defterine`}</b> işlenecek.
+                </div>
+              )}
+              <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
+                {matris.length > 0 && (
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr>
+                          <th style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "left", padding: "2px 8px 2px 0" }}>ÜRÜN</th>
+                          {bedenler.map((b) => (
+                            <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" }}>{olcuGoster(b, "Miktar")}</th>
+                          ))}
+                          <th className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "right", padding: "2px 0 2px 10px" }}>TOP.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {matris.map((r, ri) => (
+                          <tr key={ri} data-fis-onay-satir={r.ad}>
+                            <td style={{ fontSize: 12, fontWeight: 700, padding: "2px 8px 2px 0", whiteSpace: "nowrap" }}>
+                              {r.ad}<span className="mono" style={{ fontSize: 11, fontWeight: 400, color: "#7A3B22" }}> · {r.renk}</span>
+                            </td>
+                            {bedenler.map((b) => (
+                              <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "2px 7px", color: r.hucreler[b] ? "var(--erp-text)" : "#B9A88C" }}>
+                                {r.hucreler[b] ? `${isaret}${r.hucreler[b]}` : "–"}
+                              </td>
+                            ))}
+                            <td className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", padding: "2px 0 2px 10px", whiteSpace: "nowrap" }}>
+                              {isaret}{r.toplam} <span style={{ fontSize: 10, fontWeight: 400, color: "#7A3B22" }}>{r.birim}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                {tekil.map((r, ri) => (
+                  <div key={ri} data-fis-onay-satir={r.ad} className="mono" style={{ fontSize: 12 }}>
+                    <b>{r.ad}</b>{r.renk ? ` · ${r.renk}` : ""}: {isaret}{r.toplam} {r.birim}
+                  </div>
+                ))}
+                {hatalilar.map((x, i) => (
+                  <div key={i} className="mono" style={{ fontSize: 11, color: "var(--erp-warn)", fontWeight: 700 }}>
+                    ⚠ {x.k.urunAd} · {x.k.renk} {x.k.beden} —{" "}
+                    {x.eslesenSayisi === 0 ? "stokta bu ürün bulunamadı!" : `stokta bu id'ye sahip ${x.eslesenSayisi} ürün var — veri hatası!`}
+                  </div>
+                ))}
+              </div>
+              {hataliVarMi && (
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#9C3D3D", marginBottom: 8, padding: "6px 8px", background: "#FCEAEA", borderRadius: "var(--erp-r-sm)" }}>
+                  ⚠ Yukarıdaki veri hatası nedeniyle kaydetme engellendi. Sorunlu kalemi fişten çıkarıp
+                  yalnız hatasız kalemleri kaydedin — sorunlu kaydı bildirin.
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button type="button" data-fis-onay-evet="1" className="btn-primary" style={{ padding: "6px 12px", fontSize: 12 }}
+                  onClick={kaydetOnayli} disabled={hataliVarMi}>
+                  Evet, Onayla ve Kaydet
+                </button>
+                <button type="button" data-fis-onay-vazgec="1" className="btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }}
+                  onClick={() => setOnayGoster(false)}>
+                  Vazgeç, Düzenlemeye Dön
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+      )}
       <div style={{ background: "var(--erp-panel)", border: `2px solid ${ana}`, borderRadius: "var(--erp-r-md)", padding: "10px 12px", boxShadow: BOLUM_GOLGE }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
           <Receipt size={16} color={ana} />
@@ -595,7 +709,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               p.birimini ufaltıp sağ üste koy"). İkisi de FİŞİN TAMAMINI ilgilendiren ayar, kalem
               kalem değişmiyor; alan satırında yer kaplıyor ve her fişte göze giriyorlardı. Asıl iş
               ürün/renk/miktar. */}
-          <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
             <select value={paraBirimi} data-fis-pb="1"
               onChange={(e) => { setParaBirimi(e.target.value); setKParaBirimi(e.target.value); setParaBirimiElle(true); }}
               title="Fiş cariye bu para biriminde yazılır; farklı para birimindeki satırlar buna çevrilir"
@@ -609,6 +723,16 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               <option value="Resmi">Resmi</option>
               <option value="Muhasebe">Muhasebe (ikisine de)</option>
             </select>
+            {/* KAYDET / VAZGEÇ BAŞLIK SATIRINDA (v1.520.0 — kullanıcı: "Fiş formunda da kaydet vazgeç üstte olsun",
+                ardından "başlığın sağına gelsin, ekran toparlanır"). Fişin adı, para birimi, defter ve kayıt tek
+                satırda; kalem girişindeki yeşil "Ekle"den uzak. Kaydetmeden önceki onay kutusu hemen altta açılır. */}
+            {/* Kalem sayacı düğmenin yanında: "kaydedeceğim fişte kaç kalem var" kaydetmeden önce görülsün. */}
+            <span data-fis-kalem-sayaci="1" className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>{kalemler.length} kalem</span>
+            <button className="btn-primary btn-save" data-fis-kaydet="1" style={{ background: ana, padding: "5px 12px", fontSize: 12 }} disabled={kalemler.length === 0 || cevrimEksik || !seciliCariId} onClick={kaydet}
+              title={cari ? `${cari.unvan} · ${kalemler.length} kalem` : undefined}>
+              <Save size={13} /> {alisMi ? "Alış Fişini Kaydet" : "Satış Fişini Kaydet"}
+            </button>
+            <button className="btn-ghost" data-fis-vazgec="1" style={{ padding: "5px 10px", fontSize: 12 }} onClick={onVazgec}><X size={13} /> Vazgeç</button>
           </div>
         </div>
 
@@ -700,6 +824,18 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
             </>
           )}
         </div>
+      </div>
+
+      {/* AÇIKLAMA FİŞ BİLGİLERİNİN ALTINDA (v1.520.0): belgenin kendi bilgisi, kalemlerden önce (sipariş formuyla aynı standart). */}
+      <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "8px 14px" }}>
+        <Field label="Açıklama">
+          <input
+            value={aciklama}
+            onChange={(e) => setAciklama(e.target.value)}
+            placeholder={`Opsiyonel — boş kalırsa "${alisMi ? "Cariden Alış" : "Cariye Satış"} fişi" yazılır`}
+            style={inputStyle}
+          />
+        </Field>
       </div>
 
       {/* ---- KALEM EKLEME ----
@@ -1590,132 +1726,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         );
       })()}
 
-      <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14 }}>
-        <Field label="Açıklama">
-          <input
-            value={aciklama}
-            onChange={(e) => setAciklama(e.target.value)}
-            placeholder={`Opsiyonel — boş kalırsa "${alisMi ? "Cariden Alış" : "Cariye Satış"} fişi" yazılır`}
-            style={inputStyle}
-          />
-        </Field>
-      </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {koliUyarilari.length > 0 && (
-          <div data-fis-koli-uyarisi="1" style={{ flexBasis: "100%", fontSize: 12, color: "var(--erp-danger)", background: "#FBEFEA", border: "1px solid #E4B8A8", borderRadius: "var(--erp-r-md)", padding: "6px 10px" }}>
-            ⚠ Bu mal kolide. Koliyi okutmadan düz satarsanız stok düşer ama koliler "Hazır" kalır.
-            {" "}{koliUyarilari.join(" · ")}
-          </div>
-        )}
-        {/* ONAY PANELİ (23 Eylül, v1.431.0): kaydetmeden önce stok etkisinin özeti. Sipariş
-            kartındaki alış teslim formundan taşındı — orada kullanıcının isteğiyle konmuştu ve
-            alış tek ekrana geçerken kaybolmaması istendi. Matris (ürün satır, beden sütun) proje
-            kuralı: düz liste beş bedenli modeli beş kez yazar, asıl soru tekrarın altında kaybolur.
-            VERİ HATASI BARİYERİ: kalemin ürünü stokta tam olarak bir kez bulunmuyorsa kayıt
-            engelleniyor — yoksa hareket hiçbir karta işlemez ya da yanlış karta işler. */}
-        {onayGoster && (() => {
-          const isaret = alisMi ? "+" : "-";
-          const kontrollu = kalemler.map((k) => ({
-            k, eslesenSayisi: (stok || []).filter((p) => p.id === k.urunId).length,
-          }));
-          const hataliVarMi = kontrollu.some((x) => x.eslesenSayisi !== 1);
-          const ix = {};
-          const satirlar = [];
-          kontrollu.forEach(({ k }) => {
-            const a = `${k.urunId}|${k.renk || ""}`;
-            if (!(a in ix)) { ix[a] = satirlar.length; satirlar.push({ ad: k.urunAd, renk: k.renk || "", birim: k.birim || "", hucreler: {}, toplam: 0 }); }
-            const st = satirlar[ix[a]];
-            st.hucreler[k.beden || ""] = stokYuvarla((st.hucreler[k.beden || ""] || 0) + (k.miktar || 0));
-            st.toplam = stokYuvarla(st.toplam + (k.miktar || 0));
-          });
-          const matris = satirlar.filter((r) => Object.keys(r.hucreler).length > 1);
-          const tekil = satirlar.filter((r) => Object.keys(r.hucreler).length <= 1);
-          const bedenler = bedenSirala(Array.from(new Set(matris.flatMap((r) => Object.keys(r.hucreler)))));
-          const hatalilar = kontrollu.filter((x) => x.eslesenSayisi !== 1);
-          return (
-            <div data-fis-onay="1" style={{ flexBasis: "100%", background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F",
-              borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 6 }}>
-                Şunu onaylıyor musunuz? Aşağıdaki ürünlerin stoğu değişecek:
-              </div>
-              {cari && (
-                <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 6 }}>
-                  <b>{cari.unvan}</b> · Cari hareketi <b>{defter === "Muhasebe" ? "hem Genel hem Resmi deftere" : `${defter} defterine`}</b> işlenecek.
-                </div>
-              )}
-              <div style={{ display: "grid", gap: 6, marginBottom: 8 }}>
-                {matris.length > 0 && (
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ borderCollapse: "collapse" }}>
-                      <thead>
-                        <tr>
-                          <th style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "left", padding: "2px 8px 2px 0" }}>ÜRÜN</th>
-                          {bedenler.map((b) => (
-                            <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", textAlign: "center", padding: "2px 7px" }}>{olcuGoster(b, "Miktar")}</th>
-                          ))}
-                          <th className="mono" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)", textAlign: "right", padding: "2px 0 2px 10px" }}>TOP.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {matris.map((r, ri) => (
-                          <tr key={ri} data-fis-onay-satir={r.ad}>
-                            <td style={{ fontSize: 12, fontWeight: 700, padding: "2px 8px 2px 0", whiteSpace: "nowrap" }}>
-                              {r.ad}<span className="mono" style={{ fontSize: 11, fontWeight: 400, color: "#7A3B22" }}> · {r.renk}</span>
-                            </td>
-                            {bedenler.map((b) => (
-                              <td key={b} className="mono" style={{ fontSize: 12, textAlign: "center", padding: "2px 7px", color: r.hucreler[b] ? "var(--erp-text)" : "#B9A88C" }}>
-                                {r.hucreler[b] ? `${isaret}${r.hucreler[b]}` : "–"}
-                              </td>
-                            ))}
-                            <td className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", padding: "2px 0 2px 10px", whiteSpace: "nowrap" }}>
-                              {isaret}{r.toplam} <span style={{ fontSize: 10, fontWeight: 400, color: "#7A3B22" }}>{r.birim}</span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {tekil.map((r, ri) => (
-                  <div key={ri} data-fis-onay-satir={r.ad} className="mono" style={{ fontSize: 12 }}>
-                    <b>{r.ad}</b>{r.renk ? ` · ${r.renk}` : ""}: {isaret}{r.toplam} {r.birim}
-                  </div>
-                ))}
-                {hatalilar.map((x, i) => (
-                  <div key={i} className="mono" style={{ fontSize: 11, color: "var(--erp-warn)", fontWeight: 700 }}>
-                    ⚠ {x.k.urunAd} · {x.k.renk} {x.k.beden} —{" "}
-                    {x.eslesenSayisi === 0 ? "stokta bu ürün bulunamadı!" : `stokta bu id'ye sahip ${x.eslesenSayisi} ürün var — veri hatası!`}
-                  </div>
-                ))}
-              </div>
-              {hataliVarMi && (
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#9C3D3D", marginBottom: 8, padding: "6px 8px", background: "#FCEAEA", borderRadius: "var(--erp-r-sm)" }}>
-                  ⚠ Yukarıdaki veri hatası nedeniyle kaydetme engellendi. Sorunlu kalemi fişten çıkarıp
-                  yalnız hatasız kalemleri kaydedin — sorunlu kaydı bildirin.
-                </div>
-              )}
-              <div style={{ display: "flex", gap: 8 }}>
-                <button type="button" data-fis-onay-evet="1" className="btn-primary" style={{ padding: "6px 12px", fontSize: 12 }}
-                  onClick={kaydetOnayli} disabled={hataliVarMi}>
-                  Evet, Onayla ve Kaydet
-                </button>
-                <button type="button" data-fis-onay-vazgec="1" className="btn-ghost" style={{ padding: "6px 12px", fontSize: 12 }}
-                  onClick={() => setOnayGoster(false)}>
-                  Vazgeç, Düzenlemeye Dön
-                </button>
-              </div>
-            </div>
-          );
-        })()}
-        <button className="btn-primary btn-save" data-fis-kaydet="1" style={{ background: ana }} disabled={kalemler.length === 0 || cevrimEksik || !seciliCariId} onClick={kaydet}>
-          <Save size={14} /> {alisMi ? "Alış Fişini Kaydet" : "Satış Fişini Kaydet"}
-        </button>
-        <button className="btn-ghost" data-fis-vazgec="1" onClick={onVazgec}><X size={14} /> Vazgeç</button>
-        <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--erp-text-2)", alignSelf: "center" }}>
-          {cari ? `${cari.unvan} · ${kalemler.length} kalem` : ""}
-        </span>
-      </div>
     </div>
   );
 }

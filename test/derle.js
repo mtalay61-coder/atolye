@@ -37,6 +37,7 @@ let kaynak = fs.readFileSync(girdi, "utf8");
 kaynak = kaynak.replace(/^import React[\s\S]*?from "react";/m,
   'const React = require("react");\n' +
   'const { useState, useEffect, useLayoutEffect, useCallback, useRef } = React;');
+kaynak = kaynak.replace(/^import \{ createPortal \} from "react-dom";/m, 'const { createPortal } = require("react-dom");');
 // XLSX sahte: dosya yazmıyor, ama `raporExcelAktar` çağrılabilsin (çıktı `window.__sonRaporExcel`e düşüyor).
 kaynak = kaynak.replace(/^import \* as XLSX from "xlsx";/m, "const XLSX = { utils: { book_new: () => ({}), aoa_to_sheet: (a) => a, json_to_sheet: (a) => a, book_append_sheet: () => {} }, writeFile: () => {} };");
 kaynak = kaynak.replace(/^import \{[\s\S]*?\} from "lucide-react";/m, (blok) => {
