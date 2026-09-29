@@ -3057,10 +3057,8 @@ export default function AtolyeERP() {
         /* ---- EKRAN DÜZENİ (v1.522.0, 387) — blok ızgarası: Dar = 4/12, Yarım = 6/12, Tam = 12/12.
            Dar ekranda Dar/Yarım bloklar tam genişliğe iner: telefonda yan yana üç blok okunmaz. */
         .duzen-alani { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
-        .duzen-blok { grid-column: span 12; min-width: 0; }
-        .duzen-blok-yarim { grid-column: span 6; }
-        .duzen-blok-dar { grid-column: span 4; }
-        @media (max-width: 760px) { .duzen-blok-yarim, .duzen-blok-dar { grid-column: span 12; } }
+        .duzen-blok { grid-column: span var(--duzen-sutun, 12); min-width: 0; position: relative; }
+        @media (max-width: 760px) { .duzen-blok { grid-column: span 12; } .duzen-boyut-tutamagi { display: none !important; } }
         input:focus-visible, select:focus-visible, button:focus-visible {
           outline: 2px solid var(--modul-renk, #E1611F); outline-offset: 1px;
         }
