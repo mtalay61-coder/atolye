@@ -422,7 +422,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
 // Tutarlılık bulgularını gösteren ekran. Denetim İSTEK ÜZERİNE çalışır, kendiliğinden değil:
 // bütün hareketleri tarıyor ve büyük veride pahalı; her ekran açılışında koşturmak uygulamayı
 // yavaşlatırdı.
-function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muhasebe, onKarsilananOnar, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes, onEksikHareketOnar, onDefterdenYenidenKur }) {
+function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes }) {
   const [sonuc, setSonuc] = useState(null);
   const [calisiyor, setCalisiyor] = useState(false);
   const [acikKod, setAcikKod] = useState(null);

@@ -42,7 +42,12 @@ function tumFisleriTopla(cariler, stok) {
   });
 
   return gruplar.map((g) => {
-    const cariSatirlari = g.hareketler.filter((h) => h.kaynakTip === "cari");
+    // PEŞİN SATIRI TOPLAMA GİRMEZ (v1.537.0 — son denetim): fişten peşin tahsilat/ödeme fişle aynı numarayı taşıyor;
+    // toplama katılınca 1000 ₺'lik satış fişi Fişler listesinde 2000 ₺ görünüyordu. Kasaya bağlı (`muhasebeBagId`)
+    // satır, grupta fişin kendi satırları varsa sayılmaz; kasadan girilen tahsilat/ödeme fişinde (yalnız o satır) sayılır.
+    const tumCariSatirlari = g.hareketler.filter((h) => h.kaynakTip === "cari");
+    const fisinKendiSatirlari = tumCariSatirlari.filter((h) => !h.muhasebeBagId);
+    const cariSatirlari = fisinKendiSatirlari.length > 0 ? fisinKendiSatirlari : tumCariSatirlari;
     const toplam = cariSatirlari.reduce((s, h) => s + (h.tutar || 0), 0);
     // PARA BİRİMİ fişin kendi para birimidir. Toplam ekranda sabit "₺" ile yazılıyordu: dolar
     // kesilmiş bir fiş "18,67 ₺" görünüyor, rakam doğru ama para birimi YANLIŞ okunuyordu.
@@ -281,6 +286,9 @@ const CEK_ISLEMLERI = {
     ad: "Ciro Et",
     aciklama: "Çeki başka bir cariye ver — o cariye olan borcun azalır",
     izinliDurumlar: ["Portföyde"],
+    // YALNIZ ALINAN ÇEK (v1.537.0 — son denetim): kendi (şahsi) çekimiz çıkışında cariye ödeme olarak zaten yazıldı;
+    // ciro menüde çıkıyor ve İKİNCİ bir cariye de ödeme yazıyordu — aynı çekle iki cari birden kapanıyordu.
+    tipler: ["Alınan"],
     yeniDurum: "Ciro Edildi",
     cariGerekli: true,
   },
@@ -295,6 +303,7 @@ const CEK_ISLEMLERI = {
     ad: "Bankaya Tahsile Ver",
     aciklama: "Çeki tahsil için bankaya ver — hangi bankada beklediği takip edilir",
     izinliDurumlar: ["Portföyde"],
+    tipler: ["Alınan"],   // şahsi çeki bankaya tahsile vermek anlamsız (parası bizden çıkar)
     yeniDurum: "Tahsilde",
     bankaGerekli: true,
   },
@@ -317,8 +326,9 @@ const CEK_ISLEMLERI = {
 // cevabı tek yerde.
 function cekIzinliIslemler(cek) {
   const durum = (cek && cek.durum) || "Portföyde";
+  const tip = (cek && cek.tip) || "Alınan";
   return Object.entries(CEK_ISLEMLERI)
-    .filter(([, tanim]) => tanim.izinliDurumlar.includes(durum))
+    .filter(([, tanim]) => tanim.izinliDurumlar.includes(durum) && (!tanim.tipler || tanim.tipler.includes(tip)))
     .map(([anahtar, tanim]) => ({ anahtar, ...tanim }));
 }
 
@@ -743,6 +753,7 @@ function cekIslemUygula(cek, islemAnahtari, ayrinti = {}) {
   const tanim = CEK_ISLEMLERI[islemAnahtari];
   if (!cek || !tanim) return null;
   if (!tanim.izinliDurumlar.includes(cek.durum || "Portföyde")) return null;
+  if (tanim.tipler && !tanim.tipler.includes(cek.tip || "Alınan")) return null;
   const satir = {
     id: uid("cekh"),
     islem: tanim.ad,

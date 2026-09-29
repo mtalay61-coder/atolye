@@ -100,7 +100,9 @@ function duzenTasi(liste, id, hedefId) {
 // `kilitli`: düzen ikonu çıkmaz (salt-okunur önizleme gibi yerler); kayıtlı düzen yine uygulanır.
 // `acRef` + `disIkon` (v1.529.0): ikon ekranın kendi başlık şeridinde duruyorsa (sipariş kartı) alan kendi ikon satırını
 // çizmez; başlıktaki ikon `acRef.current()` ile kipi açar. Kip araç çubuğu (Kaydet/Vazgeç) yine alanın üstünde çıkar.
-function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIkon = false }) {
+// `kontrolRef` + `cubuksuz` (v1.537.0): başka bir kipin (ürün kartında sekme düzeni) Kaydet/Vazgeç/Varsayılan'ı bu alanı
+// da yönetir; alan kendi araç çubuğunu çizmez — tek ekranda iki ayrı "Düzeni kaydet" çubuğu olmasın.
+function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIkon = false, kontrolRef, cubuksuz = false }) {
   const baglam = React.useContext(EkranDuzeniBaglami);
   const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
   const [kip, setKip] = useState(false);
@@ -109,6 +111,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
   // SALINIM KİLİDİ: takastan sonra bloklar yer değiştirdiği için işaretçi yeniden AYNI hedefin üstüne düşebiliyor ve
   // blok geri kaçıyordu (senaryo yakaladı). Son takas edilen hedef, işaretçi başka bir bloğa geçene kadar yok sayılır.
   const sonHedefRef = useRef(null);
+  const kokRef = useRef(null);
   // Boyutlandırma: { id, x, bas, kolon } — basılan anın işaretçi konumu, başlangıç sütunu, bir sütunun piksel genişliği.
   const boyutRef = useRef(null);
   const [boyutlanan, setBoyutlanan] = useState(null);
@@ -123,23 +126,45 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
     if (baglam && baglam.kaydet) baglam.kaydet(ekran, taslak || duzen);
     kiptenCik();
   };
+  if (kontrolRef) kontrolRef.current = {
+    kaydet: () => { if (kip) kaydet(); },
+    vazgec: () => { if (kip) kiptenCik(); },
+    varsayilan: () => { if (kip) setTaslak(ekranDuzeniCoz(bloklar, null)); },
+  };
 
-  // SÜRÜKLEME: tutamakta basılı tutulunca işaretçi yakalanır; hareket ederken altındaki bloğun yerine geçilir.
-  const surukle = {
-    // BÜTÜN ÇUBUK TUTAMAK (v1.528.0): yalnız küçük ⠿ ikonundan tutmak zordu. Çubuktaki düğmeler hariç her yer sürükler.
-    onPointerDown: (id) => (e) => { if (e.target.closest && e.target.closest("button")) return; e.preventDefault(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
-    onPointerMove: (e) => {
-      if (!suruklenen) return;
-      duzenKenardaKaydir(e.currentTarget, e.clientY);
+  // SÜRÜKLEME PENCEREDEN DİNLENİR (v1.537.0 — son denetim): blok yer değiştirince React düğümü DOM'da taşıyor ve
+  // tarayıcı işaretçi yakalamasını bırakıyordu; sonraki hareket/bırakma olayları çubuğa hiç ulaşmıyor, `suruklenen`
+  // dolu kalıyor ve fare tuşu bırakıldıktan sonra bir çubuğun üstünden geçmek blokları kendiliğinden kaydırıyordu.
+  useEffect(() => {
+    if (!suruklenen) return undefined;
+    const hareket = (e) => {
+      if (e.pointerType === "mouse" && !(e.buttons & 1)) { setSuruklenen(null); return; }
+      duzenKenardaKaydir(kokRef.current, e.clientY);
       const alti = document.elementFromPoint(e.clientX, e.clientY);
       const blok = alti && alti.closest ? alti.closest(`[data-duzen-ekran="${ekran}"] [data-duzen-blok]`) : null;
       const hedef = blok && blok.getAttribute("data-duzen-blok");
-      if (!hedef || hedef === suruklenen) { if (hedef === suruklenen) return; sonHedefRef.current = null; return; }
+      if (!hedef || hedef === suruklenen) { if (!hedef) sonHedefRef.current = null; return; }
       if (hedef === sonHedefRef.current) return;
       sonHedefRef.current = hedef;
-      setTaslak((o) => duzenTasi(o || duzen, suruklenen, hedef));
-    },
-    onPointerUp: () => setSuruklenen(null),
+      // Kipte taslak hep dolu (kipe girerken kuruluyor); eski `duzen` kapanışına düşülmez.
+      setTaslak((o) => (o ? duzenTasi(o, suruklenen, hedef) : o));
+    };
+    const bitir = () => setSuruklenen(null);
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", bitir);
+    window.addEventListener("pointercancel", bitir);
+    return () => {
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", bitir);
+      window.removeEventListener("pointercancel", bitir);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suruklenen, ekran]);
+
+  // SÜRÜKLEME: çubukta basılı tutulunca başlar; hareket ve bırakma yukarıdaki pencere dinleyicisinde.
+  const surukle = {
+    // BÜTÜN ÇUBUK TUTAMAK (v1.528.0): yalnız küçük ⠿ ikonundan tutmak zordu. Çubuktaki düğmeler hariç her yer sürükler.
+    onPointerDown: (id) => (e) => { if (e.target.closest && e.target.closest("button")) return; e.preventDefault(); sonHedefRef.current = null; setSuruklenen(id); },
   };
 
   // BOYUTLANDIRMA: sağ kenardaki tutamak çekildikçe genişlik en yakın sütuna oturur (ızgara dışı piksel yok — dar ekranda
@@ -168,7 +193,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
     const b = blokBul(d.id);
     return (
       <div data-duzen-cubugu={d.id} title="Basılı tutup sürükleyin"
-        onPointerDown={surukle.onPointerDown(d.id)} onPointerMove={surukle.onPointerMove} onPointerUp={surukle.onPointerUp} onPointerCancel={surukle.onPointerUp}
+        onPointerDown={surukle.onPointerDown(d.id)}
         style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "1px 4px", marginBottom: 3, cursor: suruklenen === d.id ? "grabbing" : "grab", touchAction: "none",
         background: "#6B4E8A14", border: "1px solid #6B4E8A55", borderRadius: "var(--erp-r-sm)", fontSize: 11, userSelect: "none" }}>
         <span data-duzen-tutamak={d.id} style={{ display: "inline-flex", padding: 1, color: "var(--erp-purple)" }}>
@@ -202,10 +227,11 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
     );
   };
 
-  const genislikSinifi = (g) => `duzen-blok duzen-blok-${DUZEN_SUTUN[g] ? g : "sayi"}`;
+  // Genişlik `--duzen-sutun` değişkeninde; `duzen-blok-dar/yarim/...` sınıflarının CSS kuralı v1.528.0'da kalktı.
+  const genislikSinifi = () => "duzen-blok";
   return (
-    <div data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
-      {baglam && baglam.yetkili && !kilitli && (kip || !disIkon) && (
+    <div ref={kokRef} data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
+      {baglam && baglam.yetkili && !kilitli && (kip ? !cubuksuz : !disIkon) && (
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 }}>
           {!kip ? (
             // KÜÇÜK İKON (v1.525.0 — kullanıcı: "Düzen için küçük ayar tutuyorsun, onunla yapılsın; kapatma ve silme
@@ -311,7 +337,9 @@ function EkranDuzeniTanimlari() {
 // (`ekranDuzenleri[ekran] = [{ id, gizli }]`) ve aynı çözücü (`ekranDuzeniCoz`); yalnız yerleşim yatay.
 // `sekmeler`: [{ key, label, gizlenemez? }] — koşullu sekmeler (Reçete yalnız mamulde) listede olmayabilir.
 // `acRef` + `disIkon` (v1.530.0): DuzenAlani'daki gibi — ikon kartın üst şeridinde.
-function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false }) {
+// `ekKontrol` (v1.537.0): aynı çubuk başka bir alanı da yönetir (ürün kartında Stok Bilgileri blokları) — { kaydet,
+// vazgec, varsayilan } ref'i; `ekAciklama` çubuğun yazısına eklenir.
+function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false, ekKontrol, ekAciklama }) {
   const baglam = React.useContext(EkranDuzeniBaglami);
   const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
   const bloklar = (sekmeler || []).map((t) => ({ id: t.key, gizlenemez: !!t.gizlenemez }));
@@ -326,9 +354,12 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
   const aktifGizli = !kip && aktif && !gorunenler.some((d) => d.id === aktif) && duzen.some((d) => d.id === aktif);
   useEffect(() => { if (aktifGizli && gorunenler[0]) onSec(gorunenler[0].id); }, [aktifGizli]);
 
+  const ek = () => (ekKontrol && ekKontrol.current) || null;
   const kiptenCik = () => { setKip(false); setTaslak(null); setSuruklenen(null); };
+  const vazgec = () => { if (ek()) ek().vazgec(); kiptenCik(); };
   if (acRef) acRef.current = () => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); };
   const kaydet = () => {
+    if (ek()) ek().kaydet();
     const liste = taslak || duzen;
     // BU ÜRÜNDE OLMAYAN sekmelerin kaydı korunur: hammadde kartında kaydedilen sıra Reçete/Maliyet'i silmesin.
     // Eski kayıttaki SOLUNDAKİ sekmenin hemen sağına geri konur (sona atılsaydı mamulde Reçete en sona kaçardı).
@@ -344,20 +375,34 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
     kiptenCik();
   };
   const tasi = (id, hedefId) => setTaslak((o) => duzenTasi(o || duzen, id, hedefId));
+  // Pencereden dinlenir — DuzenAlani'daki yakalama kaybı notu (v1.537.0) burada da geçerli.
   const surukle = {
-    onPointerDown: (id) => (e) => { e.preventDefault(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
-    onPointerMove: (e) => {
-      if (!suruklenen) return;
+    onPointerDown: (id) => (e) => { e.preventDefault(); sonHedefRef.current = null; setSuruklenen(id); },
+  };
+  useEffect(() => {
+    if (!suruklenen) return undefined;
+    const hareket = (e) => {
+      if (e.pointerType === "mouse" && !(e.buttons & 1)) { setSuruklenen(null); return; }
       const alti = document.elementFromPoint(e.clientX, e.clientY);
       const el = alti && alti.closest ? alti.closest(`[data-sekme-duzen-ekran="${ekran}"] [data-sekme-duzen]`) : null;
       const hedef = el && el.getAttribute("data-sekme-duzen");
       if (!hedef || hedef === suruklenen) { if (!hedef) sonHedefRef.current = null; return; }
       if (hedef === sonHedefRef.current) return;
       sonHedefRef.current = hedef;
-      tasi(suruklenen, hedef);
-    },
-    onPointerUp: () => setSuruklenen(null),
-  };
+      // Kipte taslak hep dolu (kipe girerken kuruluyor); eski `duzen` kapanışına düşülmez.
+      setTaslak((o) => (o ? duzenTasi(o, suruklenen, hedef) : o));
+    };
+    const bitir = () => setSuruklenen(null);
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", bitir);
+    window.addEventListener("pointercancel", bitir);
+    return () => {
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", bitir);
+      window.removeEventListener("pointercancel", bitir);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suruklenen, ekran]);
   const kucukDugme = { border: "1px solid var(--erp-line)", background: "#fff", borderRadius: 4, padding: "1px 4px", cursor: "pointer", display: "inline-flex" };
 
   if (kip) {
@@ -365,11 +410,11 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
       <div data-sekme-duzen-ekran={ekran} data-duzen-kip="1" style={{ marginBottom: 14, padding: 8, border: "2px dashed #6B4E8A66", borderRadius: "var(--erp-r-md)", background: "#6B4E8A0A" }}>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
           <span style={{ fontSize: 11, color: "var(--erp-purple)", marginRight: "auto" }}>
-            Sekme düzeni — ⠿ ile sürükleyin ya da oklarla taşıyın; göz düğmesiyle gizleyin. Bütün ürün kartlarında ve cihazlarda geçerli.
+            Sekme düzeni — ⠿ ile sürükleyin ya da oklarla taşıyın; göz düğmesiyle gizleyin.{ekAciklama ? ` ${ekAciklama}` : ""} Bütün ürün kartlarında ve cihazlarda geçerli.
           </span>
           <button type="button" className="btn-ghost" data-duzen-varsayilan={ekran} style={{ padding: "3px 10px", fontSize: 12 }}
-            onClick={() => setTaslak(ekranDuzeniCoz(bloklar, null))}><RotateCcw size={12} /> Varsayılana dön</button>
-          <button type="button" className="btn-ghost" data-duzen-vazgec={ekran} style={{ padding: "3px 10px", fontSize: 12 }} onClick={kiptenCik}><X size={12} /> Vazgeç</button>
+            onClick={() => { setTaslak(ekranDuzeniCoz(bloklar, null)); if (ek()) ek().varsayilan(); }}><RotateCcw size={12} /> Varsayılana dön</button>
+          <button type="button" className="btn-ghost" data-duzen-vazgec={ekran} style={{ padding: "3px 10px", fontSize: 12 }} onClick={vazgec}><X size={12} /> Vazgeç</button>
           <button type="button" className="btn-primary btn-save" data-duzen-kaydet={ekran} style={{ padding: "3px 12px", fontSize: 12 }} onClick={kaydet}><Save size={12} /> Düzeni kaydet</button>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -381,7 +426,7 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
                 style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 6px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700,
                   border: `1.5px solid ${suruklenen === d.id ? "var(--erp-purple)" : "#6B4E8A55"}`, background: "#fff", opacity: d.gizli ? 0.45 : 1 }}>
                 <span data-duzen-tutamak={d.id} title="Basılı tutup sürükleyin"
-                  onPointerDown={surukle.onPointerDown(d.id)} onPointerMove={surukle.onPointerMove} onPointerUp={surukle.onPointerUp} onPointerCancel={surukle.onPointerUp}
+                  onPointerDown={surukle.onPointerDown(d.id)}
                   style={{ cursor: "grab", touchAction: "none", display: "inline-flex", color: "var(--erp-purple)" }}>
                   <GripVertical size={14} />
                 </span>

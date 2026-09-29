@@ -22,8 +22,7 @@
   ]
  },
  "gozler": [
-  "islem",
-  "defter"
+  "islem"
  ],
  "hatalar": [],
  "kayit": [
@@ -41,7 +40,6 @@
  "seritIkonlari": [
   "duzenle",
   "pasif",
-  "sil",
   "duzen:kasaDetay"
  ],
  "varsayilan": [

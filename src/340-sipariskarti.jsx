@@ -468,19 +468,6 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
 
 
           </>) },
-          // Açık kartta (baslangicAcik) para birimi üst şeritte; blok yalnız liste içi kapalı-açılır kartta dolu.
-          { id: "paraBirimi", ad: "Para birimi çevirisi", icerik: (<>
-          {!baslangicAcik && Object.keys(pbToplamlariHam).length > 0 && (
-            !saltOkunur && <FisToplamCeviriPaneli
-              pbToplamlari={pbToplamlariHam}
-              kurlar={kurlar}
-              deger={{ kayitParaBirimi: siparis.kayitParaBirimi, kayitKurlari: siparis.kayitKurlari }}
-              onDegistir={(yeni) => onKayitParaGuncelle && onKayitParaGuncelle(siparis.id, yeni.kayitParaBirimi, yeni.kayitKurlari)}
-            />
-          )}
-
-
-          </>) },
           { id: "kalemler", ad: "Kalemler", gizlenemez: true, icerik: (<>
           {/* Kalemler artık bir SEKME DEĞİL, kartın gövdesi. Siparişin ne olduğu her zaman
               görünmeli; sekmeler kalemlerin ALTINDA, ek bilgi katmanı olarak durur. */}
@@ -2410,7 +2397,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             </div>
           )}
           </>) },
-          ].filter((b) => !(baslangicAcik && b.id === "paraBirimi"))} />
+          ]} />
 
           {/* Durum ve sil, kart BAŞLIĞINA taşındı — burada tekrar edilmiyor. */}
 

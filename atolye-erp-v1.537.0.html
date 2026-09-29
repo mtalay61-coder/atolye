@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.534.0</title>
+<title>Atölye ERP 1.537.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1982,9 +1982,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.534.0";
+const SURUM = "1.537.0";
 const SURUM_TARIHI = "2026-09-29";
-const SURUM_NOTU = "Kasa/banka: ekran duzeni ve tek mor ust serit; duzenle/pasif/sil kucuk ikon";
+const SURUM_NOTU = "Son denetim: pesin odemeli alis cari yonu, kismi teslim, veri ve arayuz duzeltmeleri";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1992,6 +1992,18 @@ const SURUM_NOTU = "Kasa/banka: ekran duzeni ve tek mor ust serit; duzenle/pasif
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.537.0", tarih: "29.09.2026",
+        eklenen: [],
+        degisen: ["Planlama sekmesinde [X] geçerli planlamayı geri almıyor; yalnız bağlı kaydı silinmiş planlamayı temizliyor (geri almak için üretimi / alışı kendi ekranından silin)", "Kasa/banka: hesap düzenleme formu şeridin altında; hareketli hesapta sil ikonu pasif; virman hedefinde pasif hesaplar yok", "Ürün kartında sekme ve Stok Bilgileri blok düzeni tek 'Düzeni kaydet' çubuğuyla kaydediliyor", "Tümü/Genel/Resmi seçimi (kasa) ve defter/para birimi seçimi (cari) gizlenemez blok", "Kullanılmayan onarım fonksiyonları kaldırıldı"],
+        duzeltilen: ["Peşin ödemeli ALIŞ fişi tedarikçi borcunu iki katına çıkarıyordu (peşin ödeme cariye 'Tahsilat' yönüyle yazılıyordu); düzeltildi ve mevcut kayıtlar açılışta bir kez onarılıyor", "Proseste kısmi teslimde kalan çiftler kayboluyordu: kalan kısım artık aynı ustada açık iş olarak kalıyor, adım ve üretim eksik miktarla bitmiş sayılmıyor", "Peşinli fiş cari ekstresinde, Fişler listesinde ve fiş çıktısında fiş + peşin toplanıyordu (1000 ₺ fiş 2000 ₺ görünüyordu)", "Şahsi çek ciro edilebiliyor / tahsile verilebiliyordu (ikinci cariye de ödeme yazılıyordu)", "Silinen siparişin numarası yeni siparişe veriliyordu (çöpteki numaralar artık sayılıyor)", "Fişte elle eklenen miktar siparişe ya da koliye bağlı satıra karışıyordu", "Üretim teslimindeki malzeme iadesi alış rezervasyonuna kaydedilmiyordu", "Planlama geri almada çok bedenli satırda yalnız son beden temizleniyordu", "Mamul deposunda son proseste teslim alınan çiftler hem stokta hem üretimde sayılıyordu", "Kasa koşan bakiyesi tarihe göre değil giriş sırasına göre hesaplanıyordu", "Kasa hareketi düzenlenince cari hareketin açıklaması (fiş no dahil) eziliyordu", "Excel özetinde cari bakiyesi para birimleri karıştırılarak toplanıyordu", "Düzen kipinde sürükleme blok yer değiştirdikten sonra takılı kalabiliyordu", "Aynı anda kaydedilen iki ekran düzeninden biri kayboluyordu", "Modelhane numune tarihi gece yarısından sonra önceki güne düşüyordu", "Kasa açıklamasında kur bilgisi yanlışlıkla gizlenebiliyordu", "Test koşusu hiç var olmayan bir birim testini çağırıyordu (her koşu 'davranış değişti' bitiyordu)"] },
+    { surum: "1.536.0", tarih: "29.09.2026",
+        eklenen: ["Kasa/banka ekran düzeninde yeni blok: 'Defter seçimi (Tümü / Genel / Resmi)' — hareket tablosunun (ekstre) altına da taşınabilir"],
+        degisen: [],
+        duzeltilen: ["Kasa düzeninde hareket listesinin üstündeki Tümü/Genel/Resmi seçimi listeyle birlikte hep üstte kalıyordu, aşağı indirilemiyordu"] },
+    { surum: "1.535.0", tarih: "29.09.2026",
+        eklenen: [],
+        degisen: ["Kasa/banka işlem düğmeleri kendi renginde: Tahsilat yeşil, Ödeme kiremit, Virman mavi (seçiliyken dolu)"],
+        duzeltilen: ["Düzen kipinde uzun blok (hareket listesi) en üstteyken aşağı taşınamıyordu: kipte bloklar kısa önizleme (en çok 220 px), sürüklerken ekran kenarında sayfa kendiliğinden kayıyor"] },
     { surum: "1.534.0", tarih: "29.09.2026",
         eklenen: ["Kasa ve banka detayında ekran düzeni: İşlem düğmeleri + formlar ve Hareket listesi blokları (kasa ve banka ayrı düzen)"],
         degisen: ["Kasa/banka detayı başlığı mor şerit; Düzenle, Pasife Al ve Sil alttaki yazılı düğmeler yerine şeritte küçük ikon (cari/ürün kartıyla aynı)"],
@@ -5404,8 +5416,11 @@ async function mevcutAnahtarlar() {
 // İki kaydın aynı numarayı taşıması, numaraya göre kurulmuş her bağlantıyı (planlama referansı,
 // rezervasyon, cari fiş eşleşmesi) bozar. Bu yüzden sayım değil, KULLANILMIŞ EN BÜYÜK numara esas
 // alınır — silinen numara bir daha asla geri dönmez.
-function sonrakiSiparisNo(mevcutListe, onEk) {
-    const enBuyuk = (mevcutListe || []).reduce((enb, s) => {
+// ÇÖP DE SAYILIR (v1.537.0 — son denetim): yorum "asla geri dönmez" diyordu ama yalnız canlı liste okunuyordu; en
+// son sipariş silinip çöpe gidince numarası YENİ siparişe veriliyor, eskisi çöpten geri yüklenince aynı numaralı iki
+// sipariş oluşuyordu (planlama referansı ilk bulunana gider). Üretim numarası bunu zaten yapıyor (`enBuyukUretimNo`).
+function sonrakiSiparisNo(mevcutListe, onEk, cop) {
+    const enBuyuk = [...(mevcutListe || []), ...((cop || []).filter((k) => k && k.tur === "siparis" && k.veri).map((k) => k.veri))].reduce((enb, s) => {
         if (!s || typeof s.siparisNo !== "string" || !s.siparisNo.startsWith(onEk))
             return enb;
         const n = parseInt(s.siparisNo.slice(onEk.length), 10);
@@ -8855,11 +8870,17 @@ function fisYaz(stok, cariler, fis) {
         const kasaYonu = alis ? "Çıkış" : "Giriş";
         const cariAciklama = `${alis ? "Ödeme" : "Tahsilat"} (${pesin.hesapAd || "hesap"}) · ${fis.fisNo}`;
         // Cari tarafı: fişin açtığı borcu/alacağı KAPATAN kayıt.
+        // YÖN HATASI (v1.537.0 — son denetim): kayıt her fişte `yon: "Tahsilat"` idi. Cari bakiyesinde yalnız "Borç"
+        // artı sayıldığı için SATIŞTA doğru (fiş +X, peşin −P) ama ALIŞTA yanlıştı: fiş −X (Alacak), peşin de −P →
+        // 1000 ₺'lik alışı peşin ödeyen tedarikçi 0 yerine −2000 görünüyordu. Alışta peşin bir ÖDEMEDİR:
+        // `hareketYonu("Ödeme")` = "Borç" (+). Satış tarafı aynı kalıyor ("Tahsilat" eksi sayılıyor). `islemTipi`
+        // de yazılıyor: fiş numarası "AF-" olduğu için tip çıkarımı aksi halde onu "Alış" sanıyordu.
         cariHareketleri.push({
             id: uid("hrk"),
             tarih: fis.cariTarihi,
             zaman: fis.zaman,
-            yon: "Tahsilat",
+            yon: alis ? hareketYonu("Ödeme") : "Tahsilat",
+            islemTipi: alis ? "Ödeme" : "Tahsilat",
             tutar: pesin.tutar,
             paraBirimi: pesin.paraBirimi || fis.kayitParaBirimi,
             odemeSekli: pesin.hesapTur === "kasa" ? "Nakit" : "Havale/EFT",
@@ -8894,6 +8915,15 @@ function fisYaz(stok, cariler, fis) {
     }
     const yeniCariler = cariHareketleri.length === 0 ? cariler : cariler.map((c) => c.id === fis.cariId ? { ...c, hareketler: [...cariHareketleri, ...(c.hareketler || [])] } : c);
     return { stok: yeniStok, cariler: yeniCariler, cariHareketleri, kimlikler, atlananlar, cevrilemeyenler, pesinHareket, yazilmadi: false };
+}
+// PEŞİN ÖDEME YÖNÜ ONARIMI (v1.537.0): v1.160.0–v1.536.0 arasında ALIŞ fişinden peşin ödenen tutar cariye
+// `yon: "Tahsilat"` ile yazıldı (bkz. fisYaz'daki yön notu) ve tedarikçi borcunu iki katına çıkardı. İmza kesin:
+// fişe bağlı (`muhasebeBagId`) + "Tahsilat" yönü + açıklaması "Ödeme (" ile başlıyor — satış peşini "Tahsilat (",
+// kasadan girilen normal tahsilat ise `muhasebeBagId` taşısa da açıklaması "Ödeme (" ile başlamaz. Saf; birim testli.
+function pesinOdemeYonuDuzelt(h) {
+    if (!h || !h.muhasebeBagId || h.yon !== "Tahsilat" || !/^Ödeme \(/.test(String(h.aciklama || "")))
+        return h;
+    return { ...h, yon: "Borç", islemTipi: "Ödeme" };
 }
 // ================= TEDARİK PLANLAMA =================
 //
@@ -9163,7 +9193,7 @@ function usePlanlama(d) {
             const yeniAlislar = [];
             const grupNo = {};
             grupSirasi.forEach((g) => {
-                const alisNo = sonrakiSiparisNo([...yeniAlislar, ...prevSiparisler], "ALS-");
+                const alisNo = sonrakiSiparisNo([...yeniAlislar, ...prevSiparisler], "ALS-", cop);
                 grupNo[g] = alisNo;
                 yeniAlislar.push(alisSiparisiKur(alisNo, alisKalemleri.filter((x) => x._grup === g).map(({ _grup, ...x }) => x)));
             });
@@ -9221,7 +9251,7 @@ function usePlanlama(d) {
                 : `${yeniAlislar.length} alış siparişi oluşturuldu (${yeniAlislar[0].siparisNo} – ${yeniAlislar[yeniAlislar.length - 1].siparisNo})`);
             return nextSiparisler;
         });
-    }, [stok, showToast]);
+    }, [stok, showToast, cop]);
     // HAMMADDE SATIN ALMA — Planlama > Sipariş İhtiyaç Planlama ekranından çağrılır.
     // planlaSatinAlma'dan (mamul satın alma) BİLİNÇLİ OLARAK ayrı tutulmuştur; ikisi farklı şeylerdir:
     //   • planlaSatinAlma: MAMULÜ dışarıdan hazır alır -> satış kalemini "Satınalma" olarak işaretler,
@@ -9248,7 +9278,7 @@ function usePlanlama(d) {
             return;
         }
         setSiparisler((prev) => {
-            const alisNo = sonrakiSiparisNo(prev, "ALS-");
+            const alisNo = sonrakiSiparisNo(prev, "ALS-", cop);
             const tumKaynakIdler = new Set();
             const kaynakNolar = new Set();
             const kalemler = gecerli.map((t) => {
@@ -9308,7 +9338,7 @@ function usePlanlama(d) {
                 (idListesi.length > 1 ? `, ${idListesi.length} satış siparişine rezerve` : ""));
             return next;
         });
-    }, [stok, showToast]);
+    }, [stok, showToast, cop]);
     return { planlaUretim, planlaSatinAlma, planlaHammaddeSatinAlma };
 }
 // ================= TEK KAPI: fisGeriAl =================
@@ -9996,13 +10026,38 @@ function useUretimTeslim(d) {
         let nextProsesIlerleme = siparis.prosesIlerleme.map((p, i) => {
             if (i !== adimIndex)
                 return p;
-            const yeniAtamalar = (p.atamalar || []).map((a) => a.id === atamaId
-                ? {
-                    ...a, tamamlandiMi: true, tamamlanmaTarihi: new Date().toISOString(),
-                    // Sonuç atamaya yazılır: akış, ücret ve fire raporları buradan okur.
-                    sonuc: { saglam: saglamHarita, tamir: tamirListesi, hurda: hurdaListesi },
-                }
-                : a);
+            // KISMİ TESLİM — KALAN USTADA AÇIK KALIR (v1.537.0 — son denetim). Eskiden atama tüm miktarıyla "tamamlandı"
+            // işaretleniyor, kalan çiftler için hiçbir kayıt kalmıyordu: ekranda "X çift ustada kaldı, sonra teslim edilecek"
+            // yazıyor ama teslim alınacak bir iş yoktu; adım (ve son proseste üretim) eksik miktarla BİTMİŞ sayılıyordu.
+            // Şimdi: teslim alınan atama TESLİM EDİLEN miktara iner; kalan bedenler aynı ustaya, aynı barkodla, VERİLMİŞ ama
+            // tamamlanmamış yeni bir atama olur. Toplam dağıtılan miktar değişmez (adimBedenDurumu aynı sayar).
+            const kalanAtama = kismiMi ? {
+                id: uid("atama"), personelId: atama.personelId || null,
+                bedenMiktarlari: { ...kalanBedenleri }, miktar: stokYuvarla(atama.miktar - sonucToplam),
+                verildiMi: true, verilmeTarihi: atama.verilmeTarihi || new Date().toISOString(),
+                // Verilen hammadde ilk teslimde hesaplandı; kalan kısım reçeteye göre düşülür (ikinci kez "verilen" sayılmasın).
+                verilenHammaddeler: null,
+                // Barkod: parça kodu taşıyan (bölünmüş) işte kalan kısım YENİ parça kodu alır — aynı kod sonraki proseste
+                // "zaten alındı" sayılır ve kalan parça oraya hiç akamazdı. Ana kodla ilerleyen işte kod aynı kalır.
+                barkod: (() => {
+                    const anaKod = siparis.takipKodu || siparis.siparisNo;
+                    if (!atama.barkod || atama.barkod === anaKod)
+                        return atama.barkod || null;
+                    const kodlar = (siparis.prosesIlerleme || []).flatMap((x) => (x.atamalar || []).map((y) => y.barkod)).filter(Boolean);
+                    return parcaBarkoduUret(anaKod, kodlar);
+                })(),
+                tamamlandiMi: false, tamamlanmaTarihi: null,
+                ...(atama.tamirMi ? { tamirMi: true, tamirKaynakProses: atama.tamirKaynakProses, tamirSebep: atama.tamirSebep, tamirUcret: atama.tamirUcret, tamirHammaddeler: [] } : {}),
+                kismiKalanKaynak: atama.id,
+            } : null;
+            const yeniAtamalar = [...(p.atamalar || []).map((a) => a.id === atamaId
+                    ? {
+                        ...a, tamamlandiMi: true, tamamlanmaTarihi: new Date().toISOString(),
+                        ...(kismiMi ? { miktar: sonucToplam, bedenMiktarlari: { ...teslimBedenleri } } : {}),
+                        // Sonuç atamaya yazılır: akış, ücret ve fire raporları buradan okur.
+                        sonuc: { saglam: saglamHarita, tamir: tamirListesi, hurda: hurdaListesi },
+                    }
+                    : a), ...(kalanAtama ? [kalanAtama] : [])];
             const tamamlananToplam = yeniAtamalar.filter((a) => a.tamamlandiMi).reduce((s, a) => s + a.miktar, 0);
             const adimTamamlandiMi = yeniAtamalar.every((a) => a.tamamlandiMi) && tamamlananToplam >= toplamAdet;
             return { ...p, atamalar: yeniAtamalar, tamamlandiMi: adimTamamlandiMi, tamamlanmaTarihi: adimTamamlandiMi ? new Date().toISOString() : null };
@@ -10214,10 +10269,8 @@ function useUretimTeslim(d) {
         yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
         yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
         yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
-        if (nextSiparislerRez !== siparisler) {
-            setSiparisler(nextSiparislerRez);
-            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
-        }
+        // SIRA (v1.537.0 — son denetim): bu blok sipariş listesi YAZILDIKTAN SONRA çalışıyordu; alış rezervasyonundaki
+        // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce.
         // Artan malzeme rezervasyonu da SERBEST bırakır: geri gelen mal aslında tüketilmemiştir.
         // Bunu atlarsak rezervasyon "kullanıldı" görünür ve o sipariş için stokta duran malzeme
         // ikinci kez talep edilmiş gibi hesaplanır.
@@ -10232,6 +10285,10 @@ function useUretimTeslim(d) {
                 }
             });
         }
+        if (nextSiparislerRez !== siparisler) {
+            setSiparisler(nextSiparislerRez);
+            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+        }
         if (nextStokRez !== stokRezervasyonlari) {
             setStokRezervasyonlari(nextStokRez);
             yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
@@ -10243,7 +10300,7 @@ function useUretimTeslim(d) {
         let rezervasyonUyarisi = "";
         // Kısmi teslimde kalan miktar açıkça söylenir; yoksa "eksik mi girdim" tereddüdü doğar.
         if (kismiMi) {
-            rezervasyonUyarisi += ` — ${stokYuvarla(atama.miktar - sonucToplam)} çift ustada kaldı, sonra teslim edilecek.`;
+            rezervasyonUyarisi += ` — ${stokYuvarla(atama.miktar - sonucToplam)} çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir.`;
         }
         // FİRE ÖZETİ — hurda ve tamir sessiz kalmamalı; ikisi de maliyet ve teslim tarihi etkiler.
         if (hurdaAdet > 0) {
@@ -11401,96 +11458,6 @@ function useAdDegistirme(d) {
         gunlukYaz(`Tanımsız ölçü birleştirildi: ${eskiAd} → ${yeniAd}`, "tanimlar", {});
         showToast(`"${eskiAd}" → "${yeniAd}" · kayıtlar hizalandı`);
     }, [stok, siparisler, uretim, koliler, showToast]);
-    // EKSİK STOK HAREKETİNİ FİŞTEN YENİDEN YAZ (15 Eylül — Veri Denetimi onarımı).
-    //
-    // Durum: siparişin kalemi "karşılandı" (fiş kesildi, cari hareketi var) ama stok hareketi yok —
-    // bulut yazımı yarım kalmış ya da kayıt silinmişti. Fişin kimliği cari hareketlerinden
-    // (siparisId eşleşen, fişli) bulunur; eksik kadar hareket AYNI fiş numarasıyla yazılır ve varyant
-    // miktarı düzeltilir. Yalnız "siparişte var, stokta yok" yönü onarılır: fazla hareket hangisinin
-    // mükerrer olduğunu bilmeyi gerektirir, o elle bakılacak iş.
-    const eksikHareketOnar = useCallback((eksikler) => {
-        let nextStok = stok;
-        let yazilan = 0;
-        const gunlukSatirlari = [];
-        eksikler.forEach(({ siparisId, kalemId, eksik }) => {
-            const sip = siparisler.find((x) => x.id === siparisId);
-            const kalem = sip && (sip.kalemler || []).find((k) => k.id === kalemId);
-            if (!sip || !kalem || !(eksik > 0))
-                return;
-            const cari = cariler.find((c) => c.id === sip.cariId);
-            // Fiş: bu siparişe bağlı en son fişli cari hareketi; yoksa sipariş numarasından türetilen ad.
-            const fisliHareket = ((cari && cari.hareketler) || [])
-                .filter((h) => h.fisNo && (h.siparisId ? h.siparisId === sip.id : h.siparisNo === sip.siparisNo))
-                .sort((x, y) => String(y.tarih || "").localeCompare(String(x.tarih || "")))[0];
-            const fisNo = (fisliHareket && fisliHareket.fisNo) || `${sip.siparisNo}-F${sip.teslimSayaci || 1}`;
-            const tarih = (fisliHareket && fisliHareket.tarih) || bugunYerel();
-            const alisMi = sip.tip === "Alış";
-            nextStok = nextStok.map((p) => {
-                if (p.id !== kalem.urunId)
-                    return p;
-                const hareket = {
-                    id: uid("hrk"), tarih, renk: kalem.renk, beden: kalem.beden,
-                    miktar: alisMi ? eksik : -eksik,
-                    kaynak: alisMi ? "Satınalma" : "Satış",
-                    cariId: sip.cariId, fisNo, siparisNo: sip.siparisNo, siparisId: sip.id, kalemId: kalem.id,
-                    aciklama: "Onarım: eksik hareket fişten yeniden yazıldı",
-                };
-                const variants = (p.variants || []).some((v) => v.renk === kalem.renk && v.beden === kalem.beden)
-                    ? (p.variants || []).map((v) => (v.renk === kalem.renk && v.beden === kalem.beden ? { ...v, miktar: stokYuvarla((v.miktar || 0) + hareket.miktar) } : v))
-                    : [...(p.variants || []), { renk: kalem.renk, beden: kalem.beden, miktar: hareket.miktar }];
-                yazilan++;
-                gunlukSatirlari.push(`${sip.siparisNo} ${kalem.urunAd} ${kalem.renk}/${kalem.beden} ${hareket.miktar}`);
-                return { ...p, variants, hareketler: [...(p.hareketler || []), hareket] };
-            });
-        });
-        if (yazilan === 0) {
-            showToast("Onarılacak eksik hareket bulunamadı");
-            return;
-        }
-        setStok(nextStok);
-        yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
-        gunlukYaz(`Onarım: ${yazilan} eksik stok hareketi fişten yeniden yazıldı`, "denetim", { satirlar: gunlukSatirlari });
-        showToast(`${yazilan} eksik stok hareketi fişten yeniden yazıldı; stok düzeltildi`);
-    }, [stok, siparisler, cariler, showToast]);
-    // DEFTERDEN YENİDEN KUR (Adım 2, 15 Eylül). Defter doğruluğun kaynağı: iptal edilmemiş bir fişin
-    // stok hareketi stokta yoksa BİREBİR geri yazılır — miktar, tarih, fiş no, sipariş bağı, hareket
-    // kimliği dahil. "Fişten yeniden yaz" (21) siparişin fişinden TÜRETİYORDU; bu ise kayıttan
-    // kopyalıyor, tahmin yok. Varyant miktarı da hareketin yönüne göre düzeltilir.
-    //
-    // Sipariş `karsilanan`ına DOKUNULMAZ: bu onarım kayıp hareketi geri koyar; karşılanan zaten
-    // hareketlerle karşılaştırılıp ayrıca denetleniyor (2. kural). İki onarımın aynı sayıyı iki kez
-    // düzeltmesi, eksik bırakmaktan daha tehlikeli olurdu.
-    const defterdenYenidenKur = useCallback((kayitlar) => {
-        let nextStok = stok;
-        let yazilan = 0;
-        const gunluk = [];
-        kayitlar.forEach(({ fisNo, hareket }) => {
-            if (!hareket || !hareket.urunId)
-                return;
-            nextStok = nextStok.map((p) => {
-                if (p.id !== hareket.urunId)
-                    return p;
-                if ((p.hareketler || []).some((h) => h.id === hareket.id))
-                    return p; // zaten var
-                const { urunId, urunAd, ...temiz } = hareket;
-                const variants = (p.variants || []).some((v) => v.renk === hareket.renk && v.beden === hareket.beden)
-                    ? (p.variants || []).map((v) => (v.renk === hareket.renk && v.beden === hareket.beden
-                        ? { ...v, miktar: stokYuvarla((v.miktar || 0) + (hareket.miktar || 0)) } : v))
-                    : [...(p.variants || []), { renk: hareket.renk, beden: hareket.beden, miktar: hareket.miktar || 0 }];
-                yazilan++;
-                gunluk.push(`${fisNo} ${p.ad} ${hareket.renk}/${hareket.beden} ${hareket.miktar}`);
-                return { ...p, variants, hareketler: [...(p.hareketler || []), temiz] };
-            });
-        });
-        if (yazilan === 0) {
-            showToast("Geri yazılacak hareket bulunamadı (hepsi zaten yerinde)");
-            return;
-        }
-        setStok(nextStok);
-        yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
-        gunlukYaz(`Defterden yeniden kuruldu: ${yazilan} stok hareketi`, "denetim", { satirlar: gunluk });
-        showToast(`${yazilan} hareket fiş defterinden birebir geri yazıldı`);
-    }, [stok, showToast]);
     const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
         const yeniAd = yeniAdHam.trim();
         const eskiRenk = tanimlar.renkler.find((r) => r.id === renkId);
@@ -11632,7 +11599,7 @@ function useAdDegistirme(d) {
     // aynı aileden — "kayıtlar birbirini tutmuyorsa düzelt" işi.
     return {
         olcuAdDegistir, kullanimdakiOlculer, hammaddeRenkAdDegistir,
-        defterdenYenidenKur, eksikHareketOnar, tanimsizOlcuCevir,
+        tanimsizOlcuCevir,
     };
 }
 // ================= HURDA TELAFİ ÜRETİMİ =================
@@ -13895,8 +13862,9 @@ function useYedekleme(d) {
         }));
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uretimSatirlari), "Üretim");
         const cariSatirlari = cariler.map((c) => {
-            const bakiye = (c.hareketler || []).reduce((s, h) => s + (h.yon === "Borç" ? h.tutar : -h.tutar), 0);
-            return { Unvan: c.unvan, Tip: c.tip, Telefon: c.telefon || "", Bakiye: bakiye };
+            // PARA BİRİMİ BAZINDA (v1.537.0 — son denetim): bütün hareketler toplanıyordu (100 ₺ + 50 € = 150) ve tutarı
+            // olmayan hareket NaN yapıyordu. Uygulamanın her yerindeki bakiye kuralı (`cariBakiyeleri`) ile aynı sonuç.
+            return { Unvan: c.unvan, Tip: c.tip, Telefon: c.telefon || "", Bakiye: bakiyeMetni(cariBakiyeleri(c)) };
         });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cariSatirlari), "Cariler");
         XLSX.writeFile(wb, `atolye-ozet-${bugunYerel()}.xlsx`);
@@ -14739,6 +14707,41 @@ function AtolyeERP() {
         setBekleyenYazmalar, setBulutGirisGerekli, setCariler, setCekGorselleri, setCop, setFisDefteri, setGorevler, setKoliler, setLoading, setMesajOkumalari, setMesajlar, setModeller, setMuhasebe, setOnaylar, setSiparisler, setStok, setStokRezervasyonlari, setStorageOk, setTanimlar, setUretim, setVeriKaynagi, setVeriKilidiSebep,
         setFaturalar,
     });
+    // PEŞİN ÖDEME YÖNÜ GÖÇÜ (v1.537.0 — son denetim): alış fişinden peşin ödenen tutar cariye yanlış yönle
+    // yazılmıştı (bkz. 078-fisyaz `pesinOdemeYonuDuzelt`). Veri yüklendikten sonra hem cari hareketinde hem fiş
+    // defterindeki kopyasında düzeltilir. DAMGA YOK: onarım kendini sınırlıyor (düzelen kayıt "Borç" olur, bir daha
+    // eşleşmez); yalnız düzeltilecek kayıt varsa yazar — damga her hesaba gereksiz bir tanımlar yazması eklerdi.
+    // Veri kilidi (salt okuma) varken çalışmaz.
+    useEffect(() => {
+        if (loading || veriKilidiSebep)
+            return;
+        let sayi = 0;
+        const yeniCariler = (cariler || []).map((c) => {
+            let degisti = false;
+            const hareketler = (c.hareketler || []).map((h) => { const y = pesinOdemeYonuDuzelt(h); if (y !== h) {
+                degisti = true;
+                sayi++;
+            } return y; });
+            return degisti ? { ...c, hareketler } : c;
+        });
+        const yeniDefter = (fisDefteri || []).map((k) => {
+            if (!k || !Array.isArray(k.cariHareketleri))
+                return k;
+            let degisti = false;
+            const ch = k.cariHareketleri.map((h) => { const y = pesinOdemeYonuDuzelt(h); if (y !== h)
+                degisti = true; return y; });
+            return degisti ? { ...k, cariHareketleri: ch } : k;
+        });
+        if (sayi > 0) {
+            setCariler(yeniCariler);
+            yazimiIzle(tabloYaz("cari:data", "cariler", yeniCariler), "Cari kartları", yeniCariler);
+            setFisDefteri(yeniDefter);
+            yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeniDefter), "Fiş defteri", yeniDefter);
+            gunlukYaz(`Peşin ödeme yönü onarıldı: ${sayi} alış peşin kaydı (tedarikçi borcu iki kat görünüyordu)`, "cari", { sayi });
+            setTimeout(() => showToast(`${sayi} peşin ödeme kaydı düzeltildi — tedarikçi bakiyeleri artık doğru`), 1800);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading, veriKilidiSebep, showToast]);
     // YÖNETİCİSİZ LİSTE KİLİDİ (kullanıcı, 13 Eylül: sıfırladıktan sonra "Kullanıcı" rolüyle ekleyip
     // girişi açtı, kısıtlı girdi). Kısıtlı kullanıcı Tanımlar'ı bile göremediği için hiçbir ekrandan
     // düzeltemez. Giriş yapmış kullanıcı Yönetici değil ve listede HİÇ Yönetici yoksa, giren kişi
@@ -14895,18 +14898,6 @@ function AtolyeERP() {
     // yükleniyor ve türetme boş listeyle çalışıp sonra üzerine yazılıyordu.
     //
     // Sonsuz döngü yok: hesap bir şey değiştirmezse AYNI dizi referansı dönüyor, effect durur.
-    // YETİM REZERVASYON TEMİZLEME (20 Eylül): silinmiş üretimlerin rezervasyon kayıtlarını siler.
-    const rezervasyonTemizle = useCallback((uretimNolari) => {
-        if (!uretimNolari || uretimNolari.length === 0)
-            return;
-        const kume = new Set(uretimNolari.map(String));
-        setStokRezervasyonlari((onceki) => {
-            const kalan = (onceki || []).filter((r) => !(r && r.uretimNo && kume.has(String(r.uretimNo))));
-            yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", kalan), "Stok rezervasyonları", kalan);
-            return kalan;
-        });
-        showToast(`${uretimNolari.length} silinmiş üretimin rezervasyonları temizlendi`);
-    }, [setStokRezervasyonlari, showToast]);
     // SİLİNMİŞ SİPARİŞİN BAĞ KALINTISI (v1.512.0). v1.512.0 öncesi doğrudan silme yolu siparişi siliyor,
     // fişlerini bırakıyordu. Kullanıcının kuralına göre bu DOĞRU sonuç (fiş bağımsız kalır) — yanlış olan
     // yalnız hareketlerde kalan sipariş kimliği ("bağlı sipariş silinmiş" uyarısı). Temizlik yalnız kimliği
@@ -14935,23 +14926,6 @@ function AtolyeERP() {
             ? `⚠ Bağlar bu bilgisayarda çözüldü ama buluta yazılamadı (${basarisiz[0].hata})`
             : `${r.sayi} hareketin silinmiş sipariş bağı çözüldü (${r.siparisNolar.join(", ")}) — fişler bağımsız, stok ve cari değişmedi`);
     }, [stok, cariler, siparisler, showToast]);
-    const karsilananOnar = useCallback((kayitlar) => {
-        if (!kayitlar || kayitlar.length === 0)
-            return;
-        setSiparisler((onceki) => onceki.map((sp) => {
-            const buna = kayitlar.filter((k) => k.siparisId === sp.id);
-            if (buna.length === 0)
-                return sp;
-            return {
-                ...sp,
-                kalemler: (sp.kalemler || []).map((k) => {
-                    const d = buna.find((x) => x.kalemId === k.id);
-                    return d ? { ...k, karsilanan: d.gercek } : k;
-                }),
-            };
-        }));
-        showToast(`${kayitlar.length} kalemin karşılanan miktarı düzeltildi`);
-    }, [setSiparisler, showToast]);
     // ONAY SİSTEMİ AYRI DOSYADA (19 Eylül, 2. madde, 13. tur): `075-onay.jsx`.
     //
     // İlk denemede (v1.350.0) taşınamamıştı: `onayUygula` SİLME ZİNCİRLERİNİ çağırıyor, onlar ise
@@ -15336,14 +15310,19 @@ function AtolyeERP() {
         uretim, siparisler, stok, cariler, showToast, adimlariYurut, setUretim, setSiparisler, setStok, setCariler, copaAt, stokRezervasyonlari, setStokRezervasyonlari, aktifKullanici,
     });
     // Bir satış kalemindeki geçersiz (bağlı kaydı silinmiş) planlama referansını temizler.
-    const planlamaTemizle = useCallback((satisSiparisId, kalemId) => {
-        const nextSiparisler = siparisler.map((s) => s.id === satisSiparisId
-            ? { ...s, kalemler: bekleyenKalemleriBirlestir(s.kalemler.map((k) => (k.id === kalemId ? { ...k, planlama: null } : k))) }
-            : s);
-        setSiparisler(nextSiparisler);
-        yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
+    // TEK ya da ÇOK kalem, GÜNCEL listeden (v1.537.0 — son denetim): kapanıştaki `siparisler`'den tam dizi kurup
+    // yazıyordu; bir döngüde art arda çağrılınca her çağrı aynı eski diziden başlıyor, yalnız SONUNCUSU kalıyordu.
+    const planlamaTemizle = useCallback((satisSiparisId, kalemIdOrIds) => {
+        const idler = new Set(Array.isArray(kalemIdOrIds) ? kalemIdOrIds : [kalemIdOrIds]);
+        setSiparisler((onceki) => {
+            const nextSiparisler = onceki.map((s) => s.id === satisSiparisId
+                ? { ...s, kalemler: bekleyenKalemleriBirlestir(s.kalemler.map((k) => (idler.has(k.id) ? { ...k, planlama: null } : k))) }
+                : s);
+            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
+            return nextSiparisler;
+        });
         showToast("Geçersiz planlama referansı temizlendi — kalem yeniden planlanabilir");
-    }, [siparisler, showToast]);
+    }, [showToast]);
     // ---- KOLİ (PAKETLEME) ----
     // Koli kodu SIRALI: "K-20260902-001". Fiş numaralarıyla aynı gerekçe — barkod okunmadığında
     // insan gözüyle okunup elle aranabilmeli, rastgele bir blok bunu imkânsız kılıyordu.
@@ -16227,7 +16206,7 @@ function AtolyeERP() {
     // beden dağılımları, koli kalemleri, asorti oranları. Yoksa "41" ile "41 " iki ayrı beden olur ve
     // üretim/stok eşleşmesi kopar. Eşleştirme büyük/küçük harf ve boşluk farkını yok sayar.
     // AD DEĞİŞTİRME (ÖLÇÜ VE RENK) AYRI DOSYADA (19 Eylül, 2. madde, 9. tur): `082-ad-degistir.jsx`.
-    const { olcuAdDegistir, kullanimdakiOlculer, hammaddeRenkAdDegistir, defterdenYenidenKur, eksikHareketOnar, tanimsizOlcuCevir, } = useAdDegistirme({
+    const { olcuAdDegistir, kullanimdakiOlculer, hammaddeRenkAdDegistir, tanimsizOlcuCevir, } = useAdDegistirme({
         tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
         setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
     });
@@ -17019,6 +16998,10 @@ function AtolyeERP() {
         mobilDuzenRef.current = mobilDuzen;
         setMobilDuzenSurumu((n) => n + 1); // menü genişliği yeniden hesaplansın
     }, [mobilDuzen]);
+    // Ekran düzeni kaydı için en güncel tanımlar (bkz. ekranDuzeniDegeri). KANCA BURADA — aşağıdaki erken dönüşlerden
+    // (giriş ekranları) ÖNCE; sonrasında olsaydı çizimler arasında kanca sayısı değişir, uygulama çökerdi.
+    const ekranTanimRef = useRef(tanimlar);
+    ekranTanimRef.current = tanimlar;
     // BULUT ÖN GİRİŞ (2. aşama): veri okunamadıysa her şeyden önce.
     //
     if (!loading && bulutGirisGerekli) {
@@ -17082,8 +17065,13 @@ function AtolyeERP() {
     const ekranDuzeniDegeri = {
         duzenler: tanimlar.ekranDuzenleri || {},
         yetkili: kullaniciYetkisiVar("tanimlar", "goruntuleme"),
+        // EN GÜNCEL TANIMLARDAN (v1.537.0 — son denetim): kapanıştaki `tanimlar` kullanılıyordu; ürün kartında sekme ve
+        // blok düzeni aynı tıklamada kaydedilince ikincisi birincinin üstüne yazıyordu. Ref her yazımda anında güncellenir.
         kaydet: (ekran, liste) => {
-            saveTanimlar({ ...tanimlar, ekranDuzenleri: { ...(tanimlar.ekranDuzenleri || {}), [ekran]: (liste || []).map(({ id, genislik, gizli }) => ({ id, genislik, gizli: !!gizli })) } });
+            const guncel = ekranTanimRef.current || tanimlar;
+            const yeni = { ...guncel, ekranDuzenleri: { ...(guncel.ekranDuzenleri || {}), [ekran]: (liste || []).map(({ id, genislik, gizli }) => ({ id, genislik, gizli: !!gizli })) } };
+            ekranTanimRef.current = yeni;
+            saveTanimlar(yeni);
             showToast("Ekran düzeni kaydedildi — bütün cihazlarda geçerli");
         },
     };
@@ -17590,9 +17578,9 @@ function AtolyeERP() {
                     React.createElement(Loader2, { size: 18, className: "mono", style: { animation: "spin 1s linear infinite" } }),
                     "Y\u00FCkleniyor\u2026")) : !storageOk ? (React.createElement("div", { style: { color: "var(--erp-warn)", padding: 28 } }, "Depolama \u015Fu anda eri\u015Filemiyor. Sayfay\u0131 yenileyip tekrar deneyin.")) : (React.createElement(React.Fragment, null,
                     React.createElement("div", { style: { display: tab === "anasayfa" ? undefined : "none" } },
-                        React.createElement(AnaSayfaModule, { gorevler: gorevler, aktifKullanici: aktifKullanici, onGoreveGit: () => setTab("gorevler"), stok: stok, uretim: uretim, tanimlar: tanimlar, cariler: cariler, siparisler: siparisler, muhasebe: muhasebe, uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, onRezervasyonTemizle: rezervasyonTemizle, onNavigate: setTab, onGoToSiparis: sipariseGit, onGoToUretim: (id) => { setUretimHedefId(id || null); setTab("uretim"); }, onGoToUrun: (urunId) => uruneGit(urunId, null, { tab: "anasayfa", etiket: "Ana sayfaya dön" }), onGoToCari: () => setTab("cari") })),
+                        React.createElement(AnaSayfaModule, { gorevler: gorevler, aktifKullanici: aktifKullanici, onGoreveGit: () => setTab("gorevler"), stok: stok, uretim: uretim, tanimlar: tanimlar, cariler: cariler, siparisler: siparisler, muhasebe: muhasebe, uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, onNavigate: setTab, onGoToSiparis: sipariseGit, onGoToUretim: (id) => { setUretimHedefId(id || null); setTab("uretim"); }, onGoToUrun: (urunId) => uruneGit(urunId, null, { tab: "anasayfa", etiket: "Ana sayfaya dön" }), onGoToCari: () => setTab("cari") })),
                     React.createElement("div", { style: { display: tab === "tanimlar" ? undefined : "none" } },
-                        React.createElement(TanimlarModule, { fisDefteri: fisDefteri, onDefterdenYenidenKur: defterdenYenidenKur, onEksikHareketOnar: eksikHareketOnar, onKarsilananOnar: karsilananOnar, onYetimSiparisBagiCoz: yetimSiparisBaglariniTemizle, muhasebe: muhasebe, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: mobilDuzenKipiAyarla, mobilDuzenAktif: mobilDuzen, kullanimdakiOlculer: kullanimdakiOlculer, onTanimsizOlcuCevir: tanimsizOlcuCevir, yayinSurum: yayinSurum, onSurumYayinla: async (v) => {
+                        React.createElement(TanimlarModule, { fisDefteri: fisDefteri, onYetimSiparisBagiCoz: yetimSiparisBaglariniTemizle, muhasebe: muhasebe, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: mobilDuzenKipiAyarla, mobilDuzenAktif: mobilDuzen, kullanimdakiOlculer: kullanimdakiOlculer, onTanimsizOlcuCevir: tanimsizOlcuCevir, yayinSurum: yayinSurum, onSurumYayinla: async (v) => {
                                 try {
                                     await yayinlananSurumuYaz(v);
                                     setYayinSurum(v);
@@ -17663,9 +17651,9 @@ function AtolyeERP() {
                             // duruyor, yani Depo'nun kaydırma konumu ve açık satırları yerinde kalıyor.
                             onGoToUrun: (id) => uruneGit(id, null, { tab: "depo", etiket: "Depoya dön" }), onSatinAlPlanla: hammaddeyiPlanla, onAlisFisi: alisFisiAc })),
                     React.createElement("div", { style: { display: tab === "siparis" ? undefined : "none" } },
-                        React.createElement(SiparisModule, { aktifSekme: tab === "siparis", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "siparis"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Sat\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
+                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "siparis", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "siparis"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Sat\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement("div", { style: { display: tab === "satinalma" ? undefined : "none" } },
-                        React.createElement(SiparisModule, { aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
+                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement("div", { style: { display: tab === "fisler" ? undefined : "none" } },
                         React.createElement(FislerModule, { muhasebe: muhasebe, hedefFisNo: hedefFisNo, onHedefTuketildi: () => setHedefFisNo(null), cariler: cariler, stok: stok, siparisler: siparisler, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYetimFisTemizle: yetimFisTemizle, faturalar: faturalar, onFaturaAc: (fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo }) })),
                     tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement(GunlukPaneli, { showToast: showToast })),
@@ -17842,7 +17830,7 @@ function AtolyeERP() {
                                         // olabilir. Pencerenin açıldığı cariyi kullanmak, seçimi yok sayardı.
                                         stokFisiKaydet(fis.cariId || p.veri.cariId, p.veri.tip, fis);
                                         pencereKapat(p.id);
-                                    } })) : planlamaMi ? (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, onGoToSiparis: (id) => { pencereKapat(p.id); sipariseGit(id); }, onGoToUrun: (id) => { pencereKapat(p.id); uruneGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, showToast: showToast, hedefHammadde: p.veri.hedef, onHedefTuketildi: () => { } })) : (React.createElement(SiparisModule, { onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => { pencereKapat(p.id); setTab("cari"); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {}, hedefYeniAlis: p.veri.taslak, onYeniAlisTuketildi: () => { } }))))));
+                                    } })) : planlamaMi ? (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, onGoToSiparis: (id) => { pencereKapat(p.id); sipariseGit(id); }, onGoToUrun: (id) => { pencereKapat(p.id); uruneGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, showToast: showToast, hedefHammadde: p.veri.hedef, onHedefTuketildi: () => { } })) : (React.createElement(SiparisModule, { cop: cop, onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => { pencereKapat(p.id); setTab("cari"); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {}, hedefYeniAlis: p.veri.taslak, onYeniAlisTuketildi: () => { } }))))));
                     })));
             })(),
             sonHata && (React.createElement("div", { style: {
@@ -19552,7 +19540,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
 // Tutarlılık bulgularını gösteren ekran. Denetim İSTEK ÜZERİNE çalışır, kendiliğinden değil:
 // bütün hareketleri tarıyor ve büyük veride pahalı; her ekran açılışında koşturmak uygulamayı
 // yavaşlatırdı.
-function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muhasebe, onKarsilananOnar, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes, onEksikHareketOnar, onDefterdenYenidenKur }) {
+function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes }) {
     const [sonuc, setSonuc] = useState(null);
     const [calisiyor, setCalisiyor] = useState(false);
     const [acikKod, setAcikKod] = useState(null);
@@ -19690,7 +19678,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, onRezervasyonTemizle,
                         React.createElement("div", { style: { display: "grid", gap: 3, maxHeight: 300, overflowY: "auto" } }, g.kayitlar.map((d, i) => (React.createElement("div", { key: i, className: "mono", style: { fontSize: 11, color: "var(--erp-text)", background: "var(--erp-panel)", borderRadius: "var(--erp-r-sm)", padding: "4px 8px" } }, d))))))));
             }))))));
 }
-function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muhasebe, onKarsilananOnar, onYetimSiparisBagiCoz, fisDefteri, onDefterdenYenidenKur, onEksikHareketOnar, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
     const [yeniRenkHammadde, setYeniRenkHammadde] = useState("");
     const [yeniFireSebep, setYeniFireSebep] = useState("");
     const [yeniBeden, setYeniBeden] = useState("");
@@ -21058,7 +21046,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
                 React.createElement(DepolamaDurumuBolumu, { stok: stok, cariler: cariler, tanimlar: tanimlar }),
                 React.createElement(OtomatikYedekBolumu, { sonYedekTarihi: sonYedekTarihi, onSimdiYedekle: onSimdiYedekle, onGeriYukle: onYedektenGeriYukle })))),
         aktifTanimSekme === "bakim" && (React.createElement(React.Fragment, null,
-            React.createElement(VeriDenetimiEkrani, { uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, onRezervasyonTemizle: onRezervasyonTemizle, muhasebe: muhasebe, onKarsilananOnar: onKarsilananOnar, onYetimSiparisBagiCoz: onYetimSiparisBagiCoz, fisDefteri: fisDefteri, onDefterdenYenidenKur: onDefterdenYenidenKur, onEksikHareketOnar: onEksikHareketOnar, stok: stok, cariler: cariler, siparisler: siparisler, tanimlar: tanimlar, onAcilisFisiKes: onAcilisFisiKes }),
+            React.createElement(VeriDenetimiEkrani, { uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, muhasebe: muhasebe, onYetimSiparisBagiCoz: onYetimSiparisBagiCoz, fisDefteri: fisDefteri, stok: stok, cariler: cariler, siparisler: siparisler, tanimlar: tanimlar, onAcilisFisiKes: onAcilisFisiKes }),
             React.createElement("div", { style: { marginTop: 20 } },
                 React.createElement(DefterOnarimBolumu, { stok: stok, onOnar: onDefterTopluOnar })),
             React.createElement(VeritabaniSifirlaBolumu, { onVeritabaniSifirla: onVeritabaniSifirla, supabaseBagli: supabaseBagli }))),
@@ -24486,6 +24474,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
     const sekmeAcRef = useRef(null);
     const stokAcRef = useRef(null);
+    const stokKontrolRef = useRef(null);
     const duzenBaglami = React.useContext(EkranDuzeniBaglami);
     // BEDEN ETİKETİ BASMA (22 Eylül, v1.413.0 — kullanıcı: "o düğmeyi ekle ve seçili bedenler için
     // toplu basım da koy"). Depoda okutulan asıl etiket beden etiketi; Barkodlar sekmesinde kodlar
@@ -25664,9 +25653,12 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     },
                 ];
                 // SEKME SIRASI / GİZLEME (v1.524.0): sıra ve gizlilik Tanımlar'da (bulutta) — her ürün kartında aynı.
-                return React.createElement(DuzenliSekmeler, { ekran: "urunKartiSekmeleri", sekmeler: sekmeler, aktif: cardTab, onSec: setCardTab, acRef: sekmeAcRef, disIkon: true });
+                return React.createElement(DuzenliSekmeler, { ekran: "urunKartiSekmeleri", sekmeler: sekmeler, aktif: cardTab, onSec: setCardTab, acRef: sekmeAcRef, disIkon: true, 
+                    // TEK ÇUBUK (v1.537.0 — son denetim): Stok Bilgileri'ndeyken ikon iki kipi birden açıyordu ve iki ayrı "Düzeni kaydet"
+                    // çubuğu çıkıyordu; biri kaydedilince diğeri kipte kalıyordu. Blok düzeni artık bu çubukla kaydedilir/vazgeçilir.
+                    ekKontrol: stokKontrolRef, ekAciklama: cardTab === "stok" ? "Aşağıdaki Stok Bilgileri blokları da bu çubukla kaydedilir." : "" });
             })(),
-            cardTab === "stok" && (React.createElement(DuzenAlani, { ekran: "urunKartiStok", aralik: 0, acRef: stokAcRef, disIkon: true, bloklar: [
+            cardTab === "stok" && (React.createElement(DuzenAlani, { ekran: "urunKartiStok", aralik: 0, acRef: stokAcRef, disIkon: true, kontrolRef: stokKontrolRef, cubuksuz: true, bloklar: [
                     { id: "stokDurumu", ad: "Stok durumu", icerik: (React.createElement(React.Fragment, null, (() => {
                             const satirlar = [];
                             (product.variants || []).forEach((v) => {
@@ -28100,7 +28092,12 @@ function tumFisleriTopla(cariler, stok) {
         gruplar[index[key]].hareketler.push(h);
     });
     return gruplar.map((g) => {
-        const cariSatirlari = g.hareketler.filter((h) => h.kaynakTip === "cari");
+        // PEŞİN SATIRI TOPLAMA GİRMEZ (v1.537.0 — son denetim): fişten peşin tahsilat/ödeme fişle aynı numarayı taşıyor;
+        // toplama katılınca 1000 ₺'lik satış fişi Fişler listesinde 2000 ₺ görünüyordu. Kasaya bağlı (`muhasebeBagId`)
+        // satır, grupta fişin kendi satırları varsa sayılmaz; kasadan girilen tahsilat/ödeme fişinde (yalnız o satır) sayılır.
+        const tumCariSatirlari = g.hareketler.filter((h) => h.kaynakTip === "cari");
+        const fisinKendiSatirlari = tumCariSatirlari.filter((h) => !h.muhasebeBagId);
+        const cariSatirlari = fisinKendiSatirlari.length > 0 ? fisinKendiSatirlari : tumCariSatirlari;
         const toplam = cariSatirlari.reduce((s, h) => s + (h.tutar || 0), 0);
         // PARA BİRİMİ fişin kendi para birimidir. Toplam ekranda sabit "₺" ile yazılıyordu: dolar
         // kesilmiş bir fiş "18,67 ₺" görünüyor, rakam doğru ama para birimi YANLIŞ okunuyordu.
@@ -28348,6 +28345,9 @@ const CEK_ISLEMLERI = {
         ad: "Ciro Et",
         aciklama: "Çeki başka bir cariye ver — o cariye olan borcun azalır",
         izinliDurumlar: ["Portföyde"],
+        // YALNIZ ALINAN ÇEK (v1.537.0 — son denetim): kendi (şahsi) çekimiz çıkışında cariye ödeme olarak zaten yazıldı;
+        // ciro menüde çıkıyor ve İKİNCİ bir cariye de ödeme yazıyordu — aynı çekle iki cari birden kapanıyordu.
+        tipler: ["Alınan"],
         yeniDurum: "Ciro Edildi",
         cariGerekli: true,
     },
@@ -28362,6 +28362,7 @@ const CEK_ISLEMLERI = {
         ad: "Bankaya Tahsile Ver",
         aciklama: "Çeki tahsil için bankaya ver — hangi bankada beklediği takip edilir",
         izinliDurumlar: ["Portföyde"],
+        tipler: ["Alınan"], // şahsi çeki bankaya tahsile vermek anlamsız (parası bizden çıkar)
         yeniDurum: "Tahsilde",
         bankaGerekli: true,
     },
@@ -28383,8 +28384,9 @@ const CEK_ISLEMLERI = {
 // cevabı tek yerde.
 function cekIzinliIslemler(cek) {
     const durum = (cek && cek.durum) || "Portföyde";
+    const tip = (cek && cek.tip) || "Alınan";
     return Object.entries(CEK_ISLEMLERI)
-        .filter(([, tanim]) => tanim.izinliDurumlar.includes(durum))
+        .filter(([, tanim]) => tanim.izinliDurumlar.includes(durum) && (!tanim.tipler || tanim.tipler.includes(tip)))
         .map(([anahtar, tanim]) => ({ anahtar, ...tanim }));
 }
 // ETKİN GEÇMİŞ — geri alınmamış işlemler.
@@ -28815,6 +28817,8 @@ function cekIslemUygula(cek, islemAnahtari, ayrinti = {}) {
     if (!cek || !tanim)
         return null;
     if (!tanim.izinliDurumlar.includes(cek.durum || "Portföyde"))
+        return null;
+    if (tanim.tipler && !tanim.tipler.includes(cek.tip || "Alınan"))
         return null;
     const satir = {
         id: uid("cekh"),
@@ -29324,7 +29328,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
                         tutar: Math.round((h.tutar || 0) * oran * 100) / 100,
                         tarih: yeni.tarih || h.tarih,
                         hesapTutar: yeni.tutar,
-                        aciklama: yeni.aciklama || h.aciklama,
+                        // Cari açıklaması YALNIZ kullanıcı açıklamayı değiştirdiyse güncellenir (v1.537.0 — son denetim): kasa
+                        // biçimindeki metin ("Tahsilat · Ünvan · …") her düzenlemede cari kaydın kendi açıklamasını (fiş no dahil) eziyordu.
+                        aciklama: (yeni.aciklama != null && yeni.aciklama !== eski.aciklama) ? yeni.aciklama : h.aciklama,
                     }
                     : h)),
             })));
@@ -29701,7 +29707,8 @@ function kasaAciklamaSade(aciklama, cariAdi, tip) {
             return true;
         if (/^(Tahsilat|Ödeme|Virman|Giriş|Çıkış)$/.test(x))
             return true;
-        if (/^(Tahsilat|Ödeme)\s*\([^)]*\)$/.test(x))
+        // Parantez içinde "=" varsa kur bilgisidir ("Ödeme (1.000 ₺, 1 USD = 40 TRY kuruyla)") — gizlenmez (v1.537.0).
+        if (/^(Tahsilat|Ödeme)\s*\([^)=]*\)$/.test(x))
             return true;
         return false;
     };
@@ -29964,7 +29971,9 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                     } },
                                     React.createElement(Pencil, { size: 14 }))),
                                 duzenlenen !== h.id && (React.createElement("button", { type: "button", className: "btn-ikon", "data-kart-eylem": "pasif", "data-hesap-pasif": h.id, title: h.pasif ? `${birimAdi}'ı yeniden kullanıma aç` : `${birimAdi}'ı pasife al — hareketleri durur, yeni işlemde seçilemez`, onClick: () => onHesapPasifDegistir(h.id, !h.pasif), style: { color: h.pasif ? "var(--erp-primary)" : "var(--erp-purple)" } }, h.pasif ? React.createElement(Check, { size: 14 }) : React.createElement(Archive, { size: 14 }))),
-                                duzenlenen !== h.id && (React.createElement(SilOnayButonu, { kartEylemi: true, onConfirm: () => onHesapSil(h.id), boyut: 14, baslikNormal: (h.hareketler || []).length > 0
+                                duzenlenen !== h.id && (h.hareketler || []).length > 0 && (React.createElement("span", { className: "btn-ikon", title: `${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`, style: { opacity: 0.35, cursor: "not-allowed" } },
+                                    React.createElement(Trash2, { size: 14 }))),
+                                duzenlenen !== h.id && (h.hareketler || []).length === 0 && (React.createElement(SilOnayButonu, { kartEylemi: true, onConfirm: () => onHesapSil(h.id), boyut: 14, baslikNormal: (h.hareketler || []).length > 0
                                         ? `${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`
                                         : silmeYetkisiVar === false
                                             ? `${birimAdi}'ı sil (yönetici onayına gider)`
@@ -29974,11 +29983,19 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                     React.createElement(LayoutGrid, { size: 14 }))),
                                 React.createElement("button", { type: "button", onClick: () => setAcikHesap(null), title: "Se\u00E7imi kald\u0131r", style: { border: "1px solid var(--erp-line-soft)", background: "#fff", borderRadius: "var(--erp-r-md)", padding: "4px 6px", cursor: "pointer", color: "var(--erp-text-2)", display: "flex", flexShrink: 0 } },
                                     React.createElement(X, { size: 13 }))),
+                            duzenlenen === h.id && (React.createElement("div", { "data-hesap-duzenle-formu": "1", style: { margin: "8px 12px 0", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },
+                                React.createElement(React.Fragment, null,
+                                    ekleAlanlari.map((a2) => (React.createElement("input", { key: a2.key, value: duzenForm[a2.key] || "", "data-hesap-duzenle": a2.key, placeholder: a2.placeholder, onChange: (e) => setDuzenForm({ ...duzenForm, [a2.key]: e.target.value }), style: { padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 } }))),
+                                    React.createElement("button", { "data-kart-eylem": "kaydet", title: "Kaydet \u00B7 Ctrl+S", type: "button", className: "btn-primary", style: { fontSize: 12, padding: "5px 12px" }, onClick: () => { if (onHesapGuncelle)
+                                            onHesapGuncelle(h.id, duzenForm); setDuzenlenen(null); } }, "Kaydet"),
+                                    React.createElement("button", { type: "button", className: "btn-ghost", "data-kart-eylem": "vazgec", title: "Vazge\u00E7 \u00B7 Esc", style: { fontSize: 12, padding: "5px 12px" }, onClick: () => setDuzenlenen(null) }, "Vazge\u00E7")))),
                             React.createElement(DuzenAlani, { ekran: birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay", aralik: 0, acRef: hesapDuzenAcRef, disIkon: true, bloklar: [
                                     { id: "islem", ad: "İşlem düğmeleri ve formlar", icerik: (React.createElement(React.Fragment, null,
                                             acik && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" } }, [
-                                                { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: "var(--erp-primary)" },
-                                                { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: "var(--erp-warn)" },
+                                                // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
+                                                // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
+                                                { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
+                                                { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
                                                 { k: "virman", ad: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
                                                 { k: "serbest", ad: "Serbest kayıt", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
                                             ].map((x) => (React.createElement("button", { key: x.k, type: "button", "data-islem": x.k, title: x.ipucu, onClick: () => {
@@ -29989,14 +30006,15 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                     if (x.k === "odeme")
                                                         setHForm((f) => ({ ...f, yon: "Çıkış" }));
                                                 }, style: { padding: "8px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
-                                                    border: `1.5px solid ${islem === x.k ? x.renk : "var(--erp-border)"}`,
-                                                    background: islem === x.k ? `${alfaEkle(x.renk, "1A")}` : "#fff",
-                                                    color: islem === x.k ? x.renk : "var(--erp-text)" } }, x.ad))))),
+                                                    // Seçili değilken çerçeve + yazı kendi renginde, seçiliyken dolu (renk zemin, beyaz yazı).
+                                                    border: `1.5px solid ${x.renk}`,
+                                                    background: islem === x.k ? x.renk : alfaEkle(x.renk, "0F"),
+                                                    color: islem === x.k ? "#fff" : x.renk } }, x.ad))))),
                                             acik && islem === "virman" && (React.createElement("div", { "data-virman-formu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" } },
                                                 React.createElement(Field, { label: "Nereye" },
                                                     React.createElement("select", { value: virman.hedef, "data-virman-hedef": "1", onChange: (e) => setVirman({ ...virman, hedef: e.target.value }), style: inputStyle },
                                                         React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                                        (tumHesaplar || []).filter((x) => x.id !== h.id).map((x) => (React.createElement("option", { key: x.id, value: x.id },
+                                                        (tumHesaplar || []).filter((x) => x.id !== h.id && !x.pasif).map((x) => (React.createElement("option", { key: x.id, value: x.id },
                                                             x.ad,
                                                             " (",
                                                             x.paraBirimi || "TRY",
@@ -30157,7 +30175,33 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                         React.createElement(Plus, { size: 13 }),
                                                         " Ekle")));
                                             })())))) },
-                                    { id: "hareketler", ad: "Hareket listesi", gizlenemez: true, icerik: (React.createElement(React.Fragment, null,
+                                    { id: "defter", ad: "Defter seçimi (Tümü / Genel / Resmi)", gizlenemez: true, icerik: (() => {
+                                            // AYRI BLOK (v1.536.0 — kullanıcı, kasa düzen kipi ekran görüntüsü: "Hareket listesi aşağı inmiyor, ekstrenin
+                                            // de altına inmesini istiyorum"). Tümü/Genel/Resmi seçimi hareket tablosunun içindeydi; tablo tek blok
+                                            // olduğu için seçim onunla birlikte hep üstte kalıyordu. Artık kendi bloğu — tablonun altına da taşınabilir.
+                                            const tumHareketler = h.hareketler || [];
+                                            if (tumHareketler.length === 0)
+                                                return null;
+                                            const genelSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Genel")).length;
+                                            const resmiSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Resmi")).length;
+                                            return (React.createElement("div", { "data-hesap-defter-secimi": "1", style: { display: "flex", gap: 5, margin: "8px 12px" } }, [
+                                                { key: "Tümü", sayi: tumHareketler.length },
+                                                { key: "Genel", sayi: genelSayi },
+                                                { key: "Resmi", sayi: resmiSayi },
+                                            ].map((s) => (React.createElement("button", { key: s.key, type: "button", onClick: () => setDefterFiltre(s.key), style: {
+                                                    padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                                                    border: `1.5px solid ${defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-border)"}`,
+                                                    background: defterFiltre === s.key ? "#8A5A381A" : "#fff",
+                                                    color: defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-text-2)",
+                                                } },
+                                                s.key,
+                                                " ",
+                                                React.createElement("span", { className: "mono", style: { fontWeight: 400 } },
+                                                    "(",
+                                                    s.sayi,
+                                                    ")"))))));
+                                        })() },
+                                    { id: "hareketler", ad: "Hareket listesi (ekstre)", gizlenemez: true, icerik: (React.createElement(React.Fragment, null,
                                             acik && duzenle && duzenle.hesapId === h.id && (React.createElement("div", { "data-duzenle-paneli": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
                                                     padding: "10px 12px", background: "var(--erp-hover)", borderTop: "1px solid var(--erp-line-soft)", borderBottom: "1px solid var(--erp-line-soft)" } },
                                                 React.createElement(Field, { label: "Tarih" },
@@ -30176,151 +30220,129 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                         setDuzenle(null);
                                                     } }, "Kaydet"),
                                                 React.createElement("button", { className: "btn-ghost", "data-duzenle-vazgec": "1", style: { padding: "8px 12px", fontSize: 13 }, onClick: () => setDuzenle(null) }, "Vazge\u00E7"))),
-                                            acik && (React.createElement("div", { style: { padding: "0 12px 12px" } },
-                                                (h.hareketler || []).length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "Hen\u00FCz hareket yok.")) : (() => {
-                                                    const tumHareketler = h.hareketler || [];
-                                                    // "Muhasebe" hareketi HER İKİ sekmede de sayılıyor ve listeleniyor —
-                                                    // etiketi zaten "ikisine de" diyor. Sayaçlar ve liste aynı kuraldan
-                                                    // (`defterKapsar`) geçiyor; ayrı yazılsalardı biri sayıp diğeri
-                                                    // göstermeyebilirdi.
-                                                    const genelSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Genel")).length;
-                                                    const resmiSayi = tumHareketler.filter((hr) => defterKapsar(hr.defter, "Resmi")).length;
-                                                    const filtrelenmis = tumHareketler.filter((hr) => defterKapsar(hr.defter, defterFiltre));
-                                                    // Ekstre mantığıyla aynı: hareketler ESKİDEN YENİYE sıralanır ve koşan bakiye HER
-                                                    // SATIRDA hesaplanır — SADECE seçili defterin (Tümü/Genel/Resmi) hareketleri
-                                                    // üzerinden, aktif sekmeye göre AYRI bir bakiye akışı takip edilir.
-                                                    const eskidenYeniye = [...filtrelenmis].reverse();
-                                                    let kosanBakiye = 0;
-                                                    const satirlar = eskidenYeniye.map((hr) => {
-                                                        kosanBakiye += hr.yon === "Giriş" ? hr.tutar : -hr.tutar;
-                                                        return { hr, kosanBakiye };
-                                                    }).reverse(); // tekrar en yeni en üste al (görüntüleme sırası korunur)
-                                                    // Koşan bakiye YUKARIDA, filtrelenmemiş küme üzerinden hesaplandı ve satıra
-                                                    // yazıldı. Sütun filtresi SADECE gösterimi kısar — bakiye sütunu hesabın
-                                                    // gerçek seyrini göstermeye devam eder.
-                                                    const kEsler = (metin, aranan) => String(metin || "").toLocaleLowerCase("tr-TR").includes(aranan.toLocaleLowerCase("tr-TR"));
-                                                    const gorunenSatirlar = satirlar.filter(({ hr }) => {
-                                                        if (kolonFiltre.tarih.trim() && !kEsler(hr.tarih, kolonFiltre.tarih.trim()))
+                                            acik && (React.createElement("div", { style: { padding: "0 12px 12px" } }, (h.hareketler || []).length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "Hen\u00FCz hareket yok.")) : (() => {
+                                                const tumHareketler = h.hareketler || [];
+                                                // "Muhasebe" hareketi HER İKİ sekmede de sayılıyor ve listeleniyor —
+                                                // etiketi zaten "ikisine de" diyor. Sayaçlar ve liste aynı kuraldan
+                                                // (`defterKapsar`) geçiyor; ayrı yazılsalardı biri sayıp diğeri
+                                                // göstermeyebilirdi.
+                                                // Tümü/Genel/Resmi sayaçları "defter" bloğunda (v1.536.0), aynı `defterKapsar` kuralıyla.
+                                                const filtrelenmis = tumHareketler.filter((hr) => defterKapsar(hr.defter, defterFiltre));
+                                                // Ekstre mantığıyla aynı: hareketler ESKİDEN YENİYE sıralanır ve koşan bakiye HER
+                                                // SATIRDA hesaplanır — SADECE seçili defterin (Tümü/Genel/Resmi) hareketleri
+                                                // üzerinden, aktif sekmeye göre AYRI bir bakiye akışı takip edilir.
+                                                // TARİHE GÖRE (v1.537.0 — son denetim): liste giriş sırasıyla ters çevriliyordu; geçmiş tarihli ya da
+                                                // tarihi düzenlenmiş hareket en üstte kalıyor, bakiye sütunu o tarihteki bakiyeyi göstermiyordu. Aynı
+                                                // tarihliler giriş sırasını korur (kararlı sıralama). Cari ekstresi de tarihe göre sıralıyor.
+                                                const eskidenYeniye = [...filtrelenmis].reverse().sort((a, b) => String(a.tarih || "").slice(0, 10).localeCompare(String(b.tarih || "").slice(0, 10)));
+                                                let kosanBakiye = 0;
+                                                const satirlar = eskidenYeniye.map((hr) => {
+                                                    kosanBakiye += hr.yon === "Giriş" ? hr.tutar : -hr.tutar;
+                                                    return { hr, kosanBakiye };
+                                                }).reverse(); // tekrar en yeni en üste al (görüntüleme sırası korunur)
+                                                // Koşan bakiye YUKARIDA, filtrelenmemiş küme üzerinden hesaplandı ve satıra
+                                                // yazıldı. Sütun filtresi SADECE gösterimi kısar — bakiye sütunu hesabın
+                                                // gerçek seyrini göstermeye devam eder.
+                                                const kEsler = (metin, aranan) => String(metin || "").toLocaleLowerCase("tr-TR").includes(aranan.toLocaleLowerCase("tr-TR"));
+                                                const gorunenSatirlar = satirlar.filter(({ hr }) => {
+                                                    if (kolonFiltre.tarih.trim() && !kEsler(hr.tarih, kolonFiltre.tarih.trim()))
+                                                        return false;
+                                                    if (kolonFiltre.aciklama.trim()) {
+                                                        const cariAdi = hr.cariId ? (((cariler || []).find((c) => c.id === hr.cariId) || {}).unvan || "") : "";
+                                                        const havuz = [cariAdi, hr.aciklama, hr.defter];
+                                                        if (!havuz.some((x) => kEsler(x, kolonFiltre.aciklama.trim())))
                                                             return false;
-                                                        if (kolonFiltre.aciklama.trim()) {
-                                                            const cariAdi = hr.cariId ? (((cariler || []).find((c) => c.id === hr.cariId) || {}).unvan || "") : "";
-                                                            const havuz = [cariAdi, hr.aciklama, hr.defter];
-                                                            if (!havuz.some((x) => kEsler(x, kolonFiltre.aciklama.trim())))
-                                                                return false;
-                                                        }
-                                                        const esikG = parseFloat(String(kolonFiltre.giris).replace(",", "."));
-                                                        if (Number.isFinite(esikG) && (hr.yon !== "Giriş" || hr.tutar < esikG))
-                                                            return false;
-                                                        const esikC = parseFloat(String(kolonFiltre.cikis).replace(",", "."));
-                                                        if (Number.isFinite(esikC) && (hr.yon === "Giriş" || hr.tutar < esikC))
-                                                            return false;
-                                                        return true;
-                                                    });
-                                                    const toplamGiris = gorunenSatirlar.filter(({ hr }) => hr.yon === "Giriş").reduce((s, { hr }) => s + hr.tutar, 0);
-                                                    const toplamCikis = gorunenSatirlar.filter(({ hr }) => hr.yon !== "Giriş").reduce((s, { hr }) => s + hr.tutar, 0);
-                                                    const kFiltreKutusu = (alan, ipucu, sayisalMi) => (React.createElement("input", { type: "text", inputMode: sayisalMi ? "decimal" : "text", value: kolonFiltre[alan], onChange: (e) => setKolonFiltre({ ...kolonFiltre, [alan]: e.target.value }), placeholder: ipucu, className: "mono", style: {
-                                                            width: "100%", minWidth: sayisalMi ? 58 : 80, padding: "3px 6px", fontSize: 11,
-                                                            border: `1px solid ${kolonFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
-                                                            background: kolonFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
-                                                            borderRadius: "var(--erp-r-sm)", textAlign: sayisalMi ? "right" : "left", boxSizing: "border-box",
-                                                        } }));
-                                                    return (React.createElement(React.Fragment, null,
-                                                        React.createElement("div", { style: { display: "flex", gap: 5, marginBottom: 8 } }, [
-                                                            { key: "Tümü", sayi: tumHareketler.length },
-                                                            { key: "Genel", sayi: genelSayi },
-                                                            { key: "Resmi", sayi: resmiSayi },
-                                                        ].map((s) => (React.createElement("button", { key: s.key, type: "button", onClick: () => setDefterFiltre(s.key), style: {
-                                                                padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                                                                border: `1.5px solid ${defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-border)"}`,
-                                                                background: defterFiltre === s.key ? "#8A5A381A" : "#fff",
-                                                                color: defterFiltre === s.key ? "var(--erp-brown)" : "var(--erp-text-2)",
-                                                            } },
-                                                            s.key,
-                                                            " ",
-                                                            React.createElement("span", { className: "mono", style: { fontWeight: 400 } },
-                                                                "(",
-                                                                s.sayi,
-                                                                ")"))))),
-                                                        satirlar.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } },
-                                                            defterFiltre,
-                                                            " defterinde hareket yok.")) : (React.createElement("div", { style: { overflowX: "auto" } },
-                                                            React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 12 } },
-                                                                React.createElement("thead", null,
-                                                                    React.createElement("tr", { style: { borderBottom: "1.5px solid var(--erp-line)" } },
-                                                                        React.createElement("th", { style: { textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" } }, "Tarih"),
-                                                                        React.createElement("th", { style: { textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" } }, "A\u00E7\u0131klama"),
-                                                                        React.createElement("th", { style: { textAlign: "right", padding: "4px 6px", color: "var(--erp-primary)" } }, "Giri\u015F"),
-                                                                        React.createElement("th", { style: { textAlign: "right", padding: "4px 6px", color: "var(--erp-warn)" } }, "\u00C7\u0131k\u0131\u015F"),
-                                                                        React.createElement("th", { style: { textAlign: "right", padding: "4px 6px", color: "var(--erp-text-2)" } }, "Bakiye"),
-                                                                        React.createElement("th", { style: { width: 20 } })),
-                                                                    React.createElement("tr", { style: { borderBottom: "1px solid var(--erp-line-soft)" } },
-                                                                        React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("tarih", "tarih…")),
-                                                                        React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("aciklama", "cari, açıklama…")),
-                                                                        React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("giris", "≥", true)),
-                                                                        React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("cikis", "≥", true)),
-                                                                        React.createElement("th", null),
-                                                                        React.createElement("th", null))),
-                                                                React.createElement("tbody", null,
-                                                                    gorunenSatirlar.length === 0 && (React.createElement("tr", null,
-                                                                        React.createElement("td", { colSpan: 6, style: { padding: "12px 6px", textAlign: "center", fontSize: 12, color: "var(--erp-text-3)" } }, "Bu filtreyle e\u015Fle\u015Fen hareket yok."))),
-                                                                    gorunenSatirlar.map(({ hr, kosanBakiye: kb }) => {
-                                                                        const cari = hr.cariId ? (cariler || []).find((c) => c.id === hr.cariId) : null;
-                                                                        return (React.createElement("tr", { key: hr.id, style: { borderTop: "1px solid var(--erp-line-soft)" } },
-                                                                            React.createElement("td", { className: "mono", style: { padding: "5px 6px", color: "var(--erp-text-3)", whiteSpace: "nowrap" } }, tarihYaz(hr.tarih, true)),
-                                                                            React.createElement("td", { style: { padding: "5px 6px", color: "var(--erp-text)" } },
-                                                                                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } },
-                                                                                    cari && React.createElement("span", { style: { color: "var(--erp-info)", fontWeight: 600 } }, cari.unvan),
-                                                                                    hr.defter && hr.defter !== "Genel" && (React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "1px 5px", borderRadius: "var(--erp-r-pill)" } }, hr.defter === "Muhasebe" ? "Muhasebe (ikisine de)" : hr.defter)),
-                                                                                    (() => {
-                                                                                        const tip = hareketIslemTipi(hr);
-                                                                                        if (!tip)
-                                                                                            return null;
-                                                                                        const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
-                                                                                        return (React.createElement("span", { className: "mono", style: {
-                                                                                                fontSize: 9, fontWeight: 700, color: renk,
-                                                                                                background: `${alfaEkle(renk, "1A")}`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
-                                                                                            } }, tip));
-                                                                                    })(),
-                                                                                    (() => {
-                                                                                        const sade = kasaAciklamaSade(hr.aciklama, cari ? cari.unvan : "", hareketIslemTipi(hr));
-                                                                                        return sade ? React.createElement("span", { "data-kasa-aciklama": "1", style: { color: "var(--erp-text-2)" } }, sade) : null;
-                                                                                    })())),
-                                                                            React.createElement("td", { className: "mono", style: { padding: "5px 6px", textAlign: "right", color: "var(--erp-primary)", fontWeight: 600 } }, hr.yon === "Giriş" ? `${hr.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : ""),
-                                                                            React.createElement("td", { className: "mono", style: { padding: "5px 6px", textAlign: "right", color: "var(--erp-warn)", fontWeight: 600 } }, hr.yon !== "Giriş" ? `${hr.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : ""),
-                                                                            React.createElement("td", { className: "mono", style: { padding: "5px 6px", textAlign: "right", fontWeight: 700 } },
-                                                                                kb.toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
-                                                                                " ",
-                                                                                sembol),
-                                                                            React.createElement("td", { style: { padding: "5px 2px", textAlign: "center", whiteSpace: "nowrap" } },
-                                                                                !hr.virmanMi && (React.createElement("button", { "data-hareket-duzenle": hr.id, onClick: () => setDuzenle({
-                                                                                        hesapId: h.id, hareketId: hr.id,
-                                                                                        tutar: String(hr.tutar || ""), tarih: hr.tarih || "",
-                                                                                        aciklama: hr.aciklama || "",
-                                                                                    }), title: "Bu hareketi d\u00FCzenle", className: "btn-ikon" },
-                                                                                    React.createElement(Pencil, { size: 11 }))),
-                                                                                React.createElement(SilOnayButonu, { onConfirm: () => onHareketSil(h.id, hr.id), boyut: 11, baslikNormal: silmeYetkisiVar === false ? "Silme yetkiniz yok — istek yönetici onayına gönderilir" : "Bu hareketi sil" }))));
-                                                                    })),
-                                                                gorunenSatirlar.length > 0 && (React.createElement("tfoot", null,
-                                                                    React.createElement("tr", { style: { borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" } },
-                                                                        React.createElement("td", { style: { padding: "6px 6px", fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)", whiteSpace: "nowrap" } }, kolonFiltreAktif ? "SÜZÜLEN TOPLAM" : "TOPLAM"),
-                                                                        React.createElement("td", { className: "mono", style: { padding: "6px 6px", fontSize: 10, color: "var(--erp-text-3)" } },
-                                                                            gorunenSatirlar.length,
-                                                                            kolonFiltreAktif ? ` / ${satirlar.length}` : "",
-                                                                            " hareket"),
-                                                                        React.createElement("td", { className: "mono", style: { padding: "6px 6px", textAlign: "right", fontSize: 12, fontWeight: 700, color: "var(--erp-primary)" } }, toplamGiris > 0 ? `${toplamGiris.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : "—"),
-                                                                        React.createElement("td", { className: "mono", style: { padding: "6px 6px", textAlign: "right", fontSize: 12, fontWeight: 700, color: "var(--erp-warn)" } }, toplamCikis > 0 ? `${toplamCikis.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : "—"),
-                                                                        React.createElement("td", { className: "mono", style: { padding: "6px 6px", textAlign: "right", fontSize: 12, fontWeight: 700, color: (toplamGiris - toplamCikis) >= 0 ? "var(--erp-primary)" : "var(--erp-warn)" } },
-                                                                            (toplamGiris - toplamCikis).toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
-                                                                            " ",
-                                                                            sembol),
-                                                                        React.createElement("td", null)))))))));
-                                                })(),
-                                                duzenlenen === h.id && (React.createElement("div", { "data-hesap-duzenle-formu": "1", style: { marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },
-                                                    React.createElement(React.Fragment, null,
-                                                        ekleAlanlari.map((a2) => (React.createElement("input", { key: a2.key, value: duzenForm[a2.key] || "", "data-hesap-duzenle": a2.key, placeholder: a2.placeholder, onChange: (e) => setDuzenForm({ ...duzenForm, [a2.key]: e.target.value }), style: { padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 } }))),
-                                                        React.createElement("button", { "data-kart-eylem": "kaydet", title: "Kaydet \u00B7 Ctrl+S", type: "button", className: "btn-primary", style: { fontSize: 12, padding: "5px 12px" }, onClick: () => { if (onHesapGuncelle)
-                                                                onHesapGuncelle(h.id, duzenForm); setDuzenlenen(null); } }, "Kaydet"),
-                                                        React.createElement("button", { type: "button", className: "btn-ghost", "data-kart-eylem": "vazgec", title: "Vazge\u00E7 \u00B7 Esc", style: { fontSize: 12, padding: "5px 12px" }, onClick: () => setDuzenlenen(null) }, "Vazge\u00E7")))))))) },
+                                                    }
+                                                    const esikG = parseFloat(String(kolonFiltre.giris).replace(",", "."));
+                                                    if (Number.isFinite(esikG) && (hr.yon !== "Giriş" || hr.tutar < esikG))
+                                                        return false;
+                                                    const esikC = parseFloat(String(kolonFiltre.cikis).replace(",", "."));
+                                                    if (Number.isFinite(esikC) && (hr.yon === "Giriş" || hr.tutar < esikC))
+                                                        return false;
+                                                    return true;
+                                                });
+                                                const toplamGiris = gorunenSatirlar.filter(({ hr }) => hr.yon === "Giriş").reduce((s, { hr }) => s + hr.tutar, 0);
+                                                const toplamCikis = gorunenSatirlar.filter(({ hr }) => hr.yon !== "Giriş").reduce((s, { hr }) => s + hr.tutar, 0);
+                                                const kFiltreKutusu = (alan, ipucu, sayisalMi) => (React.createElement("input", { type: "text", inputMode: sayisalMi ? "decimal" : "text", value: kolonFiltre[alan], onChange: (e) => setKolonFiltre({ ...kolonFiltre, [alan]: e.target.value }), placeholder: ipucu, className: "mono", style: {
+                                                        width: "100%", minWidth: sayisalMi ? 58 : 80, padding: "3px 6px", fontSize: 11,
+                                                        border: `1px solid ${kolonFiltre[alan].trim() ? "var(--erp-brown)" : "var(--erp-border-2)"}`,
+                                                        background: kolonFiltre[alan].trim() ? "var(--erp-hover)" : "#fff",
+                                                        borderRadius: "var(--erp-r-sm)", textAlign: sayisalMi ? "right" : "left", boxSizing: "border-box",
+                                                    } }));
+                                                return (React.createElement(React.Fragment, null, satirlar.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } },
+                                                    defterFiltre,
+                                                    " defterinde hareket yok.")) : (React.createElement("div", { style: { overflowX: "auto" } },
+                                                    React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 12 } },
+                                                        React.createElement("thead", null,
+                                                            React.createElement("tr", { style: { borderBottom: "1.5px solid var(--erp-line)" } },
+                                                                React.createElement("th", { style: { textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" } }, "Tarih"),
+                                                                React.createElement("th", { style: { textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" } }, "A\u00E7\u0131klama"),
+                                                                React.createElement("th", { style: { textAlign: "right", padding: "4px 6px", color: "var(--erp-primary)" } }, "Giri\u015F"),
+                                                                React.createElement("th", { style: { textAlign: "right", padding: "4px 6px", color: "var(--erp-warn)" } }, "\u00C7\u0131k\u0131\u015F"),
+                                                                React.createElement("th", { style: { textAlign: "right", padding: "4px 6px", color: "var(--erp-text-2)" } }, "Bakiye"),
+                                                                React.createElement("th", { style: { width: 20 } })),
+                                                            React.createElement("tr", { style: { borderBottom: "1px solid var(--erp-line-soft)" } },
+                                                                React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("tarih", "tarih…")),
+                                                                React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("aciklama", "cari, açıklama…")),
+                                                                React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("giris", "≥", true)),
+                                                                React.createElement("th", { style: { padding: "3px 6px" } }, kFiltreKutusu("cikis", "≥", true)),
+                                                                React.createElement("th", null),
+                                                                React.createElement("th", null))),
+                                                        React.createElement("tbody", null,
+                                                            gorunenSatirlar.length === 0 && (React.createElement("tr", null,
+                                                                React.createElement("td", { colSpan: 6, style: { padding: "12px 6px", textAlign: "center", fontSize: 12, color: "var(--erp-text-3)" } }, "Bu filtreyle e\u015Fle\u015Fen hareket yok."))),
+                                                            gorunenSatirlar.map(({ hr, kosanBakiye: kb }) => {
+                                                                const cari = hr.cariId ? (cariler || []).find((c) => c.id === hr.cariId) : null;
+                                                                return (React.createElement("tr", { key: hr.id, style: { borderTop: "1px solid var(--erp-line-soft)" } },
+                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 6px", color: "var(--erp-text-3)", whiteSpace: "nowrap" } }, tarihYaz(hr.tarih, true)),
+                                                                    React.createElement("td", { style: { padding: "5px 6px", color: "var(--erp-text)" } },
+                                                                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } },
+                                                                            cari && React.createElement("span", { style: { color: "var(--erp-info)", fontWeight: 600 } }, cari.unvan),
+                                                                            hr.defter && hr.defter !== "Genel" && (React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "1px 5px", borderRadius: "var(--erp-r-pill)" } }, hr.defter === "Muhasebe" ? "Muhasebe (ikisine de)" : hr.defter)),
+                                                                            (() => {
+                                                                                const tip = hareketIslemTipi(hr);
+                                                                                if (!tip)
+                                                                                    return null;
+                                                                                const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
+                                                                                return (React.createElement("span", { className: "mono", style: {
+                                                                                        fontSize: 9, fontWeight: 700, color: renk,
+                                                                                        background: `${alfaEkle(renk, "1A")}`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
+                                                                                    } }, tip));
+                                                                            })(),
+                                                                            (() => {
+                                                                                const sade = kasaAciklamaSade(hr.aciklama, cari ? cari.unvan : "", hareketIslemTipi(hr));
+                                                                                return sade ? React.createElement("span", { "data-kasa-aciklama": "1", style: { color: "var(--erp-text-2)" } }, sade) : null;
+                                                                            })())),
+                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 6px", textAlign: "right", color: "var(--erp-primary)", fontWeight: 600 } }, hr.yon === "Giriş" ? `${hr.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : ""),
+                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 6px", textAlign: "right", color: "var(--erp-warn)", fontWeight: 600 } }, hr.yon !== "Giriş" ? `${hr.tutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : ""),
+                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 6px", textAlign: "right", fontWeight: 700 } },
+                                                                        kb.toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                                        " ",
+                                                                        sembol),
+                                                                    React.createElement("td", { style: { padding: "5px 2px", textAlign: "center", whiteSpace: "nowrap" } },
+                                                                        !hr.virmanMi && (React.createElement("button", { "data-hareket-duzenle": hr.id, onClick: () => setDuzenle({
+                                                                                hesapId: h.id, hareketId: hr.id,
+                                                                                tutar: String(hr.tutar || ""), tarih: hr.tarih || "",
+                                                                                aciklama: hr.aciklama || "",
+                                                                            }), title: "Bu hareketi d\u00FCzenle", className: "btn-ikon" },
+                                                                            React.createElement(Pencil, { size: 11 }))),
+                                                                        React.createElement(SilOnayButonu, { onConfirm: () => onHareketSil(h.id, hr.id), boyut: 11, baslikNormal: silmeYetkisiVar === false ? "Silme yetkiniz yok — istek yönetici onayına gönderilir" : "Bu hareketi sil" }))));
+                                                            })),
+                                                        gorunenSatirlar.length > 0 && (React.createElement("tfoot", null,
+                                                            React.createElement("tr", { style: { borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" } },
+                                                                React.createElement("td", { style: { padding: "6px 6px", fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)", whiteSpace: "nowrap" } }, kolonFiltreAktif ? "SÜZÜLEN TOPLAM" : "TOPLAM"),
+                                                                React.createElement("td", { className: "mono", style: { padding: "6px 6px", fontSize: 10, color: "var(--erp-text-3)" } },
+                                                                    gorunenSatirlar.length,
+                                                                    kolonFiltreAktif ? ` / ${satirlar.length}` : "",
+                                                                    " hareket"),
+                                                                React.createElement("td", { className: "mono", style: { padding: "6px 6px", textAlign: "right", fontSize: 12, fontWeight: 700, color: "var(--erp-primary)" } }, toplamGiris > 0 ? `${toplamGiris.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : "—"),
+                                                                React.createElement("td", { className: "mono", style: { padding: "6px 6px", textAlign: "right", fontSize: 12, fontWeight: 700, color: "var(--erp-warn)" } }, toplamCikis > 0 ? `${toplamCikis.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembol}` : "—"),
+                                                                React.createElement("td", { className: "mono", style: { padding: "6px 6px", textAlign: "right", fontSize: 12, fontWeight: 700, color: (toplamGiris - toplamCikis) >= 0 ? "var(--erp-primary)" : "var(--erp-warn)" } },
+                                                                    (toplamGiris - toplamCikis).toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                                    " ",
+                                                                    sembol),
+                                                                React.createElement("td", null)))))))));
+                                            })())))) },
                                 ] })));
                     }))));
         })()));
@@ -31685,10 +31707,20 @@ function mamulDeposuDurumu(stok, siparisler, uretim, koliler) {
         const bedenler = (o.bedenMiktarlari || []).length
             ? o.bedenMiktarlari
             : [{ beden: o.beden || "", miktar: o.adet || 0 }];
+        // SON PROSESTE TESLİM ALINAN DÜŞÜLÜR (v1.537.0 — son denetim): son prosesin kısmi teslimleri stoğa HEMEN
+        // giriyor (sağlam) ya da gidiyor (hurda); yine de bütün miktar "üretimde" sayılıyordu — 56 çiftin 32'si
+        // stoktayken ekranda stok 32 + üretimde 56, açık 32 eksik çıkıyordu.
+        const adimlar = o.prosesIlerleme || [];
+        const son = adimlar.length ? adimlar[adimlar.length - 1] : null;
+        const cikan = {};
+        ((son && son.atamalar) || []).filter((a) => a.tamamlandiMi && a.sonuc).forEach((a) => {
+            Object.entries(a.sonuc.saglam || {}).forEach(([bd, m]) => { cikan[bd] = (cikan[bd] || 0) + (m || 0); });
+            (a.sonuc.hurda || []).forEach((x) => { cikan[x.beden] = (cikan[x.beden] || 0) + (x.miktar || 0); });
+        });
         bedenler.forEach((b) => {
             const h = hucre(o.urunId, o.renk, b.beden);
             if (h)
-                h.uretimde += b.miktar || 0;
+                h.uretimde += Math.max(0, stokYuvarla((b.miktar || 0) - (cikan[b.beden] || 0)));
         });
     });
     satirlar.forEach((satir) => {
@@ -33123,13 +33155,22 @@ function SagPanelKart({ secim, arkaplan, cerceveRenk, cikarFonk, varsayilanTip, 
     const odakliSiparis = { ...s, kalemler: ilgiliKalemler };
     const cari = (cariler || []).find((c) => c.id === s.cariId);
     const urun = (stok || []).find((p) => p.id === secim.urunId);
-    // [X] butonu: eğer bu satırdaki kalemler ARTIK planlanmışsa (kullanıcı zaten Onayla'ya bastıysa),
-    // panelden kaldırmak GERÇEKTEN planlamayı geri alır (onPlanlamaTemizle çağrılır) — bu, kalemi tekrar
-    // "bekleyen" durumuna döndürür ve sol tarafta yeniden görünmesini sağlar. Henüz onaylanmamışsa (hâlâ
-    // form aşamasındaysa), sadece bu panelden (yerel görünümden) kaldırılır — zaten planlanmış bir şey yok.
+    // [X] butonu: satırı bu panelden kaldırır. Bağlı kaydı silinmiş (geçersiz) planlamalar da temizlenir.
+    // GEÇERLİ PLANLAMA GERİ ALINMAZ (v1.537.0 — son denetim): [X] eskiden bağlı üretim/alış YERİNDE dururken kalemin
+    // referansını siliyordu — kayıt sahipsiz kalıyor, satır yeniden planlanınca ikinci üretim ve ikinci hammadde
+    // rezervasyonu doğuyordu (talep iki kat). Artık yalnız bağlı kaydı ARTIK OLMAYAN (geçersiz) referanslar temizlenir;
+    // geçerli planlama kendi kaydından (üretimi / alış siparişini silerek ya da iptal ederek) geri alınır.
     function kaldirVeGeriAl() {
-        const planlanmisOlanlar = ilgiliKalemler.filter((k) => k.planlama);
-        planlanmisOlanlar.forEach((k) => onPlanlamaTemizle && onPlanlamaTemizle(s.id, k.id));
+        const gecersizler = ilgiliKalemler.filter((k) => {
+            if (!k.planlama)
+                return false;
+            const no = k.planlama.referansNo;
+            return k.planlama.tip === "Satınalma"
+                ? !(siparisler || []).some((x) => x.siparisNo === no)
+                : !(uretim || []).some((x) => x.siparisNo === no);
+        });
+        if (gecersizler.length > 0 && onPlanlamaTemizle)
+            onPlanlamaTemizle(s.id, gecersizler.map((k) => k.id));
         cikarFonk(secim);
     }
     return (React.createElement("div", { style: { background: arkaplan, border: `1px solid ${cerceveRenk}`, borderRadius: "var(--erp-r-md)", padding: 10 } },
@@ -33141,7 +33182,7 @@ function SagPanelKart({ secim, arkaplan, cerceveRenk, cikarFonk, varsayilanTip, 
                 urun ? urun.ad : secim.urunId,
                 " \u00B7 ",
                 secim.renk),
-            React.createElement("button", { type: "button", onClick: kaldirVeGeriAl, title: "Panelden kald\u0131r \u2014 hen\u00FCz onaylanmad\u0131ysa sadece g\u00F6r\u00FCn\u00FCmden \u00E7\u0131kar, onayland\u0131ysa planlamay\u0131 geri al\u0131r", style: { marginLeft: "auto", border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" } },
+            React.createElement("button", { type: "button", onClick: kaldirVeGeriAl, title: "Panelden kald\u0131r \u2014 planlama geri al\u0131nmaz; geri almak i\u00E7in \u00FCretimi / al\u0131\u015F sipari\u015Fini kendi ekran\u0131ndan silin ya da iptal edin", style: { marginLeft: "auto", border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" } },
                 React.createElement(X, { size: 13 }))),
         React.createElement(PlanlamaBolumu, { siparis: odakliSiparis, stok: stok, cariler: cariler, tumSiparisler: siparisler, uretimSiparisleri: uretim, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onSiparisGit: onGoToSiparis, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur, varsayilanTip: varsayilanTip, sonrasindaYonlendir: sonrasindaYonlendir })));
 }
@@ -33162,7 +33203,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
     // Sağ paneldeki bir satır, SADECE o kalem GERÇEKTEN tamamen karşılandığında (kalan=0, yani teslim
     // alındığında) otomatik kaybolur. Planlanmış AMA HENÜZ TESLİM ALINMAMIŞ bir satır (kalan hâlâ >0),
     // "Onayla" sonrası da sağ panelde (artık "planlanmış" rozetiyle) GÖRÜNMEYE DEVAM EDER — kullanıcı
-    // isterse [X] ile bilinçli olarak çıkarır (bu, planlamayı da geri alır, bkz. SagPanelKart).
+    // isterse [X] ile panelden çıkarır (geçerli planlama geri ALINMAZ, bkz. SagPanelKart v1.537.0).
     function halaBekliyorMu(secim) {
         const s = (siparisler || []).find((x) => x.id === secim.siparisId);
         if (!s)
@@ -36438,7 +36479,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         let sonraki = [...kalemler];
         let yeni = 0, birlesen = 0;
         eklenecekler.forEach((x) => {
-            const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden);
+            // SERBEST satır yalnız SERBEST satırla birleşir (v1.537.0 — son denetim): siparişe ya da koliye bağlı satıra
+            // eklenirse elle girilen miktar o sipariş kalemine sayılıyordu (karşılanan 15/10, "fazla" işareti yok) ya da
+            // koli içeriğini şişiriyordu. Bağlı yoldaki (yukarıda) eşleşme kuralının aynısı.
+            const i = sonraki.findIndex((k) => k.urunId === seciliUrun.id && k.renk === kRenk && k.beden === x.beden && !k.kalemId && !k.koliId);
             if (i >= 0) {
                 birlesen++;
                 // Birleşen satırın oranı da son girilene döner (fiyat ve para birimiyle aynı kural).
@@ -37722,7 +37766,11 @@ function cariHareketleriGrupla(hareketler) {
     const gruplar = [];
     const index = {};
     hareketler.forEach((h) => {
-        const key = h.fisNo ? `fis__${h.fisNo}` : `tek__${h.id}`;
+        // PEŞİN KAYIT AYRI GRUP (v1.537.0 — son denetim): fişten peşin tahsilat/ödeme fişle aynı `fisNo`yu taşıyor.
+        // Aynı gruba girince grup tutarı fiş + peşin toplanıyor, yön ilk kaydınkiyle sayılıyordu: 1000 ₺ satış + 1000 ₺
+        // peşin tahsil ekstrede "Borç 2000" ve koşan bakiye +2000 görünüyordu (başlık doğru olarak 0). Kasaya bağlı
+        // (`muhasebeBagId`) kayıt kendi satırında, kendi yönüyle durur — e-fatura da onu fatura satırından ayırıyor.
+        const key = h.fisNo ? (h.muhasebeBagId ? `pesin__${h.fisNo}__${h.id}` : `fis__${h.fisNo}`) : `tek__${h.id}`;
         if (!(key in index)) {
             index[key] = gruplar.length;
             // `zaman` DA TAŞINIYOR: ekstre sıralaması gün içinde saate bakıyor (bkz. 265-carikart).
@@ -38681,7 +38729,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                     " ",
                                     tip))),
                                 stokluTipler.length > 0 && (React.createElement("button", { className: "btn-ghost", style: { borderColor: "var(--erp-text-3)", color: "var(--erp-text-2)", fontSize: 11 }, title: "Stok etkisi olmadan yaln\u0131zca cari bor\u00E7/alacak kayd\u0131 \u2014 hizmet bedeli, navlun, iskonto gibi", onClick: () => hareketTipiSec(stokluTipler[0]) }, "\u00DCr\u00FCns\u00FCz kay\u0131t")))))) },
-                        { id: "filtre", ad: "Defter ve para birimi seçimi", icerik: (React.createElement(React.Fragment, null,
+                        // GİZLENEMEZ (v1.537.0 — son denetim): gizlenince defter "Genel"de takılı kalıyor, Tümü/Resmi'ye geçecek düğme
+                        // kalmıyordu — Resmi hareketler bütün cihazlarda "yok" gibi görünürdü.
+                        { id: "filtre", ad: "Defter ve para birimi seçimi", gizlenemez: true, icerik: (React.createElement(React.Fragment, null,
                                 (cari.hareketler || []).length > 0 && (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 10 } },
                                     ["Tümü", "Genel", "Resmi"].map((d) => {
                                         // SAYIM FİŞ BAZINDA, HAREKET BAZINDA DEĞİL.
@@ -39329,7 +39379,11 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
     // Muhasebe defterinde aynı fişte hem Genel hem Resmi kaydı oluşabilir (aynı tutar) — çift saymamak
     // için tekilleştiriyoruz.
     const gorulmusImzalar = new Set();
-    const tekilHareketler = fis.hareketler.filter((h) => {
+    // Peşin tahsilat/ödeme satırı (kasaya bağlı, fişle aynı numara) fiş toplamına ve KDV matrahına girmez
+    // (v1.537.0 — son denetim); fişin kendi satırı yoksa (kasadan girilen tahsilat/ödeme fişi) o satır kalır.
+    const fisinKendi = fis.hareketler.filter((h) => !h.muhasebeBagId);
+    const yazilacaklar = fisinKendi.length > 0 ? fisinKendi : fis.hareketler;
+    const tekilHareketler = yazilacaklar.filter((h) => {
         const imza = `${h.tutar}|${h.urunAd || ""}|${h.renk || ""}|${h.beden || ""}|${h.miktar || ""}`;
         if ((h.defter || "Genel") === "Resmi" && gorulmusImzalar.has(imza))
             return false;
@@ -43742,7 +43796,7 @@ function htmlKacis(v) {
 }
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar, koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar, koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
     // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
     // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
     // sipariş kalemleri düz satıra çevriliyor.
@@ -44538,7 +44592,7 @@ function SiparisModule({ aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFise
             return showToast("En az 1 kalem ekleyin");
         const siparis = {
             id: uid("sip"),
-            siparisNo: sonrakiSiparisNo(siparisler, tip === "Satış" ? "SAT-" : "ALS-"),
+            siparisNo: sonrakiSiparisNo(siparisler, tip === "Satış" ? "SAT-" : "ALS-", cop),
             tip, cariId, tarih, teslimTarihi, not: not.trim(),
             musteriKodu: musteriKodu.trim(),
             kayitParaBirimi, kayitKurlari,
@@ -46569,8 +46623,6 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             saltOkunur && siparis.not && (React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 10, fontSize: 12, color: "var(--erp-text-2)", alignItems: "flex-start" } },
                                 React.createElement(FileText, { size: 13, style: { flexShrink: 0, marginTop: 1 } }),
                                 React.createElement(NotKaynakla, { not: siparis.not, tumSiparisler: tumSiparisler, onSiparisGit: onSiparisGit }))))) },
-                    // Açık kartta (baslangicAcik) para birimi üst şeritte; blok yalnız liste içi kapalı-açılır kartta dolu.
-                    { id: "paraBirimi", ad: "Para birimi çevirisi", icerik: (React.createElement(React.Fragment, null, !baslangicAcik && Object.keys(pbToplamlariHam).length > 0 && (!saltOkunur && React.createElement(FisToplamCeviriPaneli, { pbToplamlari: pbToplamlariHam, kurlar: kurlar, deger: { kayitParaBirimi: siparis.kayitParaBirimi, kayitKurlari: siparis.kayitKurlari }, onDegistir: (yeni) => onKayitParaGuncelle && onKayitParaGuncelle(siparis.id, yeni.kayitParaBirimi, yeni.kayitKurlari) })))) },
                     { id: "kalemler", ad: "Kalemler", gizlenemez: true, icerik: (React.createElement(React.Fragment, null,
                             (() => {
                                 // "Kalemlere Ekle" ard arda tıklanırsa (eski davranışta) aynı ürün+renk+beden'e sahip
@@ -47995,7 +48047,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     !teslimOnayGoster && (React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 10 } },
                                         React.createElement("button", { "data-islem-kaydet": "1", className: "btn-primary", style: { padding: "6px 12px", fontSize: 12 }, onClick: teslimSubmit }, "\u0130\u015Flemi Kaydet"),
                                         React.createElement("button", { className: "btn-ghost", style: { padding: "6px 12px", fontSize: 12 }, onClick: () => { setShowTeslim(false); setTeslimMiktarlar({}); setTeslimOnayGoster(false); } }, "Vazge\u00E7")))))))))) },
-                ].filter((b) => !(baslangicAcik && b.id === "paraBirimi")) })))));
+                ] })))));
 }
 // `genislik`: alanın kendi genişliği (18 Eylül). Esnek ızgaralarda alanlar ekranı doldurmak için
 // uzuyor ve aralarında okunmayan boşluk kalıyordu; bu prop verilen alan içeriği kadar duruyor.
@@ -48998,6 +49050,26 @@ function ekranDuzeniCoz(bloklar, kayit) {
     });
     return sonuc;
 }
+// SÜRÜKLERKEN KENDİLİĞİNDEN KAYDIRMA (v1.535.0 — kullanıcı: "Hareket listesi alta inmiyor"). Uzun bir blok (hareket
+// listesi) en üstteyken alttaki blok ekranın dışında kalıyordu; işaretçi oraya ulaşamadığı için taşıma olmuyordu.
+// İşaretçi ekranın alt/üst kenarına yaklaşınca en yakın kaydırılabilir kap (yoksa sayfa) kayar.
+function duzenKenardaKaydir(el, clientY) {
+    const kenar = 70;
+    const h = window.innerHeight || 0;
+    const adim = clientY > h - kenar ? 24 : clientY < kenar ? -24 : 0;
+    if (!adim)
+        return;
+    let p = el && el.parentElement;
+    while (p && p !== document.body) {
+        const st = getComputedStyle(p);
+        if (/(auto|scroll)/.test(st.overflowY) && p.scrollHeight > p.clientHeight) {
+            p.scrollTop += adim;
+            return;
+        }
+        p = p.parentElement;
+    }
+    (document.scrollingElement || document.documentElement).scrollTop += adim;
+}
 // Sürüklemede/oklarda bir bloğu hedefin yerine taşır.
 function duzenTasi(liste, id, hedefId) {
     const i = liste.findIndex((x) => x.id === id);
@@ -49014,7 +49086,9 @@ function duzenTasi(liste, id, hedefId) {
 // `kilitli`: düzen ikonu çıkmaz (salt-okunur önizleme gibi yerler); kayıtlı düzen yine uygulanır.
 // `acRef` + `disIkon` (v1.529.0): ikon ekranın kendi başlık şeridinde duruyorsa (sipariş kartı) alan kendi ikon satırını
 // çizmez; başlıktaki ikon `acRef.current()` ile kipi açar. Kip araç çubuğu (Kaydet/Vazgeç) yine alanın üstünde çıkar.
-function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIkon = false }) {
+// `kontrolRef` + `cubuksuz` (v1.537.0): başka bir kipin (ürün kartında sekme düzeni) Kaydet/Vazgeç/Varsayılan'ı bu alanı
+// da yönetir; alan kendi araç çubuğunu çizmez — tek ekranda iki ayrı "Düzeni kaydet" çubuğu olmasın.
+function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIkon = false, kontrolRef, cubuksuz = false }) {
     const baglam = React.useContext(EkranDuzeniBaglami);
     const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
     const [kip, setKip] = useState(false);
@@ -49023,6 +49097,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
     // SALINIM KİLİDİ: takastan sonra bloklar yer değiştirdiği için işaretçi yeniden AYNI hedefin üstüne düşebiliyor ve
     // blok geri kaçıyordu (senaryo yakaladı). Son takas edilen hedef, işaretçi başka bir bloğa geçene kadar yok sayılır.
     const sonHedefRef = useRef(null);
+    const kokRef = useRef(null);
     // Boyutlandırma: { id, x, bas, kolon } — basılan anın işaretçi konumu, başlangıç sütunu, bir sütunun piksel genişliği.
     const boyutRef = useRef(null);
     const [boyutlanan, setBoyutlanan] = useState(null);
@@ -49038,32 +49113,57 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
             baglam.kaydet(ekran, taslak || duzen);
         kiptenCik();
     };
-    // SÜRÜKLEME: tutamakta basılı tutulunca işaretçi yakalanır; hareket ederken altındaki bloğun yerine geçilir.
-    const surukle = {
-        // BÜTÜN ÇUBUK TUTAMAK (v1.528.0): yalnız küçük ⠿ ikonundan tutmak zordu. Çubuktaki düğmeler hariç her yer sürükler.
-        onPointerDown: (id) => (e) => { if (e.target.closest && e.target.closest("button"))
-            return; e.preventDefault(); try {
-            e.currentTarget.setPointerCapture(e.pointerId);
-        }
-        catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
-        onPointerMove: (e) => {
-            if (!suruklenen)
+    if (kontrolRef)
+        kontrolRef.current = {
+            kaydet: () => { if (kip)
+                kaydet(); },
+            vazgec: () => { if (kip)
+                kiptenCik(); },
+            varsayilan: () => { if (kip)
+                setTaslak(ekranDuzeniCoz(bloklar, null)); },
+        };
+    // SÜRÜKLEME PENCEREDEN DİNLENİR (v1.537.0 — son denetim): blok yer değiştirince React düğümü DOM'da taşıyor ve
+    // tarayıcı işaretçi yakalamasını bırakıyordu; sonraki hareket/bırakma olayları çubuğa hiç ulaşmıyor, `suruklenen`
+    // dolu kalıyor ve fare tuşu bırakıldıktan sonra bir çubuğun üstünden geçmek blokları kendiliğinden kaydırıyordu.
+    useEffect(() => {
+        if (!suruklenen)
+            return undefined;
+        const hareket = (e) => {
+            if (e.pointerType === "mouse" && !(e.buttons & 1)) {
+                setSuruklenen(null);
                 return;
+            }
+            duzenKenardaKaydir(kokRef.current, e.clientY);
             const alti = document.elementFromPoint(e.clientX, e.clientY);
             const blok = alti && alti.closest ? alti.closest(`[data-duzen-ekran="${ekran}"] [data-duzen-blok]`) : null;
             const hedef = blok && blok.getAttribute("data-duzen-blok");
             if (!hedef || hedef === suruklenen) {
-                if (hedef === suruklenen)
-                    return;
-                sonHedefRef.current = null;
+                if (!hedef)
+                    sonHedefRef.current = null;
                 return;
             }
             if (hedef === sonHedefRef.current)
                 return;
             sonHedefRef.current = hedef;
-            setTaslak((o) => duzenTasi(o || duzen, suruklenen, hedef));
-        },
-        onPointerUp: () => setSuruklenen(null),
+            // Kipte taslak hep dolu (kipe girerken kuruluyor); eski `duzen` kapanışına düşülmez.
+            setTaslak((o) => (o ? duzenTasi(o, suruklenen, hedef) : o));
+        };
+        const bitir = () => setSuruklenen(null);
+        window.addEventListener("pointermove", hareket);
+        window.addEventListener("pointerup", bitir);
+        window.addEventListener("pointercancel", bitir);
+        return () => {
+            window.removeEventListener("pointermove", hareket);
+            window.removeEventListener("pointerup", bitir);
+            window.removeEventListener("pointercancel", bitir);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [suruklenen, ekran]);
+    // SÜRÜKLEME: çubukta basılı tutulunca başlar; hareket ve bırakma yukarıdaki pencere dinleyicisinde.
+    const surukle = {
+        // BÜTÜN ÇUBUK TUTAMAK (v1.528.0): yalnız küçük ⠿ ikonundan tutmak zordu. Çubuktaki düğmeler hariç her yer sürükler.
+        onPointerDown: (id) => (e) => { if (e.target.closest && e.target.closest("button"))
+            return; e.preventDefault(); sonHedefRef.current = null; setSuruklenen(id); },
     };
     // BOYUTLANDIRMA: sağ kenardaki tutamak çekildikçe genişlik en yakın sütuna oturur (ızgara dışı piksel yok — dar ekranda
     // yine tam genişliğe iner).
@@ -49094,7 +49194,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
     };
     const cubuk = (d, i) => {
         const b = blokBul(d.id);
-        return (React.createElement("div", { "data-duzen-cubugu": d.id, title: "Bas\u0131l\u0131 tutup s\u00FCr\u00FCkleyin", onPointerDown: surukle.onPointerDown(d.id), onPointerMove: surukle.onPointerMove, onPointerUp: surukle.onPointerUp, onPointerCancel: surukle.onPointerUp, style: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "1px 4px", marginBottom: 3, cursor: suruklenen === d.id ? "grabbing" : "grab", touchAction: "none",
+        return (React.createElement("div", { "data-duzen-cubugu": d.id, title: "Bas\u0131l\u0131 tutup s\u00FCr\u00FCkleyin", onPointerDown: surukle.onPointerDown(d.id), style: { display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "1px 4px", marginBottom: 3, cursor: suruklenen === d.id ? "grabbing" : "grab", touchAction: "none",
                 background: "#6B4E8A14", border: "1px solid #6B4E8A55", borderRadius: "var(--erp-r-sm)", fontSize: 11, userSelect: "none" } },
             React.createElement("span", { "data-duzen-tutamak": d.id, style: { display: "inline-flex", padding: 1, color: "var(--erp-purple)" } },
                 React.createElement(GripVertical, { size: 14 })),
@@ -49112,9 +49212,10 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
                     background: d.genislik === g.k ? "#6B4E8A1A" : "#fff", color: d.genislik === g.k ? "var(--erp-purple)" : "var(--erp-text-2)" } }, g.ad)))),
             !(b && b.gizlenemez) && (React.createElement("button", { type: "button", "data-duzen-gizle": d.id, onClick: () => guncelle(d.id, { gizli: !d.gizli }), title: d.gizli ? "Göster" : "Gizle", style: { border: "1px solid var(--erp-line)", background: "#fff", borderRadius: 4, padding: "1px 5px", cursor: "pointer", display: "inline-flex", color: d.gizli ? "var(--erp-text-3)" : "var(--erp-purple)" } }, d.gizli ? React.createElement(EyeOff, { size: 13 }) : React.createElement(Eye, { size: 13 })))));
     };
-    const genislikSinifi = (g) => `duzen-blok duzen-blok-${DUZEN_SUTUN[g] ? g : "sayi"}`;
-    return (React.createElement("div", { "data-duzen-ekran": ekran, "data-duzen-kip": kip ? "1" : undefined },
-        baglam && baglam.yetkili && !kilitli && (kip || !disIkon) && (React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 } }, !kip ? (React.createElement("button", { type: "button", className: "btn-ikon", "data-duzen-ac": ekran, onClick: kipeGir, title: "Ekran d\u00FCzeni \u2014 bloklar\u0131 s\u0131rala, geni\u015Fli\u011Fini ayarla, gizle" },
+    // Genişlik `--duzen-sutun` değişkeninde; `duzen-blok-dar/yarim/...` sınıflarının CSS kuralı v1.528.0'da kalktı.
+    const genislikSinifi = () => "duzen-blok";
+    return (React.createElement("div", { ref: kokRef, "data-duzen-ekran": ekran, "data-duzen-kip": kip ? "1" : undefined },
+        baglam && baglam.yetkili && !kilitli && (kip ? !cubuksuz : !disIkon) && (React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 } }, !kip ? (React.createElement("button", { type: "button", className: "btn-ikon", "data-duzen-ac": ekran, onClick: kipeGir, title: "Ekran d\u00FCzeni \u2014 bloklar\u0131 s\u0131rala, geni\u015Fli\u011Fini ayarla, gizle" },
             React.createElement(LayoutGrid, { size: 14 }))) : (React.createElement(React.Fragment, null,
             React.createElement("span", { style: { fontSize: 11, color: "var(--erp-purple)", marginRight: "auto" } }, "D\u00FCzenleme kipi \u2014 bloklar\u0131 mor \u00E7ubu\u011Fundan tutup s\u00FCr\u00FCkleyin; geni\u015Fli\u011Fi sa\u011F kenardaki tutama\u011F\u0131 \u00E7ekerek ayarlay\u0131n (yan yana s\u0131\u011Fanlar ayn\u0131 sat\u0131ra ge\u00E7er). B\u00FCt\u00FCn cihazlara kaydedilir."),
             React.createElement("button", { type: "button", className: "btn-ghost", "data-duzen-varsayilan": ekran, style: { padding: "3px 10px", fontSize: 12 }, onClick: () => setTaslak(ekranDuzeniCoz(bloklar, null)) },
@@ -49137,7 +49238,8 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
                 kip && cubuk(d, i),
                 kip && (React.createElement("div", { "data-duzen-boyut": d.id, className: "duzen-boyut-tutamagi", title: "\u00C7ekerek geni\u015Fli\u011Fi ayarlay\u0131n", onPointerDown: boyutla.onPointerDown(d), onPointerMove: boyutla.onPointerMove, onPointerUp: boyutla.onPointerUp, onPointerCancel: boyutla.onPointerUp, style: { position: "absolute", top: 0, bottom: 0, right: -8, width: 12, cursor: "ew-resize", touchAction: "none", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center" } },
                     React.createElement("div", { style: { width: 4, height: 36, maxHeight: "60%", borderRadius: 2, background: boyutlanan === d.id ? "var(--erp-purple)" : "#6B4E8A88" } }))),
-                React.createElement("div", { style: kip ? { pointerEvents: "none", maxHeight: d.gizli ? 60 : undefined, overflow: d.gizli ? "hidden" : undefined } : undefined }, b.icerik)));
+                React.createElement("div", { "data-duzen-onizleme": kip ? "1" : undefined, style: kip ? { pointerEvents: "none", maxHeight: d.gizli ? 60 : 220, overflow: "hidden",
+                        WebkitMaskImage: "linear-gradient(to bottom, #000 75%, transparent)", maskImage: "linear-gradient(to bottom, #000 75%, transparent)" } : undefined }, b.icerik)));
         }))));
 }
 // TANIMLAR > GÖRÜNÜM > EKRAN DÜZENİ (v1.523.0 — kullanıcı: "Düzen tuşunu göremedim"). Düzenin NEREDE değiştirildiğini
@@ -49181,7 +49283,9 @@ function EkranDuzeniTanimlari() {
 // (`ekranDuzenleri[ekran] = [{ id, gizli }]`) ve aynı çözücü (`ekranDuzeniCoz`); yalnız yerleşim yatay.
 // `sekmeler`: [{ key, label, gizlenemez? }] — koşullu sekmeler (Reçete yalnız mamulde) listede olmayabilir.
 // `acRef` + `disIkon` (v1.530.0): DuzenAlani'daki gibi — ikon kartın üst şeridinde.
-function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false }) {
+// `ekKontrol` (v1.537.0): aynı çubuk başka bir alanı da yönetir (ürün kartında Stok Bilgileri blokları) — { kaydet,
+// vazgec, varsayilan } ref'i; `ekAciklama` çubuğun yazısına eklenir.
+function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false, ekKontrol, ekAciklama }) {
     const baglam = React.useContext(EkranDuzeniBaglami);
     const kayitli = baglam && baglam.duzenler ? baglam.duzenler[ekran] : null;
     const bloklar = (sekmeler || []).map((t) => ({ id: t.key, gizlenemez: !!t.gizlenemez }));
@@ -49196,10 +49300,15 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
     const aktifGizli = !kip && aktif && !gorunenler.some((d) => d.id === aktif) && duzen.some((d) => d.id === aktif);
     useEffect(() => { if (aktifGizli && gorunenler[0])
         onSec(gorunenler[0].id); }, [aktifGizli]);
+    const ek = () => (ekKontrol && ekKontrol.current) || null;
     const kiptenCik = () => { setKip(false); setTaslak(null); setSuruklenen(null); };
+    const vazgec = () => { if (ek())
+        ek().vazgec(); kiptenCik(); };
     if (acRef)
         acRef.current = () => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); };
     const kaydet = () => {
+        if (ek())
+            ek().kaydet();
         const liste = taslak || duzen;
         // BU ÜRÜNDE OLMAYAN sekmelerin kaydı korunur: hammadde kartında kaydedilen sıra Reçete/Maliyet'i silmesin.
         // Eski kayıttaki SOLUNDAKİ sekmenin hemen sağına geri konur (sona atılsaydı mamulde Reçete en sona kaçardı).
@@ -49217,14 +49326,18 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
         kiptenCik();
     };
     const tasi = (id, hedefId) => setTaslak((o) => duzenTasi(o || duzen, id, hedefId));
+    // Pencereden dinlenir — DuzenAlani'daki yakalama kaybı notu (v1.537.0) burada da geçerli.
     const surukle = {
-        onPointerDown: (id) => (e) => { e.preventDefault(); try {
-            e.currentTarget.setPointerCapture(e.pointerId);
-        }
-        catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
-        onPointerMove: (e) => {
-            if (!suruklenen)
+        onPointerDown: (id) => (e) => { e.preventDefault(); sonHedefRef.current = null; setSuruklenen(id); },
+    };
+    useEffect(() => {
+        if (!suruklenen)
+            return undefined;
+        const hareket = (e) => {
+            if (e.pointerType === "mouse" && !(e.buttons & 1)) {
+                setSuruklenen(null);
                 return;
+            }
             const alti = document.elementFromPoint(e.clientX, e.clientY);
             const el = alti && alti.closest ? alti.closest(`[data-sekme-duzen-ekran="${ekran}"] [data-sekme-duzen]`) : null;
             const hedef = el && el.getAttribute("data-sekme-duzen");
@@ -49236,19 +49349,33 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
             if (hedef === sonHedefRef.current)
                 return;
             sonHedefRef.current = hedef;
-            tasi(suruklenen, hedef);
-        },
-        onPointerUp: () => setSuruklenen(null),
-    };
+            // Kipte taslak hep dolu (kipe girerken kuruluyor); eski `duzen` kapanışına düşülmez.
+            setTaslak((o) => (o ? duzenTasi(o, suruklenen, hedef) : o));
+        };
+        const bitir = () => setSuruklenen(null);
+        window.addEventListener("pointermove", hareket);
+        window.addEventListener("pointerup", bitir);
+        window.addEventListener("pointercancel", bitir);
+        return () => {
+            window.removeEventListener("pointermove", hareket);
+            window.removeEventListener("pointerup", bitir);
+            window.removeEventListener("pointercancel", bitir);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [suruklenen, ekran]);
     const kucukDugme = { border: "1px solid var(--erp-line)", background: "#fff", borderRadius: 4, padding: "1px 4px", cursor: "pointer", display: "inline-flex" };
     if (kip) {
         return (React.createElement("div", { "data-sekme-duzen-ekran": ekran, "data-duzen-kip": "1", style: { marginBottom: 14, padding: 8, border: "2px dashed #6B4E8A66", borderRadius: "var(--erp-r-md)", background: "#6B4E8A0A" } },
             React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 } },
-                React.createElement("span", { style: { fontSize: 11, color: "var(--erp-purple)", marginRight: "auto" } }, "Sekme d\u00FCzeni \u2014 \u283F ile s\u00FCr\u00FCkleyin ya da oklarla ta\u015F\u0131y\u0131n; g\u00F6z d\u00FC\u011Fmesiyle gizleyin. B\u00FCt\u00FCn \u00FCr\u00FCn kartlar\u0131nda ve cihazlarda ge\u00E7erli."),
-                React.createElement("button", { type: "button", className: "btn-ghost", "data-duzen-varsayilan": ekran, style: { padding: "3px 10px", fontSize: 12 }, onClick: () => setTaslak(ekranDuzeniCoz(bloklar, null)) },
+                React.createElement("span", { style: { fontSize: 11, color: "var(--erp-purple)", marginRight: "auto" } },
+                    "Sekme d\u00FCzeni \u2014 \u283F ile s\u00FCr\u00FCkleyin ya da oklarla ta\u015F\u0131y\u0131n; g\u00F6z d\u00FC\u011Fmesiyle gizleyin.",
+                    ekAciklama ? ` ${ekAciklama}` : "",
+                    " B\u00FCt\u00FCn \u00FCr\u00FCn kartlar\u0131nda ve cihazlarda ge\u00E7erli."),
+                React.createElement("button", { type: "button", className: "btn-ghost", "data-duzen-varsayilan": ekran, style: { padding: "3px 10px", fontSize: 12 }, onClick: () => { setTaslak(ekranDuzeniCoz(bloklar, null)); if (ek())
+                        ek().varsayilan(); } },
                     React.createElement(RotateCcw, { size: 12 }),
                     " Varsay\u0131lana d\u00F6n"),
-                React.createElement("button", { type: "button", className: "btn-ghost", "data-duzen-vazgec": ekran, style: { padding: "3px 10px", fontSize: 12 }, onClick: kiptenCik },
+                React.createElement("button", { type: "button", className: "btn-ghost", "data-duzen-vazgec": ekran, style: { padding: "3px 10px", fontSize: 12 }, onClick: vazgec },
                     React.createElement(X, { size: 12 }),
                     " Vazge\u00E7"),
                 React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-duzen-kaydet": ekran, style: { padding: "3px 12px", fontSize: 12 }, onClick: kaydet },
@@ -49260,7 +49387,7 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
                     return null;
                 return (React.createElement("div", { key: d.id, "data-sekme-duzen": d.id, "data-sekme-gizli": d.gizli ? "1" : undefined, style: { display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 6px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700,
                         border: `1.5px solid ${suruklenen === d.id ? "var(--erp-purple)" : "#6B4E8A55"}`, background: "#fff", opacity: d.gizli ? 0.45 : 1 } },
-                    React.createElement("span", { "data-duzen-tutamak": d.id, title: "Bas\u0131l\u0131 tutup s\u00FCr\u00FCkleyin", onPointerDown: surukle.onPointerDown(d.id), onPointerMove: surukle.onPointerMove, onPointerUp: surukle.onPointerUp, onPointerCancel: surukle.onPointerUp, style: { cursor: "grab", touchAction: "none", display: "inline-flex", color: "var(--erp-purple)" } },
+                    React.createElement("span", { "data-duzen-tutamak": d.id, title: "Bas\u0131l\u0131 tutup s\u00FCr\u00FCkleyin", onPointerDown: surukle.onPointerDown(d.id), style: { cursor: "grab", touchAction: "none", display: "inline-flex", color: "var(--erp-purple)" } },
                         React.createElement(GripVertical, { size: 14 })),
                     React.createElement("span", { style: { textDecoration: d.gizli ? "line-through" : undefined } }, t.label),
                     React.createElement("button", { type: "button", "data-duzen-yukari": d.id, title: "Sola", disabled: i === 0, onClick: () => tasi(d.id, duzen[i - 1].id), style: kucukDugme },
@@ -49663,7 +49790,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
             const TUR_ADLARI = { proto: "Proto", gelistirme: "Geliştirme", onayli: "Onaylı numune" };
             const KARARLAR = { devam: "Devam — sonraki tur", revizyon: "Revizyon gerekli", onay: "Onaylandı" };
             const ekle = () => onGuncelle({ numuneler: [...turlar, { id: uid("nm"), no: turlar.length + 1,
-                        tur: turlar.length === 0 ? "proto" : "gelistirme", tarih: new Date().toISOString().slice(0, 10),
+                        tur: turlar.length === 0 ? "proto" : "gelistirme", tarih: bugunYerel(), // yerel gün (UTC değil: 00:00–03:00 arası önceki güne düşüyordu)
                         foto: "", yorum: "", karar: "" }] });
             const guncelle = (id, alanlar) => onGuncelle({ numuneler: turlar.map((n) => (n.id === id ? { ...n, ...alanlar } : n)) });
             return (React.createElement("div", { "data-model-numune": "1", style: { display: "grid", gap: 10 } },
@@ -50109,7 +50236,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.534.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.537.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

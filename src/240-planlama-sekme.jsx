@@ -160,13 +160,20 @@ function SagPanelKart({ secim, arkaplan, cerceveRenk, cikarFonk, varsayilanTip, 
   const cari = (cariler || []).find((c) => c.id === s.cariId);
   const urun = (stok || []).find((p) => p.id === secim.urunId);
 
-  // [X] butonu: eğer bu satırdaki kalemler ARTIK planlanmışsa (kullanıcı zaten Onayla'ya bastıysa),
-  // panelden kaldırmak GERÇEKTEN planlamayı geri alır (onPlanlamaTemizle çağrılır) — bu, kalemi tekrar
-  // "bekleyen" durumuna döndürür ve sol tarafta yeniden görünmesini sağlar. Henüz onaylanmamışsa (hâlâ
-  // form aşamasındaysa), sadece bu panelden (yerel görünümden) kaldırılır — zaten planlanmış bir şey yok.
+  // [X] butonu: satırı bu panelden kaldırır. Bağlı kaydı silinmiş (geçersiz) planlamalar da temizlenir.
+  // GEÇERLİ PLANLAMA GERİ ALINMAZ (v1.537.0 — son denetim): [X] eskiden bağlı üretim/alış YERİNDE dururken kalemin
+  // referansını siliyordu — kayıt sahipsiz kalıyor, satır yeniden planlanınca ikinci üretim ve ikinci hammadde
+  // rezervasyonu doğuyordu (talep iki kat). Artık yalnız bağlı kaydı ARTIK OLMAYAN (geçersiz) referanslar temizlenir;
+  // geçerli planlama kendi kaydından (üretimi / alış siparişini silerek ya da iptal ederek) geri alınır.
   function kaldirVeGeriAl() {
-    const planlanmisOlanlar = ilgiliKalemler.filter((k) => k.planlama);
-    planlanmisOlanlar.forEach((k) => onPlanlamaTemizle && onPlanlamaTemizle(s.id, k.id));
+    const gecersizler = ilgiliKalemler.filter((k) => {
+      if (!k.planlama) return false;
+      const no = k.planlama.referansNo;
+      return k.planlama.tip === "Satınalma"
+        ? !(siparisler || []).some((x) => x.siparisNo === no)
+        : !(uretim || []).some((x) => x.siparisNo === no);
+    });
+    if (gecersizler.length > 0 && onPlanlamaTemizle) onPlanlamaTemizle(s.id, gecersizler.map((k) => k.id));
     cikarFonk(secim);
   }
 
@@ -176,7 +183,7 @@ function SagPanelKart({ secim, arkaplan, cerceveRenk, cikarFonk, varsayilanTip, 
         <span className="mono" style={{ fontWeight: 700, fontSize: 12 }}>{s.siparisNo}</span>
         <span style={{ fontSize: 11, color: "var(--erp-text)" }}>{cari ? cari.unvan : "—"}</span>
         <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>· {urun ? urun.ad : secim.urunId} · {secim.renk}</span>
-        <button type="button" onClick={kaldirVeGeriAl} title="Panelden kaldır — henüz onaylanmadıysa sadece görünümden çıkar, onaylandıysa planlamayı geri alır" style={{ marginLeft: "auto", border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" }}>
+        <button type="button" onClick={kaldirVeGeriAl} title="Panelden kaldır — planlama geri alınmaz; geri almak için üretimi / alış siparişini kendi ekranından silin ya da iptal edin" style={{ marginLeft: "auto", border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" }}>
           <X size={13} />
         </button>
       </div>
@@ -220,7 +227,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
   // Sağ paneldeki bir satır, SADECE o kalem GERÇEKTEN tamamen karşılandığında (kalan=0, yani teslim
   // alındığında) otomatik kaybolur. Planlanmış AMA HENÜZ TESLİM ALINMAMIŞ bir satır (kalan hâlâ >0),
   // "Onayla" sonrası da sağ panelde (artık "planlanmış" rozetiyle) GÖRÜNMEYE DEVAM EDER — kullanıcı
-  // isterse [X] ile bilinçli olarak çıkarır (bu, planlamayı da geri alır, bkz. SagPanelKart).
+  // isterse [X] ile panelden çıkarır (geçerli planlama geri ALINMAZ, bkz. SagPanelKart v1.537.0).
   function halaBekliyorMu(secim) {
     const s = (siparisler || []).find((x) => x.id === secim.siparisId);
     if (!s) return false;

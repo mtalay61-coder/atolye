@@ -448,7 +448,11 @@ function cariHareketleriGrupla(hareketler) {
   const gruplar = [];
   const index = {};
   hareketler.forEach((h) => {
-    const key = h.fisNo ? `fis__${h.fisNo}` : `tek__${h.id}`;
+    // PEŞİN KAYIT AYRI GRUP (v1.537.0 — son denetim): fişten peşin tahsilat/ödeme fişle aynı `fisNo`yu taşıyor.
+    // Aynı gruba girince grup tutarı fiş + peşin toplanıyor, yön ilk kaydınkiyle sayılıyordu: 1000 ₺ satış + 1000 ₺
+    // peşin tahsil ekstrede "Borç 2000" ve koşan bakiye +2000 görünüyordu (başlık doğru olarak 0). Kasaya bağlı
+    // (`muhasebeBagId`) kayıt kendi satırında, kendi yönüyle durur — e-fatura da onu fatura satırından ayırıyor.
+    const key = h.fisNo ? (h.muhasebeBagId ? `pesin__${h.fisNo}__${h.id}` : `fis__${h.fisNo}`) : `tek__${h.id}`;
     if (!(key in index)) {
       index[key] = gruplar.length;
       // `zaman` DA TAŞINIYOR: ekstre sıralaması gün içinde saate bakıyor (bkz. 265-carikart).

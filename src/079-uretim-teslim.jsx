@@ -250,15 +250,39 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   // let: aşağıda tamir atamaları eklenirken yeniden atanır.
   let nextProsesIlerleme = siparis.prosesIlerleme.map((p, i) => {
     if (i !== adimIndex) return p;
-    const yeniAtamalar = (p.atamalar || []).map((a) =>
+    // KISMİ TESLİM — KALAN USTADA AÇIK KALIR (v1.537.0 — son denetim). Eskiden atama tüm miktarıyla "tamamlandı"
+    // işaretleniyor, kalan çiftler için hiçbir kayıt kalmıyordu: ekranda "X çift ustada kaldı, sonra teslim edilecek"
+    // yazıyor ama teslim alınacak bir iş yoktu; adım (ve son proseste üretim) eksik miktarla BİTMİŞ sayılıyordu.
+    // Şimdi: teslim alınan atama TESLİM EDİLEN miktara iner; kalan bedenler aynı ustaya, aynı barkodla, VERİLMİŞ ama
+    // tamamlanmamış yeni bir atama olur. Toplam dağıtılan miktar değişmez (adimBedenDurumu aynı sayar).
+    const kalanAtama = kismiMi ? {
+      id: uid("atama"), personelId: atama.personelId || null,
+      bedenMiktarlari: { ...kalanBedenleri }, miktar: stokYuvarla(atama.miktar - sonucToplam),
+      verildiMi: true, verilmeTarihi: atama.verilmeTarihi || new Date().toISOString(),
+      // Verilen hammadde ilk teslimde hesaplandı; kalan kısım reçeteye göre düşülür (ikinci kez "verilen" sayılmasın).
+      verilenHammaddeler: null,
+      // Barkod: parça kodu taşıyan (bölünmüş) işte kalan kısım YENİ parça kodu alır — aynı kod sonraki proseste
+      // "zaten alındı" sayılır ve kalan parça oraya hiç akamazdı. Ana kodla ilerleyen işte kod aynı kalır.
+      barkod: (() => {
+        const anaKod = siparis.takipKodu || siparis.siparisNo;
+        if (!atama.barkod || atama.barkod === anaKod) return atama.barkod || null;
+        const kodlar = (siparis.prosesIlerleme || []).flatMap((x) => (x.atamalar || []).map((y) => y.barkod)).filter(Boolean);
+        return parcaBarkoduUret(anaKod, kodlar);
+      })(),
+      tamamlandiMi: false, tamamlanmaTarihi: null,
+      ...(atama.tamirMi ? { tamirMi: true, tamirKaynakProses: atama.tamirKaynakProses, tamirSebep: atama.tamirSebep, tamirUcret: atama.tamirUcret, tamirHammaddeler: [] } : {}),
+      kismiKalanKaynak: atama.id,
+    } : null;
+    const yeniAtamalar = [...(p.atamalar || []).map((a) =>
       a.id === atamaId
         ? {
             ...a, tamamlandiMi: true, tamamlanmaTarihi: new Date().toISOString(),
+            ...(kismiMi ? { miktar: sonucToplam, bedenMiktarlari: { ...teslimBedenleri } } : {}),
             // Sonuç atamaya yazılır: akış, ücret ve fire raporları buradan okur.
             sonuc: { saglam: saglamHarita, tamir: tamirListesi, hurda: hurdaListesi },
           }
         : a
-    );
+    ), ...(kalanAtama ? [kalanAtama] : [])];
     const tamamlananToplam = yeniAtamalar.filter((a) => a.tamamlandiMi).reduce((s, a) => s + a.miktar, 0);
     const adimTamamlandiMi = yeniAtamalar.every((a) => a.tamamlandiMi) && tamamlananToplam >= toplamAdet;
     return { ...p, atamalar: yeniAtamalar, tamamlandiMi: adimTamamlandiMi, tamamlanmaTarihi: adimTamamlandiMi ? new Date().toISOString() : null };
@@ -486,10 +510,8 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
   yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
   yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
-  if (nextSiparislerRez !== siparisler) {
-    setSiparisler(nextSiparislerRez);
-    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
-  }
+  // SIRA (v1.537.0 — son denetim): bu blok sipariş listesi YAZILDIKTAN SONRA çalışıyordu; alış rezervasyonundaki
+  // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce.
   // Artan malzeme rezervasyonu da SERBEST bırakır: geri gelen mal aslında tüketilmemiştir.
   // Bunu atlarsak rezervasyon "kullanıldı" görünür ve o sipariş için stokta duran malzeme
   // ikinci kez talep edilmiş gibi hesaplanır.
@@ -509,6 +531,10 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     });
   }
 
+  if (nextSiparislerRez !== siparisler) {
+    setSiparisler(nextSiparislerRez);
+    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+  }
   if (nextStokRez !== stokRezervasyonlari) {
     setStokRezervasyonlari(nextStokRez);
     yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
@@ -521,7 +547,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   let rezervasyonUyarisi = "";
   // Kısmi teslimde kalan miktar açıkça söylenir; yoksa "eksik mi girdim" tereddüdü doğar.
   if (kismiMi) {
-    rezervasyonUyarisi += ` — ${stokYuvarla(atama.miktar - sonucToplam)} çift ustada kaldı, sonra teslim edilecek.`;
+    rezervasyonUyarisi += ` — ${stokYuvarla(atama.miktar - sonucToplam)} çift ustada kaldı; aynı ustada açık iş olarak duruyor, sonra teslim alınabilir.`;
   }
   // FİRE ÖZETİ — hurda ve tamir sessiz kalmamalı; ikisi de maliyet ve teslim tarihi etkiler.
   if (hurdaAdet > 0) {

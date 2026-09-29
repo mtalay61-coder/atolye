@@ -651,6 +651,36 @@ export default function AtolyeERP() {
     setFaturalar,
   });
 
+  // PEŞİN ÖDEME YÖNÜ GÖÇÜ (v1.537.0 — son denetim): alış fişinden peşin ödenen tutar cariye yanlış yönle
+  // yazılmıştı (bkz. 078-fisyaz `pesinOdemeYonuDuzelt`). Veri yüklendikten sonra hem cari hareketinde hem fiş
+  // defterindeki kopyasında düzeltilir. DAMGA YOK: onarım kendini sınırlıyor (düzelen kayıt "Borç" olur, bir daha
+  // eşleşmez); yalnız düzeltilecek kayıt varsa yazar — damga her hesaba gereksiz bir tanımlar yazması eklerdi.
+  // Veri kilidi (salt okuma) varken çalışmaz.
+  useEffect(() => {
+    if (loading || veriKilidiSebep) return;
+    let sayi = 0;
+    const yeniCariler = (cariler || []).map((c) => {
+      let degisti = false;
+      const hareketler = (c.hareketler || []).map((h) => { const y = pesinOdemeYonuDuzelt(h); if (y !== h) { degisti = true; sayi++; } return y; });
+      return degisti ? { ...c, hareketler } : c;
+    });
+    const yeniDefter = (fisDefteri || []).map((k) => {
+      if (!k || !Array.isArray(k.cariHareketleri)) return k;
+      let degisti = false;
+      const ch = k.cariHareketleri.map((h) => { const y = pesinOdemeYonuDuzelt(h); if (y !== h) degisti = true; return y; });
+      return degisti ? { ...k, cariHareketleri: ch } : k;
+    });
+    if (sayi > 0) {
+      setCariler(yeniCariler);
+      yazimiIzle(tabloYaz("cari:data", "cariler", yeniCariler), "Cari kartları", yeniCariler);
+      setFisDefteri(yeniDefter);
+      yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeniDefter), "Fiş defteri", yeniDefter);
+      gunlukYaz(`Peşin ödeme yönü onarıldı: ${sayi} alış peşin kaydı (tedarikçi borcu iki kat görünüyordu)`, "cari", { sayi });
+      setTimeout(() => showToast(`${sayi} peşin ödeme kaydı düzeltildi — tedarikçi bakiyeleri artık doğru`), 1800);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, veriKilidiSebep, showToast]);
+
   // YÖNETİCİSİZ LİSTE KİLİDİ (kullanıcı, 13 Eylül: sıfırladıktan sonra "Kullanıcı" rolüyle ekleyip
   // girişi açtı, kısıtlı girdi). Kısıtlı kullanıcı Tanımlar'ı bile göremediği için hiçbir ekrandan
   // düzeltemez. Giriş yapmış kullanıcı Yönetici değil ve listede HİÇ Yönetici yoksa, giren kişi
@@ -792,17 +822,6 @@ export default function AtolyeERP() {
   // Sonsuz döngü yok: hesap bir şey değiştirmezse AYNI dizi referansı dönüyor, effect durur.
 
 
-  // YETİM REZERVASYON TEMİZLEME (20 Eylül): silinmiş üretimlerin rezervasyon kayıtlarını siler.
-  const rezervasyonTemizle = useCallback((uretimNolari) => {
-    if (!uretimNolari || uretimNolari.length === 0) return;
-    const kume = new Set(uretimNolari.map(String));
-    setStokRezervasyonlari((onceki) => {
-      const kalan = (onceki || []).filter((r) => !(r && r.uretimNo && kume.has(String(r.uretimNo))));
-      yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", kalan), "Stok rezervasyonları", kalan);
-      return kalan;
-    });
-    showToast(`${uretimNolari.length} silinmiş üretimin rezervasyonları temizlendi`);
-  }, [setStokRezervasyonlari, showToast]);
 
 
   // SİLİNMİŞ SİPARİŞİN BAĞ KALINTISI (v1.512.0). v1.512.0 öncesi doğrudan silme yolu siparişi siliyor,
@@ -825,21 +844,6 @@ export default function AtolyeERP() {
       : `${r.sayi} hareketin silinmiş sipariş bağı çözüldü (${r.siparisNolar.join(", ")}) — fişler bağımsız, stok ve cari değişmedi`);
   }, [stok, cariler, siparisler, showToast]);
 
-  const karsilananOnar = useCallback((kayitlar) => {
-    if (!kayitlar || kayitlar.length === 0) return;
-    setSiparisler((onceki) => onceki.map((sp) => {
-      const buna = kayitlar.filter((k) => k.siparisId === sp.id);
-      if (buna.length === 0) return sp;
-      return {
-        ...sp,
-        kalemler: (sp.kalemler || []).map((k) => {
-          const d = buna.find((x) => x.kalemId === k.id);
-          return d ? { ...k, karsilanan: d.gercek } : k;
-        }),
-      };
-    }));
-    showToast(`${kayitlar.length} kalemin karşılanan miktarı düzeltildi`);
-  }, [setSiparisler, showToast]);
 
   // ONAY SİSTEMİ AYRI DOSYADA (19 Eylül, 2. madde, 13. tur): `075-onay.jsx`.
   //
@@ -1253,16 +1257,21 @@ export default function AtolyeERP() {
   });
 
   // Bir satış kalemindeki geçersiz (bağlı kaydı silinmiş) planlama referansını temizler.
-  const planlamaTemizle = useCallback((satisSiparisId, kalemId) => {
-    const nextSiparisler = siparisler.map((s) =>
-      s.id === satisSiparisId
-        ? { ...s, kalemler: bekleyenKalemleriBirlestir(s.kalemler.map((k) => (k.id === kalemId ? { ...k, planlama: null } : k))) }
-        : s
-    );
-    setSiparisler(nextSiparisler);
-    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
+  // TEK ya da ÇOK kalem, GÜNCEL listeden (v1.537.0 — son denetim): kapanıştaki `siparisler`'den tam dizi kurup
+  // yazıyordu; bir döngüde art arda çağrılınca her çağrı aynı eski diziden başlıyor, yalnız SONUNCUSU kalıyordu.
+  const planlamaTemizle = useCallback((satisSiparisId, kalemIdOrIds) => {
+    const idler = new Set(Array.isArray(kalemIdOrIds) ? kalemIdOrIds : [kalemIdOrIds]);
+    setSiparisler((onceki) => {
+      const nextSiparisler = onceki.map((s) =>
+        s.id === satisSiparisId
+          ? { ...s, kalemler: bekleyenKalemleriBirlestir(s.kalemler.map((k) => (idler.has(k.id) ? { ...k, planlama: null } : k))) }
+          : s
+      );
+      yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
+      return nextSiparisler;
+    });
     showToast("Geçersiz planlama referansı temizlendi — kalem yeniden planlanabilir");
-  }, [siparisler, showToast]);
+  }, [showToast]);
 
   // ---- KOLİ (PAKETLEME) ----
   // Koli kodu SIRALI: "K-20260902-001". Fiş numaralarıyla aynı gerekçe — barkod okunmadığında
@@ -2127,7 +2136,7 @@ export default function AtolyeERP() {
   // AD DEĞİŞTİRME (ÖLÇÜ VE RENK) AYRI DOSYADA (19 Eylül, 2. madde, 9. tur): `082-ad-degistir.jsx`.
   const {
     olcuAdDegistir, kullanimdakiOlculer, hammaddeRenkAdDegistir,
-    defterdenYenidenKur, eksikHareketOnar, tanimsizOlcuCevir,
+    tanimsizOlcuCevir,
   } = useAdDegistirme({
     tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast, setStok, setSiparisler, setUretim, saveTanimlar, saveKoliler,
     setTanimlar, setKoliler, setStokRezervasyonlari, cariler,
@@ -2931,6 +2940,11 @@ export default function AtolyeERP() {
     setMobilDuzenSurumu((n) => n + 1);   // menü genişliği yeniden hesaplansın
   }, [mobilDuzen]);
 
+  // Ekran düzeni kaydı için en güncel tanımlar (bkz. ekranDuzeniDegeri). KANCA BURADA — aşağıdaki erken dönüşlerden
+  // (giriş ekranları) ÖNCE; sonrasında olsaydı çizimler arasında kanca sayısı değişir, uygulama çökerdi.
+  const ekranTanimRef = useRef(tanimlar);
+  ekranTanimRef.current = tanimlar;
+
   // BULUT ÖN GİRİŞ (2. aşama): veri okunamadıysa her şeyden önce.
   //
   if (!loading && bulutGirisGerekli) {
@@ -3009,8 +3023,13 @@ export default function AtolyeERP() {
   const ekranDuzeniDegeri = {
     duzenler: tanimlar.ekranDuzenleri || {},
     yetkili: kullaniciYetkisiVar("tanimlar", "goruntuleme"),
+    // EN GÜNCEL TANIMLARDAN (v1.537.0 — son denetim): kapanıştaki `tanimlar` kullanılıyordu; ürün kartında sekme ve
+    // blok düzeni aynı tıklamada kaydedilince ikincisi birincinin üstüne yazıyordu. Ref her yazımda anında güncellenir.
     kaydet: (ekran, liste) => {
-      saveTanimlar({ ...tanimlar, ekranDuzenleri: { ...(tanimlar.ekranDuzenleri || {}), [ekran]: (liste || []).map(({ id, genislik, gizli }) => ({ id, genislik, gizli: !!gizli })) } });
+      const guncel = ekranTanimRef.current || tanimlar;
+      const yeni = { ...guncel, ekranDuzenleri: { ...(guncel.ekranDuzenleri || {}), [ekran]: (liste || []).map(({ id, genislik, gizli }) => ({ id, genislik, gizli: !!gizli })) } };
+      ekranTanimRef.current = yeni;
+      saveTanimlar(yeni);
       showToast("Ekran düzeni kaydedildi — bütün cihazlarda geçerli");
     },
   };
@@ -3837,7 +3856,6 @@ export default function AtolyeERP() {
               muhasebe={muhasebe}
               uretim={uretim}
               stokRezervasyonlari={stokRezervasyonlari}
-              onRezervasyonTemizle={rezervasyonTemizle}
               onNavigate={setTab}
               onGoToSiparis={sipariseGit}
               onGoToUretim={(id) => { setUretimHedefId(id || null); setTab("uretim"); }}
@@ -3848,9 +3866,6 @@ export default function AtolyeERP() {
           <div style={{ display: tab === "tanimlar" ? undefined : "none" }}>
             <TanimlarModule
               fisDefteri={fisDefteri}
-              onDefterdenYenidenKur={defterdenYenidenKur}
-              onEksikHareketOnar={eksikHareketOnar}
-              onKarsilananOnar={karsilananOnar}
               onYetimSiparisBagiCoz={yetimSiparisBaglariniTemizle}
               muhasebe={muhasebe}
               mobilDuzenKipi={mobilDuzenKipi}
@@ -4094,6 +4109,7 @@ export default function AtolyeERP() {
           </div>
           <div style={{ display: tab === "siparis" ? undefined : "none" }}>
             <SiparisModule
+              cop={cop}
               aktifSekme={tab === "siparis"}
               onSiparisGitGlobal={sipariseGit}
               mobilBolumAyari={mobilBolumCoz(tanimlar.mobilGorunum, "siparis")}
@@ -4146,6 +4162,7 @@ export default function AtolyeERP() {
               diğerine taşınmamasına yol açardı. */}
           <div style={{ display: tab === "satinalma" ? undefined : "none" }}>
             <SiparisModule
+              cop={cop}
               aktifSekme={tab === "satinalma"}
               onSiparisGitGlobal={sipariseGit}
               mobilBolumAyari={mobilBolumCoz(tanimlar.mobilGorunum, "satinalma")}
@@ -4672,6 +4689,7 @@ export default function AtolyeERP() {
                              pencere de görünmez olurdu — tıklayınca hiçbir şey olmayan bir ekran.
                              Tam ekran sipariş ve fiş yazdırma, Satın Alma sekmesinden yapılır. */
                           <SiparisModule
+                            cop={cop}
               onSiparisGitGlobal={sipariseGit}
               mobilBolumAyari={mobilBolumCoz(tanimlar.mobilGorunum, "satinalma")}
               onFiseGitNo={fiseGit}

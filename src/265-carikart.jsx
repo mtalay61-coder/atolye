@@ -590,10 +590,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 >
                   <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
                 </button>
-                {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun").
-                    Özellik vardı ama yalnız başlıktaki yazısız arşiv ikonuydu; kullanıcı bulamadı.
-                    İkon başlıkta kalıyor (kart kapalıyken de erişilsin), burada adıyla da duruyor.
-                    Silme burada tekrar edilmiyor: son çare olan işlem göz önünde durmasın. */}
+                {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun"). Başlıktaki arşiv
+                    ikonu bulunamadığı için eklendi; son denetim (v1.537.0) "aynı şeritte iki kontrol" diye işaretledi ama
+                    kullanıcının açık isteği olduğu için KORUNUYOR (senaryo finans-menu ölçüyor). */}
                 <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
               {cardTab === "hareketler" && duzenBaglami && duzenBaglami.yetkili && (
                 <button type="button" className="btn-ikon" data-duzen-ac="cariHareketler" title="Ekran düzeni — hareketler bölümlerini sırala, genişliğini ayarla, gizle"
@@ -1336,7 +1335,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
 
           </>) },
-          { id: "filtre", ad: "Defter ve para birimi seçimi", icerik: (<>
+          // GİZLENEMEZ (v1.537.0 — son denetim): gizlenince defter "Genel"de takılı kalıyor, Tümü/Resmi'ye geçecek düğme
+          // kalmıyordu — Resmi hareketler bütün cihazlarda "yok" gibi görünürdü.
+          { id: "filtre", ad: "Defter ve para birimi seçimi", gizlenemez: true, icerik: (<>
           {(cari.hareketler || []).length > 0 && (
             <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
               {["Tümü", "Genel", "Resmi"].map((d) => {

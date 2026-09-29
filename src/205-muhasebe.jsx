@@ -192,7 +192,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
             tutar: Math.round((h.tutar || 0) * oran * 100) / 100,
             tarih: yeni.tarih || h.tarih,
             hesapTutar: yeni.tutar,
-            aciklama: yeni.aciklama || h.aciklama,
+            // Cari açıklaması YALNIZ kullanıcı açıklamayı değiştirdiyse güncellenir (v1.537.0 — son denetim): kasa
+            // biçimindeki metin ("Tahsilat · Ünvan · …") her düzenlemede cari kaydın kendi açıklamasını (fiş no dahil) eziyordu.
+            aciklama: (yeni.aciklama != null && yeni.aciklama !== eski.aciklama) ? yeni.aciklama : h.aciklama,
           }
           : h)),
       })));

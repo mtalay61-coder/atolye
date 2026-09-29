@@ -37,6 +37,7 @@ function ProductMatrixCard({
   // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
   const sekmeAcRef = useRef(null);
   const stokAcRef = useRef(null);
+  const stokKontrolRef = useRef(null);
   const duzenBaglami = React.useContext(EkranDuzeniBaglami);
   // BEDEN ETİKETİ BASMA (22 Eylül, v1.413.0 — kullanıcı: "o düğmeyi ekle ve seçili bedenler için
   // toplu basım da koy"). Depoda okutulan asıl etiket beden etiketi; Barkodlar sekmesinde kodlar
@@ -1482,13 +1483,16 @@ function ProductMatrixCard({
           },
         ];
         // SEKME SIRASI / GİZLEME (v1.524.0): sıra ve gizlilik Tanımlar'da (bulutta) — her ürün kartında aynı.
-        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} acRef={sekmeAcRef} disIkon />;
+        return <DuzenliSekmeler ekran="urunKartiSekmeleri" sekmeler={sekmeler} aktif={cardTab} onSec={setCardTab} acRef={sekmeAcRef} disIkon
+          // TEK ÇUBUK (v1.537.0 — son denetim): Stok Bilgileri'ndeyken ikon iki kipi birden açıyordu ve iki ayrı "Düzeni kaydet"
+          // çubuğu çıkıyordu; biri kaydedilince diğeri kipte kalıyordu. Blok düzeni artık bu çubukla kaydedilir/vazgeçilir.
+          ekKontrol={stokKontrolRef} ekAciklama={cardTab === "stok" ? "Aşağıdaki Stok Bilgileri blokları da bu çubukla kaydedilir." : ""} />;
       })()}
 
       {/* EKRAN DÜZENİ (v1.524.0 — kullanıcı: "Ürün kartına da düzen ekle"): Stok Bilgileri sekmesinin üç bölümü
           blok. Aralık 0: bölümler kendi kenar boşluklarını zaten taşıyor, ızgara boşluğu ikiye katlardı. */}
       {cardTab === "stok" && (
-      <DuzenAlani ekran="urunKartiStok" aralik={0} acRef={stokAcRef} disIkon bloklar={[
+      <DuzenAlani ekran="urunKartiStok" aralik={0} acRef={stokAcRef} disIkon kontrolRef={stokKontrolRef} cubuksuz bloklar={[
       { id: "stokDurumu", ad: "Stok durumu", icerik: (<>
       {/* ---- STOK DURUMU ----
           Beş büyüklük ve ilişkileri (sütun başlıklarında da açıklanıyor):

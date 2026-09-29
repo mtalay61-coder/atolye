@@ -606,7 +606,7 @@ function ModelKarti({ model, onGuncelle, onAsamaDegistir, onKoleksiyonaAl, showT
         const TUR_ADLARI = { proto: "Proto", gelistirme: "Geliştirme", onayli: "Onaylı numune" };
         const KARARLAR = { devam: "Devam — sonraki tur", revizyon: "Revizyon gerekli", onay: "Onaylandı" };
         const ekle = () => onGuncelle({ numuneler: [...turlar, { id: uid("nm"), no: turlar.length + 1,
-          tur: turlar.length === 0 ? "proto" : "gelistirme", tarih: new Date().toISOString().slice(0, 10),
+          tur: turlar.length === 0 ? "proto" : "gelistirme", tarih: bugunYerel(),   // yerel gün (UTC değil: 00:00–03:00 arası önceki güne düşüyordu)
           foto: "", yorum: "", karar: "" }] });
         const guncelle = (id, alanlar) => onGuncelle({ numuneler: turlar.map((n) => (n.id === id ? { ...n, ...alanlar } : n)) });
         return (
