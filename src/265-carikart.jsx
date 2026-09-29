@@ -484,9 +484,27 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         </div>
         {/* Bakiye PARA BİRİMİ BAZINDA. Tek sayı toplayıp sonuna "₺" koymak, EUR ile çalışan bir
             caride yanlış sembol; karışık para birimli caride ise olmayan bir kur çevrimi demekti. */}
-        <span className="mono" style={{ fontWeight: 700, fontSize: 15, color: bakiyeRengi(bakiyeYonu(bakiye)) }}>
-          {bakiyeMetni(bakiye)}
-        </span>
+        {/* ALACAK / BORÇ AYRI SÜTUN (v1.518.0 — kullanıcı: "Cari hesaplar listesinde alacak borç ayrı sütun olsun").
+            Tek "+50.000 / −30" sütunu yerine iki sabit genişlikte hücre: Alacak (yeşil, +) ve Borç (kırmızı, −). Hücre
+            başlığı küçük yazıyla hücrenin içinde — kartlar ayrı kutular, üstte ortak başlık satırına hizalanamazdı.
+            Karışık para birimli caride aynı hücrede para birimleri " · " ile. */}
+        {(() => {
+          const { alacak, borc } = bakiyeAyir(bakiye);
+          const hucre = (etiket, deger, renk, veri) => (
+            <span data-cari-liste-hucre={veri} style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end", minWidth: 104, flexShrink: 0 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".04em", color: "var(--erp-text-3)" }}>{etiket}</span>
+              <span className="mono" style={{ fontWeight: 700, fontSize: 14, color: Object.keys(deger).length ? renk : "var(--erp-text-3)", whiteSpace: "nowrap" }}>
+                {Object.keys(deger).length ? bakiyeMetni(deger) : "—"}
+              </span>
+            </span>
+          );
+          return (
+            <span data-cari-liste-bakiye={cari.unvan} style={{ display: "inline-flex", gap: 10 }}>
+              {hucre("ALACAK", alacak, "var(--erp-primary)", "alacak")}
+              {hucre("BORÇ", borc, "var(--erp-warn)", "borc")}
+            </span>
+          );
+        })()}
         {!duzenleModu && (open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />)}
           </>
         )}

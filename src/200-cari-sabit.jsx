@@ -174,6 +174,24 @@ function bakiyeRengi(deger) {
   return "var(--erp-text-3)";
 }
 
+// ALACAK / BORÇ AYRIMI (v1.518.0 — kullanıcı: "Cari hesaplar listesinde alacak borç ayrı sütun olsun").
+// Para birimi başına bakiye: pozitif = bizim ALACAĞIMIZ, negatif = BORCUMUZ. Borç eksi işaretiyle kalır —
+// listenin altında alacak + borç toplanınca doğrudan net çıkar (300 bin alacak, −250 bin borç → +50 bin).
+function bakiyeAyir(bakiyeler) {
+  const alacak = {}; const borc = {};
+  Object.entries(bakiyeler || {}).forEach(([pb, t]) => {
+    if (t > 0.004) alacak[pb] = t;
+    else if (t < -0.004) borc[pb] = t;
+  });
+  return { alacak, borc };
+}
+// Birden çok bakiye nesnesini para birimi başına toplar (listenin dip toplamı).
+function bakiyeleriTopla(liste) {
+  const t = {};
+  (liste || []).forEach((b) => Object.entries(b || {}).forEach(([pb, x]) => { t[pb] = Math.round(((t[pb] || 0) + x) * 100) / 100; }));
+  return t;
+}
+
 // Renk kararı için tek sayı gerekiyor (artı yeşil, eksi kırmızı). Para birimleri karışıksa
 // hepsi aynı yöndeyse o yön, değilse 0 (nötr) döner — uydurma bir toplam üretmeden.
 function bakiyeYonu(bakiyeler) {
