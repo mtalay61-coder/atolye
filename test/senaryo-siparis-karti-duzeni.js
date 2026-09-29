@@ -6,7 +6,9 @@
 // Ölçülen:
 //   1) varsayılan sıra; düzen ikonu tek (tam ekran kartta); kipte gizlenebilen bloklar (Kalemler yok);
 //   2) Tedarik bloğu Kalemler'in üstüne, Not gizli → Kaydet → sıra uygulanmış, not metni görünmüyor;
-//   3) kayıt tanimlar.ekranDuzenleri.siparisKarti.
+//   3) (v1.528.0) Para birimi bloğunun sağ kenarı fareyle 9 sütun sola çekilir → 3/12 (sayı olarak kaydedilir);
+//      Teslim bloğu çubuğunun adından tutulup Koliler'in üstüne sürüklenir;
+//   4) kayıt tanimlar.ekranDuzenleri.siparisKarti.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -49,6 +51,23 @@ async function calistir(ekranGoruntusu) {
   await sayfa.locator(`${gorunur} [data-duzen-yukari="tedarik"]`).first().click();
   await sayfa.locator(`${gorunur} [data-duzen-gizle="not"]`).first().click();
   await sayfa.waitForTimeout(150);
+  // FAREYLE GENİŞLİK (v1.528.0): Para birimi bloğunun sağ kenar tutamağı 9 sütun sola çekilir → 3/12.
+  const alanGenisligi = await sayfa.evaluate((K) => [...document.querySelectorAll(`${K} > .duzen-alani`)].find((x) => x.getBoundingClientRect().width > 0).getBoundingClientRect().width, K);
+  const tut = await sayfa.locator(`${gorunur} [data-duzen-boyut="paraBirimi"]`).first().boundingBox();
+  await sayfa.mouse.move(tut.x + tut.width / 2, tut.y + tut.height / 2);
+  await sayfa.mouse.down();
+  await sayfa.mouse.move(tut.x + tut.width / 2 - alanGenisligi * 9 / 12, tut.y + tut.height / 2, { steps: 10 });
+  await sayfa.mouse.up();
+  await sayfa.waitForTimeout(150);
+  const genislikEtiketi = await sayfa.locator(`${gorunur} [data-duzen-sutun-etiketi="paraBirimi"]`).first().textContent();
+  // ÇUBUKTAN SÜRÜKLE (v1.528.0): Teslim bloğu, ⠿ değil çubuğunun ADINDAN tutulup Koliler'in üstüne.
+  const ad = await sayfa.locator(`${gorunur} [data-duzen-cubugu="teslim"] b`).first().boundingBox();
+  const hedef = await sayfa.locator(`${gorunur} [data-duzen-blok="koliler"]`).first().boundingBox();
+  await sayfa.mouse.move(ad.x + 10, ad.y + ad.height / 2);
+  await sayfa.mouse.down();
+  await sayfa.mouse.move(hedef.x + 60, hedef.y + hedef.height / 2, { steps: 8 });
+  await sayfa.mouse.up();
+  await sayfa.waitForTimeout(150);
   if (ekranGoruntusu) await sayfa.locator(gorunur).first().screenshot({ path: ekranGoruntusu });
   await sayfa.locator(`${gorunur} [data-duzen-kaydet="siparisKarti"]`).first().click();
   await sayfa.waitForTimeout(900);
@@ -57,7 +76,7 @@ async function calistir(ekranGoruntusu) {
   const kayit = ((tanim && tanim.ekranDuzenleri) || {}).siparisKarti || [];
   await tarayici.close();
   return {
-    hatalar, varsayilan, ikonSayisi, gozler, kayittanSonra,
+    hatalar, varsayilan, ikonSayisi, gozler, genislikEtiketi, kayittanSonra,
     kayit: kayit.map((x) => `${x.id}:${x.genislik}${x.gizli ? "(gizli)" : ""}`),
   };
 }

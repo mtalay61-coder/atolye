@@ -31,10 +31,27 @@ const DUZEN_GENISLIKLERI = [
   { k: "tam", ad: "Tam", sutun: 12 },
 ];
 
+// SERBEST GENİŞLİK (v1.528.0 — kullanıcı: "boyutunu mouse ile ayarlayıp sürükleyeceğimiz; tek satıra sığacak çok şey
+// varken birkaç satır tutuyor"). Üç hazır genişlik (⅓ ½ tam) yan yana dizmeye yetmiyordu: Not dar, para birimi yarım
+// olunca satırın ¼'ü boş kalıyordu. Artık genişlik 12 sütunluk ızgarada 1–12 arası bir SAYI da olabilir; bloğun sağ
+// kenarındaki tutamak fareyle/parmakla çekilerek ayarlanır. Hazır adlar (dar/yarim/tam) eski kayıtlar ve düğmeler için
+// duruyor; çekerken 4/6/12'ye denk gelen değer yine adıyla yazılır (kayıt ve düğme vurgusu tutarlı kalsın).
+const DUZEN_SUTUN = { dar: 4, yarim: 6, tam: 12 };
+function duzenSutunu(g) {
+  if (DUZEN_SUTUN[g]) return DUZEN_SUTUN[g];
+  const n = Math.round(Number(g));
+  return n >= 1 && n <= 12 ? n : 12;
+}
+function duzenGenislikDegeri(n) {
+  const k = Object.keys(DUZEN_SUTUN).find((x) => DUZEN_SUTUN[x] === n);
+  return k || n;
+}
+
 // Kodun blok listesi + kayıtlı düzen → çizilecek sıra. Saf; birim testli.
 function ekranDuzeniCoz(bloklar, kayit) {
   const kodda = new Map((bloklar || []).map((b) => [b.id, b]));
-  const gecerliGenislik = (g, v) => (DUZEN_GENISLIKLERI.some((x) => x.k === g) ? g : (v || "tam"));
+  const sayiMi = (g) => typeof g === "number" && Number.isInteger(g) && g >= 1 && g <= 12;
+  const gecerliGenislik = (g, v) => (DUZEN_GENISLIKLERI.some((x) => x.k === g) || sayiMi(g) ? g : (v || "tam"));
   const sonuc = [];
   const eklenen = new Set();
   (Array.isArray(kayit) ? kayit : []).forEach((k) => {
@@ -73,11 +90,14 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
   // SALINIM KİLİDİ: takastan sonra bloklar yer değiştirdiği için işaretçi yeniden AYNI hedefin üstüne düşebiliyor ve
   // blok geri kaçıyordu (senaryo yakaladı). Son takas edilen hedef, işaretçi başka bir bloğa geçene kadar yok sayılır.
   const sonHedefRef = useRef(null);
+  // Boyutlandırma: { id, x, bas, kolon } — basılan anın işaretçi konumu, başlangıç sütunu, bir sütunun piksel genişliği.
+  const boyutRef = useRef(null);
+  const [boyutlanan, setBoyutlanan] = useState(null);
   const duzen = kip && taslak ? taslak : ekranDuzeniCoz(bloklar, kayitli);
   const blokBul = (id) => (bloklar || []).find((b) => b.id === id);
 
   const kipeGir = () => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); };
-  const kiptenCik = () => { setKip(false); setTaslak(null); setSuruklenen(null); };
+  const kiptenCik = () => { setKip(false); setTaslak(null); setSuruklenen(null); setBoyutlanan(null); boyutRef.current = null; };
   const guncelle = (id, degisim) => setTaslak((o) => (o || duzen).map((x) => (x.id === id ? { ...x, ...degisim } : x)));
   const kaydet = () => {
     if (baglam && baglam.kaydet) baglam.kaydet(ekran, taslak || duzen);
@@ -86,7 +106,8 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
 
   // SÜRÜKLEME: tutamakta basılı tutulunca işaretçi yakalanır; hareket ederken altındaki bloğun yerine geçilir.
   const surukle = {
-    onPointerDown: (id) => (e) => { e.preventDefault(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
+    // BÜTÜN ÇUBUK TUTAMAK (v1.528.0): yalnız küçük ⠿ ikonundan tutmak zordu. Çubuktaki düğmeler hariç her yer sürükler.
+    onPointerDown: (id) => (e) => { if (e.target.closest && e.target.closest("button")) return; e.preventDefault(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
     onPointerMove: (e) => {
       if (!suruklenen) return;
       const alti = document.elementFromPoint(e.clientX, e.clientY);
@@ -100,17 +121,40 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
     onPointerUp: () => setSuruklenen(null),
   };
 
+  // BOYUTLANDIRMA: sağ kenardaki tutamak çekildikçe genişlik en yakın sütuna oturur (ızgara dışı piksel yok — dar ekranda
+  // yine tam genişliğe iner).
+  const boyutla = {
+    onPointerDown: (d) => (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const alan = e.currentTarget.closest(".duzen-alani");
+      if (!alan) return;
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* */ }
+      const stil = getComputedStyle(alan);
+      const bosluk = parseFloat(stil.columnGap) || 0;
+      boyutRef.current = { id: d.id, x: e.clientX, bas: duzenSutunu(d.genislik), kolon: (alan.getBoundingClientRect().width + bosluk) / 12 };
+      setBoyutlanan(d.id);
+    },
+    onPointerMove: (e) => {
+      const b = boyutRef.current;
+      if (!b || !b.kolon) return;
+      const n = Math.max(1, Math.min(12, Math.round(b.bas + (e.clientX - b.x) / b.kolon)));
+      setTaslak((o) => (o || duzen).map((x) => (x.id === b.id && duzenSutunu(x.genislik) !== n ? { ...x, genislik: duzenGenislikDegeri(n) } : x)));
+    },
+    onPointerUp: () => { boyutRef.current = null; setBoyutlanan(null); },
+  };
+
   const cubuk = (d, i) => {
     const b = blokBul(d.id);
     return (
-      <div data-duzen-cubugu={d.id} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "4px 6px", marginBottom: 6,
-        background: "#6B4E8A14", border: "1px solid #6B4E8A55", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
-        <span data-duzen-tutamak={d.id} title="Basılı tutup sürükleyin"
-          onPointerDown={surukle.onPointerDown(d.id)} onPointerMove={surukle.onPointerMove} onPointerUp={surukle.onPointerUp} onPointerCancel={surukle.onPointerUp}
-          style={{ cursor: "grab", touchAction: "none", display: "inline-flex", padding: 2, color: "var(--erp-purple)" }}>
-          <GripVertical size={16} />
+      <div data-duzen-cubugu={d.id} title="Basılı tutup sürükleyin"
+        onPointerDown={surukle.onPointerDown(d.id)} onPointerMove={surukle.onPointerMove} onPointerUp={surukle.onPointerUp} onPointerCancel={surukle.onPointerUp}
+        style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", padding: "1px 4px", marginBottom: 3, cursor: suruklenen === d.id ? "grabbing" : "grab", touchAction: "none",
+        background: "#6B4E8A14", border: "1px solid #6B4E8A55", borderRadius: "var(--erp-r-sm)", fontSize: 11, userSelect: "none" }}>
+        <span data-duzen-tutamak={d.id} style={{ display: "inline-flex", padding: 1, color: "var(--erp-purple)" }}>
+          <GripVertical size={14} />
         </span>
-        <b style={{ color: "var(--erp-purple)" }}>{b ? b.ad : d.id}</b>
+        <b style={{ color: "var(--erp-purple)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{b ? b.ad : d.id}</b>
+        <span data-duzen-sutun-etiketi={d.id} className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{duzenSutunu(d.genislik)}/12</span>
         <span style={{ display: "inline-flex", gap: 2 }}>
           <button type="button" data-duzen-yukari={d.id} disabled={i === 0} onClick={() => setTaslak((o) => duzenTasi(o || duzen, d.id, duzen[i - 1].id))}
             style={{ border: "1px solid var(--erp-line)", background: "#fff", borderRadius: 4, padding: "1px 4px", cursor: "pointer", display: "inline-flex" }}><ChevronUp size={12} /></button>
@@ -120,7 +164,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
         <span style={{ display: "inline-flex", gap: 2, marginLeft: "auto" }}>
           {DUZEN_GENISLIKLERI.map((g) => (
             <button key={g.k} type="button" data-duzen-genislik={`${d.id}:${g.k}`} onClick={() => guncelle(d.id, { genislik: g.k })}
-              style={{ padding: "1px 8px", fontSize: 11, fontWeight: 600, borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+              style={{ padding: "0 6px", fontSize: 10, fontWeight: 600, borderRadius: "var(--erp-r-pill)", cursor: "pointer",
                 border: `1.5px solid ${d.genislik === g.k ? "var(--erp-purple)" : "var(--erp-border)"}`,
                 background: d.genislik === g.k ? "#6B4E8A1A" : "#fff", color: d.genislik === g.k ? "var(--erp-purple)" : "var(--erp-text-2)" }}>
               {g.ad}
@@ -137,7 +181,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
     );
   };
 
-  const genislikSinifi = (g) => `duzen-blok duzen-blok-${g || "tam"}`;
+  const genislikSinifi = (g) => `duzen-blok duzen-blok-${DUZEN_SUTUN[g] ? g : "sayi"}`;
   return (
     <div data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
       {baglam && baglam.yetkili && !kilitli && (
@@ -153,7 +197,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
           ) : (
             <>
               <span style={{ fontSize: 11, color: "var(--erp-purple)", marginRight: "auto" }}>
-                Düzenleme kipi — blokları ⠿ ile sürükleyin ya da oklarla taşıyın; genişlik ve göz düğmesiyle ayarlayın. Bütün cihazlara kaydedilir.
+                Düzenleme kipi — blokları mor çubuğundan tutup sürükleyin; genişliği sağ kenardaki tutamağı çekerek ayarlayın (yan yana sığanlar aynı satıra geçer). Bütün cihazlara kaydedilir.
               </span>
               <button type="button" className="btn-ghost" data-duzen-varsayilan={ekran} style={{ padding: "3px 10px", fontSize: 12 }}
                 onClick={() => setTaslak(ekranDuzeniCoz(bloklar, null))}><RotateCcw size={12} /> Varsayılana dön</button>
@@ -170,8 +214,17 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false }) {
           if (d.gizli && !kip) return null;
           return (
             <div key={d.id} data-duzen-blok={d.id} data-duzen-genislik-deger={d.genislik} className={genislikSinifi(d.genislik)}
-              style={kip ? { outline: `2px dashed ${suruklenen === d.id ? "var(--erp-purple)" : "#6B4E8A66"}`, outlineOffset: 3, borderRadius: 6, opacity: d.gizli ? 0.45 : 1 } : undefined}>
+              style={{ "--duzen-sutun": duzenSutunu(d.genislik),
+                ...(kip ? { outline: `2px dashed ${suruklenen === d.id || boyutlanan === d.id ? "var(--erp-purple)" : "#6B4E8A66"}`, outlineOffset: 3, borderRadius: 6, opacity: d.gizli ? 0.45 : 1 } : {}) }}>
               {kip && cubuk(d, i)}
+              {kip && (
+                // SAĞ KENAR TUTAMAĞI: çekilerek genişlik (1–12 sütun). Dar ekranda bloklar zaten tam genişlik — gizli.
+                <div data-duzen-boyut={d.id} className="duzen-boyut-tutamagi" title="Çekerek genişliği ayarlayın"
+                  onPointerDown={boyutla.onPointerDown(d)} onPointerMove={boyutla.onPointerMove} onPointerUp={boyutla.onPointerUp} onPointerCancel={boyutla.onPointerUp}
+                  style={{ position: "absolute", top: 0, bottom: 0, right: -8, width: 12, cursor: "ew-resize", touchAction: "none", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: 4, height: 36, maxHeight: "60%", borderRadius: 2, background: boyutlanan === d.id ? "var(--erp-purple)" : "#6B4E8A88" }} />
+                </div>
+              )}
               {/* Kipte içerik tıklanamaz: blok taşınırken yanlışlıkla bir alana yazılmasın / düğmeye basılmasın. */}
               <div style={kip ? { pointerEvents: "none", maxHeight: d.gizli ? 60 : undefined, overflow: d.gizli ? "hidden" : undefined } : undefined}>
                 {b.icerik}
