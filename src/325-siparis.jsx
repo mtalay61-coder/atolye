@@ -1105,6 +1105,30 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
           );
         })()}
         <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20, ...(duzenlenenId ? { margin: "0 16px" } : {}) }}>
+          {/* KAYDET / VAZGEÇ ÜSTTE (v1.519.0 — kullanıcı: "Satın almayı kaydet ile Ekle karışıyor, kaydet vazgeç
+              butonlarını üste alalım standart gibi; not ve cari defteri de yukarıda olsun, bunları standart yapmak
+              lazım"). Eskiden kalem girişinin hemen altındaydılar: yeşil "Ekle" ile koyu yeşil "Satın Almayı Kaydet"
+              alt alta duruyor, kalem eklemek isteyen siparişi kaydediyordu. Fiş formunda kaydet başlıkta; burada da
+              formun başında, kalem girişinden uzak. Düzenlemede Vazgeç turuncu başlıkta zaten var — burada yalnız Kaydet.
+              DÜZENLEMEDE DÜĞMENİN ADI DEĞİŞİR: "Siparişi Kaydet"e basıp var olan siparişe eklendiğini fark etmek
+              (ya da tersi) geri alınması zahmetli bir sürpriz olurdu. */}
+          <div data-siparis-form-eylemler="1" style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap", marginBottom: 12, paddingBottom: 10, borderBottom: "1px dashed var(--erp-line)" }}>
+            {duzenlenenId ? (
+              <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1">
+                <Save size={14} /> {(siparisler.find((s) => s.id === duzenlenenId) || {}).siparisNo} Değişikliklerini Kaydet
+              </button>
+            ) : (
+              <>
+                <button className="btn-primary btn-save" onClick={siparisKaydet} data-siparis-kaydet="1">
+                  <Save size={14} /> {tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet"}
+                </button>
+                <button className="btn-ghost" onClick={() => { setShowForm(false); resetForm(); }}>
+                  <X size={14} /> Vazgeç
+                </button>
+              </>
+            )}
+          </div>
+
           {/* TİP SEÇİCİ — YALNIZ SABİT TİP YOKKEN. Alış ve satış siparişleri AYRI ana sekmelere
               bölündüğünde (`sabitTip`) bu satır İKİNCİ bir seçim noktası oluyordu: kullanıcı
               "Alış Siparişi" sekmesinden girip formda "Satış"a basabiliyordu ve hangisinin
@@ -1160,6 +1184,20 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
                 title="Sipariş No'nun yerine değil, yanında tutulur — müşterinin/tedarikçinin kendi sisteminde bu siparişe verdiği kod"
                 style={inputStyle}
               />
+            </Field>
+
+            {/* NOT VE CARİ DEFTERİ BAŞLIKTA (v1.519.0): siparişin kendi bilgileri, kalemlerden önce — fişte de öyle. */}
+            <div style={{ gridColumn: "span 2" }}>
+              <Field label="Not">
+                <input value={not} onChange={(e) => setNot(e.target.value)} placeholder="Opsiyonel" style={inputStyle} />
+              </Field>
+            </div>
+            <Field label="Cari Defteri">
+              <select value={siparisDefter} onChange={(e) => setSiparisDefter(e.target.value)} style={inputStyle}>
+                <option value="Genel">Genel</option>
+                <option value="Resmi">Resmi</option>
+                <option value="Muhasebe">Muhasebe (ikisine de)</option>
+              </select>
             </Field>
 
             {/* Sipariş BAŞLIĞINDAKİ kutu alanı KALDIRILDI: kutu kalem bazında seçiliyor ve iki
@@ -2002,37 +2040,6 @@ function SiparisModule({ onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabit
             );
           })()}
 
-          <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <Field label="Not">
-              <input value={not} onChange={(e) => setNot(e.target.value)} placeholder="Opsiyonel" style={inputStyle} />
-            </Field>
-            <Field label="Cari Defteri">
-              <select value={siparisDefter} onChange={(e) => setSiparisDefter(e.target.value)} style={{ ...inputStyle, width: 190 }}>
-                <option value="Genel">Genel</option>
-                <option value="Resmi">Resmi</option>
-                <option value="Muhasebe">Muhasebe (ikisine de)</option>
-              </select>
-            </Field>
-          </div>
-
-          {/* DÜZENLEMEDE DÜĞME BAŞKA İŞ YAPAR. Aynı formun iki sonucu olduğu için düğmenin adı
-              da değişiyor: "Siparişi Kaydet"e basıp var olan siparişe eklendiğini fark etmek
-              (ya da tersi) geri alınması zahmetli bir sürpriz olurdu. */}
-          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            {duzenlenenId ? (
-              <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1">
-                <Save size={14} /> {(siparisler.find((s) => s.id === duzenlenenId) || {}).siparisNo} Değişikliklerini Kaydet
-              </button>
-            ) : (
-              <button className="btn-primary btn-save" onClick={siparisKaydet}>
-                <Save size={14} /> {tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet"}
-              </button>
-            )}
-            <button
-                          className="btn-ghost" onClick={() => (duzenlenenId ? duzenlemedenCik() : (setShowForm(false), resetForm()))}>
-              <X size={14} /> Vazgeç
-            </button>
-          </div>
         </div>
         </div>
       )}
