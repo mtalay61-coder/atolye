@@ -67,6 +67,23 @@ function ekranDuzeniCoz(bloklar, kayit) {
   return sonuc;
 }
 
+// SÜRÜKLERKEN KENDİLİĞİNDEN KAYDIRMA (v1.535.0 — kullanıcı: "Hareket listesi alta inmiyor"). Uzun bir blok (hareket
+// listesi) en üstteyken alttaki blok ekranın dışında kalıyordu; işaretçi oraya ulaşamadığı için taşıma olmuyordu.
+// İşaretçi ekranın alt/üst kenarına yaklaşınca en yakın kaydırılabilir kap (yoksa sayfa) kayar.
+function duzenKenardaKaydir(el, clientY) {
+  const kenar = 70;
+  const h = window.innerHeight || 0;
+  const adim = clientY > h - kenar ? 24 : clientY < kenar ? -24 : 0;
+  if (!adim) return;
+  let p = el && el.parentElement;
+  while (p && p !== document.body) {
+    const st = getComputedStyle(p);
+    if (/(auto|scroll)/.test(st.overflowY) && p.scrollHeight > p.clientHeight) { p.scrollTop += adim; return; }
+    p = p.parentElement;
+  }
+  (document.scrollingElement || document.documentElement).scrollTop += adim;
+}
+
 // Sürüklemede/oklarda bir bloğu hedefin yerine taşır.
 function duzenTasi(liste, id, hedefId) {
   const i = liste.findIndex((x) => x.id === id);
@@ -113,6 +130,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
     onPointerDown: (id) => (e) => { if (e.target.closest && e.target.closest("button")) return; e.preventDefault(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) { /* */ } sonHedefRef.current = null; setSuruklenen(id); },
     onPointerMove: (e) => {
       if (!suruklenen) return;
+      duzenKenardaKaydir(e.currentTarget, e.clientY);
       const alti = document.elementFromPoint(e.clientX, e.clientY);
       const blok = alti && alti.closest ? alti.closest(`[data-duzen-ekran="${ekran}"] [data-duzen-blok]`) : null;
       const hedef = blok && blok.getAttribute("data-duzen-blok");
@@ -229,7 +247,10 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
                 </div>
               )}
               {/* Kipte içerik tıklanamaz: blok taşınırken yanlışlıkla bir alana yazılmasın / düğmeye basılmasın. */}
-              <div style={kip ? { pointerEvents: "none", maxHeight: d.gizli ? 60 : undefined, overflow: d.gizli ? "hidden" : undefined } : undefined}>
+              {/* KİPTE KISA ÖNİZLEME (v1.535.0): içerik en çok 220 px (gizliyse 60) — uzun bir liste diğer blokları ekranın
+                  dışına itip taşımayı imkânsız kılıyordu. Kipten çıkınca tam boy. */}
+              <div data-duzen-onizleme={kip ? "1" : undefined} style={kip ? { pointerEvents: "none", maxHeight: d.gizli ? 60 : 220, overflow: "hidden",
+                WebkitMaskImage: "linear-gradient(to bottom, #000 75%, transparent)", maskImage: "linear-gradient(to bottom, #000 75%, transparent)" } : undefined}>
                 {b.icerik}
               </div>
             </div>

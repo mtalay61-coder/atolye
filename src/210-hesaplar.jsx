@@ -401,8 +401,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 {acik && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" }}>
                     {[
-                      { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: "var(--erp-primary)" },
-                      { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: "var(--erp-warn)" },
+                      // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
+                      // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
+                      { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
+                      { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
                       { k: "virman", ad: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
                       { k: "serbest", ad: "Serbest kayıt", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
                     ].map((x) => (
@@ -415,9 +417,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           if (x.k === "odeme") setHForm((f) => ({ ...f, yon: "Çıkış" }));
                         }}
                         style={{ padding: "8px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
-                          border: `1.5px solid ${islem === x.k ? x.renk : "var(--erp-border)"}`,
-                          background: islem === x.k ? `${alfaEkle(x.renk, "1A")}` : "#fff",
-                          color: islem === x.k ? x.renk : "var(--erp-text)" }}>
+                          // Seçili değilken çerçeve + yazı kendi renginde, seçiliyken dolu (renk zemin, beyaz yazı).
+                          border: `1.5px solid ${x.renk}`,
+                          background: islem === x.k ? x.renk : alfaEkle(x.renk, "0F"),
+                          color: islem === x.k ? "#fff" : x.renk }}>
                         {x.ad}
                       </button>
                     ))}
