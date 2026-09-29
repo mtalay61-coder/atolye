@@ -3037,6 +3037,12 @@ export default function AtolyeERP() {
         ${erpTokenCss()}
         * { box-sizing: border-box; }
         input, select, button, textarea { font-family: inherit; }
+        /* ---- BOYUT AYARLARI (v1.521.0, 386-boyut-ayari) ----
+           Tanımlar > Görünüm > Boyut. zoom satır içi piksel stilleri de ölçeklediği için yüzlerce ekrana
+           dokunmadan bütün uygulamada geçerli. Değişkenler kök öğede; ayar yoksa 1 (hiçbir şey değişmez). */
+        html { zoom: var(--olcek-genel, 1); }
+        .btn-primary, .btn-ghost, .btn-save, .btn-danger { zoom: var(--olcek-dugme, 1); }
+        input:not([type="checkbox"]):not([type="radio"]), select, textarea { zoom: var(--olcek-kutu, 1); }
         input:focus-visible, select:focus-visible, button:focus-visible {
           outline: 2px solid var(--modul-renk, #E1611F); outline-offset: 1px;
         }

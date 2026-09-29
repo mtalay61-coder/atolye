@@ -2097,6 +2097,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, onRezervasyonTemizle, muh
 
     {aktifTanimSekme === "gorunum" && (
     <>
+      {/* BOYUT (v1.521.0) — düğme, kutu ve genel ölçek; bütün ekranlar, bu cihaz. */}
+      <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
+        <BoyutAyarlari showToast={showToast} />
+      </div>
       {/* MOBİL GÖRÜNÜM DÜZENLEYİCİ (14 Eylül) — telefon düzenini kullanıcı kuruyor. */}
       <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
         <MobilGorunumDuzenleyici tanimlar={tanimlar} onSave={onSave} showToast={showToast}
