@@ -1,0 +1,119 @@
+{
+ "deri": {
+  "kip": false,
+  "sira": [
+   "stok*",
+   "siparisler",
+   "fiyat",
+   "hareketler",
+   "kodlar",
+   "kullanim"
+  ]
+ },
+ "hatalar": [],
+ "kayitSekmeler": [
+  "siparisler",
+  "recete",
+  "maliyet",
+  "stok",
+  "fiyat",
+  "hareketler",
+  "barkodlar(gizli)",
+  "teknik",
+  "kodlar",
+  "kullanim"
+ ],
+ "kayitStok": [
+  "renkBedenEkle",
+  "stokDurumu(gizli)",
+  "renkBeden"
+ ],
+ "kipte": {
+  "gozler": [
+   "recete",
+   "maliyet",
+   "fiyat",
+   "siparisler",
+   "hareketler",
+   "barkodlar",
+   "teknik",
+   "kodlar"
+  ],
+  "kip": true,
+  "sira": [
+   "stok",
+   "recete",
+   "maliyet",
+   "fiyat",
+   "siparisler",
+   "hareketler",
+   "barkodlar",
+   "teknik",
+   "kodlar"
+  ]
+ },
+ "kipteSonra": {
+  "gozler": [
+   "siparisler",
+   "recete",
+   "maliyet",
+   "fiyat",
+   "hareketler",
+   "barkodlar",
+   "teknik",
+   "kodlar"
+  ],
+  "kip": true,
+  "sira": [
+   "stok",
+   "siparisler",
+   "recete",
+   "maliyet",
+   "fiyat",
+   "hareketler",
+   "barkodlar(gizli)",
+   "teknik",
+   "kodlar"
+  ]
+ },
+ "sekmeKaydi": {
+  "kip": false,
+  "sira": [
+   "stok*",
+   "siparisler",
+   "recete",
+   "maliyet",
+   "fiyat",
+   "hareketler",
+   "teknik",
+   "kodlar"
+  ]
+ },
+ "stokGozler": [
+  "stokDurumu",
+  "renkBedenEkle"
+ ],
+ "stokKaydi": [
+  "renkBedenEkle",
+  "renkBeden"
+ ],
+ "stokVarsayilan": [
+  "stokDurumu",
+  "renkBeden",
+  "renkBedenEkle"
+ ],
+ "varsayilan": {
+  "kip": false,
+  "sira": [
+   "stok*",
+   "recete",
+   "maliyet",
+   "fiyat",
+   "siparisler",
+   "hareketler",
+   "barkodlar",
+   "teknik",
+   "kodlar"
+  ]
+ }
+}

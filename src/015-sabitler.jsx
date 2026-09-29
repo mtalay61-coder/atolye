@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.523.0";
-const SURUM_TARIHI = "2026-09-28";
-const SURUM_NOTU = "Duzeni degistir dugmesi belirgin; Tanimlar > Gorunum > Ekran Duzeni";
+const SURUM = "1.524.0";
+const SURUM_TARIHI = "2026-09-29";
+const SURUM_NOTU = "Urun kartinda duzen: sekme sirasi/gizleme ve Stok Bilgileri bloklari";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Duzeni degistir dugmesi belirgin; Tanimlar > Gorunum > Ekran
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.524.0", tarih: "29.09.2026",
+    eklenen: ["Ürün kartı: 'Sekmeleri düzenle' — sekmelerin sırası sürükleyerek/oklarla değişir, kullanılmayan sekme gizlenir (Stok Bilgileri hep görünür)", "Ürün kartı > Stok Bilgileri: Stok durumu, Renkler ve bedenler, Renk/beden ekle bölümleri 'Düzeni değiştir' ile sıralanır, genişliği ayarlanır, gizlenir"],
+    degisen: ["Tanımlar > Görünüm > Ekran Düzeni listesine ürün kartının iki düzeni eklendi"],
+    duzeltilen: [] },
   { surum: "1.523.0", tarih: "29.09.2026",
     eklenen: ["Tanımlar > Görünüm > Ekran Düzeni: düzeni değiştirilebilen ekranlar, nerede oldukları ve kayıtlı düzeni varsayılana döndürme"],
     degisen: ["Sipariş ve fiş formundaki 'Düzen' düğmesi belirgin: mor çerçeveli 'Düzeni değiştir' (önce küçük gri yazıydı, görünmüyordu)"],
