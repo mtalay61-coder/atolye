@@ -1,8 +1,7 @@
 {
  "fisFormuAcildi": true,
  "hareketGozler": [
-  "islem",
-  "filtre"
+  "islem"
  ],
  "hareketKaydi": [
   "islem:yarim",

@@ -590,9 +590,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 >
                   <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
                 </button>
-                {/* PASİFE AL YAZILI DÜĞMESİ KALDIRILDI (v1.537.0 — son denetim): v1.530'dan beri aynı mor şeritte başlığın
-                    arşiv ikonuyla yan yana iki kontrol duruyordu. Kasada (v1.533) aynı gerekçeyle yazılı düğme kalkmıştı;
-                    kalıp: seyrek işlem küçük ikon. */}
+                {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun"). Başlıktaki arşiv
+                    ikonu bulunamadığı için eklendi; son denetim (v1.537.0) "aynı şeritte iki kontrol" diye işaretledi ama
+                    kullanıcının açık isteği olduğu için KORUNUYOR (senaryo finans-menu ölçüyor). */}
+                <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
               {cardTab === "hareketler" && duzenBaglami && duzenBaglami.yetkili && (
                 <button type="button" className="btn-ikon" data-duzen-ac="cariHareketler" title="Ekran düzeni — hareketler bölümlerini sırala, genişliğini ayarla, gizle"
                   onClick={() => { if (duzenAcRef.current) duzenAcRef.current(); }}>
