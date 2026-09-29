@@ -47,6 +47,7 @@ node birim-son-alis.js || HATA=1
 node birim-siparis-ciktisi.js || HATA=1
 node birim-siparis-iptal.js || HATA=1
 node birim-ekran-duzeni.js || HATA=1
+node birim-kasa-aciklama.js || HATA=1
 node birim-surum.js || HATA=1
 # SENARYOLAR PARALEL (15 Eylül: "neden artık yavaşladın?"). Sıralı koşu senaryo sayısı arttıkça
 # doğrusal uzuyordu (62 senaryo ≈ 13 dk). Her senaryo kendi Chromium'unu açıyor ve birbirinden

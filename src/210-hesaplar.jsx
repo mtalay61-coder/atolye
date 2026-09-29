@@ -1,5 +1,22 @@
 // Kasa ve Banka için ortak liste/hareket bileşeni — ikisi de aynı yapıyı (hesap + giriş/çıkış
 // hareketleri, türetilmiş bakiye) paylaştığı için tek bir bileşende birleştirilmiştir.
+// Kasa/banka satırındaki açıklamadan, satırda zaten görünen parçaları ayıklar (v1.532.0). Otomatik açıklama
+// "Tahsilat · New Diamond · Tahsilat (TL Kasa)" biçiminde; cari adı ve işlem tipi satırda rozet olarak duruyor, hesap
+// adı ise ekranın başlığı. Geriye kalan (elle yazılmış not, fiş no, kur bilgisi) aynen kalır. Saf; birim testli.
+function kasaAciklamaSade(aciklama, cariAdi, tip) {
+  if (!aciklama) return "";
+  const tekrar = (p) => {
+    const x = p.trim();
+    if (!x) return true;
+    if (cariAdi && x === cariAdi) return true;
+    if (tip && x === tip) return true;
+    if (/^(Tahsilat|Ödeme|Virman|Giriş|Çıkış)$/.test(x)) return true;
+    if (/^(Tahsilat|Ödeme)\s*\([^)]*\)$/.test(x)) return true;
+    return false;
+  };
+  return String(aciklama).split(" · ").filter((p) => !tekrar(p)).join(" · ").trim();
+}
+
 function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, onHareketGuncelle, hesaplar, birimAdi, ekleAlanlari, onHesapEkle, onHesapSil, onHesapPasifDegistir, onHareketEkle, onHareketSil, cariler, kurlar, showToast, silmeYetkisiVar }) {
   // Düzenlenen hesabın kimliği ve form içeriği (19 Eylül).
   const [duzenlenen, setDuzenlenen] = useState(null);
@@ -827,7 +844,13 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                             </span>
                                           );
                                         })()}
-                                        {hr.aciklama && <span style={{ color: "var(--erp-text-2)" }}>{hr.aciklama}</span>}
+                                        {/* SADE AÇIKLAMA (v1.532.0 — kullanıcı: "cari adı ve tahsilat yazıyor, alt satıra inen açıklamaya
+                                            gerek yok"): otomatik açıklamanın cari adı / işlem tipi / "Tahsilat (TL Kasa)" parçaları
+                                            satırda zaten rozet olarak var; yalnız ARTAN (elle yazılan not, kur bilgisi) gösterilir. */}
+                                        {(() => {
+                                          const sade = kasaAciklamaSade(hr.aciklama, cari ? cari.unvan : "", hareketIslemTipi(hr));
+                                          return sade ? <span data-kasa-aciklama="1" style={{ color: "var(--erp-text-2)" }}>{sade}</span> : null;
+                                        })()}
                                       </div>
                                     </td>
                                     <td className="mono" style={{ padding: "5px 6px", textAlign: "right", color: "var(--erp-primary)", fontWeight: 600 }}>
