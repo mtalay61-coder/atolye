@@ -140,14 +140,14 @@ function DuzenAlani({ ekran, bloklar, aralik = 12 }) {
   return (
     <div data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
       {baglam && baglam.yetkili && (
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 2 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 }}>
           {!kip ? (
-            // GÖRÜNÜR DÜĞME (v1.523.0 — kullanıcı: "Düzen tuşunu göremedim"). 11 px gri, çerçevesiz bir yazıydı; formun
-            // köşesinde kayboluyordu. Artık çerçeveli, mor (düzen kipinin rengi) ve adı ne yaptığını söylüyor.
-            <button type="button" data-duzen-ac={ekran} onClick={kipeGir} title="Bu ekranın bloklarını sırala, genişliğini ayarla, gizle"
-              style={{ border: "1.5px solid var(--erp-purple)", background: "#6B4E8A12", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5,
-                fontSize: 12, fontWeight: 700, color: "var(--erp-purple)", padding: "4px 10px", borderRadius: "var(--erp-r-pill)" }}>
-              <LayoutGrid size={14} /> Düzeni değiştir
+            // KÜÇÜK İKON (v1.525.0 — kullanıcı: "Düzen için küçük ayar tutuyorsun, onunla yapılsın; kapatma ve silme
+            // butonu gibi o kadar büyük yer kaplamasın, her zaman yapılmayacak işlem"). v1.523.0'da görünmediği için
+            // mor, yazılı bir düğmeye çevrilmişti; bu kez fazla göze battı. Kart başlıklarındaki sil/pasif ikonlarıyla
+            // aynı `btn-ikon`: sessiz, üstüne gelince belirir; adı ipucunda. Tanımlar > Görünüm nerede olduğunu anlatıyor.
+            <button type="button" className="btn-ikon" data-duzen-ac={ekran} onClick={kipeGir} title="Ekran düzeni — blokları sırala, genişliğini ayarla, gizle">
+              <LayoutGrid size={14} />
             </button>
           ) : (
             <>
@@ -189,7 +189,7 @@ function DuzenAlani({ ekran, bloklar, aralik = 12 }) {
 const DUZENLI_EKRANLAR = [
   { ekran: "siparisFormu", ad: "Sipariş formu", yer: "Sipariş / Alış Siparişi → Yeni sipariş ya da ✎ Düzenle" },
   { ekran: "fisFormu", ad: "Fiş formu", yer: "Cari kartı → Alış Fişi / Satış Fişi" },
-  { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → sekmelerin sağındaki “Sekmeleri düzenle”" },
+  { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → sekmelerin sağındaki düzen ikonu" },
   { ekran: "urunKartiStok", ad: "Ürün kartı — Stok Bilgileri", yer: "Stok → ürün kartı → Stok Bilgileri sekmesi" },
   { ekran: "cariKarti", ad: "Cari kartı", yer: "Cari → cari kartı (bakiye, sekmeler, ekstre)" },
   { ekran: "cariHareketler", ad: "Cari kartı — Hareketler", yer: "Cari → cari kartı → Hareketler sekmesi" },
@@ -201,8 +201,8 @@ function EkranDuzeniTanimlari() {
     <div data-ekran-duzeni-tanimlari="1">
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Ekran Düzeni</h3>
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
-        Aşağıdaki ekranlarda sağ üstteki mor <b>“Düzeni değiştir”</b> düğmesiyle bloklar sürüklenip sıralanır, genişliği
-        (Dar / Yarım / Tam) seçilir, gizlenir. Düzen bütün cihazlarda geçerlidir.
+        Aşağıdaki ekranlarda sağ üstteki küçük <b>düzen ikonuyla</b> (<LayoutGrid size={12} style={{ verticalAlign: "-2px" }} />) bloklar
+        sürüklenip sıralanır, genişliği (Dar / Yarım / Tam) seçilir, gizlenir. Düzen bütün cihazlarda geçerlidir.
       </p>
       {DUZENLI_EKRANLAR.map((x) => {
         const kayitli = Array.isArray(duzenler[x.ekran]) && duzenler[x.ekran].length > 0;
@@ -337,11 +337,9 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec }) {
         );
       })}
       {baglam && baglam.yetkili && (
-        <button type="button" data-duzen-ac={ekran} onClick={() => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); }}
-          title="Sekmelerin sırasını değiştir, kullanılmayanları gizle"
-          style={{ marginLeft: "auto", border: "1.5px solid var(--erp-purple)", background: "#6B4E8A12", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5,
-            fontSize: 12, fontWeight: 700, color: "var(--erp-purple)", padding: "4px 10px", borderRadius: "var(--erp-r-pill)" }}>
-          <LayoutGrid size={14} /> Sekmeleri düzenle
+        <button type="button" className="btn-ikon" data-duzen-ac={ekran} onClick={() => { setTaslak(ekranDuzeniCoz(bloklar, kayitli)); setKip(true); }}
+          title="Sekme düzeni — sırasını değiştir, kullanılmayanları gizle" style={{ marginLeft: "auto" }}>
+          <LayoutGrid size={14} />
         </button>
       )}
     </div>
