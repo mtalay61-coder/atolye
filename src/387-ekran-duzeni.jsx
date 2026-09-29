@@ -191,6 +191,8 @@ const DUZENLI_EKRANLAR = [
   { ekran: "fisFormu", ad: "Fiş formu", yer: "Cari kartı → Alış Fişi / Satış Fişi" },
   { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → sekmelerin sağındaki “Sekmeleri düzenle”" },
   { ekran: "urunKartiStok", ad: "Ürün kartı — Stok Bilgileri", yer: "Stok → ürün kartı → Stok Bilgileri sekmesi" },
+  { ekran: "cariKarti", ad: "Cari kartı", yer: "Cari → cari kartı (bakiye, sekmeler, ekstre)" },
+  { ekran: "cariHareketler", ad: "Cari kartı — Hareketler", yer: "Cari → cari kartı → Hareketler sekmesi" },
 ];
 function EkranDuzeniTanimlari() {
   const baglam = React.useContext(EkranDuzeniBaglami);
