@@ -1,5 +1,22 @@
 // Kasa ve Banka için ortak liste/hareket bileşeni — ikisi de aynı yapıyı (hesap + giriş/çıkış
 // hareketleri, türetilmiş bakiye) paylaştığı için tek bir bileşende birleştirilmiştir.
+// Kasa/banka satırındaki açıklamadan, satırda zaten görünen parçaları ayıklar (v1.532.0). Otomatik açıklama
+// "Tahsilat · New Diamond · Tahsilat (TL Kasa)" biçiminde; cari adı ve işlem tipi satırda rozet olarak duruyor, hesap
+// adı ise ekranın başlığı. Geriye kalan (elle yazılmış not, fiş no, kur bilgisi) aynen kalır. Saf; birim testli.
+function kasaAciklamaSade(aciklama, cariAdi, tip) {
+  if (!aciklama) return "";
+  const tekrar = (p) => {
+    const x = p.trim();
+    if (!x) return true;
+    if (cariAdi && x === cariAdi) return true;
+    if (tip && x === tip) return true;
+    if (/^(Tahsilat|Ödeme|Virman|Giriş|Çıkış)$/.test(x)) return true;
+    if (/^(Tahsilat|Ödeme)\s*\([^)]*\)$/.test(x)) return true;
+    return false;
+  };
+  return String(aciklama).split(" · ").filter((p) => !tekrar(p)).join(" · ").trim();
+}
+
 function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, onHareketGuncelle, hesaplar, birimAdi, ekleAlanlari, onHesapEkle, onHesapSil, onHesapPasifDegistir, onHareketEkle, onHareketSil, cariler, kurlar, showToast, silmeYetkisiVar }) {
   // Düzenlenen hesabın kimliği ve form içeriği (19 Eylül).
   const [duzenlenen, setDuzenlenen] = useState(null);
@@ -7,6 +24,9 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
   const [yeniForm, setYeniForm] = useState({ paraBirimi: "TRY" });
   const [showYeni, setShowYeni] = useState(false);
   const [acikHesap, setAcikHesap] = useState(null);
+  // Düzen ikonu detay başlığında (v1.533.0); aynı anda tek hesap açık olduğu için tek ref yeter.
+  const hesapDuzenAcRef = useRef(null);
+  const duzenBaglami = React.useContext(EkranDuzeniBaglami);
   // İŞLEM PANELİ (kullanıcı, 17 Eylül: "kasa seçildiğinde ilk olarak hareketleri getirsin;
   // hareketlerin üzerinde ödeme, tahsilat, kasalar arası virman yapabileceğimiz işlemler butonu
   // olsun, tıklayınca güzel butonları olsun, oralardan işlem yapalım").
@@ -306,7 +326,8 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
               const acik = true;
               return (
                 <div key={h.id} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, borderBottom: "1px solid var(--erp-line-soft)" }}>
+                  {/* TEK ÜST ŞERİT (v1.533.0): sipariş / cari / ürün kartıyla aynı mor şerit; ✎ · pasif · 🗑 · düzen küçük ikon. */}
+                  <div data-hesap-ust-serit={h.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", margin: "10px 12px 0", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, overflowWrap: "anywhere" }}>
                         {h.ad}
@@ -324,6 +345,45 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                     <span className="mono" style={{ fontWeight: 700, fontSize: 16, color: bakiye >= 0 ? "var(--erp-primary)" : "var(--erp-warn)" }}>
                       {bakiye.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {sembol}
                     </span>
+                    {duzenlenen !== h.id && (
+                      <button type="button" className="btn-ikon" data-hesap-duzenle-ac={h.id} data-kart-eylem="duzenle" title={`${birimAdi} adını / bilgilerini düzenle`}
+                        onClick={() => {
+                          const form = {};
+                          ekleAlanlari.forEach((a2) => { form[a2.key] = h[a2.key] || ""; });
+                          setDuzenForm(form);
+                          setDuzenlenen(h.id);
+                        }}>
+                        <Pencil size={14} />
+                      </button>
+                    )}
+                    {/* Kart kalıbı: düzenlemede yalnız Kaydet · Vazgeç — pasif ve sil de gizli. */}
+                    {duzenlenen !== h.id && (
+                    <button type="button" className="btn-ikon" data-kart-eylem="pasif" data-hesap-pasif={h.id}
+                      title={h.pasif ? `${birimAdi}'ı yeniden kullanıma aç` : `${birimAdi}'ı pasife al — hareketleri durur, yeni işlemde seçilemez`}
+                      onClick={() => onHesapPasifDegistir(h.id, !h.pasif)}
+                      style={{ color: h.pasif ? "var(--erp-primary)" : "var(--erp-purple)" }}>
+                      {h.pasif ? <Check size={14} /> : <Archive size={14} />}
+                    </button>
+                    )}
+                    {duzenlenen !== h.id && (
+                      <SilOnayButonu kartEylemi
+                        onConfirm={() => onHesapSil(h.id)}
+                        boyut={14}
+                        baslikNormal={
+                          (h.hareketler || []).length > 0
+                            ? `${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`
+                            : silmeYetkisiVar === false
+                              ? `${birimAdi}'ı sil (yönetici onayına gider)`
+                              : `${birimAdi}'ı sil`
+                        }
+                      />
+                    )}
+                    {duzenBaglami && duzenBaglami.yetkili && (
+                      <button type="button" className="btn-ikon" data-duzen-ac={birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay"} title="Ekran düzeni — bölümleri sırala, genişliğini ayarla, gizle"
+                        onClick={() => { if (hesapDuzenAcRef.current) hesapDuzenAcRef.current(); }}>
+                        <LayoutGrid size={14} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setAcikHesap(null)}
@@ -333,6 +393,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       <X size={13} />
                     </button>
                   </div>
+                {/* EKRAN DÜZENİ (v1.533.0 — kullanıcı: "Kasada da ekran düzenleme olsun"): işlem düğmeleri + formlar ve hareket
+                    listesi iki blok; düzen ikonu başlık şeridinde. Kasa ve banka ayrı düzen tutar. */}
+                <DuzenAlani ekran={birimAdi === "Kasa" ? "kasaDetay" : "bankaDetay"} aralik={0} acRef={hesapDuzenAcRef} disIkon bloklar={[
+                { id: "islem", ad: "İşlem düğmeleri ve formlar", icerik: (<>
                 {/* İŞLEM ÇUBUĞU: hesap açılınca görünen ilk şey. Form seçilen işleme göre açılıyor. */}
                 {acik && (
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" }}>
@@ -644,6 +708,8 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                   </div>
                 )}
 
+                </>) },
+                { id: "hareketler", ad: "Hareket listesi", gizlenemez: true, icerik: (<>
                 {/* DÜZENLEME PANELİ: seçilen hareketin üstünde açılıyor. */}
                 {acik && duzenle && duzenle.hesapId === h.id && (
                   <div data-duzenle-paneli="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
@@ -827,7 +893,13 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                             </span>
                                           );
                                         })()}
-                                        {hr.aciklama && <span style={{ color: "var(--erp-text-2)" }}>{hr.aciklama}</span>}
+                                        {/* SADE AÇIKLAMA (v1.532.0 — kullanıcı: "cari adı ve tahsilat yazıyor, alt satıra inen açıklamaya
+                                            gerek yok"): otomatik açıklamanın cari adı / işlem tipi / "Tahsilat (TL Kasa)" parçaları
+                                            satırda zaten rozet olarak var; yalnız ARTAN (elle yazılan not, kur bilgisi) gösterilir. */}
+                                        {(() => {
+                                          const sade = kasaAciklamaSade(hr.aciklama, cari ? cari.unvan : "", hareketIslemTipi(hr));
+                                          return sade ? <span data-kasa-aciklama="1" style={{ color: "var(--erp-text-2)" }}>{sade}</span> : null;
+                                        })()}
                                       </div>
                                     </td>
                                     <td className="mono" style={{ padding: "5px 6px", textAlign: "right", color: "var(--erp-primary)", fontWeight: 600 }}>
@@ -902,13 +974,16 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         </>
                       );
                     })()}
-                    <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    {/* KÜÇÜK EYLEMLER ÜST ŞERİTTE (v1.533.0 — kullanıcı: "altta sil, pasife al, düzenle daha ufalsın; daha önce
+                        yaptıklarımızdan kontrol et"): cari/ürün kartındaki gibi ✎ · pasif · 🗑 başlıkta ikon. Burada yalnız
+                        düzenleme açıkken ad/banka/IBAN kutuları ve Kaydet · Vazgeç kalıyor. */}
+                    {duzenlenen === h.id && (
+                    <div data-hesap-duzenle-formu="1" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       {/* DÜZENLEME (kullanıcı, 19 Eylül: "banka listesi düzenleme olsun"). Hesap
                           adı, banka ve IBAN yanlış girildiğinde tek yol hesabı silip yeniden
                           açmaktı — hareketi olan hesap silinemediği için bu da mümkün değildi;
                           yanlış ad kalıcı oluyordu. Para birimi düzenlenmiyor: hareketler o
                           birimde yazıldı, sonradan değiştirmek geçmişi yanlış gösterirdi. */}
-                      {duzenlenen === h.id ? (
                         <>
                           {ekleAlanlari.map((a2) => (
                             <input key={a2.key} value={duzenForm[a2.key] || ""}
@@ -924,40 +999,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           <button type="button" className="btn-ghost" data-kart-eylem="vazgec" title="Vazgeç · Esc" style={{ fontSize: 12, padding: "5px 12px" }}
                             onClick={() => setDuzenlenen(null)}>Vazgeç</button>
                         </>
-                      ) : (
-                        <button type="button" className="btn-ghost" data-hesap-duzenle-ac={h.id} data-kart-eylem="duzenle"
-                          style={{ fontSize: 12, padding: "5px 12px" }}
-                          onClick={() => {
-                            const form = {};
-                            ekleAlanlari.forEach((a2) => { form[a2.key] = h[a2.key] || ""; });
-                            setDuzenForm(form);
-                            setDuzenlenen(h.id);
-                          }}>
-                          <Pencil size={12} /> Düzenle
-                        </button>
-                      )}
-                      <PasifButonu
-                        pasif={!!h.pasif}
-                        etiket={birimAdi}
-                        onDegistir={() => onHesapPasifDegistir(h.id, !h.pasif)}
-                      />
-{/* Düzenleme modunda Sil gizli — kart kalıbı: düzenlemede yalnız Kaydet · Vazgeç. */}
-                      {duzenlenen !== h.id && (
-                      <SilOnayButonu kartEylemi
-                        onConfirm={() => onHesapSil(h.id)}
-                        boyut={12}
-                        baslikNormal={
-                          (h.hareketler || []).length > 0
-                            ? `${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`
-                            : silmeYetkisiVar === false
-                              ? `${birimAdi}'ı sil (yönetici onayına gider)`
-                              : `${birimAdi}'ı sil`
-                        }
-                      />
-                      )}
                     </div>
+                    )}
                   </div>
                 )}
+                </>) },
+                ]} />
                 </div>
               );
             })}

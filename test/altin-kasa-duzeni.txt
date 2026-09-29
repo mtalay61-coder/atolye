@@ -1,0 +1,32 @@
+{
+ "altYaziliDugme": 0,
+ "duzenlemede": {
+  "form": 1,
+  "serit": [
+   "duzen:kasaDetay"
+  ]
+ },
+ "gozler": [
+  "islem"
+ ],
+ "hatalar": [],
+ "kayit": [
+  "hareketler",
+  "islem"
+ ],
+ "kayittanSonra": [
+  "hareketler",
+  "islem"
+ ],
+ "sadeAciklamaSayisi": 0,
+ "seritIkonlari": [
+  "duzenle",
+  "pasif",
+  "sil",
+  "duzen:kasaDetay"
+ ],
+ "varsayilan": [
+  "islem",
+  "hareketler"
+ ]
+}

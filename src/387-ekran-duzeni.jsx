@@ -249,6 +249,8 @@ const DUZENLI_EKRANLAR = [
   { ekran: "urunKartiSekmeleri", ad: "Ürün kartı — sekmeler", yer: "Stok → ürün kartı → üst şeritteki düzen ikonu" },
   { ekran: "urunKartiStok", ad: "Ürün kartı — Stok Bilgileri", yer: "Stok → ürün kartı → Stok Bilgileri sekmesi" },
   { ekran: "siparisKarti", ad: "Sipariş kartı", yer: "Sipariş / Alış Siparişi → siparişi tam ekran aç" },
+  { ekran: "kasaDetay", ad: "Kasa", yer: "Finans → Kasa & Banka → Kasa → bir kasa seçin → şeritteki düzen ikonu" },
+  { ekran: "bankaDetay", ad: "Banka hesabı", yer: "Finans → Kasa & Banka → Banka → bir hesap seçin → şeritteki düzen ikonu" },
   { ekran: "cariHareketler", ad: "Cari kartı — Hareketler", yer: "Cari → cari kartı → üst şeritteki düzen ikonu (Hareketler sekmesindeyken)" },
 ];
 function EkranDuzeniTanimlari() {
