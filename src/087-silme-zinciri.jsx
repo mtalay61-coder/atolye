@@ -15,6 +15,11 @@ function useSilmeZincirleri(d) {
   const { cariler, copaAt, showToast, siparisler, stok, uretim, koliler, stokRezervasyonlari, aktifKullanici,
     fisDefteriniDonustur, setCariler, setStok, setSiparisler, setUretim, setKoliler, setStokRezervasyonlari } = d;
 
+// EN GÜNCEL VERİ (v1.538.0 — son denetim, kullanıcı kararı): sipariş kapatma birkaç yazmayı sırayla BEKLİYOR; her
+// çizimde güncellenen bu ref sayesinde her tablo yazılmadan hemen önce bağ çözümü EN SON hâl üzerinden yeniden kurulur.
+const sonVeriRef = useRef(null);
+sonVeriRef.current = { stok, cariler, siparisler, uretim, koliler, stokRezervasyonlari };
+
 const cariSilCascade = useCallback((cariId) => {
   const cari = cariler.find((c) => c.id === cariId);
   if (!cari) return;
@@ -128,20 +133,38 @@ const siparisKapat = useCallback(async (siparisId) => {
   }
 
   const sonuclar = [];
-  const yaz = async (degisti, set, sonrasi, soz) => { if (!degisti) return; set(sonrasi); sonuclar.push(await soz(sonrasi)); };
-  await yaz(r.degisenler.stok, setStok, r.stok, (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
-  await yaz(r.degisenler.cariler, setCariler, r.cariler, (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
+  // BAYAT ANLIK GÖRÜNTÜ YAZILMAZ (v1.538.0): eskiden bütün tablolar işlemin BAŞINDA hesaplanan dizilerle yazılıyordu;
+  // fiş defteri ve bulut yazmaları beklenirken başka pencerede yapılan planlama/teslim eziliyordu. Artık her tablo,
+  // yazılmadan hemen önce `sonVeriRef`teki güncel hâl üzerinden yeniden çözülür (aynı saf fonksiyon, aynı seçenekler).
+  const secenek = { sil, kullanici: (aktifKullanici && aktifKullanici.ad) || "" };
+  const yaz = async (alan, set, soz) => {
+    const guncel = sonVeriRef.current || veri;
+    const d = siparisBaglariniCoz({ ...guncel }, siparisId, secenek);
+    if (!d || !d.degisenler[alan]) return;
+    const sonrasi = d[alan];
+    sonVeriRef.current = { ...(sonVeriRef.current || {}), [alan]: sonrasi };
+    set(sonrasi);
+    sonuclar.push(await soz(sonrasi));
+  };
+  await yaz("stok", setStok, (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
+  await yaz("cariler", setCariler, (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
   sonuclar.push(await fisDefteriniDonustur((defter) => {
     // Yalnız hedef sipariş yeter (defterin bağı ona göre çözülüyor); bekleme öncesi listeyi okumaya gerek yok.
     const d = siparisBaglariniCoz({ siparisler: [siparis], fisDefteri: defter }, siparisId);
     return d ? d.fisDefteri : defter;
   }));
-  await yaz(r.degisenler.uretim, setUretim, r.uretim, (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
-  await yaz(r.degisenler.koliler, setKoliler, r.koliler, (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
-  await yaz(r.degisenler.stokRezervasyonlari, setStokRezervasyonlari, r.stokRezervasyonlari,
+  await yaz("uretim", setUretim, (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
+  await yaz("koliler", setKoliler, (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
+  await yaz("stokRezervasyonlari", setStokRezervasyonlari,
     (x) => yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", x), "Stok rezervasyonları", x));
-  // Sipariş EN SONA: bağlar çözülmeden sipariş "İptal"/silinmiş görünmesin.
-  await yaz(true, setSiparisler, nextSiparisler, (x) => yazimiIzle(tabloYaz("siparis:data", "siparisler", x), "Siparişler", x));
+  // Sipariş EN SONA: bağlar çözülmeden sipariş "İptal"/silinmiş görünmesin. Bu da güncel listeden.
+  {
+    const guncel = sonVeriRef.current || veri;
+    const d = siparisBaglariniCoz({ ...guncel }, siparisId, secenek);
+    const sonrasi = d ? (sil ? d.siparisler.filter((x) => x.id !== siparisId) : d.siparisler) : nextSiparisler;
+    setSiparisler(sonrasi);
+    sonuclar.push(await yazimiIzle(tabloYaz("siparis:data", "siparisler", sonrasi), "Siparişler", sonrasi));
+  }
 
   const basarisiz = sonuclar.filter((x) => x && x.ok === false);
   const eylem = sil ? "silindi" : "iptal edildi";

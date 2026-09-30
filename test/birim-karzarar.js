@@ -47,4 +47,13 @@ const eski = [{ ...stok0[0], hareketler: [
 ] }];
 bekle("stoktaki fiyat, yoksa 0 + sayılır", rapor({ stok: eski, cariler: cariler0 }), { gelir: 90, smm: 120, brut: -30, fiyatsiz: 1 });
 
+console.log("Eksik kur uyarısı (v1.538.0)");
+// EUR işçilik (cari hareketi) var, kurlarda EUR yok → tutar TL sayılır ve `kurEksik` EUR'u söyler.
+const iscilikCari = [{ id: "p", unvan: "Usta", tip: "Personel", hareketler: [
+  { id: "i1", tarih: bugun.slice(0, 10), yon: "Alacak", tutar: 10, paraBirimi: "EUR", islemTipi: "İşçilik", fisNo: "1-Kesim-İşçilik" }] }];
+const kzEksik = karZararHesapla({ stok: [], cariler: iscilikCari, muhasebe: { kurlar: { USD: 40 } }, giderKartlari: [], donem: "tumu" });
+bekle("kuru olmayan para birimi raporlanır", kzEksik.kurEksik, ["EUR"]);
+const kzTam = karZararHesapla({ stok: [], cariler: iscilikCari, muhasebe: { kurlar: { USD: 40, EUR: 50 } }, giderKartlari: [], donem: "tumu" });
+bekle("kur varsa uyarı yok, tutar çevrilir", [kzTam.kurEksik, kzTam.uretimIscilik], [[], 500]);
+
 process.exit(hata);

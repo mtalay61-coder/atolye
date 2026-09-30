@@ -37,10 +37,13 @@ function kzTarihUygun(tarih, aralik) {
 }
 
 // Tutarı TL'ye çevirir (kur yoksa olduğu gibi bırakır — sıfırlamak toplamı sessizce bozardı).
-function kzTL(tutar, paraBirimi, kurlar) {
+// `eksik` (Set, v1.538.0 — kullanıcı kararı): kuru olmayan para birimi buraya yazılır; rapor "şu tutarlar TL
+// sayıldı" uyarısını gösterir. Önce uyarı yoktu — kur çekilemediğinde EUR/USD gelir-gider sessizce TL sayılıyordu.
+function kzTL(tutar, paraBirimi, kurlar, eksik) {
   const pb = paraBirimi || "TRY";
   if (pb === "TRY") return tutar || 0;
   const kur = (kurlar || {})[pb];
+  if (!kur && eksik && (tutar || 0) !== 0) eksik.add(pb);
   return kur ? (tutar || 0) * kur : (tutar || 0);
 }
 
@@ -48,6 +51,7 @@ function kzTL(tutar, paraBirimi, kurlar) {
 function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
   const aralik = kzDonemAraligi(donem);
   const kurlar = (muhasebe && muhasebe.kurlar) || {};
+  const kurEksik = new Set();
 
   // ---- 1) SATIŞ GELİRİ ve SMM — stok hareketlerinden.
   // Cari hareketinden değil stok hareketinden okunuyor: fişin PARA ayağı cari defterinde,
@@ -101,9 +105,9 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
       let gelir = 0;
       if (ch) {
         const net = typeof ch.matrah === "number" ? ch.matrah : (ch.tutar || 0);
-        gelir = kzTL(net, ch.paraBirimi, kurlar);
+        gelir = kzTL(net, ch.paraBirimi, kurlar, kurEksik);
       } else if (h.birimFiyat) {
-        gelir = kzTL(h.birimFiyat * adet, h.paraBirimi, kurlar);
+        gelir = kzTL(h.birimFiyat * adet, h.paraBirimi, kurlar, kurEksik);
       } else {
         fiyatsizSatir += 1;
       }
@@ -126,7 +130,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
       if (!h.giderKartId || h.virmanMi) return;
       if (!kzTarihUygun(h.tarih, aralik)) return;
       const kart = kartAdi[h.giderKartId] || { ad: h.giderKartAd || "Bilinmeyen", grup: h.giderGrubu || "yonetim", tur: "gider" };
-      const tutar = kzTL(h.tutar || 0, hes.paraBirimi, kurlar);
+      const tutar = kzTL(h.tutar || 0, hes.paraBirimi, kurlar, kurEksik);
       if (h.yon === "Giriş") { digerGelir += tutar; return; }
       giderToplam += tutar;
       const anahtar = kart.grup || "yonetim";
@@ -160,7 +164,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
       // fişinin geri alınması karşı kayıtla değil SİLMEYLE yapıldığı için ters yönlü bir
       // işçilik hareketi yok. Yöne bakmak eski kayıtları ya da yenileri rapordan düşürürdü.
       if (!kzTarihUygun(h.tarih, aralik)) return;
-      const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar);
+      const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
       uretimIscilik += tutar;
       iscilikDetay[c.unvan] = (iscilikDetay[c.unvan] || 0) + tutar;
     });
@@ -171,6 +175,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
   return {
     aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar,
     gruplar, satisKalemleri,
+    kurEksik: [...kurEksik],
     // Gider kartı hiç yoksa kullanıcıya yol göstermek için.
     kartYok: (giderKartlari || []).length === 0,
   };
@@ -191,6 +196,13 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
 
   return (
     <div data-kar-zarar="1" style={{ display: "grid", gap: 12 }}>
+      {sonuc.kurEksik.length > 0 && (
+        <div data-kz-kur-eksik={sonuc.kurEksik.join(",")} style={{ padding: "8px 12px", borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)",
+          background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 }}>
+          ⚠ {sonuc.kurEksik.join(", ")} kuru yok — bu para birimindeki tutarlar TL gibi sayıldı, rapor yanlış olabilir.
+          Üst şeritteki kuru güncelleyin (↻) ya da elle girin.
+        </div>
+      )}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
         {[{ k: "buAy", ad: "Bu ay" }, { k: "gecenAy", ad: "Geçen ay" }, { k: "buYil", ad: "Bu yıl" }, { k: "tumu", ad: "Tümü" }].map((d) => (
           <button key={d.k} type="button" data-kz-donem={d.k} onClick={() => setDonem(d.k)}

@@ -59,7 +59,7 @@ function onayUygula(istek) {
     islerRef.current.siparisKapat(p.siparisId);
   } else if (tip === "uretimSil") {
     islerRef.current.uretimSil(p.uretimId, p.cascade);
-  } else if (tip === "muhasebeHareketSil" || tip === "muhasebeHesapSil" || tip === "muhasebeCekSil") {
+  } else if (tip === "muhasebeHareketSil" || tip === "muhasebeHesapSil" || tip === "muhasebeCekSil" || tip === "muhasebeHareketGuncelle") {
     // nonce: aynı işlem iki kez onaylanırsa (ya da aynı parametrelerle tekrar gelirse) useEffect'in
     // bunu YENİ bir görev olarak görmesi için. Referans eşitliği yeterli olmazdı.
     setMuhasebeOnayliIslem({ tip, ...p, nonce: Date.now() });

@@ -141,8 +141,10 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
     const fisNo = fisNoUret("VRM");
     // Sebep ALAN olarak taşınıyor (yalnız açıklama metninde değil): raporda "döviz bozdurmalar"
     // diye süzmek için metin ayrıştırmak kırılgan olurdu.
+    // "MUHASEBE" (iki defter) — v1.538.0, kullanıcı kararı: para fiziksel olarak yer değiştiriyor; yalnız Genel'e
+    // yazılınca Resmi defterde kaynak hesap şişkin, hedef eksik kalıyordu.
     const ortak = { tarih: zaman, muhasebeBagId: bagId, fisNo, virmanMi: true, virmanSebebi: sebep || null,
-      kullanici: islemKullanicisiAd(), defter: "Genel" };
+      kullanici: islemKullanicisiAd(), defter: "Muhasebe" };
     const sebepMetni = sebep ? ` · ${sebep}` : "";
     const cikis = {
       ...ortak, id: uid("mhrk"), yon: "Çıkış", tutar: kaynak.tutar,
@@ -170,11 +172,21 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
   //
   // Para birimi ve yön DEĞİŞTİRİLMİYOR: yön işlemin cinsini (tahsilat/ödeme) belirliyor, onu
   // değiştirmek başka bir işlem demek — o zaman silinip yeniden girilmeli.
-  async function hareketGuncelle(tur, hesapId, hareketId, yeni) {
+  //
+  // YETKİ (v1.538.0 — kullanıcı kararı): silme yönetici onayına düşerken tutarı/tarihi değiştirmek serbestti; onay
+  // kontrolü böyle etkisiz kalıyordu. Silme yetkisi olmayanın düzenlemesi de onaya düşer, onaylanınca AYNI fonksiyonla.
+  async function hareketGuncelle(tur, hesapId, hareketId, yeni, onaylandi) {
     const key = tur === "kasa" ? "kasalar" : "bankalar";
     const hesap = (muhasebe[key] || []).find((h) => h.id === hesapId);
     const eski = hesap && (hesap.hareketler || []).find((h) => h.id === hareketId);
     if (!eski) return;
+    if (!onaylandi && kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme")) {
+      const para = PARA_SEMBOLU[hesap.paraBirimi || "TRY"] || "";
+      onayIste("muhasebe", "Düzenle",
+        `"${hesap.ad}" hesabında ${eski.tutar} ${para} (${eski.tarih || ""}) kaydını düzenle → ${yeni.tutar} ${para}${yeni.tarih && yeni.tarih !== eski.tarih ? ` · ${yeni.tarih}` : ""}`,
+        "muhasebeHareketGuncelle", { tur, hesapId, hareketId, yeni });
+      return;
+    }
     const guncel = { ...eski, tutar: yeni.tutar, tarih: yeni.tarih || eski.tarih, aciklama: yeni.aciklama };
     await onSave({
       ...muhasebe,
@@ -325,6 +337,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
     if (!onayliIslem) return;
     const i = onayliIslem;
     if (i.tip === "muhasebeHareketSil") hareketSil(i.tur, i.hesapId, i.hareketId, true);
+    else if (i.tip === "muhasebeHareketGuncelle") hareketGuncelle(i.tur, i.hesapId, i.hareketId, i.yeni, true);
     else if (i.tip === "muhasebeHesapSil") hesapSil(i.tur, i.id, true);
     else if (i.tip === "muhasebeCekSil") cekSil(i.id, true);
     onOnayliIslemBitti && onOnayliIslemBitti();
