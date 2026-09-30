@@ -457,7 +457,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const bildir = (metin, tamam) => {
       setBarkodSonuc({ tamam, metin, kod: temiz });
       showToast(metin);
-      if (!tamam && typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([90, 70, 90]);
+      if (!tamam) okutmaHatasiTitret();
     };
     const cozum = urunBarkoduCoz(temiz, stok || [], barkodTanimlari);
     if (!cozum) { bildir(`Tanınmayan barkod: ${temiz} — ${barkodTaninmamaSebebi(temiz)}`, false); setBarkodGirisi(""); return; }
@@ -1296,19 +1296,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               title="Ürünün fotoğrafını çekip kayıtlı görsellerle eşleştir">
               <Camera size={13} /> Fotoğraftan bul
             </button>
-            {barkodSonuc && (
-              <div data-barkod-sonuc={barkodSonuc.tamam ? "tamam" : "hata"} style={{ flexBasis: "100%", display: "flex", alignItems: "flex-start", gap: 8,
-                padding: "7px 10px", borderRadius: "var(--erp-r-md)", fontSize: 12, fontWeight: 600,
-                color: barkodSonuc.tamam ? "var(--erp-ok)" : "var(--erp-danger)",
-                background: barkodSonuc.tamam ? "var(--erp-ok-tint)" : "#FBE9E7",
-                border: `1px solid ${barkodSonuc.tamam ? "#9CC7A4" : "#E3A69C"}` }}>
-                <span style={{ flex: 1 }}>{barkodSonuc.tamam ? "✓ " : "✕ "}{barkodSonuc.metin}</span>
-                <button type="button" title="Kapat" onClick={() => setBarkodSonuc(null)}
-                  style={{ border: "none", background: "none", color: "inherit", cursor: "pointer", padding: 0, display: "flex" }}>
-                  <X size={14} />
-                </button>
-              </div>
-            )}
+            <OkutmaSonucu sonuc={barkodSonuc} onKapat={() => setBarkodSonuc(null)} />
             <div style={{ flexBasis: "100%" }}>
               <KameraOkuyucu onKod={(kod) => asortiBarkodOkut(kod)} />
             </div>

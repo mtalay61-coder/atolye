@@ -58,6 +58,9 @@ const TABLO_SEMA = {
       // KDV ORANI (v1.496.0) — ürüne özel; yoksa Tanımlar'daki varsayılan. Alan YALNIZ ürün taşıyorsa
       // gönderilir: `kdv-orani.sql` çalıştırılmadan oranı olmayan ürünlerin kaydı etkilenmesin.
       ...("kdvOrani" in u ? { kdv_orani: u.kdvOrani ?? null } : {}),
+      // HARİCİ BARKODLAR (v1.542.0) — kutu/tedarikçi etiketi → renk+beden. Kdv ile aynı kural: alan YALNIZ
+      // ürün taşıyorsa gönderilir; `harici-barkod.sql` çalıştırılmadan öteki ürünlerin kaydı etkilenmesin.
+      ...("hariciBarkodlar" in u ? { harici_barkodlar: u.hariciBarkodlar || [] } : {}),
     }),
     cocuklar: [
       {

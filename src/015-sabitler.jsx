@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.541.0";
+const SURUM = "1.542.0";
 const SURUM_TARIHI = "2026-09-30";
-const SURUM_NOTU = "Sipariste barkod okutma sonucu kutunun altinda kalici; taninmayan kodun sebebi yaziliyor, hatada cift titresim";
+const SURUM_NOTU = "Harici barkod: kutu/tedarikci etiketi urun kartinda bedene baglanir, okutulunca taninir; sevkiyatta okutma sonucu kalici satirda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Sipariste barkod okutma sonucu kutunun altinda kalici; tanin
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.542.0", tarih: "30.09.2026",
+    eklenen: ["Harici barkod: ürün kartı › Barkodlar'da her renk+bedene kutunun/tedarikçinin kendi barkodu girilebiliyor; siparişte, Depo › Okut'ta ve sevkiyatta okutulunca o beden olarak tanınıyor (Supabase'de harici-barkod.sql bir kez çalıştırılmalı)", "Depo › Sevkiyat'ta okutma sonucu kutunun altında kalıcı satır; hatada çift titreşim"],
+    degisen: ["Aynı harici barkod iki bedene ya da bizim bir barkodumuzla çakışacak şekilde girilemiyor"],
+    duzeltilen: [] },
   { surum: "1.541.0", tarih: "30.09.2026",
     eklenen: ["Sipariş formunda barkod okutmanın sonucu barkod kutusunun altında kalıcı satır olarak (yeşil: eklendi, kırmızı: neden eklenmedi)"],
     degisen: ["Tanınmayan barkodda sebep yazılıyor (bizim etiketimiz değil / koli / atölye parçası / ürün bulunamadı)", "Barkod eklenemeyince telefon çift titriyor (başarılı okuma tek kısa titreşim)"],
