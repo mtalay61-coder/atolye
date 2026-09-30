@@ -41,6 +41,11 @@
   "renkSeviyesiReddedildi": true,
   "stokSeviyesiReddedildi": true
  },
+ "sonucSatiri": {
+  "basarili": true,
+  "bizimSemaUrunYok": true,
+  "yabanciEtiket": true
+ },
  "toplamCift": 17,
  "yerlesim": {
   "renkSeciciOkunabilir": true

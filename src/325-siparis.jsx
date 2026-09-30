@@ -65,6 +65,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const [kalemler, setKalemler] = useState([]);
   // Asorti barkodu okutma kutusu (fuar akışı).
   const [barkodGirisi, setBarkodGirisi] = useState("");
+  // SON OKUTMANIN SONUCU, kutunun altında KALICI (v1.541.0). Toast ekranın tepesinde birkaç saniye
+  // duruyor; kamerayla okuturken göz kamerada, kullanıcı "titriyor ama eklemiyor, hatayı söylemiyor"
+  // dedi. { tamam, metin } — bir sonraki okutmaya kadar kalır.
+  const [barkodSonuc, setBarkodSonuc] = useState(null);
   // BARKOD PANELİ KATLANIR (v1.470.0 — kullanıcı: "barkod okutu da tıklayınca açılsın, kullanmayınca
   // çok yer kaplıyor"). Kapalıyken tek ince düğme. Son tercih bu cihazda hatırlanıyor: fuarda
   // okutarak çalışan açık bırakır, elle giren kapalı — her sipariş açılışında yeniden tıklamasın.
@@ -448,19 +452,26 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   function asortiBarkodOkut(kod) {
     const temiz = String(kod || "").trim();
     if (!temiz) return;
+    // Her sonuç iki yere: toast + kutunun altındaki kalıcı satır. Başarısızlıkta ÇİFT titreşim — kamera
+    // her okumada kısa titretiyor (236), başarılı/başarısız ayırt edilemiyordu.
+    const bildir = (metin, tamam) => {
+      setBarkodSonuc({ tamam, metin, kod: temiz });
+      showToast(metin);
+      if (!tamam && typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([90, 70, 90]);
+    };
     const cozum = urunBarkoduCoz(temiz, stok || [], barkodTanimlari);
-    if (!cozum) { showToast(`Tanınmayan barkod: ${temiz}`); setBarkodGirisi(""); return; }
+    if (!cozum) { bildir(`Tanınmayan barkod: ${temiz} — ${barkodTaninmamaSebebi(temiz)}`, false); setBarkodGirisi(""); return; }
 
     // SEVİYE SEVİYE ne yapılacağı farklı. Renksiz/bedensiz bir kod okutulunca ne ekleneceği belli
     // değil — hangi renk, hangi beden? Kaleme çevirmek yerine sebebi söyleniyor: sessizce yanlış
     // satır yazmaktansa hiç yazmamak doğru.
     if (cozum.seviye === "stok") {
-      showToast(`${cozum.urun.ad}: bu kod yalnızca ürünü gösteriyor, renk/beden içermiyor`);
+      bildir(`${cozum.urun.ad}: bu kod yalnızca ürünü gösteriyor, renk/beden içermiyor`, false);
       setBarkodGirisi("");
       return;
     }
     if (cozum.seviye === "renk") {
-      showToast(`${cozum.urun.ad} · ${cozum.renk}: bu kod beden içermiyor`);
+      bildir(`${cozum.urun.ad} · ${cozum.renk}: bu kod beden içermiyor`, false);
       setBarkodGirisi("");
       return;
     }
@@ -480,11 +491,11 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         ...(kdvAktif ? { kdvOrani: urunKdvOrani(cozum.urun, firmaBilgileri) } : {}),
       }]);
       setBarkodGirisi("");
-      showToast(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`);
+      bildir(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`, true);
       return;
     }
 
-    if (cozum.dagilim.length === 0) { showToast(`${cozum.urun.ad} · ${cozum.renk}: asortideki bedenler bu üründe yok`); return; }
+    if (cozum.dagilim.length === 0) { bildir(`${cozum.urun.ad} · ${cozum.renk}: asortideki bedenler bu üründe yok`, false); setBarkodGirisi(""); return; }
 
     let sonraki = [...kalemler];
     cozum.dagilim.forEach((d) => {
@@ -500,9 +511,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     setKalemler(sonraki);
     setBarkodGirisi("");
     // Üründe olmayan bedenler SESSİZCE atlanmıyor: sipariş eksik girilmiş olacak, kullanıcı bilsin.
-    showToast(cozum.eksikBedenler.length
+    bildir(cozum.eksikBedenler.length
       ? `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi — ${cozum.eksikBedenler.join(", ")} bedeni üründe yok`
-      : `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi`);
+      : `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi`, true);
   }
 
   function kalemEkle() {
@@ -1285,6 +1296,19 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               title="Ürünün fotoğrafını çekip kayıtlı görsellerle eşleştir">
               <Camera size={13} /> Fotoğraftan bul
             </button>
+            {barkodSonuc && (
+              <div data-barkod-sonuc={barkodSonuc.tamam ? "tamam" : "hata"} style={{ flexBasis: "100%", display: "flex", alignItems: "flex-start", gap: 8,
+                padding: "7px 10px", borderRadius: "var(--erp-r-md)", fontSize: 12, fontWeight: 600,
+                color: barkodSonuc.tamam ? "var(--erp-ok)" : "var(--erp-danger)",
+                background: barkodSonuc.tamam ? "var(--erp-ok-tint)" : "#FBE9E7",
+                border: `1px solid ${barkodSonuc.tamam ? "#9CC7A4" : "#E3A69C"}` }}>
+                <span style={{ flex: 1 }}>{barkodSonuc.tamam ? "✓ " : "✕ "}{barkodSonuc.metin}</span>
+                <button type="button" title="Kapat" onClick={() => setBarkodSonuc(null)}
+                  style={{ border: "none", background: "none", color: "inherit", cursor: "pointer", padding: 0, display: "flex" }}>
+                  <X size={14} />
+                </button>
+              </div>
+            )}
             <div style={{ flexBasis: "100%" }}>
               <KameraOkuyucu onKod={(kod) => asortiBarkodOkut(kod)} />
             </div>

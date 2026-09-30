@@ -487,6 +487,19 @@ function varyantinBarkodu(urun, variant, tanimlar) {
 //
 // Tanınmayan koda `null` dönüyor, "en yakın" tahmin YAPILMIYOR: fuarda yanlış ürünü siparişe
 // yazmak, hiç yazmamaktan pahalıdır.
+// TANINMAYAN BARKODUN SEBEBİ (v1.541.0 — kullanıcı, sipariş formunda kamerayla "999000016232" okutunca:
+// "Barkod okutunca titriyor ama eklemiyor veya hata ne ise söylemiyor"). Yalnız "tanınmayan" demek
+// yetmiyor: kutunun/tedarikçinin etiketi mi, koli mi, atölye parçası mı, yoksa bizim etiketimiz ama ürünü
+// silinmiş mi — ne yapılacağı buna göre değişiyor. Depo > Okut'taki (236, derlenmiş) sebeplerin aynısı.
+function barkodTaninmamaSebebi(kod) {
+  const k = String(kod || "").trim();
+  if (/^K-/i.test(k)) return "Bu bir KOLİ barkodu — ürün etiketini okutun.";
+  if (/^\d+-\d+$/.test(k)) return "Bu bir ÜRETİM PARÇASI barkodu (atölye) — ürün etiketini okutun.";
+  if (!new RegExp(`^${BARKOD_ON_EK}\\d+$`).test(k))
+    return `Bu barkod bizim ürün etiketimiz değil (ürün barkodları ${BARKOD_ON_EK} ile başlar) — kutunun ya da tedarikçinin etiketi olabilir.`;
+  return "Barkod ürün şemasına uyuyor ama bu kodda bir ürün/renk/beden yok — kod atanmamış, ürün silinmiş ya da etiket eski olabilir.";
+}
+
 function urunBarkoduCoz(kod, stok, tanimlar) {
   const temiz = String(kod || "").trim();
   if (!/^\d+$/.test(temiz)) return null;

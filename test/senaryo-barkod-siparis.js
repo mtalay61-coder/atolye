@@ -132,6 +132,12 @@ async function calistir() {
 
   // TEK ÇİFT: 12 haneli kod 38 numaraya bir çift ekliyor.
   await okut(kodBeden);
+  const sonucSatiri = () => sayfa.evaluate(() => {
+    const e = [...document.querySelectorAll("[data-barkod-sonuc]")].find((x) => x.offsetParent);
+    return e ? { tur: e.getAttribute("data-barkod-sonuc"), metin: e.textContent } : null;
+  });
+  // KALICI SONUÇ SATIRI (v1.541.0): başarılı okutma yeşil satırda kalıyor.
+  const basariliSatir = await sonucSatiri();
 
   // Tanınmayan kod sessizce yutulmamalı.
   await kutu.fill("909999000101");
@@ -140,6 +146,12 @@ async function calistir() {
   // önceki bildirimin zamanlayıcısı yenisini siliyordu (showToast'ta düzeltildi).
   await sayfa.waitForTimeout(1000);
   const bilinmeyen = await sayfa.evaluate(() => document.body.innerText);
+  const hataliSatir = await sonucSatiri();
+  // Kutunun/tedarikçinin etiketi (kullanıcının telefonda okuttuğu kod): sebep "bizim etiketimiz değil".
+  await kutu.fill("999000016232");
+  await kutu.press("Enter");
+  await sayfa.waitForTimeout(400);
+  const yabanciSatir = await sonucSatiri();
 
   await sayfa.waitForTimeout(600);
   await sayfa.locator('button:has-text("Siparişi Kaydet"):visible').first().click();
@@ -160,6 +172,12 @@ async function calistir() {
     yerlesim,
     asortiMesaji: /8 çift eklendi/.test(asortiSonrasi),
     bilinmeyenKodReddedildi: /Tanınmayan barkod/.test(bilinmeyen),
+    // v1.541.0: sonuç kutunun altında kalıcı; tanınmayanda SEBEP yazıyor.
+    sonucSatiri: {
+      basarili: basariliSatir && basariliSatir.tur === "tamam" && /1 eklendi/.test(basariliSatir.metin),
+      bizimSemaUrunYok: hataliSatir && hataliSatir.tur === "hata" && /şemasına uyuyor/.test(hataliSatir.metin),
+      yabanciEtiket: yabanciSatir && yabanciSatir.tur === "hata" && /bizim ürün etiketimiz değil/.test(yabanciSatir.metin),
+    },
     // İki asorti katı (36:2 37:4 38:4 39:4 40:2) + tek çift 38 = 38'de 5.
     kalemler,
     toplamCift: kalemler.reduce((n, k) => n + k.miktar, 0),
