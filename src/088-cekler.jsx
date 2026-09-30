@@ -49,7 +49,7 @@ const cekGorselKaydet = useCallback(async (cekId, gorseller) => {
 //
 // KASA HAREKETİ YOK — çek nakit değil, para vadesinde el değiştirir (7z-8'deki gerekçenin aynısı).
 const cekEkleVeIsle = useCallback((veri) => {
-  const cek = { id: uid("cek"), durum: "Portföyde", ...veri };
+  const cek = { id: uid("cek"), durum: "Portföyde", ...veri, defter: veri.defter || "Genel" };
   const cari = veri.cariId ? cariler.find((c) => c.id === veri.cariId) : null;
   const hareketGerekli = !!cari && !veri.hareketId && (veri.tutar || 0) > 0;
 
@@ -72,7 +72,7 @@ const cekEkleVeIsle = useCallback((veri) => {
       islemTipi,
       aciklama: `${verilen ? "Şahsi çek çıkışı" : "Müşteri çeki"}${cek.cekNo ? ` · No ${cek.cekNo}` : ""}${cek.banka ? ` · ${cek.banka}` : ""}`,
       kullanici: (aktifKullanici && aktifKullanici.ad) || null,
-      defter: "Genel",
+      defter: cek.defter,   // v1.539.0: çekin kendi defteri (önce hep "Genel")
       // Karşı taraf bilgisi 7z-7'nin alanlarıyla: ekstrede çekin kendi tutarı görünsün.
       hesapAd: `Çek${cek.cekNo ? ` No ${cek.cekNo}` : ""}`,
       hesapPB: cek.paraBirimi || "TRY",
@@ -120,7 +120,7 @@ const cekIslemYap = useCallback((cekId, islem, secim = {}) => {
     hareket = cekCiroHareketi(cek, {
       cariId: hedefCariId, tutar: secim.tutar, paraBirimi: secim.paraBirimi, tarih,
       fisNo: fisNoSiradaki(fisOnEki("Ödeme"), tumFisNumaralari(cariler)),
-      aciklama: secim.aciklama, kullanici, defter: secim.defter || "Genel",
+      aciklama: secim.aciklama, kullanici, defter: secim.defter || cek.defter || "Genel",
     });
   } else if (islem === "iade" && cek.cariId) {
     hedefCariId = cek.cariId;

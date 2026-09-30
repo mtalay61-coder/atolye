@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.538.0";
+const SURUM = "1.539.0";
 const SURUM_TARIHI = "2026-09-30";
-const SURUM_NOTU = "Virman ve cek tahsili iki deftere; yetkisiz kasa duzenlemesi onaya; kar-zarar kur eksik uyarisi; siparis kapatma guncel veriyle";
+const SURUM_NOTU = "Cekte defter secimi (Genel / Resmi / Muhasebe): giris, ciro, iade ve tahsil cekin defterine yaziliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Virman ve cek tahsili iki deftere; yetkisiz kasa duzenlemesi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.539.0", tarih: "30.09.2026",
+    eklenen: ["Çek formunda Defter seçimi (Genel / Resmi / Muhasebe — carideki gibi); çek listesinde Resmi / Genel + Resmi rozeti"],
+    degisen: ["Çekin cari girişi, cirosu, iadesi ve tahsilde kasa/banka hareketi çekin kendi defterine yazılıyor (önce giriş hep Genel, tahsil hep Muhasebe'ydi)", "Cari kartından çekle girilen hareketin defteri çeke de geçiyor"],
+    duzeltilen: [] },
   { surum: "1.538.0", tarih: "30.09.2026",
     eklenen: ["Kâr-zarar raporunda kuru olmayan para birimi uyarısı (o tutarlar TL gibi sayıldığında)"],
     degisen: ["Virman ve çek tahsilinin kasa/banka hareketi 'Muhasebe' (Genel + Resmi) deftere yazılıyor", "Silme yetkisi olmayan kullanıcının kasa/banka hareketi düzenlemesi yönetici onayına düşüyor"],

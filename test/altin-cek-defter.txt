@@ -1,0 +1,35 @@
+{
+ "cariGirisi": {
+  "defter": "Resmi",
+  "tutar": 7000,
+  "yon": "Alacak"
+ },
+ "hatalar": [],
+ "rozetler": [
+  "Resmi",
+  "Resmi"
+ ],
+ "secenekler": {
+  "deger": "Genel",
+  "secenekler": [
+   "Genel",
+   "Resmi",
+   "Muhasebe"
+  ]
+ },
+ "tahsil": {
+  "bankaHareketleri": [
+   [
+    "Giriş",
+    3000,
+    "Resmi",
+    "cR"
+   ]
+  ],
+  "durum": "Tahsil Edildi"
+ },
+ "yeniCek": {
+  "bagli": true,
+  "defter": "Resmi"
+ }
+}

@@ -205,6 +205,12 @@ console.log("6. tahsil");
   bekle("cari yok \u2014 bor\u00e7 \u00e7ek al\u0131n\u0131rken kapand\u0131", hh.cariId, undefined);
   bekle("\u015fahsi \u00e7ekin tahsili hesaptan \u00c7IKI\u015e",
     cekTahsilHesapHareketi({ ...tahsilde, tip: "Verilen" }, { tutar: 1, tarih: "x" }).yon, "\u00c7\u0131k\u0131\u015f");
+  // v1.539.0: tahsil hareketi çekin kendi defterine; defteri olmayan eski çek v1.538'deki gibi Muhasebe.
+  bekle("tahsil \u00e7ekin defterinde", [
+    cekTahsilHesapHareketi({ ...tahsilde, defter: "Resmi" }, { tutar: 1, tarih: "x" }).defter,
+    cekTahsilHesapHareketi({ ...tahsilde, defter: "Genel" }, { tutar: 1, tarih: "x" }).defter,
+    cekTahsilHesapHareketi({ ...tahsilde, defter: undefined }, { tutar: 1, tarih: "x" }).defter,
+  ], ["Resmi", "Genel", "Muhasebe"]);
 
   const muhasebe = { kasalar: [{ id: "k1", ad: "TL Kasa", hareketler: [] }],
     bankalar: [{ id: "b1", ad: "Ziraat TL", hareketler: [{ id: "eski" }] }, { id: "b2", ad: "Diger", hareketler: [] }] };

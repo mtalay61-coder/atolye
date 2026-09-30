@@ -220,6 +220,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         // biri çek alır, diğeri çek verir. Yönle türetmeye çalışmak Tahsilat'ı "Verilen" yapıyordu.
         tip: hareketTipi === "Tahsilat" || hareketTipi === "Satış" ? "Alınan" : "Verilen",
         cariId: cari.id,
+        // Cari hareketinin defteri çeke de geçer (v1.539.0): ciro/iade/tahsil aynı defterde devam eder.
+        defter: hForm.defter || "Genel",
         // Çek KENDİ biriminde; cariye işlenen tutar ayrıca bilgi olarak (v1.459.0).
         tutar: cekCevrim.farkli ? cekCevrim.cekTutar : tutar,
         paraBirimi: cekCevrim.cekPB,
