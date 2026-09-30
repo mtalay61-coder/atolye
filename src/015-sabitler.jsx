@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.537.0";
-const SURUM_TARIHI = "2026-09-29";
-const SURUM_NOTU = "Son denetim: pesin odemeli alis cari yonu, kismi teslim, veri ve arayuz duzeltmeleri";
+const SURUM = "1.538.0";
+const SURUM_TARIHI = "2026-09-30";
+const SURUM_NOTU = "Virman ve cek tahsili iki deftere; yetkisiz kasa duzenlemesi onaya; kar-zarar kur eksik uyarisi; siparis kapatma guncel veriyle";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Son denetim: pesin odemeli alis cari yonu, kismi teslim, ver
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.538.0", tarih: "30.09.2026",
+    eklenen: ["Kâr-zarar raporunda kuru olmayan para birimi uyarısı (o tutarlar TL gibi sayıldığında)"],
+    degisen: ["Virman ve çek tahsilinin kasa/banka hareketi 'Muhasebe' (Genel + Resmi) deftere yazılıyor", "Silme yetkisi olmayan kullanıcının kasa/banka hareketi düzenlemesi yönetici onayına düşüyor"],
+    duzeltilen: ["Sipariş iptal/silme bekleme sırasında başka ekranda yapılan değişiklikleri eziyordu (güncel veri üzerinden yazılıyor)"] },
   { surum: "1.537.0", tarih: "29.09.2026",
     eklenen: [],
     degisen: ["Planlama sekmesinde [X] geçerli planlamayı geri almıyor; yalnız bağlı kaydı silinmiş planlamayı temizliyor (geri almak için üretimi / alışı kendi ekranından silin)", "Kasa/banka: hesap düzenleme formu şeridin altında; hareketli hesapta sil ikonu pasif; virman hedefinde pasif hesaplar yok", "Ürün kartında sekme ve Stok Bilgileri blok düzeni tek 'Düzeni kaydet' çubuğuyla kaydediliyor", "Tümü/Genel/Resmi seçimi (kasa) ve defter/para birimi seçimi (cari) gizlenemez blok", "Kullanılmayan onarım fonksiyonları kaldırıldı"],
