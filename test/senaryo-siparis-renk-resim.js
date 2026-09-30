@@ -52,6 +52,12 @@ async function calistir() {
   await sayfa.locator('[data-aramali-oneri="Kahve Süet"]').dispatchEvent("mousedown");
   await sayfa.waitForTimeout(300);
   sonuc.kahveSecilince = { kutu: await kutu.inputValue(), kutuResmi: await sayfa.evaluate(() => !!document.querySelector("[data-aramali-kutu-resim]")), matris: await matrisVar() };
+  // Seçili kutuya YAZMADAN yeniden tıklamak: diğer renkler açılır liste gibi görünür (seçimi değiştirmek için).
+  await sayfa.locator('input[placeholder="Model ara…"]:visible').first().focus();
+  await sayfa.waitForTimeout(250);
+  await kutu.click();
+  await sayfa.waitForTimeout(200);
+  sonuc.seciliyeTiklayinca = await oneriler();
   await kutu.fill("si");
   await sayfa.waitForTimeout(200);
   sonuc.yarimYazimda = { matris: await matrisVar() };
@@ -67,10 +73,20 @@ async function calistir() {
   sonuc.pozKutusu = (await poz.count()) > 0;
   if (sonuc.pozKutusu) {
     await poz.click();
-    await poz.fill("tab");   // "taba" tohumdaki "Taba" ile tam eşleşir, liste bilerek süzülmez
+    await poz.fill("tab");
     await sayfa.waitForTimeout(200);
     // Yalnız pozisyon kutusunun kendi listesi (renk kutusunun listesi karışmasın).
     sonuc.pozTaba = await poz.evaluate((i) => [...i.parentElement.querySelectorAll("[data-aramali-oneri]")].map((b) => b.getAttribute("data-aramali-oneri")));
+    // TAM ADI YAZMAK (v1.540.0, kullanıcı: "Kahve aramada tam adını yazınca tüm renkleri listeliyor"): liste
+    // süzülmeye devam eder — tam eşleşen en üstte, o adla başlayanlar altında; başka renk görünmez.
+    await poz.fill("");
+    await poz.type("taba");
+    await sayfa.waitForTimeout(200);
+    if (process.env.EKRAN) {
+      const r = await poz.boundingBox();
+      await sayfa.screenshot({ path: process.env.EKRAN, clip: { x: Math.max(0, r.x - 20), y: Math.max(0, r.y - 40), width: 420, height: 260 } });
+    }
+    sonuc.pozTamAd = await poz.evaluate((i) => [...i.parentElement.querySelectorAll("[data-aramali-oneri]")].map((b) => b.getAttribute("data-aramali-oneri")));
     await sayfa.locator('[data-aramali-oneri="Taba Deri (72)"]').dispatchEvent("mousedown");
     await sayfa.waitForTimeout(200);
     sonuc.pozSecilen = await poz.inputValue();

@@ -21,6 +21,14 @@
   "Taba Deri (72)",
   "Taba Süet (71)"
  ],
+ "pozTamAd": [
+  "Taba",
+  "Taba Deri (72)",
+  "Taba Süet (71)"
+ ],
+ "seciliyeTiklayinca": [
+  "Siyah (resim)"
+ ],
  "sueYazinca": [
   "Kahve Süet"
  ],

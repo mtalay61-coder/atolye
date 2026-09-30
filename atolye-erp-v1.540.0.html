@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.537.0</title>
+<title>Atölye ERP 1.540.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -671,35 +671,40 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false }) {
     const [acik, setAcik] = useState(false);
     const [vurgulu, setVurgulu] = useState(-1);
+    // YAZILDI MI (v1.540.0): odaklanınca false, kutuya harf girince true. Tam eşleşmede "hepsini göster"
+    // yalnız YAZILMADAN açılışta geçerli (seçili rengi değiştirmek için); yazarken tam adı bitirmek
+    // listeyi süzmeyi bırakmamalı. Kullanıcı: "Kahve aramada tam adını yazınca tüm renkleri listeliyor."
+    const [yazildi, setYazildi] = useState(false);
     const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
     const tekil = Array.from(new Set((oneriler || []).map((o) => String(o).trim()).filter(Boolean)))
         .sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
-    // Kutudaki değerin kendisi öneri olarak tekrar gösterilmiyor; başı eşleşenler önce.
-    // Kutudaki değer bir önerinin TAM kendisiyse (seçim yapılmış) liste süzülmüyor, diğerleri
-    // gösteriliyor: seçimi değiştirmek için önce kutuyu silmek gerekmesin (açılır liste gibi).
+    // Başı eşleşenler önce. Kutudaki değer bir önerinin TAM kendisiyse ve kutu YAZILMADAN açıldıysa
+    // (seçim yapılmış) liste süzülmüyor, diğerleri gösteriliyor: seçimi değiştirmek için önce kutuyu
+    // silmek gerekmesin (açılır liste gibi). Yazarken tam eşleşen en üstte, sonra "Kahve Baskı" gibi
+    // o adla başlayanlar — v1.540.0'a kadar burada da tüm liste açılıyordu.
     const tamEslesme = tekil.some((o) => o.toLocaleLowerCase("tr-TR") === q);
     const sonuclar = (() => {
         if (!q)
             return tekil;
-        if (tamEslesme)
+        if (tamEslesme && !yazildi)
             return tekil.filter((o) => o.toLocaleLowerCase("tr-TR") !== q);
-        const bas = [], ic = [];
+        const tam = [], bas = [], ic = [];
         tekil.forEach((o) => {
             const e = o.toLocaleLowerCase("tr-TR");
             if (e === q)
-                return;
-            if (e.startsWith(q))
+                tam.push(o);
+            else if (e.startsWith(q))
                 bas.push(o);
             else if (e.includes(q))
                 ic.push(o);
         });
-        return [...bas, ...ic];
+        return [...tam, ...bas, ...ic];
     })().slice(0, 50);
-    const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); };
+    const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); setYazildi(false); };
     const kutuResmi = resimler && tamEslesme ? resimler[tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q)] : null;
     return (React.createElement("div", { style: { position: "relative" } },
         kutuResmi && (React.createElement("img", { src: kutuResmi, alt: "", "data-aramali-kutu-resim": "1", style: { position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 26, height: 26, objectFit: "cover", borderRadius: 4, pointerEvents: "none" } })),
-        React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), disabled: disabled, value: deger || "", onChange: (e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }, onFocus: () => setAcik(true), onBlur: () => {
+        React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), disabled: disabled, value: deger || "", onChange: (e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); setYazildi(true); }, onFocus: () => { setAcik(true); setYazildi(false); }, onBlur: () => {
                 setTimeout(() => setAcik(false), 150);
                 if (yalnizListeden && q && !tamEslesme)
                     onDegis(sonuclar[0] || "");
@@ -1982,9 +1987,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.537.0";
-const SURUM_TARIHI = "2026-09-29";
-const SURUM_NOTU = "Son denetim: pesin odemeli alis cari yonu, kismi teslim, veri ve arayuz duzeltmeleri";
+const SURUM = "1.540.0";
+const SURUM_TARIHI = "2026-09-30";
+const SURUM_NOTU = "Aramali kutularda (renk, ozel kod) tam ad yazilinca tum liste aciliyordu; artik suzuluyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1992,6 +1997,18 @@ const SURUM_NOTU = "Son denetim: pesin odemeli alis cari yonu, kismi teslim, ver
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.540.0", tarih: "30.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Renk ve özel kod arama kutularında adın tamamı yazılınca ('Kahve') liste süzülmeyi bırakıp bütün renkleri açıyordu; artık tam eşleşen en üstte, o adla başlayanlar ('Kahve Baskı', 'Kahve Deri') altında. Seçili kutuya yazmadan tıklayınca tüm liste açılmaya devam ediyor"] },
+    { surum: "1.539.0", tarih: "30.09.2026",
+        eklenen: ["Çek formunda Defter seçimi (Genel / Resmi / Muhasebe — carideki gibi); çek listesinde Resmi / Genel + Resmi rozeti"],
+        degisen: ["Çekin cari girişi, cirosu, iadesi ve tahsilde kasa/banka hareketi çekin kendi defterine yazılıyor (önce giriş hep Genel, tahsil hep Muhasebe'ydi)", "Cari kartından çekle girilen hareketin defteri çeke de geçiyor"],
+        duzeltilen: [] },
+    { surum: "1.538.0", tarih: "30.09.2026",
+        eklenen: ["Kâr-zarar raporunda kuru olmayan para birimi uyarısı (o tutarlar TL gibi sayıldığında)"],
+        degisen: ["Virman ve çek tahsilinin kasa/banka hareketi 'Muhasebe' (Genel + Resmi) deftere yazılıyor", "Silme yetkisi olmayan kullanıcının kasa/banka hareketi düzenlemesi yönetici onayına düşüyor"],
+        duzeltilen: ["Sipariş iptal/silme bekleme sırasında başka ekranda yapılan değişiklikleri eziyordu (güncel veri üzerinden yazılıyor)"] },
     { surum: "1.537.0", tarih: "29.09.2026",
         eklenen: [],
         degisen: ["Planlama sekmesinde [X] geçerli planlamayı geri almıyor; yalnız bağlı kaydı silinmiş planlamayı temizliyor (geri almak için üretimi / alışı kendi ekranından silin)", "Kasa/banka: hesap düzenleme formu şeridin altında; hareketli hesapta sil ikonu pasif; virman hedefinde pasif hesaplar yok", "Ürün kartında sekme ve Stok Bilgileri blok düzeni tek 'Düzeni kaydet' çubuğuyla kaydediliyor", "Tümü/Genel/Resmi seçimi (kasa) ve defter/para birimi seçimi (cari) gizlenemez blok", "Kullanılmayan onarım fonksiyonları kaldırıldı"],
@@ -7077,7 +7094,7 @@ function useOnaySistemi(d) {
         else if (tip === "uretimSil") {
             islerRef.current.uretimSil(p.uretimId, p.cascade);
         }
-        else if (tip === "muhasebeHareketSil" || tip === "muhasebeHesapSil" || tip === "muhasebeCekSil") {
+        else if (tip === "muhasebeHareketSil" || tip === "muhasebeHesapSil" || tip === "muhasebeCekSil" || tip === "muhasebeHareketGuncelle") {
             // nonce: aynı işlem iki kez onaylanırsa (ya da aynı parametrelerle tekrar gelirse) useEffect'in
             // bunu YENİ bir görev olarak görmesi için. Referans eşitliği yeterli olmazdı.
             setMuhasebeOnayliIslem({ tip, ...p, nonce: Date.now() });
@@ -11821,6 +11838,10 @@ function useGocVeOnarim(d) {
 // "emin misiniz" diye sormaktan daha tehlikelidir.
 function useSilmeZincirleri(d) {
     const { cariler, copaAt, showToast, siparisler, stok, uretim, koliler, stokRezervasyonlari, aktifKullanici, fisDefteriniDonustur, setCariler, setStok, setSiparisler, setUretim, setKoliler, setStokRezervasyonlari } = d;
+    // EN GÜNCEL VERİ (v1.538.0 — son denetim, kullanıcı kararı): sipariş kapatma birkaç yazmayı sırayla BEKLİYOR; her
+    // çizimde güncellenen bu ref sayesinde her tablo yazılmadan hemen önce bağ çözümü EN SON hâl üzerinden yeniden kurulur.
+    const sonVeriRef = useRef(null);
+    sonVeriRef.current = { stok, cariler, siparisler, uretim, koliler, stokRezervasyonlari };
     const cariSilCascade = useCallback((cariId) => {
         const cari = cariler.find((c) => c.id === cariId);
         if (!cari)
@@ -11932,20 +11953,38 @@ function useSilmeZincirleri(d) {
             });
         }
         const sonuclar = [];
-        const yaz = async (degisti, set, sonrasi, soz) => { if (!degisti)
-            return; set(sonrasi); sonuclar.push(await soz(sonrasi)); };
-        await yaz(r.degisenler.stok, setStok, r.stok, (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
-        await yaz(r.degisenler.cariler, setCariler, r.cariler, (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
+        // BAYAT ANLIK GÖRÜNTÜ YAZILMAZ (v1.538.0): eskiden bütün tablolar işlemin BAŞINDA hesaplanan dizilerle yazılıyordu;
+        // fiş defteri ve bulut yazmaları beklenirken başka pencerede yapılan planlama/teslim eziliyordu. Artık her tablo,
+        // yazılmadan hemen önce `sonVeriRef`teki güncel hâl üzerinden yeniden çözülür (aynı saf fonksiyon, aynı seçenekler).
+        const secenek = { sil, kullanici: (aktifKullanici && aktifKullanici.ad) || "" };
+        const yaz = async (alan, set, soz) => {
+            const guncel = sonVeriRef.current || veri;
+            const d = siparisBaglariniCoz({ ...guncel }, siparisId, secenek);
+            if (!d || !d.degisenler[alan])
+                return;
+            const sonrasi = d[alan];
+            sonVeriRef.current = { ...(sonVeriRef.current || {}), [alan]: sonrasi };
+            set(sonrasi);
+            sonuclar.push(await soz(sonrasi));
+        };
+        await yaz("stok", setStok, (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
+        await yaz("cariler", setCariler, (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
         sonuclar.push(await fisDefteriniDonustur((defter) => {
             // Yalnız hedef sipariş yeter (defterin bağı ona göre çözülüyor); bekleme öncesi listeyi okumaya gerek yok.
             const d = siparisBaglariniCoz({ siparisler: [siparis], fisDefteri: defter }, siparisId);
             return d ? d.fisDefteri : defter;
         }));
-        await yaz(r.degisenler.uretim, setUretim, r.uretim, (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
-        await yaz(r.degisenler.koliler, setKoliler, r.koliler, (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
-        await yaz(r.degisenler.stokRezervasyonlari, setStokRezervasyonlari, r.stokRezervasyonlari, (x) => yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", x), "Stok rezervasyonları", x));
-        // Sipariş EN SONA: bağlar çözülmeden sipariş "İptal"/silinmiş görünmesin.
-        await yaz(true, setSiparisler, nextSiparisler, (x) => yazimiIzle(tabloYaz("siparis:data", "siparisler", x), "Siparişler", x));
+        await yaz("uretim", setUretim, (x) => yazimiIzle(tabloYaz("uretim:siparisler", "uretim", x), "Üretim", x));
+        await yaz("koliler", setKoliler, (x) => yazimiIzle(tekilYaz("koli:data", "koliler", x), "Koliler", x));
+        await yaz("stokRezervasyonlari", setStokRezervasyonlari, (x) => yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", x), "Stok rezervasyonları", x));
+        // Sipariş EN SONA: bağlar çözülmeden sipariş "İptal"/silinmiş görünmesin. Bu da güncel listeden.
+        {
+            const guncel = sonVeriRef.current || veri;
+            const d = siparisBaglariniCoz({ ...guncel }, siparisId, secenek);
+            const sonrasi = d ? (sil ? d.siparisler.filter((x) => x.id !== siparisId) : d.siparisler) : nextSiparisler;
+            setSiparisler(sonrasi);
+            sonuclar.push(await yazimiIzle(tabloYaz("siparis:data", "siparisler", sonrasi), "Siparişler", sonrasi));
+        }
         const basarisiz = sonuclar.filter((x) => x && x.ok === false);
         const eylem = sil ? "silindi" : "iptal edildi";
         gunlukYaz(basarisiz.length ? `Sipariş ${eylem} ama YARIM KALDI: ${no}` : `Sipariş ${eylem}: ${no}`, "siparis", { siparisNo: no, tip: siparis.tip, fisler: ozet.fisNolar, alislar: ozet.alislar.map((a) => a.siparisNo),
@@ -12022,7 +12061,7 @@ function useCekler(d) {
     //
     // KASA HAREKETİ YOK — çek nakit değil, para vadesinde el değiştirir (7z-8'deki gerekçenin aynısı).
     const cekEkleVeIsle = useCallback((veri) => {
-        const cek = { id: uid("cek"), durum: "Portföyde", ...veri };
+        const cek = { id: uid("cek"), durum: "Portföyde", ...veri, defter: veri.defter || "Genel" };
         const cari = veri.cariId ? cariler.find((c) => c.id === veri.cariId) : null;
         const hareketGerekli = !!cari && !veri.hareketId && (veri.tutar || 0) > 0;
         let hareket = null;
@@ -12044,7 +12083,7 @@ function useCekler(d) {
                 islemTipi,
                 aciklama: `${verilen ? "Şahsi çek çıkışı" : "Müşteri çeki"}${cek.cekNo ? ` · No ${cek.cekNo}` : ""}${cek.banka ? ` · ${cek.banka}` : ""}`,
                 kullanici: (aktifKullanici && aktifKullanici.ad) || null,
-                defter: "Genel",
+                defter: cek.defter, // v1.539.0: çekin kendi defteri (önce hep "Genel")
                 // Karşı taraf bilgisi 7z-7'nin alanlarıyla: ekstrede çekin kendi tutarı görünsün.
                 hesapAd: `Çek${cek.cekNo ? ` No ${cek.cekNo}` : ""}`,
                 hesapPB: cek.paraBirimi || "TRY",
@@ -12092,7 +12131,7 @@ function useCekler(d) {
             hareket = cekCiroHareketi(cek, {
                 cariId: hedefCariId, tutar: secim.tutar, paraBirimi: secim.paraBirimi, tarih,
                 fisNo: fisNoSiradaki(fisOnEki("Ödeme"), tumFisNumaralari(cariler)),
-                aciklama: secim.aciklama, kullanici, defter: secim.defter || "Genel",
+                aciklama: secim.aciklama, kullanici, defter: secim.defter || cek.defter || "Genel",
             });
         }
         else if (islem === "iade" && cek.cariId) {
@@ -28801,7 +28840,10 @@ function cekTahsilHesapHareketi(cek, { tutar, tarih, kullanici, cariAd } = {}) {
         tarih,
         yon: verilen ? "Çıkış" : "Giriş",
         tutar: tutar > 0 ? tutar : cek.tutar,
-        defter: "Genel",
+        // ÇEKİN KENDİ DEFTERİ (v1.539.0): çek hangi deftere girdiyse tahsilde hesaba giren para da oraya — Resmi'de çek
+        // alınmamışken bankanın artması (ya da tersi) olmasın. v1.538.0'da defter bilgisi olmadığı için "Muhasebe"ydı;
+        // defteri olmayan eski çekler de öyle kalır (o sürümün kararı).
+        defter: cek.defter || "Muhasebe",
         aciklama: `Çek tahsili${cek.cekNo ? ` · No ${cek.cekNo}` : ""}${cariAd ? ` · ${cariAd}` : ""}`,
         kullanici: kullanici || null,
         cekId: cek.id,
@@ -29277,8 +29319,10 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
         const fisNo = fisNoUret("VRM");
         // Sebep ALAN olarak taşınıyor (yalnız açıklama metninde değil): raporda "döviz bozdurmalar"
         // diye süzmek için metin ayrıştırmak kırılgan olurdu.
+        // "MUHASEBE" (iki defter) — v1.538.0, kullanıcı kararı: para fiziksel olarak yer değiştiriyor; yalnız Genel'e
+        // yazılınca Resmi defterde kaynak hesap şişkin, hedef eksik kalıyordu.
         const ortak = { tarih: zaman, muhasebeBagId: bagId, fisNo, virmanMi: true, virmanSebebi: sebep || null,
-            kullanici: islemKullanicisiAd(), defter: "Genel" };
+            kullanici: islemKullanicisiAd(), defter: "Muhasebe" };
         const sebepMetni = sebep ? ` · ${sebep}` : "";
         const cikis = {
             ...ortak, id: uid("mhrk"), yon: "Çıkış", tutar: kaynak.tutar,
@@ -29305,12 +29349,20 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
     //
     // Para birimi ve yön DEĞİŞTİRİLMİYOR: yön işlemin cinsini (tahsilat/ödeme) belirliyor, onu
     // değiştirmek başka bir işlem demek — o zaman silinip yeniden girilmeli.
-    async function hareketGuncelle(tur, hesapId, hareketId, yeni) {
+    //
+    // YETKİ (v1.538.0 — kullanıcı kararı): silme yönetici onayına düşerken tutarı/tarihi değiştirmek serbestti; onay
+    // kontrolü böyle etkisiz kalıyordu. Silme yetkisi olmayanın düzenlemesi de onaya düşer, onaylanınca AYNI fonksiyonla.
+    async function hareketGuncelle(tur, hesapId, hareketId, yeni, onaylandi) {
         const key = tur === "kasa" ? "kasalar" : "bankalar";
         const hesap = (muhasebe[key] || []).find((h) => h.id === hesapId);
         const eski = hesap && (hesap.hareketler || []).find((h) => h.id === hareketId);
         if (!eski)
             return;
+        if (!onaylandi && kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme")) {
+            const para = PARA_SEMBOLU[hesap.paraBirimi || "TRY"] || "";
+            onayIste("muhasebe", "Düzenle", `"${hesap.ad}" hesabında ${eski.tutar} ${para} (${eski.tarih || ""}) kaydını düzenle → ${yeni.tutar} ${para}${yeni.tarih && yeni.tarih !== eski.tarih ? ` · ${yeni.tarih}` : ""}`, "muhasebeHareketGuncelle", { tur, hesapId, hareketId, yeni });
+            return;
+        }
         const guncel = { ...eski, tutar: yeni.tutar, tarih: yeni.tarih || eski.tarih, aciklama: yeni.aciklama };
         await onSave({
             ...muhasebe,
@@ -29457,6 +29509,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
         const i = onayliIslem;
         if (i.tip === "muhasebeHareketSil")
             hareketSil(i.tur, i.hesapId, i.hareketId, true);
+        else if (i.tip === "muhasebeHareketGuncelle")
+            hareketGuncelle(i.tur, i.hesapId, i.hareketId, i.yeni, true);
         else if (i.tip === "muhasebeHesapSil")
             hesapSil(i.tur, i.id, true);
         else if (i.tip === "muhasebeCekSil")
@@ -30368,7 +30422,9 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
     // nereden girildiğine göre eksik kalmasına yol açardı.
     // `tlKarsiligi` + `kur`: dövizli çekin kayıt anındaki TL değeri. Vade geldiğinde kur değişmiş
     // olacak; çekin GİRİLDİĞİ günkü karşılığı ayrı bir bilgi ve sonradan hesaplanamaz.
-    const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "" };
+    // DEFTER (v1.539.0 — kullanıcı: "Çekte Resmi ve Genel defter yok mu? … carideki gibi olsun"): çek hangi deftere
+    // aitse carideki girişi, cirosu, iadesi ve tahsilde hesaba giren para o deftere yazılır.
+    const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "", defter: "Genel" };
     const [form, setForm] = useState(BOS_CEK);
     const [filtre, setFiltre] = useState("Tümü");
     // KENDİ ÇEK DEFTERİMİZ (kullanıcı, 6 Eylül: "verilen çek için kendi çek defterimiz olması
@@ -30562,6 +30618,12 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                                 setForm({ ...form, iban, banka: form.banka || ibandanBanka(iban) });
                             }, placeholder: "TR.. \u2014 banka otomatik", style: { ...kutu, fontFamily: "monospace" } })),
                     React.createElement("label", { style: etiket },
+                        "Defter",
+                        React.createElement("select", { "data-cek-defter": "1", value: form.defter || "Genel", onChange: (e) => setForm({ ...form, defter: e.target.value }), style: { ...kutu, width: 150 } },
+                            React.createElement("option", { value: "Genel" }, "Genel"),
+                            React.createElement("option", { value: "Resmi" }, "Resmi"),
+                            React.createElement("option", { value: "Muhasebe" }, "Muhasebe (ikisine de)"))),
+                    React.createElement("label", { style: etiket },
                         "Sahiplik",
                         React.createElement("div", { style: { display: "flex", gap: 5 } }, ["Kendi", "Cirolu"].map((se) => (React.createElement("button", { key: se, type: "button", onClick: () => setForm({ ...form, sahiplik: se }), style: {
                                 fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: "var(--erp-r-sm)", cursor: "pointer",
@@ -30606,6 +30668,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     c.banka,
                     c.sube ? ` / ${c.sube}` : ""),
                 c.sahiplik === "Cirolu" && (React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: "#8A3D6B", background: "#8A3D6B14", border: "1px solid #8A3D6B44", borderRadius: "var(--erp-r-pill)", padding: "1px 7px" } }, "cirolu")),
+                c.defter && c.defter !== "Genel" && (React.createElement("span", { "data-cek-defter-rozet": c.defter, style: { fontSize: 10, fontWeight: 700, color: "var(--erp-primary)", background: "var(--erp-primary-soft, #0000000a)", border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-pill)", padding: "1px 7px" } }, c.defter === "Muhasebe" ? "Genel + Resmi" : "Resmi")),
                 c.kesideci && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } },
                     "ke\u015Fideci: ",
                     c.kesideci),
@@ -34343,17 +34406,22 @@ function kzTarihUygun(tarih, aralik) {
     return t >= aralik.bas && t <= aralik.son;
 }
 // Tutarı TL'ye çevirir (kur yoksa olduğu gibi bırakır — sıfırlamak toplamı sessizce bozardı).
-function kzTL(tutar, paraBirimi, kurlar) {
+// `eksik` (Set, v1.538.0 — kullanıcı kararı): kuru olmayan para birimi buraya yazılır; rapor "şu tutarlar TL
+// sayıldı" uyarısını gösterir. Önce uyarı yoktu — kur çekilemediğinde EUR/USD gelir-gider sessizce TL sayılıyordu.
+function kzTL(tutar, paraBirimi, kurlar, eksik) {
     const pb = paraBirimi || "TRY";
     if (pb === "TRY")
         return tutar || 0;
     const kur = (kurlar || {})[pb];
+    if (!kur && eksik && (tutar || 0) !== 0)
+        eksik.add(pb);
     return kur ? (tutar || 0) * kur : (tutar || 0);
 }
 // Dönemin kâr-zarar tablosunu kurar.
 function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
     const aralik = kzDonemAraligi(donem);
     const kurlar = (muhasebe && muhasebe.kurlar) || {};
+    const kurEksik = new Set();
     // ---- 1) SATIŞ GELİRİ ve SMM — stok hareketlerinden.
     // Cari hareketinden değil stok hareketinden okunuyor: fişin PARA ayağı cari defterinde,
     // MAL ayağı stokta. Satılan malın maliyetini bilmek için hangi üründen kaç adet çıktığı gerekiyor.
@@ -34411,10 +34479,10 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
             let gelir = 0;
             if (ch) {
                 const net = typeof ch.matrah === "number" ? ch.matrah : (ch.tutar || 0);
-                gelir = kzTL(net, ch.paraBirimi, kurlar);
+                gelir = kzTL(net, ch.paraBirimi, kurlar, kurEksik);
             }
             else if (h.birimFiyat) {
-                gelir = kzTL(h.birimFiyat * adet, h.paraBirimi, kurlar);
+                gelir = kzTL(h.birimFiyat * adet, h.paraBirimi, kurlar, kurEksik);
             }
             else {
                 fiyatsizSatir += 1;
@@ -34439,7 +34507,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
             if (!kzTarihUygun(h.tarih, aralik))
                 return;
             const kart = kartAdi[h.giderKartId] || { ad: h.giderKartAd || "Bilinmeyen", grup: h.giderGrubu || "yonetim", tur: "gider" };
-            const tutar = kzTL(h.tutar || 0, hes.paraBirimi, kurlar);
+            const tutar = kzTL(h.tutar || 0, hes.paraBirimi, kurlar, kurEksik);
             if (h.yon === "Giriş") {
                 digerGelir += tutar;
                 return;
@@ -34478,7 +34546,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
             // işçilik hareketi yok. Yöne bakmak eski kayıtları ya da yenileri rapordan düşürürdü.
             if (!kzTarihUygun(h.tarih, aralik))
                 return;
-            const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar);
+            const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
             uretimIscilik += tutar;
             iscilikDetay[c.unvan] = (iscilikDetay[c.unvan] || 0) + tutar;
         });
@@ -34488,6 +34556,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
     return {
         aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar,
         gruplar, satisKalemleri,
+        kurEksik: [...kurEksik],
         // Gider kartı hiç yoksa kullanıcıya yol göstermek için.
         kartYok: (giderKartlari || []).length === 0,
     };
@@ -34501,6 +34570,11 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
         React.createElement("span", { style: { flex: 1, fontSize: kalin ? 14 : 13, fontWeight: kalin ? 700 : 500, color: "var(--erp-text)" } }, etiket),
         React.createElement("span", { className: "mono", style: { fontSize: kalin ? 15 : 13, fontWeight: 700, color: renk || "var(--erp-text)" } }, para(deger))));
     return (React.createElement("div", { "data-kar-zarar": "1", style: { display: "grid", gap: 12 } },
+        sonuc.kurEksik.length > 0 && (React.createElement("div", { "data-kz-kur-eksik": sonuc.kurEksik.join(","), style: { padding: "8px 12px", borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)",
+                background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 } },
+            "\u26A0 ",
+            sonuc.kurEksik.join(", "),
+            " kuru yok \u2014 bu para birimindeki tutarlar TL gibi say\u0131ld\u0131, rapor yanl\u0131\u015F olabilir. \u00DCst \u015Feritteki kuru g\u00FCncelleyin (\u21BB) ya da elle girin.")),
         React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" } }, [{ k: "buAy", ad: "Bu ay" }, { k: "gecenAy", ad: "Geçen ay" }, { k: "buYil", ad: "Bu yıl" }, { k: "tumu", ad: "Tümü" }].map((d) => (React.createElement("button", { key: d.k, type: "button", "data-kz-donem": d.k, onClick: () => setDonem(d.k), style: { padding: "6px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
                 border: `1.5px solid ${donem === d.k ? "var(--erp-primary)" : "var(--erp-border)"}`,
                 background: donem === d.k ? "#4E6B4E1A" : "#fff", color: donem === d.k ? "var(--erp-primary)" : "var(--erp-text-2)" } }, d.ad)))),
@@ -38186,6 +38260,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 // biri çek alır, diğeri çek verir. Yönle türetmeye çalışmak Tahsilat'ı "Verilen" yapıyordu.
                 tip: hareketTipi === "Tahsilat" || hareketTipi === "Satış" ? "Alınan" : "Verilen",
                 cariId: cari.id,
+                // Cari hareketinin defteri çeke de geçer (v1.539.0): ciro/iade/tahsil aynı defterde devam eder.
+                defter: hForm.defter || "Genel",
                 // Çek KENDİ biriminde; cariye işlenen tutar ayrıca bilgi olarak (v1.459.0).
                 tutar: cekCevrim.farkli ? cekCevrim.cekTutar : tutar,
                 paraBirimi: cekCevrim.cekPB,
@@ -50236,7 +50312,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.537.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.540.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
