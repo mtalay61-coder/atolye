@@ -34,6 +34,8 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
   const [temizlemeOnayi, setTemizlemeOnayi] = useState(null); // temizlenmek istenen fişin key'i
   // Hangi fişin "İşlemler" menüsü açık (18 Eylül).
   const [islemlerAcik, setIslemlerAcik] = useState(null);
+  // DEFTER SÜZGECİ (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap").
+  const [filtreDefter, setFiltreDefter] = useState("Tümü");
 
   // KAPSAM (17 Eylül): liste, sayaçlar ve tip çipleri hepsi aynı kapsamdan beslenmeli; yalnız
   // listeyi süzmek, sayaçların kapsam dışı fişleri saymasına ve çiplerin boş süzgeç göstermesine
@@ -57,6 +59,9 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
   const filtreli = tumFisler.filter((f) => {
     // KAPSAM SÜZGECİ: menüden hangi girişle geldiysek yalnız o kapsamın tipleri.
     if (filtreTip !== "Tümü" && f.tip !== filtreTip) return false;
+    // Defteri olmayan (cari ayağı yok: üretim, dahili stok) fiş para kaydı değil — her süzgeçte görünür.
+    const fd = fisinDefteri(f);
+    if (fd && !defterKapsar(fd, filtreDefter)) return false;
     if (!q) return true;
     return (
       (f.fisNo || "").toLowerCase().includes(q) ||
@@ -199,6 +204,15 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
       </div>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+        {["Tümü", "Genel", "Resmi"].map((d) => (
+          <button key={`d-${d}`} type="button" data-fis-defter-sec={d} onClick={() => setFiltreDefter(d)}
+            style={{ padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 13, cursor: "pointer",
+              border: `1.5px solid ${filtreDefter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
+              background: filtreDefter === d ? "#4E6B4E1A" : "#fff", color: filtreDefter === d ? "var(--erp-primary)" : "var(--erp-text-2)" }}>
+            {d === "Tümü" ? "Tüm defterler" : d}
+          </button>
+        ))}
+        <span style={{ width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "0 2px" }} />
         {/* TİP ÇİPLERİ — para fişleri de dahil (19 Eylül): tek listede hepsi var, çiple daraltılıyor. */}
         {["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Diğer"].map((t) => (
           sayilar[t] > 0 || t === "Tümü" ? (
@@ -300,6 +314,18 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                       <FileText size={10} /> {f.odemeSekli}{f.vade ? ` · ${f.vade}` : ""}
                     </span>
                   )}
+                  {/* DEFTER ROZETİ (v1.543.0): Genel varsayılan, yazılmıyor; Resmi ve Muhasebe görünür. */}
+                  {(() => {
+                    const fd = fisinDefteri(f);
+                    if (!fd || fd === "Genel") return null;
+                    return (
+                      <span data-fis-defter-rozet={fd} className="mono"
+                        style={{ fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
+                          background: "#4E6B4E14", color: "var(--erp-primary)", border: "1px solid var(--erp-line)" }}>
+                        {fd === "Muhasebe" ? "Genel + Resmi" : "Resmi"}
+                      </span>
+                    );
+                  })()}
                   {/* Faturası olan fiş listede belli olsun (v1.500.0): taslak mı, numara almış mı. */}
                   {(() => {
                     const ft = fisinFaturasi(faturalar, f.fisNo);

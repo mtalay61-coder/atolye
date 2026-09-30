@@ -282,7 +282,9 @@ const verileriExcelAktar = useCallback(() => {
   const cariSatirlari = cariler.map((c) => {
     // PARA BİRİMİ BAZINDA (v1.537.0 — son denetim): bütün hareketler toplanıyordu (100 ₺ + 50 € = 150) ve tutarı
     // olmayan hareket NaN yapıyordu. Uygulamanın her yerindeki bakiye kuralı (`cariBakiyeleri`) ile aynı sonuç.
-    return { Unvan: c.unvan, Tip: c.tip, Telefon: c.telefon || "", Bakiye: bakiyeMetni(cariBakiyeleri(c)) };
+    // Genel ve Resmi bakiye ayrı sütunda (v1.543.0); "Bakiye" iki defterin birlikte hâli (Muhasebe bir kez).
+    return { Unvan: c.unvan, Tip: c.tip, Telefon: c.telefon || "", Bakiye: bakiyeMetni(cariBakiyeleri(c)),
+      "Genel Bakiye": bakiyeMetni(cariBakiyeleri(c, "Genel")), "Resmi Bakiye": bakiyeMetni(cariBakiyeleri(c, "Resmi")) };
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cariSatirlari), "Cariler");
 

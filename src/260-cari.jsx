@@ -9,6 +9,10 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
   const [acikCariId, setAcikCariId] = useState(null);
   const [pasifSekme, setPasifSekme] = useState(false);
   const [personelProsesSekme, setPersonelProsesSekme] = useState("Tümü");
+  // LİSTE DEFTERİ (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap"). Satır
+  // bakiyesi, üstteki Alacak/Borç/Net özeti ve dip toplam seçilen deftere göre (Muhasebe ikisine de girer).
+  // Açık kartın içindeki Genel/Resmi ayrımı ve ekstre süzgeci ayrı — kartta zaten var.
+  const [listeDefter, setListeDefter] = useState("Tümü");
   const [form, setForm] = useState(emptyForm());
 
   function emptyForm() {
@@ -203,7 +207,7 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
   const toplamAlacak = {};
   const toplamBorc = {};
   cariler.forEach((c) => {
-    Object.entries(cariBakiyeleri(c)).forEach(([pb, t]) => {
+    Object.entries(cariBakiyeleri(c, listeDefter)).forEach(([pb, t]) => {
       if (t > 0) toplamAlacak[pb] = (toplamAlacak[pb] || 0) + t;
       else if (t < 0) toplamBorc[pb] = (toplamBorc[pb] || 0) - t;
     });
@@ -299,6 +303,16 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
             }}
           />
         </div>
+        <div data-cari-liste-defter={listeDefter} style={{ display: "flex", gap: 4 }}>
+          {["Tümü", "Genel", "Resmi"].map((d) => (
+            <button key={d} type="button" data-cari-defter-sec={d} onClick={() => setListeDefter(d)}
+              style={{ padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                border: `1.5px solid ${listeDefter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
+                background: listeDefter === d ? "#4E6B4E1A" : "#fff", color: listeDefter === d ? "var(--erp-primary)" : "var(--erp-text-2)" }}>
+              {d}
+            </button>
+          ))}
+        </div>
         {cariler.length > 0 && (
           <>
             <span className="mono" style={{ fontSize: 13, color: "var(--erp-primary)", fontWeight: 600 }}>
@@ -385,6 +399,7 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               onAcKapa={() => setAcikCariId((onceki) => (onceki === c.id ? null : c.id))}
               onCekEkle={onCekEkle}
               bakiye={cariBakiyeleri(c)}
+              listeBakiye={cariBakiyeleri(c, listeDefter)}
               genelBakiye={cariBakiyeleri(c, "Genel")}
               resmiBakiye={cariBakiyeleri(c, "Resmi")}
               onAddHareket={addHareket}
@@ -410,7 +425,7 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               süzgeci uygulanmış) toplamı: Alacak (+), Borç (−), Net = ikisinin toplamı. Para birimleri ayrı satırda
               — farklı birimleri toplamak yapılmamış bir kur çevrimi olurdu. */}
           {(() => {
-            const ayrik = filtered.map((c) => bakiyeAyir(cariBakiyeleri(c)));
+            const ayrik = filtered.map((c) => bakiyeAyir(cariBakiyeleri(c, listeDefter)));
             const alacakT = bakiyeleriTopla(ayrik.map((x) => x.alacak));
             const borcT = bakiyeleriTopla(ayrik.map((x) => x.borc));
             const netT = bakiyeleriTopla([alacakT, borcT]);

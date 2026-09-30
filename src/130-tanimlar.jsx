@@ -827,6 +827,29 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
           </Field>
         </div>
 
+        {/* İŞÇİLİK DEFTERİ (v1.543.0 — kullanıcı: "İşçilik genele yazılsın, tanımlarsa ayar mantıklı"). Üretim
+            teslimi ve ara proses işçiliği personel carisine bu defterle yazılır; varsayılan Genel. Önceki
+            kayıtlar değişmez. */}
+        {(() => {
+          const fb = tanimlar.firmaBilgileri || {};
+          return (
+            <div data-iscilik-defteri-ayari="1" style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>İşçilik defteri</div>
+              <Field label="Üretim işçiliği hangi deftere yazılsın">
+                <select value={iscilikDefteri(fb)} data-iscilik-defteri="1"
+                  onChange={(e) => firmaBilgisiGuncelle("iscilikDefteri", e.target.value)} style={{ ...inputStyle, width: 200 }}>
+                  <option value="Genel">Genel</option>
+                  <option value="Resmi">Resmi</option>
+                  <option value="Muhasebe">Muhasebe (ikisine de)</option>
+                </select>
+              </Field>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
+                Üretim tesliminde ve ara proseste personel carisine yazılan işçilik ücretinin defteri. Önceki kayıtlar değişmez.
+              </div>
+            </div>
+          );
+        })()}
+
         {/* KDV (v1.496.0 — e-fatura yol haritası, Aşama 1). Açma anahtarı VARSAYILAN KAPALI: açılınca yeni
             fişlerde satır KDV'si hesaplanır ve cariye KDV DAHİL tutar yazılır (eski fişler değişmez). Oranlar
             mali müşavirle teyit edilmeden açılmamalı — bu yüzden uyarı metni anahtarın hemen yanında. */}

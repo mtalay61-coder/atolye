@@ -27,6 +27,13 @@ function kdvAktifMi(firmaBilgileri) {
   return !!(firmaBilgileri && firmaBilgileri.kdvAktif);
 }
 
+// İŞÇİLİK DEFTERİ (v1.543.0): Tanımlar › Firma'daki ayar; girilmemişse "Genel" (önceki davranış).
+// Üretim teslimi (079) ve ara proses (080) işçilik hareketini buradan okur — iki yer aynı kuralı kullansın.
+function iscilikDefteri(firmaBilgileri) {
+  const d = firmaBilgileri && firmaBilgileri.iscilikDefteri;
+  return d === "Resmi" || d === "Muhasebe" ? d : "Genel";
+}
+
 // Tanımlar'daki varsayılan: mamul ve diğer (hammadde, yarı mamul, hizmet) ayrı. Girilmemişse %20.
 function varsayilanKdvOrani(urun, firmaBilgileri) {
   const fb = firmaBilgileri || {};

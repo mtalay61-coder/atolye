@@ -1,4 +1,4 @@
-function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle }) {
+function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle }) {
   // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
   // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
   // gittiği söylenmezse silindi sanılıyor.
@@ -499,7 +499,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             başlığı küçük yazıyla hücrenin içinde — kartlar ayrı kutular, üstte ortak başlık satırına hizalanamazdı.
             Karışık para birimli caride aynı hücrede para birimleri " · " ile. */}
         {(() => {
-          const { alacak, borc } = bakiyeAyir(bakiye);
+          // Liste satırı listenin defter seçimine göre (v1.543.0); verilmemişse tüm defterler.
+          const { alacak, borc } = bakiyeAyir(listeBakiye || bakiye);
           const hucre = (etiket, deger, renk, veri) => (
             <span data-cari-liste-hucre={veri} style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end", minWidth: 104, flexShrink: 0 }}>
               <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".04em", color: "var(--erp-text-3)" }}>{etiket}</span>

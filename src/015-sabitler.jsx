@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.542.0";
+const SURUM = "1.543.0";
 const SURUM_TARIHI = "2026-09-30";
-const SURUM_NOTU = "Harici barkod: kutu/tedarikci etiketi urun kartinda bedene baglanir, okutulunca taninir; sevkiyatta okutma sonucu kalici satirda";
+const SURUM_NOTU = "Defter secimi: cari listesi, kar-zarar, fisler, anasayfa ve Excel; iscilik defteri Tanimlar ayarindan (varsayilan Genel)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Harici barkod: kutu/tedarikci etiketi urun kartinda bedene b
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.543.0", tarih: "30.09.2026",
+    eklenen: ["Cari Hesaplar listesinde Tümü / Genel / Resmi seçimi (satır bakiyesi, üst özet ve dip toplam)", "Kâr-Zarar'da Tümü / Genel / Resmi seçimi", "Fişler listesinde defter süzgeci ve Resmi / Genel + Resmi rozeti", "Anasayfa Toplam Alacak kartında Genel ve Resmi alacak ayrı", "Excel özetinde carilerin Genel ve Resmi bakiyesi ayrı sütun", "Tanımlar › Firma: İşçilik defteri ayarı (varsayılan Genel)"],
+    degisen: ["Üretim ve ara proses işçiliği Tanımlar'daki işçilik defterine yazılıyor (ayar girilmezse önceki gibi Genel)"],
+    duzeltilen: [] },
   { surum: "1.542.0", tarih: "30.09.2026",
     eklenen: ["Harici barkod: ürün kartı › Barkodlar'da her renk+bedene kutunun/tedarikçinin kendi barkodu girilebiliyor; siparişte, Depo › Okut'ta ve sevkiyatta okutulunca o beden olarak tanınıyor (Supabase'de harici-barkod.sql bir kez çalıştırılmalı)", "Depo › Sevkiyat'ta okutma sonucu kutunun altında kalıcı satır; hatada çift titreşim"],
     degisen: ["Aynı harici barkod iki bedene ya da bizim bir barkodumuzla çakışacak şekilde girilemiyor"],
