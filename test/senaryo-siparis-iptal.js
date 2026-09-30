@@ -16,12 +16,12 @@ const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
-async function kartiAcVeSil(sayfa) {
-  await modulAc(sayfa, "Sipariş");
+async function kartiAcVeSil(sayfa, no = "SAT-Y", modul = "Sipariş") {
+  await modulAc(sayfa, modul);
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Tümü\s*\(/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(500);
-  await sayfa.locator('[data-siparis-tam-ekran="SAT-Y"]').first().click();
+  await sayfa.locator(`[data-siparis-tam-ekran="${no}"]`).first().click();
   await sayfa.waitForTimeout(800);
   await sayfa.locator('button[title^="Siparişi"]:visible').first().click();
   await sayfa.waitForTimeout(400);
@@ -30,8 +30,10 @@ async function kartiAcVeSil(sayfa) {
   if (await sil.count()) { await sil.first().click(); await sayfa.waitForTimeout(500); }
   const onay = await sayfa.evaluate(() => {
     const k = [...document.querySelectorAll("[data-siparis-kapat-onayi]")].find((x) => x.getBoundingClientRect().width > 0);
-    return k ? { kip: k.getAttribute("data-siparis-kapat-onayi"), fisGorunuyor: /SF-Y/.test(k.innerText), alisGorunuyor: /ALS-Y/.test(k.innerText) } : null;
+    return k ? { kip: k.getAttribute("data-siparis-kapat-onayi"), fisGorunuyor: /SF-Y/.test(k.innerText), alisGorunuyor: /ALS-Y/.test(k.innerText),
+      satisPlanlamasiGorunuyor: /SAT-Z/.test(k.innerText) } : null;
   });
+  if (process.env.EKRAN && no === "ALS-Z") await sayfa.screenshot({ path: process.env.EKRAN });
   const evet = sayfa.getByRole("button", { name: /^Evet, (İptal Et|Sil)$/ }).filter({ visible: true });
   if (await evet.count()) { await evet.first().click(); }
   await sayfa.waitForTimeout(1500);
@@ -58,6 +60,13 @@ async function calistir() {
       ] },
     { id: "ay", siparisNo: "ALS-Y", tip: "Alış", cariId: "c1", durum: "Bekliyor", tarih: "2026-09-28", not: "Kaynak: SAT-Y", rezervasyonSiparisId: "sy",
       kalemler: [{ id: "ak1", urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "41", miktar: 6, karsilanan: 0, birim: "çift", birimFiyat: 60, paraBirimi: "TRY" }] },
+    // v1.544.0 — kullanıcının örneği: satışın planladığı, FİŞİ OLMAYAN alış. Silinir (iptal değil), satışın
+    // planlaması boşalır.
+    { id: "sz", siparisNo: "SAT-Z", tip: "Satış", cariId: "c2", durum: "Bekliyor", tarih: "2026-09-28",
+      kalemler: [{ id: "kz1", urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "41", miktar: 2, karsilanan: 0, birim: "çift", birimFiyat: 100, paraBirimi: "TRY",
+        planlama: { tip: "Satınalma", referansNo: "ALS-Z" } }] },
+    { id: "az", siparisNo: "ALS-Z", tip: "Alış", cariId: "c1", durum: "Bekliyor", tarih: "2026-09-28", not: "Kaynak: SAT-Z",
+      kalemler: [{ id: "akz", urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "41", miktar: 2, karsilanan: 0, birim: "çift", birimFiyat: 60, paraBirimi: "TRY" }] },
   ]);
   t["stokrez:data"] = JSON.stringify([{ id: "rz1", urunId: "u1", urunAd: "Deri", renk: "Siyah", beden: "", birim: "m", siparisId: "sy", siparisNo: "SAT-Y", uretimNo: "", miktar: 3, tuketilen: 0, tarih: "2026-09-28" }]);
 
@@ -82,8 +91,18 @@ async function calistir() {
   const onay2 = await kartiAcVeSil(sayfa);
   const sip2 = (await depoOku(sayfa, "siparis:data")) || [];
   const b3 = ((await depoOku(sayfa, "stok:items")) || []).find((p) => p.id === "u2") || {};
+  // Fişsiz, satışa bağlı alış: onay "sil" kipinde, çözülecek bağ (SAT-Z planlaması) listede; silinince alış yok,
+  // satışın kalemi yeniden planlanabilir.
+  const onay3 = await kartiAcVeSil(sayfa, "ALS-Z", "Alış Siparişi");
+  const sip3 = (await depoOku(sayfa, "siparis:data")) || [];
+  const sz = sip3.find((s) => s.id === "sz") || {};
   await tarayici.close();
   return {
+    fissizAlisSilme: {
+      kip: onay3 && onay3.kip, bagGorunuyor: !!(onay3 && onay3.satisPlanlamasiGorunuyor),
+      alisSilindi: !sip3.some((s) => s.id === "az"),
+      satisPlanlamasiBos: ((sz.kalemler || [])[0] || {}).planlama || null,
+    },
     hatalar,
     iptalOnayi: onay,
     siparisDurumu: sy.durum || null,

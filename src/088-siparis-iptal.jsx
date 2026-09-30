@@ -34,14 +34,20 @@
 
 const IPTAL_EKI = " (iptal)";
 
-// Sipariş hâlâ bir şeye bağlı mı? Bağlıysa İPTAL, değilse (yanlış açılmış, hiç işlem görmemiş) SİLME.
-// `siparisBaglariniCoz` ile aynı eşleşmeleri kullanır — önizlemede "boş" deyip iptalde bir şey
-// değiştirmek (ya da tersi) olmasın diye özetten okunuyor.
+// Siparişe ait FİŞ GİRİŞİ var mı? Varsa İPTAL, yoksa SİLME.
+// KURAL DARALDI (v1.544.0 — kullanıcı, satış siparişine bağlı ALS-1007'nin silme onayında: "Alış siparişi satış
+// ile bağlantılı, bunu silmek satışta sadece bilgi değiştirir; şayet alış siparişine ait fiş girişi olsa idi o
+// zaman silinemezdi. Siparişe ait fiş girişlerinde silmeyi iptal et"). v1.512.0'da HER bağ (planlama, satışın
+// planlaması, zincir, koli, rezervasyon) iptale zorluyordu. Oysa o bağlar yalnız BİLGİ: silmede de çözülüyor
+// (`siparisBaglariniCoz` `sil` seçeneğiyle aynı işi yapar; satışın planlaması boşalır, üretim/alış devam eder,
+// koli siparişsiz kalır). İzi korunması gereken tek şey FİŞ: stok/cari hareketi, fiş defteri kaydı ya da teslim
+// sayacı (karşılanan) — fiş siparişin numarasını taşıyor, sipariş kaybolursa "bu fiş nereden doğdu" cevapsız kalır.
+// `siparisBaglariniCoz` özetinden okunuyor: önizleme ile uygulama aynı hesaptan.
 function siparisIslemGormusMu(ozet, siparis) {
   if (!ozet) return false;
   const karsilanan = (siparis && siparis.kalemler || []).some((k) => (k.karsilanan || 0) > 0);
-  const planlanmis = (siparis && siparis.kalemler || []).some((k) => k.planlama);
-  return ozet.bagSayisi > 0 || karsilanan || planlanmis;
+  return ozet.stokHareketi > 0 || ozet.cariHareketi > 0 || ozet.defterKaydi > 0
+    || (ozet.fisNolar || []).length > 0 || karsilanan;
 }
 
 // Hareketin bu siparişe bağlı olup olmadığı. Kimliği olmayan ESKİ hareketlerde numara (bkz. 087'nin
