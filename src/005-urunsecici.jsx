@@ -355,25 +355,29 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false }) {
   const [acik, setAcik] = useState(false);
   const [vurgulu, setVurgulu] = useState(-1);
+  // YAZILDI MI (v1.540.0): odaklanınca false, kutuya harf girince true. Tam eşleşmede "hepsini göster"
+  // yalnız YAZILMADAN açılışta geçerli (seçili rengi değiştirmek için); yazarken tam adı bitirmek
+  // listeyi süzmeyi bırakmamalı. Kullanıcı: "Kahve aramada tam adını yazınca tüm renkleri listeliyor."
+  const [yazildi, setYazildi] = useState(false);
   const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
   const tekil = Array.from(new Set((oneriler || []).map((o) => String(o).trim()).filter(Boolean)))
     .sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
-  // Kutudaki değerin kendisi öneri olarak tekrar gösterilmiyor; başı eşleşenler önce.
-  // Kutudaki değer bir önerinin TAM kendisiyse (seçim yapılmış) liste süzülmüyor, diğerleri
-  // gösteriliyor: seçimi değiştirmek için önce kutuyu silmek gerekmesin (açılır liste gibi).
+  // Başı eşleşenler önce. Kutudaki değer bir önerinin TAM kendisiyse ve kutu YAZILMADAN açıldıysa
+  // (seçim yapılmış) liste süzülmüyor, diğerleri gösteriliyor: seçimi değiştirmek için önce kutuyu
+  // silmek gerekmesin (açılır liste gibi). Yazarken tam eşleşen en üstte, sonra "Kahve Baskı" gibi
+  // o adla başlayanlar — v1.540.0'a kadar burada da tüm liste açılıyordu.
   const tamEslesme = tekil.some((o) => o.toLocaleLowerCase("tr-TR") === q);
   const sonuclar = (() => {
     if (!q) return tekil;
-    if (tamEslesme) return tekil.filter((o) => o.toLocaleLowerCase("tr-TR") !== q);
-    const bas = [], ic = [];
+    if (tamEslesme && !yazildi) return tekil.filter((o) => o.toLocaleLowerCase("tr-TR") !== q);
+    const tam = [], bas = [], ic = [];
     tekil.forEach((o) => {
       const e = o.toLocaleLowerCase("tr-TR");
-      if (e === q) return;
-      if (e.startsWith(q)) bas.push(o); else if (e.includes(q)) ic.push(o);
+      if (e === q) tam.push(o); else if (e.startsWith(q)) bas.push(o); else if (e.includes(q)) ic.push(o);
     });
-    return [...bas, ...ic];
+    return [...tam, ...bas, ...ic];
   })().slice(0, 50);
-  const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); };
+  const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); setYazildi(false); };
   const kutuResmi = resimler && tamEslesme ? resimler[tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q)] : null;
   return (
     <div style={{ position: "relative" }}>
@@ -385,8 +389,8 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
         {...(veriAdi ? { [veriAdi]: "1" } : {})}
         disabled={disabled}
         value={deger || ""}
-        onChange={(e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }}
-        onFocus={() => setAcik(true)}
+        onChange={(e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); setYazildi(true); }}
+        onFocus={() => { setAcik(true); setYazildi(false); }}
         onBlur={() => {
           setTimeout(() => setAcik(false), 150);
           if (yalnizListeden && q && !tamEslesme) onDegis(sonuclar[0] || "");
