@@ -401,6 +401,16 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             const liste = [siparis, ...(tumSiparisler || []).filter((s) => s.id !== siparis.id)];
             const oz = siparisIptalOzeti({ stok, cariler, siparisler: liste, uretim: uretimSiparisleri, koliler, stokRezervasyonlari }, siparis.id);
             const iptal = siparis.durum !== "İptal" && siparisIslemGormusMu(oz, siparis);
+            // Bilgi bağları (v1.544.0): iptalde de silmede de çözülür; ikisinde de gösterilsin.
+            const bilgiBaglari = (m) => (
+              <>
+                {oz.alislar.length > 0 && m("Alış siparişleri", <><b className="mono">{oz.alislar.map((x) => x.siparisNo).join(", ")}</b> — devam eder; gelen mal serbest stoğa girer</>)}
+                {oz.uretimler.length > 0 && m("Üretimler", <><b className="mono">{oz.uretimler.map((x) => x.siparisNo).join(", ")}</b> — devam eder; üretilen mal serbest stoğa girer</>)}
+                {oz.koliler.length > 0 && m("Koliler", <>{oz.koliler.length} koli siparişsiz kalır, içindeki mal serbest sayılır</>)}
+                {oz.rezervasyonMiktari > 0 && m("Ayrılmış malzeme", <>{oz.rezervasyonMiktari} birim ayrılmışlıktan çıkar (serbest stok)</>)}
+                {oz.planlamasiBosalan.length > 0 && m("Satış siparişleri", <><b className="mono">{oz.planlamasiBosalan.join(", ")}</b> — bu alışa bağlı planlaması boşalır, yeniden planlanabilir</>)}
+              </>
+            );
             const madde = (baslik, icerik) => (
               <div style={{ display: "flex", gap: 6, fontSize: 12, lineHeight: 1.45 }}>
                 <span style={{ color: "var(--erp-text-2)", minWidth: 118, flexShrink: 0 }}>{baslik}</span>
@@ -412,26 +422,29 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 {iptal ? (
                   <>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 4 }}>
-                      {siparis.siparisNo} işlem görmüş — silinmez, İPTAL edilir
+                      {siparis.siparisNo} fiş girişi var — silinmez, İPTAL edilir
                     </div>
                     <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 8 }}>
                       Sipariş "İptal" durumunda kalır. Hiçbir fiş, stok miktarı ya da cari tutarı değişmez; yalnız siparişle bağlar kopar.
                     </div>
                     <div style={{ display: "grid", gap: 3, marginBottom: 8 }}>
                       {oz.fisNolar.length > 0 && madde("Fişler", <><b className="mono">{oz.fisNolar.join(", ")}</b> — bağımsız fiş olarak kalır</>)}
-                      {oz.alislar.length > 0 && madde("Alış siparişleri", <><b className="mono">{oz.alislar.map((x) => x.siparisNo).join(", ")}</b> — devam eder; gelen mal serbest stoğa girer</>)}
-                      {oz.uretimler.length > 0 && madde("Üretimler", <><b className="mono">{oz.uretimler.map((x) => x.siparisNo).join(", ")}</b> — devam eder; üretilen mal serbest stoğa girer</>)}
-                      {oz.koliler.length > 0 && madde("Koliler", <>{oz.koliler.length} koli siparişsiz kalır, içindeki mal serbest sayılır</>)}
-                      {oz.rezervasyonMiktari > 0 && madde("Ayrılmış malzeme", <>{oz.rezervasyonMiktari} birim ayrılmışlıktan çıkar (serbest stok)</>)}
-                      {oz.planlamasiBosalan.length > 0 && madde("Satış siparişleri", <><b className="mono">{oz.planlamasiBosalan.join(", ")}</b> — bu alışa bağlı planlaması boşalır, yeniden planlanabilir</>)}
+                      {bilgiBaglari(madde)}
                     </div>
                   </>
                 ) : (
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 8 }}>
-                    {siparis.durum === "İptal"
-                      ? "Bu iptal edilmiş siparişi silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"
-                      : "Bu sipariş hiç işlem görmemiş. Silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"}
-                  </div>
+                  <>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: oz && oz.bagSayisi > 0 ? 4 : 8 }}>
+                      {siparis.durum === "İptal"
+                        ? "Bu iptal edilmiş siparişi silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"
+                        : "Bu siparişin fiş girişi yok. Silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"}
+                    </div>
+                    {oz && oz.bagSayisi > 0 && (
+                      <div data-silme-baglari="1" style={{ display: "grid", gap: 3, marginBottom: 8 }}>
+                        {bilgiBaglari(madde)}
+                      </div>
+                    )}
+                  </>
                 )}
                 <div style={{ display: "flex", gap: 8 }}>
                   <button className="btn-primary" style={{ padding: "6px 12px", fontSize: 12 }} onClick={() => { onSil(siparis.id); setSiparisSilOnayGoster(false); }}>

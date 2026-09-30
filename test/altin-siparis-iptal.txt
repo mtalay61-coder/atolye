@@ -15,6 +15,12 @@
   "miktar": -4,
   "siparisNo": "SAT-Y (iptal)"
  },
+ "fissizAlisSilme": {
+  "alisSilindi": true,
+  "bagGorunuyor": true,
+  "kip": "sil",
+  "satisPlanlamasiBos": null
+ },
  "hatalar": [],
  "ikinciOnayKipi": "sil",
  "ikinciSilmedenSonraFisVar": true,
@@ -22,7 +28,8 @@
  "iptalOnayi": {
   "alisGorunuyor": true,
   "fisGorunuyor": true,
-  "kip": "iptal"
+  "kip": "iptal",
+  "satisPlanlamasiGorunuyor": false
  },
  "rezervasyonKaldi": false,
  "siparisDurumu": "İptal",

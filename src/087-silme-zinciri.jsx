@@ -107,10 +107,10 @@ const urunSilCascade = useCallback((urunId) => {
 // olur; alım vs. yok olmaz, bağlantısı kalmaz, oluşan stok serbest stoğa düşer."
 //
 // KARAR (kendisi verir — kart, onay ekranı ve eski çağrılar aynı sonuca varsın):
-//   · Sipariş bir şeye bağlıysa (fiş, planlama, koli, rezervasyon, teslim sayacı) → İPTAL: kayıt
+//   · Siparişe ait FİŞ GİRİŞİ varsa (stok/cari hareketi, fiş defteri kaydı, teslim sayacı) → İPTAL: kayıt
 //     "İptal" durumunda kalır, bütün bağlar çözülür, hiçbir fişe/miktara/tutara dokunulmaz.
-//   · Hiçbir şeye bağlı değilse (yanlış açılmış) ya da zaten İptal ise → SİL: listeden çıkar, çöpe gider.
-//     Zaten iptal edilmiş siparişte kalıntı bağ varsa (eski sürümün bıraktığı) önce o da çözülür.
+//   · Fiş yoksa ya da zaten İptal ise → SİL: listeden çıkar, çöpe gider. Planlama/koli/rezervasyon gibi bilgi
+//     bağları varsa SİLMEDE DE çözülür (v1.544.0 — önce bunlar da iptale zorluyordu; bkz. 088 `siparisIslemGormusMu`).
 // Yazmalar beklenir; "iptal edildi" ancak hepsinin sonucu bilinince söylenir.
 const siparisKapat = useCallback(async (siparisId) => {
   const siparis = siparisler.find((s) => s.id === siparisId);
@@ -127,8 +127,10 @@ const siparisKapat = useCallback(async (siparisId) => {
   const nextSiparisler = sil ? r.siparisler.filter((s) => s.id !== siparisId) : r.siparisler;
   if (sil) {
     copaAt("siparis", `${siparis.tip} ${no}`, siparis, {
-      ozet: `${(siparis.kalemler || []).length} kalem — ${zatenIptal ? "iptal edilmiş" : "işlem görmemiş"}, durum: ${siparis.durum}`,
-      yanEtkiliMi: false,
+      ozet: `${(siparis.kalemler || []).length} kalem — ${zatenIptal ? "iptal edilmiş" : "fiş girişi yok"}, durum: ${siparis.durum}`
+        + (onizleme.ozet.bagSayisi > 0 ? " · bağları çözüldü (planlama/koli/ayırma)" : ""),
+      // Bağ çözüldüyse geri yükleme onları kurmaz (satışın planlaması boş kalır) — çöp ekranı uyarsın.
+      yanEtkiliMi: onizleme.ozet.bagSayisi > 0,
     });
   }
 

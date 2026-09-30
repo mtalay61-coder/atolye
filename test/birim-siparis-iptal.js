@@ -71,6 +71,25 @@ console.log("boş sipariş → silme");
 const bos = { id: "sp3", siparisNo: "SAT-11", tip: "Satış", durum: "Bekliyor", kalemler: [{ id: "q", miktar: 3 }] };
 bekle("bağı olmayan sipariş işlem görmemiş sayılır", siparisIslemGormusMu(siparisIptalOzeti({ ...veri, siparisler: [...veri.siparisler, bos] }, "sp3"), bos), false);
 
+console.log("yalnız fiş girişi iptale zorlar (v1.544.0)");
+{
+  // Kullanıcının örneği: SAT-1004'ün planladığı alış ALS-1007, henüz fişi yok → SİLİNİR, satışın planlaması boşalır.
+  const satP = { id: "s1", siparisNo: "SAT-1004", tip: "Satış", durum: "Bekliyor",
+    kalemler: [{ id: "k1", miktar: 8, planlama: { tip: "Satınalma", referansNo: "ALS-1007" } }] };
+  const als = { id: "a1", siparisNo: "ALS-1007", tip: "Alış", durum: "Bekliyor", not: "Kaynak: SAT-1004", kalemler: [{ id: "ka", miktar: 8 }] };
+  const v2 = { stok: [], cariler: [], siparisler: [satP, als], uretim: [], koliler: [], stokRezervasyonlari: [] };
+  const ozA = siparisIptalOzeti(v2, "a1");
+  bekle("fişsiz, satışa bağlı alış → silinebilir (bağ var ama bilgi)", [ozA.planlamasiBosalan, siparisIslemGormusMu(ozA, als)], [["SAT-1004"], false]);
+  const silA = siparisBaglariniCoz(v2, "a1", { sil: true });
+  bekle("silmede de satışın planlaması boşalıyor, alış iptale dönmüyor",
+    [silA.siparisler.find((x) => x.id === "s1").kalemler[0].planlama, silA.siparisler.find((x) => x.id === "a1").durum], [null, "Bekliyor"]);
+  bekle("planlanmış ama fişsiz satış → silinebilir", siparisIslemGormusMu(siparisIptalOzeti(v2, "s1"), satP), false);
+  const alsTeslim = { ...als, kalemler: [{ id: "ka", miktar: 8, karsilanan: 2 }] };
+  bekle("teslim alınmış (karşılanan) → iptal", siparisIslemGormusMu(siparisIptalOzeti({ ...v2, siparisler: [satP, alsTeslim] }, "a1"), alsTeslim), true);
+  const v3 = { ...v2, stok: [{ id: "u", hareketler: [{ id: "h", siparisId: "a1", siparisNo: "ALS-1007", fisNo: "AF-1", miktar: 8 }] }] };
+  bekle("fiş hareketi varsa → iptal", siparisIslemGormusMu(siparisIptalOzeti(v3, "a1"), als), true);
+}
+
 console.log("mevcut yetim hareketler");
 const y = yetimSiparisBaglariniCoz([{ id: "u", hareketler: [{ id: "a", siparisId: "yok", siparisNo: "SAT-9", kalemId: "k", miktar: -2 }, { id: "b", siparisId: "sp2", siparisNo: "SAT-1001" }] }],
   [{ id: "c", hareketler: [{ id: "a", siparisId: "yok", siparisNo: "SAT-9", tutar: 50 }] }], [baska]);
