@@ -224,7 +224,9 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
               // (AF- alış, SF- satış…), işçilik hiçbirine uymadığı için ROZETSİZ kalıyor ve ürün alanları
               // olduğu için alış fişi gibi tablolanıyordu. Artık kendi tipiyle geliyor.
               islemTipi: "İşçilik",
-              yon: hareketYonu("İşçilik"), tutar, odemeSekli: "Nakit", vade: "", defter: "Genel",
+              yon: hareketYonu("İşçilik"), tutar, odemeSekli: "Nakit", vade: "",
+              // Defter Tanımlar ayarından (v1.543.0; varsayılan Genel).
+              defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri),
               // İŞÇİLİK AYRI FİŞ — bkz. ara proses tarafındaki gerekçe.
               siparisNo: siparis.siparisNo, fisNo: `${fisNo}-İşçilik`, uretimId: siparis.id,
               // urunAd/renk, bu hareketin ürün resmini gösterebilmek için yapısal olarak da tutulur —
@@ -589,7 +591,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
       : `${atama.miktar} adetlik atama teslim alındı${hareketOzet.length ? ` (${hareketOzet.join(", ")})` : ""}${buAdimSonProsesMi ? " — bu kısım mamul stoğa eklendi" : ""}`)
     + rezervasyonUyarisi
   );
-}, [stok, cariler, uretim, siparisler, showToast, stokRezervasyonlari]);
+}, [stok, cariler, uretim, siparisler, tanimlar, showToast, stokRezervasyonlari]);
 
   return uretimProsesAtamaTeslimAl;
 }

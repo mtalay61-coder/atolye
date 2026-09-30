@@ -1,0 +1,45 @@
+{
+ "cari": {
+  "Genel": {
+   "dip": "Toplam · 3 cariAlacak +1.050 ₺Borç -30 ₺Net alacak +1.020 ₺",
+   "satir": "ALACAK+1.050 ₺BORÇ—"
+  },
+  "Resmi": {
+   "dip": "Toplam · 3 cariAlacak +450 ₺Borç 0 ₺Net alacak +450 ₺",
+   "satir": "ALACAK+450 ₺BORÇ—"
+  },
+  "Tümü": {
+   "dip": "Toplam · 3 cariAlacak +1.450 ₺Borç -30 ₺Net alacak +1.420 ₺",
+   "satir": "ALACAK+1.450 ₺BORÇ—"
+  }
+ },
+ "fisler": {
+  "Genel": [
+   "SF-G-1",
+   "SF-M-1"
+  ],
+  "Resmi": [
+   "SF-R-1",
+   "SF-M-1"
+  ],
+  "Tümü": [
+   "SF-G-1",
+   "SF-R-1",
+   "SF-M-1"
+  ]
+ },
+ "hatalar": [],
+ "iscilikAyari": {
+  "kaydedilen": "Resmi",
+  "varsayilan": "Genel"
+ },
+ "karZararSatisGeliri": {
+  "Genel": "1.050 ₺",
+  "Resmi": "450 ₺",
+  "Tümü": "1.450 ₺"
+ },
+ "rozetler": [
+  "Genel + Resmi",
+  "Resmi"
+ ]
+}

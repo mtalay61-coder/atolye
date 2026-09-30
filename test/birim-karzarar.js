@@ -8,7 +8,7 @@
 //   • KDV'li fişte gelir MATRAH (KDV gelir değil), maliyet değişmez.
 //   • Döviz satır: cariye çevrilmiş tutar (TL) gelir olur.
 //   • Cari ayağı yoksa stoktaki fiyat; o da yoksa 0 ve `fiyatsizSatir` sayılır.
-const { fisYaz, karZararHesapla } = require("./erp.cjs");
+const { fisYaz, karZararHesapla, iscilikDefteri, fisinDefteri } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -55,5 +55,29 @@ const kzEksik = karZararHesapla({ stok: [], cariler: iscilikCari, muhasebe: { ku
 bekle("kuru olmayan para birimi raporlanır", kzEksik.kurEksik, ["EUR"]);
 const kzTam = karZararHesapla({ stok: [], cariler: iscilikCari, muhasebe: { kurlar: { USD: 40, EUR: 50 } }, giderKartlari: [], donem: "tumu" });
 bekle("kur varsa uyarı yok, tutar çevrilir", [kzTam.kurEksik, kzTam.uretimIscilik], [[], 500]);
+
+console.log("Defter seçimi (v1.543.0)");
+{
+  // Genel satış (SF-1), Resmi satış, Muhasebe gideri, Resmi işçilik.
+  const rR = fisYaz(JSON.parse(JSON.stringify(r1.stok)), JSON.parse(JSON.stringify(r1.cariler)), { ...fis("SF-R", [{ ...k, miktar: 1, birimFiyat: 300 }]), defter: "Resmi" });
+  const cariler = [...rR.cariler, { id: "p", unvan: "Usta", tip: "Personel", hareketler: [
+    { id: "i2", tarih: bugun.slice(0, 10), yon: "Alacak", tutar: 30, paraBirimi: "TRY", islemTipi: "İşçilik", fisNo: "2-Kesim-İşçilik", defter: "Resmi" }] }];
+  const muhasebe = { kurlar: { USD: 40 }, kasalar: [{ id: "k", paraBirimi: "TRY", hareketler: [
+    { id: "g1", tarih: bugun.slice(0, 10), yon: "Çıkış", tutar: 50, giderKartId: "kira", defter: "Muhasebe" },
+    { id: "g2", tarih: bugun.slice(0, 10), yon: "Çıkış", tutar: 7, giderKartId: "kira", defter: "Genel" }] }], bankalar: [] };
+  const kz = (defter) => {
+    const x = karZararHesapla({ stok: rR.stok, cariler, muhasebe, giderKartlari: [{ id: "kira", ad: "Kira", grup: "yonetim" }], donem: "tumu", defter });
+    return [x.satisGeliri, x.uretimIscilik, x.giderToplam];
+  };
+  bekle("Tümü: hepsi", kz("Tümü"), [500, 30, 57]);
+  bekle("Genel: Genel satış + Muhasebe/Genel gider, Resmi işçilik yok", kz("Genel"), [200, 0, 57]);
+  bekle("Resmi: Resmi satış + işçilik + Muhasebe gideri", kz("Resmi"), [300, 30, 50]);
+}
+bekle("işçilik defteri ayarı: yoksa Genel, geçersizse Genel", [iscilikDefteri(null), iscilikDefteri({ iscilikDefteri: "Resmi" }), iscilikDefteri({ iscilikDefteri: "x" })], ["Genel", "Resmi", "Genel"]);
+bekle("fişin defteri: cari ayağından; yoksa null; Muhasebe öncelikli", [
+  fisinDefteri({ hareketler: [{ kaynakTip: "stok" }] }),
+  fisinDefteri({ hareketler: [{ kaynakTip: "cari", defter: "Resmi" }] }),
+  fisinDefteri({ hareketler: [{ kaynakTip: "cari" }, { kaynakTip: "cari", defter: "Muhasebe" }] }),
+], [null, "Resmi", "Muhasebe"]);
 
 process.exit(hata);

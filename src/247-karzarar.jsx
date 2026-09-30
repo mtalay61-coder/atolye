@@ -48,8 +48,14 @@ function kzTL(tutar, paraBirimi, kurlar, eksik) {
 }
 
 // Dönemin kâr-zarar tablosunu kurar.
-function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
+// DEFTER (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap"). `defter`
+// "Genel"/"Resmi" verilirse her kalem kendi kaydının defterine göre süzülür (`defterKapsar`: Muhasebe
+// ikisine de girer): satış geliri ve SMM satışın CARİ ayağının defterinden (stok hareketinde defter yok),
+// gider/diğer gelir kasa-banka hareketinden, işçilik personel carisindeki hareketten. Cari ayağı olmayan
+// eski satış Genel sayılır (fiş defterinin varsayılanı). Boş/"Tümü" = eskisi gibi hepsi.
+function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter }) {
   const aralik = kzDonemAraligi(donem);
+  const kapsar = (d) => defterKapsar(d, defter);
   const kurlar = (muhasebe && muhasebe.kurlar) || {};
   const kurEksik = new Set();
 
@@ -102,6 +108,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
       if (!kzTarihUygun(h.tarih, aralik)) return;
       const adet = Math.abs(h.miktar || 0);
       const ch = cariAyagi.get(h.id);
+      if (!kapsar(ch ? ch.defter : "Genel")) return;
       let gelir = 0;
       if (ch) {
         const net = typeof ch.matrah === "number" ? ch.matrah : (ch.tutar || 0);
@@ -128,7 +135,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
   hesaplar.forEach((hes) => {
     (hes.hareketler || []).forEach((h) => {
       if (!h.giderKartId || h.virmanMi) return;
-      if (!kzTarihUygun(h.tarih, aralik)) return;
+      if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter)) return;
       const kart = kartAdi[h.giderKartId] || { ad: h.giderKartAd || "Bilinmeyen", grup: h.giderGrubu || "yonetim", tur: "gider" };
       const tutar = kzTL(h.tutar || 0, hes.paraBirimi, kurlar, kurEksik);
       if (h.yon === "Giriş") { digerGelir += tutar; return; }
@@ -163,7 +170,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
       // yönde "Alacak" yazıldı. İkisi de aynı olayı (hak edilen ücret) anlatıyor; işçilik
       // fişinin geri alınması karşı kayıtla değil SİLMEYLE yapıldığı için ters yönlü bir
       // işçilik hareketi yok. Yöne bakmak eski kayıtları ya da yenileri rapordan düşürürdü.
-      if (!kzTarihUygun(h.tarih, aralik)) return;
+      if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter)) return;
       const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
       uretimIscilik += tutar;
       iscilikDetay[c.unvan] = (iscilikDetay[c.unvan] || 0) + tutar;
@@ -183,7 +190,8 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem }) {
 
 function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
   const [donem, setDonem] = useState("buAy");
-  const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem });
+  const [defter, setDefter] = useState("Tümü");
+  const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter });
   const para = (v) => `${Math.round(v).toLocaleString("tr-TR")} ₺`;
 
   const satir = (etiket, deger, renk, kalin, ipucu) => (
@@ -210,6 +218,16 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
               border: `1.5px solid ${donem === d.k ? "var(--erp-primary)" : "var(--erp-border)"}`,
               background: donem === d.k ? "#4E6B4E1A" : "#fff", color: donem === d.k ? "var(--erp-primary)" : "var(--erp-text-2)" }}>
             {d.ad}
+          </button>
+        ))}
+        {/* DEFTER SEÇİMİ (v1.543.0) — dönemden ayrı grup; kasa/cari ekranlarındaki Tümü/Genel/Resmi ile aynı. */}
+        <span style={{ width: 1, height: 22, background: "var(--erp-line)", margin: "0 4px" }} />
+        {["Tümü", "Genel", "Resmi"].map((d) => (
+          <button key={d} type="button" data-kz-defter={d} onClick={() => setDefter(d)}
+            style={{ padding: "6px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+              border: `1.5px solid ${defter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
+              background: defter === d ? "#4E6B4E1A" : "#fff", color: defter === d ? "var(--erp-primary)" : "var(--erp-text-2)" }}>
+            {d}
           </button>
         ))}
       </div>

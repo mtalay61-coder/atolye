@@ -558,6 +558,15 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
   const alacakSatirlari = Object.entries(alacakPB)
     .sort((a, b) => (a[0] === "TRY" ? -1 : b[0] === "TRY" ? 1 : b[1] - a[1]));
   const toplamAlacak = alacakPB.TRY || 0;
+  // DEFTER AYRIMI (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap"). Kart
+  // ana değeri tüm defterler; altına Genel ve Resmi alacak ayrı yazılıyor (para birimi başına, cari
+  // listesiyle aynı `cariBakiyeleri` kuralı — Muhasebe kaydı ikisine de girer).
+  const defterAlacagi = (d) => {
+    const t = {};
+    cariler.forEach((c) => Object.entries(cariBakiyeleri(c, d)).forEach(([pb, x]) => { if (x > 0) t[pb] = (t[pb] || 0) + x; }));
+    return Object.entries(t).sort((a, b) => (a[0] === "TRY" ? -1 : b[0] === "TRY" ? 1 : b[1] - a[1]))
+      .map(([pb, x]) => `${Math.round(x).toLocaleString("tr-TR")} ${PARA_SEMBOLU[pb] || pb}`).join(" · ") || "0 ₺";
+  };
 
   const acikSatisSiparisi = siparisler.filter((s) => s.tip === "Satış" && s.durum !== "Tamamlandı" && s.durum !== "İptal").length;
   const acikAlisSiparisi = siparisler.filter((s) => s.tip === "Alış" && s.durum !== "Tamamlandı" && s.durum !== "İptal").length;
@@ -584,6 +593,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
       alt: alacakSatirlari.length > 1
         ? alacakSatirlari.slice(1).map(([pb, t]) => `${Math.round(t).toLocaleString("tr-TR")} ${PARA_SEMBOLU[pb] || pb}`).join("  ·  ")
         : `${cariler.length} cari kayıtlı`,
+      defterAlt: alacakSatirlari.length ? `Genel: ${defterAlacagi("Genel")}  ·  Resmi: ${defterAlacagi("Resmi")}` : null,
       renk: "var(--erp-info)",
     },
     { label: "Açık Siparişler", value: `${acikSatisSiparisi + acikAlisSiparisi}`, alt: `${acikSatisSiparisi} satış · ${acikAlisSiparisi} alış`, renk: "var(--erp-purple)" },
@@ -731,6 +741,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
                 {s.value}
               </div>
               {s.alt && <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 2 }}>{s.alt}</div>}
+              {s.defterAlt && <div data-anasayfa-defter-alacak="1" className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 2 }}>{s.defterAlt}</div>}
             </div>
           ))}
         </div>

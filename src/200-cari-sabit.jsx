@@ -838,6 +838,15 @@ function cekCiroHareketi(cek, { cariId, tutar, paraBirimi, tarih, fisNo, aciklam
 // Çeki ciro edilmiş hâle getirir. Durum değişikliği ve ciro bilgisi TEK yerde kuruluyor ki
 // çek ekranı ile cari kartı ayrışmasın.
 
+// FİŞİN DEFTERİ (v1.543.0, Fişler listesi): cari ayağının defteri. Cari ayağı yoksa (üretim, dahili stok)
+// null — para kaydı değil. Ayaklardan biri "Muhasebe"yse fiş ikisine de girer; değilse ilk ayağınki.
+function fisinDefteri(fis) {
+  const cariAyaklari = ((fis && fis.hareketler) || []).filter((h) => h.kaynakTip === "cari");
+  if (!cariAyaklari.length) return null;
+  if (cariAyaklari.some((h) => h.defter === "Muhasebe")) return "Muhasebe";
+  return cariAyaklari[0].defter || "Genel";
+}
+
 function defterKapsar(kayitDefteri, secilen) {
   if (!secilen || secilen === "Tümü") return true;
   const d = kayitDefteri || "Genel";

@@ -283,7 +283,9 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
                 // (AF- alış, SF- satış…), işçilik hiçbirine uymadığı için ROZETSİZ kalıyor ve ürün alanları
                 // olduğu için alış fişi gibi tablolanıyordu. Artık kendi tipiyle geliyor.
                 islemTipi: "İşçilik",
-                yon: hareketYonu("İşçilik"), tutar: araTutar, odemeSekli: "Nakit", vade: "", defter: "Genel",
+                yon: hareketYonu("İşçilik"), tutar: araTutar, odemeSekli: "Nakit", vade: "",
+              // Defter Tanımlar ayarından (v1.543.0; varsayılan Genel).
+              defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri),
                 // İŞÇİLİK AYRI FİŞ. Hammadde çıkışı depodan mal çıkarır, işçilik bir kişiye
                 // borç doğurur — iki farklı olay. Aynı fiş numarasını paylaştıkları için
                 // Fişler ekranında tek satır görünüyor ve "bu fişin tutarı ne" sorusunun net
