@@ -41,7 +41,7 @@ Tek senaryo: `cd test && node derle.js && node paket-test.js && node senaryo-<ad
 Bilinen test boşlukları: `tedarik-girisleri` bu ortamda ağ kısıtı yüzünden FARKLI; paralel koşuda
 birkaç senaryo oynak — FARKLI çıkanı tek başına yeniden koş. (Taşımada kaybolan 15 senaryo 27 Eylül'de
 yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
-`src/137`, `236`, `237`, `238` derlenmiş (React.createElement) hâlde; dokunulursa JSX'e çevir.
+`src/137`, `236`, `237` derlenmiş (React.createElement) hâlde; dokunulursa JSX'e çevir.
 
 ## Değişiklik akışı
 

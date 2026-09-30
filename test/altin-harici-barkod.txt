@@ -1,0 +1,33 @@
+{
+ "cakisma": {
+  "kayitDegismedi": true,
+  "kutuEskiDegerde": true,
+  "reddedildi": true
+ },
+ "hatalar": [],
+ "kaydedilen": [
+  {
+   "beden": "38",
+   "kod": "999000016232",
+   "renk": "Siyah"
+  }
+ ],
+ "kutuVar": true,
+ "sevkiyat": {
+  "koliYok": {
+   "metin": "✕ Koli bulunamadı: K-YOK-1",
+   "tur": "hata"
+  },
+  "urunEtiketi": {
+   "metin": "✕ Bu bir ÜRÜN etiketi — sevkiyatta koli barkodu okutulur (Paketleme'de koli kurun ya da sipariş kartından fiş kesin)",
+   "tur": "hata"
+  }
+ },
+ "siparis": {
+  "kalemSatiri": true,
+  "sonuc": {
+   "metin": "✓ 125 Model · Siyah · 38: 1 eklendi",
+   "tur": "tamam"
+  }
+ }
+}

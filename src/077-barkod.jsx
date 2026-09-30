@@ -496,11 +496,89 @@ function barkodTaninmamaSebebi(kod) {
   if (/^K-/i.test(k)) return "Bu bir KOLİ barkodu — ürün etiketini okutun.";
   if (/^\d+-\d+$/.test(k)) return "Bu bir ÜRETİM PARÇASI barkodu (atölye) — ürün etiketini okutun.";
   if (!new RegExp(`^${BARKOD_ON_EK}\\d+$`).test(k))
-    return `Bu barkod bizim ürün etiketimiz değil (ürün barkodları ${BARKOD_ON_EK} ile başlar) — kutunun ya da tedarikçinin etiketi olabilir.`;
+    return `Bu barkod bizim ürün etiketimiz değil (ürün barkodları ${BARKOD_ON_EK} ile başlar) — kutunun ya da tedarikçinin etiketiyse ürün kartı › Barkodlar'da ilgili bedene "harici barkod" olarak girin.`;
   return "Barkod ürün şemasına uyuyor ama bu kodda bir ürün/renk/beden yok — kod atanmamış, ürün silinmiş ya da etiket eski olabilir.";
 }
 
+// OKUTMA SONUCU SATIRI (v1.542.0) — sipariş formu ve Depo > Sevkiyat ortak. Toast ekranın tepesinde
+// birkaç saniye kalıyor; kamerayla okuturken göz kamerada. Sonuç okutma kutusunun yanında, bir sonraki
+// okutmaya ya da X'e kadar duruyor. `sonuc`: { tamam, metin } ya da null.
+function OkutmaSonucu({ sonuc, onKapat }) {
+  if (!sonuc) return null;
+  return (
+    <div data-barkod-sonuc={sonuc.tamam ? "tamam" : "hata"} style={{ flexBasis: "100%", display: "flex", alignItems: "flex-start", gap: 8,
+      padding: "7px 10px", borderRadius: "var(--erp-r-md)", fontSize: 12, fontWeight: 600,
+      color: sonuc.tamam ? "var(--erp-ok)" : "var(--erp-danger)",
+      background: sonuc.tamam ? "var(--erp-ok-tint)" : "#FBE9E7",
+      border: `1px solid ${sonuc.tamam ? "#9CC7A4" : "#E3A69C"}` }}>
+      <span style={{ flex: 1 }}>{sonuc.tamam ? "✓ " : "✕ "}{sonuc.metin}</span>
+      <button type="button" title="Kapat" onClick={onKapat}
+        style={{ border: "none", background: "none", color: "inherit", cursor: "pointer", padding: 0, display: "flex" }}>
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+// Başarısız okutmada ÇİFT titreşim. Kamera (236) her okumada kısa titretiyor; bu çağrı onu kesip
+// yerine desen çalıyor — başarılı/başarısız elde hissediliyor.
+function okutmaHatasiTitret() {
+  if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([90, 70, 90]);
+}
+
+// HARİCİ BARKOD (v1.542.0 — kullanıcı: "harici barkod ekle"). Kutunun ya da tedarikçinin kendi etiketi
+// (EAN vb.) bizim şemamıza uymaz; ürün kartında (Barkodlar sekmesi) bir RENK+BEDENE bağlanır ve okutulunca
+// o bedenin kendi barkodu gibi çözülür (seviye "beden"). Ürün kaydında `hariciBarkodlar: [{ kod, renk,
+// beden }]` — varyant tablosunun sütunları sabit, ürün satırında `harici_barkodlar` (harici-barkod.sql).
+// Kod BÜYÜK HARF ve boşluksuz karşılaştırılır: okuyucu/klavye farkı ("abc 123" / "ABC123") eşleşmeyi bozmasın.
+function hariciBarkodNormal(kod) {
+  return String(kod || "").replace(/\s+/g, "").toLocaleUpperCase("tr-TR");
+}
+
+function hariciBarkodCoz(kod, stok, tanimlar) {
+  const n = hariciBarkodNormal(kod);
+  if (!n) return null;
+  for (const urun of stok || []) {
+    const h = (urun.hariciBarkodlar || []).find((x) => hariciBarkodNormal(x.kod) === n);
+    if (!h) continue;
+    // Bağlı olduğu renk/beden üründen silinmişse eşleşme YOK: olmayan satıra kalem yazılmasın.
+    const variant = (urun.variants || []).find((v) => kodEsit(v.renk, h.renk) && kodEsit(v.beden, h.beden));
+    if (!variant) return null;
+    const renkTanim = ((tanimlar && tanimlar.renkler) || [])
+      .find((r) => (variant.renkId ? r.id === variant.renkId : kodEsit(r.ad, variant.renk))) || null;
+    return { seviye: "beden", urun, renk: variant.renk, renkTanim, beden: variant.beden, variant, harici: true };
+  }
+  return null;
+}
+
+// Bir harici barkodun başka yerde kullanılıp kullanılmadığı. Döner: engel metni ya da null.
+// Kendi şemamızdaki bir kodla ya da başka bir renk/bedenin harici koduyla çakışırsa kabul edilmez —
+// aynı etiket iki mala çözülürse hangisinin ekleneceği okutma sırasına kalırdı.
+function hariciBarkodCakismasi(kod, stok, tanimlar, { urunId, renk, beden } = {}) {
+  const n = hariciBarkodNormal(kod);
+  if (!n) return null;
+  const sema = semaBarkoduCoz(n, stok, tanimlar);
+  if (sema) return `Bu kod zaten bizim barkodumuz: ${[sema.urun.ad, sema.renk, sema.beden].filter(Boolean).join(" · ")}`;
+  for (const urun of stok || []) {
+    const h = (urun.hariciBarkodlar || []).find((x) => hariciBarkodNormal(x.kod) === n);
+    if (h && !(urun.id === urunId && kodEsit(h.renk, renk) && kodEsit(h.beden, beden)))
+      return `Bu harici barkod zaten kullanılıyor: ${[urun.ad, h.renk, h.beden].filter(Boolean).join(" · ")}`;
+  }
+  return null;
+}
+
+// Ürünün harici barkod listesinde bir renk+bedenin kodunu yazar (boş kod = siler). Saf: yeni liste döner.
+function hariciBarkodAyarla(liste, renk, beden, kod) {
+  const kalan = (liste || []).filter((x) => !(kodEsit(x.renk, renk) && kodEsit(x.beden, beden)));
+  const temiz = String(kod || "").replace(/\s+/g, "");
+  return temiz ? [...kalan, { kod: temiz, renk, beden }] : kalan;
+}
+
 function urunBarkoduCoz(kod, stok, tanimlar) {
+  return semaBarkoduCoz(kod, stok, tanimlar) || hariciBarkodCoz(kod, stok, tanimlar);
+}
+
+function semaBarkoduCoz(kod, stok, tanimlar) {
   const temiz = String(kod || "").trim();
   if (!/^\d+$/.test(temiz)) return null;
   if (temiz.slice(0, BARKOD_ON_EK.length) !== BARKOD_ON_EK) return null;

@@ -10,6 +10,38 @@ function fiyatSayisi(v) {
 }
 const fiyatYazi = (n) => (n == null || n === "" ? "" : String(n).replace(".", ","));
 
+// HARİCİ BARKOD KUTUSU (v1.542.0) — Barkodlar sekmesinde her renk+beden satırında. Kutudan çıkınca ya da
+// Enter'da kaydeder; boşaltmak siler. Çakışan kod (bizim barkodumuz ya da başka bedenin harici kodu)
+// kaydedilmez, sebebi söylenir ve kutu eski değere döner. USB/Bluetooth okuyucu Enter gönderdiği için
+// kutuya odaklanıp etiketi okutmak da yeter.
+function HariciBarkodKutusu({ urun, variant, stok, tanimlar, onKaydet, showToast }) {
+  const mevcut = ((urun.hariciBarkodlar || []).find((x) => kodEsit(x.renk, variant.renk) && kodEsit(x.beden, variant.beden)) || {}).kod || "";
+  const [deger, setDeger] = useState(mevcut);
+  React.useEffect(() => { setDeger(mevcut); }, [mevcut]);
+  const kaydet = () => {
+    const temiz = String(deger || "").replace(/\s+/g, "");
+    if (temiz === mevcut) { setDeger(mevcut); return; }
+    const engel = temiz ? hariciBarkodCakismasi(temiz, stok, tanimlar, { urunId: urun.id, renk: variant.renk, beden: variant.beden }) : null;
+    if (engel) { showToast(engel); setDeger(mevcut); return; }
+    onKaydet(temiz);
+    showToast(temiz
+      ? `${[urun.ad, variant.renk, variant.beden].filter(Boolean).join(" · ")}: harici barkod ${temiz} kaydedildi`
+      : `${[urun.ad, variant.renk, variant.beden].filter(Boolean).join(" · ")}: harici barkod silindi`);
+  };
+  return (
+    <input
+      data-harici-barkod={`${variant.renk}|${variant.beden}`}
+      value={deger}
+      onChange={(e) => setDeger(e.target.value)}
+      onBlur={kaydet}
+      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
+      placeholder="okutun / yazın"
+      autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="done"
+      style={{ ...inputStyle, width: 150, padding: "3px 6px", fontSize: 12, fontFamily: "monospace" }}
+    />
+  );
+}
+
 function ProductMatrixCard({
   kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet,
   tanimlarAylikUretimHedefi, tanimlarGenelGiderler,
@@ -4762,6 +4794,9 @@ function ProductMatrixCard({
                   <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>ÖLÇÜ</th>
                   <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>ÖLÇÜ KODU</th>
                   <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }}>BARKOD</th>
+                  {/* HARİCİ BARKOD (v1.542.0): kutunun/tedarikçinin etiketi bu bedene bağlanır; okutulunca
+                      yandaki kendi barkodumuz gibi tanınır. */}
+                  <th style={{ fontSize: 10, textAlign: "left", padding: "5px 8px" }} title="Kutunun ya da tedarikçinin kendi barkodu — okutulunca bu beden olarak tanınır">HARİCİ BARKOD</th>
                   <th style={{ fontSize: 10, textAlign: "right", padding: "5px 8px" }}>STOK</th>
                   <th style={{ fontSize: 10, textAlign: "center", padding: "5px 6px" }}>ETİKET</th>
                 </tr>
@@ -4799,6 +4834,13 @@ function ProductMatrixCard({
                       </td>
                       <td className="mono" style={{ padding: "5px 8px", fontSize: 12, fontWeight: 700, color: kod ? "var(--erp-text)" : "var(--erp-warn)" }}>
                         {kod || "barkod kurulamıyor"}
+                      </td>
+                      <td style={{ padding: "3px 8px" }}>
+                        <HariciBarkodKutusu
+                          urun={product} variant={v} stok={tumUrunler} tanimlar={barkodTanimlari}
+                          onKaydet={(yeniKod) => onUrunGuncelle(product.id, { hariciBarkodlar: hariciBarkodAyarla(product.hariciBarkodlar, v.renk, v.beden, yeniKod) })}
+                          showToast={showToast}
+                        />
                       </td>
                       <td className="mono" style={{ padding: "5px 8px", fontSize: 12, textAlign: "right" }}>{v.miktar || 0}</td>
                       <td style={{ padding: "5px 6px", textAlign: "center" }}>
