@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.538.0</title>
+<title>Atölye ERP 1.541.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -671,35 +671,40 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false }) {
     const [acik, setAcik] = useState(false);
     const [vurgulu, setVurgulu] = useState(-1);
+    // YAZILDI MI (v1.540.0): odaklanınca false, kutuya harf girince true. Tam eşleşmede "hepsini göster"
+    // yalnız YAZILMADAN açılışta geçerli (seçili rengi değiştirmek için); yazarken tam adı bitirmek
+    // listeyi süzmeyi bırakmamalı. Kullanıcı: "Kahve aramada tam adını yazınca tüm renkleri listeliyor."
+    const [yazildi, setYazildi] = useState(false);
     const q = String(deger || "").trim().toLocaleLowerCase("tr-TR");
     const tekil = Array.from(new Set((oneriler || []).map((o) => String(o).trim()).filter(Boolean)))
         .sort((a, b) => a.localeCompare(b, "tr", { numeric: true }));
-    // Kutudaki değerin kendisi öneri olarak tekrar gösterilmiyor; başı eşleşenler önce.
-    // Kutudaki değer bir önerinin TAM kendisiyse (seçim yapılmış) liste süzülmüyor, diğerleri
-    // gösteriliyor: seçimi değiştirmek için önce kutuyu silmek gerekmesin (açılır liste gibi).
+    // Başı eşleşenler önce. Kutudaki değer bir önerinin TAM kendisiyse ve kutu YAZILMADAN açıldıysa
+    // (seçim yapılmış) liste süzülmüyor, diğerleri gösteriliyor: seçimi değiştirmek için önce kutuyu
+    // silmek gerekmesin (açılır liste gibi). Yazarken tam eşleşen en üstte, sonra "Kahve Baskı" gibi
+    // o adla başlayanlar — v1.540.0'a kadar burada da tüm liste açılıyordu.
     const tamEslesme = tekil.some((o) => o.toLocaleLowerCase("tr-TR") === q);
     const sonuclar = (() => {
         if (!q)
             return tekil;
-        if (tamEslesme)
+        if (tamEslesme && !yazildi)
             return tekil.filter((o) => o.toLocaleLowerCase("tr-TR") !== q);
-        const bas = [], ic = [];
+        const tam = [], bas = [], ic = [];
         tekil.forEach((o) => {
             const e = o.toLocaleLowerCase("tr-TR");
             if (e === q)
-                return;
-            if (e.startsWith(q))
+                tam.push(o);
+            else if (e.startsWith(q))
                 bas.push(o);
             else if (e.includes(q))
                 ic.push(o);
         });
-        return [...bas, ...ic];
+        return [...tam, ...bas, ...ic];
     })().slice(0, 50);
-    const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); };
+    const sec = (o) => { onDegis(o); setAcik(false); setVurgulu(-1); setYazildi(false); };
     const kutuResmi = resimler && tamEslesme ? resimler[tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q)] : null;
     return (React.createElement("div", { style: { position: "relative" } },
         kutuResmi && (React.createElement("img", { src: kutuResmi, alt: "", "data-aramali-kutu-resim": "1", style: { position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)", width: 26, height: 26, objectFit: "cover", borderRadius: 4, pointerEvents: "none" } })),
-        React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), disabled: disabled, value: deger || "", onChange: (e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); }, onFocus: () => setAcik(true), onBlur: () => {
+        React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), disabled: disabled, value: deger || "", onChange: (e) => { onDegis(sayisal ? e.target.value.replace(/\D/g, "") : e.target.value); setAcik(true); setVurgulu(-1); setYazildi(true); }, onFocus: () => { setAcik(true); setYazildi(false); }, onBlur: () => {
                 setTimeout(() => setAcik(false), 150);
                 if (yalnizListeden && q && !tamEslesme)
                     onDegis(sonuclar[0] || "");
@@ -1982,9 +1987,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.538.0";
+const SURUM = "1.541.0";
 const SURUM_TARIHI = "2026-09-30";
-const SURUM_NOTU = "Virman ve cek tahsili iki deftere; yetkisiz kasa duzenlemesi onaya; kar-zarar kur eksik uyarisi; siparis kapatma guncel veriyle";
+const SURUM_NOTU = "Sipariste barkod okutma sonucu kutunun altinda kalici; taninmayan kodun sebebi yaziliyor, hatada cift titresim";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1992,6 +1997,18 @@ const SURUM_NOTU = "Virman ve cek tahsili iki deftere; yetkisiz kasa duzenlemesi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.541.0", tarih: "30.09.2026",
+        eklenen: ["Sipariş formunda barkod okutmanın sonucu barkod kutusunun altında kalıcı satır olarak (yeşil: eklendi, kırmızı: neden eklenmedi)"],
+        degisen: ["Tanınmayan barkodda sebep yazılıyor (bizim etiketimiz değil / koli / atölye parçası / ürün bulunamadı)", "Barkod eklenemeyince telefon çift titriyor (başarılı okuma tek kısa titreşim)"],
+        duzeltilen: ["Kamerayla okutulan barkod eklenmeyince hata yalnız ekranın tepesinde birkaç saniye görünüyordu, kameraya bakarken fark edilmiyordu"] },
+    { surum: "1.540.0", tarih: "30.09.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Renk ve özel kod arama kutularında adın tamamı yazılınca ('Kahve') liste süzülmeyi bırakıp bütün renkleri açıyordu; artık tam eşleşen en üstte, o adla başlayanlar ('Kahve Baskı', 'Kahve Deri') altında. Seçili kutuya yazmadan tıklayınca tüm liste açılmaya devam ediyor"] },
+    { surum: "1.539.0", tarih: "30.09.2026",
+        eklenen: ["Çek formunda Defter seçimi (Genel / Resmi / Muhasebe — carideki gibi); çek listesinde Resmi / Genel + Resmi rozeti"],
+        degisen: ["Çekin cari girişi, cirosu, iadesi ve tahsilde kasa/banka hareketi çekin kendi defterine yazılıyor (önce giriş hep Genel, tahsil hep Muhasebe'ydi)", "Cari kartından çekle girilen hareketin defteri çeke de geçiyor"],
+        duzeltilen: [] },
     { surum: "1.538.0", tarih: "30.09.2026",
         eklenen: ["Kâr-zarar raporunda kuru olmayan para birimi uyarısı (o tutarlar TL gibi sayıldığında)"],
         degisen: ["Virman ve çek tahsilinin kasa/banka hareketi 'Muhasebe' (Genel + Resmi) deftere yazılıyor", "Silme yetkisi olmayan kullanıcının kasa/banka hareketi düzenlemesi yönetici onayına düşüyor"],
@@ -8079,6 +8096,20 @@ function varyantinBarkodu(urun, variant, tanimlar) {
 //
 // Tanınmayan koda `null` dönüyor, "en yakın" tahmin YAPILMIYOR: fuarda yanlış ürünü siparişe
 // yazmak, hiç yazmamaktan pahalıdır.
+// TANINMAYAN BARKODUN SEBEBİ (v1.541.0 — kullanıcı, sipariş formunda kamerayla "999000016232" okutunca:
+// "Barkod okutunca titriyor ama eklemiyor veya hata ne ise söylemiyor"). Yalnız "tanınmayan" demek
+// yetmiyor: kutunun/tedarikçinin etiketi mi, koli mi, atölye parçası mı, yoksa bizim etiketimiz ama ürünü
+// silinmiş mi — ne yapılacağı buna göre değişiyor. Depo > Okut'taki (236, derlenmiş) sebeplerin aynısı.
+function barkodTaninmamaSebebi(kod) {
+    const k = String(kod || "").trim();
+    if (/^K-/i.test(k))
+        return "Bu bir KOLİ barkodu — ürün etiketini okutun.";
+    if (/^\d+-\d+$/.test(k))
+        return "Bu bir ÜRETİM PARÇASI barkodu (atölye) — ürün etiketini okutun.";
+    if (!new RegExp(`^${BARKOD_ON_EK}\\d+$`).test(k))
+        return `Bu barkod bizim ürün etiketimiz değil (ürün barkodları ${BARKOD_ON_EK} ile başlar) — kutunun ya da tedarikçinin etiketi olabilir.`;
+    return "Barkod ürün şemasına uyuyor ama bu kodda bir ürün/renk/beden yok — kod atanmamış, ürün silinmiş ya da etiket eski olabilir.";
+}
 function urunBarkoduCoz(kod, stok, tanimlar) {
     const temiz = String(kod || "").trim();
     if (!/^\d+$/.test(temiz))
@@ -12048,7 +12079,7 @@ function useCekler(d) {
     //
     // KASA HAREKETİ YOK — çek nakit değil, para vadesinde el değiştirir (7z-8'deki gerekçenin aynısı).
     const cekEkleVeIsle = useCallback((veri) => {
-        const cek = { id: uid("cek"), durum: "Portföyde", ...veri };
+        const cek = { id: uid("cek"), durum: "Portföyde", ...veri, defter: veri.defter || "Genel" };
         const cari = veri.cariId ? cariler.find((c) => c.id === veri.cariId) : null;
         const hareketGerekli = !!cari && !veri.hareketId && (veri.tutar || 0) > 0;
         let hareket = null;
@@ -12070,7 +12101,7 @@ function useCekler(d) {
                 islemTipi,
                 aciklama: `${verilen ? "Şahsi çek çıkışı" : "Müşteri çeki"}${cek.cekNo ? ` · No ${cek.cekNo}` : ""}${cek.banka ? ` · ${cek.banka}` : ""}`,
                 kullanici: (aktifKullanici && aktifKullanici.ad) || null,
-                defter: "Genel",
+                defter: cek.defter, // v1.539.0: çekin kendi defteri (önce hep "Genel")
                 // Karşı taraf bilgisi 7z-7'nin alanlarıyla: ekstrede çekin kendi tutarı görünsün.
                 hesapAd: `Çek${cek.cekNo ? ` No ${cek.cekNo}` : ""}`,
                 hesapPB: cek.paraBirimi || "TRY",
@@ -12118,7 +12149,7 @@ function useCekler(d) {
             hareket = cekCiroHareketi(cek, {
                 cariId: hedefCariId, tutar: secim.tutar, paraBirimi: secim.paraBirimi, tarih,
                 fisNo: fisNoSiradaki(fisOnEki("Ödeme"), tumFisNumaralari(cariler)),
-                aciklama: secim.aciklama, kullanici, defter: secim.defter || "Genel",
+                aciklama: secim.aciklama, kullanici, defter: secim.defter || cek.defter || "Genel",
             });
         }
         else if (islem === "iade" && cek.cariId) {
@@ -28827,9 +28858,10 @@ function cekTahsilHesapHareketi(cek, { tutar, tarih, kullanici, cariAd } = {}) {
         tarih,
         yon: verilen ? "Çıkış" : "Giriş",
         tutar: tutar > 0 ? tutar : cek.tutar,
-        // "MUHASEBE" (iki defter) — v1.538.0, kullanıcı kararı: tahsil edilen para hesaba fiilen giriyor; yalnız Genel'e
-        // yazılınca Resmi defterde hesap bakiyesi eksik kalıyordu.
-        defter: "Muhasebe",
+        // ÇEKİN KENDİ DEFTERİ (v1.539.0): çek hangi deftere girdiyse tahsilde hesaba giren para da oraya — Resmi'de çek
+        // alınmamışken bankanın artması (ya da tersi) olmasın. v1.538.0'da defter bilgisi olmadığı için "Muhasebe"ydı;
+        // defteri olmayan eski çekler de öyle kalır (o sürümün kararı).
+        defter: cek.defter || "Muhasebe",
         aciklama: `Çek tahsili${cek.cekNo ? ` · No ${cek.cekNo}` : ""}${cariAd ? ` · ${cariAd}` : ""}`,
         kullanici: kullanici || null,
         cekId: cek.id,
@@ -30408,7 +30440,9 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
     // nereden girildiğine göre eksik kalmasına yol açardı.
     // `tlKarsiligi` + `kur`: dövizli çekin kayıt anındaki TL değeri. Vade geldiğinde kur değişmiş
     // olacak; çekin GİRİLDİĞİ günkü karşılığı ayrı bir bilgi ve sonradan hesaplanamaz.
-    const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "" };
+    // DEFTER (v1.539.0 — kullanıcı: "Çekte Resmi ve Genel defter yok mu? … carideki gibi olsun"): çek hangi deftere
+    // aitse carideki girişi, cirosu, iadesi ve tahsilde hesaba giren para o deftere yazılır.
+    const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "", defter: "Genel" };
     const [form, setForm] = useState(BOS_CEK);
     const [filtre, setFiltre] = useState("Tümü");
     // KENDİ ÇEK DEFTERİMİZ (kullanıcı, 6 Eylül: "verilen çek için kendi çek defterimiz olması
@@ -30602,6 +30636,12 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                                 setForm({ ...form, iban, banka: form.banka || ibandanBanka(iban) });
                             }, placeholder: "TR.. \u2014 banka otomatik", style: { ...kutu, fontFamily: "monospace" } })),
                     React.createElement("label", { style: etiket },
+                        "Defter",
+                        React.createElement("select", { "data-cek-defter": "1", value: form.defter || "Genel", onChange: (e) => setForm({ ...form, defter: e.target.value }), style: { ...kutu, width: 150 } },
+                            React.createElement("option", { value: "Genel" }, "Genel"),
+                            React.createElement("option", { value: "Resmi" }, "Resmi"),
+                            React.createElement("option", { value: "Muhasebe" }, "Muhasebe (ikisine de)"))),
+                    React.createElement("label", { style: etiket },
                         "Sahiplik",
                         React.createElement("div", { style: { display: "flex", gap: 5 } }, ["Kendi", "Cirolu"].map((se) => (React.createElement("button", { key: se, type: "button", onClick: () => setForm({ ...form, sahiplik: se }), style: {
                                 fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: "var(--erp-r-sm)", cursor: "pointer",
@@ -30646,6 +30686,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     c.banka,
                     c.sube ? ` / ${c.sube}` : ""),
                 c.sahiplik === "Cirolu" && (React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: "#8A3D6B", background: "#8A3D6B14", border: "1px solid #8A3D6B44", borderRadius: "var(--erp-r-pill)", padding: "1px 7px" } }, "cirolu")),
+                c.defter && c.defter !== "Genel" && (React.createElement("span", { "data-cek-defter-rozet": c.defter, style: { fontSize: 10, fontWeight: 700, color: "var(--erp-primary)", background: "var(--erp-primary-soft, #0000000a)", border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-pill)", padding: "1px 7px" } }, c.defter === "Muhasebe" ? "Genel + Resmi" : "Resmi")),
                 c.kesideci && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } },
                     "ke\u015Fideci: ",
                     c.kesideci),
@@ -38237,6 +38278,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 // biri çek alır, diğeri çek verir. Yönle türetmeye çalışmak Tahsilat'ı "Verilen" yapıyordu.
                 tip: hareketTipi === "Tahsilat" || hareketTipi === "Satış" ? "Alınan" : "Verilen",
                 cariId: cari.id,
+                // Cari hareketinin defteri çeke de geçer (v1.539.0): ciro/iade/tahsil aynı defterde devam eder.
+                defter: hForm.defter || "Genel",
                 // Çek KENDİ biriminde; cariye işlenen tutar ayrıca bilgi olarak (v1.459.0).
                 tutar: cekCevrim.farkli ? cekCevrim.cekTutar : tutar,
                 paraBirimi: cekCevrim.cekPB,
@@ -43913,6 +43956,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const [kalemler, setKalemler] = useState([]);
     // Asorti barkodu okutma kutusu (fuar akışı).
     const [barkodGirisi, setBarkodGirisi] = useState("");
+    // SON OKUTMANIN SONUCU, kutunun altında KALICI (v1.541.0). Toast ekranın tepesinde birkaç saniye
+    // duruyor; kamerayla okuturken göz kamerada, kullanıcı "titriyor ama eklemiyor, hatayı söylemiyor"
+    // dedi. { tamam, metin } — bir sonraki okutmaya kadar kalır.
+    const [barkodSonuc, setBarkodSonuc] = useState(null);
     // BARKOD PANELİ KATLANIR (v1.470.0 — kullanıcı: "barkod okutu da tıklayınca açılsın, kullanmayınca
     // çok yer kaplıyor"). Kapalıyken tek ince düğme. Son tercih bu cihazda hatırlanıyor: fuarda
     // okutarak çalışan açık bırakır, elle giren kapalı — her sipariş açılışında yeniden tıklamasın.
@@ -44263,9 +44310,17 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         const temiz = String(kod || "").trim();
         if (!temiz)
             return;
+        // Her sonuç iki yere: toast + kutunun altındaki kalıcı satır. Başarısızlıkta ÇİFT titreşim — kamera
+        // her okumada kısa titretiyor (236), başarılı/başarısız ayırt edilemiyordu.
+        const bildir = (metin, tamam) => {
+            setBarkodSonuc({ tamam, metin, kod: temiz });
+            showToast(metin);
+            if (!tamam && typeof navigator !== "undefined" && navigator.vibrate)
+                navigator.vibrate([90, 70, 90]);
+        };
         const cozum = urunBarkoduCoz(temiz, stok || [], barkodTanimlari);
         if (!cozum) {
-            showToast(`Tanınmayan barkod: ${temiz}`);
+            bildir(`Tanınmayan barkod: ${temiz} — ${barkodTaninmamaSebebi(temiz)}`, false);
             setBarkodGirisi("");
             return;
         }
@@ -44273,12 +44328,12 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         // değil — hangi renk, hangi beden? Kaleme çevirmek yerine sebebi söyleniyor: sessizce yanlış
         // satır yazmaktansa hiç yazmamak doğru.
         if (cozum.seviye === "stok") {
-            showToast(`${cozum.urun.ad}: bu kod yalnızca ürünü gösteriyor, renk/beden içermiyor`);
+            bildir(`${cozum.urun.ad}: bu kod yalnızca ürünü gösteriyor, renk/beden içermiyor`, false);
             setBarkodGirisi("");
             return;
         }
         if (cozum.seviye === "renk") {
-            showToast(`${cozum.urun.ad} · ${cozum.renk}: bu kod beden içermiyor`);
+            bildir(`${cozum.urun.ad} · ${cozum.renk}: bu kod beden içermiyor`, false);
             setBarkodGirisi("");
             return;
         }
@@ -44298,11 +44353,12 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                         ...(kdvAktif ? { kdvOrani: urunKdvOrani(cozum.urun, firmaBilgileri) } : {}),
                     }]);
             setBarkodGirisi("");
-            showToast(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`);
+            bildir(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`, true);
             return;
         }
         if (cozum.dagilim.length === 0) {
-            showToast(`${cozum.urun.ad} · ${cozum.renk}: asortideki bedenler bu üründe yok`);
+            bildir(`${cozum.urun.ad} · ${cozum.renk}: asortideki bedenler bu üründe yok`, false);
+            setBarkodGirisi("");
             return;
         }
         let sonraki = [...kalemler];
@@ -44321,9 +44377,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         setKalemler(sonraki);
         setBarkodGirisi("");
         // Üründe olmayan bedenler SESSİZCE atlanmıyor: sipariş eksik girilmiş olacak, kullanıcı bilsin.
-        showToast(cozum.eksikBedenler.length
+        bildir(cozum.eksikBedenler.length
             ? `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi — ${cozum.eksikBedenler.join(", ")} bedeni üründe yok`
-            : `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi`);
+            : `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi`, true);
     }
     function kalemEkle() {
         if (!seciliUrun || !kRenk)
@@ -44942,6 +44998,16 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                     React.createElement("button", { type: "button", className: "btn-ghost", "data-foto-ac": "1", style: { padding: "6px 12px", fontSize: 12 }, onClick: () => setFotoAcik(true), title: "\u00DCr\u00FCn\u00FCn foto\u011Fraf\u0131n\u0131 \u00E7ekip kay\u0131tl\u0131 g\u00F6rsellerle e\u015Fle\u015Ftir" },
                                         React.createElement(Camera, { size: 13 }),
                                         " Foto\u011Fraftan bul"),
+                                    barkodSonuc && (React.createElement("div", { "data-barkod-sonuc": barkodSonuc.tamam ? "tamam" : "hata", style: { flexBasis: "100%", display: "flex", alignItems: "flex-start", gap: 8,
+                                            padding: "7px 10px", borderRadius: "var(--erp-r-md)", fontSize: 12, fontWeight: 600,
+                                            color: barkodSonuc.tamam ? "var(--erp-ok)" : "var(--erp-danger)",
+                                            background: barkodSonuc.tamam ? "var(--erp-ok-tint)" : "#FBE9E7",
+                                            border: `1px solid ${barkodSonuc.tamam ? "#9CC7A4" : "#E3A69C"}` } },
+                                        React.createElement("span", { style: { flex: 1 } },
+                                            barkodSonuc.tamam ? "✓ " : "✕ ",
+                                            barkodSonuc.metin),
+                                        React.createElement("button", { type: "button", title: "Kapat", onClick: () => setBarkodSonuc(null), style: { border: "none", background: "none", color: "inherit", cursor: "pointer", padding: 0, display: "flex" } },
+                                            React.createElement(X, { size: 14 })))),
                                     React.createElement("div", { style: { flexBasis: "100%" } },
                                         React.createElement(KameraOkuyucu, { onKod: (kod) => asortiBarkodOkut(kod) })))),
                                 React.createElement(GorselIleBul, { havuz: fotoHavuzu, acikMi: fotoAcik, onKapat: () => setFotoAcik(false), onSec: fotoSecimi, showToast: showToast, altBilgi: (React.createElement("div", { style: { fontSize: 12, color: "#2E5670", marginBottom: 8 } },
@@ -50287,7 +50353,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.538.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.541.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
