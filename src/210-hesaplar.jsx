@@ -1061,7 +1061,9 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
   // nereden girildiğine göre eksik kalmasına yol açardı.
   // `tlKarsiligi` + `kur`: dövizli çekin kayıt anındaki TL değeri. Vade geldiğinde kur değişmiş
   // olacak; çekin GİRİLDİĞİ günkü karşılığı ayrı bir bilgi ve sonradan hesaplanamaz.
-  const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "" };
+  // DEFTER (v1.539.0 — kullanıcı: "Çekte Resmi ve Genel defter yok mu? … carideki gibi olsun"): çek hangi deftere
+  // aitse carideki girişi, cirosu, iadesi ve tahsilde hesaba giren para o deftere yazılır.
+  const BOS_CEK = { tip: "Alınan", cekNo: "", cariId: "", tutar: "", vadeTarihi: "", not: "", paraBirimi: "TRY", banka: "", sube: "", iban: "", kesideci: "", sahiplik: "Kendi", tlKarsiligi: "", kur: "", cariPB: "", cariTutar: "", cariKur: "", defter: "Genel" };
   const [form, setForm] = useState(BOS_CEK);
   const [filtre, setFiltre] = useState("Tümü");
   // KENDİ ÇEK DEFTERİMİZ (kullanıcı, 6 Eylül: "verilen çek için kendi çek defterimiz olması
@@ -1376,6 +1378,15 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                   />
                 </label>
                 <label style={etiket}>
+                  Defter
+                  {/* Carideki fiş formuyla aynı üç seçenek (v1.539.0). */}
+                  <select data-cek-defter="1" value={form.defter || "Genel"} onChange={(e) => setForm({ ...form, defter: e.target.value })} style={{ ...kutu, width: 150 }}>
+                    <option value="Genel">Genel</option>
+                    <option value="Resmi">Resmi</option>
+                    <option value="Muhasebe">Muhasebe (ikisine de)</option>
+                  </select>
+                </label>
+                <label style={etiket}>
                   Sahiplik
                   {/* Kendi mi cirolu mu: karşılıksız çıkarsa alacağın kimden isteneceğini belirler. */}
                   <div style={{ display: "flex", gap: 5 }}>
@@ -1445,6 +1456,12 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                 {c.sahiplik === "Cirolu" && (
                   <span style={{ fontSize: 10, fontWeight: 700, color: "#8A3D6B", background: "#8A3D6B14", border: "1px solid #8A3D6B44", borderRadius: "var(--erp-r-pill)", padding: "1px 7px" }}>
                     cirolu
+                  </span>
+                )}
+                {/* DEFTER ROZETİ (v1.539.0): Genel varsayılan, yazmıyoruz; Resmi/Muhasebe satırda görünsün. */}
+                {c.defter && c.defter !== "Genel" && (
+                  <span data-cek-defter-rozet={c.defter} style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-primary)", background: "var(--erp-primary-soft, #0000000a)", border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-pill)", padding: "1px 7px" }}>
+                    {c.defter === "Muhasebe" ? "Genel + Resmi" : "Resmi"}
                   </span>
                 )}
                 {c.kesideci && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>keşideci: {c.kesideci}</span>}

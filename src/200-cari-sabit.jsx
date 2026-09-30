@@ -737,9 +737,10 @@ function cekTahsilHesapHareketi(cek, { tutar, tarih, kullanici, cariAd } = {}) {
     tarih,
     yon: verilen ? "Çıkış" : "Giriş",
     tutar: tutar > 0 ? tutar : cek.tutar,
-    // "MUHASEBE" (iki defter) — v1.538.0, kullanıcı kararı: tahsil edilen para hesaba fiilen giriyor; yalnız Genel'e
-    // yazılınca Resmi defterde hesap bakiyesi eksik kalıyordu.
-    defter: "Muhasebe",
+    // ÇEKİN KENDİ DEFTERİ (v1.539.0): çek hangi deftere girdiyse tahsilde hesaba giren para da oraya — Resmi'de çek
+    // alınmamışken bankanın artması (ya da tersi) olmasın. v1.538.0'da defter bilgisi olmadığı için "Muhasebe"ydı;
+    // defteri olmayan eski çekler de öyle kalır (o sürümün kararı).
+    defter: cek.defter || "Muhasebe",
     aciklama: `Çek tahsili${cek.cekNo ? ` · No ${cek.cekNo}` : ""}${cariAd ? ` · ${cariAd}` : ""}`,
     kullanici: kullanici || null,
     cekId: cek.id,
