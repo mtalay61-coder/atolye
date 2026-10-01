@@ -27,6 +27,51 @@
 // kadar ne geri alındığı da tarihin parçası; silmek "bu hiç olmadı" demek olurdu.
 const FIS_DEFTERI_ANAHTAR = "fisdefter:data";
 
+// DEFTERDEN EKSİK ALAN ONARIMI (v1.546.0). Şema sütunları açıkça saydığı için cari ve stok hareketinin bazı
+// alanları (cari: işlem tipi, çek kimliği…; stok: birim fiyat, kur, ürün adı…) buluta gitmiyor, buluttan
+// yeniden yüklenen her cihazda kayboluyordu. Fiş defteri ise her fişin hareketlerinin TAM kopyasını tek
+// jsonb'de saklıyor — kaybolan alanlar oradan geri doldurulabilir. KURAL: yalnız hareketTE OLMAYAN alan
+// doldurulur, var olan değere dokunulmaz; BAĞ alanları (esId, siparisId, kalemId, rezervasyonSiparisId,
+// urunId) hiç doldurulmaz — sipariş iptali, ikiz göçü gibi işlemler onları bilerek koparmış olabilir.
+// İptal edilmiş fişin kopyası kullanılmaz. Saf: değişen kayıt yoksa aynı diziler döner.
+const DEFTER_ONARIM_DISI = new Set(["id", "esId", "siparisId", "kalemId", "rezervasyonSiparisId", "urunId", "kaynakTip"]);
+function defterdenEksikAlanlariTamamla(cariler, stok, defter) {
+  const cariKopya = new Map();
+  const stokKopya = new Map();
+  (defter || []).forEach((k) => {
+    if (!k || k.iptal) return;
+    (k.cariHareketleri || []).forEach((h) => { if (h && h.id) cariKopya.set(h.id, h); });
+    (k.stokHareketleri || []).forEach((h) => { if (h && h.id) stokKopya.set(h.id, h); });
+  });
+  let sayi = 0;
+  const tamamla = (h, kopyalar) => {
+    const k = h && h.id ? kopyalar.get(h.id) : null;
+    if (!k) return h;
+    let y = h;
+    Object.keys(k).forEach((alan) => {
+      if (DEFTER_ONARIM_DISI.has(alan) || h[alan] !== undefined || k[alan] === undefined || k[alan] === null) return;
+      if (y === h) y = { ...h };
+      y[alan] = k[alan];
+    });
+    if (y !== h) sayi++;
+    return y;
+  };
+  const listeyiTamamla = (kayitlar, kopyalar) => {
+    let degisti = false;
+    const sonuc = (kayitlar || []).map((x) => {
+      const hs = (x.hareketler || []).map((h) => tamamla(h, kopyalar));
+      if (hs.every((h, i) => h === x.hareketler[i])) return x;
+      degisti = true;
+      return { ...x, hareketler: hs };
+    });
+    return degisti ? sonuc : kayitlar;
+  };
+  const yeniCariler = listeyiTamamla(cariler, cariKopya);
+  const cariSayi = sayi;
+  const yeniStok = listeyiTamamla(stok, stokKopya);
+  return { cariler: yeniCariler, stok: yeniStok, cariSayi, stokSayi: sayi - cariSayi };
+}
+
 // Fiş kaydını yazma sonuçlarından kurar. `sonuc` = fisYaz çıktısı.
 function fisDefterKaydiKur(fis, sonuc, ek) {
   const stokHareketleri = [];

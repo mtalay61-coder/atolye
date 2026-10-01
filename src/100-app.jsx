@@ -670,9 +670,35 @@ export default function AtolyeERP() {
       const ch = k.cariHareketleri.map((h) => { const y = pesinOdemeYonuDuzelt(h); if (y !== h) degisti = true; return y; });
       return degisti ? { ...k, cariHareketleri: ch } : k;
     });
+    // DEFTERDEN EKSİK ALAN ONARIMI (v1.546.0 — bkz. 077 `defterdenEksikAlanlariTamamla`): buluta gitmeyen hareket
+    // alanları (işlem tipi, birim fiyat…) fiş defterindeki tam kopyadan geri doldurulur; yeni şema (`ek`) artık
+    // onları buluta da taşır. Peşin onarımının SONUCU üzerinden — iki onarım aynı cari listesini ayrı ayrı yazıp
+    // birbirini ezmesin. Kendini sınırlıyor: doldurulan alan bir dahaki açılışta eksik olmaz.
+    // GÜNCEL DEĞER ÜZERİNDEN (fonksiyonlu güncelleme): açılıştaki diğer göçler (görsel ayırma vb.) aynı anda stoğu
+    // değiştiriyor; kapanıştaki eski listeden yazmak onların sonucunu ezerdi (gorsel-depo senaryosu yakaladı).
+    // Peşin onarımı varsa onun setCariler'ı önce uygulanır, bu güncelleme onun üzerine kurulur.
     if (sayi > 0) {
       setCariler(yeniCariler);
       yazimiIzle(tabloYaz("cari:data", "cariler", yeniCariler), "Cari kartları", yeniCariler);
+    }
+    const defterKaynak = sayi > 0 ? yeniDefter : fisDefteri;
+    setCariler((onceki) => {
+      const r = defterdenEksikAlanlariTamamla(onceki, [], defterKaynak);
+      if (r.cariler === onceki) return onceki;
+      yazimiIzle(tabloYaz("cari:data", "cariler", r.cariler), "Cari kartları", r.cariler);
+      gunlukYaz(`Fiş defterinden eksik alan onarımı: ${r.cariSayi} cari hareketi`, "veri", { cari: r.cariSayi });
+      return r.cariler;
+    });
+    setStok((onceki) => {
+      const r = defterdenEksikAlanlariTamamla([], onceki, defterKaynak);
+      if (r.stok === onceki) return onceki;
+      // Yerele GÖRSELSİZ (saveStok kuralı): stok state'i görselleri taşıyor, `stok:items` taşımamalı.
+      const yerelStok = gorselleriAyir(r.stok).stok;
+      yazimiIzle(tabloYaz("stok:items", "urunler", r.stok, yerelStok), "Stok kartları", yerelStok);
+      gunlukYaz(`Fiş defterinden eksik alan onarımı: ${r.stokSayi} stok hareketi`, "veri", { stok: r.stokSayi });
+      return r.stok;
+    });
+    if (sayi > 0) {
       setFisDefteri(yeniDefter);
       yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeniDefter), "Fiş defteri", yeniDefter);
       gunlukYaz(`Peşin ödeme yönü onarıldı: ${sayi} alış peşin kaydı (tedarikçi borcu iki kat görünüyordu)`, "cari", { sayi });

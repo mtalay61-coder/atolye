@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.545.0";
+const SURUM = "1.546.0";
 const SURUM_TARIHI = "2026-10-01";
-const SURUM_NOTU = "Fis defteri Yeniden dene ile gonderiliyor; siparis kaleminin KDV ve notlari buluta gidiyor (siparis-ek.sql)";
+const SURUM_NOTU = "Urun, stok hareketi, cari, cari hareketi, uretim ve atamada buluta gitmeyen alanlar ek sutununda; kaybolanlar fis defterinden onariliyor (tablo-ek.sql)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Fis defteri Yeniden dene ile gonderiliyor; siparis kaleminin
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.546.0", tarih: "01.10.2026",
+    eklenen: ["Açılışta fiş defterinden eksik alan onarımı: buluttan yüklenirken kaybolmuş cari/stok hareketi bilgileri (işlem tipi, birim fiyat, ürün adı…) fişin kendi kopyasından geri dolduruluyor"],
+    degisen: [],
+    duzeltilen: ["Cari hareketinin işlem tipi (Satış/Alış/Tahsilat/Ödeme/İşçilik) ve çek bağı, stok hareketinin birim fiyatı/kuru/ürün adı, ürünün renk başlığı, üretimin ve iş atamalarının sonradan eklenen bilgileri buluta gitmiyordu; başka cihazda ve yeniden açılışta kayboluyordu (Supabase'de tablo-ek.sql çalıştırılmalı)"] },
   { surum: "1.545.0", tarih: "01.10.2026",
     eklenen: [],
     degisen: [],

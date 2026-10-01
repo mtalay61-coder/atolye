@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.543.0</title>
+<title>Atölye ERP 1.546.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1987,9 +1987,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.543.0";
-const SURUM_TARIHI = "2026-09-30";
-const SURUM_NOTU = "Defter secimi: cari listesi, kar-zarar, fisler, anasayfa ve Excel; iscilik defteri Tanimlar ayarindan (varsayilan Genel)";
+const SURUM = "1.546.0";
+const SURUM_TARIHI = "2026-10-01";
+const SURUM_NOTU = "Urun, stok hareketi, cari, cari hareketi, uretim ve atamada buluta gitmeyen alanlar ek sutununda; kaybolanlar fis defterinden onariliyor (tablo-ek.sql)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1997,6 +1997,18 @@ const SURUM_NOTU = "Defter secimi: cari listesi, kar-zarar, fisler, anasayfa ve 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.546.0", tarih: "01.10.2026",
+        eklenen: ["Açılışta fiş defterinden eksik alan onarımı: buluttan yüklenirken kaybolmuş cari/stok hareketi bilgileri (işlem tipi, birim fiyat, ürün adı…) fişin kendi kopyasından geri dolduruluyor"],
+        degisen: [],
+        duzeltilen: ["Cari hareketinin işlem tipi (Satış/Alış/Tahsilat/Ödeme/İşçilik) ve çek bağı, stok hareketinin birim fiyatı/kuru/ürün adı, ürünün renk başlığı, üretimin ve iş atamalarının sonradan eklenen bilgileri buluta gitmiyordu; başka cihazda ve yeniden açılışta kayboluyordu (Supabase'de tablo-ek.sql çalıştırılmalı)"] },
+    { surum: "1.545.0", tarih: "01.10.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["\"Yeniden dene\" fiş defterini göndermiyordu; buluta gidemeyen fiş defteri uyarısı ancak bir sonraki fişte kalkıyordu", "Fiş defteri gönderilemediyse açılışta buluttaki eski defter bu cihazdaki güncel defterin üstüne yazılıyordu (son fişler defterden düşebiliyordu)", "Sipariş kaleminin KDV oranı ve notları, siparişin iptal zamanı ve iptal eden buluta gitmiyordu; başka cihazda ve yeniden açılışta kayboluyordu (Supabase'de siparis-ek.sql çalıştırılmalı)"] },
+    { surum: "1.544.0", tarih: "30.09.2026",
+        eklenen: ["Silme onayında siparişin çözülecek bağları (satış planlaması, üretim, alış, koli, ayrılmış malzeme) listeleniyor"],
+        degisen: ["Sipariş yalnız FİŞ GİRİŞİ varsa (stok/cari hareketi, fiş kaydı, teslim) silinmez, iptal edilir; satışa bağlı alış siparişi, planlanmış satış siparişi gibi yalnız bilgi bağı olan sipariş silinebilir — bağlar silmede de çözülür"],
+        duzeltilen: [] },
     { surum: "1.543.0", tarih: "30.09.2026",
         eklenen: ["Cari Hesaplar listesinde Tümü / Genel / Resmi seçimi (satır bakiyesi, üst özet ve dip toplam)", "Kâr-Zarar'da Tümü / Genel / Resmi seçimi", "Fişler listesinde defter süzgeci ve Resmi / Genel + Resmi rozeti", "Anasayfa Toplam Alacak kartında Genel ve Resmi alacak ayrı", "Excel özetinde carilerin Genel ve Resmi bakiyesi ayrı sütun", "Tanımlar › Firma: İşçilik defteri ayarı (varsayılan Genel)"],
         degisen: ["Üretim ve ara proses işçiliği Tanımlar'daki işçilik defterine yazılıyor (ayar girilmezse önceki gibi Genel)"],
@@ -3783,6 +3795,51 @@ function tekilYaz(anahtar, tablo, veri) {
 //
 // Alt kayıtlar da fark hesabına girer: 500 hareketi olan bir üründe tek hareket eklendiğinde
 // yalnızca o satır yazılır, 500'ü birden değil.
+// ŞEMA DIŞI ALANLAR → `ek` (v1.545.0). Sütunları açıkça sayan şema, sayılmayan alanı SESSİZCE düşürüyordu
+// (bu projede üçüncü kez: sipariş kaleminin KDV oranı ve notları, siparişin iptal zamanı/eden, rezervasyon
+// zinciri buluta hiç gitmiyordu — başka cihazda ve yeniden açılışta kayboluyordu). Artık siparişte ve kalemde
+// sütunu olmayan HER alan `ek` jsonb'ye gider; okuma tarafı (045) köke açar. Yeni alan eklemek şema
+// değişikliği istemez. `ek` yalnız doluysa gönderilir: `siparis-ek.sql` çalıştırılmadan ek'siz kayıtlar
+// etkilenmesin.
+function semaDisiAlanlar(kayit, bilinenler) {
+    const ek = {};
+    Object.keys(kayit || {}).forEach((k) => {
+        if (bilinenler.has(k))
+            return;
+        const v = kayit[k];
+        if (v === undefined || typeof v === "function")
+            return;
+        ek[k] = v;
+    });
+    return Object.keys(ek).length ? { ek } : {};
+}
+// Ham hâli (sarmalayıcısız): elle yazılmış `ek` alanlarıyla birleştirmek için (cari, cari hareketi).
+function semaDisiHam(kayit, bilinenler) {
+    const r = semaDisiAlanlar(kayit, bilinenler);
+    return r.ek || {};
+}
+// v1.546.0 — aynı kayıp üretimde, cari hareketinde (işlem tipi!), stok hareketinde ve üründe (renk başlığı)
+// de vardı. Her tablonun sütuna eşlenen alanları; geri kalan her şey `ek`e.
+const URUN_SUTUNLARI = new Set(["id", "ad", "kategori", "birim", "malzemeTipi", "mamulTipi", "olcuTipi", "alisFiyati",
+    "alisParaBirimi", "satisFiyati", "satisParaBirimi", "sezonYili", "tedarikciId", "varsayilanProses", "paketlemeNotu",
+    "kapakResmi", "renkResimleri", "recete", "receteGerceklesme", "fiyatKurallari", "prosesUcretleri", "ozelKodlar",
+    "pasif", "stokNo", "kdvOrani", "hariciBarkodlar", "variants", "hareketler", "ek", "surum"]);
+const STOK_HAREKET_SUTUNLARI = new Set(["id", "urunId", "renk", "beden", "miktar", "kaynak", "tarih", "fisNo", "siparisNo",
+    "cariId", "uretimId", "siparisId", "kalemId", "rezervasyonSiparisId", "fazlaGonderim", "aciklama", "ek", "surum"]);
+const CARI_SUTUNLARI = new Set(["id", "unvan", "tip", "telefon", "vergiNo", "adres", "paraBirimi", "resim", "barkodKodu",
+    "kod", "bagliProsesler", "fiyatGrubu", "pasif", "hareketler", "ek", "surum"]);
+const CARI_HAREKET_SUTUNLARI = new Set(["id", "cariId", "tarih", "zaman", "yon", "tutar", "paraBirimi", "odemeSekli", "vade",
+    "defter", "fisNo", "siparisNo", "uretimId", "urunAd", "renk", "aciklama", "ek", "surum"]);
+const URETIM_SUTUNLARI = new Set(["id", "siparisNo", "takipKodu", "urunId", "model", "renk", "adet", "bedenMiktarlari",
+    "prosesIlerleme", "rezervasyonSiparisId", "ambalaj", "termin", "asama", "stogaEklendiMi", "hurdaTelafisiMi",
+    "hurdaKaynakUretimNo", "not", "olusturuldu", "ek", "surum"]);
+const ATAMA_SUTUNLARI = new Set(["id", "uretimId", "proses", "personelId", "bedenMiktarlari", "miktar", "verildiMi",
+    "verilmeTarihi", "tamamlandiMi", "tamamlanmaTarihi", "sonuc", "tamirMi", "tamirKaynakProses", "tamirSebep", "tamirUcret",
+    "tamirHammaddeler", "barkod", "ek", "surum"]);
+const SIPARIS_SUTUNLARI = new Set(["id", "siparisNo", "tip", "cariId", "tarih", "teslimTarihi", "durum", "musteriKodu",
+    "defterTercihi", "kayitParaBirimi", "kayitKurlari", "ambalaj", "not", "olusturuldu", "kalemler", "ek", "surum"]);
+const SIPARIS_KALEM_SUTUNLARI = new Set(["id", "urunId", "urunAd", "renk", "beden", "miktar", "karsilanan", "birimFiyat",
+    "paraBirimi", "birim", "planlama", "ambalaj", "rezervasyonlar", "ek", "siparisId", "sira", "surum"]);
 const TABLO_SEMA = {
     urunler: {
         satir: (u) => ({
@@ -3826,6 +3883,7 @@ const TABLO_SEMA = {
             // HARİCİ BARKODLAR (v1.542.0) — kutu/tedarikçi etiketi → renk+beden. Kdv ile aynı kural: alan YALNIZ
             // ürün taşıyorsa gönderilir; `harici-barkod.sql` çalıştırılmadan öteki ürünlerin kaydı etkilenmesin.
             ...("hariciBarkodlar" in u ? { harici_barkodlar: u.hariciBarkodlar || [] } : {}),
+            ...semaDisiAlanlar(u, URUN_SUTUNLARI),
         }),
         cocuklar: [
             {
@@ -3850,7 +3908,7 @@ const TABLO_SEMA = {
                     fis_no: h.fisNo || null, siparis_no: h.siparisNo || null, cari_id: h.cariId || null,
                     uretim_id: h.uretimId || null, siparis_id: h.siparisId || null, kalem_id: h.kalemId || null,
                     rezervasyon_siparis_id: h.rezervasyonSiparisId || null,
-                    fazla_gonderim: !!h.fazlaGonderim, aciklama: h.aciklama || null, ek: {},
+                    fazla_gonderim: !!h.fazlaGonderim, aciklama: h.aciklama || null, ek: semaDisiHam(h, STOK_HAREKET_SUTUNLARI),
                 })),
             },
         ],
@@ -3868,6 +3926,7 @@ const TABLO_SEMA = {
             // E-FATURA ALICI BİLGİLERİ (v1.496.0): vergi dairesi, TC kimlik no (şahıs), il, ilçe — `ek`te,
             // sütun (SQL göçü) gerekmiyor; okuma tarafı `ek`i kök alana açıyor.
             pasif: !!c.pasif, ek: {
+                ...semaDisiHam(c, CARI_SUTUNLARI),
                 ...(c.whatsapp ? { whatsapp: c.whatsapp } : {}), ...(c.eposta ? { eposta: c.eposta } : {}),
                 ...(c.vergiDairesi ? { vergiDairesi: c.vergiDairesi } : {}), ...(c.tckn ? { tckn: c.tckn } : {}),
                 ...(c.il ? { il: c.il } : {}), ...(c.ilce ? { ilce: c.ilce } : {}),
@@ -3895,6 +3954,9 @@ const TABLO_SEMA = {
                     // `esId` de buradan gidiyor: Muhasebe defterindeki Genel/Resmi eşleşmesi yenilemeden
                     // sonra kopuyor, biri silinince diğeri yetim kalıyordu.
                     ek: {
+                        // Elle sayılmayan HER alan (işlem tipi, çek kimliği, peşin bağı…) — v1.546.0. Aşağıdaki açık liste
+                        // aynı alanları null'la tamamlıyor; okuma null'ları zaten atlıyor.
+                        ...semaDisiHam(h, CARI_HAREKET_SUTUNLARI),
                         beden: h.beden ?? null, miktar: h.miktar ?? null, birim: h.birim || null,
                         birimFiyat: h.birimFiyat ?? null, kalemParaBirimi: h.kalemParaBirimi || null,
                         hamBirimFiyat: h.hamBirimFiyat ?? null, kur: h.kur ?? null, kurHedef: h.kurHedef ?? null,
@@ -3947,6 +4009,7 @@ const TABLO_SEMA = {
             // `tarih` kullanıcının girdiği sipariş tarihi, `olusturuldu` kaydın sisteme girdiği an —
             // ikisi farklı sorular.
             ambalaj: s.ambalaj || null, not_metni: s.not || null, olusturuldu: s.olusturuldu || null,
+            ...semaDisiAlanlar(s, SIPARIS_SUTUNLARI),
         }),
         cocuklar: [{
                 tablo: "siparis_kalemleri",
@@ -3960,6 +4023,7 @@ const TABLO_SEMA = {
                     karsilanan: k.karsilanan || 0, fiyat: k.birimFiyat || 0, para_birimi: k.paraBirimi || "TRY",
                     birim: k.birim || null, planlama: k.planlama || null, ambalaj: k.ambalaj || null,
                     rezervasyonlar: k.rezervasyonlar || [], sira: i,
+                    ...semaDisiAlanlar(k, SIPARIS_KALEM_SUTUNLARI),
                 })),
             }],
     },
@@ -3976,6 +4040,7 @@ const TABLO_SEMA = {
             stoga_eklendi_mi: !!o.stogaEklendiMi, hurda_telafisi_mi: !!o.hurdaTelafisiMi,
             hurda_kaynak_uretim_no: o.hurdaKaynakUretimNo || null, not_metni: o.not || null,
             olusturuldu: o.olusturuldu || null,
+            ...semaDisiAlanlar(o, URETIM_SUTUNLARI),
         }),
         cocuklar: [{
                 tablo: "uretim_atamalari",
@@ -3994,6 +4059,7 @@ const TABLO_SEMA = {
                                 tamir_ucret: a.tamirUcret || 0, tamir_hammaddeler: a.tamirHammaddeler || [],
                                 // Parça barkodu: "1001-1", "1001-2". Atölyede okutulan kod bu.
                                 barkod: a.barkod || null,
+                                ...semaDisiAlanlar(a, ATAMA_SUTUNLARI),
                             });
                         });
                     });
@@ -4348,6 +4414,12 @@ function alanAdi(sutun) {
         return OKUMA_ISTISNA[sutun];
     return sutun.replace(/_([a-z])/g, (_, h) => h.toUpperCase());
 }
+// `ek` köke açılır (v1.545.0, 035 `semaDisiAlanlar`): KDV oranı, kalem notları, iptal zamanı… Açılmazsa
+// uygulama `k.kdvOrani` diye bakar, `k.ek.kdvOrani`yi görmez. Sütun değeri ek'tekini ezer (sütun asıl).
+function ekiKokeAc(kayit) {
+    const { ek, ...kalan } = kayit || {};
+    return ek && typeof ek === "object" && !Array.isArray(ek) ? { ...ek, ...kalan } : kalan;
+}
 function kayitaCevir(satir) {
     const k = {};
     Object.entries(satir || {}).forEach(([s, v]) => {
@@ -4429,25 +4501,25 @@ async function supabasedenOku() {
         }),
     }));
     const stok = urunSatir.map((u) => ({
-        ...kayitaCevir(u),
+        ...ekiKokeAc(kayitaCevir(u)),
         variants: (varyantMap.get(u.id) || []).map((v) => ({
             renk: v.renk, renkId: v.renk_id || null, beden: v.beden,
             miktar: stokYuvarla(v.miktar), minStok: v.min_stok || 0,
         })),
-        hareketler: (hareketMap.get(u.id) || []).map(kayitaCevir),
+        hareketler: (hareketMap.get(u.id) || []).map((h) => ekiKokeAc(kayitaCevir(h))),
     }));
     const siparisler = sipSatir.map((s) => ({
-        ...kayitaCevir(s),
-        kalemler: (kalemMap.get(s.id) || []).map(kayitaCevir),
+        ...ekiKokeAc(kayitaCevir(s)),
+        kalemler: (kalemMap.get(s.id) || []).map((k) => ekiKokeAc(kayitaCevir(k))),
     }));
     // Atamalar prosesIlerleme'nin içine GERİ yerleştirilir: uygulama onları orada bekliyor.
     const uretim = uretSatir.map((o) => {
         const atamalar = atamaMap.get(o.id) || [];
         const ilerleme = (o.proses_ilerleme || []).map((p) => ({
             ...p,
-            atamalar: atamalar.filter((a) => a.proses === p.proses).map(kayitaCevir),
+            atamalar: atamalar.filter((a) => a.proses === p.proses).map((a) => ekiKokeAc(kayitaCevir(a))),
         }));
-        return { ...kayitaCevir(o), prosesIlerleme: ilerleme };
+        return { ...ekiKokeAc(kayitaCevir(o)), prosesIlerleme: ilerleme };
     });
     return {
         tanimlar: (tanimSatir[0] && tanimSatir[0].veri) || null,
@@ -8397,6 +8469,58 @@ function useCopKutusu(d) {
 // İPTAL SİLMEZ: fiş geri alınınca defterdeki kayıt `iptal: true` olur ve öyle kalır. Ne olduğu
 // kadar ne geri alındığı da tarihin parçası; silmek "bu hiç olmadı" demek olurdu.
 const FIS_DEFTERI_ANAHTAR = "fisdefter:data";
+// DEFTERDEN EKSİK ALAN ONARIMI (v1.546.0). Şema sütunları açıkça saydığı için cari ve stok hareketinin bazı
+// alanları (cari: işlem tipi, çek kimliği…; stok: birim fiyat, kur, ürün adı…) buluta gitmiyor, buluttan
+// yeniden yüklenen her cihazda kayboluyordu. Fiş defteri ise her fişin hareketlerinin TAM kopyasını tek
+// jsonb'de saklıyor — kaybolan alanlar oradan geri doldurulabilir. KURAL: yalnız hareketTE OLMAYAN alan
+// doldurulur, var olan değere dokunulmaz; BAĞ alanları (esId, siparisId, kalemId, rezervasyonSiparisId,
+// urunId) hiç doldurulmaz — sipariş iptali, ikiz göçü gibi işlemler onları bilerek koparmış olabilir.
+// İptal edilmiş fişin kopyası kullanılmaz. Saf: değişen kayıt yoksa aynı diziler döner.
+const DEFTER_ONARIM_DISI = new Set(["id", "esId", "siparisId", "kalemId", "rezervasyonSiparisId", "urunId", "kaynakTip"]);
+function defterdenEksikAlanlariTamamla(cariler, stok, defter) {
+    const cariKopya = new Map();
+    const stokKopya = new Map();
+    (defter || []).forEach((k) => {
+        if (!k || k.iptal)
+            return;
+        (k.cariHareketleri || []).forEach((h) => { if (h && h.id)
+            cariKopya.set(h.id, h); });
+        (k.stokHareketleri || []).forEach((h) => { if (h && h.id)
+            stokKopya.set(h.id, h); });
+    });
+    let sayi = 0;
+    const tamamla = (h, kopyalar) => {
+        const k = h && h.id ? kopyalar.get(h.id) : null;
+        if (!k)
+            return h;
+        let y = h;
+        Object.keys(k).forEach((alan) => {
+            if (DEFTER_ONARIM_DISI.has(alan) || h[alan] !== undefined || k[alan] === undefined || k[alan] === null)
+                return;
+            if (y === h)
+                y = { ...h };
+            y[alan] = k[alan];
+        });
+        if (y !== h)
+            sayi++;
+        return y;
+    };
+    const listeyiTamamla = (kayitlar, kopyalar) => {
+        let degisti = false;
+        const sonuc = (kayitlar || []).map((x) => {
+            const hs = (x.hareketler || []).map((h) => tamamla(h, kopyalar));
+            if (hs.every((h, i) => h === x.hareketler[i]))
+                return x;
+            degisti = true;
+            return { ...x, hareketler: hs };
+        });
+        return degisti ? sonuc : kayitlar;
+    };
+    const yeniCariler = listeyiTamamla(cariler, cariKopya);
+    const cariSayi = sayi;
+    const yeniStok = listeyiTamamla(stok, stokKopya);
+    return { cariler: yeniCariler, stok: yeniStok, cariSayi, stokSayi: sayi - cariSayi };
+}
 // Fiş kaydını yazma sonuçlarından kurar. `sonuc` = fisYaz çıktısı.
 function fisDefterKaydiKur(fis, sonuc, ek) {
     const stokHareketleri = [];
@@ -12041,10 +12165,10 @@ function useSilmeZincirleri(d) {
     // olur; alım vs. yok olmaz, bağlantısı kalmaz, oluşan stok serbest stoğa düşer."
     //
     // KARAR (kendisi verir — kart, onay ekranı ve eski çağrılar aynı sonuca varsın):
-    //   · Sipariş bir şeye bağlıysa (fiş, planlama, koli, rezervasyon, teslim sayacı) → İPTAL: kayıt
+    //   · Siparişe ait FİŞ GİRİŞİ varsa (stok/cari hareketi, fiş defteri kaydı, teslim sayacı) → İPTAL: kayıt
     //     "İptal" durumunda kalır, bütün bağlar çözülür, hiçbir fişe/miktara/tutara dokunulmaz.
-    //   · Hiçbir şeye bağlı değilse (yanlış açılmış) ya da zaten İptal ise → SİL: listeden çıkar, çöpe gider.
-    //     Zaten iptal edilmiş siparişte kalıntı bağ varsa (eski sürümün bıraktığı) önce o da çözülür.
+    //   · Fiş yoksa ya da zaten İptal ise → SİL: listeden çıkar, çöpe gider. Planlama/koli/rezervasyon gibi bilgi
+    //     bağları varsa SİLMEDE DE çözülür (v1.544.0 — önce bunlar da iptale zorluyordu; bkz. 088 `siparisIslemGormusMu`).
     // Yazmalar beklenir; "iptal edildi" ancak hepsinin sonucu bilinince söylenir.
     const siparisKapat = useCallback(async (siparisId) => {
         const siparis = siparisler.find((s) => s.id === siparisId);
@@ -12062,8 +12186,10 @@ function useSilmeZincirleri(d) {
         const nextSiparisler = sil ? r.siparisler.filter((s) => s.id !== siparisId) : r.siparisler;
         if (sil) {
             copaAt("siparis", `${siparis.tip} ${no}`, siparis, {
-                ozet: `${(siparis.kalemler || []).length} kalem — ${zatenIptal ? "iptal edilmiş" : "işlem görmemiş"}, durum: ${siparis.durum}`,
-                yanEtkiliMi: false,
+                ozet: `${(siparis.kalemler || []).length} kalem — ${zatenIptal ? "iptal edilmiş" : "fiş girişi yok"}, durum: ${siparis.durum}`
+                    + (onizleme.ozet.bagSayisi > 0 ? " · bağları çözüldü (planlama/koli/ayırma)" : ""),
+                // Bağ çözüldüyse geri yükleme onları kurmaz (satışın planlaması boş kalır) — çöp ekranı uyarsın.
+                yanEtkiliMi: onizleme.ozet.bagSayisi > 0,
             });
         }
         const sonuclar = [];
@@ -12360,15 +12486,21 @@ function useCekler(d) {
 // Aynı fonksiyon "önizleme" için de kullanılıyor (`siparisIptalOzeti`): onay penceresinde gösterilen
 // sayılar ile uygulanan işlem tek hesaptan çıkıyor, ikisi birbirinden ayrışamaz.
 const IPTAL_EKI = " (iptal)";
-// Sipariş hâlâ bir şeye bağlı mı? Bağlıysa İPTAL, değilse (yanlış açılmış, hiç işlem görmemiş) SİLME.
-// `siparisBaglariniCoz` ile aynı eşleşmeleri kullanır — önizlemede "boş" deyip iptalde bir şey
-// değiştirmek (ya da tersi) olmasın diye özetten okunuyor.
+// Siparişe ait FİŞ GİRİŞİ var mı? Varsa İPTAL, yoksa SİLME.
+// KURAL DARALDI (v1.544.0 — kullanıcı, satış siparişine bağlı ALS-1007'nin silme onayında: "Alış siparişi satış
+// ile bağlantılı, bunu silmek satışta sadece bilgi değiştirir; şayet alış siparişine ait fiş girişi olsa idi o
+// zaman silinemezdi. Siparişe ait fiş girişlerinde silmeyi iptal et"). v1.512.0'da HER bağ (planlama, satışın
+// planlaması, zincir, koli, rezervasyon) iptale zorluyordu. Oysa o bağlar yalnız BİLGİ: silmede de çözülüyor
+// (`siparisBaglariniCoz` `sil` seçeneğiyle aynı işi yapar; satışın planlaması boşalır, üretim/alış devam eder,
+// koli siparişsiz kalır). İzi korunması gereken tek şey FİŞ: stok/cari hareketi, fiş defteri kaydı ya da teslim
+// sayacı (karşılanan) — fiş siparişin numarasını taşıyor, sipariş kaybolursa "bu fiş nereden doğdu" cevapsız kalır.
+// `siparisBaglariniCoz` özetinden okunuyor: önizleme ile uygulama aynı hesaptan.
 function siparisIslemGormusMu(ozet, siparis) {
     if (!ozet)
         return false;
     const karsilanan = (siparis && siparis.kalemler || []).some((k) => (k.karsilanan || 0) > 0);
-    const planlanmis = (siparis && siparis.kalemler || []).some((k) => k.planlama);
-    return ozet.bagSayisi > 0 || karsilanan || planlanmis;
+    return ozet.stokHareketi > 0 || ozet.cariHareketi > 0 || ozet.defterKaydi > 0
+        || (ozet.fisNolar || []).length > 0 || karsilanan;
 }
 // Hareketin bu siparişe bağlı olup olmadığı. Kimliği olmayan ESKİ hareketlerde numara (bkz. 087'nin
 // eski `hareketAit`i); kimlikli harekette yalnız kimlik — numara yeniden kullanılmış olabilir.
@@ -12966,8 +13098,15 @@ function useAcilisYukleme(d) {
                             catch (e2) { /* faturalar boş başlar */ }
                         }
                         try {
-                            const fSatir = await supabaseTumSatirlar("fis_defteri");
-                            if (fSatir[0] && fSatir[0].veri)
+                            // BEKLEYEN YAZMA VARSA YEREL KAZANIR (v1.545.0): buluta gidemeyen fiş defteri yazması bekliyorsa
+                            // bu cihazdaki kopya esas — diğer tablolardaki kuralın aynısı. Önce bu tablo atlanıyordu: geride
+                            // kalan bulut, yereldeki son fişleri defterden düşürüyordu (kullanıcı, 1 Ekim: "Fiş defteri ·
+                            // Failed to fetch", geçici bağlantı kopması).
+                            const yerelF = bekleyenler[FIS_DEFTERI_ANAHTAR] ? await guvenliOku(FIS_DEFTERI_ANAHTAR, null) : null;
+                            const fSatir = yerelF && yerelF.deger ? [] : await supabaseTumSatirlar("fis_defteri");
+                            if (yerelF && yerelF.deger)
+                                setFisDefteri(JSON.parse(yerelF.deger));
+                            else if (fSatir[0] && fSatir[0].veri)
                                 setFisDefteri(fSatir[0].veri);
                             else {
                                 const okuma = await guvenliOku("fisdefter:data", null);
@@ -14887,9 +15026,37 @@ function AtolyeERP() {
                 degisti = true; return y; });
             return degisti ? { ...k, cariHareketleri: ch } : k;
         });
+        // DEFTERDEN EKSİK ALAN ONARIMI (v1.546.0 — bkz. 077 `defterdenEksikAlanlariTamamla`): buluta gitmeyen hareket
+        // alanları (işlem tipi, birim fiyat…) fiş defterindeki tam kopyadan geri doldurulur; yeni şema (`ek`) artık
+        // onları buluta da taşır. Peşin onarımının SONUCU üzerinden — iki onarım aynı cari listesini ayrı ayrı yazıp
+        // birbirini ezmesin. Kendini sınırlıyor: doldurulan alan bir dahaki açılışta eksik olmaz.
+        // GÜNCEL DEĞER ÜZERİNDEN (fonksiyonlu güncelleme): açılıştaki diğer göçler (görsel ayırma vb.) aynı anda stoğu
+        // değiştiriyor; kapanıştaki eski listeden yazmak onların sonucunu ezerdi (gorsel-depo senaryosu yakaladı).
+        // Peşin onarımı varsa onun setCariler'ı önce uygulanır, bu güncelleme onun üzerine kurulur.
         if (sayi > 0) {
             setCariler(yeniCariler);
             yazimiIzle(tabloYaz("cari:data", "cariler", yeniCariler), "Cari kartları", yeniCariler);
+        }
+        const defterKaynak = sayi > 0 ? yeniDefter : fisDefteri;
+        setCariler((onceki) => {
+            const r = defterdenEksikAlanlariTamamla(onceki, [], defterKaynak);
+            if (r.cariler === onceki)
+                return onceki;
+            yazimiIzle(tabloYaz("cari:data", "cariler", r.cariler), "Cari kartları", r.cariler);
+            gunlukYaz(`Fiş defterinden eksik alan onarımı: ${r.cariSayi} cari hareketi`, "veri", { cari: r.cariSayi });
+            return r.cariler;
+        });
+        setStok((onceki) => {
+            const r = defterdenEksikAlanlariTamamla([], onceki, defterKaynak);
+            if (r.stok === onceki)
+                return onceki;
+            // Yerele GÖRSELSİZ (saveStok kuralı): stok state'i görselleri taşıyor, `stok:items` taşımamalı.
+            const yerelStok = gorselleriAyir(r.stok).stok;
+            yazimiIzle(tabloYaz("stok:items", "urunler", r.stok, yerelStok), "Stok kartları", yerelStok);
+            gunlukYaz(`Fiş defterinden eksik alan onarımı: ${r.stokSayi} stok hareketi`, "veri", { stok: r.stokSayi });
+            return r.stok;
+        });
+        if (sayi > 0) {
             setFisDefteri(yeniDefter);
             yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeniDefter), "Fiş defteri", yeniDefter);
             gunlukYaz(`Peşin ödeme yönü onarıldı: ${sayi} alış peşin kaydı (tedarikçi borcu iki kat görünüyordu)`, "cari", { sayi });
@@ -14960,11 +15127,14 @@ function AtolyeERP() {
             isler.push(tekilYaz("mesaj:data", "mesajlar", mesajlar));
         if (d["fatura:data"])
             isler.push(tekilYaz("fatura:data", "faturalar", faturalar));
+        // Fiş defteri bu listede YOKTU (v1.545.0): "Yeniden dene" onu hiç göndermiyor, uyarı ancak bir sonraki fişte kalkıyordu.
+        if (d[FIS_DEFTERI_ANAHTAR])
+            isler.push(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", fisDefteri));
         await Promise.all(isler.map((p2) => Promise.resolve(p2).catch(() => { })));
         const kalan = Object.keys(bekleyenYazmalariOku()).length;
         if (!sessiz || kalan === 0)
             showToast(kalan === 0 ? "Bekleyen kayıtların hepsi buluta gönderildi" : `${kalan} tablo hâlâ gönderilemedi — "Hata" düğmesinden sebebini okuyun`);
-    }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
+    }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, fisDefteri, showToast]);
     // Bağlantı gelince ve açılıştan kısa süre sonra kendiliğinden dene.
     // Kendiliğinden deneme: bağlantı geri gelince ve dakikada bir — SESSİZ (toast yok), yalnız
     // başarı bildirilir. Her açılışta hemen denemek, ağ yokken sürekli hata üretirdi.
@@ -46975,6 +47145,23 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 const liste = [siparis, ...(tumSiparisler || []).filter((s) => s.id !== siparis.id)];
                 const oz = siparisIptalOzeti({ stok, cariler, siparisler: liste, uretim: uretimSiparisleri, koliler, stokRezervasyonlari }, siparis.id);
                 const iptal = siparis.durum !== "İptal" && siparisIslemGormusMu(oz, siparis);
+                // Bilgi bağları (v1.544.0): iptalde de silmede de çözülür; ikisinde de gösterilsin.
+                const bilgiBaglari = (m) => (React.createElement(React.Fragment, null,
+                    oz.alislar.length > 0 && m("Alış siparişleri", React.createElement(React.Fragment, null,
+                        React.createElement("b", { className: "mono" }, oz.alislar.map((x) => x.siparisNo).join(", ")),
+                        " \u2014 devam eder; gelen mal serbest sto\u011Fa girer")),
+                    oz.uretimler.length > 0 && m("Üretimler", React.createElement(React.Fragment, null,
+                        React.createElement("b", { className: "mono" }, oz.uretimler.map((x) => x.siparisNo).join(", ")),
+                        " \u2014 devam eder; \u00FCretilen mal serbest sto\u011Fa girer")),
+                    oz.koliler.length > 0 && m("Koliler", React.createElement(React.Fragment, null,
+                        oz.koliler.length,
+                        " koli sipari\u015Fsiz kal\u0131r, i\u00E7indeki mal serbest say\u0131l\u0131r")),
+                    oz.rezervasyonMiktari > 0 && m("Ayrılmış malzeme", React.createElement(React.Fragment, null,
+                        oz.rezervasyonMiktari,
+                        " birim ayr\u0131lm\u0131\u015Fl\u0131ktan \u00E7\u0131kar (serbest stok)")),
+                    oz.planlamasiBosalan.length > 0 && m("Satış siparişleri", React.createElement(React.Fragment, null,
+                        React.createElement("b", { className: "mono" }, oz.planlamasiBosalan.join(", ")),
+                        " \u2014 bu al\u0131\u015Fa ba\u011Fl\u0131 planlamas\u0131 bo\u015Fal\u0131r, yeniden planlanabilir"))));
                 const madde = (baslik, icerik) => (React.createElement("div", { style: { display: "flex", gap: 6, fontSize: 12, lineHeight: 1.45 } },
                     React.createElement("span", { style: { color: "var(--erp-text-2)", minWidth: 118, flexShrink: 0 } }, baslik),
                     React.createElement("span", null, icerik)));
@@ -46982,29 +47169,17 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                     iptal ? (React.createElement(React.Fragment, null,
                         React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 4 } },
                             siparis.siparisNo,
-                            " i\u015Flem g\u00F6rm\u00FC\u015F \u2014 silinmez, \u0130PTAL edilir"),
+                            " fi\u015F giri\u015Fi var \u2014 silinmez, \u0130PTAL edilir"),
                         React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 8 } }, "Sipari\u015F \"\u0130ptal\" durumunda kal\u0131r. Hi\u00E7bir fi\u015F, stok miktar\u0131 ya da cari tutar\u0131 de\u011Fi\u015Fmez; yaln\u0131z sipari\u015Fle ba\u011Flar kopar."),
                         React.createElement("div", { style: { display: "grid", gap: 3, marginBottom: 8 } },
                             oz.fisNolar.length > 0 && madde("Fişler", React.createElement(React.Fragment, null,
                                 React.createElement("b", { className: "mono" }, oz.fisNolar.join(", ")),
                                 " \u2014 ba\u011F\u0131ms\u0131z fi\u015F olarak kal\u0131r")),
-                            oz.alislar.length > 0 && madde("Alış siparişleri", React.createElement(React.Fragment, null,
-                                React.createElement("b", { className: "mono" }, oz.alislar.map((x) => x.siparisNo).join(", ")),
-                                " \u2014 devam eder; gelen mal serbest sto\u011Fa girer")),
-                            oz.uretimler.length > 0 && madde("Üretimler", React.createElement(React.Fragment, null,
-                                React.createElement("b", { className: "mono" }, oz.uretimler.map((x) => x.siparisNo).join(", ")),
-                                " \u2014 devam eder; \u00FCretilen mal serbest sto\u011Fa girer")),
-                            oz.koliler.length > 0 && madde("Koliler", React.createElement(React.Fragment, null,
-                                oz.koliler.length,
-                                " koli sipari\u015Fsiz kal\u0131r, i\u00E7indeki mal serbest say\u0131l\u0131r")),
-                            oz.rezervasyonMiktari > 0 && madde("Ayrılmış malzeme", React.createElement(React.Fragment, null,
-                                oz.rezervasyonMiktari,
-                                " birim ayr\u0131lm\u0131\u015Fl\u0131ktan \u00E7\u0131kar (serbest stok)")),
-                            oz.planlamasiBosalan.length > 0 && madde("Satış siparişleri", React.createElement(React.Fragment, null,
-                                React.createElement("b", { className: "mono" }, oz.planlamasiBosalan.join(", ")),
-                                " \u2014 bu al\u0131\u015Fa ba\u011Fl\u0131 planlamas\u0131 bo\u015Fal\u0131r, yeniden planlanabilir"))))) : (React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 8 } }, siparis.durum === "İptal"
-                        ? "Bu iptal edilmiş siparişi silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"
-                        : "Bu sipariş hiç işlem görmemiş. Silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)")),
+                            bilgiBaglari(madde)))) : (React.createElement(React.Fragment, null,
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: oz && oz.bagSayisi > 0 ? 4 : 8 } }, siparis.durum === "İptal"
+                            ? "Bu iptal edilmiş siparişi silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"
+                            : "Bu siparişin fiş girişi yok. Silmek istediğinize emin misiniz? (Çöp Kutusu'ndan geri alınabilir)"),
+                        oz && oz.bagSayisi > 0 && (React.createElement("div", { "data-silme-baglari": "1", style: { display: "grid", gap: 3, marginBottom: 8 } }, bilgiBaglari(madde))))),
                     React.createElement("div", { style: { display: "flex", gap: 8 } },
                         React.createElement("button", { className: "btn-primary", style: { padding: "6px 12px", fontSize: 12 }, onClick: () => { onSil(siparis.id); setSiparisSilOnayGoster(false); } }, iptal ? "Evet, İptal Et" : "Evet, Sil"),
                         React.createElement("button", { className: "btn-ghost", style: { padding: "6px 12px", fontSize: 12 }, onClick: () => setSiparisSilOnayGoster(false) }, "Vazge\u00E7"))));
@@ -50630,7 +50805,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.543.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.546.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
