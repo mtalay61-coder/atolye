@@ -217,8 +217,14 @@ useEffect(() => {
           }
 
           try {
-            const fSatir = await supabaseTumSatirlar("fis_defteri");
-            if (fSatir[0] && fSatir[0].veri) setFisDefteri(fSatir[0].veri);
+            // BEKLEYEN YAZMA VARSA YEREL KAZANIR (v1.545.0): buluta gidemeyen fiş defteri yazması bekliyorsa
+            // bu cihazdaki kopya esas — diğer tablolardaki kuralın aynısı. Önce bu tablo atlanıyordu: geride
+            // kalan bulut, yereldeki son fişleri defterden düşürüyordu (kullanıcı, 1 Ekim: "Fiş defteri ·
+            // Failed to fetch", geçici bağlantı kopması).
+            const yerelF = bekleyenler[FIS_DEFTERI_ANAHTAR] ? await guvenliOku(FIS_DEFTERI_ANAHTAR, null) : null;
+            const fSatir = yerelF && yerelF.deger ? [] : await supabaseTumSatirlar("fis_defteri");
+            if (yerelF && yerelF.deger) setFisDefteri(JSON.parse(yerelF.deger));
+            else if (fSatir[0] && fSatir[0].veri) setFisDefteri(fSatir[0].veri);
             else {
               const okuma = await guvenliOku("fisdefter:data", null);
               if (okuma.deger) setFisDefteri(JSON.parse(okuma.deger));

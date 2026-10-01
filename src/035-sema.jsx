@@ -18,6 +18,27 @@
 //
 // Alt kayıtlar da fark hesabına girer: 500 hareketi olan bir üründe tek hareket eklendiğinde
 // yalnızca o satır yazılır, 500'ü birden değil.
+// ŞEMA DIŞI ALANLAR → `ek` (v1.545.0). Sütunları açıkça sayan şema, sayılmayan alanı SESSİZCE düşürüyordu
+// (bu projede üçüncü kez: sipariş kaleminin KDV oranı ve notları, siparişin iptal zamanı/eden, rezervasyon
+// zinciri buluta hiç gitmiyordu — başka cihazda ve yeniden açılışta kayboluyordu). Artık siparişte ve kalemde
+// sütunu olmayan HER alan `ek` jsonb'ye gider; okuma tarafı (045) köke açar. Yeni alan eklemek şema
+// değişikliği istemez. `ek` yalnız doluysa gönderilir: `siparis-ek.sql` çalıştırılmadan ek'siz kayıtlar
+// etkilenmesin.
+function semaDisiAlanlar(kayit, bilinenler) {
+  const ek = {};
+  Object.keys(kayit || {}).forEach((k) => {
+    if (bilinenler.has(k)) return;
+    const v = kayit[k];
+    if (v === undefined || typeof v === "function") return;
+    ek[k] = v;
+  });
+  return Object.keys(ek).length ? { ek } : {};
+}
+const SIPARIS_SUTUNLARI = new Set(["id", "siparisNo", "tip", "cariId", "tarih", "teslimTarihi", "durum", "musteriKodu",
+  "defterTercihi", "kayitParaBirimi", "kayitKurlari", "ambalaj", "not", "olusturuldu", "kalemler", "ek", "surum"]);
+const SIPARIS_KALEM_SUTUNLARI = new Set(["id", "urunId", "urunAd", "renk", "beden", "miktar", "karsilanan", "birimFiyat",
+  "paraBirimi", "birim", "planlama", "ambalaj", "rezervasyonlar", "ek", "siparisId", "sira", "surum"]);
+
 const TABLO_SEMA = {
   urunler: {
     satir: (u) => ({
@@ -185,6 +206,7 @@ const TABLO_SEMA = {
       // `tarih` kullanıcının girdiği sipariş tarihi, `olusturuldu` kaydın sisteme girdiği an —
       // ikisi farklı sorular.
       ambalaj: s.ambalaj || null, not_metni: s.not || null, olusturuldu: s.olusturuldu || null,
+      ...semaDisiAlanlar(s, SIPARIS_SUTUNLARI),
     }),
     cocuklar: [{
       tablo: "siparis_kalemleri",
@@ -198,6 +220,7 @@ const TABLO_SEMA = {
         karsilanan: k.karsilanan || 0, fiyat: k.birimFiyat || 0, para_birimi: k.paraBirimi || "TRY",
         birim: k.birim || null, planlama: k.planlama || null, ambalaj: k.ambalaj || null,
         rezervasyonlar: k.rezervasyonlar || [], sira: i,
+        ...semaDisiAlanlar(k, SIPARIS_KALEM_SUTUNLARI),
       })),
     }],
   },
