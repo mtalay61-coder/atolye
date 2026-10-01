@@ -21,7 +21,7 @@ satirlar.forEach((sat, i) => {
   const no = i + 1;
   // Katman gövdesi: tabloYaz ve tekilYaz tanımlarının içi.
   const cevre = satirlar.slice(Math.max(0, i - 6), i + 1).join("\n");
-  if (/function (tabloYaz|tekilYaz|fisDefteriYaz)\b/.test(cevre)) return; // fisDefteriYaz: fiş başına satır (v1.545.0)
+  if (/function (tabloYaz|tekilYaz)\b/.test(cevre)) return;
   if (MUAF_ANAHTAR.test(sat)) return; // yalnızca bu bilgisayara ait yerel tercih
   // GEREKÇELİ MUAFİYET. Projenin kuralı: bir denetim konulduğunda muafiyet sessizce geçilemez,
   // gerekçesiyle etiketlenir (bkz. matris-muaf, fis-muaf, kirpma-muaf). Anahtar adına dayalı

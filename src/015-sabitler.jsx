@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.544.0";
-const SURUM_TARIHI = "2026-09-30";
-const SURUM_NOTU = "Siparis yalniz fis girisi varsa iptal edilir; planlama/koli gibi bilgi baglarinda silinebilir (baglar cozulur)";
+const SURUM = "1.545.0";
+const SURUM_TARIHI = "2026-10-01";
+const SURUM_NOTU = "Fis defteri Yeniden dene ile gonderiliyor; siparis kaleminin KDV ve notlari buluta gidiyor (siparis-ek.sql)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis yalniz fis girisi varsa iptal edilir; planlama/koli 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.545.0", tarih: "01.10.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["\"Yeniden dene\" fiş defterini göndermiyordu; buluta gidemeyen fiş defteri uyarısı ancak bir sonraki fişte kalkıyordu", "Fiş defteri gönderilemediyse açılışta buluttaki eski defter bu cihazdaki güncel defterin üstüne yazılıyordu (son fişler defterden düşebiliyordu)", "Sipariş kaleminin KDV oranı ve notları, siparişin iptal zamanı ve iptal eden buluta gitmiyordu; başka cihazda ve yeniden açılışta kayboluyordu (Supabase'de siparis-ek.sql çalıştırılmalı)"] },
   { surum: "1.544.0", tarih: "30.09.2026",
     eklenen: ["Silme onayında siparişin çözülecek bağları (satış planlaması, üretim, alış, koli, ayrılmış malzeme) listeleniyor"],
     degisen: ["Sipariş yalnız FİŞ GİRİŞİ varsa (stok/cari hareketi, fiş kaydı, teslim) silinmez, iptal edilir; satışa bağlı alış siparişi, planlanmış satış siparişi gibi yalnız bilgi bağı olan sipariş silinebilir — bağlar silmede de çözülür"],

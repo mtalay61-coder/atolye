@@ -51,6 +51,13 @@ function alanAdi(sutun) {
   if (OKUMA_ISTISNA[sutun]) return OKUMA_ISTISNA[sutun];
   return sutun.replace(/_([a-z])/g, (_, h) => h.toUpperCase());
 }
+// `ek` köke açılır (v1.545.0, 035 `semaDisiAlanlar`): KDV oranı, kalem notları, iptal zamanı… Açılmazsa
+// uygulama `k.kdvOrani` diye bakar, `k.ek.kdvOrani`yi görmez. Sütun değeri ek'tekini ezer (sütun asıl).
+function ekiKokeAc(kayit) {
+  const { ek, ...kalan } = kayit || {};
+  return ek && typeof ek === "object" && !Array.isArray(ek) ? { ...ek, ...kalan } : kalan;
+}
+
 function kayitaCevir(satir) {
   const k = {};
   Object.entries(satir || {}).forEach(([s, v]) => {
@@ -147,8 +154,8 @@ async function supabasedenOku() {
   }));
 
   const siparisler = sipSatir.map((s) => ({
-    ...kayitaCevir(s),
-    kalemler: (kalemMap.get(s.id) || []).map(kayitaCevir),
+    ...ekiKokeAc(kayitaCevir(s)),
+    kalemler: (kalemMap.get(s.id) || []).map((k) => ekiKokeAc(kayitaCevir(k))),
   }));
 
   // Atamalar prosesIlerleme'nin içine GERİ yerleştirilir: uygulama onları orada bekliyor.
