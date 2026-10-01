@@ -217,8 +217,14 @@ useEffect(() => {
           }
 
           try {
+            // FİŞ BAŞINA SATIR (v1.545.0): satırlar (ve eski "tekil" satır) birleştirilir. Bulutta gidemeyen
+            // fiş defteri yazması bekliyorsa YEREL kazanır — diğer tablolardaki kuralın aynısı; önce bu tablo
+            // atlanıyordu ve geride kalan bulut, yereldeki son fişleri bellekten düşürüyordu.
             const fSatir = await supabaseTumSatirlar("fis_defteri");
-            if (fSatir[0] && fSatir[0].veri) setFisDefteri(fSatir[0].veri);
+            const bulutDefter = fisDefteriSatirlardanKur(fSatir);
+            const yerelF = bekleyenler[FIS_DEFTERI_ANAHTAR] ? await guvenliOku(FIS_DEFTERI_ANAHTAR, null) : null;
+            if (yerelF && yerelF.deger) setFisDefteri(JSON.parse(yerelF.deger));
+            else if (fSatir.length) setFisDefteri(bulutDefter);
             else {
               const okuma = await guvenliOku("fisdefter:data", null);
               if (okuma.deger) setFisDefteri(JSON.parse(okuma.deger));

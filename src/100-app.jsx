@@ -324,7 +324,7 @@ export default function AtolyeERP() {
         kullanici: (aktifKullanici && aktifKullanici.ad) || "",
       });
       if (yeni === onceki) return onceki;
-      yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeni), "Fiş defteri", yeni);
+      yazimiIzle(fisDefteriYaz(yeni), "Fiş defteri", yeni);
       return yeni;
     });
   }, [defterTetik]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -674,7 +674,7 @@ export default function AtolyeERP() {
       setCariler(yeniCariler);
       yazimiIzle(tabloYaz("cari:data", "cariler", yeniCariler), "Cari kartları", yeniCariler);
       setFisDefteri(yeniDefter);
-      yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeniDefter), "Fiş defteri", yeniDefter);
+      yazimiIzle(fisDefteriYaz(yeniDefter), "Fiş defteri", yeniDefter);
       gunlukYaz(`Peşin ödeme yönü onarıldı: ${sayi} alış peşin kaydı (tedarikçi borcu iki kat görünüyordu)`, "cari", { sayi });
       setTimeout(() => showToast(`${sayi} peşin ödeme kaydı düzeltildi — tedarikçi bakiyeleri artık doğru`), 1800);
     }
@@ -730,10 +730,12 @@ export default function AtolyeERP() {
     if (d["gorev:data"]) isler.push(tekilYaz("gorev:data", "gorevler", gorevler));
     if (d["mesaj:data"]) isler.push(tekilYaz("mesaj:data", "mesajlar", mesajlar));
     if (d["fatura:data"]) isler.push(tekilYaz("fatura:data", "faturalar", faturalar));
+    // Fiş defteri bu listede YOKTU (v1.545.0): "Yeniden dene" onu hiç göndermiyor, uyarı hiç kalkmıyordu.
+    if (d[FIS_DEFTERI_ANAHTAR]) isler.push(fisDefteriYaz(fisDefteri));
     await Promise.all(isler.map((p2) => Promise.resolve(p2).catch(() => {})));
     const kalan = Object.keys(bekleyenYazmalariOku()).length;
     if (!sessiz || kalan === 0) showToast(kalan === 0 ? "Bekleyen kayıtların hepsi buluta gönderildi" : `${kalan} tablo hâlâ gönderilemedi — "Hata" düğmesinden sebebini okuyun`);
-  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
+  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, fisDefteri, showToast]);
   // Bağlantı gelince ve açılıştan kısa süre sonra kendiliğinden dene.
   // Kendiliğinden deneme: bağlantı geri gelince ve dakikada bir — SESSİZ (toast yok), yalnız
   // başarı bildirilir. Her açılışta hemen denemek, ağ yokken sürekli hata üretirdi.

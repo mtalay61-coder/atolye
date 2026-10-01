@@ -31,7 +31,7 @@ const kayitEkleVeYaz = useCallback(async (kayit) => {
   defterRef.current = next;
   setFisDefteri((onceki) => [kayit, ...(onceki || []).filter((k) => k !== kayit)]);
   try {
-    await tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", next);
+    await fisDefteriYaz(next);
     return true;
   } catch (e) {
     // Yerel yazma da başarısızsa (depo dolu) işlem gerçekten yapılamaz. Geri alınan yalnız BU kayıt:
@@ -41,7 +41,7 @@ const kayitEkleVeYaz = useCallback(async (kayit) => {
     // Bekleme sırasında başka bir yazma (başka fiş, iptal) bu kaydı İÇEREN tam defteri depoya
     // yazmış olabilir: yan etkileri hiç uygulanmamış bir fiş defterde kalırdı. Geri alınmış hâl
     // yazılır; depo tümden bozuksa bu da düşer ve hata zaten bildirildi.
-    yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", defterRef.current), "Fiş defteri", defterRef.current);
+    yazimiIzle(fisDefteriYaz(defterRef.current), "Fiş defteri", defterRef.current);
     kaydetmeHatasiBildir(e, "Fiş defteri", next);
     showToast("Fiş kaydedilemedi — hiçbir değişiklik yapılmadı");
     return false;
@@ -77,7 +77,7 @@ const fisDefterindeIptal = useCallback((fisNo) => {
   const iptalZamani = (defter.find((x) => x.fisNo === fisNo && x.iptal) || {}).iptalZamani;
   setFisDefteri((onceki) => (onceki || []).map((x) =>
     (x.fisNo === fisNo && !x.iptal ? { ...x, iptal: true, iptalZamani } : x)));
-  yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", defter), "Fiş defteri", defter);
+  yazimiIzle(fisDefteriYaz(defter), "Fiş defteri", defter);
 }, []);
 
 // Defterin tamamına bir dönüşüm uygular (sipariş iptalinde fişlerin sipariş bağı çözülürken, v1.512.0).
@@ -88,7 +88,7 @@ const fisDefteriniDonustur = useCallback((donustur) => {
   if (!sonra || sonra === once) return Promise.resolve({ ok: true });
   defterRef.current = sonra;
   setFisDefteri(() => sonra);
-  return yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", sonra), "Fiş defteri", sonra);
+  return yazimiIzle(fisDefteriYaz(sonra), "Fiş defteri", sonra);
 }, []);
 
   return { fisDefterineKayitYaz, fisDefterineYaz, fisDefterindeIptal, fisDefteriniDonustur };

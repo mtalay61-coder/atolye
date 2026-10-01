@@ -25,7 +25,7 @@ const borclar = [];
 // Bilinçli bir istisna gerekirse satıra `sonuc-muaf: <gerekçe>` yazılır.
 satirlar.forEach((sat, i) => {
   if (/^\s*\/\//.test(sat)) return;
-  if (!/(tabloYaz|tekilYaz)\([^;]*\)\s*\.catch\(\s*\(\s*\w*\s*\)\s*=>\s*\{\s*\}\s*\)/.test(sat)) return;
+  if (!/(tabloYaz|tekilYaz|fisDefteriYaz)\([^;]*\)\s*\.catch\(\s*\(\s*\w*\s*\)\s*=>\s*\{\s*\}\s*\)/.test(sat)) return;
   if (/sonuc-muaf:\s*\S/.test(sat)) return;
   bulgular.push(`${dosya}:${i + 1}  yazma sonucu yutuluyor (yerel hata sessiz kalır): ${sat.trim().slice(0, 60)} — ` +
     "`yazimiIzle(…, etiket, veri)` kullanın");

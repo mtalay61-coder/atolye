@@ -386,6 +386,110 @@ function bekleyenYazmaSil(anahtar) {
   } catch (e) { /* */ }
 }
 
+// ================= FİŞ DEFTERİ — FİŞ BAŞINA SATIR (v1.545.0) =================
+//
+// Kullanıcı (1 Ekim, ekran: "Fiş defteri · 2 deneme · Failed to fetch", "Yeniden dene"ye basınca kaybolmuyor;
+// cari telefonu değişiyor ve başka cihazda görünüyor). TEŞHİS: yalnız fiş defteri gidemiyordu. Defter bulutta
+// TEK satırdı (`id: "tekil"`, `veri`: bütün fişler) ve HER fişte bütün defter baştan gönderiliyordu; fiş sayısı
+// arttıkça istek büyüdü, Supabase büyük gövdede bağlantıyı kesiyor → tarayıcı "Failed to fetch".
+// ÇÖZÜM: her fiş kendi satırında (`id`: fişin satır kimliği, `veri`: kayıt). Bulutta ne olduğu
+// `_fisDefteriBulut`ta (satır kimliği → JSON) tutuluyor; yazmada YALNIZ değişen/yeni satırlar gidiyor, o da
+// ~250 KB'lık parçalar hâlinde. Defterden çıkan satır (nadiren: başarısız fişin geri alınması) siliniyor.
+// GEÇİŞ: eski "tekil" satır okunurken açılıyor; ilk başarılı tam yüklemeden sonra siliniyor. Okuyucu ikisini
+// birleştirir (tekil satırdaki kayıt, aynı kimlikli tek satırla ezilir) — geçiş yarıda kalsa da defter tam.
+// Tabloda şema değişikliği YOK (id text, veri jsonb) — SQL gerekmiyor.
+const _fisDefteriBulut = new Map();
+let _fisDefteriTekilVar = false;
+let _fisDefteriKuyruk = Promise.resolve();
+const FIS_DEFTERI_PARCA = 250000;
+
+// Satır kimlikleri: kaydın `id`si (fiş no). Aynı numara iptalden sonra yeniden kesildiyse ikinci kayıt
+// `~2` ekiyle — sıra kaydın zamanına göre, böylece her cihazda aynı kimlik çıkar.
+function fisDefteriSatirKimlikleri(defter) {
+  const gruplar = new Map();
+  (defter || []).forEach((k, i) => {
+    if (!k) return;
+    const taban = String(k.id || k.fisNo || `kayit-${i}`);
+    if (!gruplar.has(taban)) gruplar.set(taban, []);
+    gruplar.get(taban).push({ k, i });
+  });
+  const kimlik = new Array((defter || []).length);
+  gruplar.forEach((liste, taban) => {
+    liste.sort((a, b) => String(a.k.zaman || "").localeCompare(String(b.k.zaman || "")) || a.i - b.i);
+    liste.forEach((x, n) => { kimlik[x.i] = n === 0 ? taban : `${taban}~${n + 1}`; });
+  });
+  return kimlik;
+}
+
+// Buluttan gelen satırlardan defteri kurar (eski "tekil" satırı da açar). Bulut durumu hafızaya alınır.
+function fisDefteriSatirlardanKur(satirlar) {
+  _fisDefteriBulut.clear();
+  _fisDefteriTekilVar = false;
+  const kayitlar = new Map();
+  const tekil = (satirlar || []).find((r) => r && r.id === "tekil");
+  if (tekil && Array.isArray(tekil.veri)) {
+    _fisDefteriTekilVar = true;
+    const kim = fisDefteriSatirKimlikleri(tekil.veri);
+    tekil.veri.forEach((k, i) => { if (k) kayitlar.set(kim[i], k); });
+  }
+  (satirlar || []).forEach((r) => {
+    if (!r || r.id === "tekil" || !r.veri || typeof r.veri !== "object" || Array.isArray(r.veri)) return;
+    kayitlar.set(r.id, r.veri);
+    _fisDefteriBulut.set(r.id, JSON.stringify(r.veri));
+  });
+  // Defter en yeni başta tutuluyor (yeni kayıt dizinin başına ekleniyor).
+  return [...kayitlar.values()].sort((a, b) => String(b.zaman || "").localeCompare(String(a.zaman || "")));
+}
+
+function fisDefteriYaz(defter) {
+  const yerel = guvenliYaz(FIS_DEFTERI_ANAHTAR, JSON.stringify(defter), true);
+  if (!supabaseAcikMi()) return yerel;
+  // SIRAYLA: iki yazma aynı anda farkı hesaplarsa biri ötekinin henüz gitmemiş satırını "bulutta yok" sanıp
+  // geri alınmış bir kaydı bırakabilirdi. Her yazma bir öncekinin bitmesini bekler (hatası olsa da).
+  const bulut = (_fisDefteriKuyruk = _fisDefteriKuyruk.catch(() => {}).then(async () => {
+    const kim = fisDefteriSatirKimlikleri(defter);
+    const simdiki = new Map();
+    (defter || []).forEach((k, i) => { if (k) simdiki.set(kim[i], JSON.stringify(k)); });
+    const degisen = [...simdiki.entries()].filter(([id, j]) => _fisDefteriBulut.get(id) !== j);
+    // Parçalar: her istek ~250 KB'ı geçmesin.
+    let parca = [], boyut = 0;
+    const gonder = async () => {
+      if (!parca.length) return;
+      const giden = parca; parca = []; boyut = 0;
+      await supabaseIstek("fis_defteri", {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: `[${giden.map(([id, j]) => `{"id":${JSON.stringify(id)},"veri":${j}}`).join(",")}]`,
+      });
+      giden.forEach(([id, j]) => _fisDefteriBulut.set(id, j));
+    };
+    for (const satir of degisen) {
+      if (boyut + satir[1].length > FIS_DEFTERI_PARCA && parca.length) await gonder();
+      parca.push(satir); boyut += satir[1].length;
+    }
+    await gonder();
+    const silinecek = [..._fisDefteriBulut.keys()].filter((id) => !simdiki.has(id));
+    for (let i = 0; i < silinecek.length; i += 100) {
+      const grup = silinecek.slice(i, i + 100);
+      await supabaseIstek(`fis_defteri?id=in.(${grup.map((x) => encodeURIComponent(`"${x.replace(/"/g, "")}"`)).join(",")})`, { method: "DELETE" });
+      grup.forEach((id) => _fisDefteriBulut.delete(id));
+    }
+    // Eski tek satır: bütün kayıtlar kendi satırına geçtikten SONRA silinir.
+    if (_fisDefteriTekilVar) {
+      await supabaseIstek("fis_defteri?id=eq.tekil", { method: "DELETE" });
+      _fisDefteriTekilVar = false;
+    }
+    bekleyenYazmaSil(FIS_DEFTERI_ANAHTAR);
+  })).catch((e) => {
+    console.error("Supabase yazma hatası:", "fis_defteri", e);
+    bekleyenYazmaEkle(FIS_DEFTERI_ANAHTAR, "fis_defteri", e && e.message);
+    if (typeof window !== "undefined" && window.__supabaseHataBildir) {
+      window.__supabaseHataBildir("fis_defteri", String(e && e.message || e));
+    }
+  });
+  return Promise.all([yerel, bulut]).then(() => yerel);
+}
+
 function tekilYaz(anahtar, tablo, veri) {
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
