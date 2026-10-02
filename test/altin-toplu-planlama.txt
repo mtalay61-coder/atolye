@@ -1,4 +1,9 @@
 {
+ "acilirBolum": {
+  "basta": false,
+  "dokununca": true,
+  "tekrarDokununca": false
+ },
  "alisNolariFarkli": true,
  "alisSonucu": {
   "sayi": "2",

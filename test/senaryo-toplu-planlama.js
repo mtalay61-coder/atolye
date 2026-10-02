@@ -35,8 +35,17 @@ async function calistir(ekranGoruntusu) {
   await sayfa.waitForTimeout(400);
   await sayfa.locator('[data-siparis-tam-ekran="SAT-T1"]').first().click();
   await sayfa.waitForTimeout(800);
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Tedarik Planlama/.test(x.textContent) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
-  await sayfa.waitForTimeout(500);
+  // AÇILIR BÖLÜM (v1.547.0): kart açılınca Tedarik Planlama KAPALI; dokununca açılır, tekrar dokununca kapanır.
+  const planlamaGorunur = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-planlama-tumunu-sec]")].some((x) => x.getBoundingClientRect().width > 0));
+  const bolumDugmesi = async () => { await sayfa.locator('[data-kart-bolum="planlama"]:visible').first().click(); await sayfa.waitForTimeout(400); };
+  const acilir = { basta: await planlamaGorunur() };
+  if (process.env.EKRAN_KAPALI) await sayfa.screenshot({ path: process.env.EKRAN_KAPALI });
+  await bolumDugmesi();
+  acilir.dokununca = await planlamaGorunur();
+  await bolumDugmesi();
+  acilir.tekrarDokununca = await planlamaGorunur();
+  await bolumDugmesi();
+  if (process.env.EKRAN_ACIK) await sayfa.screenshot({ path: process.env.EKRAN_ACIK });
 
   const kutular = await sayfa.evaluate(() => [...document.querySelectorAll("[data-planlama-satir-sec]")].filter((x) => x.getBoundingClientRect().width > 0).map((x) => x.getAttribute("data-planlama-satir-sec")));
   await sayfa.locator("[data-planlama-tumunu-sec] input:visible").first().check();
@@ -77,6 +86,7 @@ async function calistir(ekranGoruntusu) {
   const alislar = siparisler.filter((s) => s.tip === "Alış" && (s.not || "").includes("SAT-T1"));
   const yeniUretimler = uretimler.filter((u) => (u.not || "").includes("SAT-T1"));
   return {
+    acilirBolum: acilir,
     hatalar, kutular, tumuSecilince, uretimSonucu, alisSonucu,
     uretimler: yeniUretimler.map((u) => `${u.model} ${u.renk}: ${(u.bedenMiktarlari || []).map((b) => `${b.beden}:${b.miktar}`).join(" ")}`).sort(),
     uretimNolariFarkli: new Set(yeniUretimler.map((u) => u.siparisNo)).size === yeniUretimler.length,

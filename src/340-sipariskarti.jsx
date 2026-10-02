@@ -118,7 +118,10 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   const [siparisSilOnayGoster, setSiparisSilOnayGoster] = useState(false);
   // Kart içi sekme: "kalemler" | "rezervasyon". Rezervasyon bilgisi kalemlerin arasına sıkışmak
   // yerine kendi sekmesinde durur — kalem listesi uzunken görünmez hale geliyordu.
-  const [kartSekme, setKartSekme] = useState("kalemler");
+  // AÇILIR (v1.547.0 — kullanıcı: "Tedarik planlamayı komple yap, satırlar değil; tedarik planlamaya tıklayınca
+  // hepsini göster"). Kart açılınca hiçbir bölüm açık değil (null); düğmeye dokununca açılır, aynı düğmeye tekrar
+  // dokununca kapanır. Önce ilk sekme (Tedarik Planlama) hep açık geliyordu ve 59 satırlık tablo kartı kaplıyordu.
+  const [kartSekme, setKartSekme] = useState(null);
   const cari = cariler.find((c) => c.id === siparis.cariId);
   // Kalemlerin, para birimine göre gruplu toplamı — hem başlıktaki toplam hesaplaması hem de aşağıdaki
   // "Fiş toplamını çevir" paneli için ortak kullanılır.
@@ -931,9 +934,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             }
             if (sekmeler.length === 0) return null;
 
-            // Açık sekme, mevcut sekmeler arasında yoksa ilkine düşülür: sipariş durumu değişince
+            // Açık sekme, mevcut sekmeler arasında yoksa hiçbiri açık değil (v1.547.0; önce ilkine düşülüyordu): sipariş durumu değişince
             // (ör. iptal edilince planlama sekmesi kalkar) boş bir içerik kalmasın.
-            const aktifKey = sekmeler.some((x) => x.key === kartSekme) ? kartSekme : sekmeler[0].key;
+            const aktifKey = sekmeler.some((x) => x.key === kartSekme) ? kartSekme : null;
 
             return (
               <div style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12 }}>
@@ -944,17 +947,22 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                       <button
                         key={x.key}
                         type="button"
-                        onClick={() => setKartSekme(x.key)}
+                        data-kart-bolum={x.key} data-kart-bolum-acik={aktif ? "1" : "0"}
+                        title={aktif ? "Kapat" : "Aç"}
+                        onClick={() => setKartSekme((o) => (o === x.key ? null : x.key))}
                         style={{
                           padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                          border: `1.5px solid ${aktif ? x.renk : "var(--erp-border-2)"}`,
+                          // Kapalıyken de KENDİ RENGİNDE (v1.547.0): artık hepsi kapalı başladığı için gri düğme
+                          // "5 bekliyor" uyarısını soldururdu. Açık olan dolu renk.
+                          border: `1.5px solid ${x.renk}`,
                           background: aktif ? x.renk : "#fff",
-                          color: aktif ? "#fff" : "var(--erp-text-2)",
+                          color: aktif ? "#fff" : x.renk,
                           display: "flex", alignItems: "center", gap: 5,
                         }}
                       >
                         {x.ikon}
                         {x.ad}
+                        {aktif ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                       </button>
                     );
                   })}
