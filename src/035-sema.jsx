@@ -34,6 +34,29 @@ function semaDisiAlanlar(kayit, bilinenler) {
   });
   return Object.keys(ek).length ? { ek } : {};
 }
+// Ham hâli (sarmalayıcısız): elle yazılmış `ek` alanlarıyla birleştirmek için (cari, cari hareketi).
+function semaDisiHam(kayit, bilinenler) {
+  const r = semaDisiAlanlar(kayit, bilinenler);
+  return r.ek || {};
+}
+// v1.546.0 — aynı kayıp üretimde, cari hareketinde (işlem tipi!), stok hareketinde ve üründe (renk başlığı)
+// de vardı. Her tablonun sütuna eşlenen alanları; geri kalan her şey `ek`e.
+const URUN_SUTUNLARI = new Set(["id", "ad", "kategori", "birim", "malzemeTipi", "mamulTipi", "olcuTipi", "alisFiyati",
+  "alisParaBirimi", "satisFiyati", "satisParaBirimi", "sezonYili", "tedarikciId", "varsayilanProses", "paketlemeNotu",
+  "kapakResmi", "renkResimleri", "recete", "receteGerceklesme", "fiyatKurallari", "prosesUcretleri", "ozelKodlar",
+  "pasif", "stokNo", "kdvOrani", "hariciBarkodlar", "variants", "hareketler", "ek", "surum"]);
+const STOK_HAREKET_SUTUNLARI = new Set(["id", "urunId", "renk", "beden", "miktar", "kaynak", "tarih", "fisNo", "siparisNo",
+  "cariId", "uretimId", "siparisId", "kalemId", "rezervasyonSiparisId", "fazlaGonderim", "aciklama", "ek", "surum"]);
+const CARI_SUTUNLARI = new Set(["id", "unvan", "tip", "telefon", "vergiNo", "adres", "paraBirimi", "resim", "barkodKodu",
+  "kod", "bagliProsesler", "fiyatGrubu", "pasif", "hareketler", "ek", "surum"]);
+const CARI_HAREKET_SUTUNLARI = new Set(["id", "cariId", "tarih", "zaman", "yon", "tutar", "paraBirimi", "odemeSekli", "vade",
+  "defter", "fisNo", "siparisNo", "uretimId", "urunAd", "renk", "aciklama", "ek", "surum"]);
+const URETIM_SUTUNLARI = new Set(["id", "siparisNo", "takipKodu", "urunId", "model", "renk", "adet", "bedenMiktarlari",
+  "prosesIlerleme", "rezervasyonSiparisId", "ambalaj", "termin", "asama", "stogaEklendiMi", "hurdaTelafisiMi",
+  "hurdaKaynakUretimNo", "not", "olusturuldu", "ek", "surum"]);
+const ATAMA_SUTUNLARI = new Set(["id", "uretimId", "proses", "personelId", "bedenMiktarlari", "miktar", "verildiMi",
+  "verilmeTarihi", "tamamlandiMi", "tamamlanmaTarihi", "sonuc", "tamirMi", "tamirKaynakProses", "tamirSebep", "tamirUcret",
+  "tamirHammaddeler", "barkod", "ek", "surum"]);
 const SIPARIS_SUTUNLARI = new Set(["id", "siparisNo", "tip", "cariId", "tarih", "teslimTarihi", "durum", "musteriKodu",
   "defterTercihi", "kayitParaBirimi", "kayitKurlari", "ambalaj", "not", "olusturuldu", "kalemler", "ek", "surum"]);
 const SIPARIS_KALEM_SUTUNLARI = new Set(["id", "urunId", "urunAd", "renk", "beden", "miktar", "karsilanan", "birimFiyat",
@@ -82,6 +105,7 @@ const TABLO_SEMA = {
       // HARİCİ BARKODLAR (v1.542.0) — kutu/tedarikçi etiketi → renk+beden. Kdv ile aynı kural: alan YALNIZ
       // ürün taşıyorsa gönderilir; `harici-barkod.sql` çalıştırılmadan öteki ürünlerin kaydı etkilenmesin.
       ...("hariciBarkodlar" in u ? { harici_barkodlar: u.hariciBarkodlar || [] } : {}),
+      ...semaDisiAlanlar(u, URUN_SUTUNLARI),
     }),
     cocuklar: [
       {
@@ -106,7 +130,7 @@ const TABLO_SEMA = {
           fis_no: h.fisNo || null, siparis_no: h.siparisNo || null, cari_id: h.cariId || null,
           uretim_id: h.uretimId || null, siparis_id: h.siparisId || null, kalem_id: h.kalemId || null,
           rezervasyon_siparis_id: h.rezervasyonSiparisId || null,
-          fazla_gonderim: !!h.fazlaGonderim, aciklama: h.aciklama || null, ek: {},
+          fazla_gonderim: !!h.fazlaGonderim, aciklama: h.aciklama || null, ek: semaDisiHam(h, STOK_HAREKET_SUTUNLARI),
         })),
       },
     ],
@@ -125,6 +149,7 @@ const TABLO_SEMA = {
       // E-FATURA ALICI BİLGİLERİ (v1.496.0): vergi dairesi, TC kimlik no (şahıs), il, ilçe — `ek`te,
       // sütun (SQL göçü) gerekmiyor; okuma tarafı `ek`i kök alana açıyor.
       pasif: !!c.pasif, ek: {
+        ...semaDisiHam(c, CARI_SUTUNLARI),
         ...(c.whatsapp ? { whatsapp: c.whatsapp } : {}), ...(c.eposta ? { eposta: c.eposta } : {}),
         ...(c.vergiDairesi ? { vergiDairesi: c.vergiDairesi } : {}), ...(c.tckn ? { tckn: c.tckn } : {}),
         ...(c.il ? { il: c.il } : {}), ...(c.ilce ? { ilce: c.ilce } : {}),
@@ -152,6 +177,9 @@ const TABLO_SEMA = {
         // `esId` de buradan gidiyor: Muhasebe defterindeki Genel/Resmi eşleşmesi yenilemeden
         // sonra kopuyor, biri silinince diğeri yetim kalıyordu.
         ek: {
+          // Elle sayılmayan HER alan (işlem tipi, çek kimliği, peşin bağı…) — v1.546.0. Aşağıdaki açık liste
+          // aynı alanları null'la tamamlıyor; okuma null'ları zaten atlıyor.
+          ...semaDisiHam(h, CARI_HAREKET_SUTUNLARI),
           beden: h.beden ?? null, miktar: h.miktar ?? null, birim: h.birim || null,
           birimFiyat: h.birimFiyat ?? null, kalemParaBirimi: h.kalemParaBirimi || null,
           hamBirimFiyat: h.hamBirimFiyat ?? null, kur: h.kur ?? null, kurHedef: h.kurHedef ?? null,
@@ -238,6 +266,7 @@ const TABLO_SEMA = {
       stoga_eklendi_mi: !!o.stogaEklendiMi, hurda_telafisi_mi: !!o.hurdaTelafisiMi,
       hurda_kaynak_uretim_no: o.hurdaKaynakUretimNo || null, not_metni: o.not || null,
       olusturuldu: o.olusturuldu || null,
+      ...semaDisiAlanlar(o, URETIM_SUTUNLARI),
     }),
     cocuklar: [{
       tablo: "uretim_atamalari",
@@ -256,6 +285,7 @@ const TABLO_SEMA = {
               tamir_ucret: a.tamirUcret || 0, tamir_hammaddeler: a.tamirHammaddeler || [],
               // Parça barkodu: "1001-1", "1001-2". Atölyede okutulan kod bu.
               barkod: a.barkod || null,
+              ...semaDisiAlanlar(a, ATAMA_SUTUNLARI),
             });
           });
         });

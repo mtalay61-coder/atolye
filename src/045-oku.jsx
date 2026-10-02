@@ -145,12 +145,12 @@ async function supabasedenOku() {
   }));
 
   const stok = urunSatir.map((u) => ({
-    ...kayitaCevir(u),
+    ...ekiKokeAc(kayitaCevir(u)),
     variants: (varyantMap.get(u.id) || []).map((v) => ({
       renk: v.renk, renkId: v.renk_id || null, beden: v.beden,
       miktar: stokYuvarla(v.miktar), minStok: v.min_stok || 0,
     })),
-    hareketler: (hareketMap.get(u.id) || []).map(kayitaCevir),
+    hareketler: (hareketMap.get(u.id) || []).map((h) => ekiKokeAc(kayitaCevir(h))),
   }));
 
   const siparisler = sipSatir.map((s) => ({
@@ -163,9 +163,9 @@ async function supabasedenOku() {
     const atamalar = atamaMap.get(o.id) || [];
     const ilerleme = (o.proses_ilerleme || []).map((p) => ({
       ...p,
-      atamalar: atamalar.filter((a) => a.proses === p.proses).map(kayitaCevir),
+      atamalar: atamalar.filter((a) => a.proses === p.proses).map((a) => ekiKokeAc(kayitaCevir(a))),
     }));
-    return { ...kayitaCevir(o), prosesIlerleme: ilerleme };
+    return { ...ekiKokeAc(kayitaCevir(o)), prosesIlerleme: ilerleme };
   });
 
   return {
