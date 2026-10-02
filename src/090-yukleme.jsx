@@ -53,7 +53,17 @@ useEffect(() => {
             try {
               const okuma = await guvenliOku(anahtar, null);
               if (okuma.deger) {
-                bulut[alan] = JSON.parse(okuma.deger);
+                const yerelDeger = JSON.parse(okuma.deger);
+                // STOK: yerel kopya GÖRSELSİZ tutuluyor (saveStok, v1.548.0'dan beri her yol). Görseller geri
+                // birleştirilmezse sıradaki yazma ürünleri buluta görselsiz gönderip buluttaki görselleri silerdi.
+                // Önce görsel deposu, yoksa buluttaki ürün satırı (eski hâli ama görseli o taşıyor).
+                if (alan === "stok" && Array.isArray(yerelDeger)) {
+                  let birlesik = yerelDeger;
+                  try { birlesik = gorselleriBirlestir(birlesik, (await gorselleriOku(null)).gorseller); } catch (e) { /* depo okunamazsa buluttan */ }
+                  const bulutGorsel = {};
+                  (bulut.stok || []).forEach((u) => { const g = urunGorselleri(u); if (g) bulutGorsel[u.id] = g; });
+                  bulut[alan] = gorselleriBirlestir(birlesik, bulutGorsel);
+                } else bulut[alan] = yerelDeger;
                 console.warn(`Bekleyen yazma: ${anahtar} için yerel kopya esas alındı (bulut ${bekleyenler[anahtar].zaman} tarihinden beri geride)`);
               }
             } catch (e) { console.error("Bekleyen yazma okunamadı:", anahtar, e); }
