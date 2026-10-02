@@ -252,7 +252,14 @@ function yazimiIzle(soz, etiket, veri) {
   );
 }
 
+// STOK YERELE GÖRSELSİZ (v1.548.0). `saveStok` yerel kopyayı `gorselleriAyir` ile görselsiz veriyordu; ama
+// üretim teslimi, ara proses, ad değiştirme, silme zinciri, onarımlar… (25 çağrı) doğrudan `tabloYaz` çağırıp
+// GÖRSELLİ listeyi yerel `stok:items`a yazıyordu — anahtar gereksiz büyüyor, görsel deposu kuralı deliniyordu.
+// Kural artık tek yerde: yerel kopya verilmediyse burada ayrılır. Buluta yine görselli gider (ürün satırında).
+// Görsel deposuna (`gorselleriYaz`) BURADAN yazılmıyor: listede olmayan ürünün görselini siliyor, görselsiz
+// bir liste gelirse depo boşalırdı; depo zaten ürün kaydedilirken (`saveStok`) ve açılış göçünde güncelleniyor.
 function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
+  if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar)) yerelKayitlar = gorselleriAyir(kayitlar).stok;
   const yerel = guvenliYaz(anahtar, JSON.stringify(yerelKayitlar || kayitlar), true);
   if (!supabaseAcikMi() || !TABLO_SEMA[tablo]) {
     if (!TABLO_SEMA[tablo]) tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin

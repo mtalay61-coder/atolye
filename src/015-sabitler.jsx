@@ -457,9 +457,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.547.0";
+const SURUM = "1.548.0";
 const SURUM_TARIHI = "2026-10-02";
-const SURUM_NOTU = "Siparis kartinda Tedarik Planlama ve diger bolumler acilir: dokununca acilir, tekrar dokununca kapanir";
+const SURUM_NOTU = "Stok kaydinin yerel kopyasi her yoldan gorselsiz; bekleyen yazmada gorseller geri birlestiriliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +468,10 @@ const SURUM_NOTU = "Siparis kartinda Tedarik Planlama ve diger bolumler acilir: 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.548.0", tarih: "02.10.2026",
+    eklenen: [],
+    degisen: ["Stok kartlarının bu cihazdaki kopyası her kayıt yolunda görselsiz yazılıyor (üretim teslimi, ara proses, ad değiştirme… önce görselleri de yazıyordu); görseller buluttaki ürün satırında ve görsel deposunda"],
+    duzeltilen: ["Stok buluta gönderilemediyse açılışta yerel kopya esas alınırken görseller geri birleştirilmiyordu; sıradaki yazma ürünleri buluta görselsiz gönderebilirdi"] },
   { surum: "1.547.0", tarih: "02.10.2026",
     eklenen: [],
     degisen: ["Sipariş kartında Tedarik Planlama (ve Hammadde İhtiyacı, Fişler, Rezervasyon) açılır bölüm: kart kapalı bölümlerle açılıyor, düğmeye dokununca açılıyor, tekrar dokununca kapanıyor"],
