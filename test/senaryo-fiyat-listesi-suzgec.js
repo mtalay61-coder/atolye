@@ -52,8 +52,21 @@ async function calistir() {
   await sayfa.locator("[data-fl-resim-buyuk]").first().click();
   await sayfa.waitForTimeout(200);
   const kapandi = (await sayfa.locator("[data-fl-resim-buyuk]").count()) === 0;
+  // EXCEL + YAZDIR (v1.554.0): süzgeç (Sezon 2026) uygulanmışken — çıktı ekrandakini taşır.
+  await sayfa.locator(`${kok} [data-fl-ozel-kod="Sezon"]`).first().selectOption("2026");
+  await sayfa.waitForTimeout(200);
+  await sayfa.locator(`${kok} [data-fl-excel]`).first().click();
+  await sayfa.waitForTimeout(300);
+  const excel = await sayfa.evaluate(() => (window.__sonFiyatListesiExcel || []).map((r, i) => (i === 0 ? [r[0]] : r)));
+  await sayfa.locator(`${kok} [data-fl-yazdir]`).first().click();
+  await sayfa.waitForTimeout(300);
+  const yazdir = await sayfa.evaluate(() => {
+    const d = document.createElement("div"); d.innerHTML = window.__sonFiyatListesiYazdir || "";
+    return { satir: [...d.querySelectorAll("tbody tr")].map((tr) => [...tr.querySelectorAll("td")].slice(1, 3).map((td) => td.textContent.trim()).join(" ")),
+      resim: d.querySelectorAll("tbody img").length };
+  });
   await tarayici.close();
-  return { resimler, kutular, hepsi, sezon, ikiAlan, arama, buyuk, kapandi, hatalar };
+  return { resimler, kutular, hepsi, sezon, ikiAlan, arama, buyuk, kapandi, excel, yazdir, hatalar };
 }
 
 if (require.main === module) {

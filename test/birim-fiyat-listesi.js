@@ -4,7 +4,7 @@
 // kaydedelim; Toptan TL %14 + ya da 10 TL indirimle farklı kaydedip başka fiyat grubu oluşturalım."
 // Ölçülen: kaynaktan okuma (grup kuralı / genel fiyat, boş = null), dönüşüm (yüzde, tutar, yuvarlama),
 // yazma (kural ekle/güncelle/sil + geçmiş), fişin okuduğu `fiyatBul` yazılanı görüyor mu, birim çevirme.
-const { ozelKodSecenekleri, ozelKodSuzgeceUyar, fiyatListesiKaynaklari, urunKaynakFiyati, fiyatDonustur, fiyatListesiYaz, fiyatlariHedefBirime, fiyatBul } = require("./erp.cjs");
+const { fiyatListesiTablosu, ozelKodSecenekleri, ozelKodSuzgeceUyar, fiyatListesiKaynaklari, urunKaynakFiyati, fiyatDonustur, fiyatListesiYaz, fiyatlariHedefBirime, fiyatBul } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -80,6 +80,17 @@ bekle("seçenekler: yalnız dolu ve uyan değerler", ozelKodSecenekleri(oku, ala
 bekle("tek alan süzgeci", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "2026" })).map((u) => u.id), ["1", "3"]);
 bekle("iki alan (VE)", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "2026", t: "Kauçuk" })).map((u) => u.id), ["1"]);
 bekle("boş seçim süzmez", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "" })).length, 3);
+
+// 6) Excel / yazdırma tablosu (v1.554.0): özel kodlar ayrı sütun, boş fiyat boş hücre, önizleme sütunu.
+const tSatir = [
+  { urun: { id: "1", ad: "Bot", stokNo: 1001, kategori: "Mamul", mamulTipi: "Bot", ozelKodlar: { s: "2026", t: "Kauçuk" }, kapakResmi: "data:x" }, fiyat: 400, paraBirimi: "TRY", yeni: 456 },
+  { urun: { id: "2", ad: "Babet", kategori: "Mamul", mamulTipi: "Babet", ozelKodlar: { s: "2025" } }, fiyat: null, paraBirimi: "TRY", yeni: null },
+];
+const tt = fiyatListesiTablosu(tSatir, { kaynak: toptan, ozelAlanlar: alanlar, islemAktif: true });
+bekle("başlıklar", tt.basliklar, ["Stok no", "Model / ürün", "Kategori", "Sezon", "Taban", "Toptan TL", "P.B.", "Yeni fiyat"]);
+bekle("satırlar", tt.satirlar, [["1001", "Bot", "Mamul", "2026", "Kauçuk", 400, "TRY", 456], ["", "Babet", "Mamul", "2025", "", "", "TRY", ""]]);
+bekle("resimler", tt.resimler, ["data:x", ""]);
+bekle("önizleme yokken yeni sütun yok", fiyatListesiTablosu(tSatir, { kaynak: toptan, ozelAlanlar: [], islemAktif: false }).basliklar, ["Stok no", "Model / ürün", "Kategori", "Toptan TL", "P.B."]);
 
 console.log(hata ? "birim-fiyat-listesi: HATA" : "birim-fiyat-listesi: tamam");
 process.exit(hata);

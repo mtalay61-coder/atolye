@@ -38,5 +38,48 @@
   ],
   "buyuk": 1,
   "kapandi": true,
+  "excel": [
+    [
+      "Fiyat Listesi — Genel satış fiyatı"
+    ],
+    [
+      "Süzgeç: Mamul · Sezon: 2026"
+    ],
+    [],
+    [
+      "Stok no",
+      "Model / ürün",
+      "Kategori",
+      "Sezon",
+      "Taban",
+      "Genel satış fiyatı",
+      "P.B."
+    ],
+    [
+      "",
+      "Bot",
+      "Mamul",
+      "2026",
+      "Kauçuk",
+      "",
+      "TRY"
+    ],
+    [
+      "",
+      "Çizme",
+      "Mamul",
+      "2026",
+      "Deri",
+      "",
+      "TRY"
+    ]
+  ],
+  "yazdir": {
+    "satir": [
+      " Bot",
+      " Çizme"
+    ],
+    "resim": 2
+  },
   "hatalar": []
 }
