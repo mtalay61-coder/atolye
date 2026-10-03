@@ -3241,6 +3241,8 @@ function ProductMatrixCard({
                                                 // düzenleniyor. O yüzden hücrede DEĞİŞKEN olan şey renktir —
                                                 // salt okunur metin yerine açılır liste. Eskiden rengi
                                                 // değiştirmek için satırı silip yeniden eklemek gerekiyordu.
+                                                // Satırın rengi seçeneklerde YOKSA (ör. şablondan gelen mamul rengi hammaddede açılmamış)
+                                                // tarayıcı sessizce İLK seçeneği gösteriyordu; kayıtlı renk "(stokta yok)" ile görünür (v1.559.0).
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                                                   <select
                                                     value={r.renk}
@@ -3249,7 +3251,7 @@ function ProductMatrixCard({
                                                     title={poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
                                                     style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
                                                   >
-                                                    {bedensizRenkSecenekleri.length === 0 && <option value={r.renk}>{r.renk}</option>}
+                                                    {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
                                                   </select>
                                                 </span>
@@ -3262,7 +3264,7 @@ function ProductMatrixCard({
                                                   title={poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
                                                   style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
                                                 >
-                                                  {bedensizRenkSecenekleri.length === 0 && <option value={r.renk}>{r.renk}</option>}
+                                                  {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                   {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
                                                 </select>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
@@ -3386,7 +3388,7 @@ function ProductMatrixCard({
                                                     title="Hammadde rengini değiştir"
                                                     style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
                                                   >
-                                                    {bedensizRenkSecenekleri.length === 0 && <option value={r.renk}>{r.renk}</option>}
+                                                    {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
                                                   </select>
                                                   {!tekliMiktarSabit && (

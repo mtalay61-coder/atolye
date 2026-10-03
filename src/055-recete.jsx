@@ -389,12 +389,16 @@ function sablonHedefRengi(sa, mamulRenk) {
 function sablonuUruneUygula(sablon, product) {
   const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk)));
   const mevcut = product.recete || [];
-  const eklemeId = uid("sablon");
+  // HER ŞABLON SATIRINA AYRI eklemeId (v1.559.0). Reçete görünümü eklemeId'ye göre kart açar (145); tek kimlik
+  // 13 hammaddeyi tek "Deri" kartına sıkıştırıyordu, öbürleri görünmüyordu. Kimlik mamul renkleri arasında
+  // ORTAK — aynı hammaddenin tüm renk satırları tek kartta. "sablon-" öneki geri almada kullanılıyor (160).
+  const eklemeIdleri = (sablon.satirlar || []).map(() => uid("sablon"));
   const eklemeTarihi = new Date().toISOString();
   const eklenecekler = [];
   let atlanan = 0;
   renkler.forEach((mr) => {
-    (sablon.satirlar || []).forEach((sa) => {
+    (sablon.satirlar || []).forEach((sa, i) => {
+      const eklemeId = eklemeIdleri[i];
       const renk = sablonHedefRengi(sa, mr);
       const varMi = mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId
         && (r.renk || "") === renk && (r.beden || "Standart") === (sa.beden || "Standart")

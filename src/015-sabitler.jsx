@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.558.0";
+const SURUM = "1.559.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Recete sablonu: mamul rengine bagli hammadde rengi her renge dogru uygulaniyor; iscilik ve ara prosesler sablonda; sablondan eklenenleri kaldir";
+const SURUM_NOTU = "Sablondan eklenen recete: her hammadde kendi kartinda (Astar, Jut, Takviye, Yapistirici... gorunuyor); stokta olmayan renk ilk secenek gibi gosterilmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Recete sablonu: mamul rengine bagli hammadde rengi her renge
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.559.0", tarih: "03.10.2026",
+    eklenen: [],
+    degisen: ["Hammadde rengi stokta açılmamışsa reçete hücresinde '(stokta yok)' olarak görünüyor — eskiden listedeki ilk renk gösteriliyordu"],
+    duzeltilen: ["Şablondan eklenen reçetede yalnız ilk hammadde (Deri) görünüyor, diğerleri (Astar, Jut, Takviye Bezi, Fort Bombe, Yapıştırıcı…) onun kartına sıkışıyordu; artık her hammadde kendi kartında. Daha önce şablondan eklenmiş reçeteler de kendiliğinden ayrışıyor"] },
   { surum: "1.558.0", tarih: "03.10.2026",
     eklenen: ["Reçete şablonu işçilik ücretlerini ve ara prosesleri de taşıyor (hedefte boş olanlar doldurulur)", "Ürün reçetesinde 'Şablondan eklenen N satır' kaldırma düğmesi"],
     degisen: ["Şablon, en çok satırı olan mamul renginden çıkarılıyor; girmeyen (bedene göre değişen) malzemelerin adı söyleniyor"],

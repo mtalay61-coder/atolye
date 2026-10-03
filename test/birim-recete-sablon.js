@@ -1,7 +1,7 @@
 // BİRİM TESTİ — REÇETE ŞABLONU RENK POZİSYONU + İŞÇİLİK (v1.558.0)
 // Kullanıcı: "İlk resim şablondan eklenen reçete, ikinci resim şablonun oluşturulduğu reçete. Şablondan ekleme doğru
 // çalışmıyor." 27080 D (Kahve Süet) → şablon → 27081 D (4 renk): deri dört renkte de "Kahve Süet" geliyordu.
-const { sablonuUruneUygula, recetedenSablonSatirlari, urundenSablonIsciligi, sablonPozisyonu } = require("./erp.cjs");
+const { sablonuUruneUygula, recetedenSablonSatirlari, urundenSablonIsciligi, sablonPozisyonu, receteGrupla } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -33,6 +33,14 @@ bekle("pozisyonlu satır '1. Renk' açıklaması", u.eklenecekler.find((r) => r.
 bekle("miktar taşınır", u.eklenecekler.find((r) => r.hammaddeAd === "Deri").miktar, 18);
 bekle("işçilik: boş olan dolar, dolu (Saya 20) ezilmez", u.ekAlanlar.prosesUcretleri, { Saya: 20, Kesim: 35 });
 bekle("ara proses ve ücreti gelir", [u.ekAlanlar.araProsesEklentileri, u.ekAlanlar.araProsesUcretleri], [{ Kesim: ["ap1"] }, { ap1: 3 }]);
+// v1.559.0 — "yine olmadı": tek eklemeId 3 hammaddeyi tek "Deri" kartına sıkıştırıyordu.
+const idler = (ad) => [...new Set(u.eklenecekler.filter((r) => r.hammaddeAd === ad).map((r) => r.eklemeId))];
+bekle("her hammaddenin kendi eklemeId'si, renkler arasında ortak", [idler("Deri").length, idler("Astar Dana").length, idler("Aksesuar").length, new Set([...idler("Deri"), ...idler("Astar Dana"), ...idler("Aksesuar")]).size], [1, 1, 1, 3]);
+bekle("eklemeId 'sablon-' önekli (geri alma)", u.eklenecekler.every((r) => String(r.eklemeId).startsWith("sablon-")), true);
+bekle("reçete görünümü: 3 kart (hammadde başına)", receteGrupla(u.eklenecekler.map((r, i) => ({ ...r, id: `x${i}` }))).map((g) => `${g.hammaddeAd}:${g.satirlar.length}`), ["Deri:4", "Astar Dana:4", "Aksesuar:4"]);
+// Kullanıcının v1.558 ile eklenmiş satırları (hepsi TEK eklemeId) da hammadde başına ayrışır.
+const eski = u.eklenecekler.map((r, i) => ({ ...r, id: `y${i}`, eklemeId: "sablon-tek" }));
+bekle("eski tek-kimlikli şablon satırları da ayrışır", receteGrupla(eski).map((g) => g.hammaddeAd), ["Deri", "Astar Dana", "Aksesuar"]);
 const ikinci = sablonuUruneUygula(sablon, { ...hedef, recete: u.eklenecekler, ...u.ekAlanlar });
 bekle("ikinci uygulamada hepsi zaten var", [ikinci.eklenecekler.length, ikinci.iscilikSayisi], [0, 0]);
 
