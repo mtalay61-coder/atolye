@@ -2012,11 +2012,11 @@ function ProductMatrixCard({
               onClick={() => {
                 const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
                 if (!sb) return;
-                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi } = sablonuUruneUygula(sb, product);
+                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler } = sablonuUruneUygula(sb, product);
                 if (eklenecekler.length === 0 && !iscilikSayisi) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
                 // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
                 onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
-                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}`);
+                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}`);
               }}
               style={{ padding: "5px 12px", fontSize: 12 }}>
               {(product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"}
@@ -2044,14 +2044,14 @@ function ProductMatrixCard({
                 onClick={() => {
                   const ad = window.prompt("Şablon adı (örn. Standart bot malzemeleri):", "");
                   if (!ad || !ad.trim()) return;
-                  const { satirlar, atlananlar } = recetedenSablonSatirlari(product.recete);
-                  if (satirlar.length === 0) { (showToast || (() => {}))("Bedenden bağımsız satır yok — şablon oluşmadı"); return; }
+                  const { satirlar, atlananlar } = recetedenSablonSatirlari(product.recete, product.variants);
+                  if (satirlar.length === 0) { (showToast || (() => {}))("Şablona girecek satır yok — şablon oluşmadı"); return; }
                   const pozisyonlu = satirlar.filter((x) => x.pozisyon).length;
                   onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar, iscilik: urundenSablonIsciligi(product) });
                   (showToast || (() => {}))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi`
                     + (pozisyonlu ? ` · ${pozisyonlu} malzemenin rengi mamul renginden alınacak` : "")
                     + " · işçilik ve ara prosesler dahil"
-                    + (atlananlar.length ? ` · bedene göre değişen ${atlananlar.length} malzeme girmedi: ${atlananlar.join(", ")}` : "")
+                    + (atlananlar.length ? ` · ${atlananlar.length} malzeme girmedi (tüm bedenler ve beden satırı karışık): ${atlananlar.join(", ")}` : "")
                     + ". Tanımlar › Üretim'den düzenlenir.");
                 }}
                 style={{ padding: "5px 12px", fontSize: 12 }}>
@@ -3685,6 +3685,7 @@ function ProductMatrixCard({
                                                 className="mono"
                                                 style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
                                               >
+                                                {!bedenHammaddeRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{bedenHammaddeRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
                                               </select>
                                             </span>
@@ -3707,6 +3708,7 @@ function ProductMatrixCard({
                                                 className="mono"
                                                 style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
                                               >
+                                                {!bedenHammaddeRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{bedenHammaddeRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
                                               </select>
                                               <div style={{ display: "flex", alignItems: "center", gap: 3 }}>

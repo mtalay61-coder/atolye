@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.559.0";
+const SURUM = "1.560.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Sablondan eklenen recete: her hammadde kendi kartinda (Astar, Jut, Takviye, Yapistirici... gorunuyor); stokta olmayan renk ilk secenek gibi gosterilmiyor";
+const SURUM_NOTU = "Recete sablonu bedene gore degisen malzemeleri (taban, fusbet...) de tasiyor; sablondan eklemede eksik hammadde kalmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Sablondan eklenen recete: her hammadde kendi kartinda (Astar
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.560.0", tarih: "03.10.2026",
+    eklenen: ["Reçete şablonu bedene göre değişen malzemeleri de taşıyor (taban, fusbet…): hammadde numarası mamul numarasıyla aynıysa her bedene, değilse beden eşleşmesiyle; karşılığı olmayan beden adıyla bildiriliyor"],
+    degisen: [],
+    duzeltilen: ["Reçeteden şablon oluştururken bedene göre değişen malzemeler (MT230 Taban, Fusbet) şablona girmiyordu; şablondan eklenen reçetede bu hammaddeler eksik kalıyordu"] },
   { surum: "1.559.0", tarih: "03.10.2026",
     eklenen: [],
     degisen: ["Hammadde rengi stokta açılmamışsa reçete hücresinde '(stokta yok)' olarak görünüyor — eskiden listedeki ilk renk gösteriliyordu"],

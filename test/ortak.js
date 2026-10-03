@@ -10,7 +10,7 @@ const { chromium } = require("playwright");
 // `tarayiciArgs`: Chromium bayrakları — örn. sahte kamera (`--use-file-for-fake-video-capture`).
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
-async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false } = {}) {
+async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true } = {}) {
   const tarayici = await chromium.launch({ args: tarayiciArgs });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
   const sayfa = await tarayici.newPage({ viewport: { width: 1400, height: 950 } });
@@ -39,6 +39,12 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
     const kok = window.__ReactDOMClient.createRoot(document.getElementById("kok"));
     kok.render(window.__React.createElement(window.__App));
   });
+  // AÇILIŞIN BİTMESİNİ BEKLE (v1.560.0): senaryolar açılıştan sonra SABİT süre (2–2,5 sn) bekliyordu. Bulut
+  // denemelerinin düşme süresi ortama göre oynayınca (aynı paket bir koşuda 2 sn, öbüründe 3 sn) "Yükleniyor…"
+  // hâlâ ekrandayken menüye tıklanıp senaryo yanlış yere gidiyordu. Yükleme ekranını ölçen senaryo `yuklemeyiBekle: false`.
+  if (yuklemeyiBekle) {
+    await sayfa.waitForFunction(() => document.body && !document.body.innerText.includes("Yükleniyor"), null, { timeout: 20000 }).catch(() => {});
+  }
   return { tarayici, sayfa };
 }
 
