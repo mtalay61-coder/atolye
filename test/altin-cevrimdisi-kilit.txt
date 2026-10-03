@@ -1,0 +1,14 @@
+{
+  "A": {
+    "kilit": {
+      "var": true,
+      "yerel": true
+    },
+    "menu": "kilit üstte"
+  },
+  "B": {
+    "baslangictaKilit": false,
+    "offlineSonra": true,
+    "onlineSonra": false
+  }
+}
