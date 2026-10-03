@@ -143,7 +143,7 @@ useEffect(() => {
           // "çöpü boşalt" dendiğinde fark hesabı silinecek bir şey görmüyor ve buluttaki
           // kayıtlar olduğu gibi kalıyordu.
           setOnaylar(bulut.onaylar || []);
-          setCop(bulut.cop || []);
+          setCop(copuBuda(bulut.cop || []));   // 90 günü dolanlar açılışta da düşer (v1.549.0)
 
           // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil.
           tabloBaslangicTam("urunler", damga.urunler);
@@ -654,7 +654,7 @@ useEffect(() => {
       setOnaylar(oy);
       setMuhasebe(mh);
       setStokRezervasyonlari(Array.isArray(srez) ? srez : []);
-      setCop(cp);
+      setCop(copuBuda(cp));
       try {
         const okumaMd = await guvenliOku("model:data", anahtarKumesi);
         if (okumaMd.deger) { try { setModeller(JSON.parse(okumaMd.deger)); } catch (e) { /* bozuksa boş */ } }

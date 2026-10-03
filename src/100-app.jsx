@@ -945,19 +945,50 @@ export default function AtolyeERP() {
     return () => { if (window.__kayitHatasiBildir === kaydetmeHatasiBildir) delete window.__kayitHatasiBildir; };
   }, [kaydetmeHatasiBildir]);
 
+  // ÇÖP BAĞLANTILARI (v1.549.0). `copaAt` ve görev/model/mesaj kaydediciler bu noktadan SONRA tanımlanıyor; doğrudan
+  // kullanmak tanımlanmadan erişim (TDZ) olurdu. Ref'ler burada kurulur, aşağıda tanımlandıkları yerde doldurulur.
+  // Hepsi erken dönüşlerden (BULUT ÖN GİRİŞ) ÖNCE — kanca sırası her çizimde aynı kalmalı.
+  const copaAtRef = useRef(null);
+  const ekGeriYukleRef = useRef({});
+  const topluSilmeBildirRef = useRef(null);
+  const tanimRef = useRef(tanimlar);
+  tanimRef.current = tanimlar;
+  const gorevRef = useRef(gorevler);
+  gorevRef.current = gorevler;
+  const modelRef = useRef(modeller);
+  modelRef.current = modeller;
+  const mesajRef = useRef(mesajlar);
+  mesajRef.current = mesajlar;
+  // TANIMDAN SİLİNEN HER ÖĞE ÇÖPE: renk, beden, proses, kullanıcı, asorti, gider kartı… Tek tek düğmelere bağlamak
+  // yerine kaydetme anındaki fark (077 `tanimdanDusenler`) — yeni bir tanım listesi de kendiliğinden kapsanır.
+  // Tanımları yazan iki yol da (saveTanimlar, tanimlarKodluYaz) bundan geçer.
+  // Yalnız ref okur → bağımlılıksız useCallback; kimliği sabit.
+  const tanimSilinenleriCopeAt = useCallback((sonraki) => {
+    if (copaAtRef.current) {
+      tanimdanDusenler(tanimRef.current, sonraki).forEach(({ alan, kayit }) => {
+        copaAtRef.current("tanim", tanimKaydiAdi(alan, kayit), { alan, kayit }, {
+          ozet: `Tanımlar › ${TANIM_ALAN_ADLARI[alan] || alan}`,
+          ustKayit: { tur: "tanimlar", id: alan, ad: TANIM_ALAN_ADLARI[alan] || alan },
+        });
+      });
+    }
+    tanimRef.current = sonraki;
+  }, []);
+
   const saveTanimlar = useCallback(async (next) => {
     // YENİ TANIMA KODU ANINDA VERİLİYOR. Kod atamayı ayrı bir düğmeye bırakmak, kullanıcının rengi
     // tanımlayıp etiket basmaya kalktığında "kod atanmamış" görmesi demekti. `kodlariAta` kodu
     // OLANA dokunmuyor, o yüzden her kayıtta güvenle çağrılabilir.
     // Stok no burada atanmıyor: ürün listesi bu yolda değil, onu `kodlariTamamla` dolduruyor.
     const kodlu = kodlariAta([], next).tanimlar;
+    tanimSilinenleriCopeAt(kodlu);
     setTanimlar(kodlu);
     try {
       await tekilYaz("tanimlar:data", "tanimlar", kodlu);
     } catch (e) {
       kaydetmeHatasiBildir(e, "Tanımlar", kodlu);
     }
-  }, [showToast, kaydetmeHatasiBildir]);
+  }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
 
   // REÇETE ŞABLONLARI (21 Eylül): tanımlarda tutuluyor; ürün kartı ve modelhane buradan yazar.
   const receteSablonuKaydet = useCallback((sablon) => {
@@ -1264,7 +1295,9 @@ export default function AtolyeERP() {
     cop, setCop, showToast, aktifKullanici,
     stok, cariler, siparisler, uretim, koliler, muhasebe,
     setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe,
+    ekGeriYukleRef, topluSilmeBildirRef,
   });
+  copaAtRef.current = copaAt;
 
   const adimlariYurut = useCallback(async (adimlar) => {
     const yapilan = [];
@@ -1382,6 +1415,11 @@ export default function AtolyeERP() {
   }, [showToast]);
 
   const saveModeller = useCallback((next) => {
+    // Silinen model çöpe (v1.549.0).
+    if (copaAtRef.current) listedenDusenler(modelRef.current, next).forEach((m) => {
+      copaAtRef.current("model", `${m.kod || ""} ${m.ad || ""}`.trim() || "Model", m, { ozet: `Modelhane · aşama: ${m.asama || "—"}` });
+    });
+    modelRef.current = next;
     setModeller(next);
     yazimiIzle(tekilYaz("model:data", "modeller", next), "Modeller", next);
   }, []);
@@ -1527,6 +1565,11 @@ export default function AtolyeERP() {
   }, [stok, modeller, saveModeller, showToast]);
 
   const saveGorevler = useCallback(async (next) => {
+    // Silinen görev çöpe (v1.549.0).
+    if (copaAtRef.current) listedenDusenler(gorevRef.current, next).forEach((g) => {
+      copaAtRef.current("gorev", g.baslik || g.metin || "Görev", g, { ozet: `${g.atananAd ? `→ ${g.atananAd} · ` : ""}durum: ${g.durum || "—"}` });
+    });
+    gorevRef.current = next;
     setGorevler(next);
     try {
       await tekilYaz("gorev:data", "gorevler", next);
@@ -1534,6 +1577,44 @@ export default function AtolyeERP() {
       kaydetmeHatasiBildir(e, "Görevler", next);
     }
   }, [kaydetmeHatasiBildir]);
+
+  // ÇÖPTEN GERİ YÜKLEME — tanım, görev, model (v1.549.0). Aynı kimlik (ya da düz değer) zaten varsa geri yüklenmez.
+  ekGeriYukleRef.current = {
+    tanim: async ({ alan, kayit } = {}) => {
+      const t = tanimRef.current || {};
+      const liste = Array.isArray(t[alan]) ? t[alan] : [];
+      const varMi = kayit && typeof kayit === "object" ? liste.some((x) => x && x.id === kayit.id) : liste.includes(kayit);
+      if (varMi) return { ok: false, mesaj: "Bu tanım zaten listede — geri yükleme yapılmadı" };
+      await saveTanimlar({ ...t, [alan]: [...liste, kayit] });
+      return { ok: true, not: alan === "kullanicilar" ? "şifre çöpte saklanmaz; bulut hesabı silindiyse Kullanıcılar'dan yeniden açın" : "" };
+    },
+    gorev: async (g) => {
+      if ((gorevRef.current || []).some((x) => x.id === g.id)) return { ok: false, mesaj: "Bu görev zaten listede" };
+      await saveGorevler([g, ...(gorevRef.current || [])]);
+      return { ok: true };
+    },
+    model: async (m) => {
+      if ((modelRef.current || []).some((x) => x.id === m.id)) return { ok: false, mesaj: "Bu model zaten listede" };
+      saveModeller([m, ...(modelRef.current || [])]);
+      return { ok: true };
+    },
+  };
+
+  // TOPLU SİLME ALARMI (v1.549.0): 10 dakikada 20+ kayıt çöpe atılınca günlüğe "güvenlik" kaydı, silen kişiye uyarı
+  // ve her Yöneticiye özel mesaj (sohbet kanalı = iki kimliğin sıralı birleşimi, 372-sohbet). Silen kişi tek
+  // Yöneticiyse mesaj gitmez, günlük kaydı kalır.
+  topluSilmeBildirRef.current = (sayi) => {
+    const ben = aktifKullanici || {};
+    const metin = `⚠ Güvenlik uyarısı: ${ben.ad || "Bir kullanıcı"} son 10 dakikada ${sayi} kayıt sildi. Çöp kutusundan kontrol edin (Tanımlar › Çöp Kutusu).`;
+    gunlukYaz(`Toplu silme uyarısı: ${ben.ad || "—"} 10 dakikada ${sayi} kayıt sildi`, "guvenlik", { sayi, kullaniciId: ben.id || null });
+    showToast(`⚠ Kısa sürede ${sayi} kayıt sildiniz — Yöneticiye bildirildi`);
+    const yoneticiler = ((tanimRef.current && tanimRef.current.kullanicilar) || []).filter((k) => k.rol === "Yönetici" && k.id !== ben.id);
+    if (!ben.id || yoneticiler.length === 0) return;
+    const zaman = new Date().toISOString();
+    const yeni = yoneticiler.map((y) => ({ id: uid("msj"), kanal: [ben.id, y.id].sort().join("|"), kullaniciId: ben.id,
+      kullaniciAd: ben.ad || "", metin, zaman, hedef: null, gorevId: null }));
+    saveMesajlar([...(mesajRef.current || []), ...yeni]);
+  };
 
   // KOLİ (PAKETLEME) AYRI DOSYADA (19 Eylül, 2. madde): `092-koliler.jsx`.
   const { saveKoliler, koliEkle, koliEkleCoklu, koliSil } = useKoliler({ koliler, setKoliler, stok, showToast, copaAt, kaydetmeHatasiBildir, aktifKullanici });
@@ -2177,10 +2258,11 @@ export default function AtolyeERP() {
   // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
   const tanimlarKodluYaz = useCallback((next) => {
     const kodlu = kodlariAta([], next).tanimlar;
+    tanimSilinenleriCopeAt(kodlu);
     setTanimlar(kodlu);
     yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
     return kodlu;
-  }, []);
+  }, [tanimSilinenleriCopeAt]);
 
   // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
   // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten

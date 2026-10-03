@@ -2216,12 +2216,15 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         urun: "Ürün", cari: "Cari", siparis: "Sipariş", uretim: "Üretim",
         stokHareketi: "Stok Hareketi", cariHareketi: "Cari Hareketi",
         kasa: "Kasa", banka: "Banka", kasaHareketi: "Kasa Fişi", bankaHareketi: "Banka Fişi", cek: "Çek",
+        koli: "Koli", tanim: "Tanım", gorev: "Görev", model: "Model",
       };
       const TUR_RENK = {
         urun: "var(--erp-brown)", cari: "#9C3D3D", siparis: "var(--erp-info)", uretim: "var(--erp-primary)",
         stokHareketi: "var(--erp-text-2)", cariHareketi: "var(--erp-purple)",
         kasa: "#2F6B4F", banka: "var(--erp-info)", kasaHareketi: "#2F6B4F", bankaHareketi: "var(--erp-info)", cek: "var(--erp-brown)",
+        koli: "var(--erp-brown)", tanim: "#6B4E8A", gorev: "var(--erp-info)", model: "#8A3D6B",
       };
+      const yonetici = !!(aktifKullanici && aktifKullanici.rol === "Yönetici");
       const liste = (cop || []).filter((k) => {
         if (copTurFiltre !== "Tümü" && k.tur !== copTurFiltre) return false;
         if (copArama.trim()) {
@@ -2245,9 +2248,25 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               oluşturmaz. Yan etkili kayıtlar aşağıda ayrıca işaretlidir; geri yükledikten sonra ilgili
               stok ve cari bakiyelerini kontrol edin.
               <br />
-              En fazla son 300 kayıt saklanır; sınır aşılınca en eskiler düşer.
+              <span data-cop-kurallar="1">
+                <b>Güvenlik kuralları:</b> kayıtlar {COP_SAKLAMA_GUN} gün saklanır, sonra kendiliğinden düşer. Her kayıt en az{" "}
+                {COP_EN_AZ_GUN} gün çöpte kalır — o süre dolmadan kimse kalıcı silemez. Kalıcı silme ve boşaltma yalnız
+                Yöneticide; diğer kullanıcılar görüp geri yükleyebilir. Kısa sürede çok sayıda silme olursa Yöneticiye
+                uyarı gider. Bulutta ayrıca silinen her satır sunucu arşivinde saklanır (aşağıda).
+              </span>
             </div>
           </div>
+
+          {(() => {
+            // SÜRE SINIRINA YAKLAŞANLAR: 90 günü dolan kayıt sessizce düşer; son 14 günde uyarılır ki
+            // gerekiyorsa geri yüklensin. Sayı sınırı yokken (eskiden 300) bu tek kayıp yolu.
+            const yakinda = (cop || []).filter((k) => COP_SAKLAMA_GUN - copYasiGun(k) <= 14).length;
+            return yakinda > 0 ? (
+              <div data-cop-yakinda="1" style={{ fontSize: 12, color: "var(--erp-warn)", background: "#B85C2E12", border: "1px solid #B85C2E40", borderRadius: "var(--erp-r-md)", padding: "8px 12px", marginBottom: 12 }}>
+                <b>{yakinda} kayıt</b> 14 gün içinde {COP_SAKLAMA_GUN} günlük süreyi dolduruyor ve çöpten düşecek — gerekiyorsa şimdi geri yükleyin.
+              </div>
+            ) : null;
+          })()}
 
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
             {["Tümü", ...Object.keys(TUR_ADLARI).filter((t) => turSayilari[t])].map((t) => {
@@ -2276,12 +2295,12 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               placeholder="Ara…"
               style={{ ...inputStyle, width: 180, fontSize: 12, marginLeft: "auto" }}
             />
-            {(cop || []).length > 0 && (
+            {(cop || []).length > 0 && yonetici && (
               <SilOnayButonu
                 onConfirm={onCopBosalt}
                 boyut={13}
-                baslikNormal="Çöp kutusunu tamamen boşalt"
-                baslikOnay="Tüm kayıtlar kalıcı silinecek — tekrar dokunun"
+                baslikNormal={`${COP_EN_AZ_GUN} günden eski kayıtları kalıcı sil`}
+                baslikOnay={`${COP_EN_AZ_GUN} günden eski kayıtlar kalıcı silinecek — tekrar dokunun`}
               />
             )}
           </div>
@@ -2294,7 +2313,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 const acik = acikCopId === k.id;
                 const renk = TUR_RENK[k.tur] || "var(--erp-text-2)";
                 return (
-                  <div key={k.id} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+                  <div key={k.id} data-cop-kart={k.baslik} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", flexWrap: "wrap" }}>
                       <span className="mono" style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "1A"), color: renk, whiteSpace: "nowrap" }}>
                         {TUR_ADLARI[k.tur] || k.tur}
@@ -2309,6 +2328,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                       <div className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", textAlign: "right", whiteSpace: "nowrap" }}>
                         <div>{new Date(k.silinmeTarihi).toLocaleString("tr-TR")}</div>
                         <div style={{ color: "var(--erp-text-3)" }}>{k.kullaniciAd}</div>
+                        {(() => {
+                          const kalanGun = Math.max(0, Math.ceil(COP_SAKLAMA_GUN - copYasiGun(k)));
+                          return kalanGun <= 14 ? <div data-cop-kalan-gun="1" style={{ color: "var(--erp-warn)", fontWeight: 700 }}>{kalanGun} gün sonra düşer</div> : null;
+                        })()}
                       </div>
                       {k.yanEtkiliMi && (
                         <span
@@ -2332,7 +2355,12 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                             geri yüklenemez
                           </span>
                         )}
-                        <SilOnayButonu onConfirm={() => onCopKaliciSil(k.id)} boyut={12} baslikNormal="Kalıcı olarak sil" />
+                        {(() => {
+                          const izin = copKaliciSilinebilirMi(k, aktifKullanici);
+                          return izin.ok
+                            ? <SilOnayButonu onConfirm={() => onCopKaliciSil(k.id)} boyut={12} baslikNormal="Kalıcı olarak sil" />
+                            : <span data-cop-sil-kilitli="1" title={izin.sebep} style={{ display: "inline-flex", color: "var(--erp-text-3)", opacity: 0.5 }}><Lock size={12} /></span>;
+                        })()}
                       </div>
                     </div>
 
@@ -2350,10 +2378,81 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               })}
             </div>
           )}
+          {yonetici && <SunucuArsiviBolumu kullanicilar={tanimlar.kullanicilar} supabaseBagli={supabaseBagli} />}
         </div>
       );
     })()}
     </>
+  );
+}
+
+// SUNUCU ARŞİVİ GÖRÜNÜMÜ (v1.549.0) — yalnız Yönetici. `silinen_arsiv` tablosunu (silinen-arsiv.sql) OKUR;
+// yazma/silme düğmesi bilerek yok: tablo uygulamaya zaten kapalı, arayüz de öyle görünmeli. İstek elle
+// (düğmeyle) atılır — her Tanımlar açılışında buluttan 200 satır çekmek gereksiz.
+function SunucuArsiviBolumu({ kullanicilar, supabaseBagli }) {
+  const [satirlar, setSatirlar] = useState(null);
+  const [durum, setDurum] = useState("");
+  const [acikId, setAcikId] = useState(null);
+  const [tablo, setTablo] = useState("");
+  const yukle = async () => {
+    if (!supabaseAcikMi()) { setDurum("Bulut bağlı değil — arşiv yalnız bulutta tutulur."); return; }
+    setDurum("Yükleniyor…");
+    try {
+      const filtre = tablo ? `&tablo=eq.${encodeURIComponent(tablo)}` : "";
+      const r = await supabaseIstek(`silinen_arsiv?select=id,tablo,islem,satir_id,veri,silen_eposta,zaman&order=zaman.desc&limit=200${filtre}`);
+      setSatirlar(Array.isArray(r) ? r : []);
+      setDurum("");
+    } catch (e) {
+      const m = String((e && e.message) || e);
+      // Tablo yoksa PostgREST 404 / 42P01 döner: SQL henüz çalıştırılmamış.
+      setDurum(/404|42P01|does not exist|Could not find/i.test(m)
+        ? "Sunucu arşivi kurulmamış — Supabase'de silinen-arsiv.sql çalıştırılmalı."
+        : `Arşiv okunamadı: ${m.slice(0, 160)}`);
+    }
+  };
+  return (
+    <div data-sunucu-arsivi="1" style={{ marginTop: 22, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+        <Archive size={15} color="var(--erp-brown)" />
+        <b style={{ fontSize: 13 }}>Sunucu arşivi</b>
+        <span style={{ fontSize: 11, color: "var(--erp-text-3)", flex: 1, minWidth: 200 }}>
+          Veritabanının kendisinin tuttuğu silme kaydı — uygulamadan silinemez. Son 200 satır.
+        </span>
+        <select value={tablo} onChange={(e) => setTablo(e.target.value)} style={{ ...inputStyle, width: 160, fontSize: 12 }}>
+          <option value="">Tüm tablolar</option>
+          {Object.entries(ARSIV_TABLO_ADLARI).map(([t, ad]) => <option key={t} value={t}>{ad}</option>)}
+        </select>
+        <button type="button" className="btn-ghost" data-arsiv-yukle="1" style={{ padding: "5px 10px", fontSize: 11 }} onClick={yukle} disabled={!supabaseBagli && !supabaseAcikMi()}>
+          <RefreshCw size={12} /> {satirlar ? "Yenile" : "Arşivi getir"}
+        </button>
+      </div>
+      {durum && <div className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>{durum}</div>}
+      {satirlar && satirlar.length === 0 && !durum && <EmptyState text="Arşivde kayıt yok." />}
+      {satirlar && satirlar.length > 0 && (
+        <div style={{ display: "grid", gap: 4 }}>
+          {satirlar.map((a) => {
+            const o = arsivSatiriOzeti(a, kullanicilar);
+            const acik = acikId === a.id;
+            return (
+              <div key={a.id} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)" }}>
+                <button type="button" onClick={() => setAcikId(acik ? null : a.id)}
+                  style={{ display: "flex", gap: 10, alignItems: "center", width: "100%", background: "none", border: "none", padding: "6px 10px", cursor: "pointer", textAlign: "left", flexWrap: "wrap" }}>
+                  <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", minWidth: 90 }}>{o.tabloAdi}</span>
+                  <span style={{ fontSize: 12, flex: 1, minWidth: 140, overflowWrap: "anywhere" }}>{o.baslik}</span>
+                  <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>{new Date(a.zaman).toLocaleString("tr-TR")} · {o.kim}</span>
+                  {acik ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+                {acik && (
+                  <pre className="mono" style={{ margin: 0, padding: 10, fontSize: 10, background: "var(--erp-panel)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" }}>
+                    {JSON.stringify(gizliAlanlariAt(a.veri), null, 2)}
+                  </pre>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
