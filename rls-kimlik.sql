@@ -47,6 +47,7 @@ declare
 begin
   for t in
     select tablename from pg_tables where schemaname = 'public'
+      and tablename <> 'silinen_arsiv'   -- yalnız okunur arşiv; kendi politikası silinen-arsiv.sql'de
   loop
     execute format('alter table public.%I enable row level security', t.tablename);
     -- Tablonun KENDİ kurulum dosyasından kalan eski politikalar silinir (rol sınırı yoktu).
@@ -91,6 +92,19 @@ begin
     create policy "surum_anon_okuma" on public.surum for select to anon using (true);
   end if;
 end $$;
+
+-- 5) SİLİNENLER ARŞİVİ (v1.549.0): 3. adımdaki "grant all" arşive de yazma/silme verirdi — arşivi
+--    korumasız bırakmamak için yetkiler YENİDEN daraltılıyor (yalnız okuma). TRUNCATE de alınıyor:
+--    satır tetikleyicisi TRUNCATE'te çalışmaz, tablo iz bırakmadan boşaltılabilirdi.
+do $$
+begin
+  if exists (select 1 from pg_tables where schemaname = 'public' and tablename = 'silinen_arsiv') then
+    revoke all on public.silinen_arsiv from anon, authenticated;
+    grant select on public.silinen_arsiv to authenticated;
+    revoke all on sequence public.silinen_arsiv_id_seq from anon, authenticated;
+  end if;
+end $$;
+revoke truncate on all tables in schema public from authenticated;
 
 commit;
 

@@ -1,0 +1,55 @@
+{
+  "baslangic": {
+    "kartlar": [
+      "Yeni Cari",
+      "Eski Cari",
+      "Düşecek Cari"
+    ],
+    "kilitli": 1,
+    "yakinda": [
+      "1 kayıt 14 gün içinde 90 günlük süreyi dolduruyor ve çöpten düşecek — gerekiyorsa şimdi geri yükleyin."
+    ],
+    "kalanGun": [
+      "5 gün sonra düşer"
+    ],
+    "arsivVar": 1
+  },
+  "arsivSatirlari": [
+    "CariSilinen Cari<zaman> · test@atolye.local",
+    "TanımlarDeğişiklik öncesi anlık görüntü<zaman> · bilinmiyor"
+  ],
+  "arsivIcerik": "şifresiz",
+  "silindi": true,
+  "renkSonra": [
+    "Siyah",
+    "Taba"
+  ],
+  "copSonra": [
+    "tanim:Renk: Lacivert",
+    "cari:Yeni Cari",
+    "cari:Eski Cari",
+    "cari:Düşecek Cari"
+  ],
+  "renkGeri": [
+    "Siyah",
+    "Taba",
+    "Lacivert"
+  ],
+  "copGeri": [
+    "Yeni Cari",
+    "Eski Cari",
+    "Düşecek Cari"
+  ],
+  "bosaltSonra": [
+    "Yeni Cari"
+  ],
+  "kalanTip": 0,
+  "mesajlar": [
+    {
+      "kanal": "k2|test-modu",
+      "uyari": true,
+      "sayi": "20"
+    }
+  ],
+  "hatalar": []
+}

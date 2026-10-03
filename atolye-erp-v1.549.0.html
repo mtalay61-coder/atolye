@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.546.0</title>
+<title>Atölye ERP 1.549.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1987,9 +1987,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.546.0";
-const SURUM_TARIHI = "2026-10-01";
-const SURUM_NOTU = "Urun, stok hareketi, cari, cari hareketi, uretim ve atamada buluta gitmeyen alanlar ek sutununda; kaybolanlar fis defterinden onariliyor (tablo-ek.sql)";
+const SURUM = "1.549.0";
+const SURUM_TARIHI = "2026-10-03";
+const SURUM_NOTU = "Cop kutusu guvenligi: kalici silme yalniz Yonetici ve 30 gun sonra, 90 gun saklama, tanim/gorev/model silmeleri cope, toplu silme alarmi, sunucu arsivi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1997,6 +1997,26 @@ const SURUM_NOTU = "Urun, stok hareketi, cari, cari hareketi, uretim ve atamada 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.549.0", tarih: "03.10.2026",
+        eklenen: [
+            "Sunucu arşivi: silinen her satır veritabanında ayrıca saklanıyor, uygulamadan silinemiyor (silinen-arsiv.sql); Yönetici Çöp Kutusu altından okuyabilir",
+            "Toplu silme alarmı: 10 dakikada 20 ve üstü silme olursa günlüğe yazılıyor ve Yöneticilere mesaj gidiyor",
+            "Tanımlardan silinen öğeler (renk, beden, proses, kullanıcı, gider kartı…), görevler ve modeller artık çöpe düşüyor ve geri yüklenebiliyor",
+            "Çöpte süresi dolmak üzere olan kayıtlar için uyarı",
+        ],
+        degisen: [
+            "Kalıcı silme ve çöpü boşaltma yalnız Yöneticide; her kayıt en az 30 gün çöpte kalıyor, Boşalt yalnız 30 günden eskileri siliyor",
+            "Çöp kutusunda 300 kayıt sınırı yerine 90 gün saklama",
+        ],
+        duzeltilen: [] },
+    { surum: "1.548.0", tarih: "02.10.2026",
+        eklenen: [],
+        degisen: ["Stok kartlarının bu cihazdaki kopyası her kayıt yolunda görselsiz yazılıyor (üretim teslimi, ara proses, ad değiştirme… önce görselleri de yazıyordu); görseller buluttaki ürün satırında ve görsel deposunda"],
+        duzeltilen: ["Stok buluta gönderilemediyse açılışta yerel kopya esas alınırken görseller geri birleştirilmiyordu; sıradaki yazma ürünleri buluta görselsiz gönderebilirdi"] },
+    { surum: "1.547.0", tarih: "02.10.2026",
+        eklenen: [],
+        degisen: ["Sipariş kartında Tedarik Planlama (ve Hammadde İhtiyacı, Fişler, Rezervasyon) açılır bölüm: kart kapalı bölümlerle açılıyor, düğmeye dokununca açılıyor, tekrar dokununca kapanıyor"],
+        duzeltilen: [] },
     { surum: "1.546.0", tarih: "01.10.2026",
         eklenen: ["Açılışta fiş defterinden eksik alan onarımı: buluttan yüklenirken kaybolmuş cari/stok hareketi bilgileri (işlem tipi, birim fiyat, ürün adı…) fişin kendi kopyasından geri dolduruluyor"],
         degisen: [],
@@ -4320,7 +4340,15 @@ function yazimiIzle(soz, etiket, veri) {
         return { ok: false, yerel: true, hata: String((hata && hata.message) || hata) };
     });
 }
+// STOK YERELE GÖRSELSİZ (v1.548.0). `saveStok` yerel kopyayı `gorselleriAyir` ile görselsiz veriyordu; ama
+// üretim teslimi, ara proses, ad değiştirme, silme zinciri, onarımlar… (25 çağrı) doğrudan `tabloYaz` çağırıp
+// GÖRSELLİ listeyi yerel `stok:items`a yazıyordu — anahtar gereksiz büyüyor, görsel deposu kuralı deliniyordu.
+// Kural artık tek yerde: yerel kopya verilmediyse burada ayrılır. Buluta yine görselli gider (ürün satırında).
+// Görsel deposuna (`gorselleriYaz`) BURADAN yazılmıyor: listede olmayan ürünün görselini siliyor, görselsiz
+// bir liste gelirse depo boşalırdı; depo zaten ürün kaydedilirken (`saveStok`) ve açılış göçünde güncelleniyor.
 function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
+    if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar))
+        yerelKayitlar = gorselleriAyir(kayitlar).stok;
     const yerel = guvenliYaz(anahtar, JSON.stringify(yerelKayitlar || kayitlar), true);
     if (!supabaseAcikMi() || !TABLO_SEMA[tablo]) {
         if (!TABLO_SEMA[tablo])
@@ -8333,11 +8361,103 @@ function semaBarkoduCoz(kod, stok, tanimlar) {
 // fişler, stok hareketleri, kasa karşılıkları). Geri alınamayan böyle bir silme, aylarca sürmüş
 // bir kaydın bir dokunuşla yok olması demekti. Çöp kutusu, "emin misiniz" sorusundan daha
 // güvenli: soruyu yanlış cevaplamak da geri alınabilir oluyor.
-// Çöpte tutulacak en fazla kayıt. Sabit: sınırsız çöp, silinen her şeyi sonsuza dek taşımak ve
-// depoyu şişirmek demek; çok küçük bir sınır ise geri almayı işe yaramaz hale getirir.
-const COP_SINIRI = 300;
+// SAKLAMA KURALLARI (v1.549.0 — kullanıcı: "Çöp kutusunu daha verimli kullanalım, güvenliğe karşı" → "hepsini yap").
+//   · SÜRE, SAYI DEĞİL: kayıt 90 gün çöpte kalır, sonra kendiliğinden düşer. Önce 300 kayıt sınırı vardı; yoğun bir
+//     haftada eski silinenler haber vermeden kayboluyordu. Yine de sonsuz büyümesin diye sert bir tavan (5000) var;
+//     ona yaklaşılınca uyarı.
+//   · EN AZ 30 GÜN: 30 günden yeni kayıt kimse tarafından kalıcı silinemez ("sil, sonra çöpten de sil" ile iz
+//     yok etmek mümkün olmasın).
+//   · KALICI SİLME / BOŞALTMA YALNIZ YÖNETİCİ: diğerleri görür ve geri yükler.
+//   · Sunucu tarafında ayrıca `silinen_arsiv` (silinen-arsiv.sql) var: çöpten düşen kayıt da orada durur.
+const COP_SAKLAMA_GUN = 90;
+const COP_EN_AZ_GUN = 30;
+const COP_SERT_SINIR = 5000;
+const GUN_MS = 24 * 60 * 60 * 1000;
+function copYasiGun(kayit, simdi = Date.now()) {
+    const t = Date.parse((kayit && kayit.silinmeTarihi) || "");
+    return Number.isFinite(t) ? (simdi - t) / GUN_MS : 0;
+}
+// Saklama süresini aşanları atar ve sert tavanı uygular. Saf.
+function copuBuda(liste, simdi = Date.now()) {
+    return (liste || []).filter((k) => copYasiGun(k, simdi) <= COP_SAKLAMA_GUN).slice(0, COP_SERT_SINIR);
+}
+// Kalıcı silme izni. Döner: { ok, sebep }.
+function copKaliciSilinebilirMi(kayit, kullanici, simdi = Date.now()) {
+    if (!kullanici || kullanici.rol !== "Yönetici")
+        return { ok: false, sebep: "Çöpten kalıcı silmeyi yalnız Yönetici yapabilir" };
+    const yas = copYasiGun(kayit, simdi);
+    if (yas < COP_EN_AZ_GUN) {
+        const kalan = Math.ceil(COP_EN_AZ_GUN - yas);
+        return { ok: false, sebep: `Kayıt en az ${COP_EN_AZ_GUN} gün çöpte kalır — ${kalan} gün sonra silinebilir` };
+    }
+    return { ok: true, sebep: "" };
+}
+// TOPLU SİLME ALARMI: son 10 dakikada aynı kişinin çöpe attığı kayıt sayısı. Eşik aşılınca (20) uyarı; aynı
+// pencere içinde ikinci kez uyarmaz. Saf: zaman damgası listesi ve son uyarı zamanı dışarıda tutulur.
+const TOPLU_SILME_PENCERE_MS = 10 * 60 * 1000;
+const TOPLU_SILME_ESIK = 20;
+function topluSilmeDurumu(zamanlar, sonUyari, simdi = Date.now()) {
+    const pencere = (zamanlar || []).filter((t) => simdi - t <= TOPLU_SILME_PENCERE_MS);
+    const uyar = pencere.length >= TOPLU_SILME_ESIK && !(sonUyari && simdi - sonUyari <= TOPLU_SILME_PENCERE_MS);
+    return { pencere, sayi: pencere.length, uyar };
+}
+// LİSTEDEN DÜŞENLER (v1.549.0): görev/model gibi tek parça listelerde silmeyi yakalamak için. Kimlikle karşılaştırır.
+function listedenDusenler(onceki, sonraki) {
+    const kalan = new Set((sonraki || []).map((x) => x && x.id).filter(Boolean));
+    return (onceki || []).filter((x) => x && x.id && !kalan.has(x.id));
+}
+// TANIMLARDAN DÜŞENLER: Tanımlar tek kayıt; içindeki listelerden (renk, beden, proses, kullanıcı, asorti, gider
+// kartı…) silinen her öğe. Kimlikli nesnelerde kimlikle, düz değer listelerinde (hammadde tipleri gibi) değerle
+// karşılaştırılır. Tek tek her silme düğmesine bağlamak yerine kaydetme anında fark — yeni bir tanım listesi
+// eklendiğinde de kendiliğinden çöpe düşer. Döner: [{ alan, kayit }].
+// GİZLİ ALANLAR çöpe yazılmaz (kullanıcı kaydındaki şifre benzeri her alan): çöp bulutta, Tanımlar'a giren herkes görür.
+const GIZLI_ALAN = /sifre|şifre|parola|password|hash|token|secret|apiKey|smtp/i;
+// Derin: arşivdeki tanımlar görüntüsünde şifre `kullanicilar[].sifre` gibi iç içe duruyor.
+function gizliAlanlariAt(kayit) {
+    if (Array.isArray(kayit))
+        return kayit.map(gizliAlanlariAt);
+    if (!kayit || typeof kayit !== "object")
+        return kayit;
+    const y = {};
+    Object.keys(kayit).forEach((k) => { if (!GIZLI_ALAN.test(k))
+        y[k] = gizliAlanlariAt(kayit[k]); });
+    return y;
+}
+function tanimdanDusenler(onceki, sonraki) {
+    const sonuc = [];
+    Object.keys(onceki || {}).forEach((alan) => {
+        const a = onceki[alan];
+        const b = (sonraki || {})[alan];
+        if (!Array.isArray(a) || !Array.isArray(b))
+            return;
+        if (a.every((x) => x && typeof x === "object" && x.id)) {
+            listedenDusenler(a, b).forEach((kayit) => sonuc.push({ alan, kayit: gizliAlanlariAt(kayit) }));
+        }
+        else if (a.every((x) => typeof x === "string" || typeof x === "number")) {
+            const kalan = new Set(b);
+            a.filter((x) => !kalan.has(x)).forEach((kayit) => sonuc.push({ alan, kayit }));
+        }
+    });
+    return sonuc;
+}
+const TANIM_ALAN_ADLARI = {
+    renkler: "Renk", bedenler: "Beden/ölçü", birimler: "Birim", prosesler: "Proses", araProsesler: "Ara proses",
+    kullanicilar: "Kullanıcı", asortiler: "Asorti", fiyatGruplari: "Fiyat grubu", ozelKodAlanlari: "Özel kod alanı",
+    receteSablonlari: "Reçete şablonu", renkKombinasyonlari: "Renk kombinasyonu", giderKartlari: "Gider/gelir kartı",
+    hammaddeTipleri: "Hammadde tipi", malzemeTipleri: "Malzeme tipi", mamulTipleri: "Mamul tipi",
+};
+function tanimKaydiAdi(alan, kayit) {
+    const tur = TANIM_ALAN_ADLARI[alan] || alan;
+    const ad = kayit && typeof kayit === "object" ? (kayit.ad || kayit.kullaniciAdi || kayit.kod || kayit.id) : kayit;
+    return `${tur}: ${ad}`;
+}
+// Oturum boyunca silme zamanları (modül düzeyi: kancanın her çizimde yeniden kurulması sayacı sıfırlamasın).
+const _silmeZamanlari = { liste: [], sonUyari: 0 };
 function useCopKutusu(d) {
-    const { cop, setCop, showToast, aktifKullanici, stok, cariler, siparisler, uretim, koliler, muhasebe, setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe, } = d;
+    const { cop, setCop, showToast, aktifKullanici, stok, cariler, siparisler, uretim, koliler, muhasebe, setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe, 
+    // v1.549.0: tanım/görev/model geri yükleyicileri ve toplu silme bildirimi — App'te bu kancadan SONRA
+    // tanımlanan fonksiyonlara ref ile ulaşılıyor (tanımlanmadan önce kullanılmasınlar diye).
+    ekGeriYukleRef, topluSilmeBildirRef, } = d;
     const copaAt = useCallback((tur, baslik, veri, secenekler) => {
         // Yazma kilitliyken çöpe kayıt EKLENMEZ. Aksi halde silme diske yazılamadığı için gerçekleşmez,
         // ama çöp kutusunda "silindi" görünen bir kayıt belirir; kullanıcı silinmemiş bir kaydı silinmiş
@@ -8359,25 +8479,72 @@ function useCopKutusu(d) {
             kullaniciId: (aktifKullanici && aktifKullanici.id) || null,
         };
         setCop((prev) => {
-            const next = [kayit, ...prev].slice(0, COP_SINIRI);
+            const next = copuBuda([kayit, ...prev]);
             yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
             return next;
         });
+        // Toplu silme alarmı (oturum içi sayaç).
+        const simdi = Date.now();
+        const durum = topluSilmeDurumu([..._silmeZamanlari.liste, simdi], _silmeZamanlari.sonUyari, simdi);
+        _silmeZamanlari.liste = durum.pencere;
+        if (durum.uyar) {
+            _silmeZamanlari.sonUyari = simdi;
+            if (topluSilmeBildirRef && topluSilmeBildirRef.current)
+                topluSilmeBildirRef.current(durum.sayi);
+        }
     }, [aktifKullanici]);
-    const coptanKaliciSil = useCallback((copId) => {
+    // Çöpten çıkarma — İZİN KONTROLÜ YOK; yalnız iç kullanım (geri yükleme sonrası). Dışarıya `coptanKaliciSil` açılır.
+    const coptanCikar = useCallback((copId) => {
         setCop((prev) => {
             const next = prev.filter((k) => k.id !== copId);
             yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
             return next;
         });
     }, []);
-    const copuBosalt = useCallback(() => {
-        setCop(() => {
-            yazimiIzle(tabloYaz("cop:data", "cop", []), "Çöp kutusu", []);
-            return [];
+    const coptanKaliciSil = useCallback((copId) => {
+        const kayit = (cop || []).find((k) => k.id === copId);
+        if (!kayit)
+            return;
+        const izin = copKaliciSilinebilirMi(kayit, aktifKullanici);
+        if (!izin.ok) {
+            showToast(izin.sebep);
+            return;
+        }
+        coptanCikar(copId);
+        gunlukYaz(`Çöpten kalıcı silindi: ${kayit.baslik}`, "cop", { copId, tur: kayit.tur });
+    }, [cop, aktifKullanici, coptanCikar, showToast]);
+    // BOŞALT: yalnız Yönetici; yalnız en az 30 gündür çöpte olanlar gider, yeniler kalır.
+    const copuBosalt = useCallback(async () => {
+        if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+            showToast("Çöpü yalnız Yönetici boşaltabilir");
+            return;
+        }
+        const simdi = Date.now();
+        const mevcut = cop || [];
+        const silinecek = mevcut.filter((k) => copYasiGun(k, simdi) >= COP_EN_AZ_GUN);
+        if (silinecek.length === 0) {
+            showToast(`Çöpte ${COP_EN_AZ_GUN} günden eski kayıt yok — yeni kayıtlar en az ${COP_EN_AZ_GUN} gün kalır`);
+            return;
+        }
+        const ids = new Set(silinecek.map((k) => k.id));
+        // Kalan sayı setCop'tan ÖNCE hesaplanır (sonra `cop` okumak eski değeri verir — 18A).
+        const kalan = mevcut.length - silinecek.length;
+        // Durum işlevsel güncellenir (bu arada çöpe düşen kayıt kaybolmasın); yazma sözü dışarı alınıp
+        // BEKLENİR — "silindi" mesajı ancak yazma tuttuysa verilir (13).
+        let soz = null;
+        setCop((prev) => {
+            const next = prev.filter((k) => !ids.has(k.id));
+            soz = yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
+            return next;
         });
-        showToast("Çöp kutusu boşaltıldı");
-    }, [showToast]);
+        const sonuc = soz ? await soz : { ok: true };
+        gunlukYaz(`Çöp boşaltıldı: ${silinecek.length} kayıt (${COP_EN_AZ_GUN} günden eski)`, "cop", { sayi: silinecek.length });
+        if (sonuc && sonuc.ok === false && sonuc.yerel) {
+            showToast("Çöp boşaltılamadı — cihaza yazılamadı");
+            return;
+        }
+        showToast(`${silinecek.length} eski kayıt silindi${kalan > 0 ? ` — ${kalan} yeni kayıt ${COP_EN_AZ_GUN} gün dolana kadar kalıyor` : ""}`);
+    }, [cop, aktifKullanici, showToast]);
     const coptanGeriYukle = useCallback(async (copId) => {
         const kayit = cop.find((k) => k.id === copId);
         if (!kayit)
@@ -8401,6 +8568,19 @@ function useCopKutusu(d) {
             uretim: { liste: uretim, set: setUretim, anahtar: "uretim:siparisler", tablo: "uretim", etiket: "Üretim", basa: true, ad: "üretim siparişi" },
         }[kayit.tur];
         if (!TUR) {
+            // Tanım / görev / model (v1.549.0): kendi kaydetme yolları App'te — ref üzerinden.
+            const ek = ekGeriYukleRef && ekGeriYukleRef.current && ekGeriYukleRef.current[kayit.tur];
+            if (ek) {
+                const r = await ek(kayit.veri);
+                if (r && r.ok) {
+                    coptanCikar(copId);
+                    gunlukYaz(`Çöpten geri yüklendi: ${kayit.baslik}`, "cop", { copId, tur: kayit.tur });
+                    showToast(`"${kayit.baslik}" geri yüklendi${r.not ? ` — ${r.not}` : ""}`);
+                }
+                else
+                    showToast((r && r.mesaj) || "Geri yüklenemedi");
+                return;
+            }
             showToast("Bu tür kayıt otomatik geri yüklenemiyor — içeriği görüntüleyip elle girebilirsiniz");
             return;
         }
@@ -8419,7 +8599,7 @@ function useCopKutusu(d) {
             showToast(`⚠ "${kayit.baslik}" geri yüklenemedi — bu bilgisayara yazılamadı. Kayıt çöpte duruyor.`);
             return;
         }
-        coptanKaliciSil(copId);
+        coptanCikar(copId);
         const yanEtki = kayit.yanEtkiliMi ? " — dikkat: silme sırasındaki stok/cari etkileri geri alınmadı, kontrol edin" : "";
         if (sonuc.ok === false) {
             gunlukYaz(`Çöpten geri yüklendi, BULUT YAZILAMADI: ${kayit.baslik}`, "cop", { copId, hata: sonuc.hata });
@@ -8429,7 +8609,7 @@ function useCopKutusu(d) {
         else {
             showToast(`"${kayit.baslik}" geri yüklendi${yanEtki}`);
         }
-    }, [cop, stok, cariler, siparisler, uretim, coptanKaliciSil, showToast]);
+    }, [cop, stok, cariler, siparisler, uretim, coptanCikar, showToast]);
     // Birden çok tabloya yazan silme işlemleri için ortak yürütücü.
     //
     // Tarayıcıdan çok tablolu işlem (transaction) açılamıyor: PostgREST her tabloyu ayrı istekle
@@ -8440,6 +8620,32 @@ function useCopKutusu(d) {
     //   2. DURMA — ilk hatada devam edilmez. Devam etmek, hasarı büyütmekten başka bir şey değil.
     //   3. DÜRÜST RAPOR — ne yapıldı, ne yapılamadı, kullanıcı ne yapmalı; hepsi söylenir.
     return { copaAt, coptanKaliciSil, copuBosalt, coptanGeriYukle };
+}
+// ================= SUNUCU ARŞİVİ (v1.549.0) =================
+// `silinen-arsiv.sql`: veritabanı tetikleyicisi silinen her satırı `silinen_arsiv`e kopyalar; uygulama
+// yalnız OKUR (yazma/silme yetkisi yok). Çöp kutusu boşaltılsa ya da hesabı ele geçen biri çöpü de
+// silse bile iz orada kalır. Aşağıdakiler okunan satırı insan diline çevirir.
+const ARSIV_TABLO_ADLARI = {
+    urunler: "Ürün", varyantlar: "Ürün varyantı", stok_hareketleri: "Stok hareketi", cariler: "Cari",
+    cari_hareketleri: "Cari hareketi", siparisler: "Sipariş", siparis_kalemleri: "Sipariş kalemi",
+    uretim: "Üretim", uretim_atamalari: "İş ataması", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay",
+    cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
+    gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka",
+};
+function arsivSatiriOzeti(satir, kullanicilar) {
+    const v = (satir && satir.veri) || {};
+    // Satır tablolarında `veri` sütunu yoksa satırın kendisi; varsa (cop, onaylar) asıl kayıt içeride.
+    const ic = v.veri && typeof v.veri === "object" && !Array.isArray(v.veri) ? v.veri : v;
+    const baslik = satir && satir.islem === "GORUNTU"
+        ? "Değişiklik öncesi anlık görüntü"
+        : (v.baslik || ic.ad || ic.unvan || ic.siparisNo || ic.urunAdi || ic.aciklama || ic.no || satir.satir_id || "—");
+    const ep = String((satir && satir.silen_eposta) || "").toLowerCase();
+    const k = ep && (kullanicilar || []).find((x) => String(kullaniciEposta(x)).toLowerCase() === ep);
+    return {
+        tabloAdi: ARSIV_TABLO_ADLARI[satir && satir.tablo] || (satir && satir.tablo) || "?",
+        baslik: String(baslik),
+        kim: k ? k.ad || k.kullaniciAdi : (ep || "bilinmiyor"),
+    };
 }
 // ================= FİŞ DEFTERİ =================
 //
@@ -12911,7 +13117,23 @@ function useAcilisYukleme(d) {
                             try {
                                 const okuma = await guvenliOku(anahtar, null);
                                 if (okuma.deger) {
-                                    bulut[alan] = JSON.parse(okuma.deger);
+                                    const yerelDeger = JSON.parse(okuma.deger);
+                                    // STOK: yerel kopya GÖRSELSİZ tutuluyor (saveStok, v1.548.0'dan beri her yol). Görseller geri
+                                    // birleştirilmezse sıradaki yazma ürünleri buluta görselsiz gönderip buluttaki görselleri silerdi.
+                                    // Önce görsel deposu, yoksa buluttaki ürün satırı (eski hâli ama görseli o taşıyor).
+                                    if (alan === "stok" && Array.isArray(yerelDeger)) {
+                                        let birlesik = yerelDeger;
+                                        try {
+                                            birlesik = gorselleriBirlestir(birlesik, (await gorselleriOku(null)).gorseller);
+                                        }
+                                        catch (e) { /* depo okunamazsa buluttan */ }
+                                        const bulutGorsel = {};
+                                        (bulut.stok || []).forEach((u) => { const g = urunGorselleri(u); if (g)
+                                            bulutGorsel[u.id] = g; });
+                                        bulut[alan] = gorselleriBirlestir(birlesik, bulutGorsel);
+                                    }
+                                    else
+                                        bulut[alan] = yerelDeger;
                                     console.warn(`Bekleyen yazma: ${anahtar} için yerel kopya esas alındı (bulut ${bekleyenler[anahtar].zaman} tarihinden beri geride)`);
                                 }
                             }
@@ -13000,7 +13222,7 @@ function useAcilisYukleme(d) {
                         // "çöpü boşalt" dendiğinde fark hesabı silinecek bir şey görmüyor ve buluttaki
                         // kayıtlar olduğu gibi kalıyordu.
                         setOnaylar(bulut.onaylar || []);
-                        setCop(bulut.cop || []);
+                        setCop(copuBuda(bulut.cop || [])); // 90 günü dolanlar açılışta da düşer (v1.549.0)
                         // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil.
                         tabloBaslangicTam("urunler", damga.urunler);
                         tabloBaslangicTam("siparisler", bulut.siparisler);
@@ -13599,7 +13821,7 @@ function useAcilisYukleme(d) {
                 setOnaylar(oy);
                 setMuhasebe(mh);
                 setStokRezervasyonlari(Array.isArray(srez) ? srez : []);
-                setCop(cp);
+                setCop(copuBuda(cp));
                 try {
                     const okumaMd = await guvenliOku("model:data", anahtarKumesi);
                     if (okumaMd.deger) {
@@ -15309,12 +15531,42 @@ function AtolyeERP() {
         return () => { if (window.__kayitHatasiBildir === kaydetmeHatasiBildir)
             delete window.__kayitHatasiBildir; };
     }, [kaydetmeHatasiBildir]);
+    // ÇÖP BAĞLANTILARI (v1.549.0). `copaAt` ve görev/model/mesaj kaydediciler bu noktadan SONRA tanımlanıyor; doğrudan
+    // kullanmak tanımlanmadan erişim (TDZ) olurdu. Ref'ler burada kurulur, aşağıda tanımlandıkları yerde doldurulur.
+    // Hepsi erken dönüşlerden (BULUT ÖN GİRİŞ) ÖNCE — kanca sırası her çizimde aynı kalmalı.
+    const copaAtRef = useRef(null);
+    const ekGeriYukleRef = useRef({});
+    const topluSilmeBildirRef = useRef(null);
+    const tanimRef = useRef(tanimlar);
+    tanimRef.current = tanimlar;
+    const gorevRef = useRef(gorevler);
+    gorevRef.current = gorevler;
+    const modelRef = useRef(modeller);
+    modelRef.current = modeller;
+    const mesajRef = useRef(mesajlar);
+    mesajRef.current = mesajlar;
+    // TANIMDAN SİLİNEN HER ÖĞE ÇÖPE: renk, beden, proses, kullanıcı, asorti, gider kartı… Tek tek düğmelere bağlamak
+    // yerine kaydetme anındaki fark (077 `tanimdanDusenler`) — yeni bir tanım listesi de kendiliğinden kapsanır.
+    // Tanımları yazan iki yol da (saveTanimlar, tanimlarKodluYaz) bundan geçer.
+    // Yalnız ref okur → bağımlılıksız useCallback; kimliği sabit.
+    const tanimSilinenleriCopeAt = useCallback((sonraki) => {
+        if (copaAtRef.current) {
+            tanimdanDusenler(tanimRef.current, sonraki).forEach(({ alan, kayit }) => {
+                copaAtRef.current("tanim", tanimKaydiAdi(alan, kayit), { alan, kayit }, {
+                    ozet: `Tanımlar › ${TANIM_ALAN_ADLARI[alan] || alan}`,
+                    ustKayit: { tur: "tanimlar", id: alan, ad: TANIM_ALAN_ADLARI[alan] || alan },
+                });
+            });
+        }
+        tanimRef.current = sonraki;
+    }, []);
     const saveTanimlar = useCallback(async (next) => {
         // YENİ TANIMA KODU ANINDA VERİLİYOR. Kod atamayı ayrı bir düğmeye bırakmak, kullanıcının rengi
         // tanımlayıp etiket basmaya kalktığında "kod atanmamış" görmesi demekti. `kodlariAta` kodu
         // OLANA dokunmuyor, o yüzden her kayıtta güvenle çağrılabilir.
         // Stok no burada atanmıyor: ürün listesi bu yolda değil, onu `kodlariTamamla` dolduruyor.
         const kodlu = kodlariAta([], next).tanimlar;
+        tanimSilinenleriCopeAt(kodlu);
         setTanimlar(kodlu);
         try {
             await tekilYaz("tanimlar:data", "tanimlar", kodlu);
@@ -15322,7 +15574,7 @@ function AtolyeERP() {
         catch (e) {
             kaydetmeHatasiBildir(e, "Tanımlar", kodlu);
         }
-    }, [showToast, kaydetmeHatasiBildir]);
+    }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
     // REÇETE ŞABLONLARI (21 Eylül): tanımlarda tutuluyor; ürün kartı ve modelhane buradan yazar.
     const receteSablonuKaydet = useCallback((sablon) => {
         if (!sablon || !sablon.ad)
@@ -15617,7 +15869,9 @@ function AtolyeERP() {
         cop, setCop, showToast, aktifKullanici,
         stok, cariler, siparisler, uretim, koliler, muhasebe,
         setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe,
+        ekGeriYukleRef, topluSilmeBildirRef,
     });
+    copaAtRef.current = copaAt;
     const adimlariYurut = useCallback(async (adimlar) => {
         const yapilan = [];
         for (const adim of adimlar) {
@@ -15732,6 +15986,12 @@ function AtolyeERP() {
         });
     }, [showToast]);
     const saveModeller = useCallback((next) => {
+        // Silinen model çöpe (v1.549.0).
+        if (copaAtRef.current)
+            listedenDusenler(modelRef.current, next).forEach((m) => {
+                copaAtRef.current("model", `${m.kod || ""} ${m.ad || ""}`.trim() || "Model", m, { ozet: `Modelhane · aşama: ${m.asama || "—"}` });
+            });
+        modelRef.current = next;
         setModeller(next);
         yazimiIzle(tekilYaz("model:data", "modeller", next), "Modeller", next);
     }, []);
@@ -15890,6 +16150,12 @@ function AtolyeERP() {
         showToast(`${model.kod} koleksiyona alındı — Stok'ta "${model.ad}" ürün kartı açıldı`);
     }, [stok, modeller, saveModeller, showToast]);
     const saveGorevler = useCallback(async (next) => {
+        // Silinen görev çöpe (v1.549.0).
+        if (copaAtRef.current)
+            listedenDusenler(gorevRef.current, next).forEach((g) => {
+                copaAtRef.current("gorev", g.baslik || g.metin || "Görev", g, { ozet: `${g.atananAd ? `→ ${g.atananAd} · ` : ""}durum: ${g.durum || "—"}` });
+            });
+        gorevRef.current = next;
         setGorevler(next);
         try {
             await tekilYaz("gorev:data", "gorevler", next);
@@ -15898,6 +16164,46 @@ function AtolyeERP() {
             kaydetmeHatasiBildir(e, "Görevler", next);
         }
     }, [kaydetmeHatasiBildir]);
+    // ÇÖPTEN GERİ YÜKLEME — tanım, görev, model (v1.549.0). Aynı kimlik (ya da düz değer) zaten varsa geri yüklenmez.
+    ekGeriYukleRef.current = {
+        tanim: async ({ alan, kayit } = {}) => {
+            const t = tanimRef.current || {};
+            const liste = Array.isArray(t[alan]) ? t[alan] : [];
+            const varMi = kayit && typeof kayit === "object" ? liste.some((x) => x && x.id === kayit.id) : liste.includes(kayit);
+            if (varMi)
+                return { ok: false, mesaj: "Bu tanım zaten listede — geri yükleme yapılmadı" };
+            await saveTanimlar({ ...t, [alan]: [...liste, kayit] });
+            return { ok: true, not: alan === "kullanicilar" ? "şifre çöpte saklanmaz; bulut hesabı silindiyse Kullanıcılar'dan yeniden açın" : "" };
+        },
+        gorev: async (g) => {
+            if ((gorevRef.current || []).some((x) => x.id === g.id))
+                return { ok: false, mesaj: "Bu görev zaten listede" };
+            await saveGorevler([g, ...(gorevRef.current || [])]);
+            return { ok: true };
+        },
+        model: async (m) => {
+            if ((modelRef.current || []).some((x) => x.id === m.id))
+                return { ok: false, mesaj: "Bu model zaten listede" };
+            saveModeller([m, ...(modelRef.current || [])]);
+            return { ok: true };
+        },
+    };
+    // TOPLU SİLME ALARMI (v1.549.0): 10 dakikada 20+ kayıt çöpe atılınca günlüğe "güvenlik" kaydı, silen kişiye uyarı
+    // ve her Yöneticiye özel mesaj (sohbet kanalı = iki kimliğin sıralı birleşimi, 372-sohbet). Silen kişi tek
+    // Yöneticiyse mesaj gitmez, günlük kaydı kalır.
+    topluSilmeBildirRef.current = (sayi) => {
+        const ben = aktifKullanici || {};
+        const metin = `⚠ Güvenlik uyarısı: ${ben.ad || "Bir kullanıcı"} son 10 dakikada ${sayi} kayıt sildi. Çöp kutusundan kontrol edin (Tanımlar › Çöp Kutusu).`;
+        gunlukYaz(`Toplu silme uyarısı: ${ben.ad || "—"} 10 dakikada ${sayi} kayıt sildi`, "guvenlik", { sayi, kullaniciId: ben.id || null });
+        showToast(`⚠ Kısa sürede ${sayi} kayıt sildiniz — Yöneticiye bildirildi`);
+        const yoneticiler = ((tanimRef.current && tanimRef.current.kullanicilar) || []).filter((k) => k.rol === "Yönetici" && k.id !== ben.id);
+        if (!ben.id || yoneticiler.length === 0)
+            return;
+        const zaman = new Date().toISOString();
+        const yeni = yoneticiler.map((y) => ({ id: uid("msj"), kanal: [ben.id, y.id].sort().join("|"), kullaniciId: ben.id,
+            kullaniciAd: ben.ad || "", metin, zaman, hedef: null, gorevId: null }));
+        saveMesajlar([...(mesajRef.current || []), ...yeni]);
+    };
     // KOLİ (PAKETLEME) AYRI DOSYADA (19 Eylül, 2. madde): `092-koliler.jsx`.
     const { saveKoliler, koliEkle, koliEkleCoklu, koliSil } = useKoliler({ koliler, setKoliler, stok, showToast, copaAt, kaydetmeHatasiBildir, aktifKullanici });
     // KALICI KODLARI TAMAMLAR — ürünlere stok no, renk/ölçü/asorti tanımlarına kod atar.
@@ -16542,10 +16848,11 @@ function AtolyeERP() {
     // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
     const tanimlarKodluYaz = useCallback((next) => {
         const kodlu = kodlariAta([], next).tanimlar;
+        tanimSilinenleriCopeAt(kodlu);
         setTanimlar(kodlu);
         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
         return kodlu;
-    }, []);
+    }, [tanimSilinenleriCopeAt]);
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
@@ -21403,12 +21710,15 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 urun: "Ürün", cari: "Cari", siparis: "Sipariş", uretim: "Üretim",
                 stokHareketi: "Stok Hareketi", cariHareketi: "Cari Hareketi",
                 kasa: "Kasa", banka: "Banka", kasaHareketi: "Kasa Fişi", bankaHareketi: "Banka Fişi", cek: "Çek",
+                koli: "Koli", tanim: "Tanım", gorev: "Görev", model: "Model",
             };
             const TUR_RENK = {
                 urun: "var(--erp-brown)", cari: "#9C3D3D", siparis: "var(--erp-info)", uretim: "var(--erp-primary)",
                 stokHareketi: "var(--erp-text-2)", cariHareketi: "var(--erp-purple)",
                 kasa: "#2F6B4F", banka: "var(--erp-info)", kasaHareketi: "#2F6B4F", bankaHareketi: "var(--erp-info)", cek: "var(--erp-brown)",
+                koli: "var(--erp-brown)", tanim: "#6B4E8A", gorev: "var(--erp-info)", model: "#8A3D6B",
             };
+            const yonetici = !!(aktifKullanici && aktifKullanici.rol === "Yönetici");
             const liste = (cop || []).filter((k) => {
                 if (copTurFiltre !== "Tümü" && k.tur !== copTurFiltre)
                     return false;
@@ -21430,7 +21740,26 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                         React.createElement("b", null, " Geri y\u00FCkleme kayd\u0131n kendisini geri getirir, silme s\u0131ras\u0131ndaki yan etkileri geri almaz:"),
                         " bir sipari\u015F silinirken stok hareketleri de geri sar\u0131lm\u0131\u015Ft\u0131, sipari\u015Fi geri y\u00FCklemek onlar\u0131 yeniden olu\u015Fturmaz. Yan etkili kay\u0131tlar a\u015Fa\u011F\u0131da ayr\u0131ca i\u015Faretlidir; geri y\u00FCkledikten sonra ilgili stok ve cari bakiyelerini kontrol edin.",
                         React.createElement("br", null),
-                        "En fazla son 300 kay\u0131t saklan\u0131r; s\u0131n\u0131r a\u015F\u0131l\u0131nca en eskiler d\u00FC\u015Fer.")),
+                        React.createElement("span", { "data-cop-kurallar": "1" },
+                            React.createElement("b", null, "G\u00FCvenlik kurallar\u0131:"),
+                            " kay\u0131tlar ",
+                            COP_SAKLAMA_GUN,
+                            " g\u00FCn saklan\u0131r, sonra kendili\u011Finden d\u00FC\u015Fer. Her kay\u0131t en az",
+                            " ",
+                            COP_EN_AZ_GUN,
+                            " g\u00FCn \u00E7\u00F6pte kal\u0131r \u2014 o s\u00FCre dolmadan kimse kal\u0131c\u0131 silemez. Kal\u0131c\u0131 silme ve bo\u015Faltma yaln\u0131z Y\u00F6neticide; di\u011Fer kullan\u0131c\u0131lar g\u00F6r\u00FCp geri y\u00FCkleyebilir. K\u0131sa s\u00FCrede \u00E7ok say\u0131da silme olursa Y\u00F6neticiye uyar\u0131 gider. Bulutta ayr\u0131ca silinen her sat\u0131r sunucu ar\u015Fivinde saklan\u0131r (a\u015Fa\u011F\u0131da)."))),
+                (() => {
+                    // SÜRE SINIRINA YAKLAŞANLAR: 90 günü dolan kayıt sessizce düşer; son 14 günde uyarılır ki
+                    // gerekiyorsa geri yüklensin. Sayı sınırı yokken (eskiden 300) bu tek kayıp yolu.
+                    const yakinda = (cop || []).filter((k) => COP_SAKLAMA_GUN - copYasiGun(k) <= 14).length;
+                    return yakinda > 0 ? (React.createElement("div", { "data-cop-yakinda": "1", style: { fontSize: 12, color: "var(--erp-warn)", background: "#B85C2E12", border: "1px solid #B85C2E40", borderRadius: "var(--erp-r-md)", padding: "8px 12px", marginBottom: 12 } },
+                        React.createElement("b", null,
+                            yakinda,
+                            " kay\u0131t"),
+                        " 14 g\u00FCn i\u00E7inde ",
+                        COP_SAKLAMA_GUN,
+                        " g\u00FCnl\u00FCk s\u00FCreyi dolduruyor ve \u00E7\u00F6pten d\u00FC\u015Fecek \u2014 gerekiyorsa \u015Fimdi geri y\u00FCkleyin.")) : null;
+                })(),
                 React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12 } },
                     ["Tümü", ...Object.keys(TUR_ADLARI).filter((t) => turSayilari[t])].map((t) => {
                         const aktif = copTurFiltre === t;
@@ -21447,11 +21776,11 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                             ")"));
                     }),
                     React.createElement("input", { value: copArama, onChange: (e) => setCopArama(e.target.value), placeholder: "Ara\u2026", style: { ...inputStyle, width: 180, fontSize: 12, marginLeft: "auto" } }),
-                    (cop || []).length > 0 && (React.createElement(SilOnayButonu, { onConfirm: onCopBosalt, boyut: 13, baslikNormal: "\u00C7\u00F6p kutusunu tamamen bo\u015Falt", baslikOnay: "T\u00FCm kay\u0131tlar kal\u0131c\u0131 silinecek \u2014 tekrar dokunun" }))),
+                    (cop || []).length > 0 && yonetici && (React.createElement(SilOnayButonu, { onConfirm: onCopBosalt, boyut: 13, baslikNormal: `${COP_EN_AZ_GUN} günden eski kayıtları kalıcı sil`, baslikOnay: `${COP_EN_AZ_GUN} günden eski kayıtlar kalıcı silinecek — tekrar dokunun` }))),
                 liste.length === 0 ? (React.createElement(EmptyState, { text: (cop || []).length === 0 ? "Çöp kutusu boş — henüz hiçbir kayıt silinmedi." : "Bu filtreyle eşleşen kayıt yok." })) : (React.createElement("div", { style: { display: "grid", gap: 8 } }, liste.map((k) => {
                     const acik = acikCopId === k.id;
                     const renk = TUR_RENK[k.tur] || "var(--erp-text-2)";
-                    return (React.createElement("div", { key: k.id, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+                    return (React.createElement("div", { key: k.id, "data-cop-kart": k.baslik, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", flexWrap: "wrap" } },
                             React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "1A"), color: renk, whiteSpace: "nowrap" } }, TUR_ADLARI[k.tur] || k.tur),
                             React.createElement("div", { style: { flex: 1, minWidth: 160 } },
@@ -21462,7 +21791,13 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                     k.ustKayit.ad))),
                             React.createElement("div", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-2)", textAlign: "right", whiteSpace: "nowrap" } },
                                 React.createElement("div", null, new Date(k.silinmeTarihi).toLocaleString("tr-TR")),
-                                React.createElement("div", { style: { color: "var(--erp-text-3)" } }, k.kullaniciAd)),
+                                React.createElement("div", { style: { color: "var(--erp-text-3)" } }, k.kullaniciAd),
+                                (() => {
+                                    const kalanGun = Math.max(0, Math.ceil(COP_SAKLAMA_GUN - copYasiGun(k)));
+                                    return kalanGun <= 14 ? React.createElement("div", { "data-cop-kalan-gun": "1", style: { color: "var(--erp-warn)", fontWeight: 700 } },
+                                        kalanGun,
+                                        " g\u00FCn sonra d\u00FC\u015Fer") : null;
+                                })()),
                             k.yanEtkiliMi && (React.createElement("span", { className: "mono", title: "Silinirken stok/cari kay\u0131tlar\u0131 da etkilendi \u2014 geri y\u00FCkleme bunlar\u0131 d\u00FCzeltmez", style: { fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: "var(--erp-r-pill)", background: "#B85C2E18", color: "var(--erp-warn)", whiteSpace: "nowrap" } }, "yan etkili")),
                             React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center" } },
                                 React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "4px 9px", fontSize: 11 }, onClick: () => setAcikCopId(acik ? null : k.id) },
@@ -21471,11 +21806,75 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                 k.geriAlinabilirMi ? (React.createElement("button", { type: "button", className: "btn-primary btn-save", style: { padding: "5px 10px", fontSize: 11 }, onClick: () => onCopGeriYukle(k.id) },
                                     React.createElement(ArrowRight, { size: 12 }),
                                     " Geri y\u00FCkle")) : (React.createElement("span", { className: "mono", style: { fontSize: 9, color: "var(--erp-text-3)", maxWidth: 110, lineHeight: 1.3 }, title: "Bu t\u00FCr kay\u0131tlar otomatik geri y\u00FCklenemez; i\u00E7eri\u011Fi g\u00F6r\u00FCp elle girebilirsiniz" }, "geri y\u00FCklenemez")),
-                                React.createElement(SilOnayButonu, { onConfirm: () => onCopKaliciSil(k.id), boyut: 12, baslikNormal: "Kal\u0131c\u0131 olarak sil" }))),
+                                (() => {
+                                    const izin = copKaliciSilinebilirMi(k, aktifKullanici);
+                                    return izin.ok
+                                        ? React.createElement(SilOnayButonu, { onConfirm: () => onCopKaliciSil(k.id), boyut: 12, baslikNormal: "Kal\u0131c\u0131 olarak sil" })
+                                        : React.createElement("span", { "data-cop-sil-kilitli": "1", title: izin.sebep, style: { display: "inline-flex", color: "var(--erp-text-3)", opacity: 0.5 } },
+                                            React.createElement(Lock, { size: 12 }));
+                                })())),
                         acik && (React.createElement("div", { style: { borderTop: "1px solid var(--erp-line-soft)", background: "var(--erp-panel)", padding: 10 } },
                             React.createElement("pre", { className: "mono", style: { margin: 0, fontSize: 10, color: "var(--erp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" } }, JSON.stringify(k.veri, null, 2))))));
-                })))));
+                }))),
+                yonetici && React.createElement(SunucuArsiviBolumu, { kullanicilar: tanimlar.kullanicilar, supabaseBagli: supabaseBagli })));
         })()));
+}
+// SUNUCU ARŞİVİ GÖRÜNÜMÜ (v1.549.0) — yalnız Yönetici. `silinen_arsiv` tablosunu (silinen-arsiv.sql) OKUR;
+// yazma/silme düğmesi bilerek yok: tablo uygulamaya zaten kapalı, arayüz de öyle görünmeli. İstek elle
+// (düğmeyle) atılır — her Tanımlar açılışında buluttan 200 satır çekmek gereksiz.
+function SunucuArsiviBolumu({ kullanicilar, supabaseBagli }) {
+    const [satirlar, setSatirlar] = useState(null);
+    const [durum, setDurum] = useState("");
+    const [acikId, setAcikId] = useState(null);
+    const [tablo, setTablo] = useState("");
+    const yukle = async () => {
+        if (!supabaseAcikMi()) {
+            setDurum("Bulut bağlı değil — arşiv yalnız bulutta tutulur.");
+            return;
+        }
+        setDurum("Yükleniyor…");
+        try {
+            const filtre = tablo ? `&tablo=eq.${encodeURIComponent(tablo)}` : "";
+            const r = await supabaseIstek(`silinen_arsiv?select=id,tablo,islem,satir_id,veri,silen_eposta,zaman&order=zaman.desc&limit=200${filtre}`);
+            setSatirlar(Array.isArray(r) ? r : []);
+            setDurum("");
+        }
+        catch (e) {
+            const m = String((e && e.message) || e);
+            // Tablo yoksa PostgREST 404 / 42P01 döner: SQL henüz çalıştırılmamış.
+            setDurum(/404|42P01|does not exist|Could not find/i.test(m)
+                ? "Sunucu arşivi kurulmamış — Supabase'de silinen-arsiv.sql çalıştırılmalı."
+                : `Arşiv okunamadı: ${m.slice(0, 160)}`);
+        }
+    };
+    return (React.createElement("div", { "data-sunucu-arsivi": "1", style: { marginTop: 22, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 } },
+            React.createElement(Archive, { size: 15, color: "var(--erp-brown)" }),
+            React.createElement("b", { style: { fontSize: 13 } }, "Sunucu ar\u015Fivi"),
+            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)", flex: 1, minWidth: 200 } }, "Veritaban\u0131n\u0131n kendisinin tuttu\u011Fu silme kayd\u0131 \u2014 uygulamadan silinemez. Son 200 sat\u0131r."),
+            React.createElement("select", { value: tablo, onChange: (e) => setTablo(e.target.value), style: { ...inputStyle, width: 160, fontSize: 12 } },
+                React.createElement("option", { value: "" }, "T\u00FCm tablolar"),
+                Object.entries(ARSIV_TABLO_ADLARI).map(([t, ad]) => React.createElement("option", { key: t, value: t }, ad))),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-arsiv-yukle": "1", style: { padding: "5px 10px", fontSize: 11 }, onClick: yukle, disabled: !supabaseBagli && !supabaseAcikMi() },
+                React.createElement(RefreshCw, { size: 12 }),
+                " ",
+                satirlar ? "Yenile" : "Arşivi getir")),
+        durum && React.createElement("div", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 } }, durum),
+        satirlar && satirlar.length === 0 && !durum && React.createElement(EmptyState, { text: "Ar\u015Fivde kay\u0131t yok." }),
+        satirlar && satirlar.length > 0 && (React.createElement("div", { style: { display: "grid", gap: 4 } }, satirlar.map((a) => {
+            const o = arsivSatiriOzeti(a, kullanicilar);
+            const acik = acikId === a.id;
+            return (React.createElement("div", { key: a.id, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)" } },
+                React.createElement("button", { type: "button", onClick: () => setAcikId(acik ? null : a.id), style: { display: "flex", gap: 10, alignItems: "center", width: "100%", background: "none", border: "none", padding: "6px 10px", cursor: "pointer", textAlign: "left", flexWrap: "wrap" } },
+                    React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", minWidth: 90 } }, o.tabloAdi),
+                    React.createElement("span", { style: { fontSize: 12, flex: 1, minWidth: 140, overflowWrap: "anywhere" } }, o.baslik),
+                    React.createElement("span", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-3)", whiteSpace: "nowrap" } },
+                        new Date(a.zaman).toLocaleString("tr-TR"),
+                        " \u00B7 ",
+                        o.kim),
+                    acik ? React.createElement(ChevronUp, { size: 12 }) : React.createElement(ChevronDown, { size: 12 })),
+                acik && (React.createElement("pre", { className: "mono", style: { margin: 0, padding: 10, fontSize: 10, background: "var(--erp-panel)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" } }, JSON.stringify(gizliAlanlariAt(a.veri), null, 2)))));
+        })))));
 }
 // Kullanıcı satırında şifre değiştirme / bulut hesabı açma kutusu: tıklanınca açılır, Enter ya da
 // Uygula ile gönderir; bulut kabul edince kapanır.
@@ -46980,7 +47379,10 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     const [siparisSilOnayGoster, setSiparisSilOnayGoster] = useState(false);
     // Kart içi sekme: "kalemler" | "rezervasyon". Rezervasyon bilgisi kalemlerin arasına sıkışmak
     // yerine kendi sekmesinde durur — kalem listesi uzunken görünmez hale geliyordu.
-    const [kartSekme, setKartSekme] = useState("kalemler");
+    // AÇILIR (v1.547.0 — kullanıcı: "Tedarik planlamayı komple yap, satırlar değil; tedarik planlamaya tıklayınca
+    // hepsini göster"). Kart açılınca hiçbir bölüm açık değil (null); düğmeye dokununca açılır, aynı düğmeye tekrar
+    // dokununca kapanır. Önce ilk sekme (Tedarik Planlama) hep açık geliyordu ve 59 satırlık tablo kartı kaplıyordu.
+    const [kartSekme, setKartSekme] = useState(null);
     const cari = cariler.find((c) => c.id === siparis.cariId);
     // Kalemlerin, para birimine göre gruplu toplamı — hem başlıktaki toplam hesaplaması hem de aşağıdaki
     // "Fiş toplamını çevir" paneli için ortak kullanılır.
@@ -47514,21 +47916,24 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             }
                             if (sekmeler.length === 0)
                                 return null;
-                            // Açık sekme, mevcut sekmeler arasında yoksa ilkine düşülür: sipariş durumu değişince
+                            // Açık sekme, mevcut sekmeler arasında yoksa hiçbiri açık değil (v1.547.0; önce ilkine düşülüyordu): sipariş durumu değişince
                             // (ör. iptal edilince planlama sekmesi kalkar) boş bir içerik kalmasın.
-                            const aktifKey = sekmeler.some((x) => x.key === kartSekme) ? kartSekme : sekmeler[0].key;
+                            const aktifKey = sekmeler.some((x) => x.key === kartSekme) ? kartSekme : null;
                             return (React.createElement("div", { style: { marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12 } },
                                 React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 } }, sekmeler.map((x) => {
                                     const aktif = aktifKey === x.key;
-                                    return (React.createElement("button", { key: x.key, type: "button", onClick: () => setKartSekme(x.key), style: {
+                                    return (React.createElement("button", { key: x.key, type: "button", "data-kart-bolum": x.key, "data-kart-bolum-acik": aktif ? "1" : "0", title: aktif ? "Kapat" : "Aç", onClick: () => setKartSekme((o) => (o === x.key ? null : x.key)), style: {
                                             padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 600, cursor: "pointer",
-                                            border: `1.5px solid ${aktif ? x.renk : "var(--erp-border-2)"}`,
+                                            // Kapalıyken de KENDİ RENGİNDE (v1.547.0): artık hepsi kapalı başladığı için gri düğme
+                                            // "5 bekliyor" uyarısını soldururdu. Açık olan dolu renk.
+                                            border: `1.5px solid ${x.renk}`,
                                             background: aktif ? x.renk : "#fff",
-                                            color: aktif ? "#fff" : "var(--erp-text-2)",
+                                            color: aktif ? "#fff" : x.renk,
                                             display: "flex", alignItems: "center", gap: 5,
                                         } },
                                         x.ikon,
-                                        x.ad));
+                                        x.ad,
+                                        aktif ? React.createElement(ChevronUp, { size: 12 }) : React.createElement(ChevronDown, { size: 12 })));
                                 })),
                                 aktifKey === "planlama" && planlamaVar && (React.createElement(PlanlamaBolumu, { siparis: siparis, firmaBilgileri: firmaBilgileri, showToast: showToast, onFiseGitNo: onFiseGitNo, stok: stok, cariler: cariler, tumSiparisler: tumSiparisler, uretimSiparisleri: uretimSiparisleri, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onSiparisGit: onSiparisGit, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler })),
                                 aktifKey === "ihtiyac" && ihtiyac && (() => {
@@ -50805,7 +51210,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.546.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.549.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
