@@ -3,7 +3,7 @@
 // Kullanıcı (Paketleme): "1017 - Beyaz Deri/Gümüş … Tanımlar'da yok". Tanımlar tek satır; başka cihazın eski
 // listesi yeni model renklerini siliyordu. Ölçülen: birleştirme başkasının eklediğini korur, bu cihazda
 // silineni geri getirmez, aynı kimlikte yerel kazanır; kayıp model renkleri etiketten AYNI kodla kurulur.
-const { tanimlariBirlestir, kayipModelRenkleri, renkTanimiBul } = require("./erp.cjs");
+const { tanimlariBirlestir, kayipModelRenkleri, renkTanimiBul, tanimKodlariniOnar } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -53,6 +53,26 @@ bekle("'/' içeren renk adı en uzun eşleşmeyle", k.kombinasyonlar[2].renkIdle
 const onarilmis = { ...tanimlar, renkler: [...tanimlar.renkler, ...k.renkler], renkKombinasyonlari: [...tanimlar.renkKombinasyonlari, ...k.kombinasyonlar] };
 bekle("barkod renk tanımı artık bulunuyor, kodu 1017", (renkTanimiBul(onarilmis, null, "1017 - Beyaz Deri/Gümüş") || {}).barkodKodu, 1017);
 bekle("onarım sonrası kayıp yok", kayipModelRenkleri(stok, onarilmis, yeniId).kombinasyonlar.length, 0);
+
+// Kod çakışması onarımı (v1.556.0 — "Renk kodları çakışıyor"): iki cihaz aynı anda 44 verdi, birleştirme ikisini tuttu.
+const cakisan = {
+  renkler: [
+    { id: "renk-lz000001-aaaa", ad: "Light", barkodKodu: 44, kod: "144" },          // yeni (sonra açılmış)
+    { id: "renk-ka000001-bbbb", ad: "Yılan Deri", barkodKodu: 44 },                 // eski — kodunu korur
+    { id: "renk-ka000002-cccc", ad: "Bej", barkodKodu: 1017 },                      // model rengi koduyla çakışıyor
+    { id: "r1", ad: "Siyah", barkodKodu: 1 },
+  ],
+  renkKombinasyonlari: [{ id: "k1", kod: "1017", renkIdler: ["r1"] }],
+  bedenler: [{ id: "b1", ad: "40", barkodKodu: 5 }, { id: "b2", ad: "41", barkodKodu: 5 }],
+  kodSayaclari: { renk: 44 },
+};
+const on = tanimKodlariniOnar(cakisan);
+const kodlar = Object.fromEntries(on.tanimlar.renkler.map((r) => [r.ad, r.barkodKodu]));
+bekle("eski renk 44'ü korur, Siyah değişmez", [kodlar["Yılan Deri"], kodlar.Siyah], [44, 1]);
+bekle("yeni renk ve model rengiyle çakışan renk yeni kod alır, hepsi tekil", new Set(on.tanimlar.renkler.map((r) => r.barkodKodu).concat([1017])).size, 5);
+bekle("değişenler raporlanır", on.degisenler.map((d) => `${d.aile}:${d.ad}:${d.eski}`).sort(), ["renk:Bej:1017", "renk:Light:44", "ölçü:41:5"]);
+bekle("ton kodu (kod) dokunulmaz", on.tanimlar.renkler.find((r) => r.ad === "Light").kod, "144");
+bekle("çakışma yoksa aynı nesne", tanimKodlariniOnar(on.tanimlar).degisenler.length, 0);
 
 console.log(hata ? "birim-tanim-birlestir: HATA" : "birim-tanim-birlestir: tamam");
 process.exit(hata);

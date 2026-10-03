@@ -48,8 +48,13 @@ useEffect(() => {
           // defteri"). Bir tablo son oturumda buluta yazılamadıysa bulutun eski hâli yerelin
           // güncel hâlini EZMEMELİ — stok tutarsızlığının kaynağı tam olarak buydu.
           const bekleyenler = bekleyenYazmalariOku();
+          // BULUTUN GERÇEK HÂLİ (v1.556.0): yerel kazanınca da saklanır — fark tabanı bundan kurulur
+          // (025 `tabloBaslangicBekleyen`), yoksa yerelde olup bulutta olmayan kayıt hiç gönderilmez.
+          const bulutKopya = {};
+          const ALAN_TABLO = { stok: "urunler", siparisler: "siparisler", uretim: "uretim", cariler: "cariler" };
           const yerelKazansin = async (anahtar, alan) => {
             if (!bekleyenler[anahtar]) return;
+            bulutKopya[alan] = bulut[alan] || [];
             try {
               const okuma = await guvenliOku(anahtar, null);
               if (okuma.deger) {
@@ -64,9 +69,26 @@ useEffect(() => {
                   (bulut.stok || []).forEach((u) => { const g = urunGorselleri(u); if (g) bulutGorsel[u.id] = g; });
                   bulut[alan] = gorselleriBirlestir(birlesik, bulutGorsel);
                 } else bulut[alan] = yerelDeger;
+                // Başka cihazın bu arada eklediği kayıtlar da ekranda kalsın (bu cihazda silinenler hariç).
+                if (Array.isArray(bulut[alan])) bulut[alan] = yereliBulutlaBirlestir(bulut[alan], bulutKopya[alan], ALAN_TABLO[alan]);
                 console.warn(`Bekleyen yazma: ${anahtar} için yerel kopya esas alındı (bulut ${bekleyenler[anahtar].zaman} tarihinden beri geride)`);
               }
             } catch (e) { console.error("Bekleyen yazma okunamadı:", anahtar, e); }
+          };
+          // TEK PARÇA TABLO OKUMA (v1.556.0, 089 `derinBirlestir`): bulut esas; bulut okunamazsa ya da boşsa yerel.
+          // BEKLEYEN YAZMA VARSA yerel esas + buluttaki yeniler — önce bulut kazanıyordu ve otomatik yeniden
+          // gönderme ekrandaki (bulut) hâli yazdığı için internetsiz girilen kasa fişi, koli… KALICI kayboluyordu.
+          const tekilOku = async (tablo, anahtar) => {
+            let bulutVeri;
+            try { const sat = await supabaseTumSatirlar(tablo); bulutVeri = sat[0] && sat[0].veri ? sat[0].veri : null; } catch (e) { bulutVeri = undefined; }
+            let yerelVeri = null;
+            try { const o = await guvenliOku(anahtar, null); if (o.deger) yerelVeri = JSON.parse(o.deger); } catch (e) { /* */ }
+            if (bulutVeri == null) return yerelVeri;
+            if (bekleyenler[anahtar] && yerelVeri != null) {
+              console.warn(`Bekleyen yazma: ${anahtar} — yerel kopya esas, buluttakiyle birleştirildi`);
+              return derinBirlestir(yerelVeri, bulutVeri);
+            }
+            return bulutVeri;
           };
           await yerelKazansin("stok:items", "stok");
           await yerelKazansin("siparis:data", "siparisler");
@@ -150,33 +172,27 @@ useEffect(() => {
           setOnaylar(bulut.onaylar || []);
           setCop(copuBuda(bulut.cop || []));   // 90 günü dolanlar açılışta da düşer (v1.549.0)
 
-          // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil.
-          tabloBaslangicTam("urunler", damga.urunler);
-          tabloBaslangicTam("siparisler", bulut.siparisler);
-          tabloBaslangicTam("uretim", bulut.uretim);
-          tabloBaslangicTam("cariler", bulut.cariler);
+          // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil. BEKLEYEN YAZMASI olan
+          // tabloda durum yerel olduğu için taban AYRICA bulutun gerçek hâlinden kurulur (v1.556.0 — "Jut").
+          const tabanKur = (tablo, alan, durum) => {
+            if (bulutKopya[alan]) tabloBaslangicBekleyen(tablo, bulutKopya[alan], durum);
+            else { tabloBaslangicTam(tablo, durum); bekleyenKayitlariTabanaUygula(tablo); }
+          };
+          tabanKur("urunler", "stok", damga.urunler);
+          tabanKur("siparisler", "siparisler", bulut.siparisler);
+          tabanKur("uretim", "uretim", bulut.uretim);
+          tabanKur("cariler", "cariler", bulut.cariler);
           tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari);
           tabloBaslangicTam("onaylar", bulut.onaylar || []);
           tabloBaslangicTam("cop", bulut.cop || []);
+          ["stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
 
           // Muhasebe (kasa/banka/çek) ve onaylar henüz tabloya taşınmadı; bulut açıkken de
           // tarayıcı deposundan okunur. Bunlar tek kullanıcı tarafından girilen, nadiren
           // çakışan kayıtlar — taşınmaları öncelikli değildi.
           // Muhasebe BULUTTAN okunur; yerel kopya yalnızca bulut erişilemezse kullanılır.
           // Kur bilgisi de burada: ikinci bilgisayarda elle girilen kur kaybolmasın diye.
-          try {
-            const mSatir = await supabaseTumSatirlar("muhasebe");
-            if (mSatir[0] && mSatir[0].veri) setMuhasebe(mSatir[0].veri);
-            else {
-              const okuma = await guvenliOku("muhasebe:data", null);
-              if (okuma.deger) setMuhasebe(JSON.parse(okuma.deger));
-            }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("muhasebe:data", null);
-              if (okuma.deger) setMuhasebe(JSON.parse(okuma.deger));
-            } catch (e2) { /* muhasebe okunamazsa boş başlar */ }
-          }
+          { const v = await tekilOku("muhasebe", "muhasebe:data"); if (v != null) setMuhasebe(v); }
           // ÇEK GÖRSELLERİ — kendi tablosu var, satır satır okunuyor. Bulut erişilemezse
           // yerel anahtarlar okunuyor (çek başına `cekgorsel:<id>`).
           // `bulut.cekGorselleri` zaten okundu (045-oku); ayrıca sorgulamaya gerek yok.
@@ -185,103 +201,32 @@ useEffect(() => {
           // KOLİLER de muhasebe gibi tekil tablo: buluttan okunur, yerel kopya yalnızca bulut
           // erişilemezse kullanılır. Yazıp okumamak, ikinci bilgisayarda koli listesini BOŞ
           // gösterirdi — paketlemeyi yapan personel kendi kurduğu koliyi bulamazdı.
-          try {
-            const kSatir = await supabaseTumSatirlar("koliler");
-            if (kSatir[0] && kSatir[0].veri) setKoliler(kSatir[0].veri);
-            else {
-              const okuma = await guvenliOku("koli:data", null);
-              if (okuma.deger) setKoliler(JSON.parse(okuma.deger));
-            }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("koli:data", null);
-              if (okuma.deger) setKoliler(JSON.parse(okuma.deger));
-            } catch (e2) { /* koliler okunamazsa boş başlar */ }
-          }
+          { const v = await tekilOku("koliler", "koli:data"); if (v != null) setKoliler(v); }
 
           // GÖREVLER — kolilerle aynı kalıp. Tablo yoksa (gorevler.sql çalıştırılmadıysa) yerel
           // kopya kullanılır; yazma uyarısı ekranda görünür, veri kaybolmaz.
-          try {
-            const mdSatir = await supabaseTumSatirlar("modeller");
-            if (mdSatir[0] && mdSatir[0].veri) setModeller(mdSatir[0].veri);
-            else {
-              const okuma = await guvenliOku("model:data", null);
-              if (okuma.deger) setModeller(JSON.parse(okuma.deger));
-            }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("model:data", null);
-              if (okuma.deger) setModeller(JSON.parse(okuma.deger));
-            } catch (e2) { /* modelhane boş başlar */ }
-          }
+          { const v = await tekilOku("modeller", "model:data"); if (v != null) setModeller(v); }
 
           // FATURALAR (v1.500.0) — aynı kalıp. Tablo yoksa (faturalar.sql çalıştırılmadıysa) yerel kopya;
           // yazma uyarısı ekranda görünür, veri kaybolmaz.
-          try {
-            const ftSatir = await supabaseTumSatirlar("faturalar");
-            if (ftSatir[0] && ftSatir[0].veri) setFaturalar(ftSatir[0].veri);
+          { const v = await tekilOku("faturalar", "fatura:data"); if (v != null) setFaturalar(v); }
+
+          // FİŞ DEFTERİ: bekleyen yazma varsa yerel esas (v1.545.0) — artık buluttaki yenilerle BİRLEŞİK (v1.556.0).
+          {
+            const v = await tekilOku("fis_defteri", FIS_DEFTERI_ANAHTAR);
+            if (v != null) setFisDefteri(v);
             else {
-              const okuma = await guvenliOku("fatura:data", null);
-              if (okuma.deger) setFaturalar(JSON.parse(okuma.deger));
+              try { const okuma = await guvenliOku("fisdefter:data", null); if (okuma.deger) setFisDefteri(JSON.parse(okuma.deger)); } catch (e) { /* boş başlar */ }
             }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("fatura:data", null);
-              if (okuma.deger) setFaturalar(JSON.parse(okuma.deger));
-            } catch (e2) { /* faturalar boş başlar */ }
           }
 
-          try {
-            // BEKLEYEN YAZMA VARSA YEREL KAZANIR (v1.545.0): buluta gidemeyen fiş defteri yazması bekliyorsa
-            // bu cihazdaki kopya esas — diğer tablolardaki kuralın aynısı. Önce bu tablo atlanıyordu: geride
-            // kalan bulut, yereldeki son fişleri defterden düşürüyordu (kullanıcı, 1 Ekim: "Fiş defteri ·
-            // Failed to fetch", geçici bağlantı kopması).
-            const yerelF = bekleyenler[FIS_DEFTERI_ANAHTAR] ? await guvenliOku(FIS_DEFTERI_ANAHTAR, null) : null;
-            const fSatir = yerelF && yerelF.deger ? [] : await supabaseTumSatirlar("fis_defteri");
-            if (yerelF && yerelF.deger) setFisDefteri(JSON.parse(yerelF.deger));
-            else if (fSatir[0] && fSatir[0].veri) setFisDefteri(fSatir[0].veri);
-            else {
-              const okuma = await guvenliOku("fisdefter:data", null);
-              if (okuma.deger) setFisDefteri(JSON.parse(okuma.deger));
-            }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("fisdefter:data", null);
-              if (okuma.deger) setFisDefteri(JSON.parse(okuma.deger));
-            } catch (e2) { /* defter okunamazsa boş başlar */ }
-          }
-
-          try {
-            const mSatir = await supabaseTumSatirlar("mesajlar");
-            if (mSatir[0] && mSatir[0].veri) setMesajlar(mSatir[0].veri);
-            else {
-              const okuma = await guvenliOku("mesaj:data", null);
-              if (okuma.deger) setMesajlar(JSON.parse(okuma.deger));
-            }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("mesaj:data", null);
-              if (okuma.deger) setMesajlar(JSON.parse(okuma.deger));
-            } catch (e2) { /* mesajlar okunamazsa boş başlar */ }
-          }
+          { const v = await tekilOku("mesajlar", "mesaj:data"); if (v != null) setMesajlar(v); }
           try {
             const okumaO = await guvenliOku("mesaj:okuma", null);
             if (okumaO.deger) setMesajOkumalari(JSON.parse(okumaO.deger));
           } catch (e) { /* okuma damgaları yalnız bu cihazın, kaybı önemsiz */ }
 
-          try {
-            const gSatir = await supabaseTumSatirlar("gorevler");
-            if (gSatir[0] && gSatir[0].veri) setGorevler(gSatir[0].veri);
-            else {
-              const okuma = await guvenliOku("gorev:data", null);
-              if (okuma.deger) setGorevler(JSON.parse(okuma.deger));
-            }
-          } catch (e) {
-            try {
-              const okuma = await guvenliOku("gorev:data", null);
-              if (okuma.deger) setGorevler(JSON.parse(okuma.deger));
-            } catch (e2) { /* görevler okunamazsa boş başlar */ }
-          }
+          { const v = await tekilOku("gorevler", "gorev:data"); if (v != null) setGorevler(v); }
 
           // Onaylar artık BULUTTAN okunuyor (yukarıda), yerelden okumaya gerek yok.
 
@@ -687,6 +632,9 @@ useEffect(() => {
       tabloBaslangicTam("siparisler", sp);
       tabloBaslangicTam("uretim", u);
       tabloBaslangicTam("cariler", c);
+      // İNTERNETSİZ AÇILIŞ (v1.556.0): taban yerel kopya; önceki oturumda buluta GİDEMEYEN kayıtlar
+      // defterden tabandan düşülür ki internet gelince ilk yazmada gitsinler.
+      ["urunler", "siparisler", "uretim", "cariler", "stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
       tabloBaslangicTam("stok_rezervasyonlari", Array.isArray(srez) ? srez : []);
       tabloBaslangicTam("onaylar", oy);
       tabloBaslangicTam("cop", cp);

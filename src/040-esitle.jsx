@@ -79,12 +79,32 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
   const sema = TABLO_SEMA[tablo];
   if (!sema) return;
 
-  // 1) ANA KAYITLAR
-  // Fark belleğinin ÖNCEKİ hâli saklanıyor: çakışma çıkarsa geri alınacak. tabloFarki belleği
-  // çağrıldığı anda güncelliyor, yani "yazıldı" diye işaretliyor — yazılmadıysa bu yalan olur
-  // ve kayıt bir daha hiç denenmez.
-  const oncekiBellek = _sonHal[tablo] ? new Map(_sonHal[tablo]) : null;
+  // BELLEK YEDEĞİ — ANA + ALT (v1.556.0). tabloFarki belleği çağrıldığı anda "yazıldı" diye işaretliyor.
+  // Yazma DÜŞERSE (internet/elektrik kesintisi, sunucu hatası) bu yalan olur ve kayıt bir daha hiç
+  // gönderilmez: kullanıcı (3 Ekim): "Jut stoğu açtım, reçeteye ekledim, silmedim ama stokta görünmüyor;
+  // reçetede görünüyor — bir ara elektrik gitti, internetsiz çalıştım". Jut internetsiz açıldı → POST düştü
+  // → bellek "Jut bulutta" dedi → internet gelince sıradaki yazma yalnız reçeteyi gönderdi, başarılı olunca
+  // bekleyen yazma defteri de silindi → bir sonraki açılışta buluttan okununca Jut YOKTU.
+  // Artık: hata/çakışmada ana ve alt belleklerin hepsi geri alınır; değişenler kalıcı deftere yazılır
+  // (`bekleyenKayitEkle`) ki uygulama kapanıp açılsa da gönderilsin.
+  const bellekAdlari = [tablo, ...(sema.cocuklar || []).map((c) => `${tablo}::${c.tablo}`)];
+  const bellekYedegi = {};
+  bellekAdlari.forEach((b) => { bellekYedegi[b] = _sonHal[b] ? new Map(_sonHal[b]) : null; });
+  const bellegiGeriAl = () => bellekAdlari.forEach((b) => {
+    if (bellekYedegi[b]) _sonHal[b] = bellekYedegi[b]; else delete _sonHal[b];
+  });
+
+  // 1) ANA KAYITLAR — ve ALT KAYIT FARKLARI ÖNCEDEN (ağa çıkmadan): yazma yarıda düşerse ne
+  // gönderilecekti, tamamı bilinsin (deftere o yazılır).
   const fark = tabloFarki(tablo, kayitlar);
+  const cocukFarklari = (sema.cocuklar || []).map((cocuk) => {
+    const duz = [];
+    (kayitlar || []).forEach((k) => { cocuk.cikar(k).forEach((c) => duz.push(c)); });
+    const kimlikli = duz.map((c) => ({ ...c, __k: cocuk.anahtar(c) }));
+    return { cocuk, cFark: tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k }))) };
+  });
+  let _sayim = null;
+  try {
   if (!_surumler[tablo]) _surumler[tablo] = new Map();
   const surumMap = _surumler[tablo];
   const degisen = [...fark.eklenen, ...fark.guncellenen];
@@ -130,7 +150,7 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
       else surumMap.set(k.id, beklenen + 1);
     }));
   }
-  const _sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
+  _sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
 
   // ÇAKIŞMA VARSA BURADA DURULUR — alt kayıtlara hiç dokunulmaz.
   //
@@ -146,7 +166,7 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
   // Çakışma, elimizdeki tablonun bayat olduğunun kanıtıdır. Bayat veriyle yazmaya devam etmek
   // tahmin yürütmektir; doğru davranış durup kullanıcıyı yenilemeye yönlendirmektir.
   if (cakisanlar.length > 0) {
-    if (oncekiBellek) _sonHal[tablo] = oncekiBellek;
+    bellegiGeriAl();
 
     // SUNUCUYA SOR: çakışma gerçek mi? Beklediğimiz sürümle sunucudakini karşılaştırmadan
     // "başkası değiştirdi" demek tahmindir. Sunucudaki sürüm beklediğimizden BİR fazlaysa,
@@ -172,13 +192,9 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
     return { __cakisma: true, sayim: _sayim, teshis };
   }
 
-  // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır.
+  // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır (fark yukarıda hesaplandı).
   // Böylece 500 hareketi olan bir üründe tek hareket eklendiğinde yalnızca o satır gider.
-  for (const cocuk of sema.cocuklar) {
-    const duz = [];
-    (kayitlar || []).forEach((k) => { cocuk.cikar(k).forEach((c) => duz.push(c)); });
-    const kimlikli = duz.map((c) => ({ ...c, __k: cocuk.anahtar(c) }));
-    const cFark = tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k })));
+  for (const { cocuk, cFark } of cocukFarklari) {
 
     const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) =>
       // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
@@ -212,6 +228,15 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
   if (fark.silinen.length > 0) {
     await supabaseSil(tablo, fark.silinen);
   }
+  } catch (e) {
+    // YAZMA DÜŞTÜ: bellek geri, gönderilemeyenler kalıcı deftere. Hata yukarı gider (tabloYaz bekleyen
+    // yazma şeridini açar, çağıran "kaydedilemedi" der).
+    bellegiGeriAl();
+    bekleyenKayitEkle(tablo, fark, cocukFarklari);
+    throw e;
+  }
+  // Hepsi gitti: defterdeki önceki bekleyenler de bu yazmayla gönderildi (tabanda yoklardı).
+  bekleyenKayitTemizle(tablo);
   return _sayim;
 }
 

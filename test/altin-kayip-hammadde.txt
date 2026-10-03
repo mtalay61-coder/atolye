@@ -1,0 +1,17 @@
+{
+  "uyari": "2 hammadde reçetelerde kullanılıyor ama stokta yok: Jut (Bot) · Taban (Bot)",
+  "sonra": {
+    "jut": {
+      "ad": "Jut",
+      "kategori": "Hammadde",
+      "birim": "Çift",
+      "renkler": [
+        "Naturel"
+      ],
+      "geriKuruldu": true
+    },
+    "receteAyni": true,
+    "uyariKalkti": true
+  },
+  "hatalar": []
+}

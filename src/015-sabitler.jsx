@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.555.0";
+const SURUM = "1.556.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Stok kartinda renk eklerken tanimsiz renk icin ortak renk acilsin mi sorusu; renk kodu ve barkod kodu otomatik";
+const SURUM_NOTU = "Internetsizken acilan kayitlar kaybolmuyor (fark bellegi, bekleyen kayit defteri, tekil tablolar); kayip hammadde geri kur; renk barkod kodu cakismasi kendiliginden onariliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,15 @@ const SURUM_NOTU = "Stok kartinda renk eklerken tanimsiz renk icin ortak renk ac
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.556.0", tarih: "03.10.2026",
+    eklenen: ["Stok: reçetelerde kullanılan ama stokta olmayan hammadde uyarısı ve 'Geri kur' (aynı kimlikle, reçete bağı yerine oturur)"],
+    degisen: [],
+    duzeltilen: [
+      "İnternet/elektrik kesintisinde açılan ya da değiştirilen kayıt buluta hiç gitmeyebiliyordu: yazma düşünce fark belleği geri alınmıyor, internet gelince sonraki yazma o kaydı atlıyordu; başarılı yazma da 'bekleyen' uyarısını kaldırıyor, bir sonraki açılışta kayıt yok oluyordu",
+      "Açılışta bekleyen yazma varken fark tabanı yerel kopyadan kuruluyordu (bulutta olmayan kayıt 'var' sayılıyordu); artık bulutun gerçek hâlinden kuruluyor, gönderilemeyen kayıtlar kalıcı bir defterde tutulup mutlaka gönderiliyor",
+      "Kasa & Banka, koliler, faturalar, mesajlar, görevler: internetsizken girilen kayıt açılışta buluttaki eski hâlle eziliyordu; artık yerel + buluttaki yeniler birleştiriliyor",
+      "Renk (ve ölçü/asorti) barkod kodu çakışması: iki cihazın aynı anda verdiği kodlar yan yana gelebiliyordu; artık kendiliğinden onarılıyor (en eski kodunu korur, diğerine sıradaki boş kod) ve hangi kodun değiştiği bildiriliyor",
+    ] },
   { surum: "1.555.0", tarih: "03.10.2026",
     eklenen: ["Stok kartı › Renk ekle: yazılan renk tanımlarda yoksa 'Ortak renk olarak açılsın mı?' soruluyor; onaylanınca Tanımlar'a renk kodu, barkod kodu, malzeme tipi ve görünüm rengiyle açılıp ürüne ekleniyor"],
     degisen: [],

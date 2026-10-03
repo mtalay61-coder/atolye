@@ -2294,6 +2294,25 @@ export default function AtolyeERP() {
     return kodlu;
   }, [tanimSilinenleriCopeAt]);
 
+  // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
+  // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
+  // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
+  // çakışan/eksik kod varsa en eski kayıt kodunu korur, diğerine sıradaki boş kod verilir ve SÖYLENİR (etiket
+  // basıldıysa yeniden basılmalı). Aynı imza ikinci kez onarılmaz — onarım hatalıysa döngü olmasın.
+  const kodOnarimImzaRef = useRef("");
+  useEffect(() => {
+    if (loading) return;
+    const o = tanimKodlariniOnar(tanimlar);
+    if (o.degisenler.length === 0) return;
+    const imza = o.degisenler.map((d) => `${d.id}:${d.alan}:${d.eski}`).join("|");
+    if (kodOnarimImzaRef.current === imza) return;
+    kodOnarimImzaRef.current = imza;
+    tanimlarKodluYaz(o.tanimlar);
+    const metin = o.degisenler.map((d) => `${d.ad}: ${d.alan === "kod" ? "renk kodu" : `${d.aile} barkod kodu`} ${d.eski || "yok"} → ${d.yeni}`).join(" · ");
+    gunlukYaz(`Kod çakışması onarıldı: ${metin}`, "tanimlar", { degisenler: o.degisenler });
+    showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
+  }, [loading, tanimlar, tanimlarKodluYaz, showToast]);
+
   // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
   // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
   // tanımlıysa dokunmaz.

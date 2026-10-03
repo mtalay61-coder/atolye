@@ -1203,6 +1203,36 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
         </div>
       )}
 
+      {/* KAYIP HAMMADDE UYARISI (v1.556.0 — "Jut" olayı, 089): reçetede kullanılan ama stokta OLMAYAN
+          hammadde. Stok tamamen yüklüyken (ürün varken) gösterilir; aynı kimlikle geri kurulur, reçete bağı
+          kendiliğinden yerine oturur. */}
+      {items.length > 0 && kapsam !== "mamul" && (() => {
+        const kayip = kayipHammaddeler(items);
+        if (kayip.length === 0) return null;
+        return (
+          <div data-kayip-hammadde={kayip.length} style={{ border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)",
+            padding: 10, marginBottom: 10, fontSize: 12, color: "#7A3B22", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 240 }}>
+              <b>{kayip.length} hammadde reçetelerde kullanılıyor ama stokta yok:</b>{" "}
+              <span className="mono">{kayip.map((h) => `${h.ad} (${h.kullananlar.join(", ")})`).join(" · ")}</span>
+              <div style={{ color: "var(--erp-text-2)", marginTop: 3 }}>
+                Büyük olasılıkla internetsizken açıldı ve buluta hiç gitmedi (v1.556.0'da düzeltildi). Geri kurulunca aynı kimlikle
+                açılır, reçeteler yeniden bağlanır; fiyat, tedarikçi ve stok bilgisini kartta tamamlayın.
+              </div>
+            </div>
+            <button type="button" className="btn-primary" data-kayip-hammadde-kur="1" style={{ padding: "5px 12px", fontSize: 12 }}
+              onClick={() => {
+                const yeniler = kayip.map(kayipHammaddeKarti);
+                onSave([...items, ...yeniler]);
+                gunlukYaz(`${yeniler.length} kayıp hammadde reçetelerden geri kuruldu: ${yeniler.map((u) => u.ad).join(", ")}`, "veri", { idler: yeniler.map((u) => u.id) });
+                showToast(`${yeniler.length} hammadde geri kuruldu: ${yeniler.map((u) => u.ad).join(", ")} — fiyat ve tedarikçiyi kartta tamamlayın`);
+              }}>
+              Geri kur
+            </button>
+          </div>
+        );
+      })()}
+
       {/* TEK SATIR, SIKI (kullanıcı, 12 Eylül): arama · stok değeri · iki düğme. Dolgular küçüldü,
           düğmeler kısa; telefonda iki satıra sarılsa da liste bir ekran yukarı geldi. */}
       <div style={{ display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
