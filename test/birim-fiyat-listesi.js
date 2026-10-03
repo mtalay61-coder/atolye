@@ -4,7 +4,7 @@
 // kaydedelim; Toptan TL %14 + ya da 10 TL indirimle farklı kaydedip başka fiyat grubu oluşturalım."
 // Ölçülen: kaynaktan okuma (grup kuralı / genel fiyat, boş = null), dönüşüm (yüzde, tutar, yuvarlama),
 // yazma (kural ekle/güncelle/sil + geçmiş), fişin okuduğu `fiyatBul` yazılanı görüyor mu, birim çevirme.
-const { fiyatListesiKaynaklari, urunKaynakFiyati, fiyatDonustur, fiyatListesiYaz, fiyatlariHedefBirime, fiyatBul } = require("./erp.cjs");
+const { ozelKodSecenekleri, ozelKodSuzgeceUyar, fiyatListesiKaynaklari, urunKaynakFiyati, fiyatDonustur, fiyatListesiYaz, fiyatlariHedefBirime, fiyatBul } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -68,6 +68,18 @@ const yeniGrup = fiyatListesiKaynaklari([{ id: "g3", ad: "Toptan TL +14", tip: "
 const y4 = fiyatListesiYaz(urunler, yeniGrup, { a: 456 }, { paraBirimleri: { a: "TRY" } });
 bekle("yeni gruba yazıldı, kaynak grup değişmedi", y4.urunler[0].fiyatKurallari.map((k) => `${k.deger}:${k.fiyat}`), ["g1:400", "g1:999", "g3:456"]);
 bekle("USD grubunda fiyat yok → boş", urunKaynakFiyati(urunler[0], usd).fiyat, null);
+
+// 5) Özel kod süzgeci (v1.553.0)
+const alanlar = [{ id: "s", ad: "Sezon" }, { id: "t", ad: "Taban", kapsamTuru: "mamul", kapsamAd: "Bot" }];
+const oku = [
+  { id: "1", mamulTipi: "Bot", ozelKodlar: { s: "2026", t: "Kauçuk" } },
+  { id: "2", mamulTipi: "Babet", ozelKodlar: { s: "2025", t: "Deri" } },   // Taban alanı Babet'e uymaz → görünmez
+  { id: "3", mamulTipi: "Bot", ozelKodlar: { s: "2026" } },
+];
+bekle("seçenekler: yalnız dolu ve uyan değerler", ozelKodSecenekleri(oku, alanlar), [{ id: "s", ad: "Sezon", degerler: ["2025", "2026"] }, { id: "t", ad: "Taban", degerler: ["Kauçuk"] }]);
+bekle("tek alan süzgeci", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "2026" })).map((u) => u.id), ["1", "3"]);
+bekle("iki alan (VE)", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "2026", t: "Kauçuk" })).map((u) => u.id), ["1"]);
+bekle("boş seçim süzmez", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "" })).length, 3);
 
 console.log(hata ? "birim-fiyat-listesi: HATA" : "birim-fiyat-listesi: tamam");
 process.exit(hata);
