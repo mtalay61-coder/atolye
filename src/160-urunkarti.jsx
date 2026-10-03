@@ -2012,23 +2012,47 @@ function ProductMatrixCard({
               onClick={() => {
                 const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
                 if (!sb) return;
-                const { eklenecekler, atlanan } = sablonuUruneUygula(sb, product);
-                if (eklenecekler.length === 0) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
-                onReceteGrubuGuncelle(product.id, [], eklenecekler);
-                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}`);
+                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi } = sablonuUruneUygula(sb, product);
+                if (eklenecekler.length === 0 && !iscilikSayisi) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
+                // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
+                onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
+                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}`);
               }}
               style={{ padding: "5px 12px", fontSize: 12 }}>
               {(product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"}
             </button>
+            {(() => {
+              // ŞABLON EKLEMESİNİ GERİ AL (v1.558.0): şablondan gelen satırlar `eklemeId` "sablon-…" taşır. Eski
+              // (pozisyonsuz) şablonla yanlış renkte eklenen satırlar tek dokunuşla kaldırılıp şablon yeniden uygulanabilsin.
+              const sablonSatirlari = (product.recete || []).filter((r) => String(r.eklemeId || "").startsWith("sablon-"));
+              if (sablonSatirlari.length === 0) return null;
+              return (
+                <span data-sablon-geri-al={sablonSatirlari.length} style={{ display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" }}>
+                Şablondan eklenen {sablonSatirlari.length} satır
+                <SilOnayButonu boyut={12}
+                  baslikNormal={`Şablondan eklenen ${sablonSatirlari.length} satırı kaldır`}
+                  baslikOnay={`Şablondan eklenen ${sablonSatirlari.length} reçete satırı kaldırılacak — tekrar dokunun`}
+                  onConfirm={() => {
+                    onReceteGrubuGuncelle(product.id, sablonSatirlari.map((r) => r.id), []);
+                    (showToast || (() => {}))(`Şablondan eklenen ${sablonSatirlari.length} satır kaldırıldı`);
+                  }} />
+                </span>
+              );
+            })()}
             {(product.recete || []).length > 0 && onReceteSablonuKaydet && (
               <button type="button" className="btn-ghost" data-recete-sablon-kaydet="1"
                 onClick={() => {
                   const ad = window.prompt("Şablon adı (örn. Standart bot malzemeleri):", "");
                   if (!ad || !ad.trim()) return;
-                  const { satirlar, atlanan } = recetedenSablonSatirlari(product.recete);
+                  const { satirlar, atlananlar } = recetedenSablonSatirlari(product.recete);
                   if (satirlar.length === 0) { (showToast || (() => {}))("Bedenden bağımsız satır yok — şablon oluşmadı"); return; }
-                  onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar });
-                  (showToast || (() => {}))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi${atlanan > 0 ? ` · bedene göre değişen ${atlanan} malzeme girmedi` : ""}. Tanımlar › Üretim'den düzenlenir.`);
+                  const pozisyonlu = satirlar.filter((x) => x.pozisyon).length;
+                  onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar, iscilik: urundenSablonIsciligi(product) });
+                  (showToast || (() => {}))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi`
+                    + (pozisyonlu ? ` · ${pozisyonlu} malzemenin rengi mamul renginden alınacak` : "")
+                    + " · işçilik ve ara prosesler dahil"
+                    + (atlananlar.length ? ` · bedene göre değişen ${atlananlar.length} malzeme girmedi: ${atlananlar.join(", ")}` : "")
+                    + ". Tanımlar › Üretim'den düzenlenir.");
                 }}
                 style={{ padding: "5px 12px", fontSize: 12 }}>
                 Bu reçeteden şablon oluştur

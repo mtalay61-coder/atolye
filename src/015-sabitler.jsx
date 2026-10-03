@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.557.0";
+const SURUM = "1.558.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Internet yokken uygulama kilitlenir: kayit girilemez, baglanti gelince bekleyenler gonderilip devam edilir";
+const SURUM_NOTU = "Recete sablonu: mamul rengine bagli hammadde rengi her renge dogru uygulaniyor; iscilik ve ara prosesler sablonda; sablondan eklenenleri kaldir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Internet yokken uygulama kilitlenir: kayit girilemez, baglan
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.558.0", tarih: "03.10.2026",
+    eklenen: ["Reçete şablonu işçilik ücretlerini ve ara prosesleri de taşıyor (hedefte boş olanlar doldurulur)", "Ürün reçetesinde 'Şablondan eklenen N satır' kaldırma düğmesi"],
+    degisen: ["Şablon, en çok satırı olan mamul renginden çıkarılıyor; girmeyen (bedene göre değişen) malzemelerin adı söyleniyor"],
+    duzeltilen: ["Şablondan eklemede mamul rengine bağlı hammadde rengi (örn. Kahve Süet mamul → Kahve Süet deri) bütün renklerde aynı kalıyordu; artık her mamul rengi kendi rengini alıyor"] },
   { surum: "1.557.0", tarih: "03.10.2026",
     eklenen: ["İnternet yokken uygulama kilitleniyor: tam ekran 'İnternet bağlantısı yok' — hiçbir kayıt girilemez. Bağlantı gelince bekleyen kayıtlar gönderilip kaldığı yerden devam ediyor; buluta ulaşamadan açıldıysa buluttaki güncel hâliyle yeniden açılıyor"],
     degisen: [], duzeltilen: [] },
