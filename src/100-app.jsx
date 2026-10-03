@@ -959,6 +959,11 @@ export default function AtolyeERP() {
   modelRef.current = modeller;
   const mesajRef = useRef(mesajlar);
   mesajRef.current = mesajlar;
+  // FİYAT LİSTESİ İLK AÇILIŞTA KURULUR (v1.550.0), sonra kurulu kalır: gizli (display:none) hâlde baştan
+  // DOM'da durunca başka ekranların tablo/kutu aramalarına karışıyordu; her açılışta yeniden kurulursa da
+  // kaydedilmemiş düzenlemeler kaybolurdu.
+  const fiyatListesiAcildiRef = useRef(false);
+  if (tab === "fiyatlistesi") fiyatListesiAcildiRef.current = true;
   // TANIMDAN SİLİNEN HER ÖĞE ÇÖPE: renk, beden, proses, kullanıcı, asorti, gider kartı… Tek tek düğmelere bağlamak
   // yerine kaydetme anındaki fark (077 `tanimdanDusenler`) — yeni bir tanım listesi de kendiliğinden kapsanır.
   // Tanımları yazan iki yol da (saveTanimlar, tanimlarKodluYaz) bundan geçer.
@@ -2924,6 +2929,7 @@ export default function AtolyeERP() {
     tanimlar: "Tanımlar",
     stok: "Stok Yönetimi",
     mamulstok: "Mamul Stok",
+    fiyatlistesi: "Fiyat Listesi",
     uretim: "Üretim Takibi",
     cari: "Cari Hesaplar",
     siparis: "Sipariş Yönetimi",
@@ -3524,6 +3530,8 @@ export default function AtolyeERP() {
                     // MAMUL STOK ayrı öğe (v1.455.0, kullanıcı: "stokta mamul stoğunu ayıralım, deponun
                     // alt sekmesi olsun"): Stok hammadde/yarı mamul/hizmet, Mamul Stok yalnız mamul.
                     ["stok", "Stok", <Boxes size={16} />], ["mamulstok", "Mamul Stok", <Package size={16} />],
+                    // FİYAT LİSTESİ (v1.550.0): fiyat grubu seç → modellerin o fiyatı, düzelt, toplu % / tutar, farklı kaydet.
+                    yetki("stok") && ["fiyatlistesi", "Fiyat Listesi", <Tag size={16} />],
                     ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />]] },
                   { ad: "Üretim", ikon: <Hammer size={15} />, ogeler: [
                     yetki("uretim") && ["uretim", "Üretim", <Hammer size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
@@ -4113,6 +4121,17 @@ export default function AtolyeERP() {
               onPencereAc={pencereAc}
             />
           </div>
+          {fiyatListesiAcildiRef.current && <div style={{ display: tab === "fiyatlistesi" ? undefined : "none" }}>
+            <FiyatListesiModule
+              stok={stok}
+              tanimlar={tanimlar}
+              kurlar={muhasebe.kurlar || {}}
+              onStokKaydet={saveStok}
+              onTanimlarKaydet={saveTanimlar}
+              showToast={showToast}
+              aktifKullanici={aktifKullanici}
+            />
+          </div>}
           <div style={{ display: tab === "paketleme" ? undefined : "none" }}>
             <PaketlemeModule
               koliler={koliler}

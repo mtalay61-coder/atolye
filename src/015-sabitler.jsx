@@ -246,6 +246,7 @@ const MODUL_RENK = {
   anasayfa: "var(--erp-orange)",   // tape-orange — genel/nötr
   tanimlar: "#6B7A8F",   // terzi tebeşiri mavi-gri
   stok: "var(--erp-brown)",       // saddle — deri
+  fiyatlistesi: "#B8860B",   // fiyat etiketi sarısı
   mamulstok: "var(--erp-primary)", // mamul — atölye yeşili (stok kategorisi rengiyle aynı)
   uretim: "var(--erp-primary)",     // atölye yeşili
   cari: "var(--erp-info)",       // defter mavisi
@@ -266,6 +267,7 @@ const SEKME_BILGISI = {
   tanimlar: { ad: "Tanımlar" },
   stok: { ad: "Stok" },
   mamulstok: { ad: "Mamul Stok" },
+  fiyatlistesi: { ad: "Fiyat Listesi" },
   uretim: { ad: "Üretim" },
   cari: { ad: "Cari" },
   siparis: { ad: "Sipariş" },
@@ -457,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.549.0";
+const SURUM = "1.550.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Cop kutusu guvenligi: kalici silme yalniz Yonetici ve 30 gun sonra, 90 gun saklama, tanim/gorev/model silmeleri cope, toplu silme alarmi, sunucu arsivi";
+const SURUM_NOTU = "Fiyat listesi: fiyat grubu secip modellerin fiyatlarini gor, duzelt, kaydet; toplu yuzde/tutar ile farkli kaydet (yeni fiyat grubu)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -468,6 +470,13 @@ const SURUM_NOTU = "Cop kutusu guvenligi: kalici silme yalniz Yonetici ve 30 gun
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.550.0", tarih: "03.10.2026",
+    eklenen: [
+      "Fiyat Listesi (Depo menüsü): fiyat grubu ya da genel fiyat seçilince modellerin o fiyatı listeleniyor; fiyatı olmayan boş görünüyor, aynı ekranda yazılıp kaydediliyor",
+      "Toplu işlem: yüzde ya da tutar olarak artır/indir, yuvarlama adımı; önce 'Yeni fiyat' sütununda görünüyor",
+      "Farklı kaydet: ekrandaki fiyatlar (toplu işlem uygulanmış hâliyle) yeni bir fiyat grubu olarak ya da var olan başka gruba kaydediliyor; birim farklıysa kurla çevriliyor",
+    ],
+    degisen: [], duzeltilen: [] },
   { surum: "1.549.0", tarih: "03.10.2026",
     eklenen: [
       "Sunucu arşivi: silinen her satır veritabanında ayrıca saklanıyor, uygulamadan silinemiyor (silinen-arsiv.sql); Yönetici Çöp Kutusu altından okuyabilir",

@@ -1,0 +1,37 @@
+{
+  "ilk": {
+    "kaynak": "g1",
+    "bot": "400",
+    "cizme": ""
+  },
+  "degisenSayi": "1",
+  "kayit": {
+    "cizme": "300 TRY",
+    "cubukKalkti": true
+  },
+  "onizleme": {
+    "bot": "455,00 ₺",
+    "cizme": "340,00 ₺"
+  },
+  "gruplar": [
+    "Toptan TL:Satış:TRY",
+    "Toptan TL +14:Satış:TRY"
+  ],
+  "farkli": {
+    "yeniBot": "455 TRY",
+    "yeniCizme": "340 TRY",
+    "eskiBot": "400 TRY",
+    "ekranKaynak": "Toptan TL +14 · Satış · ₺",
+    "ekranBot": "455"
+  },
+  "listede": {
+    "bot": "445",
+    "degisen": "2"
+  },
+  "indirim": {
+    "bot": "445 TRY",
+    "cizme": "330 TRY",
+    "gecmis": 2
+  },
+  "hatalar": []
+}
