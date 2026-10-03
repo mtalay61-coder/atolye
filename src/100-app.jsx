@@ -2297,7 +2297,8 @@ export default function AtolyeERP() {
   // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
   // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
   // tanımlıysa dokunmaz.
-  const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi) => {
+  // `renkKodu` (v1.555.0): kartta "renk aç" sorusunda seçilen görünüm rengi (yoksa varsayılan).
+  const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi, renkKodu) => {
     const temizAd = (ad || "").trim();
     if (!temizAd) return;
 
@@ -2339,9 +2340,12 @@ export default function AtolyeERP() {
     let sonrakiKod = (renkKodlari.length > 0 ? Math.max(...renkKodlari) : 100) + 1;
     while (kullanilanKodlar.has(sonrakiKod)) sonrakiKod += 1;
     const otomatikKod = String(sonrakiKod);
-    const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
+    const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: renkKodu || "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
     const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-    tanimlarKodluYaz(nextTanimlar);
+    const kodlu = tanimlarKodluYaz(nextTanimlar);
+    // Hangi kodları aldığı söylenir: kullanıcı etikette/barkodda göreceği numarayı bilsin.
+    const acilan = ((kodlu && kodlu.renkler) || []).find((r) => r.id === yeniRenkObj.id) || yeniRenkObj;
+    showToast(`"${temizAd}" renk tanımlarına eklendi — renk kodu ${acilan.kod}${acilan.barkodKodu != null ? `, barkod kodu ${acilan.barkodKodu}` : ""}${malzemeTipi ? ` · ${malzemeTipi}` : ""}`);
   }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   // RENKLER MALZEME TİPİNE AİT OLSUN (26 Eylül, v1.471.0 — kullanıcı: "Stok açarken malzeme tipini

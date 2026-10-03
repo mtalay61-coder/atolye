@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.554.0";
+const SURUM = "1.555.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Fiyat listesi Excel e aktarma ve resimli yazdirma (PDF)";
+const SURUM_NOTU = "Stok kartinda renk eklerken tanimsiz renk icin ortak renk acilsin mi sorusu; renk kodu ve barkod kodu otomatik";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Fiyat listesi Excel e aktarma ve resimli yazdirma (PDF)";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.555.0", tarih: "03.10.2026",
+    eklenen: ["Stok kartı › Renk ekle: yazılan renk tanımlarda yoksa 'Ortak renk olarak açılsın mı?' soruluyor; onaylanınca Tanımlar'a renk kodu, barkod kodu, malzeme tipi ve görünüm rengiyle açılıp ürüne ekleniyor"],
+    degisen: [],
+    duzeltilen: ["Stok kartında listede olmayan renk yazılınca Ekle kapalı kalıyor, kutu odağı kaybedince yazılan siliniyordu"] },
   { surum: "1.554.0", tarih: "03.10.2026",
     eklenen: ["Fiyat Listesi: Excel'e aktarma (özel kodlar ayrı sütunlarda) ve resimli Yazdır / PDF — ekranda ne görünüyorsa (süzgeç, düzenlenmiş fiyat, yeni fiyat önizlemesi) o"],
     degisen: [], duzeltilen: [] },
