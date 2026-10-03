@@ -2294,10 +2294,30 @@ export default function AtolyeERP() {
     return kodlu;
   }, [tanimSilinenleriCopeAt]);
 
+  // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
+  // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
+  // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
+  // çakışan/eksik kod varsa en eski kayıt kodunu korur, diğerine sıradaki boş kod verilir ve SÖYLENİR (etiket
+  // basıldıysa yeniden basılmalı). Aynı imza ikinci kez onarılmaz — onarım hatalıysa döngü olmasın.
+  const kodOnarimImzaRef = useRef("");
+  useEffect(() => {
+    if (loading) return;
+    const o = tanimKodlariniOnar(tanimlar);
+    if (o.degisenler.length === 0) return;
+    const imza = o.degisenler.map((d) => `${d.id}:${d.alan}:${d.eski}`).join("|");
+    if (kodOnarimImzaRef.current === imza) return;
+    kodOnarimImzaRef.current = imza;
+    tanimlarKodluYaz(o.tanimlar);
+    const metin = o.degisenler.map((d) => `${d.ad}: ${d.alan === "kod" ? "renk kodu" : `${d.aile} barkod kodu`} ${d.eski || "yok"} → ${d.yeni}`).join(" · ");
+    gunlukYaz(`Kod çakışması onarıldı: ${metin}`, "tanimlar", { degisenler: o.degisenler });
+    showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
+  }, [loading, tanimlar, tanimlarKodluYaz, showToast]);
+
   // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
   // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
   // tanımlıysa dokunmaz.
-  const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi) => {
+  // `renkKodu` (v1.555.0): kartta "renk aç" sorusunda seçilen görünüm rengi (yoksa varsayılan).
+  const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi, renkKodu) => {
     const temizAd = (ad || "").trim();
     if (!temizAd) return;
 
@@ -2339,9 +2359,12 @@ export default function AtolyeERP() {
     let sonrakiKod = (renkKodlari.length > 0 ? Math.max(...renkKodlari) : 100) + 1;
     while (kullanilanKodlar.has(sonrakiKod)) sonrakiKod += 1;
     const otomatikKod = String(sonrakiKod);
-    const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
+    const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: renkKodu || "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
     const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-    tanimlarKodluYaz(nextTanimlar);
+    const kodlu = tanimlarKodluYaz(nextTanimlar);
+    // Hangi kodları aldığı söylenir: kullanıcı etikette/barkodda göreceği numarayı bilsin.
+    const acilan = ((kodlu && kodlu.renkler) || []).find((r) => r.id === yeniRenkObj.id) || yeniRenkObj;
+    showToast(`"${temizAd}" renk tanımlarına eklendi — renk kodu ${acilan.kod}${acilan.barkodKodu != null ? `, barkod kodu ${acilan.barkodKodu}` : ""}${malzemeTipi ? ` · ${malzemeTipi}` : ""}`);
   }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   // RENKLER MALZEME TİPİNE AİT OLSUN (26 Eylül, v1.471.0 — kullanıcı: "Stok açarken malzeme tipini

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.552.0</title>
+<title>Atölye ERP 1.555.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -819,6 +819,29 @@ function eslesenOzelKodlar(urun, alanlar, q) {
         return [];
     return ozelKodCiftleri(urun, alanlar)
         .filter((x) => `${x.etiket} ${x.deger}`.toLocaleLowerCase("tr-TR").includes(q));
+}
+// ÖZEL KOD SÜZGECİ (v1.553.0 — kullanıcı: "fiyatlandırma özel kodlarla filtrelenebilsin"). Listedeki
+// ürünlerde DOLU olan her alan için seçilebilir değerler; boş alan süzgeçte görünmez (seçeneksiz kutu
+// işe yaramaz). Saf. Döner: [{ id, ad, degerler: [..] }] — değerler tr sıralı.
+function ozelKodSecenekleri(urunler, alanlar) {
+    const harita = new Map();
+    (urunler || []).forEach((u) => ozelKodCiftleri(u, alanlar).forEach((c) => {
+        if (!harita.has(c.id))
+            harita.set(c.id, { id: c.id, ad: c.etiket, degerler: new Set() });
+        harita.get(c.id).degerler.add(c.deger);
+    }));
+    return (alanlar || []).filter((a) => harita.has(a.id)).map((a) => {
+        const h = harita.get(a.id);
+        return { id: a.id, ad: h.ad, degerler: Array.from(h.degerler).sort((x, y) => x.localeCompare(y, "tr", { numeric: true })) };
+    });
+}
+// Seçili değerlerin HEPSİNE uyuyor mu (VE). `secim`: { alanId: deger } — boş değer = o alanda süzme yok.
+function ozelKodSuzgeceUyar(urun, alanlar, secim) {
+    const etkin = Object.entries(secim || {}).filter(([, d]) => d);
+    if (etkin.length === 0)
+        return true;
+    const ciftler = ozelKodCiftleri(urun, alanlar);
+    return etkin.every(([id, d]) => ciftler.some((c) => c.id === id && kodEsit(c.deger, d)));
 }
 // ---- GÖÇ ---------------------------------------------------------------------------------------
 //
@@ -1991,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.552.0";
+const SURUM = "1.555.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Tanimlar bulutla birlestirilerek yaziliyor (baska cihazda acilan model renkleri kaybolmuyor); kayip model renkleri urun etiketlerinden geri kuruluyor";
+const SURUM_NOTU = "Stok kartinda renk eklerken tanimsiz renk icin ortak renk acilsin mi sorusu; renk kodu ve barkod kodu otomatik";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2001,6 +2024,16 @@ const SURUM_NOTU = "Tanimlar bulutla birlestirilerek yaziliyor (baska cihazda ac
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.555.0", tarih: "03.10.2026",
+        eklenen: ["Stok kartı › Renk ekle: yazılan renk tanımlarda yoksa 'Ortak renk olarak açılsın mı?' soruluyor; onaylanınca Tanımlar'a renk kodu, barkod kodu, malzeme tipi ve görünüm rengiyle açılıp ürüne ekleniyor"],
+        degisen: [],
+        duzeltilen: ["Stok kartında listede olmayan renk yazılınca Ekle kapalı kalıyor, kutu odağı kaybedince yazılan siliniyordu"] },
+    { surum: "1.554.0", tarih: "03.10.2026",
+        eklenen: ["Fiyat Listesi: Excel'e aktarma (özel kodlar ayrı sütunlarda) ve resimli Yazdır / PDF — ekranda ne görünüyorsa (süzgeç, düzenlenmiş fiyat, yeni fiyat önizlemesi) o"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.553.0", tarih: "03.10.2026",
+        eklenen: ["Fiyat Listesi: her satırda stok resmi (tıklayınca büyür)", "Fiyat Listesi: özel kod süzgeci — dolu her özel kod alanı için seçim kutusu, arama özel kodları da tarıyor"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.552.0", tarih: "03.10.2026",
         eklenen: ["Paketleme: ürünlerde kullanılan ama tanımı kaybolmuş model renkleri için 'Model renklerini geri kur' — kodlar aynı kalıyor, basılmış barkodlar geçerli"],
         degisen: [],
@@ -17054,7 +17087,8 @@ function AtolyeERP() {
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
-    const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi) => {
+    // `renkKodu` (v1.555.0): kartta "renk aç" sorusunda seçilen görünüm rengi (yoksa varsayılan).
+    const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi, renkKodu) => {
         const temizAd = (ad || "").trim();
         if (!temizAd)
             return;
@@ -17096,9 +17130,12 @@ function AtolyeERP() {
         while (kullanilanKodlar.has(sonrakiKod))
             sonrakiKod += 1;
         const otomatikKod = String(sonrakiKod);
-        const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
+        const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: renkKodu || "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
         const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-        tanimlarKodluYaz(nextTanimlar);
+        const kodlu = tanimlarKodluYaz(nextTanimlar);
+        // Hangi kodları aldığı söylenir: kullanıcı etikette/barkodda göreceği numarayı bilsin.
+        const acilan = ((kodlu && kodlu.renkler) || []).find((r) => r.id === yeniRenkObj.id) || yeniRenkObj;
+        showToast(`"${temizAd}" renk tanımlarına eklendi — renk kodu ${acilan.kod}${acilan.barkodKodu != null ? `, barkod kodu ${acilan.barkodKodu}` : ""}${malzemeTipi ? ` · ${malzemeTipi}` : ""}`);
     }, [tanimlar, showToast, tanimlarKodluYaz]);
     // RENKLER MALZEME TİPİNE AİT OLSUN (26 Eylül, v1.471.0 — kullanıcı: "Stok açarken malzeme tipini
     // seçip renk eklendiğinde renkler o malzeme tipine ait olsun. Ortak renk varsa onu da işaretlesin.
@@ -25669,6 +25706,32 @@ function fiyatlariHedefBirime(satirlar, hedefPb, kurlar) {
     });
     return { fiyatlar, paraBirimleri, cevrilemeyen };
 }
+// DIŞA AKTARMA TABLOSU (v1.554.0 — kullanıcı: "Fiyat listesini Excel'e aktarma ve yazdırma ekle"). Excel ve
+// yazdırma AYNI tablodan: ekranda ne görünüyorsa (süzgeç, düzenlenmiş fiyat, toplu işlem önizlemesi) o.
+// Özel kodlar her alan ayrı sütun — Excel'de süzülebilsin; yalnız listede dolu olan alanlar. Saf.
+// `satirlar`: ekrandaki satırlar ({ urun, fiyat, paraBirimi, yeni, onay, hesap }).
+function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {}) {
+    const alanlar = ozelKodSecenekleri((satirlar || []).map((r) => r.urun), ozelAlanlar || []);
+    const durumYazi = (r) => {
+        if (!r.onay)
+            return "";
+        const tarih = r.onay.tarih ? new Date(r.onay.tarih).toLocaleDateString("tr-TR") : "";
+        const d = r.onay.durum === "ok" ? `OK ${tarih}` : r.onay.durum === "eskidi" ? `Değişti (onay ${tarih})` : "Onaylanmadı";
+        return `${d}${r.hesap && r.hesap.eksikler.length ? ` · ${r.hesap.eksikler.length} eksik` : ""}`;
+    };
+    const basliklar = ["Stok no", "Model / ürün", "Kategori", ...alanlar.map((a) => a.ad),
+        ...(kaynak && kaynak.maliyet ? ["Maliyet durumu"] : []), kaynak && kaynak.maliyet ? "Maliyet" : ((kaynak && kaynak.ad) || "Fiyat"), "P.B.",
+        ...(islemAktif ? ["Yeni fiyat"] : [])];
+    const govde = (satirlar || []).map((r) => {
+        const kod = {};
+        ozelKodCiftleri(r.urun, ozelAlanlar || []).forEach((c) => { kod[c.id] = c.deger; });
+        return [r.urun.stokNo != null ? String(r.urun.stokNo) : "", r.urun.ad || "", r.urun.kategori || "", ...alanlar.map((a) => kod[a.id] || ""),
+            ...(kaynak && kaynak.maliyet ? [durumYazi(r)] : []), r.fiyat > 0 ? r.fiyat : "", r.paraBirimi || "",
+            ...(islemAktif ? [r.yeni > 0 ? r.yeni : ""] : [])];
+    });
+    const resimler = (satirlar || []).map((r) => { const g = urunGorselleri(r.urun); return g ? (g.kapakResmi || Object.values(g.renkResimleri)[0] || "") : ""; });
+    return { basliklar, satirlar: govde, resimler };
+}
 function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
     const kaynaklar = fiyatListesiKaynaklari(tanimlar.fiyatGruplari);
     const maliyetCtx = { tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [],
@@ -25680,6 +25743,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     const kaynak = kaynaklar.find((k) => k.key === kaynakKey) || kaynaklar[0];
     const [kategori, setKategori] = useState("Mamul");
     const [arama, setArama] = useState("");
+    const [ozelSecim, setOzelSecim] = useState({}); // { alanId: değer }
+    const [buyukResim, setBuyukResim] = useState(null); // { src, ad }
     const [goster, setGoster] = useState("tumu"); // tumu | fiyatli | fiyatsiz
     // Düzenlemeler KAYNAK BAŞINA tutulur: kaynak değiştirince yazılanlar kaybolmasın, karışmasın da.
     const [duzenler, setDuzenler] = useState({});
@@ -25690,9 +25755,14 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     const [farkli, setFarkli] = useState(null); // null | { hedef: "yeni" | grupId, ad, paraBirimi }
     const kategoriler = ["Tümü", ...Array.from(new Set((stok || []).map((u) => u.kategori).filter(Boolean)))];
     const q = arama.trim().toLocaleLowerCase("tr-TR");
-    const satirlar = (stok || [])
-        .filter((u) => kategori === "Tümü" || u.kategori === kategori)
-        .filter((u) => !q || [u.ad, u.stokNo, u.kod, u.modelKodu].some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q)))
+    // ÖZEL KOD SÜZGECİ (v1.553.0, 008): kategoriye uyan ürünlerde dolu olan her özel kod alanı bir seçim kutusu.
+    // Arama kutusu da özel kod değerlerini tarar ("Sezon 2026" gibi).
+    const ozelAlanlar = tanimlar.ozelKodAlanlari || [];
+    const kategoridekiler = (stok || []).filter((u) => kategori === "Tümü" || u.kategori === kategori);
+    const ozelSecenekler = ozelKodSecenekleri(kategoridekiler, ozelAlanlar);
+    const satirlar = kategoridekiler
+        .filter((u) => ozelKodSuzgeceUyar(u, ozelAlanlar, ozelSecim))
+        .filter((u) => !q || [u.ad, u.stokNo, u.kod, u.modelKodu, ozelKodMetni(u, ozelAlanlar)].some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q)))
         .map((u) => {
         const k = urunKaynakFiyati(u, kaynak, maliyetCtx);
         const yazi = !kaynak.maliyet && Object.prototype.hasOwnProperty.call(kaynakDuzen, u.id) ? kaynakDuzen[u.id] : null;
@@ -25706,6 +25776,53 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         .filter((r) => !kaynak.maliyet || !yalnizOk || (r.onay && r.onay.durum === "ok"))
         .sort((a, b) => String(a.urun.ad || "").localeCompare(String(b.urun.ad || ""), "tr"));
     const degisenler = satirlar.filter((r) => r.degisti);
+    // ---- DIŞA AKTARMA (v1.554.0) ----
+    const tabloBasligi = () => {
+        const suzgec = [kategori !== "Tümü" ? kategori : "",
+            ...ozelSecenekler.filter((a) => ozelSecim[a.id]).map((a) => `${a.ad}: ${ozelSecim[a.id]}`),
+            arama.trim() ? `"${arama.trim()}"` : "", kaynak.maliyet && yalnizOk ? "yalnız Maliyet OK" : ""].filter(Boolean).join(" · ");
+        return { ad: `Fiyat Listesi — ${kaynak.maliyet ? "Maliyet" : kaynak.ad}`, suzgec,
+            not: islemAktif ? `Yeni fiyat: ${islemNorm.yon < 0 ? "−" : "+"}${islemNorm.tur === "yuzde" ? `%${islemNorm.deger}` : islemNorm.deger}` : "" };
+    };
+    const excelAktar = () => {
+        const t = fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif });
+        const b = tabloBasligi();
+        const aoa = [[b.ad, new Date().toLocaleDateString("tr-TR")], ...(b.suzgec ? [[`Süzgeç: ${b.suzgec}`]] : []), ...(b.not ? [[b.not]] : []), [], t.basliklar, ...t.satirlar];
+        if (typeof window !== "undefined")
+            window.__sonFiyatListesiExcel = aoa; // test okur (indirme ölçülemiyor)
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Fiyat Listesi");
+        XLSX.writeFile(wb, `${b.ad.replace(/[^\p{L}\p{N}_-]+/gu, "_")}-${bugunYerel()}.xlsx`);
+    };
+    const yazdir = () => {
+        const t = fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif });
+        const b = tabloBasligi();
+        const firma = tanimlar.firmaBilgileri || {};
+        const kac = (x) => String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        const fiyatSutunlari = new Set([t.basliklar.length - (islemAktif ? 3 : 2), ...(islemAktif ? [t.basliklar.length - 1] : [])]);
+        const para = (v) => (typeof v === "number" ? v.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v);
+        const govde = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div style="display:flex;gap:10px;align-items:center">
+          ${firma.logo ? `<img src="${kac(firma.logo)}" style="width:44px;height:44px;object-fit:contain" />` : ""}
+          <div><div style="font-size:18px;font-weight:700">${kac(firma.unvan || "")}</div>
+          <div style="font-size:14px;font-weight:700">${kac(b.ad)}</div></div>
+        </div>
+        <div style="font-size:12px;text-align:right">${kac(new Date().toLocaleDateString("tr-TR"))}
+          ${b.suzgec ? `<div>${kac(b.suzgec)}</div>` : ""}${b.not ? `<div>${kac(b.not)}</div>` : ""}</div>
+      </div>
+      <table data-fl-yazdir-tablo="1">
+        <thead><tr><th></th>${t.basliklar.map((h, i) => `<th style="border-bottom:2px solid #333;${fiyatSutunlari.has(i) ? "text-align:right" : ""}">${kac(h)}</th>`).join("")}</tr></thead>
+        <tbody>${t.satirlar.map((row, ri) => `<tr style="border-bottom:1px solid #ddd">
+          <td style="width:44px">${t.resimler[ri] ? `<img src="${kac(t.resimler[ri])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px" />` : ""}</td>
+          ${row.map((v, i) => `<td style="${fiyatSutunlari.has(i) ? "text-align:right;font-weight:700" : ""}${i === 1 ? "font-weight:700" : ""}">${kac(para(v))}</td>`).join("")}
+        </tr>`).join("")}</tbody>
+      </table>
+      <div style="font-size:10px;color:#777;margin-top:8px">${t.satirlar.length} ürün</div>`;
+        if (typeof window !== "undefined")
+            window.__sonFiyatListesiYazdir = govde; // test okur
+        htmlGovdesiniIndir(govde, `${b.ad} ${bugunYerel()}`);
+    };
     const fiyatliSayi = satirlar.filter((r) => r.fiyat > 0).length;
     const yaz = (id, metin) => setDuzenler((d) => ({ ...d, [kaynak.key]: { ...(d[kaynak.key] || {}), [id]: metin } }));
     const duzenTemizle = () => setDuzenler((d) => ({ ...d, [kaynak.key]: {} }));
@@ -25795,7 +25912,29 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
             kaynak.maliyet && (React.createElement("button", { type: "button", "data-fl-yalniz-ok": yalnizOk ? "1" : "0", onClick: () => setYalnizOk((x) => !x), style: cip(yalnizOk), title: "\u00DCr\u00FCn kart\u0131 \u203A Maliyet'te 'Maliyet OK' denmi\u015F ve o g\u00FCnden beri maliyeti de\u011Fi\u015Fmemi\u015F \u00FCr\u00FCnler" },
                 yalnizOk ? "✓ " : "",
                 "Yaln\u0131z Maliyet OK")),
-            React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Listede ara\u2026", style: { ...kutu, width: 180, marginLeft: "auto" } })),
+            React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Listede ara\u2026", style: { ...kutu, width: 180, marginLeft: "auto" } }),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-fl-excel": "1", disabled: satirlar.length === 0, onClick: excelAktar, title: "Ekrandaki liste (s\u00FCzge\u00E7 ve d\u00FCzenlemelerle) Excel dosyas\u0131 olarak", style: { padding: "6px 10px", fontSize: 12 } },
+                React.createElement(Download, { size: 13 }),
+                " Excel"),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-fl-yazdir": "1", disabled: satirlar.length === 0, onClick: yazdir, title: "Resimli fiyat listesi \u2014 a\u00E7\u0131lan dosya yazd\u0131rma penceresini getirir, PDF olarak da kaydedilebilir", style: { padding: "6px 10px", fontSize: 12 } },
+                React.createElement(Printer, { size: 13 }),
+                " Yazd\u0131r / PDF")),
+        ozelSecenekler.length > 0 && (React.createElement("div", { "data-fl-ozel-kodlar": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: -4, marginBottom: 12 } },
+            React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "\u00D6zel kod"),
+            ozelSecenekler.map((a) => (React.createElement("select", { key: a.id, "data-fl-ozel-kod": a.ad, value: ozelSecim[a.id] || "", onChange: (e) => setOzelSecim((s) => ({ ...s, [a.id]: e.target.value })), style: { ...kutu, width: "auto", minWidth: 130, fontWeight: ozelSecim[a.id] ? 700 : 400,
+                    borderColor: ozelSecim[a.id] ? "var(--erp-accent)" : undefined } },
+                React.createElement("option", { value: "" },
+                    a.ad,
+                    ": T\u00FCm\u00FC"),
+                a.degerler.map((d) => React.createElement("option", { key: d, value: d },
+                    a.ad,
+                    ": ",
+                    d))))),
+            Object.values(ozelSecim).some(Boolean) && (React.createElement("button", { type: "button", className: "btn-ghost", "data-fl-ozel-temizle": "1", onClick: () => setOzelSecim({}), style: { padding: "4px 10px", fontSize: 12 } }, "S\u00FCzgeci temizle")))),
+        buyukResim && (React.createElement("div", { "data-fl-resim-buyuk": "1", onClick: () => setBuyukResim(null), style: { position: "fixed", inset: 0, zIndex: 600, background: "rgba(34,27,20,.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, cursor: "zoom-out" } },
+            React.createElement("div", { style: { background: "#fff", borderRadius: "var(--erp-r-lg)", padding: 10, maxWidth: "90vw", maxHeight: "90vh", textAlign: "center" } },
+                React.createElement("img", { src: buyukResim.src, alt: buyukResim.ad, style: { maxWidth: "85vw", maxHeight: "80vh", objectFit: "contain", display: "block" } }),
+                React.createElement("div", { style: { fontSize: 13, fontWeight: 700, marginTop: 6 } }, buyukResim.ad)))),
         (tanimlar.fiyatGruplari || []).length === 0 && (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 10 } }, "Hen\u00FCz fiyat grubu yok \u2014 a\u015Fa\u011F\u0131dan \"Farkl\u0131 kaydet\" ile genel fiyattan yeni grup olu\u015Fturabilir ya da Tan\u0131mlar \u203A \u00DCr\u00FCn \u203A Fiyat Gruplar\u0131'ndan a\u00E7abilirsiniz.")),
         React.createElement("div", { "data-fl-toplu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", background: "var(--erp-panel)",
                 border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 12 } },
@@ -25850,6 +25989,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
             React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } },
                 React.createElement("thead", null,
                     React.createElement("tr", { style: { background: "var(--erp-panel)", textAlign: "left" } },
+                        React.createElement("th", { style: { padding: "8px 6px", width: 52 } }),
                         React.createElement("th", { style: { padding: "8px 10px", width: 90 } }, "Stok no"),
                         React.createElement("th", { style: { padding: "8px 10px" } }, "Model / \u00FCr\u00FCn"),
                         React.createElement("th", { style: { padding: "8px 10px", width: 100 } }, "Kategori"),
@@ -25858,10 +25998,21 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                         islemAktif && React.createElement("th", { style: { padding: "8px 10px", width: 120, textAlign: "right" } }, "Yeni fiyat"))),
                 React.createElement("tbody", null,
                     satirlar.length === 0 && (React.createElement("tr", null,
-                        React.createElement("td", { colSpan: 6, style: { padding: 16, textAlign: "center", color: "var(--erp-text-3)" } }, "Bu s\u00FCzge\u00E7le \u00FCr\u00FCn yok."))),
+                        React.createElement("td", { colSpan: 7, style: { padding: 16, textAlign: "center", color: "var(--erp-text-3)" } }, "Bu s\u00FCzge\u00E7le \u00FCr\u00FCn yok."))),
                     satirlar.map((r) => (React.createElement("tr", { key: r.urunId, "data-fl-satir": r.urun.ad, style: { borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined } },
+                        React.createElement("td", { style: { padding: "4px 6px" } }, (() => {
+                            // STOK RESMİ (v1.553.0): kapak, yoksa ilk renk resmi; tıklayınca büyür.
+                            const g = urunGorselleri(r.urun);
+                            const src = g ? (g.kapakResmi || Object.values(g.renkResimleri)[0]) : "";
+                            return src
+                                ? React.createElement("img", { src: src, alt: r.urun.ad, "data-fl-resim": r.urun.ad, onClick: () => setBuyukResim({ src, ad: r.urun.ad }), style: { width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", cursor: "zoom-in", display: "block" } })
+                                : React.createElement("div", { style: { width: 40, height: 40, borderRadius: "var(--erp-r-sm)", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--erp-text-3)" } },
+                                    React.createElement(ImageIcon, { size: 16 }));
+                        })()),
                         React.createElement("td", { className: "mono", style: { padding: "6px 10px", fontSize: 11, color: "var(--erp-text-3)" } }, r.urun.stokNo || "—"),
-                        React.createElement("td", { style: { padding: "6px 10px", fontWeight: 600 } }, r.urun.ad),
+                        React.createElement("td", { style: { padding: "6px 10px", fontWeight: 600 } },
+                            r.urun.ad,
+                            ozelKodCiftleri(r.urun, ozelAlanlar).length > 0 && (React.createElement("div", { "data-fl-ozel-satir": "1", style: { fontSize: 10, fontWeight: 400, color: "var(--erp-text-3)", marginTop: 1 } }, ozelKodCiftleri(r.urun, ozelAlanlar).map((c) => `${c.etiket}: ${c.deger}`).join(" · ")))),
                         React.createElement("td", { style: { padding: "6px 10px", fontSize: 11, color: "var(--erp-text-2)" } }, r.urun.kategori || ""),
                         kaynak.maliyet && (React.createElement("td", { "data-fl-maliyet-durum": r.urun.ad, style: { padding: "6px 10px", fontSize: 11 } },
                             r.onay.durum === "ok" && React.createElement("span", { style: { color: "var(--erp-ok)", fontWeight: 700 } },
@@ -26060,6 +26211,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     const [addingBeden, setAddingBeden] = useState(false);
     const [serbestOlcuGiris, setSerbestOlcuGiris] = useState(false);
     const [newRenk, setNewRenk] = useState("");
+    // TANIMSIZ RENK SORUSU (v1.555.0): yazılan renk tanımlarda yoksa "ortak renk açılsın mı?" — { ad, renkKodu }.
+    const [renkAcSorusu, setRenkAcSorusu] = useState(null);
     const [newBeden, setNewBeden] = useState("");
     const [rHammaddeId, setRHammaddeId] = useState("");
     const [rMap, setRMap] = useState({}); // { [mamulRenk]: hammaddeRenk }
@@ -27227,23 +27380,77 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                         ? [...eklenebilirRenkler, ...digerTipRenkleri].map((r) => ({ id: r.id, etiket: r.ad }))
                                         : eklenebilirKombinasyonlar.filter((k) => k.renkIdler.length === renkEkleSayisi);
                                     return (React.createElement("div", null,
-                                        uygunSecenekler.length > 0 ? (React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 8 } },
-                                            React.createElement("div", { style: { width: 240 } },
-                                                React.createElement(AramaliMetin, { veriAdi: "data-kart-renk-arama", deger: newRenk, onDegis: setNewRenk, oneriler: uygunSecenekler.map((s) => s.etiket), yalnizListeden: true, placeholder: "Renk yaz\u0131n ya da se\u00E7in\u2026" })),
-                                            React.createElement("button", { className: "btn-primary", 
-                                                // Yazarken kutuda yarım metin olabilir: yalnız listedeki bir değer eklenir.
-                                                disabled: !uygunSecenekler.some((s) => s.etiket === newRenk), onClick: () => {
-                                                    if (!uygunSecenekler.some((s) => s.etiket === newRenk))
-                                                        return;
-                                                    onAddRenk(product.id, newRenk);
-                                                    // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
-                                                    // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
-                                                    if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla)
-                                                        onRenkleriTipeBagla([newRenk], product.malzemeTipi);
-                                                    setNewRenk("");
-                                                    setAddingRenk(false);
-                                                    setRenkEkleSayisi(1);
-                                                } }, "Ekle"))) : (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 } }, isMamul && renkEkleSayisi > 1
+                                        uygunSecenekler.length > 0 || !isMamul || renkEkleSayisi === 1 ? (React.createElement(React.Fragment, null,
+                                            React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 8 } },
+                                                React.createElement("div", { style: { width: 240 } },
+                                                    React.createElement(AramaliMetin, { veriAdi: "data-kart-renk-arama", deger: newRenk, onDegis: (v) => { setNewRenk(v); setRenkAcSorusu(null); }, oneriler: uygunSecenekler.map((s) => s.etiket), placeholder: "Renk yaz\u0131n ya da se\u00E7in\u2026" })),
+                                                React.createElement("button", { className: "btn-primary", "data-kart-renk-ekle": "1", disabled: !newRenk.trim() || !!renkAcSorusu, onClick: () => {
+                                                        const ad = newRenk.trim();
+                                                        if (!ad)
+                                                            return;
+                                                        const secenek = uygunSecenekler.find((s) => kodEsit(s.etiket, ad));
+                                                        if (secenek) {
+                                                            onAddRenk(product.id, secenek.etiket);
+                                                            // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
+                                                            // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
+                                                            if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla)
+                                                                onRenkleriTipeBagla([secenek.etiket], product.malzemeTipi);
+                                                            setNewRenk("");
+                                                            setAddingRenk(false);
+                                                            setRenkEkleSayisi(1);
+                                                            return;
+                                                        }
+                                                        if (renkler.some((r) => kodEsit(r, ad))) {
+                                                            if (showToast)
+                                                                showToast(`"${ad}" bu üründe zaten var`);
+                                                            return;
+                                                        }
+                                                        if (isMamul && renkEkleSayisi > 1) {
+                                                            if (showToast)
+                                                                showToast("Çok renkli model rengi listeden seçilir ya da aşağıdan oluşturulur");
+                                                            return;
+                                                        }
+                                                        // Tanımda VAR ama bu listede yok (ör. kombinasyon biçimli ad): tanımdaki adıyla eklenir.
+                                                        const tanimda = (tanimlarRenkler || []).find((r) => kodEsit(r.ad, ad));
+                                                        if (tanimda) {
+                                                            if (onYeniRenkKaydet)
+                                                                onYeniRenkKaydet(tanimda.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined);
+                                                            onAddRenk(product.id, tanimda.ad);
+                                                            setNewRenk("");
+                                                            setAddingRenk(false);
+                                                            setRenkEkleSayisi(1);
+                                                            return;
+                                                        }
+                                                        setRenkAcSorusu({ ad, renkKodu: "#C9B99A" });
+                                                    } }, "Ekle")),
+                                            renkAcSorusu && (React.createElement("div", { "data-renk-ac-sorusu": renkAcSorusu.ad, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8,
+                                                    padding: "8px 10px", border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)", fontSize: 12 } },
+                                                React.createElement("span", { style: { flexBasis: "100%" } },
+                                                    React.createElement("b", null,
+                                                        "\"",
+                                                        renkAcSorusu.ad,
+                                                        "\""),
+                                                    " renk tan\u0131mlar\u0131nda yok. Ortak renk olarak a\u00E7\u0131ls\u0131n m\u0131?",
+                                                    React.createElement("span", { style: { color: "var(--erp-text-2)" } },
+                                                        " Tan\u0131mlar'a eklenir, renk kodu ve barkod kodu otomatik verilir",
+                                                        !isMamul && product.malzemeTipi ? `, "${product.malzemeTipi}" tipine bağlanır` : "",
+                                                        "; sonra bu \u00FCr\u00FCne eklenir.")),
+                                                React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 5 } },
+                                                    "G\u00F6r\u00FCn\u00FCm",
+                                                    React.createElement("input", { type: "color", "data-renk-ac-hex": "1", value: renkAcSorusu.renkKodu, onChange: (e) => setRenkAcSorusu((s) => ({ ...s, renkKodu: e.target.value })), style: { width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4 } })),
+                                                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-renk-ac-evet": "1", style: { padding: "5px 12px", fontSize: 12 }, onClick: () => {
+                                                        // Önce ürüne, SONRA tanıma: tanımın bildirimi (renk kodu, barkod kodu) son kalsın, görülsün.
+                                                        onAddRenk(product.id, renkAcSorusu.ad);
+                                                        if (onYeniRenkKaydet)
+                                                            onYeniRenkKaydet(renkAcSorusu.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined, renkAcSorusu.renkKodu);
+                                                        setRenkAcSorusu(null);
+                                                        setNewRenk("");
+                                                        setAddingRenk(false);
+                                                        setRenkEkleSayisi(1);
+                                                    } },
+                                                    React.createElement(Check, { size: 13 }),
+                                                    " Evet, renk a\u00E7 ve ekle"),
+                                                React.createElement("button", { type: "button", className: "btn-ghost", "data-renk-ac-hayir": "1", style: { padding: "5px 10px", fontSize: 12 }, onClick: () => setRenkAcSorusu(null) }, "Vazge\u00E7"))))) : (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 } }, isMamul && renkEkleSayisi > 1
                                             ? `${renkEkleSayisi} renkli tanımlı bir Model Rengi yok.`
                                             : "Tanımlı renk yok.")),
                                         isMamul && renkEkleSayisi > 1 && onKombinasyonOlustur ? (React.createElement("button", { type: "button", className: "btn-ghost", style: { color: "var(--erp-purple)", fontSize: 12 }, onClick: () => setYeniModelRengiModu(true) },
@@ -51918,7 +52125,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.552.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.555.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

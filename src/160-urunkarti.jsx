@@ -172,6 +172,8 @@ function ProductMatrixCard({
   const [addingBeden, setAddingBeden] = useState(false);
   const [serbestOlcuGiris, setSerbestOlcuGiris] = useState(false);
   const [newRenk, setNewRenk] = useState("");
+  // TANIMSIZ RENK SORUSU (v1.555.0): yazılan renk tanımlarda yoksa "ortak renk açılsın mı?" — { ad, renkKodu }.
+  const [renkAcSorusu, setRenkAcSorusu] = useState(null);
   const [newBeden, setNewBeden] = useState("");
   const [rHammaddeId, setRHammaddeId] = useState("");
   const [rMap, setRMap] = useState({}); // { [mamulRenk]: hammaddeRenk }
@@ -1704,36 +1706,89 @@ function ProductMatrixCard({
                 : eklenebilirKombinasyonlar.filter((k) => k.renkIdler.length === renkEkleSayisi);
               return (
                 <div>
-                  {uygunSecenekler.length > 0 ? (
+                  {/* Tek renk eklemede kutu HER ZAMAN (v1.555.0): öneri listesi boşken de (bütün tanımlı renkler
+                      ekliyse) yeni renk yazılabilsin — eskiden yalnız "Tanımlı renk yok" yazıyordu. */}
+                  {uygunSecenekler.length > 0 || !isMamul || renkEkleSayisi === 1 ? (<>
                     <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
                       {/* Tanımlı renk / model rengi de yazarak süzülüyor (v1.466.0). */}
                       <div style={{ width: 240 }}>
+                        {/* SERBEST YAZIM (v1.555.0 — kullanıcı: "renk eklerken renk yok ise ortak açılsın mı diye
+                            sor ve renk aç, stokta tedarikçideki gibi"). Önce `yalnizListeden`di: listede olmayan
+                            "Light" yazılıp Ekle'ye dokununca kutu odağı kaybedip yazılanı siliyordu, Ekle de
+                            kapalı kalıyordu. Artık yazılan kalır; tanımsızsa aşağıda sorulur. */}
                         <AramaliMetin
                           veriAdi="data-kart-renk-arama"
                           deger={newRenk}
-                          onDegis={setNewRenk}
+                          onDegis={(v) => { setNewRenk(v); setRenkAcSorusu(null); }}
                           oneriler={uygunSecenekler.map((s) => s.etiket)}
-                          yalnizListeden
                           placeholder="Renk yazın ya da seçin…"
                         />
                       </div>
                       <button
                         className="btn-primary"
-                        // Yazarken kutuda yarım metin olabilir: yalnız listedeki bir değer eklenir.
-                        disabled={!uygunSecenekler.some((s) => s.etiket === newRenk)}
+                        data-kart-renk-ekle="1"
+                        disabled={!newRenk.trim() || !!renkAcSorusu}
                         onClick={() => {
-                          if (!uygunSecenekler.some((s) => s.etiket === newRenk)) return;
-                          onAddRenk(product.id, newRenk);
-                          // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
-                          // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
-                          if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla([newRenk], product.malzemeTipi);
-                          setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
+                          const ad = newRenk.trim();
+                          if (!ad) return;
+                          const secenek = uygunSecenekler.find((s) => kodEsit(s.etiket, ad));
+                          if (secenek) {
+                            onAddRenk(product.id, secenek.etiket);
+                            // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
+                            // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
+                            if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla([secenek.etiket], product.malzemeTipi);
+                            setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
+                            return;
+                          }
+                          if (renkler.some((r) => kodEsit(r, ad))) { if (showToast) showToast(`"${ad}" bu üründe zaten var`); return; }
+                          if (isMamul && renkEkleSayisi > 1) { if (showToast) showToast("Çok renkli model rengi listeden seçilir ya da aşağıdan oluşturulur"); return; }
+                          // Tanımda VAR ama bu listede yok (ör. kombinasyon biçimli ad): tanımdaki adıyla eklenir.
+                          const tanimda = (tanimlarRenkler || []).find((r) => kodEsit(r.ad, ad));
+                          if (tanimda) {
+                            if (onYeniRenkKaydet) onYeniRenkKaydet(tanimda.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined);
+                            onAddRenk(product.id, tanimda.ad);
+                            setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
+                            return;
+                          }
+                          setRenkAcSorusu({ ad, renkKodu: "#C9B99A" });
                         }}
                       >
                         Ekle
                       </button>
                     </div>
-                  ) : (
+                    {renkAcSorusu && (
+                      // TEDARİKÇİDEKİ GİBİ: tanımsız değer sessizce eklenmez; ortak tanım açılıp açılmayacağı sorulur.
+                      // Açılan renk TAM tanımlıdır: renk kodu (tek havuzdan), barkod kodu (`kodlariAta`, tanımlar
+                      // yazılırken), hammaddede malzeme tipi bağı, görünüm rengi — sonra barkod/etiket "kod yok" demesin.
+                      <div data-renk-ac-sorusu={renkAcSorusu.ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8,
+                        padding: "8px 10px", border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)", fontSize: 12 }}>
+                        <span style={{ flexBasis: "100%" }}>
+                          <b>"{renkAcSorusu.ad}"</b> renk tanımlarında yok. Ortak renk olarak açılsın mı?
+                          <span style={{ color: "var(--erp-text-2)" }}> Tanımlar'a eklenir, renk kodu ve barkod kodu otomatik verilir
+                            {!isMamul && product.malzemeTipi ? `, "${product.malzemeTipi}" tipine bağlanır` : ""}; sonra bu ürüne eklenir.</span>
+                        </span>
+                        <label style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                          Görünüm
+                          <input type="color" data-renk-ac-hex="1" value={renkAcSorusu.renkKodu}
+                            onChange={(e) => setRenkAcSorusu((s) => ({ ...s, renkKodu: e.target.value }))}
+                            style={{ width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4 }} />
+                        </label>
+                        <button type="button" className="btn-primary btn-save" data-renk-ac-evet="1" style={{ padding: "5px 12px", fontSize: 12 }}
+                          onClick={() => {
+                            // Önce ürüne, SONRA tanıma: tanımın bildirimi (renk kodu, barkod kodu) son kalsın, görülsün.
+                            onAddRenk(product.id, renkAcSorusu.ad);
+                            if (onYeniRenkKaydet) onYeniRenkKaydet(renkAcSorusu.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined, renkAcSorusu.renkKodu);
+                            setRenkAcSorusu(null); setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
+                          }}>
+                          <Check size={13} /> Evet, renk aç ve ekle
+                        </button>
+                        <button type="button" className="btn-ghost" data-renk-ac-hayir="1" style={{ padding: "5px 10px", fontSize: 12 }}
+                          onClick={() => setRenkAcSorusu(null)}>
+                          Vazgeç
+                        </button>
+                      </div>
+                    )}
+                  </>) : (
                     <div style={{ fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 }}>
                       {isMamul && renkEkleSayisi > 1
                         ? `${renkEkleSayisi} renkli tanımlı bir Model Rengi yok.`

@@ -1,0 +1,37 @@
+{
+  "tabaSonra": {
+    "soru": 0,
+    "renkler": [
+      "Siyah",
+      "Taba"
+    ]
+  },
+  "ekleAcik": true,
+  "soru": "Light",
+  "vazgecSonra": {
+    "soru": 0,
+    "tanimda": false,
+    "renkler": [
+      "Siyah",
+      "Taba"
+    ]
+  },
+  "sonuc": {
+    "tanim": {
+      "kodVar": true,
+      "barkodKoduVar": true,
+      "malzemeTipleri": [
+        "Aksesuar"
+      ],
+      "renkKodu": "#e8d9b0",
+      "tip": "Hammadde"
+    },
+    "renkler": [
+      "Siyah",
+      "Taba",
+      "Light"
+    ],
+    "toast": true
+  },
+  "hatalar": []
+}

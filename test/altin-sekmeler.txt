@@ -47,7 +47,7 @@
  "modulBasligi": {
   "aciklamaKaldirildi": true,
   "baslikBoyutu": "22px",
-  "ilkIcerikUstu": 235,
+  "ilkIcerikUstu": 298,
   "kurMenude": false
  },
  "palet": {

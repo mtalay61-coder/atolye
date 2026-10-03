@@ -105,3 +105,83 @@ function kayipModelRenkleri(stok, tanimlar, yeniId) {
   });
   return { kombinasyonlar: yeniKombiler, renkler: yeniRenkler, etiketler };
 }
+
+// DERİN BİRLEŞTİRME (v1.556.0) — tek parça (tekil) tablolar için: Kasa & Banka (muhasebe), koliler, faturalar,
+// modeller, mesajlar, görevler, fiş defteri. İnternetsizken yazılan kayıt "bekleyen" kalınca açılışta BULUT
+// kopyası esas alınıyor, otomatik yeniden gönderme de ekrandaki (bulut) hâli yazıyordu: internetsiz girilen kasa
+// fişi KALICI kayboluyordu. Artık bekleyen varsa yerel esas, buluttaki yeniler eklenir. Kural:
+//   · iki taraf da "her öğesi kimlikli nesne" dizisi → kimliğe göre birleş (ortak kimlikte içe doğru), buluttaki
+//     yeni öğeler sona;
+//   · iki taraf da düz nesne → anahtar birleşimi, içe doğru;
+//   · diğer her şey (sayı, metin, kimliksiz dizi) → YEREL kazanır.
+// Bilinen bedel: bu cihazda İNTERNETSİZKEN silinen öğe bulutta duruyorsa geri gelir (kaybolmaktansa). Saf.
+function derinBirlestir(yerel, bulut) {
+  if (yerel === undefined) return bulut;
+  if (bulut === undefined || bulut === null) return yerel;
+  const kimlikliDizi = (d) => Array.isArray(d) && d.every((x) => x && typeof x === "object" && !Array.isArray(x) && x.id !== undefined);
+  if (Array.isArray(yerel) && Array.isArray(bulut)) {
+    if (!kimlikliDizi(yerel) || !kimlikliDizi(bulut)) return yerel;
+    const bulutHarita = new Map(bulut.map((x) => [x.id, x]));
+    const yerelIdler = new Set(yerel.map((x) => x.id));
+    return [...yerel.map((x) => (bulutHarita.has(x.id) ? derinBirlestir(x, bulutHarita.get(x.id)) : x)),
+      ...bulut.filter((x) => !yerelIdler.has(x.id))];
+  }
+  const duzNesne = (o) => o && typeof o === "object" && !Array.isArray(o);
+  if (duzNesne(yerel) && duzNesne(bulut)) {
+    const sonuc = { ...bulut, ...yerel };
+    Object.keys(yerel).forEach((k) => { if (k in bulut) sonuc[k] = derinBirlestir(yerel[k], bulut[k]); });
+    return sonuc;
+  }
+  return yerel;
+}
+
+// RENK / ÖLÇÜ / ASORTİ KODU ONARIMI (v1.556.0 — kullanıcı: "Renk kodları çakışıyor, burayı düzeltmiştik daha
+// önce!" — ekranda iki renk "Renk kodu: 0044"). Barkod kodu her cihazda kendi sayacıyla veriliyor; tek cihazda
+// `kodlariAta` var olanları atlıyor, çakışmıyor. Ama iki cihaz aynı anda yeni renk açınca ikisi de 44'ü verdi;
+// tanım birleştirmesi (v1.552) ikisini de korudu → aynı kod iki renkte (okutulan etiket hangi renk?). Ayrıca bazı
+// renkler 101'li ton kodu (`kod`) olmadan açılmıştı ("örn. 101" boş). Bu işlev:
+//   · `barkodKodu` (renk, beden/ölçü, asorti): aynı kodu taşıyanlardan EN ESKİSİ (kimlikteki zaman damgası; yoksa
+//     liste sırası) kodunu korur, diğerlerinin kodu silinip `kodlariAta` ile sıradaki boş kod verilir;
+// Ton kodu (`kod`, "101") barkoda girmez ve kullanıcı değiştirebilir; çakışması Tanımlar'daki "Düzelt"le elle.
+// Saf. Döner: { tanimlar, degisenler: [{ aile, ad, alan, eski, yeni }] } — değişiklik yoksa tanimlar aynı nesne.
+function kimlikZamani(id) {
+  const p = String(id || "").split("-");
+  const n = p.length >= 3 ? parseInt(p[1], 36) : NaN;
+  return Number.isFinite(n) ? n : 0;
+}
+function tanimKodlariniOnar(tanimlar) {
+  const t = tanimlar || {};
+  const degisenler = [];
+  let kirli = false;
+  // Model rengi (kombinasyon) kodları renk barkod koduyla AYNI alanı paylaşıyor (077 `kodlariAta`): renkte o
+  // numaralar baştan dolu sayılır — çakışırsa kombinasyon kodunu korur (basılmış model rengi etiketi), renk yeni kod alır.
+  const kombiKodlari = (t.renkKombinasyonlari || []).map((k) => Number(k.kod)).filter((v) => v > 0);
+  const temizle = (liste, aile) => {
+    const sirali = (liste || []).map((x, i) => ({ x, i })).sort((a, b) => (kimlikZamani(a.x.id) - kimlikZamani(b.x.id)) || (a.i - b.i));
+    const tutulan = new Set(aile === "renk" ? kombiKodlari : []);
+    const sil = new Set();
+    sirali.forEach(({ x }) => {
+      const v = Number(x.barkodKodu);
+      if (!(v > 0) || !x.id) return;
+      if (tutulan.has(v)) sil.add(x.id); else tutulan.add(v);
+    });
+    if (sil.size === 0) return liste;
+    kirli = true;
+    return (liste || []).map((x) => {
+      if (!sil.has(x.id)) return x;
+      degisenler.push({ aile, ad: x.ad, alan: "barkodKodu", eski: x.barkodKodu, id: x.id });
+      const { barkodKodu, ...kalan } = x;
+      return kalan;
+    });
+  };
+  const ara = { ...t, renkler: temizle(t.renkler, "renk"), bedenler: temizle(t.bedenler, "ölçü"), asortiler: temizle(t.asortiler, "asorti") };
+  if (!kirli) return { tanimlar: t, degisenler: [] };
+  const kodlu = kodlariAta([], ara).tanimlar;
+  // Yeni barkod kodlarını rapora yaz.
+  const yeniBarkod = (id) => {
+    const r = [...(kodlu.renkler || []), ...(kodlu.bedenler || []), ...(kodlu.asortiler || [])].find((x) => x.id === id);
+    return r ? r.barkodKodu : null;
+  };
+  degisenler.forEach((d) => { if (d.alan === "barkodKodu") d.yeni = yeniBarkod(d.id); });
+  return { tanimlar: kodlu, degisenler };
+}

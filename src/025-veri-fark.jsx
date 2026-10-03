@@ -84,6 +84,98 @@ function tabloBaslangic(tablo, kayitlar) {
 }
 
 // =============================================================================================
+// BEKLEYEN KAYIT DEFTERİ (v1.556.0) — buluta GİDEMEMİŞ kayıtlar, oturumlar arası.
+//
+// "Bekleyen yazma" defteri (030) yalnız "bu TABLO buluttan geride" der; HANGİ kayıtların gitmediğini
+// bilmez. Fark belleği ise oturumla ölür. Sonuç (kullanıcı, 3 Ekim — "Jut" olayı): internetsizken açılan
+// ürün buluta hiç gitmedi; açılışta yerel kopya esas alınıp fark tabanı da YERELDEN kuruldu, yani Jut
+// "bulutta var" sayıldı; sonraki başarılı yazma bekleyen yazma defterini sildi; bir sonraki açılışta Jut
+// yoktu. Bu defter, düşen yazmanın kayıt kimliklerini tutar; açılışta fark tabanından düşülür (ya da
+// silinecekse tabana eklenir) ki ilk yazma onları da göndersin. Başarılı yazma tabloyu defterden siler.
+// Biçim: { tablo: { ana: { id: "yaz" | "sil" }, cocuk: { altTablo: { anahtar: { t: "yaz" } | { t: "sil", k: kayıt } } } } }
+const BEKLEYEN_KAYIT_ANAHTAR = "bekleyen:kayitlar";
+function bekleyenKayitlariOku() {
+  try {
+    const d = JSON.parse((typeof window !== "undefined" && window.localStorage && window.localStorage.getItem(BEKLEYEN_KAYIT_ANAHTAR)) || "{}");
+    return d && typeof d === "object" ? d : {};
+  } catch (e) { return {}; }
+}
+function bekleyenKayitlariYaz(d) {
+  try { window.localStorage.setItem(BEKLEYEN_KAYIT_ANAHTAR, JSON.stringify(d)); } catch (e) { /* depo yoksa defter yok */ }
+}
+// Düşen bir yazmanın farklarını deftere işler (öncekilerle birleşir; son durum kazanır).
+function bekleyenKayitEkle(tablo, fark, cocukFarklari) {
+  const d = bekleyenKayitlariOku();
+  const t = d[tablo] || { ana: {}, cocuk: {} };
+  t.ana = t.ana || {}; t.cocuk = t.cocuk || {};
+  [...(fark.eklenen || []), ...(fark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined) t.ana[k.id] = "yaz"; });
+  (fark.silinen || []).forEach((id) => { t.ana[id] = "sil"; });
+  (cocukFarklari || []).forEach(({ cocuk, cFark }) => {
+    const c = t.cocuk[cocuk.tablo] || {};
+    [...(cFark.eklenen || []), ...(cFark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined) c[k.id] = { t: "yaz" }; });
+    (cFark.silinenKayitlar || []).forEach((k) => { if (k && k.id !== undefined) c[k.id] = { t: "sil", k }; });
+    t.cocuk[cocuk.tablo] = c;
+  });
+  d[tablo] = t;
+  bekleyenKayitlariYaz(d);
+}
+function bekleyenKayitTemizle(tablo) {
+  const d = bekleyenKayitlariOku();
+  if (!d[tablo]) return;
+  delete d[tablo];
+  bekleyenKayitlariYaz(d);
+}
+// Açılışta, fark tabanı kurulduktan SONRA çağrılır: defterdeki "yaz"lar tabandan düşer (gönderilsin),
+// "sil"ler tabana eklenir (silme gönderilsin). Döner: işlenen kayıt sayısı.
+function bekleyenKayitlariTabanaUygula(tablo) {
+  const t = bekleyenKayitlariOku()[tablo];
+  if (!t) return 0;
+  let n = 0;
+  const m = _sonHal[tablo] || new Map();
+  Object.entries(t.ana || {}).forEach(([id, tur]) => {
+    n++;
+    if (tur === "yaz") m.delete(id);
+    else if (!m.has(id)) m.set(id, JSON.stringify({ id }));
+  });
+  _sonHal[tablo] = m;
+  Object.entries(t.cocuk || {}).forEach(([alt, kayitlar]) => {
+    const ad = `${tablo}::${alt}`;
+    const cm = _sonHal[ad] || new Map();
+    Object.entries(kayitlar || {}).forEach(([k, v]) => {
+      n++;
+      if (v && v.t === "yaz") cm.delete(k);
+      else if (v && v.t === "sil" && v.k && !cm.has(k)) cm.set(k, JSON.stringify(v.k));
+    });
+    _sonHal[ad] = cm;
+  });
+  return n;
+}
+// BEKLEYEN YAZMASI OLAN TABLONUN AÇILIŞ TABANI. Durum (ekran) yerel kopyadır — bulutun gerisinde
+// değil İLERİSİNDE. Taban ise BULUTUN GERÇEK HÂLİ olmalı ki yerelde olup bulutta olmayan her şey
+// (internetsiz açılan ürün) ilk yazmada gitsin. Alt kayıtlarda bulutta olup yerelde OLMAYANLAR (başka
+// cihazın aynı ürüne eklediği hareket) tabandan çıkarılır: silinmezler — veri kaybı silmekten değil
+// eklenmemekten olsun. Yerelde bilerek silinenler defterden ("sil") tabana geri eklenir.
+function tabloBaslangicBekleyen(tablo, bulutKayitlar, durumKayitlar) {
+  tabloBaslangicTam(tablo, bulutKayitlar);
+  const sema = TABLO_SEMA[tablo];
+  (sema && sema.cocuklar || []).forEach((cocuk) => {
+    const durumdakiler = new Set();
+    (durumKayitlar || []).forEach((k) => cocuk.cikar(k).forEach((c) => durumdakiler.add(cocuk.anahtar(c))));
+    const m = _sonHal[`${tablo}::${cocuk.tablo}`];
+    if (m) [...m.keys()].forEach((k) => { if (!durumdakiler.has(k)) m.delete(k); });
+  });
+  bekleyenKayitlariTabanaUygula(tablo);
+}
+// Bekleyen yazma varken açılış durumu: YEREL kopya + bulutta olup yerelde olmayan ana kayıtlar (başka
+// cihazın eklediği) — bu cihazda bilerek silinenler (defterde "sil") hariç. Saf.
+function yereliBulutlaBirlestir(yerel, bulut, tablo) {
+  const t = bekleyenKayitlariOku()[tablo] || {};
+  const silinen = new Set(Object.entries(t.ana || {}).filter(([, v]) => v === "sil").map(([id]) => id));
+  const yerelIdler = new Set((yerel || []).map((k) => k && k.id));
+  return [...(yerel || []), ...(bulut || []).filter((k) => k && !yerelIdler.has(k.id) && !silinen.has(String(k.id)))];
+}
+
+// =============================================================================================
 // SÜRÜM KONTROLÜ — İYİMSER KİLİTLEME
 //
 // SORUN: fark katmanı "hangi kayıt değişti" sorusunu çözdü ama "ben bu kaydı okuduktan SONRA

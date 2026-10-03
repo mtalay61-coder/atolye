@@ -19,6 +19,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 const DISA_AKTAR = [
   "fiyatListesiTablosu",   // fiyat listesi Excel/yazdır (v1.554.0)
   "ozelKodSecenekleri", "ozelKodSuzgeceUyar",   // fiyat listesi özel kod süzgeci (v1.553.0)
+  "supabaseTabloEsitle", "tabloBaslangicTam", "tabloBaslangicBekleyen", "bekleyenKayitlariOku", "bekleyenKayitlariTabanaUygula", "yereliBulutlaBirlestir", "surumleriYukle", "kayipHammaddeler", "kayipHammaddeKarti", "derinBirlestir", "tanimKodlariniOnar",   // bekleyen kayıt defteri (v1.556.0)
   "tanimlariBirlestir", "kayipModelRenkleri", "renkTanimiBul",   // tanım birleştirme (v1.552.0)
   "urunMaliyetHesabi", "maliyetOnayDurumu", "maliyetOnayKaydi",   // maliyet OK (v1.551.0)
   "fiyatListesiKaynaklari", "urunKaynakFiyati", "fiyatDonustur", "fiyatListesiYaz", "fiyatlariHedefBirime",   // fiyat listesi (v1.550.0)
