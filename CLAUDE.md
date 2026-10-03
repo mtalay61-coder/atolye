@@ -1,8 +1,9 @@
 # Atölye ERP — Claude Code rehberi
 
 Atölye üretim, stok, sipariş ve cari takibi. React uygulaması, **tek HTML dosyası** olarak
-paketlenir ve GitHub Pages'ten (`main` dalı) yayınlanır. Veri Supabase'de, çevrimdışıyken
-tarayıcının yerel deposunda (IndexedDB).
+paketlenir ve GitHub Pages'ten (`main` dalı) yayınlanır. Veri Supabase'de. İnternet yokken uygulama
+KİLİTLENİR (v1.557, kullanıcı kararı); tarayıcının yerel deposu (IndexedDB) yalnız yedek kopya ve
+gönderilemeyen yazmaların beklediği yer.
 
 Proje uzun süre sohbet üzerinden geliştirildi; tüm geçmiş, kararlar ve kurallar
 **`DEVAM-NOTU.md`** içinde (12 000+ satır). Yeni bir işe başlamadan önce en azından
@@ -65,3 +66,5 @@ yeniden yazıldı; bkz. DEVAM-NOTU v1.505.0.)
 - Supabase **secret anahtarı asla koda girmez**; yalnız publishable anahtar gömülü.
 - Dışarıya veri gönderen AI/servis entegrasyonu önerme (kullanıcı kararı, bkz. 7a).
 - Fişsiz hareket olmaz, eksi stok kırpılmaz, matris kuralı — bkz. "Proje kuralları".
+- İnternetsiz kayıt girilmez (çevrimdışı kilit, v1.557); yazma katmanında düşen yazma fark belleğini geri alır
+  ve bekleyen kayıt defterine yazar (v1.556 "Jut") — bu iki korumayı gevşetme.

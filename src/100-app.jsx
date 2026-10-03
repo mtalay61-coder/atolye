@@ -782,6 +782,54 @@ export default function AtolyeERP() {
     return () => { clearInterval(z); window.removeEventListener("online", cevrimici); };
   }, [loading, Object.keys(bekleyenYazmalar).length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ÇEVRİMDIŞI KİLİT (v1.556.1 — kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm").
+  // "Jut" olayı (v1.556.0): internetsiz girilen kayıt buluta gitmedi, sonra kayboldu. Yazma katmanı onarıldı ama
+  // kökten çözüm internetsiz HİÇ kayıt girilmemesi: bağlantı yoksa tam ekran kilit, hiçbir düğme çalışmaz.
+  //   • Yokluk üç yoldan öğrenilir: bir bulut isteği ağa çıkamaz (030 `baglantiBildir`), tarayıcı "offline"
+  //     der, ya da yoklama (`baglantiSina`, kilitliyken 5 sn'de, açıkken 30 sn'de bir) cevap alamaz.
+  //   • Buluttan okunamayıp YEREL kopyayla açıldıysa da kilitli (eski hâl üstüne iş girilmesin).
+  //   • Bağlantı gelince: bekleyen kayıtlar gönderilir; yerel kopyayla açılmışsa sayfa buluttan YENİDEN açılır.
+  // Supabase kurulu değilse (yalnız yerel kurulum) kilit yok. Testler `__cevrimdisiSerbest` ile açar (ağsız koşuyorlar).
+  const [baglantiYok, setBaglantiYok] = useState(false);
+  const cevrimdisiSerbest = typeof window !== "undefined" && !!window.__cevrimdisiSerbest;
+  const yerelAcildi = !!(veriKaynagi && veriKaynagi.tur === "yerel");
+  const kilitli = !cevrimdisiSerbest && supabaseAcikMi() && !loading && (baglantiYok || yerelAcildi);
+  useEffect(() => {
+    if (cevrimdisiSerbest || !supabaseAcikMi()) return undefined;
+    window.__baglantiDegisti = (varMi) => setBaglantiYok(!varMi);
+    // Katmandaki durum da güncellenir: yoksa yoklama "var" dediğinde değişiklik sayılmaz, kilit kalkmazdı.
+    const cevrimdisi = () => { baglantiBildir(false, "tarayıcı çevrimdışı"); setBaglantiYok(true); };
+    const cevrimici = () => { baglantiSina(); };
+    window.addEventListener("offline", cevrimdisi);
+    window.addEventListener("online", cevrimici);
+    if (typeof navigator !== "undefined" && navigator.onLine === false) setBaglantiYok(true);
+    return () => { window.__baglantiDegisti = null; window.removeEventListener("offline", cevrimdisi); window.removeEventListener("online", cevrimici); };
+  }, [cevrimdisiSerbest]);
+  useEffect(() => {
+    if (cevrimdisiSerbest || !supabaseAcikMi() || loading) return undefined;
+    const z = setInterval(() => { if (!document.hidden || baglantiYok || yerelAcildi) baglantiSina(); }, baglantiYok || yerelAcildi ? 5000 : 30000);
+    return () => clearInterval(z);
+  }, [cevrimdisiSerbest, loading, baglantiYok, yerelAcildi]);
+  // Bağlantı geri geldi: önce bekleyenler gider; yerel kopyayla açılmışsa bulut hâliyle yeniden açılır.
+  const yenidenAcildiRef = useRef(false);
+  useEffect(() => {
+    if (cevrimdisiSerbest || loading || baglantiYok) return;
+    (async () => {
+      try { await yenidenGonderRef.current(true); } catch (e) { /* defterde kalır, sonra yine denenir */ }
+      if (yerelAcildi && !yenidenAcildiRef.current) {
+        // Döngü freni: internet var ama bulut OKUNAMIYORSA (sunucu hatası) yeniden açmak yine yerele düşer ve sayfa
+        // kendini yenileyip dururdu. Önce bulut gerçekten okunuyor mu bakılır; son 30 sn'de yenilendiyse beklenir.
+        try { await supabaseIstek("tanimlar?select=id&limit=1"); } catch (e) { return; }
+        let son = 0;
+        try { son = Number(window.sessionStorage.getItem("kilit:yenidenAcilis")) || 0; } catch (e) { /* */ }
+        if (Date.now() - son < 30000) return;
+        try { window.sessionStorage.setItem("kilit:yenidenAcilis", String(Date.now())); } catch (e) { /* */ }
+        yenidenAcildiRef.current = true;
+        window.location.reload();
+      }
+    })();
+  }, [baglantiYok, loading, yerelAcildi, cevrimdisiSerbest]);
+
   // SÜRÜM KONTROLÜ VE OTOMATİK GEÇİŞ (25 Eylül, v1.447.0 — bkz. `surumeOtomatikGec`).
   //   • AÇILIŞTA: yeni sürüm varsa sormadan geçilir. Henüz bir şey girilmedi, kaybolacak iş yok.
   //   • UZUN SÜRE ARKA PLANDA KALIP GERİ GELİNCE (telefonda "uygulama" olarak açılan ekran böyle
@@ -3199,6 +3247,10 @@ export default function AtolyeERP() {
   };
   return (
     <EkranDuzeniBaglami.Provider value={ekranDuzeniDegeri}>
+    {kilitli && (
+      <CevrimdisiKilit yerelAcildi={yerelAcildi} bekleyenSayisi={Object.keys(bekleyenYazmalar).length}
+        sebep={veriKaynagi && veriKaynagi.hata} onDene={() => baglantiSina()} />
+    )}
     <div
       style={{
         // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.554.0</title>
+<title>Atölye ERP 1.557.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2014,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.554.0";
+const SURUM = "1.557.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Fiyat listesi Excel e aktarma ve resimli yazdirma (PDF)";
+const SURUM_NOTU = "Internet yokken uygulama kilitlenir: kayit girilemez, baglanti gelince bekleyenler gonderilip devam edilir";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2024,6 +2024,22 @@ const SURUM_NOTU = "Fiyat listesi Excel e aktarma ve resimli yazdirma (PDF)";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.557.0", tarih: "03.10.2026",
+        eklenen: ["İnternet yokken uygulama kilitleniyor: tam ekran 'İnternet bağlantısı yok' — hiçbir kayıt girilemez. Bağlantı gelince bekleyen kayıtlar gönderilip kaldığı yerden devam ediyor; buluta ulaşamadan açıldıysa buluttaki güncel hâliyle yeniden açılıyor"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.556.0", tarih: "03.10.2026",
+        eklenen: ["Stok: reçetelerde kullanılan ama stokta olmayan hammadde uyarısı ve 'Geri kur' (aynı kimlikle, reçete bağı yerine oturur)"],
+        degisen: [],
+        duzeltilen: [
+            "İnternet/elektrik kesintisinde açılan ya da değiştirilen kayıt buluta hiç gitmeyebiliyordu: yazma düşünce fark belleği geri alınmıyor, internet gelince sonraki yazma o kaydı atlıyordu; başarılı yazma da 'bekleyen' uyarısını kaldırıyor, bir sonraki açılışta kayıt yok oluyordu",
+            "Açılışta bekleyen yazma varken fark tabanı yerel kopyadan kuruluyordu (bulutta olmayan kayıt 'var' sayılıyordu); artık bulutun gerçek hâlinden kuruluyor, gönderilemeyen kayıtlar kalıcı bir defterde tutulup mutlaka gönderiliyor",
+            "Kasa & Banka, koliler, faturalar, mesajlar, görevler: internetsizken girilen kayıt açılışta buluttaki eski hâlle eziliyordu; artık yerel + buluttaki yeniler birleştiriliyor",
+            "Renk (ve ölçü/asorti) barkod kodu çakışması: iki cihazın aynı anda verdiği kodlar yan yana gelebiliyordu; artık kendiliğinden onarılıyor (en eski kodunu korur, diğerine sıradaki boş kod) ve hangi kodun değiştiği bildiriliyor",
+        ] },
+    { surum: "1.555.0", tarih: "03.10.2026",
+        eklenen: ["Stok kartı › Renk ekle: yazılan renk tanımlarda yoksa 'Ortak renk olarak açılsın mı?' soruluyor; onaylanınca Tanımlar'a renk kodu, barkod kodu, malzeme tipi ve görünüm rengiyle açılıp ürüne ekleniyor"],
+        degisen: [],
+        duzeltilen: ["Stok kartında listede olmayan renk yazılınca Ekle kapalı kalıyor, kutu odağı kaybedince yazılan siliniyordu"] },
     { surum: "1.554.0", tarih: "03.10.2026",
         eklenen: ["Fiyat Listesi: Excel'e aktarma (özel kodlar ayrı sütunlarda) ve resimli Yazdır / PDF — ekranda ne görünüyorsa (süzgeç, düzenlenmiş fiyat, yeni fiyat önizlemesi) o"],
         degisen: [], duzeltilen: [] },
@@ -3260,6 +3276,115 @@ function tabloBaslangic(tablo, kayitlar) {
     _sonHal[tablo] = m;
 }
 // =============================================================================================
+// BEKLEYEN KAYIT DEFTERİ (v1.556.0) — buluta GİDEMEMİŞ kayıtlar, oturumlar arası.
+//
+// "Bekleyen yazma" defteri (030) yalnız "bu TABLO buluttan geride" der; HANGİ kayıtların gitmediğini
+// bilmez. Fark belleği ise oturumla ölür. Sonuç (kullanıcı, 3 Ekim — "Jut" olayı): internetsizken açılan
+// ürün buluta hiç gitmedi; açılışta yerel kopya esas alınıp fark tabanı da YERELDEN kuruldu, yani Jut
+// "bulutta var" sayıldı; sonraki başarılı yazma bekleyen yazma defterini sildi; bir sonraki açılışta Jut
+// yoktu. Bu defter, düşen yazmanın kayıt kimliklerini tutar; açılışta fark tabanından düşülür (ya da
+// silinecekse tabana eklenir) ki ilk yazma onları da göndersin. Başarılı yazma tabloyu defterden siler.
+// Biçim: { tablo: { ana: { id: "yaz" | "sil" }, cocuk: { altTablo: { anahtar: { t: "yaz" } | { t: "sil", k: kayıt } } } } }
+const BEKLEYEN_KAYIT_ANAHTAR = "bekleyen:kayitlar";
+function bekleyenKayitlariOku() {
+    try {
+        const d = JSON.parse((typeof window !== "undefined" && window.localStorage && window.localStorage.getItem(BEKLEYEN_KAYIT_ANAHTAR)) || "{}");
+        return d && typeof d === "object" ? d : {};
+    }
+    catch (e) {
+        return {};
+    }
+}
+function bekleyenKayitlariYaz(d) {
+    try {
+        window.localStorage.setItem(BEKLEYEN_KAYIT_ANAHTAR, JSON.stringify(d));
+    }
+    catch (e) { /* depo yoksa defter yok */ }
+}
+// Düşen bir yazmanın farklarını deftere işler (öncekilerle birleşir; son durum kazanır).
+function bekleyenKayitEkle(tablo, fark, cocukFarklari) {
+    const d = bekleyenKayitlariOku();
+    const t = d[tablo] || { ana: {}, cocuk: {} };
+    t.ana = t.ana || {};
+    t.cocuk = t.cocuk || {};
+    [...(fark.eklenen || []), ...(fark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined)
+        t.ana[k.id] = "yaz"; });
+    (fark.silinen || []).forEach((id) => { t.ana[id] = "sil"; });
+    (cocukFarklari || []).forEach(({ cocuk, cFark }) => {
+        const c = t.cocuk[cocuk.tablo] || {};
+        [...(cFark.eklenen || []), ...(cFark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined)
+            c[k.id] = { t: "yaz" }; });
+        (cFark.silinenKayitlar || []).forEach((k) => { if (k && k.id !== undefined)
+            c[k.id] = { t: "sil", k }; });
+        t.cocuk[cocuk.tablo] = c;
+    });
+    d[tablo] = t;
+    bekleyenKayitlariYaz(d);
+}
+function bekleyenKayitTemizle(tablo) {
+    const d = bekleyenKayitlariOku();
+    if (!d[tablo])
+        return;
+    delete d[tablo];
+    bekleyenKayitlariYaz(d);
+}
+// Açılışta, fark tabanı kurulduktan SONRA çağrılır: defterdeki "yaz"lar tabandan düşer (gönderilsin),
+// "sil"ler tabana eklenir (silme gönderilsin). Döner: işlenen kayıt sayısı.
+function bekleyenKayitlariTabanaUygula(tablo) {
+    const t = bekleyenKayitlariOku()[tablo];
+    if (!t)
+        return 0;
+    let n = 0;
+    const m = _sonHal[tablo] || new Map();
+    Object.entries(t.ana || {}).forEach(([id, tur]) => {
+        n++;
+        if (tur === "yaz")
+            m.delete(id);
+        else if (!m.has(id))
+            m.set(id, JSON.stringify({ id }));
+    });
+    _sonHal[tablo] = m;
+    Object.entries(t.cocuk || {}).forEach(([alt, kayitlar]) => {
+        const ad = `${tablo}::${alt}`;
+        const cm = _sonHal[ad] || new Map();
+        Object.entries(kayitlar || {}).forEach(([k, v]) => {
+            n++;
+            if (v && v.t === "yaz")
+                cm.delete(k);
+            else if (v && v.t === "sil" && v.k && !cm.has(k))
+                cm.set(k, JSON.stringify(v.k));
+        });
+        _sonHal[ad] = cm;
+    });
+    return n;
+}
+// BEKLEYEN YAZMASI OLAN TABLONUN AÇILIŞ TABANI. Durum (ekran) yerel kopyadır — bulutun gerisinde
+// değil İLERİSİNDE. Taban ise BULUTUN GERÇEK HÂLİ olmalı ki yerelde olup bulutta olmayan her şey
+// (internetsiz açılan ürün) ilk yazmada gitsin. Alt kayıtlarda bulutta olup yerelde OLMAYANLAR (başka
+// cihazın aynı ürüne eklediği hareket) tabandan çıkarılır: silinmezler — veri kaybı silmekten değil
+// eklenmemekten olsun. Yerelde bilerek silinenler defterden ("sil") tabana geri eklenir.
+function tabloBaslangicBekleyen(tablo, bulutKayitlar, durumKayitlar) {
+    tabloBaslangicTam(tablo, bulutKayitlar);
+    const sema = TABLO_SEMA[tablo];
+    (sema && sema.cocuklar || []).forEach((cocuk) => {
+        const durumdakiler = new Set();
+        (durumKayitlar || []).forEach((k) => cocuk.cikar(k).forEach((c) => durumdakiler.add(cocuk.anahtar(c))));
+        const m = _sonHal[`${tablo}::${cocuk.tablo}`];
+        if (m)
+            [...m.keys()].forEach((k) => { if (!durumdakiler.has(k))
+                m.delete(k); });
+    });
+    bekleyenKayitlariTabanaUygula(tablo);
+}
+// Bekleyen yazma varken açılış durumu: YEREL kopya + bulutta olup yerelde olmayan ana kayıtlar (başka
+// cihazın eklediği) — bu cihazda bilerek silinenler (defterde "sil") hariç. Saf.
+function yereliBulutlaBirlestir(yerel, bulut, tablo) {
+    const t = bekleyenKayitlariOku()[tablo] || {};
+    const silinen = new Set(Object.entries(t.ana || {}).filter(([, v]) => v === "sil").map(([id]) => id));
+    const yerelIdler = new Set((yerel || []).map((k) => k && k.id));
+    return [...(yerel || []), ...(bulut || []).filter((k) => k && !yerelIdler.has(k.id) && !silinen.has(String(k.id)))];
+}
+// =============================================================================================
 // SÜRÜM KONTROLÜ — İYİMSER KİLİTLEME
 //
 // SORUN: fark katmanı "hangi kayıt değişti" sorusunu çözdü ama "ben bu kaydı okuduktan SONRA
@@ -3744,15 +3869,47 @@ async function yetkiBasliklari() {
 }
 // Supabase REST çağrısı. supabase-js kütüphanesi yerine doğrudan REST kullanılıyor: tek ihtiyacımız
 // upsert ve delete, bunun için 300 KB'lık bir kütüphane eklemek gereksiz.
+// BAĞLANTI DURUMU (v1.556.1 — kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm").
+// Her bulut isteği sonucu bildirir: istek ağa hiç çıkamadıysa (fetch reddedildi) bağlantı YOK; herhangi bir
+// HTTP cevabı geldiyse (401/500 dahil) internet VAR. App (`__baglantiDegisti`) yokken ekranı kilitler — internetsiz
+// girilen işin buluta gitmeyip kaybolması (v1.556.0 "Jut") en baştan engellensin.
+let _baglantiVar = true;
+function baglantiBildir(varMi, sebep) {
+    if (_baglantiVar === varMi)
+        return;
+    _baglantiVar = varMi;
+    if (typeof window !== "undefined" && window.__baglantiDegisti)
+        window.__baglantiDegisti(varMi, sebep || "");
+}
+// Hafif yoklama: herhangi bir HTTP cevabı = internet var. Önbellek kapalı (eski cevap "var" demesin).
+async function baglantiSina() {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/surum?select=surum&limit=1`, { headers: { apikey: SUPABASE_ANAHTAR }, cache: "no-store" });
+        baglantiBildir(true);
+        return true;
+    }
+    catch (e) {
+        baglantiBildir(false, String((e && e.message) || e));
+        return false;
+    }
+}
 async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
-    const yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
-        ...secenekler,
-        headers: {
-            ...(await yetkiBasliklari()),
-            "Content-Type": "application/json",
-            ...(secenekler.headers || {}),
-        },
-    });
+    let yanit;
+    try {
+        yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
+            ...secenekler,
+            headers: {
+                ...(await yetkiBasliklari()),
+                "Content-Type": "application/json",
+                ...(secenekler.headers || {}),
+            },
+        });
+    }
+    catch (e) {
+        baglantiBildir(false, String((e && e.message) || e));
+        throw e;
+    }
+    baglantiBildir(true);
     // Jeton istek yoldayken dolmuş olabilir. Bir kez yenileyip tekrar deniyoruz; ikinci 401
     // gerçekten yetki yok demektir ve hata yukarı çıkar. Sonsuz döngü `tekrarMi` ile kesiliyor.
     if (yanit.status === 401 && !tekrarMi && _oturum) {
@@ -4250,133 +4407,160 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
     const sema = TABLO_SEMA[tablo];
     if (!sema)
         return;
-    // 1) ANA KAYITLAR
-    // Fark belleğinin ÖNCEKİ hâli saklanıyor: çakışma çıkarsa geri alınacak. tabloFarki belleği
-    // çağrıldığı anda güncelliyor, yani "yazıldı" diye işaretliyor — yazılmadıysa bu yalan olur
-    // ve kayıt bir daha hiç denenmez.
-    const oncekiBellek = _sonHal[tablo] ? new Map(_sonHal[tablo]) : null;
-    const fark = tabloFarki(tablo, kayitlar);
-    if (!_surumler[tablo])
-        _surumler[tablo] = new Map();
-    const surumMap = _surumler[tablo];
-    const degisen = [...fark.eklenen, ...fark.guncellenen];
-    // Ayrım "eklenen mi güncellenen mi"ye göre DEĞİL, sürümünü bilip bilmediğimize göre yapılır.
-    // Fark belleği sıfırlandığında (göç, veritabanı sıfırlama) veritabanında zaten var olan
-    // kayıtlar da "eklenen" görünüyor; onları INSERT saymak yinelenen anahtar hatası verirdi.
-    const yeniler = [];
-    const guncellemeler = [];
-    degisen.forEach((k) => {
-        if (!surumDesteklenmiyor && surumMap.has(k.id))
-            guncellemeler.push(k);
+    // BELLEK YEDEĞİ — ANA + ALT (v1.556.0). tabloFarki belleği çağrıldığı anda "yazıldı" diye işaretliyor.
+    // Yazma DÜŞERSE (internet/elektrik kesintisi, sunucu hatası) bu yalan olur ve kayıt bir daha hiç
+    // gönderilmez: kullanıcı (3 Ekim): "Jut stoğu açtım, reçeteye ekledim, silmedim ama stokta görünmüyor;
+    // reçetede görünüyor — bir ara elektrik gitti, internetsiz çalıştım". Jut internetsiz açıldı → POST düştü
+    // → bellek "Jut bulutta" dedi → internet gelince sıradaki yazma yalnız reçeteyi gönderdi, başarılı olunca
+    // bekleyen yazma defteri de silindi → bir sonraki açılışta buluttan okununca Jut YOKTU.
+    // Artık: hata/çakışmada ana ve alt belleklerin hepsi geri alınır; değişenler kalıcı deftere yazılır
+    // (`bekleyenKayitEkle`) ki uygulama kapanıp açılsa da gönderilsin.
+    const bellekAdlari = [tablo, ...(sema.cocuklar || []).map((c) => `${tablo}::${c.tablo}`)];
+    const bellekYedegi = {};
+    bellekAdlari.forEach((b) => { bellekYedegi[b] = _sonHal[b] ? new Map(_sonHal[b]) : null; });
+    const bellegiGeriAl = () => bellekAdlari.forEach((b) => {
+        if (bellekYedegi[b])
+            _sonHal[b] = bellekYedegi[b];
         else
-            yeniler.push(k);
+            delete _sonHal[b];
     });
-    if (yeniler.length > 0) {
-        await supabaseIstek(tablo, {
-            method: "POST",
-            headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-            body: JSON.stringify(yeniler.map((k) => (surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 }))),
-        });
-        if (!surumDesteklenmiyor)
-            yeniler.forEach((k) => surumMap.set(k.id, 1));
-    }
-    // Güncellemeler tek tek gider. Toplu upsert ile sürüm koşulu kurulamıyor: upsert "varsa üzerine
-    // yaz" demektir, "sürümü buysa üzerine yaz" diyemez. Kaydın ezilmemesi, tek istekte bitmesinden
-    // önemli — fark katmanı sayesinde bir işlemde genelde tek kayıt değişiyor zaten.
-    const cakisanlar = [];
-    if (guncellemeler.length > 0) {
-        await sirayla(guncellemeler.map((k) => async () => {
-            const beklenen = surumMap.get(k.id);
-            const donen = await supabaseIstek(`${tablo}?id=eq.${pgKimlik(k.id)}&surum=eq.${beklenen}&select=id`, {
-                method: "PATCH",
-                headers: { Prefer: "return=representation" },
-                body: JSON.stringify({ ...sema.satir(k), surum: beklenen + 1 }),
-            });
-            // Sıfır satır döndüyse koşul tutmadı: kaydı aradan başkası değiştirmiş.
-            if (Array.isArray(donen) && donen.length === 0)
-                cakisanlar.push(k.id);
-            else
-                surumMap.set(k.id, beklenen + 1);
-        }));
-    }
-    const _sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
-    // ÇAKIŞMA VARSA BURADA DURULUR — alt kayıtlara hiç dokunulmaz.
-    //
-    // Kilit yalnızca ana satırın SÜTUNLARINI koruyor. Oysa bu uygulamada asıl veri alt tablolarda:
-    // bir ürünün stok miktarı `variants`ta, defteri `hareketler`de. Çakışmadan sonra alt yazmaya
-    // devam etmek, korunan ana satırın altından varyantı ezmek demekti.
-    //
-    // "Kampre Bezi" olayı tam olarak buydu: iki 0,8'lik kesim bir bilgisayarda işlendi, üçüncü
-    // kesim o ikisini görmemiş bayat bir kopyada hesaplandı. Hareketler kimliğe göre birleştiği
-    // için üçü de deftere düştü, varyant ise komple üzerine yazıldı — defter −14,8 derken stok
-    // −13,2'de kaldı.
-    //
-    // Çakışma, elimizdeki tablonun bayat olduğunun kanıtıdır. Bayat veriyle yazmaya devam etmek
-    // tahmin yürütmektir; doğru davranış durup kullanıcıyı yenilemeye yönlendirmektir.
-    if (cakisanlar.length > 0) {
-        if (oncekiBellek)
-            _sonHal[tablo] = oncekiBellek;
-        // SUNUCUYA SOR: çakışma gerçek mi? Beklediğimiz sürümle sunucudakini karşılaştırmadan
-        // "başkası değiştirdi" demek tahmindir. Sunucudaki sürüm beklediğimizden BİR fazlaysa,
-        // değişikliği büyük olasılıkla BU bilgisayar yaptı (örtüşen ikinci yazma) — sahte çakışma.
-        // Kullanıcıya olmayan bir "başka bilgisayar"ı suçlamak, hatayı aramasını da zorlaştırır.
-        let teshis = [];
-        try {
-            const liste = cakisanlar.map((id) => encodeURIComponent(`"${String(id).replace(/"/g, '\\"')}"`)).join(",");
-            const guncel = await supabaseIstek(`${tablo}?id=in.(${liste})&select=id,surum`);
-            teshis = (guncel || []).map((r) => ({ id: r.id, sunucu: r.surum, beklenen: surumMap.get(r.id) }));
-        }
-        catch (e) {
-            console.warn("Çakışma teşhisi okunamadı:", e && e.message);
-        }
-        // Sürümü tazele ki bir sonraki deneme doğru koşulla gitsin; kullanıcı aynı duvara ikinci
-        // kez toslamasın.
-        teshis.forEach((t) => { if (t.sunucu != null)
-            surumMap.set(t.id, t.sunucu); });
-        gunlukYaz(`Sürüm çakışması: ${tablo}`, "veri", { tablo, adet: cakisanlar.length, teshis });
-        surumCakismasiBildir(tablo, cakisanlar, teshis);
-        // ÇAKIŞMA BİR BAŞARISIZLIKTIR. Eskiden buradan normal dönülüyor, `tabloYaz` da { ok: true }
-        // üretiyordu; sonuçta üstte "kaydedilmedi" şeridi çıkarken altta "silindi" yazıyordu.
-        return { __cakisma: true, sayim: _sayim, teshis };
-    }
-    // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır.
-    // Böylece 500 hareketi olan bir üründe tek hareket eklendiğinde yalnızca o satır gider.
-    for (const cocuk of sema.cocuklar) {
+    // 1) ANA KAYITLAR — ve ALT KAYIT FARKLARI ÖNCEDEN (ağa çıkmadan): yazma yarıda düşerse ne
+    // gönderilecekti, tamamı bilinsin (deftere o yazılır).
+    const fark = tabloFarki(tablo, kayitlar);
+    const cocukFarklari = (sema.cocuklar || []).map((cocuk) => {
         const duz = [];
         (kayitlar || []).forEach((k) => { cocuk.cikar(k).forEach((c) => duz.push(c)); });
         const kimlikli = duz.map((c) => ({ ...c, __k: cocuk.anahtar(c) }));
-        const cFark = tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k })));
-        const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) => 
-        // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
-        // Hareket gibi gerçek kimliği olan tablolarda geri konur.
-        cocuk.cakisma ? temiz : { ...temiz, id: __k });
-        if (cYaz.length > 0) {
-            const yol = cocuk.cakisma ? `${cocuk.tablo}?on_conflict=${cocuk.cakisma}` : cocuk.tablo;
-            await supabaseIstek(yol, {
+        return { cocuk, cFark: tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k }))) };
+    });
+    let _sayim = null;
+    try {
+        if (!_surumler[tablo])
+            _surumler[tablo] = new Map();
+        const surumMap = _surumler[tablo];
+        const degisen = [...fark.eklenen, ...fark.guncellenen];
+        // Ayrım "eklenen mi güncellenen mi"ye göre DEĞİL, sürümünü bilip bilmediğimize göre yapılır.
+        // Fark belleği sıfırlandığında (göç, veritabanı sıfırlama) veritabanında zaten var olan
+        // kayıtlar da "eklenen" görünüyor; onları INSERT saymak yinelenen anahtar hatası verirdi.
+        const yeniler = [];
+        const guncellemeler = [];
+        degisen.forEach((k) => {
+            if (!surumDesteklenmiyor && surumMap.has(k.id))
+                guncellemeler.push(k);
+            else
+                yeniler.push(k);
+        });
+        if (yeniler.length > 0) {
+            await supabaseIstek(tablo, {
                 method: "POST",
                 headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-                body: JSON.stringify(cYaz),
+                body: JSON.stringify(yeniler.map((k) => (surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 }))),
             });
+            if (!surumDesteklenmiyor)
+                yeniler.forEach((k) => surumMap.set(k.id, 1));
         }
-        // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)
-        // veritabanından da düşer. Bileşik anahtarlı tablolarda `id` sütunu olmadığı için silme
-        // sütun değerleriyle kurulur — eskiden bu tablolar silmeden büsbütün muaftı.
-        if (cFark.silinen.length > 0) {
-            if (cocuk.cakisma) {
-                // Alan listesi `cakisma` dizesinden okunuyor: ikisini ayrı tutmak, birini
-                // güncelleyip diğerini unutma riskiydi.
-                const alanlar = cocuk.cakisma.split(",").map((a) => a.trim()).filter(Boolean);
-                await supabaseSilBilesik(cocuk.tablo, alanlar, cFark.silinenKayitlar);
+        // Güncellemeler tek tek gider. Toplu upsert ile sürüm koşulu kurulamıyor: upsert "varsa üzerine
+        // yaz" demektir, "sürümü buysa üzerine yaz" diyemez. Kaydın ezilmemesi, tek istekte bitmesinden
+        // önemli — fark katmanı sayesinde bir işlemde genelde tek kayıt değişiyor zaten.
+        const cakisanlar = [];
+        if (guncellemeler.length > 0) {
+            await sirayla(guncellemeler.map((k) => async () => {
+                const beklenen = surumMap.get(k.id);
+                const donen = await supabaseIstek(`${tablo}?id=eq.${pgKimlik(k.id)}&surum=eq.${beklenen}&select=id`, {
+                    method: "PATCH",
+                    headers: { Prefer: "return=representation" },
+                    body: JSON.stringify({ ...sema.satir(k), surum: beklenen + 1 }),
+                });
+                // Sıfır satır döndüyse koşul tutmadı: kaydı aradan başkası değiştirmiş.
+                if (Array.isArray(donen) && donen.length === 0)
+                    cakisanlar.push(k.id);
+                else
+                    surumMap.set(k.id, beklenen + 1);
+            }));
+        }
+        _sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
+        // ÇAKIŞMA VARSA BURADA DURULUR — alt kayıtlara hiç dokunulmaz.
+        //
+        // Kilit yalnızca ana satırın SÜTUNLARINI koruyor. Oysa bu uygulamada asıl veri alt tablolarda:
+        // bir ürünün stok miktarı `variants`ta, defteri `hareketler`de. Çakışmadan sonra alt yazmaya
+        // devam etmek, korunan ana satırın altından varyantı ezmek demekti.
+        //
+        // "Kampre Bezi" olayı tam olarak buydu: iki 0,8'lik kesim bir bilgisayarda işlendi, üçüncü
+        // kesim o ikisini görmemiş bayat bir kopyada hesaplandı. Hareketler kimliğe göre birleştiği
+        // için üçü de deftere düştü, varyant ise komple üzerine yazıldı — defter −14,8 derken stok
+        // −13,2'de kaldı.
+        //
+        // Çakışma, elimizdeki tablonun bayat olduğunun kanıtıdır. Bayat veriyle yazmaya devam etmek
+        // tahmin yürütmektir; doğru davranış durup kullanıcıyı yenilemeye yönlendirmektir.
+        if (cakisanlar.length > 0) {
+            bellegiGeriAl();
+            // SUNUCUYA SOR: çakışma gerçek mi? Beklediğimiz sürümle sunucudakini karşılaştırmadan
+            // "başkası değiştirdi" demek tahmindir. Sunucudaki sürüm beklediğimizden BİR fazlaysa,
+            // değişikliği büyük olasılıkla BU bilgisayar yaptı (örtüşen ikinci yazma) — sahte çakışma.
+            // Kullanıcıya olmayan bir "başka bilgisayar"ı suçlamak, hatayı aramasını da zorlaştırır.
+            let teshis = [];
+            try {
+                const liste = cakisanlar.map((id) => encodeURIComponent(`"${String(id).replace(/"/g, '\\"')}"`)).join(",");
+                const guncel = await supabaseIstek(`${tablo}?id=in.(${liste})&select=id,surum`);
+                teshis = (guncel || []).map((r) => ({ id: r.id, sunucu: r.surum, beklenen: surumMap.get(r.id) }));
             }
-            else {
-                await supabaseSil(cocuk.tablo, cFark.silinen);
+            catch (e) {
+                console.warn("Çakışma teşhisi okunamadı:", e && e.message);
             }
+            // Sürümü tazele ki bir sonraki deneme doğru koşulla gitsin; kullanıcı aynı duvara ikinci
+            // kez toslamasın.
+            teshis.forEach((t) => { if (t.sunucu != null)
+                surumMap.set(t.id, t.sunucu); });
+            gunlukYaz(`Sürüm çakışması: ${tablo}`, "veri", { tablo, adet: cakisanlar.length, teshis });
+            surumCakismasiBildir(tablo, cakisanlar, teshis);
+            // ÇAKIŞMA BİR BAŞARISIZLIKTIR. Eskiden buradan normal dönülüyor, `tabloYaz` da { ok: true }
+            // üretiyordu; sonuçta üstte "kaydedilmedi" şeridi çıkarken altta "silindi" yazıyordu.
+            return { __cakisma: true, sayim: _sayim, teshis };
+        }
+        // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır (fark yukarıda hesaplandı).
+        // Böylece 500 hareketi olan bir üründe tek hareket eklendiğinde yalnızca o satır gider.
+        for (const { cocuk, cFark } of cocukFarklari) {
+            const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) => 
+            // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
+            // Hareket gibi gerçek kimliği olan tablolarda geri konur.
+            cocuk.cakisma ? temiz : { ...temiz, id: __k });
+            if (cYaz.length > 0) {
+                const yol = cocuk.cakisma ? `${cocuk.tablo}?on_conflict=${cocuk.cakisma}` : cocuk.tablo;
+                await supabaseIstek(yol, {
+                    method: "POST",
+                    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+                    body: JSON.stringify(cYaz),
+                });
+            }
+            // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)
+            // veritabanından da düşer. Bileşik anahtarlı tablolarda `id` sütunu olmadığı için silme
+            // sütun değerleriyle kurulur — eskiden bu tablolar silmeden büsbütün muaftı.
+            if (cFark.silinen.length > 0) {
+                if (cocuk.cakisma) {
+                    // Alan listesi `cakisma` dizesinden okunuyor: ikisini ayrı tutmak, birini
+                    // güncelleyip diğerini unutma riskiydi.
+                    const alanlar = cocuk.cakisma.split(",").map((a) => a.trim()).filter(Boolean);
+                    await supabaseSilBilesik(cocuk.tablo, alanlar, cFark.silinenKayitlar);
+                }
+                else {
+                    await supabaseSil(cocuk.tablo, cFark.silinen);
+                }
+            }
+        }
+        // 3) SİLİNEN ANA KAYITLAR — alt kayıtlar cascade ile birlikte gider.
+        if (fark.silinen.length > 0) {
+            await supabaseSil(tablo, fark.silinen);
         }
     }
-    // 3) SİLİNEN ANA KAYITLAR — alt kayıtlar cascade ile birlikte gider.
-    if (fark.silinen.length > 0) {
-        await supabaseSil(tablo, fark.silinen);
+    catch (e) {
+        // YAZMA DÜŞTÜ: bellek geri, gönderilemeyenler kalıcı deftere. Hata yukarı gider (tabloYaz bekleyen
+        // yazma şeridini açar, çağıran "kaydedilemedi" der).
+        bellegiGeriAl();
+        bekleyenKayitEkle(tablo, fark, cocukFarklari);
+        throw e;
     }
+    // Hepsi gitti: defterdeki önceki bekleyenler de bu yazmayla gönderildi (tabanda yoklardı).
+    bekleyenKayitTemizle(tablo);
     return _sayim;
 }
 // Dizi tabanlı tablolar için tek giriş noktası.
@@ -13142,6 +13326,53 @@ function useCariFisiKaydet(d) {
     }, [stok, cariler, showToast, addCariHareketFromStok, muhasebeyePesinIsle, aktifKullanici, fisDefterineYaz, fisGeriAlRef, koliler, saveKoliler]);
     return stokFisiKaydet;
 }
+// ================= REÇETEDE OLUP STOKTA OLMAYAN HAMMADDE — ONARIM (3 Ekim, v1.556.0) =================
+//
+// Kullanıcı: "Jut stoğu açtım ve reçeteye ekledim, Jut'u silmedim ama stokta görünmüyor; mamul reçetede
+// görünüyor." Sebep yazma katmanındaydı (025/040: internetsizken açılan ürün buluta hiç gitmedi, fark
+// belleği "gitti" sandı) — o açık kapatıldı. Bu dosya ZATEN kaybolmuş olanları geri kurar: reçete satırı
+// hammaddenin KİMLİĞİNİ, adını, birimini, rengini ve boyunu taşıyor. Ürün AYNI KİMLİKLE yeniden açılınca
+// reçete bağı kendiliğinden yerine oturur (reçete hiç değiştirilmez). Fiyat, tedarikçi, stok no gibi
+// reçetede olmayan bilgiler boş gelir — kullanıcı tamamlar; stok miktarı 0 (hareketi yoksa doğrusu bu).
+// Saf. Döner: [{ id, ad, birim, renkler: [..], bedenler: [..], kullananlar: [mamul adları] }] — ada göre sıralı.
+function kayipHammaddeler(stok) {
+    const varIdler = new Set((stok || []).map((u) => u && u.id));
+    const harita = new Map();
+    (stok || []).forEach((u) => (u.recete || []).forEach((r) => {
+        const id = r && r.hammaddeUrunId;
+        if (!id || varIdler.has(id))
+            return;
+        if (!harita.has(id))
+            harita.set(id, { id, ad: r.hammaddeAd || "?", birim: r.birim || "", renkler: new Set(), bedenler: new Set(), kullananlar: new Set() });
+        const h = harita.get(id);
+        if (r.renk)
+            h.renkler.add(r.renk);
+        if (r.beden)
+            h.bedenler.add(r.beden);
+        if (!h.birim && r.birim)
+            h.birim = r.birim;
+        h.kullananlar.add(u.ad || u.id);
+    }));
+    return Array.from(harita.values())
+        .map((h) => ({ ...h, renkler: Array.from(h.renkler).sort(), bedenler: Array.from(h.bedenler).sort(), kullananlar: Array.from(h.kullananlar).sort() }))
+        .sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr"));
+}
+// Kayıp hammaddeyi stok kartı olarak kurar (aynı kimlik). Renk yoksa ölçüsüz tek satır ("Standart" yer tutucu
+// değil, boş renk — reçete satırı da renksizse eşleşme boşla). Boy varsa her renk × boy.
+function kayipHammaddeKarti(h) {
+    const renkler = h.renkler.length ? h.renkler : [""];
+    const bedenler = h.bedenler.length ? h.bedenler : [""];
+    const variants = [];
+    renkler.forEach((renk) => bedenler.forEach((beden) => variants.push({ renk, beden, miktar: 0 })));
+    return {
+        id: h.id, ad: h.ad, kategori: "Hammadde", birim: h.birim || "adet",
+        olcuTipi: h.bedenler.length ? "Boyut" : "Serbest",
+        variants, hareketler: [], recete: [], alisFiyati: 0,
+        // Nereden geldiği kartta görünsün: kullanıcı fiyat/tedarikçi gibi boş alanları tamamlaması gerektiğini bilsin.
+        not: `Reçetelerden geri kuruldu (${new Date().toLocaleDateString("tr-TR")}) — fiyat, tedarikçi ve stok bilgisini kontrol edin.`,
+        geriKuruldu: true,
+    };
+}
 // ================= TANIMLAR — BİRLEŞTİREREK YAZ + MODEL RENGİ ONARIMI (3 Ekim, v1.552.0) =================
 //
 // Kullanıcı (Paketleme ekran görüntüsü): "75 renk/bedende çift barkodu kurulamıyor — Tanımlar'da yok: renk:
@@ -13263,6 +13494,96 @@ function kayipModelRenkleri(stok, tanimlar, yeniId) {
     });
     return { kombinasyonlar: yeniKombiler, renkler: yeniRenkler, etiketler };
 }
+// DERİN BİRLEŞTİRME (v1.556.0) — tek parça (tekil) tablolar için: Kasa & Banka (muhasebe), koliler, faturalar,
+// modeller, mesajlar, görevler, fiş defteri. İnternetsizken yazılan kayıt "bekleyen" kalınca açılışta BULUT
+// kopyası esas alınıyor, otomatik yeniden gönderme de ekrandaki (bulut) hâli yazıyordu: internetsiz girilen kasa
+// fişi KALICI kayboluyordu. Artık bekleyen varsa yerel esas, buluttaki yeniler eklenir. Kural:
+//   · iki taraf da "her öğesi kimlikli nesne" dizisi → kimliğe göre birleş (ortak kimlikte içe doğru), buluttaki
+//     yeni öğeler sona;
+//   · iki taraf da düz nesne → anahtar birleşimi, içe doğru;
+//   · diğer her şey (sayı, metin, kimliksiz dizi) → YEREL kazanır.
+// Bilinen bedel: bu cihazda İNTERNETSİZKEN silinen öğe bulutta duruyorsa geri gelir (kaybolmaktansa). Saf.
+function derinBirlestir(yerel, bulut) {
+    if (yerel === undefined)
+        return bulut;
+    if (bulut === undefined || bulut === null)
+        return yerel;
+    const kimlikliDizi = (d) => Array.isArray(d) && d.every((x) => x && typeof x === "object" && !Array.isArray(x) && x.id !== undefined);
+    if (Array.isArray(yerel) && Array.isArray(bulut)) {
+        if (!kimlikliDizi(yerel) || !kimlikliDizi(bulut))
+            return yerel;
+        const bulutHarita = new Map(bulut.map((x) => [x.id, x]));
+        const yerelIdler = new Set(yerel.map((x) => x.id));
+        return [...yerel.map((x) => (bulutHarita.has(x.id) ? derinBirlestir(x, bulutHarita.get(x.id)) : x)),
+            ...bulut.filter((x) => !yerelIdler.has(x.id))];
+    }
+    const duzNesne = (o) => o && typeof o === "object" && !Array.isArray(o);
+    if (duzNesne(yerel) && duzNesne(bulut)) {
+        const sonuc = { ...bulut, ...yerel };
+        Object.keys(yerel).forEach((k) => { if (k in bulut)
+            sonuc[k] = derinBirlestir(yerel[k], bulut[k]); });
+        return sonuc;
+    }
+    return yerel;
+}
+// RENK / ÖLÇÜ / ASORTİ KODU ONARIMI (v1.556.0 — kullanıcı: "Renk kodları çakışıyor, burayı düzeltmiştik daha
+// önce!" — ekranda iki renk "Renk kodu: 0044"). Barkod kodu her cihazda kendi sayacıyla veriliyor; tek cihazda
+// `kodlariAta` var olanları atlıyor, çakışmıyor. Ama iki cihaz aynı anda yeni renk açınca ikisi de 44'ü verdi;
+// tanım birleştirmesi (v1.552) ikisini de korudu → aynı kod iki renkte (okutulan etiket hangi renk?). Ayrıca bazı
+// renkler 101'li ton kodu (`kod`) olmadan açılmıştı ("örn. 101" boş). Bu işlev:
+//   · `barkodKodu` (renk, beden/ölçü, asorti): aynı kodu taşıyanlardan EN ESKİSİ (kimlikteki zaman damgası; yoksa
+//     liste sırası) kodunu korur, diğerlerinin kodu silinip `kodlariAta` ile sıradaki boş kod verilir;
+// Ton kodu (`kod`, "101") barkoda girmez ve kullanıcı değiştirebilir; çakışması Tanımlar'daki "Düzelt"le elle.
+// Saf. Döner: { tanimlar, degisenler: [{ aile, ad, alan, eski, yeni }] } — değişiklik yoksa tanimlar aynı nesne.
+function kimlikZamani(id) {
+    const p = String(id || "").split("-");
+    const n = p.length >= 3 ? parseInt(p[1], 36) : NaN;
+    return Number.isFinite(n) ? n : 0;
+}
+function tanimKodlariniOnar(tanimlar) {
+    const t = tanimlar || {};
+    const degisenler = [];
+    let kirli = false;
+    // Model rengi (kombinasyon) kodları renk barkod koduyla AYNI alanı paylaşıyor (077 `kodlariAta`): renkte o
+    // numaralar baştan dolu sayılır — çakışırsa kombinasyon kodunu korur (basılmış model rengi etiketi), renk yeni kod alır.
+    const kombiKodlari = (t.renkKombinasyonlari || []).map((k) => Number(k.kod)).filter((v) => v > 0);
+    const temizle = (liste, aile) => {
+        const sirali = (liste || []).map((x, i) => ({ x, i })).sort((a, b) => (kimlikZamani(a.x.id) - kimlikZamani(b.x.id)) || (a.i - b.i));
+        const tutulan = new Set(aile === "renk" ? kombiKodlari : []);
+        const sil = new Set();
+        sirali.forEach(({ x }) => {
+            const v = Number(x.barkodKodu);
+            if (!(v > 0) || !x.id)
+                return;
+            if (tutulan.has(v))
+                sil.add(x.id);
+            else
+                tutulan.add(v);
+        });
+        if (sil.size === 0)
+            return liste;
+        kirli = true;
+        return (liste || []).map((x) => {
+            if (!sil.has(x.id))
+                return x;
+            degisenler.push({ aile, ad: x.ad, alan: "barkodKodu", eski: x.barkodKodu, id: x.id });
+            const { barkodKodu, ...kalan } = x;
+            return kalan;
+        });
+    };
+    const ara = { ...t, renkler: temizle(t.renkler, "renk"), bedenler: temizle(t.bedenler, "ölçü"), asortiler: temizle(t.asortiler, "asorti") };
+    if (!kirli)
+        return { tanimlar: t, degisenler: [] };
+    const kodlu = kodlariAta([], ara).tanimlar;
+    // Yeni barkod kodlarını rapora yaz.
+    const yeniBarkod = (id) => {
+        const r = [...(kodlu.renkler || []), ...(kodlu.bedenler || []), ...(kodlu.asortiler || [])].find((x) => x.id === id);
+        return r ? r.barkodKodu : null;
+    };
+    degisenler.forEach((d) => { if (d.alan === "barkodKodu")
+        d.yeni = yeniBarkod(d.id); });
+    return { tanimlar: kodlu, degisenler };
+}
 // ================= AÇILIŞ YÜKLEME =================
 //
 // 19 Eylül (2. madde, 4. tur): `100-app.jsx`ten çıkarılan EN BÜYÜK parça (627 satır).
@@ -13304,9 +13625,14 @@ function useAcilisYukleme(d) {
                         // defteri"). Bir tablo son oturumda buluta yazılamadıysa bulutun eski hâli yerelin
                         // güncel hâlini EZMEMELİ — stok tutarsızlığının kaynağı tam olarak buydu.
                         const bekleyenler = bekleyenYazmalariOku();
+                        // BULUTUN GERÇEK HÂLİ (v1.556.0): yerel kazanınca da saklanır — fark tabanı bundan kurulur
+                        // (025 `tabloBaslangicBekleyen`), yoksa yerelde olup bulutta olmayan kayıt hiç gönderilmez.
+                        const bulutKopya = {};
+                        const ALAN_TABLO = { stok: "urunler", siparisler: "siparisler", uretim: "uretim", cariler: "cariler" };
                         const yerelKazansin = async (anahtar, alan) => {
                             if (!bekleyenler[anahtar])
                                 return;
+                            bulutKopya[alan] = bulut[alan] || [];
                             try {
                                 const okuma = await guvenliOku(anahtar, null);
                                 if (okuma.deger) {
@@ -13327,12 +13653,42 @@ function useAcilisYukleme(d) {
                                     }
                                     else
                                         bulut[alan] = yerelDeger;
+                                    // Başka cihazın bu arada eklediği kayıtlar da ekranda kalsın (bu cihazda silinenler hariç).
+                                    if (Array.isArray(bulut[alan]))
+                                        bulut[alan] = yereliBulutlaBirlestir(bulut[alan], bulutKopya[alan], ALAN_TABLO[alan]);
                                     console.warn(`Bekleyen yazma: ${anahtar} için yerel kopya esas alındı (bulut ${bekleyenler[anahtar].zaman} tarihinden beri geride)`);
                                 }
                             }
                             catch (e) {
                                 console.error("Bekleyen yazma okunamadı:", anahtar, e);
                             }
+                        };
+                        // TEK PARÇA TABLO OKUMA (v1.556.0, 089 `derinBirlestir`): bulut esas; bulut okunamazsa ya da boşsa yerel.
+                        // BEKLEYEN YAZMA VARSA yerel esas + buluttaki yeniler — önce bulut kazanıyordu ve otomatik yeniden
+                        // gönderme ekrandaki (bulut) hâli yazdığı için internetsiz girilen kasa fişi, koli… KALICI kayboluyordu.
+                        const tekilOku = async (tablo, anahtar) => {
+                            let bulutVeri;
+                            try {
+                                const sat = await supabaseTumSatirlar(tablo);
+                                bulutVeri = sat[0] && sat[0].veri ? sat[0].veri : null;
+                            }
+                            catch (e) {
+                                bulutVeri = undefined;
+                            }
+                            let yerelVeri = null;
+                            try {
+                                const o = await guvenliOku(anahtar, null);
+                                if (o.deger)
+                                    yerelVeri = JSON.parse(o.deger);
+                            }
+                            catch (e) { /* */ }
+                            if (bulutVeri == null)
+                                return yerelVeri;
+                            if (bekleyenler[anahtar] && yerelVeri != null) {
+                                console.warn(`Bekleyen yazma: ${anahtar} — yerel kopya esas, buluttakiyle birleştirildi`);
+                                return derinBirlestir(yerelVeri, bulutVeri);
+                            }
+                            return bulutVeri;
                         };
                         await yerelKazansin("stok:items", "stok");
                         await yerelKazansin("siparis:data", "siparisler");
@@ -13418,36 +13774,33 @@ function useAcilisYukleme(d) {
                         // kayıtlar olduğu gibi kalıyordu.
                         setOnaylar(bulut.onaylar || []);
                         setCop(copuBuda(bulut.cop || [])); // 90 günü dolanlar açılışta da düşer (v1.549.0)
-                        // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil.
-                        tabloBaslangicTam("urunler", damga.urunler);
-                        tabloBaslangicTam("siparisler", bulut.siparisler);
-                        tabloBaslangicTam("uretim", bulut.uretim);
-                        tabloBaslangicTam("cariler", bulut.cariler);
+                        // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil. BEKLEYEN YAZMASI olan
+                        // tabloda durum yerel olduğu için taban AYRICA bulutun gerçek hâlinden kurulur (v1.556.0 — "Jut").
+                        const tabanKur = (tablo, alan, durum) => {
+                            if (bulutKopya[alan])
+                                tabloBaslangicBekleyen(tablo, bulutKopya[alan], durum);
+                            else {
+                                tabloBaslangicTam(tablo, durum);
+                                bekleyenKayitlariTabanaUygula(tablo);
+                            }
+                        };
+                        tabanKur("urunler", "stok", damga.urunler);
+                        tabanKur("siparisler", "siparisler", bulut.siparisler);
+                        tabanKur("uretim", "uretim", bulut.uretim);
+                        tabanKur("cariler", "cariler", bulut.cariler);
                         tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari);
                         tabloBaslangicTam("onaylar", bulut.onaylar || []);
                         tabloBaslangicTam("cop", bulut.cop || []);
+                        ["stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
                         // Muhasebe (kasa/banka/çek) ve onaylar henüz tabloya taşınmadı; bulut açıkken de
                         // tarayıcı deposundan okunur. Bunlar tek kullanıcı tarafından girilen, nadiren
                         // çakışan kayıtlar — taşınmaları öncelikli değildi.
                         // Muhasebe BULUTTAN okunur; yerel kopya yalnızca bulut erişilemezse kullanılır.
                         // Kur bilgisi de burada: ikinci bilgisayarda elle girilen kur kaybolmasın diye.
-                        try {
-                            const mSatir = await supabaseTumSatirlar("muhasebe");
-                            if (mSatir[0] && mSatir[0].veri)
-                                setMuhasebe(mSatir[0].veri);
-                            else {
-                                const okuma = await guvenliOku("muhasebe:data", null);
-                                if (okuma.deger)
-                                    setMuhasebe(JSON.parse(okuma.deger));
-                            }
-                        }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("muhasebe:data", null);
-                                if (okuma.deger)
-                                    setMuhasebe(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* muhasebe okunamazsa boş başlar */ }
+                        {
+                            const v = await tekilOku("muhasebe", "muhasebe:data");
+                            if (v != null)
+                                setMuhasebe(v);
                         }
                         // ÇEK GÖRSELLERİ — kendi tablosu var, satır satır okunuyor. Bulut erişilemezse
                         // yerel anahtarlar okunuyor (çek başına `cekgorsel:<id>`).
@@ -13456,106 +13809,43 @@ function useAcilisYukleme(d) {
                         // KOLİLER de muhasebe gibi tekil tablo: buluttan okunur, yerel kopya yalnızca bulut
                         // erişilemezse kullanılır. Yazıp okumamak, ikinci bilgisayarda koli listesini BOŞ
                         // gösterirdi — paketlemeyi yapan personel kendi kurduğu koliyi bulamazdı.
-                        try {
-                            const kSatir = await supabaseTumSatirlar("koliler");
-                            if (kSatir[0] && kSatir[0].veri)
-                                setKoliler(kSatir[0].veri);
-                            else {
-                                const okuma = await guvenliOku("koli:data", null);
-                                if (okuma.deger)
-                                    setKoliler(JSON.parse(okuma.deger));
-                            }
-                        }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("koli:data", null);
-                                if (okuma.deger)
-                                    setKoliler(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* koliler okunamazsa boş başlar */ }
+                        {
+                            const v = await tekilOku("koliler", "koli:data");
+                            if (v != null)
+                                setKoliler(v);
                         }
                         // GÖREVLER — kolilerle aynı kalıp. Tablo yoksa (gorevler.sql çalıştırılmadıysa) yerel
                         // kopya kullanılır; yazma uyarısı ekranda görünür, veri kaybolmaz.
-                        try {
-                            const mdSatir = await supabaseTumSatirlar("modeller");
-                            if (mdSatir[0] && mdSatir[0].veri)
-                                setModeller(mdSatir[0].veri);
-                            else {
-                                const okuma = await guvenliOku("model:data", null);
-                                if (okuma.deger)
-                                    setModeller(JSON.parse(okuma.deger));
-                            }
-                        }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("model:data", null);
-                                if (okuma.deger)
-                                    setModeller(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* modelhane boş başlar */ }
+                        {
+                            const v = await tekilOku("modeller", "model:data");
+                            if (v != null)
+                                setModeller(v);
                         }
                         // FATURALAR (v1.500.0) — aynı kalıp. Tablo yoksa (faturalar.sql çalıştırılmadıysa) yerel kopya;
                         // yazma uyarısı ekranda görünür, veri kaybolmaz.
-                        try {
-                            const ftSatir = await supabaseTumSatirlar("faturalar");
-                            if (ftSatir[0] && ftSatir[0].veri)
-                                setFaturalar(ftSatir[0].veri);
+                        {
+                            const v = await tekilOku("faturalar", "fatura:data");
+                            if (v != null)
+                                setFaturalar(v);
+                        }
+                        // FİŞ DEFTERİ: bekleyen yazma varsa yerel esas (v1.545.0) — artık buluttaki yenilerle BİRLEŞİK (v1.556.0).
+                        {
+                            const v = await tekilOku("fis_defteri", FIS_DEFTERI_ANAHTAR);
+                            if (v != null)
+                                setFisDefteri(v);
                             else {
-                                const okuma = await guvenliOku("fatura:data", null);
-                                if (okuma.deger)
-                                    setFaturalar(JSON.parse(okuma.deger));
+                                try {
+                                    const okuma = await guvenliOku("fisdefter:data", null);
+                                    if (okuma.deger)
+                                        setFisDefteri(JSON.parse(okuma.deger));
+                                }
+                                catch (e) { /* boş başlar */ }
                             }
                         }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("fatura:data", null);
-                                if (okuma.deger)
-                                    setFaturalar(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* faturalar boş başlar */ }
-                        }
-                        try {
-                            // BEKLEYEN YAZMA VARSA YEREL KAZANIR (v1.545.0): buluta gidemeyen fiş defteri yazması bekliyorsa
-                            // bu cihazdaki kopya esas — diğer tablolardaki kuralın aynısı. Önce bu tablo atlanıyordu: geride
-                            // kalan bulut, yereldeki son fişleri defterden düşürüyordu (kullanıcı, 1 Ekim: "Fiş defteri ·
-                            // Failed to fetch", geçici bağlantı kopması).
-                            const yerelF = bekleyenler[FIS_DEFTERI_ANAHTAR] ? await guvenliOku(FIS_DEFTERI_ANAHTAR, null) : null;
-                            const fSatir = yerelF && yerelF.deger ? [] : await supabaseTumSatirlar("fis_defteri");
-                            if (yerelF && yerelF.deger)
-                                setFisDefteri(JSON.parse(yerelF.deger));
-                            else if (fSatir[0] && fSatir[0].veri)
-                                setFisDefteri(fSatir[0].veri);
-                            else {
-                                const okuma = await guvenliOku("fisdefter:data", null);
-                                if (okuma.deger)
-                                    setFisDefteri(JSON.parse(okuma.deger));
-                            }
-                        }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("fisdefter:data", null);
-                                if (okuma.deger)
-                                    setFisDefteri(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* defter okunamazsa boş başlar */ }
-                        }
-                        try {
-                            const mSatir = await supabaseTumSatirlar("mesajlar");
-                            if (mSatir[0] && mSatir[0].veri)
-                                setMesajlar(mSatir[0].veri);
-                            else {
-                                const okuma = await guvenliOku("mesaj:data", null);
-                                if (okuma.deger)
-                                    setMesajlar(JSON.parse(okuma.deger));
-                            }
-                        }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("mesaj:data", null);
-                                if (okuma.deger)
-                                    setMesajlar(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* mesajlar okunamazsa boş başlar */ }
+                        {
+                            const v = await tekilOku("mesajlar", "mesaj:data");
+                            if (v != null)
+                                setMesajlar(v);
                         }
                         try {
                             const okumaO = await guvenliOku("mesaj:okuma", null);
@@ -13563,23 +13853,10 @@ function useAcilisYukleme(d) {
                                 setMesajOkumalari(JSON.parse(okumaO.deger));
                         }
                         catch (e) { /* okuma damgaları yalnız bu cihazın, kaybı önemsiz */ }
-                        try {
-                            const gSatir = await supabaseTumSatirlar("gorevler");
-                            if (gSatir[0] && gSatir[0].veri)
-                                setGorevler(gSatir[0].veri);
-                            else {
-                                const okuma = await guvenliOku("gorev:data", null);
-                                if (okuma.deger)
-                                    setGorevler(JSON.parse(okuma.deger));
-                            }
-                        }
-                        catch (e) {
-                            try {
-                                const okuma = await guvenliOku("gorev:data", null);
-                                if (okuma.deger)
-                                    setGorevler(JSON.parse(okuma.deger));
-                            }
-                            catch (e2) { /* görevler okunamazsa boş başlar */ }
+                        {
+                            const v = await tekilOku("gorevler", "gorev:data");
+                            if (v != null)
+                                setGorevler(v);
                         }
                         // Onaylar artık BULUTTAN okunuyor (yukarıda), yerelden okumaya gerek yok.
                         setVeriKaynagi({ tur: "bulut", zaman: Date.now() });
@@ -14078,6 +14355,9 @@ function useAcilisYukleme(d) {
                 tabloBaslangicTam("siparisler", sp);
                 tabloBaslangicTam("uretim", u);
                 tabloBaslangicTam("cariler", c);
+                // İNTERNETSİZ AÇILIŞ (v1.556.0): taban yerel kopya; önceki oturumda buluta GİDEMEYEN kayıtlar
+                // defterden tabandan düşülür ki internet gelince ilk yazmada gitsinler.
+                ["urunler", "siparisler", "uretim", "cariler", "stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
                 tabloBaslangicTam("stok_rezervasyonlari", Array.isArray(srez) ? srez : []);
                 tabloBaslangicTam("onaylar", oy);
                 tabloBaslangicTam("cop", cp);
@@ -15572,6 +15852,73 @@ function AtolyeERP() {
         window.addEventListener("online", cevrimici);
         return () => { clearInterval(z); window.removeEventListener("online", cevrimici); };
     }, [loading, Object.keys(bekleyenYazmalar).length]); // eslint-disable-line react-hooks/exhaustive-deps
+    // ÇEVRİMDIŞI KİLİT (v1.556.1 — kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm").
+    // "Jut" olayı (v1.556.0): internetsiz girilen kayıt buluta gitmedi, sonra kayboldu. Yazma katmanı onarıldı ama
+    // kökten çözüm internetsiz HİÇ kayıt girilmemesi: bağlantı yoksa tam ekran kilit, hiçbir düğme çalışmaz.
+    //   • Yokluk üç yoldan öğrenilir: bir bulut isteği ağa çıkamaz (030 `baglantiBildir`), tarayıcı "offline"
+    //     der, ya da yoklama (`baglantiSina`, kilitliyken 5 sn'de, açıkken 30 sn'de bir) cevap alamaz.
+    //   • Buluttan okunamayıp YEREL kopyayla açıldıysa da kilitli (eski hâl üstüne iş girilmesin).
+    //   • Bağlantı gelince: bekleyen kayıtlar gönderilir; yerel kopyayla açılmışsa sayfa buluttan YENİDEN açılır.
+    // Supabase kurulu değilse (yalnız yerel kurulum) kilit yok. Testler `__cevrimdisiSerbest` ile açar (ağsız koşuyorlar).
+    const [baglantiYok, setBaglantiYok] = useState(false);
+    const cevrimdisiSerbest = typeof window !== "undefined" && !!window.__cevrimdisiSerbest;
+    const yerelAcildi = !!(veriKaynagi && veriKaynagi.tur === "yerel");
+    const kilitli = !cevrimdisiSerbest && supabaseAcikMi() && !loading && (baglantiYok || yerelAcildi);
+    useEffect(() => {
+        if (cevrimdisiSerbest || !supabaseAcikMi())
+            return undefined;
+        window.__baglantiDegisti = (varMi) => setBaglantiYok(!varMi);
+        // Katmandaki durum da güncellenir: yoksa yoklama "var" dediğinde değişiklik sayılmaz, kilit kalkmazdı.
+        const cevrimdisi = () => { baglantiBildir(false, "tarayıcı çevrimdışı"); setBaglantiYok(true); };
+        const cevrimici = () => { baglantiSina(); };
+        window.addEventListener("offline", cevrimdisi);
+        window.addEventListener("online", cevrimici);
+        if (typeof navigator !== "undefined" && navigator.onLine === false)
+            setBaglantiYok(true);
+        return () => { window.__baglantiDegisti = null; window.removeEventListener("offline", cevrimdisi); window.removeEventListener("online", cevrimici); };
+    }, [cevrimdisiSerbest]);
+    useEffect(() => {
+        if (cevrimdisiSerbest || !supabaseAcikMi() || loading)
+            return undefined;
+        const z = setInterval(() => { if (!document.hidden || baglantiYok || yerelAcildi)
+            baglantiSina(); }, baglantiYok || yerelAcildi ? 5000 : 30000);
+        return () => clearInterval(z);
+    }, [cevrimdisiSerbest, loading, baglantiYok, yerelAcildi]);
+    // Bağlantı geri geldi: önce bekleyenler gider; yerel kopyayla açılmışsa bulut hâliyle yeniden açılır.
+    const yenidenAcildiRef = useRef(false);
+    useEffect(() => {
+        if (cevrimdisiSerbest || loading || baglantiYok)
+            return;
+        (async () => {
+            try {
+                await yenidenGonderRef.current(true);
+            }
+            catch (e) { /* defterde kalır, sonra yine denenir */ }
+            if (yerelAcildi && !yenidenAcildiRef.current) {
+                // Döngü freni: internet var ama bulut OKUNAMIYORSA (sunucu hatası) yeniden açmak yine yerele düşer ve sayfa
+                // kendini yenileyip dururdu. Önce bulut gerçekten okunuyor mu bakılır; son 30 sn'de yenilendiyse beklenir.
+                try {
+                    await supabaseIstek("tanimlar?select=id&limit=1");
+                }
+                catch (e) {
+                    return;
+                }
+                let son = 0;
+                try {
+                    son = Number(window.sessionStorage.getItem("kilit:yenidenAcilis")) || 0;
+                }
+                catch (e) { /* */ }
+                if (Date.now() - son < 30000)
+                    return;
+                try {
+                    window.sessionStorage.setItem("kilit:yenidenAcilis", String(Date.now()));
+                }
+                catch (e) { /* */ }
+                yenidenAcildiRef.current = true;
+                window.location.reload();
+            }
+        })();
+    }, [baglantiYok, loading, yerelAcildi, cevrimdisiSerbest]);
     // SÜRÜM KONTROLÜ VE OTOMATİK GEÇİŞ (25 Eylül, v1.447.0 — bkz. `surumeOtomatikGec`).
     //   • AÇILIŞTA: yeni sürüm varsa sormadan geçilir. Henüz bir şey girilmedi, kaybolacak iş yok.
     //   • UZUN SÜRE ARKA PLANDA KALIP GERİ GELİNCE (telefonda "uygulama" olarak açılan ekran böyle
@@ -17080,10 +17427,32 @@ function AtolyeERP() {
         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
         return kodlu;
     }, [tanimSilinenleriCopeAt]);
+    // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
+    // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
+    // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
+    // çakışan/eksik kod varsa en eski kayıt kodunu korur, diğerine sıradaki boş kod verilir ve SÖYLENİR (etiket
+    // basıldıysa yeniden basılmalı). Aynı imza ikinci kez onarılmaz — onarım hatalıysa döngü olmasın.
+    const kodOnarimImzaRef = useRef("");
+    useEffect(() => {
+        if (loading)
+            return;
+        const o = tanimKodlariniOnar(tanimlar);
+        if (o.degisenler.length === 0)
+            return;
+        const imza = o.degisenler.map((d) => `${d.id}:${d.alan}:${d.eski}`).join("|");
+        if (kodOnarimImzaRef.current === imza)
+            return;
+        kodOnarimImzaRef.current = imza;
+        tanimlarKodluYaz(o.tanimlar);
+        const metin = o.degisenler.map((d) => `${d.ad}: ${d.alan === "kod" ? "renk kodu" : `${d.aile} barkod kodu`} ${d.eski || "yok"} → ${d.yeni}`).join(" · ");
+        gunlukYaz(`Kod çakışması onarıldı: ${metin}`, "tanimlar", { degisenler: o.degisenler });
+        showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
+    }, [loading, tanimlar, tanimlarKodluYaz, showToast]);
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
-    const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi) => {
+    // `renkKodu` (v1.555.0): kartta "renk aç" sorusunda seçilen görünüm rengi (yoksa varsayılan).
+    const yeniRenkKaydet = useCallback((ad, tip, malzemeTipi, renkKodu) => {
         const temizAd = (ad || "").trim();
         if (!temizAd)
             return;
@@ -17125,9 +17494,12 @@ function AtolyeERP() {
         while (kullanilanKodlar.has(sonrakiKod))
             sonrakiKod += 1;
         const otomatikKod = String(sonrakiKod);
-        const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
+        const yeniRenkObj = { id: uid("renk"), ad: temizAd, tip: "Hammadde", renkKodu: renkKodu || "#C9B99A", kod: otomatikKod, malzemeTipleri: malzemeTipi ? [malzemeTipi] : [] };
         const nextTanimlar = { ...tanimlar, renkler: [...tanimlar.renkler, yeniRenkObj] };
-        tanimlarKodluYaz(nextTanimlar);
+        const kodlu = tanimlarKodluYaz(nextTanimlar);
+        // Hangi kodları aldığı söylenir: kullanıcı etikette/barkodda göreceği numarayı bilsin.
+        const acilan = ((kodlu && kodlu.renkler) || []).find((r) => r.id === yeniRenkObj.id) || yeniRenkObj;
+        showToast(`"${temizAd}" renk tanımlarına eklendi — renk kodu ${acilan.kod}${acilan.barkodKodu != null ? `, barkod kodu ${acilan.barkodKodu}` : ""}${malzemeTipi ? ` · ${malzemeTipi}` : ""}`);
     }, [tanimlar, showToast, tanimlarKodluYaz]);
     // RENKLER MALZEME TİPİNE AİT OLSUN (26 Eylül, v1.471.0 — kullanıcı: "Stok açarken malzeme tipini
     // seçip renk eklendiğinde renkler o malzeme tipine ait olsun. Ortak renk varsa onu da işaretlesin.
@@ -17936,6 +18308,7 @@ function AtolyeERP() {
         },
     };
     return (React.createElement(EkranDuzeniBaglami.Provider, { value: ekranDuzeniDegeri },
+        kilitli && (React.createElement(CevrimdisiKilit, { yerelAcildi: yerelAcildi, bekleyenSayisi: Object.keys(bekleyenYazmalar).length, sebep: veriKaynagi && veriKaynagi.hata, onDene: () => baglantiSina() })),
         React.createElement("div", { style: {
                 // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu
                 // kapsayıcı kendi fontunu (Inter) ve yeşil gradyanını basıp temayı EZİYORDU — görünen
@@ -24591,6 +24964,26 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                     h.fisNo),
                 React.createElement("span", { style: { color: "var(--erp-warn)", fontStyle: "italic" } }, h.sorunlar.join(", ")),
                 React.createElement(SilOnayButonu, { onConfirm: () => bagliOlmayanHareketiSil(h.urunId, h.id), boyut: 11, baslikNormal: "Bu hareketi sil" })))))))),
+        items.length > 0 && kapsam !== "mamul" && (() => {
+            const kayip = kayipHammaddeler(items);
+            if (kayip.length === 0)
+                return null;
+            return (React.createElement("div", { "data-kayip-hammadde": kayip.length, style: { border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)",
+                    padding: 10, marginBottom: 10, fontSize: 12, color: "#7A3B22", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" } },
+                React.createElement("div", { style: { flex: 1, minWidth: 240 } },
+                    React.createElement("b", null,
+                        kayip.length,
+                        " hammadde re\u00E7etelerde kullan\u0131l\u0131yor ama stokta yok:"),
+                    " ",
+                    React.createElement("span", { className: "mono" }, kayip.map((h) => `${h.ad} (${h.kullananlar.join(", ")})`).join(" · ")),
+                    React.createElement("div", { style: { color: "var(--erp-text-2)", marginTop: 3 } }, "B\u00FCy\u00FCk olas\u0131l\u0131kla internetsizken a\u00E7\u0131ld\u0131 ve buluta hi\u00E7 gitmedi (v1.556.0'da d\u00FCzeltildi). Geri kurulunca ayn\u0131 kimlikle a\u00E7\u0131l\u0131r, re\u00E7eteler yeniden ba\u011Flan\u0131r; fiyat, tedarik\u00E7i ve stok bilgisini kartta tamamlay\u0131n.")),
+                React.createElement("button", { type: "button", className: "btn-primary", "data-kayip-hammadde-kur": "1", style: { padding: "5px 12px", fontSize: 12 }, onClick: () => {
+                        const yeniler = kayip.map(kayipHammaddeKarti);
+                        onSave([...items, ...yeniler]);
+                        gunlukYaz(`${yeniler.length} kayıp hammadde reçetelerden geri kuruldu: ${yeniler.map((u) => u.ad).join(", ")}`, "veri", { idler: yeniler.map((u) => u.id) });
+                        showToast(`${yeniler.length} hammadde geri kuruldu: ${yeniler.map((u) => u.ad).join(", ")} — fiyat ve tedarikçiyi kartta tamamlayın`);
+                    } }, "Geri kur")));
+        })(),
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 8, flexWrap: "wrap", alignItems: "center" } },
             React.createElement("div", { style: { position: "relative", flex: "1 1 200px" } },
                 React.createElement(Search, { size: 14, style: { position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" } }),
@@ -26203,6 +26596,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     const [addingBeden, setAddingBeden] = useState(false);
     const [serbestOlcuGiris, setSerbestOlcuGiris] = useState(false);
     const [newRenk, setNewRenk] = useState("");
+    // TANIMSIZ RENK SORUSU (v1.555.0): yazılan renk tanımlarda yoksa "ortak renk açılsın mı?" — { ad, renkKodu }.
+    const [renkAcSorusu, setRenkAcSorusu] = useState(null);
     const [newBeden, setNewBeden] = useState("");
     const [rHammaddeId, setRHammaddeId] = useState("");
     const [rMap, setRMap] = useState({}); // { [mamulRenk]: hammaddeRenk }
@@ -27370,23 +27765,77 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                         ? [...eklenebilirRenkler, ...digerTipRenkleri].map((r) => ({ id: r.id, etiket: r.ad }))
                                         : eklenebilirKombinasyonlar.filter((k) => k.renkIdler.length === renkEkleSayisi);
                                     return (React.createElement("div", null,
-                                        uygunSecenekler.length > 0 ? (React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 8 } },
-                                            React.createElement("div", { style: { width: 240 } },
-                                                React.createElement(AramaliMetin, { veriAdi: "data-kart-renk-arama", deger: newRenk, onDegis: setNewRenk, oneriler: uygunSecenekler.map((s) => s.etiket), yalnizListeden: true, placeholder: "Renk yaz\u0131n ya da se\u00E7in\u2026" })),
-                                            React.createElement("button", { className: "btn-primary", 
-                                                // Yazarken kutuda yarım metin olabilir: yalnız listedeki bir değer eklenir.
-                                                disabled: !uygunSecenekler.some((s) => s.etiket === newRenk), onClick: () => {
-                                                    if (!uygunSecenekler.some((s) => s.etiket === newRenk))
-                                                        return;
-                                                    onAddRenk(product.id, newRenk);
-                                                    // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
-                                                    // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
-                                                    if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla)
-                                                        onRenkleriTipeBagla([newRenk], product.malzemeTipi);
-                                                    setNewRenk("");
-                                                    setAddingRenk(false);
-                                                    setRenkEkleSayisi(1);
-                                                } }, "Ekle"))) : (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 } }, isMamul && renkEkleSayisi > 1
+                                        uygunSecenekler.length > 0 || !isMamul || renkEkleSayisi === 1 ? (React.createElement(React.Fragment, null,
+                                            React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center", marginBottom: 8 } },
+                                                React.createElement("div", { style: { width: 240 } },
+                                                    React.createElement(AramaliMetin, { veriAdi: "data-kart-renk-arama", deger: newRenk, onDegis: (v) => { setNewRenk(v); setRenkAcSorusu(null); }, oneriler: uygunSecenekler.map((s) => s.etiket), placeholder: "Renk yaz\u0131n ya da se\u00E7in\u2026" })),
+                                                React.createElement("button", { className: "btn-primary", "data-kart-renk-ekle": "1", disabled: !newRenk.trim() || !!renkAcSorusu, onClick: () => {
+                                                        const ad = newRenk.trim();
+                                                        if (!ad)
+                                                            return;
+                                                        const secenek = uygunSecenekler.find((s) => kodEsit(s.etiket, ad));
+                                                        if (secenek) {
+                                                            onAddRenk(product.id, secenek.etiket);
+                                                            // Hammaddede seçilen renk ürünün malzeme tipine bağlanır (v1.471.0) —
+                                                            // yeni ürün formundaki kuralın aynısı; genel renk o tipin rengi olur.
+                                                            if (!isMamul && product.malzemeTipi && onRenkleriTipeBagla)
+                                                                onRenkleriTipeBagla([secenek.etiket], product.malzemeTipi);
+                                                            setNewRenk("");
+                                                            setAddingRenk(false);
+                                                            setRenkEkleSayisi(1);
+                                                            return;
+                                                        }
+                                                        if (renkler.some((r) => kodEsit(r, ad))) {
+                                                            if (showToast)
+                                                                showToast(`"${ad}" bu üründe zaten var`);
+                                                            return;
+                                                        }
+                                                        if (isMamul && renkEkleSayisi > 1) {
+                                                            if (showToast)
+                                                                showToast("Çok renkli model rengi listeden seçilir ya da aşağıdan oluşturulur");
+                                                            return;
+                                                        }
+                                                        // Tanımda VAR ama bu listede yok (ör. kombinasyon biçimli ad): tanımdaki adıyla eklenir.
+                                                        const tanimda = (tanimlarRenkler || []).find((r) => kodEsit(r.ad, ad));
+                                                        if (tanimda) {
+                                                            if (onYeniRenkKaydet)
+                                                                onYeniRenkKaydet(tanimda.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined);
+                                                            onAddRenk(product.id, tanimda.ad);
+                                                            setNewRenk("");
+                                                            setAddingRenk(false);
+                                                            setRenkEkleSayisi(1);
+                                                            return;
+                                                        }
+                                                        setRenkAcSorusu({ ad, renkKodu: "#C9B99A" });
+                                                    } }, "Ekle")),
+                                            renkAcSorusu && (React.createElement("div", { "data-renk-ac-sorusu": renkAcSorusu.ad, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8,
+                                                    padding: "8px 10px", border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)", fontSize: 12 } },
+                                                React.createElement("span", { style: { flexBasis: "100%" } },
+                                                    React.createElement("b", null,
+                                                        "\"",
+                                                        renkAcSorusu.ad,
+                                                        "\""),
+                                                    " renk tan\u0131mlar\u0131nda yok. Ortak renk olarak a\u00E7\u0131ls\u0131n m\u0131?",
+                                                    React.createElement("span", { style: { color: "var(--erp-text-2)" } },
+                                                        " Tan\u0131mlar'a eklenir, renk kodu ve barkod kodu otomatik verilir",
+                                                        !isMamul && product.malzemeTipi ? `, "${product.malzemeTipi}" tipine bağlanır` : "",
+                                                        "; sonra bu \u00FCr\u00FCne eklenir.")),
+                                                React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 5 } },
+                                                    "G\u00F6r\u00FCn\u00FCm",
+                                                    React.createElement("input", { type: "color", "data-renk-ac-hex": "1", value: renkAcSorusu.renkKodu, onChange: (e) => setRenkAcSorusu((s) => ({ ...s, renkKodu: e.target.value })), style: { width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4 } })),
+                                                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-renk-ac-evet": "1", style: { padding: "5px 12px", fontSize: 12 }, onClick: () => {
+                                                        // Önce ürüne, SONRA tanıma: tanımın bildirimi (renk kodu, barkod kodu) son kalsın, görülsün.
+                                                        onAddRenk(product.id, renkAcSorusu.ad);
+                                                        if (onYeniRenkKaydet)
+                                                            onYeniRenkKaydet(renkAcSorusu.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined, renkAcSorusu.renkKodu);
+                                                        setRenkAcSorusu(null);
+                                                        setNewRenk("");
+                                                        setAddingRenk(false);
+                                                        setRenkEkleSayisi(1);
+                                                    } },
+                                                    React.createElement(Check, { size: 13 }),
+                                                    " Evet, renk a\u00E7 ve ekle"),
+                                                React.createElement("button", { type: "button", className: "btn-ghost", "data-renk-ac-hayir": "1", style: { padding: "5px 10px", fontSize: 12 }, onClick: () => setRenkAcSorusu(null) }, "Vazge\u00E7"))))) : (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", marginBottom: 8 } }, isMamul && renkEkleSayisi > 1
                                             ? `${renkEkleSayisi} renkli tanımlı bir Model Rengi yok.`
                                             : "Tanımlı renk yok.")),
                                         isMamul && renkEkleSayisi > 1 && onKombinasyonOlustur ? (React.createElement("button", { type: "button", className: "btn-ghost", style: { color: "var(--erp-purple)", fontSize: 12 }, onClick: () => setYeniModelRengiModu(true) },
@@ -49899,6 +50348,32 @@ function EmptyState({ text, mesaj }) {
             borderRadius: "var(--erp-r-md)", fontSize: 14,
         } }, text));
 }
+// ÇEVRİMDIŞI KİLİT EKRANI (v1.556.1) — App'teki `kilitli` iken her şeyin üstünde; altındaki ekrana dokunulamaz.
+// Kullanıcıya NEDEN durdurulduğu ve ne olacağı söylenir: veri kaybolmasın diye; bağlantı gelince kendiliğinden devam.
+function CevrimdisiKilit({ yerelAcildi, bekleyenSayisi, sebep, onDene }) {
+    const [deneniyor, setDeneniyor] = useState(false);
+    return (React.createElement("div", { "data-cevrimdisi-kilit": "1", role: "alertdialog", "aria-modal": "true", onKeyDownCapture: (e) => { e.stopPropagation(); }, style: { position: "fixed", inset: 0, zIndex: 100000, background: "rgba(34,27,20,.78)", display: "flex",
+            alignItems: "center", justifyContent: "center", padding: 20 } },
+        React.createElement("div", { style: { background: "#fff", borderRadius: "var(--erp-r-lg)", padding: "22px 24px", maxWidth: 460, width: "100%", textAlign: "center",
+                boxShadow: "0 10px 40px rgba(0,0,0,.3)" } },
+            React.createElement("div", { style: { fontSize: 40, lineHeight: 1 } }, "\uD83D\uDCE1"),
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, margin: "10px 0 6px" } }, "\u0130nternet ba\u011Flant\u0131s\u0131 yok"),
+            React.createElement("div", { style: { fontSize: 13, color: "var(--erp-text-2)", lineHeight: 1.6 } },
+                "Veri kaybolmas\u0131n diye uygulama durduruldu \u2014 internetsiz girilen kay\u0131tlar buluta gitmeyip kaybolabiliyordu.",
+                yerelAcildi
+                    ? " Uygulama buluta ulaşamadan açıldı; bağlantı gelince buluttaki güncel hâliyle kendiliğinden yeniden açılacak."
+                    : " Bağlantı gelince kaldığınız yerden kendiliğinden devam edecek."),
+            bekleyenSayisi > 0 && (React.createElement("div", { "data-kilit-bekleyen": bekleyenSayisi, style: { fontSize: 12, marginTop: 10, color: "var(--erp-warn)", fontWeight: 700 } },
+                bekleyenSayisi,
+                " tablodaki kay\u0131tlar bu cihazda bekliyor \u2014 ba\u011Flant\u0131 gelince otomatik g\u00F6nderilecek.")),
+            sebep && React.createElement("div", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-3)", marginTop: 8 } }, String(sebep).slice(0, 120)),
+            React.createElement("button", { type: "button", className: "btn-primary", "data-kilit-dene": "1", disabled: deneniyor, onClick: async () => { setDeneniyor(true); try {
+                    await onDene();
+                }
+                finally {
+                    setDeneniyor(false);
+                } }, style: { marginTop: 16, padding: "9px 18px", fontSize: 14 } }, deneniyor ? "Deneniyor…" : "Bağlantıyı yeniden dene"))));
+}
 // ================= EYLEM ÇUBUĞU =================
 //
 // Kullanıcı (18 Eylül): *"Kaydet, vazgeç butonları uygulamanın her yerinde dağınık. Sağ üstte
@@ -52061,7 +52536,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.554.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.557.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

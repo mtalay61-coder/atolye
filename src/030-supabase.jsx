@@ -310,15 +310,44 @@ async function yetkiBasliklari() {
 
 // Supabase REST çağrısı. supabase-js kütüphanesi yerine doğrudan REST kullanılıyor: tek ihtiyacımız
 // upsert ve delete, bunun için 300 KB'lık bir kütüphane eklemek gereksiz.
+// BAĞLANTI DURUMU (v1.556.1 — kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm").
+// Her bulut isteği sonucu bildirir: istek ağa hiç çıkamadıysa (fetch reddedildi) bağlantı YOK; herhangi bir
+// HTTP cevabı geldiyse (401/500 dahil) internet VAR. App (`__baglantiDegisti`) yokken ekranı kilitler — internetsiz
+// girilen işin buluta gitmeyip kaybolması (v1.556.0 "Jut") en baştan engellensin.
+let _baglantiVar = true;
+function baglantiBildir(varMi, sebep) {
+  if (_baglantiVar === varMi) return;
+  _baglantiVar = varMi;
+  if (typeof window !== "undefined" && window.__baglantiDegisti) window.__baglantiDegisti(varMi, sebep || "");
+}
+// Hafif yoklama: herhangi bir HTTP cevabı = internet var. Önbellek kapalı (eski cevap "var" demesin).
+async function baglantiSina() {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/surum?select=surum&limit=1`, { headers: { apikey: SUPABASE_ANAHTAR }, cache: "no-store" });
+    baglantiBildir(true);
+    return true;
+  } catch (e) {
+    baglantiBildir(false, String((e && e.message) || e));
+    return false;
+  }
+}
+
 async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
-  const yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
-    ...secenekler,
-    headers: {
-      ...(await yetkiBasliklari()),
-      "Content-Type": "application/json",
-      ...(secenekler.headers || {}),
-    },
-  });
+  let yanit;
+  try {
+    yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
+      ...secenekler,
+      headers: {
+        ...(await yetkiBasliklari()),
+        "Content-Type": "application/json",
+        ...(secenekler.headers || {}),
+      },
+    });
+  } catch (e) {
+    baglantiBildir(false, String((e && e.message) || e));
+    throw e;
+  }
+  baglantiBildir(true);
   // Jeton istek yoldayken dolmuş olabilir. Bir kez yenileyip tekrar deniyoruz; ikinci 401
   // gerçekten yetki yok demektir ve hata yukarı çıkar. Sonsuz döngü `tekrarMi` ile kesiliyor.
   if (yanit.status === 401 && !tekrarMi && _oturum) {
