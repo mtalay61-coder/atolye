@@ -129,6 +129,32 @@ function fiyatlariHedefBirime(satirlar, hedefPb, kurlar) {
   return { fiyatlar, paraBirimleri, cevrilemeyen };
 }
 
+// DIŞA AKTARMA TABLOSU (v1.554.0 — kullanıcı: "Fiyat listesini Excel'e aktarma ve yazdırma ekle"). Excel ve
+// yazdırma AYNI tablodan: ekranda ne görünüyorsa (süzgeç, düzenlenmiş fiyat, toplu işlem önizlemesi) o.
+// Özel kodlar her alan ayrı sütun — Excel'de süzülebilsin; yalnız listede dolu olan alanlar. Saf.
+// `satirlar`: ekrandaki satırlar ({ urun, fiyat, paraBirimi, yeni, onay, hesap }).
+function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {}) {
+  const alanlar = ozelKodSecenekleri((satirlar || []).map((r) => r.urun), ozelAlanlar || []);
+  const durumYazi = (r) => {
+    if (!r.onay) return "";
+    const tarih = r.onay.tarih ? new Date(r.onay.tarih).toLocaleDateString("tr-TR") : "";
+    const d = r.onay.durum === "ok" ? `OK ${tarih}` : r.onay.durum === "eskidi" ? `Değişti (onay ${tarih})` : "Onaylanmadı";
+    return `${d}${r.hesap && r.hesap.eksikler.length ? ` · ${r.hesap.eksikler.length} eksik` : ""}`;
+  };
+  const basliklar = ["Stok no", "Model / ürün", "Kategori", ...alanlar.map((a) => a.ad),
+    ...(kaynak && kaynak.maliyet ? ["Maliyet durumu"] : []), kaynak && kaynak.maliyet ? "Maliyet" : ((kaynak && kaynak.ad) || "Fiyat"), "P.B.",
+    ...(islemAktif ? ["Yeni fiyat"] : [])];
+  const govde = (satirlar || []).map((r) => {
+    const kod = {};
+    ozelKodCiftleri(r.urun, ozelAlanlar || []).forEach((c) => { kod[c.id] = c.deger; });
+    return [r.urun.stokNo != null ? String(r.urun.stokNo) : "", r.urun.ad || "", r.urun.kategori || "", ...alanlar.map((a) => kod[a.id] || ""),
+      ...(kaynak && kaynak.maliyet ? [durumYazi(r)] : []), r.fiyat > 0 ? r.fiyat : "", r.paraBirimi || "",
+      ...(islemAktif ? [r.yeni > 0 ? r.yeni : ""] : [])];
+  });
+  const resimler = (satirlar || []).map((r) => { const g = urunGorselleri(r.urun); return g ? (g.kapakResmi || Object.values(g.renkResimleri)[0] || "") : ""; });
+  return { basliklar, satirlar: govde, resimler };
+}
+
 function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
   const kaynaklar = fiyatListesiKaynaklari(tanimlar.fiyatGruplari);
   const maliyetCtx = { tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [],
@@ -174,6 +200,52 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     .filter((r) => !kaynak.maliyet || !yalnizOk || (r.onay && r.onay.durum === "ok"))
     .sort((a, b) => String(a.urun.ad || "").localeCompare(String(b.urun.ad || ""), "tr"));
   const degisenler = satirlar.filter((r) => r.degisti);
+
+  // ---- DIŞA AKTARMA (v1.554.0) ----
+  const tabloBasligi = () => {
+    const suzgec = [kategori !== "Tümü" ? kategori : "",
+      ...ozelSecenekler.filter((a) => ozelSecim[a.id]).map((a) => `${a.ad}: ${ozelSecim[a.id]}`),
+      arama.trim() ? `"${arama.trim()}"` : "", kaynak.maliyet && yalnizOk ? "yalnız Maliyet OK" : ""].filter(Boolean).join(" · ");
+    return { ad: `Fiyat Listesi — ${kaynak.maliyet ? "Maliyet" : kaynak.ad}`, suzgec,
+      not: islemAktif ? `Yeni fiyat: ${islemNorm.yon < 0 ? "−" : "+"}${islemNorm.tur === "yuzde" ? `%${islemNorm.deger}` : islemNorm.deger}` : "" };
+  };
+  const excelAktar = () => {
+    const t = fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif });
+    const b = tabloBasligi();
+    const aoa = [[b.ad, new Date().toLocaleDateString("tr-TR")], ...(b.suzgec ? [[`Süzgeç: ${b.suzgec}`]] : []), ...(b.not ? [[b.not]] : []), [], t.basliklar, ...t.satirlar];
+    if (typeof window !== "undefined") window.__sonFiyatListesiExcel = aoa;   // test okur (indirme ölçülemiyor)
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), "Fiyat Listesi");
+    XLSX.writeFile(wb, `${b.ad.replace(/[^\p{L}\p{N}_-]+/gu, "_")}-${bugunYerel()}.xlsx`);
+  };
+  const yazdir = () => {
+    const t = fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif });
+    const b = tabloBasligi();
+    const firma = tanimlar.firmaBilgileri || {};
+    const kac = (x) => String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const fiyatSutunlari = new Set([t.basliklar.length - (islemAktif ? 3 : 2), ...(islemAktif ? [t.basliklar.length - 1] : [])]);
+    const para = (v) => (typeof v === "number" ? v.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v);
+    const govde = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div style="display:flex;gap:10px;align-items:center">
+          ${firma.logo ? `<img src="${kac(firma.logo)}" style="width:44px;height:44px;object-fit:contain" />` : ""}
+          <div><div style="font-size:18px;font-weight:700">${kac(firma.unvan || "")}</div>
+          <div style="font-size:14px;font-weight:700">${kac(b.ad)}</div></div>
+        </div>
+        <div style="font-size:12px;text-align:right">${kac(new Date().toLocaleDateString("tr-TR"))}
+          ${b.suzgec ? `<div>${kac(b.suzgec)}</div>` : ""}${b.not ? `<div>${kac(b.not)}</div>` : ""}</div>
+      </div>
+      <table data-fl-yazdir-tablo="1">
+        <thead><tr><th></th>${t.basliklar.map((h, i) => `<th style="border-bottom:2px solid #333;${fiyatSutunlari.has(i) ? "text-align:right" : ""}">${kac(h)}</th>`).join("")}</tr></thead>
+        <tbody>${t.satirlar.map((row, ri) => `<tr style="border-bottom:1px solid #ddd">
+          <td style="width:44px">${t.resimler[ri] ? `<img src="${kac(t.resimler[ri])}" style="width:40px;height:40px;object-fit:cover;border-radius:4px" />` : ""}</td>
+          ${row.map((v, i) => `<td style="${fiyatSutunlari.has(i) ? "text-align:right;font-weight:700" : ""}${i === 1 ? "font-weight:700" : ""}">${kac(para(v))}</td>`).join("")}
+        </tr>`).join("")}</tbody>
+      </table>
+      <div style="font-size:10px;color:#777;margin-top:8px">${t.satirlar.length} ürün</div>`;
+    if (typeof window !== "undefined") window.__sonFiyatListesiYazdir = govde;   // test okur
+    htmlGovdesiniIndir(govde, `${b.ad} ${bugunYerel()}`);
+  };
   const fiyatliSayi = satirlar.filter((r) => r.fiyat > 0).length;
 
   const yaz = (id, metin) => setDuzenler((d) => ({ ...d, [kaynak.key]: { ...(d[kaynak.key] || {}), [id]: metin } }));
@@ -269,6 +341,14 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
           </button>
         )}
         <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Listede ara…" style={{ ...kutu, width: 180, marginLeft: "auto" }} />
+        <button type="button" className="btn-ghost" data-fl-excel="1" disabled={satirlar.length === 0} onClick={excelAktar}
+          title="Ekrandaki liste (süzgeç ve düzenlemelerle) Excel dosyası olarak" style={{ padding: "6px 10px", fontSize: 12 }}>
+          <Download size={13} /> Excel
+        </button>
+        <button type="button" className="btn-ghost" data-fl-yazdir="1" disabled={satirlar.length === 0} onClick={yazdir}
+          title="Resimli fiyat listesi — açılan dosya yazdırma penceresini getirir, PDF olarak da kaydedilebilir" style={{ padding: "6px 10px", fontSize: 12 }}>
+          <Printer size={13} /> Yazdır / PDF
+        </button>
       </div>
       {ozelSecenekler.length > 0 && (
         <div data-fl-ozel-kodlar="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: -4, marginBottom: 12 }}>
