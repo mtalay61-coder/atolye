@@ -14,7 +14,7 @@
 // `fisGeriAl` bağı bir SONRAKİ adımda; bu sürümde koli kurma ve etiket basma var.
 function PaketlemeModule({
   koliler, stok, siparisler, cariler, uretim, asortiler, tanimlar,
-  onKoliEkle, onKoliEkleCoklu, onKoliSil, onKodlariAta, showToast, onKolileriElleKapat,
+  onKoliEkle, onKoliEkleCoklu, onKoliSil, onKodlariAta, onModelRenkleriniOnar, showToast, onKolileriElleKapat,
 }) {
   const [acikForm, setAcikForm] = useState(false);
   const [form, setForm] = useState({ siparisId: "", cariId: "", uretimId: "", not: "" });
@@ -206,6 +206,7 @@ function PaketlemeModule({
   // SEBEBİ de gerekiyor: "kod atanmamış" düğmeyle çözülür, "renk hiç tanımlı değil" çözülmez.
   // İkisini ayırmadan tek bir düğme göstermek, basınca hiçbir şeyin değişmediği bir düğme olurdu.
   const barkodEksik = barkodEksikleri(mamuller, tanimlar);
+  const kayipModel = kayipModelRenkleri(mamuller, tanimlar, (on) => on);   // yalnız sayım; kimlik App'te verilir
 
   const anahtarla = (urunId, r, b) => `${urunId}|${r}|${b}`;
 
@@ -466,6 +467,17 @@ function PaketlemeModule({
             <div style={{ width: "100%", fontSize: 12 }}>
               <b>Tanımlar'da yok</b> (önce tanımlanmalı):{" "}
               <span className="mono">{barkodEksik.tanimsiz.join(" · ")}</span>
+              {/* KAYIP MODEL RENKLERİ (v1.552.0): ürünlerde etiketi duran ama tanımı düşmüş model renkleri
+                  etiketten geri kurulur — kod aynı, basılmış barkod geçerli. */}
+              {kayipModel.kombinasyonlar.length > 0 && onModelRenkleriniOnar && (
+                <div style={{ marginTop: 6, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span>{kayipModel.kombinasyonlar.length} model rengi ürünlerde kullanılıyor ama tanımı kaybolmuş — kodlarıyla geri kurulabilir.</span>
+                  <button type="button" className="btn-primary" data-model-rengi-onar={kayipModel.kombinasyonlar.length} onClick={onModelRenkleriniOnar}
+                    style={{ padding: "4px 10px", fontSize: 12 }}>
+                    Model renklerini geri kur
+                  </button>
+                </div>
+              )}
             </div>
           )}
           {barkodEksik.stokNosuz.length > 0 && (

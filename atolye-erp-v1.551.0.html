@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.548.0</title>
+<title>Atölye ERP 1.551.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -228,7 +228,9 @@ Settings, Download, User, MessageCircle, Mail, LogOut, Menu,
 // Sipariş formu "Ekle" düğmesi (v1.470.0).
 PackagePlus, 
 // Ekran düzeni (v1.522.0, 387): tutamak, göster/gizle, düzen düğmesi.
-GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw, } from "lucide-react";
+GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw, 
+// Fiyat listesi (v1.550.0, 157).
+Tag, } from "lucide-react";
 /* ---------------------------------------------------------
    Token sistemi
    Renk: leather-dark #2B1D14, saddle #8A5A38, cream #F2E8D8,
@@ -1788,6 +1790,7 @@ const MODUL_RENK = {
     anasayfa: "var(--erp-orange)", // tape-orange — genel/nötr
     tanimlar: "#6B7A8F", // terzi tebeşiri mavi-gri
     stok: "var(--erp-brown)", // saddle — deri
+    fiyatlistesi: "#B8860B", // fiyat etiketi sarısı
     mamulstok: "var(--erp-primary)", // mamul — atölye yeşili (stok kategorisi rengiyle aynı)
     uretim: "var(--erp-primary)", // atölye yeşili
     cari: "var(--erp-info)", // defter mavisi
@@ -1807,6 +1810,7 @@ const SEKME_BILGISI = {
     tanimlar: { ad: "Tanımlar" },
     stok: { ad: "Stok" },
     mamulstok: { ad: "Mamul Stok" },
+    fiyatlistesi: { ad: "Fiyat Listesi" },
     uretim: { ad: "Üretim" },
     cari: { ad: "Cari" },
     siparis: { ad: "Sipariş" },
@@ -1987,9 +1991,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.548.0";
-const SURUM_TARIHI = "2026-10-02";
-const SURUM_NOTU = "Stok kaydinin yerel kopyasi her yoldan gorselsiz; bekleyen yazmada gorseller geri birlestiriliyor";
+const SURUM = "1.551.0";
+const SURUM_TARIHI = "2026-10-03";
+const SURUM_NOTU = "Maliyet OK dugmesi (eksikler + son onay tarihi); fiyat listesinde Maliyet kaynagi: recete maliyeti ya da alis fiyati uzerine kar koyup satis fiyati";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -1997,6 +2001,33 @@ const SURUM_NOTU = "Stok kaydinin yerel kopyasi her yoldan gorselsiz; bekleyen y
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.551.0", tarih: "03.10.2026",
+        eklenen: [
+            "Ürün kartı › Maliyet: 'Maliyet OK' düğmesi — maliyetteki eksikler (fiyatı olmayan hammadde, kur, işçilik…) listeleniyor, onay tarihi ve kimin onayladığı görünüyor; onaydan sonra maliyet değişirse uyarı",
+            "Dışarıdan alınan (reçetesiz) üründe maliyet alış fiyatı; Maliyet sekmesinde o da onaylanabiliyor",
+            "Fiyat Listesi'nde 'Maliyet (reçete / alış)' kaynağı: maliyet durumu ve tarihi sütunu, 'Yalnız Maliyet OK' süzgeci; üzerine kâr % (ya da tutar) koyup Farklı kaydet ile satış fiyat grubu ya da genel satış fiyatı",
+        ],
+        degisen: ["Fiyat Listesi'nde Farklı kaydet artık farklı tipteki gruplara da (alıştan satışa) yazabiliyor; yeni grubun tipi seçiliyor"],
+        duzeltilen: [] },
+    { surum: "1.550.0", tarih: "03.10.2026",
+        eklenen: [
+            "Fiyat Listesi (Depo menüsü): fiyat grubu ya da genel fiyat seçilince modellerin o fiyatı listeleniyor; fiyatı olmayan boş görünüyor, aynı ekranda yazılıp kaydediliyor",
+            "Toplu işlem: yüzde ya da tutar olarak artır/indir, yuvarlama adımı; önce 'Yeni fiyat' sütununda görünüyor",
+            "Farklı kaydet: ekrandaki fiyatlar (toplu işlem uygulanmış hâliyle) yeni bir fiyat grubu olarak ya da var olan başka gruba kaydediliyor; birim farklıysa kurla çevriliyor",
+        ],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.549.0", tarih: "03.10.2026",
+        eklenen: [
+            "Sunucu arşivi: silinen her satır veritabanında ayrıca saklanıyor, uygulamadan silinemiyor (silinen-arsiv.sql); Yönetici Çöp Kutusu altından okuyabilir",
+            "Toplu silme alarmı: 10 dakikada 20 ve üstü silme olursa günlüğe yazılıyor ve Yöneticilere mesaj gidiyor",
+            "Tanımlardan silinen öğeler (renk, beden, proses, kullanıcı, gider kartı…), görevler ve modeller artık çöpe düşüyor ve geri yüklenebiliyor",
+            "Çöpte süresi dolmak üzere olan kayıtlar için uyarı",
+        ],
+        degisen: [
+            "Kalıcı silme ve çöpü boşaltma yalnız Yöneticide; her kayıt en az 30 gün çöpte kalıyor, Boşalt yalnız 30 günden eskileri siliyor",
+            "Çöp kutusunda 300 kayıt sınırı yerine 90 gün saklama",
+        ],
+        duzeltilen: [] },
     { surum: "1.548.0", tarih: "02.10.2026",
         eklenen: [],
         degisen: ["Stok kartlarının bu cihazdaki kopyası her kayıt yolunda görselsiz yazılıyor (üretim teslimi, ara proses, ad değiştirme… önce görselleri de yazıyordu); görseller buluttaki ürün satırında ve görsel deposunda"],
@@ -8349,11 +8380,103 @@ function semaBarkoduCoz(kod, stok, tanimlar) {
 // fişler, stok hareketleri, kasa karşılıkları). Geri alınamayan böyle bir silme, aylarca sürmüş
 // bir kaydın bir dokunuşla yok olması demekti. Çöp kutusu, "emin misiniz" sorusundan daha
 // güvenli: soruyu yanlış cevaplamak da geri alınabilir oluyor.
-// Çöpte tutulacak en fazla kayıt. Sabit: sınırsız çöp, silinen her şeyi sonsuza dek taşımak ve
-// depoyu şişirmek demek; çok küçük bir sınır ise geri almayı işe yaramaz hale getirir.
-const COP_SINIRI = 300;
+// SAKLAMA KURALLARI (v1.549.0 — kullanıcı: "Çöp kutusunu daha verimli kullanalım, güvenliğe karşı" → "hepsini yap").
+//   · SÜRE, SAYI DEĞİL: kayıt 90 gün çöpte kalır, sonra kendiliğinden düşer. Önce 300 kayıt sınırı vardı; yoğun bir
+//     haftada eski silinenler haber vermeden kayboluyordu. Yine de sonsuz büyümesin diye sert bir tavan (5000) var;
+//     ona yaklaşılınca uyarı.
+//   · EN AZ 30 GÜN: 30 günden yeni kayıt kimse tarafından kalıcı silinemez ("sil, sonra çöpten de sil" ile iz
+//     yok etmek mümkün olmasın).
+//   · KALICI SİLME / BOŞALTMA YALNIZ YÖNETİCİ: diğerleri görür ve geri yükler.
+//   · Sunucu tarafında ayrıca `silinen_arsiv` (silinen-arsiv.sql) var: çöpten düşen kayıt da orada durur.
+const COP_SAKLAMA_GUN = 90;
+const COP_EN_AZ_GUN = 30;
+const COP_SERT_SINIR = 5000;
+const GUN_MS = 24 * 60 * 60 * 1000;
+function copYasiGun(kayit, simdi = Date.now()) {
+    const t = Date.parse((kayit && kayit.silinmeTarihi) || "");
+    return Number.isFinite(t) ? (simdi - t) / GUN_MS : 0;
+}
+// Saklama süresini aşanları atar ve sert tavanı uygular. Saf.
+function copuBuda(liste, simdi = Date.now()) {
+    return (liste || []).filter((k) => copYasiGun(k, simdi) <= COP_SAKLAMA_GUN).slice(0, COP_SERT_SINIR);
+}
+// Kalıcı silme izni. Döner: { ok, sebep }.
+function copKaliciSilinebilirMi(kayit, kullanici, simdi = Date.now()) {
+    if (!kullanici || kullanici.rol !== "Yönetici")
+        return { ok: false, sebep: "Çöpten kalıcı silmeyi yalnız Yönetici yapabilir" };
+    const yas = copYasiGun(kayit, simdi);
+    if (yas < COP_EN_AZ_GUN) {
+        const kalan = Math.ceil(COP_EN_AZ_GUN - yas);
+        return { ok: false, sebep: `Kayıt en az ${COP_EN_AZ_GUN} gün çöpte kalır — ${kalan} gün sonra silinebilir` };
+    }
+    return { ok: true, sebep: "" };
+}
+// TOPLU SİLME ALARMI: son 10 dakikada aynı kişinin çöpe attığı kayıt sayısı. Eşik aşılınca (20) uyarı; aynı
+// pencere içinde ikinci kez uyarmaz. Saf: zaman damgası listesi ve son uyarı zamanı dışarıda tutulur.
+const TOPLU_SILME_PENCERE_MS = 10 * 60 * 1000;
+const TOPLU_SILME_ESIK = 20;
+function topluSilmeDurumu(zamanlar, sonUyari, simdi = Date.now()) {
+    const pencere = (zamanlar || []).filter((t) => simdi - t <= TOPLU_SILME_PENCERE_MS);
+    const uyar = pencere.length >= TOPLU_SILME_ESIK && !(sonUyari && simdi - sonUyari <= TOPLU_SILME_PENCERE_MS);
+    return { pencere, sayi: pencere.length, uyar };
+}
+// LİSTEDEN DÜŞENLER (v1.549.0): görev/model gibi tek parça listelerde silmeyi yakalamak için. Kimlikle karşılaştırır.
+function listedenDusenler(onceki, sonraki) {
+    const kalan = new Set((sonraki || []).map((x) => x && x.id).filter(Boolean));
+    return (onceki || []).filter((x) => x && x.id && !kalan.has(x.id));
+}
+// TANIMLARDAN DÜŞENLER: Tanımlar tek kayıt; içindeki listelerden (renk, beden, proses, kullanıcı, asorti, gider
+// kartı…) silinen her öğe. Kimlikli nesnelerde kimlikle, düz değer listelerinde (hammadde tipleri gibi) değerle
+// karşılaştırılır. Tek tek her silme düğmesine bağlamak yerine kaydetme anında fark — yeni bir tanım listesi
+// eklendiğinde de kendiliğinden çöpe düşer. Döner: [{ alan, kayit }].
+// GİZLİ ALANLAR çöpe yazılmaz (kullanıcı kaydındaki şifre benzeri her alan): çöp bulutta, Tanımlar'a giren herkes görür.
+const GIZLI_ALAN = /sifre|şifre|parola|password|hash|token|secret|apiKey|smtp/i;
+// Derin: arşivdeki tanımlar görüntüsünde şifre `kullanicilar[].sifre` gibi iç içe duruyor.
+function gizliAlanlariAt(kayit) {
+    if (Array.isArray(kayit))
+        return kayit.map(gizliAlanlariAt);
+    if (!kayit || typeof kayit !== "object")
+        return kayit;
+    const y = {};
+    Object.keys(kayit).forEach((k) => { if (!GIZLI_ALAN.test(k))
+        y[k] = gizliAlanlariAt(kayit[k]); });
+    return y;
+}
+function tanimdanDusenler(onceki, sonraki) {
+    const sonuc = [];
+    Object.keys(onceki || {}).forEach((alan) => {
+        const a = onceki[alan];
+        const b = (sonraki || {})[alan];
+        if (!Array.isArray(a) || !Array.isArray(b))
+            return;
+        if (a.every((x) => x && typeof x === "object" && x.id)) {
+            listedenDusenler(a, b).forEach((kayit) => sonuc.push({ alan, kayit: gizliAlanlariAt(kayit) }));
+        }
+        else if (a.every((x) => typeof x === "string" || typeof x === "number")) {
+            const kalan = new Set(b);
+            a.filter((x) => !kalan.has(x)).forEach((kayit) => sonuc.push({ alan, kayit }));
+        }
+    });
+    return sonuc;
+}
+const TANIM_ALAN_ADLARI = {
+    renkler: "Renk", bedenler: "Beden/ölçü", birimler: "Birim", prosesler: "Proses", araProsesler: "Ara proses",
+    kullanicilar: "Kullanıcı", asortiler: "Asorti", fiyatGruplari: "Fiyat grubu", ozelKodAlanlari: "Özel kod alanı",
+    receteSablonlari: "Reçete şablonu", renkKombinasyonlari: "Renk kombinasyonu", giderKartlari: "Gider/gelir kartı",
+    hammaddeTipleri: "Hammadde tipi", malzemeTipleri: "Malzeme tipi", mamulTipleri: "Mamul tipi",
+};
+function tanimKaydiAdi(alan, kayit) {
+    const tur = TANIM_ALAN_ADLARI[alan] || alan;
+    const ad = kayit && typeof kayit === "object" ? (kayit.ad || kayit.kullaniciAdi || kayit.kod || kayit.id) : kayit;
+    return `${tur}: ${ad}`;
+}
+// Oturum boyunca silme zamanları (modül düzeyi: kancanın her çizimde yeniden kurulması sayacı sıfırlamasın).
+const _silmeZamanlari = { liste: [], sonUyari: 0 };
 function useCopKutusu(d) {
-    const { cop, setCop, showToast, aktifKullanici, stok, cariler, siparisler, uretim, koliler, muhasebe, setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe, } = d;
+    const { cop, setCop, showToast, aktifKullanici, stok, cariler, siparisler, uretim, koliler, muhasebe, setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe, 
+    // v1.549.0: tanım/görev/model geri yükleyicileri ve toplu silme bildirimi — App'te bu kancadan SONRA
+    // tanımlanan fonksiyonlara ref ile ulaşılıyor (tanımlanmadan önce kullanılmasınlar diye).
+    ekGeriYukleRef, topluSilmeBildirRef, } = d;
     const copaAt = useCallback((tur, baslik, veri, secenekler) => {
         // Yazma kilitliyken çöpe kayıt EKLENMEZ. Aksi halde silme diske yazılamadığı için gerçekleşmez,
         // ama çöp kutusunda "silindi" görünen bir kayıt belirir; kullanıcı silinmemiş bir kaydı silinmiş
@@ -8375,25 +8498,72 @@ function useCopKutusu(d) {
             kullaniciId: (aktifKullanici && aktifKullanici.id) || null,
         };
         setCop((prev) => {
-            const next = [kayit, ...prev].slice(0, COP_SINIRI);
+            const next = copuBuda([kayit, ...prev]);
             yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
             return next;
         });
+        // Toplu silme alarmı (oturum içi sayaç).
+        const simdi = Date.now();
+        const durum = topluSilmeDurumu([..._silmeZamanlari.liste, simdi], _silmeZamanlari.sonUyari, simdi);
+        _silmeZamanlari.liste = durum.pencere;
+        if (durum.uyar) {
+            _silmeZamanlari.sonUyari = simdi;
+            if (topluSilmeBildirRef && topluSilmeBildirRef.current)
+                topluSilmeBildirRef.current(durum.sayi);
+        }
     }, [aktifKullanici]);
-    const coptanKaliciSil = useCallback((copId) => {
+    // Çöpten çıkarma — İZİN KONTROLÜ YOK; yalnız iç kullanım (geri yükleme sonrası). Dışarıya `coptanKaliciSil` açılır.
+    const coptanCikar = useCallback((copId) => {
         setCop((prev) => {
             const next = prev.filter((k) => k.id !== copId);
             yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
             return next;
         });
     }, []);
-    const copuBosalt = useCallback(() => {
-        setCop(() => {
-            yazimiIzle(tabloYaz("cop:data", "cop", []), "Çöp kutusu", []);
-            return [];
+    const coptanKaliciSil = useCallback((copId) => {
+        const kayit = (cop || []).find((k) => k.id === copId);
+        if (!kayit)
+            return;
+        const izin = copKaliciSilinebilirMi(kayit, aktifKullanici);
+        if (!izin.ok) {
+            showToast(izin.sebep);
+            return;
+        }
+        coptanCikar(copId);
+        gunlukYaz(`Çöpten kalıcı silindi: ${kayit.baslik}`, "cop", { copId, tur: kayit.tur });
+    }, [cop, aktifKullanici, coptanCikar, showToast]);
+    // BOŞALT: yalnız Yönetici; yalnız en az 30 gündür çöpte olanlar gider, yeniler kalır.
+    const copuBosalt = useCallback(async () => {
+        if (!aktifKullanici || aktifKullanici.rol !== "Yönetici") {
+            showToast("Çöpü yalnız Yönetici boşaltabilir");
+            return;
+        }
+        const simdi = Date.now();
+        const mevcut = cop || [];
+        const silinecek = mevcut.filter((k) => copYasiGun(k, simdi) >= COP_EN_AZ_GUN);
+        if (silinecek.length === 0) {
+            showToast(`Çöpte ${COP_EN_AZ_GUN} günden eski kayıt yok — yeni kayıtlar en az ${COP_EN_AZ_GUN} gün kalır`);
+            return;
+        }
+        const ids = new Set(silinecek.map((k) => k.id));
+        // Kalan sayı setCop'tan ÖNCE hesaplanır (sonra `cop` okumak eski değeri verir — 18A).
+        const kalan = mevcut.length - silinecek.length;
+        // Durum işlevsel güncellenir (bu arada çöpe düşen kayıt kaybolmasın); yazma sözü dışarı alınıp
+        // BEKLENİR — "silindi" mesajı ancak yazma tuttuysa verilir (13).
+        let soz = null;
+        setCop((prev) => {
+            const next = prev.filter((k) => !ids.has(k.id));
+            soz = yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
+            return next;
         });
-        showToast("Çöp kutusu boşaltıldı");
-    }, [showToast]);
+        const sonuc = soz ? await soz : { ok: true };
+        gunlukYaz(`Çöp boşaltıldı: ${silinecek.length} kayıt (${COP_EN_AZ_GUN} günden eski)`, "cop", { sayi: silinecek.length });
+        if (sonuc && sonuc.ok === false && sonuc.yerel) {
+            showToast("Çöp boşaltılamadı — cihaza yazılamadı");
+            return;
+        }
+        showToast(`${silinecek.length} eski kayıt silindi${kalan > 0 ? ` — ${kalan} yeni kayıt ${COP_EN_AZ_GUN} gün dolana kadar kalıyor` : ""}`);
+    }, [cop, aktifKullanici, showToast]);
     const coptanGeriYukle = useCallback(async (copId) => {
         const kayit = cop.find((k) => k.id === copId);
         if (!kayit)
@@ -8417,6 +8587,19 @@ function useCopKutusu(d) {
             uretim: { liste: uretim, set: setUretim, anahtar: "uretim:siparisler", tablo: "uretim", etiket: "Üretim", basa: true, ad: "üretim siparişi" },
         }[kayit.tur];
         if (!TUR) {
+            // Tanım / görev / model (v1.549.0): kendi kaydetme yolları App'te — ref üzerinden.
+            const ek = ekGeriYukleRef && ekGeriYukleRef.current && ekGeriYukleRef.current[kayit.tur];
+            if (ek) {
+                const r = await ek(kayit.veri);
+                if (r && r.ok) {
+                    coptanCikar(copId);
+                    gunlukYaz(`Çöpten geri yüklendi: ${kayit.baslik}`, "cop", { copId, tur: kayit.tur });
+                    showToast(`"${kayit.baslik}" geri yüklendi${r.not ? ` — ${r.not}` : ""}`);
+                }
+                else
+                    showToast((r && r.mesaj) || "Geri yüklenemedi");
+                return;
+            }
             showToast("Bu tür kayıt otomatik geri yüklenemiyor — içeriği görüntüleyip elle girebilirsiniz");
             return;
         }
@@ -8435,7 +8618,7 @@ function useCopKutusu(d) {
             showToast(`⚠ "${kayit.baslik}" geri yüklenemedi — bu bilgisayara yazılamadı. Kayıt çöpte duruyor.`);
             return;
         }
-        coptanKaliciSil(copId);
+        coptanCikar(copId);
         const yanEtki = kayit.yanEtkiliMi ? " — dikkat: silme sırasındaki stok/cari etkileri geri alınmadı, kontrol edin" : "";
         if (sonuc.ok === false) {
             gunlukYaz(`Çöpten geri yüklendi, BULUT YAZILAMADI: ${kayit.baslik}`, "cop", { copId, hata: sonuc.hata });
@@ -8445,7 +8628,7 @@ function useCopKutusu(d) {
         else {
             showToast(`"${kayit.baslik}" geri yüklendi${yanEtki}`);
         }
-    }, [cop, stok, cariler, siparisler, uretim, coptanKaliciSil, showToast]);
+    }, [cop, stok, cariler, siparisler, uretim, coptanCikar, showToast]);
     // Birden çok tabloya yazan silme işlemleri için ortak yürütücü.
     //
     // Tarayıcıdan çok tablolu işlem (transaction) açılamıyor: PostgREST her tabloyu ayrı istekle
@@ -8456,6 +8639,32 @@ function useCopKutusu(d) {
     //   2. DURMA — ilk hatada devam edilmez. Devam etmek, hasarı büyütmekten başka bir şey değil.
     //   3. DÜRÜST RAPOR — ne yapıldı, ne yapılamadı, kullanıcı ne yapmalı; hepsi söylenir.
     return { copaAt, coptanKaliciSil, copuBosalt, coptanGeriYukle };
+}
+// ================= SUNUCU ARŞİVİ (v1.549.0) =================
+// `silinen-arsiv.sql`: veritabanı tetikleyicisi silinen her satırı `silinen_arsiv`e kopyalar; uygulama
+// yalnız OKUR (yazma/silme yetkisi yok). Çöp kutusu boşaltılsa ya da hesabı ele geçen biri çöpü de
+// silse bile iz orada kalır. Aşağıdakiler okunan satırı insan diline çevirir.
+const ARSIV_TABLO_ADLARI = {
+    urunler: "Ürün", varyantlar: "Ürün varyantı", stok_hareketleri: "Stok hareketi", cariler: "Cari",
+    cari_hareketleri: "Cari hareketi", siparisler: "Sipariş", siparis_kalemleri: "Sipariş kalemi",
+    uretim: "Üretim", uretim_atamalari: "İş ataması", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay",
+    cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
+    gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka",
+};
+function arsivSatiriOzeti(satir, kullanicilar) {
+    const v = (satir && satir.veri) || {};
+    // Satır tablolarında `veri` sütunu yoksa satırın kendisi; varsa (cop, onaylar) asıl kayıt içeride.
+    const ic = v.veri && typeof v.veri === "object" && !Array.isArray(v.veri) ? v.veri : v;
+    const baslik = satir && satir.islem === "GORUNTU"
+        ? "Değişiklik öncesi anlık görüntü"
+        : (v.baslik || ic.ad || ic.unvan || ic.siparisNo || ic.urunAdi || ic.aciklama || ic.no || satir.satir_id || "—");
+    const ep = String((satir && satir.silen_eposta) || "").toLowerCase();
+    const k = ep && (kullanicilar || []).find((x) => String(kullaniciEposta(x)).toLowerCase() === ep);
+    return {
+        tabloAdi: ARSIV_TABLO_ADLARI[satir && satir.tablo] || (satir && satir.tablo) || "?",
+        baslik: String(baslik),
+        kim: k ? k.ad || k.kullaniciAdi : (ep || "bilinmiyor"),
+    };
 }
 // ================= FİŞ DEFTERİ =================
 //
@@ -13032,7 +13241,7 @@ function useAcilisYukleme(d) {
                         // "çöpü boşalt" dendiğinde fark hesabı silinecek bir şey görmüyor ve buluttaki
                         // kayıtlar olduğu gibi kalıyordu.
                         setOnaylar(bulut.onaylar || []);
-                        setCop(bulut.cop || []);
+                        setCop(copuBuda(bulut.cop || [])); // 90 günü dolanlar açılışta da düşer (v1.549.0)
                         // Fark katmanının başlangıcı buluttan gelen hâldir; yerelden değil.
                         tabloBaslangicTam("urunler", damga.urunler);
                         tabloBaslangicTam("siparisler", bulut.siparisler);
@@ -13631,7 +13840,7 @@ function useAcilisYukleme(d) {
                 setOnaylar(oy);
                 setMuhasebe(mh);
                 setStokRezervasyonlari(Array.isArray(srez) ? srez : []);
-                setCop(cp);
+                setCop(copuBuda(cp));
                 try {
                     const okumaMd = await guvenliOku("model:data", anahtarKumesi);
                     if (okumaMd.deger) {
@@ -15341,12 +15550,48 @@ function AtolyeERP() {
         return () => { if (window.__kayitHatasiBildir === kaydetmeHatasiBildir)
             delete window.__kayitHatasiBildir; };
     }, [kaydetmeHatasiBildir]);
+    // ÇÖP BAĞLANTILARI (v1.549.0). `copaAt` ve görev/model/mesaj kaydediciler bu noktadan SONRA tanımlanıyor; doğrudan
+    // kullanmak tanımlanmadan erişim (TDZ) olurdu. Ref'ler burada kurulur, aşağıda tanımlandıkları yerde doldurulur.
+    // Hepsi erken dönüşlerden (BULUT ÖN GİRİŞ) ÖNCE — kanca sırası her çizimde aynı kalmalı.
+    const copaAtRef = useRef(null);
+    const ekGeriYukleRef = useRef({});
+    const topluSilmeBildirRef = useRef(null);
+    const tanimRef = useRef(tanimlar);
+    tanimRef.current = tanimlar;
+    const gorevRef = useRef(gorevler);
+    gorevRef.current = gorevler;
+    const modelRef = useRef(modeller);
+    modelRef.current = modeller;
+    const mesajRef = useRef(mesajlar);
+    mesajRef.current = mesajlar;
+    // FİYAT LİSTESİ İLK AÇILIŞTA KURULUR (v1.550.0), sonra kurulu kalır: gizli (display:none) hâlde baştan
+    // DOM'da durunca başka ekranların tablo/kutu aramalarına karışıyordu; her açılışta yeniden kurulursa da
+    // kaydedilmemiş düzenlemeler kaybolurdu.
+    const fiyatListesiAcildiRef = useRef(false);
+    if (tab === "fiyatlistesi")
+        fiyatListesiAcildiRef.current = true;
+    // TANIMDAN SİLİNEN HER ÖĞE ÇÖPE: renk, beden, proses, kullanıcı, asorti, gider kartı… Tek tek düğmelere bağlamak
+    // yerine kaydetme anındaki fark (077 `tanimdanDusenler`) — yeni bir tanım listesi de kendiliğinden kapsanır.
+    // Tanımları yazan iki yol da (saveTanimlar, tanimlarKodluYaz) bundan geçer.
+    // Yalnız ref okur → bağımlılıksız useCallback; kimliği sabit.
+    const tanimSilinenleriCopeAt = useCallback((sonraki) => {
+        if (copaAtRef.current) {
+            tanimdanDusenler(tanimRef.current, sonraki).forEach(({ alan, kayit }) => {
+                copaAtRef.current("tanim", tanimKaydiAdi(alan, kayit), { alan, kayit }, {
+                    ozet: `Tanımlar › ${TANIM_ALAN_ADLARI[alan] || alan}`,
+                    ustKayit: { tur: "tanimlar", id: alan, ad: TANIM_ALAN_ADLARI[alan] || alan },
+                });
+            });
+        }
+        tanimRef.current = sonraki;
+    }, []);
     const saveTanimlar = useCallback(async (next) => {
         // YENİ TANIMA KODU ANINDA VERİLİYOR. Kod atamayı ayrı bir düğmeye bırakmak, kullanıcının rengi
         // tanımlayıp etiket basmaya kalktığında "kod atanmamış" görmesi demekti. `kodlariAta` kodu
         // OLANA dokunmuyor, o yüzden her kayıtta güvenle çağrılabilir.
         // Stok no burada atanmıyor: ürün listesi bu yolda değil, onu `kodlariTamamla` dolduruyor.
         const kodlu = kodlariAta([], next).tanimlar;
+        tanimSilinenleriCopeAt(kodlu);
         setTanimlar(kodlu);
         try {
             await tekilYaz("tanimlar:data", "tanimlar", kodlu);
@@ -15354,7 +15599,7 @@ function AtolyeERP() {
         catch (e) {
             kaydetmeHatasiBildir(e, "Tanımlar", kodlu);
         }
-    }, [showToast, kaydetmeHatasiBildir]);
+    }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
     // REÇETE ŞABLONLARI (21 Eylül): tanımlarda tutuluyor; ürün kartı ve modelhane buradan yazar.
     const receteSablonuKaydet = useCallback((sablon) => {
         if (!sablon || !sablon.ad)
@@ -15649,7 +15894,9 @@ function AtolyeERP() {
         cop, setCop, showToast, aktifKullanici,
         stok, cariler, siparisler, uretim, koliler, muhasebe,
         setStok, setCariler, setSiparisler, setUretim, setKoliler, setMuhasebe,
+        ekGeriYukleRef, topluSilmeBildirRef,
     });
+    copaAtRef.current = copaAt;
     const adimlariYurut = useCallback(async (adimlar) => {
         const yapilan = [];
         for (const adim of adimlar) {
@@ -15764,6 +16011,12 @@ function AtolyeERP() {
         });
     }, [showToast]);
     const saveModeller = useCallback((next) => {
+        // Silinen model çöpe (v1.549.0).
+        if (copaAtRef.current)
+            listedenDusenler(modelRef.current, next).forEach((m) => {
+                copaAtRef.current("model", `${m.kod || ""} ${m.ad || ""}`.trim() || "Model", m, { ozet: `Modelhane · aşama: ${m.asama || "—"}` });
+            });
+        modelRef.current = next;
         setModeller(next);
         yazimiIzle(tekilYaz("model:data", "modeller", next), "Modeller", next);
     }, []);
@@ -15922,6 +16175,12 @@ function AtolyeERP() {
         showToast(`${model.kod} koleksiyona alındı — Stok'ta "${model.ad}" ürün kartı açıldı`);
     }, [stok, modeller, saveModeller, showToast]);
     const saveGorevler = useCallback(async (next) => {
+        // Silinen görev çöpe (v1.549.0).
+        if (copaAtRef.current)
+            listedenDusenler(gorevRef.current, next).forEach((g) => {
+                copaAtRef.current("gorev", g.baslik || g.metin || "Görev", g, { ozet: `${g.atananAd ? `→ ${g.atananAd} · ` : ""}durum: ${g.durum || "—"}` });
+            });
+        gorevRef.current = next;
         setGorevler(next);
         try {
             await tekilYaz("gorev:data", "gorevler", next);
@@ -15930,6 +16189,46 @@ function AtolyeERP() {
             kaydetmeHatasiBildir(e, "Görevler", next);
         }
     }, [kaydetmeHatasiBildir]);
+    // ÇÖPTEN GERİ YÜKLEME — tanım, görev, model (v1.549.0). Aynı kimlik (ya da düz değer) zaten varsa geri yüklenmez.
+    ekGeriYukleRef.current = {
+        tanim: async ({ alan, kayit } = {}) => {
+            const t = tanimRef.current || {};
+            const liste = Array.isArray(t[alan]) ? t[alan] : [];
+            const varMi = kayit && typeof kayit === "object" ? liste.some((x) => x && x.id === kayit.id) : liste.includes(kayit);
+            if (varMi)
+                return { ok: false, mesaj: "Bu tanım zaten listede — geri yükleme yapılmadı" };
+            await saveTanimlar({ ...t, [alan]: [...liste, kayit] });
+            return { ok: true, not: alan === "kullanicilar" ? "şifre çöpte saklanmaz; bulut hesabı silindiyse Kullanıcılar'dan yeniden açın" : "" };
+        },
+        gorev: async (g) => {
+            if ((gorevRef.current || []).some((x) => x.id === g.id))
+                return { ok: false, mesaj: "Bu görev zaten listede" };
+            await saveGorevler([g, ...(gorevRef.current || [])]);
+            return { ok: true };
+        },
+        model: async (m) => {
+            if ((modelRef.current || []).some((x) => x.id === m.id))
+                return { ok: false, mesaj: "Bu model zaten listede" };
+            saveModeller([m, ...(modelRef.current || [])]);
+            return { ok: true };
+        },
+    };
+    // TOPLU SİLME ALARMI (v1.549.0): 10 dakikada 20+ kayıt çöpe atılınca günlüğe "güvenlik" kaydı, silen kişiye uyarı
+    // ve her Yöneticiye özel mesaj (sohbet kanalı = iki kimliğin sıralı birleşimi, 372-sohbet). Silen kişi tek
+    // Yöneticiyse mesaj gitmez, günlük kaydı kalır.
+    topluSilmeBildirRef.current = (sayi) => {
+        const ben = aktifKullanici || {};
+        const metin = `⚠ Güvenlik uyarısı: ${ben.ad || "Bir kullanıcı"} son 10 dakikada ${sayi} kayıt sildi. Çöp kutusundan kontrol edin (Tanımlar › Çöp Kutusu).`;
+        gunlukYaz(`Toplu silme uyarısı: ${ben.ad || "—"} 10 dakikada ${sayi} kayıt sildi`, "guvenlik", { sayi, kullaniciId: ben.id || null });
+        showToast(`⚠ Kısa sürede ${sayi} kayıt sildiniz — Yöneticiye bildirildi`);
+        const yoneticiler = ((tanimRef.current && tanimRef.current.kullanicilar) || []).filter((k) => k.rol === "Yönetici" && k.id !== ben.id);
+        if (!ben.id || yoneticiler.length === 0)
+            return;
+        const zaman = new Date().toISOString();
+        const yeni = yoneticiler.map((y) => ({ id: uid("msj"), kanal: [ben.id, y.id].sort().join("|"), kullaniciId: ben.id,
+            kullaniciAd: ben.ad || "", metin, zaman, hedef: null, gorevId: null }));
+        saveMesajlar([...(mesajRef.current || []), ...yeni]);
+    };
     // KOLİ (PAKETLEME) AYRI DOSYADA (19 Eylül, 2. madde): `092-koliler.jsx`.
     const { saveKoliler, koliEkle, koliEkleCoklu, koliSil } = useKoliler({ koliler, setKoliler, stok, showToast, copaAt, kaydetmeHatasiBildir, aktifKullanici });
     // KALICI KODLARI TAMAMLAR — ürünlere stok no, renk/ölçü/asorti tanımlarına kod atar.
@@ -16574,10 +16873,11 @@ function AtolyeERP() {
     // yardımcıdan geçiyor; `kodlariAta` kodu olana dokunmuyor, her yazımda güvenle çağrılabilir.
     const tanimlarKodluYaz = useCallback((next) => {
         const kodlu = kodlariAta([], next).tanimlar;
+        tanimSilinenleriCopeAt(kodlu);
         setTanimlar(kodlu);
         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
         return kodlu;
-    }, []);
+    }, [tanimSilinenleriCopeAt]);
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
@@ -17211,6 +17511,7 @@ function AtolyeERP() {
         tanimlar: "Tanımlar",
         stok: "Stok Yönetimi",
         mamulstok: "Mamul Stok",
+        fiyatlistesi: "Fiyat Listesi",
         uretim: "Üretim Takibi",
         cari: "Cari Hesaplar",
         siparis: "Sipariş Yönetimi",
@@ -17723,6 +18024,8 @@ function AtolyeERP() {
                                     // MAMUL STOK ayrı öğe (v1.455.0, kullanıcı: "stokta mamul stoğunu ayıralım, deponun
                                     // alt sekmesi olsun"): Stok hammadde/yarı mamul/hizmet, Mamul Stok yalnız mamul.
                                     ["stok", "Stok", React.createElement(Boxes, { size: 16 })], ["mamulstok", "Mamul Stok", React.createElement(Package, { size: 16 })],
+                                    // FİYAT LİSTESİ (v1.550.0): fiyat grubu seç → modellerin o fiyatı, düzelt, toplu % / tutar, farklı kaydet.
+                                    yetki("stok") && ["fiyatlistesi", "Fiyat Listesi", React.createElement(Tag, { size: 16 })],
                                     ["depo", "Depo", React.createElement(Layers, { size: 16 })], ["paketleme", "Paketleme", React.createElement(PackageCheck, { size: 16 })]
                                 ] },
                             { ad: "Üretim", ikon: React.createElement(Hammer, { size: 15 }), ogeler: [
@@ -17961,6 +18264,8 @@ function AtolyeERP() {
                             // yazılıyor. Aksi halde aynı çek iki ayrı yerde ayrı ayrı tutuluyordu — bu projede
                             // "aynı bilgi iki yerde" kalıbı defalarca hataya döndü.
                             onCekEkle: (cek) => saveMuhasebe({ ...muhasebe, cekler: [{ id: uid("cek"), durum: "Portföyde", ...cek }, ...(muhasebe.cekler || [])] }), showToast: showToast, onFisSil: yetimFisTemizle, siparisler: siparisler, stok: stok, onGoToSiparis: sipariseGit, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], onCopaAt: copaAt, onStokFisiAc: stokFisiAc, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: pencereAc })),
+                    fiyatListesiAcildiRef.current && React.createElement("div", { style: { display: tab === "fiyatlistesi" ? undefined : "none" } },
+                        React.createElement(FiyatListesiModule, { stok: stok, tanimlar: tanimlar, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi || [], cariler: cariler, onStokKaydet: saveStok, onTanimlarKaydet: saveTanimlar, showToast: showToast, aktifKullanici: aktifKullanici })),
                     React.createElement("div", { style: { display: tab === "paketleme" ? undefined : "none" } },
                         React.createElement(PaketlemeModule, { koliler: koliler, stok: stok, siparisler: siparisler, cariler: cariler, uretim: uretim, asortiler: tanimlar.asortiler, onKoliEkle: koliEkle, onKoliEkleCoklu: koliEkleCoklu, onKolileriElleKapat: (idler, sebep) => {
                                 const zaman = new Date().toISOString();
@@ -21435,12 +21740,15 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 urun: "Ürün", cari: "Cari", siparis: "Sipariş", uretim: "Üretim",
                 stokHareketi: "Stok Hareketi", cariHareketi: "Cari Hareketi",
                 kasa: "Kasa", banka: "Banka", kasaHareketi: "Kasa Fişi", bankaHareketi: "Banka Fişi", cek: "Çek",
+                koli: "Koli", tanim: "Tanım", gorev: "Görev", model: "Model",
             };
             const TUR_RENK = {
                 urun: "var(--erp-brown)", cari: "#9C3D3D", siparis: "var(--erp-info)", uretim: "var(--erp-primary)",
                 stokHareketi: "var(--erp-text-2)", cariHareketi: "var(--erp-purple)",
                 kasa: "#2F6B4F", banka: "var(--erp-info)", kasaHareketi: "#2F6B4F", bankaHareketi: "var(--erp-info)", cek: "var(--erp-brown)",
+                koli: "var(--erp-brown)", tanim: "#6B4E8A", gorev: "var(--erp-info)", model: "#8A3D6B",
             };
+            const yonetici = !!(aktifKullanici && aktifKullanici.rol === "Yönetici");
             const liste = (cop || []).filter((k) => {
                 if (copTurFiltre !== "Tümü" && k.tur !== copTurFiltre)
                     return false;
@@ -21462,7 +21770,26 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                         React.createElement("b", null, " Geri y\u00FCkleme kayd\u0131n kendisini geri getirir, silme s\u0131ras\u0131ndaki yan etkileri geri almaz:"),
                         " bir sipari\u015F silinirken stok hareketleri de geri sar\u0131lm\u0131\u015Ft\u0131, sipari\u015Fi geri y\u00FCklemek onlar\u0131 yeniden olu\u015Fturmaz. Yan etkili kay\u0131tlar a\u015Fa\u011F\u0131da ayr\u0131ca i\u015Faretlidir; geri y\u00FCkledikten sonra ilgili stok ve cari bakiyelerini kontrol edin.",
                         React.createElement("br", null),
-                        "En fazla son 300 kay\u0131t saklan\u0131r; s\u0131n\u0131r a\u015F\u0131l\u0131nca en eskiler d\u00FC\u015Fer.")),
+                        React.createElement("span", { "data-cop-kurallar": "1" },
+                            React.createElement("b", null, "G\u00FCvenlik kurallar\u0131:"),
+                            " kay\u0131tlar ",
+                            COP_SAKLAMA_GUN,
+                            " g\u00FCn saklan\u0131r, sonra kendili\u011Finden d\u00FC\u015Fer. Her kay\u0131t en az",
+                            " ",
+                            COP_EN_AZ_GUN,
+                            " g\u00FCn \u00E7\u00F6pte kal\u0131r \u2014 o s\u00FCre dolmadan kimse kal\u0131c\u0131 silemez. Kal\u0131c\u0131 silme ve bo\u015Faltma yaln\u0131z Y\u00F6neticide; di\u011Fer kullan\u0131c\u0131lar g\u00F6r\u00FCp geri y\u00FCkleyebilir. K\u0131sa s\u00FCrede \u00E7ok say\u0131da silme olursa Y\u00F6neticiye uyar\u0131 gider. Bulutta ayr\u0131ca silinen her sat\u0131r sunucu ar\u015Fivinde saklan\u0131r (a\u015Fa\u011F\u0131da)."))),
+                (() => {
+                    // SÜRE SINIRINA YAKLAŞANLAR: 90 günü dolan kayıt sessizce düşer; son 14 günde uyarılır ki
+                    // gerekiyorsa geri yüklensin. Sayı sınırı yokken (eskiden 300) bu tek kayıp yolu.
+                    const yakinda = (cop || []).filter((k) => COP_SAKLAMA_GUN - copYasiGun(k) <= 14).length;
+                    return yakinda > 0 ? (React.createElement("div", { "data-cop-yakinda": "1", style: { fontSize: 12, color: "var(--erp-warn)", background: "#B85C2E12", border: "1px solid #B85C2E40", borderRadius: "var(--erp-r-md)", padding: "8px 12px", marginBottom: 12 } },
+                        React.createElement("b", null,
+                            yakinda,
+                            " kay\u0131t"),
+                        " 14 g\u00FCn i\u00E7inde ",
+                        COP_SAKLAMA_GUN,
+                        " g\u00FCnl\u00FCk s\u00FCreyi dolduruyor ve \u00E7\u00F6pten d\u00FC\u015Fecek \u2014 gerekiyorsa \u015Fimdi geri y\u00FCkleyin.")) : null;
+                })(),
                 React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12 } },
                     ["Tümü", ...Object.keys(TUR_ADLARI).filter((t) => turSayilari[t])].map((t) => {
                         const aktif = copTurFiltre === t;
@@ -21479,11 +21806,11 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                             ")"));
                     }),
                     React.createElement("input", { value: copArama, onChange: (e) => setCopArama(e.target.value), placeholder: "Ara\u2026", style: { ...inputStyle, width: 180, fontSize: 12, marginLeft: "auto" } }),
-                    (cop || []).length > 0 && (React.createElement(SilOnayButonu, { onConfirm: onCopBosalt, boyut: 13, baslikNormal: "\u00C7\u00F6p kutusunu tamamen bo\u015Falt", baslikOnay: "T\u00FCm kay\u0131tlar kal\u0131c\u0131 silinecek \u2014 tekrar dokunun" }))),
+                    (cop || []).length > 0 && yonetici && (React.createElement(SilOnayButonu, { onConfirm: onCopBosalt, boyut: 13, baslikNormal: `${COP_EN_AZ_GUN} günden eski kayıtları kalıcı sil`, baslikOnay: `${COP_EN_AZ_GUN} günden eski kayıtlar kalıcı silinecek — tekrar dokunun` }))),
                 liste.length === 0 ? (React.createElement(EmptyState, { text: (cop || []).length === 0 ? "Çöp kutusu boş — henüz hiçbir kayıt silinmedi." : "Bu filtreyle eşleşen kayıt yok." })) : (React.createElement("div", { style: { display: "grid", gap: 8 } }, liste.map((k) => {
                     const acik = acikCopId === k.id;
                     const renk = TUR_RENK[k.tur] || "var(--erp-text-2)";
-                    return (React.createElement("div", { key: k.id, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+                    return (React.createElement("div", { key: k.id, "data-cop-kart": k.baslik, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderLeft: `3px solid ${renk}`, borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", flexWrap: "wrap" } },
                             React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "1A"), color: renk, whiteSpace: "nowrap" } }, TUR_ADLARI[k.tur] || k.tur),
                             React.createElement("div", { style: { flex: 1, minWidth: 160 } },
@@ -21494,7 +21821,13 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                     k.ustKayit.ad))),
                             React.createElement("div", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-2)", textAlign: "right", whiteSpace: "nowrap" } },
                                 React.createElement("div", null, new Date(k.silinmeTarihi).toLocaleString("tr-TR")),
-                                React.createElement("div", { style: { color: "var(--erp-text-3)" } }, k.kullaniciAd)),
+                                React.createElement("div", { style: { color: "var(--erp-text-3)" } }, k.kullaniciAd),
+                                (() => {
+                                    const kalanGun = Math.max(0, Math.ceil(COP_SAKLAMA_GUN - copYasiGun(k)));
+                                    return kalanGun <= 14 ? React.createElement("div", { "data-cop-kalan-gun": "1", style: { color: "var(--erp-warn)", fontWeight: 700 } },
+                                        kalanGun,
+                                        " g\u00FCn sonra d\u00FC\u015Fer") : null;
+                                })()),
                             k.yanEtkiliMi && (React.createElement("span", { className: "mono", title: "Silinirken stok/cari kay\u0131tlar\u0131 da etkilendi \u2014 geri y\u00FCkleme bunlar\u0131 d\u00FCzeltmez", style: { fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: "var(--erp-r-pill)", background: "#B85C2E18", color: "var(--erp-warn)", whiteSpace: "nowrap" } }, "yan etkili")),
                             React.createElement("div", { style: { display: "flex", gap: 5, alignItems: "center" } },
                                 React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "4px 9px", fontSize: 11 }, onClick: () => setAcikCopId(acik ? null : k.id) },
@@ -21503,11 +21836,75 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                 k.geriAlinabilirMi ? (React.createElement("button", { type: "button", className: "btn-primary btn-save", style: { padding: "5px 10px", fontSize: 11 }, onClick: () => onCopGeriYukle(k.id) },
                                     React.createElement(ArrowRight, { size: 12 }),
                                     " Geri y\u00FCkle")) : (React.createElement("span", { className: "mono", style: { fontSize: 9, color: "var(--erp-text-3)", maxWidth: 110, lineHeight: 1.3 }, title: "Bu t\u00FCr kay\u0131tlar otomatik geri y\u00FCklenemez; i\u00E7eri\u011Fi g\u00F6r\u00FCp elle girebilirsiniz" }, "geri y\u00FCklenemez")),
-                                React.createElement(SilOnayButonu, { onConfirm: () => onCopKaliciSil(k.id), boyut: 12, baslikNormal: "Kal\u0131c\u0131 olarak sil" }))),
+                                (() => {
+                                    const izin = copKaliciSilinebilirMi(k, aktifKullanici);
+                                    return izin.ok
+                                        ? React.createElement(SilOnayButonu, { onConfirm: () => onCopKaliciSil(k.id), boyut: 12, baslikNormal: "Kal\u0131c\u0131 olarak sil" })
+                                        : React.createElement("span", { "data-cop-sil-kilitli": "1", title: izin.sebep, style: { display: "inline-flex", color: "var(--erp-text-3)", opacity: 0.5 } },
+                                            React.createElement(Lock, { size: 12 }));
+                                })())),
                         acik && (React.createElement("div", { style: { borderTop: "1px solid var(--erp-line-soft)", background: "var(--erp-panel)", padding: 10 } },
                             React.createElement("pre", { className: "mono", style: { margin: 0, fontSize: 10, color: "var(--erp-text)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" } }, JSON.stringify(k.veri, null, 2))))));
-                })))));
+                }))),
+                yonetici && React.createElement(SunucuArsiviBolumu, { kullanicilar: tanimlar.kullanicilar, supabaseBagli: supabaseBagli })));
         })()));
+}
+// SUNUCU ARŞİVİ GÖRÜNÜMÜ (v1.549.0) — yalnız Yönetici. `silinen_arsiv` tablosunu (silinen-arsiv.sql) OKUR;
+// yazma/silme düğmesi bilerek yok: tablo uygulamaya zaten kapalı, arayüz de öyle görünmeli. İstek elle
+// (düğmeyle) atılır — her Tanımlar açılışında buluttan 200 satır çekmek gereksiz.
+function SunucuArsiviBolumu({ kullanicilar, supabaseBagli }) {
+    const [satirlar, setSatirlar] = useState(null);
+    const [durum, setDurum] = useState("");
+    const [acikId, setAcikId] = useState(null);
+    const [tablo, setTablo] = useState("");
+    const yukle = async () => {
+        if (!supabaseAcikMi()) {
+            setDurum("Bulut bağlı değil — arşiv yalnız bulutta tutulur.");
+            return;
+        }
+        setDurum("Yükleniyor…");
+        try {
+            const filtre = tablo ? `&tablo=eq.${encodeURIComponent(tablo)}` : "";
+            const r = await supabaseIstek(`silinen_arsiv?select=id,tablo,islem,satir_id,veri,silen_eposta,zaman&order=zaman.desc&limit=200${filtre}`);
+            setSatirlar(Array.isArray(r) ? r : []);
+            setDurum("");
+        }
+        catch (e) {
+            const m = String((e && e.message) || e);
+            // Tablo yoksa PostgREST 404 / 42P01 döner: SQL henüz çalıştırılmamış.
+            setDurum(/404|42P01|does not exist|Could not find/i.test(m)
+                ? "Sunucu arşivi kurulmamış — Supabase'de silinen-arsiv.sql çalıştırılmalı."
+                : `Arşiv okunamadı: ${m.slice(0, 160)}`);
+        }
+    };
+    return (React.createElement("div", { "data-sunucu-arsivi": "1", style: { marginTop: 22, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 } },
+            React.createElement(Archive, { size: 15, color: "var(--erp-brown)" }),
+            React.createElement("b", { style: { fontSize: 13 } }, "Sunucu ar\u015Fivi"),
+            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)", flex: 1, minWidth: 200 } }, "Veritaban\u0131n\u0131n kendisinin tuttu\u011Fu silme kayd\u0131 \u2014 uygulamadan silinemez. Son 200 sat\u0131r."),
+            React.createElement("select", { value: tablo, onChange: (e) => setTablo(e.target.value), style: { ...inputStyle, width: 160, fontSize: 12 } },
+                React.createElement("option", { value: "" }, "T\u00FCm tablolar"),
+                Object.entries(ARSIV_TABLO_ADLARI).map(([t, ad]) => React.createElement("option", { key: t, value: t }, ad))),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-arsiv-yukle": "1", style: { padding: "5px 10px", fontSize: 11 }, onClick: yukle, disabled: !supabaseBagli && !supabaseAcikMi() },
+                React.createElement(RefreshCw, { size: 12 }),
+                " ",
+                satirlar ? "Yenile" : "Arşivi getir")),
+        durum && React.createElement("div", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 } }, durum),
+        satirlar && satirlar.length === 0 && !durum && React.createElement(EmptyState, { text: "Ar\u015Fivde kay\u0131t yok." }),
+        satirlar && satirlar.length > 0 && (React.createElement("div", { style: { display: "grid", gap: 4 } }, satirlar.map((a) => {
+            const o = arsivSatiriOzeti(a, kullanicilar);
+            const acik = acikId === a.id;
+            return (React.createElement("div", { key: a.id, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)" } },
+                React.createElement("button", { type: "button", onClick: () => setAcikId(acik ? null : a.id), style: { display: "flex", gap: 10, alignItems: "center", width: "100%", background: "none", border: "none", padding: "6px 10px", cursor: "pointer", textAlign: "left", flexWrap: "wrap" } },
+                    React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", minWidth: 90 } }, o.tabloAdi),
+                    React.createElement("span", { style: { fontSize: 12, flex: 1, minWidth: 140, overflowWrap: "anywhere" } }, o.baslik),
+                    React.createElement("span", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-3)", whiteSpace: "nowrap" } },
+                        new Date(a.zaman).toLocaleString("tr-TR"),
+                        " \u00B7 ",
+                        o.kim),
+                    acik ? React.createElement(ChevronUp, { size: 12 }) : React.createElement(ChevronDown, { size: 12 })),
+                acik && (React.createElement("pre", { className: "mono", style: { margin: 0, padding: 10, fontSize: 10, background: "var(--erp-panel)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" } }, JSON.stringify(gizliAlanlariAt(a.veri), null, 2)))));
+        })))));
 }
 // Kullanıcı satırında şifre değiştirme / bulut hesabı açma kutusu: tıklanınca açılır, Enter ya da
 // Uygula ile gönderir; bulut kabul edince kapanır.
@@ -24825,6 +25222,503 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
         kritik && React.createElement(AlertTriangle, { size: 15, color: "var(--erp-warn)" }),
         React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" })));
 }
+// ================= ÜRÜN MALİYETİ — TEK HESAP + "MALİYET OK" (3 Ekim, v1.551.0) =================
+//
+// Kullanıcı: "Reçete maliyetten maliyet de çeksin. Maliyette maliyet ok düğmesi olsun — maliyette eksik bir
+// şey yok anlamında — ve son maliyet güncelleme tarihi ile beraber. Ayrı bir grupta seçince reçete maliyeti
+// gibi üzerine kâr koyup satış fiyatı belirleyelim; dışarıdan aldığımız ürünlerin alış fiyatından satış
+// fiyatı yapalım."
+//
+// Ürün kartının Maliyet sekmesindeki hesap (160) ve Maliyet Yazdır (275) kendi içlerinde satır satır
+// hesaplıyor; fiyat listesi (157) yüzlerce ürünün maliyetini tek bakışta istiyor. Hesap BURADA saf bir
+// işlev olarak, kartla AYNI kurallarla: reçetesi olan rengin hammaddeleri (`hammaddeBirimFiyati` — son
+// alış önce), ana + ara proses işçiliği, çift başı genel gider (ürüne özel ya da defter ÷ aylık hedef).
+// Reçetesi olmayan (dışarıdan alınan) ürünün maliyeti ALIŞ FİYATI (kurla TL).
+//
+// `eksikler`: maliyeti eksik/yanlış gösterebilecek her şey (fiyatı olmayan hammadde, girilmemiş kur,
+// işçiliği olmayan reçete…). "Maliyet OK" kullanıcının bunlara bakıp "tamam" demesi; kayıt `maliyetOnay`.
+// Döner: { tur: "recete" | "alis" | "yok", hammadde, iscilik, genel, tamTL (null = hesaplanamadı), eksikler: [] }
+function urunMaliyetHesabi(urun, ctx = {}) {
+    const eksikler = [];
+    if (!urun)
+        return { tur: "yok", hammadde: 0, iscilik: 0, genel: 0, tamTL: null, eksikler: ["ürün yok"] };
+    const kurlar = ctx.kurlar || {};
+    const recete = urun.recete || [];
+    if (recete.length === 0) {
+        const f = parseFloat(urun.alisFiyati) || 0;
+        if (!(f > 0))
+            return { tur: "yok", hammadde: 0, iscilik: 0, genel: 0, tamTL: null, eksikler: ["reçete de alış fiyatı da yok"] };
+        const pb = alisPbKodu(urun);
+        const kur = pb === "TRY" ? 1 : parseFloat(kurlar[pb]) || 0;
+        if (!kur)
+            return { tur: "alis", hammadde: 0, iscilik: 0, genel: 0, tamTL: null, alisFiyati: f, paraBirimi: pb, eksikler: [`${pb} kuru girilmemiş`] };
+        const tl = Math.round(f * kur * 100) / 100;
+        return { tur: "alis", hammadde: 0, iscilik: 0, genel: 0, tamTL: tl, alisFiyati: f, paraBirimi: pb, eksikler };
+    }
+    // Kartla aynı: ilk reçetesi olan varyant rengi.
+    const renkler = Array.from(new Set((urun.variants || []).map((v) => v.renk)));
+    const receteRengi = renkler.find((mr) => recete.some((r) => r.mamulRenk === mr));
+    let hammadde = 0;
+    if (!receteRengi)
+        eksikler.push("reçete hiçbir renge bağlı değil");
+    else {
+        const ilgili = recete.filter((r) => r.mamulRenk === receteRengi);
+        receteProsesGrupla(ilgili, ctx.tanimlarProsesler || [], urun.receteProsesSirasiOverride).forEach((pg) => {
+            receteMaliyetGrupla(pg.satirlar).forEach((g) => {
+                const s = g.satirlar[0];
+                const hm = (ctx.tumUrunler || []).find((p) => p.id === s.hammaddeUrunId);
+                const ad = hm ? hm.ad : (s.hammaddeAd || "?");
+                if (!hm) {
+                    eksikler.push(`${ad}: stok kartı bulunamadı`);
+                    return;
+                }
+                const bf = hammaddeBirimFiyati(hm, s.renk, s.beden, kurlar, { cariler: ctx.cariler || [], kurGecmisi: ctx.kurGecmisi || [] });
+                if (!(bf.kendiFiyat > 0))
+                    eksikler.push(`${ad}${s.renk ? ` · ${s.renk}` : ""}: fiyatı yok`);
+                else if (bf.pb !== "TRY" && !(parseFloat(kurlar[bf.pb]) > 0))
+                    eksikler.push(`${bf.pb} kuru girilmemiş (${ad})`);
+                hammadde += (s.miktar || 0) * bf.tl;
+            });
+        });
+    }
+    const ana = Object.values(urun.prosesUcretleri || {}).reduce((t, u) => t + (u || 0), 0);
+    const ara = araProsesCiftleri(urun).reduce((t, [, apId]) => {
+        if (!apId)
+            return t;
+        const ozel = (urun.araProsesUcretleri || {})[apId];
+        if (ozel != null)
+            return t + ozel;
+        const ap = (ctx.tanimlarAraProsesler || []).find((x) => x.id === apId);
+        return t + (ap ? (ap.ucret || 0) : 0);
+    }, 0);
+    const iscilik = ana + ara;
+    if (!(iscilik > 0))
+        eksikler.push("işçilik ücreti girilmemiş");
+    const hedefAdet = parseFloat(ctx.aylikUretimHedefi) || 0;
+    const aylikGenel = (ctx.genelGiderler || []).reduce((t, k) => t + (parseFloat(k.aylikTutar) || 0), 0);
+    const ozelGenel = urun.genelGiderCiftBasi != null && urun.genelGiderCiftBasi !== "" ? parseFloat(urun.genelGiderCiftBasi) : null;
+    const genel = ozelGenel != null && !Number.isNaN(ozelGenel) ? ozelGenel : (hedefAdet > 0 ? aylikGenel / hedefAdet : 0);
+    if (ozelGenel == null && aylikGenel > 0 && !(hedefAdet > 0))
+        eksikler.push("genel gider var ama aylık üretim hedefi girilmemiş");
+    const tamTL = Math.round((hammadde + iscilik + genel) * 100) / 100;
+    return { tur: "recete", hammadde, iscilik, genel, tamTL: tamTL > 0 ? tamTL : null, eksikler };
+}
+// MALİYET OK DURUMU. `urun.maliyetOnay = { tarih, kim, tamTL, tur }` — kullanıcı "Maliyet OK" dediği an.
+// Onaydan SONRA maliyet değiştiyse (hammadde fiyatı, işçilik, kur…) onay "eskidi" sayılır: tarih hâlâ
+// gösterilir ama kullanıcı yeniden bakmalı. Eşik %0,5 ve 1 kuruş — kur kıpırtısı her gün onayı düşürmesin.
+function maliyetOnayDurumu(urun, hesap) {
+    const o = urun && urun.maliyetOnay;
+    if (!o || !o.tarih)
+        return { durum: "yok", tarih: null, kim: "" };
+    const simdi = hesap ? hesap.tamTL : null;
+    const fark = simdi != null && o.tamTL != null ? Math.abs(simdi - o.tamTL) : 0;
+    const eskidi = simdi == null || (fark > 0.01 && fark > Math.abs(o.tamTL) * 0.005);
+    return { durum: eskidi ? "eskidi" : "ok", tarih: o.tarih, kim: o.kim || "", onayTL: o.tamTL, simdiTL: simdi };
+}
+// Kayıt nesnesi (saf; zaman ve kim dışarıdan).
+function maliyetOnayKaydi(hesap, kim, zaman) {
+    return { tarih: zaman || new Date().toISOString(), kim: kim || "", tamTL: hesap ? hesap.tamTL : null, tur: hesap ? hesap.tur : null,
+        eksikSayisi: hesap ? hesap.eksikler.length : 0 };
+}
+// Ürün kartı › Maliyet sekmesinin başındaki kutu: eksikler, onay durumu ve "Maliyet OK" düğmesi.
+function MaliyetOnayKutusu({ urun, hesap, onUrunGuncelle }) {
+    const d = maliyetOnayDurumu(urun, hesap);
+    const tarihYazi = d.tarih ? new Date(d.tarih).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }) : "";
+    const tl = (v) => `${(Math.round((v || 0) * 100) / 100).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₺`;
+    const renk = d.durum === "ok" ? "var(--erp-ok)" : d.durum === "eskidi" ? "var(--erp-warn)" : "var(--erp-text-2)";
+    // Kart aktif kullanıcıyı almıyor; günlüğün kullanıcısı (girişte ayarlanır) yeterli. Ayarlanmamışsa boş.
+    const gk = (typeof _gunlukKullanici !== "undefined" && _gunlukKullanici && _gunlukKullanici.ad) || "";
+    const kim = gk === "Bilinmeyen" ? "" : gk;
+    return (React.createElement("div", { "data-maliyet-onay": d.durum, style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "10px 12px",
+            border: `1px solid ${d.durum === "ok" ? "#8FA888" : "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)",
+            background: d.durum === "ok" ? "#F0F5EE" : "var(--erp-panel)" } },
+        React.createElement("div", { style: { flex: 1, minWidth: 220, fontSize: 12 } },
+            React.createElement("div", { style: { fontWeight: 700, color: renk } },
+                d.durum === "ok" && React.createElement(React.Fragment, null,
+                    "\u2713 Maliyet OK \u00B7 ",
+                    tarihYazi,
+                    d.kim ? ` · ${d.kim}` : ""),
+                d.durum === "eskidi" && React.createElement(React.Fragment, null,
+                    "\u26A0 Maliyet onaydan sonra de\u011Fi\u015Fti (",
+                    tl(d.onayTL),
+                    " \u2192 ",
+                    d.simdiTL != null ? tl(d.simdiTL) : "hesaplanamıyor",
+                    ") \u00B7 onay ",
+                    tarihYazi),
+                d.durum === "yok" && React.createElement(React.Fragment, null, "Maliyet hen\u00FCz onaylanmad\u0131")),
+            React.createElement("div", { style: { color: "var(--erp-text-2)", marginTop: 2 } },
+                hesap.tur === "alis" ? "Dışarıdan alınan ürün — maliyet alış fiyatı" : "Reçete maliyeti",
+                ": ",
+                React.createElement("b", { className: "mono", "data-maliyet-onay-tutar": "1" }, hesap.tamTL != null ? tl(hesap.tamTL) : "—")),
+            hesap.eksikler.length > 0 && (React.createElement("ul", { "data-maliyet-eksikler": hesap.eksikler.length, style: { margin: "4px 0 0", paddingLeft: 18, color: "var(--erp-warn)" } }, hesap.eksikler.map((e) => React.createElement("li", { key: e }, e))))),
+        React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-maliyet-ok": "1", disabled: hesap.tamTL == null, title: hesap.eksikler.length ? "Eksikler var — yine de onaylarsanız fiyat listesinde 'OK' görünür" : "Maliyette eksik yok — onayla", onClick: () => onUrunGuncelle(urun.id, { maliyetOnay: maliyetOnayKaydi(hesap, kim) }), style: { padding: "7px 14px" } },
+            React.createElement(Check, { size: 14 }),
+            " Maliyet OK")));
+}
+// ================= FİYAT LİSTESİ (3 Ekim, v1.550.0) =================
+//
+// Kullanıcı: "Fiyat listesi yapmamız gerekli. Modellerin seçili fiyatları ile alakalı. Örnek Toptan TL
+// fiyat seçip filtreleyince modellerin Toptan TL fiyatları çıkmalı, fiyat yoksa boş göstermeli ve aynı
+// ekrandan girip düzeltilebilmeli ve kaydedilebilmeli. Bu ekranda farklı kaydet de olmalı. Örnek olarak
+// Toptan TL %14 + yapıp o fiyatın üzerine yüzde 14 artırarak veya 10 TL indirim gibi seçeneklerle pratik
+// şekilde başka fiyat grubu da oluşturalım."
+//
+// VERİ YENİ DEĞİL: fiyat grubu Tanımlar'da (`tanimlar.fiyatGruplari`: ad, tip, paraBirimi), ürünün o
+// gruptaki fiyatı ürünün `fiyatKurallari`nda (`kapsam: "fiyatGrubu"`, `deger: grupId`). Fiş ve sipariş
+// `fiyatBul` ile AYNI kuralı okuyor — bu ekran ayrı bir fiyat deposu açmıyor, var olanı toplu gösterip
+// yazıyor. Böylece burada girilen fiyat, gruba atanmış cariye kesilen fişte kendiliğinden gelir.
+// "Genel satış / Genel alış" da kaynak olarak seçilebilir (ürün kartındaki satisFiyati / alisFiyati).
+//
+// Her yazım ürünün `fiyatGecmisi`ne düşer (ürün kartındaki "Fiyat Değişiklik Geçmişi") — kim değiştirdi
+// sorusu toplu işlemde de cevapsız kalmasın.
+const FL_GENEL_SATIS = "__genelSatis";
+const FL_GENEL_ALIS = "__genelAlis";
+// MALİYET KAYNAĞI (v1.551.0): reçeteli üründe tam maliyet, reçetesizde (dışarıdan alınan) alış fiyatı — TL.
+// SALT OKUNUR: maliyet ürün kartında hesaplanır; buradan yalnız üzerine kâr koyup "Farklı kaydet" ile satış
+// fiyatı (grup ya da genel) üretilir.
+const FL_MALIYET = "__maliyet";
+// Seçilebilir kaynaklar: iki genel fiyat + Tanımlar'daki her fiyat grubu. Saf.
+function fiyatListesiKaynaklari(fiyatGruplari) {
+    return [
+        { key: FL_GENEL_SATIS, ad: "Genel satış fiyatı", tip: "Satış", genel: true, paraBirimi: null },
+        { key: FL_GENEL_ALIS, ad: "Genel alış fiyatı", tip: "Alış", genel: true, paraBirimi: null },
+        { key: FL_MALIYET, ad: "Maliyet (reçete / alış)", tip: "Maliyet", maliyet: true, genel: false, paraBirimi: "TRY" },
+        ...(fiyatGruplari || []).map((g) => ({ key: g.id, grupId: g.id, ad: g.ad, tip: g.tip || "Satış", genel: false,
+            paraBirimi: alisPbKodu({ alisParaBirimi: g.paraBirimi }) })),
+    ];
+}
+// Grubun ürün üzerindeki kuralı: renk/beden kırılımı OLMAYAN grup kuralı (fiyatBul da onu okuyor).
+function flGrupKurali(urun, kaynak) {
+    return (urun.fiyatKurallari || []).find((k) => k.kapsam === "fiyatGrubu" && k.deger === kaynak.grupId
+        && k.tip === kaynak.tip && !k.renk && !k.beden) || null;
+}
+// Ürünün seçili kaynaktaki fiyatı. Fiyat yoksa `fiyat: null` (ekranda BOŞ — 0 yazmak "bedava" sanılır).
+// `ctx` yalnız maliyet kaynağında gerekir (urunMaliyetHesabi bağlamı: tumUrunler, kurlar, tanımlar…).
+function urunKaynakFiyati(urun, kaynak, ctx) {
+    if (!urun || !kaynak)
+        return { fiyat: null, paraBirimi: "TRY" };
+    if (kaynak.maliyet) {
+        const hesap = urunMaliyetHesabi(urun, ctx || {});
+        return { fiyat: hesap.tamTL, paraBirimi: "TRY", hesap };
+    }
+    if (kaynak.genel) {
+        const satis = kaynak.tip === "Satış";
+        const f = parseFloat(satis ? urun.satisFiyati : urun.alisFiyati);
+        return { fiyat: f > 0 ? f : null, paraBirimi: alisPbKodu({ alisParaBirimi: satis ? urun.satisParaBirimi : urun.alisParaBirimi }) };
+    }
+    const k = flGrupKurali(urun, kaynak);
+    return {
+        fiyat: k && k.fiyat > 0 ? k.fiyat : null,
+        // Kural kendi birimini taşır; taşımıyorsa (eski kayıt) grubun birimi.
+        paraBirimi: (k && k.paraBirimi) || kaynak.paraBirimi || "TRY",
+    };
+}
+// TOPLU İŞLEM: yüzde ya da tutar, artış ya da indirim, isteğe bağlı yuvarlama adımı. Saf.
+//   islem = { tur: "yuzde" | "tutar", yon: 1 | -1, deger, adim }  (adim: 0.01, 0.05, 0.5, 1, 5, 10)
+// Sonuç 0 ya da eksiye düşerse null (o ürün yeni listede boş kalır, eksi fiyat yazılmaz).
+function fiyatDonustur(fiyat, islem) {
+    if (!(fiyat > 0))
+        return null;
+    const d = parseFloat(islem && islem.deger);
+    let y = fiyat;
+    if (d > 0)
+        y = islem.tur === "tutar" ? fiyat + (islem.yon < 0 ? -d : d) : fiyat * (1 + (islem.yon < 0 ? -d : d) / 100);
+    const adim = parseFloat(islem && islem.adim) > 0 ? parseFloat(islem.adim) : 0.01;
+    y = Math.round(y / adim) * adim;
+    y = Math.round(y * 100) / 100; // kayan nokta artığı (0.1 + 0.2) temizlensin
+    return y > 0 ? y : null;
+}
+// FİYATLARI KAYNAĞA YAZ. Saf: yeni ürün listesini ve değişen ürün sayısını döndürür.
+//   fiyatlar: { urunId: sayı | null }  — null "fiyatı kaldır" demek (grupta kural silinir, genelde 0).
+//   s: { zaman, kim, not, paraBirimleri: { urunId: pb } }  — pb verilmezse var olan kuralın birimi, yoksa grubun.
+function fiyatListesiYaz(urunler, kaynak, fiyatlar, s = {}) {
+    // Maliyet hesaplanan bir değer, yazılacak yeri yok (kart hesaplar).
+    if (!kaynak || kaynak.maliyet)
+        return { urunler, degisen: 0 };
+    const zaman = s.zaman || new Date().toISOString();
+    let degisen = 0;
+    const sonuc = (urunler || []).map((u) => {
+        if (!Object.prototype.hasOwnProperty.call(fiyatlar, u.id))
+            return u;
+        const yeni = fiyatlar[u.id] > 0 ? Math.round(fiyatlar[u.id] * 100) / 100 : null;
+        const eski = urunKaynakFiyati(u, kaynak);
+        const pb = (s.paraBirimleri && s.paraBirimleri[u.id]) || null;
+        if ((eski.fiyat || null) === yeni && (!pb || pb === eski.paraBirimi))
+            return u;
+        degisen++;
+        const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip,
+            etiket: `${kaynak.genel ? kaynak.ad : `Grup: ${kaynak.ad}`} (fiyat listesi${s.not ? ` · ${s.not}` : ""}${s.kim ? ` · ${s.kim}` : ""})`,
+            eskiFiyat: eski.fiyat, yeniFiyat: yeni, eskiParaBirimi: eski.fiyat != null ? eski.paraBirimi : null,
+            paraBirimi: pb || eski.paraBirimi };
+        const gecmis = [log, ...(u.fiyatGecmisi || [])].slice(0, HAREKET_GECMIS_SINIRI);
+        if (kaynak.genel) {
+            const alan = kaynak.tip === "Satış" ? "satisFiyati" : "alisFiyati";
+            const pbAlan = kaynak.tip === "Satış" ? "satisParaBirimi" : "alisParaBirimi";
+            return { ...u, [alan]: yeni || 0, ...(pb ? { [pbAlan]: PARA_SEMBOLU[pb] || pb } : {}), fiyatGecmisi: gecmis };
+        }
+        const kurallar = u.fiyatKurallari || [];
+        const mevcut = flGrupKurali(u, kaynak);
+        let yeniKurallar;
+        if (yeni == null) {
+            yeniKurallar = kurallar.filter((k) => !mevcut || k.id !== mevcut.id);
+        }
+        else {
+            const kural = { ...(mevcut || {}), id: mevcut ? mevcut.id : uid("fkural"), kapsam: "fiyatGrubu", deger: kaynak.grupId,
+                tip: kaynak.tip, fiyat: yeni, paraBirimi: pb || (mevcut && mevcut.paraBirimi) || kaynak.paraBirimi || "TRY",
+                etiket: kaynak.ad, renk: null, beden: null, kaynak: "fiyatListesi" };
+            yeniKurallar = mevcut ? kurallar.map((k) => (k.id === mevcut.id ? kural : k)) : [...kurallar, kural];
+        }
+        return { ...u, fiyatKurallari: yeniKurallar, fiyatGecmisi: gecmis };
+    });
+    return { urunler: sonuc, degisen };
+}
+// FARKLI KAYDET İÇİN BİRİM ÇEVİRME: hedef grubun birimi satırın biriminden farklıysa kurla çevrilir;
+// kur yoksa satır atlanır ve sayılır (yanlış birimde fiyat yazmaktansa boş bırakmak). Saf.
+function fiyatlariHedefBirime(satirlar, hedefPb, kurlar) {
+    const fiyatlar = {};
+    const paraBirimleri = {};
+    let cevrilemeyen = 0;
+    (satirlar || []).forEach((r) => {
+        if (!(r.fiyat > 0))
+            return;
+        if (!hedefPb || r.paraBirimi === hedefPb) {
+            fiyatlar[r.urunId] = r.fiyat;
+            paraBirimleri[r.urunId] = r.paraBirimi;
+            return;
+        }
+        const c = fiyatFiseCevir(r.fiyat, r.paraBirimi, hedefPb, kurlar || {});
+        if (c.cevrilemedi || !(c.fiyat > 0)) {
+            cevrilemeyen++;
+            return;
+        }
+        fiyatlar[r.urunId] = Math.round(c.fiyat * 100) / 100;
+        paraBirimleri[r.urunId] = hedefPb;
+    });
+    return { fiyatlar, paraBirimleri, cevrilemeyen };
+}
+function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
+    const kaynaklar = fiyatListesiKaynaklari(tanimlar.fiyatGruplari);
+    const maliyetCtx = { tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [],
+        kurlar, cariler: cariler || [], kurGecmisi: kurGecmisi || [], aylikUretimHedefi: tanimlar.aylikUretimHedefi, genelGiderler: tanimlar.genelGiderler };
+    // Maliyet kaynağında varsayılan: yalnız "Maliyet OK" olanlar — onaylanmamış maliyetin üstüne fiyat kurmayalım.
+    const [yalnizOk, setYalnizOk] = useState(true);
+    // Varsayılan: ilk SATIŞ fiyat grubu (kullanıcının örneği "Toptan TL"); grup yoksa genel satış.
+    const [kaynakKey, setKaynakKey] = useState(() => ((tanimlar.fiyatGruplari || []).find((g) => (g.tip || "Satış") === "Satış") || {}).id || FL_GENEL_SATIS);
+    const kaynak = kaynaklar.find((k) => k.key === kaynakKey) || kaynaklar[0];
+    const [kategori, setKategori] = useState("Mamul");
+    const [arama, setArama] = useState("");
+    const [goster, setGoster] = useState("tumu"); // tumu | fiyatli | fiyatsiz
+    // Düzenlemeler KAYNAK BAŞINA tutulur: kaynak değiştirince yazılanlar kaybolmasın, karışmasın da.
+    const [duzenler, setDuzenler] = useState({});
+    const kaynakDuzen = duzenler[kaynak.key] || {};
+    const [islem, setIslem] = useState({ tur: "yuzde", yon: 1, deger: "", adim: "0.01" });
+    const islemAktif = parseFloat(String(islem.deger).replace(",", ".")) > 0;
+    const islemNorm = { ...islem, deger: parseFloat(String(islem.deger).replace(",", ".")) || 0 };
+    const [farkli, setFarkli] = useState(null); // null | { hedef: "yeni" | grupId, ad, paraBirimi }
+    const kategoriler = ["Tümü", ...Array.from(new Set((stok || []).map((u) => u.kategori).filter(Boolean)))];
+    const q = arama.trim().toLocaleLowerCase("tr-TR");
+    const satirlar = (stok || [])
+        .filter((u) => kategori === "Tümü" || u.kategori === kategori)
+        .filter((u) => !q || [u.ad, u.stokNo, u.kod, u.modelKodu].some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q)))
+        .map((u) => {
+        const k = urunKaynakFiyati(u, kaynak, maliyetCtx);
+        const yazi = !kaynak.maliyet && Object.prototype.hasOwnProperty.call(kaynakDuzen, u.id) ? kaynakDuzen[u.id] : null;
+        const duzen = yazi == null ? null : (yazi.trim() === "" ? null : fiyatSayisi(yazi));
+        const gecerli = yazi == null ? k.fiyat : (duzen > 0 ? duzen : null);
+        return { urun: u, urunId: u.id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, hesap: k.hesap || null,
+            onay: k.hesap ? maliyetOnayDurumu(u, k.hesap) : null, degisti: yazi != null && (gecerli || null) !== (k.fiyat || null),
+            fiyat: gecerli, yeni: islemAktif ? fiyatDonustur(gecerli, islemNorm) : gecerli };
+    })
+        .filter((r) => goster === "tumu" || (goster === "fiyatli" ? r.fiyat > 0 : !(r.fiyat > 0)))
+        .filter((r) => !kaynak.maliyet || !yalnizOk || (r.onay && r.onay.durum === "ok"))
+        .sort((a, b) => String(a.urun.ad || "").localeCompare(String(b.urun.ad || ""), "tr"));
+    const degisenler = satirlar.filter((r) => r.degisti);
+    const fiyatliSayi = satirlar.filter((r) => r.fiyat > 0).length;
+    const yaz = (id, metin) => setDuzenler((d) => ({ ...d, [kaynak.key]: { ...(d[kaynak.key] || {}), [id]: metin } }));
+    const duzenTemizle = () => setDuzenler((d) => ({ ...d, [kaynak.key]: {} }));
+    const kim = (aktifKullanici && aktifKullanici.ad) || "";
+    // KAYDET: yalnız elle değiştirilen satırlar, seçili kaynağa.
+    const kaydet = () => {
+        if (degisenler.length === 0)
+            return;
+        const fiyatlar = {};
+        degisenler.forEach((r) => { fiyatlar[r.urunId] = r.fiyat; });
+        const { urunler, degisen } = fiyatListesiYaz(stok, kaynak, fiyatlar, { kim });
+        if (degisen)
+            onStokKaydet(urunler);
+        duzenTemizle();
+        showToast(`${degisen} ürünün "${kaynak.ad}" fiyatı kaydedildi`);
+    };
+    // TOPLU İŞLEMİ BU LİSTEYE AL: yeni değerler düzenleme olarak yazılır — kullanıcı görür, isterse tek tek
+    // düzeltir, sonra Kaydet. Doğrudan yazmıyoruz: yüzlerce fiyatı tek tıkla değiştirmek geri dönüşü zor bir iş.
+    const islemiListeyeAl = () => {
+        if (!islemAktif)
+            return;
+        setDuzenler((d) => {
+            const yeni = { ...(d[kaynak.key] || {}) };
+            satirlar.forEach((r) => { if (r.fiyat > 0)
+                yeni[r.urunId] = fiyatYazi(r.yeni == null ? "" : r.yeni); });
+            return { ...d, [kaynak.key]: yeni };
+        });
+        setIslem((i) => ({ ...i, deger: "" }));
+    };
+    // FARKLI KAYDET: ekrandaki fiyatlar (toplu işlem varsa uygulanmış hâli) başka bir gruba — yeni ya da var
+    // olan. Yeni grup Tanımlar'a eklenir; birimi farklıysa kurla çevrilir. Yalnız fiyatı OLAN satırlar yazılır,
+    // hedef grupta listede görünmeyen (süzgeç dışı) ürünlere dokunulmaz.
+    const farkliKaydet = () => {
+        if (!farkli)
+            return;
+        let hedef;
+        let yeniTanimlar = null;
+        if (farkli.hedef === "yeni") {
+            const ad = (farkli.ad || "").trim();
+            if (!ad) {
+                showToast("Yeni fiyat grubunun adını yazın");
+                return;
+            }
+            if ((tanimlar.fiyatGruplari || []).some((g) => g.ad.toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"))) {
+                showToast(`"${ad}" adında bir fiyat grubu zaten var — listeden seçin ya da başka ad verin`);
+                return;
+            }
+            const g = { id: uid("fgrup"), ad, tip: farkli.tip || "Satış", paraBirimi: farkli.paraBirimi || "TRY" };
+            yeniTanimlar = { ...tanimlar, fiyatGruplari: [...(tanimlar.fiyatGruplari || []), g] };
+            hedef = fiyatListesiKaynaklari([g]).find((k) => k.grupId === g.id); // sıraya değil kimliğe bak
+        }
+        else {
+            hedef = kaynaklar.find((k) => k.key === farkli.hedef);
+            if (!hedef || hedef.key === kaynak.key) {
+                showToast("Hedef olarak başka bir fiyat grubu seçin");
+                return;
+            }
+        }
+        const kaynakSatirlar = satirlar.map((r) => ({ urunId: r.urunId, fiyat: r.yeni, paraBirimi: r.paraBirimi }));
+        const { fiyatlar, paraBirimleri, cevrilemeyen } = fiyatlariHedefBirime(kaynakSatirlar, hedef.genel ? null : hedef.paraBirimi, kurlar);
+        const not = `${kaynak.ad}${islemAktif ? ` ${islemNorm.yon < 0 ? "−" : "+"}${islemNorm.tur === "yuzde" ? `%${islemNorm.deger}` : islemNorm.deger}` : ""}'dan`;
+        const { urunler, degisen } = fiyatListesiYaz(stok, hedef, fiyatlar, { kim, not, paraBirimleri });
+        if (yeniTanimlar)
+            onTanimlarKaydet(yeniTanimlar);
+        if (degisen)
+            onStokKaydet(urunler);
+        setFarkli(null);
+        setIslem((i) => ({ ...i, deger: "" }));
+        // Kaynak listedeki KAYDEDİLMEMİŞ düzenlemeler silinmez: kaynak başına tutuluyor, geri dönünce yerinde.
+        setKaynakKey(hedef.key); // sonucu hemen görsün
+        showToast(`"${hedef.ad}" ${yeniTanimlar ? "oluşturuldu" : "güncellendi"} — ${degisen} ürün fiyatı yazıldı`
+            + (cevrilemeyen ? ` · ${cevrilemeyen} ürün kur olmadığı için atlandı` : ""));
+    };
+    const pbSembol = (pb) => PARA_SEMBOLU[pb] || pb || "";
+    const kutu = { ...inputStyle, fontSize: 13 };
+    const cip = (aktif) => ({ padding: "5px 11px", fontSize: 12, fontWeight: 700, borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+        border: `1.5px solid ${aktif ? "var(--erp-accent)" : "var(--erp-border-2)"}`, background: aktif ? "var(--erp-accent-tint)" : "#fff",
+        color: aktif ? "var(--erp-accent)" : "var(--erp-text-2)" });
+    return (React.createElement("div", { "data-fiyat-listesi": "1" },
+        React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 } },
+            React.createElement("label", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "Fiyat"),
+            React.createElement("select", { "data-fl-kaynak": "1", value: kaynak.key, onChange: (e) => { setKaynakKey(e.target.value); setFarkli(null); }, style: { ...kutu, width: 270, fontWeight: 700 } }, kaynaklar.map((k) => (React.createElement("option", { key: k.key, value: k.key },
+                k.ad,
+                k.genel || k.maliyet ? "" : ` · ${k.tip} · ${pbSembol(k.paraBirimi)}`)))),
+            React.createElement("select", { "data-fl-kategori": "1", value: kategori, onChange: (e) => setKategori(e.target.value), style: { ...kutu, width: 140 } }, kategoriler.map((k) => React.createElement("option", { key: k, value: k }, k === "Tümü" ? "Tüm kategoriler" : k))),
+            React.createElement("div", { style: { display: "flex", gap: 4 } }, [["tumu", "Tümü"], ["fiyatli", "Fiyatı olan"], ["fiyatsiz", "Fiyatı boş"]].map(([k, ad]) => (React.createElement("button", { key: k, type: "button", "data-fl-goster": k, onClick: () => setGoster(k), style: cip(goster === k) }, ad)))),
+            kaynak.maliyet && (React.createElement("button", { type: "button", "data-fl-yalniz-ok": yalnizOk ? "1" : "0", onClick: () => setYalnizOk((x) => !x), style: cip(yalnizOk), title: "\u00DCr\u00FCn kart\u0131 \u203A Maliyet'te 'Maliyet OK' denmi\u015F ve o g\u00FCnden beri maliyeti de\u011Fi\u015Fmemi\u015F \u00FCr\u00FCnler" },
+                yalnizOk ? "✓ " : "",
+                "Yaln\u0131z Maliyet OK")),
+            React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Listede ara\u2026", style: { ...kutu, width: 180, marginLeft: "auto" } })),
+        (tanimlar.fiyatGruplari || []).length === 0 && (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 10 } }, "Hen\u00FCz fiyat grubu yok \u2014 a\u015Fa\u011F\u0131dan \"Farkl\u0131 kaydet\" ile genel fiyattan yeni grup olu\u015Fturabilir ya da Tan\u0131mlar \u203A \u00DCr\u00FCn \u203A Fiyat Gruplar\u0131'ndan a\u00E7abilirsiniz.")),
+        React.createElement("div", { "data-fl-toplu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", background: "var(--erp-panel)",
+                border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 12 } },
+            React.createElement("b", { style: { fontSize: 12 } }, kaynak.maliyet ? "Kâr ekle:" : "Toplu işlem:"),
+            React.createElement("div", { style: { display: "flex", gap: 4 } }, [[1, "Artır"], [-1, "İndir"]].map(([yon, ad]) => (React.createElement("button", { key: yon, type: "button", "data-fl-yon": yon, onClick: () => setIslem((i) => ({ ...i, yon })), style: cip(islem.yon === yon) }, ad)))),
+            React.createElement("input", { "data-fl-deger": "1", value: islem.deger, inputMode: "decimal", placeholder: islem.tur === "yuzde" ? "14" : "10", onChange: (e) => setIslem((i) => ({ ...i, deger: e.target.value })), style: { ...kutu, width: 80, textAlign: "right" } }),
+            React.createElement("div", { style: { display: "flex", gap: 4 } }, [["yuzde", "%"], ["tutar", `Tutar (${pbSembol(kaynak.paraBirimi || "TRY")})`]].map(([tur, ad]) => (React.createElement("button", { key: tur, type: "button", "data-fl-tur": tur, onClick: () => setIslem((i) => ({ ...i, tur })), style: cip(islem.tur === tur) }, ad)))),
+            React.createElement("label", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, "Yuvarla"),
+            React.createElement("select", { "data-fl-adim": "1", value: islem.adim, onChange: (e) => setIslem((i) => ({ ...i, adim: e.target.value })), style: { ...kutu, width: 100 } }, [["0.01", "Kuruş"], ["0.05", "0,05"], ["0.5", "0,50"], ["1", "1"], ["5", "5"], ["10", "10"]].map(([v, ad]) => React.createElement("option", { key: v, value: v }, ad))),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-fl-listeye-al": "1", disabled: !islemAktif || kaynak.maliyet, onClick: islemiListeyeAl, title: "Yeni fiyatlar\u0131 bu listeye yaz (Kaydet'e bas\u0131lana kadar kaydedilmez)", style: { padding: "6px 11px", fontSize: 12 } }, "Bu listeye uygula"),
+            React.createElement("button", { type: "button", className: "btn-primary", "data-fl-farkli-ac": "1", onClick: () => setFarkli(farkli ? null : { hedef: "yeni", ad: "", paraBirimi: kaynak.paraBirimi || "TRY",
+                    // Maliyetten ve alıştan SATIŞ fiyatı üretilir (kullanıcı: "alış fiyatından satış fiyatı yapalım").
+                    tip: kaynak.maliyet || kaynak.tip === "Alış" ? "Satış" : kaynak.tip }), style: { padding: "6px 12px", fontSize: 12, marginLeft: "auto" } },
+                React.createElement(Save, { size: 13 }),
+                " Farkl\u0131 kaydet\u2026"),
+            farkli && (React.createElement("div", { "data-fl-farkli": "1", style: { flexBasis: "100%", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px dashed var(--erp-line)", paddingTop: 8 } },
+                React.createElement("span", { style: { fontSize: 12 } },
+                    "Ekrandaki ",
+                    fiyatliSayi,
+                    " fiyat",
+                    islemAktif ? ` (${islemNorm.yon < 0 ? "−" : "+"}${islemNorm.tur === "yuzde" ? `%${islemNorm.deger}` : `${islemNorm.deger} ${pbSembol(kaynak.paraBirimi || "TRY")}`} uygulanmış)` : "",
+                    " \u2192"),
+                React.createElement("select", { "data-fl-hedef": "1", value: farkli.hedef, onChange: (e) => setFarkli((f) => ({ ...f, hedef: e.target.value })), style: { ...kutu, width: 200 } },
+                    React.createElement("option", { value: "yeni" }, "Yeni fiyat grubu\u2026"),
+                    kaynaklar.filter((k) => k.key !== kaynak.key && !k.maliyet).map((k) => React.createElement("option", { key: k.key, value: k.key },
+                        k.ad,
+                        k.genel ? "" : ` · ${k.tip}`))),
+                farkli.hedef === "yeni" && (React.createElement(React.Fragment, null,
+                    React.createElement("input", { "data-fl-yeni-ad": "1", value: farkli.ad, placeholder: "\u00D6rn. Toptan TL +14", autoFocus: true, onChange: (e) => setFarkli((f) => ({ ...f, ad: e.target.value })), style: { ...kutu, width: 190 } }),
+                    React.createElement("select", { "data-fl-yeni-tip": "1", value: farkli.tip, onChange: (e) => setFarkli((f) => ({ ...f, tip: e.target.value })), style: { ...kutu, width: 90 } }, ["Satış", "Alış"].map((t) => React.createElement("option", { key: t, value: t }, t))),
+                    React.createElement("select", { "data-fl-yeni-pb": "1", value: farkli.paraBirimi, onChange: (e) => setFarkli((f) => ({ ...f, paraBirimi: e.target.value })), style: { ...kutu, width: 90 } }, ["TRY", "USD", "EUR"].map((pb) => React.createElement("option", { key: pb, value: pb },
+                        pbSembol(pb),
+                        " ",
+                        pb))))),
+                React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-fl-farkli-kaydet": "1", onClick: farkliKaydet, style: { padding: "6px 12px", fontSize: 12 } },
+                    React.createElement(Check, { size: 13 }),
+                    " Grubu kaydet"),
+                React.createElement("button", { type: "button", className: "btn-ghost", onClick: () => setFarkli(null), style: { padding: "6px 10px", fontSize: 12 } }, "Vazge\u00E7")))),
+        degisenler.length > 0 && (React.createElement("div", { "data-fl-degisen": degisenler.length, style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 10, padding: "8px 12px",
+                background: "var(--erp-accent-tint)", borderRadius: "var(--erp-r-md)", fontSize: 13 } },
+            React.createElement("b", null,
+                degisenler.length,
+                " fiyat de\u011Fi\u015Fti"),
+            " \u2014 \"",
+            kaynak.ad,
+            "\" listesine kaydedilmedi.",
+            React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-fl-kaydet": "1", onClick: kaydet, style: { marginLeft: "auto", padding: "6px 14px" } },
+                React.createElement(Save, { size: 13 }),
+                " Kaydet"),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-fl-vazgec": "1", onClick: duzenTemizle, style: { padding: "6px 10px" } }, "Vazge\u00E7"))),
+        React.createElement("div", { style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflowX: "auto" } },
+            React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } },
+                React.createElement("thead", null,
+                    React.createElement("tr", { style: { background: "var(--erp-panel)", textAlign: "left" } },
+                        React.createElement("th", { style: { padding: "8px 10px", width: 90 } }, "Stok no"),
+                        React.createElement("th", { style: { padding: "8px 10px" } }, "Model / \u00FCr\u00FCn"),
+                        React.createElement("th", { style: { padding: "8px 10px", width: 100 } }, "Kategori"),
+                        kaynak.maliyet && React.createElement("th", { style: { padding: "8px 10px", width: 210 } }, "Maliyet durumu"),
+                        React.createElement("th", { style: { padding: "8px 10px", width: 150, textAlign: "right" } }, kaynak.maliyet ? "Maliyet" : kaynak.ad),
+                        islemAktif && React.createElement("th", { style: { padding: "8px 10px", width: 120, textAlign: "right" } }, "Yeni fiyat"))),
+                React.createElement("tbody", null,
+                    satirlar.length === 0 && (React.createElement("tr", null,
+                        React.createElement("td", { colSpan: 6, style: { padding: 16, textAlign: "center", color: "var(--erp-text-3)" } }, "Bu s\u00FCzge\u00E7le \u00FCr\u00FCn yok."))),
+                    satirlar.map((r) => (React.createElement("tr", { key: r.urunId, "data-fl-satir": r.urun.ad, style: { borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined } },
+                        React.createElement("td", { className: "mono", style: { padding: "6px 10px", fontSize: 11, color: "var(--erp-text-3)" } }, r.urun.stokNo || "—"),
+                        React.createElement("td", { style: { padding: "6px 10px", fontWeight: 600 } }, r.urun.ad),
+                        React.createElement("td", { style: { padding: "6px 10px", fontSize: 11, color: "var(--erp-text-2)" } }, r.urun.kategori || ""),
+                        kaynak.maliyet && (React.createElement("td", { "data-fl-maliyet-durum": r.urun.ad, style: { padding: "6px 10px", fontSize: 11 } },
+                            r.onay.durum === "ok" && React.createElement("span", { style: { color: "var(--erp-ok)", fontWeight: 700 } },
+                                "\u2713 OK \u00B7 ",
+                                new Date(r.onay.tarih).toLocaleDateString("tr-TR")),
+                            r.onay.durum === "eskidi" && React.createElement("span", { style: { color: "var(--erp-warn)", fontWeight: 700 }, title: "Onaydan sonra maliyet de\u011Fi\u015Fti \u2014 \u00FCr\u00FCn kart\u0131nda yeniden onaylay\u0131n" },
+                                "\u26A0 de\u011Fi\u015Fti \u00B7 onay ",
+                                new Date(r.onay.tarih).toLocaleDateString("tr-TR")),
+                            r.onay.durum === "yok" && React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "onaylanmad\u0131"),
+                            React.createElement("span", { style: { color: "var(--erp-text-3)" } },
+                                " \u00B7 ",
+                                r.hesap.tur === "alis" ? "alış" : r.hesap.tur === "recete" ? "reçete" : "—"),
+                            r.hesap.eksikler.length > 0 && React.createElement("span", { title: r.hesap.eksikler.join("\n"), style: { color: "var(--erp-warn)" } },
+                                " \u00B7 ",
+                                r.hesap.eksikler.length,
+                                " eksik"))),
+                        React.createElement("td", { style: { padding: "4px 10px", textAlign: "right", whiteSpace: "nowrap" } },
+                            React.createElement("input", { "data-fl-fiyat": r.urun.ad, inputMode: "decimal", readOnly: !!kaynak.maliyet, value: r.yazi != null ? r.yazi : fiyatYazi(r.kayitli), placeholder: "\u2014", onChange: (e) => yaz(r.urunId, e.target.value), onKeyDown: (e) => { if (e.key === "Enter" && degisenler.length)
+                                    kaydet(); }, style: { ...kutu, width: 100, textAlign: "right", padding: "5px 8px", fontWeight: r.degisti ? 800 : 600,
+                                    borderColor: r.degisti ? "var(--erp-warn)" : undefined } }),
+                            React.createElement("span", { style: { marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" } }, pbSembol(r.paraBirimi))),
+                        islemAktif && (React.createElement("td", { "data-fl-yeni": r.urun.ad, className: "mono", style: { padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "var(--erp-accent)" } }, r.yeni > 0 ? `${r.yeni.toFixed(2).replace(".", ",")} ${pbSembol(r.paraBirimi)}` : "")))))))),
+        React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 } }, kaynak.maliyet ? (React.createElement(React.Fragment, null,
+            satirlar.length,
+            " \u00FCr\u00FCn \u00B7 maliyet TL, \u00FCr\u00FCn kart\u0131nda hesaplan\u0131r (re\u00E7eteli: re\u00E7ete + i\u015F\u00E7ilik + genel gider; re\u00E7etesiz: al\u0131\u015F fiyat\u0131) \u2014 buradan de\u011Fi\u015Ftirilmez. Onay \u00FCr\u00FCn kart\u0131 \u203A Maliyet \u203A \"Maliyet OK\". K\u00E2r ekleyip \"Farkl\u0131 kaydet\" ile sat\u0131\u015F fiyat\u0131 yaz\u0131n.")) : (React.createElement(React.Fragment, null,
+            satirlar.length,
+            " \u00FCr\u00FCn \u00B7 ",
+            fiyatliSayi,
+            " fiyatl\u0131 \u00B7 bo\u015F kutu = bu listede fiyat\u0131 yok (yaz\u0131p Kaydet'e bas\u0131n; kutuyu bo\u015Faltmak fiyat\u0131 kald\u0131r\u0131r). Fi\u015F ve sipari\u015Fte bu fiyat, gruba atanm\u0131\u015F cariye kendili\u011Finden gelir.")))));
+}
 // Stok Hareketleri'ni de Stok Bilgileri'ndeki renk×beden matrisiyle aynı düzende gösterir.
 // Her hücre o renk/bedene ait net hareketi gösterir, tıklanınca o hücrenin fiş geçmişi açılır.
 // Fiyat kutusuna yazılan metin → sayı (v1.481.0). Telefonda virgülle yazılıyor ("0,18"); number kutusu
@@ -27257,11 +28151,13 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                             })))));
                     })()))))),
             isMamul && cardTab === "maliyet" && (React.createElement("div", { "data-maliyet-sekmesi": "1", style: { display: "grid", gap: 10 } },
+                React.createElement(MaliyetOnayKutusu, { urun: product, onUrunGuncelle: onUrunGuncelle, hesap: urunMaliyetHesabi(product, { tumUrunler, tanimlarProsesler, tanimlarAraProsesler, kurlar, cariler, kurGecmisi,
+                        aylikUretimHedefi: tanimlarAylikUretimHedefi, genelGiderler: tanimlarGenelGiderler }) }),
                 (product.recete || []).length > 0 && (React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } },
                     React.createElement("button", { type: "button", className: "btn-ghost", "data-maliyet-yazdir-ac": "1", onClick: () => onPencereAc("maliyet", product.id, `Maliyet: ${product.ad}`, { product }), title: "Se\u00E7ili para biriminde maliyet d\u00F6k\u00FCm\u00FCn\u00FC yazd\u0131r" },
                         React.createElement(Printer, { size: 13 }),
                         " Maliyet Yazd\u0131r (PDF)"))),
-                (product.recete || []).length === 0 && (React.createElement(EmptyState, { text: "Re\u00E7ete bo\u015F \u2014 \u00F6nce Re\u00E7ete sekmesinden hammadde ekleyin, maliyet buradan \u00E7\u0131kar." })),
+                (product.recete || []).length === 0 && (React.createElement(EmptyState, { text: "Re\u00E7ete bo\u015F \u2014 \u00FCretilen \u00FCr\u00FCnde Re\u00E7ete sekmesinden hammadde ekleyin; d\u0131\u015Far\u0131dan al\u0131nan \u00FCr\u00FCnde maliyet al\u0131\u015F fiyat\u0131d\u0131r (Stok Bilgileri \u203A Al\u0131\u015F fiyat\u0131)." })),
                 (() => {
                     const ozet = product.receteGerceklesme || {};
                     const satirlar = [];
@@ -50843,7 +51739,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.548.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.551.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

@@ -17,12 +17,17 @@
 
 const FL_GENEL_SATIS = "__genelSatis";
 const FL_GENEL_ALIS = "__genelAlis";
+// MALİYET KAYNAĞI (v1.551.0): reçeteli üründe tam maliyet, reçetesizde (dışarıdan alınan) alış fiyatı — TL.
+// SALT OKUNUR: maliyet ürün kartında hesaplanır; buradan yalnız üzerine kâr koyup "Farklı kaydet" ile satış
+// fiyatı (grup ya da genel) üretilir.
+const FL_MALIYET = "__maliyet";
 
 // Seçilebilir kaynaklar: iki genel fiyat + Tanımlar'daki her fiyat grubu. Saf.
 function fiyatListesiKaynaklari(fiyatGruplari) {
   return [
     { key: FL_GENEL_SATIS, ad: "Genel satış fiyatı", tip: "Satış", genel: true, paraBirimi: null },
     { key: FL_GENEL_ALIS, ad: "Genel alış fiyatı", tip: "Alış", genel: true, paraBirimi: null },
+    { key: FL_MALIYET, ad: "Maliyet (reçete / alış)", tip: "Maliyet", maliyet: true, genel: false, paraBirimi: "TRY" },
     ...(fiyatGruplari || []).map((g) => ({ key: g.id, grupId: g.id, ad: g.ad, tip: g.tip || "Satış", genel: false,
       paraBirimi: alisPbKodu({ alisParaBirimi: g.paraBirimi }) })),
   ];
@@ -35,8 +40,13 @@ function flGrupKurali(urun, kaynak) {
 }
 
 // Ürünün seçili kaynaktaki fiyatı. Fiyat yoksa `fiyat: null` (ekranda BOŞ — 0 yazmak "bedava" sanılır).
-function urunKaynakFiyati(urun, kaynak) {
+// `ctx` yalnız maliyet kaynağında gerekir (urunMaliyetHesabi bağlamı: tumUrunler, kurlar, tanımlar…).
+function urunKaynakFiyati(urun, kaynak, ctx) {
   if (!urun || !kaynak) return { fiyat: null, paraBirimi: "TRY" };
+  if (kaynak.maliyet) {
+    const hesap = urunMaliyetHesabi(urun, ctx || {});
+    return { fiyat: hesap.tamTL, paraBirimi: "TRY", hesap };
+  }
   if (kaynak.genel) {
     const satis = kaynak.tip === "Satış";
     const f = parseFloat(satis ? urun.satisFiyati : urun.alisFiyati);
@@ -68,6 +78,8 @@ function fiyatDonustur(fiyat, islem) {
 //   fiyatlar: { urunId: sayı | null }  — null "fiyatı kaldır" demek (grupta kural silinir, genelde 0).
 //   s: { zaman, kim, not, paraBirimleri: { urunId: pb } }  — pb verilmezse var olan kuralın birimi, yoksa grubun.
 function fiyatListesiYaz(urunler, kaynak, fiyatlar, s = {}) {
+  // Maliyet hesaplanan bir değer, yazılacak yeri yok (kart hesaplar).
+  if (!kaynak || kaynak.maliyet) return { urunler, degisen: 0 };
   const zaman = s.zaman || new Date().toISOString();
   let degisen = 0;
   const sonuc = (urunler || []).map((u) => {
@@ -117,8 +129,12 @@ function fiyatlariHedefBirime(satirlar, hedefPb, kurlar) {
   return { fiyatlar, paraBirimleri, cevrilemeyen };
 }
 
-function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
+function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
   const kaynaklar = fiyatListesiKaynaklari(tanimlar.fiyatGruplari);
+  const maliyetCtx = { tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [],
+    kurlar, cariler: cariler || [], kurGecmisi: kurGecmisi || [], aylikUretimHedefi: tanimlar.aylikUretimHedefi, genelGiderler: tanimlar.genelGiderler };
+  // Maliyet kaynağında varsayılan: yalnız "Maliyet OK" olanlar — onaylanmamış maliyetin üstüne fiyat kurmayalım.
+  const [yalnizOk, setYalnizOk] = useState(true);
   // Varsayılan: ilk SATIŞ fiyat grubu (kullanıcının örneği "Toptan TL"); grup yoksa genel satış.
   const [kaynakKey, setKaynakKey] = useState(() => ((tanimlar.fiyatGruplari || []).find((g) => (g.tip || "Satış") === "Satış") || {}).id || FL_GENEL_SATIS);
   const kaynak = kaynaklar.find((k) => k.key === kaynakKey) || kaynaklar[0];
@@ -139,14 +155,16 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
     .filter((u) => kategori === "Tümü" || u.kategori === kategori)
     .filter((u) => !q || [u.ad, u.stokNo, u.kod, u.modelKodu].some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q)))
     .map((u) => {
-      const k = urunKaynakFiyati(u, kaynak);
-      const yazi = Object.prototype.hasOwnProperty.call(kaynakDuzen, u.id) ? kaynakDuzen[u.id] : null;
+      const k = urunKaynakFiyati(u, kaynak, maliyetCtx);
+      const yazi = !kaynak.maliyet && Object.prototype.hasOwnProperty.call(kaynakDuzen, u.id) ? kaynakDuzen[u.id] : null;
       const duzen = yazi == null ? null : (yazi.trim() === "" ? null : fiyatSayisi(yazi));
       const gecerli = yazi == null ? k.fiyat : (duzen > 0 ? duzen : null);
-      return { urun: u, urunId: u.id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, degisti: yazi != null && (gecerli || null) !== (k.fiyat || null),
+      return { urun: u, urunId: u.id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, hesap: k.hesap || null,
+        onay: k.hesap ? maliyetOnayDurumu(u, k.hesap) : null, degisti: yazi != null && (gecerli || null) !== (k.fiyat || null),
         fiyat: gecerli, yeni: islemAktif ? fiyatDonustur(gecerli, islemNorm) : gecerli };
     })
     .filter((r) => goster === "tumu" || (goster === "fiyatli" ? r.fiyat > 0 : !(r.fiyat > 0)))
+    .filter((r) => !kaynak.maliyet || !yalnizOk || (r.onay && r.onay.durum === "ok"))
     .sort((a, b) => String(a.urun.ad || "").localeCompare(String(b.urun.ad || ""), "tr"));
   const degisenler = satirlar.filter((r) => r.degisti);
   const fiyatliSayi = satirlar.filter((r) => r.fiyat > 0).length;
@@ -191,9 +209,9 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
       if ((tanimlar.fiyatGruplari || []).some((g) => g.ad.toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"))) {
         showToast(`"${ad}" adında bir fiyat grubu zaten var — listeden seçin ya da başka ad verin`); return;
       }
-      const g = { id: uid("fgrup"), ad, tip: kaynak.tip, paraBirimi: farkli.paraBirimi || "TRY" };
+      const g = { id: uid("fgrup"), ad, tip: farkli.tip || "Satış", paraBirimi: farkli.paraBirimi || "TRY" };
       yeniTanimlar = { ...tanimlar, fiyatGruplari: [...(tanimlar.fiyatGruplari || []), g] };
-      hedef = fiyatListesiKaynaklari([g])[2];
+      hedef = fiyatListesiKaynaklari([g]).find((k) => k.grupId === g.id);   // sıraya değil kimliğe bak
     } else {
       hedef = kaynaklar.find((k) => k.key === farkli.hedef);
       if (!hedef || hedef.key === kaynak.key) { showToast("Hedef olarak başka bir fiyat grubu seçin"); return; }
@@ -224,9 +242,9 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
         <label style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>Fiyat</label>
         <select data-fl-kaynak="1" value={kaynak.key} onChange={(e) => { setKaynakKey(e.target.value); setFarkli(null); }}
-          style={{ ...kutu, width: 230, fontWeight: 700 }}>
+          style={{ ...kutu, width: 270, fontWeight: 700 }}>
           {kaynaklar.map((k) => (
-            <option key={k.key} value={k.key}>{k.ad}{k.genel ? "" : ` · ${k.tip} · ${pbSembol(k.paraBirimi)}`}</option>
+            <option key={k.key} value={k.key}>{k.ad}{k.genel || k.maliyet ? "" : ` · ${k.tip} · ${pbSembol(k.paraBirimi)}`}</option>
           ))}
         </select>
         <select data-fl-kategori="1" value={kategori} onChange={(e) => setKategori(e.target.value)} style={{ ...kutu, width: 140 }}>
@@ -237,6 +255,12 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
             <button key={k} type="button" data-fl-goster={k} onClick={() => setGoster(k)} style={cip(goster === k)}>{ad}</button>
           ))}
         </div>
+        {kaynak.maliyet && (
+          <button type="button" data-fl-yalniz-ok={yalnizOk ? "1" : "0"} onClick={() => setYalnizOk((x) => !x)} style={cip(yalnizOk)}
+            title="Ürün kartı › Maliyet'te 'Maliyet OK' denmiş ve o günden beri maliyeti değişmemiş ürünler">
+            {yalnizOk ? "✓ " : ""}Yalnız Maliyet OK
+          </button>
+        )}
         <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Listede ara…" style={{ ...kutu, width: 180, marginLeft: "auto" }} />
       </div>
       {(tanimlar.fiyatGruplari || []).length === 0 && (
@@ -248,7 +272,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
       {/* TOPLU İŞLEM + FARKLI KAYDET */}
       <div data-fl-toplu="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", background: "var(--erp-panel)",
         border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 12 }}>
-        <b style={{ fontSize: 12 }}>Toplu işlem:</b>
+        <b style={{ fontSize: 12 }}>{kaynak.maliyet ? "Kâr ekle:" : "Toplu işlem:"}</b>
         <div style={{ display: "flex", gap: 4 }}>
           {[[1, "Artır"], [-1, "İndir"]].map(([yon, ad]) => (
             <button key={yon} type="button" data-fl-yon={yon} onClick={() => setIslem((i) => ({ ...i, yon }))} style={cip(islem.yon === yon)}>{ad}</button>
@@ -265,12 +289,14 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
         <select data-fl-adim="1" value={islem.adim} onChange={(e) => setIslem((i) => ({ ...i, adim: e.target.value }))} style={{ ...kutu, width: 100 }}>
           {[["0.01", "Kuruş"], ["0.05", "0,05"], ["0.5", "0,50"], ["1", "1"], ["5", "5"], ["10", "10"]].map(([v, ad]) => <option key={v} value={v}>{ad}</option>)}
         </select>
-        <button type="button" className="btn-ghost" data-fl-listeye-al="1" disabled={!islemAktif} onClick={islemiListeyeAl}
+        <button type="button" className="btn-ghost" data-fl-listeye-al="1" disabled={!islemAktif || kaynak.maliyet} onClick={islemiListeyeAl}
           title="Yeni fiyatları bu listeye yaz (Kaydet'e basılana kadar kaydedilmez)" style={{ padding: "6px 11px", fontSize: 12 }}>
           Bu listeye uygula
         </button>
         <button type="button" className="btn-primary" data-fl-farkli-ac="1"
-          onClick={() => setFarkli(farkli ? null : { hedef: "yeni", ad: "", paraBirimi: kaynak.paraBirimi || "TRY" })}
+          onClick={() => setFarkli(farkli ? null : { hedef: "yeni", ad: "", paraBirimi: kaynak.paraBirimi || "TRY",
+            // Maliyetten ve alıştan SATIŞ fiyatı üretilir (kullanıcı: "alış fiyatından satış fiyatı yapalım").
+            tip: kaynak.maliyet || kaynak.tip === "Alış" ? "Satış" : kaynak.tip })}
           style={{ padding: "6px 12px", fontSize: 12, marginLeft: "auto" }}>
           <Save size={13} /> Farklı kaydet…
         </button>
@@ -281,12 +307,15 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
             </span>
             <select data-fl-hedef="1" value={farkli.hedef} onChange={(e) => setFarkli((f) => ({ ...f, hedef: e.target.value }))} style={{ ...kutu, width: 200 }}>
               <option value="yeni">Yeni fiyat grubu…</option>
-              {kaynaklar.filter((k) => k.key !== kaynak.key && k.tip === kaynak.tip).map((k) => <option key={k.key} value={k.key}>{k.ad}</option>)}
+              {kaynaklar.filter((k) => k.key !== kaynak.key && !k.maliyet).map((k) => <option key={k.key} value={k.key}>{k.ad}{k.genel ? "" : ` · ${k.tip}`}</option>)}
             </select>
             {farkli.hedef === "yeni" && (
               <>
                 <input data-fl-yeni-ad="1" value={farkli.ad} placeholder="Örn. Toptan TL +14" autoFocus
                   onChange={(e) => setFarkli((f) => ({ ...f, ad: e.target.value }))} style={{ ...kutu, width: 190 }} />
+                <select data-fl-yeni-tip="1" value={farkli.tip} onChange={(e) => setFarkli((f) => ({ ...f, tip: e.target.value }))} style={{ ...kutu, width: 90 }}>
+                  {["Satış", "Alış"].map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
                 <select data-fl-yeni-pb="1" value={farkli.paraBirimi} onChange={(e) => setFarkli((f) => ({ ...f, paraBirimi: e.target.value }))} style={{ ...kutu, width: 90 }}>
                   {["TRY", "USD", "EUR"].map((pb) => <option key={pb} value={pb}>{pbSembol(pb)} {pb}</option>)}
                 </select>
@@ -320,21 +349,31 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
               <th style={{ padding: "8px 10px", width: 90 }}>Stok no</th>
               <th style={{ padding: "8px 10px" }}>Model / ürün</th>
               <th style={{ padding: "8px 10px", width: 100 }}>Kategori</th>
-              <th style={{ padding: "8px 10px", width: 150, textAlign: "right" }}>{kaynak.ad}</th>
+              {kaynak.maliyet && <th style={{ padding: "8px 10px", width: 210 }}>Maliyet durumu</th>}
+              <th style={{ padding: "8px 10px", width: 150, textAlign: "right" }}>{kaynak.maliyet ? "Maliyet" : kaynak.ad}</th>
               {islemAktif && <th style={{ padding: "8px 10px", width: 120, textAlign: "right" }}>Yeni fiyat</th>}
             </tr>
           </thead>
           <tbody>
             {satirlar.length === 0 && (
-              <tr><td colSpan={5} style={{ padding: 16, textAlign: "center", color: "var(--erp-text-3)" }}>Bu süzgeçle ürün yok.</td></tr>
+              <tr><td colSpan={6} style={{ padding: 16, textAlign: "center", color: "var(--erp-text-3)" }}>Bu süzgeçle ürün yok.</td></tr>
             )}
             {satirlar.map((r) => (
               <tr key={r.urunId} data-fl-satir={r.urun.ad} style={{ borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined }}>
                 <td className="mono" style={{ padding: "6px 10px", fontSize: 11, color: "var(--erp-text-3)" }}>{r.urun.stokNo || "—"}</td>
                 <td style={{ padding: "6px 10px", fontWeight: 600 }}>{r.urun.ad}</td>
                 <td style={{ padding: "6px 10px", fontSize: 11, color: "var(--erp-text-2)" }}>{r.urun.kategori || ""}</td>
+                {kaynak.maliyet && (
+                  <td data-fl-maliyet-durum={r.urun.ad} style={{ padding: "6px 10px", fontSize: 11 }}>
+                    {r.onay.durum === "ok" && <span style={{ color: "var(--erp-ok)", fontWeight: 700 }}>✓ OK · {new Date(r.onay.tarih).toLocaleDateString("tr-TR")}</span>}
+                    {r.onay.durum === "eskidi" && <span style={{ color: "var(--erp-warn)", fontWeight: 700 }} title="Onaydan sonra maliyet değişti — ürün kartında yeniden onaylayın">⚠ değişti · onay {new Date(r.onay.tarih).toLocaleDateString("tr-TR")}</span>}
+                    {r.onay.durum === "yok" && <span style={{ color: "var(--erp-text-3)" }}>onaylanmadı</span>}
+                    <span style={{ color: "var(--erp-text-3)" }}> · {r.hesap.tur === "alis" ? "alış" : r.hesap.tur === "recete" ? "reçete" : "—"}</span>
+                    {r.hesap.eksikler.length > 0 && <span title={r.hesap.eksikler.join("\n")} style={{ color: "var(--erp-warn)" }}> · {r.hesap.eksikler.length} eksik</span>}
+                  </td>
+                )}
                 <td style={{ padding: "4px 10px", textAlign: "right", whiteSpace: "nowrap" }}>
-                  <input data-fl-fiyat={r.urun.ad} inputMode="decimal"
+                  <input data-fl-fiyat={r.urun.ad} inputMode="decimal" readOnly={!!kaynak.maliyet}
                     value={r.yazi != null ? r.yazi : fiyatYazi(r.kayitli)}
                     placeholder="—"
                     onChange={(e) => yaz(r.urunId, e.target.value)}
@@ -354,8 +393,13 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, onStokKaydet, onTanimlarKa
         </table>
       </div>
       <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 }}>
-        {satirlar.length} ürün · {fiyatliSayi} fiyatlı · boş kutu = bu listede fiyatı yok (yazıp Kaydet'e basın; kutuyu boşaltmak fiyatı kaldırır).
-        Fiş ve siparişte bu fiyat, gruba atanmış cariye kendiliğinden gelir.
+        {kaynak.maliyet ? (
+          <>{satirlar.length} ürün · maliyet TL, ürün kartında hesaplanır (reçeteli: reçete + işçilik + genel gider; reçetesiz: alış fiyatı) —
+            buradan değiştirilmez. Onay ürün kartı › Maliyet › "Maliyet OK". Kâr ekleyip "Farklı kaydet" ile satış fiyatı yazın.</>
+        ) : (
+          <>{satirlar.length} ürün · {fiyatliSayi} fiyatlı · boş kutu = bu listede fiyatı yok (yazıp Kaydet'e basın; kutuyu boşaltmak fiyatı kaldırır).
+            Fiş ve siparişte bu fiyat, gruba atanmış cariye kendiliğinden gelir.</>
+        )}
       </div>
     </div>
   );

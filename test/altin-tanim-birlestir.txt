@@ -1,0 +1,27 @@
+{
+  "uyariOnce": true,
+  "dugme": "1",
+  "uyariSonra": false,
+  "kombinasyonlar": [
+    "1002:r1+r2"
+  ],
+  "yerelRenkler": [
+    "Siyah",
+    "Taba",
+    "Lacivert"
+  ],
+  "bulutaGidenRenkler": [
+    "Siyah",
+    "Taba",
+    "Lacivert"
+  ],
+  "bulutaGidenKombi": [
+    "1002"
+  ],
+  "ekranda": [
+    "Siyah",
+    "Taba",
+    "Lacivert"
+  ],
+  "hatalar": []
+}

@@ -386,16 +386,34 @@ function bekleyenYazmaSil(anahtar) {
   } catch (e) { /* */ }
 }
 
-function tekilYaz(anahtar, tablo, veri) {
+function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
+  // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
+  // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
+  // "1017 - Beyaz Deri/Gümüş … Tanımlar'da yok"). Yazmadan önce buluttaki hâl okunur; bu cihazda SİLİNMEMİŞ
+  // eksik öğeler eklenir. Bulut okunamazsa birleştirmesiz yazılır. Yedekten geri yükleme ve sıfırlama
+  // bilerek bütününü yazar: `{ birlestirme: false }`.
+  const birlestir = tablo === "tanimlar" && secenek.birlestirme !== false && typeof tanimlariBirlestir === "function";
+  const gidecek = birlestir
+    ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").then((r) => {
+        const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
+        const b = tanimlariBirlestir(veri, bulut, tanimSilinenleriOku());
+        if (b.eklenen.length === 0) return veri;
+        // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır.
+        guvenliYaz(anahtar, JSON.stringify(b.tanimlar), true);
+        console.info(`Tanımlar bulutla birleştirildi: ${b.eklenen.length} öğe korundu`, b.eklenen);
+        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti(bulut, b.eklenen);
+        return b.tanimlar;
+      }).catch(() => veri)
+    : Promise.resolve(veri);
   return Promise.all([
     yerel,
-    supabaseIstek(tablo, {
+    gidecek.then((v) => supabaseIstek(tablo, {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify([{ id: "tekil", veri }]),
-    }).then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
+      body: JSON.stringify([{ id: "tekil", veri: v }]),
+    })).then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
       bekleyenYazmaEkle(anahtar, tablo, e && e.message);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {

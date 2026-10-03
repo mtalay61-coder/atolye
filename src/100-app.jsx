@@ -969,8 +969,11 @@ export default function AtolyeERP() {
   // Tanımları yazan iki yol da (saveTanimlar, tanimlarKodluYaz) bundan geçer.
   // Yalnız ref okur → bağımlılıksız useCallback; kimliği sabit.
   const tanimSilinenleriCopeAt = useCallback((sonraki) => {
+    const dusenler = tanimdanDusenler(tanimRef.current, sonraki);
+    // Bu cihazda silindi defteri (089): buluttaki hâlle birleştirirken silinen geri gelmesin.
+    tanimSilinenleriKaydet(dusenler.map((d) => d.kayit && d.kayit.id).filter(Boolean));
     if (copaAtRef.current) {
-      tanimdanDusenler(tanimRef.current, sonraki).forEach(({ alan, kayit }) => {
+      dusenler.forEach(({ alan, kayit }) => {
         copaAtRef.current("tanim", tanimKaydiAdi(alan, kayit), { alan, kayit }, {
           ozet: `Tanımlar › ${TANIM_ALAN_ADLARI[alan] || alan}`,
           ustKayit: { tur: "tanimlar", id: alan, ad: TANIM_ALAN_ADLARI[alan] || alan },
@@ -978,6 +981,15 @@ export default function AtolyeERP() {
       });
     }
     tanimRef.current = sonraki;
+  }, []);
+
+  // Katman (030 tekilYaz) buluttaki tanımlarla birleştirip eksik öğe eklediğinde ekran da güncellensin.
+  useEffect(() => {
+    window.__tanimlarBirlesti = (bulut, eklenen) => {
+      setTanimlar((prev) => tanimlariBirlestir(prev, bulut, tanimSilinenleriOku()).tanimlar);
+      gunlukYaz(`Tanımlar bulutla birleştirildi: başka cihazda eklenen ${eklenen.length} öğe korundu`, "tanimlar", { eklenen: eklenen.slice(0, 50) });
+    };
+    return () => { window.__tanimlarBirlesti = null; };
   }, []);
 
   const saveTanimlar = useCallback(async (next) => {
@@ -1647,6 +1659,19 @@ export default function AtolyeERP() {
       : "Kodu eksik kayıt yok");
   }, [stok, tanimlar, saveStok, saveTanimlar, showToast]);
 
+  // KAYIP MODEL RENKLERİNİ GERİ KUR (v1.552.0, 089): ürünlerde "1017 - Beyaz Deri/Gümüş" gibi kullanılan ama
+  // tanımlarda kombinasyonu olmayan model renkleri etiketlerinden geri kurulur — KOD AYNI kalır, basılmış
+  // barkodlar geçerli. Eksik renk varsa o da tanımlanır (kodunu `kodlariAta` verir).
+  const modelRenkleriniOnar = useCallback(() => {
+    const k = kayipModelRenkleri(stok, tanimlar, uid);
+    if (k.kombinasyonlar.length === 0) { showToast("Kayıp model rengi yok"); return; }
+    saveTanimlar({ ...tanimlar, renkler: [...(tanimlar.renkler || []), ...k.renkler],
+      renkKombinasyonlari: [...(tanimlar.renkKombinasyonlari || []), ...k.kombinasyonlar] });
+    gunlukYaz(`${k.kombinasyonlar.length} model rengi ürün etiketlerinden geri kuruldu`, "tanimlar", { etiketler: k.etiketler, yeniRenk: k.renkler.map((r) => r.ad) });
+    showToast(`${k.kombinasyonlar.length} model rengi geri kuruldu (${k.etiketler.map((e) => e.split(" - ")[0]).join(", ")})`
+      + (k.renkler.length ? ` · ${k.renkler.length} renk de yeniden tanımlandı: ${k.renkler.map((r) => r.ad).join(", ")}` : ""));
+  }, [stok, tanimlar, saveTanimlar, showToast]);
+
   const saveCariler = useCallback(async (next) => {
     // YENİ CARİYE KODU ANINDA VERİLİYOR. Ayrı bir "kodları ata" adımına bırakmak, kullanıcının
     // cariyi açıp koduna baktığında boş görmesi demekti. `cariKodlariAta` kodu OLANA dokunmuyor,
@@ -2157,7 +2182,7 @@ export default function AtolyeERP() {
       if (!basarili) basarisizlar.push(key);
     }
     // Tanımlar tek satırlık tablo — ayrı yol.
-    try { await tekilYaz("tanimlar:data", "tanimlar", varsayilanTanimlar); }
+    try { await tekilYaz("tanimlar:data", "tanimlar", varsayilanTanimlar, { birlestirme: false }); }
     catch (e) { basarisizlar.push("tanimlar:data"); }
 
     if (basarisizlar.length === 0) {
@@ -4126,6 +4151,8 @@ export default function AtolyeERP() {
               stok={stok}
               tanimlar={tanimlar}
               kurlar={muhasebe.kurlar || {}}
+              kurGecmisi={muhasebe.kurGecmisi || []}
+              cariler={cariler}
               onStokKaydet={saveStok}
               onTanimlarKaydet={saveTanimlar}
               showToast={showToast}
@@ -4153,6 +4180,7 @@ export default function AtolyeERP() {
               }}
               onKoliSil={koliSil}
               onKodlariAta={kodlariTamamla}
+              onModelRenkleriniOnar={modelRenkleriniOnar}
               tanimlar={tanimlar}
               showToast={showToast}
             />

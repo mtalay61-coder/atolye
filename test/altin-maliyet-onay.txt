@@ -1,0 +1,49 @@
+{
+  "onayOnce": {
+    "durum": "yok",
+    "tutar": "262,00 ₺",
+    "eksik": 0
+  },
+  "kartTam": "262,00 ₺",
+  "onaySonra": {
+    "durum": "ok",
+    "tutar": "262,00 ₺",
+    "eksik": 0
+  },
+  "kayit": {
+    "kim": "",
+    "tamTL": 262,
+    "tur": "recete",
+    "tarihVar": true
+  },
+  "yalnizOk": [
+    {
+      "ad": "Bot",
+      "durum": "✓ OK · <tarih> · reçete",
+      "maliyet": "262"
+    }
+  ],
+  "hepsi": [
+    {
+      "ad": "Bot",
+      "durum": "✓ OK · <tarih> · reçete",
+      "maliyet": "262"
+    },
+    {
+      "ad": "Terlik",
+      "durum": "onaylanmadı · alış",
+      "maliyet": "100"
+    }
+  ],
+  "yeniTip": "Satış",
+  "perakende": {
+    "grup": "Perakende:Satış:TRY",
+    "bot": "327.5 TRY",
+    "terlik": "yok"
+  },
+  "genelSatis": {
+    "bot": 366.8,
+    "terlik": 140
+  },
+  "hatalar": []
+}

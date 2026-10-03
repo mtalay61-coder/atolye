@@ -73,7 +73,12 @@ useEffect(() => {
           await yerelKazansin("uretim:siparisler", "uretim");
           await yerelKazansin("cari:data", "cariler");
           if (bekleyenler["tanimlar:data"]) {
-            try { const o = await guvenliOku("tanimlar:data", null); if (o.deger) bulut.tanimlar = JSON.parse(o.deger); } catch (e) { /* */ }
+            // YEREL ESAS AMA BULUTLA BİRLEŞİK (v1.552.0, 089): yerel kopya bütünüyle esas alınınca başka cihazda
+            // bu arada açılmış model renkleri/renkler kayboluyordu (bekleyen yazma gidince bulutun üstüne).
+            try {
+              const o = await guvenliOku("tanimlar:data", null);
+              if (o.deger) bulut.tanimlar = tanimlariBirlestir(JSON.parse(o.deger), bulut.tanimlar, tanimSilinenleriOku()).tanimlar;
+            } catch (e) { /* */ }
           }
           if (Object.keys(bekleyenler).length > 0) {
             setBekleyenYazmalar(bekleyenler);
