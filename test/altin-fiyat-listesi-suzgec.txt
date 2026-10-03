@@ -1,0 +1,42 @@
+{
+  "resimler": [
+    "Bot",
+    "Çizme"
+  ],
+  "kutular": [
+    {
+      "ad": "Sezon",
+      "secenekler": [
+        "Sezon: Tümü",
+        "Sezon: 2025",
+        "Sezon: 2026"
+      ]
+    },
+    {
+      "ad": "Taban",
+      "secenekler": [
+        "Taban: Tümü",
+        "Taban: Deri",
+        "Taban: Kauçuk"
+      ]
+    }
+  ],
+  "hepsi": [
+    "Babet",
+    "Bot",
+    "Çizme"
+  ],
+  "sezon": [
+    "Bot",
+    "Çizme"
+  ],
+  "ikiAlan": [
+    "Bot"
+  ],
+  "arama": [
+    "Babet"
+  ],
+  "buyuk": 1,
+  "kapandi": true,
+  "hatalar": []
+}

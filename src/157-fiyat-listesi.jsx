@@ -140,6 +140,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
   const kaynak = kaynaklar.find((k) => k.key === kaynakKey) || kaynaklar[0];
   const [kategori, setKategori] = useState("Mamul");
   const [arama, setArama] = useState("");
+  const [ozelSecim, setOzelSecim] = useState({});   // { alanId: değer }
+  const [buyukResim, setBuyukResim] = useState(null);   // { src, ad }
   const [goster, setGoster] = useState("tumu");   // tumu | fiyatli | fiyatsiz
   // Düzenlemeler KAYNAK BAŞINA tutulur: kaynak değiştirince yazılanlar kaybolmasın, karışmasın da.
   const [duzenler, setDuzenler] = useState({});
@@ -151,9 +153,14 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
 
   const kategoriler = ["Tümü", ...Array.from(new Set((stok || []).map((u) => u.kategori).filter(Boolean)))];
   const q = arama.trim().toLocaleLowerCase("tr-TR");
-  const satirlar = (stok || [])
-    .filter((u) => kategori === "Tümü" || u.kategori === kategori)
-    .filter((u) => !q || [u.ad, u.stokNo, u.kod, u.modelKodu].some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q)))
+  // ÖZEL KOD SÜZGECİ (v1.553.0, 008): kategoriye uyan ürünlerde dolu olan her özel kod alanı bir seçim kutusu.
+  // Arama kutusu da özel kod değerlerini tarar ("Sezon 2026" gibi).
+  const ozelAlanlar = tanimlar.ozelKodAlanlari || [];
+  const kategoridekiler = (stok || []).filter((u) => kategori === "Tümü" || u.kategori === kategori);
+  const ozelSecenekler = ozelKodSecenekleri(kategoridekiler, ozelAlanlar);
+  const satirlar = kategoridekiler
+    .filter((u) => ozelKodSuzgeceUyar(u, ozelAlanlar, ozelSecim))
+    .filter((u) => !q || [u.ad, u.stokNo, u.kod, u.modelKodu, ozelKodMetni(u, ozelAlanlar)].some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q)))
     .map((u) => {
       const k = urunKaynakFiyati(u, kaynak, maliyetCtx);
       const yazi = !kaynak.maliyet && Object.prototype.hasOwnProperty.call(kaynakDuzen, u.id) ? kaynakDuzen[u.id] : null;
@@ -263,6 +270,34 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         )}
         <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Listede ara…" style={{ ...kutu, width: 180, marginLeft: "auto" }} />
       </div>
+      {ozelSecenekler.length > 0 && (
+        <div data-fl-ozel-kodlar="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: -4, marginBottom: 12 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>Özel kod</span>
+          {ozelSecenekler.map((a) => (
+            <select key={a.id} data-fl-ozel-kod={a.ad} value={ozelSecim[a.id] || ""}
+              onChange={(e) => setOzelSecim((s) => ({ ...s, [a.id]: e.target.value }))}
+              style={{ ...kutu, width: "auto", minWidth: 130, fontWeight: ozelSecim[a.id] ? 700 : 400,
+                borderColor: ozelSecim[a.id] ? "var(--erp-accent)" : undefined }}>
+              <option value="">{a.ad}: Tümü</option>
+              {a.degerler.map((d) => <option key={d} value={d}>{a.ad}: {d}</option>)}
+            </select>
+          ))}
+          {Object.values(ozelSecim).some(Boolean) && (
+            <button type="button" className="btn-ghost" data-fl-ozel-temizle="1" onClick={() => setOzelSecim({})} style={{ padding: "4px 10px", fontSize: 12 }}>
+              Süzgeci temizle
+            </button>
+          )}
+        </div>
+      )}
+      {buyukResim && (
+        <div data-fl-resim-buyuk="1" onClick={() => setBuyukResim(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 600, background: "rgba(34,27,20,.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, cursor: "zoom-out" }}>
+          <div style={{ background: "#fff", borderRadius: "var(--erp-r-lg)", padding: 10, maxWidth: "90vw", maxHeight: "90vh", textAlign: "center" }}>
+            <img src={buyukResim.src} alt={buyukResim.ad} style={{ maxWidth: "85vw", maxHeight: "80vh", objectFit: "contain", display: "block" }} />
+            <div style={{ fontSize: 13, fontWeight: 700, marginTop: 6 }}>{buyukResim.ad}</div>
+          </div>
+        </div>
+      )}
       {(tanimlar.fiyatGruplari || []).length === 0 && (
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 10 }}>
           Henüz fiyat grubu yok — aşağıdan "Farklı kaydet" ile genel fiyattan yeni grup oluşturabilir ya da Tanımlar › Ürün › Fiyat Grupları'ndan açabilirsiniz.
@@ -346,6 +381,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ background: "var(--erp-panel)", textAlign: "left" }}>
+              <th style={{ padding: "8px 6px", width: 52 }}></th>
               <th style={{ padding: "8px 10px", width: 90 }}>Stok no</th>
               <th style={{ padding: "8px 10px" }}>Model / ürün</th>
               <th style={{ padding: "8px 10px", width: 100 }}>Kategori</th>
@@ -356,12 +392,31 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
           </thead>
           <tbody>
             {satirlar.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 16, textAlign: "center", color: "var(--erp-text-3)" }}>Bu süzgeçle ürün yok.</td></tr>
+              <tr><td colSpan={7} style={{ padding: 16, textAlign: "center", color: "var(--erp-text-3)" }}>Bu süzgeçle ürün yok.</td></tr>
             )}
             {satirlar.map((r) => (
               <tr key={r.urunId} data-fl-satir={r.urun.ad} style={{ borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined }}>
+                <td style={{ padding: "4px 6px" }}>
+                  {(() => {
+                    // STOK RESMİ (v1.553.0): kapak, yoksa ilk renk resmi; tıklayınca büyür.
+                    const g = urunGorselleri(r.urun);
+                    const src = g ? (g.kapakResmi || Object.values(g.renkResimleri)[0]) : "";
+                    return src
+                      ? <img src={src} alt={r.urun.ad} data-fl-resim={r.urun.ad} onClick={() => setBuyukResim({ src, ad: r.urun.ad })}
+                          style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", cursor: "zoom-in", display: "block" }} />
+                      : <div style={{ width: 40, height: 40, borderRadius: "var(--erp-r-sm)", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--erp-text-3)" }}><ImageIcon size={16} /></div>;
+                  })()}
+                </td>
                 <td className="mono" style={{ padding: "6px 10px", fontSize: 11, color: "var(--erp-text-3)" }}>{r.urun.stokNo || "—"}</td>
-                <td style={{ padding: "6px 10px", fontWeight: 600 }}>{r.urun.ad}</td>
+                <td style={{ padding: "6px 10px", fontWeight: 600 }}>
+                  {r.urun.ad}
+                  {/* Özel kodlar adın altında küçük: süzerken neyle süzüldüğü görünsün. */}
+                  {ozelKodCiftleri(r.urun, ozelAlanlar).length > 0 && (
+                    <div data-fl-ozel-satir="1" style={{ fontSize: 10, fontWeight: 400, color: "var(--erp-text-3)", marginTop: 1 }}>
+                      {ozelKodCiftleri(r.urun, ozelAlanlar).map((c) => `${c.etiket}: ${c.deger}`).join(" · ")}
+                    </div>
+                  )}
+                </td>
                 <td style={{ padding: "6px 10px", fontSize: 11, color: "var(--erp-text-2)" }}>{r.urun.kategori || ""}</td>
                 {kaynak.maliyet && (
                   <td data-fl-maliyet-durum={r.urun.ad} style={{ padding: "6px 10px", fontSize: 11 }}>

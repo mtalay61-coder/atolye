@@ -78,6 +78,28 @@ function eslesenOzelKodlar(urun, alanlar, q) {
     .filter((x) => `${x.etiket} ${x.deger}`.toLocaleLowerCase("tr-TR").includes(q));
 }
 
+// ÖZEL KOD SÜZGECİ (v1.553.0 — kullanıcı: "fiyatlandırma özel kodlarla filtrelenebilsin"). Listedeki
+// ürünlerde DOLU olan her alan için seçilebilir değerler; boş alan süzgeçte görünmez (seçeneksiz kutu
+// işe yaramaz). Saf. Döner: [{ id, ad, degerler: [..] }] — değerler tr sıralı.
+function ozelKodSecenekleri(urunler, alanlar) {
+  const harita = new Map();
+  (urunler || []).forEach((u) => ozelKodCiftleri(u, alanlar).forEach((c) => {
+    if (!harita.has(c.id)) harita.set(c.id, { id: c.id, ad: c.etiket, degerler: new Set() });
+    harita.get(c.id).degerler.add(c.deger);
+  }));
+  return (alanlar || []).filter((a) => harita.has(a.id)).map((a) => {
+    const h = harita.get(a.id);
+    return { id: a.id, ad: h.ad, degerler: Array.from(h.degerler).sort((x, y) => x.localeCompare(y, "tr", { numeric: true })) };
+  });
+}
+// Seçili değerlerin HEPSİNE uyuyor mu (VE). `secim`: { alanId: deger } — boş değer = o alanda süzme yok.
+function ozelKodSuzgeceUyar(urun, alanlar, secim) {
+  const etkin = Object.entries(secim || {}).filter(([, d]) => d);
+  if (etkin.length === 0) return true;
+  const ciftler = ozelKodCiftleri(urun, alanlar);
+  return etkin.every(([id, d]) => ciftler.some((c) => c.id === id && kodEsit(c.deger, d)));
+}
+
 // ---- GÖÇ ---------------------------------------------------------------------------------------
 //
 // Eski biçim: `tanimlar.ozelKodEtiketleri` (beş başlık) + `urun.ozelKodlar` (beş elemanlı DİZİ).
