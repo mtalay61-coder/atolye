@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.556.0</title>
+<title>Atölye ERP 1.559.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2014,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.556.0";
+const SURUM = "1.559.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Internetsizken acilan kayitlar kaybolmuyor (fark bellegi, bekleyen kayit defteri, tekil tablolar); kayip hammadde geri kur; renk barkod kodu cakismasi kendiliginden onariliyor";
+const SURUM_NOTU = "Sablondan eklenen recete: her hammadde kendi kartinda (Astar, Jut, Takviye, Yapistirici... gorunuyor); stokta olmayan renk ilk secenek gibi gosterilmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2024,6 +2024,17 @@ const SURUM_NOTU = "Internetsizken acilan kayitlar kaybolmuyor (fark bellegi, be
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.559.0", tarih: "03.10.2026",
+        eklenen: [],
+        degisen: ["Hammadde rengi stokta açılmamışsa reçete hücresinde '(stokta yok)' olarak görünüyor — eskiden listedeki ilk renk gösteriliyordu"],
+        duzeltilen: ["Şablondan eklenen reçetede yalnız ilk hammadde (Deri) görünüyor, diğerleri (Astar, Jut, Takviye Bezi, Fort Bombe, Yapıştırıcı…) onun kartına sıkışıyordu; artık her hammadde kendi kartında. Daha önce şablondan eklenmiş reçeteler de kendiliğinden ayrışıyor"] },
+    { surum: "1.558.0", tarih: "03.10.2026",
+        eklenen: ["Reçete şablonu işçilik ücretlerini ve ara prosesleri de taşıyor (hedefte boş olanlar doldurulur)", "Ürün reçetesinde 'Şablondan eklenen N satır' kaldırma düğmesi"],
+        degisen: ["Şablon, en çok satırı olan mamul renginden çıkarılıyor; girmeyen (bedene göre değişen) malzemelerin adı söyleniyor"],
+        duzeltilen: ["Şablondan eklemede mamul rengine bağlı hammadde rengi (örn. Kahve Süet mamul → Kahve Süet deri) bütün renklerde aynı kalıyordu; artık her mamul rengi kendi rengini alıyor"] },
+    { surum: "1.557.0", tarih: "03.10.2026",
+        eklenen: ["İnternet yokken uygulama kilitleniyor: tam ekran 'İnternet bağlantısı yok' — hiçbir kayıt girilemez. Bağlantı gelince bekleyen kayıtlar gönderilip kaldığı yerden devam ediyor; buluta ulaşamadan açıldıysa buluttaki güncel hâliyle yeniden açılıyor"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.556.0", tarih: "03.10.2026",
         eklenen: ["Stok: reçetelerde kullanılan ama stokta olmayan hammadde uyarısı ve 'Geri kur' (aynı kimlikle, reçete bağı yerine oturur)"],
         degisen: [],
@@ -3866,15 +3877,47 @@ async function yetkiBasliklari() {
 }
 // Supabase REST çağrısı. supabase-js kütüphanesi yerine doğrudan REST kullanılıyor: tek ihtiyacımız
 // upsert ve delete, bunun için 300 KB'lık bir kütüphane eklemek gereksiz.
+// BAĞLANTI DURUMU (v1.556.1 — kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm").
+// Her bulut isteği sonucu bildirir: istek ağa hiç çıkamadıysa (fetch reddedildi) bağlantı YOK; herhangi bir
+// HTTP cevabı geldiyse (401/500 dahil) internet VAR. App (`__baglantiDegisti`) yokken ekranı kilitler — internetsiz
+// girilen işin buluta gitmeyip kaybolması (v1.556.0 "Jut") en baştan engellensin.
+let _baglantiVar = true;
+function baglantiBildir(varMi, sebep) {
+    if (_baglantiVar === varMi)
+        return;
+    _baglantiVar = varMi;
+    if (typeof window !== "undefined" && window.__baglantiDegisti)
+        window.__baglantiDegisti(varMi, sebep || "");
+}
+// Hafif yoklama: herhangi bir HTTP cevabı = internet var. Önbellek kapalı (eski cevap "var" demesin).
+async function baglantiSina() {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/surum?select=surum&limit=1`, { headers: { apikey: SUPABASE_ANAHTAR }, cache: "no-store" });
+        baglantiBildir(true);
+        return true;
+    }
+    catch (e) {
+        baglantiBildir(false, String((e && e.message) || e));
+        return false;
+    }
+}
 async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
-    const yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
-        ...secenekler,
-        headers: {
-            ...(await yetkiBasliklari()),
-            "Content-Type": "application/json",
-            ...(secenekler.headers || {}),
-        },
-    });
+    let yanit;
+    try {
+        yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
+            ...secenekler,
+            headers: {
+                ...(await yetkiBasliklari()),
+                "Content-Type": "application/json",
+                ...(secenekler.headers || {}),
+            },
+        });
+    }
+    catch (e) {
+        baglantiBildir(false, String((e && e.message) || e));
+        throw e;
+    }
+    baglantiBildir(true);
     // Jeton istek yoldayken dolmuş olabilir. Bir kez yenileyip tekrar deniyoruz; ikinci 401
     // gerçekten yetki yok demektir ve hata yukarı çıkar. Sonsuz döngü `tekrarMi` ile kesiliyor.
     if (yanit.status === 401 && !tekrarMi && _oturum) {
@@ -5469,20 +5512,55 @@ function eksiStokSebebi(stok, hammaddeUrunId, renk, beden) {
 // Şablon RENKTEN BAĞIMSIZ: standart malzemeler (yapıştırıcı T-28, silme suyu, fort bombe 1 mm)
 // her mamul renginde aynıdır. Şablon satırı = { hammaddeUrunId, hammaddeAd, renk, beden (boy),
 // miktar, birim, proses }. Tanımlarda `receteSablonlari: [{ id, ad, satirlar }]`.
+// RENK POZİSYONU (v1.558.0 — kullanıcı: "Şablondan ekleme doğru çalışmıyor", 27080 D'den kurulan şablon 27081 D'ye
+// uygulanınca dört mamul renginin HEPSİNDE deri "Kahve Süet" geldi). Şablon hammadde rengini harfiyen saklıyordu;
+// oysa "mamul Kahve Süet → deri Kahve Süet" satırı rengi MAMUL RENGİNDEN alıyor. Artık şablon satırı bu bağı
+// `pozisyon` olarak saklar: hammadde rengi mamul rengiyle aynıysa 1; model rengi (kombinasyon) etiketinde
+// "1004 - Kırmızı/Bej" k'ıncı bileşenle aynıysa k; satır zaten "N. Renk" açıklamalıysa N. Uygulanırken her mamul
+// rengi kendi rengini alır (`kombinasyonRengiCoz`). Mamul rengiyle bağı olmayan (Nikel, Standart) sabit kalır.
+function sablonPozisyonu(r) {
+    const m = String((r && r.aciklama) || "").match(/^(\d+)\. Renk$/);
+    if (m)
+        return Number(m[1]);
+    const mr = String((r && r.mamulRenk) || "");
+    if (!r || !r.renk || !mr)
+        return null;
+    if (kombinasyonEtiketiFormatindaMi(mr)) {
+        const k = mr.match(/^.+? - (.+)$/);
+        const parcalar = k ? k[1].split("/").map((x) => x.trim()) : [];
+        const i = parcalar.findIndex((p) => kodEsit(p, r.renk));
+        return i >= 0 ? i + 1 : null;
+    }
+    return kodEsit(r.renk, mr) ? 1 : null;
+}
+function sablonHedefRengi(sa, mamulRenk) {
+    if (!sa.pozisyon)
+        return sa.renk || "Standart";
+    if (kombinasyonEtiketiFormatindaMi(mamulRenk))
+        return kombinasyonRengiCoz(mamulRenk, sa.pozisyon) || sa.renk || "Standart";
+    return sa.pozisyon === 1 ? mamulRenk : (sa.renk || "Standart");
+}
 // Şablonu ürüne uygula: ürünün HER mamul rengi için bir satır ("Tüm Bedenler"). Aynı mamul
 // renginde aynı hammadde+renk+boy+proses zaten varsa eklenmez — şablonu iki kez uygulamak
-// reçeteyi ikiye katlamasın. Döner: { eklenecekler, atlanan }.
+// reçeteyi ikiye katlamasın. Pozisyonlu satırın rengi hedef mamul renginden çözülür.
+// İŞÇİLİK (v1.558.0): şablon işçilik ücretlerini ve ara prosesleri de taşır; hedefte BOŞ olanlar doldurulur,
+// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi }.
 function sablonuUruneUygula(sablon, product) {
     const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk)));
     const mevcut = product.recete || [];
-    const eklemeId = uid("sablon");
+    // HER ŞABLON SATIRINA AYRI eklemeId (v1.559.0). Reçete görünümü eklemeId'ye göre kart açar (145); tek kimlik
+    // 13 hammaddeyi tek "Deri" kartına sıkıştırıyordu, öbürleri görünmüyordu. Kimlik mamul renkleri arasında
+    // ORTAK — aynı hammaddenin tüm renk satırları tek kartta. "sablon-" öneki geri almada kullanılıyor (160).
+    const eklemeIdleri = (sablon.satirlar || []).map(() => uid("sablon"));
     const eklemeTarihi = new Date().toISOString();
     const eklenecekler = [];
     let atlanan = 0;
     renkler.forEach((mr) => {
-        (sablon.satirlar || []).forEach((sa) => {
+        (sablon.satirlar || []).forEach((sa, i) => {
+            const eklemeId = eklemeIdleri[i];
+            const renk = sablonHedefRengi(sa, mr);
             const varMi = mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId
-                && (r.renk || "") === (sa.renk || "") && (r.beden || "Standart") === (sa.beden || "Standart")
+                && (r.renk || "") === renk && (r.beden || "Standart") === (sa.beden || "Standart")
                 && (r.proses || "") === (sa.proses || ""));
             if (varMi) {
                 atlanan += 1;
@@ -5491,41 +5569,80 @@ function sablonuUruneUygula(sablon, product) {
             eklenecekler.push({
                 mamulRenk: mr, mamulBeden: "Tüm Bedenler",
                 hammaddeUrunId: sa.hammaddeUrunId, hammaddeAd: sa.hammaddeAd,
-                renk: sa.renk || "Standart", beden: sa.beden || "Standart",
+                renk, beden: sa.beden || "Standart",
                 miktar: parseFloat(sa.miktar) || 0, birim: sa.birim || "", proses: sa.proses || "",
-                aciklama: `şablon: ${sablon.ad}`, eklemeId, eklemeTarihi, ambalajDegisken: false,
+                aciklama: sa.pozisyon ? `${sa.pozisyon}. Renk` : `şablon: ${sablon.ad}`, eklemeId, eklemeTarihi, ambalajDegisken: false,
             });
         });
     });
-    return { eklenecekler, atlanan };
+    const ekAlanlar = {};
+    let iscilikSayisi = 0;
+    const isc = sablon.iscilik || {};
+    const pu = { ...(product.prosesUcretleri || {}) };
+    Object.entries(isc.prosesUcretleri || {}).forEach(([p, u]) => { if (u > 0 && !(pu[p] > 0)) {
+        pu[p] = u;
+        iscilikSayisi++;
+    } });
+    if (iscilikSayisi)
+        ekAlanlar.prosesUcretleri = pu;
+    const ape = { ...(product.araProsesEklentileri || {}) };
+    let apeSayisi = 0;
+    Object.entries(isc.araProsesEklentileri || {}).forEach(([asil, v]) => { if (ape[asil] == null || (Array.isArray(ape[asil]) && ape[asil].length === 0)) {
+        ape[asil] = v;
+        apeSayisi++;
+    } });
+    if (apeSayisi)
+        ekAlanlar.araProsesEklentileri = ape;
+    const apu = { ...(product.araProsesUcretleri || {}) };
+    let apuSayisi = 0;
+    Object.entries(isc.araProsesUcretleri || {}).forEach(([id, u]) => { if (apu[id] == null) {
+        apu[id] = u;
+        apuSayisi++;
+    } });
+    if (apuSayisi)
+        ekAlanlar.araProsesUcretleri = apu;
+    return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi };
 }
-// Reçeteden şablon çıkar: İLK mamul rengindeki satırlardan, bedenden bağımsız olanlar
-// (tüm bedenlerde aynı boy ve miktar). Bedene göre değişen malzeme (taban numarası gibi)
-// şablona girmez — "standart malzeme" değildir. Döner: { satirlar, atlanan }.
+// Reçeteden şablon çıkar: EN ÇOK satırı olan mamul rengindeki (eskiden ilk renk — o renkte eksik malzeme varsa
+// şablon eksik kalıyordu) satırlardan, bedenden bağımsız olanlar (tüm bedenlerde aynı boy ve miktar). Bedene
+// göre değişen malzeme (taban numarası gibi) şablona girmez — "standart malzeme" değildir; ADLARI döner ki
+// kullanıcı neyin girmediğini görsün. Döner: { satirlar, atlanan, atlananlar }.
 function recetedenSablonSatirlari(recete) {
     const satirlar = recete || [];
     if (satirlar.length === 0)
-        return { satirlar: [], atlanan: 0 };
-    const ilkRenk = satirlar[0].mamulRenk;
+        return { satirlar: [], atlanan: 0, atlananlar: [] };
+    const sayac = {};
+    satirlar.forEach((r) => { sayac[r.mamulRenk] = (sayac[r.mamulRenk] || 0) + 1; });
+    const ilkRenk = Object.keys(sayac).sort((a, b) => sayac[b] - sayac[a])[0];
     const gruplar = {};
     satirlar.filter((r) => r.mamulRenk === ilkRenk).forEach((r) => {
         const a = `${r.hammaddeUrunId}|${r.renk || ""}|${r.proses || ""}`;
         (gruplar[a] = gruplar[a] || []).push(r);
     });
     const sonuc = [];
-    let atlanan = 0;
+    const atlananlar = [];
     Object.values(gruplar).forEach((g) => {
         const boylar = new Set(g.map((r) => r.beden || "Standart"));
         const miktarlar = new Set(g.map((r) => r.miktar));
         if (boylar.size > 1 || miktarlar.size > 1) {
-            atlanan += 1;
+            atlananlar.push(g[0].hammaddeAd || "?");
             return;
         }
         const r = g[0];
+        const pozisyon = sablonPozisyonu(r);
         sonuc.push({ id: uid("ss"), hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd, renk: r.renk || "Standart",
+            ...(pozisyon ? { pozisyon } : {}),
             beden: r.beden || "Standart", miktar: r.miktar, birim: r.birim || "", proses: r.proses || "" });
     });
-    return { satirlar: sonuc, atlanan };
+    return { satirlar: sonuc, atlanan: atlananlar.length, atlananlar };
+}
+// Üründen şablonun işçilik kısmı: sıfırdan büyük proses ücretleri, ara proses seçimleri ve ücretleri. Saf.
+function urundenSablonIsciligi(product) {
+    const prosesUcretleri = {};
+    Object.entries((product && product.prosesUcretleri) || {}).forEach(([p, u]) => { if (u > 0)
+        prosesUcretleri[p] = u; });
+    return { prosesUcretleri, araProsesEklentileri: { ...((product && product.araProsesEklentileri) || {}) },
+        araProsesUcretleri: { ...((product && product.araProsesUcretleri) || {}) } };
 }
 // =============================================================================================
 // VERİ KAYBI KORUMASI
@@ -15817,6 +15934,73 @@ function AtolyeERP() {
         window.addEventListener("online", cevrimici);
         return () => { clearInterval(z); window.removeEventListener("online", cevrimici); };
     }, [loading, Object.keys(bekleyenYazmalar).length]); // eslint-disable-line react-hooks/exhaustive-deps
+    // ÇEVRİMDIŞI KİLİT (v1.556.1 — kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm").
+    // "Jut" olayı (v1.556.0): internetsiz girilen kayıt buluta gitmedi, sonra kayboldu. Yazma katmanı onarıldı ama
+    // kökten çözüm internetsiz HİÇ kayıt girilmemesi: bağlantı yoksa tam ekran kilit, hiçbir düğme çalışmaz.
+    //   • Yokluk üç yoldan öğrenilir: bir bulut isteği ağa çıkamaz (030 `baglantiBildir`), tarayıcı "offline"
+    //     der, ya da yoklama (`baglantiSina`, kilitliyken 5 sn'de, açıkken 30 sn'de bir) cevap alamaz.
+    //   • Buluttan okunamayıp YEREL kopyayla açıldıysa da kilitli (eski hâl üstüne iş girilmesin).
+    //   • Bağlantı gelince: bekleyen kayıtlar gönderilir; yerel kopyayla açılmışsa sayfa buluttan YENİDEN açılır.
+    // Supabase kurulu değilse (yalnız yerel kurulum) kilit yok. Testler `__cevrimdisiSerbest` ile açar (ağsız koşuyorlar).
+    const [baglantiYok, setBaglantiYok] = useState(false);
+    const cevrimdisiSerbest = typeof window !== "undefined" && !!window.__cevrimdisiSerbest;
+    const yerelAcildi = !!(veriKaynagi && veriKaynagi.tur === "yerel");
+    const kilitli = !cevrimdisiSerbest && supabaseAcikMi() && !loading && (baglantiYok || yerelAcildi);
+    useEffect(() => {
+        if (cevrimdisiSerbest || !supabaseAcikMi())
+            return undefined;
+        window.__baglantiDegisti = (varMi) => setBaglantiYok(!varMi);
+        // Katmandaki durum da güncellenir: yoksa yoklama "var" dediğinde değişiklik sayılmaz, kilit kalkmazdı.
+        const cevrimdisi = () => { baglantiBildir(false, "tarayıcı çevrimdışı"); setBaglantiYok(true); };
+        const cevrimici = () => { baglantiSina(); };
+        window.addEventListener("offline", cevrimdisi);
+        window.addEventListener("online", cevrimici);
+        if (typeof navigator !== "undefined" && navigator.onLine === false)
+            setBaglantiYok(true);
+        return () => { window.__baglantiDegisti = null; window.removeEventListener("offline", cevrimdisi); window.removeEventListener("online", cevrimici); };
+    }, [cevrimdisiSerbest]);
+    useEffect(() => {
+        if (cevrimdisiSerbest || !supabaseAcikMi() || loading)
+            return undefined;
+        const z = setInterval(() => { if (!document.hidden || baglantiYok || yerelAcildi)
+            baglantiSina(); }, baglantiYok || yerelAcildi ? 5000 : 30000);
+        return () => clearInterval(z);
+    }, [cevrimdisiSerbest, loading, baglantiYok, yerelAcildi]);
+    // Bağlantı geri geldi: önce bekleyenler gider; yerel kopyayla açılmışsa bulut hâliyle yeniden açılır.
+    const yenidenAcildiRef = useRef(false);
+    useEffect(() => {
+        if (cevrimdisiSerbest || loading || baglantiYok)
+            return;
+        (async () => {
+            try {
+                await yenidenGonderRef.current(true);
+            }
+            catch (e) { /* defterde kalır, sonra yine denenir */ }
+            if (yerelAcildi && !yenidenAcildiRef.current) {
+                // Döngü freni: internet var ama bulut OKUNAMIYORSA (sunucu hatası) yeniden açmak yine yerele düşer ve sayfa
+                // kendini yenileyip dururdu. Önce bulut gerçekten okunuyor mu bakılır; son 30 sn'de yenilendiyse beklenir.
+                try {
+                    await supabaseIstek("tanimlar?select=id&limit=1");
+                }
+                catch (e) {
+                    return;
+                }
+                let son = 0;
+                try {
+                    son = Number(window.sessionStorage.getItem("kilit:yenidenAcilis")) || 0;
+                }
+                catch (e) { /* */ }
+                if (Date.now() - son < 30000)
+                    return;
+                try {
+                    window.sessionStorage.setItem("kilit:yenidenAcilis", String(Date.now()));
+                }
+                catch (e) { /* */ }
+                yenidenAcildiRef.current = true;
+                window.location.reload();
+            }
+        })();
+    }, [baglantiYok, loading, yerelAcildi, cevrimdisiSerbest]);
     // SÜRÜM KONTROLÜ VE OTOMATİK GEÇİŞ (25 Eylül, v1.447.0 — bkz. `surumeOtomatikGec`).
     //   • AÇILIŞTA: yeni sürüm varsa sormadan geçilir. Henüz bir şey girilmedi, kaybolacak iş yok.
     //   • UZUN SÜRE ARKA PLANDA KALIP GERİ GELİNCE (telefonda "uygulama" olarak açılan ekran böyle
@@ -18206,6 +18390,7 @@ function AtolyeERP() {
         },
     };
     return (React.createElement(EkranDuzeniBaglami.Provider, { value: ekranDuzeniDegeri },
+        kilitli && (React.createElement(CevrimdisiKilit, { yerelAcildi: yerelAcildi, bekleyenSayisi: Object.keys(bekleyenYazmalar).length, sebep: veriKaynagi && veriKaynagi.hata, onDene: () => baglantiSina() })),
         React.createElement("div", { style: {
                 // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu
                 // kapsayıcı kendi fontunu (Inter) ve yeşil gradyanını basıp temayı EZİYORDU — görünen
@@ -22051,7 +22236,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                         React.createElement("span", { style: { flex: "1 1 160px", fontWeight: 700 } },
                             sa.hammaddeAd,
                             React.createElement("span", { style: { fontWeight: 400, color: "var(--erp-text-3)" } },
-                                sa.renk && sa.renk !== "Standart" ? ` · ${sa.renk}` : "",
+                                sa.pozisyon ? ` · ${sa.pozisyon}. renk (mamul renginden)` : sa.renk && sa.renk !== "Standart" ? ` · ${sa.renk}` : "",
                                 sa.beden && sa.beden !== "Standart" ? ` · ${sa.beden}` : "",
                                 sa.proses ? ` · ${sa.proses}` : "")),
                         React.createElement("input", { type: "number", min: "0", step: "any", defaultValue: sa.miktar, onBlur: (e) => guncelle({ satirlar: sb.satirlar.map((x) => (x.id === sa.id ? { ...x, miktar: parseFloat(e.target.value) || 0 } : x)) }), style: { width: 80, padding: "2px 6px", fontSize: 12, textAlign: "right", border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" } }),
@@ -23494,8 +23679,10 @@ function receteGrupla(recete) {
     const gruplar = [];
     const index = {};
     recete.forEach((r) => {
+        // Anahtar hammadde+prosesi DE içerir (v1.559.0): v1.558 şablonu 13 hammaddeye TEK eklemeId vermişti, hepsi
+        // ilk hammaddenin kartına sıkışıyordu. Normal eklemede bir eklemeId zaten tek hammadde+proses taşır.
         const key = r.eklemeId
-            ? `e:${r.eklemeId}`
+            ? `e:${r.eklemeId}|${r.hammaddeUrunId}|${r.proses || ""}`
             : `h:${r.hammaddeUrunId}__${r.proses || ""}`;
         if (!(key in index)) {
             index[key] = gruplar.length;
@@ -24523,13 +24710,16 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
         onSave(next);
     }
     // Bir reçete grubunu tek seferde günceller: eski satırları siler ve yenilerini ekler (tutarlılık için tek işlemde).
-    function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar) {
+    // `ekAlanlar` (v1.558.0): reçeteyle AYNI yazımda üründe değişecek başka alanlar (şablondan gelen işçilik
+    // ücretleri, ara prosesler). Ayrı bir `urunGuncelle` çağrısı aynı çizimdeki eski `items`tan hesaplayıp
+    // reçete eklemesini EZERDİ.
+    function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar, ekAlanlar) {
         const next = items.map((p) => {
             if (p.id !== productId)
                 return p;
             const kalanlar = (p.recete || []).filter((r) => !silinecekIdler.includes(r.id));
             const eklenenler = yeniSatirlar.map((s) => ({ id: uid("recete"), ...s }));
-            return { ...p, recete: [...kalanlar, ...eklenenler] };
+            return { ...p, ...(ekAlanlar || {}), recete: [...kalanlar, ...eklenenler] };
         });
         onSave(next);
     }
@@ -27844,25 +28034,46 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                             const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
                             if (!sb)
                                 return;
-                            const { eklenecekler, atlanan } = sablonuUruneUygula(sb, product);
-                            if (eklenecekler.length === 0) {
+                            const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi } = sablonuUruneUygula(sb, product);
+                            if (eklenecekler.length === 0 && !iscilikSayisi) {
                                 (showToast || (() => { }))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş");
                                 return;
                             }
-                            onReceteGrubuGuncelle(product.id, [], eklenecekler);
-                            (showToast || (() => { }))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}`);
+                            // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
+                            onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
+                            (showToast || (() => { }))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}`);
                         }, style: { padding: "5px 12px", fontSize: 12 } }, (product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"),
+                    (() => {
+                        // ŞABLON EKLEMESİNİ GERİ AL (v1.558.0): şablondan gelen satırlar `eklemeId` "sablon-…" taşır. Eski
+                        // (pozisyonsuz) şablonla yanlış renkte eklenen satırlar tek dokunuşla kaldırılıp şablon yeniden uygulanabilsin.
+                        const sablonSatirlari = (product.recete || []).filter((r) => String(r.eklemeId || "").startsWith("sablon-"));
+                        if (sablonSatirlari.length === 0)
+                            return null;
+                        return (React.createElement("span", { "data-sablon-geri-al": sablonSatirlari.length, style: { display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" } },
+                            "\u015Eablondan eklenen ",
+                            sablonSatirlari.length,
+                            " sat\u0131r",
+                            React.createElement(SilOnayButonu, { boyut: 12, baslikNormal: `Şablondan eklenen ${sablonSatirlari.length} satırı kaldır`, baslikOnay: `Şablondan eklenen ${sablonSatirlari.length} reçete satırı kaldırılacak — tekrar dokunun`, onConfirm: () => {
+                                    onReceteGrubuGuncelle(product.id, sablonSatirlari.map((r) => r.id), []);
+                                    (showToast || (() => { }))(`Şablondan eklenen ${sablonSatirlari.length} satır kaldırıldı`);
+                                } })));
+                    })(),
                     (product.recete || []).length > 0 && onReceteSablonuKaydet && (React.createElement("button", { type: "button", className: "btn-ghost", "data-recete-sablon-kaydet": "1", onClick: () => {
                             const ad = window.prompt("Şablon adı (örn. Standart bot malzemeleri):", "");
                             if (!ad || !ad.trim())
                                 return;
-                            const { satirlar, atlanan } = recetedenSablonSatirlari(product.recete);
+                            const { satirlar, atlananlar } = recetedenSablonSatirlari(product.recete);
                             if (satirlar.length === 0) {
                                 (showToast || (() => { }))("Bedenden bağımsız satır yok — şablon oluşmadı");
                                 return;
                             }
-                            onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar });
-                            (showToast || (() => { }))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi${atlanan > 0 ? ` · bedene göre değişen ${atlanan} malzeme girmedi` : ""}. Tanımlar › Üretim'den düzenlenir.`);
+                            const pozisyonlu = satirlar.filter((x) => x.pozisyon).length;
+                            onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar, iscilik: urundenSablonIsciligi(product) });
+                            (showToast || (() => { }))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi`
+                                + (pozisyonlu ? ` · ${pozisyonlu} malzemenin rengi mamul renginden alınacak` : "")
+                                + " · işçilik ve ara prosesler dahil"
+                                + (atlananlar.length ? ` · bedene göre değişen ${atlananlar.length} malzeme girmedi: ${atlananlar.join(", ")}` : "")
+                                + ". Tanımlar › Üretim'den düzenlenir.");
                         }, style: { padding: "5px 12px", fontSize: 12 } }, "Bu re\u00E7eteden \u015Fablon olu\u015Ftur"))),
                 (() => {
                     const eksikRaporu = renkler
@@ -28463,10 +28674,10 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                             const r = kaynakSatirlar.find((x) => x.mamulRenk === mr && (poz === null || x.aciklama === poz));
                                                             return (React.createElement("td", { key: mr, style: { padding: "4px 8px", textAlign: "center" } }, r ? (satirSabit ? (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
                                                                 React.createElement("select", { value: r.renk, onChange: (e) => bedensizRenkDegistir(r, e.target.value), className: "mono", title: poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir", style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" } },
-                                                                    bedensizRenkSecenekleri.length === 0 && React.createElement("option", { value: r.renk }, r.renk),
+                                                                    !bedensizRenkSecenekleri.includes(r.renk) && React.createElement("option", { value: r.renk }, bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk),
                                                                     bedensizRenkSecenekleri.map((rr) => React.createElement("option", { key: rr, value: rr }, rr))))) : (React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
                                                                 React.createElement("select", { value: r.renk, onChange: (e) => bedensizRenkDegistir(r, e.target.value), className: "mono", title: poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir", style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" } },
-                                                                    bedensizRenkSecenekleri.length === 0 && React.createElement("option", { value: r.renk }, r.renk),
+                                                                    !bedensizRenkSecenekleri.includes(r.renk) && React.createElement("option", { value: r.renk }, bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk),
                                                                     bedensizRenkSecenekleri.map((rr) => React.createElement("option", { key: rr, value: rr }, rr))),
                                                                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
                                                                     React.createElement(MiktarGirisi, { deger: r.miktar, genislik: 50, onKaydet: (yeni) => {
@@ -28515,7 +28726,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                             tekliSatirlar.map((r) => (React.createElement("td", { key: r.id, style: { padding: "6px 8px", textAlign: "center" } },
                                                                 React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
                                                                     React.createElement("select", { value: r.renk, onChange: (e) => bedensizRenkDegistir(r, e.target.value), className: "mono", title: "Hammadde rengini de\u011Fi\u015Ftir", style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" } },
-                                                                        bedensizRenkSecenekleri.length === 0 && React.createElement("option", { value: r.renk }, r.renk),
+                                                                        !bedensizRenkSecenekleri.includes(r.renk) && React.createElement("option", { value: r.renk }, bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk),
                                                                         bedensizRenkSecenekleri.map((rr) => React.createElement("option", { key: rr, value: rr }, rr))),
                                                                     !tekliMiktarSabit && (React.createElement(MiktarGirisi, { deger: r.miktar, genislik: 46, onKaydet: (yeni) => {
                                                                             const { id, ...rest } = r;
@@ -50245,6 +50456,32 @@ function EmptyState({ text, mesaj }) {
             borderRadius: "var(--erp-r-md)", fontSize: 14,
         } }, text));
 }
+// ÇEVRİMDIŞI KİLİT EKRANI (v1.556.1) — App'teki `kilitli` iken her şeyin üstünde; altındaki ekrana dokunulamaz.
+// Kullanıcıya NEDEN durdurulduğu ve ne olacağı söylenir: veri kaybolmasın diye; bağlantı gelince kendiliğinden devam.
+function CevrimdisiKilit({ yerelAcildi, bekleyenSayisi, sebep, onDene }) {
+    const [deneniyor, setDeneniyor] = useState(false);
+    return (React.createElement("div", { "data-cevrimdisi-kilit": "1", role: "alertdialog", "aria-modal": "true", onKeyDownCapture: (e) => { e.stopPropagation(); }, style: { position: "fixed", inset: 0, zIndex: 100000, background: "rgba(34,27,20,.78)", display: "flex",
+            alignItems: "center", justifyContent: "center", padding: 20 } },
+        React.createElement("div", { style: { background: "#fff", borderRadius: "var(--erp-r-lg)", padding: "22px 24px", maxWidth: 460, width: "100%", textAlign: "center",
+                boxShadow: "0 10px 40px rgba(0,0,0,.3)" } },
+            React.createElement("div", { style: { fontSize: 40, lineHeight: 1 } }, "\uD83D\uDCE1"),
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, margin: "10px 0 6px" } }, "\u0130nternet ba\u011Flant\u0131s\u0131 yok"),
+            React.createElement("div", { style: { fontSize: 13, color: "var(--erp-text-2)", lineHeight: 1.6 } },
+                "Veri kaybolmas\u0131n diye uygulama durduruldu \u2014 internetsiz girilen kay\u0131tlar buluta gitmeyip kaybolabiliyordu.",
+                yerelAcildi
+                    ? " Uygulama buluta ulaşamadan açıldı; bağlantı gelince buluttaki güncel hâliyle kendiliğinden yeniden açılacak."
+                    : " Bağlantı gelince kaldığınız yerden kendiliğinden devam edecek."),
+            bekleyenSayisi > 0 && (React.createElement("div", { "data-kilit-bekleyen": bekleyenSayisi, style: { fontSize: 12, marginTop: 10, color: "var(--erp-warn)", fontWeight: 700 } },
+                bekleyenSayisi,
+                " tablodaki kay\u0131tlar bu cihazda bekliyor \u2014 ba\u011Flant\u0131 gelince otomatik g\u00F6nderilecek.")),
+            sebep && React.createElement("div", { className: "mono", style: { fontSize: 10, color: "var(--erp-text-3)", marginTop: 8 } }, String(sebep).slice(0, 120)),
+            React.createElement("button", { type: "button", className: "btn-primary", "data-kilit-dene": "1", disabled: deneniyor, onClick: async () => { setDeneniyor(true); try {
+                    await onDene();
+                }
+                finally {
+                    setDeneniyor(false);
+                } }, style: { marginTop: 16, padding: "9px 18px", fontSize: 14 } }, deneniyor ? "Deneniyor…" : "Bağlantıyı yeniden dene"))));
+}
 // ================= EYLEM ÇUBUĞU =================
 //
 // Kullanıcı (18 Eylül): *"Kaydet, vazgeç butonları uygulamanın her yerinde dağınık. Sağ üstte
@@ -52407,7 +52644,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.556.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.559.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

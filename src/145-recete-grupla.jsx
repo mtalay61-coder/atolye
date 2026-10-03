@@ -15,8 +15,10 @@ function receteGrupla(recete) {
   const gruplar = [];
   const index = {};
   recete.forEach((r) => {
+    // Anahtar hammadde+prosesi DE içerir (v1.559.0): v1.558 şablonu 13 hammaddeye TEK eklemeId vermişti, hepsi
+    // ilk hammaddenin kartına sıkışıyordu. Normal eklemede bir eklemeId zaten tek hammadde+proses taşır.
     const key = r.eklemeId
-      ? `e:${r.eklemeId}`
+      ? `e:${r.eklemeId}|${r.hammaddeUrunId}|${r.proses || ""}`
       : `h:${r.hammaddeUrunId}__${r.proses || ""}`;
     if (!(key in index)) {
       index[key] = gruplar.length;
