@@ -17,6 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
+  "tanimlariBirlestir", "kayipModelRenkleri", "renkTanimiBul",   // tanım birleştirme (v1.552.0)
   "urunMaliyetHesabi", "maliyetOnayDurumu", "maliyetOnayKaydi",   // maliyet OK (v1.551.0)
   "fiyatListesiKaynaklari", "urunKaynakFiyati", "fiyatDonustur", "fiyatListesiYaz", "fiyatlariHedefBirime",   // fiyat listesi (v1.550.0)
   "copuBuda", "copKaliciSilinebilirMi", "topluSilmeDurumu", "listedenDusenler", "tanimdanDusenler", "gizliAlanlariAt", "tanimKaydiAdi", "arsivSatiriOzeti",   // çöp güvenliği (v1.549.0)

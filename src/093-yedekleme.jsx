@@ -139,7 +139,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   await tabloYaz("siparis:data", "siparisler", y.siparisler || []);
   await tabloYaz("uretim:siparisler", "uretim", y.uretim || []);
   await tabloYaz("cari:data", "cariler", y.cariler || []);
-  if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar);
+  if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false });   // yedek bütünüyle döner
   if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
   if (Array.isArray(y.koliler)) await tekilYaz("koli:data", "koliler", y.koliler);
   if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
@@ -207,7 +207,7 @@ const yedektenGeriYukle = useCallback(async (tarih) => {
     await tabloYaz("siparis:data", "siparisler", y.siparisler || []);
     await tabloYaz("uretim:siparisler", "uretim", y.uretim || []);
     await tabloYaz("cari:data", "cariler", y.cariler || []);
-    if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar);
+    if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false });   // yedek bütünüyle döner
     if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
 
     showToast(`${tarih} tarihli yedek geri yüklendi — geri yükleme öncesi hâl de ayrıca saklandı`);

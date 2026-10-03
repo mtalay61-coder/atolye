@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.551.0";
+const SURUM = "1.552.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Maliyet OK dugmesi (eksikler + son onay tarihi); fiyat listesinde Maliyet kaynagi: recete maliyeti ya da alis fiyati uzerine kar koyup satis fiyati";
+const SURUM_NOTU = "Tanimlar bulutla birlestirilerek yaziliyor (baska cihazda acilan model renkleri kaybolmuyor); kayip model renkleri urun etiketlerinden geri kuruluyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Maliyet OK dugmesi (eksikler + son onay tarihi); fiyat liste
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.552.0", tarih: "03.10.2026",
+    eklenen: ["Paketleme: ürünlerde kullanılan ama tanımı kaybolmuş model renkleri için 'Model renklerini geri kur' — kodlar aynı kalıyor, basılmış barkodlar geçerli"],
+    degisen: [],
+    duzeltilen: ["Tanımlar tek parça yazıldığı için başka cihazda (ya da bekleyen yazması olan cihazda) eski liste, yeni açılmış model renklerini/renkleri siliyordu; artık yazmadan önce buluttaki hâlle birleştiriliyor, bu cihazda silinenler geri gelmiyor"] },
   { surum: "1.551.0", tarih: "03.10.2026",
     eklenen: [
       "Ürün kartı › Maliyet: 'Maliyet OK' düğmesi — maliyetteki eksikler (fiyatı olmayan hammadde, kur, işçilik…) listeleniyor, onay tarihi ve kimin onayladığı görünüyor; onaydan sonra maliyet değişirse uyarı",
