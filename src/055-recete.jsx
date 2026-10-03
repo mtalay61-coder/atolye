@@ -385,7 +385,7 @@ function sablonHedefRengi(sa, mamulRenk) {
 // renginde aynı hammadde+renk+boy+proses zaten varsa eklenmez — şablonu iki kez uygulamak
 // reçeteyi ikiye katlamasın. Pozisyonlu satırın rengi hedef mamul renginden çözülür.
 // İŞÇİLİK (v1.558.0): şablon işçilik ücretlerini ve ara prosesleri de taşır; hedefte BOŞ olanlar doldurulur,
-// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi }.
+// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler }.
 function sablonuUruneUygula(sablon, product) {
   const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk)));
   const mevcut = product.recete || [];
@@ -396,21 +396,37 @@ function sablonuUruneUygula(sablon, product) {
   const eklemeTarihi = new Date().toISOString();
   const eklenecekler = [];
   let atlanan = 0;
+  // BEDENE GÖRE DEĞİŞEN MALZEME (v1.560.0): `sa.bedenler = { mamulBedeni: { beden, miktar } }` taşıyan şablon satırı
+  // hedefin HER mamul bedenine ayrı satır açar. `bedenAyni` (taban/fusbet: hammadde no = mamul no) kaynakta
+  // olmayan bedene de uyar; haritalı satırda karşılığı olmayan beden atlanır ve ADI döner (sessiz eksik olmasın).
+  const bedenEksikler = new Set();
   renkler.forEach((mr) => {
+    const mamulBedenleri = bedenSirala(Array.from(new Set((product.variants || []).filter((v) => v.renk === mr).map((v) => v.beden).filter(Boolean))));
     (sablon.satirlar || []).forEach((sa, i) => {
       const eklemeId = eklemeIdleri[i];
       const renk = sablonHedefRengi(sa, mr);
-      const varMi = mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId
-        && (r.renk || "") === renk && (r.beden || "Standart") === (sa.beden || "Standart")
-        && (r.proses || "") === (sa.proses || ""));
-      if (varMi) { atlanan += 1; return; }
-      eklenecekler.push({
-        mamulRenk: mr, mamulBeden: "Tüm Bedenler",
-        hammaddeUrunId: sa.hammaddeUrunId, hammaddeAd: sa.hammaddeAd,
-        renk, beden: sa.beden || "Standart",
-        miktar: parseFloat(sa.miktar) || 0, birim: sa.birim || "", proses: sa.proses || "",
+      const ortak = {
+        hammaddeUrunId: sa.hammaddeUrunId, hammaddeAd: sa.hammaddeAd, renk, birim: sa.birim || "", proses: sa.proses || "",
         aciklama: sa.pozisyon ? `${sa.pozisyon}. Renk` : `şablon: ${sablon.ad}`, eklemeId, eklemeTarihi, ambalajDegisken: false,
-      });
+      };
+      const ayniVarMi = (mb, hb) => mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId
+        && (mb == null || r.mamulBeden === mb)
+        && (r.renk || "") === renk && (r.beden || "Standart") === hb && (r.proses || "") === (sa.proses || ""));
+      if (sa.bedenler) {
+        if (mamulBedenleri.length === 0) { bedenEksikler.add(sa.hammaddeAd || "?"); return; }
+        mamulBedenleri.forEach((mb) => {
+          const e = sa.bedenler[mb];
+          const hb = e ? e.beden : (sa.bedenAyni ? mb : null);
+          const miktar = e ? e.miktar : sa.miktar;
+          // Kısmi malzeme (kaynakta yalnız bazı bedenlerde) karşılıksız bedende BİLEREK yok — uyarı gürültü olur.
+          if (!hb || miktar == null) { if (!sa.kismi) bedenEksikler.add(`${sa.hammaddeAd || "?"} (${mb})`); return; }
+          if (ayniVarMi(mb, hb)) { atlanan += 1; return; }
+          eklenecekler.push({ mamulRenk: mr, mamulBeden: mb, beden: hb, miktar: parseFloat(miktar) || 0, ...ortak });
+        });
+        return;
+      }
+      if (ayniVarMi(null, sa.beden || "Standart")) { atlanan += 1; return; }
+      eklenecekler.push({ mamulRenk: mr, mamulBeden: "Tüm Bedenler", beden: sa.beden || "Standart", miktar: parseFloat(sa.miktar) || 0, ...ortak });
     });
   });
   const ekAlanlar = {};
@@ -427,14 +443,16 @@ function sablonuUruneUygula(sablon, product) {
   let apuSayisi = 0;
   Object.entries(isc.araProsesUcretleri || {}).forEach(([id, u]) => { if (apu[id] == null) { apu[id] = u; apuSayisi++; } });
   if (apuSayisi) ekAlanlar.araProsesUcretleri = apu;
-  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi };
+  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi, bedenEksikler: Array.from(bedenEksikler) };
 }
 
 // Reçeteden şablon çıkar: EN ÇOK satırı olan mamul rengindeki (eskiden ilk renk — o renkte eksik malzeme varsa
-// şablon eksik kalıyordu) satırlardan, bedenden bağımsız olanlar (tüm bedenlerde aynı boy ve miktar). Bedene
-// göre değişen malzeme (taban numarası gibi) şablona girmez — "standart malzeme" değildir; ADLARI döner ki
-// kullanıcı neyin girmediğini görsün. Döner: { satirlar, atlanan, atlananlar }.
-function recetedenSablonSatirlari(recete) {
+// şablon eksik kalıyordu) satırlar. Bedenden bağımsız olan tek satır; bedene göre değişen (taban numarası,
+// fusbet) v1.560.0'dan beri beden haritasıyla girer. Giremeyen (belirsiz) olursa ADI döner.
+// Döner: { satirlar, atlanan, atlananlar }.
+// `variants` (ürünün varyantları, isteğe bağlı): yalnız BAZI bedenlerde olan malzeme (ör. sadece 42'de) "tüm
+// bedenler"e yayılmasın diye kaynak rengin beden sayısı bilinmeli; verilmezse eski davranış.
+function recetedenSablonSatirlari(recete, variants) {
   const satirlar = recete || [];
   if (satirlar.length === 0) return { satirlar: [], atlanan: 0, atlananlar: [] };
   const sayac = {};
@@ -450,12 +468,25 @@ function recetedenSablonSatirlari(recete) {
   Object.values(gruplar).forEach((g) => {
     const boylar = new Set(g.map((r) => r.beden || "Standart"));
     const miktarlar = new Set(g.map((r) => r.miktar));
-    if (boylar.size > 1 || miktarlar.size > 1) { atlananlar.push(g[0].hammaddeAd || "?"); return; }
     const r = g[0];
     const pozisyon = sablonPozisyonu(r);
-    sonuc.push({ id: uid("ss"), hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd, renk: r.renk || "Standart",
-      ...(pozisyon ? { pozisyon } : {}),
-      beden: r.beden || "Standart", miktar: r.miktar, birim: r.birim || "", proses: r.proses || "" });
+    const temel = { id: uid("ss"), hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd, renk: r.renk || "Standart",
+      ...(pozisyon ? { pozisyon } : {}), birim: r.birim || "", proses: r.proses || "" };
+    const ozelBedenler = new Set(g.map((x) => x.mamulBeden).filter((b) => b && b !== "Tüm Bedenler")); // sirasiz-tamam
+    const kaynakBedenSayisi = new Set((variants || []).filter((v) => v.renk === ilkRenk && v.beden).map((v) => v.beden)).size; // sirasiz-tamam (yalnız sayılıyor)
+    const kismi = ozelBedenler.size === g.length && kaynakBedenSayisi > 0 && ozelBedenler.size < kaynakBedenSayisi;
+    if (boylar.size <= 1 && miktarlar.size <= 1 && !kismi) {
+      sonuc.push({ ...temel, beden: r.beden || "Standart", miktar: r.miktar });
+      return;
+    }
+    // BEDENE GÖRE DEĞİŞEN (v1.560.0 — kullanıcı: "yine eksik hammadde çekti"; taban, fusbet girmiyordu): mamul
+    // bedeni → hammadde boyu + miktar haritası. "Tüm Bedenler" satırıyla karışık grup (belirsiz) yine girmez.
+    if (g.some((x) => !x.mamulBeden || x.mamulBeden === "Tüm Bedenler")) { atlananlar.push(r.hammaddeAd || "?"); return; }
+    const bedenler = {};
+    g.forEach((x) => { bedenler[x.mamulBeden] = { beden: x.beden || "Standart", miktar: x.miktar }; });
+    const bedenAyni = g.every((x) => kodEsit(x.beden || "", x.mamulBeden));
+    sonuc.push({ ...temel, beden: bedenAyni ? "mamul bedeni" : "bedene göre", miktar: miktarlar.size === 1 ? r.miktar : null,
+      bedenler, ...(bedenAyni ? { bedenAyni: true } : {}), ...(kismi ? { kismi: true } : {}) });
   });
   return { satirlar: sonuc, atlanan: atlananlar.length, atlananlar };
 }

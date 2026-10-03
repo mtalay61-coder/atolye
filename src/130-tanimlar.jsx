@@ -1865,8 +1865,18 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 <div key={sa.id} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, padding: "3px 0", borderTop: "1px solid var(--erp-border-2)", flexWrap: "wrap" }}>
                   <span style={{ flex: "1 1 160px", fontWeight: 700 }}>{sa.hammaddeAd}<span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>
                     {sa.pozisyon ? ` · ${sa.pozisyon}. renk (mamul renginden)` : sa.renk && sa.renk !== "Standart" ? ` · ${sa.renk}` : ""}{sa.beden && sa.beden !== "Standart" ? ` · ${sa.beden}` : ""}{sa.proses ? ` · ${sa.proses}` : ""}</span></span>
-                  <input type="number" min="0" step="any" defaultValue={sa.miktar}
-                    onBlur={(e) => guncelle({ satirlar: sb.satirlar.map((x) => (x.id === sa.id ? { ...x, miktar: parseFloat(e.target.value) || 0 } : x)) })}
+                  {/* Bedene göre değişen satırda (v1.560.0) beden başı miktar farklıysa kutu boş gelir ("bedene göre");
+                      yazılan değer TÜM bedenlere uygulanır, boş bırakmak beden başı miktarları korur. */}
+                  <input type="number" min="0" step="any" defaultValue={sa.miktar == null ? "" : sa.miktar}
+                    placeholder={sa.bedenler ? "bedene göre" : ""}
+                    title={sa.bedenler ? `Bedenler: ${Object.entries(sa.bedenler).map(([mb, e]) => `${mb}→${e.beden} ×${e.miktar}`).join(", ")}` : undefined}
+                    onBlur={(e) => {
+                      if (sa.bedenler && e.target.value === "") return;
+                      const m = parseFloat(e.target.value) || 0;
+                      guncelle({ satirlar: sb.satirlar.map((x) => (x.id !== sa.id ? x : x.bedenler
+                        ? { ...x, miktar: m, bedenler: Object.fromEntries(Object.entries(x.bedenler).map(([mb, b]) => [mb, { ...b, miktar: m }])) }
+                        : { ...x, miktar: m })) });
+                    }}
                     style={{ width: 80, padding: "2px 6px", fontSize: 12, textAlign: "right", border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" }} />
                   <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", minWidth: 40 }}>{sa.birim}</span>
                   <SilOnayButonu boyut={11} baslikNormal={`${sa.hammaddeAd} şablondan çıkarılsın mı?`}

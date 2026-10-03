@@ -52,5 +52,32 @@ bekle("hedef model renginde 2. bileşen (Taba)", k.eklenecekler[0].renk, "Taba")
 // Eski şablon (pozisyonsuz) aynen çalışır.
 bekle("pozisyonsuz eski şablon: renk aynen", sablonuUruneUygula({ ad: "eski", satirlar: [{ hammaddeUrunId: "d", hammaddeAd: "Deri", renk: "Kahve Süet", miktar: 1 }] }, { variants: [{ renk: "Taba Süet" }], recete: [] }).eklenecekler[0].renk, "Kahve Süet");
 
+// v1.560.0 — "yine eksik hammadde çekti": bedene göre değişen taban/fusbet şablona girmiyordu.
+const bedenli = (hid, ad, renk, boy, miktar) => ["36", "37", "38"].map((mb) => ({ id: `${hid}-${mb}`, mamulRenk: "Kahve Süet", mamulBeden: mb,
+  hammaddeUrunId: hid, hammaddeAd: ad, renk, beden: boy(mb), miktar: miktar(mb), birim: "Çift", proses: "Üste" }));
+const kaynak2 = [
+  ...bedenli("taban", "MT230 Taban", "Kahve", (mb) => mb, () => 1),
+  ...bedenli("bagcik", "Bağcık", "Kahve", () => "120 cm", () => 1),
+  ...bedenli("kalip", "Kalıp", "Std", (mb) => (mb === "36" ? "K1" : "K2"), (mb) => (mb === "38" ? 2 : 1)),
+];
+const s2 = recetedenSablonSatirlari(kaynak2);
+bekle("bedene göre değişenler şablona girer, hiçbiri atlanmaz", [s2.satirlar.map((x) => x.hammaddeAd), s2.atlananlar], [["MT230 Taban", "Bağcık", "Kalıp"], []]);
+bekle("taban: hammadde no = mamul no", !!s2.satirlar[0].bedenAyni, true);
+bekle("bağcık (tek boy) bedensiz satır", [s2.satirlar[1].bedenler, s2.satirlar[1].beden], [undefined, "120 cm"]);
+const h2 = { variants: ["Taba Süet", "Pudra Süet"].flatMap((renk) => ["36", "37", "38", "39"].map((beden) => ({ renk, beden }))), recete: [] };
+const u2 = sablonuUruneUygula({ ad: "A", satirlar: s2.satirlar }, h2);
+const satirlarOf = (ad, mr) => u2.eklenecekler.filter((r) => r.hammaddeAd === ad && r.mamulRenk === mr).map((r) => `${r.mamulBeden}:${r.beden}×${r.miktar}`);
+bekle("taban her bedene (kaynakta olmayan 39 dahil)", satirlarOf("MT230 Taban", "Taba Süet"), ["36:36×1", "37:37×1", "38:38×1", "39:39×1"]);
+bekle("haritalı: beden ve miktar haritadan; 39 karşılıksız", satirlarOf("Kalıp", "Pudra Süet"), ["36:K1×1", "37:K2×1", "38:K2×2"]);
+bekle("karşılıksız beden adıyla bildirilir", u2.bedenEksikler, ["Kalıp (39)"]);
+bekle("bağcık tüm bedenler", satirlarOf("Bağcık", "Taba Süet"), ["Tüm Bedenler:120 cm×1"]);
+const kismi = recetedenSablonSatirlari([...bedenli("taban", "Taban", "K", (mb) => mb, () => 1), { ...bedenli("tak", "Takviye", "B", () => "S", () => 1)[2] }],
+  ["36", "37", "38"].map((beden) => ({ renk: "Kahve Süet", beden })));
+bekle("yalnız 38'de olan malzeme yalnız 38'e (tüm bedenlere yayılmaz)", kismi.satirlar[1].bedenler, { 38: { beden: "S", miktar: 1 } });
+const uk = sablonuUruneUygula({ ad: "K", satirlar: kismi.satirlar }, h2);
+bekle("kısmi malzeme yalnız 38'e, uyarısız", [uk.eklenecekler.filter((r) => r.hammaddeAd === "Takviye").map((r) => r.mamulBeden), uk.bedenEksikler], [["38", "38"], []]);
+const u3 = sablonuUruneUygula({ ad: "A", satirlar: s2.satirlar }, { ...h2, recete: u2.eklenecekler });
+bekle("bedenli şablon ikinci kez eklenmez", u3.eklenecekler.length, 0);
+
 console.log(hata ? "birim-recete-sablon: HATA" : "birim-recete-sablon: tamam");
 process.exit(hata);
