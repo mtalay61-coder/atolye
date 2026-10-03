@@ -4126,6 +4126,8 @@ export default function AtolyeERP() {
               stok={stok}
               tanimlar={tanimlar}
               kurlar={muhasebe.kurlar || {}}
+              kurGecmisi={muhasebe.kurGecmisi || []}
+              cariler={cariler}
               onStokKaydet={saveStok}
               onTanimlarKaydet={saveTanimlar}
               showToast={showToast}

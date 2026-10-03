@@ -18,8 +18,8 @@ const K = fiyatListesiKaynaklari(gruplar);
 const toptan = K.find((k) => k.key === "g1");
 const usd = K.find((k) => k.key === "g2");
 const genel = K[0];
-bekle("kaynaklar: 2 genel + gruplar, grup birimi koda çevrili", K.map((k) => `${k.ad}:${k.paraBirimi}`),
-  ["Genel satış fiyatı:null", "Genel alış fiyatı:null", "Toptan TL:TRY", "Toptan USD:USD"]);
+bekle("kaynaklar: 2 genel + maliyet + gruplar, grup birimi koda çevrili", K.map((k) => `${k.ad}:${k.paraBirimi}`),
+  ["Genel satış fiyatı:null", "Genel alış fiyatı:null", "Maliyet (reçete / alış):TRY", "Toptan TL:TRY", "Toptan USD:USD"]);
 
 const urunler = [
   { id: "a", ad: "Bot", satisFiyati: 500, satisParaBirimi: "₺",
@@ -64,7 +64,7 @@ const satirlar = [{ urunId: "a", fiyat: 456, paraBirimi: "TRY" }, { urunId: "b",
 bekle("aynı birim: olduğu gibi, boş satır yazılmaz", fiyatlariHedefBirime(satirlar, "TRY", {}).fiyatlar, { a: 456 });
 bekle("USD'ye kurla", fiyatlariHedefBirime(satirlar, "USD", { USD: 40 }).fiyatlar, { a: 11.4 });
 bekle("kur yoksa atlanır ve sayılır", fiyatlariHedefBirime(satirlar, "USD", {}).cevrilemeyen, 1);
-const yeniGrup = fiyatListesiKaynaklari([{ id: "g3", ad: "Toptan TL +14", tip: "Satış", paraBirimi: "TRY" }])[2];
+const yeniGrup = fiyatListesiKaynaklari([{ id: "g3", ad: "Toptan TL +14", tip: "Satış", paraBirimi: "TRY" }]).find((k) => k.grupId === "g3");
 const y4 = fiyatListesiYaz(urunler, yeniGrup, { a: 456 }, { paraBirimleri: { a: "TRY" } });
 bekle("yeni gruba yazıldı, kaynak grup değişmedi", y4.urunler[0].fiyatKurallari.map((k) => `${k.deger}:${k.fiyat}`), ["g1:400", "g1:999", "g3:456"]);
 bekle("USD grubunda fiyat yok → boş", urunKaynakFiyati(urunler[0], usd).fiyat, null);

@@ -3925,6 +3925,11 @@ function ProductMatrixCard({
       {/* MALİYET SEKMESİ (21 Eylül): reçete maliyet dökümü + fiyat gruplarına satış fiyatı. */}
       {isMamul && cardTab === "maliyet" && (
         <div data-maliyet-sekmesi="1" style={{ display: "grid", gap: 10 }}>
+          {/* MALİYET OK (v1.551.0, 156): eksikler + onay durumu + son onay tarihi. Reçetesiz (dışarıdan
+              alınan) üründe maliyet alış fiyatıdır; onu da burada onaylar. Fiyat listesi bu onayı okur. */}
+          <MaliyetOnayKutusu urun={product} onUrunGuncelle={onUrunGuncelle}
+            hesap={urunMaliyetHesabi(product, { tumUrunler, tanimlarProsesler, tanimlarAraProsesler, kurlar, cariler, kurGecmisi,
+              aylikUretimHedefi: tanimlarAylikUretimHedefi, genelGiderler: tanimlarGenelGiderler })} />
           {(product.recete || []).length > 0 && (
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button type="button" className="btn-ghost" data-maliyet-yazdir-ac="1"
@@ -3935,7 +3940,7 @@ function ProductMatrixCard({
             </div>
           )}
           {(product.recete || []).length === 0 && (
-            <EmptyState text="Reçete boş — önce Reçete sekmesinden hammadde ekleyin, maliyet buradan çıkar." />
+            <EmptyState text="Reçete boş — üretilen üründe Reçete sekmesinden hammadde ekleyin; dışarıdan alınan üründe maliyet alış fiyatıdır (Stok Bilgileri › Alış fiyatı)." />
           )}
           {/* ÜRETİMDE REÇETEDEN SAPMALAR (kullanıcı, 21 Eylül: "üretimden ölçülen tüketimi de
               sekmeye taşıyabiliriz; üretimde fark yok ise göstermesine gerek yok, fark olan

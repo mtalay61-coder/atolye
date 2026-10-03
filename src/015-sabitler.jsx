@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.550.0";
+const SURUM = "1.551.0";
 const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Fiyat listesi: fiyat grubu secip modellerin fiyatlarini gor, duzelt, kaydet; toplu yuzde/tutar ile farkli kaydet (yeni fiyat grubu)";
+const SURUM_NOTU = "Maliyet OK dugmesi (eksikler + son onay tarihi); fiyat listesinde Maliyet kaynagi: recete maliyeti ya da alis fiyati uzerine kar koyup satis fiyati";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,14 @@ const SURUM_NOTU = "Fiyat listesi: fiyat grubu secip modellerin fiyatlarini gor,
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.551.0", tarih: "03.10.2026",
+    eklenen: [
+      "Ürün kartı › Maliyet: 'Maliyet OK' düğmesi — maliyetteki eksikler (fiyatı olmayan hammadde, kur, işçilik…) listeleniyor, onay tarihi ve kimin onayladığı görünüyor; onaydan sonra maliyet değişirse uyarı",
+      "Dışarıdan alınan (reçetesiz) üründe maliyet alış fiyatı; Maliyet sekmesinde o da onaylanabiliyor",
+      "Fiyat Listesi'nde 'Maliyet (reçete / alış)' kaynağı: maliyet durumu ve tarihi sütunu, 'Yalnız Maliyet OK' süzgeci; üzerine kâr % (ya da tutar) koyup Farklı kaydet ile satış fiyat grubu ya da genel satış fiyatı",
+    ],
+    degisen: ["Fiyat Listesi'nde Farklı kaydet artık farklı tipteki gruplara da (alıştan satışa) yazabiliyor; yeni grubun tipi seçiliyor"],
+    duzeltilen: [] },
   { surum: "1.550.0", tarih: "03.10.2026",
     eklenen: [
       "Fiyat Listesi (Depo menüsü): fiyat grubu ya da genel fiyat seçilince modellerin o fiyatı listeleniyor; fiyatı olmayan boş görünüyor, aynı ekranda yazılıp kaydediliyor",
