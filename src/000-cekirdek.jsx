@@ -16,6 +16,8 @@ import {
   PackagePlus,
   // Ekran düzeni (v1.522.0, 387): tutamak, göster/gizle, düzen düğmesi.
   GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw,
+  // Fiyat listesi (v1.550.0, 157).
+  Tag,
 } from "lucide-react";
 
 /* ---------------------------------------------------------

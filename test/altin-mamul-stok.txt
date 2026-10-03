@@ -2,6 +2,7 @@
  "depoOgeleri": [
   "Stok",
   "Mamul Stok",
+  "Fiyat Listesi",
   "Depo",
   "Paketleme"
  ],

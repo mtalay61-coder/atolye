@@ -8,6 +8,7 @@
   "Anasayfa",
   "Stok",
   "Mamul Stok",
+  "Fiyat Listesi",
   "Depo",
   "Paketleme",
   "Planlama",
