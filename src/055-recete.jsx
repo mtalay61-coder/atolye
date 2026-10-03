@@ -356,9 +356,36 @@ function eksiStokSebebi(stok, hammaddeUrunId, renk, beden) {
 // her mamul renginde aynıdır. Şablon satırı = { hammaddeUrunId, hammaddeAd, renk, beden (boy),
 // miktar, birim, proses }. Tanımlarda `receteSablonlari: [{ id, ad, satirlar }]`.
 
+// RENK POZİSYONU (v1.558.0 — kullanıcı: "Şablondan ekleme doğru çalışmıyor", 27080 D'den kurulan şablon 27081 D'ye
+// uygulanınca dört mamul renginin HEPSİNDE deri "Kahve Süet" geldi). Şablon hammadde rengini harfiyen saklıyordu;
+// oysa "mamul Kahve Süet → deri Kahve Süet" satırı rengi MAMUL RENGİNDEN alıyor. Artık şablon satırı bu bağı
+// `pozisyon` olarak saklar: hammadde rengi mamul rengiyle aynıysa 1; model rengi (kombinasyon) etiketinde
+// "1004 - Kırmızı/Bej" k'ıncı bileşenle aynıysa k; satır zaten "N. Renk" açıklamalıysa N. Uygulanırken her mamul
+// rengi kendi rengini alır (`kombinasyonRengiCoz`). Mamul rengiyle bağı olmayan (Nikel, Standart) sabit kalır.
+function sablonPozisyonu(r) {
+  const m = String((r && r.aciklama) || "").match(/^(\d+)\. Renk$/);
+  if (m) return Number(m[1]);
+  const mr = String((r && r.mamulRenk) || "");
+  if (!r || !r.renk || !mr) return null;
+  if (kombinasyonEtiketiFormatindaMi(mr)) {
+    const k = mr.match(/^.+? - (.+)$/);
+    const parcalar = k ? k[1].split("/").map((x) => x.trim()) : [];
+    const i = parcalar.findIndex((p) => kodEsit(p, r.renk));
+    return i >= 0 ? i + 1 : null;
+  }
+  return kodEsit(r.renk, mr) ? 1 : null;
+}
+function sablonHedefRengi(sa, mamulRenk) {
+  if (!sa.pozisyon) return sa.renk || "Standart";
+  if (kombinasyonEtiketiFormatindaMi(mamulRenk)) return kombinasyonRengiCoz(mamulRenk, sa.pozisyon) || sa.renk || "Standart";
+  return sa.pozisyon === 1 ? mamulRenk : (sa.renk || "Standart");
+}
+
 // Şablonu ürüne uygula: ürünün HER mamul rengi için bir satır ("Tüm Bedenler"). Aynı mamul
 // renginde aynı hammadde+renk+boy+proses zaten varsa eklenmez — şablonu iki kez uygulamak
-// reçeteyi ikiye katlamasın. Döner: { eklenecekler, atlanan }.
+// reçeteyi ikiye katlamasın. Pozisyonlu satırın rengi hedef mamul renginden çözülür.
+// İŞÇİLİK (v1.558.0): şablon işçilik ücretlerini ve ara prosesleri de taşır; hedefte BOŞ olanlar doldurulur,
+// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi }.
 function sablonuUruneUygula(sablon, product) {
   const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk)));
   const mevcut = product.recete || [];
@@ -368,43 +395,71 @@ function sablonuUruneUygula(sablon, product) {
   let atlanan = 0;
   renkler.forEach((mr) => {
     (sablon.satirlar || []).forEach((sa) => {
+      const renk = sablonHedefRengi(sa, mr);
       const varMi = mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId
-        && (r.renk || "") === (sa.renk || "") && (r.beden || "Standart") === (sa.beden || "Standart")
+        && (r.renk || "") === renk && (r.beden || "Standart") === (sa.beden || "Standart")
         && (r.proses || "") === (sa.proses || ""));
       if (varMi) { atlanan += 1; return; }
       eklenecekler.push({
         mamulRenk: mr, mamulBeden: "Tüm Bedenler",
         hammaddeUrunId: sa.hammaddeUrunId, hammaddeAd: sa.hammaddeAd,
-        renk: sa.renk || "Standart", beden: sa.beden || "Standart",
+        renk, beden: sa.beden || "Standart",
         miktar: parseFloat(sa.miktar) || 0, birim: sa.birim || "", proses: sa.proses || "",
-        aciklama: `şablon: ${sablon.ad}`, eklemeId, eklemeTarihi, ambalajDegisken: false,
+        aciklama: sa.pozisyon ? `${sa.pozisyon}. Renk` : `şablon: ${sablon.ad}`, eklemeId, eklemeTarihi, ambalajDegisken: false,
       });
     });
   });
-  return { eklenecekler, atlanan };
+  const ekAlanlar = {};
+  let iscilikSayisi = 0;
+  const isc = sablon.iscilik || {};
+  const pu = { ...(product.prosesUcretleri || {}) };
+  Object.entries(isc.prosesUcretleri || {}).forEach(([p, u]) => { if (u > 0 && !(pu[p] > 0)) { pu[p] = u; iscilikSayisi++; } });
+  if (iscilikSayisi) ekAlanlar.prosesUcretleri = pu;
+  const ape = { ...(product.araProsesEklentileri || {}) };
+  let apeSayisi = 0;
+  Object.entries(isc.araProsesEklentileri || {}).forEach(([asil, v]) => { if (ape[asil] == null || (Array.isArray(ape[asil]) && ape[asil].length === 0)) { ape[asil] = v; apeSayisi++; } });
+  if (apeSayisi) ekAlanlar.araProsesEklentileri = ape;
+  const apu = { ...(product.araProsesUcretleri || {}) };
+  let apuSayisi = 0;
+  Object.entries(isc.araProsesUcretleri || {}).forEach(([id, u]) => { if (apu[id] == null) { apu[id] = u; apuSayisi++; } });
+  if (apuSayisi) ekAlanlar.araProsesUcretleri = apu;
+  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi };
 }
 
-// Reçeteden şablon çıkar: İLK mamul rengindeki satırlardan, bedenden bağımsız olanlar
-// (tüm bedenlerde aynı boy ve miktar). Bedene göre değişen malzeme (taban numarası gibi)
-// şablona girmez — "standart malzeme" değildir. Döner: { satirlar, atlanan }.
+// Reçeteden şablon çıkar: EN ÇOK satırı olan mamul rengindeki (eskiden ilk renk — o renkte eksik malzeme varsa
+// şablon eksik kalıyordu) satırlardan, bedenden bağımsız olanlar (tüm bedenlerde aynı boy ve miktar). Bedene
+// göre değişen malzeme (taban numarası gibi) şablona girmez — "standart malzeme" değildir; ADLARI döner ki
+// kullanıcı neyin girmediğini görsün. Döner: { satirlar, atlanan, atlananlar }.
 function recetedenSablonSatirlari(recete) {
   const satirlar = recete || [];
-  if (satirlar.length === 0) return { satirlar: [], atlanan: 0 };
-  const ilkRenk = satirlar[0].mamulRenk;
+  if (satirlar.length === 0) return { satirlar: [], atlanan: 0, atlananlar: [] };
+  const sayac = {};
+  satirlar.forEach((r) => { sayac[r.mamulRenk] = (sayac[r.mamulRenk] || 0) + 1; });
+  const ilkRenk = Object.keys(sayac).sort((a, b) => sayac[b] - sayac[a])[0];
   const gruplar = {};
   satirlar.filter((r) => r.mamulRenk === ilkRenk).forEach((r) => {
     const a = `${r.hammaddeUrunId}|${r.renk || ""}|${r.proses || ""}`;
     (gruplar[a] = gruplar[a] || []).push(r);
   });
   const sonuc = [];
-  let atlanan = 0;
+  const atlananlar = [];
   Object.values(gruplar).forEach((g) => {
     const boylar = new Set(g.map((r) => r.beden || "Standart"));
     const miktarlar = new Set(g.map((r) => r.miktar));
-    if (boylar.size > 1 || miktarlar.size > 1) { atlanan += 1; return; }
+    if (boylar.size > 1 || miktarlar.size > 1) { atlananlar.push(g[0].hammaddeAd || "?"); return; }
     const r = g[0];
+    const pozisyon = sablonPozisyonu(r);
     sonuc.push({ id: uid("ss"), hammaddeUrunId: r.hammaddeUrunId, hammaddeAd: r.hammaddeAd, renk: r.renk || "Standart",
+      ...(pozisyon ? { pozisyon } : {}),
       beden: r.beden || "Standart", miktar: r.miktar, birim: r.birim || "", proses: r.proses || "" });
   });
-  return { satirlar: sonuc, atlanan };
+  return { satirlar: sonuc, atlanan: atlananlar.length, atlananlar };
+}
+
+// Üründen şablonun işçilik kısmı: sıfırdan büyük proses ücretleri, ara proses seçimleri ve ücretleri. Saf.
+function urundenSablonIsciligi(product) {
+  const prosesUcretleri = {};
+  Object.entries((product && product.prosesUcretleri) || {}).forEach(([p, u]) => { if (u > 0) prosesUcretleri[p] = u; });
+  return { prosesUcretleri, araProsesEklentileri: { ...((product && product.araProsesEklentileri) || {}) },
+    araProsesUcretleri: { ...((product && product.araProsesUcretleri) || {}) } };
 }

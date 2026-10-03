@@ -731,12 +731,15 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   }
 
   // Bir reçete grubunu tek seferde günceller: eski satırları siler ve yenilerini ekler (tutarlılık için tek işlemde).
-  function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar) {
+  // `ekAlanlar` (v1.558.0): reçeteyle AYNI yazımda üründe değişecek başka alanlar (şablondan gelen işçilik
+  // ücretleri, ara prosesler). Ayrı bir `urunGuncelle` çağrısı aynı çizimdeki eski `items`tan hesaplayıp
+  // reçete eklemesini EZERDİ.
+  function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar, ekAlanlar) {
     const next = items.map((p) => {
       if (p.id !== productId) return p;
       const kalanlar = (p.recete || []).filter((r) => !silinecekIdler.includes(r.id));
       const eklenenler = yeniSatirlar.map((s) => ({ id: uid("recete"), ...s }));
-      return { ...p, recete: [...kalanlar, ...eklenenler] };
+      return { ...p, ...(ekAlanlar || {}), recete: [...kalanlar, ...eklenenler] };
     });
     onSave(next);
   }

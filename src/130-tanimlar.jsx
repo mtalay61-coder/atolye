@@ -1864,7 +1864,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               {(sb.satirlar || []).map((sa) => (
                 <div key={sa.id} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, padding: "3px 0", borderTop: "1px solid var(--erp-border-2)", flexWrap: "wrap" }}>
                   <span style={{ flex: "1 1 160px", fontWeight: 700 }}>{sa.hammaddeAd}<span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>
-                    {sa.renk && sa.renk !== "Standart" ? ` · ${sa.renk}` : ""}{sa.beden && sa.beden !== "Standart" ? ` · ${sa.beden}` : ""}{sa.proses ? ` · ${sa.proses}` : ""}</span></span>
+                    {sa.pozisyon ? ` · ${sa.pozisyon}. renk (mamul renginden)` : sa.renk && sa.renk !== "Standart" ? ` · ${sa.renk}` : ""}{sa.beden && sa.beden !== "Standart" ? ` · ${sa.beden}` : ""}{sa.proses ? ` · ${sa.proses}` : ""}</span></span>
                   <input type="number" min="0" step="any" defaultValue={sa.miktar}
                     onBlur={(e) => guncelle({ satirlar: sb.satirlar.map((x) => (x.id === sa.id ? { ...x, miktar: parseFloat(e.target.value) || 0 } : x)) })}
                     style={{ width: 80, padding: "2px 6px", fontSize: 12, textAlign: "right", border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" }} />
