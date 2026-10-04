@@ -8,6 +8,11 @@ function fiyatSayisi(v) {
   if (!t) return NaN;
   return parseFloat(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
 }
+// GEÇMİŞTEN GELEN RENK EŞLEŞMESİ (v1.561.0): şablondan uygulanırken rengi geçmiş reçetelerden HATIRLANAN satır
+// (`renkGecmisten`) kırmızı çerçeveyle gösterilir — kullanıcı "gözden kaçırmasın". Renk seçilince ya da
+// "Eşleştirmeleri onayla" ile işaret düşer. Bilinmeyen eşleşme hiç açılmaz: turuncu "eşleştir…" kutusu.
+const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
+const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
 const fiyatYazi = (n) => (n == null || n === "" ? "" : String(n).replace(".", ","));
 
 // HARİCİ BARKOD KUTUSU (v1.542.0) — Barkodlar sekmesinde her renk+beden satırında. Kutudan çıkınca ya da
@@ -2012,11 +2017,11 @@ function ProductMatrixCard({
               onClick={() => {
                 const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
                 if (!sb) return;
-                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler } = sablonuUruneUygula(sb, product);
+                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
                 if (eklenecekler.length === 0 && !iscilikSayisi) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
                 // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
                 onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
-                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}`);
+                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
               }}
               style={{ padding: "5px 12px", fontSize: 12 }}>
               {(product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"}
@@ -2059,6 +2064,48 @@ function ProductMatrixCard({
               </button>
             )}
           </div>
+          {(() => {
+            // RENK EŞLEŞTİRME ŞERİDİ (v1.561.0): şablondan gelen satırlarda geçmişten hatırlanan renkler (kırmızı)
+            // ve hiç eşleşmesi olmayan mamul renkleri (turuncu "eşleştir…") kalıcı olarak sayılır — toast kaybolur,
+            // bu şerit eşleştirmeler bitene kadar durur.
+            const recete = product.recete || [];
+            const gecmisSatirlar = recete.filter((r) => r.renkGecmisten);
+            const mamulRenkleri = Array.from(new Set((product.variants || []).map((v) => v.renk)));
+            const sablonGruplari = new Map();
+            recete.forEach((r) => {
+              if (!String(r.eklemeId || "").startsWith("sablon-")) return;
+              const k = `${r.eklemeId}|${r.hammaddeUrunId}|${r.proses || ""}`;
+              if (!sablonGruplari.has(k)) sablonGruplari.set(k, { ad: r.hammaddeAd, renkler: new Set() });
+              sablonGruplari.get(k).renkler.add(r.mamulRenk);
+            });
+            const bos = [];
+            sablonGruplari.forEach((g) => mamulRenkleri.forEach((mr) => { if (!g.renkler.has(mr)) bos.push(`${g.ad} · ${mr}`); }));
+            const gecmisAdet = new Set(gecmisSatirlar.map((r) => `${r.hammaddeUrunId}|${r.mamulRenk}|${r.proses || ""}`)).size;
+            if (gecmisAdet === 0 && bos.length === 0) return null;
+            return (
+              <div data-renk-eslestirme-seridi={`${gecmisAdet}/${bos.length}`} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", margin: "8px 0", padding: "8px 12px",
+                border: "2px solid var(--erp-danger)", borderRadius: "var(--erp-r-md)", background: "#FDECEC", fontSize: 12, color: "var(--erp-text)" }}>
+                <b style={{ color: "var(--erp-danger)" }}>Renk eşleştirmelerini kontrol edin:</b>
+                {gecmisAdet > 0 && (
+                  <span><span style={{ ...GECMIS_RENK_STILI, padding: "1px 6px", borderRadius: "var(--erp-r-sm)", fontWeight: 700 }}>{gecmisAdet}</span> renk geçmiş reçetelerden hatırlandı (kırmızı kutular)</span>
+                )}
+                {bos.length > 0 && (
+                  <span title={bos.join("\n")}><span style={{ color: "var(--erp-warn)", border: "1px dashed #B85C2E", background: "var(--erp-orange-bg)", padding: "1px 6px", borderRadius: "var(--erp-r-sm)", fontWeight: 700 }}>{bos.length}</span> eşleşme boş — turuncu "eşleştir…" kutularından seçin</span>
+                )}
+                {gecmisAdet > 0 && (
+                  <button type="button" className="btn-ghost" data-renk-gecmis-onayla="1" style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 12 }}
+                    onClick={() => {
+                      // Kullanıcı kırmızı kutulara baktı ve doğru buldu: işaretler düşer, renkler aynen kalır.
+                      const yeni = gecmisSatirlar.map(({ id, renkGecmisten: _rg, ...rest }) => rest);
+                      onReceteGrubuGuncelle(product.id, gecmisSatirlar.map((r) => r.id), yeni);
+                      (showToast || (() => {}))(`${gecmisAdet} renk eşleştirmesi onaylandı`);
+                    }}>
+                    <Check size={13} /> Eşleştirmeleri onayla
+                  </button>
+                )}
+              </div>
+            );
+          })()}
           {/* KAPSAM UYARISI — üretimde sessiz eksik tüketimin önüne geçer.
               Bir hammaddenin yalnızca bazı bedenleri tanımlıysa, üretim sırasında kalan bedenler
               için hiç stok düşülmez ve fark ancak sayımda ortaya çıkar. */}
@@ -3012,7 +3059,7 @@ function ProductMatrixCard({
                         // seferde güncellenir ki kısmi (yarısı eski, yarısı yeni) bir durum oluşmasın.
                         const bedensizRenkDegistir = (satir, yeniRenk) => {
                           if (!yeniRenk || yeniRenk === satir.renk) return;
-                          const { id, ...rest } = satir;
+                          const { id, renkGecmisten: _rg, ...rest } = satir;
                           onReceteGrubuGuncelle(product.id, [satir.id], [{ ...rest, renk: yeniRenk }]);
                         };
                         return (
@@ -3245,11 +3292,11 @@ function ProductMatrixCard({
                                                 // tarayıcı sessizce İLK seçeneği gösteriyordu; kayıtlı renk "(stokta yok)" ile görünür (v1.559.0).
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                                                   <select
-                                                    value={r.renk}
+                                                    value={r.renk} data-renk-gecmis={r.renkGecmisten ? "1" : undefined}
                                                     onChange={(e) => bedensizRenkDegistir(r, e.target.value)}
                                                     className="mono"
-                                                    title={poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
-                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                                    title={r.renkGecmisten ? GECMIS_RENK_IPUCU : poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
+                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff", ...(r.renkGecmisten ? GECMIS_RENK_STILI : {}) }}
                                                   >
                                                     {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
@@ -3258,11 +3305,11 @@ function ProductMatrixCard({
                                               ) : (
                                               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                                                 <select
-                                                  value={r.renk}
+                                                  value={r.renk} data-renk-gecmis={r.renkGecmisten ? "1" : undefined}
                                                   onChange={(e) => bedensizRenkDegistir(r, e.target.value)}
                                                   className="mono"
-                                                  title={poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
-                                                  style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                                  title={r.renkGecmisten ? GECMIS_RENK_IPUCU : poz != null ? aciklamaGoster(poz, mr) : "Hammadde rengini değiştir"}
+                                                  style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff", ...(r.renkGecmisten ? GECMIS_RENK_STILI : {}) }}
                                                 >
                                                   {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                   {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
@@ -3296,7 +3343,7 @@ function ProductMatrixCard({
                                               onChange={(e) => {
                                                 const yeniRenk = e.target.value;
                                                 if (!yeniRenk) return;
-                                                const { id, ...rest } = satirlarBu[0];
+                                                const { id, renkGecmisten: _rg, ...rest } = satirlarBu[0];
                                                 onReceteGrubuGuncelle(product.id, [], [{ ...rest, mamulRenk: mr, renk: yeniRenk }]);
                                               }}
                                               className="mono"
@@ -3382,11 +3429,11 @@ function ProductMatrixCard({
                                               <td key={r.id} style={{ padding: "6px 8px", textAlign: "center" }}>
                                                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                                                   <select
-                                                    value={r.renk}
+                                                    value={r.renk} data-renk-gecmis={r.renkGecmisten ? "1" : undefined}
                                                     onChange={(e) => bedensizRenkDegistir(r, e.target.value)}
                                                     className="mono"
-                                                    title="Hammadde rengini değiştir"
-                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                                    title={r.renkGecmisten ? GECMIS_RENK_IPUCU : "Hammadde rengini değiştir"}
+                                                    style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff", ...(r.renkGecmisten ? GECMIS_RENK_STILI : {}) }}
                                                   >
                                                     {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
@@ -3672,18 +3719,19 @@ function ProductMatrixCard({
                                           {hepsininMiktariAyni ? (
                                             <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                                               <select
-                                                value={ms.renk}
+                                                value={ms.renk} data-renk-gecmis={ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined}
                                                 onChange={(e) => {
                                                   const yeniRenk = e.target.value;
                                                   if (!yeniRenk || yeniRenk === ms.renk) return;
                                                   const guncellenecekler = ms.satirlar.map((r) => {
-                                                    const { id, ...rest } = r;
+                                                    const { id, renkGecmisten: _rg, ...rest } = r;
                                                     return { ...rest, renk: yeniRenk };
                                                   });
                                                   onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                                 }}
                                                 className="mono"
-                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
+                                                title={ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_IPUCU : undefined}
+                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", ...(ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_STILI : {}) }}
                                               >
                                                 {!bedenHammaddeRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{bedenHammaddeRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -3695,18 +3743,19 @@ function ProductMatrixCard({
                                             // her sütun kendi miktarını burada, hücrede taşımaya devam eder.
                                             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                                               <select
-                                                value={ms.renk}
+                                                value={ms.renk} data-renk-gecmis={ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined}
                                                 onChange={(e) => {
                                                   const yeniRenk = e.target.value;
                                                   if (!yeniRenk || yeniRenk === ms.renk) return;
                                                   const guncellenecekler = ms.satirlar.map((r) => {
-                                                    const { id, ...rest } = r;
+                                                    const { id, renkGecmisten: _rg, ...rest } = r;
                                                     return { ...rest, renk: yeniRenk };
                                                   });
                                                   onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                                 }}
                                                 className="mono"
-                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
+                                                title={ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_IPUCU : undefined}
+                                                style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", ...(ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_STILI : {}) }}
                                               >
                                                 {!bedenHammaddeRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{bedenHammaddeRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -3748,7 +3797,7 @@ function ProductMatrixCard({
                                               const ornek = matrisSatirlari[0];
                                               if (!ornek) return;
                                               const yeniSatirlar = ornek.satirlar.map((r) => {
-                                                const { id, ...rest } = r;
+                                                const { id, renkGecmisten: _rg, ...rest } = r;
                                                 return { ...rest, mamulRenk: mr, renk: yeniRenk };
                                               });
                                               onReceteGrubuGuncelle(product.id, [], yeniSatirlar);
@@ -3921,19 +3970,21 @@ function ProductMatrixCard({
                                   </span>
                                 )}
                                 <select
-                                  value={ms.renk}
+                                  value={ms.renk} data-renk-gecmis={ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined}
                                   onChange={(e) => {
                                     const yeniRenk = e.target.value;
                                     if (!yeniRenk || yeniRenk === ms.renk) return;
                                     const guncellenecekler = ms.satirlar.map((r) => {
-                                      const { id, ...rest } = r;
+                                      const { id, renkGecmisten: _rg, ...rest } = r;
                                       return { ...rest, renk: yeniRenk };
                                     });
                                     onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                   }}
                                   className="mono"
-                                  style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px" }}
+                                  title={ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_IPUCU : undefined}
+                                  style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", ...(ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_STILI : {}) }}
                                 >
+                                  {!belirtilmemisRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{belirtilmemisRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                   {belirtilmemisRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
                                 </select>
                                 {ms.proses && <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{ms.proses}</span>}

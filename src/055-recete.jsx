@@ -385,8 +385,36 @@ function sablonHedefRengi(sa, mamulRenk) {
 // renginde aynı hammadde+renk+boy+proses zaten varsa eklenmez — şablonu iki kez uygulamak
 // reçeteyi ikiye katlamasın. Pozisyonlu satırın rengi hedef mamul renginden çözülür.
 // İŞÇİLİK (v1.558.0): şablon işçilik ücretlerini ve ara prosesleri de taşır; hedefte BOŞ olanlar doldurulur,
-// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler }.
-function sablonuUruneUygula(sablon, product) {
+// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi }.
+// RENK EŞLEŞTİRME — normal "Reçeteye Ekle" ile AYNI sistem (v1.561.0, kullanıcı: "renk eşleştirmeleri aynı
+// sistemde getir, hatırla ve bilmediğini boş getir; renkli belirt, kullanıcı gözden kaçırmasın"). Eskiden şablon
+// satırının rengi (kaynak modelin rengi, ör. Taban "Kahve") hedefin BÜTÜN renklerine aynen yazılıyordu.
+// Sıra: (1) hammaddede mamul (pozisyon) rengiyle AYNI ADLI renk; (2) geçmiş reçetelerde bu mamul rengine
+// verilmiş karar (`gecmisRenkOnerisi` — işaretlenir: `renkGecmisten`); (3) renksiz / tek renkli / "Standart"
+// rengi olan hammaddede o renk (sabit); (4) BİLİNMİYOR → "" (satır açılmaz, matriste turuncu "eşleştir…").
+// `ctx.tumUrunler` verilmezse (eski çağrı) şablonun rengi aynen — `sablonHedefRengi`.
+function sablonRengiCoz(sa, mr, ctx, gecmisHarita) {
+  const h = ctx && ctx.tumUrunler ? ctx.tumUrunler.find((u) => u.id === sa.hammaddeUrunId) : null;
+  if (!h) return { renk: sablonHedefRengi(sa, mr), gecmis: false };
+  if (urunRenksizMi(h)) return { renk: sa.renk || "Standart", gecmis: false };
+  const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+  const hRenkler = Array.from(new Set((h.variants || []).map((v) => v.renk).filter(Boolean)));
+  const kombi = kombinasyonEtiketiFormatindaMi(mr);
+  const pozisyonRengi = kombi ? (kombinasyonRengiCoz(mr, sa.pozisyon || 1) || mr) : mr;
+  const isim = hRenkler.find((a) => nrm(a) === nrm(pozisyonRengi));
+  if (isim) return { renk: isim, gecmis: false };
+  const gecmis = gecmisRenkOnerisi(gecmisHarita, pozisyonRengi, h.id, hRenkler);
+  if (gecmis) return { renk: gecmis, gecmis: true };
+  const standart = hRenkler.find((a) => nrm(a) === "standart");
+  if (standart) return { renk: standart, gecmis: false };
+  if (hRenkler.length === 1) return { renk: hRenkler[0], gecmis: false };
+  return { renk: "", gecmis: false };
+}
+
+function sablonuUruneUygula(sablon, product, ctx) {
+  const gecmisHarita = ctx && ctx.tumUrunler ? gecmisRenkEslesmeleri(ctx.tumUrunler) : null;
+  const bosEslesmeler = [];
+  let gecmisSayisi = 0;
   const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk)));
   const mevcut = product.recete || [];
   // HER ŞABLON SATIRINA AYRI eklemeId (v1.559.0). Reçete görünümü eklemeId'ye göre kart açar (145); tek kimlik
@@ -404,14 +432,24 @@ function sablonuUruneUygula(sablon, product) {
     const mamulBedenleri = bedenSirala(Array.from(new Set((product.variants || []).filter((v) => v.renk === mr).map((v) => v.beden).filter(Boolean))));
     (sablon.satirlar || []).forEach((sa, i) => {
       const eklemeId = eklemeIdleri[i];
-      const renk = sablonHedefRengi(sa, mr);
+      const cozum = sablonRengiCoz(sa, mr, ctx, gecmisHarita);
+      const renk = cozum.renk;
+      if (!renk) {
+        // Kullanıcı boş eşleşmeyi sonradan doldurduysa (satır var) yeniden uygulamada "boş" sayılmaz.
+        if (mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId && (r.proses || "") === (sa.proses || ""))) { atlanan += 1; return; }
+        bosEslesmeler.push({ hammaddeAd: sa.hammaddeAd || "?", mamulRenk: mr });
+        return;
+      }
       const ortak = {
         hammaddeUrunId: sa.hammaddeUrunId, hammaddeAd: sa.hammaddeAd, renk, birim: sa.birim || "", proses: sa.proses || "",
         aciklama: sa.pozisyon ? `${sa.pozisyon}. Renk` : `şablon: ${sablon.ad}`, eklemeId, eklemeTarihi, ambalajDegisken: false,
+        ...(cozum.gecmis ? { renkGecmisten: true } : {}),
       };
+      // Tekrar kontrolü RENGE BAKMAZ (v1.561.0): kullanıcı geçmişten gelen rengi değiştirdikten sonra şablon yeniden
+      // uygulanınca aynı malzeme eski renkle ikinci kez eklenmesin.
       const ayniVarMi = (mb, hb) => mevcut.some((r) => r.mamulRenk === mr && r.hammaddeUrunId === sa.hammaddeUrunId
         && (mb == null || r.mamulBeden === mb)
-        && (r.renk || "") === renk && (r.beden || "Standart") === hb && (r.proses || "") === (sa.proses || ""));
+        && (r.beden || "Standart") === hb && (r.proses || "") === (sa.proses || ""));
       if (sa.bedenler) {
         if (mamulBedenleri.length === 0) { bedenEksikler.add(sa.hammaddeAd || "?"); return; }
         mamulBedenleri.forEach((mb) => {
@@ -443,7 +481,8 @@ function sablonuUruneUygula(sablon, product) {
   let apuSayisi = 0;
   Object.entries(isc.araProsesUcretleri || {}).forEach(([id, u]) => { if (apu[id] == null) { apu[id] = u; apuSayisi++; } });
   if (apuSayisi) ekAlanlar.araProsesUcretleri = apu;
-  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi, bedenEksikler: Array.from(bedenEksikler) };
+  gecmisSayisi = eklenecekler.filter((r) => r.renkGecmisten).length;
+  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi, bedenEksikler: Array.from(bedenEksikler), bosEslesmeler, gecmisSayisi };
 }
 
 // Reçeteden şablon çıkar: EN ÇOK satırı olan mamul rengindeki (eskiden ilk renk — o renkte eksik malzeme varsa

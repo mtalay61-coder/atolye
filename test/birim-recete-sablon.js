@@ -79,5 +79,38 @@ bekle("kısmi malzeme yalnız 38'e, uyarısız", [uk.eklenecekler.filter((r) => 
 const u3 = sablonuUruneUygula({ ad: "A", satirlar: s2.satirlar }, { ...h2, recete: u2.eklenecekler });
 bekle("bedenli şablon ikinci kez eklenmez", u3.eklenecekler.length, 0);
 
+// v1.561.0 — "renk eşleştirmeleri aynı sistemde getir, hatırla ve bilmediğini boş getir".
+const hm = (id, ad, renkler) => ({ id, ad, kategori: "Hammadde", variants: renkler.map((renk) => ({ renk, beden: "" })) });
+const tum = [
+  hm("taban", "Taban", ["Kahve", "Taba", "Siyah"]), hm("bagcik", "Bağcık", ["Kahve", "Siyah", "Beyaz"]),
+  hm("yap", "Yapıştırıcı", ["Beyaz"]), hm("silme", "Silme Suyu", ["Standart", "Mavi"]), hm("deri", "Deri", ["Kahve Süet", "Taba Süet"]),
+  // Geçmiş: başka bir modelde "Siyah Süet" mamule Bağcık Siyah bağlanmış.
+  { id: "eski", ad: "Eski", variants: [], recete: [{ mamulRenk: "Siyah Süet", hammaddeUrunId: "bagcik", renk: "Siyah", eklemeTarihi: "2026-09-01" }] },
+];
+const sb3 = { ad: "Atom", satirlar: [
+  { id: "a", hammaddeUrunId: "deri", hammaddeAd: "Deri", renk: "Kahve Süet", pozisyon: 1, beden: "Standart", miktar: 1 },
+  { id: "b", hammaddeUrunId: "taban", hammaddeAd: "Taban", renk: "Kahve", beden: "Standart", miktar: 1 },
+  { id: "c", hammaddeUrunId: "bagcik", hammaddeAd: "Bağcık", renk: "Kahve", beden: "Standart", miktar: 1 },
+  { id: "d", hammaddeUrunId: "yap", hammaddeAd: "Yapıştırıcı", renk: "Beyaz", beden: "Standart", miktar: 1 },
+  { id: "e", hammaddeUrunId: "silme", hammaddeAd: "Silme Suyu", renk: "Standart", beden: "Standart", miktar: 1 },
+] };
+const h3 = { variants: ["Taba Süet", "Siyah Süet", "Pudra Süet"].map((renk) => ({ renk, beden: "40" })), recete: [] };
+const u4 = sablonuUruneUygula(sb3, h3, { tumUrunler: [...tum, h3] });
+const renkOf = (ad, mr) => { const r = u4.eklenecekler.find((x) => x.hammaddeAd === ad && x.mamulRenk === mr); return r ? `${r.renk}${r.renkGecmisten ? "*" : ""}` : "BOŞ"; };
+bekle("aynı adlı renk: Taba Süet deri → Taba Süet", renkOf("Deri", "Taba Süet"), "Taba Süet");
+bekle("geçmişten hatırlanan işaretli (Siyah Süet → Bağcık Siyah*)", renkOf("Bağcık", "Siyah Süet"), "Siyah*");
+bekle("bilinmeyen boş (Pudra Süet → Bağcık)", renkOf("Bağcık", "Pudra Süet"), "BOŞ");
+bekle("bilinmeyen boş (Pudra Süet → Taban)", renkOf("Taban", "Pudra Süet"), "BOŞ");
+bekle("tek renkli hammadde sabit (Yapıştırıcı Beyaz)", renkOf("Yapıştırıcı", "Pudra Süet"), "Beyaz");
+bekle("'Standart' rengi olan sabit (Silme Suyu)", renkOf("Silme Suyu", "Taba Süet"), "Standart");
+bekle("boşlar listelenir", u4.bosEslesmeler.some((b) => b.hammaddeAd === "Taban" && b.mamulRenk === "Pudra Süet"), true);
+bekle("başka hammaddedeki karar da öneri (normal eklemeyle aynı): Taban Siyah*", renkOf("Taban", "Siyah Süet"), "Siyah*");
+bekle("geçmiş sayısı", u4.gecmisSayisi, 2);
+// Kullanıcı boşu doldurdu, geçmişi değiştirdi → yeniden uygulamada ikinci kez eklenmez, boş sayılmaz.
+const doldurulmus = [...u4.eklenecekler.map((r) => (r.hammaddeAd === "Bağcık" && r.mamulRenk === "Siyah Süet" ? { ...r, renk: "Beyaz", renkGecmisten: undefined } : r)),
+  ...u4.bosEslesmeler.map((b) => ({ mamulRenk: b.mamulRenk, mamulBeden: "Tüm Bedenler", hammaddeUrunId: sb3.satirlar.find((x) => x.hammaddeAd === b.hammaddeAd).hammaddeUrunId, hammaddeAd: b.hammaddeAd, renk: "Siyah", beden: "Standart", proses: "" }))];
+const u5 = sablonuUruneUygula(sb3, { ...h3, recete: doldurulmus }, { tumUrunler: tum });
+bekle("yeniden uygulama: hepsi zaten var", [u5.eklenecekler.length, u5.bosEslesmeler.length], [0, 0]);
+
 console.log(hata ? "birim-recete-sablon: HATA" : "birim-recete-sablon: tamam");
 process.exit(hata);
