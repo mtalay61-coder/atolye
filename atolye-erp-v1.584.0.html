@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.581.0</title>
+<title>Atölye ERP 1.584.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2033,9 +2033,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.581.0";
+const SURUM = "1.584.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Maliyet dokumunde hammadde birim fiyatinin para birimi satirdan degistirilebiliyor";
+const SURUM_NOTU = "Katalogda en fazla 3 fiyat: genel satis/alis ya da fiyat gruplari secilerek kartta ve detayda gosterilir";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2043,6 +2043,15 @@ const SURUM_NOTU = "Maliyet dokumunde hammadde birim fiyatinin para birimi satir
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.584.0", tarih: "04.10.2026",
+        eklenen: ["Katalogda 'Katalog fiyatları' seçimi: genel satış/alış ya da fiyat grupları (Toptan, Perakende…) arasından en fazla 3 fiyat kartta ve detayda gösterilir; seçim cihaza özel. Cariye özel fiyatlar katalogda gösterilmez; müşteri görünümünde alış fiyatları gizli"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.583.0", tarih: "04.10.2026", eklenen: [],
+        degisen: ["Kâr satış fiyatından hesaplanıyor (marj): fiyat = maliyet ÷ (1 − kâr%). 1000 TL maliyet, %30 kâr → 1.428,57 TL (eskiden 1.300). Ürün kartı maliyet özeti, maliyet çıktısı ve fiyat listesinde maliyete 'Kâr ekle %'"],
+        duzeltilen: [] },
+    { surum: "1.582.0", tarih: "04.10.2026", eklenen: [],
+        degisen: ["Maliyet özetinde ve maliyet/reçete çıktısında işçilik satırları proses sırasıyla (ürüne özel sıra, yoksa Tanımlar'daki sıra); her ara proses kendi ana prosesinin hemen altında"],
+        duzeltilen: [] },
     { surum: "1.581.0", tarih: "04.10.2026", eklenen: ["Maliyet dökümünde hammadde birim fiyatının yanında para birimi seçicisi (₺ / $ / €): fiyat kuraldan geliyorsa kuralın, karttan geliyorsa kartın alış birimi değişir; rakam aynı kalır"],
         degisen: [], duzeltilen: [] },
     { surum: "1.580.0", tarih: "04.10.2026", eklenen: [],
@@ -2910,6 +2919,17 @@ function uretimUrunu(siparis, stok) {
 // çekiliyordu (USD/EUR anahtarlarıyla); ama stok kartları para birimini SİMGEYLE saklıyor
 // ("$", "€", "₺"). `kurlar["$"]` hiç bulunmadığı için dolar fiyatları çevrilmiyor, uyarı da
 // "$, ₺ kuru girilmemiş" diyordu — TL için bile. Cari ekranındaki `PARA_KODU` eşlemesiyle aynı.
+// KÂR SATIŞ FİYATINDAN (v1.583.0 — kullanıcı: "Kârı hesaplarken satış fiyatından hesapla. Maliyet 1000 TL, %30 kâr ile 1300
+// olmasın; %30 kâr satış fiyatından geri gelsin"). Kâr oranı satış fiyatının yüzdesi (marj): fiyat = maliyet ÷ (1 − kâr%).
+// 1000 TL, %30 → 1.428,57 TL (satışın %30'u = 428,57 kâr). %100 ve üstü tanımsız → maliyet aynen (çağıran uyarır).
+function marjlaSatisFiyati(maliyet, karYuzde) {
+    const k = parseFloat(karYuzde) || 0;
+    if (!(maliyet > 0))
+        return 0;
+    if (k >= 100)
+        return maliyet;
+    return maliyet / (1 - k / 100);
+}
 function alisPbKodu(urun) {
     const ham = String((urun && urun.alisParaBirimi) || "").trim();
     if (!ham || ham === "₺" || ham === "TL" || ham === "TRY")
@@ -12123,6 +12143,30 @@ function araProsesIdleri(urun, asilProses) {
 // Ürünün bütün (asıl proses, ara proses kimliği) çiftleri — maliyet ve baskı listeleri için.
 function araProsesCiftleri(urun) {
     return Object.keys((urun && urun.araProsesEklentileri) || {}).flatMap((asil) => araProsesIdleri(urun, asil).map((id) => [asil, id]));
+}
+// İŞÇİLİK SATIRLARI PROSES SIRASIYLA (v1.582.0 — kullanıcı: "İşçilik sıralamasını sıralamaya göre ver"). Maliyet özetinde
+// işçilik ücret kaydının sırasıyla (Saya, Kalfa, Kesim…) ve ara prosesler en sonda geliyordu. Artık: ana prosesler ürünün
+// özel sırası (`receteProsesSirasiOverride`) ya da Tanımlar'daki sıra; her ara proses KENDİ ana prosesinin hemen altında.
+// Döner: [{ tur: "ana", proses, ucret } | { tur: "ara", anaProses, apId, ad, ucret }] (yalnız ücreti > 0). Saf.
+function iscilikSiraliSatirlar(urun, tanimlarProsesler, tanimlarAraProsesler) {
+    const siraMap = {};
+    (tanimlarProsesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
+    const ozel = (urun && urun.receteProsesSirasiOverride) || {};
+    const sira = (p) => (ozel[p] != null ? ozel[p] : (siraMap[p] ?? 999));
+    const ucretler = (urun && urun.prosesUcretleri) || {};
+    const aralar = araProsesCiftleri(urun).filter(([, id]) => id).map(([ana, id]) => {
+        const t = (tanimlarAraProsesler || []).find((x) => x.id === id);
+        const oz = ((urun && urun.araProsesUcretleri) || {})[id];
+        return { tur: "ara", anaProses: ana, apId: id, ad: t ? t.ad : "ara proses", ucret: oz != null ? oz : (t ? (t.ucret || 0) : 0) };
+    }).filter((x) => x.ucret > 0);
+    const anaAdlari = Array.from(new Set([...Object.keys(ucretler).filter((p) => (ucretler[p] || 0) > 0), ...aralar.map((a) => a.anaProses)]));
+    const sonuc = [];
+    anaAdlari.map((p, i) => ({ p, i, s: sira(p) })).sort((a, b) => a.s - b.s || a.i - b.i).forEach(({ p }) => {
+        if ((ucretler[p] || 0) > 0)
+            sonuc.push({ tur: "ana", proses: p, ucret: ucretler[p] });
+        aralar.filter((a) => a.anaProses === p).forEach((a) => sonuc.push(a));
+    });
+    return sonuc;
 }
 function uretimProsesAdimlari(urun, renk, tanimlar) {
     const siraMap = {};
@@ -25000,6 +25044,30 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // MÜŞTERİ GÖRÜNÜMÜ: maliyet tarafı gizlenir (alış fiyatı, tedarikçi, stok değeri). Ekranı
     // müşteriye çevirmek fuarda tek hareket; o hareketin maliyeti göstermemesi gerekiyor.
     const [musteriGorunumu, setMusteriGorunumu] = useState(false);
+    // KATALOG FİYATLARI (v1.584.0 — kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı
+    // seçilerek katalogda görünecek fiyatlar çıksın"). Kart altında en fazla 3 kaynak: genel satış/alış ya da fiyat grupları
+    // (Toptan, Perakende, VOOG Özel…). CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen);
+    // maliyet de yok. Müşteri görünümünde alış tipli kaynaklar gizli. Seçim cihaza özel (yerel depo) — fuardaki tablet ile
+    // ofis farklı fiyat gösterebilir.
+    const [katalogKaynaklari, setKatalogKaynaklari] = useState(() => {
+        try {
+            const v = JSON.parse(window.localStorage.getItem("katalog:fiyatKaynaklari") || "null");
+            if (Array.isArray(v) && v.length)
+                return v.slice(0, 3);
+        }
+        catch (e) { /* yerel depo yok */ }
+        return [FL_GENEL_SATIS];
+    });
+    const katalogKaynakSec = (key) => setKatalogKaynaklari((x) => {
+        const yeni = x.includes(key) ? x.filter((k) => k !== key) : (x.length >= 3 ? x : [...x, key]);
+        if (!x.includes(key) && x.length >= 3)
+            showToast("Katalogda en fazla 3 fiyat gösterilir — önce birini kaldırın");
+        try {
+            window.localStorage.setItem("katalog:fiyatKaynaklari", JSON.stringify(yeni));
+        }
+        catch (e) { /* yerel depo yok */ }
+        return yeni;
+    });
     const [katalogUrunId, setKatalogUrunId] = useState(null);
     const [katalogRenk, setKatalogRenk] = useState("");
     const [katalogFotoAcik, setKatalogFotoAcik] = useState(false);
@@ -25893,6 +25961,14 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // `satisFiyati` ve `alisFiyati`. Fiyatlandırma sekmesindeki kurallar buraya sızmıyor.
     // İKİ FİYATIN İKİ AYRI BİRİMİ VAR. Önceden tek `paraBirimi` vardı ve ALIŞIN birimiydi:
     // katalogda satış fiyatı yanlış birimle gösteriliyordu.
+    const katalogSecenekleri = fiyatListesiKaynaklari(tanimlar.fiyatGruplari || []).filter((k) => !k.maliyet);
+    const katalogGosterilen = katalogKaynaklari.map((key) => katalogSecenekleri.find((k) => k.key === key)).filter(Boolean)
+        .filter((k) => !(musteriGorunumu && k.tip === "Alış"));
+    const katalogFiyatSatirlari = (p) => katalogGosterilen.map((k) => {
+        const f = urunKaynakFiyati(p, k);
+        const yazi = f.fiyat > 0 ? `${Number(f.fiyat).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[f.paraBirimi] || f.paraBirimi}` : "—";
+        return { key: k.key, ad: k.genel ? (k.tip === "Satış" ? "Satış" : "Alış") : k.ad, yazi, var: f.fiyat > 0 };
+    });
     const katalogFiyat = (p) => ({
         satis: p.satisFiyati || 0,
         satisBirimi: p.satisParaBirimi || "₺",
@@ -25968,7 +26044,9 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, seciliRenk || "—")),
                 React.createElement("div", { style: { display: "grid", gap: 12, flex: 1, minWidth: 260 } },
                     React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" } },
-                        React.createElement("span", { className: "mono", style: { fontSize: 24, fontWeight: 700, color: "var(--erp-info)" } }, fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "fiyat girilmemiş"),
+                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-detay-fiyat": f.ad, style: { fontSize: i === 0 ? 24 : 16, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)" } },
+                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)", marginRight: 4 } }, f.ad),
+                            f.var ? f.yazi : (i === 0 ? "fiyat girilmemiş" : "—")))),
                         !musteriGorunumu && fiyat.alis ? (React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-brown)" } },
                             "al\u0131\u015F ",
                             fiyat.alis,
@@ -26205,7 +26283,17 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                             color: musteriGorunumu ? "#3F5A33" : "var(--erp-text-2)",
                         }, title: musteriGorunumu
                             ? "Müşteri görünümü AÇIK — alış fiyatı, tedarikçi ve stok değeri gizli"
-                            : "Personel görünümü — maliyet bilgileri görünür" }, musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"))))),
+                            : "Personel görünümü — maliyet bilgileri görünür" }, musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"),
+                    React.createElement("span", { "data-katalog-fiyat-secimi": "1", style: { display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap" } },
+                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, "Katalog fiyatlar\u0131:"),
+                        katalogSecenekleri.filter((k) => !(musteriGorunumu && k.tip === "Alış")).map((k) => {
+                            const secili = katalogKaynaklari.includes(k.key);
+                            return (React.createElement("button", { key: k.key, type: "button", "data-katalog-kaynak": k.ad, onClick: () => katalogKaynakSec(k.key), style: { padding: "3px 9px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                                    border: `1.5px solid ${secili ? "var(--erp-info)" : "var(--erp-border)"}`, background: secili ? "#3D6B8A1A" : "#fff",
+                                    color: secili ? "var(--erp-info)" : "var(--erp-text-2)" } },
+                                secili ? "✓ " : "",
+                                k.ad));
+                        })))))),
         showForm && (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 } },
             React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 } },
                 React.createElement("div", null,
@@ -26714,7 +26802,9 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                         : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
                     React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
                         React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
-                        React.createElement("span", { className: "mono", style: { fontSize: 13, fontWeight: 700, color: "var(--erp-info)" } }, fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "—"),
+                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
+                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
+                            React.createElement("span", null, f.yazi)))),
                         React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
                             renkler.length,
                             " renk",
@@ -27132,8 +27222,11 @@ function fiyatDonustur(fiyat, islem) {
         return null;
     const d = parseFloat(islem && islem.deger);
     let y = fiyat;
+    // `islem.marj` (v1.583.0): kaynak MALİYET iken "Kâr ekle %" kârı SATIŞ fiyatından alır (fiyat = maliyet ÷ (1 − %)).
+    // Var olan fiyat listesine zam/indirim (yüzde) ise eskisi gibi fiyatın yüzdesi.
     if (d > 0)
-        y = islem.tur === "tutar" ? fiyat + (islem.yon < 0 ? -d : d) : fiyat * (1 + (islem.yon < 0 ? -d : d) / 100);
+        y = islem.tur === "tutar" ? fiyat + (islem.yon < 0 ? -d : d)
+            : (islem.marj && islem.yon >= 0 ? (d < 100 ? fiyat / (1 - d / 100) : fiyat) : fiyat * (1 + (islem.yon < 0 ? -d : d) / 100));
     const adim = parseFloat(islem && islem.adim) > 0 ? parseFloat(islem.adim) : 0.01;
     y = Math.round(y / adim) * adim;
     y = Math.round(y * 100) / 100; // kayan nokta artığı (0.1 + 0.2) temizlensin
@@ -27253,7 +27346,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     const kaynakDuzen = duzenler[kaynak.key] || {};
     const [islem, setIslem] = useState({ tur: "yuzde", yon: 1, deger: "", adim: "0.01" });
     const islemAktif = parseFloat(String(islem.deger).replace(",", ".")) > 0;
-    const islemNorm = { ...islem, deger: parseFloat(String(islem.deger).replace(",", ".")) || 0 };
+    const islemNorm = { ...islem, deger: parseFloat(String(islem.deger).replace(",", ".")) || 0, marj: !!kaynak.maliyet };
     const [farkli, setFarkli] = useState(null); // null | { hedef: "yeni" | grupId, ad, paraBirimi }
     const kategoriler = ["Tümü", ...Array.from(new Set((stok || []).map((u) => u.kategori).filter(Boolean)))];
     const q = arama.trim().toLocaleLowerCase("tr-TR");
@@ -30800,7 +30893,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                             const tamMaliyet = genelToplam + ciftBasiGenel;
                             const marj = parseFloat(product.karMarji) != null && !Number.isNaN(parseFloat(product.karMarji))
                                 ? parseFloat(product.karMarji) : 30;
-                            const satisFiyati = tamMaliyet * (1 + marj / 100);
+                            const satisFiyati = marjlaSatisFiyati(tamMaliyet, marj); // kâr satıştan (v1.583.0)
                             // Seçilen maliyet biriminde (21 Eylül).
                             const yaz = (v) => hedefYaz(v);
                             return (React.createElement(React.Fragment, null,
@@ -30811,31 +30904,23 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                         "Hammadde",
                                         receteVarRenk ? ` (${receteVarRenk})` : ""),
                                     React.createElement("span", { className: "mono", "data-ozet-hammadde": "1", style: { textAlign: "right", fontWeight: 700 } }, yaz(hammaddeToplami)),
-                                    Object.entries(product.prosesUcretleri || {}).filter(([, u]) => (u || 0) > 0).map(([pAd, u]) => (React.createElement(React.Fragment, { key: `isc-${pAd}` },
+                                    iscilikSiraliSatirlar(product, tanimlarProsesler, tanimlarAraProsesler).map((x) => x.tur === "ana" ? (React.createElement(React.Fragment, { key: `isc-${x.proses}` },
                                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 12 } },
                                             "\u0130\u015F\u00E7ilik \u00B7 ",
-                                            pAd),
-                                        React.createElement("span", { className: "mono", "data-ozet-iscilik-satir": pAd, style: { textAlign: "right", fontSize: 12, color: "var(--erp-text-2)", whiteSpace: "nowrap" } },
-                                            sayiKutusu(hedefe(u || 0), (v) => onUrunGuncelle(product.id, { prosesUcretleri: { ...(product.prosesUcretleri || {}), [pAd]: Math.round(tlye(v) * 100) / 100 } }), `isc-${pAd}`, 70),
+                                            x.proses),
+                                        React.createElement("span", { className: "mono", "data-ozet-iscilik-satir": x.proses, style: { textAlign: "right", fontSize: 12, color: "var(--erp-text-2)", whiteSpace: "nowrap" } },
+                                            sayiKutusu(hedefe(x.ucret || 0), (v) => onUrunGuncelle(product.id, { prosesUcretleri: { ...(product.prosesUcretleri || {}), [x.proses]: Math.round(tlye(v) * 100) / 100 } }), `isc-${x.proses}`, 70),
                                             " ",
-                                            PB_SIMGE[hedefPb])))),
-                                    araProsesCiftleri(product).map(([anaProses, apId]) => {
-                                        const ozel = (product.araProsesUcretleri || {})[apId];
-                                        const tanimli = (tanimlarAraProsesler || []).find((ap) => ap.id === apId);
-                                        const ucret = ozel != null ? ozel : (tanimli ? (tanimli.ucret || 0) : 0);
-                                        if (!(ucret > 0))
-                                            return null;
-                                        return (React.createElement(React.Fragment, { key: `ara-${apId}` },
-                                            React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 12 } },
-                                                "\u0130\u015F\u00E7ilik \u00B7 ",
-                                                tanimli ? tanimli.ad : "ara proses",
-                                                " ",
-                                                React.createElement("span", { style: { fontSize: 10 } },
-                                                    "(",
-                                                    anaProses,
-                                                    " sonras\u0131)")),
-                                            React.createElement("span", { className: "mono", style: { textAlign: "right", fontSize: 12, color: "var(--erp-text-2)" } }, yaz(ucret))));
-                                    }),
+                                            PB_SIMGE[hedefPb]))) : (React.createElement(React.Fragment, { key: `ara-${x.anaProses}-${x.apId}` },
+                                        React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 24 } },
+                                            "\u21B3 ",
+                                            x.ad,
+                                            " ",
+                                            React.createElement("span", { style: { fontSize: 10 } },
+                                                "(",
+                                                x.anaProses,
+                                                " sonras\u0131)")),
+                                        React.createElement("span", { className: "mono", "data-ozet-iscilik-ara": x.ad, style: { textAlign: "right", fontSize: 12, color: "var(--erp-text-2)" } }, yaz(x.ucret))))),
                                     React.createElement("span", null, "\u0130\u015F\u00E7ilik toplam\u0131"),
                                     React.createElement("span", { className: "mono", "data-ozet-iscilik": "1", style: { textAlign: "right", fontWeight: 700 } }, yaz(isciligToplami)),
                                     React.createElement("span", null,
@@ -43277,24 +43362,9 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
     const prosesSiraMap = {};
     (tanimlarProsesler || []).forEach((p) => { prosesSiraMap[p.ad] = p.sira ?? 999; });
     hammaddeSatirlari.sort((a, b) => (prosesSiraMap[a.proses] ?? 999) - (prosesSiraMap[b.proses] ?? 999));
-    const isciligSatirlari = Object.entries(product.prosesUcretleri || {})
-        .filter(([, u]) => u > 0)
-        .map(([proses, ucret]) => ({ proses, ucret, araMi: false }))
-        .sort((a, b) => (prosesSiraMap[a.proses] ?? 999) - (prosesSiraMap[b.proses] ?? 999));
-    // Ara proses ücretleri (bir ana prosesten sonra otomatik tamamlanan küçük işçilik kalemleri) ayrı
-    // satırlar olarak eklenir — bunlar da toplam üretim maliyetinin bir parçasıdır, eksik bırakılmaz.
-    araProsesCiftleri(product).forEach(([anaProses, araProsesId]) => {
-        if (!araProsesId)
-            return;
-        const tanimliAp = (tanimlarAraProsesler || []).find((ap) => ap.id === araProsesId);
-        if (!tanimliAp)
-            return;
-        const ozelUcret = (product.araProsesUcretleri || {})[araProsesId];
-        const ucret = ozelUcret != null ? ozelUcret : (tanimliAp.ucret || 0);
-        if (ucret > 0) {
-            isciligSatirlari.push({ proses: `${tanimliAp.ad} (${anaProses} sonrası)`, ucret, araMi: true });
-        }
-    });
+    // Proses sırasıyla, ara proses kendi ana prosesinin altında (v1.582.0, 080 `iscilikSiraliSatirlar`).
+    const isciligSatirlari = iscilikSiraliSatirlar(product, tanimlarProsesler, tanimlarAraProsesler)
+        .map((x) => (x.tur === "ana" ? { proses: x.proses, ucret: x.ucret, araMi: false } : { proses: `${x.ad} (${x.anaProses} sonrası)`, ucret: x.ucret, araMi: true }));
     const isciligToplami = isciligSatirlari.reduce((s, x) => s + x.ucret, 0);
     const genelToplam = hammaddeToplami + isciligToplami;
     return (React.createElement("div", { style: {
@@ -43821,15 +43891,8 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
         });
     }
     // İşçilik
-    const iscilik = Object.entries(product.prosesUcretleri || {}).filter(([, u]) => (u || 0) > 0).map(([p, u]) => ({ proses: p, ucret: u }));
-    araProsesCiftleri(product).forEach(([anaProses, apId]) => {
-        if (!apId)
-            return;
-        const ap = (tanimlarAraProsesler || []).find((x) => x.id === apId);
-        const ucret = (product.araProsesUcretleri || {})[apId] != null ? product.araProsesUcretleri[apId] : (ap ? (ap.ucret || 0) : 0);
-        if (ucret > 0)
-            iscilik.push({ proses: `${ap ? ap.ad : apId} (${anaProses} sonrası)`, ucret });
-    });
+    const iscilik = iscilikSiraliSatirlar(product, tanimlarProsesler, tanimlarAraProsesler)
+        .map((x) => ({ proses: x.tur === "ana" ? x.proses : `${x.ad} (${x.anaProses} sonrası)`, ucret: x.ucret }));
     const isciligToplami = iscilik.reduce((t, x) => t + x.ucret, 0);
     const hedefAdet = parseFloat(aylikUretimHedefi) || 0;
     const aylikGenel = (genelGiderler || []).reduce((t, k) => t + (parseFloat(k.aylikTutar) || 0), 0);
@@ -43838,7 +43901,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
     const ciftBasiGenel = ozelGenel != null && !Number.isNaN(ozelGenel) ? ozelGenel : (hedefAdet > 0 ? aylikGenel / hedefAdet : 0);
     const tamMaliyet = hammaddeToplami + isciligToplami + ciftBasiGenel;
     const marj = product.karMarji != null && !Number.isNaN(parseFloat(product.karMarji)) ? parseFloat(product.karMarji) : 30;
-    const satisFiyati = tamMaliyet * (1 + marj / 100);
+    const satisFiyati = marjlaSatisFiyati(tamMaliyet, marj); // kâr satıştan (v1.583.0)
     // Kayıtlı grup fiyatları
     const grupFiyatlari = (product.fiyatKurallari || []).filter((k) => k.tip === "Satış" && k.kapsam === "fiyatGrubu" && !k.renk && !k.beden)
         .map((k) => ({ ad: ((fiyatGruplari || []).find((g) => g.id === k.deger) || {}).ad || k.etiket || k.deger, fiyat: k.fiyat, pb: k.paraBirimi || "TRY" }));
@@ -54329,7 +54392,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.581.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.584.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
