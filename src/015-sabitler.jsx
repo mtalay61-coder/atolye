@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.587.0";
+const SURUM = "1.588.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Kar/Zarar Finans > Gelir / Gider ekranina tasindi; bolum (Kesimhane) maasi bolumun iscilik gider kartina yaziliyor";
+const SURUM_NOTU = "Tanimlar: tum basliklar dokununca acilir/kapanir (kapali baslar, secim cihazda kalir)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Kar/Zarar Finans > Gelir / Gider ekranina tasindi; bolum (Ke
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.588.0", tarih: "04.10.2026",
+    eklenen: [],
+    degisen: ["Tanımlar: bütün ana başlıklar (Firma, Renkler, Bedenler, Birimler, Asortiler, Bölümler, Fiyat Grupları, Özel Kodlar, Model Rengi, Prosesler, Ara Prosesler, Reçete şablonları, Kullanıcılar, Boyut, Ekran Düzeni, Mobil Görünüm, Yedekleme) dokununca açılıp kapanıyor; kapalı başlar, açık bıraktıklarınız bu cihazda hatırlanır"],
+    duzeltilen: [] },
   { surum: "1.587.0", tarih: "04.10.2026",
     eklenen: ["Her atölye içi bölüm için \"<Bölüm> işçiliği\" gider kartı (Finans › Gelir / Gider): personel maaş tahakkukları bu kartın hareketi, Kâr/Zarar'da Giderler altında o kart olarak görünür"],
     degisen: ["Kâr / Zarar sekmesi Kasa & Banka'dan Finans › Gelir / Gider ekranına taşındı (üçüncü sekme)", "Bölüm maaşı artık \"Üretim işçiliği\" satırında değil, bölümün gider kartında sayılıyor"],

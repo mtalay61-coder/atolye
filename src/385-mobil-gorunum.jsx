@@ -159,7 +159,7 @@ function MobilGorunumDuzenleyici({ tanimlar, onSave, showToast, mobilDuzenKipi, 
 
   return (
     <div data-mobil-gorunum="1">
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Mobil Görünüm</h3>
+      <TanimBasligi ad="Mobil Görünüm" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Telefonda hangi modüllerin görüneceğini ve sırasını siz belirleyin. Satırı basılı tutup sürükleyin
         (ya da ok düğmelerini kullanın); göz düğmesi modülü telefonda gizler. <b>İlk sıradakiler alt çubukta</b>

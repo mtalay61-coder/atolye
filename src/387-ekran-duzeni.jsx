@@ -305,7 +305,7 @@ function EkranDuzeniTanimlari() {
   const duzenler = (baglam && baglam.duzenler) || {};
   return (
     <div data-ekran-duzeni-tanimlari="1">
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Ekran Düzeni</h3>
+      <TanimBasligi ad="Ekran Düzeni" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
         Aşağıdaki ekranlarda sağ üstteki küçük <b>düzen ikonuyla</b> (<LayoutGrid size={12} style={{ verticalAlign: "-2px" }} />) bloklar
         sürüklenip sıralanır, genişliği (Dar / Yarım / Tam) seçilir, gizlenir. Düzen bütün cihazlarda geçerlidir.

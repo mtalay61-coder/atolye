@@ -498,7 +498,7 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
 
   return (
     <div style={{ marginTop: 28 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Model Rengi</h3>
+      <TanimBasligi ad="Model Rengi" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Tek bir hammadde renginden (örn. sadece Siyah) ya da birden fazla renkten oluşan modeller için
         (örn. Siyah-Beyaz-Kırmızı deri kombinasyonu) uzun ismi tekrarlamak yerine otomatik kısa bir kod atanır.
