@@ -745,9 +745,18 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar, ekAlanlar) {
     const next = items.map((p) => {
       if (p.id !== productId) return p;
-      const kalanlar = (p.recete || []).filter((r) => !silinecekIdler.includes(r.id));
       const eklenenler = yeniSatirlar.map((s) => ({ id: uid("recete"), ...s }));
-      return { ...p, ...(ekAlanlar || {}), recete: [...kalanlar, ...eklenenler] };
+      // YERİNDE GÜNCELLE (v1.567.0): değişen satırlar (renk, boy, açıklama…) silinip SONA ekleniyordu; reçete kartı
+      // her düzenlemede listenin sonuna kayıyordu. Yeni satırlar ilk silinen satırın yerine konur; silme yoksa sona.
+      const sil = new Set(silinecekIdler);
+      const sonuc = [];
+      let yerlesti = false;
+      (p.recete || []).forEach((r) => {
+        if (!sil.has(r.id)) { sonuc.push(r); return; }
+        if (!yerlesti) { sonuc.push(...eklenenler); yerlesti = true; }
+      });
+      if (!yerlesti) sonuc.push(...eklenenler);
+      return { ...p, ...(ekAlanlar || {}), recete: sonuc };
     });
     onSave(next);
   }
