@@ -33,6 +33,18 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
   const [busy, setBusy] = useState(false);
   const [hata, setHata] = useState("");
   const [bilgi, setBilgi] = useState("");
+  // RESME DOKUNUNCA BÜYÜT (v1.574.0 — kullanıcı: "Stokta resim üzerinde çarpı var onu kaldıralım, resme tıklayınca resmi
+  // büyütsün, silmek için düzenleye tıklayınca silme ve düzeltme olsun"). Köşedeki × kaldırıldı (yanlışlıkla dokunulup resim
+  // gidiyordu). Görseli olan kutuya dokununca tam ekran büyük hâli; orada "Düzenle" → değiştirme paneli, panelde onaylı "Sil".
+  // Görseli olmayan kutuda dokunuş eskisi gibi doğrudan ekleme panelini açar.
+  const [buyuk, setBuyuk] = useState(false);
+  const [silOnay, setSilOnay] = useState(false);
+  React.useEffect(() => {
+    if (!buyuk) return undefined;
+    const d = (e) => { if (e.key === "Escape") { e.stopPropagation(); setBuyuk(false); } };
+    window.addEventListener("keydown", d, true);
+    return () => window.removeEventListener("keydown", d, true);
+  }, [buyuk]);
   // GALERİ VE KAMERA — iki AYRI gizli dosya girdisi.
   //
   // Fark tek bir öznitelikte: `capture="environment"` olan girdi telefonda doğrudan KAMERAYI açar,
@@ -43,7 +55,8 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
   const kameraRef = React.useRef(null);
 
   function save() {
-    onUrlSave(draft.trim());
+    // Boş kutuyla Kaydet görseli SİLMEZ (v1.574.0): silme yalnız onaylı "Görseli sil" ile.
+    if (draft.trim()) onUrlSave(draft.trim());
     setEditing(false);
   }
 
@@ -102,10 +115,13 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         disabled={!editable}
         onClick={() => {
           if (!editable) return;
+          if (src && !editing) { setBuyuk(true); return; }
           setDraft(src || "");
+          setSilOnay(false);
           setEditing((v) => !v);
         }}
-        title={!editable ? "" : (baslik || (src ? "Görseli değiştir" : "Bu ürünün rengine görsel ekle"))}
+        data-gorsel-kutu={src ? "dolu" : "bos"}
+        title={!editable ? "" : (src ? "Büyüt — değiştirmek/silmek için Düzenle" : (baslik || "Bu ürünün rengine görsel ekle"))}
         style={{
           width: size, height: size, borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)",
           overflow: "hidden", padding: 0, cursor: editable ? "pointer" : "default",
@@ -127,22 +143,22 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         )}
       </button>
 
-      {src && onRemove && editable && !editing && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          title="Görseli kaldır"
-          style={{
-            position: "absolute", top: -6, right: -6, width: 14, height: 14, borderRadius: "50%",
-            background: "#4B3625", color: "var(--erp-panel-2)", border: "none", fontSize: 9, lineHeight: "14px",
-            cursor: "pointer", padding: 0, zIndex: 2,
-          }}
-        >
-          ×
-        </button>
+      {buyuk && src && createPortal(
+        <div data-gorsel-buyuk="1" onClick={() => setBuyuk(false)} title="Kapatmak için dokunun"
+          style={{ position: "fixed", inset: 0, zIndex: 900, background: "rgba(30,24,16,.86)", display: "flex",
+            alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, padding: 20, cursor: "zoom-out" }}>
+          <img src={src} alt="" style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "var(--erp-r-md)" }} />
+          <div style={{ display: "flex", gap: 8 }} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="btn-primary" data-gorsel-duzenle="1" style={{ padding: "7px 16px", fontSize: 13 }}
+              onClick={() => { setBuyuk(false); setDraft(""); setSilOnay(false); setEditing(true); }}>
+              ✎ Düzenle
+            </button>
+            <button type="button" className="btn-ghost" style={{ padding: "7px 16px", fontSize: 13, background: "#fff" }} onClick={() => setBuyuk(false)}>
+              Kapat
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
 
       {editing && (
@@ -230,6 +246,14 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
             <button className="btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} onClick={() => setEditing(false)}>
               Vazgeç
             </button>
+            {/* SİL (v1.574.0): yalnız düzenleme panelinde ve İKİ dokunuşla — ilk dokunuş sorar. */}
+            {src && onRemove && (
+              <button type="button" data-gorsel-sil={silOnay ? "onay" : "1"} style={{ marginLeft: "auto", padding: "5px 10px", fontSize: 12, borderRadius: "var(--erp-r-sm)", cursor: "pointer",
+                border: "1px solid var(--erp-danger)", background: silOnay ? "var(--erp-danger)" : "#fff", color: silOnay ? "#fff" : "var(--erp-danger)", fontWeight: 700 }}
+                onClick={() => { if (!silOnay) { setSilOnay(true); return; } onRemove(); setSilOnay(false); setEditing(false); }}>
+                {silOnay ? "Emin misiniz? Sil" : "Görseli sil"}
+              </button>
+            )}
 
           </div>
         </div>

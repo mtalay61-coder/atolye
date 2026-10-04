@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.573.0";
+const SURUM = "1.574.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Recete renk kutulari dar; dokununca arama, suzulen liste ve yeni renk ekleme ayni kutuda";
+const SURUM_NOTU = "Stok resmi: kosedeki carpi kalkti; resme dokununca buyuyor, Duzenle ile degistirme ve onayli silme";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Recete renk kutulari dar; dokununca arama, suzulen liste ve 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.574.0", tarih: "04.10.2026",
+    eklenen: ["Stok kartındaki resme (kapak ve renk resimleri) dokununca büyük hâli açılıyor; orada 'Düzenle' ile değiştirme ve onaylı silme"],
+    degisen: ["Resmin köşesindeki × (tek dokunuşla silme) kaldırıldı; silme yalnız Düzenle panelinde, iki dokunuşla"],
+    duzeltilen: ["Görsel panelinde kutu boşken Kaydet resmi siliyordu"] },
   { surum: "1.573.0", tarih: "04.10.2026", eklenen: [],
     degisen: ["Reçetedeki hammadde renk kutuları dar düğme; dokununca arama kutusu, yazdıkça süzülen renkler ve 'yeni renk olarak ekle' aynı açılır kutuda (ayrı '＋ Yaz / yeni…' seçeneği kalktı)"],
     duzeltilen: ["Renk kutuları en uzun renk adına göre genişleyip ekranı dolduruyordu"] },
