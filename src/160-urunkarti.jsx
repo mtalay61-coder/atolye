@@ -155,7 +155,8 @@ function ProductMatrixCard({
   };
   // Reçete şablonu seçimi (21 Eylül).
   const [sablonSecim, setSablonSecim] = useState("");
-  const [kopyaKaynak, setKopyaKaynak] = useState("");   // "Başka stoktan reçete çek" (v1.564.0)
+  const [kopyaKaynak, setKopyaKaynak] = useState("");
+  const [receteAraclariAcik, setReceteAraclariAcik] = useState(false);   // şablon/kopya araçları açılır (v1.565.0)   // "Başka stoktan reçete çek" (v1.564.0)
   // Fiyat grubu ekleme satırı (21 Eylül).
   const [fgSecim, setFgSecim] = useState("");
   const [fgFiyat, setFgFiyat] = useState(""); // "stok" | "recete" | "fiyat" | "siparisler"
@@ -2059,26 +2060,13 @@ function ProductMatrixCard({
         <div>
           {/* ŞABLON ÇUBUĞU (21 Eylül): standart malzemeleri (yapıştırıcı, silme suyu, fort bombe…)
               tek dokunuşla ekle ya da bu reçetenin standart kısmını şablon olarak sakla. */}
-          <div data-recete-sablon-cubugu="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
-            background: "var(--erp-panel)", border: "1px dashed var(--erp-border)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>Reçete şablonu:</span>
-            <select data-recete-sablon-sec="1" value={sablonSecim} onChange={(e) => setSablonSecim(e.target.value)}
-              style={{ padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 }}>
-              <option value="">— şablon seçin —</option>
-              {(receteSablonlari || []).map((sb) => <option key={sb.id} value={sb.id}>{sb.ad} ({(sb.satirlar || []).length})</option>)}
-            </select>
-            <button type="button" className="btn-primary" data-recete-sablon-uygula="1" disabled={!sablonSecim}
-              onClick={() => {
-                const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
-                if (!sb) return;
-                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
-                if (eklenecekler.length === 0 && !iscilikSayisi) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
-                // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
-                onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
-                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
-              }}
-              style={{ padding: "5px 12px", fontSize: 12 }}>
-              {(product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"}
+          {/* ŞABLON / KOPYA ARAÇLARI TEK DÜĞMEDE (v1.565.0 — kullanıcı: "reçete kopyalama ve kopya çek çok yer
+              kaplıyor, tek buton veya açılır şekilde yapalım"). Kapalı başlar; geri alma çipi dışarıda kalır ki
+              şablondan/kopyadan eklenen satırlar görünür olsun. */}
+          <div data-recete-araclar="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: receteAraclariAcik ? 6 : 12 }}>
+            <button type="button" className="btn-ghost" data-recete-araclar-ac="1" aria-expanded={receteAraclariAcik}
+              onClick={() => setReceteAraclariAcik((a) => !a)} style={{ padding: "5px 12px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 4 }}>
+              Şablon / kopyala {receteAraclariAcik ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
             {(() => {
               // ŞABLON EKLEMESİNİ GERİ AL (v1.558.0): şablondan gelen satırlar `eklemeId` "sablon-…" taşır. Eski
@@ -2099,6 +2087,30 @@ function ProductMatrixCard({
                 </span>
               );
             })()}
+          </div>
+          {receteAraclariAcik && (
+          <div style={{ marginBottom: 12 }}>
+          <div data-recete-sablon-cubugu="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+            background: "var(--erp-panel)", border: "1px dashed var(--erp-border)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 6 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>Reçete şablonu:</span>
+            <select data-recete-sablon-sec="1" value={sablonSecim} onChange={(e) => setSablonSecim(e.target.value)}
+              style={{ padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 }}>
+              <option value="">— şablon seçin —</option>
+              {(receteSablonlari || []).map((sb) => <option key={sb.id} value={sb.id}>{sb.ad} ({(sb.satirlar || []).length})</option>)}
+            </select>
+            <button type="button" className="btn-primary" data-recete-sablon-uygula="1" disabled={!sablonSecim}
+              onClick={() => {
+                const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
+                if (!sb) return;
+                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
+                if (eklenecekler.length === 0 && !iscilikSayisi) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
+                // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
+                onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
+                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
+              }}
+              style={{ padding: "5px 12px", fontSize: 12 }}>
+              {(product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"}
+            </button>
             {(product.recete || []).length > 0 && onReceteSablonuKaydet && (
               <button type="button" className="btn-ghost" data-recete-sablon-kaydet="1"
                 onClick={() => {
@@ -2154,6 +2166,8 @@ function ProductMatrixCard({
               </div>
             );
           })()}
+          </div>
+          )}
           {(() => {
             // RENK EŞLEŞTİRME ŞERİDİ (v1.561.0): şablondan gelen satırlarda geçmişten hatırlanan renkler (kırmızı)
             // ve hiç eşleşmesi olmayan mamul renkleri (turuncu "eşleştir…") kalıcı olarak sayılır — toast kaybolur,
