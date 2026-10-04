@@ -1,0 +1,5 @@
+OTOMATIK ["Deri: Bej Deri, Kahve Deri","Süet: Kahve Süet, Siyah Süet, Taba Süet","Baskı: Kahve Baskı, Siyah Baskı"]
+SATIRDAN ["Deri: Bej Deri, Kahve Deri","Süet: Kahve Süet, Siyah Süet, Taba Süet, Vizon","Baskı: Kahve Baskı, Siyah Baskı"]
+KURALLAR ["Kahve Süet: 0.0051 USD","Siyah Süet: 0.0051 USD","Taba Süet: 0.0051 USD","Vizon: 0.0051 USD"]
+RENKLER ["Bej Deri=rgb(107, 78, 138)","Kahve Deri=rgb(107, 78, 138)","Kahve Süet=rgb(31, 122, 107)","Siyah Süet=rgb(31, 122, 107)","Taba Süet=rgb(31, 122, 107)","Kahve Baskı=rgb(181, 86, 42)","Siyah Baskı=rgb(181, 86, 42)","Vizon=rgb(31, 122, 107)","Siyah=rgb(138, 145, 158)"]
+HATALAR []

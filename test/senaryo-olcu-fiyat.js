@@ -46,7 +46,7 @@ async function fiyatlandirma(hatalar) {
   await sayfa.waitForTimeout(600);
   const durum = await sayfa.evaluate(() => {
     const kutu = (v) => { const i = document.querySelector(`[data-fk-hucre="${v}"]`); return i ? `kutu ${i.value}` : "kutu yok"; };
-    const tr = [...document.querySelectorAll("tr")].find((x) => x.offsetParent && (x.querySelector("td") || {}).textContent === "Siyah");
+    const tr = document.querySelector('tr[data-fk-renk-satir="Siyah"]');
     const renkKutusu = tr && tr.querySelector('input[type="checkbox"]');
     return {
       bedenler: Object.fromEntries(["40", "41", "42"].map((b) => [b, kutu(`beden|${b}`)])),
@@ -56,7 +56,7 @@ async function fiyatlandirma(hatalar) {
   });
   // Renk kutusunu işaretle: hücreler geçerli fiyatı (beden fiyatı) gri yazar.
   await sayfa.evaluate(() => {
-    const tr = [...document.querySelectorAll("tr")].find((x) => x.offsetParent && (x.querySelector("td") || {}).textContent === "Siyah");
+    const tr = document.querySelector('tr[data-fk-renk-satir="Siyah"]');
     tr.querySelector('input[type="checkbox"]').click();
   });
   await sayfa.waitForTimeout(300);

@@ -46,7 +46,7 @@ async function calistir() {
 
   // Satır "Tek fiyat" kutusunu işaretle (Siyah), 0,18 yaz.
   const tekFiyatAc = (renk) => sayfa.evaluate((renk) => {
-    const tr = [...document.querySelectorAll("tr")].find((x) => x.offsetParent && (x.querySelector("td") || {}).textContent === renk);
+    const tr = document.querySelector(`tr[data-fk-renk-satir="${renk}"]`);
     const c = tr && tr.querySelector('input[type="checkbox"]');
     if (c && !c.checked) c.click();   // renk tek fiyatı varsayılan açık
   }, renk);
