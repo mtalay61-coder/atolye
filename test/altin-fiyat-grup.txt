@@ -1,0 +1,6 @@
+TUMU ["Bej Deri: 0.0041 USD","Kahve Deri: 0.0041 USD","Kahve Süet: 0.0041 USD","Siyah Süet: 0.0041 USD","Taba Süet: 0.0041 USD","Siyah: 0.0041 USD"]
+GRUP ["Bej Deri: 0.0041 USD","Kahve Deri: 0.0041 USD","Kahve Süet: 0.0051 USD","Siyah Süet: 0.0051 USD","Taba Süet: 0.0051 USD","Siyah: 0.0041 USD"]
+GRUPLAR ["Süetler: Kahve Süet, Siyah Süet, Taba Süet"]
+TUMU KUTU 
+UYE EKLENDI ["Bej Deri: 0.0051 USD","Kahve Deri: 0.0041 USD","Kahve Süet: 0.0051 USD","Siyah Süet: 0.0051 USD","Taba Süet: 0.0051 USD","Siyah: 0.0041 USD"]
+HATALAR []

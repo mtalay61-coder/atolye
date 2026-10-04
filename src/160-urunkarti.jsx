@@ -412,6 +412,15 @@ function ProductMatrixCard({
   const [fkTekFiyatRenkler, setFkTekFiyatRenkler] = useState({});
   const tekFiyatRenkAcikMi = (r) => (fkTekFiyatRenkler[r] === undefined ? true : !!fkTekFiyatRenkler[r]);
   const [fkTekFiyatBedenler, setFkTekFiyatBedenler] = useState({});
+  // TÜMÜ TEK FİYAT + RENK GRUPLARI (v1.576.0 — kullanıcı: "Sağ en altta tik koyalım, ona tıklayınca tüm renk bedenler aynı
+  // fiyat olsun; fiyatta gruplandırma olsun — deri stokta süet renkler hep aynı fiyat olacak şekilde setleri ayrı gruplayıp
+  // fiyatlandıralım"). İkisi de YENİ bir kural türü değil: seçilen renklerin hepsine aynı "renk" kuralı yazılır (fiş tarafı
+  // `fiyatBul` hiç değişmez, öncelik aynı: Renk+Ölçü > Renk > Ölçü > Genel). Grup = ürünün `fiyatRenkGruplari`
+  // ([{ id, ad, renkler }], Alış/Satış ortak; şema dışı → `ek`); grubun fiyatı üyelerinin ORTAK renk fiyatından okunur.
+  const [fkTumuTek, setFkTumuTek] = useState(undefined);
+  const [fkTumuPb, setFkTumuPb] = useState(null);
+  const [fkGrupForm, setFkGrupForm] = useState(null);   // { id?, ad, renkler: [] }
+  const [fkGrupPb, setFkGrupPb] = useState({});
   const [showFiyatGecmisi, setShowFiyatGecmisi] = useState(false);
   const [addingBeden, setAddingBeden] = useState(false);
   const [serbestOlcuGiris, setSerbestOlcuGiris] = useState(false);
@@ -836,6 +845,63 @@ function ProductMatrixCard({
     }
     fiyatKuraliKaydetDogrudan(kapsam, deger, etiket, fiyat);
     setFkRenk(""); setFkBeden(""); setFkGrupId(""); setFkCariId(""); setFkFiyat("");
+  }
+
+  // Renklerin ORTAK "renk" fiyatı: hepsinde aynı fiyat + birimde renk kuralı varsa { fiyat, paraBirimi }, yoksa null.
+  function ortakRenkFiyati(renkler) {
+    if (!renkler || renkler.length === 0) return null;
+    let ortak = null;
+    for (const r of renkler) {
+      const k = (product.fiyatKurallari || []).find((x) => x.tip === fkTip && x.kapsam === "renk" && x.deger === r);
+      if (!k) return null;
+      const pb = k.paraBirimi || kartPb(fkTip);
+      if (ortak && (ortak.fiyat !== k.fiyat || ortak.paraBirimi !== pb)) return null;
+      ortak = { fiyat: k.fiyat, paraBirimi: pb };
+    }
+    return ortak;
+  }
+  // Birden çok renge AYNI renk fiyatı — TEK yazımda, geçmişe tek satır. `ekAlanlar`: aynı yazıma girecek başka alanlar
+  // (grup üyeliği) — ayrı `onUrunGuncelle` eski listeyle birbirini ezerdi.
+  function renkFiyatlariTopluKaydet(renkler, fiyat, pb, etiket, ekAlanlar) {
+    if (!(fiyat > 0) || !renkler.length) return;
+    const birim = pb || fkParaBirimi;
+    const kurallar = [...(product.fiyatKurallari || [])];
+    renkler.forEach((r) => {
+      const i = kurallar.findIndex((k) => k.tip === fkTip && k.kapsam === "renk" && k.deger === r);
+      const yeni = { id: i >= 0 ? kurallar[i].id : uid("fkural"), kapsam: "renk", deger: r, tip: fkTip, fiyat, etiket: `Renk: ${r}`,
+        renk: null, beden: null, paraBirimi: birim };
+      if (i >= 0) kurallar[i] = yeni; else kurallar.push(yeni);
+    });
+    const log = { id: uid("flog"), tarih: new Date().toISOString(), tip: fkTip, etiket: `${etiket} (${renkler.length} renk)`,
+      eskiFiyat: null, yeniFiyat: fiyat, paraBirimi: birim, toplu: true };
+    if (birim !== fkParaBirimi) setFkParaBirimi(birim);
+    onUrunGuncelle(product.id, {
+      fiyatKurallari: kurallar,
+      ...(birim !== fkPbVarsayilan(fkTip) ? { fiyatParaBirimi: { ...(product.fiyatParaBirimi || {}), [fkTip]: birim } } : {}),
+      fiyatGecmisi: [log, ...(product.fiyatGecmisi || [])].slice(0, HAREKET_GECMIS_SINIRI),
+      ...(ekAlanlar || {}),
+    });
+    // Renk+ölçü hücre fiyatı renk fiyatından ÖNCE gelir — "hepsi aynı" sanılmasın, söylenir.
+    const hucre = (product.fiyatKurallari || []).filter((k) => k.tip === fkTip && k.kapsam === "renkBeden" && renkler.includes(String(k.deger).split("|")[0])).length;
+    if (hucre && showToast) showToast(`${renkler.length} renge ${fiyatYazi(fiyat)} ${PARA_SEMBOLU[birim] || birim} yazıldı · ${hucre} renk+ölçü hücre fiyatı bunun önünde geçerli kalıyor (hücreyi boşaltın)`);
+  }
+  // Grup kaydet (yeni / düzenle): bir renk tek grupta olur (başka gruptan çıkarılır). Grubun ortak fiyatı varsa yeni
+  // eklenen üyelere de aynı yazımda uygulanır.
+  function fiyatGrubuKaydet(form) {
+    const ad = String(form.ad || "").trim();
+    if (!ad || !form.renkler.length) { if (showToast) showToast("Grup adı ve en az bir renk seçin"); return; }
+    const id = form.id || uid("frg");
+    const eski = (product.fiyatRenkGruplari || []).find((g) => g.id === id);
+    const gruplar = (product.fiyatRenkGruplari || [])
+      .filter((g) => g.id !== id)
+      .map((g) => ({ ...g, renkler: g.renkler.filter((r) => !form.renkler.includes(r)) }))
+      .filter((g) => g.renkler.length > 0);
+    const yeniGruplar = [...gruplar, { id, ad, renkler: [...form.renkler] }];
+    const ortak = eski ? ortakRenkFiyati(eski.renkler) : null;
+    const eklenen = form.renkler.filter((r) => !(eski && eski.renkler.includes(r)));
+    if (ortak && eklenen.length) renkFiyatlariTopluKaydet(eklenen, ortak.fiyat, ortak.paraBirimi, `Grup ${ad}`, { fiyatRenkGruplari: yeniGruplar });
+    else onUrunGuncelle(product.id, { fiyatRenkGruplari: yeniGruplar });
+    setFkGrupForm(null);
   }
 
   function fiyatKuraliSil(kuralId) {
@@ -5845,7 +5911,7 @@ function ProductMatrixCard({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => { setFkTip(t); setFkParaBirimi(fkPbVarsayilan(t)); setFkKutuPb({}); }}
+                  onClick={() => { setFkTip(t); setFkParaBirimi(fkPbVarsayilan(t)); setFkKutuPb({}); setFkTumuTek(undefined); setFkTumuPb(null); setFkGrupPb({}); }}
                   style={{
                     padding: "5px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     border: `1.5px solid ${fkTip === t ? (t === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-border)"}`,
@@ -6055,7 +6121,10 @@ function ProductMatrixCard({
                           const renkKurali = kuralBul("renk", r);
                           return (
                             <tr key={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
-                              <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>{olcuGoster(r)}</td>
+                              <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
+                                {olcuGoster(r)}
+                                {(() => { const g = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r)); return g ? <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)", background: "#6B4E8A1A", color: "var(--erp-purple)" }}>{g.ad}</span> : null; })()}
+                              </td>
                               {tumBedenler.map((b) => {
                                 const deger = `${r}|${b}`;
                                 const kural = kuralBul("renkBeden", deger);
@@ -6093,10 +6162,103 @@ function ProductMatrixCard({
                               </td>
                             );
                           })}
-                          <td style={{ borderLeft: "1px dashed var(--erp-line)" }}></td>
+                          {/* TÜMÜ TEK FİYAT (v1.576.0): sağ alt köşe — işaretleyip fiyat yazınca BÜTÜN renklere aynı renk
+                              fiyatı (dolayısıyla bütün renk × ölçü aynı). Kutu, bütün renklerin ortak fiyatını gösterir. */}
+                          <td style={{ padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed var(--erp-line)" }}>
+                            {(() => {
+                              const ortak = ortakRenkFiyati(tumRenkler);
+                              const acik = fkTumuTek !== undefined ? fkTumuTek : !!ortak;
+                              const pb = fkTumuPb || (ortak ? ortak.paraBirimi : fkParaBirimi);
+                              return (
+                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                                  <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)" }}>
+                                    <input type="checkbox" data-fk-tumu-tik="1" checked={acik} onChange={() => setFkTumuTek(!acik)} title="Bütün renk ve ölçülere aynı fiyat" />
+                                    Tümü tek fiyat
+                                  </label>
+                                  {acik && (
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                                      <input key={ortak ? `${ortak.fiyat}|${ortak.paraBirimi}` : "bos"} type="text" inputMode="decimal" data-fk-tumu="1"
+                                        defaultValue={ortak ? fiyatYazi(ortak.fiyat) : ""} placeholder={ortak ? "" : "karışık / yok"} className="mono"
+                                        onBlur={(e) => { const y = fiyatSayisi(e.target.value); if (!(y > 0) || (ortak && y === ortak.fiyat && pb === ortak.paraBirimi)) return; renkFiyatlariTopluKaydet(tumRenkler, y, pb, "Tüm renkler"); }}
+                                        style={{ width: 84, padding: "4px 6px", fontSize: 13, border: "1px solid #6B4E8A", borderRadius: "var(--erp-r-sm)", textAlign: "right",
+                                          ...(ortak ? { color: "var(--erp-void)", fontWeight: 700, background: "var(--erp-void-tint)" } : {}) }} />
+                                      <ParaBirimiSecici deger={pb} veri="tumu"
+                                        onDegis={(y) => { setFkTumuPb(y); if (ortak) renkFiyatlariTopluKaydet(tumRenkler, ortak.fiyat, y, "Tüm renkler"); }} />
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </td>
                         </tr>
                       </tbody>
                     </table>
+                    {/* RENK GRUPLARI (v1.576.0): aynı fiyatlı renk setleri (ör. Deri: "Süetler", "Baskılar"). Grubun fiyatı
+                        yazılınca üyelerin hepsine renk fiyatı; üyeler matrisin renk adının yanında etiketle görünür. */}
+                    <div data-fk-gruplar="1" style={{ marginTop: 10, padding: "8px 10px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Renk grupları</span>
+                        <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>aynı fiyatlı renk setleri — grubun fiyatı bütün renklerine yazılır</span>
+                        {!fkGrupForm && (
+                          <button type="button" className="btn-ghost" data-fk-grup-ekle="1" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 12 }}
+                            onClick={() => setFkGrupForm({ ad: "", renkler: [] })}>
+                            <Plus size={12} /> Grup ekle
+                          </button>
+                        )}
+                      </div>
+                      {(product.fiyatRenkGruplari || []).map((g) => {
+                        const renkler = g.renkler.filter((r) => tumRenkler.includes(r));
+                        const ortak = ortakRenkFiyati(renkler);
+                        const pb = fkGrupPb[g.id] || (ortak ? ortak.paraBirimi : fkParaBirimi);
+                        return (
+                          <div key={g.id} data-fk-grup={g.ad} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "5px 0", borderTop: "1px solid var(--erp-line-soft)" }}>
+                            <b style={{ fontSize: 13, minWidth: 80 }}>{g.ad}</b>
+                            <span style={{ display: "flex", gap: 4, flexWrap: "wrap", flex: "1 1 200px" }}>
+                              {renkler.map((r) => <span key={r} className="mono" style={{ fontSize: 11, padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: "#6B4E8A1A", color: "var(--erp-purple)" }}>{r}</span>)}
+                            </span>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                              <input key={ortak ? `${ortak.fiyat}|${ortak.paraBirimi}` : "bos"} type="text" inputMode="decimal" data-fk-grup-fiyat={g.ad}
+                                defaultValue={ortak ? fiyatYazi(ortak.fiyat) : ""} placeholder={ortak ? "" : "karışık / yok"} className="mono"
+                                onBlur={(e) => { const y = fiyatSayisi(e.target.value); if (!(y > 0) || (ortak && y === ortak.fiyat && pb === ortak.paraBirimi)) return; renkFiyatlariTopluKaydet(renkler, y, pb, `Grup ${g.ad}`); }}
+                                style={{ width: 84, padding: "4px 6px", fontSize: 13, border: "1px solid #6B4E8A", borderRadius: "var(--erp-r-sm)", textAlign: "right",
+                                  ...(ortak ? { color: "var(--erp-void)", fontWeight: 700, background: "var(--erp-void-tint)" } : {}) }} />
+                              <ParaBirimiSecici deger={pb} veri={`grup|${g.ad}`}
+                                onDegis={(y) => { setFkGrupPb((x) => ({ ...x, [g.id]: y })); if (ortak) renkFiyatlariTopluKaydet(renkler, ortak.fiyat, y, `Grup ${g.ad}`); }} />
+                            </span>
+                            <button type="button" className="btn-ghost" data-fk-grup-duzenle={g.ad} style={{ padding: "3px 8px", fontSize: 11 }}
+                              onClick={() => setFkGrupForm({ id: g.id, ad: g.ad, renkler: [...g.renkler] })}>Düzenle</button>
+                            <SilOnayButonu onConfirm={() => onUrunGuncelle(product.id, { fiyatRenkGruplari: (product.fiyatRenkGruplari || []).filter((x) => x.id !== g.id) })}
+                              boyut={13} baslikNormal={`"${g.ad}" grubunu sil (renk fiyatları kalır)`} baslikOnay="Grup silinecek — tekrar dokunun" />
+                          </div>
+                        );
+                      })}
+                      {fkGrupForm && (
+                        <div data-fk-grup-form="1" style={{ display: "flex", flexDirection: "column", gap: 6, padding: "6px 0", borderTop: "1px solid var(--erp-line-soft)" }}>
+                          <input value={fkGrupForm.ad} data-fk-grup-ad="1" placeholder="Grup adı (ör. Süetler)" autoFocus
+                            onChange={(e) => setFkGrupForm((f) => ({ ...f, ad: e.target.value }))}
+                            style={{ ...inputStyle, maxWidth: 240, fontSize: 13, padding: "5px 8px" }} />
+                          <span style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                            {tumRenkler.map((r) => {
+                              const secili = fkGrupForm.renkler.includes(r);
+                              const baskaGrup = (product.fiyatRenkGruplari || []).find((g) => g.id !== fkGrupForm.id && g.renkler.includes(r));
+                              return (
+                                <button key={r} type="button" data-fk-grup-renk={r} title={baskaGrup ? `Şu an "${baskaGrup.ad}" grubunda — seçilirse oradan çıkar` : undefined}
+                                  onClick={() => setFkGrupForm((f) => ({ ...f, renkler: secili ? f.renkler.filter((x) => x !== r) : [...f.renkler, r] }))}
+                                  style={{ fontSize: 12, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+                                    border: `1.5px solid ${secili ? "var(--erp-purple)" : "var(--erp-line)"}`, background: secili ? "#6B4E8A1A" : "#fff",
+                                    color: secili ? "var(--erp-purple)" : "var(--erp-text-2)", fontWeight: secili ? 700 : 400 }}>
+                                  {secili ? "✓ " : ""}{r}{baskaGrup && !secili ? ` · ${baskaGrup.ad}` : ""}
+                                </button>
+                              );
+                            })}
+                          </span>
+                          <span style={{ display: "flex", gap: 6 }}>
+                            <button type="button" className="btn-primary" data-fk-grup-kaydet="1" style={{ padding: "4px 12px", fontSize: 12 }} onClick={() => fiyatGrubuKaydet(fkGrupForm)}>Kaydet</button>
+                            <button type="button" className="btn-ghost" style={{ padding: "4px 12px", fontSize: 12 }} onClick={() => setFkGrupForm(null)}>Vazgeç</button>
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <p style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 }}>
                       Fiyatı kutuya yazıp kutudan çıkın — kaydedilir; kutuyu boşaltıp çıkarsanız fiyat silinir. Virgülle yazabilirsiniz (0,18). Para birimi her kutunun yanında seçilir (₺ / $ / €).
                       Bir rengin tamamına tek fiyat için sağdaki kutuyu işaretleyin; ölçünün tamamı için alttaki kutuyu.
