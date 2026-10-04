@@ -2169,6 +2169,29 @@ function ProductMatrixCard({
           </div>
           )}
           {(() => {
+            // OTOMATİK EŞLEŞTİR (v1.566.0): boş kalmış renk eşleşmelerinden ÇÖZÜLEBİLENLER (aynı ad, sabit/Standart,
+            // geçmiş → kırmızı) tek dokunuşla doldurulur. Yeni renk eklenince bu zaten kendiliğinden oluyor (v1.564);
+            // bu şerit ondan önce eklenmiş renkler ve elle boş bırakılmış hücreler için.
+            const e = eksikRenkEslesmeleri(product, tumUrunler);
+            if (e.satirlar.length === 0) return null;
+            const grupSayisi = new Set(e.satirlar.map((r) => `${r.mamulRenk}|${r.eklemeId || ""}|${r.hammaddeUrunId}|${r.proses || ""}|${r.aciklama || ""}`)).size;
+            return (
+              <div data-otomatik-eslestir={grupSayisi} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", margin: "8px 0", padding: "8px 12px",
+                border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-md)", background: "var(--erp-orange-bg)", fontSize: 12 }}>
+                <span><b style={{ color: "var(--erp-warn)" }}>{grupSayisi}</b> boş renk eşleşmesi otomatik doldurulabilir
+                  {e.gecmisSayisi ? <> ({e.gecmisSayisi} tanesi geçmişten — kırmızı gelir, kontrol edin)</> : null}
+                  {e.bosSayisi ? <> · {e.bosSayisi} tanesi bilinmiyor, turuncu kalır</> : null}</span>
+                <button type="button" className="btn-primary" data-otomatik-eslestir-uygula="1" style={{ marginLeft: "auto", padding: "4px 12px", fontSize: 12 }}
+                  onClick={() => {
+                    onReceteGrubuGuncelle(product.id, [], e.satirlar);
+                    (showToast || (() => {}))(`${grupSayisi} renk eşleşmesi dolduruldu${e.gecmisSayisi ? ` · ${e.gecmisSayisi} geçmişten (kırmızı) — kontrol edin` : ""}`);
+                  }}>
+                  Otomatik eşleştir
+                </button>
+              </div>
+            );
+          })()}
+          {(() => {
             // RENK EŞLEŞTİRME ŞERİDİ (v1.561.0): şablondan gelen satırlarda geçmişten hatırlanan renkler (kırmızı)
             // ve hiç eşleşmesi olmayan mamul renkleri (turuncu "eşleştir…") kalıcı olarak sayılır — toast kaybolur,
             // bu şerit eşleştirmeler bitene kadar durur.
@@ -3159,10 +3182,7 @@ function ProductMatrixCard({
                         // Hammadde rengini DEĞİŞTİREBİLMEK için bu hammaddenin renk seçenekleri.
                         // (Bedenli gruplarda zaten vardı; bedensiz grupta renk salt okunur metindi ve
                         // değiştirmek için satırı silip yeniden eklemek gerekiyordu.)
-                        const bedensizHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
-                        const bedensizRenkSecenekleri = bedensizHammadde
-                          ? Array.from(new Set(bedensizHammadde.variants.map((v) => v.renk)))
-                          : [];
+                        const bedensizRenkSecenekleri = hammaddeRenkSecenekleri(g.hammaddeUrunId, tumUrunler);
 
                         // Bir hücrenin hammadde rengini değiştirir. Aynı satırın tüm kayıtları tek
                         // seferde güncellenir ki kısmi (yarısı eski, yarısı yeni) bir durum oluşmasın.
@@ -3632,8 +3652,7 @@ function ProductMatrixCard({
                         // Hücrelerdeki hammadde rengini SADECE silip yeniden eklemek yerine, doğrudan
                         // değiştirebilmek için bu hammaddenin (tüm gruptaki hammadde AYNI) kendi renk
                         // seçeneklerini burada bir kez hesaplıyoruz.
-                        const bedenHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
-                        const bedenHammaddeRenkSecenekleri = bedenHammadde ? Array.from(new Set(bedenHammadde.variants.map((v) => v.renk))) : [];
+                        const bedenHammaddeRenkSecenekleri = hammaddeRenkSecenekleri(g.hammaddeUrunId, tumUrunler);
                         return (
                           <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
@@ -4077,8 +4096,7 @@ function ProductMatrixCard({
                               if (silinecekIdler.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
                             }} />
                           {(() => {
-                            const belirtilmemisHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
-                            const belirtilmemisRenkSecenekleri = belirtilmemisHammadde ? Array.from(new Set(belirtilmemisHammadde.variants.map((v) => v.renk))) : [];
+                            const belirtilmemisRenkSecenekleri = hammaddeRenkSecenekleri(g.hammaddeUrunId, tumUrunler);
                             return [...matrisSatirlari.map((ms) => {
                             const tekBeden = ms.satirlar.length === 1 && ms.satirlar[0].mamulBeden === "Tüm Bedenler";
                             return (

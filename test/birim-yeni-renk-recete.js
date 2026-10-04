@@ -1,7 +1,7 @@
 // BİRİM TESTİ — YENİ RENK → REÇETE GEÇMİŞTEN + BEDEN/BOY EŞLEŞMESİ DEĞİŞTİR (v1.564.0)
 // Kullanıcı: "Yeni renk eklenince eşleştirmeyi geçmişten otomatik doldursun, boyutlarda beden gibi olsun.
 // Beden değiştikçe boyut da değişebilir."
-const { yeniRenkReceteSatirlari, receteBedenDegistir, stoktanReceteKopyala } = require("./erp.cjs");
+const { yeniRenkReceteSatirlari, receteBedenDegistir, stoktanReceteKopyala, eksikRenkEslesmeleri, hammaddeRenkSecenekleri } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -66,6 +66,19 @@ bekle("kopya- kimliği, kaynak eklemesi başına bir", [kp.eklenecekler.every((x
 bekle("işçilik boşsa gelir", kp.ekAlanlar.prosesUcretleri, { Kesim: 35 });
 const kp2 = stoktanReceteKopyala(kaynak, { ...hedef, recete: kp.eklenecekler.map((x, i) => ({ ...x, id: "z" + i })), ...kp.ekAlanlar }, tum);
 bekle("ikinci kez: hepsi zaten var", [kp2.eklenecekler.length, kp2.iscilikSayisi], [0, 0]);
+
+// v1.566.0 — eksik eşleşmeleri doldur + boş açılmayan liste
+const eski = { id: "e2", variants: ["Kahve Süet", "Bej Süet"].map((renk) => ({ renk, beden: "40" })), recete: [
+  r("1", "Kahve Süet", "deri", "Deri", "Kahve Süet"), r("2", "Kahve Süet", "tak", "Takviye Bezi", "Standart"),
+  r("3", "Kahve Süet", "fort", "Fort Bombe", "Atom Fort"), r("4", "Kahve Süet", "bag", "Bağcık", "Kahve"),
+] };
+const tum2 = [...tum, hm("tak", "Takviye Bezi", ["Standart", "Beyaz"]), hm("fort", "Fort Bombe", ["Atom Fort", "Pinpon 2 mm"]), eski];
+const ek = eksikRenkEslesmeleri(eski, tum2);
+bekle("aynı ad + Standart kullanım + geçmiş dolar, bilinmeyen boş", [ek.satirlar.map((x) => `${x.hammaddeAd}:${x.renk}${x.renkGecmisten ? "*" : ""}`), ek.gecmisSayisi, ek.bosSayisi],
+  [["Deri:Bej Süet", "Takviye Bezi:Standart", "Bağcık:Bej*"], 1, 1]);
+bekle("tamamsa boş", eksikRenkEslesmeleri({ ...eski, recete: [...eski.recete, ...ek.satirlar.map((x, i) => ({ ...x, id: "q" + i }))] }, tum2).satirlar.length, 0);
+bekle("kartı olmayan hammaddede seçenekler reçetelerden", hammaddeRenkSecenekleri("yok", [{ recete: [{ hammaddeUrunId: "yok", renk: "Atom Fort" }, { hammaddeUrunId: "yok", renk: "Pinpon" }] }]), ["Atom Fort", "Pinpon"]);
+bekle("kart renkleri önce, reçetedeki fazlalar sonra", hammaddeRenkSecenekleri("fort", [...tum2, { recete: [{ hammaddeUrunId: "fort", renk: "Eski Fort" }] }]), ["Atom Fort", "Pinpon 2 mm", "Eski Fort"]);
 
 console.log(hata ? "birim-yeni-renk-recete: HATA" : "birim-yeni-renk-recete: tamam");
 process.exit(hata);
