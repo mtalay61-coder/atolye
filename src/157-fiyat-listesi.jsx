@@ -146,8 +146,9 @@ function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {})
     ...(islemAktif ? ["Yeni fiyat"] : [])];
   const govde = (satirlar || []).map((r) => {
     const kod = {};
-    ozelKodCiftleri(r.urun, ozelAlanlar || []).forEach((c) => { kod[c.id] = c.deger; });
-    return [r.urun.stokNo != null ? String(r.urun.stokNo) : "", r.urun.ad || "", r.urun.kategori || "", ...alanlar.map((a) => kod[a.id] || ""),
+    // Sütun AD'a göre (v1.580.0): aynı adlı alanlar tek sütun.
+    ozelKodCiftleri(r.urun, ozelAlanlar || []).forEach((c) => { kod[ozelKodAdAnahtari(c.etiket)] = c.deger; });
+    return [r.urun.stokNo != null ? String(r.urun.stokNo) : "", r.urun.ad || "", r.urun.kategori || "", ...alanlar.map((a) => kod[ozelKodAdAnahtari(a.ad)] || ""),
       ...(kaynak && kaynak.maliyet ? [durumYazi(r)] : []), r.fiyat > 0 ? r.fiyat : "", r.paraBirimi || "",
       ...(islemAktif ? [r.yeni > 0 ? r.yeni : ""] : [])];
   });

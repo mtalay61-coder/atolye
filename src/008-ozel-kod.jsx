@@ -81,23 +81,40 @@ function eslesenOzelKodlar(urun, alanlar, q) {
 // ÖZEL KOD SÜZGECİ (v1.553.0 — kullanıcı: "fiyatlandırma özel kodlarla filtrelenebilsin"). Listedeki
 // ürünlerde DOLU olan her alan için seçilebilir değerler; boş alan süzgeçte görünmez (seçeneksiz kutu
 // işe yaramaz). Saf. Döner: [{ id, ad, degerler: [..] }] — değerler tr sıralı.
+// AYNI ADLI ALANLAR TEK SÜZGEÇ (v1.580.0 — kullanıcı: "Fiyat listesinde tek özel kod sanki çokmuş gibi filtrelendi; tek tek
+// filtre olacağına tek atama olsun"). Farklı kapsamlarda ("Ayakkabı", "Sandalet"…) aynı adla açılmış alanlar (üç "Taban", iki
+// "Kalıp") ayrı ayrı kutu açıyordu. Artık AD'a göre birleşir: tek kutu, değerler hepsinden; `id` ilk alanın kimliği (temsilci)
+// — süzgeç (`ozelKodSuzgeceUyar`) o kimliğin ADINI taşıyan her alana bakar.
+const ozelKodAdAnahtari = (ad) => String(ad || "").trim().toLocaleLowerCase("tr-TR");
 function ozelKodSecenekleri(urunler, alanlar) {
   const harita = new Map();
   (urunler || []).forEach((u) => ozelKodCiftleri(u, alanlar).forEach((c) => {
-    if (!harita.has(c.id)) harita.set(c.id, { id: c.id, ad: c.etiket, degerler: new Set() });
-    harita.get(c.id).degerler.add(c.deger);
+    const k = ozelKodAdAnahtari(c.etiket);
+    if (!harita.has(k)) harita.set(k, { ad: c.etiket, degerler: new Map() });
+    const h = harita.get(k);
+    if (!h.degerler.has(ozelKodAdAnahtari(c.deger))) h.degerler.set(ozelKodAdAnahtari(c.deger), c.deger);
   }));
-  return (alanlar || []).filter((a) => harita.has(a.id)).map((a) => {
-    const h = harita.get(a.id);
-    return { id: a.id, ad: h.ad, degerler: Array.from(h.degerler).sort((x, y) => x.localeCompare(y, "tr", { numeric: true })) };
+  const goruldu = new Set();
+  const sonuc = [];
+  (alanlar || []).forEach((a) => {
+    const k = ozelKodAdAnahtari(a.ad);
+    if (!harita.has(k) || goruldu.has(k)) return;
+    goruldu.add(k);
+    const h = harita.get(k);
+    sonuc.push({ id: a.id, ad: h.ad, degerler: Array.from(h.degerler.values()).sort((x, y) => x.localeCompare(y, "tr", { numeric: true })) });
   });
+  return sonuc;
 }
 // Seçili değerlerin HEPSİNE uyuyor mu (VE). `secim`: { alanId: deger } — boş değer = o alanda süzme yok.
 function ozelKodSuzgeceUyar(urun, alanlar, secim) {
   const etkin = Object.entries(secim || {}).filter(([, d]) => d);
   if (etkin.length === 0) return true;
   const ciftler = ozelKodCiftleri(urun, alanlar);
-  return etkin.every(([id, d]) => ciftler.some((c) => c.id === id && kodEsit(c.deger, d)));
+  const adi = (id) => ((alanlar || []).find((a) => a.id === id) || {}).ad;
+  return etkin.every(([id, d]) => {
+    const ad = adi(id);
+    return ciftler.some((c) => (ad ? ozelKodAdAnahtari(c.etiket) === ozelKodAdAnahtari(ad) : c.id === id) && kodEsit(c.deger, d));
+  });
 }
 
 // ---- GÖÇ ---------------------------------------------------------------------------------------

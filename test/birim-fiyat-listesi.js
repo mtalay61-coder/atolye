@@ -80,6 +80,15 @@ bekle("seçenekler: yalnız dolu ve uyan değerler", ozelKodSecenekleri(oku, ala
 bekle("tek alan süzgeci", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "2026" })).map((u) => u.id), ["1", "3"]);
 bekle("iki alan (VE)", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "2026", t: "Kauçuk" })).map((u) => u.id), ["1"]);
 bekle("boş seçim süzmez", oku.filter((u) => ozelKodSuzgeceUyar(u, alanlar, { s: "" })).length, 3);
+// v1.580.0: aynı adlı alanlar (farklı kapsam) TEK süzgeç.
+const alanlar2 = [{ id: "t1", ad: "Taban", kapsamTuru: "mamul", kapsamAd: "Bot" }, { id: "t2", ad: "Taban", kapsamTuru: "mamul", kapsamAd: "Sandalet" }, { id: "k1", ad: "Kalıp" }];
+const oku2 = [
+  { id: "a", mamulTipi: "Bot", ozelKodlar: { t1: "MT276", k1: "276" } },
+  { id: "b", mamulTipi: "Sandalet", ozelKodlar: { t2: "MT230" } },
+  { id: "c", mamulTipi: "Sandalet", ozelKodlar: { t2: "mt276" } },
+];
+bekle("aynı adlı alanlar tek seçenek (değerler birleşik)", ozelKodSecenekleri(oku2, alanlar2), [{ id: "t1", ad: "Taban", degerler: ["MT230", "MT276"] }, { id: "k1", ad: "Kalıp", degerler: ["276"] }]);
+bekle("temsilci kimlikle süzgeç bütün aynı adlı alanlara bakar", oku2.filter((u) => ozelKodSuzgeceUyar(u, alanlar2, { t1: "MT276" })).map((u) => u.id), ["a", "c"]);
 
 // 6) Excel / yazdırma tablosu (v1.554.0): özel kodlar ayrı sütun, boş fiyat boş hücre, önizleme sütunu.
 const tSatir = [
