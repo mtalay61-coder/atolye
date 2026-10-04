@@ -5316,6 +5316,9 @@ function ProductMatrixCard({
               const yeniler = renkler.filter((r) => !mevcut.some((x) => x.renk === r && x.asortiId === asortiForm.asortiId))
                 .map((r) => ({ id: uid("asb"), renk: r, asortiId: asortiForm.asortiId }));
               if (yeniler.length) onUrunGuncelle(product.id, { asortiBarkodlari: [...mevcut, ...yeniler] });
+              // Kod parçaları (stok no, renk kodu, asorti kodu) eksikse tamamlanır — ürün yazımı otursun diye kısa gecikmeyle.
+              const asortiKodsuz = (asortiler || []).some((a) => a.id === asortiForm.asortiId && !(a.barkodKodu > 0));
+              if (yeniler.length && (barkodEksikMi || asortiKodsuz)) setTimeout(() => { if (barkodTamamlaRef.current) barkodTamamlaRef.current(product.id, true); }, 700);
               if (showToast) showToast(yeniler.length ? `${yeniler.length} asorti barkodu oluşturuldu` : "Bu asorti barkodları zaten var");
               setAsortiForm(null);
             };
