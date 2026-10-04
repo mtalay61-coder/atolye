@@ -33,6 +33,7 @@ node birim-maliyet-onay.js || HATA=1
 node birim-tanim-birlestir.js || HATA=1
 node birim-bekleyen-kayit.js || HATA=1
 node birim-recete-sablon.js || HATA=1
+node birim-yeni-renk-recete.js || HATA=1
 node birim-finans-rapor.js || HATA=1
 node birim-finans-ek.js || HATA=1
 node birim-ara-proses.js || HATA=1

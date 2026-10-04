@@ -469,6 +469,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   function addRenkToProduct(productId, renk) {
     renk = renk.trim();
     if (!renk) return;
+    let receteOzeti = null;
     const next = items.map((p) => {
       if (p.id !== productId) return p;
       const varsayilanMinStok = (p.variants[0] || {}).minStok || 0;
@@ -483,10 +484,17 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
       // ilk andan itibaren güvenilir çalışır.
       const yeniRenkId = renkKimligiBul(renk, (tanimlar.renkler || []));
       const newVariants = bedenler.map((b) => ({ renk, renkId: yeniRenkId, beden: b, miktar: 0, minStok: varsayilanMinStok }));
-      return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "renk");
+      // REÇETE GEÇMİŞTEN (v1.564.0): yeni renk için reçete satırları mevcut renkten kopyalanır, hammadde rengi
+      // aynı ad / geçmiş karar (kırmızı) / sabit malzeme kuralıyla; bilinmeyen boş kalır (turuncu "eşleştir…").
+      const rc = yeniRenkReceteSatirlari(p, renk, items);
+      receteOzeti = rc;
+      const yeniRecete = rc.satirlar.map((r) => ({ id: uid("recete"), ...r }));
+      return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants], ...(yeniRecete.length ? { recete: [...(p.recete || []), ...yeniRecete] } : {}) }, "renk");
     });
     onSave(next);
-    showToast("Renk eklendi");
+    showToast(receteOzeti && (receteOzeti.satirlar.length || receteOzeti.bosGruplar.length)
+      ? `Renk eklendi · reçete: ${receteOzeti.satirlar.length} satır kopyalandı${receteOzeti.gecmisSayisi ? ` · ${receteOzeti.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${receteOzeti.bosGruplar.length ? ` · ${receteOzeti.bosGruplar.length} hammadde boş (turuncu "eşleştir…")` : ""}`
+      : "Renk eklendi");
   }
 
   // Tek beden ya da BEDEN LİSTESİ (beden grubu, 14 Eylül). Liste tek `onSave` ile yazılıyor: art
