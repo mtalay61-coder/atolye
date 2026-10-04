@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.570.0";
+const SURUM = "1.571.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Recetede karsiligi olmayan beden/boy artik turuncu eslestir kutusuyla gorunuyor, gecmisten hatirlanan boy kirmizi; sablon ve stoktan cekmede bedenler atlanmiyor";
+const SURUM_NOTU = "Recete renk eslestirmesinde yazarak arama; listede olmayan renk recete icinden yeni renk olarak eklenir (renk kodu, barkod kodu, hammadde stok kartina)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Recetede karsiligi olmayan beden/boy artik turuncu eslestir 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.571.0", tarih: "04.10.2026",
+    eklenen: ["Reçetedeki hammadde renk kutularında (eşleştir… dahil) '＋ Yaz / yeni renk…': yazdıkça süzülen liste; stokta olmayan renk 'yeni renk olarak ekle' ile reçeteden çıkmadan açılıyor — Tanımlar'a renk kodu + barkod kodu + malzeme tipi + görünüm rengiyle, hammadde stok kartına bütün bedenleriyle eklenip reçete satırına yazılıyor", "Tanımlı olup hammadde kartında olmayan renk aramada 'stoğa eklenir' diye çıkıyor"],
+    degisen: ["Reçete kartında ortak miktar ayrı satır yerine hammadde başlık satırında (ekran daha derli toplu)"],
+    duzeltilen: ["Bedenli hammaddede açıklama görünmüyor, eklenemiyordu — artık sol hücrede düzenlenip eklenebiliyor"] },
   { surum: "1.570.0", tarih: "04.10.2026",
     eklenen: ["Reçetede satırı olmayan mamul bedeni beden/boy eşleşmesinde turuncu 'eşleştir…' kutusuyla görünüyor; boy seçilince satır en yakın bedenin miktarıyla açılıyor", "Boy/beden de geçmiş reçetelerden hatırlanıyor (kırmızı kutu, 'Eşleştirmeleri onayla' ile onaylanır)"],
     degisen: ["'Hepsi →' eksik bedenleri de dolduruyor", "Kartında bedeni açılmamış hammaddede boy listesi reçetelerde kullanılan boylardan dolduruluyor"],
