@@ -53,8 +53,20 @@ async function calistir() {
   await sayfa.waitForTimeout(800);
   const bolumSatiri = await sayfa.evaluate(() => { const r = document.querySelector('[data-kz-bolum="Kesimhane"]'); return r ? r.innerText.replace(/\s+/g, " ").trim() : "yok"; });
   const iscilikToplam = await sayfa.evaluate(() => { const r = document.querySelector("[data-iscilik-dokumu]"); return r ? r.innerText.replace(/\s+/g, " ").trim().slice(0, 120) : "yok"; });
+  // v1.586: bölüm satırına tıklayınca döküm açılır — aylık verim, personel ve girişler.
+  await sayfa.locator('[data-kz-bolum="Kesimhane"]').click();
+  await sayfa.waitForTimeout(600);
+  const dokum = await sayfa.evaluate(() => {
+    const m = (x) => x.innerText.replace(/\s+/g, " ").trim().replace(/\d{2}\.\d{2}\.\d{4}/g, "GG.AA.YYYY").replace(/\b\d{4}-\d{2}\b/g, "YYYY-AA");
+    return {
+      acik: !!document.querySelector("[data-kz-bolum-dokum]"),
+      aylar: [...document.querySelectorAll("[data-kz-bolum-ay]")].map(m),
+      personel: [...document.querySelectorAll("[data-kz-bolum-personel]")].map(m),
+      girisler: [...document.querySelectorAll("[data-kz-bolum-giris]")].map(m),
+    };
+  });
   await tarayici.close();
-  return { hatalar, maasOnce, teslim: { yeniCariHareketleri: yeniHareketler, tahakkuk, adimTamam: !!(u.prosesIlerleme || [{}])[0].tamamlandiMi }, karZarar: { bolumSatiri, iscilikToplam } };
+  return { hatalar, maasOnce, teslim: { yeniCariHareketleri: yeniHareketler, tahakkuk, adimTamam: !!(u.prosesIlerleme || [{}])[0].tamamlandiMi }, karZarar: { bolumSatiri, iscilikToplam, dokum } };
 }
 
 if (require.main === module) {

@@ -1,7 +1,19 @@
 {
  "hatalar": [],
  "karZarar": {
-  "bolumSatiri": "Kesimhane tahakkuk 90 ₺ (3 adet) maaş 20.000 ₺ zarar 19.910 ₺",
+  "bolumSatiri": "▸ Kesimhane tahakkuk 90 ₺ (3 adet) maaş 20.000 ₺ zarar 19.910 ₺",
+  "dokum": {
+   "acik": true,
+   "aylar": [
+    "YYYY-AA 3 90 ₺ 20.000 ₺ %0 6.666,67 ₺ -19.910 ₺"
+   ],
+   "girisler": [
+    "GG.AA.YYYY 1002 Bot · Siyah Kesim Personel C 3 30 ₺ 90 ₺"
+   ],
+   "personel": [
+    "Personel C · 3 adet · 90 ₺"
+   ]
+  },
   "iscilikToplam": "Üretim işçiliği — kime ne kadar hak edildi Personel C · 20.000 ₺"
  },
  "maasOnce": [

@@ -205,6 +205,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
   const [donem, setDonem] = useState("buAy");
   const [defter, setDefter] = useState("Tümü");
   const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter, uretim, tanimlar });
+  const [acikBolum, setAcikBolum] = useState(null);   // bölüm dökümü (v1.586.0)
   const para = (v) => `${Math.round(v).toLocaleString("tr-TR")} ₺`;
 
   const satir = (etiket, deger, renk, kalin, ipucu) => (
@@ -327,16 +328,86 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
           <div style={{ padding: "8px 12px", fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", borderBottom: "1px solid var(--erp-head)" }}>
             Atölye içi bölümler <span style={{ fontWeight: 400 }}>— ürünlere yüklenen parça başı tutar − maaşlar</span>
           </div>
-          {sonuc.bolumler.map((b) => (
-            <div key={b.id} data-kz-bolum={b.ad} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--erp-head)", flexWrap: "wrap" }}>
-              <span style={{ flex: "1 1 140px", fontSize: 13, fontWeight: 700 }}>{b.ad}</span>
+          {sonuc.bolumler.map((b) => (<React.Fragment key={b.id}>
+            <div data-kz-bolum={b.ad} onClick={() => setAcikBolum(acikBolum === b.id ? null : b.id)} title="Döküm için dokunun"
+              style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--erp-head)", flexWrap: "wrap", cursor: "pointer", background: acikBolum === b.id ? "var(--erp-panel)" : "transparent" }}>
+              <span style={{ flex: "1 1 140px", fontSize: 13, fontWeight: 700 }}>{acikBolum === b.id ? "▾ " : "▸ "}{b.ad}</span>
               <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>tahakkuk {para(b.tahakkuk)} <span style={{ fontSize: 11 }}>({b.adet.toLocaleString("tr-TR")} adet)</span></span>
               <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>maaş {para(b.maas)}</span>
               <span className="mono" data-kz-bolum-kar={b.ad} style={{ fontSize: 14, fontWeight: 700, color: b.kar >= 0 ? "var(--erp-ok)" : "var(--erp-danger)" }}>
                 {b.kar >= 0 ? "kâr" : "zarar"} {para(Math.abs(b.kar))}
               </span>
             </div>
-          ))}
+            {acikBolum === b.id && (() => {
+              // BÖLÜM DÖKÜMÜ (v1.586.0): aylık verim + dönem girişleri + personel bazında. Verim = tahakkuk ÷ maaş;
+              // çift başı gerçek maliyet = maaş ÷ adet (reçetedeki ücretle kıyaslanır).
+              const bolum = ((tanimlar && tanimlar.bolumler) || []).find((x) => x.id === b.id);
+              if (!bolum) return null;
+              const aylik = bolumAylikDokum(bolum, uretim, cariler);
+              const girisler = bolumGirisleri(bolum, uretim, cariler, (t) => kzTarihUygun(t, sonuc.aralik));
+              const kisiler = bolumPersonelDokumu(girisler);
+              const yuzde = (v) => (v == null ? "—" : `%${Math.round(v)}`);
+              const th = { padding: "5px 8px", fontSize: 10, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--erp-text-2)", textAlign: "right", borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+              const td = { padding: "5px 8px", fontSize: 12, textAlign: "right", borderBottom: "1px solid var(--erp-head)", whiteSpace: "nowrap" };
+              return (
+                <div data-kz-bolum-dokum={b.ad} style={{ padding: "10px 12px", borderBottom: "1px solid var(--erp-head)", background: "#FBFAF7", display: "grid", gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Aylık verim <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>— verim = tahakkuk ÷ maaş (%100 üstü bölüm kendini çıkarıyor) · çift başı = maaş ÷ adet</span></div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
+                        <thead><tr>{["Ay", "Adet", "Tahakkuk", "Maaş", "Verim", "Çift başı gerçek", "Kâr / zarar"].map((h, i) => <th key={h} style={{ ...th, textAlign: i === 0 ? "left" : "right" }}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {aylik.length === 0 ? <tr><td colSpan={7} style={{ ...td, textAlign: "left", color: "var(--erp-text-3)" }}>Henüz kayıt yok</td></tr> : aylik.map((k) => (
+                            <tr key={k.ay} data-kz-bolum-ay={k.ay}>
+                              <td className="mono" style={{ ...td, textAlign: "left", fontWeight: 700 }}>{k.ay}</td>
+                              <td className="mono" style={td}>{k.adet.toLocaleString("tr-TR")}</td>
+                              <td className="mono" style={td}>{para(k.tahakkuk)}</td>
+                              <td className="mono" style={td}>{para(k.maas)}</td>
+                              <td className="mono" style={{ ...td, fontWeight: 700, color: k.verim == null ? "var(--erp-text-3)" : k.verim >= 100 ? "var(--erp-ok)" : "var(--erp-danger)" }}>{yuzde(k.verim)}</td>
+                              <td className="mono" style={td}>{k.ciftMaliyeti == null ? "—" : `${(Math.round(k.ciftMaliyeti * 100) / 100).toLocaleString("tr-TR")} ₺`}</td>
+                              <td className="mono" style={{ ...td, fontWeight: 700, color: k.kar >= 0 ? "var(--erp-ok)" : "var(--erp-danger)" }}>{para(k.kar)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Personel bazında <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>— seçili dönem</span></div>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {kisiler.length === 0 ? <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Bu dönemde giriş yok</span> : kisiler.map((k) => (
+                        <span key={k.personel} data-kz-bolum-personel={k.personel} className="mono" style={{ fontSize: 12, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "3px 10px" }}>
+                          <b>{k.personel}</b> · {k.adet.toLocaleString("tr-TR")} adet · {para(k.tahakkuk)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Girişler <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>— seçili dönem, {girisler.length} teslim</span></div>
+                    <div style={{ overflowX: "auto", maxHeight: 320, overflowY: "auto" }}>
+                      <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
+                        <thead><tr>{["Tarih", "Üretim", "Model · renk", "Proses", "Personel", "Adet", "Ücret", "Tutar"].map((h, i) => <th key={h} style={{ ...th, textAlign: i < 5 ? "left" : "right" }}>{h}</th>)}</tr></thead>
+                        <tbody>
+                          {girisler.map((g) => (
+                            <tr key={g.id} data-kz-bolum-giris={g.siparisNo}>
+                              <td className="mono" style={{ ...td, textAlign: "left" }}>{tarihYaz ? tarihYaz(g.tarih) : g.tarih}</td>
+                              <td className="mono" style={{ ...td, textAlign: "left", fontWeight: 700 }}>{g.siparisNo}</td>
+                              <td style={{ ...td, textAlign: "left" }}>{g.model}{g.renk ? ` · ${g.renk}` : ""}</td>
+                              <td style={{ ...td, textAlign: "left" }}>{g.proses}</td>
+                              <td style={{ ...td, textAlign: "left" }}>{g.personel || "—"}</td>
+                              <td className="mono" style={td}>{g.adet.toLocaleString("tr-TR")}</td>
+                              <td className="mono" style={td}>{g.ucret.toLocaleString("tr-TR")} ₺</td>
+                              <td className="mono" style={{ ...td, fontWeight: 700 }}>{para(g.tutar)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </React.Fragment>))}
         </div>
       )}
 
