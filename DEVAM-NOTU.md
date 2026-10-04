@@ -7419,7 +7419,7 @@ olmasın; %30 kâr satış fiyatından geri gelsin." KARAR: kâr oranı MARJ —
 (`satisFiyati`, Kâr satırı = fiyat − maliyet), `MaliyetYazdir`, fiyat listesinde kaynak MALİYET iken "Kâr ekle %"
 (`fiyatDonustur` `islem.marj`); var olan fiyat listesine zam/indirim (%) ESKİSİ GİBİ fiyatın yüzdesi. Altınları güncellenen
 senaryolar (değerler formülle doğrulandı): `maliyet-dokumu` 7,56 $ → 10,80 $, `urun-maliyeti` 262 → 349,33, `maliyet-onay`
-(%25 → 349,33; %40 → 436,67 / 166,67), `maliyet-son-alis` 432,33 → 617,61. `birim-fiyat-listesi` +1.
+(%25 → 349,33; %40 → 436,67 / 166,67), `maliyet-son-alis` 432,33 → 617,61, `fiyat-grubu` / `fiyat-grubu-duzenle` öneri 6,30 → 6,72 $ (kâr %25: ×1,0667). `birim-fiyat-listesi` +1.
 ## FİYATLANDIRMADA PARA BİRİMİ (26 Eylül, v1.481.0 — Claude Code oturumu)
 
 Kullanıcı (Deri ▸ Fiyatlandırma, renk tek fiyatı ",18", her yerde ₺): "Fiyatlandırmada para birimi
