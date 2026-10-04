@@ -157,21 +157,48 @@ function HariciBarkodKutusu({ urun, variant, stok, tanimlar, onKaydet, showToast
 // hem hammadde kartına renk (bütün bedenleriyle) hem reçete satırına (`receteGrubuGuncelle`'nin 5. bağımsız değişkeni —
 // art arda iki yazım birbirinin üstüne eski listeyle yazardı); Tanımlar'a ortak renk olarak renk kodu + barkod kodu +
 // malzeme tipi + görünüm rengiyle (`onYeniRenkKaydet`, stok kartındaki "renk aç" yoluyla aynı).
-const YENI_RENK_SECENEGI = "__recete_yeni_renk__";
-function ReceteRenkSecimi({ hammaddeId, yr, onChange, children, ...rest }) {
-  const [ara, setAra] = useState(false);
-  if (ara && yr) {
-    return <ReceteRenkArama hammaddeId={hammaddeId} yr={yr} onKapat={() => setAra(false)}
-      onSec={(ad) => onChange({ target: { value: ad } })} />;
-  }
+// AÇILIR ARAMALI RENK KUTUSU (v1.573.0 — kullanıcı: "Renk kutuları genişledi, daha dar yap; burada da filtre olsun ve
+// ekleme bunun içerisinde olsun"). Yerel <select> en uzun seçeneğe göre genişliyordu ("＋ Yaz / yeni…" ekleyince daha da)
+// ve telefonda yazarak süzülemiyordu. Artık dar bir düğme (uzun ad … ile kısalır); dokununca altında arama kutusu +
+// süzülen renkler + "yeni renk olarak ekle" açılır. Panel `createPortal` ile gövdeye, sabit konumla çizilir: reçete
+// tabloları yatay kaydırmalı kutuda, içeride açılsa kesilirdi. Seçim asıl `onChange`'e `{target:{value}}` ile gider.
+function ReceteRenkSecimi({ hammaddeId, yr, onChange, children, value, style, title, className, ...rest }) {
+  const [konum, setKonum] = useState(null);
+  const btnRef = React.useRef(null);
+  if (!yr) return <select value={value} onChange={onChange} style={style} title={title} className={className} {...rest}>{children}</select>;
+  const kart = hammaddeRenkSecenekleri(hammaddeId, yr.tumUrunler);
+  const bos = !value;
+  const etiket = bos ? "eşleştir…" : `${value}${kart.length && !kart.includes(value) ? " (stokta yok)" : ""}`;
+  const ac = () => {
+    const r = btnRef.current ? btnRef.current.getBoundingClientRect() : { left: 8, bottom: 80, top: 60 };
+    const genislik = 250;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - genislik - 8));
+    // Altta yer yoksa (ekranın alt yarısı) üstte aç.
+    const ustte = r.bottom + 320 > window.innerHeight && r.top > 320;
+    setKonum(ustte ? { left, bottom: window.innerHeight - r.top + 4, genislik } : { left, top: r.bottom + 4, genislik });
+  };
   return (
-    <select {...rest} onChange={(e) => { if (e.target.value === YENI_RENK_SECENEGI) { setAra(true); return; } onChange(e); }}>
-      {children}
-      {yr && <option value={YENI_RENK_SECENEGI}>＋ Yaz / yeni…</option>}
-    </select>
+    <>
+      <button ref={btnRef} type="button" title={title || "Hammadde rengini seç / ara / yeni ekle"} className={className} {...rest}
+        data-recete-renk-kutu={bos ? "bos" : value} onClick={ac}
+        style={{ ...style, display: "inline-flex", alignItems: "center", gap: 3, maxWidth: 140, minWidth: 64, cursor: "pointer", textAlign: "left" }}>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{etiket}</span>
+        <ChevronDown size={12} style={{ flexShrink: 0, opacity: 0.6 }} />
+      </button>
+      {konum && createPortal(
+        <div onMouseDown={(e) => { if (e.target === e.currentTarget) setKonum(null); }}
+          style={{ position: "fixed", inset: 0, zIndex: 3000, background: "transparent" }}>
+          <div style={{ position: "fixed", left: konum.left, ...(konum.top != null ? { top: konum.top } : { bottom: konum.bottom }), width: konum.genislik }}>
+            <ReceteRenkArama hammaddeId={hammaddeId} yr={yr} secili={value} onKapat={() => setKonum(null)}
+              onSec={(ad) => { if (ad !== value) onChange({ target: { value: ad } }); }} />
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
-function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat }) {
+function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat, secili }) {
   const [q, setQ] = useState("");
   const [renkKodu, setRenkKodu] = useState("#C9B99A");
   const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
@@ -185,7 +212,7 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat }) {
   const sec = (ad, yeni) => { yr.sec(hammaddeId, ad, yeni, renkKodu, onSec); onKapat(); };
   const kutu = { fontSize: 13, padding: "3px 6px", border: "1px solid var(--erp-accent)", borderRadius: "var(--erp-r-sm)", minWidth: 0, flex: 1 };
   return (
-    <span data-recete-renk-arama="1" style={{ display: "inline-flex", flexDirection: "column", gap: 3, minWidth: 180, maxWidth: 260, textAlign: "left", verticalAlign: "top",
+    <span data-recete-renk-arama="1" style={{ display: "flex", flexDirection: "column", gap: 3, width: "100%", boxSizing: "border-box", textAlign: "left",
       background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 5, boxShadow: "0 6px 18px rgba(16,24,40,0.10)" }}>
       <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
         <input autoFocus value={q} data-recete-renk-ara="1" placeholder="Renk yazın…" style={kutu}
@@ -196,11 +223,11 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat }) {
           }} />
         <button type="button" title="Vazgeç" onClick={onKapat} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", fontWeight: 700 }}>×</button>
       </span>
-      <span style={{ display: "flex", flexDirection: "column", maxHeight: 170, overflowY: "auto" }}>
+      <span style={{ display: "flex", flexDirection: "column", maxHeight: 220, overflowY: "auto" }}>
         {sonuc.map((s) => (
           <button key={s.ad} type="button" data-recete-renk-secenek={s.ad} onMouseDown={(e) => e.preventDefault()} onClick={() => sec(s.ad, false)}
-            style={{ textAlign: "left", border: "none", background: "transparent", padding: "4px 6px", fontSize: 13, cursor: "pointer", borderRadius: "var(--erp-r-sm)" }}>
-            {s.ad}{!s.kartta && <span style={{ marginLeft: 6, fontSize: 11, color: "var(--erp-text-3)" }}>tanımlı · stoğa eklenir</span>}
+            style={{ textAlign: "left", border: "none", background: s.ad === secili ? "var(--erp-hover)" : "transparent", fontWeight: s.ad === secili ? 700 : 400, padding: "6px 8px", fontSize: 14, cursor: "pointer", borderRadius: "var(--erp-r-sm)" }}>
+            {s.ad === secili ? "✓ " : ""}{s.ad}{!s.kartta && <span style={{ marginLeft: 6, fontSize: 11, color: "var(--erp-text-3)" }}>tanımlı · stoğa eklenir</span>}
           </button>
         ))}
         {t && sonuc.length === 0 && <span style={{ fontSize: 12, color: "var(--erp-text-3)", padding: "3px 6px" }}>"{q.trim()}" ile eşleşen renk yok</span>}

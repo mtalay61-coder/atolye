@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.572.0";
+const SURUM = "1.573.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Baska stoktan recete cek listesinde recetedeki kalem sayisi gosteriliyor (farkli hammadde sayisi degil)";
+const SURUM_NOTU = "Recete renk kutulari dar; dokununca arama, suzulen liste ve yeni renk ekleme ayni kutuda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Baska stoktan recete cek listesinde recetedeki kalem sayisi 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.573.0", tarih: "04.10.2026", eklenen: [],
+    degisen: ["Reçetedeki hammadde renk kutuları dar düğme; dokununca arama kutusu, yazdıkça süzülen renkler ve 'yeni renk olarak ekle' aynı açılır kutuda (ayrı '＋ Yaz / yeni…' seçeneği kalktı)"],
+    duzeltilen: ["Renk kutuları en uzun renk adına göre genişleyip ekranı dolduruyordu"] },
   { surum: "1.572.0", tarih: "04.10.2026", eklenen: [], degisen: [],
     duzeltilen: ["Başka stoktan reçete çek listesinde sayı farklı hammaddeyi sayıyordu (aynı hammadde iki kullanımda tek sayılıyordu, 15 kalemlik reçete 13 görünüyordu); artık reçetedeki kalem sayısı"] },
   { surum: "1.571.0", tarih: "04.10.2026",
