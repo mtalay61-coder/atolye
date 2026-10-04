@@ -269,7 +269,7 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   // Reçeteden yeni renk (v1.571.0): seçim sırasında hammaddeye eklenecek renk burada bekler; reçete yazımı
   // (`onReceteGrubuGuncelle`) onu alıp hammadde kartına AYNI yazımda ekler. Tek kullanımlık.
@@ -299,6 +299,23 @@ function ProductMatrixCard({
   // Barkod kurmak için gereken üç liste. Kartın elinde zaten ayrı ayrı duruyorlar; barkod
   // fonksiyonları üçünü birlikte istiyor çünkü bir kodu kurmak üçüne birden bakmayı gerektiriyor.
   const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+  // RENK / ÖLÇÜ EKLENİNCE BARKOD KENDİLİĞİNDEN (v1.579.0): ürüne yeni varyant gelince (kart açıkken) barkodu kurulamayan
+  // varyant ya da stok no yoksa `onBarkodTamamla` (100 `urunBarkodunuTamamla`) çağrılır. 700 ms sonra ve EN SON fonksiyonla
+  // (ref): renk ekleme yolu tanımı ayrıca yazıyor (v1.555 "renk aç") — önce o yazım otursun, aynı renk iki kez tanımlanmasın.
+  const barkodTamamlaRef = React.useRef(onBarkodTamamla);
+  barkodTamamlaRef.current = onBarkodTamamla;
+  const varyantImzaRef = React.useRef(null);
+  const barkodEksikMi = !product.stokNo || (product.variants || []).some((v) => !varyantinBarkodu(product, v, barkodTanimlari));
+  React.useEffect(() => {
+    const imza = (product.variants || []).map((v) => `${v.renk}|${v.beden}`).sort().join(";");
+    const onceki = varyantImzaRef.current;
+    varyantImzaRef.current = imza;
+    if (onceki === null || onceki === imza) return undefined;
+    const eski = new Set(onceki.split(";"));
+    if (!imza.split(";").some((x) => !eski.has(x))) return undefined;
+    const z = setTimeout(() => { if (barkodTamamlaRef.current) barkodTamamlaRef.current(product.id, true); }, 700);
+    return () => clearTimeout(z);
+  }, [product.variants]);
   // baslangicSekme: dışarıdan gelen yönlendirmenin istediği sekme (ör. sipariş ekranındaki
   // "Reçeteyi aç" düğmesi). Yalnızca ilk açılışta uygulanır; kullanıcı sonradan sekme
   // değiştirdiğinde geri zıplamamalı.
@@ -5251,6 +5268,13 @@ function ProductMatrixCard({
               {product.stokNo ? `stok no ${String(product.stokNo).padStart(4, "0")}` : "stok no atanmamış"}
             </span>
             <span>Kodlar bir kez atanır, ad değişse de değişmez.</span>
+            {barkodEksikMi && onBarkodTamamla && (
+              // Eski (kodsuz kalmış) ürünler için tek dokunuş: tanımsız renk/ölçü tanımlanır, kod + stok no atanır (v1.579.0).
+              <button type="button" className="btn-primary" data-barkod-tamamla="1" style={{ padding: "4px 12px", fontSize: 12 }}
+                onClick={() => onBarkodTamamla(product.id)}>
+                Barkodları oluştur
+              </button>
+            )}
           </div>
 
           {/* SADECE STOK seviyesi — renksiz/bedensiz, ürünün kendi kodu. Depoda model bazında
