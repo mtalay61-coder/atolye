@@ -1,4 +1,9 @@
 function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+  // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
+  // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
+  // yazmalar bu ref'ten okur.
+  const tanimlarGuncelRef = useRef(tanimlar);
+  tanimlarGuncelRef.current = tanimlar;
   const [yeniRenkHammadde, setYeniRenkHammadde] = useState("");
   const [yeniFireSebep, setYeniFireSebep] = useState("");
   const [yeniBeden, setYeniBeden] = useState("");
@@ -346,6 +351,20 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
   }
 
   function removeOlcu(id) {
+    // KULLANIM KONTROLÜ + ONAY (v1.569.0, denetim): tek dokunuşla, kullanıldığına bakmadan siliniyordu. Kullanılan beden
+    // tanımsız kalıyor, `barkodKodu` kayboluyor — basılmış etiketler çözülmüyor, yeniden eklenince yeni kod alıyordu.
+    const olcu = (tanimlar.bedenler || []).find((b) => b.id === id);
+    if (!olcu) return;
+    const nrm = (x) => String(x == null ? "" : x).trim().toLocaleLowerCase("tr-TR");
+    const ad = nrm(olcu.ad);
+    const kullananlar = (stok || []).filter((u) => (u.variants || []).some((v) => nrm(v.beden) === ad)
+      || (u.recete || []).some((r) => nrm(r.mamulBeden) === ad || nrm(r.beden) === ad)).map((u) => u.ad);
+    const siparisteVar = (siparisler || []).some((sp) => (sp.kalemler || []).some((k) => nrm(k.beden) === ad));
+    if (kullananlar.length > 0 || siparisteVar) {
+      showToast(`Silinemiyor — "${olcu.ad}" kullanılıyor${kullananlar.length ? `: ${kullananlar.slice(0, 5).join(", ")}${kullananlar.length > 5 ? " …" : ""}` : " (siparişlerde)"}`);
+      return;
+    }
+    if (!window.confirm(`"${olcu.ad}" ${olcu.tip === "Boyut" ? "boyutu" : "bedeni"} silinsin mi?`)) return;
     onSave({ ...tanimlar, bedenler: tanimlar.bedenler.filter((b) => b.id !== id) });
   }
 
@@ -449,7 +468,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         return false;
       }
       setBulutIslemi(null);
-      onSave({ ...tanimlar, kullanicilar: [...mevcut, { ...yeni, eposta, bulutHesabi: true }] });
+      { const g = tanimlarGuncelRef.current; onSave({ ...g, kullanicilar: [...(g.kullanicilar || []), { ...yeni, eposta, bulutHesabi: true }] }); }
       showToast(`${temizAd} eklendi · bulut hesabı doğrulandı: ${eposta}`);
       return true;
     }
@@ -458,7 +477,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     const sonuc = await bulutKullaniciIslemi("ekle", eposta, sifre);
     setBulutIslemi(null);
     if (sonuc.tamam) {
-      onSave({ ...tanimlar, kullanicilar: [...mevcut, { ...yeni, eposta, bulutHesabi: true }] });
+      { const g = tanimlarGuncelRef.current; onSave({ ...g, kullanicilar: [...(g.kullanicilar || []), { ...yeni, eposta, bulutHesabi: true }] }); }
       showToast(`${temizAd} eklendi · bulut hesabı: ${eposta}`);
       return true;
     }
@@ -488,7 +507,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     if (!sonuc.tamam && k.bulutHesabi !== false) {
       return showToast(`Bulut hesabı silinemedi, kayıt DURUYOR: ${sonuc.hata}`);
     }
-    onSave({ ...tanimlar, kullanicilar: (tanimlar.kullanicilar || []).filter((x) => x.id !== id) });
+    { const g = tanimlarGuncelRef.current; onSave({ ...g, kullanicilar: (g.kullanicilar || []).filter((x) => x.id !== id) }); }
     showToast(`${k.ad} silindi${sonuc.tamam ? " · bulut hesabı da silindi" : ""}`);
   }
 
@@ -505,9 +524,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     setBulutIslemi(null);
     if (!sonuc.tamam) { showToast(`Bulut: ${sonuc.hata}`); return false; }
     // Bulut kabul etti: yerel düz metin şifre SİLİNİYOR, e-posta ve rozet yazılıyor.
+    const gT = tanimlarGuncelRef.current;
     onSave({
-      ...tanimlar,
-      kullanicilar: (tanimlar.kullanicilar || []).map((x) => {
+      ...gT,
+      kullanicilar: (gT.kullanicilar || []).map((x) => {
         if (x.id !== id) return x;
         const { sifre: _eski, ...kalan } = x;
         return { ...kalan, eposta, bulutHesabi: true };

@@ -415,34 +415,42 @@ function bekleyenYazmaSil(anahtar) {
   } catch (e) { /* */ }
 }
 
+// Anahtar başına yazma sayacı (v1.569.0): kuyrukta bekleyen ESKİ bir yazmanın birleşik hâli, arada yapılmış daha yeni
+// yerel kaydın üstüne yazılmasın.
+const _tekilSayac = {};
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
+  const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
   // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
   // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
   // "1017 - Beyaz Deri/Gümüş … Tanımlar'da yok"). Yazmadan önce buluttaki hâl okunur; bu cihazda SİLİNMEMİŞ
   // eksik öğeler eklenir. Bulut okunamazsa birleştirmesiz yazılır. Yedekten geri yükleme ve sıfırlama
   // bilerek bütününü yazar: `{ birlestirme: false }`.
   const birlestir = tablo === "tanimlar" && secenek.birlestirme !== false && typeof tanimlariBirlestir === "function";
-  const gidecek = birlestir
+  // SIRALI (v1.569.0, denetim): tek satırlık tablolar kuyruğa girmiyordu; iki hızlı kayıtta önce başlayan (okuma +
+  // birleştirme + yazma) SONRA bitebiliyor, bulutta eski liste kalıyordu. `tabloYaz` ile aynı tablo kuyruğu.
+  const isi = () => (birlestir
     ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").then((r) => {
         const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
         const b = tanimlariBirlestir(veri, bulut, tanimSilinenleriOku());
-        if (b.eklenen.length === 0) return veri;
-        // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır.
-        guvenliYaz(anahtar, JSON.stringify(b.tanimlar), true);
+        // Ortak silinenler (`__silinenler`) her yazmada buluta taşınır; yerel/ekran yalnız öğe eklendi/çıkarıldıysa.
+        if (b.eklenen.length === 0 && b.cikarilan.length === 0) return b.tanimlar;
+        // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
+        if (_tekilSayac[anahtar] === benimSiram) guvenliYaz(anahtar, JSON.stringify(b.tanimlar), true);
         console.info(`Tanımlar bulutla birleştirildi: ${b.eklenen.length} öğe korundu`, b.eklenen);
-        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti(bulut, b.eklenen);
+        if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti(bulut, b.eklenen, b.cikarilan);
         return b.tanimlar;
       }).catch(() => veri)
-    : Promise.resolve(veri);
-  return Promise.all([
-    yerel,
-    gidecek.then((v) => supabaseIstek(tablo, {
+    : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify([{ id: "tekil", veri: v }]),
-    })).then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
+    }));
+  const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
+  return Promise.all([
+    yerel,
+    gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
       bekleyenYazmaEkle(anahtar, tablo, e && e.message);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {

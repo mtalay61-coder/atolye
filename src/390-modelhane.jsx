@@ -27,6 +27,17 @@ function modelAsamasi(key) {
   return MODEL_ASAMALARI.find((a) => a.key === key) || MODEL_ASAMALARI[0];
 }
 
+// OTOMATİK MODEL KODU (v1.569.0, denetim): "Model Yap" ilham kayıtlarını saymıyor, "Yeni model" sayıyordu — iki yol aynı
+// M-003'ü verebiliyordu; silinen model de sayıyı düşürüp eski kodu yeniden açıyordu. Kural: kullanılmış EN BÜYÜK
+// M-numarası + 1.
+function sonrakiModelKodu(modeller) {
+  const enBuyuk = (modeller || []).reduce((m, x) => {
+    const e = String((x && x.kod) || "").match(/^M-(\d+)$/i);
+    return e ? Math.max(m, parseInt(e[1], 10)) : m;
+  }, 0);
+  return `M-${String(enBuyuk + 1).padStart(3, "0")}`;
+}
+
 function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cariler, kurGecmisi, stok, onNumuneUret, onNumuneUretimi, modeller, onSave, onKoleksiyonaAl, showToast, kullaniciYetkisiVar }) {
   // Liste / katalog ve resim büyütme (21 Eylül).
   const [katalogMod, setKatalogMod] = useState(false);
@@ -78,7 +89,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cari
   function ilhamdanModelYap(ilham) {
     const ad = String(ilham.modelAdi || "").trim();
     if (!ad) return showToast("Model adı yazın, sonra \"Model Yap\" deyin");
-    const kod = `M-${String((modeller || []).filter((m) => m.tip !== "ilham").length + 1).padStart(3, "0")}`;
+    const kod = sonrakiModelKodu(modeller);
     const kayit = {
       id: uid("model"), kod, ad, sezon: "", modelci: "",
       asama: "fikir", kalip: "", taban: ilham.taban || "", topuk: "", bedenSerisi: "",
@@ -98,7 +109,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cari
   function modelEkle() {
     const ad = yeni.ad.trim();
     if (!ad) return showToast("Model adı gerekli");
-    const kod = yeni.kod.trim() || `M-${String((modeller || []).length + 1).padStart(3, "0")}`;
+    const kod = yeni.kod.trim() || sonrakiModelKodu(modeller);
     if ((modeller || []).some((m) => String(m.kod || "").toLocaleLowerCase("tr-TR") === kod.toLocaleLowerCase("tr-TR"))) {
       return showToast(`"${kod}" kodu zaten kullanılıyor`);
     }

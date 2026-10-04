@@ -51,7 +51,8 @@ useEffect(() => {
           // BULUTUN GERÇEK HÂLİ (v1.556.0): yerel kazanınca da saklanır — fark tabanı bundan kurulur
           // (025 `tabloBaslangicBekleyen`), yoksa yerelde olup bulutta olmayan kayıt hiç gönderilmez.
           const bulutKopya = {};
-          const ALAN_TABLO = { stok: "urunler", siparisler: "siparisler", uretim: "uretim", cariler: "cariler" };
+          const ALAN_TABLO = { stok: "urunler", siparisler: "siparisler", uretim: "uretim", cariler: "cariler",
+            cop: "cop", onaylar: "onaylar", stokRezervasyonlari: "stok_rezervasyonlari" };
           const yerelKazansin = async (anahtar, alan) => {
             if (!bekleyenler[anahtar]) return;
             bulutKopya[alan] = bulut[alan] || [];
@@ -94,6 +95,12 @@ useEffect(() => {
           await yerelKazansin("siparis:data", "siparisler");
           await yerelKazansin("uretim:siparisler", "uretim");
           await yerelKazansin("cari:data", "cariler");
+          // ÇÖP / ONAYLAR / REZERVASYONLAR DA (v1.569.0, denetim): bunlarda "yerel kazanır" yoktu; bağlantı kesildiği an
+          // silinen ürünün çöp kaydı yalnız yerelde kalıyor, açılışta buluttan okunup sonraki yeniden gönderme de bulut
+          // hâlini yazdığı için çöp kopyası kayboluyordu (ürün geri yüklenemiyordu).
+          await yerelKazansin("cop:data", "cop");
+          await yerelKazansin("onaylar:data", "onaylar");
+          await yerelKazansin("stokrez:data", "stokRezervasyonlari");
           if (bekleyenler["tanimlar:data"]) {
             // YEREL ESAS AMA BULUTLA BİRLEŞİK (v1.552.0, 089): yerel kopya bütünüyle esas alınınca başka cihazda
             // bu arada açılmış model renkleri/renkler kayboluyordu (bekleyen yazma gidince bulutun üstüne).
@@ -182,10 +189,9 @@ useEffect(() => {
           tabanKur("siparisler", "siparisler", bulut.siparisler);
           tabanKur("uretim", "uretim", bulut.uretim);
           tabanKur("cariler", "cariler", bulut.cariler);
-          tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari);
-          tabloBaslangicTam("onaylar", bulut.onaylar || []);
-          tabloBaslangicTam("cop", bulut.cop || []);
-          ["stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
+          tabanKur("stok_rezervasyonlari", "stokRezervasyonlari", bulut.stokRezervasyonlari || []);
+          tabanKur("onaylar", "onaylar", bulut.onaylar || []);
+          tabanKur("cop", "cop", bulut.cop || []);
 
           // Muhasebe (kasa/banka/çek) ve onaylar henüz tabloya taşınmadı; bulut açıkken de
           // tarayıcı deposundan okunur. Bunlar tek kullanıcı tarafından girilen, nadiren
@@ -570,6 +576,11 @@ useEffect(() => {
       // ÖZEL KOD GÖÇÜ BURADA DA ÇALIŞMALI. Yalnızca bulut yoluna konsaydı, internetsiz açılan
       // bir cihazda eski biçim taşınmadan kalır ve kodlar ekranda hiç görünmezdi — tam olarak
       // yukarıdaki yorumun uyardığı ayrışma.
+      // TABAN GÖÇTEN ÖNCE (v1.569.0, denetim): aşağıdaki göç yazmaları (özel kod, cari kodu) fark tabanı kurulmadan
+      // kuyruğa giriyordu; araya `await` girince boş tabana karşı çalışıp BÜTÜN kayıtları "eklenen" sayıyor, yazma
+      // düşünce tablonun tamamı bekleyen deftere giriyordu. Taban burada kurulur (aşağıdaki kurulum aynı değerle tekrar).
+      tabloBaslangicTam("urunler", yerelDamga.urunler);
+      tabloBaslangicTam("cariler", c);
       const yerelKodGoc = ozelKodGoc(t, yerelDamga.urunler, () => uid("oka"));
       if (yerelKodGoc.degisti) {
         t = yerelKodGoc.tanimlar;

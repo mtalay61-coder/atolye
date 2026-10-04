@@ -112,8 +112,11 @@ function bekleyenKayitEkle(tablo, fark, cocukFarklari) {
   (fark.silinen || []).forEach((id) => { t.ana[id] = "sil"; });
   (cocukFarklari || []).forEach(({ cocuk, cFark }) => {
     const c = t.cocuk[cocuk.tablo] || {};
-    [...(cFark.eklenen || []), ...(cFark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined) c[k.id] = { t: "yaz" }; });
-    (cFark.silinenKayitlar || []).forEach((k) => { if (k && k.id !== undefined) c[k.id] = { t: "sil", k }; });
+    // `p`: alt kaydın ANA kaydı (v1.569.0) — açılışta yalnız defterdeki ana kayıtlar yerelden alınabilsin.
+    const ebeveynAlan = { urunler: "urun_id", cariler: "cari_id", siparisler: "siparis_id", uretim: "uretim_id" }[tablo];
+    const ebeveyn = (k) => (ebeveynAlan && k[ebeveynAlan] != null ? String(k[ebeveynAlan]) : null);
+    [...(cFark.eklenen || []), ...(cFark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined) c[k.id] = { t: "yaz", p: ebeveyn(k) }; });
+    (cFark.silinenKayitlar || []).forEach((k) => { if (k && k.id !== undefined) c[k.id] = { t: "sil", k, p: ebeveyn(k) }; });
     t.cocuk[cocuk.tablo] = c;
   });
   d[tablo] = t;
@@ -171,8 +174,45 @@ function tabloBaslangicBekleyen(tablo, bulutKayitlar, durumKayitlar) {
 function yereliBulutlaBirlestir(yerel, bulut, tablo) {
   const t = bekleyenKayitlariOku()[tablo] || {};
   const silinen = new Set(Object.entries(t.ana || {}).filter(([, v]) => v === "sil").map(([id]) => id));
-  const yerelIdler = new Set((yerel || []).map((k) => k && k.id));
-  return [...(yerel || []), ...(bulut || []).filter((k) => k && !yerelIdler.has(k.id) && !silinen.has(String(k.id)))];
+  const yazilan = new Set(Object.entries(t.ana || {}).filter(([, v]) => v === "yaz").map(([id]) => id));
+  const cocukYazVar = Object.values(t.cocuk || {}).some((kayitlar) => Object.keys(kayitlar || {}).length > 0);
+  // YALNIZ DEFTERDEKİLER YERELDEN (v1.569.0, denetim — çok cihaz): önce bekleyen yazması olan tablonun TAMAMI yerelden
+  // alınıyordu; yerelle bulut arasındaki BÜTÜN farklar (bayat kayıtlar dahil) gönderiliyor, başka cihazın bu arada
+  // değiştirdiği kayıt (fiyat, varyant) eski hâline dönüyordu. Ayrıntılı defter (v1.556) varsa: defterde "yaz" olan
+  // kayıt yerelden (+ buluttaki, bu cihazda silinmemiş hareketleri), "sil" olan hiç, GERİSİ BULUTTAN. Defter yoksa ya da
+  // yalnız alt kayıt içeriyorsa (eski sürümden kalan bekleyen) eski davranış: yerel esas + buluttaki yeniler.
+  const ebeveynsizCocuk = Object.values(t.cocuk || {}).some((kayitlar) => Object.values(kayitlar || {}).some((v) => v && v.p == null));
+  if ((yazilan.size === 0 && silinen.size === 0 && !cocukYazVar) || ebeveynsizCocuk) {
+    const yerelIdler = new Set((yerel || []).map((k) => k && k.id));
+    return [...(yerel || []), ...(bulut || []).filter((k) => k && !yerelIdler.has(k.id) && !silinen.has(String(k.id)))];
+  }
+  const silinenCocuk = new Set();
+  const cocukYazilan = new Set();   // alt kaydı defterde olan ana kayıtlar
+  Object.values(t.cocuk || {}).forEach((kayitlar) => Object.entries(kayitlar || {}).forEach(([k, v]) => {
+    if (v && v.t === "sil") silinenCocuk.add(String(k));
+    if (v && v.p != null) cocukYazilan.add(String(v.p));
+  }));
+  const yerelHarita = new Map((yerel || []).filter(Boolean).map((k) => [String(k.id), k]));
+  const hareketBirlestir = (yer, bul) => {
+    if (!yer || !bul || !Array.isArray(yer.hareketler) || !Array.isArray(bul.hareketler)) return yer;
+    const var_ = new Set(yer.hareketler.map((h) => h && String(h.id)));
+    const ek = bul.hareketler.filter((h) => h && !var_.has(String(h.id)) && !silinenCocuk.has(String(h.id)));
+    return ek.length ? { ...yer, hareketler: [...yer.hareketler, ...ek] } : yer;
+  };
+  // Alt kaydı defterde olan ana kayıt (yalnız hareket eklenmiş ürün) da yerelden — `p` ile bilinir. Eski defterde `p`
+  // yoksa (`ebeveynsizCocuk`) yukarıdaki eski davranışa düşülür.
+  const yereldenMi = (id) => yazilan.has(id) || cocukYazilan.has(id);
+  const bulutIdler = new Set();
+  const sonuc = [];
+  (bulut || []).forEach((k) => {
+    if (!k) return;
+    const id = String(k.id);
+    bulutIdler.add(id);
+    if (silinen.has(id)) return;
+    sonuc.push(yereldenMi(id) && yerelHarita.has(id) ? hareketBirlestir(yerelHarita.get(id), k) : k);
+  });
+  (yerel || []).forEach((k) => { if (k && !bulutIdler.has(String(k.id)) && (yazilan.has(String(k.id)) || cocukYazilan.has(String(k.id)))) sonuc.push(k); });
+  return sonuc;
 }
 
 // =============================================================================================

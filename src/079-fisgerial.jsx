@@ -358,9 +358,19 @@ function fisGeriAl(veri, secenekler = {}) {
           tamamlanmaTarihi: null,
         };
       });
+      // TAMİR İŞLERİ DE GERİ (v1.569.0, denetim): teslimde ayrılan tamir çiftleri bir prosese yeni atama olarak
+      // dönüyordu; teslim geri alınınca o atamalar kalıyor, çiftler iki kez sayılıyor ve tamir malzemesi yeniden
+      // düşülüyordu. Bu teslimden doğan (`tamirKaynakAtamaId`) ve teslim ALINMAMIŞ tamir atamaları kaldırılır
+      // (teslim alınmış olan varsa geri alma çağıranda engellenir — `teslimTamirleriTamamlandiMi`).
+      const temizIlerleme = eslesme.atamaId == null ? yeniIlerleme : yeniIlerleme.map((p) => {
+        const kalan = (p.atamalar || []).filter((a) => !(a.tamirMi && a.tamirKaynakAtamaId === eslesme.atamaId && !a.tamamlandiMi));
+        if (kalan.length === (p.atamalar || []).length) return p;
+        const bitti = kalan.length > 0 && kalan.every((a) => a.tamamlandiMi);
+        return { ...p, atamalar: kalan, tamamlandiMi: p.tamamlandiMi && bitti };
+      });
       return {
         ...u,
-        prosesIlerleme: yeniIlerleme,
+        prosesIlerleme: temizIlerleme,
         asama: adim.proses,
         stogaEklendiMi: sonProsesMi ? false : u.stogaEklendiMi,
       };
@@ -442,4 +452,12 @@ function fisGeriAl(veri, secenekler = {}) {
     muhasebeBagIdler: [...muhasebeBagIdler],
     hareketIdler: idler,
   };
+}
+
+
+// Bu teslimden doğan tamir işlerinden TESLİM ALINMIŞ olan var mı? Varsa teslim geri alınamaz — tamirin malzemesi ve
+// işçiliği işlenmiş, önce o geri alınmalı (v1.569.0).
+function teslimTamirleriTamamlandiMi(uretimKaydi, atamaId) {
+  return ((uretimKaydi && uretimKaydi.prosesIlerleme) || []).some((p) => (p.atamalar || [])
+    .some((a) => a.tamirMi && a.tamirKaynakAtamaId === atamaId && a.tamamlandiMi));
 }

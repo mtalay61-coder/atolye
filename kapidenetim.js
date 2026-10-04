@@ -71,6 +71,10 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
   // başlangıç noktası. `fisYaz`dan geçirilemez: fisYaz cari/sipariş/ambalaj yan etkileri olan
   // bir işlem, açılışın hiçbiri yok.
   "acilisFisleriUret",          // önbellek-defter farkını açılış hareketi olarak yazma
+  // — YÜKLEME BİRLEŞİMİ (v1.569.0) —
+  // Yeni hareket ÜRETMEZ: bekleyen yazması olan kaydın yerel hâline, BULUTTA ZATEN OLAN (başka cihazın yazdığı)
+  // hareketleri katar ki açılışta onlar kaybolmasın. Fiş, cari, sipariş yan etkisi yok.
+  "yereliBulutlaBirlestir",
 ]);
 
 // Geri alan yollar ayrı sayılır: bunlar hareket YAZMAZ, siler. Yazıcı listesiyle karıştırmak,

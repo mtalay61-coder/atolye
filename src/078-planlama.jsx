@@ -36,7 +36,9 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
       const kalan = k.miktar - (k.karsilanan || 0);
       const miktar = g.miktar != null ? Math.min(g.miktar, kalan) : kalan;
       if (miktar <= 0) return;
-      const grupAnahtari = `${k.urunId}|${k.renk}`;
+      // KUTU RENGİ DE ANAHTARDA (v1.569.0, denetim): aynı ürün+renkte farklı kutu seçilmiş satırlar tek üretimde
+      // birleşiyor, üretimin `ambalaj`ı yalnız ilk satırın kutusunu taşıyor — öbür satırlar yanlış kutudan düşüyordu.
+      const grupAnahtari = `${k.urunId}|${k.renk}|${(k.ambalaj && k.ambalaj.renk) || ""}`;
       if (!renkGruplari[grupAnahtari]) renkGruplari[grupAnahtari] = [];
       renkGruplari[grupAnahtari].push({ renk: k.renk, kalemId: k.id, beden: k.beden, miktar, urunAd: k.urunAd, urunId: k.urunId, ambalaj: k.ambalaj || null });
     });
@@ -87,7 +89,13 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
         beden: `${olcuGoster(renk) ? `${olcuGoster(renk)} · ` : ""}${satirlar.map((x) => `${olcuMiktarMetni(x.beden, x.miktar)}`).join(", ")}`,
         urunId: satirlar[0].urunId,
         renk,
-        bedenMiktarlari: satirlar.map((x) => ({ beden: x.beden, miktar: x.miktar })),
+        // Aynı beden iki satırda gelirse TOPLANIR (v1.569.0): tüketim/rezervasyon `.find` ile ilk kaydı okuyordu,
+        // ikinci satırın malzemesi eksik düşülüp eksik ayrılıyordu.
+        bedenMiktarlari: satirlar.reduce((liste, x) => {
+          const var_ = liste.find((b) => b.beden === x.beden);
+          if (var_) var_.miktar += x.miktar; else liste.push({ beden: x.beden, miktar: x.miktar });
+          return liste;
+        }, []),
         stogaEklendiMi: false,
         prosesIlerleme,
         termin: "",

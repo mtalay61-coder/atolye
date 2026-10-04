@@ -83,6 +83,16 @@ const silinenler = (tablo) => istekler.filter((r) => r.yontem === "DELETE" && r.
   // 5) Birleştirme
   bekle("yerel + bulutta yeni ürün", yereliBulutlaBirlestir([urun("A", "Deri")], [urun("A", "Deri"), urun("B", "Yeni")], "urunler").map((u) => u.id), ["A", "B"]);
 
+  // 5b) v1.569.0 — yalnız defterdekiler yerelden: başka cihazın değiştirdiği kayıt bulut hâliyle gelir
+  bellek["bekleyen:kayitlar"] = JSON.stringify({ urunler: { ana: { A: "yaz" }, cocuk: { stok_hareketleri: { hY: { t: "yaz", p: "A" } } } } });
+  const yA = { ...urun("A", "Deri yerel"), hareketler: [{ id: "hY", miktar: 1 }] };
+  const bA = { ...urun("A", "Deri bulut"), hareketler: [{ id: "hB", miktar: 5 }] };
+  const yP = { ...urun("P", "Eski fiyat") }; const bP = { ...urun("P", "Yeni fiyat (B cihazı)") };
+  const bir = yereliBulutlaBirlestir([yA, yP], [bA, bP], "urunler");
+  bekle("defterdeki A yerelden + buluttaki hareketi", [bir.find((u) => u.id === "A").ad, bir.find((u) => u.id === "A").hareketler.map((h) => h.id)], ["Deri yerel", ["hY", "hB"]]);
+  bekle("defterde olmayan P buluttan (B'nin değişikliği korunur)", bir.find((u) => u.id === "P").ad, "Yeni fiyat (B cihazı)");
+  delete bellek["bekleyen:kayitlar"];
+
   // 6) Kayıp hammadde onarımı
   const kayip = kayipHammaddeler([{ ...receteli }, urun("A", "Deri")]);
   bekle("reçetede olup stokta olmayan: Jut", kayip.map((h) => `${h.id}:${h.ad}:${h.birim}:${h.kullananlar.join(",")}`), ["jut1:Jut:Çift:27080 D"]);
