@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.581.0";
+const SURUM = "1.583.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Maliyet dokumunde hammadde birim fiyatinin para birimi satirdan degistirilebiliyor";
+const SURUM_NOTU = "Kar satis fiyatindan hesaplaniyor: fiyat = maliyet / (1 - kar%); 1000 TL %30 kar ile 1428,57 TL";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,12 @@ const SURUM_NOTU = "Maliyet dokumunde hammadde birim fiyatinin para birimi satir
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.583.0", tarih: "04.10.2026", eklenen: [],
+    degisen: ["Kâr satış fiyatından hesaplanıyor (marj): fiyat = maliyet ÷ (1 − kâr%). 1000 TL maliyet, %30 kâr → 1.428,57 TL (eskiden 1.300). Ürün kartı maliyet özeti, maliyet çıktısı ve fiyat listesinde maliyete 'Kâr ekle %'"],
+    duzeltilen: [] },
+  { surum: "1.582.0", tarih: "04.10.2026", eklenen: [],
+    degisen: ["Maliyet özetinde ve maliyet/reçete çıktısında işçilik satırları proses sırasıyla (ürüne özel sıra, yoksa Tanımlar'daki sıra); her ara proses kendi ana prosesinin hemen altında"],
+    duzeltilen: [] },
   { surum: "1.581.0", tarih: "04.10.2026", eklenen: ["Maliyet dökümünde hammadde birim fiyatının yanında para birimi seçicisi (₺ / $ / €): fiyat kuraldan geliyorsa kuralın, karttan geliyorsa kartın alış birimi değişir; rakam aynı kalır"],
     degisen: [], duzeltilen: [] },
   { surum: "1.580.0", tarih: "04.10.2026", eklenen: [],
@@ -1343,6 +1349,16 @@ function uretimUrunu(siparis, stok) {
 // çekiliyordu (USD/EUR anahtarlarıyla); ama stok kartları para birimini SİMGEYLE saklıyor
 // ("$", "€", "₺"). `kurlar["$"]` hiç bulunmadığı için dolar fiyatları çevrilmiyor, uyarı da
 // "$, ₺ kuru girilmemiş" diyordu — TL için bile. Cari ekranındaki `PARA_KODU` eşlemesiyle aynı.
+// KÂR SATIŞ FİYATINDAN (v1.583.0 — kullanıcı: "Kârı hesaplarken satış fiyatından hesapla. Maliyet 1000 TL, %30 kâr ile 1300
+// olmasın; %30 kâr satış fiyatından geri gelsin"). Kâr oranı satış fiyatının yüzdesi (marj): fiyat = maliyet ÷ (1 − kâr%).
+// 1000 TL, %30 → 1.428,57 TL (satışın %30'u = 428,57 kâr). %100 ve üstü tanımsız → maliyet aynen (çağıran uyarır).
+function marjlaSatisFiyati(maliyet, karYuzde) {
+  const k = parseFloat(karYuzde) || 0;
+  if (!(maliyet > 0)) return 0;
+  if (k >= 100) return maliyet;
+  return maliyet / (1 - k / 100);
+}
+
 function alisPbKodu(urun) {
   const ham = String((urun && urun.alisParaBirimi) || "").trim();
   if (!ham || ham === "₺" || ham === "TL" || ham === "TRY") return "TRY";

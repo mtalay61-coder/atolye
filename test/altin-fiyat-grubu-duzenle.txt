@@ -2,7 +2,7 @@
  "grupPb": "USD",
  "hatalar": [],
  "kural": [
-  "fg1:6.3:USD"
+  "fg1:6.72:USD"
  ],
  "uyari": true,
  "uyariSonra": false

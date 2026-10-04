@@ -5,9 +5,9 @@
  "maliyet": {
   "hammadde": "192,00 ₺",
   "iscilik": "50,00 ₺",
-  "kar": "65,50 ₺",
+  "kar": "87,33 ₺",
   "marjKutusu": true,
-  "satisOnerisi": "327,50 ₺",
+  "satisOnerisi": "349,33 ₺",
   "tamMaliyet": "262,00 ₺"
  }
 }

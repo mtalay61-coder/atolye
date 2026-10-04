@@ -42,6 +42,7 @@ bekle("kuruş artığı yok (0,1 + 0,2)", fiyatDonustur(0.1, { tur: "tutar", yon
 bekle("eksiye düşen → boş", fiyatDonustur(5, { tur: "tutar", yon: -1, deger: 10 }), null);
 bekle("boş fiyat dönüşmez", fiyatDonustur(null, { tur: "yuzde", yon: 1, deger: 14 }), null);
 bekle("işlem yok → aynı fiyat", fiyatDonustur(123.45, { tur: "yuzde", yon: 1, deger: "" }), 123.45);
+bekle("maliyete kâr satıştan (v1.583.0): 1000, %30 → 1428,57", fiyatDonustur(1000, { tur: "yuzde", yon: 1, deger: 30, marj: true }), 1428.57);
 
 // 3) Yazma
 const z = "2026-10-03T10:00:00.000Z";
