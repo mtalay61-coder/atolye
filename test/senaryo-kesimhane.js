@@ -47,12 +47,16 @@ async function calistir() {
   const u = ((await depoOku(sayfa, "uretim:siparisler")) || []).find((x) => x.id === "up2") || {};
   const tahakkuk = (u.bolumTahakkuklari || []).map((x) => `${x.bolumAd} · ${x.proses} · ${x.adet} × ${x.ucret} = ${x.tutar} · ${x.fisNo}`);
 
-  await modulAc(sayfa, "Kasa & Banka");
-  await sayfa.waitForTimeout(500);
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Kâr \/ Zarar/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
+  // v1.587.0: Kâr / Zarar Finans › Gelir / Gider ekranında.
+  await modulAc(sayfa, "Gelir / Gider");
+  await sayfa.waitForTimeout(900);
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-gg-sekme="karzarar"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
   const bolumSatiri = await sayfa.evaluate(() => { const r = document.querySelector('[data-kz-bolum="Kesimhane"]'); return r ? r.innerText.replace(/\s+/g, " ").trim() : "yok"; });
   const iscilikToplam = await sayfa.evaluate(() => { const r = document.querySelector("[data-iscilik-dokumu]"); return r ? r.innerText.replace(/\s+/g, " ").trim().slice(0, 120) : "yok"; });
+  // v1.587.0: maaş "Üretim işçiliği"nde değil, Giderler › Üretim gideri › "Kesimhane işçiliği" kartında.
+  const giderGrubu = await sayfa.evaluate(() => { const r = document.querySelector('[data-kz-grup="uretim"]'); return r ? r.innerText.replace(/\s+/g, " ").trim().slice(0, 120) : "yok"; });
+  const giderSatiri = await sayfa.evaluate(() => { const m = document.body.innerText.replace(/\n/g, " | "); const i = m.indexOf("− Giderler"); return i < 0 ? null : m.slice(i, i + 40).split("|")[1].trim(); });
   // v1.586: bölüm satırına tıklayınca döküm açılır — aylık verim, personel ve girişler.
   await sayfa.locator('[data-kz-bolum="Kesimhane"]').click();
   await sayfa.waitForTimeout(600);
@@ -65,8 +69,22 @@ async function calistir() {
       girisler: [...document.querySelectorAll("[data-kz-bolum-giris]")].map(m),
     };
   });
+  // Gelir / Gider Kartları: bölümle açılan "Kesimhane işçiliği" kartı, rozeti ve ekstresinde maaş tahakkuku.
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-gg-sekme="kartlar"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(600);
+  const kart = await sayfa.evaluate(() => {
+    const r = document.querySelector('[data-gider-kart="Kesimhane işçiliği"]');
+    if (!r) return "yok";
+    return { satir: r.innerText.replace(/\s+/g, " ").trim(), rozet: !!r.querySelector("[data-gider-kart-bolum]") };
+  });
+  await sayfa.locator('[data-kart-ekstre="Kesimhane işçiliği"]').click();
+  await sayfa.waitForTimeout(400);
+  const kartEkstre = await sayfa.evaluate(() => { const r = document.querySelector('[data-kart-hareketleri="Kesimhane işçiliği"]'); return r ? r.innerText.replace(/\s+/g, " ").trim().replace(/\d{2}\.\d{2}\.\d{4}/g, "GG.AA.YYYY").replace(/[A-ZÇĞİÖŞÜa-zçğıöşü]+ \d{4} maaşı/g, "AY YYYY maaşı") : "yok"; });
+  const tanimKart = ((await depoOku(sayfa, "tanimlar:data")) || {}).giderKartlari || [];
+  const bolumKarti = tanimKart.filter((k) => k.bolumId === "bk").map((k) => `${k.ad} · ${k.grup} · ${k.tur}`);
   await tarayici.close();
-  return { hatalar, maasOnce, teslim: { yeniCariHareketleri: yeniHareketler, tahakkuk, adimTamam: !!(u.prosesIlerleme || [{}])[0].tamamlandiMi }, karZarar: { bolumSatiri, iscilikToplam, dokum } };
+  return { hatalar, maasOnce, teslim: { yeniCariHareketleri: yeniHareketler, tahakkuk, adimTamam: !!(u.prosesIlerleme || [{}])[0].tamamlandiMi },
+    karZarar: { bolumSatiri, iscilikToplam, giderGrubu, giderSatiri, dokum }, giderKarti: { kart, kartEkstre, bolumKarti } };
 }
 
 if (require.main === module) {

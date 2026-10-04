@@ -64,9 +64,10 @@ async function calistir() {
     .map((x) => x.textContent.trim()).sort());
 
   // ---- 4. KÂR-ZARAR -------------------------------------------------------------------------------------
-  await modulAc(sayfa, "Kasa & Banka");
+  // v1.587.0: Kâr / Zarar Finans › Gelir / Gider ekranında.
+  await modulAc(sayfa, "Gelir / Gider");
   await sayfa.waitForTimeout(900);
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Kâr \/ Zarar/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-gg-sekme="karzarar"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
   const gelir = () => sayfa.evaluate(() => {
     const m2 = document.body.innerText.replace(/\n/g, " | ");

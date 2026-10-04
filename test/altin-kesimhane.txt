@@ -1,4 +1,14 @@
 {
+ "giderKarti": {
+  "bolumKarti": [
+   "Kesimhane işçiliği · uretim · gider"
+  ],
+  "kart": {
+   "rozet": true,
+   "satir": "Kesimhane işçiliği 730 bölüm · maaş tahakkuku 20.000 ₺ Hareketler"
+  },
+  "kartEkstre": "GG.AA.YYYY Maaş tahakkuku · Personel C Kesimhane — AY YYYY maaşı −20.000"
+ },
  "hatalar": [],
  "karZarar": {
   "bolumSatiri": "▸ Kesimhane tahakkuk 90 ₺ (3 adet) maaş 20.000 ₺ zarar 19.910 ₺",
@@ -14,7 +24,9 @@
     "Personel C · 3 adet · 90 ₺"
    ]
   },
-  "iscilikToplam": "Üretim işçiliği — kime ne kadar hak edildi Personel C · 20.000 ₺"
+  "giderGrubu": "Üretim gideri %100 20.000 ₺ Kesimhane işçiliği · 20.000 ₺",
+  "giderSatiri": "-20.000 ₺",
+  "iscilikToplam": "yok"
  },
  "maasOnce": [
   "MAAS-YYYY-MM-0003 · Maaş · Alacak · 20000"

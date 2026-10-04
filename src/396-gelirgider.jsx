@@ -6,7 +6,7 @@
 // şeyler. Gelir/gider kartları ise her gün kullanılan bir defter: yeni gider çıkar, kart eklenir,
 // rapor oradan okunur. İkisini aynı sayfada tutmak, günlük işi kurulum ayarlarının arasına
 // gömmekti.
-function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
+function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast }) {
   // Hangi bölüm açık (20 Eylül).
   const [bolum, setBolum] = useState("kartlar");
   // Yeni grup formu (20 Eylül).
@@ -31,6 +31,9 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
         if (h.giderKartId === kartId) liste.push({ ...h, hesapAd: hes.ad });
       });
     });
+    // BÖLÜM İŞÇİLİĞİ (v1.587.0): bölüme bağlı kartın hareketi personele tahakkuk eden MAAŞ (cari hareketi) —
+    // "Kesimhane işçiliği" gideri ödendiği gün değil hak edildiği ay doğar. Kasadan cariye ödeme kartı tekrar yazmaz.
+    bolumMaasHareketleri(tanimlar, cariler, kartId).forEach((h) => liste.push({ ...h, yon: "Çıkış", hesapAd: `Maaş tahakkuku · ${h.cariUnvan}` }));
     return liste.sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
   };
   const kartToplami = (kartId) => kartHareketleri(kartId)
@@ -41,7 +44,8 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
         aylık yükü tutar ve çift başı maliyeti hesaplar. Aynı ekranda ama ayrı sekmelerde:
         biri "ne ödedik", diğeri "bir çift bana kaça mal oluyor". */}
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      {[{ k: "kartlar", ad: "Gelir / Gider Kartları" }, { k: "genel", ad: "Genel Gider ve Çift Başı Maliyet" }].map((x) => (
+      {/* KÂR / ZARAR BURADA (v1.587.0): Kasa & Banka'dan taşındı — "kazanıyor muyuz" sorusu kartların yanında. */}
+      {[{ k: "kartlar", ad: "Gelir / Gider Kartları" }, { k: "genel", ad: "Genel Gider ve Çift Başı Maliyet" }, { k: "karzarar", ad: "Kâr / Zarar" }].map((x) => (
         <button key={x.k} type="button" data-gg-sekme={x.k} onClick={() => setBolum(x.k)}
           style={{ padding: "7px 16px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
             border: `1.5px solid ${bolum === x.k ? "var(--erp-primary)" : "var(--erp-border)"}`,
@@ -51,7 +55,9 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
       ))}
     </div>
 
-    {bolum === "genel" ? (
+    {bolum === "karzarar" ? (
+      <KarZararPaneli stok={stok} cariler={cariler} muhasebe={muhasebe} giderKartlari={tanimlar.giderKartlari || []} tanimlar={tanimlar} uretim={uretim} />
+    ) : bolum === "genel" ? (
       <GenelGiderEkrani tanimlar={tanimlar} onSave={onSave} stok={stok} muhasebe={muhasebe} showToast={showToast} />
     ) : (
     <>
@@ -194,6 +200,12 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, showToast }) {
                           background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px", marginBottom: 3 }}>
                           <b style={{ fontSize: 13 }}>{k.ad}</b>
                           {k.tdhp && <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{k.tdhp}</span>}
+                          {k.bolumId && (
+                            <span data-gider-kart-bolum={k.bolumId} title="Atölye içi bölüm kartı: bölüm personelinin maaş tahakkukları buraya işlenir"
+                              style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: "var(--erp-orange-bg)", color: "var(--erp-warn)" }}>
+                              bölüm · maaş tahakkuku
+                            </span>
+                          )}
                           {/* KART EKSTRESİ (kullanıcı, 20 Eylül: "gider kartlarını da cari gibi
                               görmesi lazım... giderlerin raporları vs. olacak"). Kart artık yalnız
                               bir etiket değil: kendi hareketleri ve toplamı var — tıpkı cari gibi.

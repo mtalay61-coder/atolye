@@ -460,9 +460,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
           { key: "kasa", label: "Kasa", icon: <Wallet size={14} /> },
           { key: "banka", label: "Banka", icon: <Landmark size={14} /> },
           kapsam !== "kasabanka" && { key: "cek", label: "Çek", icon: <Receipt size={14} /> },
-          // KÂR / ZARAR (18 Eylül): gelir-gider kartlarının meyvesi. Kasa/banka/çek "para nerede"
-          // sorusunu cevaplıyor; bu sekme "kazanıyor muyuz" sorusunu.
-          { key: "karzarar", label: "Kâr / Zarar", icon: <FileText size={14} /> },
+          // KÂR / ZARAR sekmesi v1.587.0'da Finans › Gelir / Gider'e taşındı (kullanıcı: "kasa-banka içerisinde
+          // olması mantıksız") — rapor gider kartlarının meyvesi, kartların yanında durmalı.
         ].filter(Boolean).map((s) => (
           <button
             key={s.key}
@@ -532,10 +531,6 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
           showToast={showToast}
         />
       )}
-      {altSekme === "karzarar" && (
-        <KarZararPaneli stok={stok} cariler={cariler} muhasebe={muhasebe} giderKartlari={giderKartlari} tanimlar={tanimlar} uretim={uretim} />
-      )}
-
       {altSekme === "cek" && (
         <CekListesi cekler={cekler} cariler={cariler} kurlar={kurlar} onEkle={cekEkle} onSil={cekSil} onIslem={onCekIslem} onSonIslemiGeriAl={cekSonIslemiGeriAl} onYazdir={onCekYazdir} bankalar={bankalar} kasalar={kasalar} gorseller={cekGorselleri} onGorselKaydet={onCekGorselKaydet} />
       )}

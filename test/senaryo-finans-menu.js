@@ -33,7 +33,7 @@ async function calistir() {
     return kap ? [...kap.querySelectorAll("[data-nav]")].map((b) => b.getAttribute("data-nav")) : null;
   });
 
-  const SEKMELER = ["Kasa", "Banka", "Çek", "Kâr / Zarar"];
+  const SEKMELER = ["Kasa", "Banka", "Çek", "Kâr / Zarar"];   // Kâr / Zarar v1.587.0'da Gelir / Gider'e taşındı — artık hiçbirinde görünmemeli
   await modulAc(sayfa, "Kasa & Banka");
   await sayfa.waitForTimeout(700);
   const kasaBanka = { baslik: await baslik(), sekmeler: await gorunenDugmeler(SEKMELER) };

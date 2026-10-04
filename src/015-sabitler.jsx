@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.586.0";
+const SURUM = "1.587.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Kar-Zararda bolum dokumu: aylik verim (tahakkuk/maas, cift basi gercek maliyet), girisler ve personel bazinda adet";
+const SURUM_NOTU = "Kar/Zarar Finans > Gelir / Gider ekranina tasindi; bolum (Kesimhane) maasi bolumun iscilik gider kartina yaziliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Kar-Zararda bolum dokumu: aylik verim (tahakkuk/maas, cift b
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.587.0", tarih: "04.10.2026",
+    eklenen: ["Her atölye içi bölüm için \"<Bölüm> işçiliği\" gider kartı (Finans › Gelir / Gider): personel maaş tahakkukları bu kartın hareketi, Kâr/Zarar'da Giderler altında o kart olarak görünür"],
+    degisen: ["Kâr / Zarar sekmesi Kasa & Banka'dan Finans › Gelir / Gider ekranına taşındı (üçüncü sekme)", "Bölüm maaşı artık \"Üretim işçiliği\" satırında değil, bölümün gider kartında sayılıyor"],
+    duzeltilen: [] },
   { surum: "1.586.0", tarih: "04.10.2026",
     eklenen: ["Finans › Kâr/Zarar › Atölye içi bölümler: bölüm satırına dokununca döküm — aylık tablo (adet, tahakkuk, maaş, verim %, çift başı gerçek maliyet, kâr/zarar), seçili dönemin girişleri (tarih, üretim no, model/renk, personel, adet × ücret) ve personel bazında adet/tahakkuk"],
     degisen: [], duzeltilen: [] },
@@ -1411,6 +1415,53 @@ function bolumKarZarar(bolum, uretim, cariler, tarihUygun) {
 // BÖLÜM DÖKÜMÜ (v1.586.0 — kullanıcı: "Kesimhane'ye yap o girişleri, ne kadar verimli olduğu da görünsün").
 // Girişler: bölümün tahakkuk kayıtları üretim bilgisiyle (dönem süzgeçli). Aylık: ay bazında adet/tahakkuk/maaş,
 // verim = tahakkuk ÷ maaş (%100 üstü bölüm kendini çıkarıyor), çift başı gerçek maliyet = maaş ÷ adet. Saf.
+// BÖLÜM ↔ GİDER KARTI (v1.587.0 — kullanıcı: "gider kartları içerisine bağlansın, kesimhane için işçilikler kesim
+// işçiliği gideri olarak yazsın"). Her atölye içi bölümün "<Bölüm> işçiliği" adlı bir gider kartı var (`kart.bolumId`);
+// personele tahakkuk eden maaş bu kartın hareketi, Kâr-Zarar'da Giderler altında o kart olarak görünür.
+function bolumKartAdi(bolum) { return `${bolum.ad} işçiliği`; }
+function bolumGiderKarti(tanimlar, bolum) {
+  if (!tanimlar || !bolum) return null;
+  const kartlar = tanimlar.giderKartlari || [];
+  return kartlar.find((k) => k.bolumId === bolum.id) || kartlar.find((k) => kodEsit(k.ad, bolumKartAdi(bolum))) || null;
+}
+// Kartı olmayan bölümlere kart açar (ad "… işçiliği" olan eski kart varsa onu bağlar). Değişiklik yoksa aynı nesne döner.
+function bolumKartlariniTamamla(tanimlar) {
+  const bolumler = (tanimlar && tanimlar.bolumler) || [];
+  if (!bolumler.length) return tanimlar;
+  let kartlar = tanimlar.giderKartlari || [];
+  let degisti = false;
+  const gruplar = giderGelirGruplari(tanimlar);
+  const grup = gruplar.find((g) => g.key === "uretim") || gruplar.find((g) => g.tur !== "gelir") || gruplar[0] || { key: "uretim", tur: "gider", tdhp: "730" };
+  bolumler.forEach((b) => {
+    const mevcut = kartlar.find((k) => k.bolumId === b.id);
+    if (mevcut) return;
+    const adli = kartlar.find((k) => kodEsit(k.ad, bolumKartAdi(b)));
+    kartlar = adli
+      ? kartlar.map((k) => (k === adli ? { ...k, bolumId: b.id } : k))
+      : [...kartlar, { id: uid("gkart"), ad: bolumKartAdi(b), grup: grup.key, tur: grup.tur, tdhp: grup.tdhp, bolumId: b.id }];
+    degisti = true;
+  });
+  return degisti ? { ...tanimlar, giderKartlari: kartlar } : tanimlar;
+}
+// Karta bağlı bölümün maaş tahakkukları (cari hareketleri) — kart ekstresi ve Kâr-Zarar için. Eski maaş fişlerinde
+// `giderKartId` yok; bölüm kimliğinden (`bolumId`) de bağlanır.
+function bolumMaasHareketleri(tanimlar, cariler, kartId) {
+  const kart = ((tanimlar && tanimlar.giderKartlari) || []).find((k) => k.id === kartId);
+  if (!kart) return [];
+  const liste = [];
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+    if (!maasMi) return;
+    if (h.giderKartId === kartId || (kart.bolumId && h.bolumId === kart.bolumId)) liste.push({ ...h, cariUnvan: c.unvan });
+  }));
+  return liste;
+}
+// Maaş hareketinin gider kartı: hareketteki kimlik, yoksa bölümünün kartı.
+function maasGiderKarti(tanimlar, h) {
+  const kartlar = (tanimlar && tanimlar.giderKartlari) || [];
+  return kartlar.find((k) => h.giderKartId && k.id === h.giderKartId) || kartlar.find((k) => h.bolumId && k.bolumId === h.bolumId) || null;
+}
+
 function bolumGirisleri(bolum, uretim, cariler, tarihUygun) {
   const ad = (id) => (((cariler || []).find((c) => c.id === id) || {}).unvan) || "";
   const satirlar = [];

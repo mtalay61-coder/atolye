@@ -2455,7 +2455,8 @@ export default function AtolyeERP() {
       if ((c.hareketler || []).some((h) => h.fisNo === fisNo)) return;
       yeniler.push({ cariId: c.id, h: { id: uid("hrk"), tarih: `${ay}-01`, zaman: new Date().toISOString(), islemTipi: "Maaş",
         yon: hareketYonu("Maaş"), tutar: maas, odemeSekli: "Nakit", vade: "", defter: iscilikDefteri(tanimlar.firmaBilgileri),
-        fisNo, bolumId: b.id, aciklama: `${b.ad} — ${ayAdi} maaşı`, kullanici: "sistem" } });
+        // GİDER KARTI (v1.587.0): bölümün işçilik kartı — Kâr-Zarar bu maaşı "Kesimhane işçiliği" gideri olarak sayar.
+        fisNo, bolumId: b.id, giderKartId: (bolumGiderKarti(tanimlar, b) || {}).id, aciklama: `${b.ad} — ${ayAdi} maaşı`, kullanici: "sistem" } });
     }));
     if (!yeniler.length) return;
     const imza = yeniler.map((y) => y.h.fisNo).join("|");
@@ -2471,6 +2472,17 @@ export default function AtolyeERP() {
     if (loading || baglantiYok) return;
     maasTahakkukEt();
   }, [loading, baglantiYok, maasTahakkukEt]);
+  // BÖLÜM GİDER KARTLARI (v1.587.0): kartı olmayan bölüme (v1.585'te açılmış Kesimhane gibi) "<Bölüm> işçiliği" kartı
+  // açılır; maaş tahakkukları oraya bağlanır. Tanımlar bütün olarak, bulutla birleşerek yazılır (v1.552). Bir kez.
+  const bolumKartImzaRef = useRef(false);
+  useEffect(() => {
+    if (loading || baglantiYok || bolumKartImzaRef.current) return;
+    const next = bolumKartlariniTamamla(tanimlar);
+    if (next === tanimlar) return;
+    bolumKartImzaRef.current = true;
+    saveTanimlar(next);
+    showToast("Bölüm işçilik gider kartı açıldı (Finans › Gelir / Gider)");
+  }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast]);
 
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
   // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
@@ -4634,6 +4646,7 @@ export default function AtolyeERP() {
                 onSave={saveTanimlar}
                 muhasebe={muhasebe}
                 cariler={cariler}
+                uretim={uretim}
                 showToast={showToast}
               />
             )

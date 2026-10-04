@@ -172,9 +172,12 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
   const iscilikDetay = {};
   (cariler || []).forEach((c) => {
     (c.hareketler || []).forEach((h) => {
-      // MAAŞ DA İŞÇİLİK (v1.585.0): atölye içi bölümde parça başı tutar cariye yazılmıyor; o bölümün gerçek işçilik
-      // maliyeti personele tahakkuk eden maaştır. Çift sayım yok — bölümde "-İşçilik" cari hareketi hiç doğmuyor.
+      // BÖLÜM MAAŞI GİDER KARTINDA (v1.587.0 — kullanıcı: "kesimhane için işçilikler kesim işçiliği gideri olarak yazsın").
+      // v1.585'te maaş "Üretim işçiliği" satırına giriyordu; artık bölümün "<Bölüm> işçiliği" gider kartına yazılır ve
+      // aşağıda Giderler altında o kartla görünür. Burada SAYILMAZ — çift sayım olmasın. Kartı olmayan (bölümsüz) bir
+      // maaş hareketi yine işçilik sayılır ki rapordan düşmesin.
       const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+      if (maasMi && maasGiderKarti(tanimlar, h)) return;
       if (!maasMi && (!h.fisNo || !/-İşçilik$/.test(h.fisNo))) return;
       // YÖNE BAKILMIYOR (v1.409.0): işçilik v1.408'e kadar yanlışlıkla "Borç", sonra doğru
       // yönde "Alacak" yazıldı. İkisi de aynı olayı (hak edilen ücret) anlatıyor; işçilik
@@ -184,6 +187,23 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
       const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
       uretimIscilik += tutar;
       iscilikDetay[c.unvan] = (iscilikDetay[c.unvan] || 0) + tutar;
+    });
+  });
+
+  // BÖLÜM MAAŞLARI → GİDER KARTI (v1.587.0): kasa hareketi gibi kartın grubuna ve kartına eklenir.
+  (cariler || []).forEach((c) => {
+    (c.hareketler || []).forEach((h) => {
+      const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+      if (!maasMi) return;
+      const kart = maasGiderKarti(tanimlar, h);
+      if (!kart) return;
+      if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter)) return;
+      const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
+      giderToplam += tutar;
+      const anahtar = kart.grup || "uretim";
+      if (!gruplar[anahtar]) gruplar[anahtar] = { toplam: 0, kartlar: {} };
+      gruplar[anahtar].toplam += tutar;
+      gruplar[anahtar].kartlar[kart.ad] = (gruplar[anahtar].kartlar[kart.ad] || 0) + tutar;
     });
   });
 
@@ -255,7 +275,7 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uret
       {sonuc.kartYok && (
         <div style={{ background: "#FFF4E6", border: "1px solid #E1A03F", borderRadius: "var(--erp-r-md)", padding: "10px 12px", fontSize: 12, color: "#7A5A28" }}>
           Gider kartı tanımlı değil: kira, elektrik, personel gibi kalemler hesaba girmiyor.
-          Finans › Gelir / Gider ekranından ekleyin.
+          "Gelir / Gider Kartları" sekmesinden ekleyin.
         </div>
       )}
 
