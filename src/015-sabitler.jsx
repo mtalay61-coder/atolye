@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.560.0";
-const SURUM_TARIHI = "2026-10-03";
-const SURUM_NOTU = "Recete sablonu bedene gore degisen malzemeleri (taban, fusbet...) de tasiyor; sablondan eklemede eksik hammadde kalmiyor";
+const SURUM = "1.561.0";
+const SURUM_TARIHI = "2026-10-04";
+const SURUM_NOTU = "Sablondan recetede renk eslestirme normal recete eklemedeki gibi: ayni adli renk, gecmisten hatirlanan (kirmizi), bilinmeyen bos (turuncu eslestir); uyari seridi ve onay";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Recete sablonu bedene gore degisen malzemeleri (taban, fusbe
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.561.0", tarih: "04.10.2026",
+    eklenen: ["Şablondan eklenen reçetede 'Renk eşleştirmelerini kontrol edin' şeridi: geçmişten hatırlanan renk sayısı, boş eşleşme sayısı ve 'Eşleştirmeleri onayla' düğmesi"],
+    degisen: ["Şablondan reçete eklerken hammadde rengi normal reçete eklemedeki gibi seçiliyor: mamul rengiyle aynı adlı renk, yoksa geçmiş reçetelerde verilmiş eşleştirme (kırmızı çerçeve — kontrol edin), tek renkli/standart hammaddede o renk; bilinmeyen eşleşme BOŞ bırakılıyor (turuncu 'eşleştir…' kutusu)"],
+    duzeltilen: ["Şablondan eklemede kaynak modelin hammadde rengi (örn. Taban 'Kahve') yeni modelin bütün renklerine aynen yazılıyordu"] },
   { surum: "1.560.0", tarih: "03.10.2026",
     eklenen: ["Reçete şablonu bedene göre değişen malzemeleri de taşıyor (taban, fusbet…): hammadde numarası mamul numarasıyla aynıysa her bedene, değilse beden eşleşmesiyle; karşılığı olmayan beden adıyla bildiriliyor"],
     degisen: [],
