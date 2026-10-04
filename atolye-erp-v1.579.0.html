@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.576.0</title>
+<title>Atölye ERP 1.579.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2014,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.576.0";
+const SURUM = "1.579.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Fiyatlandirmada Tumu tek fiyat tiki ve renk gruplari (ayni fiyatli renk setleri)";
+const SURUM_NOTU = "Barkod kodlari otomatik (stokta acilan renk/beden/boyut tanimlanir, kod atanir); asorti barkodlarini kullanici stok kartindan olusturur";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2024,6 +2024,16 @@ const SURUM_NOTU = "Fiyatlandirmada Tumu tek fiyat tiki ve renk gruplari (ayni f
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.579.0", tarih: "04.10.2026",
+        eklenen: ["Stokta açılan renk, beden ve boyut Tanımlar'da yoksa kendiliğinden tanımlanıyor; renk/ölçü kodu ve ürünün stok no'su otomatik atanıyor — barkod kendiliğinden kuruluyor", "Ürün kartı › Barkodlar: 'Asorti barkodu ekle' (renk ya da bütün renkler + asorti); listeden kaldırma"],
+        degisen: ["Asorti barkodları artık her renk × asorti için kendiliğinden listelenmiyor; yalnız kullanıcının oluşturdukları (basılmış eski etiketler okunmaya devam eder)"],
+        duzeltilen: ["Tanımlarda olmayan boyutlu stokta (Bağcık 100 Cm / 120 cm) barkod 'kurulamıyor' kalıyordu"] },
+    { surum: "1.578.0", tarih: "04.10.2026", eklenen: ["Renk grubu satırında öbür tarafın (alış↔satış) fiyatı bilgi olarak görünüyor"],
+        degisen: ["Özel fiyat paneli düzenlenen tarafın renginde çerçeveli; başlık 'ALIŞ fiyatları' / 'SATIŞ fiyatları', sütun 'Tek alış/satış fiyatı' — alış ve satış fiyatlarının ayrı girildiği belirgin"],
+        duzeltilen: [] },
+    { surum: "1.577.0", tarih: "04.10.2026",
+        eklenen: ["Fiyatlandırma matrisinde her rengin yanında açılır grup seçici: listeden gruba al, '+ yeni grup…', gruptan çıkar", "'Adına göre otomatik grupla': adının son kelimesi aynı renkler (Süet, Deri, Baskı…) tek dokunuşla gruplanır", "Her fiyat grubu kendi renginde (seçici, grup adı ve üye etiketleri)"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.576.0", tarih: "04.10.2026",
         eklenen: ["Fiyatlandırma matrisinin sağ alt köşesinde 'Tümü tek fiyat' tiki: işaretleyip fiyat yazınca bütün renk ve bedenler aynı fiyat (birimiyle)", "Renk grupları: aynı fiyatlı renk setleri (ör. Deri'de Süetler, Baskılar) — grubun fiyatı bütün renklerine yazılır; renk matriste grup etiketiyle görünür; bir renk tek grupta olur"],
         degisen: [], duzeltilen: [] },
@@ -8971,6 +8981,36 @@ const bedenKoduBul = (tanimlar, bedenAd, olcuTipi) => {
         return t.barkodKodu ? Number(t.barkodKodu) : null;
     return kodEsit(bedenAd, OLCUSUZ_AD) ? OLCUSUZ_KOD : null;
 };
+// OTOMATİK BARKOD TANIMLARI (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
+// oluştursun"). Bağcık'ta "100 Cm" / "120 cm" boyutları Tanımlar'da yoktu → ölçü kodu "—", barkod "kurulamıyor".
+// Stokta kullanılan ama TANIMSIZ renk ve ölçüleri döndürür (kodlarını `kodlariAta` verir). Atlananlar: "Standart"
+// (ayrılmış kod), boş ad, model rengi (kombinasyon) etiketi — onu `kayipModelRenkleri` kodunu koruyarak kurar.
+// Renk tek havuz (tip "Hammadde", hammaddede malzeme tipine bağlı); ölçü ürünün ölçü tipiyle (Beden/Boyut). Saf.
+function eksikBarkodTanimlari(stok, tanimlar, uidFn) {
+    const renkler = [];
+    const bedenler = [];
+    const renkVar = new Set();
+    const olcuVar = new Set();
+    const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+    (stok || []).forEach((u) => {
+        const tip = u.olcuTipi === "Boyut" ? "Boyut" : "Beden";
+        const hammadde = u.kategori === "Hammadde";
+        (u.variants || []).forEach((v) => {
+            const r = String(v.renk || "").trim();
+            if (r && !kodEsit(r, OLCUSUZ_AD) && !kombinasyonEtiketiFormatindaMi(r) && !renkTanimiBul(tanimlar, v.renkId, r) && !renkVar.has(nrm(r))) {
+                renkVar.add(nrm(r));
+                renkler.push({ id: uidFn("renk"), ad: r, tip: "Hammadde", renkKodu: "#C9B99A", malzemeTipleri: hammadde && u.malzemeTipi ? [u.malzemeTipi] : [] });
+            }
+            const b = String(v.beden || "").trim();
+            const anahtar = `${tip}|${nrm(b)}`;
+            if (b && !kodEsit(b, OLCUSUZ_AD) && !olcuTanimiBul(tanimlar, b, u.olcuTipi) && !olcuVar.has(anahtar)) {
+                olcuVar.add(anahtar);
+                bedenler.push({ id: uidFn("olcu"), ad: b, tip, ...(tip === "Boyut" && hammadde && u.malzemeTipi ? { malzemeTipleri: [u.malzemeTipi] } : {}) });
+            }
+        });
+    });
+    return { renkler, bedenler };
+}
 // Barkodu kurulamayan yerleri SEBEBİYLE birlikte çıkarır. Üç ayrı sebep var ve çözümleri farklı:
 //   - stok no yok / renk-ölçü tanımlı ama kodsuz  → "Eksik kodları ata" düğmesi çözer
 //   - renk ya da ölçü HİÇ TANIMLI DEĞİL           → yalnızca kullanıcı tanım ekleyerek çözer
@@ -18142,6 +18182,42 @@ function AtolyeERP() {
         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
         return kodlu;
     }, [tanimSilinenleriCopeAt]);
+    // BARKOD KODLARI KENDİLİĞİNDEN (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
+    // oluştursun; sadece asorti barkodunu kullanıcı oluştursun"). Eskiden kod atama Paketleme › "Eksik kodları ata" düğmesine
+    // kalıyordu; stok kartında açılan ama Tanımlar'da olmayan ölçü (Bağcık "100 Cm") hiç kod almıyordu → "barkod kurulamıyor".
+    // Stok ya da tanımlar her değiştiğinde: tanımsız renk/ölçü tanımlanır (`eksikBarkodTanimlari`), stok no'suz ürüne stok no,
+    // kodsuz tanıma kod (`kodlariAta`) — VAR OLAN koda dokunulmaz (basılmış etiket geçerli kalır). Asorti tanımına kod da
+    // burada verilir ama asorti BARKODU ürün kartında kullanıcı ekleyince listelenir. İnternet yokken çalışmaz (kilit, v1.557).
+    // Aynı eksik imzası ikinci kez işlenmez — yazım düşerse döngü olmasın.
+    const otoKodImzaRef = useRef("");
+    useEffect(() => {
+        if (loading || baglantiYok)
+            return;
+        const e = eksikBarkodTanimlari(stok, tanimlar, uid);
+        const t2 = (e.renkler.length || e.bedenler.length)
+            ? { ...tanimlar, renkler: [...(tanimlar.renkler || []), ...e.renkler], bedenler: [...(tanimlar.bedenler || []), ...e.bedenler] }
+            : tanimlar;
+        const k = kodlariAta(stok, t2);
+        const toplam = k.atanan.stok + k.atanan.renk + k.atanan.beden + k.atanan.asorti;
+        if (!e.renkler.length && !e.bedenler.length && toplam === 0)
+            return;
+        const imza = [...e.renkler.map((r) => `r:${r.ad}`), ...e.bedenler.map((b) => `b:${b.tip}:${b.ad}`),
+            ...(stok || []).filter((u) => !u.stokNo).map((u) => `s:${u.id}`), `k:${toplam}`].join("|");
+        if (otoKodImzaRef.current === imza)
+            return;
+        otoKodImzaRef.current = imza;
+        if (k.atanan.stok > 0)
+            saveStok(k.stok);
+        tanimlarKodluYaz(k.tanimlar);
+        const parca = [
+            e.renkler.length ? `${e.renkler.length} renk (${e.renkler.map((r) => r.ad).join(", ")})` : "",
+            e.bedenler.length ? `${e.bedenler.length} ölçü (${e.bedenler.map((b) => b.ad).join(", ")})` : "",
+            k.atanan.stok ? `${k.atanan.stok} stok no` : "",
+        ].filter(Boolean);
+        gunlukYaz(`Barkod kodları otomatik: ${parca.join(" · ") || `${toplam} kod`}`, "tanimlar", { renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), atanan: k.atanan });
+        if (parca.length)
+            showToast(`Barkod için otomatik tanımlandı: ${parca.join(" · ")}`);
+    }, [loading, baglantiYok, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
     // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
     // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
     // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -27595,6 +27671,10 @@ function HariciBarkodKutusu({ urun, variant, stok, tanimlar, onKaydet, showToast
 // ve telefonda yazarak süzülemiyordu. Artık dar bir düğme (uzun ad … ile kısalır); dokununca altında arama kutusu +
 // süzülen renkler + "yeni renk olarak ekle" açılır. Panel `createPortal` ile gövdeye, sabit konumla çizilir: reçete
 // tabloları yatay kaydırmalı kutuda, içeride açılsa kesilirdi. Seçim asıl `onChange`'e `{target:{value}}` ile gider.
+// GRUP RENKLERİ (v1.577.0 — kullanıcı: "Grupların renkleri de değişsin"): her fiyat grubu kendi renginde (sırasına göre);
+// matristeki seçici, grup listesindeki ad ve üye etiketleri aynı renkte — hangi rengin hangi setten olduğu bir bakışta.
+const FIYAT_GRUP_RENKLERI = ["#6B4E8A", "#1F7A6B", "#B5562A", "#2F5F9E", "#8A6D1F", "#A23B6B", "#4C7A2A", "#5A5A7A"];
+const fiyatGrupRengi = (gruplar, id) => FIYAT_GRUP_RENKLERI[Math.max(0, (gruplar || []).findIndex((g) => g.id === id)) % FIYAT_GRUP_RENKLERI.length];
 // Fiyat kutusunun yanındaki küçük para birimi seçicisi (v1.575.0).
 function ParaBirimiSecici({ deger, onDegis, veri }) {
     return (React.createElement("select", { value: deger, "data-fk-kutu-pb": veri, title: "Para birimi", onChange: (e) => onDegis(e.target.value), className: "mono", style: { fontSize: 12, fontWeight: 700, padding: "3px 1px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff", color: "var(--erp-text-2)", width: 42 } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, PARA_SEMBOLU[pb] || pb))));
@@ -27834,6 +27914,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     const [fkTumuPb, setFkTumuPb] = useState(null);
     const [fkGrupForm, setFkGrupForm] = useState(null); // { id?, ad, renkler: [] }
     const [fkGrupPb, setFkGrupPb] = useState({});
+    const [asortiForm, setAsortiForm] = useState(null); // { renk, asortiId } — asorti barkodu ekleme (v1.579.0)
     const [showFiyatGecmisi, setShowFiyatGecmisi] = useState(false);
     const [addingBeden, setAddingBeden] = useState(false);
     const [serbestOlcuGiris, setSerbestOlcuGiris] = useState(false);
@@ -28283,15 +28364,15 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
         setFkFiyat("");
     }
     // Renklerin ORTAK "renk" fiyatı: hepsinde aynı fiyat + birimde renk kuralı varsa { fiyat, paraBirimi }, yoksa null.
-    function ortakRenkFiyati(renkler) {
+    function ortakRenkFiyati(renkler, tip = fkTip) {
         if (!renkler || renkler.length === 0)
             return null;
         let ortak = null;
         for (const r of renkler) {
-            const k = (product.fiyatKurallari || []).find((x) => x.tip === fkTip && x.kapsam === "renk" && x.deger === r);
+            const k = (product.fiyatKurallari || []).find((x) => x.tip === tip && x.kapsam === "renk" && x.deger === r);
             if (!k)
                 return null;
-            const pb = k.paraBirimi || kartPb(fkTip);
+            const pb = k.paraBirimi || kartPb(tip);
             if (ortak && (ortak.fiyat !== k.fiyat || ortak.paraBirimi !== pb))
                 return null;
             ortak = { fiyat: k.fiyat, paraBirimi: pb };
@@ -28352,6 +28433,61 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
         else
             onUrunGuncelle(product.id, { fiyatRenkGruplari: yeniGruplar });
         setFkGrupForm(null);
+    }
+    // TEK RENGİ GRUBA ATA (v1.577.0 — kullanıcı: "Grupları eklerken seçmeli olsun, bu şekilde zor"): matrisin renk satırındaki
+    // açılır kutudan. `hedefId` null → gruptan çıkar; `yeniAd` → yeni grup aç. Boşalan grup silinir. Hedef grubun ortak
+    // fiyatı varsa renge AYNI yazımda uygulanır.
+    function renkGrubaAta(r, hedefId, yeniAd) {
+        const mevcut = product.fiyatRenkGruplari || [];
+        const ayniAdli = yeniAd ? mevcut.find((g) => kodEsit(g.ad, yeniAd)) : null;
+        const hedef = ayniAdli ? ayniAdli.id : hedefId;
+        let gruplar = mevcut.map((g) => ({ ...g, renkler: g.renkler.filter((x) => x !== r) }));
+        if (hedef)
+            gruplar = gruplar.map((g) => (g.id === hedef ? { ...g, renkler: [...g.renkler, r] } : g));
+        else if (yeniAd)
+            gruplar.push({ id: uid("frg"), ad: yeniAd, renkler: [r] });
+        gruplar = gruplar.filter((g) => g.renkler.length > 0);
+        const eski = hedef ? mevcut.find((g) => g.id === hedef) : null;
+        const ortak = eski ? ortakRenkFiyati(eski.renkler.filter((x) => x !== r)) : null;
+        if (ortak)
+            renkFiyatlariTopluKaydet([r], ortak.fiyat, ortak.paraBirimi, `Grup ${eski.ad}`, { fiyatRenkGruplari: gruplar });
+        else
+            onUrunGuncelle(product.id, { fiyatRenkGruplari: gruplar });
+    }
+    // ADINA GÖRE OTOMATİK GRUPLA (v1.577.0): grupsuz renkler adının SON kelimesine göre ("Kahve Süet", "Siyah Süet" → Süet;
+    // "Kahve Baskı", "Siyah Baskı" → Baskı); en az iki renk aynı kelimeyi paylaşıyorsa grup olur. Aynı adlı grup varsa ona eklenir.
+    // Fiyat yazmaz — grupların fiyatı sonra tek kutudan girilir.
+    function otomatikGrupla(renkler) {
+        const mevcut = product.fiyatRenkGruplari || [];
+        const grupta = new Set(mevcut.flatMap((g) => g.renkler));
+        const kova = new Map();
+        renkler.filter((r) => !grupta.has(r)).forEach((r) => {
+            const p = String(r || "").trim().split(/\s+/);
+            if (p.length < 2)
+                return;
+            const k = p[p.length - 1];
+            const anahtar = k.toLocaleLowerCase("tr-TR");
+            if (!kova.has(anahtar))
+                kova.set(anahtar, { ad: k, renkler: [] });
+            kova.get(anahtar).renkler.push(r);
+        });
+        let gruplar = [...mevcut];
+        let sayi = 0;
+        kova.forEach(({ ad, renkler: l }) => {
+            const var_ = gruplar.find((g) => kodEsit(g.ad, ad));
+            if (!var_ && l.length < 2)
+                return;
+            sayi += l.length;
+            gruplar = var_ ? gruplar.map((g) => (g.id === var_.id ? { ...g, renkler: [...g.renkler, ...l] } : g)) : [...gruplar, { id: uid("frg"), ad, renkler: l }];
+        });
+        if (!sayi) {
+            if (showToast)
+                showToast("Otomatik gruplanacak renk yok (adının son kelimesi aynı olan en az iki grupsuz renk gerekir)");
+            return;
+        }
+        onUrunGuncelle(product.id, { fiyatRenkGruplari: gruplar });
+        if (showToast)
+            showToast(`${sayi} renk adına göre gruplandı — grupların fiyatını aşağıdan girin`);
     }
     function fiyatKuraliSil(kuralId) {
         const kural = (product.fiyatKurallari || []).find((k) => k.id === kuralId);
@@ -30912,44 +31048,67 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                   ${barkodSvg(urunBarkoduKur("stok", { stokNo: product.stokNo }), { birim: 2, yukseklik: 30 })}
                 `], { genislikMM: 60, yukseklikMM: 40 }) },
                     React.createElement(Printer, { size: 12 })))) : null,
-            (asortiler || []).length > 0 && (React.createElement("div", { style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", padding: 10 } },
-                React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 6 } }, "Asorti barkodlar\u0131 \u2014 sipari\u015F ekran\u0131nda okutulur"),
-                React.createElement("div", { style: { display: "grid", gap: 4 } }, Array.from(new Set((product.variants || []).map((v) => v.renk))).map((renk) => {
-                    const ilk = (product.variants || []).find((v) => v.renk === renk);
-                    const renkKod = renkKoduBul(barkodTanimlari, ilk && ilk.renkId, renk);
-                    // renkKod SIFIR olabilir ("Standart" için ayrılmış kod) — doğrusu null kontrolü.
-                    if (!product.stokNo || renkKod === null)
-                        return (React.createElement("div", { key: renk, style: { fontSize: 11, color: "var(--erp-warn)" } },
-                            renk,
-                            ": ",
-                            !product.stokNo ? "önce stok no atanmalı" : "bu renge renk kodu atanmamış",
-                            " (Paketleme \u2192 Eksik kodlar\u0131 ata)"));
-                    return (asortiler || []).map((a) => {
-                        const kod = urunBarkoduKur("asorti", { stokNo: product.stokNo, renkKod, asortiKod: a.barkodKodu });
-                        const adet = (a.oranlar || []).reduce((t, o) => t + (o.oran || 0), 0);
-                        if (!kod)
-                            return (React.createElement("div", { key: `${renk}|${a.id}`, style: { fontSize: 11, color: "var(--erp-warn)" } },
-                                renk,
-                                " \u00B7 ",
-                                a.ad,
-                                ": asorti kodu atanmam\u0131\u015F"));
-                        return (React.createElement("div", { key: `${renk}|${a.id}`, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 } },
-                            React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 } }, renk),
-                            React.createElement("span", null, a.ad),
+            (() => {
+                const urunRenkleri = Array.from(new Set((product.variants || []).map((v) => v.renk)));
+                const urunBedenleri = new Set((product.variants || []).map((v) => v.beden)); // sirasiz-tamam (üyelik)
+                const uygunAsortiler = (product.olcuTipi || "Beden") === "Beden"
+                    ? (asortiler || []).filter((a) => (a.oranlar || []).some((o) => urunBedenleri.has(o.beden))) : [];
+                const kayitlar = (product.asortiBarkodlari || []).filter((x) => urunRenkleri.includes(x.renk));
+                const ekle = () => {
+                    const renkler = asortiForm.renk === "__hepsi__" ? urunRenkleri : [asortiForm.renk];
+                    const mevcut = product.asortiBarkodlari || [];
+                    const yeniler = renkler.filter((r) => !mevcut.some((x) => x.renk === r && x.asortiId === asortiForm.asortiId))
+                        .map((r) => ({ id: uid("asb"), renk: r, asortiId: asortiForm.asortiId }));
+                    if (yeniler.length)
+                        onUrunGuncelle(product.id, { asortiBarkodlari: [...mevcut, ...yeniler] });
+                    if (showToast)
+                        showToast(yeniler.length ? `${yeniler.length} asorti barkodu oluşturuldu` : "Bu asorti barkodları zaten var");
+                    setAsortiForm(null);
+                };
+                if (uygunAsortiler.length === 0 && kayitlar.length === 0)
+                    return null;
+                return (React.createElement("div", { "data-asorti-barkodlari": "1", style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", padding: 10 } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } },
+                        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, "Asorti barkodlar\u0131 \u2014 sipari\u015F ekran\u0131nda okutulur"),
+                        !asortiForm && uygunAsortiler.length > 0 && (React.createElement("button", { type: "button", className: "btn-ghost", "data-asorti-barkod-ekle": "1", style: { marginLeft: "auto", padding: "3px 10px", fontSize: 12 }, onClick: () => setAsortiForm({ renk: urunRenkleri[0] || "", asortiId: uygunAsortiler[0].id }) },
+                            React.createElement(Plus, { size: 12 }),
+                            " Asorti barkodu ekle"))),
+                    asortiForm && (React.createElement("div", { "data-asorti-barkod-form": "1", style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 } },
+                        React.createElement("select", { value: asortiForm.renk, "data-asorti-barkod-renk": "1", onChange: (e) => setAsortiForm((f) => ({ ...f, renk: e.target.value })), style: { ...inputStyle, width: "auto", fontSize: 12, padding: "4px 6px" } },
+                            urunRenkleri.map((r) => React.createElement("option", { key: r, value: r }, r)),
+                            urunRenkleri.length > 1 && React.createElement("option", { value: "__hepsi__" }, "B\u00FCt\u00FCn renkler")),
+                        React.createElement("select", { value: asortiForm.asortiId, "data-asorti-barkod-asorti": "1", onChange: (e) => setAsortiForm((f) => ({ ...f, asortiId: e.target.value })), style: { ...inputStyle, width: "auto", fontSize: 12, padding: "4px 6px" } }, uygunAsortiler.map((a) => React.createElement("option", { key: a.id, value: a.id },
+                            a.ad,
+                            " (",
+                            (a.oranlar || []).reduce((t, o) => t + (o.oran || 0), 0),
+                            " \u00E7ift)"))),
+                        React.createElement("button", { type: "button", className: "btn-primary", "data-asorti-barkod-olustur": "1", style: { padding: "4px 12px", fontSize: 12 }, onClick: ekle }, "Olu\u015Ftur"),
+                        React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "4px 10px", fontSize: 12 }, onClick: () => setAsortiForm(null) }, "Vazge\u00E7"))),
+                    kayitlar.length === 0 && !asortiForm && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Hen\u00FCz asorti barkodu yok \u2014 \"Asorti barkodu ekle\" ile renk ve asorti se\u00E7ip olu\u015Fturun.")),
+                    React.createElement("div", { style: { display: "grid", gap: 4 } }, kayitlar.map((x) => {
+                        const a = (asortiler || []).find((y) => y.id === x.asortiId);
+                        const ilk = (product.variants || []).find((v) => v.renk === x.renk);
+                        const renkKod = renkKoduBul(barkodTanimlari, ilk && ilk.renkId, x.renk);
+                        const kod = a && product.stokNo && renkKod !== null ? urunBarkoduKur("asorti", { stokNo: product.stokNo, renkKod, asortiKod: a.barkodKodu }) : "";
+                        const adet = a ? (a.oranlar || []).reduce((t, o) => t + (o.oran || 0), 0) : 0;
+                        return (React.createElement("div", { key: x.id, "data-asorti-barkod": `${x.renk}|${a ? a.ad : "?"}`, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 } },
+                            React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 } }, x.renk),
+                            React.createElement("span", null, a ? a.ad : "silinmiş asorti"),
                             React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } },
                                 adet,
                                 " \u00E7ift"),
-                            React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" } }, kod),
-                            React.createElement("button", { className: "btn-ikon", title: "Bu asortinin barkod etiketini bas (6\u00D74 cm)", onClick: () => etiketYazdir([`
-                            <div style="font-size:12px;font-weight:700">${product.ad}</div>
-                            <div style="font-size:11px">${renk} · ${a.ad}</div>
-                            ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
-                            <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>
-                            <div style="font-size:11px;font-weight:700">${adet} çift</div>
-                          `], { genislikMM: 60, yukseklikMM: 40 }) },
-                                React.createElement(Printer, { size: 12 }))));
-                    });
-                })))),
+                            kod ? (React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" } }, kod)) : (React.createElement("span", { style: { fontSize: 11, color: "var(--erp-warn)" } }, "kod bekleniyor (birka\u00E7 saniye i\u00E7inde otomatik atan\u0131r)")),
+                            kod && a && (React.createElement("button", { className: "btn-ikon", title: "Bu asortinin barkod etiketini bas (6\u00D74 cm)", onClick: () => etiketYazdir([`
+                              <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                              <div style="font-size:11px">${x.renk} · ${a.ad}</div>
+                              ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
+                              <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>
+                              <div style="font-size:11px;font-weight:700">${adet} çift</div>
+                            `], { genislikMM: 60, yukseklikMM: 40 }) },
+                                React.createElement(Printer, { size: 12 }))),
+                            React.createElement(SilOnayButonu, { onConfirm: () => onUrunGuncelle(product.id, { asortiBarkodlari: (product.asortiBarkodlari || []).filter((y) => y.id !== x.id) }), boyut: 12, baslikNormal: "Bu asorti barkodunu listeden kald\u0131r (bas\u0131lm\u0131\u015F etiket okunmaya devam eder)", baslikOnay: "Kald\u0131r\u0131lacak \u2014 tekrar dokunun" })));
+                    }))));
+            })(),
             seciliEtiketler.length > 0 && (React.createElement("div", { "data-etiket-serit": "1", style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
                     padding: "6px 10px", marginBottom: 6, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" } },
                 React.createElement("b", { style: { fontSize: 12 } },
@@ -31326,9 +31485,17 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     " ",
                     PARA_SEMBOLU[kartPb(t)] || kartPb(t),
                     " genel)")))),
-                React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 } },
+                React.createElement("div", { "data-fk-panel-tip": fkTip, style: { background: "var(--erp-panel)", border: `2px solid ${fkTip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`, borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 } },
                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 } },
-                        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, "Yeni \u00D6zel Fiyat Ekle")),
+                        React.createElement("span", { style: { fontSize: 13, fontWeight: 800, color: fkTip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)" } },
+                            fkTip === "Alış" ? "ALIŞ" : "SATIŞ",
+                            " fiyatlar\u0131 \u2014 \u00F6zel fiyat ekle"),
+                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } },
+                            "Burada yaz\u0131lan yaln\u0131z ",
+                            fkTip.toLocaleLowerCase("tr-TR"),
+                            " fiyat\u0131d\u0131r; ",
+                            fkTip === "Alış" ? "satış" : "alış",
+                            " fiyat\u0131 \u00FCstteki sekmeden ayr\u0131 girilir.")),
                     React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } }, [
                         { key: "renkBeden", label: "Renk + Beden" },
                         { key: "fiyatGrubu", label: "Fiyat Grubuna Göre" },
@@ -31454,15 +31621,38 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                     React.createElement("tr", null,
                                         React.createElement("th", { style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, matrisKoseBasligi(tumRenkler, tumBedenler, renkBasligi(product), product.olcuTipi || "Beden")),
                                         tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))),
-                                        React.createElement("th", { style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" } }, "Tek fiyat (bu rengin t\u00FCm\u00FC)"))),
+                                        React.createElement("th", { style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" } },
+                                            "Tek ",
+                                            fkTip.toLocaleLowerCase("tr-TR"),
+                                            " fiyat\u0131 (bu rengin t\u00FCm\u00FC)"))),
                                 React.createElement("tbody", null,
                                     tumRenkler.map((r) => {
                                         const renkKilitli = renkAcik(r);
                                         const renkKurali = kuralBul("renk", r);
-                                        return (React.createElement("tr", { key: r, style: { borderTop: "1px solid var(--erp-line-soft)" } },
+                                        return (React.createElement("tr", { key: r, "data-fk-renk-satir": r, style: { borderTop: "1px solid var(--erp-line-soft)" } },
                                             React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } },
                                                 olcuGoster(r),
-                                                (() => { const g = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r)); return g ? React.createElement("span", { style: { marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)", background: "#6B4E8A1A", color: "var(--erp-purple)" } }, g.ad) : null; })()),
+                                                (() => {
+                                                    // GRUP SEÇİCİ (v1.577.0): rengi listeden bir gruba al / yeni grup aç / gruptan çıkar.
+                                                    const gr = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r));
+                                                    return (React.createElement("select", { value: gr ? gr.id : "", "data-fk-renk-grup": r, title: "Fiyat grubu \u2014 ayn\u0131 gruptaki renkler ayn\u0131 fiyat\u0131 al\u0131r", onChange: (e) => {
+                                                            const v = e.target.value;
+                                                            if (v === "__yeni__") {
+                                                                const ad = (window.prompt("Yeni grup adı (ör. Süetler):", "") || "").trim();
+                                                                if (ad)
+                                                                    renkGrubaAta(r, null, ad);
+                                                                return;
+                                                            }
+                                                            renkGrubaAta(r, v || null);
+                                                        }, style: { marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 2px", borderRadius: "var(--erp-r-pill)", maxWidth: 110,
+                                                            ...(() => {
+                                                                const c = gr ? fiyatGrupRengi(product.fiyatRenkGruplari, gr.id) : null;
+                                                                return { border: `1px solid ${c || "var(--erp-line)"}`, background: c ? `${c}1F` : "#fff", color: c || "var(--erp-text-3)" };
+                                                            })() } },
+                                                        React.createElement("option", { value: "" }, gr ? "— gruptan çıkar" : "+ grup"),
+                                                        (product.fiyatRenkGruplari || []).map((x) => React.createElement("option", { key: x.id, value: x.id }, x.ad)),
+                                                        React.createElement("option", { value: "__yeni__" }, "+ yeni grup\u2026")));
+                                                })()),
                                             tumBedenler.map((b) => {
                                                 const deger = `${r}|${b}`;
                                                 const kural = kuralBul("renkBeden", deger);
@@ -31505,9 +31695,15 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                         })())))),
                             React.createElement("div", { "data-fk-gruplar": "1", style: { marginTop: 10, padding: "8px 10px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-md)" } },
                                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } },
-                                    React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, "Renk gruplar\u0131"),
-                                    React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "ayn\u0131 fiyatl\u0131 renk setleri \u2014 grubun fiyat\u0131 b\u00FCt\u00FCn renklerine yaz\u0131l\u0131r"),
-                                    !fkGrupForm && (React.createElement("button", { type: "button", className: "btn-ghost", "data-fk-grup-ekle": "1", style: { marginLeft: "auto", padding: "3px 10px", fontSize: 12 }, onClick: () => setFkGrupForm({ ad: "", renkler: [] }) },
+                                    React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } },
+                                        "Renk gruplar\u0131 ",
+                                        React.createElement("span", { style: { color: fkTip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)" } },
+                                            "\u00B7 ",
+                                            fkTip,
+                                            " fiyatlar\u0131")),
+                                    React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "ayn\u0131 fiyatl\u0131 renk setleri \u2014 grubun fiyat\u0131 b\u00FCt\u00FCn renklerine yaz\u0131l\u0131r; rengi gruba almak i\u00E7in sat\u0131rdaki \"+ grup\" kutusu"),
+                                    React.createElement("button", { type: "button", className: "btn-ghost", "data-fk-grup-otomatik": "1", style: { marginLeft: "auto", padding: "3px 10px", fontSize: 12 }, title: "Ad\u0131n\u0131n son kelimesi ayn\u0131 olan renkleri (S\u00FCet, Deri, Bask\u0131\u2026) tek dokunu\u015Fla grupla", onClick: () => otomatikGrupla(tumRenkler) }, "Ad\u0131na g\u00F6re otomatik grupla"),
+                                    !fkGrupForm && (React.createElement("button", { type: "button", className: "btn-ghost", "data-fk-grup-ekle": "1", style: { padding: "3px 10px", fontSize: 12 }, onClick: () => setFkGrupForm({ ad: "", renkler: [] }) },
                                         React.createElement(Plus, { size: 12 }),
                                         " Grup ekle"))),
                                 (product.fiyatRenkGruplari || []).map((g) => {
@@ -31515,14 +31711,25 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                     const ortak = ortakRenkFiyati(renkler);
                                     const pb = fkGrupPb[g.id] || (ortak ? ortak.paraBirimi : fkParaBirimi);
                                     return (React.createElement("div", { key: g.id, "data-fk-grup": g.ad, style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "5px 0", borderTop: "1px solid var(--erp-line-soft)" } },
-                                        React.createElement("b", { style: { fontSize: 13, minWidth: 80 } }, g.ad),
-                                        React.createElement("span", { style: { display: "flex", gap: 4, flexWrap: "wrap", flex: "1 1 200px" } }, renkler.map((r) => React.createElement("span", { key: r, className: "mono", style: { fontSize: 11, padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: "#6B4E8A1A", color: "var(--erp-purple)" } }, r))),
+                                        React.createElement("b", { style: { fontSize: 13, minWidth: 80, color: fiyatGrupRengi(product.fiyatRenkGruplari, g.id), display: "inline-flex", alignItems: "center", gap: 5 } },
+                                            React.createElement("span", { style: { width: 10, height: 10, borderRadius: "50%", background: fiyatGrupRengi(product.fiyatRenkGruplari, g.id), display: "inline-block" } }),
+                                            g.ad),
+                                        React.createElement("span", { style: { display: "flex", gap: 4, flexWrap: "wrap", flex: "1 1 200px" } }, renkler.map((r) => React.createElement("span", { key: r, className: "mono", style: { fontSize: 11, padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: `${fiyatGrupRengi(product.fiyatRenkGruplari, g.id)}1F`, color: fiyatGrupRengi(product.fiyatRenkGruplari, g.id) } }, r))),
                                         React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
                                             React.createElement("input", { key: ortak ? `${ortak.fiyat}|${ortak.paraBirimi}` : "bos", type: "text", inputMode: "decimal", "data-fk-grup-fiyat": g.ad, defaultValue: ortak ? fiyatYazi(ortak.fiyat) : "", placeholder: ortak ? "" : "karışık / yok", className: "mono", onBlur: (e) => { const y = fiyatSayisi(e.target.value); if (!(y > 0) || (ortak && y === ortak.fiyat && pb === ortak.paraBirimi))
                                                     return; renkFiyatlariTopluKaydet(renkler, y, pb, `Grup ${g.ad}`); }, style: { width: 84, padding: "4px 6px", fontSize: 13, border: "1px solid #6B4E8A", borderRadius: "var(--erp-r-sm)", textAlign: "right",
                                                     ...(ortak ? { color: "var(--erp-void)", fontWeight: 700, background: "var(--erp-void-tint)" } : {}) } }),
                                             React.createElement(ParaBirimiSecici, { deger: pb, veri: `grup|${g.ad}`, onDegis: (y) => { setFkGrupPb((x) => ({ ...x, [g.id]: y })); if (ortak)
                                                     renkFiyatlariTopluKaydet(renkler, ortak.fiyat, y, `Grup ${g.ad}`); } })),
+                                        (() => {
+                                            // Öbür tarafın (alış↔satış) grup fiyatı — yalnız bilgi; iki fiyatın ayrı olduğu görünsün.
+                                            const obur = fkTip === "Alış" ? "Satış" : "Alış";
+                                            const o = ortakRenkFiyati(renkler, obur);
+                                            return React.createElement("span", { "data-fk-grup-obur": g.ad, className: "mono", title: `${obur} fiyatı ${obur} sekmesinden girilir`, style: { fontSize: 11, color: "var(--erp-text-3)" } },
+                                                obur,
+                                                ": ",
+                                                o ? `${fiyatYazi(o.fiyat)} ${PARA_SEMBOLU[o.paraBirimi] || o.paraBirimi}` : "—");
+                                        })(),
                                         React.createElement("button", { type: "button", className: "btn-ghost", "data-fk-grup-duzenle": g.ad, style: { padding: "3px 8px", fontSize: 11 }, onClick: () => setFkGrupForm({ id: g.id, ad: g.ad, renkler: [...g.renkler] }) }, "D\u00FCzenle"),
                                         React.createElement(SilOnayButonu, { onConfirm: () => onUrunGuncelle(product.id, { fiyatRenkGruplari: (product.fiyatRenkGruplari || []).filter((x) => x.id !== g.id) }), boyut: 13, baslikNormal: `"${g.ad}" grubunu sil (renk fiyatları kalır)`, baslikOnay: "Grup silinecek \u2014 tekrar dokunun" })));
                                 }),
@@ -54064,7 +54271,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.576.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.579.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

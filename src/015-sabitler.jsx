@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.578.0";
+const SURUM = "1.579.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Fiyatlandirmada hangi tarafin (alis/satis) fiyati yazildigi belirgin; grup satirinda obur tarafin fiyati";
+const SURUM_NOTU = "Barkod kodlari otomatik (stokta acilan renk/beden/boyut tanimlanir, kod atanir); asorti barkodlarini kullanici stok kartindan olusturur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Fiyatlandirmada hangi tarafin (alis/satis) fiyati yazildigi 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.579.0", tarih: "04.10.2026",
+    eklenen: ["Stokta açılan renk, beden ve boyut Tanımlar'da yoksa kendiliğinden tanımlanıyor; renk/ölçü kodu ve ürünün stok no'su otomatik atanıyor — barkod kendiliğinden kuruluyor", "Ürün kartı › Barkodlar: 'Asorti barkodu ekle' (renk ya da bütün renkler + asorti); listeden kaldırma"],
+    degisen: ["Asorti barkodları artık her renk × asorti için kendiliğinden listelenmiyor; yalnız kullanıcının oluşturdukları (basılmış eski etiketler okunmaya devam eder)"],
+    duzeltilen: ["Tanımlarda olmayan boyutlu stokta (Bağcık 100 Cm / 120 cm) barkod 'kurulamıyor' kalıyordu"] },
   { surum: "1.578.0", tarih: "04.10.2026", eklenen: ["Renk grubu satırında öbür tarafın (alış↔satış) fiyatı bilgi olarak görünüyor"],
     degisen: ["Özel fiyat paneli düzenlenen tarafın renginde çerçeveli; başlık 'ALIŞ fiyatları' / 'SATIŞ fiyatları', sütun 'Tek alış/satış fiyatı' — alış ve satış fiyatlarının ayrı girildiği belirgin"],
     duzeltilen: [] },

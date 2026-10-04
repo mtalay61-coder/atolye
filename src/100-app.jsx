@@ -2400,6 +2400,38 @@ export default function AtolyeERP() {
     return kodlu;
   }, [tanimSilinenleriCopeAt]);
 
+  // BARKOD KODLARI KENDİLİĞİNDEN (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
+  // oluştursun; sadece asorti barkodunu kullanıcı oluştursun"). Eskiden kod atama Paketleme › "Eksik kodları ata" düğmesine
+  // kalıyordu; stok kartında açılan ama Tanımlar'da olmayan ölçü (Bağcık "100 Cm") hiç kod almıyordu → "barkod kurulamıyor".
+  // Stok ya da tanımlar her değiştiğinde: tanımsız renk/ölçü tanımlanır (`eksikBarkodTanimlari`), stok no'suz ürüne stok no,
+  // kodsuz tanıma kod (`kodlariAta`) — VAR OLAN koda dokunulmaz (basılmış etiket geçerli kalır). Asorti tanımına kod da
+  // burada verilir ama asorti BARKODU ürün kartında kullanıcı ekleyince listelenir. İnternet yokken çalışmaz (kilit, v1.557).
+  // Aynı eksik imzası ikinci kez işlenmez — yazım düşerse döngü olmasın.
+  const otoKodImzaRef = useRef("");
+  useEffect(() => {
+    if (loading || baglantiYok) return;
+    const e = eksikBarkodTanimlari(stok, tanimlar, uid);
+    const t2 = (e.renkler.length || e.bedenler.length)
+      ? { ...tanimlar, renkler: [...(tanimlar.renkler || []), ...e.renkler], bedenler: [...(tanimlar.bedenler || []), ...e.bedenler] }
+      : tanimlar;
+    const k = kodlariAta(stok, t2);
+    const toplam = k.atanan.stok + k.atanan.renk + k.atanan.beden + k.atanan.asorti;
+    if (!e.renkler.length && !e.bedenler.length && toplam === 0) return;
+    const imza = [...e.renkler.map((r) => `r:${r.ad}`), ...e.bedenler.map((b) => `b:${b.tip}:${b.ad}`),
+      ...(stok || []).filter((u) => !u.stokNo).map((u) => `s:${u.id}`), `k:${toplam}`].join("|");
+    if (otoKodImzaRef.current === imza) return;
+    otoKodImzaRef.current = imza;
+    if (k.atanan.stok > 0) saveStok(k.stok);
+    tanimlarKodluYaz(k.tanimlar);
+    const parca = [
+      e.renkler.length ? `${e.renkler.length} renk (${e.renkler.map((r) => r.ad).join(", ")})` : "",
+      e.bedenler.length ? `${e.bedenler.length} ölçü (${e.bedenler.map((b) => b.ad).join(", ")})` : "",
+      k.atanan.stok ? `${k.atanan.stok} stok no` : "",
+    ].filter(Boolean);
+    gunlukYaz(`Barkod kodları otomatik: ${parca.join(" · ") || `${toplam} kod`}`, "tanimlar", { renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), atanan: k.atanan });
+    if (parca.length) showToast(`Barkod için otomatik tanımlandı: ${parca.join(" · ")}`);
+  }, [loading, baglantiYok, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
   // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
   // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;

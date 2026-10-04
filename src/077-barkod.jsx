@@ -419,6 +419,37 @@ const bedenKoduBul = (tanimlar, bedenAd, olcuTipi) => {
   return kodEsit(bedenAd, OLCUSUZ_AD) ? OLCUSUZ_KOD : null;
 };
 
+// OTOMATİK BARKOD TANIMLARI (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
+// oluştursun"). Bağcık'ta "100 Cm" / "120 cm" boyutları Tanımlar'da yoktu → ölçü kodu "—", barkod "kurulamıyor".
+// Stokta kullanılan ama TANIMSIZ renk ve ölçüleri döndürür (kodlarını `kodlariAta` verir). Atlananlar: "Standart"
+// (ayrılmış kod), boş ad, model rengi (kombinasyon) etiketi — onu `kayipModelRenkleri` kodunu koruyarak kurar.
+// Renk tek havuz (tip "Hammadde", hammaddede malzeme tipine bağlı); ölçü ürünün ölçü tipiyle (Beden/Boyut). Saf.
+function eksikBarkodTanimlari(stok, tanimlar, uidFn) {
+  const renkler = [];
+  const bedenler = [];
+  const renkVar = new Set();
+  const olcuVar = new Set();
+  const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+  (stok || []).forEach((u) => {
+    const tip = u.olcuTipi === "Boyut" ? "Boyut" : "Beden";
+    const hammadde = u.kategori === "Hammadde";
+    (u.variants || []).forEach((v) => {
+      const r = String(v.renk || "").trim();
+      if (r && !kodEsit(r, OLCUSUZ_AD) && !kombinasyonEtiketiFormatindaMi(r) && !renkTanimiBul(tanimlar, v.renkId, r) && !renkVar.has(nrm(r))) {
+        renkVar.add(nrm(r));
+        renkler.push({ id: uidFn("renk"), ad: r, tip: "Hammadde", renkKodu: "#C9B99A", malzemeTipleri: hammadde && u.malzemeTipi ? [u.malzemeTipi] : [] });
+      }
+      const b = String(v.beden || "").trim();
+      const anahtar = `${tip}|${nrm(b)}`;
+      if (b && !kodEsit(b, OLCUSUZ_AD) && !olcuTanimiBul(tanimlar, b, u.olcuTipi) && !olcuVar.has(anahtar)) {
+        olcuVar.add(anahtar);
+        bedenler.push({ id: uidFn("olcu"), ad: b, tip, ...(tip === "Boyut" && hammadde && u.malzemeTipi ? { malzemeTipleri: [u.malzemeTipi] } : {}) });
+      }
+    });
+  });
+  return { renkler, bedenler };
+}
+
 // Barkodu kurulamayan yerleri SEBEBİYLE birlikte çıkarır. Üç ayrı sebep var ve çözümleri farklı:
 //   - stok no yok / renk-ölçü tanımlı ama kodsuz  → "Eksik kodları ata" düğmesi çözer
 //   - renk ya da ölçü HİÇ TANIMLI DEĞİL           → yalnızca kullanıcı tanım ekleyerek çözer
