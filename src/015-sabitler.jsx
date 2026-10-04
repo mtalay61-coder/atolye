@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.562.0";
+const SURUM = "1.563.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Urune yeni renk eklenince recetede o renk icin turuncu eslestir kutusu (tek renkte tanimli hammaddede liste gorunumu yerine matris)";
+const SURUM_NOTU = "Recete kartinda beden / boy eslesmesi renk gibi degistirilebilir (mamul bedeni basina secim, Hepsi)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Urune yeni renk eklenince recetede o renk icin turuncu esles
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.563.0", tarih: "04.10.2026",
+    eklenen: ["Reçete kartında 'Beden eşleşmesi' / 'Boy eşleşmesi' şeridi: her mamul bedeni için hammadde bedeni (taban numarası, bağcık boyu) açılır listeden değiştirilir, 'Hepsi →' ile tüm bedenlere tek seferde; değişiklik o bedenin bütün renklerine uygulanır"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.562.0", tarih: "04.10.2026",
     eklenen: [],
     degisen: [],

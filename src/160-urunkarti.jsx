@@ -13,6 +13,55 @@ function fiyatSayisi(v) {
 // "Eşleştirmeleri onayla" ile işaret düşer. Bilinmeyen eşleşme hiç açılmaz: turuncu "eşleştir…" kutusu.
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
+// BEDEN / BOY EŞLEŞMESİ DEĞİŞTİRME (v1.563.0 — kullanıcı: "beden eşleştirme, boyut eşleştirme de renk gibi
+// değiştirilebilir olsun"). Reçete kartında hammadde bedeni (taban numarası, bağcık boyu) yalnız eklerken
+// seçiliyordu; yanlışsa satırı silip yeniden eklemek gerekiyordu. Şerit, mamul bedeni başına hammadde bedenini
+// gösterir; değişiklik o mamul bedeninin BÜTÜN renklerdeki satırlarına uygulanır (renk gibi tek dokunuş).
+// `onDegistir(mamulBedenleri[], yeni)` LİSTE alır: "Hepsi →" tek yazımda gitmeli (art arda yazımlar aynı eski
+// listeden kurulup birbirinin üstüne yazardı).
+// Bedensiz hammaddede (yalnız "Standart") şerit çıkmaz — değiştirecek bir şey yok.
+function BedenEslesmeSeridi({ satirlar, hammadde, onDegistir }) {
+  if (!hammadde || !(satirlar || []).length) return null;
+  const hBedenler = bedenSirala(Array.from(new Set((hammadde.variants || []).map((v) => v.beden).filter((b) => b && b !== "Standart"))));
+  if (hBedenler.length === 0) return null;
+  const harita = new Map();
+  satirlar.forEach((r) => {
+    const mb = r.mamulBeden || "Tüm Bedenler";
+    if (!harita.has(mb)) harita.set(mb, new Set());
+    harita.get(mb).add(r.beden || "Standart");
+  });
+  const mamulBedenleri = [...(harita.has("Tüm Bedenler") ? ["Tüm Bedenler"] : []), ...bedenSirala(Array.from(harita.keys()).filter((b) => b !== "Tüm Bedenler"))];
+  const kutu = { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" };
+  return (
+    <div data-beden-eslesme-seridi={mamulBedenleri.length} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 }}>
+      <span>{hammadde.olcuTipi === "Boyut" ? "Boy eşleşmesi" : "Beden eşleşmesi"}:</span>
+      {mamulBedenleri.length > 1 && (
+        <select value="" data-beden-esle-hepsi="1" title="Bütün mamul bedenlerine aynı hammadde bedeni" style={kutu}
+          onChange={(e) => { const y = e.target.value; if (y) onDegistir(mamulBedenleri, y); }}>
+          <option value="">Hepsi →</option>
+          {hBedenler.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+      )}
+      {mamulBedenleri.map((mb) => {
+        const degerler = Array.from(harita.get(mb));
+        const deger = degerler.length === 1 ? degerler[0] : "";
+        return (
+          <span key={mb} style={{ display: "inline-flex", alignItems: "center", gap: 3, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "2px 5px" }}>
+            <b className="mono" style={{ color: "var(--erp-text)" }}>{mb === "Tüm Bedenler" ? "Tüm bedenler" : mb}</b>
+            <ArrowRight size={11} color="var(--erp-text-3)" />
+            <select value={deger} data-beden-esle={mb} className="mono" style={kutu}
+              onChange={(e) => { const y = e.target.value; if (y && y !== deger) onDegistir([mb], y); }}>
+              {deger === "" && <option value="">karışık</option>}
+              {deger !== "" && !hBedenler.includes(deger) && <option value={deger}>{deger === "Standart" ? "—" : `${deger} (stokta yok)`}</option>}
+              {hBedenler.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 const fiyatYazi = (n) => (n == null || n === "" ? "" : String(n).replace(".", ","));
 
 // HARİCİ BARKOD KUTUSU (v1.542.0) — Barkodlar sekmesinde her renk+beden satırında. Kutudan çıkınca ya da
@@ -3173,6 +3222,12 @@ function ProductMatrixCard({
                                 />
                               </span>
                             </div>
+                            <BedenEslesmeSeridi satirlar={g.satirlar} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)}
+                              onDegistir={(mb, yeni) => {
+                                const hedef = g.satirlar.filter((r) => mb.includes(r.mamulBeden || "Tüm Bedenler") && r.beden !== yeni);
+                                if (hedef.length === 0) return;
+                                onReceteGrubuGuncelle(product.id, hedef.map((r) => r.id), hedef.map(({ id, ...rest }) => ({ ...rest, beden: yeni })));
+                              }} />
                             {hepsiAyniMiktarBu && (
                               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 }}>
                                 <span>Tüm eşleşmelerde aynı miktar</span>
@@ -3631,6 +3686,12 @@ function ProductMatrixCard({
                                 />
                               </span>
                             </div>
+                            <BedenEslesmeSeridi satirlar={g.satirlar} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)}
+                              onDegistir={(mb, yeni) => {
+                                const hedef = g.satirlar.filter((r) => mb.includes(r.mamulBeden || "Tüm Bedenler") && r.beden !== yeni);
+                                if (hedef.length === 0) return;
+                                onReceteGrubuGuncelle(product.id, hedef.map((r) => r.id), hedef.map(({ id, ...rest }) => ({ ...rest, beden: yeni })));
+                              }} />
                             {hepsiSabit ? (() => {
                               // Sadece bedenler arasında değil, TÜM mamul renkler arasında da miktar
                               // aynıysa (örn. hepsi "1"), bu tek değer özet satırında doğrudan gösterilir.
@@ -3957,6 +4018,12 @@ function ProductMatrixCard({
                           </span>
                         </div>
                         <div style={{ display: "grid", gap: 8 }}>
+                          <BedenEslesmeSeridi satirlar={g.satirlar} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)}
+                            onDegistir={(mb, yeni) => {
+                              const hedef = g.satirlar.filter((r) => mb.includes(r.mamulBeden || "Tüm Bedenler") && r.beden !== yeni);
+                              if (hedef.length === 0) return;
+                              onReceteGrubuGuncelle(product.id, hedef.map((r) => r.id), hedef.map(({ id, ...rest }) => ({ ...rest, beden: yeni })));
+                            }} />
                           {(() => {
                             const belirtilmemisHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
                             const belirtilmemisRenkSecenekleri = belirtilmemisHammadde ? Array.from(new Set(belirtilmemisHammadde.variants.map((v) => v.renk))) : [];
