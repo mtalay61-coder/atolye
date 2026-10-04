@@ -394,9 +394,12 @@ function sablonHedefRengi(sa, mamulRenk) {
 // rengi olan hammaddede o renk (sabit); (4) BİLİNMİYOR → "" (satır açılmaz, matriste turuncu "eşleştir…").
 // `ctx.tumUrunler` verilmezse (eski çağrı) şablonun rengi aynen — `sablonHedefRengi`.
 function sablonRengiCoz(sa, mr, ctx, gecmisHarita) {
-  const h = ctx && ctx.tumUrunler ? ctx.tumUrunler.find((u) => u.id === sa.hammaddeUrunId) : null;
-  if (!h) return { renk: sablonHedefRengi(sa, mr), gecmis: false };
-  if (urunRenksizMi(h)) return { renk: sa.renk || "Standart", gecmis: false };
+  if (!ctx || !ctx.tumUrunler) return { renk: sablonHedefRengi(sa, mr), gecmis: false };
+  // Stok kartı bulunamayan hammadde (v1.566.0): kaynak rengi körlemesine kopyalanmaz; renk seçenekleri reçetelerde
+  // kullanılmış renklerden kurulur ve aynı ad / geçmiş kuralı işler — bilinmeyen BOŞ kalır.
+  const h = ctx.tumUrunler.find((u) => u.id === sa.hammaddeUrunId)
+    || { id: sa.hammaddeUrunId, variants: hammaddeRenkSecenekleri(sa.hammaddeUrunId, ctx.tumUrunler).map((renk) => ({ renk, beden: "" })), kartYok: true };
+  if (!h.kartYok && urunRenksizMi(h)) return { renk: sa.renk || "Standart", gecmis: false };
   const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
   const hRenkler = Array.from(new Set((h.variants || []).map((v) => v.renk).filter(Boolean)));
   const kombi = kombinasyonEtiketiFormatindaMi(mr);
@@ -561,6 +564,21 @@ function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
   });
   const eklemeTarihi = new Date().toISOString();
   gruplar.forEach((satirlar) => {
+    const g = grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi);
+    if (!g) return;
+    if (g.bos) { sonuc.bosGruplar.push(g.hammaddeAd); return; }
+    sonuc.satirlar.push(...g.satirlar);
+    if (g.gecmis) sonuc.gecmisSayisi += 1;
+  });
+  return sonuc;
+}
+
+// Tek reçete grubunun (aynı ekleme+hammadde+proses+açıklama) satırlarını `yeniRenk` için kurar. Döner:
+// null (grup yeni rengi zaten kapsıyor) | { bos: true, hammaddeAd } | { satirlar, gecmis }.
+function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi) {
+  const nrmRenk = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+  if (satirlar.some((r) => r.mamulRenk === yeniRenk)) return null;
+  {
     const renkler = Array.from(new Set(satirlar.map((r) => r.mamulRenk)));
     // Örnek: en çok satırı olan mamul rengi (bedenleri en eksiksiz olan).
     const ornekRenk = renkler.sort((a, b) => satirlar.filter((r) => r.mamulRenk === b).length - satirlar.filter((r) => r.mamulRenk === a).length)[0];
@@ -573,15 +591,42 @@ function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
       cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
       const kullanilan = Array.from(new Set(satirlar.map((r) => r.renk)));
       if (!cozum.renk && renkler.length >= 2 && kullanilan.length === 1) cozum = { renk: kullanilan[0], gecmis: false };
+      // Renksiz kullanım (hep "Standart") tek renkte de sabittir (v1.566.0: Takviye Bezi, Jut).
+      if (!cozum.renk && kullanilan.every((x) => !x || nrmRenk(x) === "standart")) cozum = { renk: kullanilan[0] || "Standart", gecmis: false };
     }
-    if (!cozum.renk) { sonuc.bosGruplar.push(s0.hammaddeAd || "?"); return; }
-    ornek.forEach((r) => {
+    if (!cozum.renk) return { bos: true, hammaddeAd: s0.hammaddeAd || "?" };
+    return { gecmis: !!cozum.gecmis, satirlar: ornek.map((r) => {
       const { id, renkGecmisten: _rg, ...rest } = r;
-      sonuc.satirlar.push({ ...rest, mamulRenk: yeniRenk, renk: cozum.renk, eklemeTarihi: rest.eklemeTarihi || eklemeTarihi,
-        ...(cozum.gecmis ? { renkGecmisten: true } : {}) });
-    });
-    if (cozum.gecmis) sonuc.gecmisSayisi += 1;
+      return { ...rest, mamulRenk: yeniRenk, renk: cozum.renk, eklemeTarihi: rest.eklemeTarihi || eklemeTarihi,
+        ...(cozum.gecmis ? { renkGecmisten: true } : {}) };
+    }) };
+  }
+}
+
+// EKSİK RENK EŞLEŞMELERİNİ DOLDUR (v1.566.0 — kullanıcı: "Eşleştirmede renk ve bedensizler otomatik eşleşecek, renk
+// uyanlar otomatik, eskiden hatırlama mantığı da olacak"). v1.564'ten ÖNCE eklenen renkler (ya da elle bırakılmış
+// boşluklar) için: ürünün her rengi × her reçete grubu, satırı yoksa `grupYeniRenkSatirlari` ile (aynı ad → geçmiş
+// [kırmızı] → sabit/Standart → boş). Döner: { satirlar, gecmisSayisi, bosSayisi }.
+function eksikRenkEslesmeleri(product, tumUrunler) {
+  const recete = (product && product.recete) || [];
+  const sonuc = { satirlar: [], gecmisSayisi: 0, bosSayisi: 0 };
+  if (recete.length === 0) return sonuc;
+  const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk).filter(Boolean)));
+  const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler || []);
+  const gruplar = new Map();
+  recete.forEach((r) => {
+    const k = `${r.eklemeId || ""}|${r.hammaddeUrunId}|${r.proses || ""}|${r.aciklama || ""}`;
+    if (!gruplar.has(k)) gruplar.set(k, []);
+    gruplar.get(k).push(r);
   });
+  const eklemeTarihi = new Date().toISOString();
+  gruplar.forEach((satirlar) => renkler.forEach((mr) => {
+    const g = grupYeniRenkSatirlari(satirlar, mr, tumUrunler, gecmisHarita, eklemeTarihi);
+    if (!g) return;
+    if (g.bos) { sonuc.bosSayisi += 1; return; }
+    sonuc.satirlar.push(...g.satirlar);
+    if (g.gecmis) sonuc.gecmisSayisi += 1;
+  }));
   return sonuc;
 }
 

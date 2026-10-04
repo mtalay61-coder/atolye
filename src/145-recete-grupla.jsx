@@ -283,3 +283,19 @@ function receteBedenDegistir(satirlar, mamulBedenleri, yeniBeden, urunBedenleri)
   });
   return { silinecekIdler, yeniSatirlar };
 }
+
+// ================= HAMMADDE RENK SEÇENEKLERİ (v1.566.0) =================
+//
+// Kullanıcı: "Rengi olan bazı stoklar görünmüyor" — reçete kartındaki "eşleştir…" listesi yalnız hammaddenin stok
+// kartındaki varyant renklerinden kuruluyordu; hammadde stokta bulunamayınca (kayıp/silinmiş kart) ya da kartında
+// renk açılmamışsa liste BOŞ açılıyor, eşleştirme yapılamıyordu. Seçenekler: kartın renkleri + bu hammaddenin
+// BÜTÜN reçetelerde kullanılmış renkleri (sıralı, boşlar atılır). Kartta olmayan renk seçilirse hücre zaten
+// "(stokta yok)" diye görünür.
+function hammaddeRenkSecenekleri(hammaddeId, tumUrunler) {
+  const h = (tumUrunler || []).find((u) => u.id === hammaddeId);
+  const kart = h ? (h.variants || []).map((v) => v.renk).filter(Boolean) : [];
+  const recetede = [];
+  (tumUrunler || []).forEach((u) => (u.recete || []).forEach((r) => { if (r && r.hammaddeUrunId === hammaddeId && r.renk) recetede.push(r.renk); }));
+  const ekler = Array.from(new Set(recetede.filter((r) => !kart.includes(r)))).sort((a, b) => String(a).localeCompare(String(b), "tr"));
+  return [...Array.from(new Set(kart)), ...ekler];
+}

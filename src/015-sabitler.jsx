@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.565.0";
+const SURUM = "1.566.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Recete sekmesinde sablon ve baska stoktan cek tek Sablon / kopyala dugmesinde (acilir)";
+const SURUM_NOTU = "Recetede bos renk eslesmeleri icin Otomatik eslestir (ayni ad, Standart/sabit, gecmis); eslestir listesi bos acilmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Recete sekmesinde sablon ve baska stoktan cek tek Sablon / k
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.566.0", tarih: "04.10.2026",
+    eklenen: ["Reçetede 'Otomatik eşleştir' şeridi: boş kalmış renk eşleşmelerinden çözülebilenler tek dokunuşla doluyor (aynı adlı renk, Standart/sabit malzeme, geçmiş eşleştirme — kırmızı)"],
+    degisen: ["Renksiz kullanılan malzeme (hep 'Standart') yeni renge kendiliğinden Standart olarak geçiyor"],
+    duzeltilen: ["Reçete kartındaki 'eşleştir…' ve renk listeleri, hammaddenin stok kartı bulunamadığında ya da kartında renk yokken boş açılıyordu; artık o hammaddenin reçetelerde kullanılmış renkleri de listeleniyor"] },
   { surum: "1.565.0", tarih: "04.10.2026",
     eklenen: [],
     degisen: ["Reçete sekmesinde şablon ve 'Başka stoktan reçete çek' araçları tek 'Şablon / kopyala' düğmesinin altında, açılır (kapalı başlar); 'Şablondan / kopyadan eklenen N satır' düğmenin yanında görünür"],
