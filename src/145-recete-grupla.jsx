@@ -248,3 +248,38 @@ function gecmisRenkOnerisi(harita, mamulPozisyonRengi, hammaddeId, hammaddeRenkl
   const baska = enSon(liste.filter((x) => x.hammaddeId !== hammaddeId && var_(x.renk)));
   return baska ? var_(baska.renk) : "";
 }
+
+// ================= BEDEN / BOY EŞLEŞMESİ DEĞİŞTİR (v1.564.0) =================
+//
+// Kullanıcı: "Boyutlarda beden gibi olsun. Beden değiştikçe boyut da değişebilir." Bağcık gibi "Tüm Bedenler"
+// satırında boy (120 cm) bütün numaralar için tekti; 36–38 için 120, 39–42 için 140 cm demek mümkün değildi.
+// Bir mamul bedeni için farklı boy seçilince "Tüm Bedenler" satırı (her renk için) ürünün BEDENLERİNE açılır —
+// seçilen bedende yeni boy, öbürlerinde eski boy; miktar, renk, açıklama aynen. Bütün bedenler aynı boya
+// getirilince ("Hepsi") satır açılmaz, "Tüm Bedenler" satırının boyu değişir.
+// `satirlar`: tek grubun satırları; `mamulBedenleri`: değişecek mamul bedenleri; `urunBedenleri`: ürünün
+// bedenleri (sıralı). Döner: { silinecekIdler, yeniSatirlar (id'siz) } — `onReceteGrubuGuncelle` girdisi.
+function receteBedenDegistir(satirlar, mamulBedenleri, yeniBeden, urunBedenleri) {
+  const hedef = new Set(mamulBedenleri || []);
+  const tum = (urunBedenleri || []).filter((b) => b && b !== "Tüm Bedenler");
+  const hepsi = tum.length > 0 && tum.every((b) => hedef.has(b));
+  const silinecekIdler = [];
+  const yeniSatirlar = [];
+  (satirlar || []).forEach((r) => {
+    const { id, ...rest } = r;
+    const mb = r.mamulBeden || "Tüm Bedenler";
+    if (mb === "Tüm Bedenler") {
+      if (hedef.has("Tüm Bedenler") || hepsi || tum.length === 0) {
+        if (r.beden === yeniBeden) return;
+        silinecekIdler.push(id); yeniSatirlar.push({ ...rest, beden: yeniBeden });
+        return;
+      }
+      if (!tum.some((b) => hedef.has(b))) return;
+      silinecekIdler.push(id);
+      tum.forEach((b) => yeniSatirlar.push({ ...rest, mamulBeden: b, beden: hedef.has(b) ? yeniBeden : (r.beden || "Standart") }));
+      return;
+    }
+    if (!hedef.has(mb) || r.beden === yeniBeden) return;
+    silinecekIdler.push(id); yeniSatirlar.push({ ...rest, beden: yeniBeden });
+  });
+  return { silinecekIdler, yeniSatirlar };
+}

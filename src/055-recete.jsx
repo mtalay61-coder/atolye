@@ -537,3 +537,132 @@ function urundenSablonIsciligi(product) {
   return { prosesUcretleri, araProsesEklentileri: { ...((product && product.araProsesEklentileri) || {}) },
     araProsesUcretleri: { ...((product && product.araProsesUcretleri) || {}) } };
 }
+
+// ================= YENİ RENK → REÇETE EŞLEŞTİRMESİ GEÇMİŞTEN (v1.564.0) =================
+//
+// Kullanıcı: "Yeni renk eklenince eşleştirmeyi geçmişten otomatik doldursun." Ürüne renk eklenince reçetede o renk
+// için hiç satır açılmıyordu; her hammaddede turuncu "eşleştir…" kutusundan tek tek seçmek gerekiyordu.
+// Her reçete grubu (ekleme + hammadde + proses + pozisyon) için ÖRNEK bir mevcut rengin satırları (bedenler, boy,
+// miktar AYNEN) yeni renge kopyalanır; hammadde rengi şablonla AYNI kuralla çözülür (`sablonRengiCoz`): aynı ad →
+// geçmiş karar (kırmızı, `renkGecmisten`) → tek renkli / Standart. Ek kural: grubun BÜTÜN mevcut renkleri (en az
+// iki) aynı hammadde rengini kullanıyorsa o renk (ör. Silme Suyu hep Standart, Yapıştırıcı hep Beyaz) — sabit
+// malzeme. Hiçbiri tutmazsa satır AÇILMAZ (matris turuncu "eşleştir…"). Ambalajda değişken satır aynen kopyalanır.
+// Döner: { satirlar (id'siz), gecmisSayisi, bosGruplar: [hammaddeAd] }.
+function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
+  const recete = (product && product.recete) || [];
+  const sonuc = { satirlar: [], gecmisSayisi: 0, bosGruplar: [] };
+  if (!yeniRenk || recete.length === 0 || recete.some((r) => r.mamulRenk === yeniRenk)) return sonuc;
+  const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler || []);
+  const gruplar = new Map();
+  recete.forEach((r) => {
+    const k = `${r.eklemeId || ""}|${r.hammaddeUrunId}|${r.proses || ""}|${r.aciklama || ""}`;
+    if (!gruplar.has(k)) gruplar.set(k, []);
+    gruplar.get(k).push(r);
+  });
+  const eklemeTarihi = new Date().toISOString();
+  gruplar.forEach((satirlar) => {
+    const renkler = Array.from(new Set(satirlar.map((r) => r.mamulRenk)));
+    // Örnek: en çok satırı olan mamul rengi (bedenleri en eksiksiz olan).
+    const ornekRenk = renkler.sort((a, b) => satirlar.filter((r) => r.mamulRenk === b).length - satirlar.filter((r) => r.mamulRenk === a).length)[0];
+    const ornek = satirlar.filter((r) => r.mamulRenk === ornekRenk);
+    const s0 = ornek[0];
+    const poz = parseInt((String(s0.aciklama || "").match(/^(\d+)\. Renk$/) || [])[1] || "", 10) || null;
+    let cozum;
+    if (s0.ambalajDegisken) cozum = { renk: s0.renk, gecmis: false };
+    else {
+      cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
+      const kullanilan = Array.from(new Set(satirlar.map((r) => r.renk)));
+      if (!cozum.renk && renkler.length >= 2 && kullanilan.length === 1) cozum = { renk: kullanilan[0], gecmis: false };
+    }
+    if (!cozum.renk) { sonuc.bosGruplar.push(s0.hammaddeAd || "?"); return; }
+    ornek.forEach((r) => {
+      const { id, renkGecmisten: _rg, ...rest } = r;
+      sonuc.satirlar.push({ ...rest, mamulRenk: yeniRenk, renk: cozum.renk, eklemeTarihi: rest.eklemeTarihi || eklemeTarihi,
+        ...(cozum.gecmis ? { renkGecmisten: true } : {}) });
+    });
+    if (cozum.gecmis) sonuc.gecmisSayisi += 1;
+  });
+  return sonuc;
+}
+
+// ================= BAŞKA STOKTAN REÇETE ÇEK (v1.564.0) =================
+//
+// Kullanıcı: "Aynı şekilde kopyalayınca hiç değişmeyecek ve kopyalanan stoğa olduğu gibi yapıştırılacak. Başka stok
+// içinden reçeteyi stoktan çek — o stoğun reçetesini kopyala, konuştuğumuz tüm şeyler eksiksiz olsun."
+// Kurallar:
+//  • Hedefin KAYNAKTA DA OLAN mamul rengi → kaynak satırları AYNEN (hammadde rengi, bedenler, boy, miktar, açıklama).
+//  • Kaynakta OLMAYAN renk → `yeniRenkReceteSatirlari` (aynı ad → geçmiş [kırmızı] → sabit malzeme → boş [turuncu]).
+//  • Bedenler: hedefte olmayan mamul bedeninin satırı alınmaz; kaynakta olmayan hedef bedeni, satırın boyu mamul
+//    bedenine eşitse (taban/fusbet) aynı numarayla açılır, değilse `bedenEksikler`e (adıyla) yazılır.
+//  • Hedefte zaten olan (renk+hammadde+proses+beden) satır tekrar eklenmez.
+//  • Her kaynak eklemesi yeni bir "kopya-" kimliği alır (kart düzeni aynen; geri alma bu önekle).
+//  • İşçilik / ara proses: hedefte BOŞ olanlar kaynaktan (şablonla aynı kural).
+// Döner: { eklenecekler, ekAlanlar, iscilikSayisi, gecmisSayisi, bosGruplar, bedenEksikler, atlanan, ayniRenkSayisi }.
+function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
+  const kRecete = (kaynak && kaynak.recete) || [];
+  const mevcut = (hedef && hedef.recete) || [];
+  const hRenkler = Array.from(new Set((hedef.variants || []).map((v) => v.renk)));
+  const hBedenleri = (mr) => bedenSirala(Array.from(new Set((hedef.variants || []).filter((v) => v.renk === mr).map((v) => v.beden).filter(Boolean))));
+  const kRenkler = new Set(kRecete.map((r) => r.mamulRenk));
+  const kimlikler = new Map();
+  const yeniKimlik = (eid) => { const k = eid || "_"; if (!kimlikler.has(k)) kimlikler.set(k, uid("kopya")); return kimlikler.get(k); };
+  const sonuc = { eklenecekler: [], ekAlanlar: {}, iscilikSayisi: 0, gecmisSayisi: 0, bosGruplar: [], bedenEksikler: [], atlanan: 0, ayniRenkSayisi: 0 };
+  const bedenEksik = new Set();
+  const eklemeTarihi = new Date().toISOString();
+  hRenkler.forEach((mr) => {
+    let satirlar;
+    if (kRenkler.has(mr)) {
+      satirlar = kRecete.filter((r) => r.mamulRenk === mr).map(({ id, renkGecmisten: _rg, ...rest }) => rest);
+      sonuc.ayniRenkSayisi += 1;
+    } else {
+      const y = yeniRenkReceteSatirlari(kaynak, mr, tumUrunler);
+      satirlar = y.satirlar;
+      sonuc.gecmisSayisi += y.gecmisSayisi;
+      y.bosGruplar.forEach((a) => sonuc.bosGruplar.push(`${a} · ${mr}`));
+    }
+    const bedenler = hBedenleri(mr);
+    // Grup grup beden uyumu: hedefte olmayan bedeni at; kaynakta olmayan hedef bedenini (boy = numara ise) aç.
+    const gruplar = new Map();
+    satirlar.forEach((r) => {
+      const k = `${r.eklemeId || ""}|${r.hammaddeUrunId}|${r.proses || ""}|${r.aciklama || ""}`;
+      if (!gruplar.has(k)) gruplar.set(k, []);
+      gruplar.get(k).push(r);
+    });
+    gruplar.forEach((g) => {
+      const bedenli = g.filter((r) => r.mamulBeden && r.mamulBeden !== "Tüm Bedenler");
+      let son = g.filter((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler");
+      if (bedenli.length) {
+        const varolan = bedenli.filter((r) => bedenler.length === 0 || bedenler.includes(r.mamulBeden));
+        son = son.concat(varolan);
+        const kapsanan = new Set(bedenli.map((r) => r.mamulBeden));
+        const bedenAyni = bedenli.every((r) => kodEsit(r.beden || "", r.mamulBeden));
+        bedenler.filter((b) => !kapsanan.has(b)).forEach((b) => {
+          if (bedenAyni) son.push({ ...bedenli[bedenli.length - 1], mamulBeden: b, beden: b });
+          else bedenEksik.add(`${g[0].hammaddeAd || "?"} (${b})`);
+        });
+      }
+      son.forEach((r) => {
+        const ayni = mevcut.some((m) => m.mamulRenk === mr && m.hammaddeUrunId === r.hammaddeUrunId && (m.proses || "") === (r.proses || "")
+          && (m.mamulBeden || "Tüm Bedenler") === (r.mamulBeden || "Tüm Bedenler"));
+        if (ayni) { sonuc.atlanan += 1; return; }
+        sonuc.eklenecekler.push({ ...r, mamulRenk: mr, eklemeId: yeniKimlik(r.eklemeId), eklemeTarihi });
+      });
+    });
+  });
+  sonuc.bedenEksikler = Array.from(bedenEksik);
+  // İşçilik: şablondaki kuralın aynısı — hedefte boş olan dolar, dolu olan ezilmez.
+  const isc = urundenSablonIsciligi(kaynak);
+  const pu = { ...(hedef.prosesUcretleri || {}) };
+  Object.entries(isc.prosesUcretleri).forEach(([p, u]) => { if (u > 0 && !(pu[p] > 0)) { pu[p] = u; sonuc.iscilikSayisi++; } });
+  if (sonuc.iscilikSayisi) sonuc.ekAlanlar.prosesUcretleri = pu;
+  const ape = { ...(hedef.araProsesEklentileri || {}) };
+  let n = 0;
+  Object.entries(isc.araProsesEklentileri).forEach(([a, v]) => { if (ape[a] == null || (Array.isArray(ape[a]) && ape[a].length === 0)) { ape[a] = v; n++; } });
+  if (n) sonuc.ekAlanlar.araProsesEklentileri = ape;
+  const apu = { ...(hedef.araProsesUcretleri || {}) };
+  let m = 0;
+  Object.entries(isc.araProsesUcretleri).forEach(([id, u]) => { if (apu[id] == null) { apu[id] = u; m++; } });
+  if (m) sonuc.ekAlanlar.araProsesUcretleri = apu;
+  sonuc.iscilikSayisi += n;
+  return sonuc;
+}
