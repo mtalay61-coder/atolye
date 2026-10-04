@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.583.0</title>
+<title>Atölye ERP 1.586.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2033,9 +2033,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.583.0";
+const SURUM = "1.586.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Kar satis fiyatindan hesaplaniyor: fiyat = maliyet / (1 - kar%); 1000 TL %30 kar ile 1428,57 TL";
+const SURUM_NOTU = "Kar-Zararda bolum dokumu: aylik verim (tahakkuk/maas, cift basi gercek maliyet), girisler ve personel bazinda adet";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2043,6 +2043,15 @@ const SURUM_NOTU = "Kar satis fiyatindan hesaplaniyor: fiyat = maliyet / (1 - ka
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.586.0", tarih: "04.10.2026",
+        eklenen: ["Finans › Kâr/Zarar › Atölye içi bölümler: bölüm satırına dokununca döküm — aylık tablo (adet, tahakkuk, maaş, verim %, çift başı gerçek maliyet, kâr/zarar), seçili dönemin girişleri (tarih, üretim no, model/renk, personel, adet × ücret) ve personel bazında adet/tahakkuk"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.585.0", tarih: "04.10.2026",
+        eklenen: ["Tanımlar › Üretim › 'Atölye içi bölümler' (ör. Kesimhane): bağlı prosesler, personel ve aylık maaş", "Bölüme bağlı prosesin teslimi personel carisine yazılmıyor; üretim kaydına bölüm tahakkuku (adet × ücret) işleniyor — ürün maliyeti değişmez", "Her ay başı bölüm personeline 'Maaş' alacağı kendiliğinden tahakkuk ediyor (MAAS-YYYY-MM fişi); kasadan ödeme kapatır", "Finans › Kâr-Zarar'da 'Atölye içi bölümler': dönem tahakkuku − maaş = bölüm kâr/zararı; şirket işçiliğine maaşlar sayılıyor"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.584.0", tarih: "04.10.2026",
+        eklenen: ["Katalogda 'Katalog fiyatları' seçimi: genel satış/alış ya da fiyat grupları (Toptan, Perakende…) arasından en fazla 3 fiyat kartta ve detayda gösterilir; seçim cihaza özel. Cariye özel fiyatlar katalogda gösterilmez; müşteri görünümünde alış fiyatları gizli"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.583.0", tarih: "04.10.2026", eklenen: [],
         degisen: ["Kâr satış fiyatından hesaplanıyor (marj): fiyat = maliyet ÷ (1 − kâr%). 1000 TL maliyet, %30 kâr → 1.428,57 TL (eskiden 1.300). Ürün kartı maliyet özeti, maliyet çıktısı ve fiyat listesinde maliyete 'Kâr ekle %'"],
         duzeltilen: [] },
@@ -2926,6 +2935,104 @@ function marjlaSatisFiyati(maliyet, karYuzde) {
     if (k >= 100)
         return maliyet;
     return maliyet / (1 - k / 100);
+}
+// ATÖLYE İÇİ BÖLÜM — KESİMHANE (v1.585.0). Kullanıcı: "Atölye içi kesimhanemiz var, 5 kişi çalışıyor. Ürün maliyetine
+// kesim 30 ₺ giriyorum; üretimde bu tutar bir cariye alacak yazılıyor ama biz 5 kişiye MAAŞ ödüyoruz, parça başı değil.
+// Carilerde hareket olmuyor, üretim carisi bizden fazla alacaklı görünüyor." Model (kullanıcı kararı):
+//   • Tanımlar'da bölüm: { id, ad, prosesler: [proses adı…], personel: [{ cariId, maas }] }.
+//   • Bölüme bağlı prosesin teslimi personel CARİSİNE YAZILMAZ; üretim kaydına `bolumTahakkuklari` (parça başı
+//     tutar) eklenir. Ürün maliyeti değişmez (prosesUcretleri aynen); kimseye borç doğmaz.
+//   • Her ay başı bölüm personeline "Maaş" alacağı (fiş MAAS-YYYY-MM-<cari kodu>); kasadan ödeme kapatır.
+//   • Kâr-Zarar'da bölüm: dönem tahakkuku (ürünlere yüklenen) − maaşlar = bölümün kârı/zararı.
+//   • Eski cari alacaklarına dokunulmaz (kullanıcı kararı).
+function prosesBolumu(tanimlar, prosesAdi) {
+    if (!prosesAdi)
+        return null;
+    return ((tanimlar && tanimlar.bolumler) || []).find((b) => (b.prosesler || []).includes(prosesAdi)) || null;
+}
+function bolumTahakkukKaydi(bolum, k) {
+    const adet = Number(k.adet) || 0;
+    const ucret = Number(k.ucret) || 0;
+    return { id: uid("tah"), bolumId: bolum.id, bolumAd: bolum.ad, proses: k.proses, atamaId: k.atamaId || null, fisNo: k.fisNo || "",
+        tarih: bugunYerel(), zaman: new Date().toISOString(), adet, ucret, tutar: Math.round(adet * ucret * 100) / 100,
+        personelId: k.personelId || null, model: k.model || "", renk: k.renk || "" };
+}
+function maasFisNo(ay, cari) {
+    return `MAAS-${ay}-${Number(cari && cari.kod) > 0 ? String(cari.kod).padStart(4, "0") : (cari && cari.id)}`;
+}
+// Bölümün dönem kâr/zararı. `tarihUygun(tarih)`: dönem süzgeci (rapor verir). Saf.
+function bolumKarZarar(bolum, uretim, cariler, tarihUygun) {
+    let tahakkuk = 0, adet = 0, maas = 0;
+    (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+        if (t.bolumId !== bolum.id || !tarihUygun(t.tarih))
+            return;
+        tahakkuk += t.tutar || 0;
+        adet += t.adet || 0;
+    }));
+    const uyeler = new Set((bolum.personel || []).map((p) => p.cariId));
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+        if (!(h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))))
+            return;
+        if (!(h.bolumId === bolum.id || (!h.bolumId && uyeler.has(c.id))))
+            return;
+        if (!tarihUygun(h.tarih))
+            return;
+        maas += Number(h.tutar) || 0;
+    }));
+    return { tahakkuk, adet, maas, kar: tahakkuk - maas };
+}
+// BÖLÜM DÖKÜMÜ (v1.586.0 — kullanıcı: "Kesimhane'ye yap o girişleri, ne kadar verimli olduğu da görünsün").
+// Girişler: bölümün tahakkuk kayıtları üretim bilgisiyle (dönem süzgeçli). Aylık: ay bazında adet/tahakkuk/maaş,
+// verim = tahakkuk ÷ maaş (%100 üstü bölüm kendini çıkarıyor), çift başı gerçek maliyet = maaş ÷ adet. Saf.
+function bolumGirisleri(bolum, uretim, cariler, tarihUygun) {
+    const ad = (id) => (((cariler || []).find((c) => c.id === id) || {}).unvan) || "";
+    const satirlar = [];
+    (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+        if (t.bolumId !== bolum.id || !tarihUygun(t.tarih))
+            return;
+        satirlar.push({ id: t.id, tarih: t.tarih, zaman: t.zaman || "", siparisNo: u.siparisNo || "", model: t.model || u.model || "", renk: t.renk || u.renk || "",
+            proses: t.proses, personel: ad(t.personelId), personelId: t.personelId || null, adet: t.adet || 0, ucret: t.ucret || 0, tutar: t.tutar || 0 });
+    }));
+    return satirlar.sort((a, b) => (b.zaman || b.tarih).localeCompare(a.zaman || a.tarih));
+}
+function bolumAylikDokum(bolum, uretim, cariler) {
+    const aylar = new Map();
+    const al = (ay) => { if (!aylar.has(ay))
+        aylar.set(ay, { ay, adet: 0, tahakkuk: 0, maas: 0 }); return aylar.get(ay); };
+    (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+        if (t.bolumId !== bolum.id || !t.tarih)
+            return;
+        const k = al(String(t.tarih).slice(0, 7));
+        k.adet += t.adet || 0;
+        k.tahakkuk += t.tutar || 0;
+    }));
+    const uyeler = new Set((bolum.personel || []).map((p) => p.cariId));
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+        if (!(h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))))
+            return;
+        if (!(h.bolumId === bolum.id || (!h.bolumId && uyeler.has(c.id))))
+            return;
+        if (!h.tarih)
+            return;
+        al(String(h.tarih).slice(0, 7)).maas += Number(h.tutar) || 0;
+    }));
+    return Array.from(aylar.values()).sort((a, b) => b.ay.localeCompare(a.ay)).map((k) => ({
+        ...k, kar: k.tahakkuk - k.maas,
+        verim: k.maas > 0 ? (k.tahakkuk / k.maas) * 100 : null,
+        ciftMaliyeti: k.adet > 0 ? k.maas / k.adet : null,
+    }));
+}
+// Personel bazında (dönem): adet ve tahakkuk — kim ne kadar üretti.
+function bolumPersonelDokumu(girisler) {
+    const h = new Map();
+    (girisler || []).forEach((g) => {
+        const k = g.personel || "(personel seçilmemiş)";
+        if (!h.has(k))
+            h.set(k, { personel: k, adet: 0, tahakkuk: 0 });
+        h.get(k).adet += g.adet;
+        h.get(k).tahakkuk += g.tutar;
+    });
+    return Array.from(h.values()).sort((a, b) => b.adet - a.adet);
 }
 function alisPbKodu(urun) {
     const ham = String((urun && urun.alisParaBirimi) || "").trim();
@@ -11109,8 +11216,13 @@ function fisGeriAl(veri, secenekler = {}) {
                 const bitti = kalan.length > 0 && kalan.every((a) => a.tamamlandiMi);
                 return { ...p, atamalar: kalan, tamamlandiMi: p.tamamlandiMi && bitti };
             });
+            // BÖLÜM TAHAKKUKU DA GERİ (v1.585.0): bu teslimin "-İşçilik" fişi cariye değil üretim kaydına tahakkuk olarak
+            // yazılmış olabilir (atölye içi bölüm); fiş ailesiyle birlikte o kayıt da düşer, yoksa rapor hayalet tutar sayardı.
+            const fisKumesi = new Set(eslesme.fisler || []);
+            const kalanTahakkuk = (u.bolumTahakkuklari || []).filter((t) => !fisKumesi.has(t.fisNo));
             return {
                 ...u,
+                ...(kalanTahakkuk.length !== (u.bolumTahakkuklari || []).length ? { bolumTahakkuklari: kalanTahakkuk } : {}),
                 prosesIlerleme: temizIlerleme,
                 asama: adim.proses,
                 stogaEklendiMi: sonProsesMi ? false : u.stogaEklendiMi,
@@ -11399,7 +11511,17 @@ function useUretimTeslim(d) {
             ? (atama.tamirUcret || 0)
             : (urun && urun.prosesUcretleri ? (urun.prosesUcretleri[prosesAdi] || 0) : 0);
         let nextCariler = cariler;
-        if (atama.personelId && ucret > 0) {
+        // ATÖLYE İÇİ BÖLÜM (v1.585.0, bkz. 015 `prosesBolumu`): proses bir bölüme (Kesimhane) bağlıysa parça başı tutar
+        // CARİYE YAZILMAZ — maaşlı personelin carisi alacaklanmaz; tutar üretim kaydına bölüm tahakkuku olarak gider.
+        const bolum = prosesBolumu(tanimlar, prosesAdi);
+        let bolumTahakkuku = null;
+        if (bolum && ucret > 0) {
+            const ucretliAdet = Math.max(0, sonucToplam - hurdaAdet);
+            if (ucretliAdet > 0)
+                bolumTahakkuku = bolumTahakkukKaydi(bolum, { proses: prosesAdi, atamaId: atama.id, fisNo: `${fisNo}-İşçilik`,
+                    adet: ucretliAdet, ucret, personelId: atama.personelId, model: siparis.model, renk: siparis.renk });
+        }
+        else if (atama.personelId && ucret > 0) {
             // HURDA ÜCRETİ ÖDENMEZ: hurdanın çıktığı aşama bu aşamadır ve o adetler için işçilik
             // hak edilmemiştir. Önceki aşamalarda ödenmiş ücretlere dokunulmaz — o işler yapılmıştı.
             // Tamir edilen çiftler için ücret ÖDENİR: iş yapıldı, kusur tamirde giderilecek.
@@ -11551,8 +11673,11 @@ function useUretimTeslim(d) {
             });
         }
         const nextUretim = uretim.map((o) => o.id === uretimId
-            ? { ...o, prosesIlerleme: nextProsesIlerleme, asama: tumuTamam ? "Tamamlandı" : prosesAdi, stogaEklendiMi: tumuTamam || o.stogaEklendiMi }
+            ? { ...o, prosesIlerleme: nextProsesIlerleme, asama: tumuTamam ? "Tamamlandı" : prosesAdi, stogaEklendiMi: tumuTamam || o.stogaEklendiMi,
+                ...(bolumTahakkuku ? { bolumTahakkuklari: [...(o.bolumTahakkuklari || []), bolumTahakkuku] } : {}) }
             : o);
+        if (bolumTahakkuku)
+            showToast(`${bolum.ad}: ${bolumTahakkuku.adet} adet × ${ucret} ₺ = ${bolumTahakkuku.tutar.toLocaleString("tr-TR")} ₺ bölüm tahakkuku (cariye yazılmadı — maaşlı bölüm)`);
         // ---- REÇETE GERÇEKLEŞMESİ ----
         //
         // Kullanıcı (6 Eylül): "Hammadde birim adedi reçeteye NOT olarak yansısın — deri 30 desi
@@ -12342,6 +12467,7 @@ function useProsesVer(d) {
         // `rezervasyonDusulecek` ile aynı biçim, aşağıda aynı sırayla (önce stok, sonra alış rezervasyonu).
         const araRezervasyonDusulecek = [];
         const araMesajlari = [];
+        const araTahakkuklar = []; // atölye içi bölüm tahakkukları (v1.585.0)
         tamamlanacakAralar.forEach((oncekiAdim) => {
             // Ara prosesin ücreti, önce BU ÜRÜNE ÖZEL bir geçersiz kılma (override) var mı diye bakılır;
             // yoksa Tanımlar'da o ara proses için tanımlanmış GENEL/varsayılan ücret kullanılır.
@@ -12390,7 +12516,14 @@ function useProsesVer(d) {
                     return { ...p, variants, hareketler: [...yeniHareketler, ...(p.hareketler || [])].slice(0, HAREKET_GECMIS_SINIRI) };
                 });
             }
-            if (araCariId && araTutar > 0) {
+            // ATÖLYE İÇİ BÖLÜM (v1.585.0): ara proses bir bölüme bağlıysa cariye değil üretim kaydına tahakkuk.
+            const araBolum = prosesBolumu(tanimlar, araTanim ? araTanim.ad : "");
+            if (araBolum && araTutar > 0) {
+                araTahakkuklar.push(bolumTahakkukKaydi(araBolum, { proses: araTanim.ad, atamaId: null, fisNo: `${araFisNo}-İşçilik`,
+                    adet: toplamAdet, ucret: araUcret, personelId: araCariId || null, model: siparis.model, renk: siparis.renk }));
+                araMesajlari.push(` — "${oncekiAdim.proses}" ara prosesi otomatik tamamlandı (${araBolum.ad} tahakkuku ${araTutar.toLocaleString("tr-TR")} ₺, cariye yazılmadı)`);
+            }
+            else if (araCariId && araTutar > 0) {
                 nextCariler = nextCariler.map((c) => c.id === araCariId
                     ? {
                         ...c,
@@ -12449,7 +12582,9 @@ function useProsesVer(d) {
                 }
             });
         }
-        const nextUretim = uretim.map((o) => (o.id === uretimId ? { ...o, prosesIlerleme: nextProsesIlerleme } : o));
+        const nextUretim = uretim.map((o) => (o.id === uretimId
+            ? { ...o, prosesIlerleme: nextProsesIlerleme, ...(araTahakkuklar.length ? { bolumTahakkuklari: [...(o.bolumTahakkuklari || []), ...araTahakkuklar] } : {}) }
+            : o));
         setStok(nextStok);
         setCariler(nextCariler);
         setUretim(nextUretim);
@@ -18288,6 +18423,52 @@ function AtolyeERP() {
         gunlukYaz(`Barkod tamamlandı: ${urun.ad} — ${parca.join(" · ") || "kodlar atandı"}`, "tanimlar", { urunId, renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), stokNo: yeniNo });
         showToast(`${urun.ad}: barkod oluşturuldu${parca.length ? ` — ${parca.join(" · ")}` : ""}`);
     }, [stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+    // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0 — kullanıcı kararı: "ay başı kendiliğinden"). Atölye içi bölüm personeline bu ayın
+    // maaşı (Tanımlar'daki tutar) bir kez "Maaş" alacağı olarak yazılır; fiş numarası MAAS-YYYY-MM-<kod> tekilliği sağlar
+    // (cari bulutla birleşik okunur; aynı fiş varsa yazılmaz). Ödeme kasadan cariye — bakiye kapanır. İnternet yokken ve
+    // yükleme bitmeden çalışmaz. Aynı imza ikinci kez yazılmaz (yazım düşerse döngü olmasın).
+    const maasImzaRef = useRef("");
+    // Adlı yazıcı (kapidenetim.js `IZINLI_YAZICILAR`): cari hareketini yalnız bu fonksiyon yazar; efekt yalnız çağırır.
+    const maasTahakkukEt = useCallback(() => {
+        const bolumler = tanimlar.bolumler || [];
+        if (!bolumler.length)
+            return;
+        const simdi = new Date();
+        const ay = `${simdi.getFullYear()}-${String(simdi.getMonth() + 1).padStart(2, "0")}`;
+        const ayAdi = simdi.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+        const yeniler = [];
+        bolumler.forEach((b) => (b.personel || []).forEach((p) => {
+            const maas = parseFloat(p.maas) || 0;
+            if (!(maas > 0))
+                return;
+            const c = (cariler || []).find((x) => x.id === p.cariId);
+            if (!c || c.pasif)
+                return;
+            const fisNo = maasFisNo(ay, c);
+            // fis-muaf: MAAS-YYYY-MM-<kod> fişi işçilik eki taşımaz, tam eşleşme doğru (fisdenetim 12).
+            if ((c.hareketler || []).some((h) => h.fisNo === fisNo))
+                return;
+            yeniler.push({ cariId: c.id, h: { id: uid("hrk"), tarih: `${ay}-01`, zaman: new Date().toISOString(), islemTipi: "Maaş",
+                    yon: hareketYonu("Maaş"), tutar: maas, odemeSekli: "Nakit", vade: "", defter: iscilikDefteri(tanimlar.firmaBilgileri),
+                    fisNo, bolumId: b.id, aciklama: `${b.ad} — ${ayAdi} maaşı`, kullanici: "sistem" } });
+        }));
+        if (!yeniler.length)
+            return;
+        const imza = yeniler.map((y) => y.h.fisNo).join("|");
+        if (maasImzaRef.current === imza)
+            return;
+        maasImzaRef.current = imza;
+        const next = (cariler || []).map((c) => { const l = yeniler.filter((y) => y.cariId === c.id); return l.length ? { ...c, hareketler: [...l.map((y) => y.h), ...(c.hareketler || [])] } : c; });
+        setCariler(next);
+        yazimiIzle(tabloYaz("cari:data", "cariler", next), "Cari kartları", next);
+        gunlukYaz(`${ayAdi} maaşları tahakkuk etti: ${yeniler.length} personel`, "cari", { ay, fisler: yeniler.map((y) => y.h.fisNo) });
+        showToast(`${ayAdi}: ${yeniler.length} bölüm personeline maaş tahakkuk etti (kasadan ödeme kapatır)`);
+    }, [tanimlar, cariler, showToast]);
+    useEffect(() => {
+        if (loading || baglantiYok)
+            return;
+        maasTahakkukEt();
+    }, [loading, baglantiYok, maasTahakkukEt]);
     // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
     // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
     // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -19766,7 +19947,7 @@ function AtolyeERP() {
                     tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement(GunlukPaneli, { showToast: showToast })),
                     tab === "finansrapor" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Finans raporunu g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(FinansRaporu, { cariler: cariler, muhasebe: muhasebe, stok: stok, uretim: uretim, araProsesler: tanimlar.araProsesler || [], raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, showToast: showToast, firmaBilgileri: tanimlar.firmaBilgileri }))),
                     tab === "gelirgider" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Gelir / Gider ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(GelirGiderEkrani, { stok: stok, tanimlar: tanimlar, onSave: saveTanimlar, muhasebe: muhasebe, cariler: cariler, showToast: showToast }))),
-                    React.createElement("div", { style: { display: tab === "muhasebe" || tab === "cekler" ? undefined : "none" } }, !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Kasa & Banka ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok. Eri\u015Fim i\u00E7in y\u00F6neticinize ba\u015Fvurun." })) : (React.createElement(MuhasebeModule, { kapsam: muhasebeKapsamRef.current, tanimlar: tanimlar, stok: stok, giderKartlari: tanimlar.giderKartlari || [], onCekIslem: cekIslemYap, onCekEkleIsle: cekEkleVeIsle, onCekHareketiyleSil: cekHareketiyleSil, 
+                    React.createElement("div", { style: { display: tab === "muhasebe" || tab === "cekler" ? undefined : "none" } }, !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Kasa & Banka ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok. Eri\u015Fim i\u00E7in y\u00F6neticinize ba\u015Fvurun." })) : (React.createElement(MuhasebeModule, { kapsam: muhasebeKapsamRef.current, tanimlar: tanimlar, stok: stok, uretim: uretim, giderKartlari: tanimlar.giderKartlari || [], onCekIslem: cekIslemYap, onCekEkleIsle: cekEkleVeIsle, onCekHareketiyleSil: cekHareketiyleSil, 
                         // SON İŞLEMİ GERİ AL (v1.459.0): ciro/iade fişini fiş silme kapısından siler; çek
                         // `cekIslemGeriAl` ile bir önceki durumuna döner. Hareket bulunamazsa false.
                         // ÇEK BORDROSU (v1.460.0): pencere yalnız çek + işlem satırı kimliğini taşıyor, çek
@@ -21849,6 +22030,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     const [yeniAraProsesCariId, setYeniAraProsesCariId] = useState("");
     const [yeniAraProsesUcret, setYeniAraProsesUcret] = useState("");
     const [yeniFiyatGrubu, setYeniFiyatGrubu] = useState("");
+    const [yeniBolum, setYeniBolum] = useState(""); // atölye içi bölüm (v1.585.0)
     const [yeniFiyatGrubuTipi, setYeniFiyatGrubuTipi] = useState("Satış");
     const [yeniSablonAdi, setYeniSablonAdi] = useState("");
     // Fiyat grubunun para birimi (21 Eylül): "Toptan USD" grubunun fiyatları dolarla tutulur.
@@ -22232,6 +22414,21 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
             return showToast("Bu isimde bir grup zaten var");
         }
         onSave({ ...tanimlar, fiyatGruplari: [...mevcut, { id: uid("fgrup"), ad: temizAd, tip, paraBirimi }] });
+    }
+    // Atölye içi bölümler (v1.585.0).
+    function bolumEkle(ad) {
+        const temiz = String(ad || "").trim();
+        if (!temiz)
+            return showToast("Bölüm adı gerekli");
+        if ((tanimlar.bolumler || []).some((b) => kodEsit(b.ad, temiz)))
+            return showToast("Bu adda bölüm zaten var");
+        onSave({ ...tanimlar, bolumler: [...(tanimlar.bolumler || []), { id: uid("bolum"), ad: temiz, prosesler: [], personel: [] }] });
+    }
+    function bolumGuncelle(id, alanlar) {
+        onSave({ ...tanimlar, bolumler: (tanimlar.bolumler || []).map((b) => (b.id === id ? { ...b, ...alanlar } : b)) });
+    }
+    function bolumSil(id) {
+        onSave({ ...tanimlar, bolumler: (tanimlar.bolumler || []).filter((b) => b.id !== id) });
     }
     function fiyatGrubuSil(id) {
         onSave({ ...tanimlar, fiyatGruplari: (tanimlar.fiyatGruplari || []).filter((g) => g.id !== id) });
@@ -22869,6 +23066,51 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                         ": ",
                         o.oran))))))))),
                 React.createElement(AsortiOlusturucu, { bedenler: bedenGrubuTumu.concat(boyutGrubuTumu), onKaydet: asortiEkle })),
+            React.createElement("div", { "data-bolumler": "1", style: { marginTop: 28 } },
+                React.createElement("h3", { style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" } }, "At\u00F6lye \u0130\u00E7i B\u00F6l\u00FCmler"),
+                React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" } }, "Maa\u015Fl\u0131 personelle \u00E7al\u0131\u015Fan b\u00F6l\u00FCm (\u00F6r. Kesimhane). B\u00F6l\u00FCme ba\u011Fl\u0131 prosesin teslimi personel carisine par\u00E7a ba\u015F\u0131 alacak YAZMAZ; tutar b\u00F6l\u00FCm tahakkuku olur (\u00FCr\u00FCn maliyeti de\u011Fi\u015Fmez). Her ay ba\u015F\u0131 buradaki maa\u015F personel carisine \"Maa\u015F\" olarak tahakkuk eder, kasadan \u00F6deme kapat\u0131r. Finans \u203A K\u00E2r-Zarar'da b\u00F6l\u00FCm\u00FCn tahakkuk \u2212 maa\u015F fark\u0131 g\u00F6r\u00FCn\u00FCr."),
+                React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
+                    React.createElement("input", { value: yeniBolum, "data-bolum-ad": "1", onChange: (e) => setYeniBolum(e.target.value), placeholder: "\u00D6rn. Kesimhane", style: inputStyle, onKeyDown: (e) => { if (e.key === "Enter") {
+                            bolumEkle(yeniBolum);
+                            setYeniBolum("");
+                        } } }),
+                    React.createElement("button", { className: "btn-primary", "data-bolum-ekle": "1", onClick: () => { bolumEkle(yeniBolum); setYeniBolum(""); } },
+                        React.createElement(Plus, { size: 14 }))),
+                (tanimlar.bolumler || []).length === 0 ? (React.createElement(EmptyState, { text: "Hen\u00FCz at\u00F6lye i\u00E7i b\u00F6l\u00FCm tan\u0131mlanmad\u0131." })) : (tanimlar.bolumler || []).map((b) => {
+                    const prosesAdlari = [...(tanimlar.prosesler || []).map((p) => p.ad), ...(tanimlar.araProsesler || []).map((p) => p.ad)].filter(Boolean);
+                    const personelCariler = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
+                    const uyeler = b.personel || [];
+                    return (React.createElement("div", { key: b.id, "data-bolum": b.ad, style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, marginBottom: 10 } },
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } },
+                            React.createElement("input", { value: b.ad, onChange: (e) => bolumGuncelle(b.id, { ad: e.target.value }), style: { fontSize: 14, fontWeight: 700, flex: 1, padding: "4px 8px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" } }),
+                            React.createElement(SilOnayButonu, { onConfirm: () => bolumSil(b.id), boyut: 14, baslikNormal: `"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`, baslikOnay: "Silinecek \u2014 tekrar dokunun" })),
+                        React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 } },
+                            "Ba\u011Fl\u0131 prosesler ",
+                            React.createElement("span", { style: { fontSize: 11 } }, "(bu proseslerin teslimi cariye yaz\u0131lmaz)")),
+                        React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 } }, prosesAdlari.map((ad) => {
+                            const secili = (b.prosesler || []).includes(ad);
+                            const baska = (tanimlar.bolumler || []).find((x) => x.id !== b.id && (x.prosesler || []).includes(ad));
+                            return (React.createElement("button", { key: ad, type: "button", "data-bolum-proses": `${b.ad}|${ad}`, disabled: !!baska, title: baska ? `"${baska.ad}" bölümünde` : undefined, onClick: () => bolumGuncelle(b.id, { prosesler: secili ? (b.prosesler || []).filter((x) => x !== ad) : [...(b.prosesler || []), ad] }), style: { fontSize: 12, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", cursor: baska ? "default" : "pointer", opacity: baska ? 0.5 : 1,
+                                    border: `1.5px solid ${secili ? "var(--erp-primary)" : "var(--erp-line)"}`, background: secili ? "#4E6B4E1A" : "#fff",
+                                    color: secili ? "var(--erp-primary)" : "var(--erp-text-2)", fontWeight: secili ? 700 : 400 } },
+                                secili ? "✓ " : "",
+                                ad));
+                        })),
+                        React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 } }, "Personel ve ayl\u0131k maa\u015F (\u20BA)"),
+                        uyeler.map((p) => {
+                            const c = (cariler || []).find((x) => x.id === p.cariId);
+                            return (React.createElement("div", { key: p.cariId, "data-bolum-personel": c ? c.unvan : p.cariId, style: { display: "flex", alignItems: "center", gap: 8, padding: "4px 0" } },
+                                React.createElement("span", { style: { flex: 1, fontSize: 13 } }, c ? c.unvan : "silinmiş cari"),
+                                React.createElement("input", { type: "text", inputMode: "decimal", defaultValue: p.maas || "", "data-bolum-maas": c ? c.unvan : p.cariId, placeholder: "ayl\u0131k maa\u015F", className: "mono", onBlur: (e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0))
+                                        bolumGuncelle(b.id, { personel: uyeler.map((x) => (x.cariId === p.cariId ? { ...x, maas: v } : x)) }); }, style: { width: 110, padding: "4px 8px", fontSize: 13, textAlign: "right", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" } }),
+                                React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "\u20BA / ay"),
+                                React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "2px 8px", fontSize: 12 }, title: "B\u00F6l\u00FCmden \u00E7\u0131kar", onClick: () => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) }) }, "\u00D7")));
+                        }),
+                        React.createElement("select", { value: "", "data-bolum-personel-ekle": b.ad, onChange: (e) => { const id = e.target.value; if (id)
+                                bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }, style: { ...inputStyle, width: "auto", minWidth: 220, fontSize: 12, padding: "4px 8px", marginTop: 4 } },
+                            React.createElement("option", { value: "" }, "+ personel ekle (Personel tipli cari)\u2026"),
+                            personelCariler.filter((c) => !uyeler.some((x) => x.cariId === c.id)).map((c) => React.createElement("option", { key: c.id, value: c.id }, c.unvan)))));
+                })),
             React.createElement("div", { style: { marginTop: 28 } },
                 React.createElement("h3", { style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" } }, "Fiyat Gruplar\u0131"),
                 React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" } }, "M\u00FC\u015Fteri/tedarik\u00E7i carilerini gruplara ay\u0131r\u0131n (\u00F6rn. \"Toptan M\u00FC\u015Fteri\", \"VIP Tedarik\u00E7i\"). Cari kart\u0131ndan bir cariyi bir gruba atayabilir, Stok'ta bir \u00FCr\u00FCn\u00FCn \"Fiyatland\u0131rma\" b\u00F6l\u00FCm\u00FCnden o gruba \u00F6zel fiyat tan\u0131mlayabilirsiniz \u2014 o gruptaki t\u00FCm cariler otomatik olarak bu fiyat\u0131 g\u00F6r\u00FCr. Bir cariye ayr\u0131ca grubundan ba\u011F\u0131ms\u0131z, tamamen \u00F6zel bir fiyat da (grup harici) verilebilir."),
@@ -25041,6 +25283,30 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // MÜŞTERİ GÖRÜNÜMÜ: maliyet tarafı gizlenir (alış fiyatı, tedarikçi, stok değeri). Ekranı
     // müşteriye çevirmek fuarda tek hareket; o hareketin maliyeti göstermemesi gerekiyor.
     const [musteriGorunumu, setMusteriGorunumu] = useState(false);
+    // KATALOG FİYATLARI (v1.584.0 — kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı
+    // seçilerek katalogda görünecek fiyatlar çıksın"). Kart altında en fazla 3 kaynak: genel satış/alış ya da fiyat grupları
+    // (Toptan, Perakende, VOOG Özel…). CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen);
+    // maliyet de yok. Müşteri görünümünde alış tipli kaynaklar gizli. Seçim cihaza özel (yerel depo) — fuardaki tablet ile
+    // ofis farklı fiyat gösterebilir.
+    const [katalogKaynaklari, setKatalogKaynaklari] = useState(() => {
+        try {
+            const v = JSON.parse(window.localStorage.getItem("katalog:fiyatKaynaklari") || "null");
+            if (Array.isArray(v) && v.length)
+                return v.slice(0, 3);
+        }
+        catch (e) { /* yerel depo yok */ }
+        return [FL_GENEL_SATIS];
+    });
+    const katalogKaynakSec = (key) => setKatalogKaynaklari((x) => {
+        const yeni = x.includes(key) ? x.filter((k) => k !== key) : (x.length >= 3 ? x : [...x, key]);
+        if (!x.includes(key) && x.length >= 3)
+            showToast("Katalogda en fazla 3 fiyat gösterilir — önce birini kaldırın");
+        try {
+            window.localStorage.setItem("katalog:fiyatKaynaklari", JSON.stringify(yeni));
+        }
+        catch (e) { /* yerel depo yok */ }
+        return yeni;
+    });
     const [katalogUrunId, setKatalogUrunId] = useState(null);
     const [katalogRenk, setKatalogRenk] = useState("");
     const [katalogFotoAcik, setKatalogFotoAcik] = useState(false);
@@ -25934,6 +26200,14 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // `satisFiyati` ve `alisFiyati`. Fiyatlandırma sekmesindeki kurallar buraya sızmıyor.
     // İKİ FİYATIN İKİ AYRI BİRİMİ VAR. Önceden tek `paraBirimi` vardı ve ALIŞIN birimiydi:
     // katalogda satış fiyatı yanlış birimle gösteriliyordu.
+    const katalogSecenekleri = fiyatListesiKaynaklari(tanimlar.fiyatGruplari || []).filter((k) => !k.maliyet);
+    const katalogGosterilen = katalogKaynaklari.map((key) => katalogSecenekleri.find((k) => k.key === key)).filter(Boolean)
+        .filter((k) => !(musteriGorunumu && k.tip === "Alış"));
+    const katalogFiyatSatirlari = (p) => katalogGosterilen.map((k) => {
+        const f = urunKaynakFiyati(p, k);
+        const yazi = f.fiyat > 0 ? `${Number(f.fiyat).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[f.paraBirimi] || f.paraBirimi}` : "—";
+        return { key: k.key, ad: k.genel ? (k.tip === "Satış" ? "Satış" : "Alış") : k.ad, yazi, var: f.fiyat > 0 };
+    });
     const katalogFiyat = (p) => ({
         satis: p.satisFiyati || 0,
         satisBirimi: p.satisParaBirimi || "₺",
@@ -26009,7 +26283,9 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                     React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, seciliRenk || "—")),
                 React.createElement("div", { style: { display: "grid", gap: 12, flex: 1, minWidth: 260 } },
                     React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" } },
-                        React.createElement("span", { className: "mono", style: { fontSize: 24, fontWeight: 700, color: "var(--erp-info)" } }, fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "fiyat girilmemiş"),
+                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-detay-fiyat": f.ad, style: { fontSize: i === 0 ? 24 : 16, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)" } },
+                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)", marginRight: 4 } }, f.ad),
+                            f.var ? f.yazi : (i === 0 ? "fiyat girilmemiş" : "—")))),
                         !musteriGorunumu && fiyat.alis ? (React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-brown)" } },
                             "al\u0131\u015F ",
                             fiyat.alis,
@@ -26246,7 +26522,17 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                             color: musteriGorunumu ? "#3F5A33" : "var(--erp-text-2)",
                         }, title: musteriGorunumu
                             ? "Müşteri görünümü AÇIK — alış fiyatı, tedarikçi ve stok değeri gizli"
-                            : "Personel görünümü — maliyet bilgileri görünür" }, musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"))))),
+                            : "Personel görünümü — maliyet bilgileri görünür" }, musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"),
+                    React.createElement("span", { "data-katalog-fiyat-secimi": "1", style: { display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap" } },
+                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, "Katalog fiyatlar\u0131:"),
+                        katalogSecenekleri.filter((k) => !(musteriGorunumu && k.tip === "Alış")).map((k) => {
+                            const secili = katalogKaynaklari.includes(k.key);
+                            return (React.createElement("button", { key: k.key, type: "button", "data-katalog-kaynak": k.ad, onClick: () => katalogKaynakSec(k.key), style: { padding: "3px 9px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                                    border: `1.5px solid ${secili ? "var(--erp-info)" : "var(--erp-border)"}`, background: secili ? "#3D6B8A1A" : "#fff",
+                                    color: secili ? "var(--erp-info)" : "var(--erp-text-2)" } },
+                                secili ? "✓ " : "",
+                                k.ad));
+                        })))))),
         showForm && (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 } },
             React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 } },
                 React.createElement("div", null,
@@ -26755,7 +27041,9 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                         : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
                     React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
                         React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
-                        React.createElement("span", { className: "mono", style: { fontSize: 13, fontWeight: 700, color: "var(--erp-info)" } }, fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "—"),
+                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
+                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
+                            React.createElement("span", null, f.yazi)))),
                         React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
                             renkler.length,
                             " renk",
@@ -31914,7 +32202,7 @@ const CARI_TIP_RENK = { "Müşteri": "var(--erp-primary)", "Tedarikçi": "var(--
 const ODEME_SEKILLERI = ["Nakit", "Havale/EFT", "Kredi Kartı", "Çek", "Senet"];
 // İŞÇİLİK kendi rengiyle (23 Eylül, v1.433.0): alışla aynı kahverengi olsaydı ekstrede yine
 // "mal almışız" izlenimi sürerdi — işçilik bir HİZMET alımı, mal girişi yok.
-const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)" };
+const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)", "Maaş": "var(--erp-accent)" };
 // Tüm carilerin hareketlerini tarayıp fiş no'ya göre gruplar; sipariş no önekinden (SAT-/ALS-/SP-) tipini çıkarır.
 function tumFisleriTopla(cariler, stok) {
     const tumHareketler = [];
@@ -32011,6 +32299,8 @@ const FIS_TIP_RENK = {
     "Cariye Satış": "var(--erp-info)", "Cariden Alış": "var(--erp-brown)",
     "Üretim Girişi": "var(--erp-primary)", "Üretim Çıkışı": "var(--erp-warn)",
     "İşçilik": "var(--erp-purple)", "Diğer": "var(--erp-text-2)",
+    // MAAŞ (v1.585.0): atölye içi bölüm personelinin aylık tahakkuku — işçilik gibi hizmet alımı (Alacak), ödeme kapatır.
+    "Maaş": "var(--erp-purple)",
     // Para hareketleri cari ekstresindeki renklerle AYNI (bkz. HAREKET_TIPI_RENK): aynı olay iki
     // ekranda iki farklı renkte görünmesin.
     "Tahsilat": "var(--erp-primary)", "Ödeme": "var(--erp-warn)",
@@ -32997,6 +33287,8 @@ function hareketIslemTipi(h) {
     // o kayıtlarda tip fiş numarasının "-İşçilik" ekinden okunuyor. Yeni kayıtlar alanı taşıyor.
     if (/-İşçilik$/.test(fis))
         return "İşçilik";
+    if (/^MAAS-/.test(fis))
+        return "Maaş";
     const yazi = String(h.aciklama || "").trim();
     if (/^tahsilat/i.test(yazi))
         return "Tahsilat";
@@ -33011,7 +33303,7 @@ function paraHareketiMi(h) {
         return true;
     return /^(tahsilat|ödeme)$/i.test(String(h.aciklama || "").trim());
 }
-function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
+function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
     const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
     // KAPSAM (v1.458.0): menüde "Kasa & Banka" ve "Çek & Senet" ayrı öğe; ikisi de bu tek örneği
     // gösteriyor. Çek & Senet'te sekme şeridi yok, hep çek; Kasa & Banka'da Çek sekmesi yok — orada
@@ -33485,7 +33777,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
                 ...(muhasebe.kasalar || []).map((k) => ({ ...k, tur: "kasa" })),
                 ...(muhasebe.bankalar || []).map((b2) => ({ ...b2, tur: "banka" })),
             ], onVirman: virmanYap, giderKartlari: giderKartlari, onHareketGuncelle: (hid, hrid, y) => hareketGuncelle("banka", hid, hrid, y), onHareketEkle: (hid, h) => hareketEkle("banka", hid, h), onHareketSil: (hid, hrid) => hareketSil("banka", hid, hrid), cariler: cariler, kurlar: muhasebe.kurlar || {}, showToast: showToast })),
-        altSekme === "karzarar" && (React.createElement(KarZararPaneli, { stok: stok, cariler: cariler, muhasebe: muhasebe, giderKartlari: giderKartlari, tanimlar: tanimlar })),
+        altSekme === "karzarar" && (React.createElement(KarZararPaneli, { stok: stok, cariler: cariler, muhasebe: muhasebe, giderKartlari: giderKartlari, tanimlar: tanimlar, uretim: uretim })),
         altSekme === "cek" && (React.createElement(CekListesi, { cekler: cekler, cariler: cariler, kurlar: kurlar, onEkle: cekEkle, onSil: cekSil, onIslem: onCekIslem, onSonIslemiGeriAl: cekSonIslemiGeriAl, onYazdir: onCekYazdir, bankalar: bankalar, kasalar: kasalar, gorseller: cekGorselleri, onGorselKaydet: onCekGorselKaydet }))));
 }
 // ================= KASA/BANKA ↔ CARİ HAREKETİ: TEK ÇEKİRDEK =================
@@ -38333,7 +38625,7 @@ function kzTL(tutar, paraBirimi, kurlar, eksik) {
 // ikisine de girer): satış geliri ve SMM satışın CARİ ayağının defterinden (stok hareketinde defter yok),
 // gider/diğer gelir kasa-banka hareketinden, işçilik personel carisindeki hareketten. Cari ayağı olmayan
 // eski satış Genel sayılır (fiş defterinin varsayılanı). Boş/"Tümü" = eskisi gibi hepsi.
-function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter }) {
+function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter, uretim, tanimlar }) {
     const aralik = kzDonemAraligi(donem);
     const kapsar = (d) => defterKapsar(d, defter);
     const kurlar = (muhasebe && muhasebe.kurlar) || {};
@@ -38471,7 +38763,10 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
     const iscilikDetay = {};
     (cariler || []).forEach((c) => {
         (c.hareketler || []).forEach((h) => {
-            if (!h.fisNo || !/-İşçilik$/.test(h.fisNo))
+            // MAAŞ DA İŞÇİLİK (v1.585.0): atölye içi bölümde parça başı tutar cariye yazılmıyor; o bölümün gerçek işçilik
+            // maliyeti personele tahakkuk eden maaştır. Çift sayım yok — bölümde "-İşçilik" cari hareketi hiç doğmuyor.
+            const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+            if (!maasMi && (!h.fisNo || !/-İşçilik$/.test(h.fisNo)))
                 return;
             // YÖNE BAKILMIYOR (v1.409.0): işçilik v1.408'e kadar yanlışlıkla "Borç", sonra doğru
             // yönde "Alacak" yazıldı. İkisi de aynı olayı (hak edilen ücret) anlatıyor; işçilik
@@ -38486,18 +38781,22 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
     });
     const brutKar = satisGeliri - smm - uretimIscilik;
     const netKar = brutKar - giderToplam + digerGelir;
+    // ATÖLYE İÇİ BÖLÜMLER (v1.585.0): bölümün dönem tahakkuku (ürünlere yüklenen parça başı) − maaşları.
+    const bolumler = ((tanimlar && tanimlar.bolumler) || []).map((b) => ({ id: b.id, ad: b.ad,
+        ...bolumKarZarar(b, uretim, cariler, (t) => kzTarihUygun(t, aralik)) }));
     return {
-        aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar,
+        aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar, bolumler,
         gruplar, satisKalemleri,
         kurEksik: [...kurEksik],
         // Gider kartı hiç yoksa kullanıcıya yol göstermek için.
         kartYok: (giderKartlari || []).length === 0,
     };
 }
-function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
+function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uretim }) {
     const [donem, setDonem] = useState("buAy");
     const [defter, setDefter] = useState("Tümü");
-    const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter });
+    const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter, uretim, tanimlar });
+    const [acikBolum, setAcikBolum] = useState(null); // bölüm dökümü (v1.586.0)
     const para = (v) => `${Math.round(v).toLocaleString("tr-TR")} ₺`;
     const satir = (etiket, deger, renk, kalin, ipucu) => (React.createElement("div", { title: ipucu, style: { display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
             borderBottom: "1px solid var(--erp-head)", background: kalin ? "var(--erp-panel)" : "transparent" } },
@@ -38556,6 +38855,95 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
                         " \u00B7 ",
                         para(tutar)))))));
             }))),
+        (sonuc.bolumler || []).length > 0 && (React.createElement("div", { "data-kz-bolumler": "1", style: { background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+            React.createElement("div", { style: { padding: "8px 12px", fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", borderBottom: "1px solid var(--erp-head)" } },
+                "At\u00F6lye i\u00E7i b\u00F6l\u00FCmler ",
+                React.createElement("span", { style: { fontWeight: 400 } }, "\u2014 \u00FCr\u00FCnlere y\u00FCklenen par\u00E7a ba\u015F\u0131 tutar \u2212 maa\u015Flar")),
+            sonuc.bolumler.map((b) => (React.createElement(React.Fragment, { key: b.id },
+                React.createElement("div", { "data-kz-bolum": b.ad, onClick: () => setAcikBolum(acikBolum === b.id ? null : b.id), title: "D\u00F6k\u00FCm i\u00E7in dokunun", style: { display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--erp-head)", flexWrap: "wrap", cursor: "pointer", background: acikBolum === b.id ? "var(--erp-panel)" : "transparent" } },
+                    React.createElement("span", { style: { flex: "1 1 140px", fontSize: 13, fontWeight: 700 } },
+                        acikBolum === b.id ? "▾ " : "▸ ",
+                        b.ad),
+                    React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } },
+                        "tahakkuk ",
+                        para(b.tahakkuk),
+                        " ",
+                        React.createElement("span", { style: { fontSize: 11 } },
+                            "(",
+                            b.adet.toLocaleString("tr-TR"),
+                            " adet)")),
+                    React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } },
+                        "maa\u015F ",
+                        para(b.maas)),
+                    React.createElement("span", { className: "mono", "data-kz-bolum-kar": b.ad, style: { fontSize: 14, fontWeight: 700, color: b.kar >= 0 ? "var(--erp-ok)" : "var(--erp-danger)" } },
+                        b.kar >= 0 ? "kâr" : "zarar",
+                        " ",
+                        para(Math.abs(b.kar)))),
+                acikBolum === b.id && (() => {
+                    // BÖLÜM DÖKÜMÜ (v1.586.0): aylık verim + dönem girişleri + personel bazında. Verim = tahakkuk ÷ maaş;
+                    // çift başı gerçek maliyet = maaş ÷ adet (reçetedeki ücretle kıyaslanır).
+                    const bolum = ((tanimlar && tanimlar.bolumler) || []).find((x) => x.id === b.id);
+                    if (!bolum)
+                        return null;
+                    const aylik = bolumAylikDokum(bolum, uretim, cariler);
+                    const girisler = bolumGirisleri(bolum, uretim, cariler, (t) => kzTarihUygun(t, sonuc.aralik));
+                    const kisiler = bolumPersonelDokumu(girisler);
+                    const yuzde = (v) => (v == null ? "—" : `%${Math.round(v)}`);
+                    const th = { padding: "5px 8px", fontSize: 10, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--erp-text-2)", textAlign: "right", borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+                    const td = { padding: "5px 8px", fontSize: 12, textAlign: "right", borderBottom: "1px solid var(--erp-head)", whiteSpace: "nowrap" };
+                    return (React.createElement("div", { "data-kz-bolum-dokum": b.ad, style: { padding: "10px 12px", borderBottom: "1px solid var(--erp-head)", background: "#FBFAF7", display: "grid", gap: 12 } },
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 700, marginBottom: 4 } },
+                                "Ayl\u0131k verim ",
+                                React.createElement("span", { style: { fontWeight: 400, color: "var(--erp-text-3)" } }, "\u2014 verim = tahakkuk \u00F7 maa\u015F (%100 \u00FCst\u00FC b\u00F6l\u00FCm kendini \u00E7\u0131kar\u0131yor) \u00B7 \u00E7ift ba\u015F\u0131 = maa\u015F \u00F7 adet")),
+                            React.createElement("div", { style: { overflowX: "auto" } },
+                                React.createElement("table", { style: { borderCollapse: "collapse", minWidth: "100%" } },
+                                    React.createElement("thead", null,
+                                        React.createElement("tr", null, ["Ay", "Adet", "Tahakkuk", "Maaş", "Verim", "Çift başı gerçek", "Kâr / zarar"].map((h, i) => React.createElement("th", { key: h, style: { ...th, textAlign: i === 0 ? "left" : "right" } }, h)))),
+                                    React.createElement("tbody", null, aylik.length === 0 ? React.createElement("tr", null,
+                                        React.createElement("td", { colSpan: 7, style: { ...td, textAlign: "left", color: "var(--erp-text-3)" } }, "Hen\u00FCz kay\u0131t yok")) : aylik.map((k) => (React.createElement("tr", { key: k.ay, "data-kz-bolum-ay": k.ay },
+                                        React.createElement("td", { className: "mono", style: { ...td, textAlign: "left", fontWeight: 700 } }, k.ay),
+                                        React.createElement("td", { className: "mono", style: td }, k.adet.toLocaleString("tr-TR")),
+                                        React.createElement("td", { className: "mono", style: td }, para(k.tahakkuk)),
+                                        React.createElement("td", { className: "mono", style: td }, para(k.maas)),
+                                        React.createElement("td", { className: "mono", style: { ...td, fontWeight: 700, color: k.verim == null ? "var(--erp-text-3)" : k.verim >= 100 ? "var(--erp-ok)" : "var(--erp-danger)" } }, yuzde(k.verim)),
+                                        React.createElement("td", { className: "mono", style: td }, k.ciftMaliyeti == null ? "—" : `${(Math.round(k.ciftMaliyeti * 100) / 100).toLocaleString("tr-TR")} ₺`),
+                                        React.createElement("td", { className: "mono", style: { ...td, fontWeight: 700, color: k.kar >= 0 ? "var(--erp-ok)" : "var(--erp-danger)" } }, para(k.kar))))))))),
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 700, marginBottom: 4 } },
+                                "Personel baz\u0131nda ",
+                                React.createElement("span", { style: { fontWeight: 400, color: "var(--erp-text-3)" } }, "\u2014 se\u00E7ili d\u00F6nem")),
+                            React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, kisiler.length === 0 ? React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "Bu d\u00F6nemde giri\u015F yok") : kisiler.map((k) => (React.createElement("span", { key: k.personel, "data-kz-bolum-personel": k.personel, className: "mono", style: { fontSize: 12, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "3px 10px" } },
+                                React.createElement("b", null, k.personel),
+                                " \u00B7 ",
+                                k.adet.toLocaleString("tr-TR"),
+                                " adet \u00B7 ",
+                                para(k.tahakkuk)))))),
+                        React.createElement("div", null,
+                            React.createElement("div", { style: { fontSize: 12, fontWeight: 700, marginBottom: 4 } },
+                                "Giri\u015Fler ",
+                                React.createElement("span", { style: { fontWeight: 400, color: "var(--erp-text-3)" } },
+                                    "\u2014 se\u00E7ili d\u00F6nem, ",
+                                    girisler.length,
+                                    " teslim")),
+                            React.createElement("div", { style: { overflowX: "auto", maxHeight: 320, overflowY: "auto" } },
+                                React.createElement("table", { style: { borderCollapse: "collapse", minWidth: "100%" } },
+                                    React.createElement("thead", null,
+                                        React.createElement("tr", null, ["Tarih", "Üretim", "Model · renk", "Proses", "Personel", "Adet", "Ücret", "Tutar"].map((h, i) => React.createElement("th", { key: h, style: { ...th, textAlign: i < 5 ? "left" : "right" } }, h)))),
+                                    React.createElement("tbody", null, girisler.map((g) => (React.createElement("tr", { key: g.id, "data-kz-bolum-giris": g.siparisNo },
+                                        React.createElement("td", { className: "mono", style: { ...td, textAlign: "left" } }, tarihYaz ? tarihYaz(g.tarih) : g.tarih),
+                                        React.createElement("td", { className: "mono", style: { ...td, textAlign: "left", fontWeight: 700 } }, g.siparisNo),
+                                        React.createElement("td", { style: { ...td, textAlign: "left" } },
+                                            g.model,
+                                            g.renk ? ` · ${g.renk}` : ""),
+                                        React.createElement("td", { style: { ...td, textAlign: "left" } }, g.proses),
+                                        React.createElement("td", { style: { ...td, textAlign: "left" } }, g.personel || "—"),
+                                        React.createElement("td", { className: "mono", style: td }, g.adet.toLocaleString("tr-TR")),
+                                        React.createElement("td", { className: "mono", style: td },
+                                            g.ucret.toLocaleString("tr-TR"),
+                                            " \u20BA"),
+                                        React.createElement("td", { className: "mono", style: { ...td, fontWeight: 700 } }, para(g.tutar)))))))))));
+                })()))))),
         React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 } },
             "Sat\u0131lan mal\u0131n maliyeti: mamulde ",
             React.createElement("b", null, "re\u00E7etedeki hammaddeler"),
@@ -54343,7 +54731,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.583.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.586.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

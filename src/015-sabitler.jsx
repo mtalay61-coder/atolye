@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.585.0";
+const SURUM = "1.586.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Atolye ici bolum (Kesimhane): parca basi iscilik cariye degil bolum tahakkukuna, aylik maas carisine, Kar-Zararda bolum kar/zarar";
+const SURUM_NOTU = "Kar-Zararda bolum dokumu: aylik verim (tahakkuk/maas, cift basi gercek maliyet), girisler ve personel bazinda adet";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Atolye ici bolum (Kesimhane): parca basi iscilik cariye degi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.586.0", tarih: "04.10.2026",
+    eklenen: ["Finans › Kâr/Zarar › Atölye içi bölümler: bölüm satırına dokununca döküm — aylık tablo (adet, tahakkuk, maaş, verim %, çift başı gerçek maliyet, kâr/zarar), seçili dönemin girişleri (tarih, üretim no, model/renk, personel, adet × ücret) ve personel bazında adet/tahakkuk"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.585.0", tarih: "04.10.2026",
     eklenen: ["Tanımlar › Üretim › 'Atölye içi bölümler' (ör. Kesimhane): bağlı prosesler, personel ve aylık maaş", "Bölüme bağlı prosesin teslimi personel carisine yazılmıyor; üretim kaydına bölüm tahakkuku (adet × ücret) işleniyor — ürün maliyeti değişmez", "Her ay başı bölüm personeline 'Maaş' alacağı kendiliğinden tahakkuk ediyor (MAAS-YYYY-MM fişi); kasadan ödeme kapatır", "Finans › Kâr-Zarar'da 'Atölye içi bölümler': dönem tahakkuku − maaş = bölüm kâr/zararı; şirket işçiliğine maaşlar sayılıyor"],
     degisen: [], duzeltilen: [] },
@@ -1403,6 +1406,50 @@ function bolumKarZarar(bolum, uretim, cariler, tarihUygun) {
     maas += Number(h.tutar) || 0;
   }));
   return { tahakkuk, adet, maas, kar: tahakkuk - maas };
+}
+
+// BÖLÜM DÖKÜMÜ (v1.586.0 — kullanıcı: "Kesimhane'ye yap o girişleri, ne kadar verimli olduğu da görünsün").
+// Girişler: bölümün tahakkuk kayıtları üretim bilgisiyle (dönem süzgeçli). Aylık: ay bazında adet/tahakkuk/maaş,
+// verim = tahakkuk ÷ maaş (%100 üstü bölüm kendini çıkarıyor), çift başı gerçek maliyet = maaş ÷ adet. Saf.
+function bolumGirisleri(bolum, uretim, cariler, tarihUygun) {
+  const ad = (id) => (((cariler || []).find((c) => c.id === id) || {}).unvan) || "";
+  const satirlar = [];
+  (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+    if (t.bolumId !== bolum.id || !tarihUygun(t.tarih)) return;
+    satirlar.push({ id: t.id, tarih: t.tarih, zaman: t.zaman || "", siparisNo: u.siparisNo || "", model: t.model || u.model || "", renk: t.renk || u.renk || "",
+      proses: t.proses, personel: ad(t.personelId), personelId: t.personelId || null, adet: t.adet || 0, ucret: t.ucret || 0, tutar: t.tutar || 0 });
+  }));
+  return satirlar.sort((a, b) => (b.zaman || b.tarih).localeCompare(a.zaman || a.tarih));
+}
+function bolumAylikDokum(bolum, uretim, cariler) {
+  const aylar = new Map();
+  const al = (ay) => { if (!aylar.has(ay)) aylar.set(ay, { ay, adet: 0, tahakkuk: 0, maas: 0 }); return aylar.get(ay); };
+  (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+    if (t.bolumId !== bolum.id || !t.tarih) return;
+    const k = al(String(t.tarih).slice(0, 7)); k.adet += t.adet || 0; k.tahakkuk += t.tutar || 0;
+  }));
+  const uyeler = new Set((bolum.personel || []).map((p) => p.cariId));
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    if (!(h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || "")))) return;
+    if (!(h.bolumId === bolum.id || (!h.bolumId && uyeler.has(c.id)))) return;
+    if (!h.tarih) return;
+    al(String(h.tarih).slice(0, 7)).maas += Number(h.tutar) || 0;
+  }));
+  return Array.from(aylar.values()).sort((a, b) => b.ay.localeCompare(a.ay)).map((k) => ({
+    ...k, kar: k.tahakkuk - k.maas,
+    verim: k.maas > 0 ? (k.tahakkuk / k.maas) * 100 : null,
+    ciftMaliyeti: k.adet > 0 ? k.maas / k.adet : null,
+  }));
+}
+// Personel bazında (dönem): adet ve tahakkuk — kim ne kadar üretti.
+function bolumPersonelDokumu(girisler) {
+  const h = new Map();
+  (girisler || []).forEach((g) => {
+    const k = g.personel || "(personel seçilmemiş)";
+    if (!h.has(k)) h.set(k, { personel: k, adet: 0, tahakkuk: 0 });
+    h.get(k).adet += g.adet; h.get(k).tahakkuk += g.tutar;
+  });
+  return Array.from(h.values()).sort((a, b) => b.adet - a.adet);
 }
 
 function alisPbKodu(urun) {
