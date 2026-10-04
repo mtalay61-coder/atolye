@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.574.0";
+const SURUM = "1.575.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Stok resmi: kosedeki carpi kalkti; resme dokununca buyuyor, Duzenle ile degistirme ve onayli silme";
+const SURUM_NOTU = "Fiyatlandirmada para birimi her fiyat kutusunun yaninda; ustteki secici ve hepsi TL olsun mu seridi kalkti";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Stok resmi: kosedeki carpi kalkti; resme dokununca buyuyor, 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.575.0", tarih: "04.10.2026", eklenen: ["Fiyatlandırmada her fiyat kutusunun yanında kendi para birimi seçicisi (₺ / $ / €); fiyat grubu / cari fiyatında da"],
+    degisen: ["Üstteki tek 'Para birimi' seçicisi ve 'Bu sekmede N fiyat başka birimde, hepsi ₺ olsun mu?' şeridi kaldırıldı; kayıtlı fiyatın birimi kutunun yanından değiştirilir (rakam aynı kalır)"],
+    duzeltilen: [] },
   { surum: "1.574.0", tarih: "04.10.2026",
     eklenen: ["Stok kartındaki resme (kapak ve renk resimleri) dokununca büyük hâli açılıyor; orada 'Düzenle' ile değiştirme ve onaylı silme"],
     degisen: ["Resmin köşesindeki × (tek dokunuşla silme) kaldırıldı; silme yalnız Düzenle panelinde, iki dokunuşla"],

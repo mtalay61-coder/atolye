@@ -3,9 +3,12 @@
   "alisBasligi": "Alış Fiyatı (2 $ genel)",
   "pb": "USD"
  },
+ "birimDegisti": [
+  "0.18 EUR"
+ ],
  "hatalar": [],
  "kayit": [
-  "Alış · renk Siyah: 0.18 USD",
+  "Alış · renk Siyah: 0.18 EUR",
   "Alış · renk Taba: 12.5 TRY"
  ],
  "liste": [
