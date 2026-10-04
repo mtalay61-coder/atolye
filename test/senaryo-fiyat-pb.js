@@ -9,6 +9,9 @@
 //   3. TRY seçip başka renge "12,5" → kural 12.5 TRY; listede "12,5 ₺".
 //   4. Kutu yanında kuralın kendi birimi: TRY seçiliyken USD kuralın yanında "$" (farklı birim uyarısı).
 //   5. Fiş fiyatı kuralın biriminden çevriliyor (fiyatBul paraBirimi) — birim testlerinde; burada kayıt.
+// v1.575.0 (kullanıcı: "Üstteki kurlara gerek yok, her satırın yanına p.birimi girilsin"): üstteki seçici kalktı; birim
+// her kutunun yanındaki seçiciden (`data-fk-kutu-pb`). TRY artık Taba'nın kutusundan seçiliyor; ek adım: kayıtlı Siyah
+// fiyatının birimi kutunun yanından EUR yapılınca kural aynı rakamla EUR.
 const { uygulamaAc, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -37,7 +40,7 @@ async function calistir() {
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Alış Fiyatı/.test(x.textContent.trim()) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(300);
   const baslangic = await sayfa.evaluate(() => ({
-    pb: (document.querySelector("[data-fk-para-birimi]") || {}).getAttribute && document.querySelector("[data-fk-para-birimi]").getAttribute("data-fk-para-birimi"),
+    pb: (document.querySelector('[data-fk-kutu-pb="renk|Siyah"]') || {}).value,
     alisBasligi: ([...document.querySelectorAll("button")].find((x) => /^Alış Fiyatı/.test(x.textContent.trim())) || {}).textContent,
   }));
 
@@ -56,23 +59,29 @@ async function calistir() {
   await tekFiyatAc("Siyah");
   await sayfa.waitForTimeout(200);
   await yaz("renk|Siyah", "0,18");
-  // TRY seç, Taba'ya 12,5.
-  await sayfa.locator('[data-fk-pb="TRY"]').click();
-  await sayfa.waitForTimeout(150);
+  // Taba'nın kutusunda TRY seç, 12,5.
   await tekFiyatAc("Taba");
   await sayfa.waitForTimeout(200);
+  await sayfa.locator('[data-fk-kutu-pb="renk|Taba"]').selectOption("TRY");
+  await sayfa.waitForTimeout(150);
   await yaz("renk|Taba", "12,5");
 
   const liste = await sayfa.evaluate(() => [...document.querySelectorAll("[data-fk-kural]")].map((x) => `${x.getAttribute("data-fk-kural")}: ${x.textContent.replace(/\s+/g, " ").trim()}`));
   const siyahKutuBirimi = await sayfa.evaluate(() => {
     const k = document.querySelector('[data-fk-hucre="renk|Siyah"]');
-    return k ? `${k.value} ${k.nextElementSibling.textContent}` : null;
+    const pb = k && k.nextElementSibling;
+    return k ? `${k.value} ${pb && pb.selectedOptions ? pb.selectedOptions[0].textContent : pb.textContent}` : null;
   });
+  // Kayıtlı fiyatın birimi kutunun yanından değişir (rakam aynı).
+  await sayfa.locator('[data-fk-kutu-pb="renk|Siyah"]').selectOption("EUR");
+  await sayfa.waitForTimeout(500);
+  const birimDegisti = ((((await depoOku(sayfa, "stok:items")) || []).find((p) => p.id === "u1") || {}).fiyatKurallari || [])
+    .filter((k) => k.deger === "Siyah").map((k) => `${k.fiyat} ${k.paraBirimi}`);
   const kayit = ((((await depoOku(sayfa, "stok:items")) || []).find((p) => p.id === "u1") || {}).fiyatKurallari || [])
     .map((k) => `${k.tip} · ${k.kapsam} ${k.deger}: ${k.fiyat} ${k.paraBirimi}`);
 
   await tarayici.close();
-  return { hatalar, baslangic, liste, siyahKutuBirimi, kayit };
+  return { hatalar, baslangic, liste, siyahKutuBirimi, kayit, birimDegisti };
 }
 
 if (require.main === module) {

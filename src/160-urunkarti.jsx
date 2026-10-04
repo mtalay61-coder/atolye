@@ -162,6 +162,15 @@ function HariciBarkodKutusu({ urun, variant, stok, tanimlar, onKaydet, showToast
 // ve telefonda yazarak süzülemiyordu. Artık dar bir düğme (uzun ad … ile kısalır); dokununca altında arama kutusu +
 // süzülen renkler + "yeni renk olarak ekle" açılır. Panel `createPortal` ile gövdeye, sabit konumla çizilir: reçete
 // tabloları yatay kaydırmalı kutuda, içeride açılsa kesilirdi. Seçim asıl `onChange`'e `{target:{value}}` ile gider.
+// Fiyat kutusunun yanındaki küçük para birimi seçicisi (v1.575.0).
+function ParaBirimiSecici({ deger, onDegis, veri }) {
+  return (
+    <select value={deger} data-fk-kutu-pb={veri} title="Para birimi" onChange={(e) => onDegis(e.target.value)} className="mono"
+      style={{ fontSize: 12, fontWeight: 700, padding: "3px 1px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff", color: "var(--erp-text-2)", width: 42 }}>
+      {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{PARA_SEMBOLU[pb] || pb}</option>)}
+    </select>
+  );
+}
 function ReceteRenkSecimi({ hammaddeId, yr, onChange, children, value, style, title, className, ...rest }) {
   const [konum, setKonum] = useState(null);
   const btnRef = React.useRef(null);
@@ -380,10 +389,15 @@ function ProductMatrixCard({
   // FİYATLANDIRMA PARA BİRİMİ KALICI (v1.485.0). Kullanıcı: "P.birimi üstten değişince bedenler
   // değişmiyor ve kapatınca eski halini alıyor." Seçim yalnız ekran durumuydu: kart kapanınca kartın
   // alış/satış birimine dönüyordu. Artık ürüne yazılıyor (`fiyatParaBirimi: { Satış, Alış }`); yoksa
-  // kartın birimi. Var olan fiyatlar ise sorulmadan değişmez — `fkPbSoru` çubuğu (aşağıda) sorar.
+  // kartın birimi. v1.575.0: üst seçici kalktı, birim her fiyat kutusunun yanında (bkz. `fkKutuPb`).
   const fkPbVarsayilan = (tip) => ((product.fiyatParaBirimi || {})[tip]) || kartPb(tip);
   const [fkParaBirimi, setFkParaBirimi] = useState(() => fkPbVarsayilan("Satış"));
-  const [fkPbSoru, setFkPbSoru] = useState(null);
+  // SATIR BAŞINA PARA BİRİMİ (v1.575.0 — kullanıcı: "Fiyat kurlarda sıkıntı var. Üstteki kurlara gerek yok, her satırın
+  // yanına p.birimi girilsin"). Üstteki tek seçici + "hepsi ₺ olsun mu" şeridi kalktı; her fiyat kutusunun yanında kendi
+  // birimi seçilir. Kayıtlı fiyatta birim değişince kural o birimle (rakam aynı) yazılır; boş kutuda seçilen birim
+  // (`fkKutuPb[veri]`) fiyat yazılınca kullanılır. `fkParaBirimi` artık yalnız YENİ kutuların varsayılanı: son kaydedilen
+  // birim (ürüne `fiyatParaBirimi` olarak aynı yazımda kaydedilir).
+  const [fkKutuPb, setFkKutuPb] = useState({});
   // Renk+Beden matrisinde bir satırı (renk) ya da sütunu (beden) "tek fiyat"a kilitleyip kilitlemediğimizi
   // tutar — kilitliyken o satır/sütunun tüm hücreleri yerine TEK bir ortak fiyat kutusu kullanılır.
   // TEK FİYAT VARSAYILAN AÇIK (kullanıcı, 17 Eylül: "varsayılanda renk beden için aynı fiyat
@@ -761,54 +775,30 @@ function ProductMatrixCard({
   // Çekirdek kaydetme mantığı: state'teki (fkRenk/fkBeden/fkFiyat gibi) form alanlarına bağlı
   // olmadan, doğrudan verilen kapsam/değer/fiyat ile bir fiyat kuralı ekler ya da günceller. Hem tekli
   // form (fiyatKuraliKaydet) hem matris hücreleri (her hücre kendi başına, anında kaydedilir) bunu kullanır.
-  // Para birimi seçimi: ürüne yazılır; bu sekmede başka birimde fiyat varsa ne yapılacağı sorulur.
-  function fkParaBirimiSec(pb) {
-    setFkParaBirimi(pb);
-    if (fkPbVarsayilan(fkTip) !== pb) onUrunGuncelle(product.id, { fiyatParaBirimi: { ...(product.fiyatParaBirimi || {}), [fkTip]: pb } });
-    const farkli = (product.fiyatKurallari || []).filter((k) => k.tip === fkTip && (k.paraBirimi || kartPb(fkTip)) !== pb);
-    setFkPbSoru(farkli.length ? { hedef: pb, kurallar: farkli } : null);
-  }
-  function fkParaBirimiUygula(hedef, yol) {
-    const kurallar = (product.fiyatKurallari || []).map((k) => {
-      if (k.tip !== fkTip) return k;
-      const kPb = k.paraBirimi || kartPb(fkTip);
-      if (kPb === hedef) return k;
-      if (yol === "kur") {
-        const c = fiyatFiseCevir(k.fiyat, kPb, hedef, kurlar);
-        return c.cevrilemedi ? k : { ...k, fiyat: c.fiyat, paraBirimi: hedef };
-      }
-      return { ...k, paraBirimi: hedef };
-    });
-    const log = { id: uid("flog"), tarih: new Date().toISOString(), tip: fkTip,
-      etiket: `Özel fiyatlar ${PARA_SEMBOLU[hedef] || hedef} yapıldı (${yol === "kur" ? "kurla çevrildi" : "aynı rakamla"})`,
-      eskiFiyat: null, yeniFiyat: null, paraBirimi: hedef, toplu: true };
-    onUrunGuncelle(product.id, {
-      fiyatKurallari: kurallar,
-      fiyatParaBirimi: { ...(product.fiyatParaBirimi || {}), [fkTip]: hedef },
-      fiyatGecmisi: [log, ...(product.fiyatGecmisi || [])].slice(0, HAREKET_GECMIS_SINIRI),
-    });
-    setFkPbSoru(null);
-  }
-
-  function fiyatKuraliKaydetDogrudan(kapsam, deger, etiket, fiyat, ek) {
+  // `pb` (v1.575.0): bu fiyatın para birimi (satırdaki seçici); verilmezse varsayılan (`fkParaBirimi`).
+  function fiyatKuraliKaydetDogrudan(kapsam, deger, etiket, fiyat, ek, pb) {
     if (!(fiyat > 0)) return;
+    const birim = pb || fkParaBirimi;
     const mevcutKurallar = product.fiyatKurallari || [];
     // Cari kuralında AYNI cari için farklı renk/beden kırılımları ayrı kurallardır: eşleşme
     // kapsam+değer+renk+beden üzerinden yapılıyor, yoksa ikinci kırılım birincinin üzerine yazardı.
     const eskiKural = mevcutKurallar.find((k) => k.tip === fkTip && k.kapsam === kapsam && k.deger === deger
       && (k.renk || null) === ((ek && ek.renk) || null) && (k.beden || null) === ((ek && ek.beden) || null));
     const yeniKural = { id: eskiKural ? eskiKural.id : uid("fkural"), kapsam, deger, tip: fkTip, fiyat, etiket,
-      renk: (ek && ek.renk) || null, beden: (ek && ek.beden) || null, paraBirimi: fkParaBirimi };
+      renk: (ek && ek.renk) || null, beden: (ek && ek.beden) || null, paraBirimi: birim };
     const yeniKurallar = eskiKural
       ? mevcutKurallar.map((k) => (k.id === eskiKural.id ? yeniKural : k))
       : [...mevcutKurallar, yeniKural];
     const log = {
       id: uid("flog"), tarih: new Date().toISOString(), tip: fkTip, etiket,
       eskiFiyat: eskiKural ? eskiKural.fiyat : null, yeniFiyat: fiyat,
-      eskiParaBirimi: eskiKural ? (eskiKural.paraBirimi || kartPb(fkTip)) : null, paraBirimi: fkParaBirimi,
+      eskiParaBirimi: eskiKural ? (eskiKural.paraBirimi || kartPb(fkTip)) : null, paraBirimi: birim,
     };
+    // Son kullanılan birim yeni kutuların varsayılanı olur — AYNI yazımda (ayrı yazım eski listeyle ezerdi).
+    if (birim !== fkParaBirimi) setFkParaBirimi(birim);
     onUrunGuncelle(product.id, {
       fiyatKurallari: yeniKurallar,
+      ...(birim !== fkPbVarsayilan(fkTip) ? { fiyatParaBirimi: { ...(product.fiyatParaBirimi || {}), [fkTip]: birim } } : {}),
       fiyatGecmisi: [log, ...(product.fiyatGecmisi || [])].slice(0, HAREKET_GECMIS_SINIRI),
     });
   }
@@ -5855,7 +5845,7 @@ function ProductMatrixCard({
                 <button
                   key={t}
                   type="button"
-                  onClick={() => { setFkTip(t); setFkParaBirimi(fkPbVarsayilan(t)); setFkPbSoru(null); }}
+                  onClick={() => { setFkTip(t); setFkParaBirimi(fkPbVarsayilan(t)); setFkKutuPb({}); }}
                   style={{
                     padding: "5px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     border: `1.5px solid ${fkTip === t ? (t === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-border)"}`,
@@ -5871,43 +5861,7 @@ function ProductMatrixCard({
             <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Yeni Özel Fiyat Ekle</span>
-                {/* PARA BİRİMİ SEÇİCİ (v1.481.0): aşağıda girilen her fiyat bu birimle kaydedilir. */}
-                <span data-fk-para-birimi={fkParaBirimi} style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
-                  <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Para birimi:</span>
-                  {MUHASEBE_PARA_BIRIMLERI.map((pb) => (
-                    <button key={pb} type="button" data-fk-pb={pb} onClick={() => fkParaBirimiSec(pb)}
-                      style={{ padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-                        border: `1.5px solid ${fkParaBirimi === pb ? "var(--erp-primary)" : "var(--erp-line)"}`,
-                        background: fkParaBirimi === pb ? "var(--erp-primary)" : "#fff", color: fkParaBirimi === pb ? "#fff" : "var(--erp-text-2)" }}>
-                      {PARA_SEMBOLU[pb] || pb} {pb}
-                    </button>
-                  ))}
-                </span>
               </div>
-              {fkPbSoru && (() => {
-                // VAR OLAN FİYATLAR NE OLSUN? Birim değişince eski fiyatlar kendi birimlerinde kalıyordu
-                // (kullanıcı "değişmiyor" dedi); sessizce değiştirmek de yanlış olurdu — 16 ₺ ile 16 $
-                // arasında 48 kat fark var. Üç açık seçenek: aynı rakamla yeni birim (fiyatlar zaten o
-                // birimde düşünülerek girildiyse), kurla çevir, dokunma (yalnız yeni fiyatlar).
-                const { hedef, kurallar: farkli } = fkPbSoru;
-                const hs = PARA_SEMBOLU[hedef] || hedef;
-                const ornek = farkli[0];
-                const oPb = ornek.paraBirimi || kartPb(fkTip);
-                const cevrim = fiyatFiseCevir(ornek.fiyat, oPb, hedef, kurlar);
-                return (
-                  <div data-fk-pb-soru={hedef} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", margin: "0 0 10px", padding: "8px 10px", background: "var(--erp-wait-tint)", border: "1px solid var(--erp-wait)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
-                    <span style={{ flex: "1 1 220px" }}>Bu sekmede <b>{farkli.length}</b> fiyat başka birimde. Hepsi {hs} olsun mu?</span>
-                    <button type="button" className="btn-ghost" data-fk-pb-uygula="ayni" onClick={() => fkParaBirimiUygula(hedef, "ayni")}>
-                      Aynı rakamla ({fiyatYazi(ornek.fiyat)} {PARA_SEMBOLU[oPb] || oPb} → {fiyatYazi(ornek.fiyat)} {hs})
-                    </button>
-                    <button type="button" className="btn-ghost" data-fk-pb-uygula="kur" disabled={cevrim.cevrilemedi} title={cevrim.cevrilemedi ? "Kur yok" : undefined}
-                      onClick={() => fkParaBirimiUygula(hedef, "kur")}>
-                      Kurla çevir ({fiyatYazi(ornek.fiyat)} {PARA_SEMBOLU[oPb] || oPb} → {cevrim.cevrilemedi ? "kur yok" : `${fiyatYazi(cevrim.fiyat)} ${hs}`})
-                    </button>
-                    <button type="button" className="btn-ghost" data-fk-pb-uygula="dokunma" onClick={() => setFkPbSoru(null)}>Dokunma, yalnız yeni fiyatlar</button>
-                  </div>
-                );
-              })()}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                 {[
                   { key: "renkBeden", label: "Renk + Beden" },
@@ -5979,9 +5933,12 @@ function ProductMatrixCard({
                 )}
                 {(fkKapsam === "fiyatGrubu" || fkKapsam === "cari") && (
                   <>
-                    <Field label={`Fiyat (${PARA_SEMBOLU[fkParaBirimi] || fkParaBirimi})`}>
-                      <input type="text" inputMode="decimal" value={fkFiyat} onChange={(e) => setFkFiyat(e.target.value)} placeholder="0,00"
-                        data-fk-fiyat="1" className="mono" style={{ ...inputStyle, width: 110, textAlign: "right" }} />
+                    <Field label="Fiyat">
+                      <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+                        <input type="text" inputMode="decimal" value={fkFiyat} onChange={(e) => setFkFiyat(e.target.value)} placeholder="0,00"
+                          data-fk-fiyat="1" className="mono" style={{ ...inputStyle, width: 110, textAlign: "right" }} />
+                        <ParaBirimiSecici deger={fkParaBirimi} onDegis={setFkParaBirimi} veri="form" />
+                      </span>
                     </Field>
                     <button className="btn-primary" onClick={fiyatKuraliKaydet}><Plus size={14} /> Ekle</button>
                   </>
@@ -5996,14 +5953,13 @@ function ProductMatrixCard({
                 const tumBedenler = bedenSirala(Array.from(new Set(product.variants.map((v) => v.beden))));
                 const kuralBul = (kapsam, deger) => (product.fiyatKurallari || []).find((k) => k.tip === fkTip && k.kapsam === kapsam && k.deger === deger);
 
-                const pbSembol = PARA_SEMBOLU[fkParaBirimi] || fkParaBirimi;
                 // FİYAT KUTUSU (v1.481.0): metin kutusu (virgül kabul), 84 px, sağında kuralın KENDİ para
                 // birimi — seçili birimden farklıysa turuncu (kaydedilince seçili birime geçer).
                 // `uygulanan`: bu kutunun fiyatı satışta EN AZ BİR hücrede geçiyor → kırmızı (v1.485.0).
                 // Kullanıcı: "Geçerli olacak fiyat kırmızı olsun, hangisinin geçerli sayıldığı daha rahat
                 // anlaşılsın." Ezilen (ör. renk fiyatı varken beden fiyatı) normal renkte kalır.
                 const fiyatKutusu = ({ kural, kaydet, veri, vurgu, ipucu, uygulanan }) => {
-                  const kPb = kural ? (kural.paraBirimi || kartPb(fkTip)) : fkParaBirimi;
+                  const kPb = kural ? (kural.paraBirimi || kartPb(fkTip)) : (fkKutuPb[veri] || fkParaBirimi);
                   return (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                       <input
@@ -6022,19 +5978,17 @@ function ProductMatrixCard({
                           if (kural && e.target.value.trim() === "") { fiyatKuraliSil(kural.id); return; }
                           const yeni = fiyatSayisi(e.target.value);
                           if (kural && yeni === 0 && e.target.value.trim() !== "") { fiyatKuraliSil(kural.id); return; }
-                          if (!(yeni > 0) || (kural && yeni === kural.fiyat && kPb === fkParaBirimi)) return;
-                          kaydet(yeni);
+                          if (!(yeni > 0) || (kural && yeni === kural.fiyat)) return;
+                          kaydet(yeni, kPb);
                         }}
                         className={ipucu && !kural ? "mono fk-uygulanan" : "mono"}
                         style={{ width: 84, padding: "4px 6px", fontSize: 13, border: `1px solid ${vurgu ? "#6B4E8A" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", textAlign: "right",
                           ...(uygulanan ? { color: "var(--erp-void)", fontWeight: 700, background: "var(--erp-void-tint)" } : {}) }}
                       />
-                      {/* Boş kutu geçerli fiyatı kendi birimiyle gösteriyorsa ("12 ₺") yanına seçili birim
-                          ("$") yazılmaz — "12 ₺ $" iki birim yan yana kafa karıştırıyordu (v1.485.0). */}
-                      <span className="mono" title={kural && kPb !== fkParaBirimi ? `Bu fiyat ${kPb} — değiştirirseniz ${fkParaBirimi} olarak kaydedilir` : undefined} hidden={!kural && !!ipucu}
-                        style={{ fontSize: 11, fontWeight: 700, color: kural && kPb !== fkParaBirimi ? "#B7791F" : "var(--erp-text-3)" }}>
-                        {PARA_SEMBOLU[kPb] || kPb}
-                      </span>
+                      {/* SATIRIN KENDİ BİRİMİ (v1.575.0): kayıtlı fiyatta değiştirmek kuralı o birimle (aynı rakam) yazar;
+                          boş kutuda yazılacak fiyatın birimini seçer. */}
+                      <ParaBirimiSecici deger={kPb} veri={veri}
+                        onDegis={(pb) => { if (kural) kaydet(kural.fiyat, pb); else setFkKutuPb((x) => ({ ...x, [veri]: pb })); }} />
                     </span>
                   );
                 };
@@ -6112,14 +6066,14 @@ function ProductMatrixCard({
                                       // boşsa beden fiyatı ya da genel fiyat — hangisi uygulanıyorsa.
                                       const g = gecerli(r, b);
                                       return <span className="mono" data-fk-gecerli={deger} data-fk-uygulanan={g.fiyat > 0 ? "1" : undefined} title={`Satışta uygulanan: ${g.kaynak}`} style={{ fontSize: 12, fontWeight: 700, color: g.fiyat > 0 ? "var(--erp-void)" : "var(--erp-text-3)" }}>{gecerliYazi(g) || "—"}</span>;
-                                    })() : fiyatKutusu({ kural, veri: deger, uygulanan: !!kural, ipucu: kural ? "" : gecerliYazi(gecerli(r, b)), kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni) })}
+                                    })() : fiyatKutusu({ kural, veri: deger, uygulanan: !!kural, ipucu: kural ? "" : gecerliYazi(gecerli(r, b)), kaydet: (yeni, pb) => fiyatKuraliKaydetDogrudan("renkBeden", deger, `${r} / ${b}`, yeni, null, pb) })}
                                   </td>
                                 );
                               })}
                               <td style={{ padding: "4px 6px", textAlign: "center", borderLeft: "1px dashed var(--erp-line)" }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 4, justifyContent: "center" }}>
                                   <input type="checkbox" checked={renkKilitli} onChange={() => renkTekFiyatToggle(r)} title="Bu rengin tüm bedenlerine tek fiyat uygula" />
-                                  {renkKilitli ? fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, uygulanan: !!renkKurali && renkUygulaniyor(r), kaydet: (yeni) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni) }) : kapaliKuralNotu(renkKurali)}
+                                  {renkKilitli ? fiyatKutusu({ kural: renkKurali, veri: `renk|${r}`, vurgu: true, uygulanan: !!renkKurali && renkUygulaniyor(r), kaydet: (yeni, pb) => fiyatKuraliKaydetDogrudan("renk", r, `Renk: ${r}`, yeni, null, pb) }) : kapaliKuralNotu(renkKurali)}
                                 </div>
                               </td>
                             </tr>
@@ -6134,7 +6088,7 @@ function ProductMatrixCard({
                               <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
                                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
                                   <input type="checkbox" checked={bedenKilitli} onChange={() => bedenTekFiyatToggle(b)} title="Bu bedenin tüm renklerine tek fiyat uygula" />
-                                  {bedenKilitli ? fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, uygulanan: !!bedenKurali && bedenUygulaniyor(b), kaydet: (yeni) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni) }) : kapaliKuralNotu(bedenKurali)}
+                                  {bedenKilitli ? fiyatKutusu({ kural: bedenKurali, veri: `beden|${b}`, vurgu: true, uygulanan: !!bedenKurali && bedenUygulaniyor(b), kaydet: (yeni, pb) => fiyatKuraliKaydetDogrudan("beden", b, `Beden: ${b}`, yeni, null, pb) }) : kapaliKuralNotu(bedenKurali)}
                                 </div>
                               </td>
                             );
@@ -6144,7 +6098,7 @@ function ProductMatrixCard({
                       </tbody>
                     </table>
                     <p style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6 }}>
-                      Fiyatı kutuya yazıp kutudan çıkın — kaydedilir; kutuyu boşaltıp çıkarsanız fiyat silinir. Virgülle yazabilirsiniz (0,18). Birim: <b>{pbSembol} {fkParaBirimi}</b> (yukarıdan değiştirin).
+                      Fiyatı kutuya yazıp kutudan çıkın — kaydedilir; kutuyu boşaltıp çıkarsanız fiyat silinir. Virgülle yazabilirsiniz (0,18). Para birimi her kutunun yanında seçilir (₺ / $ / €).
                       Bir rengin tamamına tek fiyat için sağdaki kutuyu işaretleyin; ölçünün tamamı için alttaki kutuyu.
                       İkisi birden doluysa <b>renk fiyatı o rengin bütün ölçülerinde geçer</b>; ölçü fiyatı yalnız renk fiyatı
                       girilmemiş renklerde uygulanır (öncelik: Renk+Ölçü &gt; Renk &gt; Ölçü &gt; Genel). Fişe gelecek
