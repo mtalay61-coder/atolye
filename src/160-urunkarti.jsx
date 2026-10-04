@@ -162,6 +162,10 @@ function HariciBarkodKutusu({ urun, variant, stok, tanimlar, onKaydet, showToast
 // ve telefonda yazarak süzülemiyordu. Artık dar bir düğme (uzun ad … ile kısalır); dokununca altında arama kutusu +
 // süzülen renkler + "yeni renk olarak ekle" açılır. Panel `createPortal` ile gövdeye, sabit konumla çizilir: reçete
 // tabloları yatay kaydırmalı kutuda, içeride açılsa kesilirdi. Seçim asıl `onChange`'e `{target:{value}}` ile gider.
+// GRUP RENKLERİ (v1.577.0 — kullanıcı: "Grupların renkleri de değişsin"): her fiyat grubu kendi renginde (sırasına göre);
+// matristeki seçici, grup listesindeki ad ve üye etiketleri aynı renkte — hangi rengin hangi setten olduğu bir bakışta.
+const FIYAT_GRUP_RENKLERI = ["#6B4E8A", "#1F7A6B", "#B5562A", "#2F5F9E", "#8A6D1F", "#A23B6B", "#4C7A2A", "#5A5A7A"];
+const fiyatGrupRengi = (gruplar, id) => FIYAT_GRUP_RENKLERI[Math.max(0, (gruplar || []).findIndex((g) => g.id === id)) % FIYAT_GRUP_RENKLERI.length];
 // Fiyat kutusunun yanındaki küçük para birimi seçicisi (v1.575.0).
 function ParaBirimiSecici({ deger, onDegis, veri }) {
   return (
@@ -902,6 +906,50 @@ function ProductMatrixCard({
     if (ortak && eklenen.length) renkFiyatlariTopluKaydet(eklenen, ortak.fiyat, ortak.paraBirimi, `Grup ${ad}`, { fiyatRenkGruplari: yeniGruplar });
     else onUrunGuncelle(product.id, { fiyatRenkGruplari: yeniGruplar });
     setFkGrupForm(null);
+  }
+
+  // TEK RENGİ GRUBA ATA (v1.577.0 — kullanıcı: "Grupları eklerken seçmeli olsun, bu şekilde zor"): matrisin renk satırındaki
+  // açılır kutudan. `hedefId` null → gruptan çıkar; `yeniAd` → yeni grup aç. Boşalan grup silinir. Hedef grubun ortak
+  // fiyatı varsa renge AYNI yazımda uygulanır.
+  function renkGrubaAta(r, hedefId, yeniAd) {
+    const mevcut = product.fiyatRenkGruplari || [];
+    const ayniAdli = yeniAd ? mevcut.find((g) => kodEsit(g.ad, yeniAd)) : null;
+    const hedef = ayniAdli ? ayniAdli.id : hedefId;
+    let gruplar = mevcut.map((g) => ({ ...g, renkler: g.renkler.filter((x) => x !== r) }));
+    if (hedef) gruplar = gruplar.map((g) => (g.id === hedef ? { ...g, renkler: [...g.renkler, r] } : g));
+    else if (yeniAd) gruplar.push({ id: uid("frg"), ad: yeniAd, renkler: [r] });
+    gruplar = gruplar.filter((g) => g.renkler.length > 0);
+    const eski = hedef ? mevcut.find((g) => g.id === hedef) : null;
+    const ortak = eski ? ortakRenkFiyati(eski.renkler.filter((x) => x !== r)) : null;
+    if (ortak) renkFiyatlariTopluKaydet([r], ortak.fiyat, ortak.paraBirimi, `Grup ${eski.ad}`, { fiyatRenkGruplari: gruplar });
+    else onUrunGuncelle(product.id, { fiyatRenkGruplari: gruplar });
+  }
+  // ADINA GÖRE OTOMATİK GRUPLA (v1.577.0): grupsuz renkler adının SON kelimesine göre ("Kahve Süet", "Siyah Süet" → Süet;
+  // "Kahve Baskı", "Siyah Baskı" → Baskı); en az iki renk aynı kelimeyi paylaşıyorsa grup olur. Aynı adlı grup varsa ona eklenir.
+  // Fiyat yazmaz — grupların fiyatı sonra tek kutudan girilir.
+  function otomatikGrupla(renkler) {
+    const mevcut = product.fiyatRenkGruplari || [];
+    const grupta = new Set(mevcut.flatMap((g) => g.renkler));
+    const kova = new Map();
+    renkler.filter((r) => !grupta.has(r)).forEach((r) => {
+      const p = String(r || "").trim().split(/\s+/);
+      if (p.length < 2) return;
+      const k = p[p.length - 1];
+      const anahtar = k.toLocaleLowerCase("tr-TR");
+      if (!kova.has(anahtar)) kova.set(anahtar, { ad: k, renkler: [] });
+      kova.get(anahtar).renkler.push(r);
+    });
+    let gruplar = [...mevcut];
+    let sayi = 0;
+    kova.forEach(({ ad, renkler: l }) => {
+      const var_ = gruplar.find((g) => kodEsit(g.ad, ad));
+      if (!var_ && l.length < 2) return;
+      sayi += l.length;
+      gruplar = var_ ? gruplar.map((g) => (g.id === var_.id ? { ...g, renkler: [...g.renkler, ...l] } : g)) : [...gruplar, { id: uid("frg"), ad, renkler: l }];
+    });
+    if (!sayi) { if (showToast) showToast("Otomatik gruplanacak renk yok (adının son kelimesi aynı olan en az iki grupsuz renk gerekir)"); return; }
+    onUrunGuncelle(product.id, { fiyatRenkGruplari: gruplar });
+    if (showToast) showToast(`${sayi} renk adına göre gruplandı — grupların fiyatını aşağıdan girin`);
   }
 
   function fiyatKuraliSil(kuralId) {
@@ -6123,7 +6171,25 @@ function ProductMatrixCard({
                             <tr key={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                               <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                                 {olcuGoster(r)}
-                                {(() => { const g = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r)); return g ? <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)", background: "#6B4E8A1A", color: "var(--erp-purple)" }}>{g.ad}</span> : null; })()}
+                                {(() => {
+                                  // GRUP SEÇİCİ (v1.577.0): rengi listeden bir gruba al / yeni grup aç / gruptan çıkar.
+                                  const gr = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r));
+                                  return (
+                                    <select value={gr ? gr.id : ""} data-fk-renk-grup={r} title="Fiyat grubu — aynı gruptaki renkler aynı fiyatı alır"
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (v === "__yeni__") { const ad = (window.prompt("Yeni grup adı (ör. Süetler):", "") || "").trim(); if (ad) renkGrubaAta(r, null, ad); return; }
+                                        renkGrubaAta(r, v || null);
+                                      }}
+                                      style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 2px", borderRadius: "var(--erp-r-pill)", maxWidth: 110,
+                                        ...(() => { const c = gr ? fiyatGrupRengi(product.fiyatRenkGruplari, gr.id) : null;
+                                          return { border: `1px solid ${c || "var(--erp-line)"}`, background: c ? `${c}1F` : "#fff", color: c || "var(--erp-text-3)" }; })() }}>
+                                      <option value="">{gr ? "— gruptan çıkar" : "+ grup"}</option>
+                                      {(product.fiyatRenkGruplari || []).map((x) => <option key={x.id} value={x.id}>{x.ad}</option>)}
+                                      <option value="__yeni__">+ yeni grup…</option>
+                                    </select>
+                                  );
+                                })()}
                               </td>
                               {tumBedenler.map((b) => {
                                 const deger = `${r}|${b}`;
@@ -6198,9 +6264,13 @@ function ProductMatrixCard({
                     <div data-fk-gruplar="1" style={{ marginTop: 10, padding: "8px 10px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Renk grupları</span>
-                        <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>aynı fiyatlı renk setleri — grubun fiyatı bütün renklerine yazılır</span>
+                        <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>aynı fiyatlı renk setleri — grubun fiyatı bütün renklerine yazılır; rengi gruba almak için satırdaki "+ grup" kutusu</span>
+                        <button type="button" className="btn-ghost" data-fk-grup-otomatik="1" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 12 }}
+                          title="Adının son kelimesi aynı olan renkleri (Süet, Deri, Baskı…) tek dokunuşla grupla" onClick={() => otomatikGrupla(tumRenkler)}>
+                          Adına göre otomatik grupla
+                        </button>
                         {!fkGrupForm && (
-                          <button type="button" className="btn-ghost" data-fk-grup-ekle="1" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 12 }}
+                          <button type="button" className="btn-ghost" data-fk-grup-ekle="1" style={{ padding: "3px 10px", fontSize: 12 }}
                             onClick={() => setFkGrupForm({ ad: "", renkler: [] })}>
                             <Plus size={12} /> Grup ekle
                           </button>
@@ -6212,9 +6282,11 @@ function ProductMatrixCard({
                         const pb = fkGrupPb[g.id] || (ortak ? ortak.paraBirimi : fkParaBirimi);
                         return (
                           <div key={g.id} data-fk-grup={g.ad} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "5px 0", borderTop: "1px solid var(--erp-line-soft)" }}>
-                            <b style={{ fontSize: 13, minWidth: 80 }}>{g.ad}</b>
+                            <b style={{ fontSize: 13, minWidth: 80, color: fiyatGrupRengi(product.fiyatRenkGruplari, g.id), display: "inline-flex", alignItems: "center", gap: 5 }}>
+                              <span style={{ width: 10, height: 10, borderRadius: "50%", background: fiyatGrupRengi(product.fiyatRenkGruplari, g.id), display: "inline-block" }} />{g.ad}
+                            </b>
                             <span style={{ display: "flex", gap: 4, flexWrap: "wrap", flex: "1 1 200px" }}>
-                              {renkler.map((r) => <span key={r} className="mono" style={{ fontSize: 11, padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: "#6B4E8A1A", color: "var(--erp-purple)" }}>{r}</span>)}
+                              {renkler.map((r) => <span key={r} className="mono" style={{ fontSize: 11, padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: `${fiyatGrupRengi(product.fiyatRenkGruplari, g.id)}1F`, color: fiyatGrupRengi(product.fiyatRenkGruplari, g.id) }}>{r}</span>)}
                             </span>
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
                               <input key={ortak ? `${ortak.fiyat}|${ortak.paraBirimi}` : "bos"} type="text" inputMode="decimal" data-fk-grup-fiyat={g.ad}
