@@ -1,0 +1,29 @@
+{
+ "asorti": {
+  "kayit": [
+   "Siyah|as1",
+   "Kahve|as1"
+  ],
+  "once": "Asorti barkodları — sipariş ekranında okutulur Asorti barkodu ekle Henüz asorti barkodu yok — \"Asorti barkodu ekle\" ile renk ve asorti seçip oluşturun.",
+  "satirlar": [
+   "Siyah|8 li Standart: kodlu",
+   "Kahve|8 li Standart: kodlu"
+  ]
+ },
+ "bagcik": {
+  "once": {
+   "dugme": 1,
+   "kurulamayan": 4
+  },
+  "sonra": {
+   "boyutlar": [
+    "100 Cm:Boyut:kodlu:Rekapta",
+    "120 cm:Boyut:kodlu:Rekapta"
+   ],
+   "dugme": 0,
+   "kurulamayan": 0,
+   "stokNoVar": true
+  }
+ },
+ "hatalar": []
+}

@@ -2025,7 +2025,7 @@ const SURUM_NOTU = "Barkod kodlari otomatik (stokta acilan renk/beden/boyut tani
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
     { surum: "1.579.0", tarih: "04.10.2026",
-        eklenen: ["Stokta açılan renk, beden ve boyut Tanımlar'da yoksa kendiliğinden tanımlanıyor; renk/ölçü kodu ve ürünün stok no'su otomatik atanıyor — barkod kendiliğinden kuruluyor", "Ürün kartı › Barkodlar: 'Asorti barkodu ekle' (renk ya da bütün renkler + asorti); listeden kaldırma"],
+        eklenen: ["Stok kartında renk, beden ya da boyut eklenince Tanımlar'da yoksa kendiliğinden tanımlanıyor; renk/ölçü kodu ve ürünün stok no'su otomatik atanıyor — barkod kendiliğinden kuruluyor", "Barkodlar sekmesinde kodu eksik ürün için \"Barkodları oluştur\" düğmesi", "Ürün kartı › Barkodlar: 'Asorti barkodu ekle' (renk ya da bütün renkler + asorti); listeden kaldırma"],
         degisen: ["Asorti barkodları artık her renk × asorti için kendiliğinden listelenmiyor; yalnız kullanıcının oluşturdukları (basılmış eski etiketler okunmaya devam eder)"],
         duzeltilen: ["Tanımlarda olmayan boyutlu stokta (Bağcık 100 Cm / 120 cm) barkod 'kurulamıyor' kalıyordu"] },
     { surum: "1.578.0", tarih: "04.10.2026", eklenen: ["Renk grubu satırında öbür tarafın (alış↔satış) fiyatı bilgi olarak görünüyor"],
@@ -18182,42 +18182,47 @@ function AtolyeERP() {
         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", kodlu), "Tanımlar", kodlu);
         return kodlu;
     }, [tanimSilinenleriCopeAt]);
-    // BARKOD KODLARI KENDİLİĞİNDEN (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
-    // oluştursun; sadece asorti barkodunu kullanıcı oluştursun"). Eskiden kod atama Paketleme › "Eksik kodları ata" düğmesine
-    // kalıyordu; stok kartında açılan ama Tanımlar'da olmayan ölçü (Bağcık "100 Cm") hiç kod almıyordu → "barkod kurulamıyor".
-    // Stok ya da tanımlar her değiştiğinde: tanımsız renk/ölçü tanımlanır (`eksikBarkodTanimlari`), stok no'suz ürüne stok no,
-    // kodsuz tanıma kod (`kodlariAta`) — VAR OLAN koda dokunulmaz (basılmış etiket geçerli kalır). Asorti tanımına kod da
-    // burada verilir ama asorti BARKODU ürün kartında kullanıcı ekleyince listelenir. İnternet yokken çalışmaz (kilit, v1.557).
-    // Aynı eksik imzası ikinci kez işlenmez — yazım düşerse döngü olmasın.
-    const otoKodImzaRef = useRef("");
-    useEffect(() => {
-        if (loading || baglantiYok)
+    // ÜRÜNÜN BARKODUNU TAMAMLA (v1.579.0 — kullanıcı: "Stokta renk, beden, boyut vs. açıldığında barkodunu otomatik
+    // oluştursun; sadece asorti barkodunu kullanıcı oluştursun"). Bağcık'ta "100 Cm" / "120 cm" Tanımlar'da yoktu → ölçü kodu "—",
+    // barkod "kurulamıyor". YALNIZ O ÜRÜN için: tanımsız renk/ölçüleri tanımlar (`eksikBarkodTanimlari`), kodsuz tanımlara kod
+    // ve ürüne stok no verir (`kodlariAta`; var olan koda dokunmaz). Ürün kartı renk/ölçü EKLENİNCE kendiliğinden, eski ürünlerde
+    // Barkodlar sekmesindeki "Barkodları oluştur" ile çağırır. BİLEREK GENEL DEĞİL: açılışta bütün stoğu tanımlamak, yazım
+    // hatalı ölçüleri ("3840") ve göç bekleyen renkleri de kalıcı tanıma çeviriyor, "tanımsız ölçü — düzelt" akışını yutuyordu.
+    const urunBarkodunuTamamla = useCallback((urunId, sessiz) => {
+        const urun = (stok || []).find((u) => u.id === urunId);
+        if (!urun)
             return;
-        const e = eksikBarkodTanimlari(stok, tanimlar, uid);
+        const e = eksikBarkodTanimlari([urun], tanimlar, uid);
         const t2 = (e.renkler.length || e.bedenler.length)
             ? { ...tanimlar, renkler: [...(tanimlar.renkler || []), ...e.renkler], bedenler: [...(tanimlar.bedenler || []), ...e.bedenler] }
             : tanimlar;
         const k = kodlariAta(stok, t2);
-        const toplam = k.atanan.stok + k.atanan.renk + k.atanan.beden + k.atanan.asorti;
-        if (!e.renkler.length && !e.bedenler.length && toplam === 0)
+        const yeniNo = urun.stokNo ? null : ((k.stok.find((u) => u.id === urunId) || {}).stokNo || null);
+        const tanimDegisti = e.renkler.length || e.bedenler.length || k.atanan.renk || k.atanan.beden || k.atanan.asorti;
+        if (!yeniNo && !tanimDegisti) {
+            if (!sessiz)
+                showToast("Bu ürünün barkod kodları tamam");
             return;
-        const imza = [...e.renkler.map((r) => `r:${r.ad}`), ...e.bedenler.map((b) => `b:${b.tip}:${b.ad}`),
-            ...(stok || []).filter((u) => !u.stokNo).map((u) => `s:${u.id}`), `k:${toplam}`].join("|");
-        if (otoKodImzaRef.current === imza)
-            return;
-        otoKodImzaRef.current = imza;
-        if (k.atanan.stok > 0)
-            saveStok(k.stok);
-        tanimlarKodluYaz(k.tanimlar);
+        }
+        if (yeniNo)
+            saveStok(stok.map((u) => (u.id === urunId ? { ...u, stokNo: yeniNo } : u)));
+        // Sayaçlar başka stok no'suz ürünleri de saymış olabilir (yalnız boşluk bırakır, çakışma yapmaz); stok no'yu
+        // yalnız bu ürüne yazdığımız için sayaç yalnız onunkine kadar ilerletilir.
+        const sayac = { ...(k.tanimlar.kodSayaclari || {}) };
+        if (yeniNo)
+            sayac.stok = Math.max(Number((tanimlar.kodSayaclari || {}).stok) || 0, yeniNo);
+        else
+            sayac.stok = (tanimlar.kodSayaclari || {}).stok;
+        if (tanimDegisti || yeniNo)
+            tanimlarKodluYaz({ ...k.tanimlar, kodSayaclari: sayac });
         const parca = [
-            e.renkler.length ? `${e.renkler.length} renk (${e.renkler.map((r) => r.ad).join(", ")})` : "",
-            e.bedenler.length ? `${e.bedenler.length} ölçü (${e.bedenler.map((b) => b.ad).join(", ")})` : "",
-            k.atanan.stok ? `${k.atanan.stok} stok no` : "",
+            e.renkler.length ? `${e.renkler.length} renk tanımlandı (${e.renkler.map((r) => r.ad).join(", ")})` : "",
+            e.bedenler.length ? `${e.bedenler.length} ölçü tanımlandı (${e.bedenler.map((b) => b.ad).join(", ")})` : "",
+            yeniNo ? `stok no ${String(yeniNo).padStart(4, "0")}` : "",
         ].filter(Boolean);
-        gunlukYaz(`Barkod kodları otomatik: ${parca.join(" · ") || `${toplam} kod`}`, "tanimlar", { renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), atanan: k.atanan });
-        if (parca.length)
-            showToast(`Barkod için otomatik tanımlandı: ${parca.join(" · ")}`);
-    }, [loading, baglantiYok, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+        gunlukYaz(`Barkod tamamlandı: ${urun.ad} — ${parca.join(" · ") || "kodlar atandı"}`, "tanimlar", { urunId, renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), stokNo: yeniNo });
+        showToast(`${urun.ad}: barkod oluşturuldu${parca.length ? ` — ${parca.join(" · ")}` : ""}`);
+    }, [stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
     // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
     // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
     // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -19627,7 +19632,7 @@ function AtolyeERP() {
                             }, showToast: showToast, onVeritabaniSifirla: veritabaniSifirla, supabaseBagli: supabaseAcikMi(), gocDurumu: gocDurumu, onSupabaseyeGoc: supabaseyeGoc, onDefterTopluOnar: defterTopluOnar, onHammaddeRenkAdDegistir: hammaddeRenkAdDegistir, onOlcuAdDegistir: olcuAdDegistir, stok: stok, cariler: cariler, siparisler: siparisler, aktifKullanici: aktifKullanici, MODULLER: MODULLER, MODUL_ADLARI: MODUL_ADLARI, onJsonYedekle: verileriJsonYedekle, onJsonGeriYukle: jsonDosyasindanGeriYukle, onExcelAktar: verileriExcelAktar, sonYedekTarihi: sonYedekTarihi, onSimdiYedekle: () => otomatikYedekAl(false), onYedektenGeriYukle: yedektenGeriYukle, cop: cop, onCopGeriYukle: coptanGeriYukle, onCopKaliciSil: coptanKaliciSil, onCopBosalt: copuBosalt })),
                     tab === "modelhane" && (React.createElement(ModelhaneModule, { receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: receteSablonuKaydet, stok: stok, kurlar: muhasebe.kurlar || {}, cariler: cariler, kurGecmisi: muhasebe.kurGecmisi, onNumuneUret: numuneUret, modeller: modeller, onSave: saveModeller, onKoleksiyonaAl: modeliKoleksiyonaAl, onNumuneUretimi: numuneUretimiAc, showToast: showToast, kullaniciYetkisiVar: kullaniciYetkisiVar })),
                     React.createElement("div", { style: { display: tab === "stok" || tab === "mamulstok" ? undefined : "none" } },
-                        React.createElement(StokModule, { kapsam: stokKapsamRef.current, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi, onFiseGitNo: fiseGit, stokRezervasyonlari: stokRezervasyonlari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: siparisler, hedefUrunId: stokHedefUrunId, hedefSekme: stokHedefSekme, onHedefTuketildi: () => { setStokHedefUrunId(null); setStokHedefSekme(null); }, donusHedefi: donusHedefi, onDonusYap: donusYap, items: stok, onSave: saveStok, showToast: showToast, tanimlar: tanimlar, onGoToTanimlar: () => setTab("tanimlar"), cariler: cariler, onCariHareket: addCariHareketFromStok, onGoToCari: () => setTab("cari"), onRemoveHareketGlobal: removeHareketEverywhere, siparisler: siparisler, uretim: uretim, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYeniRenkKaydet: yeniRenkKaydet, onHizliCariEkle: hizliCariEkle, onRenkleriTipeBagla: renkleriTipeBagla, onYeniMalzemeTipiKaydet: yeniMalzemeTipiKaydet, onYeniOlcuKaydet: yeniOlcuKaydet, onReceteSablonuKaydet: receteSablonuKaydet, onYeniMamulTipiKaydet: yeniMamulTipiKaydet, onYeniOzelKodAlani: yeniOzelKodAlaniKaydet, onKombinasyonOlustur: kombinasyonOlusturGlobal, onAsortiOlustur: asortiOlustur, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onCopaAt: copaAt, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: pencereKucult, 
+                        React.createElement(StokModule, { kapsam: stokKapsamRef.current, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi, onFiseGitNo: fiseGit, stokRezervasyonlari: stokRezervasyonlari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: siparisler, hedefUrunId: stokHedefUrunId, hedefSekme: stokHedefSekme, onHedefTuketildi: () => { setStokHedefUrunId(null); setStokHedefSekme(null); }, donusHedefi: donusHedefi, onDonusYap: donusYap, items: stok, onSave: saveStok, showToast: showToast, tanimlar: tanimlar, onGoToTanimlar: () => setTab("tanimlar"), cariler: cariler, onCariHareket: addCariHareketFromStok, onGoToCari: () => setTab("cari"), onRemoveHareketGlobal: removeHareketEverywhere, siparisler: siparisler, uretim: uretim, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYeniRenkKaydet: yeniRenkKaydet, onBarkodTamamla: urunBarkodunuTamamla, onHizliCariEkle: hizliCariEkle, onRenkleriTipeBagla: renkleriTipeBagla, onYeniMalzemeTipiKaydet: yeniMalzemeTipiKaydet, onYeniOlcuKaydet: yeniOlcuKaydet, onReceteSablonuKaydet: receteSablonuKaydet, onYeniMamulTipiKaydet: yeniMamulTipiKaydet, onYeniOzelKodAlani: yeniOzelKodAlaniKaydet, onKombinasyonOlustur: kombinasyonOlusturGlobal, onAsortiOlustur: asortiOlustur, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onCopaAt: copaAt, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: pencereKucult, 
                             // Şeritteki ürün sekmeleri — Stok modülü hangi kartları kurulu tutacağını buradan
                             // okuyor (bkz. StokModule, "tek kaynak").
                             acikUrunIdleri: acikUrunIdleri })),
@@ -24956,7 +24961,7 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
                 " Kaydet"),
             React.createElement("button", { className: "btn-ghost", onClick: onKapat }, "Vazge\u00E7"))));
 }
-function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
+function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
     const [showForm, setShowForm] = useState(false);
     const [query, setQuery] = useState("");
     const [filterCat, setFilterCat] = useState("Tümü");
@@ -26769,7 +26774,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                             // bileşen yeniden kurulur ve istenen sekme uygulanır. Aksi halde başlangıç değeri
                             // yalnızca ilk kurulumda okunduğu için ikinci yönlendirme etkisiz kalırdı.
                             key: `${p.id}-${hedef ? hedef.sayac : 0}`, product: p, baslangicAcik: true, baslangicSekme: hedef ? hedef.sekme : null, tanimlarRenkler: tanimlar.renkler, tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler, tanimlarBedenGruplari: tanimlar.bedenGruplari || [], onAddRenk: addRenkToProduct, onRenkleriTipeBagla: onRenkleriTipeBagla, onAddBeden: addBedenToProduct, onRemoveRenk: removeRenkFromProduct, onRemoveBeden: removeBedenFromProduct, onRemoveProduct: (id, cascade) => { if (removeProduct(id, cascade) && onPencereKapat)
-                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, 
+                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, 
                             // Büyütme, katalogdaki büyük görsel penceresinin aynısı: { url, ad } bekliyor.
                             onTeknikCizimAc: (c) => setBuyukGorsel({ url: c.gorsel, ad: c.baslik || "Teknik çizim" }), cariler: cariler, onGoToCari: onGoToCari, onRemoveHareketGlobal: onRemoveHareketGlobal, onRenkResmiChange: updateRenkResmi, onRenkResmiRemove: removeRenkResmi, siparisler: siparisler, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: onPencereAc, onKombinasyonOlustur: onKombinasyonOlustur, onGoToUrun: urunAc })))));
         })));
@@ -27750,7 +27755,7 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat, secili }) {
             React.createElement("input", { type: "color", value: renkKodu, title: "G\u00F6r\u00FCn\u00FCm rengi", "data-recete-renk-yeni-hex": "1", onChange: (e) => setRenkKodu(e.target.value), style: { width: 28, height: 24, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4 } }))),
         t && !tam && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Tan\u0131mlar'a ortak renk olarak eklenir (renk kodu, barkod kodu otomatik), hammadde stok kart\u0131na da a\u00E7\u0131l\u0131r.")));
 }
-function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet, tanimlarAylikUretimHedefi, tanimlarGenelGiderler, onFiseGitNo, product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onDefterDuzeltmeYaz, baslangicSekme, stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir, onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc, onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal, onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle, onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
+function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet, tanimlarAylikUretimHedefi, tanimlarGenelGiderler, onFiseGitNo, product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onDefterDuzeltmeYaz, baslangicSekme, stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir, onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc, onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal, onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle, onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
     const [open, setOpen] = useState(!!baslangicAcik);
     // Reçeteden yeni renk (v1.571.0): seçim sırasında hammaddeye eklenecek renk burada bekler; reçete yazımı
     // (`onReceteGrubuGuncelle`) onu alıp hammadde kartına AYNI yazımda ekler. Tek kullanımlık.
@@ -27783,6 +27788,26 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     // Barkod kurmak için gereken üç liste. Kartın elinde zaten ayrı ayrı duruyorlar; barkod
     // fonksiyonları üçünü birlikte istiyor çünkü bir kodu kurmak üçüne birden bakmayı gerektiriyor.
     const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+    // RENK / ÖLÇÜ EKLENİNCE BARKOD KENDİLİĞİNDEN (v1.579.0): ürüne yeni varyant gelince (kart açıkken) barkodu kurulamayan
+    // varyant ya da stok no yoksa `onBarkodTamamla` (100 `urunBarkodunuTamamla`) çağrılır. 700 ms sonra ve EN SON fonksiyonla
+    // (ref): renk ekleme yolu tanımı ayrıca yazıyor (v1.555 "renk aç") — önce o yazım otursun, aynı renk iki kez tanımlanmasın.
+    const barkodTamamlaRef = React.useRef(onBarkodTamamla);
+    barkodTamamlaRef.current = onBarkodTamamla;
+    const varyantImzaRef = React.useRef(null);
+    const barkodEksikMi = !product.stokNo || (product.variants || []).some((v) => !varyantinBarkodu(product, v, barkodTanimlari));
+    React.useEffect(() => {
+        const imza = (product.variants || []).map((v) => `${v.renk}|${v.beden}`).sort().join(";");
+        const onceki = varyantImzaRef.current;
+        varyantImzaRef.current = imza;
+        if (onceki === null || onceki === imza)
+            return undefined;
+        const eski = new Set(onceki.split(";"));
+        if (!imza.split(";").some((x) => !eski.has(x)))
+            return undefined;
+        const z = setTimeout(() => { if (barkodTamamlaRef.current)
+            barkodTamamlaRef.current(product.id, true); }, 700);
+        return () => clearTimeout(z);
+    }, [product.variants]);
     // baslangicSekme: dışarıdan gelen yönlendirmenin istediği sekme (ör. sipariş ekranındaki
     // "Reçeteyi aç" düğmesi). Yalnızca ilk açılışta uygulanır; kullanıcı sonradan sekme
     // değiştirdiğinde geri zıplamamalı.
@@ -31039,7 +31064,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                         borderRadius: "var(--erp-r-sm)", padding: "1px 6px", fontWeight: 700,
                         color: product.stokNo ? "var(--erp-info)" : "var(--erp-warn)",
                     } }, product.stokNo ? `stok no ${String(product.stokNo).padStart(4, "0")}` : "stok no atanmamış"),
-                React.createElement("span", null, "Kodlar bir kez atan\u0131r, ad de\u011Fi\u015Fse de de\u011Fi\u015Fmez.")),
+                React.createElement("span", null, "Kodlar bir kez atan\u0131r, ad de\u011Fi\u015Fse de de\u011Fi\u015Fmez."),
+                barkodEksikMi && onBarkodTamamla && (React.createElement("button", { type: "button", className: "btn-primary", "data-barkod-tamamla": "1", style: { padding: "4px 12px", fontSize: 12 }, onClick: () => onBarkodTamamla(product.id) }, "Barkodlar\u0131 olu\u015Ftur"))),
             product.stokNo ? (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 12 } },
                 React.createElement("span", { style: { color: "var(--erp-text-2)" } }, "\u00DCr\u00FCn barkodu (renksiz):"),
                 React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text)" } }, urunBarkoduKur("stok", { stokNo: product.stokNo })),
@@ -31061,6 +31087,11 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                         .map((r) => ({ id: uid("asb"), renk: r, asortiId: asortiForm.asortiId }));
                     if (yeniler.length)
                         onUrunGuncelle(product.id, { asortiBarkodlari: [...mevcut, ...yeniler] });
+                    // Kod parçaları (stok no, renk kodu, asorti kodu) eksikse tamamlanır — ürün yazımı otursun diye kısa gecikmeyle.
+                    const asortiKodsuz = (asortiler || []).some((a) => a.id === asortiForm.asortiId && !(a.barkodKodu > 0));
+                    if (yeniler.length && (barkodEksikMi || asortiKodsuz))
+                        setTimeout(() => { if (barkodTamamlaRef.current)
+                            barkodTamamlaRef.current(product.id, true); }, 700);
                     if (showToast)
                         showToast(yeniler.length ? `${yeniler.length} asorti barkodu oluşturuldu` : "Bu asorti barkodları zaten var");
                     setAsortiForm(null);
