@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.577.0";
+const SURUM = "1.578.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Fiyat gruplari: her renk satirinda acilir grup secici ve adina gore otomatik gruplama";
+const SURUM_NOTU = "Fiyatlandirmada hangi tarafin (alis/satis) fiyati yazildigi belirgin; grup satirinda obur tarafin fiyati";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Fiyat gruplari: her renk satirinda acilir grup secici ve adi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.578.0", tarih: "04.10.2026", eklenen: ["Renk grubu satırında öbür tarafın (alış↔satış) fiyatı bilgi olarak görünüyor"],
+    degisen: ["Özel fiyat paneli düzenlenen tarafın renginde çerçeveli; başlık 'ALIŞ fiyatları' / 'SATIŞ fiyatları', sütun 'Tek alış/satış fiyatı' — alış ve satış fiyatlarının ayrı girildiği belirgin"],
+    duzeltilen: [] },
   { surum: "1.577.0", tarih: "04.10.2026",
     eklenen: ["Fiyatlandırma matrisinde her rengin yanında açılır grup seçici: listeden gruba al, '+ yeni grup…', gruptan çıkar", "'Adına göre otomatik grupla': adının son kelimesi aynı renkler (Süet, Deri, Baskı…) tek dokunuşla gruplanır", "Her fiyat grubu kendi renginde (seçici, grup adı ve üye etiketleri)"],
     degisen: [], duzeltilen: [] },

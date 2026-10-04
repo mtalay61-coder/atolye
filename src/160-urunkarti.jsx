@@ -852,13 +852,13 @@ function ProductMatrixCard({
   }
 
   // Renklerin ORTAK "renk" fiyatı: hepsinde aynı fiyat + birimde renk kuralı varsa { fiyat, paraBirimi }, yoksa null.
-  function ortakRenkFiyati(renkler) {
+  function ortakRenkFiyati(renkler, tip = fkTip) {
     if (!renkler || renkler.length === 0) return null;
     let ortak = null;
     for (const r of renkler) {
-      const k = (product.fiyatKurallari || []).find((x) => x.tip === fkTip && x.kapsam === "renk" && x.deger === r);
+      const k = (product.fiyatKurallari || []).find((x) => x.tip === tip && x.kapsam === "renk" && x.deger === r);
       if (!k) return null;
-      const pb = k.paraBirimi || kartPb(fkTip);
+      const pb = k.paraBirimi || kartPb(tip);
       if (ortak && (ortak.fiyat !== k.fiyat || ortak.paraBirimi !== pb)) return null;
       ortak = { fiyat: k.fiyat, paraBirimi: pb };
     }
@@ -5972,9 +5972,16 @@ function ProductMatrixCard({
               ))}
             </div>
 
-            <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 }}>
+            {/* HANGİ TARAF DÜZENLENİYOR (v1.578.0 — kullanıcı: "Alış ve satış fiyatları farklı olacak, sanki aynı yazıyor
+                gibi"). Kurallar zaten tipe göre ayrı (fiyatBul `k.tip === tip`), ama panel hangi tarafın fiyatını yazdığını
+                söylemiyordu; gruplar iki tarafta ortak olunca "aynı" sanılıyordu. Panel artık tarafın renginde çerçeveli ve
+                başlıkta "ALIŞ / SATIŞ fiyatları" yazıyor; grup satırında öbür tarafın fiyatı bilgi olarak görünür. */}
+            <div data-fk-panel-tip={fkTip} style={{ background: "var(--erp-panel)", border: `2px solid ${fkTip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`, borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Yeni Özel Fiyat Ekle</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: fkTip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)" }}>
+                  {fkTip === "Alış" ? "ALIŞ" : "SATIŞ"} fiyatları — özel fiyat ekle
+                </span>
+                <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Burada yazılan yalnız {fkTip.toLocaleLowerCase("tr-TR")} fiyatıdır; {fkTip === "Alış" ? "satış" : "alış"} fiyatı üstteki sekmeden ayrı girilir.</span>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                 {[
@@ -6159,7 +6166,7 @@ function ProductMatrixCard({
                             <th key={b} style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>{olcuGoster(b, "Miktar")}</th>
                           ))}
                           <th style={{ fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", borderLeft: "1px dashed var(--erp-line)" }}>
-                            Tek fiyat (bu rengin tümü)
+                            Tek {fkTip.toLocaleLowerCase("tr-TR")} fiyatı (bu rengin tümü)
                           </th>
                         </tr>
                       </thead>
@@ -6168,7 +6175,7 @@ function ProductMatrixCard({
                           const renkKilitli = renkAcik(r);
                           const renkKurali = kuralBul("renk", r);
                           return (
-                            <tr key={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                            <tr key={r} data-fk-renk-satir={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                               <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                                 {olcuGoster(r)}
                                 {(() => {
@@ -6263,7 +6270,7 @@ function ProductMatrixCard({
                         yazılınca üyelerin hepsine renk fiyatı; üyeler matrisin renk adının yanında etiketle görünür. */}
                     <div data-fk-gruplar="1" style={{ marginTop: 10, padding: "8px 10px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Renk grupları</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Renk grupları <span style={{ color: fkTip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)" }}>· {fkTip} fiyatları</span></span>
                         <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>aynı fiyatlı renk setleri — grubun fiyatı bütün renklerine yazılır; rengi gruba almak için satırdaki "+ grup" kutusu</span>
                         <button type="button" className="btn-ghost" data-fk-grup-otomatik="1" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 12 }}
                           title="Adının son kelimesi aynı olan renkleri (Süet, Deri, Baskı…) tek dokunuşla grupla" onClick={() => otomatikGrupla(tumRenkler)}>
@@ -6297,6 +6304,12 @@ function ProductMatrixCard({
                               <ParaBirimiSecici deger={pb} veri={`grup|${g.ad}`}
                                 onDegis={(y) => { setFkGrupPb((x) => ({ ...x, [g.id]: y })); if (ortak) renkFiyatlariTopluKaydet(renkler, ortak.fiyat, y, `Grup ${g.ad}`); }} />
                             </span>
+                            {(() => {
+                              // Öbür tarafın (alış↔satış) grup fiyatı — yalnız bilgi; iki fiyatın ayrı olduğu görünsün.
+                              const obur = fkTip === "Alış" ? "Satış" : "Alış";
+                              const o = ortakRenkFiyati(renkler, obur);
+                              return <span data-fk-grup-obur={g.ad} className="mono" title={`${obur} fiyatı ${obur} sekmesinden girilir`} style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{obur}: {o ? `${fiyatYazi(o.fiyat)} ${PARA_SEMBOLU[o.paraBirimi] || o.paraBirimi}` : "—"}</span>;
+                            })()}
                             <button type="button" className="btn-ghost" data-fk-grup-duzenle={g.ad} style={{ padding: "3px 8px", fontSize: 11 }}
                               onClick={() => setFkGrupForm({ id: g.id, ad: g.ad, renkler: [...g.renkler] })}>Düzenle</button>
                             <SilOnayButonu onConfirm={() => onUrunGuncelle(product.id, { fiyatRenkGruplari: (product.fiyatRenkGruplari || []).filter((x) => x.id !== g.id) })}
