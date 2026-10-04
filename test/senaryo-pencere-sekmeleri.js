@@ -57,8 +57,9 @@ async function calistir() {
   };
   const seritSekmesi = async (baslik) => {
     await sayfa.evaluate((baslik) => {
-      const d = [...document.querySelectorAll("div")].find((x) =>
-        x.getBoundingClientRect().height > 0 && x.firstChild && x.firstChild.nodeType === 3 && x.firstChild.textContent.trim() === baslik);
+      // v1.589.0: sekmelerin ilk çocuğu artık ikon; metin `data-serit-pencere` taşıyan kabın tamamından okunuyor.
+      const d = [...document.querySelectorAll("[data-serit-pencere]")].find((x) =>
+        x.getBoundingClientRect().height > 0 && x.textContent.trim() === baslik);
       if (d) d.click();
     }, baslik);
     await sayfa.waitForTimeout(800);
@@ -72,10 +73,9 @@ async function calistir() {
       .find((s) => s.textContent.trim() === "Stok Kartı" && s.getBoundingClientRect().height > 0);
     const kart = etiket ? (etiket.nextElementSibling || {}).textContent || "?" : null;
     // Seritte etkin pencere sekmesi: açık zemin (#FBF6EC) taşıyan pencere sekmesi.
-    const etkin = [...document.querySelectorAll("div")].find((x) =>
-      x.getBoundingClientRect().height > 0 && x.firstChild && x.firstChild.nodeType === 3 &&
-      /^Ürün: /.test(x.firstChild.textContent.trim()) && getComputedStyle(x).backgroundColor === panelRengi);
-    return { kart, seritteEtkin: etkin ? etkin.firstChild.textContent.trim() : null };
+    const etkin = [...document.querySelectorAll("[data-serit-pencere]")].find((x) =>
+      x.getBoundingClientRect().height > 0 && /^Ürün: /.test(x.textContent.trim()) && getComputedStyle(x).backgroundColor === panelRengi);
+    return { kart, seritteEtkin: etkin ? etkin.textContent.trim() : null };
   });
 
   const sonuc = {};
@@ -179,9 +179,9 @@ async function calistir() {
   const ikinciUretim = await tamEkran("data-uretim-karti");
   await kucultDugmesi();
   await modul("Stok");
-  const uretimBasliklari = await sayfa.evaluate(() => [...document.querySelectorAll("div")]
-    .filter((x) => x.getBoundingClientRect().height > 0 && x.firstChild && x.firstChild.nodeType === 3 && /^Üretim: /.test(x.firstChild.textContent.trim()))
-    .map((x) => x.firstChild.textContent.trim()));
+  const uretimBasliklari = await sayfa.evaluate(() => [...document.querySelectorAll("[data-serit-pencere]")]
+    .filter((x) => x.getBoundingClientRect().height > 0 && /^Üretim: /.test(x.textContent.trim()))
+    .map((x) => x.textContent.trim()));
   await seritSekmesi(uretimBasliklari[0]);
   sonuc.uretimIkiliOncekine = { acilanlar: [ilkUretim, ikinciUretim], kart: await tamEkran("data-uretim-karti") };
 

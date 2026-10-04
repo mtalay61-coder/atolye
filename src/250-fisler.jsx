@@ -52,6 +52,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
     // muhasebe fişleri ekranında yalnız "Tümü" ve "Satış" görünüyordu.
     "Tahsilat": tumFisler.filter((f) => f.tip === "Tahsilat").length,
     "Ödeme": tumFisler.filter((f) => f.tip === "Ödeme").length,
+    "Maaş": tumFisler.filter((f) => f.tip === "Maaş").length,   // v1.589.0
     "Diğer": tumFisler.filter((f) => f.tip === "Diğer").length,
   };
 
@@ -214,7 +215,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
         ))}
         <span style={{ width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "0 2px" }} />
         {/* TİP ÇİPLERİ — para fişleri de dahil (19 Eylül): tek listede hepsi var, çiple daraltılıyor. */}
-        {["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Diğer"].map((t) => (
+        {["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Maaş", "Diğer"].map((t) => (
           sayilar[t] > 0 || t === "Tümü" ? (
             <button
               key={t}

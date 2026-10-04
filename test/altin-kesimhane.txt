@@ -1,4 +1,17 @@
 {
+ "fisler": {
+  "cipler": [
+   "İşçilik (1)",
+   "Maaş (1)",
+   "Diğer (5)"
+  ],
+  "serit": [
+   "anasayfa:ikon:Anasayfa",
+   "uretim:ikon:Üretim",
+   "gelirgider:ikon:Gelir / Gider",
+   "fisler:ikon:Fişler"
+  ]
+ },
  "giderKarti": {
   "bolumKarti": [
    "Kesimhane işçiliği · uretim · gider"

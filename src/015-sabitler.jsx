@@ -279,8 +279,24 @@ const SEKME_BILGISI = {
   muhasebe: { ad: "Kasa & Banka" },
   cekler: { ad: "Çek & Senet" },
   finansrapor: { ad: "Finans Raporu" },
+  // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
+  gelirgider: { ad: "Gelir / Gider" },
+  modelhane: { ad: "Modelhane" },
+  gorevler: { ad: "Görevler" },
+  gunluk: { ad: "Günlük" },
   atolye: { ad: "Atölye" },
 };
+
+// KAYIT PENCERESİ RENGİ (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): şeritteki kayıt
+// pencereleri (ürün kartı, fiş, sipariş…) ait oldukları modülün rengini taşır; ikonlar 100-app `SEKME_IKONU`.
+const PENCERE_TIP_MODULU = {
+  urun: "stok", recete: "stok", maliyet: "stok", fis: "fisler", "stok-fisi": "fisler", fatura: "fisler",
+  cek: "cekler", ekstre: "cari", siparis: "siparis", uretim: "uretim", "depo-satinal": "planlama", "depo-alis": "satinalma",
+};
+function pencereRengi(p) {
+  if (p && p.tip === "siparis" && p.veri && p.veri.sahipTip === "Alış") return MODUL_RENK.satinalma;
+  return MODUL_RENK[PENCERE_TIP_MODULU[(p || {}).tip]] || "var(--erp-text-2)";
+}
 
 const SEZONLAR = ["İlkbahar/Yaz", "Sonbahar/Kış", "Tüm Sezon"];
 
@@ -459,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.588.0";
+const SURUM = "1.589.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Tanimlar: tum basliklar dokununca acilir/kapanir (kapali baslar, secim cihazda kalir)";
+const SURUM_NOTU = "Ust seritteki sekmeler ikonlu ve modul renginde; Fislerde Maas cipi; Gelir / Gider sekme adi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +486,10 @@ const SURUM_NOTU = "Tanimlar: tum basliklar dokununca acilir/kapanir (kapali bas
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.589.0", tarih: "04.10.2026",
+    eklenen: ["Fişler: maaş tahakkuk fişleri (MAAS-…) \"Diğer\" yerine kendi \"Maaş\" çipinde"],
+    degisen: ["Üst şeritteki açık sayfa ve kayıt sekmeleri modül ikonu ve modül rengiyle (etkin sekmede renkli üst çizgi ve yazı)"],
+    duzeltilen: ["Gelir / Gider sekmesi şeritte \"gelirgider\" diye görünüyordu"] },
   { surum: "1.588.0", tarih: "04.10.2026",
     eklenen: [],
     degisen: ["Tanımlar: bütün ana başlıklar (Firma, Renkler, Bedenler, Birimler, Asortiler, Bölümler, Fiyat Grupları, Özel Kodlar, Model Rengi, Prosesler, Ara Prosesler, Reçete şablonları, Kullanıcılar, Boyut, Ekran Düzeni, Mobil Görünüm, Yedekleme) dokununca açılıp kapanıyor; kapalı başlar, açık bıraktıklarınız bu cihazda hatırlanır"],
