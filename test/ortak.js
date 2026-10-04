@@ -10,7 +10,7 @@ const { chromium } = require("playwright");
 // `tarayiciArgs`: Chromium bayrakları — örn. sahte kamera (`--use-file-for-fake-video-capture`).
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
-async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true } = {}) {
+async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false } = {}) {
   const tarayici = await chromium.launch({ args: tarayiciArgs });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
   const sayfa = await tarayici.newPage({ viewport: { width: 1400, height: 950 } });
@@ -22,6 +22,9 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
   // ÇEVRİMDIŞI KİLİT (v1.556.1) testlerde kapalı: senaryolar ağsız koşuyor (bulut istekleri hep düşüyor).
   // Kilidin kendisini ölçen senaryo `cevrimdisiKilidi: true` verir.
   if (!cevrimdisiKilidi) await sayfa.addInitScript(() => { window.__cevrimdisiSerbest = true; });
+  // TANIMLAR BAŞLIKLARI (v1.588.0) kapalı başlıyor; senaryolar bölüm içine doğrudan dokunduğu için testte hepsi açık.
+  // Açılır davranışı ölçen senaryo `tanimBasliklariKapali: true` verir.
+  if (!tanimBasliklariKapali) await sayfa.addInitScript(() => { window.__tanimBasliklariAcik = true; });
   await sayfa.addInitScript((veri) => {
     const kutu = { ...veri };
     window.__depo = kutu;

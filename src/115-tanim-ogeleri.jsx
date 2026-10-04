@@ -551,6 +551,43 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
   );
 }
 
+// AÇILIR BAŞLIK (v1.588.0 — kullanıcı: "Tanımlarda tüm başlıkları açılır yap, çok fazla yer kaplıyor büyüdükçe").
+// Tanımlar'daki her ana bölümün h3'ü: dokununca kapanır/açılır. İçerik ayrıca sarmalanmıyor — CSS kardeş kuralı
+// (`[data-kapali="1"] ~ *`, 100-app) başlığı izleyen her şeyi gizliyor; böylece 13 bölümün gövdesi yerinden oynamadı.
+// KAPALI BAŞLAR; seçim cihazda kalır (localStorage `tanimlar:acikBasliklar`). Testler `window.__tanimBasliklariAcik`
+// ile hepsini açık başlatır (senaryolar bölüm içine doğrudan dokunuyor). `sag`: başlık satırının sağındaki araçlar
+// (Kullanıcılar'daki giriş anahtarı) — o zaman h3 yerine satır kapatıcı.
+const TANIM_BASLIK_ANAHTARI = "tanimlar:acikBasliklar";
+function tanimBasliklariOku() {
+  try { const h = window.localStorage.getItem(TANIM_BASLIK_ANAHTARI); const l = h ? JSON.parse(h) : []; return Array.isArray(l) ? l : []; }
+  catch (e) { return []; }
+}
+function TanimBasligi({ ad, sag, stil }) {
+  const [acik, setAcik] = useState(() => (typeof window !== "undefined" && window.__tanimBasliklariAcik) || tanimBasliklariOku().includes(ad));
+  const degistir = () => {
+    const yeni = !acik;
+    setAcik(yeni);
+    try {
+      const l = tanimBasliklariOku().filter((x) => x !== ad);
+      window.localStorage.setItem(TANIM_BASLIK_ANAHTARI, JSON.stringify(yeni ? [...l, ad] : l));
+    } catch (e) { /* özel sekme: bu oturumda kalır */ }
+  };
+  const h3 = (
+    <h3 data-tanim-baslik={ad} data-kapali={sag ? undefined : (acik ? "0" : "1")} onClick={degistir} title={acik ? "Kapat" : "Aç"}
+      style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: sag ? 0 : "0 0 4px", cursor: "pointer", userSelect: "none",
+        display: "flex", alignItems: "center", gap: 6, ...(stil || {}) }}>
+      <span style={{ fontSize: 11, color: "var(--erp-text-3)", width: 10 }}>{acik ? "▾" : "▸"}</span>{ad}
+    </h3>
+  );
+  if (!sag) return h3;
+  return (
+    <div data-kapali={acik ? "0" : "1"} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+      {h3}
+      {acik && sag}
+    </div>
+  );
+}
+
 function Bolum({ baslik, renk, children }) {
   return (
     <div style={{ marginBottom: 18 }}>

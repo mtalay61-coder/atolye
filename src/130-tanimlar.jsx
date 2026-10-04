@@ -786,7 +786,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     {aktifTanimSekme === "firma" && (
     <>
     <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Firma Bilgileri</h3>
+      <TanimBasligi ad="Firma Bilgileri" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Logonuz ve firma bilgileriniz; Anasayfa'da, sol menüde, Cari Ekstre'de ve yazdırılan fişlerde
         otomatik olarak gösterilir.
@@ -1026,7 +1026,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, alignItems: "start" }}>
       {/* Renkler */}
       <div>
-        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Renkler</h3>
+        <TanimBasligi ad="Renkler" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
           Hammadde renkleri burada tanımlanır. Mamul ürünlerin renk varyantları, aşağıdaki "Model Rengi" bölümünde
           bu hammadde renklerinin kombinasyonlarından oluşturulur.
@@ -1163,7 +1163,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
 
       {/* Bedenler & Boyutlar */}
       <div>
-        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Bedenler & Boyutlar</h3>
+        <TanimBasligi ad="Bedenler & Boyutlar" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
           Beden, sayısal ölçüler (39, 40, 42…) için; Boyut ise S/M/L gibi farklı bir ölçü sistemi için kullanılır.
         </p>
@@ -1379,7 +1379,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, alignItems: "start" }}>
       {/* Birimler */}
       <div>
-        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Birimler</h3>
+        <TanimBasligi ad="Birimler" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
           Stok kaydederken kullanacağınız ölçü birimlerini tanımlayın (örn. çift, koli, metre, top).
         </p>
@@ -1429,7 +1429,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
       </div>
     </div>
     <div style={{ marginTop: 28 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Asortiler</h3>
+      <TanimBasligi ad="Asortiler" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Bedenlere göre standart oran/set tanımlayın (örn. 36:1, 37:2, 38:3, 39:3, 40:2, 41:1). Sipariş ve Üretim'de
         "1 asorti" dediğinizde bu oranlar otomatik uygulanır.
@@ -1482,7 +1482,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     {/* ATÖLYE İÇİ BÖLÜMLER (v1.585.0 — kullanıcı: kesimhane 5 maaşlı kişi, parça başı tutar cariyi alacaklandırmasın).
         Bölüm = bağlı prosesler + personel (Personel tipli cari) + aylık maaş. Bkz. 015 `prosesBolumu`. */}
     <div data-bolumler="1" style={{ marginTop: 28 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Atölye İçi Bölümler</h3>
+      <TanimBasligi ad="Atölye İçi Bölümler" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Maaşlı personelle çalışan bölüm (ör. Kesimhane). Bölüme bağlı prosesin teslimi personel carisine parça başı alacak
         YAZMAZ; tutar bölüm tahakkuku olur (ürün maliyeti değişmez). Her ay başı buradaki maaş personel carisine "Maaş" olarak
@@ -1547,7 +1547,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
       })}
     </div>
     <div style={{ marginTop: 28 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Fiyat Grupları</h3>
+      <TanimBasligi ad="Fiyat Grupları" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Müşteri/tedarikçi carilerini gruplara ayırın (örn. "Toptan Müşteri", "VIP Tedarikçi"). Cari kartından bir
         cariyi bir gruba atayabilir, Stok'ta bir ürünün "Fiyatlandırma" bölümünden o gruba özel fiyat
@@ -1625,7 +1625,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     </div>
     <div style={{ marginTop: 28 }}>
     <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Özel Kod Alanları</h3>
+      <TanimBasligi ad="Özel Kod Alanları" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Alan <b>başlıkları</b> burada tanımlanır, <b>değerler</b> her ürünün kendi kartındaki
         Tanımlar › Ürün › Özel Kod Alanları bölümünden girilir (Düzenle ile). Alanlar <b>stok tipine</b> bağlanabilir:
@@ -1755,7 +1755,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, alignItems: "start" }}>
       {/* Prosesler */}
       <div>
-        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Prosesler</h3>
+        <TanimBasligi ad="Prosesler" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
           Üretim aşamalarını sırasıyla tanımlayın (örn. 1. Kesim, 2. Dikim, 3. Montaj). Reçetede hammadde eklerken
           hangi proseste kullanıldığını seçebilirsiniz; reçete listesi de bu sıraya göre gruplanır.
@@ -1862,7 +1862,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
 
       {/* Ara Prosesler */}
       <div style={{ marginTop: 28 }}>
-        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Ara Prosesler</h3>
+        <TanimBasligi ad="Ara Prosesler" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
           Kendi başına "İşi Ver / Teslim Al" adımı işletilmeyen, küçük ve sabit bir cariye (personele) bağlı
           işçilik kalemleri (örn. "Kampre" — saya dikişiyle birlikte otomatik yapılan bir iş). Reçetede bir
@@ -1950,7 +1950,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         eklenir ya da silinir. Şablonu reçeteden de oluşturabilirsiniz (ürün › Reçete). */}
     {aktifTanimSekme === "uretim" && (
       <div data-recete-sablonlari="1" style={{ border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-md)", padding: 12, marginTop: 14, background: "#fff" }}>
-        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Reçete şablonları</h3>
+        <TanimBasligi ad="Reçete şablonları" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px", lineHeight: 1.5 }}>
           Her ayakkabıda standart kullanılan malzemeler (yapıştırıcı, silme suyu, fort bombe…). Ürün ve model
           reçetesinde <b>şablondan ekle</b> ile tek seferde gelir; zaten olan malzeme tekrar eklenmez.
@@ -2040,8 +2040,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
       {/* Kullanıcılar ve Yetkiler — sadece Yönetici görebilir */}
       {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
         <div style={{ marginTop: 28 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
-            <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: 0 }}>Kullanıcılar ve Yetkiler</h3>
+          <TanimBasligi ad="Kullanıcılar ve Yetkiler" sag={(
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--erp-text-2)" }}>Kullanıcı Girişi:</span>
               {["Aktif", "Pasif"].map((durum) => {
@@ -2069,7 +2068,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 );
               })}
             </div>
-          </div>
+          )} />
           <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
             {tanimlar.girisAktifMi ? (
               <>Yönetici rolü her zaman tam yetkiye sahiptir. Diğer kullanıcılar için, her modülde ayrı ayrı
@@ -2277,7 +2276,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     {aktifTanimSekme === "yedek" && (
     <>
     <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Veri Yedekleme</h3>
+      <TanimBasligi ad="Veri Yedekleme" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Tüm atölye verinizin (stok ve görselleri, sipariş, üretim, cari, tanımlar, kasa/banka/çek, koliler)
         bir kopyasını bilgisayarınıza indirin. Düzenli aralıklarla (örn. haftada bir) JSON yedeği almanızı öneririz.

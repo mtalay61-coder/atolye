@@ -98,7 +98,7 @@ function BoyutAyarlari({ showToast }) {
   const varsayilanMi = Object.keys(BOYUT_VARSAYILAN).every((k) => ayar[k] === BOYUT_VARSAYILAN[k]);
   return (
     <div data-boyut-ayarlari="1">
-      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Boyut</h3>
+      <TanimBasligi ad="Boyut" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
         Bütün ekranlarda geçerli. Seçtiğiniz anda uygulanır; <b>bu cihaza</b> kaydedilir — telefon ve bilgisayar ayrı ayarlanabilir.
       </p>

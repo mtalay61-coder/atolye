@@ -3514,6 +3514,9 @@ export default function AtolyeERP() {
         body.mobil-duzen .main-area { padding: 16px !important; padding-bottom: 84px !important; max-width: 100% !important; }
         body.mobil-duzen .main-area.no-pad { padding: 0 0 84px !important; }
         body.mobil-duzen .tanimlar-grid { grid-template-columns: 1fr !important; }
+        /* TANIMLAR ACILIR BASLIK (v1.588.0, 115 TanimBasligi): kapali basligi izleyen kardesler gizli. */
+        [data-tanim-baslik][data-kapali="1"] ~ *, div[data-kapali="1"] ~ * { display: none !important; }
+        [data-tanim-baslik]:hover { color: var(--erp-primary); }
         body.mobil-duzen table { font-size: 12px; }
         body.mobil-duzen th { padding: 6px 7px; font-size: 10px; }
         body.mobil-duzen td { padding: 6px 7px; font-size: 12px; }

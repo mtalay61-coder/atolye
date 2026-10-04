@@ -1,0 +1,51 @@
+{
+ "birAcik": {
+  "basliklar": [
+   "Renkler:kapalı",
+   "Bedenler & Boyutlar:kapalı",
+   "Model Rengi:kapalı",
+   "Birimler:kapalı",
+   "Asortiler:kapalı",
+   "Atölye İçi Bölümler:açık",
+   "Fiyat Grupları:kapalı",
+   "Özel Kod Alanları:kapalı"
+  ],
+  "bolumEkleKutusuGorunur": true,
+  "fiyatGrubuGorunur": false
+ },
+ "hatalar": [],
+ "kapaliBaslangic": {
+  "basliklar": [
+   "Renkler:kapalı",
+   "Bedenler & Boyutlar:kapalı",
+   "Model Rengi:kapalı",
+   "Birimler:kapalı",
+   "Asortiler:kapalı",
+   "Atölye İçi Bölümler:kapalı",
+   "Fiyat Grupları:kapalı",
+   "Özel Kod Alanları:kapalı"
+  ],
+  "bolumEkleKutusuGorunur": false,
+  "fiyatGrubuGorunur": false
+ },
+ "kullanicilar": {
+  "baslik": true,
+  "girisAnahtariGorunur": false
+ },
+ "kullanicilarAcik": true,
+ "tekrarKapali": false,
+ "yenilemeSonrasi": {
+  "basliklar": [
+   "Renkler:kapalı",
+   "Bedenler & Boyutlar:kapalı",
+   "Model Rengi:kapalı",
+   "Birimler:kapalı",
+   "Asortiler:kapalı",
+   "Atölye İçi Bölümler:açık",
+   "Fiyat Grupları:kapalı",
+   "Özel Kod Alanları:kapalı"
+  ],
+  "bolumEkleKutusuGorunur": true,
+  "fiyatGrubuGorunur": false
+ }
+}
