@@ -45,24 +45,45 @@ function tanimSilinenleriKaydet(idler) {
 // olmayan kimlikli öğeler eklenir — `silinenler` (kimlik kümesi/nesnesi) içindekiler hariç. Yalnız "her öğesi
 // kimlikli nesne" olan listelere dokunulur; düz değer listeleri ve nesneler yerelden aynen.
 // Döner: { tanimlar, eklenen: [{ alan, id, ad }] }
+// ORTAK SİLİNENLER (v1.569.0, denetim — çok cihaz): "bu cihazda silindi" defteri yalnız yereldi; B'de silinen renk,
+// A'nın listesinde durduğu için A'nın ilk tanım kaydında buluta geri yazılıyordu. Silinenler artık tanımların İÇİNDE de
+// taşınıyor (`__silinenler`: { id: zaman }, 120 gün): birleştirme iki tarafın birleşimini tutar, bulutta olup bu cihazda
+// olmayan silinmişi geri getirmez, BAŞKA cihazda silinmiş olup bu cihazın listesinde kalanı da çıkarır.
+// Döner: { tanimlar, eklenen, cikarilan }.
 function tanimlariBirlestir(yerel, bulut, silinenler) {
-  const sil = silinenler instanceof Set ? silinenler : new Set(Object.keys(silinenler || {}));
+  const simdi = Date.now();
+  const tas = { ...((bulut && bulut.__silinenler) || {}), ...((yerel && yerel.__silinenler) || {}) };
+  if (silinenler && !(silinenler instanceof Set)) Object.entries(silinenler).forEach(([id, z]) => { if (!tas[id] || tas[id] < z) tas[id] = z; });
+  if (silinenler instanceof Set) silinenler.forEach((id) => { if (!tas[id]) tas[id] = simdi; });
+  Object.keys(tas).forEach((id) => { if (!(simdi - Number(tas[id]) <= TANIM_SILINEN_GUN * 864e5)) delete tas[id]; });
+  const sil = new Set(Object.keys(tas));
   const sonuc = { ...(yerel || {}) };
   const eklenen = [];
-  if (!bulut || typeof bulut !== "object") return { tanimlar: sonuc, eklenen };
+  const cikarilan = [];
+  if (Object.keys(tas).length) sonuc.__silinenler = tas;
+  // Başka yerde silinmiş, bu cihazın listesinde kalmış kimlikli öğeler çıkarılır.
+  Object.keys(sonuc).forEach((alan) => {
+    const y = sonuc[alan];
+    if (!Array.isArray(y) || !y.length || !y.every((x) => x && typeof x === "object" && x.id)) return;
+    const kalan = y.filter((x) => !sil.has(x.id));
+    if (kalan.length === y.length) return;
+    y.filter((x) => sil.has(x.id)).forEach((x) => cikarilan.push({ alan, id: x.id, ad: x.ad || x.kod || x.id }));
+    sonuc[alan] = kalan;
+  });
+  if (!bulut || typeof bulut !== "object") return { tanimlar: sonuc, eklenen, cikarilan };
   Object.keys(bulut).forEach((alan) => {
     const b = bulut[alan];
     const y = (yerel || {})[alan];
-    if (!Array.isArray(b) || b.length === 0) return;
+    if (alan === "__silinenler" || !Array.isArray(b) || b.length === 0) return;
     if (!b.every((x) => x && typeof x === "object" && x.id)) return;
     if (y != null && !(Array.isArray(y) && y.every((x) => x && typeof x === "object" && x.id))) return;
-    const yerelIdler = new Set((y || []).map((x) => x.id));
+    const yerelIdler = new Set(((sonuc[alan]) || []).map((x) => x.id));
     const eksik = b.filter((x) => !yerelIdler.has(x.id) && !sil.has(x.id));
     if (eksik.length === 0) return;
-    sonuc[alan] = [...(y || []), ...eksik];
+    sonuc[alan] = [...(sonuc[alan] || []), ...eksik];
     eksik.forEach((x) => eklenen.push({ alan, id: x.id, ad: x.ad || x.kod || x.kullaniciAdi || x.id }));
   });
-  return { tanimlar: sonuc, eklenen };
+  return { tanimlar: sonuc, eklenen, cikarilan };
 }
 
 // KAYIP MODEL RENKLERİ. Ürünlerde kullanılan "KOD - Renk1/Renk2" etiketlerinden tanımlarda kombinasyonu

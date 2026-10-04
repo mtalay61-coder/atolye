@@ -74,5 +74,13 @@ bekle("değişenler raporlanır", on.degisenler.map((d) => `${d.aile}:${d.ad}:${
 bekle("ton kodu (kod) dokunulmaz", on.tanimlar.renkler.find((r) => r.ad === "Light").kod, "144");
 bekle("çakışma yoksa aynı nesne", tanimKodlariniOnar(on.tanimlar).degisenler.length, 0);
 
+// v1.569.0 — ortak silinenler: B'de silinen renk A'nın kaydıyla geri gelmez
+const aYerel = { renkler: [{ id: "k1", ad: "Kırmızı" }, { id: "s1", ad: "Siyah" }] };
+const bulutB = { renkler: [{ id: "s1", ad: "Siyah" }], __silinenler: { k1: Date.now() } };
+const ab = tanimlariBirlestir(aYerel, bulutB, {});
+bekle("başka cihazda silinen çıkarılır, silinenler taşınır", [ab.tanimlar.renkler.map((r) => r.id), ab.cikarilan.map((c) => c.id), !!ab.tanimlar.__silinenler.k1], [["s1"], ["k1"], true]);
+const eskiTas = tanimlariBirlestir({ renkler: [] }, { renkler: [{ id: "z", ad: "Z" }], __silinenler: { z: Date.now() - 200 * 864e5 } }, {});
+bekle("120 günü geçen silinen budanır, öğe geri gelir", [eskiTas.tanimlar.renkler.map((r) => r.id), eskiTas.tanimlar.__silinenler], [["z"], undefined]);
+
 console.log(hata ? "birim-tanim-birlestir: HATA" : "birim-tanim-birlestir: tamam");
 process.exit(hata);

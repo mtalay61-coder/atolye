@@ -685,12 +685,13 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   // ürünler silinebilir — onların silinmesi hiçbir yerde delik açmaz.
   function removeProduct(id) {
     const product = items.find((p) => p.id === id);
-    if (!product) return;
+    // Dönüş: gerçekten silindiyse true (v1.569.0) — çağıran pencereyi yalnız o zaman kapatır.
+    if (!product) return false;
 
     const engeller = urunSilmeEngelleri(product);
     if (engeller.length > 0) {
       showToast(`"${product.ad}" silinemez — ${engeller.join(", ")} var. Geçmişi olan ürün silinmez; kullanımdan kaldırmak için yeni işlem girmeyin.`);
-      return;
+      return false;
     }
 
     // Yetkisi olmayan bir kullanıcı silme yapmaya çalışırsa, doğrudan silmek yerine yöneticinin
@@ -698,7 +699,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // tekrar çağrılıp gerçek silme işlemi uygulanır.
     if (kullaniciYetkisiVar && !kullaniciYetkisiVar("stok", "silme")) {
       onayIste("stok", "Sil", `"${product.ad}" ürününü sil`, "urunSil", { productId: id });
-      return;
+      return false;
     }
 
     // Buraya yalnızca bağlantısız ürünler ulaşır — yan etkisi yok, sorunsuz geri yüklenebilir.
@@ -710,6 +711,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     }
     onSave(items.filter((p) => p.id !== id));
     showToast("Ürün silindi — Tanımlar > Çöp Kutusu'ndan geri alınabilir");
+    return true;
   }
 
 
@@ -2745,7 +2747,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                   onAddBeden={addBedenToProduct}
                   onRemoveRenk={removeRenkFromProduct}
                   onRemoveBeden={removeBedenFromProduct}
-                  onRemoveProduct={(id, cascade) => { removeProduct(id, cascade); if (onPencereKapat) onPencereKapat(pencereId); }}
+                  onRemoveProduct={(id, cascade) => { if (removeProduct(id, cascade) && onPencereKapat) onPencereKapat(pencereId); }}
                   onEkFiyatEkle={ekFiyatEkle}
                   onEkFiyatSil={ekFiyatSil}
                   tumUrunler={items}

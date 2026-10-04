@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.566.0</title>
+<title>Atölye ERP 1.569.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2014,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.566.0";
+const SURUM = "1.569.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Recetede bos renk eslesmeleri icin Otomatik eslestir (ayni ad, Standart/sabit, gecmis); eslestir listesi bos acilmiyor";
+const SURUM_NOTU = "Denetimde acik kalanlar: teslim geri alininca tamir isleri ve rezervasyon, planlamada kutu rengi, cok cihaz veri birlestirme, modul yetkileri, beden silme onayi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2024,6 +2024,44 @@ const SURUM_NOTU = "Recetede bos renk eslesmeleri icin Otomatik eslestir (ayni a
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.569.0", tarih: "04.10.2026",
+        eklenen: ["Beden/boyut silinirken onay soruluyor; ürün, reçete ya da siparişte kullanılıyorsa silinmiyor", "Tanımlarda değişiklik 'Tanımlar › düzenleme' yetkisine bağlı", "Kullanıcının rolü/yetkisi/pasifliği yeniden giriş beklemeden oturuma yansıyor"],
+        degisen: ["Görüntüleme yetkisi olmayan bölüm (Cari, Üretim, Kasa & Banka, Çek, Finans, Fişler, Modelhane, Fiyat Listesi, Tanımlar) ürün/sipariş kartındaki bağlantılardan da açılmıyor"],
+        duzeltilen: [
+            "Üretim teslimi geri alınınca o teslimde ayrılan tamir işleri kalıyordu (çiftler iki kez sayılıyordu); tamir teslim alınmışsa geri alma engelleniyor",
+            "Teslim geri almada rezervasyon dengesi: ek malzeme fazladan iade ediliyor, artan iadenin bıraktığı rezervasyon geri tutulmuyordu",
+            "Planlamada aynı ürün ve renkte farklı kutu seçilmiş sipariş satırları tek üretimde birleşip yanlış kutudan düşüyordu; aynı beden iki satırda gelince ikincisinin malzemesi eksik düşülüyordu",
+            "Bekleyen kaydı olan tabloda açılışta tablonun tamamı yerelden alınıyor, başka cihazın bu arada yaptığı değişiklik geri alınabiliyordu — artık yalnız gönderilemeyen kayıtlar yerelden",
+            "Tanım kayıtları sıraya girmiyordu (iki hızlı kayıtta eski liste bulutta kalabiliyordu)",
+            "Başka cihazda silinen tanım (renk, beden…) bu cihazın sonraki kaydıyla geri geliyordu",
+            "İnternetsiz açılışta göç yazmaları bütün tabloyu bekleyen kayda alabiliyordu",
+            "Çöp, onay ve rezervasyonlarda gönderilemeyen kayıt açılışta buluttaki eski hâlle eziliyordu",
+            "Modelhane'den koleksiyona alırken aynı adlı ürün oluşabiliyordu; resimden model kodu var olan kodla çakışabiliyordu",
+            "Kullanıcı ekle/sil/şifre işlemleri bulut cevabından sonra eski tanımlarla yazıyordu",
+            "Silinemeyen (ya da onaya giden) ürünün kartı silinmiş gibi kapanıyordu",
+        ] },
+    { surum: "1.568.0", tarih: "04.10.2026",
+        eklenen: [],
+        degisen: ["Reçetede 'son şablon/kopya eklemesi' geri alma yalnız en son uygulamayı kaldırıyor (önceki bütün şablon satırları gitmiyor)", "Maliyet (ürün kartı, Maliyet OK, fiyat listesi, maliyet yazdır) bedene göre değişen malzemede ortanca bedenin satırıyla hesaplanıyor"],
+        duzeltilen: [
+            "Üretimde ustaya elle verilen hammadde, aynı malzemenin her beden satırı için tekrar tekrar düşülüyordu (3 bedende 3 kat çıkış)",
+            "Ürün başına 1000 hareketten fazlası atılıyor, en eski hareketler stoktan fişsiz düşüyor ve buluttan siliniyordu — sınır kaldırıldı",
+            "Bedene göre farklı miktarlı reçete satırlarında maliyet beden sayısı kadar katlanıyordu",
+            "Silinip aynı oturumda Çöp'ten geri yüklenen kaydın tablosunda sonraki bütün yazmalar 'sürüm çakışması'na takılıp buluta gitmiyordu",
+            "İnternet kesildiğinde imleç bir kutudaysa klavye, barkod okuyucu ve Ctrl+S ile kayıt girilebiliyordu — kilit klavyeyi de kesiyor",
+            "İnternetsiz açılışta rezervasyon / onay / çöp için bekleyen kayıtlar defterden düşüyordu",
+            "Yeni renk / Otomatik eşleştir: renk renk ayrı eklenmiş hammaddeye çift satır, tekli renge '2. Renk' satırı açılıyordu; hep aynı renkte kullanılan malzeme (Toka Nikel) yeni rengin adına çevriliyordu",
+            "Başka stoktan reçete çekerken aynı hammaddenin ikinci kullanımı (Deri Yüz + Deri Astar) kopyalanmıyordu",
+            "Fiyat listesinde 'Bu listeye uygula' sonucu sıfır/eksi olan ürünün grup fiyatını siliyordu; toplu 'Tutar' etiketi fiyatın birimini göstermiyordu",
+            "Kâr-zararda kuru girilmemiş döviz maliyet 'kur eksik' uyarısına girmiyordu",
+            "Renk adı var olan başka bir renk adına değiştirilebiliyordu (iki aynı adlı renk, kayıtlar karışıyordu)",
+            "Son Yönetici'nin rolü düşürülebiliyordu",
+            "Stoklu ya da hareketli 'Standart' yer tutucuya ilk renk/beden eklenince stok kayboluyordu",
+            "Sipariş teslimi stok/cari/sipariş tablolarını iki kez yazıyordu",
+        ] },
+    { surum: "1.567.0", tarih: "04.10.2026",
+        eklenen: ["Reçete kartında açıklama ('16 Desi Ölçüm', 'Fort', 'şablon: Atom'…) dokununca düzenleniyor, × ile siliniyor; açıklaması olmayan satıra '+ açıklama' ile ekleniyor. Değişiklik o satırın bütün renklerine uygulanıyor. Pozisyon etiketleri ('1. Renk') renk eşleşmesine bağlı olduğu için düzenlenmiyor"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.566.0", tarih: "04.10.2026",
         eklenen: ["Reçetede 'Otomatik eşleştir' şeridi: boş kalmış renk eşleşmelerinden çözülebilenler tek dokunuşla doluyor (aynı adlı renk, Standart/sabit malzeme, geçmiş eşleştirme — kırmızı)"],
         degisen: ["Renksiz kullanılan malzeme (hep 'Standart') yeni renge kendiliğinden Standart olarak geçiyor"],
@@ -2701,7 +2739,11 @@ const SURUM_GECMISI = [
     { surum: "1.405.0", tarih: "21.09.2026",
         eklenen: ["Reçete şablonları (Tanımlar > Üretim)", "Modelhanede liste/katalog görünümü ve resim büyütme"], degisen: [], duzeltilen: [] },
 ];
-const HAREKET_GECMIS_SINIRI = 1000;
+// SINIR KALKTI (v1.568.0, denetim — yüksek): stok artık hareketlerin TOPLAMI (`stokMiktarlariniHesapla`). Ürün başına
+// 1000 hareketten fazlası `.slice(0, SINIR)` ile atılınca en eski hareket (ör. +500 alış) stoktan fişsiz düşüyor, fark
+// katmanı da onu "silinen" sayıp buluttaki hareket tablosundan SİLİYORDU. Sınır sonsuz: hiçbir hareket atılmaz.
+// (`.slice(0, Infinity)` diziyi aynen döndürür; çağıran yerler değişmeden kalabildi.)
+const HAREKET_GECMIS_SINIRI = Infinity;
 // TASARIM TOKENLARI (ERP standardı, 20 Eylül). Ekrandaki :root ve YAZDIRMA ÇERÇEVESİ aynı
 // tabloyu okuyor: iframe'de var(--erp-*) tanımsız kalırsa yazı siyaha düşer, bu yüzden
 // etiketYazdir/fisYazdir de bu bloğu head'e gömüyor.
@@ -3347,10 +3389,13 @@ function bekleyenKayitEkle(tablo, fark, cocukFarklari) {
     (fark.silinen || []).forEach((id) => { t.ana[id] = "sil"; });
     (cocukFarklari || []).forEach(({ cocuk, cFark }) => {
         const c = t.cocuk[cocuk.tablo] || {};
+        // `p`: alt kaydın ANA kaydı (v1.569.0) — açılışta yalnız defterdeki ana kayıtlar yerelden alınabilsin.
+        const ebeveynAlan = { urunler: "urun_id", cariler: "cari_id", siparisler: "siparis_id", uretim: "uretim_id" }[tablo];
+        const ebeveyn = (k) => (ebeveynAlan && k[ebeveynAlan] != null ? String(k[ebeveynAlan]) : null);
         [...(cFark.eklenen || []), ...(cFark.guncellenen || [])].forEach((k) => { if (k && k.id !== undefined)
-            c[k.id] = { t: "yaz" }; });
+            c[k.id] = { t: "yaz", p: ebeveyn(k) }; });
         (cFark.silinenKayitlar || []).forEach((k) => { if (k && k.id !== undefined)
-            c[k.id] = { t: "sil", k }; });
+            c[k.id] = { t: "sil", k, p: ebeveyn(k) }; });
         t.cocuk[cocuk.tablo] = c;
     });
     d[tablo] = t;
@@ -3416,8 +3461,51 @@ function tabloBaslangicBekleyen(tablo, bulutKayitlar, durumKayitlar) {
 function yereliBulutlaBirlestir(yerel, bulut, tablo) {
     const t = bekleyenKayitlariOku()[tablo] || {};
     const silinen = new Set(Object.entries(t.ana || {}).filter(([, v]) => v === "sil").map(([id]) => id));
-    const yerelIdler = new Set((yerel || []).map((k) => k && k.id));
-    return [...(yerel || []), ...(bulut || []).filter((k) => k && !yerelIdler.has(k.id) && !silinen.has(String(k.id)))];
+    const yazilan = new Set(Object.entries(t.ana || {}).filter(([, v]) => v === "yaz").map(([id]) => id));
+    const cocukYazVar = Object.values(t.cocuk || {}).some((kayitlar) => Object.keys(kayitlar || {}).length > 0);
+    // YALNIZ DEFTERDEKİLER YERELDEN (v1.569.0, denetim — çok cihaz): önce bekleyen yazması olan tablonun TAMAMI yerelden
+    // alınıyordu; yerelle bulut arasındaki BÜTÜN farklar (bayat kayıtlar dahil) gönderiliyor, başka cihazın bu arada
+    // değiştirdiği kayıt (fiyat, varyant) eski hâline dönüyordu. Ayrıntılı defter (v1.556) varsa: defterde "yaz" olan
+    // kayıt yerelden (+ buluttaki, bu cihazda silinmemiş hareketleri), "sil" olan hiç, GERİSİ BULUTTAN. Defter yoksa ya da
+    // yalnız alt kayıt içeriyorsa (eski sürümden kalan bekleyen) eski davranış: yerel esas + buluttaki yeniler.
+    const ebeveynsizCocuk = Object.values(t.cocuk || {}).some((kayitlar) => Object.values(kayitlar || {}).some((v) => v && v.p == null));
+    if ((yazilan.size === 0 && silinen.size === 0 && !cocukYazVar) || ebeveynsizCocuk) {
+        const yerelIdler = new Set((yerel || []).map((k) => k && k.id));
+        return [...(yerel || []), ...(bulut || []).filter((k) => k && !yerelIdler.has(k.id) && !silinen.has(String(k.id)))];
+    }
+    const silinenCocuk = new Set();
+    const cocukYazilan = new Set(); // alt kaydı defterde olan ana kayıtlar
+    Object.values(t.cocuk || {}).forEach((kayitlar) => Object.entries(kayitlar || {}).forEach(([k, v]) => {
+        if (v && v.t === "sil")
+            silinenCocuk.add(String(k));
+        if (v && v.p != null)
+            cocukYazilan.add(String(v.p));
+    }));
+    const yerelHarita = new Map((yerel || []).filter(Boolean).map((k) => [String(k.id), k]));
+    const hareketBirlestir = (yer, bul) => {
+        if (!yer || !bul || !Array.isArray(yer.hareketler) || !Array.isArray(bul.hareketler))
+            return yer;
+        const var_ = new Set(yer.hareketler.map((h) => h && String(h.id)));
+        const ek = bul.hareketler.filter((h) => h && !var_.has(String(h.id)) && !silinenCocuk.has(String(h.id)));
+        return ek.length ? { ...yer, hareketler: [...yer.hareketler, ...ek] } : yer;
+    };
+    // Alt kaydı defterde olan ana kayıt (yalnız hareket eklenmiş ürün) da yerelden — `p` ile bilinir. Eski defterde `p`
+    // yoksa (`ebeveynsizCocuk`) yukarıdaki eski davranışa düşülür.
+    const yereldenMi = (id) => yazilan.has(id) || cocukYazilan.has(id);
+    const bulutIdler = new Set();
+    const sonuc = [];
+    (bulut || []).forEach((k) => {
+        if (!k)
+            return;
+        const id = String(k.id);
+        bulutIdler.add(id);
+        if (silinen.has(id))
+            return;
+        sonuc.push(yereldenMi(id) && yerelHarita.has(id) ? hareketBirlestir(yerelHarita.get(id), k) : k);
+    });
+    (yerel || []).forEach((k) => { if (k && !bulutIdler.has(String(k.id)) && (yazilan.has(String(k.id)) || cocukYazilan.has(String(k.id))))
+        sonuc.push(k); });
+    return sonuc;
 }
 // =============================================================================================
 // SÜRÜM KONTROLÜ — İYİMSER KİLİTLEME
@@ -4021,37 +4109,46 @@ function bekleyenYazmaSil(anahtar) {
     }
     catch (e) { /* */ }
 }
+// Anahtar başına yazma sayacı (v1.569.0): kuyrukta bekleyen ESKİ bir yazmanın birleşik hâli, arada yapılmış daha yeni
+// yerel kaydın üstüne yazılmasın.
+const _tekilSayac = {};
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
     if (!supabaseAcikMi())
         return yerel;
+    const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
     // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
     // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
     // "1017 - Beyaz Deri/Gümüş … Tanımlar'da yok"). Yazmadan önce buluttaki hâl okunur; bu cihazda SİLİNMEMİŞ
     // eksik öğeler eklenir. Bulut okunamazsa birleştirmesiz yazılır. Yedekten geri yükleme ve sıfırlama
     // bilerek bütününü yazar: `{ birlestirme: false }`.
     const birlestir = tablo === "tanimlar" && secenek.birlestirme !== false && typeof tanimlariBirlestir === "function";
-    const gidecek = birlestir
+    // SIRALI (v1.569.0, denetim): tek satırlık tablolar kuyruğa girmiyordu; iki hızlı kayıtta önce başlayan (okuma +
+    // birleştirme + yazma) SONRA bitebiliyor, bulutta eski liste kalıyordu. `tabloYaz` ile aynı tablo kuyruğu.
+    const isi = () => (birlestir
         ? supabaseIstek("tanimlar?id=eq.tekil&select=veri").then((r) => {
             const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
             const b = tanimlariBirlestir(veri, bulut, tanimSilinenleriOku());
-            if (b.eklenen.length === 0)
-                return veri;
-            // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır.
-            guvenliYaz(anahtar, JSON.stringify(b.tanimlar), true);
+            // Ortak silinenler (`__silinenler`) her yazmada buluta taşınır; yerel/ekran yalnız öğe eklendi/çıkarıldıysa.
+            if (b.eklenen.length === 0 && b.cikarilan.length === 0)
+                return b.tanimlar;
+            // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
+            if (_tekilSayac[anahtar] === benimSiram)
+                guvenliYaz(anahtar, JSON.stringify(b.tanimlar), true);
             console.info(`Tanımlar bulutla birleştirildi: ${b.eklenen.length} öğe korundu`, b.eklenen);
             if (typeof window !== "undefined" && window.__tanimlarBirlesti)
-                window.__tanimlarBirlesti(bulut, b.eklenen);
+                window.__tanimlarBirlesti(bulut, b.eklenen, b.cikarilan);
             return b.tanimlar;
         }).catch(() => veri)
-        : Promise.resolve(veri);
+        : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify([{ id: "tekil", veri: v }]),
+    }));
+    const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
     return Promise.all([
         yerel,
-        gidecek.then((v) => supabaseIstek(tablo, {
-            method: "POST",
-            headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-            body: JSON.stringify([{ id: "tekil", veri: v }]),
-        })).then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
+        gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
             console.error("Supabase yazma hatası:", tablo, e);
             bekleyenYazmaEkle(anahtar, tablo, e && e.message);
             if (typeof window !== "undefined" && window.__supabaseHataBildir) {
@@ -4534,10 +4631,12 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
             // değişikliği büyük olasılıkla BU bilgisayar yaptı (örtüşen ikinci yazma) — sahte çakışma.
             // Kullanıcıya olmayan bir "başka bilgisayar"ı suçlamak, hatayı aramasını da zorlaştırır.
             let teshis = [];
+            let teshisOkundu = false;
             try {
                 const liste = cakisanlar.map((id) => encodeURIComponent(`"${String(id).replace(/"/g, '\\"')}"`)).join(",");
                 const guncel = await supabaseIstek(`${tablo}?id=in.(${liste})&select=id,surum`);
                 teshis = (guncel || []).map((r) => ({ id: r.id, sunucu: r.surum, beklenen: surumMap.get(r.id) }));
+                teshisOkundu = Array.isArray(guncel);
             }
             catch (e) {
                 console.warn("Çakışma teşhisi okunamadı:", e && e.message);
@@ -4546,6 +4645,15 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
             // kez toslamasın.
             teshis.forEach((t) => { if (t.sunucu != null)
                 surumMap.set(t.id, t.sunucu); });
+            // SUNUCUDA HİÇ OLMAYAN kayıt (v1.568.0, denetim — kritik): silinip aynı oturumda geri yüklenen kaydın eski sürümü
+            // bellekte kalıyordu; PATCH boş dönüyor, sahte çakışma tablonun SONRAKİ BÜTÜN yazmalarını (alt kayıtlar dahil)
+            // durduruyordu. Teşhis okunabildiyse ve kayıt dönmediyse sürüm unutulur → bir sonraki deneme ekleme (POST).
+            if (teshis.length || cakisanlar.length) {
+                const donen = new Set(teshis.map((t) => t.id));
+                if (teshisOkundu)
+                    cakisanlar.forEach((id) => { if (!donen.has(id))
+                        surumMap.delete(id); });
+            }
             gunlukYaz(`Sürüm çakışması: ${tablo}`, "veri", { tablo, adet: cakisanlar.length, teshis });
             surumCakismasiBildir(tablo, cakisanlar, teshis);
             // ÇAKIŞMA BİR BAŞARISIZLIKTIR. Eskiden buradan normal dönülüyor, `tabloYaz` da { ok: true }
@@ -4585,6 +4693,9 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
         // 3) SİLİNEN ANA KAYITLAR — alt kayıtlar cascade ile birlikte gider.
         if (fark.silinen.length > 0) {
             await supabaseSil(tablo, fark.silinen);
+            // Silinen kaydın sürümü unutulur (v1.568.0): aynı kimlik yeniden yazılırsa (Çöp'ten geri yükleme) PATCH değil
+            // POST gitsin — yoksa sahte çakışma.
+            fark.silinen.forEach((id) => surumMap.delete(id));
         }
     }
     catch (e) {
@@ -5787,7 +5898,7 @@ function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
     });
     const eklemeTarihi = new Date().toISOString();
     gruplar.forEach((satirlar) => {
-        const g = grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi);
+        const g = grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi, recete.concat(sonuc.satirlar));
         if (!g)
             return;
         if (g.bos) {
@@ -5802,9 +5913,19 @@ function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
 }
 // Tek reçete grubunun (aynı ekleme+hammadde+proses+açıklama) satırlarını `yeniRenk` için kurar. Döner:
 // null (grup yeni rengi zaten kapsıyor) | { bos: true, hammaddeAd } | { satirlar, gecmis }.
-function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi) {
+function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi, tumRecete) {
     const nrmRenk = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
     if (satirlar.some((r) => r.mamulRenk === yeniRenk))
+        return null;
+    const s0g = satirlar[0];
+    // DENETİM (v1.568.0): (a) aynı hammadde+proses+açıklama bu renkte BAŞKA bir eklemeyle zaten varsa grup o renk için
+    // tamamdır — "Reçeteye Ekle" renk renk ayrı işlemlerle yapılabiliyor; yoksa çift satır (tüketim 2 kat) açılıyordu.
+    if ((tumRecete || []).some((r) => r.mamulRenk === yeniRenk && r.hammaddeUrunId === s0g.hammaddeUrunId
+        && (r.proses || "") === (s0g.proses || "") && (r.aciklama || "") === (s0g.aciklama || "")))
+        return null;
+    // (b) "N. Renk" pozisyon satırı yalnız N'inci bileşeni OLAN model rengine uygulanır; tekli renge "2. Renk" açılmaz.
+    const pozNo = parseInt((String(s0g.aciklama || "").match(/^(\d+)\. Renk$/) || [])[1] || "", 10) || null;
+    if (pozNo && (kombinasyonEtiketiFormatindaMi(yeniRenk) ? !kombinasyonRengiCoz(yeniRenk, pozNo) : pozNo > 1))
         return null;
     {
         const renkler = Array.from(new Set(satirlar.map((r) => r.mamulRenk)));
@@ -5817,10 +5938,13 @@ function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, ekl
         if (s0.ambalajDegisken)
             cozum = { renk: s0.renk, gecmis: false };
         else {
-            cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
             const kullanilan = Array.from(new Set(satirlar.map((r) => r.renk)));
-            if (!cozum.renk && renkler.length >= 2 && kullanilan.length === 1)
+            // (c) SABİT MALZEME ÖNCE (v1.568.0): en az iki renk aynı hammadde rengini kullanıyorsa (Toka hep Nikel) o renk —
+            // "aynı ad" kuralı yeni rengi (Siyah) Toka Siyah'a çeviriyordu.
+            if (renkler.length >= 2 && kullanilan.length === 1 && kullanilan[0])
                 cozum = { renk: kullanilan[0], gecmis: false };
+            else
+                cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
             // Renksiz kullanım (hep "Standart") tek renkte de sabittir (v1.566.0: Takviye Bezi, Jut).
             if (!cozum.renk && kullanilan.every((x) => !x || nrmRenk(x) === "standart"))
                 cozum = { renk: kullanilan[0] || "Standart", gecmis: false };
@@ -5854,7 +5978,7 @@ function eksikRenkEslesmeleri(product, tumUrunler) {
     });
     const eklemeTarihi = new Date().toISOString();
     gruplar.forEach((satirlar) => renkler.forEach((mr) => {
-        const g = grupYeniRenkSatirlari(satirlar, mr, tumUrunler, gecmisHarita, eklemeTarihi);
+        const g = grupYeniRenkSatirlari(satirlar, mr, tumUrunler, gecmisHarita, eklemeTarihi, recete.concat(sonuc.satirlar));
         if (!g)
             return;
         if (g.bos) {
@@ -5929,8 +6053,9 @@ function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
                 });
             }
             son.forEach((r) => {
+                // Açıklama da karşılaştırılır (v1.568.0): hedefte Deri "Yüz" varken kaynaktaki Deri "Astar" atlanıyordu.
                 const ayni = mevcut.some((m) => m.mamulRenk === mr && m.hammaddeUrunId === r.hammaddeUrunId && (m.proses || "") === (r.proses || "")
-                    && (m.mamulBeden || "Tüm Bedenler") === (r.mamulBeden || "Tüm Bedenler"));
+                    && (m.mamulBeden || "Tüm Bedenler") === (r.mamulBeden || "Tüm Bedenler") && (m.aciklama || "") === (r.aciklama || ""));
                 if (ayni) {
                     sonuc.atlanan += 1;
                     return;
@@ -10080,7 +10205,9 @@ function usePlanlama(d) {
                 const miktar = g.miktar != null ? Math.min(g.miktar, kalan) : kalan;
                 if (miktar <= 0)
                     return;
-                const grupAnahtari = `${k.urunId}|${k.renk}`;
+                // KUTU RENGİ DE ANAHTARDA (v1.569.0, denetim): aynı ürün+renkte farklı kutu seçilmiş satırlar tek üretimde
+                // birleşiyor, üretimin `ambalaj`ı yalnız ilk satırın kutusunu taşıyor — öbür satırlar yanlış kutudan düşüyordu.
+                const grupAnahtari = `${k.urunId}|${k.renk}|${(k.ambalaj && k.ambalaj.renk) || ""}`;
                 if (!renkGruplari[grupAnahtari])
                     renkGruplari[grupAnahtari] = [];
                 renkGruplari[grupAnahtari].push({ renk: k.renk, kalemId: k.id, beden: k.beden, miktar, urunAd: k.urunAd, urunId: k.urunId, ambalaj: k.ambalaj || null });
@@ -10132,7 +10259,16 @@ function usePlanlama(d) {
                     beden: `${olcuGoster(renk) ? `${olcuGoster(renk)} · ` : ""}${satirlar.map((x) => `${olcuMiktarMetni(x.beden, x.miktar)}`).join(", ")}`,
                     urunId: satirlar[0].urunId,
                     renk,
-                    bedenMiktarlari: satirlar.map((x) => ({ beden: x.beden, miktar: x.miktar })),
+                    // Aynı beden iki satırda gelirse TOPLANIR (v1.569.0): tüketim/rezervasyon `.find` ile ilk kaydı okuyordu,
+                    // ikinci satırın malzemesi eksik düşülüp eksik ayrılıyordu.
+                    bedenMiktarlari: satirlar.reduce((liste, x) => {
+                        const var_ = liste.find((b) => b.beden === x.beden);
+                        if (var_)
+                            var_.miktar += x.miktar;
+                        else
+                            liste.push({ beden: x.beden, miktar: x.miktar });
+                        return liste;
+                    }, []),
                     stogaEklendiMi: false,
                     prosesIlerleme,
                     termin: "",
@@ -10825,9 +10961,20 @@ function fisGeriAl(veri, secenekler = {}) {
                     tamamlanmaTarihi: null,
                 };
             });
+            // TAMİR İŞLERİ DE GERİ (v1.569.0, denetim): teslimde ayrılan tamir çiftleri bir prosese yeni atama olarak
+            // dönüyordu; teslim geri alınınca o atamalar kalıyor, çiftler iki kez sayılıyor ve tamir malzemesi yeniden
+            // düşülüyordu. Bu teslimden doğan (`tamirKaynakAtamaId`) ve teslim ALINMAMIŞ tamir atamaları kaldırılır
+            // (teslim alınmış olan varsa geri alma çağıranda engellenir — `teslimTamirleriTamamlandiMi`).
+            const temizIlerleme = eslesme.atamaId == null ? yeniIlerleme : yeniIlerleme.map((p) => {
+                const kalan = (p.atamalar || []).filter((a) => !(a.tamirMi && a.tamirKaynakAtamaId === eslesme.atamaId && !a.tamamlandiMi));
+                if (kalan.length === (p.atamalar || []).length)
+                    return p;
+                const bitti = kalan.length > 0 && kalan.every((a) => a.tamamlandiMi);
+                return { ...p, atamalar: kalan, tamamlandiMi: p.tamamlandiMi && bitti };
+            });
             return {
                 ...u,
-                prosesIlerleme: yeniIlerleme,
+                prosesIlerleme: temizIlerleme,
                 asama: adim.proses,
                 stogaEklendiMi: sonProsesMi ? false : u.stogaEklendiMi,
             };
@@ -10905,6 +11052,12 @@ function fisGeriAl(veri, secenekler = {}) {
         muhasebeBagIdler: [...muhasebeBagIdler],
         hareketIdler: idler,
     };
+}
+// Bu teslimden doğan tamir işlerinden TESLİM ALINMIŞ olan var mı? Varsa teslim geri alınamaz — tamirin malzemesi ve
+// işçiliği işlenmiş, önce o geri alınmalı (v1.569.0).
+function teslimTamirleriTamamlandiMi(uretimKaydi, atamaId) {
+    return ((uretimKaydi && uretimKaydi.prosesIlerleme) || []).some((p) => (p.atamalar || [])
+        .some((a) => a.tamirMi && a.tamirKaynakAtamaId === atamaId && a.tamamlandiMi));
 }
 // ================= ÜRETİM TESLİM ALMA =================
 //
@@ -11024,6 +11177,7 @@ function useUretimTeslim(d) {
             }
         }
         if (urun && urun.recete) {
+            const verilenDusuldu = new Set();
             nextStok = stok.map((p) => {
                 let pDegisti = false;
                 let variants = p.variants;
@@ -11054,7 +11208,16 @@ function useUretimTeslim(d) {
                     // hesaplanınca DEPODA OLMAYAN 90 desi havada kalıyordu: fiilen çıkan mal ile kayıt
                     // tutmuyordu. Artan hesabı zaten verilen miktara göre yapılıyordu; çıkış da öyle olmalı.
                     const _etkinRenkOn = ambalajRengiUygula(r, siparis, stok);
-                    const _verilenKayit = (atama.verilenHammaddeler || {})[`${r.hammaddeUrunId}|${_etkinRenkOn}|${r.beden}`];
+                    const _verilenAnahtar = `${r.hammaddeUrunId}|${_etkinRenkOn}|${r.beden}`;
+                    const _verilenKayit = (atama.verilenHammaddeler || {})[_verilenAnahtar];
+                    // VERİLEN TOPLAM BİR KEZ (v1.568.0, denetim — kritik): verilen miktar hammadde|renk|boy başına TOPLAMDIR
+                    // (310: o anahtara düşen bütün reçete satırları toplanır). Aynı anahtara birden çok satır düşünce (beden beden
+                    // satır, boy hep "Standart"/"120 cm") her satır toplamın TAMAMINI düşüyordu — 3 bedende 3 kat çıkış.
+                    if (_verilenKayit && _verilenKayit.verilen != null) {
+                        if (verilenDusuldu.has(_verilenAnahtar))
+                            return;
+                        verilenDusuldu.add(_verilenAnahtar);
+                    }
                     const tuketilecek = _verilenKayit && _verilenKayit.verilen != null
                         ? Math.round((_verilenKayit.verilen || 0) * 100) / 100
                         : Math.round(r.miktar * uretilenMiktar * 100) / 100;
@@ -11240,6 +11403,8 @@ function useUretimTeslim(d) {
                     tamamlandiMi: false, tamamlanmaTarihi: null,
                     tamirMi: true,
                     tamirKaynakProses: prosesAdi,
+                    // Hangi teslimden doğduğu (v1.569.0): teslim geri alınınca bu tamir işi de geri alınır (079-fisgerial).
+                    tamirKaynakAtamaId: atamaId,
                     tamirSebep: t.sebep || "",
                     tamirUcret: t.ucret || 0,
                     // Tamirde hangi hammaddelerin yeniden çıkacağı seçilir; boşsa hiç hammadde düşülmez.
@@ -12043,7 +12208,7 @@ function useProsesVer(d) {
                         const uretilenMiktar = r.mamulBeden === "Tüm Bedenler" ? toplamAdet : (bm ? bm.miktar : 0);
                         if (!uretilenMiktar)
                             return;
-                        const tuketilecek = r.miktar * uretilenMiktar;
+                        const tuketilecek = Math.round(r.miktar * uretilenMiktar * 100) / 100; // 0,30000000000000004 harekete yazılmasın (v1.568)
                         // HATA DÜZELTMESİ: burada doğrudan r.renk kullanılıyordu; siparişte seçilen KUTU RENGİ
                         // yok sayılıyor ve üretim hep reçetedeki varsayılan renkten (genellikle "Standart")
                         // düşüyordu. Sonuç: doğru renkten kutu satın alınıyor ama yanlış renkten stok çıkıyor —
@@ -12371,37 +12536,9 @@ function useSiparisTeslim(d) {
         // Depolama isteklerini PARALEL değil SIRALI (birer birer) gönderiyoruz — aynı anda çok istek
         // atmak hız sınırına takılıp sessizce başarısız olabiliyordu. Her biri bir kez başarısız
         // olursa kısa bir bekleyip tekrar deneniyor.
-        (async () => {
-            // tabloYaz KULLANILIYOR, guvenliYaz DEĞİL: doğrudan yazmak veri katmanını atlıyordu ve
-            // teslim alma sonucu buluta hiç gitmiyordu. Stok hareketleri tablosunun boş kalmasının
-            // sebebi buydu.
-            const yazilacaklar = [
-                ["stok:items", "urunler", nextStok],
-                ["cari:data", "cariler", nextCariler],
-                ["siparis:data", "siparisler", nextSiparisler],
-            ];
-            const basarisizlar = [];
-            for (const [key, tablo, deger] of yazilacaklar) {
-                let denemeSayisi = 0;
-                let basarili = false;
-                while (denemeSayisi < 2 && !basarili) {
-                    try {
-                        await tabloYaz(key, tablo, deger);
-                        basarili = true;
-                    }
-                    catch (e) {
-                        denemeSayisi++;
-                        if (denemeSayisi < 2)
-                            await new Promise((r) => setTimeout(r, 400));
-                    }
-                }
-                if (!basarili)
-                    basarisizlar.push(key);
-            }
-            if (basarisizlar.length > 0) {
-                showToast(`⚠ Şunlar kaydedilemedi: ${basarisizlar.join(", ")} — sayfayı yenilemeden tekrar deneyin!`);
-            }
-        })();
+        // tabloYaz KULLANILIYOR, guvenliYaz DEĞİL: doğrudan yazmak veri katmanını atlıyordu ve teslim alma sonucu
+        // buluta hiç gitmiyordu. (v1.568.0, denetim: aynı kayıt döngüsü iki kez yazılmıştı — her teslim üç tabloyu
+        // iki kez gönderiyor, hata olursa iki uyarı çıkıyordu. Tek döngü kaldı.)
         // Depolama istekleri SIRALI: aynı anda çok istek hız sınırına takılıp sessizce başarısız
         // olabiliyordu. Her biri bir kez daha deneniyor.
         (async () => {
@@ -12584,9 +12721,17 @@ function useAdDegistirme(d) {
     const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
         const yeniAd = yeniAdHam.trim();
         const eskiRenk = tanimlar.renkler.find((r) => r.id === renkId);
-        if (!eskiRenk || eskiRenk.ad === yeniAd)
+        if (!eskiRenk || !yeniAd || eskiRenk.ad === yeniAd)
             return;
         const eskiAd = eskiRenk.ad;
+        // AD ÇAKIŞMASI (v1.568.0, denetim): "Siyah" → var olan "Kahve" yapılınca iki "Kahve" tanımı oluşuyor, Siyah'ın bütün
+        // varyant/reçete/hareket/sipariş kayıtları "Kahve"ye dönüp öbür Kahve'yle ayırt edilemez oluyordu. Ölçü adında
+        // bu kontrol vardı, renkte yoktu. Büyük/küçük harf ayrımı dışındaki yazım değişikliği (siyah → Siyah) serbest.
+        const nrmAd = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+        if ((tanimlar.renkler || []).some((r) => r.id !== renkId && nrmAd(r.ad) === nrmAd(yeniAd))) {
+            showToast(`"${yeniAd}" adında bir renk zaten var — iki rengi birleştirmek ad değiştirmekle yapılmaz`);
+            return;
+        }
         // Bu rengi içeren her model rengi kombinasyonu için eski/yeni etiketi hesapla.
         const etiketEslesmeleri = (tanimlar.renkKombinasyonlari || [])
             .filter((k) => k.renkIdler.includes(renkId))
@@ -13830,29 +13975,58 @@ function tanimSilinenleriKaydet(idler) {
 // olmayan kimlikli öğeler eklenir — `silinenler` (kimlik kümesi/nesnesi) içindekiler hariç. Yalnız "her öğesi
 // kimlikli nesne" olan listelere dokunulur; düz değer listeleri ve nesneler yerelden aynen.
 // Döner: { tanimlar, eklenen: [{ alan, id, ad }] }
+// ORTAK SİLİNENLER (v1.569.0, denetim — çok cihaz): "bu cihazda silindi" defteri yalnız yereldi; B'de silinen renk,
+// A'nın listesinde durduğu için A'nın ilk tanım kaydında buluta geri yazılıyordu. Silinenler artık tanımların İÇİNDE de
+// taşınıyor (`__silinenler`: { id: zaman }, 120 gün): birleştirme iki tarafın birleşimini tutar, bulutta olup bu cihazda
+// olmayan silinmişi geri getirmez, BAŞKA cihazda silinmiş olup bu cihazın listesinde kalanı da çıkarır.
+// Döner: { tanimlar, eklenen, cikarilan }.
 function tanimlariBirlestir(yerel, bulut, silinenler) {
-    const sil = silinenler instanceof Set ? silinenler : new Set(Object.keys(silinenler || {}));
+    const simdi = Date.now();
+    const tas = { ...((bulut && bulut.__silinenler) || {}), ...((yerel && yerel.__silinenler) || {}) };
+    if (silinenler && !(silinenler instanceof Set))
+        Object.entries(silinenler).forEach(([id, z]) => { if (!tas[id] || tas[id] < z)
+            tas[id] = z; });
+    if (silinenler instanceof Set)
+        silinenler.forEach((id) => { if (!tas[id])
+            tas[id] = simdi; });
+    Object.keys(tas).forEach((id) => { if (!(simdi - Number(tas[id]) <= TANIM_SILINEN_GUN * 864e5))
+        delete tas[id]; });
+    const sil = new Set(Object.keys(tas));
     const sonuc = { ...(yerel || {}) };
     const eklenen = [];
+    const cikarilan = [];
+    if (Object.keys(tas).length)
+        sonuc.__silinenler = tas;
+    // Başka yerde silinmiş, bu cihazın listesinde kalmış kimlikli öğeler çıkarılır.
+    Object.keys(sonuc).forEach((alan) => {
+        const y = sonuc[alan];
+        if (!Array.isArray(y) || !y.length || !y.every((x) => x && typeof x === "object" && x.id))
+            return;
+        const kalan = y.filter((x) => !sil.has(x.id));
+        if (kalan.length === y.length)
+            return;
+        y.filter((x) => sil.has(x.id)).forEach((x) => cikarilan.push({ alan, id: x.id, ad: x.ad || x.kod || x.id }));
+        sonuc[alan] = kalan;
+    });
     if (!bulut || typeof bulut !== "object")
-        return { tanimlar: sonuc, eklenen };
+        return { tanimlar: sonuc, eklenen, cikarilan };
     Object.keys(bulut).forEach((alan) => {
         const b = bulut[alan];
         const y = (yerel || {})[alan];
-        if (!Array.isArray(b) || b.length === 0)
+        if (alan === "__silinenler" || !Array.isArray(b) || b.length === 0)
             return;
         if (!b.every((x) => x && typeof x === "object" && x.id))
             return;
         if (y != null && !(Array.isArray(y) && y.every((x) => x && typeof x === "object" && x.id)))
             return;
-        const yerelIdler = new Set((y || []).map((x) => x.id));
+        const yerelIdler = new Set(((sonuc[alan]) || []).map((x) => x.id));
         const eksik = b.filter((x) => !yerelIdler.has(x.id) && !sil.has(x.id));
         if (eksik.length === 0)
             return;
-        sonuc[alan] = [...(y || []), ...eksik];
+        sonuc[alan] = [...(sonuc[alan] || []), ...eksik];
         eksik.forEach((x) => eklenen.push({ alan, id: x.id, ad: x.ad || x.kod || x.kullaniciAdi || x.id }));
     });
-    return { tanimlar: sonuc, eklenen };
+    return { tanimlar: sonuc, eklenen, cikarilan };
 }
 // KAYIP MODEL RENKLERİ. Ürünlerde kullanılan "KOD - Renk1/Renk2" etiketlerinden tanımlarda kombinasyonu
 // olmayanları bulur ve geri kurulacak kombinasyonları üretir. Renk adı "/" içerebilir ("A/B" adlı bir renk):
@@ -14034,7 +14208,8 @@ function useAcilisYukleme(d) {
                         // BULUTUN GERÇEK HÂLİ (v1.556.0): yerel kazanınca da saklanır — fark tabanı bundan kurulur
                         // (025 `tabloBaslangicBekleyen`), yoksa yerelde olup bulutta olmayan kayıt hiç gönderilmez.
                         const bulutKopya = {};
-                        const ALAN_TABLO = { stok: "urunler", siparisler: "siparisler", uretim: "uretim", cariler: "cariler" };
+                        const ALAN_TABLO = { stok: "urunler", siparisler: "siparisler", uretim: "uretim", cariler: "cariler",
+                            cop: "cop", onaylar: "onaylar", stokRezervasyonlari: "stok_rezervasyonlari" };
                         const yerelKazansin = async (anahtar, alan) => {
                             if (!bekleyenler[anahtar])
                                 return;
@@ -14100,6 +14275,12 @@ function useAcilisYukleme(d) {
                         await yerelKazansin("siparis:data", "siparisler");
                         await yerelKazansin("uretim:siparisler", "uretim");
                         await yerelKazansin("cari:data", "cariler");
+                        // ÇÖP / ONAYLAR / REZERVASYONLAR DA (v1.569.0, denetim): bunlarda "yerel kazanır" yoktu; bağlantı kesildiği an
+                        // silinen ürünün çöp kaydı yalnız yerelde kalıyor, açılışta buluttan okunup sonraki yeniden gönderme de bulut
+                        // hâlini yazdığı için çöp kopyası kayboluyordu (ürün geri yüklenemiyordu).
+                        await yerelKazansin("cop:data", "cop");
+                        await yerelKazansin("onaylar:data", "onaylar");
+                        await yerelKazansin("stokrez:data", "stokRezervasyonlari");
                         if (bekleyenler["tanimlar:data"]) {
                             // YEREL ESAS AMA BULUTLA BİRLEŞİK (v1.552.0, 089): yerel kopya bütünüyle esas alınınca başka cihazda
                             // bu arada açılmış model renkleri/renkler kayboluyordu (bekleyen yazma gidince bulutun üstüne).
@@ -14194,10 +14375,9 @@ function useAcilisYukleme(d) {
                         tabanKur("siparisler", "siparisler", bulut.siparisler);
                         tabanKur("uretim", "uretim", bulut.uretim);
                         tabanKur("cariler", "cariler", bulut.cariler);
-                        tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari);
-                        tabloBaslangicTam("onaylar", bulut.onaylar || []);
-                        tabloBaslangicTam("cop", bulut.cop || []);
-                        ["stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
+                        tabanKur("stok_rezervasyonlari", "stokRezervasyonlari", bulut.stokRezervasyonlari || []);
+                        tabanKur("onaylar", "onaylar", bulut.onaylar || []);
+                        tabanKur("cop", "cop", bulut.cop || []);
                         // Muhasebe (kasa/banka/çek) ve onaylar henüz tabloya taşınmadı; bulut açıkken de
                         // tarayıcı deposundan okunur. Bunlar tek kullanıcı tarafından girilen, nadiren
                         // çakışan kayıtlar — taşınmaları öncelikli değildi.
@@ -14661,6 +14841,11 @@ function useAcilisYukleme(d) {
                 // ÖZEL KOD GÖÇÜ BURADA DA ÇALIŞMALI. Yalnızca bulut yoluna konsaydı, internetsiz açılan
                 // bir cihazda eski biçim taşınmadan kalır ve kodlar ekranda hiç görünmezdi — tam olarak
                 // yukarıdaki yorumun uyardığı ayrışma.
+                // TABAN GÖÇTEN ÖNCE (v1.569.0, denetim): aşağıdaki göç yazmaları (özel kod, cari kodu) fark tabanı kurulmadan
+                // kuyruğa giriyordu; araya `await` girince boş tabana karşı çalışıp BÜTÜN kayıtları "eklenen" sayıyor, yazma
+                // düşünce tablonun tamamı bekleyen deftere giriyordu. Taban burada kurulur (aşağıdaki kurulum aynı değerle tekrar).
+                tabloBaslangicTam("urunler", yerelDamga.urunler);
+                tabloBaslangicTam("cariler", c);
                 const yerelKodGoc = ozelKodGoc(t, yerelDamga.urunler, () => uid("oka"));
                 if (yerelKodGoc.degisti) {
                     t = yerelKodGoc.tanimlar;
@@ -14763,10 +14948,13 @@ function useAcilisYukleme(d) {
                 tabloBaslangicTam("cariler", c);
                 // İNTERNETSİZ AÇILIŞ (v1.556.0): taban yerel kopya; önceki oturumda buluta GİDEMEYEN kayıtlar
                 // defterden tabandan düşülür ki internet gelince ilk yazmada gitsinler.
-                ["urunler", "siparisler", "uretim", "cariler", "stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
+                // SIRA (v1.568.0, denetim): defter, tabanı KURULMUŞ tabloya uygulanmalı. Rezervasyon/onay/çöp tabanı defterden
+                // SONRA kuruluyor ve defterin etkisini siliyordu — o tablolardan düşen yazma bir sonraki yazmada gitmiyor,
+                // başarılı yazma da defteri temizlediği için kayıt kalıcı kayboluyordu.
                 tabloBaslangicTam("stok_rezervasyonlari", Array.isArray(srez) ? srez : []);
                 tabloBaslangicTam("onaylar", oy);
                 tabloBaslangicTam("cop", cp);
+                ["urunler", "siparisler", "uretim", "cariler", "stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
             }
             catch (e) {
                 setStorageOk(false);
@@ -16379,6 +16567,38 @@ function AtolyeERP() {
     function kullaniciYetkisiVar(modul, islemTipi) {
         return yetkiVarMi(tanimlar, aktifKullanici, modul, islemTipi);
     }
+    // SEKME YETKİ KAPISI (v1.569.0, denetim): modüller hep kurulu, yalnız gizleniyor; görüntüleme yetkisi yalnız MENÜYÜ
+    // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
+    // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
+    const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
+        cekler: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
+    useEffect(() => {
+        const m = SEKME_MODULU[tab];
+        if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme"))
+            return;
+        setTab("anasayfa");
+        showToast("Bu bölüm için yetkiniz yok");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, tanimlar, aktifKullanici]);
+    // YETKİ TAZELEME (v1.569.0): oturumdaki kullanıcı nesnesi girişte bir kez alınıyordu; Yönetici yetkiyi kaldırsa ya da
+    // kullanıcıyı pasif yapsa yeniden girişe kadar eski yetkiler geçerliydi. Tanımlardaki güncel kaydın rolü/yetkileri/
+    // pasifliği oturuma yansıtılır; pasifleşen kullanıcının oturumu kapanır.
+    useEffect(() => {
+        if (!aktifKullanici || aktifKullanici.id === "test-modu")
+            return;
+        const guncel = (tanimlar.kullanicilar || []).find((k) => k.id === aktifKullanici.id);
+        if (!guncel)
+            return;
+        if (guncel.pasif) {
+            setAktifKullanici(null);
+            showToast("Hesabınız pasif yapıldı — oturum kapatıldı");
+            return;
+        }
+        if (guncel.rol !== aktifKullanici.rol || JSON.stringify(guncel.yetkiler || {}) !== JSON.stringify(aktifKullanici.yetkiler || {})) {
+            setAktifKullanici((a) => (a ? { ...a, rol: guncel.rol, yetkiler: guncel.yetkiler } : a));
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tanimlar.kullanicilar, aktifKullanici]);
     // ONAY SİSTEMİ APP'TE KALIYOR (19 Eylül denemesi): ayrı dosyaya taşınmak istendi ama
     // `onayUygula` SİLME ZİNCİRLERİNİ çağırıyor ve onlar App'te çok daha sonra tanımlanıyor.
     // Hook'a almak, henüz var olmayan fonksiyonları parametre olarak istemek demekti; taşıma geri
@@ -16519,9 +16739,11 @@ function AtolyeERP() {
     }, []);
     // Katman (030 tekilYaz) buluttaki tanımlarla birleştirip eksik öğe eklediğinde ekran da güncellensin.
     useEffect(() => {
-        window.__tanimlarBirlesti = (bulut, eklenen) => {
-            setTanimlar((prev) => tanimlariBirlestir(prev, bulut, tanimSilinenleriOku()).tanimlar);
-            gunlukYaz(`Tanımlar bulutla birleştirildi: başka cihazda eklenen ${eklenen.length} öğe korundu`, "tanimlar", { eklenen: eklenen.slice(0, 50) });
+        window.__tanimlarBirlesti = (bulut, eklenen, cikarilan = []) => {
+            // Ref de güncellenir: başka cihazda silinip buradan çıkarılan öğe, bir sonraki kayıtta "bu cihazda silindi"
+            // sanılıp ikinci kez çöpe atılmasın (v1.569.0).
+            setTanimlar((prev) => { const m = tanimlariBirlestir(prev, bulut, tanimSilinenleriOku()).tanimlar; tanimRef.current = m; return m; });
+            gunlukYaz(`Tanımlar bulutla birleştirildi: başka cihazda eklenen ${eklenen.length} öğe korundu, silinen ${cikarilan.length} öğe çıkarıldı`, "tanimlar", { eklenen: eklenen.slice(0, 50), cikarilan: cikarilan.slice(0, 50) });
         };
         return () => { window.__tanimlarBirlesti = null; };
     }, []);
@@ -16765,6 +16987,10 @@ function AtolyeERP() {
             showToast("Sonraki prosesler başlamış — önce onları geri almalısınız");
             return;
         }
+        if (!araProsesMi && teslimTamirleriTamamlandiMi(siparis, atamaId)) {
+            showToast("Bu teslimden ayrılan tamir işi teslim alınmış — önce tamiri geri alın");
+            return;
+        }
         // ---- TEK KAPI ----
         // Stok, cari ve üretim ilerlemesinin geri alınması `fisGeriAl`da. Fiş numarası ailesi de orada
         // kuruluyor (`uretimFisAdlari`) — teslim almadaki formülün tek kopyası. Burada kalan iş
@@ -16791,6 +17017,24 @@ function AtolyeERP() {
         let iadeEdilenRez = 0;
         if (siparis.rezervasyonSiparisId) {
             sonuc.silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
+                const fisNoH = String(h.fisNo || "");
+                // DENGE (v1.569.0, denetim): "-EkMalzeme" çıkışı teslimde rezervasyondan DÜŞÜLMEDİ — geri almada iade edilirse
+                // rezervasyon fazladan açılır. "-İade" girişi teslimde rezervasyonu SERBEST bıraktı — geri almada yeniden
+                // tutulmalı (teslimdeki gibi önce stok rezervasyonu, sonra alış rezervasyonu).
+                if (fisNoH.endsWith("-EkMalzeme"))
+                    return;
+                if (h.miktar > 0) {
+                    if (!fisNoH.endsWith("-İade"))
+                        return;
+                    const sr = stokRezervasyonTuket(nextStokRezGeri, siparis.rezervasyonSiparisId, urun.id, h.renk, h.beden, h.miktar, -1);
+                    nextStokRezGeri = sr.defter;
+                    const kalan = h.miktar - (sr.dusulen || 0);
+                    if (kalan > 0.0001) {
+                        const r = rezervasyonTuket(nextSiparislerRez, siparis.rezervasyonSiparisId, urun.id, h.renk, h.beden, kalan, -1);
+                        nextSiparislerRez = r.yeniSiparisler;
+                    }
+                    return;
+                }
                 if (h.miktar >= 0)
                     return;
                 const miktar = Math.abs(h.miktar);
@@ -17084,11 +17328,20 @@ function AtolyeERP() {
             showToast(`${model.kod} zaten ürüne dönüştürülmüş`);
             return;
         }
+        // AD ÇAKIŞMASI (v1.569.0, denetim): ürün kaydetmedeki kural (152 `urunAdiAnahtari`) burada yoktu — "Bot" adlı model,
+        // "Bot" ürünü varken koleksiyona alınınca aynı adlı iki ürün oluşuyor, stok ve reçete bölünüyordu.
+        if (stok.some((p) => urunAdiAnahtari(p.ad) === urunAdiAnahtari(model.ad))) {
+            showToast(`"${model.ad}" adında bir ürün zaten var — modelin adını değiştirip tekrar deneyin`);
+            return;
+        }
+        // Birim: tanımlı birimlerden "çift" (yoksa ilk birim) — sabit "çift" tanımlarda olmayabiliyordu.
+        const tanimliBirimler = (tanimlar.birimler || []).map((b) => b.ad || b).filter(Boolean);
+        const birim = tanimliBirimler.find((b) => String(b).toLocaleLowerCase("tr-TR") === "çift") || tanimliBirimler[0] || "çift";
         const yeniUrun = {
             id: uid("urun"),
             ad: model.ad,
             kategori: "Mamul",
-            birim: "çift",
+            birim,
             olcuTipi: "Beden",
             kapakResmi: model.kapakResmi || ((model.tasarimGorselleri || [])[0] || {}).gorsel || "",
             teknikCizimler: (model.teknikCizimler || []).map((c) => ({ ...c })),
@@ -17113,7 +17366,7 @@ function AtolyeERP() {
             : m)));
         gunlukYaz(`Model koleksiyona alındı: ${model.kod} → ${model.ad}`, "modelhane", { modelId: model.id });
         showToast(`${model.kod} koleksiyona alındı — Stok'ta "${model.ad}" ürün kartı açıldı`);
-    }, [stok, modeller, saveModeller, showToast]);
+    }, [stok, modeller, saveModeller, showToast, tanimlar]);
     const saveGorevler = useCallback(async (next) => {
         // Silinen görev çöpe (v1.549.0).
         if (copaAtRef.current)
@@ -19230,7 +19483,16 @@ function AtolyeERP() {
                                 catch (e) {
                                     showToast(`Yayınlanamadı: ${e && e.message}`);
                                 }
-                            }, onAktifKullaniciGuncelle: setAktifKullanici, onAcilisFisiKes: acilisFisiKes, tanimlar: tanimlar, onSave: saveTanimlar, showToast: showToast, onVeritabaniSifirla: veritabaniSifirla, supabaseBagli: supabaseAcikMi(), gocDurumu: gocDurumu, onSupabaseyeGoc: supabaseyeGoc, onDefterTopluOnar: defterTopluOnar, onHammaddeRenkAdDegistir: hammaddeRenkAdDegistir, onOlcuAdDegistir: olcuAdDegistir, stok: stok, cariler: cariler, siparisler: siparisler, aktifKullanici: aktifKullanici, MODULLER: MODULLER, MODUL_ADLARI: MODUL_ADLARI, onJsonYedekle: verileriJsonYedekle, onJsonGeriYukle: jsonDosyasindanGeriYukle, onExcelAktar: verileriExcelAktar, sonYedekTarihi: sonYedekTarihi, onSimdiYedekle: () => otomatikYedekAl(false), onYedektenGeriYukle: yedektenGeriYukle, cop: cop, onCopGeriYukle: coptanGeriYukle, onCopKaliciSil: coptanKaliciSil, onCopBosalt: copuBosalt })),
+                            }, onAktifKullaniciGuncelle: setAktifKullanici, onAcilisFisiKes: acilisFisiKes, tanimlar: tanimlar, onSave: (sonraki) => {
+                                // TANIMLARDA DÜZENLEME YETKİSİ (v1.569.0): görüntüleme yetkisi olan herkes her şeyi değiştirip silebiliyordu.
+                                // Yöneticisiz listede (kurtarma: "Bu hesabı Yönetici yap") kayda izin var.
+                                const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");
+                                if (yoneticiVar && !kullaniciYetkisiVar("tanimlar", "duzenleme")) {
+                                    showToast("Tanımlarda değişiklik yetkiniz yok");
+                                    return undefined;
+                                }
+                                return saveTanimlar(sonraki);
+                            }, showToast: showToast, onVeritabaniSifirla: veritabaniSifirla, supabaseBagli: supabaseAcikMi(), gocDurumu: gocDurumu, onSupabaseyeGoc: supabaseyeGoc, onDefterTopluOnar: defterTopluOnar, onHammaddeRenkAdDegistir: hammaddeRenkAdDegistir, onOlcuAdDegistir: olcuAdDegistir, stok: stok, cariler: cariler, siparisler: siparisler, aktifKullanici: aktifKullanici, MODULLER: MODULLER, MODUL_ADLARI: MODUL_ADLARI, onJsonYedekle: verileriJsonYedekle, onJsonGeriYukle: jsonDosyasindanGeriYukle, onExcelAktar: verileriExcelAktar, sonYedekTarihi: sonYedekTarihi, onSimdiYedekle: () => otomatikYedekAl(false), onYedektenGeriYukle: yedektenGeriYukle, cop: cop, onCopGeriYukle: coptanGeriYukle, onCopKaliciSil: coptanKaliciSil, onCopBosalt: copuBosalt })),
                     tab === "modelhane" && (React.createElement(ModelhaneModule, { receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: receteSablonuKaydet, stok: stok, kurlar: muhasebe.kurlar || {}, cariler: cariler, kurGecmisi: muhasebe.kurGecmisi, onNumuneUret: numuneUret, modeller: modeller, onSave: saveModeller, onKoleksiyonaAl: modeliKoleksiyonaAl, onNumuneUretimi: numuneUretimiAc, showToast: showToast, kullaniciYetkisiVar: kullaniciYetkisiVar })),
                     React.createElement("div", { style: { display: tab === "stok" || tab === "mamulstok" ? undefined : "none" } },
                         React.createElement(StokModule, { kapsam: stokKapsamRef.current, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi, onFiseGitNo: fiseGit, stokRezervasyonlari: stokRezervasyonlari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: siparisler, hedefUrunId: stokHedefUrunId, hedefSekme: stokHedefSekme, onHedefTuketildi: () => { setStokHedefUrunId(null); setStokHedefSekme(null); }, donusHedefi: donusHedefi, onDonusYap: donusYap, items: stok, onSave: saveStok, showToast: showToast, tanimlar: tanimlar, onGoToTanimlar: () => setTab("tanimlar"), cariler: cariler, onCariHareket: addCariHareketFromStok, onGoToCari: () => setTab("cari"), onRemoveHareketGlobal: removeHareketEverywhere, siparisler: siparisler, uretim: uretim, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYeniRenkKaydet: yeniRenkKaydet, onHizliCariEkle: hizliCariEkle, onRenkleriTipeBagla: renkleriTipeBagla, onYeniMalzemeTipiKaydet: yeniMalzemeTipiKaydet, onYeniOlcuKaydet: yeniOlcuKaydet, onReceteSablonuKaydet: receteSablonuKaydet, onYeniMamulTipiKaydet: yeniMamulTipiKaydet, onYeniOzelKodAlani: yeniOzelKodAlaniKaydet, onKombinasyonOlustur: kombinasyonOlusturGlobal, onAsortiOlustur: asortiOlustur, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onCopaAt: copaAt, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: pencereKucult, 
@@ -21334,6 +21596,11 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, muhasebe, onYetimSipa
             }))))));
 }
 function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+    // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
+    // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
+    // yazmalar bu ref'ten okur.
+    const tanimlarGuncelRef = useRef(tanimlar);
+    tanimlarGuncelRef.current = tanimlar;
     const [yeniRenkHammadde, setYeniRenkHammadde] = useState("");
     const [yeniFireSebep, setYeniFireSebep] = useState("");
     const [yeniBeden, setYeniBeden] = useState("");
@@ -21677,6 +21944,22 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         }
     }
     function removeOlcu(id) {
+        // KULLANIM KONTROLÜ + ONAY (v1.569.0, denetim): tek dokunuşla, kullanıldığına bakmadan siliniyordu. Kullanılan beden
+        // tanımsız kalıyor, `barkodKodu` kayboluyor — basılmış etiketler çözülmüyor, yeniden eklenince yeni kod alıyordu.
+        const olcu = (tanimlar.bedenler || []).find((b) => b.id === id);
+        if (!olcu)
+            return;
+        const nrm = (x) => String(x == null ? "" : x).trim().toLocaleLowerCase("tr-TR");
+        const ad = nrm(olcu.ad);
+        const kullananlar = (stok || []).filter((u) => (u.variants || []).some((v) => nrm(v.beden) === ad)
+            || (u.recete || []).some((r) => nrm(r.mamulBeden) === ad || nrm(r.beden) === ad)).map((u) => u.ad);
+        const siparisteVar = (siparisler || []).some((sp) => (sp.kalemler || []).some((k) => nrm(k.beden) === ad));
+        if (kullananlar.length > 0 || siparisteVar) {
+            showToast(`Silinemiyor — "${olcu.ad}" kullanılıyor${kullananlar.length ? `: ${kullananlar.slice(0, 5).join(", ")}${kullananlar.length > 5 ? " …" : ""}` : " (siparişlerde)"}`);
+            return;
+        }
+        if (!window.confirm(`"${olcu.ad}" ${olcu.tip === "Boyut" ? "boyutu" : "bedeni"} silinsin mi?`))
+            return;
         onSave({ ...tanimlar, bedenler: tanimlar.bedenler.filter((b) => b.id !== id) });
     }
     function removeBirim(id) {
@@ -21782,7 +22065,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 return false;
             }
             setBulutIslemi(null);
-            onSave({ ...tanimlar, kullanicilar: [...mevcut, { ...yeni, eposta, bulutHesabi: true }] });
+            {
+                const g = tanimlarGuncelRef.current;
+                onSave({ ...g, kullanicilar: [...(g.kullanicilar || []), { ...yeni, eposta, bulutHesabi: true }] });
+            }
             showToast(`${temizAd} eklendi · bulut hesabı doğrulandı: ${eposta}`);
             return true;
         }
@@ -21790,7 +22076,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         const sonuc = await bulutKullaniciIslemi("ekle", eposta, sifre);
         setBulutIslemi(null);
         if (sonuc.tamam) {
-            onSave({ ...tanimlar, kullanicilar: [...mevcut, { ...yeni, eposta, bulutHesabi: true }] });
+            {
+                const g = tanimlarGuncelRef.current;
+                onSave({ ...g, kullanicilar: [...(g.kullanicilar || []), { ...yeni, eposta, bulutHesabi: true }] });
+            }
             showToast(`${temizAd} eklendi · bulut hesabı: ${eposta}`);
             return true;
         }
@@ -21822,7 +22111,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         if (!sonuc.tamam && k.bulutHesabi !== false) {
             return showToast(`Bulut hesabı silinemedi, kayıt DURUYOR: ${sonuc.hata}`);
         }
-        onSave({ ...tanimlar, kullanicilar: (tanimlar.kullanicilar || []).filter((x) => x.id !== id) });
+        {
+            const g = tanimlarGuncelRef.current;
+            onSave({ ...g, kullanicilar: (g.kullanicilar || []).filter((x) => x.id !== id) });
+        }
         showToast(`${k.ad} silindi${sonuc.tamam ? " · bulut hesabı da silindi" : ""}`);
     }
     // Şifre değiştirme / bulut hesabını sonradan açma — listedeki kullanıcı satırından.
@@ -21845,9 +22137,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
             return false;
         }
         // Bulut kabul etti: yerel düz metin şifre SİLİNİYOR, e-posta ve rozet yazılıyor.
+        const gT = tanimlarGuncelRef.current;
         onSave({
-            ...tanimlar,
-            kullanicilar: (tanimlar.kullanicilar || []).map((x) => {
+            ...gT,
+            kullanicilar: (gT.kullanicilar || []).map((x) => {
                 if (x.id !== id)
                     return x;
                 const { sifre: _eski, ...kalan } = x;
@@ -21888,6 +22181,13 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         });
     }
     function kullaniciRolDegistir(id, rol) {
+        // SON YÖNETİCİ (v1.568.0, denetim): silmede vardı, rol değiştirmede yoktu. Tek Yönetici kendini düşürünce liste
+        // yöneticisiz kalıyor, açık olan herhangi bir kullanıcı "yöneticisiz liste" kurtarmasıyla Yönetici olabiliyordu.
+        const k = (tanimlar.kullanicilar || []).find((x) => x.id === id);
+        if (k && k.rol === "Yönetici" && rol !== "Yönetici" && (tanimlar.kullanicilar || []).filter((x) => x.rol === "Yönetici").length <= 1) {
+            showToast("Son Yönetici'nin rolü değiştirilemez — önce başka birini Yönetici yapın");
+            return;
+        }
         onSave({ ...tanimlar, kullanicilar: (tanimlar.kullanicilar || []).map((k) => (k.id === id ? { ...k, rol } : k)) });
     }
     function firmaBilgisiGuncelle(alan, deger) {
@@ -24305,6 +24605,22 @@ function hammaddeRenkSecenekleri(hammaddeId, tumUrunler) {
     const ekler = Array.from(new Set(recetede.filter((r) => !kart.includes(r)))).sort((a, b) => String(a).localeCompare(String(b), "tr"));
     return [...Array.from(new Set(kart)), ...ekler];
 }
+// ================= MALİYET İÇİN TEMSİLİ BEDEN (v1.568.0) =================
+//
+// Denetim bulgusu: çift başı maliyet (ürün kartı Maliyet sekmesi, Maliyet OK, fiyat listesi "Maliyet" kaynağı, maliyet
+// yazdır) bir rengin BÜTÜN reçete satırlarını topluyordu. Bedene göre satırı olan malzemede (taban 36→0,10, 37→0,11…)
+// miktarlar farklıysa her beden ayrı grup olup TOPLANIYOR, maliyet beden sayısı kadar katlanıyordu; eşitse tek gruba
+// çöküyordu (doğru, şans eseri). Kural: "Tüm Bedenler" satırları + TEK bir temsili mamul bedeninin satırları
+// (rengin bedenlerinin ortancası — çift başı ortalama maliyete en yakın). `finansMamulBirimDegeri` zaten beden
+// beden hesaplıyor; bu yalnız tek sayı gösteren yerler için.
+function maliyetTemsiliSatirlar(satirlar) {
+    const liste = satirlar || [];
+    const ozel = bedenSirala(Array.from(new Set(liste.map((r) => r.mamulBeden).filter((b) => b && b !== "Tüm Bedenler"))));
+    if (ozel.length <= 1)
+        return liste;
+    const temsili = ozel[Math.floor((ozel.length - 1) / 2)];
+    return liste.filter((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler" || r.mamulBeden === temsili);
+}
 // Herhangi bir siparişe bağlı olmadan, doğrudan bir stok kartına giriş/çıkış yapmayı sağlayan bağımsız form.
 function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, onKapat }) {
     const [urunId, setUrunId] = useState("");
@@ -24860,7 +25176,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
             const varsayilanMinStok = (p.variants[0] || {}).minStok || 0;
             // Ürün hâlâ renksiz/bedensiz placeholder durumundaysa, yeni renk eklenince placeholder'ın
             // yerine geçilir (Standart/Standart satırı kalkar, gerçek renk devam eder).
-            if (placeholderMi(p)) {
+            if (placeholderMi(p) && bosYerTutucuMu(p)) { // stoklu/hareketli yer tutucu ezilmez (v1.568.0)
                 return { ...p, variants: [{ renk, renkId: renkKimligiBul(renk, (tanimlar.renkler || [])), beden: "Standart", miktar: 0, minStok: varsayilanMinStok }] };
             }
             const bedenler = bedenSirala(Array.from(new Set(p.variants.map((v) => v.beden))));
@@ -24903,7 +25219,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
         const next = [urun].map((p) => {
             const varsayilanMinStok = (p.variants[0] || {}).minStok || 0;
             // Aynı mantık: placeholder durumundaysa, yeni beden eklenince Standart/Standart satırı kalkar.
-            if (placeholderMi(p)) {
+            if (placeholderMi(p) && bosYerTutucuMu(p)) { // stoklu/hareketli yer tutucu ezilmez (v1.568.0)
                 return { ...p, variants: [{ renk: "Standart", beden, miktar: 0, minStok: varsayilanMinStok }] };
             }
             const renkler = Array.from(new Set(p.variants.map((v) => v.renk)));
@@ -24923,6 +25239,12 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // üzerinde iş olan bir Standart kaydı sessizce silinmez, kullanıcı kendisi karar verir.
     // v1.493.0: yer tutucu = "Standart" YA DA boş dize (`olcuGoster` ortak kural); boş kayıtlı eski satır
     // gerçek değer eklenince de kalıyordu. Engel kontrolü her iki yazımla ayrı ayrı yapılıyor.
+    // DENETİM (v1.568.0): yer tutucu (Standart/Standart) yalnız ADINA bakılarak siliniyordu; hızlı açılıp 50 birim stok
+    // girilmiş hammaddeye ilk renk eklenince o varyant miktar 0 ile yenisine dönüşüyor, stok hareketsiz kayboluyordu.
+    // Stoğu ya da hareketi olan yer tutucu yerinde kalır; normal ekleme yolu (`standartYerTutucuyuKaldir` korumalı) işler.
+    function bosYerTutucuMu(urun) {
+        return !(urun.variants || []).some((v) => (Number(v.miktar) || 0) !== 0) && !(urun.hareketler || []).length;
+    }
     function standartYerTutucuyuKaldir(urun, eksen) {
         const yerTutucu = (v) => !olcuGoster(v[eksen]);
         const baskaVar = (urun.variants || []).some((v) => !yerTutucu(v));
@@ -25056,19 +25378,20 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // ürünler silinebilir — onların silinmesi hiçbir yerde delik açmaz.
     function removeProduct(id) {
         const product = items.find((p) => p.id === id);
+        // Dönüş: gerçekten silindiyse true (v1.569.0) — çağıran pencereyi yalnız o zaman kapatır.
         if (!product)
-            return;
+            return false;
         const engeller = urunSilmeEngelleri(product);
         if (engeller.length > 0) {
             showToast(`"${product.ad}" silinemez — ${engeller.join(", ")} var. Geçmişi olan ürün silinmez; kullanımdan kaldırmak için yeni işlem girmeyin.`);
-            return;
+            return false;
         }
         // Yetkisi olmayan bir kullanıcı silme yapmaya çalışırsa, doğrudan silmek yerine yöneticinin
         // onayına düşürülür; onay bekleyenler panelinden onaylanırsa bu fonksiyon bypassOnay=true ile
         // tekrar çağrılıp gerçek silme işlemi uygulanır.
         if (kullaniciYetkisiVar && !kullaniciYetkisiVar("stok", "silme")) {
             onayIste("stok", "Sil", `"${product.ad}" ürününü sil`, "urunSil", { productId: id });
-            return;
+            return false;
         }
         // Buraya yalnızca bağlantısız ürünler ulaşır — yan etkisi yok, sorunsuz geri yüklenebilir.
         if (onCopaAt) {
@@ -25079,6 +25402,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
         }
         onSave(items.filter((p) => p.id !== id));
         showToast("Ürün silindi — Tanımlar > Çöp Kutusu'ndan geri alınabilir");
+        return true;
     }
     function ekFiyatEkle(productId, tip, paraBirimi, tutar) {
         const n = parseFloat(tutar);
@@ -25111,9 +25435,25 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
         const next = items.map((p) => {
             if (p.id !== productId)
                 return p;
-            const kalanlar = (p.recete || []).filter((r) => !silinecekIdler.includes(r.id));
             const eklenenler = yeniSatirlar.map((s) => ({ id: uid("recete"), ...s }));
-            return { ...p, ...(ekAlanlar || {}), recete: [...kalanlar, ...eklenenler] };
+            // YERİNDE GÜNCELLE (v1.567.0): değişen satırlar (renk, boy, açıklama…) silinip SONA ekleniyordu; reçete kartı
+            // her düzenlemede listenin sonuna kayıyordu. Yeni satırlar ilk silinen satırın yerine konur; silme yoksa sona.
+            const sil = new Set(silinecekIdler);
+            const sonuc = [];
+            let yerlesti = false;
+            (p.recete || []).forEach((r) => {
+                if (!sil.has(r.id)) {
+                    sonuc.push(r);
+                    return;
+                }
+                if (!yerlesti) {
+                    sonuc.push(...eklenenler);
+                    yerlesti = true;
+                }
+            });
+            if (!yerlesti)
+                sonuc.push(...eklenenler);
+            return { ...p, ...(ekAlanlar || {}), recete: sonuc };
         });
         onSave(next);
     }
@@ -26162,7 +26502,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                             // key'e hedef sekme dahil: aynı ürün zaten açıkken tekrar "Reçeteyi aç" denirse
                             // bileşen yeniden kurulur ve istenen sekme uygulanır. Aksi halde başlangıç değeri
                             // yalnızca ilk kurulumda okunduğu için ikinci yönlendirme etkisiz kalırdı.
-                            key: `${p.id}-${hedef ? hedef.sayac : 0}`, product: p, baslangicAcik: true, baslangicSekme: hedef ? hedef.sekme : null, tanimlarRenkler: tanimlar.renkler, tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler, tanimlarBedenGruplari: tanimlar.bedenGruplari || [], onAddRenk: addRenkToProduct, onRenkleriTipeBagla: onRenkleriTipeBagla, onAddBeden: addBedenToProduct, onRemoveRenk: removeRenkFromProduct, onRemoveBeden: removeBedenFromProduct, onRemoveProduct: (id, cascade) => { removeProduct(id, cascade); if (onPencereKapat)
+                            key: `${p.id}-${hedef ? hedef.sayac : 0}`, product: p, baslangicAcik: true, baslangicSekme: hedef ? hedef.sekme : null, tanimlarRenkler: tanimlar.renkler, tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler, tanimlarBedenGruplari: tanimlar.bedenGruplari || [], onAddRenk: addRenkToProduct, onRenkleriTipeBagla: onRenkleriTipeBagla, onAddBeden: addBedenToProduct, onRemoveRenk: removeRenkFromProduct, onRemoveBeden: removeBedenFromProduct, onRemoveProduct: (id, cascade) => { if (removeProduct(id, cascade) && onPencereKapat)
                                 onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, 
                             // Büyütme, katalogdaki büyük görsel penceresinin aynısı: { url, ad } bekliyor.
                             onTeknikCizimAc: (c) => setBuyukGorsel({ url: c.gorsel, ad: c.baslik || "Teknik çizim" }), cariler: cariler, onGoToCari: onGoToCari, onRemoveHareketGlobal: onRemoveHareketGlobal, onRenkResmiChange: updateRenkResmi, onRenkResmiRemove: removeRenkResmi, siparisler: siparisler, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: onPencereAc, onKombinasyonOlustur: onKombinasyonOlustur, onGoToUrun: urunAc })))));
@@ -26338,7 +26678,7 @@ function urunMaliyetHesabi(urun, ctx = {}) {
     if (!receteRengi)
         eksikler.push("reçete hiçbir renge bağlı değil");
     else {
-        const ilgili = recete.filter((r) => r.mamulRenk === receteRengi);
+        const ilgili = maliyetTemsiliSatirlar(recete.filter((r) => r.mamulRenk === receteRengi)); // v1.568: tek beden
         receteProsesGrupla(ilgili, ctx.tanimlarProsesler || [], urun.receteProsesSirasiOverride).forEach((pg) => {
             receteMaliyetGrupla(pg.satirlar).forEach((g) => {
                 const s = g.satirlar[0];
@@ -26712,10 +27052,15 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
             return;
         setDuzenler((d) => {
             const yeni = { ...(d[kaynak.key] || {}) };
-            satirlar.forEach((r) => { if (r.fiyat > 0)
-                yeni[r.urunId] = fiyatYazi(r.yeni == null ? "" : r.yeni); });
+            // Sonucu 0/eksi olan (null) ürün ATLANIR (v1.568.0, denetim): kutu boşaltılıyordu, Kaydet de bunu "fiyatı sil"
+            // sayıp grubun fiyat kuralını siliyordu — o cariye fişte genel fiyat çıkıyordu. Fiyatı olduğu gibi kalır.
+            satirlar.forEach((r) => { if (r.fiyat > 0 && r.yeni != null)
+                yeni[r.urunId] = fiyatYazi(r.yeni); });
             return { ...d, [kaynak.key]: yeni };
         });
+        const atlanan = satirlar.filter((r) => r.fiyat > 0 && r.yeni == null).length;
+        if (atlanan)
+            showToast(`${atlanan} üründe sonuç sıfır ya da eksi — fiyatı değiştirilmedi`);
         setIslem((i) => ({ ...i, deger: "" }));
     };
     // FARKLI KAYDET: ekrandaki fiyatlar (toplu işlem varsa uygulanmış hâli) başka bir gruba — yeni ya da var
@@ -26807,7 +27152,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
             React.createElement("b", { style: { fontSize: 12 } }, kaynak.maliyet ? "Kâr ekle:" : "Toplu işlem:"),
             React.createElement("div", { style: { display: "flex", gap: 4 } }, [[1, "Artır"], [-1, "İndir"]].map(([yon, ad]) => (React.createElement("button", { key: yon, type: "button", "data-fl-yon": yon, onClick: () => setIslem((i) => ({ ...i, yon })), style: cip(islem.yon === yon) }, ad)))),
             React.createElement("input", { "data-fl-deger": "1", value: islem.deger, inputMode: "decimal", placeholder: islem.tur === "yuzde" ? "14" : "10", onChange: (e) => setIslem((i) => ({ ...i, deger: e.target.value })), style: { ...kutu, width: 80, textAlign: "right" } }),
-            React.createElement("div", { style: { display: "flex", gap: 4 } }, [["yuzde", "%"], ["tutar", `Tutar (${pbSembol(kaynak.paraBirimi || "TRY")})`]].map(([tur, ad]) => (React.createElement("button", { key: tur, type: "button", "data-fl-tur": tur, onClick: () => setIslem((i) => ({ ...i, tur })), style: cip(islem.tur === tur) }, ad)))),
+            React.createElement("div", { style: { display: "flex", gap: 4 } }, [["yuzde", "%"], ["tutar", kaynak.paraBirimi ? `Tutar (${pbSembol(kaynak.paraBirimi)})` : "Tutar (fiyatın biriminde)"]].map(([tur, ad]) => (React.createElement("button", { key: tur, type: "button", "data-fl-tur": tur, onClick: () => setIslem((i) => ({ ...i, tur })), style: cip(islem.tur === tur) }, ad)))),
             React.createElement("label", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, "Yuvarla"),
             React.createElement("select", { "data-fl-adim": "1", value: islem.adim, onChange: (e) => setIslem((i) => ({ ...i, adim: e.target.value })), style: { ...kutu, width: 100 } }, [["0.01", "Kuruş"], ["0.05", "0,05"], ["0.5", "0,50"], ["1", "1"], ["5", "5"], ["10", "10"]].map(([v, ad]) => React.createElement("option", { key: v, value: v }, ad))),
             React.createElement("button", { type: "button", className: "btn-ghost", "data-fl-listeye-al": "1", disabled: !islemAktif || kaynak.maliyet, onClick: islemiListeyeAl, title: "Yeni fiyatlar\u0131 bu listeye yaz (Kaydet'e bas\u0131lana kadar kaydedilmez)", style: { padding: "6px 11px", fontSize: 12 } }, "Bu listeye uygula"),
@@ -26932,6 +27277,32 @@ const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol
 // `onDegistir(mamulBedenleri[], yeni)` LİSTE alır: "Hepsi →" tek yazımda gitmeli (art arda yazımlar aynı eski
 // listeden kurulup birbirinin üstüne yazardı).
 // Bedensiz hammaddede (yalnız "Standart") şerit çıkmaz — değiştirecek bir şey yok.
+// REÇETE AÇIKLAMASI DÜZENLE / SİL (v1.567.0 — kullanıcı: "Reçetede eklenen satırdaki açıklama da düzenlensin ve
+// silinebilsin"). Açıklama ("16 Desi Ölçüm", "Fort", "şablon: Atom") yalnız eklerken yazılıyordu. Etikete dokununca
+// kutu açılır: Enter/✓ kaydeder, × siler (boş açıklama). "N. Renk" POZİSYON etiketi düzenlenmez — kombinasyon
+// renginin hangi parçasının kullanılacağını o söylüyor; değişirse hammadde rengi çözümü bozulur.
+// `onKaydet(yeni)` grubun o açıklamayı taşıyan BÜTÜN satırlarına (her renk) yazmalı.
+function ReceteAciklamasi({ deger, gosterim, onKaydet, stil }) {
+    const [duzenle, setDuzenle] = useState(false);
+    const [metin, setMetin] = useState(deger || "");
+    const pozisyon = /^\d+\. Renk$/.test(String(deger || ""));
+    const temel = { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap", ...(stil || {}) };
+    if (pozisyon || !onKaydet)
+        return deger ? React.createElement("span", { className: "mono", style: temel, title: pozisyon ? "Pozisyon etiketi — renk eşleşmesi buna bağlı, düzenlenmez" : undefined }, gosterim || deger) : null;
+    const kaydet = (yeni) => { setDuzenle(false); const t = String(yeni || "").trim(); if (t !== String(deger || ""))
+        onKaydet(t); };
+    if (!duzenle) {
+        return deger ? (React.createElement("button", { type: "button", className: "mono", "data-recete-aciklama": deger, title: "A\u00E7\u0131klamay\u0131 d\u00FCzenle / sil", onClick: () => { setMetin(deger); setDuzenle(true); }, style: { ...temel, border: "1px dashed var(--erp-line)", cursor: "pointer" } },
+            gosterim || deger,
+            " \u270E")) : (React.createElement("button", { type: "button", "data-recete-aciklama-ekle": "1", title: "A\u00E7\u0131klama ekle", onClick: () => { setMetin(""); setDuzenle(true); }, style: { fontSize: 11, color: "var(--erp-text-3)", background: "none", border: "1px dashed var(--erp-line-soft)", borderRadius: "var(--erp-r-pill)", padding: "1px 6px", cursor: "pointer" } }, "+ a\u00E7\u0131klama"));
+    }
+    return (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
+        React.createElement("input", { autoFocus: true, value: metin, "data-recete-aciklama-kutu": "1", onChange: (e) => setMetin(e.target.value), onKeyDown: (e) => { if (e.key === "Enter")
+                kaydet(metin); if (e.key === "Escape")
+                setDuzenle(false); }, placeholder: "a\u00E7\u0131klama", style: { width: 130, fontSize: 12, padding: "2px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
+        React.createElement("button", { type: "button", "data-recete-aciklama-kaydet": "1", title: "Kaydet", onClick: () => kaydet(metin), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-ok)", fontWeight: 700 } }, "\u2713"),
+        deger ? React.createElement("button", { type: "button", "data-recete-aciklama-sil": "1", title: "A\u00E7\u0131klamay\u0131 sil", onClick: () => kaydet(""), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", fontWeight: 700 } }, "\u00D7") : null));
+}
 function BedenEslesmeSeridi({ satirlar, hammadde, urunBedenleri, onDegistir }) {
     if (!hammadde || !(satirlar || []).length)
         return null;
@@ -28478,14 +28849,18 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                         // ŞABLON EKLEMESİNİ GERİ AL (v1.558.0): şablondan gelen satırlar `eklemeId` "sablon-…" taşır. Eski
                         // (pozisyonsuz) şablonla yanlış renkte eklenen satırlar tek dokunuşla kaldırılıp şablon yeniden uygulanabilsin.
                         // v1.564.0: başka stoktan kopyalanan satırlar ("kopya-") da aynı düğmeyle geri alınır.
-                        const sablonSatirlari = (product.recete || []).filter((r) => /^(sablon|kopya)-/.test(String(r.eklemeId || "")));
+                        // YALNIZ SON EKLEME (v1.568.0, denetim): önce "sablon-/kopya-" önekli HER satır gidiyordu — aylar önceki
+                        // uygulamalar da. Bir uygulamanın bütün satırları aynı `eklemeTarihi`ni taşır; en yenisi kaldırılır.
+                        const tumSablon = (product.recete || []).filter((r) => /^(sablon|kopya)-/.test(String(r.eklemeId || "")));
+                        const sonTarih = tumSablon.reduce((m, r) => (String(r.eklemeTarihi || "") > m ? String(r.eklemeTarihi || "") : m), "");
+                        const sablonSatirlari = tumSablon.filter((r) => String(r.eklemeTarihi || "") === sonTarih);
                         if (sablonSatirlari.length === 0)
                             return null;
                         return (React.createElement("span", { "data-sablon-geri-al": sablonSatirlari.length, style: { display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" } },
-                            "\u015Eablondan / kopyadan eklenen ",
+                            "Son \u015Fablon/kopya eklemesi: ",
                             sablonSatirlari.length,
                             " sat\u0131r",
-                            React.createElement(SilOnayButonu, { boyut: 12, baslikNormal: `Şablondan eklenen ${sablonSatirlari.length} satırı kaldır`, baslikOnay: `Şablondan eklenen ${sablonSatirlari.length} reçete satırı kaldırılacak — tekrar dokunun`, onConfirm: () => {
+                            React.createElement(SilOnayButonu, { boyut: 12, baslikNormal: `Son şablon/kopya eklemesinin ${sablonSatirlari.length} satırını kaldır`, baslikOnay: `Şablondan eklenen ${sablonSatirlari.length} reçete satırı kaldırılacak — tekrar dokunun`, onConfirm: () => {
                                     onReceteGrubuGuncelle(product.id, sablonSatirlari.map((r) => r.id), []);
                                     (showToast || (() => { }))(`Şablondan eklenen ${sablonSatirlari.length} satır kaldırıldı`);
                                 } })));
@@ -29218,7 +29593,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                     const satirOrtakBirim = satirlarBu[0] ? satirlarBu[0].birim : "";
                                                     return (React.createElement("tr", { key: poz ?? "__tekli__" },
                                                         React.createElement("td", { style: { padding: "4px 8px" } },
-                                                            poz != null && (React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap" } }, poz)),
+                                                            React.createElement(ReceteAciklamasi, { deger: poz, onKaydet: (yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (poz || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); } }),
                                                             satirIdleri.length > 0 && (React.createElement("span", { style: { display: "inline-flex", marginLeft: poz != null ? 4 : 0, verticalAlign: "middle" } },
                                                                 React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, satirIdleri), boyut: 13, baslikNormal: "Bu sat\u0131rdaki t\u00FCm e\u015Fle\u015Fmeleri sil", baslikOnay: `${satirIdleri.length} eşleşme silinecek — emin misiniz? Tekrar dokunun` }))),
                                                             satirSabit && pozisyonlar2.length > 1 && (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3, marginTop: 3 } },
@@ -29437,7 +29812,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                             React.createElement("th", { style: { fontSize: 13, textAlign: "left", padding: "4px 8px", whiteSpace: "nowrap" } }, "Mam\u00FCl Rengi"),
                                                             matrisSatirlari.map((ms) => (React.createElement("th", { key: ms.key, style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } },
                                                                 ms.mamulRenk,
-                                                                ms.aciklama && (React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "1px 5px", borderRadius: "var(--erp-r-pill)", marginLeft: 4 } }, aciklamaGoster(ms.aciklama, ms.mamulRenk)))))),
+                                                                ms.aciklama && React.createElement(ReceteAciklamasi, { deger: ms.aciklama, gosterim: aciklamaGoster(ms.aciklama, ms.mamulRenk), stil: { fontSize: 11, padding: "1px 5px", marginLeft: 4 }, onKaydet: (yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); } })))),
                                                             eksikMamulRenkler.map((mr) => (React.createElement("th", { key: `eksik-${mr}`, title: "Bu model rengi i\u00E7in e\u015Fle\u015Fme yap\u0131lmam\u0131\u015F \u2014 \u00FCretimde bu renkten hammadde d\u00FC\u015F\u00FClmez", style: { fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap", color: "var(--erp-warn)" } },
                                                                 mr,
                                                                 React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", background: "#B85C2E18", padding: "1px 5px", borderRadius: "var(--erp-r-pill)", marginLeft: 4 } }, "eksik")))))),
@@ -29508,7 +29883,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                         React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text)" } }, ms.mamulRenk),
                                                         React.createElement(ArrowRight, { size: 12, color: "var(--erp-text-3)", style: { margin: "0 3px", verticalAlign: "middle" } }),
                                                         React.createElement("span", { className: "mono", style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } }, ms.renk),
-                                                        ms.aciklama && (React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "1px 5px", borderRadius: "var(--erp-r-pill)", marginLeft: 4 } }, aciklamaGoster(ms.aciklama, ms.mamulRenk)))),
+                                                        ms.aciklama && React.createElement(ReceteAciklamasi, { deger: ms.aciklama, gosterim: aciklamaGoster(ms.aciklama, ms.mamulRenk), stil: { fontSize: 11, padding: "1px 5px", marginLeft: 4 }, onKaydet: (yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); } })),
                                                     tumBedenler.map((b) => {
                                                         const r = ms.satirlar.find((x) => x.mamulBeden === b);
                                                         return (React.createElement("td", { key: b, style: { padding: "4px 8px", textAlign: "center" } }, r ? (React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 3 } },
@@ -29562,7 +29937,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: tekBeden ? 0 : 6 } },
                                                             React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text)" } }, ms.mamulRenk),
                                                             React.createElement(ArrowRight, { size: 13, color: "var(--erp-text-3)" }),
-                                                            ms.aciklama && (React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)" } }, aciklamaGoster(ms.aciklama, ms.mamulRenk))),
+                                                            React.createElement(ReceteAciklamasi, { deger: ms.aciklama, gosterim: aciklamaGoster(ms.aciklama, ms.mamulRenk), onKaydet: (yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); } }),
                                                             React.createElement("select", { value: ms.renk, "data-renk-gecmis": ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined, onChange: (e) => {
                                                                     const yeniRenk = e.target.value;
                                                                     if (!yeniRenk || yeniRenk === ms.renk)
@@ -29716,7 +30091,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     // TL karşılığı, seçilen maliyet biriminde karşılığı.
                     const maliyetDokumu = [];
                     if (receteVarRenk) {
-                        const ilgiliSatirlar = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+                        const ilgiliSatirlar = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk)); // v1.568: tek beden
                         receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
                             receteMaliyetGrupla(pg.satirlar).forEach((g) => {
                                 const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);
@@ -37292,12 +37667,27 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
         if (birimMaliyetOnbellek.has(anahtar))
             return birimMaliyetOnbellek.get(anahtar);
         let deger;
+        // KUR EKSİĞİ MALİYETTE DE (v1.568.0, denetim): döviz fiyatlı malın kuru yoksa maliyet TL gibi sayılıyor ama
+        // gelir tarafındaki "kur eksik" uyarısına girmiyordu — brüt kâr sessizce şişiyordu.
+        const kurYoksa = (pb) => { if (pb && pb !== "TRY" && !(parseFloat((kurlar || {})[pb]) > 0))
+            kurEksik.add(pb); };
         if (p.kategori === "Mamul") {
             const d = (p.recete || []).length ? finansMamulBirimDegeri(p, h.renk, h.beden, "hammadde", stok, kurlar, [], maliyetBaglami) : null;
-            deger = d && d.hammadde > 0 ? d.hammadde : alisFiyatiTL(p, kurlar);
+            if (d && d.kurYok)
+                kurEksik.add(d.kurYok);
+            if (d && d.hammadde > 0)
+                deger = d.hammadde;
+            else {
+                deger = alisFiyatiTL(p, kurlar);
+                if (parseFloat(p.alisFiyati) > 0)
+                    kurYoksa(alisPbKodu(p));
+            }
         }
         else {
-            deger = hammaddeBirimFiyati(p, h.renk, h.beden, kurlar, maliyetBaglami).tl;
+            const bf = hammaddeBirimFiyati(p, h.renk, h.beden, kurlar, maliyetBaglami);
+            if (bf.kendiFiyat > 0)
+                kurYoksa(bf.pb);
+            deger = bf.tl;
         }
         birimMaliyetOnbellek.set(anahtar, deger);
         return deger;
@@ -42204,7 +42594,7 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
     let hammaddeSatirlari = [];
     let hammaddeToplami = 0;
     if (receteVarRenk) {
-        const ilgiliSatirlar = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+        const ilgiliSatirlar = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk)); // v1.568: tek beden
         // Önce proses'e göre böl, ardından her proses içinde hammadde+renk+miktar'a göre grupla —
         // aynı hammadde farklı proseslerde ya da farklı miktarlarla kullanılmışsa her biri ayrı satır olarak kalır.
         receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
@@ -42746,7 +43136,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
     let hammaddeToplami = 0;
     const dagilim = {};
     if (receteVarRenk) {
-        const ilgili = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+        const ilgili = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk)); // v1.568: tek beden
         receteProsesGrupla(ilgili, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
             receteMaliyetGrupla(pg.satirlar).forEach((g) => {
                 const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);
@@ -51060,6 +51450,27 @@ function EmptyState({ text, mesaj }) {
 // Kullanıcıya NEDEN durdurulduğu ve ne olacağı söylenir: veri kaybolmasın diye; bağlantı gelince kendiliğinden devam.
 function CevrimdisiKilit({ yerelAcildi, bekleyenSayisi, sebep, onDene }) {
     const [deneniyor, setDeneniyor] = useState(false);
+    // KLAVYE DE KİLİTLİ (v1.568.0, denetim): katman yalnız fareyi kesiyordu. Bağlantı koptuğu an imleç bir form kutusundaysa
+    // yazmak, Enter, barkod okuyucu ve Ctrl+S kısayolu (pencere dinleyicisi) çalışmaya devam ediyordu — internetsiz kayıt.
+    // Odak bırakılır; kilit açıkken katman dışındaki her tuş yakalama evresinde yutulur.
+    useEffect(() => {
+        try {
+            if (document.activeElement && document.activeElement.blur)
+                document.activeElement.blur();
+        }
+        catch (e) { /* yok */ }
+        const yut = (e) => {
+            const katman = document.querySelector("[data-cevrimdisi-kilit]");
+            if (katman && katman.contains(e.target))
+                return;
+            e.preventDefault();
+            e.stopPropagation();
+        };
+        window.addEventListener("keydown", yut, true);
+        window.addEventListener("keypress", yut, true);
+        window.addEventListener("submit", yut, true);
+        return () => { window.removeEventListener("keydown", yut, true); window.removeEventListener("keypress", yut, true); window.removeEventListener("submit", yut, true); };
+    }, []);
     return (React.createElement("div", { "data-cevrimdisi-kilit": "1", role: "alertdialog", "aria-modal": "true", onKeyDownCapture: (e) => { e.stopPropagation(); }, style: { position: "fixed", inset: 0, zIndex: 100000, background: "rgba(34,27,20,.78)", display: "flex",
             alignItems: "center", justifyContent: "center", padding: 20 } },
         React.createElement("div", { style: { background: "#fff", borderRadius: "var(--erp-r-lg)", padding: "22px 24px", maxWidth: 460, width: "100%", textAlign: "center",
@@ -52446,6 +52857,16 @@ const MODEL_ASAMALARI = [
 function modelAsamasi(key) {
     return MODEL_ASAMALARI.find((a) => a.key === key) || MODEL_ASAMALARI[0];
 }
+// OTOMATİK MODEL KODU (v1.569.0, denetim): "Model Yap" ilham kayıtlarını saymıyor, "Yeni model" sayıyordu — iki yol aynı
+// M-003'ü verebiliyordu; silinen model de sayıyı düşürüp eski kodu yeniden açıyordu. Kural: kullanılmış EN BÜYÜK
+// M-numarası + 1.
+function sonrakiModelKodu(modeller) {
+    const enBuyuk = (modeller || []).reduce((m, x) => {
+        const e = String((x && x.kod) || "").match(/^M-(\d+)$/i);
+        return e ? Math.max(m, parseInt(e[1], 10)) : m;
+    }, 0);
+    return `M-${String(enBuyuk + 1).padStart(3, "0")}`;
+}
 function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cariler, kurGecmisi, stok, onNumuneUret, onNumuneUretimi, modeller, onSave, onKoleksiyonaAl, showToast, kullaniciYetkisiVar }) {
     // Liste / katalog ve resim büyütme (21 Eylül).
     const [katalogMod, setKatalogMod] = useState(false);
@@ -52498,7 +52919,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cari
         const ad = String(ilham.modelAdi || "").trim();
         if (!ad)
             return showToast("Model adı yazın, sonra \"Model Yap\" deyin");
-        const kod = `M-${String((modeller || []).filter((m) => m.tip !== "ilham").length + 1).padStart(3, "0")}`;
+        const kod = sonrakiModelKodu(modeller);
         const kayit = {
             id: uid("model"), kod, ad, sezon: "", modelci: "",
             asama: "fikir", kalip: "", taban: ilham.taban || "", topuk: "", bedenSerisi: "",
@@ -52518,7 +52939,7 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cari
         const ad = yeni.ad.trim();
         if (!ad)
             return showToast("Model adı gerekli");
-        const kod = yeni.kod.trim() || `M-${String((modeller || []).length + 1).padStart(3, "0")}`;
+        const kod = yeni.kod.trim() || sonrakiModelKodu(modeller);
         if ((modeller || []).some((m) => String(m.kod || "").toLocaleLowerCase("tr-TR") === kod.toLocaleLowerCase("tr-TR"))) {
             return showToast(`"${kod}" kodu zaten kullanılıyor`);
         }
@@ -53244,7 +53665,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.566.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.569.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

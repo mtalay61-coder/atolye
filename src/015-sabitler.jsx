@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.568.0";
+const SURUM = "1.569.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Genel denetim: verilen hammadde tekrar dusulmuyor, hareket gecmisi kirpilmiyor, maliyet beden sayisi kadar katlanmiyor, geri yuklenen kaydin yazmalari takilmiyor, cevrimdisi kilit klavyeyi de kesiyor, recete eslestirmede cift satir yok";
+const SURUM_NOTU = "Denetimde acik kalanlar: teslim geri alininca tamir isleri ve rezervasyon, planlamada kutu rengi, cok cihaz veri birlestirme, modul yetkileri, beden silme onayi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,22 @@ const SURUM_NOTU = "Genel denetim: verilen hammadde tekrar dusulmuyor, hareket g
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.569.0", tarih: "04.10.2026",
+    eklenen: ["Beden/boyut silinirken onay soruluyor; ürün, reçete ya da siparişte kullanılıyorsa silinmiyor", "Tanımlarda değişiklik 'Tanımlar › düzenleme' yetkisine bağlı", "Kullanıcının rolü/yetkisi/pasifliği yeniden giriş beklemeden oturuma yansıyor"],
+    degisen: ["Görüntüleme yetkisi olmayan bölüm (Cari, Üretim, Kasa & Banka, Çek, Finans, Fişler, Modelhane, Fiyat Listesi, Tanımlar) ürün/sipariş kartındaki bağlantılardan da açılmıyor"],
+    duzeltilen: [
+      "Üretim teslimi geri alınınca o teslimde ayrılan tamir işleri kalıyordu (çiftler iki kez sayılıyordu); tamir teslim alınmışsa geri alma engelleniyor",
+      "Teslim geri almada rezervasyon dengesi: ek malzeme fazladan iade ediliyor, artan iadenin bıraktığı rezervasyon geri tutulmuyordu",
+      "Planlamada aynı ürün ve renkte farklı kutu seçilmiş sipariş satırları tek üretimde birleşip yanlış kutudan düşüyordu; aynı beden iki satırda gelince ikincisinin malzemesi eksik düşülüyordu",
+      "Bekleyen kaydı olan tabloda açılışta tablonun tamamı yerelden alınıyor, başka cihazın bu arada yaptığı değişiklik geri alınabiliyordu — artık yalnız gönderilemeyen kayıtlar yerelden",
+      "Tanım kayıtları sıraya girmiyordu (iki hızlı kayıtta eski liste bulutta kalabiliyordu)",
+      "Başka cihazda silinen tanım (renk, beden…) bu cihazın sonraki kaydıyla geri geliyordu",
+      "İnternetsiz açılışta göç yazmaları bütün tabloyu bekleyen kayda alabiliyordu",
+      "Çöp, onay ve rezervasyonlarda gönderilemeyen kayıt açılışta buluttaki eski hâlle eziliyordu",
+      "Modelhane'den koleksiyona alırken aynı adlı ürün oluşabiliyordu; resimden model kodu var olan kodla çakışabiliyordu",
+      "Kullanıcı ekle/sil/şifre işlemleri bulut cevabından sonra eski tanımlarla yazıyordu",
+      "Silinemeyen (ya da onaya giden) ürünün kartı silinmiş gibi kapanıyordu",
+    ] },
   { surum: "1.568.0", tarih: "04.10.2026",
     eklenen: [],
     degisen: ["Reçetede 'son şablon/kopya eklemesi' geri alma yalnız en son uygulamayı kaldırıyor (önceki bütün şablon satırları gitmiyor)", "Maliyet (ürün kartı, Maliyet OK, fiyat listesi, maliyet yazdır) bedene göre değişen malzemede ortanca bedenin satırıyla hesaplanıyor"],

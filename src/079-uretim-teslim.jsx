@@ -356,6 +356,8 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
         tamamlandiMi: false, tamamlanmaTarihi: null,
         tamirMi: true,
         tamirKaynakProses: prosesAdi,
+        // Hangi teslimden doğduğu (v1.569.0): teslim geri alınınca bu tamir işi de geri alınır (079-fisgerial).
+        tamirKaynakAtamaId: atamaId,
         tamirSebep: t.sebep || "",
         tamirUcret: t.ucret || 0,
         // Tamirde hangi hammaddelerin yeniden çıkacağı seçilir; boşsa hiç hammadde düşülmez.

@@ -881,6 +881,33 @@ export default function AtolyeERP() {
     return yetkiVarMi(tanimlar, aktifKullanici, modul, islemTipi);
   }
 
+  // SEKME YETKİ KAPISI (v1.569.0, denetim): modüller hep kurulu, yalnız gizleniyor; görüntüleme yetkisi yalnız MENÜYÜ
+  // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
+  // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
+  const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
+    cekler: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
+  useEffect(() => {
+    const m = SEKME_MODULU[tab];
+    if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme")) return;
+    setTab("anasayfa");
+    showToast("Bu bölüm için yetkiniz yok");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, tanimlar, aktifKullanici]);
+
+  // YETKİ TAZELEME (v1.569.0): oturumdaki kullanıcı nesnesi girişte bir kez alınıyordu; Yönetici yetkiyi kaldırsa ya da
+  // kullanıcıyı pasif yapsa yeniden girişe kadar eski yetkiler geçerliydi. Tanımlardaki güncel kaydın rolü/yetkileri/
+  // pasifliği oturuma yansıtılır; pasifleşen kullanıcının oturumu kapanır.
+  useEffect(() => {
+    if (!aktifKullanici || aktifKullanici.id === "test-modu") return;
+    const guncel = (tanimlar.kullanicilar || []).find((k) => k.id === aktifKullanici.id);
+    if (!guncel) return;
+    if (guncel.pasif) { setAktifKullanici(null); showToast("Hesabınız pasif yapıldı — oturum kapatıldı"); return; }
+    if (guncel.rol !== aktifKullanici.rol || JSON.stringify(guncel.yetkiler || {}) !== JSON.stringify(aktifKullanici.yetkiler || {})) {
+      setAktifKullanici((a) => (a ? { ...a, rol: guncel.rol, yetkiler: guncel.yetkiler } : a));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tanimlar.kullanicilar, aktifKullanici]);
+
   // ONAY SİSTEMİ APP'TE KALIYOR (19 Eylül denemesi): ayrı dosyaya taşınmak istendi ama
   // `onayUygula` SİLME ZİNCİRLERİNİ çağırıyor ve onlar App'te çok daha sonra tanımlanıyor.
   // Hook'a almak, henüz var olmayan fonksiyonları parametre olarak istemek demekti; taşıma geri
@@ -1033,9 +1060,11 @@ export default function AtolyeERP() {
 
   // Katman (030 tekilYaz) buluttaki tanımlarla birleştirip eksik öğe eklediğinde ekran da güncellensin.
   useEffect(() => {
-    window.__tanimlarBirlesti = (bulut, eklenen) => {
-      setTanimlar((prev) => tanimlariBirlestir(prev, bulut, tanimSilinenleriOku()).tanimlar);
-      gunlukYaz(`Tanımlar bulutla birleştirildi: başka cihazda eklenen ${eklenen.length} öğe korundu`, "tanimlar", { eklenen: eklenen.slice(0, 50) });
+    window.__tanimlarBirlesti = (bulut, eklenen, cikarilan = []) => {
+      // Ref de güncellenir: başka cihazda silinip buradan çıkarılan öğe, bir sonraki kayıtta "bu cihazda silindi"
+      // sanılıp ikinci kez çöpe atılmasın (v1.569.0).
+      setTanimlar((prev) => { const m = tanimlariBirlestir(prev, bulut, tanimSilinenleriOku()).tanimlar; tanimRef.current = m; return m; });
+      gunlukYaz(`Tanımlar bulutla birleştirildi: başka cihazda eklenen ${eklenen.length} öğe korundu, silinen ${cikarilan.length} öğe çıkarıldı`, "tanimlar", { eklenen: eklenen.slice(0, 50), cikarilan: cikarilan.slice(0, 50) });
     };
     return () => { window.__tanimlarBirlesti = null; };
   }, []);
@@ -1283,6 +1312,10 @@ export default function AtolyeERP() {
       showToast("Sonraki prosesler başlamış — önce onları geri almalısınız");
       return;
     }
+    if (!araProsesMi && teslimTamirleriTamamlandiMi(siparis, atamaId)) {
+      showToast("Bu teslimden ayrılan tamir işi teslim alınmış — önce tamiri geri alın");
+      return;
+    }
 
     // ---- TEK KAPI ----
     // Stok, cari ve üretim ilerlemesinin geri alınması `fisGeriAl`da. Fiş numarası ailesi de orada
@@ -1308,6 +1341,22 @@ export default function AtolyeERP() {
     let iadeEdilenRez = 0;
     if (siparis.rezervasyonSiparisId) {
       sonuc.silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
+        const fisNoH = String(h.fisNo || "");
+        // DENGE (v1.569.0, denetim): "-EkMalzeme" çıkışı teslimde rezervasyondan DÜŞÜLMEDİ — geri almada iade edilirse
+        // rezervasyon fazladan açılır. "-İade" girişi teslimde rezervasyonu SERBEST bıraktı — geri almada yeniden
+        // tutulmalı (teslimdeki gibi önce stok rezervasyonu, sonra alış rezervasyonu).
+        if (fisNoH.endsWith("-EkMalzeme")) return;
+        if (h.miktar > 0) {
+          if (!fisNoH.endsWith("-İade")) return;
+          const sr = stokRezervasyonTuket(nextStokRezGeri, siparis.rezervasyonSiparisId, urun.id, h.renk, h.beden, h.miktar, -1);
+          nextStokRezGeri = sr.defter;
+          const kalan = h.miktar - (sr.dusulen || 0);
+          if (kalan > 0.0001) {
+            const r = rezervasyonTuket(nextSiparislerRez, siparis.rezervasyonSiparisId, urun.id, h.renk, h.beden, kalan, -1);
+            nextSiparislerRez = r.yeniSiparisler;
+          }
+          return;
+        }
         if (h.miktar >= 0) return;
         const miktar = Math.abs(h.miktar);
         const r = rezervasyonTuket(
@@ -1598,11 +1647,20 @@ export default function AtolyeERP() {
       showToast(`${model.kod} zaten ürüne dönüştürülmüş`);
       return;
     }
+    // AD ÇAKIŞMASI (v1.569.0, denetim): ürün kaydetmedeki kural (152 `urunAdiAnahtari`) burada yoktu — "Bot" adlı model,
+    // "Bot" ürünü varken koleksiyona alınınca aynı adlı iki ürün oluşuyor, stok ve reçete bölünüyordu.
+    if (stok.some((p) => urunAdiAnahtari(p.ad) === urunAdiAnahtari(model.ad))) {
+      showToast(`"${model.ad}" adında bir ürün zaten var — modelin adını değiştirip tekrar deneyin`);
+      return;
+    }
+    // Birim: tanımlı birimlerden "çift" (yoksa ilk birim) — sabit "çift" tanımlarda olmayabiliyordu.
+    const tanimliBirimler = (tanimlar.birimler || []).map((b) => b.ad || b).filter(Boolean);
+    const birim = tanimliBirimler.find((b) => String(b).toLocaleLowerCase("tr-TR") === "çift") || tanimliBirimler[0] || "çift";
     const yeniUrun = {
       id: uid("urun"),
       ad: model.ad,
       kategori: "Mamul",
-      birim: "çift",
+      birim,
       olcuTipi: "Beden",
       kapakResmi: model.kapakResmi || ((model.tasarimGorselleri || [])[0] || {}).gorsel || "",
       teknikCizimler: (model.teknikCizimler || []).map((c) => ({ ...c })),
@@ -1627,7 +1685,7 @@ export default function AtolyeERP() {
       : m)));
     gunlukYaz(`Model koleksiyona alındı: ${model.kod} → ${model.ad}`, "modelhane", { modelId: model.id });
     showToast(`${model.kod} koleksiyona alındı — Stok'ta "${model.ad}" ürün kartı açıldı`);
-  }, [stok, modeller, saveModeller, showToast]);
+  }, [stok, modeller, saveModeller, showToast, tanimlar]);
 
   const saveGorevler = useCallback(async (next) => {
     // Silinen görev çöpe (v1.549.0).
@@ -4096,7 +4154,13 @@ export default function AtolyeERP() {
                 try { await yayinlananSurumuYaz(v); setYayinSurum(v); showToast(`Sürüm ${v.surum} yayınlandı — herkes açılışta görecek`); }
                 catch (e) { showToast(`Yayınlanamadı: ${e && e.message}`); }
               }}
-              onAktifKullaniciGuncelle={setAktifKullanici} onAcilisFisiKes={acilisFisiKes} tanimlar={tanimlar} onSave={saveTanimlar} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onOlcuAdDegistir={olcuAdDegistir} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
+              onAktifKullaniciGuncelle={setAktifKullanici} onAcilisFisiKes={acilisFisiKes} tanimlar={tanimlar} onSave={(sonraki) => {
+                // TANIMLARDA DÜZENLEME YETKİSİ (v1.569.0): görüntüleme yetkisi olan herkes her şeyi değiştirip silebiliyordu.
+                // Yöneticisiz listede (kurtarma: "Bu hesabı Yönetici yap") kayda izin var.
+                const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");
+                if (yoneticiVar && !kullaniciYetkisiVar("tanimlar", "duzenleme")) { showToast("Tanımlarda değişiklik yetkiniz yok"); return undefined; }
+                return saveTanimlar(sonraki);
+              }} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onOlcuAdDegistir={olcuAdDegistir} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
           </div>
           {tab === "modelhane" && (
             <ModelhaneModule
