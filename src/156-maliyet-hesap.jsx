@@ -35,7 +35,7 @@ function urunMaliyetHesabi(urun, ctx = {}) {
   let hammadde = 0;
   if (!receteRengi) eksikler.push("reçete hiçbir renge bağlı değil");
   else {
-    const ilgili = recete.filter((r) => r.mamulRenk === receteRengi);
+    const ilgili = maliyetTemsiliSatirlar(recete.filter((r) => r.mamulRenk === receteRengi));   // v1.568: tek beden
     receteProsesGrupla(ilgili, ctx.tanimlarProsesler || [], urun.receteProsesSirasiOverride).forEach((pg) => {
       receteMaliyetGrupla(pg.satirlar).forEach((g) => {
         const s = g.satirlar[0];

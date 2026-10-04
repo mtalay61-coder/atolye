@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.567.0";
+const SURUM = "1.568.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Recete satirindaki aciklama duzenlenir, silinir ya da sonradan eklenir";
+const SURUM_NOTU = "Genel denetim: verilen hammadde tekrar dusulmuyor, hareket gecmisi kirpilmiyor, maliyet beden sayisi kadar katlanmiyor, geri yuklenen kaydin yazmalari takilmiyor, cevrimdisi kilit klavyeyi de kesiyor, recete eslestirmede cift satir yok";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,25 @@ const SURUM_NOTU = "Recete satirindaki aciklama duzenlenir, silinir ya da sonrad
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.568.0", tarih: "04.10.2026",
+    eklenen: [],
+    degisen: ["Reçetede 'son şablon/kopya eklemesi' geri alma yalnız en son uygulamayı kaldırıyor (önceki bütün şablon satırları gitmiyor)", "Maliyet (ürün kartı, Maliyet OK, fiyat listesi, maliyet yazdır) bedene göre değişen malzemede ortanca bedenin satırıyla hesaplanıyor"],
+    duzeltilen: [
+      "Üretimde ustaya elle verilen hammadde, aynı malzemenin her beden satırı için tekrar tekrar düşülüyordu (3 bedende 3 kat çıkış)",
+      "Ürün başına 1000 hareketten fazlası atılıyor, en eski hareketler stoktan fişsiz düşüyor ve buluttan siliniyordu — sınır kaldırıldı",
+      "Bedene göre farklı miktarlı reçete satırlarında maliyet beden sayısı kadar katlanıyordu",
+      "Silinip aynı oturumda Çöp'ten geri yüklenen kaydın tablosunda sonraki bütün yazmalar 'sürüm çakışması'na takılıp buluta gitmiyordu",
+      "İnternet kesildiğinde imleç bir kutudaysa klavye, barkod okuyucu ve Ctrl+S ile kayıt girilebiliyordu — kilit klavyeyi de kesiyor",
+      "İnternetsiz açılışta rezervasyon / onay / çöp için bekleyen kayıtlar defterden düşüyordu",
+      "Yeni renk / Otomatik eşleştir: renk renk ayrı eklenmiş hammaddeye çift satır, tekli renge '2. Renk' satırı açılıyordu; hep aynı renkte kullanılan malzeme (Toka Nikel) yeni rengin adına çevriliyordu",
+      "Başka stoktan reçete çekerken aynı hammaddenin ikinci kullanımı (Deri Yüz + Deri Astar) kopyalanmıyordu",
+      "Fiyat listesinde 'Bu listeye uygula' sonucu sıfır/eksi olan ürünün grup fiyatını siliyordu; toplu 'Tutar' etiketi fiyatın birimini göstermiyordu",
+      "Kâr-zararda kuru girilmemiş döviz maliyet 'kur eksik' uyarısına girmiyordu",
+      "Renk adı var olan başka bir renk adına değiştirilebiliyordu (iki aynı adlı renk, kayıtlar karışıyordu)",
+      "Son Yönetici'nin rolü düşürülebiliyordu",
+      "Stoklu ya da hareketli 'Standart' yer tutucuya ilk renk/beden eklenince stok kayboluyordu",
+      "Sipariş teslimi stok/cari/sipariş tablolarını iki kez yazıyordu",
+    ] },
   { surum: "1.567.0", tarih: "04.10.2026",
     eklenen: ["Reçete kartında açıklama ('16 Desi Ölçüm', 'Fort', 'şablon: Atom'…) dokununca düzenleniyor, × ile siliniyor; açıklaması olmayan satıra '+ açıklama' ile ekleniyor. Değişiklik o satırın bütün renklerine uygulanıyor. Pozisyon etiketleri ('1. Renk') renk eşleşmesine bağlı olduğu için düzenlenmiyor"],
     degisen: [], duzeltilen: [] },
@@ -1151,7 +1170,11 @@ const SURUM_GECMISI = [
     eklenen: ["Reçete şablonları (Tanımlar > Üretim)", "Modelhanede liste/katalog görünümü ve resim büyütme"], degisen: [], duzeltilen: [] },
 ];
 
-const HAREKET_GECMIS_SINIRI = 1000;
+// SINIR KALKTI (v1.568.0, denetim — yüksek): stok artık hareketlerin TOPLAMI (`stokMiktarlariniHesapla`). Ürün başına
+// 1000 hareketten fazlası `.slice(0, SINIR)` ile atılınca en eski hareket (ör. +500 alış) stoktan fişsiz düşüyor, fark
+// katmanı da onu "silinen" sayıp buluttaki hareket tablosundan SİLİYORDU. Sınır sonsuz: hiçbir hareket atılmaz.
+// (`.slice(0, Infinity)` diziyi aynen döndürür; çağıran yerler değişmeden kalabildi.)
+const HAREKET_GECMIS_SINIRI = Infinity;
 
 
 

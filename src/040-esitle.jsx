@@ -173,16 +173,25 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
     // değişikliği büyük olasılıkla BU bilgisayar yaptı (örtüşen ikinci yazma) — sahte çakışma.
     // Kullanıcıya olmayan bir "başka bilgisayar"ı suçlamak, hatayı aramasını da zorlaştırır.
     let teshis = [];
+    let teshisOkundu = false;
     try {
       const liste = cakisanlar.map((id) => encodeURIComponent(`"${String(id).replace(/"/g, '\\"')}"`)).join(",");
       const guncel = await supabaseIstek(`${tablo}?id=in.(${liste})&select=id,surum`);
       teshis = (guncel || []).map((r) => ({ id: r.id, sunucu: r.surum, beklenen: surumMap.get(r.id) }));
+      teshisOkundu = Array.isArray(guncel);
     } catch (e) {
       console.warn("Çakışma teşhisi okunamadı:", e && e.message);
     }
     // Sürümü tazele ki bir sonraki deneme doğru koşulla gitsin; kullanıcı aynı duvara ikinci
     // kez toslamasın.
     teshis.forEach((t) => { if (t.sunucu != null) surumMap.set(t.id, t.sunucu); });
+    // SUNUCUDA HİÇ OLMAYAN kayıt (v1.568.0, denetim — kritik): silinip aynı oturumda geri yüklenen kaydın eski sürümü
+    // bellekte kalıyordu; PATCH boş dönüyor, sahte çakışma tablonun SONRAKİ BÜTÜN yazmalarını (alt kayıtlar dahil)
+    // durduruyordu. Teşhis okunabildiyse ve kayıt dönmediyse sürüm unutulur → bir sonraki deneme ekleme (POST).
+    if (teshis.length || cakisanlar.length) {
+      const donen = new Set(teshis.map((t) => t.id));
+      if (teshisOkundu) cakisanlar.forEach((id) => { if (!donen.has(id)) surumMap.delete(id); });
+    }
 
     gunlukYaz(`Sürüm çakışması: ${tablo}`, "veri", { tablo, adet: cakisanlar.length, teshis });
     surumCakismasiBildir(tablo, cakisanlar, teshis);
@@ -227,6 +236,9 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
   // 3) SİLİNEN ANA KAYITLAR — alt kayıtlar cascade ile birlikte gider.
   if (fark.silinen.length > 0) {
     await supabaseSil(tablo, fark.silinen);
+    // Silinen kaydın sürümü unutulur (v1.568.0): aynı kimlik yeniden yazılırsa (Çöp'ten geri yükleme) PATCH değil
+    // POST gitsin — yoksa sahte çakışma.
+    fark.silinen.forEach((id) => surumMap.delete(id));
   }
   } catch (e) {
     // YAZMA DÜŞTÜ: bellek geri, gönderilemeyenler kalıcı deftere. Hata yukarı gider (tabloYaz bekleyen

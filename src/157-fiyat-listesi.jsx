@@ -269,9 +269,13 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     if (!islemAktif) return;
     setDuzenler((d) => {
       const yeni = { ...(d[kaynak.key] || {}) };
-      satirlar.forEach((r) => { if (r.fiyat > 0) yeni[r.urunId] = fiyatYazi(r.yeni == null ? "" : r.yeni); });
+      // Sonucu 0/eksi olan (null) ürün ATLANIR (v1.568.0, denetim): kutu boşaltılıyordu, Kaydet de bunu "fiyatı sil"
+      // sayıp grubun fiyat kuralını siliyordu — o cariye fişte genel fiyat çıkıyordu. Fiyatı olduğu gibi kalır.
+      satirlar.forEach((r) => { if (r.fiyat > 0 && r.yeni != null) yeni[r.urunId] = fiyatYazi(r.yeni); });
       return { ...d, [kaynak.key]: yeni };
     });
+    const atlanan = satirlar.filter((r) => r.fiyat > 0 && r.yeni == null).length;
+    if (atlanan) showToast(`${atlanan} üründe sonuç sıfır ya da eksi — fiyatı değiştirilmedi`);
     setIslem((i) => ({ ...i, deger: "" }));
   };
 
@@ -396,7 +400,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         <input data-fl-deger="1" value={islem.deger} inputMode="decimal" placeholder={islem.tur === "yuzde" ? "14" : "10"}
           onChange={(e) => setIslem((i) => ({ ...i, deger: e.target.value }))} style={{ ...kutu, width: 80, textAlign: "right" }} />
         <div style={{ display: "flex", gap: 4 }}>
-          {[["yuzde", "%"], ["tutar", `Tutar (${pbSembol(kaynak.paraBirimi || "TRY")})`]].map(([tur, ad]) => (
+          {[["yuzde", "%"], ["tutar", kaynak.paraBirimi ? `Tutar (${pbSembol(kaynak.paraBirimi)})` : "Tutar (fiyatın biriminde)"]].map(([tur, ad]) => (
             <button key={tur} type="button" data-fl-tur={tur} onClick={() => setIslem((i) => ({ ...i, tur }))} style={cip(islem.tur === tur)}>{ad}</button>
           ))}
         </div>

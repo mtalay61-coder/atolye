@@ -145,8 +145,16 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
 const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
   const yeniAd = yeniAdHam.trim();
   const eskiRenk = tanimlar.renkler.find((r) => r.id === renkId);
-  if (!eskiRenk || eskiRenk.ad === yeniAd) return;
+  if (!eskiRenk || !yeniAd || eskiRenk.ad === yeniAd) return;
   const eskiAd = eskiRenk.ad;
+  // AD ÇAKIŞMASI (v1.568.0, denetim): "Siyah" → var olan "Kahve" yapılınca iki "Kahve" tanımı oluşuyor, Siyah'ın bütün
+  // varyant/reçete/hareket/sipariş kayıtları "Kahve"ye dönüp öbür Kahve'yle ayırt edilemez oluyordu. Ölçü adında
+  // bu kontrol vardı, renkte yoktu. Büyük/küçük harf ayrımı dışındaki yazım değişikliği (siyah → Siyah) serbest.
+  const nrmAd = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR").replace(/\s+/g, " ");
+  if ((tanimlar.renkler || []).some((r) => r.id !== renkId && nrmAd(r.ad) === nrmAd(yeniAd))) {
+    showToast(`"${yeniAd}" adında bir renk zaten var — iki rengi birleştirmek ad değiştirmekle yapılmaz`);
+    return;
+  }
 
   // Bu rengi içeren her model rengi kombinasyonu için eski/yeni etiketi hesapla.
   const etiketEslesmeleri = (tanimlar.renkKombinasyonlari || [])

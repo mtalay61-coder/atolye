@@ -2104,13 +2104,17 @@ function ProductMatrixCard({
               // ŞABLON EKLEMESİNİ GERİ AL (v1.558.0): şablondan gelen satırlar `eklemeId` "sablon-…" taşır. Eski
               // (pozisyonsuz) şablonla yanlış renkte eklenen satırlar tek dokunuşla kaldırılıp şablon yeniden uygulanabilsin.
               // v1.564.0: başka stoktan kopyalanan satırlar ("kopya-") da aynı düğmeyle geri alınır.
-              const sablonSatirlari = (product.recete || []).filter((r) => /^(sablon|kopya)-/.test(String(r.eklemeId || "")));
+              // YALNIZ SON EKLEME (v1.568.0, denetim): önce "sablon-/kopya-" önekli HER satır gidiyordu — aylar önceki
+              // uygulamalar da. Bir uygulamanın bütün satırları aynı `eklemeTarihi`ni taşır; en yenisi kaldırılır.
+              const tumSablon = (product.recete || []).filter((r) => /^(sablon|kopya)-/.test(String(r.eklemeId || "")));
+              const sonTarih = tumSablon.reduce((m, r) => (String(r.eklemeTarihi || "") > m ? String(r.eklemeTarihi || "") : m), "");
+              const sablonSatirlari = tumSablon.filter((r) => String(r.eklemeTarihi || "") === sonTarih);
               if (sablonSatirlari.length === 0) return null;
               return (
                 <span data-sablon-geri-al={sablonSatirlari.length} style={{ display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" }}>
-                Şablondan / kopyadan eklenen {sablonSatirlari.length} satır
+                Son şablon/kopya eklemesi: {sablonSatirlari.length} satır
                 <SilOnayButonu boyut={12}
-                  baslikNormal={`Şablondan eklenen ${sablonSatirlari.length} satırı kaldır`}
+                  baslikNormal={`Son şablon/kopya eklemesinin ${sablonSatirlari.length} satırını kaldır`}
                   baslikOnay={`Şablondan eklenen ${sablonSatirlari.length} reçete satırı kaldırılacak — tekrar dokunun`}
                   onConfirm={() => {
                     onReceteGrubuGuncelle(product.id, sablonSatirlari.map((r) => r.id), []);
@@ -4341,7 +4345,7 @@ function ProductMatrixCard({
             // TL karşılığı, seçilen maliyet biriminde karşılığı.
             const maliyetDokumu = [];
             if (receteVarRenk) {
-              const ilgiliSatirlar = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+              const ilgiliSatirlar = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk));   // v1.568: tek beden
               receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
                 receteMaliyetGrupla(pg.satirlar).forEach((g) => {
                   const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);

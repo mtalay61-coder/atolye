@@ -10,7 +10,7 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
   let hammaddeSatirlari = [];
   let hammaddeToplami = 0;
   if (receteVarRenk) {
-    const ilgiliSatirlar = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+    const ilgiliSatirlar = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk));   // v1.568: tek beden
     // Önce proses'e göre böl, ardından her proses içinde hammadde+renk+miktar'a göre grupla —
     // aynı hammadde farklı proseslerde ya da farklı miktarlarla kullanılmışsa her biri ayrı satır olarak kalır.
     receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
@@ -655,7 +655,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
   let hammaddeToplami = 0;
   const dagilim = {};
   if (receteVarRenk) {
-    const ilgili = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+    const ilgili = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk));   // v1.568: tek beden
     receteProsesGrupla(ilgili, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
       receteMaliyetGrupla(pg.satirlar).forEach((g) => {
         const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);

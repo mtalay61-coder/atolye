@@ -127,6 +127,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   }
 
   if (urun && urun.recete) {
+    const verilenDusuldu = new Set();
     nextStok = stok.map((p) => {
       let pDegisti = false;
       let variants = p.variants;
@@ -154,7 +155,15 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
           // hesaplanınca DEPODA OLMAYAN 90 desi havada kalıyordu: fiilen çıkan mal ile kayıt
           // tutmuyordu. Artan hesabı zaten verilen miktara göre yapılıyordu; çıkış da öyle olmalı.
           const _etkinRenkOn = ambalajRengiUygula(r, siparis, stok);
-          const _verilenKayit = (atama.verilenHammaddeler || {})[`${r.hammaddeUrunId}|${_etkinRenkOn}|${r.beden}`];
+          const _verilenAnahtar = `${r.hammaddeUrunId}|${_etkinRenkOn}|${r.beden}`;
+          const _verilenKayit = (atama.verilenHammaddeler || {})[_verilenAnahtar];
+          // VERİLEN TOPLAM BİR KEZ (v1.568.0, denetim — kritik): verilen miktar hammadde|renk|boy başına TOPLAMDIR
+          // (310: o anahtara düşen bütün reçete satırları toplanır). Aynı anahtara birden çok satır düşünce (beden beden
+          // satır, boy hep "Standart"/"120 cm") her satır toplamın TAMAMINI düşüyordu — 3 bedende 3 kat çıkış.
+          if (_verilenKayit && _verilenKayit.verilen != null) {
+            if (verilenDusuldu.has(_verilenAnahtar)) return;
+            verilenDusuldu.add(_verilenAnahtar);
+          }
           const tuketilecek = _verilenKayit && _verilenKayit.verilen != null
             ? Math.round((_verilenKayit.verilen || 0) * 100) / 100
             : Math.round(r.miktar * uretilenMiktar * 100) / 100;

@@ -551,6 +551,13 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
   }
 
   function kullaniciRolDegistir(id, rol) {
+    // SON YÖNETİCİ (v1.568.0, denetim): silmede vardı, rol değiştirmede yoktu. Tek Yönetici kendini düşürünce liste
+    // yöneticisiz kalıyor, açık olan herhangi bir kullanıcı "yöneticisiz liste" kurtarmasıyla Yönetici olabiliyordu.
+    const k = (tanimlar.kullanicilar || []).find((x) => x.id === id);
+    if (k && k.rol === "Yönetici" && rol !== "Yönetici" && (tanimlar.kullanicilar || []).filter((x) => x.rol === "Yönetici").length <= 1) {
+      showToast("Son Yönetici'nin rolü değiştirilemez — önce başka birini Yönetici yapın");
+      return;
+    }
     onSave({ ...tanimlar, kullanicilar: (tanimlar.kullanicilar || []).map((k) => (k.id === id ? { ...k, rol } : k)) });
   }
 

@@ -244,7 +244,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
             const bm = siparis.bedenMiktarlari.find((x) => x.beden === r.mamulBeden);
             const uretilenMiktar = r.mamulBeden === "Tüm Bedenler" ? toplamAdet : (bm ? bm.miktar : 0);
             if (!uretilenMiktar) return;
-            const tuketilecek = r.miktar * uretilenMiktar;
+            const tuketilecek = Math.round(r.miktar * uretilenMiktar * 100) / 100;   // 0,30000000000000004 harekete yazılmasın (v1.568)
             // HATA DÜZELTMESİ: burada doğrudan r.renk kullanılıyordu; siparişte seçilen KUTU RENGİ
             // yok sayılıyor ve üretim hep reçetedeki varsayılan renkten (genellikle "Standart")
             // düşüyordu. Sonuç: doğru renkten kutu satın alınıyor ama yanlış renkten stok çıkıyor —
