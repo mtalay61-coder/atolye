@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.584.0";
+const SURUM = "1.585.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Katalogda en fazla 3 fiyat: genel satis/alis ya da fiyat gruplari secilerek kartta ve detayda gosterilir";
+const SURUM_NOTU = "Atolye ici bolum (Kesimhane): parca basi iscilik cariye degil bolum tahakkukuna, aylik maas carisine, Kar-Zararda bolum kar/zarar";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Katalogda en fazla 3 fiyat: genel satis/alis ya da fiyat gru
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.585.0", tarih: "04.10.2026",
+    eklenen: ["Tanımlar › Üretim › 'Atölye içi bölümler' (ör. Kesimhane): bağlı prosesler, personel ve aylık maaş", "Bölüme bağlı prosesin teslimi personel carisine yazılmıyor; üretim kaydına bölüm tahakkuku (adet × ücret) işleniyor — ürün maliyeti değişmez", "Her ay başı bölüm personeline 'Maaş' alacağı kendiliğinden tahakkuk ediyor (MAAS-YYYY-MM fişi); kasadan ödeme kapatır", "Finans › Kâr-Zarar'da 'Atölye içi bölümler': dönem tahakkuku − maaş = bölüm kâr/zararı; şirket işçiliğine maaşlar sayılıyor"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.584.0", tarih: "04.10.2026",
     eklenen: ["Katalogda 'Katalog fiyatları' seçimi: genel satış/alış ya da fiyat grupları (Toptan, Perakende…) arasından en fazla 3 fiyat kartta ve detayda gösterilir; seçim cihaza özel. Cariye özel fiyatlar katalogda gösterilmez; müşteri görünümünde alış fiyatları gizli"],
     degisen: [], duzeltilen: [] },
@@ -1360,6 +1363,46 @@ function marjlaSatisFiyati(maliyet, karYuzde) {
   if (!(maliyet > 0)) return 0;
   if (k >= 100) return maliyet;
   return maliyet / (1 - k / 100);
+}
+
+// ATÖLYE İÇİ BÖLÜM — KESİMHANE (v1.585.0). Kullanıcı: "Atölye içi kesimhanemiz var, 5 kişi çalışıyor. Ürün maliyetine
+// kesim 30 ₺ giriyorum; üretimde bu tutar bir cariye alacak yazılıyor ama biz 5 kişiye MAAŞ ödüyoruz, parça başı değil.
+// Carilerde hareket olmuyor, üretim carisi bizden fazla alacaklı görünüyor." Model (kullanıcı kararı):
+//   • Tanımlar'da bölüm: { id, ad, prosesler: [proses adı…], personel: [{ cariId, maas }] }.
+//   • Bölüme bağlı prosesin teslimi personel CARİSİNE YAZILMAZ; üretim kaydına `bolumTahakkuklari` (parça başı
+//     tutar) eklenir. Ürün maliyeti değişmez (prosesUcretleri aynen); kimseye borç doğmaz.
+//   • Her ay başı bölüm personeline "Maaş" alacağı (fiş MAAS-YYYY-MM-<cari kodu>); kasadan ödeme kapatır.
+//   • Kâr-Zarar'da bölüm: dönem tahakkuku (ürünlere yüklenen) − maaşlar = bölümün kârı/zararı.
+//   • Eski cari alacaklarına dokunulmaz (kullanıcı kararı).
+function prosesBolumu(tanimlar, prosesAdi) {
+  if (!prosesAdi) return null;
+  return ((tanimlar && tanimlar.bolumler) || []).find((b) => (b.prosesler || []).includes(prosesAdi)) || null;
+}
+function bolumTahakkukKaydi(bolum, k) {
+  const adet = Number(k.adet) || 0;
+  const ucret = Number(k.ucret) || 0;
+  return { id: uid("tah"), bolumId: bolum.id, bolumAd: bolum.ad, proses: k.proses, atamaId: k.atamaId || null, fisNo: k.fisNo || "",
+    tarih: bugunYerel(), zaman: new Date().toISOString(), adet, ucret, tutar: Math.round(adet * ucret * 100) / 100,
+    personelId: k.personelId || null, model: k.model || "", renk: k.renk || "" };
+}
+function maasFisNo(ay, cari) {
+  return `MAAS-${ay}-${Number(cari && cari.kod) > 0 ? String(cari.kod).padStart(4, "0") : (cari && cari.id)}`;
+}
+// Bölümün dönem kâr/zararı. `tarihUygun(tarih)`: dönem süzgeci (rapor verir). Saf.
+function bolumKarZarar(bolum, uretim, cariler, tarihUygun) {
+  let tahakkuk = 0, adet = 0, maas = 0;
+  (uretim || []).forEach((u) => (u.bolumTahakkuklari || []).forEach((t) => {
+    if (t.bolumId !== bolum.id || !tarihUygun(t.tarih)) return;
+    tahakkuk += t.tutar || 0; adet += t.adet || 0;
+  }));
+  const uyeler = new Set((bolum.personel || []).map((p) => p.cariId));
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    if (!(h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || "")))) return;
+    if (!(h.bolumId === bolum.id || (!h.bolumId && uyeler.has(c.id)))) return;
+    if (!tarihUygun(h.tarih)) return;
+    maas += Number(h.tutar) || 0;
+  }));
+  return { tahakkuk, adet, maas, kar: tahakkuk - maas };
 }
 
 function alisPbKodu(urun) {

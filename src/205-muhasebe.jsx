@@ -1,4 +1,4 @@
-function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
+function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
   const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
   // KAPSAM (v1.458.0): menüde "Kasa & Banka" ve "Çek & Senet" ayrı öğe; ikisi de bu tek örneği
   // gösteriyor. Çek & Senet'te sekme şeridi yok, hep çek; Kasa & Banka'da Çek sekmesi yok — orada
@@ -533,7 +533,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, giderKartlari, onCek
         />
       )}
       {altSekme === "karzarar" && (
-        <KarZararPaneli stok={stok} cariler={cariler} muhasebe={muhasebe} giderKartlari={giderKartlari} tanimlar={tanimlar} />
+        <KarZararPaneli stok={stok} cariler={cariler} muhasebe={muhasebe} giderKartlari={giderKartlari} tanimlar={tanimlar} uretim={uretim} />
       )}
 
       {altSekme === "cek" && (

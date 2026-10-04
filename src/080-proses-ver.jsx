@@ -240,6 +240,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   // `rezervasyonDusulecek` ile aynı biçim, aşağıda aynı sırayla (önce stok, sonra alış rezervasyonu).
   const araRezervasyonDusulecek = [];
   const araMesajlari = [];
+  const araTahakkuklar = [];   // atölye içi bölüm tahakkukları (v1.585.0)
   tamamlanacakAralar.forEach((oncekiAdim) => {
     // Ara prosesin ücreti, önce BU ÜRÜNE ÖZEL bir geçersiz kılma (override) var mı diye bakılır;
     // yoksa Tanımlar'da o ara proses için tanımlanmış GENEL/varsayılan ücret kullanılır.
@@ -290,7 +291,13 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
       });
     }
 
-    if (araCariId && araTutar > 0) {
+    // ATÖLYE İÇİ BÖLÜM (v1.585.0): ara proses bir bölüme bağlıysa cariye değil üretim kaydına tahakkuk.
+    const araBolum = prosesBolumu(tanimlar, araTanim ? araTanim.ad : "");
+    if (araBolum && araTutar > 0) {
+      araTahakkuklar.push(bolumTahakkukKaydi(araBolum, { proses: araTanim.ad, atamaId: null, fisNo: `${araFisNo}-İşçilik`,
+        adet: toplamAdet, ucret: araUcret, personelId: araCariId || null, model: siparis.model, renk: siparis.renk }));
+      araMesajlari.push(` — "${oncekiAdim.proses}" ara prosesi otomatik tamamlandı (${araBolum.ad} tahakkuku ${araTutar.toLocaleString("tr-TR")} ₺, cariye yazılmadı)`);
+    } else if (araCariId && araTutar > 0) {
       nextCariler = nextCariler.map((c) =>
         c.id === araCariId
           ? {
@@ -352,7 +359,9 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
     });
   }
 
-  const nextUretim = uretim.map((o) => (o.id === uretimId ? { ...o, prosesIlerleme: nextProsesIlerleme } : o));
+  const nextUretim = uretim.map((o) => (o.id === uretimId
+    ? { ...o, prosesIlerleme: nextProsesIlerleme, ...(araTahakkuklar.length ? { bolumTahakkuklari: [...(o.bolumTahakkuklari || []), ...araTahakkuklar] } : {}) }
+    : o));
   setStok(nextStok);
   setCariler(nextCariler);
 

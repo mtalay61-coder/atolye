@@ -5,7 +5,7 @@ const CARI_TIP_RENK = { "Müşteri": "var(--erp-primary)", "Tedarikçi": "var(--
 const ODEME_SEKILLERI = ["Nakit", "Havale/EFT", "Kredi Kartı", "Çek", "Senet"];
 // İŞÇİLİK kendi rengiyle (23 Eylül, v1.433.0): alışla aynı kahverengi olsaydı ekstrede yine
 // "mal almışız" izlenimi sürerdi — işçilik bir HİZMET alımı, mal girişi yok.
-const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)" };
+const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)", "Maaş": "var(--erp-accent)" };
 
 // Tüm carilerin hareketlerini tarayıp fiş no'ya göre gruplar; sipariş no önekinden (SAT-/ALS-/SP-) tipini çıkarır.
 function tumFisleriTopla(cariler, stok) {
@@ -100,6 +100,8 @@ const FIS_TIP_RENK = {
   "Cariye Satış": "var(--erp-info)", "Cariden Alış": "var(--erp-brown)",
   "Üretim Girişi": "var(--erp-primary)", "Üretim Çıkışı": "var(--erp-warn)",
   "İşçilik": "var(--erp-purple)", "Diğer": "var(--erp-text-2)",
+  // MAAŞ (v1.585.0): atölye içi bölüm personelinin aylık tahakkuku — işçilik gibi hizmet alımı (Alacak), ödeme kapatır.
+  "Maaş": "var(--erp-purple)",
   // Para hareketleri cari ekstresindeki renklerle AYNI (bkz. HAREKET_TIPI_RENK): aynı olay iki
   // ekranda iki farklı renkte görünmesin.
   "Tahsilat": "var(--erp-primary)", "Ödeme": "var(--erp-warn)",
@@ -1065,6 +1067,7 @@ function hareketIslemTipi(h) {
   // ESKİ İŞÇİLİK KAYITLARI (23 Eylül, v1.433.0): `islemTipi` alanı v1.433 öncesinde yazılmıyordu;
   // o kayıtlarda tip fiş numarasının "-İşçilik" ekinden okunuyor. Yeni kayıtlar alanı taşıyor.
   if (/-İşçilik$/.test(fis)) return "İşçilik";
+  if (/^MAAS-/.test(fis)) return "Maaş";
   const yazi = String(h.aciklama || "").trim();
   if (/^tahsilat/i.test(yazi)) return "Tahsilat";
   if (/^ödeme/i.test(yazi)) return "Ödeme";

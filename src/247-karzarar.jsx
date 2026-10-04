@@ -53,7 +53,7 @@ function kzTL(tutar, paraBirimi, kurlar, eksik) {
 // ikisine de girer): satış geliri ve SMM satışın CARİ ayağının defterinden (stok hareketinde defter yok),
 // gider/diğer gelir kasa-banka hareketinden, işçilik personel carisindeki hareketten. Cari ayağı olmayan
 // eski satış Genel sayılır (fiş defterinin varsayılanı). Boş/"Tümü" = eskisi gibi hepsi.
-function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter }) {
+function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter, uretim, tanimlar }) {
   const aralik = kzDonemAraligi(donem);
   const kapsar = (d) => defterKapsar(d, defter);
   const kurlar = (muhasebe && muhasebe.kurlar) || {};
@@ -172,7 +172,10 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
   const iscilikDetay = {};
   (cariler || []).forEach((c) => {
     (c.hareketler || []).forEach((h) => {
-      if (!h.fisNo || !/-İşçilik$/.test(h.fisNo)) return;
+      // MAAŞ DA İŞÇİLİK (v1.585.0): atölye içi bölümde parça başı tutar cariye yazılmıyor; o bölümün gerçek işçilik
+      // maliyeti personele tahakkuk eden maaştır. Çift sayım yok — bölümde "-İşçilik" cari hareketi hiç doğmuyor.
+      const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+      if (!maasMi && (!h.fisNo || !/-İşçilik$/.test(h.fisNo))) return;
       // YÖNE BAKILMIYOR (v1.409.0): işçilik v1.408'e kadar yanlışlıkla "Borç", sonra doğru
       // yönde "Alacak" yazıldı. İkisi de aynı olayı (hak edilen ücret) anlatıyor; işçilik
       // fişinin geri alınması karşı kayıtla değil SİLMEYLE yapıldığı için ters yönlü bir
@@ -186,8 +189,11 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
 
   const brutKar = satisGeliri - smm - uretimIscilik;
   const netKar = brutKar - giderToplam + digerGelir;
+  // ATÖLYE İÇİ BÖLÜMLER (v1.585.0): bölümün dönem tahakkuku (ürünlere yüklenen parça başı) − maaşları.
+  const bolumler = ((tanimlar && tanimlar.bolumler) || []).map((b) => ({ id: b.id, ad: b.ad,
+    ...bolumKarZarar(b, uretim, cariler, (t) => kzTarihUygun(t, aralik)) }));
   return {
-    aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar,
+    aralik, satisGeliri, smm, fiyatsizSatir, uretimIscilik, iscilikDetay, brutKar, giderToplam, digerGelir, netKar, bolumler,
     gruplar, satisKalemleri,
     kurEksik: [...kurEksik],
     // Gider kartı hiç yoksa kullanıcıya yol göstermek için.
@@ -195,10 +201,10 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
   };
 }
 
-function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
+function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar, uretim }) {
   const [donem, setDonem] = useState("buAy");
   const [defter, setDefter] = useState("Tümü");
-  const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter });
+  const sonuc = karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter, uretim, tanimlar });
   const para = (v) => `${Math.round(v).toLocaleString("tr-TR")} ₺`;
 
   const satir = (etiket, deger, renk, kalin, ipucu) => (
@@ -313,6 +319,24 @@ function KarZararPaneli({ stok, cariler, muhasebe, giderKartlari, tanimlar }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {(sonuc.bolumler || []).length > 0 && (
+        <div data-kz-bolumler="1" style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+          <div style={{ padding: "8px 12px", fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", borderBottom: "1px solid var(--erp-head)" }}>
+            Atölye içi bölümler <span style={{ fontWeight: 400 }}>— ürünlere yüklenen parça başı tutar − maaşlar</span>
+          </div>
+          {sonuc.bolumler.map((b) => (
+            <div key={b.id} data-kz-bolum={b.ad} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--erp-head)", flexWrap: "wrap" }}>
+              <span style={{ flex: "1 1 140px", fontSize: 13, fontWeight: 700 }}>{b.ad}</span>
+              <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>tahakkuk {para(b.tahakkuk)} <span style={{ fontSize: 11 }}>({b.adet.toLocaleString("tr-TR")} adet)</span></span>
+              <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>maaş {para(b.maas)}</span>
+              <span className="mono" data-kz-bolum-kar={b.ad} style={{ fontSize: 14, fontWeight: 700, color: b.kar >= 0 ? "var(--erp-ok)" : "var(--erp-danger)" }}>
+                {b.kar >= 0 ? "kâr" : "zarar"} {para(Math.abs(b.kar))}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 

@@ -211,7 +211,15 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     ? (atama.tamirUcret || 0)
     : (urun && urun.prosesUcretleri ? (urun.prosesUcretleri[prosesAdi] || 0) : 0);
   let nextCariler = cariler;
-  if (atama.personelId && ucret > 0) {
+  // ATÖLYE İÇİ BÖLÜM (v1.585.0, bkz. 015 `prosesBolumu`): proses bir bölüme (Kesimhane) bağlıysa parça başı tutar
+  // CARİYE YAZILMAZ — maaşlı personelin carisi alacaklanmaz; tutar üretim kaydına bölüm tahakkuku olarak gider.
+  const bolum = prosesBolumu(tanimlar, prosesAdi);
+  let bolumTahakkuku = null;
+  if (bolum && ucret > 0) {
+    const ucretliAdet = Math.max(0, sonucToplam - hurdaAdet);
+    if (ucretliAdet > 0) bolumTahakkuku = bolumTahakkukKaydi(bolum, { proses: prosesAdi, atamaId: atama.id, fisNo: `${fisNo}-İşçilik`,
+      adet: ucretliAdet, ucret, personelId: atama.personelId, model: siparis.model, renk: siparis.renk });
+  } else if (atama.personelId && ucret > 0) {
     // HURDA ÜCRETİ ÖDENMEZ: hurdanın çıktığı aşama bu aşamadır ve o adetler için işçilik
     // hak edilmemiştir. Önceki aşamalarda ödenmiş ücretlere dokunulmaz — o işler yapılmıştı.
     // Tamir edilen çiftler için ücret ÖDENİR: iş yapıldı, kusur tamirde giderilecek.
@@ -371,9 +379,11 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
 
   const nextUretim = uretim.map((o) =>
     o.id === uretimId
-      ? { ...o, prosesIlerleme: nextProsesIlerleme, asama: tumuTamam ? "Tamamlandı" : prosesAdi, stogaEklendiMi: tumuTamam || o.stogaEklendiMi }
+      ? { ...o, prosesIlerleme: nextProsesIlerleme, asama: tumuTamam ? "Tamamlandı" : prosesAdi, stogaEklendiMi: tumuTamam || o.stogaEklendiMi,
+          ...(bolumTahakkuku ? { bolumTahakkuklari: [...(o.bolumTahakkuklari || []), bolumTahakkuku] } : {}) }
       : o
   );
+  if (bolumTahakkuku) showToast(`${bolum.ad}: ${bolumTahakkuku.adet} adet × ${ucret} ₺ = ${bolumTahakkuku.tutar.toLocaleString("tr-TR")} ₺ bölüm tahakkuku (cariye yazılmadı — maaşlı bölüm)`);
 
   // ---- REÇETE GERÇEKLEŞMESİ ----
   //
