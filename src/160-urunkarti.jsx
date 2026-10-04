@@ -2290,7 +2290,14 @@ function ProductMatrixCard({
                 <select data-recete-kopya-kaynak="1" value={kopyaKaynak} onChange={(e) => setKopyaKaynak(e.target.value)}
                   style={{ padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 }}>
                   <option value="">— stok seçin —</option>
-                  {kaynaklar.map((u) => <option key={u.id} value={u.id}>{u.ad} ({new Set((u.recete || []).map((r) => r.hammaddeUrunId)).size} hammadde)</option>)}
+                  {/* Sayı = reçete kartındaki KALEM sayısı (v1.571.0 — kullanıcı: "27080'de 15 stok olmasına rağmen 13 gösteriyor").
+                      Eskiden FARKLI hammadde sayılıyordu; aynı hammadde iki kullanımda (Deri yüz + astar, iki proses) tek
+                      sayılıyordu. Farklı hammadde sayısı ayrıca yazılır. */}
+                  {kaynaklar.map((u) => {
+                    const kalem = receteGrupla(u.recete || []).length;
+                    const hm = new Set((u.recete || []).map((r) => r.hammaddeUrunId)).size;
+                    return <option key={u.id} value={u.id}>{u.ad} ({kalem} kalem{hm !== kalem ? ` · ${hm} farklı hammadde` : ""})</option>;
+                  })}
                 </select>
                 <button type="button" className="btn-primary" data-recete-kopya-uygula="1" disabled={!kopyaKaynak} style={{ padding: "5px 12px", fontSize: 12 }}
                   onClick={() => {
