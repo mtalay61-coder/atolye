@@ -37,6 +37,9 @@ async function calistir() {
   await sayfa.waitForTimeout(1100);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Reçete/.test(x.textContent.trim()) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
+  // v1.565.0: şablon/kopya araçları tek açılır düğmenin arkasında.
+  await sayfa.locator("[data-recete-araclar-ac]").click();
+  await sayfa.waitForTimeout(300);
   const dugmeYazisi = await sayfa.evaluate(() => (document.querySelector("[data-recete-sablon-uygula]") || {}).textContent || null);
   await sayfa.evaluate(() => { const s = document.querySelector("[data-recete-sablon-sec]"); s.value = "rs1"; s.dispatchEvent(new Event("change", { bubbles: true })); });
   await sayfa.waitForTimeout(300);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.562.0</title>
+<title>Atölye ERP 1.565.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2014,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.562.0";
+const SURUM = "1.565.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Urune yeni renk eklenince recetede o renk icin turuncu eslestir kutusu (tek renkte tanimli hammaddede liste gorunumu yerine matris)";
+const SURUM_NOTU = "Recete sekmesinde sablon ve baska stoktan cek tek Sablon / kopyala dugmesinde (acilir)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2024,6 +2024,17 @@ const SURUM_NOTU = "Urune yeni renk eklenince recetede o renk icin turuncu esles
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.565.0", tarih: "04.10.2026",
+        eklenen: [],
+        degisen: ["Reçete sekmesinde şablon ve 'Başka stoktan reçete çek' araçları tek 'Şablon / kopyala' düğmesinin altında, açılır (kapalı başlar); 'Şablondan / kopyadan eklenen N satır' düğmenin yanında görünür"],
+        duzeltilen: [] },
+    { surum: "1.564.0", tarih: "04.10.2026",
+        eklenen: ["Reçete sekmesinde 'Başka stoktan reçete çek': seçilen stoğun reçetesi bu ürüne kopyalanır — aynı renkler hiç değişmeden, olmayan renkler geçmişten (kırmızı) ya da boş (turuncu 'eşleştir…'), bedenler bu ürüne göre, işçilik ve ara prosesler boşsa doldurulur; 'kopyadan eklenen' satırlar tek dokunuşla geri alınır", "Stok kartında ürüne yeni renk eklenince reçete o renk için kendiliğinden doluyor: hammadde rengi aynı adlı renkten, geçmiş reçetelerdeki eşleştirmeden (kırmızı — kontrol edin) ya da sabit malzemeden (hep aynı renk / Standart); bilinmeyenler turuncu 'eşleştir…' kalıyor"],
+        degisen: ["Boy eşleşmesi (bağcık gibi) her mamul bedeni için ayrı seçilebiliyor: bir numarada farklı boy seçilince 'Tüm bedenler' satırı numaralara ayrılıyor"],
+        duzeltilen: [] },
+    { surum: "1.563.0", tarih: "04.10.2026",
+        eklenen: ["Reçete kartında 'Beden eşleşmesi' / 'Boy eşleşmesi' şeridi: her mamul bedeni için hammadde bedeni (taban numarası, bağcık boyu) açılır listeden değiştirilir, 'Hepsi →' ile tüm bedenlere tek seferde; değişiklik o bedenin bütün renklerine uygulanır"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.562.0", tarih: "04.10.2026",
         eklenen: [],
         degisen: [],
@@ -5743,6 +5754,161 @@ function urundenSablonIsciligi(product) {
         prosesUcretleri[p] = u; });
     return { prosesUcretleri, araProsesEklentileri: { ...((product && product.araProsesEklentileri) || {}) },
         araProsesUcretleri: { ...((product && product.araProsesUcretleri) || {}) } };
+}
+// ================= YENİ RENK → REÇETE EŞLEŞTİRMESİ GEÇMİŞTEN (v1.564.0) =================
+//
+// Kullanıcı: "Yeni renk eklenince eşleştirmeyi geçmişten otomatik doldursun." Ürüne renk eklenince reçetede o renk
+// için hiç satır açılmıyordu; her hammaddede turuncu "eşleştir…" kutusundan tek tek seçmek gerekiyordu.
+// Her reçete grubu (ekleme + hammadde + proses + pozisyon) için ÖRNEK bir mevcut rengin satırları (bedenler, boy,
+// miktar AYNEN) yeni renge kopyalanır; hammadde rengi şablonla AYNI kuralla çözülür (`sablonRengiCoz`): aynı ad →
+// geçmiş karar (kırmızı, `renkGecmisten`) → tek renkli / Standart. Ek kural: grubun BÜTÜN mevcut renkleri (en az
+// iki) aynı hammadde rengini kullanıyorsa o renk (ör. Silme Suyu hep Standart, Yapıştırıcı hep Beyaz) — sabit
+// malzeme. Hiçbiri tutmazsa satır AÇILMAZ (matris turuncu "eşleştir…"). Ambalajda değişken satır aynen kopyalanır.
+// Döner: { satirlar (id'siz), gecmisSayisi, bosGruplar: [hammaddeAd] }.
+function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
+    const recete = (product && product.recete) || [];
+    const sonuc = { satirlar: [], gecmisSayisi: 0, bosGruplar: [] };
+    if (!yeniRenk || recete.length === 0 || recete.some((r) => r.mamulRenk === yeniRenk))
+        return sonuc;
+    const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler || []);
+    const gruplar = new Map();
+    recete.forEach((r) => {
+        const k = `${r.eklemeId || ""}|${r.hammaddeUrunId}|${r.proses || ""}|${r.aciklama || ""}`;
+        if (!gruplar.has(k))
+            gruplar.set(k, []);
+        gruplar.get(k).push(r);
+    });
+    const eklemeTarihi = new Date().toISOString();
+    gruplar.forEach((satirlar) => {
+        const renkler = Array.from(new Set(satirlar.map((r) => r.mamulRenk)));
+        // Örnek: en çok satırı olan mamul rengi (bedenleri en eksiksiz olan).
+        const ornekRenk = renkler.sort((a, b) => satirlar.filter((r) => r.mamulRenk === b).length - satirlar.filter((r) => r.mamulRenk === a).length)[0];
+        const ornek = satirlar.filter((r) => r.mamulRenk === ornekRenk);
+        const s0 = ornek[0];
+        const poz = parseInt((String(s0.aciklama || "").match(/^(\d+)\. Renk$/) || [])[1] || "", 10) || null;
+        let cozum;
+        if (s0.ambalajDegisken)
+            cozum = { renk: s0.renk, gecmis: false };
+        else {
+            cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
+            const kullanilan = Array.from(new Set(satirlar.map((r) => r.renk)));
+            if (!cozum.renk && renkler.length >= 2 && kullanilan.length === 1)
+                cozum = { renk: kullanilan[0], gecmis: false };
+        }
+        if (!cozum.renk) {
+            sonuc.bosGruplar.push(s0.hammaddeAd || "?");
+            return;
+        }
+        ornek.forEach((r) => {
+            const { id, renkGecmisten: _rg, ...rest } = r;
+            sonuc.satirlar.push({ ...rest, mamulRenk: yeniRenk, renk: cozum.renk, eklemeTarihi: rest.eklemeTarihi || eklemeTarihi,
+                ...(cozum.gecmis ? { renkGecmisten: true } : {}) });
+        });
+        if (cozum.gecmis)
+            sonuc.gecmisSayisi += 1;
+    });
+    return sonuc;
+}
+// ================= BAŞKA STOKTAN REÇETE ÇEK (v1.564.0) =================
+//
+// Kullanıcı: "Aynı şekilde kopyalayınca hiç değişmeyecek ve kopyalanan stoğa olduğu gibi yapıştırılacak. Başka stok
+// içinden reçeteyi stoktan çek — o stoğun reçetesini kopyala, konuştuğumuz tüm şeyler eksiksiz olsun."
+// Kurallar:
+//  • Hedefin KAYNAKTA DA OLAN mamul rengi → kaynak satırları AYNEN (hammadde rengi, bedenler, boy, miktar, açıklama).
+//  • Kaynakta OLMAYAN renk → `yeniRenkReceteSatirlari` (aynı ad → geçmiş [kırmızı] → sabit malzeme → boş [turuncu]).
+//  • Bedenler: hedefte olmayan mamul bedeninin satırı alınmaz; kaynakta olmayan hedef bedeni, satırın boyu mamul
+//    bedenine eşitse (taban/fusbet) aynı numarayla açılır, değilse `bedenEksikler`e (adıyla) yazılır.
+//  • Hedefte zaten olan (renk+hammadde+proses+beden) satır tekrar eklenmez.
+//  • Her kaynak eklemesi yeni bir "kopya-" kimliği alır (kart düzeni aynen; geri alma bu önekle).
+//  • İşçilik / ara proses: hedefte BOŞ olanlar kaynaktan (şablonla aynı kural).
+// Döner: { eklenecekler, ekAlanlar, iscilikSayisi, gecmisSayisi, bosGruplar, bedenEksikler, atlanan, ayniRenkSayisi }.
+function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
+    const kRecete = (kaynak && kaynak.recete) || [];
+    const mevcut = (hedef && hedef.recete) || [];
+    const hRenkler = Array.from(new Set((hedef.variants || []).map((v) => v.renk)));
+    const hBedenleri = (mr) => bedenSirala(Array.from(new Set((hedef.variants || []).filter((v) => v.renk === mr).map((v) => v.beden).filter(Boolean))));
+    const kRenkler = new Set(kRecete.map((r) => r.mamulRenk));
+    const kimlikler = new Map();
+    const yeniKimlik = (eid) => { const k = eid || "_"; if (!kimlikler.has(k))
+        kimlikler.set(k, uid("kopya")); return kimlikler.get(k); };
+    const sonuc = { eklenecekler: [], ekAlanlar: {}, iscilikSayisi: 0, gecmisSayisi: 0, bosGruplar: [], bedenEksikler: [], atlanan: 0, ayniRenkSayisi: 0 };
+    const bedenEksik = new Set();
+    const eklemeTarihi = new Date().toISOString();
+    hRenkler.forEach((mr) => {
+        let satirlar;
+        if (kRenkler.has(mr)) {
+            satirlar = kRecete.filter((r) => r.mamulRenk === mr).map(({ id, renkGecmisten: _rg, ...rest }) => rest);
+            sonuc.ayniRenkSayisi += 1;
+        }
+        else {
+            const y = yeniRenkReceteSatirlari(kaynak, mr, tumUrunler);
+            satirlar = y.satirlar;
+            sonuc.gecmisSayisi += y.gecmisSayisi;
+            y.bosGruplar.forEach((a) => sonuc.bosGruplar.push(`${a} · ${mr}`));
+        }
+        const bedenler = hBedenleri(mr);
+        // Grup grup beden uyumu: hedefte olmayan bedeni at; kaynakta olmayan hedef bedenini (boy = numara ise) aç.
+        const gruplar = new Map();
+        satirlar.forEach((r) => {
+            const k = `${r.eklemeId || ""}|${r.hammaddeUrunId}|${r.proses || ""}|${r.aciklama || ""}`;
+            if (!gruplar.has(k))
+                gruplar.set(k, []);
+            gruplar.get(k).push(r);
+        });
+        gruplar.forEach((g) => {
+            const bedenli = g.filter((r) => r.mamulBeden && r.mamulBeden !== "Tüm Bedenler");
+            let son = g.filter((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler");
+            if (bedenli.length) {
+                const varolan = bedenli.filter((r) => bedenler.length === 0 || bedenler.includes(r.mamulBeden));
+                son = son.concat(varolan);
+                const kapsanan = new Set(bedenli.map((r) => r.mamulBeden));
+                const bedenAyni = bedenli.every((r) => kodEsit(r.beden || "", r.mamulBeden));
+                bedenler.filter((b) => !kapsanan.has(b)).forEach((b) => {
+                    if (bedenAyni)
+                        son.push({ ...bedenli[bedenli.length - 1], mamulBeden: b, beden: b });
+                    else
+                        bedenEksik.add(`${g[0].hammaddeAd || "?"} (${b})`);
+                });
+            }
+            son.forEach((r) => {
+                const ayni = mevcut.some((m) => m.mamulRenk === mr && m.hammaddeUrunId === r.hammaddeUrunId && (m.proses || "") === (r.proses || "")
+                    && (m.mamulBeden || "Tüm Bedenler") === (r.mamulBeden || "Tüm Bedenler"));
+                if (ayni) {
+                    sonuc.atlanan += 1;
+                    return;
+                }
+                sonuc.eklenecekler.push({ ...r, mamulRenk: mr, eklemeId: yeniKimlik(r.eklemeId), eklemeTarihi });
+            });
+        });
+    });
+    sonuc.bedenEksikler = Array.from(bedenEksik);
+    // İşçilik: şablondaki kuralın aynısı — hedefte boş olan dolar, dolu olan ezilmez.
+    const isc = urundenSablonIsciligi(kaynak);
+    const pu = { ...(hedef.prosesUcretleri || {}) };
+    Object.entries(isc.prosesUcretleri).forEach(([p, u]) => { if (u > 0 && !(pu[p] > 0)) {
+        pu[p] = u;
+        sonuc.iscilikSayisi++;
+    } });
+    if (sonuc.iscilikSayisi)
+        sonuc.ekAlanlar.prosesUcretleri = pu;
+    const ape = { ...(hedef.araProsesEklentileri || {}) };
+    let n = 0;
+    Object.entries(isc.araProsesEklentileri).forEach(([a, v]) => { if (ape[a] == null || (Array.isArray(ape[a]) && ape[a].length === 0)) {
+        ape[a] = v;
+        n++;
+    } });
+    if (n)
+        sonuc.ekAlanlar.araProsesEklentileri = ape;
+    const apu = { ...(hedef.araProsesUcretleri || {}) };
+    let m = 0;
+    Object.entries(isc.araProsesUcretleri).forEach(([id, u]) => { if (apu[id] == null) {
+        apu[id] = u;
+        m++;
+    } });
+    if (m)
+        sonuc.ekAlanlar.araProsesUcretleri = apu;
+    sonuc.iscilikSayisi += n;
+    return sonuc;
 }
 // =============================================================================================
 // VERİ KAYBI KORUMASI
@@ -24026,6 +24192,45 @@ function gecmisRenkOnerisi(harita, mamulPozisyonRengi, hammaddeId, hammaddeRenkl
     const baska = enSon(liste.filter((x) => x.hammaddeId !== hammaddeId && var_(x.renk)));
     return baska ? var_(baska.renk) : "";
 }
+// ================= BEDEN / BOY EŞLEŞMESİ DEĞİŞTİR (v1.564.0) =================
+//
+// Kullanıcı: "Boyutlarda beden gibi olsun. Beden değiştikçe boyut da değişebilir." Bağcık gibi "Tüm Bedenler"
+// satırında boy (120 cm) bütün numaralar için tekti; 36–38 için 120, 39–42 için 140 cm demek mümkün değildi.
+// Bir mamul bedeni için farklı boy seçilince "Tüm Bedenler" satırı (her renk için) ürünün BEDENLERİNE açılır —
+// seçilen bedende yeni boy, öbürlerinde eski boy; miktar, renk, açıklama aynen. Bütün bedenler aynı boya
+// getirilince ("Hepsi") satır açılmaz, "Tüm Bedenler" satırının boyu değişir.
+// `satirlar`: tek grubun satırları; `mamulBedenleri`: değişecek mamul bedenleri; `urunBedenleri`: ürünün
+// bedenleri (sıralı). Döner: { silinecekIdler, yeniSatirlar (id'siz) } — `onReceteGrubuGuncelle` girdisi.
+function receteBedenDegistir(satirlar, mamulBedenleri, yeniBeden, urunBedenleri) {
+    const hedef = new Set(mamulBedenleri || []);
+    const tum = (urunBedenleri || []).filter((b) => b && b !== "Tüm Bedenler");
+    const hepsi = tum.length > 0 && tum.every((b) => hedef.has(b));
+    const silinecekIdler = [];
+    const yeniSatirlar = [];
+    (satirlar || []).forEach((r) => {
+        const { id, ...rest } = r;
+        const mb = r.mamulBeden || "Tüm Bedenler";
+        if (mb === "Tüm Bedenler") {
+            if (hedef.has("Tüm Bedenler") || hepsi || tum.length === 0) {
+                if (r.beden === yeniBeden)
+                    return;
+                silinecekIdler.push(id);
+                yeniSatirlar.push({ ...rest, beden: yeniBeden });
+                return;
+            }
+            if (!tum.some((b) => hedef.has(b)))
+                return;
+            silinecekIdler.push(id);
+            tum.forEach((b) => yeniSatirlar.push({ ...rest, mamulBeden: b, beden: hedef.has(b) ? yeniBeden : (r.beden || "Standart") }));
+            return;
+        }
+        if (!hedef.has(mb) || r.beden === yeniBeden)
+            return;
+        silinecekIdler.push(id);
+        yeniSatirlar.push({ ...rest, beden: yeniBeden });
+    });
+    return { silinecekIdler, yeniSatirlar };
+}
 // Herhangi bir siparişe bağlı olmadan, doğrudan bir stok kartına giriş/çıkış yapmayı sağlayan bağımsız form.
 function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, onKapat }) {
     const [urunId, setUrunId] = useState("");
@@ -24574,6 +24779,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
         renk = renk.trim();
         if (!renk)
             return;
+        let receteOzeti = null;
         const next = items.map((p) => {
             if (p.id !== productId)
                 return p;
@@ -24590,10 +24796,17 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
             // ilk andan itibaren güvenilir çalışır.
             const yeniRenkId = renkKimligiBul(renk, (tanimlar.renkler || []));
             const newVariants = bedenler.map((b) => ({ renk, renkId: yeniRenkId, beden: b, miktar: 0, minStok: varsayilanMinStok }));
-            return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants] }, "renk");
+            // REÇETE GEÇMİŞTEN (v1.564.0): yeni renk için reçete satırları mevcut renkten kopyalanır, hammadde rengi
+            // aynı ad / geçmiş karar (kırmızı) / sabit malzeme kuralıyla; bilinmeyen boş kalır (turuncu "eşleştir…").
+            const rc = yeniRenkReceteSatirlari(p, renk, items);
+            receteOzeti = rc;
+            const yeniRecete = rc.satirlar.map((r) => ({ id: uid("recete"), ...r }));
+            return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants], ...(yeniRecete.length ? { recete: [...(p.recete || []), ...yeniRecete] } : {}) }, "renk");
         });
         onSave(next);
-        showToast("Renk eklendi");
+        showToast(receteOzeti && (receteOzeti.satirlar.length || receteOzeti.bosGruplar.length)
+            ? `Renk eklendi · reçete: ${receteOzeti.satirlar.length} satır kopyalandı${receteOzeti.gecmisSayisi ? ` · ${receteOzeti.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${receteOzeti.bosGruplar.length ? ` · ${receteOzeti.bosGruplar.length} hammadde boş (turuncu "eşleştir…")` : ""}`
+            : "Renk eklendi");
     }
     // Tek beden ya da BEDEN LİSTESİ (beden grubu, 14 Eylül). Liste tek `onSave` ile yazılıyor: art
     // arda çağrılan tekil eklemeler birbirinin üstüne yazıyor ve yalnız sonuncusu kalıyordu.
@@ -26638,6 +26851,55 @@ function fiyatSayisi(v) {
 // "Eşleştirmeleri onayla" ile işaret düşer. Bilinmeyen eşleşme hiç açılmaz: turuncu "eşleştir…" kutusu.
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
+// BEDEN / BOY EŞLEŞMESİ DEĞİŞTİRME (v1.563.0 — kullanıcı: "beden eşleştirme, boyut eşleştirme de renk gibi
+// değiştirilebilir olsun"). Reçete kartında hammadde bedeni (taban numarası, bağcık boyu) yalnız eklerken
+// seçiliyordu; yanlışsa satırı silip yeniden eklemek gerekiyordu. Şerit, mamul bedeni başına hammadde bedenini
+// gösterir; değişiklik o mamul bedeninin BÜTÜN renklerdeki satırlarına uygulanır (renk gibi tek dokunuş).
+// `onDegistir(mamulBedenleri[], yeni)` LİSTE alır: "Hepsi →" tek yazımda gitmeli (art arda yazımlar aynı eski
+// listeden kurulup birbirinin üstüne yazardı).
+// Bedensiz hammaddede (yalnız "Standart") şerit çıkmaz — değiştirecek bir şey yok.
+function BedenEslesmeSeridi({ satirlar, hammadde, urunBedenleri, onDegistir }) {
+    if (!hammadde || !(satirlar || []).length)
+        return null;
+    const hBedenler = bedenSirala(Array.from(new Set((hammadde.variants || []).map((v) => v.beden).filter((b) => b && b !== "Standart"))));
+    if (hBedenler.length === 0)
+        return null;
+    // v1.564.0: "Tüm Bedenler" satırı da ürünün HER bedeni için ayrı kutuyla gösterilir (boy numaraya göre
+    // değişebilsin); bir bedende farklı boy seçilince satır bedenlere açılır (`receteBedenDegistir`).
+    const ub = (urunBedenleri || []).filter((b) => b && b !== "Tüm Bedenler" && b !== "Standart");
+    const harita = new Map();
+    const ekle = (mb, b) => { if (!harita.has(mb))
+        harita.set(mb, new Set()); harita.get(mb).add(b || "Standart"); };
+    satirlar.forEach((r) => {
+        const mb = r.mamulBeden || "Tüm Bedenler";
+        if (mb === "Tüm Bedenler" && ub.length > 1)
+            ub.forEach((b) => ekle(b, r.beden));
+        else
+            ekle(mb, r.beden);
+    });
+    const mamulBedenleri = [...(harita.has("Tüm Bedenler") ? ["Tüm Bedenler"] : []), ...bedenSirala(Array.from(harita.keys()).filter((b) => b !== "Tüm Bedenler"))];
+    const kutu = { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" };
+    return (React.createElement("div", { "data-beden-eslesme-seridi": mamulBedenleri.length, style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 } },
+        React.createElement("span", null,
+            hammadde.olcuTipi === "Boyut" ? "Boy eşleşmesi" : "Beden eşleşmesi",
+            ":"),
+        mamulBedenleri.length > 1 && (React.createElement("select", { value: "", "data-beden-esle-hepsi": "1", title: "B\u00FCt\u00FCn mamul bedenlerine ayn\u0131 hammadde bedeni", style: kutu, onChange: (e) => { const y = e.target.value; if (y)
+                onDegistir(mamulBedenleri, y); } },
+            React.createElement("option", { value: "" }, "Hepsi \u2192"),
+            hBedenler.map((b) => React.createElement("option", { key: b, value: b }, b)))),
+        mamulBedenleri.map((mb) => {
+            const degerler = Array.from(harita.get(mb));
+            const deger = degerler.length === 1 ? degerler[0] : "";
+            return (React.createElement("span", { key: mb, style: { display: "inline-flex", alignItems: "center", gap: 3, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "2px 5px" } },
+                React.createElement("b", { className: "mono", style: { color: "var(--erp-text)" } }, mb === "Tüm Bedenler" ? "Tüm bedenler" : mb),
+                React.createElement(ArrowRight, { size: 11, color: "var(--erp-text-3)" }),
+                React.createElement("select", { value: deger, "data-beden-esle": mb, className: "mono", style: kutu, onChange: (e) => { const y = e.target.value; if (y && y !== deger)
+                        onDegistir([mb], y); } },
+                    deger === "" && React.createElement("option", { value: "" }, "kar\u0131\u015F\u0131k"),
+                    deger !== "" && !hBedenler.includes(deger) && React.createElement("option", { value: deger }, deger === "Standart" ? "—" : `${deger} (stokta yok)`),
+                    hBedenler.map((b) => React.createElement("option", { key: b, value: b }, b)))));
+        })));
+}
 const fiyatYazi = (n) => (n == null || n === "" ? "" : String(n).replace(".", ","));
 // HARİCİ BARKOD KUTUSU (v1.542.0) — Barkodlar sekmesinde her renk+beden satırında. Kutudan çıkınca ya da
 // Enter'da kaydeder; boşaltmak siler. Çakışan kod (bizim barkodumuz ya da başka bedenin harici kodu)
@@ -26717,6 +26979,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     };
     // Reçete şablonu seçimi (21 Eylül).
     const [sablonSecim, setSablonSecim] = useState("");
+    const [kopyaKaynak, setKopyaKaynak] = useState("");
+    const [receteAraclariAcik, setReceteAraclariAcik] = useState(false); // şablon/kopya araçları açılır (v1.565.0)   // "Başka stoktan reçete çek" (v1.564.0)
     // Fiyat grubu ekleme satırı (21 Eylül).
     const [fgSecim, setFgSecim] = useState("");
     const [fgFiyat, setFgFiyat] = useState(""); // "stok" | "recete" | "fiyat" | "siparisler"
@@ -28132,61 +28396,101 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                     " Boyut Ekle")))))) },
                 ] })),
             isMamul && cardTab === "recete" && (React.createElement("div", null,
-                React.createElement("div", { "data-recete-sablon-cubugu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
-                        background: "var(--erp-panel)", border: "1px dashed var(--erp-border)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 } },
-                    React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "Re\u00E7ete \u015Fablonu:"),
-                    React.createElement("select", { "data-recete-sablon-sec": "1", value: sablonSecim, onChange: (e) => setSablonSecim(e.target.value), style: { padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 } },
-                        React.createElement("option", { value: "" }, "\u2014 \u015Fablon se\u00E7in \u2014"),
-                        (receteSablonlari || []).map((sb) => React.createElement("option", { key: sb.id, value: sb.id },
-                            sb.ad,
-                            " (",
-                            (sb.satirlar || []).length,
-                            ")"))),
-                    React.createElement("button", { type: "button", className: "btn-primary", "data-recete-sablon-uygula": "1", disabled: !sablonSecim, onClick: () => {
-                            const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
-                            if (!sb)
-                                return;
-                            const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
-                            if (eklenecekler.length === 0 && !iscilikSayisi) {
-                                (showToast || (() => { }))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş");
-                                return;
-                            }
-                            // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
-                            onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
-                            (showToast || (() => { }))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
-                        }, style: { padding: "5px 12px", fontSize: 12 } }, (product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"),
+                React.createElement("div", { "data-recete-araclar": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: receteAraclariAcik ? 6 : 12 } },
+                    React.createElement("button", { type: "button", className: "btn-ghost", "data-recete-araclar-ac": "1", "aria-expanded": receteAraclariAcik, onClick: () => setReceteAraclariAcik((a) => !a), style: { padding: "5px 12px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 4 } },
+                        "\u015Eablon / kopyala ",
+                        receteAraclariAcik ? React.createElement(ChevronUp, { size: 13 }) : React.createElement(ChevronDown, { size: 13 })),
                     (() => {
                         // ŞABLON EKLEMESİNİ GERİ AL (v1.558.0): şablondan gelen satırlar `eklemeId` "sablon-…" taşır. Eski
                         // (pozisyonsuz) şablonla yanlış renkte eklenen satırlar tek dokunuşla kaldırılıp şablon yeniden uygulanabilsin.
-                        const sablonSatirlari = (product.recete || []).filter((r) => String(r.eklemeId || "").startsWith("sablon-"));
+                        // v1.564.0: başka stoktan kopyalanan satırlar ("kopya-") da aynı düğmeyle geri alınır.
+                        const sablonSatirlari = (product.recete || []).filter((r) => /^(sablon|kopya)-/.test(String(r.eklemeId || "")));
                         if (sablonSatirlari.length === 0)
                             return null;
                         return (React.createElement("span", { "data-sablon-geri-al": sablonSatirlari.length, style: { display: "inline-flex", gap: 4, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" } },
-                            "\u015Eablondan eklenen ",
+                            "\u015Eablondan / kopyadan eklenen ",
                             sablonSatirlari.length,
                             " sat\u0131r",
                             React.createElement(SilOnayButonu, { boyut: 12, baslikNormal: `Şablondan eklenen ${sablonSatirlari.length} satırı kaldır`, baslikOnay: `Şablondan eklenen ${sablonSatirlari.length} reçete satırı kaldırılacak — tekrar dokunun`, onConfirm: () => {
                                     onReceteGrubuGuncelle(product.id, sablonSatirlari.map((r) => r.id), []);
                                     (showToast || (() => { }))(`Şablondan eklenen ${sablonSatirlari.length} satır kaldırıldı`);
                                 } })));
-                    })(),
-                    (product.recete || []).length > 0 && onReceteSablonuKaydet && (React.createElement("button", { type: "button", className: "btn-ghost", "data-recete-sablon-kaydet": "1", onClick: () => {
-                            const ad = window.prompt("Şablon adı (örn. Standart bot malzemeleri):", "");
-                            if (!ad || !ad.trim())
-                                return;
-                            const { satirlar, atlananlar } = recetedenSablonSatirlari(product.recete, product.variants);
-                            if (satirlar.length === 0) {
-                                (showToast || (() => { }))("Şablona girecek satır yok — şablon oluşmadı");
-                                return;
-                            }
-                            const pozisyonlu = satirlar.filter((x) => x.pozisyon).length;
-                            onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar, iscilik: urundenSablonIsciligi(product) });
-                            (showToast || (() => { }))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi`
-                                + (pozisyonlu ? ` · ${pozisyonlu} malzemenin rengi mamul renginden alınacak` : "")
-                                + " · işçilik ve ara prosesler dahil"
-                                + (atlananlar.length ? ` · ${atlananlar.length} malzeme girmedi (tüm bedenler ve beden satırı karışık): ${atlananlar.join(", ")}` : "")
-                                + ". Tanımlar › Üretim'den düzenlenir.");
-                        }, style: { padding: "5px 12px", fontSize: 12 } }, "Bu re\u00E7eteden \u015Fablon olu\u015Ftur"))),
+                    })()),
+                receteAraclariAcik && (React.createElement("div", { style: { marginBottom: 12 } },
+                    React.createElement("div", { "data-recete-sablon-cubugu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center",
+                            background: "var(--erp-panel)", border: "1px dashed var(--erp-border)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 6 } },
+                        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "Re\u00E7ete \u015Fablonu:"),
+                        React.createElement("select", { "data-recete-sablon-sec": "1", value: sablonSecim, onChange: (e) => setSablonSecim(e.target.value), style: { padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 } },
+                            React.createElement("option", { value: "" }, "\u2014 \u015Fablon se\u00E7in \u2014"),
+                            (receteSablonlari || []).map((sb) => React.createElement("option", { key: sb.id, value: sb.id },
+                                sb.ad,
+                                " (",
+                                (sb.satirlar || []).length,
+                                ")"))),
+                        React.createElement("button", { type: "button", className: "btn-primary", "data-recete-sablon-uygula": "1", disabled: !sablonSecim, onClick: () => {
+                                const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
+                                if (!sb)
+                                    return;
+                                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
+                                if (eklenecekler.length === 0 && !iscilikSayisi) {
+                                    (showToast || (() => { }))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş");
+                                    return;
+                                }
+                                // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
+                                onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
+                                (showToast || (() => { }))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
+                            }, style: { padding: "5px 12px", fontSize: 12 } }, (product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"),
+                        (product.recete || []).length > 0 && onReceteSablonuKaydet && (React.createElement("button", { type: "button", className: "btn-ghost", "data-recete-sablon-kaydet": "1", onClick: () => {
+                                const ad = window.prompt("Şablon adı (örn. Standart bot malzemeleri):", "");
+                                if (!ad || !ad.trim())
+                                    return;
+                                const { satirlar, atlananlar } = recetedenSablonSatirlari(product.recete, product.variants);
+                                if (satirlar.length === 0) {
+                                    (showToast || (() => { }))("Şablona girecek satır yok — şablon oluşmadı");
+                                    return;
+                                }
+                                const pozisyonlu = satirlar.filter((x) => x.pozisyon).length;
+                                onReceteSablonuKaydet({ id: uid("rsab"), ad: ad.trim(), satirlar, iscilik: urundenSablonIsciligi(product) });
+                                (showToast || (() => { }))(`"${ad.trim()}" şablonu ${satirlar.length} malzemeyle kaydedildi`
+                                    + (pozisyonlu ? ` · ${pozisyonlu} malzemenin rengi mamul renginden alınacak` : "")
+                                    + " · işçilik ve ara prosesler dahil"
+                                    + (atlananlar.length ? ` · ${atlananlar.length} malzeme girmedi (tüm bedenler ve beden satırı karışık): ${atlananlar.join(", ")}` : "")
+                                    + ". Tanımlar › Üretim'den düzenlenir.");
+                            }, style: { padding: "5px 12px", fontSize: 12 } }, "Bu re\u00E7eteden \u015Fablon olu\u015Ftur"))),
+                    (() => {
+                        const kaynaklar = (tumUrunler || []).filter((u) => u.id !== product.id && !u.pasif && (u.recete || []).length > 0)
+                            .sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr"));
+                        if (kaynaklar.length === 0)
+                            return null;
+                        return (React.createElement("div", { "data-recete-kopya": "1", style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 6 } },
+                            React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "Ba\u015Fka stoktan re\u00E7ete \u00E7ek:"),
+                            React.createElement("select", { "data-recete-kopya-kaynak": "1", value: kopyaKaynak, onChange: (e) => setKopyaKaynak(e.target.value), style: { padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 } },
+                                React.createElement("option", { value: "" }, "\u2014 stok se\u00E7in \u2014"),
+                                kaynaklar.map((u) => React.createElement("option", { key: u.id, value: u.id },
+                                    u.ad,
+                                    " (",
+                                    new Set((u.recete || []).map((r) => r.hammaddeUrunId)).size,
+                                    " hammadde)"))),
+                            React.createElement("button", { type: "button", className: "btn-primary", "data-recete-kopya-uygula": "1", disabled: !kopyaKaynak, style: { padding: "5px 12px", fontSize: 12 }, onClick: () => {
+                                    const kaynak = kaynaklar.find((u) => u.id === kopyaKaynak);
+                                    if (!kaynak)
+                                        return;
+                                    const k = stoktanReceteKopyala(kaynak, product, tumUrunler);
+                                    if (k.eklenecekler.length === 0 && !k.iscilikSayisi) {
+                                        (showToast || (() => { }))(k.atlanan ? "Kaynağın reçetesi zaten bu üründe" : "Kopyalanacak satır yok");
+                                        return;
+                                    }
+                                    onReceteGrubuGuncelle(product.id, [], k.eklenecekler, k.ekAlanlar);
+                                    (showToast || (() => { }))(`"${kaynak.ad}" reçetesinden ${k.eklenecekler.length} satır kopyalandı`
+                                        + (k.ayniRenkSayisi ? ` · ${k.ayniRenkSayisi} renk aynen` : "")
+                                        + (k.atlanan ? ` · ${k.atlanan} zaten vardı` : "")
+                                        + (k.iscilikSayisi ? ` · ${k.iscilikSayisi} işçilik/ara proses` : "")
+                                        + (k.gecmisSayisi ? ` · ${k.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : "")
+                                        + (k.bosGruplar.length ? ` · ${k.bosGruplar.length} eşleşme BOŞ (turuncu "eşleştir…")` : "")
+                                        + (k.bedenEksikler.length ? ` · beden karşılığı yok: ${k.bedenEksikler.join(", ")}` : ""));
+                                    setKopyaKaynak("");
+                                } }, "Re\u00E7eteyi \u00E7ek")));
+                    })())),
                 (() => {
                     // RENK EŞLEŞTİRME ŞERİDİ (v1.561.0): şablondan gelen satırlarda geçmişten hatırlanan renkler (kırmızı)
                     // ve hiç eşleşmesi olmayan mamul renkleri (turuncu "eşleştir…") kalıcı olarak sayılır — toast kaybolur,
@@ -28196,7 +28500,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     const mamulRenkleri = Array.from(new Set((product.variants || []).map((v) => v.renk)));
                     const sablonGruplari = new Map();
                     recete.forEach((r) => {
-                        if (!String(r.eklemeId || "").startsWith("sablon-"))
+                        if (!/^(sablon|kopya)-/.test(String(r.eklemeId || "")))
                             return;
                         const k = `${r.eklemeId}|${r.hammaddeUrunId}|${r.proses || ""}`;
                         if (!sablonGruplari.has(k))
@@ -28770,6 +29074,11 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                             g.eklemeTarihi && (React.createElement("span", { className: "mono", title: `Bu grup ${new Date(g.eklemeTarihi).toLocaleString("tr-TR")} tarihinde tek bir "Reçeteye Ekle" işlemiyle oluşturuldu`, style: { fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" } }, tarihYaz(g.eklemeTarihi))),
                                             React.createElement("span", { style: { marginLeft: "auto", display: "flex" } },
                                                 React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, g.satirlar.map((r) => r.id)), boyut: 13, baslikNormal: `${g.hammaddeAd} hammaddesine ait tüm satırları (${g.satirlar.length}) sil`, baslikOnay: `${g.satirlar.length} satır silinecek — emin misiniz? Tekrar dokunun` }))),
+                                        React.createElement(BedenEslesmeSeridi, { satirlar: g.satirlar, urunBedenleri: bedenler, hammadde: (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId), onDegistir: (mb, yeni) => {
+                                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler);
+                                                if (silinecekIdler.length)
+                                                    onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
+                                            } }),
                                         hepsiAyniMiktarBu && (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 } },
                                             React.createElement("span", null, "T\u00FCm e\u015Fle\u015Fmelerde ayn\u0131 miktar"),
                                             "\u00B7",
@@ -28988,6 +29297,11 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                             g.eklemeTarihi && (React.createElement("span", { className: "mono", title: `Bu grup ${new Date(g.eklemeTarihi).toLocaleString("tr-TR")} tarihinde tek bir "Reçeteye Ekle" işlemiyle oluşturuldu`, style: { fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" } }, tarihYaz(g.eklemeTarihi))),
                                             React.createElement("span", { style: { marginLeft: "auto", display: "flex" } },
                                                 React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, g.satirlar.map((r) => r.id)), boyut: 13, baslikNormal: `${g.hammaddeAd} hammaddesine ait tüm satırları (${g.satirlar.length}) sil`, baslikOnay: `${g.satirlar.length} satır silinecek — emin misiniz? Tekrar dokunun` }))),
+                                        React.createElement(BedenEslesmeSeridi, { satirlar: g.satirlar, urunBedenleri: bedenler, hammadde: (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId), onDegistir: (mb, yeni) => {
+                                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler);
+                                                if (silinecekIdler.length)
+                                                    onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
+                                            } }),
                                         hepsiSabit ? (() => {
                                             // Sadece bedenler arasında değil, TÜM mamul renkler arasında da miktar
                                             // aynıysa (örn. hepsi "1"), bu tek değer özet satırında doğrudan gösterilir.
@@ -29138,74 +29452,80 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                         g.eklemeTarihi && (React.createElement("span", { className: "mono", title: `Bu grup ${new Date(g.eklemeTarihi).toLocaleString("tr-TR")} tarihinde tek bir "Reçeteye Ekle" işlemiyle oluşturuldu`, style: { fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" } }, tarihYaz(g.eklemeTarihi))),
                                         React.createElement("span", { style: { marginLeft: "auto", display: "flex" } },
                                             React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, g.satirlar.map((r) => r.id)), boyut: 13, baslikNormal: `${g.hammaddeAd} hammaddesine ait tüm satırları (${g.satirlar.length}) sil`, baslikOnay: `${g.satirlar.length} satır silinecek — emin misiniz? Tekrar dokunun` }))),
-                                    React.createElement("div", { style: { display: "grid", gap: 8 } }, (() => {
-                                        const belirtilmemisHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
-                                        const belirtilmemisRenkSecenekleri = belirtilmemisHammadde ? Array.from(new Set(belirtilmemisHammadde.variants.map((v) => v.renk))) : [];
-                                        return [...matrisSatirlari.map((ms) => {
-                                                const tekBeden = ms.satirlar.length === 1 && ms.satirlar[0].mamulBeden === "Tüm Bedenler";
-                                                return (React.createElement("div", { key: ms.key, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } },
-                                                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: tekBeden ? 0 : 6 } },
-                                                        React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text)" } }, ms.mamulRenk),
-                                                        React.createElement(ArrowRight, { size: 13, color: "var(--erp-text-3)" }),
-                                                        ms.aciklama && (React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)" } }, aciklamaGoster(ms.aciklama, ms.mamulRenk))),
-                                                        React.createElement("select", { value: ms.renk, "data-renk-gecmis": ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined, onChange: (e) => {
-                                                                const yeniRenk = e.target.value;
-                                                                if (!yeniRenk || yeniRenk === ms.renk)
-                                                                    return;
-                                                                const guncellenecekler = ms.satirlar.map((r) => {
-                                                                    const { id, renkGecmisten: _rg, ...rest } = r;
-                                                                    return { ...rest, renk: yeniRenk };
-                                                                });
-                                                                onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
-                                                            }, className: "mono", title: ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_IPUCU : undefined, style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", ...(ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_STILI : {}) } },
-                                                            !belirtilmemisRenkSecenekleri.includes(ms.renk) && React.createElement("option", { value: ms.renk }, belirtilmemisRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk),
-                                                            belirtilmemisRenkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, r))),
-                                                        ms.proses && React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } }, ms.proses),
-                                                        tekBeden && (React.createElement(React.Fragment, null,
-                                                            React.createElement("input", { type: "number", step: "any", min: "0", defaultValue: ms.satirlar[0].miktar, onBlur: (e) => {
-                                                                    const yeni = parseFloat(e.target.value);
-                                                                    const r = ms.satirlar[0];
-                                                                    if (!(yeni > 0) || yeni === r.miktar)
+                                    React.createElement("div", { style: { display: "grid", gap: 8 } },
+                                        React.createElement(BedenEslesmeSeridi, { satirlar: g.satirlar, urunBedenleri: bedenler, hammadde: (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId), onDegistir: (mb, yeni) => {
+                                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler);
+                                                if (silinecekIdler.length)
+                                                    onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
+                                            } }),
+                                        (() => {
+                                            const belirtilmemisHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
+                                            const belirtilmemisRenkSecenekleri = belirtilmemisHammadde ? Array.from(new Set(belirtilmemisHammadde.variants.map((v) => v.renk))) : [];
+                                            return [...matrisSatirlari.map((ms) => {
+                                                    const tekBeden = ms.satirlar.length === 1 && ms.satirlar[0].mamulBeden === "Tüm Bedenler";
+                                                    return (React.createElement("div", { key: ms.key, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } },
+                                                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: tekBeden ? 0 : 6 } },
+                                                            React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text)" } }, ms.mamulRenk),
+                                                            React.createElement(ArrowRight, { size: 13, color: "var(--erp-text-3)" }),
+                                                            ms.aciklama && (React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)" } }, aciklamaGoster(ms.aciklama, ms.mamulRenk))),
+                                                            React.createElement("select", { value: ms.renk, "data-renk-gecmis": ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined, onChange: (e) => {
+                                                                    const yeniRenk = e.target.value;
+                                                                    if (!yeniRenk || yeniRenk === ms.renk)
                                                                         return;
+                                                                    const guncellenecekler = ms.satirlar.map((r) => {
+                                                                        const { id, renkGecmisten: _rg, ...rest } = r;
+                                                                        return { ...rest, renk: yeniRenk };
+                                                                    });
+                                                                    onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
+                                                                }, className: "mono", title: ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_IPUCU : undefined, style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", ...(ms.satirlar.some((x) => x.renkGecmisten) ? GECMIS_RENK_STILI : {}) } },
+                                                                !belirtilmemisRenkSecenekleri.includes(ms.renk) && React.createElement("option", { value: ms.renk }, belirtilmemisRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk),
+                                                                belirtilmemisRenkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, r))),
+                                                            ms.proses && React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } }, ms.proses),
+                                                            tekBeden && (React.createElement(React.Fragment, null,
+                                                                React.createElement("input", { type: "number", step: "any", min: "0", defaultValue: ms.satirlar[0].miktar, onBlur: (e) => {
+                                                                        const yeni = parseFloat(e.target.value);
+                                                                        const r = ms.satirlar[0];
+                                                                        if (!(yeni > 0) || yeni === r.miktar)
+                                                                            return;
+                                                                        const { id, ...rest } = r;
+                                                                        onReceteGrubuGuncelle(product.id, [r.id], [{ ...rest, miktar: yeni }]);
+                                                                    }, className: "mono", style: { width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
+                                                                React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-text-3)" } }, ms.birim))),
+                                                            React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, ms.satirlar.map((r) => r.id)), boyut: 12, baslikNormal: tekBeden ? "Sil" : "Bu eşleştirmenin tüm bedenlerini sil" })),
+                                                        !tekBeden && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, ms.satirlar.map((r) => (React.createElement("div", { key: r.id, style: {
+                                                                display: "flex", alignItems: "center", gap: 4, background: "var(--erp-panel)",
+                                                                border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "3px 6px",
+                                                            } },
+                                                            React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } },
+                                                                r.mamulBeden,
+                                                                r.beden !== r.mamulBeden ? ` (${r.beden})` : ""),
+                                                            React.createElement(MiktarGirisi, { deger: r.miktar, genislik: 44, onKaydet: (yeni) => {
                                                                     const { id, ...rest } = r;
                                                                     onReceteGrubuGuncelle(product.id, [r.id], [{ ...rest, miktar: yeni }]);
-                                                                }, className: "mono", style: { width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
-                                                            React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-text-3)" } }, ms.birim))),
-                                                        React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, ms.satirlar.map((r) => r.id)), boyut: 12, baslikNormal: tekBeden ? "Sil" : "Bu eşleştirmenin tüm bedenlerini sil" })),
-                                                    !tekBeden && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, ms.satirlar.map((r) => (React.createElement("div", { key: r.id, style: {
-                                                            display: "flex", alignItems: "center", gap: 4, background: "var(--erp-panel)",
-                                                            border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "3px 6px",
-                                                        } },
-                                                        React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } },
-                                                            r.mamulBeden,
-                                                            r.beden !== r.mamulBeden ? ` (${r.beden})` : ""),
-                                                        React.createElement(MiktarGirisi, { deger: r.miktar, genislik: 44, onKaydet: (yeni) => {
-                                                                const { id, ...rest } = r;
-                                                                onReceteGrubuGuncelle(product.id, [r.id], [{ ...rest, miktar: yeni }]);
-                                                            } }))))))));
-                                            }),
-                                            // EKSİK MAMUL RENKLERİ (v1.562.0 — kullanıcı: "boyut olan stokta sorun var"): yalnız BİR mamul
-                                            // renginde satırı olan grup (ör. şablondan gelen Bağcık 120 cm, öbür renkler bilinmediği için boş)
-                                            // bu liste görünümüne düşüyor ve eksik renkler yalnız başlıkta "N renk eksik" diye yazıyordu —
-                                            // matristeki turuncu "eşleştir…" kutusu burada yoktu. Seçilince satırlar mevcut renkten kopyalanır.
-                                            ...eksikMamulRenkler.map((mr) => (React.createElement("div", { key: `eksik-${mr}`, "data-eksik-renk-satiri": mr, style: { background: "var(--erp-orange-bg)", border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-md)", padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
-                                                React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-warn)" } }, mr),
-                                                React.createElement(ArrowRight, { size: 13, color: "var(--erp-text-3)" }),
-                                                React.createElement("select", { value: "", "data-eksik-renk-esle": mr, onChange: (e) => {
-                                                        const yeniRenk = e.target.value;
-                                                        const ornek = matrisSatirlari[0];
-                                                        if (!yeniRenk || !ornek)
-                                                            return;
-                                                        const yeniSatirlar = ornek.satirlar.map((r) => {
-                                                            const { id, renkGecmisten: _rg, ...rest } = r;
-                                                            return { ...rest, mamulRenk: mr, renk: yeniRenk };
-                                                        });
-                                                        onReceteGrubuGuncelle(product.id, [], yeniSatirlar);
-                                                    }, className: "mono", title: `"${mr}" için hammadde rengi seçin — eşleşme oluşturulur`, style: { fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" } },
-                                                    React.createElement("option", { value: "" }, "e\u015Fle\u015Ftir\u2026"),
-                                                    belirtilmemisRenkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, r))),
-                                                React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "EKS\u0130K \u2014 bu renkte sat\u0131r yok"))))];
-                                    })())));
+                                                                } }))))))));
+                                                }),
+                                                // EKSİK MAMUL RENKLERİ (v1.562.0 — kullanıcı: "boyut olan stokta sorun var"): yalnız BİR mamul
+                                                // renginde satırı olan grup (ör. şablondan gelen Bağcık 120 cm, öbür renkler bilinmediği için boş)
+                                                // bu liste görünümüne düşüyor ve eksik renkler yalnız başlıkta "N renk eksik" diye yazıyordu —
+                                                // matristeki turuncu "eşleştir…" kutusu burada yoktu. Seçilince satırlar mevcut renkten kopyalanır.
+                                                ...eksikMamulRenkler.map((mr) => (React.createElement("div", { key: `eksik-${mr}`, "data-eksik-renk-satiri": mr, style: { background: "var(--erp-orange-bg)", border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-md)", padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
+                                                    React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--erp-warn)" } }, mr),
+                                                    React.createElement(ArrowRight, { size: 13, color: "var(--erp-text-3)" }),
+                                                    React.createElement("select", { value: "", "data-eksik-renk-esle": mr, onChange: (e) => {
+                                                            const yeniRenk = e.target.value;
+                                                            const ornek = matrisSatirlari[0];
+                                                            if (!yeniRenk || !ornek)
+                                                                return;
+                                                            const yeniSatirlar = ornek.satirlar.map((r) => {
+                                                                const { id, renkGecmisten: _rg, ...rest } = r;
+                                                                return { ...rest, mamulRenk: mr, renk: yeniRenk };
+                                                            });
+                                                            onReceteGrubuGuncelle(product.id, [], yeniSatirlar);
+                                                        }, className: "mono", title: `"${mr}" için hammadde rengi seçin — eşleşme oluşturulur`, style: { fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" } },
+                                                        React.createElement("option", { value: "" }, "e\u015Fle\u015Ftir\u2026"),
+                                                        belirtilmemisRenkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, r))),
+                                                    React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "EKS\u0130K \u2014 bu renkte sat\u0131r yok"))))];
+                                        })())));
                             })))));
                     })()))))),
             isMamul && cardTab === "maliyet" && (React.createElement("div", { "data-maliyet-sekmesi": "1", style: { display: "grid", gap: 10 } },
@@ -52829,7 +53149,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.562.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.565.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
