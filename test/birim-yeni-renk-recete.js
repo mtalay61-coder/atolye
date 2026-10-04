@@ -80,5 +80,24 @@ bekle("tamamsa boş", eksikRenkEslesmeleri({ ...eski, recete: [...eski.recete, .
 bekle("kartı olmayan hammaddede seçenekler reçetelerden", hammaddeRenkSecenekleri("yok", [{ recete: [{ hammaddeUrunId: "yok", renk: "Atom Fort" }, { hammaddeUrunId: "yok", renk: "Pinpon" }] }]), ["Atom Fort", "Pinpon"]);
 bekle("kart renkleri önce, reçetedeki fazlalar sonra", hammaddeRenkSecenekleri("fort", [...tum2, { recete: [{ hammaddeUrunId: "fort", renk: "Eski Fort" }] }]), ["Atom Fort", "Pinpon 2 mm", "Eski Fort"]);
 
+// v1.568.0 denetim
+const ayri = { id: "ay", variants: ["Kahve", "Siyah"].map((renk) => ({ renk, beden: "40" })), recete: [
+  r("d1", "Kahve", "deri", "Deri", "Kahve Süet", { eklemeId: "e1" }), r("d2", "Siyah", "deri", "Deri", "Bej Süet", { eklemeId: "e2" }),
+] };
+bekle("renk renk ayrı eklenmiş hammadde: çift satır yok", eksikRenkEslesmeleri(ayri, tum).satirlar.length, 0);
+bekle("yeni renk: ayrı eklemelerden tek satır", yeniRenkReceteSatirlari(ayri, "Bej Süet", tum).satirlar.filter((x) => x.hammaddeAd === "Deri").length, 1);
+const kombi = { id: "kb", variants: ["1004 - Kahve Süet/Bej Süet", "Siyah"].map((renk) => ({ renk, beden: "40" })), recete: [
+  r("p1", "1004 - Kahve Süet/Bej Süet", "deri", "Deri", "Kahve Süet", { aciklama: "1. Renk" }), r("p2", "1004 - Kahve Süet/Bej Süet", "deri", "Deri", "Bej Süet", { aciklama: "2. Renk" }),
+  r("p3", "Siyah", "deri", "Deri", "Kahve Süet", { aciklama: "1. Renk" }),
+] };
+bekle("tekli renge '2. Renk' açılmaz", eksikRenkEslesmeleri(kombi, tum).satirlar.length, 0);
+const toka = { id: "tk", variants: ["Kahve", "Taba"].map((renk) => ({ renk, beden: "40" })), recete: [
+  r("t1", "Kahve", "toka", "Toka", "Nikel"), r("t2", "Taba", "toka", "Toka", "Nikel"),
+] };
+bekle("sabit malzeme aynı-ad kuralından önce (Toka Nikel kalır)", yeniRenkReceteSatirlari(toka, "Siyah", [...tum, hm("toka", "Toka", ["Nikel", "Siyah"])]).satirlar.map((x) => x.renk), ["Nikel"]);
+const kaynak3 = { id: "k3", recete: [r("y", "Kahve Süet", "deri", "Deri", "Kahve Süet", { aciklama: "Yüz" }), r("a", "Kahve Süet", "deri", "Deri", "Kahve Süet", { aciklama: "Astar" })] };
+const hedef3 = { id: "h3", variants: [{ renk: "Kahve Süet", beden: "40" }], recete: [r("hy", "Kahve Süet", "deri", "Deri", "Kahve Süet", { aciklama: "Yüz" })] };
+bekle("kopyada aynı hammaddenin ikinci kullanımı gelir", stoktanReceteKopyala(kaynak3, hedef3, tum).eklenecekler.map((x) => x.aciklama), ["Astar"]);
+
 console.log(hata ? "birim-yeni-renk-recete: HATA" : "birim-yeni-renk-recete: tamam");
 process.exit(hata);

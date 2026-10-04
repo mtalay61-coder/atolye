@@ -299,3 +299,19 @@ function hammaddeRenkSecenekleri(hammaddeId, tumUrunler) {
   const ekler = Array.from(new Set(recetede.filter((r) => !kart.includes(r)))).sort((a, b) => String(a).localeCompare(String(b), "tr"));
   return [...Array.from(new Set(kart)), ...ekler];
 }
+
+// ================= MALİYET İÇİN TEMSİLİ BEDEN (v1.568.0) =================
+//
+// Denetim bulgusu: çift başı maliyet (ürün kartı Maliyet sekmesi, Maliyet OK, fiyat listesi "Maliyet" kaynağı, maliyet
+// yazdır) bir rengin BÜTÜN reçete satırlarını topluyordu. Bedene göre satırı olan malzemede (taban 36→0,10, 37→0,11…)
+// miktarlar farklıysa her beden ayrı grup olup TOPLANIYOR, maliyet beden sayısı kadar katlanıyordu; eşitse tek gruba
+// çöküyordu (doğru, şans eseri). Kural: "Tüm Bedenler" satırları + TEK bir temsili mamul bedeninin satırları
+// (rengin bedenlerinin ortancası — çift başı ortalama maliyete en yakın). `finansMamulBirimDegeri` zaten beden
+// beden hesaplıyor; bu yalnız tek sayı gösteren yerler için.
+function maliyetTemsiliSatirlar(satirlar) {
+  const liste = satirlar || [];
+  const ozel = bedenSirala(Array.from(new Set(liste.map((r) => r.mamulBeden).filter((b) => b && b !== "Tüm Bedenler"))));
+  if (ozel.length <= 1) return liste;
+  const temsili = ozel[Math.floor((ozel.length - 1) / 2)];
+  return liste.filter((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler" || r.mamulBeden === temsili);
+}

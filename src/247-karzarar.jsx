@@ -87,11 +87,18 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
     const anahtar = `${p.id}|${stokAnahtarNrm(h.renk)}|${stokAnahtarNrm(h.beden)}`;
     if (birimMaliyetOnbellek.has(anahtar)) return birimMaliyetOnbellek.get(anahtar);
     let deger;
+    // KUR EKSİĞİ MALİYETTE DE (v1.568.0, denetim): döviz fiyatlı malın kuru yoksa maliyet TL gibi sayılıyor ama
+    // gelir tarafındaki "kur eksik" uyarısına girmiyordu — brüt kâr sessizce şişiyordu.
+    const kurYoksa = (pb) => { if (pb && pb !== "TRY" && !(parseFloat((kurlar || {})[pb]) > 0)) kurEksik.add(pb); };
     if (p.kategori === "Mamul") {
       const d = (p.recete || []).length ? finansMamulBirimDegeri(p, h.renk, h.beden, "hammadde", stok, kurlar, [], maliyetBaglami) : null;
-      deger = d && d.hammadde > 0 ? d.hammadde : alisFiyatiTL(p, kurlar);
+      if (d && d.kurYok) kurEksik.add(d.kurYok);
+      if (d && d.hammadde > 0) deger = d.hammadde;
+      else { deger = alisFiyatiTL(p, kurlar); if (parseFloat(p.alisFiyati) > 0) kurYoksa(alisPbKodu(p)); }
     } else {
-      deger = hammaddeBirimFiyati(p, h.renk, h.beden, kurlar, maliyetBaglami).tl;
+      const bf = hammaddeBirimFiyati(p, h.renk, h.beden, kurlar, maliyetBaglami);
+      if (bf.kendiFiyat > 0) kurYoksa(bf.pb);
+      deger = bf.tl;
     }
     birimMaliyetOnbellek.set(anahtar, deger);
     return deger;

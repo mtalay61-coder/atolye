@@ -38,6 +38,21 @@ function EmptyState({ text, mesaj }) {
 // Kullanıcıya NEDEN durdurulduğu ve ne olacağı söylenir: veri kaybolmasın diye; bağlantı gelince kendiliğinden devam.
 function CevrimdisiKilit({ yerelAcildi, bekleyenSayisi, sebep, onDene }) {
   const [deneniyor, setDeneniyor] = useState(false);
+  // KLAVYE DE KİLİTLİ (v1.568.0, denetim): katman yalnız fareyi kesiyordu. Bağlantı koptuğu an imleç bir form kutusundaysa
+  // yazmak, Enter, barkod okuyucu ve Ctrl+S kısayolu (pencere dinleyicisi) çalışmaya devam ediyordu — internetsiz kayıt.
+  // Odak bırakılır; kilit açıkken katman dışındaki her tuş yakalama evresinde yutulur.
+  useEffect(() => {
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) { /* yok */ }
+    const yut = (e) => {
+      const katman = document.querySelector("[data-cevrimdisi-kilit]");
+      if (katman && katman.contains(e.target)) return;
+      e.preventDefault(); e.stopPropagation();
+    };
+    window.addEventListener("keydown", yut, true);
+    window.addEventListener("keypress", yut, true);
+    window.addEventListener("submit", yut, true);
+    return () => { window.removeEventListener("keydown", yut, true); window.removeEventListener("keypress", yut, true); window.removeEventListener("submit", yut, true); };
+  }, []);
   return (
     <div data-cevrimdisi-kilit="1" role="alertdialog" aria-modal="true"
       onKeyDownCapture={(e) => { e.stopPropagation(); }}

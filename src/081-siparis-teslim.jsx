@@ -229,35 +229,9 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
   // Depolama isteklerini PARALEL değil SIRALI (birer birer) gönderiyoruz — aynı anda çok istek
   // atmak hız sınırına takılıp sessizce başarısız olabiliyordu. Her biri bir kez başarısız
   // olursa kısa bir bekleyip tekrar deneniyor.
-  (async () => {
-    // tabloYaz KULLANILIYOR, guvenliYaz DEĞİL: doğrudan yazmak veri katmanını atlıyordu ve
-    // teslim alma sonucu buluta hiç gitmiyordu. Stok hareketleri tablosunun boş kalmasının
-    // sebebi buydu.
-    const yazilacaklar = [
-      ["stok:items", "urunler", nextStok],
-      ["cari:data", "cariler", nextCariler],
-      ["siparis:data", "siparisler", nextSiparisler],
-    ];
-    const basarisizlar = [];
-    for (const [key, tablo, deger] of yazilacaklar) {
-      let denemeSayisi = 0;
-      let basarili = false;
-      while (denemeSayisi < 2 && !basarili) {
-        try {
-          await tabloYaz(key, tablo, deger);
-          basarili = true;
-        } catch (e) {
-          denemeSayisi++;
-          if (denemeSayisi < 2) await new Promise((r) => setTimeout(r, 400));
-        }
-      }
-      if (!basarili) basarisizlar.push(key);
-    }
-    if (basarisizlar.length > 0) {
-      showToast(`⚠ Şunlar kaydedilemedi: ${basarisizlar.join(", ")} — sayfayı yenilemeden tekrar deneyin!`);
-    }
-  })();
-
+  // tabloYaz KULLANILIYOR, guvenliYaz DEĞİL: doğrudan yazmak veri katmanını atlıyordu ve teslim alma sonucu
+  // buluta hiç gitmiyordu. (v1.568.0, denetim: aynı kayıt döngüsü iki kez yazılmıştı — her teslim üç tabloyu
+  // iki kez gönderiyor, hata olursa iki uyarı çıkıyordu. Tek döngü kaldı.)
   // Depolama istekleri SIRALI: aynı anda çok istek hız sınırına takılıp sessizce başarısız
   // olabiliyordu. Her biri bir kez daha deneniyor.
   (async () => {

@@ -475,7 +475,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
       const varsayilanMinStok = (p.variants[0] || {}).minStok || 0;
       // Ürün hâlâ renksiz/bedensiz placeholder durumundaysa, yeni renk eklenince placeholder'ın
       // yerine geçilir (Standart/Standart satırı kalkar, gerçek renk devam eder).
-      if (placeholderMi(p)) {
+      if (placeholderMi(p) && bosYerTutucuMu(p)) {   // stoklu/hareketli yer tutucu ezilmez (v1.568.0)
         return { ...p, variants: [{ renk, renkId: renkKimligiBul(renk, (tanimlar.renkler || [])), beden: "Standart", miktar: 0, minStok: varsayilanMinStok }] };
       }
       const bedenler = bedenSirala(Array.from(new Set(p.variants.map((v) => v.beden))));
@@ -517,7 +517,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     const next = [urun].map((p) => {
       const varsayilanMinStok = (p.variants[0] || {}).minStok || 0;
       // Aynı mantık: placeholder durumundaysa, yeni beden eklenince Standart/Standart satırı kalkar.
-      if (placeholderMi(p)) {
+      if (placeholderMi(p) && bosYerTutucuMu(p)) {   // stoklu/hareketli yer tutucu ezilmez (v1.568.0)
         return { ...p, variants: [{ renk: "Standart", beden, miktar: 0, minStok: varsayilanMinStok }] };
       }
       const renkler = Array.from(new Set(p.variants.map((v) => v.renk)));
@@ -537,6 +537,13 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   // üzerinde iş olan bir Standart kaydı sessizce silinmez, kullanıcı kendisi karar verir.
   // v1.493.0: yer tutucu = "Standart" YA DA boş dize (`olcuGoster` ortak kural); boş kayıtlı eski satır
   // gerçek değer eklenince de kalıyordu. Engel kontrolü her iki yazımla ayrı ayrı yapılıyor.
+  // DENETİM (v1.568.0): yer tutucu (Standart/Standart) yalnız ADINA bakılarak siliniyordu; hızlı açılıp 50 birim stok
+  // girilmiş hammaddeye ilk renk eklenince o varyant miktar 0 ile yenisine dönüşüyor, stok hareketsiz kayboluyordu.
+  // Stoğu ya da hareketi olan yer tutucu yerinde kalır; normal ekleme yolu (`standartYerTutucuyuKaldir` korumalı) işler.
+  function bosYerTutucuMu(urun) {
+    return !(urun.variants || []).some((v) => (Number(v.miktar) || 0) !== 0) && !(urun.hareketler || []).length;
+  }
+
   function standartYerTutucuyuKaldir(urun, eksen) {
     const yerTutucu = (v) => !olcuGoster(v[eksen]);
     const baskaVar = (urun.variants || []).some((v) => !yerTutucu(v));

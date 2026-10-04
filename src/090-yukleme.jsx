@@ -634,10 +634,13 @@ useEffect(() => {
       tabloBaslangicTam("cariler", c);
       // İNTERNETSİZ AÇILIŞ (v1.556.0): taban yerel kopya; önceki oturumda buluta GİDEMEYEN kayıtlar
       // defterden tabandan düşülür ki internet gelince ilk yazmada gitsinler.
-      ["urunler", "siparisler", "uretim", "cariler", "stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
+      // SIRA (v1.568.0, denetim): defter, tabanı KURULMUŞ tabloya uygulanmalı. Rezervasyon/onay/çöp tabanı defterden
+      // SONRA kuruluyor ve defterin etkisini siliyordu — o tablolardan düşen yazma bir sonraki yazmada gitmiyor,
+      // başarılı yazma da defteri temizlediği için kayıt kalıcı kayboluyordu.
       tabloBaslangicTam("stok_rezervasyonlari", Array.isArray(srez) ? srez : []);
       tabloBaslangicTam("onaylar", oy);
       tabloBaslangicTam("cop", cp);
+      ["urunler", "siparisler", "uretim", "cariler", "stok_rezervasyonlari", "onaylar", "cop"].forEach((tb) => bekleyenKayitlariTabanaUygula(tb));
     } catch (e) {
       setStorageOk(false);
     } finally {

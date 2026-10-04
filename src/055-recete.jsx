@@ -564,7 +564,7 @@ function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
   });
   const eklemeTarihi = new Date().toISOString();
   gruplar.forEach((satirlar) => {
-    const g = grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi);
+    const g = grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi, recete.concat(sonuc.satirlar));
     if (!g) return;
     if (g.bos) { sonuc.bosGruplar.push(g.hammaddeAd); return; }
     sonuc.satirlar.push(...g.satirlar);
@@ -575,9 +575,17 @@ function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
 
 // Tek reçete grubunun (aynı ekleme+hammadde+proses+açıklama) satırlarını `yeniRenk` için kurar. Döner:
 // null (grup yeni rengi zaten kapsıyor) | { bos: true, hammaddeAd } | { satirlar, gecmis }.
-function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi) {
+function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, eklemeTarihi, tumRecete) {
   const nrmRenk = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
   if (satirlar.some((r) => r.mamulRenk === yeniRenk)) return null;
+  const s0g = satirlar[0];
+  // DENETİM (v1.568.0): (a) aynı hammadde+proses+açıklama bu renkte BAŞKA bir eklemeyle zaten varsa grup o renk için
+  // tamamdır — "Reçeteye Ekle" renk renk ayrı işlemlerle yapılabiliyor; yoksa çift satır (tüketim 2 kat) açılıyordu.
+  if ((tumRecete || []).some((r) => r.mamulRenk === yeniRenk && r.hammaddeUrunId === s0g.hammaddeUrunId
+    && (r.proses || "") === (s0g.proses || "") && (r.aciklama || "") === (s0g.aciklama || ""))) return null;
+  // (b) "N. Renk" pozisyon satırı yalnız N'inci bileşeni OLAN model rengine uygulanır; tekli renge "2. Renk" açılmaz.
+  const pozNo = parseInt((String(s0g.aciklama || "").match(/^(\d+)\. Renk$/) || [])[1] || "", 10) || null;
+  if (pozNo && (kombinasyonEtiketiFormatindaMi(yeniRenk) ? !kombinasyonRengiCoz(yeniRenk, pozNo) : pozNo > 1)) return null;
   {
     const renkler = Array.from(new Set(satirlar.map((r) => r.mamulRenk)));
     // Örnek: en çok satırı olan mamul rengi (bedenleri en eksiksiz olan).
@@ -588,9 +596,11 @@ function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, ekl
     let cozum;
     if (s0.ambalajDegisken) cozum = { renk: s0.renk, gecmis: false };
     else {
-      cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
       const kullanilan = Array.from(new Set(satirlar.map((r) => r.renk)));
-      if (!cozum.renk && renkler.length >= 2 && kullanilan.length === 1) cozum = { renk: kullanilan[0], gecmis: false };
+      // (c) SABİT MALZEME ÖNCE (v1.568.0): en az iki renk aynı hammadde rengini kullanıyorsa (Toka hep Nikel) o renk —
+      // "aynı ad" kuralı yeni rengi (Siyah) Toka Siyah'a çeviriyordu.
+      if (renkler.length >= 2 && kullanilan.length === 1 && kullanilan[0]) cozum = { renk: kullanilan[0], gecmis: false };
+      else cozum = sablonRengiCoz({ hammaddeUrunId: s0.hammaddeUrunId, renk: s0.renk, pozisyon: poz }, yeniRenk, { tumUrunler }, gecmisHarita);
       // Renksiz kullanım (hep "Standart") tek renkte de sabittir (v1.566.0: Takviye Bezi, Jut).
       if (!cozum.renk && kullanilan.every((x) => !x || nrmRenk(x) === "standart")) cozum = { renk: kullanilan[0] || "Standart", gecmis: false };
     }
@@ -621,7 +631,7 @@ function eksikRenkEslesmeleri(product, tumUrunler) {
   });
   const eklemeTarihi = new Date().toISOString();
   gruplar.forEach((satirlar) => renkler.forEach((mr) => {
-    const g = grupYeniRenkSatirlari(satirlar, mr, tumUrunler, gecmisHarita, eklemeTarihi);
+    const g = grupYeniRenkSatirlari(satirlar, mr, tumUrunler, gecmisHarita, eklemeTarihi, recete.concat(sonuc.satirlar));
     if (!g) return;
     if (g.bos) { sonuc.bosSayisi += 1; return; }
     sonuc.satirlar.push(...g.satirlar);
@@ -687,8 +697,9 @@ function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
         });
       }
       son.forEach((r) => {
+        // Açıklama da karşılaştırılır (v1.568.0): hedefte Deri "Yüz" varken kaynaktaki Deri "Astar" atlanıyordu.
         const ayni = mevcut.some((m) => m.mamulRenk === mr && m.hammaddeUrunId === r.hammaddeUrunId && (m.proses || "") === (r.proses || "")
-          && (m.mamulBeden || "Tüm Bedenler") === (r.mamulBeden || "Tüm Bedenler"));
+          && (m.mamulBeden || "Tüm Bedenler") === (r.mamulBeden || "Tüm Bedenler") && (m.aciklama || "") === (r.aciklama || ""));
         if (ayni) { sonuc.atlanan += 1; return; }
         sonuc.eklenecekler.push({ ...r, mamulRenk: mr, eklemeId: yeniKimlik(r.eklemeId), eklemeTarihi });
       });
