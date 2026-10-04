@@ -1,7 +1,7 @@
 // BİRİM TESTİ — YENİ RENK → REÇETE GEÇMİŞTEN + BEDEN/BOY EŞLEŞMESİ DEĞİŞTİR (v1.564.0)
 // Kullanıcı: "Yeni renk eklenince eşleştirmeyi geçmişten otomatik doldursun, boyutlarda beden gibi olsun.
 // Beden değiştikçe boyut da değişebilir."
-const { yeniRenkReceteSatirlari, receteBedenDegistir, stoktanReceteKopyala, eksikRenkEslesmeleri, hammaddeRenkSecenekleri } = require("./erp.cjs");
+const { yeniRenkReceteSatirlari, receteBedenDegistir, stoktanReceteKopyala, eksikRenkEslesmeleri, hammaddeRenkSecenekleri, receteGrupEksikBedenleri, enYakinBeden, hammaddeBedenSecenekleri, sablonuUruneUygula } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -98,6 +98,38 @@ bekle("sabit malzeme aynı-ad kuralından önce (Toka Nikel kalır)", yeniRenkRe
 const kaynak3 = { id: "k3", recete: [r("y", "Kahve Süet", "deri", "Deri", "Kahve Süet", { aciklama: "Yüz" }), r("a", "Kahve Süet", "deri", "Deri", "Kahve Süet", { aciklama: "Astar" })] };
 const hedef3 = { id: "h3", variants: [{ renk: "Kahve Süet", beden: "40" }], recete: [r("hy", "Kahve Süet", "deri", "Deri", "Kahve Süet", { aciklama: "Yüz" })] };
 bekle("kopyada aynı hammaddenin ikinci kullanımı gelir", stoktanReceteKopyala(kaynak3, hedef3, tum).eklenecekler.map((x) => x.aciklama), ["Astar"]);
+
+// KARŞILIKSIZ BEDEN (v1.570.0) — "bilmediğini boş getir, renkli belirt"; boy da geçmişten hatırlanır.
+bekle("en yakın beden (sayısal)", [enYakinBeden(["38", "40", "42"], "43"), enYakinBeden(["38", "40", "42"], "39"), enYakinBeden(["S", "M"], "L")], ["42", "38", "M"]);
+const bagB = (mb, boy, ek = {}) => r("bg" + mb, "Kahve Süet", "bag", "Bağcık", "Kahve", { mamulBeden: mb, beden: boy, miktar: Number(mb) / 10, ...ek });
+const grup = [bagB("40", "120 cm"), bagB("41", "140 cm")];
+const vary = ["40", "41", "42"].map((beden) => ({ renk: "Kahve Süet", beden }));
+bekle("eksik beden bulunur (42)", receteGrupEksikBedenleri(grup, vary), ["42"]);
+bekle("Tüm Bedenler satırı varsa eksik yok", receteGrupEksikBedenleri(bag, vary), []);
+const ekB = receteBedenDegistir(grup, ["42"], "140 cm", ["40", "41", "42"], vary);
+bekle("eşleştir… seçilince satır en yakın bedenden açılır", ekB.yeniSatirlar.map((x) => `${x.mamulBeden}:${x.beden}:${x.miktar}:${x.id || ""}`), ["42:140 cm:4.1:"]);
+bekle("varyantlar verilmezse eski davranış (satır açılmaz)", receteBedenDegistir(grup, ["42"], "140 cm", ["40", "41", "42"]).yeniSatirlar.length, 0);
+const hepsi = receteBedenDegistir(grup, ["40", "41", "42"], "150 cm", ["40", "41", "42"], vary);
+bekle("Hepsi → eksikleri de doldurur", hepsi.yeniSatirlar.map((x) => `${x.mamulBeden}:${x.beden}`).sort(), ["40:150 cm", "41:150 cm", "42:150 cm"]);
+const isaretli = [bagB("40", "120 cm", { bedenGecmisten: true })];
+bekle("hatırlanan boy aynı değerle seçilince işaret düşer", receteBedenDegistir(isaretli, ["40"], "120 cm", ["40"]).yeniSatirlar.map((x) => !!x.bedenGecmisten), [false]);
+bekle("boy seçenekleri: kart yoksa reçetelerden", hammaddeBedenSecenekleri("bag", [{ id: "u", recete: grup }]), ["120 cm", "140 cm"]);
+// Geçmiş: başka modelde Bağcık 42 → 160 cm.
+const gecmisUrun = { id: "g", variants: [], recete: [r("g42", "Siyah", "bag", "Bağcık", "Siyah", { mamulBeden: "42", beden: "160 cm", eklemeTarihi: "2026-09-01" })] };
+const kaynakB = { id: "kb", variants: [], recete: grup };
+const hedefB = { id: "hb", variants: [...vary, { renk: "Kahve Süet", beden: "43" }], recete: [] };
+const kb = stoktanReceteKopyala(kaynakB, hedefB, [...tum, gecmisUrun, kaynakB]);
+bekle("stoktan çek: 42 geçmişten (kırmızı), 43 bilinmiyor → boş + adı", [kb.eklenecekler.map((x) => `${x.mamulBeden}:${x.beden}${x.bedenGecmisten ? "*" : ""}`), kb.bedenGecmisSayisi, kb.bedenEksikler],
+  [["40:120 cm", "41:140 cm", "42:160 cm*"], 1, ["Bağcık (43)"]]);
+const sab = { id: "s", ad: "S", satirlar: [{ hammaddeUrunId: "bag", hammaddeAd: "Bağcık", renk: "Kahve", beden: "bedene göre", miktar: null, proses: "Kesim",
+  bedenler: { "40": { beden: "120 cm", miktar: 4 }, "41": { beden: "140 cm", miktar: 4.1 } } }] };
+const sb = sablonuUruneUygula(sab, hedefB, { tumUrunler: [hm("bag", "Bağcık", ["Kahve"]), gecmisUrun] });
+bekle("şablon: 42 geçmişten (miktar en yakın bedenden), 43 boş + adı", [sb.eklenecekler.map((x) => `${x.mamulBeden}:${x.beden}:${x.miktar}${x.bedenGecmisten ? "*" : ""}`), sb.bedenGecmisSayisi, sb.bedenEksikler],
+  [["40:120 cm:4", "41:140 cm:4.1", "42:160 cm:4.1*"], 1, ["Bağcık (43)"]]);
+const tabanSab = { id: "t", ad: "T", satirlar: [{ hammaddeUrunId: "taban", hammaddeAd: "Taban", renk: "Kahve", beden: "mamul bedeni", miktar: null, proses: "Kesim", bedenAyni: true,
+  bedenler: { "40": { beden: "40", miktar: 1 }, "41": { beden: "41", miktar: 2 } } }] };
+bekle("şablon: boy = numara, miktar bedene göre → eksik numara düşmez", sablonuUruneUygula(tabanSab, hedefB, { tumUrunler: [hm("taban", "Taban", ["Kahve"])] }).eklenecekler.map((x) => `${x.mamulBeden}:${x.beden}:${x.miktar}`),
+  ["40:40:1", "41:41:2", "42:42:2", "43:43:2"]);
 
 console.log(hata ? "birim-yeni-renk-recete: HATA" : "birim-yeni-renk-recete: tamam");
 process.exit(hata);

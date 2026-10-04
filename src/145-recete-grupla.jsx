@@ -258,30 +258,117 @@ function gecmisRenkOnerisi(harita, mamulPozisyonRengi, hammaddeId, hammaddeRenkl
 // getirilince ("Hepsi") satır açılmaz, "Tüm Bedenler" satırının boyu değişir.
 // `satirlar`: tek grubun satırları; `mamulBedenleri`: değişecek mamul bedenleri; `urunBedenleri`: ürünün
 // bedenleri (sıralı). Döner: { silinecekIdler, yeniSatirlar (id'siz) } — `onReceteGrubuGuncelle` girdisi.
-function receteBedenDegistir(satirlar, mamulBedenleri, yeniBeden, urunBedenleri) {
+function receteBedenDegistir(satirlar, mamulBedenleri, yeniBeden, urunBedenleri, varyantlar) {
   const hedef = new Set(mamulBedenleri || []);
   const tum = (urunBedenleri || []).filter((b) => b && b !== "Tüm Bedenler");
   const hepsi = tum.length > 0 && tum.every((b) => hedef.has(b));
   const silinecekIdler = [];
   const yeniSatirlar = [];
+  // Kullanıcının seçtiği boy artık "hatırlanan" değil: kırmızı işaret (`bedenGecmisten`) düşer.
+  const temizle = ({ id: _id, bedenGecmisten: _bg, ...rest }) => rest;
   (satirlar || []).forEach((r) => {
-    const { id, ...rest } = r;
+    const rest = temizle(r);
     const mb = r.mamulBeden || "Tüm Bedenler";
     if (mb === "Tüm Bedenler") {
       if (hedef.has("Tüm Bedenler") || hepsi || tum.length === 0) {
-        if (r.beden === yeniBeden) return;
-        silinecekIdler.push(id); yeniSatirlar.push({ ...rest, beden: yeniBeden });
+        if (r.beden === yeniBeden && !r.bedenGecmisten) return;
+        silinecekIdler.push(r.id); yeniSatirlar.push({ ...rest, beden: yeniBeden });
         return;
       }
       if (!tum.some((b) => hedef.has(b))) return;
-      silinecekIdler.push(id);
+      silinecekIdler.push(r.id);
       tum.forEach((b) => yeniSatirlar.push({ ...rest, mamulBeden: b, beden: hedef.has(b) ? yeniBeden : (r.beden || "Standart") }));
       return;
     }
-    if (!hedef.has(mb) || r.beden === yeniBeden) return;
-    silinecekIdler.push(id); yeniSatirlar.push({ ...rest, beden: yeniBeden });
+    if (!hedef.has(mb) || (r.beden === yeniBeden && !r.bedenGecmisten)) return;
+    silinecekIdler.push(r.id); yeniSatirlar.push({ ...rest, beden: yeniBeden });
   });
+  // KARŞILIĞI OLMAYAN BEDENİ AÇ (v1.570.0): `varyantlar` verilirse, hedef mamul bedeni için satırı OLMAYAN renklerde
+  // satır açılır — en yakın bedenin satırından kopya (miktar, renk, açıklama aynen), boy = seçilen. Şerit bu
+  // bedeni turuncu "eşleştir…" kutusuyla gösteriyor; seçim burada satıra dönüşür.
+  if (varyantlar) {
+    const renkler = Array.from(new Set((satirlar || []).map((r) => r.mamulRenk)));
+    renkler.forEach((mr) => {
+      const renkSatirlari = (satirlar || []).filter((r) => r.mamulRenk === mr);
+      if (renkSatirlari.some((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler")) return;
+      const renkBedenleri = new Set(varyantlar.filter((v) => v.renk === mr).map((v) => v.beden).filter(Boolean)); // sirasiz-tamam (üyelik)
+      hedef.forEach((mb) => {
+        if (mb === "Tüm Bedenler" || !renkBedenleri.has(mb)) return;
+        if (renkSatirlari.some((r) => r.mamulBeden === mb)) return;
+        const kaynakBeden = enYakinBeden(renkSatirlari.map((r) => r.mamulBeden), mb);
+        const kaynak = renkSatirlari.find((r) => r.mamulBeden === kaynakBeden);
+        if (!kaynak) return;
+        yeniSatirlar.push({ ...temizle(kaynak), mamulBeden: mb, beden: yeniBeden });
+      });
+    });
+  }
   return { silinecekIdler, yeniSatirlar };
+}
+
+// Bir bedenin listedeki EN YAKIN karşılığı: sayısal bedenlerde fark en küçük olan (eşitlikte küçük olan),
+// sayısal değilse beden sırasındaki komşu; o da yoksa listenin sonuncusu. Eksik bedene miktar/boy kopyalarken.
+function enYakinBeden(bedenler, mb) {
+  const liste = bedenSirala(Array.from(new Set((bedenler || []).filter(Boolean))));
+  if (liste.length === 0) return null;
+  const sayi = (x) => { const n = parseFloat(String(x).replace(",", ".")); return Number.isFinite(n) ? n : null; };
+  const m = sayi(mb);
+  if (m != null && liste.every((b) => sayi(b) != null)) {
+    return liste.reduce((en, b) => (Math.abs(sayi(b) - m) < Math.abs(sayi(en) - m) ? b : en), liste[0]);
+  }
+  const sirali = bedenSirala(liste.concat([mb]));
+  const i = sirali.indexOf(mb);
+  return sirali[i - 1] != null && sirali[i - 1] !== mb ? sirali[i - 1] : (sirali[i + 1] != null ? sirali[i + 1] : liste[liste.length - 1]);
+}
+
+// Mamul bedeninin satırı eksik olan renkleri ve bedenleri bul (beden eşleşme şeridindeki turuncu kutular).
+// "Tüm Bedenler" satırı olan renk eksiksiz sayılır. Döner: sıralı eksik mamul bedenleri.
+function receteGrupEksikBedenleri(satirlar, varyantlar) {
+  const eksik = new Set();
+  const renkler = Array.from(new Set((satirlar || []).map((r) => r.mamulRenk)));
+  renkler.forEach((mr) => {
+    const renkSatirlari = (satirlar || []).filter((r) => r.mamulRenk === mr);
+    if (renkSatirlari.some((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler")) return;
+    const var_ = new Set(renkSatirlari.map((r) => r.mamulBeden)); // sirasiz-tamam (üyelik)
+    (varyantlar || []).filter((v) => v.renk === mr && v.beden && v.beden !== "Standart").forEach((v) => { if (!var_.has(v.beden)) eksik.add(v.beden); });
+  });
+  return bedenSirala(Array.from(eksik));
+}
+
+// ================= GEÇMİŞTEN BOY / BEDEN EŞLEŞMESİ (v1.570.0) =================
+//
+// Kullanıcı: "boyutlarda beden gibi olsun" — renkteki "hatırla" kuralının boy karşılığı. Bütün reçetelerde bu
+// hammaddeye bu MAMUL BEDENİ için verilmiş boy (taban 43 → taban 43, bağcık 43 → 140 cm). En son eklenen kazanır.
+// "Tüm Bedenler" satırları kanıt sayılmaz (bedene özgü karar değil); kendisi hatırlanmış (`bedenGecmisten`),
+// henüz onaylanmamış satır da sayılmaz — tahmin tahmini doğurmasın.
+function gecmisBedenEslesmeleri(urunler) {
+  const harita = new Map();   // `${hammaddeId}|${mamulBeden}` → [{ beden, tarih }]
+  (urunler || []).forEach((u) => (u.recete || []).forEach((r) => {
+    if (!r || !r.hammaddeUrunId || r.bedenGecmisten) return;
+    const mb = r.mamulBeden;
+    if (!mb || mb === "Tüm Bedenler" || !r.beden || r.beden === "Standart") return;
+    const k = `${r.hammaddeUrunId}|${mb}`;
+    const liste = harita.get(k) || [];
+    liste.push({ beden: r.beden, tarih: String(r.eklemeTarihi || "") });
+    harita.set(k, liste);
+  }));
+  return harita;
+}
+function gecmisBedenOnerisi(harita, hammaddeId, mamulBeden) {
+  const liste = (harita && harita.get(`${hammaddeId}|${mamulBeden}`)) || [];
+  const enSon = liste.reduce((m, x) => (m == null || x.tarih > m.tarih ? x : m), null);
+  return enSon ? enSon.beden : "";
+}
+
+// Hammaddenin boy/beden seçenekleri: stok kartındaki bedenler + reçetelerde kullanılmış bedenler (kart yoksa
+// ya da kartta açılmamışsa şerit boş kalmasın — renkteki `hammaddeRenkSecenekleri` ile aynı mantık).
+function hammaddeBedenSecenekleri(hammaddeId, tumUrunler) {
+  const h = (tumUrunler || []).find((u) => u.id === hammaddeId);
+  const kart = h ? (h.variants || []).map((v) => v.beden).filter((b) => b && b !== "Standart") : [];  // sirasiz-tamam (aşağıda sıralanıyor)
+  const recetede = [];
+  (tumUrunler || []).forEach((u) => (u.recete || []).forEach((r) => {
+    if (r && r.hammaddeUrunId === hammaddeId && r.beden && r.beden !== "Standart") recetede.push(r.beden);
+  }));
+  return bedenSirala(Array.from(new Set([...kart, ...recetede])));
 }
 
 // ================= HAMMADDE RENK SEÇENEKLERİ (v1.566.0) =================

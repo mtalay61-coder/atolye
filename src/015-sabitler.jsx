@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.569.0";
+const SURUM = "1.570.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Denetimde acik kalanlar: teslim geri alininca tamir isleri ve rezervasyon, planlamada kutu rengi, cok cihaz veri birlestirme, modul yetkileri, beden silme onayi";
+const SURUM_NOTU = "Recetede karsiligi olmayan beden/boy artik turuncu eslestir kutusuyla gorunuyor, gecmisten hatirlanan boy kirmizi; sablon ve stoktan cekmede bedenler atlanmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,10 @@ const SURUM_NOTU = "Denetimde acik kalanlar: teslim geri alininca tamir isleri v
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.570.0", tarih: "04.10.2026",
+    eklenen: ["Reçetede satırı olmayan mamul bedeni beden/boy eşleşmesinde turuncu 'eşleştir…' kutusuyla görünüyor; boy seçilince satır en yakın bedenin miktarıyla açılıyor", "Boy/beden de geçmiş reçetelerden hatırlanıyor (kırmızı kutu, 'Eşleştirmeleri onayla' ile onaylanır)"],
+    degisen: ["'Hepsi →' eksik bedenleri de dolduruyor", "Kartında bedeni açılmamış hammaddede boy listesi reçetelerde kullanılan boylardan dolduruluyor"],
+    duzeltilen: ["Şablon uygulanırken ya da başka stoktan reçete çekilirken karşılığı bulunamayan beden sessizce atlanıyordu (yalnız kısa uyarı)", "Bedene göre miktarı değişen tabanda kaynakta olmayan numara miktar bulunamadığı için düşüyordu"] },
   { surum: "1.569.0", tarih: "04.10.2026",
     eklenen: ["Beden/boyut silinirken onay soruluyor; ürün, reçete ya da siparişte kullanılıyorsa silinmiyor", "Tanımlarda değişiklik 'Tanımlar › düzenleme' yetkisine bağlı", "Kullanıcının rolü/yetkisi/pasifliği yeniden giriş beklemeden oturuma yansıyor"],
     degisen: ["Görüntüleme yetkisi olmayan bölüm (Cari, Üretim, Kasa & Banka, Çek, Finans, Fişler, Modelhane, Fiyat Listesi, Tanımlar) ürün/sipariş kartındaki bağlantılardan da açılmıyor"],
