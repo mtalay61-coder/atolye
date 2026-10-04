@@ -4673,7 +4673,9 @@ function ProductMatrixCard({
                   border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", background: "#fff" }} />
             );
             // Hammadde birim fiyatını KAYNAĞINA yaz: boy/renk kuralından geldiyse o kurala, yoksa karta.
-            const birimFiyatKaydet = (d, yeni) => {
+            // `pb` (v1.581.0 — kullanıcı: "Maliyette de p.birimi değiştirme olsun"): satırdaki birim seçicisi. Fiyat kuraldan
+            // geliyorsa kuralın `paraBirimi`, karttan geliyorsa kartın `alisParaBirimi` (simgeyle) yazılır — rakam aynı kalır.
+            const birimFiyatKaydet = (d, yeni, pb) => {
               const hm = (tumUrunler || []).find((u) => u.id === d.hammaddeId);
               if (!hm) return;
               const kurallar = hm.fiyatKurallari || [];
@@ -4681,9 +4683,9 @@ function ProductMatrixCard({
                 || (d.boy && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "beden" && k.deger === d.boy))
                 || (d.renk && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "renk" && k.deger === d.renk));
               if (d.kaynak !== "Kart" && eslesen) {
-                onUrunGuncelle(hm.id, { fiyatKurallari: kurallar.map((k) => (k.id === eslesen.id ? { ...k, fiyat: yeni } : k)) });
+                onUrunGuncelle(hm.id, { fiyatKurallari: kurallar.map((k) => (k.id === eslesen.id ? { ...k, fiyat: yeni, ...(pb ? { paraBirimi: pb } : {}) } : k)) });
               } else {
-                onUrunGuncelle(hm.id, { alisFiyati: yeni });
+                onUrunGuncelle(hm.id, { alisFiyati: yeni, ...(pb ? { alisParaBirimi: PARA_SEMBOLU[pb] || pb } : {}) });
               }
             };
             // Para birimine göre dağılım
@@ -4722,7 +4724,8 @@ function ProductMatrixCard({
                               {/* Alıştan gelen fiyat DÜZENLENMEZ: kutuya yazılan karta/kurala giderdi ama ekranda yine
                                   alış ortalaması görünürdü — kullanıcı değişikliğinin tutmadığını sanırdı. Fiyatı alış fişi belirler. */}
                               {d.hammaddeId && !d.alisKaynakli
-                                ? <>{sayiKutusu(d.kendiFiyat, (v) => birimFiyatKaydet(d, v), `hm-${d.hammaddeId}-${d.renk}-${d.boy}`)} {PB_SIMGE[d.pb] || d.pb}</>
+                                ? <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>{sayiKutusu(d.kendiFiyat, (v) => birimFiyatKaydet(d, v), `hm-${d.hammaddeId}-${d.renk}-${d.boy}`)}
+                                    <ParaBirimiSecici deger={d.pb} veri={`maliyet|${d.hammaddeId}|${d.renk}|${d.boy}`} onDegis={(y) => { if (y !== d.pb) birimFiyatKaydet(d, d.kendiFiyat, y); }} /></span>
                                 : para(d.kendiFiyat, d.pb)}
                               {d.kaynak && d.kaynak !== "Kart" && <div data-fiyat-kaynagi="1" data-alis-kaynakli={d.alisKaynakli ? "1" : undefined} style={{ fontSize: 9, color: "var(--erp-text-3)", whiteSpace: "normal", maxWidth: 200, marginLeft: "auto" }}>{d.alisKaynakli ? d.kaynak : `${d.kaynak.replace("Renk+Beden", "Renk+boy").replace("Beden", "Boy")} fiyatı`}</div>}
                             </td>
