@@ -3024,8 +3024,13 @@ function ProductMatrixCard({
                       // hammadde rengiyle eşleştirilmişse (örn. "Astar" — hepsi Siyah'a bağlanmış), YİNE
                       // matris kurulur, sadece TEK (etiketsiz) satırla — mamul renkler yine sütun olarak
                       // yan yana görünür, kart kart alt alta dizilmez.
-                      const pozisyonluMatris = hepsiBedensiz && mamulRenkSayisiPoz > 1 && pozisyonluSatirlar.length > 0;
-                      const tekliMatris = hepsiBedensiz && pozisyonluSatirlar.length === 0 && mamulRenkSayisiTekli > 1;
+                      // ÜRÜNÜN BİRDEN FAZLA RENGİ VARSA her zaman matris (v1.562.0 — kullanıcı: "stoğa renk ekledim,
+                      // rengin hammaddesi boş ya da otomatik gelirdi, şimdi renk girecek bölüm kalmadı"). Hammadde
+                      // yalnız BİR mamul renginde tanımlıyken (ör. tek renkli modele yeni renk eklendi) liste görünümü
+                      // çıkıyor ve yeni renk için turuncu "eşleştir…" sütunu hiç olmuyordu.
+                      const urunCokRenkli = renkler.length > 1;
+                      const pozisyonluMatris = hepsiBedensiz && (mamulRenkSayisiPoz > 1 || urunCokRenkli) && pozisyonluSatirlar.length > 0;
+                      const tekliMatris = hepsiBedensiz && pozisyonluSatirlar.length === 0 && (mamulRenkSayisiTekli > 1 || urunCokRenkli);
                       const pozisyonXRenkMatrisi = pozisyonluMatris || tekliMatris;
 
                       if (pozisyonXRenkMatrisi) {
@@ -3499,7 +3504,8 @@ function ProductMatrixCard({
                       // ayrı kart kart beden dökümü göstermek yerine, tek tabloda yan yana.
                       const tumBedenlerSet = new Set();
                       matrisSatirlari.forEach((ms) => ms.satirlar.forEach((r) => tumBedenlerSet.add(r.mamulBeden)));
-                      const bedenMatrisiUygun = matrisSatirlari.length > 1 && tumBedenlerSet.size > 1 && !tumBedenlerSet.has("Tüm Bedenler");
+                      // Tek mamul renginde tanımlı ama ürünün başka renkleri de var → yine matris (eksik renk sütunu, v1.562.0).
+                      const bedenMatrisiUygun = (matrisSatirlari.length > 1 || eksikMamulRenkler.length > 0) && tumBedenlerSet.size > 1 && !tumBedenlerSet.has("Tüm Bedenler");
 
                       if (bedenMatrisiUygun) {
                         const tumBedenler = Array.from(tumBedenlerSet).sort();
@@ -3954,7 +3960,7 @@ function ProductMatrixCard({
                           {(() => {
                             const belirtilmemisHammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
                             const belirtilmemisRenkSecenekleri = belirtilmemisHammadde ? Array.from(new Set(belirtilmemisHammadde.variants.map((v) => v.renk))) : [];
-                            return matrisSatirlari.map((ms) => {
+                            return [...matrisSatirlari.map((ms) => {
                             const tekBeden = ms.satirlar.length === 1 && ms.satirlar[0].mamulBeden === "Tüm Bedenler";
                             return (
                             <div key={ms.key} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
@@ -4039,7 +4045,38 @@ function ProductMatrixCard({
                               )}
                             </div>
                             );
-                            });
+                            }),
+                            // EKSİK MAMUL RENKLERİ (v1.562.0 — kullanıcı: "boyut olan stokta sorun var"): yalnız BİR mamul
+                            // renginde satırı olan grup (ör. şablondan gelen Bağcık 120 cm, öbür renkler bilinmediği için boş)
+                            // bu liste görünümüne düşüyor ve eksik renkler yalnız başlıkta "N renk eksik" diye yazıyordu —
+                            // matristeki turuncu "eşleştir…" kutusu burada yoktu. Seçilince satırlar mevcut renkten kopyalanır.
+                            ...eksikMamulRenkler.map((mr) => (
+                              <div key={`eksik-${mr}`} data-eksik-renk-satiri={mr} style={{ background: "var(--erp-orange-bg)", border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-md)", padding: "8px 10px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--erp-warn)" }}>{mr}</span>
+                                <ArrowRight size={13} color="var(--erp-text-3)" />
+                                <select
+                                  value=""
+                                  data-eksik-renk-esle={mr}
+                                  onChange={(e) => {
+                                    const yeniRenk = e.target.value;
+                                    const ornek = matrisSatirlari[0];
+                                    if (!yeniRenk || !ornek) return;
+                                    const yeniSatirlar = ornek.satirlar.map((r) => {
+                                      const { id, renkGecmisten: _rg, ...rest } = r;
+                                      return { ...rest, mamulRenk: mr, renk: yeniRenk };
+                                    });
+                                    onReceteGrubuGuncelle(product.id, [], yeniSatirlar);
+                                  }}
+                                  className="mono"
+                                  title={`"${mr}" için hammadde rengi seçin — eşleşme oluşturulur`}
+                                  style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", border: "1px dashed #B85C2E", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" }}
+                                >
+                                  <option value="">eşleştir…</option>
+                                  {belirtilmemisRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                                <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>EKSİK — bu renkte satır yok</span>
+                              </div>
+                            ))];
                           })()}
                         </div>
                       </div>
