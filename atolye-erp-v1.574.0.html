@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.571.0</title>
+<title>Atölye ERP 1.574.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2014,9 +2014,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.571.0";
+const SURUM = "1.574.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Recete renk eslestirmesinde yazarak arama; listede olmayan renk recete icinden yeni renk olarak eklenir (renk kodu, barkod kodu, hammadde stok kartina)";
+const SURUM_NOTU = "Stok resmi: kosedeki carpi kalkti; resme dokununca buyuyor, Duzenle ile degistirme ve onayli silme";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2024,6 +2024,15 @@ const SURUM_NOTU = "Recete renk eslestirmesinde yazarak arama; listede olmayan r
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.574.0", tarih: "04.10.2026",
+        eklenen: ["Stok kartındaki resme (kapak ve renk resimleri) dokununca büyük hâli açılıyor; orada 'Düzenle' ile değiştirme ve onaylı silme"],
+        degisen: ["Resmin köşesindeki × (tek dokunuşla silme) kaldırıldı; silme yalnız Düzenle panelinde, iki dokunuşla"],
+        duzeltilen: ["Görsel panelinde kutu boşken Kaydet resmi siliyordu"] },
+    { surum: "1.573.0", tarih: "04.10.2026", eklenen: [],
+        degisen: ["Reçetedeki hammadde renk kutuları dar düğme; dokununca arama kutusu, yazdıkça süzülen renkler ve 'yeni renk olarak ekle' aynı açılır kutuda (ayrı '＋ Yaz / yeni…' seçeneği kalktı)"],
+        duzeltilen: ["Renk kutuları en uzun renk adına göre genişleyip ekranı dolduruyordu"] },
+    { surum: "1.572.0", tarih: "04.10.2026", eklenen: [], degisen: [],
+        duzeltilen: ["Başka stoktan reçete çek listesinde sayı farklı hammaddeyi sayıyordu (aynı hammadde iki kullanımda tek sayılıyordu, 15 kalemlik reçete 13 görünüyordu); artık reçetedeki kalem sayısı"] },
     { surum: "1.571.0", tarih: "04.10.2026",
         eklenen: ["Reçetedeki hammadde renk kutularında (eşleştir… dahil) '＋ Yaz / yeni renk…': yazdıkça süzülen liste; stokta olmayan renk 'yeni renk olarak ekle' ile reçeteden çıkmadan açılıyor — Tanımlar'a renk kodu + barkod kodu + malzeme tipi + görünüm rengiyle, hammadde stok kartına bütün bedenleriyle eklenip reçete satırına yazılıyor", "Tanımlı olup hammadde kartında olmayan renk aramada 'stoğa eklenir' diye çıkıyor"],
         degisen: ["Reçete kartında ortak miktar ayrı satır yerine hammadde başlık satırında (ekran daha derli toplu)"],
@@ -20457,6 +20466,22 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
     const [busy, setBusy] = useState(false);
     const [hata, setHata] = useState("");
     const [bilgi, setBilgi] = useState("");
+    // RESME DOKUNUNCA BÜYÜT (v1.574.0 — kullanıcı: "Stokta resim üzerinde çarpı var onu kaldıralım, resme tıklayınca resmi
+    // büyütsün, silmek için düzenleye tıklayınca silme ve düzeltme olsun"). Köşedeki × kaldırıldı (yanlışlıkla dokunulup resim
+    // gidiyordu). Görseli olan kutuya dokununca tam ekran büyük hâli; orada "Düzenle" → değiştirme paneli, panelde onaylı "Sil".
+    // Görseli olmayan kutuda dokunuş eskisi gibi doğrudan ekleme panelini açar.
+    const [buyuk, setBuyuk] = useState(false);
+    const [silOnay, setSilOnay] = useState(false);
+    React.useEffect(() => {
+        if (!buyuk)
+            return undefined;
+        const d = (e) => { if (e.key === "Escape") {
+            e.stopPropagation();
+            setBuyuk(false);
+        } };
+        window.addEventListener("keydown", d, true);
+        return () => window.removeEventListener("keydown", d, true);
+    }, [buyuk]);
     // GALERİ VE KAMERA — iki AYRI gizli dosya girdisi.
     //
     // Fark tek bir öznitelikte: `capture="environment"` olan girdi telefonda doğrudan KAMERAYI açar,
@@ -20466,7 +20491,9 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
     const galeriRef = React.useRef(null);
     const kameraRef = React.useRef(null);
     function save() {
-        onUrlSave(draft.trim());
+        // Boş kutuyla Kaydet görseli SİLMEZ (v1.574.0): silme yalnız onaylı "Görseli sil" ile.
+        if (draft.trim())
+            onUrlSave(draft.trim());
         setEditing(false);
     }
     // Seçilen/çekilen fotoğraf küçültülüp veri URL'sine çevrilir. Ham telefon fotoğrafı 3-8 MB;
@@ -20526,9 +20553,14 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         React.createElement("button", { type: "button", disabled: !editable, onClick: () => {
                 if (!editable)
                     return;
+                if (src && !editing) {
+                    setBuyuk(true);
+                    return;
+                }
                 setDraft(src || "");
+                setSilOnay(false);
                 setEditing((v) => !v);
-            }, title: !editable ? "" : (baslik || (src ? "Görseli değiştir" : "Bu ürünün rengine görsel ekle")), style: {
+            }, "data-gorsel-kutu": src ? "dolu" : "bos", title: !editable ? "" : (src ? "Büyüt — değiştirmek/silmek için Düzenle" : (baslik || "Bu ürünün rengine görsel ekle")), style: {
                 width: size, height: size, borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)",
                 overflow: "hidden", padding: 0, cursor: editable ? "pointer" : "default",
                 background: src ? "transparent" : "#EFE4CE",
@@ -20536,14 +20568,12 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
             } }, src ? (React.createElement("img", { src: src, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" }, onError: (e) => {
                 e.target.style.display = "none";
             } })) : (React.createElement(ImageIcon, { size: 14, color: "var(--erp-text-3)" }))),
-        src && onRemove && editable && !editing && (React.createElement("button", { type: "button", onClick: (e) => {
-                e.stopPropagation();
-                onRemove();
-            }, title: "G\u00F6rseli kald\u0131r", style: {
-                position: "absolute", top: -6, right: -6, width: 14, height: 14, borderRadius: "50%",
-                background: "#4B3625", color: "var(--erp-panel-2)", border: "none", fontSize: 9, lineHeight: "14px",
-                cursor: "pointer", padding: 0, zIndex: 2,
-            } }, "\u00D7")),
+        buyuk && src && createPortal(React.createElement("div", { "data-gorsel-buyuk": "1", onClick: () => setBuyuk(false), title: "Kapatmak i\u00E7in dokunun", style: { position: "fixed", inset: 0, zIndex: 900, background: "rgba(30,24,16,.86)", display: "flex",
+                alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, padding: 20, cursor: "zoom-out" } },
+            React.createElement("img", { src: src, alt: "", style: { maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: "var(--erp-r-md)" } }),
+            React.createElement("div", { style: { display: "flex", gap: 8 }, onClick: (e) => e.stopPropagation() },
+                React.createElement("button", { type: "button", className: "btn-primary", "data-gorsel-duzenle": "1", style: { padding: "7px 16px", fontSize: 13 }, onClick: () => { setBuyuk(false); setDraft(""); setSilOnay(false); setEditing(true); } }, "\u270E D\u00FCzenle"),
+                React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "7px 16px", fontSize: 13, background: "#fff" }, onClick: () => setBuyuk(false) }, "Kapat"))), document.body),
         editing && (React.createElement("div", { style: {
                 position: "absolute", top: size + 6, left: 0, zIndex: 20, background: "#fff",
                 border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, width: 260,
@@ -20579,7 +20609,12 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
             React.createElement("div", { style: { fontSize: 10, color: "var(--erp-text-3)", marginTop: 8, lineHeight: 1.4 } }, "Link yap\u0131\u015Ft\u0131rd\u0131ysan\u0131z Kaydet'e bas\u0131n. Foto\u011Fraf yap\u0131\u015Ft\u0131r\u0131rsan\u0131z otomatik kaydedilir. Link i\u00E7in imgur.com veya postimages.org gibi siteler do\u011Frudan \u00E7al\u0131\u015Fan ba\u011Flant\u0131 verir (Google Foto\u011Fraflar/Drive linkleri \u00E7o\u011Funlukla \u00E7al\u0131\u015Fmaz)."),
             React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 8 } },
                 React.createElement("button", { className: "btn-primary", style: { padding: "5px 10px", fontSize: 12 }, onClick: save }, "Kaydet"),
-                React.createElement("button", { className: "btn-ghost", style: { padding: "5px 10px", fontSize: 12 }, onClick: () => setEditing(false) }, "Vazge\u00E7"))))));
+                React.createElement("button", { className: "btn-ghost", style: { padding: "5px 10px", fontSize: 12 }, onClick: () => setEditing(false) }, "Vazge\u00E7"),
+                src && onRemove && (React.createElement("button", { type: "button", "data-gorsel-sil": silOnay ? "onay" : "1", style: { marginLeft: "auto", padding: "5px 10px", fontSize: 12, borderRadius: "var(--erp-r-sm)", cursor: "pointer",
+                        border: "1px solid var(--erp-danger)", background: silOnay ? "var(--erp-danger)" : "#fff", color: silOnay ? "#fff" : "var(--erp-danger)", fontWeight: 700 }, onClick: () => { if (!silOnay) {
+                        setSilOnay(true);
+                        return;
+                    } onRemove(); setSilOnay(false); setEditing(false); } }, silOnay ? "Emin misiniz? Sil" : "Görseli sil")))))));
 }
 /* ================= TANIMLAR MODÜLÜ (Renk & Beden İsim Listesi) =================
    Burada sadece isimler tanımlanır (seçim için). Görsel burada tutulmaz. */
@@ -27549,20 +27584,38 @@ function HariciBarkodKutusu({ urun, variant, stok, tanimlar, onKaydet, showToast
 // hem hammadde kartına renk (bütün bedenleriyle) hem reçete satırına (`receteGrubuGuncelle`'nin 5. bağımsız değişkeni —
 // art arda iki yazım birbirinin üstüne eski listeyle yazardı); Tanımlar'a ortak renk olarak renk kodu + barkod kodu +
 // malzeme tipi + görünüm rengiyle (`onYeniRenkKaydet`, stok kartındaki "renk aç" yoluyla aynı).
-const YENI_RENK_SECENEGI = "__recete_yeni_renk__";
-function ReceteRenkSecimi({ hammaddeId, yr, onChange, children, ...rest }) {
-    const [ara, setAra] = useState(false);
-    if (ara && yr) {
-        return React.createElement(ReceteRenkArama, { hammaddeId: hammaddeId, yr: yr, onKapat: () => setAra(false), onSec: (ad) => onChange({ target: { value: ad } }) });
-    }
-    return (React.createElement("select", { ...rest, onChange: (e) => { if (e.target.value === YENI_RENK_SECENEGI) {
-            setAra(true);
-            return;
-        } onChange(e); } },
-        children,
-        yr && React.createElement("option", { value: YENI_RENK_SECENEGI }, "\uFF0B Yaz / yeni\u2026")));
+// AÇILIR ARAMALI RENK KUTUSU (v1.573.0 — kullanıcı: "Renk kutuları genişledi, daha dar yap; burada da filtre olsun ve
+// ekleme bunun içerisinde olsun"). Yerel <select> en uzun seçeneğe göre genişliyordu ("＋ Yaz / yeni…" ekleyince daha da)
+// ve telefonda yazarak süzülemiyordu. Artık dar bir düğme (uzun ad … ile kısalır); dokununca altında arama kutusu +
+// süzülen renkler + "yeni renk olarak ekle" açılır. Panel `createPortal` ile gövdeye, sabit konumla çizilir: reçete
+// tabloları yatay kaydırmalı kutuda, içeride açılsa kesilirdi. Seçim asıl `onChange`'e `{target:{value}}` ile gider.
+function ReceteRenkSecimi({ hammaddeId, yr, onChange, children, value, style, title, className, ...rest }) {
+    const [konum, setKonum] = useState(null);
+    const btnRef = React.useRef(null);
+    if (!yr)
+        return React.createElement("select", { value: value, onChange: onChange, style: style, title: title, className: className, ...rest }, children);
+    const kart = hammaddeRenkSecenekleri(hammaddeId, yr.tumUrunler);
+    const bos = !value;
+    const etiket = bos ? "eşleştir…" : `${value}${kart.length && !kart.includes(value) ? " (stokta yok)" : ""}`;
+    const ac = () => {
+        const r = btnRef.current ? btnRef.current.getBoundingClientRect() : { left: 8, bottom: 80, top: 60 };
+        const genislik = 250;
+        const left = Math.max(8, Math.min(r.left, window.innerWidth - genislik - 8));
+        // Altta yer yoksa (ekranın alt yarısı) üstte aç.
+        const ustte = r.bottom + 320 > window.innerHeight && r.top > 320;
+        setKonum(ustte ? { left, bottom: window.innerHeight - r.top + 4, genislik } : { left, top: r.bottom + 4, genislik });
+    };
+    return (React.createElement(React.Fragment, null,
+        React.createElement("button", { ref: btnRef, type: "button", title: title || "Hammadde rengini seç / ara / yeni ekle", className: className, ...rest, "data-recete-renk-kutu": bos ? "bos" : value, onClick: ac, style: { ...style, display: "inline-flex", alignItems: "center", gap: 3, maxWidth: 140, minWidth: 64, cursor: "pointer", textAlign: "left" } },
+            React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 } }, etiket),
+            React.createElement(ChevronDown, { size: 12, style: { flexShrink: 0, opacity: 0.6 } })),
+        konum && createPortal(React.createElement("div", { onMouseDown: (e) => { if (e.target === e.currentTarget)
+                setKonum(null); }, style: { position: "fixed", inset: 0, zIndex: 3000, background: "transparent" } },
+            React.createElement("div", { style: { position: "fixed", left: konum.left, ...(konum.top != null ? { top: konum.top } : { bottom: konum.bottom }), width: konum.genislik } },
+                React.createElement(ReceteRenkArama, { hammaddeId: hammaddeId, yr: yr, secili: value, onKapat: () => setKonum(null), onSec: (ad) => { if (ad !== value)
+                        onChange({ target: { value: ad } }); } }))), document.body)));
 }
-function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat }) {
+function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat, secili }) {
     const [q, setQ] = useState("");
     const [renkKodu, setRenkKodu] = useState("#C9B99A");
     const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
@@ -27575,7 +27628,7 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat }) {
     const tam = t && [...kart, ...tanim].some((ad) => nrm(ad) === t);
     const sec = (ad, yeni) => { yr.sec(hammaddeId, ad, yeni, renkKodu, onSec); onKapat(); };
     const kutu = { fontSize: 13, padding: "3px 6px", border: "1px solid var(--erp-accent)", borderRadius: "var(--erp-r-sm)", minWidth: 0, flex: 1 };
-    return (React.createElement("span", { "data-recete-renk-arama": "1", style: { display: "inline-flex", flexDirection: "column", gap: 3, minWidth: 180, maxWidth: 260, textAlign: "left", verticalAlign: "top",
+    return (React.createElement("span", { "data-recete-renk-arama": "1", style: { display: "flex", flexDirection: "column", gap: 3, width: "100%", boxSizing: "border-box", textAlign: "left",
             background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 5, boxShadow: "0 6px 18px rgba(16,24,40,0.10)" } },
         React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4 } },
             React.createElement("input", { autoFocus: true, value: q, "data-recete-renk-ara": "1", placeholder: "Renk yaz\u0131n\u2026", style: kutu, onChange: (e) => setQ(e.target.value), onKeyDown: (e) => {
@@ -27590,8 +27643,9 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat }) {
                     }
                 } }),
             React.createElement("button", { type: "button", title: "Vazge\u00E7", onClick: onKapat, style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", fontWeight: 700 } }, "\u00D7")),
-        React.createElement("span", { style: { display: "flex", flexDirection: "column", maxHeight: 170, overflowY: "auto" } },
-            sonuc.map((s) => (React.createElement("button", { key: s.ad, type: "button", "data-recete-renk-secenek": s.ad, onMouseDown: (e) => e.preventDefault(), onClick: () => sec(s.ad, false), style: { textAlign: "left", border: "none", background: "transparent", padding: "4px 6px", fontSize: 13, cursor: "pointer", borderRadius: "var(--erp-r-sm)" } },
+        React.createElement("span", { style: { display: "flex", flexDirection: "column", maxHeight: 220, overflowY: "auto" } },
+            sonuc.map((s) => (React.createElement("button", { key: s.ad, type: "button", "data-recete-renk-secenek": s.ad, onMouseDown: (e) => e.preventDefault(), onClick: () => sec(s.ad, false), style: { textAlign: "left", border: "none", background: s.ad === secili ? "var(--erp-hover)" : "transparent", fontWeight: s.ad === secili ? 700 : 400, padding: "6px 8px", fontSize: 14, cursor: "pointer", borderRadius: "var(--erp-r-sm)" } },
+                s.ad === secili ? "✓ " : "",
                 s.ad,
                 !s.kartta && React.createElement("span", { style: { marginLeft: 6, fontSize: 11, color: "var(--erp-text-3)" } }, "tan\u0131ml\u0131 \u00B7 sto\u011Fa eklenir")))),
             t && sonuc.length === 0 && React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-3)", padding: "3px 6px" } },
@@ -29171,11 +29225,17 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                             React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "Ba\u015Fka stoktan re\u00E7ete \u00E7ek:"),
                             React.createElement("select", { "data-recete-kopya-kaynak": "1", value: kopyaKaynak, onChange: (e) => setKopyaKaynak(e.target.value), style: { padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 160 } },
                                 React.createElement("option", { value: "" }, "\u2014 stok se\u00E7in \u2014"),
-                                kaynaklar.map((u) => React.createElement("option", { key: u.id, value: u.id },
-                                    u.ad,
-                                    " (",
-                                    new Set((u.recete || []).map((r) => r.hammaddeUrunId)).size,
-                                    " hammadde)"))),
+                                kaynaklar.map((u) => {
+                                    const kalem = receteGrupla(u.recete || []).length;
+                                    const hm = new Set((u.recete || []).map((r) => r.hammaddeUrunId)).size;
+                                    return React.createElement("option", { key: u.id, value: u.id },
+                                        u.ad,
+                                        " (",
+                                        kalem,
+                                        " kalem",
+                                        hm !== kalem ? ` · ${hm} farklı hammadde` : "",
+                                        ")");
+                                })),
                             React.createElement("button", { type: "button", className: "btn-primary", "data-recete-kopya-uygula": "1", disabled: !kopyaKaynak, style: { padding: "5px 12px", fontSize: 12 }, onClick: () => {
                                     const kaynak = kaynaklar.find((u) => u.id === kopyaKaynak);
                                     if (!kaynak)
@@ -53926,7 +53986,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.571.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.574.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
