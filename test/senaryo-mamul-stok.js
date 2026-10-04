@@ -100,8 +100,9 @@ async function calistir() {
   await modulAc(sayfa, "Stok");
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => {
-    const d = [...document.querySelectorAll("div")].find((x) =>
-      x.getBoundingClientRect().height > 0 && x.firstChild && x.firstChild.nodeType === 3 && x.firstChild.textContent.trim() === "Ürün: Bot");
+    // v1.589.0: sekmenin ilk çocuğu ikon; `data-serit-pencere` kabından metin.
+    const d = [...document.querySelectorAll("[data-serit-pencere]")].find((x) =>
+      x.getBoundingClientRect().height > 0 && x.textContent.trim() === "Ürün: Bot");
     if (d) d.click();
   });
   await sayfa.waitForTimeout(900);

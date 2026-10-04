@@ -80,11 +80,19 @@ async function calistir() {
   await sayfa.locator('[data-kart-ekstre="Kesimhane işçiliği"]').click();
   await sayfa.waitForTimeout(400);
   const kartEkstre = await sayfa.evaluate(() => { const r = document.querySelector('[data-kart-hareketleri="Kesimhane işçiliği"]'); return r ? r.innerText.replace(/\s+/g, " ").trim().replace(/\d{2}\.\d{2}\.\d{4}/g, "GG.AA.YYYY").replace(/[A-ZÇĞİÖŞÜa-zçğıöşü]+ \d{4} maaşı/g, "AY YYYY maaşı") : "yok"; });
+  // v1.589.0: Fişler'de maaş fişi "Maaş" çipinde; üst şeritteki sekmeler ikonlu (svg) ve modül renginde.
+  await modulAc(sayfa, "Fişler");
+  await sayfa.waitForTimeout(800);
+  const fisler = await sayfa.evaluate(() => {
+    const cipler = [...document.querySelectorAll("button")].map((b) => b.textContent.replace(/\s+/g, " ").trim()).filter((t) => /^(Maaş|Diğer|İşçilik) \(\d+\)$/.test(t));
+    const serit = [...document.querySelectorAll("[data-serit-sekme]")].map((d) => `${d.getAttribute("data-serit-sekme")}:${d.firstElementChild && d.firstElementChild.tagName === "SPAN" ? "ikon" : "ikonsuz"}:${d.textContent.trim()}`);
+    return { cipler, serit };
+  });
   const tanimKart = ((await depoOku(sayfa, "tanimlar:data")) || {}).giderKartlari || [];
   const bolumKarti = tanimKart.filter((k) => k.bolumId === "bk").map((k) => `${k.ad} · ${k.grup} · ${k.tur}`);
   await tarayici.close();
   return { hatalar, maasOnce, teslim: { yeniCariHareketleri: yeniHareketler, tahakkuk, adimTamam: !!(u.prosesIlerleme || [{}])[0].tamamlandiMi },
-    karZarar: { bolumSatiri, iscilikToplam, giderGrubu, giderSatiri, dokum }, giderKarti: { kart, kartEkstre, bolumKarti } };
+    karZarar: { bolumSatiri, iscilikToplam, giderGrubu, giderSatiri, dokum }, giderKarti: { kart, kartEkstre, bolumKarti }, fisler };
 }
 
 if (require.main === module) {

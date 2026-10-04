@@ -1,3 +1,24 @@
+// SEKME İKONLARI (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): üst şeritteki sayfa ve kayıt
+// sekmeleri menüdeki ikonun küçüğüyle; Lucide bileşenleri 000'da içe aktarılıyor. Rengi 015 MODUL_RENK / pencereRengi.
+const SEKME_IKON_BILESENI = {
+  anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck,
+  uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
+  cari: Users, muhasebe: Wallet, cekler: Receipt, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
+  gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
+};
+function sekmeIkonu(anahtar) {
+  const B = SEKME_IKON_BILESENI[anahtar] || FileText;
+  return <B size={13} />;
+}
+const PENCERE_IKON_BILESENI = {
+  urun: Boxes, recete: Scissors, maliyet: Tag, fis: FileText, "stok-fisi": FileText, fatura: ScrollText, cek: Receipt,
+  ekstre: Users, siparis: ClipboardList, uretim: Hammer, "depo-satinal": Compass, "depo-alis": PackageCheck,
+};
+function pencereIkonu(p) {
+  const B = PENCERE_IKON_BILESENI[(p || {}).tip] || FileText;
+  return <B size={13} />;
+}
+
 export default function AtolyeERP() {
   useFonts();
   // ---- SEKME KURALI (kullanıcı, 6 Eylül) --------------------------------------------------
@@ -4767,9 +4788,13 @@ export default function AtolyeERP() {
               {acikSekmeler.map((k) => {
                 const bilgi = SEKME_BILGISI[k] || { ad: k };
                 const aktifMi = tab === k && !aktifPencereId;
+                // İKON + MODÜL RENGİ (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): ikon her zaman modül
+                // renginde; etkin sekmede yazı da o renkte ve üstte 3 piksel renkli çizgi — menüdeki renk diliyle aynı.
+                const renk = MODUL_RENK[k] || "var(--erp-text-2)";
                 return (
                   <div
                     key={`sayfa-${k}`}
+                    data-serit-sekme={k}
                     onClick={() => { setTab(k); setAktifPencereId(null); }}
                     title={bilgi.ad}
                     style={{
@@ -4777,13 +4802,12 @@ export default function AtolyeERP() {
                       // YENİ TASARIM (v1.449.0): pasif sekme zeminsiz, etkin sekme beyaz kart gibi.
                       background: aktifMi ? "var(--erp-panel)" : "transparent",
                       border: `1px solid ${aktifMi ? "var(--erp-line-soft)" : "transparent"}`, borderBottom: "none",
-                      // AKTİF SEKMENİN YAZISI DA PALETTEN (kullanıcı, 7 Eylül: "turuncu yazılar iyi
-                      // ama siyah çok sırıtıyor"). `#221B14` neredeyse siyahtı ve açık şeridin
-                      // içinde tek başına kalıyordu. Menüdeki seçili öge yazısıyla aynı ton.
-                      color: aktifMi ? "var(--erp-text)" : "var(--erp-text-2)",
+                      borderTop: `3px solid ${aktifMi ? renk : "transparent"}`,
+                      color: aktifMi ? renk : "var(--erp-text-2)",
                       fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                     }}
                   >
+                    <span style={{ display: "flex", color: renk }}>{sekmeIkonu(k)}</span>
                     {bilgi.ad}
                     {/* Ana sayfanın kapatma düğmesi YOK: dönülecek bir yer hep kalmalı. */}
                     {k !== "anasayfa" && (
@@ -4803,6 +4827,7 @@ export default function AtolyeERP() {
               {acikPencereler.map((p) => (
                 <div
                   key={p.id}
+                  data-serit-pencere={p.tip}
                   // Sekmeye tıklayınca ilgili kayda GİDİLİR.
                   //
                   // Beş pencere tipi açılıyor (urun, recete, fis, ekstre, siparis, uretim) ama
@@ -4830,10 +4855,14 @@ export default function AtolyeERP() {
                   style={{
                     display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "6px 6px 0 0",
                     background: aktifPencere && p.id === aktifPencere.id ? "var(--erp-panel)" : "transparent",
-                    color: aktifPencere && p.id === aktifPencere.id ? "var(--erp-text)" : "var(--erp-text-2)",
+                    // KAYIT PENCERESİ DE RENKLİ (v1.589.0): ait olduğu modülün rengi (015 `pencereRengi`), ikonlu.
+                    border: `1px solid ${aktifPencere && p.id === aktifPencere.id ? "var(--erp-line-soft)" : "transparent"}`, borderBottom: "none",
+                    borderTop: `3px solid ${aktifPencere && p.id === aktifPencere.id ? pencereRengi(p) : "transparent"}`,
+                    color: aktifPencere && p.id === aktifPencere.id ? pencereRengi(p) : "var(--erp-text-2)",
                     fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                   }}
                 >
+                  <span style={{ display: "flex", color: pencereRengi(p) }}>{pencereIkonu(p)}</span>
                   {p.baslik}
                   <button
                     onClick={(e) => { e.stopPropagation(); pencereKapat(p.id); }}

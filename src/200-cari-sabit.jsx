@@ -74,6 +74,9 @@ function tumFisleriTopla(cariler, stok) {
     // Numara zaten işlemi söylüyordu; okunmuyordu.
     else if (g.fisNo && g.fisNo.startsWith("THS-")) tip = "Tahsilat";
     else if (g.fisNo && g.fisNo.startsWith("ODM-")) tip = "Ödeme";
+    // MAAŞ (v1.589.0 — kullanıcı: "maaş fişlerini de gruplandırmak lazım"): MAAS-YYYY-MM-<kod> fişleri "Diğer"e
+    // düşüyordu; artık kendi çipi var (rengi FIS_TIP_RENK "Maaş").
+    else if (g.fisNo && g.fisNo.startsWith("MAAS-")) tip = "Maaş";
 
     else if (g.fisNo && /^\d/.test(g.fisNo)) {
       // Üretim sipariş kodları artık salt sayısal (örn. "1023") — SAT-/ALS- ile başlamayıp
