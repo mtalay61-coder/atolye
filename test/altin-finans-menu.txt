@@ -6,8 +6,7 @@
  },
  "donus": [
   "Kasa",
-  "Banka",
-  "Kâr / Zarar"
+  "Banka"
  ],
  "finansOgeleri": [
   "Cari",
@@ -22,8 +21,7 @@
   "baslik": "Kasa & Banka",
   "sekmeler": [
    "Kasa",
-   "Banka",
-   "Kâr / Zarar"
+   "Banka"
   ]
  },
  "pasif": {

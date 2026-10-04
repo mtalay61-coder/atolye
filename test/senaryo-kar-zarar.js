@@ -54,9 +54,10 @@ function tohum({ kartsiz } = {}) {
 }
 
 async function panelAc(sayfa) {
-  await modulAc(sayfa, "Kasa & Banka");
+  // v1.587.0: Kâr / Zarar Finans › Gelir / Gider ekranında.
+  await modulAc(sayfa, "Gelir / Gider");
   await sayfa.waitForTimeout(900);
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Kâr \/ Zarar/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-gg-sekme="karzarar"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
 }
 const satirlar = (sayfa) => sayfa.evaluate(() => {

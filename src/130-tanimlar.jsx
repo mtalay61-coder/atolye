@@ -420,10 +420,17 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     const temiz = String(ad || "").trim();
     if (!temiz) return showToast("Bölüm adı gerekli");
     if ((tanimlar.bolumler || []).some((b) => kodEsit(b.ad, temiz))) return showToast("Bu adda bölüm zaten var");
-    onSave({ ...tanimlar, bolumler: [...(tanimlar.bolumler || []), { id: uid("bolum"), ad: temiz, prosesler: [], personel: [] }] });
+    // Bölümle birlikte gider kartı da açılır (v1.587.0): "<Bölüm> işçiliği" — maaş tahakkukları bu karta işlenir.
+    onSave(bolumKartlariniTamamla({ ...tanimlar, bolumler: [...(tanimlar.bolumler || []), { id: uid("bolum"), ad: temiz, prosesler: [], personel: [] }] }));
   }
   function bolumGuncelle(id, alanlar) {
-    onSave({ ...tanimlar, bolumler: (tanimlar.bolumler || []).map((b) => (b.id === id ? { ...b, ...alanlar } : b)) });
+    const bolumler = (tanimlar.bolumler || []).map((b) => (b.id === id ? { ...b, ...alanlar } : b));
+    // Ad değişince bölüme bağlı kartın adı da değişir (kart kullanıcı tarafından yeniden adlandırılmadıysa).
+    const b = bolumler.find((x) => x.id === id);
+    const giderKartlari = alanlar.ad !== undefined && b
+      ? (tanimlar.giderKartlari || []).map((k) => (k.bolumId === id ? { ...k, ad: bolumKartAdi(b) } : k))
+      : tanimlar.giderKartlari;
+    onSave({ ...tanimlar, bolumler, giderKartlari });
   }
   function bolumSil(id) {
     onSave({ ...tanimlar, bolumler: (tanimlar.bolumler || []).filter((b) => b.id !== id) });
