@@ -269,7 +269,7 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   // Reçeteden yeni renk (v1.571.0): seçim sırasında hammaddeye eklenecek renk burada bekler; reçete yazımı
   // (`onReceteGrubuGuncelle`) onu alıp hammadde kartına AYNI yazımda ekler. Tek kullanımlık.
@@ -299,6 +299,23 @@ function ProductMatrixCard({
   // Barkod kurmak için gereken üç liste. Kartın elinde zaten ayrı ayrı duruyorlar; barkod
   // fonksiyonları üçünü birlikte istiyor çünkü bir kodu kurmak üçüne birden bakmayı gerektiriyor.
   const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+  // RENK / ÖLÇÜ EKLENİNCE BARKOD KENDİLİĞİNDEN (v1.579.0): ürüne yeni varyant gelince (kart açıkken) barkodu kurulamayan
+  // varyant ya da stok no yoksa `onBarkodTamamla` (100 `urunBarkodunuTamamla`) çağrılır. 700 ms sonra ve EN SON fonksiyonla
+  // (ref): renk ekleme yolu tanımı ayrıca yazıyor (v1.555 "renk aç") — önce o yazım otursun, aynı renk iki kez tanımlanmasın.
+  const barkodTamamlaRef = React.useRef(onBarkodTamamla);
+  barkodTamamlaRef.current = onBarkodTamamla;
+  const varyantImzaRef = React.useRef(null);
+  const barkodEksikMi = !product.stokNo || (product.variants || []).some((v) => !varyantinBarkodu(product, v, barkodTanimlari));
+  React.useEffect(() => {
+    const imza = (product.variants || []).map((v) => `${v.renk}|${v.beden}`).sort().join(";");
+    const onceki = varyantImzaRef.current;
+    varyantImzaRef.current = imza;
+    if (onceki === null || onceki === imza) return undefined;
+    const eski = new Set(onceki.split(";"));
+    if (!imza.split(";").some((x) => !eski.has(x))) return undefined;
+    const z = setTimeout(() => { if (barkodTamamlaRef.current) barkodTamamlaRef.current(product.id, true); }, 700);
+    return () => clearTimeout(z);
+  }, [product.variants]);
   // baslangicSekme: dışarıdan gelen yönlendirmenin istediği sekme (ör. sipariş ekranındaki
   // "Reçeteyi aç" düğmesi). Yalnızca ilk açılışta uygulanır; kullanıcı sonradan sekme
   // değiştirdiğinde geri zıplamamalı.
@@ -425,6 +442,7 @@ function ProductMatrixCard({
   const [fkTumuPb, setFkTumuPb] = useState(null);
   const [fkGrupForm, setFkGrupForm] = useState(null);   // { id?, ad, renkler: [] }
   const [fkGrupPb, setFkGrupPb] = useState({});
+  const [asortiForm, setAsortiForm] = useState(null);   // { renk, asortiId } — asorti barkodu ekleme (v1.579.0)
   const [showFiyatGecmisi, setShowFiyatGecmisi] = useState(false);
   const [addingBeden, setAddingBeden] = useState(false);
   const [serbestOlcuGiris, setSerbestOlcuGiris] = useState(false);
@@ -5250,6 +5268,13 @@ function ProductMatrixCard({
               {product.stokNo ? `stok no ${String(product.stokNo).padStart(4, "0")}` : "stok no atanmamış"}
             </span>
             <span>Kodlar bir kez atanır, ad değişse de değişmez.</span>
+            {barkodEksikMi && onBarkodTamamla && (
+              // Eski (kodsuz kalmış) ürünler için tek dokunuş: tanımsız renk/ölçü tanımlanır, kod + stok no atanır (v1.579.0).
+              <button type="button" className="btn-primary" data-barkod-tamamla="1" style={{ padding: "4px 12px", fontSize: 12 }}
+                onClick={() => onBarkodTamamla(product.id)}>
+                Barkodları oluştur
+              </button>
+            )}
           </div>
 
           {/* SADECE STOK seviyesi — renksiz/bedensiz, ürünün kendi kodu. Depoda model bazında
@@ -5273,57 +5298,96 @@ function ProductMatrixCard({
             </div>
           ) : null}
 
-          {/* ASORTİ BARKODLARI — her renk × asorti için bir kod. Sipariş ekranında okutulunca
-              asortinin beden dağılımı kalem olarak ekleniyor. */}
-          {(asortiler || []).length > 0 && (
-            <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", padding: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 6 }}>
-                Asorti barkodları — sipariş ekranında okutulur
-              </div>
-              <div style={{ display: "grid", gap: 4 }}>
-                {Array.from(new Set((product.variants || []).map((v) => v.renk))).map((renk) => {
-                  const ilk = (product.variants || []).find((v) => v.renk === renk);
-                  const renkKod = renkKoduBul(barkodTanimlari, ilk && ilk.renkId, renk);
-                  // renkKod SIFIR olabilir ("Standart" için ayrılmış kod) — doğrusu null kontrolü.
-                  if (!product.stokNo || renkKod === null) return (
-                    <div key={renk} style={{ fontSize: 11, color: "var(--erp-warn)" }}>
-                      {renk}: {!product.stokNo ? "önce stok no atanmalı" : "bu renge renk kodu atanmamış"} (Paketleme → Eksik kodları ata)
-                    </div>
-                  );
-                  return (asortiler || []).map((a) => {
-                    const kod = urunBarkoduKur("asorti", { stokNo: product.stokNo, renkKod, asortiKod: a.barkodKodu });
-                    const adet = (a.oranlar || []).reduce((t, o) => t + (o.oran || 0), 0);
-                    if (!kod) return (
-                      <div key={`${renk}|${a.id}`} style={{ fontSize: 11, color: "var(--erp-warn)" }}>
-                        {renk} · {a.ad}: asorti kodu atanmamış
-                      </div>
-                    );
+          {/* ASORTİ BARKODLARI (v1.579.0 — kullanıcı: "Sadece asorti barkodunu stok içerisinden kullanıcı oluştursun; birden
+              fazla asorti olacağı için kullanıcı stok içerisinden asorti barkodları oluştursun"). Eskiden ürünün HER rengi × HER
+              tanımlı asorti kendiliğinden listeleniyordu (boyutlu bağcıkta bile "8 li Standart"). Artık ürünün
+              `asortiBarkodlari: [{ id, renk, asortiId }]` listesi: "Asorti barkodu ekle" ile renk (ya da bütün renkler) + asorti
+              seçilir. Kod aynı şemadan (90 + stok no + renk kodu + asorti kodu) — eskiden basılmış asorti etiketleri okunmaya
+              devam eder. Yalnız ürünün bedenleriyle kesişen asortiler seçilebilir. */}
+          {(() => {
+            const urunRenkleri = Array.from(new Set((product.variants || []).map((v) => v.renk)));
+            const urunBedenleri = new Set((product.variants || []).map((v) => v.beden)); // sirasiz-tamam (üyelik)
+            const uygunAsortiler = (product.olcuTipi || "Beden") === "Beden"
+              ? (asortiler || []).filter((a) => (a.oranlar || []).some((o) => urunBedenleri.has(o.beden))) : [];
+            const kayitlar = (product.asortiBarkodlari || []).filter((x) => urunRenkleri.includes(x.renk));
+            const ekle = () => {
+              const renkler = asortiForm.renk === "__hepsi__" ? urunRenkleri : [asortiForm.renk];
+              const mevcut = product.asortiBarkodlari || [];
+              const yeniler = renkler.filter((r) => !mevcut.some((x) => x.renk === r && x.asortiId === asortiForm.asortiId))
+                .map((r) => ({ id: uid("asb"), renk: r, asortiId: asortiForm.asortiId }));
+              if (yeniler.length) onUrunGuncelle(product.id, { asortiBarkodlari: [...mevcut, ...yeniler] });
+              // Kod parçaları (stok no, renk kodu, asorti kodu) eksikse tamamlanır — ürün yazımı otursun diye kısa gecikmeyle.
+              const asortiKodsuz = (asortiler || []).some((a) => a.id === asortiForm.asortiId && !(a.barkodKodu > 0));
+              if (yeniler.length && (barkodEksikMi || asortiKodsuz)) setTimeout(() => { if (barkodTamamlaRef.current) barkodTamamlaRef.current(product.id, true); }, 700);
+              if (showToast) showToast(yeniler.length ? `${yeniler.length} asorti barkodu oluşturuldu` : "Bu asorti barkodları zaten var");
+              setAsortiForm(null);
+            };
+            if (uygunAsortiler.length === 0 && kayitlar.length === 0) return null;
+            return (
+              <div data-asorti-barkodlari="1" style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", padding: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Asorti barkodları — sipariş ekranında okutulur</span>
+                  {!asortiForm && uygunAsortiler.length > 0 && (
+                    <button type="button" className="btn-ghost" data-asorti-barkod-ekle="1" style={{ marginLeft: "auto", padding: "3px 10px", fontSize: 12 }}
+                      onClick={() => setAsortiForm({ renk: urunRenkleri[0] || "", asortiId: uygunAsortiler[0].id })}>
+                      <Plus size={12} /> Asorti barkodu ekle
+                    </button>
+                  )}
+                </div>
+                {asortiForm && (
+                  <div data-asorti-barkod-form="1" style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+                    <select value={asortiForm.renk} data-asorti-barkod-renk="1" onChange={(e) => setAsortiForm((f) => ({ ...f, renk: e.target.value }))} style={{ ...inputStyle, width: "auto", fontSize: 12, padding: "4px 6px" }}>
+                      {urunRenkleri.map((r) => <option key={r} value={r}>{r}</option>)}
+                      {urunRenkleri.length > 1 && <option value="__hepsi__">Bütün renkler</option>}
+                    </select>
+                    <select value={asortiForm.asortiId} data-asorti-barkod-asorti="1" onChange={(e) => setAsortiForm((f) => ({ ...f, asortiId: e.target.value }))} style={{ ...inputStyle, width: "auto", fontSize: 12, padding: "4px 6px" }}>
+                      {uygunAsortiler.map((a) => <option key={a.id} value={a.id}>{a.ad} ({(a.oranlar || []).reduce((t, o) => t + (o.oran || 0), 0)} çift)</option>)}
+                    </select>
+                    <button type="button" className="btn-primary" data-asorti-barkod-olustur="1" style={{ padding: "4px 12px", fontSize: 12 }} onClick={ekle}>Oluştur</button>
+                    <button type="button" className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => setAsortiForm(null)}>Vazgeç</button>
+                  </div>
+                )}
+                {kayitlar.length === 0 && !asortiForm && (
+                  <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Henüz asorti barkodu yok — "Asorti barkodu ekle" ile renk ve asorti seçip oluşturun.</div>
+                )}
+                <div style={{ display: "grid", gap: 4 }}>
+                  {kayitlar.map((x) => {
+                    const a = (asortiler || []).find((y) => y.id === x.asortiId);
+                    const ilk = (product.variants || []).find((v) => v.renk === x.renk);
+                    const renkKod = renkKoduBul(barkodTanimlari, ilk && ilk.renkId, x.renk);
+                    const kod = a && product.stokNo && renkKod !== null ? urunBarkoduKur("asorti", { stokNo: product.stokNo, renkKod, asortiKod: a.barkodKodu }) : "";
+                    const adet = a ? (a.oranlar || []).reduce((t, o) => t + (o.oran || 0), 0) : 0;
                     return (
-                      <div key={`${renk}|${a.id}`} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
-                        <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>{renk}</span>
-                        <span>{a.ad}</span>
+                      <div key={x.id} data-asorti-barkod={`${x.renk}|${a ? a.ad : "?"}`} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12 }}>
+                        <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>{x.renk}</span>
+                        <span>{a ? a.ad : "silinmiş asorti"}</span>
                         <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{adet} çift</span>
-                        <span className="mono" style={{ fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" }}>{kod}</span>
-                        <button
-                          className="btn-ikon"
-                          title="Bu asortinin barkod etiketini bas (6×4 cm)"
-                          onClick={() => etiketYazdir([`
-                            <div style="font-size:12px;font-weight:700">${product.ad}</div>
-                            <div style="font-size:11px">${renk} · ${a.ad}</div>
-                            ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
-                            <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>
-                            <div style="font-size:11px;font-weight:700">${adet} çift</div>
-                          `], { genislikMM: 60, yukseklikMM: 40 })}
-                        >
-                          <Printer size={12} />
-                        </button>
+                        {kod ? (
+                          <span className="mono" style={{ fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" }}>{kod}</span>
+                        ) : (
+                          <span style={{ fontSize: 11, color: "var(--erp-warn)" }}>kod bekleniyor (birkaç saniye içinde otomatik atanır)</span>
+                        )}
+                        {kod && a && (
+                          <button className="btn-ikon" title="Bu asortinin barkod etiketini bas (6×4 cm)"
+                            onClick={() => etiketYazdir([`
+                              <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                              <div style="font-size:11px">${x.renk} · ${a.ad}</div>
+                              ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
+                              <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>
+                              <div style="font-size:11px;font-weight:700">${adet} çift</div>
+                            `], { genislikMM: 60, yukseklikMM: 40 })}>
+                            <Printer size={12} />
+                          </button>
+                        )}
+                        <SilOnayButonu onConfirm={() => onUrunGuncelle(product.id, { asortiBarkodlari: (product.asortiBarkodlari || []).filter((y) => y.id !== x.id) })}
+                          boyut={12} baslikNormal="Bu asorti barkodunu listeden kaldır (basılmış etiket okunmaya devam eder)" baslikOnay="Kaldırılacak — tekrar dokunun" />
                       </div>
                     );
-                  });
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TOPLU BASIM ŞERİDİ: seçim varken görünür. Kopya sayısı depoda işe yarıyor — aynı
               bedenden birden çok kutuya etiket gerekir; her seferinde yeniden seçmek yerine
