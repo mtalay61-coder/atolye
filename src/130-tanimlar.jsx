@@ -24,6 +24,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
   const [yeniAraProsesCariId, setYeniAraProsesCariId] = useState("");
   const [yeniAraProsesUcret, setYeniAraProsesUcret] = useState("");
   const [yeniFiyatGrubu, setYeniFiyatGrubu] = useState("");
+  const [yeniBolum, setYeniBolum] = useState("");   // atölye içi bölüm (v1.585.0)
   const [yeniFiyatGrubuTipi, setYeniFiyatGrubuTipi] = useState("Satış");
   const [yeniSablonAdi, setYeniSablonAdi] = useState("");
   // Fiyat grubunun para birimi (21 Eylül): "Toptan USD" grubunun fiyatları dolarla tutulur.
@@ -414,6 +415,19 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     onSave({ ...tanimlar, fiyatGruplari: [...mevcut, { id: uid("fgrup"), ad: temizAd, tip, paraBirimi }] });
   }
 
+  // Atölye içi bölümler (v1.585.0).
+  function bolumEkle(ad) {
+    const temiz = String(ad || "").trim();
+    if (!temiz) return showToast("Bölüm adı gerekli");
+    if ((tanimlar.bolumler || []).some((b) => kodEsit(b.ad, temiz))) return showToast("Bu adda bölüm zaten var");
+    onSave({ ...tanimlar, bolumler: [...(tanimlar.bolumler || []), { id: uid("bolum"), ad: temiz, prosesler: [], personel: [] }] });
+  }
+  function bolumGuncelle(id, alanlar) {
+    onSave({ ...tanimlar, bolumler: (tanimlar.bolumler || []).map((b) => (b.id === id ? { ...b, ...alanlar } : b)) });
+  }
+  function bolumSil(id) {
+    onSave({ ...tanimlar, bolumler: (tanimlar.bolumler || []).filter((b) => b.id !== id) });
+  }
   function fiyatGrubuSil(id) {
     onSave({ ...tanimlar, fiyatGruplari: (tanimlar.fiyatGruplari || []).filter((g) => g.id !== id) });
   }
@@ -1457,6 +1471,73 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
       )}
 
       <AsortiOlusturucu bedenler={bedenGrubuTumu.concat(boyutGrubuTumu)} onKaydet={asortiEkle} />
+    </div>
+    {/* ATÖLYE İÇİ BÖLÜMLER (v1.585.0 — kullanıcı: kesimhane 5 maaşlı kişi, parça başı tutar cariyi alacaklandırmasın).
+        Bölüm = bağlı prosesler + personel (Personel tipli cari) + aylık maaş. Bkz. 015 `prosesBolumu`. */}
+    <div data-bolumler="1" style={{ marginTop: 28 }}>
+      <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Atölye İçi Bölümler</h3>
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
+        Maaşlı personelle çalışan bölüm (ör. Kesimhane). Bölüme bağlı prosesin teslimi personel carisine parça başı alacak
+        YAZMAZ; tutar bölüm tahakkuku olur (ürün maliyeti değişmez). Her ay başı buradaki maaş personel carisine "Maaş" olarak
+        tahakkuk eder, kasadan ödeme kapatır. Finans › Kâr-Zarar'da bölümün tahakkuk − maaş farkı görünür.
+      </p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <input value={yeniBolum} data-bolum-ad="1" onChange={(e) => setYeniBolum(e.target.value)} placeholder="Örn. Kesimhane" style={inputStyle}
+          onKeyDown={(e) => { if (e.key === "Enter") { bolumEkle(yeniBolum); setYeniBolum(""); } }} />
+        <button className="btn-primary" data-bolum-ekle="1" onClick={() => { bolumEkle(yeniBolum); setYeniBolum(""); }}><Plus size={14} /></button>
+      </div>
+      {(tanimlar.bolumler || []).length === 0 ? (
+        <EmptyState text="Henüz atölye içi bölüm tanımlanmadı." />
+      ) : (tanimlar.bolumler || []).map((b) => {
+        const prosesAdlari = [...(tanimlar.prosesler || []).map((p) => p.ad), ...(tanimlar.araProsesler || []).map((p) => p.ad)].filter(Boolean);
+        const personelCariler = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
+        const uyeler = b.personel || [];
+        return (
+          <div key={b.id} data-bolum={b.ad} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff", padding: 12, marginBottom: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <input value={b.ad} onChange={(e) => bolumGuncelle(b.id, { ad: e.target.value })}
+                style={{ fontSize: 14, fontWeight: 700, flex: 1, padding: "4px 8px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
+              <SilOnayButonu onConfirm={() => bolumSil(b.id)} boyut={14} baslikNormal={`"${b.ad}" bölümünü sil (tahakkuk kayıtları ve cari hareketleri kalır)`} baslikOnay="Silinecek — tekrar dokunun" />
+            </div>
+            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Bağlı prosesler <span style={{ fontSize: 11 }}>(bu proseslerin teslimi cariye yazılmaz)</span></div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+              {prosesAdlari.map((ad) => {
+                const secili = (b.prosesler || []).includes(ad);
+                const baska = (tanimlar.bolumler || []).find((x) => x.id !== b.id && (x.prosesler || []).includes(ad));
+                return (
+                  <button key={ad} type="button" data-bolum-proses={`${b.ad}|${ad}`} disabled={!!baska} title={baska ? `"${baska.ad}" bölümünde` : undefined}
+                    onClick={() => bolumGuncelle(b.id, { prosesler: secili ? (b.prosesler || []).filter((x) => x !== ad) : [...(b.prosesler || []), ad] })}
+                    style={{ fontSize: 12, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", cursor: baska ? "default" : "pointer", opacity: baska ? 0.5 : 1,
+                      border: `1.5px solid ${secili ? "var(--erp-primary)" : "var(--erp-line)"}`, background: secili ? "#4E6B4E1A" : "#fff",
+                      color: secili ? "var(--erp-primary)" : "var(--erp-text-2)", fontWeight: secili ? 700 : 400 }}>
+                    {secili ? "✓ " : ""}{ad}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 4 }}>Personel ve aylık maaş (₺)</div>
+            {uyeler.map((p) => {
+              const c = (cariler || []).find((x) => x.id === p.cariId);
+              return (
+                <div key={p.cariId} data-bolum-personel={c ? c.unvan : p.cariId} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                  <span style={{ flex: 1, fontSize: 13 }}>{c ? c.unvan : "silinmiş cari"}</span>
+                  <input type="text" inputMode="decimal" defaultValue={p.maas || ""} data-bolum-maas={c ? c.unvan : p.cariId} placeholder="aylık maaş" className="mono"
+                    onBlur={(e) => { const v = parseFloat(String(e.target.value).replace(",", ".")) || 0; if (v !== (p.maas || 0)) bolumGuncelle(b.id, { personel: uyeler.map((x) => (x.cariId === p.cariId ? { ...x, maas: v } : x)) }); }}
+                    style={{ width: 110, padding: "4px 8px", fontSize: 13, textAlign: "right", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)" }} />
+                  <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>₺ / ay</span>
+                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 12 }} title="Bölümden çıkar"
+                    onClick={() => bolumGuncelle(b.id, { personel: uyeler.filter((x) => x.cariId !== p.cariId) })}>×</button>
+                </div>
+              );
+            })}
+            <select value="" data-bolum-personel-ekle={b.ad} onChange={(e) => { const id = e.target.value; if (id) bolumGuncelle(b.id, { personel: [...uyeler, { cariId: id, maas: 0 }] }); }}
+              style={{ ...inputStyle, width: "auto", minWidth: 220, fontSize: 12, padding: "4px 8px", marginTop: 4 }}>
+              <option value="">+ personel ekle (Personel tipli cari)…</option>
+              {personelCariler.filter((c) => !uyeler.some((x) => x.cariId === c.id)).map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+            </select>
+          </div>
+        );
+      })}
     </div>
     <div style={{ marginTop: 28 }}>
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Fiyat Grupları</h3>

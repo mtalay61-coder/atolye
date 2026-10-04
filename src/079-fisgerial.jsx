@@ -368,8 +368,13 @@ function fisGeriAl(veri, secenekler = {}) {
         const bitti = kalan.length > 0 && kalan.every((a) => a.tamamlandiMi);
         return { ...p, atamalar: kalan, tamamlandiMi: p.tamamlandiMi && bitti };
       });
+      // BÖLÜM TAHAKKUKU DA GERİ (v1.585.0): bu teslimin "-İşçilik" fişi cariye değil üretim kaydına tahakkuk olarak
+      // yazılmış olabilir (atölye içi bölüm); fiş ailesiyle birlikte o kayıt da düşer, yoksa rapor hayalet tutar sayardı.
+      const fisKumesi = new Set(eslesme.fisler || []);
+      const kalanTahakkuk = (u.bolumTahakkuklari || []).filter((t) => !fisKumesi.has(t.fisNo));
       return {
         ...u,
+        ...(kalanTahakkuk.length !== (u.bolumTahakkuklari || []).length ? { bolumTahakkuklari: kalanTahakkuk } : {}),
         prosesIlerleme: temizIlerleme,
         asama: adim.proses,
         stogaEklendiMi: sonProsesMi ? false : u.stogaEklendiMi,

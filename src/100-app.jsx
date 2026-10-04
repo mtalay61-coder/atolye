@@ -2432,6 +2432,46 @@ export default function AtolyeERP() {
     showToast(`${urun.ad}: barkod oluşturuldu${parca.length ? ` — ${parca.join(" · ")}` : ""}`);
   }, [stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
 
+  // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0 — kullanıcı kararı: "ay başı kendiliğinden"). Atölye içi bölüm personeline bu ayın
+  // maaşı (Tanımlar'daki tutar) bir kez "Maaş" alacağı olarak yazılır; fiş numarası MAAS-YYYY-MM-<kod> tekilliği sağlar
+  // (cari bulutla birleşik okunur; aynı fiş varsa yazılmaz). Ödeme kasadan cariye — bakiye kapanır. İnternet yokken ve
+  // yükleme bitmeden çalışmaz. Aynı imza ikinci kez yazılmaz (yazım düşerse döngü olmasın).
+  const maasImzaRef = useRef("");
+  // Adlı yazıcı (kapidenetim.js `IZINLI_YAZICILAR`): cari hareketini yalnız bu fonksiyon yazar; efekt yalnız çağırır.
+  const maasTahakkukEt = useCallback(() => {
+    const bolumler = tanimlar.bolumler || [];
+    if (!bolumler.length) return;
+    const simdi = new Date();
+    const ay = `${simdi.getFullYear()}-${String(simdi.getMonth() + 1).padStart(2, "0")}`;
+    const ayAdi = simdi.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+    const yeniler = [];
+    bolumler.forEach((b) => (b.personel || []).forEach((p) => {
+      const maas = parseFloat(p.maas) || 0;
+      if (!(maas > 0)) return;
+      const c = (cariler || []).find((x) => x.id === p.cariId);
+      if (!c || c.pasif) return;
+      const fisNo = maasFisNo(ay, c);
+      // fis-muaf: MAAS-YYYY-MM-<kod> fişi işçilik eki taşımaz, tam eşleşme doğru (fisdenetim 12).
+      if ((c.hareketler || []).some((h) => h.fisNo === fisNo)) return;
+      yeniler.push({ cariId: c.id, h: { id: uid("hrk"), tarih: `${ay}-01`, zaman: new Date().toISOString(), islemTipi: "Maaş",
+        yon: hareketYonu("Maaş"), tutar: maas, odemeSekli: "Nakit", vade: "", defter: iscilikDefteri(tanimlar.firmaBilgileri),
+        fisNo, bolumId: b.id, aciklama: `${b.ad} — ${ayAdi} maaşı`, kullanici: "sistem" } });
+    }));
+    if (!yeniler.length) return;
+    const imza = yeniler.map((y) => y.h.fisNo).join("|");
+    if (maasImzaRef.current === imza) return;
+    maasImzaRef.current = imza;
+    const next = (cariler || []).map((c) => { const l = yeniler.filter((y) => y.cariId === c.id); return l.length ? { ...c, hareketler: [...l.map((y) => y.h), ...(c.hareketler || [])] } : c; });
+    setCariler(next);
+    yazimiIzle(tabloYaz("cari:data", "cariler", next), "Cari kartları", next);
+    gunlukYaz(`${ayAdi} maaşları tahakkuk etti: ${yeniler.length} personel`, "cari", { ay, fisler: yeniler.map((y) => y.h.fisNo) });
+    showToast(`${ayAdi}: ${yeniler.length} bölüm personeline maaş tahakkuk etti (kasadan ödeme kapatır)`);
+  }, [tanimlar, cariler, showToast]);
+  useEffect(() => {
+    if (loading || baglantiYok) return;
+    maasTahakkukEt();
+  }, [loading, baglantiYok, maasTahakkukEt]);
+
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
   // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
   // birleştirmesiyle yan yana geldi. Tanımlar her değiştiğinde (açılış, bulutla birleştirme, kayıt) denetlenir;
@@ -4607,6 +4647,7 @@ export default function AtolyeERP() {
               kapsam={muhasebeKapsamRef.current}
               tanimlar={tanimlar}
               stok={stok}
+              uretim={uretim}
               giderKartlari={tanimlar.giderKartlari || []}
               onCekIslem={cekIslemYap}
               onCekEkleIsle={cekEkleVeIsle}

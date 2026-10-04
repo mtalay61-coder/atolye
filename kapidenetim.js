@@ -75,6 +75,9 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
   // Yeni hareket ÜRETMEZ: bekleyen yazması olan kaydın yerel hâline, BULUTTA ZATEN OLAN (başka cihazın yazdığı)
   // hareketleri katar ki açılışta onlar kaybolmasın. Fiş, cari, sipariş yan etkisi yok.
   "yereliBulutlaBirlestir",
+  // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0, 100-app): atölye içi bölüm personelinin carisine ayda bir "Maaş" alacağı.
+  // Stok hareketi yazmaz; fiş numarası (MAAS-YYYY-MM-kod) tekilliği sağlar, aynı ay ikinci kez yazılmaz.
+  "maasTahakkukEt",
 ]);
 
 // Geri alan yollar ayrı sayılır: bunlar hareket YAZMAZ, siler. Yazıcı listesiyle karıştırmak,
