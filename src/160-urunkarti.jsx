@@ -4807,26 +4807,20 @@ function ProductMatrixCard({
                       <span className="mono" data-ozet-hammadde="1" style={{ textAlign: "right", fontWeight: 700 }}>{yaz(hammaddeToplami)}</span>
                       {/* İŞÇİLİK DETAYLI (kullanıcı, 21 Eylül: "işçilik fiyatları da detaylı şekilde
                           yazsın"): her proses ayrı satır, ara prosesler ayrı, altta toplam. */}
-                      {Object.entries(product.prosesUcretleri || {}).filter(([, u]) => (u || 0) > 0).map(([pAd, u]) => (
-                        <React.Fragment key={`isc-${pAd}`}>
-                          <span style={{ fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 12 }}>İşçilik · {pAd}</span>
-                          <span className="mono" data-ozet-iscilik-satir={pAd} style={{ textAlign: "right", fontSize: 12, color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>
-                            {sayiKutusu(hedefe(u || 0), (v) => onUrunGuncelle(product.id, { prosesUcretleri: { ...(product.prosesUcretleri || {}), [pAd]: Math.round(tlye(v) * 100) / 100 } }), `isc-${pAd}`, 70)} {PB_SIMGE[hedefPb]}
+                      {/* Proses sırasıyla, ara proses kendi ana prosesinin altında (v1.582.0, `iscilikSiraliSatirlar`). */}
+                      {iscilikSiraliSatirlar(product, tanimlarProsesler, tanimlarAraProsesler).map((x) => x.tur === "ana" ? (
+                        <React.Fragment key={`isc-${x.proses}`}>
+                          <span style={{ fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 12 }}>İşçilik · {x.proses}</span>
+                          <span className="mono" data-ozet-iscilik-satir={x.proses} style={{ textAlign: "right", fontSize: 12, color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>
+                            {sayiKutusu(hedefe(x.ucret || 0), (v) => onUrunGuncelle(product.id, { prosesUcretleri: { ...(product.prosesUcretleri || {}), [x.proses]: Math.round(tlye(v) * 100) / 100 } }), `isc-${x.proses}`, 70)} {PB_SIMGE[hedefPb]}
                           </span>
                         </React.Fragment>
+                      ) : (
+                        <React.Fragment key={`ara-${x.anaProses}-${x.apId}`}>
+                          <span style={{ fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 24 }}>↳ {x.ad} <span style={{ fontSize: 10 }}>({x.anaProses} sonrası)</span></span>
+                          <span className="mono" data-ozet-iscilik-ara={x.ad} style={{ textAlign: "right", fontSize: 12, color: "var(--erp-text-2)" }}>{yaz(x.ucret)}</span>
+                        </React.Fragment>
                       ))}
-                      {araProsesCiftleri(product).map(([anaProses, apId]) => {
-                        const ozel = (product.araProsesUcretleri || {})[apId];
-                        const tanimli = (tanimlarAraProsesler || []).find((ap) => ap.id === apId);
-                        const ucret = ozel != null ? ozel : (tanimli ? (tanimli.ucret || 0) : 0);
-                        if (!(ucret > 0)) return null;
-                        return (
-                          <React.Fragment key={`ara-${apId}`}>
-                            <span style={{ fontSize: 12, color: "var(--erp-text-2)", paddingLeft: 12 }}>İşçilik · {tanimli ? tanimli.ad : "ara proses"} <span style={{ fontSize: 10 }}>({anaProses} sonrası)</span></span>
-                            <span className="mono" style={{ textAlign: "right", fontSize: 12, color: "var(--erp-text-2)" }}>{yaz(ucret)}</span>
-                          </React.Fragment>
-                        );
-                      })}
                       <span>İşçilik toplamı</span>
                       <span className="mono" data-ozet-iscilik="1" style={{ textAlign: "right", fontWeight: 700 }}>{yaz(isciligToplami)}</span>
                       <span>

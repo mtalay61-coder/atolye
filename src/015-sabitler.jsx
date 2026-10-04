@@ -459,9 +459,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.581.0";
+const SURUM = "1.582.0";
 const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Maliyet dokumunde hammadde birim fiyatinin para birimi satirdan degistirilebiliyor";
+const SURUM_NOTU = "Maliyette iscilik satirlari proses sirasiyla; ara proses kendi ana prosesinin altinda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -470,6 +470,9 @@ const SURUM_NOTU = "Maliyet dokumunde hammadde birim fiyatinin para birimi satir
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.582.0", tarih: "04.10.2026", eklenen: [],
+    degisen: ["Maliyet özetinde ve maliyet/reçete çıktısında işçilik satırları proses sırasıyla (ürüne özel sıra, yoksa Tanımlar'daki sıra); her ara proses kendi ana prosesinin hemen altında"],
+    duzeltilen: [] },
   { surum: "1.581.0", tarih: "04.10.2026", eklenen: ["Maliyet dökümünde hammadde birim fiyatının yanında para birimi seçicisi (₺ / $ / €): fiyat kuraldan geliyorsa kuralın, karttan geliyorsa kartın alış birimi değişir; rakam aynı kalır"],
     degisen: [], duzeltilen: [] },
   { surum: "1.580.0", tarih: "04.10.2026", eklenen: [],

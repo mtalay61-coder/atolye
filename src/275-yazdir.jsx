@@ -30,22 +30,9 @@ function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProse
   (tanimlarProsesler || []).forEach((p) => { prosesSiraMap[p.ad] = p.sira ?? 999; });
   hammaddeSatirlari.sort((a, b) => (prosesSiraMap[a.proses] ?? 999) - (prosesSiraMap[b.proses] ?? 999));
 
-  const isciligSatirlari = Object.entries(product.prosesUcretleri || {})
-    .filter(([, u]) => u > 0)
-    .map(([proses, ucret]) => ({ proses, ucret, araMi: false }))
-    .sort((a, b) => (prosesSiraMap[a.proses] ?? 999) - (prosesSiraMap[b.proses] ?? 999));
-  // Ara proses ücretleri (bir ana prosesten sonra otomatik tamamlanan küçük işçilik kalemleri) ayrı
-  // satırlar olarak eklenir — bunlar da toplam üretim maliyetinin bir parçasıdır, eksik bırakılmaz.
-  araProsesCiftleri(product).forEach(([anaProses, araProsesId]) => {
-    if (!araProsesId) return;
-    const tanimliAp = (tanimlarAraProsesler || []).find((ap) => ap.id === araProsesId);
-    if (!tanimliAp) return;
-    const ozelUcret = (product.araProsesUcretleri || {})[araProsesId];
-    const ucret = ozelUcret != null ? ozelUcret : (tanimliAp.ucret || 0);
-    if (ucret > 0) {
-      isciligSatirlari.push({ proses: `${tanimliAp.ad} (${anaProses} sonrası)`, ucret, araMi: true });
-    }
-  });
+  // Proses sırasıyla, ara proses kendi ana prosesinin altında (v1.582.0, 080 `iscilikSiraliSatirlar`).
+  const isciligSatirlari = iscilikSiraliSatirlar(product, tanimlarProsesler, tanimlarAraProsesler)
+    .map((x) => (x.tur === "ana" ? { proses: x.proses, ucret: x.ucret, araMi: false } : { proses: `${x.ad} (${x.anaProses} sonrası)`, ucret: x.ucret, araMi: true }));
   const isciligToplami = isciligSatirlari.reduce((s, x) => s + x.ucret, 0);
   const genelToplam = hammaddeToplami + isciligToplami;
 
@@ -674,13 +661,8 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
     });
   }
   // İşçilik
-  const iscilik = Object.entries(product.prosesUcretleri || {}).filter(([, u]) => (u || 0) > 0).map(([p, u]) => ({ proses: p, ucret: u }));
-  araProsesCiftleri(product).forEach(([anaProses, apId]) => {
-    if (!apId) return;
-    const ap = (tanimlarAraProsesler || []).find((x) => x.id === apId);
-    const ucret = (product.araProsesUcretleri || {})[apId] != null ? product.araProsesUcretleri[apId] : (ap ? (ap.ucret || 0) : 0);
-    if (ucret > 0) iscilik.push({ proses: `${ap ? ap.ad : apId} (${anaProses} sonrası)`, ucret });
-  });
+  const iscilik = iscilikSiraliSatirlar(product, tanimlarProsesler, tanimlarAraProsesler)
+    .map((x) => ({ proses: x.tur === "ana" ? x.proses : `${x.ad} (${x.anaProses} sonrası)`, ucret: x.ucret }));
   const isciligToplami = iscilik.reduce((t, x) => t + x.ucret, 0);
   const hedefAdet = parseFloat(aylikUretimHedefi) || 0;
   const aylikGenel = (genelGiderler || []).reduce((t, k) => t + (parseFloat(k.aylikTutar) || 0), 0);

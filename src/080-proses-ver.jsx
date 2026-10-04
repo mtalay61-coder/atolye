@@ -29,6 +29,29 @@ function araProsesIdleri(urun, asilProses) {
 function araProsesCiftleri(urun) {
   return Object.keys((urun && urun.araProsesEklentileri) || {}).flatMap((asil) => araProsesIdleri(urun, asil).map((id) => [asil, id]));
 }
+// İŞÇİLİK SATIRLARI PROSES SIRASIYLA (v1.582.0 — kullanıcı: "İşçilik sıralamasını sıralamaya göre ver"). Maliyet özetinde
+// işçilik ücret kaydının sırasıyla (Saya, Kalfa, Kesim…) ve ara prosesler en sonda geliyordu. Artık: ana prosesler ürünün
+// özel sırası (`receteProsesSirasiOverride`) ya da Tanımlar'daki sıra; her ara proses KENDİ ana prosesinin hemen altında.
+// Döner: [{ tur: "ana", proses, ucret } | { tur: "ara", anaProses, apId, ad, ucret }] (yalnız ücreti > 0). Saf.
+function iscilikSiraliSatirlar(urun, tanimlarProsesler, tanimlarAraProsesler) {
+  const siraMap = {};
+  (tanimlarProsesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
+  const ozel = (urun && urun.receteProsesSirasiOverride) || {};
+  const sira = (p) => (ozel[p] != null ? ozel[p] : (siraMap[p] ?? 999));
+  const ucretler = (urun && urun.prosesUcretleri) || {};
+  const aralar = araProsesCiftleri(urun).filter(([, id]) => id).map(([ana, id]) => {
+    const t = (tanimlarAraProsesler || []).find((x) => x.id === id);
+    const oz = ((urun && urun.araProsesUcretleri) || {})[id];
+    return { tur: "ara", anaProses: ana, apId: id, ad: t ? t.ad : "ara proses", ucret: oz != null ? oz : (t ? (t.ucret || 0) : 0) };
+  }).filter((x) => x.ucret > 0);
+  const anaAdlari = Array.from(new Set([...Object.keys(ucretler).filter((p) => (ucretler[p] || 0) > 0), ...aralar.map((a) => a.anaProses)]));
+  const sonuc = [];
+  anaAdlari.map((p, i) => ({ p, i, s: sira(p) })).sort((a, b) => a.s - b.s || a.i - b.i).forEach(({ p }) => {
+    if ((ucretler[p] || 0) > 0) sonuc.push({ tur: "ana", proses: p, ucret: ucretler[p] });
+    aralar.filter((a) => a.anaProses === p).forEach((a) => sonuc.push(a));
+  });
+  return sonuc;
+}
 function uretimProsesAdimlari(urun, renk, tanimlar) {
   const siraMap = {};
   ((tanimlar && tanimlar.prosesler) || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
