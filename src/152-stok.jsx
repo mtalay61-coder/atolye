@@ -472,6 +472,21 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     let receteOzeti = null;
     const next = items.map((p) => {
       if (p.id !== productId) return p;
+      const s = urunRenkEkleHali(p, renk);
+      receteOzeti = s.receteOzeti;
+      return s.urun;
+    });
+    onSave(next);
+    showToast(receteOzeti && (receteOzeti.satirlar.length || receteOzeti.bosGruplar.length)
+      ? `Renk eklendi · reçete: ${receteOzeti.satirlar.length} satır kopyalandı${receteOzeti.gecmisSayisi ? ` · ${receteOzeti.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${receteOzeti.bosGruplar.length ? ` · ${receteOzeti.bosGruplar.length} hammadde boş (turuncu "eşleştir…")` : ""}`
+      : "Renk eklendi");
+  }
+
+  // Ürüne renk ekle — SAF (v1.571.0'da `addRenkToProduct`tan ayrıldı; reçeteden yeni renk de kullanıyor).
+  // Döner: { urun, receteOzeti }.
+  function urunRenkEkleHali(p, renk) {
+    let receteOzeti = null;
+    const urun = (() => {
       const varsayilanMinStok = (p.variants[0] || {}).minStok || 0;
       // Ürün hâlâ renksiz/bedensiz placeholder durumundaysa, yeni renk eklenince placeholder'ın
       // yerine geçilir (Standart/Standart satırı kalkar, gerçek renk devam eder).
@@ -490,11 +505,8 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
       receteOzeti = rc;
       const yeniRecete = rc.satirlar.map((r) => ({ id: uid("recete"), ...r }));
       return standartYerTutucuyuKaldir({ ...p, variants: [...p.variants, ...newVariants], ...(yeniRecete.length ? { recete: [...(p.recete || []), ...yeniRecete] } : {}) }, "renk");
-    });
-    onSave(next);
-    showToast(receteOzeti && (receteOzeti.satirlar.length || receteOzeti.bosGruplar.length)
-      ? `Renk eklendi · reçete: ${receteOzeti.satirlar.length} satır kopyalandı${receteOzeti.gecmisSayisi ? ` · ${receteOzeti.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${receteOzeti.bosGruplar.length ? ` · ${receteOzeti.bosGruplar.length} hammadde boş (turuncu "eşleştir…")` : ""}`
-      : "Renk eklendi");
+    })();
+    return { urun, receteOzeti };
   }
 
   // Tek beden ya da BEDEN LİSTESİ (beden grubu, 14 Eylül). Liste tek `onSave` ile yazılıyor: art
@@ -751,8 +763,11 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   // `ekAlanlar` (v1.558.0): reçeteyle AYNI yazımda üründe değişecek başka alanlar (şablondan gelen işçilik
   // ücretleri, ara prosesler). Ayrı bir `urunGuncelle` çağrısı aynı çizimdeki eski `items`tan hesaplayıp
   // reçete eklemesini EZERDİ.
-  function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar, ekAlanlar) {
+  // `hammaddeRengi` (v1.571.0): { hammaddeId, renk } — reçeteden "yeni renk" seçildiyse hammadde kartına o renk
+  // AYNI yazımda eklenir (ayrı `onSave` eski listeyle yazıp reçete değişikliğini silerdi).
+  function receteGrubuGuncelle(productId, silinecekIdler, yeniSatirlar, ekAlanlar, hammaddeRengi) {
     const next = items.map((p) => {
+      if (hammaddeRengi && p.id === hammaddeRengi.hammaddeId && p.id !== productId) return urunRenkEkleHali(p, hammaddeRengi.renk).urun;
       if (p.id !== productId) return p;
       const eklenenler = yeniSatirlar.map((s) => ({ id: uid("recete"), ...s }));
       // YERİNDE GÜNCELLE (v1.567.0): değişen satırlar (renk, boy, açıklama…) silinip SONA ekleniyordu; reçete kartı
