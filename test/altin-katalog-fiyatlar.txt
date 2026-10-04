@@ -1,0 +1,37 @@
+{
+ "alisMusteri": [
+  "Satış: Satış—",
+  "Toptan USD: Toptan USD—",
+  "Satış: Satış1.299 ₺",
+  "Toptan USD: Toptan USD29,9 $"
+ ],
+ "alisPersonel": [
+  "Satış: Satış—",
+  "Toptan USD: Toptan USD—",
+  "Tedarikçi Alış: Tedarikçi Alış—",
+  "Satış: Satış1.299 ₺",
+  "Toptan USD: Toptan USD29,9 $",
+  "Tedarikçi Alış: Tedarikçi Alış—"
+ ],
+ "cariOzelGorunuyor": false,
+ "detay": [
+  "Satış1.299 ₺",
+  "Toptan USD29,9 $",
+  "Perakende1.599 ₺"
+ ],
+ "dorduncuDenemesi": 6,
+ "hatalar": [],
+ "kalici": "[\"__genelSatis\",\"fgT\",\"fgA\"]",
+ "uclu": [
+  "Satış: Satış—",
+  "Toptan USD: Toptan USD—",
+  "Perakende: Perakende—",
+  "Satış: Satış1.299 ₺",
+  "Toptan USD: Toptan USD29,9 $",
+  "Perakende: Perakende1.599 ₺"
+ ],
+ "varsayilan": [
+  "Satış: —",
+  "Satış: 1.299 ₺"
+ ]
+}

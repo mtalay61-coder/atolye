@@ -13,6 +13,21 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   // MÜŞTERİ GÖRÜNÜMÜ: maliyet tarafı gizlenir (alış fiyatı, tedarikçi, stok değeri). Ekranı
   // müşteriye çevirmek fuarda tek hareket; o hareketin maliyeti göstermemesi gerekiyor.
   const [musteriGorunumu, setMusteriGorunumu] = useState(false);
+  // KATALOG FİYATLARI (v1.584.0 — kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı
+  // seçilerek katalogda görünecek fiyatlar çıksın"). Kart altında en fazla 3 kaynak: genel satış/alış ya da fiyat grupları
+  // (Toptan, Perakende, VOOG Özel…). CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen);
+  // maliyet de yok. Müşteri görünümünde alış tipli kaynaklar gizli. Seçim cihaza özel (yerel depo) — fuardaki tablet ile
+  // ofis farklı fiyat gösterebilir.
+  const [katalogKaynaklari, setKatalogKaynaklari] = useState(() => {
+    try { const v = JSON.parse(window.localStorage.getItem("katalog:fiyatKaynaklari") || "null"); if (Array.isArray(v) && v.length) return v.slice(0, 3); } catch (e) { /* yerel depo yok */ }
+    return [FL_GENEL_SATIS];
+  });
+  const katalogKaynakSec = (key) => setKatalogKaynaklari((x) => {
+    const yeni = x.includes(key) ? x.filter((k) => k !== key) : (x.length >= 3 ? x : [...x, key]);
+    if (!x.includes(key) && x.length >= 3) showToast("Katalogda en fazla 3 fiyat gösterilir — önce birini kaldırın");
+    try { window.localStorage.setItem("katalog:fiyatKaynaklari", JSON.stringify(yeni)); } catch (e) { /* yerel depo yok */ }
+    return yeni;
+  });
   const [katalogUrunId, setKatalogUrunId] = useState(null);
   const [katalogRenk, setKatalogRenk] = useState("");
   const [katalogFotoAcik, setKatalogFotoAcik] = useState(false);
@@ -946,6 +961,14 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   // `satisFiyati` ve `alisFiyati`. Fiyatlandırma sekmesindeki kurallar buraya sızmıyor.
   // İKİ FİYATIN İKİ AYRI BİRİMİ VAR. Önceden tek `paraBirimi` vardı ve ALIŞIN birimiydi:
   // katalogda satış fiyatı yanlış birimle gösteriliyordu.
+  const katalogSecenekleri = fiyatListesiKaynaklari(tanimlar.fiyatGruplari || []).filter((k) => !k.maliyet);
+  const katalogGosterilen = katalogKaynaklari.map((key) => katalogSecenekleri.find((k) => k.key === key)).filter(Boolean)
+    .filter((k) => !(musteriGorunumu && k.tip === "Alış"));
+  const katalogFiyatSatirlari = (p) => katalogGosterilen.map((k) => {
+    const f = urunKaynakFiyati(p, k);
+    const yazi = f.fiyat > 0 ? `${Number(f.fiyat).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[f.paraBirimi] || f.paraBirimi}` : "—";
+    return { key: k.key, ad: k.genel ? (k.tip === "Satış" ? "Satış" : "Alış") : k.ad, yazi, var: f.fiyat > 0 };
+  });
   const katalogFiyat = (p) => ({
     satis: p.satisFiyati || 0,
     satisBirimi: p.satisParaBirimi || "₺",
@@ -1056,9 +1079,12 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
               {/* BİLGİLER */}
               <div style={{ display: "grid", gap: 12, flex: 1, minWidth: 260 }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
-                  <span className="mono" style={{ fontSize: 24, fontWeight: 700, color: "var(--erp-info)" }}>
-                    {fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "fiyat girilmemiş"}
-                  </span>
+                  {katalogFiyatSatirlari(p).map((f, i) => (
+                    <span key={f.key} className="mono" data-katalog-detay-fiyat={f.ad} style={{ fontSize: i === 0 ? 24 : 16, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)" }}>
+                      {katalogGosterilen.length > 1 && <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)", marginRight: 4 }}>{f.ad}</span>}
+                      {f.var ? f.yazi : (i === 0 ? "fiyat girilmemiş" : "—")}
+                    </span>
+                  ))}
                   {/* ALIŞ FİYATI YALNIZCA PERSONEL GÖRÜNÜMÜNDE. Müşteriye maliyet göstermek,
                       pazarlığın tamamını karşı tarafa vermek demek. */}
                   {!musteriGorunumu && fiyat.alis ? (
@@ -1466,6 +1492,21 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
             >
               {musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"}
             </button>
+            {/* Katalogda görünecek fiyatlar (en fazla 3). */}
+            <span data-katalog-fiyat-secimi="1" style={{ display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Katalog fiyatları:</span>
+              {katalogSecenekleri.filter((k) => !(musteriGorunumu && k.tip === "Alış")).map((k) => {
+                const secili = katalogKaynaklari.includes(k.key);
+                return (
+                  <button key={k.key} type="button" data-katalog-kaynak={k.ad} onClick={() => katalogKaynakSec(k.key)}
+                    style={{ padding: "3px 9px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                      border: `1.5px solid ${secili ? "var(--erp-info)" : "var(--erp-border)"}`, background: secili ? "#3D6B8A1A" : "#fff",
+                      color: secili ? "var(--erp-info)" : "var(--erp-text-2)" }}>
+                    {secili ? "✓ " : ""}{k.ad}
+                  </button>
+                );
+              })}
+            </span>
           </>
         )}
         </span>
@@ -2568,9 +2609,13 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                   </div>
                   <div style={{ padding: "0 10px 10px", display: "grid", gap: 3 }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 }}>{p.ad}</span>
-                    <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-info)" }}>
-                      {fiyat.satis ? `${fiyat.satis} ${fiyat.satisBirimi}` : "—"}
-                    </span>
+                    {/* Seçilen katalog fiyatları (v1.584.0) — tek kaynak seçiliyse eskisi gibi yalnız fiyat, birden çoksa adıyla. */}
+                    {katalogFiyatSatirlari(p).map((f, i) => (
+                      <span key={f.key} className="mono" data-katalog-fiyat={f.ad} style={{ fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 }}>
+                        {katalogGosterilen.length > 1 && <span style={{ fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 }}>{f.ad}</span>}
+                        <span>{f.yazi}</span>
+                      </span>
+                    ))}
                     <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>
                       {renkler.length} renk{musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`}
                     </span>
