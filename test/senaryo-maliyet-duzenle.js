@@ -43,7 +43,7 @@ async function calistir() {
   };
   await ac();
   const once = await sayfa.evaluate(() => ({
-    fermuar: [...document.querySelectorAll("[data-maliyet-dokumu] tbody tr")].map((r) => [...r.children].map((c) => c.textContent.replace(/\s+/g, " ").trim()).join(" | "))[0],
+    fermuar: (() => { const metinAl=(c)=>{const k=c.cloneNode(true);const sec=[...c.querySelectorAll("select")];[...k.querySelectorAll("select")].forEach((s,i)=>s.replaceWith(document.createTextNode(sec[i].selectedOptions[0]?" "+sec[i].selectedOptions[0].textContent:"")));return k.textContent;}; return [...document.querySelectorAll("[data-maliyet-dokumu] tbody tr")].map((r) => [...r.children].map((c) => metinAl(c).replace(/\s+/g, " ").trim()).join(" | "))[0]; })(),
     sapma: [...document.querySelectorAll("[data-sapma-satir]")].map((r) => [...r.children].map((c) => c.textContent.trim()).join(" | ")),
   }));
 
