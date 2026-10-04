@@ -30,5 +30,5 @@
    "tl": ""
   }
  ],
- "yazdirToplam": "562,03 ₺"
+ "yazdirToplam": "617,61 ₺"
 }

@@ -671,7 +671,7 @@ function MaliyetYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraPros
   const ciftBasiGenel = ozelGenel != null && !Number.isNaN(ozelGenel) ? ozelGenel : (hedefAdet > 0 ? aylikGenel / hedefAdet : 0);
   const tamMaliyet = hammaddeToplami + isciligToplami + ciftBasiGenel;
   const marj = product.karMarji != null && !Number.isNaN(parseFloat(product.karMarji)) ? parseFloat(product.karMarji) : 30;
-  const satisFiyati = tamMaliyet * (1 + marj / 100);
+  const satisFiyati = marjlaSatisFiyati(tamMaliyet, marj);   // kâr satıştan (v1.583.0)
   // Kayıtlı grup fiyatları
   const grupFiyatlari = (product.fiyatKurallari || []).filter((k) => k.tip === "Satış" && k.kapsam === "fiyatGrubu" && !k.renk && !k.beden)
     .map((k) => ({ ad: ((fiyatGruplari || []).find((g) => g.id === k.deger) || {}).ad || k.etiket || k.deger, fiyat: k.fiyat, pb: k.paraBirimi || "TRY" }));

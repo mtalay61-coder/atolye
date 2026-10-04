@@ -67,7 +67,10 @@ function fiyatDonustur(fiyat, islem) {
   if (!(fiyat > 0)) return null;
   const d = parseFloat(islem && islem.deger);
   let y = fiyat;
-  if (d > 0) y = islem.tur === "tutar" ? fiyat + (islem.yon < 0 ? -d : d) : fiyat * (1 + (islem.yon < 0 ? -d : d) / 100);
+  // `islem.marj` (v1.583.0): kaynak MALİYET iken "Kâr ekle %" kârı SATIŞ fiyatından alır (fiyat = maliyet ÷ (1 − %)).
+  // Var olan fiyat listesine zam/indirim (yüzde) ise eskisi gibi fiyatın yüzdesi.
+  if (d > 0) y = islem.tur === "tutar" ? fiyat + (islem.yon < 0 ? -d : d)
+    : (islem.marj && islem.yon >= 0 ? (d < 100 ? fiyat / (1 - d / 100) : fiyat) : fiyat * (1 + (islem.yon < 0 ? -d : d) / 100));
   const adim = parseFloat(islem && islem.adim) > 0 ? parseFloat(islem.adim) : 0.01;
   y = Math.round(y / adim) * adim;
   y = Math.round(y * 100) / 100;   // kayan nokta artığı (0.1 + 0.2) temizlensin
@@ -175,7 +178,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
   const kaynakDuzen = duzenler[kaynak.key] || {};
   const [islem, setIslem] = useState({ tur: "yuzde", yon: 1, deger: "", adim: "0.01" });
   const islemAktif = parseFloat(String(islem.deger).replace(",", ".")) > 0;
-  const islemNorm = { ...islem, deger: parseFloat(String(islem.deger).replace(",", ".")) || 0 };
+  const islemNorm = { ...islem, deger: parseFloat(String(islem.deger).replace(",", ".")) || 0, marj: !!kaynak.maliyet };
   const [farkli, setFarkli] = useState(null);   // null | { hedef: "yeni" | grupId, ad, paraBirimi }
 
   const kategoriler = ["Tümü", ...Array.from(new Set((stok || []).map((u) => u.kategori).filter(Boolean)))];

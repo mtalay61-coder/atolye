@@ -18,6 +18,6 @@
   "acildi": true,
   "baslik": "Ürün Maliyeti · $ USD · 1 $ = 48,70 ₺",
   "hammaddeSatiri": true,
-  "toplamFiyat": "9,83 $"
+  "toplamFiyat": "10,80 $"
  }
 }

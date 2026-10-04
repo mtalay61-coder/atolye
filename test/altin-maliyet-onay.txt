@@ -38,12 +38,12 @@
   "yeniTip": "Satış",
   "perakende": {
     "grup": "Perakende:Satış:TRY",
-    "bot": "327.5 TRY",
+    "bot": "349.33 TRY",
     "terlik": "yok"
   },
   "genelSatis": {
-    "bot": 366.8,
-    "terlik": 140
+    "bot": 436.67,
+    "terlik": 166.67
   },
   "hatalar": []
 }

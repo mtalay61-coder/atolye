@@ -4792,7 +4792,7 @@ function ProductMatrixCard({
                   const tamMaliyet = genelToplam + ciftBasiGenel;
                   const marj = parseFloat(product.karMarji) != null && !Number.isNaN(parseFloat(product.karMarji))
                     ? parseFloat(product.karMarji) : 30;
-                  const satisFiyati = tamMaliyet * (1 + marj / 100);
+                  const satisFiyati = marjlaSatisFiyati(tamMaliyet, marj);   // kâr satıştan (v1.583.0)
                   // Seçilen maliyet biriminde (21 Eylül).
                   const yaz = (v) => hedefYaz(v);
                   return (<>
