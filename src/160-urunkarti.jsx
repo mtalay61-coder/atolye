@@ -52,42 +52,59 @@ function ReceteAciklamasi({ deger, gosterim, onKaydet, stil }) {
   );
 }
 
-function BedenEslesmeSeridi({ satirlar, hammadde, urunBedenleri, onDegistir }) {
-  if (!hammadde || !(satirlar || []).length) return null;
-  const hBedenler = bedenSirala(Array.from(new Set((hammadde.variants || []).map((v) => v.beden).filter((b) => b && b !== "Standart"))));
+// KARŞILIKSIZ BEDEN (v1.570.0 — kullanıcı: "bilmediğini boş getir, renkli belirt"): satırı olmayan mamul bedeni
+// (şablon / kopya / sonradan açılan numara) şeritte TURUNCU "eşleştir…" kutusuyla görünür; boy seçilince o bedenin
+// satırı en yakın bedenden kopyalanarak açılır (`receteBedenDegistir`, `varyantlar` ile). Geçmişten HATIRLANAN boy
+// (`bedenGecmisten`) KIRMIZI — renkteki gibi; seçilince ya da "Eşleştirmeleri onayla" ile işaret düşer.
+// Seçenekler: kartın bedenleri + reçetelerde kullanılmış bedenler (kartı olmayan hammaddede de liste dolu).
+function BedenEslesmeSeridi({ satirlar, hammadde, urunBedenleri, onDegistir, tumUrunler, varyantlar }) {
+  if (!(satirlar || []).length) return null;
+  const hammaddeId = (hammadde && hammadde.id) || satirlar[0].hammaddeUrunId;
+  const hBedenler = tumUrunler
+    ? hammaddeBedenSecenekleri(hammaddeId, tumUrunler)
+    : (hammadde ? bedenSirala(Array.from(new Set((hammadde.variants || []).map((v) => v.beden).filter((b) => b && b !== "Standart")))) : []);
   if (hBedenler.length === 0) return null;
   // v1.564.0: "Tüm Bedenler" satırı da ürünün HER bedeni için ayrı kutuyla gösterilir (boy numaraya göre
   // değişebilsin); bir bedende farklı boy seçilince satır bedenlere açılır (`receteBedenDegistir`).
   const ub = (urunBedenleri || []).filter((b) => b && b !== "Tüm Bedenler" && b !== "Standart");
   const harita = new Map();
+  const gecmisBedenler = new Set();
   const ekle = (mb, b) => { if (!harita.has(mb)) harita.set(mb, new Set()); harita.get(mb).add(b || "Standart"); };
   satirlar.forEach((r) => {
     const mb = r.mamulBeden || "Tüm Bedenler";
     if (mb === "Tüm Bedenler" && ub.length > 1) ub.forEach((b) => ekle(b, r.beden));
     else ekle(mb, r.beden);
+    if (r.bedenGecmisten) gecmisBedenler.add(mb);
   });
-  const mamulBedenleri = [...(harita.has("Tüm Bedenler") ? ["Tüm Bedenler"] : []), ...bedenSirala(Array.from(harita.keys()).filter((b) => b !== "Tüm Bedenler"))];
+  const eksikler = varyantlar ? receteGrupEksikBedenleri(satirlar, varyantlar) : [];
+  const mamulBedenleri = [...(harita.has("Tüm Bedenler") ? ["Tüm Bedenler"] : []), ...bedenSirala(Array.from(new Set([...harita.keys(), ...eksikler])).filter((b) => b !== "Tüm Bedenler"))];
   const kutu = { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 2px", background: "#fff" };
+  const eksikKutu = { ...kutu, color: "var(--erp-warn)", border: "1px dashed #B85C2E", background: "var(--erp-orange-bg)" };
   return (
-    <div data-beden-eslesme-seridi={mamulBedenleri.length} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 }}>
-      <span>{hammadde.olcuTipi === "Boyut" ? "Boy eşleşmesi" : "Beden eşleşmesi"}:</span>
+    <div data-beden-eslesme-seridi={mamulBedenleri.length} data-beden-eksik={eksikler.length || undefined} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 }}>
+      <span>{hammadde && hammadde.olcuTipi === "Boyut" ? "Boy eşleşmesi" : "Beden eşleşmesi"}:</span>
       {mamulBedenleri.length > 1 && (
-        <select value="" data-beden-esle-hepsi="1" title="Bütün mamul bedenlerine aynı hammadde bedeni" style={kutu}
+        <select value="" data-beden-esle-hepsi="1" title="Bütün mamul bedenlerine aynı hammadde bedeni (eksik bedenler de açılır)" style={kutu}
           onChange={(e) => { const y = e.target.value; if (y) onDegistir(mamulBedenleri, y); }}>
           <option value="">Hepsi →</option>
           {hBedenler.map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
       )}
       {mamulBedenleri.map((mb) => {
-        const degerler = Array.from(harita.get(mb));
+        const eksik = !harita.has(mb);
+        const degerler = eksik ? [] : Array.from(harita.get(mb));
         const deger = degerler.length === 1 ? degerler[0] : "";
+        const gecmis = gecmisBedenler.has(mb);
         return (
           <span key={mb} style={{ display: "inline-flex", alignItems: "center", gap: 3, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "2px 5px" }}>
-            <b className="mono" style={{ color: "var(--erp-text)" }}>{mb === "Tüm Bedenler" ? "Tüm bedenler" : mb}</b>
+            <b className="mono" style={{ color: eksik ? "var(--erp-warn)" : "var(--erp-text)" }}>{mb === "Tüm Bedenler" ? "Tüm bedenler" : mb}</b>
             <ArrowRight size={11} color="var(--erp-text-3)" />
-            <select value={deger} data-beden-esle={mb} className="mono" style={kutu}
-              onChange={(e) => { const y = e.target.value; if (y && y !== deger) onDegistir([mb], y); }}>
-              {deger === "" && <option value="">karışık</option>}
+            <select value={deger} data-beden-esle={mb} data-beden-esle-eksik={eksik ? "1" : undefined} data-beden-gecmis={gecmis ? "1" : undefined} className="mono"
+              title={eksik ? "Bu bedenin satırı yok — üretimde düşülmez. Boy/beden seçin, satır açılsın." : gecmis ? "Bu boy geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka boy seçin." : undefined}
+              style={eksik ? eksikKutu : gecmis ? { ...kutu, ...GECMIS_RENK_STILI } : kutu}
+              onChange={(e) => { const y = e.target.value; if (y && (y !== deger || gecmis)) onDegistir([mb], y); }}>
+              {eksik && <option value="">eşleştir…</option>}
+              {!eksik && deger === "" && <option value="">karışık</option>}
               {deger !== "" && !hBedenler.includes(deger) && <option value={deger}>{deger === "Standart" ? "—" : `${deger} (stokta yok)`}</option>}
               {hBedenler.map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
@@ -2138,11 +2155,11 @@ function ProductMatrixCard({
               onClick={() => {
                 const sb = (receteSablonlari || []).find((x) => x.id === sablonSecim);
                 if (!sb) return;
-                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
+                const { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi, bedenGecmisSayisi } = sablonuUruneUygula(sb, product, { tumUrunler });
                 if (eklenecekler.length === 0 && !iscilikSayisi) { (showToast || (() => {}))(atlanan > 0 ? "Şablondaki malzemelerin hepsi zaten reçetede" : "Şablon boş"); return; }
                 // Reçete + işçilik TEK yazımda (iki ayrı yazım, ikincisi birincinin üstüne eski listeyle yazardı).
                 onReceteGrubuGuncelle(product.id, [], eklenecekler, ekAlanlar);
-                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · BEDEN KARŞILIĞI YOK, eklenmedi: ${bedenEksikler.join(", ")}` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
+                (showToast || (() => {}))(`"${sb.ad}" şablonundan ${eklenecekler.length} satır eklendi${atlanan > 0 ? ` · ${atlanan} zaten vardı` : ""}${iscilikSayisi ? ` · ${iscilikSayisi} işçilik/ara proses ücreti` : ""}${bedenEksikler.length ? ` · ${bedenEksikler.length} boy/beden karşılığı BOŞ (turuncu "eşleştir…"): ${bedenEksikler.join(", ")}` : ""}${bedenGecmisSayisi ? ` · ${bedenGecmisSayisi} boy geçmişten (kırmızı) — kontrol edin` : ""}${gecmisSayisi ? ` · ${gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${bosEslesmeler.length ? ` · ${bosEslesmeler.length} renk eşleşmesi BOŞ (turuncu "eşleştir…")` : ""}`);
               }}
               style={{ padding: "5px 12px", fontSize: 12 }}>
               {(product.recete || []).length === 0 ? "Şablondan reçete oluştur" : "Şablondan reçeteye ekle"}
@@ -2194,7 +2211,8 @@ function ProductMatrixCard({
                       + (k.iscilikSayisi ? ` · ${k.iscilikSayisi} işçilik/ara proses` : "")
                       + (k.gecmisSayisi ? ` · ${k.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : "")
                       + (k.bosGruplar.length ? ` · ${k.bosGruplar.length} eşleşme BOŞ (turuncu "eşleştir…")` : "")
-                      + (k.bedenEksikler.length ? ` · beden karşılığı yok: ${k.bedenEksikler.join(", ")}` : ""));
+                      + (k.bedenGecmisSayisi ? ` · ${k.bedenGecmisSayisi} boy geçmişten (kırmızı) — kontrol edin` : "")
+                      + (k.bedenEksikler.length ? ` · ${k.bedenEksikler.length} boy/beden karşılığı BOŞ (turuncu "eşleştir…"): ${k.bedenEksikler.join(", ")}` : ""));
                     setKopyaKaynak("");
                   }}>
                   Reçeteyi çek
@@ -2232,7 +2250,7 @@ function ProductMatrixCard({
             // ve hiç eşleşmesi olmayan mamul renkleri (turuncu "eşleştir…") kalıcı olarak sayılır — toast kaybolur,
             // bu şerit eşleştirmeler bitene kadar durur.
             const recete = product.recete || [];
-            const gecmisSatirlar = recete.filter((r) => r.renkGecmisten);
+            const gecmisSatirlar = recete.filter((r) => r.renkGecmisten || r.bedenGecmisten);
             const mamulRenkleri = Array.from(new Set((product.variants || []).map((v) => v.renk)));
             const sablonGruplari = new Map();
             recete.forEach((r) => {
@@ -2243,8 +2261,10 @@ function ProductMatrixCard({
             });
             const bos = [];
             sablonGruplari.forEach((g) => mamulRenkleri.forEach((mr) => { if (!g.renkler.has(mr)) bos.push(`${g.ad} · ${mr}`); }));
-            const gecmisAdet = new Set(gecmisSatirlar.map((r) => `${r.hammaddeUrunId}|${r.mamulRenk}|${r.proses || ""}`)).size;
-            if (gecmisAdet === 0 && bos.length === 0) return null;
+            const gecmisAdet = new Set(gecmisSatirlar.filter((r) => r.renkGecmisten).map((r) => `${r.hammaddeUrunId}|${r.mamulRenk}|${r.proses || ""}`)).size;
+            // Boy da hatırlanabiliyor (v1.570.0): hammadde + mamul bedeni başına bir kırmızı kutu.
+            const bedenGecmisAdet = new Set(gecmisSatirlar.filter((r) => r.bedenGecmisten).map((r) => `${r.hammaddeUrunId}|${r.proses || ""}|${r.mamulBeden}`)).size;
+            if (gecmisAdet === 0 && bedenGecmisAdet === 0 && bos.length === 0) return null;
             return (
               <div data-renk-eslestirme-seridi={`${gecmisAdet}/${bos.length}`} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", margin: "8px 0", padding: "8px 12px",
                 border: "2px solid var(--erp-danger)", borderRadius: "var(--erp-r-md)", background: "#FDECEC", fontSize: 12, color: "var(--erp-text)" }}>
@@ -2252,16 +2272,19 @@ function ProductMatrixCard({
                 {gecmisAdet > 0 && (
                   <span><span style={{ ...GECMIS_RENK_STILI, padding: "1px 6px", borderRadius: "var(--erp-r-sm)", fontWeight: 700 }}>{gecmisAdet}</span> renk geçmiş reçetelerden hatırlandı (kırmızı kutular)</span>
                 )}
+                {bedenGecmisAdet > 0 && (
+                  <span data-beden-gecmis-adet={bedenGecmisAdet}><span style={{ ...GECMIS_RENK_STILI, padding: "1px 6px", borderRadius: "var(--erp-r-sm)", fontWeight: 700 }}>{bedenGecmisAdet}</span> boy/beden geçmişten hatırlandı (beden eşleşmesindeki kırmızı kutular)</span>
+                )}
                 {bos.length > 0 && (
                   <span title={bos.join("\n")}><span style={{ color: "var(--erp-warn)", border: "1px dashed #B85C2E", background: "var(--erp-orange-bg)", padding: "1px 6px", borderRadius: "var(--erp-r-sm)", fontWeight: 700 }}>{bos.length}</span> eşleşme boş — turuncu "eşleştir…" kutularından seçin</span>
                 )}
-                {gecmisAdet > 0 && (
+                {(gecmisAdet > 0 || bedenGecmisAdet > 0) && (
                   <button type="button" className="btn-ghost" data-renk-gecmis-onayla="1" style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 12 }}
                     onClick={() => {
                       // Kullanıcı kırmızı kutulara baktı ve doğru buldu: işaretler düşer, renkler aynen kalır.
-                      const yeni = gecmisSatirlar.map(({ id, renkGecmisten: _rg, ...rest }) => rest);
+                      const yeni = gecmisSatirlar.map(({ id, renkGecmisten: _rg, bedenGecmisten: _bg, ...rest }) => rest);
                       onReceteGrubuGuncelle(product.id, gecmisSatirlar.map((r) => r.id), yeni);
-                      (showToast || (() => {}))(`${gecmisAdet} renk eşleştirmesi onaylandı`);
+                      (showToast || (() => {}))([gecmisAdet ? `${gecmisAdet} renk` : "", bedenGecmisAdet ? `${bedenGecmisAdet} boy` : ""].filter(Boolean).join(" + ") + " eşleştirmesi onaylandı");
                     }}>
                     <Check size={13} /> Eşleştirmeleri onayla
                   </button>
@@ -2329,8 +2352,8 @@ function ProductMatrixCard({
                   </div>
                 )}
                 <div style={{ fontSize: 12, color: "var(--erp-text-3)", marginTop: 6, lineHeight: 1.6 }}>
-                  Eksik bedenleri kapsamak için o hammaddeyi yeniden ekleyin; beden eşleştirme satırında
-                  <b> Hepsi →</b> ile tüm bedenlere aynı hammadde ölçüsünü atayabilirsiniz.
+                  Eksik bedenler, o hammaddenin <b>beden eşleşmesi</b> satırında turuncu <b>eşleştir…</b> kutusuyla
+                  görünür; boy/beden seçince satır en yakın bedenin miktarıyla açılır. <b>Hepsi →</b> eksikleri de doldurur.
                 </div>
               </div>
             );
@@ -3333,10 +3356,10 @@ function ProductMatrixCard({
                                 />
                               </span>
                             </div>
-                            <BedenEslesmeSeridi satirlar={g.satirlar} urunBedenleri={bedenler} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)}
+                            <BedenEslesmeSeridi satirlar={g.satirlar} urunBedenleri={bedenler} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)} tumUrunler={tumUrunler} varyantlar={product.variants || []}
                               onDegistir={(mb, yeni) => {
-                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler);
-                                if (silinecekIdler.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
+                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler, product.variants || []);
+                                if (silinecekIdler.length || yeniSatirlar.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
                               }} />
                             {hepsiAyniMiktarBu && (
                               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-3)", marginBottom: 6 }}>
@@ -3788,10 +3811,10 @@ function ProductMatrixCard({
                                 />
                               </span>
                             </div>
-                            <BedenEslesmeSeridi satirlar={g.satirlar} urunBedenleri={bedenler} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)}
+                            <BedenEslesmeSeridi satirlar={g.satirlar} urunBedenleri={bedenler} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)} tumUrunler={tumUrunler} varyantlar={product.variants || []}
                               onDegistir={(mb, yeni) => {
-                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler);
-                                if (silinecekIdler.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
+                                const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler, product.variants || []);
+                                if (silinecekIdler.length || yeniSatirlar.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
                               }} />
                             {hepsiSabit ? (() => {
                               // Sadece bedenler arasında değil, TÜM mamul renkler arasında da miktar
@@ -4105,10 +4128,10 @@ function ProductMatrixCard({
                           </span>
                         </div>
                         <div style={{ display: "grid", gap: 8 }}>
-                          <BedenEslesmeSeridi satirlar={g.satirlar} urunBedenleri={bedenler} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)}
+                          <BedenEslesmeSeridi satirlar={g.satirlar} urunBedenleri={bedenler} hammadde={(tumUrunler || []).find((p) => p.id === g.hammaddeUrunId)} tumUrunler={tumUrunler} varyantlar={product.variants || []}
                             onDegistir={(mb, yeni) => {
-                              const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler);
-                              if (silinecekIdler.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
+                              const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler, product.variants || []);
+                              if (silinecekIdler.length || yeniSatirlar.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
                             }} />
                           {(() => {
                             const belirtilmemisRenkSecenekleri = hammaddeRenkSecenekleri(g.hammaddeUrunId, tumUrunler);

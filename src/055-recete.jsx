@@ -385,7 +385,7 @@ function sablonHedefRengi(sa, mamulRenk) {
 // renginde aynı hammadde+renk+boy+proses zaten varsa eklenmez — şablonu iki kez uygulamak
 // reçeteyi ikiye katlamasın. Pozisyonlu satırın rengi hedef mamul renginden çözülür.
 // İŞÇİLİK (v1.558.0): şablon işçilik ücretlerini ve ara prosesleri de taşır; hedefte BOŞ olanlar doldurulur,
-// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi }.
+// dolu olan EZİLMEZ. Döner: { eklenecekler, atlanan, ekAlanlar, iscilikSayisi, bedenEksikler, bosEslesmeler, gecmisSayisi, bedenGecmisSayisi }.
 // RENK EŞLEŞTİRME — normal "Reçeteye Ekle" ile AYNI sistem (v1.561.0, kullanıcı: "renk eşleştirmeleri aynı
 // sistemde getir, hatırla ve bilmediğini boş getir; renkli belirt, kullanıcı gözden kaçırmasın"). Eskiden şablon
 // satırının rengi (kaynak modelin rengi, ör. Taban "Kahve") hedefin BÜTÜN renklerine aynen yazılıyordu.
@@ -416,6 +416,8 @@ function sablonRengiCoz(sa, mr, ctx, gecmisHarita) {
 
 function sablonuUruneUygula(sablon, product, ctx) {
   const gecmisHarita = ctx && ctx.tumUrunler ? gecmisRenkEslesmeleri(ctx.tumUrunler) : null;
+  const bedenHarita = ctx && ctx.tumUrunler ? gecmisBedenEslesmeleri(ctx.tumUrunler) : null;
+  let bedenGecmisSayisi = 0;
   const bosEslesmeler = [];
   let gecmisSayisi = 0;
   const renkler = Array.from(new Set((product.variants || []).map((v) => v.renk)));
@@ -457,12 +459,22 @@ function sablonuUruneUygula(sablon, product, ctx) {
         if (mamulBedenleri.length === 0) { bedenEksikler.add(sa.hammaddeAd || "?"); return; }
         mamulBedenleri.forEach((mb) => {
           const e = sa.bedenler[mb];
-          const hb = e ? e.beden : (sa.bedenAyni ? mb : null);
-          const miktar = e ? e.miktar : sa.miktar;
           // Kısmi malzeme (kaynakta yalnız bazı bedenlerde) karşılıksız bedende BİLEREK yok — uyarı gürültü olur.
-          if (!hb || miktar == null) { if (!sa.kismi) bedenEksikler.add(`${sa.hammaddeAd || "?"} (${mb})`); return; }
+          if (!e && sa.kismi) return;
+          let hb = e ? e.beden : (sa.bedenAyni ? mb : null);
+          // KARŞILIKSIZ BEDEN (v1.570.0): eskiden satır hiç açılmıyor, yalnız toast söylüyordu. Renkteki sıra: geçmiş
+          // reçetelerde bu hammaddeye bu bedenle verilmiş boy (kırmızı, `bedenGecmisten`); o da yoksa satır açılmaz,
+          // beden eşleşme şeridinde turuncu "eşleştir…" kutusu çıkar (ve `bedenEksikler`de adı geçer).
+          let bedenGecmis = false;
+          if (!hb) { const g = gecmisBedenOnerisi(bedenHarita, sa.hammaddeUrunId, mb); if (g) { hb = g; bedenGecmis = true; } }
+          // Miktar bedene göre değişiyorsa (sa.miktar yok) karşılıksız bedene EN YAKIN bedenin miktarı — eskiden
+          // boy = numara olan tabanda bile miktar bulunamayınca beden düşüyordu.
+          let miktar = e ? e.miktar : sa.miktar;
+          if (miktar == null && !e) { const yb = enYakinBeden(Object.keys(sa.bedenler), mb); miktar = yb ? sa.bedenler[yb].miktar : null; }
+          if (!hb || miktar == null) { bedenEksikler.add(`${sa.hammaddeAd || "?"} (${mb})`); return; }
           if (ayniVarMi(mb, hb)) { atlanan += 1; return; }
-          eklenecekler.push({ mamulRenk: mr, mamulBeden: mb, beden: hb, miktar: parseFloat(miktar) || 0, ...ortak });
+          if (bedenGecmis) bedenGecmisSayisi += 1;
+          eklenecekler.push({ mamulRenk: mr, mamulBeden: mb, beden: hb, miktar: parseFloat(miktar) || 0, ...ortak, ...(bedenGecmis ? { bedenGecmisten: true } : {}) });
         });
         return;
       }
@@ -485,7 +497,7 @@ function sablonuUruneUygula(sablon, product, ctx) {
   Object.entries(isc.araProsesUcretleri || {}).forEach(([id, u]) => { if (apu[id] == null) { apu[id] = u; apuSayisi++; } });
   if (apuSayisi) ekAlanlar.araProsesUcretleri = apu;
   gecmisSayisi = eklenecekler.filter((r) => r.renkGecmisten).length;
-  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi, bedenEksikler: Array.from(bedenEksikler), bosEslesmeler, gecmisSayisi };
+  return { eklenecekler, atlanan, ekAlanlar, iscilikSayisi: iscilikSayisi + apeSayisi, bedenEksikler: Array.from(bedenEksikler), bosEslesmeler, gecmisSayisi, bedenGecmisSayisi };
 }
 
 // Reçeteden şablon çıkar: EN ÇOK satırı olan mamul rengindeki (eskiden ilk renk — o renkte eksik malzeme varsa
@@ -652,7 +664,7 @@ function eksikRenkEslesmeleri(product, tumUrunler) {
 //  • Hedefte zaten olan (renk+hammadde+proses+beden) satır tekrar eklenmez.
 //  • Her kaynak eklemesi yeni bir "kopya-" kimliği alır (kart düzeni aynen; geri alma bu önekle).
 //  • İşçilik / ara proses: hedefte BOŞ olanlar kaynaktan (şablonla aynı kural).
-// Döner: { eklenecekler, ekAlanlar, iscilikSayisi, gecmisSayisi, bosGruplar, bedenEksikler, atlanan, ayniRenkSayisi }.
+// Döner: { eklenecekler, ekAlanlar, iscilikSayisi, gecmisSayisi, bosGruplar, bedenEksikler, atlanan, ayniRenkSayisi, bedenGecmisSayisi }.
 function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
   const kRecete = (kaynak && kaynak.recete) || [];
   const mevcut = (hedef && hedef.recete) || [];
@@ -661,13 +673,14 @@ function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
   const kRenkler = new Set(kRecete.map((r) => r.mamulRenk));
   const kimlikler = new Map();
   const yeniKimlik = (eid) => { const k = eid || "_"; if (!kimlikler.has(k)) kimlikler.set(k, uid("kopya")); return kimlikler.get(k); };
-  const sonuc = { eklenecekler: [], ekAlanlar: {}, iscilikSayisi: 0, gecmisSayisi: 0, bosGruplar: [], bedenEksikler: [], atlanan: 0, ayniRenkSayisi: 0 };
+  const sonuc = { eklenecekler: [], ekAlanlar: {}, iscilikSayisi: 0, gecmisSayisi: 0, bosGruplar: [], bedenEksikler: [], atlanan: 0, ayniRenkSayisi: 0, bedenGecmisSayisi: 0 };
+  const bedenHarita = gecmisBedenEslesmeleri(tumUrunler);
   const bedenEksik = new Set();
   const eklemeTarihi = new Date().toISOString();
   hRenkler.forEach((mr) => {
     let satirlar;
     if (kRenkler.has(mr)) {
-      satirlar = kRecete.filter((r) => r.mamulRenk === mr).map(({ id, renkGecmisten: _rg, ...rest }) => rest);
+      satirlar = kRecete.filter((r) => r.mamulRenk === mr).map(({ id, renkGecmisten: _rg, bedenGecmisten: _bg, ...rest }) => rest);
       sonuc.ayniRenkSayisi += 1;
     } else {
       const y = yeniRenkReceteSatirlari(kaynak, mr, tumUrunler);
@@ -692,8 +705,13 @@ function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
         const kapsanan = new Set(bedenli.map((r) => r.mamulBeden));
         const bedenAyni = bedenli.every((r) => kodEsit(r.beden || "", r.mamulBeden));
         bedenler.filter((b) => !kapsanan.has(b)).forEach((b) => {
-          if (bedenAyni) son.push({ ...bedenli[bedenli.length - 1], mamulBeden: b, beden: b });
-          else bedenEksik.add(`${g[0].hammaddeAd || "?"} (${b})`);
+          // Karşılıksız hedef bedeni (v1.570.0): kaynak satır = EN YAKIN beden (miktar ondan). Boy = numara ise aynı
+          // numara; değilse geçmiş reçetelerde bu bedene verilmiş boy (kırmızı); o da yoksa açılmaz → turuncu kutu.
+          const kaynakSatir = bedenli.find((r) => r.mamulBeden === enYakinBeden(bedenli.map((x) => x.mamulBeden), b)) || bedenli[bedenli.length - 1];
+          if (bedenAyni) { son.push({ ...kaynakSatir, mamulBeden: b, beden: b }); return; }
+          const gb = gecmisBedenOnerisi(bedenHarita, kaynakSatir.hammaddeUrunId, b);
+          if (gb) { son.push({ ...kaynakSatir, mamulBeden: b, beden: gb, bedenGecmisten: true }); sonuc.bedenGecmisSayisi += 1; return; }
+          bedenEksik.add(`${g[0].hammaddeAd || "?"} (${b})`);
         });
       }
       son.forEach((r) => {
