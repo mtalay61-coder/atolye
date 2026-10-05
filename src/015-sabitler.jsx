@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.593.0";
+const SURUM = "1.594.0";
 const SURUM_TARIHI = "2026-10-05";
-const SURUM_NOTU = "Recete: pozisyon degistirme, kart sirasi (yukari/asagi), hammaddesiz proses, kirmizi renk hucresine onay tiki";
+const SURUM_NOTU = "Hammadde kartinda Fiyatlandirma ALIS ile acilir; maliyette satisa yazilmis fiyat uyarisi + alisa kopyala";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Recete: pozisyon degistirme, kart sirasi (yukari/asagi), ham
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.594.0", tarih: "05.10.2026",
+    eklenen: ["Maliyet dökümünde kart fiyatı okunan hammaddenin o rengi için SATIŞ fiyatı girilmişse uyarı + \"alışa kopyala\" bağlantısı"],
+    degisen: ["Hammadde (mamul olmayan) kartında Fiyatlandırma sekmesi ALIŞ fiyatlarıyla açılıyor; mamulde satışla"],
+    duzeltilen: [] },
   { surum: "1.593.0", tarih: "05.10.2026",
     eklenen: ["Reçete: \"N. Renk\" pozisyon etiketine dokununca pozisyon değiştirilebiliyor (renk kombinasyondan yeniden çözülür)", "Reçete: aynı prosesteki hammadde kartları yukarı/aşağı taşınabiliyor", "Reçete: \"Hammaddesiz proses ekle\" — yalnız işçiliği olan proses (Dikim, Kalite…) reçetede grup olur, üretimde adım olur", "Reçete: geçmişten hatırlanan (kırmızı) renk hücresinin yanında ✓ — doğruysa tek dokunuşla onaylanır, yeşil ✓ kalır"],
     degisen: [], duzeltilen: [] },

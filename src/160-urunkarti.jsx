@@ -503,7 +503,10 @@ function ProductMatrixCard({
   const [yeniTekliRenkGiris, setYeniTekliRenkGiris] = useState(false);
   const [ymrPozisyonSecimleri, setYmrPozisyonSecimleri] = useState({}); // { [pozisyon]: renkAdi }
   const [stokMatrisAcik, setStokMatrisAcik] = useState(false); // "Renkler ve Bedenler" tek başlık altında tüm matris
-  const [fkTip, setFkTip] = useState("Satış"); // "Alış" | "Satış"
+  // HAMMADDEDE ALIŞ'LA AÇILIR (v1.594.0 — kullanıcı: "Fort Bombe fiyatlar tanımlı ama 350 ₺ çekiyor"): sekme hep SATIŞ'la
+  // açılıyordu; kullanıcı hammaddenin renk fiyatlarını satışa yazdı, maliyet ALIŞ'ı okuyup kart fiyatına (350) düştü.
+  // Hammaddenin günlük işi alış fiyatıdır; mamulde satış.
+  const [fkTip, setFkTip] = useState(product.kategori === "Mamul" ? "Satış" : "Alış"); // "Alış" | "Satış"
   const [fkKapsam, setFkKapsam] = useState("renkBeden"); // "renkBeden" | "fiyatGrubu" | "cari"
   const [fkRenk, setFkRenk] = useState("");
   const [fkBeden, setFkBeden] = useState("");
@@ -4887,6 +4890,25 @@ function ProductMatrixCard({
                                     <ParaBirimiSecici deger={d.pb} veri={`maliyet|${d.hammaddeId}|${d.renk}|${d.boy}`} onDegis={(y) => { if (y !== d.pb) birimFiyatKaydet(d, d.kendiFiyat, y); }} /></span>
                                 : para(d.kendiFiyat, d.pb)}
                               {d.kaynak && d.kaynak !== "Kart" && <div data-fiyat-kaynagi="1" data-alis-kaynakli={d.alisKaynakli ? "1" : undefined} style={{ fontSize: 9, color: "var(--erp-text-3)", whiteSpace: "normal", maxWidth: 200, marginLeft: "auto" }}>{d.alisKaynakli ? d.kaynak : `${d.kaynak.replace("Renk+Beden", "Renk+boy").replace("Beden", "Boy")} fiyatı`}</div>}
+                              {/* SATIŞA YAZILMIŞ FİYAT UYARISI (v1.594.0): maliyet ALIŞ fiyatını okur; bu renk/boy için alış kuralı yok ama
+                                  SATIŞ kuralı varsa kullanıcı muhtemelen yanlış sekmeye yazdı — söyle ve tek dokunuşla alışa kopyala. */}
+                              {d.kaynak === "Kart" && !d.alisKaynakli && (() => {
+                                const hm = (tumUrunler || []).find((u) => u.id === d.hammaddeId);
+                                if (!hm) return null;
+                                let satis = null;
+                                try { satis = fiyatBul(hm, d.renk || null, d.boy || null, "", "Satış", []); } catch (e) { satis = null; }
+                                if (!satis || !satis.kaynak || satis.kaynak === "Genel" || !(parseFloat(satis.fiyat) > 0)) return null;
+                                const pb = alisPbKodu({ alisParaBirimi: satis.paraBirimi });
+                                return (
+                                  <div data-maliyet-satis-uyari={d.hammaddeId} style={{ fontSize: 9, color: "var(--erp-warn)", whiteSpace: "normal", maxWidth: 220, marginLeft: "auto", marginTop: 2 }}>
+                                    Kart alış fiyatı okundu; bu {d.boy ? "renk/boy" : "renk"} için SATIŞ fiyatı girilmiş ({satis.fiyat} {PARA_SEMBOLU[pb] || pb}), maliyet alışı okur.{" "}
+                                    <button type="button" data-maliyet-satis-alisa={d.hammaddeId} onClick={() => birimFiyatKaydet(d, parseFloat(satis.fiyat), pb)}
+                                      style={{ border: "none", background: "none", padding: 0, color: "var(--erp-info)", textDecoration: "underline", cursor: "pointer", fontSize: 9, fontWeight: 700 }}>
+                                      alışa kopyala
+                                    </button>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="mono" style={{ padding: "4px 8px", textAlign: "right" }}>{para(d.kendiTutar, d.pb)}</td>
                             <td className="mono" style={{ padding: "4px 8px", textAlign: "right" }}>{para(d.tl, "TRY")}</td>
