@@ -1,0 +1,17 @@
+{
+ "hatalar": [],
+ "kartAlis": 350,
+ "kurallar": [
+  "Satış:renk:Siyah=7 USD",
+  "Alış:renk:Siyah=7 USD · Maliyet ekranından: Bot"
+ ],
+ "once": {
+  "fiyat": "350",
+  "uyari": "Kart alış fiyatı okundu; bu renk için SATIŞ fiyatı girilmiş (7 $), maliyet alışı okur. alışa kopyala"
+ },
+ "sonra": {
+  "fiyat": "7",
+  "uyari": "yok"
+ },
+ "varsayilanSekme": "Alış"
+}
