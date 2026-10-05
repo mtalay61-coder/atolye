@@ -4675,18 +4675,39 @@ function ProductMatrixCard({
             // Hammadde birim fiyatını KAYNAĞINA yaz: boy/renk kuralından geldiyse o kurala, yoksa karta.
             // `pb` (v1.581.0 — kullanıcı: "Maliyette de p.birimi değiştirme olsun"): satırdaki birim seçicisi. Fiyat kuraldan
             // geliyorsa kuralın `paraBirimi`, karttan geliyorsa kartın `alisParaBirimi` (simgeyle) yazılır — rakam aynı kalır.
+            // RENK FİYATI KARTI EZMİYOR (v1.591.0 — kullanıcı: "maliyette aynı stoğun farklı renklerinin fiyatını değişince
+            // diğer renkleri de değiştiriyor"). Eskiden satırın rengi için kural YOKSA kartın alış fiyatına yazılıyordu; kart
+            // fiyatı bütün renklerin ortak fiyatı olduğu için öbür renkler de değişiyordu. Artık renkli/boylu satır HER ZAMAN
+            // kendi kuralına yazar (renk+boy → renkBeden, boy → beden, renk → renk); kural yoksa açılır ve "Maliyet ekranından"
+            // damgasını taşır (`kaynakNotu`, `kaynakTarih`) — hammadde kartının Fiyatlandırma sekmesi bunu rozetle söyler.
+            // Kart fiyatına yalnız renksiz ve boysuz satır yazar. Hammaddenin fiyat geçmişine de satır düşer.
             const birimFiyatKaydet = (d, yeni, pb) => {
               const hm = (tumUrunler || []).find((u) => u.id === d.hammaddeId);
               if (!hm) return;
               const kurallar = hm.fiyatKurallari || [];
-              const eslesen = (d.renk && d.boy && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "renkBeden" && k.deger === `${d.renk}|${d.boy}`))
-                || (d.boy && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "beden" && k.deger === d.boy))
-                || (d.renk && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "renk" && k.deger === d.renk));
-              if (d.kaynak !== "Kart" && eslesen) {
-                onUrunGuncelle(hm.id, { fiyatKurallari: kurallar.map((k) => (k.id === eslesen.id ? { ...k, fiyat: yeni, ...(pb ? { paraBirimi: pb } : {}) } : k)) });
-              } else {
+              if (!d.renk && !d.boy) {
                 onUrunGuncelle(hm.id, { alisFiyati: yeni, ...(pb ? { alisParaBirimi: PARA_SEMBOLU[pb] || pb } : {}) });
+                return;
               }
+              // VAR OLAN kural önce (fiyatın geldiği yer: renk+boy → boy → renk; boy kuralı bilerek "o boyun bütün renkleri"
+              // demek); hiçbiri yoksa satıra en dar kural açılır: renk+boy → renkBeden, boy → beden, renk → renk.
+              const kuralAra = (kapsam, deger) => kurallar.find((k) => k.tip === "Alış" && k.kapsam === kapsam && k.deger === deger && !k.renk && !k.beden);
+              const eslesen = (d.renk && d.boy && kuralAra("renkBeden", `${d.renk}|${d.boy}`))
+                || (d.boy && kuralAra("beden", d.boy)) || (d.renk && kuralAra("renk", d.renk)) || null;
+              const kapsam = eslesen ? eslesen.kapsam : (d.renk && d.boy ? "renkBeden" : d.boy ? "beden" : "renk");
+              const deger = eslesen ? eslesen.deger : (kapsam === "renkBeden" ? `${d.renk}|${d.boy}` : kapsam === "beden" ? d.boy : d.renk);
+              const etiket = kapsam === "renkBeden" ? `${d.renk} / ${d.boy}` : kapsam === "beden" ? `Beden: ${d.boy}` : `Renk: ${d.renk}`;
+              const birim = pb || (eslesen && eslesen.paraBirimi) || d.pb || "TRY";
+              const not = `Maliyet ekranından: ${product.ad}`;
+              const yeniKural = { ...(eslesen || { id: uid("fkural"), kapsam, deger, tip: "Alış", etiket, renk: null, beden: null }),
+                fiyat: yeni, paraBirimi: birim, kaynakNotu: not, kaynakTarih: new Date().toISOString() };
+              const log = { id: uid("flog"), tarih: new Date().toISOString(), tip: "Alış", etiket: `${etiket} — ${not}`,
+                eskiFiyat: eslesen ? eslesen.fiyat : null, yeniFiyat: yeni, eskiParaBirimi: eslesen ? eslesen.paraBirimi : null, paraBirimi: birim };
+              onUrunGuncelle(hm.id, {
+                fiyatKurallari: eslesen ? kurallar.map((k) => (k.id === eslesen.id ? yeniKural : k)) : [...kurallar, yeniKural],
+                fiyatGecmisi: [log, ...(hm.fiyatGecmisi || [])].slice(0, HAREKET_GECMIS_SINIRI),
+              });
+              showToast(`${hm.ad} · ${etiket.replace(/^(Renk|Beden): /, "")}: alış fiyatı ${yeni} ${PARA_SEMBOLU[birim] || birim} — yalnız bu ${kapsam === "beden" ? "boy" : "renk"} için, stok kartına yazıldı`);
             };
             // Para birimine göre dağılım
             const dagilim = {};
@@ -6239,6 +6260,14 @@ function ProductMatrixCard({
                             <tr key={r} data-fk-renk-satir={r} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
                               <td className="mono" style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                                 {olcuGoster(r)}
+                                {/* MALİYETTEN GİRİLDİ ROZETİ (v1.591.0): bu rengin alış fiyatı bir mamulün Maliyet ekranından yazıldıysa. */}
+                                {renkKurali && renkKurali.kaynakNotu && (
+                                  <span data-fk-kaynak-notu={r} title={`${renkKurali.kaynakNotu}${renkKurali.kaynakTarih ? ` · ${tarihYaz(renkKurali.kaynakTarih)}` : ""}`}
+                                    style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
+                                      background: "var(--erp-orange-bg)", color: "var(--erp-warn)", verticalAlign: "middle" }}>
+                                    maliyetten
+                                  </span>
+                                )}
                                 {(() => {
                                   // GRUP SEÇİCİ (v1.577.0): rengi listeden bir gruba al / yeni grup aç / gruptan çıkar.
                                   const gr = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r));
