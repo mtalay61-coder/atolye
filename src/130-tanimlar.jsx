@@ -1617,6 +1617,18 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 <option value="USD">$ USD</option>
                 <option value="EUR">€ EUR</option>
               </select>
+              {/* KÂR MARJI (v1.597.0 — kullanıcı: "fiyat gruplarının kâr marjı olsun, marj girerek otomatik fiyat versin"): satış
+                  grubunun yüzdesi; ürün kartı › Maliyet'te bu grubun önerisi tam maliyet ÷ (1 − marj) olur. Boşsa ürünün kendi kârı. */}
+              {g.tip !== "Alış" && (
+                <label title="Bu grubun kâr marjı (%): Maliyet sekmesinde grup önerisi bu marjla hesaplanır; boşsa ürünün kendi kârı"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--erp-text-2)" }}>
+                  kâr %
+                  <input type="number" min="0" max="99" step="any" data-fiyat-grubu-marj={g.id} key={`marj-${g.id}-${g.marj ?? ""}`}
+                    defaultValue={g.marj ?? ""} placeholder="—"
+                    onBlur={(e) => { const v = e.target.value === "" ? null : parseFloat(e.target.value); if ((v ?? null) !== (g.marj ?? null)) onSave({ ...tanimlar, fiyatGruplari: tanimlar.fiyatGruplari.map((x) => (x.id === g.id ? { ...x, marj: v } : x)) }); }}
+                    style={{ width: 54, fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)", textAlign: "right", fontWeight: 700 }} />
+                </label>
+              )}
               <SilOnayButonu onConfirm={() => fiyatGrubuSil(g.id)} boyut={13} baslikNormal={`"${g.ad}" fiyat grubu silinsin mi? Bu gruba atanmış carilerin grubu boşalır.`} />
             </div>
           ))}

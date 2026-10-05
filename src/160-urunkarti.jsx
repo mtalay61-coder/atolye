@@ -284,7 +284,7 @@ function ProductMatrixCard({
   kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet,
   tanimlarAylikUretimHedefi, tanimlarGenelGiderler,
   onFiseGitNo,
-  product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onDefterDuzeltmeYaz, baslangicSekme,
+  product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onFiyatGrubuMarj, onDefterDuzeltmeYaz, baslangicSekme,
   stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir,
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
@@ -3781,7 +3781,24 @@ function ProductMatrixCard({
                                 const { silinecekIdler, yeniSatirlar } = receteBedenDegistir(g.satirlar, mb, yeni, bedenler, product.variants || []);
                                 if (silinecekIdler.length || yeniSatirlar.length) onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
                               }} />
-                            <div style={{ overflowX: "auto", maxWidth: "100%" }}>
+                            {/* STANDART HAMMADDE SADE (v1.597.0 — kullanıcı: "Standart hammadde için renk dağılımına gerek yok,
+                                renksiz ve bedensiz olduğu için boşa yer kaplamasın"): bütün satırlar yer tutucu renk/boy taşıyor ve her
+                                mamul renk kapsanmışsa pozisyon/renk tablosu çizilmez; miktar başlıkta (`hepsiAyniMiktarBu`), silme başlıkta. */}
+                            {(() => {
+                              const standartKart = pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
+                                && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden))
+                                && eksikMamulRenkler2.length === 0;
+                              if (standartKart) {
+                                return (
+                                  <div data-recete-standart-kart={g.hammaddeAd} style={{ fontSize: 11, color: "var(--erp-text-3)", padding: "2px 4px" }}>
+                                    Renksiz · bedensiz malzeme — bütün renklerde aynı ({mamulRenkler2.length} renk)
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
+                            <div style={{ overflowX: "auto", maxWidth: "100%", display: (pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
+                                && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden)) && eksikMamulRenkler2.length === 0) ? "none" : undefined }}>
                               <table style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
                                 <thead>
                                   <tr>
@@ -5100,7 +5117,15 @@ function ProductMatrixCard({
                       const secim = fgSecim || "";
                       const secilenGrup = satisGruplari.find((g) => g.id === secim);
                       const secilenPb = secim === "__genel" ? hedefPb : (secilenGrup ? (secilenGrup.paraBirimi || "TRY") : "TRY");
-                      const oneriHesapla = (pb) => { const k = kurTL(pb); return k > 0 ? Math.round((satisFiyati / k) * 100) / 100 : 0; };
+                      // GRUP MARJI (v1.597.0 — kullanıcı: "fiyat gruplarının kâr marjı olsun, marj girerek otomatik fiyat versin"):
+                      // grubun `marj`ı varsa öneri = tam maliyet ÷ (1 − marj); yoksa ürünün kendi kârıyla hesaplanan satış fiyatı.
+                      const grupMarji = (g) => (g && g.marj != null && g.marj !== "" ? parseFloat(g.marj) : null);
+                      const oneriHesapla = (pb, grup) => {
+                        const k = kurTL(pb); if (!(k > 0)) return 0;
+                        const m = grupMarji(grup);
+                        const tl = m != null ? marjlaSatisFiyati(tamMaliyet, m) : satisFiyati;
+                        return Math.round((tl / k) * 100) / 100;
+                      };
                       const kaydet = (hedefKey, pb, fiyat) => {
                         if (!(fiyat > 0)) return;
                         const yuvarli = Math.round(fiyat * 100) / 100;
@@ -5130,7 +5155,7 @@ function ProductMatrixCard({
                               onChange={(e) => {
                                 const v = e.target.value; setFgSecim(v);
                                 const pb = v === "__genel" ? hedefPb : ((satisGruplari.find((g) => g.id === v) || {}).paraBirimi || "TRY");
-                                setFgFiyat(v ? String(oneriHesapla(pb)) : "");
+                                setFgFiyat(v ? String(oneriHesapla(pb, satisGruplari.find((g) => g.id === v))) : "");
                               }}
                               style={{ padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 180 }}>
                               <option value="">— fiyat grubu seçin —</option>
@@ -5144,7 +5169,9 @@ function ProductMatrixCard({
                                   style={{ width: 110, padding: "5px 8px", fontSize: 13, textAlign: "right", fontWeight: 700,
                                     border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" }} />
                                 <span className="mono" style={{ fontSize: 13, fontWeight: 700 }}>{PB_SIMGE[secilenPb]}</span>
-                                <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>öneri {para(oneriHesapla(secilenPb), secilenPb)}</span>
+                                <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
+                                  öneri {para(oneriHesapla(secilenPb, secilenGrup), secilenPb)}{grupMarji(secilenGrup) != null ? ` (grup kârı %${grupMarji(secilenGrup)})` : ""}
+                                </span>
                                 <button type="button" className="btn-primary" data-fg-ekle="1"
                                   onClick={() => kaydet(secim, secilenPb, parseFloat(fgFiyat))}
                                   style={{ padding: "5px 14px", fontSize: 13 }}>Ekle</button>
@@ -5167,7 +5194,8 @@ function ProductMatrixCard({
                               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "#fff", maxWidth: 560 }}>
                                 <tbody>
                                   {kayitli.map((r) => {
-                                    const oneri = oneriHesapla(r.pb);
+                                    const grupKaydi = r.key === "__genel" ? null : satisGruplari.find((g) => g.id === r.key);
+                                    const oneri = oneriHesapla(r.pb, grupKaydi);
                                     const fark = oneri > 0 ? Math.round(((r.fiyat / oneri) - 1) * 100) : null;
                                     // Grubun para birimi sonradan değiştiyse kayıtlı fiyat eski birimde kalır — söylenmeli.
                                     const grupPb = r.key === "__genel" ? r.pb : ((satisGruplari.find((g) => g.id === r.key) || {}).paraBirimi || "TRY");
@@ -5182,15 +5210,35 @@ function ProductMatrixCard({
                                             </span>
                                           )}
                                         </td>
-                                        <td className="mono" data-grup-mevcut={r.key} style={{ padding: "4px 8px", textAlign: "right", fontWeight: 700 }}>{para(r.fiyat, r.pb)}</td>
-                                        <td className="mono" style={{ padding: "4px 8px", textAlign: "right", fontSize: 11, color: "var(--erp-text-3)" }}>öneri {para(oneri, r.pb)}</td>
+                                        {/* RAKAMLA DÜZENLE (v1.597.0 — kullanıcı: "rakam girerek de olsun"): kutudan çıkınca kaydeder. */}
+                                        <td className="mono" data-grup-mevcut={r.key} style={{ padding: "4px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
+                                          <input type="number" min="0" step="any" data-grup-fiyat-kutu={r.key} key={`${r.key}-${r.fiyat}`} defaultValue={r.fiyat}
+                                            onBlur={(e) => { const v = parseFloat(e.target.value); if (v > 0 && Math.abs(v - r.fiyat) > 0.0001) kaydet(r.key, r.pb, v); }}
+                                            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                                            style={{ width: 84, padding: "2px 6px", fontSize: 12, textAlign: "right", fontWeight: 700, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" }} />
+                                          {" "}{PB_SIMGE[r.pb] || r.pb}
+                                        </td>
+                                        <td className="mono" style={{ padding: "4px 8px", textAlign: "right", fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>
+                                          öneri {para(oneri, r.pb)}
+                                          {/* GRUP KÂR MARJI (v1.597.0): grup satırında düzenlenir, Tanımlar'a yazılır; boşsa ürünün kârı. */}
+                                          {grupKaydi && onFiyatGrubuMarj && (
+                                            <label title="Bu grubun kâr marjı (%) — öneri tam maliyetten bu marjla hesaplanır; boşsa ürünün kendi kârı" style={{ marginLeft: 6, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                                              kâr %
+                                              <input type="number" min="0" max="99" step="any" data-fg-marj={r.key} key={`marj-${r.key}-${grupKaydi.marj ?? ""}`} defaultValue={grupKaydi.marj ?? ""}
+                                                placeholder={String(product.karMarji != null ? product.karMarji : 30)}
+                                                onBlur={(e) => { const v = e.target.value === "" ? null : parseFloat(e.target.value); if ((v ?? null) !== (grupKaydi.marj ?? null)) onFiyatGrubuMarj(r.key, v); }}
+                                                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                                                style={{ width: 46, padding: "1px 4px", fontSize: 11, textAlign: "right", fontWeight: 700, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" }} />
+                                            </label>
+                                          )}
+                                        </td>
                                         <td style={{ padding: "4px 8px", textAlign: "right", fontSize: 11, fontWeight: 700,
                                           color: fark == null || fark === 0 ? "var(--erp-text-3)" : fark < 0 ? "var(--erp-void)" : "var(--erp-ok)" }}>
                                           {fark == null ? "" : `${fark > 0 ? "+" : ""}%${fark}`}
                                         </td>
                                         <td style={{ padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" }}>
                                           <button type="button" className="btn-ghost" data-fiyat-uygula={r.key} title="Öneriye eşitle"
-                                            onClick={() => kaydet(r.key, grupPb, oneriHesapla(grupPb))} style={{ fontSize: 11, padding: "2px 8px" }}>Öneriye eşitle</button>
+                                            onClick={() => kaydet(r.key, grupPb, oneriHesapla(grupPb, grupKaydi))} style={{ fontSize: 11, padding: "2px 8px" }}>Öneriye eşitle</button>
                                           {r.kuralId && <SilOnayButonu onConfirm={() => fiyatKuraliSil(r.kuralId)} boyut={11} baslikNormal={`${r.ad} fiyatı silinsin mi?`} />}
                                         </td>
                                       </tr>
