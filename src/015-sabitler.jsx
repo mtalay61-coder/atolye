@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.590.0";
+const SURUM = "1.591.0";
 const SURUM_TARIHI = "2026-10-05";
-const SURUM_NOTU = "Katalog fiyatlari bulutta: Fiyat Listesinden \"Katalogda goster\" (en fazla 3), herkes ayni fiyatlari gorur";
+const SURUM_NOTU = "Maliyette hammadde fiyati degisince yalniz o renk degisiyor (renk kurali), kart fiyati ezilmiyor; stok kartinda maliyetten rozeti";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Katalog fiyatlari bulutta: Fiyat Listesinden \"Katalogda gos
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.591.0", tarih: "05.10.2026",
+    eklenen: ["Hammadde kartı › Fiyatlandırma: Maliyet ekranından girilen renk fiyatında \"maliyetten\" rozeti (hangi mamulden, ne zaman) + fiyat geçmişinde satır"],
+    degisen: [],
+    duzeltilen: ["Mamul › Maliyet'te bir rengin hammadde birim fiyatı değiştirilince aynı stoğun öbür renkleri de değişiyordu (kart fiyatına yazılıyordu); artık yalnız o rengin (ya da boyun) alış kuralına yazılıyor"] },
   { surum: "1.590.0", tarih: "05.10.2026",
     eklenen: ["Depo › Fiyat Listesi: seçili fiyat kaynağı için \"☆ Katalogda göster\" düğmesi ve üstte katalog listesi (en fazla 3, × ile kaldır)"],
     degisen: ["Katalogda görünen fiyatlar artık bulutta (Tanımlar) tutuluyor — her cihaz aynı fiyatları gösterir; katalogdaki cihaza özel seçim çipleri kalktı, yalnız liste görünüyor"],

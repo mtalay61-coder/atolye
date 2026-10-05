@@ -1,0 +1,24 @@
+{
+ "hatalar": [],
+ "kayit": {
+  "gecmis": [
+   "Renk: Siyah — Maliyet ekranından: Bot null → 120"
+  ],
+  "kartAlis": 100,
+  "kurallar": [
+   "renk:Siyah=120 TRY · Maliyet ekranından: Bot"
+  ]
+ },
+ "once": [
+  "Deri · Siyah: 100",
+  "Taban · Siyah · 41: 0,00 ₺yok fiyatı"
+ ],
+ "rozet": {
+  "siyah": "maliyetten · Maliyet ekranından: Bot · GG.AA.YYYY SS:DD",
+  "taba": false
+ },
+ "sonra": [
+  "Deri · Siyah: 120",
+  "Taban · Siyah · 41: 0,00 ₺yok fiyatı"
+ ]
+}

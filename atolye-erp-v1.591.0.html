@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.588.0</title>
+<title>Atölye ERP 1.591.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -1864,8 +1864,24 @@ const SEKME_BILGISI = {
     muhasebe: { ad: "Kasa & Banka" },
     cekler: { ad: "Çek & Senet" },
     finansrapor: { ad: "Finans Raporu" },
+    // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
+    gelirgider: { ad: "Gelir / Gider" },
+    modelhane: { ad: "Modelhane" },
+    gorevler: { ad: "Görevler" },
+    gunluk: { ad: "Günlük" },
     atolye: { ad: "Atölye" },
 };
+// KAYIT PENCERESİ RENGİ (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): şeritteki kayıt
+// pencereleri (ürün kartı, fiş, sipariş…) ait oldukları modülün rengini taşır; ikonlar 100-app `SEKME_IKONU`.
+const PENCERE_TIP_MODULU = {
+    urun: "stok", recete: "stok", maliyet: "stok", fis: "fisler", "stok-fisi": "fisler", fatura: "fisler",
+    cek: "cekler", ekstre: "cari", siparis: "siparis", uretim: "uretim", "depo-satinal": "planlama", "depo-alis": "satinalma",
+};
+function pencereRengi(p) {
+    if (p && p.tip === "siparis" && p.veri && p.veri.sahipTip === "Alış")
+        return MODUL_RENK.satinalma;
+    return MODUL_RENK[PENCERE_TIP_MODULU[(p || {}).tip]] || "var(--erp-text-2)";
+}
 const SEZONLAR = ["İlkbahar/Yaz", "Sonbahar/Kış", "Tüm Sezon"];
 // BULUTA GİDEMEYEN KAYIT — TABLO AÇIKLAMALARI (19 Eylül).
 //
@@ -2033,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.588.0";
-const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Tanimlar: tum basliklar dokununca acilir/kapanir (kapali baslar, secim cihazda kalir)";
+const SURUM = "1.591.0";
+const SURUM_TARIHI = "2026-10-05";
+const SURUM_NOTU = "Maliyette hammadde fiyati degisince yalniz o renk degisiyor (renk kurali), kart fiyati ezilmiyor; stok kartinda maliyetten rozeti";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2043,6 +2059,18 @@ const SURUM_NOTU = "Tanimlar: tum basliklar dokununca acilir/kapanir (kapali bas
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.591.0", tarih: "05.10.2026",
+        eklenen: ["Hammadde kartı › Fiyatlandırma: Maliyet ekranından girilen renk fiyatında \"maliyetten\" rozeti (hangi mamulden, ne zaman) + fiyat geçmişinde satır"],
+        degisen: [],
+        duzeltilen: ["Mamul › Maliyet'te bir rengin hammadde birim fiyatı değiştirilince aynı stoğun öbür renkleri de değişiyordu (kart fiyatına yazılıyordu); artık yalnız o rengin (ya da boyun) alış kuralına yazılıyor"] },
+    { surum: "1.590.0", tarih: "05.10.2026",
+        eklenen: ["Depo › Fiyat Listesi: seçili fiyat kaynağı için \"☆ Katalogda göster\" düğmesi ve üstte katalog listesi (en fazla 3, × ile kaldır)"],
+        degisen: ["Katalogda görünen fiyatlar artık bulutta (Tanımlar) tutuluyor — her cihaz aynı fiyatları gösterir; katalogdaki cihaza özel seçim çipleri kalktı, yalnız liste görünüyor"],
+        duzeltilen: [] },
+    { surum: "1.589.0", tarih: "04.10.2026",
+        eklenen: ["Fişler: maaş tahakkuk fişleri (MAAS-…) \"Diğer\" yerine kendi \"Maaş\" çipinde"],
+        degisen: ["Üst şeritteki açık sayfa ve kayıt sekmeleri modül ikonu ve modül rengiyle (etkin sekmede renkli üst çizgi ve yazı)"],
+        duzeltilen: ["Gelir / Gider sekmesi şeritte \"gelirgider\" diye görünüyordu"] },
     { surum: "1.588.0", tarih: "04.10.2026",
         eklenen: [],
         degisen: ["Tanımlar: bütün ana başlıklar (Firma, Renkler, Bedenler, Birimler, Asortiler, Bölümler, Fiyat Grupları, Özel Kodlar, Model Rengi, Prosesler, Ara Prosesler, Reçete şablonları, Kullanıcılar, Boyut, Ekran Düzeni, Mobil Görünüm, Yedekleme) dokununca açılıp kapanıyor; kapalı başlar, açık bıraktıklarınız bu cihazda hatırlanır"],
@@ -15964,6 +15992,26 @@ function usePencereler(baslangic) {
         pencereAc, pencereKapat, pencereKucult,
     };
 }
+// SEKME İKONLARI (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): üst şeritteki sayfa ve kayıt
+// sekmeleri menüdeki ikonun küçüğüyle; Lucide bileşenleri 000'da içe aktarılıyor. Rengi 015 MODUL_RENK / pencereRengi.
+const SEKME_IKON_BILESENI = {
+    anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck,
+    uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
+    cari: Users, muhasebe: Wallet, cekler: Receipt, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
+    gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
+};
+function sekmeIkonu(anahtar) {
+    const B = SEKME_IKON_BILESENI[anahtar] || FileText;
+    return React.createElement(B, { size: 13 });
+}
+const PENCERE_IKON_BILESENI = {
+    urun: Boxes, recete: Scissors, maliyet: Tag, fis: FileText, "stok-fisi": FileText, fatura: ScrollText, cek: Receipt,
+    ekstre: Users, siparis: ClipboardList, uretim: Hammer, "depo-satinal": Compass, "depo-alis": PackageCheck,
+};
+function pencereIkonu(p) {
+    const B = PENCERE_IKON_BILESENI[(p || {}).tip] || FileText;
+    return React.createElement(B, { size: 13 });
+}
 function AtolyeERP() {
     useFonts();
     // ---- SEKME KURALI (kullanıcı, 6 Eylül) --------------------------------------------------
@@ -20084,23 +20132,25 @@ function AtolyeERP() {
                             acikSekmeler.map((k) => {
                                 const bilgi = SEKME_BILGISI[k] || { ad: k };
                                 const aktifMi = tab === k && !aktifPencereId;
-                                return (React.createElement("div", { key: `sayfa-${k}`, onClick: () => { setTab(k); setAktifPencereId(null); }, title: bilgi.ad, style: {
+                                // İKON + MODÜL RENGİ (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): ikon her zaman modül
+                                // renginde; etkin sekmede yazı da o renkte ve üstte 3 piksel renkli çizgi — menüdeki renk diliyle aynı.
+                                const renk = MODUL_RENK[k] || "var(--erp-text-2)";
+                                return (React.createElement("div", { key: `sayfa-${k}`, "data-serit-sekme": k, onClick: () => { setTab(k); setAktifPencereId(null); }, title: bilgi.ad, style: {
                                         display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "var(--erp-r-md) var(--erp-r-md) 0 0",
                                         // YENİ TASARIM (v1.449.0): pasif sekme zeminsiz, etkin sekme beyaz kart gibi.
                                         background: aktifMi ? "var(--erp-panel)" : "transparent",
                                         border: `1px solid ${aktifMi ? "var(--erp-line-soft)" : "transparent"}`, borderBottom: "none",
-                                        // AKTİF SEKMENİN YAZISI DA PALETTEN (kullanıcı, 7 Eylül: "turuncu yazılar iyi
-                                        // ama siyah çok sırıtıyor"). `#221B14` neredeyse siyahtı ve açık şeridin
-                                        // içinde tek başına kalıyordu. Menüdeki seçili öge yazısıyla aynı ton.
-                                        color: aktifMi ? "var(--erp-text)" : "var(--erp-text-2)",
+                                        borderTop: `3px solid ${aktifMi ? renk : "transparent"}`,
+                                        color: aktifMi ? renk : "var(--erp-text-2)",
                                         fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                                     } },
+                                    React.createElement("span", { style: { display: "flex", color: renk } }, sekmeIkonu(k)),
                                     bilgi.ad,
                                     k !== "anasayfa" && (React.createElement("button", { onClick: (e) => { e.stopPropagation(); sekmeKapat(k); }, style: { border: "none", background: "none", color: "inherit", cursor: "pointer", display: "flex", opacity: 0.7 } },
                                         React.createElement(X, { size: 12 })))));
                             }),
                             acikPencereler.length > 0 && (React.createElement("span", { style: { width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "6px 6px 0", flexShrink: 0 } })),
-                            acikPencereler.map((p) => (React.createElement("div", { key: p.id, 
+                            acikPencereler.map((p) => (React.createElement("div", { key: p.id, "data-serit-pencere": p.tip, 
                                 // Sekmeye tıklayınca ilgili kayda GİDİLİR.
                                 //
                                 // Beş pencere tipi açılıyor (urun, recete, fis, ekstre, siparis, uretim) ama
@@ -20129,9 +20179,13 @@ function AtolyeERP() {
                                 }, style: {
                                     display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "6px 6px 0 0",
                                     background: aktifPencere && p.id === aktifPencere.id ? "var(--erp-panel)" : "transparent",
-                                    color: aktifPencere && p.id === aktifPencere.id ? "var(--erp-text)" : "var(--erp-text-2)",
+                                    // KAYIT PENCERESİ DE RENKLİ (v1.589.0): ait olduğu modülün rengi (015 `pencereRengi`), ikonlu.
+                                    border: `1px solid ${aktifPencere && p.id === aktifPencere.id ? "var(--erp-line-soft)" : "transparent"}`, borderBottom: "none",
+                                    borderTop: `3px solid ${aktifPencere && p.id === aktifPencere.id ? pencereRengi(p) : "transparent"}`,
+                                    color: aktifPencere && p.id === aktifPencere.id ? pencereRengi(p) : "var(--erp-text-2)",
                                     fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                                 } },
+                                React.createElement("span", { style: { display: "flex", color: pencereRengi(p) } }, pencereIkonu(p)),
                                 p.baslik,
                                 React.createElement("button", { onClick: (e) => { e.stopPropagation(); pencereKapat(p.id); }, style: { border: "none", background: "none", color: "inherit", cursor: "pointer", display: "flex", opacity: 0.7 } },
                                     React.createElement(X, { size: 12 })))))),
@@ -25403,30 +25457,11 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
     // MÜŞTERİ GÖRÜNÜMÜ: maliyet tarafı gizlenir (alış fiyatı, tedarikçi, stok değeri). Ekranı
     // müşteriye çevirmek fuarda tek hareket; o hareketin maliyeti göstermemesi gerekiyor.
     const [musteriGorunumu, setMusteriGorunumu] = useState(false);
-    // KATALOG FİYATLARI (v1.584.0 — kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı
-    // seçilerek katalogda görünecek fiyatlar çıksın"). Kart altında en fazla 3 kaynak: genel satış/alış ya da fiyat grupları
-    // (Toptan, Perakende, VOOG Özel…). CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen);
-    // maliyet de yok. Müşteri görünümünde alış tipli kaynaklar gizli. Seçim cihaza özel (yerel depo) — fuardaki tablet ile
-    // ofis farklı fiyat gösterebilir.
-    const [katalogKaynaklari, setKatalogKaynaklari] = useState(() => {
-        try {
-            const v = JSON.parse(window.localStorage.getItem("katalog:fiyatKaynaklari") || "null");
-            if (Array.isArray(v) && v.length)
-                return v.slice(0, 3);
-        }
-        catch (e) { /* yerel depo yok */ }
-        return [FL_GENEL_SATIS];
-    });
-    const katalogKaynakSec = (key) => setKatalogKaynaklari((x) => {
-        const yeni = x.includes(key) ? x.filter((k) => k !== key) : (x.length >= 3 ? x : [...x, key]);
-        if (!x.includes(key) && x.length >= 3)
-            showToast("Katalogda en fazla 3 fiyat gösterilir — önce birini kaldırın");
-        try {
-            window.localStorage.setItem("katalog:fiyatKaynaklari", JSON.stringify(yeni));
-        }
-        catch (e) { /* yerel depo yok */ }
-        return yeni;
-    });
+    // KATALOG FİYATLARI (v1.584.0 → v1.590.0): hangi kaynakların gösterileceği artık BULUTTA (`tanimlar.katalogFiyatKaynaklari`,
+    // Fiyat Listesi ekranından seçilir, en fazla 3) — "herkes farklı fiyatlar görmesin". Cihaza özel yerel seçim kalktı.
+    // CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen); maliyet de yok. Müşteri görünümünde
+    // alış tipli kaynaklar gizli.
+    const katalogKaynaklari = katalogFiyatAnahtarlari(tanimlar);
     const [katalogUrunId, setKatalogUrunId] = useState(null);
     const [katalogRenk, setKatalogRenk] = useState("");
     const [katalogFotoAcik, setKatalogFotoAcik] = useState(false);
@@ -26643,16 +26678,14 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                         }, title: musteriGorunumu
                             ? "Müşteri görünümü AÇIK — alış fiyatı, tedarikçi ve stok değeri gizli"
                             : "Personel görünümü — maliyet bilgileri görünür" }, musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"),
-                    React.createElement("span", { "data-katalog-fiyat-secimi": "1", style: { display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap" } },
-                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, "Katalog fiyatlar\u0131:"),
-                        katalogSecenekleri.filter((k) => !(musteriGorunumu && k.tip === "Alış")).map((k) => {
-                            const secili = katalogKaynaklari.includes(k.key);
-                            return (React.createElement("button", { key: k.key, type: "button", "data-katalog-kaynak": k.ad, onClick: () => katalogKaynakSec(k.key), style: { padding: "3px 9px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                                    border: `1.5px solid ${secili ? "var(--erp-info)" : "var(--erp-border)"}`, background: secili ? "#3D6B8A1A" : "#fff",
-                                    color: secili ? "var(--erp-info)" : "var(--erp-text-2)" } },
-                                secili ? "✓ " : "",
-                                k.ad));
-                        })))))),
+                    React.createElement("span", { "data-katalog-fiyat-secimi": "1", style: { display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap", fontSize: 11, color: "var(--erp-text-2)" } },
+                        React.createElement("span", null, "Katalog fiyatlar\u0131:"),
+                        katalogGosterilen.map((k, i) => (React.createElement("span", { key: k.key, "data-katalog-kaynak": k.ad, style: { padding: "2px 8px", borderRadius: "var(--erp-r-pill)", fontWeight: 700,
+                                border: "1px solid var(--erp-info)", background: "#3D6B8A1A", color: "var(--erp-info)" } },
+                            i + 1,
+                            ". ",
+                            k.ad))),
+                        React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "(Depo \u203A Fiyat Listesi'nden se\u00E7ilir)")))))),
         showForm && (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 } },
             React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 } },
                 React.createElement("div", null,
@@ -27538,6 +27571,15 @@ const FL_GENEL_ALIS = "__genelAlis";
 // fiyatı (grup ya da genel) üretilir.
 const FL_MALIYET = "__maliyet";
 // Seçilebilir kaynaklar: iki genel fiyat + Tanımlar'daki her fiyat grubu. Saf.
+// KATALOG FİYATLARI BULUTTA (v1.590.0 — kullanıcı: "Buluta gitsin fiyatlar, herkes farklı fiyatlar görmesin; fiyat
+// listesinden katalog fiyatı oluşturalım, 3 adet, onları girdiğimizde katalogda çıksın"). v1.584'te seçim cihazın yerel
+// deposundaydı; artık `tanimlar.katalogFiyatKaynaklari` (kaynak anahtarları, en fazla 3; maliyet olamaz) ve Fiyat Listesi
+// ekranından yönetiliyor. Liste boşsa katalog genel satış fiyatını gösterir (eski davranış).
+const KATALOG_FIYAT_SAYISI = 3;
+function katalogFiyatAnahtarlari(tanimlar) {
+    const l = (tanimlar && Array.isArray(tanimlar.katalogFiyatKaynaklari)) ? tanimlar.katalogFiyatKaynaklari.filter((k) => k && k !== FL_MALIYET) : [];
+    return l.length ? l.slice(0, KATALOG_FIYAT_SAYISI) : [FL_GENEL_SATIS];
+}
 function fiyatListesiKaynaklari(fiyatGruplari) {
     return [
         { key: FL_GENEL_SATIS, ad: "Genel satış fiyatı", tip: "Satış", genel: true, paraBirimi: null },
@@ -27861,11 +27903,38 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         border: `1.5px solid ${aktif ? "var(--erp-accent)" : "var(--erp-border-2)"}`, background: aktif ? "var(--erp-accent-tint)" : "#fff",
         color: aktif ? "var(--erp-accent)" : "var(--erp-text-2)" });
     return (React.createElement("div", { "data-fiyat-listesi": "1" },
+        (() => {
+            const liste = katalogFiyatAnahtarlari(tanimlar).map((key) => kaynaklar.find((k) => k.key === key)).filter(Boolean);
+            return (React.createElement("div", { "data-fl-katalog-listesi": "1", style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 } },
+                React.createElement("span", { style: { fontWeight: 700, color: "var(--erp-text-2)" } }, "Katalog fiyatlar\u0131:"),
+                liste.map((k, i) => (React.createElement("span", { key: k.key, "data-fl-katalog-kaynak": k.ad, style: { display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 4px 2px 9px",
+                        borderRadius: "var(--erp-r-pill)", border: "1px solid var(--erp-info)", background: "#3D6B8A1A", color: "var(--erp-info)", fontWeight: 700 } },
+                    i + 1,
+                    ". ",
+                    k.ad,
+                    React.createElement("button", { type: "button", title: "Katalogdan kald\u0131r", "data-fl-katalog-kaldir": k.ad, onClick: () => onTanimlarKaydet({ ...tanimlar, katalogFiyatKaynaklari: katalogFiyatAnahtarlari(tanimlar).filter((x) => x !== k.key) }), style: { border: "none", background: "none", cursor: "pointer", color: "inherit", padding: "0 3px", fontSize: 13 } }, "\u00D7")))),
+                React.createElement("span", { style: { color: "var(--erp-text-3)" } },
+                    "\u2014 yukar\u0131daki kayna\u011F\u0131 se\u00E7ip \"Katalogda g\u00F6ster\" deyin (en fazla ",
+                    KATALOG_FIYAT_SAYISI,
+                    "); herkes ayn\u0131 listeyi g\u00F6r\u00FCr")));
+        })(),
         React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 } },
             React.createElement("label", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, "Fiyat"),
             React.createElement("select", { "data-fl-kaynak": "1", value: kaynak.key, onChange: (e) => { setKaynakKey(e.target.value); setFarkli(null); }, style: { ...kutu, width: 270, fontWeight: 700 } }, kaynaklar.map((k) => (React.createElement("option", { key: k.key, value: k.key },
                 k.ad,
                 k.genel || k.maliyet ? "" : ` · ${k.tip} · ${pbSembol(k.paraBirimi)}`)))),
+            !kaynak.maliyet && (() => {
+                const liste = katalogFiyatAnahtarlari(tanimlar);
+                const secili = liste.includes(kaynak.key);
+                const sira = liste.indexOf(kaynak.key) + 1;
+                return (React.createElement("button", { type: "button", "data-fl-katalog": secili ? "1" : "0", style: cip(secili), title: secili ? `Katalogda ${sira}. fiyat — kaldırmak için dokunun` : `Bu fiyatı katalogda göster (en fazla ${KATALOG_FIYAT_SAYISI})`, onClick: () => {
+                        if (!secili && liste.length >= KATALOG_FIYAT_SAYISI)
+                            return showToast(`Katalogda en fazla ${KATALOG_FIYAT_SAYISI} fiyat gösterilir — önce birini kaldırın`);
+                        const yeni = secili ? liste.filter((k) => k !== kaynak.key) : [...liste, kaynak.key];
+                        onTanimlarKaydet({ ...tanimlar, katalogFiyatKaynaklari: yeni });
+                        showToast(secili ? `"${kaynak.ad}" katalogdan kaldırıldı` : `"${kaynak.ad}" katalogda ${yeni.length}. fiyat olarak gösterilecek`);
+                    } }, secili ? `★ Katalog ${sira}` : "☆ Katalogda göster"));
+            })(),
             React.createElement("select", { "data-fl-kategori": "1", value: kategori, onChange: (e) => setKategori(e.target.value), style: { ...kutu, width: 140 } }, kategoriler.map((k) => React.createElement("option", { key: k, value: k }, k === "Tümü" ? "Tüm kategoriler" : k))),
             React.createElement("div", { style: { display: "flex", gap: 4 } }, [["tumu", "Tümü"], ["fiyatli", "Fiyatı olan"], ["fiyatsiz", "Fiyatı boş"]].map(([k, ad]) => (React.createElement("button", { key: k, type: "button", "data-fl-goster": k, onClick: () => setGoster(k), style: cip(goster === k) }, ad)))),
             kaynak.maliyet && (React.createElement("button", { type: "button", "data-fl-yalniz-ok": yalnizOk ? "1" : "0", onClick: () => setYalnizOk((x) => !x), style: cip(yalnizOk), title: "\u00DCr\u00FCn kart\u0131 \u203A Maliyet'te 'Maliyet OK' denmi\u015F ve o g\u00FCnden beri maliyeti de\u011Fi\u015Fmemi\u015F \u00FCr\u00FCnler" },
@@ -31168,20 +31237,40 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     // Hammadde birim fiyatını KAYNAĞINA yaz: boy/renk kuralından geldiyse o kurala, yoksa karta.
                     // `pb` (v1.581.0 — kullanıcı: "Maliyette de p.birimi değiştirme olsun"): satırdaki birim seçicisi. Fiyat kuraldan
                     // geliyorsa kuralın `paraBirimi`, karttan geliyorsa kartın `alisParaBirimi` (simgeyle) yazılır — rakam aynı kalır.
+                    // RENK FİYATI KARTI EZMİYOR (v1.591.0 — kullanıcı: "maliyette aynı stoğun farklı renklerinin fiyatını değişince
+                    // diğer renkleri de değiştiriyor"). Eskiden satırın rengi için kural YOKSA kartın alış fiyatına yazılıyordu; kart
+                    // fiyatı bütün renklerin ortak fiyatı olduğu için öbür renkler de değişiyordu. Artık renkli/boylu satır HER ZAMAN
+                    // kendi kuralına yazar (renk+boy → renkBeden, boy → beden, renk → renk); kural yoksa açılır ve "Maliyet ekranından"
+                    // damgasını taşır (`kaynakNotu`, `kaynakTarih`) — hammadde kartının Fiyatlandırma sekmesi bunu rozetle söyler.
+                    // Kart fiyatına yalnız renksiz ve boysuz satır yazar. Hammaddenin fiyat geçmişine de satır düşer.
                     const birimFiyatKaydet = (d, yeni, pb) => {
                         const hm = (tumUrunler || []).find((u) => u.id === d.hammaddeId);
                         if (!hm)
                             return;
                         const kurallar = hm.fiyatKurallari || [];
-                        const eslesen = (d.renk && d.boy && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "renkBeden" && k.deger === `${d.renk}|${d.boy}`))
-                            || (d.boy && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "beden" && k.deger === d.boy))
-                            || (d.renk && kurallar.find((k) => k.tip === "Alış" && k.kapsam === "renk" && k.deger === d.renk));
-                        if (d.kaynak !== "Kart" && eslesen) {
-                            onUrunGuncelle(hm.id, { fiyatKurallari: kurallar.map((k) => (k.id === eslesen.id ? { ...k, fiyat: yeni, ...(pb ? { paraBirimi: pb } : {}) } : k)) });
-                        }
-                        else {
+                        if (!d.renk && !d.boy) {
                             onUrunGuncelle(hm.id, { alisFiyati: yeni, ...(pb ? { alisParaBirimi: PARA_SEMBOLU[pb] || pb } : {}) });
+                            return;
                         }
+                        // VAR OLAN kural önce (fiyatın geldiği yer: renk+boy → boy → renk; boy kuralı bilerek "o boyun bütün renkleri"
+                        // demek); hiçbiri yoksa satıra en dar kural açılır: renk+boy → renkBeden, boy → beden, renk → renk.
+                        const kuralAra = (kapsam, deger) => kurallar.find((k) => k.tip === "Alış" && k.kapsam === kapsam && k.deger === deger && !k.renk && !k.beden);
+                        const eslesen = (d.renk && d.boy && kuralAra("renkBeden", `${d.renk}|${d.boy}`))
+                            || (d.boy && kuralAra("beden", d.boy)) || (d.renk && kuralAra("renk", d.renk)) || null;
+                        const kapsam = eslesen ? eslesen.kapsam : (d.renk && d.boy ? "renkBeden" : d.boy ? "beden" : "renk");
+                        const deger = eslesen ? eslesen.deger : (kapsam === "renkBeden" ? `${d.renk}|${d.boy}` : kapsam === "beden" ? d.boy : d.renk);
+                        const etiket = kapsam === "renkBeden" ? `${d.renk} / ${d.boy}` : kapsam === "beden" ? `Beden: ${d.boy}` : `Renk: ${d.renk}`;
+                        const birim = pb || (eslesen && eslesen.paraBirimi) || d.pb || "TRY";
+                        const not = `Maliyet ekranından: ${product.ad}`;
+                        const yeniKural = { ...(eslesen || { id: uid("fkural"), kapsam, deger, tip: "Alış", etiket, renk: null, beden: null }),
+                            fiyat: yeni, paraBirimi: birim, kaynakNotu: not, kaynakTarih: new Date().toISOString() };
+                        const log = { id: uid("flog"), tarih: new Date().toISOString(), tip: "Alış", etiket: `${etiket} — ${not}`,
+                            eskiFiyat: eslesen ? eslesen.fiyat : null, yeniFiyat: yeni, eskiParaBirimi: eslesen ? eslesen.paraBirimi : null, paraBirimi: birim };
+                        onUrunGuncelle(hm.id, {
+                            fiyatKurallari: eslesen ? kurallar.map((k) => (k.id === eslesen.id ? yeniKural : k)) : [...kurallar, yeniKural],
+                            fiyatGecmisi: [log, ...(hm.fiyatGecmisi || [])].slice(0, HAREKET_GECMIS_SINIRI),
+                        });
+                        showToast(`${hm.ad} · ${etiket.replace(/^(Renk|Beden): /, "")}: alış fiyatı ${yeni} ${PARA_SEMBOLU[birim] || birim} — yalnız bu ${kapsam === "beden" ? "boy" : "renk"} için, stok kartına yazıldı`);
                     };
                     // Para birimine göre dağılım
                     const dagilim = {};
@@ -32134,6 +32223,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                         return (React.createElement("tr", { key: r, "data-fk-renk-satir": r, style: { borderTop: "1px solid var(--erp-line-soft)" } },
                                             React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } },
                                                 olcuGoster(r),
+                                                renkKurali && renkKurali.kaynakNotu && (React.createElement("span", { "data-fk-kaynak-notu": r, title: `${renkKurali.kaynakNotu}${renkKurali.kaynakTarih ? ` · ${tarihYaz(renkKurali.kaynakTarih)}` : ""}`, style: { marginLeft: 6, fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
+                                                        background: "var(--erp-orange-bg)", color: "var(--erp-warn)", verticalAlign: "middle" } }, "maliyetten")),
                                                 (() => {
                                                     // GRUP SEÇİCİ (v1.577.0): rengi listeden bir gruba al / yeni grup aç / gruptan çıkar.
                                                     const gr = (product.fiyatRenkGruplari || []).find((x) => x.renkler.includes(r));
@@ -32393,6 +32484,10 @@ function tumFisleriTopla(cariler, stok) {
             tip = "Tahsilat";
         else if (g.fisNo && g.fisNo.startsWith("ODM-"))
             tip = "Ödeme";
+        // MAAŞ (v1.589.0 — kullanıcı: "maaş fişlerini de gruplandırmak lazım"): MAAS-YYYY-MM-<kod> fişleri "Diğer"e
+        // düşüyordu; artık kendi çipi var (rengi FIS_TIP_RENK "Maaş").
+        else if (g.fisNo && g.fisNo.startsWith("MAAS-"))
+            tip = "Maaş";
         else if (g.fisNo && /^\d/.test(g.fisNo)) {
             // Üretim sipariş kodları artık salt sayısal (örn. "1023") — SAT-/ALS- ile başlamayıp
             // rakamla başlayan fişler üretime aittir.
@@ -40368,6 +40463,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
         // muhasebe fişleri ekranında yalnız "Tümü" ve "Satış" görünüyordu.
         "Tahsilat": tumFisler.filter((f) => f.tip === "Tahsilat").length,
         "Ödeme": tumFisler.filter((f) => f.tip === "Ödeme").length,
+        "Maaş": tumFisler.filter((f) => f.tip === "Maaş").length, // v1.589.0
         "Diğer": tumFisler.filter((f) => f.tip === "Diğer").length,
     };
     const q = query.trim().toLowerCase();
@@ -40515,7 +40611,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                     border: `1.5px solid ${filtreDefter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
                     background: filtreDefter === d ? "#4E6B4E1A" : "#fff", color: filtreDefter === d ? "var(--erp-primary)" : "var(--erp-text-2)" } }, d === "Tümü" ? "Tüm defterler" : d))),
             React.createElement("span", { style: { width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "0 2px" } }),
-            ["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Diğer"].map((t) => (sayilar[t] > 0 || t === "Tümü" ? (React.createElement("button", { key: t, onClick: () => setFiltreTip(t), style: {
+            ["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Maaş", "Diğer"].map((t) => (sayilar[t] > 0 || t === "Tümü" ? (React.createElement("button", { key: t, onClick: () => setFiltreTip(t), style: {
                     padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 13, cursor: "pointer",
                     border: `1.5px solid ${filtreTip === t ? (FIS_TIP_RENK[t] || "var(--erp-orange)") : "var(--erp-border)"}`,
                     background: filtreTip === t ? alfaEkle((FIS_TIP_RENK[t] || "var(--erp-orange)"), "1A") : "#fff",
@@ -54877,7 +54973,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.588.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.591.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
