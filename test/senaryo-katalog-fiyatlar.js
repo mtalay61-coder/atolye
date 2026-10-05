@@ -1,8 +1,8 @@
-// SENARYO — KATALOGDA 3 FİYAT (4 Ekim, v1.584.0).
+// SENARYO — KATALOGDA 3 FİYAT (4 Ekim, v1.584.0; 5 Ekim v1.590.0: seçim Fiyat Listesi'nde ve bulutta).
 // Kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı seçilerek katalogda görünecek
 // fiyatlar çıksın." Ölçülen: genel satış + Toptan $ + Perakende ₺ seçilince kartta ve detayda üçü de; dördüncü seçilemez;
 // müşteri görünümünde alış tipli kaynak gizli; seçim yerel depoda kalıcı. Cariye özel fiyat katalogda yine yok (senaryo-katalog).
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, depoOku } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -20,35 +20,54 @@ async function calistir() {
   t["stok:items"] = JSON.stringify(st);
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
+  await sayfa.waitForTimeout(2000);
+  // v1.590.0: seçim Fiyat Listesi'nde ve BULUTTA (tanımlar). Kaynağı seç → "Katalogda göster".
+  await sayfa.evaluate(() => document.querySelector('[data-nav="Fiyat Listesi"]').click());
+  await sayfa.waitForTimeout(900);
+  const kok = "[data-fiyat-listesi]";
+  const katalogListesi = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-fl-katalog-kaynak]")].map((x) => x.getAttribute("data-fl-katalog-kaynak")));
+  const kaynakSecVeEkle = async (key) => {
+    await sayfa.locator(`${kok} [data-fl-kaynak]`).first().selectOption(key);
+    await sayfa.waitForTimeout(300);
+    await sayfa.locator(`${kok} [data-fl-katalog]`).first().click();
+    await sayfa.waitForTimeout(400);
+  };
+  const baslangic = { liste: await katalogListesi(), dugme: await sayfa.locator(`${kok} [data-fl-katalog]`).first().textContent() };
+  await kaynakSecVeEkle("fgT");
+  await kaynakSecVeEkle("fgP");
+  const ucSecili = await katalogListesi();
+  await kaynakSecVeEkle("fgA");   // 4. olmaz
+  const dorduncuDenemesi = await katalogListesi();
+  const bulut = ((await depoOku(sayfa, "tanimlar:data")) || {}).katalogFiyatKaynaklari;
+  // Katalog
   await sayfa.evaluate(() => document.querySelector('[data-nav="Mamul Stok"]').click());
   await sayfa.waitForTimeout(800);
   await sayfa.locator('button:has-text("Katalog"):visible').first().click();
   await sayfa.waitForTimeout(600);
   const kart = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-katalog-fiyat]")].map((x) => `${x.getAttribute("data-katalog-fiyat")}: ${x.textContent.replace(/\s+/g, " ").trim()}`));
-  const varsayilan = await kart();
-  await sayfa.locator('[data-katalog-kaynak="Toptan USD"]').click();
-  await sayfa.locator('[data-katalog-kaynak="Perakende"]').click();
-  await sayfa.waitForTimeout(300);
   const uclu = await kart();
-  await sayfa.locator('[data-katalog-kaynak="Tedarikçi Alış"]').click();   // 4. olmaz
-  await sayfa.waitForTimeout(300);
-  const dorduncuDenemesi = (await kart()).length;
-  // Detay
+  const katalogOzeti = await sayfa.evaluate(() => [...document.querySelectorAll("[data-katalog-kaynak]")].map((x) => x.textContent.trim()));
+  const cipTiklanabilir = await sayfa.evaluate(() => [...document.querySelectorAll("[data-katalog-kaynak]")].some((x) => x.tagName === "BUTTON"));
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /27325 D/.test(x.textContent) && x.offsetParent); b.click(); });
   await sayfa.waitForTimeout(600);
   const detay = await sayfa.evaluate(() => [...document.querySelectorAll("[data-katalog-detay-fiyat]")].map((x) => x.textContent.replace(/\s+/g, " ").trim()));
   const cariOzelGorunuyor = await sayfa.evaluate(() => /999/.test(document.body.innerText));
-  // Alış kaynağı: Perakende'yi bırak, alışı seç → personelde görünür, müşteri görünümünde gizli.
-  await sayfa.locator('[data-katalog-kaynak="Perakende"]').click();
-  await sayfa.locator('[data-katalog-kaynak="Tedarikçi Alış"]').click();
+  // Perakende'yi kaldır, alışı ekle → personelde görünür, müşteri görünümünde gizli.
+  await sayfa.evaluate(() => document.querySelector('[data-nav="Fiyat Listesi"]').click());
+  await sayfa.waitForTimeout(700);
+  await sayfa.locator(`${kok} [data-fl-katalog-kaldir="Perakende"]`).first().click();
   await sayfa.waitForTimeout(300);
+  await kaynakSecVeEkle("fgA");
+  const alisListesi = await katalogListesi();
+  await sayfa.evaluate(() => document.querySelector('[data-nav="Mamul Stok"]').click());
+  await sayfa.waitForTimeout(700);
   const alisPersonel = await kart();
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Personel görünümü"); b.click(); });
   await sayfa.waitForTimeout(300);
   const alisMusteri = await kart();
-  const kalici = await sayfa.evaluate(() => localStorage.getItem("katalog:fiyatKaynaklari"));
+  const yerelKayit = await sayfa.evaluate(() => localStorage.getItem("katalog:fiyatKaynaklari"));
   await tarayici.close();
-  return { hatalar, varsayilan, uclu, dorduncuDenemesi, detay, cariOzelGorunuyor, alisPersonel, alisMusteri, kalici };
+  return { hatalar, baslangic, ucSecili, dorduncuDenemesi, bulut, uclu, katalogOzeti, cipTiklanabilir, detay, cariOzelGorunuyor, alisListesi, alisPersonel, alisMusteri, yerelKayit };
 }
 
 if (require.main === module) {

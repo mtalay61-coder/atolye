@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.589.0";
-const SURUM_TARIHI = "2026-10-04";
-const SURUM_NOTU = "Ust seritteki sekmeler ikonlu ve modul renginde; Fislerde Maas cipi; Gelir / Gider sekme adi";
+const SURUM = "1.590.0";
+const SURUM_TARIHI = "2026-10-05";
+const SURUM_NOTU = "Katalog fiyatlari bulutta: Fiyat Listesinden \"Katalogda goster\" (en fazla 3), herkes ayni fiyatlari gorur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Ust seritteki sekmeler ikonlu ve modul renginde; Fislerde Ma
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.590.0", tarih: "05.10.2026",
+    eklenen: ["Depo › Fiyat Listesi: seçili fiyat kaynağı için \"☆ Katalogda göster\" düğmesi ve üstte katalog listesi (en fazla 3, × ile kaldır)"],
+    degisen: ["Katalogda görünen fiyatlar artık bulutta (Tanımlar) tutuluyor — her cihaz aynı fiyatları gösterir; katalogdaki cihaza özel seçim çipleri kalktı, yalnız liste görünüyor"],
+    duzeltilen: [] },
   { surum: "1.589.0", tarih: "04.10.2026",
     eklenen: ["Fişler: maaş tahakkuk fişleri (MAAS-…) \"Diğer\" yerine kendi \"Maaş\" çipinde"],
     degisen: ["Üst şeritteki açık sayfa ve kayıt sekmeleri modül ikonu ve modül rengiyle (etkin sekmede renkli üst çizgi ve yazı)"],
