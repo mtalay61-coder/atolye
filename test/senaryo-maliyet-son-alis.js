@@ -49,10 +49,12 @@ async function calistir() {
     if (!t) return null;
     return [...t.querySelectorAll("tbody tr")].map((r) => {
       const h = [...r.children];
-      const kutu = h[2] && h[2].querySelector("input");
-      const kaynak = h[2] && h[2].querySelector("[data-fiyat-kaynagi]");
-      const fiyat = kutu ? kutu.value : (h[2] ? h[2].textContent.replace(kaynak ? kaynak.textContent : "", "").trim() : "");
-      return { ad: h[0] ? h[0].textContent.trim() : "", fiyat, kutu: !!kutu, kaynak: kaynak ? kaynak.textContent.replace(/\d{2}\.\d{2}\.\d{4}/, "GG.AA.YYYY").trim() : null, tl: h[4] ? h[4].textContent.trim() : "" };
+      // v1.595.0: ilk sütun proses; hammadde h[1], birim fiyat h[3], TL h[5].
+      const kutu = h[3] && h[3].querySelector("input");
+      const kaynak = h[3] && h[3].querySelector("[data-fiyat-kaynagi]");
+      const toplamSatiri = !!r.querySelector("td[colspan]");
+      const fiyat = kutu ? kutu.value : (h[3] ? h[3].textContent.replace(kaynak ? kaynak.textContent : "", "").trim() : "");
+      return { ad: toplamSatiri ? h[0].textContent.trim() : (h[1] ? h[1].textContent.trim() : ""), fiyat, kutu: !!kutu, kaynak: kaynak ? kaynak.textContent.replace(/\d{2}\.\d{2}\.\d{4}/, "GG.AA.YYYY").trim() : null, tl: h[5] ? h[5].textContent.trim() : "" };
     });
   });
   if (process.env.FOTO) await sayfa.locator("[data-maliyet-dokumu]").first().screenshot({ path: process.env.FOTO });

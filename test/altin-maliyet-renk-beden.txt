@@ -1,0 +1,38 @@
+{
+ "beden42": {
+  "beden": "42 · Orta beden (40)",
+  "renk": "Siyah",
+  "renkSecenekleri": [
+   "Siyah",
+   "Taba"
+  ],
+  "satirlar": [
+   "Kesim | Deri · Siyah | 2 metre",
+   "Kesim | Deri · Siyah | 1 metre"
+  ]
+ },
+ "hatalar": [],
+ "taba": {
+  "beden": "yok",
+  "renk": "Taba",
+  "renkSecenekleri": [
+   "Siyah",
+   "Taba"
+  ],
+  "satirlar": [
+   "Kesim | Deri · Taba | 3 metre"
+  ]
+ },
+ "varsayilan": {
+  "beden": "(orta) · Orta beden (40)",
+  "renk": "Siyah",
+  "renkSecenekleri": [
+   "Siyah",
+   "Taba"
+  ],
+  "satirlar": [
+   "Kesim | Deri · Siyah | 2 metre",
+   "Kesim | Deri · Siyah | 5 metre"
+  ]
+ }
+}

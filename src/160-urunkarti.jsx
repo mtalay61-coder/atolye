@@ -432,6 +432,10 @@ function ProductMatrixCard({
   const gecerliBaslangicSekme =
     baslangicSekme === "recete" && product.kategori !== "Mamul" ? "stok" : baslangicSekme;
   const [cardTab, setCardTab] = useState(gecerliBaslangicSekme || "stok");
+  // MALİYET RENK / BEDEN SEÇİMİ (v1.595.0 — kullanıcı: "maliyette renk bedenler neye göre çekiyor?"): maliyet, reçetesi olan
+  // İLK mamul renk ve ORTA beden üzerinden hesaplanıyordu (v1.568 temsili beden); hangisi olduğu yazmıyordu. Artık üstte seçilir.
+  const [maliyetRenk, setMaliyetRenk] = useState("");
+  const [maliyetBeden, setMaliyetBeden] = useState("");
   // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
   const sekmeAcRef = useRef(null);
   const stokAcRef = useRef(null);
@@ -4757,7 +4761,12 @@ function ProductMatrixCard({
               return s + (tanimliAp ? (tanimliAp.ucret || 0) : 0);
             }, 0);
             const isciligToplami = anaProsesIscilik + araProsesIscilik;
-            const receteVarRenk = renkler.find((mr) => (product.recete || []).some((r) => r.mamulRenk === mr));
+            const receteRenkleri = renkler.filter((mr) => (product.recete || []).some((r) => r.mamulRenk === mr));
+            const receteVarRenk = (maliyetRenk && receteRenkleri.includes(maliyetRenk)) ? maliyetRenk : receteRenkleri[0];
+            const maliyetBedenleri = bedenSirala(Array.from(new Set((product.recete || []).filter((r) => r.mamulRenk === receteVarRenk)
+              .map((r) => r.mamulBeden).filter((b) => b && b !== "Tüm Bedenler"))));
+            const seciliBeden = maliyetBedenleri.includes(maliyetBeden) ? maliyetBeden : "";
+            const temsiliBeden = maliyetBedenleri.length > 1 ? maliyetBedenleri[Math.floor((maliyetBedenleri.length - 1) / 2)] : (maliyetBedenleri[0] || "");
             let hammaddeToplami = 0;
             const kuruEksikler = new Set();
             // REÇETE MALİYET DÖKÜMÜ (kullanıcı, 21 Eylül: "stoğun para birimi ve kendi birimi ile
@@ -4766,7 +4775,11 @@ function ProductMatrixCard({
             // TL karşılığı, seçilen maliyet biriminde karşılığı.
             const maliyetDokumu = [];
             if (receteVarRenk) {
-              const ilgiliSatirlar = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk));   // v1.568: tek beden
+              const renkSatirlari = product.recete.filter((r) => r.mamulRenk === receteVarRenk);
+              // Beden seçildiyse o beden (+ "Tüm Bedenler" satırları); seçilmediyse orta beden (v1.568 temsili).
+              const ilgiliSatirlar = seciliBeden
+                ? renkSatirlari.filter((r) => !r.mamulBeden || r.mamulBeden === "Tüm Bedenler" || r.mamulBeden === seciliBeden)
+                : maliyetTemsiliSatirlar(renkSatirlari);
               receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).forEach((pg) => {
                 receteMaliyetGrupla(pg.satirlar).forEach((g) => {
                   const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);
@@ -4779,6 +4792,7 @@ function ProductMatrixCard({
                   if (bf.kendiFiyat > 0 && bf.pb !== "TRY" && !(parseFloat((kurlar || {})[bf.pb]) > 0)) kuruEksikler.add(bf.pb);
                   hammaddeToplami += miktar * fiyat;
                   maliyetDokumu.push({
+                    proses: pg.proses,   // v1.595.0: dökümde proses adı
                     hammaddeId: hammadde ? hammadde.id : null,
                     ad: hammadde ? hammadde.ad : (g.satirlar[0].hammaddeAd || "?"),
                     renk: g.satirlar[0].renk || "", boy: g.satirlar[0].beden || "",
@@ -4860,13 +4874,37 @@ function ProductMatrixCard({
               <div style={{ background: "#F0F5EE", border: "1px solid #8FA888", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 12, fontSize: 12, color: "var(--erp-primary)" }}>
                 {/* Maliyet birimi seçici TOPLAM FİYATIN yanına taşındı (21 Eylül). */}
                 {/* SATIR DÖKÜMÜ: kendi biriminde fiyat/tutar, TL, seçilen birim */}
+                {/* HANGİ RENK / BEDEN (v1.595.0): seçilebilir; varsayılan ilk reçeteli renk ve orta beden. */}
+                {receteVarRenk && (
+                  <div data-maliyet-secim="1" style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 8, fontSize: 12 }}>
+                    <span style={{ fontWeight: 700 }}>Maliyet şu renk/beden için:</span>
+                    <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>Renk
+                      <select data-maliyet-renk="1" value={receteVarRenk} onChange={(e) => { setMaliyetRenk(e.target.value); setMaliyetBeden(""); }}
+                        style={{ fontSize: 12, padding: "2px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
+                        {receteRenkleri.map((mr) => <option key={mr} value={mr}>{mr}</option>)}
+                      </select>
+                    </label>
+                    {maliyetBedenleri.length > 0 && (
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>Beden
+                        <select data-maliyet-beden="1" value={seciliBeden} onChange={(e) => setMaliyetBeden(e.target.value)}
+                          style={{ fontSize: 12, padding: "2px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
+                          <option value="">{temsiliBeden ? `Orta beden (${temsiliBeden})` : "—"}</option>
+                          {maliyetBedenleri.map((b) => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </label>
+                    )}
+                    <span style={{ color: "var(--erp-text-3)" }}>
+                      Reçetesi olan ilk renk ve orta beden varsayılan; bedene göre değişen malzeme (taban, fort) seçilen bedenin satırından okunur.
+                    </span>
+                  </div>
+                )}
                 {maliyetDokumu.length > 0 && (
                   <div style={{ overflowX: "auto", marginBottom: 8 }}>
                     <table data-maliyet-dokumu="1" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "#fff" }}>
                       <thead>
                         <tr style={{ background: "var(--erp-panel-2)" }}>
-                          {["Hammadde", "Miktar", "Birim fiyat", "Tutar (kendi)", "TL", ...(hedefPb !== "TRY" ? [PB_SIMGE[hedefPb]] : [])].map((h, k) => (
-                            <th key={h} style={{ padding: "5px 8px", textAlign: k === 0 ? "left" : "right", fontSize: 10,
+                          {["Proses", "Hammadde", "Miktar", "Birim fiyat", "Tutar (kendi)", "TL", ...(hedefPb !== "TRY" ? [PB_SIMGE[hedefPb]] : [])].map((h, k) => (
+                            <th key={h} style={{ padding: "5px 8px", textAlign: k <= 1 ? "left" : "right", fontSize: 10,
                               letterSpacing: ".04em", textTransform: "uppercase", color: "var(--erp-text-2)",
                               borderBottom: "2px solid var(--erp-border)" }}>{h}</th>
                           ))}
@@ -4875,6 +4913,7 @@ function ProductMatrixCard({
                       <tbody>
                         {maliyetDokumu.map((d, k) => (
                           <tr key={k} style={{ borderBottom: "1px solid var(--erp-border-2)" }}>
+                            <td data-maliyet-proses={d.proses} className="mono" style={{ padding: "4px 8px", fontSize: 11, color: "var(--erp-purple)", whiteSpace: "nowrap" }}>{d.proses}</td>
                             <td style={{ padding: "4px 8px", fontWeight: 700 }}>
                               {d.ad}{d.renk ? <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}> · {d.renk}</span> : null}
                               {d.boy ? <span data-maliyet-boy="1" style={{ fontWeight: 400, color: "var(--erp-text-3)" }}> · {d.boy}</span> : null}
@@ -4918,7 +4957,7 @@ function ProductMatrixCard({
                           </tr>
                         ))}
                         <tr style={{ background: "var(--erp-panel-2)", fontWeight: 700 }}>
-                          <td style={{ padding: "5px 8px" }} colSpan={4}>Toplam</td>
+                          <td style={{ padding: "5px 8px" }} colSpan={5}>Toplam</td>
                           <td className="mono" style={{ padding: "5px 8px", textAlign: "right" }}>{para(hammaddeToplami, "TRY")}</td>
                           {hedefPb !== "TRY" && (
                             <td className="mono" style={{ padding: "5px 8px", textAlign: "right" }}>{para(hedefe(hammaddeToplami), hedefPb)}</td>

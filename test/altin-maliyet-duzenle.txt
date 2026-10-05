@@ -1,7 +1,7 @@
 {
  "hatalar": [],
  "once": {
-  "fermuar": "Fermuar · Siyah · 50 cm | 1 Çift | ₺Boy fiyatı | 4,00 ₺ | 4,00 ₺",
+  "fermuar": "Saya | Fermuar · Siyah · 50 cm | 1 Çift | ₺Boy fiyatı | 4,00 ₺ | 4,00 ₺",
   "sapma": [
    "1001 | Fermuar · Siyah · 50 cm | +0,2 Çift | +12 Çift"
   ]
