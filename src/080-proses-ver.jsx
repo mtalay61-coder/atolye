@@ -57,8 +57,11 @@ function uretimProsesAdimlari(urun, renk, tanimlar) {
   ((tanimlar && tanimlar.prosesler) || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
   const araTanimlari = (tanimlar && tanimlar.araProsesler) || [];
   const araAdlari = new Set(araTanimlari.map((ap) => ap.ad));
-  const asillar = Array.from(new Set(((urun && urun.recete) || [])
-    .filter((r) => r.mamulRenk === renk && r.proses && !araAdlari.has(r.proses)).map((r) => r.proses)));
+  // Hammaddesiz prosesler de adım (v1.593.0, `receteEkProsesler`).
+  const asillar = Array.from(new Set([
+    ...((urun && urun.recete) || []).filter((r) => r.mamulRenk === renk && r.proses && !araAdlari.has(r.proses)).map((r) => r.proses),
+    ...((urun && urun.receteEkProsesler) || []).filter((p) => p && !araAdlari.has(p)),
+  ]));
   if (asillar.length === 0) {
     return [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null, atamalar: [] }];
   }

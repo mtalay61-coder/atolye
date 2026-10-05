@@ -25,11 +25,31 @@ const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol
 // kutu açılır: Enter/✓ kaydeder, × siler (boş açıklama). "N. Renk" POZİSYON etiketi düzenlenmez — kombinasyon
 // renginin hangi parçasının kullanılacağını o söylüyor; değişirse hammadde rengi çözümü bozulur.
 // `onKaydet(yeni)` grubun o açıklamayı taşıyan BÜTÜN satırlarına (her renk) yazmalı.
-function ReceteAciklamasi({ deger, gosterim, onKaydet, stil }) {
+// POZİSYON DÜZENLEME (v1.593.0 — kullanıcı: "pozisyonda düzenleme olsun"): `pozisyonSecenekleri` + `onPozisyonDegistir`
+// verilirse "N. Renk" etiketi dokununca küçük bir listeye dönüşür (1. Renk … N. Renk); seçilince satırlar yeni pozisyona
+// taşınır ve hammadde rengi kombinasyondan yeniden çözülür (160 `pozisyonDegistir`). Liste yalnız düzenlerken açılır —
+// kapalıyken etiket düz metin (ekran okuma ve testler değişmedi).
+function ReceteAciklamasi({ deger, gosterim, onKaydet, stil, pozisyonSecenekleri, onPozisyonDegistir }) {
   const [duzenle, setDuzenle] = useState(false);
   const [metin, setMetin] = useState(deger || "");
   const pozisyon = /^\d+\. Renk$/.test(String(deger || ""));
   const temel = { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)", background: "var(--erp-panel-2)", padding: "3px 8px", borderRadius: "var(--erp-r-pill)", whiteSpace: "nowrap", ...(stil || {}) };
+  if (pozisyon && onPozisyonDegistir && (pozisyonSecenekleri || []).length > 1) {
+    if (!duzenle) {
+      return (
+        <button type="button" className="mono" data-recete-pozisyon={deger} title="Pozisyonu değiştir (1. Renk, 2. Renk…)" onClick={() => setDuzenle(true)}
+          style={{ ...temel, border: "1px dashed var(--erp-line)", cursor: "pointer" }}>{gosterim || deger} ✎</button>
+      );
+    }
+    return (
+      <select autoFocus className="mono" data-recete-pozisyon-sec={deger} value={deger}
+        onChange={(e) => { setDuzenle(false); if (e.target.value !== deger) onPozisyonDegistir(e.target.value); }}
+        onBlur={() => setDuzenle(false)}
+        style={{ ...temel, border: "1px solid var(--erp-brown)", cursor: "pointer" }}>
+        {pozisyonSecenekleri.map((p) => <option key={p} value={p}>{p}</option>)}
+      </select>
+    );
+  }
   if (pozisyon || !onKaydet) return deger ? <span className="mono" style={temel} title={pozisyon ? "Pozisyon etiketi — renk eşleşmesi buna bağlı, düzenlenmez" : undefined}>{gosterim || deger}</span> : null;
   const kaydet = (yeni) => { setDuzenle(false); const t = String(yeni || "").trim(); if (t !== String(deger || "")) onKaydet(t); };
   if (!duzenle) {
@@ -278,6 +298,94 @@ function ProductMatrixCard({
     const hr = receteRenkEkleRef.current;
     receteRenkEkleRef.current = null;
     return receteGrubuGuncelleHam(pid, sil, yeni, ek, hr);
+  };
+  // ---- REÇETE DÜZENLEME ARAÇLARI (v1.593.0 — kullanıcı: "pozisyonda düzenleme olsun, stokların sıralaması olsun
+  // aşağı yukarı gibi, hammadde kullanmayan proses de ekleyebilelim"; "otomatik eşleşmede kırmızı ama doğruysa üzerine
+  // tik koyalım, kırmızı kalksın yeşil olsun").
+  // Pozisyon seçenekleri: mamul renklerin en çok pozisyonu ile karttaki en büyük pozisyon numarasının büyüğü kadar.
+  const pozisyonEtiketleri = (g) => {
+    const mamulRenkleri = Array.from(new Set((product.variants || []).map((v) => v.renk)));
+    let n = Math.max(1, ...mamulRenkleri.map((mr) => pozisyonSayisi(mr)));
+    g.satirlar.forEach((r) => { const m = /^(\d+)\. Renk$/.exec(String(r.aciklama || "")); if (m) n = Math.max(n, parseInt(m[1], 10)); });
+    return Array.from({ length: n }, (_, i) => `${i + 1}. Renk`);
+  };
+  // Kartın "eskiPoz" satırları "yeniPoz"a taşınır; hammadde rengi kombinasyonun o parçasından yeniden çözülür
+  // (adı hammaddede varsa), çözülemezse eldeki renk kalır. Aynı kartta hedef pozisyon zaten varsa taşınmaz.
+  const pozisyonDegistir = (g, eskiPoz, yeniPoz) => {
+    if (!yeniPoz || yeniPoz === eskiPoz) return;
+    if (g.satirlar.some((r) => (r.aciklama || "") === yeniPoz)) { if (showToast) showToast(`Bu kartta "${yeniPoz}" zaten var — önce onu değiştirin`); return; }
+    const satirlar = g.satirlar.filter((r) => (r.aciklama || "") === (eskiPoz || ""));
+    if (!satirlar.length) return;
+    const p = parseInt(yeniPoz, 10);
+    const adaylar = hammaddeRenkSecenekleri(g.hammaddeUrunId, tumUrunler);
+    const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+    let cozulen = 0;
+    const yeni = satirlar.map((r) => {
+      const { id, ...rest } = r;
+      const hedef = kombinasyonRengiCoz(r.mamulRenk, p);
+      const uyan = hedef ? adaylar.find((a) => nrm(a) === nrm(hedef)) : null;
+      if (uyan) cozulen++;
+      // Renk yeniden çözüldüyse "geçmişten" işareti düşer (artık kombinasyondan geldi); çözülemediyse eldeki renk ve
+      // işareti aynen kalır — kullanıcı kırmızıyı görmeye devam eder.
+      return uyan ? { ...rest, renkGecmisten: undefined, aciklama: yeniPoz, renk: uyan } : { ...rest, aciklama: yeniPoz };
+    });
+    onReceteGrubuGuncelle(product.id, satirlar.map((r) => r.id), yeni);
+    if (showToast) showToast(`${g.hammaddeAd}: "${eskiPoz}" → "${yeniPoz}"${cozulen ? ` · ${cozulen} renk kombinasyondan yeniden çözüldü` : ""}`);
+  };
+  // Kart sırası: aynı prosesteki kartlar reçete dizisindeki sırayla çiziliyor (receteGrupla ilk görülme sırası);
+  // yukarı/aşağı, bu prosesin satırlarını yeni kart sırasıyla dizinin sonuna yazar — öbür proseslerin satırları yerinde.
+  const kartTasi = (pg, g, yon) => {
+    const gruplar = receteGrupla(pg.satirlar);
+    const i = gruplar.findIndex((x) => x.key === g.key);
+    const j = i + yon;
+    if (i < 0 || j < 0 || j >= gruplar.length) return;
+    const yeniSira = [...gruplar]; [yeniSira[i], yeniSira[j]] = [yeniSira[j], yeniSira[i]];
+    const pgIdler = new Set(pg.satirlar.map((r) => r.id));
+    const digerler = (product.recete || []).filter((r) => !pgIdler.has(r.id));
+    onUrunGuncelle(product.id, { recete: [...digerler, ...yeniSira.flatMap((x) => x.satirlar)] });
+  };
+  const kartSiraOklari = (pg, g) => {
+    const gruplar = receteGrupla(pg.satirlar);
+    const i = gruplar.findIndex((x) => x.key === g.key);
+    if (gruplar.length < 2) return null;
+    const ok = (yon, Ikon, etiket) => {
+      const kapali = yon < 0 ? i <= 0 : i >= gruplar.length - 1;
+      return (
+        <button type="button" data-recete-kart-tasi={yon < 0 ? "yukari" : "asagi"} data-recete-kart={g.hammaddeAd} title={etiket}
+          disabled={kapali} onClick={() => kartTasi(pg, g, yon)}
+          style={{ border: "none", background: "none", padding: 0, lineHeight: 0.7, cursor: kapali ? "default" : "pointer", color: kapali ? "var(--erp-border-2)" : "var(--erp-text-2)" }}>
+          <Ikon size={13} />
+        </button>
+      );
+    };
+    return <span style={{ display: "flex", flexDirection: "column" }}>{ok(-1, ChevronUp, "Kartı yukarı taşı")}{ok(1, ChevronDown, "Kartı aşağı taşı")}</span>;
+  };
+  // Hammaddesiz proses: ürünün `receteEkProsesler` listesi.
+  const bosProsesEkle = (ad) => {
+    if (!ad) return;
+    const l = product.receteEkProsesler || [];
+    if (l.includes(ad)) return;
+    onUrunGuncelle(product.id, { receteEkProsesler: [...l, ad] });
+    if (showToast) showToast(`"${ad}" prosesi reçeteye eklendi — hammaddesi yok, yalnız işçilik girilir`);
+  };
+  const bosProsesKaldir = (ad) => onUrunGuncelle(product.id, { receteEkProsesler: (product.receteEkProsesler || []).filter((x) => x !== ad) });
+  // Kırmızı (geçmişten hatırlanan) renk hücresine ✓: işaret düşer, satır "onaylı" (yeşil ✓) olur.
+  const renkOnayDugmesi = (satirlar) => {
+    const l = (satirlar || []).filter(Boolean);
+    if (!l.length) return null;
+    if (l.some((r) => r.renkGecmisten)) {
+      return (
+        <button type="button" data-renk-gecmis-onay="1" title="Doğru — bu eşleşmeyi onayla (kırmızı kalkar)"
+          onClick={() => onReceteGrubuGuncelle(product.id, l.map((r) => r.id), l.map(({ id, renkGecmisten: _rg, ...rest }) => ({ ...rest, renkOnayli: true })))}
+          style={{ border: "1.5px solid var(--erp-ok)", background: "#fff", color: "var(--erp-ok)", borderRadius: "var(--erp-r-sm)", padding: "0 5px", fontSize: 12, fontWeight: 800, cursor: "pointer", lineHeight: 1.4 }}>
+          ✓
+        </button>
+      );
+    }
+    if (l.every((r) => r.renkOnayli)) {
+      return <span data-renk-onayli="1" title="Eşleşme onaylandı" style={{ color: "var(--erp-ok)", fontWeight: 800, fontSize: 12 }}>✓</span>;
+    }
+    return null;
   };
   const receteRenkYeni = {
     tanimlarRenkler, tumUrunler,
@@ -3254,11 +3362,28 @@ function ProductMatrixCard({
               Maliyet ve satış fiyatı → Maliyet sekmesi
             </button>
           )}
-          {(product.recete || []).length > 0 && (
+          {((product.recete || []).length > 0 || (product.receteEkProsesler || []).length > 0) && (
             <>
+              {/* HAMMADDESİZ PROSES EKLE (v1.593.0): yalnız işçiliği olan adım (ör. Dikim, Kalite) reçetede grup olur. */}
+              {(() => {
+                const mevcut = new Set(receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).map((pg) => pg.proses));
+                const adaylar = (tanimlarProsesler || []).map((p) => p.ad).filter((ad) => !mevcut.has(ad));
+                if (!adaylar.length) return null;
+                return (
+                  <div data-recete-bos-proses="1" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)" }}>
+                    <span>Hammaddesiz proses ekle:</span>
+                    <select data-recete-bos-proses-sec="1" value="" onChange={(e) => bosProsesEkle(e.target.value)}
+                      style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
+                      <option value="">Seçin…</option>
+                      {adaylar.map((ad) => <option key={ad} value={ad}>{ad}</option>)}
+                    </select>
+                    <span style={{ color: "var(--erp-text-3)" }}>— yalnız işçilik girilir, üretimde adım olur</span>
+                  </div>
+                );
+              })()}
               <div style={{ display: "grid", gap: 14, marginBottom: 12 }}>
               {(() => {
-                const pgListesi = receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride);
+                const pgListesi = receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler);
                 return pgListesi.map((pg, pgIndex) => (
                 <div
                   key={pg.proses}
@@ -3368,6 +3493,14 @@ function ProductMatrixCard({
                           style={{ width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
                         />
                       </label>
+                    )}
+                    {pg.bosMu && (
+                      <span data-recete-bos-proses-rozet={pg.proses} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700,
+                        color: "var(--erp-text-2)", background: "var(--erp-panel-2)", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-pill)", padding: "2px 8px" }}>
+                        hammadde yok · yalnız işçilik
+                        <button type="button" data-recete-bos-proses-kaldir={pg.proses} title="Prosesi reçeteden kaldır" onClick={() => bosProsesKaldir(pg.proses)}
+                          style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-danger)", fontSize: 13, padding: "0 2px", lineHeight: 1 }}>×</button>
+                      </span>
                     )}
                     {/* BİRDEN ÇOK ARA PROSES (v1.477.0 — kullanıcı: "bir prosesin altına birden fazla ara proses
                         eklenebilmeli"). `araProsesEklentileri[proses]` artık dizi (eski tek kimlik de okunur,
@@ -3503,6 +3636,7 @@ function ProductMatrixCard({
                         return (
                           <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              {kartSiraOklari(pg, g)}
                               <ColorSwatch
                                 src={(() => {
                                   const hammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
@@ -3678,7 +3812,7 @@ function ProductMatrixCard({
                                     return (
                                     <tr key={poz ?? "__tekli__"}>
                                       <td style={{ padding: "4px 8px" }}>
-                                        <ReceteAciklamasi deger={poz} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (poz || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />
+                                        <ReceteAciklamasi deger={poz} pozisyonSecenekleri={pozisyonEtiketleri(g)} onPozisyonDegistir={(yeni) => pozisyonDegistir(g, poz, yeni)} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (poz || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />
                                         {satirIdleri.length > 0 && (
                                           <span style={{ display: "inline-flex", marginLeft: poz != null ? 4 : 0, verticalAlign: "middle" }}>
                                             <SilOnayButonu
@@ -3737,7 +3871,7 @@ function ProductMatrixCard({
                                                   >
                                                     {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
-                                                  </ReceteRenkSecimi>
+                                                  </ReceteRenkSecimi>{renkOnayDugmesi([r])}
                                                 </span>
                                               ) : (
                                               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
@@ -3750,7 +3884,7 @@ function ProductMatrixCard({
                                                 >
                                                   {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                   {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
-                                                </ReceteRenkSecimi>
+                                                </ReceteRenkSecimi>{renkOnayDugmesi([r])}
                                                 <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                                                   <MiktarGirisi
                                                     deger={r.miktar}
@@ -3874,7 +4008,7 @@ function ProductMatrixCard({
                                                   >
                                                     {!bedensizRenkSecenekleri.includes(r.renk) && <option value={r.renk}>{bedensizRenkSecenekleri.length ? `${r.renk} (stokta yok)` : r.renk}</option>}
                                                     {bedensizRenkSecenekleri.map((rr) => <option key={rr} value={rr}>{rr}</option>)}
-                                                  </ReceteRenkSecimi>
+                                                  </ReceteRenkSecimi>{renkOnayDugmesi([r])}
                                                   {!tekliMiktarSabit && (
                                                     <MiktarGirisi
                                                     deger={r.miktar}
@@ -3966,6 +4100,7 @@ function ProductMatrixCard({
                         return (
                           <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", minWidth: 0 }}>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                              {kartSiraOklari(pg, g)}
                               <ColorSwatch
                                 src={(() => {
                                   const hammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
@@ -4120,7 +4255,7 @@ function ProductMatrixCard({
                                       {matrisSatirlari.map((ms) => (
                                         <th key={ms.key} style={{ fontSize: 13, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" }}>
                                           {ms.mamulRenk}
-                                          {ms.aciklama && grupAciklamalari.length > 1 && <ReceteAciklamasi deger={ms.aciklama} gosterim={aciklamaGoster(ms.aciklama, ms.mamulRenk)} stil={{ fontSize: 11, padding: "1px 5px", marginLeft: 4 }} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />}
+                                          {ms.aciklama && grupAciklamalari.length > 1 && <ReceteAciklamasi deger={ms.aciklama} pozisyonSecenekleri={pozisyonEtiketleri(g)} onPozisyonDegistir={(yeni) => pozisyonDegistir(g, ms.aciklama, yeni)} gosterim={aciklamaGoster(ms.aciklama, ms.mamulRenk)} stil={{ fontSize: 11, padding: "1px 5px", marginLeft: 4 }} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />}
                                         </th>
                                       ))}
                                       {eksikMamulRenkler.map((mr) => (
@@ -4147,7 +4282,7 @@ function ProductMatrixCard({
                                         Hammadde Rengi
                                         {grupAciklamalari.length === 1 && (
                                           <div style={{ marginTop: 3 }}>
-                                            <ReceteAciklamasi deger={grupAciklamalari[0]} gosterim={aciklamaGoster(grupAciklamalari[0], matrisSatirlari[0] ? matrisSatirlari[0].mamulRenk : "")}
+                                            <ReceteAciklamasi deger={grupAciklamalari[0]} pozisyonSecenekleri={pozisyonEtiketleri(g)} onPozisyonDegistir={(yeni) => pozisyonDegistir(g, grupAciklamalari[0], yeni)} gosterim={aciklamaGoster(grupAciklamalari[0], matrisSatirlari[0] ? matrisSatirlari[0].mamulRenk : "")}
                                               onKaydet={(yeni) => onReceteGrubuGuncelle(product.id, g.satirlar.map((x) => x.id), g.satirlar.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni })))} />
                                           </div>
                                         )}
@@ -4175,7 +4310,7 @@ function ProductMatrixCard({
                                               >
                                                 {!bedenHammaddeRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{bedenHammaddeRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
-                                              </ReceteRenkSecimi>
+                                              </ReceteRenkSecimi>{renkOnayDugmesi(ms.satirlar)}
                                             </span>
                                           ) : (
                                             // Mamul renkler arasında miktar FARKLIYSA (her biri kendi içinde
@@ -4199,7 +4334,7 @@ function ProductMatrixCard({
                                               >
                                                 {!bedenHammaddeRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{bedenHammaddeRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                                 {bedenHammaddeRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
-                                              </ReceteRenkSecimi>
+                                              </ReceteRenkSecimi>{renkOnayDugmesi(ms.satirlar)}
                                               <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
                                                 <input
                                                   type="number" step="any" min="0"
@@ -4275,7 +4410,7 @@ function ProductMatrixCard({
                                         <ArrowRight size={12} color="var(--erp-text-3)" style={{ margin: "0 3px", verticalAlign: "middle" }} />
                                         <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>{ms.renk}</span>
                                         {/* Açıklamasız grupta "+ açıklama" ilk satırda (v1.571.0 — bedenli hammaddede açıklama eklenemiyordu). */}
-                                        {(ms.aciklama || msi === 0) && <ReceteAciklamasi deger={ms.aciklama} gosterim={aciklamaGoster(ms.aciklama, ms.mamulRenk)} stil={{ fontSize: 11, padding: "1px 5px", marginLeft: 4 }} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />}
+                                        {(ms.aciklama || msi === 0) && <ReceteAciklamasi deger={ms.aciklama} pozisyonSecenekleri={pozisyonEtiketleri(g)} onPozisyonDegistir={(yeni) => pozisyonDegistir(g, ms.aciklama, yeni)} gosterim={aciklamaGoster(ms.aciklama, ms.mamulRenk)} stil={{ fontSize: 11, padding: "1px 5px", marginLeft: 4 }} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />}
                                       </td>
                                       {tumBedenler.map((b) => {
                                         const r = ms.satirlar.find((x) => x.mamulBeden === b);
@@ -4317,6 +4452,7 @@ function ProductMatrixCard({
                       return (
                       <div key={g.key} style={{ border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)" }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          {kartSiraOklari(pg, g)}
                           <ColorSwatch
                             src={(() => {
                               const hammadde = (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId);
@@ -4399,7 +4535,7 @@ function ProductMatrixCard({
                               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: tekBeden ? 0 : 6 }}>
                                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--erp-text)" }}>{ms.mamulRenk}</span>
                                 <ArrowRight size={13} color="var(--erp-text-3)" />
-                                <ReceteAciklamasi deger={ms.aciklama} gosterim={aciklamaGoster(ms.aciklama, ms.mamulRenk)} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />
+                                <ReceteAciklamasi deger={ms.aciklama} pozisyonSecenekleri={pozisyonEtiketleri(g)} onPozisyonDegistir={(yeni) => pozisyonDegistir(g, ms.aciklama, yeni)} gosterim={aciklamaGoster(ms.aciklama, ms.mamulRenk)} onKaydet={(yeni) => { const h = g.satirlar.filter((x) => (x.aciklama || "") === (ms.aciklama || "")); onReceteGrubuGuncelle(product.id, h.map((x) => x.id), h.map(({ id, ...rest }) => ({ ...rest, aciklama: yeni }))); }} />
                                 <ReceteRenkSecimi hammaddeId={g.hammaddeUrunId} yr={receteRenkYeni}
                                   value={ms.renk} data-renk-gecmis={ms.satirlar.some((x) => x.renkGecmisten) ? "1" : undefined}
                                   onChange={(e) => {
@@ -4417,7 +4553,7 @@ function ProductMatrixCard({
                                 >
                                   {!belirtilmemisRenkSecenekleri.includes(ms.renk) && <option value={ms.renk}>{belirtilmemisRenkSecenekleri.length ? `${ms.renk} (stokta yok)` : ms.renk}</option>}
                                   {belirtilmemisRenkSecenekleri.map((r) => <option key={r} value={r}>{r}</option>)}
-                                </ReceteRenkSecimi>
+                                </ReceteRenkSecimi>{renkOnayDugmesi(ms.satirlar)}
                                 {ms.proses && <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{ms.proses}</span>}
                                 {tekBeden && (
                                   <>
@@ -4628,7 +4764,7 @@ function ProductMatrixCard({
             const maliyetDokumu = [];
             if (receteVarRenk) {
               const ilgiliSatirlar = maliyetTemsiliSatirlar(product.recete.filter((r) => r.mamulRenk === receteVarRenk));   // v1.568: tek beden
-              receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride).forEach((pg) => {
+              receteProsesGrupla(ilgiliSatirlar, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).forEach((pg) => {
                 receteMaliyetGrupla(pg.satirlar).forEach((g) => {
                   const hammadde = (tumUrunler || []).find((p) => p.id === g.satirlar[0].hammaddeUrunId);
                   const miktar = g.satirlar[0].miktar || 0;
