@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.594.0";
+const SURUM = "1.595.0";
 const SURUM_TARIHI = "2026-10-05";
-const SURUM_NOTU = "Hammadde kartinda Fiyatlandirma ALIS ile acilir; maliyette satisa yazilmis fiyat uyarisi + alisa kopyala";
+const SURUM_NOTU = "Maliyet dokumunde proses sutunu; maliyetin hangi renk/beden icin hesaplandigi secilebilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Hammadde kartinda Fiyatlandirma ALIS ile acilir; maliyette s
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.595.0", tarih: "05.10.2026",
+    eklenen: ["Maliyet dökümünde \"Proses\" sütunu", "Maliyet sekmesinde renk ve beden seçici: maliyet hangi mamul renk ve beden için hesaplanıyor görünür ve değiştirilebilir (varsayılan: reçetesi olan ilk renk, orta beden)"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.594.0", tarih: "05.10.2026",
     eklenen: ["Maliyet dökümünde kart fiyatı okunan hammaddenin o rengi için SATIŞ fiyatı girilmişse uyarı + \"alışa kopyala\" bağlantısı"],
     degisen: ["Hammadde (mamul olmayan) kartında Fiyatlandırma sekmesi ALIŞ fiyatlarıyla açılıyor; mamulde satışla"],

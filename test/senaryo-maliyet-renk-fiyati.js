@@ -29,10 +29,11 @@ async function calistir() {
     await sayfa.evaluate((s) => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim().startsWith(s) && x.offsetParent); if (b) b.click(); }, sekme);
     await sayfa.waitForTimeout(800);
   };
+  // v1.595.0: ilk sütun proses; hammadde 2. hücre.
   const dokum = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-maliyet-dokumu] tbody tr")].slice(0, -1).map((tr) => {
-    const ad = tr.children[0].textContent.replace(/\s+/g, " ").trim();
+    const ad = tr.children[1].textContent.replace(/\s+/g, " ").trim();
     const kutu = tr.querySelector("input[data-maliyet-duzenle]");
-    return `${ad}: ${kutu ? kutu.value : tr.children[2].textContent.trim()}`;
+    return `${ad}: ${kutu ? kutu.value : tr.children[3].textContent.trim()}`;
   }));
   await kartAc("Mamul Stok", "Bot", "Maliyet");
   const once = await dokum();
