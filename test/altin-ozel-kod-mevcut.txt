@@ -1,0 +1,19 @@
+{
+ "alanlar": [
+  "Kalıp No · malzeme · Taban",
+  "Kalıp No · genel"
+ ],
+ "hatalar": [],
+ "once": {
+  "alanlar": [],
+  "kalipGorunuyor": false
+ },
+ "secenekler": [
+  "Kalıp No"
+ ],
+ "seciciKaldi": 0,
+ "sonra": {
+  "girisAcik": 0,
+  "kalipGorunuyor": true
+ }
+}
