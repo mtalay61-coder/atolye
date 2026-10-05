@@ -1,0 +1,6 @@
+{
+ "hatalar": [],
+ "kartIciPozisyon": false,
+ "notMetni": "Renksiz · bedensiz malzeme — bütün renklerde aynı (2 renk)",
+ "tumPozisyonBasliklari": 1
+}

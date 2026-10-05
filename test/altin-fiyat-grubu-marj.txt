@@ -1,0 +1,19 @@
+{
+ "duzeltildi": [
+  "fg1=260 TRY"
+ ],
+ "eklendi": [
+  "fg1=250 TRY"
+ ],
+ "esitlendi": [
+  "fg1=400 TRY"
+ ],
+ "hatalar": [],
+ "oneriMarjli": "250",
+ "oneriSonra": "öneri 400,00 ₺kâr %",
+ "tam": {
+  "tam": "200,00 ₺",
+  "toplam": "285,71 ₺"
+ },
+ "tanimMarj": 50
+}

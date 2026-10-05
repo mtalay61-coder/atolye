@@ -2672,6 +2672,11 @@ export default function AtolyeERP() {
   //
   // Aynı kapsamda aynı ad varsa YENİSİ AÇILMIYOR, var olanın kimliği dönüyor: iki özdeş başlık
   // ürün kartında hangisine yazdığınızı ayırt edilemez kılardı.
+  // FİYAT GRUBU MARJI (v1.597.0): ürün kartı › Maliyet'teki grup satırından yazılır; tanımlar bütün olarak (bulutla birleşik).
+  const fiyatGrubuMarjKaydet = useCallback((grupId, marj) => {
+    const v = marj === "" || marj == null ? null : (parseFloat(marj) || 0);
+    tanimlarKodluYaz({ ...tanimlar, fiyatGruplari: (tanimlar.fiyatGruplari || []).map((g) => (g.id === grupId ? { ...g, marj: v } : g)) });
+  }, [tanimlar, tanimlarKodluYaz]);
   const yeniOzelKodAlaniKaydet = useCallback((ad, kapsamTuru, kapsamAd) => {
     const temizAd = (ad || "").trim();
     if (!temizAd) return null;
@@ -4326,6 +4331,7 @@ export default function AtolyeERP() {
               onReceteSablonuKaydet={receteSablonuKaydet}
               onYeniMamulTipiKaydet={yeniMamulTipiKaydet}
               onYeniOzelKodAlani={yeniOzelKodAlaniKaydet}
+              onFiyatGrubuMarj={fiyatGrubuMarjKaydet}
               onKombinasyonOlustur={kombinasyonOlusturGlobal}
               onAsortiOlustur={asortiOlustur}
               kullaniciYetkisiVar={kullaniciYetkisiVar}
