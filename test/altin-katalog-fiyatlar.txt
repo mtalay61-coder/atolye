@@ -1,4 +1,9 @@
 {
+ "alisListesi": [
+  "Genel satış fiyatı",
+  "Toptan USD",
+  "Tedarikçi Alış"
+ ],
  "alisMusteri": [
   "Satış: Satış—",
   "Toptan USD: Toptan USD—",
@@ -13,15 +18,40 @@
   "Toptan USD: Toptan USD29,9 $",
   "Tedarikçi Alış: Tedarikçi Alış—"
  ],
+ "baslangic": {
+  "dugme": "☆ Katalogda göster",
+  "liste": [
+   "Genel satış fiyatı"
+  ]
+ },
+ "bulut": [
+  "__genelSatis",
+  "fgT",
+  "fgP"
+ ],
  "cariOzelGorunuyor": false,
+ "cipTiklanabilir": false,
  "detay": [
   "Satış1.299 ₺",
   "Toptan USD29,9 $",
   "Perakende1.599 ₺"
  ],
- "dorduncuDenemesi": 6,
+ "dorduncuDenemesi": [
+  "Genel satış fiyatı",
+  "Toptan USD",
+  "Perakende"
+ ],
  "hatalar": [],
- "kalici": "[\"__genelSatis\",\"fgT\",\"fgA\"]",
+ "katalogOzeti": [
+  "1. Genel satış fiyatı",
+  "2. Toptan USD",
+  "3. Perakende"
+ ],
+ "ucSecili": [
+  "Genel satış fiyatı",
+  "Toptan USD",
+  "Perakende"
+ ],
  "uclu": [
   "Satış: Satış—",
   "Toptan USD: Toptan USD—",
@@ -30,8 +60,5 @@
   "Toptan USD: Toptan USD29,9 $",
   "Perakende: Perakende1.599 ₺"
  ],
- "varsayilan": [
-  "Satış: —",
-  "Satış: 1.299 ₺"
- ]
+ "yerelKayit": null
 }

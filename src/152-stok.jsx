@@ -13,21 +13,11 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
   // MÜŞTERİ GÖRÜNÜMÜ: maliyet tarafı gizlenir (alış fiyatı, tedarikçi, stok değeri). Ekranı
   // müşteriye çevirmek fuarda tek hareket; o hareketin maliyeti göstermemesi gerekiyor.
   const [musteriGorunumu, setMusteriGorunumu] = useState(false);
-  // KATALOG FİYATLARI (v1.584.0 — kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı
-  // seçilerek katalogda görünecek fiyatlar çıksın"). Kart altında en fazla 3 kaynak: genel satış/alış ya da fiyat grupları
-  // (Toptan, Perakende, VOOG Özel…). CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen);
-  // maliyet de yok. Müşteri görünümünde alış tipli kaynaklar gizli. Seçim cihaza özel (yerel depo) — fuardaki tablet ile
-  // ofis farklı fiyat gösterebilir.
-  const [katalogKaynaklari, setKatalogKaynaklari] = useState(() => {
-    try { const v = JSON.parse(window.localStorage.getItem("katalog:fiyatKaynaklari") || "null"); if (Array.isArray(v) && v.length) return v.slice(0, 3); } catch (e) { /* yerel depo yok */ }
-    return [FL_GENEL_SATIS];
-  });
-  const katalogKaynakSec = (key) => setKatalogKaynaklari((x) => {
-    const yeni = x.includes(key) ? x.filter((k) => k !== key) : (x.length >= 3 ? x : [...x, key]);
-    if (!x.includes(key) && x.length >= 3) showToast("Katalogda en fazla 3 fiyat gösterilir — önce birini kaldırın");
-    try { window.localStorage.setItem("katalog:fiyatKaynaklari", JSON.stringify(yeni)); } catch (e) { /* yerel depo yok */ }
-    return yeni;
-  });
+  // KATALOG FİYATLARI (v1.584.0 → v1.590.0): hangi kaynakların gösterileceği artık BULUTTA (`tanimlar.katalogFiyatKaynaklari`,
+  // Fiyat Listesi ekranından seçilir, en fazla 3) — "herkes farklı fiyatlar görmesin". Cihaza özel yerel seçim kalktı.
+  // CARİYE ÖZEL fiyatlar BİLEREK yok (aşağıdaki "fiyatBul çağrılmaz" kuralı aynen); maliyet de yok. Müşteri görünümünde
+  // alış tipli kaynaklar gizli.
+  const katalogKaynaklari = katalogFiyatAnahtarlari(tanimlar);
   const [katalogUrunId, setKatalogUrunId] = useState(null);
   const [katalogRenk, setKatalogRenk] = useState("");
   const [katalogFotoAcik, setKatalogFotoAcik] = useState(false);
@@ -1492,20 +1482,14 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
             >
               {musteriGorunumu ? "Müşteri görünümü" : "Personel görünümü"}
             </button>
-            {/* Katalogda görünecek fiyatlar (en fazla 3). */}
-            <span data-katalog-fiyat-secimi="1" style={{ display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>Katalog fiyatları:</span>
-              {katalogSecenekleri.filter((k) => !(musteriGorunumu && k.tip === "Alış")).map((k) => {
-                const secili = katalogKaynaklari.includes(k.key);
-                return (
-                  <button key={k.key} type="button" data-katalog-kaynak={k.ad} onClick={() => katalogKaynakSec(k.key)}
-                    style={{ padding: "3px 9px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
-                      border: `1.5px solid ${secili ? "var(--erp-info)" : "var(--erp-border)"}`, background: secili ? "#3D6B8A1A" : "#fff",
-                      color: secili ? "var(--erp-info)" : "var(--erp-text-2)" }}>
-                    {secili ? "✓ " : ""}{k.ad}
-                  </button>
-                );
-              })}
+            {/* Katalogda görünen fiyatlar — Fiyat Listesi'nden seçilir, bulutta (v1.590.0). */}
+            <span data-katalog-fiyat-secimi="1" style={{ display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "wrap", fontSize: 11, color: "var(--erp-text-2)" }}>
+              <span>Katalog fiyatları:</span>
+              {katalogGosterilen.map((k, i) => (
+                <span key={k.key} data-katalog-kaynak={k.ad} style={{ padding: "2px 8px", borderRadius: "var(--erp-r-pill)", fontWeight: 700,
+                  border: "1px solid var(--erp-info)", background: "#3D6B8A1A", color: "var(--erp-info)" }}>{i + 1}. {k.ad}</span>
+              ))}
+              <span style={{ color: "var(--erp-text-3)" }}>(Depo › Fiyat Listesi'nden seçilir)</span>
             </span>
           </>
         )}

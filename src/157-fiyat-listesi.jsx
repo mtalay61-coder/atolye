@@ -23,6 +23,16 @@ const FL_GENEL_ALIS = "__genelAlis";
 const FL_MALIYET = "__maliyet";
 
 // Seçilebilir kaynaklar: iki genel fiyat + Tanımlar'daki her fiyat grubu. Saf.
+// KATALOG FİYATLARI BULUTTA (v1.590.0 — kullanıcı: "Buluta gitsin fiyatlar, herkes farklı fiyatlar görmesin; fiyat
+// listesinden katalog fiyatı oluşturalım, 3 adet, onları girdiğimizde katalogda çıksın"). v1.584'te seçim cihazın yerel
+// deposundaydı; artık `tanimlar.katalogFiyatKaynaklari` (kaynak anahtarları, en fazla 3; maliyet olamaz) ve Fiyat Listesi
+// ekranından yönetiliyor. Liste boşsa katalog genel satış fiyatını gösterir (eski davranış).
+const KATALOG_FIYAT_SAYISI = 3;
+function katalogFiyatAnahtarlari(tanimlar) {
+  const l = (tanimlar && Array.isArray(tanimlar.katalogFiyatKaynaklari)) ? tanimlar.katalogFiyatKaynaklari.filter((k) => k && k !== FL_MALIYET) : [];
+  return l.length ? l.slice(0, KATALOG_FIYAT_SAYISI) : [FL_GENEL_SATIS];
+}
+
 function fiyatListesiKaynaklari(fiyatGruplari) {
   return [
     { key: FL_GENEL_SATIS, ad: "Genel satış fiyatı", tip: "Satış", genel: true, paraBirimi: null },
@@ -325,6 +335,25 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
 
   return (
     <div data-fiyat-listesi="1">
+      {/* KATALOG LİSTESİ (v1.590.0): hangi fiyatlar katalogda, sırasıyla; × ile kaldırılır. */}
+      {(() => {
+        const liste = katalogFiyatAnahtarlari(tanimlar).map((key) => kaynaklar.find((k) => k.key === key)).filter(Boolean);
+        return (
+          <div data-fl-katalog-listesi="1" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 }}>
+            <span style={{ fontWeight: 700, color: "var(--erp-text-2)" }}>Katalog fiyatları:</span>
+            {liste.map((k, i) => (
+              <span key={k.key} data-fl-katalog-kaynak={k.ad} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 4px 2px 9px",
+                borderRadius: "var(--erp-r-pill)", border: "1px solid var(--erp-info)", background: "#3D6B8A1A", color: "var(--erp-info)", fontWeight: 700 }}>
+                {i + 1}. {k.ad}
+                <button type="button" title="Katalogdan kaldır" data-fl-katalog-kaldir={k.ad}
+                  onClick={() => onTanimlarKaydet({ ...tanimlar, katalogFiyatKaynaklari: katalogFiyatAnahtarlari(tanimlar).filter((x) => x !== k.key) })}
+                  style={{ border: "none", background: "none", cursor: "pointer", color: "inherit", padding: "0 3px", fontSize: 13 }}>×</button>
+              </span>
+            ))}
+            <span style={{ color: "var(--erp-text-3)" }}>— yukarıdaki kaynağı seçip "Katalogda göster" deyin (en fazla {KATALOG_FIYAT_SAYISI}); herkes aynı listeyi görür</span>
+          </div>
+        );
+      })()}
       {/* ÜST: kaynak + süzgeçler */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
         <label style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>Fiyat</label>
@@ -334,6 +363,24 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
             <option key={k.key} value={k.key}>{k.ad}{k.genel || k.maliyet ? "" : ` · ${k.tip} · ${pbSembol(k.paraBirimi)}`}</option>
           ))}
         </select>
+        {/* KATALOG FİYATI (v1.590.0): seçili kaynak katalogda gösterilsin mi — bulutta, herkes aynı listeyi görür. */}
+        {!kaynak.maliyet && (() => {
+          const liste = katalogFiyatAnahtarlari(tanimlar);
+          const secili = liste.includes(kaynak.key);
+          const sira = liste.indexOf(kaynak.key) + 1;
+          return (
+            <button type="button" data-fl-katalog={secili ? "1" : "0"} style={cip(secili)}
+              title={secili ? `Katalogda ${sira}. fiyat — kaldırmak için dokunun` : `Bu fiyatı katalogda göster (en fazla ${KATALOG_FIYAT_SAYISI})`}
+              onClick={() => {
+                if (!secili && liste.length >= KATALOG_FIYAT_SAYISI) return showToast(`Katalogda en fazla ${KATALOG_FIYAT_SAYISI} fiyat gösterilir — önce birini kaldırın`);
+                const yeni = secili ? liste.filter((k) => k !== kaynak.key) : [...liste, kaynak.key];
+                onTanimlarKaydet({ ...tanimlar, katalogFiyatKaynaklari: yeni });
+                showToast(secili ? `"${kaynak.ad}" katalogdan kaldırıldı` : `"${kaynak.ad}" katalogda ${yeni.length}. fiyat olarak gösterilecek`);
+              }}>
+              {secili ? `★ Katalog ${sira}` : "☆ Katalogda göster"}
+            </button>
+          );
+        })()}
         <select data-fl-kategori="1" value={kategori} onChange={(e) => setKategori(e.target.value)} style={{ ...kutu, width: 140 }}>
           {kategoriler.map((k) => <option key={k} value={k}>{k === "Tümü" ? "Tüm kategoriler" : k}</option>)}
         </select>
