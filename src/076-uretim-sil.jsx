@@ -112,8 +112,12 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
         silinenStokSayisi++;
         return false;
       });
+      // REÇETE ÖLÇÜMLERİ DE DÜŞER (v1.592.0): bu üretimin teslimlerinde mamule yazılan "gerçek tüketim" ölçümleri silinir;
+      // Maliyet sekmesindeki sapma tablosu silinen üretimi göstermez.
+      const gerceklesme = p.id === siparis.urunId ? receteGerceklesmeUretimSil(p.receteGerceklesme, siparis.siparisNo) : p.receteGerceklesme;
+      if (gerceklesme !== p.receteGerceklesme) degisti = true;
       if (!degisti) return p;
-      return { ...p, variants, hareketler: kalanHareketler };
+      return { ...p, variants, hareketler: kalanHareketler, ...(gerceklesme !== p.receteGerceklesme ? { receteGerceklesme: gerceklesme } : {}) };
     });
 
     const nextCariler = cariler.map((c) => {

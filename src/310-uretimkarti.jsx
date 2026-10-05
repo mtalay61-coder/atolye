@@ -480,7 +480,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
               <Maximize2 size={13} />
             </button>
           )}
-          <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setSilOnayGoster(true); }}><Trash2 size={13} /></button>
+          <button className="btn-ghost" data-uretim-sil="1" title="Üretimi sil" onClick={(e) => { e.stopPropagation(); setSilOnayGoster(true); }}><Trash2 size={13} /></button>
           {acik ? <ChevronUp size={16} color="var(--erp-text-3)" /> : <ChevronDown size={16} color="var(--erp-text-3)" />}
         </div>
       </div>
