@@ -1,6 +1,10 @@
 function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
   const [showForm, setShowForm] = useState(false);
-  const [query, setQuery] = useState("");
+  // ARAMA KAPSAMA GÖRE AYRI (v1.596.0 — kullanıcı: "mamul arama ile stok arama aynıları kalıyor, hammadde ile ayrılsın"):
+  // Stok ve Mamul Stok aynı bileşen (kapsam prop'u), tek `query` iki ekranda da görünüyordu. Metin kapsam başına tutulur.
+  const [aramaMetinleri, setAramaMetinleri] = useState({});
+  const query = aramaMetinleri[kapsam] || "";
+  const setQuery = (v) => setAramaMetinleri((x) => ({ ...x, [kapsam]: typeof v === "function" ? v(x[kapsam] || "") : v }));
   const [filterCat, setFilterCat] = useState("Tümü");
   // Pasif görünümü: açıkken YALNIZCA pasif kartlar listelenir. Ayrı bir sekme olması bilinçli —
   // pasifleri aktiflerin arasına karıştırmak, pasife almanın amacını ortadan kaldırırdı.
@@ -1305,13 +1309,18 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
             title="Boşlukla ayırarak birden çok kelime yazabilirsiniz — hepsini birden taşıyan ürünler listelenir (örn. &quot;mamul yazlık 2027&quot;)"
             style={{
               width: "100%",
-              padding: "6px 8px 6px 28px",
+              padding: "6px 26px 6px 28px",
               borderRadius: "var(--erp-r-md)",
               border: "1px solid var(--erp-line)",
               background: "var(--erp-panel)",
               fontSize: 13,
             }}
           />
+          {/* HIZLI TEMİZLE (v1.596.0 — kullanıcı: "silme için × olsun"). */}
+          {query && (
+            <button type="button" data-stok-arama-temizle="1" title="Aramayı temizle" onClick={() => setQuery("")}
+              style={{ position: "absolute", right: 6, top: 4, border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", fontSize: 16, lineHeight: 1, padding: "2px 4px" }}>×</button>
+          )}
         </div>
         {lowStockProductCount > 0 && (
           <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--erp-warn)" }}>

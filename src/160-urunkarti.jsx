@@ -5237,7 +5237,31 @@ function ProductMatrixCard({
                 Aynı işi iki ekrandan birinde yapabilmek, "hangi ekranda ne yapabiliyorum" diye
                 hatırlamayı gerektiriyordu. */}
             {yeniKodAlaniGiris ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto", flexWrap: "wrap" }}>
+                {/* MEVCUT ALANLARDAN SEÇ (v1.596.0 — kullanıcı: "özel kod eklerken eklenmişlerden göster, onlardan ekleyelim,
+                    yoksa yeni açalım"): başka tiplerde tanımlı alan adları (bu üründe görünmeyenler) listede; seçilince aynı
+                    adla bu ürünün kapsamına açılır. Listede yoksa sağdaki kutuya yeni ad yazılır. */}
+                {(() => {
+                  const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+                  const mevcutAdlar = new Set(alanlar.map((a) => nrm(a.ad)));
+                  const secenekler = Array.from(new Set((tanimlarOzelKodAlanlari || []).map((a) => a.ad).filter((ad) => ad && !mevcutAdlar.has(nrm(ad)))))
+                    .sort((a, b) => a.localeCompare(b, "tr"));
+                  if (!secenekler.length) return null;
+                  return (
+                    <select data-ozel-kod-mevcut="1" value="" title="Başka tipte tanımlı alanlardan seç — aynı adla bu ürünün tipine açılır"
+                      onChange={(e) => {
+                        const ad = e.target.value; if (!ad) return;
+                        const id = onYeniOzelKodAlani && onYeniOzelKodAlani(ad, eklenecekKapsam, kapsamAd);
+                        if (!id) { showToast("Alan eklenemedi"); return; }
+                        setYeniKodAlaniGiris(false); setYeniKodAlaniAdi("");
+                        showToast(eklenecekKapsam === "genel" ? `"${ad}" genel alan olarak eklendi — her üründe görünür` : `"${ad}" yalnız "${kapsamAd}" tipinde görünür`);
+                      }}
+                      style={{ ...inputStyle, width: 170, padding: "5px 8px", fontSize: 12 }}>
+                      <option value="">Mevcut alanlardan seç…</option>
+                      {secenekler.map((ad) => <option key={ad} value={ad}>{ad}</option>)}
+                    </select>
+                  );
+                })()}
                 <input
                   autoFocus
                   value={yeniKodAlaniAdi}

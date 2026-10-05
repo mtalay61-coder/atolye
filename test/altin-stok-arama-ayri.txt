@@ -1,0 +1,27 @@
+{
+ "hatalar": [],
+ "mamul1": {
+  "metin": "272",
+  "temizleVar": 1
+ },
+ "mamul2": {
+  "metin": "272",
+  "temizleVar": 1
+ },
+ "mamulTemiz": {
+  "metin": "",
+  "temizleVar": 0
+ },
+ "stok1": {
+  "metin": "deri",
+  "temizleVar": 1
+ },
+ "stok2": {
+  "metin": "deri",
+  "temizleVar": 1
+ },
+ "stokBos": {
+  "metin": "",
+  "temizleVar": 0
+ }
+}

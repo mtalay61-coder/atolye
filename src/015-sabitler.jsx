@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.595.0";
+const SURUM = "1.596.0";
 const SURUM_TARIHI = "2026-10-05";
-const SURUM_NOTU = "Maliyet dokumunde proses sutunu; maliyetin hangi renk/beden icin hesaplandigi secilebilir";
+const SURUM_NOTU = "Stok ve Mamul Stok aramasi ayri + arama kutusunda x; ozel kod alani eklerken mevcut alanlardan secme";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Maliyet dokumunde proses sutunu; maliyetin hangi renk/beden 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.596.0", tarih: "05.10.2026",
+    eklenen: ["Stok / Mamul Stok arama kutusunda × ile hızlı temizleme", "Ürün kartı › Özel Kodlar › Alan Ekle: başka tiplerde tanımlı alanlardan seçerek ekleme (listede yoksa yeni ad yazılır)"],
+    degisen: [], duzeltilen: ["Stok ve Mamul Stok aynı arama metnini paylaşıyordu (birinde yazılan öbüründe kalıyordu); artık her ekranın araması ayrı"] },
   { surum: "1.595.0", tarih: "05.10.2026",
     eklenen: ["Maliyet dökümünde \"Proses\" sütunu", "Maliyet sekmesinde renk ve beden seçici: maliyet hangi mamul renk ve beden için hesaplanıyor görünür ve değiştirilebilir (varsayılan: reçetesi olan ilk renk, orta beden)"],
     degisen: [], duzeltilen: [] },
