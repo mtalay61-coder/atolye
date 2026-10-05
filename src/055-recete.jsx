@@ -275,9 +275,66 @@ function receteGerceklesmeEkle(mevcut, olcumler) {
         return [{ uretimNo: o.uretimNo || "?", tarih: o.tarih || null, birimFark: Math.round((o.gerceklesen - plan) * 10000) / 10000,
           toplamFark: o.toplamFark != null ? o.toplamFark : null }, ...onceki].slice(0, 30);
       })(),
+      // ÖLÇÜM BAŞINA KAYIT (v1.592.0 — kullanıcı: "üretimler silindi, eski üretimdeki farkları hesapladı; gerçekleşen
+      // üretimden alsın, silinenleri almasın"). Toplam/olcum sayacı silinen üretimi geri çıkaramıyordu; artık her ölçüm
+      // üretim numarasıyla duruyor (son 60), özet var olan üretimlere göre yeniden kurulur (`receteGerceklesmeCanli`).
+      olcumler: [{ uretimNo: o.uretimNo || null, tarih: o.tarih || null, gerceklesen: o.gerceklesen, planlanan: o.planlanan || 0,
+        toplamFark: o.toplamFark != null ? o.toplamFark : null }, ...(eski.olcumler || [])].slice(0, 60),
     };
   });
   return ozet;
+}
+
+// CANLI ÖZET (v1.592.0): yalnız VAR OLAN üretimlerin ölçümleri. `uretimNolari`: mamulün bugünkü üretim kayıtlarının
+// numaraları (Set). Ölçüm başına kaydı olan anahtarlar ondan yeniden kurulur; eski toplu kayıt (ölçüm listesi yok) ancak
+// mamulün hâlâ en az bir üretimi varsa gösterilir — hangi üretimden geldiği bilinmediği için silinenle ayrıştırılamaz.
+// Giriş nesnesi değiştirilmez.
+function receteGerceklesmeCanli(ozet, uretimNolari) {
+  const sonuc = {};
+  const kume = uretimNolari instanceof Set ? uretimNolari : new Set(uretimNolari || []);
+  Object.entries(ozet || {}).forEach(([anahtar, kayit]) => {
+    if (!kayit) return;
+    if (Array.isArray(kayit.olcumler)) {
+      const canli = kayit.olcumler.filter((o) => o && o.gerceklesen > 0 && (!o.uretimNo || kume.has(String(o.uretimNo))));
+      if (!canli.length) return;
+      const plan = canli[0].planlanan || kayit.planlanan || 0;
+      sonuc[anahtar] = {
+        olcum: canli.length,
+        toplam: Math.round(canli.reduce((t, o) => t + o.gerceklesen, 0) * 10000) / 10000,
+        planlanan: plan,
+        sonTarih: canli[0].tarih || kayit.sonTarih || null,
+        sapmalar: canli.filter((o) => plan > 0 && Math.abs(o.gerceklesen - plan) / plan >= 0.005)
+          .map((o) => ({ uretimNo: o.uretimNo || "?", tarih: o.tarih, birimFark: Math.round((o.gerceklesen - plan) * 10000) / 10000, toplamFark: o.toplamFark })),
+        olcumler: canli,
+      };
+      return;
+    }
+    if (kume.size === 0) return;   // eski toplu kayıt, mamulün üretimi kalmamış → gösterme
+    const sapmalar = (kayit.sapmalar || []).filter((sp) => !sp.uretimNo || sp.uretimNo === "?" || kume.has(String(sp.uretimNo)));
+    sonuc[anahtar] = { ...kayit, sapmalar };
+  });
+  return sonuc;
+}
+
+// Silinen üretimin ölçümleri mamulden düşer (v1.592.0, 076 uretimSil). Değişiklik yoksa aynı nesne döner.
+function receteGerceklesmeUretimSil(ozet, uretimNo) {
+  if (!ozet || !uretimNo) return ozet;
+  let degisti = false;
+  const sonuc = {};
+  Object.entries(ozet).forEach(([anahtar, kayit]) => {
+    if (!kayit) return;
+    const olcumler = Array.isArray(kayit.olcumler) ? kayit.olcumler.filter((o) => String(o.uretimNo) !== String(uretimNo)) : null;
+    const sapmalar = (kayit.sapmalar || []).filter((sp) => String(sp.uretimNo) !== String(uretimNo));
+    if ((olcumler && olcumler.length !== kayit.olcumler.length) || sapmalar.length !== (kayit.sapmalar || []).length) degisti = true;
+    if (olcumler) {
+      if (!olcumler.length) return;   // bu hammaddenin bütün ölçümleri o üretimdendi
+      sonuc[anahtar] = { ...kayit, olcumler, sapmalar, olcum: olcumler.length,
+        toplam: Math.round(olcumler.reduce((t, o) => t + (o.gerceklesen || 0), 0) * 10000) / 10000 };
+    } else {
+      sonuc[anahtar] = { ...kayit, sapmalar };
+    }
+  });
+  return degisti ? sonuc : ozet;
 }
 
 // Bir hammadde için okunabilir durum döner; gösterilecek bir şey yoksa null.

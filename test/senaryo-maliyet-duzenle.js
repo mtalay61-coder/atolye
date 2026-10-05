@@ -24,7 +24,8 @@ async function calistir() {
   bot.prosesUcretleri = { Saya: 100 };
   // İki ölçüm: biri reçeteyle aynı (listelenmemeli), biri farklı (10077 · +0,2)
   bot.receteGerceklesme = { "hf|Siyah|50 cm": { olcum: 2, toplam: 2.2, planlanan: 1, sonTarih: "2026-09-20",
-    sapmalar: [{ uretimNo: "10077", tarih: "2026-09-20", birimFark: 0.2, toplamFark: 12 }] } };
+    // v1.592.0: sapma VAR OLAN üretimden olmalı (tohumda 1001); silinen üretimin sapması tabloya girmez.
+    sapmalar: [{ uretimNo: "1001", tarih: "2026-09-20", birimFark: 0.2, toplamFark: 12 }] } };
   t["stok:items"] = JSON.stringify(st);
 
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });

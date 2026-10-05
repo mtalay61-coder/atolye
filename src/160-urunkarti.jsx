@@ -4543,7 +4543,9 @@ function ProductMatrixCard({
               üretimde üretim no, stok ve fark miktarını belirtse yeterli"). Reçeteyle tutan
               ölçümler listelenmiyor; her sapma kendi üretim numarasıyla bir satır. */}
           {(() => {
-            const ozet = product.receteGerceklesme || {};
+            // YALNIZ VAR OLAN ÜRETİMLER (v1.592.0): silinen üretimin ölçümü tabloya girmez (055 receteGerceklesmeCanli).
+            const ozet = receteGerceklesmeCanli(product.receteGerceklesme || {},
+              new Set((uretim || []).filter((o) => o.urunId === product.id).map((o) => String(o.siparisNo))));
             const satirlar = [];
             const oneriler = [];
             Object.keys(ozet).forEach((anahtar) => {

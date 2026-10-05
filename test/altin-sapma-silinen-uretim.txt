@@ -1,0 +1,41 @@
+{
+ "hatalar": [],
+ "once": {
+  "blokVar": true,
+  "satirlar": [
+   "1001 | Deri · Siyah | +0,3 metre | +3 metre"
+  ]
+ },
+ "silmeSonrasi": {
+  "gerceklesme": {
+   "u1|Siyah|": {
+    "olcum": 1,
+    "olcumler": [
+     {
+      "gerceklesen": 2.5,
+      "planlanan": 2,
+      "tarih": "<tarih>",
+      "toplamFark": 5,
+      "uretimNo": "9999"
+     }
+    ],
+    "planlanan": 2,
+    "sapmalar": [
+     {
+      "birimFark": 0.5,
+      "tarih": "<tarih>",
+      "toplamFark": 5,
+      "uretimNo": "9999"
+     }
+    ],
+    "sonTarih": "<tarih>",
+    "toplam": 2.5
+   }
+  },
+  "uretimler": []
+ },
+ "sonra": {
+  "blokVar": false,
+  "satirlar": []
+ }
+}
