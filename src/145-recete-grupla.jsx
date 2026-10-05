@@ -58,22 +58,26 @@ function receteMaliyetGrupla(recete) {
 // (urunSiraOverride: {[prosesAdi]: özelSiraNo}) tanımlıysa, o proses için GENEL sıra yerine bu
 // özel değer kullanılır. Böylece Tanımlar'daki genel sıralamaya dokunmadan, sadece bu ürünün
 // reçetesinde belirli bir prosesi öne/geriye alabilirsiniz.
-function receteProsesGrupla(recete, tanimlarProsesler, urunSiraOverride) {
+// HAMMADDESİZ PROSES (v1.593.0 — kullanıcı: "hammadde kullanmayan proses de ekleyebilelim"): `ekProsesler`
+// (ürünün `receteEkProsesler` listesi) reçetede satırı olmasa da grup olarak çıkar (`bosMu`) — işçilik ücreti
+// girilir, üretim adımı olur (080 uretimProsesAdimlari).
+function receteProsesGrupla(recete, tanimlarProsesler, urunSiraOverride, ekProsesler) {
   const siraMap = {};
   (tanimlarProsesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 0; });
 
   const gruplar = {};
-  recete.forEach((r) => {
+  (recete || []).forEach((r) => {
     const key = r.proses || "Belirtilmemiş";
     if (!gruplar[key]) gruplar[key] = [];
     gruplar[key].push(r);
   });
+  (ekProsesler || []).forEach((ad) => { if (ad && !gruplar[ad]) gruplar[ad] = []; });
 
   return Object.entries(gruplar)
     .map(([proses, satirlar]) => {
       const ozel = (urunSiraOverride || {})[proses];
       const genelSira = proses === "Belirtilmemiş" ? null : (siraMap[proses] ?? 999);
-      return { proses, sira: ozel != null ? ozel : genelSira, ozelSiraMi: ozel != null, satirlar };
+      return { proses, sira: ozel != null ? ozel : genelSira, ozelSiraMi: ozel != null, satirlar, bosMu: satirlar.length === 0 };
     })
     .sort((a, b) => {
       if (a.sira === null) return 1;

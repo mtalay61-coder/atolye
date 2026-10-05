@@ -1,0 +1,43 @@
+{
+ "dikim": {
+  "ekProsesler": [
+   "Dikim"
+  ],
+  "rozet": "hammadde yok · yalnız işçilik×",
+  "seciciKaldi": 0
+ },
+ "dikimKaldirildi": {
+  "ekProsesler": [],
+  "rozet": 0
+ },
+ "hatalar": [],
+ "onaySonrasi": {
+  "astar": [
+   "1. Renk · Siyah · gecmis:false · onayli:true"
+  ],
+  "kirmiziKaldi": 0,
+  "yesilVar": 1
+ },
+ "once": {
+  "astar": [
+   "2. Renk · Siyah · gecmis:true · onayli:false"
+  ],
+  "kartlar": [
+   "Deri",
+   "Taban",
+   "Astar"
+  ],
+  "kirmiziVar": 1
+ },
+ "pozisyonSonrasi": [
+  "1. Renk · Siyah · gecmis:true · onayli:false"
+ ],
+ "siraSonrasi": {
+  "ilkSatirHammadde": "Taban",
+  "kartlar": [
+   "Taban",
+   "Deri",
+   "Astar"
+  ]
+ }
+}
