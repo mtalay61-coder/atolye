@@ -4,8 +4,8 @@
   "Sipariş",
   "Alış Siparişi",
   "Stok",
-  "Üretim",
-  "Depo",
+  "Mamul Stok",
+  "Fiyat Listesi",
   "Tümü"
  ],
  "bolumKaydi": {
@@ -93,7 +93,7 @@
  "tumuPaneli": {
   "acik": true,
   "masaustuDugmesi": true,
-  "moduller": 12
+  "moduller": 14
  },
  "uyariMetni": "Mobil görünüm varsayılana döndü",
  "zorlaMobil": {
