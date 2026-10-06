@@ -212,8 +212,13 @@ function etiketYazdir(etiketler, { genislikMM, yukseklikMM, ustHizali }) {
       body { margin: 0; font-family: 'Courier New', monospace; color: #000; }
       /* Küçük etiket ORTALANIR (içerik az, göz ortaya bakar). İŞ EMRİ gibi dolu sayfalar ise
          üstten hizalanır: ortalamak, uzun bir tabloyu sayfanın dışına taşırır. */
+      /* SAYFAYA GÖRE ORTALA (v1.601.0 — kullanıcı etiket fotoğrafıyla: "barkod ortalansın"): yazıcı sürücüsü
+         kâğıdı 40 mm'den uzun tanımlamışsa 40 mm'lik kutu sayfanın üstünde kalıyor, içerik üst yarıya basılıyordu.
+         min-height: 100vh yazdırmada sayfa kutusunun boyu demek: etiket gerçek sayfayı doldurur, içerik onun
+         ortasına gelir. Sayfa tam 40 mm ise değişen bir şey yok. */
+      html, body { height: 100%; }
       .etiket {
-        width: ${genislikMM}mm; height: ${yukseklikMM}mm;
+        width: ${genislikMM}mm; height: ${yukseklikMM}mm; min-height: 100vh;
         padding: ${ustHizali ? 6 : 2}mm; overflow: hidden;
         display: flex; flex-direction: column;
         align-items: ${ustHizali ? "stretch" : "center"};
