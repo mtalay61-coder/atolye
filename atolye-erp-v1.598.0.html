@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.595.0</title>
+<title>Atölye ERP 1.598.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.595.0";
-const SURUM_TARIHI = "2026-10-05";
-const SURUM_NOTU = "Maliyet dokumunde proses sutunu; maliyetin hangi renk/beden icin hesaplandigi secilebilir";
+const SURUM = "1.598.0";
+const SURUM_TARIHI = "2026-10-06";
+const SURUM_NOTU = "Recetede miktar kutulari ve birimleri vurgulu (sari zemin, kalin) - miktarlar bir bakista secilir";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,17 @@ const SURUM_NOTU = "Maliyet dokumunde proses sutunu; maliyetin hangi renk/beden 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.598.0", tarih: "06.10.2026",
+        eklenen: [],
+        degisen: ["Reçete: bütün miktar kutuları ve birim etiketleri sarı zeminli, koyu kenarlıklı ve kalın — renk seçici ve tarihlerin arasında miktar bir bakışta seçiliyor"],
+        duzeltilen: [] },
+    { surum: "1.597.0", tarih: "05.10.2026",
+        eklenen: ["Fiyat gruplarına kâr marjı (%): Tanımlar › Fiyat Grupları ve Maliyet'teki grup satırından girilir; grubun önerilen fiyatı tam maliyet ÷ (1 − marj)", "Maliyet › Fiyat grupları: kayıtlı grup fiyatı kutuya rakam yazarak düzenlenir"],
+        degisen: ["Reçetede renksiz ve bedensiz (Standart) hammadde kartında pozisyon/renk tablosu çizilmiyor — tek satır not"],
+        duzeltilen: [] },
+    { surum: "1.596.0", tarih: "05.10.2026",
+        eklenen: ["Stok / Mamul Stok arama kutusunda × ile hızlı temizleme", "Ürün kartı › Özel Kodlar › Alan Ekle: başka tiplerde tanımlı alanlardan seçerek ekleme (listede yoksa yeni ad yazılır)"],
+        degisen: [], duzeltilen: ["Stok ve Mamul Stok aynı arama metnini paylaşıyordu (birinde yazılan öbüründe kalıyordu); artık her ekranın araması ayrı"] },
     { surum: "1.595.0", tarih: "05.10.2026",
         eklenen: ["Maliyet dökümünde \"Proses\" sütunu", "Maliyet sekmesinde renk ve beden seçici: maliyet hangi mamul renk ve beden için hesaplanıyor görünür ve değiştirilebilir (varsayılan: reçetesi olan ilk renk, orta beden)"],
         degisen: [], duzeltilen: [] },
@@ -18844,6 +18855,11 @@ function AtolyeERP() {
     //
     // Aynı kapsamda aynı ad varsa YENİSİ AÇILMIYOR, var olanın kimliği dönüyor: iki özdeş başlık
     // ürün kartında hangisine yazdığınızı ayırt edilemez kılardı.
+    // FİYAT GRUBU MARJI (v1.597.0): ürün kartı › Maliyet'teki grup satırından yazılır; tanımlar bütün olarak (bulutla birleşik).
+    const fiyatGrubuMarjKaydet = useCallback((grupId, marj) => {
+        const v = marj === "" || marj == null ? null : (parseFloat(marj) || 0);
+        tanimlarKodluYaz({ ...tanimlar, fiyatGruplari: (tanimlar.fiyatGruplari || []).map((g) => (g.id === grupId ? { ...g, marj: v } : g)) });
+    }, [tanimlar, tanimlarKodluYaz]);
     const yeniOzelKodAlaniKaydet = useCallback((ad, kapsamTuru, kapsamAd) => {
         const temizAd = (ad || "").trim();
         if (!temizAd)
@@ -20088,7 +20104,7 @@ function AtolyeERP() {
                             }, showToast: showToast, onVeritabaniSifirla: veritabaniSifirla, supabaseBagli: supabaseAcikMi(), gocDurumu: gocDurumu, onSupabaseyeGoc: supabaseyeGoc, onDefterTopluOnar: defterTopluOnar, onHammaddeRenkAdDegistir: hammaddeRenkAdDegistir, onOlcuAdDegistir: olcuAdDegistir, stok: stok, cariler: cariler, siparisler: siparisler, aktifKullanici: aktifKullanici, MODULLER: MODULLER, MODUL_ADLARI: MODUL_ADLARI, onJsonYedekle: verileriJsonYedekle, onJsonGeriYukle: jsonDosyasindanGeriYukle, onExcelAktar: verileriExcelAktar, sonYedekTarihi: sonYedekTarihi, onSimdiYedekle: () => otomatikYedekAl(false), onYedektenGeriYukle: yedektenGeriYukle, cop: cop, onCopGeriYukle: coptanGeriYukle, onCopKaliciSil: coptanKaliciSil, onCopBosalt: copuBosalt })),
                     tab === "modelhane" && (React.createElement(ModelhaneModule, { receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: receteSablonuKaydet, stok: stok, kurlar: muhasebe.kurlar || {}, cariler: cariler, kurGecmisi: muhasebe.kurGecmisi, onNumuneUret: numuneUret, modeller: modeller, onSave: saveModeller, onKoleksiyonaAl: modeliKoleksiyonaAl, onNumuneUretimi: numuneUretimiAc, showToast: showToast, kullaniciYetkisiVar: kullaniciYetkisiVar })),
                     React.createElement("div", { style: { display: tab === "stok" || tab === "mamulstok" ? undefined : "none" } },
-                        React.createElement(StokModule, { kapsam: stokKapsamRef.current, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi, onFiseGitNo: fiseGit, stokRezervasyonlari: stokRezervasyonlari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: siparisler, hedefUrunId: stokHedefUrunId, hedefSekme: stokHedefSekme, onHedefTuketildi: () => { setStokHedefUrunId(null); setStokHedefSekme(null); }, donusHedefi: donusHedefi, onDonusYap: donusYap, items: stok, onSave: saveStok, showToast: showToast, tanimlar: tanimlar, onGoToTanimlar: () => setTab("tanimlar"), cariler: cariler, onCariHareket: addCariHareketFromStok, onGoToCari: () => setTab("cari"), onRemoveHareketGlobal: removeHareketEverywhere, siparisler: siparisler, uretim: uretim, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYeniRenkKaydet: yeniRenkKaydet, onBarkodTamamla: urunBarkodunuTamamla, onHizliCariEkle: hizliCariEkle, onRenkleriTipeBagla: renkleriTipeBagla, onYeniMalzemeTipiKaydet: yeniMalzemeTipiKaydet, onYeniOlcuKaydet: yeniOlcuKaydet, onReceteSablonuKaydet: receteSablonuKaydet, onYeniMamulTipiKaydet: yeniMamulTipiKaydet, onYeniOzelKodAlani: yeniOzelKodAlaniKaydet, onKombinasyonOlustur: kombinasyonOlusturGlobal, onAsortiOlustur: asortiOlustur, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onCopaAt: copaAt, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: pencereKucult, 
+                        React.createElement(StokModule, { kapsam: stokKapsamRef.current, kurlar: muhasebe.kurlar || {}, kurGecmisi: muhasebe.kurGecmisi, onFiseGitNo: fiseGit, stokRezervasyonlari: stokRezervasyonlari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: siparisler, hedefUrunId: stokHedefUrunId, hedefSekme: stokHedefSekme, onHedefTuketildi: () => { setStokHedefUrunId(null); setStokHedefSekme(null); }, donusHedefi: donusHedefi, onDonusYap: donusYap, items: stok, onSave: saveStok, showToast: showToast, tanimlar: tanimlar, onGoToTanimlar: () => setTab("tanimlar"), cariler: cariler, onCariHareket: addCariHareketFromStok, onGoToCari: () => setTab("cari"), onRemoveHareketGlobal: removeHareketEverywhere, siparisler: siparisler, uretim: uretim, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYeniRenkKaydet: yeniRenkKaydet, onBarkodTamamla: urunBarkodunuTamamla, onHizliCariEkle: hizliCariEkle, onRenkleriTipeBagla: renkleriTipeBagla, onYeniMalzemeTipiKaydet: yeniMalzemeTipiKaydet, onYeniOlcuKaydet: yeniOlcuKaydet, onReceteSablonuKaydet: receteSablonuKaydet, onYeniMamulTipiKaydet: yeniMamulTipiKaydet, onYeniOzelKodAlani: yeniOzelKodAlaniKaydet, onFiyatGrubuMarj: fiyatGrubuMarjKaydet, onKombinasyonOlustur: kombinasyonOlusturGlobal, onAsortiOlustur: asortiOlustur, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onCopaAt: copaAt, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: pencereKucult, 
                             // Şeritteki ürün sekmeleri — Stok modülü hangi kartları kurulu tutacağını buradan
                             // okuyor (bkz. StokModule, "tek kaynak").
                             acikUrunIdleri: acikUrunIdleri })),
@@ -23408,6 +23424,10 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                         React.createElement("option", { value: "TRY" }, "\u20BA TRY"),
                         React.createElement("option", { value: "USD" }, "$ USD"),
                         React.createElement("option", { value: "EUR" }, "\u20AC EUR")),
+                    g.tip !== "Alış" && (React.createElement("label", { title: "Bu grubun k\u00E2r marj\u0131 (%): Maliyet sekmesinde grup \u00F6nerisi bu marjla hesaplan\u0131r; bo\u015Fsa \u00FCr\u00FCn\u00FCn kendi k\u00E2r\u0131", style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--erp-text-2)" } },
+                        "k\u00E2r %",
+                        React.createElement("input", { type: "number", min: "0", max: "99", step: "any", "data-fiyat-grubu-marj": g.id, key: `marj-${g.id}-${g.marj ?? ""}`, defaultValue: g.marj ?? "", placeholder: "\u2014", onBlur: (e) => { const v = e.target.value === "" ? null : parseFloat(e.target.value); if ((v ?? null) !== (g.marj ?? null))
+                                onSave({ ...tanimlar, fiyatGruplari: tanimlar.fiyatGruplari.map((x) => (x.id === g.id ? { ...x, marj: v } : x)) }); }, style: { width: 54, fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)", textAlign: "right", fontWeight: 700 } }))),
                     React.createElement(SilOnayButonu, { onConfirm: () => fiyatGrubuSil(g.id), boyut: 13, baslikNormal: `"${g.ad}" fiyat grubu silinsin mi? Bu gruba atanmış carilerin grubu boşalır.` }))))))),
             React.createElement("div", { style: { marginTop: 28 } },
                 React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 } },
@@ -25532,9 +25552,13 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
                 " Kaydet"),
             React.createElement("button", { className: "btn-ghost", onClick: onKapat }, "Vazge\u00E7"))));
 }
-function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
+function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri }) {
     const [showForm, setShowForm] = useState(false);
-    const [query, setQuery] = useState("");
+    // ARAMA KAPSAMA GÖRE AYRI (v1.596.0 — kullanıcı: "mamul arama ile stok arama aynıları kalıyor, hammadde ile ayrılsın"):
+    // Stok ve Mamul Stok aynı bileşen (kapsam prop'u), tek `query` iki ekranda da görünüyordu. Metin kapsam başına tutulur.
+    const [aramaMetinleri, setAramaMetinleri] = useState({});
+    const query = aramaMetinleri[kapsam] || "";
+    const setQuery = (v) => setAramaMetinleri((x) => ({ ...x, [kapsam]: typeof v === "function" ? v(x[kapsam] || "") : v }));
     const [filterCat, setFilterCat] = useState("Tümü");
     // Pasif görünümü: açıkken YALNIZCA pasif kartlar listelenir. Ayrı bir sekme olması bilinçli —
     // pasifleri aktiflerin arasına karıştırmak, pasife almanın amacını ortadan kaldırırdı.
@@ -26667,12 +26691,13 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                 React.createElement(Search, { size: 14, style: { position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" } }),
                 React.createElement("input", { value: query, onChange: (e) => setQuery(e.target.value), placeholder: "Ara: \u00FCr\u00FCn, renk, beden, kategori, tip, sezon\u2026", title: "Bo\u015Flukla ay\u0131rarak birden \u00E7ok kelime yazabilirsiniz \u2014 hepsini birden ta\u015F\u0131yan \u00FCr\u00FCnler listelenir (\u00F6rn. \"mamul yazl\u0131k 2027\")", style: {
                         width: "100%",
-                        padding: "6px 8px 6px 28px",
+                        padding: "6px 26px 6px 28px",
                         borderRadius: "var(--erp-r-md)",
                         border: "1px solid var(--erp-line)",
                         background: "var(--erp-panel)",
                         fontSize: 13,
-                    } })),
+                    } }),
+                query && (React.createElement("button", { type: "button", "data-stok-arama-temizle": "1", title: "Aramay\u0131 temizle", onClick: () => setQuery(""), style: { position: "absolute", right: 6, top: 4, border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", fontSize: 16, lineHeight: 1, padding: "2px 4px" } }, "\u00D7"))),
             lowStockProductCount > 0 && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 13, color: "var(--erp-warn)" } },
                 React.createElement(AlertTriangle, { size: 14 }),
                 " ",
@@ -27370,7 +27395,7 @@ function StokModule({ kapsam = "genel", onReceteSablonuKaydet, kurlar, kurGecmis
                             // bileşen yeniden kurulur ve istenen sekme uygulanır. Aksi halde başlangıç değeri
                             // yalnızca ilk kurulumda okunduğu için ikinci yönlendirme etkisiz kalırdı.
                             key: `${p.id}-${hedef ? hedef.sayac : 0}`, product: p, baslangicAcik: true, baslangicSekme: hedef ? hedef.sekme : null, tanimlarRenkler: tanimlar.renkler, tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler, tanimlarBedenGruplari: tanimlar.bedenGruplari || [], onAddRenk: addRenkToProduct, onRenkleriTipeBagla: onRenkleriTipeBagla, onAddBeden: addBedenToProduct, onRemoveRenk: removeRenkFromProduct, onRemoveBeden: removeBedenFromProduct, onRemoveProduct: (id, cascade) => { if (removeProduct(id, cascade) && onPencereKapat)
-                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, 
+                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, onFiyatGrubuMarj: onFiyatGrubuMarj, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, 
                             // Büyütme, katalogdaki büyük görsel penceresinin aynısı: { url, ad } bekliyor.
                             onTeknikCizimAc: (c) => setBuyukGorsel({ url: c.gorsel, ad: c.baslik || "Teknik çizim" }), cariler: cariler, onGoToCari: onGoToCari, onRemoveHareketGlobal: onRemoveHareketGlobal, onRenkResmiChange: updateRenkResmi, onRenkResmiRemove: removeRenkResmi, siparisler: siparisler, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: onPencereAc, onKombinasyonOlustur: onKombinasyonOlustur, onGoToUrun: urunAc })))));
         })));
@@ -28175,6 +28200,11 @@ function fiyatSayisi(v) {
 // GEÇMİŞTEN GELEN RENK EŞLEŞMESİ (v1.561.0): şablondan uygulanırken rengi geçmiş reçetelerden HATIRLANAN satır
 // (`renkGecmisten`) kırmızı çerçeveyle gösterilir — kullanıcı "gözden kaçırmasın". Renk seçilince ya da
 // "Eşleştirmeleri onayla" ile işaret düşer. Bilinmeyen eşleşme hiç açılmaz: turuncu "eşleştir…" kutusu.
+// REÇETE MİKTARI (v1.598.0 — kullanıcı: "reçetede miktarlar belli olmuyor, renklendir"): miktar kutuları
+// renk seçicileri ve tarihlerle aynı gri çizgide kaybolduğundan bütün miktar kutuları ve birim etiketleri
+// tek vurgulu stilde — sıcak sarı zemin, koyu kenarlık, kalın yazı. Tek sabit: bir yerde değişirse hepsi değişsin.
+const RECETE_MIKTAR_STILI = { fontWeight: 700, color: "var(--erp-wait)", background: "var(--erp-wait-tint)", border: "1.5px solid var(--erp-wait)", borderRadius: "var(--erp-r-sm)", textAlign: "right" };
+const RECETE_BIRIM_STILI = { fontSize: 12, fontWeight: 700, color: "var(--erp-wait)" };
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
 // BEDEN / BOY EŞLEŞMESİ DEĞİŞTİRME (v1.563.0 — kullanıcı: "beden eşleştirme, boyut eşleştirme de renk gibi
@@ -28404,7 +28434,7 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat, secili }) {
             React.createElement("input", { type: "color", value: renkKodu, title: "G\u00F6r\u00FCn\u00FCm rengi", "data-recete-renk-yeni-hex": "1", onChange: (e) => setRenkKodu(e.target.value), style: { width: 28, height: 24, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4 } }))),
         t && !tam && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Tan\u0131mlar'a ortak renk olarak eklenir (renk kodu, barkod kodu otomatik), hammadde stok kart\u0131na da a\u00E7\u0131l\u0131r.")));
 }
-function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet, tanimlarAylikUretimHedefi, tanimlarGenelGiderler, onFiseGitNo, product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onDefterDuzeltmeYaz, baslangicSekme, stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir, onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc, onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal, onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle, onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
+function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet, tanimlarAylikUretimHedefi, tanimlarGenelGiderler, onFiseGitNo, product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onFiyatGrubuMarj, onDefterDuzeltmeYaz, baslangicSekme, stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir, onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc, onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal, onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle, onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
     const [open, setOpen] = useState(!!baslangicAcik);
     // Reçeteden yeni renk (v1.571.0): seçim sırasında hammaddeye eklenecek renk burada bekler; reçete yazımı
     // (`onReceteGrubuGuncelle`) onu alıp hammadde kartına AYNI yazımda ekler. Tek kullanımlık.
@@ -30871,7 +30901,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                             g.eklemeTarihi && (React.createElement("span", { className: "mono", title: `Bu grup ${new Date(g.eklemeTarihi).toLocaleString("tr-TR")} tarihinde tek bir "Reçeteye Ekle" işlemiyle oluşturuldu`, style: { fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" } }, tarihYaz(g.eklemeTarihi))),
                                             hepsiAyniMiktarBu && (React.createElement("span", { "data-baslik-miktar": "1", title: "T\u00FCm e\u015Fle\u015Fmelerde ayn\u0131 miktar", style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 400, color: "var(--erp-text-3)" } },
                                                 "\u00B7",
-                                                React.createElement("input", { type: "text", inputMode: "decimal", defaultValue: ortakMiktarBu, className: "mono", style: { width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }, title: "Hesap yazabilirsiniz: 1/8, 120/14", onBlur: (e) => {
+                                                React.createElement("input", { type: "text", inputMode: "decimal", defaultValue: ortakMiktarBu, className: "mono", style: { width: 78, padding: "3px 6px", fontSize: 12, ...RECETE_MIKTAR_STILI }, title: "Hesap yazabilirsiniz: 1/8, 120/14", onBlur: (e) => {
                                                         // Reçetedeki her miktar alanı hesap kabul ediyor; toplu
                                                         // düzenlemenin etmemesi tutarsızlık olurdu.
                                                         const yeni = ifadeHesapla(e.target.value);
@@ -30886,7 +30916,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                         });
                                                         onReceteGrubuGuncelle(product.id, kaynakSatirlar.map((r) => r.id), guncellenecekler);
                                                     }, className: "mono", style: { width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" } }),
-                                                React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text)" } }, ortakBirimBu))),
+                                                React.createElement("span", { className: "mono", style: RECETE_BIRIM_STILI }, ortakBirimBu))),
                                             React.createElement("span", { style: { marginLeft: "auto", display: "flex" } },
                                                 React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, g.satirlar.map((r) => r.id)), boyut: 13, baslikNormal: `${g.hammaddeAd} hammaddesine ait tüm satırları (${g.satirlar.length}) sil`, baslikOnay: `${g.satirlar.length} satır silinecek — emin misiniz? Tekrar dokunun` }))),
                                         React.createElement(BedenEslesmeSeridi, { satirlar: g.satirlar, urunBedenleri: bedenler, hammadde: (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId), tumUrunler: tumUrunler, varyantlar: product.variants || [], onDegistir: (mb, yeni) => {
@@ -30894,7 +30924,20 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                 if (silinecekIdler.length || yeniSatirlar.length)
                                                     onReceteGrubuGuncelle(product.id, silinecekIdler, yeniSatirlar);
                                             } }),
-                                        React.createElement("div", { style: { overflowX: "auto", maxWidth: "100%" } },
+                                        (() => {
+                                            const standartKart = pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
+                                                && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden))
+                                                && eksikMamulRenkler2.length === 0;
+                                            if (standartKart) {
+                                                return (React.createElement("div", { "data-recete-standart-kart": g.hammaddeAd, style: { fontSize: 11, color: "var(--erp-text-3)", padding: "2px 4px" } },
+                                                    "Renksiz \u00B7 bedensiz malzeme \u2014 b\u00FCt\u00FCn renklerde ayn\u0131 (",
+                                                    mamulRenkler2.length,
+                                                    " renk)"));
+                                            }
+                                            return null;
+                                        })(),
+                                        React.createElement("div", { style: { overflowX: "auto", maxWidth: "100%", display: (pozisyonluSatirlar.length === 0 && hepsiAyniMiktarBu
+                                                    && kaynakSatirlar.every((r) => !olcuGoster(r.renk) && !olcuGoster(r.beden)) && eksikMamulRenkler2.length === 0) ? "none" : undefined } },
                                             React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
                                                 React.createElement("thead", null,
                                                     React.createElement("tr", null,
@@ -30930,8 +30973,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                                             return { ...rest, miktar: yeni };
                                                                         });
                                                                         onReceteGrubuGuncelle(product.id, satirlarBu.map((r) => r.id), guncellenecekler);
-                                                                    }, className: "mono", style: { width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" } }),
-                                                                React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } }, satirOrtakBirim)))),
+                                                                    }, className: "mono", style: { width: 78, padding: "3px 6px", fontSize: 12, ...RECETE_MIKTAR_STILI } }),
+                                                                React.createElement("span", { className: "mono", style: RECETE_BIRIM_STILI }, satirOrtakBirim)))),
                                                         mamulRenkler2.map((mr) => {
                                                             const r = kaynakSatirlar.find((x) => x.mamulRenk === mr && (poz === null || x.aciklama === poz));
                                                             return (React.createElement("td", { key: mr, style: { padding: "4px 8px", textAlign: "center" } }, r ? (satirSabit ? (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3 } },
@@ -31112,8 +31155,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                         // TÜM mamul renklerin TÜM bedenlerine yeni miktar tek seferde uygulanır.
                                                         const tumSatirlar = matrisSatirlari.flatMap((ms) => ms.satirlar);
                                                         onReceteGrubuGuncelle(product.id, tumSatirlar.map((r) => r.id), tumSatirlar.map(({ id, ...rest }) => ({ ...rest, miktar: yeni })));
-                                                    }, className: "mono", style: { width: 70, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" } }),
-                                                React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text)" } }, baslikOrtakBirim))),
+                                                    }, className: "mono", style: { width: 70, padding: "3px 6px", fontSize: 12, ...RECETE_MIKTAR_STILI } }),
+                                                React.createElement("span", { className: "mono", style: RECETE_BIRIM_STILI }, baslikOrtakBirim))),
                                             React.createElement("span", { style: { marginLeft: "auto", display: "flex" } },
                                                 React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, g.satirlar.map((r) => r.id)), boyut: 13, baslikNormal: `${g.hammaddeAd} hammaddesine ait tüm satırları (${g.satirlar.length}) sil`, baslikOnay: `${g.satirlar.length} satır silinecek — emin misiniz? Tekrar dokunun` }))),
                                         React.createElement(BedenEslesmeSeridi, { satirlar: g.satirlar, urunBedenleri: bedenler, hammadde: (tumUrunler || []).find((p) => p.id === g.hammaddeUrunId), tumUrunler: tumUrunler, varyantlar: product.variants || [], onDegistir: (mb, yeni) => {
@@ -31180,8 +31223,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                                                 return { ...rest, miktar: yeni };
                                                                             });
                                                                             onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
-                                                                        }, className: "mono", style: { width: 44, padding: "4px 7px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
-                                                                    React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } }, ms.birim))))))),
+                                                                        }, className: "mono", style: { width: 44, padding: "4px 7px", fontSize: 12, ...RECETE_MIKTAR_STILI } }),
+                                                                    React.createElement("span", { className: "mono", style: RECETE_BIRIM_STILI }, ms.birim))))))),
                                                             eksikMamulRenkler.map((mr) => (React.createElement("td", { key: `eksik-${mr}`, style: { padding: "6px 8px", textAlign: "center" } },
                                                                 React.createElement(ReceteRenkSecimi, { hammaddeId: g.hammaddeUrunId, yr: receteRenkYeni, value: "", onChange: (e) => {
                                                                         const yeniRenk = e.target.value;
@@ -31287,8 +31330,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                                             return;
                                                                         const { id, ...rest } = r;
                                                                         onReceteGrubuGuncelle(product.id, [r.id], [{ ...rest, miktar: yeni }]);
-                                                                    }, className: "mono", style: { width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
-                                                                React.createElement("span", { className: "mono", style: { fontSize: 13, color: "var(--erp-text-3)" } }, ms.birim))),
+                                                                    }, className: "mono", style: { width: 64, padding: "3px 5px", fontSize: 13, ...RECETE_MIKTAR_STILI } }),
+                                                                React.createElement("span", { className: "mono", style: RECETE_BIRIM_STILI }, ms.birim))),
                                                             React.createElement(SilOnayButonu, { onConfirm: () => onReceteSilToplu(product.id, ms.satirlar.map((r) => r.id)), boyut: 12, baslikNormal: tekBeden ? "Sil" : "Bu eşleştirmenin tüm bedenlerini sil" })),
                                                         !tekBeden && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, ms.satirlar.map((r) => (React.createElement("div", { key: r.id, style: {
                                                                 display: "flex", alignItems: "center", gap: 4, background: "var(--erp-panel)",
@@ -31685,7 +31728,17 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                     const secim = fgSecim || "";
                                     const secilenGrup = satisGruplari.find((g) => g.id === secim);
                                     const secilenPb = secim === "__genel" ? hedefPb : (secilenGrup ? (secilenGrup.paraBirimi || "TRY") : "TRY");
-                                    const oneriHesapla = (pb) => { const k = kurTL(pb); return k > 0 ? Math.round((satisFiyati / k) * 100) / 100 : 0; };
+                                    // GRUP MARJI (v1.597.0 — kullanıcı: "fiyat gruplarının kâr marjı olsun, marj girerek otomatik fiyat versin"):
+                                    // grubun `marj`ı varsa öneri = tam maliyet ÷ (1 − marj); yoksa ürünün kendi kârıyla hesaplanan satış fiyatı.
+                                    const grupMarji = (g) => (g && g.marj != null && g.marj !== "" ? parseFloat(g.marj) : null);
+                                    const oneriHesapla = (pb, grup) => {
+                                        const k = kurTL(pb);
+                                        if (!(k > 0))
+                                            return 0;
+                                        const m = grupMarji(grup);
+                                        const tl = m != null ? marjlaSatisFiyati(tamMaliyet, m) : satisFiyati;
+                                        return Math.round((tl / k) * 100) / 100;
+                                    };
                                     const kaydet = (hedefKey, pb, fiyat) => {
                                         if (!(fiyat > 0))
                                             return;
@@ -31715,7 +31768,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                     const v = e.target.value;
                                                     setFgSecim(v);
                                                     const pb = v === "__genel" ? hedefPb : ((satisGruplari.find((g) => g.id === v) || {}).paraBirimi || "TRY");
-                                                    setFgFiyat(v ? String(oneriHesapla(pb)) : "");
+                                                    setFgFiyat(v ? String(oneriHesapla(pb, satisGruplari.find((g) => g.id === v))) : "");
                                                 }, style: { padding: "5px 8px", fontSize: 13, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)", minWidth: 180 } },
                                                 React.createElement("option", { value: "" }, "\u2014 fiyat grubu se\u00E7in \u2014"),
                                                 React.createElement("option", { value: "__genel" }, "Genel (grubu olmayan cariler)"),
@@ -31729,7 +31782,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                 React.createElement("span", { className: "mono", style: { fontSize: 13, fontWeight: 700 } }, PB_SIMGE[secilenPb]),
                                                 React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } },
                                                     "\u00F6neri ",
-                                                    para(oneriHesapla(secilenPb), secilenPb)),
+                                                    para(oneriHesapla(secilenPb, secilenGrup), secilenPb),
+                                                    grupMarji(secilenGrup) != null ? ` (grup kârı %${grupMarji(secilenGrup)})` : ""),
                                                 React.createElement("button", { type: "button", className: "btn-primary", "data-fg-ekle": "1", onClick: () => kaydet(secim, secilenPb, parseFloat(fgFiyat)), style: { padding: "5px 14px", fontSize: 13 } }, "Ekle"))),
                                             satisGruplari.length === 0 && !secim && (React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Grup yok \u2014 \"Toptan USD\" gibi gruplar Tan\u0131mlar \u203A Fiyat Gruplar\u0131'ndan eklenir."))),
                                         (() => {
@@ -31741,7 +31795,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                 return React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Hen\u00FCz fiyat girilmedi.");
                                             return (React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 12, background: "#fff", maxWidth: 560 } },
                                                 React.createElement("tbody", null, kayitli.map((r) => {
-                                                    const oneri = oneriHesapla(r.pb);
+                                                    const grupKaydi = r.key === "__genel" ? null : satisGruplari.find((g) => g.id === r.key);
+                                                    const oneri = oneriHesapla(r.pb, grupKaydi);
                                                     const fark = oneri > 0 ? Math.round(((r.fiyat / oneri) - 1) * 100) : null;
                                                     // Grubun para birimi sonradan değiştiyse kayıtlı fiyat eski birimde kalır — söylenmeli.
                                                     const grupPb = r.key === "__genel" ? r.pb : ((satisGruplari.find((g) => g.id === r.key) || {}).paraBirimi || "TRY");
@@ -31755,14 +31810,24 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                                                 " \u2014 fiyat ",
                                                                 PB_SIMGE[r.pb],
                                                                 " ile kay\u0131tl\u0131, \"\u00D6neriye e\u015Fitle\" ile yenileyin"))),
-                                                        React.createElement("td", { className: "mono", "data-grup-mevcut": r.key, style: { padding: "4px 8px", textAlign: "right", fontWeight: 700 } }, para(r.fiyat, r.pb)),
-                                                        React.createElement("td", { className: "mono", style: { padding: "4px 8px", textAlign: "right", fontSize: 11, color: "var(--erp-text-3)" } },
+                                                        React.createElement("td", { className: "mono", "data-grup-mevcut": r.key, style: { padding: "4px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" } },
+                                                            React.createElement("input", { type: "number", min: "0", step: "any", "data-grup-fiyat-kutu": r.key, key: `${r.key}-${r.fiyat}`, defaultValue: r.fiyat, onBlur: (e) => { const v = parseFloat(e.target.value); if (v > 0 && Math.abs(v - r.fiyat) > 0.0001)
+                                                                    kaydet(r.key, r.pb, v); }, onKeyDown: (e) => { if (e.key === "Enter")
+                                                                    e.currentTarget.blur(); }, style: { width: 84, padding: "2px 6px", fontSize: 12, textAlign: "right", fontWeight: 700, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" } }),
+                                                            " ",
+                                                            PB_SIMGE[r.pb] || r.pb),
+                                                        React.createElement("td", { className: "mono", style: { padding: "4px 8px", textAlign: "right", fontSize: 11, color: "var(--erp-text-3)", whiteSpace: "nowrap" } },
                                                             "\u00F6neri ",
-                                                            para(oneri, r.pb)),
+                                                            para(oneri, r.pb),
+                                                            grupKaydi && onFiyatGrubuMarj && (React.createElement("label", { title: "Bu grubun k\u00E2r marj\u0131 (%) \u2014 \u00F6neri tam maliyetten bu marjla hesaplan\u0131r; bo\u015Fsa \u00FCr\u00FCn\u00FCn kendi k\u00E2r\u0131", style: { marginLeft: 6, display: "inline-flex", alignItems: "center", gap: 2 } },
+                                                                "k\u00E2r %",
+                                                                React.createElement("input", { type: "number", min: "0", max: "99", step: "any", "data-fg-marj": r.key, key: `marj-${r.key}-${grupKaydi.marj ?? ""}`, defaultValue: grupKaydi.marj ?? "", placeholder: String(product.karMarji != null ? product.karMarji : 30), onBlur: (e) => { const v = e.target.value === "" ? null : parseFloat(e.target.value); if ((v ?? null) !== (grupKaydi.marj ?? null))
+                                                                        onFiyatGrubuMarj(r.key, v); }, onKeyDown: (e) => { if (e.key === "Enter")
+                                                                        e.currentTarget.blur(); }, style: { width: 46, padding: "1px 4px", fontSize: 11, textAlign: "right", fontWeight: 700, border: "1px solid var(--erp-border)", borderRadius: "var(--erp-r-sm)" } })))),
                                                         React.createElement("td", { style: { padding: "4px 8px", textAlign: "right", fontSize: 11, fontWeight: 700,
                                                                 color: fark == null || fark === 0 ? "var(--erp-text-3)" : fark < 0 ? "var(--erp-void)" : "var(--erp-ok)" } }, fark == null ? "" : `${fark > 0 ? "+" : ""}%${fark}`),
                                                         React.createElement("td", { style: { padding: "4px 8px", textAlign: "right", whiteSpace: "nowrap" } },
-                                                            React.createElement("button", { type: "button", className: "btn-ghost", "data-fiyat-uygula": r.key, title: "\u00D6neriye e\u015Fitle", onClick: () => kaydet(r.key, grupPb, oneriHesapla(grupPb)), style: { fontSize: 11, padding: "2px 8px" } }, "\u00D6neriye e\u015Fitle"),
+                                                            React.createElement("button", { type: "button", className: "btn-ghost", "data-fiyat-uygula": r.key, title: "\u00D6neriye e\u015Fitle", onClick: () => kaydet(r.key, grupPb, oneriHesapla(grupPb, grupKaydi)), style: { fontSize: 11, padding: "2px 8px" } }, "\u00D6neriye e\u015Fitle"),
                                                             r.kuralId && React.createElement(SilOnayButonu, { onConfirm: () => fiyatKuraliSil(r.kuralId), boyut: 11, baslikNormal: `${r.ad} fiyatı silinsin mi?` }))));
                                                 }))));
                                         })(),
@@ -31784,7 +31849,30 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 } },
                     React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, "\u00D6zel Kodlar"),
                     React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, tipMetni ? `Genel alanlar + "${tipMetni}" tipine özel alanlar` : "Genel alanlar"),
-                    yeniKodAlaniGiris ? (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, marginLeft: "auto" } },
+                    yeniKodAlaniGiris ? (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 4, marginLeft: "auto", flexWrap: "wrap" } },
+                        (() => {
+                            const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+                            const mevcutAdlar = new Set(alanlar.map((a) => nrm(a.ad)));
+                            const secenekler = Array.from(new Set((tanimlarOzelKodAlanlari || []).map((a) => a.ad).filter((ad) => ad && !mevcutAdlar.has(nrm(ad)))))
+                                .sort((a, b) => a.localeCompare(b, "tr"));
+                            if (!secenekler.length)
+                                return null;
+                            return (React.createElement("select", { "data-ozel-kod-mevcut": "1", value: "", title: "Ba\u015Fka tipte tan\u0131ml\u0131 alanlardan se\u00E7 \u2014 ayn\u0131 adla bu \u00FCr\u00FCn\u00FCn tipine a\u00E7\u0131l\u0131r", onChange: (e) => {
+                                    const ad = e.target.value;
+                                    if (!ad)
+                                        return;
+                                    const id = onYeniOzelKodAlani && onYeniOzelKodAlani(ad, eklenecekKapsam, kapsamAd);
+                                    if (!id) {
+                                        showToast("Alan eklenemedi");
+                                        return;
+                                    }
+                                    setYeniKodAlaniGiris(false);
+                                    setYeniKodAlaniAdi("");
+                                    showToast(eklenecekKapsam === "genel" ? `"${ad}" genel alan olarak eklendi — her üründe görünür` : `"${ad}" yalnız "${kapsamAd}" tipinde görünür`);
+                                }, style: { ...inputStyle, width: 170, padding: "5px 8px", fontSize: 12 } },
+                                React.createElement("option", { value: "" }, "Mevcut alanlardan se\u00E7\u2026"),
+                                secenekler.map((ad) => React.createElement("option", { key: ad, value: ad }, ad))));
+                        })(),
                         React.createElement("input", { autoFocus: true, value: yeniKodAlaniAdi, onChange: (e) => setYeniKodAlaniAdi(e.target.value), placeholder: "\u00D6rn. Taban", style: { ...inputStyle, width: 150, padding: "5px 8px", fontSize: 12 } }),
                         React.createElement("button", { type: "button", className: "btn-primary", style: { padding: "5px 8px" }, onClick: () => {
                                 const ad = yeniKodAlaniAdi.trim();
@@ -44179,8 +44267,10 @@ function MiktarGirisi({ deger, onKaydet, genislik = 50 }) {
                 // yapıştırıcı, çivi, iplik gibi malzemeler binde birler mertebesinde tüketiliyor;
                 // "0,0125" yedi karakter. Dar alan bunu "0," diye kesiyor ve kullanıcı kaydettiği
                 // değeri göremiyor — girdiğinden emin olamadığı bir alan, olmayan alandan kötü.
-                width: Math.max(genislik, 78), padding: "4px 7px", fontSize: 12, borderRadius: "var(--erp-r-sm)",
-                border: `1px solid ${gecersiz ? "var(--erp-orange)" : "var(--erp-border)"}`,
+                width: Math.max(genislik, 78), padding: "4px 7px", fontSize: 12,
+                // v1.598.0: reçetedeki diğer miktar kutularıyla aynı vurgu (RECETE_MIKTAR_STILI, 160-urunkarti).
+                ...RECETE_MIKTAR_STILI,
+                ...(gecersiz ? { border: "1.5px solid var(--erp-orange)" } : {}),
             } }),
         ifadeMi && hesaplanan !== null && (React.createElement("span", { className: "mono", style: { fontSize: 10, color: "var(--erp-primary)", fontWeight: 700, lineHeight: 1.4 } },
             "= ",
@@ -55251,7 +55341,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.595.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.598.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

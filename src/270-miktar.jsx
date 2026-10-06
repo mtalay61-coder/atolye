@@ -106,8 +106,10 @@ function MiktarGirisi({ deger, onKaydet, genislik = 50 }) {
           // yapıştırıcı, çivi, iplik gibi malzemeler binde birler mertebesinde tüketiliyor;
           // "0,0125" yedi karakter. Dar alan bunu "0," diye kesiyor ve kullanıcı kaydettiği
           // değeri göremiyor — girdiğinden emin olamadığı bir alan, olmayan alandan kötü.
-          width: Math.max(genislik, 78), padding: "4px 7px", fontSize: 12, borderRadius: "var(--erp-r-sm)",
-          border: `1px solid ${gecersiz ? "var(--erp-orange)" : "var(--erp-border)"}`,
+          width: Math.max(genislik, 78), padding: "4px 7px", fontSize: 12,
+          // v1.598.0: reçetedeki diğer miktar kutularıyla aynı vurgu (RECETE_MIKTAR_STILI, 160-urunkarti).
+          ...RECETE_MIKTAR_STILI,
+          ...(gecersiz ? { border: "1.5px solid var(--erp-orange)" } : {}),
         }}
       />
       {ifadeMi && hesaplanan !== null && (
