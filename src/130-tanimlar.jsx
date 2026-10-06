@@ -1610,7 +1610,12 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               </select>
               <select value={g.paraBirimi || "TRY"} data-fiyat-grubu-pb-duzenle={g.id}
                 title="Bu grubun fiyatları hangi para biriminde — ürünlerdeki kayıtlı fiyatlar bu birimde okunur"
-                onChange={(e) => onSave({ ...tanimlar, fiyatGruplari: tanimlar.fiyatGruplari.map((x) => (x.id === g.id ? { ...x, paraBirimi: e.target.value } : x)) })}
+                onChange={(e) => {
+                  onSave({ ...tanimlar, fiyatGruplari: tanimlar.fiyatGruplari.map((x) => (x.id === g.id ? { ...x, paraBirimi: e.target.value } : x)) });
+                  // v1.600.0: kayıtlı fiyatlar kendi birimini taşır; grubun birimi değişince onlar değişmez. Kullanıcı
+                  // "değiştirdim ama değişmedi" demesin diye nereden değişeceği burada söylenir.
+                  showToast("Grubun birimi değişti; ürünlerdeki kayıtlı fiyatlar eski birimde kaldı — Depo › Fiyat Listesi'nde bu grubu seçince üstteki şeritten birimi değiştirin ya da kurla çevirin");
+                }}
                 style={{ fontSize: 12, padding: "4px 6px", border: "1px solid var(--erp-border-2)", borderRadius: "var(--erp-r-sm)",
                   fontWeight: 700, color: (g.paraBirimi || "TRY") === "TRY" ? "var(--erp-text-2)" : "var(--erp-info)" }}>
                 <option value="TRY">₺ TRY</option>
