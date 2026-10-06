@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.605.0";
+const SURUM = "1.606.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Recete: renksiz hammadde (Standart) yeni mamul renginde eslestirme sormaz, kendiliginden dolar; model rengi ekleme yolu da otomatik kurallari uygular; hammaddesiz proses satiri hep gorunur";
+const SURUM_NOTU = "Stok no cakismasi kendiliginden onarilir (yerelde ve bulut 409 urunler_stok_no_tekil hatasinda) - bekleyen stok kayitlari gider";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Recete: renksiz hammadde (Standart) yeni mamul renginde esle
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.606.0", tarih: "06.10.2026",
+    eklenen: [], degisen: [],
+    duzeltilen: ["Çoklu cihaz: iki ürüne aynı stok no düşünce bulut bütün stok kayıtlarını reddediyordu (409 urunler_stok_no_tekil, \"Yeniden dene\" sayacı büyüyordu) — yerelde çakışan numara en eski ürün korunarak onarılır; bulut hatasında buluttaki numaralar okunup çakışan ürüne yeni numara verilir ve gönderim yinelenir. Etiket basıldıysa yeniden basılmalı (uyarı çıkar)"] },
   { surum: "1.605.0", tarih: "06.10.2026",
     eklenen: [],
     degisen: ["Reçete: \"Hammaddesiz proses ekle\" satırı aday proses kalmayınca da görünür (nedeni ve çözümü yazar)"],

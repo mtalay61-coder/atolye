@@ -1,0 +1,8 @@
+{
+  "nolar": [
+    "Bot:7",
+    "Çizme:8"
+  ],
+  "sayac": 8,
+  "hatalar": []
+}
