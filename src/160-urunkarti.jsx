@@ -14,7 +14,7 @@ function fiyatSayisi(v) {
 // REÇETE MİKTARI (v1.598.0 — kullanıcı: "reçetede miktarlar belli olmuyor, renklendir"): miktar kutuları
 // renk seçicileri ve tarihlerle aynı gri çizgide kaybolduğundan bütün miktar kutuları ve birim etiketleri
 // tek vurgulu stilde — sıcak sarı zemin, koyu kenarlık, kalın yazı. Tek sabit: bir yerde değişirse hepsi değişsin.
-const RECETE_MIKTAR_STILI = { fontWeight: 700, color: "var(--erp-wait)", background: "var(--erp-wait-tint)", border: "1.5px solid var(--erp-wait)", borderRadius: "var(--erp-r-sm)", textAlign: "right" };
+const RECETE_MIKTAR_STILI = { fontWeight: 700, color: "var(--erp-wait)", background: "var(--erp-wait-tint)", border: "2px solid var(--erp-wait)", borderRadius: "var(--erp-r-sm)", textAlign: "right" };
 const RECETE_BIRIM_STILI = { fontSize: 12, fontWeight: 700, color: "var(--erp-wait)" };
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
@@ -3764,8 +3764,6 @@ function ProductMatrixCard({
                                     });
                                     onReceteGrubuGuncelle(product.id, kaynakSatirlar.map((r) => r.id), guncellenecekler);
                                   }}
-                                  className="mono"
-                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
                                 />
                                 <span className="mono" style={RECETE_BIRIM_STILI}>{ortakBirimBu}</span>
                               </span>
