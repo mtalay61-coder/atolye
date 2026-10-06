@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.604.0</title>
+<title>Atölye ERP 1.607.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.604.0";
+const SURUM = "1.607.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Stok resmine damga: sag ustte firma logosu, altinda stok adi ve renk (Tanimlar > Firma Bilgileri nden kapatilabilir)";
+const SURUM_NOTU = "Fiyat Listesi: fiyatin son degistirilme tarihi satirda; resim katalogla ayni kural (ilk renk resmi, yoksa kapak)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,16 @@ const SURUM_NOTU = "Stok resmine damga: sag ustte firma logosu, altinda stok adi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.607.0", tarih: "06.10.2026",
+        eklenen: ["Fiyat Listesi: her satırda fiyatın son değiştirilme tarihi (fiyat geçmişinden; bilinmiyorsa —)"], degisen: [],
+        duzeltilen: ["Fiyat Listesi: ürün resmi kapak resmini öne alıyordu, katalog ilk renk resmini — renk resmi yenilenince listede eski fotoğraf kalıyordu; kural katalogla aynı (ilk renk resmi, yoksa kapak)"] },
+    { surum: "1.606.0", tarih: "06.10.2026",
+        eklenen: [], degisen: [],
+        duzeltilen: ["Çoklu cihaz: iki ürüne aynı stok no düşünce bulut bütün stok kayıtlarını reddediyordu (409 urunler_stok_no_tekil, \"Yeniden dene\" sayacı büyüyordu) — yerelde çakışan numara en eski ürün korunarak onarılır; bulut hatasında buluttaki numaralar okunup çakışan ürüne yeni numara verilir ve gönderim yinelenir. Etiket basıldıysa yeniden basılmalı (uyarı çıkar)"] },
+    { surum: "1.605.0", tarih: "06.10.2026",
+        eklenen: [],
+        degisen: ["Reçete: \"Hammaddesiz proses ekle\" satırı aday proses kalmayınca da görünür (nedeni ve çözümü yazar)"],
+        duzeltilen: ["Reçete: renksiz hammadde (Takviye Bezi, Jut) yeni mamul renginde turuncu \"eşleştir…\" soruyordu — kart açılınca kendiliğinden Standart ile dolar; ürün kartından model rengi eklerken de (kaynak renk seçilmese bile) otomatik eşleşme kuralları çalışır"] },
     { surum: "1.604.0", tarih: "06.10.2026",
         eklenen: ["Stok kartına fotoğraf yüklenince sağ üst köşeye firma logosu, altına stok adı ve (renk resmiyse) renk basılır — kapak ve renk resimleri, stok formu ve ürün kartı; Tanımlar › Firma Bilgileri \"Stok resmine logo + ad damgası\" tikiyle kapatılır"],
         degisen: [], duzeltilen: [] },
@@ -6305,7 +6315,10 @@ function urundenSablonIsciligi(product) {
 function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
     const recete = (product && product.recete) || [];
     const sonuc = { satirlar: [], gecmisSayisi: 0, bosGruplar: [] };
-    if (!yeniRenk || recete.length === 0 || recete.some((r) => r.mamulRenk === yeniRenk))
+    // v1.605.0: "renk zaten reçetede varsa hiç dokunma" erken dönüşü KALKTI — model rengi ekleme yolu (100
+    // yeniRenkVeReceteEkle) kaynak renkten bazı satırları kopyalayıp kalan gruplar için buraya geliyor; grup zaten
+    // kapsıyorsa `grupYeniRenkSatirlari` null döner, çift satır açılmaz.
+    if (!yeniRenk || recete.length === 0)
         return sonuc;
     const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler || []);
     const gruplar = new Map();
@@ -14645,6 +14658,54 @@ function kimlikZamani(id) {
     const n = p.length >= 3 ? parseInt(p[1], 36) : NaN;
     return Number.isFinite(n) ? n : 0;
 }
+// STOK NO ÇAKIŞMASI (v1.606.0 — kullanıcı, çoklu cihaz: Supabase 409 "duplicate key value violates unique constraint
+// urunler_stok_no_tekil", 315 deneme). İki cihaz aynı sayaçtan numara üretince (v1.603 ile stok no artık kart açılır
+// açılmaz veriliyor) aynı stok no iki ürüne düşüyor; bulut tekil dizin isteği reddediyor, bekleyen defter her denemede
+// büyüyor ve HİÇBİR stok kaydı gitmiyor. Onarım `tanimKodlariniOnar` ile aynı ilke: EN ESKİ kayıt (kimlik zamanı,
+// eşitse `olusturuldu`, eşitse liste sırası) numarasını korur — etiketi büyük ihtimalle o basıldı; diğeri sıradaki boş
+// numarayı alır. `bulutKullanilan`: buluttaki { stokNo: urunId } — buradaki ürünün numarası bulutta BAŞKA bir üründeyse
+// bu cihazdaki (daha yeni olan) ürün yeni numara alır: bulut kaynak. Sayaç yeni numaranın gerisinde kalmaz. Saf.
+// Döner: { stok, tanimlar, degisenler: [{ id, ad, eski, yeni }] }.
+function stokNoCakismalariniOnar(stok, tanimlar, bulutKullanilan) {
+    const liste = stok || [];
+    const t = tanimlar || {};
+    const bulut = bulutKullanilan || {};
+    const no = (u) => Number(u && u.stokNo) || 0;
+    const sirali = liste.map((u, i) => ({ u, i })).sort((a, b) => (kimlikZamani(a.u.id) - kimlikZamani(b.u.id)) || String(a.u.olusturuldu || "").localeCompare(String(b.u.olusturuldu || "")) || (a.i - b.i));
+    const tutulan = new Set(Object.keys(bulut).map(Number).filter((v) => v > 0));
+    const yenidenNumarala = new Set();
+    sirali.forEach(({ u }) => {
+        const v = no(u);
+        if (!(v > 0))
+            return;
+        // Bulutta aynı numara başka bir ürünün: bu ürün (kim daha eskiyse fark etmez, bulut kaynak) yeni numara alır.
+        if (bulut[v] && bulut[v] !== u.id) {
+            yenidenNumarala.add(u.id);
+            return;
+        }
+        if (tutulan.has(v) && !(bulut[v] === u.id)) {
+            yenidenNumarala.add(u.id);
+            return;
+        }
+        tutulan.add(v);
+    });
+    if (yenidenNumarala.size === 0)
+        return { stok: liste, tanimlar: t, degisenler: [] };
+    const sayaclar = { ...(t.kodSayaclari || {}) };
+    // Sayaç bilinen en büyük numaranın gerisindeyse (başka cihaz ilerletmiş) oradan devam: aynı çakışma tekrar doğmasın.
+    sayaclar.stok = Math.max(Number(sayaclar.stok) || 0, ...Array.from(tutulan));
+    const degisenler = [];
+    const yeniStok = liste.map((u) => {
+        if (!yenidenNumarala.has(u.id))
+            return u;
+        const n = kodSayacIlerlet(sayaclar, "stok", tutulan);
+        if (n === null)
+            return u;
+        degisenler.push({ id: u.id, ad: u.ad, eski: u.stokNo, yeni: n });
+        return { ...u, stokNo: n };
+    });
+    return { stok: yeniStok, tanimlar: { ...t, kodSayaclari: sayaclar }, degisenler };
+}
 function tanimKodlariniOnar(tanimlar) {
     const t = tanimlar || {};
     const degisenler = [];
@@ -17356,11 +17417,17 @@ function AtolyeERP() {
         // eklemeId ayrımı, "aynı hammadde farklı amaçla ikinci kez eklendi" durumu içindir (ör. Deri
         // Nubuk hem yüz hem astar). Renk kopyalama o durum değildir.
         const kaynakSatirlar = kaynakRenk ? (urun.recete || []).filter((r) => r.mamulRenk === kaynakRenk) : [];
-        const yeniRecete = kaynakSatirlar.map((r) => {
+        const kopyalanan = kaynakSatirlar.map((r) => {
             const { id, ...kalan } = r;
             const degistirilmis = hammaddeRenkleri && hammaddeRenkleri[r.id];
             return { ...kalan, id: uid("recete"), mamulRenk: ad, renk: degistirilmis || r.renk };
         });
+        // KALAN GRUPLAR OTOMATİK (v1.605.0 — kullanıcı: "Standart'ta eşleşme olmayacaktı, yeni renk ekleyince eşleşme
+        // istedi"): kaynak renk seçilmediyse ya da seçilen renk her hammaddeyi kapsamıyorsa, Stok ekranındaki renk ekleme
+        // ile aynı kurallar (aynı ad → geçmiş [kırmızı] → sabit/renksiz → Standart) burada da çalışır. Renksiz hammadde
+        // (Takviye Bezi, Jut) böylece hiçbir yolda turuncu "eşleştir…" sormaz.
+        const otomatik = yeniRenkReceteSatirlari({ ...urun, recete: [...(urun.recete || []), ...kopyalanan] }, ad, stok);
+        const yeniRecete = [...kopyalanan, ...otomatik.satirlar.map((r) => ({ id: uid("recete"), ...r }))];
         setStok((prev) => {
             const next = prev.map((p) => p.id === urunId
                 ? { ...p, variants: [...p.variants, ...yeniVariants], recete: [...(p.recete || []), ...yeniRecete] }
@@ -17369,7 +17436,7 @@ function AtolyeERP() {
             return next;
         });
         showToast(yeniRecete.length > 0
-            ? `"${ad}" rengi eklendi — "${kaynakRenk}" reçetesinden ${yeniRecete.length} satır kopyalandı`
+            ? `"${ad}" rengi eklendi — ${kopyalanan.length ? `"${kaynakRenk}" reçetesinden ${kopyalanan.length} satır kopyalandı` : ""}${kopyalanan.length && otomatik.satirlar.length ? ", " : ""}${otomatik.satirlar.length ? `${otomatik.satirlar.length} satır kendiliğinden eşleşti${otomatik.gecmisSayisi ? ` (${otomatik.gecmisSayisi} geçmişten — kırmızı, kontrol edin)` : ""}` : ""}${otomatik.bosGruplar.length ? ` · ${otomatik.bosGruplar.join(", ")}: eşleştirin` : ""}`
             : `"${ad}" rengi eklendi — reçete kopyalanmadı, Stok ekranından tanımlayın`);
         return true;
     }, [stok, showToast, tanimlar]);
@@ -18787,6 +18854,51 @@ function AtolyeERP() {
         gunlukYaz(`Kod çakışması onarıldı: ${metin}`, "tanimlar", { degisenler: o.degisenler });
         showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
     }, [loading, tanimlar, tanimlarKodluYaz, showToast]);
+    // STOK NO ÇAKIŞMASI (v1.606.0, 089 `stokNoCakismalariniOnar`): (1) yerelde aynı numaralı iki ürün → en eski korur,
+    // diğeri yeni numara; stok her değişince denetlenir, aynı imza bir kez. (2) Bulut 409 `urunler_stok_no_tekil` deyince
+    // (çakışan ürün bu cihazda henüz yoksa yerel denetim göremez) buluttaki stok no listesi çekilir, çakışan yerel ürün yeni
+    // numara alır ve bekleyenler yeniden gönderilir — "Yeniden dene" 315 kez aynı hatayı almasın.
+    const stokNoOnarimImzaRef = useRef("");
+    useEffect(() => {
+        if (loading)
+            return;
+        const o = stokNoCakismalariniOnar(stok, tanimlar);
+        if (o.degisenler.length === 0)
+            return;
+        const imza = o.degisenler.map((d) => `${d.id}:${d.eski}`).join("|");
+        if (stokNoOnarimImzaRef.current === imza)
+            return;
+        stokNoOnarimImzaRef.current = imza;
+        saveStok(o.stok);
+        tanimlarKodluYaz(o.tanimlar);
+        const metin = o.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
+        gunlukYaz(`Stok no çakışması onarıldı: ${metin}`, "stok", { degisenler: o.degisenler });
+        showToast(`Stok no çakışması onarıldı — ${metin}. Bu ürünün etiketini bastıysanız yeniden basın.`);
+    }, [loading, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+    const bulutStokNoOnarimRef = useRef(0);
+    useEffect(() => {
+        if (!yazmaHatasi || !/urunler_stok_no_tekil/.test(String(yazmaHatasi.mesaj || "")))
+            return;
+        if (bulutStokNoOnarimRef.current === yazmaHatasi.zaman)
+            return;
+        bulutStokNoOnarimRef.current = yazmaHatasi.zaman;
+        supabaseIstek("urunler?select=id,stok_no&stok_no=not.is.null").then((satirlar) => {
+            const bulut = {};
+            (Array.isArray(satirlar) ? satirlar : []).forEach((r) => { if (r && r.stok_no > 0)
+                bulut[r.stok_no] = r.id; });
+            const o = stokNoCakismalariniOnar(stok, tanimlar, bulut);
+            if (o.degisenler.length === 0) {
+                showToast("Stok no çakışması: bulutla karşılaştırıldı, bu cihazda çakışan ürün bulunamadı — sayfayı yenileyip tekrar deneyin");
+                return;
+            }
+            saveStok(o.stok);
+            tanimlarKodluYaz(o.tanimlar);
+            const metin = o.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
+            gunlukYaz(`Stok no çakışması bulutla onarıldı: ${metin}`, "stok", { degisenler: o.degisenler });
+            showToast(`Stok no çakışması onarıldı (bulutta aynı numara başka üründe) — ${metin}. Etiket bastıysanız yeniden basın.`);
+            setTimeout(() => yenidenGonderRef.current(true), 1500);
+        }).catch((e) => console.warn("Stok no onarımı için bulut okunamadı", e));
+    }, [yazmaHatasi, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
     // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
     // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
     // tanımlıysa dokunmaz.
@@ -27877,6 +27989,48 @@ function flGrupKurali(urun, kaynak) {
     return (urun.fiyatKurallari || []).find((k) => k.kapsam === "fiyatGrubu" && k.deger === kaynak.grupId
         && k.tip === kaynak.tip && !k.renk && !k.beden) || null;
 }
+// LİSTEDEKİ ÜRÜN RESMİ (v1.607.0 — kullanıcı: "Stok resmi değişti ama fiyat listesinde resim değişmedi"): kullanıcı
+// yeni fotoğrafı RENK resmi olarak yükledi; liste kapak resmini öne alıyordu (eski fotoğraf), katalog ise ilk renk
+// resmini. Kural artık katalogla (152 `katalogGorsel`) aynı: ilk renk resmi, yoksa kapak. Saf.
+function fiyatListesiGorseli(urun) {
+    const g = urunGorselleri(urun);
+    if (!g)
+        return "";
+    return Object.values(g.renkResimleri || {}).find(Boolean) || g.kapakResmi || "";
+}
+// SON FİYAT DEĞİŞİKLİĞİ (v1.607.0 — kullanıcı: "fiyat listesine fiyat değiştirme tarihleri de yazsın"). Ürünün fiyat
+// geçmişinden (`fiyatGecmisi`, her yazıcı bir satır bırakır) seçili kaynağa ait EN YENİ kaydın tarihi. Kaynak eşleşmesi:
+// yeni kayıtlarda `grupId` (v1.607'den beri fiyat listesi yazıyor); eskilerde etiket metni — grup kaynağında grup adını
+// içeren, genel kaynakta grup/renk/beden kuralı olmayan ve tipi tutan kayıt. Maliyetten yazılan kuralın `kaynakTarih`i de
+// aday. Hiçbiri yoksa null (ekranda "—"): tarih uydurulmaz. Saf.
+function fiyatSonDegisiklik(urun, kaynak, fiyatGruplari) {
+    if (!urun || !kaynak || kaynak.maliyet)
+        return null;
+    const grupAdlari = (fiyatGruplari || []).map((g) => g.ad).filter(Boolean);
+    const adaylar = [];
+    (urun.fiyatGecmisi || []).forEach((l) => {
+        if (!l || !l.tarih)
+            return;
+        if (l.tip && l.tip !== kaynak.tip)
+            return;
+        const e = String(l.etiket || "");
+        let uyar;
+        if (kaynak.grupId)
+            uyar = l.grupId ? l.grupId === kaynak.grupId : e.includes(kaynak.ad);
+        else
+            uyar = !l.grupId && !/^Grup:|^Renk:|^Beden:|^Boy:| \/ /.test(e) && !grupAdlari.some((ad) => e.includes(ad));
+        if (uyar)
+            adaylar.push(l.tarih);
+    });
+    if (kaynak.grupId) {
+        const k = flGrupKurali(urun, kaynak);
+        if (k && k.kaynakTarih)
+            adaylar.push(k.kaynakTarih);
+    }
+    if (!adaylar.length)
+        return null;
+    return adaylar.sort().reverse()[0];
+}
 // Ürünün seçili kaynaktaki fiyatı. Fiyat yoksa `fiyat: null` (ekranda BOŞ — 0 yazmak "bedava" sanılır).
 // `ctx` yalnız maliyet kaynağında gerekir (urunMaliyetHesabi bağlamı: tumUrunler, kurlar, tanımlar…).
 function urunKaynakFiyati(urun, kaynak, ctx) {
@@ -27945,7 +28099,7 @@ function fiyatListesiYaz(urunler, kaynak, fiyatlar, s = {}) {
         if ((eski.fiyat || null) === yeni && (!pb || pb === eski.paraBirimi))
             return u;
         degisen++;
-        const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip,
+        const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip, ...(kaynak.grupId ? { grupId: kaynak.grupId } : {}),
             etiket: `${kaynak.genel ? kaynak.ad : `Grup: ${kaynak.ad}`} (fiyat listesi${s.not ? ` · ${s.not}` : ""}${s.kim ? ` · ${s.kim}` : ""})`,
             eskiFiyat: eski.fiyat, yeniFiyat: yeni, eskiParaBirimi: eski.fiyat != null ? eski.paraBirimi : null,
             paraBirimi: pb || eski.paraBirimi };
@@ -28019,7 +28173,7 @@ function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {})
             ...(kaynak && kaynak.maliyet ? [durumYazi(r)] : []), r.fiyat > 0 ? r.fiyat : "", r.paraBirimi || "",
             ...(islemAktif ? [r.yeni > 0 ? r.yeni : ""] : [])];
     });
-    const resimler = (satirlar || []).map((r) => { const g = urunGorselleri(r.urun); return g ? (g.kapakResmi || Object.values(g.renkResimleri)[0] || "") : ""; });
+    const resimler = (satirlar || []).map((r) => fiyatListesiGorseli(r.urun));
     return { basliklar, satirlar: govde, resimler };
 }
 function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
@@ -28059,6 +28213,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         const duzen = yazi == null ? null : (yazi.trim() === "" ? null : fiyatSayisi(yazi));
         const gecerli = yazi == null ? k.fiyat : (duzen > 0 ? duzen : null);
         return { urun: u, urunId: u.id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, hesap: k.hesap || null,
+            sonTarih: fiyatSonDegisiklik(u, kaynak, tanimlar.fiyatGruplari),
             onay: k.hesap ? maliyetOnayDurumu(u, k.hesap) : null, degisti: yazi != null && (gecerli || null) !== (k.fiyat || null),
             fiyat: gecerli, yeni: islemAktif ? fiyatDonustur(gecerli, islemNorm) : gecerli };
     })
@@ -28371,9 +28526,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                         React.createElement("td", { colSpan: 7, style: { padding: 16, textAlign: "center", color: "var(--erp-text-3)" } }, "Bu s\u00FCzge\u00E7le \u00FCr\u00FCn yok."))),
                     satirlar.map((r) => (React.createElement("tr", { key: r.urunId, "data-fl-satir": r.urun.ad, style: { borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined } },
                         React.createElement("td", { style: { padding: "4px 6px" } }, (() => {
-                            // STOK RESMİ (v1.553.0): kapak, yoksa ilk renk resmi; tıklayınca büyür.
-                            const g = urunGorselleri(r.urun);
-                            const src = g ? (g.kapakResmi || Object.values(g.renkResimleri)[0]) : "";
+                            // STOK RESMİ (v1.553.0; v1.607.0 kural katalogla aynı): ilk renk resmi, yoksa kapak; tıklayınca büyür.
+                            const src = fiyatListesiGorseli(r.urun);
                             return src
                                 ? React.createElement("img", { src: src, alt: r.urun.ad, "data-fl-resim": r.urun.ad, onClick: () => setBuyukResim({ src, ad: r.urun.ad }), style: { width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", cursor: "zoom-in", display: "block" } })
                                 : React.createElement("div", { style: { width: 40, height: 40, borderRadius: "var(--erp-r-sm)", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--erp-text-3)" } },
@@ -28404,7 +28558,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                                     kaydet(); }, style: { ...kutu, width: 100, textAlign: "right", padding: "5px 8px", fontWeight: r.degisti ? 800 : 600,
                                     borderColor: r.degisti ? "var(--erp-warn)" : undefined } }),
                             !kaynak.maliyet && r.kayitli > 0 ? (React.createElement("select", { "data-fl-pb": r.urun.ad, value: r.paraBirimi || "TRY", onChange: (e) => satirBirimi(r, e.target.value), title: "Bu \u00FCr\u00FCn\u00FCn bu listedeki fiyat\u0131n\u0131n para birimi \u2014 de\u011Fi\u015Ftirince rakam ayn\u0131 kal\u0131r, yaln\u0131z birim de\u011Fi\u015Fir", style: { marginLeft: 5, fontSize: 12, fontWeight: 700, padding: "3px 4px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)",
-                                    color: !kaynak.genel && (kaynak.paraBirimi || "TRY") !== r.paraBirimi ? "var(--erp-orange)" : "var(--erp-text-2)", background: "#fff" } }, ["TRY", "USD", "EUR"].map((pb) => React.createElement("option", { key: pb, value: pb }, pbSembol(pb))))) : (React.createElement("span", { style: { marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" } }, pbSembol(r.paraBirimi)))),
+                                    color: !kaynak.genel && (kaynak.paraBirimi || "TRY") !== r.paraBirimi ? "var(--erp-orange)" : "var(--erp-text-2)", background: "#fff" } }, ["TRY", "USD", "EUR"].map((pb) => React.createElement("option", { key: pb, value: pb }, pbSembol(pb))))) : (React.createElement("span", { style: { marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" } }, pbSembol(r.paraBirimi))),
+                            !kaynak.maliyet && (React.createElement("div", { "data-fl-tarih": r.urun.ad, title: "Bu listedeki fiyat\u0131n son de\u011Fi\u015Ftirilme tarihi (fiyat ge\u00E7mi\u015Finden)", style: { fontSize: 10, color: r.sonTarih ? "var(--erp-text-3)" : "var(--erp-line)", marginTop: 2, textAlign: "right" } }, r.sonTarih ? tarihYaz(r.sonTarih) : "—"))),
                         islemAktif && (React.createElement("td", { "data-fl-yeni": r.urun.ad, className: "mono", style: { padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "var(--erp-accent)" } }, r.yeni > 0 ? `${r.yeni.toFixed(2).replace(".", ",")} ${pbSembol(r.paraBirimi)}` : "")))))))),
         React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 } }, kaynak.maliyet ? (React.createElement(React.Fragment, null,
             satirlar.length,
@@ -28814,6 +28969,27 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
             barkodTamamlaRef.current(product.id, true); }, 700);
         return () => clearTimeout(z);
     }, [product.variants]);
+    // RENKSİZ HAMMADDE KENDİLİĞİNDEN (v1.605.0 — kullanıcı, Takviye Bezi'nde yeni mamul rengi "eşleştir…" sorunca:
+    // "Standart'ta eşleşme olmayacaktı"): kart açıkken, boş renk eşleşmelerinden hammaddesi RENKSİZ olanlar (tek
+    // "Standart" rengi var — karar verilecek bir şey yok) sessizce doldurulur; renkli hammaddeler yine turuncu "eşleştir…"
+    // ya da "Otomatik eşleştir" şeridinde kalır. Aynı imza (renkler + reçete uzunluğu) için bir kez: yazma sonrası
+    // eksik kalmayacağı için döngü olmaz, kalırsa da (kayıt düşerse) tekrar denenmez.
+    const renksizDoldurmaImzaRef = React.useRef("");
+    React.useEffect(() => {
+        if (!onReceteGrubuGuncelle || !(product.recete || []).length)
+            return undefined;
+        const imza = `${(product.variants || []).map((v) => v.renk).join("|")}#${(product.recete || []).length}`;
+        if (renksizDoldurmaImzaRef.current === imza)
+            return undefined;
+        renksizDoldurmaImzaRef.current = imza;
+        const e = eksikRenkEslesmeleri(product, tumUrunler);
+        const renksizler = e.satirlar.filter((r) => !r.renkGecmisten && urunRenksizMi((tumUrunler || []).find((p) => p.id === r.hammaddeUrunId)));
+        if (!renksizler.length)
+            return undefined;
+        // Gecikmesiz: `tumUrunler` her render'da yeni dizi olabildiğinden zamanlayıcı temizlemesi yazmayı yutuyordu.
+        onReceteGrubuGuncelle(product.id, [], renksizler);
+        return undefined;
+    }, [product.variants, product.recete, tumUrunler, onReceteGrubuGuncelle]);
     // baslangicSekme: dışarıdan gelen yönlendirmenin istediği sekme (ör. sipariş ekranındaki
     // "Reçeteyi aç" düğmesi). Yalnızca ilk açılışta uygulanır; kullanıcı sonradan sekme
     // değiştirdiğinde geri zıplamamalı.
@@ -30909,14 +31085,15 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     (() => {
                         const mevcut = new Set(receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).map((pg) => pg.proses));
                         const adaylar = (tanimlarProsesler || []).map((p) => p.ad).filter((ad) => !mevcut.has(ad));
-                        if (!adaylar.length)
-                            return null;
-                        return (React.createElement("div", { "data-recete-bos-proses": "1", style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)" } },
+                        // v1.605.0 (kullanıcı: "hammaddesiz proses de eklenecekti"): aday kalmayınca satır büsbütün kayboluyor,
+                        // kullanıcı özelliği bulamıyordu. Satır hep durur; aday yoksa nedeni ve çözümü yazar.
+                        return (React.createElement("div", { "data-recete-bos-proses": adaylar.length, style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)", flexWrap: "wrap" } },
                             React.createElement("span", null, "Hammaddesiz proses ekle:"),
-                            React.createElement("select", { "data-recete-bos-proses-sec": "1", value: "", onChange: (e) => bosProsesEkle(e.target.value), style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } },
-                                React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                adaylar.map((ad) => React.createElement("option", { key: ad, value: ad }, ad))),
-                            React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "\u2014 yaln\u0131z i\u015F\u00E7ilik girilir, \u00FCretimde ad\u0131m olur")));
+                            adaylar.length ? (React.createElement(React.Fragment, null,
+                                React.createElement("select", { "data-recete-bos-proses-sec": "1", value: "", onChange: (e) => bosProsesEkle(e.target.value), style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } },
+                                    React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
+                                    adaylar.map((ad) => React.createElement("option", { key: ad, value: ad }, ad))),
+                                React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "\u2014 yaln\u0131z i\u015F\u00E7ilik girilir, \u00FCretimde ad\u0131m olur"))) : (React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "tan\u0131ml\u0131 b\u00FCt\u00FCn prosesler zaten re\u00E7etede \u2014 yeni bir ad\u0131m i\u00E7in \u00F6nce Tan\u0131mlar \u203A Prosesler'e ekleyin"))));
                     })(),
                     React.createElement("div", { style: { display: "grid", gap: 14, marginBottom: 12 } }, (() => {
                         const pgListesi = receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler);
@@ -55574,7 +55751,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.604.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.607.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

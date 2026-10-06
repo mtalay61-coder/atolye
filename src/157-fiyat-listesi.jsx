@@ -49,6 +49,41 @@ function flGrupKurali(urun, kaynak) {
     && k.tip === kaynak.tip && !k.renk && !k.beden) || null;
 }
 
+// LİSTEDEKİ ÜRÜN RESMİ (v1.607.0 — kullanıcı: "Stok resmi değişti ama fiyat listesinde resim değişmedi"): kullanıcı
+// yeni fotoğrafı RENK resmi olarak yükledi; liste kapak resmini öne alıyordu (eski fotoğraf), katalog ise ilk renk
+// resmini. Kural artık katalogla (152 `katalogGorsel`) aynı: ilk renk resmi, yoksa kapak. Saf.
+function fiyatListesiGorseli(urun) {
+  const g = urunGorselleri(urun);
+  if (!g) return "";
+  return Object.values(g.renkResimleri || {}).find(Boolean) || g.kapakResmi || "";
+}
+
+// SON FİYAT DEĞİŞİKLİĞİ (v1.607.0 — kullanıcı: "fiyat listesine fiyat değiştirme tarihleri de yazsın"). Ürünün fiyat
+// geçmişinden (`fiyatGecmisi`, her yazıcı bir satır bırakır) seçili kaynağa ait EN YENİ kaydın tarihi. Kaynak eşleşmesi:
+// yeni kayıtlarda `grupId` (v1.607'den beri fiyat listesi yazıyor); eskilerde etiket metni — grup kaynağında grup adını
+// içeren, genel kaynakta grup/renk/beden kuralı olmayan ve tipi tutan kayıt. Maliyetten yazılan kuralın `kaynakTarih`i de
+// aday. Hiçbiri yoksa null (ekranda "—"): tarih uydurulmaz. Saf.
+function fiyatSonDegisiklik(urun, kaynak, fiyatGruplari) {
+  if (!urun || !kaynak || kaynak.maliyet) return null;
+  const grupAdlari = (fiyatGruplari || []).map((g) => g.ad).filter(Boolean);
+  const adaylar = [];
+  (urun.fiyatGecmisi || []).forEach((l) => {
+    if (!l || !l.tarih) return;
+    if (l.tip && l.tip !== kaynak.tip) return;
+    const e = String(l.etiket || "");
+    let uyar;
+    if (kaynak.grupId) uyar = l.grupId ? l.grupId === kaynak.grupId : e.includes(kaynak.ad);
+    else uyar = !l.grupId && !/^Grup:|^Renk:|^Beden:|^Boy:| \/ /.test(e) && !grupAdlari.some((ad) => e.includes(ad));
+    if (uyar) adaylar.push(l.tarih);
+  });
+  if (kaynak.grupId) {
+    const k = flGrupKurali(urun, kaynak);
+    if (k && k.kaynakTarih) adaylar.push(k.kaynakTarih);
+  }
+  if (!adaylar.length) return null;
+  return adaylar.sort().reverse()[0];
+}
+
 // Ürünün seçili kaynaktaki fiyatı. Fiyat yoksa `fiyat: null` (ekranda BOŞ — 0 yazmak "bedava" sanılır).
 // `ctx` yalnız maliyet kaynağında gerekir (urunMaliyetHesabi bağlamı: tumUrunler, kurlar, tanımlar…).
 function urunKaynakFiyati(urun, kaynak, ctx) {
@@ -113,7 +148,7 @@ function fiyatListesiYaz(urunler, kaynak, fiyatlar, s = {}) {
     const pb = (s.paraBirimleri && s.paraBirimleri[u.id]) || null;
     if ((eski.fiyat || null) === yeni && (!pb || pb === eski.paraBirimi)) return u;
     degisen++;
-    const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip,
+    const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip, ...(kaynak.grupId ? { grupId: kaynak.grupId } : {}),
       etiket: `${kaynak.genel ? kaynak.ad : `Grup: ${kaynak.ad}`} (fiyat listesi${s.not ? ` · ${s.not}` : ""}${s.kim ? ` · ${s.kim}` : ""})`,
       eskiFiyat: eski.fiyat, yeniFiyat: yeni, eskiParaBirimi: eski.fiyat != null ? eski.paraBirimi : null,
       paraBirimi: pb || eski.paraBirimi };
@@ -176,7 +211,7 @@ function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {})
       ...(kaynak && kaynak.maliyet ? [durumYazi(r)] : []), r.fiyat > 0 ? r.fiyat : "", r.paraBirimi || "",
       ...(islemAktif ? [r.yeni > 0 ? r.yeni : ""] : [])];
   });
-  const resimler = (satirlar || []).map((r) => { const g = urunGorselleri(r.urun); return g ? (g.kapakResmi || Object.values(g.renkResimleri)[0] || "") : ""; });
+  const resimler = (satirlar || []).map((r) => fiyatListesiGorseli(r.urun));
   return { basliklar, satirlar: govde, resimler };
 }
 
@@ -218,6 +253,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
       const duzen = yazi == null ? null : (yazi.trim() === "" ? null : fiyatSayisi(yazi));
       const gecerli = yazi == null ? k.fiyat : (duzen > 0 ? duzen : null);
       return { urun: u, urunId: u.id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, hesap: k.hesap || null,
+        sonTarih: fiyatSonDegisiklik(u, kaynak, tanimlar.fiyatGruplari),
         onay: k.hesap ? maliyetOnayDurumu(u, k.hesap) : null, degisti: yazi != null && (gecerli || null) !== (k.fiyat || null),
         fiyat: gecerli, yeni: islemAktif ? fiyatDonustur(gecerli, islemNorm) : gecerli };
     })
@@ -586,9 +622,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
               <tr key={r.urunId} data-fl-satir={r.urun.ad} style={{ borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined }}>
                 <td style={{ padding: "4px 6px" }}>
                   {(() => {
-                    // STOK RESMİ (v1.553.0): kapak, yoksa ilk renk resmi; tıklayınca büyür.
-                    const g = urunGorselleri(r.urun);
-                    const src = g ? (g.kapakResmi || Object.values(g.renkResimleri)[0]) : "";
+                    // STOK RESMİ (v1.553.0; v1.607.0 kural katalogla aynı): ilk renk resmi, yoksa kapak; tıklayınca büyür.
+                    const src = fiyatListesiGorseli(r.urun);
                     return src
                       ? <img src={src} alt={r.urun.ad} data-fl-resim={r.urun.ad} onClick={() => setBuyukResim({ src, ad: r.urun.ad })}
                           style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", cursor: "zoom-in", display: "block" }} />
@@ -632,6 +667,12 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                     </select>
                   ) : (
                     <span style={{ marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" }}>{pbSembol(r.paraBirimi)}</span>
+                  )}
+                  {!kaynak.maliyet && (
+                    <div data-fl-tarih={r.urun.ad} title="Bu listedeki fiyatın son değiştirilme tarihi (fiyat geçmişinden)"
+                      style={{ fontSize: 10, color: r.sonTarih ? "var(--erp-text-3)" : "var(--erp-line)", marginTop: 2, textAlign: "right" }}>
+                      {r.sonTarih ? tarihYaz(r.sonTarih) : "—"}
+                    </div>
                   )}
                 </td>
                 {islemAktif && (

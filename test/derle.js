@@ -23,7 +23,7 @@ const DISA_AKTAR = [
   "supabaseTabloEsitle", "tabloBaslangicTam", "tabloBaslangicBekleyen", "bekleyenKayitlariOku", "bekleyenKayitlariTabanaUygula", "yereliBulutlaBirlestir", "surumleriYukle", "kayipHammaddeler", "kayipHammaddeKarti", "derinBirlestir", "tanimKodlariniOnar",   // bekleyen kayıt defteri (v1.556.0)
   "tanimlariBirlestir", "kayipModelRenkleri", "renkTanimiBul",   // tanım birleştirme (v1.552.0)
   "urunMaliyetHesabi", "maliyetOnayDurumu", "maliyetOnayKaydi",   // maliyet OK (v1.551.0)
-  "fiyatListesiKaynaklari", "urunKaynakFiyati", "fiyatDonustur", "fiyatListesiYaz", "fiyatlariHedefBirime",   // fiyat listesi (v1.550.0)
+  "fiyatListesiKaynaklari", "fiyatListesiGorseli", "fiyatSonDegisiklik", "urunKaynakFiyati", "fiyatDonustur", "fiyatListesiYaz", "fiyatlariHedefBirime",   // fiyat listesi (v1.550.0)
   "copuBuda", "copKaliciSilinebilirMi", "topluSilmeDurumu", "listedenDusenler", "tanimdanDusenler", "gizliAlanlariAt", "tanimKaydiAdi", "arsivSatiriOzeti",   // çöp güvenliği (v1.549.0)
   "fiyatBul",   // fiyat çözümleme: cari/renk/beden kırılımı (18 Eylül)
   "useFisDefteriYazma",   // fiş defteri yazma kancası — bayat okuma senaryosu (22 Eylül)
