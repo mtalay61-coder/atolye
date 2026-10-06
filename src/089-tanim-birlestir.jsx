@@ -170,6 +170,46 @@ function kimlikZamani(id) {
   const n = p.length >= 3 ? parseInt(p[1], 36) : NaN;
   return Number.isFinite(n) ? n : 0;
 }
+// STOK NO ÇAKIŞMASI (v1.606.0 — kullanıcı, çoklu cihaz: Supabase 409 "duplicate key value violates unique constraint
+// urunler_stok_no_tekil", 315 deneme). İki cihaz aynı sayaçtan numara üretince (v1.603 ile stok no artık kart açılır
+// açılmaz veriliyor) aynı stok no iki ürüne düşüyor; bulut tekil dizin isteği reddediyor, bekleyen defter her denemede
+// büyüyor ve HİÇBİR stok kaydı gitmiyor. Onarım `tanimKodlariniOnar` ile aynı ilke: EN ESKİ kayıt (kimlik zamanı,
+// eşitse `olusturuldu`, eşitse liste sırası) numarasını korur — etiketi büyük ihtimalle o basıldı; diğeri sıradaki boş
+// numarayı alır. `bulutKullanilan`: buluttaki { stokNo: urunId } — buradaki ürünün numarası bulutta BAŞKA bir üründeyse
+// bu cihazdaki (daha yeni olan) ürün yeni numara alır: bulut kaynak. Sayaç yeni numaranın gerisinde kalmaz. Saf.
+// Döner: { stok, tanimlar, degisenler: [{ id, ad, eski, yeni }] }.
+function stokNoCakismalariniOnar(stok, tanimlar, bulutKullanilan) {
+  const liste = stok || [];
+  const t = tanimlar || {};
+  const bulut = bulutKullanilan || {};
+  const no = (u) => Number(u && u.stokNo) || 0;
+  const sirali = liste.map((u, i) => ({ u, i })).sort((a, b) =>
+    (kimlikZamani(a.u.id) - kimlikZamani(b.u.id)) || String(a.u.olusturuldu || "").localeCompare(String(b.u.olusturuldu || "")) || (a.i - b.i));
+  const tutulan = new Set(Object.keys(bulut).map(Number).filter((v) => v > 0));
+  const yenidenNumarala = new Set();
+  sirali.forEach(({ u }) => {
+    const v = no(u);
+    if (!(v > 0)) return;
+    // Bulutta aynı numara başka bir ürünün: bu ürün (kim daha eskiyse fark etmez, bulut kaynak) yeni numara alır.
+    if (bulut[v] && bulut[v] !== u.id) { yenidenNumarala.add(u.id); return; }
+    if (tutulan.has(v) && !(bulut[v] === u.id)) { yenidenNumarala.add(u.id); return; }
+    tutulan.add(v);
+  });
+  if (yenidenNumarala.size === 0) return { stok: liste, tanimlar: t, degisenler: [] };
+  const sayaclar = { ...(t.kodSayaclari || {}) };
+  // Sayaç bilinen en büyük numaranın gerisindeyse (başka cihaz ilerletmiş) oradan devam: aynı çakışma tekrar doğmasın.
+  sayaclar.stok = Math.max(Number(sayaclar.stok) || 0, ...Array.from(tutulan));
+  const degisenler = [];
+  const yeniStok = liste.map((u) => {
+    if (!yenidenNumarala.has(u.id)) return u;
+    const n = kodSayacIlerlet(sayaclar, "stok", tutulan);
+    if (n === null) return u;
+    degisenler.push({ id: u.id, ad: u.ad, eski: u.stokNo, yeni: n });
+    return { ...u, stokNo: n };
+  });
+  return { stok: yeniStok, tanimlar: { ...t, kodSayaclari: sayaclar }, degisenler };
+}
+
 function tanimKodlariniOnar(tanimlar) {
   const t = tanimlar || {};
   const degisenler = [];

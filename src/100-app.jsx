@@ -2556,6 +2556,43 @@ export default function AtolyeERP() {
     showToast(`Kod çakışması onarıldı — ${metin}. Bu renklerin etiketini bastıysanız yeniden basın.`);
   }, [loading, tanimlar, tanimlarKodluYaz, showToast]);
 
+  // STOK NO ÇAKIŞMASI (v1.606.0, 089 `stokNoCakismalariniOnar`): (1) yerelde aynı numaralı iki ürün → en eski korur,
+  // diğeri yeni numara; stok her değişince denetlenir, aynı imza bir kez. (2) Bulut 409 `urunler_stok_no_tekil` deyince
+  // (çakışan ürün bu cihazda henüz yoksa yerel denetim göremez) buluttaki stok no listesi çekilir, çakışan yerel ürün yeni
+  // numara alır ve bekleyenler yeniden gönderilir — "Yeniden dene" 315 kez aynı hatayı almasın.
+  const stokNoOnarimImzaRef = useRef("");
+  useEffect(() => {
+    if (loading) return;
+    const o = stokNoCakismalariniOnar(stok, tanimlar);
+    if (o.degisenler.length === 0) return;
+    const imza = o.degisenler.map((d) => `${d.id}:${d.eski}`).join("|");
+    if (stokNoOnarimImzaRef.current === imza) return;
+    stokNoOnarimImzaRef.current = imza;
+    saveStok(o.stok);
+    tanimlarKodluYaz(o.tanimlar);
+    const metin = o.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
+    gunlukYaz(`Stok no çakışması onarıldı: ${metin}`, "stok", { degisenler: o.degisenler });
+    showToast(`Stok no çakışması onarıldı — ${metin}. Bu ürünün etiketini bastıysanız yeniden basın.`);
+  }, [loading, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+  const bulutStokNoOnarimRef = useRef(0);
+  useEffect(() => {
+    if (!yazmaHatasi || !/urunler_stok_no_tekil/.test(String(yazmaHatasi.mesaj || ""))) return;
+    if (bulutStokNoOnarimRef.current === yazmaHatasi.zaman) return;
+    bulutStokNoOnarimRef.current = yazmaHatasi.zaman;
+    supabaseIstek("urunler?select=id,stok_no&stok_no=not.is.null").then((satirlar) => {
+      const bulut = {};
+      (Array.isArray(satirlar) ? satirlar : []).forEach((r) => { if (r && r.stok_no > 0) bulut[r.stok_no] = r.id; });
+      const o = stokNoCakismalariniOnar(stok, tanimlar, bulut);
+      if (o.degisenler.length === 0) { showToast("Stok no çakışması: bulutla karşılaştırıldı, bu cihazda çakışan ürün bulunamadı — sayfayı yenileyip tekrar deneyin"); return; }
+      saveStok(o.stok);
+      tanimlarKodluYaz(o.tanimlar);
+      const metin = o.degisenler.map((d) => `${d.ad}: ${String(d.eski).padStart(4, "0")} → ${String(d.yeni).padStart(4, "0")}`).join(" · ");
+      gunlukYaz(`Stok no çakışması bulutla onarıldı: ${metin}`, "stok", { degisenler: o.degisenler });
+      showToast(`Stok no çakışması onarıldı (bulutta aynı numara başka üründe) — ${metin}. Etiket bastıysanız yeniden basın.`);
+      setTimeout(() => yenidenGonderRef.current(true), 1500);
+    }).catch((e) => console.warn("Stok no onarımı için bulut okunamadı", e));
+  }, [yazmaHatasi, stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+
   // Stok kartından serbest metinle YENİ bir renk eklendiğinde, bu rengi Tanımlar'daki renk listesine de
   // kaydeder — tip (Mamul/Hammadde) ve varsa malzeme tipiyle (Deri/Taban/Bağcık…) birlikte. Renk zaten
   // tanımlıysa dokunmaz.

@@ -1,1 +1,1 @@
-{"surum": "1.605.0", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.605.0.html", "not": "Recete: renksiz hammadde (Standart) yeni mamul renginde eslestirme sormaz, kendiliginden dolar; model rengi ekleme yolu da otomatik kurallari uygular; hammaddesiz proses satiri hep gorunur"}
+{"surum": "1.606.0", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.606.0.html", "not": "Stok no cakismasi kendiliginden onarilir (yerelde ve bulut 409 urunler_stok_no_tekil hatasinda) - bekleyen stok kayitlari gider"}
