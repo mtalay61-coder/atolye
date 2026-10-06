@@ -1,0 +1,32 @@
+{
+  "ilk": {
+    "serit": "2",
+    "bot": "TRY",
+    "cizme": "TRY"
+  },
+  "satirdan": {
+    "serit": "1",
+    "bot": "1349 USD",
+    "botKutu": "USD"
+  },
+  "kurla": {
+    "serit": "yok",
+    "cizme": "28.1 USD",
+    "cizmeKutu": "28,1"
+  },
+  "euro": {
+    "serit": "1",
+    "bot": "1349 EUR"
+  },
+  "esitle": {
+    "serit": "yok",
+    "bot": "1349 USD",
+    "cizme": "28.1 USD"
+  },
+  "gecmis": [
+    "EUR→USD 1349",
+    "USD→EUR 1349",
+    "TRY→USD 1349"
+  ],
+  "hatalar": []
+}

@@ -70,6 +70,17 @@ function urunKaynakFiyati(urun, kaynak, ctx) {
   };
 }
 
+// BİRİM UYUMSUZLUĞU (v1.600.0 — kullanıcı: "VOOG özel fiyat TL idi, USD olarak değiştirdim ama para birimi değişmedi
+// ve değiştirilemiyor"): her kural kendi birimini taşır (v1.575), grubun birimi Tanımlar'da değişince eski kurallar
+// ₺ kalır ve ekranda grubun değil kuralın birimi görünür — doğru, çünkü 1349 ₺'yi sessizce 1349 $ yapmak yanlış olur.
+// Bu yardımcı grubun biriminden farklı kayıtlı fiyatları bulur; ekran bunları şeritle gösterir ve iki seçenek sunar:
+// birimi değiştir (rakam aynı) ya da kurla çevir. Genel ve maliyet kaynaklarında grup birimi yok. Saf.
+function grupBirimUyumsuzlari(satirlar, kaynak) {
+  if (!kaynak || kaynak.genel || kaynak.maliyet) return [];
+  const hedef = kaynak.paraBirimi || "TRY";
+  return (satirlar || []).filter((r) => r.kayitli > 0 && r.paraBirimi && r.paraBirimi !== hedef);
+}
+
 // TOPLU İŞLEM: yüzde ya da tutar, artış ya da indirim, isteğe bağlı yuvarlama adımı. Saf.
 //   islem = { tur: "yuzde" | "tutar", yon: 1 | -1, deger, adim }  (adim: 0.01, 0.05, 0.5, 1, 5, 10)
 // Sonuç 0 ya da eksiye düşerse null (o ürün yeni listede boş kalır, eksi fiyat yazılmaz).
@@ -275,6 +286,30 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     if (degisen) onStokKaydet(urunler);
     duzenTemizle();
     showToast(`${degisen} ürünün "${kaynak.ad}" fiyatı kaydedildi`);
+  };
+
+  // BİRİM EŞİTLE (v1.600.0): grubun biriminden farklı kayıtlı fiyatlar — rakam aynı kalsın (birim etiketi değişir)
+  // ya da kurla çevrilsin. Kur yoksa o ürün atlanır ve sayılır. Yazma yine fiyatListesiYaz'dan geçer (fiyat geçmişi
+  // satırı düşer: eski birim → yeni birim).
+  const uyumsuz = grupBirimUyumsuzlari(satirlar, kaynak);
+  const birimiEsitle = (kurla) => {
+    if (!uyumsuz.length) return;
+    const hedef = kaynak.paraBirimi || "TRY";
+    let fiyatlar = {}, paraBirimleri = {}, cevrilemeyen = 0;
+    if (kurla) {
+      ({ fiyatlar, paraBirimleri, cevrilemeyen } = fiyatlariHedefBirime(uyumsuz.map((r) => ({ urunId: r.urunId, fiyat: r.kayitli, paraBirimi: r.paraBirimi })), hedef, kurlar));
+    } else {
+      uyumsuz.forEach((r) => { fiyatlar[r.urunId] = r.kayitli; paraBirimleri[r.urunId] = hedef; });
+    }
+    const { urunler, degisen } = fiyatListesiYaz(stok, kaynak, fiyatlar, { kim, paraBirimleri, not: kurla ? `kurla ${hedef}'ye çevrildi` : `birim ${hedef} yapıldı` });
+    if (degisen) onStokKaydet(urunler);
+    showToast(`${degisen} fiyat ${pbSembol(hedef)} ${kurla ? "olarak çevrildi" : "yapıldı"}` + (cevrilemeyen ? ` · ${cevrilemeyen} ürün kur olmadığı için atlandı` : ""));
+  };
+  // SATIR BİRİMİ: fiyat kutusunun yanındaki sembol artık seçim kutusu — tek ürünün birimi buradan değiştirilir.
+  const satirBirimi = (r, pb) => {
+    if (!(r.kayitli > 0) || pb === r.paraBirimi) return;
+    const { urunler, degisen } = fiyatListesiYaz(stok, kaynak, { [r.urunId]: r.kayitli }, { kim, paraBirimleri: { [r.urunId]: pb }, not: `birim ${pb} yapıldı` });
+    if (degisen) onStokKaydet(urunler);
   };
 
   // TOPLU İŞLEMİ BU LİSTEYE AL: yeni değerler düzenleme olarak yazılır — kullanıcı görür, isterse tek tek
@@ -511,6 +546,24 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         </div>
       )}
 
+      {uyumsuz.length > 0 && (
+        <div data-fl-birim-uyari={uyumsuz.length} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10, padding: "8px 12px",
+          background: "var(--erp-orange-bg)", border: "1.5px solid var(--erp-orange)", borderRadius: "var(--erp-r-md)", fontSize: 13 }}>
+          <span>
+            <b>Grubun para birimi {pbSembol(kaynak.paraBirimi)}</b>, ama {uyumsuz.length} ürünün fiyatı {Array.from(new Set(uyumsuz.map((r) => pbSembol(r.paraBirimi)))).join(" / ")} olarak kayıtlı.
+            <span style={{ color: "var(--erp-text-2)" }}> Fiş ve siparişte kayıtlı birim geçerli; rakamlar kendiliğinden çevrilmez.</span>
+          </span>
+          <button type="button" className="btn-ghost" data-fl-birim-esitle="1" onClick={() => birimiEsitle(false)} style={{ padding: "4px 10px", fontSize: 12, fontWeight: 700 }}
+            title="Rakamlar aynı kalır, yalnız birim etiketi grubun birimine çevrilir (1349 ₺ → 1349 $)">
+            Birimi {pbSembol(kaynak.paraBirimi)} yap (rakam aynı)
+          </button>
+          <button type="button" className="btn-ghost" data-fl-birim-cevir="1" onClick={() => birimiEsitle(true)} style={{ padding: "4px 10px", fontSize: 12, fontWeight: 700 }}
+            title="Kayıtlı fiyat güncel kurla grubun birimine çevrilir (1349 ₺ → 28,10 $). Kuru olmayan ürün atlanır.">
+            Kurla {pbSembol(kaynak.paraBirimi)}'ye çevir
+          </button>
+        </div>
+      )}
+
       {/* LİSTE */}
       <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -570,7 +623,16 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                     onKeyDown={(e) => { if (e.key === "Enter" && degisenler.length) kaydet(); }}
                     style={{ ...kutu, width: 100, textAlign: "right", padding: "5px 8px", fontWeight: r.degisti ? 800 : 600,
                       borderColor: r.degisti ? "var(--erp-warn)" : undefined }} />
-                  <span style={{ marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" }}>{pbSembol(r.paraBirimi)}</span>
+                  {!kaynak.maliyet && r.kayitli > 0 ? (
+                    <select data-fl-pb={r.urun.ad} value={r.paraBirimi || "TRY"} onChange={(e) => satirBirimi(r, e.target.value)}
+                      title="Bu ürünün bu listedeki fiyatının para birimi — değiştirince rakam aynı kalır, yalnız birim değişir"
+                      style={{ marginLeft: 5, fontSize: 12, fontWeight: 700, padding: "3px 4px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)",
+                        color: !kaynak.genel && (kaynak.paraBirimi || "TRY") !== r.paraBirimi ? "var(--erp-orange)" : "var(--erp-text-2)", background: "#fff" }}>
+                      {["TRY", "USD", "EUR"].map((pb) => <option key={pb} value={pb}>{pbSembol(pb)}</option>)}
+                    </select>
+                  ) : (
+                    <span style={{ marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" }}>{pbSembol(r.paraBirimi)}</span>
+                  )}
                 </td>
                 {islemAktif && (
                   <td data-fl-yeni={r.urun.ad} className="mono" style={{ padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "var(--erp-accent)" }}>
