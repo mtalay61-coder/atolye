@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.603.0";
+const SURUM = "1.604.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Yeni stok karti kaydedilince barkodlar kendiliginden kurulur (stok no + kodlar) - Barkodlari olustur veya Paketleme gerekmez; etikette stok adi buyuk";
+const SURUM_NOTU = "Stok resmine damga: sag ustte firma logosu, altinda stok adi ve renk (Tanimlar > Firma Bilgileri nden kapatilabilir)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Yeni stok karti kaydedilince barkodlar kendiliginden kurulur
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.604.0", tarih: "06.10.2026",
+    eklenen: ["Stok kartına fotoğraf yüklenince sağ üst köşeye firma logosu, altına stok adı ve (renk resmiyse) renk basılır — kapak ve renk resimleri, stok formu ve ürün kartı; Tanımlar › Firma Bilgileri \"Stok resmine logo + ad damgası\" tikiyle kapatılır"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.603.0", tarih: "06.10.2026",
     eklenen: ["Yeni stok kartı kaydedilince (Stok formu, hızlı hammadde, modelden koleksiyon) barkodlar kendiliğinden kurulur: stok no ve eksik renk/ölçü kodları atanır — Barkodlar sekmesinde \"Barkodları oluştur\"a ya da Paketleme'ye gerek yok"],
     degisen: ["Barkod etiketlerinde (ürün, beden, asorti) stok adı büyük punto"], duzeltilen: [] },

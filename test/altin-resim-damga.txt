@@ -1,0 +1,26 @@
+{
+  "dogrudan": {
+    "damgali": {
+      "boyut": "300x200",
+      "sagUstLogo": "mavi",
+      "logoAlti": "acik",
+      "solAlt": "kirmizi"
+    },
+    "logosuz": {
+      "boyut": "300x200",
+      "sagUstLogo": "acik",
+      "logoAlti": "kirmizi",
+      "solAlt": "kirmizi"
+    },
+    "bosAynen": true,
+    "tikKapali": true,
+    "varsayilan": "{\"logo\":\"L\",\"satirlar\":[\"27322 D\",\"Siyah\"]}"
+  },
+  "form": {
+    "boyut": "300x200",
+    "sagUstLogo": "mavi",
+    "logoAlti": "acik",
+    "solAlt": "kirmizi"
+  },
+  "hatalar": []
+}

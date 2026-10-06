@@ -1520,6 +1520,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                 onUrlSave={(url) => setForm({ ...form, kapakResmi: url })}
                 onRemove={() => setForm({ ...form, kapakResmi: "" })}
                 size={48}
+                damga={stokResmiDamgasi(tanimlar.firmaBilgileri, [form.ad])}
               />
             </div>
             <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginBottom: 8 }}>
@@ -2532,6 +2533,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                           onUrlSave={(url) => setMatrixRenkResmi(r, url)}
                           onRemove={() => removeMatrixRenkResmi(r)}
                           size={26}
+                          damga={stokResmiDamgasi(tanimlar.firmaBilgileri, [form.ad, kodEsit(r, OLCUSUZ_AD) ? "" : r])}
                         />
                         {olcuGoster(r)}
                       </td>

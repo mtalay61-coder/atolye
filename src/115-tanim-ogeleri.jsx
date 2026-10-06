@@ -24,10 +24,75 @@ function fileToCompressedDataUrl(file, maxWidth = 480, quality = 0.75) {
   });
 }
 
+// RESME DAMGA (v1.604.0 — kullanıcı: "Stok resmi eklediğimizde sağ üste logomuz, altına stok kodu, altına renk kodu
+// yazdırabilir miyiz?"). Yüklenen (küçültülmüş) stok resminin sağ üst köşesine firma logosu, altına verilen satırlar
+// (stok adı, renk) basılır. Müşteriye giden katalog/WhatsApp görselinde firma ve model bir bakışta okunsun diye.
+// Ölçüler resim genişliğine göre: logo genişliğin %22'si, yazı %5'i; yazılar beyaz yarı saydam kutu üstünde (fotoğraf
+// koyu da olsa açık da olsa okunur). Logo yüklenemezse (çapraz kaynak, bozuk veri) logosuz devam eder; canvas okunamazsa
+// (taint) resim OLDUĞU GİBİ kaydedilir — damga için fotoğrafı kaybetmeye değmez. Saf değil (DOM); senaryo `resim-damga`.
+function resmeDamgaVur(dataUrl, { logo, satirlar } = {}) {
+  const metinler = (satirlar || []).map((x) => String(x || "").trim()).filter(Boolean);
+  if (!logo && !metinler.length) return Promise.resolve(dataUrl);
+  const yukle = (src) => new Promise((cozul) => {
+    if (!src) return cozul(null);
+    const im = new window.Image();
+    im.onload = () => cozul(im);
+    im.onerror = () => cozul(null);
+    im.src = src;
+  });
+  return Promise.all([yukle(dataUrl), yukle(logo)]).then(([resim, logoResmi]) => {
+    if (!resim) return dataUrl;
+    try {
+      const w = resim.width; const h = resim.height;
+      const tuval = document.createElement("canvas");
+      tuval.width = w; tuval.height = h;
+      const ctx = tuval.getContext("2d");
+      ctx.drawImage(resim, 0, 0, w, h);
+      const kenar = Math.round(w * 0.03);
+      let y = kenar;
+      if (logoResmi && logoResmi.width && logoResmi.height) {
+        const lw = Math.round(w * 0.22);
+        const lh = Math.round(lw * logoResmi.height / logoResmi.width);
+        // Logonun arkasına beyaz zemin: koyu fotoğrafta koyu logo kaybolmasın.
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.fillRect(w - kenar - lw - 4, y - 4, lw + 8, lh + 8);
+        ctx.drawImage(logoResmi, w - kenar - lw, y, lw, lh);
+        y += lh + 8 + Math.round(w * 0.015);
+      }
+      const punto = Math.max(11, Math.round(w * 0.05));
+      ctx.font = `bold ${punto}px -apple-system, "Segoe UI", Arial, sans-serif`;
+      ctx.textAlign = "right"; ctx.textBaseline = "top";
+      metinler.forEach((m) => {
+        const gen = ctx.measureText(m).width;
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.fillRect(w - kenar - gen - 8, y - 2, gen + 10, punto + 6);
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillText(m, w - kenar - 3, y + 1);
+        y += punto + 8;
+      });
+      return tuval.toDataURL("image/jpeg", 0.8);
+    } catch (e) {
+      return dataUrl;
+    }
+  });
+}
+
+// Stok resmi damgası tek yerden kurulur: Tanımlar › Firma Bilgileri'nde kapatılmadıysa (varsayılan AÇIK) logo + satırlar.
+// `satirlar`: stok adı, varsa renk. Boş satırlar düşer; logo yoksa yalnız yazı basılır.
+function stokResmiDamgasi(firmaBilgileri, satirlar) {
+  const f = firmaBilgileri || {};
+  if (f.resimDamgasi === false) return undefined;
+  return { logo: f.logo || "", satirlar: (satirlar || []).filter(Boolean) };
+}
+
+// Senaryo `resim-damga` canvas sonucunu doğrudan ölçüyor (test okur; uygulama kullanmaz).
+if (typeof window !== "undefined") window.__resimDamga = { resmeDamgaVur, stokResmiDamgasi };
+
 // `baslik`: kutunun neyin görseli olduğunu söyleyen ipucu. Varsayılan metin "bu ÜRÜNÜN rengine
 // görsel ekle" diyordu; bileşen artık çek fotoğrafı gibi başka yerlerde de kullanılıyor ve orada
 // yanlış bilgi veriyordu.
-function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, baslik }) {
+// `damga`: { logo, satirlar } — verilirse yüklenen/yapıştırılan fotoğrafa `resmeDamgaVur` uygulanır (v1.604.0).
+function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, baslik, damga }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -71,7 +136,8 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
     setBusy(true);
     setHata("");
     try {
-      const dataUrl = await fileToCompressedDataUrl(dosya);
+      let dataUrl = await fileToCompressedDataUrl(dosya);
+      if (damga) dataUrl = await resmeDamgaVur(dataUrl, damga);
       // Küçültme oranı kullanıcıya söylenir. Görseller ürün kaydının İÇİNDE saklanıyor ve o kaydın
       // bir boyut sınırı var; "3,8 MB → 46 KB" görmek, sınıra yaklaşıldığında sebebi anlaşılır kılar.
       setBilgi(`${boyutMetni(dosya.size)} → ${boyutMetni(new Blob([dataUrl]).size)}`);
@@ -95,7 +161,8 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         if (!file) continue;
         setBusy(true);
         try {
-          const dataUrl = await fileToCompressedDataUrl(file);
+          let dataUrl = await fileToCompressedDataUrl(file);
+          if (damga) dataUrl = await resmeDamgaVur(dataUrl, damga);
           onUrlSave(dataUrl);
           setEditing(false);
         } catch (err) {
