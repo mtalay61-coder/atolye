@@ -4,7 +4,7 @@
 // kaydedelim; Toptan TL %14 + ya da 10 TL indirimle farklı kaydedip başka fiyat grubu oluşturalım."
 // Ölçülen: kaynaktan okuma (grup kuralı / genel fiyat, boş = null), dönüşüm (yüzde, tutar, yuvarlama),
 // yazma (kural ekle/güncelle/sil + geçmiş), fişin okuduğu `fiyatBul` yazılanı görüyor mu, birim çevirme.
-const { fiyatListesiTablosu, ozelKodSecenekleri, ozelKodSuzgeceUyar, fiyatListesiKaynaklari, urunKaynakFiyati, fiyatDonustur, fiyatListesiYaz, fiyatlariHedefBirime, fiyatBul } = require("./erp.cjs");
+const { fiyatSonDegisiklik, fiyatListesiGorseli, fiyatListesiTablosu, ozelKodSecenekleri, ozelKodSuzgeceUyar, fiyatListesiKaynaklari, urunKaynakFiyati, fiyatDonustur, fiyatListesiYaz, fiyatlariHedefBirime, fiyatBul } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -103,4 +103,21 @@ bekle("resimler", tt.resimler, ["data:x", ""]);
 bekle("önizleme yokken yeni sütun yok", fiyatListesiTablosu(tSatir, { kaynak: toptan, ozelAlanlar: [], islemAktif: false }).basliklar, ["Stok no", "Model / ürün", "Kategori", "Toptan TL", "P.B."]);
 
 console.log(hata ? "birim-fiyat-listesi: HATA" : "birim-fiyat-listesi: tamam");
+// v1.607.0: liste resmi — ilk renk resmi, yoksa kapak (katalogla aynı); resim yoksa boş.
+bekle("liste resmi: renk resmi önce", fiyatListesiGorseli({ kapakResmi: "K", renkResimleri: { Siyah: "R1", Bej: "R2" } }), "R1");
+bekle("liste resmi: renk yoksa kapak", fiyatListesiGorseli({ kapakResmi: "K", renkResimleri: {} }), "K");
+bekle("liste resmi: hiç yoksa boş", fiyatListesiGorseli({ kapakResmi: "", renkResimleri: {} }), "");
+// v1.607.0: son fiyat değişikliği tarihi.
+{
+  const y = fiyatListesiYaz([{ id: "z", ad: "Z", fiyatKurallari: [] }], toptan, { z: 100 }, { zaman: "2026-10-06T10:00:00.000Z" });
+  const z = y.urunler[0];
+  bekle("grup kaynağı: fiyat listesi yazımının tarihi (grupId ile)", fiyatSonDegisiklik(z, toptan, gruplar), "2026-10-06T10:00:00.000Z");
+  bekle("başka grup: tarih yok", fiyatSonDegisiklik(z, usd, gruplar), null);
+  const eski = { ...z, fiyatGecmisi: [{ tarih: "2026-09-01T00:00:00.000Z", tip: "Satış", etiket: "Toptan TL (maliyetten)" }, { tarih: "2026-09-05T00:00:00.000Z", tip: "Satış", etiket: "Genel satış fiyatı (fiyat listesi)" }] };
+  bekle("eski kayıt: etiketle grup adı eşleşir", fiyatSonDegisiklik(eski, toptan, gruplar), "2026-09-01T00:00:00.000Z");
+  bekle("genel kaynak: grup adı içermeyen kayıt", fiyatSonDegisiklik(eski, genel, gruplar), "2026-09-05T00:00:00.000Z");
+  bekle("maliyet kaynağında tarih yok", fiyatSonDegisiklik(eski, K.find((k) => k.maliyet), gruplar), null);
+}
 process.exit(hata);
+
+
