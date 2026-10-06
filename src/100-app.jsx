@@ -3690,7 +3690,7 @@ export default function AtolyeERP() {
             ekrana sığdırmaya çalışmak yerine dördü burada, gerisi "Tümü" listesinde. */}
         {(() => {
           const ikonlar = {
-            anasayfa: <Home size={18} />, tanimlar: <Palette size={18} />, stok: <Boxes size={18} />,
+            anasayfa: <Home size={18} />, tanimlar: <Palette size={18} />, stok: <Boxes size={18} />, mamulstok: <Package size={18} />, fiyatlistesi: <Tag size={18} />,
             uretim: <Hammer size={18} />, cari: <Users size={18} />, siparis: <ClipboardList size={18} />,
             satinalma: <PackageCheck size={18} />, depo: <Layers size={18} />, paketleme: <PackageCheck size={18} />,
             gorevler: <MessageCircle size={18} />, planlama: <Compass size={18} />, fisler: <FileText size={18} />,
