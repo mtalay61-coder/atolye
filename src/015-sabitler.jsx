@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.601.0";
+const SURUM = "1.602.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Barkod etiketi: icerik yazicinin gercek sayfa boyuna gore ortalanir (kagit 40 mm den uzunsa ustte kalmiyor)";
+const SURUM_NOTU = "Buluta yazma: toplu pakette alan kumeleri esitlenir (PGRST102 hatasi, bekleyen sayac artmaz); model renkli mamulde barkod kurulur; barkod etiketi sayfaya gore ortali";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Barkod etiketi: icerik yazicinin gercek sayfa boyuna gore or
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.602.0", tarih: "06.10.2026",
+    eklenen: [], degisen: [],
+    duzeltilen: ["Ürün kartı › Barkodlar: model renkli (kombinasyon, örn. \"1031 - Kırmızı Deri/Gümüş\") mamulde her satır \"barkod kurulamıyor\" çıkıyordu — kombinasyon kodu artık renk kodu olarak okunur; sipariş formunda bu barkodlar çözülür", "Buluta yazma: aynı pakete düşen satırlardan bazıları şema dışı alan (ek) taşıyınca Supabase isteği reddediyordu (400 PGRST102 \"All object keys must match\") ve \"Yeniden dene\" her seferinde sayacı artırıyordu — paketteki alan kümeleri eşitlenir, eksikler null"] },
   { surum: "1.601.0", tarih: "06.10.2026",
     eklenen: [], degisen: [],
     duzeltilen: ["Barkod / koli / kutu etiketi: yazıcı kâğıdı 40 mm'den uzun tanımlıysa içerik üst yarıda kalıyordu — etiket gerçek sayfayı doldurur, barkod ortada"] },

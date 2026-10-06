@@ -4561,6 +4561,7 @@ export default function AtolyeERP() {
               onYeniRenkKaydet={yeniRenkKaydet}
               onModelRengiVeRecete={modelRengiVeReceteEkle}
               tanimlarRenkler={tanimlar.renkler || []}
+              tanimlarKombinasyonlar={tanimlar.renkKombinasyonlari || []}
               tanimlarBedenler={tanimlar.bedenler || []}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
               tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
@@ -4614,6 +4615,7 @@ export default function AtolyeERP() {
               onYeniRenkKaydet={yeniRenkKaydet}
               onModelRengiVeRecete={modelRengiVeReceteEkle}
               tanimlarRenkler={tanimlar.renkler || []}
+              tanimlarKombinasyonlar={tanimlar.renkKombinasyonlari || []}
               tanimlarBedenler={tanimlar.bedenler || []}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
               tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
@@ -5139,6 +5141,7 @@ export default function AtolyeERP() {
                             onYeniRenkKaydet={yeniRenkKaydet}
                             onModelRengiVeRecete={modelRengiVeReceteEkle}
                             tanimlarRenkler={tanimlar.renkler || []}
+                            tanimlarKombinasyonlar={tanimlar.renkKombinasyonlari || []}
                             tanimlarBedenler={tanimlar.bedenler || []}
               tanimlarBedenGruplari={tanimlar.bedenGruplari || []}
                             tanimlarOzelKodAlanlari={tanimlar.ozelKodAlanlari || []}
