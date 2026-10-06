@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.600.0</title>
+<title>Atölye ERP 1.603.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.600.0";
+const SURUM = "1.603.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Fiyat Listesi: grubun para birimi degisince kayitli fiyatlarin birimi seritten degistirilir (rakam ayni ya da kurla), satirda birim secici";
+const SURUM_NOTU = "Yeni stok karti kaydedilince barkodlar kendiliginden kurulur (stok no + kodlar) - Barkodlari olustur veya Paketleme gerekmez; etikette stok adi buyuk";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,15 @@ const SURUM_NOTU = "Fiyat Listesi: grubun para birimi degisince kayitli fiyatlar
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.603.0", tarih: "06.10.2026",
+        eklenen: ["Yeni stok kartı kaydedilince (Stok formu, hızlı hammadde, modelden koleksiyon) barkodlar kendiliğinden kurulur: stok no ve eksik renk/ölçü kodları atanır — Barkodlar sekmesinde \"Barkodları oluştur\"a ya da Paketleme'ye gerek yok"],
+        degisen: ["Barkod etiketlerinde (ürün, beden, asorti) stok adı büyük punto"], duzeltilen: [] },
+    { surum: "1.602.0", tarih: "06.10.2026",
+        eklenen: [], degisen: [],
+        duzeltilen: ["Ürün kartı › Barkodlar: model renkli (kombinasyon, örn. \"1031 - Kırmızı Deri/Gümüş\") mamulde her satır \"barkod kurulamıyor\" çıkıyordu — kombinasyon kodu artık renk kodu olarak okunur; sipariş formunda bu barkodlar çözülür", "Buluta yazma: aynı pakete düşen satırlardan bazıları şema dışı alan (ek) taşıyınca Supabase isteği reddediyordu (400 PGRST102 \"All object keys must match\") ve \"Yeniden dene\" her seferinde sayacı artırıyordu — paketteki alan kümeleri eşitlenir, eksikler null"] },
+    { surum: "1.601.0", tarih: "06.10.2026",
+        eklenen: [], degisen: [],
+        duzeltilen: ["Barkod / koli / kutu etiketi: yazıcı kâğıdı 40 mm'den uzun tanımlıysa içerik üst yarıda kalıyordu — etiket gerçek sayfayı doldurur, barkod ortada"] },
     { surum: "1.600.0", tarih: "06.10.2026",
         eklenen: ["Fiyat Listesi: grubun para birimiyle farklı kayıtlı fiyat varsa turuncu şerit — \"Birimi … yap (rakam aynı)\" ya da \"Kurla … çevir\"", "Fiyat Listesi: fiyat kutusunun yanındaki birim artık seçim kutusu — tek ürünün birimi satırdan değiştirilir"],
         degisen: ["Tanımlar › Fiyat Grupları: grubun birimi değişince kayıtlı fiyatların eski birimde kaldığını ve nereden değişeceğini söyleyen uyarı"],
@@ -4833,6 +4842,27 @@ function tabloKuyrugunaAl(tablo, is) {
     _bulutYazmaKuyrugu[tablo] = yeni.then(() => { }, () => { });
     return yeni;
 }
+// TOPLU YAZMADA ALAN KÜMELERİ EŞİT OLMALI (v1.602.0 — kullanıcı, çoklu cihaza geçince: "Yeniden dene tıklayınca
+// sayı artıyor", Supabase 400 PGRST102 "All object keys must match"). PostgREST tek istekte birden çok satır
+// alırken her satırın AYNI anahtarları taşımasını ister. Bizim satırlar `semaDisiAlanlar` yüzünden farklı
+// çıkabiliyor: şema dışı alanı olan kayıt `ek` taşır, olmayan taşımaz. Tek kayıtlı yazmalarda görünmez; iki
+// cihazdan arka arkaya girilen siparişler aynı pakete düşünce (10 kalemden 3'ünde ek alan var) istek
+// reddediliyor ve bekleyen defter her denemede büyüyor. Çözüm: paketteki bütün anahtarların birleşimi alınır,
+// eksik olan anahtar `null` ile doldurulur. Yalnız pakette ZATEN olan anahtarlar eklenir — olmayan bir sütun
+// uydurulmaz. Saf; birim testi `birim-satir-esitle`.
+function satirlariEsitle(satirlar) {
+    const anahtarlar = [];
+    const gorulen = new Set();
+    (satirlar || []).forEach((r) => Object.keys(r || {}).forEach((k) => { if (!gorulen.has(k)) {
+        gorulen.add(k);
+        anahtarlar.push(k);
+    } }));
+    return (satirlar || []).map((r) => {
+        const s = {};
+        anahtarlar.forEach((k) => { s[k] = r && r[k] !== undefined ? r[k] : null; });
+        return s;
+    });
+}
 function supabaseTabloEsitle(tablo, kayitlar) {
     return tabloKuyrugunaAl(tablo, () => _tabloEsitleUygula(tablo, kayitlar));
 }
@@ -4887,7 +4917,7 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
             await supabaseIstek(tablo, {
                 method: "POST",
                 headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-                body: JSON.stringify(yeniler.map((k) => (surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 }))),
+                body: JSON.stringify(satirlariEsitle(yeniler.map((k) => (surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 })))),
             });
             if (!surumDesteklenmiyor)
                 yeniler.forEach((k) => surumMap.set(k.id, 1));
@@ -4973,7 +5003,7 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
                 await supabaseIstek(yol, {
                     method: "POST",
                     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-                    body: JSON.stringify(cYaz),
+                    body: JSON.stringify(satirlariEsitle(cYaz)),
                 });
             }
             // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)
@@ -7486,8 +7516,13 @@ function etiketYazdir(etiketler, { genislikMM, yukseklikMM, ustHizali }) {
       body { margin: 0; font-family: 'Courier New', monospace; color: #000; }
       /* Küçük etiket ORTALANIR (içerik az, göz ortaya bakar). İŞ EMRİ gibi dolu sayfalar ise
          üstten hizalanır: ortalamak, uzun bir tabloyu sayfanın dışına taşırır. */
+      /* SAYFAYA GÖRE ORTALA (v1.601.0 — kullanıcı etiket fotoğrafıyla: "barkod ortalansın"): yazıcı sürücüsü
+         kâğıdı 40 mm'den uzun tanımlamışsa 40 mm'lik kutu sayfanın üstünde kalıyor, içerik üst yarıya basılıyordu.
+         min-height: 100vh yazdırmada sayfa kutusunun boyu demek: etiket gerçek sayfayı doldurur, içerik onun
+         ortasına gelir. Sayfa tam 40 mm ise değişen bir şey yok. */
+      html, body { height: 100%; }
       .etiket {
-        width: ${genislikMM}mm; height: ${yukseklikMM}mm;
+        width: ${genislikMM}mm; height: ${yukseklikMM}mm; min-height: 100vh;
         padding: ${ustHizali ? 6 : 2}mm; overflow: hidden;
         display: flex; flex-direction: column;
         align-items: ${ustHizali ? "stretch" : "center"};
@@ -17867,6 +17902,7 @@ function AtolyeERP() {
         const nextStok = [...stok, yeniUrun];
         setStok(nextStok);
         yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
+        barkodBekleyenRef.current.push(yeniUrun.id); // v1.603.0: barkod kendiliğinden (stok güncellenince efekt işler)
         saveModeller((modeller || []).map((m) => (m.id === model.id
             ? { ...m, asama: "koleksiyon", urunId: yeniUrun.id,
                 gecmis: [...(m.gecmis || []), { zaman: new Date().toISOString(), olay: "Koleksiyona alındı — ürün kartı oluşturuldu" }] }
@@ -18599,10 +18635,20 @@ function AtolyeERP() {
     // ve ürüne stok no verir (`kodlariAta`; var olan koda dokunmaz). Ürün kartı renk/ölçü EKLENİNCE kendiliğinden, eski ürünlerde
     // Barkodlar sekmesindeki "Barkodları oluştur" ile çağırır. BİLEREK GENEL DEĞİL: açılışta bütün stoğu tanımlamak, yazım
     // hatalı ölçüleri ("3840") ve göç bekleyen renkleri de kalıcı tanıma çeviriyor, "tanımsız ölçü — düzelt" akışını yutuyordu.
+    // YENİ STOK AÇILINCA BARKOD KENDİLİĞİNDEN (v1.603.0 — kullanıcı: "Barkod için stok açınca barkodları otomatik kursun,
+    // tekrar paketlemeden barkod oluşturmaya gerek yok"). Ürünü oluşturan yol (152 stok formu, hızlı hammadde; burada
+    // modelden koleksiyon) kaydeder kaydetmez `urunBarkodunuTamamla(id, true)` çağırır. O anda ürün henüz `stok`
+    // state'inde olmayabilir (setState sonrası aynı tur) — o zaman kimlik bu kuyruğa alınır ve `stok` güncellenince
+    // aşağıdaki efekt işler. Yalnız BU CİHAZDA açılan ürünler: buluttan gelen ürünü burada da kodlamak iki cihazın aynı
+    // anda stok no / kod ataması demek olurdu.
+    const barkodBekleyenRef = useRef([]);
     const urunBarkodunuTamamla = useCallback((urunId, sessiz) => {
         const urun = (stok || []).find((u) => u.id === urunId);
-        if (!urun)
-            return;
+        if (!urun) {
+            if (sessiz && !barkodBekleyenRef.current.includes(urunId))
+                barkodBekleyenRef.current.push(urunId);
+            return false;
+        }
         const e = eksikBarkodTanimlari([urun], tanimlar, uid);
         const t2 = (e.renkler.length || e.bedenler.length)
             ? { ...tanimlar, renkler: [...(tanimlar.renkler || []), ...e.renkler], bedenler: [...(tanimlar.bedenler || []), ...e.bedenler] }
@@ -18613,7 +18659,7 @@ function AtolyeERP() {
         if (!yeniNo && !tanimDegisti) {
             if (!sessiz)
                 showToast("Bu ürünün barkod kodları tamam");
-            return;
+            return false;
         }
         if (yeniNo)
             saveStok(stok.map((u) => (u.id === urunId ? { ...u, stokNo: yeniNo } : u)));
@@ -18633,7 +18679,30 @@ function AtolyeERP() {
         ].filter(Boolean);
         gunlukYaz(`Barkod tamamlandı: ${urun.ad} — ${parca.join(" · ") || "kodlar atandı"}`, "tanimlar", { urunId, renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), stokNo: yeniNo });
         showToast(`${urun.ad}: barkod oluşturuldu${parca.length ? ` — ${parca.join(" · ")}` : ""}`);
+        return true;
     }, [stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+    // Kuyruktaki ürünler `stok` güncellenince işlenir. Tek turda EN FAZLA BİR yazan çağrı: fonksiyon kapanımdaki
+    // stok/tanımları okuyor, art arda iki yazma ikincisinin ilkini ezmesi demek. Yazan çıkınca efekt yeni state ile
+    // yeniden koşar ve sıradakini alır; yazmayan (kodları zaten tam) çağrılar aynı turda ardı ardına geçilir.
+    useEffect(() => {
+        if (!barkodBekleyenRef.current.length)
+            return undefined;
+        const z = setTimeout(() => {
+            const kalan = [];
+            let yazildi = false;
+            barkodBekleyenRef.current.forEach((id) => {
+                if (yazildi || !(stok || []).some((u) => u.id === id)) {
+                    kalan.push(id);
+                    return;
+                }
+                // Ürün artık state'te: çağrı ya yazar (true) ya da kodları tam diye geçer (false) — iki hâlde de kuyruktan çıkar.
+                if (urunBarkodunuTamamla(id, true) === true)
+                    yazildi = true;
+            });
+            barkodBekleyenRef.current = kalan; // state'te henüz olmayanlar bir sonraki stok güncellemesini bekler
+        }, 700);
+        return () => clearTimeout(z);
+    }, [stok, urunBarkodunuTamamla]);
     // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0 — kullanıcı kararı: "ay başı kendiliğinden"). Atölye içi bölüm personeline bu ayın
     // maaşı (Tanımlar'daki tutar) bir kez "Maaş" alacağı olarak yazılır; fiş numarası MAAS-YYYY-MM-<kod> tekilliği sağlar
     // (cari bulutla birleşik okunur; aynı fiş varsa yazılmaz). Ödeme kasadan cariye — bakiye kapanır. İnternet yokken ve
@@ -20172,9 +20241,9 @@ function AtolyeERP() {
                             // duruyor, yani Depo'nun kaydırma konumu ve açık satırları yerinde kalıyor.
                             onGoToUrun: (id) => uruneGit(id, null, { tab: "depo", etiket: "Depoya dön" }), onSatinAlPlanla: hammaddeyiPlanla, onAlisFisi: alisFisiAc })),
                     React.createElement("div", { style: { display: tab === "siparis" ? undefined : "none" } },
-                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "siparis", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "siparis"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Sat\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
+                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "siparis", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "siparis"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Sat\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement("div", { style: { display: tab === "satinalma" ? undefined : "none" } },
-                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
+                        React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement("div", { style: { display: tab === "fisler" ? undefined : "none" } },
                         React.createElement(FislerModule, { muhasebe: muhasebe, hedefFisNo: hedefFisNo, onHedefTuketildi: () => setHedefFisNo(null), cariler: cariler, stok: stok, siparisler: siparisler, uretim: uretim, onGoToCari: () => setTab("cari"), onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYetimFisTemizle: yetimFisTemizle, faturalar: faturalar, onFaturaAc: (fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo }) })),
                     tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement(GunlukPaneli, { showToast: showToast })),
@@ -20357,7 +20426,7 @@ function AtolyeERP() {
                                         // olabilir. Pencerenin açıldığı cariyi kullanmak, seçimi yok sayardı.
                                         stokFisiKaydet(fis.cariId || p.veri.cariId, p.veri.tip, fis);
                                         pencereKapat(p.id);
-                                    } })) : planlamaMi ? (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, onGoToSiparis: (id) => { pencereKapat(p.id); sipariseGit(id); }, onGoToUrun: (id) => { pencereKapat(p.id); uruneGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, showToast: showToast, hedefHammadde: p.veri.hedef, onHedefTuketildi: () => { } })) : (React.createElement(SiparisModule, { cop: cop, onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => { pencereKapat(p.id); setTab("cari"); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {}, hedefYeniAlis: p.veri.taslak, onYeniAlisTuketildi: () => { } }))))));
+                                    } })) : planlamaMi ? (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, onGoToSiparis: (id) => { pencereKapat(p.id); sipariseGit(id); }, onGoToUrun: (id) => { pencereKapat(p.id); uruneGit(id); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, showToast: showToast, hedefHammadde: p.veri.hedef, onHedefTuketildi: () => { } })) : (React.createElement(SiparisModule, { cop: cop, onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: () => { pencereKapat(p.id); setTab("cari"); }, onGoToUretim: (id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {}, hedefYeniAlis: p.veri.taslak, onYeniAlisTuketildi: () => { } }))))));
                     })));
             })(),
             sonHata && (React.createElement("div", { style: {
@@ -25681,6 +25750,8 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             renkResimleri: {},
         };
         onSave([urun, ...items]);
+        if (onBarkodTamamla)
+            onBarkodTamamla(urun.id, true); // v1.603.0: barkod kendiliğinden (stok no + kodlar)
         showToast(`"${yeniAd}" hammadde olarak eklendi — ayrıntıları Stok kartından tamamlayın`);
         return urun.id;
     }
@@ -25847,6 +25918,10 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             renkResimleri: matrix.renkResimleri || {},
         };
         onSave([product, ...items]);
+        // BARKOD KENDİLİĞİNDEN (v1.603.0): kart kaydedilince stok no + renk/ölçü kodları atanır, Barkodlar sekmesinde
+        // "Barkodları oluştur"a ya da Paketleme'ye gerek kalmaz. Ürün henüz state'te değil; 100 kuyruğa alır.
+        if (onBarkodTamamla)
+            onBarkodTamamla(product.id, true);
         // Seçilen renkler ürünün malzeme tipine bağlanıyor (v1.471.0, bkz. `renkleriTipeBagla`).
         if (product.malzemeTipi && onRenkleriTipeBagla)
             onRenkleriTipeBagla(matrix.renkler, product.malzemeTipi);
@@ -28633,7 +28708,11 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     const [yeniKodAlaniAdi, setYeniKodAlaniAdi] = useState("");
     // Barkod kurmak için gereken üç liste. Kartın elinde zaten ayrı ayrı duruyorlar; barkod
     // fonksiyonları üçünü birlikte istiyor çünkü bir kodu kurmak üçüne birden bakmayı gerektiriyor.
-    const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+    // MODEL RENGİ (v1.602.0 — kullanıcı, "1031 - Kırmızı Deri/Gümüş" renkli sandaletin Barkodlar sekmesi: "Barkodları
+    // kurulamıyor"): mamulün varyant rengi bir renk kombinasyonu; `renkKoduBul` kodu `renkKombinasyonlari`nden okuyor
+    // (077 modelRengiTanimiBul) ama bu nesneye kombinasyonlar hiç konmuyordu — her model renkli mamulde "barkod
+    // kurulamıyor". "Barkodları oluştur" da bir şey yapmıyordu, çünkü o taraf tam tanımlarla bakıyor ve eksik görmüyordu.
+    const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler, renkKombinasyonlari: tanimlarKombinasyonlar || [] };
     // RENK / ÖLÇÜ EKLENİNCE BARKOD KENDİLİĞİNDEN (v1.579.0): ürüne yeni varyant gelince (kart açıkken) barkodu kurulamayan
     // varyant ya da stok no yoksa `onBarkodTamamla` (100 `urunBarkodunuTamamla`) çağrılır. 700 ms sonra ve EN SON fonksiyonla
     // (ref): renk ekleme yolu tanımı ayrıca yazıyor (v1.555 "renk aç") — önce o yazım otursun, aynı renk iki kez tanımlanmasın.
@@ -28680,7 +28759,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     // Tek etiketin gövdesi — tek basım da toplu basım da buradan geçiyor ki iki yerde iki farklı
     // etiket çıkmasın.
     const bedenEtiketiGovde = (v, kod) => `
-    <div style="font-size:12px;font-weight:700">${product.ad}</div>
+    <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
     <div style="font-size:11px">${olcuMetni([v.renk, v.beden])}</div>
     ${barkodSvg(kod, { birim: 2, yukseklik: 30 })}
   `;
@@ -32068,7 +32147,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                 React.createElement("span", { style: { color: "var(--erp-text-2)" } }, "\u00DCr\u00FCn barkodu (renksiz):"),
                 React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text)" } }, urunBarkoduKur("stok", { stokNo: product.stokNo })),
                 React.createElement("button", { className: "btn-ikon", title: "\u00DCr\u00FCn barkodunu bas (6\u00D74 cm)", onClick: () => etiketYazdir([`
-                  <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                  <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
                   ${barkodSvg(urunBarkoduKur("stok", { stokNo: product.stokNo }), { birim: 2, yukseklik: 30 })}
                 `], { genislikMM: 60, yukseklikMM: 40 }) },
                     React.createElement(Printer, { size: 12 })))) : null,
@@ -32128,7 +32207,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                 " \u00E7ift"),
                             kod ? (React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" } }, kod)) : (React.createElement("span", { style: { fontSize: 11, color: "var(--erp-warn)" } }, "kod bekleniyor (birka\u00E7 saniye i\u00E7inde otomatik atan\u0131r)")),
                             kod && a && (React.createElement("button", { className: "btn-ikon", title: "Bu asortinin barkod etiketini bas (6\u00D74 cm)", onClick: () => etiketYazdir([`
-                              <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                              <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
                               <div style="font-size:11px">${x.renk} · ${a.ad}</div>
                               ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
                               <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>
@@ -48887,7 +48966,7 @@ function htmlKacis(v) {
 }
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar, koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar, koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
     // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
     // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
     // sipariş kalemleri düz satıra çevriliyor.
@@ -49293,7 +49372,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         }
     }
     // Barkod kurmak/çözmek için gereken üç liste; çözücü üçüne birden bakıyor.
-    const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+    // v1.602.0: model rengi (kombinasyon) barkodları da çözülsün diye kombinasyonlar da burada.
+    const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler, renkKombinasyonlari: tanimlarKombinasyonlar || [] };
     // BARKOD OKUTMA — fuar akışı.
     //
     // Kullanıcı: "Sipariş giriş ekranında barkod okut bölümü olsun ve okutulan ürün asorti kadar
@@ -55413,7 +55493,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.600.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.603.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

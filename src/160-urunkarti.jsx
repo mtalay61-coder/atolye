@@ -460,7 +460,7 @@ function ProductMatrixCard({
   // Tek etiketin gövdesi — tek basım da toplu basım da buradan geçiyor ki iki yerde iki farklı
   // etiket çıkmasın.
   const bedenEtiketiGovde = (v, kod) => `
-    <div style="font-size:12px;font-weight:700">${product.ad}</div>
+    <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
     <div style="font-size:11px">${olcuMetni([v.renk, v.beden])}</div>
     ${barkodSvg(kod, { birim: 2, yukseklik: 30 })}
   `;
@@ -5585,7 +5585,7 @@ function ProductMatrixCard({
                 className="btn-ikon"
                 title="Ürün barkodunu bas (6×4 cm)"
                 onClick={() => etiketYazdir([`
-                  <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                  <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
                   ${barkodSvg(urunBarkoduKur("stok", { stokNo: product.stokNo }), { birim: 2, yukseklik: 30 })}
                 `], { genislikMM: 60, yukseklikMM: 40 })}
               >
@@ -5666,7 +5666,7 @@ function ProductMatrixCard({
                         {kod && a && (
                           <button className="btn-ikon" title="Bu asortinin barkod etiketini bas (6×4 cm)"
                             onClick={() => etiketYazdir([`
-                              <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                              <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
                               <div style="font-size:11px">${x.renk} · ${a.ad}</div>
                               ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
                               <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>

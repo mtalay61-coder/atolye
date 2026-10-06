@@ -1,1 +1,1 @@
-{"surum": "1.602.0", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.602.0.html", "not": "Buluta yazma: toplu pakette alan kumeleri esitlenir (PGRST102 hatasi, bekleyen sayac artmaz); model renkli mamulde barkod kurulur; barkod etiketi sayfaya gore ortali"}
+{"surum": "1.603.0", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.603.0.html", "not": "Yeni stok karti kaydedilince barkodlar kendiliginden kurulur (stok no + kodlar) - Barkodlari olustur veya Paketleme gerekmez; etikette stok adi buyuk"}

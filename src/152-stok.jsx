@@ -110,6 +110,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
       renkResimleri: {},
     };
     onSave([urun, ...items]);
+    if (onBarkodTamamla) onBarkodTamamla(urun.id, true);   // v1.603.0: barkod kendiliğinden (stok no + kodlar)
     showToast(`"${yeniAd}" hammadde olarak eklendi — ayrıntıları Stok kartından tamamlayın`);
     return urun.id;
   }
@@ -286,6 +287,9 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
       renkResimleri: matrix.renkResimleri || {},
     };
     onSave([product, ...items]);
+    // BARKOD KENDİLİĞİNDEN (v1.603.0): kart kaydedilince stok no + renk/ölçü kodları atanır, Barkodlar sekmesinde
+    // "Barkodları oluştur"a ya da Paketleme'ye gerek kalmaz. Ürün henüz state'te değil; 100 kuyruğa alır.
+    if (onBarkodTamamla) onBarkodTamamla(product.id, true);
     // Seçilen renkler ürünün malzeme tipine bağlanıyor (v1.471.0, bkz. `renkleriTipeBagla`).
     if (product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla(matrix.renkler, product.malzemeTipi);
     setForm(emptyForm());

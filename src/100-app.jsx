@@ -1700,6 +1700,7 @@ export default function AtolyeERP() {
     const nextStok = [...stok, yeniUrun];
     setStok(nextStok);
     yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
+    barkodBekleyenRef.current.push(yeniUrun.id);   // v1.603.0: barkod kendiliğinden (stok güncellenince efekt işler)
     saveModeller((modeller || []).map((m) => (m.id === model.id
       ? { ...m, asama: "koleksiyon", urunId: yeniUrun.id,
         gecmis: [...(m.gecmis || []), { zaman: new Date().toISOString(), olay: "Koleksiyona alındı — ürün kartı oluşturuldu" }] }
@@ -2427,9 +2428,16 @@ export default function AtolyeERP() {
   // ve ürüne stok no verir (`kodlariAta`; var olan koda dokunmaz). Ürün kartı renk/ölçü EKLENİNCE kendiliğinden, eski ürünlerde
   // Barkodlar sekmesindeki "Barkodları oluştur" ile çağırır. BİLEREK GENEL DEĞİL: açılışta bütün stoğu tanımlamak, yazım
   // hatalı ölçüleri ("3840") ve göç bekleyen renkleri de kalıcı tanıma çeviriyor, "tanımsız ölçü — düzelt" akışını yutuyordu.
+  // YENİ STOK AÇILINCA BARKOD KENDİLİĞİNDEN (v1.603.0 — kullanıcı: "Barkod için stok açınca barkodları otomatik kursun,
+  // tekrar paketlemeden barkod oluşturmaya gerek yok"). Ürünü oluşturan yol (152 stok formu, hızlı hammadde; burada
+  // modelden koleksiyon) kaydeder kaydetmez `urunBarkodunuTamamla(id, true)` çağırır. O anda ürün henüz `stok`
+  // state'inde olmayabilir (setState sonrası aynı tur) — o zaman kimlik bu kuyruğa alınır ve `stok` güncellenince
+  // aşağıdaki efekt işler. Yalnız BU CİHAZDA açılan ürünler: buluttan gelen ürünü burada da kodlamak iki cihazın aynı
+  // anda stok no / kod ataması demek olurdu.
+  const barkodBekleyenRef = useRef([]);
   const urunBarkodunuTamamla = useCallback((urunId, sessiz) => {
     const urun = (stok || []).find((u) => u.id === urunId);
-    if (!urun) return;
+    if (!urun) { if (sessiz && !barkodBekleyenRef.current.includes(urunId)) barkodBekleyenRef.current.push(urunId); return false; }
     const e = eksikBarkodTanimlari([urun], tanimlar, uid);
     const t2 = (e.renkler.length || e.bedenler.length)
       ? { ...tanimlar, renkler: [...(tanimlar.renkler || []), ...e.renkler], bedenler: [...(tanimlar.bedenler || []), ...e.bedenler] }
@@ -2437,7 +2445,7 @@ export default function AtolyeERP() {
     const k = kodlariAta(stok, t2);
     const yeniNo = urun.stokNo ? null : ((k.stok.find((u) => u.id === urunId) || {}).stokNo || null);
     const tanimDegisti = e.renkler.length || e.bedenler.length || k.atanan.renk || k.atanan.beden || k.atanan.asorti;
-    if (!yeniNo && !tanimDegisti) { if (!sessiz) showToast("Bu ürünün barkod kodları tamam"); return; }
+    if (!yeniNo && !tanimDegisti) { if (!sessiz) showToast("Bu ürünün barkod kodları tamam"); return false; }
     if (yeniNo) saveStok(stok.map((u) => (u.id === urunId ? { ...u, stokNo: yeniNo } : u)));
     // Sayaçlar başka stok no'suz ürünleri de saymış olabilir (yalnız boşluk bırakır, çakışma yapmaz); stok no'yu
     // yalnız bu ürüne yazdığımız için sayaç yalnız onunkine kadar ilerletilir.
@@ -2451,7 +2459,25 @@ export default function AtolyeERP() {
     ].filter(Boolean);
     gunlukYaz(`Barkod tamamlandı: ${urun.ad} — ${parca.join(" · ") || "kodlar atandı"}`, "tanimlar", { urunId, renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), stokNo: yeniNo });
     showToast(`${urun.ad}: barkod oluşturuldu${parca.length ? ` — ${parca.join(" · ")}` : ""}`);
+    return true;
   }, [stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+  // Kuyruktaki ürünler `stok` güncellenince işlenir. Tek turda EN FAZLA BİR yazan çağrı: fonksiyon kapanımdaki
+  // stok/tanımları okuyor, art arda iki yazma ikincisinin ilkini ezmesi demek. Yazan çıkınca efekt yeni state ile
+  // yeniden koşar ve sıradakini alır; yazmayan (kodları zaten tam) çağrılar aynı turda ardı ardına geçilir.
+  useEffect(() => {
+    if (!barkodBekleyenRef.current.length) return undefined;
+    const z = setTimeout(() => {
+      const kalan = [];
+      let yazildi = false;
+      barkodBekleyenRef.current.forEach((id) => {
+        if (yazildi || !(stok || []).some((u) => u.id === id)) { kalan.push(id); return; }
+        // Ürün artık state'te: çağrı ya yazar (true) ya da kodları tam diye geçer (false) — iki hâlde de kuyruktan çıkar.
+        if (urunBarkodunuTamamla(id, true) === true) yazildi = true;
+      });
+      barkodBekleyenRef.current = kalan;   // state'te henüz olmayanlar bir sonraki stok güncellemesini bekler
+    }, 700);
+    return () => clearTimeout(z);
+  }, [stok, urunBarkodunuTamamla]);
 
   // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0 — kullanıcı kararı: "ay başı kendiliğinden"). Atölye içi bölüm personeline bu ayın
   // maaşı (Tanımlar'daki tutar) bir kez "Maaş" alacağı olarak yazılır; fiş numarası MAAS-YYYY-MM-<kod> tekilliği sağlar

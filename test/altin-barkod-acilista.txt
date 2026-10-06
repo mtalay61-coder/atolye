@@ -1,0 +1,13 @@
+{
+  "kayit": {
+    "var": true,
+    "stokNo": 1,
+    "sayac": 1
+  },
+  "kart": {
+    "kurulamayan": 0,
+    "urunBarkodu": "900001",
+    "olusturDugmesi": false
+  },
+  "hatalar": []
+}
