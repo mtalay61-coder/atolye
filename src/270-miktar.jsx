@@ -109,7 +109,7 @@ function MiktarGirisi({ deger, onKaydet, genislik = 50 }) {
           width: Math.max(genislik, 78), padding: "4px 7px", fontSize: 12,
           // v1.598.0: reçetedeki diğer miktar kutularıyla aynı vurgu (RECETE_MIKTAR_STILI, 160-urunkarti).
           ...RECETE_MIKTAR_STILI,
-          ...(gecersiz ? { border: "1.5px solid var(--erp-orange)" } : {}),
+          ...(gecersiz ? { border: "2px solid var(--erp-orange)" } : {}),
         }}
       />
       {ifadeMi && hesaplanan !== null && (
