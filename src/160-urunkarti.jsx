@@ -11,6 +11,11 @@ function fiyatSayisi(v) {
 // GEÇMİŞTEN GELEN RENK EŞLEŞMESİ (v1.561.0): şablondan uygulanırken rengi geçmiş reçetelerden HATIRLANAN satır
 // (`renkGecmisten`) kırmızı çerçeveyle gösterilir — kullanıcı "gözden kaçırmasın". Renk seçilince ya da
 // "Eşleştirmeleri onayla" ile işaret düşer. Bilinmeyen eşleşme hiç açılmaz: turuncu "eşleştir…" kutusu.
+// REÇETE MİKTARI (v1.598.0 — kullanıcı: "reçetede miktarlar belli olmuyor, renklendir"): miktar kutuları
+// renk seçicileri ve tarihlerle aynı gri çizgide kaybolduğundan bütün miktar kutuları ve birim etiketleri
+// tek vurgulu stilde — sıcak sarı zemin, koyu kenarlık, kalın yazı. Tek sabit: bir yerde değişirse hepsi değişsin.
+const RECETE_MIKTAR_STILI = { fontWeight: 700, color: "var(--erp-wait)", background: "var(--erp-wait-tint)", border: "1.5px solid var(--erp-wait)", borderRadius: "var(--erp-r-sm)", textAlign: "right" };
+const RECETE_BIRIM_STILI = { fontSize: 12, fontWeight: 700, color: "var(--erp-wait)" };
 const GECMIS_RENK_STILI = { border: "2px solid var(--erp-danger)", background: "#FDECEC", color: "var(--erp-danger)" };
 const GECMIS_RENK_IPUCU = "Bu renk geçmiş reçetelerden HATIRLANDI — kontrol edin. Doğruysa üstteki 'Eşleştirmeleri onayla', değilse başka renk seçin.";
 // BEDEN / BOY EŞLEŞMESİ DEĞİŞTİRME (v1.563.0 — kullanıcı: "beden eşleştirme, boyut eşleştirme de renk gibi
@@ -3745,7 +3750,7 @@ function ProductMatrixCard({
                                   type="text" inputMode="decimal"
                                   defaultValue={ortakMiktarBu}
                                   className="mono"
-                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
+                                  style={{ width: 78, padding: "3px 6px", fontSize: 12, ...RECETE_MIKTAR_STILI }}
                                   title="Hesap yazabilirsiniz: 1/8, 120/14"
                                   onBlur={(e) => {
                                     // Reçetedeki her miktar alanı hesap kabul ediyor; toplu
@@ -3762,7 +3767,7 @@ function ProductMatrixCard({
                                   className="mono"
                                   style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
                                 />
-                                <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>{ortakBirimBu}</span>
+                                <span className="mono" style={RECETE_BIRIM_STILI}>{ortakBirimBu}</span>
                               </span>
                             )}
                               {/* ONAYLI SİLME (kullanıcı, 11 Eylül: "reçetede silme onaylı olsun, tek tıklama ile
@@ -3867,9 +3872,9 @@ function ProductMatrixCard({
                                                 onReceteGrubuGuncelle(product.id, satirlarBu.map((r) => r.id), guncellenecekler);
                                               }}
                                               className="mono"
-                                              style={{ width: 78, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
+                                              style={{ width: 78, padding: "3px 6px", fontSize: 12, ...RECETE_MIKTAR_STILI }}
                                             />
-                                            <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{satirOrtakBirim}</span>
+                                            <span className="mono" style={RECETE_BIRIM_STILI}>{satirOrtakBirim}</span>
                                           </div>
                                         )}
                                       </td>
@@ -4234,9 +4239,9 @@ function ProductMatrixCard({
                                       onReceteGrubuGuncelle(product.id, tumSatirlar.map((r) => r.id), tumSatirlar.map(({ id, ...rest }) => ({ ...rest, miktar: yeni })));
                                     }}
                                     className="mono"
-                                    style={{ width: 70, padding: "3px 6px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontWeight: 700, color: "var(--erp-text)" }}
+                                    style={{ width: 70, padding: "3px 6px", fontSize: 12, ...RECETE_MIKTAR_STILI }}
                                   />
-                                  <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>{baslikOrtakBirim}</span>
+                                  <span className="mono" style={RECETE_BIRIM_STILI}>{baslikOrtakBirim}</span>
                                 </span>
                               )}
                               {/* ONAYLI SİLME (kullanıcı, 11 Eylül: "reçetede silme onaylı olsun, tek tıklama ile
@@ -4373,9 +4378,9 @@ function ProductMatrixCard({
                                                     onReceteGrubuGuncelle(product.id, ms.satirlar.map((r) => r.id), guncellenecekler);
                                                   }}
                                                   className="mono"
-                                                  style={{ width: 44, padding: "4px 7px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
+                                                  style={{ width: 44, padding: "4px 7px", fontSize: 12, ...RECETE_MIKTAR_STILI }}
                                                 />
-                                                <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{ms.birim}</span>
+                                                <span className="mono" style={RECETE_BIRIM_STILI}>{ms.birim}</span>
                                               </div>
                                             </div>
                                           )}
@@ -4592,9 +4597,9 @@ function ProductMatrixCard({
                                         onReceteGrubuGuncelle(product.id, [r.id], [{ ...rest, miktar: yeni }]);
                                       }}
                                       className="mono"
-                                      style={{ width: 64, padding: "3px 5px", fontSize: 13, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
+                                      style={{ width: 64, padding: "3px 5px", fontSize: 13, ...RECETE_MIKTAR_STILI }}
                                     />
-                                    <span className="mono" style={{ fontSize: 13, color: "var(--erp-text-3)" }}>{ms.birim}</span>
+                                    <span className="mono" style={RECETE_BIRIM_STILI}>{ms.birim}</span>
                                   </>
                                 )}
                                 <SilOnayButonu

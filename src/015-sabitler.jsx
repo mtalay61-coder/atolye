@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.597.0";
-const SURUM_TARIHI = "2026-10-05";
-const SURUM_NOTU = "Fiyat grubu kar marji (grup onerisi marjdan), grup fiyati rakamla duzenlenir; Standart hammadde karti recetede sade";
+const SURUM = "1.598.0";
+const SURUM_TARIHI = "2026-10-06";
+const SURUM_NOTU = "Recetede miktar kutulari ve birimleri vurgulu (sari zemin, kalin) - miktarlar bir bakista secilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Fiyat grubu kar marji (grup onerisi marjdan), grup fiyati ra
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.598.0", tarih: "06.10.2026",
+    eklenen: [],
+    degisen: ["Reçete: bütün miktar kutuları ve birim etiketleri sarı zeminli, koyu kenarlıklı ve kalın — renk seçici ve tarihlerin arasında miktar bir bakışta seçiliyor"],
+    duzeltilen: [] },
   { surum: "1.597.0", tarih: "05.10.2026",
     eklenen: ["Fiyat gruplarına kâr marjı (%): Tanımlar › Fiyat Grupları ve Maliyet'teki grup satırından girilir; grubun önerilen fiyatı tam maliyet ÷ (1 − marj)", "Maliyet › Fiyat grupları: kayıtlı grup fiyatı kutuya rakam yazarak düzenlenir"],
     degisen: ["Reçetede renksiz ve bedensiz (Standart) hammadde kartında pozisyon/renk tablosu çizilmiyor — tek satır not"],
