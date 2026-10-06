@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.602.0</title>
+<title>Atölye ERP 1.605.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.602.0";
+const SURUM = "1.605.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Buluta yazma: toplu pakette alan kumeleri esitlenir (PGRST102 hatasi, bekleyen sayac artmaz); model renkli mamulde barkod kurulur; barkod etiketi sayfaya gore ortali";
+const SURUM_NOTU = "Recete: renksiz hammadde (Standart) yeni mamul renginde eslestirme sormaz, kendiliginden dolar; model rengi ekleme yolu da otomatik kurallari uygular; hammaddesiz proses satiri hep gorunur";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,16 @@ const SURUM_NOTU = "Buluta yazma: toplu pakette alan kumeleri esitlenir (PGRST10
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.605.0", tarih: "06.10.2026",
+        eklenen: [],
+        degisen: ["Reçete: \"Hammaddesiz proses ekle\" satırı aday proses kalmayınca da görünür (nedeni ve çözümü yazar)"],
+        duzeltilen: ["Reçete: renksiz hammadde (Takviye Bezi, Jut) yeni mamul renginde turuncu \"eşleştir…\" soruyordu — kart açılınca kendiliğinden Standart ile dolar; ürün kartından model rengi eklerken de (kaynak renk seçilmese bile) otomatik eşleşme kuralları çalışır"] },
+    { surum: "1.604.0", tarih: "06.10.2026",
+        eklenen: ["Stok kartına fotoğraf yüklenince sağ üst köşeye firma logosu, altına stok adı ve (renk resmiyse) renk basılır — kapak ve renk resimleri, stok formu ve ürün kartı; Tanımlar › Firma Bilgileri \"Stok resmine logo + ad damgası\" tikiyle kapatılır"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.603.0", tarih: "06.10.2026",
+        eklenen: ["Yeni stok kartı kaydedilince (Stok formu, hızlı hammadde, modelden koleksiyon) barkodlar kendiliğinden kurulur: stok no ve eksik renk/ölçü kodları atanır — Barkodlar sekmesinde \"Barkodları oluştur\"a ya da Paketleme'ye gerek yok"],
+        degisen: ["Barkod etiketlerinde (ürün, beden, asorti) stok adı büyük punto"], duzeltilen: [] },
     { surum: "1.602.0", tarih: "06.10.2026",
         eklenen: [], degisen: [],
         duzeltilen: ["Ürün kartı › Barkodlar: model renkli (kombinasyon, örn. \"1031 - Kırmızı Deri/Gümüş\") mamulde her satır \"barkod kurulamıyor\" çıkıyordu — kombinasyon kodu artık renk kodu olarak okunur; sipariş formunda bu barkodlar çözülür", "Buluta yazma: aynı pakete düşen satırlardan bazıları şema dışı alan (ek) taşıyınca Supabase isteği reddediyordu (400 PGRST102 \"All object keys must match\") ve \"Yeniden dene\" her seferinde sayacı artırıyordu — paketteki alan kümeleri eşitlenir, eksikler null"] },
@@ -6299,7 +6309,10 @@ function urundenSablonIsciligi(product) {
 function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
     const recete = (product && product.recete) || [];
     const sonuc = { satirlar: [], gecmisSayisi: 0, bosGruplar: [] };
-    if (!yeniRenk || recete.length === 0 || recete.some((r) => r.mamulRenk === yeniRenk))
+    // v1.605.0: "renk zaten reçetede varsa hiç dokunma" erken dönüşü KALKTI — model rengi ekleme yolu (100
+    // yeniRenkVeReceteEkle) kaynak renkten bazı satırları kopyalayıp kalan gruplar için buraya geliyor; grup zaten
+    // kapsıyorsa `grupYeniRenkSatirlari` null döner, çift satır açılmaz.
+    if (!yeniRenk || recete.length === 0)
         return sonuc;
     const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler || []);
     const gruplar = new Map();
@@ -17350,11 +17363,17 @@ function AtolyeERP() {
         // eklemeId ayrımı, "aynı hammadde farklı amaçla ikinci kez eklendi" durumu içindir (ör. Deri
         // Nubuk hem yüz hem astar). Renk kopyalama o durum değildir.
         const kaynakSatirlar = kaynakRenk ? (urun.recete || []).filter((r) => r.mamulRenk === kaynakRenk) : [];
-        const yeniRecete = kaynakSatirlar.map((r) => {
+        const kopyalanan = kaynakSatirlar.map((r) => {
             const { id, ...kalan } = r;
             const degistirilmis = hammaddeRenkleri && hammaddeRenkleri[r.id];
             return { ...kalan, id: uid("recete"), mamulRenk: ad, renk: degistirilmis || r.renk };
         });
+        // KALAN GRUPLAR OTOMATİK (v1.605.0 — kullanıcı: "Standart'ta eşleşme olmayacaktı, yeni renk ekleyince eşleşme
+        // istedi"): kaynak renk seçilmediyse ya da seçilen renk her hammaddeyi kapsamıyorsa, Stok ekranındaki renk ekleme
+        // ile aynı kurallar (aynı ad → geçmiş [kırmızı] → sabit/renksiz → Standart) burada da çalışır. Renksiz hammadde
+        // (Takviye Bezi, Jut) böylece hiçbir yolda turuncu "eşleştir…" sormaz.
+        const otomatik = yeniRenkReceteSatirlari({ ...urun, recete: [...(urun.recete || []), ...kopyalanan] }, ad, stok);
+        const yeniRecete = [...kopyalanan, ...otomatik.satirlar.map((r) => ({ id: uid("recete"), ...r }))];
         setStok((prev) => {
             const next = prev.map((p) => p.id === urunId
                 ? { ...p, variants: [...p.variants, ...yeniVariants], recete: [...(p.recete || []), ...yeniRecete] }
@@ -17363,7 +17382,7 @@ function AtolyeERP() {
             return next;
         });
         showToast(yeniRecete.length > 0
-            ? `"${ad}" rengi eklendi — "${kaynakRenk}" reçetesinden ${yeniRecete.length} satır kopyalandı`
+            ? `"${ad}" rengi eklendi — ${kopyalanan.length ? `"${kaynakRenk}" reçetesinden ${kopyalanan.length} satır kopyalandı` : ""}${kopyalanan.length && otomatik.satirlar.length ? ", " : ""}${otomatik.satirlar.length ? `${otomatik.satirlar.length} satır kendiliğinden eşleşti${otomatik.gecmisSayisi ? ` (${otomatik.gecmisSayisi} geçmişten — kırmızı, kontrol edin)` : ""}` : ""}${otomatik.bosGruplar.length ? ` · ${otomatik.bosGruplar.join(", ")}: eşleştirin` : ""}`
             : `"${ad}" rengi eklendi — reçete kopyalanmadı, Stok ekranından tanımlayın`);
         return true;
     }, [stok, showToast, tanimlar]);
@@ -17899,6 +17918,7 @@ function AtolyeERP() {
         const nextStok = [...stok, yeniUrun];
         setStok(nextStok);
         yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
+        barkodBekleyenRef.current.push(yeniUrun.id); // v1.603.0: barkod kendiliğinden (stok güncellenince efekt işler)
         saveModeller((modeller || []).map((m) => (m.id === model.id
             ? { ...m, asama: "koleksiyon", urunId: yeniUrun.id,
                 gecmis: [...(m.gecmis || []), { zaman: new Date().toISOString(), olay: "Koleksiyona alındı — ürün kartı oluşturuldu" }] }
@@ -18631,10 +18651,20 @@ function AtolyeERP() {
     // ve ürüne stok no verir (`kodlariAta`; var olan koda dokunmaz). Ürün kartı renk/ölçü EKLENİNCE kendiliğinden, eski ürünlerde
     // Barkodlar sekmesindeki "Barkodları oluştur" ile çağırır. BİLEREK GENEL DEĞİL: açılışta bütün stoğu tanımlamak, yazım
     // hatalı ölçüleri ("3840") ve göç bekleyen renkleri de kalıcı tanıma çeviriyor, "tanımsız ölçü — düzelt" akışını yutuyordu.
+    // YENİ STOK AÇILINCA BARKOD KENDİLİĞİNDEN (v1.603.0 — kullanıcı: "Barkod için stok açınca barkodları otomatik kursun,
+    // tekrar paketlemeden barkod oluşturmaya gerek yok"). Ürünü oluşturan yol (152 stok formu, hızlı hammadde; burada
+    // modelden koleksiyon) kaydeder kaydetmez `urunBarkodunuTamamla(id, true)` çağırır. O anda ürün henüz `stok`
+    // state'inde olmayabilir (setState sonrası aynı tur) — o zaman kimlik bu kuyruğa alınır ve `stok` güncellenince
+    // aşağıdaki efekt işler. Yalnız BU CİHAZDA açılan ürünler: buluttan gelen ürünü burada da kodlamak iki cihazın aynı
+    // anda stok no / kod ataması demek olurdu.
+    const barkodBekleyenRef = useRef([]);
     const urunBarkodunuTamamla = useCallback((urunId, sessiz) => {
         const urun = (stok || []).find((u) => u.id === urunId);
-        if (!urun)
-            return;
+        if (!urun) {
+            if (sessiz && !barkodBekleyenRef.current.includes(urunId))
+                barkodBekleyenRef.current.push(urunId);
+            return false;
+        }
         const e = eksikBarkodTanimlari([urun], tanimlar, uid);
         const t2 = (e.renkler.length || e.bedenler.length)
             ? { ...tanimlar, renkler: [...(tanimlar.renkler || []), ...e.renkler], bedenler: [...(tanimlar.bedenler || []), ...e.bedenler] }
@@ -18645,7 +18675,7 @@ function AtolyeERP() {
         if (!yeniNo && !tanimDegisti) {
             if (!sessiz)
                 showToast("Bu ürünün barkod kodları tamam");
-            return;
+            return false;
         }
         if (yeniNo)
             saveStok(stok.map((u) => (u.id === urunId ? { ...u, stokNo: yeniNo } : u)));
@@ -18665,7 +18695,30 @@ function AtolyeERP() {
         ].filter(Boolean);
         gunlukYaz(`Barkod tamamlandı: ${urun.ad} — ${parca.join(" · ") || "kodlar atandı"}`, "tanimlar", { urunId, renkler: e.renkler.map((r) => r.ad), olculer: e.bedenler.map((b) => b.ad), stokNo: yeniNo });
         showToast(`${urun.ad}: barkod oluşturuldu${parca.length ? ` — ${parca.join(" · ")}` : ""}`);
+        return true;
     }, [stok, tanimlar, saveStok, tanimlarKodluYaz, showToast]);
+    // Kuyruktaki ürünler `stok` güncellenince işlenir. Tek turda EN FAZLA BİR yazan çağrı: fonksiyon kapanımdaki
+    // stok/tanımları okuyor, art arda iki yazma ikincisinin ilkini ezmesi demek. Yazan çıkınca efekt yeni state ile
+    // yeniden koşar ve sıradakini alır; yazmayan (kodları zaten tam) çağrılar aynı turda ardı ardına geçilir.
+    useEffect(() => {
+        if (!barkodBekleyenRef.current.length)
+            return undefined;
+        const z = setTimeout(() => {
+            const kalan = [];
+            let yazildi = false;
+            barkodBekleyenRef.current.forEach((id) => {
+                if (yazildi || !(stok || []).some((u) => u.id === id)) {
+                    kalan.push(id);
+                    return;
+                }
+                // Ürün artık state'te: çağrı ya yazar (true) ya da kodları tam diye geçer (false) — iki hâlde de kuyruktan çıkar.
+                if (urunBarkodunuTamamla(id, true) === true)
+                    yazildi = true;
+            });
+            barkodBekleyenRef.current = kalan; // state'te henüz olmayanlar bir sonraki stok güncellemesini bekler
+        }, 700);
+        return () => clearTimeout(z);
+    }, [stok, urunBarkodunuTamamla]);
     // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0 — kullanıcı kararı: "ay başı kendiliğinden"). Atölye içi bölüm personeline bu ayın
     // maaşı (Tanımlar'daki tutar) bir kez "Maaş" alacağı olarak yazılır; fiş numarası MAAS-YYYY-MM-<kod> tekilliği sağlar
     // (cari bulutla birleşik okunur; aynı fiş varsa yazılmaz). Ödeme kasadan cariye — bakiye kapanır. İnternet yokken ve
@@ -21061,10 +21114,81 @@ function fileToCompressedDataUrl(file, maxWidth = 480, quality = 0.75) {
         reader.readAsDataURL(file);
     });
 }
+// RESME DAMGA (v1.604.0 — kullanıcı: "Stok resmi eklediğimizde sağ üste logomuz, altına stok kodu, altına renk kodu
+// yazdırabilir miyiz?"). Yüklenen (küçültülmüş) stok resminin sağ üst köşesine firma logosu, altına verilen satırlar
+// (stok adı, renk) basılır. Müşteriye giden katalog/WhatsApp görselinde firma ve model bir bakışta okunsun diye.
+// Ölçüler resim genişliğine göre: logo genişliğin %22'si, yazı %5'i; yazılar beyaz yarı saydam kutu üstünde (fotoğraf
+// koyu da olsa açık da olsa okunur). Logo yüklenemezse (çapraz kaynak, bozuk veri) logosuz devam eder; canvas okunamazsa
+// (taint) resim OLDUĞU GİBİ kaydedilir — damga için fotoğrafı kaybetmeye değmez. Saf değil (DOM); senaryo `resim-damga`.
+function resmeDamgaVur(dataUrl, { logo, satirlar } = {}) {
+    const metinler = (satirlar || []).map((x) => String(x || "").trim()).filter(Boolean);
+    if (!logo && !metinler.length)
+        return Promise.resolve(dataUrl);
+    const yukle = (src) => new Promise((cozul) => {
+        if (!src)
+            return cozul(null);
+        const im = new window.Image();
+        im.onload = () => cozul(im);
+        im.onerror = () => cozul(null);
+        im.src = src;
+    });
+    return Promise.all([yukle(dataUrl), yukle(logo)]).then(([resim, logoResmi]) => {
+        if (!resim)
+            return dataUrl;
+        try {
+            const w = resim.width;
+            const h = resim.height;
+            const tuval = document.createElement("canvas");
+            tuval.width = w;
+            tuval.height = h;
+            const ctx = tuval.getContext("2d");
+            ctx.drawImage(resim, 0, 0, w, h);
+            const kenar = Math.round(w * 0.03);
+            let y = kenar;
+            if (logoResmi && logoResmi.width && logoResmi.height) {
+                const lw = Math.round(w * 0.22);
+                const lh = Math.round(lw * logoResmi.height / logoResmi.width);
+                // Logonun arkasına beyaz zemin: koyu fotoğrafta koyu logo kaybolmasın.
+                ctx.fillStyle = "rgba(255,255,255,0.85)";
+                ctx.fillRect(w - kenar - lw - 4, y - 4, lw + 8, lh + 8);
+                ctx.drawImage(logoResmi, w - kenar - lw, y, lw, lh);
+                y += lh + 8 + Math.round(w * 0.015);
+            }
+            const punto = Math.max(11, Math.round(w * 0.05));
+            ctx.font = `bold ${punto}px -apple-system, "Segoe UI", Arial, sans-serif`;
+            ctx.textAlign = "right";
+            ctx.textBaseline = "top";
+            metinler.forEach((m) => {
+                const gen = ctx.measureText(m).width;
+                ctx.fillStyle = "rgba(255,255,255,0.85)";
+                ctx.fillRect(w - kenar - gen - 8, y - 2, gen + 10, punto + 6);
+                ctx.fillStyle = "#1a1a1a";
+                ctx.fillText(m, w - kenar - 3, y + 1);
+                y += punto + 8;
+            });
+            return tuval.toDataURL("image/jpeg", 0.8);
+        }
+        catch (e) {
+            return dataUrl;
+        }
+    });
+}
+// Stok resmi damgası tek yerden kurulur: Tanımlar › Firma Bilgileri'nde kapatılmadıysa (varsayılan AÇIK) logo + satırlar.
+// `satirlar`: stok adı, varsa renk. Boş satırlar düşer; logo yoksa yalnız yazı basılır.
+function stokResmiDamgasi(firmaBilgileri, satirlar) {
+    const f = firmaBilgileri || {};
+    if (f.resimDamgasi === false)
+        return undefined;
+    return { logo: f.logo || "", satirlar: (satirlar || []).filter(Boolean) };
+}
+// Senaryo `resim-damga` canvas sonucunu doğrudan ölçüyor (test okur; uygulama kullanmaz).
+if (typeof window !== "undefined")
+    window.__resimDamga = { resmeDamgaVur, stokResmiDamgasi };
 // `baslik`: kutunun neyin görseli olduğunu söyleyen ipucu. Varsayılan metin "bu ÜRÜNÜN rengine
 // görsel ekle" diyordu; bileşen artık çek fotoğrafı gibi başka yerlerde de kullanılıyor ve orada
 // yanlış bilgi veriyordu.
-function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, baslik }) {
+// `damga`: { logo, satirlar } — verilirse yüklenen/yapıştırılan fotoğrafa `resmeDamgaVur` uygulanır (v1.604.0).
+function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, baslik, damga }) {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState("");
     const [busy, setBusy] = useState(false);
@@ -21112,7 +21236,9 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
         setBusy(true);
         setHata("");
         try {
-            const dataUrl = await fileToCompressedDataUrl(dosya);
+            let dataUrl = await fileToCompressedDataUrl(dosya);
+            if (damga)
+                dataUrl = await resmeDamgaVur(dataUrl, damga);
             // Küçültme oranı kullanıcıya söylenir. Görseller ürün kaydının İÇİNDE saklanıyor ve o kaydın
             // bir boyut sınırı var; "3,8 MB → 46 KB" görmek, sınıra yaklaşıldığında sebebi anlaşılır kılar.
             setBilgi(`${boyutMetni(dosya.size)} → ${boyutMetni(new Blob([dataUrl]).size)}`);
@@ -21139,7 +21265,9 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
                     continue;
                 setBusy(true);
                 try {
-                    const dataUrl = await fileToCompressedDataUrl(file);
+                    let dataUrl = await fileToCompressedDataUrl(file);
+                    if (damga)
+                        dataUrl = await resmeDamgaVur(dataUrl, damga);
                     onUrlSave(dataUrl);
                     setEditing(false);
                 }
@@ -23066,6 +23194,9 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                 React.createElement("div", { style: { display: "flex", gap: 20, flexWrap: "wrap" } },
                     React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8 } },
                         (tanimlar.firmaBilgileri || {}).logo && (React.createElement("img", { src: tanimlar.firmaBilgileri.logo, alt: "Firma logosu", style: { width: 120, height: 60, objectFit: "contain", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 6 } })),
+                        React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" }, title: "Stok kart\u0131na y\u00FCklenen foto\u011Fraf\u0131n sa\u011F \u00FCst\u00FCne logo, alt\u0131na stok ad\u0131 ve renk bas\u0131l\u0131r (v1.604.0). Kapat\u0131nca foto\u011Fraf oldu\u011Fu gibi kaydedilir." },
+                            React.createElement("input", { type: "checkbox", "data-resim-damgasi": "1", checked: (tanimlar.firmaBilgileri || {}).resimDamgasi !== false, onChange: (e) => firmaBilgisiGuncelle("resimDamgasi", e.target.checked) }),
+                            "Stok resmine logo + ad damgas\u0131"),
                         React.createElement("label", { className: "btn-ghost", style: { cursor: "pointer", fontSize: 12 } },
                             React.createElement(ImageIcon, { size: 13 }),
                             " Logo De\u011Fi\u015Ftir",
@@ -25713,6 +25844,8 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             renkResimleri: {},
         };
         onSave([urun, ...items]);
+        if (onBarkodTamamla)
+            onBarkodTamamla(urun.id, true); // v1.603.0: barkod kendiliğinden (stok no + kodlar)
         showToast(`"${yeniAd}" hammadde olarak eklendi — ayrıntıları Stok kartından tamamlayın`);
         return urun.id;
     }
@@ -25879,6 +26012,10 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             renkResimleri: matrix.renkResimleri || {},
         };
         onSave([product, ...items]);
+        // BARKOD KENDİLİĞİNDEN (v1.603.0): kart kaydedilince stok no + renk/ölçü kodları atanır, Barkodlar sekmesinde
+        // "Barkodları oluştur"a ya da Paketleme'ye gerek kalmaz. Ürün henüz state'te değil; 100 kuyruğa alır.
+        if (onBarkodTamamla)
+            onBarkodTamamla(product.id, true);
         // Seçilen renkler ürünün malzeme tipine bağlanıyor (v1.471.0, bkz. `renkleriTipeBagla`).
         if (product.malzemeTipi && onRenkleriTipeBagla)
             onRenkleriTipeBagla(matrix.renkler, product.malzemeTipi);
@@ -26849,7 +26986,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 } },
                 React.createElement("div", null,
                     React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 4 } }, "Kapak Resmi"),
-                    React.createElement(ColorSwatch, { src: form.kapakResmi, onUrlSave: (url) => setForm({ ...form, kapakResmi: url }), onRemove: () => setForm({ ...form, kapakResmi: "" }), size: 48 })),
+                    React.createElement(ColorSwatch, { src: form.kapakResmi, onUrlSave: (url) => setForm({ ...form, kapakResmi: url }), onRemove: () => setForm({ ...form, kapakResmi: "" }), size: 48, damga: stokResmiDamgasi(tanimlar.firmaBilgileri, [form.ad]) })),
                 React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginBottom: 8 } }, "Renkten ba\u011F\u0131ms\u0131z, \u00FCr\u00FCn\u00FCn genel g\u00F6rseli \u2014 listede detaya girmeden g\u00F6r\u00FCn\u00FCr.")),
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.6fr 1fr 0.8fr", gap: 10 } },
                 React.createElement(Field, { label: "\u00DCr\u00FCn Ad\u0131" },
@@ -27320,7 +27457,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                             matrix.bedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { textAlign: "center" } }, olcuGoster(b, "Miktar")))))),
                     React.createElement("tbody", null, matrix.renkler.map((r) => (React.createElement("tr", { key: r },
                         React.createElement("td", { style: { fontWeight: 600, whiteSpace: "nowrap" } },
-                            React.createElement(ColorSwatch, { src: matrix.renkResimleri[r], onUrlSave: (url) => setMatrixRenkResmi(r, url), onRemove: () => removeMatrixRenkResmi(r), size: 26 }),
+                            React.createElement(ColorSwatch, { src: matrix.renkResimleri[r], onUrlSave: (url) => setMatrixRenkResmi(r, url), onRemove: () => removeMatrixRenkResmi(r), size: 26, damga: stokResmiDamgasi(tanimlar.firmaBilgileri, [form.ad, kodEsit(r, OLCUSUZ_AD) ? "" : r]) }),
                             olcuGoster(r)),
                         matrix.bedenler.map((b) => (React.createElement("td", { key: b, className: "mono", style: { textAlign: "center", color: "var(--erp-text-3)" } }, "0")))))))))),
             React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 14 } },
@@ -28690,6 +28827,27 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
             barkodTamamlaRef.current(product.id, true); }, 700);
         return () => clearTimeout(z);
     }, [product.variants]);
+    // RENKSİZ HAMMADDE KENDİLİĞİNDEN (v1.605.0 — kullanıcı, Takviye Bezi'nde yeni mamul rengi "eşleştir…" sorunca:
+    // "Standart'ta eşleşme olmayacaktı"): kart açıkken, boş renk eşleşmelerinden hammaddesi RENKSİZ olanlar (tek
+    // "Standart" rengi var — karar verilecek bir şey yok) sessizce doldurulur; renkli hammaddeler yine turuncu "eşleştir…"
+    // ya da "Otomatik eşleştir" şeridinde kalır. Aynı imza (renkler + reçete uzunluğu) için bir kez: yazma sonrası
+    // eksik kalmayacağı için döngü olmaz, kalırsa da (kayıt düşerse) tekrar denenmez.
+    const renksizDoldurmaImzaRef = React.useRef("");
+    React.useEffect(() => {
+        if (!onReceteGrubuGuncelle || !(product.recete || []).length)
+            return undefined;
+        const imza = `${(product.variants || []).map((v) => v.renk).join("|")}#${(product.recete || []).length}`;
+        if (renksizDoldurmaImzaRef.current === imza)
+            return undefined;
+        renksizDoldurmaImzaRef.current = imza;
+        const e = eksikRenkEslesmeleri(product, tumUrunler);
+        const renksizler = e.satirlar.filter((r) => !r.renkGecmisten && urunRenksizMi((tumUrunler || []).find((p) => p.id === r.hammaddeUrunId)));
+        if (!renksizler.length)
+            return undefined;
+        // Gecikmesiz: `tumUrunler` her render'da yeni dizi olabildiğinden zamanlayıcı temizlemesi yazmayı yutuyordu.
+        onReceteGrubuGuncelle(product.id, [], renksizler);
+        return undefined;
+    }, [product.variants, product.recete, tumUrunler, onReceteGrubuGuncelle]);
     // baslangicSekme: dışarıdan gelen yönlendirmenin istediği sekme (ör. sipariş ekranındaki
     // "Reçeteyi aç" düğmesi). Yalnızca ilk açılışta uygulanır; kullanıcı sonradan sekme
     // değiştirdiğinde geri zıplamamalı.
@@ -28716,7 +28874,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     // Tek etiketin gövdesi — tek basım da toplu basım da buradan geçiyor ki iki yerde iki farklı
     // etiket çıkmasın.
     const bedenEtiketiGovde = (v, kod) => `
-    <div style="font-size:12px;font-weight:700">${product.ad}</div>
+    <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
     <div style="font-size:11px">${olcuMetni([v.renk, v.beden])}</div>
     ${barkodSvg(kod, { birim: 2, yukseklik: 30 })}
   `;
@@ -29666,7 +29824,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                 open && (React.createElement("div", { "data-urun-serit-bilgi": "1", style: { flex: 1, minWidth: 0 } },
                     React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 } },
                         React.createElement("div", { style: { display: "flex", gap: 12, alignItems: "center" } },
-                            React.createElement(ColorSwatch, { src: product.kapakResmi, onUrlSave: (url) => onKapakResmiChange(product.id, url), onRemove: () => onKapakResmiChange(product.id, ""), size: 52 }),
+                            React.createElement(ColorSwatch, { src: product.kapakResmi, onUrlSave: (url) => onKapakResmiChange(product.id, url), onRemove: () => onKapakResmiChange(product.id, ""), size: 52, damga: stokResmiDamgasi(firmaBilgileri, [product.ad]) }),
                             React.createElement("div", { style: { minWidth: 0 } },
                                 React.createElement("div", { "data-urun-serit-ad": "1", style: { fontWeight: 700, fontSize: 16, overflowWrap: "anywhere", marginBottom: 4, color: product.pasif ? "var(--erp-text-3)" : undefined } }, product.ad),
                                 React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
@@ -30068,7 +30226,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                             React.createElement("th", null))),
                                     React.createElement("tbody", null, renkler.map((r) => (React.createElement("tr", { key: r },
                                         React.createElement("td", { style: { fontWeight: 600, whiteSpace: "nowrap" } },
-                                            React.createElement(ColorSwatch, { src: (product.renkResimleri || {})[r] || product.kapakResmi, onUrlSave: (url) => onRenkResmiChange(product.id, r, url), onRemove: () => onRenkResmiRemove(product.id, r), size: 26 }),
+                                            React.createElement(ColorSwatch, { src: (product.renkResimleri || {})[r] || product.kapakResmi, onUrlSave: (url) => onRenkResmiChange(product.id, r, url), onRemove: () => onRenkResmiRemove(product.id, r), size: 26, damga: stokResmiDamgasi(firmaBilgileri, [product.ad, kodEsit(r, OLCUSUZ_AD) ? "" : r]) }),
                                             olcuGoster(r),
                                             React.createElement(SilOnayButonu, { onConfirm: () => onRemoveRenk(product.id, r), boyut: 12, baslikNormal: `${r} rengi bu üründen kaldırılsın mı?` })),
                                         bedenler.map((b) => {
@@ -30785,14 +30943,15 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     (() => {
                         const mevcut = new Set(receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).map((pg) => pg.proses));
                         const adaylar = (tanimlarProsesler || []).map((p) => p.ad).filter((ad) => !mevcut.has(ad));
-                        if (!adaylar.length)
-                            return null;
-                        return (React.createElement("div", { "data-recete-bos-proses": "1", style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)" } },
+                        // v1.605.0 (kullanıcı: "hammaddesiz proses de eklenecekti"): aday kalmayınca satır büsbütün kayboluyor,
+                        // kullanıcı özelliği bulamıyordu. Satır hep durur; aday yoksa nedeni ve çözümü yazar.
+                        return (React.createElement("div", { "data-recete-bos-proses": adaylar.length, style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)", flexWrap: "wrap" } },
                             React.createElement("span", null, "Hammaddesiz proses ekle:"),
-                            React.createElement("select", { "data-recete-bos-proses-sec": "1", value: "", onChange: (e) => bosProsesEkle(e.target.value), style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } },
-                                React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                adaylar.map((ad) => React.createElement("option", { key: ad, value: ad }, ad))),
-                            React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "\u2014 yaln\u0131z i\u015F\u00E7ilik girilir, \u00FCretimde ad\u0131m olur")));
+                            adaylar.length ? (React.createElement(React.Fragment, null,
+                                React.createElement("select", { "data-recete-bos-proses-sec": "1", value: "", onChange: (e) => bosProsesEkle(e.target.value), style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } },
+                                    React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
+                                    adaylar.map((ad) => React.createElement("option", { key: ad, value: ad }, ad))),
+                                React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "\u2014 yaln\u0131z i\u015F\u00E7ilik girilir, \u00FCretimde ad\u0131m olur"))) : (React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "tan\u0131ml\u0131 b\u00FCt\u00FCn prosesler zaten re\u00E7etede \u2014 yeni bir ad\u0131m i\u00E7in \u00F6nce Tan\u0131mlar \u203A Prosesler'e ekleyin"))));
                     })(),
                     React.createElement("div", { style: { display: "grid", gap: 14, marginBottom: 12 } }, (() => {
                         const pgListesi = receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler);
@@ -32104,7 +32263,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                 React.createElement("span", { style: { color: "var(--erp-text-2)" } }, "\u00DCr\u00FCn barkodu (renksiz):"),
                 React.createElement("span", { className: "mono", style: { fontWeight: 700, color: "var(--erp-text)" } }, urunBarkoduKur("stok", { stokNo: product.stokNo })),
                 React.createElement("button", { className: "btn-ikon", title: "\u00DCr\u00FCn barkodunu bas (6\u00D74 cm)", onClick: () => etiketYazdir([`
-                  <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                  <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
                   ${barkodSvg(urunBarkoduKur("stok", { stokNo: product.stokNo }), { birim: 2, yukseklik: 30 })}
                 `], { genislikMM: 60, yukseklikMM: 40 }) },
                     React.createElement(Printer, { size: 12 })))) : null,
@@ -32164,7 +32323,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                 " \u00E7ift"),
                             kod ? (React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-info)", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", padding: "1px 6px" } }, kod)) : (React.createElement("span", { style: { fontSize: 11, color: "var(--erp-warn)" } }, "kod bekleniyor (birka\u00E7 saniye i\u00E7inde otomatik atan\u0131r)")),
                             kod && a && (React.createElement("button", { className: "btn-ikon", title: "Bu asortinin barkod etiketini bas (6\u00D74 cm)", onClick: () => etiketYazdir([`
-                              <div style="font-size:12px;font-weight:700">${product.ad}</div>
+                              <div style="font-size:20px;font-weight:700;line-height:1.1">${product.ad}</div>
                               <div style="font-size:11px">${x.renk} · ${a.ad}</div>
                               ${barkodSvg(kod, { birim: 1, yukseklik: 28 })}
                               <div style="font-size:10px">${(a.oranlar || []).map((o) => `${o.beden}:${o.oran}`).join("  ")}</div>
@@ -55450,7 +55609,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.602.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.605.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

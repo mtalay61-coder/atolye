@@ -1,0 +1,20 @@
+{
+  "renkler": [
+    "Siyah",
+    "Taba"
+  ],
+  "ekran": {
+    "standartNotu": true,
+    "eslestirSayisi": 2,
+    "bosProsesSatiri": "0",
+    "bosProsesMetni": "Hammaddesiz proses ekle: tanımlı bütün prosesler zaten reçet"
+  },
+  "takviye": [
+    "Siyah:Standart:0.05",
+    "Taba:Standart:0.05"
+  ],
+  "deri": [
+    "Siyah:Siyah"
+  ],
+  "hatalar": []
+}

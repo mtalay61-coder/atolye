@@ -623,7 +623,10 @@ function urundenSablonIsciligi(product) {
 function yeniRenkReceteSatirlari(product, yeniRenk, tumUrunler) {
   const recete = (product && product.recete) || [];
   const sonuc = { satirlar: [], gecmisSayisi: 0, bosGruplar: [] };
-  if (!yeniRenk || recete.length === 0 || recete.some((r) => r.mamulRenk === yeniRenk)) return sonuc;
+  // v1.605.0: "renk zaten reçetede varsa hiç dokunma" erken dönüşü KALKTI — model rengi ekleme yolu (100
+  // yeniRenkVeReceteEkle) kaynak renkten bazı satırları kopyalayıp kalan gruplar için buraya geliyor; grup zaten
+  // kapsıyorsa `grupYeniRenkSatirlari` null döner, çift satır açılmaz.
+  if (!yeniRenk || recete.length === 0) return sonuc;
   const gecmisHarita = gecmisRenkEslesmeleri(tumUrunler || []);
   const gruplar = new Map();
   recete.forEach((r) => {
