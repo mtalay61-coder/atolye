@@ -433,6 +433,24 @@ function ProductMatrixCard({
     const z = setTimeout(() => { if (barkodTamamlaRef.current) barkodTamamlaRef.current(product.id, true); }, 700);
     return () => clearTimeout(z);
   }, [product.variants]);
+  // RENKSİZ HAMMADDE KENDİLİĞİNDEN (v1.605.0 — kullanıcı, Takviye Bezi'nde yeni mamul rengi "eşleştir…" sorunca:
+  // "Standart'ta eşleşme olmayacaktı"): kart açıkken, boş renk eşleşmelerinden hammaddesi RENKSİZ olanlar (tek
+  // "Standart" rengi var — karar verilecek bir şey yok) sessizce doldurulur; renkli hammaddeler yine turuncu "eşleştir…"
+  // ya da "Otomatik eşleştir" şeridinde kalır. Aynı imza (renkler + reçete uzunluğu) için bir kez: yazma sonrası
+  // eksik kalmayacağı için döngü olmaz, kalırsa da (kayıt düşerse) tekrar denenmez.
+  const renksizDoldurmaImzaRef = React.useRef("");
+  React.useEffect(() => {
+    if (!onReceteGrubuGuncelle || !(product.recete || []).length) return undefined;
+    const imza = `${(product.variants || []).map((v) => v.renk).join("|")}#${(product.recete || []).length}`;
+    if (renksizDoldurmaImzaRef.current === imza) return undefined;
+    renksizDoldurmaImzaRef.current = imza;
+    const e = eksikRenkEslesmeleri(product, tumUrunler);
+    const renksizler = e.satirlar.filter((r) => !r.renkGecmisten && urunRenksizMi((tumUrunler || []).find((p) => p.id === r.hammaddeUrunId)));
+    if (!renksizler.length) return undefined;
+    // Gecikmesiz: `tumUrunler` her render'da yeni dizi olabildiğinden zamanlayıcı temizlemesi yazmayı yutuyordu.
+    onReceteGrubuGuncelle(product.id, [], renksizler);
+    return undefined;
+  }, [product.variants, product.recete, tumUrunler, onReceteGrubuGuncelle]);
   // baslangicSekme: dışarıdan gelen yönlendirmenin istediği sekme (ör. sipariş ekranındaki
   // "Reçeteyi aç" düğmesi). Yalnızca ilk açılışta uygulanır; kullanıcı sonradan sekme
   // değiştirdiğinde geri zıplamamalı.
@@ -3386,16 +3404,23 @@ function ProductMatrixCard({
               {(() => {
                 const mevcut = new Set(receteProsesGrupla(product.recete, tanimlarProsesler, product.receteProsesSirasiOverride, product.receteEkProsesler).map((pg) => pg.proses));
                 const adaylar = (tanimlarProsesler || []).map((p) => p.ad).filter((ad) => !mevcut.has(ad));
-                if (!adaylar.length) return null;
+                // v1.605.0 (kullanıcı: "hammaddesiz proses de eklenecekti"): aday kalmayınca satır büsbütün kayboluyor,
+                // kullanıcı özelliği bulamıyordu. Satır hep durur; aday yoksa nedeni ve çözümü yazar.
                 return (
-                  <div data-recete-bos-proses="1" style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)" }}>
+                  <div data-recete-bos-proses={adaylar.length} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, fontSize: 12, color: "var(--erp-text-2)", flexWrap: "wrap" }}>
                     <span>Hammaddesiz proses ekle:</span>
-                    <select data-recete-bos-proses-sec="1" value="" onChange={(e) => bosProsesEkle(e.target.value)}
-                      style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
-                      <option value="">Seçin…</option>
-                      {adaylar.map((ad) => <option key={ad} value={ad}>{ad}</option>)}
-                    </select>
-                    <span style={{ color: "var(--erp-text-3)" }}>— yalnız işçilik girilir, üretimde adım olur</span>
+                    {adaylar.length ? (
+                      <>
+                        <select data-recete-bos-proses-sec="1" value="" onChange={(e) => bosProsesEkle(e.target.value)}
+                          style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}>
+                          <option value="">Seçin…</option>
+                          {adaylar.map((ad) => <option key={ad} value={ad}>{ad}</option>)}
+                        </select>
+                        <span style={{ color: "var(--erp-text-3)" }}>— yalnız işçilik girilir, üretimde adım olur</span>
+                      </>
+                    ) : (
+                      <span style={{ color: "var(--erp-text-3)" }}>tanımlı bütün prosesler zaten reçetede — yeni bir adım için önce Tanımlar › Prosesler'e ekleyin</span>
+                    )}
                   </div>
                 );
               })()}

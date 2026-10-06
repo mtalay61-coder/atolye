@@ -34,6 +34,11 @@ bekle("bilinmeyen boş (Taban)", [renk("Taban"), y.bosGruplar.includes("Taban")]
 bekle("bedenli satır bedenleriyle kopyalanır (tek renkli hammadde)", renk("Taban2"), "Kahve@40,Kahve@41");
 bekle("id taşınmaz, yeni renk", y.satirlar.every((x) => !x.id && x.mamulRenk === "Bej Süet"), true);
 bekle("zaten varsa hiçbir şey", yeniRenkReceteSatirlari(urun, "Kahve Süet", tum).satirlar.length, 0);
+// v1.605.0: yeni renk BAZI gruplarda zaten varsa (model rengi ekleme kaynak renkten kopyaladı) kalan gruplar yine dolar;
+// dolu grup için çift satır açılmaz.
+const kismi = { ...urun, recete: [...urun.recete, r("k1", "Bej Süet", "deri", "Deri", "Bej Süet", { aciklama: "16 Desi" })] };
+const yk = yeniRenkReceteSatirlari(kismi, "Bej Süet", [...tum, hm("taban2", "Taban2", ["Kahve"]), kismi]);
+bekle("kısmen dolu renkte kalan gruplar dolar, Deri tekrar açılmaz", [yk.satirlar.some((x) => x.hammaddeAd === "Deri"), yk.satirlar.filter((x) => x.hammaddeAd === "Silme Suyu").map((x) => x.renk)], [false, ["Standart"]]);
 
 // receteBedenDegistir
 const bag = [r("k", "Kahve Süet", "bag", "Bağcık", "Kahve", { beden: "120 cm" }), r("b", "Bej Süet", "bag", "Bağcık", "Bej", { beden: "120 cm" })];

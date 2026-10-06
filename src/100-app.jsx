@@ -1151,11 +1151,17 @@ export default function AtolyeERP() {
     // eklemeId ayrımı, "aynı hammadde farklı amaçla ikinci kez eklendi" durumu içindir (ör. Deri
     // Nubuk hem yüz hem astar). Renk kopyalama o durum değildir.
     const kaynakSatirlar = kaynakRenk ? (urun.recete || []).filter((r) => r.mamulRenk === kaynakRenk) : [];
-    const yeniRecete = kaynakSatirlar.map((r) => {
+    const kopyalanan = kaynakSatirlar.map((r) => {
       const { id, ...kalan } = r;
       const degistirilmis = hammaddeRenkleri && hammaddeRenkleri[r.id];
       return { ...kalan, id: uid("recete"), mamulRenk: ad, renk: degistirilmis || r.renk };
     });
+    // KALAN GRUPLAR OTOMATİK (v1.605.0 — kullanıcı: "Standart'ta eşleşme olmayacaktı, yeni renk ekleyince eşleşme
+    // istedi"): kaynak renk seçilmediyse ya da seçilen renk her hammaddeyi kapsamıyorsa, Stok ekranındaki renk ekleme
+    // ile aynı kurallar (aynı ad → geçmiş [kırmızı] → sabit/renksiz → Standart) burada da çalışır. Renksiz hammadde
+    // (Takviye Bezi, Jut) böylece hiçbir yolda turuncu "eşleştir…" sormaz.
+    const otomatik = yeniRenkReceteSatirlari({ ...urun, recete: [...(urun.recete || []), ...kopyalanan] }, ad, stok);
+    const yeniRecete = [...kopyalanan, ...otomatik.satirlar.map((r) => ({ id: uid("recete"), ...r }))];
 
     setStok((prev) => {
       const next = prev.map((p) =>
@@ -1169,7 +1175,7 @@ export default function AtolyeERP() {
 
     showToast(
       yeniRecete.length > 0
-        ? `"${ad}" rengi eklendi — "${kaynakRenk}" reçetesinden ${yeniRecete.length} satır kopyalandı`
+        ? `"${ad}" rengi eklendi — ${kopyalanan.length ? `"${kaynakRenk}" reçetesinden ${kopyalanan.length} satır kopyalandı` : ""}${kopyalanan.length && otomatik.satirlar.length ? ", " : ""}${otomatik.satirlar.length ? `${otomatik.satirlar.length} satır kendiliğinden eşleşti${otomatik.gecmisSayisi ? ` (${otomatik.gecmisSayisi} geçmişten — kırmızı, kontrol edin)` : ""}` : ""}${otomatik.bosGruplar.length ? ` · ${otomatik.bosGruplar.join(", ")}: eşleştirin` : ""}`
         : `"${ad}" rengi eklendi — reçete kopyalanmadı, Stok ekranından tanımlayın`
     );
     return true;
