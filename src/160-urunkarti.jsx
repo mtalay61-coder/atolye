@@ -1368,6 +1368,7 @@ function ProductMatrixCard({
             onUrlSave={(url) => onKapakResmiChange(product.id, url)}
             onRemove={() => onKapakResmiChange(product.id, "")}
             size={52}
+            damga={stokResmiDamgasi(firmaBilgileri, [product.ad])}
           />
           <div style={{ minWidth: 0 }}>
           {/* AD BİLGİ SÜTUNUNUN BAŞINDA (v1.531.0 — kullanıcı: "alt satırı buraya toplayalım"): açık kartta ad ile
@@ -2111,6 +2112,7 @@ function ProductMatrixCard({
                         onUrlSave={(url) => onRenkResmiChange(product.id, r, url)}
                         onRemove={() => onRenkResmiRemove(product.id, r)}
                         size={26}
+                        damga={stokResmiDamgasi(firmaBilgileri, [product.ad, kodEsit(r, OLCUSUZ_AD) ? "" : r])}
                       />
                       {olcuGoster(r)}
                       <SilOnayButonu onConfirm={() => onRemoveRenk(product.id, r)} boyut={12} baslikNormal={`${r} rengi bu üründen kaldırılsın mı?`} />

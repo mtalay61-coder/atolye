@@ -800,6 +800,12 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               style={{ width: 120, height: 60, objectFit: "contain", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 6 }}
             />
           )}
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, cursor: "pointer" }}
+            title="Stok kartına yüklenen fotoğrafın sağ üstüne logo, altına stok adı ve renk basılır (v1.604.0). Kapatınca fotoğraf olduğu gibi kaydedilir.">
+            <input type="checkbox" data-resim-damgasi="1" checked={(tanimlar.firmaBilgileri || {}).resimDamgasi !== false}
+              onChange={(e) => firmaBilgisiGuncelle("resimDamgasi", e.target.checked)} />
+            Stok resmine logo + ad damgası
+          </label>
           <label className="btn-ghost" style={{ cursor: "pointer", fontSize: 12 }}>
             <ImageIcon size={13} /> Logo Değiştir
             <input
