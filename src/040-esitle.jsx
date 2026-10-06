@@ -71,6 +71,25 @@ function tabloKuyrugunaAl(tablo, is) {
   return yeni;
 }
 
+// TOPLU YAZMADA ALAN KÜMELERİ EŞİT OLMALI (v1.602.0 — kullanıcı, çoklu cihaza geçince: "Yeniden dene tıklayınca
+// sayı artıyor", Supabase 400 PGRST102 "All object keys must match"). PostgREST tek istekte birden çok satır
+// alırken her satırın AYNI anahtarları taşımasını ister. Bizim satırlar `semaDisiAlanlar` yüzünden farklı
+// çıkabiliyor: şema dışı alanı olan kayıt `ek` taşır, olmayan taşımaz. Tek kayıtlı yazmalarda görünmez; iki
+// cihazdan arka arkaya girilen siparişler aynı pakete düşünce (10 kalemden 3'ünde ek alan var) istek
+// reddediliyor ve bekleyen defter her denemede büyüyor. Çözüm: paketteki bütün anahtarların birleşimi alınır,
+// eksik olan anahtar `null` ile doldurulur. Yalnız pakette ZATEN olan anahtarlar eklenir — olmayan bir sütun
+// uydurulmaz. Saf; birim testi `birim-satir-esitle`.
+function satirlariEsitle(satirlar) {
+  const anahtarlar = [];
+  const gorulen = new Set();
+  (satirlar || []).forEach((r) => Object.keys(r || {}).forEach((k) => { if (!gorulen.has(k)) { gorulen.add(k); anahtarlar.push(k); } }));
+  return (satirlar || []).map((r) => {
+    const s = {};
+    anahtarlar.forEach((k) => { s[k] = r && r[k] !== undefined ? r[k] : null; });
+    return s;
+  });
+}
+
 function supabaseTabloEsitle(tablo, kayitlar) {
   return tabloKuyrugunaAl(tablo, () => _tabloEsitleUygula(tablo, kayitlar));
 }
@@ -123,9 +142,9 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
     await supabaseIstek(tablo, {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify(yeniler.map((k) => (
+      body: JSON.stringify(satirlariEsitle(yeniler.map((k) => (
         surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 }
-      ))),
+      )))),
     });
     if (!surumDesteklenmiyor) yeniler.forEach((k) => surumMap.set(k.id, 1));
   }
@@ -215,7 +234,7 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
       await supabaseIstek(yol, {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify(cYaz),
+        body: JSON.stringify(satirlariEsitle(cYaz)),
       });
     }
     // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)

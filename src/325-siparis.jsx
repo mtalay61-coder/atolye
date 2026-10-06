@@ -1,6 +1,6 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
@@ -438,7 +438,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
 
 
   // Barkod kurmak/çözmek için gereken üç liste; çözücü üçüne birden bakıyor.
-  const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+  // v1.602.0: model rengi (kombinasyon) barkodları da çözülsün diye kombinasyonlar da burada.
+  const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler, renkKombinasyonlari: tanimlarKombinasyonlar || [] };
 
   // BARKOD OKUTMA — fuar akışı.
   //

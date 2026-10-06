@@ -411,7 +411,11 @@ function ProductMatrixCard({
   const [yeniKodAlaniAdi, setYeniKodAlaniAdi] = useState("");
   // Barkod kurmak için gereken üç liste. Kartın elinde zaten ayrı ayrı duruyorlar; barkod
   // fonksiyonları üçünü birlikte istiyor çünkü bir kodu kurmak üçüne birden bakmayı gerektiriyor.
-  const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler };
+  // MODEL RENGİ (v1.602.0 — kullanıcı, "1031 - Kırmızı Deri/Gümüş" renkli sandaletin Barkodlar sekmesi: "Barkodları
+  // kurulamıyor"): mamulün varyant rengi bir renk kombinasyonu; `renkKoduBul` kodu `renkKombinasyonlari`nden okuyor
+  // (077 modelRengiTanimiBul) ama bu nesneye kombinasyonlar hiç konmuyordu — her model renkli mamulde "barkod
+  // kurulamıyor". "Barkodları oluştur" da bir şey yapmıyordu, çünkü o taraf tam tanımlarla bakıyor ve eksik görmüyordu.
+  const barkodTanimlari = { renkler: tanimlarRenkler, bedenler: tanimlarBedenler, asortiler, renkKombinasyonlari: tanimlarKombinasyonlar || [] };
   // RENK / ÖLÇÜ EKLENİNCE BARKOD KENDİLİĞİNDEN (v1.579.0): ürüne yeni varyant gelince (kart açıkken) barkodu kurulamayan
   // varyant ya da stok no yoksa `onBarkodTamamla` (100 `urunBarkodunuTamamla`) çağrılır. 700 ms sonra ve EN SON fonksiyonla
   // (ref): renk ekleme yolu tanımı ayrıca yazıyor (v1.555 "renk aç") — önce o yazım otursun, aynı renk iki kez tanımlanmasın.

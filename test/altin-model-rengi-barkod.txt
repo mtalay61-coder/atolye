@@ -1,0 +1,21 @@
+{
+  "kurulamayan": 0,
+  "urunBarkodu": "900053",
+  "satirlar": [
+    {
+      "renkKodu": "1031",
+      "olcu": "40",
+      "olcuKodu": "01",
+      "barkod": "900053103101",
+      "secilebilir": true
+    },
+    {
+      "renkKodu": "1031",
+      "olcu": "41",
+      "olcuKodu": "02",
+      "barkod": "900053103102",
+      "secilebilir": true
+    }
+  ],
+  "hatalar": []
+}
