@@ -22,7 +22,8 @@
   "varyantGorselSayisi": 2
  },
  "detayKonumu": {
-  "detayKartinAltinda": true
+  "detayAdi": "Katalog Model",
+  "detayIzgaraninUstunde": true
  },
  "etiketleAra": {
   "ikisiDeVar": true,

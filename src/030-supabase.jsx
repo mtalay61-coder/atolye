@@ -45,12 +45,19 @@ function oturumOku() {
 }
 function oturumYaz(o) {
   _oturum = o;
+  _oturumOkundu = true;
   try {
     if (o) localStorage.setItem(OTURUM_ANAHTARI, JSON.stringify(o));
     else localStorage.removeItem(OTURUM_ANAHTARI);
   } catch (e) { /* depo dolu ya da kapalı: oturum bellekte yaşamaya devam eder */ }
 }
-function oturumBaslat() { _oturum = oturumOku(); return _oturum; }
+// KAYITLI OTURUM İLK İSTEKTE OKUNUR (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı: muhasebe' yapıyor, sonra
+// gidiyor"): `oturumBaslat` yükleme akışının ortasında çağrılıyor; açılışta ondan ÖNCE koşan yazmalar (döviz kuru
+// güncellemesi muhasebeyi hemen yazıyor) `_oturum` boşken anonim gidip 401/42501 alıyordu. Jeton isteyen her yer
+// (`gecerliJeton`) oturum hiç okunmadıysa önce depodan okur; çıkış (`oturumYaz(null)`) "okundu" sayılır ki eski
+// oturum geri gelmesin.
+let _oturumOkundu = false;
+function oturumBaslat() { _oturum = oturumOku(); _oturumOkundu = true; return _oturum; }
 
 // Kullanıcı adından e-posta türetir. Supabase Auth e-posta istiyor ama atölyede kimsenin
 // kurumsal adresi yok; `@atolye.local` gerçek posta kutusu değil, yalnızca tekil bir kimlik.
@@ -277,6 +284,17 @@ async function jetonTazele() {
     _yenilemeIslemi = authIstek("token?grant_type=refresh_token", { refresh_token: _oturum.yenileme })
       .then((veri) => { oturumKur(veri, _oturum && _oturum.email); return _oturum; })
       .catch((e) => {
+        // GEÇİCİ HATA OTURUMU DÜŞÜRMEZ (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı' yapıyor, sonra gidiyor"):
+        // bilgisayar uykudan dönerken / Wi-Fi bağlanırken yenileme isteği ağa çıkamıyor (Failed to fetch) ya da sunucu
+        // 5xx veriyordu; oturum siliniyor, o anki yazma anonim gidip 42501 alıyordu. Yenileme jetonu aslında geçerli.
+        // Artık yalnız Supabase'in AÇIKÇA reddettiği (400/401, invalid grant) yenileme oturumu düşürür; geçici hatada
+        // oturum durur, bu istek jetonsuz gider ve bir sonraki istek yenilemeyi yeniden dener (dakikalık otomatik
+        // yeniden gönderim bekleyen kaydı götürür).
+        const ham = String((e && e.message) || e || "");
+        if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|timeout/i.test(ham)) {
+          console.warn("Jeton yenilenemedi (geçici), oturum korunuyor:", ham);
+          return null;
+        }
         console.warn("Jeton yenilenemedi, oturum düştü:", e);
         oturumYaz(null);
         // OTURUM DÜŞTÜ BİLDİRİMİ (kullanıcı, 21 Eylül: "hiç işlem yapılmadı kasada" — ekranda
@@ -293,9 +311,10 @@ async function jetonTazele() {
 
 let _oturumDustuDinleyici = null;
 function oturumDustuDinle(fn) { _oturumDustuDinleyici = fn; }
-function oturumVarMi() { return !!_oturum; }
+function oturumVarMi() { if (!_oturum && !_oturumOkundu) oturumBaslat(); return !!_oturum; }
 
 async function gecerliJeton() {
+  if (!_oturum && !_oturumOkundu) oturumBaslat();
   if (!_oturum) return null;
   if (Date.now() >= _oturum.sonaErme) { const y = await jetonTazele(); return y ? y.erisim : null; }
   return _oturum.erisim;

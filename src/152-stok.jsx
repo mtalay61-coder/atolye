@@ -998,6 +998,12 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     setKatalogRenk(renk || (p ? (katalogRenkleri(p)[0] || "") : ""));
     setKatalogFotoAcik(false);
   }
+  // Detay ızgaranın üstünde (v1.609.0): başka bir ürün açılınca sayfa detaya kayar, kullanıcı aşağıda kalmasın.
+  const katalogDetayRef = useRef(null);
+  useEffect(() => {
+    if (!katalogUrunId || !katalogDetayRef.current || typeof katalogDetayRef.current.scrollIntoView !== "function") return;
+    try { katalogDetayRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* eski tarayıcı */ }
+  }, [katalogUrunId]);
 
   // ---- KATALOG DETAYI — büyük görsel + çevresinde varyantlar --------------------------------
   //
@@ -2582,6 +2588,14 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
           // IZGARA — vitrin düzeni. Kart başına TEK görsel: kapak ya da ilk rengin görseli.
           // Renklerin hepsi ızgarada gösterilseydi tek model onlarca kutu kaplar ve "gezinme"
           // hissi kaybolurdu; renkler detayda.
+          // DETAY ÜSTTE (v1.609.0 — kullanıcı: "kataloğa tıklayınca açılımı üste yapsın"): detay eskiden tıklanan kartın
+          // altındaki tam satırda açılıyordu (CSS `1 / -1`); uzun listede sayfanın ortasında kalıyor, kart kayıyordu.
+          // Şimdi ızgaranın ÜSTÜNDE tek yerde; açılınca oraya kaydırılır (ref + scrollIntoView).
+          <>
+          {(() => {
+            const acik = katalogUrunId ? filtered.find((x) => x.id === katalogUrunId) : null;
+            return acik ? <div ref={katalogDetayRef} data-katalog-detay={acik.ad} style={{ marginBottom: 14, scrollMarginTop: 90 }}>{katalogDetayiCiz(acik)}</div> : null;
+          })()}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
             {filtered.map((p) => {
               const fiyat = katalogFiyat(p);
@@ -2620,19 +2634,11 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     </span>
                   </div>
                 </button>
-                {/* TAM SATIR: `1 / -1` ile ızgaranın bütün sütunlarını kaplıyor, yani detay
-                    tıklanan kartın hemen ALTINDAKİ satırda açılıyor. Sütun sayısı `auto-fill`
-                    ile tarayıcıda hesaplandığı için "satırın sonu" JS'te güvenilir biçimde
-                    bulunamıyordu; bu, aynı sonucu CSS'e bırakan yol. */}
-                {acikMi && (
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    {katalogDetayiCiz(p)}
-                  </div>
-                )}
                 </React.Fragment>
               );
             })}
           </div>
+          </>
         )
       )}
 

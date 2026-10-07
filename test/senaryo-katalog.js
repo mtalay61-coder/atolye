@@ -146,12 +146,13 @@ async function calistir() {
       .find((b) => /Katalog Model/.test(b.textContent) && b.querySelector("img"));
     // Detay sarmalayıcısı ızgaranın tam satırını kaplıyor; onu stiliyle buluyoruz, metinle
     // ararsak büyük bir ata öge yakalanıyor ve konum ölçümü anlamsızlaşıyor.
-    const panel = [...document.querySelectorAll("div")]
-      .find((d) => d.style && d.style.gridColumn === "1 / -1");
+    // v1.609.0 (kullanıcı: "kataloğa tıklayınca açılımı üste yapsın"): detay ızgaranın ÜSTÜNDE tek yerde
+    // (`data-katalog-detay`), açılınca sayfa oraya kayıyor. Ölçü: panelin üst kenarı kartın üstünden yukarıda.
+    const panel = document.querySelector("[data-katalog-detay]");
     if (!kart || !panel) return { olcum: "bulunamadı" };
     const k = kart.getBoundingClientRect();
     const p = panel.getBoundingClientRect();
-    return { detayKartinAltinda: p.top >= k.top };
+    return { detayIzgaraninUstunde: p.top <= k.top, detayAdi: panel.getAttribute("data-katalog-detay") };
   });
 
   const detay = await sayfa.evaluate(() => {
