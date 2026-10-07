@@ -437,9 +437,16 @@ function bekleyenYazmaSil(anahtar) {
 // Anahtar başına yazma sayacı (v1.569.0): kuyrukta bekleyen ESKİ bir yazmanın birleşik hâli, arada yapılmış daha yeni
 // yerel kaydın üstüne yazılmasın.
 const _tekilSayac = {};
+// BU CİHAZIN SON BULUT YAZMASI (v1.611.0, değişiklik sayacı): tablo → zaman. Yoklama, sayacı artan tablonun
+// yazması bizden geldiyse (son 12 sn) tazelemeyi erteler — kendi kaydımızı buluttan geri okumak boşa iş.
+const _bulutSonYazma = {};
+function bulutYazmaDamgala(tablo) { _bulutSonYazma[tablo] = Date.now(); }
+function bulutSonYazma(tablo) { return _bulutSonYazma[tablo] || 0; }
+
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
+  bulutYazmaDamgala(tablo);
   const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
   // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
   // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de

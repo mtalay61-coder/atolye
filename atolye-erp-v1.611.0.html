@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.608.0</title>
+<title>Atölye ERP 1.611.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.608.0";
+const SURUM = "1.611.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Mobil gorunumde Mamul Stok ve Fiyat Listesi de var (alt cubuga ve menuye konabilir)";
+const SURUM_NOTU = "Baska cihazin degisikligi aninda: sekme acikken 8 sn de bir degisiklik sayaci okunur, degisen tablo buluttan tazelenir (degisiklik-sayaci.sql calistirilmali)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,14 @@ const SURUM_NOTU = "Mobil gorunumde Mamul Stok ve Fiyat Listesi de var (alt cubu
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.611.0", tarih: "07.10.2026",
+        eklenen: ["Başka cihazın yaptığı işlem anında görünür: sekme açıkken 8 saniyede bir buluttaki değişiklik sayacı okunur, sayacı artan tablo (kendi yazmamız değilse ve bekleyen kaydı yoksa) buluttan yeniden çekilip ekrana işlenir, \"Başka cihazdan güncellendi: …\" notu çıkar. Supabase'de degisiklik-sayaci.sql bir kez çalıştırılmalı; çalıştırılmadıysa uygulama eskisi gibi çalışır"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.610.0", tarih: "07.10.2026",
+        eklenen: [], degisen: ["Katalog: ürün detayı sayfayı kaydırmadan ızgaranın üstüne açılan pencerede; dışına tıklamak ya da Kapat düğmesi kapatır"], duzeltilen: [] },
+    { surum: "1.609.0", tarih: "07.10.2026",
+        eklenen: [], degisen: ["Katalog: tıklanan ürünün detayı artık ızgaranın üstünde tek yerde açılır ve sayfa oraya kayar (eskiden kartın altındaki satırda)"],
+        duzeltilen: ["Açılışta \"Buluta yazılamadı: muhasebe\" (401 / 42501): oturum jetonu yenilenirken geçici ağ hatası (uykudan dönen bilgisayar, bağlanmakta olan Wi-Fi) oturumu düşürüyor, o anki yazma girişsiz gidiyordu — geçici hatada oturum korunur, yalnız Supabase'in açıkça reddettiği yenileme oturumu düşürür; kayıtlı oturum ayrıca ilk bulut isteğinde okunur"] },
     { surum: "1.608.0", tarih: "06.10.2026",
         eklenen: ["Mobil görünüm: Mamul Stok ve Fiyat Listesi ekranları mobil listede — ☰ menüde görünür, Tanımlar › Mobil Görünüm'den alt çubuğa alınabilir"],
         degisen: [], duzeltilen: [] },
@@ -4028,6 +4036,7 @@ function oturumOku() {
 }
 function oturumYaz(o) {
     _oturum = o;
+    _oturumOkundu = true;
     try {
         if (o)
             localStorage.setItem(OTURUM_ANAHTARI, JSON.stringify(o));
@@ -4036,7 +4045,13 @@ function oturumYaz(o) {
     }
     catch (e) { /* depo dolu ya da kapalı: oturum bellekte yaşamaya devam eder */ }
 }
-function oturumBaslat() { _oturum = oturumOku(); return _oturum; }
+// KAYITLI OTURUM İLK İSTEKTE OKUNUR (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı: muhasebe' yapıyor, sonra
+// gidiyor"): `oturumBaslat` yükleme akışının ortasında çağrılıyor; açılışta ondan ÖNCE koşan yazmalar (döviz kuru
+// güncellemesi muhasebeyi hemen yazıyor) `_oturum` boşken anonim gidip 401/42501 alıyordu. Jeton isteyen her yer
+// (`gecerliJeton`) oturum hiç okunmadıysa önce depodan okur; çıkış (`oturumYaz(null)`) "okundu" sayılır ki eski
+// oturum geri gelmesin.
+let _oturumOkundu = false;
+function oturumBaslat() { _oturum = oturumOku(); _oturumOkundu = true; return _oturum; }
 // Kullanıcı adından e-posta türetir. Supabase Auth e-posta istiyor ama atölyede kimsenin
 // kurumsal adresi yok; `@atolye.local` gerçek posta kutusu değil, yalnızca tekil bir kimlik.
 // Türkçe harfler ASCII'ye indiriliyor: e-posta alanı onları kabul etmiyor.
@@ -4281,6 +4296,17 @@ async function jetonTazele() {
         _yenilemeIslemi = authIstek("token?grant_type=refresh_token", { refresh_token: _oturum.yenileme })
             .then((veri) => { oturumKur(veri, _oturum && _oturum.email); return _oturum; })
             .catch((e) => {
+            // GEÇİCİ HATA OTURUMU DÜŞÜRMEZ (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı' yapıyor, sonra gidiyor"):
+            // bilgisayar uykudan dönerken / Wi-Fi bağlanırken yenileme isteği ağa çıkamıyor (Failed to fetch) ya da sunucu
+            // 5xx veriyordu; oturum siliniyor, o anki yazma anonim gidip 42501 alıyordu. Yenileme jetonu aslında geçerli.
+            // Artık yalnız Supabase'in AÇIKÇA reddettiği (400/401, invalid grant) yenileme oturumu düşürür; geçici hatada
+            // oturum durur, bu istek jetonsuz gider ve bir sonraki istek yenilemeyi yeniden dener (dakikalık otomatik
+            // yeniden gönderim bekleyen kaydı götürür).
+            const ham = String((e && e.message) || e || "");
+            if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|timeout/i.test(ham)) {
+                console.warn("Jeton yenilenemedi (geçici), oturum korunuyor:", ham);
+                return null;
+            }
             console.warn("Jeton yenilenemedi, oturum düştü:", e);
             oturumYaz(null);
             // OTURUM DÜŞTÜ BİLDİRİMİ (kullanıcı, 21 Eylül: "hiç işlem yapılmadı kasada" — ekranda
@@ -4300,8 +4326,11 @@ async function jetonTazele() {
 }
 let _oturumDustuDinleyici = null;
 function oturumDustuDinle(fn) { _oturumDustuDinleyici = fn; }
-function oturumVarMi() { return !!_oturum; }
+function oturumVarMi() { if (!_oturum && !_oturumOkundu)
+    oturumBaslat(); return !!_oturum; }
 async function gecerliJeton() {
+    if (!_oturum && !_oturumOkundu)
+        oturumBaslat();
     if (!_oturum)
         return null;
     if (Date.now() >= _oturum.sonaErme) {
@@ -4438,10 +4467,16 @@ function bekleyenYazmaSil(anahtar) {
 // Anahtar başına yazma sayacı (v1.569.0): kuyrukta bekleyen ESKİ bir yazmanın birleşik hâli, arada yapılmış daha yeni
 // yerel kaydın üstüne yazılmasın.
 const _tekilSayac = {};
+// BU CİHAZIN SON BULUT YAZMASI (v1.611.0, değişiklik sayacı): tablo → zaman. Yoklama, sayacı artan tablonun
+// yazması bizden geldiyse (son 12 sn) tazelemeyi erteler — kendi kaydımızı buluttan geri okumak boşa iş.
+const _bulutSonYazma = {};
+function bulutYazmaDamgala(tablo) { _bulutSonYazma[tablo] = Date.now(); }
+function bulutSonYazma(tablo) { return _bulutSonYazma[tablo] || 0; }
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
     if (!supabaseAcikMi())
         return yerel;
+    bulutYazmaDamgala(tablo);
     const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
     // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
     // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
@@ -5104,6 +5139,7 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
             tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin
         return Promise.resolve(yerel).then(() => ({ ok: true, bulut: false }));
     }
+    bulutYazmaDamgala(tablo);
     return Promise.all([
         yerel,
         supabaseTabloEsitle(tablo, kayitlar).then((sayim) => {
@@ -5208,39 +5244,65 @@ function kayitaCevir(satir) {
     });
     return k;
 }
+// `urunler` sütunları görselsiz: şemanın satır üreticisinden (035) okunur ki sütun listesi ikinci bir yerde
+// tekrarlanmasın; `ek` (şema dışı alanlar) ve `surum` (iyimser kilit) eklenir — ikisi şema satırında görünmez.
+function urunResimsizSutunlari() {
+    const ornek = TABLO_SEMA.urunler.satir({ id: "x", variants: [], hareketler: [] });
+    const sutunlar = Object.keys(ornek).filter((k) => k !== "kapak_resmi" && k !== "renk_resimleri" && k !== "ek");
+    sutunlar.push("ek");
+    if (!surumDesteklenmiyor)
+        sutunlar.push("surum");
+    return sutunlar;
+}
 // Buluttan tüm veriyi çeker ve uygulamanın iç yapısına dönüştürür.
-async function supabasedenOku() {
+// `secenek.yalniz` (v1.611.0, değişiklik sayacı): yalnız bu TABLOLAR okunur, ötekiler boş gelir ve sürüm haritaları
+// yalnız okunanlar için yenilenir — kısmi tazelemede okunmayan tablonun haritası silinirse sonraki yazması INSERT'e
+// düşer ve başka cihazın kaydını ezer. `secenek.resimsiz`: `urunler` görsel sütunları dışarıda (kapak_resmi,
+// renk_resimleri) — tazelemede 15 MB inmesin; görseller ekrandakinden korunur (100 `bulutDegisikligiUygula`).
+async function supabasedenOku(secenek = {}) {
+    const yalniz = secenek.yalniz ? new Set(secenek.yalniz) : null;
+    const okunur = (tablo) => !yalniz || yalniz.has(tablo);
+    const oku = (tablo, sorgu) => (okunur(tablo) ? supabaseTumSatirlar(tablo, sorgu) : Promise.resolve([]));
     // Sürüm sütunu var mı? Yazma başlamadan önce bilinmesi gerekiyor; sonra öğrenilirse ilk yazma
     // 400 alıp boşa giderdi.
-    await surumDesteginiYokla();
+    if (!yalniz)
+        await surumDesteginiYokla();
     const [tanimSatir, cariSatir, cariHareket, urunSatir, varyantSatir, hareketSatir, sipSatir, kalemSatir, uretSatir, atamaSatir, rezSatir, onaySatir, copSatir, cekGorselSatir,] = await Promise.all([
-        supabaseTumSatirlar("tanimlar"),
-        supabaseTumSatirlar("cariler"),
-        supabaseTumSatirlar("cari_hareketleri", "select=*&order=tarih.desc"),
-        supabaseTumSatirlar("urunler"),
-        supabaseTumSatirlar("varyantlar"),
-        supabaseTumSatirlar("stok_hareketleri", "select=*&order=tarih.desc"),
-        supabaseTumSatirlar("siparisler"),
-        supabaseTumSatirlar("siparis_kalemleri", "select=*&order=sira.asc"),
-        supabaseTumSatirlar("uretim"),
-        supabaseTumSatirlar("uretim_atamalari"),
-        supabaseTumSatirlar("stok_rezervasyonlari"),
-        supabaseTumSatirlar("onaylar"),
-        supabaseTumSatirlar("cop"),
-        supabaseTumSatirlar("cek_gorselleri"),
+        oku("tanimlar"),
+        oku("cariler"),
+        oku("cari_hareketleri", "select=*&order=tarih.desc"),
+        oku("urunler", secenek.resimsiz ? `select=${urunResimsizSutunlari().join(",")}` : "select=*"),
+        oku("varyantlar"),
+        oku("stok_hareketleri", "select=*&order=tarih.desc"),
+        oku("siparisler"),
+        oku("siparis_kalemleri", "select=*&order=sira.asc"),
+        oku("uretim"),
+        oku("uretim_atamalari"),
+        oku("stok_rezervasyonlari"),
+        oku("onaylar"),
+        oku("cop"),
+        oku("cek_gorselleri"),
     ]);
     // Sürüm sayaçları uygulama kaydına DEĞİL, ayrı haritaya alınır (bkz. _surumler yorumu).
     // Ham satırlar burada elde olduğu için okuma yeri burası.
-    surumleriYukle("urunler", urunSatir);
-    surumleriYukle("cariler", cariSatir);
-    surumleriYukle("siparisler", sipSatir);
-    surumleriYukle("uretim", uretSatir);
-    surumleriYukle("stok_rezervasyonlari", rezSatir);
-    surumleriYukle("onaylar", onaySatir);
-    surumleriYukle("cop", copSatir);
+    if (okunur("urunler"))
+        surumleriYukle("urunler", urunSatir);
+    if (okunur("cariler"))
+        surumleriYukle("cariler", cariSatir);
+    if (okunur("siparisler"))
+        surumleriYukle("siparisler", sipSatir);
+    if (okunur("uretim"))
+        surumleriYukle("uretim", uretSatir);
+    if (okunur("stok_rezervasyonlari"))
+        surumleriYukle("stok_rezervasyonlari", rezSatir);
+    if (okunur("onaylar"))
+        surumleriYukle("onaylar", onaySatir);
+    if (okunur("cop"))
+        surumleriYukle("cop", copSatir);
     // Çek görselleri de sürüm takibine giriyor: olmazsa her güncelleme koşulsuz INSERT yoluna
     // düşer ve ikinci cihazdaki değişiklik sessizce ezilir (10. denetim bunu yakaladı).
-    surumleriYukle("cek_gorselleri", cekGorselSatir);
+    if (okunur("cek_gorselleri"))
+        surumleriYukle("cek_gorselleri", cekGorselSatir);
     // Alt kayıtları ana kayda göre grupla — her seferinde filter çalıştırmak yerine tek geçiş.
     const grupla = (satirlar, alan) => {
         const m = new Map();
@@ -5377,6 +5439,85 @@ function renkKimlikleriniDamgala(urunler, tanimliRenkler) {
         return degisti ? { ...u, variants, recete } : u;
     });
     return { urunler: yeni, damgalanan };
+}
+// DEĞİŞİKLİK SAYACI — başka cihazın yazdığını anında görmek (7 Ekim 2026, v1.611.0).
+//
+// Kullanıcı: "Başka kullanıcıların yaptığı işlemler geç düşüyor, anında nasıl görebiliriz?" Uygulama buluttaki
+// değişiklikleri yalnız AÇILIŞTA okuyordu (sohbet hariç). Supabase'de tek satırlık `degisiklik` tablosu var
+// (degisiklik-sayaci.sql): her tabloya tetikleyici, yazmada o tablonun sayacını artırır. Uygulama sekme açıkken
+// birkaç saniyede bir bu satırı okur; sayacı artan tabloları (kendi yazmamız değilse) buluttan yeniden çeker ve
+// ekrana sessizce işler (100 `bulutDegisikligiUygula`). Gerçek zamanlı WebSocket (Supabase Realtime) yerine yoklama:
+// kurulumu tek SQL, bağlantı kopması / uyku derdi yok; gecikme en çok bir yoklama aralığı.
+//
+// Bu dosya SAF parçaları taşır (birim testi `birim-degisiklik`); okuma/yazma 100'de.
+// Bulut tablosu → uygulama alanı (state). Alt tablolar ana alana düşer: kalem değişince siparişler tazelenir.
+const DEGISIKLIK_TABLO_ALANI = {
+    urunler: "stok", varyantlar: "stok", stok_hareketleri: "stok",
+    cariler: "cariler", cari_hareketleri: "cariler",
+    siparisler: "siparisler", siparis_kalemleri: "siparisler",
+    uretim: "uretim", uretim_atamalari: "uretim",
+    stok_rezervasyonlari: "stokRezervasyonlari", onaylar: "onaylar", cop: "cop",
+    tanimlar: "tanimlar", muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler",
+    faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller",
+    // mesajlar: sohbet kendi 6 sn yoklamasıyla tazeleniyor (100); cek_gorselleri: kendi yazma yolu, nadir — burada yok.
+};
+// Alan → yerel anahtar (bekleyen yazma defteri bu anahtarla tutuluyor): bekleyeni olan alan TAZELENMEZ, yerel kazanır.
+const DEGISIKLIK_ALAN_ANAHTARI = {
+    stok: "stok:items", cariler: "cari:data", siparisler: "siparis:data", uretim: "uretim:siparisler",
+    stokRezervasyonlari: "stokrez:data", onaylar: "onaylar:data", cop: "cop:data", tanimlar: "tanimlar:data",
+    muhasebe: "muhasebe:data", koliler: "koli:data", gorevler: "gorev:data", faturalar: "fatura:data",
+    fisDefteri: "fisdefter:data", modeller: "model:data",
+};
+const DEGISIKLIK_ALAN_ADI = {
+    stok: "Stok", cariler: "Cariler", siparisler: "Siparişler", uretim: "Üretim", stokRezervasyonlari: "Rezervasyonlar",
+    onaylar: "Onaylar", cop: "Çöp", tanimlar: "Tanımlar", muhasebe: "Kasa / Banka", koliler: "Koliler", gorevler: "Görevler",
+    faturalar: "Faturalar", fisDefteri: "Fiş defteri", modeller: "Modelhane",
+};
+const DEGISIKLIK_YOKLAMA_MS = 8000;
+const DEGISIKLIK_KENDI_YAZMA_MS = 12000;
+// Sayaç farkından tazelenecek alanları çıkarır. Saf.
+//   onceki/yeni: { tablo: sayı }. `sonYazma(tablo)` → bu cihazın o tabloya son yazma zamanı (ms), `simdi` → şimdi.
+//   `bekleyenAnahtarlar`: bekleyen yazma defterindeki yerel anahtarlar.
+// Döner: { alanlar: [...], tablolar: [...], ertelenen: [...tablolar] } — ertelenen: bizim yazmamız olabilir, bu turda
+// geçilir ama "görüldü" sayılmaz; sonraki turda yazma yaşlanınca tazelenir (başka cihazın aynı andaki kaydı kaçmasın).
+function degisiklikFarki(onceki, yeni, { sonYazma, simdi, bekleyenAnahtarlar } = {}) {
+    const alanlar = new Set();
+    const tablolar = [];
+    const ertelenen = [];
+    const bekleyen = new Set(bekleyenAnahtarlar || []);
+    Object.entries(yeni || {}).forEach(([tablo, sayi]) => {
+        const alan = DEGISIKLIK_TABLO_ALANI[tablo];
+        if (!alan)
+            return;
+        if (Number(sayi) === Number((onceki || {})[tablo] || 0))
+            return;
+        if (sonYazma && simdi != null && simdi - (sonYazma(tablo) || 0) < DEGISIKLIK_KENDI_YAZMA_MS) {
+            ertelenen.push(tablo);
+            return;
+        }
+        const anahtar = DEGISIKLIK_ALAN_ANAHTARI[alan];
+        if (anahtar && bekleyen.has(anahtar)) {
+            ertelenen.push(tablo);
+            return;
+        }
+        alanlar.add(alan);
+        tablolar.push(tablo);
+    });
+    return { alanlar: Array.from(alanlar), tablolar, ertelenen };
+}
+// Bir alan için buluttan okunacak tablolar (alt tablolar dahil).
+function alaninTablolari(alan) {
+    return Object.entries(DEGISIKLIK_TABLO_ALANI).filter(([, a]) => a === alan).map(([t]) => t);
+}
+// "Görüldü" sayaçları: tazelenen ve değişmeyen tablolar yeni değeri alır, ertelenenler eski değerde kalır.
+function degisiklikGoruldu(onceki, yeni, ertelenen) {
+    const e = new Set(ertelenen || []);
+    const sonuc = { ...(yeni || {}) };
+    e.forEach((t) => { if ((onceki || {})[t] !== undefined)
+        sonuc[t] = onceki[t];
+    else
+        delete sonuc[t]; });
+    return sonuc;
 }
 // Bugünün tarihini YEREL GÜNE göre verir (YYYY-AA-GG).
 //
@@ -17067,6 +17208,106 @@ function AtolyeERP() {
     const cevrimdisiSerbest = typeof window !== "undefined" && !!window.__cevrimdisiSerbest;
     const yerelAcildi = !!(veriKaynagi && veriKaynagi.tur === "yerel");
     const kilitli = !cevrimdisiSerbest && supabaseAcikMi() && !loading && (baglantiYok || yerelAcildi);
+    // BAŞKA CİHAZIN DEĞİŞİKLİĞİ ANINDA (v1.611.0, 047 + degisiklik-sayaci.sql). Sekme görünürken 8 sn'de bir tek satır
+    // okunur; sayacı artan tablolar bizim yazmamız değilse (12 sn) ve bekleyen yazması yoksa buluttan yeniden çekilir,
+    // state ve fark tabanı yenilenir, kısa toast. Stok görselsiz okunur (15 MB inmesin), görseller ekrandakinden korunur.
+    // Tablo yoksa (SQL çalıştırılmadı) ilk hata sonrası yoklama 5 dk susar — konsolda bir kez söylenir.
+    const degisiklikRef = useRef({ gorulen: null, mesgul: false, susturulana: 0 });
+    const bulutDegisikligiUygula = useCallback(async (alanlar) => {
+        const tablolar = alanlar.flatMap(alaninTablolari);
+        const bulut = await supabasedenOku({ yalniz: tablolar, resimsiz: true });
+        alanlar.forEach((alan) => {
+            if (alan === "stok") {
+                const mevcutGorsel = {};
+                (sonStokRef.current || []).forEach((u) => { const g = urunGorselleri(u); if (g)
+                    mevcutGorsel[u.id] = g; });
+                const yeni = gorselleriBirlestir(bulut.stok, mevcutGorsel);
+                setStok(yeni);
+                tabloBaslangicTam("urunler", yeni);
+            }
+            else if (alan === "cariler") {
+                setCariler(bulut.cariler);
+                tabloBaslangicTam("cariler", bulut.cariler);
+            }
+            else if (alan === "siparisler") {
+                setSiparisler(bulut.siparisler);
+                tabloBaslangicTam("siparisler", bulut.siparisler);
+            }
+            else if (alan === "uretim") {
+                setUretim(bulut.uretim);
+                tabloBaslangicTam("uretim", bulut.uretim);
+            }
+            else if (alan === "stokRezervasyonlari") {
+                setStokRezervasyonlari(bulut.stokRezervasyonlari || []);
+                tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari || []);
+            }
+            else if (alan === "onaylar") {
+                setOnaylar(bulut.onaylar || []);
+                tabloBaslangicTam("onaylar", bulut.onaylar || []);
+            }
+            else if (alan === "cop") {
+                const c = copuBuda(bulut.cop || []);
+                setCop(c);
+                tabloBaslangicTam("cop", bulut.cop || []);
+            }
+            else if (alan === "tanimlar") {
+                if (bulut.tanimlar)
+                    setTanimlar((t) => ({ ...t, ...bulut.tanimlar }));
+            }
+        });
+        // Tek satırlık tablolar: `veri` sütunu bütün hâl.
+        const tekil = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, fis_defteri: setFisDefteri, modeller: setModeller };
+        const tekilAlan = { muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler", faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller" };
+        for (const [tablo, setX] of Object.entries(tekil)) {
+            if (!alanlar.includes(tekilAlan[tablo]))
+                continue;
+            const sat = await supabaseTumSatirlar(tablo);
+            if (sat[0] && sat[0].veri != null)
+                setX(sat[0].veri);
+        }
+    }, []);
+    useEffect(() => {
+        if (loading || !supabaseAcikMi())
+            return undefined;
+        const yokla = async () => {
+            const d = degisiklikRef.current;
+            if (d.mesgul || document.hidden || baglantiYok || !oturumVarMi() || Date.now() < d.susturulana)
+                return;
+            d.mesgul = true;
+            try {
+                const sat = await supabaseIstek("degisiklik?id=eq.tekil&select=sayaclar");
+                const yeni = (Array.isArray(sat) && sat[0] && sat[0].sayaclar) || {};
+                if (d.gorulen === null) {
+                    d.gorulen = yeni;
+                    return;
+                }
+                const f = degisiklikFarki(d.gorulen, yeni, { sonYazma: bulutSonYazma, simdi: Date.now(), bekleyenAnahtarlar: Object.keys(bekleyenYazmalariOku()) });
+                if (f.alanlar.length) {
+                    await bulutDegisikligiUygula(f.alanlar);
+                    gunlukYaz(`Başka cihazdan güncellendi: ${f.alanlar.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ")}`, "veri", { tablolar: f.tablolar });
+                    showToast(`Başka cihazdan güncellendi: ${f.alanlar.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ")}`);
+                }
+                d.gorulen = degisiklikGoruldu(d.gorulen, yeni, f.ertelenen);
+            }
+            catch (e) {
+                // Tablo yok (SQL çalıştırılmadı) ya da yetki yok: 5 dk sus, bir kez söyle. Ağ hatası: bir sonraki tur.
+                if (/HTTP 4|Supabase 4|42P01|does not exist|permission/i.test(String((e && e.message) || e))) {
+                    if (!degisiklikRef.current.susturulana)
+                        console.warn("Değişiklik sayacı okunamadı — degisiklik-sayaci.sql çalıştırılmalı:", e);
+                    degisiklikRef.current.susturulana = Date.now() + 5 * 60 * 1000;
+                }
+            }
+            finally {
+                degisiklikRef.current.mesgul = false;
+            }
+        };
+        const z = setInterval(yokla, DEGISIKLIK_YOKLAMA_MS);
+        const gorunurluk = () => { if (!document.hidden)
+            yokla(); };
+        document.addEventListener("visibilitychange", gorunurluk);
+        yokla();
+        return () => { clearInterval(z); document.removeEventListener("visibilitychange", gorunurluk); };
+    }, [loading, baglantiYok, bulutDegisikligiUygula, showToast]);
     useEffect(() => {
         if (cevrimdisiSerbest || !supabaseAcikMi())
             return undefined;
@@ -26813,7 +27054,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     p.kategori,
                     p.mamulTipi ? ` · ${p.mamulTipi}` : "",
                     p.sezon ? ` · ${p.sezon}` : ""),
-                React.createElement("button", { className: "btn-ghost", style: { marginLeft: "auto", padding: "4px 12px", fontSize: 12 }, onClick: () => setKatalogUrunId(null) },
+                React.createElement("button", { className: "btn-ghost", "data-katalog-detay-kapat": "1", style: { marginLeft: "auto", padding: "4px 12px", fontSize: 12 }, onClick: () => setKatalogUrunId(null) },
                     React.createElement(X, { size: 13 }),
                     " Kapat")),
             React.createElement("div", { style: { display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-start" } },
@@ -27573,34 +27814,41 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     React.createElement(X, { size: 14 }),
                     " Vazge\u00E7")))),
         katalogMod && (React.createElement(GorselIleBul, { havuz: katalogHavuzu, acikMi: katalogFotoAcik, onKapat: () => setKatalogFotoAcik(false), onSec: (secim) => { setKatalogFotoAcik(false); katalogAc(secim.urunId, secim.renk); }, showToast: showToast })),
-        katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 } }, filtered.map((p) => {
-            const fiyat = katalogFiyat(p);
-            const renkler = katalogRenkleri(p);
-            const kapak = katalogGorsel(p, renkler[0]);
-            const acikMi = katalogUrunId === p.id;
-            return (React.createElement(React.Fragment, { key: p.id },
-                React.createElement("button", { type: "button", 
-                    // Açık karta tekrar tıklamak KAPATIYOR: detayı kapatmak için ayrı bir düğmeye
-                    // uzanmak, tıklanan yerin uzağına gitmek demekti.
-                    onClick: () => (acikMi ? setKatalogUrunId(null) : katalogAc(p.id, renkler[0])), style: {
-                        display: "grid", gap: 6, padding: 0, cursor: "pointer", textAlign: "left",
-                        border: `1px solid ${katalogUrunId === p.id ? "var(--erp-info)" : "var(--erp-border-2)"}`,
-                        borderRadius: "var(--erp-r-lg)", overflow: "hidden", background: "#fff",
-                    } },
-                    React.createElement("div", { style: { width: "100%", aspectRatio: "1 / 1", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center" } }, kapak
-                        ? React.createElement("img", { src: kapak, alt: p.ad, style: { width: "100%", height: "100%", objectFit: "cover" } })
-                        : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
-                    React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
-                        React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
-                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
-                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
-                            React.createElement("span", null, f.yazi)))),
-                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
-                            renkler.length,
-                            " renk",
-                            musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`))),
-                acikMi && (React.createElement("div", { style: { gridColumn: "1 / -1" } }, katalogDetayiCiz(p)))));
-        })))),
+        katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : (React.createElement(React.Fragment, null,
+            (() => {
+                const acik = katalogUrunId ? filtered.find((x) => x.id === katalogUrunId) : null;
+                if (!acik)
+                    return null;
+                return (React.createElement("div", { "data-katalog-detay": acik.ad, onClick: () => setKatalogUrunId(null), title: "Kapatmak i\u00E7in d\u0131\u015F\u0131na t\u0131klay\u0131n", style: { position: "fixed", inset: 0, zIndex: 800, background: "rgba(30,24,16,.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
+                    React.createElement("div", { onClick: (e) => e.stopPropagation(), title: "", style: { background: "#fff", borderRadius: "var(--erp-r-lg)", width: "min(980px, 100%)", maxHeight: "92vh", overflowY: "auto", boxShadow: "0 18px 60px rgba(0,0,0,.35)" } }, katalogDetayiCiz(acik))));
+            })(),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 } }, filtered.map((p) => {
+                const fiyat = katalogFiyat(p);
+                const renkler = katalogRenkleri(p);
+                const kapak = katalogGorsel(p, renkler[0]);
+                const acikMi = katalogUrunId === p.id;
+                return (React.createElement(React.Fragment, { key: p.id },
+                    React.createElement("button", { type: "button", 
+                        // Açık karta tekrar tıklamak KAPATIYOR: detayı kapatmak için ayrı bir düğmeye
+                        // uzanmak, tıklanan yerin uzağına gitmek demekti.
+                        onClick: () => (acikMi ? setKatalogUrunId(null) : katalogAc(p.id, renkler[0])), style: {
+                            display: "grid", gap: 6, padding: 0, cursor: "pointer", textAlign: "left",
+                            border: `1px solid ${katalogUrunId === p.id ? "var(--erp-info)" : "var(--erp-border-2)"}`,
+                            borderRadius: "var(--erp-r-lg)", overflow: "hidden", background: "#fff",
+                        } },
+                        React.createElement("div", { style: { width: "100%", aspectRatio: "1 / 1", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center" } }, kapak
+                            ? React.createElement("img", { src: kapak, alt: p.ad, style: { width: "100%", height: "100%", objectFit: "cover" } })
+                            : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
+                        React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
+                            React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
+                            katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
+                                katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
+                                React.createElement("span", null, f.yazi)))),
+                            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                                renkler.length,
+                                " renk",
+                                musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`)))));
+            }))))),
         !katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : filterCat !== "Tümü" ? (React.createElement("div", { style: { display: "grid", gap: 8 } }, filtered.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari }))))) : (React.createElement("div", { style: { display: "grid", gap: 28 } }, kapsamKategorileri.map((kat) => {
             const grup = filtered.filter((p) => p.kategori === kat);
             if (grup.length === 0)
@@ -55758,7 +56006,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.608.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.611.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
