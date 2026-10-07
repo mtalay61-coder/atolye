@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.606.0</title>
+<title>Atölye ERP 1.609.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.606.0";
+const SURUM = "1.609.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Stok no cakismasi kendiliginden onarilir (yerelde ve bulut 409 urunler_stok_no_tekil hatasinda) - bekleyen stok kayitlari gider";
+const SURUM_NOTU = "Katalogda secilen urunun detayi listenin ustunde acilir; acilista ilk bulut yazmasinin 401 almasi onlendi (gecici ag hatasinda oturum korunur)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,15 @@ const SURUM_NOTU = "Stok no cakismasi kendiliginden onarilir (yerelde ve bulut 4
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.609.0", tarih: "07.10.2026",
+        eklenen: [], degisen: ["Katalog: tıklanan ürünün detayı artık ızgaranın üstünde tek yerde açılır ve sayfa oraya kayar (eskiden kartın altındaki satırda)"],
+        duzeltilen: ["Açılışta \"Buluta yazılamadı: muhasebe\" (401 / 42501): oturum jetonu yenilenirken geçici ağ hatası (uykudan dönen bilgisayar, bağlanmakta olan Wi-Fi) oturumu düşürüyor, o anki yazma girişsiz gidiyordu — geçici hatada oturum korunur, yalnız Supabase'in açıkça reddettiği yenileme oturumu düşürür; kayıtlı oturum ayrıca ilk bulut isteğinde okunur"] },
+    { surum: "1.608.0", tarih: "06.10.2026",
+        eklenen: ["Mobil görünüm: Mamul Stok ve Fiyat Listesi ekranları mobil listede — ☰ menüde görünür, Tanımlar › Mobil Görünüm'den alt çubuğa alınabilir"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.607.0", tarih: "06.10.2026",
+        eklenen: ["Fiyat Listesi: her satırda fiyatın son değiştirilme tarihi (fiyat geçmişinden; bilinmiyorsa —)"], degisen: [],
+        duzeltilen: ["Fiyat Listesi: ürün resmi kapak resmini öne alıyordu, katalog ilk renk resmini — renk resmi yenilenince listede eski fotoğraf kalıyordu; kural katalogla aynı (ilk renk resmi, yoksa kapak)"] },
     { surum: "1.606.0", tarih: "06.10.2026",
         eklenen: [], degisen: [],
         duzeltilen: ["Çoklu cihaz: iki ürüne aynı stok no düşünce bulut bütün stok kayıtlarını reddediyordu (409 urunler_stok_no_tekil, \"Yeniden dene\" sayacı büyüyordu) — yerelde çakışan numara en eski ürün korunarak onarılır; bulut hatasında buluttaki numaralar okunup çakışan ürüne yeni numara verilir ve gönderim yinelenir. Etiket basıldıysa yeniden basılmalı (uyarı çıkar)"] },
@@ -4022,6 +4031,7 @@ function oturumOku() {
 }
 function oturumYaz(o) {
     _oturum = o;
+    _oturumOkundu = true;
     try {
         if (o)
             localStorage.setItem(OTURUM_ANAHTARI, JSON.stringify(o));
@@ -4030,7 +4040,13 @@ function oturumYaz(o) {
     }
     catch (e) { /* depo dolu ya da kapalı: oturum bellekte yaşamaya devam eder */ }
 }
-function oturumBaslat() { _oturum = oturumOku(); return _oturum; }
+// KAYITLI OTURUM İLK İSTEKTE OKUNUR (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı: muhasebe' yapıyor, sonra
+// gidiyor"): `oturumBaslat` yükleme akışının ortasında çağrılıyor; açılışta ondan ÖNCE koşan yazmalar (döviz kuru
+// güncellemesi muhasebeyi hemen yazıyor) `_oturum` boşken anonim gidip 401/42501 alıyordu. Jeton isteyen her yer
+// (`gecerliJeton`) oturum hiç okunmadıysa önce depodan okur; çıkış (`oturumYaz(null)`) "okundu" sayılır ki eski
+// oturum geri gelmesin.
+let _oturumOkundu = false;
+function oturumBaslat() { _oturum = oturumOku(); _oturumOkundu = true; return _oturum; }
 // Kullanıcı adından e-posta türetir. Supabase Auth e-posta istiyor ama atölyede kimsenin
 // kurumsal adresi yok; `@atolye.local` gerçek posta kutusu değil, yalnızca tekil bir kimlik.
 // Türkçe harfler ASCII'ye indiriliyor: e-posta alanı onları kabul etmiyor.
@@ -4275,6 +4291,17 @@ async function jetonTazele() {
         _yenilemeIslemi = authIstek("token?grant_type=refresh_token", { refresh_token: _oturum.yenileme })
             .then((veri) => { oturumKur(veri, _oturum && _oturum.email); return _oturum; })
             .catch((e) => {
+            // GEÇİCİ HATA OTURUMU DÜŞÜRMEZ (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı' yapıyor, sonra gidiyor"):
+            // bilgisayar uykudan dönerken / Wi-Fi bağlanırken yenileme isteği ağa çıkamıyor (Failed to fetch) ya da sunucu
+            // 5xx veriyordu; oturum siliniyor, o anki yazma anonim gidip 42501 alıyordu. Yenileme jetonu aslında geçerli.
+            // Artık yalnız Supabase'in AÇIKÇA reddettiği (400/401, invalid grant) yenileme oturumu düşürür; geçici hatada
+            // oturum durur, bu istek jetonsuz gider ve bir sonraki istek yenilemeyi yeniden dener (dakikalık otomatik
+            // yeniden gönderim bekleyen kaydı götürür).
+            const ham = String((e && e.message) || e || "");
+            if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|timeout/i.test(ham)) {
+                console.warn("Jeton yenilenemedi (geçici), oturum korunuyor:", ham);
+                return null;
+            }
             console.warn("Jeton yenilenemedi, oturum düştü:", e);
             oturumYaz(null);
             // OTURUM DÜŞTÜ BİLDİRİMİ (kullanıcı, 21 Eylül: "hiç işlem yapılmadı kasada" — ekranda
@@ -4294,8 +4321,11 @@ async function jetonTazele() {
 }
 let _oturumDustuDinleyici = null;
 function oturumDustuDinle(fn) { _oturumDustuDinleyici = fn; }
-function oturumVarMi() { return !!_oturum; }
+function oturumVarMi() { if (!_oturum && !_oturumOkundu)
+    oturumBaslat(); return !!_oturum; }
 async function gecerliJeton() {
+    if (!_oturum && !_oturumOkundu)
+        oturumBaslat();
     if (!_oturum)
         return null;
     if (Date.now() >= _oturum.sonaErme) {
@@ -19952,7 +19982,7 @@ function AtolyeERP() {
                 } },
                 (() => {
                     const ikonlar = {
-                        anasayfa: React.createElement(Home, { size: 18 }), tanimlar: React.createElement(Palette, { size: 18 }), stok: React.createElement(Boxes, { size: 18 }),
+                        anasayfa: React.createElement(Home, { size: 18 }), tanimlar: React.createElement(Palette, { size: 18 }), stok: React.createElement(Boxes, { size: 18 }), mamulstok: React.createElement(Package, { size: 18 }), fiyatlistesi: React.createElement(Tag, { size: 18 }),
                         uretim: React.createElement(Hammer, { size: 18 }), cari: React.createElement(Users, { size: 18 }), siparis: React.createElement(ClipboardList, { size: 18 }),
                         satinalma: React.createElement(PackageCheck, { size: 18 }), depo: React.createElement(Layers, { size: 18 }), paketleme: React.createElement(PackageCheck, { size: 18 }),
                         gorevler: React.createElement(MessageCircle, { size: 18 }), planlama: React.createElement(Compass, { size: 18 }), fisler: React.createElement(FileText, { size: 18 }),
@@ -26780,6 +26810,16 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
         setKatalogRenk(renk || (p ? (katalogRenkleri(p)[0] || "") : ""));
         setKatalogFotoAcik(false);
     }
+    // Detay ızgaranın üstünde (v1.609.0): başka bir ürün açılınca sayfa detaya kayar, kullanıcı aşağıda kalmasın.
+    const katalogDetayRef = useRef(null);
+    useEffect(() => {
+        if (!katalogUrunId || !katalogDetayRef.current || typeof katalogDetayRef.current.scrollIntoView !== "function")
+            return;
+        try {
+            katalogDetayRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        catch (e) { /* eski tarayıcı */ }
+    }, [katalogUrunId]);
     // ---- KATALOG DETAYI — büyük görsel + çevresinde varyantlar --------------------------------
     //
     // Kullanıcı: "1 büyük resim ve etrafında varyant resimleri listelenecek… amaç web sitesinden
@@ -27567,34 +27607,38 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     React.createElement(X, { size: 14 }),
                     " Vazge\u00E7")))),
         katalogMod && (React.createElement(GorselIleBul, { havuz: katalogHavuzu, acikMi: katalogFotoAcik, onKapat: () => setKatalogFotoAcik(false), onSec: (secim) => { setKatalogFotoAcik(false); katalogAc(secim.urunId, secim.renk); }, showToast: showToast })),
-        katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 } }, filtered.map((p) => {
-            const fiyat = katalogFiyat(p);
-            const renkler = katalogRenkleri(p);
-            const kapak = katalogGorsel(p, renkler[0]);
-            const acikMi = katalogUrunId === p.id;
-            return (React.createElement(React.Fragment, { key: p.id },
-                React.createElement("button", { type: "button", 
-                    // Açık karta tekrar tıklamak KAPATIYOR: detayı kapatmak için ayrı bir düğmeye
-                    // uzanmak, tıklanan yerin uzağına gitmek demekti.
-                    onClick: () => (acikMi ? setKatalogUrunId(null) : katalogAc(p.id, renkler[0])), style: {
-                        display: "grid", gap: 6, padding: 0, cursor: "pointer", textAlign: "left",
-                        border: `1px solid ${katalogUrunId === p.id ? "var(--erp-info)" : "var(--erp-border-2)"}`,
-                        borderRadius: "var(--erp-r-lg)", overflow: "hidden", background: "#fff",
-                    } },
-                    React.createElement("div", { style: { width: "100%", aspectRatio: "1 / 1", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center" } }, kapak
-                        ? React.createElement("img", { src: kapak, alt: p.ad, style: { width: "100%", height: "100%", objectFit: "cover" } })
-                        : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
-                    React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
-                        React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
-                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
-                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
-                            React.createElement("span", null, f.yazi)))),
-                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
-                            renkler.length,
-                            " renk",
-                            musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`))),
-                acikMi && (React.createElement("div", { style: { gridColumn: "1 / -1" } }, katalogDetayiCiz(p)))));
-        })))),
+        katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : (React.createElement(React.Fragment, null,
+            (() => {
+                const acik = katalogUrunId ? filtered.find((x) => x.id === katalogUrunId) : null;
+                return acik ? React.createElement("div", { ref: katalogDetayRef, "data-katalog-detay": acik.ad, style: { marginBottom: 14, scrollMarginTop: 90 } }, katalogDetayiCiz(acik)) : null;
+            })(),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 } }, filtered.map((p) => {
+                const fiyat = katalogFiyat(p);
+                const renkler = katalogRenkleri(p);
+                const kapak = katalogGorsel(p, renkler[0]);
+                const acikMi = katalogUrunId === p.id;
+                return (React.createElement(React.Fragment, { key: p.id },
+                    React.createElement("button", { type: "button", 
+                        // Açık karta tekrar tıklamak KAPATIYOR: detayı kapatmak için ayrı bir düğmeye
+                        // uzanmak, tıklanan yerin uzağına gitmek demekti.
+                        onClick: () => (acikMi ? setKatalogUrunId(null) : katalogAc(p.id, renkler[0])), style: {
+                            display: "grid", gap: 6, padding: 0, cursor: "pointer", textAlign: "left",
+                            border: `1px solid ${katalogUrunId === p.id ? "var(--erp-info)" : "var(--erp-border-2)"}`,
+                            borderRadius: "var(--erp-r-lg)", overflow: "hidden", background: "#fff",
+                        } },
+                        React.createElement("div", { style: { width: "100%", aspectRatio: "1 / 1", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center" } }, kapak
+                            ? React.createElement("img", { src: kapak, alt: p.ad, style: { width: "100%", height: "100%", objectFit: "cover" } })
+                            : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
+                        React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
+                            React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
+                            katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
+                                katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
+                                React.createElement("span", null, f.yazi)))),
+                            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                                renkler.length,
+                                " renk",
+                                musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`)))));
+            }))))),
         !katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : filterCat !== "Tümü" ? (React.createElement("div", { style: { display: "grid", gap: 8 } }, filtered.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari }))))) : (React.createElement("div", { style: { display: "grid", gap: 28 } }, kapsamKategorileri.map((kat) => {
             const grup = filtered.filter((p) => p.kategori === kat);
             if (grup.length === 0)
@@ -27986,6 +28030,48 @@ function flGrupKurali(urun, kaynak) {
     return (urun.fiyatKurallari || []).find((k) => k.kapsam === "fiyatGrubu" && k.deger === kaynak.grupId
         && k.tip === kaynak.tip && !k.renk && !k.beden) || null;
 }
+// LİSTEDEKİ ÜRÜN RESMİ (v1.607.0 — kullanıcı: "Stok resmi değişti ama fiyat listesinde resim değişmedi"): kullanıcı
+// yeni fotoğrafı RENK resmi olarak yükledi; liste kapak resmini öne alıyordu (eski fotoğraf), katalog ise ilk renk
+// resmini. Kural artık katalogla (152 `katalogGorsel`) aynı: ilk renk resmi, yoksa kapak. Saf.
+function fiyatListesiGorseli(urun) {
+    const g = urunGorselleri(urun);
+    if (!g)
+        return "";
+    return Object.values(g.renkResimleri || {}).find(Boolean) || g.kapakResmi || "";
+}
+// SON FİYAT DEĞİŞİKLİĞİ (v1.607.0 — kullanıcı: "fiyat listesine fiyat değiştirme tarihleri de yazsın"). Ürünün fiyat
+// geçmişinden (`fiyatGecmisi`, her yazıcı bir satır bırakır) seçili kaynağa ait EN YENİ kaydın tarihi. Kaynak eşleşmesi:
+// yeni kayıtlarda `grupId` (v1.607'den beri fiyat listesi yazıyor); eskilerde etiket metni — grup kaynağında grup adını
+// içeren, genel kaynakta grup/renk/beden kuralı olmayan ve tipi tutan kayıt. Maliyetten yazılan kuralın `kaynakTarih`i de
+// aday. Hiçbiri yoksa null (ekranda "—"): tarih uydurulmaz. Saf.
+function fiyatSonDegisiklik(urun, kaynak, fiyatGruplari) {
+    if (!urun || !kaynak || kaynak.maliyet)
+        return null;
+    const grupAdlari = (fiyatGruplari || []).map((g) => g.ad).filter(Boolean);
+    const adaylar = [];
+    (urun.fiyatGecmisi || []).forEach((l) => {
+        if (!l || !l.tarih)
+            return;
+        if (l.tip && l.tip !== kaynak.tip)
+            return;
+        const e = String(l.etiket || "");
+        let uyar;
+        if (kaynak.grupId)
+            uyar = l.grupId ? l.grupId === kaynak.grupId : e.includes(kaynak.ad);
+        else
+            uyar = !l.grupId && !/^Grup:|^Renk:|^Beden:|^Boy:| \/ /.test(e) && !grupAdlari.some((ad) => e.includes(ad));
+        if (uyar)
+            adaylar.push(l.tarih);
+    });
+    if (kaynak.grupId) {
+        const k = flGrupKurali(urun, kaynak);
+        if (k && k.kaynakTarih)
+            adaylar.push(k.kaynakTarih);
+    }
+    if (!adaylar.length)
+        return null;
+    return adaylar.sort().reverse()[0];
+}
 // Ürünün seçili kaynaktaki fiyatı. Fiyat yoksa `fiyat: null` (ekranda BOŞ — 0 yazmak "bedava" sanılır).
 // `ctx` yalnız maliyet kaynağında gerekir (urunMaliyetHesabi bağlamı: tumUrunler, kurlar, tanımlar…).
 function urunKaynakFiyati(urun, kaynak, ctx) {
@@ -28054,7 +28140,7 @@ function fiyatListesiYaz(urunler, kaynak, fiyatlar, s = {}) {
         if ((eski.fiyat || null) === yeni && (!pb || pb === eski.paraBirimi))
             return u;
         degisen++;
-        const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip,
+        const log = { id: uid("flog"), tarih: zaman, tip: kaynak.tip, ...(kaynak.grupId ? { grupId: kaynak.grupId } : {}),
             etiket: `${kaynak.genel ? kaynak.ad : `Grup: ${kaynak.ad}`} (fiyat listesi${s.not ? ` · ${s.not}` : ""}${s.kim ? ` · ${s.kim}` : ""})`,
             eskiFiyat: eski.fiyat, yeniFiyat: yeni, eskiParaBirimi: eski.fiyat != null ? eski.paraBirimi : null,
             paraBirimi: pb || eski.paraBirimi };
@@ -28128,7 +28214,7 @@ function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {})
             ...(kaynak && kaynak.maliyet ? [durumYazi(r)] : []), r.fiyat > 0 ? r.fiyat : "", r.paraBirimi || "",
             ...(islemAktif ? [r.yeni > 0 ? r.yeni : ""] : [])];
     });
-    const resimler = (satirlar || []).map((r) => { const g = urunGorselleri(r.urun); return g ? (g.kapakResmi || Object.values(g.renkResimleri)[0] || "") : ""; });
+    const resimler = (satirlar || []).map((r) => fiyatListesiGorseli(r.urun));
     return { basliklar, satirlar: govde, resimler };
 }
 function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
@@ -28168,6 +28254,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
         const duzen = yazi == null ? null : (yazi.trim() === "" ? null : fiyatSayisi(yazi));
         const gecerli = yazi == null ? k.fiyat : (duzen > 0 ? duzen : null);
         return { urun: u, urunId: u.id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, hesap: k.hesap || null,
+            sonTarih: fiyatSonDegisiklik(u, kaynak, tanimlar.fiyatGruplari),
             onay: k.hesap ? maliyetOnayDurumu(u, k.hesap) : null, degisti: yazi != null && (gecerli || null) !== (k.fiyat || null),
             fiyat: gecerli, yeni: islemAktif ? fiyatDonustur(gecerli, islemNorm) : gecerli };
     })
@@ -28480,9 +28567,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                         React.createElement("td", { colSpan: 7, style: { padding: 16, textAlign: "center", color: "var(--erp-text-3)" } }, "Bu s\u00FCzge\u00E7le \u00FCr\u00FCn yok."))),
                     satirlar.map((r) => (React.createElement("tr", { key: r.urunId, "data-fl-satir": r.urun.ad, style: { borderTop: "1px solid var(--erp-line-soft)", background: r.degisti ? "#FFF8E6" : undefined } },
                         React.createElement("td", { style: { padding: "4px 6px" } }, (() => {
-                            // STOK RESMİ (v1.553.0): kapak, yoksa ilk renk resmi; tıklayınca büyür.
-                            const g = urunGorselleri(r.urun);
-                            const src = g ? (g.kapakResmi || Object.values(g.renkResimleri)[0]) : "";
+                            // STOK RESMİ (v1.553.0; v1.607.0 kural katalogla aynı): ilk renk resmi, yoksa kapak; tıklayınca büyür.
+                            const src = fiyatListesiGorseli(r.urun);
                             return src
                                 ? React.createElement("img", { src: src, alt: r.urun.ad, "data-fl-resim": r.urun.ad, onClick: () => setBuyukResim({ src, ad: r.urun.ad }), style: { width: 40, height: 40, objectFit: "cover", borderRadius: "var(--erp-r-sm)", border: "1px solid var(--erp-line-soft)", cursor: "zoom-in", display: "block" } })
                                 : React.createElement("div", { style: { width: 40, height: 40, borderRadius: "var(--erp-r-sm)", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--erp-text-3)" } },
@@ -28513,7 +28599,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
                                     kaydet(); }, style: { ...kutu, width: 100, textAlign: "right", padding: "5px 8px", fontWeight: r.degisti ? 800 : 600,
                                     borderColor: r.degisti ? "var(--erp-warn)" : undefined } }),
                             !kaynak.maliyet && r.kayitli > 0 ? (React.createElement("select", { "data-fl-pb": r.urun.ad, value: r.paraBirimi || "TRY", onChange: (e) => satirBirimi(r, e.target.value), title: "Bu \u00FCr\u00FCn\u00FCn bu listedeki fiyat\u0131n\u0131n para birimi \u2014 de\u011Fi\u015Ftirince rakam ayn\u0131 kal\u0131r, yaln\u0131z birim de\u011Fi\u015Fir", style: { marginLeft: 5, fontSize: 12, fontWeight: 700, padding: "3px 4px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)",
-                                    color: !kaynak.genel && (kaynak.paraBirimi || "TRY") !== r.paraBirimi ? "var(--erp-orange)" : "var(--erp-text-2)", background: "#fff" } }, ["TRY", "USD", "EUR"].map((pb) => React.createElement("option", { key: pb, value: pb }, pbSembol(pb))))) : (React.createElement("span", { style: { marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" } }, pbSembol(r.paraBirimi)))),
+                                    color: !kaynak.genel && (kaynak.paraBirimi || "TRY") !== r.paraBirimi ? "var(--erp-orange)" : "var(--erp-text-2)", background: "#fff" } }, ["TRY", "USD", "EUR"].map((pb) => React.createElement("option", { key: pb, value: pb }, pbSembol(pb))))) : (React.createElement("span", { style: { marginLeft: 5, fontSize: 12, color: "var(--erp-text-2)" } }, pbSembol(r.paraBirimi))),
+                            !kaynak.maliyet && (React.createElement("div", { "data-fl-tarih": r.urun.ad, title: "Bu listedeki fiyat\u0131n son de\u011Fi\u015Ftirilme tarihi (fiyat ge\u00E7mi\u015Finden)", style: { fontSize: 10, color: r.sonTarih ? "var(--erp-text-3)" : "var(--erp-line)", marginTop: 2, textAlign: "right" } }, r.sonTarih ? tarihYaz(r.sonTarih) : "—"))),
                         islemAktif && (React.createElement("td", { "data-fl-yeni": r.urun.ad, className: "mono", style: { padding: "6px 10px", textAlign: "right", fontWeight: 700, color: "var(--erp-accent)" } }, r.yeni > 0 ? `${r.yeni.toFixed(2).replace(".", ",")} ${pbSembol(r.paraBirimi)}` : "")))))))),
         React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 } }, kaynak.maliyet ? (React.createElement(React.Fragment, null,
             satirlar.length,
@@ -54121,6 +54208,10 @@ const MOBIL_MODULLER = [
     { key: "satinalma", ad: "Alış Siparişi" },
     { key: "cari", ad: "Cari" },
     { key: "stok", ad: "Stok" },
+    // v1.608.0 (kullanıcı, iPhone: "Mobilde mamul stok yok, Stok hammadde açıyor"): üst menüdeki Depo › Mamul Stok ve
+    // Fiyat Listesi mobil listede hiç yoktu — ne alt çubuğa ne ☰'ye konabiliyordu.
+    { key: "mamulstok", ad: "Mamul Stok" },
+    { key: "fiyatlistesi", ad: "Fiyat Listesi" },
     { key: "uretim", ad: "Üretim" },
     { key: "depo", ad: "Depo" },
     { key: "paketleme", ad: "Paketleme" },
@@ -55705,7 +55796,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.606.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.609.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
