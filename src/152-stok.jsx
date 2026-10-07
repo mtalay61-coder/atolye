@@ -998,12 +998,6 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     setKatalogRenk(renk || (p ? (katalogRenkleri(p)[0] || "") : ""));
     setKatalogFotoAcik(false);
   }
-  // Detay ızgaranın üstünde (v1.609.0): başka bir ürün açılınca sayfa detaya kayar, kullanıcı aşağıda kalmasın.
-  const katalogDetayRef = useRef(null);
-  useEffect(() => {
-    if (!katalogUrunId || !katalogDetayRef.current || typeof katalogDetayRef.current.scrollIntoView !== "function") return;
-    try { katalogDetayRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { /* eski tarayıcı */ }
-  }, [katalogUrunId]);
 
   // ---- KATALOG DETAYI — büyük görsel + çevresinde varyantlar --------------------------------
   //
@@ -1030,7 +1024,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
               <h3 style={{ margin: 0, fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, color: "var(--erp-text)" }}>{p.ad}</h3>
               <KategoriIkonu kategori={p.kategori} size={16} />
               <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{p.kategori}{p.mamulTipi ? ` · ${p.mamulTipi}` : ""}{p.sezon ? ` · ${p.sezon}` : ""}</span>
-              <button className="btn-ghost" style={{ marginLeft: "auto", padding: "4px 12px", fontSize: 12 }} onClick={() => setKatalogUrunId(null)}>
+              <button className="btn-ghost" data-katalog-detay-kapat="1" style={{ marginLeft: "auto", padding: "4px 12px", fontSize: 12 }} onClick={() => setKatalogUrunId(null)}>
                 <X size={13} /> Kapat
               </button>
             </div>
@@ -2588,13 +2582,24 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
           // IZGARA — vitrin düzeni. Kart başına TEK görsel: kapak ya da ilk rengin görseli.
           // Renklerin hepsi ızgarada gösterilseydi tek model onlarca kutu kaplar ve "gezinme"
           // hissi kaybolurdu; renkler detayda.
-          // DETAY ÜSTTE (v1.609.0 — kullanıcı: "kataloğa tıklayınca açılımı üste yapsın"): detay eskiden tıklanan kartın
-          // altındaki tam satırda açılıyordu (CSS `1 / -1`); uzun listede sayfanın ortasında kalıyor, kart kayıyordu.
-          // Şimdi ızgaranın ÜSTÜNDE tek yerde; açılınca oraya kaydırılır (ref + scrollIntoView).
+          // DETAY PENCEREDE (v1.609.0 — kullanıcı: "kataloğa tıklayınca açılımı üste yapsın" → "sayfa oraya kaymasın,
+          // pencere açılsın orada büyüsün"): detay eskiden tıklanan kartın altındaki tam satırda açılıyordu (CSS `1 / -1`),
+          // sonra ızgaranın üstüne alınıp sayfa kaydırıldı; ikisi de kullanıcıyı yerinden oynatıyordu. Şimdi ızgara olduğu
+          // yerde kalır, detay ÜSTÜNE AÇILAN pencerede (sabit katman, ortalı, kendi içinde kayar). Dışına tıklamak ya da ×
+          // kapatır; büyük görsel katmanı (900) bunun üstünde kalsın diye z 800.
           <>
           {(() => {
             const acik = katalogUrunId ? filtered.find((x) => x.id === katalogUrunId) : null;
-            return acik ? <div ref={katalogDetayRef} data-katalog-detay={acik.ad} style={{ marginBottom: 14, scrollMarginTop: 90 }}>{katalogDetayiCiz(acik)}</div> : null;
+            if (!acik) return null;
+            return (
+              <div data-katalog-detay={acik.ad} onClick={() => setKatalogUrunId(null)} title="Kapatmak için dışına tıklayın"
+                style={{ position: "fixed", inset: 0, zIndex: 800, background: "rgba(30,24,16,.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+                <div onClick={(e) => e.stopPropagation()} title=""
+                  style={{ background: "#fff", borderRadius: "var(--erp-r-lg)", width: "min(980px, 100%)", maxHeight: "92vh", overflowY: "auto", boxShadow: "0 18px 60px rgba(0,0,0,.35)" }}>
+                  {katalogDetayiCiz(acik)}
+                </div>
+              </div>
+            );
           })()}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 }}>
             {filtered.map((p) => {

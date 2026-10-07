@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.609.0";
+const SURUM = "1.610.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Katalogda secilen urunun detayi listenin ustunde acilir; acilista ilk bulut yazmasinin 401 almasi onlendi (gecici ag hatasinda oturum korunur)";
+const SURUM_NOTU = "Katalogda urun detayi sayfayi kaydirmadan ustune acilan pencerede";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,8 @@ const SURUM_NOTU = "Katalogda secilen urunun detayi listenin ustunde acilir; aci
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.610.0", tarih: "07.10.2026",
+    eklenen: [], degisen: ["Katalog: ürün detayı sayfayı kaydırmadan ızgaranın üstüne açılan pencerede; dışına tıklamak ya da Kapat düğmesi kapatır"], duzeltilen: [] },
   { surum: "1.609.0", tarih: "07.10.2026",
     eklenen: [], degisen: ["Katalog: tıklanan ürünün detayı artık ızgaranın üstünde tek yerde açılır ve sayfa oraya kayar (eskiden kartın altındaki satırda)"],
     duzeltilen: ["Açılışta \"Buluta yazılamadı: muhasebe\" (401 / 42501): oturum jetonu yenilenirken geçici ağ hatası (uykudan dönen bilgisayar, bağlanmakta olan Wi-Fi) oturumu düşürüyor, o anki yazma girişsiz gidiyordu — geçici hatada oturum korunur, yalnız Supabase'in açıkça reddettiği yenileme oturumu düşürür; kayıtlı oturum ayrıca ilk bulut isteğinde okunur"] },

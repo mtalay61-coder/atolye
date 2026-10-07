@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.607.0</title>
+<title>Atölye ERP 1.610.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.607.0";
+const SURUM = "1.610.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Fiyat Listesi: fiyatin son degistirilme tarihi satirda; resim katalogla ayni kural (ilk renk resmi, yoksa kapak)";
+const SURUM_NOTU = "Katalogda urun detayi sayfayi kaydirmadan ustune acilan pencerede";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,14 @@ const SURUM_NOTU = "Fiyat Listesi: fiyatin son degistirilme tarihi satirda; resi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.610.0", tarih: "07.10.2026",
+        eklenen: [], degisen: ["Katalog: ürün detayı sayfayı kaydırmadan ızgaranın üstüne açılan pencerede; dışına tıklamak ya da Kapat düğmesi kapatır"], duzeltilen: [] },
+    { surum: "1.609.0", tarih: "07.10.2026",
+        eklenen: [], degisen: ["Katalog: tıklanan ürünün detayı artık ızgaranın üstünde tek yerde açılır ve sayfa oraya kayar (eskiden kartın altındaki satırda)"],
+        duzeltilen: ["Açılışta \"Buluta yazılamadı: muhasebe\" (401 / 42501): oturum jetonu yenilenirken geçici ağ hatası (uykudan dönen bilgisayar, bağlanmakta olan Wi-Fi) oturumu düşürüyor, o anki yazma girişsiz gidiyordu — geçici hatada oturum korunur, yalnız Supabase'in açıkça reddettiği yenileme oturumu düşürür; kayıtlı oturum ayrıca ilk bulut isteğinde okunur"] },
+    { surum: "1.608.0", tarih: "06.10.2026",
+        eklenen: ["Mobil görünüm: Mamul Stok ve Fiyat Listesi ekranları mobil listede — ☰ menüde görünür, Tanımlar › Mobil Görünüm'den alt çubuğa alınabilir"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.607.0", tarih: "06.10.2026",
         eklenen: ["Fiyat Listesi: her satırda fiyatın son değiştirilme tarihi (fiyat geçmişinden; bilinmiyorsa —)"], degisen: [],
         duzeltilen: ["Fiyat Listesi: ürün resmi kapak resmini öne alıyordu, katalog ilk renk resmini — renk resmi yenilenince listede eski fotoğraf kalıyordu; kural katalogla aynı (ilk renk resmi, yoksa kapak)"] },
@@ -4025,6 +4033,7 @@ function oturumOku() {
 }
 function oturumYaz(o) {
     _oturum = o;
+    _oturumOkundu = true;
     try {
         if (o)
             localStorage.setItem(OTURUM_ANAHTARI, JSON.stringify(o));
@@ -4033,7 +4042,13 @@ function oturumYaz(o) {
     }
     catch (e) { /* depo dolu ya da kapalı: oturum bellekte yaşamaya devam eder */ }
 }
-function oturumBaslat() { _oturum = oturumOku(); return _oturum; }
+// KAYITLI OTURUM İLK İSTEKTE OKUNUR (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı: muhasebe' yapıyor, sonra
+// gidiyor"): `oturumBaslat` yükleme akışının ortasında çağrılıyor; açılışta ondan ÖNCE koşan yazmalar (döviz kuru
+// güncellemesi muhasebeyi hemen yazıyor) `_oturum` boşken anonim gidip 401/42501 alıyordu. Jeton isteyen her yer
+// (`gecerliJeton`) oturum hiç okunmadıysa önce depodan okur; çıkış (`oturumYaz(null)`) "okundu" sayılır ki eski
+// oturum geri gelmesin.
+let _oturumOkundu = false;
+function oturumBaslat() { _oturum = oturumOku(); _oturumOkundu = true; return _oturum; }
 // Kullanıcı adından e-posta türetir. Supabase Auth e-posta istiyor ama atölyede kimsenin
 // kurumsal adresi yok; `@atolye.local` gerçek posta kutusu değil, yalnızca tekil bir kimlik.
 // Türkçe harfler ASCII'ye indiriliyor: e-posta alanı onları kabul etmiyor.
@@ -4278,6 +4293,17 @@ async function jetonTazele() {
         _yenilemeIslemi = authIstek("token?grant_type=refresh_token", { refresh_token: _oturum.yenileme })
             .then((veri) => { oturumKur(veri, _oturum && _oturum.email); return _oturum; })
             .catch((e) => {
+            // GEÇİCİ HATA OTURUMU DÜŞÜRMEZ (v1.609.0 — kullanıcı: "ilk açılışta 'buluta yazılamadı' yapıyor, sonra gidiyor"):
+            // bilgisayar uykudan dönerken / Wi-Fi bağlanırken yenileme isteği ağa çıkamıyor (Failed to fetch) ya da sunucu
+            // 5xx veriyordu; oturum siliniyor, o anki yazma anonim gidip 42501 alıyordu. Yenileme jetonu aslında geçerli.
+            // Artık yalnız Supabase'in AÇIKÇA reddettiği (400/401, invalid grant) yenileme oturumu düşürür; geçici hatada
+            // oturum durur, bu istek jetonsuz gider ve bir sonraki istek yenilemeyi yeniden dener (dakikalık otomatik
+            // yeniden gönderim bekleyen kaydı götürür).
+            const ham = String((e && e.message) || e || "");
+            if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|timeout/i.test(ham)) {
+                console.warn("Jeton yenilenemedi (geçici), oturum korunuyor:", ham);
+                return null;
+            }
             console.warn("Jeton yenilenemedi, oturum düştü:", e);
             oturumYaz(null);
             // OTURUM DÜŞTÜ BİLDİRİMİ (kullanıcı, 21 Eylül: "hiç işlem yapılmadı kasada" — ekranda
@@ -4297,8 +4323,11 @@ async function jetonTazele() {
 }
 let _oturumDustuDinleyici = null;
 function oturumDustuDinle(fn) { _oturumDustuDinleyici = fn; }
-function oturumVarMi() { return !!_oturum; }
+function oturumVarMi() { if (!_oturum && !_oturumOkundu)
+    oturumBaslat(); return !!_oturum; }
 async function gecerliJeton() {
+    if (!_oturum && !_oturumOkundu)
+        oturumBaslat();
     if (!_oturum)
         return null;
     if (Date.now() >= _oturum.sonaErme) {
@@ -19955,7 +19984,7 @@ function AtolyeERP() {
                 } },
                 (() => {
                     const ikonlar = {
-                        anasayfa: React.createElement(Home, { size: 18 }), tanimlar: React.createElement(Palette, { size: 18 }), stok: React.createElement(Boxes, { size: 18 }),
+                        anasayfa: React.createElement(Home, { size: 18 }), tanimlar: React.createElement(Palette, { size: 18 }), stok: React.createElement(Boxes, { size: 18 }), mamulstok: React.createElement(Package, { size: 18 }), fiyatlistesi: React.createElement(Tag, { size: 18 }),
                         uretim: React.createElement(Hammer, { size: 18 }), cari: React.createElement(Users, { size: 18 }), siparis: React.createElement(ClipboardList, { size: 18 }),
                         satinalma: React.createElement(PackageCheck, { size: 18 }), depo: React.createElement(Layers, { size: 18 }), paketleme: React.createElement(PackageCheck, { size: 18 }),
                         gorevler: React.createElement(MessageCircle, { size: 18 }), planlama: React.createElement(Compass, { size: 18 }), fisler: React.createElement(FileText, { size: 18 }),
@@ -26810,7 +26839,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     p.kategori,
                     p.mamulTipi ? ` · ${p.mamulTipi}` : "",
                     p.sezon ? ` · ${p.sezon}` : ""),
-                React.createElement("button", { className: "btn-ghost", style: { marginLeft: "auto", padding: "4px 12px", fontSize: 12 }, onClick: () => setKatalogUrunId(null) },
+                React.createElement("button", { className: "btn-ghost", "data-katalog-detay-kapat": "1", style: { marginLeft: "auto", padding: "4px 12px", fontSize: 12 }, onClick: () => setKatalogUrunId(null) },
                     React.createElement(X, { size: 13 }),
                     " Kapat")),
             React.createElement("div", { style: { display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-start" } },
@@ -27570,34 +27599,41 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     React.createElement(X, { size: 14 }),
                     " Vazge\u00E7")))),
         katalogMod && (React.createElement(GorselIleBul, { havuz: katalogHavuzu, acikMi: katalogFotoAcik, onKapat: () => setKatalogFotoAcik(false), onSec: (secim) => { setKatalogFotoAcik(false); katalogAc(secim.urunId, secim.renk); }, showToast: showToast })),
-        katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 } }, filtered.map((p) => {
-            const fiyat = katalogFiyat(p);
-            const renkler = katalogRenkleri(p);
-            const kapak = katalogGorsel(p, renkler[0]);
-            const acikMi = katalogUrunId === p.id;
-            return (React.createElement(React.Fragment, { key: p.id },
-                React.createElement("button", { type: "button", 
-                    // Açık karta tekrar tıklamak KAPATIYOR: detayı kapatmak için ayrı bir düğmeye
-                    // uzanmak, tıklanan yerin uzağına gitmek demekti.
-                    onClick: () => (acikMi ? setKatalogUrunId(null) : katalogAc(p.id, renkler[0])), style: {
-                        display: "grid", gap: 6, padding: 0, cursor: "pointer", textAlign: "left",
-                        border: `1px solid ${katalogUrunId === p.id ? "var(--erp-info)" : "var(--erp-border-2)"}`,
-                        borderRadius: "var(--erp-r-lg)", overflow: "hidden", background: "#fff",
-                    } },
-                    React.createElement("div", { style: { width: "100%", aspectRatio: "1 / 1", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center" } }, kapak
-                        ? React.createElement("img", { src: kapak, alt: p.ad, style: { width: "100%", height: "100%", objectFit: "cover" } })
-                        : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
-                    React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
-                        React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
-                        katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
-                            katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
-                            React.createElement("span", null, f.yazi)))),
-                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
-                            renkler.length,
-                            " renk",
-                            musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`))),
-                acikMi && (React.createElement("div", { style: { gridColumn: "1 / -1" } }, katalogDetayiCiz(p)))));
-        })))),
+        katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : (React.createElement(React.Fragment, null,
+            (() => {
+                const acik = katalogUrunId ? filtered.find((x) => x.id === katalogUrunId) : null;
+                if (!acik)
+                    return null;
+                return (React.createElement("div", { "data-katalog-detay": acik.ad, onClick: () => setKatalogUrunId(null), title: "Kapatmak i\u00E7in d\u0131\u015F\u0131na t\u0131klay\u0131n", style: { position: "fixed", inset: 0, zIndex: 800, background: "rgba(30,24,16,.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
+                    React.createElement("div", { onClick: (e) => e.stopPropagation(), title: "", style: { background: "#fff", borderRadius: "var(--erp-r-lg)", width: "min(980px, 100%)", maxHeight: "92vh", overflowY: "auto", boxShadow: "0 18px 60px rgba(0,0,0,.35)" } }, katalogDetayiCiz(acik))));
+            })(),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 14 } }, filtered.map((p) => {
+                const fiyat = katalogFiyat(p);
+                const renkler = katalogRenkleri(p);
+                const kapak = katalogGorsel(p, renkler[0]);
+                const acikMi = katalogUrunId === p.id;
+                return (React.createElement(React.Fragment, { key: p.id },
+                    React.createElement("button", { type: "button", 
+                        // Açık karta tekrar tıklamak KAPATIYOR: detayı kapatmak için ayrı bir düğmeye
+                        // uzanmak, tıklanan yerin uzağına gitmek demekti.
+                        onClick: () => (acikMi ? setKatalogUrunId(null) : katalogAc(p.id, renkler[0])), style: {
+                            display: "grid", gap: 6, padding: 0, cursor: "pointer", textAlign: "left",
+                            border: `1px solid ${katalogUrunId === p.id ? "var(--erp-info)" : "var(--erp-border-2)"}`,
+                            borderRadius: "var(--erp-r-lg)", overflow: "hidden", background: "#fff",
+                        } },
+                        React.createElement("div", { style: { width: "100%", aspectRatio: "1 / 1", background: "var(--erp-panel)", display: "flex", alignItems: "center", justifyContent: "center" } }, kapak
+                            ? React.createElement("img", { src: kapak, alt: p.ad, style: { width: "100%", height: "100%", objectFit: "cover" } })
+                            : React.createElement(KategoriIkonu, { kategori: p.kategori, size: 28 })),
+                        React.createElement("div", { style: { padding: "0 10px 10px", display: "grid", gap: 3 } },
+                            React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", lineHeight: 1.25 } }, p.ad),
+                            katalogFiyatSatirlari(p).map((f, i) => (React.createElement("span", { key: f.key, className: "mono", "data-katalog-fiyat": f.ad, style: { fontSize: i === 0 ? 13 : 12, fontWeight: 700, color: f.var ? (i === 0 ? "var(--erp-info)" : "var(--erp-text)") : "var(--erp-text-3)", display: "flex", justifyContent: "space-between", gap: 6 } },
+                                katalogGosterilen.length > 1 && React.createElement("span", { style: { fontFamily: "inherit", fontWeight: 400, color: "var(--erp-text-2)", fontSize: 11 } }, f.ad),
+                                React.createElement("span", null, f.yazi)))),
+                            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)" } },
+                                renkler.length,
+                                " renk",
+                                musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`)))));
+            }))))),
         !katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : filterCat !== "Tümü" ? (React.createElement("div", { style: { display: "grid", gap: 8 } }, filtered.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari }))))) : (React.createElement("div", { style: { display: "grid", gap: 28 } }, kapsamKategorileri.map((kat) => {
             const grup = filtered.filter((p) => p.kategori === kat);
             if (grup.length === 0)
@@ -54167,6 +54203,10 @@ const MOBIL_MODULLER = [
     { key: "satinalma", ad: "Alış Siparişi" },
     { key: "cari", ad: "Cari" },
     { key: "stok", ad: "Stok" },
+    // v1.608.0 (kullanıcı, iPhone: "Mobilde mamul stok yok, Stok hammadde açıyor"): üst menüdeki Depo › Mamul Stok ve
+    // Fiyat Listesi mobil listede hiç yoktu — ne alt çubuğa ne ☰'ye konabiliyordu.
+    { key: "mamulstok", ad: "Mamul Stok" },
+    { key: "fiyatlistesi", ad: "Fiyat Listesi" },
     { key: "uretim", ad: "Üretim" },
     { key: "depo", ad: "Depo" },
     { key: "paketleme", ad: "Paketleme" },
@@ -55751,7 +55791,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.607.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.610.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
