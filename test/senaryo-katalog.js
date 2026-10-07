@@ -146,13 +146,12 @@ async function calistir() {
       .find((b) => /Katalog Model/.test(b.textContent) && b.querySelector("img"));
     // Detay sarmalayıcısı ızgaranın tam satırını kaplıyor; onu stiliyle buluyoruz, metinle
     // ararsak büyük bir ata öge yakalanıyor ve konum ölçümü anlamsızlaşıyor.
-    // v1.609.0 (kullanıcı: "kataloğa tıklayınca açılımı üste yapsın"): detay ızgaranın ÜSTÜNDE tek yerde
-    // (`data-katalog-detay`), açılınca sayfa oraya kayıyor. Ölçü: panelin üst kenarı kartın üstünden yukarıda.
+    // v1.610.0 (kullanıcı: "sayfa oraya kaymasın, pencere açılsın orada büyüsün"): detay sabit katmanda (fixed)
+    // ızgaranın ÜSTÜNE açılan pencere; sayfa kaydırılmaz. Ölçü: katman fixed, kapat düğmesi var, sayfa kaymadı.
     const panel = document.querySelector("[data-katalog-detay]");
     if (!kart || !panel) return { olcum: "bulunamadı" };
-    const k = kart.getBoundingClientRect();
-    const p = panel.getBoundingClientRect();
-    return { detayIzgaraninUstunde: p.top <= k.top, detayAdi: panel.getAttribute("data-katalog-detay") };
+    return { detayPencere: getComputedStyle(panel).position === "fixed", kapatVar: !!panel.querySelector("[data-katalog-detay-kapat]"),
+      sayfaKaymadi: window.scrollY === 0, detayAdi: panel.getAttribute("data-katalog-detay") };
   });
 
   const detay = await sayfa.evaluate(() => {
@@ -176,7 +175,12 @@ async function calistir() {
   // MÜŞTERİ GÖRÜNÜMÜ — maliyet tarafı kapanmalı.
   // 410 ARAMASI (22 Eylül): düz /410/ sürüm numarasına (1.410.0) takılıyordu — nokta ve rakamla
   // çevrili 410 sayılmıyor.
+  // v1.610.0: detay pencere (sabit katman) başlıktaki düğmeyi örtüyor — önce kapat, görünümü değiştir, kartı yeniden aç.
+  await sayfa.locator("[data-katalog-detay-kapat]").first().click();
+  await sayfa.waitForTimeout(300);
   await sayfa.locator('button:has-text("Personel görünümü"):visible').first().click();
+  await sayfa.waitForTimeout(300);
+  await sayfa.locator('button:has-text("Katalog Model"):visible').first().click();
   await sayfa.waitForTimeout(600);
   const musteri = await sayfa.evaluate(() => {
     const m = document.body.innerText;
@@ -194,6 +198,8 @@ async function calistir() {
   //
   // Kullanıcı: "Özel kod dolu ise görünsün; örn. Özel kod 1 taban ise 'Taban: 147' yazsın.
   // Ürün aramada taban filtreleyerek arama vs. yapılır."
+  await sayfa.locator("[data-katalog-detay-kapat]").first().click();
+  await sayfa.waitForTimeout(300);
   await sayfa.locator('button:has-text("Liste"):visible').first().click();
   await sayfa.waitForTimeout(600);
 

@@ -23,7 +23,9 @@
  },
  "detayKonumu": {
   "detayAdi": "Katalog Model",
-  "detayIzgaraninUstunde": true
+  "detayPencere": true,
+  "kapatVar": true,
+  "sayfaKaymadi": true
  },
  "etiketleAra": {
   "ikisiDeVar": true,
