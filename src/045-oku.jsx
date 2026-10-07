@@ -69,44 +69,61 @@ function kayitaCevir(satir) {
   return k;
 }
 
+// `urunler` sütunları görselsiz: şemanın satır üreticisinden (035) okunur ki sütun listesi ikinci bir yerde
+// tekrarlanmasın; `ek` (şema dışı alanlar) ve `surum` (iyimser kilit) eklenir — ikisi şema satırında görünmez.
+function urunResimsizSutunlari() {
+  const ornek = TABLO_SEMA.urunler.satir({ id: "x", variants: [], hareketler: [] });
+  const sutunlar = Object.keys(ornek).filter((k) => k !== "kapak_resmi" && k !== "renk_resimleri" && k !== "ek");
+  sutunlar.push("ek");
+  if (!surumDesteklenmiyor) sutunlar.push("surum");
+  return sutunlar;
+}
+
 // Buluttan tüm veriyi çeker ve uygulamanın iç yapısına dönüştürür.
-async function supabasedenOku() {
+// `secenek.yalniz` (v1.611.0, değişiklik sayacı): yalnız bu TABLOLAR okunur, ötekiler boş gelir ve sürüm haritaları
+// yalnız okunanlar için yenilenir — kısmi tazelemede okunmayan tablonun haritası silinirse sonraki yazması INSERT'e
+// düşer ve başka cihazın kaydını ezer. `secenek.resimsiz`: `urunler` görsel sütunları dışarıda (kapak_resmi,
+// renk_resimleri) — tazelemede 15 MB inmesin; görseller ekrandakinden korunur (100 `bulutDegisikligiUygula`).
+async function supabasedenOku(secenek = {}) {
+  const yalniz = secenek.yalniz ? new Set(secenek.yalniz) : null;
+  const okunur = (tablo) => !yalniz || yalniz.has(tablo);
+  const oku = (tablo, sorgu) => (okunur(tablo) ? supabaseTumSatirlar(tablo, sorgu) : Promise.resolve([]));
   // Sürüm sütunu var mı? Yazma başlamadan önce bilinmesi gerekiyor; sonra öğrenilirse ilk yazma
   // 400 alıp boşa giderdi.
-  await surumDesteginiYokla();
+  if (!yalniz) await surumDesteginiYokla();
 
   const [
     tanimSatir, cariSatir, cariHareket, urunSatir, varyantSatir, hareketSatir,
     sipSatir, kalemSatir, uretSatir, atamaSatir, rezSatir, onaySatir, copSatir, cekGorselSatir,
   ] = await Promise.all([
-    supabaseTumSatirlar("tanimlar"),
-    supabaseTumSatirlar("cariler"),
-    supabaseTumSatirlar("cari_hareketleri", "select=*&order=tarih.desc"),
-    supabaseTumSatirlar("urunler"),
-    supabaseTumSatirlar("varyantlar"),
-    supabaseTumSatirlar("stok_hareketleri", "select=*&order=tarih.desc"),
-    supabaseTumSatirlar("siparisler"),
-    supabaseTumSatirlar("siparis_kalemleri", "select=*&order=sira.asc"),
-    supabaseTumSatirlar("uretim"),
-    supabaseTumSatirlar("uretim_atamalari"),
-    supabaseTumSatirlar("stok_rezervasyonlari"),
-    supabaseTumSatirlar("onaylar"),
-    supabaseTumSatirlar("cop"),
-    supabaseTumSatirlar("cek_gorselleri"),
+    oku("tanimlar"),
+    oku("cariler"),
+    oku("cari_hareketleri", "select=*&order=tarih.desc"),
+    oku("urunler", secenek.resimsiz ? `select=${urunResimsizSutunlari().join(",")}` : "select=*"),
+    oku("varyantlar"),
+    oku("stok_hareketleri", "select=*&order=tarih.desc"),
+    oku("siparisler"),
+    oku("siparis_kalemleri", "select=*&order=sira.asc"),
+    oku("uretim"),
+    oku("uretim_atamalari"),
+    oku("stok_rezervasyonlari"),
+    oku("onaylar"),
+    oku("cop"),
+    oku("cek_gorselleri"),
   ]);
 
   // Sürüm sayaçları uygulama kaydına DEĞİL, ayrı haritaya alınır (bkz. _surumler yorumu).
   // Ham satırlar burada elde olduğu için okuma yeri burası.
-  surumleriYukle("urunler", urunSatir);
-  surumleriYukle("cariler", cariSatir);
-  surumleriYukle("siparisler", sipSatir);
-  surumleriYukle("uretim", uretSatir);
-  surumleriYukle("stok_rezervasyonlari", rezSatir);
-  surumleriYukle("onaylar", onaySatir);
-  surumleriYukle("cop", copSatir);
+  if (okunur("urunler")) surumleriYukle("urunler", urunSatir);
+  if (okunur("cariler")) surumleriYukle("cariler", cariSatir);
+  if (okunur("siparisler")) surumleriYukle("siparisler", sipSatir);
+  if (okunur("uretim")) surumleriYukle("uretim", uretSatir);
+  if (okunur("stok_rezervasyonlari")) surumleriYukle("stok_rezervasyonlari", rezSatir);
+  if (okunur("onaylar")) surumleriYukle("onaylar", onaySatir);
+  if (okunur("cop")) surumleriYukle("cop", copSatir);
   // Çek görselleri de sürüm takibine giriyor: olmazsa her güncelleme koşulsuz INSERT yoluna
   // düşer ve ikinci cihazdaki değişiklik sessizce ezilir (10. denetim bunu yakaladı).
-  surumleriYukle("cek_gorselleri", cekGorselSatir);
+  if (okunur("cek_gorselleri")) surumleriYukle("cek_gorselleri", cekGorselSatir);
 
   // Alt kayıtları ana kayda göre grupla — her seferinde filter çalıştırmak yerine tek geçiş.
   const grupla = (satirlar, alan) => {

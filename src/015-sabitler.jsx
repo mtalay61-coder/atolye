@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.610.0";
+const SURUM = "1.611.0";
 const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Katalogda urun detayi sayfayi kaydirmadan ustune acilan pencerede";
+const SURUM_NOTU = "Baska cihazin degisikligi aninda: sekme acikken 8 sn de bir degisiklik sayaci okunur, degisen tablo buluttan tazelenir (degisiklik-sayaci.sql calistirilmali)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Katalogda urun detayi sayfayi kaydirmadan ustune acilan penc
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.611.0", tarih: "07.10.2026",
+    eklenen: ["Başka cihazın yaptığı işlem anında görünür: sekme açıkken 8 saniyede bir buluttaki değişiklik sayacı okunur, sayacı artan tablo (kendi yazmamız değilse ve bekleyen kaydı yoksa) buluttan yeniden çekilip ekrana işlenir, \"Başka cihazdan güncellendi: …\" notu çıkar. Supabase'de degisiklik-sayaci.sql bir kez çalıştırılmalı; çalıştırılmadıysa uygulama eskisi gibi çalışır"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.610.0", tarih: "07.10.2026",
     eklenen: [], degisen: ["Katalog: ürün detayı sayfayı kaydırmadan ızgaranın üstüne açılan pencerede; dışına tıklamak ya da Kapat düğmesi kapatır"], duzeltilen: [] },
   { surum: "1.609.0", tarih: "07.10.2026",

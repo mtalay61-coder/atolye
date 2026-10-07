@@ -321,6 +321,7 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
     if (!TABLO_SEMA[tablo]) tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin
     return Promise.resolve(yerel).then(() => ({ ok: true, bulut: false }));
   }
+  bulutYazmaDamgala(tablo);
   return Promise.all([
     yerel,
     supabaseTabloEsitle(tablo, kayitlar).then(

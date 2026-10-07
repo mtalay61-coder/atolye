@@ -815,6 +815,70 @@ export default function AtolyeERP() {
   const cevrimdisiSerbest = typeof window !== "undefined" && !!window.__cevrimdisiSerbest;
   const yerelAcildi = !!(veriKaynagi && veriKaynagi.tur === "yerel");
   const kilitli = !cevrimdisiSerbest && supabaseAcikMi() && !loading && (baglantiYok || yerelAcildi);
+
+  // BAŞKA CİHAZIN DEĞİŞİKLİĞİ ANINDA (v1.611.0, 047 + degisiklik-sayaci.sql). Sekme görünürken 8 sn'de bir tek satır
+  // okunur; sayacı artan tablolar bizim yazmamız değilse (12 sn) ve bekleyen yazması yoksa buluttan yeniden çekilir,
+  // state ve fark tabanı yenilenir, kısa toast. Stok görselsiz okunur (15 MB inmesin), görseller ekrandakinden korunur.
+  // Tablo yoksa (SQL çalıştırılmadı) ilk hata sonrası yoklama 5 dk susar — konsolda bir kez söylenir.
+  const degisiklikRef = useRef({ gorulen: null, mesgul: false, susturulana: 0 });
+  const bulutDegisikligiUygula = useCallback(async (alanlar) => {
+    const tablolar = alanlar.flatMap(alaninTablolari);
+    const bulut = await supabasedenOku({ yalniz: tablolar, resimsiz: true });
+    alanlar.forEach((alan) => {
+      if (alan === "stok") {
+        const mevcutGorsel = {};
+        (sonStokRef.current || []).forEach((u) => { const g = urunGorselleri(u); if (g) mevcutGorsel[u.id] = g; });
+        const yeni = gorselleriBirlestir(bulut.stok, mevcutGorsel);
+        setStok(yeni); tabloBaslangicTam("urunler", yeni);
+      } else if (alan === "cariler") { setCariler(bulut.cariler); tabloBaslangicTam("cariler", bulut.cariler); }
+      else if (alan === "siparisler") { setSiparisler(bulut.siparisler); tabloBaslangicTam("siparisler", bulut.siparisler); }
+      else if (alan === "uretim") { setUretim(bulut.uretim); tabloBaslangicTam("uretim", bulut.uretim); }
+      else if (alan === "stokRezervasyonlari") { setStokRezervasyonlari(bulut.stokRezervasyonlari || []); tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari || []); }
+      else if (alan === "onaylar") { setOnaylar(bulut.onaylar || []); tabloBaslangicTam("onaylar", bulut.onaylar || []); }
+      else if (alan === "cop") { const c = copuBuda(bulut.cop || []); setCop(c); tabloBaslangicTam("cop", bulut.cop || []); }
+      else if (alan === "tanimlar") { if (bulut.tanimlar) setTanimlar((t) => ({ ...t, ...bulut.tanimlar })); }
+    });
+    // Tek satırlık tablolar: `veri` sütunu bütün hâl.
+    const tekil = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, fis_defteri: setFisDefteri, modeller: setModeller };
+    const tekilAlan = { muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler", faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller" };
+    for (const [tablo, setX] of Object.entries(tekil)) {
+      if (!alanlar.includes(tekilAlan[tablo])) continue;
+      const sat = await supabaseTumSatirlar(tablo);
+      if (sat[0] && sat[0].veri != null) setX(sat[0].veri);
+    }
+  }, []);
+  useEffect(() => {
+    if (loading || !supabaseAcikMi()) return undefined;
+    const yokla = async () => {
+      const d = degisiklikRef.current;
+      if (d.mesgul || document.hidden || baglantiYok || !oturumVarMi() || Date.now() < d.susturulana) return;
+      d.mesgul = true;
+      try {
+        const sat = await supabaseIstek("degisiklik?id=eq.tekil&select=sayaclar");
+        const yeni = (Array.isArray(sat) && sat[0] && sat[0].sayaclar) || {};
+        if (d.gorulen === null) { d.gorulen = yeni; return; }
+        const f = degisiklikFarki(d.gorulen, yeni, { sonYazma: bulutSonYazma, simdi: Date.now(), bekleyenAnahtarlar: Object.keys(bekleyenYazmalariOku()) });
+        if (f.alanlar.length) {
+          await bulutDegisikligiUygula(f.alanlar);
+          gunlukYaz(`Başka cihazdan güncellendi: ${f.alanlar.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ")}`, "veri", { tablolar: f.tablolar });
+          showToast(`Başka cihazdan güncellendi: ${f.alanlar.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ")}`);
+        }
+        d.gorulen = degisiklikGoruldu(d.gorulen, yeni, f.ertelenen);
+      } catch (e) {
+        // Tablo yok (SQL çalıştırılmadı) ya da yetki yok: 5 dk sus, bir kez söyle. Ağ hatası: bir sonraki tur.
+        if (/HTTP 4|Supabase 4|42P01|does not exist|permission/i.test(String((e && e.message) || e))) {
+          if (!degisiklikRef.current.susturulana) console.warn("Değişiklik sayacı okunamadı — degisiklik-sayaci.sql çalıştırılmalı:", e);
+          degisiklikRef.current.susturulana = Date.now() + 5 * 60 * 1000;
+        }
+      } finally { degisiklikRef.current.mesgul = false; }
+    };
+    const z = setInterval(yokla, DEGISIKLIK_YOKLAMA_MS);
+    const gorunurluk = () => { if (!document.hidden) yokla(); };
+    document.addEventListener("visibilitychange", gorunurluk);
+    yokla();
+    return () => { clearInterval(z); document.removeEventListener("visibilitychange", gorunurluk); };
+  }, [loading, baglantiYok, bulutDegisikligiUygula, showToast]);
+
   useEffect(() => {
     if (cevrimdisiSerbest || !supabaseAcikMi()) return undefined;
     window.__baglantiDegisti = (varMi) => setBaglantiYok(!varMi);
