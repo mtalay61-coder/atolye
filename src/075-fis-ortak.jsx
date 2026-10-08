@@ -519,16 +519,37 @@ async function pdfKutuphaneleriniYukle() {
   }
 }
 
+// PDF GÖVDESİ AYRI BELGEDE ÇİZİLİR (v1.616.0 — kullanıcı, PDF ekran görüntüsü: "PDF'te yazılar iç içe geçiyor":
+// "New Diamond" → "NewDiamond", "SAT-1009" harfleri üst üste). Sebep: uygulama Boyut ayarını `html { zoom }` ile uyguluyor
+// (100-app, v1.521) ve html2canvas CSS `zoom`'u tanımıyor — kelimelerin yerini büyütülmüş ölçüp yazıyı büyütülmemiş
+// çiziyor, boşluklar kayboluyor. Ayrıca uygulamanın genel `th` kuralı (büyük harf, harf aralığı) PDF'e sızıyordu.
+// Çözüm: gövde, uygulama CSS'i OLMAYAN gizli bir iframe'de kendi sabit stiliyle kurulur, html2canvas oradan çizer.
+// Resimlerin yüklenmesi beklenir (yoksa boş kutu çıkıyordu). `pdfCiktiBelgesi` testte de kullanılıyor.
+const PDF_CIKTI_STILI = "html,body{margin:0;padding:0;zoom:1}body{width:794px;box-sizing:border-box;padding:24px;background:#fff;color:#33281C;" +
+  "font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;" +
+  "letter-spacing:normal;word-spacing:normal;font-kerning:normal}" +
+  "table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px;text-transform:none;letter-spacing:normal}" +
+  ".mono{font-family:'Courier New',Courier,'Liberation Mono',monospace}img{max-width:100%}";
+function pdfCiktiBelgesi(govdeHTML) {
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=794"><style>${PDF_CIKTI_STILI}</style></head><body>${govdeHTML}</body></html>`;
+}
+
 async function htmldenPdfBlob(govdeHTML) {
   const kut = await pdfKutuphaneleriniYukle();
   if (!kut) return null;
-  const kap = document.createElement("div");
-  // A4 genişliği (96dpi ≈ 794px); ekran dışında ama çizilebilir (display:none çizilmez).
-  kap.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;padding:24px;background:#fff;color:var(--erp-text);font-family:-apple-system,'Segoe UI',sans-serif;";
-  kap.innerHTML = `<style>table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px}.mono{font-family:'Courier New',monospace}img{max-width:100%}</style>${govdeHTML}`;
-  document.body.appendChild(kap);
+  const cerceve = document.createElement("iframe");
+  cerceve.setAttribute("aria-hidden", "true");
+  // Ekran dışında ama çizilebilir (display:none çizilmez). Yükseklik içerikten sonra ayarlanır.
+  cerceve.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;";
+  document.body.appendChild(cerceve);
   try {
-    const tuval = await kut.html2canvas(kap, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+    const belge = cerceve.contentDocument;
+    belge.open(); belge.write(pdfCiktiBelgesi(govdeHTML)); belge.close();
+    // Resimler (logo, ürün) yüklenmeden çizilirse boş çıkar.
+    await Promise.all([...belge.images].map((im) => (im.complete ? null : new Promise((r) => { im.onload = r; im.onerror = r; }))));
+    if (belge.fonts && belge.fonts.ready) { try { await belge.fonts.ready; } catch (e) { /* yazı tipi beklenemedi — devam */ } }
+    cerceve.style.height = `${Math.max(1123, belge.documentElement.scrollHeight)}px`;
+    const tuval = await kut.html2canvas(belge.body, { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 794 });
     const pdf = new kut.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
     const sayfaG = pdf.internal.pageSize.getWidth(), sayfaY = pdf.internal.pageSize.getHeight();
     const resimY = (tuval.height * sayfaG) / tuval.width;
@@ -542,7 +563,7 @@ async function htmldenPdfBlob(govdeHTML) {
     }
     return pdf.output("blob");
   } finally {
-    document.body.removeChild(kap);
+    document.body.removeChild(cerceve);
   }
 }
 
