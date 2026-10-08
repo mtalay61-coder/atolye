@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.612.0";
+const SURUM = "1.613.0";
 const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "Siparis kartindan Tahsilat/Odeme girisi (cari karti onceden dolu acilir, odenen/kalan kartta) + caride Ulke alani";
+const SURUM_NOTU = "Tahsilat/Odeme formu siparis kartinin icinde acilir (kasa/banka, kur, defter); cek/senet icin cari kartina baglanti";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Siparis kartindan Tahsilat/Odeme girisi (cari karti onceden 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.613.0", tarih: "08.10.2026",
+    eklenen: ["Sipariş kartında o siparişe bağlı tahsilatlar/ödemeler listelenir: tarih, fiş no (tıklayınca fişe gider), tutar, kasa/banka"],
+    degisen: ["Sipariş kartındaki \"Tahsilat Gir / Ödeme Gir\" artık formu kartın içinde açıyor: tarih, tutar, defter, ödeme şekli, kasa/banka (farklı para birimindeyse hesaba işlenecek tutar ve kur), açıklama. Kayıt cari ekstresine ve kasaya aynı anda düşer, siparişe bağlı kalır. Çek/senet için \"cari kartında aç\" bağlantısı"],
+    duzeltilen: [] },
   { surum: "1.612.0", tarih: "08.10.2026",
     eklenen: ["Sipariş kartında \"Tahsilat Gir\" (satış) / \"Ödeme Gir\" (alış) düğmesi: carinin kartı açılır, tahsilat formu sipariş tutarı, para birimi ve sipariş numarasıyla dolu gelir; kaydedilen hareket siparişe bağlanır ve sipariş kartında \"Ödenen / Kalan\" görünür",
       "Cari kartında ve yeni cari formunda Ülke alanı (e-faturada alıcı ülkesi buradan gider, boşsa Türkiye)"],
