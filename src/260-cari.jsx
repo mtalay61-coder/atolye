@@ -1,4 +1,4 @@
-function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle }) {
+function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -9,6 +9,15 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
   const [acikCariId, setAcikCariId] = useState(null);
   const [pasifSekme, setPasifSekme] = useState(false);
   const [personelProsesSekme, setPersonelProsesSekme] = useState("Tümü");
+  // SİPARİŞTEN GELEN TAHSİLAT/ÖDEME HEDEFİ (v1.612.0): süzgeçleri sıfırla (kart listede görünsün) ve o kartı aç.
+  // Formu doldurma işi kartın kendisinde (CariCard, `odemeHedefi` etkisi); hedefi de o tüketir.
+  useEffect(() => {
+    if (!odemeHedefi) return;
+    setQuery("");
+    setCariTipSekme("Tümü");
+    setPasifSekme(false);
+    setAcikCariId(odemeHedefi.cariId);
+  }, [odemeHedefi]);
   // LİSTE DEFTERİ (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap"). Satır
   // bakiyesi, üstteki Alacak/Borç/Net özeti ve dip toplam seçilen deftere göre (Muhasebe ikisine de girer).
   // Açık kartın içindeki Genel/Resmi ayrımı ve ekstre süzgeci ayrı — kartta zaten var.
@@ -25,7 +34,7 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
     //
     // Varsayılan yine TRY: çoğu cari TL, her seferinde seçtirmek gereksiz. Ama artık GÖRÜNÜR ve
     // değiştirilebilir; sessiz bir varsayım değil.
-    return { unvan: "", tip: "Müşteri", telefon: "", vergiNo: "", adres: "", notlar: "", paraBirimi: "TRY" };
+    return { unvan: "", tip: "Müşteri", telefon: "", vergiNo: "", adres: "", ulke: "", notlar: "", paraBirimi: "TRY" };
   }
 
   function addCari() {
@@ -41,6 +50,9 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
       telefon: form.telefon.trim(),
       vergiNo: vergiNoKaydedilecek(form.vergiNo),
       adres: form.adres.trim(),
+      // ÜLKE (v1.612.0 — kullanıcı: "caride ülke de girebilelim"): yurt dışı müşteri (Tiran, Arnavutluk gibi) için.
+      // Sütun değil `ek` (semaDisiHam); e-faturada alıcı ülkesi buradan, boşsa Türkiye.
+      ...(form.ulke && form.ulke.trim() ? { ulke: form.ulke.trim() } : {}),
       notlar: form.notlar.trim(),
       paraBirimi: form.paraBirimi || "TRY",
       hareketler: [],
@@ -351,9 +363,12 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               <VergiNoUyarisi cariler={cariler} no={form.vergiNo} />
             </Field>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 1fr", gap: 10, marginTop: 10 }}>
             <Field label="Adres">
               <input value={form.adres} onChange={(e) => setForm({ ...form, adres: e.target.value })} placeholder="Opsiyonel" style={inputStyle} />
+            </Field>
+            <Field label="Ülke">
+              <input value={form.ulke} onChange={(e) => setForm({ ...form, ulke: e.target.value })} placeholder="Boşsa Türkiye" data-yeni-cari-ulke="1" style={inputStyle} />
             </Field>
             <Field label="Not">
               <input value={form.notlar} onChange={(e) => setForm({ ...form, notlar: e.target.value })} placeholder="Opsiyonel" style={inputStyle} />
@@ -419,6 +434,8 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               onStokFisiAc={onStokFisiAc}
               tanimlarFiyatGruplari={tanimlarFiyatGruplari}
               onPencereAc={onPencereAc}
+              odemeHedefi={odemeHedefi && odemeHedefi.cariId === c.id ? odemeHedefi : null}
+              onOdemeHedefiTuketildi={onOdemeHedefiTuketildi}
             />
           ))}
           {/* DİP TOPLAM (v1.518.0 — kullanıcı: alacak ve borç ayrı, altta net). LİSTELENEN carilerin (sekme + arama

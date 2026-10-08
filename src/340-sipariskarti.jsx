@@ -62,7 +62,7 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
   const duzenAcRef = useRef(null);
@@ -135,6 +135,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   // para birimine çevrildikten sonra tüm ekranlarda aynı birimle devam etmesini sağlar. Kayıt para
   // birimi ayarlanmamışsa, kalemlerin kendi para birimi (hepsi aynıysa) kullanılır (eskisi gibi).
   let toplam, toplamSembol;
+  // Başlıktaki toplamın para birimi KODU (sembol değil) — Tahsilat/Ödeme köprüsü ve "Ödenen/Kalan" için (v1.612.0).
+  let toplamPB = null;
   if (siparis.kayitParaBirimi) {
     const birlesikKurlar = { ...(kurlar || {}), ...(siparis.kayitKurlari || {}) };
     let toplamKayitPB = 0;
@@ -146,6 +148,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     });
     toplam = hepsiCevrilebildi ? toplamKayitPB : siparis.kalemler.reduce((sum, k) => sum + k.miktar * k.birimFiyat, 0);
     toplamSembol = hepsiCevrilebildi ? (PARA_SEMBOLU[siparis.kayitParaBirimi] || siparis.kayitParaBirimi) : "₺";
+    toplamPB = hepsiCevrilebildi ? siparis.kayitParaBirimi : null;
   } else {
     toplam = siparis.kalemler.reduce((sum, k) => sum + k.miktar * k.birimFiyat, 0);
     // Kalemler AYNI para biriminde ise onun sembolü kullanılır; farklı para birimleri karışıksa
@@ -153,6 +156,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     // zaten ayrı ayrı doğru gösteriyor, bu sadece ÖZET/başlık gösterimi içindir.
     const kalemPBleriHepsiAyniMi = new Set(siparis.kalemler.map((k) => k.paraBirimi || "TRY")).size <= 1;
     toplamSembol = kalemPBleriHepsiAyniMi && siparis.kalemler[0] ? (PARA_SEMBOLU[siparis.kalemler[0].paraBirimi || "TRY"] || siparis.kalemler[0].paraBirimi) : "₺";
+    toplamPB = kalemPBleriHepsiAyniMi && siparis.kalemler[0] ? (siparis.kalemler[0].paraBirimi || "TRY") : null;
   }
   const durumRenk = SIPARIS_DURUM_RENK[siparis.durum] || "var(--erp-text-2)";
   const eksikVar = siparis.kalemler.some((k) => (k.karsilanan || 0) < k.miktar);
@@ -1723,6 +1727,43 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         </div>
                       );
                     })()}
+              {/* TAHSİLAT / ÖDEME GİR (v1.612.0 — kullanıcı: "Siparişte ödeme girişi de olsun"). Para hareketi formu
+                  TEK YERDE kalıyor (cari kartı: kasa/banka seçimi, kur, çek — 265); burası köprü: carinin kartını
+                  açar, formu siparişin kalan tutarı, para birimi ve numarasıyla dolu getirir. Kaydedilen hareket
+                  `siparisId` taşır; "Ödenen / Kalan" buradan okunur (siparisOdemeOzeti, 320). */}
+              {onOdemeGir && cari && (() => {
+                const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
+                const sembolu = (pb) => PARA_SEMBOLU[pb] || pb;
+                const tutarYaz = (t, pb) => `${(Number(t) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembolu(pb)}`;
+                const ozetMetni = oz.odemeler.length === 0 ? null
+                  : toplamPB && oz.toplamlar[toplamPB] != null
+                    ? `Ödenen ${tutarYaz(oz.odenen, toplamPB)} · Kalan ${tutarYaz(oz.kalan, toplamPB)}`
+                    : `Ödenen ${Object.entries(oz.toplamlar).map(([pb, t]) => tutarYaz(t, pb)).join(" + ")}`;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                    <button
+                      type="button"
+                      className="btn-ghost"
+                      data-siparis-odeme-gir={oz.beklenenTip}
+                      style={{ borderColor: HAREKET_TIPI_RENK[oz.beklenenTip], color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
+                      title={`${cari.unvan} kartında ${oz.beklenenTip.toLowerCase()} formunu bu siparişle dolu açar`}
+                      onClick={() => onOdemeGir({
+                        cariId: siparis.cariId, tip: oz.beklenenTip,
+                        tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
+                        paraBirimi: toplamPB || "TRY", siparisId: siparis.id, siparisNo: siparis.siparisNo,
+                      })}
+                    >
+                      <Plus size={13} /> {oz.beklenenTip} Gir
+                    </button>
+                    {ozetMetni && (
+                      <span className="mono" data-siparis-odenen={oz.odenen} data-siparis-kalan={oz.kalan}
+                        style={{ fontSize: 12, fontWeight: 700, color: oz.kalan > 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
+                        {ozetMetni}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
               <button
                           data-fis-olustur="1"
                 className={showTeslim ? "btn-ghost" : "btn-primary"}

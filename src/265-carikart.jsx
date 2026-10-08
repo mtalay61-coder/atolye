@@ -1,4 +1,4 @@
-function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle }) {
+function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
   // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
   // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
   // gittiği söylenmezse silindi sanılıyor.
@@ -89,6 +89,29 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     setShowHareket(true);
   }
 
+  // SİPARİŞTEN GELEN TAHSİLAT/ÖDEME (v1.612.0 — kullanıcı: "Siparişte ödeme girişi de olsun"). Sipariş kartındaki
+  // "Tahsilat Gir / Ödeme Gir" buraya hedef gönderir: Hareketler sekmesi, tip, tutar (kalan), siparişin para birimi
+  // ve açıklaması dolu gelir; `siparisId/siparisNo` kayda geçer (sipariş kartı "Ödenen / Kalan" bunu sayar).
+  // Kasa/banka, kur, çek seçimi kullanıcıda — form AYNI form, yalnız önceden dolu. Hedef bir kez tüketilir.
+  const kartRef = useRef(null);
+  useEffect(() => {
+    if (!odemeHedefi || !open) return;
+    setCardTab("hareketler");
+    setHareketTipi(odemeHedefi.tip);
+    setHForm({
+      ...emptyHareket(),
+      yon: hareketYonu(odemeHedefi.tip),
+      tutar: odemeHedefi.tutar > 0 ? String(Math.round(odemeHedefi.tutar * 100) / 100) : "",
+      paraBirimi: odemeHedefi.paraBirimi || cari.paraBirimi || "TRY",
+      aciklama: odemeHedefi.siparisNo ? `Sipariş ${odemeHedefi.siparisNo}` : "",
+      siparisId: odemeHedefi.siparisId || null,
+      siparisNo: odemeHedefi.siparisNo || null,
+    });
+    setShowHareket(true);
+    if (kartRef.current && kartRef.current.scrollIntoView) kartRef.current.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (onOdemeHedefiTuketildi) onOdemeHedefiTuketildi();
+  }, [odemeHedefi, open]);
+
   function submitHareket() {
     const tutar = parseFloat(hForm.tutar);
     if (!tutar || tutar <= 0) return;
@@ -123,6 +146,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       fisNo: hForm.fisNo.trim() || "",
       // Huninin doğru ön eki seçebilmesi için işlem tipi kayda giriyor.
       islemTipi: hareketTipi || null,
+      // SİPARİŞ BAĞI (v1.612.0): siparişten gelen tahsilat/ödeme siparişine bağlı kalır.
+      ...(hForm.siparisId ? { siparisId: hForm.siparisId, siparisNo: hForm.siparisNo || null } : {}),
       // Aciklama boş bırakılırsa, hangi butonla (Alış/Satış/Ödeme/Tahsilat) girildiği otomatik eklenir —
       // "yon" alanı (Borç/Tahsilat) tek başına Alış'ı Satış'tan, Ödeme'yi Tahsilat'tan ayırt edemediği
       // için bu bilgi hareket geçmişinde kaybolmasın diye.
@@ -319,7 +344,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const subeOnerileri = bilinenSubeler(gecmisCekler, hForm.cek && hForm.cek.banka);
 
   return (
-    <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    <div ref={kartRef} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <div
         data-cari-ust-serit={open ? "1" : undefined}
         style={{
@@ -750,6 +775,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               ["tckn", "TC Kimlik No", 110, "şahıs ise"],
               ["il", "İl", 90, ""],
               ["ilce", "İlçe", 90, ""],
+              // ÜLKE (v1.612.0): yurt dışı cari için; e-faturada alıcı ülkesi buradan, boşsa Türkiye.
+              ["ulke", "Ülke", 100, "Türkiye"],
             ].map(([alan, etiket, gen, ipucu]) => (
               <label key={alan} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
                 {etiket}
@@ -1044,8 +1071,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 </Field>
                 <Field label="Tutar">
                   <div style={{ display: "flex", gap: 4 }}>
-                    <input type="number" step="0.01" value={hForm.tutar} onChange={(e) => setHForm({ ...hForm, tutar: e.target.value })} style={{ ...inputStyle, flex: 1 }} />
-                    <select value={hForm.paraBirimi || "TRY"} onChange={(e) => setHForm({ ...hForm, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 68 }}>
+                    <input type="number" step="0.01" data-cari-hareket-tutar="1" value={hForm.tutar} onChange={(e) => setHForm({ ...hForm, tutar: e.target.value })} style={{ ...inputStyle, flex: 1 }} />
+                    <select data-cari-hareket-pb="1" value={hForm.paraBirimi || "TRY"} onChange={(e) => setHForm({ ...hForm, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 68 }}>
                       {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                     </select>
                   </div>
@@ -1079,6 +1106,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                       </span>
                     ) : (
                       <select
+                        data-cari-hareket-hesap="1"
                         value={hForm.hesap}
                         onChange={(e) => {
                           const yeni = uygunHesaplar.find((h) => h.deger === e.target.value);
@@ -1146,7 +1174,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   </Field>
                 )}
                 <Field label="Açıklama">
-                  <input value={hForm.aciklama} onChange={(e) => setHForm({ ...hForm, aciklama: e.target.value })} placeholder={`Opsiyonel — boş kalırsa "${hareketTipi}" yazılır`} style={inputStyle} />
+                  <input data-cari-hareket-aciklama="1" value={hForm.aciklama} onChange={(e) => setHForm({ ...hForm, aciklama: e.target.value })} placeholder={`Opsiyonel — boş kalırsa "${hareketTipi}" yazılır`} style={inputStyle} />
                 </Field>
               </div>
 

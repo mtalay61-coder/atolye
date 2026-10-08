@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.611.0";
-const SURUM_TARIHI = "2026-10-06";
-const SURUM_NOTU = "Baska cihazin degisikligi aninda: sekme acikken 8 sn de bir degisiklik sayaci okunur, degisen tablo buluttan tazelenir (degisiklik-sayaci.sql calistirilmali)";
+const SURUM = "1.612.0";
+const SURUM_TARIHI = "2026-10-08";
+const SURUM_NOTU = "Siparis kartindan Tahsilat/Odeme girisi (cari karti onceden dolu acilir, odenen/kalan kartta) + caride Ulke alani";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Baska cihazin degisikligi aninda: sekme acikken 8 sn de bir 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.612.0", tarih: "08.10.2026",
+    eklenen: ["Sipariş kartında \"Tahsilat Gir\" (satış) / \"Ödeme Gir\" (alış) düğmesi: carinin kartı açılır, tahsilat formu sipariş tutarı, para birimi ve sipariş numarasıyla dolu gelir; kaydedilen hareket siparişe bağlanır ve sipariş kartında \"Ödenen / Kalan\" görünür",
+      "Cari kartında ve yeni cari formunda Ülke alanı (e-faturada alıcı ülkesi buradan gider, boşsa Türkiye)"],
+    degisen: ["Sipariş listesinde her sipariş belirgin ama yumuşak bir çerçevede (satırlar birbirine karışmıyor)"], duzeltilen: [] },
   { surum: "1.611.0", tarih: "07.10.2026",
     eklenen: ["Başka cihazın yaptığı işlem anında görünür: sekme açıkken 8 saniyede bir buluttaki değişiklik sayacı okunur, sayacı artan tablo (kendi yazmamız değilse ve bekleyen kaydı yoksa) buluttan yeniden çekilip ekrana işlenir, \"Başka cihazdan güncellendi: …\" notu çıkar. Supabase'de degisiklik-sayaci.sql bir kez çalıştırılmalı; çalıştırılmadıysa uygulama eskisi gibi çalışır"],
     degisen: [], duzeltilen: [] },
