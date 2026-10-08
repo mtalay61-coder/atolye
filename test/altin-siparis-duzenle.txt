@@ -40,7 +40,7 @@
  "renksizRed": true,
  "satirlar": [
   {
-   "miktarKutusu": 2,
+   "miktarKutusu": 4,
    "renk": "Siyah",
    "renkSecenekleri": [
     "Siyah"
@@ -58,7 +58,7 @@
    "urunSecici": false
   },
   {
-   "miktarKutusu": 2,
+   "miktarKutusu": 4,
    "renk": "Taba",
    "renkSecenekleri": [
     "Taba (listede yok)",

@@ -1,0 +1,50 @@
+{
+ "hatalar": [],
+ "silindiktenSonra": [
+  {
+   "renk": "Siyah",
+   "bosKutular": [
+    "41",
+    "42"
+   ],
+   "tireler": 0
+  },
+  {
+   "renk": "Kahve",
+   "bosKutular": [
+    "41",
+    "42"
+   ],
+   "tireler": 0
+  }
+ ],
+ "geriYazildi": [
+  {
+   "renk": "Siyah",
+   "bosKutular": [
+    "42"
+   ],
+   "tireler": 0
+  },
+  {
+   "renk": "Kahve",
+   "bosKutular": [
+    "41",
+    "42"
+   ],
+   "tireler": 0
+  }
+ ],
+ "kahveSilindi": [
+  "Siyah"
+ ],
+ "kahveGeri": [
+  "Siyah",
+  "Kahve"
+ ],
+ "kalemler": [
+  "Kahve:40:6:0:TRY:-",
+  "Siyah:40:2:400:TRY:10",
+  "Siyah:41:5:400:TRY:10"
+ ]
+}

@@ -557,6 +557,41 @@ function okutmaHatasiTitret() {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([90, 70, 90]);
 }
 
+// OKUTMA SESİ (v1.614.0 — kullanıcı: "Okuyunca ses çıkarsın daha belirgin"). Dosya yok, Web Audio ile üretilir
+// (çevrimdışı da çalar). Başarı: kısa, yüksek, iki ton (yükselen); hata: alçak, uzun, kare dalga. Ses yüksek ama
+// kırpılmaz (kazanç 0.35). Tarayıcı sesi yalnız bir dokunuştan sonra açar: `okutmaSesiHazirla` kamerayı açan /
+// barkod kutusuna basan dokunuşta çağrılır. Ses açılamazsa (sessiz mod, eski tarayıcı) sessizce geçilir.
+let _okutmaSesBaglami = null;
+function okutmaSesiHazirla() {
+  try {
+    const AC = typeof window !== "undefined" && (window.AudioContext || window.webkitAudioContext);
+    if (!AC) return null;
+    if (!_okutmaSesBaglami) _okutmaSesBaglami = new AC();
+    if (_okutmaSesBaglami.state === "suspended") _okutmaSesBaglami.resume();
+    return _okutmaSesBaglami;
+  } catch (e) { return null; }
+}
+function okutmaSesi(tamam) {
+  try {
+    const c = okutmaSesiHazirla();
+    if (!c) return;
+    const ton = (frekans, baslangic, sure, dalga) => {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = dalga;
+      o.frequency.value = frekans;
+      const t0 = c.currentTime + baslangic;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + sure);
+      o.connect(g); g.connect(c.destination);
+      o.start(t0); o.stop(t0 + sure + 0.02);
+    };
+    if (tamam) { ton(1320, 0, 0.09, "square"); ton(1760, 0.1, 0.14, "square"); }
+    else { ton(220, 0, 0.45, "sawtooth"); }
+  } catch (e) { /* ses yok — titreşim ve ekran yazısı yeterli */ }
+}
+
 // HARİCİ BARKOD (v1.542.0 — kullanıcı: "harici barkod ekle"). Kutunun ya da tedarikçinin kendi etiketi
 // (EAN vb.) bizim şemamıza uymaz; ürün kartında (Barkodlar sekmesi) bir RENK+BEDENE bağlanır ve okutulunca
 // o bedenin kendi barkodu gibi çözülür (seviye "beden"). Ürün kaydında `hariciBarkodlar: [{ kod, renk,

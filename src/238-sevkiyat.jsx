@@ -54,6 +54,7 @@ function SevkiyatEkrani({ koliler, siparisler, cariler, stok, tanimlar, uretim, 
       setOkutmaSonucu({ tamam, metin });
       showToast(metin);
       if (!tamam) okutmaHatasiTitret();
+      okutmaSesi(!!tamam);   // v1.614.0: okutma sesi (sipariş formuyla aynı)
     };
     const koli = (koliler || []).find((k) => (k.kod || "").toLocaleUpperCase("tr") === kod.toLocaleUpperCase("tr"));
     if (!koli) {

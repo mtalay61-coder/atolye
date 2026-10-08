@@ -392,6 +392,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1); setSiparisDefter("Genel");
     setMusteriKodu(""); setKayitParaBirimi(null); setKayitKurlari({});
     setKAmbalajRenk("");
+    // ÖNCEKİ SİPARİŞİN OKUTMA SONUCU TEMİZLENİR (v1.614.0 — kullanıcı: "Yeni sipariş açınca eski barkodu gösteriyor
+    // ekranda hâlâ 27454, önceki siparişten kalma"). Sonuç satırı bir sonraki okutmaya kadar kalıyordu; yeni sipariş
+    // de "sonraki" sayılmıyordu.
+    setBarkodSonuc(null); setBarkodGirisi("");
   }
 
   // HAVUZ: siparişe girilebilecek ürünlerin görselleri (ürün+renk). Havuzu ÇAĞIRAN belirliyor;
@@ -459,6 +463,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
       setBarkodSonuc({ tamam, metin, kod: temiz });
       showToast(metin);
       if (!tamam) okutmaHatasiTitret();
+      // SES (v1.614.0 — kullanıcı: "Okuyunca ses çıkarsın daha belirgin"): başarıda iki yüksek ton, hatada alçak ton.
+      okutmaSesi(!!tamam);
     };
     const cozum = urunBarkoduCoz(temiz, stok || [], barkodTanimlari);
     if (!cozum) { bildir(`Tanınmayan barkod: ${temiz} — ${barkodTaninmamaSebebi(temiz)}`, false); setBarkodGirisi(""); return; }
@@ -599,6 +605,20 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // çağrı AYNI çizimin `kalemler` fotoğrafından kuruyordu: her yazma bir öncekini ezdi, yalnız SON beden
   // fiyatı aldı. Satır sonra "farklı" görünüp fiyat kutusu da kayboluyordu (düzeltmenin yolu kalmıyordu).
   // Fiş formunda (255) aynı fonksiyon baştan fonksiyonluydu; hata yalnız sipariş formundaydı.
+  // SİLİNEN BEDENİ SATIRA GERİ EKLE (v1.614.0). Satırın (aynı ürün + renk) ilk kalemi şablon: fiyat, para birimi,
+  // KDV, kutu ve notlar ondan; satırda bedenler farklı fiyattaysa o ölçünün fiyat kuralı yoksa ilk kalemin fiyatı.
+  // Aynı ürün+renk+beden zaten varsa (başka satırda) miktarı artırılır — kalemEkle ile aynı birleştirme kuralı.
+  function bedenGeriEkle(g, beden, miktar) {
+    const ilk = (g.kalemler || [])[0];
+    if (!ilk) return;
+    setKalemler((onceki) => {
+      const i = onceki.findIndex((k) => k.urunId === ilk.urunId && k.renk === ilk.renk && k.beden === beden && !kalemKilitSebebi(k));
+      if (i >= 0) return onceki.map((k, j) => (j === i ? { ...k, miktar: (k.miktar || 0) + miktar } : k));
+      const { id, beden: _b, miktar: _m, karsilanan, planlama, ...sablon } = ilk;
+      return [...onceki, { ...sablon, id: uid("kalem"), beden, miktar }];
+    });
+  }
+
   function kalemDuzenle(id, alan, deger) {
     const idler = new Set(Array.isArray(id) ? id : [id]);
     setKalemler((onceki) => onceki.map((k) => (idler.has(k.id) && !kalemKilitSebebi(k) ? { ...k, [alan]: deger } : k)));
@@ -1762,7 +1782,15 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               }
               gruplar[grupIndex[key]].kalemler.push(k);
             });
-            const tumBedenler = Array.from(new Set(kalemler.map((k) => k.beden)));
+            // SÜTUNLAR = kalemlerin ölçüleri + satırlardaki ürünlerin BÜTÜN ölçüleri, sıralı (v1.614.0 — kullanıcı:
+            // "Silinen rengi tekrar ekleyemiyorum"). Yalnız kalemlerden türetilince bir ölçünün son kalemi silindiğinde
+            // sütun da yok oluyordu: geri yazacak hücre kalmıyordu. Ürünün ölçüleri sütunda dursun; boş hücre geri
+            // ekleme kutusu (bedenGeriEkle). Sıra küçükten büyüğe (denetim 17; eskiden ekleme sırasıydı: "36 37 38 40 39").
+            const formUrunleri = Array.from(new Set(kalemler.map((k) => k.urunId))).map((id) => urunUygun.find((p) => p.id === id)).filter(Boolean);
+            const tumBedenler = bedenSirala(Array.from(new Set([
+              ...kalemler.map((k) => k.beden),
+              ...formUrunleri.flatMap((p) => (p.variants || []).map((v) => v.beden)),
+            ].filter((b) => b != null && b !== ""))));
             // RENK SÜTUNUNUN BAŞLIĞI (v1.494.0, fiş kalem tablosuyla aynı kural): ürünlerin renk başlığı
             // ortaksa sütunda o; karışıksa başlıklar birlikte ve başlık değiştiği her yerde ara satır.
             const grupUrunu = (g) => urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
@@ -1884,7 +1912,32 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                           </td>
                           {tumBedenler.map((b) => {
                             const k = g.kalemler.find((x) => x.beden === b);
-                            if (!k) return <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}><span style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span></td>;
+                            // SİLİNEN BEDEN YERİNDE GERİ YAZILIR (v1.614.0 — kullanıcı: "Silinen rengi tekrar ekleyemiyorum").
+                            // "×" ile silinen hücre "—" kalıyor ve bir daha doldurulamıyordu; tek yol kalemi baştan eklemekti.
+                            // Kilitsiz satırda, ürünün o ölçüsü varsa boş kutu: miktar yazılınca satırın fiyatı, birimi, KDV'si,
+                            // kutusu ve notlarıyla yeni kalem açılır (`bedenGeriEkle`).
+                            if (!k) {
+                              const olcuVar = !g.kilit && g.renk && urun && (urun.variants || []).some((v) => v.beden === b);
+                              if (!olcuVar) return <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}><span style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span></td>;
+                              return (
+                                <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>
+                                  <input
+                                    type="number" step="0.01" min="0" placeholder="+"
+                                    data-form-kalem-beden-ekle={b}
+                                    title={`${b} ölçüsünü bu satıra geri ekle — miktarı yazın`}
+                                    onBlur={(e) => {
+                                      const yeni = parseFloat(e.target.value);
+                                      if (!(yeni > 0)) { e.target.value = ""; return; }
+                                      bedenGeriEkle(g, b, yeni);
+                                      e.target.value = "";
+                                    }}
+                                    onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                                    className="mono"
+                                    style={{ width: 48, padding: "3px 4px", fontSize: 11, border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center", background: "transparent" }}
+                                  />
+                                </td>
+                              );
+                            }
                             if (g.kilit) {
                               return (
                                 <td key={b} className="mono" title={g.kilit} style={{ padding: "4px 6px", textAlign: "center", fontSize: 12, fontWeight: 600 }}>
@@ -2124,6 +2177,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               return;
             }
             setTip(siparisSekme === "alis" ? "Alış" : "Satış");
+            // Yeni sipariş açılırken önceki okutmanın sonucu ekranda kalmasın (v1.614.0).
+            setBarkodSonuc(null); setBarkodGirisi("");
             setShowForm((v) => !v);
           }}
         >

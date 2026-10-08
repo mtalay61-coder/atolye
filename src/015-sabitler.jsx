@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.613.0";
+const SURUM = "1.614.0";
 const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "Tahsilat/Odeme formu siparis kartinin icinde acilir (kasa/banka, kur, defter); cek/senet icin cari kartina baglanti";
+const SURUM_NOTU = "Siparis formunda silinen beden/renk geri eklenir; yeni sipariste eski okutma sonucu temizlenir; kamera teyitli okur, okumadan sonra bekler, sesli bildirir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Tahsilat/Odeme formu siparis kartinin icinde acilir (kasa/ba
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.614.0", tarih: "08.10.2026",
+    eklenen: ["Barkod okutunca ses: başarıda iki kısa yüksek ton, hatada alçak uzun ton (sipariş formu ve depo sevkiyatı)"],
+    degisen: ["Kamerayla okuma daha hassas: kod art arda iki karede aynı okununca kabul edilir (yanlış okuma eklenmez), daha yüksek çözünürlük ve sürekli odak. Okumadan sonra 1,8 sn bekler — ekranda yeşil \"Okundu ✓\" ve geri sayım; aynı etiket 4 sn içinde tekrar sayılmaz"],
+    duzeltilen: ["Sipariş formunda \"×\" ile silinen ölçü bir daha eklenemiyordu (hücre \"—\" kalıyordu, son kalemi silinen ölçünün sütunu da kayboluyordu). Artık ürünün bütün ölçüleri sütunda, sıralı; boş hücreye miktar yazılınca o ölçü satırın fiyatı, para birimi, KDV'si ve notlarıyla geri eklenir",
+      "Yeni sipariş açılınca önceki siparişte okutulan barkodun sonucu (\"27454 … eklendi\") ekranda kalıyordu — temizlenir"] },
   { surum: "1.613.0", tarih: "08.10.2026",
     eklenen: ["Sipariş kartında o siparişe bağlı tahsilatlar/ödemeler listelenir: tarih, fiş no (tıklayınca fişe gider), tutar, kasa/banka"],
     degisen: ["Sipariş kartındaki \"Tahsilat Gir / Ödeme Gir\" artık formu kartın içinde açıyor: tarih, tutar, defter, ödeme şekli, kasa/banka (farklı para birimindeyse hesaba işlenecek tutar ve kur), açıklama. Kayıt cari ekstresine ve kasaya aynı anda düşer, siparişe bağlı kalır. Çek/senet için \"cari kartında aç\" bağlantısı"],
