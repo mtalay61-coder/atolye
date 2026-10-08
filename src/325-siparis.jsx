@@ -69,6 +69,19 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // duruyor; kamerayla okuturken göz kamerada, kullanıcı "titriyor ama eklemiyor, hatayı söylemiyor"
   // dedi. { tamam, metin } — bir sonraki okutmaya kadar kalır.
   const [barkodSonuc, setBarkodSonuc] = useState(null);
+  // OKUTULAN SATIR VURGUSU (v1.615.0 — kullanıcı: "Barkod okutunca sipariş satırı da vurgulansın"). Kamerayla
+  // okuturken göz telefonda; hangi satıra eklendiği tabloda bir bakışta görünsün. { anahtar: "urunId|renk",
+  // bedenler: [...], zaman } — 2,5 sn sonra söner; satır görünür alana kaydırılır.
+  const [okutulanSatir, setOkutulanSatir] = useState(null);
+  useEffect(() => {
+    if (!okutulanSatir) return undefined;
+    const t = setTimeout(() => setOkutulanSatir(null), 2500);
+    try {
+      const tr = document.querySelector(`[data-okutulan-satir="1"]`);
+      if (tr && tr.scrollIntoView) tr.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } catch (e) { /* kaydırma yoksa yalnız vurgu */ }
+    return () => clearTimeout(t);
+  }, [okutulanSatir]);
   // BARKOD PANELİ KATLANIR (v1.470.0 — kullanıcı: "barkod okutu da tıklayınca açılsın, kullanmayınca
   // çok yer kaplıyor"). Kapalıyken tek ince düğme. Son tercih bu cihazda hatırlanıyor: fuarda
   // okutarak çalışan açık bırakır, elle giren kapalı — her sipariş açılışında yeniden tıklamasın.
@@ -395,7 +408,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     // ÖNCEKİ SİPARİŞİN OKUTMA SONUCU TEMİZLENİR (v1.614.0 — kullanıcı: "Yeni sipariş açınca eski barkodu gösteriyor
     // ekranda hâlâ 27454, önceki siparişten kalma"). Sonuç satırı bir sonraki okutmaya kadar kalıyordu; yeni sipariş
     // de "sonraki" sayılmıyordu.
-    setBarkodSonuc(null); setBarkodGirisi("");
+    setBarkodSonuc(null); setBarkodGirisi(""); setOkutulanSatir(null);
   }
 
   // HAVUZ: siparişe girilebilecek ürünlerin görselleri (ürün+renk). Havuzu ÇAĞIRAN belirliyor;
@@ -499,6 +512,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
       }]);
       setBarkodGirisi("");
       bildir(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`, true);
+      setOkutulanSatir({ anahtar: `${cozum.urun.id}|${cozum.renk}`, bedenler: [cozum.beden], zaman: Date.now() });
       return;
     }
 
@@ -517,6 +531,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     });
     setKalemler(sonraki);
     setBarkodGirisi("");
+    setOkutulanSatir({ anahtar: `${cozum.urun.id}|${cozum.renk}`, bedenler: cozum.dagilim.map((d) => d.beden), zaman: Date.now() });
     // Üründe olmayan bedenler SESSİZCE atlanmıyor: sipariş eksik girilmiş olacak, kullanıcı bilsin.
     bildir(cozum.eksikBedenler.length
       ? `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi — ${cozum.eksikBedenler.join(", ")} bedeni üründe yok`
@@ -1825,6 +1840,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       const idler = g.kalemler.map((k) => k.id);
                       const renkSecenekleri = urunRenkleri(urun);
                       const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
+                      // Son okutulan barkodun satırı (v1.615.0): sarı zemin + yeşil sol çizgi, okutulan ölçüler kalın yeşil.
+                      const okutulan = !!okutulanSatir && !g.kilit && okutulanSatir.anahtar === `${g.urunId}|${g.renk}`;
                       return (
                         <React.Fragment key={g.key}>
                         {araBaslikVar && (
@@ -1834,7 +1851,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                             </td>
                           </tr>
                         )}
-                        <tr key={g.key} data-form-kalem-satiri={g.kilit ? "kilitli" : "serbest"} style={{ borderTop: "1px solid var(--erp-line-soft)", background: g.kilit ? "var(--erp-panel-2)" : undefined }}>
+                        <tr key={g.key} data-form-kalem-satiri={g.kilit ? "kilitli" : "serbest"} data-okutulan-satir={okutulan ? "1" : undefined}
+                          style={{ borderTop: "1px solid var(--erp-line-soft)", background: okutulan ? "#FFF1B8" : (g.kilit ? "var(--erp-panel-2)" : undefined),
+                            boxShadow: okutulan ? "inset 4px 0 0 #2E8B57" : undefined, transition: "background .4s" }}>
                           <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
                             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                               <ColorSwatch src={gorsel} editable={false} size={26} />
@@ -1958,7 +1977,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                       kalemDuzenle(k.id, "miktar", yeni);
                                     }}
                                     className="mono"
-                                    style={{ width: 48, padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
+                                    data-okutulan-hucre={okutulan && okutulanSatir.bedenler.includes(b) ? "1" : undefined}
+                                    style={{ width: 48, padding: "3px 4px", fontSize: 11, border: okutulan && okutulanSatir.bedenler.includes(b) ? "2px solid #2E8B57" : "1px solid var(--erp-line)", fontWeight: okutulan && okutulanSatir.bedenler.includes(b) ? 800 : undefined, borderRadius: "var(--erp-r-sm)", textAlign: "center" }}
                                   />
                                   <button
                                     onClick={() => kalemSil(k.id)}

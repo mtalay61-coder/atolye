@@ -1,0 +1,39 @@
+{
+ "hatalar": [],
+ "vurgu": {
+  "satir": 1,
+  "hucre": 5
+ },
+ "vurguSondu": true,
+ "eskiSonucYok": true,
+ "dugmeMenusu": {
+  "baslik": true,
+  "ogeler": [
+   "odeme:Tahsilatcari kartında",
+   "odeme-kartta:Tahsilat — bu kartta"
+  ]
+ },
+ "kapandi": true,
+ "sagTikMenusu": {
+  "baslik": true,
+  "ogeler": [
+   "odeme:Tahsilatcari kartında",
+   "odeme-kartta:Tahsilat — bu kartta"
+  ]
+ },
+ "cariFormu": {
+  "cariEkrani": true,
+  "kart": "Müşteri B",
+  "tutar": "150",
+  "pb": "USD",
+  "aciklama": "Sipariş SAT-9"
+ },
+ "cikti": {
+  "bolum": "1",
+  "baslik": true,
+  "fis": true,
+  "kasa": true,
+  "kalan": "150",
+  "odemesizBolumYok": true
+ }
+}

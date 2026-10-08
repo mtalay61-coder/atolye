@@ -394,6 +394,38 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
   });
   const modelResmi = (m) => { const u = (stok || []).find((x) => x.ad === m.urunAd); return (u && u.kapakResmi) || resimBul(m.renkler[0]) || ""; };
   const modelPbToplam = (m) => { const t = {}; m.renkler.forEach((g) => { t[g.paraBirimi] = (t[g.paraBirimi] || 0) + g.tutar; }); return Object.entries(t).map(([pb, v]) => para(v, pb)).join(" + "); };
+  // BAĞLI ÖDEMELER (v1.615.0 — kullanıcı: "Sipariş yazdırda siparişin altında bağlantılı ödeme görünsün"). Siparişe bağlı
+  // tahsilatlar (satış) / ödemeler (alış): tarih · fiş no · kasa/banka · tutar; altta Ödenen ve (tek para birimli
+  // siparişte) Kalan. Kaynak sipariş kartındakiyle aynı: `siparisOdemeOzeti` (320). Ödeme yoksa bölüm hiç çizilmez.
+  const odemeBolumu = (() => {
+    const pbler = Object.keys(pbToplam);
+    const siparisPB = pbler.length === 1 ? pbler[0] : null;
+    const genelToplam = siparisPB ? pbToplam[siparisPB] : 0;
+    const oz = siparisOdemeOzeti(siparis, cari, genelToplam, siparisPB);
+    if (!oz.odemeler.length) return "";
+    const baslik = oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar";
+    const tarihYaz = (t) => (t ? String(t).slice(0, 10).split("-").reverse().join(".") : "");
+    const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => `<tr style="border-bottom:1px solid #eee">
+        <td class="mono">${esc(tarihYaz(h.tarih))}</td>
+        <td class="mono">${esc(h.fisNo || "")}</td>
+        <td>${esc(h.hesapAd || h.odemeSekli || "")}${h.hesapPB && h.hesapPB !== (h.paraBirimi || "TRY") && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}</td>
+        <td class="mono" style="text-align:right;white-space:nowrap">${para(h.tutar, h.paraBirimi || "TRY")}</td>
+      </tr>`).join("");
+    const odenenMetni = Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ");
+    return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;border:1px solid #ccc;border-radius:6px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
+      <div style="font-size:12px;font-weight:700;padding:5px 8px;background:#F6F1E8;border-bottom:1px solid #ccc">${baslik}</div>
+      <table style="width:100%;border-collapse:collapse"><tbody>
+        ${satirlar}
+        <tr style="border-top:2px solid #bbb;font-weight:700">
+          <td colspan="3" style="text-align:right">Ödenen</td>
+          <td class="mono" style="text-align:right;white-space:nowrap">${odenenMetni}</td>
+        </tr>
+        ${siparisPB && oz.toplamlar[siparisPB] != null ? `<tr data-cikti-kalan="${oz.kalan}" style="font-weight:700">
+          <td colspan="3" style="text-align:right">Kalan</td>
+          <td class="mono" style="text-align:right;white-space:nowrap">${para(oz.kalan, siparisPB)}</td>
+        </tr>` : ""}
+      </tbody></table></div>`;
+  })();
   const renkBasligiMetni = ortakRenkBasligi(modeller.map((m) => (stok || []).find((x) => x.ad === m.urunAd) || {})) || "Renk";
   return `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #33281C;padding-bottom:8px;margin-bottom:12px">
@@ -452,6 +484,7 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
       <td class="mono" style="text-align:right;width:160px;font-size:13px">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
     </tr></tbody></table>
     ${siparis.not ? `<div style="margin-top:12px;font-size:12px"><b>Not:</b> ${esc(siparis.not)}</div>` : ""}
+    ${odemeBolumu}
     <div style="margin-top:24px;font-size:10px;color:#9B8B72">Atölye ERP · ${new Date().toLocaleDateString("tr-TR")}</div>`;
 }
 

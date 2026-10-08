@@ -65,6 +65,10 @@ function mobilBolumGizliMi(ayar, bolumKey) {
 function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet }) {
   // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
   const [showOdeme, setShowOdeme] = useState(false);
+  // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
+  // içinde olsun, tıklayınca cari tahsilat ekranı açsın, içinde olduğumuz sipariş no atayarak"). Mor şeritte "İşlemler"
+  // düğmesi; şeride SAĞ TIKLAMAK da aynı menüyü imlecin yanında açar. { x, y } (ekran koordinatı) ya da null.
+  const [islemMenu, setIslemMenu] = useState(null);
   const [open, setOpen] = useState(!!baslangicAcik);
   // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
   const duzenAcRef = useRef(null);
@@ -230,6 +234,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
         role={baslangicAcik ? undefined : "button"}
         tabIndex={baslangicAcik ? undefined : 0}
         onClick={baslangicAcik ? undefined : () => setOpen((v) => !v)}
+        onContextMenu={open && onOdemeGir && cari ? (e) => { e.preventDefault(); setIslemMenu({ x: e.clientX, y: e.clientY }); } : undefined}
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 10,
           // Liste içinde bu şerit yalnızca iki küçük kontrol taşır; 14px'lik dolgu boş bir bant
@@ -376,6 +381,14 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   />
                 );
               })()}
+              {onOdemeGir && cari && (
+                <button type="button" className="btn-ghost" data-siparis-islemler="1"
+                  title="İşlemler — tahsilat/ödeme (şeride sağ tıklayarak da açılır)"
+                  style={{ padding: "3px 9px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}
+                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setIslemMenu((m) => (m ? null : { x: r.left, y: r.bottom + 4 })); }}>
+                  İşlemler <ChevronDown size={12} />
+                </button>
+              )}
             </span>
           )}
         </span>
@@ -397,6 +410,39 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           </button>
         )}
       </div>
+      {/* İŞLEMLER MENÜSÜ (v1.615.0): sabit konumlu, dışına tıklayınca kapanır. Tahsilat (satış) / Ödeme (alış) carinin
+          kartını açar; form bu siparişin numarası, kalan tutarı ve para birimiyle dolu gelir (v1.612 köprüsü), hareket
+          siparişe bağlanır. */}
+      {islemMenu && onOdemeGir && cari && (() => {
+        const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
+        const hedef = { cariId: siparis.cariId, tip: oz.beklenenTip, tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
+          paraBirimi: toplamPB || "TRY", siparisId: siparis.id, siparisNo: siparis.siparisNo };
+        const genislik = 230;
+        const x = Math.max(8, Math.min(islemMenu.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - genislik - 8));
+        const ogeStil = { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", textAlign: "left", cursor: "pointer", fontSize: 13 };
+        return (
+          <div data-siparis-islem-perde="1" onClick={() => setIslemMenu(null)} onContextMenu={(e) => { e.preventDefault(); setIslemMenu(null); }}
+            style={{ position: "fixed", inset: 0, zIndex: 900 }}>
+            <div data-siparis-islem-menusu="1" onClick={(e) => e.stopPropagation()}
+              style={{ position: "fixed", left: x, top: islemMenu.y, width: genislik, background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)", overflow: "hidden" }}>
+              <div className="mono" style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 4px", borderBottom: "1px solid var(--erp-line-soft)" }}>
+                İŞLEMLER · {siparis.siparisNo}
+              </div>
+              <button type="button" data-siparis-islem="odeme" style={{ ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
+                onClick={() => { setIslemMenu(null); onOdemeGir(hedef); }}>
+                <Plus size={14} /> {oz.beklenenTip}
+                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--erp-text-3)" }}>cari kartında</span>
+              </button>
+              {onOdemeKaydet && (
+                <button type="button" data-siparis-islem="odeme-kartta" style={{ ...ogeStil, color: "var(--erp-text-2)", fontSize: 12, borderTop: "1px solid var(--erp-line-soft)" }}
+                  onClick={() => { setIslemMenu(null); setOpen(true); setShowOdeme(true); }}>
+                  <Plus size={12} /> {oz.beklenenTip} — bu kartta
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {open && (
         <div style={{ padding: "0 14px 14px" }}>
