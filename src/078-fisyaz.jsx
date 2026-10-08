@@ -263,6 +263,12 @@ function fisYaz(stok, cariler, fis) {
     // peşin tahsil edersek kasaya GİRER.
     const kasaYonu = alis ? "Çıkış" : "Giriş";
     const cariAciklama = `${alis ? "Ödeme" : "Tahsilat"} (${pesin.hesapAd || "hesap"}) · ${fis.fisNo}`;
+    // SİPARİŞ BAĞI (v1.612.0): fişin bütün satırları TEK siparişe aitse peşin tahsilat/ödeme de o siparişe
+    // bağlanır; sipariş kartındaki "Ödenen / Kalan" (siparisOdemeOzeti) bunu sayar. Satırlar birden çok
+    // siparişten geliyorsa hangi siparişin parası olduğu bilinemez — bağ kurulmaz.
+    const pesinSiparisleri = new Set(cariHareketleri.map((h) => h.siparisId).filter(Boolean));
+    const pesinSiparisId = pesinSiparisleri.size === 1 ? [...pesinSiparisleri][0] : null;
+    const pesinSiparisNo = pesinSiparisId ? (cariHareketleri.find((h) => h.siparisId === pesinSiparisId) || {}).siparisNo || null : null;
 
     // Cari tarafı: fişin açtığı borcu/alacağı KAPATAN kayıt.
     // YÖN HATASI (v1.537.0 — son denetim): kayıt her fişte `yon: "Tahsilat"` idi. Cari bakiyesinde yalnız "Borç"
@@ -285,6 +291,7 @@ function fisYaz(stok, cariler, fis) {
       aciklama: cariAciklama,
       kullanici: fis.kullanici || null,
       defter: fis.defter || "Genel",
+      ...(pesinSiparisId ? { siparisId: pesinSiparisId, siparisNo: pesinSiparisNo } : {}),
       // Karşı taraf: ekstrede "hangi kasaya, ne kadar" görünsün diye alan olarak taşınıyor.
       hesapAd: pesin.hesapAd || null,
       hesapPB: pesin.paraBirimi || fis.kayitParaBirimi,

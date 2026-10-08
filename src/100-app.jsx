@@ -3320,6 +3320,15 @@ export default function AtolyeERP() {
     setTab(hedef && hedef.tip === "Alış" ? "satinalma" : "siparis");
   }, [siparisler]);
 
+  // SİPARİŞTEN TAHSİLAT/ÖDEME (v1.612.0 — kullanıcı: "Siparişte ödeme girişi de olsun"). Sipariş kartı hedefi verir
+  // ({ cariId, tip, tutar, paraBirimi, siparisId, siparisNo }); Cari ekranı açılır, CariModule o kartı açıp formu
+  // doldurur ve hedefi tüketir. Form tek yerde (265) kalıyor — kasa/banka, kur, çek mantığı çoğaltılmıyor.
+  const [cariOdemeHedefi, setCariOdemeHedefi] = useState(null);
+  const siparisOdemesineGit = useCallback((hedef) => {
+    setCariOdemeHedefi(hedef);
+    setTab("cari");
+  }, []);
+
 
   const TAB_TITLES = {
     anasayfa: "Atölye ERP",
@@ -4531,6 +4540,8 @@ export default function AtolyeERP() {
               onStokFisiAc={stokFisiAc}
               tanimlarFiyatGruplari={tanimlar.fiyatGruplari || []}
               onPencereAc={pencereAc}
+              odemeHedefi={cariOdemeHedefi}
+              onOdemeHedefiTuketildi={() => setCariOdemeHedefi(null)}
             />
           </div>
           {fiyatListesiAcildiRef.current && <div style={{ display: tab === "fiyatlistesi" ? undefined : "none" }}>
@@ -4671,6 +4682,7 @@ export default function AtolyeERP() {
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
+              onOdemeGir={siparisOdemesineGit}
               onSiparisKapat={siparisKapat}
               onCopaAt={copaAt}
               onPlanlaUretim={planlaUretim}
@@ -4725,6 +4737,7 @@ export default function AtolyeERP() {
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
+              onOdemeGir={siparisOdemesineGit}
               onSiparisKapat={siparisKapat}
               onCopaAt={copaAt}
               onPlanlaUretim={planlaUretim}
@@ -5262,6 +5275,7 @@ export default function AtolyeERP() {
                             onGoToUretim={(id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }}
                             onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
+              onOdemeGir={siparisOdemesineGit}
                             onSiparisKapat={siparisKapat}
                             onCopaAt={copaAt}
                             onPlanlaUretim={planlaUretim}

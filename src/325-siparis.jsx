@@ -1,6 +1,6 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler }) {
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, onOdemeGir }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
@@ -1058,6 +1058,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 onSil={(id) => { siparisSil(id); onPencereKapat && onPencereKapat(`siparis-${id}`); }}
                 onGerceklestir={onGerceklestir}
                 onSatisFisiAc={onSatisFisiAc}
+                onOdemeGir={onOdemeGir}
                 onPlanlaUretim={onPlanlaUretim}
                 onPlanlaSatinAlma={onPlanlaSatinAlma}
                 baslangicAcik
@@ -2314,7 +2315,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               <div
                 key={s.id}
                 style={{
-                  border: `1px solid ${acikSiparisId === s.id ? (s.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-line-soft)"}`,
+                  // ÇERÇEVE (v1.612.0 — kullanıcı: "Sipariş ayrıştırmak için çerçeveye al, çok baskın olmasın"): kapalı
+                  // satırda da görünür bir çizgi (--erp-line, 1.5px) — önceki soft çizgi açık zeminde kayboluyor, iki
+                  // sipariş birbirine karışıyordu. Açıkken tip rengi + gölge (değişmedi).
+                  border: `${acikSiparisId === s.id ? "1px" : "1.5px"} solid ${acikSiparisId === s.id ? (s.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)") : "var(--erp-line)"}`,
                   borderRadius: "var(--erp-r-lg)",
                   overflow: "hidden",
                   boxShadow: acikSiparisId === s.id ? "0 2px 10px rgba(34,27,20,.12)" : "none",
@@ -2338,6 +2342,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                             onSil={(id) => { siparisSil(id); setAcikSiparisId(null); }}
                       onGerceklestir={onGerceklestir}
                 onSatisFisiAc={onSatisFisiAc}
+                onOdemeGir={onOdemeGir}
                       onPlanlaUretim={onPlanlaUretim}
                       onPlanlaSatinAlma={onPlanlaSatinAlma}
                       baslangicAcik
@@ -2382,7 +2387,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               <div
                 key={s.id}
                 style={{
-                  border: `1px solid ${acikSiparisId === s.id ? "var(--erp-brown)" : "var(--erp-line-soft)"}`,
+                  border: `${acikSiparisId === s.id ? "1px" : "1.5px"} solid ${acikSiparisId === s.id ? "var(--erp-brown)" : "var(--erp-line)"}`,
                   borderRadius: "var(--erp-r-lg)",
                   overflow: "hidden",
                   boxShadow: acikSiparisId === s.id ? "0 2px 10px rgba(34,27,20,.12)" : "none",
@@ -2406,6 +2411,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                             onSil={(id) => { siparisSil(id); setAcikSiparisId(null); }}
                       onGerceklestir={onGerceklestir}
                 onSatisFisiAc={onSatisFisiAc}
+                onOdemeGir={onOdemeGir}
                       onPlanlaUretim={onPlanlaUretim}
                       onPlanlaSatinAlma={onPlanlaSatinAlma}
                       baslangicAcik

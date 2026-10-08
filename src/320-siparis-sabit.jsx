@@ -122,6 +122,31 @@ const EKLE_DUGMESI = {
 // `planlama.referansNo`su üretim numarası. Böylece planlamadan SONRA eklenen not da atölyeye düşer,
 // eski planlanmış işler de göç gerektirmeden notlarını gösterir. (Kutu rengi kopyalanıyor çünkü
 // hammadde tüketimini değiştiriyor; not yalnız bilgi.)
+// ================= SİPARİŞİN ÖDEMELERİ (v1.612.0) =================
+// Kullanıcı (8 Ekim): "Siparişte ödeme girişi de olsun." Sipariş kartındaki "Tahsilat Gir / Ödeme Gir" düğmesi
+// carinin kartını açıp tahsilat formunu siparişle dolu getiriyor; kaydedilen hareket `siparisId` taşıyor. Bu
+// fonksiyon o hareketleri toplar: satışta Tahsilat, alışta Ödeme sayılır (tip: alan ya da fiş ön eki) (ters yönlü kayıt — iade — düşülmez;
+// nadir ve ayrı bir iş). Para birimine göre ayrı toplanır: USD sipariş TL kasadan tahsil edilmiş olabilir,
+// cari hareketi carinin birimindedir. "Kalan" yalnız siparişin para biriminde ödenen varsa hesaplanır.
+//
+// girdi: siparis, cari (hareketleriyle), siparisToplami, siparisPB
+// dönen: { odemeler: [hareket…], toplamlar: { PB: tutar }, odenen: siparisPB'deki toplam, kalan }
+function siparisOdemeOzeti(siparis, cari, siparisToplami, siparisPB) {
+  const beklenenTip = siparis && siparis.tip === "Alış" ? "Ödeme" : "Tahsilat";
+  // Tip `hareketIslemTipi` ile (200): cari kartının hunisi (addHareket) `islemTipi` alanını kayda YAZMAZ, tip fiş
+  // numarasının ön ekinden (THS-/ODM-) okunur; fişten gelen peşin kaydında ise alan var.
+  const odemeler = ((cari && cari.hareketler) || []).filter((h) => h && h.siparisId === siparis.id && hareketIslemTipi(h) === beklenenTip);
+  const toplamlar = {};
+  odemeler.forEach((h) => {
+    const pb = h.paraBirimi || "TRY";
+    toplamlar[pb] = (toplamlar[pb] || 0) + (Number(h.tutar) || 0);
+  });
+  const pb = siparisPB || "TRY";
+  const odenen = toplamlar[pb] || 0;
+  const kalan = Math.max(0, Math.round(((Number(siparisToplami) || 0) - odenen) * 100) / 100);
+  return { odemeler, toplamlar, odenen, kalan, beklenenTip };
+}
+
 function kalemNotlari(k) {
   if (!k) return [];
   const liste = [];

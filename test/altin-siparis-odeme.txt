@@ -1,0 +1,33 @@
+{
+ "hatalar": [],
+ "dugme": {
+  "tip": "Tahsilat",
+  "yazi": "Tahsilat Gir",
+  "ozetVar": false
+ },
+ "form": {
+  "cariEkrani": true,
+  "acikKart": "Müşteri B",
+  "tutar": "250",
+  "pb": "USD",
+  "aciklama": "Sipariş SAT-9",
+  "hesapSecici": true
+ },
+ "kayit": {
+  "yon": "Alacak",
+  "tutar": 250,
+  "pb": "USD",
+  "siparisId": "s9",
+  "siparisNo": "SAT-9",
+  "fisOnEki": "THS-",
+  "kasaYonu": "Giriş",
+  "kasaTutar": 250
+ },
+ "ulkeAlaniVar": true,
+ "ulke": "Arnavutluk",
+ "ozet": {
+  "odenen": "250",
+  "kalan": "0",
+  "yazi": "Ödenen 250 $ · Kalan 0 $"
+ }
+}
