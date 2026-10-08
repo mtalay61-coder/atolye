@@ -3328,6 +3328,13 @@ export default function AtolyeERP() {
     setCariOdemeHedefi(hedef);
     setTab("cari");
   }, []);
+  // SİPARİŞ KARTINDAKİ FORMDAN KAYIT (v1.613.0): cari hareketi VAR OLAN huniden (addCariHareketFromStok: fiş no
+  // THS-/ODM-, zaman, kullanıcı), kasa/banka hareketi muhasebeyePesinIsle'den — yeni yazıcı kapısı açılmıyor (denetim 16).
+  const siparisOdemesiKaydet = useCallback((k) => {
+    if (!k || !k.cariId || !k.cariHareketi) return;
+    addCariHareketFromStok(k.cariId, k.cariHareketi);
+    if (k.muhasebe && k.muhasebe.hesapId) muhasebeyePesinIsle({ hesapTur: k.muhasebe.hesapTur, hesapId: k.muhasebe.hesapId, hareket: k.muhasebe.hareket });
+  }, [addCariHareketFromStok, muhasebeyePesinIsle]);
 
 
   const TAB_TITLES = {
@@ -4683,6 +4690,8 @@ export default function AtolyeERP() {
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
               onOdemeGir={siparisOdemesineGit}
+              muhasebe={muhasebe}
+              onOdemeKaydet={siparisOdemesiKaydet}
               onSiparisKapat={siparisKapat}
               onCopaAt={copaAt}
               onPlanlaUretim={planlaUretim}
@@ -4738,6 +4747,8 @@ export default function AtolyeERP() {
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
               onOdemeGir={siparisOdemesineGit}
+              muhasebe={muhasebe}
+              onOdemeKaydet={siparisOdemesiKaydet}
               onSiparisKapat={siparisKapat}
               onCopaAt={copaAt}
               onPlanlaUretim={planlaUretim}
@@ -5276,6 +5287,8 @@ export default function AtolyeERP() {
                             onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
               onOdemeGir={siparisOdemesineGit}
+              muhasebe={muhasebe}
+              onOdemeKaydet={siparisOdemesiKaydet}
                             onSiparisKapat={siparisKapat}
                             onCopaAt={copaAt}
                             onPlanlaUretim={planlaUretim}

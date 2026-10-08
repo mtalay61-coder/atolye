@@ -62,7 +62,9 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet }) {
+  // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
+  const [showOdeme, setShowOdeme] = useState(false);
   const [open, setOpen] = useState(!!baslangicAcik);
   // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
   const duzenAcRef = useRef(null);
@@ -1731,7 +1733,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   TEK YERDE kalıyor (cari kartı: kasa/banka seçimi, kur, çek — 265); burası köprü: carinin kartını
                   açar, formu siparişin kalan tutarı, para birimi ve numarasıyla dolu getirir. Kaydedilen hareket
                   `siparisId` taşır; "Ödenen / Kalan" buradan okunur (siparisOdemeOzeti, 320). */}
-              {onOdemeGir && cari && (() => {
+              {cari && (onOdemeKaydet || onOdemeGir) && (() => {
                 const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
                 const sembolu = (pb) => PARA_SEMBOLU[pb] || pb;
                 const tutarYaz = (t, pb) => `${(Number(t) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${sembolu(pb)}`;
@@ -1739,29 +1741,69 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   : toplamPB && oz.toplamlar[toplamPB] != null
                     ? `Ödenen ${tutarYaz(oz.odenen, toplamPB)} · Kalan ${tutarYaz(oz.kalan, toplamPB)}`
                     : `Ödenen ${Object.entries(oz.toplamlar).map(([pb, t]) => tutarYaz(t, pb)).join(" + ")}`;
+                const hedef = {
+                  cariId: siparis.cariId, tip: oz.beklenenTip,
+                  tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
+                  paraBirimi: toplamPB || "TRY", siparisId: siparis.id, siparisNo: siparis.siparisNo,
+                };
                 return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
-                    <button
-                      type="button"
-                      className="btn-ghost"
-                      data-siparis-odeme-gir={oz.beklenenTip}
-                      style={{ borderColor: HAREKET_TIPI_RENK[oz.beklenenTip], color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
-                      title={`${cari.unvan} kartında ${oz.beklenenTip.toLowerCase()} formunu bu siparişle dolu açar`}
-                      onClick={() => onOdemeGir({
-                        cariId: siparis.cariId, tip: oz.beklenenTip,
-                        tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
-                        paraBirimi: toplamPB || "TRY", siparisId: siparis.id, siparisNo: siparis.siparisNo,
-                      })}
-                    >
-                      <Plus size={13} /> {oz.beklenenTip} Gir
-                    </button>
-                    {ozetMetni && (
-                      <span className="mono" data-siparis-odenen={oz.odenen} data-siparis-kalan={oz.kalan}
-                        style={{ fontSize: 12, fontWeight: 700, color: oz.kalan > 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
-                        {ozetMetni}
-                      </span>
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                      <button
+                        type="button"
+                        className="btn-ghost"
+                        data-siparis-odeme-gir={oz.beklenenTip}
+                        style={{ borderColor: HAREKET_TIPI_RENK[oz.beklenenTip], color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
+                        title={onOdemeKaydet ? `${oz.beklenenTip} formunu bu kartta açar` : `${cari.unvan} kartında ${oz.beklenenTip.toLowerCase()} formunu bu siparişle dolu açar`}
+                        onClick={() => { if (onOdemeKaydet) setShowOdeme((v) => !v); else onOdemeGir(hedef); }}
+                      >
+                        <Plus size={13} /> {showOdeme ? `${oz.beklenenTip} Formunu Kapat` : `${oz.beklenenTip} Gir`}
+                      </button>
+                      {ozetMetni && (
+                        <span className="mono" data-siparis-odenen={oz.odenen} data-siparis-kalan={oz.kalan}
+                          style={{ fontSize: 12, fontWeight: 700, color: oz.kalan > 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}>
+                          {ozetMetni}
+                        </span>
+                      )}
+                      {/* Çek/senet ve vade cari kartındaki formda — eski köprü onun için duruyor. */}
+                      {showOdeme && onOdemeGir && (
+                        <button type="button" className="btn-ghost" data-siparis-odeme-caride="1" style={{ fontSize: 11, padding: "4px 8px" }}
+                          title="Çek/senet ya da vadeli kayıt için cari kartındaki tam form" onClick={() => onOdemeGir(hedef)}>
+                          Çek/senet için cari kartında aç
+                        </button>
+                      )}
+                    </div>
+                    {/* SİPARİŞİN TAHSİLATLARI LİSTEDE (v1.613.0 — kullanıcı: "Tahsilatı siparişe bağlayalım, siparişte
+                        tahsilat da görünsün"): bu siparişe bağlı para hareketleri tarih · fiş no · tutar · kasa/banka. */}
+                    {oz.odemeler.length > 0 && (
+                      <div data-siparis-odeme-listesi={oz.odemeler.length} style={{ border: `1px solid ${HAREKET_TIPI_RENK[oz.beklenenTip]}`, borderRadius: "var(--erp-r-md)", overflow: "hidden", marginBottom: 10, background: "#fff" }}>
+                        <div className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-panel-2)", background: HAREKET_TIPI_RENK[oz.beklenenTip], padding: "4px 10px" }}>
+                          {oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar"} ({oz.odemeler.length})
+                        </div>
+                        {[...oz.odemeler].sort((x, y) => String(y.tarih || "").localeCompare(String(x.tarih || ""))).map((h, i) => (
+                          <div key={h.id || i} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "5px 10px", fontSize: 12, borderTop: i === 0 ? "none" : "1px solid var(--erp-line-soft)" }}>
+                            <span className="mono" style={{ color: "var(--erp-text-2)" }}>{h.tarih ? h.tarih.split("-").reverse().join(".") : "—"}</span>
+                            {h.fisNo && (
+                              <button type="button" className="mono" style={{ background: "none", border: "none", padding: 0, color: "var(--erp-info)", fontWeight: 700, cursor: onFiseGitNo ? "pointer" : "default", textDecoration: onFiseGitNo ? "underline" : "none" }}
+                                onClick={() => { if (onFiseGitNo) onFiseGitNo(h.fisNo); }}>{h.fisNo}</button>
+                            )}
+                            <span className="mono" style={{ fontWeight: 700 }}>{tutarYaz(h.tutar, h.paraBirimi || "TRY")}</span>
+                            {h.hesapAd && <span style={{ color: "var(--erp-text-2)" }}>{h.hesapAd}{h.hesapPB && h.hesapPB !== (h.paraBirimi || "TRY") && h.hesapTutar != null ? ` · ${tutarYaz(h.hesapTutar, h.hesapPB)}` : ""}</span>}
+                            {h.odemeSekli && h.odemeSekli !== "Nakit" && <span style={{ color: "var(--erp-text-3)", fontSize: 11 }}>{h.odemeSekli}</span>}
+                            {(h.defter || "Genel") !== "Genel" && <span style={{ color: "var(--erp-text-3)", fontSize: 11 }}>{h.defter}</span>}
+                          </div>
+                        ))}
+                      </div>
                     )}
-                  </div>
+                    {showOdeme && onOdemeKaydet && (
+                      <SiparisOdemeFormu
+                        siparis={siparis} cari={cari} tip={oz.beklenenTip} tutar={hedef.tutar} paraBirimi={hedef.paraBirimi}
+                        muhasebe={muhasebe} kurlar={kurlar} showToast={showToast}
+                        onVazgec={() => setShowOdeme(false)}
+                        onKaydet={(k) => { onOdemeKaydet(k); setShowOdeme(false); if (showToast) showToast(`${oz.beklenenTip} kaydedildi — ${cari.unvan}`); }}
+                      />
+                    )}
+                  </>
                 );
               })()}
               <button

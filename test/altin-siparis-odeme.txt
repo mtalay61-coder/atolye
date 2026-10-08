@@ -6,12 +6,14 @@
   "ozetVar": false
  },
  "form": {
-  "cariEkrani": true,
-  "acikKart": "Müşteri B",
+  "kartta": true,
+  "tip": "Tahsilat",
+  "cariEkraninaGitmedi": true,
   "tutar": "250",
   "pb": "USD",
   "aciklama": "Sipariş SAT-9",
-  "hesapSecici": true
+  "hesapSecici": true,
+  "carideAcBaglantisi": true
  },
  "kayit": {
   "yon": "Alacak",
@@ -20,8 +22,30 @@
   "siparisId": "s9",
   "siparisNo": "SAT-9",
   "fisOnEki": "THS-",
+  "aciklama": "Tahsilat (USD Kasa): Sipariş SAT-9",
+  "hesapAd": "USD Kasa",
+  "bagVar": true,
   "kasaYonu": "Giriş",
-  "kasaTutar": 250
+  "kasaTutar": 250,
+  "hesapsizKayit": 0
+ },
+ "ozetHemen": {
+  "odenen": "250",
+  "kalan": "0",
+  "yazi": "Ödenen 250 $ · Kalan 0 $",
+  "formKapandi": true,
+  "liste": {
+   "adet": "1",
+   "fisVar": true,
+   "kasaVar": true,
+   "tutarVar": true
+  }
+ },
+ "kopru": {
+  "cariEkrani": true,
+  "acikKart": "Müşteri B",
+  "tutar": "",
+  "pb": "USD"
  },
  "ulkeAlaniVar": true,
  "ulke": "Arnavutluk",
