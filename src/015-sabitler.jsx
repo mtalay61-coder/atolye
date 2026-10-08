@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.614.0";
+const SURUM = "1.615.0";
 const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "Siparis formunda silinen beden/renk geri eklenir; yeni sipariste eski okutma sonucu temizlenir; kamera teyitli okur, okumadan sonra bekler, sesli bildirir";
+const SURUM_NOTU = "Barkod okutunca siparis satiri vurgulanir; siparis kartinda Islemler menusu (sag tik da acar) Tahsilat/Odeme siparis no ile; siparis ciktisinda bagli odemeler";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Siparis formunda silinen beden/renk geri eklenir; yeni sipar
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.615.0", tarih: "08.10.2026",
+    eklenen: ["Sipariş kartının mor şeridinde \"İşlemler\" menüsü (şeride sağ tıklayınca da açılır): Tahsilat (alışta Ödeme) carinin tahsilat ekranını bu siparişin numarası ve kalan tutarıyla açar; \"bu kartta\" seçeneği formu kartın içinde açar",
+      "Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) siparişe bağlı tahsilatlar: tarih, fiş no, kasa/banka, tutar; altta Ödenen ve Kalan"],
+    degisen: ["Sipariş formunda barkod okutunca eklenen satır 2,5 sn sarı zeminle vurgulanır, okutulan ölçüler kalın yeşil çerçeveli; satır görünür alana kaydırılır"],
+    duzeltilen: [] },
   { surum: "1.614.0", tarih: "08.10.2026",
     eklenen: ["Barkod okutunca ses: başarıda iki kısa yüksek ton, hatada alçak uzun ton (sipariş formu ve depo sevkiyatı)"],
     degisen: ["Kamerayla okuma daha hassas: kod art arda iki karede aynı okununca kabul edilir (yanlış okuma eklenmez), daha yüksek çözünürlük ve sürekli odak. Okumadan sonra 1,8 sn bekler — ekranda yeşil \"Okundu ✓\" ve geri sayım; aynı etiket 4 sn içinde tekrar sayılmaz"],
