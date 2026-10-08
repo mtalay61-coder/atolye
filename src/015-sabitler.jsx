@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.615.0";
+const SURUM = "1.616.0";
 const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "Barkod okutunca siparis satiri vurgulanir; siparis kartinda Islemler menusu (sag tik da acar) Tahsilat/Odeme siparis no ile; siparis ciktisinda bagli odemeler";
+const SURUM_NOTU = "PDF te yazilar ic ice gecmiyor: PDF uygulamanin boyut ayarindan (zoom) ayri bir belgede cizilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Barkod okutunca siparis satiri vurgulanir; siparis kartinda 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.616.0", tarih: "08.10.2026",
+    eklenen: [], degisen: [],
+    duzeltilen: ["PDF'te (sipariş, ekstre, fiş — PDF / WhatsApp / E-posta) yazılar iç içe geçiyordu (\"New Diamond\" → \"NewDiamond\", sipariş no harfleri üst üste). Sebep uygulamanın Boyut ayarıydı; PDF artık ondan ayrı bir belgede, sabit yazı stiliyle çiziliyor"] },
   { surum: "1.615.0", tarih: "08.10.2026",
     eklenen: ["Sipariş kartının mor şeridinde \"İşlemler\" menüsü (şeride sağ tıklayınca da açılır): Tahsilat (alışta Ödeme) carinin tahsilat ekranını bu siparişin numarası ve kalan tutarıyla açar; \"bu kartta\" seçeneği formu kartın içinde açar",
       "Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) siparişe bağlı tahsilatlar: tarih, fiş no, kasa/banka, tutar; altta Ödenen ve Kalan"],
