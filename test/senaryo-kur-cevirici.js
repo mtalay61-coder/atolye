@@ -12,7 +12,7 @@
 //   1. Tutar girilince kur ÖN DOLUYOR ve hedef tutar hesaplanıyor.
 //   2. HEDEF TUTAR yazılınca kur geri hesaplanıyor.
 //   3. KUR yazılınca hedef tutar yeniden hesaplanıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -41,13 +41,7 @@ async function calistir() {
   await sayfa.waitForTimeout(600);
 
   // Cari seç ve dönüştürülecek para birimini USD yap: TL kasa → USD cari, yani çevrim gerekiyor.
-  await sayfa.evaluate(() => {
-    const s = [...document.querySelectorAll("select")]
-      .find((x) => [...x.options].some((o) => /Müşteri B/.test(o.textContent)));
-    const o = [...s.options].find((x) => /Müşteri B/.test(x.textContent));
-    s.value = o.value;
-    s.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await cariSec(sayfa, "Müşteri B", "", "data-kasa-cari");   // v1.622.0: aramalı kutu
   await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => {
     const s = [...document.querySelectorAll("select")]

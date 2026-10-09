@@ -1228,7 +1228,12 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               sabit; düzen onlara dokunmaz. Başlık ve kalemler gizlenemez (siparişin kendisi). */}
           <DuzenAlani ekran="siparisFormu" bloklar={[
             { id: "baslik", ad: "Sipariş bilgileri", gizlenemez: true, icerik: (<>
-          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr 0.8fr", gap: 10 }}>
+          {/* TELEFONDA TAŞMA (v1.622.0 — kullanıcı: "ekran kaymış"): sabit dört sütun dar ekranda sağa
+              taşıyor, "Müşteri Sipariş Kodu" kesiliyordu. Artık sütunlar sığdığı kadar; sığmayan alt satıra iner,
+              cari alanı ötekilerin iki katı pay alır (geniş ekranda eski 1.4/0.8 oranına yakın). Izgara değil esnek
+              satır: tek sütuna düşen telefonda "span 2" ızgarayı yeniden taşırırdı. */}
+          <div data-siparis-baslik-alanlari style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <div style={{ flex: "2 1 260px", minWidth: 0 }}>
             <Field label={tip === "Satış" ? "Müşteri" : "Tedarikçi"}>
               {/* Düzenlemede teslimat yapılmışsa CARİ KİLİTLİ: fişler o cariye kesildi. Sebep
                   yanında yazılı — kaydedince reddedilmek yerine baştan görünsün. */}
@@ -1245,12 +1250,18 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 );
               })()}
             </Field>
+            </div>
+            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
             <Field label="Sipariş Tarihi">
               <input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} style={inputStyle} />
             </Field>
+            </div>
+            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
             <Field label="Teslim Tarihi">
               <input type="date" value={teslimTarihi} onChange={(e) => setTeslimTarihi(e.target.value)} style={inputStyle} />
             </Field>
+            </div>
+            <div style={{ flex: "1 1 180px", minWidth: 0 }}>
             <Field label={tip === "Satış" ? "Müşteri Sipariş Kodu (opsiyonel)" : "Tedarikçi Sipariş Kodu (opsiyonel)"}>
               <input
                 value={musteriKodu}
@@ -1260,13 +1271,15 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 style={inputStyle}
               />
             </Field>
+            </div>
 
             {/* NOT VE CARİ DEFTERİ BAŞLIKTA (v1.519.0): siparişin kendi bilgileri, kalemlerden önce — fişte de öyle. */}
-            <div style={{ gridColumn: "span 2" }}>
+            <div style={{ flex: "3 1 260px", minWidth: 0 }}>
               <Field label="Not">
                 <input value={not} onChange={(e) => setNot(e.target.value)} placeholder="Opsiyonel" style={inputStyle} />
               </Field>
             </div>
+            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
             <Field label="Cari Defteri">
               <select value={siparisDefter} onChange={(e) => setSiparisDefter(e.target.value)} style={inputStyle}>
                 <option value="Genel">Genel</option>
@@ -1274,6 +1287,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 <option value="Muhasebe">Muhasebe (ikisine de)</option>
               </select>
             </Field>
+            </div>
 
             {/* Sipariş BAŞLIĞINDAKİ kutu alanı KALDIRILDI: kutu kalem bazında seçiliyor ve iki
                 seviyenin birlikte durması "hangisi geçerli?" belirsizliği yaratıyordu. Kalem

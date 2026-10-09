@@ -12,7 +12,7 @@
 //   4. Bankaya tahsile verme de geri alınıyor (kayıt doğurmayan aşama).
 //   5. Tahsil geri alınıyor: bankadaki tahsil kaydı siliniyor, çek yeniden Tahsilde.
 //   6. Cari kartında çek girişi: dolar carisine TL çek — çek ₺ kaydediliyor, hareket $.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -82,7 +82,7 @@ async function calistir() {
     set(kutular.find((x) => x.type === "number"), "42000");
     set(kutular.find((x) => x.type === "date"), "2026-12-01");
   });
-  await secimYap("Müşteri B");
+  await cariSec(sayfa, "Müşteri B", "", "data-cek-cari");   // v1.622.0: aramalı kutu
   await sayfa.waitForTimeout(400);
   const giris = {
     cariHesabi: await sayfa.locator("[data-cek-cari-pb]").inputValue(),

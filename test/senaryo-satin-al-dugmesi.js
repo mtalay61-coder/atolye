@@ -186,7 +186,7 @@ async function calistir() {
       fisEkraniAcildi: gorunen.some((m) => /ALIŞ FİŞİ/i.test(m)),
       siparisFormuAcilmadi: !gorunen.some((m) => /YENİ ALIŞ|Yeni Satın Alma/i.test(m)),
       // CARİ SEÇİMİ formun içinde olmalı: başka cariden alım yapılabilsin.
-      cariSecimiVar: !!document.querySelector('select[title="Alışın yapılacağı cari"]'),
+      cariSecimiVar: !!document.querySelector('input[title="Alışın yapılacağı cari"]'),
       // DEPO'DAN GELEN ÜRÜN KALEM OLARAK gelmeli (v1.206.0). Önce form SEÇİCİSİ dolduruluyordu
       // ve kullanıcı ayrıca "Kalem Ekle"ye basmak zorundaydı; artık doğrudan listeye düşüyor.
       //
@@ -202,8 +202,12 @@ async function calistir() {
 
   // CARİ DEĞİŞİNCE ÜST BAŞLIK DA DEĞİŞMELİ.
   // Kayıt doğru cariye gidiyordu ama başlık açılıştaki cariyi yazmaya devam ediyordu.
-  const cariKutusu = sayfa.locator('select[title="Alışın yapılacağı cari"]');
-  await cariKutusu.selectOption({ label: "Müşteri B" }).catch(() => {});
+  // v1.622.0: kutu aramalı (CariSecici) — yazıp öneriye dokunuluyor.
+  const cariKutusu = sayfa.locator('input[title="Alışın yapılacağı cari"]').first();
+  await cariKutusu.click().catch(() => {});
+  await cariKutusu.fill("Müşteri B").catch(() => {});
+  await sayfa.waitForTimeout(150);
+  await sayfa.locator('[data-cari-secenek="Müşteri B"]').first().dispatchEvent("mousedown").catch(() => {});
   await sayfa.waitForTimeout(600);
   const baslikGuncellendi = await sayfa.evaluate(() => /Müşteri B/.test(document.body.innerText));
 

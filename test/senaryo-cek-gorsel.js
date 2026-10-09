@@ -9,7 +9,7 @@
 //            uygulamanın kayıt başına 5 MB sınırına çek başına iki fotoğrafla hızla çarpmaktı.
 //
 // `tabloYaz`ın dördüncü parametresi bunu mümkün kılıyor: buluta tam liste, yerele boş liste.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -120,13 +120,8 @@ async function calistir() {
       if (t) { const i = t.querySelector("input"); set.call(i, "5000"); i.dispatchEvent(new Event("input", { bubbles: true })); }
       const v = bul(/Vade Tarihi/);
       if (v) { const i = v.querySelector("input"); set.call(i, "2026-12-01"); i.dispatchEvent(new Event("input", { bubbles: true })); }
-      const c = bul(/^Cari/);
-      if (c) {
-        const sel = c.querySelector("select");
-        const o = [...sel.options].find((x) => /Tedarikçi A/.test(x.textContent));
-        if (o) { sel.value = o.value; sel.dispatchEvent(new Event("change", { bubbles: true })); }
-      }
     });
+    await cariSec(sayfa, "Tedarikçi A", "", "data-cek-cari");   // v1.622.0: aramalı kutu
     await sayfa.waitForTimeout(500);
     await sayfa.evaluate(() => {
       const b = [...document.querySelectorAll("button")]

@@ -761,17 +761,17 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               Depo/stok yolundan açıldığında cari boş gelir — o zaman seçici çıkar. */}
           {!seciliCariId && (
           <Field label={alisMi ? "Tedarikçi" : "Müşteri"}>
-            <select
-              value={seciliCariId}
-              onChange={(e) => setSeciliCariId(e.target.value)}
+            {/* ARAMALI (v1.622.0 — kullanıcı: "Fiş ekranlarında da müşteri seçimi aramalı olsun"):
+                sipariş formundaki seçicinin aynısı; ünvan / kod / telefonla süzülür. */}
+            <CariSecici
+              cariler={(cariler || []).filter((c) => !c.pasif)}
+              deger={seciliCariId}
+              onDegis={setSeciliCariId}
+              veriAdi="data-fis-cari"
               title={alisMi ? "Alışın yapılacağı cari" : "Satışın yapılacağı cari"}
-              style={{ ...inputStyle, minWidth: 190 }}
-            >
-              <option value="">— Seçin —</option>
-              {(cariler || [])
-                .filter((c) => !c.pasif)
-                .map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
-            </select>
+              placeholder={alisMi ? "Tedarikçi ara: ünvan, kod, telefon…" : "Müşteri ara: ünvan, kod, telefon…"}
+              minGenislik={220}
+            />
           </Field>
           )}
           <Field label="Fiş Tarihi" genislik={150}>

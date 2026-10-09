@@ -6,7 +6,7 @@
 // düşüyordu — iki ekran aynı olayı ters kaydediyordu.
 //
 // KURAL (tek yerde, `hareketYonu`): kasa GİRİŞ = tahsilat → "Alacak"; kasa ÇIKIŞ = ödeme → "Borç".
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -36,11 +36,8 @@ async function kasaHareketi(yon, tutar) {
     s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
   }, yon);
   await sayfa.waitForTimeout(300);
-  await sayfa.evaluate(() => {
-    const s = [...document.querySelectorAll("select")].find((x) => [...x.options].some((o) => /Tedarikçi A/.test(o.textContent)));
-    const o = [...s.options].find((x) => /Tedarikçi A/.test(x.textContent));
-    s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  // v1.622.0: cari kutusu aramalı (CariSecici).
+  await cariSec(sayfa, "Tedarikçi A", "", "data-kasa-cari");
   await sayfa.waitForTimeout(400);
   await sayfa.locator('input[type="number"]').first().fill(String(tutar));
   await sayfa.waitForTimeout(300);

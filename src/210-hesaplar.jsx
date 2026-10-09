@@ -617,10 +617,9 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                 ZORUNLU (v1.314.0); serbest kayıtta ise karşı taraf GİDER/GELİR KARTI
                                 olabiliyor. Kart seçimi aşağıda; ikisinden biri dolu olmalı. */}
                             {islem === "serbest" ? "Cari (kart seçerseniz boş bırakın)" : "Cari"}
-                            <select value={hForm.cariId} onChange={(e) => setHForm({ ...hForm, cariId: e.target.value, giderKartId: e.target.value ? "" : hForm.giderKartId })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 130 }}>
-                              <option value="">Seçin…</option>
-                              {secilebilirler(cariler, hForm.cariId).map((c) => <option key={c.id} value={c.id}>{secenekEtiketi(c, c.unvan)}</option>)}
-                            </select>
+                            {/* ARAMALI (v1.622.0): cari listesi uzadıkça açılır liste içinden çıkılmıyordu. */}
+                            <CariSecici cariler={secilebilirler(cariler, hForm.cariId)} deger={hForm.cariId} kucuk minGenislik={190} veriAdi="data-kasa-cari"
+                              onDegis={(id) => setHForm({ ...hForm, cariId: id, giderKartId: id ? "" : hForm.giderKartId })} />
                           </label>
                           {/* GİDER / GELİR KARTI — kira, elektrik, personel gibi alışı olmayan
                               kalemler. Karşı tarafı olmayan para hareketi bırakmamak için:
@@ -1212,18 +1211,13 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Cari
-            <select
-              value={form.cariId}
-              onChange={(e) => {
+            {/* ARAMALI (v1.622.0). */}
+            <CariSecici cariler={secilebilirler(cariler, form.cariId)} deger={form.cariId} kucuk minGenislik={200} veriAdi="data-cek-cari"
+              onDegis={(id) => {
                 // Carinin HESAP BİRİMİ varsayılan: dolarla çalışan cariye TL çek → cariye $ işlenir.
-                const cr = (cariler || []).find((x) => x.id === e.target.value);
-                setForm({ ...form, cariId: e.target.value, cariPB: (cr && cr.paraBirimi) || form.paraBirimi || "TRY", cariTutar: "", cariKur: "" });
-              }}
-              style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 140 }}
-            >
-              <option value="">Seçin…</option>
-              {secilebilirler(cariler, form.cariId).map((c) => <option key={c.id} value={c.id}>{secenekEtiketi(c, c.unvan)}</option>)}
-            </select>
+                const cr = (cariler || []).find((x) => x.id === id);
+                setForm({ ...form, cariId: id, cariPB: (cr && cr.paraBirimi) || form.paraBirimi || "TRY", cariTutar: "", cariKur: "" });
+              }} />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             {/* PARA BİRİMİ SEÇİLEN BİRİMDEN OKUNUYOR. Etikette "₺" SABİT yazılıydı: dolar çeki
