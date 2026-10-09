@@ -69,6 +69,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   // içinde olsun, tıklayınca cari tahsilat ekranı açsın, içinde olduğumuz sipariş no atayarak"). Mor şeritte "İşlemler"
   // düğmesi; şeride SAĞ TIKLAMAK da aynı menüyü imlecin yanında açar. { x, y } (ekran koordinatı) ya da null.
   const [islemMenu, setIslemMenu] = useState(null);
+  // NOTLAR PENCERESİ (v1.621.0 — kullanıcı: "Sipariş notları görmemiz lazım, siparişte üzerine tıklayınca açılır not şeklinde
+  // olsun"). Mor şeritte "Notlar (n)"; tıklayınca siparişin genel notu + model/renk notları (proses etiketli) tek pencerede.
+  const [notPenceresi, setNotPenceresi] = useState(null);
   const [open, setOpen] = useState(!!baslangicAcik);
   // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
   const duzenAcRef = useRef(null);
@@ -381,6 +384,18 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   />
                 );
               })()}
+              {(() => {
+                const sayi = siparisNotSayisi(siparis);
+                if (!sayi) return null;
+                return (
+                  <button type="button" className="btn-ghost" data-siparis-notlar={sayi}
+                    title="Sipariş notları — genel not ve model/renk notları"
+                    style={{ padding: "3px 9px", fontSize: 11, fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 4, borderColor: "#B7791F", color: "#8A5A10", background: "#FFF6DA" }}
+                    onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setNotPenceresi((m) => (m ? null : { x: r.left, y: r.bottom + 4 })); }}>
+                    <FileText size={12} /> Notlar ({sayi})
+                  </button>
+                );
+              })()}
               {onOdemeGir && cari && (
                 <button type="button" className="btn-ghost" data-siparis-islemler="1"
                   title="İşlemler — tahsilat/ödeme (şeride sağ tıklayarak da açılır)"
@@ -413,6 +428,47 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
       {/* İŞLEMLER MENÜSÜ (v1.615.0): sabit konumlu, dışına tıklayınca kapanır. Tahsilat (satış) / Ödeme (alış) carinin
           kartını açar; form bu siparişin numarası, kalan tutarı ve para birimiyle dolu gelir (v1.612 köprüsü), hareket
           siparişe bağlanır. */}
+      {notPenceresi && (() => {
+        // Model → renk → notlar; aynı not bir rengin birden çok ölçüsünde tekrar ediyorsa bir kez (grupNotlari).
+        const gruplar = [];
+        (siparis.kalemler || []).forEach((k) => {
+          const anahtar = `${k.urunAd}|${k.renk || ""}`;
+          let g = gruplar.find((x) => x.anahtar === anahtar);
+          if (!g) { g = { anahtar, urunAd: k.urunAd, renk: k.renk || "", kalemler: [] }; gruplar.push(g); }
+          g.kalemler.push(k);
+        });
+        const notlu = gruplar.map((g) => ({ ...g, notlar: grupNotlari(g.kalemler) })).filter((g) => g.notlar.length);
+        const genislik = 360;
+        const x = Math.max(8, Math.min(notPenceresi.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - genislik - 8));
+        return (
+          <div data-siparis-not-perde="1" onClick={() => setNotPenceresi(null)} style={{ position: "fixed", inset: 0, zIndex: 900 }}>
+            <div data-siparis-not-penceresi="1" onClick={(e) => e.stopPropagation()}
+              style={{ position: "fixed", left: x, top: notPenceresi.y, width: genislik, maxWidth: "calc(100vw - 16px)", maxHeight: "70vh", overflowY: "auto",
+                background: "#FFFBEF", border: "1.5px solid #B7791F", borderRadius: "var(--erp-r-md)", boxShadow: "0 8px 24px rgba(34,27,20,.2)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderBottom: "1px solid #EBD9A8", fontSize: 12, fontWeight: 800, color: "#8A5A10" }}>
+                <FileText size={14} /> NOTLAR · {siparis.siparisNo}
+                <button type="button" onClick={() => setNotPenceresi(null)} style={{ marginLeft: "auto", border: "none", background: "none", cursor: "pointer", color: "#8A5A10", display: "flex" }}><X size={14} /></button>
+              </div>
+              {siparis.not && (
+                <div data-siparis-not-genel="1" style={{ padding: "8px 12px", borderBottom: "1px solid #EBD9A8" }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: "var(--erp-text-3)", letterSpacing: ".04em" }}>SİPARİŞ NOTU</div>
+                  <div style={{ fontSize: 14, whiteSpace: "pre-wrap" }}><NotKaynakla not={siparis.not} tumSiparisler={tumSiparisler} onSiparisGit={onSiparisGit} /></div>
+                </div>
+              )}
+              {notlu.map((g) => (
+                <div key={g.anahtar} data-siparis-not-renk={`${g.urunAd} · ${g.renk}`} style={{ padding: "8px 12px", borderBottom: "1px solid #EBD9A8" }}>
+                  <div style={{ fontSize: 12, fontWeight: 800 }}>{g.urunAd}{g.renk ? <span style={{ fontWeight: 600, color: "var(--erp-text-2)" }}> · {g.renk}</span> : null}</div>
+                  {g.notlar.map((n) => (
+                    <div key={notEtiketi(n)} style={{ fontSize: 13, marginTop: 2 }}>
+                      {n.proses && <b style={{ color: "#8A6A2E" }}>{n.proses}: </b>}{n.metin}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       {islemMenu && onOdemeGir && cari && (() => {
         const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
         const hedef = { cariId: siparis.cariId, tip: oz.beklenenTip, tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,

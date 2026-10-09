@@ -160,6 +160,13 @@ function notlariTekille(liste) {
 }
 // Bir renk satırındaki (aynı ürün+renk, farklı ölçüler) kalemlerin notları.
 function grupNotlari(kalemler) { return notlariTekille((kalemler || []).flatMap(kalemNotlari)); }
+// Siparişteki TEKİL not sayısı (v1.621.0): genel not + her ürün/renk grubunun tekil notları — aynı notun ölçü tekrarları bir.
+function siparisNotSayisi(siparis) {
+  if (!siparis) return 0;
+  const gruplar = {};
+  (siparis.kalemler || []).forEach((k) => { const a = `${k.urunAd}|${k.renk || ""}`; (gruplar[a] = gruplar[a] || []).push(k); });
+  return (siparis.not ? 1 : 0) + Object.values(gruplar).reduce((t, g) => t + grupNotlari(g).length, 0);
+}
 // Üretime bağlı satış kalemlerinin notları (üretim no = kalemin planlama referansı).
 function uretimSiparisNotlari(u, siparisler) {
   if (!u || !u.siparisNo) return [];
