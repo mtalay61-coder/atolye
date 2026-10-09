@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.619.0";
+const SURUM = "1.620.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Cari Raporlar sekmesi: bakiye (alacak/borc), siparisler teslim/kalan, tahsilat, saglik durumu (Iyi/Takip/Riskli), yazdir/PDF; Fisler ekraninda simgeler";
+const SURUM_NOTU = "Siparis formunda musteri/tedarikci secimi aramali: unvan, cari kodu veya telefonla yazdikca suzulur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Cari Raporlar sekmesi: bakiye (alacak/borc), siparisler tesl
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.620.0", tarih: "09.10.2026",
+    eklenen: [],
+    degisen: ["Sipariş formunda müşteri/tedarikçi seçimi açılır liste yerine aramalı kutu: ünvan, cari kodu ya da telefonla yazdıkça süzülür, ok tuşları + Enter ile ya da dokunarak seçilir; listede cari kodu ve ülkesi görünür"],
+    duzeltilen: [] },
   { surum: "1.619.0", tarih: "09.10.2026",
     eklenen: ["Cari ekranında \"Raporlar\" sekmesi: bütün cariler için bakiye (alacağımız / borcumuz), açık sipariş, kalan adet ve tutar, son tahsilat/ödeme ve sağlık durumu (İyi / Takip / Riskli, riskliler önce). Cariye dokununca rapor kartı: o anki bakiye, sipariş-teslim-kalan sayıları, siparişe bağlı tahsilat, durumun nedenleri, sipariş tablosu (gecikenler işaretli); Yazdır / PDF / WhatsApp / E-posta",
       "Fişler ekranında tip çiplerine ve satır etiketlerine simge (Satış, Alış, Tahsilat, Ödeme, Üretim, İşçilik, Maaş…)"],

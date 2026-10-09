@@ -10,7 +10,7 @@
 //
 // Dört seviyenin ikisi kalem üretiyor (asorti, tek çift), ikisi ÜRETMEMELİ (stok, renk) —
 // "hangi renk/hangi beden" belli değilken satır yazmak, karşılığı üretilemeyecek sipariş demek.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -75,7 +75,7 @@ async function calistir() {
   await sayfa.locator("[data-yeni-siparis]:visible").first().click();
   await sayfa.waitForTimeout(700);
   // Müşteri seçilmeden sipariş kaydedilmiyor (form kuralı); fuar akışı da müşteriyle başlıyor.
-  await sayfa.locator('select:has(option:text-is("Müşteri B"))').first().selectOption({ label: "Müşteri B" });
+  await cariSec(sayfa, "Müşteri B");   // v1.620.0: aramalı cari kutusu
   await sayfa.waitForTimeout(400);
 
   // YERLEŞİM — Renk seçicisi DAR EKRANDA da okunabilir kalmalı. Sabit sütun oranlarıyla
@@ -92,10 +92,11 @@ async function calistir() {
     if (b) b.click();
   });
   await sayfa.waitForTimeout(600);
+  // v1.620.0: eski ölçüm "Seçin…" seçenekli İLK select'i alıyordu — o aslında müşteri listesiydi (renk kutusu v1.469'dan
+  // beri aramalı metin). Müşteri de aramalı olunca ölçüm boş kaldı; artık doğrudan renk kutusu ölçülüyor.
   const renkSeciciGenisligi = await sayfa.evaluate(() => {
-    const sel = [...document.querySelectorAll("select")]
-      .find((s) => [...s.options].some((o) => o.textContent === "Seçin…"));
-    return sel ? Math.round(sel.getBoundingClientRect().width) : 0;
+    const k = [...document.querySelectorAll("[data-siparis-renk-arama]")].find((x) => x.getBoundingClientRect().width > 0);
+    return k ? Math.round(k.getBoundingClientRect().width) : 0;
   });
   const yerlesim = { renkSeciciOkunabilir: renkSeciciGenisligi >= 100 };
   if (eskiGorunum) await sayfa.setViewportSize(eskiGorunum);

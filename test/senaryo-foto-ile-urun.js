@@ -20,7 +20,7 @@
 //   4. Kodlar atandıktan sonra aynı fotoğraf ürünü normal sorgulama yolundan getiriyor
 //      (`data-depo-okut-sonuc="fm1"`).
 const { chromium } = require("playwright");
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -95,7 +95,7 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
   await sayfa.locator("[data-yeni-siparis]:visible").first().click();
   await sayfa.waitForTimeout(700);
-  await sayfa.locator('select:has(option:text-is("Müşteri B"))').first().selectOption({ label: "Müşteri B" });
+  await cariSec(sayfa, "Müşteri B");   // v1.620.0: aramalı cari kutusu
   await sayfa.waitForTimeout(400);
   const dugmeKapaliPanelde = await sayfa.locator("[data-foto-ac]:visible").count();
   await sayfa.locator("[data-barkod-paneli-ac]:visible").first().click();

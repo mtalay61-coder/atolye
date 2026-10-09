@@ -18,7 +18,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -101,7 +101,7 @@ async function calistir() {
   // Sipariş ekranı liste görünümünde açılıyor; barkod kutusu YENİ SİPARİŞ formunda.
   await s2.locator("[data-yeni-siparis]:visible").first().click();
   await s2.waitForTimeout(700);
-  await s2.locator('select:has(option:text-is("Müşteri B"))').first().selectOption({ label: "Müşteri B" });
+  await cariSec(s2, "Müşteri B");   // v1.620.0: aramalı cari kutusu
   await s2.waitForTimeout(400);
 
   // 1. Düğme panelin içinde.

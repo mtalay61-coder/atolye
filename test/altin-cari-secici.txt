@@ -1,0 +1,30 @@
+{
+ "hatalar": [],
+ "bas": {
+  "deger": "",
+  "id": ""
+ },
+ "tumu": [
+  "Müşteri B",
+  "New Diamond",
+  "Stone Blue",
+  "İgii Tirana"
+ ],
+ "tir": [
+  "İgii Tirana"
+ ],
+ "kod": [
+  "İgii Tirana"
+ ],
+ "buyuk": [
+  "İgii Tirana"
+ ],
+ "secim": {
+  "deger": "İgii Tirana",
+  "id": "c7"
+ },
+ "temiz": {
+  "deger": "",
+  "id": ""
+ }
+}

@@ -71,4 +71,15 @@ const modulAc = async (sayfa, ad) => {
   if (!bulundu) throw new Error(`Menüde "${ad}" yok`);
 };
 
-module.exports = { uygulamaAc, depoOku, bekle, modulAc };
+// CARİ SEÇ (v1.620.0): sipariş formundaki müşteri/tedarikçi kutusu artık aramalı (CariSecici). Kutuya yazıp öneriye
+// dokunur. `kok`: birden çok form açıksa daraltmak için seçici (varsayılan: görünen ilk kutu).
+const cariSec = async (sayfa, unvan, kok = "") => {
+  const kutu = sayfa.locator(`${kok} input[data-siparis-cari]:visible`).first();
+  await kutu.click();
+  await kutu.fill(unvan);
+  await sayfa.waitForTimeout(150);
+  await sayfa.locator(`[data-cari-secenek="${unvan}"]`).first().dispatchEvent("mousedown");
+  await sayfa.waitForTimeout(200);
+};
+
+module.exports = { uygulamaAc, depoOku, bekle, modulAc, cariSec };

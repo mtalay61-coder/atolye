@@ -8,7 +8,7 @@
 //   B) SAT-9 (250 USD, 100 USD tahsil edilmiş) kartında "İşlemler" → menü: Tahsilat; şeride sağ tık da menüyü açar.
 //      Tahsilat → Cari ekranı, Müşteri B kartında form: tutar 150 (kalan), USD, "Sipariş SAT-9".
 //   C) Çıktı HTML'inde hesap özeti: Sipariş toplamı, "− 100 $" tahsilat satırı (THS-1005001, USD Kasa), KALAN BAKİYE 150 $.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {
@@ -42,7 +42,7 @@ async function calistir() {
   const kodAsorti = `90${hane(urun.stokNo, 4)}${hane(((tn.renkler || []).find((r) => r.ad === "Siyah") || {}).barkodKodu, 4)}${hane(((tn.asortiler || []).find((a) => a.id === "as1") || {}).barkodKodu, 3)}`;
   await modulAc(sayfa, "Sipariş"); await sayfa.waitForTimeout(700);
   await sayfa.locator("[data-yeni-siparis]:visible").first().click(); await sayfa.waitForTimeout(700);
-  await sayfa.locator('select:has(option:text-is("Müşteri B"))').first().selectOption({ label: "Müşteri B" });
+  await cariSec(sayfa, "Müşteri B");   // v1.620.0: aramalı cari kutusu
   await sayfa.locator("[data-barkod-paneli-ac]:visible").first().click(); await sayfa.waitForTimeout(200);
   const kutu = sayfa.locator('input[title="Barkod"]:visible').first();
   await kutu.fill(kodAsorti); await kutu.press("Enter");
