@@ -1,0 +1,11 @@
+{
+ "hatalar": [],
+ "tabloSayisi": 3,
+ "resimSolAyni": true,
+ "resimGenAyni": true,
+ "renkGenAyni": true,
+ "tutarSolAyni": true,
+ "durumSolAyni": true,
+ "resimUste": true,
+ "tasmaYok": true
+}

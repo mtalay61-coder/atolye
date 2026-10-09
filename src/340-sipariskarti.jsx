@@ -721,7 +721,24 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                           zorunda kalıyordu. `matris-tablo` sınıfı başlık zemini, ince dikey çizgiler
                           ve zebra satır veriyor; sınıf tek yerde tanımlı (100-app), bütün matrisler
                           aynı görünüyor. */}
-                      <table className="matris-tablo" style={{ width: "auto", minWidth: "100%", borderCollapse: "collapse" }}>
+                      {/* SABİT SÜTUNLAR (v1.627.0 — kullanıcı: "Siparişte kolonlar dengesiz, buna düzen getirmemiz lazım, resim
+                          hep aynı yerde olsun"). Tablo `width: auto` idi: her ürünün tablosu kendi içeriğine göre genişliyor, uzun
+                          renk adı ("1014 – Beyaz Süet/Beyaz Baskı/Beyaz Deri") resim sütununu daraltıp ölçüleri sağa itiyordu —
+                          alt alta ürünlerde resim, ölçüler ve tutarlar her satırda başka yerdeydi. Artık `table-layout: fixed` +
+                          colgroup: resim 150 px, renk 250 px (uzun ad alt satıra sarar), sağdaki Adet / Birim / Tutar / Durum sabit;
+                          ölçü sütunları aradaki boşluğu eşit paylaşır. Her üründe resim, renk ve tutar aynı hizada. Dar ekranda
+                          tablo en az içeriği kadar geniş kalır, kap yatay kayar. */}
+                      <table className="matris-tablo" data-siparis-kart-tablo="1"
+                        style={{ width: "100%", tableLayout: "fixed", minWidth: 150 + 250 + tumBedenler.length * 52 + 100 + 95 + 115 + 125, borderCollapse: "collapse" }}>
+                        <colgroup>
+                          <col style={{ width: 150 }} />
+                          <col style={{ width: 250 }} />
+                          {tumBedenler.map((b) => <col key={b} />)}
+                          <col style={{ width: 100 }} />
+                          <col style={{ width: 95 }} />
+                          <col style={{ width: 115 }} />
+                          <col style={{ width: 125 }} />
+                        </colgroup>
                         <tbody>
                           <tr>
                             <td
@@ -730,7 +747,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               rowSpan={renkGruplari.length + 1 + (renkGruplari.length > 1 ? 1 : 0)
                                 + renkGruplari.filter((rg) => acikNotSatirlari[`${ug.urunId}|${rg.renk}`] && grupNotlari(rg.kalemler).length > 0).length}
                               style={{
-                                padding: "10px 12px", verticalAlign: "middle", textAlign: "center",
+                                // ÜSTE HİZALI (v1.627.0): çok renkli üründe resim ortaya kayıyordu; artık her üründe sol üstte.
+                                padding: "10px 12px", verticalAlign: "top", textAlign: "center",
                                 background: siparis.tip === "Alış" ? "#8A5A3812" : "#3D6B8A12",
                                 borderRight: `2px solid ${siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`,
                                 minWidth: 132,
@@ -802,7 +820,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     duruyor. Aynı ürünün küçük bir kopyasını her renk satırında
                                     tekrarlamak yer kaplıyor ve renk adını sağa itiyordu.
                                     Renk adı artık ortalanmış ve tek başına. */}
-                                <td style={{ padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", textAlign: "center", color: "var(--erp-text)" }}>
+                                <td style={{ padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "normal", overflowWrap: "anywhere", textAlign: "center", color: "var(--erp-text)" }}>
                                   {rg.renk}
                                   {/* Renk bazlı notlar (v1.470.0; v1.476.0'dan beri proses etiketli: "Kesim: …"). v1.623.0: hücrede
                                       yalnız rozet; notun kendisi satıra tıklayınca altta açılır (uzun not satırı şişiriyordu). */}

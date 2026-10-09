@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.626.0";
+const SURUM = "1.627.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Kalan kaydetler de mor seritte: asorti, stok giris/cikis, fiyat listesi, fiyat grubu, elle kur, rapor, koli, gorsel, hesap ve hareket duzenleme, ekran duzeni";
+const SURUM_NOTU = "Siparis kartinda sabit sutunlar: resim her urunde ayni yerde, renk/adet/birim/tutar/durum hizali";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Kalan kaydetler de mor seritte: asorti, stok giris/cikis, fi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.627.0", tarih: "09.10.2026",
+    eklenen: [],
+    degisen: ["Sipariş kartında ürün tabloları sabit sütunlu: resim her üründe aynı yerde (sol üstte), renk sütunu sabit genişlikte (uzun ad alt satıra sarar), Adet / Birim / Tutar / Durum alt alta ürünlerde aynı hizada"],
+    duzeltilen: [] },
   { surum: "1.626.0", tarih: "09.10.2026",
     eklenen: [],
     degisen: ["Kalan Kaydet düğmeleri de üstteki mor şeritte: yeni asorti, bağımsız stok giriş/çıkış, fiyat listesi (kaydet ve farklı kaydet), ürün kartında fiyat grubu, elle kur, rapor ayarları, yeni koli, görsel değiştirme, kasa/banka hesap ve hareket düzenleme, ekran düzeni"],
