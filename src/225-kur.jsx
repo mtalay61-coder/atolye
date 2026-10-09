@@ -157,7 +157,16 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
             boxShadow: "none", minWidth: 230,
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)", marginBottom: 6 }}>Kuru elle gir (1 birim = ? ₺)</div>
+          {/* MOR KAYIT ŞERİDİ (v1.626.0): başlık + Kaydet · Vazgeç üstte. */}
+          <div data-kur-elle-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "4px 8px", marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#5B3F75" }}>Kuru elle gir (1 birim = ? ₺)</span>
+            <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
+              <button className="btn-primary btn-save" style={{ padding: "4px 10px", fontSize: 11 }} onClick={elleKaydet}>
+                <Check size={12} /> Kaydet
+              </button>
+              <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 11 }} onClick={() => { setElleAcik(false); setHata(""); }}>Vazgeç</button>
+            </span>
+          </div>
           <div style={{ display: "grid", gap: 6 }}>
             {["USD", "EUR"].map((pb) => (
               <label key={pb} style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -178,12 +187,6 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
           {/* Kaydedilemediğinde SEBEBİ yazılır; sessizce hiçbir şey yapmamak "uygulama bozuk"
               dedirtiyordu. */}
           {hata && <div style={{ fontSize: 11, color: "var(--erp-warn)", fontWeight: 600, marginTop: 7 }}>{hata}</div>}
-          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button className="btn-primary btn-save" style={{ padding: "5px 10px", fontSize: 11 }} onClick={elleKaydet}>
-              <Check size={12} /> Kaydet
-            </button>
-            <button className="btn-ghost" style={{ padding: "5px 10px", fontSize: 11 }} onClick={() => { setElleAcik(false); setHata(""); }}>Vazgeç</button>
-          </div>
           <div style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 6, lineHeight: 1.5 }}>
             TCMB'nin döviz satış kurunu tcmb.gov.tr adresinden okuyup buraya yazabilirsiniz.
           </div>

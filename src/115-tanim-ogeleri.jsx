@@ -236,6 +236,24 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
             boxShadow: "none",
           }}
         >
+          {/* MOR KAYIT ŞERİDİ (v1.626.0 — "Diğer kaydetleri de mor şeride al"): Kaydet · Vazgeç · Sil panelin üstünde. */}
+          <div data-gorsel-kayit-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", padding: "5px 8px", marginBottom: 10 }}>
+            <button className="btn-primary btn-save" style={{ padding: "5px 10px", fontSize: 12 }} onClick={save}>
+              Kaydet
+            </button>
+            <button className="btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} onClick={() => setEditing(false)}>
+              Vazgeç
+            </button>
+            {/* SİL (v1.574.0): yalnız düzenleme panelinde ve İKİ dokunuşla — ilk dokunuş sorar. */}
+            {src && onRemove && (
+              <button type="button" data-gorsel-sil={silOnay ? "onay" : "1"} style={{ marginLeft: "auto", padding: "5px 10px", fontSize: 12, borderRadius: "var(--erp-r-sm)", cursor: "pointer",
+                border: "1px solid var(--erp-danger)", background: silOnay ? "var(--erp-danger)" : "#fff", color: silOnay ? "#fff" : "var(--erp-danger)", fontWeight: 700 }}
+                onClick={() => { if (!silOnay) { setSilOnay(true); return; } onRemove(); setSilOnay(false); setEditing(false); }}>
+                {silOnay ? "Emin misiniz? Sil" : "Görseli sil"}
+              </button>
+            )}
+
+          </div>
           <input
             ref={galeriRef}
             type="file"
@@ -305,23 +323,6 @@ function ColorSwatch({ src, onUrlSave, onRemove, size = 30, editable = true, bas
             Link yapıştırdıysanız Kaydet'e basın. Fotoğraf yapıştırırsanız otomatik kaydedilir.
             Link için imgur.com veya postimages.org gibi siteler doğrudan çalışan bağlantı verir
             (Google Fotoğraflar/Drive linkleri çoğunlukla çalışmaz).
-          </div>
-          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-            <button className="btn-primary" style={{ padding: "5px 10px", fontSize: 12 }} onClick={save}>
-              Kaydet
-            </button>
-            <button className="btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} onClick={() => setEditing(false)}>
-              Vazgeç
-            </button>
-            {/* SİL (v1.574.0): yalnız düzenleme panelinde ve İKİ dokunuşla — ilk dokunuş sorar. */}
-            {src && onRemove && (
-              <button type="button" data-gorsel-sil={silOnay ? "onay" : "1"} style={{ marginLeft: "auto", padding: "5px 10px", fontSize: 12, borderRadius: "var(--erp-r-sm)", cursor: "pointer",
-                border: "1px solid var(--erp-danger)", background: silOnay ? "var(--erp-danger)" : "#fff", color: silOnay ? "#fff" : "var(--erp-danger)", fontWeight: 700 }}
-                onClick={() => { if (!silOnay) { setSilOnay(true); return; } onRemove(); setSilOnay(false); setEditing(false); }}>
-                {silOnay ? "Emin misiniz? Sil" : "Görseli sil"}
-              </button>
-            )}
-
           </div>
         </div>
       )}

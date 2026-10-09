@@ -15,6 +15,10 @@ function AsortiOlusturucu({ bedenler, onKaydet }) {
 
   return (
     <div style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14, maxWidth: 640 }}>
+      {/* MOR KAYIT ŞERİDİ (v1.626.0 — kullanıcı: "Diğer kaydetleri de mor şeride al"). */}
+      <KayitSeridi baslik="Yeni Asorti" veri="data-asorti-seridi">
+        <button className="btn-primary btn-save" onClick={kaydet}><Save size={14} /> Asorti Kaydet</button>
+      </KayitSeridi>
       <Field label="Asorti Adı">
         <input value={ad} onChange={(e) => setAd(e.target.value)} placeholder="Örn. Standart Asorti" style={{ ...inputStyle, marginBottom: 10 }} />
       </Field>
@@ -31,9 +35,6 @@ function AsortiOlusturucu({ bedenler, onKaydet }) {
             />
           </label>
         ))}
-      </div>
-      <div style={{ marginTop: 12 }}>
-        <button className="btn-primary btn-save" onClick={kaydet}><Save size={14} /> Asorti Kaydet</button>
       </div>
     </div>
   );
@@ -328,7 +329,7 @@ function AsortiOlusturTeklifi({ degerler, bedenSecenekleri, asortiler, onOlustur
           Bu dağılımı asorti olarak kaydet
         </button>
       ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", padding: "5px 8px" }}>
           <input
             autoFocus
             value={ad}
@@ -337,7 +338,7 @@ function AsortiOlusturTeklifi({ degerler, bedenSecenekleri, asortiler, onOlustur
             style={{ ...inputStyle, width: 150, fontSize: 12 }}
             onKeyDown={(e) => e.key === "Enter" && ad.trim() && kaydet()}
           />
-          <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "5px 10px" }} disabled={!ad.trim()} onClick={kaydet}>
+          <button type="button" className="btn-primary btn-save" style={{ fontSize: 11, padding: "5px 10px" }} disabled={!ad.trim()} onClick={kaydet}>
             Kaydet
           </button>
           <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px" }} onClick={() => { setAcik(false); setAd(""); }}>
