@@ -13,7 +13,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const [siparisArama, setSiparisArama] = useState("");
   // Alan bazlı filtre. Üstteki genel arama kutusu "her yerde ara" yapar; bu şerit ise her kutunun
   // KENDİ alanında arar — "cari adında Ahmet geçen" ile "notunda Ahmet geçen" ayrımı burada kurulur.
-  const [siparisKolonFiltre, setSiparisKolonFiltre] = useState({ no: "", cari: "", tarih: "" });
+  // `belge` / `sezon` (v1.624.1 — kullanıcı: "Sezon ve belge no ile siparişleri filtreleyebilelim"): belge no metinle,
+  // sezon kayıtlı sezonlardan seçilerek (birebir eşleşme — "2026 Yaz" ararken "2026 Yaz Ek" gelmesin).
+  const BOS_SIPARIS_FILTRE = { no: "", cari: "", tarih: "", belge: "", sezon: "" };
+  const [siparisKolonFiltre, setSiparisKolonFiltre] = useState(BOS_SIPARIS_FILTRE);
   const siparisKolonAktif = Object.values(siparisKolonFiltre).some((v) => String(v).trim() !== "");
   const [acikSiparisId, setAcikSiparisId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -920,12 +923,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // (ya da zaten iptal) sipariş silinip çöpe gider. Burada ayrı bir yol yok: iki yol vardı ve biri (doğrudan
   // silme) fişleri yetim bırakıyor, öteki (zincir) fişleri siliyordu — ikisi de kullanıcının kuralına aykırıydı.
   // "Önce bağlı alışı silin" engeli de kalktı: kurala göre alış devam eder, yalnız bağı kopar.
-  // Başlık yuvası yalnız ETKİN sekmede kullanılır: modül sekmeler arasında `display:none` ile açık kalıyor,
-  // gizli bir sekmenin açık formu başlığa ikinci bir Kaydet düğmesi çizmesin.
-  const [baslikYuvasi, setBaslikYuvasi] = useState(null);
-  useLayoutEffect(() => {
-    setBaslikYuvasi(aktifSekme && showForm && typeof document !== "undefined" ? document.getElementById("modul-baslik-eylemleri") : null);
-  }, [aktifSekme, showForm]);
+  // (Başlık yuvası — Kaydet/Vazgeç modül başlığına portal ile çiziliyordu, v1.520.0 — v1.625.0'da kalktı: düğmeler
+  // formun üstündeki mor KAYIT ŞERİDİnde, bkz. `KayitSeridi`.)
 
   function siparisSil(id) {
     if (!siparisler.some((s) => s.id === id)) return;
@@ -955,6 +954,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const esle = (metin, aranan) =>
       String(metin || "").toLocaleLowerCase("tr-TR").includes(aranan.toLocaleLowerCase("tr-TR"));
     if (siparisKolonFiltre.no.trim() && !esle(s.siparisNo, siparisKolonFiltre.no.trim()) && !esle(s.musteriKodu, siparisKolonFiltre.no.trim())) return false;
+    if (siparisKolonFiltre.belge.trim() && !esle(s.belgeNo, siparisKolonFiltre.belge.trim())) return false;
+    if (siparisKolonFiltre.sezon && (s.sezon || "") !== siparisKolonFiltre.sezon) return false;
     if (siparisKolonFiltre.cari.trim()) {
       const cariAdi = (cariler.find((c) => c.id === s.cariId) || {}).unvan || "";
       if (!esle(cariAdi, siparisKolonFiltre.cari.trim())) return false;
@@ -1152,7 +1153,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             <div style={{
               display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", marginBottom: 12,
               background: hedef.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)", color: "var(--erp-panel-2)",
-              position: "sticky", top: 0, zIndex: 1,
+              // Yapışkan DEĞİL (v1.625.0): kaydırınca üstte kalan, Kaydet'i taşıyan mor kayıt şeridi; ikisi aynı yere
+              // yapışıp birbirini örtmesin.
             }}>
               <Pencil size={18} />
               <span style={{ display: "flex", flexDirection: "column", minWidth: 0, lineHeight: 1.25 }}>
@@ -1164,13 +1166,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                   <span className="mono" style={{ fontSize: 12, fontWeight: 500, marginLeft: 8, opacity: 0.85 }}>{hedef.siparisNo}</span>
                 </span>
               </span>
-              <button
-                className="btn-ghost"
-                style={{ marginLeft: "auto", padding: "6px 12px", fontSize: 12, background: "rgba(255,255,255,.14)", borderColor: "rgba(255,255,255,.35)", color: "var(--erp-panel-2)" }}
-                onClick={duzenlemedenCik}
-              >
-                <X size={14} /> Vazgeç
-              </button>
+              {/* Vazgeç mor kayıt şeridinde (v1.625.0), Kaydet'in yanında. */}
             </div>
           );
         })()}
@@ -1182,30 +1178,33 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               formun başında, kalem girişinden uzak. Düzenlemede Vazgeç turuncu başlıkta zaten var — burada yalnız Kaydet.
               DÜZENLEMEDE DÜĞMENİN ADI DEĞİŞİR: "Siparişi Kaydet"e basıp var olan siparişe eklendiğini fark etmek
               (ya da tersi) geri alınması zahmetli bir sürpriz olurdu. */}
+          {/* MOR KAYIT ŞERİDİ (v1.625.0 — kullanıcı: "Sipariş düzenleyip kaydet tuşu mor şeride alalım", "Tüm kaydetler
+              üst mor şeritte olsun"). Yeni siparişte de düzenlemede de Kaydet · Vazgeç formun en üstünde, kartlardaki mor
+              şeritle aynı görünümde; kaydırınca üstte kalır (yapışkan). Önce yeni siparişte modül başlığına taşınıyor
+              (v1.520.0), düzenlemede formun başında ayrı bir satırdı; Vazgeç ise mavi düzenleme başlığındaydı. */}
           {(() => {
-            // BAŞLIĞIN SAĞINDA (v1.520.0 — kullanıcı: "Kaydet ve Vazgeç Alış Siparişi yazısının sağına gelsin").
-            // Yeni siparişte düğmeler modül başlığının yuvasına çiziliyor (100-app `modul-baslik-eylemleri`); yuva
-            // yoksa (pencere içinde, başka ekranda) ya da düzenlemedeyse formun başında kalıyor.
-            const dugmeler = (
-              <div data-siparis-form-eylemler="1" style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "nowrap", ...(baslikYuvasi && !duzenlenenId ? {} : { marginBottom: 12, paddingBottom: 10, borderBottom: "1px dashed var(--erp-line)" }) }}>
-
-            {duzenlenenId ? (
-              <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1">
-                <Save size={14} /> {(siparisler.find((s) => s.id === duzenlenenId) || {}).siparisNo} Değişikliklerini Kaydet
-              </button>
-            ) : (
-              <>
-                <button className="btn-primary btn-save" onClick={siparisKaydet} data-siparis-kaydet="1" style={{ padding: "6px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
-                  <Save size={14} /> {tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet"}
-                </button>
-                <button className="btn-ghost" onClick={() => { setShowForm(false); resetForm(); }} style={{ padding: "6px 12px", fontSize: 13 }}>
+            const hedef = duzenlenenId ? (siparisler.find((s) => s.id === duzenlenenId) || {}) : null;
+            const kalemSayisi = kalemler.length;
+            return (
+              <KayitSeridi yapiskan veri="data-siparis-form-eylemler"
+                ikon={duzenlenenId ? <Pencil size={15} color="#5B3F75" /> : (tip === "Alış" ? <PackageCheck size={15} color="#5B3F75" /> : <Truck size={15} color="#5B3F75" />)}
+                baslik={duzenlenenId ? `${hedef.siparisNo} düzenleniyor` : (tip === "Alış" ? "Yeni Alış Siparişi" : "Yeni Satış Siparişi")}
+                ozet={<span className="mono" data-siparis-form-kalem-sayisi={kalemSayisi} style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{kalemSayisi} kalem</span>}>
+                {duzenlenenId ? (
+                  <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1" style={{ padding: "6px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
+                    <Save size={14} /> Değişiklikleri Kaydet
+                  </button>
+                ) : (
+                  <button className="btn-primary btn-save" onClick={siparisKaydet} data-siparis-kaydet="1" style={{ padding: "6px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
+                    <Save size={14} /> {tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet"}
+                  </button>
+                )}
+                <button className="btn-ghost" data-siparis-form-vazgec="1" style={{ padding: "6px 12px", fontSize: 13 }}
+                  onClick={duzenlenenId ? duzenlemedenCik : () => { setShowForm(false); resetForm(); }}>
                   <X size={14} /> Vazgeç
                 </button>
-              </>
-            )}
-              </div>
+              </KayitSeridi>
             );
-            return baslikYuvasi && !duzenlenenId ? createPortal(dugmeler, baslikYuvasi) : dugmeler;
           })()}
 
           {/* TİP SEÇİCİ — YALNIZ SABİT TİP YOKKEN. Alış ve satış siparişleri AYRI ana sekmelere
@@ -1305,7 +1304,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 <input value={not} onChange={(e) => setNot(e.target.value)} placeholder="Opsiyonel" style={inputStyle} />
               </Field>
             </div>
-            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
+            {/* Kısa seçim: tek başına kalınca satırı boydan boya kaplamasın (v1.625.0). */}
+            <div style={{ flex: "1 1 140px", minWidth: 0, maxWidth: 260 }}>
             <Field label="Cari Defteri">
               <select value={siparisDefter} onChange={(e) => setSiparisDefter(e.target.value)} style={inputStyle}>
                 <option value="Genel">Genel</option>
@@ -2422,12 +2422,28 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               {sFiltreKutusu("no", "sipariş / müşteri kodu…")}
               {sFiltreKutusu("cari", "cari…")}
               {sFiltreKutusu("tarih", "tarih / teslim…")}
+              {sFiltreKutusu("belge", "belge no…")}
+              {(() => {
+                const sezonlar = [...new Set(siparisler.filter((x) => (siparisSekme === "satis" ? x.tip !== "Alış" : x.tip === "Alış")).map((x) => x.sezon).filter(Boolean))].sort();
+                if (!sezonlar.length && !siparisKolonFiltre.sezon) return null;
+                const aktif = !!siparisKolonFiltre.sezon;
+                return (
+                  <select value={siparisKolonFiltre.sezon} data-siparis-sezon-filtre="1" title="Sezona göre süz"
+                    onChange={(e) => setSiparisKolonFiltre({ ...siparisKolonFiltre, sezon: e.target.value })}
+                    className="mono"
+                    style={{ padding: "4px 7px", fontSize: 11, minWidth: 110, flex: "0 1 150px", borderRadius: "var(--erp-r-sm)",
+                      border: `1px solid ${aktif ? "var(--erp-brown)" : "var(--erp-border-2)"}`, background: aktif ? "var(--erp-hover)" : "#fff" }}>
+                    <option value="">Tüm sezonlar</option>
+                    {sezonlar.map((z) => <option key={z} value={z}>{z}</option>)}
+                  </select>
+                );
+              })()}
               {siparisKolonAktif && (
                 <button
                   type="button"
                   className="btn-ghost"
                   style={{ fontSize: 10, padding: "4px 8px" }}
-                  onClick={() => setSiparisKolonFiltre({ no: "", cari: "", tarih: "" })}
+                  onClick={() => setSiparisKolonFiltre(BOS_SIPARIS_FILTRE)}
                 >
                   <X size={10} /> Temizle
                 </button>

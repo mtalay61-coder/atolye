@@ -703,7 +703,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       <DuzenAlani ekran="fisFormu" aralik={16} bloklar={[
         { id: "baslik", ad: "Fiş bilgileri", gizlenemez: true, icerik: (<>
       <div style={{ background: "var(--erp-panel)", border: `2px solid ${ana}`, borderRadius: "var(--erp-r-md)", padding: "10px 12px", boxShadow: BOLUM_GOLGE }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+        {/* MOR KAYIT ŞERİDİ (v1.625.0 — kullanıcı: "Tüm kaydetler üst mor şeritte olsun"): fişin adı, para birimi,
+            defter ve Kaydet · Vazgeç zaten tek satırdaydı (v1.520.0); satır kartlardaki mor şerit görünümünü aldı. */}
+        <div data-fis-kayit-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap", padding: "6px 10px" }}>
           <Receipt size={16} color={ana} />
           <span style={{ fontSize: 14, fontWeight: 700, color: ana }}>
             {alisMi ? "Cariden Alış Fişi" : "Cariye Satış Fişi"}

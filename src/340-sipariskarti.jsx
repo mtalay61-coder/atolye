@@ -508,17 +508,19 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
               <div className="mono" style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 4px", borderBottom: "1px solid var(--erp-line-soft)" }}>
                 İŞLEMLER · {siparis.siparisNo}
               </div>
+              {/* TEK TAHSİLAT SATIRI (v1.624.1 — kullanıcı: "siparişte tahsilat 2 adet var neden?"). Önce iki satırdı:
+                  "Tahsilat · cari kartında" (cari kartını sipariş no ile açan köprü, v1.615.0) ve "Tahsilat — bu kartta"
+                  (kartın içindeki form, v1.613.0). İkisi de aynı kaydı yazıyor, fark yalnız ekran; kullanıcıya iki ayrı
+                  işlem gibi göründü. Artık tek satır kartın içindeki formu açar; çek/senet ya da vadeli kayıt için cari
+                  kartındaki tam forma geçiş formun içinde ("Çek/senet için cari kartında aç"). Kart formu olmayan yerde
+                  (onOdemeKaydet verilmemiş) aynı satır eskisi gibi cari kartını açar. */}
               <button type="button" data-siparis-islem="odeme" style={{ ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
-                onClick={() => { setIslemMenu(null); onOdemeGir(hedef); }}>
-                <HareketIkonu tip={oz.beklenenTip} size={16} /> {oz.beklenenTip}
-                <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--erp-text-3)" }}>cari kartında</span>
+                onClick={() => {
+                  setIslemMenu(null);
+                  if (onOdemeKaydet) { setOpen(true); setShowOdeme(true); } else onOdemeGir(hedef);
+                }}>
+                <HareketIkonu tip={oz.beklenenTip} size={16} /> {oz.beklenenTip} Gir
               </button>
-              {onOdemeKaydet && (
-                <button type="button" data-siparis-islem="odeme-kartta" style={{ ...ogeStil, color: "var(--erp-text-2)", fontSize: 12, borderTop: "1px solid var(--erp-line-soft)" }}
-                  onClick={() => { setIslemMenu(null); setOpen(true); setShowOdeme(true); }}>
-                  <Plus size={12} /> {oz.beklenenTip} — bu kartta
-                </button>
-              )}
             </div>
           </div>
         );

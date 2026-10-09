@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.624.0";
+const SURUM = "1.625.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Sipariste Belge No ve Sezon alanlari; kartin mor seridinde ve ciktida gorunur";
+const SURUM_NOTU = "Kaydet/Vazgec ust mor seritte (siparis, fis, cari, stok, kasa, cek, tahsilat); siparis listesinde Belge No ve Sezon suzgeci";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,14 @@ const SURUM_NOTU = "Sipariste Belge No ve Sezon alanlari; kartin mor seridinde v
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.625.0", tarih: "09.10.2026",
+    eklenen: [],
+    degisen: ["Kaydet ve Vazgeç düğmeleri formların üstündeki mor şeritte: sipariş (yeni ve düzenleme, kaydırınca üstte kalır), alış/satış fişi, yeni cari, yeni stok kartı, cari hareketi, yeni kasa/banka, çek/senet, siparişte tahsilat"],
+    duzeltilen: [] },
+  { surum: "1.624.1", tarih: "09.10.2026",
+    eklenen: ["Sipariş listesinde Belge No (yazarak) ve Sezon (seçerek) süzgeci; liste satırında belge no ve sezon rozeti"],
+    degisen: ["Sipariş kartı İşlemler menüsünde tek Tahsilat satırı: kartın içindeki formu açar; çek/senet için cari kartına geçiş formun içinde"],
+    duzeltilen: [] },
   { surum: "1.624.0", tarih: "09.10.2026",
     eklenen: ["Sipariş formunda Belge No ve Sezon alanları (sezon önceki siparişlerden önerilir); sipariş kartının mor şeridinde, tam ekran başlığında ve sipariş çıktısında görünür, aramada bulunur"],
     degisen: [],

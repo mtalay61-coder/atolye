@@ -145,6 +145,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
 
       {showYeni && (
         <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+          {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde, tam genişlik. */}
+          <KayitSeridi baslik={`Yeni ${birimAdi || "Hesap"}`} veri="data-hesap-form-seridi" style={{ flex: "1 1 100%", marginBottom: 4 }}>
+            <button className="btn-primary btn-save" onClick={yeniKaydet}><Save size={14} /> Kaydet</button>
+            <button className="btn-ghost" onClick={() => { setShowYeni(false); setYeniForm({ paraBirimi: "TRY" }); }}>Vazgeç</button>
+          </KayitSeridi>
           {ekleAlanlari.map((a) => (
             <label key={a.key} style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               {a.label}
@@ -177,8 +182,6 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
               {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
             </select>
           </label>
-          <button className="btn-primary btn-save" onClick={yeniKaydet}><Save size={14} /> Kaydet</button>
-          <button className="btn-ghost" onClick={() => { setShowYeni(false); setYeniForm({ paraBirimi: "TRY" }); }}>Vazgeç</button>
         </div>
       )}
 
@@ -1194,6 +1197,11 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
 
       {showYeni && (
         <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+          {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde, tam genişlik. */}
+          <KayitSeridi baslik="Yeni Çek / Senet" veri="data-cek-form-seridi" style={{ flex: "1 1 100%", marginBottom: 4 }}>
+            <button className="btn-primary btn-save" onClick={kaydet}><Save size={14} /> Kaydet</button>
+            <button className="btn-ghost" onClick={() => setShowYeni(false)}>Vazgeç</button>
+          </KayitSeridi>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>
             Tip
             <select value={form.tip} onChange={(e) => setForm({ ...form, tip: e.target.value })} style={{ padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 }}>
@@ -1414,8 +1422,6 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
               </>
             );
           })()}
-          <button className="btn-primary btn-save" onClick={kaydet}><Save size={14} /> Kaydet</button>
-          <button className="btn-ghost" onClick={() => setShowYeni(false)}>Vazgeç</button>
         </div>
       )}
 

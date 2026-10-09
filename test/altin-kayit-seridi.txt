@@ -1,0 +1,18 @@
+{
+ "hatalar": [],
+ "yeniSiparis": {
+  "morSeritte": true,
+  "vazgecAyniSeritte": true
+ },
+ "yeniSiparisBaslik": "Yeni Satış Siparişi0 kalem Siparişi Kayd",
+ "siparisDuzenleme": {
+  "morSeritte": true,
+  "vazgecAyniSeritte": true
+ },
+ "kaydirincaKaydetGorunur": true,
+ "duzenlemeKapandi": true,
+ "yeniCari": {
+  "morSeritte": true,
+  "vazgecAyniSeritte": true
+ }
+}

@@ -1512,6 +1512,11 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
 
       {showForm && (
         <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
+          {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde (önce matrisin altındaydı). */}
+          <KayitSeridi baslik="Yeni Stok Kartı" ikon={<Package size={15} color="#5B3F75" />} veri="data-stok-form-seridi">
+            <button className="btn-primary btn-save" onClick={saveProduct} disabled={!matrix}><Save size={14} /> Kaydet</button>
+            <button className="btn-ghost" onClick={() => { setShowForm(false); setMatrix(null); }}><X size={14} /> Vazgeç</button>
+          </KayitSeridi>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 }}>
             <div>
               <div style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 4 }}>Kapak Resmi</div>
@@ -2549,18 +2554,6 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            <button className="btn-primary btn-save" onClick={saveProduct} disabled={!matrix}><Save size={14} /> Kaydet</button>
-            <button
-              className="btn-ghost"
-              onClick={() => {
-                setShowForm(false);
-                setMatrix(null);
-              }}
-            >
-              <X size={14} /> Vazgeç
-            </button>
-          </div>
         </div>
       )}
 

@@ -370,6 +370,11 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
 
       {showForm && (
         <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
+          {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde (önce dipteydi). */}
+          <KayitSeridi baslik="Yeni Cari" ikon={<Users size={15} color="#5B3F75" />} veri="data-cari-form-seridi">
+            <button className="btn-primary btn-save" onClick={addCari}><Save size={14} /> Kaydet</button>
+            <button className="btn-ghost" onClick={() => setShowForm(false)}><X size={14} /> Vazgeç</button>
+          </KayitSeridi>
           <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 1fr", gap: 10 }}>
             <Field label="Unvan / Ad Soyad">
               <input value={form.unvan} onChange={(e) => setForm({ ...form, unvan: e.target.value })} placeholder="Örn. Deniz Ayakkabıcılık" style={inputStyle} />
@@ -413,10 +418,6 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
                 ))}
               </select>
             </Field>
-          </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button className="btn-primary btn-save" onClick={addCari}><Save size={14} /> Kaydet</button>
-            <button className="btn-ghost" onClick={() => setShowForm(false)}><X size={14} /> Vazgeç</button>
           </div>
         </div>
       )}

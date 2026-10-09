@@ -70,9 +70,14 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
   const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
   return (
     <div data-siparis-odeme-formu={tip} style={{ background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+      {/* MOR KAYIT ŞERİDİ (v1.625.0 — "Tüm kaydetler üst mor şeritte olsun"): Kaydet · Vazgeç formun üstünde. */}
+      <div data-siparis-odeme-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap", padding: "6px 10px" }}>
         <span className="mono" style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 5 }}><HareketIkonu tip={tip} size={13} />{tip}</span>
         <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{cari.unvan} · {siparis.siparisNo}</span>
+        <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
+          <button type="button" className="btn-primary btn-save" data-siparis-odeme-kaydet="1" onClick={kaydet}><Save size={14} /> Kaydet</button>
+          <button type="button" className="btn-ghost" onClick={onVazgec}><X size={14} /> Vazgeç</button>
+        </span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
         <Field label="Tarih">
@@ -117,10 +122,6 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
         <Field label="Açıklama">
           <input data-siparis-odeme-aciklama="1" value={form.aciklama} onChange={(e) => setForm({ ...form, aciklama: e.target.value })} placeholder="Opsiyonel" style={inputStyle} />
         </Field>
-      </div>
-      <div style={{ display: "flex", gap: 8, marginTop: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <button type="button" className="btn-primary" data-siparis-odeme-kaydet="1" onClick={kaydet}><Save size={14} /> Kaydet</button>
-        <button type="button" className="btn-ghost" onClick={onVazgec}><X size={14} /> Vazgeç</button>
       </div>
     </div>
   );

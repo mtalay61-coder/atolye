@@ -7,6 +7,27 @@
    "2026 Kış"
   ]
  },
+ "suzgec": {
+  "hepsi": [
+   "SAT-B1",
+   "SAT-B2"
+  ],
+  "sezonSecenekleri": [
+   "",
+   "2026 Kış",
+   "2027 Yaz"
+  ],
+  "sezon2026Kis": [
+   "SAT-B2"
+  ],
+  "belge778": [
+   "SAT-B1"
+  ],
+  "satirRozetleri": [
+   "Belge BLG-778",
+   "2027 Yaz"
+  ]
+ },
  "kayit": {
   "belgeNo": "BLG-778",
   "sezon": "2027 Yaz",

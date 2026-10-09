@@ -9,17 +9,19 @@
  "dugmeMenusu": {
   "baslik": true,
   "ogeler": [
-   "odeme:Tahsilatcari kartında",
-   "odeme-kartta:Tahsilat — bu kartta"
+   "odeme:Tahsilat Gir"
   ]
  },
  "kapandi": true,
  "sagTikMenusu": {
   "baslik": true,
   "ogeler": [
-   "odeme:Tahsilatcari kartında",
-   "odeme-kartta:Tahsilat — bu kartta"
+   "odeme:Tahsilat Gir"
   ]
+ },
+ "kartFormu": {
+  "tip": "Tahsilat",
+  "tutar": "150"
  },
  "cariFormu": {
   "cariEkrani": true,
