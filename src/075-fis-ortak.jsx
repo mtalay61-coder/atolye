@@ -403,27 +403,34 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
     const genelToplam = siparisPB ? pbToplam[siparisPB] : 0;
     const oz = siparisOdemeOzeti(siparis, cari, genelToplam, siparisPB);
     if (!oz.odemeler.length) return "";
-    const baslik = oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar";
+    // TOPLAMDAN DÜŞÜLÜR, BELİRGİN (v1.617.0 — kullanıcı, SAT-1008 PDF'i: "Bu tahsilat sipariş toplamından düşmesi
+    // gerekli, daha belirgin olmalı"). Ayrı küçük kutu yerine hesap özeti: Sipariş toplamı → her tahsilat EKSİ satır
+    // (tarih · fiş no · kasa) → büyük, çerçeveli KALAN. Siparişin birimi dışında (ör. USD siparişe TL tahsilat) satır
+    // yine eksi gösterilir ama toplamdan düşülmez; kalan yalnız siparişin birimindeki tahsilattan hesaplanır.
+    const tahsilat = oz.beklenenTip === "Ödeme" ? "Ödeme" : "Tahsilat";
     const tarihYaz = (t) => (t ? String(t).slice(0, 10).split("-").reverse().join(".") : "");
-    const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => `<tr style="border-bottom:1px solid #eee">
-        <td class="mono">${esc(tarihYaz(h.tarih))}</td>
-        <td class="mono">${esc(h.fisNo || "")}</td>
-        <td>${esc(h.hesapAd || h.odemeSekli || "")}${h.hesapPB && h.hesapPB !== (h.paraBirimi || "TRY") && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}</td>
-        <td class="mono" style="text-align:right;white-space:nowrap">${para(h.tutar, h.paraBirimi || "TRY")}</td>
-      </tr>`).join("");
-    const odenenMetni = Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ");
-    return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;border:1px solid #ccc;border-radius:6px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
-      <div style="font-size:12px;font-weight:700;padding:5px 8px;background:#F6F1E8;border-bottom:1px solid #ccc">${baslik}</div>
+    const satirStil = "font-size:13px;padding:5px 10px;border-bottom:1px solid #eee";
+    const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => {
+      const pb = h.paraBirimi || "TRY";
+      const dusulmez = siparisPB && pb !== siparisPB;
+      return `<tr data-cikti-odeme-satiri="1">
+        <td style="${satirStil}">${tahsilat} · <span class="mono">${esc(tarihYaz(h.tarih))}</span>${h.fisNo ? ` · <span class="mono">${esc(h.fisNo)}</span>` : ""}${h.hesapAd ? ` · ${esc(h.hesapAd)}` : ""}${h.hesapPB && h.hesapPB !== pb && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}${dusulmez ? ` <span style="color:#7A6A50">— farklı para birimi, toplamdan düşülmedi</span>` : ""}</td>
+        <td class="mono" style="${satirStil};text-align:right;white-space:nowrap;font-weight:700;color:#1E7A46">− ${para(h.tutar, pb)}</td>
+      </tr>`;
+    }).join("");
+    const kalanVar = siparisPB != null;
+    return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;margin-left:auto;width:62%;min-width:420px;border:2px solid #33281C;border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
       <table style="width:100%;border-collapse:collapse"><tbody>
-        ${satirlar}
-        <tr style="border-top:2px solid #bbb;font-weight:700">
-          <td colspan="3" style="text-align:right">Ödenen</td>
-          <td class="mono" style="text-align:right;white-space:nowrap">${odenenMetni}</td>
+        <tr style="background:#F6F1E8">
+          <td style="font-size:13px;font-weight:700;padding:7px 10px;border-bottom:1px solid #ccc">Sipariş toplamı</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid #ccc">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
         </tr>
-        ${siparisPB && oz.toplamlar[siparisPB] != null ? `<tr data-cikti-kalan="${oz.kalan}" style="font-weight:700">
-          <td colspan="3" style="text-align:right">Kalan</td>
-          <td class="mono" style="text-align:right;white-space:nowrap">${para(oz.kalan, siparisPB)}</td>
-        </tr>` : ""}
+        ${satirlar}
+        ${kalanVar ? `<tr data-cikti-kalan="${oz.kalan}" style="background:#FFF1B8">
+          <td style="font-size:17px;font-weight:800;padding:10px;border-top:2px solid #33281C">KALAN BAKİYE</td>
+          <td class="mono" style="font-size:20px;font-weight:800;padding:10px;text-align:right;white-space:nowrap;border-top:2px solid #33281C">${para(oz.kalan, siparisPB)}</td>
+        </tr>` : `<tr><td style="font-size:13px;font-weight:700;padding:8px 10px;border-top:2px solid #33281C">Toplam ${tahsilat.toLocaleLowerCase("tr-TR")}</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:8px 10px;text-align:right;border-top:2px solid #33281C">${Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ")}</td></tr>`}
       </tbody></table></div>`;
   })();
   const renkBasligiMetni = ortakRenkBasligi(modeller.map((m) => (stok || []).find((x) => x.ad === m.urunAd) || {})) || "Renk";

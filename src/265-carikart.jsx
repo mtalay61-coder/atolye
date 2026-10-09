@@ -1337,7 +1337,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   data-cari-fis-ac={tip}
                   onClick={() => onStokFisiAc && onStokFisiAc(cari.id, tip, cari.unvan)}
                 >
-                  <Plus size={13} /> {tip} Fişi
+                  <HareketIkonu tip={tip} size={15} /> {tip} Fişi
                 </button>
               ))}
               {["Ödeme", "Tahsilat"].map((tip) => (
@@ -1347,7 +1347,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   style={{ borderColor: HAREKET_TIPI_RENK[tip], color: HAREKET_TIPI_RENK[tip] }}
                   onClick={() => hareketTipiSec(tip)}
                 >
-                  <Plus size={13} /> {tip}
+                  <HareketIkonu tip={tip} size={15} /> {tip}
                 </button>
               ))}
               {/* Mal hareketi olmayan alış/satış (hizmet bedeli, navlun, iskonto…) için kaçış yolu. */}

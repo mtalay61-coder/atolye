@@ -6,6 +6,15 @@ const ODEME_SEKILLERI = ["Nakit", "Havale/EFT", "Kredi Kartı", "Çek", "Senet"]
 // İŞÇİLİK kendi rengiyle (23 Eylül, v1.433.0): alışla aynı kahverengi olsaydı ekstrede yine
 // "mal almışız" izlenimi sürerdi — işçilik bir HİZMET alımı, mal girişi yok.
 const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)", "Maaş": "var(--erp-accent)" };
+// HAREKET SİMGELERİ (v1.618.0 — kullanıcı: "Ödeme, tahsilat vs. bunlara logo ekleyelim, daha belirgin olsun"). Renk tablosunun
+// yanında TEK simge tablosu: kasa/banka işlem düğmeleri, cari kartı düğmeleri, satır rozetleri ve sipariş kartı aynı simgeyi
+// kullanır. Tahsilat = içeri giren ok (para kasaya girer), Ödeme = dışarı çıkan ok, Virman = iki yönlü ok.
+const HAREKET_TIPI_IKON = { "Tahsilat": ArrowDownCircle, "Ödeme": ArrowUpCircle, "Virman": ArrowLeftRight, "Serbest": PenLine,
+  "Alış": PackageCheck, "Satış": Truck };
+function HareketIkonu({ tip, size = 14 }) {
+  const I = HAREKET_TIPI_IKON[tip];
+  return I ? <I size={size} strokeWidth={2.4} style={{ flexShrink: 0 }} /> : null;
+}
 
 // Tüm carilerin hareketlerini tarayıp fiş no'ya göre gruplar; sipariş no önekinden (SAT-/ALS-/SP-) tipini çıkarır.
 function tumFisleriTopla(cariler, stok) {

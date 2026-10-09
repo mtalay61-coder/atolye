@@ -437,10 +437,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                     {[
                       // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
                       // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
-                      { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
-                      { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
-                      { k: "virman", ad: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
-                      { k: "serbest", ad: "Serbest kayıt", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
+                      // SİMGELİ (v1.618.0): HAREKET_TIPI_IKON — cari kartı ve sipariş kartıyla aynı simgeler.
+                      { k: "tahsilat", ad: "Tahsilat", ikon: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
+                      { k: "odeme", ad: "Ödeme", ikon: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
+                      { k: "virman", ad: "Virman", ikon: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
+                      { k: "serbest", ad: "Serbest kayıt", ikon: "Serbest", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
                     ].map((x) => (
                       <button
                       key={x.k} type="button" data-islem={x.k} title={x.ipucu}
@@ -451,11 +452,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           if (x.k === "odeme") setHForm((f) => ({ ...f, yon: "Çıkış" }));
                         }}
                         style={{ padding: "8px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                          display: "inline-flex", alignItems: "center", gap: 6,
                           // Seçili değilken çerçeve + yazı kendi renginde, seçiliyken dolu (renk zemin, beyaz yazı).
                           border: `1.5px solid ${x.renk}`,
                           background: islem === x.k ? x.renk : alfaEkle(x.renk, "0F"),
                           color: islem === x.k ? "#fff" : x.renk }}>
-                        {x.ad}
+                        <HareketIkonu tip={x.ikon} size={16} /> {x.ad}
                       </button>
                     ))}
                   </div>
@@ -936,10 +938,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                           const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
                                           return (
                                             <span className="mono" style={{
-                                              fontSize: 9, fontWeight: 700, color: renk,
+                                              fontSize: 9, fontWeight: 700, color: renk, display: "inline-flex", alignItems: "center", gap: 3,
                                               background: `${alfaEkle(renk, "1A")}`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
                                             }}>
-                                              {tip}
+                                              <HareketIkonu tip={tip} size={11} />{tip}
                                             </span>
                                           );
                                         })()}

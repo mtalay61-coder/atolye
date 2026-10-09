@@ -7,7 +7,7 @@
 //      işaretli (5 hücre); 2,5 sn sonra vurgu söner. Form kapatılıp yeni sipariş açılınca okutma sonucu yok.
 //   B) SAT-9 (250 USD, 100 USD tahsil edilmiş) kartında "İşlemler" → menü: Tahsilat; şeride sağ tık da menüyü açar.
 //      Tahsilat → Cari ekranı, Müşteri B kartında form: tutar 150 (kalan), USD, "Sipariş SAT-9".
-//   C) Çıktı HTML'inde "Tahsilatlar" bölümü: 1 satır (THS-1005001, 100 $), Ödenen 100 $, Kalan 150 $.
+//   C) Çıktı HTML'inde hesap özeti: Sipariş toplamı, "− 100 $" tahsilat satırı (THS-1005001, USD Kasa), KALAN BAKİYE 150 $.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
@@ -93,7 +93,9 @@ async function calistir() {
   const html = erp.siparisCiktisiHTML(sip, c.find((x) => x.id === "c2"), {}, stok);
   const cikti = {
     bolum: (html.match(/data-cikti-odemeler="(\d+)"/) || [])[1] || null,
-    baslik: /Tahsilatlar/.test(html), fis: /THS-1005001/.test(html), kasa: /USD Kasa/.test(html),
+    // v1.617.0: hesap özeti — Sipariş toplamı, eksi tahsilat satırı, KALAN BAKİYE.
+    baslik: /Sipariş toplamı/.test(html) && /KALAN BAKİYE/.test(html), fis: /THS-1005001/.test(html), kasa: /USD Kasa/.test(html),
+    eksiSatir: /−\s*100 \$/.test(html),
     kalan: (html.match(/data-cikti-kalan="([\d.]+)"/) || [])[1] || null,
   };
   const odemesiz = erp.siparisCiktisiHTML(sip, { ...c.find((x) => x.id === "c2"), hareketler: [] }, {}, stok);
