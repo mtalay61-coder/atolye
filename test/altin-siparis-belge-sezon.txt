@@ -1,0 +1,26 @@
+{
+ "hatalar": [],
+ "form": {
+  "belgeKutusu": true,
+  "sezonKutusu": true,
+  "sezonOnerileri": [
+   "2026 Kış"
+  ]
+ },
+ "kayit": {
+  "belgeNo": "BLG-778",
+  "sezon": "2027 Yaz",
+  "satirNotu": [
+   "taban sert olsun"
+  ]
+ },
+ "serit": {
+  "belge": [
+   "Belge: BLG-778"
+  ],
+  "sezon": [
+   "Sezon: 2027 Yaz"
+  ],
+  "morSeritte": true
+ }
+}

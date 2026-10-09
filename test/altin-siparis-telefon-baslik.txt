@@ -8,8 +8,8 @@
    "Sipariş Tarihi",
    "Teslim Tarihi",
    "Müşteri Sipariş Kodu (op",
-   "Not",
-   "Cari Defteri"
+   "Belge No",
+   "Sezon"
   ]
  },
  "telefon": {

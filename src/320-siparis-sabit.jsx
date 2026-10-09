@@ -217,6 +217,11 @@ function KalemNotDuzenleyici({ notlar, prosesler, onDegis, onTaslak, salt = fals
           <input value={metin} data-kalem-not-metin="1"
             onChange={(e) => { setMetin(e.target.value); if (onTaslak) onTaslak(e.target.value.trim() ? { proses, metin: e.target.value.trim() } : null); }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); ekle(); } }}
+            // KUTUDAN ÇIKINCA EKLENİR (v1.624.0 — kullanıcı: "sipariş satıra girdiğim notu göremiyorum"). Satırdaki ve
+            // Notlar panelindeki düzenleyicide `onTaslak` yok: not yazılıp Enter/+ basılmadan Kaydet'e basılınca not
+            // kaleme hiç gitmiyordu. Odak aynı düzenleyicinin proses seçicisine/düğmesine geçiyorsa eklenmez —
+            // önce yazıp sonra proses seçen kullanıcının notu "Genel" diye düşmesin.
+            onBlur={(e) => { if (e.relatedTarget && e.currentTarget.parentElement.contains(e.relatedTarget)) return; ekle(); }}
             placeholder={proses ? `${proses} notu…` : "Not…"}
             style={{ flex: 1, minWidth: 80, fontSize: fs, padding: "3px 6px", border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "transparent", fontFamily: "inherit" }} />
           <button type="button" data-kalem-not-ekle="1" onClick={ekle} disabled={!metin.trim()} title="Notu ekle"
