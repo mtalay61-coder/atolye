@@ -16,7 +16,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const [duzenleUnvan, setDuzenleUnvan] = useState(cari.unvan);
   const [duzenleTip, setDuzenleTip] = useState(cari.tip);
   const [duzenleParaBirimi, setDuzenleParaBirimi] = useState(cari.paraBirimi || "TRY");
-  const [cardTab, setCardTab] = useState("hareketler"); // "hareketler" | "siparisler"
+  const [cardTab, setCardTab] = useState("hareketler"); // "hareketler" | "siparisler" | "bilgiler"
   // KART AÇILINCA DÜZENLEME ALANLARI GİZLİ. Telefon/vergi no/adres/fotoğraf ve personelin barkod
   // + proses ayarları kayıt sırasında giriliyor; kart günlük işte HAREKETLER için açılıyor.
   // Bu alanları hep açık tutmak ekranın üçte birini alıp asıl içeriği (ekstre) aşağı itiyordu.
@@ -552,9 +552,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               setDuzenleTip(cari.tip);
               setDuzenleModu(true);
               setOpen(true);
+              // Kalem "bilgileri düzenle" demek: adres/vergi alanları Bilgiler sekmesinde (v1.623.0).
+              setCardTab("bilgiler");
             }}
             data-kart-eylem="duzenle"
-            title="Düzenle · F2 — ad, tip, telefon, adres"
+            title="Düzenle · F2 — ad, tip, telefon, e-posta; adres ve vergi bilgileri Bilgiler sekmesinde"
             style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, flexShrink: 0 }}
           >
             <Pencil size={15} />
@@ -588,6 +590,42 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         >
           <Trash2 size={15} />
         </button>
+        {/* İLETİŞİM MOR ŞERİTTE (v1.623.0): kalemle düzenlemede telefon / WhatsApp / e-posta adın hemen altında,
+            şeridin içinde; öteki bilgiler "Bilgiler" sekmesinde. Okuma kipinde aynı üçlü adın altında yazıyor. */}
+        {open && duzenleAcik && (
+          <div data-cari-serit-iletisim="1" style={{ flex: "1 1 100%", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid #C9B3D9", paddingTop: 6 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#5B3F75", fontWeight: 600 }}>
+              Telefon
+              <input
+                defaultValue={cari.telefon}
+                onBlur={(e) => onFieldChange(cari.id, "telefon", e.target.value)}
+                style={{ ...inputStyle, width: 120, padding: "4px 6px", fontWeight: 400 }}
+              />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#5B3F75", fontWeight: 600 }}>
+              WhatsApp
+              <input
+                defaultValue={cari.whatsapp || ""}
+                placeholder="05xx…"
+                title="Sipariş çıktısı bu numaraya gönderilir (kullanıcı, 13 Eylül). Boşsa telefon kullanılır."
+                data-cari-whatsapp="1"
+                onBlur={(e) => onFieldChange(cari.id, "whatsapp", e.target.value)}
+                style={{ ...inputStyle, width: 130, padding: "4px 6px", fontWeight: 400 }}
+              />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#5B3F75", fontWeight: 600 }}>
+              E-posta
+              <input
+                defaultValue={cari.eposta || ""}
+                placeholder="ad@firma.com"
+                title="Sipariş PDF'i bu adrese e-postayla gönderilir (13 Eylül)"
+                data-cari-eposta="1"
+                onBlur={(e) => onFieldChange(cari.id, "eposta", e.target.value.trim())}
+                style={{ ...inputStyle, width: 170, padding: "4px 6px", fontWeight: 400 }}
+              />
+            </label>
+          </div>
+        )}
         {open && (
           <div data-cari-serit-alt="1" style={{ flex: "1 1 100%", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid #C9B3D9", paddingTop: 6 }}>
             <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
@@ -703,38 +741,36 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </div>
             );
           })()}
-          {duzenleAcik && (
+          {/* v1.530.0: kart düzeyi düzen (cariKarti: bakiye / sekmeler / ekstre) KALDIRILDI — bakiye özeti ve ekstre
+              düğmeleri üst şeride taşındı, geriye taşınacak tek blok kalmadı. Düzen yalnız Hareketler sekmesinin içinde. */}
+          <>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            {[
+              { key: "hareketler", label: "Hareketler" },
+              { key: "siparisler", label: `Siparişler (${(siparisler || []).filter((s) => s.cariId === cari.id).length})` },
+              { key: "bilgiler", label: "Bilgiler" },
+            ].map((t) => (
+              <button
+                key={t.key}
+                data-cari-sekme={t.key}
+                onClick={() => setCardTab(t.key)}
+                style={{
+                  padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 12, cursor: "pointer",
+                  border: `1.5px solid ${cardTab === t.key ? "var(--erp-orange)" : "var(--erp-border)"}`,
+                  background: cardTab === t.key ? "var(--erp-orange-bg)" : "#fff",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* BİLGİLER SEKMESİ (v1.623.0 — kullanıcı: "müşteri bilgileri mor şeritte olsun, diğer bilgiler sekme olarak
+              eklensin adres vergi no v.s; mor şeritte telefon no ve mail olsun diğerleri sekme olsun"). Vergi/adres/e-fatura,
+              fiyat grubu ve personelin barkod/proses ayarları kalemle açılan uzun satırlardı; şeridin altını dolduruyor,
+              Hareketler'i aşağı itiyordu. Artık ayrı sekmede ve sekme açıkken her zaman düzenlenebilir (kalem gerekmez). */}
+          {cardTab === "bilgiler" && (
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
-              Telefon
-              <input
-                defaultValue={cari.telefon}
-                onBlur={(e) => onFieldChange(cari.id, "telefon", e.target.value)}
-                style={{ ...inputStyle, width: 120, padding: "4px 6px", fontWeight: 400 }}
-              />
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
-              WhatsApp
-              <input
-                defaultValue={cari.whatsapp || ""}
-                placeholder="05xx…"
-                title="Sipariş çıktısı bu numaraya gönderilir (kullanıcı, 13 Eylül). Boşsa telefon kullanılır."
-                data-cari-whatsapp="1"
-                onBlur={(e) => onFieldChange(cari.id, "whatsapp", e.target.value)}
-                style={{ ...inputStyle, width: 130, padding: "4px 6px", fontWeight: 400 }}
-              />
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
-              E-posta
-              <input
-                defaultValue={cari.eposta || ""}
-                placeholder="ad@firma.com"
-                title="Sipariş PDF'i bu adrese e-postayla gönderilir (13 Eylül)"
-                data-cari-eposta="1"
-                onBlur={(e) => onFieldChange(cari.id, "eposta", e.target.value.trim())}
-                style={{ ...inputStyle, width: 170, padding: "4px 6px", fontWeight: 400 }}
-              />
-            </label>
             <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               Vergi No
               <span style={{ display: "inline-flex", flexDirection: "column" }}>
@@ -842,7 +878,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           </div>
           )}
 
-          {duzenleAcik && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (
+          {cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (
             <div style={{ marginBottom: 14, padding: "8px 10px", background: "#EAF0F4", borderRadius: "var(--erp-r-md)" }}>
               <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 12, color: "var(--erp-info)", fontWeight: 600 }}>Fiyat Grubu:</span>
@@ -863,7 +899,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             </div>
           )}
 
-          {duzenleAcik && cari.tip === "Personel" && (
+          {cardTab === "bilgiler" && cari.tip === "Personel" && (
             <div style={{ display: "grid", gap: 10, marginBottom: 14, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" }}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-purple)", fontWeight: 600 }}>
@@ -1019,28 +1055,6 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </div>
             </div>
           )}
-          {/* v1.530.0: kart düzeyi düzen (cariKarti: bakiye / sekmeler / ekstre) KALDIRILDI — bakiye özeti ve ekstre
-              düğmeleri üst şeride taşındı, geriye taşınacak tek blok kalmadı. Düzen yalnız Hareketler sekmesinin içinde. */}
-          <>
-          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-            {[
-              { key: "hareketler", label: "Hareketler" },
-              { key: "siparisler", label: `Siparişler (${(siparisler || []).filter((s) => s.cariId === cari.id).length})` },
-            ].map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setCardTab(t.key)}
-                style={{
-                  padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 12, cursor: "pointer",
-                  border: `1.5px solid ${cardTab === t.key ? "var(--erp-orange)" : "var(--erp-border)"}`,
-                  background: cardTab === t.key ? "var(--erp-orange-bg)" : "#fff",
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {/* EKRAN DÜZENİ (v1.525.0): Hareketler sekmesinin üç bölümü blok — fiş düğmeleri / filtreler / liste. */}
           {cardTab === "hareketler" && (
           <DuzenAlani ekran="cariHareketler" aralik={0} acRef={duzenAcRef} disIkon bloklar={[

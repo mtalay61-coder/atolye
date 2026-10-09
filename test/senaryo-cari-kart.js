@@ -54,6 +54,9 @@ async function calistir() {
   await sayfa.locator('[data-kart-eylem="duzenle"]:visible').last().click();
   await sayfa.waitForTimeout(500);
   const duzenleme = await gorunum(sayfa);
+  // v1.623.0: kalem Bilgiler sekmesini açıyor; ekstre ölçümleri Hareketler sekmesinde.
+  await sayfa.locator('[data-cari-sekme="hareketler"]:visible').last().click();
+  await sayfa.waitForTimeout(400);
 
   // FİŞ SAYIMI — beden başına değil, FİŞ başına.
   //

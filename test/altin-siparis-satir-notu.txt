@@ -1,0 +1,42 @@
+{
+ "hatalar": [],
+ "bas": {
+  "notluSatirlar": [
+   "Siyah: 2 not :rgb(255, 246, 218)"
+  ],
+  "acikNotlar": []
+ },
+ "acik": {
+  "notluSatirlar": [
+   "Siyah: 2 not :rgb(255, 239, 194)"
+  ],
+  "acikNotlar": [
+   "Kesim: Deri aynı partiden",
+   "Bağcık bej"
+  ]
+ },
+ "kapali": {
+  "notluSatirlar": [
+   "Siyah: 2 not :rgb(255, 239, 194)"
+  ],
+  "acikNotlar": []
+ },
+ "cariBas": {
+  "sekmeler": [
+   "hareketler",
+   "siparisler",
+   "bilgiler"
+  ],
+  "vergiAlaniGorunur": false
+ },
+ "cariDuzen": {
+  "seritteWhatsapp": true,
+  "seritteEposta": true,
+  "seritteVergi": false,
+  "seritMorun": true,
+  "bilgilerSekmesiSecili": true,
+  "vergiNoGorunur": true,
+  "ulkeGorunur": true,
+  "efaturaGorunur": true
+ }
+}

@@ -72,6 +72,11 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   // NOTLAR PENCERESİ (v1.621.0 — kullanıcı: "Sipariş notları görmemiz lazım, siparişte üzerine tıklayınca açılır not şeklinde
   // olsun"). Mor şeritte "Notlar (n)"; tıklayınca siparişin genel notu + model/renk notları (proses etiketli) tek pencerede.
   const [notPenceresi, setNotPenceresi] = useState(null);
+  // AÇIK SATIR NOTU (v1.623.0 — kullanıcı: "sipariş satır notları üzerine tıklayınca açılsın, düzenleye tıklamadan
+  // görünmüyor; not olan satırda not olduğunu belli eden renk olsun"). Anahtar "urunId|renk" → true; tıklanan satırın
+  // altında notlar açılır, ikinci tıklama kapatır. Birkaç satır birlikte açık kalabilir (karşılaştırma için).
+  const [acikNotSatirlari, setAcikNotSatirlari] = useState({});
+  const notSatiriDegistir = (anahtar) => setAcikNotSatirlari((o) => ({ ...o, [anahtar]: !o[anahtar] }));
   const [open, setOpen] = useState(!!baslangicAcik);
   // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
   const duzenAcRef = useRef(null);
@@ -700,7 +705,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                           <tr>
                             <td
                               // +1 başlık satırı, +1 de (varsa) toplam satırı için.
-                              rowSpan={renkGruplari.length + 1 + (renkGruplari.length > 1 ? 1 : 0)}
+                              // Açık not satırları da birer satır (v1.623.0).
+                              rowSpan={renkGruplari.length + 1 + (renkGruplari.length > 1 ? 1 : 0)
+                                + renkGruplari.filter((rg) => acikNotSatirlari[`${ug.urunId}|${rg.renk}`] && grupNotlari(rg.kalemler).length > 0).length}
                               style={{
                                 padding: "10px 12px", verticalAlign: "middle", textAlign: "center",
                                 background: siparis.tip === "Alış" ? "#8A5A3812" : "#3D6B8A12",
@@ -754,20 +761,38 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               mevcut.planlama = mevcut.planlama || k.planlama;
                               mevcut.parcalar.push(k);
                             });
+                            const satirNotlari = grupNotlari(rg.kalemler);
+                            const notAnahtari = `${ug.urunId}|${rg.renk}`;
+                            const notAcik = satirNotlari.length > 0 && !!acikNotSatirlari[notAnahtari];
                             return (
-                              <tr key={rg.renk} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                              <React.Fragment key={rg.renk}>
+                              <tr data-kart-notlu-satir={satirNotlari.length ? rg.renk : undefined}
+                                onClick={satirNotlari.length ? (e) => {
+                                  // Hücredeki düğme/kutuya tıklama (miktar düzenleme vb.) notu açıp kapatmasın.
+                                  if (e.target.closest("button, input, select, a")) return;
+                                  notSatiriDegistir(notAnahtari);
+                                } : undefined}
+                                title={satirNotlari.length ? (notAcik ? "Notu kapatmak için tıklayın" : "Notu görmek için tıklayın") : undefined}
+                                style={{ borderTop: "1px solid var(--erp-line-soft)",
+                                  // NOTLU SATIR RENKLİ: formdaki proses notu rozetinin sarısı — not var, bir bakışta.
+                                  // Zemin hücrelerde (100-app CSS: matris zebrası tr zeminini örtüyor).
+                                  ...(satirNotlari.length ? { cursor: "pointer" } : {}) }}>
                                 {/* KÜÇÜK RESİM KALDIRILDI: hemen solda ürünün 92 piksellik görseli
                                     duruyor. Aynı ürünün küçük bir kopyasını her renk satırında
                                     tekrarlamak yer kaplıyor ve renk adını sağa itiyordu.
                                     Renk adı artık ortalanmış ve tek başına. */}
                                 <td style={{ padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "nowrap", textAlign: "center", color: "var(--erp-text)" }}>
                                   {rg.renk}
-                                  {/* Renk bazlı notlar (v1.470.0; v1.476.0'dan beri proses etiketli: "Kesim: …"). */}
-                                  {grupNotlari(rg.kalemler).map((n) => (
-                                    <div key={notEtiketi(n)} data-kart-kalem-aciklama="1" style={{ fontSize: 11, fontWeight: 500, color: "var(--erp-text-2)", whiteSpace: "normal", maxWidth: 220, margin: "2px auto 0" }}>
-                                      {n.proses && <b style={{ color: "#8A6A2E" }}>{n.proses}: </b>}{n.metin}
+                                  {/* Renk bazlı notlar (v1.470.0; v1.476.0'dan beri proses etiketli: "Kesim: …"). v1.623.0: hücrede
+                                      yalnız rozet; notun kendisi satıra tıklayınca altta açılır (uzun not satırı şişiriyordu). */}
+                                  {satirNotlari.length > 0 && (
+                                    <div style={{ marginTop: 2 }}>
+                                      <span data-kart-not-rozeti={satirNotlari.length} style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700,
+                                        padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: notAcik ? "#E3C77A" : "#FFE9A8", color: "#7A5A12", border: "1px solid #E3C77A" }}>
+                                        <FileText size={10} /> {satirNotlari.length} not {notAcik ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                      </span>
                                     </div>
-                                  ))}
+                                  )}
                                 </td>
                                 {tumBedenler.map((b) => {
                                   const k = kalemBedenIndex[b];
@@ -917,6 +942,18 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                   })()}
                                 </td>
                               </tr>
+                              {notAcik && (
+                                <tr data-kart-not-satiri={rg.renk} onClick={() => notSatiriDegistir(notAnahtari)} style={{ cursor: "pointer" }}>
+                                  <td colSpan={tumBedenler.length + 5} style={{ padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" }}>
+                                    {satirNotlari.map((n) => (
+                                      <div key={notEtiketi(n)} data-kart-kalem-aciklama="1" style={{ fontSize: 13, color: "var(--erp-text)", whiteSpace: "pre-wrap", padding: "2px 0" }}>
+                                        {n.proses && <b style={{ color: "#8A6A2E" }}>{n.proses}: </b>}{n.metin}
+                                      </div>
+                                    ))}
+                                  </td>
+                                </tr>
+                              )}
+                              </React.Fragment>
                             );
                           })}
                           {/* ÜRÜN TOPLAMI — birden çok renkli siparişte ürünün genel adedi ve
