@@ -1,5 +1,6 @@
 // SENARYO — SİPARİŞTE BELGE NO + SEZON (9 Ekim, v1.624.0).
 // Kullanıcı: "Sipariş girerken belge no ve sezon girişi eklensin, bunlar da mor şeritte görünsün."
+// v1.624.1: listede Sezon seçici (kayıtlı sezonlar) ve belge no kutusuyla süzme; satırda belge/sezon rozeti.
 // Ölçülen: düzenleme formunda Belge No ve Sezon kutuları (sezon önerisi başka siparişten); yazıp kaydedince kayda
 // belgeNo/sezon düşer; satırın not kutusuna yazılıp Enter/+ basılmadan kaydedilen not da kaleme yazılır (kullanıcı:
 // "sipariş satıra girdiğim notu göremiyorum" — v1.624.0'a kadar kayboluyordu); kartın mor şeridinde "Belge: …" ve "Sezon: …" rozetleri; aramada belge no ile bulunur.
@@ -43,8 +44,19 @@ async function calistir() {
     morSeritte: [...document.querySelectorAll("[data-siparis-serit-belge]")].some((x) => getComputedStyle(x.parentElement.parentElement).backgroundColor === "rgb(237, 231, 242)"),
   }));
   if (process.env.EKRAN) await sayfa.screenshot({ path: process.env.EKRAN, clip: { x: 0, y: 90, width: 1400, height: 300 } });
+  // SÜZGEÇ (v1.624.1 — kullanıcı: "Sezon ve belge no ile siparişleri filtreleyebilelim").
+  await modulAc(sayfa, "Sipariş"); await sayfa.waitForTimeout(600);
+  const satirlar = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-siparis-satir]")].filter((x) => x.getBoundingClientRect().width > 0).map((x) => x.getAttribute("data-siparis-satir")).sort());
+  const suzgec = { hepsi: await satirlar() };
+  suzgec.sezonSecenekleri = await sayfa.evaluate(() => { const s = [...document.querySelectorAll("[data-siparis-sezon-filtre]")].find((x) => x.getBoundingClientRect().width > 0); return s ? [...s.options].map((o) => o.value) : null; });
+  await sayfa.locator("[data-siparis-sezon-filtre]:visible").first().selectOption("2026 Kış"); await sayfa.waitForTimeout(300);
+  suzgec.sezon2026Kis = await satirlar();
+  await sayfa.locator("[data-siparis-sezon-filtre]:visible").first().selectOption(""); await sayfa.waitForTimeout(200);
+  await sayfa.locator('input[placeholder="belge no…"]:visible').first().fill("778"); await sayfa.waitForTimeout(300);
+  suzgec.belge778 = await satirlar();
+  suzgec.satirRozetleri = await sayfa.evaluate(() => [...document.querySelectorAll("[data-siparis-satir-belge], [data-siparis-satir-sezon]")].filter((x) => x.getBoundingClientRect().width > 0).map((x) => x.textContent.trim()));
   await tarayici.close();
-  return { hatalar, form, kayit: { belgeNo: kayit.belgeNo, sezon: kayit.sezon, satirNotu: (kayit.kalemler || []).map((x) => (x.notlar || []).map((n) => n.metin).join("|")) }, serit };
+  return { hatalar, form, suzgec, kayit: { belgeNo: kayit.belgeNo, sezon: kayit.sezon, satirNotu: (kayit.kalemler || []).map((x) => (x.notlar || []).map((n) => n.metin).join("|")) }, serit };
 }
 if (require.main === module) calistir().then((s) => console.log(JSON.stringify(s, null, 1)));
 module.exports = { calistir };

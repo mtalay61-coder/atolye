@@ -10,6 +10,27 @@ function Field({ label, children, genislik }) {
   );
 }
 
+// KAYIT ŞERİDİ (v1.625.0 — kullanıcı: "Sipariş düzenleyip kaydet tuşu mor şeride alalım", "Tüm kaydetler üst mor
+// şeritte olsun"). Kartlarda (sipariş, cari, ürün) üstteki mor şerit kaydın kimliği + eylemleri taşıyor; formlar da aynı
+// düzende: solda formun adı (ve isteğe bağlı özet), sağda Kaydet · Vazgeç. Kaydet hep aynı yerde — kalem girişindeki
+// yeşil "Ekle"den ve formun dibinden uzak. `yapiskan`: uzun formda (sipariş, fiş) şerit kaydırınca üstte kalır.
+// `veri`: testlerin şeridi bulması için data özniteliği adı.
+const MOR_SERIT_STIL = { background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" };
+function KayitSeridi({ baslik, ikon, ozet, children, yapiskan = false, veri = "data-kayit-seridi", style }) {
+  return (
+    <div {...{ [veri]: "1" }} data-kayit-seridi-ortak="1"
+      style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "7px 10px", marginBottom: 12,
+        ...(yapiskan ? { position: "sticky", top: 0, zIndex: 5, boxShadow: "0 2px 6px rgba(60,40,80,.08)" } : {}), ...(style || {}) }}>
+      {ikon}
+      {baslik && <span style={{ fontSize: 14, fontWeight: 700, color: "#5B3F75" }}>{baslik}</span>}
+      {ozet}
+      <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+        {children}
+      </span>
+    </div>
+  );
+}
+
 const inputStyle = {
   padding: "8px 10px",
   borderRadius: "var(--erp-r-md)",

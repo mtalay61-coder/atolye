@@ -1061,7 +1061,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (<>
           {showHareket ? (
             <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+              {/* MOR KAYIT ŞERİDİ (v1.625.0 — "Tüm kaydetler üst mor şeritte olsun"): işlem tipi, yön açıklaması ve
+                  Kaydet · Vazgeç tek satırda, formun üstünde (önce düğmeler formun dibindeydi). */}
+              <div data-cari-hareket-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", flexWrap: "wrap" }}>
                 <span
                   className="mono"
                   style={{
@@ -1077,6 +1079,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   {hForm.yon === "Borç"
                     ? "Bakiye artacak — cari bize borçlanır"
                     : "Bakiye azalacak — biz cariye borçlanırız"}
+                </span>
+                <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
+                  <button className="btn-primary btn-save" onClick={submitHareket}><Save size={14} /> Kaydet</button>
+                  <button className="btn-ghost" onClick={() => { setShowHareket(false); setHareketTipi(null); }}><X size={14} /> Vazgeç</button>
                 </span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
@@ -1328,10 +1334,6 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   </div>
                 </div>
               )}
-              <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="btn-primary btn-save" onClick={submitHareket}><Save size={14} /> Kaydet</button>
-                <button className="btn-ghost" onClick={() => { setShowHareket(false); setHareketTipi(null); }}><X size={14} /> Vazgeç</button>
-              </div>
             </div>
           ) : (
             <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>

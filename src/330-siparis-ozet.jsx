@@ -322,6 +322,19 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
           </span>
         ) : null;
       })()}
+      {/* Belge no / sezon listede de (v1.624.1): süzgeçle aranan bilgi satırda görünsün. */}
+      {siparis.belgeNo && (
+        <span className="mono" data-siparis-satir-belge={siparis.belgeNo} title="Belge no"
+          style={{ fontSize: 11, fontWeight: 600, color: "#5B3F75", background: "#fff", border: "1px solid #C9B3D9", padding: "0 7px", borderRadius: "var(--erp-r-pill)" }}>
+          Belge {siparis.belgeNo}
+        </span>
+      )}
+      {siparis.sezon && (
+        <span className="mono" data-siparis-satir-sezon={siparis.sezon} title="Sezon"
+          style={{ fontSize: 11, fontWeight: 600, color: "#5B3F75", background: "#fff", border: "1px solid #C9B3D9", padding: "0 7px", borderRadius: "var(--erp-r-pill)" }}>
+          {siparis.sezon}
+        </span>
+      )}
       {siparis.musteriKodu && (
         <span
           className="mono"

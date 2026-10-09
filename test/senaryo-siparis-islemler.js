@@ -6,7 +6,7 @@
 //   A) Yeni sipariş formunda asorti barkodu okutulur → eklenen satır vurgulu (data-okutulan-satir), okutulan ölçüler
 //      işaretli (5 hücre); 2,5 sn sonra vurgu söner. Form kapatılıp yeni sipariş açılınca okutma sonucu yok.
 //   B) SAT-9 (250 USD, 100 USD tahsil edilmiş) kartında "İşlemler" → menü: Tahsilat; şeride sağ tık da menüyü açar.
-//      Tahsilat → Cari ekranı, Müşteri B kartında form: tutar 150 (kalan), USD, "Sipariş SAT-9".
+//      Tahsilat (tek satır, v1.624.1) → kartın içinde form; "Çek/senet için cari kartında aç" → Cari ekranı, Müşteri B kartında form: tutar 150 (kalan), USD, "Sipariş SAT-9".
 //   C) Çıktı HTML'inde hesap özeti: Sipariş toplamı, "− 100 $" tahsilat satırı (THS-1005001, USD Kasa), KALAN BAKİYE 150 $.
 const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
@@ -77,7 +77,14 @@ async function calistir() {
   const serit = sayfa.locator("[data-siparis-ust-serit]:visible").first();
   await serit.click({ button: "right", position: { x: 6, y: 6 } }); await sayfa.waitForTimeout(300);
   const sagTikMenusu = await menuOge();
-  await sayfa.locator('[data-siparis-islem="odeme"]').first().click(); await sayfa.waitForTimeout(1100);
+  // v1.624.1: menüde TEK tahsilat satırı — kartın içindeki formu açar ("tahsilat 2 adet var neden?"); cari kartındaki
+  // tam forma (çek/senet) geçiş formun içindeki düğmeyle.
+  await sayfa.locator('[data-siparis-islem="odeme"]').first().click(); await sayfa.waitForTimeout(500);
+  const kartFormu = await sayfa.evaluate(() => {
+    const f = [...document.querySelectorAll("[data-siparis-odeme-formu]")].find((x) => x.getBoundingClientRect().width > 0);
+    return f ? { tip: f.getAttribute("data-siparis-odeme-formu"), tutar: (f.querySelector("[data-siparis-odeme-tutar]") || {}).value } : null;
+  });
+  await sayfa.locator("[data-siparis-odeme-caride]:visible").first().click(); await sayfa.waitForTimeout(1100);
   const cariFormu = await sayfa.evaluate(() => {
     const q = (s) => document.querySelector(s);
     const s = [...document.querySelectorAll("[data-cari-ust-serit]")].find((x) => x.getBoundingClientRect().width > 0);
@@ -100,7 +107,7 @@ async function calistir() {
   };
   const odemesiz = erp.siparisCiktisiHTML(sip, { ...c.find((x) => x.id === "c2"), hareketler: [] }, {}, stok);
   cikti.odemesizBolumYok = !/data-cikti-odemeler/.test(odemesiz);
-  return { hatalar, vurgu, vurguSondu, eskiSonucYok, dugmeMenusu, kapandi, sagTikMenusu, cariFormu, cikti };
+  return { hatalar, vurgu, vurguSondu, eskiSonucYok, dugmeMenusu, kapandi, sagTikMenusu, kartFormu, cariFormu, cikti };
 }
 
 if (require.main === module) {
