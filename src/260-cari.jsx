@@ -9,6 +9,8 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
   const [acikCariId, setAcikCariId] = useState(null);
   const [pasifSekme, setPasifSekme] = useState(false);
   const [personelProsesSekme, setPersonelProsesSekme] = useState("Tümü");
+  // ÜST SEKME (v1.619.0 — kullanıcı: "cari bölümüne rapor yapalım"): Liste (kartlar) · Raporlar (262 CariRaporlari).
+  const [cariUstSekme, setCariUstSekme] = useState("liste");
   // SİPARİŞTEN GELEN TAHSİLAT/ÖDEME HEDEFİ (v1.612.0): süzgeçleri sıfırla (kart listede görünsün) ve o kartı aç.
   // Formu doldurma işi kartın kendisinde (CariCard, `odemeHedefi` etkisi); hedefi de o tüketir.
   useEffect(() => {
@@ -225,8 +227,30 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
     });
   });
 
+  const ustSekmeSeridi = (
+    <div style={{ display: "flex", gap: 4, marginBottom: 10, borderBottom: "1px solid var(--erp-line)" }}>
+      {[{ key: "liste", ad: "Liste" }, { key: "raporlar", ad: "Raporlar" }].map((t) => (
+        <button key={t.key} type="button" data-cari-ust-sekme={t.key} onClick={() => setCariUstSekme(t.key)}
+          style={{ padding: "5px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", background: "none", border: "none",
+            borderBottom: `3px solid ${cariUstSekme === t.key ? "var(--erp-text)" : "transparent"}`,
+            color: cariUstSekme === t.key ? "var(--erp-text)" : "var(--erp-text-3)" }}>
+          {t.ad}
+        </button>
+      ))}
+    </div>
+  );
+  if (cariUstSekme === "raporlar") {
+    return (
+      <div>
+        {ustSekmeSeridi}
+        <CariRaporlari cariler={cariler} siparisler={siparisler} firmaBilgileri={firmaBilgileri} showToast={showToast} onGoToSiparis={onGoToSiparis} />
+      </div>
+    );
+  }
+
   return (
     <div>
+      {ustSekmeSeridi}
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12, alignItems: "center" }}>
         {/* PASİF SEKMESİ — pasife alınan kartlar buradan görülür ve geri alınabilir.
             Sayı sıfırsa sekme hiç gösterilmez: hiç pasif kaydı olmayan bir kullanıcıya boş bir

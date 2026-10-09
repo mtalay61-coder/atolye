@@ -10,7 +10,9 @@ const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-
 // yanında TEK simge tablosu: kasa/banka işlem düğmeleri, cari kartı düğmeleri, satır rozetleri ve sipariş kartı aynı simgeyi
 // kullanır. Tahsilat = içeri giren ok (para kasaya girer), Ödeme = dışarı çıkan ok, Virman = iki yönlü ok.
 const HAREKET_TIPI_IKON = { "Tahsilat": ArrowDownCircle, "Ödeme": ArrowUpCircle, "Virman": ArrowLeftRight, "Serbest": PenLine,
-  "Alış": PackageCheck, "Satış": Truck };
+  "Alış": PackageCheck, "Satış": Truck,
+  // Fişler ekranının tip çipleri (v1.619.0 — kullanıcı: "Fişler ekranına da simge ekle").
+  "Üretim Girişi": PackagePlus, "Üretim Çıkışı": PackageOpen, "İşçilik": Wrench, "Maaş": Wallet, "Diğer": FileText, "Tümü": Layers };
 function HareketIkonu({ tip, size = 14 }) {
   const I = HAREKET_TIPI_IKON[tip];
   return I ? <I size={size} strokeWidth={2.4} style={{ flexShrink: 0 }} /> : null;

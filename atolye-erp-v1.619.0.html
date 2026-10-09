@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.616.0</title>
+<title>Atölye ERP 1.619.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -230,7 +230,9 @@ PackagePlus,
 // Ekran düzeni (v1.522.0, 387): tutamak, göster/gizle, düzen düğmesi.
 GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw, 
 // Fiyat listesi (v1.550.0, 157).
-Tag, } from "lucide-react";
+Tag, 
+// Para hareketi simgeleri (v1.618.0, 200 HAREKET_TIPI_IKON): tahsilat (giren), ödeme (çıkan), virman, serbest kayıt.
+ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, PenLine, } from "lucide-react";
 /* ---------------------------------------------------------
    Token sistemi
    Renk: leather-dark #2B1D14, saddle #8A5A38, cream #F2E8D8,
@@ -2049,9 +2051,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.616.0";
-const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "PDF te yazilar ic ice gecmiyor: PDF uygulamanin boyut ayarindan (zoom) ayri bir belgede cizilir";
+const SURUM = "1.619.0";
+const SURUM_TARIHI = "2026-10-09";
+const SURUM_NOTU = "Cari Raporlar sekmesi: bakiye (alacak/borc), siparisler teslim/kalan, tahsilat, saglik durumu (Iyi/Takip/Riskli), yazdir/PDF; Fisler ekraninda simgeler";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2061,17 @@ const SURUM_NOTU = "PDF te yazilar ic ice gecmiyor: PDF uygulamanin boyut ayarin
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.619.0", tarih: "09.10.2026",
+        eklenen: ["Cari ekranında \"Raporlar\" sekmesi: bütün cariler için bakiye (alacağımız / borcumuz), açık sipariş, kalan adet ve tutar, son tahsilat/ödeme ve sağlık durumu (İyi / Takip / Riskli, riskliler önce). Cariye dokununca rapor kartı: o anki bakiye, sipariş-teslim-kalan sayıları, siparişe bağlı tahsilat, durumun nedenleri, sipariş tablosu (gecikenler işaretli); Yazdır / PDF / WhatsApp / E-posta",
+            "Fişler ekranında tip çiplerine ve satır etiketlerine simge (Satış, Alış, Tahsilat, Ödeme, Üretim, İşçilik, Maaş…)"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.618.0", tarih: "09.10.2026",
+        eklenen: ["Para hareketlerine simge: Tahsilat (içeri ok), Ödeme (dışarı ok), Virman (iki yönlü ok), Serbest kayıt (kalem); Alış/Satış fişi düğmelerinde kutu/kamyon. Kasa & Banka işlem düğmeleri ve satır rozetleri, cari kartı düğmeleri, sipariş kartındaki Tahsilat Gir, İşlemler menüsü ve tahsilat listesi"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.617.0", tarih: "09.10.2026",
+        eklenen: [],
+        degisen: ["Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) tahsilatlar sipariş toplamından düşülerek gösterilir: Sipariş toplamı, her tahsilat eksi satır (tarih, fiş no, kasa), en altta büyük ve sarı zeminli KALAN BAKİYE"],
+        duzeltilen: [] },
     { surum: "1.616.0", tarih: "08.10.2026",
         eklenen: [], degisen: [],
         duzeltilen: ["PDF'te (sipariş, ekstre, fiş — PDF / WhatsApp / E-posta) yazılar iç içe geçiyordu (\"New Diamond\" → \"NewDiamond\", sipariş no harfleri üst üste). Sebep uygulamanın Boyut ayarıydı; PDF artık ondan ayrı bir belgede, sabit yazı stiliyle çiziliyor"] },
@@ -7908,27 +7921,34 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
         const oz = siparisOdemeOzeti(siparis, cari, genelToplam, siparisPB);
         if (!oz.odemeler.length)
             return "";
-        const baslik = oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar";
+        // TOPLAMDAN DÜŞÜLÜR, BELİRGİN (v1.617.0 — kullanıcı, SAT-1008 PDF'i: "Bu tahsilat sipariş toplamından düşmesi
+        // gerekli, daha belirgin olmalı"). Ayrı küçük kutu yerine hesap özeti: Sipariş toplamı → her tahsilat EKSİ satır
+        // (tarih · fiş no · kasa) → büyük, çerçeveli KALAN. Siparişin birimi dışında (ör. USD siparişe TL tahsilat) satır
+        // yine eksi gösterilir ama toplamdan düşülmez; kalan yalnız siparişin birimindeki tahsilattan hesaplanır.
+        const tahsilat = oz.beklenenTip === "Ödeme" ? "Ödeme" : "Tahsilat";
         const tarihYaz = (t) => (t ? String(t).slice(0, 10).split("-").reverse().join(".") : "");
-        const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => `<tr style="border-bottom:1px solid #eee">
-        <td class="mono">${esc(tarihYaz(h.tarih))}</td>
-        <td class="mono">${esc(h.fisNo || "")}</td>
-        <td>${esc(h.hesapAd || h.odemeSekli || "")}${h.hesapPB && h.hesapPB !== (h.paraBirimi || "TRY") && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}</td>
-        <td class="mono" style="text-align:right;white-space:nowrap">${para(h.tutar, h.paraBirimi || "TRY")}</td>
-      </tr>`).join("");
-        const odenenMetni = Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ");
-        return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;border:1px solid #ccc;border-radius:6px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
-      <div style="font-size:12px;font-weight:700;padding:5px 8px;background:#F6F1E8;border-bottom:1px solid #ccc">${baslik}</div>
+        const satirStil = "font-size:13px;padding:5px 10px;border-bottom:1px solid #eee";
+        const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => {
+            const pb = h.paraBirimi || "TRY";
+            const dusulmez = siparisPB && pb !== siparisPB;
+            return `<tr data-cikti-odeme-satiri="1">
+        <td style="${satirStil}">${tahsilat} · <span class="mono">${esc(tarihYaz(h.tarih))}</span>${h.fisNo ? ` · <span class="mono">${esc(h.fisNo)}</span>` : ""}${h.hesapAd ? ` · ${esc(h.hesapAd)}` : ""}${h.hesapPB && h.hesapPB !== pb && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}${dusulmez ? ` <span style="color:#7A6A50">— farklı para birimi, toplamdan düşülmedi</span>` : ""}</td>
+        <td class="mono" style="${satirStil};text-align:right;white-space:nowrap;font-weight:700;color:#1E7A46">− ${para(h.tutar, pb)}</td>
+      </tr>`;
+        }).join("");
+        const kalanVar = siparisPB != null;
+        return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;margin-left:auto;width:62%;min-width:420px;border:2px solid #33281C;border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
       <table style="width:100%;border-collapse:collapse"><tbody>
-        ${satirlar}
-        <tr style="border-top:2px solid #bbb;font-weight:700">
-          <td colspan="3" style="text-align:right">Ödenen</td>
-          <td class="mono" style="text-align:right;white-space:nowrap">${odenenMetni}</td>
+        <tr style="background:#F6F1E8">
+          <td style="font-size:13px;font-weight:700;padding:7px 10px;border-bottom:1px solid #ccc">Sipariş toplamı</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid #ccc">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
         </tr>
-        ${siparisPB && oz.toplamlar[siparisPB] != null ? `<tr data-cikti-kalan="${oz.kalan}" style="font-weight:700">
-          <td colspan="3" style="text-align:right">Kalan</td>
-          <td class="mono" style="text-align:right;white-space:nowrap">${para(oz.kalan, siparisPB)}</td>
-        </tr>` : ""}
+        ${satirlar}
+        ${kalanVar ? `<tr data-cikti-kalan="${oz.kalan}" style="background:#FFF1B8">
+          <td style="font-size:17px;font-weight:800;padding:10px;border-top:2px solid #33281C">KALAN BAKİYE</td>
+          <td class="mono" style="font-size:20px;font-weight:800;padding:10px;text-align:right;white-space:nowrap;border-top:2px solid #33281C">${para(oz.kalan, siparisPB)}</td>
+        </tr>` : `<tr><td style="font-size:13px;font-weight:700;padding:8px 10px;border-top:2px solid #33281C">Toplam ${tahsilat.toLocaleLowerCase("tr-TR")}</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:8px 10px;text-align:right;border-top:2px solid #33281C">${Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ")}</td></tr>`}
       </tbody></table></div>`;
     })();
     const renkBasligiMetni = ortakRenkBasligi(modeller.map((m) => (stok || []).find((x) => x.ad === m.urunAd) || {})) || "Renk";
@@ -33595,6 +33615,17 @@ const ODEME_SEKILLERI = ["Nakit", "Havale/EFT", "Kredi Kartı", "Çek", "Senet"]
 // İŞÇİLİK kendi rengiyle (23 Eylül, v1.433.0): alışla aynı kahverengi olsaydı ekstrede yine
 // "mal almışız" izlenimi sürerdi — işçilik bir HİZMET alımı, mal girişi yok.
 const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)", "Maaş": "var(--erp-accent)" };
+// HAREKET SİMGELERİ (v1.618.0 — kullanıcı: "Ödeme, tahsilat vs. bunlara logo ekleyelim, daha belirgin olsun"). Renk tablosunun
+// yanında TEK simge tablosu: kasa/banka işlem düğmeleri, cari kartı düğmeleri, satır rozetleri ve sipariş kartı aynı simgeyi
+// kullanır. Tahsilat = içeri giren ok (para kasaya girer), Ödeme = dışarı çıkan ok, Virman = iki yönlü ok.
+const HAREKET_TIPI_IKON = { "Tahsilat": ArrowDownCircle, "Ödeme": ArrowUpCircle, "Virman": ArrowLeftRight, "Serbest": PenLine,
+    "Alış": PackageCheck, "Satış": Truck,
+    // Fişler ekranının tip çipleri (v1.619.0 — kullanıcı: "Fişler ekranına da simge ekle").
+    "Üretim Girişi": PackagePlus, "Üretim Çıkışı": PackageOpen, "İşçilik": Wrench, "Maaş": Wallet, "Diğer": FileText, "Tümü": Layers };
+function HareketIkonu({ tip, size = 14 }) {
+    const I = HAREKET_TIPI_IKON[tip];
+    return I ? React.createElement(I, { size: size, strokeWidth: 2.4, style: { flexShrink: 0 } }) : null;
+}
 // Tüm carilerin hareketlerini tarayıp fiş no'ya göre gruplar; sipariş no önekinden (SAT-/ALS-/SP-) tipini çıkarır.
 function tumFisleriTopla(cariler, stok) {
     const tumHareketler = [];
@@ -35562,10 +35593,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                             acik && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" } }, [
                                                 // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
                                                 // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
-                                                { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
-                                                { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
-                                                { k: "virman", ad: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
-                                                { k: "serbest", ad: "Serbest kayıt", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
+                                                // SİMGELİ (v1.618.0): HAREKET_TIPI_IKON — cari kartı ve sipariş kartıyla aynı simgeler.
+                                                { k: "tahsilat", ad: "Tahsilat", ikon: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
+                                                { k: "odeme", ad: "Ödeme", ikon: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
+                                                { k: "virman", ad: "Virman", ikon: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
+                                                { k: "serbest", ad: "Serbest kayıt", ikon: "Serbest", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
                                             ].map((x) => (React.createElement("button", { key: x.k, type: "button", "data-islem": x.k, title: x.ipucu, onClick: () => {
                                                     setIslem(islem === x.k ? null : x.k);
                                                     // Yön işleme göre kilitleniyor: kullanıcı ayrıca "Giriş/Çıkış" seçmesin.
@@ -35574,10 +35606,14 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                     if (x.k === "odeme")
                                                         setHForm((f) => ({ ...f, yon: "Çıkış" }));
                                                 }, style: { padding: "8px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                                                    display: "inline-flex", alignItems: "center", gap: 6,
                                                     // Seçili değilken çerçeve + yazı kendi renginde, seçiliyken dolu (renk zemin, beyaz yazı).
                                                     border: `1.5px solid ${x.renk}`,
                                                     background: islem === x.k ? x.renk : alfaEkle(x.renk, "0F"),
-                                                    color: islem === x.k ? "#fff" : x.renk } }, x.ad))))),
+                                                    color: islem === x.k ? "#fff" : x.renk } },
+                                                React.createElement(HareketIkonu, { tip: x.ikon, size: 16 }),
+                                                " ",
+                                                x.ad))))),
                                             acik && islem === "virman" && (React.createElement("div", { "data-virman-formu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" } },
                                                 React.createElement(Field, { label: "Nereye" },
                                                     React.createElement("select", { value: virman.hedef, "data-virman-hedef": "1", onChange: (e) => setVirman({ ...virman, hedef: e.target.value }), style: inputStyle },
@@ -35873,9 +35909,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                                                     return null;
                                                                                 const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
                                                                                 return (React.createElement("span", { className: "mono", style: {
-                                                                                        fontSize: 9, fontWeight: 700, color: renk,
+                                                                                        fontSize: 9, fontWeight: 700, color: renk, display: "inline-flex", alignItems: "center", gap: 3,
                                                                                         background: `${alfaEkle(renk, "1A")}`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
-                                                                                    } }, tip));
+                                                                                    } },
+                                                                                    React.createElement(HareketIkonu, { tip: tip, size: 11 }),
+                                                                                    tip));
                                                                             })(),
                                                                             (() => {
                                                                                 const sade = kasaAciklamaSade(hr.aciklama, cari ? cari.unvan : "", hareketIslemTipi(hr));
@@ -41871,12 +41909,15 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                     border: `1.5px solid ${filtreDefter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
                     background: filtreDefter === d ? "#4E6B4E1A" : "#fff", color: filtreDefter === d ? "var(--erp-primary)" : "var(--erp-text-2)" } }, d === "Tümü" ? "Tüm defterler" : d))),
             React.createElement("span", { style: { width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "0 2px" } }),
-            ["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Maaş", "Diğer"].map((t) => (sayilar[t] > 0 || t === "Tümü" ? (React.createElement("button", { key: t, onClick: () => setFiltreTip(t), style: {
+            ["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Maaş", "Diğer"].map((t) => (sayilar[t] > 0 || t === "Tümü" ? (React.createElement("button", { key: t, onClick: () => setFiltreTip(t), "data-fis-tip-cipi": t, style: {
                     padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 13, cursor: "pointer",
+                    display: "inline-flex", alignItems: "center", gap: 6,
                     border: `1.5px solid ${filtreTip === t ? (FIS_TIP_RENK[t] || "var(--erp-orange)") : "var(--erp-border)"}`,
                     background: filtreTip === t ? alfaEkle((FIS_TIP_RENK[t] || "var(--erp-orange)"), "1A") : "#fff",
                     color: filtreTip === t ? (FIS_TIP_RENK[t] || "var(--erp-orange)") : "var(--erp-text)",
                 } },
+                React.createElement("span", { style: { display: "inline-flex", color: FIS_TIP_RENK[t] || "var(--erp-text-2)" } },
+                    React.createElement(HareketIkonu, { tip: t, size: 15 })),
                 t,
                 " ",
                 React.createElement("span", { className: "mono", style: { fontWeight: 400 } },
@@ -41916,7 +41957,9 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                         width: "100%", display: "flex", alignItems: "center", gap: 10, padding: 14,
                         background: "transparent", border: "none", cursor: "pointer", textAlign: "left", flexWrap: "wrap",
                     } },
-                    React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk } }, f.tip),
+                    React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 4 } },
+                        React.createElement(HareketIkonu, { tip: f.tip, size: 13 }),
+                        f.tip),
                     React.createElement("span", { className: "mono", style: { fontWeight: 700, fontSize: 14 } }, f.fisNo || "—"),
                     React.createElement("span", { "aria-hidden": "true", style: { color: "var(--erp-border)" } }, "\u00B7"),
                     f.cariAd ? (React.createElement("span", { "data-fis-cari": f.cariAd, onClick: (e) => { e.stopPropagation(); if (onGoToCari)
@@ -43361,6 +43404,8 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
     const [acikCariId, setAcikCariId] = useState(null);
     const [pasifSekme, setPasifSekme] = useState(false);
     const [personelProsesSekme, setPersonelProsesSekme] = useState("Tümü");
+    // ÜST SEKME (v1.619.0 — kullanıcı: "cari bölümüne rapor yapalım"): Liste (kartlar) · Raporlar (262 CariRaporlari).
+    const [cariUstSekme, setCariUstSekme] = useState("liste");
     // SİPARİŞTEN GELEN TAHSİLAT/ÖDEME HEDEFİ (v1.612.0): süzgeçleri sıfırla (kart listede görünsün) ve o kartı aç.
     // Formu doldurma işi kartın kendisinde (CariCard, `odemeHedefi` etkisi); hedefi de o tüketir.
     useEffect(() => {
@@ -43557,7 +43602,16 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
                 toplamBorc[pb] = (toplamBorc[pb] || 0) - t;
         });
     });
+    const ustSekmeSeridi = (React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 10, borderBottom: "1px solid var(--erp-line)" } }, [{ key: "liste", ad: "Liste" }, { key: "raporlar", ad: "Raporlar" }].map((t) => (React.createElement("button", { key: t.key, type: "button", "data-cari-ust-sekme": t.key, onClick: () => setCariUstSekme(t.key), style: { padding: "5px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer", background: "none", border: "none",
+            borderBottom: `3px solid ${cariUstSekme === t.key ? "var(--erp-text)" : "transparent"}`,
+            color: cariUstSekme === t.key ? "var(--erp-text)" : "var(--erp-text-3)" } }, t.ad)))));
+    if (cariUstSekme === "raporlar") {
+        return (React.createElement("div", null,
+            ustSekmeSeridi,
+            React.createElement(CariRaporlari, { cariler: cariler, siparisler: siparisler, firmaBilgileri: firmaBilgileri, showToast: showToast, onGoToSiparis: onGoToSiparis })));
+    }
     return (React.createElement("div", null,
+        ustSekmeSeridi,
         React.createElement("div", { style: { display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12, alignItems: "center" } },
             pasifCariSayisi > 0 && (React.createElement("button", { type: "button", onClick: () => setPasifSekme((v) => !v), style: {
                     padding: "8px 14px", fontSize: 13, fontWeight: 700, cursor: "pointer",
@@ -43895,6 +43949,326 @@ function VergiNoUyarisi({ cariler, no, haricId }) {
         ayni.length > 0 && (React.createElement("div", { style: { ...satir, color: "var(--erp-orange)", fontWeight: 600 }, "data-vergi-no-mukerrer": "1" },
             "Bu numarayla kay\u0131tl\u0131: ",
             ayni.map((c) => `${c.unvan} (${c.tip})`).join(", ")))));
+}
+// ================= CARİ RAPORU (v1.619.0) =================
+//
+// Kullanıcı (9 Ekim): "Cari siparişleri, teslim edilen, kalan vs., alacak verecek, sağlık durumu sordurduğum gibi rapor
+// yapalım cari bölümüne. Raporlar başlığında carinin o anki bakiyesi vs." Cari ekranına "Liste | Raporlar" sekmesi; Raporlar'da
+// bütün carilerin özet tablosu (bakiye, açık sipariş, kalan, son tahsilat, sağlık) ve seçilen carinin rapor kartı.
+//
+// KAYNAKLAR TEK: bakiye `cariBakiyeleri` (200), siparişe bağlı tahsilat `siparisOdemeOzeti` (320), hareket tipi
+// `hareketIslemTipi` (200). Rapor hiçbir şey YAZMAZ.
+//
+// SAĞLIK DURUMU — kurallar açık, kullanıcıya nedenleriyle gösteriliyor (kara kutu puan yok):
+//   Müşteri (bize borçlu, bakiye > 0):
+//     iyi    : alacağımız yok ya da son tahsilat ≤ 30 gün
+//     takip  : son tahsilat 31–60 gün önce (hiç tahsilat yoksa: en eski borç 31–60 gün)
+//     riskli : son tahsilat > 60 gün önce (hiç tahsilat yoksa: en eski borç > 60 gün)
+//   Tedarikçi (biz borçluyuz, bakiye < 0): son ödememiz > 60 gün → takip (borcumuz bekliyor).
+//   Ek uyarılar (seviyeyi değiştirmez, nedenlere eklenir): teslim tarihi geçmiş açık sipariş; açık siparişlerin kalan
+//   tutarı + mevcut alacak.
+const CARI_SAGLIK = {
+    iyi: { ad: "İyi", renk: "var(--erp-primary)" },
+    takip: { ad: "Takip", renk: "var(--erp-warn)" },
+    riskli: { ad: "Riskli", renk: "var(--erp-danger)" },
+};
+const CARI_SAGLIK_TAKIP_GUN = 30;
+const CARI_SAGLIK_RISK_GUN = 60;
+function cariGunFarki(a, b) {
+    if (!a || !b)
+        return null;
+    const t1 = Date.parse(String(a).slice(0, 10)), t2 = Date.parse(String(b).slice(0, 10));
+    if (isNaN(t1) || isNaN(t2))
+        return null;
+    return Math.round((t2 - t1) / 86400000);
+}
+// girdi: cari, siparisler, { bugun: "YYYY-MM-DD" }
+function cariRaporu(cari, siparisler, secenek = {}) {
+    const bugun = secenek.bugun || bugunYerel();
+    const bakiye = cariBakiyeleri(cari); // PB → tutar; + cari bize borçlu, − biz borçluyuz
+    const alacak = {}, verecek = {};
+    Object.entries(bakiye).forEach(([pb, t]) => { if (t > 0)
+        alacak[pb] = t;
+    else if (t < 0)
+        verecek[pb] = -t; });
+    const musteriMi = cari.tip !== "Tedarikçi";
+    const hareketler = (cari.hareketler || []);
+    const paraTipi = musteriMi ? "Tahsilat" : "Ödeme";
+    const paraHareketleri = hareketler.filter((h) => hareketIslemTipi(h) === paraTipi)
+        .sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
+    const sonPara = paraHareketleri[0] || null;
+    const sonParaGun = sonPara ? cariGunFarki(sonPara.tarih, bugun) : null;
+    const siparisSatirlari = (siparisler || [])
+        .filter((s) => s.cariId === cari.id && s.durum !== "İptal")
+        .map((s) => {
+        const kalemler = s.kalemler || [];
+        const adet = kalemler.reduce((t, k) => t + (Number(k.miktar) || 0), 0);
+        const teslim = kalemler.reduce((t, k) => t + Math.min(Number(k.karsilanan) || 0, Number(k.miktar) || 0), 0);
+        const tutar = {}, kalanTutar = {};
+        kalemler.forEach((k) => {
+            const pb = k.paraBirimi || "TRY";
+            const f = Number(k.birimFiyat) || 0;
+            tutar[pb] = (tutar[pb] || 0) + (Number(k.miktar) || 0) * f;
+            const kalanAdet = Math.max(0, (Number(k.miktar) || 0) - (Number(k.karsilanan) || 0));
+            kalanTutar[pb] = (kalanTutar[pb] || 0) + kalanAdet * f;
+        });
+        const pbler = Object.keys(tutar);
+        const tekPB = pbler.length === 1 ? pbler[0] : null;
+        const oz = siparisOdemeOzeti(s, cari, tekPB ? tutar[tekPB] : 0, tekPB);
+        const kalanAdet = Math.max(0, adet - teslim);
+        const gecikti = kalanAdet > 0 && s.teslimTarihi && cariGunFarki(s.teslimTarihi, bugun) > 0;
+        return {
+            id: s.id, siparisNo: s.siparisNo, tip: s.tip, tarih: (s.tarih || "").slice(0, 10), teslimTarihi: s.teslimTarihi || "",
+            durum: s.durum || "", adet, teslim, kalanAdet, tutar, kalanTutar, tekPB,
+            odenen: oz.toplamlar, odemeKalan: tekPB && oz.toplamlar[tekPB] != null ? oz.kalan : null, gecikti: !!gecikti,
+        };
+    })
+        .sort((a, b) => String(b.tarih).localeCompare(String(a.tarih)));
+    const topla = (liste, alan) => {
+        const t = {};
+        liste.forEach((r) => Object.entries(r[alan] || {}).forEach(([pb, v]) => { t[pb] = (t[pb] || 0) + v; }));
+        Object.keys(t).forEach((pb) => { t[pb] = Math.round(t[pb] * 100) / 100; if (!t[pb])
+            delete t[pb]; });
+        return t;
+    };
+    const acikSiparisler = siparisSatirlari.filter((r) => r.kalanAdet > 0);
+    const toplam = {
+        siparisSayisi: siparisSatirlari.length,
+        acikSiparis: acikSiparisler.length,
+        adet: siparisSatirlari.reduce((t, r) => t + r.adet, 0),
+        teslim: siparisSatirlari.reduce((t, r) => t + r.teslim, 0),
+        kalanAdet: siparisSatirlari.reduce((t, r) => t + r.kalanAdet, 0),
+        tutar: topla(siparisSatirlari, "tutar"),
+        kalanTutar: topla(acikSiparisler, "kalanTutar"),
+        odenen: topla(siparisSatirlari, "odenen"),
+        geciken: siparisSatirlari.filter((r) => r.gecikti).length,
+    };
+    // SAĞLIK
+    const nedenler = [];
+    let seviye = "iyi";
+    const alacakVar = Object.keys(alacak).length > 0;
+    const verecekVar = Object.keys(verecek).length > 0;
+    if (musteriMi && alacakVar) {
+        let gun = sonParaGun;
+        let dayanak = sonPara ? `son tahsilat ${gun} gün önce` : null;
+        if (!sonPara) {
+            const borclar = hareketler.filter((h) => h.yon === "Borç" && h.tarih).map((h) => h.tarih).sort();
+            gun = borclar.length ? cariGunFarki(borclar[0], bugun) : null;
+            dayanak = gun != null ? `hiç tahsilat yok, en eski borç ${gun} gün önce` : "hiç tahsilat yok";
+        }
+        if (gun != null && gun > CARI_SAGLIK_RISK_GUN)
+            seviye = "riskli";
+        else if (gun != null && gun > CARI_SAGLIK_TAKIP_GUN)
+            seviye = "takip";
+        nedenler.push(`Alacağımız var — ${dayanak}`);
+    }
+    else if (musteriMi) {
+        nedenler.push("Alacağımız yok");
+    }
+    if (!musteriMi && verecekVar) {
+        if (sonParaGun == null || sonParaGun > CARI_SAGLIK_RISK_GUN)
+            seviye = "takip";
+        nedenler.push(`Borcumuz var — ${sonPara ? `son ödememiz ${sonParaGun} gün önce` : "henüz ödeme yapılmadı"}`);
+    }
+    else if (!musteriMi) {
+        nedenler.push("Borcumuz yok");
+    }
+    if (toplam.geciken > 0)
+        nedenler.push(`${toplam.geciken} siparişin teslim tarihi geçti`);
+    if (toplam.acikSiparis > 0)
+        nedenler.push(`${toplam.acikSiparis} açık sipariş, ${toplam.kalanAdet} adet teslim bekliyor`);
+    return {
+        cariId: cari.id, unvan: cari.unvan, tip: cari.tip, ulke: cari.ulke || "", bugun,
+        bakiye, alacak, verecek, sonPara: sonPara ? { tarih: sonPara.tarih, tutar: sonPara.tutar, paraBirimi: sonPara.paraBirimi || "TRY", fisNo: sonPara.fisNo || "" } : null,
+        sonParaGun, paraTipi, siparisler: siparisSatirlari, toplam, saglik: { seviye, nedenler },
+    };
+}
+const cariRaporPara = (v, pb) => `${(Number(v) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+const cariRaporParaListe = (t) => (Object.keys(t || {}).length ? Object.entries(t).map(([pb, v]) => cariRaporPara(v, pb)).join(" + ") : "—");
+const cariRaporTarih = (t) => (t ? String(t).slice(0, 10).split("-").reverse().join(".") : "—");
+// Yazdır / PDF / WhatsApp gövdesi — sipariş çıktısıyla aynı görsel dil.
+function cariRaporuHTML(r, firmaBilgileri) {
+    const esc = (v) => String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
+    const f = firmaBilgileri || {};
+    const s = CARI_SAGLIK[r.saglik.seviye];
+    const sagRenk = { iyi: "#2E7D4F", takip: "#B7791F", riskli: "#B3261E" }[r.saglik.seviye];
+    const bakiyeKutusu = Object.keys(r.alacak).length
+        ? `<div style="font-size:12px;color:#7A6A50">Alacağımız</div><div class="mono" style="font-size:22px;font-weight:800;color:#2E7D4F">${esc(cariRaporParaListe(r.alacak))}</div>`
+        : Object.keys(r.verecek).length
+            ? `<div style="font-size:12px;color:#7A6A50">Borcumuz</div><div class="mono" style="font-size:22px;font-weight:800;color:#B3261E">${esc(cariRaporParaListe(r.verecek))}</div>`
+            : `<div style="font-size:12px;color:#7A6A50">Bakiye</div><div class="mono" style="font-size:22px;font-weight:800">0</div>`;
+    const kutu = (baslik, deger) => `<td style="padding:8px 10px;border:1px solid #ddd;background:#FBF8F2"><div style="font-size:11px;color:#7A6A50">${baslik}</div><div class="mono" style="font-size:14px;font-weight:700">${deger}</div></td>`;
+    return `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #33281C;padding-bottom:8px;margin-bottom:12px">
+    <div>${f.logo ? `<img src="${f.logo}" style="height:40px;margin-bottom:4px" />` : ""}<div style="font-size:16px;font-weight:700">${esc(f.unvan || "")}</div></div>
+    <div style="text-align:right"><div style="font-size:11px;letter-spacing:1px;color:#7A6A50">CARİ RAPORU</div>
+      <div class="mono" style="font-size:12px">${esc(cariRaporTarih(r.bugun))}</div></div>
+  </div>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><tr>
+    <td style="vertical-align:top"><div style="font-size:11px;color:#7A6A50">${esc(r.tip || "Cari")}${r.ulke ? ` · ${esc(r.ulke)}` : ""}</div><div style="font-size:18px;font-weight:800">${esc(r.unvan)}</div>
+      <div style="margin-top:6px;display:inline-block;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:800;color:#fff;background:${sagRenk}">Durum: ${esc(s.ad)}</div></td>
+    <td style="text-align:right;vertical-align:top;width:45%">${bakiyeKutusu}</td>
+  </tr></table>
+  <table style="width:100%;border-collapse:separate;border-spacing:6px;margin-bottom:10px"><tr>
+    ${kutu("Sipariş", `${r.toplam.siparisSayisi} (${r.toplam.acikSiparis} açık)`)}
+    ${kutu("Sipariş adedi", r.toplam.adet)}
+    ${kutu("Teslim edilen", r.toplam.teslim)}
+    ${kutu("Kalan", r.toplam.kalanAdet)}
+    ${kutu(`Son ${r.paraTipi.toLocaleLowerCase("tr-TR")}`, r.sonPara ? `${esc(cariRaporTarih(r.sonPara.tarih))} · ${esc(cariRaporPara(r.sonPara.tutar, r.sonPara.paraBirimi))}` : "—")}
+  </tr></table>
+  <div style="font-size:12px;margin-bottom:12px">${r.saglik.nedenler.map((n) => `• ${esc(n)}`).join("<br/>")}</div>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="background:#F6F1E8">${["Sipariş", "Tarih", "Durum", "Adet", "Teslim", "Kalan", "Tutar", `${r.paraTipi}`, "Kalan tutar"].map((h, i) => `<th style="padding:5px 8px;border-bottom:1px solid #ccc;text-align:${i >= 3 ? "right" : "left"}">${h}</th>`).join("")}</tr>
+    ${r.siparisler.map((x) => `<tr style="border-bottom:1px solid #eee${x.gecikti ? ";background:#FDECEA" : ""}">
+      <td class="mono">${esc(x.siparisNo)}</td><td class="mono">${esc(cariRaporTarih(x.tarih))}</td><td>${esc(x.durum)}${x.gecikti ? " · gecikti" : ""}</td>
+      <td class="mono" style="text-align:right">${x.adet}</td><td class="mono" style="text-align:right">${x.teslim}</td><td class="mono" style="text-align:right;font-weight:700">${x.kalanAdet}</td>
+      <td class="mono" style="text-align:right">${esc(cariRaporParaListe(x.tutar))}</td><td class="mono" style="text-align:right;color:#2E7D4F">${esc(cariRaporParaListe(x.odenen))}</td>
+      <td class="mono" style="text-align:right;font-weight:700">${x.odemeKalan != null ? esc(cariRaporPara(x.odemeKalan, x.tekPB)) : esc(cariRaporParaListe(x.tutar))}</td></tr>`).join("")}
+  </table>
+  <div style="margin-top:24px;font-size:10px;color:#9B8B72">Atölye ERP · ${new Date().toLocaleDateString("tr-TR")}</div>`;
+}
+function CariSaglikRozeti({ seviye, kucuk }) {
+    const s = CARI_SAGLIK[seviye] || CARI_SAGLIK.iyi;
+    return (React.createElement("span", { "data-cari-saglik": seviye, className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: kucuk ? 10 : 12, fontWeight: 800,
+            padding: kucuk ? "1px 7px" : "3px 10px", borderRadius: "var(--erp-r-pill)", color: s.renk, background: alfaEkle(s.renk, "1A"), border: `1px solid ${s.renk}` } },
+        "\u25CF ",
+        s.ad));
+}
+function CariRaporlari({ cariler, siparisler, firmaBilgileri, showToast, onGoToSiparis }) {
+    const [arama, setArama] = useState("");
+    const [tipSec, setTipSec] = useState("Tümü");
+    const [seciliId, setSeciliId] = useState(null);
+    const bugun = bugunYerel();
+    const SIRA = { riskli: 0, takip: 1, iyi: 2 };
+    const raporlar = (cariler || [])
+        .filter((c) => !c.pasif && c.tip !== "Personel")
+        .filter((c) => tipSec === "Tümü" || c.tip === tipSec || (c.tip === "Her İkisi"))
+        .filter((c) => !arama.trim() || String(c.unvan || "").toLocaleLowerCase("tr-TR").includes(arama.trim().toLocaleLowerCase("tr-TR")))
+        .map((c) => cariRaporu(c, siparisler, { bugun }))
+        .sort((a, b) => SIRA[a.saglik.seviye] - SIRA[b.saglik.seviye] || a.unvan.localeCompare(b.unvan, "tr"));
+    const secili = raporlar.find((r) => r.cariId === seciliId) || null;
+    const seciliCari = secili ? cariler.find((c) => c.id === secili.cariId) : null;
+    const bakiyeYaz = (r) => (Object.keys(r.alacak).length
+        ? React.createElement("span", { style: { color: "var(--erp-primary)", fontWeight: 800 } }, cariRaporParaListe(r.alacak))
+        : Object.keys(r.verecek).length
+            ? React.createElement("span", { style: { color: "var(--erp-danger)", fontWeight: 800 } },
+                "\u2212",
+                cariRaporParaListe(r.verecek))
+            : React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "0"));
+    const sayilar = { riskli: raporlar.filter((r) => r.saglik.seviye === "riskli").length, takip: raporlar.filter((r) => r.saglik.seviye === "takip").length };
+    const th = { padding: "6px 8px", fontSize: 11, textAlign: "left", color: "var(--erp-text-2)", borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+    const td = { padding: "7px 8px", fontSize: 13, borderBottom: "1px solid var(--erp-line-soft)", whiteSpace: "nowrap" };
+    return (React.createElement("div", { "data-cari-raporlari": "1" },
+        secili && (React.createElement("div", { "data-cari-rapor-karti": secili.unvan, style: { background: "var(--erp-panel)", border: `2px solid ${CARI_SAGLIK[secili.saglik.seviye].renk}`, borderRadius: "var(--erp-r-lg)", padding: 14, marginBottom: 14 } },
+            React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap" } },
+                React.createElement("div", { style: { flex: "1 1 240px" } },
+                    React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", fontWeight: 700 } },
+                        secili.tip,
+                        secili.ulke ? ` · ${secili.ulke}` : ""),
+                    React.createElement("div", { style: { fontSize: 20, fontWeight: 800 } }, secili.unvan),
+                    React.createElement("div", { style: { marginTop: 6 } },
+                        React.createElement(CariSaglikRozeti, { seviye: secili.saglik.seviye }))),
+                React.createElement("div", { "data-cari-rapor-bakiye": "1", style: { textAlign: "right", flex: "0 1 auto" } },
+                    React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", fontWeight: 700 } },
+                        Object.keys(secili.alacak).length ? "Alacağımız" : Object.keys(secili.verecek).length ? "Borcumuz" : "Bakiye",
+                        " \u00B7 ",
+                        cariRaporTarih(secili.bugun)),
+                    React.createElement("div", { className: "mono", style: { fontSize: 26 } }, bakiyeYaz(secili))),
+                React.createElement("button", { type: "button", className: "btn-ghost", onClick: () => setSeciliId(null), title: "Raporu kapat", style: { padding: "4px 8px" } },
+                    React.createElement(X, { size: 14 }))),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8, margin: "12px 0" } }, [
+                ["Sipariş", `${secili.toplam.siparisSayisi} (${secili.toplam.acikSiparis} açık)`],
+                ["Sipariş adedi", secili.toplam.adet],
+                ["Teslim edilen", secili.toplam.teslim],
+                ["Kalan", secili.toplam.kalanAdet],
+                ["Kalan teslim tutarı", cariRaporParaListe(secili.toplam.kalanTutar)],
+                [`Siparişe bağlı ${secili.paraTipi.toLocaleLowerCase("tr-TR")}`, cariRaporParaListe(secili.toplam.odenen)],
+                [`Son ${secili.paraTipi.toLocaleLowerCase("tr-TR")}`, secili.sonPara ? `${cariRaporTarih(secili.sonPara.tarih)} (${secili.sonParaGun} gün)` : "—"],
+            ].map(([b, d]) => (React.createElement("div", { key: b, style: { background: "var(--erp-panel-2)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } },
+                React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", fontWeight: 700 } }, b),
+                React.createElement("div", { className: "mono", style: { fontSize: 15, fontWeight: 800 } }, d))))),
+            React.createElement("div", { "data-cari-rapor-nedenler": "1", style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 10 } }, secili.saglik.nedenler.map((n) => React.createElement("div", { key: n },
+                "\u2022 ",
+                n))),
+            React.createElement("div", { style: { overflowX: "auto" } },
+                React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+                    React.createElement("thead", null,
+                        React.createElement("tr", null, ["Sipariş", "Tarih", "Durum", "Adet", "Teslim", "Kalan", "Tutar", secili.paraTipi, "Kalan tutar"].map((h, i) => React.createElement("th", { key: h, style: { ...th, textAlign: i >= 3 ? "right" : "left" } }, h)))),
+                    React.createElement("tbody", null,
+                        secili.siparisler.length === 0 && React.createElement("tr", null,
+                            React.createElement("td", { colSpan: 9, style: { ...td, color: "var(--erp-text-3)" } }, "Sipari\u015F yok")),
+                        secili.siparisler.map((x) => (React.createElement("tr", { key: x.id, "data-cari-rapor-siparis": x.siparisNo, style: { background: x.gecikti ? "var(--erp-orange-bg)" : undefined } },
+                            React.createElement("td", { style: td },
+                                React.createElement("button", { type: "button", className: "mono", onClick: () => onGoToSiparis && onGoToSiparis(x.id), style: { background: "none", border: "none", padding: 0, color: "var(--erp-info)", fontWeight: 700, textDecoration: "underline", cursor: "pointer" } }, x.siparisNo)),
+                            React.createElement("td", { style: td, className: "mono" }, cariRaporTarih(x.tarih)),
+                            React.createElement("td", { style: td },
+                                x.durum,
+                                x.gecikti ? React.createElement("span", { style: { color: "var(--erp-danger)", fontWeight: 700 } }, " \u00B7 gecikti") : null),
+                            React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, x.adet),
+                            React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, x.teslim),
+                            React.createElement("td", { style: { ...td, textAlign: "right", fontWeight: 800 }, className: "mono" }, x.kalanAdet),
+                            React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, cariRaporParaListe(x.tutar)),
+                            React.createElement("td", { style: { ...td, textAlign: "right", color: "var(--erp-primary)" }, className: "mono" }, cariRaporParaListe(x.odenen)),
+                            React.createElement("td", { style: { ...td, textAlign: "right", fontWeight: 800 }, className: "mono" }, x.odemeKalan != null ? cariRaporPara(x.odemeKalan, x.tekPB) : cariRaporParaListe(x.tutar)))))))),
+            React.createElement("div", { style: { marginTop: 10 } },
+                React.createElement(PaylasSeridi, { govdeHTML: cariRaporuHTML(secili, firmaBilgileri), dosyaAdi: `Cari raporu - ${secili.unvan}`, cari: seciliCari, konu: `Cari raporu — ${secili.unvan}`, ozet: `${secili.unvan} — ${Object.keys(secili.alacak).length ? `alacağımız ${cariRaporParaListe(secili.alacak)}` : Object.keys(secili.verecek).length ? `borcumuz ${cariRaporParaListe(secili.verecek)}` : "bakiye 0"}; ${secili.toplam.acikSiparis} açık sipariş, ${secili.toplam.kalanAdet} adet kalan.`, showToast: showToast, firmaBilgileri: firmaBilgileri })))),
+        React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 } },
+            React.createElement("div", { style: { position: "relative", flex: "1 1 220px" } },
+                React.createElement(Search, { size: 15, style: { position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" } }),
+                React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Cari ara\u2026", "data-cari-rapor-arama": "1", style: { width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14 } })),
+            ["Tümü", "Müşteri", "Tedarikçi"].map((t) => (React.createElement("button", { key: t, type: "button", onClick: () => setTipSec(t), style: { padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    border: `1.5px solid ${tipSec === t ? "var(--erp-primary)" : "var(--erp-border)"}`, background: tipSec === t ? "#4E6B4E1A" : "#fff", color: tipSec === t ? "var(--erp-primary)" : "var(--erp-text-2)" } }, t))),
+            React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)", marginLeft: "auto" } },
+                raporlar.length,
+                " cari \u00B7 ",
+                React.createElement("span", { style: { color: "var(--erp-danger)", fontWeight: 700 } },
+                    sayilar.riskli,
+                    " riskli"),
+                " \u00B7 ",
+                React.createElement("span", { style: { color: "var(--erp-warn)", fontWeight: 700 } },
+                    sayilar.takip,
+                    " takip"))),
+        React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflowX: "auto" } },
+            React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+                React.createElement("thead", null,
+                    React.createElement("tr", null, ["Cari", "Durum", "Bakiye", "Açık sipariş", "Kalan adet", "Kalan teslim tutarı", "Son tahsilat/ödeme"].map((h, i) => React.createElement("th", { key: h, style: { ...th, textAlign: i >= 2 ? "right" : "left" } }, h)))),
+                React.createElement("tbody", null,
+                    raporlar.length === 0 && React.createElement("tr", null,
+                        React.createElement("td", { colSpan: 7, style: { ...td, color: "var(--erp-text-3)" } }, "Cari yok")),
+                    raporlar.map((r) => (React.createElement("tr", { key: r.cariId, "data-cari-rapor-satir": r.unvan, onClick: () => setSeciliId(r.cariId === seciliId ? null : r.cariId), style: { cursor: "pointer", background: r.cariId === seciliId ? "var(--erp-hover)" : undefined } },
+                        React.createElement("td", { style: { ...td, fontWeight: 700 } },
+                            r.unvan,
+                            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", fontWeight: 400 } }, r.tip)),
+                        React.createElement("td", { style: td },
+                            React.createElement(CariSaglikRozeti, { seviye: r.saglik.seviye, kucuk: true })),
+                        React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, bakiyeYaz(r)),
+                        React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" },
+                            r.toplam.acikSiparis,
+                            r.toplam.geciken ? React.createElement("span", { style: { color: "var(--erp-danger)" } },
+                                " (",
+                                r.toplam.geciken,
+                                " gecikmi\u015F)") : null),
+                        React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, r.toplam.kalanAdet),
+                        React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, cariRaporParaListe(r.toplam.kalanTutar)),
+                        React.createElement("td", { style: { ...td, textAlign: "right" }, className: "mono" }, r.sonPara ? `${cariRaporTarih(r.sonPara.tarih)} · ${r.sonParaGun} gün` : "—"))))))),
+        React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 8 } },
+            "Durum: ",
+            React.createElement("b", null, "\u0130yi"),
+            " \u2014 alacak yok ya da son tahsilat ",
+            CARI_SAGLIK_TAKIP_GUN,
+            " g\u00FCn i\u00E7inde \u00B7 ",
+            React.createElement("b", null, "Takip"),
+            " \u2014 ",
+            CARI_SAGLIK_TAKIP_GUN + 1,
+            "\u2013",
+            CARI_SAGLIK_RISK_GUN,
+            " g\u00FCn (tedarik\u00E7ide: ",
+            CARI_SAGLIK_RISK_GUN,
+            " g\u00FCnden uzun s\u00FCredir \u00F6denmemi\u015F borcumuz) \u00B7 ",
+            React.createElement("b", null, "Riskli"),
+            " \u2014 alacak var, ",
+            CARI_SAGLIK_RISK_GUN,
+            " g\u00FCnden uzun s\u00FCredir tahsilat yok.")));
 }
 function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
     // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
@@ -44691,12 +45065,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                         React.createElement(X, { size: 14 }),
                                         " Vazge\u00E7")))) : (React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" } },
                                 stokluTipler.map((tip) => (React.createElement("button", { key: tip, className: "btn-ghost", style: { borderColor: HAREKET_TIPI_RENK[tip], color: HAREKET_TIPI_RENK[tip] }, "data-cari-fis-ac": tip, onClick: () => onStokFisiAc && onStokFisiAc(cari.id, tip, cari.unvan) },
-                                    React.createElement(Plus, { size: 13 }),
+                                    React.createElement(HareketIkonu, { tip: tip, size: 15 }),
                                     " ",
                                     tip,
                                     " Fi\u015Fi"))),
                                 ["Ödeme", "Tahsilat"].map((tip) => (React.createElement("button", { key: tip, className: "btn-ghost", style: { borderColor: HAREKET_TIPI_RENK[tip], color: HAREKET_TIPI_RENK[tip] }, onClick: () => hareketTipiSec(tip) },
-                                    React.createElement(Plus, { size: 13 }),
+                                    React.createElement(HareketIkonu, { tip: tip, size: 15 }),
                                     " ",
                                     tip))),
                                 stokluTipler.length > 0 && (React.createElement("button", { className: "btn-ghost", style: { borderColor: "var(--erp-text-3)", color: "var(--erp-text-2)", fontSize: 11 }, title: "Stok etkisi olmadan yaln\u0131zca cari bor\u00E7/alacak kayd\u0131 \u2014 hizmet bedeli, navlun, iskonto gibi", onClick: () => hareketTipiSec(stokluTipler[0]) }, "\u00DCr\u00FCns\u00FCz kay\u0131t")))))) },
@@ -52450,7 +52824,9 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
     const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
     return (React.createElement("div", { "data-siparis-odeme-formu": tip, style: { background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 10 } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
-            React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk } }, tip),
+            React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 5 } },
+                React.createElement(HareketIkonu, { tip: tip, size: 13 }),
+                tip),
             React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                 cari.unvan,
                 " \u00B7 ",
@@ -52791,7 +53167,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         "\u0130\u015ELEMLER \u00B7 ",
                         siparis.siparisNo),
                     React.createElement("button", { type: "button", "data-siparis-islem": "odeme", style: { ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }, onClick: () => { setIslemMenu(null); onOdemeGir(hedef); } },
-                        React.createElement(Plus, { size: 14 }),
+                        React.createElement(HareketIkonu, { tip: oz.beklenenTip, size: 16 }),
                         " ",
                         oz.beklenenTip,
                         React.createElement("span", { style: { marginLeft: "auto", fontSize: 11, color: "var(--erp-text-3)" } }, "cari kart\u0131nda")),
@@ -53802,17 +54178,19 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                 setShowOdeme((v) => !v);
                                             else
                                                 onOdemeGir(hedef); } },
-                                            React.createElement(Plus, { size: 13 }),
+                                            React.createElement(HareketIkonu, { tip: oz.beklenenTip, size: 15 }),
                                             " ",
                                             showOdeme ? `${oz.beklenenTip} Formunu Kapat` : `${oz.beklenenTip} Gir`),
                                         ozetMetni && (React.createElement("span", { className: "mono", "data-siparis-odenen": oz.odenen, "data-siparis-kalan": oz.kalan, style: { fontSize: 12, fontWeight: 700, color: oz.kalan > 0 ? "var(--erp-warn)" : "var(--erp-primary)" } }, ozetMetni)),
                                         showOdeme && onOdemeGir && (React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-odeme-caride": "1", style: { fontSize: 11, padding: "4px 8px" }, title: "\u00C7ek/senet ya da vadeli kay\u0131t i\u00E7in cari kart\u0131ndaki tam form", onClick: () => onOdemeGir(hedef) }, "\u00C7ek/senet i\u00E7in cari kart\u0131nda a\u00E7"))),
                                     oz.odemeler.length > 0 && (React.createElement("div", { "data-siparis-odeme-listesi": oz.odemeler.length, style: { border: `1px solid ${HAREKET_TIPI_RENK[oz.beklenenTip]}`, borderRadius: "var(--erp-r-md)", overflow: "hidden", marginBottom: 10, background: "#fff" } },
                                         React.createElement("div", { className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-panel-2)", background: HAREKET_TIPI_RENK[oz.beklenenTip], padding: "4px 10px" } },
-                                            oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar",
-                                            " (",
-                                            oz.odemeler.length,
-                                            ")"),
+                                            React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } },
+                                                React.createElement(HareketIkonu, { tip: oz.beklenenTip, size: 12 }),
+                                                oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar",
+                                                " (",
+                                                oz.odemeler.length,
+                                                ")")),
                                         [...oz.odemeler].sort((x, y) => String(y.tarih || "").localeCompare(String(x.tarih || ""))).map((h, i) => (React.createElement("div", { key: h.id || i, style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "5px 10px", fontSize: 12, borderTop: i === 0 ? "none" : "1px solid var(--erp-line-soft)" } },
                                             React.createElement("span", { className: "mono", style: { color: "var(--erp-text-2)" } }, h.tarih ? h.tarih.split("-").reverse().join(".") : "—"),
                                             h.fisNo && (React.createElement("button", { type: "button", className: "mono", style: { background: "none", border: "none", padding: 0, color: "var(--erp-info)", fontWeight: 700, cursor: onFiseGitNo ? "pointer" : "default", textDecoration: onFiseGitNo ? "underline" : "none" }, onClick: () => { if (onFiseGitNo)
@@ -56580,7 +56958,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.616.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.619.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
