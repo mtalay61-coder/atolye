@@ -450,7 +450,8 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
     <div style="margin-bottom:12px">
       <div style="font-size:11px;color:#7A6A50">${siparis.tip === "Alış" ? "Tedarikçi" : "Müşteri"}</div>
       <div style="font-size:14px;font-weight:700">${esc(cari ? cari.unvan : "")}</div>
-      <div style="font-size:11px;color:#7A6A50">${[cari && cari.adres, cari && cari.telefon, siparis.musteriKodu && `Müşteri kodu: ${siparis.musteriKodu}`].filter(Boolean).map(esc).join(" · ")}</div>
+      <div style="font-size:11px;color:#7A6A50">${[cari && cari.adres, cari && cari.telefon, siparis.musteriKodu && `Müşteri kodu: ${siparis.musteriKodu}`,
+        siparis.belgeNo && `Belge no: ${siparis.belgeNo}`, siparis.sezon && `Sezon: ${siparis.sezon}`].filter(Boolean).map(esc).join(" · ")}</div>
     </div>
     ${modeller.map((m) => {
       // Her model KENDİ bedenleriyle (kartla aynı): 37-41 bot ile 40-45 terlik aynı siparişte boş

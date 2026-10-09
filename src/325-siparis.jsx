@@ -32,6 +32,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // giriyoruz, aynı not mantığı sipariş girişinde de olsun"). Kartın "Notlar" penceresiyle aynı içerik, ama düzenlenebilir.
   const [formNotlariAcik, setFormNotlariAcik] = useState(false);
   const [siparisDefter, setSiparisDefter] = useState("Genel"); // "Genel" | "Resmi" | "Muhasebe"
+  // BELGE NO + SEZON (v1.624.0): kullanıcının kendi belge numarası (ör. kâğıt sipariş formu) ve sezon (ör. "2026 Yaz").
+  // Şemada sütun yok → `ek`te saklanır (035 semaDisiAlanlar), SQL gerekmez.
+  const [belgeNo, setBelgeNo] = useState("");
+  const [sezon, setSezon] = useState("");
   const [musteriKodu, setMusteriKodu] = useState(""); // Müşteri/tedarikçinin kendi verdiği referans kodu — sipariş no'nun YERİNE değil, YANINDA tutulur.
   // Siparişin ambalajı (kutu). { urunId, renk } — ikisi de boşsa reçetedeki varsayılan kutu geçerlidir.
   // Kutu tercihi KALEM bazındadır. Yalnızca renk tutulur — hangi ambalaj ürünü olduğu reçeteden
@@ -406,7 +410,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   function resetForm() {
     setCariId(""); setTarih(bugunYerel()); setTeslimTarihi(""); setNot("");
     setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1); setSiparisDefter("Genel");
-    setMusteriKodu(""); setKayitParaBirimi(null); setKayitKurlari({});
+    setMusteriKodu(""); setBelgeNo(""); setSezon(""); setKayitParaBirimi(null); setKayitKurlari({});
     setKAmbalajRenk("");
     // ÖNCEKİ SİPARİŞİN OKUTMA SONUCU TEMİZLENİR (v1.614.0 — kullanıcı: "Yeni sipariş açınca eski barkodu gösteriyor
     // ekranda hâlâ 27454, önceki siparişten kalma"). Sonuç satırı bir sonraki okutmaya kadar kalıyordu; yeni sipariş
@@ -721,6 +725,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     setTeslimTarihi(siparis.teslimTarihi || "");
     setNot(siparis.not || "");
     setMusteriKodu(siparis.musteriKodu || "");
+    setBelgeNo(siparis.belgeNo || ""); setSezon(siparis.sezon || "");
     setSiparisDefter(siparis.defterTercihi || "Genel");
     setKayitParaBirimi(siparis.kayitParaBirimi || null);
     setKayitKurlari(siparis.kayitKurlari || {});
@@ -777,6 +782,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     onSave(siparisler.map((s) => (s.id !== siparis.id ? s : {
       ...s,
       cariId, tarih, teslimTarihi, not: not.trim(), musteriKodu: musteriKodu.trim(),
+      belgeNo: belgeNo.trim() || undefined, sezon: sezon.trim() || undefined,
       defterTercihi: siparisDefter, kayitParaBirimi, kayitKurlari,
       kalemler: sonKalemler,
     })));
@@ -853,6 +859,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
       siparisNo: sonrakiSiparisNo(siparisler, tip === "Satış" ? "SAT-" : "ALS-", cop),
       tip, cariId, tarih, teslimTarihi, not: not.trim(),
       musteriKodu: musteriKodu.trim(),
+      ...(belgeNo.trim() ? { belgeNo: belgeNo.trim() } : {}), ...(sezon.trim() ? { sezon: sezon.trim() } : {}),
       kayitParaBirimi, kayitKurlari,
       durum: "Bekliyor", kalemler,
       defterTercihi: siparisDefter,
@@ -936,6 +943,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const parcalar = [
       s.siparisNo || "",
       s.musteriKodu || "",
+      s.belgeNo || "", s.sezon || "",
       cariAdi,
       s.not || "",
       ...s.kalemler.flatMap((k) => [k.urunAd, k.renk, k.beden]),
@@ -1062,6 +1070,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 <span className="mono" style={{ fontSize: 11, opacity: 0.85, display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <span>{tamEkranSiparis.siparisNo}</span>
                   {tamEkranSiparis.musteriKodu && <span>#{tamEkranSiparis.musteriKodu}</span>}
+                  {tamEkranSiparis.belgeNo && <span>Belge: {tamEkranSiparis.belgeNo}</span>}
+                  {tamEkranSiparis.sezon && <span>Sezon: {tamEkranSiparis.sezon}</span>}
                   <span>{tamEkranSiparis.tarih}</span>
                 </span>
               </span>
@@ -1270,6 +1280,22 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 title="Sipariş No'nun yerine değil, yanında tutulur — müşterinin/tedarikçinin kendi sisteminde bu siparişe verdiği kod"
                 style={inputStyle}
               />
+            </Field>
+            </div>
+
+            {/* BELGE NO + SEZON (v1.624.0). Sezon önerileri önceki siparişlerden (datalist) — aynı sezon adı tek
+                yazımla kalsın ("2026 Yaz" / "Yaz 2026" ikiliği listelerde ayrı grup çıkarırdı). */}
+            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
+            <Field label="Belge No">
+              <input value={belgeNo} onChange={(e) => setBelgeNo(e.target.value)} data-siparis-belge-no placeholder="opsiyonel" style={inputStyle} />
+            </Field>
+            </div>
+            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
+            <Field label="Sezon">
+              <input value={sezon} onChange={(e) => setSezon(e.target.value)} data-siparis-sezon list="siparis-sezon-onerileri" placeholder="örn. 2026 Yaz" style={inputStyle} />
+              <datalist id="siparis-sezon-onerileri">
+                {[...new Set((siparisler || []).map((x) => x.sezon).filter(Boolean))].sort().map((z) => <option key={z} value={z} />)}
+              </datalist>
             </Field>
             </div>
 

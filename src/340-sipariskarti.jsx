@@ -327,6 +327,25 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
         {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
         </>)}
 
+        {/* BELGE NO + SEZON MOR ŞERİTTE (v1.624.0 — kullanıcı: "Sipariş girerken belge no ve sezon girişi eklensin,
+            bunlar da mor şeritte görünsün"). Bilgi bloğunun (yalnız tek başına kartta çizilen) DIŞINDA: listede açılan
+            kartın şeridinde de görünür. Boşsa rozet yok. */}
+        {(siparis.belgeNo || siparis.sezon) && (
+          <span style={{ display: "inline-flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            {siparis.belgeNo && (
+              <span className="mono" data-siparis-serit-belge={siparis.belgeNo} title="Belge no"
+                style={{ fontSize: 11, fontWeight: 700, color: "#5B3F75", background: "#fff", border: "1px solid #C9B3D9", padding: "1px 8px", borderRadius: "var(--erp-r-pill)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <FileText size={11} /> Belge: {siparis.belgeNo}
+              </span>
+            )}
+            {siparis.sezon && (
+              <span className="mono" data-siparis-serit-sezon={siparis.sezon} title="Sezon"
+                style={{ fontSize: 11, fontWeight: 700, color: "#5B3F75", background: "#fff", border: "1px solid #C9B3D9", padding: "1px 8px", borderRadius: "var(--erp-r-pill)" }}>
+                Sezon: {siparis.sezon}
+              </span>
+            )}
+          </span>
+        )}
         {/* DURUM ve SİL, kart BAŞLIĞINDA — ürün ve cari kartlarıyla aynı düzen.
             Önceden kartın en altında, tüm kalemlerin ve sekmelerin ardındaydılar; uzun bir siparişte
             durumu değiştirmek için sonuna kadar kaydırmak gerekiyordu.
