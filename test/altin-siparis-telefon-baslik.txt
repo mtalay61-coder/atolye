@@ -1,0 +1,27 @@
+{
+ "hatalar": [],
+ "genis": {
+  "tasan": [],
+  "yatayKaydirma": false,
+  "ilkSatir": [
+   "Müşteri",
+   "Sipariş Tarihi",
+   "Teslim Tarihi",
+   "Müşteri Sipariş Kodu (op",
+   "Not",
+   "Cari Defteri"
+  ]
+ },
+ "telefon": {
+  "tasan": [],
+  "yatayKaydirma": false,
+  "ilkSatir": [
+   "Müşteri"
+  ]
+ },
+ "kasaKutusuVar": true,
+ "oneri": [
+  "Tedarikçi A"
+ ],
+ "secilen": "c1"
+}

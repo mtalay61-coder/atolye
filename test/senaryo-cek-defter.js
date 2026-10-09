@@ -3,7 +3,7 @@
 //   1. Çek formunda Defter seçimi var (Genel / Resmi / Muhasebe); Resmi seçilen çekin cari girişi Resmi deftere.
 //   2. Listede Resmi rozeti görünüyor.
 //   3. Resmi çekin tahsilinde bankaya giren para da Resmi deftere (önce hep "Muhasebe").
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -50,13 +50,8 @@ async function calistir() {
     if (t) { const i = t.querySelector("input"); set.call(i, "7000"); i.dispatchEvent(new Event("input", { bubbles: true })); }
     const v = bul(/Vade Tarihi/);
     if (v) { const i = v.querySelector("input"); set.call(i, "2026-12-01"); i.dispatchEvent(new Event("input", { bubbles: true })); }
-    const c = bul(/^Cari/);
-    if (c) {
-      const sel = c.querySelector("select");
-      const o = [...sel.options].find((x) => /Müşteri B/.test(x.textContent));
-      if (o) { sel.value = o.value; sel.dispatchEvent(new Event("change", { bubbles: true })); }
-    }
   });
+  await cariSec(sayfa, "Müşteri B", "", "data-cek-cari");   // v1.622.0: aramalı kutu
   await sayfa.waitForTimeout(300);
   await sayfa.selectOption("[data-cek-defter]", "Resmi");
   await sayfa.waitForTimeout(300);

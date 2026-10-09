@@ -73,8 +73,9 @@ const modulAc = async (sayfa, ad) => {
 
 // CARİ SEÇ (v1.620.0): sipariş formundaki müşteri/tedarikçi kutusu artık aramalı (CariSecici). Kutuya yazıp öneriye
 // dokunur. `kok`: birden çok form açıksa daraltmak için seçici (varsayılan: görünen ilk kutu).
-const cariSec = async (sayfa, unvan, kok = "") => {
-  const kutu = sayfa.locator(`${kok} input[data-siparis-cari]:visible`).first();
+// `alan` (v1.622.0): fiş / kasa / çek formlarındaki kutuların veri adı (data-fis-cari, data-kasa-cari, data-cek-cari).
+const cariSec = async (sayfa, unvan, kok = "", alan = "data-siparis-cari") => {
+  const kutu = sayfa.locator(`${kok} input[${alan}]:visible`).first();
   await kutu.click();
   await kutu.fill(unvan);
   await sayfa.waitForTimeout(150);

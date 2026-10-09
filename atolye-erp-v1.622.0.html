@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.619.0</title>
+<title>Atölye ERP 1.622.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -741,6 +741,76 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
                 ? React.createElement("img", { src: resimler[o], alt: "", "data-aramali-oneri-resim": "1", loading: "lazy", style: { width: 34, height: 34, objectFit: "cover", borderRadius: 4, border: "1px solid var(--erp-line-soft)", flexShrink: 0 } })
                 : React.createElement("span", { style: { width: 34, height: 34, borderRadius: 4, background: "var(--erp-zebra)", flexShrink: 0 } })),
             React.createElement("span", null, o))))))));
+}
+// ---- CARİ SEÇİCİ (aramalı) — v1.620.0 ----
+// Kullanıcı (sipariş formu, açılır müşteri listesi): "Müşteri seçerken filtreli olsun, daha öncekiler gibi; cari arttıkça
+// içinden çıkılmıyor." Açılır <select> yerine yazdıkça süzülen kutu (renk/ürün seçicileriyle aynı davranış): ünvan,
+// cari kodu ve telefonla aranır (Türkçe büyük/küçük harf duyarsız, başı eşleşen önce); ok tuşları + Enter; dokunarak seçim.
+// DEĞER `deger` (cari id) — kutu odakta değilken seçili carinin ünvanı yazar; dışarıdan değişen seçim (form sıfırlama,
+// tedarikçi otomatik doldurma) kutuya yansır. Kutu boşaltılıp çıkılırsa seçim KALIR (yanlışlıkla silinmesin); "×" temizler.
+// `veriAdi` kutuya, `data-cari-id` seçili id'ye konur (testler okuyor).
+// `title` kutuya gider; `minGenislik` dar formlarda (kasa/çek satırı) kutunun ezilmemesi için; `kucuk` 12 px
+// yazı — kasa formunun diğer alanlarıyla aynı boy (v1.622.0).
+function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "Cari ara: ünvan, kod, telefon…", veriAdi, title, minGenislik, kucuk = false }) {
+    const [acik, setAcik] = useState(false);
+    const [sorgu, setSorgu] = useState(null); // null = yazılmıyor, kutuda seçili ünvan
+    const [vurgulu, setVurgulu] = useState(0);
+    const secili = (cariler || []).find((c) => c.id === deger) || null;
+    const q = String(sorgu || "").trim().toLocaleLowerCase("tr-TR");
+    const sonuclar = (() => {
+        const liste = cariler || [];
+        if (!q)
+            return liste;
+        const bas = [], ic = [];
+        liste.forEach((c) => {
+            const ad = String(c.unvan || "").toLocaleLowerCase("tr-TR");
+            // Kod hem "7" hem listede görünen "0007" biçimiyle bulunur.
+            const kodlar = c.kod != null && c.kod !== "" ? [String(c.kod), String(c.kod).padStart(4, "0")] : [];
+            const diger = [...kodlar, c.telefon, c.whatsapp].filter(Boolean).map((x) => String(x).toLocaleLowerCase("tr-TR"));
+            if (ad.startsWith(q) || ad.split(/\s+/).some((k) => k.startsWith(q)) || diger.some((d) => d.startsWith(q)))
+                bas.push(c);
+            else if (ad.includes(q) || diger.some((d) => d.includes(q)))
+                ic.push(c);
+        });
+        return [...bas, ...ic];
+    })().slice(0, 80);
+    const sec = (c) => { onDegis(c.id); setSorgu(null); setAcik(false); setVurgulu(0); };
+    return (React.createElement("div", { style: { position: "relative", minWidth: minGenislik || undefined } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, ...inputStyle, padding: "0 8px", opacity: disabled ? 0.6 : 1,
+                border: `1px solid ${acik ? "var(--erp-accent)" : "var(--erp-line)"}` } },
+            React.createElement(Search, { size: 14, color: "var(--erp-text-3)", style: { flexShrink: 0 } }),
+            React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), "data-cari-id": deger || "", title: title, disabled: disabled, value: sorgu != null ? sorgu : (secili ? secili.unvan : ""), onChange: (e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }, onFocus: (e) => { setSorgu(""); setAcik(true); setVurgulu(0); }, onBlur: () => setTimeout(() => { setAcik(false); setSorgu(null); }, 150), onKeyDown: (e) => {
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setAcik(true);
+                        setVurgulu((v) => Math.min(v + 1, sonuclar.length - 1));
+                    }
+                    else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setVurgulu((v) => Math.max(v - 1, 0));
+                    }
+                    else if (e.key === "Enter") {
+                        e.preventDefault();
+                        if (sonuclar[vurgulu])
+                            sec(sonuclar[vurgulu]);
+                    }
+                    else if (e.key === "Escape") {
+                        setAcik(false);
+                        setSorgu(null);
+                        e.currentTarget.blur();
+                    }
+                }, placeholder: secili ? secili.unvan : placeholder, autoComplete: "off", autoCorrect: "off", spellCheck: false, style: { flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: kucuk ? 12 : 14, padding: kucuk ? "5px 0" : "8px 0", fontWeight: secili && sorgu == null ? 700 : 400 } }),
+            secili && !disabled && (React.createElement("button", { type: "button", title: "Se\u00E7imi temizle", "data-cari-secici-temizle": "1", onMouseDown: (e) => { e.preventDefault(); onDegis(""); setSorgu(null); }, style: { border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", padding: 0, display: "flex" } },
+                React.createElement(X, { size: 14 })))),
+        acik && !disabled && (React.createElement("div", { role: "listbox", style: { position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 60, minWidth: "100%", maxHeight: 300, overflowY: "auto",
+                background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 10px 28px rgba(16, 24, 40, 0.12)", padding: 4 } }, sonuclar.length === 0 ? (React.createElement("div", { style: { padding: "9px 10px", fontSize: 13, color: "var(--erp-text-3)" } },
+            "\"",
+            sorgu,
+            "\" ile e\u015Fle\u015Fen cari yok")) : sonuclar.map((c, i) => (React.createElement("button", { key: c.id, type: "button", role: "option", "aria-selected": c.id === deger, "data-cari-secenek": c.unvan, onMouseDown: (e) => { e.preventDefault(); sec(c); }, onMouseEnter: () => setVurgulu(i), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
+                background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 14, cursor: "pointer", fontWeight: c.id === deger ? 800 : 400 } },
+            c.kod != null && c.kod !== "" && React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-info)", minWidth: 34 } }, String(c.kod).padStart(4, "0")),
+            React.createElement("span", { style: { flex: 1 } }, c.unvan),
+            c.ulke && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, c.ulke))))))));
 }
 // ================= ÖZEL KOD ALANLARI =================
 //
@@ -2051,9 +2121,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.619.0";
+const SURUM = "1.622.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Cari Raporlar sekmesi: bakiye (alacak/borc), siparisler teslim/kalan, tahsilat, saglik durumu (Iyi/Takip/Riskli), yazdir/PDF; Fisler ekraninda simgeler";
+const SURUM_NOTU = "Fis ve kasa/cek formlarinda aramali cari secici; siparis basligi telefonda tasmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2061,6 +2131,18 @@ const SURUM_NOTU = "Cari Raporlar sekmesi: bakiye (alacak/borc), siparisler tesl
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.622.0", tarih: "09.10.2026",
+        eklenen: ["Fiş (alış/satış), kasa-banka hareketi ve çek formlarında cari seçimi aramalı: ünvan, kod ya da telefonla süzülür"],
+        degisen: [],
+        duzeltilen: ["Sipariş formu başlığı telefonda sağa taşıyordu (Müşteri Sipariş Kodu kesiliyordu); alanlar artık sığmayınca alt satıra iniyor"] },
+    { surum: "1.621.0", tarih: "09.10.2026",
+        eklenen: ["Sipariş kartının mor şeridinde sarı \"Notlar (n)\" düğmesi: tıklayınca siparişin genel notu ve model/renk notları (proses etiketiyle) açılır pencerede. Sipariş listesinde notlu siparişte sarı \"n not\" rozeti",
+            "Sipariş girişinde (yeni ve düzenleme) kalem tablosunun üstünde \"Notlar (n)\" paneli: genel sipariş notu ve her model/renk için proses etiketli not ekleme/silme — sipariş kaydedilmeden önce"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.620.0", tarih: "09.10.2026",
+        eklenen: [],
+        degisen: ["Sipariş formunda müşteri/tedarikçi seçimi açılır liste yerine aramalı kutu: ünvan, cari kodu ya da telefonla yazdıkça süzülür, ok tuşları + Enter ile ya da dokunarak seçilir; listede cari kodu ve ülkesi görünür"],
+        duzeltilen: [] },
     { surum: "1.619.0", tarih: "09.10.2026",
         eklenen: ["Cari ekranında \"Raporlar\" sekmesi: bütün cariler için bakiye (alacağımız / borcumuz), açık sipariş, kalan adet ve tutar, son tahsilat/ödeme ve sağlık durumu (İyi / Takip / Riskli, riskliler önce). Cariye dokununca rapor kartı: o anki bakiye, sipariş-teslim-kalan sayıları, siparişe bağlı tahsilat, durumun nedenleri, sipariş tablosu (gecikenler işaretli); Yazdır / PDF / WhatsApp / E-posta",
             "Fişler ekranında tip çiplerine ve satır etiketlerine simge (Satış, Alış, Tahsilat, Ödeme, Üretim, İşçilik, Maaş…)"],
@@ -35721,9 +35803,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                             React.createElement("option", { value: "\u00C7\u0131k\u0131\u015F" }, "\u00C7\u0131k\u0131\u015F (\u2212)"))),
                                                     React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                                                         islem === "serbest" ? "Cari (kart seçerseniz boş bırakın)" : "Cari",
-                                                        React.createElement("select", { value: hForm.cariId, onChange: (e) => setHForm({ ...hForm, cariId: e.target.value, giderKartId: e.target.value ? "" : hForm.giderKartId }), style: { padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 130 } },
-                                                            React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                                            secilebilirler(cariler, hForm.cariId).map((c) => React.createElement("option", { key: c.id, value: c.id }, secenekEtiketi(c, c.unvan))))),
+                                                        React.createElement(CariSecici, { cariler: secilebilirler(cariler, hForm.cariId), deger: hForm.cariId, kucuk: true, minGenislik: 190, veriAdi: "data-kasa-cari", onDegis: (id) => setHForm({ ...hForm, cariId: id, giderKartId: id ? "" : hForm.giderKartId }) })),
                                                     (giderKartlari || []).length > 0 && (React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                                                         "Gider / gelir kart\u0131",
                                                         React.createElement("select", { value: hForm.giderKartId || "", "data-gider-kart-sec": "1", onChange: (e) => setHForm({ ...hForm, giderKartId: e.target.value, cariId: e.target.value ? "" : hForm.cariId }), style: { padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 150 } },
@@ -36084,13 +36164,11 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                 React.createElement("input", { value: form.cekNo, onChange: (e) => setForm({ ...form, cekNo: e.target.value }), style: { width: 100, padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12 } })),
             React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                 "Cari",
-                React.createElement("select", { value: form.cariId, onChange: (e) => {
+                React.createElement(CariSecici, { cariler: secilebilirler(cariler, form.cariId), deger: form.cariId, kucuk: true, minGenislik: 200, veriAdi: "data-cek-cari", onDegis: (id) => {
                         // Carinin HESAP BİRİMİ varsayılan: dolarla çalışan cariye TL çek → cariye $ işlenir.
-                        const cr = (cariler || []).find((x) => x.id === e.target.value);
-                        setForm({ ...form, cariId: e.target.value, cariPB: (cr && cr.paraBirimi) || form.paraBirimi || "TRY", cariTutar: "", cariKur: "" });
-                    }, style: { padding: "5px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, minWidth: 140 } },
-                    React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                    secilebilirler(cariler, form.cariId).map((c) => React.createElement("option", { key: c.id, value: c.id }, secenekEtiketi(c, c.unvan))))),
+                        const cr = (cariler || []).find((x) => x.id === id);
+                        setForm({ ...form, cariId: id, cariPB: (cr && cr.paraBirimi) || form.paraBirimi || "TRY", cariTutar: "", cariKur: "" });
+                    } })),
             React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                 "Tutar (",
                 PARA_SEMBOLU[form.paraBirimi || "TRY"] || form.paraBirimi,
@@ -42793,11 +42871,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                                         " Vazge\u00E7"))),
                             React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8, alignItems: "flex-end" } },
                                 !seciliCariId && (React.createElement(Field, { label: alisMi ? "Tedarikçi" : "Müşteri" },
-                                    React.createElement("select", { value: seciliCariId, onChange: (e) => setSeciliCariId(e.target.value), title: alisMi ? "Alışın yapılacağı cari" : "Satışın yapılacağı cari", style: { ...inputStyle, minWidth: 190 } },
-                                        React.createElement("option", { value: "" }, "\u2014 Se\u00E7in \u2014"),
-                                        (cariler || [])
-                                            .filter((c) => !c.pasif)
-                                            .map((c) => React.createElement("option", { key: c.id, value: c.id }, c.unvan))))),
+                                    React.createElement(CariSecici, { cariler: (cariler || []).filter((c) => !c.pasif), deger: seciliCariId, onDegis: setSeciliCariId, veriAdi: "data-fis-cari", title: alisMi ? "Alışın yapılacağı cari" : "Satışın yapılacağı cari", placeholder: alisMi ? "Tedarikçi ara: ünvan, kod, telefon…" : "Müşteri ara: ünvan, kod, telefon…", minGenislik: 220 }))),
                                 React.createElement(Field, { label: "Fi\u015F Tarihi", genislik: 150 },
                                     React.createElement("input", { type: "date", value: tarih, onChange: (e) => setTarih(e.target.value), style: inputStyle })),
                                 React.createElement(Field, { label: "Fi\u015F No", genislik: 160 },
@@ -50096,6 +50170,14 @@ function notlariTekille(liste) {
 }
 // Bir renk satırındaki (aynı ürün+renk, farklı ölçüler) kalemlerin notları.
 function grupNotlari(kalemler) { return notlariTekille((kalemler || []).flatMap(kalemNotlari)); }
+// Siparişteki TEKİL not sayısı (v1.621.0): genel not + her ürün/renk grubunun tekil notları — aynı notun ölçü tekrarları bir.
+function siparisNotSayisi(siparis) {
+    if (!siparis)
+        return 0;
+    const gruplar = {};
+    (siparis.kalemler || []).forEach((k) => { const a = `${k.urunAd}|${k.renk || ""}`; (gruplar[a] = gruplar[a] || []).push(k); });
+    return (siparis.not ? 1 : 0) + Object.values(gruplar).reduce((t, g) => t + grupNotlari(g).length, 0);
+}
 // Üretime bağlı satış kalemlerinin notları (üretim no = kalemin planlama referansı).
 function uretimSiparisNotlari(u, siparisler) {
     if (!u || !u.siparisNo)
@@ -50179,6 +50261,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const [tarih, setTarih] = useState(bugunYerel());
     const [teslimTarihi, setTeslimTarihi] = useState("");
     const [not, setNot] = useState("");
+    // FORMDA NOTLAR PANELİ (v1.621.0 — kullanıcı: "Sipariş girişinde not ekleyebilelim, şu anda sipariş girdikten sonra not
+    // giriyoruz, aynı not mantığı sipariş girişinde de olsun"). Kartın "Notlar" penceresiyle aynı içerik, ama düzenlenebilir.
+    const [formNotlariAcik, setFormNotlariAcik] = useState(false);
     const [siparisDefter, setSiparisDefter] = useState("Genel"); // "Genel" | "Resmi" | "Muhasebe"
     const [musteriKodu, setMusteriKodu] = useState(""); // Müşteri/tedarikçinin kendi verdiği referans kodu — sipariş no'nun YERİNE değil, YANINDA tutulur.
     // Siparişin ambalajı (kutu). { urunId, renk } — ikisi de boşsa reçetedeki varsayılan kutu geçerlidir.
@@ -51255,29 +51340,32 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                     " Sipari\u015Fi")))),
                 React.createElement(DuzenAlani, { ekran: "siparisFormu", bloklar: [
                         { id: "baslik", ad: "Sipariş bilgileri", gizlenemez: true, icerik: (React.createElement(React.Fragment, null,
-                                React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr 0.8fr", gap: 10 } },
-                                    React.createElement(Field, { label: tip === "Satış" ? "Müşteri" : "Tedarikçi" }, (() => {
-                                        const cariKilitli = duzenlenenId && kalemler.some((k) => (k.karsilanan || 0) > 0);
-                                        return (React.createElement(React.Fragment, null,
-                                            React.createElement("select", { value: cariId, onChange: (e) => setCariId(e.target.value), style: inputStyle, disabled: cariKilitli, "data-siparis-cari": "1" },
-                                                React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                                                cariUygun.map((c) => React.createElement("option", { key: c.id, value: c.id }, c.unvan))),
-                                            cariKilitli && React.createElement("span", { style: { fontSize: 10, color: "var(--erp-brown)" } }, "teslimat yap\u0131lm\u0131\u015F, de\u011Fi\u015Ftirilemez")));
-                                    })()),
-                                    React.createElement(Field, { label: "Sipari\u015F Tarihi" },
-                                        React.createElement("input", { type: "date", value: tarih, onChange: (e) => setTarih(e.target.value), style: inputStyle })),
-                                    React.createElement(Field, { label: "Teslim Tarihi" },
-                                        React.createElement("input", { type: "date", value: teslimTarihi, onChange: (e) => setTeslimTarihi(e.target.value), style: inputStyle })),
-                                    React.createElement(Field, { label: tip === "Satış" ? "Müşteri Sipariş Kodu (opsiyonel)" : "Tedarikçi Sipariş Kodu (opsiyonel)" },
-                                        React.createElement("input", { value: musteriKodu, onChange: (e) => setMusteriKodu(e.target.value), placeholder: "\u00F6rn. kar\u015F\u0131 taraf\u0131n kendi sipari\u015F/referans numaras\u0131", title: "Sipari\u015F No'nun yerine de\u011Fil, yan\u0131nda tutulur \u2014 m\u00FC\u015Fterinin/tedarik\u00E7inin kendi sisteminde bu sipari\u015Fe verdi\u011Fi kod", style: inputStyle })),
-                                    React.createElement("div", { style: { gridColumn: "span 2" } },
+                                React.createElement("div", { "data-siparis-baslik-alanlari": true, style: { display: "flex", flexWrap: "wrap", gap: 10 } },
+                                    React.createElement("div", { style: { flex: "2 1 260px", minWidth: 0 } },
+                                        React.createElement(Field, { label: tip === "Satış" ? "Müşteri" : "Tedarikçi" }, (() => {
+                                            const cariKilitli = duzenlenenId && kalemler.some((k) => (k.karsilanan || 0) > 0);
+                                            return (React.createElement(React.Fragment, null,
+                                                React.createElement(CariSecici, { cariler: cariUygun, deger: cariId, onDegis: setCariId, disabled: cariKilitli, veriAdi: "data-siparis-cari", placeholder: tip === "Alış" ? "Tedarikçi ara: ünvan, kod, telefon…" : "Müşteri ara: ünvan, kod, telefon…" }),
+                                                cariKilitli && React.createElement("span", { style: { fontSize: 10, color: "var(--erp-brown)" } }, "teslimat yap\u0131lm\u0131\u015F, de\u011Fi\u015Ftirilemez")));
+                                        })())),
+                                    React.createElement("div", { style: { flex: "1 1 140px", minWidth: 0 } },
+                                        React.createElement(Field, { label: "Sipari\u015F Tarihi" },
+                                            React.createElement("input", { type: "date", value: tarih, onChange: (e) => setTarih(e.target.value), style: inputStyle }))),
+                                    React.createElement("div", { style: { flex: "1 1 140px", minWidth: 0 } },
+                                        React.createElement(Field, { label: "Teslim Tarihi" },
+                                            React.createElement("input", { type: "date", value: teslimTarihi, onChange: (e) => setTeslimTarihi(e.target.value), style: inputStyle }))),
+                                    React.createElement("div", { style: { flex: "1 1 180px", minWidth: 0 } },
+                                        React.createElement(Field, { label: tip === "Satış" ? "Müşteri Sipariş Kodu (opsiyonel)" : "Tedarikçi Sipariş Kodu (opsiyonel)" },
+                                            React.createElement("input", { value: musteriKodu, onChange: (e) => setMusteriKodu(e.target.value), placeholder: "\u00F6rn. kar\u015F\u0131 taraf\u0131n kendi sipari\u015F/referans numaras\u0131", title: "Sipari\u015F No'nun yerine de\u011Fil, yan\u0131nda tutulur \u2014 m\u00FC\u015Fterinin/tedarik\u00E7inin kendi sisteminde bu sipari\u015Fe verdi\u011Fi kod", style: inputStyle }))),
+                                    React.createElement("div", { style: { flex: "3 1 260px", minWidth: 0 } },
                                         React.createElement(Field, { label: "Not" },
                                             React.createElement("input", { value: not, onChange: (e) => setNot(e.target.value), placeholder: "Opsiyonel", style: inputStyle }))),
-                                    React.createElement(Field, { label: "Cari Defteri" },
-                                        React.createElement("select", { value: siparisDefter, onChange: (e) => setSiparisDefter(e.target.value), style: inputStyle },
-                                            React.createElement("option", { value: "Genel" }, "Genel"),
-                                            React.createElement("option", { value: "Resmi" }, "Resmi"),
-                                            React.createElement("option", { value: "Muhasebe" }, "Muhasebe (ikisine de)")))))) },
+                                    React.createElement("div", { style: { flex: "1 1 140px", minWidth: 0 } },
+                                        React.createElement(Field, { label: "Cari Defteri" },
+                                            React.createElement("select", { value: siparisDefter, onChange: (e) => setSiparisDefter(e.target.value), style: inputStyle },
+                                                React.createElement("option", { value: "Genel" }, "Genel"),
+                                                React.createElement("option", { value: "Resmi" }, "Resmi"),
+                                                React.createElement("option", { value: "Muhasebe" }, "Muhasebe (ikisine de)"))))))) },
                         { id: "barkod", ad: "Barkod · kamera · ses · fotoğraf", icerik: (React.createElement(React.Fragment, null,
                                 !barkodPaneli ? (React.createElement("button", { type: "button", "data-barkod-paneli-ac": "1", onClick: () => barkodPaneliDegistir(true), title: "Barkod okutma, kamera, sesli giri\u015F ve foto\u011Fraftan bulma", style: { display: "flex", alignItems: "center", gap: 6, width: "100%", marginBottom: 10, padding: "6px 10px", fontSize: 12, fontWeight: 700,
                                         color: "#2E5670", background: "#EAF0F4", border: "1px dashed #3D6B8A", borderRadius: "var(--erp-r-md)", cursor: "pointer" } },
@@ -51525,209 +51613,245 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                     React.createElement("div", { "data-siparis-kalem-notlari": "1", style: { marginTop: 8, maxWidth: 560 } },
                                         React.createElement(KalemNotDuzenleyici, { key: kNotAnahtar, notlar: kNotlar, prosesler: notProsesleri(seciliUrun, kRenk), onDegis: setKNotlar, onTaslak: setKNotTaslak })),
                                     React.createElement(AsortiOlusturTeklifi, { degerler: kMiktarlar, bedenSecenekleri: bedenSecenekleri, asortiler: asortiler, onOlustur: onAsortiOlustur }))))) },
-                        { id: "kalemler", ad: "Kalemler ve toplam", gizlenemez: true, icerik: (React.createElement(React.Fragment, null, kalemler.length > 0 && (() => {
-                                // Satırlar = Ürün+Renk grubu, sütunlar = o gruptaki tüm bedenlerin birleşimi. Aynı ürün+renk
-                                // için farklı bedenler tek satırda yan yana görünür — kart kart / satır satır tekrar etmez.
-                                const gruplar = [];
-                                const grupIndex = {};
-                                // KİLİTLİ KALEMLER AYRI SATIRDA (düzenleme, 25 Eylül): planlanmış/teslim alınmış bir
-                                // kalemle bekleyen bir kalem aynı ürün+renkte olabilir; tek satırda dursalar ürün/renk
-                                // seçicisi kilitliyi de değiştirecekmiş gibi görünürdü.
-                                kalemler.forEach((k) => {
-                                    const kilit = kalemKilitSebebi(k);
-                                    // Kilit SEBEBİ anahtarda: planlanmış ile teslim alınmış ayrı satırda, etiketi doğru kalsın.
-                                    const key = `${k.urunId || k.urunAd}__${k.renk}__${kilit || "serbest"}`;
-                                    if (!(key in grupIndex)) {
-                                        grupIndex[key] = gruplar.length;
-                                        gruplar.push({ key, urunId: k.urunId, urunAd: k.urunAd, renk: k.renk, kilit, kalemler: [] });
-                                    }
-                                    gruplar[grupIndex[key]].kalemler.push(k);
-                                });
-                                // SÜTUNLAR = kalemlerin ölçüleri + satırlardaki ürünlerin BÜTÜN ölçüleri, sıralı (v1.614.0 — kullanıcı:
-                                // "Silinen rengi tekrar ekleyemiyorum"). Yalnız kalemlerden türetilince bir ölçünün son kalemi silindiğinde
-                                // sütun da yok oluyordu: geri yazacak hücre kalmıyordu. Ürünün ölçüleri sütunda dursun; boş hücre geri
-                                // ekleme kutusu (bedenGeriEkle). Sıra küçükten büyüğe (denetim 17; eskiden ekleme sırasıydı: "36 37 38 40 39").
-                                const formUrunleri = Array.from(new Set(kalemler.map((k) => k.urunId))).map((id) => urunUygun.find((p) => p.id === id)).filter(Boolean);
-                                const tumBedenler = bedenSirala(Array.from(new Set([
-                                    ...kalemler.map((k) => k.beden),
-                                    ...formUrunleri.flatMap((p) => (p.variants || []).map((v) => v.beden)),
-                                ].filter((b) => b != null && b !== ""))));
-                                // RENK SÜTUNUNUN BAŞLIĞI (v1.494.0, fiş kalem tablosuyla aynı kural): ürünlerin renk başlığı
-                                // ortaksa sütunda o; karışıksa başlıklar birlikte ve başlık değiştiği her yerde ara satır.
-                                const grupUrunu = (g) => urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
-                                const grupRenkBasligi = (g) => renkBasligi(grupUrunu(g));
-                                const ortakBaslik = ortakRenkBasligi(gruplar.map((g) => grupUrunu(g) || {}));
-                                const renkSutunBasligi = ortakBaslik || Array.from(new Set(gruplar.map(grupRenkBasligi))).join(" / ");
-                                return (React.createElement("div", { style: { marginTop: 12 } },
-                                    React.createElement("div", { style: { overflowX: "auto" } },
-                                        React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
-                                            React.createElement("thead", null,
-                                                React.createElement("tr", null,
-                                                    React.createElement("th", { style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, "\u00DCr\u00FCn"),
-                                                    React.createElement("th", { "data-siparis-renk-sutunu": "1", style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, renkSutunBasligi),
-                                                    tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))),
-                                                    React.createElement("th", { style: { fontSize: 11, textAlign: "right", padding: "4px 8px", borderLeft: "1px dashed var(--erp-line)" } }, "Birim Fiyat"),
-                                                    kdvAktif && React.createElement("th", { "data-siparis-kdv-sutunu": "1", style: { fontSize: 11, textAlign: "center", padding: "4px 8px" } }, "KDV"),
-                                                    React.createElement("th", { style: { fontSize: 11, textAlign: "right", padding: "4px 8px" } }, kdvAktif ? "Tutar (KDV hariç)" : "Tutar"),
-                                                    React.createElement("th", { "aria-label": "Sat\u0131r\u0131 sil", style: { width: 28 } }))),
-                                            React.createElement("tbody", null, gruplar.map((g, gi) => {
-                                                const araBaslikVar = !ortakBaslik && (gi === 0 || grupRenkBasligi(gruplar[gi - 1]) !== grupRenkBasligi(g));
-                                                const birimFiyatlarFarkli = new Set(g.kalemler.map((k) => k.birimFiyat)).size > 1;
-                                                const grupTutar = g.kalemler.reduce((s, k) => s + k.miktar * k.birimFiyat, 0);
-                                                const urun = urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
-                                                const gorsel = urun ? ((urun.renkResimleri || {})[g.renk] || urun.kapakResmi) : null;
-                                                const idler = g.kalemler.map((k) => k.id);
-                                                const renkSecenekleri = urunRenkleri(urun);
-                                                const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
-                                                // Son okutulan barkodun satırı (v1.615.0): sarı zemin + yeşil sol çizgi, okutulan ölçüler kalın yeşil.
-                                                const okutulan = !!okutulanSatir && !g.kilit && okutulanSatir.anahtar === `${g.urunId}|${g.renk}`;
-                                                return (React.createElement(React.Fragment, { key: g.key },
-                                                    araBaslikVar && (React.createElement("tr", { "data-siparis-renk-ara-baslik": grupRenkBasligi(g) },
-                                                        React.createElement("td", { colSpan: tumBedenler.length + 5 + (kdvAktif ? 1 : 0), style: { padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" } }, grupRenkBasligi(g).toLocaleUpperCase("tr-TR")))),
-                                                    React.createElement("tr", { key: g.key, "data-form-kalem-satiri": g.kilit ? "kilitli" : "serbest", "data-okutulan-satir": okutulan ? "1" : undefined, style: { borderTop: "1px solid var(--erp-line-soft)", background: okutulan ? "#FFF1B8" : (g.kilit ? "var(--erp-panel-2)" : undefined),
-                                                            boxShadow: okutulan ? "inset 4px 0 0 #2E8B57" : undefined, transition: "background .4s" } },
-                                                        React.createElement("td", { style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } },
-                                                            React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } },
-                                                                React.createElement(ColorSwatch, { src: gorsel, editable: false, size: 26 }),
-                                                                g.kilit ? (React.createElement("span", { title: g.kilit, "data-kilitli-kalem": "1", style: { display: "inline-flex", alignItems: "center", gap: 6 } },
-                                                                    g.urunAd,
-                                                                    React.createElement("span", { className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, color: "var(--erp-brown)", background: "#8A5A3818", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" } },
-                                                                        React.createElement(Lock, { size: 10 }),
-                                                                        g.kalemler.some((k) => k.planlama) ? "planlandı" : "teslim alındı"))) : (React.createElement("select", { value: urun ? urun.id : "", onChange: (e) => grupUrunDegistir(idler, e.target.value), "data-form-kalem-urun": "1", title: "\u00DCr\u00FCn\u00FC de\u011Fi\u015Ftir \u2014 renk yeni \u00FCr\u00FCnde yoksa yeniden se\u00E7ilmeli", style: { padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", maxWidth: 200 } },
-                                                                    !urun && React.createElement("option", { value: "" },
+                        { id: "kalemler", ad: "Kalemler ve toplam", gizlenemez: true, icerik: (React.createElement(React.Fragment, null,
+                                (() => {
+                                    const sayi = siparisNotSayisi({ not, kalemler });
+                                    const gruplar = [];
+                                    kalemler.forEach((k) => {
+                                        const a = `${k.urunId || k.urunAd}|${k.renk || ""}`;
+                                        let g = gruplar.find((x) => x.anahtar === a);
+                                        if (!g) {
+                                            g = { anahtar: a, urunId: k.urunId, urunAd: k.urunAd, renk: k.renk || "", kalemler: [] };
+                                            gruplar.push(g);
+                                        }
+                                        g.kalemler.push(k);
+                                    });
+                                    return (React.createElement("div", { "data-form-notlar-alani": "1", style: { margin: "6px 0 10px" } },
+                                        React.createElement("button", { type: "button", "data-form-notlar": sayi, onClick: () => setFormNotlariAcik((v) => !v), style: { display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", fontSize: 13, fontWeight: 800, cursor: "pointer",
+                                                borderRadius: "var(--erp-r-pill)", border: "1.5px solid #B7791F", color: "#8A5A10", background: formNotlariAcik ? "#FFE9A8" : "#FFF6DA" } },
+                                            React.createElement(FileText, { size: 14 }),
+                                            " Notlar (",
+                                            sayi,
+                                            ") ",
+                                            formNotlariAcik ? React.createElement(ChevronUp, { size: 14 }) : React.createElement(ChevronDown, { size: 14 })),
+                                        formNotlariAcik && (React.createElement("div", { "data-form-notlar-paneli": "1", style: { marginTop: 8, background: "#FFFBEF", border: "1.5px solid #B7791F", borderRadius: "var(--erp-r-md)", padding: 10, display: "grid", gap: 10 } },
+                                            React.createElement("div", null,
+                                                React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "var(--erp-text-3)", letterSpacing: ".04em", marginBottom: 3 } }, "S\u0130PAR\u0130\u015E NOTU (genel)"),
+                                                React.createElement("textarea", { "data-form-genel-not": "1", value: not, onChange: (e) => setNot(e.target.value), rows: 2, placeholder: "Sipari\u015Fin geneli i\u00E7in not \u2014 \u00F6rn. kutular logolu", style: { ...inputStyle, width: "100%", resize: "vertical", fontFamily: "inherit" } })),
+                                            gruplar.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "Model/renk notu i\u00E7in \u00F6nce kalem ekleyin (ya da \"Kalem Ekle\"deki not kutusunu kullan\u0131n).")) : gruplar.map((g) => {
+                                                const urun = urunUygun.find((u) => u.id === g.urunId) || urunUygun.find((u) => u.ad === g.urunAd);
+                                                return (React.createElement("div", { key: g.anahtar, "data-form-not-grubu": `${g.urunAd} · ${g.renk}` },
+                                                    React.createElement("div", { style: { fontSize: 12, fontWeight: 800, marginBottom: 3 } },
+                                                        g.urunAd,
+                                                        g.renk ? React.createElement("span", { style: { fontWeight: 600, color: "var(--erp-text-2)" } },
+                                                            " \u00B7 ",
+                                                            olcuGoster(g.renk)) : null),
+                                                    React.createElement(KalemNotDuzenleyici, { notlar: grupNotlari(g.kalemler), prosesler: notProsesleri(urun, g.renk), onDegis: (yeni) => grupNotDegistir(g.kalemler.map((k) => k.id), yeni), veriAdi: "data-form-panel-notlari" })));
+                                            })))));
+                                })(),
+                                kalemler.length > 0 && (() => {
+                                    // Satırlar = Ürün+Renk grubu, sütunlar = o gruptaki tüm bedenlerin birleşimi. Aynı ürün+renk
+                                    // için farklı bedenler tek satırda yan yana görünür — kart kart / satır satır tekrar etmez.
+                                    const gruplar = [];
+                                    const grupIndex = {};
+                                    // KİLİTLİ KALEMLER AYRI SATIRDA (düzenleme, 25 Eylül): planlanmış/teslim alınmış bir
+                                    // kalemle bekleyen bir kalem aynı ürün+renkte olabilir; tek satırda dursalar ürün/renk
+                                    // seçicisi kilitliyi de değiştirecekmiş gibi görünürdü.
+                                    kalemler.forEach((k) => {
+                                        const kilit = kalemKilitSebebi(k);
+                                        // Kilit SEBEBİ anahtarda: planlanmış ile teslim alınmış ayrı satırda, etiketi doğru kalsın.
+                                        const key = `${k.urunId || k.urunAd}__${k.renk}__${kilit || "serbest"}`;
+                                        if (!(key in grupIndex)) {
+                                            grupIndex[key] = gruplar.length;
+                                            gruplar.push({ key, urunId: k.urunId, urunAd: k.urunAd, renk: k.renk, kilit, kalemler: [] });
+                                        }
+                                        gruplar[grupIndex[key]].kalemler.push(k);
+                                    });
+                                    // SÜTUNLAR = kalemlerin ölçüleri + satırlardaki ürünlerin BÜTÜN ölçüleri, sıralı (v1.614.0 — kullanıcı:
+                                    // "Silinen rengi tekrar ekleyemiyorum"). Yalnız kalemlerden türetilince bir ölçünün son kalemi silindiğinde
+                                    // sütun da yok oluyordu: geri yazacak hücre kalmıyordu. Ürünün ölçüleri sütunda dursun; boş hücre geri
+                                    // ekleme kutusu (bedenGeriEkle). Sıra küçükten büyüğe (denetim 17; eskiden ekleme sırasıydı: "36 37 38 40 39").
+                                    const formUrunleri = Array.from(new Set(kalemler.map((k) => k.urunId))).map((id) => urunUygun.find((p) => p.id === id)).filter(Boolean);
+                                    const tumBedenler = bedenSirala(Array.from(new Set([
+                                        ...kalemler.map((k) => k.beden),
+                                        ...formUrunleri.flatMap((p) => (p.variants || []).map((v) => v.beden)),
+                                    ].filter((b) => b != null && b !== ""))));
+                                    // RENK SÜTUNUNUN BAŞLIĞI (v1.494.0, fiş kalem tablosuyla aynı kural): ürünlerin renk başlığı
+                                    // ortaksa sütunda o; karışıksa başlıklar birlikte ve başlık değiştiği her yerde ara satır.
+                                    const grupUrunu = (g) => urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
+                                    const grupRenkBasligi = (g) => renkBasligi(grupUrunu(g));
+                                    const ortakBaslik = ortakRenkBasligi(gruplar.map((g) => grupUrunu(g) || {}));
+                                    const renkSutunBasligi = ortakBaslik || Array.from(new Set(gruplar.map(grupRenkBasligi))).join(" / ");
+                                    return (React.createElement("div", { style: { marginTop: 12 } },
+                                        React.createElement("div", { style: { overflowX: "auto" } },
+                                            React.createElement("table", { style: { width: "auto", minWidth: "100%", borderCollapse: "collapse" } },
+                                                React.createElement("thead", null,
+                                                    React.createElement("tr", null,
+                                                        React.createElement("th", { style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, "\u00DCr\u00FCn"),
+                                                        React.createElement("th", { "data-siparis-renk-sutunu": "1", style: { fontSize: 11, textAlign: "left", padding: "4px 8px" } }, renkSutunBasligi),
+                                                        tumBedenler.map((b) => (React.createElement("th", { key: b, style: { fontSize: 11, textAlign: "center", padding: "4px 8px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))),
+                                                        React.createElement("th", { style: { fontSize: 11, textAlign: "right", padding: "4px 8px", borderLeft: "1px dashed var(--erp-line)" } }, "Birim Fiyat"),
+                                                        kdvAktif && React.createElement("th", { "data-siparis-kdv-sutunu": "1", style: { fontSize: 11, textAlign: "center", padding: "4px 8px" } }, "KDV"),
+                                                        React.createElement("th", { style: { fontSize: 11, textAlign: "right", padding: "4px 8px" } }, kdvAktif ? "Tutar (KDV hariç)" : "Tutar"),
+                                                        React.createElement("th", { "aria-label": "Sat\u0131r\u0131 sil", style: { width: 28 } }))),
+                                                React.createElement("tbody", null, gruplar.map((g, gi) => {
+                                                    const araBaslikVar = !ortakBaslik && (gi === 0 || grupRenkBasligi(gruplar[gi - 1]) !== grupRenkBasligi(g));
+                                                    const birimFiyatlarFarkli = new Set(g.kalemler.map((k) => k.birimFiyat)).size > 1;
+                                                    const grupTutar = g.kalemler.reduce((s, k) => s + k.miktar * k.birimFiyat, 0);
+                                                    const urun = urunUygun.find((p) => p.id === g.urunId) || urunUygun.find((p) => p.ad === g.urunAd);
+                                                    const gorsel = urun ? ((urun.renkResimleri || {})[g.renk] || urun.kapakResmi) : null;
+                                                    const idler = g.kalemler.map((k) => k.id);
+                                                    const renkSecenekleri = urunRenkleri(urun);
+                                                    const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
+                                                    // Son okutulan barkodun satırı (v1.615.0): sarı zemin + yeşil sol çizgi, okutulan ölçüler kalın yeşil.
+                                                    const okutulan = !!okutulanSatir && !g.kilit && okutulanSatir.anahtar === `${g.urunId}|${g.renk}`;
+                                                    return (React.createElement(React.Fragment, { key: g.key },
+                                                        araBaslikVar && (React.createElement("tr", { "data-siparis-renk-ara-baslik": grupRenkBasligi(g) },
+                                                            React.createElement("td", { colSpan: tumBedenler.length + 5 + (kdvAktif ? 1 : 0), style: { padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" } }, grupRenkBasligi(g).toLocaleUpperCase("tr-TR")))),
+                                                        React.createElement("tr", { key: g.key, "data-form-kalem-satiri": g.kilit ? "kilitli" : "serbest", "data-okutulan-satir": okutulan ? "1" : undefined, style: { borderTop: "1px solid var(--erp-line-soft)", background: okutulan ? "#FFF1B8" : (g.kilit ? "var(--erp-panel-2)" : undefined),
+                                                                boxShadow: okutulan ? "inset 4px 0 0 #2E8B57" : undefined, transition: "background .4s" } },
+                                                            React.createElement("td", { style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } },
+                                                                React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } },
+                                                                    React.createElement(ColorSwatch, { src: gorsel, editable: false, size: 26 }),
+                                                                    g.kilit ? (React.createElement("span", { title: g.kilit, "data-kilitli-kalem": "1", style: { display: "inline-flex", alignItems: "center", gap: 6 } },
                                                                         g.urunAd,
-                                                                        " (listede yok)"),
-                                                                    urunUygun.map((u) => React.createElement("option", { key: u.id, value: u.id }, u.ad)))))),
-                                                        React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, whiteSpace: "nowrap" } },
-                                                            React.createElement("div", { "data-form-kalem-renk-notlar": "1", style: { display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "nowrap" } },
-                                                                React.createElement("span", { style: { display: "inline-flex", alignItems: "center", flexShrink: 0 } },
-                                                                    g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (React.createElement("select", { value: g.renk || "", onChange: (e) => e.target.value && grupDegistir(idler, { renk: e.target.value }), "data-form-kalem-renk": "1", title: "Rengi de\u011Fi\u015Ftir \u2014 bu sat\u0131rdaki b\u00FCt\u00FCn \u00F6l\u00E7\u00FClere uygulan\u0131r", style: { padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)" } },
-                                                                        renkEksik && React.createElement("option", { value: "" }, "Renk se\u00E7in\u2026"),
-                                                                        g.renk && !renkSecenekleri.includes(g.renk) && React.createElement("option", { value: g.renk },
-                                                                            olcuGoster(g.renk),
+                                                                        React.createElement("span", { className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, color: "var(--erp-brown)", background: "#8A5A3818", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" } },
+                                                                            React.createElement(Lock, { size: 10 }),
+                                                                            g.kalemler.some((k) => k.planlama) ? "planlandı" : "teslim alındı"))) : (React.createElement("select", { value: urun ? urun.id : "", onChange: (e) => grupUrunDegistir(idler, e.target.value), "data-form-kalem-urun": "1", title: "\u00DCr\u00FCn\u00FC de\u011Fi\u015Ftir \u2014 renk yeni \u00FCr\u00FCnde yoksa yeniden se\u00E7ilmeli", style: { padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", maxWidth: 200 } },
+                                                                        !urun && React.createElement("option", { value: "" },
+                                                                            g.urunAd,
                                                                             " (listede yok)"),
-                                                                        renkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, olcuGoster(r))))),
-                                                                    (() => {
-                                                                        const kutu = (g.kalemler.find((x) => x.ambalaj && x.ambalaj.renk) || {}).ambalaj;
-                                                                        if (!kutu)
-                                                                            return null;
-                                                                        return (React.createElement("span", { className: "mono", title: `Bu kalemin kutusu: ${kutu.renk}`, style: { fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", background: "#8A5A3818", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 5, whiteSpace: "nowrap" } }, kutu.renk));
-                                                                    })()),
-                                                                React.createElement("div", { "data-form-kalem-notlari": "1", style: { flex: 1, minWidth: 200, whiteSpace: "normal" } },
-                                                                    React.createElement(KalemNotDuzenleyici, { notlar: grupNotlari(g.kalemler), prosesler: notProsesleri(urun, g.renk), onDegis: (yeni) => grupNotDegistir(idler, yeni), kucuk: true })))),
-                                                        tumBedenler.map((b) => {
-                                                            const k = g.kalemler.find((x) => x.beden === b);
-                                                            // SİLİNEN BEDEN YERİNDE GERİ YAZILIR (v1.614.0 — kullanıcı: "Silinen rengi tekrar ekleyemiyorum").
-                                                            // "×" ile silinen hücre "—" kalıyor ve bir daha doldurulamıyordu; tek yol kalemi baştan eklemekti.
-                                                            // Kilitsiz satırda, ürünün o ölçüsü varsa boş kutu: miktar yazılınca satırın fiyatı, birimi, KDV'si,
-                                                            // kutusu ve notlarıyla yeni kalem açılır (`bedenGeriEkle`).
-                                                            if (!k) {
-                                                                const olcuVar = !g.kilit && g.renk && urun && (urun.variants || []).some((v) => v.beden === b);
-                                                                if (!olcuVar)
-                                                                    return React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
-                                                                        React.createElement("span", { style: { fontSize: 11, color: "var(--erp-border)" } }, "\u2014"));
-                                                                return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
-                                                                    React.createElement("input", { type: "number", step: "0.01", min: "0", placeholder: "+", "data-form-kalem-beden-ekle": b, title: `${b} ölçüsünü bu satıra geri ekle — miktarı yazın`, onBlur: (e) => {
-                                                                            const yeni = parseFloat(e.target.value);
-                                                                            if (!(yeni > 0)) {
+                                                                        urunUygun.map((u) => React.createElement("option", { key: u.id, value: u.id }, u.ad)))))),
+                                                            React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, whiteSpace: "nowrap" } },
+                                                                React.createElement("div", { "data-form-kalem-renk-notlar": "1", style: { display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "nowrap" } },
+                                                                    React.createElement("span", { style: { display: "inline-flex", alignItems: "center", flexShrink: 0 } },
+                                                                        g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (React.createElement("select", { value: g.renk || "", onChange: (e) => e.target.value && grupDegistir(idler, { renk: e.target.value }), "data-form-kalem-renk": "1", title: "Rengi de\u011Fi\u015Ftir \u2014 bu sat\u0131rdaki b\u00FCt\u00FCn \u00F6l\u00E7\u00FClere uygulan\u0131r", style: { padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)" } },
+                                                                            renkEksik && React.createElement("option", { value: "" }, "Renk se\u00E7in\u2026"),
+                                                                            g.renk && !renkSecenekleri.includes(g.renk) && React.createElement("option", { value: g.renk },
+                                                                                olcuGoster(g.renk),
+                                                                                " (listede yok)"),
+                                                                            renkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, olcuGoster(r))))),
+                                                                        (() => {
+                                                                            const kutu = (g.kalemler.find((x) => x.ambalaj && x.ambalaj.renk) || {}).ambalaj;
+                                                                            if (!kutu)
+                                                                                return null;
+                                                                            return (React.createElement("span", { className: "mono", title: `Bu kalemin kutusu: ${kutu.renk}`, style: { fontSize: 9, fontWeight: 700, color: "var(--erp-brown)", background: "#8A5A3818", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 5, whiteSpace: "nowrap" } }, kutu.renk));
+                                                                        })()),
+                                                                    React.createElement("div", { "data-form-kalem-notlari": "1", style: { flex: 1, minWidth: 200, whiteSpace: "normal" } },
+                                                                        React.createElement(KalemNotDuzenleyici, { notlar: grupNotlari(g.kalemler), prosesler: notProsesleri(urun, g.renk), onDegis: (yeni) => grupNotDegistir(idler, yeni), kucuk: true })))),
+                                                            tumBedenler.map((b) => {
+                                                                const k = g.kalemler.find((x) => x.beden === b);
+                                                                // SİLİNEN BEDEN YERİNDE GERİ YAZILIR (v1.614.0 — kullanıcı: "Silinen rengi tekrar ekleyemiyorum").
+                                                                // "×" ile silinen hücre "—" kalıyor ve bir daha doldurulamıyordu; tek yol kalemi baştan eklemekti.
+                                                                // Kilitsiz satırda, ürünün o ölçüsü varsa boş kutu: miktar yazılınca satırın fiyatı, birimi, KDV'si,
+                                                                // kutusu ve notlarıyla yeni kalem açılır (`bedenGeriEkle`).
+                                                                if (!k) {
+                                                                    const olcuVar = !g.kilit && g.renk && urun && (urun.variants || []).some((v) => v.beden === b);
+                                                                    if (!olcuVar)
+                                                                        return React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
+                                                                            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-border)" } }, "\u2014"));
+                                                                    return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
+                                                                        React.createElement("input", { type: "number", step: "0.01", min: "0", placeholder: "+", "data-form-kalem-beden-ekle": b, title: `${b} ölçüsünü bu satıra geri ekle — miktarı yazın`, onBlur: (e) => {
+                                                                                const yeni = parseFloat(e.target.value);
+                                                                                if (!(yeni > 0)) {
+                                                                                    e.target.value = "";
+                                                                                    return;
+                                                                                }
+                                                                                bedenGeriEkle(g, b, yeni);
                                                                                 e.target.value = "";
-                                                                                return;
-                                                                            }
-                                                                            bedenGeriEkle(g, b, yeni);
-                                                                            e.target.value = "";
-                                                                        }, onKeyDown: (e) => { if (e.key === "Enter")
-                                                                            e.currentTarget.blur(); }, className: "mono", style: { width: 48, padding: "3px 4px", fontSize: 11, border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center", background: "transparent" } })));
-                                                            }
-                                                            if (g.kilit) {
-                                                                return (React.createElement("td", { key: b, className: "mono", title: g.kilit, style: { padding: "4px 6px", textAlign: "center", fontSize: 12, fontWeight: 600 } }, k.miktar));
-                                                            }
-                                                            return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
-                                                                React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 3 } },
-                                                                    React.createElement("input", { key: `${k.id}-${k.miktar}`, type: "number", step: "0.01", min: "0", defaultValue: k.miktar, onBlur: (e) => {
-                                                                            const yeni = parseFloat(e.target.value);
-                                                                            if (!(yeni > 0) || yeni === k.miktar)
-                                                                                return;
-                                                                            kalemDuzenle(k.id, "miktar", yeni);
-                                                                        }, className: "mono", "data-okutulan-hucre": okutulan && okutulanSatir.bedenler.includes(b) ? "1" : undefined, style: { width: 48, padding: "3px 4px", fontSize: 11, border: okutulan && okutulanSatir.bedenler.includes(b) ? "2px solid #2E8B57" : "1px solid var(--erp-line)", fontWeight: okutulan && okutulanSatir.bedenler.includes(b) ? 800 : undefined, borderRadius: "var(--erp-r-sm)", textAlign: "center" } }),
-                                                                    React.createElement("button", { onClick: () => kalemSil(k.id), title: "Bu bedeni sil", style: { border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 0 } },
-                                                                        React.createElement(X, { size: 10 })))));
-                                                        }),
-                                                        React.createElement("td", { style: { padding: "6px 8px", textAlign: "right", borderLeft: "1px dashed var(--erp-line)" } }, g.kilit ? (React.createElement("span", { className: "mono", title: g.kilit, style: { fontSize: 12 } }, birimFiyatlarFarkli ? "farklı" : `${g.kalemler[0].birimFiyat} ${g.kalemler[0].paraBirimi || "TRY"}`)) : birimFiyatlarFarkli ? (React.createElement("input", { key: `${g.key}-farkli-${g.kalemler.map((k) => k.birimFiyat).join("|")}`, type: "number", step: "0.01", min: "0", placeholder: "farkl\u0131", "data-form-kalem-farkli-fiyat": "1", title: `Bedenlerin fiyatı farklı (${Array.from(new Set(g.kalemler.map((k) => k.birimFiyat || 0))).join(" / ")}) — yazılan fiyat bütün bedenlere uygulanır`, onBlur: (e) => {
-                                                                const yeni = parseFloat(e.target.value);
-                                                                if (!(yeni >= 0))
-                                                                    return;
-                                                                kalemDuzenle(g.kalemler.map((k) => k.id), "birimFiyat", yeni);
-                                                            }, className: "mono", style: { width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-warn)", borderRadius: "var(--erp-r-sm)", textAlign: "right" } })) : (React.createElement("div", { style: { display: "flex", gap: 3, justifyContent: "flex-end" } },
-                                                            React.createElement("input", { key: `${g.key}-${g.kalemler[0].birimFiyat}-${g.kalemler[0].paraBirimi}`, type: "number", step: "0.01", min: "0", defaultValue: g.kalemler[0].birimFiyat, onBlur: (e) => {
+                                                                            }, onKeyDown: (e) => { if (e.key === "Enter")
+                                                                                e.currentTarget.blur(); }, className: "mono", style: { width: 48, padding: "3px 4px", fontSize: 11, border: "1px dashed var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center", background: "transparent" } })));
+                                                                }
+                                                                if (g.kilit) {
+                                                                    return (React.createElement("td", { key: b, className: "mono", title: g.kilit, style: { padding: "4px 6px", textAlign: "center", fontSize: 12, fontWeight: 600 } }, k.miktar));
+                                                                }
+                                                                return (React.createElement("td", { key: b, style: { padding: "4px 6px", textAlign: "center" } },
+                                                                    React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 3 } },
+                                                                        React.createElement("input", { key: `${k.id}-${k.miktar}`, type: "number", step: "0.01", min: "0", defaultValue: k.miktar, onBlur: (e) => {
+                                                                                const yeni = parseFloat(e.target.value);
+                                                                                if (!(yeni > 0) || yeni === k.miktar)
+                                                                                    return;
+                                                                                kalemDuzenle(k.id, "miktar", yeni);
+                                                                            }, className: "mono", "data-okutulan-hucre": okutulan && okutulanSatir.bedenler.includes(b) ? "1" : undefined, style: { width: 48, padding: "3px 4px", fontSize: 11, border: okutulan && okutulanSatir.bedenler.includes(b) ? "2px solid #2E8B57" : "1px solid var(--erp-line)", fontWeight: okutulan && okutulanSatir.bedenler.includes(b) ? 800 : undefined, borderRadius: "var(--erp-r-sm)", textAlign: "center" } }),
+                                                                        React.createElement("button", { onClick: () => kalemSil(k.id), title: "Bu bedeni sil", style: { border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 0 } },
+                                                                            React.createElement(X, { size: 10 })))));
+                                                            }),
+                                                            React.createElement("td", { style: { padding: "6px 8px", textAlign: "right", borderLeft: "1px dashed var(--erp-line)" } }, g.kilit ? (React.createElement("span", { className: "mono", title: g.kilit, style: { fontSize: 12 } }, birimFiyatlarFarkli ? "farklı" : `${g.kalemler[0].birimFiyat} ${g.kalemler[0].paraBirimi || "TRY"}`)) : birimFiyatlarFarkli ? (React.createElement("input", { key: `${g.key}-farkli-${g.kalemler.map((k) => k.birimFiyat).join("|")}`, type: "number", step: "0.01", min: "0", placeholder: "farkl\u0131", "data-form-kalem-farkli-fiyat": "1", title: `Bedenlerin fiyatı farklı (${Array.from(new Set(g.kalemler.map((k) => k.birimFiyat || 0))).join(" / ")}) — yazılan fiyat bütün bedenlere uygulanır`, onBlur: (e) => {
                                                                     const yeni = parseFloat(e.target.value);
-                                                                    if (!(yeni >= 0) || yeni === g.kalemler[0].birimFiyat)
+                                                                    if (!(yeni >= 0))
                                                                         return;
-                                                                    // Bu gruptaki (aynı ürün+renk) TÜM bedenlerin birim fiyatı tek seferde güncellenir.
                                                                     kalemDuzenle(g.kalemler.map((k) => k.id), "birimFiyat", yeni);
-                                                                }, className: "mono", style: { width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "right" } }),
-                                                            React.createElement("select", { value: g.kalemler[0].paraBirimi || "TRY", onChange: (e) => kalemDuzenle(g.kalemler.map((k) => k.id), "paraBirimi", e.target.value), className: "mono", style: { width: 56, padding: "3px 2px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb)))))),
-                                                        kdvAktif && (() => {
-                                                            const oranlar = Array.from(new Set(g.kalemler.map(kalemKdv)));
-                                                            const tahmini = g.kalemler.some((k) => typeof k.kdvOrani !== "number");
-                                                            const tek = oranlar.length === 1 ? oranlar[0] : null;
-                                                            if (g.kilit) {
-                                                                return (React.createElement("td", { "data-siparis-satir-kdv": g.key, className: "mono", title: tahmini ? "Ürünün oranı — satırda oran kayıtlı değil" : g.kilit, style: { padding: "6px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined } }, tek != null ? `%${tek}` : React.createElement("span", { style: { fontSize: 10, color: "var(--erp-warn)" } }, "kar\u0131\u015F\u0131k")));
-                                                            }
-                                                            return (React.createElement("td", { "data-siparis-satir-kdv": g.key, style: { padding: "4px 6px", textAlign: "center" } },
-                                                                React.createElement("select", { "data-siparis-satir-kdv-sec": g.key, value: tek == null ? "" : String(tek), title: tahmini ? "Ürünün oranı — satırda oran kayıtlı değil; seçerseniz satıra yazılır" : "KDV oranı — satırın bütün bedenlerine uygulanır", onChange: (e) => { const oran = Number(e.target.value); if (Number.isFinite(oran) && e.target.value !== "")
-                                                                        kalemDuzenle(idler, "kdvOrani", oran); }, className: "mono", style: { padding: "3px 4px", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined, border: `1px solid ${tek == null ? "var(--erp-warn)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", background: "#fff" } },
-                                                                    tek == null && React.createElement("option", { value: "" }, "kar\u0131\u015F\u0131k"),
-                                                                    Array.from(new Set([...KDV_ORANLARI, ...oranlar])).sort((a, b) => a - b).map((o) => React.createElement("option", { key: o, value: String(o) },
-                                                                        "%",
-                                                                        o)))));
-                                                        })(),
-                                                        React.createElement("td", { className: "mono", style: { padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" } },
-                                                            grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
-                                                            " ",
-                                                            PARA_SEMBOLU[g.kalemler[0].paraBirimi || "TRY"] || g.kalemler[0].paraBirimi),
-                                                        React.createElement("td", { style: { padding: "4px 6px", textAlign: "center" } }, !g.kilit && (React.createElement("button", { type: "button", "data-form-kalem-satir-sil": g.key, title: "Bu sat\u0131r\u0131 sipari\u015Ften \u00E7\u0131kar (b\u00FCt\u00FCn bedenler)", onClick: () => { const kume = new Set(idler); setKalemler((onceki) => onceki.filter((x) => !kume.has(x.id) || kalemKilitSebebi(x))); }, style: { border: "1px solid var(--erp-line)", background: "#fff", color: "var(--erp-danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: "var(--erp-r-sm)" } },
-                                                            React.createElement(Trash2, { size: 14 })))))));
-                                            })))),
-                                    React.createElement("div", { style: { textAlign: "right", marginTop: 8, fontSize: 14, fontWeight: 700 } }, (() => {
-                                        // Farklı para birimlerindeki kalemleri TOPLAMAK anlamsız olduğu için, kalem para
-                                        // birimleri farklıysa toplam da her para birimi için AYRI AYRI gösterilir.
-                                        const pbToplamlari = {};
-                                        gruplar.forEach((g) => {
-                                            const pb = g.kalemler[0].paraBirimi || "TRY";
-                                            pbToplamlari[pb] = (pbToplamlari[pb] || 0) + g.kalemler.reduce((s, k) => s + k.miktar * k.birimFiyat, 0);
-                                        });
-                                        const pbler = Object.keys(pbToplamlari);
-                                        const pb = pbler[0] || "TRY";
-                                        return (React.createElement(React.Fragment, null,
-                                            pbler.length <= 1 ? (React.createElement(React.Fragment, null,
-                                                "Toplam: ",
-                                                React.createElement("span", { className: "mono" },
-                                                    (pbToplamlari[pb] || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                                }, className: "mono", style: { width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-warn)", borderRadius: "var(--erp-r-sm)", textAlign: "right" } })) : (React.createElement("div", { style: { display: "flex", gap: 3, justifyContent: "flex-end" } },
+                                                                React.createElement("input", { key: `${g.key}-${g.kalemler[0].birimFiyat}-${g.kalemler[0].paraBirimi}`, type: "number", step: "0.01", min: "0", defaultValue: g.kalemler[0].birimFiyat, onBlur: (e) => {
+                                                                        const yeni = parseFloat(e.target.value);
+                                                                        if (!(yeni >= 0) || yeni === g.kalemler[0].birimFiyat)
+                                                                            return;
+                                                                        // Bu gruptaki (aynı ürün+renk) TÜM bedenlerin birim fiyatı tek seferde güncellenir.
+                                                                        kalemDuzenle(g.kalemler.map((k) => k.id), "birimFiyat", yeni);
+                                                                    }, className: "mono", style: { width: 60, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "right" } }),
+                                                                React.createElement("select", { value: g.kalemler[0].paraBirimi || "TRY", onChange: (e) => kalemDuzenle(g.kalemler.map((k) => k.id), "paraBirimi", e.target.value), className: "mono", style: { width: 56, padding: "3px 2px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb)))))),
+                                                            kdvAktif && (() => {
+                                                                const oranlar = Array.from(new Set(g.kalemler.map(kalemKdv)));
+                                                                const tahmini = g.kalemler.some((k) => typeof k.kdvOrani !== "number");
+                                                                const tek = oranlar.length === 1 ? oranlar[0] : null;
+                                                                if (g.kilit) {
+                                                                    return (React.createElement("td", { "data-siparis-satir-kdv": g.key, className: "mono", title: tahmini ? "Ürünün oranı — satırda oran kayıtlı değil" : g.kilit, style: { padding: "6px 8px", textAlign: "center", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined } }, tek != null ? `%${tek}` : React.createElement("span", { style: { fontSize: 10, color: "var(--erp-warn)" } }, "kar\u0131\u015F\u0131k")));
+                                                                }
+                                                                return (React.createElement("td", { "data-siparis-satir-kdv": g.key, style: { padding: "4px 6px", textAlign: "center" } },
+                                                                    React.createElement("select", { "data-siparis-satir-kdv-sec": g.key, value: tek == null ? "" : String(tek), title: tahmini ? "Ürünün oranı — satırda oran kayıtlı değil; seçerseniz satıra yazılır" : "KDV oranı — satırın bütün bedenlerine uygulanır", onChange: (e) => { const oran = Number(e.target.value); if (Number.isFinite(oran) && e.target.value !== "")
+                                                                            kalemDuzenle(idler, "kdvOrani", oran); }, className: "mono", style: { padding: "3px 4px", fontSize: 12, fontWeight: 700, color: tahmini ? "var(--erp-text-3)" : undefined, border: `1px solid ${tek == null ? "var(--erp-warn)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)", background: "#fff" } },
+                                                                        tek == null && React.createElement("option", { value: "" }, "kar\u0131\u015F\u0131k"),
+                                                                        Array.from(new Set([...KDV_ORANLARI, ...oranlar])).sort((a, b) => a - b).map((o) => React.createElement("option", { key: o, value: String(o) },
+                                                                            "%",
+                                                                            o)))));
+                                                            })(),
+                                                            React.createElement("td", { className: "mono", style: { padding: "6px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" } },
+                                                                grupTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                                " ",
+                                                                PARA_SEMBOLU[g.kalemler[0].paraBirimi || "TRY"] || g.kalemler[0].paraBirimi),
+                                                            React.createElement("td", { style: { padding: "4px 6px", textAlign: "center" } }, !g.kilit && (React.createElement("button", { type: "button", "data-form-kalem-satir-sil": g.key, title: "Bu sat\u0131r\u0131 sipari\u015Ften \u00E7\u0131kar (b\u00FCt\u00FCn bedenler)", onClick: () => { const kume = new Set(idler); setKalemler((onceki) => onceki.filter((x) => !kume.has(x.id) || kalemKilitSebebi(x))); }, style: { border: "1px solid var(--erp-line)", background: "#fff", color: "var(--erp-danger)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 4, borderRadius: "var(--erp-r-sm)" } },
+                                                                React.createElement(Trash2, { size: 14 })))))));
+                                                })))),
+                                        React.createElement("div", { style: { textAlign: "right", marginTop: 8, fontSize: 14, fontWeight: 700 } }, (() => {
+                                            // Farklı para birimlerindeki kalemleri TOPLAMAK anlamsız olduğu için, kalem para
+                                            // birimleri farklıysa toplam da her para birimi için AYRI AYRI gösterilir.
+                                            const pbToplamlari = {};
+                                            gruplar.forEach((g) => {
+                                                const pb = g.kalemler[0].paraBirimi || "TRY";
+                                                pbToplamlari[pb] = (pbToplamlari[pb] || 0) + g.kalemler.reduce((s, k) => s + k.miktar * k.birimFiyat, 0);
+                                            });
+                                            const pbler = Object.keys(pbToplamlari);
+                                            const pb = pbler[0] || "TRY";
+                                            return (React.createElement(React.Fragment, null,
+                                                pbler.length <= 1 ? (React.createElement(React.Fragment, null,
+                                                    "Toplam: ",
+                                                    React.createElement("span", { className: "mono" },
+                                                        (pbToplamlari[pb] || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                        " ",
+                                                        PARA_SEMBOLU[pb] || pb))) : (React.createElement("span", null,
+                                                    "Toplam:",
                                                     " ",
-                                                    PARA_SEMBOLU[pb] || pb))) : (React.createElement("span", null,
-                                                "Toplam:",
-                                                " ",
-                                                pbler.map((p, i) => (React.createElement("span", { key: p, className: "mono" },
-                                                    i > 0 && " + ",
-                                                    pbToplamlari[p].toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
-                                                    " ",
-                                                    PARA_SEMBOLU[p] || p))))),
-                                            kdvAktif && pbler.length === 1 && (() => {
-                                                const oz = kdvOzeti(kalemler.map((k) => ({ matrah: k.miktar * k.birimFiyat, kdvOrani: kalemKdv(k) })));
-                                                const yaz = (x) => `${x.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
-                                                return (React.createElement("div", { "data-siparis-kdv-dokumu": "1", style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text-2)", marginTop: 2 } },
-                                                    oz.oranlar.map((o) => React.createElement("span", { key: o.oran, style: { marginLeft: 10 } },
-                                                        "KDV %",
-                                                        o.oran,
-                                                        ": ",
-                                                        React.createElement("span", { className: "mono" }, yaz(o.kdv)))),
-                                                    React.createElement("span", { style: { marginLeft: 10, color: "var(--erp-text)", fontWeight: 700 } },
-                                                        "KDV dahil: ",
-                                                        React.createElement("span", { className: "mono", "data-siparis-kdv-dahil": "1" }, yaz(oz.genelToplam)))));
-                                            })(),
-                                            React.createElement(FisToplamCeviriPaneli, { pbToplamlari: pbToplamlari, kurlar: kurlar, deger: { kayitParaBirimi, kayitKurlari }, onDegistir: (yeni) => { setKayitParaBirimi(yeni.kayitParaBirimi); setKayitKurlari(yeni.kayitKurlari); } })));
-                                    })())));
-                            })())) },
+                                                    pbler.map((p, i) => (React.createElement("span", { key: p, className: "mono" },
+                                                        i > 0 && " + ",
+                                                        pbToplamlari[p].toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                        " ",
+                                                        PARA_SEMBOLU[p] || p))))),
+                                                kdvAktif && pbler.length === 1 && (() => {
+                                                    const oz = kdvOzeti(kalemler.map((k) => ({ matrah: k.miktar * k.birimFiyat, kdvOrani: kalemKdv(k) })));
+                                                    const yaz = (x) => `${x.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+                                                    return (React.createElement("div", { "data-siparis-kdv-dokumu": "1", style: { fontSize: 12, fontWeight: 600, color: "var(--erp-text-2)", marginTop: 2 } },
+                                                        oz.oranlar.map((o) => React.createElement("span", { key: o.oran, style: { marginLeft: 10 } },
+                                                            "KDV %",
+                                                            o.oran,
+                                                            ": ",
+                                                            React.createElement("span", { className: "mono" }, yaz(o.kdv)))),
+                                                        React.createElement("span", { style: { marginLeft: 10, color: "var(--erp-text)", fontWeight: 700 } },
+                                                            "KDV dahil: ",
+                                                            React.createElement("span", { className: "mono", "data-siparis-kdv-dahil": "1" }, yaz(oz.genelToplam)))));
+                                                })(),
+                                                React.createElement(FisToplamCeviriPaneli, { pbToplamlari: pbToplamlari, kurlar: kurlar, deger: { kayitParaBirimi, kayitKurlari }, onDegistir: (yeni) => { setKayitParaBirimi(yeni.kayitParaBirimi); setKayitKurlari(yeni.kayitKurlari); } })));
+                                        })())));
+                                })())) },
                     ] })))),
         React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" } },
             React.createElement("div", { style: { position: "relative", flex: "1 1 220px", maxWidth: 420 } },
@@ -52186,6 +52310,14 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
                 padding: "4px 12px", borderRadius: "var(--erp-r-md)",
             } }, cari ? cari.unvan : "—"),
         React.createElement("span", { className: "mono", style: { fontWeight: 700, fontSize: 12, color: "var(--erp-text-2)" } }, siparis.siparisNo),
+        (() => {
+            const sayi = siparisNotSayisi(siparis);
+            return sayi ? (React.createElement("span", { "data-siparis-satir-not": sayi, title: siparis.not ? `Not: ${siparis.not}` : "Model/renk notları var", className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 800, color: "#8A5A10", background: "#FFF6DA", border: "1px solid #E8C877", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" } },
+                React.createElement(FileText, { size: 11 }),
+                " ",
+                sayi,
+                " not")) : null;
+        })(),
         siparis.musteriKodu && (React.createElement("span", { className: "mono", title: `${siparis.tip === "Alış" ? "Tedarikçi" : "Müşteri"} sipariş kodu`, style: { fontSize: 11, fontWeight: 600, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" } },
             "#",
             siparis.musteriKodu)),
@@ -52931,6 +53063,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     // içinde olsun, tıklayınca cari tahsilat ekranı açsın, içinde olduğumuz sipariş no atayarak"). Mor şeritte "İşlemler"
     // düğmesi; şeride SAĞ TIKLAMAK da aynı menüyü imlecin yanında açar. { x, y } (ekran koordinatı) ya da null.
     const [islemMenu, setIslemMenu] = useState(null);
+    // NOTLAR PENCERESİ (v1.621.0 — kullanıcı: "Sipariş notları görmemiz lazım, siparişte üzerine tıklayınca açılır not şeklinde
+    // olsun"). Mor şeritte "Notlar (n)"; tıklayınca siparişin genel notu + model/renk notları (proses etiketli) tek pencerede.
+    const [notPenceresi, setNotPenceresi] = useState(null);
     const [open, setOpen] = useState(!!baslangicAcik);
     // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
     const duzenAcRef = useRef(null);
@@ -53146,6 +53281,16 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         const cariK = cariler.find((c) => c.id === siparis.cariId);
                         return (React.createElement(PaylasSeridi, { govdeHTML: siparisCiktisiHTML(siparis, cariK, firmaBilgileri, stok), dosyaAdi: `${siparis.siparisNo || "siparis"} - ${(cariK && cariK.unvan) || "cari"}`, cari: cariK, konu: `${siparis.tip === "Alış" ? "Alış siparişi" : "Sipariş"} ${siparis.siparisNo || ""} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim(), ozet: siparisMetinOzeti(siparis, cariK), showToast: showToast, firmaBilgileri: firmaBilgileri }));
                     })(),
+                    (() => {
+                        const sayi = siparisNotSayisi(siparis);
+                        if (!sayi)
+                            return null;
+                        return (React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-notlar": sayi, title: "Sipari\u015F notlar\u0131 \u2014 genel not ve model/renk notlar\u0131", style: { padding: "3px 9px", fontSize: 11, fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 4, borderColor: "#B7791F", color: "#8A5A10", background: "#FFF6DA" }, onClick: (e) => { const r = e.currentTarget.getBoundingClientRect(); setNotPenceresi((m) => (m ? null : { x: r.left, y: r.bottom + 4 })); } },
+                            React.createElement(FileText, { size: 12 }),
+                            " Notlar (",
+                            sayi,
+                            ")"));
+                    })(),
                     onOdemeGir && cari && (React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-islemler": "1", title: "\u0130\u015Flemler \u2014 tahsilat/\u00F6deme (\u015Feride sa\u011F t\u0131klayarak da a\u00E7\u0131l\u0131r)", style: { padding: "3px 9px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }, onClick: (e) => { const r = e.currentTarget.getBoundingClientRect(); setIslemMenu((m) => (m ? null : { x: r.left, y: r.bottom + 4 })); } },
                         "\u0130\u015Flemler ",
                         React.createElement(ChevronDown, { size: 12 })))))),
@@ -53154,6 +53299,46 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             baslangicAcik && open && !saltOkunur && duzenBaglami && duzenBaglami.yetkili && (React.createElement("button", { type: "button", className: "btn-ikon", "data-duzen-ac": "siparisKarti", title: "Ekran d\u00FCzeni \u2014 bloklar\u0131 s\u0131rala, geni\u015Fli\u011Fini ayarla, gizle", onClick: (e) => { e.stopPropagation(); if (duzenAcRef.current)
                     duzenAcRef.current(); }, style: { marginLeft: Object.keys(pbToplamlariHam).length > 0 ? 0 : "auto" } },
                 React.createElement(LayoutGrid, { size: 14 })))),
+        notPenceresi && (() => {
+            // Model → renk → notlar; aynı not bir rengin birden çok ölçüsünde tekrar ediyorsa bir kez (grupNotlari).
+            const gruplar = [];
+            (siparis.kalemler || []).forEach((k) => {
+                const anahtar = `${k.urunAd}|${k.renk || ""}`;
+                let g = gruplar.find((x) => x.anahtar === anahtar);
+                if (!g) {
+                    g = { anahtar, urunAd: k.urunAd, renk: k.renk || "", kalemler: [] };
+                    gruplar.push(g);
+                }
+                g.kalemler.push(k);
+            });
+            const notlu = gruplar.map((g) => ({ ...g, notlar: grupNotlari(g.kalemler) })).filter((g) => g.notlar.length);
+            const genislik = 360;
+            const x = Math.max(8, Math.min(notPenceresi.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - genislik - 8));
+            return (React.createElement("div", { "data-siparis-not-perde": "1", onClick: () => setNotPenceresi(null), style: { position: "fixed", inset: 0, zIndex: 900 } },
+                React.createElement("div", { "data-siparis-not-penceresi": "1", onClick: (e) => e.stopPropagation(), style: { position: "fixed", left: x, top: notPenceresi.y, width: genislik, maxWidth: "calc(100vw - 16px)", maxHeight: "70vh", overflowY: "auto",
+                        background: "#FFFBEF", border: "1.5px solid #B7791F", borderRadius: "var(--erp-r-md)", boxShadow: "0 8px 24px rgba(34,27,20,.2)" } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderBottom: "1px solid #EBD9A8", fontSize: 12, fontWeight: 800, color: "#8A5A10" } },
+                        React.createElement(FileText, { size: 14 }),
+                        " NOTLAR \u00B7 ",
+                        siparis.siparisNo,
+                        React.createElement("button", { type: "button", onClick: () => setNotPenceresi(null), style: { marginLeft: "auto", border: "none", background: "none", cursor: "pointer", color: "#8A5A10", display: "flex" } },
+                            React.createElement(X, { size: 14 }))),
+                    siparis.not && (React.createElement("div", { "data-siparis-not-genel": "1", style: { padding: "8px 12px", borderBottom: "1px solid #EBD9A8" } },
+                        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, color: "var(--erp-text-3)", letterSpacing: ".04em" } }, "S\u0130PAR\u0130\u015E NOTU"),
+                        React.createElement("div", { style: { fontSize: 14, whiteSpace: "pre-wrap" } },
+                            React.createElement(NotKaynakla, { not: siparis.not, tumSiparisler: tumSiparisler, onSiparisGit: onSiparisGit })))),
+                    notlu.map((g) => (React.createElement("div", { key: g.anahtar, "data-siparis-not-renk": `${g.urunAd} · ${g.renk}`, style: { padding: "8px 12px", borderBottom: "1px solid #EBD9A8" } },
+                        React.createElement("div", { style: { fontSize: 12, fontWeight: 800 } },
+                            g.urunAd,
+                            g.renk ? React.createElement("span", { style: { fontWeight: 600, color: "var(--erp-text-2)" } },
+                                " \u00B7 ",
+                                g.renk) : null),
+                        g.notlar.map((n) => (React.createElement("div", { key: notEtiketi(n), style: { fontSize: 13, marginTop: 2 } },
+                            n.proses && React.createElement("b", { style: { color: "#8A6A2E" } },
+                                n.proses,
+                                ": "),
+                            n.metin)))))))));
+        })(),
         islemMenu && onOdemeGir && cari && (() => {
             const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
             const hedef = { cariId: siparis.cariId, tip: oz.beklenenTip, tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
@@ -56958,7 +57143,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.619.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.622.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

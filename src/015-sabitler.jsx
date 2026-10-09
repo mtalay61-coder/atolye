@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.621.0";
+const SURUM = "1.622.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Siparis notlari: kartta Notlar penceresi, listede not rozeti, siparis girisinde Notlar paneli (genel not + model/renk notlari)";
+const SURUM_NOTU = "Fis ve kasa/cek formlarinda aramali cari secici; siparis basligi telefonda tasmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Siparis notlari: kartta Notlar penceresi, listede not rozeti
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.622.0", tarih: "09.10.2026",
+    eklenen: ["Fiş (alış/satış), kasa-banka hareketi ve çek formlarında cari seçimi aramalı: ünvan, kod ya da telefonla süzülür"],
+    degisen: [],
+    duzeltilen: ["Sipariş formu başlığı telefonda sağa taşıyordu (Müşteri Sipariş Kodu kesiliyordu); alanlar artık sığmayınca alt satıra iniyor"] },
   { surum: "1.621.0", tarih: "09.10.2026",
     eklenen: ["Sipariş kartının mor şeridinde sarı \"Notlar (n)\" düğmesi: tıklayınca siparişin genel notu ve model/renk notları (proses etiketiyle) açılır pencerede. Sipariş listesinde notlu siparişte sarı \"n not\" rozeti",
       "Sipariş girişinde (yeni ve düzenleme) kalem tablosunun üstünde \"Notlar (n)\" paneli: genel sipariş notu ve her model/renk için proses etiketli not ekleme/silme — sipariş kaydedilmeden önce"],

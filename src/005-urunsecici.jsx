@@ -438,7 +438,9 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
 // DEĞER `deger` (cari id) — kutu odakta değilken seçili carinin ünvanı yazar; dışarıdan değişen seçim (form sıfırlama,
 // tedarikçi otomatik doldurma) kutuya yansır. Kutu boşaltılıp çıkılırsa seçim KALIR (yanlışlıkla silinmesin); "×" temizler.
 // `veriAdi` kutuya, `data-cari-id` seçili id'ye konur (testler okuyor).
-function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "Cari ara: ünvan, kod, telefon…", veriAdi }) {
+// `title` kutuya gider; `minGenislik` dar formlarda (kasa/çek satırı) kutunun ezilmemesi için; `kucuk` 12 px
+// yazı — kasa formunun diğer alanlarıyla aynı boy (v1.622.0).
+function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "Cari ara: ünvan, kod, telefon…", veriAdi, title, minGenislik, kucuk = false }) {
   const [acik, setAcik] = useState(false);
   const [sorgu, setSorgu] = useState(null);   // null = yazılmıyor, kutuda seçili ünvan
   const [vurgulu, setVurgulu] = useState(0);
@@ -460,13 +462,14 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
   })().slice(0, 80);
   const sec = (c) => { onDegis(c.id); setSorgu(null); setAcik(false); setVurgulu(0); };
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", minWidth: minGenislik || undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, ...inputStyle, padding: "0 8px", opacity: disabled ? 0.6 : 1,
         border: `1px solid ${acik ? "var(--erp-accent)" : "var(--erp-line)"}` }}>
         <Search size={14} color="var(--erp-text-3)" style={{ flexShrink: 0 }} />
         <input
           {...(veriAdi ? { [veriAdi]: "1" } : {})}
           data-cari-id={deger || ""}
+          title={title}
           disabled={disabled}
           value={sorgu != null ? sorgu : (secili ? secili.unvan : "")}
           onChange={(e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }}
@@ -480,7 +483,7 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
           }}
           placeholder={secili ? secili.unvan : placeholder}
           autoComplete="off" autoCorrect="off" spellCheck={false}
-          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, padding: "8px 0", fontWeight: secili && sorgu == null ? 700 : 400 }}
+          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: kucuk ? 12 : 14, padding: kucuk ? "5px 0" : "8px 0", fontWeight: secili && sorgu == null ? 700 : 400 }}
         />
         {secili && !disabled && (
           <button type="button" title="Seçimi temizle" data-cari-secici-temizle="1" onMouseDown={(e) => { e.preventDefault(); onDegis(""); setSorgu(null); }}
