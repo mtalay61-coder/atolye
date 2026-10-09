@@ -311,6 +311,17 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
         {cari ? cari.unvan : "—"}
       </span>
       <span className="mono" style={{ fontWeight: 700, fontSize: 12, color: "var(--erp-text-2)" }}>{siparis.siparisNo}</span>
+      {/* NOT GÖSTERGESİ (v1.621.0): siparişte not varsa satırda sarı "not" rozeti; üzerine gelince genel not görünür. Notların
+          tamamı kartın mor şeridindeki "Notlar" penceresinde. */}
+      {(() => {
+        const sayi = siparisNotSayisi(siparis);
+        return sayi ? (
+          <span data-siparis-satir-not={sayi} title={siparis.not ? `Not: ${siparis.not}` : "Model/renk notları var"} className="mono"
+            style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 800, color: "#8A5A10", background: "#FFF6DA", border: "1px solid #E8C877", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" }}>
+            <FileText size={11} /> {sayi} not
+          </span>
+        ) : null;
+      })()}
       {siparis.musteriKodu && (
         <span
           className="mono"

@@ -1,0 +1,32 @@
+{
+ "hatalar": [],
+ "rozetler": [
+  "SAT-N1:3",
+  "SAT-N2:-"
+ ],
+ "dugme": "Notlar (3)",
+ "pencere": {
+  "genel": "SİPARİŞ NOTU\nKutular müşterinin logolu",
+  "renkler": [
+   "Bot · Siyah Kesim: Deri aynı partiden",
+   "Bot · Kahve Bağcık bej"
+  ]
+ },
+ "kapandi": true,
+ "form": {
+  "formDugmesi": "0",
+  "panelde": {
+   "sayac": "2",
+   "notlar": [
+    "Kesim: Deri aynı partiden"
+   ]
+  },
+  "kayitNot": "Acil — fuar numunesi",
+  "kayitKalemNotlari": [
+   [
+    "Kesim:Deri aynı partiden"
+   ]
+  ],
+  "kartDugmesi": "Notlar (2)"
+ }
+}

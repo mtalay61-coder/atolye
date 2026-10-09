@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.620.0";
+const SURUM = "1.621.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Siparis formunda musteri/tedarikci secimi aramali: unvan, cari kodu veya telefonla yazdikca suzulur";
+const SURUM_NOTU = "Siparis notlari: kartta Notlar penceresi, listede not rozeti, siparis girisinde Notlar paneli (genel not + model/renk notlari)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Siparis formunda musteri/tedarikci secimi aramali: unvan, ca
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.621.0", tarih: "09.10.2026",
+    eklenen: ["Sipariş kartının mor şeridinde sarı \"Notlar (n)\" düğmesi: tıklayınca siparişin genel notu ve model/renk notları (proses etiketiyle) açılır pencerede. Sipariş listesinde notlu siparişte sarı \"n not\" rozeti",
+      "Sipariş girişinde (yeni ve düzenleme) kalem tablosunun üstünde \"Notlar (n)\" paneli: genel sipariş notu ve her model/renk için proses etiketli not ekleme/silme — sipariş kaydedilmeden önce"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.620.0", tarih: "09.10.2026",
     eklenen: [],
     degisen: ["Sipariş formunda müşteri/tedarikçi seçimi açılır liste yerine aramalı kutu: ünvan, cari kodu ya da telefonla yazdıkça süzülür, ok tuşları + Enter ile ya da dokunarak seçilir; listede cari kodu ve ülkesi görünür"],

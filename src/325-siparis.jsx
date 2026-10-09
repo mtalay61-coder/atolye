@@ -28,6 +28,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const [tarih, setTarih] = useState(bugunYerel());
   const [teslimTarihi, setTeslimTarihi] = useState("");
   const [not, setNot] = useState("");
+  // FORMDA NOTLAR PANELİ (v1.621.0 — kullanıcı: "Sipariş girişinde not ekleyebilelim, şu anda sipariş girdikten sonra not
+  // giriyoruz, aynı not mantığı sipariş girişinde de olsun"). Kartın "Notlar" penceresiyle aynı içerik, ama düzenlenebilir.
+  const [formNotlariAcik, setFormNotlariAcik] = useState(false);
   const [siparisDefter, setSiparisDefter] = useState("Genel"); // "Genel" | "Resmi" | "Muhasebe"
   const [musteriKodu, setMusteriKodu] = useState(""); // Müşteri/tedarikçinin kendi verdiği referans kodu — sipariş no'nun YERİNE değil, YANINDA tutulur.
   // Siparişin ambalajı (kutu). { urunId, renk } — ikisi de boşsa reçetedeki varsayılan kutu geçerlidir.
@@ -1779,6 +1782,49 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
 
             </>) },
             { id: "kalemler", ad: "Kalemler ve toplam", gizlenemez: true, icerik: (<>
+          {/* NOTLAR (v1.621.0): sipariş kartındaki "Notlar" düğmesinin formdaki karşılığı — burada DÜZENLENİR. Genel sipariş
+              notu (başlıktaki "Not" kutusuyla aynı alan) + her model/renk satırının proses etiketli notları, geniş alanda.
+              Tablodaki dar not kutusu telefonda neredeyse görünmüyordu; sipariş kaydedilmeden önce de not girilebilsin. */}
+          {(() => {
+            const sayi = siparisNotSayisi({ not, kalemler });
+            const gruplar = [];
+            kalemler.forEach((k) => {
+              const a = `${k.urunId || k.urunAd}|${k.renk || ""}`;
+              let g = gruplar.find((x) => x.anahtar === a);
+              if (!g) { g = { anahtar: a, urunId: k.urunId, urunAd: k.urunAd, renk: k.renk || "", kalemler: [] }; gruplar.push(g); }
+              g.kalemler.push(k);
+            });
+            return (
+              <div data-form-notlar-alani="1" style={{ margin: "6px 0 10px" }}>
+                <button type="button" data-form-notlar={sayi} onClick={() => setFormNotlariAcik((v) => !v)}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", fontSize: 13, fontWeight: 800, cursor: "pointer",
+                    borderRadius: "var(--erp-r-pill)", border: "1.5px solid #B7791F", color: "#8A5A10", background: formNotlariAcik ? "#FFE9A8" : "#FFF6DA" }}>
+                  <FileText size={14} /> Notlar ({sayi}) {formNotlariAcik ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                {formNotlariAcik && (
+                  <div data-form-notlar-paneli="1" style={{ marginTop: 8, background: "#FFFBEF", border: "1.5px solid #B7791F", borderRadius: "var(--erp-r-md)", padding: 10, display: "grid", gap: 10 }}>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: "var(--erp-text-3)", letterSpacing: ".04em", marginBottom: 3 }}>SİPARİŞ NOTU (genel)</div>
+                      <textarea data-form-genel-not="1" value={not} onChange={(e) => setNot(e.target.value)} rows={2} placeholder="Siparişin geneli için not — örn. kutular logolu"
+                        style={{ ...inputStyle, width: "100%", resize: "vertical", fontFamily: "inherit" }} />
+                    </div>
+                    {gruplar.length === 0 ? (
+                      <div style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Model/renk notu için önce kalem ekleyin (ya da "Kalem Ekle"deki not kutusunu kullanın).</div>
+                    ) : gruplar.map((g) => {
+                      const urun = urunUygun.find((u) => u.id === g.urunId) || urunUygun.find((u) => u.ad === g.urunAd);
+                      return (
+                        <div key={g.anahtar} data-form-not-grubu={`${g.urunAd} · ${g.renk}`}>
+                          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 3 }}>{g.urunAd}{g.renk ? <span style={{ fontWeight: 600, color: "var(--erp-text-2)" }}> · {olcuGoster(g.renk)}</span> : null}</div>
+                          <KalemNotDuzenleyici notlar={grupNotlari(g.kalemler)} prosesler={notProsesleri(urun, g.renk)}
+                            onDegis={(yeni) => grupNotDegistir(g.kalemler.map((k) => k.id), yeni)} veriAdi="data-form-panel-notlari" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
           {kalemler.length > 0 && (() => {
             // Satırlar = Ürün+Renk grubu, sütunlar = o gruptaki tüm bedenlerin birleşimi. Aynı ürün+renk
             // için farklı bedenler tek satırda yan yana görünür — kart kart / satır satır tekrar etmez.

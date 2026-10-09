@@ -26,7 +26,7 @@
  },
  "ustSerit": {
   "duzenIkonu": true,
-  "metin": "Bekliyor Yazdır PDF WhatsApp E-postaİşlemler Fiş P.Birimi:TRYUSDEURToplam: 500 ₺",
+  "metin": "Bekliyor Yazdır PDF WhatsApp E-posta Notlar (1)İşlemler Fiş P.Birimi:TRYUSDEURToplam: 500 ₺",
   "pbPaneli": true
  },
  "varsayilan": {
