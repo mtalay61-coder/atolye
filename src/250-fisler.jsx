@@ -220,13 +220,17 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
             <button
               key={t}
               onClick={() => setFiltreTip(t)}
+              data-fis-tip-cipi={t}
               style={{
                 padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 13, cursor: "pointer",
+                display: "inline-flex", alignItems: "center", gap: 6,
                 border: `1.5px solid ${filtreTip === t ? (FIS_TIP_RENK[t] || "var(--erp-orange)") : "var(--erp-border)"}`,
                 background: filtreTip === t ? alfaEkle((FIS_TIP_RENK[t] || "var(--erp-orange)"), "1A") : "#fff",
                 color: filtreTip === t ? (FIS_TIP_RENK[t] || "var(--erp-orange)") : "var(--erp-text)",
               }}
             >
+              {/* SİMGE (v1.619.0): HAREKET_TIPI_IKON — kasa ve cari ekranıyla aynı simgeler. Seçili değilken simge tip renginde. */}
+              <span style={{ display: "inline-flex", color: FIS_TIP_RENK[t] || "var(--erp-text-2)" }}><HareketIkonu tip={t} size={15} /></span>
               {t} <span className="mono" style={{ fontWeight: 400 }}>({sayilar[t]})</span>
             </button>
           ) : null
@@ -276,9 +280,9 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                 >
                   <span
                     className="mono"
-                    style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk }}
+                    style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 4 }}
                   >
-                    {f.tip}
+                    <HareketIkonu tip={f.tip} size={13} />{f.tip}
                   </span>
                   <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>{f.fisNo || "—"}</span>
                   <span aria-hidden="true" style={{ color: "var(--erp-border)" }}>·</span>

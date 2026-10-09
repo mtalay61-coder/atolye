@@ -1,0 +1,45 @@
+{
+ "hatalar": [],
+ "sekmeler": [
+  "liste",
+  "raporlar"
+ ],
+ "tablo": [
+  {
+   "cari": "Müşteri B",
+   "durum": "riskli"
+  },
+  {
+   "cari": "Tedarikçi A",
+   "durum": "iyi"
+  }
+ ],
+ "kart": {
+  "cari": "Müşteri B",
+  "bakiye": "Alacağımız · GG.AA.YYYY 250 $",
+  "saglik": "riskli",
+  "nedenler": [
+   "• 1 siparişin teslim tarihi geçti",
+   "• 1 açık sipariş, 6 adet teslim bekliyor"
+  ],
+  "tahsilatNedeni": true,
+  "siparis": [
+   "SAT-R1 01.09.2026 Kısmi Teslim · gecikti 16 10 6 400 $ 150 $ 250 $"
+  ],
+  "paylas": true
+ },
+ "siparisEkrani": {
+  "sip": true,
+  "raporGorunmuyor": true
+ },
+ "listeKartlari": true,
+ "fisCipleri": [
+  "Tümü",
+  "Satış",
+  "Tahsilat",
+  "Üretim Girişi",
+  "Üretim Çıkışı",
+  "İşçilik",
+  "Diğer"
+ ]
+}
