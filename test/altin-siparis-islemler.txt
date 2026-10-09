@@ -33,6 +33,7 @@
   "baslik": true,
   "fis": true,
   "kasa": true,
+  "eksiSatir": true,
   "kalan": "150",
   "odemesizBolumYok": true
  }

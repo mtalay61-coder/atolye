@@ -18,6 +18,8 @@ import {
   GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw,
   // Fiyat listesi (v1.550.0, 157).
   Tag,
+  // Para hareketi simgeleri (v1.618.0, 200 HAREKET_TIPI_IKON): tahsilat (giren), ödeme (çıkan), virman, serbest kayıt.
+  ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, PenLine,
 } from "lucide-react";
 
 /* ---------------------------------------------------------

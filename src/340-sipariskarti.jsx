@@ -430,7 +430,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
               </div>
               <button type="button" data-siparis-islem="odeme" style={{ ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
                 onClick={() => { setIslemMenu(null); onOdemeGir(hedef); }}>
-                <Plus size={14} /> {oz.beklenenTip}
+                <HareketIkonu tip={oz.beklenenTip} size={16} /> {oz.beklenenTip}
                 <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--erp-text-3)" }}>cari kartında</span>
               </button>
               {onOdemeKaydet && (
@@ -1803,7 +1803,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         title={onOdemeKaydet ? `${oz.beklenenTip} formunu bu kartta açar` : `${cari.unvan} kartında ${oz.beklenenTip.toLowerCase()} formunu bu siparişle dolu açar`}
                         onClick={() => { if (onOdemeKaydet) setShowOdeme((v) => !v); else onOdemeGir(hedef); }}
                       >
-                        <Plus size={13} /> {showOdeme ? `${oz.beklenenTip} Formunu Kapat` : `${oz.beklenenTip} Gir`}
+                        <HareketIkonu tip={oz.beklenenTip} size={15} /> {showOdeme ? `${oz.beklenenTip} Formunu Kapat` : `${oz.beklenenTip} Gir`}
                       </button>
                       {ozetMetni && (
                         <span className="mono" data-siparis-odenen={oz.odenen} data-siparis-kalan={oz.kalan}
@@ -1824,7 +1824,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                     {oz.odemeler.length > 0 && (
                       <div data-siparis-odeme-listesi={oz.odemeler.length} style={{ border: `1px solid ${HAREKET_TIPI_RENK[oz.beklenenTip]}`, borderRadius: "var(--erp-r-md)", overflow: "hidden", marginBottom: 10, background: "#fff" }}>
                         <div className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-panel-2)", background: HAREKET_TIPI_RENK[oz.beklenenTip], padding: "4px 10px" }}>
-                          {oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar"} ({oz.odemeler.length})
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}><HareketIkonu tip={oz.beklenenTip} size={12} />{oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar"} ({oz.odemeler.length})</span>
                         </div>
                         {[...oz.odemeler].sort((x, y) => String(y.tarih || "").localeCompare(String(x.tarih || ""))).map((h, i) => (
                           <div key={h.id || i} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "5px 10px", fontSize: 12, borderTop: i === 0 ? "none" : "1px solid var(--erp-line-soft)" }}>

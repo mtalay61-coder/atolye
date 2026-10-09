@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.616.0";
-const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "PDF te yazilar ic ice gecmiyor: PDF uygulamanin boyut ayarindan (zoom) ayri bir belgede cizilir";
+const SURUM = "1.618.0";
+const SURUM_TARIHI = "2026-10-09";
+const SURUM_NOTU = "Tahsilat, Odeme, Virman, Serbest kayit, Alis/Satis fisi dugmelerinde ve rozetlerinde simge (kasa/banka, cari karti, siparis karti)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,13 @@ const SURUM_NOTU = "PDF te yazilar ic ice gecmiyor: PDF uygulamanin boyut ayarin
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.618.0", tarih: "09.10.2026",
+    eklenen: ["Para hareketlerine simge: Tahsilat (içeri ok), Ödeme (dışarı ok), Virman (iki yönlü ok), Serbest kayıt (kalem); Alış/Satış fişi düğmelerinde kutu/kamyon. Kasa & Banka işlem düğmeleri ve satır rozetleri, cari kartı düğmeleri, sipariş kartındaki Tahsilat Gir, İşlemler menüsü ve tahsilat listesi"],
+    degisen: [], duzeltilen: [] },
+  { surum: "1.617.0", tarih: "09.10.2026",
+    eklenen: [],
+    degisen: ["Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) tahsilatlar sipariş toplamından düşülerek gösterilir: Sipariş toplamı, her tahsilat eksi satır (tarih, fiş no, kasa), en altta büyük ve sarı zeminli KALAN BAKİYE"],
+    duzeltilen: [] },
   { surum: "1.616.0", tarih: "08.10.2026",
     eklenen: [], degisen: [],
     duzeltilen: ["PDF'te (sipariş, ekstre, fiş — PDF / WhatsApp / E-posta) yazılar iç içe geçiyordu (\"New Diamond\" → \"NewDiamond\", sipariş no harfleri üst üste). Sebep uygulamanın Boyut ayarıydı; PDF artık ondan ayrı bir belgede, sabit yazı stiliyle çiziliyor"] },

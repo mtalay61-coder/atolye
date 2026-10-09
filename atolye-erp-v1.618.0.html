@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.615.0</title>
+<title>Atölye ERP 1.618.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -230,7 +230,9 @@ PackagePlus,
 // Ekran düzeni (v1.522.0, 387): tutamak, göster/gizle, düzen düğmesi.
 GripVertical, Eye, EyeOff, LayoutGrid, RotateCcw, 
 // Fiyat listesi (v1.550.0, 157).
-Tag, } from "lucide-react";
+Tag, 
+// Para hareketi simgeleri (v1.618.0, 200 HAREKET_TIPI_IKON): tahsilat (giren), ödeme (çıkan), virman, serbest kayıt.
+ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, PenLine, } from "lucide-react";
 /* ---------------------------------------------------------
    Token sistemi
    Renk: leather-dark #2B1D14, saddle #8A5A38, cream #F2E8D8,
@@ -2049,9 +2051,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.615.0";
-const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "Barkod okutunca siparis satiri vurgulanir; siparis kartinda Islemler menusu (sag tik da acar) Tahsilat/Odeme siparis no ile; siparis ciktisinda bagli odemeler";
+const SURUM = "1.618.0";
+const SURUM_TARIHI = "2026-10-09";
+const SURUM_NOTU = "Tahsilat, Odeme, Virman, Serbest kayit, Alis/Satis fisi dugmelerinde ve rozetlerinde simge (kasa/banka, cari karti, siparis karti)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2061,16 @@ const SURUM_NOTU = "Barkod okutunca siparis satiri vurgulanir; siparis kartinda 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.618.0", tarih: "09.10.2026",
+        eklenen: ["Para hareketlerine simge: Tahsilat (içeri ok), Ödeme (dışarı ok), Virman (iki yönlü ok), Serbest kayıt (kalem); Alış/Satış fişi düğmelerinde kutu/kamyon. Kasa & Banka işlem düğmeleri ve satır rozetleri, cari kartı düğmeleri, sipariş kartındaki Tahsilat Gir, İşlemler menüsü ve tahsilat listesi"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.617.0", tarih: "09.10.2026",
+        eklenen: [],
+        degisen: ["Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) tahsilatlar sipariş toplamından düşülerek gösterilir: Sipariş toplamı, her tahsilat eksi satır (tarih, fiş no, kasa), en altta büyük ve sarı zeminli KALAN BAKİYE"],
+        duzeltilen: [] },
+    { surum: "1.616.0", tarih: "08.10.2026",
+        eklenen: [], degisen: [],
+        duzeltilen: ["PDF'te (sipariş, ekstre, fiş — PDF / WhatsApp / E-posta) yazılar iç içe geçiyordu (\"New Diamond\" → \"NewDiamond\", sipariş no harfleri üst üste). Sebep uygulamanın Boyut ayarıydı; PDF artık ondan ayrı bir belgede, sabit yazı stiliyle çiziliyor"] },
     { surum: "1.615.0", tarih: "08.10.2026",
         eklenen: ["Sipariş kartının mor şeridinde \"İşlemler\" menüsü (şeride sağ tıklayınca da açılır): Tahsilat (alışta Ödeme) carinin tahsilat ekranını bu siparişin numarası ve kalan tutarıyla açar; \"bu kartta\" seçeneği formu kartın içinde açar",
             "Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) siparişe bağlı tahsilatlar: tarih, fiş no, kasa/banka, tutar; altta Ödenen ve Kalan"],
@@ -7905,27 +7917,34 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
         const oz = siparisOdemeOzeti(siparis, cari, genelToplam, siparisPB);
         if (!oz.odemeler.length)
             return "";
-        const baslik = oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar";
+        // TOPLAMDAN DÜŞÜLÜR, BELİRGİN (v1.617.0 — kullanıcı, SAT-1008 PDF'i: "Bu tahsilat sipariş toplamından düşmesi
+        // gerekli, daha belirgin olmalı"). Ayrı küçük kutu yerine hesap özeti: Sipariş toplamı → her tahsilat EKSİ satır
+        // (tarih · fiş no · kasa) → büyük, çerçeveli KALAN. Siparişin birimi dışında (ör. USD siparişe TL tahsilat) satır
+        // yine eksi gösterilir ama toplamdan düşülmez; kalan yalnız siparişin birimindeki tahsilattan hesaplanır.
+        const tahsilat = oz.beklenenTip === "Ödeme" ? "Ödeme" : "Tahsilat";
         const tarihYaz = (t) => (t ? String(t).slice(0, 10).split("-").reverse().join(".") : "");
-        const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => `<tr style="border-bottom:1px solid #eee">
-        <td class="mono">${esc(tarihYaz(h.tarih))}</td>
-        <td class="mono">${esc(h.fisNo || "")}</td>
-        <td>${esc(h.hesapAd || h.odemeSekli || "")}${h.hesapPB && h.hesapPB !== (h.paraBirimi || "TRY") && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}</td>
-        <td class="mono" style="text-align:right;white-space:nowrap">${para(h.tutar, h.paraBirimi || "TRY")}</td>
-      </tr>`).join("");
-        const odenenMetni = Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ");
-        return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;border:1px solid #ccc;border-radius:6px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
-      <div style="font-size:12px;font-weight:700;padding:5px 8px;background:#F6F1E8;border-bottom:1px solid #ccc">${baslik}</div>
+        const satirStil = "font-size:13px;padding:5px 10px;border-bottom:1px solid #eee";
+        const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => {
+            const pb = h.paraBirimi || "TRY";
+            const dusulmez = siparisPB && pb !== siparisPB;
+            return `<tr data-cikti-odeme-satiri="1">
+        <td style="${satirStil}">${tahsilat} · <span class="mono">${esc(tarihYaz(h.tarih))}</span>${h.fisNo ? ` · <span class="mono">${esc(h.fisNo)}</span>` : ""}${h.hesapAd ? ` · ${esc(h.hesapAd)}` : ""}${h.hesapPB && h.hesapPB !== pb && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}${dusulmez ? ` <span style="color:#7A6A50">— farklı para birimi, toplamdan düşülmedi</span>` : ""}</td>
+        <td class="mono" style="${satirStil};text-align:right;white-space:nowrap;font-weight:700;color:#1E7A46">− ${para(h.tutar, pb)}</td>
+      </tr>`;
+        }).join("");
+        const kalanVar = siparisPB != null;
+        return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;margin-left:auto;width:62%;min-width:420px;border:2px solid #33281C;border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
       <table style="width:100%;border-collapse:collapse"><tbody>
-        ${satirlar}
-        <tr style="border-top:2px solid #bbb;font-weight:700">
-          <td colspan="3" style="text-align:right">Ödenen</td>
-          <td class="mono" style="text-align:right;white-space:nowrap">${odenenMetni}</td>
+        <tr style="background:#F6F1E8">
+          <td style="font-size:13px;font-weight:700;padding:7px 10px;border-bottom:1px solid #ccc">Sipariş toplamı</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid #ccc">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
         </tr>
-        ${siparisPB && oz.toplamlar[siparisPB] != null ? `<tr data-cikti-kalan="${oz.kalan}" style="font-weight:700">
-          <td colspan="3" style="text-align:right">Kalan</td>
-          <td class="mono" style="text-align:right;white-space:nowrap">${para(oz.kalan, siparisPB)}</td>
-        </tr>` : ""}
+        ${satirlar}
+        ${kalanVar ? `<tr data-cikti-kalan="${oz.kalan}" style="background:#FFF1B8">
+          <td style="font-size:17px;font-weight:800;padding:10px;border-top:2px solid #33281C">KALAN BAKİYE</td>
+          <td class="mono" style="font-size:20px;font-weight:800;padding:10px;text-align:right;white-space:nowrap;border-top:2px solid #33281C">${para(oz.kalan, siparisPB)}</td>
+        </tr>` : `<tr><td style="font-size:13px;font-weight:700;padding:8px 10px;border-top:2px solid #33281C">Toplam ${tahsilat.toLocaleLowerCase("tr-TR")}</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:8px 10px;text-align:right;border-top:2px solid #33281C">${Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ")}</td></tr>`}
       </tbody></table></div>`;
     })();
     const renkBasligiMetni = ortakRenkBasligi(modeller.map((m) => (stok || []).find((x) => x.ad === m.urunAd) || {})) || "Renk";
@@ -8022,17 +8041,44 @@ async function pdfKutuphaneleriniYukle() {
         return null;
     }
 }
+// PDF GÖVDESİ AYRI BELGEDE ÇİZİLİR (v1.616.0 — kullanıcı, PDF ekran görüntüsü: "PDF'te yazılar iç içe geçiyor":
+// "New Diamond" → "NewDiamond", "SAT-1009" harfleri üst üste). Sebep: uygulama Boyut ayarını `html { zoom }` ile uyguluyor
+// (100-app, v1.521) ve html2canvas CSS `zoom`'u tanımıyor — kelimelerin yerini büyütülmüş ölçüp yazıyı büyütülmemiş
+// çiziyor, boşluklar kayboluyor. Ayrıca uygulamanın genel `th` kuralı (büyük harf, harf aralığı) PDF'e sızıyordu.
+// Çözüm: gövde, uygulama CSS'i OLMAYAN gizli bir iframe'de kendi sabit stiliyle kurulur, html2canvas oradan çizer.
+// Resimlerin yüklenmesi beklenir (yoksa boş kutu çıkıyordu). `pdfCiktiBelgesi` testte de kullanılıyor.
+const PDF_CIKTI_STILI = "html,body{margin:0;padding:0;zoom:1}body{width:794px;box-sizing:border-box;padding:24px;background:#fff;color:#33281C;" +
+    "font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;" +
+    "letter-spacing:normal;word-spacing:normal;font-kerning:normal}" +
+    "table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px;text-transform:none;letter-spacing:normal}" +
+    ".mono{font-family:'Courier New',Courier,'Liberation Mono',monospace}img{max-width:100%}";
+function pdfCiktiBelgesi(govdeHTML) {
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=794"><style>${PDF_CIKTI_STILI}</style></head><body>${govdeHTML}</body></html>`;
+}
 async function htmldenPdfBlob(govdeHTML) {
     const kut = await pdfKutuphaneleriniYukle();
     if (!kut)
         return null;
-    const kap = document.createElement("div");
-    // A4 genişliği (96dpi ≈ 794px); ekran dışında ama çizilebilir (display:none çizilmez).
-    kap.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;padding:24px;background:#fff;color:var(--erp-text);font-family:-apple-system,'Segoe UI',sans-serif;";
-    kap.innerHTML = `<style>table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px}.mono{font-family:'Courier New',monospace}img{max-width:100%}</style>${govdeHTML}`;
-    document.body.appendChild(kap);
+    const cerceve = document.createElement("iframe");
+    cerceve.setAttribute("aria-hidden", "true");
+    // Ekran dışında ama çizilebilir (display:none çizilmez). Yükseklik içerikten sonra ayarlanır.
+    cerceve.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;";
+    document.body.appendChild(cerceve);
     try {
-        const tuval = await kut.html2canvas(kap, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+        const belge = cerceve.contentDocument;
+        belge.open();
+        belge.write(pdfCiktiBelgesi(govdeHTML));
+        belge.close();
+        // Resimler (logo, ürün) yüklenmeden çizilirse boş çıkar.
+        await Promise.all([...belge.images].map((im) => (im.complete ? null : new Promise((r) => { im.onload = r; im.onerror = r; }))));
+        if (belge.fonts && belge.fonts.ready) {
+            try {
+                await belge.fonts.ready;
+            }
+            catch (e) { /* yazı tipi beklenemedi — devam */ }
+        }
+        cerceve.style.height = `${Math.max(1123, belge.documentElement.scrollHeight)}px`;
+        const tuval = await kut.html2canvas(belge.body, { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 794 });
         const pdf = new kut.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
         const sayfaG = pdf.internal.pageSize.getWidth(), sayfaY = pdf.internal.pageSize.getHeight();
         const resimY = (tuval.height * sayfaG) / tuval.width;
@@ -8049,7 +8095,7 @@ async function htmldenPdfBlob(govdeHTML) {
         return pdf.output("blob");
     }
     finally {
-        document.body.removeChild(kap);
+        document.body.removeChild(cerceve);
     }
 }
 function blobIndir(blob, dosyaAdi) {
@@ -33565,6 +33611,15 @@ const ODEME_SEKILLERI = ["Nakit", "Havale/EFT", "Kredi Kartı", "Çek", "Senet"]
 // İŞÇİLİK kendi rengiyle (23 Eylül, v1.433.0): alışla aynı kahverengi olsaydı ekstrede yine
 // "mal almışız" izlenimi sürerdi — işçilik bir HİZMET alımı, mal girişi yok.
 const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-info)", "Ödeme": "var(--erp-warn)", "Tahsilat": "var(--erp-primary)", "İşçilik": "var(--erp-accent)", "Maaş": "var(--erp-accent)" };
+// HAREKET SİMGELERİ (v1.618.0 — kullanıcı: "Ödeme, tahsilat vs. bunlara logo ekleyelim, daha belirgin olsun"). Renk tablosunun
+// yanında TEK simge tablosu: kasa/banka işlem düğmeleri, cari kartı düğmeleri, satır rozetleri ve sipariş kartı aynı simgeyi
+// kullanır. Tahsilat = içeri giren ok (para kasaya girer), Ödeme = dışarı çıkan ok, Virman = iki yönlü ok.
+const HAREKET_TIPI_IKON = { "Tahsilat": ArrowDownCircle, "Ödeme": ArrowUpCircle, "Virman": ArrowLeftRight, "Serbest": PenLine,
+    "Alış": PackageCheck, "Satış": Truck };
+function HareketIkonu({ tip, size = 14 }) {
+    const I = HAREKET_TIPI_IKON[tip];
+    return I ? React.createElement(I, { size: size, strokeWidth: 2.4, style: { flexShrink: 0 } }) : null;
+}
 // Tüm carilerin hareketlerini tarayıp fiş no'ya göre gruplar; sipariş no önekinden (SAT-/ALS-/SP-) tipini çıkarır.
 function tumFisleriTopla(cariler, stok) {
     const tumHareketler = [];
@@ -35532,10 +35587,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                             acik && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", padding: "10px 12px 0" } }, [
                                                 // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
                                                 // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
-                                                { k: "tahsilat", ad: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
-                                                { k: "odeme", ad: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
-                                                { k: "virman", ad: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
-                                                { k: "serbest", ad: "Serbest kayıt", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
+                                                // SİMGELİ (v1.618.0): HAREKET_TIPI_IKON — cari kartı ve sipariş kartıyla aynı simgeler.
+                                                { k: "tahsilat", ad: "Tahsilat", ikon: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
+                                                { k: "odeme", ad: "Ödeme", ikon: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
+                                                { k: "virman", ad: "Virman", ikon: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
+                                                { k: "serbest", ad: "Serbest kayıt", ikon: "Serbest", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
                                             ].map((x) => (React.createElement("button", { key: x.k, type: "button", "data-islem": x.k, title: x.ipucu, onClick: () => {
                                                     setIslem(islem === x.k ? null : x.k);
                                                     // Yön işleme göre kilitleniyor: kullanıcı ayrıca "Giriş/Çıkış" seçmesin.
@@ -35544,10 +35600,14 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                     if (x.k === "odeme")
                                                         setHForm((f) => ({ ...f, yon: "Çıkış" }));
                                                 }, style: { padding: "8px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                                                    display: "inline-flex", alignItems: "center", gap: 6,
                                                     // Seçili değilken çerçeve + yazı kendi renginde, seçiliyken dolu (renk zemin, beyaz yazı).
                                                     border: `1.5px solid ${x.renk}`,
                                                     background: islem === x.k ? x.renk : alfaEkle(x.renk, "0F"),
-                                                    color: islem === x.k ? "#fff" : x.renk } }, x.ad))))),
+                                                    color: islem === x.k ? "#fff" : x.renk } },
+                                                React.createElement(HareketIkonu, { tip: x.ikon, size: 16 }),
+                                                " ",
+                                                x.ad))))),
                                             acik && islem === "virman" && (React.createElement("div", { "data-virman-formu": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", padding: "10px 12px" } },
                                                 React.createElement(Field, { label: "Nereye" },
                                                     React.createElement("select", { value: virman.hedef, "data-virman-hedef": "1", onChange: (e) => setVirman({ ...virman, hedef: e.target.value }), style: inputStyle },
@@ -35843,9 +35903,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                                                                     return null;
                                                                                 const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
                                                                                 return (React.createElement("span", { className: "mono", style: {
-                                                                                        fontSize: 9, fontWeight: 700, color: renk,
+                                                                                        fontSize: 9, fontWeight: 700, color: renk, display: "inline-flex", alignItems: "center", gap: 3,
                                                                                         background: `${alfaEkle(renk, "1A")}`, padding: "1px 6px", borderRadius: "var(--erp-r-pill)",
-                                                                                    } }, tip));
+                                                                                    } },
+                                                                                    React.createElement(HareketIkonu, { tip: tip, size: 11 }),
+                                                                                    tip));
                                                                             })(),
                                                                             (() => {
                                                                                 const sade = kasaAciklamaSade(hr.aciklama, cari ? cari.unvan : "", hareketIslemTipi(hr));
@@ -44661,12 +44723,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                         React.createElement(X, { size: 14 }),
                                         " Vazge\u00E7")))) : (React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" } },
                                 stokluTipler.map((tip) => (React.createElement("button", { key: tip, className: "btn-ghost", style: { borderColor: HAREKET_TIPI_RENK[tip], color: HAREKET_TIPI_RENK[tip] }, "data-cari-fis-ac": tip, onClick: () => onStokFisiAc && onStokFisiAc(cari.id, tip, cari.unvan) },
-                                    React.createElement(Plus, { size: 13 }),
+                                    React.createElement(HareketIkonu, { tip: tip, size: 15 }),
                                     " ",
                                     tip,
                                     " Fi\u015Fi"))),
                                 ["Ödeme", "Tahsilat"].map((tip) => (React.createElement("button", { key: tip, className: "btn-ghost", style: { borderColor: HAREKET_TIPI_RENK[tip], color: HAREKET_TIPI_RENK[tip] }, onClick: () => hareketTipiSec(tip) },
-                                    React.createElement(Plus, { size: 13 }),
+                                    React.createElement(HareketIkonu, { tip: tip, size: 15 }),
                                     " ",
                                     tip))),
                                 stokluTipler.length > 0 && (React.createElement("button", { className: "btn-ghost", style: { borderColor: "var(--erp-text-3)", color: "var(--erp-text-2)", fontSize: 11 }, title: "Stok etkisi olmadan yaln\u0131zca cari bor\u00E7/alacak kayd\u0131 \u2014 hizmet bedeli, navlun, iskonto gibi", onClick: () => hareketTipiSec(stokluTipler[0]) }, "\u00DCr\u00FCns\u00FCz kay\u0131t")))))) },
@@ -52420,7 +52482,9 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
     const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
     return (React.createElement("div", { "data-siparis-odeme-formu": tip, style: { background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 10 } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } },
-            React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk } }, tip),
+            React.createElement("span", { className: "mono", style: { fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 5 } },
+                React.createElement(HareketIkonu, { tip: tip, size: 13 }),
+                tip),
             React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
                 cari.unvan,
                 " \u00B7 ",
@@ -52761,7 +52825,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         "\u0130\u015ELEMLER \u00B7 ",
                         siparis.siparisNo),
                     React.createElement("button", { type: "button", "data-siparis-islem": "odeme", style: { ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }, onClick: () => { setIslemMenu(null); onOdemeGir(hedef); } },
-                        React.createElement(Plus, { size: 14 }),
+                        React.createElement(HareketIkonu, { tip: oz.beklenenTip, size: 16 }),
                         " ",
                         oz.beklenenTip,
                         React.createElement("span", { style: { marginLeft: "auto", fontSize: 11, color: "var(--erp-text-3)" } }, "cari kart\u0131nda")),
@@ -53772,17 +53836,19 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                 setShowOdeme((v) => !v);
                                             else
                                                 onOdemeGir(hedef); } },
-                                            React.createElement(Plus, { size: 13 }),
+                                            React.createElement(HareketIkonu, { tip: oz.beklenenTip, size: 15 }),
                                             " ",
                                             showOdeme ? `${oz.beklenenTip} Formunu Kapat` : `${oz.beklenenTip} Gir`),
                                         ozetMetni && (React.createElement("span", { className: "mono", "data-siparis-odenen": oz.odenen, "data-siparis-kalan": oz.kalan, style: { fontSize: 12, fontWeight: 700, color: oz.kalan > 0 ? "var(--erp-warn)" : "var(--erp-primary)" } }, ozetMetni)),
                                         showOdeme && onOdemeGir && (React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-odeme-caride": "1", style: { fontSize: 11, padding: "4px 8px" }, title: "\u00C7ek/senet ya da vadeli kay\u0131t i\u00E7in cari kart\u0131ndaki tam form", onClick: () => onOdemeGir(hedef) }, "\u00C7ek/senet i\u00E7in cari kart\u0131nda a\u00E7"))),
                                     oz.odemeler.length > 0 && (React.createElement("div", { "data-siparis-odeme-listesi": oz.odemeler.length, style: { border: `1px solid ${HAREKET_TIPI_RENK[oz.beklenenTip]}`, borderRadius: "var(--erp-r-md)", overflow: "hidden", marginBottom: 10, background: "#fff" } },
                                         React.createElement("div", { className: "mono", style: { fontSize: 11, fontWeight: 700, color: "var(--erp-panel-2)", background: HAREKET_TIPI_RENK[oz.beklenenTip], padding: "4px 10px" } },
-                                            oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar",
-                                            " (",
-                                            oz.odemeler.length,
-                                            ")"),
+                                            React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 5 } },
+                                                React.createElement(HareketIkonu, { tip: oz.beklenenTip, size: 12 }),
+                                                oz.beklenenTip === "Ödeme" ? "Ödemeler" : "Tahsilatlar",
+                                                " (",
+                                                oz.odemeler.length,
+                                                ")")),
                                         [...oz.odemeler].sort((x, y) => String(y.tarih || "").localeCompare(String(x.tarih || ""))).map((h, i) => (React.createElement("div", { key: h.id || i, style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", padding: "5px 10px", fontSize: 12, borderTop: i === 0 ? "none" : "1px solid var(--erp-line-soft)" } },
                                             React.createElement("span", { className: "mono", style: { color: "var(--erp-text-2)" } }, h.tarih ? h.tarih.split("-").reverse().join(".") : "—"),
                                             h.fisNo && (React.createElement("button", { type: "button", className: "mono", style: { background: "none", border: "none", padding: 0, color: "var(--erp-info)", fontWeight: 700, cursor: onFiseGitNo ? "pointer" : "default", textDecoration: onFiseGitNo ? "underline" : "none" }, onClick: () => { if (onFiseGitNo)
@@ -56550,7 +56616,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.615.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.618.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

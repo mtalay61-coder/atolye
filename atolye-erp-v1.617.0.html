@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.614.0</title>
+<title>Atölye ERP 1.617.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2049,9 +2049,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.614.0";
-const SURUM_TARIHI = "2026-10-08";
-const SURUM_NOTU = "Siparis formunda silinen beden/renk geri eklenir; yeni sipariste eski okutma sonucu temizlenir; kamera teyitli okur, okumadan sonra bekler, sesli bildirir";
+const SURUM = "1.617.0";
+const SURUM_TARIHI = "2026-10-09";
+const SURUM_NOTU = "Siparis ciktisinda tahsilat toplamdan dusulur: Siparis toplami, eksi tahsilatlar, buyuk ve cerceveli KALAN BAKIYE";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2059,6 +2059,18 @@ const SURUM_NOTU = "Siparis formunda silinen beden/renk geri eklenir; yeni sipar
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.617.0", tarih: "09.10.2026",
+        eklenen: [],
+        degisen: ["Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) tahsilatlar sipariş toplamından düşülerek gösterilir: Sipariş toplamı, her tahsilat eksi satır (tarih, fiş no, kasa), en altta büyük ve sarı zeminli KALAN BAKİYE"],
+        duzeltilen: [] },
+    { surum: "1.616.0", tarih: "08.10.2026",
+        eklenen: [], degisen: [],
+        duzeltilen: ["PDF'te (sipariş, ekstre, fiş — PDF / WhatsApp / E-posta) yazılar iç içe geçiyordu (\"New Diamond\" → \"NewDiamond\", sipariş no harfleri üst üste). Sebep uygulamanın Boyut ayarıydı; PDF artık ondan ayrı bir belgede, sabit yazı stiliyle çiziliyor"] },
+    { surum: "1.615.0", tarih: "08.10.2026",
+        eklenen: ["Sipariş kartının mor şeridinde \"İşlemler\" menüsü (şeride sağ tıklayınca da açılır): Tahsilat (alışta Ödeme) carinin tahsilat ekranını bu siparişin numarası ve kalan tutarıyla açar; \"bu kartta\" seçeneği formu kartın içinde açar",
+            "Sipariş çıktısında (Yazdır / PDF / WhatsApp / E-posta) siparişe bağlı tahsilatlar: tarih, fiş no, kasa/banka, tutar; altta Ödenen ve Kalan"],
+        degisen: ["Sipariş formunda barkod okutunca eklenen satır 2,5 sn sarı zeminle vurgulanır, okutulan ölçüler kalın yeşil çerçeveli; satır görünür alana kaydırılır"],
+        duzeltilen: [] },
     { surum: "1.614.0", tarih: "08.10.2026",
         eklenen: ["Barkod okutunca ses: başarıda iki kısa yüksek ton, hatada alçak uzun ton (sipariş formu ve depo sevkiyatı)"],
         degisen: ["Kamerayla okuma daha hassas: kod art arda iki karede aynı okununca kabul edilir (yanlış okuma eklenmez), daha yüksek çözünürlük ve sürekli odak. Okumadan sonra 1,8 sn bekler — ekranda yeşil \"Okundu ✓\" ve geri sayım; aynı etiket 4 sn içinde tekrar sayılmaz"],
@@ -7890,6 +7902,46 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
     });
     const modelResmi = (m) => { const u = (stok || []).find((x) => x.ad === m.urunAd); return (u && u.kapakResmi) || resimBul(m.renkler[0]) || ""; };
     const modelPbToplam = (m) => { const t = {}; m.renkler.forEach((g) => { t[g.paraBirimi] = (t[g.paraBirimi] || 0) + g.tutar; }); return Object.entries(t).map(([pb, v]) => para(v, pb)).join(" + "); };
+    // BAĞLI ÖDEMELER (v1.615.0 — kullanıcı: "Sipariş yazdırda siparişin altında bağlantılı ödeme görünsün"). Siparişe bağlı
+    // tahsilatlar (satış) / ödemeler (alış): tarih · fiş no · kasa/banka · tutar; altta Ödenen ve (tek para birimli
+    // siparişte) Kalan. Kaynak sipariş kartındakiyle aynı: `siparisOdemeOzeti` (320). Ödeme yoksa bölüm hiç çizilmez.
+    const odemeBolumu = (() => {
+        const pbler = Object.keys(pbToplam);
+        const siparisPB = pbler.length === 1 ? pbler[0] : null;
+        const genelToplam = siparisPB ? pbToplam[siparisPB] : 0;
+        const oz = siparisOdemeOzeti(siparis, cari, genelToplam, siparisPB);
+        if (!oz.odemeler.length)
+            return "";
+        // TOPLAMDAN DÜŞÜLÜR, BELİRGİN (v1.617.0 — kullanıcı, SAT-1008 PDF'i: "Bu tahsilat sipariş toplamından düşmesi
+        // gerekli, daha belirgin olmalı"). Ayrı küçük kutu yerine hesap özeti: Sipariş toplamı → her tahsilat EKSİ satır
+        // (tarih · fiş no · kasa) → büyük, çerçeveli KALAN. Siparişin birimi dışında (ör. USD siparişe TL tahsilat) satır
+        // yine eksi gösterilir ama toplamdan düşülmez; kalan yalnız siparişin birimindeki tahsilattan hesaplanır.
+        const tahsilat = oz.beklenenTip === "Ödeme" ? "Ödeme" : "Tahsilat";
+        const tarihYaz = (t) => (t ? String(t).slice(0, 10).split("-").reverse().join(".") : "");
+        const satirStil = "font-size:13px;padding:5px 10px;border-bottom:1px solid #eee";
+        const satirlar = [...oz.odemeler].sort((x, y) => String(x.tarih || "").localeCompare(String(y.tarih || ""))).map((h) => {
+            const pb = h.paraBirimi || "TRY";
+            const dusulmez = siparisPB && pb !== siparisPB;
+            return `<tr data-cikti-odeme-satiri="1">
+        <td style="${satirStil}">${tahsilat} · <span class="mono">${esc(tarihYaz(h.tarih))}</span>${h.fisNo ? ` · <span class="mono">${esc(h.fisNo)}</span>` : ""}${h.hesapAd ? ` · ${esc(h.hesapAd)}` : ""}${h.hesapPB && h.hesapPB !== pb && h.hesapTutar != null ? ` <span style="color:#7A6A50">(${para(h.hesapTutar, h.hesapPB)})</span>` : ""}${dusulmez ? ` <span style="color:#7A6A50">— farklı para birimi, toplamdan düşülmedi</span>` : ""}</td>
+        <td class="mono" style="${satirStil};text-align:right;white-space:nowrap;font-weight:700;color:#1E7A46">− ${para(h.tutar, pb)}</td>
+      </tr>`;
+        }).join("");
+        const kalanVar = siparisPB != null;
+        return `<div data-cikti-odemeler="${oz.odemeler.length}" style="margin-top:14px;margin-left:auto;width:62%;min-width:420px;border:2px solid #33281C;border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid">
+      <table style="width:100%;border-collapse:collapse"><tbody>
+        <tr style="background:#F6F1E8">
+          <td style="font-size:13px;font-weight:700;padding:7px 10px;border-bottom:1px solid #ccc">Sipariş toplamı</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid #ccc">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
+        </tr>
+        ${satirlar}
+        ${kalanVar ? `<tr data-cikti-kalan="${oz.kalan}" style="background:#FFF1B8">
+          <td style="font-size:17px;font-weight:800;padding:10px;border-top:2px solid #33281C">KALAN BAKİYE</td>
+          <td class="mono" style="font-size:20px;font-weight:800;padding:10px;text-align:right;white-space:nowrap;border-top:2px solid #33281C">${para(oz.kalan, siparisPB)}</td>
+        </tr>` : `<tr><td style="font-size:13px;font-weight:700;padding:8px 10px;border-top:2px solid #33281C">Toplam ${tahsilat.toLocaleLowerCase("tr-TR")}</td>
+          <td class="mono" style="font-size:14px;font-weight:700;padding:8px 10px;text-align:right;border-top:2px solid #33281C">${Object.entries(oz.toplamlar).map(([pb, v]) => para(v, pb)).join(" + ")}</td></tr>`}
+      </tbody></table></div>`;
+    })();
     const renkBasligiMetni = ortakRenkBasligi(modeller.map((m) => (stok || []).find((x) => x.ad === m.urunAd) || {})) || "Renk";
     return `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #33281C;padding-bottom:8px;margin-bottom:12px">
@@ -7948,6 +8000,7 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
       <td class="mono" style="text-align:right;width:160px;font-size:13px">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
     </tr></tbody></table>
     ${siparis.not ? `<div style="margin-top:12px;font-size:12px"><b>Not:</b> ${esc(siparis.not)}</div>` : ""}
+    ${odemeBolumu}
     <div style="margin-top:24px;font-size:10px;color:#9B8B72">Atölye ERP · ${new Date().toLocaleDateString("tr-TR")}</div>`;
 }
 // ---- PDF (kullanıcı, 13 Eylül: "WhatsApp'tan fiş gönderme, ekrandakinin aynı bilgileri ve PDF
@@ -7983,17 +8036,44 @@ async function pdfKutuphaneleriniYukle() {
         return null;
     }
 }
+// PDF GÖVDESİ AYRI BELGEDE ÇİZİLİR (v1.616.0 — kullanıcı, PDF ekran görüntüsü: "PDF'te yazılar iç içe geçiyor":
+// "New Diamond" → "NewDiamond", "SAT-1009" harfleri üst üste). Sebep: uygulama Boyut ayarını `html { zoom }` ile uyguluyor
+// (100-app, v1.521) ve html2canvas CSS `zoom`'u tanımıyor — kelimelerin yerini büyütülmüş ölçüp yazıyı büyütülmemiş
+// çiziyor, boşluklar kayboluyor. Ayrıca uygulamanın genel `th` kuralı (büyük harf, harf aralığı) PDF'e sızıyordu.
+// Çözüm: gövde, uygulama CSS'i OLMAYAN gizli bir iframe'de kendi sabit stiliyle kurulur, html2canvas oradan çizer.
+// Resimlerin yüklenmesi beklenir (yoksa boş kutu çıkıyordu). `pdfCiktiBelgesi` testte de kullanılıyor.
+const PDF_CIKTI_STILI = "html,body{margin:0;padding:0;zoom:1}body{width:794px;box-sizing:border-box;padding:24px;background:#fff;color:#33281C;" +
+    "font-family:-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-text-size-adjust:100%;text-size-adjust:100%;" +
+    "letter-spacing:normal;word-spacing:normal;font-kerning:normal}" +
+    "table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px;text-transform:none;letter-spacing:normal}" +
+    ".mono{font-family:'Courier New',Courier,'Liberation Mono',monospace}img{max-width:100%}";
+function pdfCiktiBelgesi(govdeHTML) {
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=794"><style>${PDF_CIKTI_STILI}</style></head><body>${govdeHTML}</body></html>`;
+}
 async function htmldenPdfBlob(govdeHTML) {
     const kut = await pdfKutuphaneleriniYukle();
     if (!kut)
         return null;
-    const kap = document.createElement("div");
-    // A4 genişliği (96dpi ≈ 794px); ekran dışında ama çizilebilir (display:none çizilmez).
-    kap.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;padding:24px;background:#fff;color:var(--erp-text);font-family:-apple-system,'Segoe UI',sans-serif;";
-    kap.innerHTML = `<style>table{width:100%;border-collapse:collapse}th,td{padding:4px 8px;text-align:left;font-size:12px}.mono{font-family:'Courier New',monospace}img{max-width:100%}</style>${govdeHTML}`;
-    document.body.appendChild(kap);
+    const cerceve = document.createElement("iframe");
+    cerceve.setAttribute("aria-hidden", "true");
+    // Ekran dışında ama çizilebilir (display:none çizilmez). Yükseklik içerikten sonra ayarlanır.
+    cerceve.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;";
+    document.body.appendChild(cerceve);
     try {
-        const tuval = await kut.html2canvas(kap, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+        const belge = cerceve.contentDocument;
+        belge.open();
+        belge.write(pdfCiktiBelgesi(govdeHTML));
+        belge.close();
+        // Resimler (logo, ürün) yüklenmeden çizilirse boş çıkar.
+        await Promise.all([...belge.images].map((im) => (im.complete ? null : new Promise((r) => { im.onload = r; im.onerror = r; }))));
+        if (belge.fonts && belge.fonts.ready) {
+            try {
+                await belge.fonts.ready;
+            }
+            catch (e) { /* yazı tipi beklenemedi — devam */ }
+        }
+        cerceve.style.height = `${Math.max(1123, belge.documentElement.scrollHeight)}px`;
+        const tuval = await kut.html2canvas(belge.body, { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 794 });
         const pdf = new kut.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
         const sayfaG = pdf.internal.pageSize.getWidth(), sayfaY = pdf.internal.pageSize.getHeight();
         const resimY = (tuval.height * sayfaG) / tuval.width;
@@ -8010,7 +8090,7 @@ async function htmldenPdfBlob(govdeHTML) {
         return pdf.output("blob");
     }
     finally {
-        document.body.removeChild(kap);
+        document.body.removeChild(cerceve);
     }
 }
 function blobIndir(blob, dosyaAdi) {
@@ -49778,6 +49858,22 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     // duruyor; kamerayla okuturken göz kamerada, kullanıcı "titriyor ama eklemiyor, hatayı söylemiyor"
     // dedi. { tamam, metin } — bir sonraki okutmaya kadar kalır.
     const [barkodSonuc, setBarkodSonuc] = useState(null);
+    // OKUTULAN SATIR VURGUSU (v1.615.0 — kullanıcı: "Barkod okutunca sipariş satırı da vurgulansın"). Kamerayla
+    // okuturken göz telefonda; hangi satıra eklendiği tabloda bir bakışta görünsün. { anahtar: "urunId|renk",
+    // bedenler: [...], zaman } — 2,5 sn sonra söner; satır görünür alana kaydırılır.
+    const [okutulanSatir, setOkutulanSatir] = useState(null);
+    useEffect(() => {
+        if (!okutulanSatir)
+            return undefined;
+        const t = setTimeout(() => setOkutulanSatir(null), 2500);
+        try {
+            const tr = document.querySelector(`[data-okutulan-satir="1"]`);
+            if (tr && tr.scrollIntoView)
+                tr.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+        catch (e) { /* kaydırma yoksa yalnız vurgu */ }
+        return () => clearTimeout(t);
+    }, [okutulanSatir]);
     // BARKOD PANELİ KATLANIR (v1.470.0 — kullanıcı: "barkod okutu da tıklayınca açılsın, kullanmayınca
     // çok yer kaplıyor"). Kapalıyken tek ince düğme. Son tercih bu cihazda hatırlanıyor: fuarda
     // okutarak çalışan açık bırakır, elle giren kapalı — her sipariş açılışında yeniden tıklamasın.
@@ -50079,6 +50175,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         // de "sonraki" sayılmıyordu.
         setBarkodSonuc(null);
         setBarkodGirisi("");
+        setOkutulanSatir(null);
     }
     // HAVUZ: siparişe girilebilecek ürünlerin görselleri (ürün+renk). Havuzu ÇAĞIRAN belirliyor;
     // burada `urunUygun` zaten tipe göre süzülmüş (alışta hammadde, satışta mamul) — fotoğrafın
@@ -50180,6 +50277,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                     }]);
             setBarkodGirisi("");
             bildir(`${olcuMetni([cozum.urun.ad, cozum.renk, cozum.beden])}: 1 eklendi`, true);
+            setOkutulanSatir({ anahtar: `${cozum.urun.id}|${cozum.renk}`, bedenler: [cozum.beden], zaman: Date.now() });
             return;
         }
         if (cozum.dagilim.length === 0) {
@@ -50202,6 +50300,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         });
         setKalemler(sonraki);
         setBarkodGirisi("");
+        setOkutulanSatir({ anahtar: `${cozum.urun.id}|${cozum.renk}`, bedenler: cozum.dagilim.map((d) => d.beden), zaman: Date.now() });
         // Üründe olmayan bedenler SESSİZCE atlanmıyor: sipariş eksik girilmiş olacak, kullanıcı bilsin.
         bildir(cozum.eksikBedenler.length
             ? `${cozum.urun.ad} · ${cozum.renk} · ${cozum.asorti.ad}: ${cozum.toplam} çift eklendi — ${cozum.eksikBedenler.join(", ")} bedeni üründe yok`
@@ -51117,10 +51216,13 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                                 const idler = g.kalemler.map((k) => k.id);
                                                 const renkSecenekleri = urunRenkleri(urun);
                                                 const renkEksik = !g.kilit && renkSecenekleri.length > 0 && !g.renk;
+                                                // Son okutulan barkodun satırı (v1.615.0): sarı zemin + yeşil sol çizgi, okutulan ölçüler kalın yeşil.
+                                                const okutulan = !!okutulanSatir && !g.kilit && okutulanSatir.anahtar === `${g.urunId}|${g.renk}`;
                                                 return (React.createElement(React.Fragment, { key: g.key },
                                                     araBaslikVar && (React.createElement("tr", { "data-siparis-renk-ara-baslik": grupRenkBasligi(g) },
                                                         React.createElement("td", { colSpan: tumBedenler.length + 5 + (kdvAktif ? 1 : 0), style: { padding: "6px 8px 2px", fontSize: 10, fontWeight: 800, letterSpacing: ".04em", color: "var(--erp-text-2)", background: "var(--erp-head)" } }, grupRenkBasligi(g).toLocaleUpperCase("tr-TR")))),
-                                                    React.createElement("tr", { key: g.key, "data-form-kalem-satiri": g.kilit ? "kilitli" : "serbest", style: { borderTop: "1px solid var(--erp-line-soft)", background: g.kilit ? "var(--erp-panel-2)" : undefined } },
+                                                    React.createElement("tr", { key: g.key, "data-form-kalem-satiri": g.kilit ? "kilitli" : "serbest", "data-okutulan-satir": okutulan ? "1" : undefined, style: { borderTop: "1px solid var(--erp-line-soft)", background: okutulan ? "#FFF1B8" : (g.kilit ? "var(--erp-panel-2)" : undefined),
+                                                            boxShadow: okutulan ? "inset 4px 0 0 #2E8B57" : undefined, transition: "background .4s" } },
                                                         React.createElement("td", { style: { padding: "6px 8px", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } },
                                                             React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } },
                                                                 React.createElement(ColorSwatch, { src: gorsel, editable: false, size: 26 }),
@@ -51183,7 +51285,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                                                             if (!(yeni > 0) || yeni === k.miktar)
                                                                                 return;
                                                                             kalemDuzenle(k.id, "miktar", yeni);
-                                                                        }, className: "mono", style: { width: 48, padding: "3px 4px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", textAlign: "center" } }),
+                                                                        }, className: "mono", "data-okutulan-hucre": okutulan && okutulanSatir.bedenler.includes(b) ? "1" : undefined, style: { width: 48, padding: "3px 4px", fontSize: 11, border: okutulan && okutulanSatir.bedenler.includes(b) ? "2px solid #2E8B57" : "1px solid var(--erp-line)", fontWeight: okutulan && okutulanSatir.bedenler.includes(b) ? 800 : undefined, borderRadius: "var(--erp-r-sm)", textAlign: "center" } }),
                                                                     React.createElement("button", { onClick: () => kalemSil(k.id), title: "Bu bedeni sil", style: { border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 0 } },
                                                                         React.createElement(X, { size: 10 })))));
                                                         }),
@@ -52460,6 +52562,10 @@ function mobilBolumGizliMi(ayar, bolumKey) {
 function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet }) {
     // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
     const [showOdeme, setShowOdeme] = useState(false);
+    // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
+    // içinde olsun, tıklayınca cari tahsilat ekranı açsın, içinde olduğumuz sipariş no atayarak"). Mor şeritte "İşlemler"
+    // düğmesi; şeride SAĞ TIKLAMAK da aynı menüyü imlecin yanında açar. { x, y } (ekran koordinatı) ya da null.
+    const [islemMenu, setIslemMenu] = useState(null);
     const [open, setOpen] = useState(!!baslangicAcik);
     // Düzen ikonu üst şeritte (v1.529.0); kipi DuzenAlani açar.
     const duzenAcRef = useRef(null);
@@ -52626,7 +52732,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
         setEklenenGruplar(gruplar);
     }
     return (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
-        React.createElement("div", { role: baslangicAcik ? undefined : "button", tabIndex: baslangicAcik ? undefined : 0, onClick: baslangicAcik ? undefined : () => setOpen((v) => !v), style: {
+        React.createElement("div", { role: baslangicAcik ? undefined : "button", tabIndex: baslangicAcik ? undefined : 0, onClick: baslangicAcik ? undefined : () => setOpen((v) => !v), onContextMenu: open && onOdemeGir && cari ? (e) => { e.preventDefault(); setIslemMenu({ x: e.clientX, y: e.clientY }); } : undefined, style: {
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
                 // Liste içinde bu şerit yalnızca iki küçük kontrol taşır; 14px'lik dolgu boş bir bant
                 // gibi görünüyordu.
@@ -52670,15 +52776,42 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                     } }, siparis.durum),
                 !saltOkunur && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } },
                     React.createElement(KayitEylemleri, { onDuzenle: open && onDuzenle ? () => onDuzenle(siparis.id) : undefined, duzenleBaslik: "D\u00FCzenle \u2014 sipari\u015F formunda a\u00E7\u0131l\u0131r: ba\u015Fl\u0131k, \u00FCr\u00FCn ekleme, bekleyen kalemlerde \u00FCr\u00FCn/renk/miktar/fiyat", onSil: () => { setOpen(true); setSiparisSilOnayGoster(true); }, silBaslik: siparis.durum === "İptal" ? "Siparişi sil" : "Siparişi iptal et / sil — işlem görmüşse iptal edilir, fişler kalır" }))),
-                open && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } }, (() => {
-                    const cariK = cariler.find((c) => c.id === siparis.cariId);
-                    return (React.createElement(PaylasSeridi, { govdeHTML: siparisCiktisiHTML(siparis, cariK, firmaBilgileri, stok), dosyaAdi: `${siparis.siparisNo || "siparis"} - ${(cariK && cariK.unvan) || "cari"}`, cari: cariK, konu: `${siparis.tip === "Alış" ? "Alış siparişi" : "Sipariş"} ${siparis.siparisNo || ""} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim(), ozet: siparisMetinOzeti(siparis, cariK), showToast: showToast, firmaBilgileri: firmaBilgileri }));
-                })()))),
+                open && (React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6 } },
+                    (() => {
+                        const cariK = cariler.find((c) => c.id === siparis.cariId);
+                        return (React.createElement(PaylasSeridi, { govdeHTML: siparisCiktisiHTML(siparis, cariK, firmaBilgileri, stok), dosyaAdi: `${siparis.siparisNo || "siparis"} - ${(cariK && cariK.unvan) || "cari"}`, cari: cariK, konu: `${siparis.tip === "Alış" ? "Alış siparişi" : "Sipariş"} ${siparis.siparisNo || ""} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim(), ozet: siparisMetinOzeti(siparis, cariK), showToast: showToast, firmaBilgileri: firmaBilgileri }));
+                    })(),
+                    onOdemeGir && cari && (React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-islemler": "1", title: "\u0130\u015Flemler \u2014 tahsilat/\u00F6deme (\u015Feride sa\u011F t\u0131klayarak da a\u00E7\u0131l\u0131r)", style: { padding: "3px 9px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }, onClick: (e) => { const r = e.currentTarget.getBoundingClientRect(); setIslemMenu((m) => (m ? null : { x: r.left, y: r.bottom + 4 })); } },
+                        "\u0130\u015Flemler ",
+                        React.createElement(ChevronDown, { size: 12 })))))),
             baslangicAcik && open && !saltOkunur && Object.keys(pbToplamlariHam).length > 0 && (React.createElement("span", { onClick: (e) => e.stopPropagation(), style: { display: "contents" } },
                 React.createElement(FisToplamCeviriPaneli, { gomulu: true, pbToplamlari: pbToplamlariHam, kurlar: kurlar, deger: { kayitParaBirimi: siparis.kayitParaBirimi, kayitKurlari: siparis.kayitKurlari }, onDegistir: (yeni) => onKayitParaGuncelle && onKayitParaGuncelle(siparis.id, yeni.kayitParaBirimi, yeni.kayitKurlari) }))),
             baslangicAcik && open && !saltOkunur && duzenBaglami && duzenBaglami.yetkili && (React.createElement("button", { type: "button", className: "btn-ikon", "data-duzen-ac": "siparisKarti", title: "Ekran d\u00FCzeni \u2014 bloklar\u0131 s\u0131rala, geni\u015Fli\u011Fini ayarla, gizle", onClick: (e) => { e.stopPropagation(); if (duzenAcRef.current)
                     duzenAcRef.current(); }, style: { marginLeft: Object.keys(pbToplamlariHam).length > 0 ? 0 : "auto" } },
                 React.createElement(LayoutGrid, { size: 14 })))),
+        islemMenu && onOdemeGir && cari && (() => {
+            const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
+            const hedef = { cariId: siparis.cariId, tip: oz.beklenenTip, tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
+                paraBirimi: toplamPB || "TRY", siparisId: siparis.id, siparisNo: siparis.siparisNo };
+            const genislik = 230;
+            const x = Math.max(8, Math.min(islemMenu.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - genislik - 8));
+            const ogeStil = { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", textAlign: "left", cursor: "pointer", fontSize: 13 };
+            return (React.createElement("div", { "data-siparis-islem-perde": "1", onClick: () => setIslemMenu(null), onContextMenu: (e) => { e.preventDefault(); setIslemMenu(null); }, style: { position: "fixed", inset: 0, zIndex: 900 } },
+                React.createElement("div", { "data-siparis-islem-menusu": "1", onClick: (e) => e.stopPropagation(), style: { position: "fixed", left: x, top: islemMenu.y, width: genislik, background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)", overflow: "hidden" } },
+                    React.createElement("div", { className: "mono", style: { fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 4px", borderBottom: "1px solid var(--erp-line-soft)" } },
+                        "\u0130\u015ELEMLER \u00B7 ",
+                        siparis.siparisNo),
+                    React.createElement("button", { type: "button", "data-siparis-islem": "odeme", style: { ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }, onClick: () => { setIslemMenu(null); onOdemeGir(hedef); } },
+                        React.createElement(Plus, { size: 14 }),
+                        " ",
+                        oz.beklenenTip,
+                        React.createElement("span", { style: { marginLeft: "auto", fontSize: 11, color: "var(--erp-text-3)" } }, "cari kart\u0131nda")),
+                    onOdemeKaydet && (React.createElement("button", { type: "button", "data-siparis-islem": "odeme-kartta", style: { ...ogeStil, color: "var(--erp-text-2)", fontSize: 12, borderTop: "1px solid var(--erp-line-soft)" }, onClick: () => { setIslemMenu(null); setOpen(true); setShowOdeme(true); } },
+                        React.createElement(Plus, { size: 12 }),
+                        " ",
+                        oz.beklenenTip,
+                        " \u2014 bu kartta")))));
+        })(),
         open && (React.createElement("div", { style: { padding: "0 14px 14px" } },
             siparisSilOnayGoster && (() => {
                 // İPTAL Mİ SİLME Mİ (v1.512.0) — karar App'teki `siparisKapat`ın kararıyla AYNI hesaptan
@@ -56458,7 +56591,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.614.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.617.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
