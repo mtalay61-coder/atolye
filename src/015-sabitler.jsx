@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.622.0";
+const SURUM = "1.623.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Fis ve kasa/cek formlarinda aramali cari secici; siparis basligi telefonda tasmiyor";
+const SURUM_NOTU = "Cari karti: iletisim mor seritte, adres-vergi Bilgiler sekmesinde; siparis kartinda notlu satir sari, tiklayinca not acilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Fis ve kasa/cek formlarinda aramali cari secici; siparis bas
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.623.0", tarih: "09.10.2026",
+    eklenen: ["Cari kartında Bilgiler sekmesi: adres, vergi no/dairesi, TC kimlik, il/ilçe/ülke, e-fatura, fiyat grubu (personelde fotoğraf, barkod kodu, prosesler)"],
+    degisen: ["Cari kartında telefon, WhatsApp ve e-posta düzenlemede mor şeridin içinde; kalem Bilgiler sekmesini de açar",
+      "Sipariş kartında notlu renk satırı sarı ve \"N not\" rozetli; satıra tıklayınca notlar altında açılır, tekrar tıklayınca kapanır"],
+    duzeltilen: [] },
   { surum: "1.622.0", tarih: "09.10.2026",
     eklenen: ["Fiş (alış/satış), kasa-banka hareketi ve çek formlarında cari seçimi aramalı: ünvan, kod ya da telefonla süzülür"],
     degisen: [],

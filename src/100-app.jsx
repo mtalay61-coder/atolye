@@ -3723,6 +3723,9 @@ export default function AtolyeERP() {
         .matris-tablo th:last-child, .matris-tablo td:last-child { border-right: none; }
         .matris-tablo tbody tr:nth-child(even) > td { background: var(--erp-zebra); }
         .matris-tablo tbody tr:hover > td { background: var(--erp-hover); }
+        /* NOTLU SİPARİŞ SATIRI (v1.623.0): zebra/hover sarıyı ezmesin — not var, bir bakışta. Ürün hücresi (rowspan) hariç. */
+        .matris-tablo tbody tr[data-kart-notlu-satir] > td:not([rowspan]), .matris-tablo tbody tr[data-kart-not-satiri] > td { background: #FFF6DA; }
+        .matris-tablo tbody tr[data-kart-notlu-satir]:hover > td:not([rowspan]) { background: #FFEFC2; }
 
         @media (max-width: 720px) {
           .sidebar, .ust-menu { display: none; }

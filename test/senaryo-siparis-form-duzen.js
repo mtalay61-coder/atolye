@@ -161,6 +161,12 @@ async function calistir() {
   await sayfa.waitForTimeout(1000);
   const sip = ((await depoOku(sayfa, "siparis:data")) || []).find((x) => x.id === "sf1") || {};
   const kayit = (sip.kalemler || []).map((k) => `${k.renk} ${k.beden} × ${k.miktar}: ${(k.notlar || []).map((n) => (n.proses ? `${n.proses}: ` : "") + n.metin).join(" | ") || k.aciklama || "—"}`).sort();
+  // v1.623.0: kartta not metni satıra tıklayınca açılıyor — notlu her satırın rozetine bir kez tıkla.
+  const rozetSayisi = await sayfa.locator("[data-kart-notlu-satir]:visible [data-kart-not-rozeti]").count();
+  for (let i = 0; i < rozetSayisi; i++) {
+    await sayfa.locator("[data-kart-notlu-satir]:visible [data-kart-not-rozeti]").nth(i).evaluate((r) => r.click());
+    await sayfa.waitForTimeout(200);
+  }
   const kartta = await sayfa.evaluate(() => [...document.querySelectorAll("[data-kart-kalem-aciklama]")]
     .filter((d) => d.getBoundingClientRect().width > 0).map((d) => d.textContent.trim()));
 
