@@ -96,7 +96,7 @@ async function calistir() {
     const form = document.querySelector('[data-siparis-duzenleme="sd1"]');
     const cari = form.querySelector("[data-siparis-cari]");
     return {
-      cari: cari.value, cariKilitli: cari.disabled,
+      cari: cari.getAttribute("data-cari-id"), cariKilitli: cari.disabled,   // v1.620.0: aramalı kutu, id data-cari-id'de
       tarihler: [...form.querySelectorAll('input[type="date"]')].map((i) => i.value),
       notVar: [...form.querySelectorAll("input")].some((i) => i.value === "ilk not"),
     };

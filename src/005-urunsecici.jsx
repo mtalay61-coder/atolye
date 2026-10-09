@@ -430,3 +430,81 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
     </div>
   );
 }
+
+// ---- CARİ SEÇİCİ (aramalı) — v1.620.0 ----
+// Kullanıcı (sipariş formu, açılır müşteri listesi): "Müşteri seçerken filtreli olsun, daha öncekiler gibi; cari arttıkça
+// içinden çıkılmıyor." Açılır <select> yerine yazdıkça süzülen kutu (renk/ürün seçicileriyle aynı davranış): ünvan,
+// cari kodu ve telefonla aranır (Türkçe büyük/küçük harf duyarsız, başı eşleşen önce); ok tuşları + Enter; dokunarak seçim.
+// DEĞER `deger` (cari id) — kutu odakta değilken seçili carinin ünvanı yazar; dışarıdan değişen seçim (form sıfırlama,
+// tedarikçi otomatik doldurma) kutuya yansır. Kutu boşaltılıp çıkılırsa seçim KALIR (yanlışlıkla silinmesin); "×" temizler.
+// `veriAdi` kutuya, `data-cari-id` seçili id'ye konur (testler okuyor).
+function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "Cari ara: ünvan, kod, telefon…", veriAdi }) {
+  const [acik, setAcik] = useState(false);
+  const [sorgu, setSorgu] = useState(null);   // null = yazılmıyor, kutuda seçili ünvan
+  const [vurgulu, setVurgulu] = useState(0);
+  const secili = (cariler || []).find((c) => c.id === deger) || null;
+  const q = String(sorgu || "").trim().toLocaleLowerCase("tr-TR");
+  const sonuclar = (() => {
+    const liste = cariler || [];
+    if (!q) return liste;
+    const bas = [], ic = [];
+    liste.forEach((c) => {
+      const ad = String(c.unvan || "").toLocaleLowerCase("tr-TR");
+      // Kod hem "7" hem listede görünen "0007" biçimiyle bulunur.
+      const kodlar = c.kod != null && c.kod !== "" ? [String(c.kod), String(c.kod).padStart(4, "0")] : [];
+      const diger = [...kodlar, c.telefon, c.whatsapp].filter(Boolean).map((x) => String(x).toLocaleLowerCase("tr-TR"));
+      if (ad.startsWith(q) || ad.split(/\s+/).some((k) => k.startsWith(q)) || diger.some((d) => d.startsWith(q))) bas.push(c);
+      else if (ad.includes(q) || diger.some((d) => d.includes(q))) ic.push(c);
+    });
+    return [...bas, ...ic];
+  })().slice(0, 80);
+  const sec = (c) => { onDegis(c.id); setSorgu(null); setAcik(false); setVurgulu(0); };
+  return (
+    <div style={{ position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, ...inputStyle, padding: "0 8px", opacity: disabled ? 0.6 : 1,
+        border: `1px solid ${acik ? "var(--erp-accent)" : "var(--erp-line)"}` }}>
+        <Search size={14} color="var(--erp-text-3)" style={{ flexShrink: 0 }} />
+        <input
+          {...(veriAdi ? { [veriAdi]: "1" } : {})}
+          data-cari-id={deger || ""}
+          disabled={disabled}
+          value={sorgu != null ? sorgu : (secili ? secili.unvan : "")}
+          onChange={(e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }}
+          onFocus={(e) => { setSorgu(""); setAcik(true); setVurgulu(0); }}
+          onBlur={() => setTimeout(() => { setAcik(false); setSorgu(null); }, 150)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") { e.preventDefault(); setAcik(true); setVurgulu((v) => Math.min(v + 1, sonuclar.length - 1)); }
+            else if (e.key === "ArrowUp") { e.preventDefault(); setVurgulu((v) => Math.max(v - 1, 0)); }
+            else if (e.key === "Enter") { e.preventDefault(); if (sonuclar[vurgulu]) sec(sonuclar[vurgulu]); }
+            else if (e.key === "Escape") { setAcik(false); setSorgu(null); e.currentTarget.blur(); }
+          }}
+          placeholder={secili ? secili.unvan : placeholder}
+          autoComplete="off" autoCorrect="off" spellCheck={false}
+          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, padding: "8px 0", fontWeight: secili && sorgu == null ? 700 : 400 }}
+        />
+        {secili && !disabled && (
+          <button type="button" title="Seçimi temizle" data-cari-secici-temizle="1" onMouseDown={(e) => { e.preventDefault(); onDegis(""); setSorgu(null); }}
+            style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", padding: 0, display: "flex" }}><X size={14} /></button>
+        )}
+      </div>
+      {acik && !disabled && (
+        <div role="listbox" style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 60, minWidth: "100%", maxHeight: 300, overflowY: "auto",
+          background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 10px 28px rgba(16, 24, 40, 0.12)", padding: 4 }}>
+          {sonuclar.length === 0 ? (
+            <div style={{ padding: "9px 10px", fontSize: 13, color: "var(--erp-text-3)" }}>"{sorgu}" ile eşleşen cari yok</div>
+          ) : sonuclar.map((c, i) => (
+            <button key={c.id} type="button" role="option" aria-selected={c.id === deger} data-cari-secenek={c.unvan}
+              onMouseDown={(e) => { e.preventDefault(); sec(c); }}
+              onMouseEnter={() => setVurgulu(i)}
+              style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
+                background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 14, cursor: "pointer", fontWeight: c.id === deger ? 800 : 400 }}>
+              {c.kod != null && c.kod !== "" && <span className="mono" style={{ fontSize: 11, color: "var(--erp-info)", minWidth: 34 }}>{String(c.kod).padStart(4, "0")}</span>}
+              <span style={{ flex: 1 }}>{c.unvan}</span>
+              {c.ulke && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{c.ulke}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1233,10 +1233,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 const cariKilitli = duzenlenenId && kalemler.some((k) => (k.karsilanan || 0) > 0);
                 return (
                   <>
-                    <select value={cariId} onChange={(e) => setCariId(e.target.value)} style={inputStyle} disabled={cariKilitli} data-siparis-cari="1">
-                      <option value="">Seçin…</option>
-                      {cariUygun.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
-                    </select>
+                    {/* ARAMALI (v1.620.0 — kullanıcı: "Müşteri seçerken filtreli olsun, cari arttıkça içinden çıkılmıyor"):
+                        yazdıkça süzülür (ünvan / cari kodu / telefon). Seçili id `data-cari-id`de. */}
+                    <CariSecici cariler={cariUygun} deger={cariId} onDegis={setCariId} disabled={cariKilitli} veriAdi="data-siparis-cari"
+                      placeholder={tip === "Alış" ? "Tedarikçi ara: ünvan, kod, telefon…" : "Müşteri ara: ünvan, kod, telefon…"} />
                     {cariKilitli && <span style={{ fontSize: 10, color: "var(--erp-brown)" }}>teslimat yapılmış, değiştirilemez</span>}
                   </>
                 );
