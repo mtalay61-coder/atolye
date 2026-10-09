@@ -542,7 +542,7 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
           <Save size={13} /> Farklı kaydet…
         </button>
         {farkli && (
-          <div data-fl-farkli="1" style={{ flexBasis: "100%", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px dashed var(--erp-line)", paddingTop: 8 }}>
+          <div data-fl-farkli="1" style={{ ...MOR_SERIT_STIL, flexBasis: "100%", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", padding: "6px 10px" }}>
             <span style={{ fontSize: 12 }}>
               Ekrandaki {fiyatliSayi} fiyat{islemAktif ? ` (${islemNorm.yon < 0 ? "−" : "+"}${islemNorm.tur === "yuzde" ? `%${islemNorm.deger}` : `${islemNorm.deger} ${pbSembol(kaynak.paraBirimi || "TRY")}`} uygulanmış)` : ""} →
             </span>
@@ -572,8 +572,8 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
 
       {/* KAYDET ÇUBUĞU — yalnız değişiklik varken */}
       {degisenler.length > 0 && (
-        <div data-fl-degisen={degisenler.length} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10, padding: "8px 12px",
-          background: "var(--erp-accent-tint)", borderRadius: "var(--erp-r-md)", fontSize: 13 }}>
+        // Mor kayıt şeridi görünümü (v1.626.0) — bütün formlardaki Kaydet şeridiyle aynı.
+        <div data-fl-degisen={degisenler.length} style={{ ...MOR_SERIT_STIL, display: "flex", gap: 8, alignItems: "center", marginBottom: 10, padding: "8px 12px", fontSize: 13 }}>
           <b>{degisenler.length} fiyat değişti</b> — "{kaynak.ad}" listesine kaydedilmedi.
           <button type="button" className="btn-primary btn-save" data-fl-kaydet="1" onClick={kaydet} style={{ marginLeft: "auto", padding: "6px 14px" }}>
             <Save size={13} /> Kaydet

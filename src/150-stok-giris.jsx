@@ -34,10 +34,11 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
 
   return (
     <div style={{ background: "var(--erp-panel)", border: "1.5px solid #6B4E8A", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-purple)" }}>Bağımsız Stok Girişi / Çıkışı</div>
-        <button className="btn-ghost" onClick={onKapat}><X size={14} /></button>
-      </div>
+      {/* MOR KAYIT ŞERİDİ (v1.626.0): Kaydet · Vazgeç başlıkta (önce formun dibindeydi; sağ üstte ayrıca × vardı). */}
+      <KayitSeridi baslik="Bağımsız Stok Girişi / Çıkışı" veri="data-stok-giris-seridi">
+        <button className="btn-primary btn-save" disabled={!renk} onClick={kaydet}><Save size={14} /> Kaydet</button>
+        <button className="btn-ghost" onClick={onKapat}><X size={14} /> Vazgeç</button>
+      </KayitSeridi>
       <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Bir sipariş oluşturmadan doğrudan stok düzeltmesi yapın (sayım farkı, numune, fire). Bir cariden alış/satış
         yapacaksanız, bunu artık Cari kartındaki "Cariden Alış / Cariye Satış" bölümünden yapabilirsiniz.
@@ -126,10 +127,6 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
         </Field>
       )}
 
-      <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <button className="btn-primary btn-save" disabled={!renk} onClick={kaydet}><Save size={14} /> Kaydet</button>
-        <button className="btn-ghost" onClick={onKapat}>Vazgeç</button>
-      </div>
     </div>
   );
 }

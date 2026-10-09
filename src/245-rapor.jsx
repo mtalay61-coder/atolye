@@ -511,11 +511,24 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
 
       {/* AYARLAR PANELİ (kapalı gelir) */}
       <div data-rapor-ayar-paneli={kurucuAcik ? "acik" : "kapali"} style={{ display: kurucuAcik ? undefined : "none", background: "#fff", border: "1px solid #8A5A38", borderRadius: "var(--erp-r-md)", marginBottom: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--erp-line-soft)" }}>
-          <b style={{ fontSize: 13 }}>{seciliId ? tanim.ad : "Yeni rapor"}</b>
+        <div style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 12px", margin: 8 }}>
+          <b style={{ fontSize: 13, color: "#5B3F75" }}>{seciliId ? tanim.ad : "Yeni rapor"}</b>
           <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
             {sonuc.sutunlar.length} sütun · {(tanim.suzgecler || []).filter((s) => s.alan).length + Object.values(tanim.kolonAramalari || {}).filter((v) => String(v || "").trim()).length} süzgeç
             {(tanim.gruplar || []).length > 0 && ` · gruplu: ${tanim.gruplar.map((g) => (alanIndex[g] || {}).ad || g).join(" › ")}`}
+          </span>
+          {/* KAYDET MOR ŞERİTTE (v1.626.0 — kullanıcı: "Diğer kaydetleri de mor şeride al"): rapor adı, kapsam,
+              Kaydet/Güncelle ve Sil panelin başlığında; önce panelin en dibindeydi. */}
+          <span data-rapor-kayit-seridi="1" style={{ marginLeft: "auto", display: "inline-flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <input value={tanim.ad} placeholder="Rapor adı" data-rapor-ad="1" style={{ ...kutu, width: 220 }} onChange={(e) => degistir({ ad: e.target.value })} />
+              <select value={tanim.kapsam} style={kutu} onChange={(e) => degistir({ kapsam: e.target.value })}>
+                <option value="ortak">Ortak — herkes görür</option>
+                <option value="kisisel">Kişisel — yalnız ben</option>
+              </select>
+              <button type="button" className="btn-primary btn-save" data-rapor-kaydet="1" style={{ padding: "6px 12px", fontSize: 12 }} onClick={kaydet}>
+                <Save size={12} /> {seciliId ? "Güncelle" : "Kaydet"}
+              </button>
+              {seciliId && <SilOnayButonu onConfirm={sil} boyut={13} baslikNormal="Raporu sil" baslikOnay="Rapor silinecek — emin misiniz? Tekrar dokunun" />}
           </span>
         </div>
         {(
@@ -661,18 +674,6 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
           </div>
         </div>
 
-            {/* KAYDET */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid var(--erp-line-soft)", paddingTop: 10 }}>
-              <input value={tanim.ad} placeholder="Rapor adı" data-rapor-ad="1" style={{ ...kutu, width: 220 }} onChange={(e) => degistir({ ad: e.target.value })} />
-              <select value={tanim.kapsam} style={kutu} onChange={(e) => degistir({ kapsam: e.target.value })}>
-                <option value="ortak">Ortak — herkes görür</option>
-                <option value="kisisel">Kişisel — yalnız ben</option>
-              </select>
-              <button type="button" className="btn-primary" data-rapor-kaydet="1" style={{ padding: "6px 12px", fontSize: 12 }} onClick={kaydet}>
-                <Save size={12} /> {seciliId ? "Güncelle" : "Kaydet"}
-              </button>
-              {seciliId && <SilOnayButonu onConfirm={sil} boyut={13} baslikNormal="Raporu sil" baslikOnay="Rapor silinecek — emin misiniz? Tekrar dokunun" />}
-            </div>
           </div>
         )}
       </div>

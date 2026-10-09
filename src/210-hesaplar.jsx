@@ -407,7 +407,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                         düzenleme açıkken ad/banka/IBAN kutuları ve Kaydet · Vazgeç kalıyor. ŞERİDİN HEMEN ALTINDA (v1.537.0 — son denetim):
                         önce hareket tablosunun en altındaydı; uzun listede ✎ basınca üstte hiçbir şey değişmiyor gibi görünüyordu. */}
                     {duzenlenen === h.id && (
-                    <div data-hesap-duzenle-formu="1" style={{ margin: "8px 12px 0", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <div data-hesap-duzenle-formu="1" style={{ ...MOR_SERIT_STIL, margin: "8px 12px 0", padding: "6px 10px", display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                       {/* DÜZENLEME (kullanıcı, 19 Eylül: "banka listesi düzenleme olsun"). Hesap
                           adı, banka ve IBAN yanlış girildiğinde tek yol hesabı silip yeniden
                           açmaktı — hareketi olan hesap silinemediği için bu da mümkün değildi;
@@ -421,7 +421,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               onChange={(e) => setDuzenForm({ ...duzenForm, [a2.key]: e.target.value })}
                               style={{ padding: "5px 8px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", fontSize: 12, width: 150 }} />
                           ))}
-                          <button data-kart-eylem="kaydet" title="Kaydet · Ctrl+S" type="button" className="btn-primary" style={{ fontSize: 12, padding: "5px 12px" }}
+                          <button data-kart-eylem="kaydet" title="Kaydet · Ctrl+S" type="button" className="btn-primary btn-save" style={{ fontSize: 12, padding: "5px 12px", marginLeft: "auto" }}
                             onClick={() => { if (onHesapGuncelle) onHesapGuncelle(h.id, duzenForm); setDuzenlenen(null); }}>
                             Kaydet
                           </button>
@@ -785,8 +785,9 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                 { id: "hareketler", ad: "Hareket listesi (ekstre)", gizlenemez: true, icerik: (<>
                 {/* DÜZENLEME PANELİ: seçilen hareketin üstünde açılıyor. */}
                 {acik && duzenle && duzenle.hesapId === h.id && (
-                  <div data-duzenle-paneli="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
-                    padding: "10px 12px", background: "var(--erp-hover)", borderTop: "1px solid var(--erp-line-soft)", borderBottom: "1px solid var(--erp-line-soft)" }}>
+                  // Mor kayıt şeridi görünümü (v1.626.0): tek satırlık form, Kaydet · Vazgeç aynı şeridin sağında.
+                  <div data-duzenle-paneli="1" style={{ ...MOR_SERIT_STIL, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end",
+                    padding: "10px 12px", margin: "6px 10px" }}>
                     <Field label="Tarih">
                       <input type="date" value={duzenle.tarih} data-duzenle-tarih="1"
                         onChange={(e) => setDuzenle({ ...duzenle, tarih: e.target.value })} style={{ ...inputStyle, width: 150 }} />
@@ -799,7 +800,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       <input value={duzenle.aciklama} data-duzenle-aciklama="1"
                         onChange={(e) => setDuzenle({ ...duzenle, aciklama: e.target.value })} style={{ ...inputStyle, width: 220 }} />
                     </Field>
-                    <button className="btn-primary" data-duzenle-kaydet="1" style={{ padding: "8px 14px", fontSize: 13 }}
+                    <button className="btn-primary btn-save" data-duzenle-kaydet="1" style={{ padding: "8px 14px", fontSize: 13, marginLeft: "auto" }}
                       onClick={() => {
                         const tutar = parseFloat(duzenle.tutar);
                         if (!tutar || tutar <= 0) return showToast("Tutar girin");

@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.625.0";
+const SURUM = "1.626.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Kaydet/Vazgec ust mor seritte (siparis, fis, cari, stok, kasa, cek, tahsilat); siparis listesinde Belge No ve Sezon suzgeci";
+const SURUM_NOTU = "Kalan kaydetler de mor seritte: asorti, stok giris/cikis, fiyat listesi, fiyat grubu, elle kur, rapor, koli, gorsel, hesap ve hareket duzenleme, ekran duzeni";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Kaydet/Vazgec ust mor seritte (siparis, fis, cari, stok, kas
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.626.0", tarih: "09.10.2026",
+    eklenen: [],
+    degisen: ["Kalan Kaydet düğmeleri de üstteki mor şeritte: yeni asorti, bağımsız stok giriş/çıkış, fiyat listesi (kaydet ve farklı kaydet), ürün kartında fiyat grubu, elle kur, rapor ayarları, yeni koli, görsel değiştirme, kasa/banka hesap ve hareket düzenleme, ekran düzeni"],
+    duzeltilen: [] },
   { surum: "1.625.0", tarih: "09.10.2026",
     eklenen: [],
     degisen: ["Kaydet ve Vazgeç düğmeleri formların üstündeki mor şeritte: sipariş (yeni ve düzenleme, kaydırınca üstte kalır), alış/satış fişi, yeni cari, yeni stok kartı, cari hareketi, yeni kasa/banka, çek/senet, siparişte tahsilat"],

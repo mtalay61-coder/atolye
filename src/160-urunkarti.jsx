@@ -6714,9 +6714,16 @@ function ProductMatrixCard({
                       })}
                       {fkGrupForm && (
                         <div data-fk-grup-form="1" style={{ display: "flex", flexDirection: "column", gap: 6, padding: "6px 0", borderTop: "1px solid var(--erp-line-soft)" }}>
-                          <input value={fkGrupForm.ad} data-fk-grup-ad="1" placeholder="Grup adı (ör. Süetler)" autoFocus
-                            onChange={(e) => setFkGrupForm((f) => ({ ...f, ad: e.target.value }))}
-                            style={{ ...inputStyle, maxWidth: 240, fontSize: 13, padding: "5px 8px" }} />
+                          {/* MOR KAYIT ŞERİDİ (v1.626.0): grup adı + Kaydet · Vazgeç üstte; renk seçimi altında. */}
+                          <span style={{ ...MOR_SERIT_STIL, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", padding: "5px 8px" }}>
+                            <input value={fkGrupForm.ad} data-fk-grup-ad="1" placeholder="Grup adı (ör. Süetler)" autoFocus
+                              onChange={(e) => setFkGrupForm((f) => ({ ...f, ad: e.target.value }))}
+                              style={{ ...inputStyle, maxWidth: 240, fontSize: 13, padding: "5px 8px" }} />
+                            <span style={{ marginLeft: "auto", display: "inline-flex", gap: 6 }}>
+                              <button type="button" className="btn-primary btn-save" data-fk-grup-kaydet="1" style={{ padding: "4px 12px", fontSize: 12 }} onClick={() => fiyatGrubuKaydet(fkGrupForm)}><Save size={12} /> Kaydet</button>
+                              <button type="button" className="btn-ghost" style={{ padding: "4px 12px", fontSize: 12 }} onClick={() => setFkGrupForm(null)}>Vazgeç</button>
+                            </span>
+                          </span>
                           <span style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                             {tumRenkler.map((r) => {
                               const secili = fkGrupForm.renkler.includes(r);
@@ -6731,10 +6738,6 @@ function ProductMatrixCard({
                                 </button>
                               );
                             })}
-                          </span>
-                          <span style={{ display: "flex", gap: 6 }}>
-                            <button type="button" className="btn-primary" data-fk-grup-kaydet="1" style={{ padding: "4px 12px", fontSize: 12 }} onClick={() => fiyatGrubuKaydet(fkGrupForm)}>Kaydet</button>
-                            <button type="button" className="btn-ghost" style={{ padding: "4px 12px", fontSize: 12 }} onClick={() => setFkGrupForm(null)}>Vazgeç</button>
                           </span>
                         </div>
                       )}

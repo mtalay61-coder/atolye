@@ -516,6 +516,25 @@ function PaketlemeModule({
 
       {acikForm && (
         <div style={{ border: "1.5px solid #8A5A38", borderRadius: "var(--erp-r-md)", background: "var(--erp-hover)", padding: 12, marginBottom: 14 }}>
+          {/* MOR KAYIT ŞERİDİ (v1.626.0 — "Diğer kaydetleri de mor şeride al"): Koliyi Kaydet · Vazgeç, not ve cari
+              formun üstünde; önce kalem listesinin altındaydı. */}
+          <div data-koli-kayit-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center", padding: "6px 10px" }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#5B3F75" }}>Yeni Koli</span>
+            <button
+                          data-koli-kaydet="1" className="btn-primary btn-save" onClick={koliKaydet}><Save size={14} /> Koliyi Kaydet</button>
+            <button className="btn-ghost" onClick={() => { setGirisler({}); setAcikForm(false); }}><X size={14} /> Vazgeç</button>
+            <input
+              value={form.not}
+              onChange={(e) => setForm({ ...form, not: e.target.value })}
+              placeholder="Not (opsiyonel)"
+              style={{ ...inputStyle, maxWidth: 220 }}
+            />
+            {form.cariId && (
+              <span style={{ fontSize: 12, color: "var(--erp-info)" }}>
+                {(cariler || []).find((c) => c.id === form.cariId)?.unvan}
+              </span>
+            )}
+          </div>
           {/* KAYNAK SEÇİMİ — ÜÇ YOL, TEK SONUÇ.
               Bu ekranı personel kullanıyor: önüne bütün stok listesi değil, YALNIZCA o siparişin
               ya da o üretimin içindekiler çıkmalı. Kaynak seçilmeden ürün listesi hiç açılmıyor.
@@ -703,22 +722,6 @@ function PaketlemeModule({
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <button
-                          data-koli-kaydet="1" className="btn-primary btn-save" onClick={koliKaydet}><Save size={14} /> Koliyi Kaydet</button>
-            <button className="btn-ghost" onClick={() => { setGirisler({}); setAcikForm(false); }}><X size={14} /> Vazgeç</button>
-            <input
-              value={form.not}
-              onChange={(e) => setForm({ ...form, not: e.target.value })}
-              placeholder="Not (opsiyonel)"
-              style={{ ...inputStyle, maxWidth: 220 }}
-            />
-            {form.cariId && (
-              <span style={{ fontSize: 12, color: "var(--erp-info)" }}>
-                {(cariler || []).find((c) => c.id === form.cariId)?.unvan}
-              </span>
-            )}
-          </div>
         </div>
       )}
 

@@ -232,7 +232,9 @@ function DuzenAlani({ ekran, bloklar, aralik = 12, kilitli = false, acRef, disIk
   return (
     <div ref={kokRef} data-duzen-ekran={ekran} data-duzen-kip={kip ? "1" : undefined}>
       {baglam && baglam.yetkili && !kilitli && (kip ? !cubuksuz : !disIkon) && (
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0 }}>
+        // Düzen kipinde çubuk mor kayıt şeridi görünümünde (v1.626.0); kip dışında yalnız küçük ikon, zeminsiz.
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: kip ? 8 : 0, lineHeight: kip ? undefined : 0,
+          ...(kip ? { ...MOR_SERIT_STIL, padding: "5px 8px" } : {}) }}>
           {!kip ? (
             // KÜÇÜK İKON (v1.525.0 — kullanıcı: "Düzen için küçük ayar tutuyorsun, onunla yapılsın; kapatma ve silme
             // butonu gibi o kadar büyük yer kaplamasın, her zaman yapılmayacak işlem"). v1.523.0'da görünmediği için
@@ -408,7 +410,7 @@ function DuzenliSekmeler({ ekran, sekmeler, aktif, onSec, acRef, disIkon = false
   if (kip) {
     return (
       <div data-sekme-duzen-ekran={ekran} data-duzen-kip="1" style={{ marginBottom: 14, padding: 8, border: "2px dashed #6B4E8A66", borderRadius: "var(--erp-r-md)", background: "#6B4E8A0A" }}>
-        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+        <div style={{ ...MOR_SERIT_STIL, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8, padding: "5px 8px" }}>
           <span style={{ fontSize: 11, color: "var(--erp-purple)", marginRight: "auto" }}>
             Sekme düzeni — ⠿ ile sürükleyin ya da oklarla taşıyın; göz düğmesiyle gizleyin.{ekAciklama ? ` ${ekAciklama}` : ""} Bütün ürün kartlarında ve cihazlarda geçerli.
           </span>
