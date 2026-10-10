@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.632.1";
-const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Planlama hammadde ihtiyacinda renk satirlari ve malzeme kartlari da durum renginde";
+const SURUM = "1.633.0";
+const SURUM_TARIHI = "2026-10-10";
+const SURUM_NOTU = "Hiz: veri buyudukce yavaslayan menu ve ekran gecisleri hizlandi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Planlama hammadde ihtiyacinda renk satirlari ve malzeme kart
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.633.0", tarih: "10.10.2026",
+    eklenen: ["Fişler listesi 100'er fiş gösteriyor; altta \"Daha fazla göster\" (arama ve süzgeçler yine bütün fişlerde)"],
+    degisen: ["Hız: veri büyüdükçe yavaşlayan menü açılışları ve modül geçişleri hızlandı — gizli modüller artık her tıklamada yeniden çizilmiyor, üst menü yalnız boyutu değişince ölçülüyor, tarih/sayı biçimleme ve son işlemler akışı önbellekte"],
+    duzeltilen: ["Cari ekranında her kart bütün carilerin çek geçmişini tarıyordu; artık yalnız çek formu açıkken"] },
   { surum: "1.632.1", tarih: "10.10.2026",
     eklenen: [],
     degisen: ["Planlama > Hammadde İhtiyacı'nda renk satırları ve malzeme kartları da durum renginde (stokta var yeşil, siparişte mavi, eksik turuncu); kartta durum rozeti"],

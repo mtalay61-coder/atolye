@@ -20,6 +20,12 @@ function bugunYerel(tarih) {
 // Kullanıcı haklı olarak "saat tutmuyor" diyordu.
 //
 // Saat isteğe bağlı: gün bazlı listelerde saat gürültüdür, fiş geçmişinde ise gereklidir.
+// BİÇİMLEYİCİLER BİR KEZ KURULUYOR (v1.633.0): `toLocaleDateString("tr-TR")` her çağrıda yeni bir Intl
+// biçimleyicisi kuruyor; büyük veriyle profilde en pahalı tek fonksiyon buydu (Fişler, cari ekstre, son
+// işlemler binlerce satır için çağırıyor). Aynı yerel ayar + seçeneklerle `Intl.DateTimeFormat` aynı metni üretir.
+const TARIH_BICIM = new Intl.DateTimeFormat("tr-TR");
+const SAAT_BICIM = new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit" });
+
 function tarihYaz(deger, saatliMi) {
   if (!deger) return "";
 
@@ -36,7 +42,7 @@ function tarihYaz(deger, saatliMi) {
 
   const d = new Date(deger);
   if (isNaN(d.getTime())) return String(deger);
-  const tarih = d.toLocaleDateString("tr-TR");
+  const tarih = TARIH_BICIM.format(d);
 
   // SAAT ARTIK VARSAYILAN. Önceden çağıranın açıkça istemesi gerekiyordu ve 13 çağrının 9'u
   // istemiyordu; sonuçta saati kaydedilmiş bir hareket bile ekranda yalnızca günle görünüyordu.
@@ -44,7 +50,7 @@ function tarihYaz(deger, saatliMi) {
   // yukarıda ayrılıyor, yani buraya gelen her değerin gerçek bir saati var.
   // Çağıran açıkça `false` derse yine saatsiz yazılır (dar sütunlar için).
   if (saatliMi === false) return tarih;
-  return `${tarih} ${d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+  return `${tarih} ${SAAT_BICIM.format(d)}`;
 }
 
 function stokYuvarla(sayi) {

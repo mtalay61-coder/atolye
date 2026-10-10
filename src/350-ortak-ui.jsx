@@ -104,3 +104,18 @@ function CevrimdisiKilit({ yerelAcildi, bekleyenSayisi, sebep, onDene }) {
     </div>
   );
 }
+
+// GİZLİ MODÜL DONDURUCU (v1.633.0 — kullanıcı: "uygulama doldukça yavaşlama başladı gibi, menüler geç
+// açılıyor"). Modüller state'leri kaybolmasın diye hep mount'lu, yalnız `display:none` ile gizli (bkz. 100-app).
+// Ama App her çizildiğinde (sekme değişimi, menü açma, bir kayıt) GİZLİ on küsur modül de baştan çiziliyordu:
+// büyük veriyle bir menü açmak saniyeler sürüyordu — profilde zamanın çoğu ekranda görünmeyen Fişler,
+// Paketleme, Cari listelerindeydi. Gizli kaldığı sürece güncelleme ATLANIYOR; görünür olduğu çizimde
+// en güncel prop'larla yeniden çiziliyor (gizliyken kaçırdığı değişiklikler o an gelir). Modülün kendi
+// state'i ve context aboneliği etkilenmez — yalnız App'ten gelen yeniden çizim durdurulur.
+const GizliModul = React.memo(
+  function GizliModul({ aktif, children }) {
+    return <div style={{ display: aktif ? undefined : "none" }}>{children}</div>;
+  },
+  // true = "değişmedi, çizme": önce de gizliydi, şimdi de gizli.
+  (onceki, sonraki) => !onceki.aktif && !sonraki.aktif
+);

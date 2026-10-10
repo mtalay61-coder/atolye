@@ -16,6 +16,8 @@
 // ilgilendiriyor — onu iki listede göstermek, aynı belgeyi iki yerde aramak demek. Ayrım kalktı,
 // yerine tip süzgeçleri geldi: tek liste, isteyen çipiyle daraltıyor.
 
+const FIS_SAYFA = 100;
+
 function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi, faturalar, onFaturaAc }) {
   const [filtreTip, setFiltreTip] = useState("Tümü");
   const [query, setQuery] = useState("");
@@ -40,7 +42,10 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
   // KAPSAM (17 Eylül): liste, sayaçlar ve tip çipleri hepsi aynı kapsamdan beslenmeli; yalnız
   // listeyi süzmek, sayaçların kapsam dışı fişleri saymasına ve çiplerin boş süzgeç göstermesine
   // yol açıyordu.
-  const tumFisler = tumFisleriTopla(cariler, stok);
+  //
+  // ÖNBELLEK (v1.633.0 — kullanıcı: "uygulama doldukça yavaşlama başladı"): bütün cari ve stok hareketlerini
+  // dolaşıp gruplamak, arama kutusuna her harf yazışta baştan yapılıyordu. Yalnız veri değişince kuruluyor.
+  const tumFisler = React.useMemo(() => tumFisleriTopla(cariler, stok), [cariler, stok]);
   const sayilar = {
     "Tümü": tumFisler.length,
     "Satış": tumFisler.filter((f) => f.tip === "Satış").length,
@@ -55,6 +60,13 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
     "Maaş": tumFisler.filter((f) => f.tip === "Maaş").length,   // v1.589.0
     "Diğer": tumFisler.filter((f) => f.tip === "Diğer").length,
   };
+
+  // PARÇA PARÇA ÇİZİM (v1.633.0): binlerce fiş kartını birden çizmek ekranı açmayı dakikalara çıkarıyordu
+  // (büyük veriyle ölçüldü). Liste en yeniden eskiye sıralı; ilk FIS_SAYFA kadarı çiziliyor, altta "daha
+  // fazla" düğmesi. Arama/süzgeç bütün fişlerde çalışıyor — yalnız ÇİZİLEN sayı sınırlı. Süzgeç değişince
+  // sınır başa dönüyor: yeni sonuç kümesinde 900. sıradan başlamak anlamsız.
+  const [gorunenSayi, setGorunenSayi] = useState(FIS_SAYFA);
+  useEffect(() => { setGorunenSayi(FIS_SAYFA); }, [query, filtreTip, filtreDefter]);
 
   const q = query.trim().toLowerCase();
   const filtreli = tumFisler.filter((f) => {
@@ -241,7 +253,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
         <EmptyState text="Gösterilecek fiş bulunamadı." />
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
-          {filtreli.map((f) => {
+          {filtreli.slice(0, gorunenSayi).map((f) => {
             const acik = acikFis === f.key;
             // ÇİFT SAYIM: bir fiş HEM stok hareketi HEM cari hareketi taşır ve ikisi de aynı
             // ürün+renk+beden'i yazar. İkisini birden gruplamak miktarı İKİ KATI gösteriyordu
@@ -269,7 +281,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
             const yapisizHareketler = cariHareketleri.filter((h) => !h.urunAd);
             const renk = FIS_TIP_RENK[f.tip] || "var(--erp-text-2)";
             return (
-              <div key={f.key} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+              <div key={f.key} data-fis-kart={f.fisNo || f.key} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                 <button
                   type="button"
                   onClick={() => setAcikFis(acik ? null : f.key)}
@@ -515,6 +527,13 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
               </div>
             );
           })}
+          {filtreli.length > gorunenSayi && (
+            <button type="button" className="btn-ghost" data-fis-daha-fazla="1"
+              onClick={() => setGorunenSayi((n) => n + FIS_SAYFA)}
+              style={{ justifySelf: "center", padding: "8px 18px", fontSize: 13, fontWeight: 700 }}>
+              Daha fazla göster ({gorunenSayi} / {filtreli.length})
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -338,10 +338,13 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   })();
   // Şube önerileri BÜTÜN carilerdeki çek kayıtlarından toplanıyor: şube bilgisi cariye değil
   // bankaya ait, tek bir carinin geçmişine bakmak öneriyi gereksiz daraltırdı.
-  const gecmisCekler = (tumCariler || [])
-    .flatMap((c) => (c.hareketler || []).map((h) => h.cek))
-    .filter(Boolean);
-  const subeOnerileri = bilinenSubeler(gecmisCekler, hForm.cek && hForm.cek.banka);
+  //
+  // YALNIZ ÇEK FORMU AÇIKKEN (v1.633.0): liste HER kart için, kapalı olanlar dahil, bütün carilerin bütün
+  // hareketlerini dolaşıyordu — 150 cari × 150 cari × hareket; büyük veriyle Cari ekranını açmanın en
+  // pahalı parçasıydı. Öneri yalnız çek bilgisi girilen formda kullanılıyor.
+  const subeOnerileri = open && hForm.cek
+    ? bilinenSubeler((tumCariler || []).flatMap((c) => (c.hareketler || []).map((h) => h.cek)).filter(Boolean), hForm.cek.banka)
+    : [];
 
   return (
     <div ref={kartRef} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
