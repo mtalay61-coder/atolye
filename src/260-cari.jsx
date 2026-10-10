@@ -1,4 +1,4 @@
-function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
+function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -20,6 +20,21 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
     setPasifSekme(false);
     setAcikCariId(odemeHedefi.cariId);
   }, [odemeHedefi]);
+  // CARİ KARTINA GİT (v1.638.0, 100 `cariyeGit`): aynı süzgeç sıfırlama, kart açılır ve görünür yere kaydırılır.
+  useEffect(() => {
+    if (!hedefCariId) return;
+    setQuery("");
+    setCariTipSekme("Tümü");
+    setPasifSekme(false);
+    setCariUstSekme("liste");
+    setAcikCariId(hedefCariId);
+    if (onHedefCariTuketildi) onHedefCariTuketildi();
+    const id = hedefCariId;
+    setTimeout(() => {
+      const k = document.querySelector(`[data-cari-kart-id="${id}"]`);
+      if (k && k.scrollIntoView) k.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 350);
+  }, [hedefCariId]);
   // LİSTE DEFTERİ (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap"). Satır
   // bakiyesi, üstteki Alacak/Borç/Net özeti ve dip toplam seçilen deftere göre (Muhasebe ikisine de girer).
   // Açık kartın içindeki Genel/Resmi ayrımı ve ekstre süzgeci ayrı — kartta zaten var.

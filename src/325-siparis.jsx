@@ -135,6 +135,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   useEffect(() => {
     if (!hedefSiparisId) return;
     const hedef = siparisler.find((s) => s.id === hedefSiparisId);
+    // TİPİ TUTMAYAN HEDEF BU MODÜLÜN DEĞİL (v1.638.0): satış ve alış modülleri aynı `hedefSiparisId`'yi alıyor; satış
+    // modülü alış hedefini de uygulayıp aramasına "ALS-…" yazıyor (dönünce liste boş: "eşleşen satış siparişi yok") ve
+    // hedefi tüketip alış modülünün önüne geçebiliyordu. Sipariş sağ tıkındaki "Alış siparişi" ile ortaya çıktı.
+    if (hedef && sabitTip && hedef.tip !== sabitTip) return;
     if (hedef) {
       setSiparisSekme(hedef.tip === "Alış" ? "alis" : "satis");
       // DURUM SÜZGECİ HEDEFİ GİZLİYORDU (kullanıcı ekran görüntüsüyle bildirdi, 10 Eylül).
@@ -1124,6 +1128,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 onPencereAc={onPencereAc}
                 onDuzenle={siparisDuzenlemeyiBaslat}
                 onFiseGitNo={onFiseGitNo}
+                onCariGit={onGoToCari}
+                onUruneGit={onUruneGit}
                 kurlar={kurlar}
                 onKayitParaGuncelle={siparisKayitParaGuncelle}
                 onKalemleriBirlestir={siparisKalemleriniBirlestir}
@@ -2543,6 +2549,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       firmaBilgileri={firmaBilgileri}
                       onPencereAc={onPencereAc}
                 onFiseGitNo={onFiseGitNo}
+                onCariGit={onGoToCari}
+                onUruneGit={onUruneGit}
                       kurlar={kurlar}
                       onKayitParaGuncelle={siparisKayitParaGuncelle}
                       onKalemleriBirlestir={siparisKalemleriniBirlestir}
@@ -2617,6 +2625,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       firmaBilgileri={firmaBilgileri}
                       onPencereAc={onPencereAc}
                 onFiseGitNo={onFiseGitNo}
+                onCariGit={onGoToCari}
+                onUruneGit={onUruneGit}
                       kurlar={kurlar}
                       onKayitParaGuncelle={siparisKayitParaGuncelle}
                       onKalemleriBirlestir={siparisKalemleriniBirlestir}

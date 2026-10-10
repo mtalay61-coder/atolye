@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.637.0";
+const SURUM = "1.638.0";
 const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Sag tik kartin her yerinde; sipariste mor serit ozet satiriyla birlesti; recetede stok degisince eslesmeler sifirdan";
+const SURUM_NOTU = "Siparis sag tikinda Git: cari karti, fisler, alis siparisi, uretim; stok uzerinde stok karti, renk/beden ekle, recete, fiyat";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Sag tik kartin her yerinde; sipariste mor serit ozet satiriy
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.638.0", tarih: "10.10.2026",
+    eklenen: ["Sipariş sağ tık menüsünde GİT bölümü: cari kartı, siparişin fişleri, bağlı alış siparişleri ve üretimler (alış siparişinde kaynak satış)",
+      "Sipariş kartında bir stoğun üzerine sağ tıklayınca: Stok kartına git, Renk / beden ekle, Reçete, Fiyatlandırma",
+      "Cari kartına git artık doğrudan o kartı açıyor (sipariş, fiş ve ürün kartındaki bağlantılar)"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.637.0", tarih: "10.10.2026",
     eklenen: ["Sağ tık menüsü kartın her yerinde açılıyor (ürün, cari, üretim, sipariş kartı) — yazı kutularında tarayıcının kopyala/yapıştır menüsü kalır",
       "Sipariş sağ tık menüsünde Notlar"],

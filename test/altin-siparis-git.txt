@@ -1,0 +1,36 @@
+{
+ "hatalar": [],
+ "bosYer": {
+  "acildi": true,
+  "ogeler": [
+   "cari: Cari kartı: Müşteri B",
+   "fis: Fişe git: SF-Y",
+   "alis: Alış siparişi: ALS-Y"
+  ]
+ },
+ "stokUstunde": [
+  "cari: Cari kartı: Müşteri B",
+  "fis: Fişe git: SF-Y",
+  "alis: Alış siparişi: ALS-Y",
+  "stok: Stok kartına git",
+  "renk-beden: Renk / beden ekle",
+  "recete: Reçete",
+  "fiyat: Fiyatlandırma"
+ ],
+ "cari": {
+  "gorunenKart": 3,
+  "acikKart": [
+   "c2"
+  ]
+ },
+ "alis": [
+  "ALS-Y"
+ ],
+ "fis": [
+  "SF-Y"
+ ],
+ "urun": {
+  "pencereAcik": true,
+  "renkBedenBlogu": true
+ }
+}

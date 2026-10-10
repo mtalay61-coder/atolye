@@ -350,7 +350,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
   return (
     // Sağ tık kartın HER YERİNDE (v1.636.1; önce yalnız başlıktaydı).
-    <div ref={kartRef} {...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    <div ref={kartRef} data-cari-kart-id={cari.id} {...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <SagTikMenusu konum={sagMenu} onKapat={() => setSagMenu(null)} veri="cari" baslik={`CARİ · ${cari.unvan}`} ogeler={[
         { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
         { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },

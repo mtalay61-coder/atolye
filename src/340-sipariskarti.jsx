@@ -62,7 +62,7 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde, onCariGit, onUruneGit }) {
   // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
   const [showOdeme, setShowOdeme] = useState(false);
   // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
@@ -241,7 +241,11 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
 
   return (
     // Sağ tık kartın HER YERİNDE (v1.636.1): listede şerit kalktığı için kartın gövdesi de menüyü açar.
-    <div {...sagTikIsleyicileri((x, y) => setIslemMenu({ x, y }), open)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    // Tıklanan öğe bir stok grubunun içindeyse (data-siparis-urun) menüye o stoğun "git" öğeleri eklenir (v1.638.0).
+    <div {...sagTikIsleyicileri((x, y, hedef) => {
+      const u = hedef && hedef.closest ? hedef.closest("[data-siparis-urun]") : null;
+      setIslemMenu({ x, y, urunId: u ? u.getAttribute("data-siparis-urun") : null });
+    }, open)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       {/* LİSTEDE MOR ŞERİT YOK (v1.636.1 — kullanıcı: "sağ tık olduğu için mor alan ile üst bilgiyi birleştir, 2 kere aynı
           bilgiler veriyor"). Liste içinde açılan kartın şeridi belge/sezon/durumu, hemen üstündeki özet satırıyla
           (330 SiparisOzetSatiri) birebir tekrarlıyordu; düğmeleri de sağ tık menüsüne taşınmıştı. Artık başlık özet
@@ -496,8 +500,26 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
         const W = (typeof window !== "undefined" ? window.innerWidth : 1200) / o;
         const H = (typeof window !== "undefined" ? window.innerHeight : 900) / o;
         const x = Math.max(8, Math.min(islemMenu.x / o, W - genislik - 8));
-        // Ekranın altına yakın sağ tıkta menü yukarı açılır (yaklaşık yükseklik), kesilmesin.
-        const y = Math.max(8, Math.min(islemMenu.y / o, H - 330));
+        // GİT BAĞLARI (v1.638.0 — kullanıcı: "sipariş sağ tık, git olsun açılımında: alış siparişine git, fişlerine git,
+        // cari kartına git; stok üzerinde tıklarsa stok kartına git, stok renk beden ekle"). Bağlar kayıtlardan:
+        //   fişler     — carinin bu siparişe bağlı hareketlerinin fiş numaraları (fiş geçmişiyle aynı süzgeç: siparisId);
+        //   alış/üretim — satış kalemlerinin planlaması (referansNo) + bu satışa ayrılmış alışlar (rezervasyonSiparisId);
+        //   kaynak satış — alış siparişinin `rezervasyonSiparisId`'si.
+        const fisNolari = Array.from(new Set(((cari && cari.hareketler) || [])
+          .filter((h) => (h.siparisId ? h.siparisId === siparis.id : h.siparisNo === siparis.siparisNo) && h.fisNo)
+          .map((h) => h.fisNo)));
+        const planNo = (tip) => new Set((siparis.kalemler || []).filter((k) => k.planlama && k.planlama.tip === tip).map((k) => k.planlama.referansNo));
+        const alisNo = planNo("Satınalma");
+        const alislar = siparis.tip === "Satış" ? (tumSiparisler || []).filter((s) => s.id !== siparis.id && s.tip === "Alış"
+          && (alisNo.has(s.siparisNo) || s.rezervasyonSiparisId === siparis.id)) : [];
+        const uretimNo = planNo("Üretim");
+        const uretimler = (uretimSiparisleri || []).filter((u) => uretimNo.has(u.siparisNo) || (u.rezervasyonSiparisId && u.rezervasyonSiparisId === siparis.id));
+        const kaynakSatis = siparis.tip === "Alış" && siparis.rezervasyonSiparisId ? (tumSiparisler || []).find((s) => s.id === siparis.rezervasyonSiparisId) : null;
+        const menuUrun = islemMenu.urunId ? (stok || []).find((p) => p.id === islemMenu.urunId) : null;
+        const donus = { tab: siparis.tip === "Alış" ? "satinalma" : "siparis", etiket: siparis.tip === "Alış" ? "Satın Almaya dön" : "Siparişe dön" };
+        // Ekranın altına yakın sağ tıkta menü yukarı açılır (yaklaşık yükseklik), kesilmesin; çok öğede menü kendi içinde kayar.
+        const tahminiYukseklik = 330 + 36 * (Math.min(fisNolari.length, 5) + alislar.length + uretimler.length + (kaynakSatis ? 1 : 0) + (cari ? 1 : 0) + (menuUrun ? 4 : 0));
+        const y = Math.max(8, Math.min(islemMenu.y / o, H - Math.min(tahminiYukseklik, H - 16) - 8));
         const ogeStil = { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", textAlign: "left", cursor: "pointer", fontSize: 13 };
         const ayrac = <div style={{ height: 1, background: "var(--erp-line-soft)", margin: "2px 0" }} />;
         const kapat = () => setIslemMenu(null);
@@ -517,7 +539,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           <div data-siparis-islem-perde="1" onClick={kapat} onContextMenu={(e) => { e.preventDefault(); kapat(); }}
             style={{ position: "fixed", inset: 0, zIndex: 900 }}>
             <div data-siparis-islem-menusu="1" onClick={(e) => e.stopPropagation()} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              style={{ position: "fixed", left: x, top: y, width: genislik, background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)", overflow: "hidden" }}>
+              style={{ position: "fixed", left: x, top: y, width: genislik, maxHeight: H - 16, overflowY: "auto", background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)" }}>
               <div className="mono" style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 4px", borderBottom: "1px solid var(--erp-line-soft)" }}>
                 İŞLEMLER · {siparis.siparisNo}
               </div>
@@ -540,6 +562,33 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   <FileText size={15} /> Notlar ({siparisNotSayisi(siparis)})
                 </button>
               )}
+              {(() => {
+                const bolum = (baslik) => <div className="mono" style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 2px" }}>{baslik}</div>;
+                const git = (k, etiket, ikon, onClick, ek) => (
+                  <button key={k + (ek || "")} type="button" data-siparis-git={k} data-siparis-git-hedef={ek || undefined} style={ogeStil} onClick={() => { kapat(); onClick(); }}>
+                    {React.createElement(ikon, { size: 15 })} {etiket}
+                  </button>
+                );
+                const ogeler = [
+                  cari && onCariGit && git("cari", `Cari kartı: ${cari.unvan}`, Users, () => onCariGit(cari.id)),
+                  ...(onFiseGitNo ? fisNolari.slice(0, 5).map((no) => git("fis", `Fişe git: ${no}`, Receipt, () => onFiseGitNo(no), no)) : []),
+                  ...(onSiparisGit ? alislar.map((s) => git("alis", `Alış siparişi: ${s.siparisNo}`, Truck, () => onSiparisGit(s.id), s.siparisNo)) : []),
+                  ...(onGoToUretim ? uretimler.map((u) => git("uretim", `Üretim: ${u.siparisNo}`, Scissors, () => onGoToUretim(u.id), u.siparisNo)) : []),
+                  kaynakSatis && onSiparisGit && git("satis", `Kaynak satış: ${kaynakSatis.siparisNo}`, ArrowRight, () => onSiparisGit(kaynakSatis.id), kaynakSatis.siparisNo),
+                ].filter(Boolean);
+                const urunOgeleri = menuUrun && onUruneGit ? [
+                  git("stok", "Stok kartına git", Package, () => onUruneGit(menuUrun.id, "stok", donus)),
+                  git("renk-beden", "Renk / beden ekle", Plus, () => onUruneGit(menuUrun.id, "renkBeden", donus)),
+                  menuUrun.kategori === "Mamul" && git("recete", "Reçete", Layers, () => onUruneGit(menuUrun.id, "recete", donus)),
+                  git("fiyat", "Fiyatlandırma", Wallet, () => onUruneGit(menuUrun.id, "fiyat", donus)),
+                ].filter(Boolean) : [];
+                return (
+                  <>
+                    {ogeler.length > 0 && <>{ayrac}{bolum("GİT")}{ogeler}</>}
+                    {urunOgeleri.length > 0 && <>{ayrac}{bolum(`STOK · ${menuUrun.ad}`)}{urunOgeleri}</>}
+                  </>
+                );
+              })()}
               {ayrac}
               <button type="button" data-paylas-yazdir="1" style={ogeStil} onClick={() => paylas("yazdir")}><Printer size={15} /> Yazdır</button>
               <button type="button" data-paylas-pdf="1" style={ogeStil} onClick={() => paylas("pdf")}><FileText size={15} /> PDF indir</button>
@@ -745,7 +794,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   //
                   // Şimdi resim ve ad, başlık satırı + renk satırları boyunca uzanan TEK hücrede.
                   // Hem yer kazanılıyor hem aidiyet bir bakışta belli oluyor.
-                  <div key={ug.urunId} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+                  <div key={ug.urunId} data-siparis-urun={ug.urunId} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                     <div style={{ overflowX: "auto" }}>
                       {/* TABLO GÖRÜNÜMÜ (kullanıcı, 15 Eylül: "listeyi tablo şeklinde yapalım, daha renkli ve tabloyu andıran").
                           `matris-tablo` sınıfı başlık zemini, ince dikey çizgiler ve zebra satır veriyor (100-app). */}
