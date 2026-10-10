@@ -764,6 +764,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
           border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14,
         }}
       />
+      <AramaTemizle deger={aramaSorgusu} onTemizle={() => setAramaSorgusu("")} veri="tanimlar" />
       {aramaSorgusu && (
         <button
           type="button"

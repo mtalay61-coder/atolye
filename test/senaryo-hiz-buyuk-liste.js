@@ -36,7 +36,10 @@ async function calistir() {
   }
   await ara("THS-0003");
   sonuc.eskiFisArama = { kart: await kartSayisi(), dugme: await dugme() };
-  await ara("");
+  // × ile temizleme (v1.634.1 — kullanıcı: "aramada × da çıksın hızlı silme için").
+  await sayfa.locator('[data-arama-temizle="fisler"]:visible').first().click(); await sayfa.waitForTimeout(400);
+  sonuc.carpiyleTemizlendi = { metin: await sayfa.locator('input[placeholder^="Fiş no, sipariş no"]:visible').first().inputValue(),
+    carpiGizlendi: !(await sayfa.locator('[data-arama-temizle="fisler"]:visible').count()) };
   sonuc.aramaTemizlenince = { kart: await kartSayisi(), dugme: await dugme() };
 
   // Gizli modül: arama metni korunuyor, döndüğünde güncel.

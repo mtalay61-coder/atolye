@@ -213,6 +213,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
               border: "1px solid var(--erp-line)", fontSize: 14, background: "#fff",
             }}
           />
+          <AramaTemizle deger={query} onTemizle={() => setQuery("")} veri="fisler" />
         </div>
       </div>
 

@@ -2253,6 +2253,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13,
           }}
         />
+        <AramaTemizle deger={siparisArama} onTemizle={() => setSiparisArama("")} veri="siparis" />
         {siparisArama && (
           <button
             type="button"

@@ -437,6 +437,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                     border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13,
                   }}
                 />
+                <AramaTemizle deger={uretimArama} onTemizle={() => setUretimArama("")} veri="uretim" />
               </div>
               <div style={{ display: "flex", gap: 5 }}>
                 {["Tümü", "Bugün", "Bu Hafta", "Bu Ay"].map((d) => (

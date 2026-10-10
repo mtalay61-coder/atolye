@@ -338,6 +338,7 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
               border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14,
             }}
           />
+          <AramaTemizle deger={query} onTemizle={() => setQuery("")} veri="cari" />
         </div>
         <div data-cari-liste-defter={listeDefter} style={{ display: "flex", gap: 4 }}>
           {["Tümü", "Genel", "Resmi"].map((d) => (

@@ -284,6 +284,7 @@ function CariRaporlari({ cariler, siparisler, firmaBilgileri, showToast, onGoToS
           <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" }} />
           <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Cari ara…" data-cari-rapor-arama="1"
             style={{ width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14 }} />
+          <AramaTemizle deger={arama} onTemizle={() => setArama("")} veri="cari-rapor" />
         </div>
         {["Tümü", "Müşteri", "Tedarikçi"].map((t) => (
           <button key={t} type="button" onClick={() => setTipSec(t)}
