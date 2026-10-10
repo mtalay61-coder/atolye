@@ -7,5 +7,11 @@
  "tutarSolAyni": true,
  "durumSolAyni": true,
  "resimUste": true,
- "tasmaYok": true
+ "tasmaYok": true,
+ "baslikYukAyni": true,
+ "baslik": {
+  "zemin": "rgb(227, 237, 245)",
+  "yazi": "rgb(31, 78, 115)"
+ },
+ "tablettaTasmaYok": true
 }
