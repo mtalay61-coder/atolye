@@ -107,7 +107,8 @@ async function calistir() {
     tur: tr.getAttribute("data-form-kalem-satiri"),
     urunSecici: !!tr.querySelector("[data-form-kalem-urun]"),
     renk: (tr.querySelector("[data-form-kalem-renk]") || {}).value || null,
-    renkSecenekleri: [...((tr.querySelector("[data-form-kalem-renk]") || {}).options || [])].map((o) => o.textContent),
+    // v1.631.0: renk kutusu aramalı (SatirRenkKutusu) — seçenekler sarmalayıcının data özniteliğinde.
+    renkSecenekleri: ((tr.querySelector("[data-renk-secenekleri]") || { getAttribute: () => "" }).getAttribute("data-renk-secenekleri") || "").split("|").filter(Boolean),
     miktarKutusu: tr.querySelectorAll('input[type="number"]').length,
     silDugmesi: tr.querySelectorAll('button[title="Bu bedeni sil"]').length,
   })));
@@ -121,7 +122,11 @@ async function calistir() {
 
   // 4b. Taba satırı: ÜRÜN → Çizme (Taba Çizme'de yok → renk boşalır), sonra renk → Kahve, fiyat 375.
   const tabaSatiri = sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1);
-  await tabaSatiri.locator("[data-form-kalem-urun]").selectOption("u3");
+  {
+    // v1.631.0: satırdaki ürün seçici aramalı — yazıp Enter (ilk eşleşen).
+    const u = tabaSatiri.locator("[data-form-kalem-urun]");
+    await u.click(); await u.fill("Çizme"); await sayfa.waitForTimeout(150); await u.press("Enter");
+  }
   await sayfa.waitForTimeout(300);
   const renkBosaldi = await sayfa.evaluate(() => {
     const tr = document.querySelectorAll('tr[data-form-kalem-satiri="serbest"]')[1];
@@ -132,7 +137,13 @@ async function calistir() {
   await sayfa.waitForTimeout(400);
   const renksizRed = await sayfa.evaluate(() => /Çizme: renk seçin/.test(document.body.innerText));
   const renksizKayitYok = ((await depoOku(sayfa, "siparis:data")) || [])[0].kalemler.every((k) => k.urunId === "u2");
-  await sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1).locator("[data-form-kalem-renk]").selectOption("Kahve");
+  {
+    // v1.631.0: aramalı renk kutusu — yazıp öneriye dokun.
+    const kutu = sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1).locator("[data-form-kalem-renk]");
+    // Listede tam adı yazmak seçimdir (öneriye dokunmak da olur); sonra kutudan çıkılır.
+    await kutu.click(); await kutu.fill("Kahve"); await sayfa.waitForTimeout(150);
+    await kutu.press("Tab"); await sayfa.waitForTimeout(250);
+  }
   await sayfa.waitForTimeout(300);
   const fiyatKutusu = sayfa.locator('tr[data-form-kalem-satiri="serbest"]').nth(1).locator('input[type="number"]').last();
   await fiyatKutusu.fill("375");

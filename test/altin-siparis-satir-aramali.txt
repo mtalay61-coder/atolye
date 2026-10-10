@@ -1,0 +1,15 @@
+{
+ "hatalar": [],
+ "tur": {
+  "renk": "INPUT",
+  "urun": "INPUT"
+ },
+ "renkOneri": [
+  "Taba"
+ ],
+ "secilen": "Taba",
+ "yarimdaDondu": "Taba",
+ "urunOneri": [
+  "Bot"
+ ]
+}

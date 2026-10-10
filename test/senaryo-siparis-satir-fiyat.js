@@ -38,8 +38,10 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
 
   const satirlar = sayfa.locator('tr[data-form-kalem-satiri="serbest"]');
-  const siyah = satirlar.filter({ has: sayfa.locator('[data-form-kalem-renk] option:checked', { hasText: "Siyah" }) }).first();
-  const kahve = satirlar.filter({ has: sayfa.locator('[data-form-kalem-renk] option:checked', { hasText: "Kahve" }) }).first();
+  // v1.631.0: renk kutusu aramalı (input) — satır, kutunun değerine göre bulunuyor.
+  const satirIndeksi = (renk) => sayfa.evaluate((r) => [...document.querySelectorAll('tr[data-form-kalem-satiri="serbest"]')].findIndex((tr) => (tr.querySelector("[data-form-kalem-renk]") || {}).value === r), renk);
+  const siyah = satirlar.nth(await satirIndeksi("Siyah"));
+  const kahve = satirlar.nth(await satirIndeksi("Kahve"));
   const farkliKutusuOnce = await kahve.locator("[data-form-kalem-farkli-fiyat]").count();
   // Aynı fiyatlı satır: fiyat kutusu miktar kutularından sonraki ilk sayı kutusu (son sayı kutusu).
   const siyahFiyat = siyah.locator('input[type="number"]').last();
@@ -51,7 +53,7 @@ async function calistir() {
   await kahveFiyat.blur();
   await sayfa.waitForTimeout(300);
   // SATIRI SİL (v1.515.0 — kullanıcı: "sipariş formunda da satır silme olsun").
-  const taba = satirlar.filter({ has: sayfa.locator('[data-form-kalem-renk] option:checked', { hasText: "Taba" }) }).first();
+  const taba = satirlar.nth(await satirIndeksi("Taba"));
   await taba.locator("[data-form-kalem-satir-sil]").click();
   await sayfa.waitForTimeout(300);
   await sayfa.locator("[data-siparis-duzenle-kaydet]").click();

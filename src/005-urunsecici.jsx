@@ -7,7 +7,9 @@
 //
 // Bu bileşen yazarak süzer; ada, koda ve malzeme tipine göre eşleşir. Klavyeyle kullanılabilir
 // (yukarı/aşağı/Enter/Escape) çünkü reçete girişi seri bir iştir, fareye uzanmak yavaşlatır.
-function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliProses, onHizliUrunEkle, ozelKodAlanlari }) {
+// `veriAdi` / `kucuk` / `temizle` (v1.631.0): sipariş formunun SATIRINDA da kullanılıyor (açılır liste yerine) — kutuya data
+// özniteliği, satıra uygun küçük boy, satırda ürün boşaltılamadığı için × gizlenebilir.
+function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliProses, onHizliUrunEkle, ozelKodAlanlari, veriAdi, kucuk = false, temizle = true }) {
   const [acik, setAcik] = useState(false);
   const [sorgu, setSorgu] = useState("");
   const [vurgulu, setVurgulu] = useState(0);
@@ -89,11 +91,12 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
       <div
         style={{
           display: "flex", alignItems: "center", gap: 6, width: "100%", boxSizing: "border-box",
-          padding: "6px 8px", borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-brown)" : "var(--erp-border)"}`, background: "#fff",
+          padding: kucuk ? "3px 6px" : "6px 8px", borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-brown)" : "var(--erp-border)"}`, background: "#fff",
         }}
       >
         <Search size={13} color="var(--erp-text-3)" style={{ flexShrink: 0 }} />
         <input
+          {...(veriAdi ? { [veriAdi]: "1" } : {})}
           value={acik ? sorgu : (secili ? secili.ad : "")}
           onChange={(e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }}
           onFocus={() => { setAcik(true); setSorgu(""); }}
@@ -105,9 +108,9 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
             else if (e.key === "Escape") { setAcik(false); setSorgu(""); }
           }}
           placeholder={placeholder || "Ara veya seç…"}
-          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, padding: 0 }}
+          style={{ flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: kucuk ? 12 : 14, fontWeight: kucuk ? 600 : undefined, padding: 0 }}
         />
-        {secili && !acik && (
+        {secili && !acik && temizle && (
           <button
             type="button"
             onClick={() => { onSec(""); setSorgu(""); }}
@@ -163,6 +166,7 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
               <button
                 key={u.id}
                 type="button"
+                data-urun-oneri={u.ad}
                 onMouseDown={(e) => { e.preventDefault(); sec(u); }}
                 onMouseEnter={() => setVurgulu(i)}
                 // Kategori rengi sol kenarda: arama sonuçlarında mamul ile hammaddeyi karıştırmak
@@ -427,6 +431,33 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---- SATIR RENK KUTUSU (v1.631.0) ----
+// Kullanıcı (sipariş düzenleme, satırdaki renk açılır listesi): "Renk değiştirirken hep kullandığımız şekilde olsun." Satırdaki
+// <select> yerine Kalem Ekle'deki aramalı + resimli kutunun (AramaliMetin, yalnızListeden) aynısı. Seçim yalnız listedeki
+// bir renge TAM eşleşince `onSec`e gider; yarım yazım ya da boşaltılıp çıkılan kutu kayıtlı renge geri döner (satır
+// yanlışlıkla renksiz kalmasın). Kayıtlı renk üründe artık yoksa kutuda yazmaya devam eder (eski "(listede yok)" seçeneği).
+function SatirRenkKutusu({ deger, secenekler, resimler, onSec, veriAdi = "data-form-kalem-renk", eksik = false, placeholder = "Renk ara…" }) {
+  const [yazi, setYazi] = useState(deger || "");
+  useEffect(() => { setYazi(deger || ""); }, [deger]);
+  return (
+    // `data-renk-secenekleri`: testler seçenekleri okusun ("X (listede yok)" — kayıtlı renk üründe artık yoksa, eski select gibi).
+    <div style={{ minWidth: 170 }}
+      data-renk-secenekleri={[...(deger && !(secenekler || []).includes(deger) ? [`${deger} (listede yok)`] : []), ...(secenekler || [])].join("|")}
+      onBlur={() => setTimeout(() => setYazi((y) => ((secenekler || []).includes(y) ? y : (deger || ""))), 160)}>
+      <AramaliMetin
+        veriAdi={veriAdi}
+        deger={yazi}
+        onDegis={(v) => { setYazi(v); if ((secenekler || []).includes(v) && v !== deger) onSec(v); }}
+        oneriler={secenekler}
+        resimler={resimler}
+        yalnizListeden
+        placeholder={placeholder}
+        stil={{ padding: "4px 8px", fontSize: 13, ...(eksik ? { borderColor: "var(--erp-danger, #B3261E)" } : {}) }}
+      />
     </div>
   );
 }
