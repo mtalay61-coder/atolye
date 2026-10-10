@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.635.0";
+const SURUM = "1.635.1";
 const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Firma logosu kucultulerek kaydedilir; buyuk logo bir kez kucultulur";
+const SURUM_NOTU = "Depolama Durumu: stok dolulugu gorselsiz kayittan hesaplaniyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,9 @@ const SURUM_NOTU = "Firma logosu kucultulerek kaydedilir; buyuk logo bir kez kuc
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.635.1", tarih: "10.10.2026",
+    eklenen: [], degisen: [],
+    duzeltilen: ["Tanımlar > Depolama Durumu \"stok % dolu\" rozeti ürün görsellerini de sayıyordu; görseller v1.548'den beri ayrı kayıtta, rozet artık gerçekte yazılan görselsiz stok kaydının doluluğunu gösteriyor"] },
   { surum: "1.635.0", tarih: "10.10.2026",
     eklenen: [],
     degisen: ["Firma logosu yüklenirken küçültülerek kaydediliyor (uzun kenar 400 px); daha önce yüklenmiş büyük logo bir kez kendiliğinden küçültülür — Tanımlar kaydı ~530 KB'tan küçülür, bulut indirme kotası daha az harcanır"],
