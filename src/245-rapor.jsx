@@ -468,6 +468,42 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
     degistir({ [alanAdi]: basa ? [k, ...liste] : [...liste, k] });
   };
   const yazdirId = `rapor-yazdir-${modulAnahtari}`;
+  // BAŞLIK ALTI ARAMA KUTUSU — liste ve matris görünümü ortak (v1.629.0: matriste yalnız anahtar sütunlarda vardı;
+  // kullanıcı "başlık arama olsun… sevk edilen ve kalan detaylı filtreli" dedi — sayı sütunlarında da ">0", "5-10").
+  const kolonAramaHucresi = (k) => {
+    const alan = alanIndex[k];
+    if (alan.tip === "resim") return <th key={k} />;   // resimde arama yok
+    const deger = (tanim.kolonAramalari || {})[k] || "";
+    // SEÇENEK LİSTESİ (kullanıcı, 12 Eylül: "tıklayınca dolu satırlar çıksa, yazdıkça
+    // daralsa, seçmeli olsa"). Kutuya dokununca o sütunda GERÇEKTEN var olan değerler
+    // listeleniyor (`datalist`: yazdıkça daralır, seçilir). Liste, DİĞER sütun
+    // aramalarıyla süzülmüş satırlardan: Renk "siyah" seçildiyse Beden listesinde yalnız
+    // siyahın bedenleri kalır. En çok 200 değer — telefonda daha uzunu açılmıyor.
+    const digerleri = { ...(tanim.kolonAramalari || {}) }; delete digerleri[k];
+    const kaynak = raporKolonAra(raporAra(satirlar, alanlar, arama), alanlar, digerleri);
+    // Sayıda HAM değer (2220, "2.220,00" değil): kutu ">2220" gibi girdileri okuyor,
+    // binlik noktasını sayı sanırdı. Tarihte gün.ay.yıl — kutu onu anlıyor (aşağıda).
+    const secenekler = [...new Set(kaynak.map((r) => (rSayiMi(alan.tip) ? String(rSayi(r[k])) : raporDegerYaz(alan, r[k]))).filter((v) => v !== ""))]
+      .sort((x, y) => (rSayiMi(alan.tip) ? rSayi(x) - rSayi(y) : x.localeCompare(y, "tr")))
+      .slice(0, 200);
+    const listeId = `${yazdirId}-liste-${k}`;
+    return (
+      <th key={k} style={{ padding: "2px 4px" }}>
+        <datalist id={listeId}>
+          {secenekler.map((v) => <option key={v} value={v} />)}
+        </datalist>
+        <input
+          value={deger}
+          list={listeId}
+          data-kolon-arama={k}
+          placeholder={rSayiMi(alan.tip) ? ">5, 5-10…" : "ara…"}
+          title={rSayiMi(alan.tip) ? "Sayı: 5 eşit · >5 · <5 · >=5 · <=5 · 5-10 aralık" : "İçerir — harf duyarsız"}
+          onChange={(e) => degistir({ kolonAramalari: { ...(tanim.kolonAramalari || {}), [k]: e.target.value } })}
+          style={{ width: "100%", minWidth: 56, boxSizing: "border-box", padding: "3px 6px", fontSize: 11, border: `1px solid ${deger ? "var(--erp-brown)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-sm)", background: deger ? "var(--erp-panel)" : "#fff", textAlign: rSayiMi(alan.tip) ? "right" : "left" }}
+        />
+      </th>
+    );
+  };
 
   const rozet = (aktif, renk) => ({
     padding: "4px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 600, cursor: "pointer",
@@ -680,6 +716,12 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
 
       <div id={yazdirId} style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, overflowX: "auto" }}>
         <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{tanim.ad || baslik} <span className="mono" style={{ fontWeight: 400, color: "var(--erp-text-3)", fontSize: 11 }}>{bugunYerel()}</span></div>
+        {/* SABİT BAŞLIK (v1.629.0 — kullanıcı: "Raporlarda liste aşağı uzuyor ve aşağı indiğimizde başlıklar yukarıda
+            kalıyor; başlıklar sabit, rapor kısmı aşağı inebilsin, başlıkta arama olsun"). Tablo kendi kaydırma kutusunda
+            (ekran yüksekliği kadar); başlık ve arama satırları `position: sticky` ile kutunun üstünde kalır, liste altında
+            kayar. Sayfa kaydırmasında sticky çalışmıyordu: kap `overflowX: auto` olduğu için tarayıcı yapışmayı o kaba
+            bağlıyor, kap ise hiç dikey kaymıyordu. Çıktıda (075 yazdırma) kutu sınırı kalkar. */}
+        <div className="rapor-kaydirma" data-rapor-kaydirma="1" style={{ maxHeight: "calc(100vh - 170px)", minHeight: 240, overflow: "auto" }}>
         {sonuc.sutunlar.length === 0 && !sonuc.matris ? (
           <EmptyState text="Hiç sütun seçili değil — yukarıdan en az bir sütun seçin." />
         ) : sonuc.matris ? (() => {
@@ -696,18 +738,13 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
                   {th(`Toplam ${degerAlan.ad}`, true, { borderLeft: "1px dashed var(--erp-line)" }, "_toplam")}
                   {m.digerSutunlar.map((k) => <React.Fragment key={k}>{th(alanIndex[k].ad, rSayiMi(alanIndex[k].tip), null, k)}</React.Fragment>)}
                 </tr>
+                {/* Başlık satırıyla AYNI SIRA (v1.629.0): resim sütunu varken kutular bir sütun kayıyordu (resim başta,
+                    kutular anahtarlardan başlıyordu). Ölçü sütunları + toplam tek boş hücre; diğer sütunlarda da arama. */}
                 <tr data-rapor-kolon-arama="1" className="no-print">
-                  {m.anahtarlar.map((k) => {
-                    const deger = (tanim.kolonAramalari || {})[k] || "";
-                    return (
-                      <th key={k} style={{ padding: "2px 4px" }}>
-                        <input value={deger} data-kolon-arama={k} placeholder="ara…"
-                          onChange={(e) => degistir({ kolonAramalari: { ...(tanim.kolonAramalari || {}), [k]: e.target.value } })}
-                          style={{ width: "100%", minWidth: 56, boxSizing: "border-box", padding: "3px 6px", fontSize: 11, border: `1px solid ${deger ? "var(--erp-brown)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-sm)", background: deger ? "var(--erp-panel)" : "#fff" }} />
-                      </th>
-                    );
-                  })}
-                  <th colSpan={m.bedenler.length + 1 + m.digerSutunlar.length + m.resimSutunlari.length} />
+                  {m.resimSutunlari.map((k) => <th key={k} />)}
+                  {m.anahtarlar.map((k) => kolonAramaHucresi(k))}
+                  <th colSpan={m.bedenler.length + 1} />
+                  {m.digerSutunlar.map((k) => kolonAramaHucresi(k))}
                 </tr>
               </thead>
               <tbody>
@@ -791,40 +828,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
                   Gruplanmış rapor da satırlara (gruplama öncesi) uygulanıyor — sayı sütununda arama
                   aşama/kalem satırını süzer, grubun toplamını değil. */}
               <tr data-rapor-kolon-arama="1" className="no-print">
-                {sonuc.sutunlar.map((k) => {
-                  const alan = alanIndex[k];
-                  if (alan.tip === "resim") return <th key={k} />;   // resimde arama yok
-                  const deger = (tanim.kolonAramalari || {})[k] || "";
-                  // SEÇENEK LİSTESİ (kullanıcı, 12 Eylül: "tıklayınca dolu satırlar çıksa, yazdıkça
-                  // daralsa, seçmeli olsa"). Kutuya dokununca o sütunda GERÇEKTEN var olan değerler
-                  // listeleniyor (`datalist`: yazdıkça daralır, seçilir). Liste, DİĞER sütun
-                  // aramalarıyla süzülmüş satırlardan: Renk "siyah" seçildiyse Beden listesinde yalnız
-                  // siyahın bedenleri kalır. En çok 200 değer — telefonda daha uzunu açılmıyor.
-                  const digerleri = { ...(tanim.kolonAramalari || {}) }; delete digerleri[k];
-                  const kaynak = raporKolonAra(raporAra(satirlar, alanlar, arama), alanlar, digerleri);
-                  // Sayıda HAM değer (2220, "2.220,00" değil): kutu ">2220" gibi girdileri okuyor,
-                  // binlik noktasını sayı sanırdı. Tarihte gün.ay.yıl — kutu onu anlıyor (aşağıda).
-                  const secenekler = [...new Set(kaynak.map((r) => (rSayiMi(alan.tip) ? String(rSayi(r[k])) : raporDegerYaz(alan, r[k]))).filter((v) => v !== ""))]
-                    .sort((x, y) => (rSayiMi(alan.tip) ? rSayi(x) - rSayi(y) : x.localeCompare(y, "tr")))
-                    .slice(0, 200);
-                  const listeId = `${yazdirId}-liste-${k}`;
-                  return (
-                    <th key={k} style={{ padding: "2px 4px" }}>
-                      <datalist id={listeId}>
-                        {secenekler.map((v) => <option key={v} value={v} />)}
-                      </datalist>
-                      <input
-                        value={deger}
-                        list={listeId}
-                        data-kolon-arama={k}
-                        placeholder={rSayiMi(alan.tip) ? ">5, 5-10…" : "ara…"}
-                        title={rSayiMi(alan.tip) ? "Sayı: 5 eşit · >5 · <5 · >=5 · <=5 · 5-10 aralık" : "İçerir — harf duyarsız"}
-                        onChange={(e) => degistir({ kolonAramalari: { ...(tanim.kolonAramalari || {}), [k]: e.target.value } })}
-                        style={{ width: "100%", minWidth: 56, boxSizing: "border-box", padding: "3px 6px", fontSize: 11, border: `1px solid ${deger ? "var(--erp-brown)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-sm)", background: deger ? "var(--erp-panel)" : "#fff", textAlign: rSayiMi(alan.tip) ? "right" : "left" }}
-                      />
-                    </th>
-                  );
-                })}
+                {sonuc.sutunlar.map((k) => kolonAramaHucresi(k))}
                 {(tanim.gruplar || []).length > 0 && <th />}
               </tr>
             </thead>
@@ -860,6 +864,7 @@ function RaporSekmesi({ modulAnahtari, baslik, alanlar, satirlar, raporlar, onRa
             )}
           </table>
         )}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,40 @@
+{
+ "hatalar": [],
+ "sabit": {
+  "kutuKaydi": true,
+  "baslikUsttedi": true
+ },
+ "aramaSirasi": {
+  "ilkBaslik": "Resim",
+  "kutular": [
+   "siparisNo",
+   "tarih",
+   "teslimTarihi",
+   "cari",
+   "durum",
+   "musteriKodu",
+   "urun",
+   "renk",
+   "birim",
+   "planlamaTipi",
+   "referans",
+   "asama",
+   "paraBirimi",
+   "miktar",
+   "karsilanan",
+   "kalan",
+   "birimFiyat",
+   "tutar",
+   "teslimTutar",
+   "kalanTutar",
+   "asamaTutar"
+  ]
+ },
+ "suzulmus": [
+  "SAT-1 | 01.01.2026 | Müşteri B | Bekliyor | 22900 | Kırmızı | çift | Planlanmadı | Planlanmadı"
+ ],
+ "kalanliSatir": 9,
+ "bitenler": [
+  "SAT-1 | 01.01.2026 | Müşteri B | Bekliyor | 22901 | Kırmızı | çift | Planlanmadı | Teslim edildi"
+ ]
+}
