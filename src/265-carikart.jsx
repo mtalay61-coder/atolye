@@ -13,6 +13,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const open = acik;
   const setOpen = (v) => { const hedef = typeof v === "function" ? v(acik) : v; if (hedef !== acik) onAcKapa(); };
   const [duzenleModu, setDuzenleModu] = useState(false);
+  // Düzenleme başlangıcındaki kayıt (v1.640.0, denetim; 160 ile aynı gerekçe): form açıkken gelen değişiklik ezilmesin.
+  const duzenlemeKaynagiRef = useRef(null);
+  useEffect(() => { if (duzenleModu) duzenlemeKaynagiRef.current = cari; }, [duzenleModu]);   // bayat-muaf: yalnız açılış anındaki kayıt istenir
   const [duzenleUnvan, setDuzenleUnvan] = useState(cari.unvan);
   const [duzenleTip, setDuzenleTip] = useState(cari.tip);
   const [duzenleParaBirimi, setDuzenleParaBirimi] = useState(cari.paraBirimi || "TRY");
@@ -449,6 +452,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   // için, sonraki çağrı öncekinin değişikliğini görmüyor ve üzerine yazıyordu —
                   // yalnızca EN SON çağrı (paraBirimi) kalıcı oluyor, unvan ve tip kayboluyordu.
                   // Üçü tek seferde, atomik olarak yazılır.
+                  if (duzenlemeKaynagiRef.current && duzenlemeKaynagiRef.current !== cari
+                    && !window.confirm("Bu cari siz düzenlerken başka yerden değişti. Girdiğiniz alanlar o değişikliğin üstüne yazılsın mı?")) return;
                   onFieldsChange(cari.id, {
                     unvan: yeniUnvan,
                     tip: duzenleTip,

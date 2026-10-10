@@ -246,7 +246,11 @@ useEffect(() => {
           // bulut giriş ekranı. Ağ hatası (internet yok) ise eskisi gibi yerel kopya.
           // İki okuma yolu iki biçimde hata veriyor: `supabaseIstek` "Supabase 401: …",
           // `supabaseTumSatirlar` "tanimlar: HTTP 403". İkisi de yakalanıyor.
-          if (/\b(Supabase|HTTP) 40[13]\b|permission denied|Buluta yazma yetkisi yok|JWT|jwt/.test(mesaj)) {
+          // YENİLEME GEÇİCİ HATAYLA DÜŞTÜYSE OTURUM SİLİNMEZ (v1.640.0, denetim): Wi-Fi bağlanırken `jetonTazele` "Failed to
+          // fetch" alıp null dönüyor (oturumu koruyor), okuma 401 ile düşüyor ve burası geçerli oturumu silip şifre
+          // sorduruyordu. Oturum hâlâ duruyorsa (yenileme açıkça reddedilmedi) yerel kopyaya düşülür; bir sonraki
+          // istek yenilemeyi yeniden dener.
+          if (/\b(Supabase|HTTP) 40[13]\b|permission denied|Buluta yazma yetkisi yok|JWT|jwt/.test(mesaj) && !oturumVarMi()) {
             oturumYaz(null);
             setBulutGirisGerekli({ sebep: mesaj });
             setLoading(false);

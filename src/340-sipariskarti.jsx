@@ -1135,7 +1135,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
             // Reçete/ihtiyaç sekmesi yalnızca SATIŞ siparişlerinde ve reçetesi olan bir kalem varsa
             // anlamlıdır: alış siparişinin hammadde ihtiyacı diye bir şey yok, hammaddenin kendisi
             // satın alınıyor.
-            const ihtiyac = siparis.tip === "Satış" ? siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRezervasyonlari) : null;
+            const ihtiyac = siparis.tip === "Satış" ? siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRezervasyonlari, kurlar) : null;
             const ihtiyacVar = !!(ihtiyac && (ihtiyac.kalemler.length > 0 || ihtiyac.recetesizKalem > 0));
 
             const sekmeler = [];

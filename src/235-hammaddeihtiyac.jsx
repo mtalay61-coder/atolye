@@ -1,4 +1,4 @@
-function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoToUrun, onGoToUretim, cariler, onPlanlaHammaddeSatinAlma, sadeceUretimPlanli, aciklamaMetni, bosDurumMetni, hedefHammadde, onHedefTuketildi, showToast }) {
+function HammaddeIhtiyacSekmesi({ kurlar, siparisler, stok, uretim, onGoToSiparis, onGoToUrun, onGoToUretim, cariler, onPlanlaHammaddeSatinAlma, sadeceUretimPlanli, aciklamaMetni, bosDurumMetni, hedefHammadde, onHedefTuketildi, showToast }) {
   const [acikHammadde, setAcikHammadde] = useState(null);
   const [sadeceEksik, setSadeceEksik] = useState(true);
   const [arama, setArama] = useState("");
@@ -59,25 +59,26 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
             birim: hm.birim || "", gereken: acik, kaynaklar: [],
             mevcutStok: v.miktar || 0, minStok: v.minStok || 0,
             alisFiyati: hm.alisFiyati || 0,
+            alisFiyatiTL: hammaddeBirimFiyati(hm, k.renk, k.beden, kurlar || {}).tl || 0,
             // `fark` ve `eksikMi` açık miktardan türüyor: satır ancak "eksik" ise satın alma
             // listesine giriyor. Sıfır miktarlı satırı eksik saymak, alınacak bir şey yokken
             // sipariş formu açtırırdı.
             fark: acik > 0 ? -acik : (v.miktar || 0),
             eksikMi: acik > 0,
-            eksikMiktar: acik, eksikMaliyet: Math.round(acik * (hm.alisFiyati || 0) * 100) / 100,
+            eksikMiktar: acik, eksikMaliyet: Math.round(acik * (hammaddeBirimFiyati(hm, k.renk, k.beden, kurlar || {}).tl || 0) * 100) / 100,
             serbestMi: true,   // planlamadan değil, kullanıcının isteğiyle eklendi
           });
         });
     }
   }
 
-  const mrpSonuclari = mrpHesapla(siparisler || [], stok || [], uretim || [], sadeceUretimPlanli).map((r) => {
+  const mrpSonuclari = mrpHesapla(siparisler || [], stok || [], uretim || [], sadeceUretimPlanli, kurlar || {}).map((r) => {
     const kaynakIdler = new Set(r.kaynaklar.map((k) => k.siparisId));
     const satinAlma = hammaddeSatinAlmaDurumu(r.hammaddeUrunId, r.renk, r.beden, kaynakIdler, siparisler || []);
     const netEksik = Math.round(Math.max(0, r.eksikMiktar - satinAlma.yolda) * 100) / 100;
     return {
       ...r, satinAlma, netEksik,
-      netEksikMaliyet: Math.round(netEksik * (r.alisFiyati || 0) * 100) / 100,
+      netEksikMaliyet: Math.round(netEksik * (r.alisFiyatiTL != null ? r.alisFiyatiTL : (r.alisFiyati || 0)) * 100) / 100,
       // Eksik ama net eksiği kalmamış = tamamı sipariş edilmiş, yolda.
       siparisteMi: r.eksikMi && netEksik === 0 && satinAlma.yolda > 0,
     };
@@ -116,6 +117,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
         birim: hammaddeBirimi(r.hammaddeUrunId, stok, r.birim || g.birim),
         miktar: r.netEksik,
         alisFiyati: r.alisFiyati || 0,
+        alisFiyatiTL: r.alisFiyatiTL != null ? r.alisFiyatiTL : (r.alisFiyati || 0),
         // Rezervasyon payları seçim anında hesaplanır; kaynak siparişler sonradan değişse bile
         // kullanıcının onayladığı dağıtım korunur.
         rezervasyonlar: hammaddeRezervasyonDagit(r.kaynaklar, r.netEksik),
@@ -377,7 +379,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
             {Object.keys(topluSecim).length > 0 && onPlanlaHammaddeSatinAlma && (() => {
               const secilenler = Object.values(topluSecim);
               const hammaddeSayisi = new Set(secilenler.map((s) => s.hammaddeUrunId)).size;
-              const tahminiTutar = Math.round(secilenler.reduce((t, s) => t + s.miktar * (s.alisFiyati || 0), 0) * 100) / 100;
+              const tahminiTutar = Math.round(secilenler.reduce((t, s) => t + s.miktar * (s.alisFiyatiTL != null ? s.alisFiyatiTL : (s.alisFiyati || 0)), 0) * 100) / 100;
               // Aynı hammadde+renk+beden zaten tek anahtar olduğu için kalem birleştirmeye gerek yok.
               return (
                 <div

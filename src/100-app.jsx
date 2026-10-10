@@ -5015,6 +5015,7 @@ export default function AtolyeERP() {
           </GizliModul>
           <GizliModul aktif={tab === "planlama"}>
             <PlanlamaModule
+              kurlar={muhasebe.kurlar || {}}
               siparisler={siparisler}
               stok={stok}
               uretim={uretim}
