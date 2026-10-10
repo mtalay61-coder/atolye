@@ -13,5 +13,10 @@
   "zemin": "rgb(227, 237, 245)",
   "yazi": "rgb(31, 78, 115)"
  },
- "tablettaTasmaYok": true
+ "tablettaTasmaYok": true,
+ "toplamlar": {
+  "urunToplamSatiri": 0,
+  "genel": "SİPARİŞ TOPLAMI3 model · 12 kalem24 çift240 ₺",
+  "enAltta": true
+ }
 }
