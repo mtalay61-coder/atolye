@@ -11,5 +11,15 @@
   "Siparişte (yolda) (1)",
   "Kısmen siparişte (1)",
   "Eksik — sipariş yok"
- ]
+ ],
+ "planlama": {
+  "kartlar": [
+   "Deri → kismen (Kısmen siparişte)",
+   "Taban → yolda (Siparişte (yolda))"
+  ],
+  "satirlar": [
+   "hm-kart-u1 Siyah → kismen (rgb(161, 92, 7))",
+   "hm-kart-u3 Siyah → yolda (rgb(28, 109, 181))"
+  ]
+ }
 }

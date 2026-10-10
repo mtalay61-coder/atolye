@@ -458,9 +458,13 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
               const grupEksikMi = g.sonuclar.some((r) => r.netEksik > 0);
               const grupYoldaVar = g.sonuclar.some((r) => r.satinAlma.yolda > 0);
               const grupToplamEksikMaliyet = g.sonuclar.reduce((s, r) => s + (r.netEksikMaliyet || 0), 0);
+              // KART (MALZEME) DURUMU (v1.632.1 — kullanıcı: "Bu renkleri planlamadaki satırlara da uygula"): hücrelerin
+              // toplamından, standart yardımcıyla (015 hammaddeDurumuToplu) — kenar ve başlık rozeti bu renkte.
+              const grupDurum = hammaddeDurumuToplu(g.sonuclar);
+              const grupRenk = HAMMADDE_DURUMLARI[grupDurum].renk;
 
               return (
-                <div key={g.anahtar} id={`hm-kart-${g.hammaddeUrunId}`} style={{ background: "#fff", border: `1px solid ${grupEksikMi ? "var(--erp-orange)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-md)", padding: 10 }}>
+                <div key={g.anahtar} id={`hm-kart-${g.hammaddeUrunId}`} data-hm-kart-durum={grupDurum} style={{ background: "#fff", border: `1px solid ${grupRenk}`, borderLeft: `4px solid ${grupRenk}`, borderRadius: "var(--erp-r-md)", padding: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                     {/* Grup başlığındaki kutu: bu hammaddenin TÜM eksik renk/bedenlerini tek
                         hamlede seçer. Çok renkli bir hammaddede satır satır işaretlemek,
@@ -493,6 +497,10 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                       );
                     })()}
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{g.hammaddeAd}</span>
+                    <span className="mono" data-hm-kart-durum-rozet={grupDurum} title={HAMMADDE_DURUMLARI[grupDurum].aciklama}
+                      style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", border: `1px solid ${grupRenk}`, background: alfaEkle(grupRenk, "1F"), color: grupRenk }}>
+                      {HAMMADDE_DURUMLARI[grupDurum].ad}
+                    </span>
                     {grupYoldaVar && (
                       <span className="mono" style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: "#3D6B8A22", color: "var(--erp-info)" }}>
                         <Truck size={10} style={{ verticalAlign: -1, marginRight: 3 }} />siparişte
@@ -578,9 +586,15 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                             .filter((r) => r && r.netEksik > 0);
                           const satirTamSecili = satirEksikHucreler.length > 0 &&
                             satirEksikHucreler.every((r) => topluSecim[`${g.hammaddeUrunId}|${rg.renk}|${r.beden}`]);
+                          // SATIR DURUMU (v1.632.1): renk satırı da standart renkte — hafif zemin, solda renk şeridi, renk adı
+                          // durum renginde. Yapışkan ilk hücrenin zemini opak olmalı (kayan hücreler arkasından görünmesin).
+                          const satirDurum = hammaddeDurumuToplu(tumBedenler.map((b) => rg.bedenIndex[b]).filter(Boolean));
+                          const satirRenk = HAMMADDE_DURUMLARI[satirDurum].renk;
+                          const satirZemin = `color-mix(in srgb, ${satirRenk} 8%, #fff)`;
                           return (
-                            <tr key={rg.renk} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
-                              <td style={{ fontSize: 11, fontWeight: 600, padding: "5px 8px", whiteSpace: "nowrap", position: "sticky", left: 0, background: "#fff", zIndex: 1 }}>{rg.renk}</td>
+                            <tr key={rg.renk} data-hm-satir-durum={satirDurum} style={{ borderTop: "1px solid var(--erp-line-soft)", background: satirZemin }}>
+                              <td title={HAMMADDE_DURUMLARI[satirDurum].ad} style={{ fontSize: 11, fontWeight: 700, padding: "5px 8px", whiteSpace: "nowrap", position: "sticky", left: 0, background: satirZemin, zIndex: 1,
+                                color: satirRenk, boxShadow: `inset 3px 0 0 ${satirRenk}` }}>{rg.renk}</td>
                               {tumBedenler.map((b) => {
                                 const r = rg.bedenIndex[b];
                                 if (!r) return <td key={b}></td>;

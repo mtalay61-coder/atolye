@@ -4,7 +4,7 @@
 // Ölçülen: hammaddeDurumu → eksik yok = yeterli; eksiğin tamamı yolda = yolda; bir kısmı yolda = kismen; hiç yok = eksik.
 // siparisHammaddeIhtiyaci: bu satış siparişi için verilmiş, teslim alınmamış alış siparişi `yolda`ya ve durum'a yansır;
 // başka siparişe ayrılmış alış sayılmaz.
-const { hammaddeDurumu, siparisHammaddeIhtiyaci } = require("./erp.cjs");
+const { hammaddeDurumu, hammaddeDurumuToplu, siparisHammaddeIhtiyaci } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -35,4 +35,11 @@ bekle("alış yok → eksik", durumu([satis]), { gereken: 20, eksik: 15, yolda: 
 bekle("10 yolda → kismen", durumu([satis, alis("a1", 10, "s1")]), { gereken: 20, eksik: 15, yolda: 10, netEksik: 5, durum: "kismen" });
 bekle("15 yolda → yolda", durumu([satis, alis("a1", 15, "s1")]), { gereken: 20, eksik: 15, yolda: 15, netEksik: 0, durum: "yolda" });
 bekle("başka siparişin alışı sayılmaz", durumu([satis, alis("a2", 15, "s9")]), { gereken: 20, eksik: 15, yolda: 0, netEksik: 15, durum: "eksik" });
+// TOPLU DURUM (v1.632.1): Planlama'da renk satırı / malzeme kartı.
+const h = (eksik, yolda) => ({ eksikMi: eksik > 0, eksikMiktar: eksik, netEksik: Math.max(0, eksik - yolda), satinAlma: { yolda } });
+bekle("toplu: hepsi yeterli", hammaddeDurumuToplu([h(0, 0), h(0, 3)]), "yeterli");
+bekle("toplu: eksiklerin hepsi yolda", hammaddeDurumuToplu([h(0, 0), h(4, 4)]), "yolda");
+bekle("toplu: biri yolda biri siparişsiz → kismen", hammaddeDurumuToplu([h(4, 4), h(2, 0)]), "kismen");
+bekle("toplu: hiç sipariş yok", hammaddeDurumuToplu([h(4, 0), h(1, 0)]), "eksik");
+bekle("toplu: boş liste", hammaddeDurumuToplu([]), "yeterli");
 process.exit(hata);
