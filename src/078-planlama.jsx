@@ -21,6 +21,23 @@ function usePlanlama(d) {
 const planlaUretim = useCallback((satisSiparisId, girdiler) => {
   const girdiListesi = (Array.isArray(girdiler) ? girdiler : [girdiler])
     .map((x) => (typeof x === "string" ? { kalemId: x, miktar: null } : x));
+  // REÇETE ONAY KAPISI (v1.634.0 — kullanıcı: "reçete onaysız üretim başlamasın"). Güncelleyicinin DIŞINDA:
+  // içeride uyarı göstermek yan etki olurdu. Toplu planlamada tek bir modelin reçetesi bile onaysızsa HİÇBİR üretim
+  // açılmıyor — yarısı açılıp yarısı açılmayan bir toplu işlem, hangi satırın planlandığını karıştırırdı.
+  {
+    const kaynak = (siparisler || []).find((s) => s.id === satisSiparisId);
+    const urunIdleri = Array.from(new Set(girdiListesi
+      .map((g) => kaynak && (kaynak.kalemler || []).find((k) => k.id === g.kalemId))
+      .filter(Boolean).map((k) => k.urunId)));
+    const engeller = urunIdleri
+      .map((id) => uretimReceteKapisi((stok || []).find((p) => p.id === id), stok))
+      .filter(Boolean);
+    if (engeller.length > 0) {
+      showToast(engeller.length === 1 ? engeller[0] : `${engeller.length} modelin reçetesi onaylı değil — üretim açılmadı. ${engeller[0]}`);
+      // false: çağıran ekran formu temizlemesin / yönlendirmesin (kullanıcı reçeteyi onaylayıp aynı seçimle dönebilsin).
+      return false;
+    }
+  }
   setSiparisler((prevSiparisler) => {
     const satisSiparis = prevSiparisler.find((s) => s.id === satisSiparisId);
     if (!satisSiparis) return prevSiparisler;
@@ -228,6 +245,7 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
     );
     return nextSiparisler;
   });
+  return true;
 }, [uretim, stok, tanimlar, siparisler, stokRezervasyonlari, showToast, cop]);
 
 // Bir veya birden fazla kalemi (farklı renk/beden dahil) TEK bir Alış siparişinde, seçilen TEK tedarikçiye planlar.

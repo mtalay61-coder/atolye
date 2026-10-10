@@ -26,7 +26,8 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
   function topluGonder(tip) {
     const girdiler = seciliSatirlar.flatMap((x) => x.kalemler.map((k) => ({ kalemId: k.id, miktar: k.miktar - (k.karsilanan || 0) })));
     if (girdiler.length === 0) return;
-    if (tip === "Uretim") onPlanlaUretim(siparis.id, girdiler);
+    // Reçete onay kapısı (v1.634.0) üretimi reddederse seçim korunur.
+    if (tip === "Uretim") { if (onPlanlaUretim(siparis.id, girdiler) === false) return; }
     else {
       if (!topluCariId) { if (showToast) showToast("Önce tedarikçi seçin"); return; }
       onPlanlaSatinAlma(siparis.id, girdiler, topluCariId, { ayriAyri: !tekAlis });
@@ -588,7 +589,9 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                   .map((k) => ({ kalemId: k.id, miktar: parseFloat(miktarlar[k.id]) || 0 }))
                   .filter((g) => g.miktar > 0);
                 if (uretimGirdileri.length === 0 && satinalmaGirdileri.length === 0) return;
-                if (uretimGirdileri.length > 0) onPlanlaUretim(siparis.id, uretimGirdileri);
+                // Reçete onay kapısı (v1.634.0) reddederse hiçbir şey yapılmaz: satın alma yarısı da açılmasın,
+                // girilen miktarlar kalsın.
+                if (uretimGirdileri.length > 0 && onPlanlaUretim(siparis.id, uretimGirdileri) === false) return;
                 if (satinalmaGirdileri.length > 0) onPlanlaSatinAlma(siparis.id, satinalmaGirdileri, cariId);
                 setKalemTipleri({});
                 setMiktarlar({});

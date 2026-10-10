@@ -1,0 +1,43 @@
+{
+  "formBot": {
+    "uyari": "Bot: reçete tamamlanmadan üretim açılamaz — Siyah · Taban (Kesim): 40 bedeni eksik",
+    "olusturPasif": true
+  },
+  "formCizmeOnaysiz": {
+    "uyari": "Çizme: reçete onaylanmadan üretim açılamaz — ürün kartında Reçete sekmesinden onaylayın",
+    "olusturPasif": true
+  },
+  "botKarti": {
+    "durum": "eksik",
+    "onaylaPasif": true,
+    "eksikSayisi": 1,
+    "ilkEksik": "Siyah · Taban (Kesim): 40 bedeni eksik"
+  },
+  "cizmeOnce": {
+    "durum": "onaysiz",
+    "onaylaPasif": false,
+    "eksikSayisi": 0,
+    "ilkEksik": null
+  },
+  "cizmeSonra": {
+    "durum": "onayli",
+    "onaylaPasif": null,
+    "eksikSayisi": 0,
+    "ilkEksik": null
+  },
+  "depodaOnay": {
+    "var": true,
+    "tarihVar": true
+  },
+  "formCizmeOnayli": {
+    "uyari": null,
+    "olusturPasif": false
+  },
+  "onayliUretimAcildi": 1,
+  "planlama": {
+    "uyari": "Bot: reçete tamamlanmadan üretim açılamaz — Siyah · Taban (Kesim): 40 bedeni eksik",
+    "acilanUretim": 0,
+    "secimKorundu": true
+  },
+  "hatalar": []
+}

@@ -806,3 +806,83 @@ function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
   sonuc.iscilikSayisi += n;
   return sonuc;
 }
+
+// ================= REÇETE ONAYI (v1.634.0) =================
+//
+// Kullanıcı (10 Ekim): "mamul stok için reçete tam bitmeden üretim oluşturulamasın, reçete onay olsun, reçete
+// onaysız üretim başlamasın". Eksik reçeteyle açılan üretimde eksik hammadde hiç düşülmüyor, fark ancak sayımda
+// çıkıyordu (bkz. receteKapsamEksikleri). Kural:
+//   • TAM: reçetede en az bir hammadde; her model rengi ve her beden her hammaddede kapsanmış (mevcut iki kapsam
+//     denetimi); her satırın miktarı > 0; geçmişten hatırlanan (kırmızı) renk eşleşmesi kalmamış.
+//   • ONAY: yalnız tam reçete onaylanır. Onay, reçetenin İMZASIYLA saklanır (`urun.receteOnay = { imza, onaylayan,
+//     tarih }`, şema dışı alan → `ek`). Reçete onaydan sonra HANGİ YOLDAN değişirse değişsin (satır, renk/beden
+//     eklenmesi, şablon, kopya) imza tutmaz ve onay kendiliğinden düşer — her düzenleme yoluna tek tek "onayı sil"
+//     yazmak, unutulan bir yolda bayat onayla üretim açtırırdı.
+//   • KAPI: yeni üretim (Üretim modülü + Tedarik Planlama) onaylı reçete ister. Açılmış üretimler, hurda telafisi ve
+//     modelhane numunesi kapıdan geçmez: onlar ya karar verilmiş işin devamı ya da reçetesi henüz olmayan numune.
+//
+// İMZA: satırların ad/kimlik/işaret dışındaki alanları + model renk/beden kümesi + hammaddesiz prosesler. Hammadde
+// ADI dışarıda: yeniden adlandırma reçeteyi değiştirmez (bağ kimlikle).
+const RECETE_IMZA_DISI = new Set(["id", "eklemeId", "eklemeTarihi", "renkGecmisten", "renkOnayli", "hammaddeAd"]);
+function receteImzasi(urun) {
+  const satirlar = ((urun && urun.recete) || []).map((r) => JSON.stringify(
+    Object.keys(r).filter((k) => !RECETE_IMZA_DISI.has(k) && r[k] !== undefined && r[k] !== null && r[k] !== "").sort().map((k) => [k, r[k]])
+  )).sort();
+  const varyant = Array.from(new Set(((urun && urun.variants) || []).map((v) => `${v.renk}|${v.beden}`))).sort();
+  const metin = JSON.stringify([satirlar, varyant, ((urun && urun.receteEkProsesler) || []).slice().sort()]);
+  // djb2 — kısa ve kararlı; güvenlik değil, değişiklik tespiti.
+  let h = 5381;
+  for (let i = 0; i < metin.length; i++) h = ((h * 33) ^ metin.charCodeAt(i)) >>> 0;
+  return `${h.toString(36)}-${metin.length.toString(36)}`;
+}
+
+// Reçetenin neden "tam" olmadığını okunur cümlelerle döndürür (boş dizi = tam).
+function receteEksikleri(urun, stok) {
+  const recete = (urun && urun.recete) || [];
+  if (recete.length === 0) return ["Reçetede hiç hammadde yok"];
+  const eksikler = [];
+  receteRenkKapsamEksikleri(urun, stok).forEach((e) =>
+    eksikler.push(`${e.hammaddeAd}${e.proses ? ` (${e.proses})` : ""}: ${e.eksikRenkler.join(", ")} rengi tanımsız`));
+  const renkler = Array.from(new Set((urun.variants || []).map((v) => v.renk)));
+  renkler.forEach((mr) => {
+    const bedenler = (urun.variants || []).filter((v) => v.renk === mr).map((v) => v.beden); // sirasiz-tamam: yalnız kapsam denetimi, eksik listesi kendi sırasında
+    receteKapsamEksikleri(urun, mr, bedenler).forEach((e) =>
+      eksikler.push(`${mr} · ${e.hammaddeAd}${e.proses ? ` (${e.proses})` : ""}: ${e.eksikBedenler.join(", ")} bedeni eksik`));
+  });
+  const miktarsiz = recete.filter((r) => !(Number(r.miktar) > 0));
+  if (miktarsiz.length > 0) {
+    const adlar = Array.from(new Set(miktarsiz.map((r) => r.hammaddeAd || "?")));
+    eksikler.push(`Miktarı girilmemiş satır: ${adlar.join(", ")} (${miktarsiz.length} satır)`);
+  }
+  const kirmizi = recete.filter((r) => r.renkGecmisten);
+  if (kirmizi.length > 0) {
+    const adlar = Array.from(new Set(kirmizi.map((r) => r.hammaddeAd || "?")));
+    eksikler.push(`Geçmişten gelen (kırmızı) renk eşleşmesi onaylanmadı: ${adlar.join(", ")} — hücredeki ✓ ile onaylayın`);
+  }
+  return eksikler;
+}
+
+// Döner: { durum: "onayli" | "degisti" | "onaysiz" | "eksik", eksikler, onay }.
+// "eksik" önce gelir: onay kaydı olsa bile tam olmayan reçete onaylı sayılmaz (ör. sonradan renk eklendi).
+function receteOnayDurumu(urun, stok) {
+  const eksikler = receteEksikleri(urun, stok);
+  const onay = (urun && urun.receteOnay) || null;
+  if (eksikler.length > 0) return { durum: "eksik", eksikler, onay };
+  if (!onay || !onay.imza) return { durum: "onaysiz", eksikler, onay };
+  if (onay.imza !== receteImzasi(urun)) return { durum: "degisti", eksikler, onay };
+  return { durum: "onayli", eksikler, onay };
+}
+
+// Üretim açma kapısı: sorun yoksa null, varsa kullanıcıya gösterilecek cümle.
+// Testlerde `window.__receteOnaySerbest` kapıyı açar (çevrimdışı kilitteki `__cevrimdisiSerbest` gibi): eski
+// senaryoların tohum reçeteleri bilerek eksik (kapsam uyarılarını ölçüyorlar). Kapıyı ölçen senaryo bunu kapatır.
+function uretimReceteKapisi(urun, stok) {
+  if (typeof window !== "undefined" && window.__receteOnaySerbest) return null;
+  if (!urun) return "Ürün bulunamadı";
+  const d = receteOnayDurumu(urun, stok);
+  if (d.durum === "onayli") return null;
+  const ad = urun.ad || "Ürün";
+  if (d.durum === "eksik") return `${ad}: reçete tamamlanmadan üretim açılamaz — ${d.eksikler[0]}${d.eksikler.length > 1 ? ` (+${d.eksikler.length - 1} eksik daha)` : ""}`;
+  if (d.durum === "degisti") return `${ad}: reçete onaydan sonra değişti — üretim için reçeteyi yeniden onaylayın`;
+  return `${ad}: reçete onaylanmadan üretim açılamaz — ürün kartında Reçete sekmesinden onaylayın`;
+}
