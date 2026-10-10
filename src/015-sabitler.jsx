@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.627.0";
+const SURUM = "1.628.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Siparis kartinda sabit sutunlar: resim her urunde ayni yerde, renk/adet/birim/tutar/durum hizali";
+const SURUM_NOTU = "Siparis kartinda baslik satiri acik renkli (satis mavi, alis kahve), satir yukseklikleri sabit; tablo tablette tasmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Siparis kartinda sabit sutunlar: resim her urunde ayni yerde
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.628.0", tarih: "10.10.2026",
+    eklenen: [],
+    degisen: ["Sipariş kartında tablo başlıkları açık renkli: satışta açık mavi, alışta açık kahve zemin",
+      "Sipariş kartında resim tablonun solunda ayrı kutuda; başlık ve renk satırlarının yüksekliği her üründe aynı"],
+    duzeltilen: ["Sipariş kartı tablosu tablette sağa taşıyordu (Tutar/Durum kesiliyordu); sütun genişlikleri artık ekranın yüzdesi, hiza korunuyor"] },
   { surum: "1.627.0", tarih: "09.10.2026",
     eklenen: [],
     degisen: ["Sipariş kartında ürün tabloları sabit sütunlu: resim her üründe aynı yerde (sol üstte), renk sütunu sabit genişlikte (uzun ad alt satıra sarar), Adet / Birim / Tutar / Durum alt alta ürünlerde aynı hizada"],

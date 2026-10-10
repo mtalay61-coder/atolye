@@ -715,54 +715,39 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   // Hem yer kazanılıyor hem aidiyet bir bakışta belli oluyor.
                   <div key={ug.urunId} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                     <div style={{ overflowX: "auto" }}>
-                      {/* TABLO GÖRÜNÜMÜ (kullanıcı, 15 Eylül: "listeyi tablo şeklinde yapalım, daha
-                          renkli ve tabloyu andıran"). Matris çizgisizdi: hücreler yalnız boşlukla
-                          ayrılıyordu ve göz hangi sayının hangi bedene ait olduğunu takip etmek
-                          zorunda kalıyordu. `matris-tablo` sınıfı başlık zemini, ince dikey çizgiler
-                          ve zebra satır veriyor; sınıf tek yerde tanımlı (100-app), bütün matrisler
-                          aynı görünüyor. */}
-                      {/* SABİT SÜTUNLAR (v1.627.0 — kullanıcı: "Siparişte kolonlar dengesiz, buna düzen getirmemiz lazım, resim
-                          hep aynı yerde olsun"). Tablo `width: auto` idi: her ürünün tablosu kendi içeriğine göre genişliyor, uzun
-                          renk adı ("1014 – Beyaz Süet/Beyaz Baskı/Beyaz Deri") resim sütununu daraltıp ölçüleri sağa itiyordu —
-                          alt alta ürünlerde resim, ölçüler ve tutarlar her satırda başka yerdeydi. Artık `table-layout: fixed` +
-                          colgroup: resim 150 px, renk 250 px (uzun ad alt satıra sarar), sağdaki Adet / Birim / Tutar / Durum sabit;
-                          ölçü sütunları aradaki boşluğu eşit paylaşır. Her üründe resim, renk ve tutar aynı hizada. Dar ekranda
-                          tablo en az içeriği kadar geniş kalır, kap yatay kayar. */}
-                      <table className="matris-tablo" data-siparis-kart-tablo="1"
-                        style={{ width: "100%", tableLayout: "fixed", minWidth: 150 + 250 + tumBedenler.length * 52 + 100 + 95 + 115 + 125, borderCollapse: "collapse" }}>
+                      {/* TABLO GÖRÜNÜMÜ (kullanıcı, 15 Eylül: "listeyi tablo şeklinde yapalım, daha renkli ve tabloyu andıran").
+                          `matris-tablo` sınıfı başlık zemini, ince dikey çizgiler ve zebra satır veriyor (100-app). */}
+                      {/* SABİT SÜTUNLAR (v1.627.0 — "Siparişte kolonlar dengesiz… resim hep aynı yerde olsun"): `table-layout: fixed`
+                          + colgroup, genişlikler YÜZDE (v1.628.0 — piksel toplamı tablette ekrandan genişti). Ürünler arası hiza aynı.
+                          RESİM TABLONUN DIŞINDA (v1.628.0 — kullanıcı: "yükseklik sabit olsun"): resim, satırlara yayılan (rowspan)
+                          bir hücreydi; resim tablodan uzun olunca tarayıcı artan yüksekliği satırlara dağıtıyor, başlık satırı kimi
+                          üründe 26, kiminde 64 px oluyordu. Artık solda sabit genişlikte (120 px) ayrı kutu, tablo sağında; satır
+                          yükseklikleri içerikten gelir, başlık satırı her üründe aynı (34 px); tablo resim kutusunun boyuna uzamaz
+                          (`alignSelf: flex-start`) — tek renkli üründe satır şişmesin. Dar ekranda en az 760 px, kap kayar. */}
+                      <div data-siparis-kart-satir="1" style={{ display: "flex", minWidth: 760, alignItems: "stretch" }}>
+                        <div data-siparis-kart-resim="1" style={{
+                          flex: "0 0 120px", padding: "10px 8px", textAlign: "center",
+                          background: siparis.tip === "Alış" ? "#8A5A3812" : "#3D6B8A12",
+                          borderRight: `2px solid ${siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`,
+                        }}>
+                          {/* Resim BÜYÜK: ayakkabı modelini ayırt etmenin en hızlı yolu görseldir. */}
+                          <ColorSwatch src={urun ? urun.kapakResmi : null} editable={false} size={80} />
+                          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginTop: 6, lineHeight: 1.3, overflowWrap: "anywhere" }}>
+                            {ug.urunAd}
+                          </div>
+                        </div>
+                      <table className="matris-tablo" data-siparis-kart-tablo="1" data-tip={siparis.tip === "Alış" ? "alis" : "satis"}
+                        style={{ flex: 1, minWidth: 0, width: "100%", tableLayout: "fixed", borderCollapse: "collapse", alignSelf: "flex-start" }}>
                         <colgroup>
-                          <col style={{ width: 150 }} />
-                          <col style={{ width: 250 }} />
+                          <col style={{ width: "22%" }} />
                           {tumBedenler.map((b) => <col key={b} />)}
-                          <col style={{ width: 100 }} />
-                          <col style={{ width: 95 }} />
-                          <col style={{ width: 115 }} />
-                          <col style={{ width: 125 }} />
+                          <col style={{ width: "10%" }} />
+                          <col style={{ width: "10%" }} />
+                          <col style={{ width: "12%" }} />
+                          <col style={{ width: "14%" }} />
                         </colgroup>
                         <tbody>
-                          <tr>
-                            <td
-                              // +1 başlık satırı, +1 de (varsa) toplam satırı için.
-                              // Açık not satırları da birer satır (v1.623.0).
-                              rowSpan={renkGruplari.length + 1 + (renkGruplari.length > 1 ? 1 : 0)
-                                + renkGruplari.filter((rg) => acikNotSatirlari[`${ug.urunId}|${rg.renk}`] && grupNotlari(rg.kalemler).length > 0).length}
-                              style={{
-                                // ÜSTE HİZALI (v1.627.0): çok renkli üründe resim ortaya kayıyordu; artık her üründe sol üstte.
-                                padding: "10px 12px", verticalAlign: "top", textAlign: "center",
-                                background: siparis.tip === "Alış" ? "#8A5A3812" : "#3D6B8A12",
-                                borderRight: `2px solid ${siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`,
-                                minWidth: 132,
-                              }}
-                            >
-                              {/* Resim BÜYÜK: ayakkabı modelini ayırt etmenin en hızlı yolu görseldir.
-                                  Altına adet ve tutar yazmak hem resmi küçültüyor hem de aynı bilgiyi
-                                  ikinci kez gösteriyordu — birim fiyat ve tutar zaten satırlarda var,
-                                  adet de beden hücrelerinin toplamı. */}
-                              <ColorSwatch src={urun ? urun.kapakResmi : null} editable={false} size={92} />
-                              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginTop: 6, lineHeight: 1.3 }}>
-                                {ug.urunAd}
-                              </div>
-                            </td>
+                          <tr data-siparis-kart-baslik="1" style={{ height: 34 }}>
                             {/* Ürünün renk başlığı (v1.495.0): Renk / Baskı / Tip… */}
                             <th data-siparis-kart-renk-basligi="1" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" }}>{renkBasligi(urun)}</th>
                             {tumBedenler.map((b) => (
@@ -1019,6 +1004,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                           )}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   </div>
                 );

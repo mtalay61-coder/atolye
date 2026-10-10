@@ -3,6 +3,8 @@
 // Ölçülen: üç ürünlü siparişte (biri 5 ölçülü kısa renk adlı, biri tek ölçülü UZUN renk adlı, biri 2 ölçülü 3 renkli)
 // her ürün tablosunda resim hücresinin sol kenarı ve genişliği, renk başlığının genişliği, TUTAR ve DURUM başlıklarının
 // sol kenarı aynı; resim hücresi üste hizalı; uzun renk adı sarılır (yatay taşma yok).
+// v1.628.0 ("Başlıkların rengi değişsin", "Renkler çok baskın, tonunu açalım ve yükseklik sabit olsun"): başlık satırı
+// satışta AÇIK mavi zemin + koyu mavi yazı; başlık satırı yüksekliği her üründe aynı; 900 px tablette tablo taşmıyor.
 const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
@@ -25,19 +27,30 @@ async function calistir() {
   const olcum = await sayfa.evaluate(() => {
     const tablolar = [...document.querySelectorAll("[data-siparis-kart-tablo]")].filter((x) => x.getBoundingClientRect().width > 0);
     return tablolar.map((tb) => {
-      const resim = tb.querySelector("td[rowspan]"); const r = resim.getBoundingClientRect();
+      // v1.628.0: resim tablonun dışında, solda ayrı kutu.
+      const resim = tb.parentElement.querySelector("[data-siparis-kart-resim]"); const r = resim.getBoundingClientRect();
       const ths = [...tb.querySelectorAll("tr:first-child th")];
       const bul = (re) => { const h = ths.find((x) => re.test(x.textContent.trim())); return h ? Math.round(h.getBoundingClientRect().left) : null; };
       const renkB = tb.querySelector("[data-siparis-kart-renk-basligi]").getBoundingClientRect();
-      return { resimSol: Math.round(r.left), resimGen: Math.round(r.width), resimUst: getComputedStyle(resim).verticalAlign,
+      const bas = tb.querySelector("[data-siparis-kart-baslik]").getBoundingClientRect();
+      return { resimSol: Math.round(r.left), resimGen: Math.round(r.width), resimUst: Math.round(r.top) === Math.round(tb.getBoundingClientRect().top) ? "top" : "kaymis",
+        baslikYuk: Math.round(bas.height),
         renkGen: Math.round(renkB.width), tutarSol: bul(/^Tutar$/i), durumSol: bul(/^Durum$/i), tasma: tb.scrollWidth > tb.clientWidth + 1 };
     });
   });
+  // v1.628.0: başlık satırı renkli (satış mavi, beyaz yazı) + tablette (900 px) taşma yok.
+  const baslik = await sayfa.evaluate(() => {
+    const th = document.querySelector("[data-siparis-kart-tablo] [data-siparis-kart-renk-basligi]");
+    const cs = getComputedStyle(th); return { zemin: cs.backgroundColor, yazi: cs.color };
+  });
+  await sayfa.setViewportSize({ width: 900, height: 950 }); await sayfa.waitForTimeout(500);
+  const tablet = await sayfa.evaluate(() => [...document.querySelectorAll("[data-siparis-kart-tablo]")].filter((x) => x.getBoundingClientRect().width > 0)
+    .every((tb) => { const kap = tb.parentElement; return kap.scrollWidth <= kap.clientWidth + 1; }));
   if (process.env.EKRAN) await sayfa.screenshot({ path: process.env.EKRAN, fullPage: false });
   await tarayici.close();
   const ayni = (alan) => olcum.length > 1 && olcum.every((o) => o[alan] === olcum[0][alan]);
   return { hatalar, tabloSayisi: olcum.length, resimSolAyni: ayni("resimSol"), resimGenAyni: ayni("resimGen"), renkGenAyni: ayni("renkGen"),
-    tutarSolAyni: ayni("tutarSol"), durumSolAyni: ayni("durumSol"), resimUste: olcum.every((o) => o.resimUst === "top"), tasmaYok: olcum.every((o) => !o.tasma) };
+    tutarSolAyni: ayni("tutarSol"), durumSolAyni: ayni("durumSol"), resimUste: olcum.every((o) => o.resimUst === "top"), tasmaYok: olcum.every((o) => !o.tasma), baslikYukAyni: ayni("baslikYuk"), baslik, tablettaTasmaYok: tablet };
 }
 if (require.main === module) calistir().then((s) => console.log(JSON.stringify(s, null, 1)));
 module.exports = { calistir };

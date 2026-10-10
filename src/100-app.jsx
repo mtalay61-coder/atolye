@@ -3723,6 +3723,11 @@ export default function AtolyeERP() {
         .matris-tablo th:last-child, .matris-tablo td:last-child { border-right: none; }
         .matris-tablo tbody tr:nth-child(even) > td { background: var(--erp-zebra); }
         .matris-tablo tbody tr:hover > td { background: var(--erp-hover); }
+        /* SİPARİŞ KARTI BAŞLIK SATIRI (v1.628.0 — kullanıcı: "Başlıkların rengi değişsin", ardından "Renkler çok baskın
+           oldu, tonunu açalım"): sipariş tipinin AÇIK tonu (satış açık mavi, alış açık kahve), yazı aynı rengin koyusu.
+           Hücrelerde satır içi renk var; !important o yüzden. */
+        .matris-tablo[data-siparis-kart-tablo] tbody tr[data-siparis-kart-baslik] > th { background: #E3EDF5 !important; color: #1F4E73 !important; }
+        .matris-tablo[data-siparis-kart-tablo][data-tip="alis"] tbody tr[data-siparis-kart-baslik] > th { background: #F1E6DA !important; color: #6B4426 !important; }
         /* NOTLU SİPARİŞ SATIRI (v1.623.0): zebra/hover sarıyı ezmesin — not var, bir bakışta. Ürün hücresi (rowspan) hariç. */
         .matris-tablo tbody tr[data-kart-notlu-satir] > td:not([rowspan]), .matris-tablo tbody tr[data-kart-not-satiri] > td { background: #FFF6DA; }
         .matris-tablo tbody tr[data-kart-notlu-satir]:hover > td:not([rowspan]) { background: #FFEFC2; }
