@@ -73,7 +73,8 @@ async function calistir() {
   // v1.636.0: Yazdır/PDF/WhatsApp/E-posta şeritte düğme değil, mor şeride SAĞ TIKLA açılan menüde (kullanıcı: gizlenecek
   // özellikler sağ tıkla). Ölçülen: şeritte paylaş düğmesi yok; menüde dört öğe, Yazdır PDF'in ÜSTÜNDE (önce gelen).
   const seritteDugmeYok = !(await sayfa.evaluate(() => [...document.querySelectorAll("[data-paylas-seridi]")].some((x) => (x.getAttribute("data-paylas-seridi") || "").startsWith("SAT-9001") && x.getBoundingClientRect().width > 0)));
-  await sayfa.locator("[data-siparis-ust-serit]:visible").first().click({ button: "right", position: { x: 6, y: 6 } });
+  // v1.637.0: listede mor şerit yok — menü özet satırına (ya da kartın gövdesine) sağ tıkla açılıyor.
+  await sagTikAc(sayfa, '[data-siparis-satir="SAT-9001"]');
   await sayfa.waitForTimeout(300);
   const serit = await sayfa.evaluate(() => {
     const m = document.querySelector("[data-siparis-islem-menusu]");

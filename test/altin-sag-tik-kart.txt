@@ -1,0 +1,24 @@
+{
+ "hatalar": [],
+ "liste": {
+  "morSerit": 0,
+  "seritBelge": 0,
+  "satirBelge": 1,
+  "satirNot": 1
+ },
+ "menu": [
+  "Tahsilat Gir",
+  "Notlar (3)",
+  "Yazdır",
+  "PDF indir",
+  "WhatsApp",
+  "E-posta"
+ ],
+ "notPenceresi": {
+  "genel": "SİPARİŞ NOTU\nKutular logolu",
+  "renk": 2
+ },
+ "urunMenu": "ÜRÜN · Bot",
+ "urunInputVar": true,
+ "urunInputtaMenuYok": true
+}

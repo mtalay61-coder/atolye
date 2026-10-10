@@ -691,6 +691,77 @@ function grupYeniRenkSatirlari(satirlar, yeniRenk, tumUrunler, gecmisHarita, ekl
   }
 }
 
+// REÇETEDE STOK DEĞİŞİMİ = SIFIRDAN EKLEME (v1.636.1 — kullanıcı: "stok değiştiğinde stoğun renk eşleştirme mantığı da
+// değişmesi gerekli, sıfırdan stok ekler gibi davranmalı"). v1.636.0 eski hammadde rengini yeni stokta AYNI AD varsa
+// koruyordu; ama eski renk eski stoğun kararıydı (Deri "Taba" ↔ mamul "Siyah"), yeni stokta anlamsız. Artık her
+// satırın rengi ve boyu, yeni stok "Reçeteye Ekle"den eklenseydi nasıl çözülecekse öyle çözülür:
+//   renk: mamul (pozisyon) rengiyle aynı ad → geçmiş reçete kararı (kırmızı, `renkGecmisten`) → Standart / tek renk;
+//         renksiz stokta "Standart"; ambalajda (değişken) yeni stoğun ilk rengi (üretimde siparişten değişir).
+//   boy:  bedensiz stokta mamul beden başına satırlar tek "Tüm Bedenler" satırına iner (miktarlar aynıysa —
+//         farklıysa bedenler korunur, boy "Standart"); bedenli stokta "Tüm Bedenler" satırı mamulün her bedenine açılır,
+//         boy aynı ad → geçmiş → Standart / tek boy.
+// KONUM VE MİKTAR KALIR (mamul renk/beden, proses, pozisyon, açıklama, miktar) — kullanıcının girdiği emek bunlar.
+// Çözülemeyen hücre ESKİ değeriyle kalır ve sayılır (matriste "(stokta yok)", kullanıcı eşleştirir): satırı düşürmek
+// miktarı kaybettirirdi. Döner: { satirlar, gecmisSayisi, bosRenk, bosBeden }.
+function stokDegisimSatirlari(satirlar, yeni, tumUrunler, mamulBedenleriFn) {
+  const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+  const sonuc = { satirlar: [], gecmisSayisi: 0, bosRenk: 0, bosBeden: 0 };
+  const harita = gecmisRenkEslesmeleri(tumUrunler || []);
+  const bedenHarita = gecmisBedenEslesmeleri(tumUrunler || []);
+  const renksiz = urunRenksizMi(yeni);
+  const bedensiz = urunBedensizMi(yeni);
+  const hBedenler = Array.from(new Set((yeni.variants || []).map((v) => v.beden).filter((b) => olcuGoster(b))));  // sirasiz-tamam (yalnız arama)
+  const ilkRenk = ((yeni.variants || [])[0] || {}).renk || "Standart";
+  const bedenCoz = (mb) => {
+    const isim = hBedenler.find((b) => nrm(b) === nrm(mb));
+    if (isim) return { beden: isim, gecmis: false };
+    const g = gecmisBedenOnerisi(bedenHarita, yeni.id, mb);
+    if (g && hBedenler.some((b) => nrm(b) === nrm(g))) return { beden: g, gecmis: true };
+    const st = hBedenler.find((b) => nrm(b) === "standart");
+    if (st) return { beden: st, gecmis: false };
+    if (hBedenler.length === 1) return { beden: hBedenler[0], gecmis: false };
+    return { beden: "", gecmis: false };
+  };
+  const temiz = (satirlar || []).map(({ id: _id, renkGecmisten: _rg, renkOnayli: _ro, bedenGecmisten: _bg, ...rest }) => rest);
+  // 1) BOY — önce satır kümesi yeni stoğun ölçü yapısına göre kurulur.
+  let kume = [];
+  if (bedensiz) {
+    const gruplar = new Map();
+    temiz.forEach((r) => { const k = `${r.mamulRenk}|${r.aciklama || ""}`; if (!gruplar.has(k)) gruplar.set(k, []); gruplar.get(k).push(r); });
+    gruplar.forEach((l) => {
+      const ayniMiktar = l.every((r) => Number(r.miktar) === Number(l[0].miktar));
+      if (ayniMiktar) kume.push({ ...l[0], mamulBeden: "Tüm Bedenler", beden: "Standart" });
+      else l.forEach((r) => kume.push({ ...r, beden: "Standart" }));
+    });
+  } else {
+    temiz.forEach((r) => {
+      const mbler = r.mamulBeden === "Tüm Bedenler" ? (mamulBedenleriFn ? mamulBedenleriFn(r.mamulRenk) : []) : [r.mamulBeden];
+      if (!mbler.length) { kume.push(r); return; }
+      mbler.forEach((mb) => {
+        const c = bedenCoz(mb);
+        if (!c.beden) sonuc.bosBeden += 1;
+        kume.push({ ...r, mamulBeden: mb, beden: c.beden || r.beden, ...(c.gecmis ? { bedenGecmisten: true } : {}) });
+      });
+    });
+  }
+  // 2) RENK — "Reçeteye Ekle" ile aynı çözüm (`sablonRengiCoz`, yeni stok üzerinden).
+  kume.forEach((r) => {
+    let renk; let gecmis = false;
+    if (renksiz) renk = "Standart";
+    else if (r.ambalajDegisken) renk = ilkRenk;
+    else {
+      const poz = parseInt((String(r.aciklama || "").match(/^(\d+)\. Renk$/) || [])[1] || "", 10) || null;
+      const c = sablonRengiCoz({ hammaddeUrunId: yeni.id, pozisyon: poz }, r.mamulRenk, { tumUrunler }, harita);
+      renk = c.renk; gecmis = !!c.gecmis;
+    }
+    if (!renk) sonuc.bosRenk += 1;
+    if (gecmis) sonuc.gecmisSayisi += 1;
+    sonuc.satirlar.push({ ...r, hammaddeUrunId: yeni.id, hammaddeAd: yeni.ad, birim: yeni.birim || r.birim,
+      renk: renk || r.renk, ...(r.ambalajDegisken ? { ambalajSecenekleri: undefined } : {}), ...(gecmis ? { renkGecmisten: true } : {}) });
+  });
+  return sonuc;
+}
+
 // EKSİK RENK EŞLEŞMELERİNİ DOLDUR (v1.566.0 — kullanıcı: "Eşleştirmede renk ve bedensizler otomatik eşleşecek, renk
 // uyanlar otomatik, eskiden hatırlama mantığı da olacak"). v1.564'ten ÖNCE eklenen renkler (ya da elle bırakılmış
 // boşluklar) için: ürünün her rengi × her reçete grubu, satırı yoksa `grupYeniRenkSatirlari` ile (aynı ad → geçmiş

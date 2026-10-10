@@ -387,8 +387,10 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
   const genelNotlar = siparisNotlari.filter((n) => !n.proses || !bilinenProsesler.has(n.proses));
 
   return (
+    // Sağ tık kartın HER YERİNDE (v1.636.1; önce yalnız başlık satırındaydı).
     <div
       ref={kartRef}
+      {...sagTikIsleyicileri((x, y) => setUretimSagMenu({ x, y }))}
       style={{
         background: "var(--erp-panel)", border: `1px solid ${vurgulu ? "var(--erp-orange)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-md)", padding: 14,
         borderLeft: `4px solid ${renkKartCizgi}`,
@@ -410,7 +412,6 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
       <div
         onClick={() => setAcik((v) => !v)}
         data-uretim-kart-serit={o.siparisNo}
-        {...sagTikIsleyicileri((x, y) => setUretimSagMenu({ x, y }))}
         style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: acik ? 10 : 0, cursor: "pointer" }}
       >
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
