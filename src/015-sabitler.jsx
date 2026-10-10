@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.628.0";
+const SURUM = "1.629.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Siparis kartinda baslik satiri acik renkli (satis mavi, alis kahve), satir yukseklikleri sabit; tablo tablette tasmiyor";
+const SURUM_NOTU = "Raporlarda basliklar sabit (liste kendi kutusunda kayar), matriste her sutunda baslik aramasi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Siparis kartinda baslik satiri acik renkli (satis mavi, alis
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.629.0", tarih: "10.10.2026",
+    eklenen: ["Raporlarda başlıklar sabit: liste kendi kutusunda aşağı kayar, başlık ve arama satırı üstte, toplam satırı altta kalır",
+      "Matris görünümünde sayı sütunlarında da başlık araması (Teslim Edilen, Kalan, tutarlar: >0, 5-10…) ve bütün arama kutularında değer önerisi"],
+    degisen: [],
+    duzeltilen: ["Matris raporunda resim sütunu varken başlık altı arama kutuları bir sütun kayıyordu"] },
   { surum: "1.628.0", tarih: "10.10.2026",
     eklenen: [],
     degisen: ["Sipariş kartında tablo başlıkları açık renkli: satışta açık mavi, alışta açık kahve zemin",

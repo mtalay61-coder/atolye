@@ -3723,6 +3723,13 @@ export default function AtolyeERP() {
         .matris-tablo th:last-child, .matris-tablo td:last-child { border-right: none; }
         .matris-tablo tbody tr:nth-child(even) > td { background: var(--erp-zebra); }
         .matris-tablo tbody tr:hover > td { background: var(--erp-hover); }
+        /* RAPOR: SABİT BAŞLIK (v1.629.0 — kullanıcı: "aşağı indiğimizde başlıklar yukarıda kalıyor"). Tablo kendi
+           kaydırma kutusunda (245 .rapor-kaydirma); başlık + arama satırı üstte, toplam satırı altta yapışık kalır.
+           Zemin beyaz — yapışık satırın arkasından kayan liste görünmesin. */
+        .rapor-kaydirma thead { position: sticky; top: 0; z-index: 3; }
+        .rapor-kaydirma thead th { background: #fff; }
+        .rapor-kaydirma tfoot { position: sticky; bottom: 0; z-index: 2; }
+        .rapor-kaydirma tfoot td { background: #fff; }
         /* SİPARİŞ KARTI BAŞLIK SATIRI (v1.628.0 — kullanıcı: "Başlıkların rengi değişsin", ardından "Renkler çok baskın
            oldu, tonunu açalım"): sipariş tipinin AÇIK tonu (satış açık mavi, alış açık kahve), yazı aynı rengin koyusu.
            Hücrelerde satır içi renk var; !important o yüzden. */

@@ -842,6 +842,9 @@ function indirYazdirilabilirHTML(secici, dosyaAdi) {
           img { max-width: 100%; }
           .mono { font-family: 'Courier New', monospace; }
           .no-print { display: none !important; }
+          /* Ekrandaki rapor kaydırma kutusu (v1.629.0) çıktıda kesmesin: yükseklik sınırı ve yapışkan başlık kalkar. */
+          .rapor-kaydirma { max-height: none !important; overflow: visible !important; }
+          .rapor-kaydirma th { position: static !important; }
         </style>
       </head>
       <body onload="window.print()">${el.innerHTML}</body>
