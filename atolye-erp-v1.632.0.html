@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.629.0</title>
+<title>Atölye ERP 1.632.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -417,7 +417,9 @@ const ERP_ICONS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" style="display:no
 //
 // Bu bileşen yazarak süzer; ada, koda ve malzeme tipine göre eşleşir. Klavyeyle kullanılabilir
 // (yukarı/aşağı/Enter/Escape) çünkü reçete girişi seri bir iştir, fareye uzanmak yavaşlatır.
-function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliProses, onHizliUrunEkle, ozelKodAlanlari }) {
+// `veriAdi` / `kucuk` / `temizle` (v1.631.0): sipariş formunun SATIRINDA da kullanılıyor (açılır liste yerine) — kutuya data
+// özniteliği, satıra uygun küçük boy, satırda ürün boşaltılamadığı için × gizlenebilir.
+function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliProses, onHizliUrunEkle, ozelKodAlanlari, veriAdi, kucuk = false, temizle = true }) {
     const [acik, setAcik] = useState(false);
     const [sorgu, setSorgu] = useState("");
     const [vurgulu, setVurgulu] = useState(0);
@@ -494,10 +496,10 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
     return (React.createElement("div", { ref: sarmalayiciRef, style: { position: "relative" } },
         React.createElement("div", { style: {
                 display: "flex", alignItems: "center", gap: 6, width: "100%", boxSizing: "border-box",
-                padding: "6px 8px", borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-brown)" : "var(--erp-border)"}`, background: "#fff",
+                padding: kucuk ? "3px 6px" : "6px 8px", borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-brown)" : "var(--erp-border)"}`, background: "#fff",
             } },
             React.createElement(Search, { size: 13, color: "var(--erp-text-3)", style: { flexShrink: 0 } }),
-            React.createElement("input", { value: acik ? sorgu : (secili ? secili.ad : ""), onChange: (e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }, onFocus: () => { setAcik(true); setSorgu(""); }, onBlur: () => setTimeout(() => setAcik(false), 150), onKeyDown: (e) => {
+            React.createElement("input", { ...(veriAdi ? { [veriAdi]: "1" } : {}), value: acik ? sorgu : (secili ? secili.ad : ""), onChange: (e) => { setSorgu(e.target.value); setAcik(true); setVurgulu(0); }, onFocus: () => { setAcik(true); setSorgu(""); }, onBlur: () => setTimeout(() => setAcik(false), 150), onKeyDown: (e) => {
                     if (e.key === "ArrowDown") {
                         e.preventDefault();
                         setAcik(true);
@@ -516,8 +518,8 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
                         setAcik(false);
                         setSorgu("");
                     }
-                }, placeholder: placeholder || "Ara veya seç…", style: { flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: 14, padding: 0 } }),
-            secili && !acik && (React.createElement("button", { type: "button", onClick: () => { onSec(""); setSorgu(""); }, title: "Se\u00E7imi temizle", className: "btn-ikon", style: { padding: 1, flexShrink: 0 } },
+                }, placeholder: placeholder || "Ara veya seç…", style: { flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", fontSize: kucuk ? 12 : 14, fontWeight: kucuk ? 600 : undefined, padding: 0 } }),
+            secili && !acik && temizle && (React.createElement("button", { type: "button", onClick: () => { onSec(""); setSorgu(""); }, title: "Se\u00E7imi temizle", className: "btn-ikon", style: { padding: 1, flexShrink: 0 } },
                 React.createElement(X, { size: 12 })))),
         acik && (React.createElement("div", { style: {
                 // Liste, arama kutusundan GENİŞ olabilir: kutu dar bir sütunda dursa bile ürün adları
@@ -542,7 +544,7 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
                 "\"",
                 sorgu.trim(),
                 "\" ad\u0131yla yeni hammadde ekle")),
-            sonuclar.length === 0 ? (React.createElement("div", { style: { padding: "10px 12px", fontSize: 12, color: "var(--erp-text-3)" } }, q ? `"${sorgu}" ile eşleşen ürün yok` : "Ürün yok")) : (sonuclar.map((u, i) => (React.createElement("button", { key: u.id, type: "button", onMouseDown: (e) => { e.preventDefault(); sec(u); }, onMouseEnter: () => setVurgulu(i), 
+            sonuclar.length === 0 ? (React.createElement("div", { style: { padding: "10px 12px", fontSize: 12, color: "var(--erp-text-3)" } }, q ? `"${sorgu}" ile eşleşen ürün yok` : "Ürün yok")) : (sonuclar.map((u, i) => (React.createElement("button", { key: u.id, type: "button", "data-urun-oneri": u.ad, onMouseDown: (e) => { e.preventDefault(); sec(u); }, onMouseEnter: () => setVurgulu(i), 
                 // Kategori rengi sol kenarda: arama sonuçlarında mamul ile hammaddeyi karıştırmak
                 // en kolay yer burası — liste karışık geliyor ve isimler benzeyebiliyor.
                 style: {
@@ -741,6 +743,18 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
                 ? React.createElement("img", { src: resimler[o], alt: "", "data-aramali-oneri-resim": "1", loading: "lazy", style: { width: 34, height: 34, objectFit: "cover", borderRadius: 4, border: "1px solid var(--erp-line-soft)", flexShrink: 0 } })
                 : React.createElement("span", { style: { width: 34, height: 34, borderRadius: 4, background: "var(--erp-zebra)", flexShrink: 0 } })),
             React.createElement("span", null, o))))))));
+}
+// ---- SATIR RENK KUTUSU (v1.631.0) ----
+// Kullanıcı (sipariş düzenleme, satırdaki renk açılır listesi): "Renk değiştirirken hep kullandığımız şekilde olsun." Satırdaki
+// <select> yerine Kalem Ekle'deki aramalı + resimli kutunun (AramaliMetin, yalnızListeden) aynısı. Seçim yalnız listedeki
+// bir renge TAM eşleşince `onSec`e gider; yarım yazım ya da boşaltılıp çıkılan kutu kayıtlı renge geri döner (satır
+// yanlışlıkla renksiz kalmasın). Kayıtlı renk üründe artık yoksa kutuda yazmaya devam eder (eski "(listede yok)" seçeneği).
+function SatirRenkKutusu({ deger, secenekler, resimler, onSec, veriAdi = "data-form-kalem-renk", eksik = false, placeholder = "Renk ara…" }) {
+    const [yazi, setYazi] = useState(deger || "");
+    useEffect(() => { setYazi(deger || ""); }, [deger]);
+    return (React.createElement("div", { style: { minWidth: 170 }, "data-renk-secenekleri": [...(deger && !(secenekler || []).includes(deger) ? [`${deger} (listede yok)`] : []), ...(secenekler || [])].join("|"), onBlur: () => setTimeout(() => setYazi((y) => ((secenekler || []).includes(y) ? y : (deger || ""))), 160) },
+        React.createElement(AramaliMetin, { veriAdi: veriAdi, deger: yazi, onDegis: (v) => { setYazi(v); if ((secenekler || []).includes(v) && v !== deger)
+                onSec(v); }, oneriler: secenekler, resimler: resimler, yalnizListeden: true, placeholder: placeholder, stil: { padding: "4px 8px", fontSize: 13, ...(eksik ? { borderColor: "var(--erp-danger, #B3261E)" } : {}) } })));
 }
 // ---- CARİ SEÇİCİ (aramalı) — v1.620.0 ----
 // Kullanıcı (sipariş formu, açılır müşteri listesi): "Müşteri seçerken filtreli olsun, daha öncekiler gibi; cari arttıkça
@@ -2121,9 +2135,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.629.0";
+const SURUM = "1.632.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Raporlarda basliklar sabit (liste kendi kutusunda kayar), matriste her sutunda baslik aramasi";
+const SURUM_NOTU = "Hammadde durum renkleri standart: stokta var yesil, siparisle yolda mavi, eksik turuncu; siparis kartinda Planlama ile ayni";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2131,6 +2145,20 @@ const SURUM_NOTU = "Raporlarda basliklar sabit (liste kendi kutusunda kayar), ma
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.632.0", tarih: "10.10.2026",
+        eklenen: ["Hammadde durum renk standardı ve açıklaması (lejant): stokta var yeşil, tamamı siparişte (yolda) mavi, kısmen siparişte turuncu + kamyon, eksik turuncu"],
+        degisen: ["Sipariş kartında Hammadde İhtiyacı hücreleri Planlama ile aynı mantıkla renkli; alış siparişiyle yolda olan miktar da hesaba katılıyor ve ipucunda yazıyor",
+            "Tek ölçülü hammadde satırları (deri, astar…) da durum rengini alıyor"],
+        duzeltilen: [] },
+    { surum: "1.631.0", tarih: "10.10.2026",
+        eklenen: [],
+        degisen: ["Sipariş formunda satırdaki renk değiştirme açılır liste yerine aramalı ve resimli kutu (Kalem Ekle'deki renk kutusunun aynısı)",
+            "Sipariş formunda satırdaki ürün (model) değiştirme de yazarak süzülen aramalı kutu (ad, stok no, özel kodlar)"],
+        duzeltilen: [] },
+    { surum: "1.630.0", tarih: "10.10.2026",
+        eklenen: ["Sipariş kartının en altında tek SİPARİŞ TOPLAMI şeridi: model ve kalem sayısı, toplam adet, toplam tutar"],
+        degisen: ["Sipariş kartında ürün başına Toplam satırı kalktı (yalnız çok renkli üründe çıkıyordu, tablolar tutarsız görünüyordu)"],
+        duzeltilen: [] },
     { surum: "1.629.0", tarih: "10.10.2026",
         eklenen: ["Raporlarda başlıklar sabit: liste kendi kutusunda aşağı kayar, başlık ve arama satırı üstte, toplam satırı altta kalır",
             "Matris görünümünde sayı sütunlarında da başlık araması (Teslim Edilen, Kalan, tutarlar: >0, 5-10…) ve bütün arama kutularında değer önerisi"],
@@ -3136,6 +3164,29 @@ function erpTokenHexCss() {
 // opaklık ekliyordu. Renk artık var(--erp-*) olunca "var(--erp-primary)14" geçersiz kalıyor
 // ve zemin şeffafa düşüyordu. Bu yardımcı her ikisini de işliyor: hex'e ekler, token'ı
 // color-mix ile karıştırır.
+// HAMMADDE DURUM STANDARDI (v1.632.0 — kullanıcı: "Sipariş hammadde ihtiyacında stoğu bulunan ürünler, siparişi olan
+// ürünler, olmayan ürünler v.s. renkleri değişsin. Bu bizim standartlarımız da olsun ve planlamanın mantığının aynısı
+// olsun"). Planlama > Hammadde İhtiyacı'nın v1.2xx'ten beri kullandığı üç renk tek yere alındı; sipariş kartındaki
+// Hammadde İhtiyacı ve ileride hammadde durumu gösteren her ekran BUNU kullanır:
+//   yeterli — stok ihtiyacı karşılıyor (eksik yok)                            → yeşil  (--erp-primary)
+//   yolda   — eksik var ama eksiğin TAMAMI alış siparişiyle sipariş edilmiş   → mavi   (--erp-info)
+//   kismen  — eksiğin bir kısmı sipariş edilmiş, kalanı hâlâ sipariş yok      → turuncu (--erp-warn) + kamyon ikonu
+//   eksik   — eksik var, hiç sipariş edilmemiş                                 → turuncu (--erp-warn)
+// "Yolda" = alış siparişine bu satış siparişi için ayrılmış, henüz teslim alınmamış miktar (hammaddeSatinAlmaDurumu).
+const HAMMADDE_DURUMLARI = {
+    yeterli: { ad: "Stokta var", renk: "var(--erp-primary)", aciklama: "Stok ihtiyacı karşılıyor" },
+    yolda: { ad: "Siparişte (yolda)", renk: "var(--erp-info)", aciklama: "Eksiğin tamamı alış siparişiyle sipariş edilmiş, teslim bekleniyor" },
+    kismen: { ad: "Kısmen siparişte", renk: "var(--erp-warn)", aciklama: "Eksiğin bir kısmı sipariş edilmiş; kalanı için sipariş yok", kamyon: true },
+    eksik: { ad: "Eksik — sipariş yok", renk: "var(--erp-warn)", aciklama: "Stok yetmiyor ve alış siparişi verilmemiş" },
+};
+function hammaddeDurumu(eksik, yolda) {
+    if (!(eksik > 0))
+        return "yeterli";
+    const y = yolda || 0;
+    if (eksik - y <= 0)
+        return "yolda";
+    return y > 0 ? "kismen" : "eksik";
+}
 function alfaEkle(renk, hexAlfa) {
     if (!renk || typeof renk !== "string")
         return renk;
@@ -6003,6 +6054,12 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
         g.rezerveAcik = Math.round(bizim.reduce((t, x) => t + x.acik, 0) * 1000) / 1000;
         g.eksik = Math.round(Math.max(0, g.gereken - g.mevcutStok) * 1000) / 1000;
         g.eksikMaliyet = Math.round(g.eksik * g.alisFiyati * 100) / 100;
+        // SATIN ALMA DURUMU (v1.632.0): Planlama'daki gibi — bu satış siparişi için verilmiş alış siparişlerinde henüz teslim
+        // alınmamış (yolda) miktar. Durum standardı (HAMMADDE_DURUMLARI): yeterli / yolda / kismen / eksik.
+        const satinAlma = hammaddeSatinAlmaDurumu(g.hammaddeUrunId, g.renk, g.beden, new Set([siparis.id]), tumSiparisler || []);
+        g.yolda = satinAlma.yolda || 0;
+        g.netEksik = Math.round(Math.max(0, g.eksik - g.yolda) * 1000) / 1000;
+        g.durum = hammaddeDurumu(g.eksik, g.yolda);
     });
     // Proses sırasına göre değil, EKSİĞİ olanlar önce: kullanıcının bu ekranda aradığı şey eksiklerdir.
     sonuc.sort((a, b) => (b.eksik > 0) - (a.eksik > 0) || a.hammaddeAd.localeCompare(b.hammaddeAd, "tr"));
@@ -7521,6 +7578,14 @@ function bedenSirala(liste) {
 // hucreCiz / satirSonu: sipariş kartı hücrede eksik durumunu, sağda stok özetini gösteriyor.
 // Verilmezse sade sayı çizilir — üretim kartının ihtiyacı bu kadar.
 // `stok` (v1.495.0, isteğe bağlı): malzemenin renk başlığı (Kalınlık, Baskı…) için. Verilmezse "Renk".
+// HAMMADDE DURUM LEJANTI (v1.632.0): renklerin ne demek olduğu — Planlama ve sipariş kartında aynı (HAMMADDE_DURUMLARI).
+// `sayilar` verilirse her durumun yanında kaç hücre olduğu yazar.
+function HammaddeDurumLejanti({ sayilar }) {
+    return (React.createElement("div", { "data-hammadde-lejant": "1", style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", fontSize: 11 } }, Object.entries(HAMMADDE_DURUMLARI).map(([k, d]) => (React.createElement("span", { key: k, title: d.aciklama, "data-hammadde-lejant-durum": k, style: { display: "inline-flex", alignItems: "center", gap: 4, color: d.renk, fontWeight: 700 } },
+        React.createElement("span", { style: { width: 11, height: 11, borderRadius: 3, border: `1px solid ${d.renk}`, background: alfaEkle(d.renk, "33"), display: "inline-flex", alignItems: "center", justifyContent: "center" } }, d.kamyon && React.createElement(Truck, { size: 8 })),
+        d.ad,
+        sayilar && sayilar[k] != null ? ` (${sayilar[k]})` : "")))));
+}
 function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik, satirSonuCiz, stok }) {
     // RENK BAŞLIĞI (v1.495.0 — kullanıcı: "üretim ve planlamada da başlık görünsün"). Fiş listesindeki
     // kural: satırların başlığı ortaksa sütunda o; karışıksa sütunda hepsi, başlık değiştiği yerde ara satır.
@@ -7611,7 +7676,7 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                                 r.birimMiktar,
                                 " =",
                                 " ")),
-                            r.toplam,
+                            hucreCiz && r.kaynaklar && r.kaynaklar[tekBeden] ? hucreCiz(r.kaynaklar[tekBeden], r.toplam) : r.toplam,
                             " ",
                             React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" } }, r.birim)),
                         satirSonuCiz && (React.createElement("td", { className: "mono", style: { fontSize: 12, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap" } }, satirSonuCiz(r)))));
@@ -38063,6 +38128,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
         React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap", marginBottom: 12 } },
             React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", maxWidth: 480 } }, aciklamaMetni || (React.createElement(React.Fragment, null, "Bekleyen (hen\u00FCz tam kar\u015F\u0131lanmam\u0131\u015F) sat\u0131\u015F sipari\u015Flerine g\u00F6re gereken hammadde, mevcut stokla kar\u015F\u0131la\u015Ft\u0131r\u0131l\u0131yor. Sat\u0131nalmaya planlanm\u0131\u015F kalemler hari\u00E7 tutulur (d\u0131\u015Far\u0131dan haz\u0131r gelecekleri i\u00E7in); \u00FCretime planlan\u0131p zaten tamamlanm\u0131\u015F prosesler tekrar say\u0131lmaz."))),
             React.createElement("div", { style: { marginLeft: "auto", display: "grid", gap: 6, justifyItems: "end" } },
+                React.createElement(HammaddeDurumLejanti, null),
                 React.createElement("div", { style: { display: "flex", gap: 6, alignItems: "center" } },
                     eksikSayisi > 0 && (React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", background: "#B85C2E22", color: "var(--erp-warn)" } },
                         eksikSayisi,
@@ -38252,7 +38318,8 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                             const acikMi = acikHammadde === anahtar;
                                             // Üç durum: yeterli (yeşil) / eksik ve sipariş edilmemiş (turuncu) /
                                             // eksik ama tamamı sipariş edilmiş, yolda (mavi).
-                                            const durumRenk = !r.eksikMi ? "var(--erp-primary)" : (r.netEksik > 0 ? "var(--erp-warn)" : "var(--erp-info)");
+                                            // Ortak standart (015 HAMMADDE_DURUMLARI, v1.632.0) — sipariş kartıyla aynı.
+                                            const durumRenk = HAMMADDE_DURUMLARI[hammaddeDurumu(r.eksikMi ? r.eksikMiktar : 0, r.satinAlma.yolda)].renk;
                                             return (React.createElement("td", { key: b, style: { padding: "3px 6px", textAlign: "center" } },
                                                 React.createElement("button", { type: "button", onClick: () => setAcikHammadde(acikMi ? null : anahtar), className: "mono", style: {
                                                         fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: "var(--erp-r-pill)", border: acikMi ? "1.5px solid" : "1px solid",
@@ -51806,20 +51873,13 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                                                         g.urunAd,
                                                                         React.createElement("span", { className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700, color: "var(--erp-brown)", background: "#8A5A3818", padding: "1px 7px", borderRadius: "var(--erp-r-pill)" } },
                                                                             React.createElement(Lock, { size: 10 }),
-                                                                            g.kalemler.some((k) => k.planlama) ? "planlandı" : "teslim alındı"))) : (React.createElement("select", { value: urun ? urun.id : "", onChange: (e) => grupUrunDegistir(idler, e.target.value), "data-form-kalem-urun": "1", title: "\u00DCr\u00FCn\u00FC de\u011Fi\u015Ftir \u2014 renk yeni \u00FCr\u00FCnde yoksa yeniden se\u00E7ilmeli", style: { padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", maxWidth: 200 } },
-                                                                        !urun && React.createElement("option", { value: "" },
-                                                                            g.urunAd,
-                                                                            " (listede yok)"),
-                                                                        urunUygun.map((u) => React.createElement("option", { key: u.id, value: u.id }, u.ad)))))),
+                                                                            g.kalemler.some((k) => k.planlama) ? "planlandı" : "teslim alındı"))) : (React.createElement("div", { style: { minWidth: 170, maxWidth: 220 }, title: "\u00DCr\u00FCn\u00FC de\u011Fi\u015Ftir \u2014 renk yeni \u00FCr\u00FCnde yoksa yeniden se\u00E7ilmeli" },
+                                                                        React.createElement(AramaliUrunSecici, { urunler: urunUygun, seciliId: urun ? urun.id : "", kucuk: true, temizle: false, veriAdi: "data-form-kalem-urun", ozelKodAlanlari: tanimlarOzelKodAlanlari, placeholder: urun ? "Model ara…" : `${g.urunAd} (listede yok)`, onSec: (id) => { if (id && (!urun || id !== urun.id))
+                                                                                grupUrunDegistir(idler, id); } }))))),
                                                             React.createElement("td", { className: "mono", style: { padding: "6px 8px", fontSize: 12, whiteSpace: "nowrap" } },
                                                                 React.createElement("div", { "data-form-kalem-renk-notlar": "1", style: { display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "nowrap" } },
                                                                     React.createElement("span", { style: { display: "inline-flex", alignItems: "center", flexShrink: 0 } },
-                                                                        g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (React.createElement("select", { value: g.renk || "", onChange: (e) => e.target.value && grupDegistir(idler, { renk: e.target.value }), "data-form-kalem-renk": "1", title: "Rengi de\u011Fi\u015Ftir \u2014 bu sat\u0131rdaki b\u00FCt\u00FCn \u00F6l\u00E7\u00FClere uygulan\u0131r", style: { padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)" } },
-                                                                            renkEksik && React.createElement("option", { value: "" }, "Renk se\u00E7in\u2026"),
-                                                                            g.renk && !renkSecenekleri.includes(g.renk) && React.createElement("option", { value: g.renk },
-                                                                                olcuGoster(g.renk),
-                                                                                " (listede yok)"),
-                                                                            renkSecenekleri.map((r) => React.createElement("option", { key: r, value: r }, olcuGoster(r))))),
+                                                                        g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (React.createElement(SatirRenkKutusu, { deger: g.renk || "", secenekler: renkSecenekleri, eksik: renkEksik, resimler: (urun && urun.renkResimleri) || {}, onSec: (r) => grupDegistir(idler, { renk: r }), placeholder: renkEksik ? "Renk seçin…" : "Renk ara…" })),
                                                                         (() => {
                                                                             const kutu = (g.kalemler.find((x) => x.ambalaj && x.ambalaj.renk) || {}).ambalaj;
                                                                             if (!kutu)
@@ -53574,237 +53634,244 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                         React.createElement(AlertTriangle, { size: 14, color: "var(--erp-warn)" }),
                                         React.createElement("span", { style: { fontSize: 12, color: "var(--erp-warn)" } }, "Ayn\u0131 \u00FCr\u00FCn/renk/beden i\u00E7in, FARKLI fi\u015Flere (\u00FCretim/sat\u0131nalma) planlanm\u0131\u015F tekrar eden kalemler var \u2014 bunlar otomatik birle\u015Ftirilmiyor, \u00E7\u00FCnk\u00FC ayr\u0131 tedarik kay\u0131tlar\u0131n\u0131 temsil ediyorlar. Elle kontrol etmeniz gerekiyor.")))));
                             })(),
-                            React.createElement("div", { style: { display: "grid", gap: 8 } }, (() => {
-                                // Sipariş kalemlerinin gösterimi, artık "her renk ayrı kart" yerine "Tedarik Planlama"daki
-                                // gibi TEK bir matris tablosu: satırlar = renk, sütunlar = TÜM bedenlerin birleşimi — aynı
-                                // ürünün farklı renkleri artık kart kart tekrar etmiyor, tek bir tabloda yan yana.
-                                const urunGruplari = [];
-                                const urunIndex = {};
-                                siparis.kalemler.forEach((k) => {
-                                    if (!(k.urunId in urunIndex)) {
-                                        urunIndex[k.urunId] = urunGruplari.length;
-                                        urunGruplari.push({ urunId: k.urunId, urunAd: k.urunAd, birim: k.birim, kalemler: [] });
-                                    }
-                                    urunGruplari[urunIndex[k.urunId]].kalemler.push(k);
-                                });
-                                return urunGruplari.map((ug) => {
-                                    const renkGruplari = [];
-                                    const renkIndex = {};
-                                    ug.kalemler.forEach((k) => {
-                                        if (!(k.renk in renkIndex)) {
-                                            renkIndex[k.renk] = renkGruplari.length;
-                                            renkGruplari.push({ renk: k.renk, kalemler: [] });
+                            React.createElement("div", { style: { display: "grid", gap: 8 } },
+                                (() => {
+                                    // Sipariş kalemlerinin gösterimi, artık "her renk ayrı kart" yerine "Tedarik Planlama"daki
+                                    // gibi TEK bir matris tablosu: satırlar = renk, sütunlar = TÜM bedenlerin birleşimi — aynı
+                                    // ürünün farklı renkleri artık kart kart tekrar etmiyor, tek bir tabloda yan yana.
+                                    const urunGruplari = [];
+                                    const urunIndex = {};
+                                    siparis.kalemler.forEach((k) => {
+                                        if (!(k.urunId in urunIndex)) {
+                                            urunIndex[k.urunId] = urunGruplari.length;
+                                            urunGruplari.push({ urunId: k.urunId, urunAd: k.urunAd, birim: k.birim, kalemler: [] });
                                         }
-                                        renkGruplari[renkIndex[k.renk]].kalemler.push(k);
+                                        urunGruplari[urunIndex[k.urunId]].kalemler.push(k);
                                     });
-                                    const tumBedenler = Array.from(new Set(ug.kalemler.map((k) => k.beden)));
-                                    const toplamAdet = ug.kalemler.reduce((s, k) => s + k.miktar, 0);
-                                    // Eksik/bozuk fiyat alanı toplamı NaN yapıp tüm kartı çökertmesin.
-                                    const toplamTutar = ug.kalemler.reduce((s, k) => s + (k.miktar || 0) * (k.birimFiyat || 0), 0);
-                                    const urun = (stok || []).find((p) => p.id === ug.urunId);
-                                    return (React.createElement("div", { key: ug.urunId, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
-                                        React.createElement("div", { style: { overflowX: "auto" } },
-                                            React.createElement("div", { "data-siparis-kart-satir": "1", style: { display: "flex", minWidth: 760, alignItems: "stretch" } },
-                                                React.createElement("div", { "data-siparis-kart-resim": "1", style: {
-                                                        flex: "0 0 120px", padding: "10px 8px", textAlign: "center",
-                                                        background: siparis.tip === "Alış" ? "#8A5A3812" : "#3D6B8A12",
-                                                        borderRight: `2px solid ${siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`,
-                                                    } },
-                                                    React.createElement(ColorSwatch, { src: urun ? urun.kapakResmi : null, editable: false, size: 80 }),
-                                                    React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginTop: 6, lineHeight: 1.3, overflowWrap: "anywhere" } }, ug.urunAd)),
-                                                React.createElement("table", { className: "matris-tablo", "data-siparis-kart-tablo": "1", "data-tip": siparis.tip === "Alış" ? "alis" : "satis", style: { flex: 1, minWidth: 0, width: "100%", tableLayout: "fixed", borderCollapse: "collapse", alignSelf: "flex-start" } },
-                                                    React.createElement("colgroup", null,
-                                                        React.createElement("col", { style: { width: "22%" } }),
-                                                        tumBedenler.map((b) => React.createElement("col", { key: b })),
-                                                        React.createElement("col", { style: { width: "10%" } }),
-                                                        React.createElement("col", { style: { width: "10%" } }),
-                                                        React.createElement("col", { style: { width: "12%" } }),
-                                                        React.createElement("col", { style: { width: "14%" } })),
-                                                    React.createElement("tbody", null,
-                                                        React.createElement("tr", { "data-siparis-kart-baslik": "1", style: { height: 34 } },
-                                                            React.createElement("th", { "data-siparis-kart-renk-basligi": "1", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" } }, renkBasligi(urun)),
-                                                            tumBedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 14, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))),
-                                                            React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Adet"),
-                                                            React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Birim"),
-                                                            React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Tutar"),
-                                                            React.createElement("th", { style: { fontSize: 12, fontWeight: 700, textAlign: "left", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Durum")),
-                                                        renkGruplari.map((rg) => {
-                                                            // SİPARİŞ MİKTARI BÖLÜNMÜŞ KALEMLERDE DE TAM (kullanıcı, 19 Eylül:
-                                                            // "üstte siparişin tamamı görünecek, sipariş planlandığında üstte
-                                                            // değişiklik olmayacak").
-                                                            //
-                                                            // Planlama yapılınca kalem İKİYE BÖLÜNÜYOR: planlanan parça + kalan
-                                                            // parça (100-app, `uretimPlanla`). Bu doğru bir kayıt tekniği — her
-                                                            // parça kendi tedarik kaydını taşıyor. Ama matris her bedene TEK kalem
-                                                            // koyuyordu (son yazılan kazanıyordu), o yüzden 144 çiftlik sipariş
-                                                            // planlandıkça 136'ya, sonra daha da aşağı düşüyor görünüyordu.
-                                                            //
-                                                            // Artık aynı renk+beden için BÜTÜN kalemler toplanıyor: üst matris
-                                                            // siparişin kendisini gösteriyor, bölünme oraya yansımıyor. Kilit ve
-                                                            // karşılanma bilgisi parçaların birleşiminden hesaplanıyor.
-                                                            const kalemBedenIndex = {};
-                                                            rg.kalemler.forEach((k) => {
-                                                                const mevcut = kalemBedenIndex[k.beden];
-                                                                if (!mevcut) {
-                                                                    kalemBedenIndex[k.beden] = { ...k, parcalar: [k] };
-                                                                    return;
-                                                                }
-                                                                mevcut.miktar = (mevcut.miktar || 0) + (k.miktar || 0);
-                                                                mevcut.karsilanan = (mevcut.karsilanan || 0) + (k.karsilanan || 0);
-                                                                // Parçalardan biri planlanmışsa hücre kilitli: düzenleme tam ekranda
-                                                                // ve parça bazında yapılıyor.
-                                                                mevcut.planlama = mevcut.planlama || k.planlama;
-                                                                mevcut.parcalar.push(k);
-                                                            });
-                                                            const satirNotlari = grupNotlari(rg.kalemler);
-                                                            const notAnahtari = `${ug.urunId}|${rg.renk}`;
-                                                            const notAcik = satirNotlari.length > 0 && !!acikNotSatirlari[notAnahtari];
-                                                            return (React.createElement(React.Fragment, { key: rg.renk },
-                                                                React.createElement("tr", { "data-kart-notlu-satir": satirNotlari.length ? rg.renk : undefined, onClick: satirNotlari.length ? (e) => {
-                                                                        // Hücredeki düğme/kutuya tıklama (miktar düzenleme vb.) notu açıp kapatmasın.
-                                                                        if (e.target.closest("button, input, select, a"))
-                                                                            return;
-                                                                        notSatiriDegistir(notAnahtari);
-                                                                    } : undefined, title: satirNotlari.length ? (notAcik ? "Notu kapatmak için tıklayın" : "Notu görmek için tıklayın") : undefined, style: { borderTop: "1px solid var(--erp-line-soft)",
-                                                                        // NOTLU SATIR RENKLİ: formdaki proses notu rozetinin sarısı — not var, bir bakışta.
-                                                                        // Zemin hücrelerde (100-app CSS: matris zebrası tr zeminini örtüyor).
-                                                                        ...(satirNotlari.length ? { cursor: "pointer" } : {}) } },
-                                                                    React.createElement("td", { style: { padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "normal", overflowWrap: "anywhere", textAlign: "center", color: "var(--erp-text)" } },
-                                                                        rg.renk,
-                                                                        satirNotlari.length > 0 && (React.createElement("div", { style: { marginTop: 2 } },
-                                                                            React.createElement("span", { "data-kart-not-rozeti": satirNotlari.length, style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700,
-                                                                                    padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: notAcik ? "#E3C77A" : "#FFE9A8", color: "#7A5A12", border: "1px solid #E3C77A" } },
-                                                                                React.createElement(FileText, { size: 10 }),
-                                                                                " ",
-                                                                                satirNotlari.length,
-                                                                                " not ",
-                                                                                notAcik ? React.createElement(ChevronUp, { size: 10 }) : React.createElement(ChevronDown, { size: 10 }))))),
-                                                                    tumBedenler.map((b) => {
-                                                                        const k = kalemBedenIndex[b];
-                                                                        if (!k)
-                                                                            return React.createElement("td", { key: b });
-                                                                        const karsilanan = k.karsilanan || 0;
-                                                                        const kalanMiktar = k.miktar - karsilanan;
-                                                                        // Bir kalem PLANLANMIŞSA (üretim/satın alma siparişine bağlanmışsa) ya da
-                                                                        // kısmen dahi olsa karşılanmışsa, artık silinip/düzenlenemez.
-                                                                        // saltOkunur önizlemede her kalem kilitli sayılır — düzenleme yalnızca
-                                                                        // tam ekranda yapılır.
-                                                                        const kilitli = saltOkunur || !!k.planlama || karsilanan > 0;
-                                                                        if (kilitli) {
+                                    return urunGruplari.map((ug) => {
+                                        const renkGruplari = [];
+                                        const renkIndex = {};
+                                        ug.kalemler.forEach((k) => {
+                                            if (!(k.renk in renkIndex)) {
+                                                renkIndex[k.renk] = renkGruplari.length;
+                                                renkGruplari.push({ renk: k.renk, kalemler: [] });
+                                            }
+                                            renkGruplari[renkIndex[k.renk]].kalemler.push(k);
+                                        });
+                                        const tumBedenler = Array.from(new Set(ug.kalemler.map((k) => k.beden)));
+                                        const urun = (stok || []).find((p) => p.id === ug.urunId);
+                                        return (React.createElement("div", { key: ug.urunId, style: { background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+                                            React.createElement("div", { style: { overflowX: "auto" } },
+                                                React.createElement("div", { "data-siparis-kart-satir": "1", style: { display: "flex", minWidth: 760, alignItems: "stretch" } },
+                                                    React.createElement("div", { "data-siparis-kart-resim": "1", style: {
+                                                            flex: "0 0 120px", padding: "10px 8px", textAlign: "center",
+                                                            background: siparis.tip === "Alış" ? "#8A5A3812" : "#3D6B8A12",
+                                                            borderRight: `2px solid ${siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"}`,
+                                                        } },
+                                                        React.createElement(ColorSwatch, { src: urun ? urun.kapakResmi : null, editable: false, size: 80 }),
+                                                        React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "var(--erp-text)", marginTop: 6, lineHeight: 1.3, overflowWrap: "anywhere" } }, ug.urunAd)),
+                                                    React.createElement("table", { className: "matris-tablo", "data-siparis-kart-tablo": "1", "data-tip": siparis.tip === "Alış" ? "alis" : "satis", style: { flex: 1, minWidth: 0, width: "100%", tableLayout: "fixed", borderCollapse: "collapse", alignSelf: "flex-start" } },
+                                                        React.createElement("colgroup", null,
+                                                            React.createElement("col", { style: { width: "22%" } }),
+                                                            tumBedenler.map((b) => React.createElement("col", { key: b })),
+                                                            React.createElement("col", { style: { width: "10%" } }),
+                                                            React.createElement("col", { style: { width: "10%" } }),
+                                                            React.createElement("col", { style: { width: "12%" } }),
+                                                            React.createElement("col", { style: { width: "14%" } })),
+                                                        React.createElement("tbody", null,
+                                                            React.createElement("tr", { "data-siparis-kart-baslik": "1", style: { height: 34 } },
+                                                                React.createElement("th", { "data-siparis-kart-renk-basligi": "1", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" } }, renkBasligi(urun)),
+                                                                tumBedenler.map((b) => (React.createElement("th", { key: b, className: "mono", style: { fontSize: 14, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 6px", whiteSpace: "nowrap" } }, olcuGoster(b, "Miktar")))),
+                                                                React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Adet"),
+                                                                React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Birim"),
+                                                                React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Tutar"),
+                                                                React.createElement("th", { style: { fontSize: 12, fontWeight: 700, textAlign: "left", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Durum")),
+                                                            renkGruplari.map((rg) => {
+                                                                // SİPARİŞ MİKTARI BÖLÜNMÜŞ KALEMLERDE DE TAM (kullanıcı, 19 Eylül:
+                                                                // "üstte siparişin tamamı görünecek, sipariş planlandığında üstte
+                                                                // değişiklik olmayacak").
+                                                                //
+                                                                // Planlama yapılınca kalem İKİYE BÖLÜNÜYOR: planlanan parça + kalan
+                                                                // parça (100-app, `uretimPlanla`). Bu doğru bir kayıt tekniği — her
+                                                                // parça kendi tedarik kaydını taşıyor. Ama matris her bedene TEK kalem
+                                                                // koyuyordu (son yazılan kazanıyordu), o yüzden 144 çiftlik sipariş
+                                                                // planlandıkça 136'ya, sonra daha da aşağı düşüyor görünüyordu.
+                                                                //
+                                                                // Artık aynı renk+beden için BÜTÜN kalemler toplanıyor: üst matris
+                                                                // siparişin kendisini gösteriyor, bölünme oraya yansımıyor. Kilit ve
+                                                                // karşılanma bilgisi parçaların birleşiminden hesaplanıyor.
+                                                                const kalemBedenIndex = {};
+                                                                rg.kalemler.forEach((k) => {
+                                                                    const mevcut = kalemBedenIndex[k.beden];
+                                                                    if (!mevcut) {
+                                                                        kalemBedenIndex[k.beden] = { ...k, parcalar: [k] };
+                                                                        return;
+                                                                    }
+                                                                    mevcut.miktar = (mevcut.miktar || 0) + (k.miktar || 0);
+                                                                    mevcut.karsilanan = (mevcut.karsilanan || 0) + (k.karsilanan || 0);
+                                                                    // Parçalardan biri planlanmışsa hücre kilitli: düzenleme tam ekranda
+                                                                    // ve parça bazında yapılıyor.
+                                                                    mevcut.planlama = mevcut.planlama || k.planlama;
+                                                                    mevcut.parcalar.push(k);
+                                                                });
+                                                                const satirNotlari = grupNotlari(rg.kalemler);
+                                                                const notAnahtari = `${ug.urunId}|${rg.renk}`;
+                                                                const notAcik = satirNotlari.length > 0 && !!acikNotSatirlari[notAnahtari];
+                                                                return (React.createElement(React.Fragment, { key: rg.renk },
+                                                                    React.createElement("tr", { "data-kart-notlu-satir": satirNotlari.length ? rg.renk : undefined, onClick: satirNotlari.length ? (e) => {
+                                                                            // Hücredeki düğme/kutuya tıklama (miktar düzenleme vb.) notu açıp kapatmasın.
+                                                                            if (e.target.closest("button, input, select, a"))
+                                                                                return;
+                                                                            notSatiriDegistir(notAnahtari);
+                                                                        } : undefined, title: satirNotlari.length ? (notAcik ? "Notu kapatmak için tıklayın" : "Notu görmek için tıklayın") : undefined, style: { borderTop: "1px solid var(--erp-line-soft)",
+                                                                            // NOTLU SATIR RENKLİ: formdaki proses notu rozetinin sarısı — not var, bir bakışta.
+                                                                            // Zemin hücrelerde (100-app CSS: matris zebrası tr zeminini örtüyor).
+                                                                            ...(satirNotlari.length ? { cursor: "pointer" } : {}) } },
+                                                                        React.createElement("td", { style: { padding: "5px 8px", fontSize: 14, fontWeight: 700, whiteSpace: "normal", overflowWrap: "anywhere", textAlign: "center", color: "var(--erp-text)" } },
+                                                                            rg.renk,
+                                                                            satirNotlari.length > 0 && (React.createElement("div", { style: { marginTop: 2 } },
+                                                                                React.createElement("span", { "data-kart-not-rozeti": satirNotlari.length, style: { display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10, fontWeight: 700,
+                                                                                        padding: "1px 7px", borderRadius: "var(--erp-r-pill)", background: notAcik ? "#E3C77A" : "#FFE9A8", color: "#7A5A12", border: "1px solid #E3C77A" } },
+                                                                                    React.createElement(FileText, { size: 10 }),
+                                                                                    " ",
+                                                                                    satirNotlari.length,
+                                                                                    " not ",
+                                                                                    notAcik ? React.createElement(ChevronUp, { size: 10 }) : React.createElement(ChevronDown, { size: 10 }))))),
+                                                                        tumBedenler.map((b) => {
+                                                                            const k = kalemBedenIndex[b];
+                                                                            if (!k)
+                                                                                return React.createElement("td", { key: b });
+                                                                            const karsilanan = k.karsilanan || 0;
+                                                                            const kalanMiktar = k.miktar - karsilanan;
+                                                                            // Bir kalem PLANLANMIŞSA (üretim/satın alma siparişine bağlanmışsa) ya da
+                                                                            // kısmen dahi olsa karşılanmışsa, artık silinip/düzenlenemez.
+                                                                            // saltOkunur önizlemede her kalem kilitli sayılır — düzenleme yalnızca
+                                                                            // tam ekranda yapılır.
+                                                                            const kilitli = saltOkunur || !!k.planlama || karsilanan > 0;
+                                                                            if (kilitli) {
+                                                                                return (React.createElement("td", { key: b, style: { padding: "5px 6px", textAlign: "center" } },
+                                                                                    React.createElement("span", { className: "mono", title: `${karsilanan}/${k.miktar} karşılandı · ` + (k.planlama ? "Planlanmış, düzenlenemez" : karsilanan > 0 ? "Kısmen işlenmiş, düzenlenemez" : ""), style: { fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", color: "var(--erp-text)" } },
+                                                                                        k.miktar,
+                                                                                        karsilanan > 0 && (React.createElement("span", { title: `${karsilanan}/${k.miktar} karşılandı`, style: { width: 6, height: 6, borderRadius: "var(--erp-r-sm)", flexShrink: 0,
+                                                                                                background: kalanMiktar > 0 ? "var(--erp-warn)" : "var(--erp-primary)" } })))));
+                                                                            }
                                                                             return (React.createElement("td", { key: b, style: { padding: "5px 6px", textAlign: "center" } },
-                                                                                React.createElement("span", { className: "mono", title: `${karsilanan}/${k.miktar} karşılandı · ` + (k.planlama ? "Planlanmış, düzenlenemez" : karsilanan > 0 ? "Kısmen işlenmiş, düzenlenemez" : ""), style: { fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", color: "var(--erp-text)" } },
-                                                                                    k.miktar,
-                                                                                    karsilanan > 0 && (React.createElement("span", { title: `${karsilanan}/${k.miktar} karşılandı`, style: { width: 6, height: 6, borderRadius: "var(--erp-r-sm)", flexShrink: 0,
-                                                                                            background: kalanMiktar > 0 ? "var(--erp-warn)" : "var(--erp-primary)" } })))));
-                                                                        }
-                                                                        return (React.createElement("td", { key: b, style: { padding: "5px 6px", textAlign: "center" } },
-                                                                            React.createElement("span", { className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } }, k.miktar)));
-                                                                    }),
-                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } },
-                                                                        rg.kalemler.reduce((t, k) => t + (k.miktar || 0), 0),
-                                                                        " ",
-                                                                        React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" } }, ug.birim)),
-                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } }, (() => {
-                                                                        const fiyatlar = Array.from(new Set(rg.kalemler.map((k) => k.birimFiyat || 0)));
-                                                                        const sembol = PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi;
-                                                                        const yaz = (x) => x.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
-                                                                        return fiyatlar.length === 1
-                                                                            ? `${yaz(fiyatlar[0])} ${sembol}`
-                                                                            : `${yaz(Math.min(...fiyatlar))}–${yaz(Math.max(...fiyatlar))} ${sembol}`;
-                                                                    })()),
-                                                                    React.createElement("td", { className: "mono", style: { padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } },
-                                                                        rg.kalemler
-                                                                            .reduce((t, k) => t + (k.miktar || 0) * (k.birimFiyat || 0), 0)
-                                                                            .toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
-                                                                        " ",
-                                                                        PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi),
-                                                                    React.createElement("td", { style: { padding: "5px 12px", whiteSpace: "nowrap" } }, (() => {
-                                                                        const durumlar = rg.kalemler.map((k) => {
-                                                                            // FAZLA SEVK UYARISI (kullanıcı, 19 Eylül: "fazla satış
-                                                                            // yaptık, bunu belirtmesi gerekli"). Karşılanan miktar
-                                                                            // siparişi AŞTIĞINDA eskiden yine "Teslim edildi" yazıyordu;
-                                                                            // 136 çiftlik siparişe 160 çift sevk edildiği ekranda hiçbir
-                                                                            // yerde görünmüyordu. Fazla sevk bir hata değil (müşteri
-                                                                            // fazladan istemiş olabilir) ama SESSİZ kalması hata: fatura
-                                                                            // ile sipariş tutmaz ve fark aylar sonra bulunur.
-                                                                            if ((k.karsilanan || 0) > k.miktar) {
+                                                                                React.createElement("span", { className: "mono", style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" } }, k.miktar)));
+                                                                        }),
+                                                                        React.createElement("td", { className: "mono", style: { padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } },
+                                                                            rg.kalemler.reduce((t, k) => t + (k.miktar || 0), 0),
+                                                                            " ",
+                                                                            React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" } }, ug.birim)),
+                                                                        React.createElement("td", { className: "mono", style: { padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } }, (() => {
+                                                                            const fiyatlar = Array.from(new Set(rg.kalemler.map((k) => k.birimFiyat || 0)));
+                                                                            const sembol = PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi;
+                                                                            const yaz = (x) => x.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+                                                                            return fiyatlar.length === 1
+                                                                                ? `${yaz(fiyatlar[0])} ${sembol}`
+                                                                                : `${yaz(Math.min(...fiyatlar))}–${yaz(Math.max(...fiyatlar))} ${sembol}`;
+                                                                        })()),
+                                                                        React.createElement("td", { className: "mono", style: { padding: "5px 10px", textAlign: "right", whiteSpace: "nowrap", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } },
+                                                                            rg.kalemler
+                                                                                .reduce((t, k) => t + (k.miktar || 0) * (k.birimFiyat || 0), 0)
+                                                                                .toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
+                                                                            " ",
+                                                                            PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi),
+                                                                        React.createElement("td", { style: { padding: "5px 12px", whiteSpace: "nowrap" } }, (() => {
+                                                                            const durumlar = rg.kalemler.map((k) => {
+                                                                                // FAZLA SEVK UYARISI (kullanıcı, 19 Eylül: "fazla satış
+                                                                                // yaptık, bunu belirtmesi gerekli"). Karşılanan miktar
+                                                                                // siparişi AŞTIĞINDA eskiden yine "Teslim edildi" yazıyordu;
+                                                                                // 136 çiftlik siparişe 160 çift sevk edildiği ekranda hiçbir
+                                                                                // yerde görünmüyordu. Fazla sevk bir hata değil (müşteri
+                                                                                // fazladan istemiş olabilir) ama SESSİZ kalması hata: fatura
+                                                                                // ile sipariş tutmaz ve fark aylar sonra bulunur.
+                                                                                if ((k.karsilanan || 0) > k.miktar) {
+                                                                                    return {
+                                                                                        metin: `Fazla sevk (+${(k.karsilanan || 0) - k.miktar})`,
+                                                                                        renk: "var(--erp-warn)", sira: 5,
+                                                                                        ipucu: `Sipariş ${k.miktar}, sevk edilen ${k.karsilanan || 0} — aradaki fark faturaya yansımalı`,
+                                                                                    };
+                                                                                }
+                                                                                if ((k.karsilanan || 0) >= k.miktar)
+                                                                                    return { metin: "Teslim edildi", renk: "var(--erp-primary)", sira: 5 };
+                                                                                if (!k.planlama)
+                                                                                    return { metin: "Planlanacak", renk: "var(--erp-text-3)", sira: 0 };
+                                                                                if (k.planlama.tip === "Satınalma") {
+                                                                                    const alis = (tumSiparisler || []).find((s) => s.siparisNo === k.planlama.referansNo);
+                                                                                    if (alis && alis.durum === "Tamamlandı")
+                                                                                        return { metin: "Geldi", renk: "var(--erp-primary)", sira: 4 };
+                                                                                    if (alis && alis.durum === "Kısmi Teslim")
+                                                                                        return { metin: "Kısmen geldi", renk: "#C97B3D", sira: 2 };
+                                                                                    return { metin: `Alış siparişi ${k.planlama.referansNo}`, renk: "var(--erp-brown)", sira: 1, ikon: "alis" };
+                                                                                }
+                                                                                const ur = (uretimSiparisleri || []).find((o) => o.siparisNo === k.planlama.referansNo);
+                                                                                if (!ur)
+                                                                                    return { metin: "Üretilecek", renk: "var(--erp-info)", sira: 1 };
+                                                                                const ilerleme = ur.prosesIlerleme || [];
+                                                                                const biten = ilerleme.filter((p) => p.tamamlandiMi).length;
+                                                                                const siradaki = ilerleme.find((p) => !p.tamamlandiMi);
+                                                                                const basladi = ilerleme.some((p) => p.tamamlandiMi || (p.atamalar || []).some((a) => a.verildiMi));
+                                                                                if (ur.stogaEklendiMi)
+                                                                                    return { metin: "Üretildi", renk: "var(--erp-primary)", sira: 4 };
+                                                                                if (!basladi)
+                                                                                    return { metin: "Üretilecek", renk: "var(--erp-info)", sira: 1 };
                                                                                 return {
-                                                                                    metin: `Fazla sevk (+${(k.karsilanan || 0) - k.miktar})`,
-                                                                                    renk: "var(--erp-warn)", sira: 5,
-                                                                                    ipucu: `Sipariş ${k.miktar}, sevk edilen ${k.karsilanan || 0} — aradaki fark faturaya yansımalı`,
+                                                                                    metin: siradaki ? siradaki.proses : (ur.asama || "Üretim"),
+                                                                                    adim: `${biten}/${ilerleme.length}`,
+                                                                                    renk: prosesRengi(siradaki ? siradaki.proses : "Üretim"),
+                                                                                    sira: 2, ikon: "uretim",
                                                                                 };
-                                                                            }
-                                                                            if ((k.karsilanan || 0) >= k.miktar)
-                                                                                return { metin: "Teslim edildi", renk: "var(--erp-primary)", sira: 5 };
-                                                                            if (!k.planlama)
-                                                                                return { metin: "Planlanacak", renk: "var(--erp-text-3)", sira: 0 };
-                                                                            if (k.planlama.tip === "Satınalma") {
-                                                                                const alis = (tumSiparisler || []).find((s) => s.siparisNo === k.planlama.referansNo);
-                                                                                if (alis && alis.durum === "Tamamlandı")
-                                                                                    return { metin: "Geldi", renk: "var(--erp-primary)", sira: 4 };
-                                                                                if (alis && alis.durum === "Kısmi Teslim")
-                                                                                    return { metin: "Kısmen geldi", renk: "#C97B3D", sira: 2 };
-                                                                                return { metin: `Alış siparişi ${k.planlama.referansNo}`, renk: "var(--erp-brown)", sira: 1, ikon: "alis" };
-                                                                            }
-                                                                            const ur = (uretimSiparisleri || []).find((o) => o.siparisNo === k.planlama.referansNo);
-                                                                            if (!ur)
-                                                                                return { metin: "Üretilecek", renk: "var(--erp-info)", sira: 1 };
-                                                                            const ilerleme = ur.prosesIlerleme || [];
-                                                                            const biten = ilerleme.filter((p) => p.tamamlandiMi).length;
-                                                                            const siradaki = ilerleme.find((p) => !p.tamamlandiMi);
-                                                                            const basladi = ilerleme.some((p) => p.tamamlandiMi || (p.atamalar || []).some((a) => a.verildiMi));
-                                                                            if (ur.stogaEklendiMi)
-                                                                                return { metin: "Üretildi", renk: "var(--erp-primary)", sira: 4 };
-                                                                            if (!basladi)
-                                                                                return { metin: "Üretilecek", renk: "var(--erp-info)", sira: 1 };
-                                                                            return {
-                                                                                metin: siradaki ? siradaki.proses : (ur.asama || "Üretim"),
-                                                                                adim: `${biten}/${ilerleme.length}`,
-                                                                                renk: prosesRengi(siradaki ? siradaki.proses : "Üretim"),
-                                                                                sira: 2, ikon: "uretim",
-                                                                            };
-                                                                        });
-                                                                        durumlar.sort((a, b) => a.sira - b.sira);
-                                                                        // FAZLA SEVK HER ZAMAN ÖNE ÇIKAR (19 Eylül): renk grubunda en
-                                                                        // "geri"deki durum gösteriliyor; fazla sevk en ileri aşama
-                                                                        // olduğu için sıralamada sona düşüyor ve hiç görünmüyordu.
-                                                                        // Oysa bu bir UYARI: sessiz kalırsa fatura ile sipariş tutmaz.
-                                                                        const d = durumlar.find((x) => x.sira === 5) || durumlar[0];
-                                                                        if (!d)
-                                                                            return null;
-                                                                        return (React.createElement("span", { className: "mono", title: d.ipucu || undefined, style: {
-                                                                                display: "inline-flex", alignItems: "center", gap: 5,
-                                                                                fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)",
-                                                                                background: d.sira <= 2 && d.ikon ? d.renk : alfaEkle(d.renk, "22"),
-                                                                                color: d.sira <= 2 && d.ikon ? "var(--erp-panel-2)" : d.renk,
-                                                                            } },
-                                                                            d.ikon === "uretim" && React.createElement(Hammer, { size: 10 }),
-                                                                            d.ikon === "alis" && React.createElement(PackageCheck, { size: 10 }),
-                                                                            d.metin,
-                                                                            d.adim && React.createElement("span", { style: { opacity: 0.75, fontWeight: 400 } }, d.adim)));
-                                                                    })())),
-                                                                notAcik && (React.createElement("tr", { "data-kart-not-satiri": rg.renk, onClick: () => notSatiriDegistir(notAnahtari), style: { cursor: "pointer" } },
-                                                                    React.createElement("td", { colSpan: tumBedenler.length + 5, style: { padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" } }, satirNotlari.map((n) => (React.createElement("div", { key: notEtiketi(n), "data-kart-kalem-aciklama": "1", style: { fontSize: 13, color: "var(--erp-text)", whiteSpace: "pre-wrap", padding: "2px 0" } },
-                                                                        n.proses && React.createElement("b", { style: { color: "#8A6A2E" } },
-                                                                            n.proses,
-                                                                            ": "),
-                                                                        n.metin))))))));
-                                                        }),
-                                                        renkGruplari.length > 1 && (React.createElement("tr", { style: { borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" } },
-                                                            React.createElement("td", { style: { padding: "6px 8px", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" } }, "Toplam"),
-                                                            tumBedenler.map((b) => (React.createElement("td", { key: b, className: "mono", style: { padding: "6px 6px", textAlign: "center", fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" } }, ug.kalemler.filter((k) => k.beden === b).reduce((t, k) => t + (k.miktar || 0), 0) || ""))),
-                                                            React.createElement("td", { className: "mono", style: { padding: "6px 10px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" } },
-                                                                toplamAdet,
-                                                                " ",
-                                                                React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" } }, ug.birim)),
-                                                            React.createElement("td", null),
-                                                            React.createElement("td", { className: "mono", style: { padding: "6px 10px", textAlign: "right", fontSize: 14, fontWeight: 700, color: "var(--erp-text)" } },
-                                                                toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
-                                                                " ",
-                                                                PARA_SEMBOLU[ug.kalemler[0].paraBirimi || "TRY"] || ug.kalemler[0].paraBirimi),
-                                                            React.createElement("td", null)))))))));
-                                });
-                            })()))) },
+                                                                            });
+                                                                            durumlar.sort((a, b) => a.sira - b.sira);
+                                                                            // FAZLA SEVK HER ZAMAN ÖNE ÇIKAR (19 Eylül): renk grubunda en
+                                                                            // "geri"deki durum gösteriliyor; fazla sevk en ileri aşama
+                                                                            // olduğu için sıralamada sona düşüyor ve hiç görünmüyordu.
+                                                                            // Oysa bu bir UYARI: sessiz kalırsa fatura ile sipariş tutmaz.
+                                                                            const d = durumlar.find((x) => x.sira === 5) || durumlar[0];
+                                                                            if (!d)
+                                                                                return null;
+                                                                            return (React.createElement("span", { className: "mono", title: d.ipucu || undefined, style: {
+                                                                                    display: "inline-flex", alignItems: "center", gap: 5,
+                                                                                    fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)",
+                                                                                    background: d.sira <= 2 && d.ikon ? d.renk : alfaEkle(d.renk, "22"),
+                                                                                    color: d.sira <= 2 && d.ikon ? "var(--erp-panel-2)" : d.renk,
+                                                                                } },
+                                                                                d.ikon === "uretim" && React.createElement(Hammer, { size: 10 }),
+                                                                                d.ikon === "alis" && React.createElement(PackageCheck, { size: 10 }),
+                                                                                d.metin,
+                                                                                d.adim && React.createElement("span", { style: { opacity: 0.75, fontWeight: 400 } }, d.adim)));
+                                                                        })())),
+                                                                    notAcik && (React.createElement("tr", { "data-kart-not-satiri": rg.renk, onClick: () => notSatiriDegistir(notAnahtari), style: { cursor: "pointer" } },
+                                                                        React.createElement("td", { colSpan: tumBedenler.length + 5, style: { padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" } }, satirNotlari.map((n) => (React.createElement("div", { key: notEtiketi(n), "data-kart-kalem-aciklama": "1", style: { fontSize: 13, color: "var(--erp-text)", whiteSpace: "pre-wrap", padding: "2px 0" } },
+                                                                            n.proses && React.createElement("b", { style: { color: "#8A6A2E" } },
+                                                                                n.proses,
+                                                                                ": "),
+                                                                            n.metin))))))));
+                                                            })))))));
+                                    });
+                                })(),
+                                (() => {
+                                    const adetler = {};
+                                    const tutarlar = {};
+                                    siparis.kalemler.forEach((k) => {
+                                        const b = k.birim || "adet";
+                                        adetler[b] = (adetler[b] || 0) + (k.miktar || 0);
+                                        const pb = k.paraBirimi || "TRY";
+                                        tutarlar[pb] = (tutarlar[pb] || 0) + (k.miktar || 0) * (k.birimFiyat || 0);
+                                    });
+                                    const modelSayisi = new Set(siparis.kalemler.map((k) => k.urunId)).size;
+                                    return (React.createElement("div", { "data-siparis-genel-toplam": "1", style: { display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "8px 14px",
+                                            background: siparis.tip === "Alış" ? "#F1E6DA" : "#E3EDF5", color: siparis.tip === "Alış" ? "#6B4426" : "#1F4E73",
+                                            border: `1px solid ${siparis.tip === "Alış" ? "#D9C2A8" : "#BFD3E4"}`, borderRadius: "var(--erp-r-md)" } },
+                                        React.createElement("span", { style: { fontSize: 13, fontWeight: 800, letterSpacing: ".04em" } }, "S\u0130PAR\u0130\u015E TOPLAMI"),
+                                        React.createElement("span", { style: { fontSize: 12 } },
+                                            modelSayisi,
+                                            " model \u00B7 ",
+                                            siparis.kalemler.length,
+                                            " kalem"),
+                                        React.createElement("span", { className: "mono", "data-siparis-genel-adet": Object.entries(adetler).map(([b, n]) => `${n} ${b}`).join(" + "), style: { marginLeft: "auto", fontSize: 14, fontWeight: 700 } }, Object.entries(adetler).map(([b, n]) => `${n.toLocaleString("tr-TR")} ${b}`).join(" + ")),
+                                        React.createElement("span", { className: "mono", "data-siparis-genel-tutar": "1", style: { fontSize: 16, fontWeight: 800 } }, Object.entries(tutarlar).map(([pb, t]) => `${t.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`).join(" + "))));
+                                })()))) },
                     { id: "tedarik", ad: "Tedarik ve fiş geçmişi (sekmeler)", icerik: (React.createElement(React.Fragment, null, (() => {
                             // Tedarik planlama, doğası gereği DEĞİŞİKLİK yapan bir ekran (üretim/satın alma açar).
                             // Salt-okunur önizlemede gizlenir; bilgi amaçlı sekmeler (ihtiyaç, alışlar) kalır.
@@ -53922,6 +53989,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                 " kalemin re\u00E7etesi yok"),
                                             " \u2014 o kalemler bu hesaba dahil edilmedi. \u00DCr\u00FCn kart\u0131 > Re\u00E7ete sekmesinden tan\u0131mlay\u0131n, aksi halde \u00FCretimde hammadde d\u00FC\u015F\u00FClmez.")),
                                         ihtiyac.kalemler.length === 0 ? (React.createElement(EmptyState, { text: "Re\u00E7eteye ba\u011Fl\u0131 hammadde ihtiyac\u0131 bulunamad\u0131." })) : (React.createElement("div", { style: { display: "grid", gap: 10 } },
+                                            React.createElement(HammaddeDurumLejanti, { sayilar: ihtiyac.kalemler.reduce((o, x) => { o[x.durum] = (o[x.durum] || 0) + 1; return o; }, {}) }),
                                             React.createElement(IhtiyacMatrisi, { kalemler: ihtiyac.kalemler.map((x) => ({
                                                     ad: x.hammaddeAd, renk: x.renk, beden: x.beden,
                                                     birim: x.birim, miktar: x.gereken, proses: x.proses,
@@ -53935,11 +54003,22 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                             `Stok: ${x.mevcutStok}${x.varyantYok ? " (bu renk/ölçü hammadde kartında TANIMSIZ)" : ""}\n` +
                                                             (x.rezerve > 0
                                                                 ? `Bu siparişe ayrılmış: ${x.rezerve}${x.rezerveAcik > 0 ? ` (${x.rezerveAcik} açık)` : ""}`
-                                                                : "Rezervasyon yok"), style: { display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.25, cursor: "help" } },
-                                                        React.createElement("span", { style: { color: x.eksik > 0 ? "var(--erp-warn)" : "var(--erp-text)", fontWeight: 700 } }, deger),
-                                                        x.eksik > 0 && (React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: "var(--erp-warn)" } },
+                                                                : "Rezervasyon yok") +
+                                                            (x.yolda > 0 ? `\nSiparişte (yolda): ${x.yolda}` : "") +
+                                                            (x.netEksik > 0 ? `\nHâlâ sipariş edilmemiş eksik: ${x.netEksik}` : "") +
+                                                            `\nDurum: ${HAMMADDE_DURUMLARI[x.durum].ad}`, "data-hammadde-durum": x.durum, 
+                                                        // DURUM RENGİ (v1.632.0 — Planlama ile aynı standart, HAMMADDE_DURUMLARI): stokta var yeşil,
+                                                        // tamamı siparişte mavi, eksik (ya da kısmen siparişte + kamyon) turuncu; hap zemini durum renginde.
+                                                        style: { display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.25, cursor: "help",
+                                                            padding: "1px 7px", borderRadius: "var(--erp-r-pill)", border: `1px solid ${HAMMADDE_DURUMLARI[x.durum].renk}`,
+                                                            background: alfaEkle(HAMMADDE_DURUMLARI[x.durum].renk, "1F"), color: HAMMADDE_DURUMLARI[x.durum].renk } },
+                                                        React.createElement("span", { style: { fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 3 } },
+                                                            deger,
+                                                            x.yolda > 0 && React.createElement(Truck, { size: 10 })),
+                                                        x.eksik > 0 && (React.createElement("span", { style: { fontSize: 10, fontWeight: 700 } },
                                                             "\u2212",
-                                                            x.eksik)),
+                                                            x.eksik,
+                                                            x.yolda > 0 ? ` · ${x.yolda} yolda` : "")),
                                                         x.varyantYok && (React.createElement("span", { title: "Bu renk/\u00F6l\u00E7\u00FC hammadde kart\u0131nda hi\u00E7 tan\u0131ml\u0131 de\u011Fil \u2014 stok 0 g\u00F6r\u00FCnmesinin sebebi sto\u011Fun bitmesi de\u011Fil", style: { fontSize: 9, color: "var(--erp-warn)" } }, "tan\u0131ms\u0131z"))));
                                                 } }),
                                             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "7px 10px", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" } },
@@ -57304,7 +57383,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.629.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.632.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

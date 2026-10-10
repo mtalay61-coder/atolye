@@ -294,6 +294,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
           )}
         </div>
         <div style={{ marginLeft: "auto", display: "grid", gap: 6, justifyItems: "end" }}>
+          <HammaddeDurumLejanti />
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             {eksikSayisi > 0 && (
               <span className="mono" style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", background: "#B85C2E22", color: "var(--erp-warn)" }}>
@@ -587,7 +588,8 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                                 const acikMi = acikHammadde === anahtar;
                                 // Üç durum: yeterli (yeşil) / eksik ve sipariş edilmemiş (turuncu) /
                                 // eksik ama tamamı sipariş edilmiş, yolda (mavi).
-                                const durumRenk = !r.eksikMi ? "var(--erp-primary)" : (r.netEksik > 0 ? "var(--erp-warn)" : "var(--erp-info)");
+                                // Ortak standart (015 HAMMADDE_DURUMLARI, v1.632.0) — sipariş kartıyla aynı.
+                                const durumRenk = HAMMADDE_DURUMLARI[hammaddeDurumu(r.eksikMi ? r.eksikMiktar : 0, r.satinAlma.yolda)].renk;
                                 return (
                                   <td key={b} style={{ padding: "3px 6px", textAlign: "center" }}>
                                     <button

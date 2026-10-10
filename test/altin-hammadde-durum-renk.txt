@@ -1,0 +1,15 @@
+{
+ "hatalar": [],
+ "hucreler": [
+  "Deri Siyah → kismen (rgb(161, 92, 7))",
+  "Deri Taba → yeterli (rgb(47, 125, 74))",
+  "Taban Siyah → yeterli (rgb(47, 125, 74))",
+  "Taban Siyah → yolda (rgb(28, 109, 181))"
+ ],
+ "lejant": [
+  "Stokta var (2)",
+  "Siparişte (yolda) (1)",
+  "Kısmen siparişte (1)",
+  "Eksik — sipariş yok"
+ ]
+}

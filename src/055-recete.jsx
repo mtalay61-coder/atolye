@@ -67,6 +67,12 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
     g.rezerveAcik = Math.round(bizim.reduce((t, x) => t + x.acik, 0) * 1000) / 1000;
     g.eksik = Math.round(Math.max(0, g.gereken - g.mevcutStok) * 1000) / 1000;
     g.eksikMaliyet = Math.round(g.eksik * g.alisFiyati * 100) / 100;
+    // SATIN ALMA DURUMU (v1.632.0): Planlama'daki gibi — bu satış siparişi için verilmiş alış siparişlerinde henüz teslim
+    // alınmamış (yolda) miktar. Durum standardı (HAMMADDE_DURUMLARI): yeterli / yolda / kismen / eksik.
+    const satinAlma = hammaddeSatinAlmaDurumu(g.hammaddeUrunId, g.renk, g.beden, new Set([siparis.id]), tumSiparisler || []);
+    g.yolda = satinAlma.yolda || 0;
+    g.netEksik = Math.round(Math.max(0, g.eksik - g.yolda) * 1000) / 1000;
+    g.durum = hammaddeDurumu(g.eksik, g.yolda);
   });
 
   // Proses sırasına göre değil, EKSİĞİ olanlar önce: kullanıcının bu ekranda aradığı şey eksiklerdir.
