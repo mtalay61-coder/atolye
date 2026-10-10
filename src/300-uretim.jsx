@@ -47,6 +47,9 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
 
   function addOrder() {
     if (!seciliUrun) return showToast("Ürün seçin");
+    // REÇETE ONAYI (v1.634.0): eksik ya da onaysız reçeteyle üretim açılmaz (bkz. 055 uretimReceteKapisi).
+    const receteKapisi = uretimReceteKapisi(seciliUrun, stok);
+    if (receteKapisi) return showToast(receteKapisi);
     if (!renk) return showToast("Renk seçin");
     const bedenMiktarlari = bedenSecenekleri
       .map((b) => ({ beden: b, miktar: parseFloat(bedenMiktarlar[b]) || 0 }))
@@ -235,6 +238,16 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
             </Field>
           </div>
 
+          {/* REÇETE ONAY UYARISI (v1.634.0): kullanıcı miktarları girip "Oluştur"a bastıktan sonra öğrenmesin;
+              ürün seçilir seçilmez söyleniyor, "Oluştur" pasif. */}
+          {seciliUrun && uretimReceteKapisi(seciliUrun, stok) && (
+            <div data-uretim-recete-kapisi="1" style={{ marginTop: 12, padding: "10px 12px", borderRadius: "var(--erp-r-md)",
+              background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", color: "#7A3B22", fontSize: 13, display: "flex", gap: 8, alignItems: "flex-start" }}>
+              <AlertTriangle size={15} color="var(--erp-warn)" style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>{uretimReceteKapisi(seciliUrun, stok)}</span>
+            </div>
+          )}
+
           {seciliUrun && (
             <div style={{ marginTop: 12 }}>
               {/* Ürünün renk başlığı (v1.495.0): Renk / Baskı / Tip… */}
@@ -303,7 +316,9 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
           )}
 
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-            <button className="btn-primary" onClick={addOrder}>Oluştur</button>
+            <button className="btn-primary" data-uretim-olustur="1" onClick={addOrder}
+              disabled={!!(seciliUrun && uretimReceteKapisi(seciliUrun, stok))}
+              style={seciliUrun && uretimReceteKapisi(seciliUrun, stok) ? { opacity: 0.5, cursor: "not-allowed" } : undefined}>Oluştur</button>
             <button className="btn-ghost" onClick={() => { setShowForm(false); resetForm(); }}><X size={14} /> Vazgeç</button>
           </div>
         </div>

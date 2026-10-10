@@ -2698,6 +2698,59 @@ function ProductMatrixCard({
               fark birlikteyken çıkıyor — tek üretimde deri kötü çıkmış olabilir. */}
           {/* "Üretimden ölçülen tüketim" MALİYET SEKMESİNE TAŞINDI (21 Eylül). */}
 
+          {/* ---- REÇETE ONAYI (v1.634.0) ------------------------------------------------------------
+              Kullanıcı: "reçete tam bitmeden üretim oluşturulamasın, reçete onay olsun, reçete onaysız üretim
+              başlamasın". Kural ve imza 055 `receteOnayDurumu`nda. Yalnız Mamul: üretim kapısı mamulde. Eksik
+              reçetede "Onayla" pasif ve neyin eksik olduğu yazıyor; onaydan sonra reçete değişirse onay kendiliğinden
+              düşüyor (imza tutmuyor) ve burada "değişti" görünüyor. */}
+          {product.kategori === "Mamul" && (() => {
+            const od = receteOnayDurumu(product, tumUrunler);
+            const renkler4 = {
+              onayli: { zemin: "#E8F3EA", kenar: "var(--erp-ok)", yazi: "#2F5A35", baslik: "Reçete onaylı — üretim açılabilir" },
+              degisti: { zemin: "var(--erp-orange-bg)", kenar: "#E1611F", yazi: "#7A3B22", baslik: "Reçete onaydan sonra değişti — üretim açılamaz, kontrol edip yeniden onaylayın" },
+              onaysiz: { zemin: "var(--erp-orange-bg)", kenar: "#E1611F", yazi: "#7A3B22", baslik: "Reçete onaylanmadı — onaylanana kadar bu üründen üretim açılamaz" },
+              eksik: { zemin: "#FBEAEA", kenar: "var(--erp-warn)", yazi: "#7A2222", baslik: "Reçete tamamlanmadı — onaylanamaz, üretim açılamaz" },
+            }[od.durum];
+            const onayla = () => {
+              onUrunGuncelle(product.id, { receteOnay: { imza: receteImzasi(product), onaylayan: (_gunlukKullanici && _gunlukKullanici.ad) || "", tarih: new Date().toISOString() } });
+              if (showToast) showToast(`${product.ad}: reçete onaylandı`);
+            };
+            const kaldir = () => {
+              onUrunGuncelle(product.id, { receteOnay: null });
+              if (showToast) showToast(`${product.ad}: reçete onayı kaldırıldı — üretim açılamaz`);
+            };
+            return (
+              <div data-recete-onay={od.durum} style={{ background: renkler4.zemin, border: `1.5px solid ${renkler4.kenar}`, borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 14, color: renkler4.yazi }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  {od.durum === "onayli" ? <Check size={16} color="var(--erp-ok)" strokeWidth={3} /> : <AlertTriangle size={16} color="var(--erp-warn)" />}
+                  <span style={{ fontSize: 13, fontWeight: 700, flex: "1 1 260px" }}>{renkler4.baslik}</span>
+                  {od.durum === "onayli" ? (
+                    <button type="button" className="btn-ghost" data-recete-onay-kaldir="1" onClick={kaldir} style={{ padding: "5px 10px", fontSize: 12 }}>
+                      Onayı kaldır
+                    </button>
+                  ) : (
+                    <button type="button" className="btn-primary" data-recete-onayla="1" onClick={onayla} disabled={od.durum === "eksik"}
+                      title={od.durum === "eksik" ? "Önce aşağıdaki eksikleri tamamlayın" : "Reçeteyi kontrol ettim, üretime açılabilir"}
+                      style={{ padding: "6px 12px", fontSize: 12, ...(od.durum === "eksik" ? { opacity: 0.5, cursor: "not-allowed" } : {}) }}>
+                      <Check size={13} /> Reçeteyi onayla
+                    </button>
+                  )}
+                </div>
+                {od.onay && od.onay.tarih && od.durum !== "eksik" && (
+                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.85 }}>
+                    {od.durum === "onayli" ? "Onaylayan" : "Son onay"}: {od.onay.onaylayan || "—"} · {tarihYaz(od.onay.tarih)}
+                  </div>
+                )}
+                {od.durum === "eksik" && (
+                  <ul data-recete-eksikleri="1" style={{ margin: "6px 0 0", paddingLeft: 20, fontSize: 12, lineHeight: 1.6 }}>
+                    {od.eksikler.slice(0, 8).map((e, i) => <li key={i}>{e}</li>)}
+                    {od.eksikler.length > 8 && <li>… ve {od.eksikler.length - 8} eksik daha</li>}
+                  </ul>
+                )}
+              </div>
+            );
+          })()}
+
           {(() => {
             const eksikRaporu = renkler
               .map((mr) => ({ renk: mr, eksikler: receteKapsamEksikleri(product, mr, bedenler) }))
