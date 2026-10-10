@@ -1,0 +1,19 @@
+{
+  "tohumLogoKB": true,
+  "acilista": {
+    "kuculdu": true,
+    "boyut": [
+      400,
+      250
+    ],
+    "unvanKorundu": "Atölye"
+  },
+  "yuklemede": {
+    "kuculdu": true,
+    "boyut": [
+      400,
+      250
+    ]
+  },
+  "hatalar": []
+}

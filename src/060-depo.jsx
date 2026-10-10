@@ -82,6 +82,15 @@ function veriBoyutu(deger) {
 // yer kapladığını söylemiyordu.
 //
 // Artifact ortamında localStorage yok; orada `null` döner ve çağıran yeri atlar.
+// "atolye:" ÖNEKİ OLMADAN DOĞRUDAN localStorage'a yazılan KENDİ anahtarlarımız (v1.635.0 — kullanıcı ekran görüntüsüyle:
+// Depolama Durumu `firma:gorunum`, `oturum:aktif`, `bekleyen:yazma`… kayıtlarını "başka uygulama" diye gösteriyordu ve
+// "deponun çoğunu başka bir uygulama kullanıyor" diyordu — yanlış alarm). Yeni bir doğrudan localStorage anahtarı
+// eklerken BURAYA da yaz.
+const UYGULAMA_DIS_ANAHTARLARI = new Set([
+  "firma:gorunum", "oturum:aktif", "bekleyen:yazma", "bekleyen:kayitlar", "tanimlar:acikBasliklar", "tanim:silinenler",
+  "gorunum:boyut", "ustMenu:kademe", "mobil:duzen", "cari:ekstre-sade", "siparis:barkodPaneli", "github:token", "github:ayar",
+]);
+
 function depoKullanimi() {
   if (typeof localStorage === "undefined" || !localStorage) return null;
   const kayitlar = [];
@@ -101,7 +110,7 @@ function depoKullanimi() {
       // uygulaması da aynı localStorage'a yazıyor. Bildirilen olayda deponun %70'ini bu uygulamaya
       // ait OLMAYAN bir kayıt (`not-defteri:tasks`, 3,46 MB) doldurmuştu. "Ürün görsellerinizi
       // silin" demek, sorunu bizde aramaya yönlendiren yanlış bir tavsiye olurdu.
-      const bizeAitMi = tamAnahtar.startsWith("atolye:");
+      const bizeAitMi = tamAnahtar.startsWith("atolye:") || UYGULAMA_DIS_ANAHTARLARI.has(tamAnahtar);
       if (bizeAitMi) bizim += bayt; else yabanci += bayt;
       toplam += bayt;
       kayitlar.push({ anahtar: tamAnahtar.replace(/^atolye:/, ""), bayt, bizeAitMi });

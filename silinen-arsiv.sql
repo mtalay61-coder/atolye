@@ -19,7 +19,7 @@
 --    • TRUNCATE (tabloyu tek seferde boşaltma) satır satır iz bırakmadığı için giriş yapmış
 --      kullanıcıdan TAMAMEN alınır; uygulama zaten kullanmıyor.
 --
---  SAKLAMA: silinen satırlar 365 gün, tek satırlık tabloların anlık görüntüleri 90 gün. Eskiler
+--  SAKLAMA: silinen satırlar 365 gün, tek satırlık tabloların anlık görüntüleri 30 gün (günde en çok bir; v1.634.2'ye kadar saatlik + 90 gündü). Eskiler
 --  tetikleyicinin kendisi tarafından ara ara temizlenir (uygulama değil).
 --
 --  NASIL ÇALIŞTIRILIR: Supabase > SQL Editor > New query > tamamını yapıştır > Run. Tekrar
@@ -78,7 +78,7 @@ begin
   return OLD;
 end $$;
 
--- 4) Tek satırlık tablonun eski hâlini (saatte en çok bir kez) saklayan tetikleyici
+-- 4) Tek satırlık tablonun eski hâlini (GÜNDE en çok bir kez, 30 gün — v1.634.2, bkz. arsiv-goruntu-seyrelt.sql) saklayan tetikleyici
 create or replace function public.arsive_kopyala_goruntu()
 returns trigger
 language plpgsql
@@ -88,11 +88,11 @@ as $$
 begin
   if OLD.veri is distinct from NEW.veri and not exists (
     select 1 from public.silinen_arsiv
-    where tablo = TG_TABLE_NAME and islem = 'GORUNTU' and zaman > now() - interval '1 hour'
+    where tablo = TG_TABLE_NAME and islem = 'GORUNTU' and zaman > now() - interval '24 hours'
   ) then
     insert into public.silinen_arsiv (tablo, islem, satir_id, veri)
     values (TG_TABLE_NAME, 'GORUNTU', to_jsonb(OLD) ->> 'id', to_jsonb(OLD));
-    delete from public.silinen_arsiv where islem = 'GORUNTU' and zaman < now() - interval '90 days';
+    delete from public.silinen_arsiv where islem = 'GORUNTU' and zaman < now() - interval '30 days';
   end if;
   return NEW;
 end $$;

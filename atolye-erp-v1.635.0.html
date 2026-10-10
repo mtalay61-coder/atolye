@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.633.0</title>
+<title>Atölye ERP 1.635.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2135,9 +2135,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.633.0";
+const SURUM = "1.635.0";
 const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Hiz: veri buyudukce yavaslayan menu ve ekran gecisleri hizlandi";
+const SURUM_NOTU = "Firma logosu kucultulerek kaydedilir; buyuk logo bir kez kucultulur";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2145,6 +2145,17 @@ const SURUM_NOTU = "Hiz: veri buyudukce yavaslayan menu ve ekran gecisleri hizla
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.635.0", tarih: "10.10.2026",
+        eklenen: [],
+        degisen: ["Firma logosu yüklenirken küçültülerek kaydediliyor (uzun kenar 400 px); daha önce yüklenmiş büyük logo bir kez kendiliğinden küçültülür — Tanımlar kaydı ~530 KB'tan küçülür, bulut indirme kotası daha az harcanır"],
+        duzeltilen: ["Tanımlar > Depolama Durumu bu uygulamanın kendi kayıtlarını (firma görünümü, oturum, bekleyen yazma…) \"başka uygulama\" diye gösteriyordu"] },
+    { surum: "1.634.1", tarih: "10.10.2026",
+        eklenen: ["Arama kutularında × ile hızlı temizleme: Fişler, Cari, Cari Raporları, Sipariş, Üretim, Hammadde İhtiyacı, Görevler, Tanımlar"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.634.0", tarih: "10.10.2026",
+        eklenen: ["Reçete onayı: ürün kartı > Reçete sekmesinde \"Reçeteyi onayla\" — yalnız reçete tamsa (her renk ve beden kapsanmış, miktarlar girilmiş, kırmızı renk eşleşmesi kalmamış) onaylanır; eksikler listelenir"],
+        degisen: ["Mamul üretimi yalnız onaylı reçeteyle açılır (Üretim > yeni üretim ve Tedarik Planlama); reçete onaydan sonra değişirse onay kendiliğinden düşer, yeniden onay gerekir. Açılmış üretimler etkilenmez"],
+        duzeltilen: [] },
     { surum: "1.633.0", tarih: "10.10.2026",
         eklenen: ["Fişler listesi 100'er fiş gösteriyor; altta \"Daha fazla göster\" (arama ve süzgeçler yine bütün fişlerde)"],
         degisen: ["Hız: veri büyüdükçe yavaşlayan menü açılışları ve modül geçişleri hızlandı — gizli modüller artık her tıklamada yeniden çizilmiyor, üst menü yalnız boyutu değişince ölçülüyor, tarih/sayı biçimleme ve son işlemler akışı önbellekte"],
@@ -6915,6 +6926,88 @@ function stoktanReceteKopyala(kaynak, hedef, tumUrunler) {
     sonuc.iscilikSayisi += n;
     return sonuc;
 }
+// ================= REÇETE ONAYI (v1.634.0) =================
+//
+// Kullanıcı (10 Ekim): "mamul stok için reçete tam bitmeden üretim oluşturulamasın, reçete onay olsun, reçete
+// onaysız üretim başlamasın". Eksik reçeteyle açılan üretimde eksik hammadde hiç düşülmüyor, fark ancak sayımda
+// çıkıyordu (bkz. receteKapsamEksikleri). Kural:
+//   • TAM: reçetede en az bir hammadde; her model rengi ve her beden her hammaddede kapsanmış (mevcut iki kapsam
+//     denetimi); her satırın miktarı > 0; geçmişten hatırlanan (kırmızı) renk eşleşmesi kalmamış.
+//   • ONAY: yalnız tam reçete onaylanır. Onay, reçetenin İMZASIYLA saklanır (`urun.receteOnay = { imza, onaylayan,
+//     tarih }`, şema dışı alan → `ek`). Reçete onaydan sonra HANGİ YOLDAN değişirse değişsin (satır, renk/beden
+//     eklenmesi, şablon, kopya) imza tutmaz ve onay kendiliğinden düşer — her düzenleme yoluna tek tek "onayı sil"
+//     yazmak, unutulan bir yolda bayat onayla üretim açtırırdı.
+//   • KAPI: yeni üretim (Üretim modülü + Tedarik Planlama) onaylı reçete ister. Açılmış üretimler, hurda telafisi ve
+//     modelhane numunesi kapıdan geçmez: onlar ya karar verilmiş işin devamı ya da reçetesi henüz olmayan numune.
+//
+// İMZA: satırların ad/kimlik/işaret dışındaki alanları + model renk/beden kümesi + hammaddesiz prosesler. Hammadde
+// ADI dışarıda: yeniden adlandırma reçeteyi değiştirmez (bağ kimlikle).
+const RECETE_IMZA_DISI = new Set(["id", "eklemeId", "eklemeTarihi", "renkGecmisten", "renkOnayli", "hammaddeAd"]);
+function receteImzasi(urun) {
+    const satirlar = ((urun && urun.recete) || []).map((r) => JSON.stringify(Object.keys(r).filter((k) => !RECETE_IMZA_DISI.has(k) && r[k] !== undefined && r[k] !== null && r[k] !== "").sort().map((k) => [k, r[k]]))).sort();
+    const varyant = Array.from(new Set(((urun && urun.variants) || []).map((v) => `${v.renk}|${v.beden}`))).sort();
+    const metin = JSON.stringify([satirlar, varyant, ((urun && urun.receteEkProsesler) || []).slice().sort()]);
+    // djb2 — kısa ve kararlı; güvenlik değil, değişiklik tespiti.
+    let h = 5381;
+    for (let i = 0; i < metin.length; i++)
+        h = ((h * 33) ^ metin.charCodeAt(i)) >>> 0;
+    return `${h.toString(36)}-${metin.length.toString(36)}`;
+}
+// Reçetenin neden "tam" olmadığını okunur cümlelerle döndürür (boş dizi = tam).
+function receteEksikleri(urun, stok) {
+    const recete = (urun && urun.recete) || [];
+    if (recete.length === 0)
+        return ["Reçetede hiç hammadde yok"];
+    const eksikler = [];
+    receteRenkKapsamEksikleri(urun, stok).forEach((e) => eksikler.push(`${e.hammaddeAd}${e.proses ? ` (${e.proses})` : ""}: ${e.eksikRenkler.join(", ")} rengi tanımsız`));
+    const renkler = Array.from(new Set((urun.variants || []).map((v) => v.renk)));
+    renkler.forEach((mr) => {
+        const bedenler = (urun.variants || []).filter((v) => v.renk === mr).map((v) => v.beden); // sirasiz-tamam: yalnız kapsam denetimi, eksik listesi kendi sırasında
+        receteKapsamEksikleri(urun, mr, bedenler).forEach((e) => eksikler.push(`${mr} · ${e.hammaddeAd}${e.proses ? ` (${e.proses})` : ""}: ${e.eksikBedenler.join(", ")} bedeni eksik`));
+    });
+    const miktarsiz = recete.filter((r) => !(Number(r.miktar) > 0));
+    if (miktarsiz.length > 0) {
+        const adlar = Array.from(new Set(miktarsiz.map((r) => r.hammaddeAd || "?")));
+        eksikler.push(`Miktarı girilmemiş satır: ${adlar.join(", ")} (${miktarsiz.length} satır)`);
+    }
+    const kirmizi = recete.filter((r) => r.renkGecmisten);
+    if (kirmizi.length > 0) {
+        const adlar = Array.from(new Set(kirmizi.map((r) => r.hammaddeAd || "?")));
+        eksikler.push(`Geçmişten gelen (kırmızı) renk eşleşmesi onaylanmadı: ${adlar.join(", ")} — hücredeki ✓ ile onaylayın`);
+    }
+    return eksikler;
+}
+// Döner: { durum: "onayli" | "degisti" | "onaysiz" | "eksik", eksikler, onay }.
+// "eksik" önce gelir: onay kaydı olsa bile tam olmayan reçete onaylı sayılmaz (ör. sonradan renk eklendi).
+function receteOnayDurumu(urun, stok) {
+    const eksikler = receteEksikleri(urun, stok);
+    const onay = (urun && urun.receteOnay) || null;
+    if (eksikler.length > 0)
+        return { durum: "eksik", eksikler, onay };
+    if (!onay || !onay.imza)
+        return { durum: "onaysiz", eksikler, onay };
+    if (onay.imza !== receteImzasi(urun))
+        return { durum: "degisti", eksikler, onay };
+    return { durum: "onayli", eksikler, onay };
+}
+// Üretim açma kapısı: sorun yoksa null, varsa kullanıcıya gösterilecek cümle.
+// Testlerde `window.__receteOnaySerbest` kapıyı açar (çevrimdışı kilitteki `__cevrimdisiSerbest` gibi): eski
+// senaryoların tohum reçeteleri bilerek eksik (kapsam uyarılarını ölçüyorlar). Kapıyı ölçen senaryo bunu kapatır.
+function uretimReceteKapisi(urun, stok) {
+    if (typeof window !== "undefined" && window.__receteOnaySerbest)
+        return null;
+    if (!urun)
+        return "Ürün bulunamadı";
+    const d = receteOnayDurumu(urun, stok);
+    if (d.durum === "onayli")
+        return null;
+    const ad = urun.ad || "Ürün";
+    if (d.durum === "eksik")
+        return `${ad}: reçete tamamlanmadan üretim açılamaz — ${d.eksikler[0]}${d.eksikler.length > 1 ? ` (+${d.eksikler.length - 1} eksik daha)` : ""}`;
+    if (d.durum === "degisti")
+        return `${ad}: reçete onaydan sonra değişti — üretim için reçeteyi yeniden onaylayın`;
+    return `${ad}: reçete onaylanmadan üretim açılamaz — ürün kartında Reçete sekmesinden onaylayın`;
+}
 // =============================================================================================
 // VERİ KAYBI KORUMASI
 //
@@ -6991,6 +7084,14 @@ function veriBoyutu(deger) {
 // yer kapladığını söylemiyordu.
 //
 // Artifact ortamında localStorage yok; orada `null` döner ve çağıran yeri atlar.
+// "atolye:" ÖNEKİ OLMADAN DOĞRUDAN localStorage'a yazılan KENDİ anahtarlarımız (v1.635.0 — kullanıcı ekran görüntüsüyle:
+// Depolama Durumu `firma:gorunum`, `oturum:aktif`, `bekleyen:yazma`… kayıtlarını "başka uygulama" diye gösteriyordu ve
+// "deponun çoğunu başka bir uygulama kullanıyor" diyordu — yanlış alarm). Yeni bir doğrudan localStorage anahtarı
+// eklerken BURAYA da yaz.
+const UYGULAMA_DIS_ANAHTARLARI = new Set([
+    "firma:gorunum", "oturum:aktif", "bekleyen:yazma", "bekleyen:kayitlar", "tanimlar:acikBasliklar", "tanim:silinenler",
+    "gorunum:boyut", "ustMenu:kademe", "mobil:duzen", "cari:ekstre-sade", "siparis:barkodPaneli", "github:token", "github:ayar",
+]);
 function depoKullanimi() {
     if (typeof localStorage === "undefined" || !localStorage)
         return null;
@@ -7012,7 +7113,7 @@ function depoKullanimi() {
             // uygulaması da aynı localStorage'a yazıyor. Bildirilen olayda deponun %70'ini bu uygulamaya
             // ait OLMAYAN bir kayıt (`not-defteri:tasks`, 3,46 MB) doldurmuştu. "Ürün görsellerinizi
             // silin" demek, sorunu bizde aramaya yönlendiren yanlış bir tavsiye olurdu.
-            const bizeAitMi = tamAnahtar.startsWith("atolye:");
+            const bizeAitMi = tamAnahtar.startsWith("atolye:") || UYGULAMA_DIS_ANAHTARLARI.has(tamAnahtar);
             if (bizeAitMi)
                 bizim += bayt;
             else
@@ -11201,6 +11302,23 @@ function usePlanlama(d) {
     const planlaUretim = useCallback((satisSiparisId, girdiler) => {
         const girdiListesi = (Array.isArray(girdiler) ? girdiler : [girdiler])
             .map((x) => (typeof x === "string" ? { kalemId: x, miktar: null } : x));
+        // REÇETE ONAY KAPISI (v1.634.0 — kullanıcı: "reçete onaysız üretim başlamasın"). Güncelleyicinin DIŞINDA:
+        // içeride uyarı göstermek yan etki olurdu. Toplu planlamada tek bir modelin reçetesi bile onaysızsa HİÇBİR üretim
+        // açılmıyor — yarısı açılıp yarısı açılmayan bir toplu işlem, hangi satırın planlandığını karıştırırdı.
+        {
+            const kaynak = (siparisler || []).find((s) => s.id === satisSiparisId);
+            const urunIdleri = Array.from(new Set(girdiListesi
+                .map((g) => kaynak && (kaynak.kalemler || []).find((k) => k.id === g.kalemId))
+                .filter(Boolean).map((k) => k.urunId)));
+            const engeller = urunIdleri
+                .map((id) => uretimReceteKapisi((stok || []).find((p) => p.id === id), stok))
+                .filter(Boolean);
+            if (engeller.length > 0) {
+                showToast(engeller.length === 1 ? engeller[0] : `${engeller.length} modelin reçetesi onaylı değil — üretim açılmadı. ${engeller[0]}`);
+                // false: çağıran ekran formu temizlemesin / yönlendirmesin (kullanıcı reçeteyi onaylayıp aynı seçimle dönebilsin).
+                return false;
+            }
+        }
         setSiparisler((prevSiparisler) => {
             const satisSiparis = prevSiparisler.find((s) => s.id === satisSiparisId);
             if (!satisSiparis)
@@ -11417,6 +11535,7 @@ function usePlanlama(d) {
                 : `${yeniUretimler.length} üretim siparişi oluşturuldu`);
             return nextSiparisler;
         });
+        return true;
     }, [uretim, stok, tanimlar, siparisler, stokRezervasyonlari, showToast, cop]);
     // Bir veya birden fazla kalemi (farklı renk/beden dahil) TEK bir Alış siparişinde, seçilen TEK tedarikçiye planlar.
     // girdiler: kalemId string dizisi (kalan tam miktar) YA DA {kalemId, miktar} çiftleri (özel adet).
@@ -18031,6 +18150,23 @@ function AtolyeERP() {
             kaydetmeHatasiBildir(e, "Tanımlar", kodlu);
         }
     }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
+    // MEVCUT BÜYÜK LOGO BİR KEZ KÜÇÜLTÜLÜR (v1.635.0). v1.635'ten önce yüklenen logo ham dosya (kullanıcıda 500 KB).
+    // Yükleme bittikten sonra 200 KB'tan büyükse küçültülüp kaydedilir; küçülen logo eşiğin altına indiği için tekrar
+    // tetiklenmez. En az %20 kazanç yoksa yazılmaz (gereksiz yazma, sunucu arşivine boş kopya). Oturum başına bir deneme.
+    const logoKucultmeDenendiRef = useRef(false);
+    useEffect(() => {
+        if (loading || logoKucultmeDenendiRef.current || firmaLogosu.length <= 200000)
+            return;
+        logoKucultmeDenendiRef.current = true;
+        const asil = firmaLogosu;
+        logoKucult(asil).then((kucuk) => {
+            const guncel = tanimRef.current;
+            // Arada başka bir logo yüklendiyse dokunma.
+            if (!guncel || (guncel.firmaBilgileri || {}).logo !== asil || kucuk.length > asil.length * 0.8)
+                return;
+            saveTanimlar({ ...guncel, firmaBilgileri: { ...(guncel.firmaBilgileri || {}), logo: kucuk } });
+        });
+    }, [loading, firmaLogosu, saveTanimlar]);
     // REÇETE ŞABLONLARI (21 Eylül): tanımlarda tutuluyor; ürün kartı ve modelhane buradan yazar.
     const receteSablonuKaydet = useCallback((sablon) => {
         if (!sablon || !sablon.ad)
@@ -21919,6 +22055,40 @@ function fileToCompressedDataUrl(file, maxWidth = 480, quality = 0.75) {
         reader.readAsDataURL(file);
     });
 }
+// FİRMA LOGOSU KÜÇÜLTME (v1.635.0 — Supabase kullanımı incelenirken bulundu). Logo yüklenen dosya OLDUĞU GİBİ
+// kaydediliyordu: kullanıcının logosu tanımlar kaydında 500 KB'tı (tanımlar toplamı ~530 KB). Tanımlar her açılışta ve
+// başka cihaz değişiklik yaptığında buluttan indirildiği için bu, aylık indirme kotasını (egress) boşa harcıyordu; sunucu
+// arşivi de her eski hâlin tam kopyasını tutuyordu (24 MB). Logo ekranda en çok ~48 px, resim damgasında ~110 px
+// çiziliyor: uzun kenarı 400 px yeter. PNG (saydamlık korunsun); hâlâ büyükse WEBP de denenir ve EN KÜÇÜĞÜ seçilir.
+// Sonuç asıldan küçük değilse asıl kalır (zaten küçük logo bozulmasın). Resim okunamazsa da asıl döner.
+const LOGO_UZUN_KENAR = 400;
+function logoKucult(dataUrl) {
+    return new Promise((resolve) => {
+        if (!dataUrl || !/^data:image\//.test(dataUrl)) {
+            resolve(dataUrl);
+            return;
+        }
+        const img = new window.Image();
+        img.onload = () => {
+            try {
+                const olcek = Math.min(1, LOGO_UZUN_KENAR / Math.max(img.width || 1, img.height || 1));
+                const tuval = document.createElement("canvas");
+                tuval.width = Math.max(1, Math.round(img.width * olcek));
+                tuval.height = Math.max(1, Math.round(img.height * olcek));
+                tuval.getContext("2d").drawImage(img, 0, 0, tuval.width, tuval.height);
+                const adaylar = [dataUrl, tuval.toDataURL("image/png")];
+                if (adaylar[1].length > 120000)
+                    adaylar.push(tuval.toDataURL("image/webp", 0.9));
+                resolve(adaylar.filter((x) => /^data:image\//.test(x)).reduce((a, b) => (b.length < a.length ? b : a)));
+            }
+            catch (e) {
+                resolve(dataUrl);
+            }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
+}
 // RESME DAMGA (v1.604.0 — kullanıcı: "Stok resmi eklediğimizde sağ üste logomuz, altına stok kodu, altına renk kodu
 // yazdırabilir miyiz?"). Yüklenen (küçültülmüş) stok resminin sağ üst köşesine firma logosu, altına verilen satırlar
 // (stok adı, renk) basılır. Müşteriye giden katalog/WhatsApp görselinde firma ve model bir bakışta okunsun diye.
@@ -23869,7 +24039,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     }
     function firmaLogoYukle(dosya) {
         const okuyucu = new FileReader();
-        okuyucu.onload = () => firmaBilgisiGuncelle("logo", okuyucu.result);
+        // Kaydetmeden önce küçültülür (v1.635.0, bkz. 115 logoKucult): ham dosya tanımlar kaydını şişiriyordu.
+        okuyucu.onload = () => logoKucult(okuyucu.result).then((logo) => firmaBilgisiGuncelle("logo", logo));
         okuyucu.readAsDataURL(dosya);
     }
     // ---- ÖZEL KOD ALANLARI ------------------------------------------------------------------
@@ -23990,6 +24161,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                     width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)",
                     border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14,
                 } }),
+            React.createElement(AramaTemizle, { deger: aramaSorgusu, onTemizle: () => setAramaSorgusu(""), veri: "tanimlar" }),
             aramaSorgusu && (React.createElement("button", { type: "button", onClick: () => setAramaSorgusu(""), style: { position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" } },
                 React.createElement(X, { size: 15 })))),
         aktifTanimSekme === "firma" && (React.createElement(React.Fragment, null,
@@ -31455,6 +31627,44 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                             React.createElement(Check, { size: 13 }),
                             " E\u015Fle\u015Ftirmeleri onayla"))));
                 })(),
+                product.kategori === "Mamul" && (() => {
+                    const od = receteOnayDurumu(product, tumUrunler);
+                    const renkler4 = {
+                        onayli: { zemin: "#E8F3EA", kenar: "var(--erp-ok)", yazi: "#2F5A35", baslik: "Reçete onaylı — üretim açılabilir" },
+                        degisti: { zemin: "var(--erp-orange-bg)", kenar: "#E1611F", yazi: "#7A3B22", baslik: "Reçete onaydan sonra değişti — üretim açılamaz, kontrol edip yeniden onaylayın" },
+                        onaysiz: { zemin: "var(--erp-orange-bg)", kenar: "#E1611F", yazi: "#7A3B22", baslik: "Reçete onaylanmadı — onaylanana kadar bu üründen üretim açılamaz" },
+                        eksik: { zemin: "#FBEAEA", kenar: "var(--erp-warn)", yazi: "#7A2222", baslik: "Reçete tamamlanmadı — onaylanamaz, üretim açılamaz" },
+                    }[od.durum];
+                    const onayla = () => {
+                        onUrunGuncelle(product.id, { receteOnay: { imza: receteImzasi(product), onaylayan: (_gunlukKullanici && _gunlukKullanici.ad) || "", tarih: new Date().toISOString() } });
+                        if (showToast)
+                            showToast(`${product.ad}: reçete onaylandı`);
+                    };
+                    const kaldir = () => {
+                        onUrunGuncelle(product.id, { receteOnay: null });
+                        if (showToast)
+                            showToast(`${product.ad}: reçete onayı kaldırıldı — üretim açılamaz`);
+                    };
+                    return (React.createElement("div", { "data-recete-onay": od.durum, style: { background: renkler4.zemin, border: `1.5px solid ${renkler4.kenar}`, borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 14, color: renkler4.yazi } },
+                        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
+                            od.durum === "onayli" ? React.createElement(Check, { size: 16, color: "var(--erp-ok)", strokeWidth: 3 }) : React.createElement(AlertTriangle, { size: 16, color: "var(--erp-warn)" }),
+                            React.createElement("span", { style: { fontSize: 13, fontWeight: 700, flex: "1 1 260px" } }, renkler4.baslik),
+                            od.durum === "onayli" ? (React.createElement("button", { type: "button", className: "btn-ghost", "data-recete-onay-kaldir": "1", onClick: kaldir, style: { padding: "5px 10px", fontSize: 12 } }, "Onay\u0131 kald\u0131r")) : (React.createElement("button", { type: "button", className: "btn-primary", "data-recete-onayla": "1", onClick: onayla, disabled: od.durum === "eksik", title: od.durum === "eksik" ? "Önce aşağıdaki eksikleri tamamlayın" : "Reçeteyi kontrol ettim, üretime açılabilir", style: { padding: "6px 12px", fontSize: 12, ...(od.durum === "eksik" ? { opacity: 0.5, cursor: "not-allowed" } : {}) } },
+                                React.createElement(Check, { size: 13 }),
+                                " Re\u00E7eteyi onayla"))),
+                        od.onay && od.onay.tarih && od.durum !== "eksik" && (React.createElement("div", { style: { fontSize: 12, marginTop: 4, opacity: 0.85 } },
+                            od.durum === "onayli" ? "Onaylayan" : "Son onay",
+                            ": ",
+                            od.onay.onaylayan || "—",
+                            " \u00B7 ",
+                            tarihYaz(od.onay.tarih))),
+                        od.durum === "eksik" && (React.createElement("ul", { "data-recete-eksikleri": "1", style: { margin: "6px 0 0", paddingLeft: 20, fontSize: 12, lineHeight: 1.6 } },
+                            od.eksikler.slice(0, 8).map((e, i) => React.createElement("li", { key: i }, e)),
+                            od.eksikler.length > 8 && React.createElement("li", null,
+                                "\u2026 ve ",
+                                od.eksikler.length - 8,
+                                " eksik daha")))));
+                })(),
                 (() => {
                     const eksikRaporu = renkler
                         .map((mr) => ({ renk: mr, eksikler: receteKapsamEksikleri(product, mr, bedenler) }))
@@ -38229,7 +38439,8 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                     " \u20BA")))),
         React.createElement("div", { style: { position: "relative", marginBottom: 10, maxWidth: 320 } },
             React.createElement(Search, { size: 14, style: { position: "absolute", left: 9, top: 9, color: "var(--erp-text-3)" } }),
-            React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Hammadde veya renk ara\u2026", style: { width: "100%", padding: "7px 10px 7px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 } })),
+            React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Hammadde veya renk ara\u2026", style: { width: "100%", padding: "7px 10px 7px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 } }),
+            React.createElement(AramaTemizle, { deger: arama, onTemizle: () => setArama(""), veri: "hammadde-ihtiyac" })),
         (() => {
             // ARTIK AYNI HAMMADDE (isim), farklı renklerde bile olsa, AYRI AYRI KARTLARDA tekrar etmiyor —
             // önceki sürüm "Astar · Siyah" ve "Astar · Beyaz" için İKİ AYRI kart gösteriyordu. Şimdi HER
@@ -42210,7 +42421,8 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                 React.createElement("input", { value: query, onChange: (e) => setQuery(e.target.value), placeholder: "Fi\u015F no, sipari\u015F no veya cari ad\u0131 ara\u2026", style: {
                         width: "100%", padding: "9px 12px 9px 32px", borderRadius: "var(--erp-r-md)",
                         border: "1px solid var(--erp-line)", fontSize: 14, background: "#fff",
-                    } }))),
+                    } }),
+                React.createElement(AramaTemizle, { deger: query, onTemizle: () => setQuery(""), veri: "fisler" }))),
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" } },
             ["Tümü", "Genel", "Resmi"].map((d) => (React.createElement("button", { key: `d-${d}`, type: "button", "data-fis-defter-sec": d, onClick: () => setFiltreDefter(d), style: { padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontWeight: 700, fontSize: 13, cursor: "pointer",
                     border: `1.5px solid ${filtreDefter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
@@ -43981,7 +44193,8 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
                 React.createElement("input", { value: query, onChange: (e) => setQuery(e.target.value), placeholder: "Cari, telefon veya vergi no ara\u2026", style: {
                         width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)",
                         border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14,
-                    } })),
+                    } }),
+                React.createElement(AramaTemizle, { deger: query, onTemizle: () => setQuery(""), veri: "cari" })),
             React.createElement("div", { "data-cari-liste-defter": listeDefter, style: { display: "flex", gap: 4 } }, ["Tümü", "Genel", "Resmi"].map((d) => (React.createElement("button", { key: d, type: "button", "data-cari-defter-sec": d, onClick: () => setListeDefter(d), style: { padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     border: `1.5px solid ${listeDefter === d ? "var(--erp-primary)" : "var(--erp-border)"}`,
                     background: listeDefter === d ? "#4E6B4E1A" : "#fff", color: listeDefter === d ? "var(--erp-primary)" : "var(--erp-text-2)" } }, d)))),
@@ -44525,7 +44738,8 @@ function CariRaporlari({ cariler, siparisler, firmaBilgileri, showToast, onGoToS
         React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 } },
             React.createElement("div", { style: { position: "relative", flex: "1 1 220px" } },
                 React.createElement(Search, { size: 15, style: { position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" } }),
-                React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Cari ara\u2026", "data-cari-rapor-arama": "1", style: { width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14 } })),
+                React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Cari ara\u2026", "data-cari-rapor-arama": "1", style: { width: "100%", padding: "8px 10px 8px 32px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 14 } }),
+                React.createElement(AramaTemizle, { deger: arama, onTemizle: () => setArama(""), veri: "cari-rapor" })),
             ["Tümü", "Müşteri", "Tedarikçi"].map((t) => (React.createElement("button", { key: t, type: "button", onClick: () => setTipSec(t), style: { padding: "5px 11px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
                     border: `1.5px solid ${tipSec === t ? "var(--erp-primary)" : "var(--erp-border)"}`, background: tipSec === t ? "#4E6B4E1A" : "#fff", color: tipSec === t ? "var(--erp-primary)" : "var(--erp-text-2)" } }, t))),
             React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)", marginLeft: "auto" } },
@@ -47886,6 +48100,10 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
     function addOrder() {
         if (!seciliUrun)
             return showToast("Ürün seçin");
+        // REÇETE ONAYI (v1.634.0): eksik ya da onaysız reçeteyle üretim açılmaz (bkz. 055 uretimReceteKapisi).
+        const receteKapisi = uretimReceteKapisi(seciliUrun, stok);
+        if (receteKapisi)
+            return showToast(receteKapisi);
         if (!renk)
             return showToast("Renk seçin");
         const bedenMiktarlari = bedenSecenekleri
@@ -47977,6 +48195,10 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                     React.createElement("input", { type: "date", value: termin, onChange: (e) => setTermin(e.target.value), style: inputStyle })),
                 React.createElement(Field, { label: "Not" },
                     React.createElement("input", { value: not, onChange: (e) => setNot(e.target.value), placeholder: "Opsiyonel", style: inputStyle }))),
+            seciliUrun && uretimReceteKapisi(seciliUrun, stok) && (React.createElement("div", { "data-uretim-recete-kapisi": "1", style: { marginTop: 12, padding: "10px 12px", borderRadius: "var(--erp-r-md)",
+                    background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", color: "#7A3B22", fontSize: 13, display: "flex", gap: 8, alignItems: "flex-start" } },
+                React.createElement(AlertTriangle, { size: 15, color: "var(--erp-warn)", style: { flexShrink: 0, marginTop: 2 } }),
+                React.createElement("span", null, uretimReceteKapisi(seciliUrun, stok)))),
             seciliUrun && (React.createElement("div", { style: { marginTop: 12 } },
                 React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600, marginBottom: 6 } }, renkBasligi(seciliUrun)),
                 React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, renkSecenekleri.map((r) => (React.createElement("button", { key: r, type: "button", onClick: () => { setRenk(r); setBedenMiktarlar({}); }, style: {
@@ -47997,7 +48219,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                     React.createElement("input", { type: "number", min: "0", value: bedenMiktarlar[b] || "", onChange: (e) => setBedenMiktarlar({ ...bedenMiktarlar, [b]: e.target.value }), style: { ...inputStyle, width: 60, textAlign: "center", padding: "6px" } }))))),
                 React.createElement(AsortiOlusturTeklifi, { degerler: bedenMiktarlar, bedenSecenekleri: bedenSecenekleri, asortiler: tanimlar.asortiler || [], onOlustur: onAsortiOlustur }))),
             React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 14 } },
-                React.createElement("button", { className: "btn-primary", onClick: addOrder }, "Olu\u015Ftur"),
+                React.createElement("button", { className: "btn-primary", "data-uretim-olustur": "1", onClick: addOrder, disabled: !!(seciliUrun && uretimReceteKapisi(seciliUrun, stok)), style: seciliUrun && uretimReceteKapisi(seciliUrun, stok) ? { opacity: 0.5, cursor: "not-allowed" } : undefined }, "Olu\u015Ftur"),
                 React.createElement("button", { className: "btn-ghost", onClick: () => { setShowForm(false); resetForm(); } },
                     React.createElement(X, { size: 14 }),
                     " Vazge\u00E7")))),
@@ -48109,7 +48331,8 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                         React.createElement("input", { value: uretimArama, onChange: (e) => setUretimArama(e.target.value), placeholder: "Model, sipari\u015F no, renk ara\u2026", style: {
                                 width: "100%", padding: "7px 10px 7px 32px", borderRadius: "var(--erp-r-md)",
                                 border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13,
-                            } })),
+                            } }),
+                        React.createElement(AramaTemizle, { deger: uretimArama, onTemizle: () => setUretimArama(""), veri: "uretim" })),
                     React.createElement("div", { style: { display: "flex", gap: 5 } }, ["Tümü", "Bugün", "Bu Hafta", "Bu Ay"].map((d) => (React.createElement("button", { key: d, type: "button", onClick: () => setUretimTarihFiltre(d), style: {
                             padding: "6px 12px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
                             border: `1.5px solid ${uretimTarihFiltre === d ? "var(--erp-orange)" : "var(--erp-border)"}`,
@@ -52126,6 +52349,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                         width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)",
                         border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13,
                     } }),
+                React.createElement(AramaTemizle, { deger: siparisArama, onTemizle: () => setSiparisArama(""), veri: "siparis" }),
                 siparisArama && (React.createElement("button", { type: "button", onClick: () => setSiparisArama(""), style: { position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex" } },
                     React.createElement(X, { size: 14 })))),
             ustSekme !== "raporlar" && (React.createElement("button", { "data-yeni-siparis": "1", className: "btn-primary", style: { padding: "6px 12px", fontSize: 12, marginLeft: "auto" }, onClick: () => {
@@ -52714,8 +52938,11 @@ function PlanlamaBolumu({ siparis, stok, cariler, tumSiparisler, uretimSiparisle
         const girdiler = seciliSatirlar.flatMap((x) => x.kalemler.map((k) => ({ kalemId: k.id, miktar: k.miktar - (k.karsilanan || 0) })));
         if (girdiler.length === 0)
             return;
-        if (tip === "Uretim")
-            onPlanlaUretim(siparis.id, girdiler);
+        // Reçete onay kapısı (v1.634.0) üretimi reddederse seçim korunur.
+        if (tip === "Uretim") {
+            if (onPlanlaUretim(siparis.id, girdiler) === false)
+                return;
+        }
         else {
             if (!topluCariId) {
                 if (showToast)
@@ -53140,8 +53367,10 @@ function PlanlamaSatiri({ grup, siparis, stok, cariler, tumSiparisler, uretimSip
                             .filter((g) => g.miktar > 0);
                         if (uretimGirdileri.length === 0 && satinalmaGirdileri.length === 0)
                             return;
-                        if (uretimGirdileri.length > 0)
-                            onPlanlaUretim(siparis.id, uretimGirdileri);
+                        // Reçete onay kapısı (v1.634.0) reddederse hiçbir şey yapılmaz: satın alma yarısı da açılmasın,
+                        // girilen miktarlar kalsın.
+                        if (uretimGirdileri.length > 0 && onPlanlaUretim(siparis.id, uretimGirdileri) === false)
+                            return;
                         if (satinalmaGirdileri.length > 0)
                             onPlanlaSatinAlma(siparis.id, satinalmaGirdileri, cariId);
                         setKalemTipleri({});
@@ -55331,6 +55560,15 @@ const GizliModul = React.memo(function GizliModul({ aktif, children }) {
 }, 
 // true = "değişmedi, çizme": önce de gizliydi, şimdi de gizli.
 (onceki, sonraki) => !onceki.aktif && !sonraki.aktif);
+// ARAMA KUTUSUNDA × (v1.634.1 — kullanıcı, Fişler ekran görüntüsüyle: "aramada × da çıksın hızlı silme için").
+// Stok aramasında v1.596.0'dan beri vardı; diğer modül aramaları (Fişler, Cari, Sipariş, Üretim…) aynı düğmeyi bu
+// bileşenden alıyor. Kap `position: relative` olmalı (arama ikonunun durduğu kap zaten öyle). Boşken çizilmez.
+function AramaTemizle({ deger, onTemizle, veri }) {
+    if (!deger)
+        return null;
+    return (React.createElement("button", { type: "button", "data-arama-temizle": veri || "1", title: "Aramay\u0131 temizle", onClick: onTemizle, style: { position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", border: "none", background: "none",
+            cursor: "pointer", color: "var(--erp-text-3)", fontSize: 18, lineHeight: 1, padding: "2px 6px" } }, "\u00D7"));
+}
 // ================= EYLEM ÇUBUĞU =================
 //
 // Kullanıcı (18 Eylül): *"Kaydet, vazgeç butonları uygulamanın her yerinde dağınık. Sağ üstte
@@ -55633,7 +55871,8 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
         React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" } },
             React.createElement("div", { style: { position: "relative", flex: "1 1 200px", maxWidth: 380 } },
                 React.createElement(Search, { size: 14, style: { position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" } }),
-                React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), "data-gorev-arama": "1", placeholder: "G\u00F6rev, ki\u015Fi, kay\u0131t ara\u2026", style: { width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 } })),
+                React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), "data-gorev-arama": "1", placeholder: "G\u00F6rev, ki\u015Fi, kay\u0131t ara\u2026", style: { width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 } }),
+                React.createElement(AramaTemizle, { deger: arama, onTemizle: () => setArama(""), veri: "gorevler" })),
             React.createElement("button", { className: "btn-primary", "data-gorev-yeni": "1", style: { marginLeft: "auto", padding: "5px 12px", fontSize: 12 }, onClick: () => setYeniAcik(!yeniAcik) },
                 React.createElement(Plus, { size: 14 }),
                 " Yeni G\u00F6rev")),
@@ -57512,7 +57751,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.633.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.635.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
