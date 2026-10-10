@@ -62,7 +62,7 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde }) {
   // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
   const [showOdeme, setShowOdeme] = useState(false);
   // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
@@ -240,14 +240,20 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   }
 
   return (
-    <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    // Sağ tık kartın HER YERİNDE (v1.636.1): listede şerit kalktığı için kartın gövdesi de menüyü açar.
+    <div {...sagTikIsleyicileri((x, y) => setIslemMenu({ x, y }), open)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+      {/* LİSTEDE MOR ŞERİT YOK (v1.636.1 — kullanıcı: "sağ tık olduğu için mor alan ile üst bilgiyi birleştir, 2 kere aynı
+          bilgiler veriyor"). Liste içinde açılan kartın şeridi belge/sezon/durumu, hemen üstündeki özet satırıyla
+          (330 SiparisOzetSatiri) birebir tekrarlıyordu; düğmeleri de sağ tık menüsüne taşınmıştı. Artık başlık özet
+          satırının kendisi: sağ tık orada (325 `disMenuIstegi` → `islemMenu`), Notlar menüde. Tam ekran pencerede
+          (listeIcinde yok) şerit olduğu gibi. */}
+      {!listeIcinde && (
       <div
         role={baslangicAcik ? undefined : "button"}
         tabIndex={baslangicAcik ? undefined : 0}
         onClick={baslangicAcik ? undefined : () => setOpen((v) => !v)}
         // SAĞ TIK / UZUN BASMA = İŞLEMLER MENÜSÜ (v1.636.0). Yazdır/PDF/WhatsApp/E-posta, tahsilat ve iptal/sil şeritte düğme
         // olarak durmuyor (kullanıcı: "ekranda gizlemek istediğimiz menüler sağ tıklama ile"); hepsi bu menüde.
-        {...sagTikIsleyicileri((x, y) => setIslemMenu({ x, y }), open)}
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 10,
           // Liste içinde bu şerit yalnızca iki küçük kontrol taşır; 14px'lik dolgu boş bir bant
@@ -434,6 +440,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           </button>
         )}
       </div>
+      )}
       {/* İŞLEMLER MENÜSÜ (v1.615.0): sabit konumlu, dışına tıklayınca kapanır. Tahsilat (satış) / Ödeme (alış) carinin
           kartını açar; form bu siparişin numarası, kalan tutarı ve para birimiyle dolu gelir (v1.612 köprüsü), hareket
           siparişe bağlanır. */}
@@ -524,6 +531,13 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 <button type="button" data-siparis-islem="odeme" style={{ ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
                   onClick={() => { kapat(); if (onOdemeKaydet) { setOpen(true); setShowOdeme(true); } else onOdemeGir(hedef); }}>
                   <HareketIkonu tip={oz.beklenenTip} size={16} /> {oz.beklenenTip} Gir
+                </button>
+              )}
+              {/* NOTLAR (v1.636.1): listede şerit olmadığı için notlar penceresi menüden de açılır. */}
+              {siparisNotSayisi(siparis) > 0 && (
+                <button type="button" data-siparis-islem="notlar" style={{ ...ogeStil, color: "#8A5A10" }}
+                  onClick={() => { kapat(); setNotPenceresi({ x: islemMenu.x, y: islemMenu.y }); }}>
+                  <FileText size={15} /> Notlar ({siparisNotSayisi(siparis)})
                 </button>
               )}
               {ayrac}

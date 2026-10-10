@@ -2524,6 +2524,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       onPlanlaSatinAlma={onPlanlaSatinAlma}
                       baslangicAcik
                       saltOkunur
+                      listeIcinde
                       disMenuIstegi={listeMenuIstegi && listeMenuIstegi.id === s.id ? listeMenuIstegi : null}
                       onSiparisGit={(hedefId) => {
                         const hedef = siparisler.find((x) => x.id === hedefId);
@@ -2597,6 +2598,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       onPlanlaSatinAlma={onPlanlaSatinAlma}
                       baslangicAcik
                       saltOkunur
+                      listeIcinde
                       disMenuIstegi={listeMenuIstegi && listeMenuIstegi.id === s.id ? listeMenuIstegi : null}
                       onSiparisGit={(hedefId) => {
                         const hedef = siparisler.find((x) => x.id === hedefId);

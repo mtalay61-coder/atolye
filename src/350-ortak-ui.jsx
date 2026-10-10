@@ -137,15 +137,25 @@ function AramaTemizle({ deger, onTemizle, veri }) {
 // sağ tık olmadığı için UZUN BASMA (550 ms, parmak kaymadan) aynı menüyü açar. Sol tık davranışı değişmez.
 // Kullanım: <div {...sagTikIsleyicileri((x, y) => menuyuAc(x, y))}> — `etkin` false ise hiçbir işleyici eklenmez
 // (tarayıcının kendi sağ tık menüsü kalır).
+// KARTIN HER YERİ (v1.636.1 — kullanıcı: "sağ tık ekranın her yerinde çalışsın"). İşleyiciler artık yalnız başlık
+// şeridinde değil, kartın TAMAMINDA (ürün, cari, üretim, sipariş kartı). İstisna: yazı kutusu / seçim kutusu ve
+// seçili metin — orada tarayıcının kendi menüsü (kopyala/yapıştır) kalır; kartın menüsü onu yutmasın. İç içe kartta
+// en içteki işleyici `stopPropagation` ile kazanır.
+function yerelMenuKalsin(e) {
+  const t = e && e.target;
+  if (t && t.closest && t.closest("input, textarea, select, [contenteditable=''], [contenteditable='true']")) return true;
+  try { const s = window.getSelection && window.getSelection(); if (s && !s.isCollapsed && String(s).trim()) return true; } catch (er) { /* yoksay */ }
+  return false;
+}
 function sagTikIsleyicileri(ac, etkin = true) {
   if (!etkin || !ac) return {};
   let zamanlayici = null;
   let baslangic = null;
   const iptal = () => { if (zamanlayici) clearTimeout(zamanlayici); zamanlayici = null; };
   return {
-    onContextMenu: (e) => { e.preventDefault(); e.stopPropagation(); ac(e.clientX, e.clientY); },
+    onContextMenu: (e) => { if (yerelMenuKalsin(e)) return; e.preventDefault(); e.stopPropagation(); ac(e.clientX, e.clientY); },
     onTouchStart: (e) => {
-      const t = e.touches && e.touches[0]; if (!t) return;
+      const t = e.touches && e.touches[0]; if (!t || yerelMenuKalsin(e)) return;
       baslangic = { x: t.clientX, y: t.clientY };
       iptal();
       zamanlayici = setTimeout(() => { zamanlayici = null; ac(baslangic.x, baslangic.y); }, 550);

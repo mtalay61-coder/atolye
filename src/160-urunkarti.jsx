@@ -325,9 +325,8 @@ function ProductMatrixCard({
   };
   // ---- REÇETEDE STOK DEĞİŞTİRME (v1.636.0 — kullanıcı: "reçetede stok değiştirme de olsun"). Kartın hammaddesi başka bir
   // stokla değiştirilir; satırların konumu (mamul renk/beden, proses, pozisyon, açıklama) ve MİKTARLARI aynen kalır.
-  // Hammadde rengi: yeni stokta AYNI ADLI renk varsa o kalır; yeni stok renksizse (tek renk) o tek renge geçer; ikisi de
-  // değilse eski renk kalır ve hücre "(stokta yok)" görünür — kullanıcı eşleştirir (sessizce yanlış renge bağlamak
-  // yerine). Birim yeni stoğun birimi olur. Aynı kartta zaten o stok varsa (aynı proses) birleştirme yapılmaz, uyarılır.
+  // Renk/boy eşleşmesi v1.636.1'den beri ESKİ stoktan taşınmaz, yeni stok sıfırdan eklenmiş gibi kurulur (055
+  // `stokDegisimSatirlari`); çözülemeyen hücre eski değeriyle "(stokta yok)" kalır, kullanıcı eşleştirir. Birim yeni stoğun. Aynı kartta zaten o stok varsa (aynı proses) birleştirme yapılmaz, uyarılır.
   const [stokDegistirKart, setStokDegistirKart] = useState(null);
   const receteStokDegistir = (g, yeniId) => {
     const yeni = (tumUrunler || []).find((u) => u.id === yeniId);
@@ -339,18 +338,16 @@ function ProductMatrixCard({
       if (showToast) showToast(`"${yeni.ad}" bu proseste zaten reçetede — önce o kartı silin ya da başka stok seçin`);
       return;
     }
-    const renkleri = Array.from(new Set((yeni.variants || []).map((v) => v.renk)));
-    const tekRenk = renkleri.length === 1 ? renkleri[0] : null;
-    const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
-    let eslesmeyen = 0;
-    const yeniSatirlar = g.satirlar.map(({ id, renkGecmisten: _rg, renkOnayli: _ro, ...rest }) => {
-      const ayni = renkleri.find((r) => nrm(r) === nrm(rest.renk));
-      const renk = ayni != null ? ayni : (tekRenk != null ? tekRenk : rest.renk);
-      if (ayni == null && tekRenk == null && rest.renk) eslesmeyen += 1;
-      return { ...rest, hammaddeUrunId: yeni.id, hammaddeAd: yeni.ad, birim: yeni.birim || rest.birim, renk };
-    });
-    onReceteGrubuGuncelle(product.id, g.satirlar.map((r) => r.id), yeniSatirlar);
-    if (showToast) showToast(`${g.hammaddeAd} → ${yeni.ad}${eslesmeyen ? ` · ${eslesmeyen} hücrede renk yeni stokta yok, eşleştirin` : ""}`);
+    // Renk ve boy SIFIRDAN çözülür (v1.636.1, 055 `stokDegisimSatirlari`): yeni stok "Reçeteye Ekle"den eklenmiş gibi.
+    const mamulBedenleri = (mr) => bedenSirala(Array.from(new Set((product.variants || []).filter((v) => v.renk === mr).map((v) => v.beden).filter(Boolean))));
+    const c = stokDegisimSatirlari(g.satirlar, yeni, tumUrunler, mamulBedenleri);
+    onReceteGrubuGuncelle(product.id, g.satirlar.map((r) => r.id), c.satirlar);
+    const notlar = [
+      c.gecmisSayisi ? `${c.gecmisSayisi} hücre geçmişten (kırmızı) — kontrol edin` : "",
+      c.bosRenk ? `${c.bosRenk} hücrede renk eşleşmedi` : "",
+      c.bosBeden ? `${c.bosBeden} hücrede boy eşleşmedi` : "",
+    ].filter(Boolean);
+    if (showToast) showToast(`${g.hammaddeAd} → ${yeni.ad} · eşleşmeler yeni stoğa göre kuruldu${notlar.length ? ` · ${notlar.join(" · ")}` : ""}`);
   };
   const stokDegistirAraci = (g) => (stokDegistirKart === g.key ? (
     <span data-recete-stok-degistir-secici={g.hammaddeAd} style={{ display: "inline-flex", alignItems: "center", gap: 4, minWidth: 220 }} onClick={(e) => e.stopPropagation()}>
@@ -360,7 +357,7 @@ function ProductMatrixCard({
     </span>
   ) : (
     <button type="button" data-recete-stok-degistir={g.hammaddeAd} onClick={(e) => { e.stopPropagation(); setStokDegistirKart(g.key); }}
-      title="Stoğu değiştir — bu kartın hammaddesini başka bir stokla değiştir (miktarlar ve eşleşmeler kalır)"
+      title="Stoğu değiştir — bu kartın hammaddesini başka bir stokla değiştir (miktarlar kalır, renk/boy eşleşmeleri yeni stoğa göre baştan kurulur)"
       style={{ border: "1px solid var(--erp-line)", background: "#fff", borderRadius: "var(--erp-r-sm)", padding: "0 5px", cursor: "pointer", fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.5 }}>
       ⇄
     </button>
@@ -1404,7 +1401,8 @@ function ProductMatrixCard({
     // Kartın tamamı kategori renginde çerçevelenir ve üstünde kalın bir şerit taşır.
     // Kategori önceden yalnızca küçük bir açılır etiketti; bir ürün kartına baktığında hammadde mi
     // mamul mü olduğu ancak o etiket okunarak anlaşılıyordu.
-    <div
+    // Sağ tık kartın HER YERİNDE (v1.636.1; önce yalnız mor şeritteydi).
+    <div {...sagTikIsleyicileri((x, y) => setUrunSagMenu({ x, y }), !showEdit)}
       style={{
         background: "var(--erp-panel)",
         border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-border-2)"), "55")}`,
@@ -1440,7 +1438,6 @@ function ProductMatrixCard({
         { k: "sil", etiket: "Ürünü sil", ikon: Trash2, renk: "var(--erp-warn)", onClick: () => { setOpen(true); setUrunSilOnay(true); } },
       ]} />
       <div data-urun-ust-serit={open ? "1" : undefined} data-urun-kart-serit={product.ad}
-        {...sagTikIsleyicileri((x, y) => setUrunSagMenu({ x, y }), !showEdit)}
         style={open ? { margin: "10px 14px 10px", padding: "8px 10px 0", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : undefined}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: open ? "0 0 8px" : "16px 16px 16px 16px" }}>
         {open && (
