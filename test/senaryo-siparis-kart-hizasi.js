@@ -38,6 +38,13 @@ async function calistir() {
         renkGen: Math.round(renkB.width), tutarSol: bul(/^Tutar$/i), durumSol: bul(/^Durum$/i), tasma: tb.scrollWidth > tb.clientWidth + 1 };
     });
   });
+  // v1.630.0 ("Sipariş içinde toplam sadece en altta olsun"): ürün başına Toplam satırı yok, en altta tek genel toplam.
+  const toplamlar = await sayfa.evaluate(() => {
+    const urunToplamSatiri = [...document.querySelectorAll("[data-siparis-kart-tablo] tbody tr")].filter((tr) => /^Toplam$/.test((tr.children[0] || {}).textContent || "")).length;
+    const g = document.querySelector("[data-siparis-genel-toplam]");
+    return { urunToplamSatiri, genel: g ? g.textContent.replace(/\s+/g, " ").trim() : null,
+      enAltta: !!g && [...document.querySelectorAll("[data-siparis-kart-tablo]")].every((tb) => tb.getBoundingClientRect().bottom <= g.getBoundingClientRect().top) };
+  });
   // v1.628.0: başlık satırı renkli (satış mavi, beyaz yazı) + tablette (900 px) taşma yok.
   const baslik = await sayfa.evaluate(() => {
     const th = document.querySelector("[data-siparis-kart-tablo] [data-siparis-kart-renk-basligi]");
@@ -50,7 +57,7 @@ async function calistir() {
   await tarayici.close();
   const ayni = (alan) => olcum.length > 1 && olcum.every((o) => o[alan] === olcum[0][alan]);
   return { hatalar, tabloSayisi: olcum.length, resimSolAyni: ayni("resimSol"), resimGenAyni: ayni("resimGen"), renkGenAyni: ayni("renkGen"),
-    tutarSolAyni: ayni("tutarSol"), durumSolAyni: ayni("durumSol"), resimUste: olcum.every((o) => o.resimUst === "top"), tasmaYok: olcum.every((o) => !o.tasma), baslikYukAyni: ayni("baslikYuk"), baslik, tablettaTasmaYok: tablet };
+    tutarSolAyni: ayni("tutarSol"), durumSolAyni: ayni("durumSol"), resimUste: olcum.every((o) => o.resimUst === "top"), tasmaYok: olcum.every((o) => !o.tasma), baslikYukAyni: ayni("baslikYuk"), baslik, tablettaTasmaYok: tablet, toplamlar };
 }
 if (require.main === module) calistir().then((s) => console.log(JSON.stringify(s, null, 1)));
 module.exports = { calistir };

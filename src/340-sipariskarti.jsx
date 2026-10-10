@@ -700,9 +700,6 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   renkGruplari[renkIndex[k.renk]].kalemler.push(k);
                 });
                 const tumBedenler = Array.from(new Set(ug.kalemler.map((k) => k.beden)));
-                const toplamAdet = ug.kalemler.reduce((s, k) => s + k.miktar, 0);
-                // Eksik/bozuk fiyat alanı toplamı NaN yapıp tüm kartı çökertmesin.
-                const toplamTutar = ug.kalemler.reduce((s, k) => s + (k.miktar || 0) * (k.birimFiyat || 0), 0);
                 const urun = (stok || []).find((p) => p.id === ug.urunId);
                 return (
                   // ÜRÜN BAŞLIĞI TABLONUN İÇİNE ALINDI.
@@ -980,28 +977,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               </React.Fragment>
                             );
                           })}
-                          {/* ÜRÜN TOPLAMI — birden çok renkli siparişte ürünün genel adedi ve
-                              bedeli. Resmin altında dururken resmi küçültüyordu; tablonun sonu
-                              hem doğru yeri hem de renk satırlarıyla aynı hizada. */}
-                          {renkGruplari.length > 1 && (
-                            <tr style={{ borderTop: "2px solid var(--erp-line)", background: "var(--erp-panel)" }}>
-                              <td style={{ padding: "6px 8px", fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center" }}>Toplam</td>
-                              {tumBedenler.map((b) => (
-                                <td key={b} className="mono" style={{ padding: "6px 6px", textAlign: "center", fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)" }}>
-                                  {ug.kalemler.filter((k) => k.beden === b).reduce((t, k) => t + (k.miktar || 0), 0) || ""}
-                                </td>
-                              ))}
-                              <td className="mono" style={{ padding: "6px 10px", textAlign: "right", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
-                                {toplamAdet} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>{ug.birim}</span>
-                              </td>
-                              <td></td>
-                              <td className="mono" style={{ padding: "6px 10px", textAlign: "right", fontSize: 14, fontWeight: 700, color: "var(--erp-text)" }}>
-                                {toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}{" "}
-                                {PARA_SEMBOLU[ug.kalemler[0].paraBirimi || "TRY"] || ug.kalemler[0].paraBirimi}
-                              </td>
-                              <td></td>
-                            </tr>
-                          )}
+                          {/* (ÜRÜN TOPLAMI satırı v1.630.0'da kalktı — kullanıcı: "Aynı model 1'den fazla satır olunca altta toplam
+                              yazıyor, tek model olduğunda yazmıyor; sipariş içinde toplam sadece en altta olsun, tüm sipariş toplamı
+                              gibi". Tek renkli üründe çizilmediği için tablolar tutarsız görünüyordu; genel toplam aşağıda.) */}
                         </tbody>
                       </table>
                       </div>
@@ -1009,6 +987,31 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   </div>
                 );
               });
+            })()}
+            {/* SİPARİŞ TOPLAMI — EN ALTTA, TEK (v1.630.0). Bütün ürünlerin adedi (birim birim) ve tutarı (para birimi
+                para birimi; kur çevrimi yok — satırlardaki tutarların düz toplamı). Ürün tablolarıyla aynı sağ sütun
+                düzeninde değil, ayrı bir şerit: ürün tabloları farklı ölçü sayısında, hizaya zorlamak gereksiz. */}
+            {(() => {
+              const adetler = {}; const tutarlar = {};
+              siparis.kalemler.forEach((k) => {
+                const b = k.birim || "adet"; adetler[b] = (adetler[b] || 0) + (k.miktar || 0);
+                const pb = k.paraBirimi || "TRY"; tutarlar[pb] = (tutarlar[pb] || 0) + (k.miktar || 0) * (k.birimFiyat || 0);
+              });
+              const modelSayisi = new Set(siparis.kalemler.map((k) => k.urunId)).size;
+              return (
+                <div data-siparis-genel-toplam="1" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "8px 14px",
+                  background: siparis.tip === "Alış" ? "#F1E6DA" : "#E3EDF5", color: siparis.tip === "Alış" ? "#6B4426" : "#1F4E73",
+                  border: `1px solid ${siparis.tip === "Alış" ? "#D9C2A8" : "#BFD3E4"}`, borderRadius: "var(--erp-r-md)" }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".04em" }}>SİPARİŞ TOPLAMI</span>
+                  <span style={{ fontSize: 12 }}>{modelSayisi} model · {siparis.kalemler.length} kalem</span>
+                  <span className="mono" data-siparis-genel-adet={Object.entries(adetler).map(([b, n]) => `${n} ${b}`).join(" + ")} style={{ marginLeft: "auto", fontSize: 14, fontWeight: 700 }}>
+                    {Object.entries(adetler).map(([b, n]) => `${n.toLocaleString("tr-TR")} ${b}`).join(" + ")}
+                  </span>
+                  <span className="mono" data-siparis-genel-tutar="1" style={{ fontSize: 16, fontWeight: 800 }}>
+                    {Object.entries(tutarlar).map(([pb, t]) => `${t.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`).join(" + ")}
+                  </span>
+                </div>
+              );
             })()}
           </div>
 
