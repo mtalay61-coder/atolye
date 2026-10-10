@@ -146,7 +146,10 @@ function DefterOnarimBolumu({ stok, onOnar }) {
 function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
   const [acik, setAcik] = useState(false);
 
-  const stokBayt = veriBoyutu(stok || []);
+  // KAYDEDİLEN hâlin boyutu (v1.635.1 — kullanıcı ekranında "stok %68 dolu"). v1.548'den beri ürün görselleri stok
+  // kaydında DEĞİL, ürün başına ayrı anahtarda (062 `gorselleriAyir`); sınır (DEPO_SINIRI) da yazılan görselsiz kayda
+  // uygulanıyor. Bellekteki görselli listeyi ölçmek, gerçekte ~%5 dolu kaydı %68 gösteriyordu.
+  const stokBayt = veriBoyutu(gorselleriAyir(stok || []).stok);
   const cariBayt = veriBoyutu(cariler || []);
   const tanimBayt = veriBoyutu(tanimlar || {});
 
@@ -201,8 +204,8 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
         <div style={{ marginTop: 8, background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: 10, fontSize: 12, color: "#7A3B22", lineHeight: 1.6 }}>
           <b style={{ color: "var(--erp-warn)" }}>Stok verisi kayıt sınırına ulaştı ({boyutMetni(stokBayt)} / {boyutMetni(DEPO_SINIRI)}).</b>
           {" "}Bu durumda hiçbir stok değişikliği kaydedilemez — silme yaparsınız, ekrandan gider, sayfa
-          yenilenince geri gelir. Aşağıdaki listeden en çok yer kaplayan ürünlerin görsellerini silin
-          ya da daha küçük görsellerle değiştirin.
+          yenilenince geri gelir. Aşağıdaki listeden en çok hareketi olan ürünlere bakın (görseller bu kayda
+          dahil değil).
         </div>
       )}
 
@@ -258,7 +261,7 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
           ))}
           <div style={{ padding: "6px 10px", fontSize: 10, color: "var(--erp-text-2)", borderTop: "1px solid var(--erp-head)", lineHeight: 1.5 }}>
             <b>cop</b> çöp kutusudur — silinen kayıtların tam kopyasını tutar ve en hızlı yer açılan
-            yerdir (Tanımlar &gt; Çöp Kutusu). <b>stok</b> içindeki yükün çoğu ürün görselleridir.
+            yerdir (Tanımlar &gt; Çöp Kutusu). Ürün görselleri ürün başına ayrı kayıtta durur (<b>gorsel:…</b>), <b>stok</b> kaydına dahil değildir.
           </div>
         </div>
       )}
@@ -311,8 +314,8 @@ function DepolamaDurumuBolumu({ stok, cariler, tanimlar }) {
             </table>
           </div>
           <div style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 8, lineHeight: 1.6 }}>
-            Her kayıt anahtarı en fazla {boyutMetni(DEPO_SINIRI)} tutabilir. Ürün görselleri stok kaydının
-            içinde base64 olarak saklandığı için sınıra en hızlı yaklaşan anahtar "stok"tur.
+            Her kayıt anahtarı en fazla {boyutMetni(DEPO_SINIRI)} tutabilir. Ürün görselleri stok kaydında değil,
+            her ürün için ayrı kayıtta saklanır; "stok %" yalnız görselsiz stok kaydının doluluğudur.
           </div>
         </div>
       )}
