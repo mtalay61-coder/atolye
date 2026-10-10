@@ -219,7 +219,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
     return [
       { k: "ac", etiket: acikFis === f.key ? "Fişi kapat" : "Fişi aç", ikon: acikFis === f.key ? ChevronUp : ChevronDown, onClick: () => setAcikFis(acikFis === f.key ? null : f.key) },
       { ayrac: true },
-      { k: "cari", etiket: `${f.cariAd} carisine git`, ikon: Users, gizli: !f.cariAd || !onGoToCari, onClick: () => onGoToCari(), veri: { "data-islem-cari": "1" } },
+      { k: "cari", etiket: `${f.cariAd} carisine git`, ikon: Users, gizli: !f.cariAd || !onGoToCari, onClick: () => onGoToCari(f.cariId), veri: { "data-islem-cari": "1" } },
       { k: "baglanti", ikon: ArrowRight, gizli: !baglanti, onClick: git,
         etiket: baglanti && baglanti.tip === "siparis" ? "İlgili siparişe git" : baglanti && baglanti.tip === "uretim" ? "İlgili üretime git" : "İlgili cariye git" },
       { k: "ilgili-satis", ikon: ArrowRight, gizli: !ilgiliSatis, etiket: `İlgili satış: ${ilgiliSatis ? ilgiliSatis.siparisNo : ""}`, renk: "#C97B3D",
@@ -345,7 +345,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                   {f.cariAd ? (
                     <span
                       data-fis-cari={f.cariAd}
-                      onClick={(e) => { e.stopPropagation(); if (onGoToCari) onGoToCari(); }}
+                      onClick={(e) => { e.stopPropagation(); if (onGoToCari) onGoToCari(f.cariId); }}
                       title={`${f.cariAd} cari kartını aç`}
                       style={{ fontSize: 13, color: "var(--erp-info)", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }}
                     >

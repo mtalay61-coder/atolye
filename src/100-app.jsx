@@ -3376,6 +3376,13 @@ export default function AtolyeERP() {
   // ({ cariId, tip, tutar, paraBirimi, siparisId, siparisNo }); Cari ekranı açılır, CariModule o kartı açıp formu
   // doldurur ve hedefi tüketir. Form tek yerde (265) kalıyor — kasa/banka, kur, çek mantığı çoğaltılmıyor.
   const [cariOdemeHedefi, setCariOdemeHedefi] = useState(null);
+  // CARİ KARTINA GİT (v1.638.0 — kullanıcı: sipariş sağ tıkında "cari kartına git"). Eskiden `onGoToCari` yalnız Cari
+  // ekranına geçiyordu, kullanıcı kartı listede arıyordu. Kimlik verilirse CariModule o kartı açıp ona kaydırır.
+  const [cariHedefId, setCariHedefId] = useState(null);
+  const cariyeGit = useCallback((cariId) => {
+    if (cariId && typeof cariId === "string") setCariHedefId(cariId);
+    setTab("cari");
+  }, []);
   const siparisOdemesineGit = useCallback((hedef) => {
     setCariOdemeHedefi(hedef);
     setTab("cari");
@@ -4470,7 +4477,7 @@ export default function AtolyeERP() {
               onGoToSiparis={sipariseGit}
               onGoToUretim={(id) => { setUretimHedefId(id || null); setTab("uretim"); }}
               onGoToUrun={(urunId) => uruneGit(urunId, null, { tab: "anasayfa", etiket: "Ana sayfaya dön" })}
-              onGoToCari={() => setTab("cari")}
+              onGoToCari={cariyeGit}
             />
           </GizliModul>
           <GizliModul aktif={tab === "tanimlar"}>
@@ -4532,7 +4539,7 @@ export default function AtolyeERP() {
               onGoToTanimlar={() => setTab("tanimlar")}
               cariler={cariler}
               onCariHareket={addCariHareketFromStok}
-              onGoToCari={() => setTab("cari")}
+              onGoToCari={cariyeGit}
               onRemoveHareketGlobal={removeHareketEverywhere}
               siparisler={siparisler}
               uretim={uretim}
@@ -4582,7 +4589,7 @@ export default function AtolyeERP() {
               onProsesTeslimGeriAl={uretimProsesAtamaTeslimGeriAl}
               onRemoveOrder={uretimSil}
               cariler={cariler}
-              onGoToCari={() => setTab("cari")}
+              onGoToCari={cariyeGit}
               siparisler={siparisler}
               onGoToSiparis={sipariseGit}
               hedefUretimId={uretimHedefId}
@@ -4616,6 +4623,8 @@ export default function AtolyeERP() {
               onPencereAc={pencereAc}
               odemeHedefi={cariOdemeHedefi}
               onOdemeHedefiTuketildi={() => setCariOdemeHedefi(null)}
+              hedefCariId={cariHedefId}
+              onHedefCariTuketildi={() => setCariHedefId(null)}
             />
           </GizliModul>
           {fiyatListesiAcildiRef.current && <div style={{ display: tab === "fiyatlistesi" ? undefined : "none" }}>
@@ -4752,7 +4761,7 @@ export default function AtolyeERP() {
               cariler={cariler}
               stok={stok}
               uretim={uretim}
-              onGoToCari={() => setTab("cari")}
+              onGoToCari={cariyeGit}
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
@@ -4809,7 +4818,7 @@ export default function AtolyeERP() {
               cariler={cariler}
               stok={stok}
               uretim={uretim}
-              onGoToCari={() => setTab("cari")}
+              onGoToCari={cariyeGit}
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}
@@ -4856,7 +4865,7 @@ export default function AtolyeERP() {
               stok={stok}
               siparisler={siparisler}
               uretim={uretim}
-              onGoToCari={() => setTab("cari")}
+              onGoToCari={cariyeGit}
               onGoToSiparis={sipariseGit}
               onGoToUretim={(uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }}
               onYetimFisTemizle={yetimFisTemizle}
@@ -5349,7 +5358,7 @@ export default function AtolyeERP() {
                             cariler={cariler}
                             stok={stok}
                             uretim={uretim}
-                            onGoToCari={() => { pencereKapat(p.id); setTab("cari"); }}
+                            onGoToCari={(id) => { pencereKapat(p.id); cariyeGit(id); }}
                             onGoToUretim={(id) => { pencereKapat(p.id); setUretimHedefId(id || null); setTab("uretim"); }}
                             onGerceklestir={siparisGerceklestir}
               onSatisFisiAc={satisFisiAcSiparisten}

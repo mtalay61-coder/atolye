@@ -9,6 +9,11 @@
  "menu": [
   "Tahsilat Gir",
   "Notlar (3)",
+  "Cari kartı: Müşteri B",
+  "Stok kartına git",
+  "Renk / beden ekle",
+  "Reçete",
+  "Fiyatlandırma",
   "Yazdır",
   "PDF indir",
   "WhatsApp",

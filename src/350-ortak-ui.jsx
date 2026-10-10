@@ -153,12 +153,14 @@ function sagTikIsleyicileri(ac, etkin = true) {
   let baslangic = null;
   const iptal = () => { if (zamanlayici) clearTimeout(zamanlayici); zamanlayici = null; };
   return {
-    onContextMenu: (e) => { if (yerelMenuKalsin(e)) return; e.preventDefault(); e.stopPropagation(); ac(e.clientX, e.clientY); },
+    // Üçüncü bağımsız değişken TIKLANAN ÖĞE (v1.638.0): menü neye sağ tıklandığına göre öğe ekleyebilsin (sipariş kartında
+    // stok satırı → "Stok kartına git").
+    onContextMenu: (e) => { if (yerelMenuKalsin(e)) return; e.preventDefault(); e.stopPropagation(); ac(e.clientX, e.clientY, e.target); },
     onTouchStart: (e) => {
       const t = e.touches && e.touches[0]; if (!t || yerelMenuKalsin(e)) return;
-      baslangic = { x: t.clientX, y: t.clientY };
+      baslangic = { x: t.clientX, y: t.clientY, hedef: e.target };
       iptal();
-      zamanlayici = setTimeout(() => { zamanlayici = null; ac(baslangic.x, baslangic.y); }, 550);
+      zamanlayici = setTimeout(() => { zamanlayici = null; ac(baslangic.x, baslangic.y, baslangic.hedef); }, 550);
     },
     onTouchMove: (e) => {
       const t = e.touches && e.touches[0];

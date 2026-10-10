@@ -504,8 +504,17 @@ function ProductMatrixCard({
   // değiştirdiğinde geri zıplamamalı.
   // "recete" sekmesi yalnızca MAMUL üründe var; hammadde için istenirse stok bilgilerine düşülür,
   // aksi halde boş bir sekme açılırdı.
+  // "renkBeden" (v1.638.0, sipariş sağ tıkı "Renk / beden ekle"): Stok Bilgileri sekmesi + renk/beden bloğuna kaydırma.
   const gecerliBaslangicSekme =
-    baslangicSekme === "recete" && product.kategori !== "Mamul" ? "stok" : baslangicSekme;
+    (baslangicSekme === "recete" && product.kategori !== "Mamul") || baslangicSekme === "renkBeden" ? "stok" : baslangicSekme;
+  useEffect(() => {
+    if (baslangicSekme !== "renkBeden") return undefined;
+    const t = setTimeout(() => {
+      const b = document.querySelector(`[data-urun-karti="${product.id}"] [data-duzen-blok="renkBeden"]`);
+      if (b && b.scrollIntoView) b.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [product.id]);
   const [cardTab, setCardTab] = useState(gecerliBaslangicSekme || "stok");
   // MALİYET RENK / BEDEN SEÇİMİ (v1.595.0 — kullanıcı: "maliyette renk bedenler neye göre çekiyor?"): maliyet, reçetesi olan
   // İLK mamul renk ve ORTA beden üzerinden hesaplanıyordu (v1.568 temsili beden); hangisi olduğu yazmıyordu. Artık üstte seçilir.
