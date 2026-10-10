@@ -4,7 +4,7 @@
 // Kurulum: SAT-R1 = Bot Siyah 41×3 + 42×3. Deri Siyah 12 gerekli / stok 7 → 5 eksik, 2'si alışla yolda → KISMEN;
 // Deri Taba 3 / stok 4 → YETERLİ; Taban 41: 3 / stok 10 → YETERLİ; Taban 42: 3 / stok 0, 3'ü yolda → YOLDA.
 // Ölçülen: Hammadde İhtiyacı sekmesinde her hücrenin durumu ve rengi, lejant (dört durum + sayılar), tek ölçülü satırlar
-// (Deri) da renkli.
+// (Deri) da renkli. v1.632.1: Planlama > Hammadde İhtiyaç'ta renk satırları ve malzeme kartları da durum renginde.
 const { uygulamaAc, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
@@ -40,8 +40,22 @@ async function calistir() {
     return { hucreler, lejant };
   });
   if (process.env.EKRAN) { await sayfa.locator("[data-hammadde-lejant]").first().scrollIntoViewIfNeeded(); await sayfa.screenshot({ path: process.env.EKRAN }); }
+
+  // PLANLAMA > Hammadde İhtiyaç (v1.632.1 — "Bu renkleri planlamadaki satırlara da uygula"): renk satırları ve malzeme
+  // kartları da durum renginde (satır/kart durumu hücrelerin toplamından).
+  await sayfa.keyboard.press("Escape");
+  await modulAc(sayfa, "Planlama"); await sayfa.waitForTimeout(700);
+  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Hammadde İhtiyaç" && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await sayfa.waitForTimeout(700);
+  const planlama = await sayfa.evaluate(() => ({
+    kartlar: [...document.querySelectorAll("[data-hm-kart-durum]")].filter((x) => x.getBoundingClientRect().width > 0)
+      .map((x) => `${(x.querySelector("span[style*='font-weight: 700']") || {}).textContent} → ${x.getAttribute("data-hm-kart-durum")} (${(x.querySelector("[data-hm-kart-durum-rozet]") || {}).textContent})`).sort(),
+    satirlar: [...document.querySelectorAll("[data-hm-satir-durum]")].filter((x) => x.getBoundingClientRect().width > 0)
+      .map((x) => `${x.closest("[data-hm-kart-durum]").id} ${x.children[0].textContent.trim()} → ${x.getAttribute("data-hm-satir-durum")} (${getComputedStyle(x.children[0]).color})`).sort(),
+  }));
+  if (process.env.EKRAN_PLANLAMA) await sayfa.screenshot({ path: process.env.EKRAN_PLANLAMA });
   await tarayici.close();
-  return { hatalar, ...sonuc };
+  return { hatalar, ...sonuc, planlama };
 }
 if (require.main === module) calistir().then((s) => console.log(JSON.stringify(s, null, 1)));
 module.exports = { calistir };

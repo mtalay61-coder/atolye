@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.632.0";
+const SURUM = "1.632.1";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Hammadde durum renkleri standart: stokta var yesil, siparisle yolda mavi, eksik turuncu; siparis kartinda Planlama ile ayni";
+const SURUM_NOTU = "Planlama hammadde ihtiyacinda renk satirlari ve malzeme kartlari da durum renginde";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Hammadde durum renkleri standart: stokta var yesil, siparisl
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.632.1", tarih: "10.10.2026",
+    eklenen: [],
+    degisen: ["Planlama > Hammadde İhtiyacı'nda renk satırları ve malzeme kartları da durum renginde (stokta var yeşil, siparişte mavi, eksik turuncu); kartta durum rozeti"],
+    duzeltilen: [] },
   { surum: "1.632.0", tarih: "10.10.2026",
     eklenen: ["Hammadde durum renk standardı ve açıklaması (lejant): stokta var yeşil, tamamı siparişte (yolda) mavi, kısmen siparişte turuncu + kamyon, eksik turuncu"],
     degisen: ["Sipariş kartında Hammadde İhtiyacı hücreleri Planlama ile aynı mantıkla renkli; alış siparişiyle yolda olan miktar da hesaba katılıyor ve ipucunda yazıyor",
@@ -1530,6 +1534,19 @@ function hammaddeDurumu(eksik, yolda) {
   const y = yolda || 0;
   if (eksik - y <= 0) return "yolda";
   return y > 0 ? "kismen" : "eksik";
+}
+
+// Birden çok hücrenin (bir renk satırı, bir malzeme kartı) TOPLU durumu (v1.632.1): eksik yoksa yeterli; eksiğin hepsi
+// siparişteyse yolda; bir kısmı siparişte kismen; hiç sipariş yoksa eksik. Hücreler Planlama (235) satırları:
+// { eksikMi, eksikMiktar, netEksik, satinAlma: { yolda } }.
+function hammaddeDurumuToplu(hucreler) {
+  const liste = (hucreler || []).filter(Boolean);
+  const eksik = liste.reduce((t, r) => t + (r.eksikMi ? (r.eksikMiktar || 0) : 0), 0);
+  if (!(eksik > 0)) return "yeterli";
+  const net = liste.reduce((t, r) => t + (r.netEksik || 0), 0);
+  if (!(net > 0)) return "yolda";
+  const yolda = liste.reduce((t, r) => t + ((r.eksikMi && r.satinAlma && r.satinAlma.yolda) || 0), 0);
+  return yolda > 0 ? "kismen" : "eksik";
 }
 
 function alfaEkle(renk, hexAlfa) {
