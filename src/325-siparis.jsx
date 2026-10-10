@@ -1956,16 +1956,15 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                   </span>
                                 </span>
                               ) : (
-                                <select
-                                  value={urun ? urun.id : ""}
-                                  onChange={(e) => grupUrunDegistir(idler, e.target.value)}
-                                  data-form-kalem-urun="1"
-                                  title="Ürünü değiştir — renk yeni üründe yoksa yeniden seçilmeli"
-                                  style={{ padding: "3px 4px", fontSize: 12, fontWeight: 600, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", maxWidth: 200 }}
-                                >
-                                  {!urun && <option value="">{g.urunAd} (listede yok)</option>}
-                                  {urunUygun.map((u) => <option key={u.id} value={u.id}>{u.ad}</option>)}
-                                </select>
+                                // ARAMALI (v1.631.0 — kullanıcı: "Stok içinde yazma filtreleme olsun"): satırda ürün değiştirmek de Kalem
+                                // Ekle'deki aramalı seçiciyle (ad, stok no, özel kodlarla süzülür); açılır liste yüzlerce modelde
+                                // ekranı kaplıyordu. Kayıtlı ürün listede yoksa kutu boş, ipucunda eski ad.
+                                <div style={{ minWidth: 170, maxWidth: 220 }} title="Ürünü değiştir — renk yeni üründe yoksa yeniden seçilmeli">
+                                  <AramaliUrunSecici urunler={urunUygun} seciliId={urun ? urun.id : ""} kucuk temizle={false}
+                                    veriAdi="data-form-kalem-urun" ozelKodAlanlari={tanimlarOzelKodAlanlari}
+                                    placeholder={urun ? "Model ara…" : `${g.urunAd} (listede yok)`}
+                                    onSec={(id) => { if (id && (!urun || id !== urun.id)) grupUrunDegistir(idler, id); }} />
+                                </div>
                               )}
                             </span>
                           </td>
@@ -1975,19 +1974,12 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                             <div data-form-kalem-renk-notlar="1" style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "nowrap" }}>
                             <span style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
                             {g.kilit || renkSecenekleri.length === 0 ? olcuGoster(g.renk) : (
-                              <select
-                                value={g.renk || ""}
-                                onChange={(e) => e.target.value && grupDegistir(idler, { renk: e.target.value })}
-                                data-form-kalem-renk="1"
-                                title="Rengi değiştir — bu satırdaki bütün ölçülere uygulanır"
-                                style={{ padding: "3px 4px", fontSize: 12, border: `1px solid ${renkEksik ? "var(--erp-danger, #B3261E)" : "var(--erp-line)"}`, borderRadius: "var(--erp-r-sm)" }}
-                              >
-                                {renkEksik && <option value="">Renk seçin…</option>}
-                                {/* Kayıtlı renk üründe artık yoksa "(listede yok)" olarak kalıyor — yoksa
-                                    tarayıcı ilk seçeneği gösterir ve kayıt sessizce başka renge döner. */}
-                                {g.renk && !renkSecenekleri.includes(g.renk) && <option value={g.renk}>{olcuGoster(g.renk)} (listede yok)</option>}
-                                {renkSecenekleri.map((r) => <option key={r} value={r}>{olcuGoster(r)}</option>)}
-                              </select>
+                              // ARAMALI + RESİMLİ (v1.631.0 — kullanıcı: "Renk değiştirirken hep kullandığımız şekilde olsun"):
+                              // Kalem Ekle'deki renk kutusunun aynısı; açılır liste tarayıcının ekranı kaplayan menüsünü açıyordu.
+                              <SatirRenkKutusu deger={g.renk || ""} secenekler={renkSecenekleri} eksik={renkEksik}
+                                resimler={(urun && urun.renkResimleri) || {}}
+                                onSec={(r) => grupDegistir(idler, { renk: r })}
+                                placeholder={renkEksik ? "Renk seçin…" : "Renk ara…"} />
                             )}
                             {/* Kutu rozeti taslak listede de görünür: kalem eklendikten sonra
                                 hangisine hangi kutunun atandığını kontrol etmek, siparişi

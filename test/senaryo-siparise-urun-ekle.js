@@ -81,7 +81,8 @@ const formSatirlari = (sayfa) => sayfa.evaluate((F) => [...document.querySelecto
   const renk = tr.querySelector("[data-form-kalem-renk]");
   const miktarlar = [...tr.querySelectorAll('button[title="Bu bedeni sil"]')].map((b) => b.parentElement.querySelector("input").value);
   // Ürün seçicisi <select>: değeri kimlik, görünen adı seçili seçenekte.
-  const urunAd = urun ? (urun.selectedOptions ? urun.selectedOptions[0].textContent.trim() : urun.textContent.trim()) : "?";
+  // v1.631.0: aramalı kutu (input) — görünen ad değerinde; kilitli satırda düz metin.
+  const urunAd = urun ? (urun.selectedOptions ? urun.selectedOptions[0].textContent.trim() : (urun.value || urun.textContent).trim()) : "?";
   return `${urunAd} · ${renk ? renk.value : "?"}: ${miktarlar.join(",")}`;
 }), FORM);
 

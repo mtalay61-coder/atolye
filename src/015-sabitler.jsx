@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.630.0";
+const SURUM = "1.631.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Siparis kartinda urun basina toplam satiri kalkti; en altta tek Siparis Toplami (adet + tutar)";
+const SURUM_NOTU = "Siparis formunda satirdaki urun ve renk degistirme aramali (Kalem Ekle ile ayni kutular)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Siparis kartinda urun basina toplam satiri kalkti; en altta 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.631.0", tarih: "10.10.2026",
+    eklenen: [],
+    degisen: ["Sipariş formunda satırdaki renk değiştirme açılır liste yerine aramalı ve resimli kutu (Kalem Ekle'deki renk kutusunun aynısı)",
+      "Sipariş formunda satırdaki ürün (model) değiştirme de yazarak süzülen aramalı kutu (ad, stok no, özel kodlar)"],
+    duzeltilen: [] },
   { surum: "1.630.0", tarih: "10.10.2026",
     eklenen: ["Sipariş kartının en altında tek SİPARİŞ TOPLAMI şeridi: model ve kalem sayısı, toplam adet, toplam tutar"],
     degisen: ["Sipariş kartında ürün başına Toplam satırı kalktı (yalnız çok renkli üründe çıkıyordu, tablolar tutarsız görünüyordu)"],
