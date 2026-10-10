@@ -331,6 +331,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
           placeholder="Hammadde veya renk ara…"
           style={{ width: "100%", padding: "7px 10px 7px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 }}
         />
+        <AramaTemizle deger={arama} onTemizle={() => setArama("")} veri="hammadde-ihtiyac" />
       </div>
 
       {(() => {

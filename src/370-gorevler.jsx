@@ -209,6 +209,7 @@ function GorevlerModule({ gorevler, kullanicilar, aktifKullanici, onKaydet, show
           <input value={arama} onChange={(e) => setArama(e.target.value)} data-gorev-arama="1"
             placeholder="Görev, kişi, kayıt ara…"
             style={{ width: "100%", padding: "6px 8px 6px 28px", borderRadius: "var(--erp-r-md)", border: "1px solid var(--erp-line)", background: "var(--erp-panel)", fontSize: 13 }} />
+          <AramaTemizle deger={arama} onTemizle={() => setArama("")} veri="gorevler" />
         </div>
         <button className="btn-primary" data-gorev-yeni="1" style={{ marginLeft: "auto", padding: "5px 12px", fontSize: 12 }}
           onClick={() => setYeniAcik(!yeniAcik)}><Plus size={14} /> Yeni Görev</button>

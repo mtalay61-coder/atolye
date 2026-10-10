@@ -119,3 +119,15 @@ const GizliModul = React.memo(
   // true = "değişmedi, çizme": önce de gizliydi, şimdi de gizli.
   (onceki, sonraki) => !onceki.aktif && !sonraki.aktif
 );
+
+// ARAMA KUTUSUNDA × (v1.634.1 — kullanıcı, Fişler ekran görüntüsüyle: "aramada × da çıksın hızlı silme için").
+// Stok aramasında v1.596.0'dan beri vardı; diğer modül aramaları (Fişler, Cari, Sipariş, Üretim…) aynı düğmeyi bu
+// bileşenden alıyor. Kap `position: relative` olmalı (arama ikonunun durduğu kap zaten öyle). Boşken çizilmez.
+function AramaTemizle({ deger, onTemizle, veri }) {
+  if (!deger) return null;
+  return (
+    <button type="button" data-arama-temizle={veri || "1"} title="Aramayı temizle" onClick={onTemizle}
+      style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", border: "none", background: "none",
+        cursor: "pointer", color: "var(--erp-text-3)", fontSize: 18, lineHeight: 1, padding: "2px 6px" }}>×</button>
+  );
+}

@@ -15,6 +15,10 @@
     "kart": 1,
     "dugme": null
   },
+  "carpiyleTemizlendi": {
+    "metin": "",
+    "carpiGizlendi": true
+  },
   "aramaTemizlenince": {
     "kart": 100,
     "dugme": "Daha fazla göster (100 / 258)"
