@@ -81,7 +81,8 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
         if (h.giderKartId !== kartId) return;
         const t = new Date(h.tarih);
         if (Number.isNaN(t.getTime()) || t < ayBasiIlk || t > aySonuIlk) return;
-        toplam += (h.yon === "Giriş" ? -1 : 1) * (h.tutar || 0);
+        // Hesabın para birimiyle TL'ye (v1.639.0, denetim; 396 ile aynı).
+        toplam += (h.yon === "Giriş" ? -1 : 1) * kzTL(h.tutar || 0, hes.paraBirimi, (muhasebe && muhasebe.kurlar) || {});
       });
     });
     return toplam;

@@ -179,7 +179,7 @@ function isEmriHammaddeMatrisiHesapla(o, stok, prosesAdi, mamulBedenleri) {
   return satirlar;
 }
 
-function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan, onAcKapa, tumUretimler, stok, cariler, personelListesi, tanimlarFireSebepleri, tanimlarProsesler, onHurdaTelafi, onGoToCari, onProsesTamamla, onProsesVer, onProsesVerGeriAl, onProsesTeslimGeriAl, onRemove, siparisler, onGoToSiparis, hedefli, onHedefGoruldu, asortiler }) {
+function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan, onAcKapa, tumUretimler, stok, cariler, personelListesi, tanimlarFireSebepleri, tanimlarProsesler, onHurdaTelafi, onGoToCari, onProsesTamamla, onProsesVer, onAtamaPersonelVer, onProsesVerGeriAl, onProsesTeslimGeriAl, onRemove, siparisler, onGoToSiparis, hedefli, onHedefGoruldu, asortiler }) {
   const [seciliPersonel, setSeciliPersonel] = useState({}); // { [proses]: personelId }
   // GERÇEKTE VERİLEN HAMMADDE — "urunId|renk|beden" -> girilen dize.
   //
@@ -629,7 +629,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
           // Artık bir sonraki proses, öncekinin TAMAMEN bitmesini beklemek zorunda değil — önceki
           // adımdan kısmen teslim alınmış (biten) miktar kadar iş dağıtılabilir.
           const mevcutBedenlerBu = oncekiAdimdanMevcutBedenler(prosesIlerleme, i, o.bedenMiktarlari);
-          const bedenDurumu = adimBedenDurumu(p, o.bedenMiktarlari, mevcutBedenlerBu);
+          const bedenDurumu = adimBedenDurumu(p, o.bedenMiktarlari, mevcutBedenlerBu, o.prosesIlerleme);
           const atamalar = p.atamalar || [];
           // "akisVarMi": bu adıma YENİ iş verilebilecek kapasite var mı (dağıtım formunu göstermek için).
           // "siradaki": bu adımın aktif/güncel adım olarak VURGULANIP vurgulanmayacağı — adımın kendisi
@@ -781,12 +781,27 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                           </span>
                         ) : (
                           <span style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+                            {/* PERSONELSİZ ATAMA (v1.639.0, denetim): atölyeden/"sonra atanacak" ile doğan tamir işi — burada personel
+                                seçilip verilir; yoksa iş kimsede değil, teslim de alınamıyordu. */}
+                            {!a.verildiMi && onAtamaPersonelVer ? (
+                              <>
+                                <select data-tamir-personel={a.id} defaultValue="" style={{ ...inputStyle, width: 170, padding: "4px 8px", fontSize: 12, border: "2px solid var(--erp-orange)" }}>
+                                  <option value="">⚠ Personel seçin</option>
+                                  {personelListesi.map((per) => <option key={per.id} value={per.id}>{per.unvan}</option>)}
+                                </select>
+                                <button type="button" className="btn-primary" data-tamir-ver={a.id} style={{ padding: "4px 10px", fontSize: 11 }}
+                                  onClick={(e) => { const sec = e.currentTarget.previousSibling; onAtamaPersonelVer(o.id, p.proses, a.id, sec ? sec.value : ""); }}>
+                                  Ver
+                                </button>
+                              </>
+                            ) : (
                             <span
                               title="Bu atama için gereken hammadde ve işçilik rezerve edildi"
                               style={{ fontSize: 10, fontWeight: 700, color: "#8A6A2E", background: "#F2E0B8", padding: "1px 6px", borderRadius: "var(--erp-r-pill)" }}
                             >
                               Rezerve
                             </span>
+                            )}
                             <button
                               className="btn-ghost"
                               style={{ padding: "4px 8px", fontSize: 11 }}

@@ -86,8 +86,15 @@ const TABLO_SEMA = {
       // `sezon-yili.sql` çalıştırılmadan buluta gitmez.
       sezon_yili: u.sezonYili || null,
       tedarikci_id: u.tedarikciId || null, varsayilan_proses: u.varsayilanProses || null,
-      paketleme_notu: u.paketlemeNotu || null, kapak_resmi: u.kapakResmi || null,
-      renk_resimleri: u.renkResimleri || {}, recete: u.recete || [],
+      paketleme_notu: u.paketlemeNotu || null,
+      // GÖRSEL SÜTUNLARI YALNIZ KAYIT TAŞIYORSA (v1.639.0, denetim — kritik): tazeleme (v1.611) ürünleri görselsiz okuyor;
+      // görseli bu cihazda olmayan (hiç yüklenmemiş ya da başka cihazın yeni eklediği) ürün düzenlenince PATCH
+      // `kapak_resmi: null` gönderiyor ve buluttaki görsel KALICI siliniyordu. Alan yoksa (undefined) sütun gönderilmez —
+      // PATCH dokunmaz; kullanıcı görseli silerse alan "" olur ve null gider. Toplu POST'ta eksik alan `satirlariEsitle`
+      // ile null tamamlanır (yeni kayıt, görseli zaten yok).
+      ...(u.kapakResmi !== undefined ? { kapak_resmi: u.kapakResmi || null } : {}),
+      ...(u.renkResimleri !== undefined ? { renk_resimleri: u.renkResimleri || {} } : {}),
+      recete: u.recete || [],
       // Reçetenin GERÇEKLEŞMESİ — planlanan ile fiilen tüketilen arasındaki farkın özeti.
       // Reçetenin kendisinden ayrı tutuluyor: reçete kullanıcının yazdığı TAHMİN, bu ise
       // ölçüm. İkisini aynı alanda karıştırmak, "hangisi benim yazdığım" sorusunu doğururdu.

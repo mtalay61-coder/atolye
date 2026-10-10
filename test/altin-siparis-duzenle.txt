@@ -58,7 +58,7 @@
    "urunSecici": false
   },
   {
-   "miktarKutusu": 4,
+   "miktarKutusu": 2,
    "renk": "Taba",
    "renkSecenekleri": [
     "Taba (listede yok)",

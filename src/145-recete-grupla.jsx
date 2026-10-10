@@ -42,7 +42,9 @@ function receteMaliyetGrupla(recete) {
   const gruplar = [];
   const index = {};
   recete.forEach((r) => {
-    const key = `${r.hammaddeUrunId}__${r.renk}__${r.miktar}`;
+    // Ekleme kimliği de anahtarda (v1.639.0, denetim): aynı proseste aynı hammadde+renk+miktarlı iki AYRI kullanım
+    // (Deri "Yüz" 2 desi + Deri "Astar" 2 desi) tek gruba çöküp maliyette bir kez sayılıyordu. Eski kayıtta (eklemeId yok) eski kural.
+    const key = `${r.hammaddeUrunId}__${r.renk}__${r.miktar}__${r.eklemeId || ""}`;
     if (!(key in index)) {
       index[key] = gruplar.length;
       gruplar.push({ key, hammaddeAd: r.hammaddeAd, renk: r.renk, satirlar: [] });
@@ -129,17 +131,26 @@ function hammaddeRezerveHesapla(urunId, renk, beden, uretim, tumUrunler) {
     o.prosesIlerleme
       .filter((p) => !p.tamamlandiMi)
       .forEach((p) => {
+        // TESLİM ALINMIŞ KISIM DÜŞÜLÜR (v1.639.0, denetim): kısmi teslimde çıkışı yapılmış hammadde rezervede de sayılıyordu
+        // (çift). Kutu rengi siparişten gelebilir — reçetedeki değil ETKİN renk (`ambalajRengiUygula`) eşleştirilir.
+        const teslimAlinan = {};
+        (p.atamalar || []).filter((a) => a.tamamlandiMi).forEach((a) => {
+          Object.entries(a.bedenMiktarlari || {}).forEach(([b, m]) => { teslimAlinan[norm(b)] = (teslimAlinan[norm(b)] || 0) + (m || 0); });
+        });
+        const teslimToplam = Object.values(teslimAlinan).reduce((t, m) => t + m, 0);
         urun.recete
           .filter((r) =>
             norm(r.proses) === norm(p.proses) &&
             norm(r.mamulRenk) === norm(o.renk) &&
             r.hammaddeUrunId === urunId &&
-            norm(r.renk) === norm(renk) &&
+            norm(ambalajRengiUygula(r, o, tumUrunler)) === norm(renk) &&
             norm(r.beden) === norm(beden)
           )
           .forEach((r) => {
             const bm = (o.bedenMiktarlari || []).find((x) => norm(x.beden) === norm(r.mamulBeden));
-            const uretilenMiktar = r.mamulBeden === "Tüm Bedenler" ? toplamAdet : (bm ? bm.miktar : 0);
+            const uretilenMiktar = r.mamulBeden === "Tüm Bedenler"
+              ? Math.max(0, toplamAdet - teslimToplam)
+              : (bm ? Math.max(0, bm.miktar - (teslimAlinan[norm(bm.beden)] || 0)) : 0);
             buUretimIcin += r.miktar * uretilenMiktar;
           });
       });

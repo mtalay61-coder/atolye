@@ -395,7 +395,8 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => tumHareketler.set(h.id, { cari: c, h })));
   ((muhasebe && muhasebe.cekler) || []).forEach((cek) => {
     const giris = cek.hareketId ? tumHareketler.get(cek.hareketId) : null;
-    const girisDefteri = (giris && giris.h.defter) || "Genel";
+    // Carisiz çekte giriş hareketi yok: çekin kendi defteri (v1.539) — yoksa Genel (v1.639.0, denetim).
+    const girisDefteri = (giris && giris.h.defter) || cek.defter || "Genel";
     if (!kapsar(girisDefteri)) return;
     const girisTarihi = finansGun((giris && giris.h.tarih) || cek.tarih || ((cek.gecmis || [])[0] || {}).tarih || "");
     if (girisTarihi && girisTarihi > bugun) return;
@@ -569,7 +570,7 @@ function finansNakitAkisi({ cariler, muhasebe, kurlar, defter = "Tümü", tarih,
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => girisler.set(h.id, h)));
   ((muhasebe && muhasebe.cekler) || []).forEach((cek) => {
     const giris = cek.hareketId ? girisler.get(cek.hareketId) : null;
-    if (!kapsar((giris && giris.defter) || "Genel")) return;
+    if (!kapsar((giris && giris.defter) || cek.defter || "Genel")) return;
     const girisTarihi = finansGun((giris && giris.tarih) || cek.tarih || "");
     if (girisTarihi && girisTarihi > bugun) return;
     const durum = finansCekDurumu(cek, bugun, bugunMu);

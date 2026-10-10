@@ -142,7 +142,7 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
     if (siparis.tip !== "Alış") islenenler.forEach((k) => {
       const urun = (stok || []).find((u) => u.id === k.urunId || u.ad === k.urunAd);
       if (!urun) return;
-      const v = (urun.variants || []).find((x) => (x.renk || "") === (k.renk || "") && (x.beden || "") === (k.beden || ""));
+      const v = (urun.variants || []).find((x) => stokAnahtarNrm(x.renk) === stokAnahtarNrm(k.renk) && stokAnahtarNrm(x.beden) === stokAnahtarNrm(k.beden));
       const mevcut = v ? (v.miktar || 0) : 0;
       if (k.miktar > mevcut) stokAsanlar.push(`${olcuMetni([k.urunAd, k.renk, k.beden], " ")}: stok ${mevcut}, sevk ${k.miktar}`);
     });
@@ -222,37 +222,13 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
   if (defterKaydiBekleyen && !(await fisDefterineKayitYaz(defterKaydiBekleyen))) return false;
 
   const { nextSiparisler, nextStok, nextCariler, bildirim } = hesap;
-  setSiparisler(nextSiparisler);
+  // GÜNCEL LİSTEYE YALNIZ DEĞİŞENLER (v1.639.0, denetim): defter yazımı beklenirken (yukarıdaki await) başka pencerede/
+  // cihazdan gelen değişiklik tam liste set edilince eziliyor, buluta eski hâl gidiyordu. Her tablo kendi güncelleyicisinde
+  // birleşir ve yazılır (`tabloYaz` zaten sıraya alıp yeniden deniyor; 100-app `yazimiIzle` hatayı şeride taşır).
+  setSiparisler((onceki) => { const n = degisenKayitlariBirlestir(onceki, siparisler, nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n); return n; });   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
   if (koliIslemi) koliIslemi();
-  setStok(nextStok);
-  setCariler(nextCariler);
-  // Depolama isteklerini PARALEL değil SIRALI (birer birer) gönderiyoruz — aynı anda çok istek
-  // atmak hız sınırına takılıp sessizce başarısız olabiliyordu. Her biri bir kez başarısız
-  // olursa kısa bir bekleyip tekrar deneniyor.
-  // tabloYaz KULLANILIYOR, guvenliYaz DEĞİL: doğrudan yazmak veri katmanını atlıyordu ve teslim alma sonucu
-  // buluta hiç gitmiyordu. (v1.568.0, denetim: aynı kayıt döngüsü iki kez yazılmıştı — her teslim üç tabloyu
-  // iki kez gönderiyor, hata olursa iki uyarı çıkıyordu. Tek döngü kaldı.)
-  // Depolama istekleri SIRALI: aynı anda çok istek hız sınırına takılıp sessizce başarısız
-  // olabiliyordu. Her biri bir kez daha deneniyor.
-  (async () => {
-    const yazilacaklar = [
-      ["stok:items", "urunler", nextStok],
-      ["cari:data", "cariler", nextCariler],
-      ["siparis:data", "siparisler", nextSiparisler],
-    ];
-    const basarisizlar = [];
-    for (const [key, tablo, deger] of yazilacaklar) {
-      let deneme = 0, basarili = false;
-      while (deneme < 2 && !basarili) {
-        try { await tabloYaz(key, tablo, deger); basarili = true; }
-        catch (e) { deneme++; if (deneme < 2) await new Promise((r) => setTimeout(r, 400)); }
-      }
-      if (!basarili) basarisizlar.push(key);
-    }
-    if (basarisizlar.length > 0) {
-      showToast(`⚠ Şunlar kaydedilemedi: ${basarisizlar.join(", ")} — "Yeniden dene" şeridinden gönderin`);
-    }
-  })();
+  setStok((onceki) => { const n = degisenKayitlariBirlestir(onceki, stok, nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", n), "Stok kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
+  setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, cariler, nextCariler); yazimiIzle(tabloYaz("cari:data", "cariler", n), "Cari kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
   showToast(bildirim);
   return true;
 }, [siparisler, stok, cariler, showToast, muhasebe, aktifKullanici, koliler, saveKoliler, fisDefterineKayitYaz, tanimlar]);

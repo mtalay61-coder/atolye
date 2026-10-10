@@ -80,7 +80,10 @@ function uretimFisAdlari(u, adimIndex, atamaId) {
   // "1001-Kesim-2" fişi, silmeden sonra bambaşka bir atamayı gösteriyordu. Parça barkodu
   // ("1001-2") atamaya bir kez yazılıp saklandığı için silmeden etkilenmiyor.
   // Barkodu olmayan ESKİ atamalarda konuma düşülüyor — o kayıtlar için başka bir dayanak yok.
-  const taban = `${u.siparisNo}-${adim.proses}${uretimAtamaEki(u, atamalar, sira >= 0 ? atamalar[sira] : null)}`;
+  // ATAMAYA YAZILMIŞ NUMARA ÖNCE (v1.639.0, denetim — kritik): teslimde `atama.fisNo` saklanıyor; konumdan türetilen ek,
+  // adıma sonradan atama gelince kayıyordu (bkz. 079-uretim-teslim). Eski atamalarda (alan yok) eski kural.
+  const atamaKayit = sira >= 0 ? atamalar[sira] : null;
+  const taban = atamaKayit && atamaKayit.fisNo ? atamaKayit.fisNo : `${u.siparisNo}-${adim.proses}${uretimAtamaEki(u, atamalar, atamaKayit)}`;
   // `-İade`: kesimde artan hammaddenin stoğa dönüşü (17 Eylül). Ailenin parçası — adım geri
   // alınınca iade hareketi de geri alınmalı, yoksa iade edilen mal stokta kalırdı.
   // `-EkMalzeme` de aileye dahil (20 Eylül): iş sırasında alınan ek malzemenin çıkış hareketi
@@ -295,7 +298,7 @@ function fisGeriAl(veri, secenekler = {}) {
     let variants = p.variants;
     silinecekler.forEach((h) => {
       variants = variants.map((v) =>
-        v.renk === h.renk && v.beden === h.beden ? { ...v, miktar: stokYuvarla(v.miktar - h.miktar) } : v
+        stokAnahtarNrm(v.renk) === stokAnahtarNrm(h.renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(h.beden) ? { ...v, miktar: stokYuvarla(v.miktar - h.miktar) } : v
       );
     });
     return { ...p, variants, hareketler: (p.hareketler || []).filter((h) => !idler.has(h.id)) };

@@ -75,7 +75,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
   function addRenk() {
     const ad = yeniRenkHammadde.trim();
     if (!ad) return;
-    if (tanimlar.renkler.some((r) => r.ad.toLowerCase() === ad.toLowerCase() && r.tip === "Hammadde")) {
+    // Tek renk havuzu (9g): tip süzgeci yok, Türkçe küçük harf (v1.639.0, denetim — "I/ı").
+    if (tanimlar.renkler.some((r) => String(r.ad || "").toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"))) {
       return showToast("Bu renk zaten tanımlı");
     }
     onSave({ ...tanimlar, renkler: [...tanimlar.renkler, { id: uid("renk"), ad, tip: "Hammadde", renkKodu: "#C9B99A", kod: sonrakiRenkKodu() }] });
@@ -373,7 +374,15 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     onSave({ ...tanimlar, birimler: (tanimlar.birimler || []).filter((b) => b.id !== id) });
   }
 
+  // KULLANILAN PROSES SİLİNİRKEN ONAY (v1.639.0, denetim): reçete satırları ve üretim adımları prosesi ADLA taşıyor;
+  // tek dokunuşla silinince tanımsız kalıyordu (renk/ölçü silmede uyarı vardı, burada yoktu).
   function removeProses(id) {
+    const p0 = (tanimlar.prosesler || []).find((p) => p.id === id);
+    const ad = p0 ? p0.ad : "";
+    const receteSayisi = (stok || []).reduce((t, u) => t + (u.recete || []).filter((r) => r.proses === ad).length, 0);
+    const uretimSayisi = (uretim || []).filter((o) => !o.stogaEklendiMi && (o.prosesIlerleme || []).some((x) => x.proses === ad && !x.tamamlandiMi)).length;
+    if ((receteSayisi > 0 || uretimSayisi > 0)
+      && !window.confirm(`"${ad}" prosesi ${receteSayisi} reçete satırında ve ${uretimSayisi} açık üretimde kullanılıyor. Silinince bu kayıtlarda proses adı kalır ama tanımsız olur (sıra/ücret bilgisi kaybolur).\n\nYine de silinsin mi?`)) return;
     onSave({ ...tanimlar, prosesler: (tanimlar.prosesler || []).filter((p) => p.id !== id) });
   }
 
@@ -399,6 +408,9 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
   }
 
   function araProsesSil(id) {
+    // Bağlı ürün sayısı (v1.639.0, denetim): ara proses ürünlere `araProsesEklentileri` ile kimlikle bağlı.
+    const bagli = (stok || []).filter((u) => JSON.stringify(u.araProsesEklentileri || {}).includes(`"${id}"`)).length;
+    if (bagli > 0 && !window.confirm(`Bu ara proses ${bagli} ürünün reçetesine bağlı. Silinince o ürünlerde adım kaybolur.\n\nYine de silinsin mi?`)) return;
     onSave({ ...tanimlar, araProsesler: (tanimlar.araProsesler || []).filter((p) => p.id !== id) });
   }
 
@@ -1036,7 +1048,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
 
     {aktifTanimSekme === "urun" && (
     <>
-    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, alignItems: "start" }}>
+    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" }}>
       {/* Renkler */}
       <div>
         <TanimBasligi ad="Renkler" />
@@ -1061,7 +1073,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               style={inputStyle}
               onKeyDown={(e) => e.key === "Enter" && addFireSebep()}
             />
-            <button className="btn-primary" onClick={addFireSebep}><Plus size={14} /></button>
+            <button className="btn-primary" title="Fire sebebi ekle" onClick={addFireSebep}><Plus size={14} /></button>
           </div>
           {(tanimlar.fireSebepleri || []).length === 0 && (
             <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9, marginBottom: 10, fontSize: 11, color: "#7A3B22", lineHeight: 1.6 }}>
@@ -1090,7 +1102,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               style={inputStyle}
               onKeyDown={(e) => e.key === "Enter" && addMamulTipi()}
             />
-            <button className="btn-primary" onClick={addMamulTipi}><Plus size={14} /></button>
+            <button className="btn-primary" title="Mamul tipi ekle" onClick={addMamulTipi}><Plus size={14} /></button>
           </div>
           <TanimListesi list={mamulTipleriGorunen} onRemove={removeMamulTipi} emptyText="Henüz mamul tipi tanımlanmadı." />
         </Bolum>
@@ -1108,7 +1120,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               style={inputStyle}
               onKeyDown={(e) => e.key === "Enter" && addHammaddeTipi()}
             />
-            <button className="btn-primary" onClick={addHammaddeTipi}><Plus size={14} /></button>
+            <button className="btn-primary" title="Hammadde tipi ekle" onClick={addHammaddeTipi}><Plus size={14} /></button>
           </div>
           <TanimListesi list={hammaddeTipleriGorunen} onRemove={removeHammaddeTipi} emptyText="Henüz malzeme tipi tanımlanmadı." />
         </Bolum>
@@ -1389,7 +1401,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         return kombi ? renkStringiniKullananUrunler(kombinasyonEtiketiHesapla(kombi)) : [];
       }}
     />
-    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, alignItems: "start" }}>
+    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" }}>
       {/* Birimler */}
       <div>
         <TanimBasligi ad="Birimler" />
@@ -1436,7 +1448,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
             style={inputStyle}
             onKeyDown={(e) => e.key === "Enter" && addBirim()}
           />
-          <button className="btn-primary" onClick={addBirim}><Plus size={14} /></button>
+          <button className="btn-primary" title="Birim ekle" onClick={addBirim}><Plus size={14} /></button>
         </div>
         <TanimListesi list={birimler} onRemove={removeBirim} emptyText="Henüz birim tanımlanmadı." mono />
       </div>
@@ -1504,7 +1516,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
       <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
         <input value={yeniBolum} data-bolum-ad="1" onChange={(e) => setYeniBolum(e.target.value)} placeholder="Örn. Kesimhane" style={inputStyle}
           onKeyDown={(e) => { if (e.key === "Enter") { bolumEkle(yeniBolum); setYeniBolum(""); } }} />
-        <button className="btn-primary" data-bolum-ekle="1" onClick={() => { bolumEkle(yeniBolum); setYeniBolum(""); }}><Plus size={14} /></button>
+        <button className="btn-primary" title="Bölüm ekle" data-bolum-ekle="1" onClick={() => { bolumEkle(yeniBolum); setYeniBolum(""); }}><Plus size={14} /></button>
       </div>
       {(tanimlar.bolumler || []).length === 0 ? (
         <EmptyState text="Henüz atölye içi bölüm tanımlanmadı." />
@@ -1795,7 +1807,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
 
     {aktifTanimSekme === "uretim" && (
     <>
-    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: 24, alignItems: "start" }}>
+    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" }}>
       {/* Prosesler */}
       <div>
         <TanimBasligi ad="Prosesler" />
@@ -1811,7 +1823,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
             style={inputStyle}
             onKeyDown={(e) => e.key === "Enter" && addProses()}
           />
-          <button className="btn-primary" onClick={addProses}><Plus size={14} /></button>
+          <button className="btn-primary" title="Proses ekle" onClick={addProses}><Plus size={14} /></button>
         </div>
         {(tanimlar.prosesler || []).length === 0 ? (
           <EmptyState text="Henüz proses tanımlanmadı." />

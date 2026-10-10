@@ -21,16 +21,10 @@ const hurdaTelafiUretimiAc = useCallback((kaynakUretimId, bedenMiktarlari) => {
   const uretimNo = String(enBuyukUretimNo(uretim, cop) + 1);
 
   const urun = stok.find((p) => p.id === kaynak.urunId);
-  const siraMap = {};
-  (tanimlar.prosesler || []).forEach((p) => { siraMap[p.ad] = p.sira ?? 999; });
-  const kullanilanProsesler = urun
-    ? Array.from(new Set((urun.recete || []).filter((r) => r.mamulRenk === kaynak.renk && r.proses).map((r) => r.proses)))
-    : [];
-  const prosesIlerleme = kullanilanProsesler.length > 0
-    ? kullanilanProsesler
-        .map((p) => ({ proses: p, sira: siraMap[p] ?? 999, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null }))
-        .sort((a, b) => a.sira - b.sira)
-    : [{ proses: "Üretim", sira: 0, tamamlandiMi: false, personelId: null, tamamlanmaTarihi: null }];
+  // ADIMLAR ORTAK KURALDAN (v1.639.0, denetim): planlama (078) ve elle üretim (300) `uretimProsesAdimlari` kullanırken
+  // burada yalnız reçetedeki proses adları alınıyordu — ara prosesler, hammaddesiz prosesler (v1.593) ve `atamalar` yoktu;
+  // ara proses adına bağlı hammadde satırı normal adım olarak açılıyordu.
+  const prosesIlerleme = uretimProsesAdimlari(urun, kaynak.renk, tanimlar);
 
   const toplam = satirlar.reduce((s, x) => s + x.miktar, 0);
   const yeni = {

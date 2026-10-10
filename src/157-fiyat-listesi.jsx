@@ -260,7 +260,25 @@ function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onSto
     .filter((r) => goster === "tumu" || (goster === "fiyatli" ? r.fiyat > 0 : !(r.fiyat > 0)))
     .filter((r) => !kaynak.maliyet || !yalnizOk || (r.onay && r.onay.durum === "ok"))
     .sort((a, b) => String(a.urun.ad || "").localeCompare(String(b.urun.ad || ""), "tr"));
-  const degisenler = satirlar.filter((r) => r.degisti);
+  // DEĞİŞENLER SÜZGEÇTEN BAĞIMSIZ (v1.639.0, denetim): yalnız ekranda görünen satırlar sayılıp kaydediliyor, ardından
+  // `duzenTemizle` kaynağın BÜTÜN düzenlemelerini siliyordu — "A'yı değiştir, B'yi ara, B'yi değiştir, Kaydet" A'yı kaybediyordu.
+  // Görünmeyen ürünün düzenlemesi de aynı hesapla sayılır ve kaydedilir.
+  const degisenler = (() => {
+    if (kaynak.maliyet) return [];
+    const gorunen = new Map(satirlar.map((r) => [r.urunId, r]));
+    const liste = [];
+    Object.keys(kaynakDuzen).forEach((id) => {
+      if (gorunen.has(id)) { const r = gorunen.get(id); if (r.degisti) liste.push(r); return; }
+      const u = (stok || []).find((x) => x.id === id);
+      if (!u) return;
+      const k = urunKaynakFiyati(u, kaynak, maliyetCtx);
+      const yazi = kaynakDuzen[id];
+      const duzen = yazi == null ? null : (String(yazi).trim() === "" ? null : fiyatSayisi(yazi));
+      const gecerli = yazi == null ? k.fiyat : (duzen > 0 ? duzen : null);
+      if ((gecerli || null) !== (k.fiyat || null)) liste.push({ urun: u, urunId: id, kayitli: k.fiyat, paraBirimi: k.paraBirimi, yazi, fiyat: gecerli, degisti: true, gizli: true });
+    });
+    return liste;
+  })();
 
   // ---- DIŞA AKTARMA (v1.554.0) ----
   const tabloBasligi = () => {

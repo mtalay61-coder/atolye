@@ -12,10 +12,9 @@
   {
    "renk": "Kahve",
    "bosKutular": [
-    "41",
-    "42"
+    "41"
    ],
-   "tireler": 0
+   "tireler": 1
   }
  ],
  "geriYazildi": [
@@ -29,10 +28,9 @@
   {
    "renk": "Kahve",
    "bosKutular": [
-    "41",
-    "42"
+    "41"
    ],
-   "tireler": 0
+   "tireler": 1
   }
  ],
  "kahveSilindi": [

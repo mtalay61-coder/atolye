@@ -57,6 +57,9 @@ function tumFisleriTopla(cariler, stok) {
         // Yalnızca `tarih`e bakmak, işçilik fişlerini saatsiz gösteriyordu.
         key, fisNo: h.fisNo, siparisNo: h.siparisNo, siparisId: h.siparisId || null, uretimId: h.uretimId || null,
         tarih: h.zaman || h.tarih,
+        // Fişin GÜNÜ ayrıca (v1.639.0, denetim): `tarih` giriş anı (zaman); geçmiş tarihli fişte fatura/irsaliye tarihi için
+        // kullanıcının seçtiği gün gerekiyor (080 e-fatura "fişten N gün sonra" uyarısı giriş gününü esas alıyordu).
+        gunTarihi: h.tarih || null,
         cariId: h.cariId || null, cariAd: h.cariAd || null, cariTip: h.cariTip, hareketler: [],
       });
     } else if (h.cariAd && !gruplar[index[key]].cariAd) {

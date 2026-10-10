@@ -356,7 +356,9 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 // `resimler` (v1.469.0, sipariş renk seçimi): { öneri: resimAdresi } — varsa listede her önerinin
 // yanında ve seçili değer kutudayken kutunun solunda küçük resim. Renk adları benzeşiyor (Taba Süet /
 // Taba Deri); resim, okumadan doğru rengi seçtiriyor.
-function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false }) {
+// `bulanikSecim` (v1.639.0): kutudan çıkınca yazılan tam eşleşmiyorsa İLK eşleşen seçilir (Kalem Ekle, v1.457 kuralı);
+// false verilirse boş döner — satır kutusu (SatirRenkKutusu) kayıtlı renge geri dönsün, "K" yazıp çıkınca satır Kahve olmasın.
+function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, yalnizListeden = false, sayisal = false, resimler = null, disabled = false, bulanikSecim = true }) {
   const [acik, setAcik] = useState(false);
   const [vurgulu, setVurgulu] = useState(-1);
   // YAZILDI MI (v1.540.0): odaklanınca false, kutuya harf girince true. Tam eşleşmede "hepsini göster"
@@ -397,7 +399,7 @@ function AramaliMetin({ deger, onDegis, oneriler, placeholder, veriAdi, stil, ya
         onFocus={() => { setAcik(true); setYazildi(false); }}
         onBlur={() => {
           setTimeout(() => setAcik(false), 150);
-          if (yalnizListeden && q && !tamEslesme) onDegis(sonuclar[0] || "");
+          if (yalnizListeden && q && !tamEslesme) onDegis(bulanikSecim ? (sonuclar[0] || "") : "");
           else if (yalnizListeden && tamEslesme) onDegis(tekil.find((o) => o.toLocaleLowerCase("tr-TR") === q));
         }}
         {...(sayisal ? { inputMode: "numeric" } : {})}
@@ -455,6 +457,7 @@ function SatirRenkKutusu({ deger, secenekler, resimler, onSec, veriAdi = "data-f
         oneriler={secenekler}
         resimler={resimler}
         yalnizListeden
+        bulanikSecim={false}
         placeholder={placeholder}
         stil={{ padding: "4px 8px", fontSize: 13, ...(eksik ? { borderColor: "var(--erp-danger, #B3261E)" } : {}) }}
       />

@@ -95,7 +95,7 @@ function AtolyeEkrani({ cariler, orders, stok, siparisler, onProsesTamamla, onPr
       if (p.tamamlandiMi || p.araProsesMi) return;
       if (bagliProsesler.length > 0 && !bagliProsesler.includes(p.proses)) return;
       const mevcutBedenler = oncekiAdimdanMevcutBedenler(ilerleme, i, o.bedenMiktarlari);
-      const durum = adimBedenDurumu(p, o.bedenMiktarlari, mevcutBedenler);
+      const durum = adimBedenDurumu(p, o.bedenMiktarlari, mevcutBedenler, o.prosesIlerleme);
       const alinabilir = durum.filter((d) => d.kalan > 0);
       if (alinabilir.length === 0) return;
       const urun = (stok || []).find((x) => x.id === o.urunId);

@@ -20,12 +20,6 @@ function useUretimSil(d) {
 const uretimSil = useCallback(async (uretimId, cascade) => {
   const siparis = uretim.find((o) => o.id === uretimId);
   if (!siparis) return;
-  // Kaydın kopyası, HERHANGİ bir değişiklik yapılmadan ÖNCE alınır — aşağıdaki adımlar hem
-  // üretimi hem bağlı stok/cari hareketlerini değiştiriyor, sonradan kopyalasak eksik olurdu.
-  copaAt("uretim", `Üretim ${siparis.siparisNo}`, siparis, {
-    ozet: `${siparis.urunAd || ""}${siparis.renk ? " · " + siparis.renk : ""} — ${(siparis.bedenMiktarlari || []).reduce((s, bm) => s + (bm.miktar || 0), 0)} adet`,
-    yanEtkiliMi: true,
-  });
 
   let etkilendiMi = false;
   const nextSiparisler = siparisler.map((s) => {
@@ -73,7 +67,7 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       } else {
         const tumAtamalar = p.atamalar || [];
         tumAtamalar.filter((a) => a.tamamlandiMi).forEach((a) => {
-          fisNolar.add(`${siparis.siparisNo}-${p.proses}${uretimAtamaEki(siparis, tumAtamalar, a)}`);
+          fisNolar.add(a.fisNo || `${siparis.siparisNo}-${p.proses}${uretimAtamaEki(siparis, tumAtamalar, a)}`);
         });
       }
     });
@@ -101,15 +95,17 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
     }
     let silinenStokSayisi = 0;
     let silinenCariSayisi = 0;
+    const silinenStokKayitlari = [];   // { urun, hareket } — alış rezervasyonu iadesi için (aşağıda)
 
     const nextStok = stok.map((p) => {
       let variants = p.variants;
       let degisti = false;
       const kalanHareketler = (p.hareketler || []).filter((h) => {
         if (!buUretimeAitStokHareketiMi(h)) return true;
-        variants = variants.map((v) => (v.renk === h.renk && v.beden === h.beden ? { ...v, miktar: stokYuvarla(v.miktar - h.miktar) } : v));
+        variants = variants.map((v) => (stokAnahtarNrm(v.renk) === stokAnahtarNrm(h.renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(h.beden) ? { ...v, miktar: stokYuvarla(v.miktar - h.miktar) } : v));
         degisti = true;
         silinenStokSayisi++;
+        silinenStokKayitlari.push({ urun: p, hareket: h });
         return false;
       });
       // REÇETE ÖLÇÜMLERİ DE DÜŞER (v1.592.0): bu üretimin teslimlerinde mamule yazılan "gerçek tüketim" ölçümleri silinir;
@@ -129,6 +125,28 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       if (kalanHareketler.length === (c.hareketler || []).length) return c;
       return { ...c, hareketler: kalanHareketler };
     });
+
+    // ALIŞ REZERVASYONU İADESİ (v1.639.0, denetim): teslimde `rezervasyonTuket(-1)` ile artırılan alış kaleminin `tuketilen`
+    // payı silmede geri alınmıyordu — satış için ayrılmış alış "kullanıldı" kalıyor, yeniden planlanan üretim o alıştan
+    // pay alamıyordu. Üretim kartındaki "teslimi geri al" (100-app) ile aynı denge: çıkış → iade (+1), "-İade" girişi → yeniden
+    // tut (−1), "-EkMalzeme" rezervasyondan düşülmediği için atlanır. Stok rezervasyon defterinin satırları aşağıda zaten siliniyor.
+    let nextSiparislerRez = nextSiparisler;
+    let rezEtkilendi = false;
+    if (siparis.rezervasyonSiparisId) {
+      silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
+        const fisNoH = String(h.fisNo || "");
+        if (fisNoH.endsWith("-EkMalzeme")) return;
+        if (h.miktar > 0) {
+          if (!fisNoH.endsWith("-İade")) return;
+          const r = rezervasyonTuket(nextSiparislerRez, siparis.rezervasyonSiparisId, urun.id, h.renk, h.beden, h.miktar, -1);
+          nextSiparislerRez = r.yeniSiparisler; if (r.dusulen > 0) rezEtkilendi = true;
+          return;
+        }
+        if (h.miktar >= 0) return;
+        const r = rezervasyonTuket(nextSiparislerRez, siparis.rezervasyonSiparisId, urun.id, h.renk, h.beden, Math.abs(h.miktar), +1);
+        nextSiparislerRez = r.yeniSiparisler; if (r.dusulen > 0) rezEtkilendi = true;
+      });
+    }
 
     // DÜRÜSTLÜK NOTU: burada "silme sonrası tekrar kontrol et" tarzı bir doğrulama YAPMIYORUZ —
     // çünkü aynı eşleştirme fonksiyonunu (buUretimeAitStokHareketiMi/CariHareketiMi) filtrelemede
@@ -150,6 +168,13 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
     // Yarıda kalırsa geriye "etkileri geri alınmış ama hâlâ duran" bir üretim kalır — bu
     // görünür, anlaşılır ve yeniden denenebilir. Ters sırada kalan şey ise öksüz hareket
     // olurdu: görünmez, izlenemez, aylar sonra "bu miktar nereden çıktı" sorusu.
+    // Kaydın kopyası çöpe, YAZMADAN HEMEN ÖNCE (v1.639.0, denetim: önce en başta alınıyordu; "ilerlemiş ama hareket yok" ya da
+    // yarım kalan silmede üretim yerinde kalırken çöpte de kopyası duruyordu — geri yükleme aynı kimlikle ikinci kayıt
+    // açabilirdi). Buraya kadar hiçbir state değişmedi; `siparis` hâlâ dokunulmamış hâl.
+    copaAt("uretim", `Üretim ${siparis.siparisNo}`, siparis, {
+      ozet: `${siparis.urunAd || ""}${siparis.renk ? " · " + siparis.renk : ""} — ${(siparis.bedenMiktarlari || []).reduce((s, bm) => s + (bm.miktar || 0), 0)} adet`,
+      yanEtkiliMi: true,
+    });
     const nextUretimListesi = uretim.filter((o) => o.id !== uretimId);
     const adimlar = [
       { ad: "hammadde hareketleri", yerelUygula: () => setStok(nextStok),
@@ -157,9 +182,9 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       { ad: "cari hareketleri", yerelUygula: () => setCariler(nextCariler),
         yaz: () => tabloYaz("cari:data", "cariler", nextCariler) },
     ];
-    if (etkilendiMi) {
-      adimlar.push({ ad: "bağlı satış siparişi", yerelUygula: () => setSiparisler(nextSiparisler),
-        yaz: () => tabloYaz("siparis:data", "siparisler", nextSiparisler) });
+    if (etkilendiMi || rezEtkilendi) {
+      adimlar.push({ ad: "bağlı satış siparişi", yerelUygula: () => setSiparisler(nextSiparislerRez),
+        yaz: () => tabloYaz("siparis:data", "siparisler", nextSiparislerRez) });
     }
     // REZERVASYON DEFTERİ DE TEMİZLENİYOR (kullanıcı, 20 Eylül: "üretim ihtiyacı her renk için
     // 0.30 adet gerçekte doğru; talep 1.96 diyor, ihtiyaç 2.56 diyor — eski kayıtlardan mı

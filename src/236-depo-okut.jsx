@@ -132,8 +132,10 @@ function DepoOkut({ stok, siparisler, uretim, koliler, cariler, stokRezervasyonl
     function fotoSecimi(secim) {
         setFotoAcik(false);
         const urun = (stok || []).find((u) => u.id === secim.urunId);
-        const renkKod = ((tanimlar && tanimlar.renkler) || []).find((r) => r.ad === secim.renk);
-        const kodu = urun && renkKod ? urunBarkoduKur("renk", { stokNo: urun.stokNo, renkKod: renkKod.barkodKodu }) : "";
+        // Model rengi (kombinasyon) de çözülsün (v1.639.0, denetim): yalnız `renkler`de tam ad arayınca mamulün
+        // "1001 - Kahve/Bej" rengi hiç bulunmuyor, her mamulde "kod atanmamış" deniyordu. `renkKoduBul` ikisine bakar.
+        const renkKodu = renkKoduBul(tanimlar, null, secim.renk);
+        const kodu = urun && renkKodu != null && renkKodu !== "" ? urunBarkoduKur("renk", { stokNo: urun.stokNo, renkKod: renkKodu }) : "";
         // Kod kurulamıyorsa (ürüne/renge kod atanmamış) SESSİZ KALMIYORUZ: sebebi söyleniyor,
         // yoksa kullanıcı fotoğrafın tanınmadığını sanır.
         if (!kodu) {

@@ -883,6 +883,21 @@ function indirYazdirilabilirHTML(secici, dosyaAdi) {
 //             Sipariş eksik kalmasın diye hurda adedi kadar YENİ üretim başlatılır.
 //
 // Eski atamalarda `sonuc` alanı yoktur; o durumda tamamı sağlam sayılır (geriye dönük uyum).
+// DEĞİŞEN KAYITLARI GÜNCEL LİSTEYE BİRLEŞTİR (v1.639.0, denetim): fiş yazma yolları hesabı kapanıştaki listeyle yapıp fiş
+// defteri yazımını (bulut, saniyeler) BEKLEDİKTEN sonra tam listeyi set ediyordu — bu arada başka pencerede/cihazdan
+// gelen değişiklik eziliyor, buluta eski hâl gidiyordu. Yalnız bu işlemin DEĞİŞTİRDİĞİ kayıtlar (eski ≠ yeni referans) güncel
+// listeye işlenir; öteki kayıtlar güncel hâliyle kalır. Yeni eklenen kayıt sona eklenir, silinen çıkarılır.
+function degisenKayitlariBirlestir(guncel, eski, yeni) {
+  const eskiMap = new Map((eski || []).map((k) => [k.id, k]));
+  const yeniMap = new Map((yeni || []).map((k) => [k.id, k]));
+  const sonuc = (guncel || [])
+    .filter((g) => !(eskiMap.has(g.id) && !yeniMap.has(g.id)))
+    .map((g) => { const y = yeniMap.get(g.id); return y && y !== eskiMap.get(g.id) ? y : g; });
+  const varOlan = new Set(sonuc.map((k) => k.id));   // sirasiz-tamam
+  (yeni || []).forEach((y) => { if (!eskiMap.has(y.id) && !varOlan.has(y.id)) sonuc.push(y); });
+  return sonuc;
+}
+
 function atamaSonucu(atama) {
   const s = atama && atama.sonuc;
   if (!s) return { saglam: { ...(atama.bedenMiktarlari || {}) }, tamir: [], hurda: [] };
@@ -891,9 +906,31 @@ function atamaSonucu(atama) {
 
 const bedenToplami = (harita) => Object.values(harita || {}).reduce((t, x) => t + (x || 0), 0);
 
-function adimBedenDurumu(adim, siparisBedenMiktarlari, ustSinirBedenler) {
+// TAMİRE GİDEN ÇİFT DAĞITILMIŞ SAYILMAZ (v1.639.0, denetim): teslim alınan atama `bedenMiktarlari`nı tamir dahil tam
+// miktarla taşıyor; tamir ÖNCEKİ (ya da aynı) prosese dönüp orada teslim alınınca bu adıma yeniden akar ama adım "dağıtılan
+// = sipariş miktarı, kalan 0" dediği için verilemiyordu (Saya'da 2 çift sonsuza dek bekliyor, üretim bitmiyordu). Tamamlanmış
+// atamada sağlam + hurda sayılır; tamir yalnız SONRAKİ bir prosese gittiyse (bu adımdan geçmiş sayılır) sayılır.
+// `prosesIlerleme` verilmezse yalnız aynı prosese dönen tamir düşülür (orada zaten kendi ataması var).
+function adimBedenDurumu(adim, siparisBedenMiktarlari, ustSinirBedenler, prosesIlerleme) {
+  const adimIndex = prosesIlerleme ? prosesIlerleme.findIndex((p) => p.proses === adim.proses) : -1;
+  const tamirGeriDonerMi = (t) => {
+    if (!t || !t.hedefProses) return false;
+    if (t.hedefProses === adim.proses) return true;
+    if (adimIndex < 0) return false;
+    const hedefIndex = prosesIlerleme.findIndex((p) => p.proses === t.hedefProses);
+    return hedefIndex >= 0 && hedefIndex <= adimIndex;
+  };
   return (siparisBedenMiktarlari || []).map((bm) => {
-    const dagitilan = (adim.atamalar || []).reduce((s, a) => s + ((a.bedenMiktarlari || {})[bm.beden] || 0), 0);
+    const dagitilan = (adim.atamalar || []).reduce((s, a) => {
+      if (a.tamamlandiMi && a.sonuc) {
+        const so = atamaSonucu(a);
+        const saglam = (so.saglam || {})[bm.beden] || 0;
+        const hurda = (so.hurda || []).filter((x) => x.beden === bm.beden).reduce((t, x) => t + (x.miktar || 0), 0);
+        const ileriTamir = (so.tamir || []).filter((x) => x.beden === bm.beden && !tamirGeriDonerMi(x)).reduce((t, x) => t + (x.miktar || 0), 0);
+        return s + saglam + hurda + ileriTamir;
+      }
+      return s + ((a.bedenMiktarlari || {})[bm.beden] || 0);
+    }, 0);
     const ustSinir = ustSinirBedenler ? (ustSinirBedenler[bm.beden] ?? 0) : bm.miktar;
     const toplam = Math.min(bm.miktar, ustSinir);
     return { beden: bm.beden, toplam, dagitilan, kalan: Math.max(0, toplam - dagitilan) };
