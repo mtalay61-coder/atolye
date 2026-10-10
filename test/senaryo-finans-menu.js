@@ -9,7 +9,7 @@
 //   3. Çek & Senet: sekme şeridi yok, doğrudan çek ekranı; başlık "Çek & Senet".
 //   4. Cari kartında yazılı "Pasife Al" düğmesi: cari listeden Pasifler'e geçiyor, bildirim çıkıyor;
 //      Pasifler'de "Aktife Al" geri getiriyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -58,21 +58,15 @@ async function calistir() {
     if (e) e.click();
   });
   await sayfa.waitForTimeout(800);
-  const pasif = { dugmeVar: await dugmeTikla("Pasife Al") };
+  // v1.636.0: yazılı "Pasife Al" düğmesi kart şeridinden sağ tık menüsüne taşındı ("Pasife al" / "Kullanıma aç").
+  const pasif = { dugmeVar: await sagTikSec(sayfa, '[data-cari-kart-serit="Müşteri B"]', "pasif") };
   await sayfa.waitForTimeout(600);
   pasif.bildirim = await sayfa.evaluate(() => /"Müşteri B" pasife alındı/.test(document.body.innerText));
   pasif.listedeKaldi = await sayfa.evaluate(() => [...document.querySelectorAll("span, div")].some((x) => x.children.length === 0 && x.textContent.trim() === "Müşteri B" && x.getBoundingClientRect().width > 0));
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Pasifler/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(600);
   // Kartın açık/kapalı durumu korunuyor: kapalıysa açılıyor (açıkken tıklamak kapatırdı).
-  if (!(await gorunenDugmeler(["Aktife Al"])).length) {
-    await sayfa.evaluate(() => {
-      const e = [...document.querySelectorAll("span, div")].find((x) => x.children.length === 0 && x.textContent.trim() === "Müşteri B" && x.getBoundingClientRect().width > 0);
-      if (e) e.click();
-    });
-    await sayfa.waitForTimeout(600);
-  }
-  pasif.aktifeAlVar = await dugmeTikla("Aktife Al");
+  pasif.aktifeAlVar = await sagTikSec(sayfa, '[data-cari-kart-serit="Müşteri B"]', "pasif");
   await sayfa.waitForTimeout(600);
   pasif.kayit = await sayfa.evaluate(() => {
     const c = JSON.parse(window.__depo["cari:data"] || "[]").find((x) => x.id === "c2");

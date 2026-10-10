@@ -2,7 +2,7 @@
 // Kullanıcı: "maliyetten fiyat gruplarına atama yapabilelim, rakam girerek de olsun, hatta fiyat gruplarının kâr marjı olsun,
 // marj girerek otomatik fiyat versin." Ölçülen: Bot tam maliyet 200 ₺ (Deri 2 m × 100), ürün kârı %30 → genel öneri 285,71;
 // Toptan grubu marj %20 → öneri 250. Ekle → kural 250; kutuya 260 → kural 260; marjı 50 yapınca öneri 400 ve Tanımlar'da marj 50.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

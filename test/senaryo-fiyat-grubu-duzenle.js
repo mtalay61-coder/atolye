@@ -4,7 +4,7 @@
 // Ölçülen: (1) Tanımlar'da grubun para birimi satır içinde USD yapılıyor, kalıcı; (2) ürün
 // kartında o gruba TL ile kayıtlı eski fiyat "birim uyuşmuyor" uyarısı alıyor; (3) "Öneriye
 // eşitle" fiyatı grubun GÜNCEL birimiyle (USD) yeniden yazıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

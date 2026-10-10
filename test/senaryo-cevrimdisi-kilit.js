@@ -2,7 +2,7 @@
 // Kullanıcı: "İnternet olmayınca uygulama çalışmayı durdursun. Kökten çözüm."
 //   A) Buluta ulaşılamadan açılış (ağ yok) → tam ekran kilit ("buluta ulaşamadan açıldı"), menüye basılamaz.
 //   B) Bulut açıkken internet kopar ("offline") → kilit; geri gelir ("online" + yoklama cevap alır) → kilit kalkar.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

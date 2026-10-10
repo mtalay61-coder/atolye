@@ -12,7 +12,7 @@
   "icerik": true
  },
  "eskiSurum": null,
- "formVar": true,
+ "formVar": false,
  "gecmis": {
   "acikMaddeler": true,
   "buSurumIsareti": true,
@@ -23,12 +23,8 @@
  "hatalar": [],
  "kapatildi": true,
  "kayitYok": null,
- "yayinSonrasiSerit": "9.9.9",
- "yazilan": {
-  "not": "",
-  "surum": "9.9.9",
-  "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v9.9.9.html"
- },
+ "yayinSonrasiSerit": null,
+ "yazilan": null,
  "yeniSurum": {
   "dugme": "indir",
   "etiket": "İndir",

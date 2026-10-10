@@ -1,7 +1,7 @@
 // SENARYO — REÇETEDE OLUP STOKTA OLMAYAN HAMMADDE: UYARI + GERİ KUR (v1.556.0, "Jut" olayı).
 // Bot'un reçetesi "jut1" kimlikli Jut'u kullanıyor, stokta Jut yok → Stok'ta uyarı → Geri kur →
 // Jut aynı kimlikle, birimiyle, reçetedeki rengiyle stokta; uyarı kalkar; reçete değişmez.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

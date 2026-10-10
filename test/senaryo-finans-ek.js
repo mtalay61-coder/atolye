@@ -6,7 +6,7 @@
 //
 // "Tarih itibarıyla" 26.09.2026'ya sabitleniyor: nakit dönemleri bugünden sayıldığı için altın
 // her gün değişmesin.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

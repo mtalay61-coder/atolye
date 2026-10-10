@@ -14,7 +14,7 @@
 // İki kural birlikte ölçülüyor:
 //   SIFIR SAY → hesapta eksi değer 0; eksi değerden satın alma miktarı TÜREMİYOR.
 //   İŞARETLE  → satır ve liste başı "stok bilinmiyor, sayım gerekli" diye damgalanıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -12,7 +12,7 @@
 //   2. Kur çevirici çalışıyor: 42.000 ₺'lik çek USD seçilince 1000 $ oluyor.
 //   3. Çek "Ciro Edildi" oluyor ve kime verildiği kaydediliyor.
 //   4. Cariye ÖDEME yönünde hareket yazılıyor ve ekstrede çekin kendi tutarı görünüyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

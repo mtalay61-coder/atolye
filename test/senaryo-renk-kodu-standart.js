@@ -10,7 +10,7 @@
 //   3. Yalnız renkli (beden "Standart") ürüne beden grubu eklenince Standart sütunu kalkıyor;
 //      üzerinde stok olan Standart kalıyor (sessizce silinmez).
 //   4. Siparişte ürün seçicide resmi olan üründe küçük resim, olmayanda ikon.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

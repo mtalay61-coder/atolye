@@ -20,7 +20,7 @@
 //   4. Alış satırı etkilenmemiş (rozetsiz, tablolu, tür açıklaması "Cariden Alış fişi").
 //   5. KAYITTAKİ fiş no değişmemiş ("10003-Üste-İşçilik"), `islemTipi` eklenmemiş.
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

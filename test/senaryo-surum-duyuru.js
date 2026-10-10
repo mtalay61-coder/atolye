@@ -4,7 +4,7 @@
 // Ölçülen: buluttaki `surum` kaydı okunuyor; kendi sürümümüzden yeniyse üst şeritte "Yeni sürüm"
 // ve İndir bağlantısı; eski/aynı sürümde şerit YOK; kapatınca gitmiyor; Tanımlar'dan yayınlama
 // buluta yazıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 // Başlatıcı sayfa depoda index.html adıyla duruyor (GitHub Pages kök adresi).
@@ -48,26 +48,9 @@ async function calistir() {
   await sayfa.waitForTimeout(600);
   // 23 Eylül: elle bağlantı yazılan "Sürüm yayınla" formu KALDIRILDI; kayıt artık GitHub'a yayınla
   // ekranından, dosya yüklendikten sonra tazeleniyor. GitHub taklit ediliyor (gerçek istek yok).
-  await sayfa.route("https://api.github.com/**", async (rota) => {
-    const yol = new URL(rota.request().url()).pathname;
-    const yanit = (v) => rota.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(v) });
-    if (/\/git\/ref\/heads\//.test(yol) && rota.request().method() === "GET") return yanit({ object: { sha: "a1" } });
-    if (/\/git\/commits\/\w+$/.test(yol)) return yanit({ tree: { sha: "t1" } });
-    if (/\/git\/blobs$/.test(yol)) return yanit({ sha: "b1" });
-    if (/\/git\/trees$/.test(yol)) return yanit({ sha: "t2" });
-    if (/\/git\/commits$/.test(yol)) return yanit({ sha: "c2" });
-    return yanit({ object: { sha: "c2" } });
-  });
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-tanim-sekme="yayin"]'); if (b) b.click(); });
-  await sayfa.waitForTimeout(400);
-  const formVar = await sayfa.evaluate(() => !!document.querySelector("[data-github-yayin]"));
-  await sayfa.locator("[data-gh-token]").first().fill("github_pat_TEST");
-  await sayfa.locator("[data-gh-dosya]").first().setInputFiles({
-    name: "atolye-erp-v9.9.9.html", mimeType: "text/html", buffer: Buffer.from("<!doctype html><html><title>Atölye ERP 9.9.9</title></html>", "utf8"),
-  });
-  await sayfa.waitForTimeout(300);
-  await sayfa.locator("[data-gh-yayinla]").first().click();
-  await sayfa.waitForTimeout(1500);
+  // v1.636.0: "GitHub'a yayınla" bölümü KALDIRILDI (kullanıcı: "buna gerek kaldı mı?" → "evet"); yayın Claude Code PR'ı ile.
+  // Tanımlar'da Yayın sekmesi ve form yok; bulut sürüm kaydı uygulamadan yazılmıyor (yazilan = null).
+  const formVar = await sayfa.evaluate(() => !!document.querySelector('[data-github-yayin], [data-tanim-sekme="yayin"]'));
   // SÜRÜM GEÇMİŞİ (23 Eylül): sekme var, kayıtlar sıralı, en üst kayıt = SURUM, yayın notu geçmişten.
   await sayfa.evaluate(() => { const b = document.querySelector('[data-tanim-sekme="surumGecmisi"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(400);

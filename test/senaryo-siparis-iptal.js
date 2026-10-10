@@ -12,7 +12,7 @@
 //      stok 6 kalıyor, cari 400; ALS-Y devam ediyor (zinciri boş, not işaretli); rezervasyon kalktı;
 //   3) Stok ekranında "bağlantısız stok hareketi" uyarısı yok;
 //   4) iptal edilmiş sipariş ikinci kez silinince listeden çıkıyor, fiş yine duruyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -23,7 +23,10 @@ async function kartiAcVeSil(sayfa, no = "SAT-Y", modul = "Sipariş") {
   await sayfa.waitForTimeout(500);
   await sayfa.locator(`[data-siparis-tam-ekran="${no}"]`).first().click();
   await sayfa.waitForTimeout(800);
-  await sayfa.locator('button[title^="Siparişi"]:visible').first().click();
+  // v1.636.0: Sil şeritte değil, mor şeride sağ tıkla açılan menüde ("İptal et / Sil").
+  await sayfa.locator("[data-siparis-ust-serit]:visible").first().click({ button: "right", position: { x: 6, y: 6 } });
+  await sayfa.waitForTimeout(300);
+  await sayfa.locator('[data-siparis-islem="sil"]').first().click();
   await sayfa.waitForTimeout(400);
   // Kart eylemi iki adımlı: "Sil" onayı, ardından kartın kendi onay kutusu.
   const sil = sayfa.getByRole("button", { name: "Sil", exact: true }).filter({ visible: true });

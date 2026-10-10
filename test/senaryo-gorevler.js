@@ -4,7 +4,7 @@
 // durum akışı ve KONTROL KURALI (atanan kendi işini Tamamlandı'ya alamaz, Kontrole gönderir;
 // atayan onaylar); yorum ve durum değişimlerinin aynı akışta kalması; gecikmiş işareti;
 // menü rozeti; kalıcılık (gorev:data).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 const { bulutGirisRotasi } = require("./giris-yardimci.js");

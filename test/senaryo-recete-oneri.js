@@ -3,7 +3,7 @@
 // Ürün kartının dış kutusunda köşeleri yuvarlatmak için `overflow: hidden` vardı; kartın içindeki
 // açılır öneri listesini de kırpıyordu. Kullanıcı listenin alt kısmını hiç göremiyordu
 // ("ekran tam olmuyor"). Bu senaryo listenin bir ATA TARAFINDAN KESİLMEDİĞİNİ ölçüyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

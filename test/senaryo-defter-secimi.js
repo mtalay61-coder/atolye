@@ -6,7 +6,7 @@
 //   2. Cari Hesaplar: Tümü/Genel/Resmi — satır bakiyesi ve dip toplam seçilen deftere göre.
 //   3. Fişler: defter süzgeci + Resmi rozeti.
 //   4. Kâr-Zarar: Tümü/Genel/Resmi seçimi satış gelirini değiştiriyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

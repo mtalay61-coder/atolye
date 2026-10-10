@@ -12,7 +12,7 @@
 //   4. Bankaya tahsile verme de geri alınıyor (kayıt doğurmayan aşama).
 //   5. Tahsil geri alınıyor: bankadaki tahsil kaydı siliniyor, çek yeniden Tahsilde.
 //   6. Cari kartında çek girişi: dolar carisine TL çek — çek ₺ kaydediliyor, hareket $.
-const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -51,10 +51,11 @@ async function calistir() {
   const cekOku = async (id) => (((await depoOku(sayfa, "muhasebe:data")) || {}).cekler || []).find((c) => c.id === id || c.cekNo === id) || {};
   const cariHareketleri = async (id) => (((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === id) || {}).hareketler || [];
   const geriAl = async (cekId) => {
-    await sayfa.locator(`[data-cek-geri-al="${cekId}"]`).click();
+    // v1.636.0: satıra sağ tık → "Son işlemi geri al" → satırdaki onay.
+    await sagTikSec(sayfa, `[data-cek-satir="${cekId}"]`, "geri-al");
     await sayfa.waitForTimeout(200);
-    const onayYazisi = await sayfa.locator(`[data-cek-geri-al="${cekId}"]`).textContent();
-    await sayfa.locator(`[data-cek-geri-al="${cekId}"]`).click();
+    const onayYazisi = await sayfa.locator('[data-cek-onay-evet="geri-al"]').textContent();
+    await sayfa.locator('[data-cek-onay-evet="geri-al"]').click();
     await sayfa.waitForTimeout(1200);
     return onayYazisi.trim();
   };

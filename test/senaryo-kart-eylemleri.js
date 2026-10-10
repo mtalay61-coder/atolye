@@ -4,7 +4,7 @@
 // KURAL: eylemler kartın BAŞLIĞINDA, sabit sırada. Düzenlemede Kaydet · Vazgeç; değilken
 // Düzenle · (özel) · Sil. Gövdede eylem düğmesi yok. Cari kartı (v1.383) ve ürün kartı (v1.387)
 // bu kurala alındı; senaryo ikisini de aynı işaretle ölçüyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

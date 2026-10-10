@@ -8,7 +8,7 @@
 //   3. %14 artır, 5'e yuvarla → Yeni fiyat sütunu (455 / 340); Farklı kaydet → "Toptan TL +14" grubu oluşur,
 //      fiyatlar oraya yazılır, Toptan TL değişmez; ekran yeni gruba geçer.
 //   4. Yeni gruptan 10 TL indirim → "Bu listeye uygula" → Kaydet.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

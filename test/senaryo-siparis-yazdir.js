@@ -14,7 +14,7 @@
 //   3. Basılan gövde siparişin kendisi: "SAT-9001", müşteri ve kalem var; uygulamanın menüsü
 //      (MODÜLLER, üst menü düğmeleri) YOK.
 //   4. Ağ tamamen kapalı (esm.sh dahil her dış istek reddediliyor) — yazdırma yine çalışıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -70,20 +70,25 @@ async function calistir() {
   });
   await sayfa.waitForTimeout(800);
 
+  // v1.636.0: Yazdır/PDF/WhatsApp/E-posta şeritte düğme değil, mor şeride SAĞ TIKLA açılan menüde (kullanıcı: gizlenecek
+  // özellikler sağ tıkla). Ölçülen: şeritte paylaş düğmesi yok; menüde dört öğe, Yazdır PDF'in ÜSTÜNDE (önce gelen).
+  const seritteDugmeYok = !(await sayfa.evaluate(() => [...document.querySelectorAll("[data-paylas-seridi]")].some((x) => (x.getAttribute("data-paylas-seridi") || "").startsWith("SAT-9001") && x.getBoundingClientRect().width > 0)));
+  await sayfa.locator("[data-siparis-ust-serit]:visible").first().click({ button: "right", position: { x: 6, y: 6 } });
+  await sayfa.waitForTimeout(300);
   const serit = await sayfa.evaluate(() => {
-    const s = [...document.querySelectorAll("[data-paylas-seridi]")].find((x) => x.getAttribute("data-paylas-seridi").startsWith("SAT-9001") && x.getBoundingClientRect().width > 0);
-    if (!s) return null;
-    const y = s.querySelector("[data-paylas-yazdir]");
-    const p = s.querySelector("[data-paylas-pdf]");
+    const m = document.querySelector("[data-siparis-islem-menusu]");
+    if (!m) return null;
+    const y = m.querySelector("[data-paylas-yazdir]");
+    const p = m.querySelector("[data-paylas-pdf]");
     return {
-      dosyaAdi: s.getAttribute("data-paylas-seridi"),
-      dugmeler: [...s.querySelectorAll("button")].map((b) => b.textContent.trim()),
-      yazdirPdfinSolunda: !!(y && p) && y.getBoundingClientRect().right <= p.getBoundingClientRect().left,
-      yazdirKilitlenebilir: !!y && y.hasAttribute("disabled"),
+      menudeSiparisNo: /SAT-9001/.test(m.textContent),
+      dugmeler: [...m.querySelectorAll("[data-paylas-yazdir],[data-paylas-pdf],[data-paylas-whatsapp],[data-paylas-eposta]")].map((b) => b.textContent.trim()),
+      yazdirPdfinUstunde: !!(y && p) && y.getBoundingClientRect().bottom <= p.getBoundingClientRect().top,
     };
   });
+  if (serit) serit.seritteDugmeYok = seritteDugmeYok;
 
-  await sayfa.locator('[data-paylas-seridi^="SAT-9001"] [data-paylas-yazdir]:visible').first().click();
+  await sayfa.locator("[data-siparis-islem-menusu] [data-paylas-yazdir]").first().click();
   await sayfa.waitForTimeout(1500);
   const iz = await sayfa.evaluate(() => window.__yazdir);
   const basilan = iz.cerceve[0] || { baslik: null, metin: "" };

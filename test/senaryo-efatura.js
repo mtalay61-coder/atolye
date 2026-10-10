@@ -11,7 +11,7 @@
 //   4. SF-0002: eksikler kırmızı (alıcı vergi no, adres, mükellefiyet), XML düğmesi kapalı.
 //   5. Tanımlar > Firma > E-Fatura: seri büyük harfe çevrilip 3 karaktere kırpılıyor, kaydediliyor.
 const fs = require("fs");
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -49,13 +49,13 @@ async function calistir() {
   const faturaAc = async (fisNo) => {
     await modulAc(sayfa, "Fişler");
     await sayfa.waitForTimeout(800);
-    const acikMi = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-fis-islemler]")].some((x) => x.offsetParent));
+    const acikMi = () => sayfa.evaluate((no) => !!document.querySelector(`[data-fis-kart="${no}"][data-fis-acik="1"]`), fisNo);
+    await sayfa.keyboard.press("Escape"); await sayfa.waitForTimeout(150);
     await sayfa.getByText(fisNo, { exact: true }).filter({ visible: true }).first().click();
     await sayfa.waitForTimeout(600);
     if (!(await acikMi())) { await sayfa.getByText(fisNo, { exact: true }).filter({ visible: true }).first().click(); await sayfa.waitForTimeout(600); }
-    const menuAcik = await sayfa.evaluate(() => [...document.querySelectorAll('[data-fis-islem-menusu="acik"]')].some((x) => x.offsetParent));
-    if (!menuAcik) { await sayfa.locator("[data-fis-islemler]:visible").first().click(); await sayfa.waitForTimeout(300); }
-    await sayfa.locator(`[data-fis-fatura="${fisNo}"]:visible`).first().click();
+    // v1.636.0: fatura öğesi fiş kartının sağ tık menüsünde.
+    await sagTikSec(sayfa, `[data-fis-kart="${fisNo}"]`, "fatura");
     await sayfa.waitForTimeout(700);
   };
   const pencere = () => sayfa.evaluate((yil) => {

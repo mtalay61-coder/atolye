@@ -6,7 +6,7 @@
 // Dönüş mekanizması (`donusHedefi`) zaten vardı ama Depo ekranı onu GEÇMİYORDU: `uruneGit(id)`
 // çağrısı dönüş hedefi olmadan yapılıyordu. Sekmeler `display:none` ile duruyor, yani dönünce
 // Depo'nun kaydırma konumu ve açık satırları yerinde kalıyor — tek eksik hedefi vermekti.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

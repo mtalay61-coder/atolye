@@ -9,7 +9,7 @@
   "ciroFisiKaldi": false,
   "durum": "Portföyde",
   "girisHareketiDuruyor": true,
-  "onayYazisi": "Emin misiniz? Geri al"
+  "onayYazisi": "Evet, geri al"
  },
  "giris": {
   "cariHareketi": {

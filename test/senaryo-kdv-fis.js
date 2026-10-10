@@ -13,7 +13,7 @@
 //   4. KDV KAPALI iken (ayrı açılış) aynı fiş eskisi gibi: KDV sütunu yok, cariye 350.
 //   5. Tanımlar > Firma'dan KDV açılıyor (varsayılan kapalı); cari kartında vergi dairesi / TCKN / il / ilçe
 //      yazılıp kaydediliyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

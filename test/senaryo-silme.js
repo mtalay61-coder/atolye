@@ -5,7 +5,7 @@
 // birden kapsıyor: stok miktarı geri düşmeli, cari borcu silinmeli, siparişin `karsilanan`ı ve
 // durumu geri dönmeli. v1.40.0'ın kök sebebi tam olarak buydu (fiş silinince sipariş "Tamamlandı"
 // kalıyor, kalem bir daha teslim alınamıyordu).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

@@ -46,6 +46,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const [showHareket, setShowHareket] = useState(false);
   const [hareketTipi, setHareketTipi] = useState(null); // "Alış" | "Satış" | "Ödeme" | "Tahsilat"
   const [silOnayGoster, setSilOnayGoster] = useState(false);
+  // SAĞ TIK MENÜSÜ (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"): şeride sağ tık / uzun basma.
+  const [sagMenu, setSagMenu] = useState(null);
   // Alış ve Satış HER cari tipinde açık. Tipe göre kısıtlamak (tedarikçiden yalnızca alınır,
   // müşteriye yalnızca satılır) kâğıt üzerinde düzenli görünüyordu ama atölye gerçeğine uymuyor:
   // müşteriden mal iade alınır, tedarikçiye fazla malzeme geri satılır, personele malzeme verilir.
@@ -348,8 +350,22 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
   return (
     <div ref={kartRef} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+      <SagTikMenusu konum={sagMenu} onKapat={() => setSagMenu(null)} veri="cari" baslik={`CARİ · ${cari.unvan}`} ogeler={[
+        { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
+        { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },
+        { ayrac: true },
+        { k: "ekstre", etiket: `Ekstre yazdır (PDF)${defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}`, ikon: Printer, gizli: !onPencereAc,
+          onClick: () => onPencereAc("ekstre", `${cari.id}-${defterFiltre}`, `Ekstre: ${cari.unvan}${defterFiltre !== "Tümü" ? ` (${defterFiltre})` : ""}`,
+            { cari, bakiye: defterFiltre === "Genel" ? genelBakiye : defterFiltre === "Resmi" ? resmiBakiye : bakiye, firmaBilgileri, defterFiltre }) },
+        { ayrac: true },
+        { k: "pasif", etiket: cari.pasif ? "Kullanıma aç" : "Pasife al", ikon: cari.pasif ? Check : Archive, renk: "var(--erp-purple)", onClick: pasifDegistir,
+          baslik: cari.pasif ? "Seçim listelerinde tekrar görünür" : "Kayıt ve geçmişi durur, yalnız YENİ işlemlerde seçilemez" },
+        { k: "sil", etiket: "Cariyi sil", ikon: Trash2, renk: "var(--erp-warn)", onClick: () => { setSilOnayGoster(true); setOpen(true); } },
+      ]} />
       <div
         data-cari-ust-serit={open ? "1" : undefined}
+        data-cari-kart-serit={cari.unvan}
+        {...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu)}
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 10, padding: 14,
           background: "transparent", border: "none", textAlign: "left",
@@ -388,11 +404,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           <img
             src={cari.resim}
             alt=""
-            style={{ width: 38, height: 38, borderRadius: "var(--erp-r-md)", objectFit: "cover", flexShrink: 0, border: "1px solid var(--erp-line)" }}
+            style={{ width: 38, height: 38, borderRadius: "var(--erp-r-md)", objectFit: cari.tip === "Personel" ? "cover" : "contain", background: "#fff", flexShrink: 0, border: `2px solid ${cariRengi(cari)}` }}
           />
         ) : (
-          <div style={{
-            width: 38, height: 38, borderRadius: "var(--erp-r-md)", background: "#4B3625", color: "var(--erp-orange)",
+          <div data-cari-renk-avatar={cariRengi(cari)} style={{
+            width: 38, height: 38, borderRadius: "var(--erp-r-md)", background: cariRengi(cari), color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
             <Users size={17} />
@@ -565,34 +581,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             <Pencil size={15} />
           </button>
         )}
-        {/* PASİFE AL / SİL — kart başlığında, düzenle ikonunun yanında.
-            Önceden kartın EN ALTINDA, hareket listesinin ardında metinli düğmelerdi; uzun bir
-            ekstrenin sonuna kadar kaydırmadan görünmüyorlardı. İkon olarak başlıkta durmaları hem
-            her zaman erişilebilir kılıyor hem de alttaki asıl işlemlerle (Ekstre Yazdır) karışmıyor. */}
-        <button
-          type="button"
-          data-kart-eylem="pasif"
-          onClick={pasifDegistir}
-          title={
-            cari.pasif
-              ? "Cariyi yeniden kullanıma aç — seçim listelerinde tekrar görünür"
-              : "Cariyi kullanımdan kaldır. Kayıt ve geçmişi durur, sadece YENİ işlemlerde seçilemez."
-          }
-          className="btn-ikon"
-          style={{ color: cari.pasif ? "var(--erp-primary)" : "var(--erp-purple)", flexShrink: 0 }}
-        >
-          {cari.pasif ? <Check size={15} /> : <Archive size={15} />}
-        </button>
-        <button
-          data-kart-eylem="sil"
-          type="button"
-          onClick={() => { setSilOnayGoster(true); setOpen(true); }}
-          title="Cariyi sil"
-          className="btn-ikon tehlike"
-          style={{ flexShrink: 0 }}
-        >
-          <Trash2 size={15} />
-        </button>
+        {/* PASİFE AL / SİL İKONLARI KALKTI (v1.636.0): şeride sağ tık (uzun basma) menüsünde. */}
         {/* İLETİŞİM MOR ŞERİTTE (v1.623.0): kalemle düzenlemede telefon / WhatsApp / e-posta adın hemen altında,
             şeridin içinde; öteki bilgiler "Bilgiler" sekmesinde. Okuma kipinde aynı üçlü adın altında yazıyor. */}
         {open && duzenleAcik && (
@@ -642,27 +631,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </span>
             </span>
             <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                <button
-                  className="btn-ghost"
-                  style={{ padding: "4px 10px", fontSize: 12 }}
-                  onClick={() => onPencereAc(
-                    "ekstre",
-                    `${cari.id}-${defterFiltre}`,
-                    `Ekstre: ${cari.unvan}${defterFiltre !== "Tümü" ? ` (${defterFiltre})` : ""}`,
-                    {
-                      cari,
-                      bakiye: defterFiltre === "Genel" ? genelBakiye : defterFiltre === "Resmi" ? resmiBakiye : bakiye,
-                      firmaBilgileri,
-                      defterFiltre,
-                    }
-                  )}
-                >
-                  <Printer size={13} /> Ekstre Yazdır (PDF){defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}
-                </button>
-                {/* PASİFE AL YAZILI DÜĞME (25 Eylül, v1.458.0 — kullanıcı: "Cari pasife alma olsun"). Başlıktaki arşiv
-                    ikonu bulunamadığı için eklendi; son denetim (v1.537.0) "aynı şeritte iki kontrol" diye işaretledi ama
-                    kullanıcının açık isteği olduğu için KORUNUYOR (senaryo finans-menu ölçüyor). */}
-                <PasifButonu pasif={!!cari.pasif} onDegistir={pasifDegistir} etiket="Cari" />
+                {/* EKSTRE YAZDIR + PASİFE AL düğmeleri KALKTI (v1.636.0): sağ tık menüsünde (kullanıcı: "gizlemek istediğimiz
+                    menüler sağ tıklama ile"). */}
               {cardTab === "hareketler" && duzenBaglami && duzenBaglami.yetkili && (
                 <button type="button" className="btn-ikon" data-duzen-ac="cariHareketler" title="Ekran düzeni — hareketler bölümlerini sırala, genişliğini ayarla, gizle"
                   onClick={() => { if (duzenAcRef.current) duzenAcRef.current(); }}>
@@ -866,18 +836,29 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             {/* Fotoğraf yalnızca PERSONEL için sorulur — atölye ekranında kişinin kendini tanıması
                 buna bağlı. Müşteri/tedarikçi carilerinde böyle bir ihtiyaç yok, alanı göstermek
                 formu gereksiz kalabalıklaştırırdı. */}
-            {cari.tip === "Personel" && (
-              <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
-                Fotoğraf
-                <ColorSwatch
-                  src={cari.resim}
-                  size={34}
-                  onUrlSave={(url) => onFieldChange(cari.id, "resim", url)}
-                  onRemove={() => onFieldChange(cari.id, "resim", "")}
-                />
-                <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 }}>atölye ekranında görünür</span>
-              </label>
-            )}
+            {/* LOGO / FOTOĞRAF + RENK (v1.636.0 — kullanıcı: "müşterileri renklendirelim, gerekirse logo da ekleyelim").
+                Görsel artık her caride: personelde fotoğraf (atölye ekranı), müşteri/tedarikçide logo (sipariş listesindeki
+                etiket). Renk: seçilmezse kimlikten otomatik (200 cariRengi); "Otomatik" seçimi kaldırır. */}
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+              {cari.tip === "Personel" ? "Fotoğraf" : "Logo"}
+              <ColorSwatch
+                src={cari.resim}
+                size={34}
+                onUrlSave={(url) => onFieldChange(cari.id, "resim", url)}
+                onRemove={() => onFieldChange(cari.id, "resim", "")}
+              />
+              <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 }}>{cari.tip === "Personel" ? "atölye ekranında görünür" : "sipariş listesinde adın yanında"}</span>
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+              Renk
+              <input type="color" data-cari-renk-sec="1" value={/^#[0-9a-f]{6}$/i.test(cari.renk || "") ? cari.renk : cariRengi(cari)}
+                onChange={(e) => onFieldChange(cari.id, "renk", e.target.value)}
+                style={{ width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4, cursor: "pointer" }} />
+              {cari.renk ? (
+                <button type="button" className="btn-ghost" data-cari-renk-otomatik="1" style={{ padding: "2px 8px", fontSize: 11 }}
+                  onClick={() => onFieldChange(cari.id, "renk", "")} title="Kendi seçtiğiniz rengi kaldır, otomatik renge dön">Otomatik</button>
+              ) : <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 }}>otomatik</span>}
+            </label>
           </div>
           )}
 

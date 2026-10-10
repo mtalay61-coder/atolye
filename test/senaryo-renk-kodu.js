@@ -1,7 +1,7 @@
 // SENARYO — RENK KODLARI TEK HAVUZDAN (kullanıcı, 13 Eylül: "hammadde ve mamul rengi kodları çakışıyor").
 // Boş veritabanında mamul "Siyah" (101) sonra hammadde "Siyah" da 101 alıyordu. Ölçülen: ikinci renk
 // 102; var olan çakışma için uyarı ve "Düzelt".
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

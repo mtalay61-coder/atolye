@@ -9,7 +9,7 @@
 //   2. Ciro edilmiş çek: kimden alındı (cari, tarih, fiş), şu an "X'e ciro edildi" + ciro fişi +
 //      karşı tarafa başka birimde işlenen tutar; yolculukta giriş ve ciro adımları.
 //   3. Tahsildeki çek: "… tahsilde bekliyor", vadeye kalan gün; geri alınmış işlem üstü çizili.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -76,8 +76,8 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   ac.dokununcaAcildi = await acikMi("ck1");
   const ciro = await ozetOku("ck1");
-  // Satırdaki bir düğme (Yazdır) özeti kapatmamalı.
-  await sayfa.locator('[data-cek-yazdir="ck1"]').click();
+  // Satırdaki menüden Yazdır (v1.636.0: sağ tık) özeti kapatmamalı.
+  await sagTikSec(sayfa, '[data-cek-satir="ck1"]', "yazdir");
   await sayfa.waitForTimeout(500);
   ac.dugmeKapatmadi = await acikMi("ck1");
   await sayfa.evaluate(() => {

@@ -4,7 +4,7 @@
 // Ölçülen: Tanımlar'da baş/son beden seçilerek grup kuruluyor (aradaki bedenler kendiliğinden);
 // ürün kartında "Beden Ekle" içindeki grup düğmesi eksik bedenleri tek dokunuşla ekliyor; beden
 // adı değişince grup da hizalanıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

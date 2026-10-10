@@ -3,7 +3,7 @@
 // 350 tl çekiyor kontrol". KÖK: Fiyatlandırma hep SATIŞ sekmesiyle açılıyordu, fiyatlar satışa yazıldı; maliyet ALIŞ okur.
 // Ölçülen: Deri kart alış 350 ₺ + Siyah SATIŞ kuralı 7 $. (1) Deri › Fiyatlandırma ALIŞ ile açılır; (2) Bot › Maliyet'te
 // Deri satırı 350 ve "SATIŞ fiyatı girilmiş" uyarısı; (3) "alışa kopyala" → Siyah ALIŞ kuralı 7 USD, satır 7 $, uyarı yok.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

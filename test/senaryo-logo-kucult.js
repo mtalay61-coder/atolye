@@ -5,7 +5,7 @@
 //   1) açılıştan sonra logo BİR KEZ küçültülüp kaydediliyor: depodaki logo eskisinin %20'sinden küçük, uzun kenarı
 //      400 px, hâlâ geçerli bir resim (ekranda çiziliyor);
 //   2) Tanımlar > Firma Bilgileri'nden büyük dosya yüklenince de küçültülmüş hâli kaydediliyor;
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { chromium } = require("playwright");
 const fs = require("fs"); const os = require("os"); const path = require("path");

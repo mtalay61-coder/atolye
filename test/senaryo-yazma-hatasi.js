@@ -9,7 +9,7 @@
 //  1) yazimiIzle: söz reddedilmiyor, `yerel: true` dönüyor ve bildirim köprüsü çağrılıyor;
 //  2) bozuk depoda geri yükleme: kayıt LİSTEYE EKLENMEDİ, ÇÖPTE KALDI, uyarı verildi;
 //  3) sağlam depoda geri yükleme: kayıt listede, çöp boş, normal mesaj.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

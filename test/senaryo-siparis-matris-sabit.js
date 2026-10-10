@@ -7,7 +7,7 @@
 //
 // Ölçülen: aynı renk+beden için iki kalem (biri planlanmış) olduğunda matris hücresi İKİSİNİN
 // TOPLAMINI gösteriyor ve ADET sütunuyla tutarlı kalıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

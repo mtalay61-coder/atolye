@@ -9,7 +9,7 @@
 // Bu senaryo mamul tarafının hesabını kilitliyor. En kritik iddia: HAZIR KOLİDEKİ mal serbest
 // sayılmamalı — fiziken depoda ama sözü verilmiş. Serbest saymak aynı çifti iki müşteriye
 // satmaya yol açardı (koli sınır denetiminde aynı hata yaşanmıştı, bkz. 3z).
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

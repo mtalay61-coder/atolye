@@ -19,7 +19,7 @@
 //   4. Tercih localStorage'ta "1"; başka modüle gidip dönünce sade kip korunuyor.
 //   5. "Detaylı görünüm" → özet 0, tablolar geri, localStorage "0".
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

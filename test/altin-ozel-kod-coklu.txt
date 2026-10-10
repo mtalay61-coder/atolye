@@ -1,0 +1,35 @@
+{
+  "once": {
+    "uyari": 4,
+    "satirSayisi": 9
+  },
+  "birlesince": {
+    "satirlar": [
+      "Taban: GENEL",
+      "MODEL: GENEL",
+      "Kalıp: mamul|Sandalet, mamul|Ayakkabı",
+      "Maliyet: mamul|Sandalet",
+      "TEDARİKÇİ: mamul|Ayakkabı"
+    ],
+    "uyariKalkti": true
+  },
+  "degerler": {
+    "sandalet": {
+      "s-k": "K-40",
+      "g-t": "T1"
+    },
+    "ayakkabi": {
+      "g-t": "T2",
+      "s-k": "K-41"
+    }
+  },
+  "rozet": {
+    "ekleyince": "Kalıp: mamul|Sandalet, mamul|Ayakkabı, mamul|Çanta",
+    "cikarinca": "Kalıp: mamul|Sandalet, mamul|Ayakkabı"
+  },
+  "aynaAdlaEkleme": {
+    "satirSayisi": 5,
+    "kalip": "Kalıp: mamul|Sandalet, mamul|Ayakkabı, mamul|Çanta"
+  },
+  "hatalar": []
+}

@@ -1,6 +1,5 @@
 {
  "alanlar": [
-  "Kalıp No · malzeme · Taban",
   "Kalıp No · genel"
  ],
  "hatalar": [],

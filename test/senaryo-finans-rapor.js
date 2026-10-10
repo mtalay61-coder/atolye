@@ -10,7 +10,7 @@
 //   3. Defter "Genel · Resmi yan yana": özet iki sütun + fark; Resmi'de yalnız Resmi/Muhasebe kayıtları.
 //   2b. "Alacaklar ve Borçlar" (v1.517.0): Alacak (TL) +, Borç (TL) −, Net Etki toplamı = alacak − borç.
 //   4. Yeni rapor kaydedilince `tanimlar.raporlar`a YALNIZ o yazılıyor (hazır şablonlar değil).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -5,7 +5,7 @@
 // Deri Taba 3 / stok 4 → YETERLİ; Taban 41: 3 / stok 10 → YETERLİ; Taban 42: 3 / stok 0, 3'ü yolda → YOLDA.
 // Ölçülen: Hammadde İhtiyacı sekmesinde her hücrenin durumu ve rengi, lejant (dört durum + sayılar), tek ölçülü satırlar
 // (Deri) da renkli. v1.632.1: Planlama > Hammadde İhtiyaç'ta renk satırları ve malzeme kartları da durum renginde.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

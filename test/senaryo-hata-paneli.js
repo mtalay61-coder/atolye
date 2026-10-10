@@ -6,7 +6,7 @@
 //
 // Ölçülen: depo sınırı aşıldığında panel AÇIK KALIYOR, sebebi ve ne yapılacağını yazıyor,
 // "Kopyala" düğmesi var; ayrıca değişikliğin buluta YAZILAMADIĞI açıkça söyleniyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

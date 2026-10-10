@@ -39,6 +39,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
   const [virman, setVirman] = useState({ hedef: "", tutar: "", aciklama: "" });
   // Satır içi düzenleme: { hesapId, hareketId, tutar, tarih, aciklama } | null
   const [duzenle, setDuzenle] = useState(null);
+  // SAĞ TIK (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"): hareket satırının Düzenle / Sil ikonları satıra
+  // sağ tık (uzun basma) menüsünde. `hareketMenu` = { x, y, hesapId, hareket }; silme onayı standart pencerede.
+  const [hareketMenu, setHareketMenu] = useState(null);
+  const [hareketSilOnay, setHareketSilOnay] = useState(null);
   // Daha önce kullanılmış virman sebepleri + hazır öneriler. Sıra: en son kullanılan önce.
   const virmanSebepOnerileri = (() => {
     const gorulen = [];
@@ -123,6 +127,20 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
 
   return (
     <div>
+      <SagTikMenusu konum={hareketMenu} onKapat={() => setHareketMenu(null)} veri="kasa-hareket"
+        baslik={hareketMenu ? `HAREKET · ${hareketMenu.hareket.tarih || ""} · ${(hareketMenu.hareket.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })}` : ""}
+        ogeler={hareketMenu ? [
+          { k: "duzenle", etiket: "Düzenle", ikon: Pencil, gizli: !!hareketMenu.hareket.virmanMi,
+            onClick: () => { const hr = hareketMenu.hareket; setDuzenle({ hesapId: hareketMenu.hesapId, hareketId: hr.id, tutar: String(hr.tutar || ""), tarih: hr.tarih || "", aciklama: hr.aciklama || "" }); } },
+          { k: "virman-not", etiket: "Virman düzenlenmez — silip yeniden yapın", ikon: Lock, pasif: true, gizli: !hareketMenu.hareket.virmanMi },
+          { ayrac: true },
+          { k: "sil", etiket: silmeYetkisiVar === false ? "Silme isteği gönder" : "Sil", ikon: Trash2, renk: "var(--erp-warn)",
+            baslik: silmeYetkisiVar === false ? "Silme yetkiniz yok — istek yönetici onayına gönderilir" : "Satırda onay istenir",
+            onClick: () => setHareketSilOnay({ hesapId: hareketMenu.hesapId, id: hareketMenu.hareket.id }) },
+        ] : []} />
+      {/* Silme onayı projenin standart penceresi (140 SilOnayPenceresi) — eski çöp kutusu ikonuyla aynı akış. */}
+      <SilOnayPenceresi acik={!!hareketSilOnay} baslik={silmeYetkisiVar === false ? "Silme yetkiniz yok — istek yönetici onayına gönderilir" : "Bu hareketi sil"}
+        onKapat={() => setHareketSilOnay(null)} onConfirm={() => { const o = hareketSilOnay; setHareketSilOnay(null); if (o) onHareketSil(o.hesapId, o.id); }} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           {Object.keys(paraBirimiToplamlari).length === 0 ? (
@@ -918,7 +936,8 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                               {gorunenSatirlar.map(({ hr, kosanBakiye: kb }) => {
                                 const cari = hr.cariId ? (cariler || []).find((c) => c.id === hr.cariId) : null;
                                 return (
-                                  <tr key={hr.id} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                                  <tr key={hr.id} data-kasa-hareket-satir={hr.id} style={{ borderTop: "1px solid var(--erp-line-soft)" }}
+                                    {...sagTikIsleyicileri((x, y) => setHareketMenu({ x, y, hesapId: h.id, hareket: hr }))}>
                                     <td className="mono" style={{ padding: "5px 6px", color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>{tarihYaz(hr.tarih, true)}</td>
                                     <td style={{ padding: "5px 6px", color: "var(--erp-text)" }}>
                                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -967,33 +986,9 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                                       {kb.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {sembol}
                                     </td>
                                     <td style={{ padding: "5px 2px", textAlign: "center", whiteSpace: "nowrap" }}>
-                                      {/* DÜZENLE (kullanıcı, 17 Eylül): yanlış tutar/tarih/açıklama için tek yol
-                                          "sil ve yeniden gir"di; cariye bağlı hareketlerde bu iki kaydı da silip
-                                          yeniden kurmak demekti. Artık satır içinde düzeltiliyor ve karşı taraf
-                                          (cari hareketi) aynı bağ üzerinden birlikte güncelleniyor.
-                                          VİRMAN satırı düzenlenmiyor: iki hesabı birden ilgilendiriyor, tek
-                                          taraftan değiştirmek ikisini ayrıştırırdı — virman silinip yeniden yapılır. */}
-                                      {!hr.virmanMi && (
-                                        <button
-                                          data-hareket-duzenle={hr.id}
-                                          onClick={() => setDuzenle({
-                                            hesapId: h.id, hareketId: hr.id,
-                                            tutar: String(hr.tutar || ""), tarih: hr.tarih || "",
-                                            aciklama: hr.aciklama || "",
-                                          })}
-                                          title="Bu hareketi düzenle"
-                                          className="btn-ikon"
-                                        >
-                                          <Pencil size={11} />
-                                        </button>
-                                      )}
-                                      {/* SİLME ONAYLI (kullanıcı, 17 Eylül): tek dokunuşla siliniyordu; para
-                                          kaydında yanlış dokunuş pahalı. İki dokunuş isteniyor. */}
-                                      <SilOnayButonu
-                                        onConfirm={() => onHareketSil(h.id, hr.id)}
-                                        boyut={11}
-                                        baslikNormal={silmeYetkisiVar === false ? "Silme yetkiniz yok — istek yönetici onayına gönderilir" : "Bu hareketi sil"}
-                                      />
+                                      {/* DÜZENLE / SİL İKONLARI KALKTI (v1.636.0): satıra sağ tık menüsünde (`hareketMenu`). Düzenle satır
+                                          içinde açılır (virman düzenlenmez — iki hesabı birden ilgilendirir); silme İKİ ADIMLI: menüden "Sil",
+                                          ardından onay penceresi (para kaydında yanlış dokunuş pahalı, 17 Eylül kuralı). */}
                                     </td>
                                   </tr>
                                 );
@@ -1052,7 +1047,10 @@ const CEK_DURUM_RENK = {
 // Kullanılmayan bir prop, "buradan da değiştirilebilir" izlenimi bırakırdı.
 function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onEkle, onSil, onIslem, onSonIslemiGeriAl, onYazdir, onGorselKaydet }) {
   // "Son İşlemi Geri Al" iki adımlı: ilk dokunuş sorar, ikincisi yapar (fiş/hesap kaydı siliniyor).
-  const [geriAlOnayId, setGeriAlOnayId] = useState(null);
+  // SAĞ TIK (v1.636.0): çek satırı menüsü + satır içi onay ({ id, tur: "geri-al" | "sil" }).
+  const [cekMenu, setCekMenu] = useState(null);
+  const [cekOnay, setCekOnay] = useState(null);
+  const [cekSilId, setCekSilId] = useState(null);
   const [showYeni, setShowYeni] = useState(false);
   // İŞLEMLER AÇILIR PENCEREDE (kullanıcı, 6 Eylül: "onlar için ekran kalabalık olur, İşlemler
   // diye buton ekle, tıklayınca seçtir, açılır pencere olduğu gibi"). Beş işlem × her satır,
@@ -1124,6 +1122,26 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
     portfoyToplamlari[pb] = (portfoyToplamlari[pb] || 0) + c.tutar;
   });
 
+  // Menü öğeleri — "İşlemler" düğmesiyle aynı kapılar (`cekIzinliIslemler`, `cekSonIslemi`).
+  const cekIslemAc = (c) => {
+    setIslemCek(c); setSecilenIslem(null);
+    setIslemForm({ cariId: "", bankaId: "", hesapSecim: "", tutar: String(c.tutar), paraBirimi: c.paraBirimi || "TRY", kurGirdi: "", not: "" });
+  };
+  const cekMenuOgeleri = (c) => {
+    const etkin = cekEtkinGecmis(c);
+    const son = etkin.length ? etkin[etkin.length - 1] : null;
+    const geri = cekSonIslemi(c);
+    return [
+      { k: "islemler", etiket: "İşlemler (ciro, iade, tahsil…)", ikon: ArrowRight, gizli: !(onIslem && cekIzinliIslemler(c).length > 0), onClick: () => cekIslemAc(c) },
+      { k: "ayrinti", etiket: gecmisCekId === c.id ? "Ayrıntıyı kapat" : "Ayrıntı / geçmiş", ikon: FileText, onClick: () => setGecmisCekId(gecmisCekId === c.id ? null : c.id) },
+      { k: "yazdir", etiket: son ? `${son.islem} belgesini yazdır` : "Giriş bordrosunu yazdır", ikon: Printer, gizli: !onYazdir, onClick: () => onYazdir(c.id, son ? son.id : null) },
+      { ayrac: true },
+      { k: "geri-al", etiket: "Son işlemi geri al", ikon: RefreshCw, renk: "var(--erp-warn)", gizli: !(onSonIslemiGeriAl && geri),
+        baslik: geri && (geri.tur === "cari" ? "Ciro/iade fişi silinir, çek önceki durumuna döner" : geri.tur === "hesap" ? "Kasa/bankadaki tahsil kaydı silinir, çek önceki durumuna döner" : "Çek önceki durumuna döner"),
+        onClick: () => setCekOnay({ id: c.id, tur: "geri-al" }) },
+      { k: "sil", etiket: "Çeki sil", ikon: Trash2, renk: "var(--erp-warn)", gizli: !onSil, onClick: () => setCekSilId(c.id) },
+    ];
+  };
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
@@ -1154,6 +1172,10 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
       {/* İKİ DEFTER — alınan çekler ve kendi yazdığımız çekler. Bunlar farklı şeyler: alınan çek
           bir ALACAK ve elimizde duruyor; şahsi çek çıkışı bizim İMZAMIZ ve bir BORÇ. Aynı listede
           göstermek portföy toplamını da anlamsız kılıyordu. */}
+      <SagTikMenusu konum={cekMenu} onKapat={() => setCekMenu(null)} veri="cek"
+        baslik={cekMenu ? `ÇEK · ${cekMenu.cek.cekNo || cekMenu.cek.no || ""} · ${cekMenu.cek.durum || ""}` : ""} ogeler={cekMenu ? cekMenuOgeleri(cekMenu.cek) : []} />
+      <SilOnayPenceresi acik={!!cekSilId} baslik="Çek silinsin mi?" onKapat={() => setCekSilId(null)}
+        onConfirm={() => { const id = cekSilId; setCekSilId(null); if (id) onSil(id); }} />
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
         {[
           { deger: "Alınan", ad: "Alınan Çekler", renk: "var(--erp-primary)" },
@@ -1437,6 +1459,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
               <div
                 key={c.id}
                 data-cek-satir={c.id}
+                {...sagTikIsleyicileri((x, y) => setCekMenu({ x, y, cek: c }))}
                 // SATIRA DOKUNUNCA ÖZET AÇILIR (v1.461.0 — kullanıcı: "çekin üzerine tıklayınca kimden
                 // alıp kime ciro ettiğimiz veya son durumu açılsın"). Satırdaki düğme, görsel ve
                 // özet panelinin içi kendi işini yapıyor; yalnız boş alana/yazıya dokunuş açıp kapatır.
@@ -1490,25 +1513,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                     <ArrowRight size={12} /> İşlemler
                   </button>
                 )}
-                {/* YAZDIR (v1.460.0 — kullanıcı: "çek işlemlerinde yazdır ekranı olsun; çek girişi,
-                    ciro vs. çıktı alalım"). Satırdaki düğme SON işlemin belgesini açar (işlem yoksa
-                    giriş bordrosu); geçmişteki her satırın da kendi yazdır düğmesi var. */}
-                {onYazdir && (() => {
-                  const etkin = cekEtkinGecmis(c);
-                  const son = etkin.length ? etkin[etkin.length - 1] : null;
-                  return (
-                    <button
-                      type="button"
-                      data-cek-yazdir={c.id}
-                      className="btn-ghost"
-                      style={{ padding: "3px 10px", fontSize: 11, color: "var(--erp-text-2)" }}
-                      title={son ? `${son.islem} belgesini yazdır` : "Çek giriş bordrosunu yazdır"}
-                      onClick={() => onYazdir(c.id, son ? son.id : null)}
-                    >
-                      <Printer size={12} /> Yazdır
-                    </button>
-                  );
-                })()}
+                {/* YAZDIR satırdan kalktı (v1.636.0): sağ tık menüsünde (son işlemin belgesi; işlem yoksa giriş bordrosu). */}
                 <button
                   type="button"
                   data-cek-ayrinti={c.id}
@@ -1562,33 +1567,21 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                 >
                   {c.durum}
                 </span>
-                {/* SON İŞLEMİ GERİ AL (v1.459.0 — kullanıcı: "ciro edilen çek geri iade alınabilir,
-                    son işlemi sil olsun"). Ciro/iade fişi, tahsil hesap kaydı ya da tahsile verme
-                    geri alınır; çek bir önceki durumuna döner. Kural `cekSonIslemi`de. */}
-                {onSonIslemiGeriAl && cekSonIslemi(c) && (
-                  <button
-                    type="button"
-                    data-cek-geri-al={c.id}
-                    className="btn-ghost"
-                    style={{ padding: "3px 10px", fontSize: 11, color: geriAlOnayId === c.id ? "#fff" : "var(--erp-warn)",
-                      background: geriAlOnayId === c.id ? "var(--erp-warn)" : undefined, borderColor: "var(--erp-warn)" }}
-                    title={(() => {
-                      const son = cekSonIslemi(c);
-                      return son.tur === "cari" ? "Ciro/iade fişi silinir, çek önceki durumuna döner"
-                        : son.tur === "hesap" ? "Kasa/bankadaki tahsil kaydı silinir, çek önceki durumuna döner"
-                        : "Çek önceki durumuna döner";
-                    })()}
-                    onClick={() => {
-                      if (geriAlOnayId !== c.id) { setGeriAlOnayId(c.id); return; }
-                      setGeriAlOnayId(null);
-                      onSonIslemiGeriAl(c.id);
-                    }}
-                    onBlur={() => setTimeout(() => setGeriAlOnayId((v) => (v === c.id ? null : v)), 200)}
-                  >
-                    <RefreshCw size={12} /> {geriAlOnayId === c.id ? "Emin misiniz? Geri al" : "Son İşlemi Geri Al"}
-                  </button>
+                {/* SON İŞLEMİ GERİ AL + SİL satırdan kalktı (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"): sağ tık
+                    menüsünde. İkisi de İKİ ADIMLI: geri alma onayı burada (satırda), silme standart onay penceresinde. */}
+                {cekOnay && cekOnay.id === c.id && (
+                  <span data-cek-onay={cekOnay.tur} onClick={(e) => e.stopPropagation()} style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 12 }}>
+                    <span style={{ color: "var(--erp-warn)", fontWeight: 700 }}>
+                      Son işlem geri alınsın mı?
+                    </span>
+                    <button type="button" className="btn-ghost" data-cek-onay-evet={cekOnay.tur}
+                      style={{ padding: "3px 10px", fontSize: 11, color: "#fff", background: "var(--erp-warn)", borderColor: "var(--erp-warn)" }}
+                      onClick={() => { setCekOnay(null); onSonIslemiGeriAl(c.id); }}>
+                      Evet, geri al
+                    </button>
+                    <button type="button" className="btn-ghost" style={{ padding: "3px 10px", fontSize: 11 }} onClick={() => setCekOnay(null)}>Vazgeç</button>
+                  </span>
                 )}
-                <SilOnayButonu onConfirm={() => onSil(c.id)} boyut={12} />
                 {/* ÇEK ÖZETİ + GEÇMİŞ (v1.461.0). Üstte üç soru cümleyle: kimden geldi, şimdi nerede,
                     vadesine ne kadar var (kural `cekOzeti`). Altta yolculuk: giriş + her işlem,
                     eskiden yeniye; geri alınan işlem üstü çizili. Geçmiş EKLENİR, üzerine yazılmaz. */}

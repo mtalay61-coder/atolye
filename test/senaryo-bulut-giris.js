@@ -9,7 +9,7 @@
 // v1.445.0: YEREL ŞİFRE YEDEĞİ KALDIRILDI. Bulut reddedince artık içeri GİRİLMİYOR (kayıtta düz
 // metin şifre olsa bile) — giriş ekranında kalınıyor, sebep kalıcı kutuda (`data-giris-hatasi`).
 // Eskiden bu senaryo "yerel şifreyle girildi" kartını ölçüyordu; o kart artık hiç açılmamalı.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

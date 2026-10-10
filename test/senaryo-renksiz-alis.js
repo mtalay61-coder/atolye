@@ -9,7 +9,7 @@
 //   C. klasik "Standart"/"Standart".
 // Her birinde: renk kutusu yok, miktar kutusu var, kalem ekleniyor; fiş kaydedilince stok artıyor
 // (B'de fiş yazımı "Standart" varyantını kendisi açıyor; A'da boş varyanta ekleniyor, çift satır yok).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

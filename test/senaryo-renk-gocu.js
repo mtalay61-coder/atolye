@@ -2,7 +2,7 @@
 // Eski veri: Mamul "Siyah" (r-m) + Hammadde "Siyah" (r-h) + yalnız mamul "Kahve" (r-k), kombinasyon
 // r-m/r-k. Ölçülen: açılışta tek "Siyah" kalır, kombinasyon r-h/r-k'ya çevrilir, her renk tek tip;
 // ürün kartında mamul için renk listesi tek havuz; Tanımlar'da "Mamul Renkleri" bölümü yok.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

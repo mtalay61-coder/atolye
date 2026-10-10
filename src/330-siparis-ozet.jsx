@@ -231,7 +231,7 @@ function siparisOzetToplami(siparis, kurlar) {
   };
 }
 
-function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, uretimSiparisleri, acikMi, kurlar }) {
+function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, uretimSiparisleri, acikMi, kurlar, onSagTik }) {
   const cari = cariler.find((c) => c.id === siparis.cariId);
   const ozetToplam = siparisOzetToplami(siparis, kurlar);
   const toplam = ozetToplam.toplam;
@@ -278,6 +278,8 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
       tabIndex={0}
       data-siparis-satir={siparis.siparisNo}
       onClick={onAc}
+      // SAĞ TIK / UZUN BASMA (v1.636.0): satırın işlemler menüsü — liste kartı açılır, menü tıklanan noktada.
+      {...sagTikIsleyicileri(onSagTik ? (x, y) => onSagTik(x, y) : null, !!onSagTik)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAc(); } }}
       style={{
         width: "100%", display: "flex", alignItems: "center", gap: 10, padding: 14,
@@ -298,17 +300,25 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
       {/* Cari adı dolu bir alan içinde: listede aranan ilk bilgi bu ve düz metin olarak
           diğer alanların arasında kayboluyordu. Renk siparişin tipini de söyler —
           satış çini mavisi, alış taba. */}
+      {/* CARİ RENGİ + LOGO (v1.636.0 — kullanıcı: "müşterileri renklendirelim, gerekirse logo da ekleyelim"). Etiket
+          carinin kendi renginde (200 cariRengi; seçilmemişse kimlikten sabit renk), logosu varsa adın solunda. Siparişin
+          tipi (satış/alış) satırın solundaki renkli şeritte ve sipariş no önekinde kalıyor. */}
       <span
+        data-siparis-cari-etiket={cari ? cari.unvan : ""}
+        data-cari-renk={cariRengi(cari)}
         style={{
-          display: "inline-block", maxWidth: 240, minWidth: 0,
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          display: "inline-flex", alignItems: "center", gap: 6, maxWidth: 260, minWidth: 0,
           fontSize: 15, fontWeight: 700,
-          color: "var(--erp-panel-2)",
-          background: siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)",
-          padding: "4px 12px", borderRadius: "var(--erp-r-md)",
+          color: "#fff",
+          background: cari ? cariRengi(cari) : (siparis.tip === "Alış" ? "var(--erp-brown)" : "var(--erp-info)"),
+          padding: cari && cari.resim ? "2px 12px 2px 3px" : "4px 12px", borderRadius: "var(--erp-r-md)",
         }}
       >
-        {cari ? cari.unvan : "—"}
+        {cari && cari.resim && (
+          <img src={cari.resim} alt="" data-siparis-cari-logo="1"
+            style={{ width: 26, height: 26, borderRadius: 6, objectFit: "contain", background: "#fff", flexShrink: 0 }} />
+        )}
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{cari ? cari.unvan : "—"}</span>
       </span>
       <span className="mono" style={{ fontWeight: 700, fontSize: 12, color: "var(--erp-text-2)" }}>{siparis.siparisNo}</span>
       {/* NOT GÖSTERGESİ (v1.621.0): siparişte not varsa satırda sarı "not" rozeti; üzerine gelince genel not görünür. Notların

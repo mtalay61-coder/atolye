@@ -4,7 +4,7 @@
 //
 // Örnekle AYNI veri: kur $48,70 €55,90; deri 2,5 $ (simgeyle), bez 1,2 €, astar 18 ₺, taban 3 $,
 // yapıştırıcı 25 ₺. Beklenen: toplam 368,25 ₺ = 7,56 $; dağılım $ %83 · ₺ %13 · € %5.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

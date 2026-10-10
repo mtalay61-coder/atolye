@@ -1,8 +1,9 @@
 // SENARYO — ÖZEL KOD ALANI: MEVCUTLARDAN SEÇ (5 Ekim, v1.596.0).
 // Kullanıcı: "özel kod eklerken eklenmişlerden göster, onlardan ekleyelim, yoksa yeni açalım." Ölçülen: Tanımlar'da yalnız
 // "Taban" tipine açılmış "Kalıp No" alanı var; Deri (tipsiz) kartında Özel Kodlar › Alan Ekle'de "Mevcut alanlardan seç…"
-// listesinde "Kalıp No" çıkıyor; seçilince GENEL kapsamda aynı adla açılıyor ve kartta görünüyor; liste artık boş (gizli).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+// listesinde "Kalıp No" çıkıyor; seçilince (v1.636.0) YENİ alan açılmıyor: aynı alan genişliyor — tipsiz ürün için GENEL
+// istendiğinden alan Genel oluyor ve kartta görünüyor; Tanımlar'da hâlâ TEK "Kalıp No"; liste artık boş (gizli).
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -32,7 +33,7 @@ async function calistir() {
   await sayfa.locator("[data-ozel-kod-mevcut]").selectOption("Kalıp No");
   await sayfa.waitForTimeout(900);
   const tanimSon = await depoOku(sayfa, "tanimlar:data");
-  const alanlar = ((tanimSon || {}).ozelKodAlanlari || []).map((a) => `${a.ad} · ${a.kapsamTuru || "genel"}${a.kapsamAd ? " · " + a.kapsamAd : ""}`);
+  const alanlar = ((tanimSon || {}).ozelKodAlanlari || []).map((a) => `${a.ad} · ${(a.kapsamlar || []).length ? a.kapsamlar.join(", ") : "genel"}`);
   const sonra = { kalipGorunuyor: await sayfa.evaluate(() => /Kalıp No/.test(document.body.innerText)), girisAcik: await sayfa.locator('input[placeholder="Örn. Taban"]:visible').count() };
   await sayfa.locator('button:has-text("Alan Ekle"):visible').first().click();
   await sayfa.waitForTimeout(300);

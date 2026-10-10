@@ -7,7 +7,7 @@
 //
 // Ölçülen: (1) çift başı genel gider ürün kartına iniyor; (2) tam maliyet üç parçanın toplamı;
 // (3) kâr marjı uygulanmış satış fiyatı görünüyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

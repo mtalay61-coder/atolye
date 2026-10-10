@@ -2,7 +2,7 @@
 // Kullanıcı (Sandalet › Barkodlar, renkler "1031 - Kırmızı Deri/Gümüş" model rengi): "Barkodları kurulamıyor."
 // Ürün kartı barkod kurarken kombinasyon listesine bakmıyordu. Ölçülen: model renkli mamulün Barkodlar sekmesinde
 // renk kodu 1031 ve beden barkodu 90 + stokNo(4) + 1031 + bedenKodu(2) kurulur; "barkod kurulamıyor" yok; sayfa hatası yok.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

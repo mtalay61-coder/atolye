@@ -9,7 +9,7 @@
 //
 // Ölçülen: (1) karşılıksız hareket yakalanıyor; (2) gider kartlı hareket YAKALANMIYOR (meşru);
 // (3) virmanın tek ayağı yakalanıyor; (4) bağı olup karşılığı silinmiş hareket yakalanıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

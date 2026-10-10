@@ -1,0 +1,26 @@
+{
+  "zoom": "1.1",
+  "basta": {
+    "sag": true,
+    "sol": false,
+    "sonSutunGorunur": false
+  },
+  "sagaKayinca": {
+    "sag": false,
+    "sol": true,
+    "sonSutunGorunur": true
+  },
+  "listeKonumu": {
+    "yatayFark": true,
+    "dikeyYakin": true,
+    "ekranIcinde": true
+  },
+  "stokDegisti": {
+    "hepsiAstar": true,
+    "miktarlarAyni": true,
+    "birim": "metre",
+    "kahve": "Kahve Süet",
+    "siyah": "Siyah Deri"
+  },
+  "hatalar": []
+}

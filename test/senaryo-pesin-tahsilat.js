@@ -11,7 +11,7 @@
 //   2. Seçilince kasa hareket ediyor ve yönü doğru (alışta çıkış).
 //   3. Peşin tutar fiş toplamını AŞAMIYOR.
 //   4. Cari borcu peşin kadar kapanıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

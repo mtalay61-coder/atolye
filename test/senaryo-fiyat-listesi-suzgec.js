@@ -4,7 +4,7 @@
 //   1. Her satırda resim: kapak resmi, yoksa renk resmi, hiç yoksa yer tutucu; tıklayınca büyür.
 //   2. Özel kod kutuları yalnız dolu alanlar için; Sezon 2026 → iki model; + Taban Kauçuk → bir model.
 //   3. Arama özel kod değerini de bulur.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 const PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";

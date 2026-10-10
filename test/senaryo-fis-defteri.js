@@ -4,7 +4,7 @@
 // Ölçülen: (1) fiş kesilince deftere TEK kayıt düşüyor — kalemler, stok hareketleri ve cari
 // hareketi bir arada; (2) defterden hesaplanan stok toplamı ürünün varyantıyla aynı (türev
 // tutarlı); (3) fiş geri alınınca defterde kayıt SİLİNMİYOR, `iptal: true` oluyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

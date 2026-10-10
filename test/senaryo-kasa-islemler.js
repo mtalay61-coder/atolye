@@ -5,7 +5,7 @@
 // Ölçülen: (1) hesap açılınca form DEĞİL hareketler görünüyor, üstte dört işlem düğmesi var;
 // (2) virman kaynaktan çıkış, hedefe giriş yazıyor, VRM fişiyle; (3) farklı para biriminde hedefe
 // geçen tutar ayrıca soruluyor (kur tahmin edilmiyor).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -96,8 +96,8 @@ async function calistir() {
   await ikinci.sayfa.waitForTimeout(900);
   await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await ikinci.sayfa.waitForTimeout(800);
-  const duzenleDugmesi = await ikinci.sayfa.evaluate(() => !!document.querySelector("[data-hareket-duzenle]"));
-  await ikinci.sayfa.evaluate(() => { const b = document.querySelector("[data-hareket-duzenle]"); if (b) b.click(); });
+  // v1.636.0: Düzenle ikonu satırdan kalktı — hareket satırına sağ tık → "Düzenle".
+  const duzenleDugmesi = await sagTikSec(ikinci.sayfa, "[data-kasa-hareket-satir]", "duzenle");
   await ikinci.sayfa.waitForTimeout(500);
   await ikinci.sayfa.locator("[data-duzenle-tutar]").fill("650");
   await ikinci.sayfa.locator("[data-duzenle-aciklama]").fill("Ödeme düzeltildi");
@@ -154,14 +154,18 @@ async function calistir() {
   await dorduncu.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await dorduncu.sayfa.waitForTimeout(800);
   // Virman satırı düzenlenemez, ama silinebilir (onaylı: iki dokunuş).
-  const virmanDuzenlenemez = await dorduncu.sayfa.evaluate(() => !document.querySelector("[data-hareket-duzenle]"));
+  // v1.636.0: virman satırının sağ tık menüsünde "Düzenle" yok (yerine pasif "Virman düzenlenmez").
+  await sagTikAc(dorduncu.sayfa, "[data-kasa-hareket-satir]"); await dorduncu.sayfa.waitForTimeout(300);
+  const virmanDuzenlenemez = await dorduncu.sayfa.evaluate(() => !document.querySelector('[data-sag-tik-menusu] [data-sag-tik="duzenle"]') && !!document.querySelector('[data-sag-tik-menusu] [data-sag-tik="virman-not"]'));
+  await dorduncu.sayfa.keyboard.press("Escape"); await dorduncu.sayfa.waitForTimeout(200);
   // Onay artık pencere (21 Eylül): ilk tık satırdaki ikon, ikinci adım penceredeki Sil.
   {
-    await dorduncu.sayfa.evaluate(() => {
-      const tr = [...document.querySelectorAll("tr")].find((x) => x.getBoundingClientRect().width > 0 && /Virman/.test(x.textContent));
-      const b = tr && tr.querySelector("button[title*='sil'], button[title*='Sil'], button[title*='Emin']");
-      if (b) b.click();
+    // v1.636.0: sil satırdan kalktı — virman satırına sağ tık → "Sil" → standart onay penceresi.
+    const vid = await dorduncu.sayfa.evaluate(() => {
+      const tr = [...document.querySelectorAll("tr[data-kasa-hareket-satir]")].find((x) => x.getBoundingClientRect().width > 0 && /Virman/.test(x.textContent));
+      return tr ? tr.getAttribute("data-kasa-hareket-satir") : null;
     });
+    if (vid) await sagTikSec(dorduncu.sayfa, `[data-kasa-hareket-satir="${vid}"]`, "sil");
     await dorduncu.sayfa.waitForTimeout(500);
   }
   await dorduncu.sayfa.locator("[data-sil-onayla]").first().click();

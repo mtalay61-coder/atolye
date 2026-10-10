@@ -12,7 +12,7 @@
 // v1.575.0 (kullanıcı: "Üstteki kurlara gerek yok, her satırın yanına p.birimi girilsin"): üstteki seçici kalktı; birim
 // her kutunun yanındaki seçiciden (`data-fk-kutu-pb`). TRY artık Taba'nın kutusundan seçiliyor; ek adım: kayıtlı Siyah
 // fiyatının birimi kutunun yanından EUR yapılınca kural aynı rakamla EUR.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

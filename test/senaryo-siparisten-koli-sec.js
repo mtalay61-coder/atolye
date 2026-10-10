@@ -22,7 +22,7 @@
 //   5. Kaydet + onay → 19 kolinin hepsi "Sevk edildi" (aynı fiş no), stok her bedende tam düşüyor,
 //      karşılanan 36=21 37=38 38=38 39=38 40=19, sipariş Tamamlandı.
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

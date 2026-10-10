@@ -9,7 +9,7 @@
 //      teslim eden firmamız; cariye başka birimde işlendiyse o tutar da basılıyor.
 //   3. Pencere CANLI: ciro geri alınınca açık pencere iptal belgesini değil güncel çeki gösteriyor;
 //      geçmişte her işlemin kendi yazdır düğmesi var.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -59,7 +59,7 @@ async function calistir() {
   await sayfa.waitForTimeout(800);
 
   // 1. Giriş bordrosu.
-  await sayfa.locator('[data-cek-yazdir="ck1"]').click();
+  await sagTikSec(sayfa, '[data-cek-satir="ck1"]', "yazdir");   // v1.636.0: yazdır sağ tık menüsünde
   await sayfa.waitForTimeout(700);
   const giris = await belge();
   await kapat();
@@ -78,7 +78,7 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   await sayfa.evaluate(() => [...document.querySelectorAll("button")].filter((x) => x.getBoundingClientRect().width > 0 && x.textContent.trim() === "Ciro Et").pop().click());
   await sayfa.waitForTimeout(1200);
-  await sayfa.locator('[data-cek-yazdir="ck1"]').click();
+  await sagTikSec(sayfa, '[data-cek-satir="ck1"]', "yazdir");   // v1.636.0: yazdır sağ tık menüsünde
   await sayfa.waitForTimeout(700);
   const ciro = await belge();
   const ciroFisi = ((((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c1") || {}).hareketler || [])
@@ -94,9 +94,9 @@ async function calistir() {
     if (b) b.click();
   });
   await sayfa.waitForTimeout(400);
-  await sayfa.locator('[data-cek-geri-al="ck1"]').click();
+  await sagTikSec(sayfa, '[data-cek-satir="ck1"]', "geri-al");   // v1.636.0
   await sayfa.waitForTimeout(150);
-  await sayfa.locator('[data-cek-geri-al="ck1"]').click();
+  await sayfa.locator('[data-cek-onay-evet="geri-al"]').click();
   await sayfa.waitForTimeout(1200);
   const geriAlindiktanSonraDurum = ((((await depoOku(sayfa, "muhasebe:data")) || {}).cekler || [])[0] || {}).durum;
   // Geçmiş: giriş + ciro + geri alma satırları, her birinin yazdır düğmesi.

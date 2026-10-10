@@ -7,7 +7,7 @@
 //      atanır, "barkod kurulamıyor" kalmaz.
 //   2. Mamulde asorti barkodları kendiliğinden listelenmez; "Asorti barkodu ekle" (Bütün renkler + asorti) → her renge bir
 //      kod, ürüne `asortiBarkodlari` olarak yazılır; ikinci kez eklemek çoğaltmaz.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

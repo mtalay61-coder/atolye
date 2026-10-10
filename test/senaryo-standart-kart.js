@@ -5,7 +5,7 @@
 // matrisinde sütun başlığı "STANDART" görünüyordu.
 // Ölçülenler: iki sekmede de ekranda "Standart" geçmiyor; matris sütun başlığı "Miktar", hareket satırı
 // "Kahve -100"; kayıt değişmiyor (varyant yine Kahve/Standart).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

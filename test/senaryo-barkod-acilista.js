@@ -2,7 +2,7 @@
 // Kullanıcı: "Barkod için stok açınca barkodları otomatik kursun, tekrar paketlemeden barkod oluşturmaya gerek yok."
 // Ölçülen: Stok › Ürün Ekle ile yeni hammadde (Standart/Standart) kaydedilince hiçbir düğmeye basmadan stok no atanır,
 // kod sayacı ilerler, kartın Barkodlar sekmesinde "barkod kurulamıyor" yok ve ürün barkodu 90 + stok no görünür.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

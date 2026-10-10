@@ -7,7 +7,7 @@
 //     "kayıtlı stok ile hareket geçmişi tutmuyor" uyarısının sebebi ortadan kalkıyor.
 //  3) HAREKETSİZ VARYANT SIFIR: açılış göçü bir kez çalıştıktan sonra hareketi olmayan varyant 0.
 //  4) EKSİ STOK: girişi olmayan ürün satılınca stok eksiye düşüyor (kullanıcının beklediği).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

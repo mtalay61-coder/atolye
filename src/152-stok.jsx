@@ -1841,8 +1841,8 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     <label key={alan.id} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                       <span style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
                         {alan.ad}
-                        {(alan.kapsamTuru || "genel") !== "genel" && (
-                          <span className="mono" style={{ fontSize: 9, marginLeft: 5, color: "var(--erp-text-3)" }}>{alan.kapsamAd}</span>
+                        {!ozelKodGenelMi(alan) && (
+                          <span className="mono" style={{ fontSize: 9, marginLeft: 5, color: "var(--erp-text-3)" }}>{ozelKodKapsamMetni(alan)}</span>
                         )}
                       </span>
                       {/* YAZARKEN ÖNERİ (25 Eylül): bu alana diğer ürünlerde girilmiş değerler süzülerek

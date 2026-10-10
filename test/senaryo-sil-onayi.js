@@ -4,7 +4,7 @@
 // Ölçülen: (1) ikona dokununca SİLMİYOR, pencere açılıyor; (2) penceredeki düğme "Sil" yazıyor;
 // (3) Vazgeç kapatıyor, kayıt duruyor; (4) Sil siliyor. Örnek: tanımlardaki asorti — önceden
 // hiç onay sormadan siliyordu (sekiz satır içi silmeden biri).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

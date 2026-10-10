@@ -4,7 +4,7 @@
 // Ölçülen: düzenleme formunda Belge No ve Sezon kutuları (sezon önerisi başka siparişten); yazıp kaydedince kayda
 // belgeNo/sezon düşer; satırın not kutusuna yazılıp Enter/+ basılmadan kaydedilen not da kaleme yazılır (kullanıcı:
 // "sipariş satıra girdiğim notu göremiyorum" — v1.624.0'a kadar kayboluyordu); kartın mor şeridinde "Belge: …" ve "Sezon: …" rozetleri; aramada belge no ile bulunur.
-const { uygulamaAc, modulAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, modulAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

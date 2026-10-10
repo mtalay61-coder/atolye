@@ -6,7 +6,7 @@
 //   2. Aynı kod başka bedene girilemez (sebep söylenir, kutu eski değere döner).
 //   3. Sipariş formunda harici kod okutulunca o bedene 1 çift eklenir, sonuç satırı yeşil.
 //   4. Depo › Sevkiyat: harici kod "ürün etiketi" diye tanınır; sonuç kutunun altında kalıcı (kırmızı).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

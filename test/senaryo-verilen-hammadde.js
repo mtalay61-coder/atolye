@@ -7,7 +7,7 @@
 //
 // Eskiden hammadde YALNIZCA teslim alırken, reçeteye göre düşülüyordu; "gerçekte ne verildi"
 // bilgisi sistemde hiç yoktu. Artan kutusu da boş başlıyor, kullanıcı farkı kafadan hesaplıyordu.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

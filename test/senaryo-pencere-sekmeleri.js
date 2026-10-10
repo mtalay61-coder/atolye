@@ -7,7 +7,7 @@
 // Şeritte hangi sekmenin etkin göründüğü de ölçülüyor — şerit ile ekran aynı şeyi söylemeli.
 // Aynı hata sınıfı sipariş ve üretim pencerelerinde de vardı (tek bir "açık kart" değeri); onlar da
 // ölçülüyor. Sipariş sekmesi Alış siparişinde bile SATIŞ ekranına götürüyordu.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

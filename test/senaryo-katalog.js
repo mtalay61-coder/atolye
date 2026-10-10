@@ -7,7 +7,7 @@
 //
 // Bu senaryonun ASIL İDDİASI o "ince nokta": ürünün cariye özel fiyatı VAR ve katalogda
 // GÖRÜNMEMELİ. Bir müşteriye başka bir müşterinin fiyatını göstermek, geri alınamayan bir hata.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -93,10 +93,10 @@ async function calistir() {
     return {
       alanSayisi: kutular.length,
       basliklar: kutular.map((i) => i.value),
-      // Kapsam başlıkları: alanların hangi ürünlerde çıktığı gruplanarak gösteriliyor.
-      genelGrubuVar: /GENEL — HER ÜRÜNDE/.test(m),
-      tipGrubuVar: /MAMUL TİPİ: AYAKKABI/.test(m),
-      sezonGrubuVar: /SEZON: İLKBAHAR\/YAZ/.test(m),
+      // Kapsam (v1.636.0): gruplar yerine her satırda tip rozetleri — seçili rozet, alanın göründüğü tip.
+      genelGrubuVar: !!document.querySelector("[data-ozel-kod-genel]"),
+      tipGrubuVar: !!document.querySelector('[data-ozel-kod-kapsam="mamul|Ayakkabı"][data-secili="1"]'),
+      sezonGrubuVar: !!document.querySelector('[data-ozel-kod-kapsam="sezon|İlkbahar/Yaz"][data-secili="1"]'),
       // Değerlerin NEREDE girildiği ekranda yazılı olmalı.
       yolTarifiVar: /Özel Kod Alanları bölümünden/.test(m),
     };

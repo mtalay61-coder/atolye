@@ -8,7 +8,7 @@
 //   3. Varsayılan vade 30 gün: dilimler kayıyor.
 //   4. Borçlar: tedarikçi borcu yaşlandırılıyor.
 //   5. Genel · Resmi yan yana: iki tablo.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

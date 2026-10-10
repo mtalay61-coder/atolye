@@ -6,7 +6,7 @@
 //   3) "Kurla $'ye çevir" → Çizme 1349 ₺ / 48 = 28,10 $; şerit kalkar.
 //   4) Bot'un satır seçicisi € → kural EUR, rakam aynı; şerit geri gelir (grup $, Bot €).
 //   5) "Birimi $ yap (rakam aynı)" → Bot 1349 USD; şerit yok. Sayfa hatası yok.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

@@ -8,7 +8,7 @@
 //      (reçetesiz, alış 100 ₺) "onaylanmadı · alış".
 //   3. Yalnız OK açıkken %25 kâr → Farklı kaydet → "Perakende" (yeni satış grubu): Bot 327,5; Terlik yazılmaz.
 //   4. Yalnız OK kapalı, %40 → genel satış fiyatına: Terlik 140.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

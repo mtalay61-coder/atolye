@@ -11,7 +11,7 @@
 //   2. Kesince hareketler yazılıyor ve HEPSİNİN fiş numarası var (fişsiz hareket olmaz).
 //   3. MİKTARLAR DEĞİŞMİYOR — açılış fişi bir düzeltme değil, bir açıklama.
 //   4. Sonrasında açık kapanıyor ve panel bunu söylüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

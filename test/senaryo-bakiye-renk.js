@@ -7,7 +7,7 @@
 // yön yalnızca renge kalmıştı — renk de yanlış olunca bakiyenin yönü ekranda hiç görünmüyordu.
 //
 // Ölçülen: listedeki (kapalı kart) bakiye ile ekstredeki koşan bakiye ve toplam AYNI renkte.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

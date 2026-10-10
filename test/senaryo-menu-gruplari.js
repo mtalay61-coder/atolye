@@ -7,7 +7,7 @@
 // ÜST MENÜ (v1.449.0): yan menü kalktı, gruplar üstte açılır liste. "daraltilmis" ölçümü artık
 // menünün İLK hâli: 4 grup düğmesi + 4 grupsuz öğe görünür, grup içerikleri kapalı. "Genişlet"
 // düğmesi yok (tıklama boşa düşüyor); grup açılınca içindekiler görünür.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -72,13 +72,14 @@ async function calistir() {
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /1001-Kesim/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
   const fisKarti = await sayfa.evaluate(() => ({
-    islemlerDugmesi: !!document.querySelector("[data-fis-islemler]"),
-    menuKapaliBasliyor: !(document.querySelector("[data-islem-cari]") || {}).offsetParent,
+    // v1.636.0: "İşlemler" düğmesi yok, menü sağ tıkla açılıyor — kart açılınca menü kapalı.
+    islemlerDugmesi: !document.querySelector("[data-fis-islemler]") && !!document.querySelector('[data-fis-acik="1"]'),
+    menuKapaliBasliyor: !document.querySelector("[data-sag-tik-menusu]"),
     cariAdiTiklanabilir: !!document.querySelector("[data-fis-cari]"),
     ikinciCariDugmesiYok: !/carisine git/.test(
       [...document.querySelectorAll("button")].filter((b) => b.offsetParent).map((b) => b.textContent).join(" ")),
   }));
-  await sayfa.evaluate(() => { const b = document.querySelector("[data-fis-islemler]"); if (b) b.click(); });
+  await sagTikAc(sayfa, '[data-fis-acik="1"]');
   await sayfa.waitForTimeout(500);
   const menuAcik = await sayfa.evaluate(() => /İlgili üretime git|İlgili siparişe git/.test(document.body.innerText));
 

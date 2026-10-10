@@ -4,7 +4,7 @@
 // Ölçülen: ekip ve kişisel kanallar; mesaj gönderme; KAYIT BAĞLAMA (sipariş seçip mesaja iliştirme);
 // SOHBETTEN GÖREV VERME (akışta görev kartı, görev kaydı oluşuyor); kart üstünden durum değişimi ve
 // kontrol kuralı; okunmamış sayacı; kalıcılık (mesaj:data, gorev:data).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 const { bulutGirisRotasi } = require("./giris-yardimci.js");

@@ -10,7 +10,7 @@
 //   2. Fiş formunda o ürün seçilince alan etiketi "Kalınlık".
 //   3. Fişte yalnız Kalınlık'lı ürün: renk sütunu "KALINLIK", ara başlık yok.
 //   4. Renk başlıklı bir ürün de eklenince: sütun "KALINLIK / RENK", başlık değiştiği yerde ara satırlar.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

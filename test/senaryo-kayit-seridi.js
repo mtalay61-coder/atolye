@@ -2,7 +2,7 @@
 // Kullanıcı: "Sipariş düzenleyip kaydet tuşu mor şeride alalım", "Tüm kaydetler üst mor şeritte olsun".
 // Ölçülen (her formda): Kaydet ve Vazgeç aynı mor şeridin (#EDE7F2) içinde ve şerit formun üst kısmında (formdaki ilk
 // giriş kutusundan yukarıda). Sipariş düzenlemede şerit yapışkan: form aşağı kaydırılınca Kaydet görünür kalır.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 const MOR = "rgb(237, 231, 242)";

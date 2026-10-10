@@ -1,4 +1,4 @@
-function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onSurumYayinla, yayinSurum, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
   // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
   // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
   // yazmalar bu ref'ten okur.
@@ -619,19 +619,25 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
   function ozelKodAlaniEkle() {
     const ad = yeniKodAd.trim();
     if (!ad) return showToast("Alan adı gerekli");
-    const [kapsamTuru, kapsamAd] = yeniKodKapsam.split("|");
-    // Aynı kapsamda aynı ad iki kez: ürün kartında iki özdeş başlık çıkardı, hangisine
-    // yazdığınızı ayırt edemezdiniz.
-    const cakisma = (tanimlar.ozelKodAlanlari || []).some((a) =>
-      (a.kapsamTuru || "genel") === kapsamTuru && String(a.kapsamAd || "") === (kapsamAd || "")
-      && a.ad.toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"));
-    if (cakisma) return showToast("Bu kapsamda aynı adlı alan zaten var");
+    // AYNI AD = AYNI ALAN (v1.636.0 — kullanıcı: "tipler renk gibi ortak olabilsin"): aynı adlı alan varsa yenisi
+    // açılmaz, seçilen tip ona eklenir (bkz. 008 ozelKodAlaniAdla). Önce tip başına ikiz "Taban"lar açılıyordu.
+    const sonuc = ozelKodAlaniAdla(tanimlar.ozelKodAlanlari || [], ad, yeniKodKapsam, uid("oka"));
+    if (!sonuc.degisti) return showToast(`"${ad}" bu kapsamda zaten var`);
+    onSave({ ...tanimlar, ozelKodAlanlari: sonuc.alanlar });
+    if (!sonuc.yeniMi) showToast(`"${ad}" zaten vardı — seçilen tip bu alana eklendi`);
+    setYeniKodAd("");
+  }
+
+  // Bir alanın tip üyeliğini aç/kapa (renklerdeki tip rozetleri gibi). Hiç tip kalmazsa alan Genel olur.
+  function ozelKodAlaniKapsamDegistir(id, kapsam) {
     onSave({
       ...tanimlar,
-      ozelKodAlanlari: [...(tanimlar.ozelKodAlanlari || []),
-        { id: uid("oka"), ad, kapsamTuru, kapsamAd: kapsamAd || "" }],
+      ozelKodAlanlari: (tanimlar.ozelKodAlanlari || []).map((a) => {
+        if (a.id !== id) return a;
+        const k = ozelKodKapsamlari(a);
+        return ozelKodKapsamYaz(a, k.includes(kapsam) ? k.filter((x) => x !== kapsam) : [...k, kapsam]);
+      }),
     });
-    setYeniKodAd("");
   }
 
   function ozelKodAlaniAdDegistir(id, ad) {
@@ -721,7 +727,6 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         { key: "uretim", ad: "Üretim" },
         { obek: "Sistem", key: "kullanicilar", ad: "Kullanıcılar" },
         { key: "gorunum", ad: "Görünüm" },
-        { key: "yayin", ad: "Yayın", yalnizYonetici: true },
         { key: "surumGecmisi", ad: "Sürüm geçmişi" },
         { obek: "Veri", key: "yedek", ad: "Yedek & Bulut" },
         { key: "bakim", ad: "Bakım" },
@@ -1653,8 +1658,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
       <TanimBasligi ad="Özel Kod Alanları" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Alan <b>başlıkları</b> burada tanımlanır, <b>değerler</b> her ürünün kendi kartındaki
-        Tanımlar › Ürün › Özel Kod Alanları bölümünden girilir (Düzenle ile). Alanlar <b>stok tipine</b> bağlanabilir:
-        Taban'ın alanları Deri'de görünmez. "Genel" alanlar her üründe görünür.
+        Tanımlar › Ürün › Özel Kod Alanları bölümünden girilir (Düzenle ile). Bir alan renkler gibi <b>birden çok tipe</b>{" "}
+        bağlanabilir: satırdaki tip rozetlerine dokunarak ekleyip çıkarın. Hiç tip seçilmeyen alan "Genel"dir, her üründe görünür.
         Başlık sonradan değişse de girilmiş değerler yerinde kalır — değer başlığa değil alanın
         KİMLİĞİNE bağlıdır.
       </p>
@@ -1699,74 +1704,87 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
           Henüz özel kod alanı yok. Alan eklenmeden ürün kartında "Özel Kodlar" sekmesi görünmez.
         </div>
       ) : (
-        <div style={{ display: "grid", gap: 14 }}>
-          {/* KAPSAMA GÖRE GRUPLANMIŞ. Düz bir liste, "bu alan hangi ürünlerde çıkıyor?" sorusunu
-              her satırda yeniden sordururdu. */}
-          {[
-            { anahtar: "genel|", baslik: "Genel — her üründe" },
-            ...(tanimlar.hammaddeTipleri || []).map((h) => ({ anahtar: `malzeme|${h.ad}`, baslik: `Malzeme tipi: ${h.ad}` })),
-            ...(tanimlar.mamulTipleri || []).map((m) => ({ anahtar: `mamul|${m.ad}`, baslik: `Mamul tipi: ${m.ad}` })),
-            ...SEZONLAR.map((sz) => ({ anahtar: `sezon|${sz}`, baslik: `Sezon: ${sz}` })),
-          ].map((grup) => {
-            const [tur, ad] = grup.anahtar.split("|");
-            const alanlar = (tanimlar.ozelKodAlanlari || [])
-              .filter((a) => (a.kapsamTuru || "genel") === tur && String(a.kapsamAd || "") === ad);
-            if (alanlar.length === 0) return null;
-            return (
-              <div key={grup.anahtar}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 6 }}>
-                  {grup.baslik.toLocaleUpperCase("tr-TR")}
-                </div>
-                <div style={{ display: "grid", gap: 6 }}>
-                  {alanlar.map((a) => (
-                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "6px 10px" }}>
-                      <input
-                        defaultValue={a.ad}
-                        // Boş bırakılan ad kaydedilmiyor: adsız bir alan, değerini okunamaz kılar.
-                        onBlur={(e) => {
-                          const yeni = e.target.value.trim();
-                          if (!yeni) { e.target.value = a.ad; return; }
-                          if (yeni !== a.ad) ozelKodAlaniAdDegistir(a.id, yeni);
-                        }}
-                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                        title="Alan başlığı — değiştirmek girilmiş değerleri etkilemez"
-                        style={{ ...inputStyle, flex: 1, minWidth: 120 }}
-                      />
-                      <SilOnayButonu onConfirm={() => ozelKodAlaniSil(a.id)} boyut={12} baslikNormal="Özel kod alanı silinsin mi?" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-          {/* KAPSAMI ARTIK OLMAYAN ALANLAR — tip silinmişse alan öksüz kalır. Gizlemek yerine
-              gösteriliyor: değerleri hâlâ duruyor ve kullanıcı ne yapacağına kendisi karar versin. */}
+        <div style={{ display: "grid", gap: 6 }}>
+          {/* TEK LİSTE, TİP ROZETLERİ (v1.636.0 — kullanıcı: "tipler renk gibi ortak olabilsin"). Önce kapsama göre
+              gruplanıyordu ve her tip kendi "Taban"ını açıyordu. Artık her alan BİR satır; hangi tiplerde göründüğü
+              renklerdeki gibi rozetlerle seçiliyor (dokununca ekle/çıkar). Hiç rozet seçili değilse alan Genel'dir.
+              Silinmiş bir tipe bağlı kapsam kırmızı rozetle görünür; dokununca kaldırılır. */}
           {(() => {
-            const gecerli = new Set([
-              "genel|",
-              ...(tanimlar.hammaddeTipleri || []).map((h) => `malzeme|${h.ad}`),
-              ...(tanimlar.mamulTipleri || []).map((m) => `mamul|${m.ad}`),
-              ...SEZONLAR.map((sz) => `sezon|${sz}`),
-            ]);   // sirasiz-tamam
-            const oksuz = (tanimlar.ozelKodAlanlari || [])
-              .filter((a) => !gecerli.has(`${a.kapsamTuru || "genel"}|${a.kapsamAd || ""}`));
-            if (oksuz.length === 0) return null;
+            const ikizSayisi = (tanimlar.ozelKodAlanlari || []).length - new Set((tanimlar.ozelKodAlanlari || []).map((a) => ozelKodAdAnahtari(a.ad))).size;
+            if (ikizSayisi <= 0 || !onOzelKodBirlestir) return null;
             return (
-              <div style={{ border: "1px solid #C9A063", background: "var(--erp-hover)", borderRadius: "var(--erp-r-md)", padding: 10 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#7A3B22", marginBottom: 6 }}>
-                  Tipi silinmiş alanlar — hiçbir üründe görünmüyor
-                </div>
-                <div style={{ display: "grid", gap: 5 }}>
-                  {oksuz.map((a) => (
-                    <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                      <span style={{ fontWeight: 600 }}>{a.ad}</span>
-                      <span className="mono" style={{ fontSize: 11, color: "#7A3B22" }}>{a.kapsamAd}</span>
-                      <SilOnayButonu onConfirm={() => ozelKodAlaniSil(a.id)} boyut={12} baslikNormal="Özel kod alanı silinsin mi?" />
-                    </div>
-                  ))}
-                </div>
+              <div data-ozel-kod-ikiz={ikizSayisi} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: "8px 12px", fontSize: 12, color: "#7A3B22" }}>
+                <span style={{ flex: "1 1 280px" }}>
+                  <b>Aynı adlı {ikizSayisi} alan daha var</b> (eskiden her tip için ayrı açılıyordu). Birleştirince her ad tek alan
+                  olur, tipleri birleşir; ürünlere girilmiş değerler korunur.
+                </span>
+                <button type="button" className="btn-primary" data-ozel-kod-birlestir="1" style={{ padding: "6px 12px", fontSize: 12 }}
+                  onClick={() => {
+                    const r = onOzelKodBirlestir();
+                    if (!r || !r.birlesenSayisi) return;
+                    showToast(r.cakismalar.length
+                      ? `${r.birlesenSayisi} alan birleştirildi. ${r.cakismalar.length} üründe iki farklı değer vardı, ilki kaldı: ${r.cakismalar.slice(0, 3).map((c) => `${c.urunAd} (${c.alanAd}: ${c.kalan} / ${c.ikiz})`).join(", ")}${r.cakismalar.length > 3 ? "…" : ""}`
+                      : `${r.birlesenSayisi} alan birleştirildi — değerler taşındı`);
+                  }}>
+                  Aynı adlıları birleştir
+                </button>
               </div>
             );
+          })()}
+          {(() => {
+            const secenekler = [
+              ...(tanimlar.hammaddeTipleri || []).map((h) => ({ k: `malzeme|${h.ad}`, ad: h.ad, renk: "var(--erp-brown)", baslik: "Malzeme tipi" })),
+              ...(tanimlar.mamulTipleri || []).map((m) => ({ k: `mamul|${m.ad}`, ad: m.ad, renk: "var(--erp-primary)", baslik: "Mamul tipi" })),
+              ...SEZONLAR.map((sz) => ({ k: `sezon|${sz}`, ad: sz, renk: "var(--erp-info)", baslik: "Sezon" })),
+            ];
+            const gecerli = new Set(secenekler.map((x) => x.k));
+            const rozet = (a, x, secili) => (
+              <button key={x.k} type="button" data-ozel-kod-kapsam={x.k} data-secili={secili ? "1" : "0"}
+                onClick={() => ozelKodAlaniKapsamDegistir(a.id, x.k)}
+                title={`${x.baslik}: ${x.ad} — ${secili ? "bu tipten çıkar" : "bu tipe ekle"}`}
+                className="mono"
+                style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)", cursor: "pointer", whiteSpace: "nowrap",
+                  border: `1px solid ${secili ? x.renk : "var(--erp-border-2)"}`, background: secili ? x.renk : "#fff", color: secili ? "#fff" : "var(--erp-text-3)" }}>
+                {x.ad}
+              </button>
+            );
+            return (tanimlar.ozelKodAlanlari || []).map((a) => {
+              const k = ozelKodKapsamlari(a);
+              const oksuz = k.filter((x) => !gecerli.has(x));
+              return (
+                <div key={a.id} data-ozel-kod-alani={a.ad} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "6px 10px" }}>
+                  <input
+                    defaultValue={a.ad}
+                    // Boş bırakılan ad kaydedilmiyor: adsız bir alan, değerini okunamaz kılar.
+                    onBlur={(e) => {
+                      const yeni = e.target.value.trim();
+                      if (!yeni) { e.target.value = a.ad; return; }
+                      if (yeni !== a.ad) ozelKodAlaniAdDegistir(a.id, yeni);
+                    }}
+                    onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                    title="Alan başlığı — değiştirmek girilmiş değerleri etkilemez"
+                    style={{ ...inputStyle, flex: "0 1 200px", minWidth: 120 }}
+                  />
+                  <span style={{ display: "flex", gap: 3, flexWrap: "wrap", flex: "1 1 300px", alignItems: "center" }}>
+                    {k.length === 0 && (
+                      <span className="mono" data-ozel-kod-genel="1" style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)", marginRight: 4 }}
+                        title="Hiç tip seçilmedi — bu alan her üründe görünür">GENEL</span>
+                    )}
+                    {secenekler.map((x) => rozet(a, x, k.includes(x.k)))}
+                    {oksuz.map((x) => (
+                      <button key={x} type="button" data-ozel-kod-oksuz={x} onClick={() => ozelKodAlaniKapsamDegistir(a.id, x)}
+                        title="Bu tip silinmiş — dokununca alandan kaldırılır"
+                        className="mono"
+                        style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: "var(--erp-r-pill)", cursor: "pointer", textDecoration: "line-through",
+                          border: "1px solid var(--erp-warn)", background: "#fff", color: "var(--erp-warn)" }}>
+                        {ozelKodKapsamParcala(x).ad} ×
+                      </button>
+                    ))}
+                  </span>
+                  <SilOnayButonu onConfirm={() => ozelKodAlaniSil(a.id)} boyut={12} baslikNormal="Özel kod alanı silinsin mi?" />
+                </div>
+              );
+            });
           })()}
         </div>
       )}
@@ -2282,17 +2300,6 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         <MobilGorunumDuzenleyici tanimlar={tanimlar} onSave={onSave} showToast={showToast}
           mobilDuzenKipi={mobilDuzenKipi} onMobilDuzenKipi={onMobilDuzenKipi} mobilDuzenAktif={mobilDuzenAktif} />
       </div>
-    </>
-    )}
-
-    {aktifTanimSekme === "yayin" && (
-    <>
-      {/* GITHUB'A YAYINLA (22 Eylül, v1.414.0): aşağıdaki "Sürüm yayınla" yalnız KAYDI günceller;
-          dosyayı hâlâ elle yüklemek gerekiyordu. Bu bölüm dosyayı da yüklüyor (tek commit) ve
-          kaydı kendi tazeliyor. Yalnız Yönetici. */}
-      {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
-        <GitHubYayin showToast={showToast} onSurumYayinla={onSurumYayinla} yayinSurum={yayinSurum} />
-      )}
     </>
     )}
 

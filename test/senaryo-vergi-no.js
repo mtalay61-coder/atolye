@@ -8,7 +8,7 @@
 //   2. Kaydet: soru çıkar; vazgeçilirse cari eklenmez, onaylanırsa eklenir (engellemez, sorar).
 //   3. Cari kartı (Müşteri B): bozuk numara yazılıp çıkılınca soru; vazgeçilirse kaydedilmez ve kutu eski
 //      değere döner; geçerli numara sorusuz kaydedilir. Bozuk TCKN kaydedilir ama kırmızı yazar.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

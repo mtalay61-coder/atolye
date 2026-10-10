@@ -5,7 +5,7 @@
 // Kurulum: Müşteri B 300.000 ₺ alacağımız (satış), Tedarikçi A'ya 250.000 ₺ borcumuz (alış), Personel C −30 (tohum).
 // Ölçülen: her kartta Alacak ve Borç hücreleri; listenin altında Alacak +300.000, Borç −250.030, Net +49.970;
 // "Müşteri" sekmesinde dip toplam yalnız o sekmenin carileri.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

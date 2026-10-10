@@ -7,7 +7,7 @@
 //   1) 3'ün 2'si sağlam teslim → ilk atama 2 çift tamamlandı; aynı ustada 1 çiftlik AÇIK atama; adım/üretim bitmedi;
 //      stoğa 2 girdi;
 //   2) kalan 1 çift teslim → adım ve üretim tamamlandı, stoğa toplam 3 girdi.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

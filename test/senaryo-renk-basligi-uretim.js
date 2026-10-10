@@ -7,7 +7,7 @@
 //   1. Planlama bölümünde Bot'un satırı "Baskı" başlığıyla.
 //   2. Hammadde ihtiyaç tablosunda (IhtiyacMatrisi) başlıklar karışık (beden bazlı Deri "Renk", Takviye
 //      "Kalınlık"): sütunda ikisi, başlık değiştiği yerde ara satırlar; bedensiz Deri tekil satırda.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

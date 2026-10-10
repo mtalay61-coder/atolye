@@ -10,7 +10,7 @@
 //      Sebep pencerede söylenir; Tanımlar'a hiçbir şey yazılmaz, şifre hiçbir kayıtta yok.
 //   3. Silme: fonksiyon `sil` çağrılır, kayıt silinir. Fonksiyon reddederse kayıt DURUR.
 //      Eskiden kalma YEREL kayıt (bulut hesabı yok) bulut reddetse de silinebilir — temizlik yolu.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

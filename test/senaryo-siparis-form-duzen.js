@@ -14,7 +14,7 @@
 //   4. Eklerken yazılan açıklama o rengin bütün ölçülerine gidiyor; satırda düzeltilebiliyor;
 //      ikinci "Ekle" (açıklamasız) önceki açıklamayı silmiyor.
 //   5. Kaydedince açıklamalar siparişte ve sipariş kartında.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

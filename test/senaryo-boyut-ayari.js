@@ -7,7 +7,7 @@
 //   2) Düğmeler "Çok büyük" → düğme yüksekliği ~1.3 kat, kutu değişmez; Genel "Büyük" → --olcek-genel 1.1;
 //   3) ayar bu cihaza kaydediliyor (localStorage `gorunum:boyut`);
 //   4) "Varsayılana dön" → hepsi 1.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -15,7 +15,7 @@
 //      title'da taşır. Sütunlar yalnız fişte koli varsa görünür.
 //   3. Kayıt: 4 koli "Sevk edildi" (aynı fiş), stok bütün bedenlerde doğru düşer
 //      (36:10→5, 37:10→2, 38:10→4, 39:10→4, 40:10→7), karşılanan kolilerin toplamı.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

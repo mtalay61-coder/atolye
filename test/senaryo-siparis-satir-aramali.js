@@ -3,7 +3,7 @@
 // listeler tarayıcının ekranı kaplayan menüsünü açıyordu). Ölçülen: düzenlemede satırdaki ürün ve renk kutuları <select>
 // değil yazılabilir kutu; renk kutusuna "ta" yazınca yalnız "Taba" önerisi; seçilince satır rengi değişir; yarım yazıp
 // çıkınca kayıtlı renge döner; ürün kutusuna "bo" yazınca öneride yalnız Bot (satışta yalnız mamuller).
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

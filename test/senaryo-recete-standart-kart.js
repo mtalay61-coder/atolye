@@ -2,7 +2,7 @@
 // Kullanıcı: "Standart hammadde için renk dağılımına gerek yok, zaten renksiz ve bedensiz olduğu için boşa yer kaplamasın."
 // Ölçülen: Bot (Siyah + Taba) reçetesinde renksiz/bedensiz "Yapıştırıcı" her iki renkte Standart × 0,002 → kartta
 // pozisyon/renk tablosu yok, tek satır not; Deri kartı (renkli) tablosu duruyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

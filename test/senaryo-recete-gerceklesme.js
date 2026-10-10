@@ -7,7 +7,7 @@
 // Reçete bir TAHMİNDİR; gerçek tüketim ancak iş bitince belli olur (verilen − iade).
 // Rakamlar HER ZAMAN gösteriliyor, ama "reçeteni değiştir" önerisi yeterli ölçüm VE anlamlı
 // fark birlikteyken çıkıyor — tek üretimde deri kötü çıkmış olabilir.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

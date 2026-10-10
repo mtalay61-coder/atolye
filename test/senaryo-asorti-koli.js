@@ -8,7 +8,7 @@
 // TEST VERİSİ NOTU: paketleme üretimi `bedenMiktarlari` alanından okuyor (`bedenDagilimi` değil).
 // İlk denemede bu yüzden satırlar hiç çizilmemişti — senaryonun kendisi yanlış alanı yazıyordu,
 // uygulamada sorun yoktu.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

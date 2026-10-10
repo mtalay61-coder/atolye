@@ -9,7 +9,7 @@
 //   2. Kayıt değişmedi: varyant yine Standart/Standart (yer tutucu yalnız gösterimde gizli).
 //   3. Ürün kartında matris başlığı ve satırı "Standart" yazmıyor; özet "tek stok kalemi".
 //   4. (v1.474.0) Renk ve beden yokken köşede "Renk \ Beden" de yazmıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

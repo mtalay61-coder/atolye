@@ -17,7 +17,7 @@
 //      "hepsi $ olsun mu" sorusu kalktı. 40'ın kutusunun yanından USD seçilince YALNIZ o kural USD olur (rakam aynı),
 //      41/42 TRY kalır; kart kapanıp açılınca 40'ın seçicisi USD gösterir ve yeni kutuların varsayılanı USD olur.
 //   D. (v1.483.0) Fiyat kutusu boşaltılınca kural silinir; kapalı kutunun kuralı × ile silinir.
-const { uygulamaAc, modulAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, modulAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

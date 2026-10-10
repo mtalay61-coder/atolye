@@ -7,7 +7,7 @@
 //
 // Ölçülen: (1) yeni grup eklenebiliyor; (2) adı düzenlenebiliyor ve KALICI yazılıyor;
 // (3) tür seçilebiliyor (gider/gelir) — kâr-zarar raporu türe göre ayırıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

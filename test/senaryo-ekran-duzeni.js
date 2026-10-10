@@ -9,7 +9,7 @@
 //   3) Kaydet → kip kapanır, sıra ve genişlik uygulanmış, gizli blok görünmüyor; tanimlar.ekranDuzenleri.siparisFormu yazıldı;
 //   4) Vazgeç değişikliği atar; Varsayılana dön → kodun sırası;
 //   5) fiş formunda da Düzen düğmesi var (fisFormu, 4 blok).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

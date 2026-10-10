@@ -5,7 +5,7 @@
 // hareketi THS- + siparisId s9 + kasa bağı; kasada 250 USD giriş; kartta hemen "Ödenen 250 $ · Kalan 0 $".
 // "Çek/senet için cari kartında aç" → cari kartı kalan tutarla dolu (v1.612 köprüsü). Cari kartına Ülke yazılınca
 // kayda `ulke` geçer.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

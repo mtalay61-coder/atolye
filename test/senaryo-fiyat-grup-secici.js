@@ -3,7 +3,7 @@
 //   1. "Adına göre otomatik grupla" → son kelimeye göre Deri / Süet / Baskı; tek kelimelik (Vizon, Siyah) grupsuz kalır.
 //   2. Süet'e 0,0051 $ → Vizon satırdaki seçiciden Süet'e alınınca o da 0.0051 USD.
 //   3. Her grubun seçici rengi farklı (aynı gruptakiler aynı).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 (async () => {
   const t = { ...TOHUM };

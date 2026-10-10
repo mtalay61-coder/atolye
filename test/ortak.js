@@ -87,3 +87,29 @@ const cariSec = async (sayfa, unvan, kok = "", alan = "data-siparis-cari") => {
 };
 
 module.exports = { uygulamaAc, depoOku, bekle, modulAc, cariSec };
+
+// SAĞ TIK MENÜSÜ (v1.636.0): `secici`ye sağ tık olayı gönderir (öğe başka bir katmanın altında kalsa da React işleyicisi
+// çalışır), ardından menüden `oge`yi (data-sag-tik) seçer. Menü açılmazsa ya da öğe yoksa false döner.
+async function sagTikAc(sayfa, secici) {
+  if (await sayfa.locator("[data-sag-tik-menusu]").count()) { await sayfa.keyboard.press("Escape"); await sayfa.waitForTimeout(150); }
+  return sayfa.evaluate((sec) => {
+    const el = [...document.querySelectorAll(sec)].find((x) => x.getBoundingClientRect().width > 0) || document.querySelector(sec);
+    if (!el) return false;
+    const b = el.getBoundingClientRect();
+    el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: b.left + Math.min(20, b.width / 2), clientY: b.top + Math.min(10, b.height / 2) }));
+    return true;
+  }, secici);
+}
+async function sagTikSec(sayfa, secici, oge) {
+  // Açık kalmış eski menü varsa önce kapanır (yoksa onun öğesi seçilirdi).
+  if (await sayfa.locator("[data-sag-tik-menusu]").count()) { await sayfa.keyboard.press("Escape"); await sayfa.waitForTimeout(150); }
+  if (!(await sagTikAc(sayfa, secici))) return false;
+  await sayfa.waitForTimeout(250);
+  const o = sayfa.locator(`[data-sag-tik-menusu] [data-sag-tik="${oge}"]`).last();
+  if (!(await o.count()) || (await o.isDisabled())) { await sayfa.keyboard.press("Escape"); return false; }
+  await o.click();
+  await sayfa.waitForTimeout(300);
+  return true;
+}
+module.exports.sagTikAc = sagTikAc;
+module.exports.sagTikSec = sagTikSec;

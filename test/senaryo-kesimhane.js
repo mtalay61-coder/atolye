@@ -5,7 +5,7 @@
 //   1) Açılışta bu ayın maaşı Personel C carisine "Maaş" alacağı olarak bir kez tahakkuk eder (MAAS-YYYY-MM-… fişi).
 //   2) 3 çift Kesim teslimi: cariye "-İşçilik" hareketi YAZILMAZ; üretim kaydına bölüm tahakkuku 3 × 30 = 90 ₺.
 //   3) Kâr-Zarar › Atölye içi bölümler: Kesimhane tahakkuk 90, maaş 20.000 → zarar 19.910.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

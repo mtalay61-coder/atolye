@@ -9,7 +9,7 @@
 //
 // Ölçülen: ödeme şekli "Çek" seçilince alanlar çıkıyor, girilen bilgiler kayda `cek` nesnesi
 // olarak yazılıyor ve ekstre satırında görünüyor. Nakit seçiliyken alanlar YOK.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

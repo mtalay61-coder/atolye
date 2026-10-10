@@ -5,7 +5,7 @@
 //      kutusu açık (beyaz zemin), sol alt köşe hâlâ kırmızı; logosuz çağrıda yalnız yazı; satır yoksa resim aynen.
 //   2) Stok › Ürün Ekle: ad "Damga Test", kapak resmi dosyadan yüklenir → kaydedilen kapakResmi damgalı (sağ üst mavi,
 //      sol alt kırmızı). Tanımlar'da tik kapalıysa `stokResmiDamgasi` undefined döner. Sayfa hatası yok.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

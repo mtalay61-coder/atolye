@@ -9,14 +9,19 @@
  "dugmeMenusu": {
   "baslik": true,
   "ogeler": [
-   "odeme:Tahsilat Gir"
-  ]
+   "duzenle:Düzenle",
+   "odeme:Tahsilat Gir",
+   "sil:İptal et / Sil"
+  ],
+  "dugmeYok": true
  },
  "kapandi": true,
  "sagTikMenusu": {
   "baslik": true,
   "ogeler": [
-   "odeme:Tahsilat Gir"
+   "duzenle:Düzenle",
+   "odeme:Tahsilat Gir",
+   "sil:İptal et / Sil"
   ]
  },
  "kartFormu": {
@@ -29,6 +34,13 @@
   "tutar": "150",
   "pb": "USD",
   "aciklama": "Sipariş SAT-9"
+ },
+ "listeSagTik": {
+  "baslik": true,
+  "ogeler": [
+   "odeme"
+  ],
+  "paylas": 4
  },
  "cikti": {
   "bolum": "1",

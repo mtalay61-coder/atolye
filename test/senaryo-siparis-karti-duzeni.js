@@ -10,7 +10,7 @@
 //   3) (v1.528.0) Not bloğunun sağ kenarı fareyle 9 sütun sola çekilir → 3/12 (sayı olarak kaydedilir);
 //      Teslim bloğu çubuğunun adından tutulup Koliler'in üstüne sürüklenir;
 //   4) kayıt tanimlar.ekranDuzenleri.siparisKarti.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

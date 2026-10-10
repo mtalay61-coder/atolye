@@ -12,7 +12,7 @@
 //      UZUN arka plan (eşik) → geri gelince geçiliyor.
 const fs = require("fs");
 const path = require("path");
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

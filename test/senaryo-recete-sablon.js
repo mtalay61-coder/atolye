@@ -5,7 +5,7 @@
 // Ölçülen: (1) Tanımlar'da şablon: yapıştırıcı; (2) boş reçeteli ürüne "Şablondan reçete oluştur"
 // → her mamul rengine bir satır; (3) ikinci uygulama çift eklemiyor; (4) modelhane Katalog
 // görünümü açılıyor, kapak resmine dokununca büyüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

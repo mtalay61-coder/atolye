@@ -18,7 +18,7 @@
 //   4. (Ayrı oturum) Kolideki mal DÜZ satırla satılırsa fişte uyarı (serbest 0, kolide 8).
 //   5. Paketleme "Elle kapat": seçili koli "Sevk edildi", sevkFisNo boş, sebep + kim saklanır;
 //      stok DEĞİŞMEZ; sipariş kartında "elle kapatıldı".
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

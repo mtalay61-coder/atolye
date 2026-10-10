@@ -6,7 +6,7 @@
 //   2. Yanlış şifre → sebep ekranda (Supabase'in mesajı Türkçeleşmiş).
 //   3. Doğru giriş → veri jetonla yeniden okunur, kullanıcı Tanımlar kaydıyla eşlenir, ikinci
 //      giriş ekranı sorulmaz; üst şeritte "Yerel giriş" rozeti YOK.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
