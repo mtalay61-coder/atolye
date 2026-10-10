@@ -16,7 +16,7 @@
 //   4. Onaylayınca: stok 7→32, cariye Alacak 300 TRY, AS-1 karşılanan 25 (Tamamlandı), fiş no AF-.
 //   5. Satışta da onay çıkıyor ve işaret "-": SAT-2 → "Bot · Siyah: -2 çift", onaylayınca Bot 40 stoğu 5→3.
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

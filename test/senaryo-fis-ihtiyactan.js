@@ -14,7 +14,7 @@
 //   2. Aynı tedarikçinin DİĞER eksikleri de geliyor.
 //   3. BAŞKA tedarikçinin eksiği GELMİYOR — fiş tek cariye kesiliyor, başkasının malını o fişe
 //      koymak borcu yanlış yere yazardı.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

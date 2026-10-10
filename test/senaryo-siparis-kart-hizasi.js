@@ -5,7 +5,7 @@
 // sol kenarı aynı; resim hücresi üste hizalı; uzun renk adı sarılır (yatay taşma yok).
 // v1.628.0 ("Başlıkların rengi değişsin", "Renkler çok baskın, tonunu açalım ve yükseklik sabit olsun"): başlık satırı
 // satışta AÇIK mavi zemin + koyu mavi yazı; başlık satırı yüksekliği her üründe aynı; 900 px tablette tablo taşmıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

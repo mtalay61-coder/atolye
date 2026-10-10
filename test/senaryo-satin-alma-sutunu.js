@@ -6,7 +6,7 @@
 //
 // Sebep: sütun yalnızca REZERVESİZ yoldaki miktarı sayıyordu. Alış siparişi bir satış siparişine
 // rezerveli açıldıysa sütun boş kalıyor, bilgi yalnızca detayda duruyordu.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

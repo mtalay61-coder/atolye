@@ -3,7 +3,7 @@
 // sağdan kesiliyordu. Ölçülen: 390 px genişlikte başlıktaki her alan kabın içinde (sağ kenar taşmıyor) ve yatay
 // kaydırma yok; geniş ekranda cari, tarih, teslim, kod tek satırda (eski düzen). Ayrıca "Fiş ekranlarında da müşteri
 // seçimi aramalı olsun": kasa tahsilat formunda kutuya "ted" yazınca yalnız tedarikçi önerilir, seçilen id kutuda.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 const olc = (sayfa) => sayfa.evaluate(() => {

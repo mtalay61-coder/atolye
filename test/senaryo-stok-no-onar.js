@@ -1,7 +1,7 @@
 // SENARYO — STOK NO ÇAKIŞMASI AÇILIŞTA ONARILIR (6 Ekim, v1.606.0).
 // Kullanıcı: Supabase 409 urunler_stok_no_tekil, 315 deneme. Tohumda iki ürün aynı stok no (7): Bot (eski kimlik) ve
 // Çizme (yeni kimlik). Ölçülen: açılışta Çizme yeni numara alır (sıradaki boş), Bot 7'de kalır, sayaç ilerler. Sayfa hatası yok.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

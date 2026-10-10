@@ -6,7 +6,7 @@
 // Akış AYRI BİR GÜNLÜK TABLOSUNDAN değil, mevcut veriden türetiliyor (cari hareketleri, stok
 // hareketleri, siparişler). Ayrı günlük tutmak her yeni işlem yolunda "oraya da yaz"ı hatırlamayı
 // gerektirirdi; bu projede tam olarak o tür ikili yazımlardan hata çıktı.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

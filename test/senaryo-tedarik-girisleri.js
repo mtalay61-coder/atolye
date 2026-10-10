@@ -6,7 +6,7 @@
 // Aynı ürün/renk/bedende iki giriş: 100 satın alma (AF-…), 3 üretim (10007-Kesim-2-Giriş). 103 çift
 // sevk edildi. Ölçülen: sevk satırı iki kaynağı MİKTARIYLA gösteriyor (eskiden hepsi "üretimden");
 // Tedarik Girişleri bölümü iki satır; alış satırına tıklayınca Fişler'de o fiş açılıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

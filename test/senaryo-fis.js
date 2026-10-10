@@ -3,7 +3,7 @@
 // Bu bir "altın çıktı" testi: senaryo çalıştırılır, ortaya çıkan stok ve cari kayıtları
 // normalleştirilip (rastgele kimlikler ve zaman damgaları sabitlenir) basılır. Refaktörden önce
 // ve sonra alınan çıktılar BİREBİR aynı olmalı; fark varsa refaktör davranışı değiştirmiştir.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 // Rastgele değerleri sabitler: hrk_xxx kimlikleri sırayla numaralanır, ISO zaman damgaları

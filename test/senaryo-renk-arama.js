@@ -6,7 +6,7 @@
 //   1. Kutuya yazınca liste süzülüyor; kelime başı eşleşenler önce ("siy" → Siyah Süet, Siyah Deri).
 //   2. Enter ilk sonucu ekliyor; kutu boşalıyor, eklenen renk listeden düşüyor.
 //   3. Dokunarak (mousedown) seçim de ekliyor; eşleşme yoksa "eşleşen yok" yazıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

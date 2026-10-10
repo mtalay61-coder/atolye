@@ -5,7 +5,7 @@
 // Ölçülen: (1) toplam aylık sabit gider; (2) hedefe göre çift başı; (3) kalem başına çift başı
 // katkı (şoför 0,20 · muhasebeci 0,50 gibi); (4) gerçekleşen üretime göre çift başı — hedefin
 // altında üretilirse maliyet ARTAR.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

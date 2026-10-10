@@ -8,7 +8,7 @@
 // Ölçülen: (1) Tanımlar'da kart açılıyor, hazır kartlarla başlanabiliyor; (2) kasa formunda kart
 // karşı taraf olarak seçilebiliyor; (3) karşı taraf seçilmeden kayıt REDDEDİLİYOR; (4) kaydedilen
 // hareket kartın adını ve GRUBUNU taşıyor (kârlılık raporu bu gruplardan çıkacak).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

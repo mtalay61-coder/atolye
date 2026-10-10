@@ -16,7 +16,7 @@
 //   3. C: alan VAR, BOŞ, miktar kutusu yok (seçim isteniyor); "Siyah" yazılınca kutu açılıyor.
 //   4. Fiş kaydedilince her ürün kendi varyantına ekleniyor (A "Standart"a, çift satır açılmadan).
 // (27 Eylül, yeniden yazıldı — dosya taşımada kaybolmuştu)
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

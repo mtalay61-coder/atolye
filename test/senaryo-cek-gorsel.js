@@ -9,7 +9,7 @@
 //            uygulamanın kayıt başına 5 MB sınırına çek başına iki fotoğrafla hızla çarpmaktı.
 //
 // `tabloYaz`ın dördüncü parametresi bunu mümkün kılıyor: buluta tam liste, yerele boş liste.
-const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

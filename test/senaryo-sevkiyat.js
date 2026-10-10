@@ -7,7 +7,7 @@
 //   2. Fiş kaydedilince koli "Sevk edildi"ye geçiyor ve hangi fişle çıktığını saklıyor.
 //   3. FİŞ GERİ ALININCA koli yeniden "Hazır" oluyor — değişmez kuralın gereği. Aksi halde mal
 //      depoya döner ama koli sevk edilmiş görünür ve bir daha okutulamazdı.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

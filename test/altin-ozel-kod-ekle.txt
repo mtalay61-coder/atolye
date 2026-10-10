@@ -1,8 +1,9 @@
 {
  "alanKaydi": {
   "ad": "Kalınlık",
-  "kapsamAd": "Deri",
-  "kapsamTuru": "malzeme",
+  "kapsamlar": [
+   "malzeme|Deri"
+  ],
   "kimlikVar": true
  },
  "bosDurum": {
@@ -17,7 +18,7 @@
  },
  "karttanEklenen": {
   "ad": "Sezon Notu",
-  "kapsamTuru": "genel",
+  "kapsamlar": [],
   "kimlikVar": true
  }
 }

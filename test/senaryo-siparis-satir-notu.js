@@ -3,7 +3,7 @@
 // olduğunu belli eden renk olsun". Ölçülen: notlu renk satırı sarı zeminli + "N not" rozetli, notsuz satır düz; başta not
 // metni kapalı; satıra tıklayınca altında not satırı (proses etiketli) açılır; tekrar tıklayınca kapanır.
 // Ayrıca cari kartı (aynı sürüm): kalem iletişim alanlarını mor şeride, adres/vergi alanlarını Bilgiler sekmesine açar.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

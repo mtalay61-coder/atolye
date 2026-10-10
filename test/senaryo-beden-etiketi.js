@@ -7,7 +7,7 @@
 // Yazdırma gerçek yazıcıya gitmez: `etiketYazdir` gizli bir iframe'e sayfayı yazıp `print()` çağırır.
 // Senaryo `print`i devre dışı bırakıp iframe'in İÇERİĞİNİ ölçüyor: kaç etiket çıktı, üstünde ne var,
 // barkodu olmayan varyant basıldı mı.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -10,7 +10,7 @@
 //      "2 üretim" + Yazdır/PDF/WhatsApp; siparişte kalemler bu üretimlere bağlı;
 //   3) Taba + Beyaz → Tedarikçi A → Alış siparişine gönder (ayrı ayrı) → İKİ alış siparişi, ikisi de Tedarikçi A;
 //      sonuç şeridi "2 alış siparişi", WhatsApp tedarikçi numarasıyla.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

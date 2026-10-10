@@ -8,7 +8,7 @@
 //   2. Yarım yazım kutudan çıkınca ilk eşleşene oturuyor; listede olmayan yazım temizleniyor ve
 //      "Model Rengi Olarak Ekle" kapalı kalıyor.
 //   3. Üç pozisyon seçilince model rengi oluşuyor ve ürüne ekleniyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

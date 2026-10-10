@@ -12,7 +12,7 @@
 //   3. Poşet REZERVASYONDAN da düşüyor (normal proses gibi).
 //   4. İki ara prosesin işçiliği ayrı fişlerle ara proses carisine yazılıyor.
 //   5. Ürün kartı reçetesinde Kesim'in altında iki ara proses listeli; Temizleme grubu "Ara proses".
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

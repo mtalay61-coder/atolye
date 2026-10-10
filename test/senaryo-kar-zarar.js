@@ -7,7 +7,7 @@
 // Ölçülen: (1) rakamlar doğru toplanıyor; (2) gider dökümü gruplara ayrılıyor ve kart adları
 // görünüyor; (3) dönem süzgeci çalışıyor (geçen ayda bu ayın hareketleri yok); (4) gider kartı
 // tanımlı değilse uyarı çıkıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

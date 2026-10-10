@@ -3,7 +3,7 @@
 // Ölçülen: Tanımlar > Renk & Beden > Beden listesinde ad düzenlenebiliyor; değişiklik ürün
 // varyantı, reçete, stok hareketi, sipariş kalemi, üretim beden dağılımı, koli kalemi ve asorti
 // oranında da hizalanıyor (aksi halde "41" ile "41B" iki ayrı beden olur, eşleşme kopar).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

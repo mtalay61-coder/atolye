@@ -6,7 +6,7 @@
 //   1. 40 kalemlik raporda tablo kendi kutusunda kayar; kutu 300 px aşağı kaydırılınca başlık satırı kutunun üstünde kalır.
 //   2. Arama satırı başlıkla aynı sütun sırasında (resim sütunu varken kayma yok) ve sayı sütunlarında da kutu var.
 //   3. Tarih "01.01.2026" + Ürün "22900" + Renk "kırmızı" → yalnız o kalem; Kalan ">0" → teslimi tamamlanmamışlar.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

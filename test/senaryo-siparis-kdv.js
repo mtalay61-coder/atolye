@@ -10,7 +10,7 @@
 //   4. Kaydedince Taba kaleminde kdvOrani 20, eski kalemde yok.
 //   5. Kartta "Satış Fişi Oluştur" → Siparişten seç → "Kolisiz kalanı ekle" → kaydet: cariye Siyah %10,
 //      Taba %20 ile KDV dahil yazılır.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

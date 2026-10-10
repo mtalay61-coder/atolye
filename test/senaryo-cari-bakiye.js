@@ -6,7 +6,7 @@
 //
 // Ölçülen: tek para birimli caride doğru sembol, KARIŞIK para birimli caride sayıların
 // toplanmayıp ayrı ayrı yazılması.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

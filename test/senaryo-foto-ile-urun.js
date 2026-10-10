@@ -20,7 +20,7 @@
 //   4. Kodlar atandıktan sonra aynı fotoğraf ürünü normal sorgulama yolundan getiriyor
 //      (`data-depo-okut-sonuc="fm1"`).
 const { chromium } = require("playwright");
-const { uygulamaAc, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

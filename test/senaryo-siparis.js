@@ -1,6 +1,6 @@
 // SENARYO — Alış siparişinden TESLİM ALMA (`siparisGerceklestir` yolu).
 // Kullanımı senaryo-fis.js ile aynı: çalıştır, çıktıyı refaktör öncesi/sonrası karşılaştır.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

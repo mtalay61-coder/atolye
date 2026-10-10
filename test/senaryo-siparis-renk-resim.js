@@ -8,7 +8,7 @@
 //   2. Yazdıkça daralıyor; seçilen rengin resmi kutunun içinde; ölçü matrisi açılıyor.
 //   3. Yarım yazım seçimi boşaltıyor (matris kapanıyor), kutudan çıkınca ilk eşleşene oturuyor.
 //   4. "+ Renk" paneli: pozisyon yazarak seçiliyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

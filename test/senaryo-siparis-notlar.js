@@ -2,7 +2,7 @@
 // Kullanıcı: "Sipariş notları görmemiz lazım, siparişte üzerine tıklayınca açılır not şeklinde olsun."
 // Ölçülen: listede notlu siparişte "3 not" rozeti, notsuzda yok; kartın mor şeridinde "Notlar (3)"; tıklayınca pencerede
 // genel not + iki renk notu (proses etiketli), aynı notun ölçü tekrarları tek; dışına tıklayınca kapanır.
-const { uygulamaAc, modulAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, modulAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

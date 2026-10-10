@@ -5,7 +5,7 @@
 // Stok hareketi fiyat TAŞIMAZ; fiyat aynı fiş numarasına yazılmış CARİ hareketinden okunuyor.
 // Cari karşılığı olmayan fişlerde (üretim çıkışı/girişi) fiyat sütunları hiç çıkmamalı — o fişin
 // bir tutarı yok, "0 ₺" yazmak yanlış olurdu.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { alisSiparisindenTeslimEt } = require("./alis-teslim-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

@@ -131,3 +131,126 @@ function AramaTemizle({ deger, onTemizle, veri }) {
         cursor: "pointer", color: "var(--erp-text-3)", fontSize: 18, lineHeight: 1, padding: "2px 6px" }}>×</button>
   );
 }
+
+// SAĞ TIK + UZUN BASMA (v1.636.0 — kullanıcı: "sol tıklama olsun, ekranda gizlemek istediğimiz menüler özellikler sağ
+// tıklama ile yapalım"; önce sipariş kartı ve listesi, gizlenen düğmeler HEP gizli). Masaüstünde sağ tık, tablette/telefonda
+// sağ tık olmadığı için UZUN BASMA (550 ms, parmak kaymadan) aynı menüyü açar. Sol tık davranışı değişmez.
+// Kullanım: <div {...sagTikIsleyicileri((x, y) => menuyuAc(x, y))}> — `etkin` false ise hiçbir işleyici eklenmez
+// (tarayıcının kendi sağ tık menüsü kalır).
+function sagTikIsleyicileri(ac, etkin = true) {
+  if (!etkin || !ac) return {};
+  let zamanlayici = null;
+  let baslangic = null;
+  const iptal = () => { if (zamanlayici) clearTimeout(zamanlayici); zamanlayici = null; };
+  return {
+    onContextMenu: (e) => { e.preventDefault(); e.stopPropagation(); ac(e.clientX, e.clientY); },
+    onTouchStart: (e) => {
+      const t = e.touches && e.touches[0]; if (!t) return;
+      baslangic = { x: t.clientX, y: t.clientY };
+      iptal();
+      zamanlayici = setTimeout(() => { zamanlayici = null; ac(baslangic.x, baslangic.y); }, 550);
+    },
+    onTouchMove: (e) => {
+      const t = e.touches && e.touches[0];
+      if (t && baslangic && Math.hypot(t.clientX - baslangic.x, t.clientY - baslangic.y) > 10) iptal();
+    },
+    onTouchEnd: iptal,
+    onTouchCancel: iptal,
+  };
+}
+
+// SAYFA ÖLÇEĞİ (v1.636.0). Boyut ayarı `html { zoom }` ile uygulanıyor (386); `getBoundingClientRect`/`clientX` görünen
+// (büyütülmüş) pikseli verir ama `position: fixed` öğenin left/top değeri yeniden zoom'la çarpılır. Bölmeden konumlanan
+// açılır pencere ölçek kadar sağa-aşağı kayıyordu (kullanıcı: "reçete renk eşleştirmesinde renk seçimi sağ alta kayıyor").
+// Konumlandırmadan ÖNCE koordinatlar buna bölünür.
+function sayfaOlcegi() {
+  try { return parseFloat(getComputedStyle(document.documentElement).zoom) || 1; } catch (e) { return 1; }
+}
+
+// YATAY KAYDIRMA KUTUSU (v1.636.0 — kullanıcı: "ekranın en sağındaki renk eşleşmelerini eşleyemiyorum, hiç görünmüyor").
+// Geniş reçete matrisi kendi kutusunda yatay kayıyordu ama ince kaydırma çubuğu tablonun altında fark edilmiyor, farede
+// yatay tekerlek de yok. Taşma varken iki yanda ◀ ▶ düğmesi (kutunun 3/4'ü kadar kaydırır) ve kalın çubuk (`.yatay-kutu`).
+// Taşma yoksa düğme çizilmez. Boyut değişimini ResizeObserver izler.
+function YatayKaydirma({ children, style, veri }) {
+  const ref = React.useRef(null);
+  const [d, setD] = useState({ sol: false, sag: false });
+  const olc = useCallback(() => {
+    const k = ref.current; if (!k) return;
+    const sol = k.scrollLeft > 2, sag = k.scrollLeft + k.clientWidth < k.scrollWidth - 2;
+    setD((o) => (o.sol === sol && o.sag === sag ? o : { sol, sag }));
+  }, []);
+  useEffect(() => {
+    const k = ref.current; if (!k) return undefined;
+    olc();
+    const g = typeof ResizeObserver !== "undefined" ? new ResizeObserver(olc) : null;
+    if (g) { g.observe(k); if (k.firstElementChild) g.observe(k.firstElementChild); }
+    return () => { if (g) g.disconnect(); };
+  }, [olc]);
+  const kaydir = (yon) => { const k = ref.current; if (k) k.scrollBy({ left: yon * Math.max(120, k.clientWidth * 0.75), behavior: "smooth" }); };
+  const dugme = (yon) => (
+    <button type="button" data-yatay-kaydir={yon > 0 ? "sag" : "sol"} onClick={() => kaydir(yon)}
+      title={yon > 0 ? "Sağdaki sütunlar" : "Soldaki sütunlar"}
+      style={{ position: "absolute", top: "50%", transform: "translateY(-50%)", [yon > 0 ? "right" : "left"]: 2, zIndex: 3,
+        width: 28, height: 44, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "rgba(255,255,255,.95)",
+        boxShadow: "0 2px 8px rgba(34,27,20,.18)", cursor: "pointer", fontSize: 14, fontWeight: 800, color: "var(--erp-text)" }}>
+      {yon > 0 ? "▶" : "◀"}
+    </button>
+  );
+  return (
+    <div style={{ position: "relative", maxWidth: "100%", ...(style || {}) }} data-yatay-kutu={veri || "1"}>
+      <div ref={ref} className="yatay-kutu" onScroll={olc} style={{ overflowX: "auto", maxWidth: "100%" }}>{children}</div>
+      {d.sol && dugme(-1)}
+      {d.sag && dugme(1)}
+    </div>
+  );
+}
+
+// ORTAK SAĞ TIK MENÜSÜ (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"). Sipariş kartındaki menünün genel
+// hâli: `konum` ({x, y} görünen piksel, sağ tıktan) verilince açılır; `ogeler` listesinden çizilir:
+//   { k, etiket, ikon (lucide bileşeni), renk, onClick, gizli, pasif, baslik, veri } — `ayrac: true` ayraç çizer.
+// `veri`: öğeye eklenecek data- öznitelikleri (eski düğmenin işareti korunsun diye, ör. { "data-fis-fatura": no }).
+// Konum sayfa ölçeğine bölünür (zoom, bkz. sayfaOlcegi) ve ekrandan taşmaz. Dışına tıklamak / sağ tıklamak / Esc kapatır.
+// Seçilen öğe önce menüyü kapatır sonra işini yapar (onay pencereleri menünün altında kalmasın).
+// İşaretler: menü `data-sag-tik-menusu={veri}`, öğe `data-sag-tik={k}` — testler buradan tıklar.
+function SagTikMenusu({ konum, baslik, ogeler, onKapat, veri, genislik = 240 }) {
+  useEffect(() => {
+    if (!konum) return undefined;
+    const tus = (e) => { if (e.key === "Escape") onKapat(); };
+    window.addEventListener("keydown", tus);
+    return () => window.removeEventListener("keydown", tus);
+  }, [konum, onKapat]);
+  if (!konum) return null;
+  const gorunen = (ogeler || []).filter((o) => o && !o.gizli);
+  // Arka arkaya / başta / sonda kalan ayraçlar atılır.
+  const temiz = gorunen.filter((o, i) => !o.ayrac || (i > 0 && i < gorunen.length - 1 && !gorunen[i - 1].ayrac));
+  const o = sayfaOlcegi();
+  const W = window.innerWidth / o, H = window.innerHeight / o;
+  const yukseklik = 34 + temiz.reduce((t, x) => t + (x.ayrac ? 5 : 35), 0);
+  const x = Math.max(8, Math.min(konum.x / o, W - genislik - 8));
+  const y = Math.max(8, Math.min(konum.y / o, H - yukseklik - 8));
+  const ogeStil = { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", textAlign: "left", cursor: "pointer", fontSize: 13 };
+  return createPortal(
+    <div data-sag-tik-perde="1" onClick={onKapat} onContextMenu={(e) => { e.preventDefault(); onKapat(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 3500 }}>
+      <div data-sag-tik-menusu={veri || "1"} onClick={(e) => e.stopPropagation()} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        style={{ position: "fixed", left: x, top: y, width: genislik, maxHeight: H - 16, overflowY: "auto", background: "#fff", border: "1px solid var(--erp-line)",
+          borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)" }}>
+        {baslik && (
+          <div className="mono" style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 4px", borderBottom: "1px solid var(--erp-line-soft)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {baslik}
+          </div>
+        )}
+        {temiz.map((og, i) => og.ayrac ? (
+          <div key={`a${i}`} style={{ height: 1, background: "var(--erp-line-soft)", margin: "2px 0" }} />
+        ) : (
+          <button key={og.k} type="button" data-sag-tik={og.k} disabled={!!og.pasif} title={og.baslik || undefined} {...(og.veri || {})}
+            style={{ ...ogeStil, color: og.pasif ? "var(--erp-text-3)" : (og.renk || "var(--erp-text)"), cursor: og.pasif ? "not-allowed" : "pointer" }}
+            onClick={() => { if (og.pasif) return; onKapat(); og.onClick && og.onClick(); }}>
+            {og.ikon ? React.createElement(og.ikon, { size: 15 }) : <span style={{ width: 15 }} />} {og.etiket}
+          </button>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}

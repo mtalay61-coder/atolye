@@ -6,7 +6,7 @@
 //
 // Ölçülen: (1) üç para birimi de kartta; (2) TL başta (ana para birimi); (3) tek para birimi varsa
 // alt satır eski bilgiyi (cari sayısı) göstermeye devam ediyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

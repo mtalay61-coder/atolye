@@ -4,7 +4,7 @@
 // Ölçülen: Raporlar sekmesi var; kurucuda gruplama seçilince tablo gruplu ve toplam satırı doğru;
 // rapor adıyla KAYDEDİLİYOR ve yenilemeden sonra kayıtlı rapor listede duruyor, açılınca aynı
 // tabloyu veriyor (tanım saklanıyor, veri değil).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

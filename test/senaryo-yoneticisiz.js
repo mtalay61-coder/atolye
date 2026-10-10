@@ -2,7 +2,7 @@
 // eklenen tek kullanıcıyla giriş açıldı, kısıtlı girdi, Tanımlar'a giremediği için düzeltemedi).
 // Ölçülen: 1) listede yönetici yokken eklenen ilk kullanıcı Yönetici olur; 2) yöneticisiz listeyle
 // giriş açılamaz; 3) yine de yöneticisiz listeyle giriş yapılmışsa giren kişi Yönetici yapılır.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { bulutGirisRotasi } = require("./giris-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

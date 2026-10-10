@@ -6,7 +6,7 @@
 // düşüyordu — iki ekran aynı olayı ters kaydediyordu.
 //
 // KURAL (tek yerde, `hareketYonu`): kasa GİRİŞ = tahsilat → "Alacak"; kasa ÇIKIŞ = ödeme → "Borç".
-const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

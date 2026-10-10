@@ -7,7 +7,7 @@
 //
 // Ölçülen: (1) boyut ürününde çipler var, miktar kutusu YOK; (2) çipe dokununca o ölçünün kutusu
 // açılıyor; (3) beden ürününde eski davranış — bütün kutular açık.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

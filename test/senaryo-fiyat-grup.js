@@ -4,7 +4,7 @@
 //   1. Sağ alt "Tümü tek fiyat" + USD + 0,0041 → bütün renklere renk kuralı 0.0041 USD.
 //   2. "Süetler" grubu (Kahve/Siyah/Taba Süet) + 0,0051 → yalnız üyeler 0.0051; grup ürüne yazılır.
 //   3. Gruba Bej Deri eklenince grubun fiyatı ona da yazılır.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 (async () => {
   const t = { ...TOHUM };

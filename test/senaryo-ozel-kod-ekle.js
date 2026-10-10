@@ -7,7 +7,7 @@
 //   1. Blok HER ZAMAN görünüyor — hiç alan tanımlanmamışken bile. Önceden boşsa hiç çizilmiyordu
 //      ve özellik yok sanılıyordu; yeni bir kurulumda tam olarak bu oluyor.
 //   2. Buradan eklenen alan SEÇİLİ TİPE ait oluyor; tip seçilmemişse Genel.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -62,8 +62,8 @@ async function calistir() {
   const eklenen = ((tanimSonrasi || {}).ozelKodAlanlari || [])[0] || {};
   const alanKaydi = {
     ad: eklenen.ad,
-    kapsamTuru: eklenen.kapsamTuru,
-    kapsamAd: eklenen.kapsamAd,
+    // v1.636.0: kapsam `kapsamlar` dizisinde ("malzeme|Deri"); boş dizi = Genel.
+    kapsamlar: eklenen.kapsamlar,
     // Kimlik atanmış olmalı: değerler ada değil KİMLİĞE bağlanıyor.
     kimlikVar: !!eklenen.id,
   };
@@ -111,7 +111,7 @@ async function calistir() {
   await tarayici.close();
   return {
     hatalar, bosDurum, alanKaydi, formdaGorundu, karttaEkleme,
-    karttanEklenen: { ad: karttanEklenen.ad, kapsamTuru: karttanEklenen.kapsamTuru, kimlikVar: !!karttanEklenen.id },
+    karttanEklenen: { ad: karttanEklenen.ad, kapsamlar: karttanEklenen.kapsamlar, kimlikVar: !!karttanEklenen.id },
   };
 }
 

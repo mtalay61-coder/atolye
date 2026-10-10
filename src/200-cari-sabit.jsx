@@ -13,6 +13,20 @@ const HAREKET_TIPI_IKON = { "Tahsilat": ArrowDownCircle, "Ödeme": ArrowUpCircle
   "Alış": PackageCheck, "Satış": Truck,
   // Fişler ekranının tip çipleri (v1.619.0 — kullanıcı: "Fişler ekranına da simge ekle").
   "Üretim Girişi": PackagePlus, "Üretim Çıkışı": PackageOpen, "İşçilik": Wrench, "Maaş": Wallet, "Diğer": FileText, "Tümü": Layers };
+// CARİ RENGİ (v1.636.0 — kullanıcı, sipariş listesi ekran görüntüsüyle: "müşterileri renklendirelim, gerekirse logo da
+// ekleyelim"). Listede bütün müşteri etiketleri aynı maviydi; göz müşteriyi renginden ayırt edemiyordu. Cari kartında renk
+// seçilebiliyor (`cari.renk`, şema dışı → `ek`); seçilmemişse KİMLİKTEN türetilen sabit bir renk (her açılışta aynı, iki
+// cari çoğunlukla farklı). Palet beyaz yazıyla okunur koyulukta. Logo `cari.resim` (personel fotoğrafıyla aynı alan).
+const CARI_RENK_PALETI = ["#2F6FA8", "#8A3D6B", "#2F7D5B", "#A8552F", "#5B4B9A", "#9A6B12", "#1F7A8C", "#A33A3A", "#4E6B2E", "#6B4E8A", "#B0602A", "#3D5A80"];
+function cariRengi(cari) {
+  if (!cari) return "var(--erp-info)";
+  if (cari.renk && /^#[0-9a-f]{6}$/i.test(cari.renk)) return cari.renk;
+  const k = String(cari.id || cari.unvan || "");
+  let h = 0;
+  for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
+  return CARI_RENK_PALETI[h % CARI_RENK_PALETI.length];
+}
+
 function HareketIkonu({ tip, size = 14 }) {
   const I = HAREKET_TIPI_IKON[tip];
   return I ? <I size={size} strokeWidth={2.4} style={{ flexShrink: 0 }} /> : null;

@@ -11,7 +11,7 @@
 //     yanıtla ESKİ veri döndürse bile ürün listesi yerelden geliyor).
 //  3) Veri Denetimi'nin "siparişte var, stokta yok" bulgusu "Fişten yeniden yaz" ile onarılıyor:
 //     eksik çıkış hareketi fiş numarasıyla yazılıyor, varyant miktarı düşüyor, bulgu kapanıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

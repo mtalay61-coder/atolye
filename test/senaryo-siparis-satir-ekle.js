@@ -12,7 +12,7 @@
 //   3) Kahve satırı yüklendi, 41 elle 6 yapıldı (kalan 1+3=4) → iki kaleme 1 ve 5 (son kalem 2 fazlası, "sipariş
 //      fazlası" işaretli); 40:4 bağlı.
 //   4) Kaydedince siparişte teslim alınan: Siyah 40:2/2 41:1/3; Kahve 40:4/4, 41 bölünmüş kalemler 1/1 ve 5/3.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -62,13 +62,16 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi }) {
   // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
   const [showOdeme, setShowOdeme] = useState(false);
   // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
   // içinde olsun, tıklayınca cari tahsilat ekranı açsın, içinde olduğumuz sipariş no atayarak"). Mor şeritte "İşlemler"
   // düğmesi; şeride SAĞ TIKLAMAK da aynı menüyü imlecin yanında açar. { x, y } (ekran koordinatı) ya da null.
   const [islemMenu, setIslemMenu] = useState(null);
+  // LİSTEDEN SAĞ TIK (v1.636.0): sipariş listesindeki satıra sağ tıklanınca liste kartı açar ve menüyü bu istekle açtırır
+  // ({ x, y, n } — `n` her istekte değişir ki aynı noktaya ikinci sağ tık da menüyü açsın).
+  useEffect(() => { if (disMenuIstegi) setIslemMenu({ x: disMenuIstegi.x, y: disMenuIstegi.y }); }, [disMenuIstegi && disMenuIstegi.n]);
   // NOTLAR PENCERESİ (v1.621.0 — kullanıcı: "Sipariş notları görmemiz lazım, siparişte üzerine tıklayınca açılır not şeklinde
   // olsun"). Mor şeritte "Notlar (n)"; tıklayınca siparişin genel notu + model/renk notları (proses etiketli) tek pencerede.
   const [notPenceresi, setNotPenceresi] = useState(null);
@@ -242,7 +245,9 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
         role={baslangicAcik ? undefined : "button"}
         tabIndex={baslangicAcik ? undefined : 0}
         onClick={baslangicAcik ? undefined : () => setOpen((v) => !v)}
-        onContextMenu={open && onOdemeGir && cari ? (e) => { e.preventDefault(); setIslemMenu({ x: e.clientX, y: e.clientY }); } : undefined}
+        // SAĞ TIK / UZUN BASMA = İŞLEMLER MENÜSÜ (v1.636.0). Yazdır/PDF/WhatsApp/E-posta, tahsilat ve iptal/sil şeritte düğme
+        // olarak durmuyor (kullanıcı: "ekranda gizlemek istediğimiz menüler sağ tıklama ile"); hepsi bu menüde.
+        {...sagTikIsleyicileri((x, y) => setIslemMenu({ x, y }), open)}
         style={{
           width: "100%", display: "flex", alignItems: "center", gap: 10,
           // Liste içinde bu şerit yalnızca iki küçük kontrol taşır; 14px'lik dolgu boş bir bant
@@ -381,10 +386,12 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   başlık kutuları açıyor, "+" / "Ürün Ekle" ise formu tam ekran kartın ARKASINDA
                   açıyordu. Artık tek yol: form önde açılıyor, girilmiş kalemler altta düzenlenebilir
                   (planlanmış/teslim alınmış olanlar kilitli), ürün ekleme de aynı formda. */}
+              {/* SİL ŞERİTTEN KALKTI (v1.636.0): sağ tık menüsünde "İptal et / Sil" (aynı onaydan geçer). Düzenle sık
+                  kullanıldığı için şeritte kalıyor. Kart kapalıyken (liste başlığı) Sil eskisi gibi burada. */}
               <KayitEylemleri
                 onDuzenle={open && onDuzenle ? () => onDuzenle(siparis.id) : undefined}
                 duzenleBaslik="Düzenle — sipariş formunda açılır: başlık, ürün ekleme, bekleyen kalemlerde ürün/renk/miktar/fiyat"
-                onSil={() => { setOpen(true); setSiparisSilOnayGoster(true); }}
+                onSil={open ? undefined : () => { setOpen(true); setSiparisSilOnayGoster(true); }}
                 silBaslik={siparis.durum === "İptal" ? "Siparişi sil" : "Siparişi iptal et / sil — işlem görmüşse iptal edilir, fişler kalır"}
               />
             </span>
@@ -392,22 +399,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           {/* Yazdır ve WhatsApp SALT OKUNURDA DA var (listeden açılan kart): çıktı almak düzenleme değil. */}
           {open && (
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              {/* YAZDIR + WHATSAPP (kullanıcı, 13 Eylül). Dosya adı "SAT-1002 - Cari Adı"; WhatsApp
-                  cari kartındaki numaraya sipariş özetiyle açılır (bkz. siparisWhatsappBaglantisi). */}
-              {/* PAYLAŞ ŞERİDİ (13 Eylül): PDF · WhatsApp · E-posta — her belgede aynı bileşen. */}
-              {(() => {
-                const cariK = cariler.find((c) => c.id === siparis.cariId);
-                return (
-                  <PaylasSeridi
-                    govdeHTML={siparisCiktisiHTML(siparis, cariK, firmaBilgileri, stok)}
-                    dosyaAdi={`${siparis.siparisNo || "siparis"} - ${(cariK && cariK.unvan) || "cari"}`}
-                    cari={cariK}
-                    konu={`${siparis.tip === "Alış" ? "Alış siparişi" : "Sipariş"} ${siparis.siparisNo || ""} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim()}
-                    ozet={siparisMetinOzeti(siparis, cariK)}
-                    showToast={showToast} firmaBilgileri={firmaBilgileri}
-                  />
-                );
-              })()}
+              {/* YAZDIR · PDF · WHATSAPP · E-POSTA ŞERİTTEN KALKTI (v1.636.0) — sağ tık menüsünde (aşağıda, `islemMenu`). */}
               {(() => {
                 const sayi = siparisNotSayisi(siparis);
                 if (!sayi) return null;
@@ -420,14 +412,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                   </button>
                 );
               })()}
-              {onOdemeGir && cari && (
-                <button type="button" className="btn-ghost" data-siparis-islemler="1"
-                  title="İşlemler — tahsilat/ödeme (şeride sağ tıklayarak da açılır)"
-                  style={{ padding: "3px 9px", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 4 }}
-                  onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setIslemMenu((m) => (m ? null : { x: r.left, y: r.bottom + 4 })); }}>
-                  İşlemler <ChevronDown size={12} />
-                </button>
-              )}
+              {/* "İşlemler" DÜĞMESİ KALKTI (v1.636.0): menü yalnız sağ tık / uzun basmayla açılıyor (kullanıcı kararı: "hep gizli"). */}
             </span>
           )}
         </span>
@@ -463,11 +448,12 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
         });
         const notlu = gruplar.map((g) => ({ ...g, notlar: grupNotlari(g.kalemler) })).filter((g) => g.notlar.length);
         const genislik = 360;
-        const x = Math.max(8, Math.min(notPenceresi.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - genislik - 8));
+        const o = sayfaOlcegi();
+        const x = Math.max(8, Math.min(notPenceresi.x / o, (typeof window !== "undefined" ? window.innerWidth : 1200) / o - genislik - 8));
         return (
           <div data-siparis-not-perde="1" onClick={() => setNotPenceresi(null)} style={{ position: "fixed", inset: 0, zIndex: 900 }}>
             <div data-siparis-not-penceresi="1" onClick={(e) => e.stopPropagation()}
-              style={{ position: "fixed", left: x, top: notPenceresi.y, width: genislik, maxWidth: "calc(100vw - 16px)", maxHeight: "70vh", overflowY: "auto",
+              style={{ position: "fixed", left: x, top: notPenceresi.y / o, width: genislik, maxWidth: "calc(100vw - 16px)", maxHeight: "70vh", overflowY: "auto",
                 background: "#FFFBEF", border: "1.5px solid #B7791F", borderRadius: "var(--erp-r-md)", boxShadow: "0 8px 24px rgba(34,27,20,.2)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", borderBottom: "1px solid #EBD9A8", fontSize: 12, fontWeight: 800, color: "#8A5A10" }}>
                 <FileText size={14} /> NOTLAR · {siparis.siparisNo}
@@ -493,34 +479,69 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
           </div>
         );
       })()}
-      {islemMenu && onOdemeGir && cari && (() => {
-        const oz = siparisOdemeOzeti(siparis, cari, toplam, toplamPB);
-        const hedef = { cariId: siparis.cariId, tip: oz.beklenenTip, tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
+      {islemMenu && (() => {
+        const oz = cari ? siparisOdemeOzeti(siparis, cari, toplam, toplamPB) : null;
+        const hedef = oz && { cariId: siparis.cariId, tip: oz.beklenenTip, tutar: oz.odemeler.length > 0 ? oz.kalan : toplam,
           paraBirimi: toplamPB || "TRY", siparisId: siparis.id, siparisNo: siparis.siparisNo };
-        const genislik = 230;
-        const x = Math.max(8, Math.min(islemMenu.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - genislik - 8));
+        const genislik = 240;
+        // Tıklama noktası görünen pikselde; `fixed` konum zoom'la çarpıldığı için ölçeğe bölünür (bkz. 350 sayfaOlcegi).
+        const o = sayfaOlcegi();
+        const W = (typeof window !== "undefined" ? window.innerWidth : 1200) / o;
+        const H = (typeof window !== "undefined" ? window.innerHeight : 900) / o;
+        const x = Math.max(8, Math.min(islemMenu.x / o, W - genislik - 8));
+        // Ekranın altına yakın sağ tıkta menü yukarı açılır (yaklaşık yükseklik), kesilmesin.
+        const y = Math.max(8, Math.min(islemMenu.y / o, H - 330));
         const ogeStil = { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", textAlign: "left", cursor: "pointer", fontSize: 13 };
+        const ayrac = <div style={{ height: 1, background: "var(--erp-line-soft)", margin: "2px 0" }} />;
+        const kapat = () => setIslemMenu(null);
+        // PAYLAŞ (v1.636.0): şeritteki PaylasSeridi'nin dört düğmesi — aynı `belgeyiPaylas` yolu, aynı dosya adı/özet.
+        const paylas = (yol) => {
+          kapat();
+          belgeyiPaylas(yol, {
+            govdeHTML: siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok),
+            dosyaAdi: `${siparis.siparisNo || "siparis"} - ${(cari && cari.unvan) || "cari"}`,
+            cari,
+            konu: `${siparis.tip === "Alış" ? "Alış siparişi" : "Sipariş"} ${siparis.siparisNo || ""} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim(),
+            ozet: siparisMetinOzeti(siparis, cari), showToast, firmaBilgileri,
+          });
+        };
+        const numara = whatsappNumarasi((cari && (cari.whatsapp || cari.telefon)) || "");
         return (
-          <div data-siparis-islem-perde="1" onClick={() => setIslemMenu(null)} onContextMenu={(e) => { e.preventDefault(); setIslemMenu(null); }}
+          <div data-siparis-islem-perde="1" onClick={kapat} onContextMenu={(e) => { e.preventDefault(); kapat(); }}
             style={{ position: "fixed", inset: 0, zIndex: 900 }}>
-            <div data-siparis-islem-menusu="1" onClick={(e) => e.stopPropagation()}
-              style={{ position: "fixed", left: x, top: islemMenu.y, width: genislik, background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)", overflow: "hidden" }}>
+            <div data-siparis-islem-menusu="1" onClick={(e) => e.stopPropagation()} onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              style={{ position: "fixed", left: x, top: y, width: genislik, background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", boxShadow: "0 6px 20px rgba(34,27,20,.18)", overflow: "hidden" }}>
               <div className="mono" style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".05em", color: "var(--erp-text-3)", padding: "6px 12px 4px", borderBottom: "1px solid var(--erp-line-soft)" }}>
                 İŞLEMLER · {siparis.siparisNo}
               </div>
-              {/* TEK TAHSİLAT SATIRI (v1.624.1 — kullanıcı: "siparişte tahsilat 2 adet var neden?"). Önce iki satırdı:
-                  "Tahsilat · cari kartında" (cari kartını sipariş no ile açan köprü, v1.615.0) ve "Tahsilat — bu kartta"
-                  (kartın içindeki form, v1.613.0). İkisi de aynı kaydı yazıyor, fark yalnız ekran; kullanıcıya iki ayrı
-                  işlem gibi göründü. Artık tek satır kartın içindeki formu açar; çek/senet ya da vadeli kayıt için cari
-                  kartındaki tam forma geçiş formun içinde ("Çek/senet için cari kartında aç"). Kart formu olmayan yerde
-                  (onOdemeKaydet verilmemiş) aynı satır eskisi gibi cari kartını açar. */}
-              <button type="button" data-siparis-islem="odeme" style={{ ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
-                onClick={() => {
-                  setIslemMenu(null);
-                  if (onOdemeKaydet) { setOpen(true); setShowOdeme(true); } else onOdemeGir(hedef);
-                }}>
-                <HareketIkonu tip={oz.beklenenTip} size={16} /> {oz.beklenenTip} Gir
-              </button>
+              {!saltOkunur && onDuzenle && (
+                <button type="button" data-siparis-islem="duzenle" style={ogeStil} onClick={() => { kapat(); onDuzenle(siparis.id); }}>
+                  <Pencil size={15} /> Düzenle
+                </button>
+              )}
+              {/* TEK TAHSİLAT SATIRI (v1.624.1): kartın içindeki formu açar; kart formu olmayan yerde cari kartını açar. */}
+              {onOdemeGir && cari && (
+                <button type="button" data-siparis-islem="odeme" style={{ ...ogeStil, color: HAREKET_TIPI_RENK[oz.beklenenTip] }}
+                  onClick={() => { kapat(); if (onOdemeKaydet) { setOpen(true); setShowOdeme(true); } else onOdemeGir(hedef); }}>
+                  <HareketIkonu tip={oz.beklenenTip} size={16} /> {oz.beklenenTip} Gir
+                </button>
+              )}
+              {ayrac}
+              <button type="button" data-paylas-yazdir="1" style={ogeStil} onClick={() => paylas("yazdir")}><Printer size={15} /> Yazdır</button>
+              <button type="button" data-paylas-pdf="1" style={ogeStil} onClick={() => paylas("pdf")}><FileText size={15} /> PDF indir</button>
+              <button type="button" data-paylas-whatsapp={numara || "numarasiz"} style={{ ...ogeStil, color: numara ? "#25763D" : undefined }}
+                title={numara ? `WhatsApp'tan PDF gönder: ${cari.whatsapp || cari.telefon}` : "Kartta WhatsApp / telefon yok — kişiyi WhatsApp'ta seçersiniz"}
+                onClick={() => paylas("whatsapp")}><MessageCircle size={15} /> WhatsApp</button>
+              <button type="button" data-paylas-eposta={(cari && cari.eposta) || "adressiz"} style={ogeStil} onClick={() => paylas("eposta")}><Mail size={15} /> E-posta</button>
+              {!saltOkunur && (
+                <>
+                  {ayrac}
+                  <button type="button" data-siparis-islem="sil" style={{ ...ogeStil, color: "var(--erp-warn)" }}
+                    onClick={() => { kapat(); setOpen(true); setSiparisSilOnayGoster(true); }}>
+                    <Trash2 size={15} /> {siparis.durum === "İptal" ? "Siparişi sil" : "İptal et / Sil"}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         );

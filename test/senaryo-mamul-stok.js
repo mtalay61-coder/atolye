@@ -7,7 +7,7 @@
 //   2. Depo ▸ Mamul Stok: yalnız mamul; kategori sekmesi yok; eklenen yeni ürün MAMUL.
 //   4. Sezon/yıl (v1.457.0): sezon yazarak listeden seçiliyor, yıl rakamla ve öneriyle.
 //   3. Şeritten mamul ürünün penceresine dönünce Mamul Stok'a geçiliyor (Stok'ta açık kalmıyor).
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

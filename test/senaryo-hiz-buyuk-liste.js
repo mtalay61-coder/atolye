@@ -7,7 +7,7 @@
 //     gizliyken eklenen veri döndüğünde görünüyor (dondurma, görünür olunca güncel prop'larla çiziyor).
 //  3. Üst menü sığdırma her çizimde değil, boyut değişince ölçülüyor: pencere daralınca menü sıkışıyor
 //     (sik-N sınıfı), genişleyince açılıyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

@@ -3,7 +3,7 @@
 // ORTA beden üzerinden hesaplanıyordu, yazmıyordu. Ölçülen: Bot'ta Siyah + Taba renkleri; Deri Siyah 2 m, Deri Taba 3 m; bedene
 // göre değişen satır (Taban 40: 5, 42: 1). Varsayılan Siyah / orta beden (40); Taba seçilince Deri 3; beden 42 seçilince Taban 1.
 // Her satırda proses sütunu "Kesim".
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

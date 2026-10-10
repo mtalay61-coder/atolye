@@ -2,7 +2,7 @@
 // Kullanıcı: "Katalog şeklinde 3 farklı fiyat göstersin; girilen fiyatlar, katalog fiyatı seçilerek katalogda görünecek
 // fiyatlar çıksın." Ölçülen: genel satış + Toptan $ + Perakende ₺ seçilince kartta ve detayda üçü de; dördüncü seçilemez;
 // müşteri görünümünde alış tipli kaynak gizli; seçim yerel depoda kalıcı. Cariye özel fiyat katalogda yine yok (senaryo-katalog).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -3,7 +3,7 @@
 // Ölçülen: Ürün sekmesinde başlıklar KAPALI başlar (içerik gizli), başlığa dokununca açılır, sayfa yenilenince
 // açık bırakılan başlık açık kalır (cihazda hatırlanır), öbürleri kapalı. Diğer senaryolar `__tanimBasliklariAcik`
 // ile hepsi açık koşuyor; bu senaryo kilidi kaldırıyor (`tanimBasliklariKapali: true`).
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

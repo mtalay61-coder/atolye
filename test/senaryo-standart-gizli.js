@@ -11,7 +11,7 @@
 //      Kalıp satırının renk hücresi BOŞ, Deri'nin rengi "Siyah" DURUYOR.
 //   2. Ölçü sütununun başlığı "Miktar" (Standart değil); tabloda hiç "Standart" geçmiyor.
 //   3. Fiş kaydedilince Kalıp'ın kayıttaki varyantı yine `Standart/Standart` — yalnız gösterim değişti.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

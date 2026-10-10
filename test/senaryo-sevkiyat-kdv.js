@@ -5,7 +5,7 @@
 // oranını (%10) yazıyordu, siparişte seçilen %20 kayboluyordu. Artık 255 sipariş kaleminden alıyor.
 // Kurulum: KDV açık (mamul %10). SAT-9'da 37 bedeni %20 ile, 38 bedeni oransız (eski) kayıtlı; ikisini
 // içeren hazır koli. Ölçülen: fiş penceresindeki oranlar ve cariye yazılan satırlar (37 → %20, 38 → %10).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -11,7 +11,7 @@
 //   1. Kahve Süet → Taba (geçmişten) KIRMIZI uyarılı; Siyah → Siyah (isim) uyarısız.
 //   2. Seçiciye dokununca o satırın uyarısı kalkıyor.
 //   3. Dokunmadan "Reçeteye Ekle": satırlar geçmiş eşleşmeyle yazılıyor (engel yok).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

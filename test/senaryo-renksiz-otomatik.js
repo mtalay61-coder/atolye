@@ -5,7 +5,7 @@
 // yalnız Siyah için. Ölçülen: kart › Reçete açılınca Takviye'nin Taba satırı kendiliğinden Standart ile açılır
 // (Takviye kartında "eşleştir" yok, "Renksiz · bedensiz" notu var); Deri yine turuncu "eşleştir…" (renkli, karar
 // kullanıcının); "Hammaddesiz proses ekle" satırı aday yokken de görünür. Sayfa hatası yok.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

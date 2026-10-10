@@ -4,7 +4,7 @@
 // Eskiden yedekte muhasebe (kasa/banka/çek) ve koliler yoktu, dosyadan geri yükleme de yoktu.
 // Ölçülen: indirilen JSON'da bütün bölümler var; veriler silindikten sonra dosya geri yüklenince
 // stok, cari, sipariş, muhasebe (çek) ve koliler yerine geliyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 const fs = require("fs");

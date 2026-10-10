@@ -3,7 +3,7 @@
 // hesapladı; üretimdeki farkları hesaplarken gerçekleşen üretimden alsın, silinenleri almasın."
 // Ölçülen: Bot'ta Deri Siyah için iki ölçüm — 1001 (tohumda var) +0,3 ve 9999 (silinmiş) +0,5. Maliyet'te yalnız 1001
 // satırı; sonra 1001 üretimi silinince tablo kalkıyor ve mamuldeki ölçüm kaydı temizleniyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -50,7 +50,7 @@ async function calistir() {
   await sayfa.waitForTimeout(800);
   await sayfa.getByText("1001", { exact: true }).last().click();
   await sayfa.waitForTimeout(800);
-  await sayfa.locator("[data-uretim-sil]:visible").first().click();
+  await sagTikSec(sayfa, "[data-uretim-kart-serit]", "sil");   // v1.636.0: sil sağ tık menüsünde
   await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Evet, Sil/.test(x.textContent.trim()) && x.offsetParent); if (b) b.click(); });
   await sayfa.waitForTimeout(1200);

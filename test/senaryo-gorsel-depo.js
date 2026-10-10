@@ -8,7 +8,7 @@
 //   1. `stok:items` görselsiz yazılıyor (asıl kazanç).
 //   2. Görseller ayrı anahtarlarda ve ürüne geri BİRLEŞİYOR — ekranda görünüyorlar.
 //   3. Yeniden yüklemede kaybolmuyorlar.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -46,11 +46,8 @@ async function calistir() {
   // KAYDETMEYİ TETİKLE. Ayrım yalnızca `saveStok` çalışınca oluşuyor; açılışta okunan hâl
   // henüz eski biçimde. Ürünü pasife almak en kısa ve yan etkisi en az olan yazma yolu
   // (kayıt, stok ve geçmiş durur; yalnız yeni işlemlerde seçilemez).
-  await sayfa.evaluate(() => {
-    const b = [...document.querySelectorAll("button")]
-      .find((x) => /kullan\u0131mdan kald\u0131r/i.test(x.title || ""));
-    if (b) b.click();
-  });
+  // v1.636.0: pasife al ikonu kart şeridinden sağ tık menüsüne taşındı.
+  await sagTikSec(sayfa, '[data-urun-kart-serit="Bot"]', "pasif");
   await sayfa.waitForTimeout(1500);
 
   const olcum = await sayfa.evaluate(() => {

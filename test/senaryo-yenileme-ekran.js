@@ -7,7 +7,7 @@
 //   1. Açık modül sekmeleri, etkin sekme ve açık sipariş penceresi yenilemeden sonra geri geliyor.
 //   2. Veri yenilemede buluttan/depodan YENİDEN okunuyor (pencere güncel kaydı gösteriyor).
 //   3. Kaydı olmayan pencere ve kopya taşıyan pencere türü (reçete) geri getirilmiyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

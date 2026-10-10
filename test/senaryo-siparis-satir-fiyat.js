@@ -8,7 +8,7 @@
 //   1) aynı fiyatlı satır (3 beden, 0 ₺) → 550 → kaydet → üç bedenin hepsi 550;
 //   2) fiyatları farklı satır (0 / 550) → "farklı" kutusuna 500 → kaydet → iki beden de 500;
 //   3) Taba satırı "satırı sil" düğmesiyle iki bedeniyle birlikte çıkıyor (v1.515.0).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

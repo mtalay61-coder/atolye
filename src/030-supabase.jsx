@@ -171,10 +171,6 @@ function surumeOtomatikGec(v, mevcutSurum) {
   return true;
 }
 
-function yayinlananSurumuYaz(veri) {
-  return tekilYaz("surum:data", "surum", veri);
-}
-
 // "1.279.0" > "1.278.0" — sayı sayı karşılaştırma. Metin karşılaştırması "1.9" ile "1.10"u ters
 // sıralardı; sürüm numaraları ikinci haneyi geçtiğinde bu kesin bir hata olurdu.
 function surumDahaYeniMi(aday, mevcut) {

@@ -5,7 +5,7 @@
 // ÖNCE: iade, çıkışla AYNI fiş numarasını taşıyordu. Fiş listesinde tek satır ve NET görünüyordu
 // (-168); +8'lik iade hiçbir fişte ayrı görünmüyordu.
 // ŞİMDİ: iade kendi fişinde (`…-İade`), fiş listesinde ayrı satır. Geri alma da onu tanıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

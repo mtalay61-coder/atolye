@@ -6,7 +6,7 @@
 // Üretim 41 bedenden 25 çift, stoğa eklenmiş. "Getir" ile üretim no okutulup 8'li koli kuruluyor:
 // 1. koliden sonra kalan 17, 2.'den sonra 9, 3.'ten sonra 1; 4. koli (8) REDDEDİLİR, kalan 1'lik
 // koli kabul edilir ve beden listeden düşer.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -8,7 +8,7 @@
 //   1. Özetin altında üretimdeki mal: 750 ₺ = hammadde 1.080 + işçilik 350 (ödenen 60 · ödenmemiş 290)
 //      − bitmiş mala aktarılan 680.
 //   2. "Stok Değeri" raporunda Bot (4 çift, hammadde 480 + işçilik 200) ve üretim satırı.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -5,7 +5,7 @@
 // "Fikir"; (3) künye alanları (kalıp, taban) kaydediliyor; (4) aşama değişince geçmişe yazılıyor;
 // (5) "Koleksiyona Al" modeli MAMUL ÜRÜN KARTINA dönüştürüyor — teknik not taşınıyor, model kaydı
 // silinmiyor, "Koleksiyonda" aşamasına geçip ürünün kimliğini taşıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

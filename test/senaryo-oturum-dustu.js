@@ -7,7 +7,7 @@
 // Ölçülen: 42501/anon hatasıyla bekleyen bir yazma varken (1) üstte "Bulut oturumunuz kapandı"
 // şeridi çıkıyor, (2) "Yeniden giriş yap" düğmesi var, (3) basınca giriş ekranı "oturumunuz
 // kapandı, hiçbir şey kaybolmadı" açıklamasıyla açılıyor. Bekleyen yazma defteri tohumdan.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

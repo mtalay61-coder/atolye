@@ -20,7 +20,7 @@
   "filtre:tam"
  ],
  "ustSerit": {
-  "altSatir": "Genel: 0 ₺Resmi: 0 ₺ Ekstre Yazdır (PDF) — Genel Pasife Al",
+  "altSatir": "Genel: 0 ₺Resmi: 0 ₺",
   "duzenIkonu": true,
   "kartDuzeniYok": true
  }

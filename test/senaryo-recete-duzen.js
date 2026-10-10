@@ -6,7 +6,7 @@
 //   2) Deri kartı aşağı → kart sırası [Astar, Deri]; reçete dizisinde Astar satırları önce.
 //   3) "Hammaddesiz proses ekle: Dikim" → DİKİM grubu rozetle; receteEkProsesler ["Dikim"]; × ile kalkıyor.
 //   4) Astar'ın kırmızı (geçmişten) hücresinde ✓ → renkGecmisten düştü, renkOnayli; yeşil ✓ görünüyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

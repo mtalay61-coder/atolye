@@ -1,0 +1,17 @@
+{
+  "musteriB": {
+    "renk": "#A33A3A",
+    "arkaPlan": "rgb(163, 58, 58)",
+    "logo": true
+  },
+  "tedarikciOtomatik": {
+    "paletten": true,
+    "logoYok": true,
+    "farkli": true
+  },
+  "seciciVar": true,
+  "kayit": "#2f7d5b",
+  "secilenListede": "#2f7d5b",
+  "otomatigeDondu": true,
+  "hatalar": []
+}

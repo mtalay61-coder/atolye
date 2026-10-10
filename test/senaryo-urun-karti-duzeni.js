@@ -8,7 +8,7 @@
 //      gizlendi, Stok'ta göz yok → Kaydet: yeni sıra, Barkodlar görünmüyor ve açık sekme ilk görünen sekmeye düştü;
 //   2) Stok sekmesinde "Renk / beden ekle" en üste, "Stok durumu" gizli → Kaydet → sıra uygulanmış;
 //   3) Deri (hammadde — Reçete/Maliyet sekmesi yok) kartında sıra kaydedilince Bot'un Reçete/Maliyet kaydı korunuyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

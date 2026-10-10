@@ -6,7 +6,7 @@
 //
 // Kural olduğu için testi de var: ileride bir ekran eklendiğinde sekme şeridine girmezse ya da
 // kapatma önceki sayfaya dönmezse burada kırılsın.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

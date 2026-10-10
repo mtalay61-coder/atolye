@@ -6,7 +6,7 @@
 // Ölçülen: (1) rol şablonu seçilince yetki kutuları doluyor (28 kutuyu elle işaretlemeye gerek
 // yok); (2) ÜRETİM rolü muhasebeyi görmüyor; (3) PANEL kullanıcısında MENÜ HİÇ ÇİZİLMİYOR ve
 // seçilen ekran açılmış geliyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { bulutGirisRotasi } = require("./giris-yardimci.js");
 const { normalles } = require("./senaryo-fis.js");

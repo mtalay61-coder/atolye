@@ -8,7 +8,7 @@
 // ORTAK FİŞ EKRANINA TAŞINDI (23 Eylül, v1.431.0): alış da tek ekranda. Yeni yolda "Siparişten seç"
 // siparişin TAMAMINI getiriyor; fişte kalmasını istemediğin modelin satırları tek tek çıkarılıyor.
 // Ölçülen davranış aynı: iki model tek fiş numarasında, üçüncüsü siparişte bekliyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

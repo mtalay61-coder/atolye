@@ -13,7 +13,7 @@
 //   2. Bekleyen yazmaları yeniden gönderme ("online" olayı): efekt kurulduktan sonra kesilen iki
 //      fiş, bağlantı gelince yerel depodan SİLİNMEMELİ. Eski hata: efekt eski stok kopyasını
 //      `tabloYaz` ile geri yazıyor, yeni fişler kayboluyordu (çevrimdışı çalışmanın silinmesi).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

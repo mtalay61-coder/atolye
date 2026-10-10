@@ -3,7 +3,7 @@
 // Ürün kartındaki Stok Durumu tablosu satır listesiydi (renk · beden satırları). Artık MATRİS
 // varsayılan: satır renk, sütun beden, hücrede seçili metrik; metrik çipleriyle değişiyor. Liste
 // görünümü yedi sütunuyla duruyor. Hücreye dokununca satır detayı açılıyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

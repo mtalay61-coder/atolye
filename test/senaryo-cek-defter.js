@@ -3,7 +3,7 @@
 //   1. Çek formunda Defter seçimi var (Genel / Resmi / Muhasebe); Resmi seçilen çekin cari girişi Resmi deftere.
 //   2. Listede Resmi rozeti görünüyor.
 //   3. Resmi çekin tahsilinde bankaya giren para da Resmi deftere (önce hep "Muhasebe").
-const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

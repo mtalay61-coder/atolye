@@ -13,7 +13,7 @@
 //   satın al  → ALIŞ SİPARİŞİ girişi
 // İkisi aynı ekrana çıkmamalı. Artık malzeme bu ekrana miktarsız bir satır olarak ekleniyor;
 // kullanıcı miktarı yazıp alış SİPARİŞİNİ buradan oluşturuyor.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

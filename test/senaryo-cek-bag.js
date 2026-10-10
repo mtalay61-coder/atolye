@@ -9,7 +9,7 @@
 //   C. Kilit kalkıyor: giriş fişi artık silinebilir.
 //   D. Çek listesinden silinen çek, DOĞDUĞU tahsilat hareketini de götürüyor — hem cirosu geri
 //      alınmış çekte hem hiç işlem görmemiş çekte.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -20,14 +20,10 @@ async function fisIslemleriniAc(sayfa) {
   // İŞLEMLER MENÜSÜ (18 Eylül): bağlantı ve silme düğmeleri bu menünün içinde. Düğme toggle
   // olduğu için açıkken dokunulmuyor. `evaluate` içindeki `click()` React dinleyicisine
   // ulaşmadığı için Playwright tıklaması kullanılıyor.
-  const acik = await sayfa.evaluate(() =>
-    [...document.querySelectorAll('[data-fis-islem-menusu="acik"]')].some((x) => x.offsetParent));
-  if (acik) return;
-  const dugme = sayfa.locator("[data-fis-islemler]:visible").first();
-  if (await dugme.count()) {
-    await dugme.click();
-    await sayfa.waitForTimeout(400);
-  }
+  // v1.636.0: "İşlemler" düğmesi yerine AÇIK fiş kartına sağ tık — aynı öğeler menüde.
+  if (await sayfa.locator("[data-sag-tik-menusu]").count()) return;
+  await sagTikAc(sayfa, '[data-fis-acik="1"]');   // açık kart
+  await sayfa.waitForTimeout(400);
 }
 
 async function calistir() {
@@ -80,8 +76,8 @@ async function calistir() {
     // `innerText`te görünmüyor — kart açık olduğu hâlde bu kontrol "kapalı" diyordu ve senaryo
     // ikinci kez tıklayıp kartı gerçekten kapatıyordu. Artık kartın açık olduğunu İŞLEMLER
     // DÜĞMESİNİN varlığından anlıyoruz; o düğme yalnız açık kartta render ediliyor.
-    const acikMi = () => sayfa.evaluate(() =>
-      [...document.querySelectorAll("[data-fis-islemler]")].some((x) => x.offsetParent));
+    const acikMi = () => sayfa.evaluate((no) => !!document.querySelector(`[data-fis-kart="${no}"][data-fis-acik="1"]`), fisNo);
+    await sayfa.keyboard.press("Escape"); await sayfa.waitForTimeout(150);   // açık sağ tık menüsü tıklamayı örtmesin
     await sayfa.getByText(fisNo, { exact: true }).filter({ visible: true }).first().click();
     await sayfa.waitForTimeout(700);
     if (!(await acikMi())) {
@@ -181,17 +177,14 @@ async function calistir() {
   const islemlerDugmesiSayisi = await sayfa.evaluate((g) =>
     [...document.querySelectorAll("button")].filter(eval(g)).filter((b) => /İşlemler/.test(b.textContent)).length, gorunur);
 
+  // v1.636.0: çek satırındaki çöp kutusu kalktı — satıra sağ tık → "Çeki sil" → standart onay penceresi.
   const cekSilDugmesi = async (cekNo, digerNo) => {
-    await sayfa.evaluate(({ cekNo, digerNo }) => {
-      const b = [...document.querySelectorAll('[data-sil-onay]')]
-        .filter((x) => x.getBoundingClientRect().width > 0)
-        .find((x) => {
-          let e = x.parentElement;
-          while (e && !e.textContent.includes(cekNo)) e = e.parentElement;
-          return e && !e.textContent.includes(digerNo);
-        });
-      if (b) b.click();
+    const id = await sayfa.evaluate(({ cekNo, digerNo }) => {
+      const r = [...document.querySelectorAll("[data-cek-satir]")].find((x) => x.getBoundingClientRect().width > 0
+        && x.textContent.includes(cekNo) && !x.textContent.includes(digerNo));
+      return r ? r.getAttribute("data-cek-satir") : null;
     }, { cekNo, digerNo });
+    if (id) await sagTikSec(sayfa, `[data-cek-satir="${id}"]`, "sil");
   };
   await cekSilDugmesi("12345", "77777");
   await sayfa.waitForTimeout(300);

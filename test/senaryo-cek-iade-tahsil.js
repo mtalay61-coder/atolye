@@ -12,7 +12,7 @@
 //   4. Tahsil edilmiş çekin giriş fişi kilitli, kilit hangi bankadan neyin silineceğini söylüyor.
 //   5. İade fişi silinince çek portföye dönüyor.
 //   6. Banka hareketi silinince çek Tahsilde'ye dönüyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -138,12 +138,8 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
   // Çek kilidi rozeti de İŞLEMLER menüsünün içinde (18 Eylül) — ölçümden önce menüyü aç.
   {
-    const acik = await sayfa.evaluate(() =>
-      [...document.querySelectorAll('[data-fis-islem-menusu="acik"]')].some((x) => x.offsetParent));
-    if (!acik) {
-      const d = sayfa.locator("[data-fis-islemler]:visible").first();
-      if (await d.count()) { await d.click(); await sayfa.waitForTimeout(400); }
-    }
+    // v1.636.0: "İşlemler" yerine açık fiş kartına sağ tık.
+    if (!(await sayfa.locator("[data-sag-tik-menusu]").count())) { await sagTikAc(sayfa, '[data-fis-acik="1"]'); await sayfa.waitForTimeout(400); }
   }
   const kilitMesaji = await sayfa.evaluate(() =>
     ([...document.querySelectorAll("[data-cek-kilidi]")].find((e) => e.getBoundingClientRect().width > 0) || { getAttribute: () => "" })
@@ -154,16 +150,13 @@ async function calistir() {
   // İade hareketi hiç yazılmadıysa (eski davranış) silinecek fiş yok — ölçüm null kalır.
   let iadeGeriAlma = null;
   if (iadeFisNo) {
+  await sayfa.keyboard.press("Escape"); await sayfa.waitForTimeout(150);   // açık sağ tık menüsü tıklamayı örtmesin
   await sayfa.getByText(iadeFisNo, { exact: true }).filter({ visible: true }).first().click();
   await sayfa.waitForTimeout(700);
   // İŞLEMLER MENÜSÜ (18 Eylül): silme düğmesi menünün içinde; önce menüyü aç.
   {
-    const acik = await sayfa.evaluate(() =>
-      [...document.querySelectorAll('[data-fis-islem-menusu="acik"]')].some((x) => x.offsetParent));
-    if (!acik) {
-      const d = sayfa.locator("[data-fis-islemler]:visible").first();
-      if (await d.count()) { await d.click(); await sayfa.waitForTimeout(400); }
-    }
+    // v1.636.0: "İşlemler" yerine açık fiş kartına sağ tık.
+    if (!(await sayfa.locator("[data-sag-tik-menusu]").count())) { await sagTikAc(sayfa, '[data-fis-acik="1"]'); await sayfa.waitForTimeout(400); }
   }
   // Menüdeki silme düğmesi: bağlantılı fişte "Sil", yetim fişte "Bu Fişi Temizle".
   await sayfa.evaluate(() => {
@@ -196,12 +189,13 @@ async function calistir() {
   // pahalı. Senaryo iki kez dokunuyor.
   // Onay artık pencere (21 Eylül): ilk tık satırdaki ikon, ikinci adım penceredeki Sil.
   {
-    await sayfa.evaluate(() => {
-      const tr = [...document.querySelectorAll("tr")]
+    // v1.636.0: hareket satırındaki çöp kutusu kalktı — satıra sağ tık → "Sil" → standart onay penceresi.
+    const hid = await sayfa.evaluate(() => {
+      const tr = [...document.querySelectorAll("tr[data-kasa-hareket-satir]")]
         .find((x) => x.getBoundingClientRect().width > 0 && /No 77777/.test(x.textContent));
-      const b = tr && tr.querySelector("button[title*='sil'], button[title*='Sil'], button[title*='Emin']");
-      if (b) b.click();
+      return tr ? tr.getAttribute("data-kasa-hareket-satir") : null;
     });
+    if (hid) await sagTikSec(sayfa, `[data-kasa-hareket-satir="${hid}"]`, "sil");
     await sayfa.waitForTimeout(400);
   }
   await sayfa.locator("[data-sil-onayla]").first().click();

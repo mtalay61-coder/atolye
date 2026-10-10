@@ -3,7 +3,7 @@
 // başlığında carinin o anki bakiyesi…" Ölçülen: Cari ekranında Liste/Raporlar sekmesi; Raporlar tablosu riskliyi öne alır;
 // Müşteri B'ye dokununca rapor kartı: bakiye (alacağımız 250 $), sayılar, nedenler, sipariş satırı (SAT-R1, gecikti);
 // sipariş no'ya dokununca siparişe gider; Liste'ye dönülünce kartlar yerinde. Fişler ekranında tip çipleri işaretli.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

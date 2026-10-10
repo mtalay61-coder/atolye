@@ -19,6 +19,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const [siparisKolonFiltre, setSiparisKolonFiltre] = useState(BOS_SIPARIS_FILTRE);
   const siparisKolonAktif = Object.values(siparisKolonFiltre).some((v) => String(v).trim() !== "");
   const [acikSiparisId, setAcikSiparisId] = useState(null);
+  // Listeden sağ tık (v1.636.0): hangi kartın menüsü, nerede açılacak (bkz. SiparisCard `disMenuIstegi`).
+  const [listeMenuIstegi, setListeMenuIstegi] = useState(null);
   const [showForm, setShowForm] = useState(false);
   // VAR OLAN SİPARİŞE KALEM EKLEME. Karta ayrı bir kalem formu yazmak yerine, ZATEN OLAN form
   // hedefe yönlendiriliyor: ürün seçici, asorti uygulama, barkod okutma, fiyat bulma, ölçü
@@ -2496,7 +2498,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                   boxShadow: acikSiparisId === s.id ? "0 2px 10px rgba(34,27,20,.12)" : "none",
                 }}
               >
-                <SiparisOzetSatiri siparis={s} cariler={cariler} onAc={() => setAcikSiparisId(acikSiparisId === s.id ? null : s.id)} onTamEkran={() => tamEkranAc(s.id, `${s.tip}: ${s.siparisNo}`)} tumSiparisler={siparisler} uretimSiparisleri={uretim} acikMi={acikSiparisId === s.id} kurlar={kurlar} />
+                <SiparisOzetSatiri siparis={s} cariler={cariler} onAc={() => setAcikSiparisId(acikSiparisId === s.id ? null : s.id)} onTamEkran={() => tamEkranAc(s.id, `${s.tip}: ${s.siparisNo}`)} tumSiparisler={siparisler} uretimSiparisleri={uretim} acikMi={acikSiparisId === s.id} kurlar={kurlar}
+                  onSagTik={(x, y) => { setAcikSiparisId(s.id); setListeMenuIstegi({ id: s.id, x, y, n: Date.now() }); }} />
                 {acikSiparisId === s.id && (
                   <div style={{ background: "var(--erp-panel-2)", padding: 12 }}>
                     <SiparisCard
@@ -2521,6 +2524,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       onPlanlaSatinAlma={onPlanlaSatinAlma}
                       baslangicAcik
                       saltOkunur
+                      disMenuIstegi={listeMenuIstegi && listeMenuIstegi.id === s.id ? listeMenuIstegi : null}
                       onSiparisGit={(hedefId) => {
                         const hedef = siparisler.find((x) => x.id === hedefId);
                         // BAŞKA MODÜLDEKİ SİPARİŞ (15 Eylül): alış kartındaki "Kaynak: SAT-…" satış
@@ -2567,7 +2571,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                   boxShadow: acikSiparisId === s.id ? "0 2px 10px rgba(34,27,20,.12)" : "none",
                 }}
               >
-                <SiparisOzetSatiri siparis={s} cariler={cariler} onAc={() => setAcikSiparisId(acikSiparisId === s.id ? null : s.id)} onTamEkran={() => tamEkranAc(s.id, `${s.tip}: ${s.siparisNo}`)} tumSiparisler={siparisler} uretimSiparisleri={uretim} acikMi={acikSiparisId === s.id} kurlar={kurlar} />
+                <SiparisOzetSatiri siparis={s} cariler={cariler} onAc={() => setAcikSiparisId(acikSiparisId === s.id ? null : s.id)} onTamEkran={() => tamEkranAc(s.id, `${s.tip}: ${s.siparisNo}`)} tumSiparisler={siparisler} uretimSiparisleri={uretim} acikMi={acikSiparisId === s.id} kurlar={kurlar}
+                  onSagTik={(x, y) => { setAcikSiparisId(s.id); setListeMenuIstegi({ id: s.id, x, y, n: Date.now() }); }} />
                 {acikSiparisId === s.id && (
                   <div style={{ background: "var(--erp-panel-2)", padding: 12 }}>
                     <SiparisCard
@@ -2592,6 +2597,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                       onPlanlaSatinAlma={onPlanlaSatinAlma}
                       baslangicAcik
                       saltOkunur
+                      disMenuIstegi={listeMenuIstegi && listeMenuIstegi.id === s.id ? listeMenuIstegi : null}
                       onSiparisGit={(hedefId) => {
                         const hedef = siparisler.find((x) => x.id === hedefId);
                         // BAŞKA MODÜLDEKİ SİPARİŞ (15 Eylül): alış kartındaki "Kaynak: SAT-…" satış

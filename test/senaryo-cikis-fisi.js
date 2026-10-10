@@ -7,7 +7,7 @@
 //   - "Fişi Oluştur" fiş PENCERESİNİ açar (23 Eylül, v1.431.0: alış da ortak fiş ekranında).
 //   - Aynı modelin başka rengi ve başka bir model, AYNI fişe ayrı satır olarak eklenir.
 //   - Her satır kendi bedenlerini taşır; toplam kutu sayısı satırların bedenlerinin toplamıdır.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

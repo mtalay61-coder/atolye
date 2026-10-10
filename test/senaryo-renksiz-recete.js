@@ -11,7 +11,7 @@
 // Ölçülenler (her biri için): renk eşleştirme kutusu yok, "rengi kim belirlesin" sorusu yok, renksiz
 // bilgisi var; A-C'de beden eşleştirmesi yok ("Bedensiz —"), D'de var. Ekleyince satırlar: mamul renk
 // başına tek satır, renk "Standart"; A-C "Tüm Bedenler", D beden beden.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

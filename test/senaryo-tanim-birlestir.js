@@ -6,7 +6,7 @@
 //   2. Geri kur → kombinasyon 1002 KODUYLA tanımlarda, uyarı kalkar.
 //   3. Bu yazımda bulut (başka cihaz) "Lacivert" rengini eklemiş → korunur (ekranda ve buluta giden veride);
 //      bu cihazda silinen "Gri" geri gelmez.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

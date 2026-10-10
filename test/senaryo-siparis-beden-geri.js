@@ -7,7 +7,7 @@
 //   2) Kutuya 5 yazılır → Siyah 41:5 geri gelir, satırın fiyatı (400) ve KDV'si (10) ile.
 //   3) Kahve satırının tek ölçüsü silinir (renk satırı kaybolur) → "Kalem Ekle"den Bot · Kahve · 40:6 geri eklenir.
 //   4) Kaydedince sipariş: Siyah 40:2 41:5, Kahve 40:6.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

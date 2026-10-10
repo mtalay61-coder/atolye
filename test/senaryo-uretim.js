@@ -5,7 +5,7 @@
 // üçünün de geri alınması, üretim ilerlemesinin sıfırlanması ve mamulün stoktan düşmesi bekleniyor.
 //
 // Bu yol artık TEK yol: aynı fişler Fişler ekranından ve cari ekstresinden kilitli (v1.46.0).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -21,8 +21,8 @@ async function calistir() {
   // Silme düğmesi fişin AÇILMIŞ hâlinde görünüyor — önce fişi aç.
   await sayfa.getByText("1001-Kesim", { exact: true }).first().click();
   await sayfa.waitForTimeout(700);
-  // İŞLEMLER MENÜSÜ (18 Eylül): sil/kilit rozeti artık bu menünün içinde.
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("[data-fis-islemler]")].find((x) => x.offsetParent); if (b) b.click(); });
+  // İŞLEMLER = SAĞ TIK (v1.636.0): sil/kilit fiş kartına sağ tıkla açılan menüde; kilitliyse "Sil" pasif ve nedeni ipucunda.
+  await sagTikAc(sayfa, '[data-fis-kart="1001-Kesim"]');
   await sayfa.waitForTimeout(400);
   const fislerEkrani = await sayfa.evaluate(() => {
     const g = (e) => e.getBoundingClientRect().width > 0;
@@ -34,6 +34,7 @@ async function calistir() {
     };
   });
 
+  await sayfa.keyboard.press("Escape");
   await modulAc(sayfa, "Üretim");
   await sayfa.waitForTimeout(600);
   await sayfa.getByText("1001", { exact: true }).last().click();

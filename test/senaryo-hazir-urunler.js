@@ -7,7 +7,7 @@
 // 42 bedenden 5 çift satın almaya planlı (alışta 3'ü teslim alındı → hazır 3), 43 bedenden 4 çift
 // planlanmamış (hazır değil). Ölçülen: hazır listesi bu iki satır; "Fişe koy" fişe HAZIR miktarı
 // yazıyor (kalanın tamamını değil); kaydedince karsilanan hazır kadar artıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -8,7 +8,7 @@
 //     o arada yazılan tam defterle depoya girmiş kalıyordu.
 // 2-4 kancanın kendisiyle ölçülür (küçük bir bileşen içinde, gerçek React ve sahte depoyla):
 // eşzamanlılığı arayüzden sıraya koymak mümkün değil.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

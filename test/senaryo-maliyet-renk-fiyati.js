@@ -4,7 +4,7 @@
 // bilgi versin." Ölçülen: Bot reçetesinde Deri Siyah (kart alış 100 ₺, renk kuralı yok). Maliyet'te Siyah'ı 120 yapınca:
 // Deri kartı alış fiyatı 100 KALIR, Siyah için renk kuralı 120 (kaynakNotu "Maliyet ekranından: Bot"), Taba kuralsız;
 // Deri kartı Fiyatlandırma'da Siyah satırında "maliyetten" rozeti; maliyet dökümünde Siyah 120, Taba 100.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

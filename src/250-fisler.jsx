@@ -35,7 +35,8 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
   }, [hedefFisNo]);
   const [temizlemeOnayi, setTemizlemeOnayi] = useState(null); // temizlenmek istenen fişin key'i
   // Hangi fişin "İşlemler" menüsü açık (18 Eylül).
-  const [islemlerAcik, setIslemlerAcik] = useState(null);
+  // Sağ tık menüsü (v1.636.0): { x, y, key } — hangi fişin menüsü, nerede.
+  const [fisMenu, setFisMenu] = useState(null);
   // DEFTER SÜZGECİ (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap").
   const [filtreDefter, setFiltreDefter] = useState("Tümü");
 
@@ -199,8 +200,47 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
     return null;
   }
 
+  // FİŞ SAĞ TIK MENÜSÜ (v1.636.0): eski "İşlemler" panelinin öğeleri. Silme kilitleri (üretim / fatura / çek) pasif öğe
+  // olarak görünür, nedeni ipucunda — "Sil"e basıp reddedilmeden önce söyleniyor (eski rozetlerle aynı bilgi).
+  function fisMenuOgeleri(f) {
+    const baglanti = fisBaglanti(f);
+    const ilgiliSatis = fisIlgiliSatis(baglanti);
+    // Kilit türü ve eski rozetin yazısı/işareti aynen (menüde pasif öğe; neden ipucunda).
+    const kilit = baglanti && uretimKilidiVarMi(f, baglanti)
+      ? { etiket: "Üretimden geri alınır", mesaj: "Üretim prosesleri sondan geriye doğru geri alınır. Bu fişi silmek için üretim kartındaki ilgili prosesin 'teslim almayı geri al' düğmesini kullanın.", veri: { "data-uretim-kilidi": "1" } }
+      : faturaKilidi(f) ? { etiket: "Faturası kesildi", mesaj: `Faturası kesildi (${faturaKilidi(f).faturaNo}) — fiş silinemez; faturayı iptal edin ya da iade faturası kesin`, veri: { "data-fatura-kilidi": "1" } }
+      : cekKilidiFis(f) ? { etiket: "Çek işlemde", mesaj: cekKilidiFis(f).mesaj, veri: { "data-cek-kilidi": "1" } } : null;
+    const git = () => {
+      if (!baglanti) return;
+      if (baglanti.tip === "siparis" && onGoToSiparis) onGoToSiparis(baglanti.id);
+      else if (baglanti.tip === "uretim" && onGoToUretim) onGoToUretim(baglanti.id);
+      else if (baglanti.tip === "cari" && onGoToCari) onGoToCari(baglanti.id);
+    };
+    return [
+      { k: "ac", etiket: acikFis === f.key ? "Fişi kapat" : "Fişi aç", ikon: acikFis === f.key ? ChevronUp : ChevronDown, onClick: () => setAcikFis(acikFis === f.key ? null : f.key) },
+      { ayrac: true },
+      { k: "cari", etiket: `${f.cariAd} carisine git`, ikon: Users, gizli: !f.cariAd || !onGoToCari, onClick: () => onGoToCari(), veri: { "data-islem-cari": "1" } },
+      { k: "baglanti", ikon: ArrowRight, gizli: !baglanti, onClick: git,
+        etiket: baglanti && baglanti.tip === "siparis" ? "İlgili siparişe git" : baglanti && baglanti.tip === "uretim" ? "İlgili üretime git" : "İlgili cariye git" },
+      { k: "ilgili-satis", ikon: ArrowRight, gizli: !ilgiliSatis, etiket: `İlgili satış: ${ilgiliSatis ? ilgiliSatis.siparisNo : ""}`, renk: "#C97B3D",
+        baslik: "Bu alış/üretim, bu satış siparişini karşılamak için Tedarik Planlama'dan oluşturulmuştur", onClick: () => onGoToSiparis && onGoToSiparis(ilgiliSatis.id) },
+      { k: "fatura", ikon: Receipt, gizli: !(onFaturaAc && faturaKesilebilirFisMi(f)), onClick: () => onFaturaAc(f.fisNo), veri: { "data-fis-fatura": f.fisNo },
+        etiket: fisinFaturasi(faturalar, f.fisNo) ? "Fatura taslağını aç" : "Fatura taslağı" },
+      { ayrac: true },
+      { k: "sil", ikon: kilit ? Lock : Trash2, gizli: !onYetimFisTemizle, pasif: !!kilit, veri: kilit ? kilit.veri : (baglanti ? { "data-fis-sil": "1" } : { "data-fis-temizle": "1" }),
+        baslik: kilit ? kilit.mesaj : (baglanti
+          ? "Bu fişin kaynağı (sipariş/üretim) hâlâ var — silerseniz o kayıtla tutarsız hale gelebilir"
+          : "Bu fiş için kaynak bağlantısı bulunamadı"),
+        renk: "var(--erp-warn)", etiket: kilit ? kilit.etiket : baglanti ? "Sil" : "Bu Fişi Temizle",
+        onClick: () => { setAcikFis(f.key); setTemizlemeOnayi(f.key); } },
+    ];
+  }
+  const menuFisi = fisMenu ? tumFisler.find((x) => x.key === fisMenu.key) : null;
+
   return (
     <div>
+      <SagTikMenusu konum={menuFisi ? fisMenu : null} onKapat={() => setFisMenu(null)} veri="fis"
+        baslik={menuFisi ? `FİŞ · ${menuFisi.fisNo || menuFisi.tip}` : ""} ogeler={menuFisi ? fisMenuOgeleri(menuFisi) : []} />
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: "1 1 220px" }}>
           <Search size={15} style={{ position: "absolute", left: 10, top: 10, color: "var(--erp-text-3)" }} />
@@ -282,7 +322,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
             const yapisizHareketler = cariHareketleri.filter((h) => !h.urunAd);
             const renk = FIS_TIP_RENK[f.tip] || "var(--erp-text-2)";
             return (
-              <div key={f.key} data-fis-kart={f.fisNo || f.key} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+              <div key={f.key} data-fis-kart={f.fisNo || f.key} data-fis-acik={acikFis === f.key ? "1" : undefined} {...sagTikIsleyicileri((x, y) => setFisMenu({ x, y, key: f.key }))} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
                 <button
                   type="button"
                   onClick={() => setAcikFis(acik ? null : f.key)}
@@ -367,127 +407,9 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                   const ilgiliSatis = fisIlgiliSatis(baglanti);
                   return (
                   <div style={{ padding: "0 14px 14px" }}>
-                    {/* İŞLEMLER MENÜSÜ (kullanıcı, 18 Eylül: "bunun için de işlemler tuşu yapalım,
-                        tıklayınca orada ilgili cariye git, bağlantılı siparişlerini göster, git
-                        vs. işlemler yapabilelim"). Bağlantı düğmeleri, sil ve temizle her fişte
-                        açıkta duruyordu: kart açılır açılmaz üç dört mavi bağlantı görünüyor,
-                        asıl içerik (kalemler) aşağı itiliyordu. Artık tek düğmenin arkasında. */}
-                    <button
-                      type="button"
-                      data-fis-islemler={f.key}
-                      onClick={() => setIslemlerAcik(islemlerAcik === f.key ? null : f.key)}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 8,
-                        padding: "5px 12px", borderRadius: "var(--erp-r-md)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-                        border: `1px solid ${islemlerAcik === f.key ? "var(--erp-info)" : "var(--erp-border)"}`,
-                        background: islemlerAcik === f.key ? "#3D6B8A14" : "#fff",
-                        color: islemlerAcik === f.key ? "var(--erp-info)" : "var(--erp-text)" }}
-                    >
-                      İşlemler {islemlerAcik === f.key ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                    </button>
-                    <div data-fis-islem-menusu={islemlerAcik === f.key ? "acik" : "kapali"}
-                      style={{ display: islemlerAcik === f.key ? "flex" : "none", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
-                      background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
-                      {/* Cari kartına gidiş de burada: başlıktaki ada dokunmak da aynı yere götürür,
-                          ama menüde arandığında bulunabilsin. */}
-                      {f.cariAd && (
-                        <button
-                          type="button"
-                          className="mono"
-                          data-islem-cari="1"
-                          onClick={() => onGoToCari && onGoToCari()}
-                          style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700,
-                            color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}
-                        >
-                          <Users size={12} /> {f.cariAd} carisine git
-                        </button>
-                      )}
-                      {f.siparisNo && f.siparisNo !== f.fisNo && (
-                        <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Sipariş: {f.siparisNo}</span>
-                      )}
-                      {/* FATURA (v1.500.0): yalnız satış fişinde. Taslak/önizleme penceresi (277-fatura). */}
-                      {onFaturaAc && faturaKesilebilirFisMi(f) && (
-                        <button type="button" data-fis-fatura={f.fisNo} onClick={() => onFaturaAc(f.fisNo)}
-                          style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700,
-                            color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
-                          <Receipt size={12} /> {fisinFaturasi(faturalar, f.fisNo) ? "Fatura taslağını aç" : "Fatura taslağı"}
-                        </button>
-                      )}
-                      {baglanti ? (
-                        <>
-                          <button
-                            type="button"
-                            className="mono"
-                            onClick={() => {
-                              if (baglanti.tip === "siparis" && onGoToSiparis) onGoToSiparis(baglanti.id);
-                              else if (baglanti.tip === "uretim" && onGoToUretim) onGoToUretim(baglanti.id);
-                              else if (baglanti.tip === "cari" && onGoToCari) onGoToCari(baglanti.id);
-                            }}
-                            style={{
-                              display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700,
-                              color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0,
-                              textDecoration: "underline",
-                            }}
-                          >
-                            <ArrowRight size={12} />
-                            {baglanti.tip === "siparis" ? "İlgili siparişe git" : baglanti.tip === "uretim" ? "İlgili üretime git" : "İlgili cariye git"}
-                          </button>
-                          {onYetimFisTemizle && (uretimKilidiVarMi(f, baglanti) ? (
-                            <span
-                              title="Üretim prosesleri sondan geriye doğru geri alınır. Bu fişi silmek için üretim kartındaki ilgili prosesin 'teslim almayı geri al' düğmesini kullanın."
-                              style={{
-                                display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700,
-                                color: "var(--erp-text-2)", background: "var(--erp-panel-2)", border: "1px solid var(--erp-line)",
-                                borderRadius: "var(--erp-r-pill)", padding: "2px 8px",
-                              }}
-                            >
-                              <Lock size={10} /> Üretimden geri alınır
-                            </span>
-                          ) : faturaKilidi(f) ? faturaKilitRozeti(faturaKilidi(f)) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (
-                            <button
-                              data-fis-sil="1"
-                              type="button"
-                              className="btn-ghost"
-                              title="Bu fişin kaynağı (sipariş/üretim) hâlâ var — silerseniz o kayıtla tutarsız hale gelebilir, dikkatli kullanın"
-                              style={{ padding: "2px 8px", fontSize: 11, borderColor: "var(--erp-text-3)", color: "var(--erp-text-2)" }}
-                              onClick={() => setTemizlemeOnayi(f.key)}
-                            >
-                              <Trash2 size={11} /> Sil
-                            </button>
-                          ))}
-                        </>
-                      ) : (
-                        <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 11, color: "var(--erp-warn)", fontStyle: "italic" }}>
-                            ⚠ Bu fiş için kaynak bağlantısı bulunamadı
-                          </span>
-                          {onYetimFisTemizle && (faturaKilidi(f) ? faturaKilitRozeti(faturaKilidi(f)) : cekKilidiFis(f) ? cekKilitRozeti(cekKilidiFis(f)) : (
-                            <button
-                              type="button"
-                              className="btn-ghost"
-                              style={{ padding: "2px 8px", fontSize: 11, borderColor: "var(--erp-warn)", color: "var(--erp-warn)" }}
-                              onClick={() => setTemizlemeOnayi(f.key)}
-                            >
-                              <Trash2 size={11} /> Bu Fişi Temizle
-                            </button>
-                          ))}
-                        </span>
-                      )}
-                      {ilgiliSatis && (
-                        <button
-                          type="button"
-                          className="mono"
-                          onClick={() => onGoToSiparis && onGoToSiparis(ilgiliSatis.id)}
-                          title="Bu alış/üretim, aşağıdaki satış siparişini karşılamak için Tedarik Planlama'dan oluşturulmuştur"
-                          style={{
-                            display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700,
-                            color: "#C97B3D", background: "var(--erp-hover)", border: "1px solid #C97B3D", borderRadius: "var(--erp-r-pill)",
-                            padding: "2px 8px", cursor: "pointer",
-                          }}
-                        >
-                          <ArrowRight size={10} /> İlgili Satış: {ilgiliSatis.siparisNo}
-                        </button>
-                      )}
-                    </div>
+                    {/* İŞLEMLER = SAĞ TIK (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"). Önceki "İşlemler"
+                        düğmesi ve açılır paneli (cariye git, fatura, ilgili kayda git, sil/temizle) kalktı; aynı öğeler fiş
+                        başlığına sağ tık / uzun basmayla açılan menüde (`fisSagMenusu`). Kilitler aynı kuraldan. */}
                     {temizlemeOnayi === f.key && (
                       <div style={{ background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-warn)", marginBottom: 8 }}>

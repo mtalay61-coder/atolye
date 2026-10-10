@@ -5,7 +5,7 @@
 // Ölçülen: (1) MAMUL kartında sekme her zaman var, hammaddede çizim yoksa YOK; (2) teknik not
 // yazılınca ürüne kaydediliyor; (3) çizim eklenince listeye giriyor, başlığı düzenlenebiliyor ve
 // sekme başlığındaki sayaç artıyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

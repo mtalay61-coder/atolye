@@ -7,7 +7,7 @@
 // kartından Alış Fişi Oluştur → "Siparişten seç" → AS-2'nin kalemleri fişe → tek fiş kaydedilir.
 // Ölçülen: tek fiş (AS-1-F1) iki kalem; AS-1 ve AS-2 ikisi de Tamamlandı (karşılanan kendi
 // kaydında); 42 bedenin stok hareketi AS-2'yi taşıyor; fiş silinince iki sipariş de geri dönüyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

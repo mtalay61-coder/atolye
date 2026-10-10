@@ -10,7 +10,7 @@
 //
 // Dört seviyenin ikisi kalem üretiyor (asorti, tek çift), ikisi ÜRETMEMELİ (stok, renk) —
 // "hangi renk/hangi beden" belli değilken satır yazmak, karşılığı üretilemeyecek sipariş demek.
-const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

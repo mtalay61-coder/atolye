@@ -6,7 +6,7 @@
 //   2. "Light" (tanımsız) → Ekle açık; basınca soru; Vazgeç → hiçbir şey yazılmaz.
 //   3. Tekrar → görünüm rengi seçilir → "Evet, renk aç ve ekle": Tanımlar'da Light (renk kodu, barkod kodu,
 //      malzeme tipi Aksesuar, görünüm rengi), üründe Light varyantı.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

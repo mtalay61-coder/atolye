@@ -9,7 +9,7 @@
 //   2. Üretim kartı: "Kesim" notu Kesim satırının altında, "Temizleme" notu Temizleme satırında;
 //      genel not kartın başında. Notlar siparişten CANLI (üretim kaydına kopya yok).
 //   3. Atölye ekranı: personelin iş kartında o prosesin notu.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

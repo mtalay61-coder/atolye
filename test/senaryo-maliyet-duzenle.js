@@ -6,7 +6,7 @@
 // Ölçülen: (1) boylu hammaddenin fiyatı BOY KURALINDAN geliyor (kart fiyatı 0 iken); (2) birim
 // fiyat maliyetten değiştirilince KURALA yazılıyor; (3) çift başı genel gider ürüne özel
 // yazılıyor; (4) sapma tablosu yalnız farklı üretimi gösteriyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

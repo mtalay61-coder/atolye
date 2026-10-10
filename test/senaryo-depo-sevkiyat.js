@@ -24,7 +24,7 @@
 //   4. Aynı çözücü cari fişinde (ayrı oturum): Müşteri B satış fişinde "Koli okut" K-001 → "eklendi ·
 //      2 satır · SAT-9 (üretim)"; başka carinin kolisi (K-002) reddedilir; kayıt → Sil → koli "Hazır",
 //      stok 20, karşılanan 0 (fiş geri alınınca koli geri gelir).
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

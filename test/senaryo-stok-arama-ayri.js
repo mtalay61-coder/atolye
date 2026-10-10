@@ -2,7 +2,7 @@
 // Kullanıcı: "mamul arama ile stok arama aynıları kalıyor, silme için × olsun hızlıca temizlemek için, hammadde ile ayrılsın
 // arama geçmişi". Ölçülen: Mamul Stok'ta "272" yazılınca Stok'ta kutu boş; Stok'ta "deri" yazılıp Mamul Stok'a dönünce "272"
 // duruyor; × ile temizlenince boş ve liste tam.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

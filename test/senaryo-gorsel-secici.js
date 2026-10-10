@@ -6,7 +6,7 @@
 //
 // Ölçülen: görsel kutusuna basınca iki düğme (Galeriden / Fotoğraf Çek) ve arkalarında iki AYRI
 // dosya girdisi var — biri galeri, diğeri `capture="environment"` ile doğrudan kamera.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

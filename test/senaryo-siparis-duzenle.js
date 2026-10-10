@@ -15,7 +15,7 @@
 //   4. Serbest kalemde miktar, fiyat, ÜRÜN ve RENK değişiyor; yeni ürün aynı formdan ekleniyor.
 //   5. Kaydedince: sipariş yerinde güncelleniyor, kilitli kalem ve cari aynen korunuyor, form
 //      kapanıyor ve tam ekran kart görünür kalıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

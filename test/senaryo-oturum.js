@@ -7,7 +7,7 @@
 // Ölçülen: (1) giriş sonrası oturum kaydı oluşuyor; (2) sayfa yenilenince giriş istenmiyor;
 // (3) çıkış yapınca kayıt siliniyor ve yenilemede giriş isteniyor; (4) 12 saatten eski oturum
 // geçersiz; (5) kullanıcı listeden silinmişse oturum kabul edilmiyor.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 const { bulutGirisRotasi } = require("./giris-yardimci.js");

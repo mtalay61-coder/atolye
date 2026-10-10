@@ -191,6 +191,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
   // Kart içi sekme: prosesler | hammadde | fire
   const [kartSekme, setKartSekme] = useState("prosesler");
   const [silOnayGoster, setSilOnayGoster] = useState(false);
+  const [uretimSagMenu, setUretimSagMenu] = useState(null); // sağ tık menüsü (v1.636.0)
   const [acikDetay, setAcikDetay] = useState(null); // açık olan tamamlanmış prosesin adı
   const [vurgulu, setVurgulu] = useState(false);
   // Tam ekran pencerede kart HER ZAMAN açık başlar: pencereyi açıp bir de kartı açmak
@@ -395,8 +396,21 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
         transition: "box-shadow .3s, border-color .3s",
       }}
     >
+      <SagTikMenusu konum={uretimSagMenu} onKapat={() => setUretimSagMenu(null)} veri="uretim" baslik={`ÜRETİM · ${o.siparisNo} · ${o.model}`} ogeler={[
+        { k: "ac", etiket: acik ? "Kartı kapat" : "Kartı aç", ikon: acik ? ChevronUp : ChevronDown, onClick: () => setAcik((v) => !v) },
+        { k: "tam-ekran", etiket: "Tam ekranda aç", ikon: Maximize2, gizli: !onTamEkran, onClick: () => onTamEkran() },
+        { k: "siparis", etiket: `Bağlı sipariş: ${bagliSatisSiparisi ? bagliSatisSiparisi.siparisNo : ""}`, ikon: Truck, gizli: !bagliSatisSiparisi || !onGoToSiparis,
+          onClick: () => onGoToSiparis(bagliSatisSiparisi.id) },
+        { ayrac: true },
+        { k: "barkod", etiket: "Barkod etiketi (6×4)", ikon: Printer, baslik: "Bu üretimin barkod etiketi — bohçaya yapıştırılır", onClick: () => uretimEtiketiYazdir(o, stok) },
+        { k: "is-emri", etiket: "İş emri yazdır (A4)", ikon: FileText, baslik: "Model görseli, müşteri, beden dağılımı ve proses bazlı hammadde ihtiyacı", onClick: () => isEmriYazdir() },
+        { ayrac: true },
+        { k: "sil", etiket: "Üretimi sil", ikon: Trash2, renk: "var(--erp-warn)", gizli: !onRemove, onClick: () => { setAcik(true); setSilOnayGoster(true); } },
+      ]} />
       <div
         onClick={() => setAcik((v) => !v)}
+        data-uretim-kart-serit={o.siparisNo}
+        {...sagTikIsleyicileri((x, y) => setUretimSagMenu({ x, y }))}
         style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: acik ? 10 : 0, cursor: "pointer" }}
       >
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -404,29 +418,8 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
           <div>
             <div style={{ fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
               {o.model} <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 500 }}>{o.siparisNo}</span>
-              {/* ÜRETİM BARKODU BURADAN BASILIYOR. İşin başında bir kez basılıyor ve bölünme
-                  olmadığı sürece bütün prosesler boyunca aynı etiket kullanılıyor. Bölünen
-                  parçaların etiketleri aşağıda, kendi satırlarında. */}
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ padding: "2px 8px", fontSize: 11 }}
-                title="Bu üretimin barkod etiketini bas (6×4 cm) — bohçaya yapıştırılır"
-                onClick={(e) => { e.stopPropagation(); uretimEtiketiYazdir(o, stok); }}
-              >
-                <Printer size={11} /> Barkod
-              </button>
-              {/* İŞ EMRİ, barkod etiketinden AYRI bir belge: reçete tablosu 6×4 cm'ye sığmaz.
-                  Etiket bohçaya yapışır, iş emri personelin eline verilir. */}
-              <button
-                type="button"
-                className="btn-ghost"
-                style={{ padding: "2px 8px", fontSize: 11 }}
-                title="İş emri (A4): model görseli, müşteri, beden dağılımı ve proses bazlı hammadde ihtiyacı"
-                onClick={(e) => { e.stopPropagation(); isEmriYazdir(); }}
-              >
-                <FileText size={11} /> İş Emri
-              </button>
+              {/* BARKOD + İŞ EMRİ DÜĞMELERİ KALKTI (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"): kartın
+                  başlığına sağ tık / uzun basma menüsünde. Barkod etiketi bohçaya, iş emri (A4) personele — ikisi ayrı belge. */}
             </div>
             {bagliSatisSiparisi && (
               <button
@@ -480,7 +473,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
               <Maximize2 size={13} />
             </button>
           )}
-          <button className="btn-ghost" data-uretim-sil="1" title="Üretimi sil" onClick={(e) => { e.stopPropagation(); setSilOnayGoster(true); }}><Trash2 size={13} /></button>
+          {/* SİL sağ tık menüsünde (v1.636.0). */}
           {acik ? <ChevronUp size={16} color="var(--erp-text-3)" /> : <ChevronDown size={16} color="var(--erp-text-3)" />}
         </div>
       </div>

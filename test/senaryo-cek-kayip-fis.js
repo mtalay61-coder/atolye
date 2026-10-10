@@ -8,7 +8,7 @@
 //   1. Fişi hiç olmayan ciro: çek yeniden Portföyde, cari hesaba dokunulmuyor, mesaj bunu söylüyor.
 //   2. Kimliği farklı kalmış kopya fiş (aynı cari, çek no, tutar): o fiş siliniyor, çek Portföyde.
 //   3. Birden fazla benzer fiş: hiçbir şey yapılmıyor, fiş numaraları söyleniyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -34,9 +34,10 @@ async function calistir() {
   await sayfa.waitForTimeout(800);
 
   const geriAl = async (id) => {
-    await sayfa.locator(`[data-cek-geri-al="${id}"]`).click();
+    // v1.636.0: satıra sağ tık → "Son işlemi geri al" → satırdaki onay.
+    await sagTikSec(sayfa, `[data-cek-satir="${id}"]`, "geri-al");
     await sayfa.waitForTimeout(150);
-    await sayfa.locator(`[data-cek-geri-al="${id}"]`).click();
+    await sayfa.locator('[data-cek-onay-evet="geri-al"]').click();
     await sayfa.waitForTimeout(1200);
     // Bildirim metni: sayfadaki satırlar arasında geri almanın sonucunu söyleyen satır.
     const mesaj = await sayfa.evaluate(() => document.body.innerText.split("\n")

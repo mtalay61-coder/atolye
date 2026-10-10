@@ -7,7 +7,7 @@
 // İki cari: USD çalışan (fiyat olduğu gibi) ve TL çalışan (kurla ÇEVRİLMİŞ).
 //
 // ÖNCE: kural para birimi taşımıyordu — "Toptan USD" grubunun 6,30'u TL cariye 6,30 ₺ gidiyordu.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

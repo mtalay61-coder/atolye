@@ -7,7 +7,7 @@
 //
 // Ölçülen: (1) hareketi olan siparişte hayalet sayaç GERÇEK sevke çekiliyor; (2) hiç hareketi
 // olmayan sipariş DOKUNULMADAN kalıyor (eski kayıtlar sıfırlanmasın).
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

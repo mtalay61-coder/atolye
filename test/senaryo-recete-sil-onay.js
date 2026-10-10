@@ -5,7 +5,7 @@
 // Ürün kartının reçete sekmesindeki çöp kutuları `onReceteSilToplu`yu DOĞRUDAN çağırıyordu: bir
 // hammaddenin bütün satırları tek dokunuşla gidiyordu. Uygulamanın geri kalanındaki silmeler
 // `SilOnayButonu` (iki dokunuş) kullanıyor. Ölçülen: tek dokunuş SİLMİYOR, ikinci dokunuş siliyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

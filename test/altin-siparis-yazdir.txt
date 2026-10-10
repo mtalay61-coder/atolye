@@ -1,15 +1,15 @@
 {
  "hatalar": [],
  "serit": {
-  "dosyaAdi": "SAT-9001 - Müşteri B",
   "dugmeler": [
    "Yazdır",
-   "PDF",
+   "PDF indir",
    "WhatsApp",
    "E-posta"
   ],
-  "yazdirKilitlenebilir": false,
-  "yazdirPdfinSolunda": true
+  "menudeSiparisNo": true,
+  "seritteDugmeYok": true,
+  "yazdirPdfinUstunde": true
  },
  "yazdirma": {
   "anaPencereCagrisi": 0,

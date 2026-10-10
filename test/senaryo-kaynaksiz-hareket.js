@@ -7,7 +7,7 @@
 //      denetimde bildiriliyor.
 //   2. OTOMATİK ONARIM DÜĞMELERİ KALDIRILDI — denetim artık yalnız bildirir, düzeltme izi kalan
 //      bir işlemle (sayım fişi, fişi geri alma) yapılır.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

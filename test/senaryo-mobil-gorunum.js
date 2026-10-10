@@ -5,7 +5,7 @@
 // modül alt çubukta çıkmıyor; alt çubuk sıralamadaki ilk DÖRT görünür modülü gösteriyor;
 // "Varsayılana dön" ayarı sıfırlıyor. (Sürükleme pointer olaylarıyla; testte ok düğmeleri
 // ölçülüyor — aynı `kaydet` yolunu kullanıyorlar.)
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

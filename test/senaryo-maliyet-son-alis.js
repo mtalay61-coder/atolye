@@ -6,7 +6,7 @@
 // 30 × 3 $ → 2,75 $); Yapıştırıcı'nın yalnız 6 ay önce 64 ₺ alışı, o gün USD 32 → 2 $ → bugün 97,40 ₺.
 // Takviye Bezi'nin alışı yok → kart fiyatı (1,2 €) ve düzenlenebilir kutu.
 // Ölçülen: ürün kartı Maliyet dökümü (fiyat, kaynak yazısı, alıştan gelen satırda kutu yok) ve çıktı toplamı.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

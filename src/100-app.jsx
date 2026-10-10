@@ -1195,6 +1195,10 @@ export default function AtolyeERP() {
     }
   }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
 
+  // ESKİ GITHUB ANAHTARI SİLİNİR (v1.636.0): "GitHub'a yayınla" bölümü kalktı (bkz. 137); bu cihazda kalmış yazma
+  // yetkili anahtar gereksiz risk.
+  useEffect(() => { ghAnahtariTemizle(); }, []);
+
   // MEVCUT BÜYÜK LOGO BİR KEZ KÜÇÜLTÜLÜR (v1.635.0). v1.635'ten önce yüklenen logo ham dosya (kullanıcıda 500 KB).
   // Yükleme bittikten sonra 200 KB'tan büyükse küçültülüp kaydedilir; küçülen logo eşiğin altına indiği için tekrar
   // tetiklenmez. En az %20 kazanç yoksa yazılmaz (gereksiz yazma, sunucu arşivine boş kopya). Oturum başına bir deneme.
@@ -2856,17 +2860,23 @@ export default function AtolyeERP() {
     const temizAd = (ad || "").trim();
     if (!temizAd) return null;
     const tur = kapsamTuru || "genel";
-    const kapsam = tur === "genel" ? "" : (kapsamAd || "");
-    const mevcut = tanimlar.ozelKodAlanlari || [];
-    const zatenVar = mevcut.find((a) =>
-      (a.kapsamTuru || "genel") === tur && String(a.kapsamAd || "") === kapsam
-      && a.ad.toLocaleLowerCase("tr-TR") === temizAd.toLocaleLowerCase("tr-TR"));
-    if (zatenVar) return zatenVar.id;
-    const yeni = { id: uid("oka"), ad: temizAd, kapsamTuru: tur, kapsamAd: kapsam };
-    const nextTanimlar = { ...tanimlar, ozelKodAlanlari: [...mevcut, yeni] };
-    tanimlarKodluYaz(nextTanimlar);
-    return yeni.id;
+    // AYNI ADLI ALAN VARSA ONA BU TİP EKLENİR (v1.636.0, bkz. 008 ozelKodAlaniAdla) — tip başına ikiz alan açılmaz.
+    const sonuc = ozelKodAlaniAdla(tanimlar.ozelKodAlanlari || [], temizAd, tur === "genel" ? "" : `${tur}|${kapsamAd || ""}`, uid("oka"));
+    if (sonuc.degisti) tanimlarKodluYaz({ ...tanimlar, ozelKodAlanlari: sonuc.alanlar });
+    return sonuc.id;
   }, [tanimlar, tanimlarKodluYaz]);
+
+  // AYNI ADLI ÖZEL KOD ALANLARINI BİRLEŞTİR (v1.636.0): tanım + ürün değerleri birlikte yazılır (bkz. 008).
+  const ozelKodAlanlariniBirlestirYaz = useCallback(() => {
+    const sonuc = ozelKodAlanlariniBirlestir(tanimlar.ozelKodAlanlari || [], stok);
+    if (sonuc.birlesenSayisi === 0) return sonuc;
+    tanimlarKodluYaz({ ...tanimlar, ozelKodAlanlari: sonuc.alanlar });
+    if (sonuc.urunler.length > 0) {
+      const degisen = new Map(sonuc.urunler.map((u) => [u.id, u]));
+      saveStok(stok.map((u) => degisen.get(u.id) || u));
+    }
+    return sonuc;
+  }, [tanimlar, stok, tanimlarKodluYaz, saveStok]);
 
   const yeniMamulTipiKaydet = useCallback((ad) => {
     const temizAd = (ad || "").trim();
@@ -3646,6 +3656,11 @@ export default function AtolyeERP() {
            Tanımlar > Görünüm > Boyut. zoom satır içi piksel stilleri de ölçeklediği için yüzlerce ekrana
            dokunmadan bütün uygulamada geçerli. Değişkenler kök öğede; ayar yoksa 1 (hiçbir şey değişmez). */
         html { zoom: var(--olcek-genel, 1); }
+        /* YATAY KAYDIRMA KUTUSU (v1.636.0, 350 YatayKaydirma): kalın, görünür çubuk; ilk sütun (Pozisyon) sabit kalır. */
+        .yatay-kutu::-webkit-scrollbar { height: 12px; }
+        .yatay-kutu::-webkit-scrollbar-thumb { background: #B9A88F; border-radius: 6px; }
+        .yatay-kutu::-webkit-scrollbar-track { background: #F1EBE1; border-radius: 6px; }
+        .yatay-kutu table tr > :first-child { position: sticky; left: 0; z-index: 1; background: var(--erp-panel); }
         .btn-primary, .btn-ghost, .btn-save, .btn-danger { zoom: var(--olcek-dugme, 1); }
         input:not([type="checkbox"]):not([type="radio"]), select, textarea { zoom: var(--olcek-kutu, 1); }
         /* ---- EKRAN DÜZENİ (v1.522.0, 387) — blok ızgarası: Dar = 4/12, Yarım = 6/12, Tam = 12/12.
@@ -4468,18 +4483,13 @@ export default function AtolyeERP() {
               mobilDuzenAktif={mobilDuzen}
               kullanimdakiOlculer={kullanimdakiOlculer}
               onTanimsizOlcuCevir={tanimsizOlcuCevir}
-              yayinSurum={yayinSurum}
-              onSurumYayinla={async (v) => {
-                try { await yayinlananSurumuYaz(v); setYayinSurum(v); showToast(`Sürüm ${v.surum} yayınlandı — herkes açılışta görecek`); }
-                catch (e) { showToast(`Yayınlanamadı: ${e && e.message}`); }
-              }}
               onAktifKullaniciGuncelle={setAktifKullanici} onAcilisFisiKes={acilisFisiKes} tanimlar={tanimlar} onSave={(sonraki) => {
                 // TANIMLARDA DÜZENLEME YETKİSİ (v1.569.0): görüntüleme yetkisi olan herkes her şeyi değiştirip silebiliyordu.
                 // Yöneticisiz listede (kurtarma: "Bu hesabı Yönetici yap") kayda izin var.
                 const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");
                 if (yoneticiVar && !kullaniciYetkisiVar("tanimlar", "duzenleme")) { showToast("Tanımlarda değişiklik yetkiniz yok"); return undefined; }
                 return saveTanimlar(sonraki);
-              }} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onOlcuAdDegistir={olcuAdDegistir} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
+              }} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onOlcuAdDegistir={olcuAdDegistir} onOzelKodBirlestir={ozelKodAlanlariniBirlestirYaz} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
           </GizliModul>
           {tab === "modelhane" && (
             <ModelhaneModule

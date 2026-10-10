@@ -10,7 +10,7 @@
 //      Tahsilat / Ödeme düğmeleri kendi renginde;
 //   4) (v1.536.0) Tümü/Genel/Resmi ayrı blok ("defter"), okla tablonun altına iniyor ve kayıtta kalıyor;
 //   5) ✎ → alttaki düzenleme formu (ad kutusu + Kaydet/Vazgeç) açılıyor, şeritte ✎ ve 🗑 gizleniyor.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

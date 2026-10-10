@@ -1,0 +1,52 @@
+{
+  "cari": {
+    "tur": "cari",
+    "ogeler": [
+      "ac",
+      "duzenle",
+      "ekstre",
+      "pasif",
+      "sil"
+    ]
+  },
+  "cariPasifYazildi": true,
+  "cariSeritteIkonYok": true,
+  "urun": {
+    "tur": "urun",
+    "ogeler": [
+      "ac",
+      "duzenle",
+      "sekme-stok",
+      "sekme-recete",
+      "sekme-maliyet",
+      "sekme-fiyat",
+      "sekme-barkodlar",
+      "sekme-hareketler",
+      "pasif",
+      "sil"
+    ]
+  },
+  "receteSekmesiAcildi": true,
+  "fisteIslemlerDugmesiYok": true,
+  "fis": {
+    "tur": "fis",
+    "ogeler": [
+      "ac",
+      "baglanti",
+      "sil(pasif)"
+    ]
+  },
+  "escKapatti": true,
+  "uretimSeritteBarkodYok": true,
+  "uretim": {
+    "tur": "uretim",
+    "ogeler": [
+      "ac",
+      "tam-ekran",
+      "barkod",
+      "is-emri",
+      "sil"
+    ]
+  },
+  "hatalar": []
+}

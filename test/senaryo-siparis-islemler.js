@@ -8,7 +8,7 @@
 //   B) SAT-9 (250 USD, 100 USD tahsil edilmiş) kartında "İşlemler" → menü: Tahsilat; şeride sağ tık da menüyü açar.
 //      Tahsilat (tek satır, v1.624.1) → kartın içinde form; "Çek/senet için cari kartında aç" → Cari ekranı, Müşteri B kartında form: tutar 150 (kalan), USD, "Sipariş SAT-9".
 //   C) Çıktı HTML'inde hesap özeti: Sipariş toplamı, "− 100 $" tahsilat satırı (THS-1005001, USD Kasa), KALAN BAKİYE 150 $.
-const { uygulamaAc, depoOku, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {
@@ -70,8 +70,10 @@ async function calistir() {
     const m = document.querySelector("[data-siparis-islem-menusu]");
     return m ? { baslik: /SAT-9/.test(m.textContent), ogeler: [...m.querySelectorAll("[data-siparis-islem]")].map((b) => b.getAttribute("data-siparis-islem") + ":" + b.textContent.replace(/\s+/g, " ").trim()) } : null;
   });
-  await sayfa.locator("[data-siparis-islemler]:visible").first().click(); await sayfa.waitForTimeout(300);
-  const dugmeMenusu = await menuOge();
+  // v1.636.0: "İşlemler" düğmesi kalktı (kullanıcı: gizli menüler sağ tıkla). Düğme yok + sağ tıkla açılan menü.
+  const dugmeYok = !(await sayfa.locator("[data-siparis-islemler]").count());
+  await sayfa.locator("[data-siparis-ust-serit]:visible").first().click({ button: "right", position: { x: 6, y: 6 } }); await sayfa.waitForTimeout(300);
+  const dugmeMenusu = { ...(await menuOge()), dugmeYok };
   await sayfa.mouse.click(700, 900); await sayfa.waitForTimeout(200);
   const kapandi = await sayfa.evaluate(() => !document.querySelector("[data-siparis-islem-menusu]"));
   const serit = sayfa.locator("[data-siparis-ust-serit]:visible").first();
@@ -93,6 +95,22 @@ async function calistir() {
       aciklama: q("[data-cari-hareket-aciklama]") && q("[data-cari-hareket-aciklama]").value };
   });
 
+  // ---- B2) LİSTE SATIRINA SAĞ TIK (v1.636.0): kart listede açılır, menü tıklanan yerde; liste kartı salt okunur
+  // olduğu için Düzenle / Sil yok, tahsilat ve paylaş var.
+  await sayfa.keyboard.press("Escape");
+  await modulAc(sayfa, "Sipariş"); await sayfa.waitForTimeout(500);
+  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /^Tümü\s*\(/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await sayfa.waitForTimeout(400);
+  // Tam ekran sipariş penceresi listenin üstünde açık kalıyor; olay doğrudan satıra gönderiliyor (React'in sağ tık işleyicisi).
+  await sayfa.evaluate(() => { const r = document.querySelector('[data-siparis-satir="SAT-9"]'); const b = r.getBoundingClientRect();
+    r.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: b.left + 40, clientY: b.top + 10 })); });
+  await sayfa.waitForTimeout(600);
+  const listeSagTik = await sayfa.evaluate(() => {
+    const m = [...document.querySelectorAll("[data-siparis-islem-menusu]")].find((x) => x.getBoundingClientRect().width > 0);
+    return m ? { baslik: /SAT-9/.test(m.textContent), ogeler: [...m.querySelectorAll("[data-siparis-islem]")].map((b) => b.getAttribute("data-siparis-islem")),
+      paylas: m.querySelectorAll("[data-paylas-yazdir],[data-paylas-pdf],[data-paylas-whatsapp],[data-paylas-eposta]").length } : null;
+  });
+
   // ---- C) çıktı HTML'i (PaylaşŞeridi'nin kullandığı gövde): sayfadaki fonksiyonla, depodaki veriden.
   await tarayici.close();
   const erp = require("./erp.cjs");
@@ -107,7 +125,7 @@ async function calistir() {
   };
   const odemesiz = erp.siparisCiktisiHTML(sip, { ...c.find((x) => x.id === "c2"), hareketler: [] }, {}, stok);
   cikti.odemesizBolumYok = !/data-cikti-odemeler/.test(odemesiz);
-  return { hatalar, vurgu, vurguSondu, eskiSonucYok, dugmeMenusu, kapandi, sagTikMenusu, kartFormu, cariFormu, cikti };
+  return { hatalar, vurgu, vurguSondu, eskiSonucYok, dugmeMenusu, kapandi, sagTikMenusu, kartFormu, cariFormu, listeSagTik, cikti };
 }
 
 if (require.main === module) {

@@ -8,7 +8,7 @@
 //   2) (v1.530.0) kart düzeyi düzen kaldırıldı: bakiye, ekstre, pasife al ve düzen ikonu mor üst şeritte;
 //   3) Hareketler: liste filtrelerin üstüne, işlem düğmeleri "Yarım" → Kaydet;
 //   4) düzenden sonra fiş düğmeleri hâlâ çalışıyor (Alış Fişi formu açılıyor); kayıt tanimlar'da.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

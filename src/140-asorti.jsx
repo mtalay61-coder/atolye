@@ -82,12 +82,6 @@ function PasifButonu({ pasif, onDegistir, etiket }) {
 // tık AYNI ikon yerine pencereye düşer — bu yüzden ikinci tık `data-sil-onayla`ya yönlendirildi.
 function SilOnayButonu({ onConfirm, boyut = 11, baslikNormal = "Sil", baslikOnay, kartEylemi = false }) {
   const [acik, setAcik] = useState(false);
-  React.useEffect(() => {
-    if (!acik) return undefined;
-    const dinle = (e) => { if (e.key === "Escape") { e.stopPropagation(); setAcik(false); } };
-    window.addEventListener("keydown", dinle, true);
-    return () => window.removeEventListener("keydown", dinle, true);
-  }, [acik]);
 
   return (
     <>
@@ -103,6 +97,24 @@ function SilOnayButonu({ onConfirm, boyut = 11, baslikNormal = "Sil", baslikOnay
       >
         <Trash2 size={boyut} />
       </button>
+      <SilOnayPenceresi acik={acik} baslik={baslikNormal} onKapat={() => setAcik(false)} onConfirm={onConfirm} />
+    </>
+  );
+}
+
+// SİLME ONAY PENCERESİ — SilOnayButonu'nun penceresi ayrı bileşen (v1.636.0): sağ tık menülerindeki "Sil" de AYNI
+// pencereyi açar (proje standardı tek kalsın; testler `data-sil-onayla` ile onaylar).
+function SilOnayPenceresi({ acik, baslik, onKapat, onConfirm }) {
+  React.useEffect(() => {
+    if (!acik) return undefined;
+    const dinle = (e) => { if (e.key === "Escape") { e.stopPropagation(); onKapat(); } };
+    window.addEventListener("keydown", dinle, true);
+    return () => window.removeEventListener("keydown", dinle, true);
+  }, [acik]);
+  const baslikNormal = baslik;
+  const setAcik = (v) => { if (!v) onKapat(); };
+  return (
+    <>
       {acik && (
         <div role="dialog" aria-modal="true" data-sil-penceresi="1"
           onClick={(e) => { e.stopPropagation(); setAcik(false); }}

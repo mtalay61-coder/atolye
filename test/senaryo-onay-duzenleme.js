@@ -9,7 +9,7 @@
 // ORTAK FİŞ EKRANINA TAŞINDI (23 Eylül, v1.431.0): alış da tek ekranda; onay paneli artık fişin
 // kendisinde (`data-fis-onay`). Ölçülen davranış aynı: onay açıkken satır eklenebiliyor ve onay
 // kendiliğinden kapanıyor — bayat özetle "evet" dedirtmemek için.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -2,7 +2,7 @@
 // Kullanıcı: "Müşteri seçerken filtreli olsun, cari arttıkça içinden çıkılmıyor." Ölçülen: yeni satış siparişinde kutu
 // boş açılır; odakta bütün müşteriler (tedarikçi yok); "tir" yazınca yalnız "İgii Tirana"; cari koduyla ("0007") bulunur;
 // Enter ile seçilir, kutuda ünvan, data-cari-id doğru; × temizler; büyük/küçük harf ("İGİİ") duyarsız.
-const { uygulamaAc, modulAc } = require("./ortak.js");
+const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

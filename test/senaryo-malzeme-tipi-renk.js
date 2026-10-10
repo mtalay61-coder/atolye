@@ -12,7 +12,7 @@
 //      KAZANIYOR (ortak renk olarak diğer tipini koruyor), zaten Astar olan değişmiyor.
 //   4. Ürün kartında (var olan ürüne renk ekleme) aynı kural: Deri'nin rengi yazınca bulunuyor,
 //      eklenince Astar'a da bağlanıyor.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -6,7 +6,7 @@
 //   3. 90 güne 14 günden az kalan kayıt için uyarı; 90 günü aşan açılışta düşer.
 //   4. "Boşalt" yalnız 30 günden eskileri siler, yeniler kalır.
 //   5. Sunucu arşivi bölümü Yöneticiye görünür; bulut yokken bunu söyler.
-const { uygulamaAc, depoOku } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

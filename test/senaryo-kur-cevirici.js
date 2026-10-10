@@ -12,7 +12,7 @@
 //   1. Tutar girilince kur ÖN DOLUYOR ve hedef tutar hesaplanıyor.
 //   2. HEDEF TUTAR yazılınca kur geri hesaplanıyor.
 //   3. KUR yazılınca hedef tutar yeniden hesaplanıyor.
-const { uygulamaAc, modulAc, cariSec } = require("./ortak.js");
+const { uygulamaAc, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

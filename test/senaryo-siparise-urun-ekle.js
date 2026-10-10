@@ -16,7 +16,7 @@
 //   3. Kaydedince kalem AYNI siparişe yazılıyor: sipariş sayısı değişmiyor, yeni sipariş no yok,
 //      mevcut kalem (kimliği ve miktarı) bozulmuyor.
 //   4. "Tamamlandı" siparişe yeni kalem eklenemiyor: kaydetme sebebini söyleyip reddediyor, kayıt aynı.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

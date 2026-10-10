@@ -8,7 +8,7 @@
 //
 // Ölçülen: (1) ekran menüden açılıyor ve kart listeleniyor; (2) kart toplamı hareketlerden
 // hesaplanıyor; (3) "Hareketler" ekstreyi açıyor ve hareketler tarih sırasında.
-const { uygulamaAc } = require("./ortak.js");
+const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 

@@ -8,7 +8,7 @@
 //   3) Çizme kartı > Reçete: "onaysiz" → Onayla → "onayli"; depoda receteOnay (onaylayan/imza) yazıldı.
 //   4) Üretim > Yeni > Çizme: uyarı yok, Siyah 40:2 → Oluştur → üretim açıldı.
 //   5) Tedarik Planlama (SAT-R1 Bot) → Üretime gönder → üretim AÇILMADI, uyarı; seçim korundu.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 
 async function calistir() {

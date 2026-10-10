@@ -7,7 +7,7 @@
 //
 // Bu senaryo o akışı uçtan uca yürütüyor: personel okut → iş al → tekrar okut → teslim et.
 // Bir önceki sürümde bu ekran yalnızca birim testleriyle kapsanmıştı ve hata tam oradan sızdı.
-const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
+const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -58,7 +58,8 @@ async function calistir() {
   await sayfa.getByText("2001", { exact: true }).last().click();
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { window.print = () => {}; });
-  await sayfa.locator('button[title^="Bu üretimin barkod etiketini bas"]:visible').first().click();
+  // v1.636.0: barkod düğmesi kart başlığından sağ tık menüsüne taşındı.
+  await sagTikSec(sayfa, "[data-uretim-kart-serit]", "barkod");
   await sayfa.waitForTimeout(700);
   const uretimEtiketi = await sayfa.evaluate(() => {
     const c = [...document.querySelectorAll("iframe")].pop();
@@ -74,7 +75,7 @@ async function calistir() {
   await sayfa.waitForTimeout(1800);
 
   // İŞ EMRİ — barkod etiketinden AYRI belge: A4, model görseli, müşteri, proses bazlı hammadde.
-  await sayfa.locator('button[title^="İş emri (A4)"]:visible').first().click();
+  await sagTikSec(sayfa, "[data-uretim-kart-serit]", "is-emri");   // v1.636.0: iş emri sağ tık menüsünde
   await sayfa.waitForTimeout(700);
   const isEmri = await sayfa.evaluate(() => {
     const c = [...document.querySelectorAll("iframe")].pop();
