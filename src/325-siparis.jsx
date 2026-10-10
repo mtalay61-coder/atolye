@@ -28,6 +28,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // Dolu olduğunda "Siparişi Kaydet" yerine "Bu Siparişe Ekle" çalışıyor.
   // DÜZENLENEN SİPARİŞ (25 Eylül): doluysa form yeni sipariş değil, bu siparişin düzenlemesi.
   const [duzenlenenId, setDuzenlenenId] = useState(null);
+  // Düzenleme başlangıcındaki sipariş nesnesi (v1.640.0, denetim): form açıkken tazelemeyle gelen değişiklik Kaydet'te
+  // uyarısız ezilmesin — referans değiştiyse sorulur.
+  const duzenlemeKaynagiRef = useRef(null);
   const [tip, setTip] = useState("Satış");
   const [cariId, setCariId] = useState("");
   const [tarih, setTarih] = useState(bugunYerel());
@@ -684,6 +687,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const siparis = siparisler.find((s) => s.id === siparisId);
     if (!siparis) return;
     resetForm();
+    duzenlemeKaynagiRef.current = siparisler.find((x) => x.id === siparisId) || null;
     setDuzenlenenId(siparisId);
     setTip(siparis.tip);
     setCariId(siparis.cariId || "");
@@ -708,6 +712,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   function siparisDuzenlemeKaydet() {
     const siparis = siparisler.find((s) => s.id === duzenlenenId);
     if (!siparis) { duzenlemedenCik(); return showToast("Düzenlenen sipariş bulunamadı — silinmiş olabilir"); }
+    if (duzenlemeKaynagiRef.current && duzenlemeKaynagiRef.current !== siparis
+      && !window.confirm("Bu sipariş siz düzenlerken başka yerden (başka cihaz ya da pencere) değişti. Formdaki hâl o değişikliğin üstüne yazılsın mı?")) return;
     if (!cariId) return showToast(tip === "Satış" ? "Müşteri seçin" : "Tedarikçi seçin");
     // CARİ, TESLİMAT YAPILMIŞSA DEĞİŞMEZ: fişler o cariye kesildi; değiştirmek ekstre ile siparişi
     // birbirinden koparırdı.
@@ -2439,11 +2445,21 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
 
       {siparisSekme === "satis" ? (
         satisListe.length === 0 ? (
-          <EmptyState text={
-            (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
-              ? "Bu filtre/aramayla eşleşen satış siparişi yok."
-              : "Henüz satış siparişi yok. Yeni sipariş oluşturarak başlayın."
-          } />
+          <>
+            <EmptyState text={
+              (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
+                ? "Bu filtre/aramayla eşleşen satış siparişi yok."
+                : "Henüz satış siparişi yok. Yeni sipariş oluşturarak başlayın."
+            } />
+            {/* Süzgeç boş ama kayıt var (v1.640.0, denetim): liste "Bekliyor" ile açılıyor, tek kayıt başka durumdaysa ilk görünüm boştu. */}
+            {durumFiltre !== "Tümü" && !siparisArama && !siparisKolonAktif && satisListeTumu.length > 0 && (
+              <div style={{ textAlign: "center", marginTop: -8 }}>
+                <button type="button" className="btn-ghost" data-siparis-tumunu-goster="1" onClick={() => setDurumFiltre("Tümü")} style={{ fontSize: 12 }}>
+                  Tümünü göster ({satisListeTumu.length})
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {satisListe.map((s) => (
@@ -2521,11 +2537,20 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         )
       ) : (
         alisListe.length === 0 ? (
-          <EmptyState text={
-            (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
-              ? "Bu filtre/aramayla eşleşen alış siparişi yok."
-              : "Henüz alış siparişi yok. Yeni sipariş oluşturarak başlayın."
-          } />
+          <>
+            <EmptyState text={
+              (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
+                ? "Bu filtre/aramayla eşleşen alış siparişi yok."
+                : "Henüz alış siparişi yok. Yeni sipariş oluşturarak başlayın."
+            } />
+            {durumFiltre !== "Tümü" && !siparisArama && !siparisKolonAktif && alisListeTumu.length > 0 && (
+              <div style={{ textAlign: "center", marginTop: -8 }}>
+                <button type="button" className="btn-ghost" data-siparis-tumunu-goster="1" onClick={() => setDurumFiltre("Tümü")} style={{ fontSize: 12 }}>
+                  Tümünü göster ({alisListeTumu.length})
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div style={{ display: "grid", gap: 12 }}>
             {alisListe.map((s) => (

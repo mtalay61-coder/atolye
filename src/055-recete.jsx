@@ -19,7 +19,7 @@
 //
 // Kalem seviyesindeki kutu tercihi (ambalajRengiUygula) burada da uygulanır — aksi halde ekranda
 // reçetedeki varsayılan kutunun stoğu görünür, oysa o siparişte başka bir kutu kullanılacaktır.
-function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
+function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez, kurlar) {
   const sonuc = [];
   const index = {};
   let recetesizKalem = 0;
@@ -48,6 +48,8 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
           // ama sebebi "stok bitti" değil, "böyle bir varyant yok"tur — ikisi farklı sorunlardır.
           varyantYok: !varyant,
           alisFiyati: hm ? (hm.alisFiyati || 0) : 0,
+          // TL karşılığı kurla (v1.640.0, denetim): eksik maliyeti dövizli fiyatı TL sayıyordu.
+          alisFiyatiTL: hm ? (hammaddeBirimFiyati(hm, etkinRenk, r.beden, kurlar || {}).tl || 0) : 0,
           // Bu SİPARİŞE ayrılmış miktar (alış rezervasyonu + stok rezervasyonu, tüketilen düşülmüş).
           rezerve: 0,
         });
@@ -66,7 +68,7 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
     g.rezerve = Math.round(bizim.reduce((t, x) => t + x.kalan, 0) * 1000) / 1000;
     g.rezerveAcik = Math.round(bizim.reduce((t, x) => t + x.acik, 0) * 1000) / 1000;
     g.eksik = Math.round(Math.max(0, g.gereken - g.mevcutStok) * 1000) / 1000;
-    g.eksikMaliyet = Math.round(g.eksik * g.alisFiyati * 100) / 100;
+    g.eksikMaliyet = Math.round(g.eksik * (g.alisFiyatiTL || 0) * 100) / 100;
     // SATIN ALMA DURUMU (v1.632.0): Planlama'daki gibi — bu satış siparişi için verilmiş alış siparişlerinde henüz teslim
     // alınmamış (yolda) miktar. Durum standardı (HAMMADDE_DURUMLARI): yeterli / yolda / kismen / eksik.
     const satinAlma = hammaddeSatinAlmaDurumu(g.hammaddeUrunId, g.renk, g.beden, new Set([siparis.id]), tumSiparisler || []);

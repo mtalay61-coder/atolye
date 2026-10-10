@@ -274,6 +274,15 @@ function bulutGirisSebebi(hata) {
 
 async function jetonTazele() {
   if (!_oturum || !_oturum.yenileme) return null;
+  // ÖTEKİ SEKME YENİLEMİŞSE ONUN OTURUMU (v1.640.0, denetim): aynı tarayıcıda iki sekme açıkken her sekme bellekteki
+  // kendi yenileme jetonuyla yeniliyordu; Supabase yenileme jetonunu döndürdüğü için ikinci sekmenin eski jetonu
+  // reddediliyor ("already used") ve `oturumYaz(null)` ORTAK anahtarı silip iki sekmeyi de düşürüyordu. Depodaki kayıt
+  // daha yeniyse önce o alınır; erişim jetonu hâlâ geçerliyse yenilemeye hiç gidilmez.
+  const kayitli = oturumOku();
+  if (kayitli && kayitli.yenileme && kayitli.yenileme !== _oturum.yenileme && (kayitli.sonaErme || 0) >= (_oturum.sonaErme || 0)) {
+    _oturum = kayitli;
+    if ((kayitli.sonaErme || 0) > Date.now() + 30000) return _oturum;
+  }
   // Açılışta on tablo aynı anda çekiliyor. Her biri ayrı yenileme başlatsaydı, ilk dönen
   // yenileme jetonu diğerlerini geçersiz kılar ve oturum kendi kendini düşürürdü.
   if (!_yenilemeIslemi) {
@@ -287,7 +296,8 @@ async function jetonTazele() {
         // oturum durur, bu istek jetonsuz gider ve bir sonraki istek yenilemeyi yeniden dener (dakikalık otomatik
         // yeniden gönderim bekleyen kaydı götürür).
         const ham = String((e && e.message) || e || "");
-        if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|timeout/i.test(ham)) {
+        // 429 (hız sınırı) da geçicidir (v1.640.0).
+        if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|HTTP 429|too many|timeout/i.test(ham)) {
           console.warn("Jeton yenilenemedi (geçici), oturum korunuyor:", ham);
           return null;
         }

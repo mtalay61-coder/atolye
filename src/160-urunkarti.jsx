@@ -522,6 +522,10 @@ function ProductMatrixCard({
   const [maliyetBeden, setMaliyetBeden] = useState("");
   // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
   const sekmeAcRef = useRef(null);
+  // DÜZENLEME BAŞLANGICINDAKİ KAYIT (v1.640.0, denetim): form açıkken başka cihazın değişikliği tazelemeyle (v1.611)
+  // gelirse kayıt nesnesi değişir; Kaydet o değişikliği uyarısız ezmesin — sorulur. Referans karşılaştırması: tazeleme
+  // ve her yazma yeni nesne üretir.
+  const duzenlemeKaynagiRef = React.useRef(null);
   const stokAcRef = useRef(null);
   const stokKontrolRef = useRef(null);
   const duzenBaglami = React.useContext(EkranDuzeniBaglami);
@@ -764,12 +768,15 @@ function ProductMatrixCard({
       malzemeTipi: product.malzemeTipi || "",
       ozelKodlar: { ...(product.ozelKodlar || {}) },
     });
+    duzenlemeKaynagiRef.current = product;
     setShowEdit(true);
   }
 
   function editKaydet() {
     const duzenlenenAd = editForm.ad.trim();
     if (!duzenlenenAd) { showToast("Ürün adı boş olamaz"); return; }
+    if (duzenlemeKaynagiRef.current && duzenlemeKaynagiRef.current !== product
+      && !window.confirm("Bu ürün siz düzenlerken başka yerden (başka cihaz ya da pencere) değişti. Girdiğiniz alanlar o değişikliğin üstüne yazılsın mı?")) return;
     // Kendisi hariç, aynı ada sahip başka ürün var mı? (Ad değiştirirken de mükerrer oluşamamalı.)
     const adCakismasi = (tumUrunler || []).find(
       (p) => p.id !== product.id && urunAdiAnahtari(p.ad) === urunAdiAnahtari(duzenlenenAd)

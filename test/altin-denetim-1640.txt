@@ -1,0 +1,13 @@
+{
+ "hatalar": [],
+ "bosSuzgec": {
+  "satir": 0,
+  "dugme": "Tümünü göster (1)"
+ },
+ "sonra": [
+  "SAT-D1"
+ ],
+ "formAcik": true,
+ "confirmSayisi": 0,
+ "kayitDuruyor": true
+}

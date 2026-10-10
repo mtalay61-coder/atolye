@@ -1,4 +1,6 @@
-function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli) {
+// `kurlar` (v1.640.0, denetim): eksik maliyeti dövizli alış fiyatını TL sayıyordu; `alisFiyatiTL` kurla (renk/boy
+// fiyat kuralı dahil, `hammaddeBirimFiyati`), kur yoksa 0 + `kurEksik`. `alisFiyati` (kendi birimi) alış siparişi için kalır.
+function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli, kurlar) {
   // Sadece "İptal" olmayan ve hâlâ karşılanmamış kalemi bulunan satış siparişleri dikkate alınır.
   const bekleyenSatislar = (siparisler || []).filter((s) => s.tip === "Satış" && s.durum !== "İptal");
   const ihtiyacGruplari = {}; // "hammaddeUrunId|renk|beden" -> { hammaddeUrunId, hammaddeAd, renk, beden, birim, gereken, kaynaklar: [...] }
@@ -108,19 +110,21 @@ function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli) {
     const stokBilinmiyor = hamStok < 0;
     const mevcutStok = stokBilinmiyor ? 0 : hamStok;
     const alisFiyati = (hammaddeUrun && hammaddeUrun.alisFiyati) || 0;
+    const bf = hammaddeUrun ? hammaddeBirimFiyati(hammaddeUrun, g.renk, g.beden, kurlar || {}) : { tl: 0, kurEksik: false };
+    const alisFiyatiTL = bf.tl || 0;
     const minStok = hammaddeUrun ? (((hammaddeUrun.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(g.renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(g.beden)) || {}).minStok || 0) : 0;
     const fark = Math.round((mevcutStok - g.gereken) * 100) / 100;
     const eksikMiktar = fark < 0 ? Math.abs(fark) : 0;
     return {
-      ...g, mevcutStok, hamStok, stokBilinmiyor, minStok, alisFiyati, fark, eksikMi: fark < 0,
-      eksikMiktar, eksikMaliyet: Math.round(eksikMiktar * alisFiyati * 100) / 100,
+      ...g, mevcutStok, hamStok, stokBilinmiyor, minStok, alisFiyati, alisFiyatiTL, kurEksik: !!bf.kurEksik, fark, eksikMi: fark < 0,
+      eksikMiktar, eksikMaliyet: Math.round(eksikMiktar * alisFiyatiTL * 100) / 100,
     };
   }).sort((a, b) => (a.eksikMi === b.eksikMi ? b.eksikMaliyet - a.eksikMaliyet || b.gereken - a.gereken : a.eksikMi ? -1 : 1));
 }
 
 // "Planlama" ana sekmesi, alt sekmelerden oluşur — şu an sadece "Hammadde İhtiyaç" (MRP) var, ama
 // yapı, ileride "Merkezi Tedarik Planlama" gibi başka alt sekmeler eklemeye hazır şekilde kuruldu.
-function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, onGoToSiparis, onGoToUrun, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlaHammaddeSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
+function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, kurlar, onGoToSiparis, onGoToUrun, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlaHammaddeSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
   const [altSekme, setAltSekme] = useState("siparisPlanlama");
   const ALT_SEKMELER = [
     { key: "siparisPlanlama", label: "Sipariş Planlama" },
@@ -168,7 +172,7 @@ function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, onGoToSi
         />
       )}
       {altSekme === "siparisIhtiyac" && (
-        <HammaddeIhtiyacSekmesi
+        <HammaddeIhtiyacSekmesi kurlar={kurlar}
           siparisler={siparisler}
           stok={stok}
           uretim={uretim}
@@ -183,7 +187,7 @@ function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, onGoToSi
         />
       )}
       {altSekme === "hammadde" && (
-        <HammaddeIhtiyacSekmesi siparisler={siparisler} stok={stok} uretim={uretim} onGoToSiparis={onGoToSiparis} onGoToUrun={onGoToUrun} onGoToUretim={onGoToUretim} cariler={cariler} onPlanlaHammaddeSatinAlma={onPlanlaHammaddeSatinAlma} />
+        <HammaddeIhtiyacSekmesi kurlar={kurlar} siparisler={siparisler} stok={stok} uretim={uretim} onGoToSiparis={onGoToSiparis} onGoToUrun={onGoToUrun} onGoToUretim={onGoToUretim} cariler={cariler} onPlanlaHammaddeSatinAlma={onPlanlaHammaddeSatinAlma} />
       )}
     </div>
   );
