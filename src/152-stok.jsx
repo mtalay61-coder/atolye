@@ -1515,7 +1515,8 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
           {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde (önce matrisin altındaydı). */}
           <KayitSeridi baslik="Yeni Stok Kartı" ikon={<Package size={15} color="#5B3F75" />} veri="data-stok-form-seridi">
             <button className="btn-primary btn-save" onClick={saveProduct} disabled={!matrix}><Save size={14} /> Kaydet</button>
-            <button className="btn-ghost" onClick={() => { setShowForm(false); setMatrix(null); }}><X size={14} /> Vazgeç</button>
+            {/* Vazgeç formu da boşaltır (v1.639.0, denetim): önceki giriş ve gizlenmiş tipin özel kodları bir sonraki açılışta kalıyordu. */}
+            <button className="btn-ghost" onClick={() => { setShowForm(false); setMatrix(null); setForm(emptyForm()); setSelRenkler([]); setSelBedenler([]); setBedensiz(false); }}><X size={14} /> Vazgeç</button>
           </KayitSeridi>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, marginBottom: 10 }}>
             <div>

@@ -1,4 +1,4 @@
-function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, onHurdaTelafi, onProsesTamamla, onProsesVer, onProsesVerGeriAl, onProsesTeslimGeriAl, onRemoveOrder, cariler, onGoToCari, siparisler, onGoToSiparis, hedefUretimId, onHedefTuketildi, onAsortiOlustur, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUretimIdleri }) {
+function UretimModule({ panelKipi, orders, cop, onAtamaPersonelVer, onSave, showToast, stok, tanimlar, onHurdaTelafi, onProsesTamamla, onProsesVer, onProsesVerGeriAl, onProsesTeslimGeriAl, onRemoveOrder, cariler, onGoToCari, siparisler, onGoToSiparis, hedefUretimId, onHedefTuketildi, onAsortiOlustur, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUretimIdleri }) {
   // TAM EKRAN ÜRETİM PENCERESİ.
   //
   // Üretim kartı uzun ve üzerinde uzun süre çalışılıyor: iş ver, teslim al, fire gir. Bu sırada
@@ -60,8 +60,11 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
 
     const order = {
       id: uid("uretim"),
-      siparisNo: String(1000 + orders.length + 1),
-      takipKodu: String(1000 + orders.length + 1),
+      // NUMARA EN BÜYÜKTEN (v1.639.0, denetim — kritik): `orders.length + 1` bir üretim silinince hâlâ kullanımdaki numarayı
+      // yeniden veriyordu (fişler, planlama referansı, etiket yanlış üretime bağlanır) ve 4 hane personel barkod aralığıyla
+      // çakışıyordu. Planlama ve hurda telafisiyle aynı kaynak: çöp dahil en büyük + 1 (5 hane).
+      siparisNo: String(enBuyukUretimNo(orders, cop) + 1),
+      takipKodu: String(enBuyukUretimNo(orders, cop) + 1),
       model: seciliUrun.ad,
       urunId: seciliUrun.id,
       renk,
@@ -144,6 +147,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                 onGoToCari={onGoToCari}
                 onProsesTamamla={onProsesTamamla}
                 onProsesVer={onProsesVer}
+                onAtamaPersonelVer={onAtamaPersonelVer}
                 onProsesVerGeriAl={onProsesVerGeriAl}
                 onProsesTeslimGeriAl={onProsesTeslimGeriAl}
                 onRemove={onRemoveOrder}
@@ -201,6 +205,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
           siparisler={siparisler}
           onProsesTamamla={onProsesTamamla}
           onProsesVer={onProsesVer}
+                onAtamaPersonelVer={onAtamaPersonelVer}
           onClose={() => setAtolyeEkraniAcik(false)}
         />
       )}
@@ -211,6 +216,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
           uretim={orders}
           stok={stok}
           onProsesVer={onProsesVer}
+                onAtamaPersonelVer={onAtamaPersonelVer}
           onProsesTamamla={onProsesTamamla}
           onClose={() => setBarkodAtolyeAcik(false)}
         />
@@ -383,7 +389,8 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
           if (pi.length === 0) return 0;
           const sonAdim = pi[pi.length - 1];
           if (sonAdim.araProsesMi) return 0;
-          return (sonAdim.atamalar || []).filter((a) => a.tamamlandiMi).reduce((s, a) => s + a.miktar, 0);
+          // Yalnız SAĞLAM (v1.639.0, denetim): `a.miktar` tamir ve hurdayı da sayıyordu; stoğa yalnız sağlam girer.
+          return (sonAdim.atamalar || []).filter((a) => a.tamamlandiMi).reduce((s, a) => s + bedenToplami(atamaSonucu(a).saglam), 0);
         }
 
         const asamaSayaci = {};
@@ -554,6 +561,7 @@ function UretimModule({ panelKipi, orders, onSave, showToast, stok, tanimlar, on
                     onGoToCari={onGoToCari}
                     onProsesTamamla={onProsesTamamla}
                     onProsesVer={onProsesVer}
+                onAtamaPersonelVer={onAtamaPersonelVer}
                     onProsesVerGeriAl={onProsesVerGeriAl}
                     onProsesTeslimGeriAl={onProsesTeslimGeriAl}
                     onRemove={onRemoveOrder}

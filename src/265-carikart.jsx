@@ -1491,7 +1491,13 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               const t = ham ? new Date(ham).getTime() : NaN;
               return Number.isNaN(t) ? 0 : t;
             };
+            // ÖNCE FİŞİN GÜNÜ, SONRA GİRİŞ ANI (v1.639.0, denetim): yalnız `zaman`a (giriş anı) göre sıralanınca 10 Ekim'de
+            // girilen 1 Eylül tarihli tahsilat Ekim fişlerinin üstüne düşüyor, Eylül satırlarının koşan bakiyesi onu
+            // içermiyordu; Finans yaşlandırma ise fiş tarihine bakıyor. Kasa ekstresi v1.537'den beri tarihe göre.
+            const gunDegeri = (g) => String((g.gunTarihi || g.tarih || "")).slice(0, 10);
             const gruplarSirali = cariHareketleriGrupla(filtreliHareketler).sort((a, b) => {
+              const gunFark = gunDegeri(a).localeCompare(gunDegeri(b));
+              if (gunFark !== 0) return gunFark;
               const fark = zamanDegeri(a) - zamanDegeri(b);
               if (fark !== 0) return fark;
               return (a.fisNo || "").localeCompare(b.fisNo || "", "tr", { numeric: true });
@@ -1501,13 +1507,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             // en yeni en üstte kalacak şekilde ters çevrilir.
             const kosanBakiyeler = {};
             const satirlar = gruplarSirali.map((g) => {
-              const gorulmusImzalar = new Set();
-              const tekilHareketler = g.hareketler.filter((h) => {
-                const imza = `${h.tutar}|${h.aciklama || ""}|${h.urunAd || ""}|${h.renk || ""}|${h.beden || ""}`;
-                if ((h.defter || "Genel") === "Resmi" && gorulmusImzalar.has(imza)) return false;
-                gorulmusImzalar.add(imza);
-                return true;
-              });
+              // İMZA TEKİLLEŞTİRME KALKTI (v1.639.0, denetim): Genel+Resmi ikiz kayıt döneminden kalmaydı; ikizler açılış
+              // göçüyle (200 `esIkizleriBirlestir`) tek "Muhasebe" kaydına indi. Süzgeç kalınca Resmi fişte aynı ürün/renk/
+              // beden/fiyatlı iki satır (iki koli) ekstrede tek sayılıyor, başlık bakiyesiyle (cariBakiyeleri) tutmuyordu.
+              const tekilHareketler = g.hareketler;
               const toplamTutar = tekilHareketler.reduce((s, h) => s + h.tutar, 0);
               const ilk = g.hareketler[0];
               const grupPB = ilk.paraBirimi || "TRY";

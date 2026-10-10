@@ -263,6 +263,13 @@ function fisYaz(stok, cariler, fis) {
     // peşin tahsil edersek kasaya GİRER.
     const kasaYonu = alis ? "Çıkış" : "Giriş";
     const cariAciklama = `${alis ? "Ödeme" : "Tahsilat"} (${pesin.hesapAd || "hesap"}) · ${fis.fisNo}`;
+    // HESABIN PARA BİRİMİNE ÇEVRİM (v1.639.0, denetim): USD fişin peşini TL kasaya tutar aynen (1.000 → 1.000 TL) yazıyordu;
+    // kasa bakiyesi hesabın biriminde sayılır. Fişin KAYIT kuruyla (fis.kurlar) çevrilir — 205 kasa ekranıyla aynı mantık.
+    // Kur yoksa 255 kaydı zaten reddediyor; yine de düşerse çevrimsiz yazmak yerine fişin tutarı korunur (eski davranış).
+    const pesinPB = pesin.paraBirimi || fis.kayitParaBirimi;
+    const hesapPB = pesin.hesapPB || pesinPB;
+    const cevrilen = hesapPB === pesinPB ? pesin.tutar : paraCevirGenel(pesin.tutar, pesinPB, hesapPB, fis.kurlar || fis.kayitKurlari || {});
+    const hesapTutar = cevrilen == null ? pesin.tutar : Math.round(cevrilen * 100) / 100;
     // SİPARİŞ BAĞI (v1.612.0): fişin bütün satırları TEK siparişe aitse peşin tahsilat/ödeme de o siparişe
     // bağlanır; sipariş kartındaki "Ödenen / Kalan" (siparisOdemeOzeti) bunu sayar. Satırlar birden çok
     // siparişten geliyorsa hangi siparişin parası olduğu bilinemez — bağ kurulmaz.
@@ -294,8 +301,8 @@ function fisYaz(stok, cariler, fis) {
       ...(pesinSiparisId ? { siparisId: pesinSiparisId, siparisNo: pesinSiparisNo } : {}),
       // Karşı taraf: ekstrede "hangi kasaya, ne kadar" görünsün diye alan olarak taşınıyor.
       hesapAd: pesin.hesapAd || null,
-      hesapPB: pesin.paraBirimi || fis.kayitParaBirimi,
-      hesapTutar: pesin.tutar,
+      hesapPB,
+      hesapTutar,
     });
 
     // Kasa/banka tarafı: ÇAĞIRAN uyguluyor. `fisYaz` stok ve carinin sahibi; muhasebe kaydı
@@ -308,7 +315,7 @@ function fisYaz(stok, cariler, fis) {
         id: uid("mhrk"),
         tarih: fis.cariTarihi,
         yon: kasaYonu,
-        tutar: pesin.tutar,
+        tutar: hesapTutar,
         cariId: fis.cariId,
         muhasebeBagId: bagId,
         defter: fis.defter || "Genel",

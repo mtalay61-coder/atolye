@@ -352,6 +352,11 @@ export default function AtolyeERP() {
   }, []);
 
   const sonStokRef = useRef(null);
+  // GÜNCEL STOK REFERANSI (v1.639.0, denetim — kritik): tazeleme (aşağıda `bulutDegisikligiUygula`) görselleri
+  // `sonStokRef`ten alıyordu; o ref yalnız hareket eklenince doluyor — oturumda fiş kesilmediyse null, kesildiyse o anki hâl.
+  // Başka cihaz kayıt yapınca ekrandaki bütün görseller düşüyor, sonraki düzenleme bulutu görselsiz yazıyordu.
+  const stokGuncelRef = useRef(null);
+  useEffect(() => { stokGuncelRef.current = stok; }, [stok]);
   useEffect(() => {
     // Numara verilmişse stoğu da kalıcı yaz.
     if (defterYazmaGerekli.current && sonStokRef.current) {
@@ -805,10 +810,17 @@ export default function AtolyeERP() {
     if (d["fatura:data"]) isler.push(tekilYaz("fatura:data", "faturalar", faturalar));
     // Fiş defteri bu listede YOKTU (v1.545.0): "Yeniden dene" onu hiç göndermiyor, uyarı ancak bir sonraki fişte kalkıyordu.
     if (d[FIS_DEFTERI_ANAHTAR]) isler.push(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", fisDefteri));
+    // EKSİK BEŞ TABLO (v1.639.0, denetim): çöp, onaylar, rezervasyonlar, modeller, çek görselleri listede yoktu — biri
+    // gönderilemezse defterde kalıyor, şerit sürüyor ve 047 bekleyen anahtarlı alanı tazelemiyordu (başka cihazın değişikliği gelmiyordu).
+    if (d["cop:data"]) isler.push(tabloYaz("cop:data", "cop", cop));
+    if (d["onaylar:data"]) isler.push(tabloYaz("onaylar:data", "onaylar", onaylar));
+    if (d["stokrez:data"]) isler.push(tabloYaz("stokrez:data", "stok_rezervasyonlari", stokRezervasyonlari));
+    if (d["model:data"]) isler.push(tekilYaz("model:data", "modeller", modeller));
+    if (d["cekgorsel:data"]) isler.push(tabloYaz("cekgorsel:data", "cek_gorselleri", cekGorselleri, []));
     await Promise.all(isler.map((p2) => Promise.resolve(p2).catch(() => {})));
     const kalan = Object.keys(bekleyenYazmalariOku()).length;
     if (!sessiz || kalan === 0) showToast(kalan === 0 ? "Bekleyen kayıtların hepsi buluta gönderildi" : `${kalan} tablo hâlâ gönderilemedi — "Hata" düğmesinden sebebini okuyun`);
-  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, fisDefteri, showToast]);
+  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, fisDefteri, cop, onaylar, stokRezervasyonlari, modeller, cekGorselleri, showToast]);
   // Bağlantı gelince ve açılıştan kısa süre sonra kendiliğinden dene.
   // Kendiliğinden deneme: bağlantı geri gelince ve dakikada bir — SESSİZ (toast yok), yalnız
   // başarı bildirilir. Her açılışta hemen denemek, ağ yokken sürekli hata üretirdi.
@@ -853,7 +865,7 @@ export default function AtolyeERP() {
     alanlar.forEach((alan) => {
       if (alan === "stok") {
         const mevcutGorsel = {};
-        (sonStokRef.current || []).forEach((u) => { const g = urunGorselleri(u); if (g) mevcutGorsel[u.id] = g; });
+        (stokGuncelRef.current || sonStokRef.current || []).forEach((u) => { const g = urunGorselleri(u); if (g) mevcutGorsel[u.id] = g; });
         const yeni = gorselleriBirlestir(bulut.stok, mevcutGorsel);
         setStok(yeni); tabloBaslangicTam("urunler", yeni);
       } else if (alan === "cariler") { setCariler(bulut.cariler); tabloBaslangicTam("cariler", bulut.cariler); }
@@ -1404,6 +1416,26 @@ export default function AtolyeERP() {
     showToast(`"${prosesAdi}" için ${atama.miktar} adetlik atama geri alındı`);
   }, [uretim, showToast]);
 
+  // PERSONELSİZ TAMİR ATAMASINA PERSONEL (v1.639.0, denetim): atölye ekranından ya da "Sonra atanacak" ile doğan tamir
+  // ataması `verildiMi: false` doğuyor; adımda dağıtılmış sayıldığı için "alınabilir iş"te çıkmıyor, kartta da personel
+  // atayan bir yol yoktu — tek çıkış atamayı silmekti (tamir ücreti ve hammadde seçimi kayboluyordu).
+  const uretimAtamayaPersonelVer = useCallback((uretimId, prosesAdi, atamaId, personelId) => {
+    if (!personelId) { showToast("Önce bir personel seçin"); return; }
+    const siparis = uretim.find((o) => o.id === uretimId);
+    if (!siparis) return;
+    const nextUretim = uretim.map((o) => (o.id !== uretimId ? o : {
+      ...o,
+      prosesIlerleme: (o.prosesIlerleme || []).map((p) => (p.proses !== prosesAdi ? p : {
+        ...p,
+        atamalar: (p.atamalar || []).map((a) => (a.id === atamaId && !a.tamamlandiMi
+          ? { ...a, personelId, verildiMi: true, verilmeTarihi: new Date().toISOString() } : a)),
+      })),
+    }));
+    setUretim(nextUretim);
+    yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
+    showToast("Tamir işi personele verildi");
+  }, [uretim, showToast]);
+
   // AŞAMA 2: Belirli bir ATAMAYI personelden "teslim al" — bu, o atamanın miktarına karşılık gelen
   // hammaddeyi gerçekten stoktan düşer ve işçilik ücretini gerçekten o personelin cari hesabına işler.
   // Adımın TAMAMI (tüm atamalar) bitmeden bir sonraki prosese geçilemez.
@@ -1772,7 +1804,8 @@ export default function AtolyeERP() {
         ? { ...m, gecmis: [...(m.gecmis || []), { tarih: new Date().toISOString(), olay: `Numune üretimi açıldı: ${uretimNo}` }],
             asama: m.asama === "fikir" || m.asama === "cizim" || m.asama === "kalip" ? "numune" : m.asama }
         : m));
-      yazimiIzle(tabloYaz("model:data", "modeller", next), "Modeller", next);
+      // `tekilYaz` (v1.639.0, denetim): "modeller" TABLO_SEMA'da yok, `tabloYaz` yalnız yerele yazıyordu — numune aşaması buluta gitmiyordu.
+      yazimiIzle(tekilYaz("model:data", "modeller", next), "Modeller", next);
       return next;
     });
     showToast(`Numune üretimi açıldı: ${uretimNo}`);
@@ -1917,6 +1950,21 @@ export default function AtolyeERP() {
   }, [stok, tanimlar, saveTanimlar, showToast]);
 
   const saveCariler = useCallback(async (next) => {
+    // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
+    // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
+    // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
+    if (typeof next === "function") {
+      setCariler((prev) => {
+        const sonuc = cariKodlariAta(next(prev), tanimlar);
+        if (sonuc.atanan > 0) Promise.resolve().then(() => {
+          setTanimlar(sonuc.tanimlar);
+          yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
+        });
+        yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler), "Cari kartları", sonuc.cariler);
+        return sonuc.cariler;
+      });
+      return;
+    }
     // YENİ CARİYE KODU ANINDA VERİLİYOR. Ayrı bir "kodları ata" adımına bırakmak, kullanıcının
     // cariyi açıp koduna baktığında boş görmesi demekti. `cariKodlariAta` kodu OLANA dokunmuyor,
     // o yüzden her kayıtta güvenle çağrılabiliyor.
@@ -2508,6 +2556,7 @@ export default function AtolyeERP() {
     cekGorselleri, showToast,
     setStok, setCariler, setSiparisler, setUretim, setMuhasebe, setTanimlar, setGorevler,
     setMesajlar, setKoliler, setFaturalar, setCekGorselleri, setSonYedekTarihi,
+    stokRezervasyonlari, onaylar, fisDefteri, modeller, setStokRezervasyonlari, setOnaylar, setFisDefteri, setModeller,
   });
 
 
@@ -2977,7 +3026,9 @@ export default function AtolyeERP() {
           // Kimin yaptığı da burada tamamlanır — fiş numarası ve zaman damgasıyla aynı gerekçe:
           // yeni bir kayıt yolu eklendiğinde kimse eklemeyi unutamasın.
           kullanici: h.kullanici || (aktifKullanici && aktifKullanici.ad) || null,
-          islemTipi: undefined,
+          // İşlem tipi varsa KORUNUR (v1.639.0, denetim): fişin peşin kaydı (078) "Ödeme"/"Tahsilat" yazıyor ("AF-" numarası
+          // tipi Alış sanmasın diye); huni alanı siliyordu, ana sayfa akışı ve veri denetimi yeniden yüklenene kadar yanlış tip görüyordu.
+          islemTipi: h.islemTipi || undefined,
         }));
       const next = prev.map((c) =>
         c.id === cariId ? { ...c, hareketler: [...eklenecekler, ...(c.hareketler || [])] } : c
@@ -4571,6 +4622,8 @@ export default function AtolyeERP() {
           </GizliModul>
           <GizliModul aktif={tab === "uretim"}>
             <UretimModule
+              cop={cop}
+              onAtamaPersonelVer={uretimAtamayaPersonelVer}
               panelKipi={panelEkranAyari && panelEkranAyari.tab === "uretim" ? panelEkranAyari.key : null}
               onPencereAc={pencereAc}
               aktifPencereId={aktifPencereId}
@@ -5037,12 +5090,17 @@ export default function AtolyeERP() {
                     key={`sayfa-${k}`}
                     data-serit-sekme={k}
                     onClick={() => { setTab(k); setAktifPencereId(null); }}
+                    // Etkin sekme görünür kalsın (v1.639.0, denetim): çok sekmede şerit kayıyor, etkin sekme ekran dışında kalıyordu.
+                    ref={aktifMi ? (el) => { if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest", inline: "nearest" }); } : undefined}
                     title={bilgi.ad}
                     style={{
                       display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: "var(--erp-r-md) var(--erp-r-md) 0 0",
                       // YENİ TASARIM (v1.449.0): pasif sekme zeminsiz, etkin sekme beyaz kart gibi.
                       background: aktifMi ? "var(--erp-panel)" : "transparent",
-                      border: `1px solid ${aktifMi ? "var(--erp-line-soft)" : "transparent"}`, borderBottom: "none",
+                      // Kısayol + tekil kenar karışmıyor (v1.639.0: React "conflicting border/borderBottom" uyarısı veriyordu).
+                      borderLeft: `1px solid ${aktifMi ? "var(--erp-line-soft)" : "transparent"}`,
+                      borderRight: `1px solid ${aktifMi ? "var(--erp-line-soft)" : "transparent"}`,
+                      borderBottom: "none",
                       borderTop: `3px solid ${aktifMi ? renk : "transparent"}`,
                       color: aktifMi ? renk : "var(--erp-text-2)",
                       fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
@@ -5053,6 +5111,7 @@ export default function AtolyeERP() {
                     {/* Ana sayfanın kapatma düğmesi YOK: dönülecek bir yer hep kalmalı. */}
                     {k !== "anasayfa" && (
                       <button
+                        title={`${bilgi.ad} sekmesini kapat`}
                         onClick={(e) => { e.stopPropagation(); sekmeKapat(k); }}
                         style={{ border: "none", background: "none", color: "inherit", cursor: "pointer", display: "flex", opacity: 0.7 }}
                       >
@@ -5484,7 +5543,8 @@ export default function AtolyeERP() {
             transform: mobilDuzen ? undefined : "translateX(-50%)",
             width: mobilDuzen ? undefined : "max-content",
             maxWidth: mobilDuzen ? undefined : 480,
-            zIndex: 300,
+            // Üst menü (510) ve sekme şeridinin (500) ÜSTÜNDE (v1.639.0, denetim: 300 ile masaüstünde menünün, telefonda şeridin arkasında kalıyordu).
+            zIndex: 600,
             background: "var(--erp-toast)",
             color: "var(--erp-panel-2)",
             padding: "12px 16px",

@@ -147,7 +147,8 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
   const toplamAcik = stokYuvarla(rezOzet.acik);
   // Toplama sırasında da birikme olur; gösterilen değer ayrıca yuvarlanır.
   const total = stokYuvarla(product.variants.reduce((sum, v) => sum + v.miktar, 0));
-  const kritik = product.variants.some((v) => v.miktar <= (v.minStok ?? 0));
+  // Üstteki "kritik seviyede varyant" sayacıyla (152) AYNI ölçü (v1.639.0, denetim): eşik 0 olan boş varyant kritik değildir.
+  const kritik = product.variants.some((v) => { const esik = v.minStok ?? product.minStok ?? 0; return esik > 0 && v.miktar < esik; });
   return (
     <button
       type="button"

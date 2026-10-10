@@ -126,7 +126,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
       const ortak = { ...cariHareketi, muhasebeBagId: bagId };
       // TEK KAYIT: "Muhasebe (ikisine de)" üçüncü bir defter değil; hangi deftere gireceğine
       // `defterKapsar` karar veriyor. Cari listesi tümüyle yazılıyor (kasa silmede olduğu gibi).
-      onCarilerGuncelle(cariler.map((c) => (c.id === hareket.cariId
+      // FONKSİYONLU GÜNCELLEME (v1.639.0, denetim): `await onSave` sırasında gelen başka cari değişikliği kapanıştaki
+      // listeyle ezilmesin — `saveCariler` fonksiyon kabul ediyor (üç yerde de).
+      onCarilerGuncelle((onceki) => onceki.map((c) => (c.id === hareket.cariId
         ? { ...c, hareketler: [ortak, ...(c.hareketler || [])] }
         : c)));
     }
@@ -196,7 +198,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
     if (eski.muhasebeBagId && onCarilerGuncelle) {
       // Cari tarafındaki tutar hesabın tutarıyla AYNI değil olabilir (kur çevrimi): oran korunuyor.
       const oran = eski.tutar ? yeni.tutar / eski.tutar : 1;
-      onCarilerGuncelle((cariler || []).map((c) => ({
+      onCarilerGuncelle((onceki) => (onceki || []).map((c) => ({
         ...c,
         hareketler: (c.hareketler || []).map((h) => (h.muhasebeBagId === eski.muhasebeBagId
           ? {
@@ -282,8 +284,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
     // Bu hareket bir cariye bağlıysa (muhasebeBagId ile), cari tarafındaki karşılığını da bulup sil —
     // aksi halde kasadan silinen bir işlem, cari ekstresinde "yetim" olarak kalır.
     if (silinecekHareket.muhasebeBagId) {
-      onCarilerGuncelle(
-        cariler.map((c) => ({
+      onCarilerGuncelle((onceki) =>
+        onceki.map((c) => ({
           ...c,
           hareketler: (c.hareketler || []).filter((h) => h.muhasebeBagId !== silinecekHareket.muhasebeBagId),
         }))
@@ -307,8 +309,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
           // Eski veride ikiz kalmış olabilir; `esId` varsa o da siliniyor. Yeni kayıtlarda
           // ikiz yok, küme tek elemanlı kalıyor.
           const esIdSet = new Set([adaylar[0].id, adaylar[0].esId].filter(Boolean));
-          onCarilerGuncelle(
-            cariler.map((c) =>
+          onCarilerGuncelle((onceki) =>
+            onceki.map((c) =>
               c.id === silinecekHareket.cariId
                 ? { ...c, hareketler: (c.hareketler || []).filter((h) => !esIdSet.has(h.id)) }
                 : c
@@ -430,7 +432,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
       toplam += tutar * kur;
     }
     [...kasalar, ...bankalar].forEach((h) => ekle(h.paraBirimi || "TRY", hesapBakiyesi(h)));
-    cekler.filter((c) => c.durum === "Portföyde").forEach((c) => ekle(c.paraBirimi || "TRY", c.tutar * (c.tip === "Alınan" ? 1 : -1)));
+    cekler.filter((c) => c.durum === "Portföyde").forEach((c) => ekle(c.paraBirimi || "TRY", c.tutar * ((c.tip || "Alınan") === "Alınan" ? 1 : -1)));
     return { toplam, eksikPB: Array.from(eksikPB) };
   }
   const tlKarsiligi = tlKarsiligiHesapla();

@@ -124,7 +124,9 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
 
   // ODAK HEP OKUTMA KUTUSUNDA. Barkod okuyucu klavye gibi yazıyor; odak başka yerdeyse okutma
   // hiçbir işe yaramıyor ve kullanıcı sebebini anlamıyor.
-  useEffect(() => { if (kutuRef.current) kutuRef.current.focus(); });
+  // Yalnız açılışta ve personel değişince (v1.639.0, denetim): her çizimde odaklanınca Miktar kutusuna ikinci rakam
+  // yazılamıyordu (setMiktar → çizim → odak okutma kutusuna). Okutma sonrası kutu zaten odakta kalıyor.
+  useEffect(() => { if (kutuRef.current) kutuRef.current.focus(); }, [personel]);
 
   // KENDİLİĞİNDEN OKUMA YOK — KULLANICI KARARI (v1.102.0).
   //
@@ -350,7 +352,8 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
         value={kod}
         onChange={(e) => setKod(e.target.value)}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); okut(kod); } }}
-        onBlur={() => { if (kutuRef.current) setTimeout(() => kutuRef.current && kutuRef.current.focus(), 50); }}
+        // Odak başka bir giriş alanına (Miktar kutusu, düğme) bilerek gittiyse geri çekilmez (v1.639.0).
+        onBlur={(e) => { const hedef = e.relatedTarget; if (hedef && /^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(hedef.tagName)) return; if (kutuRef.current) setTimeout(() => kutuRef.current && kutuRef.current.focus(), 50); }}
         placeholder={personel ? "Üretim / parça barkodu — okutun ya da yazıp Enter" : "Kendi barkodunuzu okutun ya da yazıp Enter"}
         title="Barkod"
         style={{

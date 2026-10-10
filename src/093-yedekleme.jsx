@@ -24,6 +24,10 @@ function useYedekleme(d) {
     cekGorselleri, showToast,
     setStok, setCariler, setSiparisler, setUretim, setMuhasebe, setTanimlar, setGorevler,
     setMesajlar, setKoliler, setFaturalar, setCekGorselleri, setSonYedekTarihi,
+    // EKSİK TABLOLAR YEDEKTE (v1.639.0, denetim): rezervasyonlar, onaylar, fiş defteri ve modeller yedekte yoktu; geri
+    // yükleme stok/siparişi eski hâle çekerken bunlar olduğu gibi kalıyor, rezervasyon olmayan siparişi gösteriyordu.
+    stokRezervasyonlari, onaylar, fisDefteri, modeller,
+    setStokRezervasyonlari, setOnaylar, setFisDefteri, setModeller,
   } = d;
 
 const otomatikYedekAl = useCallback(async (sessiz) => {
@@ -50,6 +54,7 @@ const otomatikYedekAl = useCallback(async (sessiz) => {
     stok: gorselsizStok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar,
     // Faturalar (v1.500.0): gönderilmiş faturanın yasal kopyası entegratörde; burada taslaklar ve durum.
     faturalar: faturalar || [],
+    stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [], fisDefteri: fisDefteri || null, modeller: modeller || [],
   };
 
   const yedekMetni = JSON.stringify(yedek);
@@ -79,7 +84,7 @@ const otomatikYedekAl = useCallback(async (sessiz) => {
     if (!sessiz) showToast("Yedek alınamadı");
     return false;
   }
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast, stokRezervasyonlari, onaylar, fisDefteri, modeller]);
 
 // Günde BİR kez, veriler yüklendikten sonra. Ref ile korunuyor: her render'da tekrar denemek
 // gereksiz yazma trafiği üretirdi.
@@ -132,6 +137,10 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (Array.isArray(y.gorevler)) setGorevler(y.gorevler);
   if (Array.isArray(y.mesajlar)) setMesajlar(y.mesajlar);
   if (Array.isArray(y.faturalar) && setFaturalar) setFaturalar(y.faturalar);
+  if (Array.isArray(y.stokRezervasyonlari) && setStokRezervasyonlari) setStokRezervasyonlari(y.stokRezervasyonlari);
+  if (Array.isArray(y.onaylar) && setOnaylar) setOnaylar(y.onaylar);
+  if (y.fisDefteri && setFisDefteri) setFisDefteri(y.fisDefteri);
+  if (Array.isArray(y.modeller) && setModeller) setModeller(y.modeller);
 
   // Geri yükleme TOPLU yazar: yedekteki hâl bütünüyle geçerli olmalı, kayıt kayıt fark almak
   // burada anlamsız. Katmanın "son bilinen hâl" belleği de yenilenir.
@@ -145,6 +154,10 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
   if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar);
   if (Array.isArray(y.faturalar)) await tekilYaz("fatura:data", "faturalar", y.faturalar);
+  if (Array.isArray(y.stokRezervasyonlari)) await tabloYaz("stokrez:data", "stok_rezervasyonlari", y.stokRezervasyonlari);
+  if (Array.isArray(y.onaylar)) await tabloYaz("onaylar:data", "onaylar", y.onaylar);
+  if (y.fisDefteri) await tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", y.fisDefteri);
+  if (Array.isArray(y.modeller)) await tekilYaz("model:data", "modeller", y.modeller);
   // Çek görselleri (varsa): toplu tablo yazımı + yerel kopya (cekGorselKaydet'in yaptığı iş,
   // burada toplu — o fonksiyon daha aşağıda tanımlı, bağımlılığa alınamaz).
   if (Array.isArray(y.cekGorselleri)) {
@@ -155,7 +168,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   }
   showToast(`${kaynakAd} geri yüklendi — geri yükleme öncesi hâl de ayrıca saklandı`);
   return true;
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, stokRezervasyonlari, onaylar, fisDefteri, modeller, showToast]);
 
 // JSON DOSYASINDAN geri yükleme: Tanımlar > Veri Yedekleme > "JSON Yedeğinden Geri Yükle".
 const jsonDosyasindanGeriYukle = useCallback(async (dosya) => {
@@ -227,6 +240,7 @@ const verileriJsonYedekle = useCallback(() => {
     olusturulmaTarihi: new Date().toISOString(),
     surum: 3, gorsellerHaric: false, uygulama: `Atölye ERP ${SURUM}`,
     stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar,
+    faturalar: faturalar || [], stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [], fisDefteri: fisDefteri || null, modeller: modeller || [],
   };
   const blob = new Blob([JSON.stringify(yedek, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -238,7 +252,7 @@ const verileriJsonYedekle = useCallback(() => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast("JSON yedeği indirildi");
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar, faturalar, stokRezervasyonlari, onaylar, fisDefteri, modeller, showToast]);
 
 // İnsan gözüyle hızlıca kontrol edilebilecek, okunabilir bir Excel özeti indirir (yedek amaçlı değil,
 // gözden geçirme/rapor amaçlıdır — tam geri yükleme için JSON yedeğini kullanın).

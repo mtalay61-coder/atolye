@@ -824,7 +824,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
         </div>
 
         <div style={{ marginTop: 24, fontSize: 11, color: "var(--erp-text-3)", textAlign: "center" }}>
-          Cari/Çek-Senet, Sipariş ve Ön Muhasebe modülleri yakında eklenecek.
+          Modüller üst menüden; Tanımlar sağ üstteki dişliden.
         </div>
       </div>
     </div>

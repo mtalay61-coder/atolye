@@ -148,7 +148,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   // doğaları gereği her zaman tam akış sağlar (bkz. oncekiAdimdanMevcutBedenler içindeki not),
   // bu yüzden burada ekstra bir "sanki tamamlanmış" varsayımına gerek yoktur.
   const mevcutBedenler = oncekiAdimdanMevcutBedenler(calismaProsesIlerleme, gercekAdimIndex, siparis.bedenMiktarlari);
-  const bedenDurumu = adimBedenDurumu(adim, siparis.bedenMiktarlari, mevcutBedenler);
+  const bedenDurumu = adimBedenDurumu(adim, siparis.bedenMiktarlari, mevcutBedenler, calismaProsesIlerleme);
 
   // Girilen beden bazlı miktarları temizle (sayıya çevir, 0/negatif/boş olanları at) ve her bedenin
   // KENDİ kalan kotasını aşmadığını kontrol et.
@@ -207,7 +207,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   const anaKod = siparis.takipKodu || siparis.siparisNo;
   const adimKalani = adimBedenDurumu(
     { ...calismaProsesIlerleme[gercekAdimIndex], atamalar: mevcutAtamalar },
-    siparis.bedenMiktarlari, mevcutBedenler
+    siparis.bedenMiktarlari, mevcutBedenler, calismaProsesIlerleme
   ).reduce((t, x) => t + (x.kalan || 0), 0);
   // ANA KOD BİR KEZ BÖLÜNDÜKTEN SONRA BİR DAHA VERİLMEZ. Üretim kartından yapılan atamalarda da
   // geçerli: bölünmüş bir üretimde yeni bir atama ana kodu alsaydı, iki parça yeniden tek işmiş
@@ -232,7 +232,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   let nextProsesIlerleme = calismaProsesIlerleme.map((p, i) => {
     if (i !== gercekAdimIndex) return p;
     const yeniAtamalar = [...mevcutAtamalar, yeniAtama];
-    const yeniBedenDurumu = adimBedenDurumu({ ...p, atamalar: yeniAtamalar }, siparis.bedenMiktarlari, mevcutBedenler);
+    const yeniBedenDurumu = adimBedenDurumu({ ...p, atamalar: yeniAtamalar }, siparis.bedenMiktarlari, mevcutBedenler, calismaProsesIlerleme);
     const hepsiDagitildi = yeniBedenDurumu.every((x) => x.kalan === 0);
     return { ...p, atamalar: yeniAtamalar, verildiMi: hepsiDagitildi };
   });

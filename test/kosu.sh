@@ -20,6 +20,7 @@ node birim-recete-onay.js || HATA=1
 node birim-depo-sahiplik.js || HATA=1
 node birim-ozel-kod-coklu.js || HATA=1
 node birim-stok-degisim.js || HATA=1
+node birim-denetim-1639.js || HATA=1
 node birim-pdf-cikti.js || HATA=1
 node birim-cari-rapor.js || HATA=1
 node birim-cari-yon.js || HATA=1

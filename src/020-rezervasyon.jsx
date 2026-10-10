@@ -41,6 +41,12 @@ const rezervasyonKalan = (r) => Math.max(0, (r.miktar || 0) - (r.tuketilen || 0)
 //
 // Dönüş: { stok, talepler: [{...rez, karsilanan, yolda, acik}], toplamTalep, stoktanKarsilanan,
 //          yoldaToplam, acikToplam, serbestStok }
+// "Standart" / "" / null AYNI varyant (v1.639.0, denetim): varyant `stokAnahtarNrm` ile bulunurken defter ve alış
+// kalemleri birebir karşılaştırılıyordu — "" kayıtlı varyanta bakınca talep 0 / açık 0 çıkıyordu.
+function ayniVaryantMi(renk1, beden1, renk2, beden2) {
+  return stokAnahtarNrm(renk1) === stokAnahtarNrm(renk2) && stokAnahtarNrm(beden1) === stokAnahtarNrm(beden2);
+}
+
 function rezervasyonKarsilama(urunId, renk, beden, tumSiparisler, stokRez, stokListesi) {
   const urun = (stokListesi || []).find((p) => p.id === urunId);
   // `stokAnahtarNrm` (v1.493.0): reçete renksiz hammaddeyi "Standart" yazar, hammaddenin kaydı ""
@@ -50,7 +56,7 @@ function rezervasyonKarsilama(urunId, renk, beden, tumSiparisler, stokRez, stokL
 
   // Talepler: stok rezervasyon defteri (üretim kararında yazılan tam ihtiyaç).
   const talepler = (stokRez || [])
-    .filter((r) => r.urunId === urunId && r.renk === renk && r.beden === beden && rezervasyonKalan(r) > 0)
+    .filter((r) => r.urunId === urunId && ayniVaryantMi(r.renk, r.beden, renk, beden) && rezervasyonKalan(r) > 0)
     .map((r) => ({ ...r, kalan: rezervasyonKalan(r) }))
     .sort((a, b) => String(a.tarih).localeCompare(String(b.tarih)));
 
@@ -59,7 +65,7 @@ function rezervasyonKarsilama(urunId, renk, beden, tumSiparisler, stokRez, stokL
   (tumSiparisler || []).forEach((s) => {
     if (s.tip !== "Alış" || s.durum === "İptal") return;
     (s.kalemler || []).forEach((k) => {
-      if (k.urunId !== urunId || k.renk !== renk || k.beden !== beden) return;
+      if (k.urunId !== urunId || !ayniVaryantMi(k.renk, k.beden, renk, beden)) return;
 
       // YOLDAKİ MİKTAR ORANLA DEĞİL, FIFO PAYLAŞTIRMAYLA HESAPLANIR.
       //
@@ -112,7 +118,7 @@ function acikRezervasyonlar(satisSiparisId, hammaddeUrunId, renk, beden, tumSipa
   (tumSiparisler || []).forEach((s) => {
     if (s.tip !== "Alış" || s.durum === "İptal") return;
     (s.kalemler || []).forEach((k) => {
-      if (k.urunId !== hammaddeUrunId || k.renk !== renk || k.beden !== beden) return;
+      if (k.urunId !== hammaddeUrunId || !ayniVaryantMi(k.renk, k.beden, renk, beden)) return;
       (k.rezervasyonlar || []).forEach((r, i) => {
         if (r.siparisId !== satisSiparisId) return;
         if (rezervasyonKalan(r) <= 0) return;
@@ -141,7 +147,7 @@ function rezervasyonTuket(tumSiparisler, satisSiparisId, hammaddeUrunId, renk, b
       let sDegisti = false;
       const kalemler = (s.kalemler || []).map((k) => {
         if (kalanIade <= 0) return k;
-        if (k.urunId !== hammaddeUrunId || k.renk !== renk || k.beden !== beden) return k;
+        if (k.urunId !== hammaddeUrunId || !ayniVaryantMi(k.renk, k.beden, renk, beden)) return k;
         if (!Array.isArray(k.rezervasyonlar)) return k;
         let kDegisti = false;
         const rez = k.rezervasyonlar.map((r) => {
@@ -178,7 +184,7 @@ function rezervasyonTuket(tumSiparisler, satisSiparisId, hammaddeUrunId, renk, b
     if (s.tip !== "Alış") return s;
     let sDegisti = false;
     const kalemler = (s.kalemler || []).map((k) => {
-      if (k.urunId !== hammaddeUrunId || k.renk !== renk || k.beden !== beden) return k;
+      if (k.urunId !== hammaddeUrunId || !ayniVaryantMi(k.renk, k.beden, renk, beden)) return k;
       if (!Array.isArray(k.rezervasyonlar)) return k;
       let kDegisti = false;
       const rez = k.rezervasyonlar.map((r, i) => {
@@ -206,7 +212,7 @@ function stokRezervasyonTuket(defter, satisSiparisId, urunId, renk, beden, mikta
   if (!satisSiparisId || !(miktar > 0)) return { defter, dusulen: 0, kalanIhtiyac: miktar, kapananlar: [] };
   const sirali = (defter || [])
     .map((r, i) => ({ r, i }))
-    .filter(({ r }) => r.siparisId === satisSiparisId && r.urunId === urunId && r.renk === renk && r.beden === beden)
+    .filter(({ r }) => r.siparisId === satisSiparisId && r.urunId === urunId && ayniVaryantMi(r.renk, r.beden, renk, beden))
     .sort((a, b) => String(a.r.tarih).localeCompare(String(b.r.tarih)));
 
   let kalanIhtiyac = miktar;
@@ -263,7 +269,7 @@ function stokDurumu(urunId, renk, beden, tumSiparisler, stokRez, stokListesi) {
   (tumSiparisler || []).forEach((s) => {
     if (s.tip !== "Alış" || s.durum === "İptal") return;
     (s.kalemler || []).forEach((k) => {
-      if (k.urunId !== urunId || k.renk !== renk || k.beden !== beden) return;
+      if (k.urunId !== urunId || !ayniVaryantMi(k.renk, k.beden, renk, beden)) return;
       const bekleyen = stokYuvarla(Math.max(0, (k.miktar || 0) - (k.karsilanan || 0)));
       if (bekleyen <= 0) return;
       const rezerveliMi = Array.isArray(k.rezervasyonlar) && k.rezervasyonlar.some((r) => rezervasyonKalan(r) > 0);

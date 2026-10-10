@@ -5,6 +5,7 @@
   "gecmisBagli": true,
   "hareket": {
    "cekId": "cA",
+   "islemTipi": "Ödeme",
    "odmFisi": true,
    "paraBirimi": "TRY",
    "tutar": 42000,

@@ -134,6 +134,9 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
       const yeniHareketler = [];
       urun.recete
         .filter((r) => {
+          // KISMİ TESLİMİN KALANI (v1.639.0, denetim — kritik): ilk teslimde VERİLEN hammaddenin tamamı düşüldü;
+          // kalan atama reçeteden bir daha düşmesin (32 çiftte 300 desi veriliyor, 20+12 teslimde 300 + 112,5 çıkıyordu).
+          if (atama.hammaddeDusuldu) return false;
           if (r.proses !== prosesAdi || r.mamulRenk !== siparis.renk || r.hammaddeUrunId !== p.id) return false;
           // TAMİR atamasında reçetenin TAMAMI değil, yalnızca SEÇİLEN hammaddeler yeniden çıkar.
           // Sökülüp yeniden kullanılan parçalar için ikinci kez malzeme düşmek, stoğu yanlış
@@ -280,6 +283,8 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
       verildiMi: true, verilmeTarihi: atama.verilmeTarihi || new Date().toISOString(),
       // Verilen hammadde ilk teslimde hesaplandı; kalan kısım reçeteye göre düşülür (ikinci kez "verilen" sayılmasın).
       verilenHammaddeler: null,
+      // Hammadde bu atamanın tamamı için ilk teslimde düşüldü (verilen miktar) — kalan teslimde yeniden düşülmez (v1.639.0).
+      hammaddeDusuldu: true,
       // Barkod: parça kodu taşıyan (bölünmüş) işte kalan kısım YENİ parça kodu alır — aynı kod sonraki proseste
       // "zaten alındı" sayılır ve kalan parça oraya hiç akamazdı. Ana kodla ilerleyen işte kod aynı kalır.
       barkod: (() => {
@@ -296,6 +301,10 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
       a.id === atamaId
         ? {
             ...a, tamamlandiMi: true, tamamlanmaTarihi: new Date().toISOString(),
+            // FİŞ NUMARASI ATAMAYA YAZILIR (v1.639.0, denetim — kritik): ek konumdan türetilince (ana kodlu iş) adıma sonradan
+            // tamir/kısmi kalan ataması gelince ilk atamanın eki "" → "-1" oluyor, geri alma "10001-Kesim-1"i arayıp kayıtlı
+            // "10001-Kesim"i bulamıyor, stok/cari yerinde kalıyordu. `uretimFisAdlari` ve üretim silme önce bu alana bakar.
+            fisNo,
             ...(kismiMi ? { miktar: sonucToplam, bedenMiktarlari: { ...teslimBedenleri } } : {}),
             // Sonuç atamaya yazılır: akış, ücret ve fire raporları buradan okur.
             sonuc: { saglam: saglamHarita, tamir: tamirListesi, hurda: hurdaListesi },
@@ -303,7 +312,13 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
         : a
     ), ...(kalanAtama ? [kalanAtama] : [])];
     const tamamlananToplam = yeniAtamalar.filter((a) => a.tamamlandiMi).reduce((s, a) => s + a.miktar, 0);
-    const adimTamamlandiMi = yeniAtamalar.every((a) => a.tamamlandiMi) && tamamlananToplam >= toplamAdet;
+    // HURDA SONRASI HEDEF KÜÇÜLÜR (v1.639.0, denetim): önceki adımlarda hurdaya çıkan çift bu adıma hiç gelmez; hedef
+    // sipariş adedi kalınca adım (ve son proseste üretim) hiç "tamamlandı" olmuyor, mamul stoğa girse de `stogaEklendiMi`
+    // false kalıyor, paketleme/planlama/rezerve hesabı üretimi açık sayıyordu.
+    const oncekiHurda = siparis.prosesIlerleme.slice(0, adimIndex).reduce((t, x) => t + (x.atamalar || [])
+      .filter((a) => a.tamamlandiMi).reduce((t2, a) => t2 + (atamaSonucu(a).hurda || []).reduce((t3, h) => t3 + (h.miktar || 0), 0), 0), 0);
+    const adimHedefi = Math.max(0, toplamAdet - oncekiHurda);
+    const adimTamamlandiMi = yeniAtamalar.every((a) => a.tamamlandiMi) && tamamlananToplam >= adimHedefi;
     return { ...p, atamalar: yeniAtamalar, tamamlandiMi: adimTamamlandiMi, tamamlanmaTarihi: adimTamamlandiMi ? new Date().toISOString() : null };
   });
   const tumuTamam = nextProsesIlerleme.every((p) => p.tamamlandiMi);
@@ -401,7 +416,11 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   // doğru olanı. (Fire ayrı bir başlık ve kendi ekranında izleniyor.)
   const verilenler = atama.verilenHammaddeler || null;
   const saglamToplam = Object.values(saglamHarita).reduce((t, m) => t + (Number(m) || 0), 0);
-  if (verilenler && saglamToplam > 0) {
+  // KISMİ TESLİMDE PAYDA ATAMANIN TAMAMI (v1.639.0, denetim): `verilen`/`beklenen` atamanın tamamı için, sağlam ise bu
+  // teslimin — 32 çiftlik atamanın 20'si teslim alınınca ölçüm 1,6 kat şişiyordu. Kalan teslim hammaddesiz (hammaddeDusuldu)
+  // olduğu için ölçüm yalnız burada yapılır; payda atamanın (hurda düşülmüş) toplam adedi.
+  const olcumPaydasi = kismiMi ? Math.max(0, (atama.miktar || 0) - hurdaAdet) : saglamToplam;
+  if (verilenler && olcumPaydasi > 0) {
     const olcumler = [];
     Object.entries(verilenler).forEach(([anahtar, v]) => {
       if (!v || !(v.verilen > 0)) return;
@@ -417,8 +436,8 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
         beden: v.beden,
         // Reçete beklentisi de ADET BAŞINA çevriliyor: `beklenen` bu atamanın TOPLAMI için
         // hesaplanmıştı, karşılaştırma birim bazında olmalı.
-        planlanan: v.beklenen > 0 ? Math.round((v.beklenen / saglamToplam) * 10000) / 10000 : 0,
-        gerceklesen: Math.round((netTuketim / saglamToplam) * 10000) / 10000,
+        planlanan: v.beklenen > 0 ? Math.round((v.beklenen / olcumPaydasi) * 10000) / 10000 : 0,
+        gerceklesen: Math.round((netTuketim / olcumPaydasi) * 10000) / 10000,
         tarih: bugunYerel(),
         // Hangi üretimde (21 Eylül): Maliyet sekmesinde fark "üretim no · stok · fark" diye
         // gösteriliyor; özet ortalama bunu kaybediyordu.

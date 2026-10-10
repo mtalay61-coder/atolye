@@ -589,16 +589,18 @@ function teslimFisiHTML({ personelAdi, urunAd, renk, proses, sonuc, atamaMiktar,
   const saglamToplam = Object.values(sonuc.saglam || {}).reduce((t, x) => t + x, 0);
   const tamirToplam = (sonuc.tamir || []).reduce((t, x) => t + x.miktar, 0);
   const hurdaToplam = (sonuc.hurda || []).reduce((t, x) => t + x.miktar, 0);
+  // Kullanıcı metni kaçışlı (v1.639.0, denetim): "<" / "&" içeren ad fişi bozuyordu; iş emri (310) `htmlKacis` kullanıyor.
+  const k = htmlKacis;
   const bedenSatirlari = Object.entries(sonuc.saglam || {})
-    .map(([b, m]) => `<tr><td>${b}</td><td class="sag">${m}</td></tr>`).join("");
+    .map(([b, m]) => `<tr><td>${k(b)}</td><td class="sag">${m}</td></tr>`).join("");
   const tarih = new Date();
   const zaman = `${String(tarih.getDate()).padStart(2, "0")}.${String(tarih.getMonth() + 1).padStart(2, "0")}.${tarih.getFullYear()} ${String(tarih.getHours()).padStart(2, "0")}:${String(tarih.getMinutes()).padStart(2, "0")}`;
   return `
-    <div class="baslik">${personelAdi}</div>
-    <div class="orta" style="font-size:11px">${zaman}${fisNo ? ` · ${fisNo}` : ""}</div>
+    <div class="baslik">${k(personelAdi)}</div>
+    <div class="orta" style="font-size:11px">${zaman}${fisNo ? ` · ${k(fisNo)}` : ""}</div>
     <div class="cizgi"></div>
-    <div class="satir"><span>${urunAd}</span><span>${renk}</span></div>
-    <div class="orta buyuk">${proses}</div>
+    <div class="satir"><span>${k(urunAd)}</span><span>${k(renk)}</span></div>
+    <div class="orta buyuk">${k(proses)}</div>
     <div class="cizgi"></div>
     <table>${bedenSatirlari}</table>
     <div class="cizgi"></div>

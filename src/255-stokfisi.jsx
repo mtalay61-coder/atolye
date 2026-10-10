@@ -466,6 +466,16 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     if (pesinSayi > cevrimSonucu.toplam + 0.001) {
       return showToast(`Peşin tutar fiş toplamını aşamaz (${cevrimSonucu.toplam.toLocaleString("tr-TR")} ${paraBirimi})`);
     }
+    // HESAP PARA BİRİMİ FARKLIYSA KUR ŞART (v1.639.0, denetim): çevrim 078'de fişin kayıt kuruyla yapılır; kur yoksa
+    // "1.000 USD = 1.000 TL" yazmak yerine durulur.
+    if (pesinHesap) {
+      const [tur0, id0] = pesinHesap.split(":");
+      const h0 = (tur0 === "kasa" ? ((muhasebe && muhasebe.kasalar) || []) : ((muhasebe && muhasebe.bankalar) || [])).find((h) => h.id === id0);
+      const hesapPB0 = h0 ? (h0.paraBirimi || "TRY") : paraBirimi;
+      if (hesapPB0 !== paraBirimi && paraCevirGenel(pesinSayi, paraBirimi, hesapPB0, birlesikKurlar) == null) {
+        return showToast(`Hesap ${hesapPB0}, fiş ${paraBirimi} — çevrim için kur girin (Kasa & Banka › Kurlar)`);
+      }
+    }
     onKaydet({
       tarih, fisNo: fisNo.trim(), odemeSekli, vade: cekSenet ? vade : "",
       // `paraBirimi` fişin KAYIT para birimi; satırlar kendi para birimini taşımaya devam eder.
@@ -480,7 +490,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         const [tur, id] = pesinHesap.split(":");
         const liste = tur === "kasa" ? ((muhasebe && muhasebe.kasalar) || []) : ((muhasebe && muhasebe.bankalar) || []);
         const hesap = liste.find((h) => h.id === id);
-        return { hesapTur: tur, hesapId: id, hesapAd: hesap ? hesap.ad : "", tutar: pesinSayi, paraBirimi };
+        return { hesapTur: tur, hesapId: id, hesapAd: hesap ? hesap.ad : "", tutar: pesinSayi, paraBirimi, hesapPB: hesap ? (hesap.paraBirimi || "TRY") : paraBirimi };
       })() : null,
     });
   }
@@ -811,6 +821,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                   style={inputStyle}
                 >
                   <option value="">Peşin yok (açık hesap)</option>
+                  {/* Hesabın para birimi fişinkinden farklıysa tutar KURLA çevrilerek yazılır (v1.639.0, denetim; önce USD fişin
+                      peşini TL kasaya çevrimsiz 1.000 (TL) yazıyordu). Kur yoksa kayıt reddedilir (aşağıda `kaydet`). */}
                   {((muhasebe && muhasebe.kasalar) || []).map((k) => (
                     <option key={`kasa:${k.id}`} value={`kasa:${k.id}`}>Kasa: {k.ad}</option>
                   ))}

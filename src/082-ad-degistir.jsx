@@ -9,6 +9,15 @@
 //
 // Eşleştirme büyük/küçük harf ve boşluk farkını yok sayar: kullanıcının gözünde aynı olan iki
 // yazım, sistemde de aynı olmalı.
+// ATAMANIN BEDEN ADLARI (v1.639.0, denetim): `bedenMiktarlari` hizalanıyor ama teslim sonucu (`sonuc.saglam/tamir/hurda`)
+// beden ADIYLA anahtarlı ve atlanıyordu — bohça sonraki prosese eski adla akıyor, üretim iki beden adı taşıyordu.
+function atamaBedenAdlariniCevir(at, es, yeniAd) {
+  const haritaCevir = (h) => { if (!h) return h; const y = {}; Object.entries(h).forEach(([b, m]) => { y[es(b) ? yeniAd : b] = m; }); return y; };
+  const listeCevir = (l) => (Array.isArray(l) ? l.map((x) => (x && es(x.beden) ? { ...x, beden: yeniAd } : x)) : l);
+  const sonuc = at.sonuc ? { ...at.sonuc, saglam: haritaCevir(at.sonuc.saglam), tamir: listeCevir(at.sonuc.tamir), hurda: listeCevir(at.sonuc.hurda) } : at.sonuc;
+  return { ...at, ...(at.bedenMiktarlari ? { bedenMiktarlari: haritaCevir(at.bedenMiktarlari) } : {}), ...(at.sonuc ? { sonuc } : {}) };
+}
+
 function useAdDegistirme(d) {
   const {
     tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast,
@@ -50,11 +59,14 @@ const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
     const recete = (p.recete || []).map((r) => (es(r.beden) || es(r.mamulBeden)
       ? { ...r, beden: cevir(r.beden), mamulBeden: cevir(r.mamulBeden) } : r));
     const hareketler = (p.hareketler || []).map((h) => (es(h.beden) ? { ...h, beden: yeniAd } : h));
+    // Harici barkodlar da beden ADIYLA (v1.639.0, denetim): hizalanmayınca kutu etiketi "tanınmayan barkod" oluyordu.
+    const hariciBarkodlar = Array.isArray(p.hariciBarkodlar) ? p.hariciBarkodlar.map((h) => (es(h.beden) ? { ...h, beden: yeniAd } : h)) : p.hariciBarkodlar;
     // `map` her zaman yeni dizi döndürüyor; içerik gerçekten değiştiyse yaz.
     const degisti = variants.some((v, i) => v !== (p.variants || [])[i])
       || recete.some((r, i) => r !== (p.recete || [])[i])
-      || hareketler.some((h, i) => h !== (p.hareketler || [])[i]);
-    return degisti ? { ...p, variants, recete, hareketler } : p;
+      || hareketler.some((h, i) => h !== (p.hareketler || [])[i])
+      || (Array.isArray(hariciBarkodlar) && hariciBarkodlar.some((h, i) => h !== p.hariciBarkodlar[i]));
+    return degisti ? { ...p, variants, recete, hareketler, ...(Array.isArray(hariciBarkodlar) ? { hariciBarkodlar } : {}) } : p;
   });
   const nextSiparisler = siparisler.map((sp) => {
     const kalemler = (sp.kalemler || []).map((k) => (es(k.beden) ? { ...k, beden: yeniAd } : k));
@@ -64,12 +76,7 @@ const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
     const bedenMiktarlari = (u.bedenMiktarlari || []).map((b) => (es(b.beden) ? { ...b, beden: yeniAd } : b));
     const prosesIlerleme = (u.prosesIlerleme || []).map((adim) => ({
       ...adim,
-      atamalar: (adim.atamalar || []).map((at) => {
-        if (!at.bedenMiktarlari) return at;
-        const yeniBM = {};
-        Object.entries(at.bedenMiktarlari).forEach(([b, m]) => { yeniBM[es(b) ? yeniAd : b] = m; });
-        return { ...at, bedenMiktarlari: yeniBM };
-      }),
+      atamalar: (adim.atamalar || []).map((at) => atamaBedenAdlariniCevir(at, es, yeniAd)),
     }));
     return { ...u, beden: cevir(u.beden), bedenMiktarlari, prosesIlerleme };
   });
@@ -81,10 +88,15 @@ const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
   setSiparisler(nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
   setUretim(nextUretim); yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
+  // Stok rezervasyonları da beden ADIYLA (v1.639.0, denetim): 020 birebir eşleştiriyor, ad değişince rezervasyon kayboluyordu.
+  const nextRez = (stokRezervasyonlari || []).map((r) => (es(r.beden) ? { ...r, beden: yeniAd } : r));
+  if (nextRez.some((r, i) => r !== stokRezervasyonlari[i])) {
+    setStokRezervasyonlari(nextRez); yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
+  }
 
   gunlukYaz(`Ölçü adı değişti: ${eskiAd} → ${yeniAd}`, "tanimlar", { olcuId });
   showToast(`"${eskiAd}" → "${yeniAd}" · kayıtlar hizalandı`);
-}, [tanimlar, stok, siparisler, uretim, koliler, showToast]);
+}, [tanimlar, stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast]);
 
 // KAYITLARDA GEÇEN ÖLÇÜLER (14 Eylül): Tanımlar "tanımsız ölçüler" bölümü için — hangi ad kaç
 // kayıtta geçiyor. Ürün varyantı, reçete, stok hareketi, sipariş kalemi, üretim beden dağılımı.
@@ -116,6 +128,7 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
     variants: (p.variants || []).map((v) => (es(v.beden) ? { ...v, beden: yeniAd } : v)),
     recete: (p.recete || []).map((r) => (es(r.beden) || es(r.mamulBeden) ? { ...r, beden: cevir(r.beden), mamulBeden: cevir(r.mamulBeden) } : r)),
     hareketler: (p.hareketler || []).map((h) => (es(h.beden) ? { ...h, beden: yeniAd } : h)),
+    ...(Array.isArray(p.hariciBarkodlar) ? { hariciBarkodlar: p.hariciBarkodlar.map((h) => (es(h.beden) ? { ...h, beden: yeniAd } : h)) } : {}),
   }));
   const nextSiparisler = siparisler.map((sp) => ({ ...sp, kalemler: (sp.kalemler || []).map((k) => (es(k.beden) ? { ...k, beden: yeniAd } : k)) }));
   const nextUretim = uretim.map((u) => ({
@@ -123,12 +136,7 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
     bedenMiktarlari: (u.bedenMiktarlari || []).map((b) => (es(b.beden) ? { ...b, beden: yeniAd } : b)),
     prosesIlerleme: (u.prosesIlerleme || []).map((adim) => ({
       ...adim,
-      atamalar: (adim.atamalar || []).map((at) => {
-        if (!at.bedenMiktarlari) return at;
-        const yeniBM = {};
-        Object.entries(at.bedenMiktarlari).forEach(([b, m]) => { yeniBM[es(b) ? yeniAd : b] = m; });
-        return { ...at, bedenMiktarlari: yeniBM };
-      }),
+      atamalar: (adim.atamalar || []).map((at) => atamaBedenAdlariniCevir(at, es, yeniAd)),
     })),
   }));
   const nextKoliler = (koliler || []).map((k) => ({ ...k, kalemler: (k.kalemler || []).map((x) => (es(x.beden) ? { ...x, beden: yeniAd } : x)) }));
@@ -136,9 +144,13 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
   setSiparisler(nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
   setUretim(nextUretim); yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
+  const nextRez = (stokRezervasyonlari || []).map((r) => (es(r.beden) ? { ...r, beden: yeniAd } : r));
+  if (nextRez.some((r, i) => r !== stokRezervasyonlari[i])) {
+    setStokRezervasyonlari(nextRez); yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
+  }
   gunlukYaz(`Tanımsız ölçü birleştirildi: ${eskiAd} → ${yeniAd}`, "tanimlar", {});
   showToast(`"${eskiAd}" → "${yeniAd}" · kayıtlar hizalandı`);
-}, [stok, siparisler, uretim, koliler, showToast]);
+}, [stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast]);
 
 
 
@@ -209,6 +221,7 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
       let nextRenkResimleri = p.renkResimleri;
       let nextRecete = p.recete;
       let nextHareketler = p.hareketler;
+      let nextHarici = p.hariciBarkodlar;
       tumEslesmeler.forEach(({ eskiEtiket, yeniEtiket }) => {
         // KİMLİK ÖNCELİKLİ EŞLEŞTİRME.
         //
@@ -255,9 +268,14 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
           degisti = true;
           nextHareketler = nextHareketler.map((h) => (es(h.renk) ? { ...h, renk: yeniEtiket } : h));
         }
+        // Harici barkodlar renk ADIYLA (v1.639.0, denetim): hizalanmayınca tedarikçi/kutu etiketi tanınmaz oluyordu.
+        if (Array.isArray(nextHarici) && nextHarici.some((h) => es(h.renk))) {
+          degisti = true;
+          nextHarici = nextHarici.map((h) => (es(h.renk) ? { ...h, renk: yeniEtiket } : h));
+        }
       });
       if (degisti) guncellenenSayisi++;
-      return degisti ? { ...p, variants: nextVariants, renkResimleri: nextRenkResimleri, recete: nextRecete, hareketler: nextHareketler } : p;
+      return degisti ? { ...p, variants: nextVariants, renkResimleri: nextRenkResimleri, recete: nextRecete, hareketler: nextHareketler, ...(Array.isArray(nextHarici) ? { hariciBarkodlar: nextHarici } : {}) } : p;
     });
     setStok(nextStok);
     yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
@@ -282,6 +300,16 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
     setUretim(nextUretim);
     yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
 
+    // Koliler de renk ADIYLA (v1.639.0, denetim; ölçü sürümü koliyi güncelliyordu, renk sürümü değil): 237 koli kalemini
+    // sipariş kalemiyle renkle eşliyor — adı değişen mamulün hazır kolisi sevkiyatta "siparişte yok" sayılıyordu.
+    const nextKoliler = (koliler || []).map((k) => {
+      const kalemler = (k.kalemler || []).map((x) => { const e = eslesmeBul(x.renk); return e ? { ...x, renk: e.yeniEtiket } : x; });
+      return kalemler.some((x, i) => x !== (k.kalemler || [])[i]) ? { ...k, kalemler } : k;
+    });
+    if (nextKoliler.some((k, i) => k !== (koliler || [])[i])) {
+      setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
+    }
+
     // Stok rezervasyonları da renk taşıyor. Güncellenmezse rezervasyon, adı değişmiş
     // hammaddeyle eşleşmez ve talep karşılanmamış görünür.
     const nextRez = stokRezervasyonlari.map((r) => {
@@ -299,7 +327,7 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
       ? `Renk adı "${eskiAd}" → "${yeniAd}" — ${guncellenenSayisi} üründe güncellendi`
       : `Renk adı "${eskiAd}" → "${yeniAd}" olarak değişti. Hiçbir üründe kullanılmıyordu.`
   );
-}, [tanimlar, stok, siparisler, uretim, stokRezervasyonlari, showToast]);
+}, [tanimlar, stok, siparisler, uretim, stokRezervasyonlari, koliler, showToast]);
 
   // Blok içinde duran onarım/çevirme işleri de buradan veriliyor: ikisi de AD/ÖLÇÜ hizalamasıyla
   // aynı aileden — "kayıtlar birbirini tutmuyorsa düzelt" işi.

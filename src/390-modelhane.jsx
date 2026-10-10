@@ -72,8 +72,15 @@ function ModelhaneModule({ receteSablonlari, onReceteSablonuKaydet, kurlar, cari
       .some((x) => String(x || "").toLocaleLowerCase("tr-TR").includes(q));
   });
 
+  // ARDIŞIK GÜNCELLEMELER BİRİKİR (v1.639.0, denetim): numune "Onaylandı" kararı + aynı tıklamada aşama değişimi iki ayrı
+  // `onSave` çağrısıydı; ikincisi kapanıştaki eski listeyle yazıp kararı siliyordu. Son hâl ref'te tutulur, her çağrı onun
+  // üstüne yazar; ref çizimle tazelenir.
+  const sonModellerRef = useRef(modeller);
+  useEffect(() => { sonModellerRef.current = modeller; }, [modeller]);
   function modelGuncelle(id, alanlar) {
-    onSave((modeller || []).map((m) => (m.id === id ? { ...m, ...alanlar } : m)));
+    const next = (sonModellerRef.current || []).map((m) => (m.id === id ? { ...m, ...alanlar } : m));
+    sonModellerRef.current = next;
+    onSave(next);
   }
 
   function ilhamEkle(url) {

@@ -28,7 +28,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
     const liste = [];
     [...((muhasebe && muhasebe.kasalar) || []), ...((muhasebe && muhasebe.bankalar) || [])].forEach((hes) => {
       (hes.hareketler || []).forEach((h) => {
-        if (h.giderKartId === kartId) liste.push({ ...h, hesapAd: hes.ad });
+        if (h.giderKartId === kartId) liste.push({ ...h, hesapAd: hes.ad, paraBirimi: hes.paraBirimi || "TRY" });
       });
     });
     // BÖLÜM İŞÇİLİĞİ (v1.587.0): bölüme bağlı kartın hareketi personele tahakkuk eden MAAŞ (cari hareketi) —
@@ -36,8 +36,10 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
     bolumMaasHareketleri(tanimlar, cariler, kartId).forEach((h) => liste.push({ ...h, yon: "Çıkış", hesapAd: `Maaş tahakkuku · ${h.cariUnvan}` }));
     return liste.sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
   };
+  // HESABIN PARA BİRİMİYLE TL'YE (v1.639.0, denetim): USD kasasından 100 $ çıkış "100 ₺" sayılıyordu; Kâr-Zarar (247)
+  // aynı hareketi kurla çeviriyor — aynı kart iki ekranda farklı çıkıyordu. Aynı çevirici (`kzTL`), kurlar Tanımlar'dan.
   const kartToplami = (kartId) => kartHareketleri(kartId)
-    .reduce((t, h) => t + (h.yon === "Giriş" ? -(h.tutar || 0) : (h.tutar || 0)), 0);
+    .reduce((t, h) => t + (h.yon === "Giriş" ? -1 : 1) * kzTL(h.tutar || 0, h.paraBirimi, (muhasebe && muhasebe.kurlar) || {}), 0);
   return (
     <div style={{ display: "grid", gap: 14 }}>
     {/* İKİ BÖLÜM (20 Eylül): kartlar GERÇEKLEŞEN ödemeyi izler, genel gider defteri PLANLANAN

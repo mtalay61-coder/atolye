@@ -204,7 +204,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   }, [hedefYeniAlis]);
 
 
-  const cariUygun = cariler.filter((c) => c.tip === (tip === "Satış" ? "Müşteri" : "Tedarikçi") || c.tip === "Her İkisi");
+  // PASİF CARİ YENİ SİPARİŞTE SEÇİLEMEZ (v1.639.0, denetim): fiş, kasa ve çek formları süzüyor, burası süzmüyordu.
+  // Düzenlenen siparişin carisi pasife alınmışsa listede kalır (kayıt bozulmasın).
+  const cariUygun = cariler.filter((c) => (c.tip === (tip === "Satış" ? "Müşteri" : "Tedarikçi") || c.tip === "Her İkisi") && (!c.pasif || c.id === cariId));
   const urunUygun = tip === "Satış" ? stok.filter((p) => p.kategori === "Mamul") : stok;
   const seciliUrun = urunUygun.find((p) => p.id === kUrunId);
   // KDV ORANI SATIR EKLENİRKEN (v1.502.0 — kullanıcı: "siparişte de satır eklerken KDV girilsin"; fişle aynı
@@ -237,7 +239,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const renkSorulmaz = renksizUrun;
   useEffect(() => {
     if (tekRenk && kRenk !== tekRenk) { setKRenk(tekRenk); setKMiktarlar({}); }
-  }, [tekRenk]);   // eslint-disable-line react-hooks/exhaustive-deps
+    // `kUrunId` de bağımlılıkta (v1.639.0, denetim): art arda iki renksiz (ya da aynı tek renkli) ürün seçilince `tekRenk`
+    // değişmiyor, `urunSec` rengi boşalttığı için miktar kutuları hiç açılmıyordu.
+  }, [tekRenk, kUrunId]);   // eslint-disable-line react-hooks/exhaustive-deps
   // BEDENLER KÜÇÜKTEN BÜYÜĞE.
   //
   // Varyantlar EKLENME sırasında duruyor; kullanıcı 40'ı önce eklediyse sipariş formunda sütunlar
@@ -449,6 +453,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   function urunSec(urunId) {
     setKUrunId(urunId);
     setKRenk(""); setKMiktarlar({});
+    // Kutu rengi de sıfırlanır (v1.639.0, denetim): önceki ürünün "Kırmızı" kutusu, alanı olmayan sonraki ürünün kalemine
+    // sessizce yazılıyordu (ekranda görünmeden).
+    setKAmbalajRenk("");
     const p = urunUygun.find((u) => u.id === urunId);
     if (p) {
       // Kuralın kendi para birimi (v1.481.0) kalemin birimine çevrilir — dolar kuralı TL diye yazılmasın.
@@ -609,6 +616,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     });
     setKalemler(sonrakiKalemler);
     setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKFiyatElle(false); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1);
+    setKAmbalajRenk("");
     // Kullanıcıya AÇIKÇA geri bildirim: eğer birleştirme olduysa bunu belirtiyoruz — böylece "hiçbir şey
     // olmadı" sanıp tekrar tıklama isteği duyulmaz, tam tersi netlik sağlanır.
     if (birlestirilenSayisi > 0 && eklenenSayisi > 0) {
@@ -657,57 +665,6 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
 
   // Sesli komuttan (Claude API ile ayrıştırılmış) dönen bilgiyi forma işler. Hiçbir şeyi otomatik
   // kaydetmez — sadece formu doldurur, kullanıcı gözden geçirip "Kalemler'e Ekle" / "Siparişi Kaydet" der.
-  function sesliSonucUygula(parsed) {
-    const normalize = (s) => (s || "").toString().trim().toLocaleLowerCase("tr-TR");
-    let mesajParcalari = [];
-
-    if (parsed.cariAdi) {
-      const eslesen = cariUygun.find((c) => normalize(c.unvan).includes(normalize(parsed.cariAdi)) || normalize(parsed.cariAdi).includes(normalize(c.unvan)));
-      if (eslesen) { setCariId(eslesen.id); mesajParcalari.push(`Cari: ${eslesen.unvan}`); }
-      else mesajParcalari.push(`⚠ Cari eşleşmedi: "${parsed.cariAdi}"`);
-    }
-
-    if (parsed.teslimTarihi) setTeslimTarihi(parsed.teslimTarihi);
-    if (parsed.not) setNot(parsed.not);
-
-    if (parsed.urunAdi) {
-      const eslesenUrun = urunUygun.find((p) => normalize(p.ad).includes(normalize(parsed.urunAdi)) || normalize(parsed.urunAdi).includes(normalize(p.ad)));
-      if (eslesenUrun) {
-        mesajParcalari.push(`Ürün: ${eslesenUrun.ad}`);
-        setKUrunId(eslesenUrun.id);
-        const fiyat = parsed.birimFiyat ?? (tip === "Satış" ? eslesenUrun.satisFiyati : eslesenUrun.alisFiyati) ?? "";
-        setKFiyat(String(fiyat));
-
-        const urunRenkleri = Array.from(new Set(eslesenUrun.variants.map((v) => v.renk)));
-        let secilenRenk = "";
-        if (parsed.renk) {
-          secilenRenk = urunRenkleri.find((r) => normalize(r).includes(normalize(parsed.renk)) || normalize(parsed.renk).includes(normalize(r))) || "";
-        }
-        if (secilenRenk) {
-          setKRenk(secilenRenk);
-          mesajParcalari.push(`Renk: ${secilenRenk}`);
-          if (parsed.bedenMiktarlari && typeof parsed.bedenMiktarlari === "object") {
-            const urunBedenleri = bedenSirala(Array.from(new Set(eslesenUrun.variants.filter((v) => v.renk === secilenRenk).map((v) => v.beden))));
-            const yeniMiktarlar = {};
-            Object.entries(parsed.bedenMiktarlari).forEach(([beden, miktar]) => {
-              const eslesenBeden = urunBedenleri.find((b) => normalize(b) === normalize(beden)) || urunBedenleri.find((b) => normalize(b).includes(normalize(beden)));
-              if (eslesenBeden && miktar > 0) yeniMiktarlar[eslesenBeden] = String(miktar);
-            });
-            setKMiktarlar(yeniMiktarlar);
-            if (Object.keys(yeniMiktarlar).length > 0) {
-              mesajParcalari.push(`Miktarlar: ${Object.entries(yeniMiktarlar).map(([b, m]) => `${b}:${m}`).join(", ")}`);
-            }
-          }
-        } else if (parsed.renk) {
-          mesajParcalari.push(`⚠ Renk eşleşmedi: "${parsed.renk}"`);
-        }
-      } else {
-        mesajParcalari.push(`⚠ Ürün eşleşmedi: "${parsed.urunAdi}"`);
-      }
-    }
-
-    showToast(mesajParcalari.length > 0 ? mesajParcalari.join(" · ") + " — kontrol edip ekleyin" : "Sesli komuttan bilgi çıkarılamadı");
-  }
 
   // ---- KAYDEDİLMİŞ SİPARİŞİ DÜZENLEME — YENİ SİPARİŞ FORMUYLA (25 Eylül) ----------------------
   //
@@ -1335,7 +1292,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               aynı kutudan geçiyor çünkü personel eline hangi etiketin geldiğini seçmiyor. */}
           {!barkodPaneli ? (
             <button type="button" data-barkod-paneli-ac="1" onClick={() => barkodPaneliDegistir(true)}
-              title="Barkod okutma, kamera, sesli giriş ve fotoğraftan bulma"
+              title="Barkod okutma, kamera ve fotoğraftan bulma"
               style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", marginBottom: 10, padding: "6px 10px", fontSize: 12, fontWeight: 700,
                 color: "#2E5670", background: "#EAF0F4", border: "1px dashed #3D6B8A", borderRadius: "var(--erp-r-md)", cursor: "pointer" }}>
               <ScanLine size={14} /> Barkod okut · kamera · ses · fotoğraf
@@ -1370,7 +1327,6 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 kutusunda formun en üstünde duruyordu ve açıklama satırıyla dört satır yer
                 kaplıyordu. İkisi de "kalem eklemenin hızlı yolu" olduğu için aynı satırda
                 olmaları da doğru. */}
-            <SesliSiparisButonu tip={tip} cariUygun={cariUygun} urunUygun={urunUygun} onSonuc={sesliSonucUygula} showToast={showToast} />
             {/* KAMERAYLA OKUT (24 Eylül, v1.438.0 — kullanıcı: "siparişte kamera ile barkod okuma
                 ekranı ekleyelim, daha önce yaptık"). Depo > Okut ve Depo > Sevkiyat'taki AYNI
                 bileşen (`KameraOkuyucu`, 236): önce cihazın kendi okuyucusu (Android Chrome),
@@ -2022,7 +1978,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                             // Kilitsiz satırda, ürünün o ölçüsü varsa boş kutu: miktar yazılınca satırın fiyatı, birimi, KDV'si,
                             // kutusu ve notlarıyla yeni kalem açılır (`bedenGeriEkle`).
                             if (!k) {
-                              const olcuVar = !g.kilit && g.renk && urun && (urun.variants || []).some((v) => v.beden === b);
+                              // Ölçü SATIRIN RENGİNDE var mı (v1.639.0, denetim): yalnız bedene bakılınca Beyaz satırında Siyah'ın 39'u
+                              // için kutu çıkıyor, olmayan Beyaz/39 varyantına kalem açılıyordu.
+                              const olcuVar = !g.kilit && g.renk && urun && (urun.variants || []).some((v) => v.beden === b && stokAnahtarNrm(v.renk) === stokAnahtarNrm(g.renk));
                               if (!olcuVar) return <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}><span style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span></td>;
                               return (
                                 <td key={b} style={{ padding: "4px 6px", textAlign: "center" }}>

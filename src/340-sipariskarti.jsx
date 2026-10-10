@@ -72,6 +72,13 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
   // LİSTEDEN SAĞ TIK (v1.636.0): sipariş listesindeki satıra sağ tıklanınca liste kartı açar ve menüyü bu istekle açtırır
   // ({ x, y, n } — `n` her istekte değişir ki aynı noktaya ikinci sağ tık da menüyü açsın).
   useEffect(() => { if (disMenuIstegi) setIslemMenu({ x: disMenuIstegi.x, y: disMenuIstegi.y }); }, [disMenuIstegi && disMenuIstegi.n]);
+  // Escape kapatır (v1.639.0, denetim): öteki kartların menüsü (350 SagTikMenusu) kapanıyor, bu menü yalnız perdeyle kapanıyordu.
+  useEffect(() => {
+    if (!islemMenu) return undefined;
+    const kapat = (e) => { if (e.key === "Escape") setIslemMenu(null); };
+    window.addEventListener("keydown", kapat);
+    return () => window.removeEventListener("keydown", kapat);
+  }, [!!islemMenu]);
   // NOTLAR PENCERESİ (v1.621.0 — kullanıcı: "Sipariş notları görmemiz lazım, siparişte üzerine tıklayınca açılır not şeklinde
   // olsun"). Mor şeritte "Notlar (n)"; tıklayınca siparişin genel notu + model/renk notları (proses etiketli) tek pencerede.
   const [notPenceresi, setNotPenceresi] = useState(null);

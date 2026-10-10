@@ -33,7 +33,10 @@ const ACILIS_KAYNAK = "Açılış";
 // aynı anahtara düşüyor, çünkü varyantları da öyle.
 function acilisFarklari(urun) {
   const toplamlar = new Map();
-  const anahtar = (renk, beden) => `${renk || ""}|${beden || ""}`;
+  // "Standart" / "" / null AYNI varyant (v1.639.0, denetim — kritik): varyantı "Standart", hareketi "" yazılmış
+  // üründe birebir karşılaştırma hareket toplamını 0 görüyor, farkı tam miktar çıkarıyor ve kesilen açılış fişi
+  // stoğu ikiye katlıyordu (012 `stokMiktarlariniHesapla` ikisini aynı sayar). 012'deki geçişle aynı anahtar.
+  const anahtar = (renk, beden) => `${stokAnahtarNrm(renk)}|${stokAnahtarNrm(beden)}`;
   (urun.hareketler || []).forEach((h) => {
     const a = anahtar(h.renk, h.beden);
     toplamlar.set(a, (toplamlar.get(a) || 0) + (h.miktar || 0));

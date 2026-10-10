@@ -148,7 +148,7 @@ function faturaKur({ fis, cari, firma, kurlar, kayit, faturalar, bugun, saat }) 
   const vknMi = (no) => vergiNoKontrol(no).tur === "vkn";
   const aliciNo = vergiNoNormal((cari && (cari.vergiNo || cari.tckn)) || "");
   return {
-    id: k.id || null, durum: k.durum || "Taslak", fisNo: fis ? fis.fisNo : k.fisNo, fisTarihi: fis ? String(fis.tarih || "").slice(0, 10) : "",
+    id: k.id || null, durum: k.durum || "Taslak", fisNo: fis ? fis.fisNo : k.fisNo, fisTarihi: fis ? String(fis.gunTarihi || fis.tarih || "").slice(0, 10) : "",
     cariId: cari ? cari.id : k.cariId, senaryo, faturaTipi: "SATIS",
     tarih, saat: k.saat || saat || "", ettn: k.ettn || null,
     faturaNo: k.faturaNo || null,

@@ -27,13 +27,18 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   // Stok hareketi tam zaman damgası tutar (sıralama saate duyarlı), cari hareketi gün bazlı.
   // Fiş tarihi kullanıcıdan geliyor; o günün saatini uydurmak yerine kaydın girildiği an eklenir.
   const zaman = new Date().toISOString();
+  // STOK ZAMANI YEREL SAATLE (v1.639.0, denetim): fişin günü (yerel) + `zaman`ın UTC saati "Z" ile birleşince yerel
+  // 01:30'da kesilen fiş ertesi güne, geçmiş tarihli fiş bir gün ileriye düşüyordu. Yerel gün + yerel saat → ISO.
+  const simdi = new Date();
+  const ikiHane = (n) => String(n).padStart(2, "0");
+  const yerelZaman = new Date(`${fis.tarih}T${ikiHane(simdi.getHours())}:${ikiHane(simdi.getMinutes())}:${ikiHane(simdi.getSeconds())}`);
   const kayitPB = fis.paraBirimi || "TRY";
   const fisAciklamasi = fis.aciklama || `${alisMi ? "Cariden Alış" : "Cariye Satış"} fişi`;
 
   const fisGovdesi = {
     fisNo, tip, cariId,
     kaynak: alisMi ? "Satınalma" : "Satış",
-    stokTarihi: `${fis.tarih}T${zaman.slice(11)}`,
+    stokTarihi: Number.isNaN(yerelZaman.getTime()) ? zaman : yerelZaman.toISOString(),
     cariTarihi: fis.tarih,
     zaman,
     kayitParaBirimi: kayitPB,
@@ -99,8 +104,13 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
       return next;
     });
   }
-  setStok(sonuc.stok);
-  yazimiIzle(tabloYaz("stok:items", "urunler", sonuc.stok), "Stok kartları", sonuc.stok);
+  // Güncel listeye yalnız değişen ürünler işlenir (v1.639.0, bkz. 075 `degisenKayitlariBirlestir`): defter yazımı beklenirken
+  // gelen başka değişiklik ezilmesin.
+  setStok((onceki) => {
+    const next = degisenKayitlariBirlestir(onceki, stok, sonuc.stok);   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
+    yazimiIzle(tabloYaz("stok:items", "urunler", next), "Stok kartları", next);
+    return next;
+  });
   // OKUTULAN KOLİLER (23 Eylül, v1.420.0): satırlar `koliId` taşıyorsa koli "Sevk edildi"ye geçer ve
   // hangi fişle çıktığını saklar — sipariş kartından kesilen fişle AYNI işaret; `fisGeriAl` bu bağdan
   // koliyi geri "Hazır" yapıyor. Fiş defteri yazımı yukarıda tuttuğu için buraya gelindi.
