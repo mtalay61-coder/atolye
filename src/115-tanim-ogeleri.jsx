@@ -24,6 +24,34 @@ function fileToCompressedDataUrl(file, maxWidth = 480, quality = 0.75) {
   });
 }
 
+// FİRMA LOGOSU KÜÇÜLTME (v1.635.0 — Supabase kullanımı incelenirken bulundu). Logo yüklenen dosya OLDUĞU GİBİ
+// kaydediliyordu: kullanıcının logosu tanımlar kaydında 500 KB'tı (tanımlar toplamı ~530 KB). Tanımlar her açılışta ve
+// başka cihaz değişiklik yaptığında buluttan indirildiği için bu, aylık indirme kotasını (egress) boşa harcıyordu; sunucu
+// arşivi de her eski hâlin tam kopyasını tutuyordu (24 MB). Logo ekranda en çok ~48 px, resim damgasında ~110 px
+// çiziliyor: uzun kenarı 400 px yeter. PNG (saydamlık korunsun); hâlâ büyükse WEBP de denenir ve EN KÜÇÜĞÜ seçilir.
+// Sonuç asıldan küçük değilse asıl kalır (zaten küçük logo bozulmasın). Resim okunamazsa da asıl döner.
+const LOGO_UZUN_KENAR = 400;
+function logoKucult(dataUrl) {
+  return new Promise((resolve) => {
+    if (!dataUrl || !/^data:image\//.test(dataUrl)) { resolve(dataUrl); return; }
+    const img = new window.Image();
+    img.onload = () => {
+      try {
+        const olcek = Math.min(1, LOGO_UZUN_KENAR / Math.max(img.width || 1, img.height || 1));
+        const tuval = document.createElement("canvas");
+        tuval.width = Math.max(1, Math.round(img.width * olcek));
+        tuval.height = Math.max(1, Math.round(img.height * olcek));
+        tuval.getContext("2d").drawImage(img, 0, 0, tuval.width, tuval.height);
+        const adaylar = [dataUrl, tuval.toDataURL("image/png")];
+        if (adaylar[1].length > 120000) adaylar.push(tuval.toDataURL("image/webp", 0.9));
+        resolve(adaylar.filter((x) => /^data:image\//.test(x)).reduce((a, b) => (b.length < a.length ? b : a)));
+      } catch (e) { resolve(dataUrl); }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 // RESME DAMGA (v1.604.0 — kullanıcı: "Stok resmi eklediğimizde sağ üste logomuz, altına stok kodu, altına renk kodu
 // yazdırabilir miyiz?"). Yüklenen (küçültülmüş) stok resminin sağ üst köşesine firma logosu, altına verilen satırlar
 // (stok adı, renk) basılır. Müşteriye giden katalog/WhatsApp görselinde firma ve model bir bakışta okunsun diye.

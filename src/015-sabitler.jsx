@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.634.1";
+const SURUM = "1.635.0";
 const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Arama kutularinda x ile hizli temizleme";
+const SURUM_NOTU = "Firma logosu kucultulerek kaydedilir; buyuk logo bir kez kucultulur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Arama kutularinda x ile hizli temizleme";
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.635.0", tarih: "10.10.2026",
+    eklenen: [],
+    degisen: ["Firma logosu yüklenirken küçültülerek kaydediliyor (uzun kenar 400 px); daha önce yüklenmiş büyük logo bir kez kendiliğinden küçültülür — Tanımlar kaydı ~530 KB'tan küçülür, bulut indirme kotası daha az harcanır"],
+    duzeltilen: ["Tanımlar > Depolama Durumu bu uygulamanın kendi kayıtlarını (firma görünümü, oturum, bekleyen yazma…) \"başka uygulama\" diye gösteriyordu"] },
   { surum: "1.634.1", tarih: "10.10.2026",
     eklenen: ["Arama kutularında × ile hızlı temizleme: Fişler, Cari, Cari Raporları, Sipariş, Üretim, Hammadde İhtiyacı, Görevler, Tanımlar"],
     degisen: [], duzeltilen: [] },

@@ -608,7 +608,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
 
   function firmaLogoYukle(dosya) {
     const okuyucu = new FileReader();
-    okuyucu.onload = () => firmaBilgisiGuncelle("logo", okuyucu.result);
+    // Kaydetmeden önce küçültülür (v1.635.0, bkz. 115 logoKucult): ham dosya tanımlar kaydını şişiriyordu.
+    okuyucu.onload = () => logoKucult(okuyucu.result).then((logo) => firmaBilgisiGuncelle("logo", logo));
     okuyucu.readAsDataURL(dosya);
   }
 

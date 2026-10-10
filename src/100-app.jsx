@@ -1195,6 +1195,22 @@ export default function AtolyeERP() {
     }
   }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
 
+  // MEVCUT BÜYÜK LOGO BİR KEZ KÜÇÜLTÜLÜR (v1.635.0). v1.635'ten önce yüklenen logo ham dosya (kullanıcıda 500 KB).
+  // Yükleme bittikten sonra 200 KB'tan büyükse küçültülüp kaydedilir; küçülen logo eşiğin altına indiği için tekrar
+  // tetiklenmez. En az %20 kazanç yoksa yazılmaz (gereksiz yazma, sunucu arşivine boş kopya). Oturum başına bir deneme.
+  const logoKucultmeDenendiRef = useRef(false);
+  useEffect(() => {
+    if (loading || logoKucultmeDenendiRef.current || firmaLogosu.length <= 200000) return;
+    logoKucultmeDenendiRef.current = true;
+    const asil = firmaLogosu;
+    logoKucult(asil).then((kucuk) => {
+      const guncel = tanimRef.current;
+      // Arada başka bir logo yüklendiyse dokunma.
+      if (!guncel || (guncel.firmaBilgileri || {}).logo !== asil || kucuk.length > asil.length * 0.8) return;
+      saveTanimlar({ ...guncel, firmaBilgileri: { ...(guncel.firmaBilgileri || {}), logo: kucuk } });
+    });
+  }, [loading, firmaLogosu, saveTanimlar]);
+
   // REÇETE ŞABLONLARI (21 Eylül): tanımlarda tutuluyor; ürün kartı ve modelhane buradan yazar.
   const receteSablonuKaydet = useCallback((sablon) => {
     if (!sablon || !sablon.ad) return;
