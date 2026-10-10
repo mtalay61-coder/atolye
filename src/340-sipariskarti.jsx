@@ -1202,6 +1202,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                               listede ikon varsayılan eşlemeden çözülür (eski tabloda zaten ikon
                               yoktu) ve gruplar kalemlerin kendi sırasını korur — o sıra "eksiği
                               olanlar önce" demek, bu ekranda aranan da tam olarak budur. */}
+                          {/* Renklerin anlamı — Planlama ile aynı lejant; parantezde kaç hücre (v1.632.0). */}
+                          <HammaddeDurumLejanti sayilar={ihtiyac.kalemler.reduce((o, x) => { o[x.durum] = (o[x.durum] || 0) + 1; return o; }, {})} />
                           <IhtiyacMatrisi
                             kalemler={ihtiyac.kalemler.map((x) => ({
                               ad: x.hammaddeAd, renk: x.renk, beden: x.beden,
@@ -1221,13 +1223,23 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     `Stok: ${x.mevcutStok}${x.varyantYok ? " (bu renk/ölçü hammadde kartında TANIMSIZ)" : ""}\n` +
                                     (x.rezerve > 0
                                       ? `Bu siparişe ayrılmış: ${x.rezerve}${x.rezerveAcik > 0 ? ` (${x.rezerveAcik} açık)` : ""}`
-                                      : "Rezervasyon yok")
+                                      : "Rezervasyon yok") +
+                                    (x.yolda > 0 ? `\nSiparişte (yolda): ${x.yolda}` : "") +
+                                    (x.netEksik > 0 ? `\nHâlâ sipariş edilmemiş eksik: ${x.netEksik}` : "") +
+                                    `\nDurum: ${HAMMADDE_DURUMLARI[x.durum].ad}`
                                   }
-                                  style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.25, cursor: "help" }}
+                                  data-hammadde-durum={x.durum}
+                                  // DURUM RENGİ (v1.632.0 — Planlama ile aynı standart, HAMMADDE_DURUMLARI): stokta var yeşil,
+                                  // tamamı siparişte mavi, eksik (ya da kısmen siparişte + kamyon) turuncu; hap zemini durum renginde.
+                                  style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.25, cursor: "help",
+                                    padding: "1px 7px", borderRadius: "var(--erp-r-pill)", border: `1px solid ${HAMMADDE_DURUMLARI[x.durum].renk}`,
+                                    background: alfaEkle(HAMMADDE_DURUMLARI[x.durum].renk, "1F"), color: HAMMADDE_DURUMLARI[x.durum].renk }}
                                 >
-                                  <span style={{ color: x.eksik > 0 ? "var(--erp-warn)" : "var(--erp-text)", fontWeight: 700 }}>{deger}</span>
+                                  <span style={{ fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                                    {deger}{x.yolda > 0 && <Truck size={10} />}
+                                  </span>
                                   {x.eksik > 0 && (
-                                    <span style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-warn)" }}>−{x.eksik}</span>
+                                    <span style={{ fontSize: 10, fontWeight: 700 }}>−{x.eksik}{x.yolda > 0 ? ` · ${x.yolda} yolda` : ""}</span>
                                   )}
                                   {x.varyantYok && (
                                     <span title="Bu renk/ölçü hammadde kartında hiç tanımlı değil — stok 0 görünmesinin sebebi stoğun bitmesi değil" style={{ fontSize: 9, color: "var(--erp-warn)" }}>tanımsız</span>

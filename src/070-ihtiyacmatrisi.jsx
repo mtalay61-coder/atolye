@@ -77,6 +77,23 @@ function bedenSirala(liste) {
 // hucreCiz / satirSonu: sipariş kartı hücrede eksik durumunu, sağda stok özetini gösteriyor.
 // Verilmezse sade sayı çizilir — üretim kartının ihtiyacı bu kadar.
 // `stok` (v1.495.0, isteğe bağlı): malzemenin renk başlığı (Kalınlık, Baskı…) için. Verilmezse "Renk".
+// HAMMADDE DURUM LEJANTI (v1.632.0): renklerin ne demek olduğu — Planlama ve sipariş kartında aynı (HAMMADDE_DURUMLARI).
+// `sayilar` verilirse her durumun yanında kaç hücre olduğu yazar.
+function HammaddeDurumLejanti({ sayilar }) {
+  return (
+    <div data-hammadde-lejant="1" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", fontSize: 11 }}>
+      {Object.entries(HAMMADDE_DURUMLARI).map(([k, d]) => (
+        <span key={k} title={d.aciklama} data-hammadde-lejant-durum={k} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: d.renk, fontWeight: 700 }}>
+          <span style={{ width: 11, height: 11, borderRadius: 3, border: `1px solid ${d.renk}`, background: alfaEkle(d.renk, "33"), display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            {d.kamyon && <Truck size={8} />}
+          </span>
+          {d.ad}{sayilar && sayilar[k] != null ? ` (${sayilar[k]})` : ""}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik, satirSonuCiz, stok }) {
   // RENK BAŞLIĞI (v1.495.0 — kullanıcı: "üretim ve planlamada da başlık görünsün"). Fiş listesindeki
   // kural: satırların başlığı ortaksa sütunda o; karışıksa sütunda hepsi, başlık değiştiği yerde ara satır.
@@ -205,7 +222,10 @@ function IhtiyacMatrisi({ kalemler, tanimlarProsesler, hucreCiz, satirSonuBaslik
                               {r.adet} × {r.birimMiktar} ={" "}
                             </span>
                           )}
-                          {r.toplam} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>{r.birim}</span>
+                          {/* Tek ölçülü satırda da hücre çizici (v1.632.0): durum rengi (stokta / siparişte / eksik) burada da
+                              görünsün — önce yalnız ölçü matrisindeki hücreler renkleniyordu, Kesim'in deri/astar satırları düz kalıyordu. */}
+                          {hucreCiz && r.kaynaklar && r.kaynaklar[tekBeden] ? hucreCiz(r.kaynaklar[tekBeden], r.toplam) : r.toplam}{" "}
+                          <span style={{ fontSize: 11, fontWeight: 400, color: "var(--erp-text-2)" }}>{r.birim}</span>
                         </td>
                         {satirSonuCiz && (
                           <td className="mono" style={{ fontSize: 12, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap" }}>{satirSonuCiz(r)}</td>

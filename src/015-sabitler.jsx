@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.631.0";
+const SURUM = "1.632.0";
 const SURUM_TARIHI = "2026-10-09";
-const SURUM_NOTU = "Siparis formunda satirdaki urun ve renk degistirme aramali (Kalem Ekle ile ayni kutular)";
+const SURUM_NOTU = "Hammadde durum renkleri standart: stokta var yesil, siparisle yolda mavi, eksik turuncu; siparis kartinda Planlama ile ayni";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Siparis formunda satirdaki urun ve renk degistirme aramali (
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.632.0", tarih: "10.10.2026",
+    eklenen: ["Hammadde durum renk standardı ve açıklaması (lejant): stokta var yeşil, tamamı siparişte (yolda) mavi, kısmen siparişte turuncu + kamyon, eksik turuncu"],
+    degisen: ["Sipariş kartında Hammadde İhtiyacı hücreleri Planlama ile aynı mantıkla renkli; alış siparişiyle yolda olan miktar da hesaba katılıyor ve ipucunda yazıyor",
+      "Tek ölçülü hammadde satırları (deri, astar…) da durum rengini alıyor"],
+    duzeltilen: [] },
   { surum: "1.631.0", tarih: "10.10.2026",
     eklenen: [],
     degisen: ["Sipariş formunda satırdaki renk değiştirme açılır liste yerine aramalı ve resimli kutu (Kalem Ekle'deki renk kutusunun aynısı)",
@@ -1505,6 +1510,28 @@ function erpTokenHexCss() {
 // opaklık ekliyordu. Renk artık var(--erp-*) olunca "var(--erp-primary)14" geçersiz kalıyor
 // ve zemin şeffafa düşüyordu. Bu yardımcı her ikisini de işliyor: hex'e ekler, token'ı
 // color-mix ile karıştırır.
+// HAMMADDE DURUM STANDARDI (v1.632.0 — kullanıcı: "Sipariş hammadde ihtiyacında stoğu bulunan ürünler, siparişi olan
+// ürünler, olmayan ürünler v.s. renkleri değişsin. Bu bizim standartlarımız da olsun ve planlamanın mantığının aynısı
+// olsun"). Planlama > Hammadde İhtiyacı'nın v1.2xx'ten beri kullandığı üç renk tek yere alındı; sipariş kartındaki
+// Hammadde İhtiyacı ve ileride hammadde durumu gösteren her ekran BUNU kullanır:
+//   yeterli — stok ihtiyacı karşılıyor (eksik yok)                            → yeşil  (--erp-primary)
+//   yolda   — eksik var ama eksiğin TAMAMI alış siparişiyle sipariş edilmiş   → mavi   (--erp-info)
+//   kismen  — eksiğin bir kısmı sipariş edilmiş, kalanı hâlâ sipariş yok      → turuncu (--erp-warn) + kamyon ikonu
+//   eksik   — eksik var, hiç sipariş edilmemiş                                 → turuncu (--erp-warn)
+// "Yolda" = alış siparişine bu satış siparişi için ayrılmış, henüz teslim alınmamış miktar (hammaddeSatinAlmaDurumu).
+const HAMMADDE_DURUMLARI = {
+  yeterli: { ad: "Stokta var", renk: "var(--erp-primary)", aciklama: "Stok ihtiyacı karşılıyor" },
+  yolda: { ad: "Siparişte (yolda)", renk: "var(--erp-info)", aciklama: "Eksiğin tamamı alış siparişiyle sipariş edilmiş, teslim bekleniyor" },
+  kismen: { ad: "Kısmen siparişte", renk: "var(--erp-warn)", aciklama: "Eksiğin bir kısmı sipariş edilmiş; kalanı için sipariş yok", kamyon: true },
+  eksik: { ad: "Eksik — sipariş yok", renk: "var(--erp-warn)", aciklama: "Stok yetmiyor ve alış siparişi verilmemiş" },
+};
+function hammaddeDurumu(eksik, yolda) {
+  if (!(eksik > 0)) return "yeterli";
+  const y = yolda || 0;
+  if (eksik - y <= 0) return "yolda";
+  return y > 0 ? "kismen" : "eksik";
+}
+
 function alfaEkle(renk, hexAlfa) {
   if (!renk || typeof renk !== "string") return renk;
   if (renk.startsWith("var(")) {
