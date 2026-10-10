@@ -203,9 +203,35 @@ export default function AtolyeERP() {
       try { window.localStorage.setItem("ustMenu:kademe", String(secilen)); } catch (e) { /* özel sekme */ }
     }
   }, []);
-  // Her çizimden sonra (etkin sekme kalınlaşınca, yetkiyle öğe eklenince genişlik değişir), ekran
-  // boyutu değişince ve yazı tipi yüklenince (DM Sans gelince yazılar genişler) yeniden ölçülür.
-  React.useLayoutEffect(() => { ustMenuSigdir(); });
+  // Menü öğelerinin BOYUTU değişince (etkin sekme kalınlaşınca, yetkiyle öğe eklenince), ekran boyutu
+  // değişince ve yazı tipi yüklenince (DM Sans gelince yazılar genişler) yeniden ölçülür.
+  //
+  // HER ÇİZİMDE DEĞİL (v1.633.0 — kullanıcı: "uygulama doldukça yavaşlama başladı, menüler geç açılıyor").
+  // Önce her App çiziminden sonra ölçülüyordu; `scrollWidth` okumak bütün sayfanın yerleşimini ZORLA
+  // hesaplatıyor ve kademe denemesi bunu 5 kez yapabiliyordu. Büyük veriyle (binlerce fiş kartı) her
+  // tıklama saniyeler sürüyordu — profilde en pahalı tek iş buydu. Artık ResizeObserver menünün ve
+  // öğelerinin boyutunu izliyor, MutationObserver öğe eklenip çıkarılmasını; yalnız gerçekten değişince
+  // ölçülüyor. Ölçüm bir sonraki kareye erteleniyor: gözlemci içinde sınıf değiştirmek "ResizeObserver
+  // loop" uyarısı üretirdi.
+  const ustMenuGozlemRef = useRef(null);
+  React.useLayoutEffect(() => {
+    const nav = ustMenuNavRef.current;
+    if (ustMenuGozlemRef.current && ustMenuGozlemRef.current.nav === nav) return;
+    if (ustMenuGozlemRef.current) ustMenuGozlemRef.current.birak();
+    ustMenuGozlemRef.current = null;
+    if (!nav) return;
+    ustMenuSigdir();
+    if (typeof ResizeObserver === "undefined") return;
+    let kare = 0;
+    const planla = () => { if (!kare) kare = requestAnimationFrame(() => { kare = 0; ustMenuSigdir(); }); };
+    const boyut = new ResizeObserver(planla);
+    const cocuklariIzle = () => { boyut.disconnect(); boyut.observe(nav); Array.from(nav.children).forEach((c) => boyut.observe(c)); };
+    cocuklariIzle();
+    const agac = new MutationObserver(() => { cocuklariIzle(); planla(); });
+    agac.observe(nav, { childList: true });
+    ustMenuGozlemRef.current = { nav, birak: () => { boyut.disconnect(); agac.disconnect(); if (kare) cancelAnimationFrame(kare); } };
+  });
+  useEffect(() => () => { if (ustMenuGozlemRef.current) ustMenuGozlemRef.current.birak(); }, []);
   useEffect(() => {
     window.addEventListener("resize", ustMenuSigdir);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(ustMenuSigdir).catch(() => {});
@@ -4400,7 +4426,7 @@ export default function AtolyeERP() {
           {/* Her modül HER ZAMAN mount edilir, sadece aktif OLMAYANLAR "display:none" ile gizlenir.
               Böylece bir modülün İÇ STATE'İ (örn. Stok'ta açık bir ürün kartı, bir formun doldurulmuş
               hali) başka bir sekmeye geçilip geri dönüldüğünde KAYBOLMAZ — modül hiç unmount olmaz. */}
-          <div style={{ display: tab === "anasayfa" ? undefined : "none" }}>
+          <GizliModul aktif={tab === "anasayfa"}>
             <AnaSayfaModule
               gorevler={gorevler}
               aktifKullanici={aktifKullanici}
@@ -4415,8 +4441,8 @@ export default function AtolyeERP() {
               onGoToUrun={(urunId) => uruneGit(urunId, null, { tab: "anasayfa", etiket: "Ana sayfaya dön" })}
               onGoToCari={() => setTab("cari")}
             />
-          </div>
-          <div style={{ display: tab === "tanimlar" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "tanimlar"}>
             <TanimlarModule
               fisDefteri={fisDefteri}
               onYetimSiparisBagiCoz={yetimSiparisBaglariniTemizle}
@@ -4438,7 +4464,7 @@ export default function AtolyeERP() {
                 if (yoneticiVar && !kullaniciYetkisiVar("tanimlar", "duzenleme")) { showToast("Tanımlarda değişiklik yetkiniz yok"); return undefined; }
                 return saveTanimlar(sonraki);
               }} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onOlcuAdDegistir={olcuAdDegistir} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
-          </div>
+          </GizliModul>
           {tab === "modelhane" && (
             <ModelhaneModule
               receteSablonlari={tanimlar.receteSablonlari || []}
@@ -4459,7 +4485,7 @@ export default function AtolyeERP() {
           {/* STOK + MAMUL STOK TEK MODÜL (v1.455.0): iki menü öğesi aynı modülü farklı KAPSAMLA
               gösteriyor. Kapsam yalnız bu iki sekmeden birindeyken güncelleniyor; başka modüle
               geçince son hâli korunuyor (gizli modülün süzgeci boş yere sıfırlanmasın). */}
-          <div style={{ display: tab === "stok" || tab === "mamulstok" ? undefined : "none" }}>
+          <GizliModul aktif={tab === "stok" || tab === "mamulstok"}>
             <StokModule
               kapsam={stokKapsamRef.current}
               kurlar={muhasebe.kurlar || {}}
@@ -4509,8 +4535,8 @@ export default function AtolyeERP() {
               // okuyor (bkz. StokModule, "tek kaynak").
               acikUrunIdleri={acikUrunIdleri}
             />
-          </div>
-          <div style={{ display: tab === "uretim" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "uretim"}>
             <UretimModule
               panelKipi={panelEkranAyari && panelEkranAyari.tab === "uretim" ? panelEkranAyari.key : null}
               onPencereAc={pencereAc}
@@ -4537,8 +4563,8 @@ export default function AtolyeERP() {
               onHedefTuketildi={() => setUretimHedefId(null)}
               onAsortiOlustur={asortiOlustur}
             />
-          </div>
-          <div style={{ display: tab === "cari" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "cari"}>
             <CariModule
               onFiseGitNo={fiseGit}
               muhasebe={muhasebe}
@@ -4565,7 +4591,7 @@ export default function AtolyeERP() {
               odemeHedefi={cariOdemeHedefi}
               onOdemeHedefiTuketildi={() => setCariOdemeHedefi(null)}
             />
-          </div>
+          </GizliModul>
           {fiyatListesiAcildiRef.current && <div style={{ display: tab === "fiyatlistesi" ? undefined : "none" }}>
             <FiyatListesiModule
               stok={stok}
@@ -4579,7 +4605,7 @@ export default function AtolyeERP() {
               aktifKullanici={aktifKullanici}
             />
           </div>}
-          <div style={{ display: tab === "paketleme" ? undefined : "none" }}>
+          <GizliModul aktif={tab === "paketleme"}>
             <PaketlemeModule
               koliler={koliler}
               stok={stok}
@@ -4604,8 +4630,8 @@ export default function AtolyeERP() {
               tanimlar={tanimlar}
               showToast={showToast}
             />
-          </div>
-          <div style={{ display: tab === "gorevler" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "gorevler"}>
             {/* SOHBET + GÖREVLER TEK EKRAN (kullanıcı, 14 Eylül: "sohbette olsun, kullanıcıyla aynı
                 bu ekrandan devam etsin; sohbete görev ekleme gibi hepsi sohbetin parçası olsun").
                 Sohbet ana sekme; görev listesi (süzgeç, kontrol, yazışma) ikinci sekmede, aynı veri. */}
@@ -4663,8 +4689,8 @@ export default function AtolyeERP() {
               }}
             />
             </div>
-          </div>
-          <div style={{ display: tab === "depo" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "depo"}>
             <RezervasyonDeposu
               koliler={koliler}
               tanimlar={tanimlar}
@@ -4683,8 +4709,8 @@ export default function AtolyeERP() {
               onSatinAlPlanla={hammaddeyiPlanla}
               onAlisFisi={alisFisiAc}
             />
-          </div>
-          <div style={{ display: tab === "siparis" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "siparis"}>
             <SiparisModule
               cop={cop}
               aktifSekme={tab === "siparis"}
@@ -4737,11 +4763,11 @@ export default function AtolyeERP() {
                             tanimlarAraProsesler={tanimlar.araProsesler || []}
               kurlar={muhasebe.kurlar || {}}
             />
-          </div>
+          </GizliModul>
           {/* SATIN ALMA — aynı modül, alış tarafına sabitlenmiş. Ayrı bir bileşen yazmak,
               iki ekranın zamanla birbirinden ayrışmasına ve bir tarafta yapılan düzeltmenin
               diğerine taşınmamasına yol açardı. */}
-          <div style={{ display: tab === "satinalma" ? undefined : "none" }}>
+          <GizliModul aktif={tab === "satinalma"}>
             <SiparisModule
               cop={cop}
               aktifSekme={tab === "satinalma"}
@@ -4794,8 +4820,8 @@ export default function AtolyeERP() {
                             tanimlarAraProsesler={tanimlar.araProsesler || []}
               kurlar={muhasebe.kurlar || {}}
             />
-          </div>
-          <div style={{ display: tab === "fisler" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "fisler"}>
             <FislerModule
               muhasebe={muhasebe}
               hedefFisNo={hedefFisNo}
@@ -4811,7 +4837,7 @@ export default function AtolyeERP() {
               faturalar={faturalar}
               onFaturaAc={(fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo })}
             />
-          </div>
+          </GizliModul>
           {/* Menüyü gizlemek TEK BAŞINA yeterli değil (bkz. muhasebe): gövde de yetkiye bağlı.
               Günlük ayrıca `display:none` ile gizlenmiyor, HİÇ RENDER EDİLMİYOR — gizli bir
               sekmede duran veri, ağ sekmesini açan herkese görünür olurdu. */}
@@ -4856,7 +4882,7 @@ export default function AtolyeERP() {
             )
           )}
 
-          <div style={{ display: tab === "muhasebe" || tab === "cekler" ? undefined : "none" }}>
+          <GizliModul aktif={tab === "muhasebe" || tab === "cekler"}>
             {!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (
               <EmptyState text="Kasa & Banka ekranını görüntüleme yetkiniz yok. Erişim için yöneticinize başvurun." />
             ) : (
@@ -4898,8 +4924,8 @@ export default function AtolyeERP() {
               onCarilerGuncelle={saveCariler}
             />
             )}
-          </div>
-          <div style={{ display: tab === "planlama" ? undefined : "none" }}>
+          </GizliModul>
+          <GizliModul aktif={tab === "planlama"}>
             <PlanlamaModule
               siparisler={siparisler}
               stok={stok}
@@ -4917,7 +4943,7 @@ export default function AtolyeERP() {
               onPlanlamaTemizle={planlamaTemizle}
               onAsortiOlustur={asortiOlustur}
             />
-          </div>
+          </GizliModul>
           </>
         )}
       </main>

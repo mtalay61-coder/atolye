@@ -1,0 +1,31 @@
+{
+  "ilk": {
+    "kart": 100,
+    "dugme": "Daha fazla göster (100 / 258)"
+  },
+  "dahaFazla1": {
+    "kart": 200,
+    "dugme": "Daha fazla göster (200 / 258)"
+  },
+  "dahaFazla2": {
+    "kart": 258,
+    "dugme": null
+  },
+  "eskiFisArama": {
+    "kart": 1,
+    "dugme": null
+  },
+  "aramaTemizlenince": {
+    "kart": 100,
+    "dugme": "Daha fazla göster (100 / 258)"
+  },
+  "donunceArama": {
+    "metin": "THS-024",
+    "kart": 10
+  },
+  "ustMenu": {
+    "darDahaSikisik": true,
+    "genisleyinceGeriAcildi": true
+  },
+  "hatalar": []
+}

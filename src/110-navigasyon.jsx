@@ -249,6 +249,9 @@ function GecikenIslerPaneli({ siparisler, uretim, stok, cariler, muhasebe, onGoT
 //
 // `kullanici` alanı v1.73.0'da eklendi; daha eski kayıtlarda yok ve "—" gösteriliyor. Uydurma bir
 // isim yazmak, denetim kaydını güvenilmez yapardı.
+// Tutar biçimleyicisi bir kez: `toLocaleString(..., {seçenek})` her fiş için yeni Intl kuruyordu.
+const SON_ISLEM_TUTAR_BICIM = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
+
 function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSiparis, onGoToUrun }) {
   const [kisiSuzgec, setKisiSuzgec] = useState("");
   const [turSuzgec, setTurSuzgec] = useState("");
@@ -257,95 +260,104 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
   const [acik, setAcik] = useState(false);
   const [limit, setLimit] = useState(20);
 
-  const olaylar = [];
-  const zamanAl = (h) => h.zaman || (h.tarih ? `${String(h.tarih).slice(0, 10)}T00:00:00.000Z` : null);
+  // HESAP VERİYE BAĞLI ÖNBELLEKTE (v1.633.0): akış BÜTÜN cari/stok hareketlerini ve siparişleri dolaşıyor;
+  // büyük veriyle ana sayfanın en pahalı parçasıydı ve her çizimde (süzgeç seçmek, "daha fazla") baştan
+  // kuruluyordu. Yalnız veri değişince yeniden kuruluyor. Git düğmeleri o anki işleyicileri ref'ten okuyor —
+  // önbellekteki kapanış eski bir işleyiciye bağlı kalmasın.
+  const gitRef = useRef(null);
+  gitRef.current = { cari: onGoToCari, siparis: onGoToSiparis, urun: onGoToUrun };
+  const olaylar = React.useMemo(() => {
+    const olaylar = [];
+    const zamanAl = (h) => h.zaman || (h.tarih ? `${String(h.tarih).slice(0, 10)}T00:00:00.000Z` : null);
 
-  // FİŞ BAŞINA TEK SATIR (kullanıcı, 9 Eylül: "fişleri satır olarak gir, tek fiş görünsün").
-  //
-  // Cari hareketleri KALEM kalem tutuluyor: beş kalemli bir satış fişi akışta beş satır üretiyordu
-  // ve hepsi aynı fiş numarasını taşıdığı için liste kendini tekrar ediyor gibi görünüyordu.
-  // Kullanıcı ekran görüntüsünde aynı fişi (SF-20260909-001) üç kez gördü.
-  //
-  // Fiş numarası olanlar TEK SATIRDA toplanıyor: tutarlar toplanıyor, ürün adları birleşiyor.
-  // Fiş numarası OLMAYAN kayıt tek başına duruyor — onu neye göre gruplayacağımızı bilmiyoruz.
-  //
-  // GRUP ANAHTARI cari + fiş no: aynı fiş numarası iki ayrı caride görünse bile (fiş sayacı
-  // tipe göre ilerliyor) karışmasınlar.
-  (cariler || []).forEach((c) => {
-    const gruplar = new Map();
-    (c.hareketler || []).forEach((h) => {
-      // ESKİ VERİ İSTİSNASI. Yeni kayıtlarda "Muhasebe" TEK satır; bu satır yalnızca göç öncesi
-      // yazılmış, hâlâ eşi duran ikizler için var — ikinci kopya akışta iki kez görünmesin.
-      // Göç (`esIkizleriBirlestir`) açılışta çalıştığı için normalde hiç tetiklenmiyor.
-      if ((h.defter || "Genel") === "Resmi" && h.esId) return;
-      const anahtar = h.fisNo ? `${c.id}|${h.fisNo}` : `tekil|${h.id}`;
-      const oncekiler = gruplar.get(anahtar);
-      if (oncekiler) oncekiler.push(h);
-      else gruplar.set(anahtar, [h]);
-    });
+    // FİŞ BAŞINA TEK SATIR (kullanıcı, 9 Eylül: "fişleri satır olarak gir, tek fiş görünsün").
+    //
+    // Cari hareketleri KALEM kalem tutuluyor: beş kalemli bir satış fişi akışta beş satır üretiyordu
+    // ve hepsi aynı fiş numarasını taşıdığı için liste kendini tekrar ediyor gibi görünüyordu.
+    // Kullanıcı ekran görüntüsünde aynı fişi (SF-20260909-001) üç kez gördü.
+    //
+    // Fiş numarası olanlar TEK SATIRDA toplanıyor: tutarlar toplanıyor, ürün adları birleşiyor.
+    // Fiş numarası OLMAYAN kayıt tek başına duruyor — onu neye göre gruplayacağımızı bilmiyoruz.
+    //
+    // GRUP ANAHTARI cari + fiş no: aynı fiş numarası iki ayrı caride görünse bile (fiş sayacı
+    // tipe göre ilerliyor) karışmasınlar.
+    (cariler || []).forEach((c) => {
+      const gruplar = new Map();
+      (c.hareketler || []).forEach((h) => {
+        // ESKİ VERİ İSTİSNASI. Yeni kayıtlarda "Muhasebe" TEK satır; bu satır yalnızca göç öncesi
+        // yazılmış, hâlâ eşi duran ikizler için var — ikinci kopya akışta iki kez görünmesin.
+        // Göç (`esIkizleriBirlestir`) açılışta çalıştığı için normalde hiç tetiklenmiyor.
+        if ((h.defter || "Genel") === "Resmi" && h.esId) return;
+        const anahtar = h.fisNo ? `${c.id}|${h.fisNo}` : `tekil|${h.id}`;
+        const oncekiler = gruplar.get(anahtar);
+        if (oncekiler) oncekiler.push(h);
+        else gruplar.set(anahtar, [h]);
+      });
 
-    gruplar.forEach((hareketler) => {
-      const ilk = hareketler[0];
-      const satis = ilk.yon === "Borç";
-      // TÜR ÖNCE ALANDAN (kullanıcı, 17 Eylül: "burada ödemeler alış diye görünüyor").
-      // Tür açıklama metninden tahmin ediliyordu; muhasebe ekranından girilen ödemenin açıklaması
-      // "Ödeme (TL Kasa)" yerine başka bir şey olunca satır "Satış" görünüyordu. `islemTipi` alanı
-      // 17 Eylül'de eklendi (207-kasa-cari-ortak) — varsa o kazanır, yoksa eski tahmin sürer.
-      const islemTipi = ilk.islemTipi || null;
-      const odemeMi = islemTipi
-        ? (islemTipi === "Ödeme" || islemTipi === "Tahsilat")
-        : (/Ödeme|Tahsilat/i.test(ilk.aciklama || "") || (ilk.fisNo || "").startsWith("OTO")
-           || /^(ODM|THS)-/.test(ilk.fisNo || ""));
-      // Toplam, kalemlerin tutarlarından. Para birimi karışıksa (nadir) ilk kalemin birimi
-      // gösteriliyor — fişin kayıt para birimi zaten tek olmalı.
-      const toplam = hareketler.reduce((t, h) => t + (h.tutar || 0), 0);
-      // Ürün adları TEKİLLEŞTİRİLİYOR: aynı ürünün üç bedeni "Bot · Bot · Bot" değil "Bot" yazsın.
-      const urunler = [...new Set(hareketler.map((h) => (h.urunAd ? `${h.urunAd}${h.renk ? " · " + h.renk : ""}` : "")).filter(Boolean))];
-      const kalemNotu = hareketler.length > 1 ? `${hareketler.length} kalem` : "";
-      olaylar.push({
-        // En yeni kalemin zamanı: fişin akıştaki yeri son hareketine göre.
-        zaman: hareketler.map(zamanAl).filter(Boolean).sort().pop() || zamanAl(ilk),
-        kullanici: ilk.kullanici || null,
-        tur: islemTipi || (odemeMi ? (satis ? "Ödeme" : "Tahsilat") : (satis ? "Satış" : "Alış")),
-        renk: odemeMi ? "var(--erp-primary)" : (satis ? "var(--erp-info)" : "var(--erp-brown)"),
-        metin: `${c.unvan} · ${toplam.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[ilk.paraBirimi || "TRY"] || ""}`,
-        alt: [ilk.fisNo, kalemNotu, urunler.slice(0, 3).join(" · ")].filter(Boolean).join(" · "),
-        git: () => onGoToCari && onGoToCari(c.id),
+      gruplar.forEach((hareketler) => {
+        const ilk = hareketler[0];
+        const satis = ilk.yon === "Borç";
+        // TÜR ÖNCE ALANDAN (kullanıcı, 17 Eylül: "burada ödemeler alış diye görünüyor").
+        // Tür açıklama metninden tahmin ediliyordu; muhasebe ekranından girilen ödemenin açıklaması
+        // "Ödeme (TL Kasa)" yerine başka bir şey olunca satır "Satış" görünüyordu. `islemTipi` alanı
+        // 17 Eylül'de eklendi (207-kasa-cari-ortak) — varsa o kazanır, yoksa eski tahmin sürer.
+        const islemTipi = ilk.islemTipi || null;
+        const odemeMi = islemTipi
+          ? (islemTipi === "Ödeme" || islemTipi === "Tahsilat")
+          : (/Ödeme|Tahsilat/i.test(ilk.aciklama || "") || (ilk.fisNo || "").startsWith("OTO")
+             || /^(ODM|THS)-/.test(ilk.fisNo || ""));
+        // Toplam, kalemlerin tutarlarından. Para birimi karışıksa (nadir) ilk kalemin birimi
+        // gösteriliyor — fişin kayıt para birimi zaten tek olmalı.
+        const toplam = hareketler.reduce((t, h) => t + (h.tutar || 0), 0);
+        // Ürün adları TEKİLLEŞTİRİLİYOR: aynı ürünün üç bedeni "Bot · Bot · Bot" değil "Bot" yazsın.
+        const urunler = [...new Set(hareketler.map((h) => (h.urunAd ? `${h.urunAd}${h.renk ? " · " + h.renk : ""}` : "")).filter(Boolean))];
+        const kalemNotu = hareketler.length > 1 ? `${hareketler.length} kalem` : "";
+        olaylar.push({
+          // En yeni kalemin zamanı: fişin akıştaki yeri son hareketine göre.
+          zaman: hareketler.map(zamanAl).filter(Boolean).sort().pop() || zamanAl(ilk),
+          kullanici: ilk.kullanici || null,
+          tur: islemTipi || (odemeMi ? (satis ? "Ödeme" : "Tahsilat") : (satis ? "Satış" : "Alış")),
+          renk: odemeMi ? "var(--erp-primary)" : (satis ? "var(--erp-info)" : "var(--erp-brown)"),
+          metin: `${c.unvan} · ${SON_ISLEM_TUTAR_BICIM.format(toplam)} ${PARA_SEMBOLU[ilk.paraBirimi || "TRY"] || ""}`,
+          alt: [ilk.fisNo, kalemNotu, urunler.slice(0, 3).join(" · ")].filter(Boolean).join(" · "),
+          git: () => gitRef.current.cari && gitRef.current.cari(c.id),
+        });
       });
     });
-  });
 
-  (stok || []).forEach((p) => {
-    (p.hareketler || []).forEach((h) => {
-      // Fişli hareketlerin cari karşılığı zaten yukarıda; akışa yalnızca cari karşılığı OLMAYANLAR
-      // giriyor (üretim çıkışı/girişi, sayım, elle düzeltme). Aksi halde her fiş iki satır olurdu.
-      if (h.cariId) return;
-      olaylar.push({
-        zaman: zamanAl(h),
-        kullanici: h.kullanici || null,
-        tur: h.kaynak || "Stok",
-        renk: h.miktar < 0 ? "var(--erp-warn)" : "var(--erp-primary)",
-        metin: `${p.ad} · ${h.renk || ""}${h.beden ? " " + h.beden : ""}`.trim(),
-        alt: `${h.miktar > 0 ? "+" : ""}${h.miktar} ${p.birim || ""}${h.fisNo ? " · " + h.fisNo : ""}`,
-        git: () => onGoToUrun && onGoToUrun(p.id),
+    (stok || []).forEach((p) => {
+      (p.hareketler || []).forEach((h) => {
+        // Fişli hareketlerin cari karşılığı zaten yukarıda; akışa yalnızca cari karşılığı OLMAYANLAR
+        // giriyor (üretim çıkışı/girişi, sayım, elle düzeltme). Aksi halde her fiş iki satır olurdu.
+        if (h.cariId) return;
+        olaylar.push({
+          zaman: zamanAl(h),
+          kullanici: h.kullanici || null,
+          tur: h.kaynak || "Stok",
+          renk: h.miktar < 0 ? "var(--erp-warn)" : "var(--erp-primary)",
+          metin: `${p.ad} · ${h.renk || ""}${h.beden ? " " + h.beden : ""}`.trim(),
+          alt: `${h.miktar > 0 ? "+" : ""}${h.miktar} ${p.birim || ""}${h.fisNo ? " · " + h.fisNo : ""}`,
+          git: () => gitRef.current.urun && gitRef.current.urun(p.id),
+        });
       });
     });
-  });
 
-  (siparisler || []).forEach((sp) => {
-    if (!sp.olusturuldu && !sp.tarih) return;
-    olaylar.push({
-      zaman: sp.olusturuldu || `${sp.tarih}T00:00:00.000Z`,
-      kullanici: sp.olusturan || null,
-      tur: `${sp.tip} siparişi`,
-      renk: sp.tip === "Satış" ? "#8A3D6B" : "var(--erp-info)",
-      metin: `${sp.siparisNo} · ${(sp.kalemler || []).length} kalem`,
-      alt: sp.durum || "",
-      git: () => onGoToSiparis && onGoToSiparis(sp.id),
+    (siparisler || []).forEach((sp) => {
+      if (!sp.olusturuldu && !sp.tarih) return;
+      olaylar.push({
+        zaman: sp.olusturuldu || `${sp.tarih}T00:00:00.000Z`,
+        kullanici: sp.olusturan || null,
+        tur: `${sp.tip} siparişi`,
+        renk: sp.tip === "Satış" ? "#8A3D6B" : "var(--erp-info)",
+        metin: `${sp.siparisNo} · ${(sp.kalemler || []).length} kalem`,
+        alt: sp.durum || "",
+        git: () => gitRef.current.siparis && gitRef.current.siparis(sp.id),
+      });
     });
-  });
 
-  olaylar.sort((a, b) => String(b.zaman || "").localeCompare(String(a.zaman || "")));
+    olaylar.sort((a, b) => String(b.zaman || "").localeCompare(String(a.zaman || "")));
+    return olaylar;
+  }, [cariler, stok, siparisler]);
 
   const kisiler = Array.from(new Set(olaylar.map((o) => o.kullanici).filter(Boolean)));
 

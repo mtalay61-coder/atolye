@@ -354,8 +354,21 @@ function cariKodlariAta(cariler, tanimlar) {
 const cariKodMetni = (cari) => (Number(cari && cari.kod) > 0
   ? String(cari.kod).padStart(KOD_HANE.cari, "0") : "");
 
-const kodEsit = (a, b) =>
-  String(a || "").toLocaleLowerCase("tr-TR") === String(b || "").toLocaleLowerCase("tr-TR");
+// KÜÇÜK HARF ÖNBELLEĞİ (v1.633.0): `toLocaleLowerCase("tr-TR")` pahalı ve kodEsit, renk/ürün eşleştirmede
+// (renkTanimiBul → her varyant × her renk tanımı) binlerce kez aynı birkaç yüz adla çağrılıyor. Ad kümesi
+// küçük; önbellek sınırı yalnız beklenmedik büyümeye karşı (dolunca boşaltılır, doğruluk etkilenmez).
+const KUCUK_HARF_ONBELLEK = new Map();
+function trKucuk(deger) {
+  const s = String(deger || "");
+  let k = KUCUK_HARF_ONBELLEK.get(s);
+  if (k === undefined) {
+    if (KUCUK_HARF_ONBELLEK.size > 20000) KUCUK_HARF_ONBELLEK.clear();
+    k = s.toLocaleLowerCase("tr-TR");
+    KUCUK_HARF_ONBELLEK.set(s, k);
+  }
+  return k;
+}
+const kodEsit = (a, b) => trKucuk(a) === trKucuk(b);
 
 // Varyantın rengini tanımlı renge bağlar: ÖNCE kimlik, sonra ad. `renkId` asıl bağ, `renk` yalnızca
 // okunabilir önbellek (bkz. 045-oku) — ada güvenmek, yeniden adlandırmada kodu kaybettirirdi.
