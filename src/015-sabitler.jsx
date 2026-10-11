@@ -477,9 +477,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.8";
+const SURUM = "1.645.9";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Finans altinda Odeme & Tahsilat: kasa, banka, kredi karti, cek ve senet tek ekranda";
+const SURUM_NOTU = "Son islemlerde islemi yapan kullanici: uretim, iscilik ve siparis kayitlarina da yaziliyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -488,6 +488,10 @@ const SURUM_NOTU = "Finans altinda Odeme & Tahsilat: kasa, banka, kredi karti, c
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.9", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Anasayfa > Son işlemler'de işlemi yapan kullanıcı yalnız fiş ve tahsilat satırlarında yazıyordu: üretim stok hareketleri, işçilik (iş verme / teslim alma) ve sipariş kayıtlarına da artık giriş yapan kullanıcının adı yazılıyor (eski kayıtlar \"—\" kalır — kim yaptığı bilinmiyor)"] },
   { surum: "1.645.8", tarih: "11.10.2026",
     eklenen: ["Finans > Ödeme & Tahsilat: Tahsilat / Ödeme seç, ödeme şekli (Nakit-kasa, Havale/EFT-banka, Kredi Kartı, Çek, Senet), cariyi seç — carinin kartı form dolu açılır (kasa/banka, kur, çek/senet bilgileri cari kartındaki formun aynısı); altta son tahsilat ve ödemeler listesi"],
     degisen: [],

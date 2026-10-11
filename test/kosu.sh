@@ -14,6 +14,7 @@ node birim-fiyat-kurali.js || HATA=1
 node birim-satir-esitle.js || HATA=1
 node birim-stok-no-onar.js || HATA=1
 node birim-degisiklik.js || HATA=1
+node birim-kullanici-damga.js || HATA=1
 node birim-siparis-odeme.js || HATA=1
 node birim-hammadde-durum.js || HATA=1
 node birim-recete-onay.js || HATA=1

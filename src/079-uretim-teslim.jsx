@@ -546,6 +546,11 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     });
   }
 
+  // KİMİN YAPTIĞI (v1.645.9, 048): yeni stok hareketleri (üretim çıkışı/girişi) ve cari hareketleri (işçilik) etkin
+  // kullanıcıyla damgalanır — durum ve yazma AYNI damgalı veriyi alır. Anasayfa › Son işlemler "—" gösteriyordu.
+  { const ad = damgaKullaniciAdi(); const simdi = new Date().toISOString();
+    nextStok = yeniHareketleriDamgala(stok, nextStok, ad, simdi);
+    nextCariler = yeniHareketleriDamgala(cariler, nextCariler, ad, simdi); }
   setStok(nextStok);
   setCariler(nextCariler);
   setUretim(nextUretim);
