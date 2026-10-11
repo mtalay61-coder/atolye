@@ -1,0 +1,34 @@
+{
+ "hatalar": [],
+ "demoDugmesi": true,
+ "secim": {
+  "kod": "demo",
+  "demo": true
+ },
+ "acilis": {
+  "serit": true,
+  "firmaKoduEkraniYok": true,
+  "sihirbazYok": true,
+  "urunSayisi": 5
+ },
+ "stokEkrani": [
+  "Saya Derisi",
+  "Kauçuk Taban",
+  "Dikiş İpi"
+ ],
+ "siparisEkrani": [
+  "SAT-1",
+  "Yıldız Mağazaları"
+ ],
+ "bulutaIstekYok": true,
+ "sifirlamaSonrasiCariler": [
+  "Yıldız Mağazaları",
+  "Adım Ayakkabı",
+  "Ege Deri Ltd.",
+  "Usta Mehmet (Saya)"
+ ],
+ "cikis": {
+  "secim": null,
+  "kodEkrani": true
+ }
+}

@@ -23,7 +23,10 @@ function pencereIkonu(p) {
 // cihazda firma seçimi yoksa uygulamanın HİÇBİR parçası çalışmaz — yalnız firma kodu ekranı. Kapı uygulama bileşeninin
 // DIŞINDA: içeride erken dönüş olsaydı yükleme efektleri yine çalışır, varsayılan projeye bağlanıp yerel veri açardı.
 export default function AtolyeERP() {
-  if (!firmaSecimiOku()) return <FirmaGirisEkrani />;
+  const secim = firmaSecimiOku();
+  if (!secim) return <FirmaGirisEkrani />;
+  // DEMO (v1.645.0, 034): örnek veri demo deposuna yazılmadan uygulama açılmaz (yükleme boş depoyu okumasın).
+  if (secim.demo) return <DemoKapisi><AtolyeUygulamasi /></DemoKapisi>;
   return <AtolyeUygulamasi />;
 }
 
@@ -3713,6 +3716,7 @@ function AtolyeUygulamasi() {
       <CevrimdisiKilit yerelAcildi={yerelAcildi} bekleyenSayisi={Object.keys(bekleyenYazmalar).length}
         sebep={veriKaynagi && veriKaynagi.hata} onDene={() => baglantiSina()} />
     )}
+    {AKTIF_FIRMA.demo ? <DemoSeridi /> : null}
     {/* KURULUM SİHİRBAZI (v1.644.0, 033): yalnız boş firmada, Yöneticiye. Testlerde kapalı (`__kurulumSihirbaziKapali`):
         tohumların çoğu boş tanımla açılıyor; sihirbazı ölçen senaryo bayrağı kaldırır. */}
     {!loading && storageOk && !kilitli && !(typeof window !== "undefined" && window.__kurulumSihirbaziKapali)

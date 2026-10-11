@@ -60,6 +60,9 @@ function firmaSecimiOku() {
   try {
     const h = typeof localStorage !== "undefined" && localStorage ? localStorage.getItem(FIRMA_SECIM_ANAHTARI) : null;
     const f = h ? JSON.parse(h) : null;
+    // DEMO FİRMA (v1.645.0, 034): bulut YOK — adres/anahtar boş, `supabaseAcikMi()` false, uygulama yalnız bu
+    // cihazın kendi (firma başına ayrı) yerel deposuyla çalışır. Gerçek veri değil; örnek veri 034'te yüklenir.
+    if (f && f.demo === true) return { kod: "demo", demo: true, url: "", anahtar: "", ad: "" };
     return firmaBaglantisiGecerli(f) ? { kod: String(f.kod || ""), url: f.url, anahtar: String(f.anahtar).trim(), ad: f.ad || "" } : null;
   } catch (e) { return null; }
 }
