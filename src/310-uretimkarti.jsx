@@ -425,7 +425,9 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                 style={{ fontWeight: 700, color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
                 {bagliSatisSiparisi.siparisNo}
               </button>
-            ) : <span className="mono" style={{ color: "var(--erp-text-3)" }}>{o.siparisNo}</span>}
+            ) : null}
+            {/* Üretim no da satırda (küçük): atölyede bohça etiketinde bu numara yazıyor, aramada da bununla bulunuyor. */}
+            <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{o.siparisNo}</span>
             <span style={{ color: "var(--erp-text-2)" }}>{bagliMusteri ? bagliMusteri.unvan : "—"}</span>
             <b>{o.model}</b>
             <span>{olcuGoster(o.renk) || ""}</span>
