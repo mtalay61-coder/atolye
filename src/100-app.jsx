@@ -4105,8 +4105,11 @@ function AtolyeUygulamasi() {
           border: "none", borderRadius: "var(--erp-r-md)", background: "transparent", cursor: "pointer", color: "var(--erp-text-2)", flexShrink: 0 };
         const rozetStili = { position: "absolute", top: 2, right: 2, minWidth: 16, height: 16, padding: "0 4px", borderRadius: "var(--erp-r-pill)",
           background: "var(--erp-accent)", color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" };
+        // ALAN ÜYELERİ (v1.645.11): Kasa & Banka, Çek & Senet ve Rapor menüde yok, Ödeme & Tahsilat alanının sekmeleri —
+        // açıkken menüde "Ödeme & Tahsilat" ve Finans grubu seçili görünür.
+        const menuSekmesi = ({ muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" })[tab] || tab;
         const Grup = ({ ad, ikon, sekmeler, children }) => {
-          const icindeAktif = sekmeler.includes(tab);
+          const icindeAktif = sekmeler.includes(menuSekmesi);
           const acik = acikUstMenu === ad;
           return (
             <div style={{ position: "relative", flexShrink: 0 }}>
@@ -4125,7 +4128,7 @@ function AtolyeUygulamasi() {
           );
         };
         const oge = (anahtar, label, icon) => (
-          <NavItem icon={icon} label={label} active={tab === anahtar} onClick={() => git(anahtar)} renk={MODUL_RENK[anahtar]} />
+          <NavItem icon={icon} label={label} active={menuSekmesi === anahtar} onClick={() => git(anahtar)} renk={MODUL_RENK[anahtar]} />
         );
         return (
           <header className="ust-menu" ref={ustMenuRef} style={{
@@ -4173,11 +4176,11 @@ function AtolyeUygulamasi() {
                     ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
                     yetki("cari") && ["cari", "Cari", <Users size={16} />],
-                    // ÖDEME & TAHSİLAT ALANI (v1.645.8 / v1.645.10): giriş ekranı + Kasa & Banka + Çek & Senet tek alan (üstte
-                    // ortak sekme şeridi, 260 OdemeAlaniSeridi). Kasa & Banka ve Çek & Senet menüde alanın ALTINDA kısa yol.
-                    yetki("muhasebe") && yetki("cari") && ["odemetahsilat", "Ödeme & Tahsilat", <ArrowDownCircle size={16} />],
-                    yetki("muhasebe") && ["muhasebe", "Kasa & Banka", <Wallet size={16} />],
-                    yetki("muhasebe") && ["cekler", "Çek & Senet", <Receipt size={16} />],
+                    // ÖDEME & TAHSİLAT ALANI (v1.645.8 / v1.645.10 / v1.645.11): giriş + Kasa & Banka + Çek & Senet + Rapor tek alan
+                    // (üstte ortak sekme şeridi, 260 OdemeAlaniSeridi). Kullanıcı (v1.645.11): "Kasa & Banka, Çek & Senet'i kaldırabilirsin,
+                    // tek çatıya topladık" — menüde yalnız alan var; iki ekran şeritten açılır (sekme anahtarları muhasebe / cekler aynı,
+                    // bağlantılar ve "kasaya git" yolları çalışmaya devam eder). Yetki: muhasebe (cari yetkisi olmayan muhasebeci de girer).
+                    yetki("muhasebe") && ["odemetahsilat", "Ödeme & Tahsilat", <ArrowDownCircle size={16} />],
                     // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
                     yetki("muhasebe") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
@@ -4224,7 +4227,7 @@ function AtolyeUygulamasi() {
                             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--erp-text-3)", padding: "4px 10px 2px" }}>{g.ad}</div>
                             {g.ogeler.map(([anahtar, label, icon]) => (
                               <button key={anahtar} type="button" data-nav-dar={label} onClick={() => git(anahtar)}
-                                style={{ ...ustDugme(tab === anahtar), width: "100%", justifyContent: "flex-start", fontWeight: tab === anahtar ? 700 : 500 }}>
+                                style={{ ...ustDugme(menuSekmesi === anahtar), width: "100%", justifyContent: "flex-start", fontWeight: menuSekmesi === anahtar ? 700 : 500 }}>
                                 {icon}{label}
                               </button>
                             ))}

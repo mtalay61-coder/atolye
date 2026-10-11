@@ -79,7 +79,20 @@ const modulAc = async (sayfa, ad) => {
     if (b) b.click();
     return !!b;
   }, ad);
-  if (!bulundu) throw new Error(`Menüde "${ad}" yok`);
+  if (bulundu) return;
+  // ÖDEME & TAHSİLAT ALANI (v1.645.11): Kasa & Banka ve Çek & Senet menüden kalktı, alanın sekme şeridinden açılır.
+  const alanSekmesi = { "Kasa & Banka": "muhasebe", "Çek & Senet": "cekler" }[ad];
+  if (alanSekmesi) {
+    await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ödeme & Tahsilat"]'); if (b) b.click(); });
+    await sayfa.waitForSelector(`[data-odeme-alani-sekme="${alanSekmesi}"]`, { state: "visible", timeout: 5000 }).catch(() => {});
+    const tamam = await sayfa.evaluate((t) => {
+      const b = [...document.querySelectorAll(`[data-odeme-alani-sekme="${t}"]`)].find((x) => x.getBoundingClientRect().width > 0);
+      if (b) b.click();
+      return !!b;
+    }, alanSekmesi);
+    if (tamam) return;
+  }
+  throw new Error(`Menüde "${ad}" yok`);
 };
 
 // CARİ SEÇ (v1.620.0): sipariş formundaki müşteri/tedarikçi kutusu artık aramalı (CariSecici). Kutuya yazıp öneriye
