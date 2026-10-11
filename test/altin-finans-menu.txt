@@ -10,9 +10,9 @@
  ],
  "finansOgeleri": [
   "Cari",
+  "Ödeme & Tahsilat",
   "Kasa & Banka",
   "Çek & Senet",
-  "Ödeme & Tahsilat",
   "Finans Raporu",
   "Gelir / Gider",
   "Fişler"

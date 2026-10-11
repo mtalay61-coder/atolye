@@ -3,7 +3,7 @@
 const SEKME_IKON_BILESENI = {
   anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck,
   uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
-  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
+  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
   gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
 };
 function sekmeIkonu(anahtar) {
@@ -330,6 +330,7 @@ function AtolyeUygulamasi() {
   const cariKapsamRef = useRef("cari");
   if (tab === "cari") cariKapsamRef.current = "cari";
   if (tab === "odemetahsilat") cariKapsamRef.current = "odeme";
+  if (tab === "odemerapor") cariKapsamRef.current = "odemerapor";
   // Bir ürüne gidilince (uruneGit — sipariş, reçete, anasayfa…) doğru stok sekmesi: mamul ürün
   // "Mamul Stok"ta, diğerleri "Stok"ta açılsın; yoksa ürün penceresinin arkasında yanlış liste kalır.
   useEffect(() => {
@@ -887,7 +888,13 @@ function AtolyeUygulamasi() {
     const bulut = await supabasedenOku({ yalniz: tablolar, resimsiz: true });
     const g = guncelDurumRef.current;
     const degisen = [];
-    const ayni = (alan, yeni) => { if (degisiklikIcerikAyni(g[alan], yeni)) return true; degisen.push(alan); return false; };
+    // Çok satırlı alanlar YAZMA biçiminde karşılaştırılır (047 `tabloIcerikAyni`, v1.645.11); tek satırlılar düz.
+    const ALAN_TABLOSU = { stok: "urunler", cariler: "cariler", siparisler: "siparisler", uretim: "uretim",
+      stokRezervasyonlari: "stok_rezervasyonlari", onaylar: "onaylar", cop: "cop" };
+    const ayni = (alan, yeni) => {
+      const esit = ALAN_TABLOSU[alan] ? tabloIcerikAyni(ALAN_TABLOSU[alan], g[alan], yeni) : degisiklikIcerikAyni(g[alan], yeni);
+      if (esit) return true; degisen.push(alan); return false;
+    };
     alanlar.forEach((alan) => {
       if (alan === "stok") {
         const mevcutGorsel = {};
@@ -1045,7 +1052,7 @@ function AtolyeUygulamasi() {
   // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
   // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
   const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
-    cekler: "muhasebe", odemetahsilat: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
+    cekler: "muhasebe", odemetahsilat: "muhasebe", odemerapor: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
   useEffect(() => {
     const m = SEKME_MODULU[tab];
     if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme")) return;
@@ -3506,6 +3513,7 @@ function AtolyeUygulamasi() {
     muhasebe: "Kasa & Banka",
     cekler: "Çek & Senet",
     odemetahsilat: "Ödeme & Tahsilat",
+    odemerapor: "Ödeme & Tahsilat Raporu",
     finansrapor: "Finans Raporu",
     planlama: "Planlama",
     // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
@@ -4164,10 +4172,12 @@ function AtolyeUygulamasi() {
                   { ad: "Siparişler", ikon: <ClipboardList size={15} />, ogeler: [
                     ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
-                    yetki("cari") && ["cari", "Cari", <Users size={16} />], yetki("muhasebe") && ["muhasebe", "Kasa & Banka", <Wallet size={16} />],
-                    yetki("muhasebe") && ["cekler", "Çek & Senet", <Receipt size={16} />],
-                    // ÖDEME & TAHSİLAT (v1.645.8): kasa, banka, çek, senet — bütün ödeme/tahsilat girişi tek ekranda (260 kapsam "odeme").
+                    yetki("cari") && ["cari", "Cari", <Users size={16} />],
+                    // ÖDEME & TAHSİLAT ALANI (v1.645.8 / v1.645.10): giriş ekranı + Kasa & Banka + Çek & Senet tek alan (üstte
+                    // ortak sekme şeridi, 260 OdemeAlaniSeridi). Kasa & Banka ve Çek & Senet menüde alanın ALTINDA kısa yol.
                     yetki("muhasebe") && yetki("cari") && ["odemetahsilat", "Ödeme & Tahsilat", <ArrowDownCircle size={16} />],
+                    yetki("muhasebe") && ["muhasebe", "Kasa & Banka", <Wallet size={16} />],
+                    yetki("muhasebe") && ["cekler", "Çek & Senet", <Receipt size={16} />],
                     // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
                     yetki("muhasebe") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
@@ -4727,10 +4737,14 @@ function AtolyeUygulamasi() {
               onAsortiOlustur={asortiOlustur}
             />
           </GizliModul>
+          {/* ÖDEME & TAHSİLAT ALANI (v1.645.10, 260): giriş, Kasa & Banka ve Çek & Senet tek alanın sekmeleri. */}
+          <OdemeAlaniSeridi tab={tab} onGit={setTab} />
           {/* Cari ve Ödeme & Tahsilat AYNI örnek (Mamul Stok / Çek & Senet deseni): kapsam son görünen sekmeden. */}
-          <GizliModul aktif={tab === "cari" || tab === "odemetahsilat"}>
+          <GizliModul aktif={tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor"}>
             <CariModule
               kapsam={cariKapsamRef.current}
+              onOdemeAlaniGit={setTab}
+              onOdemeKaydet={siparisOdemesiKaydet}
               onFiseGitNo={fiseGit}
               muhasebe={muhasebe}
               kurlar={muhasebe.kurlar}

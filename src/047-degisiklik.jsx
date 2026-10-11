@@ -79,11 +79,58 @@ function degisiklikGoruldu(onceki, yeni, ertelenen) {
 // okunan hâl ekrandakiyle aynıysa hiçbir şey değişmemiştir; tazeleme ve not yapılmaz. Anahtar sırası önemsiz (jsonb
 // anahtarları yeniden sıralar), `undefined` alan yok sayılır (JSON gibi). Fark çıkarsa — gerçekten başka cihaz ya da
 // bulutun eklediği alan — eski davranış: tazelenir ve not çıkar. Saf.
-function kararliJson(x) {
+// `bosuAt`: null / "" alanlar da yok sayılır (yazma biçiminde boş alan null, ekranda hiç yok — v1.645.11).
+function kararliJson(x, bosuAt) {
   if (x === null || typeof x !== "object") return JSON.stringify(x === undefined ? null : x);
-  if (Array.isArray(x)) return "[" + x.map(kararliJson).join(",") + "]";
-  return "{" + Object.keys(x).filter((k) => x[k] !== undefined).sort().map((k) => JSON.stringify(k) + ":" + kararliJson(x[k])).join(",") + "}";
+  if (Array.isArray(x)) return "[" + x.map((v) => kararliJson(v, bosuAt)).join(",") + "]";
+  return "{" + Object.keys(x).filter((k) => x[k] !== undefined && !(bosuAt && (x[k] === null || x[k] === ""))).sort()
+    .map((k) => JSON.stringify(k) + ":" + kararliJson(x[k], bosuAt)).join(",") + "}";
 }
 function degisiklikIcerikAyni(a, b) {
   try { return kararliJson(a) === kararliJson(b); } catch (e) { return false; }
+}
+
+// ÇOK SATIRLI TABLOLARDA İÇERİK KARŞILAŞTIRMASI (v1.645.11 — kullanıcı tek cihazla 1.645.9'da yine "Başka cihazdan
+// güncellendi: Cariler" gördü). `degisiklikIcerikAyni` buluttan OKUNMUŞ nesneyi ekrandakiyle düz karşılaştırıyordu;
+// tek satırlık tablolarda (koliler: `veri` jsonb) yeterli, ama çok satırlı tablolarda okunan nesne yazılandan farklı
+// biçimde geliyor: boş sütunlar `null` (ekranda alan hiç yok), hareketlere `cariId` eklenir, `zaman` "+00:00" ile
+// döner ("…Z" değil), sunucu kendi sütunlarını ekleyebilir. İçerik aynıyken hep "farklı" çıkıp not düşüyordu.
+// Çözüm: iki tarafı da YAZMA biçimine (035 TABLO_SEMA `satir` + `cocuklar.cikar`) çevirip karşılaştır; yerel satırda
+// olan her sütun / `ek` alanı bulutta aynı mı (boş = null = "", tarih dizgesi = aynı an). Bulutun fazladan alanı
+// (sunucu sütunu) yok sayılır. Kayıt / alt kayıt kümesi farklıysa (eklenen, silinen) farklıdır. Saf (TABLO_SEMA'yı okur).
+function _icerikDegeri(v) {
+  if (v === undefined || v === null || v === "") return null;
+  if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) { const t = Date.parse(v); return Number.isNaN(t) ? v : t; }
+  if (typeof v === "object") return kararliJson(v, true);
+  return v;
+}
+function _satirAyni(yerel, bulut) {
+  if (!bulut) return false;
+  return Object.keys(yerel).every((k) => {
+    if (k === "ek" && yerel.ek && typeof yerel.ek === "object" && !Array.isArray(yerel.ek)) {
+      const be = (bulut.ek && typeof bulut.ek === "object") ? bulut.ek : {};
+      return Object.keys(yerel.ek).every((a) => _icerikDegeri(yerel.ek[a]) === _icerikDegeri(be[a]));
+    }
+    return _icerikDegeri(yerel[k]) === _icerikDegeri(bulut[k]);
+  });
+}
+function _tabloSatirHaritasi(tablo, kayitlar) {
+  const sema = TABLO_SEMA[tablo];
+  const ana = new Map(); const cocuk = new Map();
+  (kayitlar || []).forEach((k) => {
+    if (!k || k.id === undefined) return;
+    ana.set(k.id, sema.satir(k));
+    (sema.cocuklar || []).forEach((c) => c.cikar(k).forEach((r) => cocuk.set(`${c.tablo}|${c.anahtar(r)}`, r)));
+  });
+  return { ana, cocuk };
+}
+function tabloIcerikAyni(tablo, yerelKayitlar, bulutKayitlar) {
+  if (!TABLO_SEMA[tablo]) return degisiklikIcerikAyni(yerelKayitlar, bulutKayitlar);
+  try {
+    const y = _tabloSatirHaritasi(tablo, yerelKayitlar); const b = _tabloSatirHaritasi(tablo, bulutKayitlar);
+    if (y.ana.size !== b.ana.size || y.cocuk.size !== b.cocuk.size) return false;
+    for (const [id, r] of y.ana) if (!_satirAyni(r, b.ana.get(id))) return false;
+    for (const [id, r] of y.cocuk) if (!_satirAyni(r, b.cocuk.get(id))) return false;
+    return true;
+  } catch (e) { return false; }
 }
