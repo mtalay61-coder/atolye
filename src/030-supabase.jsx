@@ -10,8 +10,60 @@
 // SECRET anahtarı buraya ASLA yazmayın — o bütün güvenlik kurallarını atlar.
 //
 // Boş bırakılırsa uygulama eskisi gibi tarayıcı deposuyla çalışmaya devam eder; hiçbir şey bozulmaz.
-const SUPABASE_URL = "https://mqdgucoomgqcvhvgixbl.supabase.co";
-const SUPABASE_ANAHTAR = "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2";
+//
+// FİRMA BAĞLANTISI (v1.642.0 — kullanıcı: "Uygulamayı pazarlamak için nasıl yapmalıyım?" → "Başla"). Aynı uygulama
+// birden çok firmaya satılacak; HER FİRMANIN AYRI Supabase projesi var (veri karışma riski sıfır, bir firmanın
+// kuralı/yedeği ötekine dokunmaz). Hangi projeye bağlanılacağı CİHAZDA seçili firmadan (`firma:secim`) okunur;
+// seçim yoksa VARSAYILAN firma — uygulamanın ilk sahibinin projesi — kullanılır, böylece bugünkü cihazlarda hiçbir
+// şey değişmez. Seçim 032-firma'daki pencereden yapılır (firma kodu ya da adres + anahtar) ve sayfa yeniden yüklenir:
+// bağlantı açılışta BİR KEZ çözülür ve sabittir — çalışırken başka projeye kaymak bellekteki veriyi öteki firmaya
+// yazdırabilirdi.
+// Bu bölüm 030'un başında ve yalnız düz fonksiyon + sabit kullanıyor: SUPABASE_URL dosya yüklenirken hesaplanıyor,
+// sonraki dosyalardaki `const`lar o an henüz tanımlı değil.
+const VARSAYILAN_FIRMA = Object.freeze({
+  kod: "",
+  url: "https://mqdgucoomgqcvhvgixbl.supabase.co",
+  anahtar: "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2",
+});
+const FIRMA_SECIM_ANAHTARI = "firma:secim";
+
+// Supabase proje adresi: yalnız https://<ref>.supabase.co. Serbest adres kabul edilmez — kullanıcıyı sahte bir
+// sunucuya yönlendirip şifresini oraya yazdırmak (oltalama) bir bağlantıyla mümkün olurdu.
+function firmaAdresiGecerli(url) {
+  return /^https:\/\/[a-z0-9]{8,40}\.supabase\.co$/.test(String(url || ""));
+}
+// Anahtar: yalnız AÇIK (publishable / eski "anon" JWT) anahtar. SECRET anahtar (sb_secret_ ya da service_role JWT)
+// bütün güvenlik kurallarını atlar — biri yanlışlıkla yapıştırırsa cihaza kaydedilmeden REDDEDİLİR. Sonuç: null =
+// geçerli, metin = ret sebebi.
+function firmaAnahtariSorunu(anahtar) {
+  const a = String(anahtar || "").trim();
+  if (!a) return "Anahtar boş";
+  if (/^sb_secret_/i.test(a)) return "Bu GİZLİ (secret) anahtar — asla kullanılmaz. Supabase > Settings > API Keys'teki Publishable anahtarı girin.";
+  if (/^sb_publishable_[A-Za-z0-9_-]{10,}$/.test(a)) return null;
+  const parca = a.split(".");
+  if (parca.length === 3) {
+    try {
+      const yuk = JSON.parse(atob(parca[1].replace(/-/g, "+").replace(/_/g, "/")));
+      if (yuk && yuk.role === "anon") return null;
+      if (yuk && yuk.role === "service_role") return "Bu service_role (gizli) anahtar — asla kullanılmaz. anon / publishable anahtarı girin.";
+    } catch (e) { /* çözülemeyen JWT: aşağıda reddedilir */ }
+  }
+  return "Anahtar tanınmadı — Supabase > Settings > API Keys'teki Publishable anahtarı (sb_publishable_…) girin.";
+}
+function firmaBaglantisiGecerli(f) {
+  return !!(f && firmaAdresiGecerli(f.url) && !firmaAnahtariSorunu(f.anahtar));
+}
+// Cihazdaki seçim; bozuk ya da geçersizse yok sayılır (varsayılana düşer — sessizce yanlış projeye değil).
+function firmaSecimiOku() {
+  try {
+    const h = typeof localStorage !== "undefined" && localStorage ? localStorage.getItem(FIRMA_SECIM_ANAHTARI) : null;
+    const f = h ? JSON.parse(h) : null;
+    return firmaBaglantisiGecerli(f) ? { kod: String(f.kod || ""), url: f.url, anahtar: String(f.anahtar).trim(), ad: f.ad || "" } : null;
+  } catch (e) { return null; }
+}
+const AKTIF_FIRMA = firmaSecimiOku() || VARSAYILAN_FIRMA;
+const SUPABASE_URL = AKTIF_FIRMA.url;
+const SUPABASE_ANAHTAR = AKTIF_FIRMA.anahtar;
 
 const supabaseAcikMi = () => !!(SUPABASE_URL && SUPABASE_ANAHTAR);
 
