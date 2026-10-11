@@ -1,0 +1,12 @@
+{
+ "modullerYok": true,
+ "pano": true,
+ "nakit": "KASA & BANKA · 2 HESAP 10.000 ₺ 300 $",
+ "buay": "BU AY TAHSİLAT / ÖDEME +750 ₺ −0 ₺ Geçen ay: kayıt yok",
+ "borc": "TOPLAM BORÇ · 2 CARİ 780 ₺",
+ "cek": "PORTFÖYDE ÇEK / SENET · 1 5.000 ₺ En yakın vade: <tarih>",
+ "teslimPaneli": true,
+ "uretimPaneli": true,
+ "nakitTiklaninca": true,
+ "hatalar": []
+}

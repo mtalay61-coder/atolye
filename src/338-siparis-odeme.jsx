@@ -141,3 +141,72 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, odemeSekli, 
     </div>
   );
 }
+
+// ÖDEME & TAHSİLAT TEK SATIR (v1.645.13 — kullanıcı: "cari seçilen yere kasa banka seçilsin, hepsi kendi bölümünde; bir
+// altta cari seçilsin; ödeme şekli kaldırılsın, ayrı ayrı girildiği için belli; tek satıra sığsın. Nakit ve EFT/havale
+// için geçerli. Kredi kartında vade tarihi olacak — ödemenin ne zaman hesaba geçeceği"). Şekil ve hesap formun DIŞINDA
+// (260 mor şerit: şekil çipleri → kasa/banka → cari); burada yalnız tarih, tutar, (kur farkı), (kartta hesaba geçiş),
+// defter, açıklama, Kaydet. Çekirdek yine `kasaCariHareketiKur` (207). KREDİ KARTI: cari hareketi işlem tarihinde (borç
+// o gün kapanır) ve `vade` = hesaba geçiş; kasa/banka hareketi HESABA GEÇİŞ tarihinde — para bankaya o gün girer.
+function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast }) {
+  const cariPB0 = cari.paraBirimi || "TRY";
+  const [f, setF] = useState({ tarih: bugunYerel(), tutar: "", pb: cariPB0, hesapTutar: "", vade: bugunYerel(), defter: "Genel", aciklama: "" });
+  const kart = odemeSekli === "Kredi Kartı";
+  const t = parseFloat(f.tutar);
+  const hesapPB = hesap ? hesap.pb : f.pb;
+  const cevrim = !!hesap && hesapPB !== f.pb;
+  const oneriHesapTutari = cevrim && t > 0 ? paraCevirGenel(t, f.pb, hesapPB, kurlar) : null;
+  const hesapTutari = cevrim ? (parseFloat(f.hesapTutar) || oneriHesapTutari) : t;
+  const kutu = { ...inputStyle, padding: "7px 9px" };
+  function kaydet() {
+    if (!hesap) { showToast(odemeSekli === "Nakit" ? "Kasayı seçin" : "Bankayı seçin"); return; }
+    if (!(t > 0)) { showToast("Tutar girin"); return; }
+    if (cevrim && !(hesapTutari > 0)) { showToast(`Hesaba geçecek tutarı girin (${hesapPB})`); return; }
+    if (kart && !f.vade) { showToast("Hesaba geçiş tarihini girin"); return; }
+    const [hesapTur, hesapId] = hesap.deger.split(":");
+    const k = kasaCariHareketiKur({
+      islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: t, cariPB: f.pb,
+      hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(hesapTutari),
+      defter: f.defter, aciklama: f.aciklama.trim(), odemeSekli, kur: cevrim && t > 0 ? hesapTutari / t : undefined,
+    });
+    const cariHareketi = kart ? { ...k.cariHareketi, vade: f.vade } : k.cariHareketi;
+    const hareket = k.muhasebeHareketi && kart ? { ...k.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k.muhasebeHareketi;
+    onKaydet({ cariId: cari.id, cariHareketi, muhasebe: hareket ? { hesapTur, hesapId, hareket } : null });
+    setF((o) => ({ ...o, tutar: "", hesapTutar: "", aciklama: "" }));
+  }
+  const etiket = (s) => <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 700 }}>{s}</span>;
+  const alan = (ad, icerik, en) => <label style={{ display: "grid", gap: 2, flex: en ? `1 1 ${en}px` : "0 0 auto", minWidth: 0 }}>{etiket(ad)}{icerik}</label>;
+  const renk = HAREKET_TIPI_RENK[tip];
+  return (
+    <div data-odeme-satiri={odemeSekli} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", padding: "10px 12px",
+      background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)" }}>
+      {alan(kart ? "İşlem tarihi" : "Tarih", <input type="date" value={f.tarih} onChange={(e) => setF({ ...f, tarih: e.target.value })} style={{ ...kutu, width: 140 }} />)}
+      {alan("Tutar", (
+        <span style={{ display: "flex", gap: 4 }}>
+          <input type="number" step="0.01" data-odeme-satiri-tutar="1" value={f.tutar} autoFocus onChange={(e) => setF({ ...f, tutar: e.target.value, hesapTutar: "" })}
+            onKeyDown={(e) => { if (e.key === "Enter") kaydet(); }} style={{ ...kutu, width: 120 }} />
+          <select value={f.pb} onChange={(e) => setF({ ...f, pb: e.target.value, hesapTutar: "" })} style={{ ...kutu, width: 66 }}>
+            {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
+          </select>
+        </span>
+      ))}
+      {cevrim && alan(`Hesaba geçen (${hesapPB})`, (
+        <input type="number" step="0.01" data-odeme-satiri-hesap-tutar="1" value={f.hesapTutar}
+          placeholder={oneriHesapTutari != null ? String(stokYuvarla(oneriHesapTutari)) : ""}
+          onChange={(e) => setF({ ...f, hesapTutar: e.target.value })} style={{ ...kutu, width: 120 }} />
+      ))}
+      {kart && alan("Hesaba geçiş (vade)", <input type="date" data-odeme-satiri-vade="1" value={f.vade} onChange={(e) => setF({ ...f, vade: e.target.value })} style={{ ...kutu, width: 140 }} />)}
+      {alan("Defter", (
+        <select value={f.defter} onChange={(e) => setF({ ...f, defter: e.target.value })} style={{ ...kutu, width: 110 }}>
+          <option value="Genel">Genel</option><option value="Resmi">Resmi</option><option value="Muhasebe">Muhasebe</option>
+        </select>
+      ))}
+      {alan("Açıklama", <input value={f.aciklama} placeholder="Opsiyonel" onChange={(e) => setF({ ...f, aciklama: e.target.value })}
+        onKeyDown={(e) => { if (e.key === "Enter") kaydet(); }} style={{ ...kutu, width: "100%" }} />, 160)}
+      <button type="button" className="btn-primary btn-save" data-odeme-satiri-kaydet="1" onClick={kaydet}
+        style={{ background: renk, borderColor: renk, padding: "8px 16px", whiteSpace: "nowrap" }}>
+        <HareketIkonu tip={tip} size={14} /> {tip} kaydet
+      </button>
+    </div>
+  );
+}

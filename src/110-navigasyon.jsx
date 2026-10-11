@@ -537,18 +537,6 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
 }
 
 function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe, gorevler, aktifKullanici, onGoreveGit, onNavigate, onGoToSiparis, onGoToUretim, onGoToUrun, onGoToCari }) {
-  const mamulSayisi = stok.filter((p) => p.kategori === "Mamul").length;
-  const hammaddeSayisi = stok.length - mamulSayisi;
-  // Eşik TANIMLI DEĞİLSE (0) varyant kritik sayılmaz. Eskiden `miktar <= 0` kontrolü, hiç eşik
-  // girilmemiş her boş varyantı kritik gösteriyordu — minimum stok artık ürün genelinde değil
-  // renk/beden bazında girildiği ve varsayılanı 0 olduğu için bu sayı anlamsız şişerdi.
-  const kritikSayisi = stok.filter((p) => p.variants.some((v) => { const esik = v.minStok ?? p.minStok ?? 0; return esik > 0 && v.miktar < esik; })).length;
-  const toplamStokDegeri = stok.reduce((sum, p) => {
-    const miktar = p.variants.reduce((s, v) => s + v.miktar, 0);
-    const birimDeger = p.kategori === "Mamul" ? (p.satisFiyati || 0) : (p.alisFiyati || 0);
-    return sum + miktar * birimDeger;
-  }, 0);
-  const aktifUretim = uretim.filter((o) => o.asama !== "Tamamlandı").length;
 
   const cariBakiye = (cari) =>
     (cari.hareketler || []).reduce((sum, h) => sum + (h.yon === "Borç" ? h.tutar : -h.tutar), 0);
@@ -611,33 +599,6 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
     { label: "Açık Siparişler", value: `${acikSatisSiparisi + acikAlisSiparisi}`, alt: `${acikSatisSiparisi} satış · ${acikAlisSiparisi} alış`, renk: "var(--erp-purple)" },
   ];
 
-  const moduller = [
-    {
-      key: "tanimlar", baslik: "Tanımlar", icon: <Palette size={22} />,
-      aciklama: "Renk, beden/boyut ve birim tanımlarınızı yönetin.",
-      sayac: `${tanimlar.renkler.length} renk · ${tanimlar.bedenler.length} ölçü`,
-    },
-    {
-      key: "stok", baslik: "Stok", icon: <Boxes size={22} />,
-      aciklama: "Mamul ve hammadde stoklarını renk × beden matrisiyle takip edin.",
-      sayac: `${stok.length} ürün kayıtlı`,
-    },
-    {
-      key: "uretim", baslik: "Üretim", icon: <Hammer size={22} />,
-      aciklama: "Siparişleri kesimden sevkiyata kadar aşama aşama izleyin.",
-      sayac: `${aktifUretim} aktif sipariş`,
-    },
-    {
-      key: "cari", baslik: "Cari", icon: <Users size={22} />,
-      aciklama: "Müşteri ve tedarikçi bakiyelerini, çek/senet dahil takip edin.",
-      sayac: `${cariler.length} cari kayıtlı`,
-    },
-    {
-      key: "siparis", baslik: "Sipariş", icon: <ClipboardList size={22} />,
-      aciklama: "Satış ve alış siparişlerinizi ayrı ayrı yönetin.",
-      sayac: `${acikSatisSiparisi} satış · ${acikAlisSiparisi} alış açık`,
-    },
-  ];
 
   return (
     <div>
@@ -778,53 +739,148 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
           onGoToUrun={onGoToUrun}
         />
 
-        {/* Modül kartları */}
-        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>
-          Modüller
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
-          {moduller.map((m) => (
-            <button
-              key={m.key}
-              onClick={() => onNavigate(m.key)}
-              style={{
-                display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 10,
-                background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 20,
-                cursor: "pointer", textAlign: "left", transition: "border-color .15s, transform .1s",
-              }}
-              // Kenarlık vurgusu da modül rengiyle: kart hangi modülse onu söylesin.
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = MODUL_RENK[m.key] || "var(--erp-orange)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--erp-border-2)")}
-            >
-              {/* İKON KUTUSU MODÜLÜN KENDİ RENGİNDE (kullanıcı ekran görüntüsüyle bildirdi,
-                  7 Eylül). Koyu kahve bloklar, mor gezinme çubuğu ile krem kartlar arasında
-                  eski paletten kalan tek yabancı öge olarak duruyordu.
-                  Zemin rengin %14 saydamı, ikon rengin kendisi: kutu artık "ne olduğunu" da
-                  söylüyor — menüdeki ve şeritteki modül renkleriyle aynı dil. */}
-              <div style={{
-                width: 44, height: 44, borderRadius: "var(--erp-r-lg)",
-                background: `${alfaEkle(MODUL_RENK[m.key] || "var(--erp-orange)", "22")}`,
-                color: MODUL_RENK[m.key] || "var(--erp-orange)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {m.icon}
-              </div>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 16, color: "var(--erp-text)" }}>
-                {m.baslik}
-              </div>
-              <div style={{ fontSize: 13, color: "var(--erp-text-2)", lineHeight: 1.5 }}>{m.aciklama}</div>
-              {/* Sayaç satırı da modül rengiyle: ikon kutusu turuncu değilken alttaki oku
-                  turuncu bırakmak, kartı iki ayrı renge bölerdi. */}
-              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: "auto", fontSize: 12, color: MODUL_RENK[m.key] || "var(--erp-orange)", fontWeight: 600 }}>
-                {m.sayac}
-                <ArrowRight size={13} />
-              </div>
-            </button>
-          ))}
-        </div>
+        {/* GÖSTERGE PANOSU (v1.645.13): modül kartları yerine — bkz. AnasayfaGostergesi. */}
+        <AnasayfaGostergesi cariler={cariler} siparisler={siparisler} uretim={uretim} muhasebe={muhasebe}
+          onNavigate={onNavigate} onGoToSiparis={onGoToSiparis} onGoToUretim={onGoToUretim} />
+      </div>
+    </div>
+  );
+}
 
-        <div style={{ marginTop: 24, fontSize: 11, color: "var(--erp-text-3)", textAlign: "center" }}>
-          Modüller üst menüden; Tanımlar sağ üstteki dişliden.
+// ANASAYFA GÖSTERGE PANOSU (v1.645.13 — kullanıcı, anasayfa görüntüsüyle: "Modülleri kaldırabiliriz, oraya dashboard
+// yaparız"). Modül kartları (Tanımlar / Stok / Üretim / Cari / Sipariş — üst menünün tekrarı, sayaçları bilgi vermiyordu)
+// kalktı; yerine günü belirleyen sorular: kasada ne var, bu ay ne girdi-çıktı, kime borçluyuz, hangi çek dönüyor, hangi
+// sipariş teslime yaklaştı, üretim nerede bekliyor. Her kart ilgili ekranı açar. Kaynak yalnız mevcut kayıtlar (hesap
+// hareketleri, cari para hareketleri, çek defteri, siparişler, üretim ilerlemesi) — ayrı bir pano verisi tutulmaz.
+// Para birimleri TOPLANMAZ (kur çevrimi yapılmamış bir toplam olurdu): her birim ayrı satır.
+function AnasayfaGostergesi({ cariler, siparisler, uretim, muhasebe, onNavigate, onGoToSiparis, onGoToUretim }) {
+  const bugunG = bugunYerel();
+  const ayAnahtari = bugunG.slice(0, 7);
+  const gecenAy = (() => { const d = new Date(`${bugunG.slice(0, 7)}-15T12:00:00`); d.setMonth(d.getMonth() - 1); return d.toISOString().slice(0, 7); })();
+  const tutar = (x, pb) => `${Math.round(x || 0).toLocaleString("tr-TR")} ${PARA_SEMBOLU[pb] || pb}`;
+  const pbSirala = (o) => Object.entries(o).filter(([, t]) => Math.abs(t) > 0.004).sort((a, b) => (a[0] === "TRY" ? -1 : b[0] === "TRY" ? 1 : Math.abs(b[1]) - Math.abs(a[1])));
+  // (1) Kasa & banka.
+  const hesaplar = [
+    ...(((muhasebe && muhasebe.kasalar) || []).filter((h) => !h.pasif).map((h) => ({ tur: "Kasa", h }))),
+    ...(((muhasebe && muhasebe.bankalar) || []).filter((h) => !h.pasif).map((h) => ({ tur: "Banka", h }))),
+  ];
+  const nakit = {};
+  hesaplar.forEach(({ h }) => { const pb = h.paraBirimi || "TRY"; nakit[pb] = (nakit[pb] || 0) + hesapBakiyesi(h); });
+  // (2) Bu ay / geçen ay tahsilat - ödeme.
+  const ay = { [ayAnahtari]: { Tahsilat: {}, "Ödeme": {} }, [gecenAy]: { Tahsilat: {}, "Ödeme": {} } };
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    if (!paraHareketiMi(h)) return;
+    const a = ay[String(h.tarih || "").slice(0, 7)];
+    if (!a) return;
+    const tip = odemeHareketTipi(h); const pb = h.paraBirimi || c.paraBirimi || "TRY";
+    a[tip][pb] = (a[tip][pb] || 0) + (Number(h.tutar) || 0);
+  }));
+  // (3) Borç (bakiyesi eksi cariler).
+  const borc = {}; let borcluSayisi = 0;
+  (cariler || []).forEach((c) => {
+    let var_ = false;
+    Object.entries(cariBakiyeleri(c)).forEach(([pb, t]) => { if (t < -0.004) { borc[pb] = (borc[pb] || 0) - t; var_ = true; } });
+    if (var_) borcluSayisi++;
+  });
+  // (4) Çek / senet portföyü + en yakın vade.
+  const portfoy = ((muhasebe && muhasebe.cekler) || []).filter((c) => (c.durum || "Portföyde") === "Portföyde");
+  const portfoyToplam = {};
+  portfoy.forEach((c) => { const pb = c.paraBirimi || "TRY"; portfoyToplam[pb] = (portfoyToplam[pb] || 0) + (Number(c.tutar) || 0); });
+  const enYakinVade = portfoy.map((c) => String(c.vadeTarihi || "").slice(0, 10)).filter(Boolean).sort()[0];
+  // (5) Yaklaşan teslimler: açık satış siparişleri, teslim tarihine göre.
+  const teslimler = (siparisler || [])
+    .filter((s) => s.tip === "Satış" && s.durum !== "Tamamlandı" && s.durum !== "İptal")
+    .map((s) => ({ s, kalan: (s.kalemler || []).reduce((t, k) => t + Math.max(0, (k.miktar || 0) - (k.karsilanan || 0)), 0) }))
+    .filter((x) => x.kalan > 0)
+    .sort((a, b) => String(a.s.teslimTarihi || "9999").localeCompare(String(b.s.teslimTarihi || "9999")));
+  // (6) Üretim: aktif üretimlerde aşama başına bekleyen adet.
+  const aktifUretimler = (uretim || []).filter((o) => o.asama !== "Tamamlandı" && !o.stogaEklendiMi);
+  const asamalar = {};
+  aktifUretimler.forEach((o) => {
+    try { uretimAsamaDagilimi(o).forEach((r) => { if (/Üretildi|Hurda/.test(r.asama)) return; asamalar[r.asama] = (asamalar[r.asama] || 0) + r.miktar; }); } catch (e) { /* eksik kayıt: atla */ }
+  });
+  const asamaListesi = Object.entries(asamalar).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const asamaMax = Math.max(1, ...asamaListesi.map(([, m]) => m));
+  const cariAd = (id) => ((cariler || []).find((c) => c.id === id) || {}).unvan || "";
+
+  const kart = (anahtar, baslik, renk, git, icerik) => (
+    <button key={anahtar} type="button" data-gosterge={anahtar} onClick={git}
+      style={{ textAlign: "left", cursor: "pointer", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderTop: `3px solid ${renk}`,
+        borderRadius: "var(--erp-r-lg)", padding: 14, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+      <div style={{ fontSize: 11, color: "var(--erp-text-3)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em", display: "flex", alignItems: "center", gap: 6 }}>
+        {baslik}<ArrowRight size={12} style={{ marginLeft: "auto" }} />
+      </div>
+      {icerik}
+    </button>
+  );
+  const buyuk = (s, renk) => <div className="mono" style={{ fontSize: 20, fontWeight: 700, color: renk || "var(--erp-text)", lineHeight: 1.2 }}>{s}</div>;
+  const kucuk = (s) => <div style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{s}</div>;
+  const satirlar = (o, renk) => { const l = pbSirala(o); return l.length ? l.map(([pb, t], i) => <React.Fragment key={pb}>{i === 0 ? buyuk(tutar(t, pb), renk) : kucuk(tutar(t, pb))}</React.Fragment>) : buyuk("0 ₺", renk); };
+  const ayOzeti = (a) => pbSirala(Object.fromEntries([...new Set([...Object.keys(a.Tahsilat), ...Object.keys(a["Ödeme"])])].map((pb) => [pb, 1])))
+    .map(([pb]) => `${tutar(a.Tahsilat[pb] || 0, pb)} / ${tutar(a["Ödeme"][pb] || 0, pb)}`).join(" · ");
+  const panel = { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 14, minWidth: 0 };
+
+  return (
+    <div data-anasayfa-gosterge="1" style={{ marginTop: 6 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>Gösterge</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 14 }}>
+        {kart("nakit", `Kasa & Banka · ${hesaplar.length} hesap`, "#2F6B4F", () => onNavigate("muhasebe"), satirlar(nakit, "#2F6B4F"))}
+        {kart("buay", "Bu ay tahsilat / ödeme", "var(--erp-primary)", () => onNavigate("odemerapor"), (<>
+          {(() => { const a = ay[ayAnahtari]; const pbs = pbSirala(Object.fromEntries([...new Set([...Object.keys(a.Tahsilat), ...Object.keys(a["Ödeme"]), "TRY"])].map((pb) => [pb, 1])));
+            const ana = (pbs[0] || ["TRY"])[0];
+            return (<>
+              <div className="mono" style={{ fontSize: 16, fontWeight: 700 }}>
+                <span style={{ color: HAREKET_TIPI_RENK["Tahsilat"] }}>+{tutar(a.Tahsilat[ana] || 0, ana)}</span>{"  "}
+                <span style={{ color: HAREKET_TIPI_RENK["Ödeme"] }}>−{tutar(a["Ödeme"][ana] || 0, ana)}</span>
+              </div>
+              {pbs.slice(1).map(([pb]) => <React.Fragment key={pb}>{kucuk(`${pb}: +${tutar(a.Tahsilat[pb] || 0, pb)} −${tutar(a["Ödeme"][pb] || 0, pb)}`)}</React.Fragment>)}
+            </>);
+          })()}
+          {kucuk(`Geçen ay: ${ayOzeti(ay[gecenAy]) || "kayıt yok"}`)}
+        </>))}
+        {kart("borc", `Toplam borç · ${borcluSayisi} cari`, "var(--erp-warn)", () => onNavigate("cari"), satirlar(borc, "var(--erp-warn)"))}
+        {kart("cek", `Portföyde çek / senet · ${portfoy.length}`, "var(--erp-text-2)", () => onNavigate("cekler"), (<>
+          {satirlar(portfoyToplam)}
+          {enYakinVade && kucuk(`En yakın vade: ${tarihTr(enYakinVade)}${enYakinVade < bugunG ? " (geçti)" : ""}`)}
+        </>))}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 12, marginBottom: 14 }}>
+        <div data-gosterge="teslimler" style={panel}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Truck size={15} color="var(--erp-info)" /><b style={{ fontSize: 13 }}>Yaklaşan teslimler</b>
+            <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{teslimler.length} açık satış</span>
+            <button type="button" className="btn-ghost" onClick={() => onNavigate("siparis")} style={{ marginLeft: "auto", padding: "2px 8px", fontSize: 11 }}>Siparişler</button>
+          </div>
+          {teslimler.length === 0 ? kucuk("Teslim bekleyen sipariş yok.") : teslimler.slice(0, 6).map(({ s, kalan }) => {
+            const t = String(s.teslimTarihi || "").slice(0, 10);
+            const gecti = t && t < bugunG;
+            return (
+              <div key={s.id} role="button" data-gosterge-teslim={s.siparisNo} onClick={() => onGoToSiparis && onGoToSiparis(s.id)}
+                style={{ display: "flex", gap: 8, alignItems: "baseline", padding: "5px 2px", borderTop: "1px solid var(--erp-line-soft)", cursor: "pointer", fontSize: 12 }}>
+                <span className="mono" style={{ minWidth: 78, color: gecti ? "var(--erp-danger, #B3261E)" : "var(--erp-text-2)", fontWeight: gecti ? 700 : 400 }}>{t ? tarihTr(t) : "tarihsiz"}</span>
+                <b className="mono">{s.siparisNo}</b>
+                <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--erp-text-2)" }}>{cariAd(s.cariId)}</span>
+                <span className="mono" style={{ fontWeight: 700 }}>{Math.round(kalan * 100) / 100} kalan</span>
+              </div>
+            );
+          })}
+        </div>
+        <div data-gosterge="uretim" style={panel}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <Hammer size={15} color="var(--erp-primary)" /><b style={{ fontSize: 13 }}>Üretim nerede bekliyor</b>
+            <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{aktifUretimler.length} aktif üretim</span>
+            <button type="button" className="btn-ghost" onClick={() => onGoToUretim && onGoToUretim(null)} style={{ marginLeft: "auto", padding: "2px 8px", fontSize: 11 }}>Üretim</button>
+          </div>
+          {asamaListesi.length === 0 ? kucuk("Aktif üretim yok.") : asamaListesi.map(([asama, m]) => (
+            <div key={asama} data-gosterge-asama={asama} style={{ display: "grid", gridTemplateColumns: "minmax(110px, 40%) 1fr auto", gap: 8, alignItems: "center", padding: "3px 0", fontSize: 12 }}>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{asama}</span>
+              <span style={{ height: 8, borderRadius: 4, background: "var(--erp-line-soft)", overflow: "hidden" }}>
+                <span style={{ display: "block", height: "100%", width: `${Math.max(4, (m / asamaMax) * 100)}%`, background: prosesRengi(asama.replace(/ (bekliyor|da|de|ta|te)$/, "")) || "var(--erp-primary)" }} />
+              </span>
+              <span className="mono" style={{ fontWeight: 700 }}>{Math.round(m * 100) / 100}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

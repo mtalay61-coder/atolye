@@ -2,8 +2,12 @@
  "menuVar": true,
  "ekran": true,
  "bosDurum": true,
- "kisaForm": {
-  "hesap": "Kasa: TL Kasa (TRY)",
+ "hesapCipleri": [
+  "TL Kasa"
+ ],
+ "tekSatir": {
+  "satirSayisi": 1,
+  "odemeSekliAlaniYok": true,
   "cariKartiYok": true
  },
  "kayittanSonraBos": "",
@@ -22,14 +26,27 @@
  "sonListe": [
   "Müşteri B | Tahsilat | Nakit | 500 ₺"
  ],
+ "kartHesaplari": [
+  "Ziraat"
+ ],
+ "bankaHareketi": [
+  [
+   "Giriş",
+   200,
+   "2099-02-15"
+  ]
+ ],
+ "kartCariHareketi": [
+  [
+   200,
+   "2099-02-15"
+  ]
+ ],
  "cekFormu": {
   "sekil": "Çek",
   "cekBilgileri": true
  },
- "ozetler": [
-  "Kasa · TL Kasa 500 ₺",
-  "Portföyde çek / senet · 0 —"
- ],
+ "ozetKartlariYok": true,
  "seritGiris": [
   "odemetahsilat:seçili",
   "muhasebe:-",
@@ -51,12 +68,15 @@
  "rapor": {
   "ozet": [
    "Nakit | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 1",
-   "Toplam | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 1"
+   "Kredi Kartı | 200,00 ₺ | 0,00 ₺ | 200,00 ₺ | 1",
+   "Toplam | 700,00 ₺ | 0,00 ₺ | 700,00 ₺ | 2"
   ],
   "hesaplar": [
-   "Kasa · TL Kasa | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 500,00 ₺"
+   "Kasa · TL Kasa | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 500,00 ₺",
+   "Banka · Ziraat | 0,00 ₺ | 0,00 ₺ | 0,00 ₺ | 200,00 ₺"
   ],
   "liste": [
+   "Müşteri B | Tahsilat | Kredi Kartı | 200,00 ₺ | Test Kullanıcısı",
    "Müşteri B | Tahsilat | Nakit | 500,00 ₺ | Test Kullanıcısı"
   ]
  },
