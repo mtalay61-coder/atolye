@@ -14,8 +14,10 @@
 // FİRMA BAĞLANTISI (v1.642.0 — kullanıcı: "Uygulamayı pazarlamak için nasıl yapmalıyım?" → "Başla"). Aynı uygulama
 // birden çok firmaya satılacak; HER FİRMANIN AYRI Supabase projesi var (veri karışma riski sıfır, bir firmanın
 // kuralı/yedeği ötekine dokunmaz). Hangi projeye bağlanılacağı CİHAZDA seçili firmadan (`firma:secim`) okunur;
-// seçim yoksa VARSAYILAN firma — uygulamanın ilk sahibinin projesi — kullanılır, böylece bugünkü cihazlarda hiçbir
-// şey değişmez. Seçim 032-firma'daki pencereden yapılır (firma kodu ya da adres + anahtar) ve sayfa yeniden yüklenir:
+// seçim yoksa uygulama AÇILMAZ, firma kodu sorulur (v1.643.0, kullanıcı: "benim kullandığım dahil herkeste istensin";
+// kapı 100 AtolyeERP'de). VARSAYILAN_FIRMA yalnız iki yerde kalıyor: kapı kapalıyken sabitlerin bir değeri olsun diye
+// ve "seçimsiz cihazın yerel verisi hangi projeye ait" sorusunun cevabı olarak (v1.642 öncesi hep ana proje — ilk
+// seçimde aynı proje seçilirse veri taşınmaz, yerinde kalır). Seçim 032-firma'daki pencereden yapılır (firma kodu ya da adres + anahtar) ve sayfa yeniden yüklenir:
 // bağlantı açılışta BİR KEZ çözülür ve sabittir — çalışırken başka projeye kaymak bellekteki veriyi öteki firmaya
 // yazdırabilirdi.
 // Bu bölüm 030'un başında ve yalnız düz fonksiyon + sabit kullanıyor: SUPABASE_URL dosya yüklenirken hesaplanıyor,

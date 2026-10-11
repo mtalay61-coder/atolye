@@ -1,5 +1,10 @@
 {
   "surum": 1,
   "aciklama": "Firma kodu rehberi (v1.642.0). Anahtar: SHA-256('atolye-firma:' + normal kod). Değer: Supabase proje adresi + AÇIK (publishable) anahtar. Elle düzenlemeyin: node firma-ekle.js <kod> <adres> <anahtar>",
-  "firmalar": {}
+  "firmalar": {
+    "ea223d7b0fb81e2d98a04afcd4842b757012d5a718e2f06d9f8b5cda75e34dad": {
+      "url": "https://mqdgucoomgqcvhvgixbl.supabase.co",
+      "anahtar": "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2"
+    }
+  }
 }

@@ -78,17 +78,26 @@ function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayi
   if (!sayi) return null;
   return `Bu cihazda buluta gönderilmemiş ${sayi} kayıt grubu var. Önce internete bağlanıp gönderin; gönderilmemiş kayıt varken firma değiştirilemez (kayıt öteki firmanın bulutuna gidebilirdi).`;
 }
-// Seçimi değiştirir (sayfayı YENİDEN YÜKLEMEZ — çağıran yükler). `yeni` null ya da varsayılan proje → varsayılan.
-// Dönüş: değişti mi. Engel varsa hata fırlatır.
-function firmaSeciminiDegistir(yeni, depo = localStorage) {
+// Seçimi yazar (sayfayı YENİDEN YÜKLEMEZ — çağıran yükler). Dönüş: seçim değişti mi. Engel varsa hata fırlatır.
+//
+// FİRMA HERKESTE SORULUR (v1.643.0 — kullanıcı: "benim şuan kullandığım dahil herkeste istensin, standart olsun"):
+// seçimsiz cihaz uygulamayı açamıyor (100 AtolyeERP kapısı). Ana firmanın cihazları da bir kez kodunu girer. O cihaz
+// zaten o projenin verisini taşıyor (seçimsiz = ana proje): AYNI PROJE seçilince saklama/temizleme YAPILMAZ ve bekleyen
+// kayıt ENGEL DEĞİLDİR — defter aynı projeye gidecek; yalnız seçim kaydı yazılır. Engel ve saklama kutusu yalnız
+// gerçekten BAŞKA projeye geçerken.
+function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOku()) {
+  if (!yeni || !firmaBaglantisiGecerli(yeni)) throw new Error((yeni && firmaAnahtariSorunu(yeni.anahtar)) || "Adres geçersiz — https://<proje>.supabase.co olmalı");
+  const kayit = JSON.stringify({ kod: firmaKoduNormal(yeni.kod), url: yeni.url, anahtar: String(yeni.anahtar).trim() });
+  // Seçimsiz cihazın verisi ana projeye ait (v1.642 öncesi hep ana proje).
+  const eskiRef = firmaRefi((mevcut || VARSAYILAN_FIRMA).url);
+  const yeniRef = firmaRefi(yeni.url);
+  if (yeniRef === eskiRef) {
+    const degisti = depo.getItem(FIRMA_SECIM_ANAHTARI) !== kayit;
+    depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
+    return degisti;
+  }
   const engel = firmaDegisimEngeli();
   if (engel) throw new Error(engel);
-  if (yeni && !firmaBaglantisiGecerli(yeni)) throw new Error(firmaAnahtariSorunu(yeni.anahtar) || "Adres geçersiz — https://<proje>.supabase.co olmalı");
-  const varsayilanRef = firmaRefi(VARSAYILAN_FIRMA.url);
-  const hedef = yeni && firmaRefi(yeni.url) !== varsayilanRef ? yeni : null;
-  const eskiRef = firmaRefi(AKTIF_FIRMA.url);
-  const yeniRef = hedef ? firmaRefi(hedef.url) : varsayilanRef;
-  if (yeniRef === eskiRef) return false;
   const sakli = {};
   for (const a of FIRMAYA_OZEL_ANAHTARLAR) {
     const d = depo.getItem(a);
@@ -103,8 +112,7 @@ function firmaSeciminiDegistir(yeni, depo = localStorage) {
     for (const [a, d] of Object.entries(geri)) if (!/^bekleyen:/.test(a)) depo.setItem(a, d);
   } catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
   depo.removeItem(`firma:sakli:${yeniRef}`);
-  if (hedef) depo.setItem(FIRMA_SECIM_ANAHTARI, JSON.stringify({ kod: firmaKoduNormal(hedef.kod), url: hedef.url, anahtar: String(hedef.anahtar).trim() }));
-  else depo.removeItem(FIRMA_SECIM_ANAHTARI);
+  depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
   return true;
 }
 // Değiştir + adres çubuğundaki ?firma= parametresini sil + yeniden yükle.
@@ -117,37 +125,46 @@ function firmaDegistirVeYenile(yeni) {
   if (degisti) location.reload();
   return degisti;
 }
+// Ekranda görünen ad: girilen kod; elle (Gelişmiş) bağlanıldıysa proje kimliği.
+function firmaGorunenAdi() {
+  const f = firmaSecimiOku();
+  return (f && (f.kod || firmaRefi(f.url))) || "—";
+}
+// Seçimsiz cihazın açılış ekranı (100 AtolyeERP kapısı). ?firma=KOD varsa kod dolu gelir.
+function FirmaGirisEkrani() {
+  return <FirmaPenceresi tamEkran kodBaslangic={adresFirmaParametresi()} onKapat={() => {}} />;
+}
 function adresFirmaParametresi() {
   try { return new URLSearchParams(location.search).get("firma") || ""; } catch (e) { return ""; }
 }
 
-function FirmaPenceresi({ onKapat, kodBaslangic = "" }) {
+function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
   const [kod, setKod] = useState(kodBaslangic);
   const [gelismis, setGelismis] = useState(false);
   const [adres, setAdres] = useState("");
   const [anahtar, setAnahtar] = useState("");
   const [bekliyor, setBekliyor] = useState(false);
   const [hata, setHata] = useState(null);
-  const engel = firmaDegisimEngeli();
-  const varsayilanda = !firmaSecimiOku();
+  // Bekleyen kayıt ancak BAŞKA projeye geçişi engeller; ilk seçimde (tam ekran) proje henüz bilinmiyor — kontrol
+  // `firmaSeciminiDegistir`de, hedef proje belli olunca yapılır ve sebep hata kutusunda görünür.
+  const engel = tamEkran ? null : firmaDegisimEngeli();
 
-  async function uygula(hedef) {
+  async function uygula() {
     setBekliyor(true); setHata(null);
     try {
-      let f = hedef;
-      if (f === undefined) {
-        if (gelismis) {
-          f = { kod: firmaKoduNormal(kod), url: adres.trim().replace(/\/+$/, ""), anahtar: anahtar.trim() };
-          if (!firmaAdresiGecerli(f.url)) throw new Error("Adres https://<proje>.supabase.co biçiminde olmalı");
-          const sorun = firmaAnahtariSorunu(f.anahtar);
-          if (sorun) throw new Error(sorun);
-        } else {
-          f = await firmaKoduCoz(kod);
-          if (!f) throw new Error("Bu kodla kayıtlı firma bulunamadı — kodu kontrol edin");
-          if (!firmaBaglantisiGecerli(f)) throw new Error("Firma kaydı bozuk — yöneticinize başvurun");
-        }
-        await firmaBaglantisiniDene(f);
+      let f;
+      if (gelismis) {
+        f = { kod: firmaKoduNormal(kod), url: adres.trim().replace(/\/+$/, ""), anahtar: anahtar.trim() };
+        if (!firmaAdresiGecerli(f.url)) throw new Error("Adres https://<proje>.supabase.co biçiminde olmalı");
+        const sorun = firmaAnahtariSorunu(f.anahtar);
+        if (sorun) throw new Error(sorun);
+      } else {
+        f = await firmaKoduCoz(kod);
+        if (!f) throw new Error("Bu kodla kayıtlı firma bulunamadı — kodu kontrol edin");
+        if (!firmaBaglantisiGecerli(f)) throw new Error("Firma kaydı bozuk — yöneticinize başvurun");
       }
+      await firmaBaglantisiniDene(f);
+      // Bekleyen kayıt engeli burada (hedef proje belli olunca): aynı projeye seçim serbest, başka projeye yasak.
       if (!firmaDegistirVeYenile(f)) { setBekliyor(false); onKapat(); }
     } catch (e) {
       setBekliyor(false);
@@ -156,14 +173,14 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "" }) {
   }
 
   return (
-    <div data-firma-penceresi="1" onClick={onKapat}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div data-firma-penceresi="1" onClick={tamEkran ? undefined : onKapat}
+      style={{ position: "fixed", inset: 0, background: tamEkran ? "var(--erp-panel-2, #f4f1ec)" : "rgba(0,0,0,.45)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()}
         style={{ background: "var(--erp-panel)", borderRadius: "var(--erp-r-lg)", padding: 24, width: 400, maxWidth: "100%", fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Firma seç</div>
+        <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>{tamEkran ? "Atölye ERP — Firma kodu" : "Firma seç"}</div>
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 14 }}>
-          Şu an: <b data-firma-aktif="1">{AKTIF_FIRMA.kod || (varsayilanda ? "ana firma" : firmaRefi(AKTIF_FIRMA.url))}</b>.
-          Firma kodunu size uygulamayı kuran kişi verir.
+          {tamEkran ? null : <>Şu an: <b data-firma-aktif="1">{firmaGorunenAdi()}</b>. </>}
+          Firma kodunu size uygulamayı kuran kişi verir. Bu cihazda bir kez sorulur.
         </div>
         {engel ? (
           <div data-firma-engel="1" style={{ fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 }}>{engel}</div>
@@ -191,13 +208,10 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "" }) {
           <div data-firma-hata="1" style={{ marginTop: 12, fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>{hata}</div>
         ) : null}
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
-          <button type="button" className="btn-primary" data-firma-uygula="1" disabled={bekliyor || !!engel || (!gelismis && firmaKoduNormal(kod).length < 3)} onClick={() => uygula()}>
+          <button type="button" className="btn-primary" data-firma-uygula="1" disabled={bekliyor || (!gelismis && firmaKoduNormal(kod).length < 3)} onClick={() => uygula()}>
             {bekliyor ? "Kontrol ediliyor…" : "Bağlan"}
           </button>
-          <button type="button" className="btn-ghost" onClick={onKapat}>Vazgeç</button>
-          {!varsayilanda ? (
-            <button type="button" className="btn-ghost" data-firma-ana="1" disabled={bekliyor || !!engel} style={{ marginLeft: "auto", fontSize: 12 }} onClick={() => uygula(null)}>Ana firmaya dön</button>
-          ) : null}
+          {tamEkran ? null : <button type="button" className="btn-ghost" onClick={onKapat}>Vazgeç</button>}
         </div>
       </div>
     </div>
@@ -210,11 +224,10 @@ function FirmaSatiri({ kucuk = false }) {
   const parametre = adresFirmaParametresi();
   const farkliParametre = !!parametre && firmaKoduNormal(parametre) !== (AKTIF_FIRMA.kod || "");
   const [acik, setAcik] = useState(farkliParametre);
-  const ad = AKTIF_FIRMA.kod || (firmaSecimiOku() ? firmaRefi(AKTIF_FIRMA.url) : "");
   return (
     <>
       <div data-firma-satiri="1" style={{ fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-        <span>Firma: <b>{ad || "ana firma"}</b></span>
+        <span>Firma: <b>{firmaGorunenAdi()}</b></span>
         <button type="button" className="btn-ghost" data-firma-degistir="1" style={{ padding: "1px 6px", fontSize: kucuk ? 11 : 12 }} onClick={() => setAcik(true)}>Değiştir</button>
       </div>
       {acik ? <FirmaPenceresi kodBaslangic={farkliParametre ? parametre : ""} onKapat={() => setAcik(false)} /> : null}
