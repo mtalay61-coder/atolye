@@ -365,6 +365,11 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   const nextUretim = uretim.map((o) => (o.id === uretimId
     ? { ...o, prosesIlerleme: nextProsesIlerleme, ...(araTahakkuklar.length ? { bolumTahakkuklari: [...(o.bolumTahakkuklari || []), ...araTahakkuklar] } : {}) }
     : o));
+  // KİMİN YAPTIĞI (v1.645.9, 048): yeni stok hareketleri (üretim çıkışı/girişi) ve cari hareketleri (işçilik) etkin
+  // kullanıcıyla damgalanır — durum ve yazma AYNI damgalı veriyi alır. Anasayfa › Son işlemler "—" gösteriyordu.
+  { const ad = damgaKullaniciAdi(); const simdi = new Date().toISOString();
+    nextStok = yeniHareketleriDamgala(stok, nextStok, ad, simdi);
+    nextCariler = yeniHareketleriDamgala(cariler, nextCariler, ad, simdi); }
   setStok(nextStok);
   setCariler(nextCariler);
 

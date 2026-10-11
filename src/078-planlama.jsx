@@ -310,6 +310,7 @@ const planlaSatinAlma = useCallback((satisSiparisId, girdiler, cariId, secenek) 
       // aynı tercihle başlar — kullanıcı tekrar seçmek zorunda kalmaz.
       defterTercihi: satisSiparis.defterTercihi || "",
       olusturuldu: new Date().toISOString(),
+      olusturan: damgaKullaniciAdi() || undefined,   // kimin açtığı (v1.645.9, 048) — Son işlemler akışı
     }; }
 
     // ÖNEMLİ: bir kalemin SADECE BİR KISMI planlanmışsa, kalemi olduğu gibi "planlandı" işaretlemek
@@ -419,6 +420,7 @@ const planlaHammaddeSatinAlma = useCallback((talepler, cariId) => {
       kalemler,
       teslimSayaci: 0,
       olusturuldu: new Date().toISOString(),
+      olusturan: damgaKullaniciAdi() || undefined,   // kimin açtığı (v1.645.9, 048) — Son işlemler akışı
     };
 
     const next = [yeniAlis, ...prev];

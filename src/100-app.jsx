@@ -140,6 +140,7 @@ function AtolyeUygulamasi() {
   const [surumSeridiKapali, setSurumSeridiKapali] = useState(false);
   const [storageOk, setStorageOk] = useState(true);
   const [aktifKullanici, setAktifKullanici] = useState(null);
+  damgaKullanicisiAyarla(aktifKullanici && aktifKullanici.ad);   // kayıt damgası (048) — her çizimde güncel
   // OTURUM SÜRDÜRME (kullanıcı, 15 Eylül: "sayfa yenilendiğinde tekrar kullanıcı adı ve şifre
   // girmemi istiyor"). `aktifKullanici` yalnız bellekteydi; her yenilemede giriş ekranı geliyordu.
   //
@@ -397,6 +398,9 @@ function AtolyeUygulamasi() {
   const [uretim, setUretim] = useState([]);
   const [cariler, setCariler] = useState([]);
   const [siparisler, setSiparisler] = useState([]);
+  // Son çizimdeki sipariş listesi: saveSiparisler yeni siparişi buna göre ayırır (048 damgası).
+  const siparislerGuncelRef = useRef([]);
+  siparislerGuncelRef.current = siparisler;
   const [muhasebe, setMuhasebe] = useState({ kasalar: [], bankalar: [], cekler: [] });
   // ÇEK GÖRSELLERİ ayrı tabloda: [{ id: cekId, on, arka }]. `muhasebe` içine koymak, tek kaydın
   // 5 MB sınırına çek başına iki fotoğrafla hızlıca çarpmak demekti (bkz. cek-gorselleri.sql).
@@ -2016,6 +2020,9 @@ function AtolyeUygulamasi() {
   }, [tanimlar, showToast, kaydetmeHatasiBildir]);
 
   const saveSiparisler = useCallback(async (next) => {
+    // KİMİN AÇTIĞI (v1.645.9, 048): yeni siparişe `olusturan` (+ eksikse `olusturuldu`) — Son işlemler akışı "—" diyordu.
+    // Sipariş formu kaydı bu kapıdan geçiyor; durum ve yazma aynı damgalı listeyi alır.
+    next = yeniSiparisleriDamgala(siparislerGuncelRef.current, next, damgaKullaniciAdi(), new Date().toISOString());
     setSiparisler(next);
     try {
       await tabloYaz("siparis:data", "siparisler", next);
