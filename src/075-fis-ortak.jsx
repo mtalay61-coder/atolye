@@ -637,9 +637,10 @@ async function siparisEpostaGonder(siparis, cari, firmaBilgileri, stok, showToas
   const govde = siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok);
   const blob = await htmldenPdfBlob(govde);
 
-  // 1) SMTP kuruluysa doğrudan gönder (isteğe bağlı yol).
+  // 1) SMTP kuruluysa doğrudan gönder (isteğe bağlı yol). Şifre sunucu sırrında (v1.641.0): kurulu sayılmak için
+  //    sunucu + kullanıcı yeter; fonksiyon şifreyi Supabase sırrından okur.
   const smtp = (firmaBilgileri && firmaBilgileri.eposta) || {};
-  if (blob && kime && smtp.sunucu && smtp.kullanici && smtp.sifre) {
+  if (blob && kime && smtp.sunucu && smtp.kullanici) {
     const base64 = await new Promise((coz, red) => { const r = new FileReader(); r.onload = () => coz(String(r.result).split(",")[1]); r.onerror = red; r.readAsDataURL(blob); });
     const sonuc = await epostaGonder({ kime, konu, metin, dosyaAdi: `${ad}.pdf`, pdfBase64: base64 });
     if (sonuc.tamam) { if (showToast) showToast(`E-posta gönderildi: ${kime}`); return "gonderildi"; }
@@ -722,7 +723,7 @@ async function belgeyiPaylas(yol, { govdeHTML, govdeSecici, dosyaAdi, cari, konu
   if (yol === "eposta") {
     const kime = (cari && cari.eposta) || "";
     const smtp = (firmaBilgileri && firmaBilgileri.eposta) || {};
-    if (blob && kime && smtp.sunucu && smtp.kullanici && smtp.sifre) {
+    if (blob && kime && smtp.sunucu && smtp.kullanici) {
       const base64 = await new Promise((coz, red) => { const r = new FileReader(); r.onload = () => coz(String(r.result).split(",")[1]); r.onerror = red; r.readAsDataURL(blob); });
       const sonuc = await epostaGonder({ kime, konu: konu || ad, metin, dosyaAdi: `${ad}.pdf`, pdfBase64: base64 });
       if (sonuc.tamam) { if (showToast) showToast(`E-posta gönderildi: ${kime}`); return "gonderildi"; }

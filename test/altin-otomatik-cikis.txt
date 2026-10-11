@@ -1,0 +1,13 @@
+{
+ "hatalar": [],
+ "ikinciGiris": true,
+ "eskiEtkinlik": {
+  "girisEkrani": true,
+  "toast": "",
+  "anahtarSilindi": true
+ },
+ "taze": {
+  "girisEkrani": false,
+  "anahtarVar": true
+ }
+}

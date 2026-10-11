@@ -3498,10 +3498,37 @@ export default function AtolyeERP() {
     setBulutGirisAyrinti(null);
     setBulutAyrintiAcik(false);
     setAktifKullanici(null);
+    try { window.localStorage.removeItem("oturum:sonEtkinlik"); } catch (e) { /* */ }
   };
   const [onayPaneliAcik, setOnayPaneliAcik] = useState(false);
   const bekleyenOnaylar = onaylar.filter((o) => o.durum === "Bekliyor");
   const girisSistemiAktif = !!tanimlar.girisAktifMi;
+  // HAREKETSİZLİKTE OTOMATİK ÇIKIŞ (v1.641.0, denetim — kullanıcı: güvenlik maddeleri). Sayfa yenilenince 12 saatlik
+  // `oturum:aktif` süresi zaten işliyor; AÇIK BIRAKILAN sekme ise süresiz oturumda kalıyordu — ortak tablette ilk gelenin
+  // önüne düşüyordu. Son dokunuş/tuş zamanı dakikada en çok bir kez yerel anahtara yazılır; açılışta ve dakikada bir
+  // bakılır: Tanımlar'daki SAAT aşıldıysa çıkış. 0 = kapalı.
+  const otomatikCikisSaat = Number((tanimlar.firmaBilgileri || {}).otomatikCikisSaat) || 0;
+  useEffect(() => {
+    if (!girisSistemiAktif || !aktifKullanici || !(otomatikCikisSaat > 0)) return undefined;
+    const ANAHTAR = "oturum:sonEtkinlik";
+    const oku = () => { try { return Number(window.localStorage.getItem(ANAHTAR)) || 0; } catch (e) { return 0; } };
+    const yaz = () => { try { window.localStorage.setItem(ANAHTAR, String(Date.now())); } catch (e) { /* */ } };
+    let sonYazim = 0;
+    const etkinlik = () => { const t = Date.now(); if (t - sonYazim > 60000) { sonYazim = t; yaz(); } };
+    const kontrol = () => {
+      const son = oku();
+      if (!son) { yaz(); return; }
+      if (Date.now() - son > otomatikCikisSaat * 3600000) {
+        showToast(`${otomatikCikisSaat} saat hareketsizlik — güvenlik için çıkış yapıldı`);   // bayat-muaf: showToast kararlı
+        kullaniciCikisYap();   // bayat-muaf: çıkış işi her çizimde aynı (jeton + yerel anahtarlar), eski kapanış da doğru çalışır
+      }
+    };
+    kontrol();
+    window.addEventListener("pointerdown", etkinlik);
+    window.addEventListener("keydown", etkinlik);
+    const zamanlayici = setInterval(kontrol, 60000);
+    return () => { window.removeEventListener("pointerdown", etkinlik); window.removeEventListener("keydown", etkinlik); clearInterval(zamanlayici); };
+  }, [girisSistemiAktif, !!aktifKullanici, otomatikCikisSaat]);   // bayat-muaf: kullaniciCikisYap/showToast her çizimde aynı işi yapar
 
   // Açılışta oturumu geri yükle: tanımlar (dolayısıyla kullanıcı listesi) hazır olduğunda bir kez.
   const oturumGeriYuklendi = useRef(false);

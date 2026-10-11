@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.640.0";
+const SURUM = "1.641.0";
 const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Denetim devami: iki sekmede oturum dusmesi, acik formun altindan gelen degisiklik, MRP doviz maliyeti, bos suzgec ipucu; rls-rol.sql";
+const SURUM_NOTU = "Guvenlik: modul yetkisi sunucuda (rls-yazma.sql), hareketsizlikte otomatik cikis, SMTP sifresi Supabase sirrinda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Denetim devami: iki sekmede oturum dusmesi, acik formun alti
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.641.0", tarih: "11.10.2026",
+    eklenen: ["rls-yazma.sql: kasa/banka/çek ve fatura yazması ile ürün/cari/sipariş/üretim silmesi sunucuda modül yetkisine bağlı (kullanıcı çalıştırır)",
+      "Hareketsizlikte otomatik çıkış: Tanımlar › Kullanıcılar'da saat (kapalı / 1-72 saat) — açık bırakılan sekme için"],
+    degisen: ["E-posta SMTP şifresi artık Tanımlar'da değil Supabase sırrında (SMTP_SIFRE); eski kayıt tek düğmeyle silinir"],
+    duzeltilen: [] },
   { surum: "1.640.0", tarih: "10.10.2026",
     eklenen: ["rls-rol.sql: kullanıcı listesini yalnız Yönetici değiştirebilir, günlüğü yalnız Yönetici siler (sunucu tarafı; kullanıcı çalıştırır)",
       "Sipariş listesi süzgeç yüzünden boşsa \"Tümünü göster (N)\" düğmesi"],
