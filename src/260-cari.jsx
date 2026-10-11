@@ -977,7 +977,6 @@ function OdemeAlaniSeridi({ tab, onGit }) {
   return (
     <div data-odeme-alani-seridi="1" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12,
       padding: "6px 8px", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
-      <b style={{ fontSize: 13, color: "#2F6B4F", marginRight: 6 }}>Ödeme & Tahsilat</b>
       {ODEME_ALANI_SEKMELERI.map(({ tab: t, ad, Ikon }) => {
         const aktif = t === tab;
         return (

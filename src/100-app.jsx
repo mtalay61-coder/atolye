@@ -48,16 +48,26 @@ function AtolyeUygulamasi() {
   // pencereler sayfa yenilenince geri geliyor. İlk değerler kayıttan; kayıt yoksa ana sayfa.
   const kayitliArayuz = useRef(arayuzDurumuOku()).current;
   const [tab, setTabHam] = useState(kayitliArayuz ? kayitliArayuz.tab : "anasayfa");
-  const [acikSekmeler, setAcikSekmeler] = useState(kayitliArayuz ? kayitliArayuz.acikSekmeler : ["anasayfa"]);
+  // Kayıtlı sekmelerde alan ekranları (eski sürümden "muhasebe", "cekler"…) tek sayfa sekmesine katlanır (v1.645.12).
+  const sayfaSekmesi = (k) => SAYFA_SEKMESI_ALANI[k] || k;
+  const katla = (liste) => Array.from(new Set((liste || []).map(sayfaSekmesi)));
+  const [acikSekmeler, setAcikSekmeler] = useState(kayitliArayuz ? katla(kayitliArayuz.acikSekmeler) : ["anasayfa"]);
   // Ziyaret sırası. Sekme kapatılınca ÖNCEKİNE dönmek için gerekiyor: liste sırası "hangi sırayla
   // açıldı"yı söyler, "en son neredeydim"i değil.
-  const sekmeGecmisi = useRef(kayitliArayuz ? kayitliArayuz.sekmeGecmisi : ["anasayfa"]);
+  const sekmeGecmisi = useRef(kayitliArayuz ? katla(kayitliArayuz.sekmeGecmisi) : ["anasayfa"]);
+  // Alanın son açık ekranı: menüden ya da üst şeritten Ödeme & Tahsilat'a dönünce kalınan yer (Kasa & Banka, Rapor…) açılır.
+  const alanSonEkranRef = useRef(kayitliArayuz && SAYFA_SEKMESI_ALANI[kayitliArayuz.tab] ? kayitliArayuz.tab : null);
 
-  const setTab = useCallback((anahtar) => {
+  // `dogrudan`: alanın kendi sekme şeridi / bağlantıları — istenen ekran açılır, "son ekrana dön" uygulanmaz.
+  const setTab = useCallback((anahtar, dogrudan) => {
     if (!anahtar) return;
-    setTabHam(anahtar);
-    setAcikSekmeler((prev) => (prev.includes(anahtar) ? prev : [...prev, anahtar]));
-    sekmeGecmisi.current = [...sekmeGecmisi.current.filter((k) => k !== anahtar), anahtar];
+    let ekran = anahtar;
+    if (anahtar === "odemetahsilat" && !dogrudan && alanSonEkranRef.current) ekran = alanSonEkranRef.current;
+    if (SAYFA_SEKMESI_ALANI[ekran] || ekran === "odemetahsilat") alanSonEkranRef.current = ekran;
+    const sayfa = SAYFA_SEKMESI_ALANI[ekran] || ekran;
+    setTabHam(ekran);
+    setAcikSekmeler((prev) => (prev.includes(sayfa) ? prev : [...prev, sayfa]));
+    sekmeGecmisi.current = [...sekmeGecmisi.current.filter((k) => k !== sayfa), sayfa];
   }, []);
 
   const sekmeKapat = useCallback((anahtar) => {
@@ -67,7 +77,7 @@ function AtolyeUygulamasi() {
       const kalan = prev.filter((k) => k !== anahtar);
       sekmeGecmisi.current = sekmeGecmisi.current.filter((k) => k !== anahtar);
       setTabHam((aktif) => {
-        if (aktif !== anahtar) return aktif;
+        if ((SAYFA_SEKMESI_ALANI[aktif] || aktif) !== anahtar) return aktif;
         // "Kapatılınca önceki ekrana dön": geçmişte hâlâ açık olan son sekme.
         const onceki = [...sekmeGecmisi.current].reverse().find((k) => kalan.includes(k));
         return onceki || "anasayfa";
@@ -4741,12 +4751,12 @@ function AtolyeUygulamasi() {
             />
           </GizliModul>
           {/* ÖDEME & TAHSİLAT ALANI (v1.645.10, 260): giriş, Kasa & Banka ve Çek & Senet tek alanın sekmeleri. */}
-          <OdemeAlaniSeridi tab={tab} onGit={setTab} />
+          <OdemeAlaniSeridi tab={tab} onGit={(t) => setTab(t, true)} />
           {/* Cari ve Ödeme & Tahsilat AYNI örnek (Mamul Stok / Çek & Senet deseni): kapsam son görünen sekmeden. */}
           <GizliModul aktif={tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor"}>
             <CariModule
               kapsam={cariKapsamRef.current}
-              onOdemeAlaniGit={setTab}
+              onOdemeAlaniGit={(t) => setTab(t, true)}
               onOdemeKaydet={siparisOdemesiKaydet}
               onFiseGitNo={fiseGit}
               muhasebe={muhasebe}
@@ -5178,7 +5188,7 @@ function AtolyeUygulamasi() {
                   farkı olduğunu sordururdu. Sayfalar solda, kayıt pencereleri sağda. */}
               {acikSekmeler.map((k) => {
                 const bilgi = SEKME_BILGISI[k] || { ad: k };
-                const aktifMi = tab === k && !aktifPencereId;
+                const aktifMi = (SAYFA_SEKMESI_ALANI[tab] || tab) === k && !aktifPencereId;
                 // İKON + MODÜL RENGİ (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): ikon her zaman modül
                 // renginde; etkin sekmede yazı da o renkte ve üstte 3 piksel renkli çizgi — menüdeki renk diliyle aynı.
                 const renk = MODUL_RENK[k] || "var(--erp-text-2)";
