@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.641.0";
-const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Guvenlik: modul yetkisi sunucuda (rls-yazma.sql), hareketsizlikte otomatik cikis, SMTP sifresi Supabase sirrinda";
+const SURUM = "1.642.0";
+const SURUM_TARIHI = "2026-10-11";
+const SURUM_NOTU = "Coklu firma: firma kodu ile her firma kendi Supabase projesine baglanir, cihazdaki yerel kopya firma basina ayri";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,12 @@ const SURUM_NOTU = "Guvenlik: modul yetkisi sunucuda (rls-yazma.sql), hareketsiz
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.642.0", tarih: "11.10.2026",
+    eklenen: ["Firma kodu: giriş ekranında ve Tanımlar › Bulut Veritabanı'nda \"Firma: … · Değiştir\"; her firma kendi Supabase projesine bağlanır",
+      "Müşteriye tek tıklık bağlantı: …/atolye/?firma=KOD",
+      "Yeni firma kurulumu: kurulum-betigi.sql + Tanımlar'dan kurulum dosyası indirme (yalnız Yönetici)"],
+    degisen: ["Cihazdaki yerel kopya firma başına ayrı; buluta gönderilmemiş kayıt varken firma değiştirilemez"],
+    duzeltilen: [] },
   { surum: "1.641.0", tarih: "11.10.2026",
     eklenen: ["rls-yazma.sql: kasa/banka/çek ve fatura yazması ile ürün/cari/sipariş/üretim silmesi sunucuda modül yetkisine bağlı (kullanıcı çalıştırır)",
       "Hareketsizlikte otomatik çıkış: Tanımlar › Kullanıcılar'da saat (kapalı / 1-72 saat) — açık bırakılan sekme için"],

@@ -438,6 +438,10 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
     // 42501 = Postgres "yetersiz yetki". Bizde tek sebebi var: rls-kimlik.sql ile anonim rolün
     // yetkileri kaldırıldı, uygulama ise GİRİŞ YAPILMADAN (anon) yazmaya çalışıyor. Teknik
     // metin yerine ne olduğu ve ne yapılacağı yazılıyor; ham hata sonda, küçük.
+    // MODÜL YETKİSİ / YÖNETİCİ KURALI (v1.642.0): rls-yazma.sql, rls-rol.sql ve kurulum_betigi() da 42501 döndürüyor ama
+    // sebep "giriş yapılmamış" DEĞİL — kullanıcının o işe yetkisi yok. Sunucunun Türkçe mesajı olduğu gibi gösterilir.
+    const kuralMesaji = (metin.match(/"message"\s*:\s*"((?:Bu işlem için yetkiniz yok|[^"]*yalnız Yönetici)[^"]*)"/) || [])[1];
+    if (kuralMesaji) throw new Error(kuralMesaji);
     if (/42501|permission denied/i.test(metin)) {
       const tablo = (metin.match(/for table (\w+)/) || [])[1] || "";
       throw new Error(`Buluta yazma yetkisi yok${tablo ? ` (${tablo})` : ""} — kimlik koruması açık ama giriş yapılmamış. `

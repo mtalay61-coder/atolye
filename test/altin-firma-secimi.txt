@@ -1,0 +1,24 @@
+{
+ "hatalar": [],
+ "satir": "Firma: ana firma Değiştir",
+ "kurulumDosyasi": {
+  "ad": true,
+  "icerik": true
+ },
+ "secim": {
+  "kod": "deneme",
+  "url": "https://abcdefghij12.supabase.co",
+  "anahtar": "sb_publishable_DENEMEANAHTARI_1"
+ },
+ "yeniProjeyeGidiyor": true,
+ "baglanti": {
+  "pencere": true,
+  "kod": "deneme",
+  "engel": true,
+  "dugmeKapali": true
+ },
+ "gizliAnahtar": {
+  "hata": true,
+  "secimYok": true
+ }
+}

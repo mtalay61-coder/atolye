@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.639.0</title>
+<title>Atölye ERP 1.642.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -79,9 +79,26 @@ import ReactDOM from "react-dom/client";
 // GERİ DÜŞÜŞ
 // IndexedDB açılamazsa (çok eski tarayıcı, gizli sekme kısıtı) köprü localStorage'a döner.
 // Uygulama çalışmaya devam eder, yalnızca eski sınırla.
+//
+// FİRMA BAŞINA AYRI DEPO (v1.642.0): uygulama birden çok firmaya satılıyor ve her firmanın ayrı Supabase projesi
+// var (030 FİRMA BAĞLANTISI). Aynı cihazda iki firma açılırsa yerel kopyalar KARIŞMAMALI — biri ötekinin stok
+// kaydını "yerel yedek" sanıp kendi bulutuna yazabilirdi. Seçili firmanın proje kimliği (adresin alt alan adı)
+// veritabanı adına ve yedek önekine eklenir. VARSAYILAN firma (seçim yok ya da ilk sahibin projesi) için adlar
+// ESKİSİ GİBİ — mevcut cihazlardaki veri yerinde kalır, göç gerekmez. Geçerlilik kuralı 030'daki
+// `firmaBaglantisiGecerli` ile aynı tutulmalı (adres https://<ref>.supabase.co, gizli anahtar asla).
 (function () {
-  const ON = "atolye:";
-  const VT_AD = "atolye-depo";
+  const VARSAYILAN_REF = "mqdgucoomgqcvhvgixbl";
+  const FIRMA_EK = (function () {
+    try {
+      const f = JSON.parse(localStorage.getItem("firma:secim") || "null");
+      const m = f && /^https:\/\/([a-z0-9]{8,40})\.supabase\.co$/.exec(String(f.url || ""));
+      const anahtar = String((f && f.anahtar) || "").trim();
+      const anahtarAcik = /^sb_publishable_/.test(anahtar) || anahtar.split(".").length === 3;
+      return m && anahtarAcik && m[1] !== VARSAYILAN_REF ? m[1] : "";
+    } catch (e) { return ""; }
+  })();
+  const ON = FIRMA_EK ? "atolye:@" + FIRMA_EK + ":" : "atolye:";
+  const VT_AD = FIRMA_EK ? "atolye-depo@" + FIRMA_EK : "atolye-depo";
   const DEPO = "kv";
   const GOC_ISARETI = "__goc_tamam";
 
@@ -100,7 +117,8 @@ import ReactDOM from "react-dom/client";
       const k = [];
       for (let i = 0; i < localStorage.length; i++) {
         const h = localStorage.key(i);
-        if (h && h.startsWith(ON + onEk)) k.push(h.slice(ON.length));
+        // Varsayılan önek ("atolye:") öteki firmaların önekini ("atolye:@ref:") de kapsıyor — onlar atlanır.
+        if (h && h.startsWith(ON + onEk) && (FIRMA_EK || !h.startsWith("atolye:@"))) k.push(h.slice(ON.length));
       }
       return k;
     },
@@ -2242,9 +2260,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.639.0";
-const SURUM_TARIHI = "2026-10-10";
-const SURUM_NOTU = "Genel denetim: kismi teslimde cift hammadde dusumu, uretim geri alma fis esleme, acilis fisi stok katlama, gorsel kaybi, tazeleme/yazma ezmeleri ve 40+ duzeltme";
+const SURUM = "1.642.0";
+const SURUM_TARIHI = "2026-10-11";
+const SURUM_NOTU = "Coklu firma: firma kodu ile her firma kendi Supabase projesine baglanir, cihazdaki yerel kopya firma basina ayri";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2252,6 +2270,24 @@ const SURUM_NOTU = "Genel denetim: kismi teslimde cift hammadde dusumu, uretim g
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.642.0", tarih: "11.10.2026",
+        eklenen: ["Firma kodu: giriş ekranında ve Tanımlar › Bulut Veritabanı'nda \"Firma: … · Değiştir\"; her firma kendi Supabase projesine bağlanır",
+            "Müşteriye tek tıklık bağlantı: …/atolye/?firma=KOD",
+            "Yeni firma kurulumu: kurulum-betigi.sql + Tanımlar'dan kurulum dosyası indirme (yalnız Yönetici)"],
+        degisen: ["Cihazdaki yerel kopya firma başına ayrı; buluta gönderilmemiş kayıt varken firma değiştirilemez"],
+        duzeltilen: [] },
+    { surum: "1.641.0", tarih: "11.10.2026",
+        eklenen: ["rls-yazma.sql: kasa/banka/çek ve fatura yazması ile ürün/cari/sipariş/üretim silmesi sunucuda modül yetkisine bağlı (kullanıcı çalıştırır)",
+            "Hareketsizlikte otomatik çıkış: Tanımlar › Kullanıcılar'da saat (kapalı / 1-72 saat) — açık bırakılan sekme için"],
+        degisen: ["E-posta SMTP şifresi artık Tanımlar'da değil Supabase sırrında (SMTP_SIFRE); eski kayıt tek düğmeyle silinir"],
+        duzeltilen: [] },
+    { surum: "1.640.0", tarih: "10.10.2026",
+        eklenen: ["rls-rol.sql: kullanıcı listesini yalnız Yönetici değiştirebilir, günlüğü yalnız Yönetici siler (sunucu tarafı; kullanıcı çalıştırır)",
+            "Sipariş listesi süzgeç yüzünden boşsa \"Tümünü göster (N)\" düğmesi"],
+        degisen: ["Ürün, cari ve sipariş düzenleme formu açıkken kayıt başka yerden değiştiyse Kaydet'te sorulur (üstüne yazmadan önce)",
+            "Planlama ve sipariş ihtiyaç ekranındaki tahmini satın alma maliyeti dövizli fiyatları kurla TL'ye çeviriyor"],
+        duzeltilen: ["Aynı tarayıcıda iki sekme açıkken jeton yenileme oturumu düşürüyordu (depodaki daha yeni oturum alınır; 429 geçici sayılır)",
+            "Wi-Fi bağlanırken açılışta geçici yenileme hatası geçerli oturumu silip şifre sorduruyordu"] },
     { surum: "1.639.0", tarih: "10.10.2026",
         eklenen: ["Tamir işi personelsiz açıldıysa üretim kartında personel seçilip verilebiliyor",
             "Proses / ara proses silerken kullanıldığı reçete ve üretim sayısıyla onay soruluyor",
@@ -4404,8 +4440,68 @@ function pgKimlik(id) {
 // SECRET anahtarı buraya ASLA yazmayın — o bütün güvenlik kurallarını atlar.
 //
 // Boş bırakılırsa uygulama eskisi gibi tarayıcı deposuyla çalışmaya devam eder; hiçbir şey bozulmaz.
-const SUPABASE_URL = "https://mqdgucoomgqcvhvgixbl.supabase.co";
-const SUPABASE_ANAHTAR = "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2";
+//
+// FİRMA BAĞLANTISI (v1.642.0 — kullanıcı: "Uygulamayı pazarlamak için nasıl yapmalıyım?" → "Başla"). Aynı uygulama
+// birden çok firmaya satılacak; HER FİRMANIN AYRI Supabase projesi var (veri karışma riski sıfır, bir firmanın
+// kuralı/yedeği ötekine dokunmaz). Hangi projeye bağlanılacağı CİHAZDA seçili firmadan (`firma:secim`) okunur;
+// seçim yoksa VARSAYILAN firma — uygulamanın ilk sahibinin projesi — kullanılır, böylece bugünkü cihazlarda hiçbir
+// şey değişmez. Seçim 032-firma'daki pencereden yapılır (firma kodu ya da adres + anahtar) ve sayfa yeniden yüklenir:
+// bağlantı açılışta BİR KEZ çözülür ve sabittir — çalışırken başka projeye kaymak bellekteki veriyi öteki firmaya
+// yazdırabilirdi.
+// Bu bölüm 030'un başında ve yalnız düz fonksiyon + sabit kullanıyor: SUPABASE_URL dosya yüklenirken hesaplanıyor,
+// sonraki dosyalardaki `const`lar o an henüz tanımlı değil.
+const VARSAYILAN_FIRMA = Object.freeze({
+    kod: "",
+    url: "https://mqdgucoomgqcvhvgixbl.supabase.co",
+    anahtar: "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2",
+});
+const FIRMA_SECIM_ANAHTARI = "firma:secim";
+// Supabase proje adresi: yalnız https://<ref>.supabase.co. Serbest adres kabul edilmez — kullanıcıyı sahte bir
+// sunucuya yönlendirip şifresini oraya yazdırmak (oltalama) bir bağlantıyla mümkün olurdu.
+function firmaAdresiGecerli(url) {
+    return /^https:\/\/[a-z0-9]{8,40}\.supabase\.co$/.test(String(url || ""));
+}
+// Anahtar: yalnız AÇIK (publishable / eski "anon" JWT) anahtar. SECRET anahtar (sb_secret_ ya da service_role JWT)
+// bütün güvenlik kurallarını atlar — biri yanlışlıkla yapıştırırsa cihaza kaydedilmeden REDDEDİLİR. Sonuç: null =
+// geçerli, metin = ret sebebi.
+function firmaAnahtariSorunu(anahtar) {
+    const a = String(anahtar || "").trim();
+    if (!a)
+        return "Anahtar boş";
+    if (/^sb_secret_/i.test(a))
+        return "Bu GİZLİ (secret) anahtar — asla kullanılmaz. Supabase > Settings > API Keys'teki Publishable anahtarı girin.";
+    if (/^sb_publishable_[A-Za-z0-9_-]{10,}$/.test(a))
+        return null;
+    const parca = a.split(".");
+    if (parca.length === 3) {
+        try {
+            const yuk = JSON.parse(atob(parca[1].replace(/-/g, "+").replace(/_/g, "/")));
+            if (yuk && yuk.role === "anon")
+                return null;
+            if (yuk && yuk.role === "service_role")
+                return "Bu service_role (gizli) anahtar — asla kullanılmaz. anon / publishable anahtarı girin.";
+        }
+        catch (e) { /* çözülemeyen JWT: aşağıda reddedilir */ }
+    }
+    return "Anahtar tanınmadı — Supabase > Settings > API Keys'teki Publishable anahtarı (sb_publishable_…) girin.";
+}
+function firmaBaglantisiGecerli(f) {
+    return !!(f && firmaAdresiGecerli(f.url) && !firmaAnahtariSorunu(f.anahtar));
+}
+// Cihazdaki seçim; bozuk ya da geçersizse yok sayılır (varsayılana düşer — sessizce yanlış projeye değil).
+function firmaSecimiOku() {
+    try {
+        const h = typeof localStorage !== "undefined" && localStorage ? localStorage.getItem(FIRMA_SECIM_ANAHTARI) : null;
+        const f = h ? JSON.parse(h) : null;
+        return firmaBaglantisiGecerli(f) ? { kod: String(f.kod || ""), url: f.url, anahtar: String(f.anahtar).trim(), ad: f.ad || "" } : null;
+    }
+    catch (e) {
+        return null;
+    }
+}
+const AKTIF_FIRMA = firmaSecimiOku() || VARSAYILAN_FIRMA;
+const SUPABASE_URL = AKTIF_FIRMA.url;
+const SUPABASE_ANAHTAR = AKTIF_FIRMA.anahtar;
 const supabaseAcikMi = () => !!(SUPABASE_URL && SUPABASE_ANAHTAR);
 // =============================================================================================
 // KİMLİK DOĞRULAMA
@@ -4692,6 +4788,16 @@ function bulutGirisSebebi(hata) {
 async function jetonTazele() {
     if (!_oturum || !_oturum.yenileme)
         return null;
+    // ÖTEKİ SEKME YENİLEMİŞSE ONUN OTURUMU (v1.640.0, denetim): aynı tarayıcıda iki sekme açıkken her sekme bellekteki
+    // kendi yenileme jetonuyla yeniliyordu; Supabase yenileme jetonunu döndürdüğü için ikinci sekmenin eski jetonu
+    // reddediliyor ("already used") ve `oturumYaz(null)` ORTAK anahtarı silip iki sekmeyi de düşürüyordu. Depodaki kayıt
+    // daha yeniyse önce o alınır; erişim jetonu hâlâ geçerliyse yenilemeye hiç gidilmez.
+    const kayitli = oturumOku();
+    if (kayitli && kayitli.yenileme && kayitli.yenileme !== _oturum.yenileme && (kayitli.sonaErme || 0) >= (_oturum.sonaErme || 0)) {
+        _oturum = kayitli;
+        if ((kayitli.sonaErme || 0) > Date.now() + 30000)
+            return _oturum;
+    }
     // Açılışta on tablo aynı anda çekiliyor. Her biri ayrı yenileme başlatsaydı, ilk dönen
     // yenileme jetonu diğerlerini geçersiz kılar ve oturum kendi kendini düşürürdü.
     if (!_yenilemeIslemi) {
@@ -4705,7 +4811,8 @@ async function jetonTazele() {
             // oturum durur, bu istek jetonsuz gider ve bir sonraki istek yenilemeyi yeniden dener (dakikalık otomatik
             // yeniden gönderim bekleyen kaydı götürür).
             const ham = String((e && e.message) || e || "");
-            if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|timeout/i.test(ham)) {
+            // 429 (hız sınırı) da geçicidir (v1.640.0).
+            if (/failed to fetch|networkerror|load failed|network request failed|HTTP 5\d\d|HTTP 429|too many|timeout/i.test(ham)) {
                 console.warn("Jeton yenilenemedi (geçici), oturum korunuyor:", ham);
                 return null;
             }
@@ -4804,6 +4911,11 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
         // 42501 = Postgres "yetersiz yetki". Bizde tek sebebi var: rls-kimlik.sql ile anonim rolün
         // yetkileri kaldırıldı, uygulama ise GİRİŞ YAPILMADAN (anon) yazmaya çalışıyor. Teknik
         // metin yerine ne olduğu ve ne yapılacağı yazılıyor; ham hata sonda, küçük.
+        // MODÜL YETKİSİ / YÖNETİCİ KURALI (v1.642.0): rls-yazma.sql, rls-rol.sql ve kurulum_betigi() da 42501 döndürüyor ama
+        // sebep "giriş yapılmamış" DEĞİL — kullanıcının o işe yetkisi yok. Sunucunun Türkçe mesajı olduğu gibi gösterilir.
+        const kuralMesaji = (metin.match(/"message"\s*:\s*"((?:Bu işlem için yetkiniz yok|[^"]*yalnız Yönetici)[^"]*)"/) || [])[1];
+        if (kuralMesaji)
+            throw new Error(kuralMesaji);
         if (/42501|permission denied/i.test(metin)) {
             const tablo = (metin.match(/for table (\w+)/) || [])[1] || "";
             throw new Error(`Buluta yazma yetkisi yok${tablo ? ` (${tablo})` : ""} — kimlik koruması açık ama giriş yapılmamış. `
@@ -4919,6 +5031,276 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
             }
         }),
     ]).then(() => yerel);
+}
+// =============================================================================================
+// FİRMA SEÇİMİ (v1.642.0 — kullanıcı: "Uygulamayı pazarlamak için nasıl yapmalıyım?" → firma kodu yapısı → "Başla")
+//
+// Bağlantının kendisi 030'un başında (AKTIF_FIRMA, SUPABASE_URL): açılışta cihazdaki `firma:secim`den bir kez
+// çözülür. Bu dosya o seçimi DEĞİŞTİREN yolları taşır:
+//   · Firma kodu → `firmalar.json` (GitHub Pages'te, uygulamanın yanında). Rehberde kod düz yazılmaz, ÖZETİ (SHA-256)
+//     anahtar olur: depo herkese açık; müşteri listesi oradan okunamasın. Değer yalnız proje adresi + AÇIK anahtar —
+//     ikisi de zaten tarayıcıya gömülmek üzere tasarlanmış; güvenlik RLS + giriş jetonunda.
+//   · Gelişmiş: adres + anahtar elle (rehbere eklenmemiş yeni kurulum için).
+//   · Bağlantı: `?firma=KOD` — müşteriye tek tıklık bağlantı. Yalnız REHBERDEKİ kodlar çözülür; bir bağlantıyla
+//     kullanıcıyı keyfi bir sunucuya (oltalama) göndermek mümkün değil, adres de yalnız *.supabase.co olabilir.
+//
+// DEĞİŞTİRME KURALLARI (veri güvenliği):
+//   1. Buluta gönderilmemiş kayıt (bekleyen yazma / bekleyen kayıt defteri) varken firma DEĞİŞTİRİLEMEZ: defter bu
+//      cihazın tek kopyası ve firmadan bağımsız anahtarlarda duruyor — değişimden sonra ÖTEKİ firmanın buluta
+//      gönderilirdi (v1.556 "Jut" korumasını gevşetmemek için).
+//   2. Firmaya özel doğrudan localStorage anahtarları (oturum, tema önbelleği, tanım silinenleri) eski firmanın
+//      saklama kutusuna (`firma:sakli:<ref>`) kaldırılır, yeni firmanınki geri konur — iki firma arasında gidip
+//      gelen cihazda oturum ve görünüm kaybolmaz, ama birbirine de karışmaz. Yerel veri deposu zaten firma başına
+//      ayrı (depo-koprusu.js).
+//   3. Bağlantı denenmeden kaydedilmez (`/auth/v1/settings` — anahtar o projeye ait mi).
+//   4. Değişimden sonra sayfa yeniden yüklenir: bellekteki veri eski firmanın; çalışırken başka projeye kaymak onu
+//      yeni firmaya yazdırabilirdi.
+// =============================================================================================
+const FIRMA_REHBERI_ADRESLERI = ["firmalar.json", "https://mtalay61-coder.github.io/atolye/firmalar.json"];
+const FIRMAYA_OZEL_ANAHTARLAR = [
+    "atolye:oturum", "oturum:aktif", "oturum:sonEtkinlik", "firma:gorunum", "tanim:silinenler", "bekleyen:yazma", "bekleyen:kayitlar",
+];
+// Kod: küçük harf, Türkçe harfler sadeleşir, yalnız [a-z0-9-]. "Öz Deri" → "ozderi" (kullanıcı nasıl yazarsa yazsın
+// aynı özete düşsün).
+function firmaKoduNormal(kod) {
+    const harita = { "ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u" };
+    return String(kod || "").trim().toLocaleLowerCase("tr-TR")
+        .replace(/[çğıöşü]/g, (h) => harita[h] || h)
+        .replace(/[^a-z0-9-]/g, "");
+}
+// Proje kimliği (adresin alt alan adı): yerel depo, saklama kutusu ve "aynı firma mı" karşılaştırması bununla.
+function firmaRefi(url) {
+    const m = /^https:\/\/([a-z0-9]{8,40})\.supabase\.co$/.exec(String(url || ""));
+    return m ? m[1] : "";
+}
+async function firmaKoduOzeti(kod) {
+    const veri = new TextEncoder().encode("atolye-firma:" + firmaKoduNormal(kod));
+    const ozet = await crypto.subtle.digest("SHA-256", veri);
+    return Array.from(new Uint8Array(ozet)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+// Rehberden kodu çözer: { kod, url, anahtar } | null (rehber okundu, kod yok). Rehber hiç okunamazsa hata.
+async function firmaKoduCoz(kod) {
+    const n = firmaKoduNormal(kod);
+    if (n.length < 3)
+        throw new Error("Firma kodu en az 3 harf ya da rakam olmalı");
+    const ozet = await firmaKoduOzeti(n);
+    let sonHata = null;
+    for (const adres of FIRMA_REHBERI_ADRESLERI) {
+        try {
+            const y = await fetch(`${adres}?t=${Date.now()}`, { cache: "no-store" });
+            if (!y.ok)
+                throw new Error(`HTTP ${y.status}`);
+            const rehber = await y.json();
+            const kayit = rehber && rehber.firmalar && rehber.firmalar[ozet];
+            if (!kayit)
+                return null;
+            return { kod: n, url: String(kayit.url || ""), anahtar: String(kayit.anahtar || "").trim() };
+        }
+        catch (e) {
+            sonHata = e;
+        }
+    }
+    throw new Error(`Firma listesi okunamadı (${(sonHata && sonHata.message) || "bağlantı yok"})`);
+}
+// Anahtar o projeye ait mi? Auth ayarları açık anahtarla okunabilen, veri içermeyen tek uç.
+async function firmaBaglantisiniDene(f) {
+    let y;
+    try {
+        y = await fetch(`${f.url}/auth/v1/settings`, { headers: { apikey: f.anahtar } });
+    }
+    catch (e) {
+        throw new Error("Sunucuya ulaşılamadı — adresi ve internet bağlantısını kontrol edin");
+    }
+    if (y.status === 401 || y.status === 403)
+        throw new Error("Anahtar bu projeye ait değil");
+    if (!y.ok)
+        throw new Error(`Sunucu yanıtı: HTTP ${y.status}`);
+    return true;
+}
+// Değişimi engelleyen bir şey var mı? Metin = sebep, null = serbest.
+function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayit = bekleyenKayitlariOku()) {
+    const sayi = Object.keys(bekleyenYazma || {}).length + Object.keys(bekleyenKayit || {}).length;
+    if (!sayi)
+        return null;
+    return `Bu cihazda buluta gönderilmemiş ${sayi} kayıt grubu var. Önce internete bağlanıp gönderin; gönderilmemiş kayıt varken firma değiştirilemez (kayıt öteki firmanın bulutuna gidebilirdi).`;
+}
+// Seçimi değiştirir (sayfayı YENİDEN YÜKLEMEZ — çağıran yükler). `yeni` null ya da varsayılan proje → varsayılan.
+// Dönüş: değişti mi. Engel varsa hata fırlatır.
+function firmaSeciminiDegistir(yeni, depo = localStorage) {
+    const engel = firmaDegisimEngeli();
+    if (engel)
+        throw new Error(engel);
+    if (yeni && !firmaBaglantisiGecerli(yeni))
+        throw new Error(firmaAnahtariSorunu(yeni.anahtar) || "Adres geçersiz — https://<proje>.supabase.co olmalı");
+    const varsayilanRef = firmaRefi(VARSAYILAN_FIRMA.url);
+    const hedef = yeni && firmaRefi(yeni.url) !== varsayilanRef ? yeni : null;
+    const eskiRef = firmaRefi(AKTIF_FIRMA.url);
+    const yeniRef = hedef ? firmaRefi(hedef.url) : varsayilanRef;
+    if (yeniRef === eskiRef)
+        return false;
+    const sakli = {};
+    for (const a of FIRMAYA_OZEL_ANAHTARLAR) {
+        const d = depo.getItem(a);
+        if (d !== null)
+            sakli[a] = d;
+        depo.removeItem(a);
+    }
+    depo.setItem(`firma:sakli:${eskiRef}`, JSON.stringify(sakli));
+    try {
+        const geri = JSON.parse(depo.getItem(`firma:sakli:${yeniRef}`) || "{}") || {};
+        // Bekleyen defter GERİ KONMAZ: değişim ancak defter boşken yapılabiliyor, saklanan hâl de boş olmalı; olmayan bir
+        // ihtimalde bile eski defteri canlandırmak, gönderilmiş kaydı ikinci kez göndermeye yol açardı.
+        for (const [a, d] of Object.entries(geri))
+            if (!/^bekleyen:/.test(a))
+                depo.setItem(a, d);
+    }
+    catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
+    depo.removeItem(`firma:sakli:${yeniRef}`);
+    if (hedef)
+        depo.setItem(FIRMA_SECIM_ANAHTARI, JSON.stringify({ kod: firmaKoduNormal(hedef.kod), url: hedef.url, anahtar: String(hedef.anahtar).trim() }));
+    else
+        depo.removeItem(FIRMA_SECIM_ANAHTARI);
+    return true;
+}
+// Değiştir + adres çubuğundaki ?firma= parametresini sil + yeniden yükle.
+function firmaDegistirVeYenile(yeni) {
+    const degisti = firmaSeciminiDegistir(yeni);
+    try {
+        const u = new URL(location.href);
+        if (u.searchParams.has("firma")) {
+            u.searchParams.delete("firma");
+            history.replaceState(null, "", u.toString());
+        }
+    }
+    catch (e) { /* file:// ya da eski tarayıcı: parametre kalır, kod aynı olduğu için pencere yeniden açılmaz */ }
+    if (degisti)
+        location.reload();
+    return degisti;
+}
+function adresFirmaParametresi() {
+    try {
+        return new URLSearchParams(location.search).get("firma") || "";
+    }
+    catch (e) {
+        return "";
+    }
+}
+function FirmaPenceresi({ onKapat, kodBaslangic = "" }) {
+    const [kod, setKod] = useState(kodBaslangic);
+    const [gelismis, setGelismis] = useState(false);
+    const [adres, setAdres] = useState("");
+    const [anahtar, setAnahtar] = useState("");
+    const [bekliyor, setBekliyor] = useState(false);
+    const [hata, setHata] = useState(null);
+    const engel = firmaDegisimEngeli();
+    const varsayilanda = !firmaSecimiOku();
+    async function uygula(hedef) {
+        setBekliyor(true);
+        setHata(null);
+        try {
+            let f = hedef;
+            if (f === undefined) {
+                if (gelismis) {
+                    f = { kod: firmaKoduNormal(kod), url: adres.trim().replace(/\/+$/, ""), anahtar: anahtar.trim() };
+                    if (!firmaAdresiGecerli(f.url))
+                        throw new Error("Adres https://<proje>.supabase.co biçiminde olmalı");
+                    const sorun = firmaAnahtariSorunu(f.anahtar);
+                    if (sorun)
+                        throw new Error(sorun);
+                }
+                else {
+                    f = await firmaKoduCoz(kod);
+                    if (!f)
+                        throw new Error("Bu kodla kayıtlı firma bulunamadı — kodu kontrol edin");
+                    if (!firmaBaglantisiGecerli(f))
+                        throw new Error("Firma kaydı bozuk — yöneticinize başvurun");
+                }
+                await firmaBaglantisiniDene(f);
+            }
+            if (!firmaDegistirVeYenile(f)) {
+                setBekliyor(false);
+                onKapat();
+            }
+        }
+        catch (e) {
+            setBekliyor(false);
+            setHata(String((e && e.message) || e));
+        }
+    }
+    return (React.createElement("div", { "data-firma-penceresi": "1", onClick: onKapat, style: { position: "fixed", inset: 0, background: "rgba(0,0,0,.45)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
+        React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { background: "var(--erp-panel)", borderRadius: "var(--erp-r-lg)", padding: 24, width: 400, maxWidth: "100%", fontFamily: "'Inter', sans-serif" } },
+            React.createElement("div", { style: { fontSize: 17, fontWeight: 700, marginBottom: 4 } }, "Firma se\u00E7"),
+            React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 14 } },
+                "\u015Eu an: ",
+                React.createElement("b", { "data-firma-aktif": "1" }, AKTIF_FIRMA.kod || (varsayilanda ? "ana firma" : firmaRefi(AKTIF_FIRMA.url))),
+                ". Firma kodunu size uygulamay\u0131 kuran ki\u015Fi verir."),
+            engel ? (React.createElement("div", { "data-firma-engel": "1", style: { fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 } }, engel)) : null,
+            React.createElement("div", { style: { display: "grid", gap: 10 } },
+                React.createElement(Field, { label: "Firma kodu" },
+                    React.createElement("input", { "data-firma-kodu": "1", value: kod, onChange: (e) => setKod(e.target.value), style: inputStyle, autoFocus: true, onKeyDown: (e) => e.key === "Enter" && !bekliyor && !engel && uygula(), placeholder: "\u00F6rn. ozderi" })),
+                React.createElement("button", { type: "button", className: "btn-ghost", style: { justifySelf: "start", fontSize: 12, padding: "2px 6px" }, onClick: () => setGelismis(!gelismis) },
+                    gelismis ? "▾" : "▸",
+                    " Geli\u015Fmi\u015F: sunucu adresi ve anahtar"),
+                gelismis ? (React.createElement(React.Fragment, null,
+                    React.createElement(Field, { label: "Supabase proje adresi" },
+                        React.createElement("input", { "data-firma-adres": "1", value: adres, onChange: (e) => setAdres(e.target.value), style: inputStyle, placeholder: "https://xxxx.supabase.co" })),
+                    React.createElement(Field, { label: "Publishable anahtar (gizli anahtar DE\u011E\u0130L)" },
+                        React.createElement("input", { "data-firma-anahtar": "1", value: anahtar, onChange: (e) => setAnahtar(e.target.value), style: inputStyle, placeholder: "sb_publishable_\u2026" })))) : null),
+            hata ? (React.createElement("div", { "data-firma-hata": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } }, hata)) : null,
+            React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" } },
+                React.createElement("button", { type: "button", className: "btn-primary", "data-firma-uygula": "1", disabled: bekliyor || !!engel || (!gelismis && firmaKoduNormal(kod).length < 3), onClick: () => uygula() }, bekliyor ? "Kontrol ediliyor…" : "Bağlan"),
+                React.createElement("button", { type: "button", className: "btn-ghost", onClick: onKapat }, "Vazge\u00E7"),
+                !varsayilanda ? (React.createElement("button", { type: "button", className: "btn-ghost", "data-firma-ana": "1", disabled: bekliyor || !!engel, style: { marginLeft: "auto", fontSize: 12 }, onClick: () => uygula(null) }, "Ana firmaya d\u00F6n")) : null))));
+}
+// Giriş ekranlarının ve Tanımlar'ın altındaki satır: hangi firmadasın + Değiştir. `?firma=KOD` ile açıldıysa ve kod
+// bugünkünden farklıysa pencere kodla dolu kendiliğinden açılır.
+function FirmaSatiri({ kucuk = false }) {
+    const parametre = adresFirmaParametresi();
+    const farkliParametre = !!parametre && firmaKoduNormal(parametre) !== (AKTIF_FIRMA.kod || "");
+    const [acik, setAcik] = useState(farkliParametre);
+    const ad = AKTIF_FIRMA.kod || (firmaSecimiOku() ? firmaRefi(AKTIF_FIRMA.url) : "");
+    return (React.createElement(React.Fragment, null,
+        React.createElement("div", { "data-firma-satiri": "1", style: { fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
+            React.createElement("span", null,
+                "Firma: ",
+                React.createElement("b", null, ad || "ana firma")),
+            React.createElement("button", { type: "button", className: "btn-ghost", "data-firma-degistir": "1", style: { padding: "1px 6px", fontSize: kucuk ? 11 : 12 }, onClick: () => setAcik(true) }, "De\u011Fi\u015Ftir")),
+        acik ? React.createElement(FirmaPenceresi, { kodBaslangic: farkliParametre ? parametre : "", onKapat: () => setAcik(false) }) : null));
+}
+// YENİ FİRMA KURULUM DOSYASI (v1.642.0): çalışan veritabanının yapısını (tablo, kural, tetikleyici, yetki) tek SQL
+// dosyası olarak indirir — yeni firmanın boş Supabase projesinde bir kez çalıştırılır. Sunucu tarafı
+// `kurulum-betigi.sql` (bir kez kurulur); yalnız Yönetici çağırabilir (sunucu reddeder, mesajı burada görünür).
+function KurulumDosyasiDugmesi() {
+    const [durum, setDurum] = useState(null); // null | "bekliyor" | { hata } | { tamam }
+    async function indir() {
+        setDurum("bekliyor");
+        try {
+            const metin = await supabaseIstek("rpc/kurulum_betigi", { method: "POST", body: "{}" });
+            if (typeof metin !== "string" || !/create table/i.test(metin))
+                throw new Error("Sunucudan boş yanıt geldi");
+            const blob = new Blob([metin], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `atolye-kurulum-${new Date().toISOString().slice(0, 10)}.sql`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            setDurum({ tamam: true });
+        }
+        catch (e) {
+            const m = String((e && e.message) || e);
+            setDurum({ hata: /404|PGRST202|kurulum_betigi/.test(m) && !/Yönetici/.test(m)
+                    ? "Sunucuda kurulum fonksiyonu yok — önce kurulum-betigi.sql'i bu projede (Supabase › SQL Editor) bir kez çalıştırın."
+                    : m });
+        }
+    }
+    return (React.createElement("div", { style: { marginBottom: 12, fontSize: 12, color: "var(--erp-text-2)" } },
+        React.createElement("button", { type: "button", className: "btn-ghost", "data-kurulum-indir": "1", disabled: durum === "bekliyor", onClick: indir, style: { fontSize: 12 } }, durum === "bekliyor" ? "Hazırlanıyor…" : "Yeni firma kurulum dosyasını indir (.sql)"),
+        React.createElement("span", { style: { marginLeft: 8, color: "var(--erp-text-3)" } }, "Yaln\u0131z Y\u00F6netici \u00B7 veri i\u00E7ermez, yaln\u0131z tablo ve kurallar"),
+        durum && durum.hata ? React.createElement("div", { "data-kurulum-hata": "1", style: { marginTop: 6, color: "var(--erp-warn)" } }, durum.hata) : null,
+        durum && durum.tamam ? React.createElement("div", { style: { marginTop: 6, color: "var(--erp-ok, #2F6B4F)" } }, "\u0130ndirildi \u2014 yeni firman\u0131n bo\u015F projesinde SQL Editor'da \u00E7al\u0131\u015Ft\u0131r\u0131n.") : null));
 }
 // NOT: Otomatik camelCase -> snake_case çevirisi KALDIRILDI. Kaydı olduğu gibi çevirmek,
 // `variants` ve `hareketler` gibi tabloda KARŞILIĞI OLMAYAN alanları da sütun sanıp göndermeye
@@ -6217,7 +6599,7 @@ function uretimParcaKodlari(u) {
 //
 // Kalem seviyesindeki kutu tercihi (ambalajRengiUygula) burada da uygulanır — aksi halde ekranda
 // reçetedeki varsayılan kutunun stoğu görünür, oysa o siparişte başka bir kutu kullanılacaktır.
-function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
+function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez, kurlar) {
     const sonuc = [];
     const index = {};
     let recetesizKalem = 0;
@@ -6248,6 +6630,8 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
                     // ama sebebi "stok bitti" değil, "böyle bir varyant yok"tur — ikisi farklı sorunlardır.
                     varyantYok: !varyant,
                     alisFiyati: hm ? (hm.alisFiyati || 0) : 0,
+                    // TL karşılığı kurla (v1.640.0, denetim): eksik maliyeti dövizli fiyatı TL sayıyordu.
+                    alisFiyatiTL: hm ? (hammaddeBirimFiyati(hm, etkinRenk, r.beden, kurlar || {}).tl || 0) : 0,
                     // Bu SİPARİŞE ayrılmış miktar (alış rezervasyonu + stok rezervasyonu, tüketilen düşülmüş).
                     rezerve: 0,
                 });
@@ -6265,7 +6649,7 @@ function siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRez) {
         g.rezerve = Math.round(bizim.reduce((t, x) => t + x.kalan, 0) * 1000) / 1000;
         g.rezerveAcik = Math.round(bizim.reduce((t, x) => t + x.acik, 0) * 1000) / 1000;
         g.eksik = Math.round(Math.max(0, g.gereken - g.mevcutStok) * 1000) / 1000;
-        g.eksikMaliyet = Math.round(g.eksik * g.alisFiyati * 100) / 100;
+        g.eksikMaliyet = Math.round(g.eksik * (g.alisFiyatiTL || 0) * 100) / 100;
         // SATIN ALMA DURUMU (v1.632.0): Planlama'daki gibi — bu satış siparişi için verilmiş alış siparişlerinde henüz teslim
         // alınmamış (yolda) miktar. Durum standardı (HAMMADDE_DURUMLARI): yeterli / yolda / kismen / eksik.
         const satinAlma = hammaddeSatinAlmaDurumu(g.hammaddeUrunId, g.renk, g.beden, new Set([siparis.id]), tumSiparisler || []);
@@ -7353,6 +7737,7 @@ function veriBoyutu(deger) {
 const UYGULAMA_DIS_ANAHTARLARI = new Set([
     "firma:gorunum", "oturum:aktif", "bekleyen:yazma", "bekleyen:kayitlar", "tanimlar:acikBasliklar", "tanim:silinenler",
     "gorunum:boyut", "ustMenu:kademe", "mobil:duzen", "cari:ekstre-sade", "siparis:barkodPaneli", "github:token", "github:ayar",
+    "oturum:sonEtkinlik",
 ]);
 function depoKullanimi() {
     if (typeof localStorage === "undefined" || !localStorage)
@@ -7776,7 +8161,9 @@ function IlkKurulumEkrani({ onOlustur }) {
                     React.createElement("input", { type: "password", value: sifreTekrar, onChange: (e) => setSifreTekrar(e.target.value), style: inputStyle })),
                 sifre && sifreTekrar && sifre !== sifreTekrar && (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-warn)" } }, "\u015Eifreler e\u015Fle\u015Fmiyor"))),
             hata && (React.createElement("div", { "data-giris-hatasi": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", border: "1px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } }, hata)),
-            React.createElement("button", { className: "btn-primary", style: { width: "100%", justifyContent: "center", marginTop: 20, opacity: bekliyor ? 0.6 : 1 }, onClick: gonder, disabled: bekliyor || !ad.trim() || !kullaniciAdi.trim() || !sifre || sifre !== sifreTekrar }, bekliyor ? "Bulut hesabı doğrulanıyor…" : "Yönetici Hesabı Oluştur ve Başla"))));
+            React.createElement("button", { className: "btn-primary", style: { width: "100%", justifyContent: "center", marginTop: 20, opacity: bekliyor ? 0.6 : 1 }, onClick: gonder, disabled: bekliyor || !ad.trim() || !kullaniciAdi.trim() || !sifre || sifre !== sifreTekrar }, bekliyor ? "Bulut hesabı doğrulanıyor…" : "Yönetici Hesabı Oluştur ve Başla"),
+            React.createElement("div", { style: { marginTop: 14 } },
+                React.createElement(FirmaSatiri, { kucuk: true })))));
 }
 function GirisEkrani({ kullanicilar, onGiris, showToast }) {
     const [kullaniciAdi, setKullaniciAdi] = useState("");
@@ -7830,7 +8217,9 @@ function GirisEkrani({ kullanicilar, onGiris, showToast }) {
                 React.createElement(Field, { label: "\u015Eifre" },
                     React.createElement("input", { type: "password", value: sifre, onChange: (e) => setSifre(e.target.value), style: inputStyle, onKeyDown: (e) => e.key === "Enter" && girisYap() }))),
             hata && (React.createElement("div", { "data-giris-hatasi": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", border: "1px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } }, hata)),
-            React.createElement("button", { className: "btn-primary", disabled: bekliyor, style: { width: "100%", justifyContent: "center", marginTop: 20, opacity: bekliyor ? 0.6 : 1 }, onClick: girisYap }, bekliyor ? "Doğrulanıyor…" : "Giriş Yap"))));
+            React.createElement("button", { className: "btn-primary", disabled: bekliyor, style: { width: "100%", justifyContent: "center", marginTop: 20, opacity: bekliyor ? 0.6 : 1 }, onClick: girisYap }, bekliyor ? "Doğrulanıyor…" : "Giriş Yap"),
+            React.createElement("div", { style: { marginTop: 14 } },
+                React.createElement(FirmaSatiri, { kucuk: true })))));
 }
 // ================= BULUT ÖN GİRİŞ EKRANI (2. aşama) =================
 //
@@ -7881,7 +8270,9 @@ function BulutGirisEkrani({ sebep, onGiris, showToast }) {
             React.createElement("button", { className: "btn-primary", disabled: bekliyor, style: { width: "100%", justifyContent: "center", marginTop: 20, opacity: bekliyor ? 0.6 : 1 }, onClick: girisYap }, bekliyor ? "Doğrulanıyor…" : "Giriş Yap"),
             sebep && (React.createElement("div", { style: { marginTop: 14, fontSize: 11, color: "var(--erp-text-3)" }, title: sebep }, sebep === "oturum-dustu"
                 ? "Oturumunuz kapandı. Giriş yapınca bu cihazda bekleyen kayıtlar buluta gönderilir — hiçbir şey kaybolmadı."
-                : "Veritabanı anahtarla okunamadı (2. aşama etkin). Bulut hesabınız yoksa yöneticinize başvurun.")))));
+                : "Veritabanı anahtarla okunamadı (2. aşama etkin). Bulut hesabınız yoksa yöneticinize başvurun.")),
+            React.createElement("div", { style: { marginTop: 14 } },
+                React.createElement(FirmaSatiri, { kucuk: true })))));
 }
 function StitchDivider({ color = "var(--erp-border)" }) {
     return (React.createElement("div", { "aria-hidden": "true", style: {
@@ -8744,9 +9135,10 @@ async function siparisEpostaGonder(siparis, cari, firmaBilgileri, stok, showToas
     const metin = siparisMetinOzeti(siparis, cari).replace(/\*/g, "");
     const govde = siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok);
     const blob = await htmldenPdfBlob(govde);
-    // 1) SMTP kuruluysa doğrudan gönder (isteğe bağlı yol).
+    // 1) SMTP kuruluysa doğrudan gönder (isteğe bağlı yol). Şifre sunucu sırrında (v1.641.0): kurulu sayılmak için
+    //    sunucu + kullanıcı yeter; fonksiyon şifreyi Supabase sırrından okur.
     const smtp = (firmaBilgileri && firmaBilgileri.eposta) || {};
-    if (blob && kime && smtp.sunucu && smtp.kullanici && smtp.sifre) {
+    if (blob && kime && smtp.sunucu && smtp.kullanici) {
         const base64 = await new Promise((coz, red) => { const r = new FileReader(); r.onload = () => coz(String(r.result).split(",")[1]); r.onerror = red; r.readAsDataURL(blob); });
         const sonuc = await epostaGonder({ kime, konu, metin, dosyaAdi: `${ad}.pdf`, pdfBase64: base64 });
         if (sonuc.tamam) {
@@ -8864,7 +9256,7 @@ async function belgeyiPaylas(yol, { govdeHTML, govdeSecici, dosyaAdi, cari, konu
     if (yol === "eposta") {
         const kime = (cari && cari.eposta) || "";
         const smtp = (firmaBilgileri && firmaBilgileri.eposta) || {};
-        if (blob && kime && smtp.sunucu && smtp.kullanici && smtp.sifre) {
+        if (blob && kime && smtp.sunucu && smtp.kullanici) {
             const base64 = await new Promise((coz, red) => { const r = new FileReader(); r.onload = () => coz(String(r.result).split(",")[1]); r.onerror = red; r.readAsDataURL(blob); });
             const sonuc = await epostaGonder({ kime, konu: konu || ad, metin, dosyaAdi: `${ad}.pdf`, pdfBase64: base64 });
             if (sonuc.tamam) {
@@ -16057,7 +16449,11 @@ function useAcilisYukleme(d) {
                         // bulut giriş ekranı. Ağ hatası (internet yok) ise eskisi gibi yerel kopya.
                         // İki okuma yolu iki biçimde hata veriyor: `supabaseIstek` "Supabase 401: …",
                         // `supabaseTumSatirlar` "tanimlar: HTTP 403". İkisi de yakalanıyor.
-                        if (/\b(Supabase|HTTP) 40[13]\b|permission denied|Buluta yazma yetkisi yok|JWT|jwt/.test(mesaj)) {
+                        // YENİLEME GEÇİCİ HATAYLA DÜŞTÜYSE OTURUM SİLİNMEZ (v1.640.0, denetim): Wi-Fi bağlanırken `jetonTazele` "Failed to
+                        // fetch" alıp null dönüyor (oturumu koruyor), okuma 401 ile düşüyor ve burası geçerli oturumu silip şifre
+                        // sorduruyordu. Oturum hâlâ duruyorsa (yenileme açıkça reddedilmedi) yerel kopyaya düşülür; bir sonraki
+                        // istek yenilemeyi yeniden dener.
+                        if (/\b(Supabase|HTTP) 40[13]\b|permission denied|Buluta yazma yetkisi yok|JWT|jwt/.test(mesaj) && !oturumVarMi()) {
                             oturumYaz(null);
                             setBulutGirisGerekli({ sebep: mesaj });
                             setLoading(false);
@@ -20867,10 +21263,55 @@ function AtolyeERP() {
         setBulutGirisAyrinti(null);
         setBulutAyrintiAcik(false);
         setAktifKullanici(null);
+        try {
+            window.localStorage.removeItem("oturum:sonEtkinlik");
+        }
+        catch (e) { /* */ }
     };
     const [onayPaneliAcik, setOnayPaneliAcik] = useState(false);
     const bekleyenOnaylar = onaylar.filter((o) => o.durum === "Bekliyor");
     const girisSistemiAktif = !!tanimlar.girisAktifMi;
+    // HAREKETSİZLİKTE OTOMATİK ÇIKIŞ (v1.641.0, denetim — kullanıcı: güvenlik maddeleri). Sayfa yenilenince 12 saatlik
+    // `oturum:aktif` süresi zaten işliyor; AÇIK BIRAKILAN sekme ise süresiz oturumda kalıyordu — ortak tablette ilk gelenin
+    // önüne düşüyordu. Son dokunuş/tuş zamanı dakikada en çok bir kez yerel anahtara yazılır; açılışta ve dakikada bir
+    // bakılır: Tanımlar'daki SAAT aşıldıysa çıkış. 0 = kapalı.
+    const otomatikCikisSaat = Number((tanimlar.firmaBilgileri || {}).otomatikCikisSaat) || 0;
+    useEffect(() => {
+        if (!girisSistemiAktif || !aktifKullanici || !(otomatikCikisSaat > 0))
+            return undefined;
+        const ANAHTAR = "oturum:sonEtkinlik";
+        const oku = () => { try {
+            return Number(window.localStorage.getItem(ANAHTAR)) || 0;
+        }
+        catch (e) {
+            return 0;
+        } };
+        const yaz = () => { try {
+            window.localStorage.setItem(ANAHTAR, String(Date.now()));
+        }
+        catch (e) { /* */ } };
+        let sonYazim = 0;
+        const etkinlik = () => { const t = Date.now(); if (t - sonYazim > 60000) {
+            sonYazim = t;
+            yaz();
+        } };
+        const kontrol = () => {
+            const son = oku();
+            if (!son) {
+                yaz();
+                return;
+            }
+            if (Date.now() - son > otomatikCikisSaat * 3600000) {
+                showToast(`${otomatikCikisSaat} saat hareketsizlik — güvenlik için çıkış yapıldı`); // bayat-muaf: showToast kararlı
+                kullaniciCikisYap(); // bayat-muaf: çıkış işi her çizimde aynı (jeton + yerel anahtarlar), eski kapanış da doğru çalışır
+            }
+        };
+        kontrol();
+        window.addEventListener("pointerdown", etkinlik);
+        window.addEventListener("keydown", etkinlik);
+        const zamanlayici = setInterval(kontrol, 60000);
+        return () => { window.removeEventListener("pointerdown", etkinlik); window.removeEventListener("keydown", etkinlik); clearInterval(zamanlayici); };
+    }, [girisSistemiAktif, !!aktifKullanici, otomatikCikisSaat]); // bayat-muaf: kullaniciCikisYap/showToast her çizimde aynı işi yapar
     // Açılışta oturumu geri yükle: tanımlar (dolayısıyla kullanıcı listesi) hazır olduğunda bir kez.
     const oturumGeriYuklendi = useRef(false);
     useEffect(() => {
@@ -21672,7 +22113,7 @@ function AtolyeERP() {
                             return true;
                         }, cekGorselleri: cekGorselleri, onCekGorselKaydet: cekGorselKaydet, muhasebe: muhasebe, onSave: saveMuhasebe, onCopaAt: copaAt, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onayliIslem: muhasebeOnayliIslem, onOnayliIslemBitti: () => setMuhasebeOnayliIslem(null), showToast: showToast, cariler: cariler, onCarilerGuncelle: saveCariler }))),
                     React.createElement(GizliModul, { aktif: tab === "planlama" },
-                        React.createElement(PlanlamaModule, { siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, asortiler: tanimlar.asortiler || [], onGoToSiparis: sipariseGit, 
+                        React.createElement(PlanlamaModule, { kurlar: muhasebe.kurlar || {}, siparisler: siparisler, stok: stok, uretim: uretim, cariler: cariler, asortiler: tanimlar.asortiler || [], onGoToSiparis: sipariseGit, 
                             // Ürün kimliği KULLANILIYOR: eskiden yalnızca sekme değiştiriliyordu, kullanıcı
                             // tıkladığı ürünü Stok listesinde elle aramak zorunda kalıyordu.
                             onGoToUrun: (urunId) => uruneGit(urunId, null, { tab: "planlama", etiket: "Planlamaya dön" }), onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlaHammaddeSatinAlma: planlaHammaddeSatinAlma, onPlanlamaTemizle: planlamaTemizle, onAsortiOlustur: asortiOlustur }))))),
@@ -24777,7 +25218,11 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                 React.createElement(Field, { label: "Kullan\u0131c\u0131 (e-posta adresi)" },
                                     React.createElement("input", { value: e.kullanici || "", placeholder: "atolye@gmail.com", onChange: (ev) => guncelle("kullanici", ev.target.value), style: inputStyle })),
                                 React.createElement(Field, { label: "\u015Eifre / uygulama \u015Fifresi" },
-                                    React.createElement("input", { type: "password", value: e.sifre || "", onChange: (ev) => guncelle("sifre", ev.target.value), style: inputStyle })),
+                                    React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", lineHeight: 1.4 } },
+                                        "Sunucuda saklan\u0131r: Supabase \u203A Edge Functions \u203A Secrets \u203A ",
+                                        React.createElement("span", { className: "mono" }, "SMTP_SIFRE"),
+                                        ".",
+                                        e.sifre ? (React.createElement("button", { type: "button", className: "btn-ghost", "data-eposta-sifre-sil": "1", style: { marginLeft: 6, padding: "2px 8px", fontSize: 11, color: "var(--erp-warn)" }, onClick: () => guncelle("sifre", ""), title: "Tan\u0131mlardaki eski \u015Fifre kayd\u0131n\u0131 siler \u2014 \u00F6nce Supabase'de SMTP_SIFRE s\u0131rr\u0131n\u0131 ekleyin" }, "Buradaki eski \u015Fifreyi sil")) : null)),
                                 React.createElement(Field, { label: "G\u00F6nderen ad\u0131" },
                                     React.createElement("input", { value: e.gonderenAd || "", placeholder: "New Diamond Shoes", onChange: (ev) => guncelle("gonderenAd", ev.target.value), style: inputStyle })))));
                     })())))),
@@ -25319,6 +25764,14 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                     color: secili ? (durum === "Aktif" ? "var(--erp-primary)" : "var(--erp-warn)") : "var(--erp-text-2)",
                                 } }, durum));
                         }))) }),
+                tanimlar.girisAktifMi && (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, margin: "0 0 10px", fontSize: 12 } },
+                    React.createElement("span", { style: { fontWeight: 600, color: "var(--erp-text-2)" } }, "Hareketsizlikte otomatik \u00E7\u0131k\u0131\u015F:"),
+                    React.createElement("select", { "data-otomatik-cikis": "1", value: String(Number((tanimlar.firmaBilgileri || {}).otomatikCikisSaat) || 0), onChange: (ev) => firmaBilgisiGuncelle("otomatikCikisSaat", Number(ev.target.value) || 0), style: { ...inputStyle, width: 150, padding: "4px 8px", fontSize: 12 } },
+                        React.createElement("option", { value: "0" }, "Kapal\u0131"),
+                        [1, 2, 4, 8, 24, 72].map((g) => React.createElement("option", { key: g, value: String(g) },
+                            g,
+                            " saat"))),
+                    React.createElement("span", { style: { color: "var(--erp-text-3) " } }, "a\u00E7\u0131k b\u0131rak\u0131lan uygulamaya bu kadar s\u00FCre dokunulmazsa oturum kapan\u0131r, \u015Fifre yeniden sorulur (sayfa yenilemede 12 saat kural\u0131 zaten var)"))),
                 React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" } }, tanimlar.girisAktifMi ? (React.createElement(React.Fragment, null, "Y\u00F6netici rol\u00FC her zaman tam yetkiye sahiptir. Di\u011Fer kullan\u0131c\u0131lar i\u00E7in, her mod\u00FClde ayr\u0131 ayr\u0131 G\u00F6r\u00FCnt\u00FCleme / D\u00FCzenleme / Kaydetme / Silme yetkisi verebilirsiniz. Yetkisi olmayan bir i\u015Flem yap\u0131lmaya \u00E7al\u0131\u015F\u0131ld\u0131\u011F\u0131nda, i\u015Flem do\u011Frudan uygulanmaz \u2014 sizin onay\u0131n\u0131za d\u00FC\u015Fer.")) : (React.createElement(React.Fragment, null,
                     "Kullan\u0131c\u0131 giri\u015Fi \u015Fu an ",
                     React.createElement("b", null, "Pasif"),
@@ -25629,6 +26082,9 @@ function SupabaseBolumu({ supabaseBagli, gocDurumu, onSupabaseyeGoc }) {
                     color: supabaseBagli ? "#2F6B4F" : "var(--erp-text-2)",
                 } }, supabaseBagli ? "BAĞLI" : "KAPALI"),
             supabaseBagli && (React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } }, SUPABASE_URL.replace("https://", "")))),
+        React.createElement("div", { style: { marginBottom: 10 } },
+            React.createElement(FirmaSatiri, null)),
+        supabaseBagli ? React.createElement(KurulumDosyasiDugmesi, null) : null,
         !supabaseBagli ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.7 } },
             "Ba\u011Flant\u0131 tan\u0131ml\u0131 de\u011Fil. Uygulama taray\u0131c\u0131 deposuyla \u00E7al\u0131\u015F\u0131yor \u2014 veriler yaln\u0131zca bu bilgisayarda duruyor ve ba\u015Fka kullan\u0131c\u0131lar g\u00F6remiyor.",
             React.createElement("div", { style: { marginTop: 8, background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10 } },
@@ -30221,6 +30677,10 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
     const [maliyetBeden, setMaliyetBeden] = useState("");
     // Düzen ikonu üst şeritte (v1.530.0): sekme düzenini ve (Stok sekmesinde) blok düzenini açar.
     const sekmeAcRef = useRef(null);
+    // DÜZENLEME BAŞLANGICINDAKİ KAYIT (v1.640.0, denetim): form açıkken başka cihazın değişikliği tazelemeyle (v1.611)
+    // gelirse kayıt nesnesi değişir; Kaydet o değişikliği uyarısız ezmesin — sorulur. Referans karşılaştırması: tazeleme
+    // ve her yazma yeni nesne üretir.
+    const duzenlemeKaynagiRef = React.useRef(null);
     const stokAcRef = useRef(null);
     const stokKontrolRef = useRef(null);
     const duzenBaglami = React.useContext(EkranDuzeniBaglami);
@@ -30460,6 +30920,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
             malzemeTipi: product.malzemeTipi || "",
             ozelKodlar: { ...(product.ozelKodlar || {}) },
         });
+        duzenlemeKaynagiRef.current = product;
         setShowEdit(true);
     }
     function editKaydet() {
@@ -30468,6 +30929,9 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
             showToast("Ürün adı boş olamaz");
             return;
         }
+        if (duzenlemeKaynagiRef.current && duzenlemeKaynagiRef.current !== product
+            && !window.confirm("Bu ürün siz düzenlerken başka yerden (başka cihaz ya da pencere) değişti. Girdiğiniz alanlar o değişikliğin üstüne yazılsın mı?"))
+            return;
         // Kendisi hariç, aynı ada sahip başka ürün var mı? (Ad değiştirirken de mükerrer oluşamamalı.)
         const adCakismasi = (tumUrunler || []).find((p) => p.id !== product.id && urunAdiAnahtari(p.ad) === urunAdiAnahtari(duzenlenenAd));
         if (adCakismasi) {
@@ -37729,7 +38193,9 @@ function KurRozeti({ kurlar, kurGecmisi, yukleniyor, onGuncelle, onElleKaydet, d
                             React.createElement("td", { style: { padding: "3px 4px" } },
                                 React.createElement("span", { className: "mono", style: { fontSize: 8, fontWeight: 700, padding: "1px 5px", borderRadius: "var(--erp-r-pill)", background: g.kaynak === "TCMB" ? "#2F6B4F22" : "#8A5A3822", color: g.kaynak === "TCMB" ? "#2F6B4F" : "var(--erp-brown)" } }, g.kaynak || "Elle")))))))))))))));
 }
-function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli) {
+// `kurlar` (v1.640.0, denetim): eksik maliyeti dövizli alış fiyatını TL sayıyordu; `alisFiyatiTL` kurla (renk/boy
+// fiyat kuralı dahil, `hammaddeBirimFiyati`), kur yoksa 0 + `kurEksik`. `alisFiyati` (kendi birimi) alış siparişi için kalır.
+function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli, kurlar) {
     // Sadece "İptal" olmayan ve hâlâ karşılanmamış kalemi bulunan satış siparişleri dikkate alınır.
     const bekleyenSatislar = (siparisler || []).filter((s) => s.tip === "Satış" && s.durum !== "İptal");
     const ihtiyacGruplari = {}; // "hammaddeUrunId|renk|beden" -> { hammaddeUrunId, hammaddeAd, renk, beden, birim, gereken, kaynaklar: [...] }
@@ -37842,18 +38308,20 @@ function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli) {
         const stokBilinmiyor = hamStok < 0;
         const mevcutStok = stokBilinmiyor ? 0 : hamStok;
         const alisFiyati = (hammaddeUrun && hammaddeUrun.alisFiyati) || 0;
+        const bf = hammaddeUrun ? hammaddeBirimFiyati(hammaddeUrun, g.renk, g.beden, kurlar || {}) : { tl: 0, kurEksik: false };
+        const alisFiyatiTL = bf.tl || 0;
         const minStok = hammaddeUrun ? (((hammaddeUrun.variants || []).find((v) => stokAnahtarNrm(v.renk) === stokAnahtarNrm(g.renk) && stokAnahtarNrm(v.beden) === stokAnahtarNrm(g.beden)) || {}).minStok || 0) : 0;
         const fark = Math.round((mevcutStok - g.gereken) * 100) / 100;
         const eksikMiktar = fark < 0 ? Math.abs(fark) : 0;
         return {
-            ...g, mevcutStok, hamStok, stokBilinmiyor, minStok, alisFiyati, fark, eksikMi: fark < 0,
-            eksikMiktar, eksikMaliyet: Math.round(eksikMiktar * alisFiyati * 100) / 100,
+            ...g, mevcutStok, hamStok, stokBilinmiyor, minStok, alisFiyati, alisFiyatiTL, kurEksik: !!bf.kurEksik, fark, eksikMi: fark < 0,
+            eksikMiktar, eksikMaliyet: Math.round(eksikMiktar * alisFiyatiTL * 100) / 100,
         };
     }).sort((a, b) => (a.eksikMi === b.eksikMi ? b.eksikMaliyet - a.eksikMaliyet || b.gereken - a.gereken : a.eksikMi ? -1 : 1));
 }
 // "Planlama" ana sekmesi, alt sekmelerden oluşur — şu an sadece "Hammadde İhtiyaç" (MRP) var, ama
 // yapı, ileride "Merkezi Tedarik Planlama" gibi başka alt sekmeler eklemeye hazır şekilde kuruldu.
-function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, onGoToSiparis, onGoToUrun, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlaHammaddeSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
+function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, kurlar, onGoToSiparis, onGoToUrun, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlaHammaddeSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
     const [altSekme, setAltSekme] = useState("siparisPlanlama");
     const ALT_SEKMELER = [
         { key: "siparisPlanlama", label: "Sipariş Planlama" },
@@ -37872,8 +38340,8 @@ function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, onGoToSi
                 } }, s.label));
         })),
         altSekme === "siparisPlanlama" && (React.createElement(SiparisPlanlamaSekmesi, { siparisler: siparisler, stok: stok, cariler: cariler, uretim: uretim, asortiler: asortiler, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onPlanlamaTemizle: onPlanlamaTemizle, onAsortiOlustur: onAsortiOlustur })),
-        altSekme === "siparisIhtiyac" && (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUrun: onGoToUrun, onGoToUretim: onGoToUretim, cariler: cariler, onPlanlaHammaddeSatinAlma: onPlanlaHammaddeSatinAlma, sadeceUretimPlanli: true, aciklamaMetni: "ZATEN \u00FCretime planlanm\u0131\u015F (aktif \u00FCretim emri a\u00E7\u0131lm\u0131\u015F) mam\u00FCllerin, hen\u00FCz kar\u015F\u0131lanmam\u0131\u015F hammadde ihtiyac\u0131 \u2014 \u00FCretime planlanmam\u0131\u015F bekleyen kalemler bu g\u00F6r\u00FCn\u00FCmde yer almaz (onlar Hammadde \u0130htiya\u00E7 sekmesinde).", bosDurumMetni: "\u00DCretime planlanm\u0131\u015F, hen\u00FCz kar\u015F\u0131lanmam\u0131\u015F bir hammadde ihtiyac\u0131 yok." })),
-        altSekme === "hammadde" && (React.createElement(HammaddeIhtiyacSekmesi, { siparisler: siparisler, stok: stok, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUrun: onGoToUrun, onGoToUretim: onGoToUretim, cariler: cariler, onPlanlaHammaddeSatinAlma: onPlanlaHammaddeSatinAlma }))));
+        altSekme === "siparisIhtiyac" && (React.createElement(HammaddeIhtiyacSekmesi, { kurlar: kurlar, siparisler: siparisler, stok: stok, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUrun: onGoToUrun, onGoToUretim: onGoToUretim, cariler: cariler, onPlanlaHammaddeSatinAlma: onPlanlaHammaddeSatinAlma, sadeceUretimPlanli: true, aciklamaMetni: "ZATEN \u00FCretime planlanm\u0131\u015F (aktif \u00FCretim emri a\u00E7\u0131lm\u0131\u015F) mam\u00FCllerin, hen\u00FCz kar\u015F\u0131lanmam\u0131\u015F hammadde ihtiyac\u0131 \u2014 \u00FCretime planlanmam\u0131\u015F bekleyen kalemler bu g\u00F6r\u00FCn\u00FCmde yer almaz (onlar Hammadde \u0130htiya\u00E7 sekmesinde).", bosDurumMetni: "\u00DCretime planlanm\u0131\u015F, hen\u00FCz kar\u015F\u0131lanmam\u0131\u015F bir hammadde ihtiyac\u0131 yok." })),
+        altSekme === "hammadde" && (React.createElement(HammaddeIhtiyacSekmesi, { kurlar: kurlar, siparisler: siparisler, stok: stok, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUrun: onGoToUrun, onGoToUretim: onGoToUretim, cariler: cariler, onPlanlaHammaddeSatinAlma: onPlanlaHammaddeSatinAlma }))));
 }
 // ---- REZERVASYON DEPOSU ----
 // "Şu an ne, kim için ayrılmış?" sorusunun tek ekranda cevabı. Bilgi iki ayrı yerde duruyordu
@@ -38537,7 +39005,7 @@ function KameraOkuyucu({ onKod, sesli = false }) {
                 yontem === "yerlesik" ? " · yerleşik okuyucu" : yontem === "cihaz" ? " · cihaz okuyucusu" : ""))),
         hata && React.createElement("div", { "data-kamera-hata": "1", style: { fontSize: 12, color: "var(--erp-danger)" } }, hata)));
 }
-function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoToUrun, onGoToUretim, cariler, onPlanlaHammaddeSatinAlma, sadeceUretimPlanli, aciklamaMetni, bosDurumMetni, hedefHammadde, onHedefTuketildi, showToast }) {
+function HammaddeIhtiyacSekmesi({ kurlar, siparisler, stok, uretim, onGoToSiparis, onGoToUrun, onGoToUretim, cariler, onPlanlaHammaddeSatinAlma, sadeceUretimPlanli, aciklamaMetni, bosDurumMetni, hedefHammadde, onHedefTuketildi, showToast }) {
     const [acikHammadde, setAcikHammadde] = useState(null);
     const [sadeceEksik, setSadeceEksik] = useState(true);
     const [arama, setArama] = useState("");
@@ -38595,24 +39063,25 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                     birim: hm.birim || "", gereken: acik, kaynaklar: [],
                     mevcutStok: v.miktar || 0, minStok: v.minStok || 0,
                     alisFiyati: hm.alisFiyati || 0,
+                    alisFiyatiTL: hammaddeBirimFiyati(hm, k.renk, k.beden, kurlar || {}).tl || 0,
                     // `fark` ve `eksikMi` açık miktardan türüyor: satır ancak "eksik" ise satın alma
                     // listesine giriyor. Sıfır miktarlı satırı eksik saymak, alınacak bir şey yokken
                     // sipariş formu açtırırdı.
                     fark: acik > 0 ? -acik : (v.miktar || 0),
                     eksikMi: acik > 0,
-                    eksikMiktar: acik, eksikMaliyet: Math.round(acik * (hm.alisFiyati || 0) * 100) / 100,
+                    eksikMiktar: acik, eksikMaliyet: Math.round(acik * (hammaddeBirimFiyati(hm, k.renk, k.beden, kurlar || {}).tl || 0) * 100) / 100,
                     serbestMi: true, // planlamadan değil, kullanıcının isteğiyle eklendi
                 });
             });
         }
     }
-    const mrpSonuclari = mrpHesapla(siparisler || [], stok || [], uretim || [], sadeceUretimPlanli).map((r) => {
+    const mrpSonuclari = mrpHesapla(siparisler || [], stok || [], uretim || [], sadeceUretimPlanli, kurlar || {}).map((r) => {
         const kaynakIdler = new Set(r.kaynaklar.map((k) => k.siparisId));
         const satinAlma = hammaddeSatinAlmaDurumu(r.hammaddeUrunId, r.renk, r.beden, kaynakIdler, siparisler || []);
         const netEksik = Math.round(Math.max(0, r.eksikMiktar - satinAlma.yolda) * 100) / 100;
         return {
             ...r, satinAlma, netEksik,
-            netEksikMaliyet: Math.round(netEksik * (r.alisFiyati || 0) * 100) / 100,
+            netEksikMaliyet: Math.round(netEksik * (r.alisFiyatiTL != null ? r.alisFiyatiTL : (r.alisFiyati || 0)) * 100) / 100,
             // Eksik ama net eksiği kalmamış = tamamı sipariş edilmiş, yolda.
             siparisteMi: r.eksikMi && netEksik === 0 && satinAlma.yolda > 0,
         };
@@ -38652,6 +39121,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                 birim: hammaddeBirimi(r.hammaddeUrunId, stok, r.birim || g.birim),
                 miktar: r.netEksik,
                 alisFiyati: r.alisFiyati || 0,
+                alisFiyatiTL: r.alisFiyatiTL != null ? r.alisFiyatiTL : (r.alisFiyati || 0),
                 // Rezervasyon payları seçim anında hesaplanır; kaynak siparişler sonradan değişse bile
                 // kullanıcının onayladığı dağıtım korunur.
                 rezervasyonlar: hammaddeRezervasyonDagit(r.kaynaklar, r.netEksik),
@@ -38868,7 +39338,7 @@ function HammaddeIhtiyacSekmesi({ siparisler, stok, uretim, onGoToSiparis, onGoT
                 Object.keys(topluSecim).length > 0 && onPlanlaHammaddeSatinAlma && (() => {
                     const secilenler = Object.values(topluSecim);
                     const hammaddeSayisi = new Set(secilenler.map((s) => s.hammaddeUrunId)).size;
-                    const tahminiTutar = Math.round(secilenler.reduce((t, s) => t + s.miktar * (s.alisFiyati || 0), 0) * 100) / 100;
+                    const tahminiTutar = Math.round(secilenler.reduce((t, s) => t + s.miktar * (s.alisFiyatiTL != null ? s.alisFiyatiTL : (s.alisFiyati || 0)), 0) * 100) / 100;
                     // Aynı hammadde+renk+beden zaten tek anahtar olduğu için kalem birleştirmeye gerek yok.
                     return (React.createElement("div", { style: {
                             position: "sticky", top: 0, zIndex: 30,
@@ -45213,6 +45683,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const setOpen = (v) => { const hedef = typeof v === "function" ? v(acik) : v; if (hedef !== acik)
         onAcKapa(); };
     const [duzenleModu, setDuzenleModu] = useState(false);
+    // Düzenleme başlangıcındaki kayıt (v1.640.0, denetim; 160 ile aynı gerekçe): form açıkken gelen değişiklik ezilmesin.
+    const duzenlemeKaynagiRef = useRef(null);
+    useEffect(() => { if (duzenleModu)
+        duzenlemeKaynagiRef.current = cari; }, [duzenleModu]); // bayat-muaf: yalnız açılış anındaki kayıt istenir
     const [duzenleUnvan, setDuzenleUnvan] = useState(cari.unvan);
     const [duzenleTip, setDuzenleTip] = useState(cari.tip);
     const [duzenleParaBirimi, setDuzenleParaBirimi] = useState(cari.paraBirimi || "TRY");
@@ -45610,6 +46084,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 // için, sonraki çağrı öncekinin değişikliğini görmüyor ve üzerine yazıyordu —
                                 // yalnızca EN SON çağrı (paraBirimi) kalıcı oluyor, unvan ve tip kayboluyordu.
                                 // Üçü tek seferde, atomik olarak yazılır.
+                                if (duzenlemeKaynagiRef.current && duzenlemeKaynagiRef.current !== cari
+                                    && !window.confirm("Bu cari siz düzenlerken başka yerden değişti. Girdiğiniz alanlar o değişikliğin üstüne yazılsın mı?"))
+                                    return;
                                 onFieldsChange(cari.id, {
                                     unvan: yeniUnvan,
                                     tip: duzenleTip,
@@ -51109,6 +51586,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     // Dolu olduğunda "Siparişi Kaydet" yerine "Bu Siparişe Ekle" çalışıyor.
     // DÜZENLENEN SİPARİŞ (25 Eylül): doluysa form yeni sipariş değil, bu siparişin düzenlemesi.
     const [duzenlenenId, setDuzenlenenId] = useState(null);
+    // Düzenleme başlangıcındaki sipariş nesnesi (v1.640.0, denetim): form açıkken tazelemeyle gelen değişiklik Kaydet'te
+    // uyarısız ezilmesin — referans değiştiyse sorulur.
+    const duzenlemeKaynagiRef = useRef(null);
     const [tip, setTip] = useState("Satış");
     const [cariId, setCariId] = useState("");
     const [tarih, setTarih] = useState(bugunYerel());
@@ -51756,6 +52236,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         if (!siparis)
             return;
         resetForm();
+        duzenlemeKaynagiRef.current = siparisler.find((x) => x.id === siparisId) || null;
         setDuzenlenenId(siparisId);
         setTip(siparis.tip);
         setCariId(siparis.cariId || "");
@@ -51782,6 +52263,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             duzenlemedenCik();
             return showToast("Düzenlenen sipariş bulunamadı — silinmiş olabilir");
         }
+        if (duzenlemeKaynagiRef.current && duzenlemeKaynagiRef.current !== siparis
+            && !window.confirm("Bu sipariş siz düzenlerken başka yerden (başka cihaz ya da pencere) değişti. Formdaki hâl o değişikliğin üstüne yazılsın mı?"))
+            return;
         if (!cariId)
             return showToast(tip === "Satış" ? "Müşteri seçin" : "Tedarikçi seçin");
         // CARİ, TESLİMAT YAPILMIŞSA DEĞİŞMEZ: fişler o cariye kesildi; değiştirmek ekstre ile siparişi
@@ -52816,9 +53300,15 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                 karisikSayisi,
                                 " sipari\u015F kar\u0131\u015F\u0131k para birimi")))))));
             })(),
-            siparisSekme === "satis" ? (satisListe.length === 0 ? (React.createElement(EmptyState, { text: (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
-                    ? "Bu filtre/aramayla eşleşen satış siparişi yok."
-                    : "Henüz satış siparişi yok. Yeni sipariş oluşturarak başlayın." })) : (React.createElement("div", { style: { display: "grid", gap: 12 } }, satisListe.map((s) => (React.createElement("div", { key: s.id, style: {
+            siparisSekme === "satis" ? (satisListe.length === 0 ? (React.createElement(React.Fragment, null,
+                React.createElement(EmptyState, { text: (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
+                        ? "Bu filtre/aramayla eşleşen satış siparişi yok."
+                        : "Henüz satış siparişi yok. Yeni sipariş oluşturarak başlayın." }),
+                durumFiltre !== "Tümü" && !siparisArama && !siparisKolonAktif && satisListeTumu.length > 0 && (React.createElement("div", { style: { textAlign: "center", marginTop: -8 } },
+                    React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-tumunu-goster": "1", onClick: () => setDurumFiltre("Tümü"), style: { fontSize: 12 } },
+                        "T\u00FCm\u00FCn\u00FC g\u00F6ster (",
+                        satisListeTumu.length,
+                        ")"))))) : (React.createElement("div", { style: { display: "grid", gap: 12 } }, satisListe.map((s) => (React.createElement("div", { key: s.id, style: {
                     // ÇERÇEVE (v1.612.0 — kullanıcı: "Sipariş ayrıştırmak için çerçeveye al, çok baskın olmasın"): kapalı
                     // satırda da görünür bir çizgi (--erp-line, 1.5px) — önceki soft çizgi açık zeminde kayboluyor, iki
                     // sipariş birbirine karışıyordu. Açıkken tip rengi + gölge (değişmedi).
@@ -52842,9 +53332,15 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                             if (hedef)
                                 setSiparisSekme(hedef.tip === "Alış" ? "alis" : "satis");
                             setAcikSiparisId(hedefId);
-                        }, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur, firmaBilgileri: firmaBilgileri, onPencereAc: onPencereAc, onFiseGitNo: onFiseGitNo, onCariGit: onGoToCari, onUruneGit: onUruneGit, kurlar: kurlar, onKayitParaGuncelle: siparisKayitParaGuncelle, onKalemleriBirlestir: siparisKalemleriniBirlestir }))))))))) : (alisListe.length === 0 ? (React.createElement(EmptyState, { text: (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
-                    ? "Bu filtre/aramayla eşleşen alış siparişi yok."
-                    : "Henüz alış siparişi yok. Yeni sipariş oluşturarak başlayın." })) : (React.createElement("div", { style: { display: "grid", gap: 12 } }, alisListe.map((s) => (React.createElement("div", { key: s.id, style: {
+                        }, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur, firmaBilgileri: firmaBilgileri, onPencereAc: onPencereAc, onFiseGitNo: onFiseGitNo, onCariGit: onGoToCari, onUruneGit: onUruneGit, kurlar: kurlar, onKayitParaGuncelle: siparisKayitParaGuncelle, onKalemleriBirlestir: siparisKalemleriniBirlestir }))))))))) : (alisListe.length === 0 ? (React.createElement(React.Fragment, null,
+                React.createElement(EmptyState, { text: (durumFiltre !== "Tümü" || siparisArama || siparisKolonAktif)
+                        ? "Bu filtre/aramayla eşleşen alış siparişi yok."
+                        : "Henüz alış siparişi yok. Yeni sipariş oluşturarak başlayın." }),
+                durumFiltre !== "Tümü" && !siparisArama && !siparisKolonAktif && alisListeTumu.length > 0 && (React.createElement("div", { style: { textAlign: "center", marginTop: -8 } },
+                    React.createElement("button", { type: "button", className: "btn-ghost", "data-siparis-tumunu-goster": "1", onClick: () => setDurumFiltre("Tümü"), style: { fontSize: 12 } },
+                        "T\u00FCm\u00FCn\u00FC g\u00F6ster (",
+                        alisListeTumu.length,
+                        ")"))))) : (React.createElement("div", { style: { display: "grid", gap: 12 } }, alisListe.map((s) => (React.createElement("div", { key: s.id, style: {
                     border: `${acikSiparisId === s.id ? "1px" : "1.5px"} solid ${acikSiparisId === s.id ? "var(--erp-brown)" : "var(--erp-line)"}`,
                     borderRadius: "var(--erp-r-lg)",
                     overflow: "hidden",
@@ -54674,7 +55170,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             // Reçete/ihtiyaç sekmesi yalnızca SATIŞ siparişlerinde ve reçetesi olan bir kalem varsa
                             // anlamlıdır: alış siparişinin hammadde ihtiyacı diye bir şey yok, hammaddenin kendisi
                             // satın alınıyor.
-                            const ihtiyac = siparis.tip === "Satış" ? siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRezervasyonlari) : null;
+                            const ihtiyac = siparis.tip === "Satış" ? siparisHammaddeIhtiyaci(siparis, stok, tumSiparisler, stokRezervasyonlari, kurlar) : null;
                             const ihtiyacVar = !!(ihtiyac && (ihtiyac.kalemler.length > 0 || ihtiyac.recetesizKalem > 0));
                             const sekmeler = [];
                             // SEKME ADINDA EKSİK SAYISI (kullanıcı, 19 Eylül: "eksik miktarın üretimle mi satın
@@ -58338,7 +58834,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.639.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.642.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

@@ -18,9 +18,26 @@
 // GERİ DÜŞÜŞ
 // IndexedDB açılamazsa (çok eski tarayıcı, gizli sekme kısıtı) köprü localStorage'a döner.
 // Uygulama çalışmaya devam eder, yalnızca eski sınırla.
+//
+// FİRMA BAŞINA AYRI DEPO (v1.642.0): uygulama birden çok firmaya satılıyor ve her firmanın ayrı Supabase projesi
+// var (030 FİRMA BAĞLANTISI). Aynı cihazda iki firma açılırsa yerel kopyalar KARIŞMAMALI — biri ötekinin stok
+// kaydını "yerel yedek" sanıp kendi bulutuna yazabilirdi. Seçili firmanın proje kimliği (adresin alt alan adı)
+// veritabanı adına ve yedek önekine eklenir. VARSAYILAN firma (seçim yok ya da ilk sahibin projesi) için adlar
+// ESKİSİ GİBİ — mevcut cihazlardaki veri yerinde kalır, göç gerekmez. Geçerlilik kuralı 030'daki
+// `firmaBaglantisiGecerli` ile aynı tutulmalı (adres https://<ref>.supabase.co, gizli anahtar asla).
 (function () {
-  const ON = "atolye:";
-  const VT_AD = "atolye-depo";
+  const VARSAYILAN_REF = "mqdgucoomgqcvhvgixbl";
+  const FIRMA_EK = (function () {
+    try {
+      const f = JSON.parse(localStorage.getItem("firma:secim") || "null");
+      const m = f && /^https:\/\/([a-z0-9]{8,40})\.supabase\.co$/.exec(String(f.url || ""));
+      const anahtar = String((f && f.anahtar) || "").trim();
+      const anahtarAcik = /^sb_publishable_/.test(anahtar) || anahtar.split(".").length === 3;
+      return m && anahtarAcik && m[1] !== VARSAYILAN_REF ? m[1] : "";
+    } catch (e) { return ""; }
+  })();
+  const ON = FIRMA_EK ? "atolye:@" + FIRMA_EK + ":" : "atolye:";
+  const VT_AD = FIRMA_EK ? "atolye-depo@" + FIRMA_EK : "atolye-depo";
   const DEPO = "kv";
   const GOC_ISARETI = "__goc_tamam";
 
@@ -39,7 +56,8 @@
       const k = [];
       for (let i = 0; i < localStorage.length; i++) {
         const h = localStorage.key(i);
-        if (h && h.startsWith(ON + onEk)) k.push(h.slice(ON.length));
+        // Varsayılan önek ("atolye:") öteki firmaların önekini ("atolye:@ref:") de kapsıyor — onlar atlanır.
+        if (h && h.startsWith(ON + onEk) && (FIRMA_EK || !h.startsWith("atolye:@"))) k.push(h.slice(ON.length));
       }
       return k;
     },

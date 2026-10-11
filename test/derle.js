@@ -17,6 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
+  "firmaKoduNormal", "firmaAnahtariSorunu", "firmaAdresiGecerli", "firmaBaglantisiGecerli", "firmaRefi", "firmaDegisimEngeli", "firmaSeciminiDegistir",   // çoklu firma (v1.642.0)
   "fiyatListesiTablosu",   // fiyat listesi Excel/yazdır (v1.554.0)
   "ozelKodSecenekleri", "ozelKodSuzgeceUyar", "ozelKodAdAnahtari", "iscilikSiraliSatirlar",   // fiyat listesi özel kod süzgeci (v1.553.0)
   "sablonuUruneUygula", "recetedenSablonSatirlari", "urundenSablonIsciligi", "sablonPozisyonu", "receteGrupla", "yeniRenkReceteSatirlari", "receteBedenDegistir", "stoktanReceteKopyala", "receteGrupEksikBedenleri", "enYakinBeden", "gecmisBedenEslesmeleri", "hammaddeBedenSecenekleri", "eksikRenkEslesmeleri", "stokDegisimSatirlari", "hammaddeRenkSecenekleri", "degisenKayitlariBirlestir", "adimBedenDurumu", "uretimFisAdlari", "receteMaliyetGrupla",   // reçete şablonu (v1.558.0)
