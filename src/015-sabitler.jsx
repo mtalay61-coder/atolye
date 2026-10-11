@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.13";
+const SURUM = "1.645.14";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Anasayfa gosterge panosu; Odeme & Tahsilat: once kasa/banka sonra cari, tek satir form, kredi kartinda hesaba gecis tarihi";
+const SURUM_NOTU = "Uretim listesi tek satirinda uretim numarasi da gorunuyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Anasayfa gosterge panosu; Odeme & Tahsilat: once kasa/banka 
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.645.14", tarih: "11.10.2026",
+    eklenen: [], degisen: ["Üretim listesinde kapalı kartın tek satırında üretim numarası da (küçük) — bohça etiketi ve aramayla eşleşsin"], duzeltilen: [] },
   { surum: "1.645.13", tarih: "11.10.2026",
     eklenen: ["Anasayfa gösterge panosu: kasa & banka bakiyeleri, bu ay ve geçen ay tahsilat / ödeme, toplam borç, portföydeki çek/senet ve en yakın vade, yaklaşan teslimler (açık satış siparişleri teslim tarihine göre, geçen kırmızı), üretimin hangi aşamada kaç adet beklediği — her kart ilgili ekranı açar"],
     degisen: ["Anasayfadaki Modüller kartları (Tanımlar, Stok, Üretim, Cari, Sipariş) kaldırıldı — üst menünün tekrarıydı",
