@@ -16,7 +16,9 @@
 //   1. Supabase > Edge Functions > Create function > adı:  eposta
 //   2. Şablon kodu silin, bu dosyanın tamamını yapıştırın > Deploy.
 //   3. "Verify JWT with legacy secret" KAPALI (fonksiyon jetonu kendisi doğruluyor).
-//   4. Tanımlar > Genel > E-posta gönderim ayarları: sunucu, port, kullanıcı, şifre, gönderen adı.
+//   4. Tanımlar > Firma > E-posta gönderim ayarları: sunucu, port, kullanıcı, gönderen adı.
+//      ŞİFRE SUNUCUDA (v1.641.0): Supabase > Edge Functions > Secrets (ya da Project Settings > Edge Functions) >
+//      "SMTP_SIFRE" adıyla ekleyin. Fonksiyon şifreyi oradan okur; Tanımlar'a girilmez.
 //      Gmail: smtp.gmail.com · 465 · Google hesabı > Güvenlik > "Uygulama şifreleri" ile üretilen
 //      16 haneli şifre (normal şifre ÇALIŞMAZ). Outlook/365: smtp.office365.com · 587 (STARTTLS).
 //      Şirket alan adı: sağlayıcının verdiği sunucu/port.
@@ -60,8 +62,11 @@ Deno.serve(async (istek: Request) => {
   if (tanimHata) return yanit(500, { tamam: false, hata: `Tanımlar okunamadı: ${tanimHata.message}` });
   const ayar = (tanimSatiri?.veri?.firmaBilgileri?.eposta || {}) as
     { sunucu?: string; port?: number | string; kullanici?: string; sifre?: string; gonderenAd?: string; tls?: string };
-  if (!ayar.sunucu || !ayar.kullanici || !ayar.sifre) {
-    return yanit(400, { tamam: false, hata: "E-posta ayarları eksik — Tanımlar > Genel > E-posta gönderim ayarları" });
+  // ŞİFRE SUNUCU SIRRINDAN (v1.641.0): Tanımlar'daki düz metin şifreyi giriş yapan herkes okuyabiliyordu. Artık
+  // Supabase > Edge Functions > Secrets > SMTP_SIFRE. Tanımlar'daki eski alan geçiş için okunmaya devam eder (boşsa sır).
+  const sifre = Deno.env.get("SMTP_SIFRE") || ayar.sifre || "";
+  if (!ayar.sunucu || !ayar.kullanici || !sifre) {
+    return yanit(400, { tamam: false, hata: "E-posta ayarları eksik — Tanımlar > Firma > E-posta (sunucu, kullanıcı) ve Supabase'de SMTP_SIFRE sırrı" });
   }
 
   // 3) İstek.
@@ -78,7 +83,7 @@ Deno.serve(async (istek: Request) => {
       hostname: ayar.sunucu,
       port,
       tls: tlsModu === "tls",
-      auth: { username: ayar.kullanici, password: ayar.sifre },
+      auth: { username: ayar.kullanici, password: sifre },
     },
   });
   try {

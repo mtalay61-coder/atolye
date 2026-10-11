@@ -89,6 +89,7 @@ function veriBoyutu(deger) {
 const UYGULAMA_DIS_ANAHTARLARI = new Set([
   "firma:gorunum", "oturum:aktif", "bekleyen:yazma", "bekleyen:kayitlar", "tanimlar:acikBasliklar", "tanim:silinenler",
   "gorunum:boyut", "ustMenu:kademe", "mobil:duzen", "cari:ekstre-sade", "siparis:barkodPaneli", "github:token", "github:ayar",
+  "oturum:sonEtkinlik",
 ]);
 
 function depoKullanimi() {

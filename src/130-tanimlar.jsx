@@ -1035,7 +1035,19 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                   </select>
                 </Field>
                 <Field label="Kullanıcı (e-posta adresi)"><input value={e.kullanici || ""} placeholder="atolye@gmail.com" onChange={(ev) => guncelle("kullanici", ev.target.value)} style={inputStyle} /></Field>
-                <Field label="Şifre / uygulama şifresi"><input type="password" value={e.sifre || ""} onChange={(ev) => guncelle("sifre", ev.target.value)} style={inputStyle} /></Field>
+                {/* ŞİFRE SUNUCUDA (v1.641.0, denetim): Tanımlar'daki düz metin şifreyi giriş yapan herkes okuyabiliyordu. Artık
+                    Supabase sırrı (SMTP_SIFRE); burada yalnız yönlendirme ve eski kaydı silme düğmesi. */}
+                <Field label="Şifre / uygulama şifresi">
+                  <div style={{ fontSize: 11, color: "var(--erp-text-2)", lineHeight: 1.4 }}>
+                    Sunucuda saklanır: Supabase › Edge Functions › Secrets › <span className="mono">SMTP_SIFRE</span>.
+                    {e.sifre ? (
+                      <button type="button" className="btn-ghost" data-eposta-sifre-sil="1" style={{ marginLeft: 6, padding: "2px 8px", fontSize: 11, color: "var(--erp-warn)" }}
+                        onClick={() => guncelle("sifre", "")} title="Tanımlardaki eski şifre kaydını siler — önce Supabase'de SMTP_SIFRE sırrını ekleyin">
+                        Buradaki eski şifreyi sil
+                      </button>
+                    ) : null}
+                  </div>
+                </Field>
                 <Field label="Gönderen adı"><input value={e.gonderenAd || ""} placeholder="New Diamond Shoes" onChange={(ev) => guncelle("gonderenAd", ev.target.value)} style={inputStyle} /></Field>
               </div>
             </div>
@@ -2124,6 +2136,17 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               })}
             </div>
           )} />
+          {tanimlar.girisAktifMi && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 0 10px", fontSize: 12 }}>
+              <span style={{ fontWeight: 600, color: "var(--erp-text-2)" }}>Hareketsizlikte otomatik çıkış:</span>
+              <select data-otomatik-cikis="1" value={String(Number((tanimlar.firmaBilgileri || {}).otomatikCikisSaat) || 0)}
+                onChange={(ev) => firmaBilgisiGuncelle("otomatikCikisSaat", Number(ev.target.value) || 0)} style={{ ...inputStyle, width: 150, padding: "4px 8px", fontSize: 12 }}>
+                <option value="0">Kapalı</option>
+                {[1, 2, 4, 8, 24, 72].map((g) => <option key={g} value={String(g)}>{g} saat</option>)}
+              </select>
+              <span style={{ color: "var(--erp-text-3) " }}>açık bırakılan uygulamaya bu kadar süre dokunulmazsa oturum kapanır, şifre yeniden sorulur (sayfa yenilemede 12 saat kuralı zaten var)</span>
+            </div>
+          )}
           <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
             {tanimlar.girisAktifMi ? (
               <>Yönetici rolü her zaman tam yetkiye sahiptir. Diğer kullanıcılar için, her modülde ayrı ayrı

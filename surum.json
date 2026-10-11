@@ -1,1 +1,1 @@
-{"surum": "1.640.0", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.640.0.html", "not": "Denetim devami: iki sekmede oturum dusmesi, acik formun altindan gelen degisiklik, MRP doviz maliyeti, bos suzgec ipucu; rls-rol.sql"}
+{"surum": "1.641.0", "url": "https://mtalay61-coder.github.io/atolye/atolye-erp-v1.641.0.html", "not": "Guvenlik: modul yetkisi sunucuda (rls-yazma.sql), hareketsizlikte otomatik cikis, SMTP sifresi Supabase sirrinda"}
