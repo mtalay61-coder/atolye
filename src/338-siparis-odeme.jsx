@@ -10,16 +10,31 @@
 //
 // props: siparis, cari, tip ("Tahsilat" | "Ödeme"), tutar (öneri), paraBirimi (öneri), muhasebe, kurlar,
 //        onKaydet({ cariId, cariHareketi, muhasebe: { hesapTur, hesapId, hareket } | null }), onVazgec, showToast
-function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, kurlar, onKaydet, onVazgec, showToast }) {
-  const [form, setForm] = useState({
-    tarih: bugunYerel(), tutar: tutar > 0 ? String(Math.round(tutar * 100) / 100) : "", paraBirimi: paraBirimi || "TRY",
-    defter: siparis.defterTercihi || "Genel", odemeSekli: "Nakit", hesap: "", hesapTutar: "",
-    aciklama: siparis.siparisNo ? `Sipariş ${siparis.siparisNo}` : "",
-  });
+// SİPARİŞSİZ DE (v1.645.10 — kullanıcı: "ödeme için kasa banka işlemleri gibi açabilir"): Finans › Ödeme & Tahsilat
+// nakit / havale / kredi kartında cari kartını açmak yerine BU kısa formu kullanır (siparis = null: sipariş bağı
+// yazılmaz). `odemeSekli` başlangıç şeklini, `hesapOnSecim` şekle uygun ilk hesabı seçer (nakit → kasa, diğerleri →
+// banka; carinin para birimindeki önce). Sipariş kartında ikisi de verilmiyor — davranış aynı.
+const KISA_FORM_SEKILLERI = ["Nakit", "Havale/EFT", "Kredi Kartı"];
+function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, odemeSekli, hesapOnSecim, muhasebe, kurlar, onKaydet, onVazgec, showToast }) {
+  const sip = siparis || {};
   const hesaplar = [
     ...(((muhasebe && muhasebe.kasalar) || []).map((k) => ({ deger: `kasa:${k.id}`, ad: `Kasa: ${k.ad}`, kisaAd: k.ad, pb: k.paraBirimi || "TRY" }))),
     ...(((muhasebe && muhasebe.bankalar) || []).map((b) => ({ deger: `banka:${b.id}`, ad: `Banka: ${b.ad}`, kisaAd: b.ad, pb: b.paraBirimi || "TRY" }))),
   ];
+  const [form, setForm] = useState(() => {
+    const sekil = KISA_FORM_SEKILLERI.includes(odemeSekli) ? odemeSekli : "Nakit";
+    let hesap = "";
+    if (hesapOnSecim) {
+      const tur = sekil === "Nakit" ? "kasa:" : "banka:";
+      const aday = hesaplar.filter((h) => h.deger.startsWith(tur));
+      hesap = ((aday.find((h) => h.pb === (paraBirimi || "TRY")) || aday[0]) || {}).deger || "";
+    }
+    return {
+      tarih: bugunYerel(), tutar: tutar > 0 ? String(Math.round(tutar * 100) / 100) : "", paraBirimi: paraBirimi || "TRY",
+      defter: sip.defterTercihi || "Genel", odemeSekli: sekil, hesap, hesapTutar: "",
+      aciklama: sip.siparisNo ? `Sipariş ${sip.siparisNo}` : "",
+    };
+  });
   const secili = hesaplar.find((h) => h.deger === form.hesap) || null;
   const cariPB = form.paraBirimi || "TRY";
   // Hesabın para birimi farklıysa hesaba işlenecek tutar ayrıca sorulur (cari kartındaki formla aynı kural:
@@ -63,7 +78,7 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
     });
     // SİPARİŞ BAĞI: sipariş kartı "Ödenen / Kalan"ı bu alandan sayar (siparisOdemeOzeti, 320). `islemTipi` huniye
     // fiş ön ekini seçtirir (THS-/ODM-); huni alanı kayda yazmaz, tip ön ekten okunur.
-    const cariHareketi = { ...kurulan.cariHareketi, siparisId: siparis.id, siparisNo: siparis.siparisNo };
+    const cariHareketi = siparis ? { ...kurulan.cariHareketi, siparisId: siparis.id, siparisNo: siparis.siparisNo } : kurulan.cariHareketi;
     onKaydet({ cariId: cari.id, cariHareketi, muhasebe: kurulan.muhasebeHareketi ? { hesapTur, hesapId, hareket: kurulan.muhasebeHareketi } : null });
   }
 
@@ -73,7 +88,7 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
       {/* MOR KAYIT ŞERİDİ (v1.625.0 — "Tüm kaydetler üst mor şeritte olsun"): Kaydet · Vazgeç formun üstünde. */}
       <div data-siparis-odeme-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap", padding: "6px 10px" }}>
         <span className="mono" style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk, display: "inline-flex", alignItems: "center", gap: 5 }}><HareketIkonu tip={tip} size={13} />{tip}</span>
-        <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{cari.unvan} · {siparis.siparisNo}</span>
+        <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{cari.unvan}{sip.siparisNo ? ` · ${sip.siparisNo}` : ""}</span>
         <span style={{ marginLeft: "auto", display: "inline-flex", gap: 8 }}>
           <button type="button" className="btn-primary btn-save" data-siparis-odeme-kaydet="1" onClick={kaydet}><Save size={14} /> Kaydet</button>
           <button type="button" className="btn-ghost" onClick={onVazgec}><X size={14} /> Vazgeç</button>
@@ -100,7 +115,7 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, muhasebe, ku
         </Field>
         <Field label="Ödeme Şekli">
           <select value={form.odemeSekli} onChange={(e) => setForm({ ...form, odemeSekli: e.target.value })} style={inputStyle}>
-            {["Nakit", "Havale/EFT", "Kredi Kartı"].map((o) => <option key={o} value={o}>{o}</option>)}
+            {KISA_FORM_SEKILLERI.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </Field>
         <Field label={tip === "Tahsilat" ? "Hangi kasaya/bankaya girdi?" : "Hangi kasadan/bankadan çıktı?"}>

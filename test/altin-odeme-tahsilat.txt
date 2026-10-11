@@ -2,8 +2,11 @@
  "menuVar": true,
  "ekran": true,
  "bosDurum": true,
- "formAcik": true,
- "odemeSekli": "Nakit",
+ "kisaForm": {
+  "hesap": "Kasa: TL Kasa (TRY)",
+  "cariKartiYok": true
+ },
+ "kayittanSonraBos": "",
  "kasa": [
   [
    "Giriş",
@@ -22,6 +25,40 @@
  "cekFormu": {
   "sekil": "Çek",
   "cekBilgileri": true
+ },
+ "ozetler": [
+  "Kasa · TL Kasa 500 ₺",
+  "Portföyde çek / senet · 0 —"
+ ],
+ "seritGiris": [
+  "odemetahsilat:seçili",
+  "muhasebe:-",
+  "cekler:-",
+  "odemerapor:-"
+ ],
+ "seritKasa": [
+  "odemetahsilat:-",
+  "muhasebe:seçili",
+  "cekler:-",
+  "odemerapor:-"
+ ],
+ "seritCek": [
+  "odemetahsilat:-",
+  "muhasebe:-",
+  "cekler:seçili",
+  "odemerapor:-"
+ ],
+ "rapor": {
+  "ozet": [
+   "Nakit | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 1",
+   "Toplam | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 1"
+  ],
+  "hesaplar": [
+   "Kasa · TL Kasa | 500,00 ₺ | 0,00 ₺ | 500,00 ₺ | 500,00 ₺"
+  ],
+  "liste": [
+   "Müşteri B | Tahsilat | Nakit | 500,00 ₺ | Test Kullanıcısı"
+  ]
  },
  "hatalar": []
 }

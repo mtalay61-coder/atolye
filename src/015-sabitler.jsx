@@ -256,7 +256,8 @@ const MODUL_RENK = {
   fisler: "var(--erp-purple)",     // damga moru
   muhasebe: "#2F6B4F",
   cekler: "#2F6B4F",
-  odemetahsilat: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
+  odemetahsilat: "#2F6B4F",
+  odemerapor: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
   finansrapor: "#2F6B4F",     // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
   planlama: "#B8860B",
   gorevler: "var(--erp-purple)",  // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
@@ -280,6 +281,7 @@ const SEKME_BILGISI = {
   muhasebe: { ad: "Kasa & Banka" },
   cekler: { ad: "Çek & Senet" },
   odemetahsilat: { ad: "Ödeme & Tahsilat" },
+  odemerapor: { ad: "Ödeme & Tahsilat Raporu" },
   finansrapor: { ad: "Finans Raporu" },
   // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
   gelirgider: { ad: "Gelir / Gider" },
@@ -477,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.9";
+const SURUM = "1.645.10";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Son islemlerde islemi yapan kullanici: uretim, iscilik ve siparis kayitlarina da yaziliyor";
+const SURUM_NOTU = "Odeme & Tahsilat tek alan (giris, Kasa & Banka, Cek & Senet, Rapor); nakit/havale kisa formla; tek cihazda Baska cihazdan guncellendi: Cariler duzeltildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -488,6 +490,12 @@ const SURUM_NOTU = "Son islemlerde islemi yapan kullanici: uretim, iscilik ve si
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.10", tarih: "11.10.2026",
+    eklenen: ["Ödeme & Tahsilat girişinin üstünde her kasa ve bankanın bakiyesi ile portföydeki çek/senet sayısı ve toplamı — karta dokununca ilgili sekme açılır",
+      "Ödeme & Tahsilat › Rapor: tarih aralığı (bugün / hafta / ay / geçen ay / yıl), ödeme şekline göre tahsilat-ödeme-net, kasa/banka giriş-çıkış ve bakiye, vadesi 30 gün içinde dolan çek/senet, kayıt listesi (kullanıcıyla)"],
+    degisen: ["Ödeme & Tahsilat tek alan oldu: üstte 'Tahsilat / Ödeme gir · Kasa & Banka · Çek & Senet · Rapor' sekme şeridi; menüde Kasa & Banka ve Çek & Senet, Ödeme & Tahsilat'ın altında",
+      "Nakit, havale/EFT ve kredi kartında cari kartı açılmıyor — Kasa & Banka işlemi gibi kısa form (tarih, tutar, kasa/banka kendiliğinden seçili, açıklama); çek ve senette cari kartının formu"],
+    duzeltilen: ["Tek cihazla çalışırken yine \"Başka cihazdan güncellendi: Cariler\": buluttan dönen kayıt biçim olarak farklı (boş alanlar, saat yazımı) olduğu için aynı içerik farklı sanılıyordu — karşılaştırma artık yazma biçiminde"] },
   { surum: "1.645.9", tarih: "11.10.2026",
     eklenen: [],
     degisen: [],

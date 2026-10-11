@@ -3,7 +3,7 @@
 // Ölçülen: sayacı artan tablo alanına düşer (kalem → siparişler); değişmeyen geçilir; bu cihazın 12 sn içindeki yazması
 // ertelenir (görüldü sayılmaz, yaşlanınca tazelenir); bekleyen yazması olan alan ertelenir; bilinmeyen tablo yok sayılır;
 // görüldü haritasında ertelenenler eski değerde kalır.
-const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni } = require("./erp.cjs");
+const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni, tabloIcerikAyni, TABLO_SEMA } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -32,5 +32,27 @@ bekle("başka alanın damgası kapsamaz (stok yazması carileri ertelemez)", f5.
 bekle("anahtar sırası önemsiz (jsonb yeniden sıralar)", degisiklikIcerikAyni([{ id: "k1", kod: "K-1", kalemler: [{ adet: 2, beden: "37" }] }], [{ kod: "K-1", id: "k1", kalemler: [{ beden: "37", adet: 2 }] }]), true);
 bekle("undefined alan yok sayılır", degisiklikIcerikAyni({ a: 1, b: undefined }, { a: 1 }), true);
 bekle("dizi sırası önemli, değer farkı yakalanır", [degisiklikIcerikAyni([1, 2], [2, 1]), degisiklikIcerikAyni({ a: 1 }, { a: 2 })], [false, false]);
+// v1.645.11: çok satırlı tablo — buluttan dönen nesne yazılandan farklı biçimde (boş sütun null, cariId eklenir,
+// zaman "+00:00", sunucu sütunu). 045'in cari okuma dönüşümü burada taklit ediliyor.
+const yerelCari = [{ id: "c1", unvan: "Celal", tip: "Müşteri", paraBirimi: "TRY", hareketler: [
+  { id: "h1", tarih: "2026-10-11", zaman: "2026-10-11T15:00:00.000Z", yon: "Alacak", tutar: 500, paraBirimi: "TRY",
+    odemeSekli: "Çek", fisNo: "ODM-1", aciklama: "Ödeme", islemTipi: "Ödeme", kullanici: "Mahmut", cek: { cekNo: "77", banka: "Ziraat" } }] }];
+const sema = TABLO_SEMA.cariler;
+const satirdan = (r) => { const k = {}; Object.entries(r).forEach(([s, v]) => { k[s.replace(/_([a-z])/g, (_, h) => h.toUpperCase())] = v; }); return k; };
+const bulutOku = (cariler) => cariler.map((c) => {
+  const satir = { ...sema.satir(c), olusturma_zamani: "2026-10-11T15:00:01+00:00", surum: 3 };
+  const hs = sema.cocuklar[0].cikar(c).map((h) => ({ ...h, zaman: h.zaman ? h.zaman.replace(".000Z", "+00:00") : null }));
+  const { surum, ...satirSurumsuz } = satir;
+  return { ...satirdan(satirSurumsuz), ...(satir.ek || {}), hareketler: hs.map((h) => {
+    const k = satirdan(h); const ek = k.ek || {}; delete k.ek;
+    Object.entries(ek).forEach(([a, d]) => { if (d !== null && d !== undefined) k[a] = d; }); return k; }) };
+});
+const bulutCari = bulutOku(yerelCari);
+bekle("düz karşılaştırma aynı içeriği FARKLI sanıyordu (hatanın kendisi)", degisiklikIcerikAyni(yerelCari, bulutCari), false);
+bekle("yazma biçiminde karşılaştırma: aynı", tabloIcerikAyni("cariler", yerelCari, bulutCari), true);
+const baskaCihaz = bulutOku([{ ...yerelCari[0], hareketler: [...yerelCari[0].hareketler, { id: "h2", tarih: "2026-10-11", yon: "Borç", tutar: 50 }] }]);
+bekle("başka cihazın yeni hareketi: farklı", tabloIcerikAyni("cariler", yerelCari, baskaCihaz), false);
+const tutarDegisti = bulutOku([{ ...yerelCari[0], hareketler: [{ ...yerelCari[0].hareketler[0], tutar: 600 }] }]);
+bekle("tutar değişti: farklı", tabloIcerikAyni("cariler", yerelCari, tutarDegisti), false);
 if (hata) { console.log("BİRİM TESTİ HATA: değişiklik sayacı"); process.exit(1); }
 console.log("── değişiklik sayacı testi temiz ──");
