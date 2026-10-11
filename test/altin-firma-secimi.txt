@@ -31,7 +31,7 @@
   "uygulamaYok": true,
   "kod": "NDS",
   "sonra": {
-   "secim": null,
+   "secim": "nds",
    "bekleyenYerinde": true,
    "oturumYerinde": true,
    "sakliKutuYok": true

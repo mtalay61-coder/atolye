@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.645.1</title>
+<title>Atölye ERP 1.645.4</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2262,9 +2262,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.645.1";
+const SURUM = "1.645.4";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Firma penceresi giris ekraninda saydam gorunuyordu (tema renkleri girisle yukleniyor); uyari iki kez yazilmiyor";
+const SURUM_NOTU = "Firma penceresi ekran yenilenince kendiliginden kapanmiyor, yazilan kod kaybolmuyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2272,6 +2272,19 @@ const SURUM_NOTU = "Firma penceresi giris ekraninda saydam gorunuyordu (tema ren
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.645.4", tarih: "11.10.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Firma penceresi, giriş ekranı ya da Tanımlar veri yüklenince yeniden çizildiğinde kendiliğinden kapanıyor, yazılan kod kayboluyordu (o an basılan \"Bağlan\" boşa gidiyordu)"] },
+    { surum: "1.645.3", tarih: "11.10.2026",
+        eklenen: [],
+        degisen: ["Bekleyen kayıt varken de demoya geçilebilir: kayıt saklanır, firma koduna dönünce gönderilir (gerçek başka firmaya geçiş yine yasak)"],
+        duzeltilen: ["Firma penceresinde \"Bağlan\" engellendiğinde hiçbir şey göstermiyordu (tepkisiz görünüyordu)"] },
+    { surum: "1.645.2", tarih: "11.10.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Tek cihazla çalışırken \"Başka cihazdan güncellendi\" yanlış uyarısı: yavaş ağda geç biten kendi kaydımız ve ürün/cari/sipariş alt tablolarına yazmamız başka cihaz sanılıyordu",
+            "Aynı tabloya yazma sürerken buluttan yeniden okuma ekrandaki yeni hâli eskisiyle değiştirebiliyordu — yazma bitene kadar okunmaz"] },
     { surum: "1.645.1", tarih: "11.10.2026",
         eklenen: [],
         degisen: [],
@@ -5008,14 +5021,20 @@ function bekleyenYazmaSil(anahtar) {
 const _tekilSayac = {};
 // BU CİHAZIN SON BULUT YAZMASI (v1.611.0, değişiklik sayacı): tablo → zaman. Yoklama, sayacı artan tablonun
 // yazması bizden geldiyse (son 12 sn) tazelemeyi erteler — kendi kaydımızı buluttan geri okumak boşa iş.
+// YOLDAKİ YAZMA (v1.645.2): damga yazma SIRAYA GİRERKEN basılıyordu. Kuyrukta bekleyen ya da yavaş ağda (mobil) 12 sn'den
+// geç biten yazmanın sayaç artışı "başka cihaz" sanılıyor, tablo buluttan yeniden okunuyordu — üstelik o sırada aynı
+// tabloya yoldaki DAHA YENİ bir yazma varsa ekrandaki yeni hâl buluttaki eski hâlle değişirdi. Artık yazma bitene kadar
+// tablo "yazılıyor" sayılır (bulutSonYazma = şimdi) ve bittiğinde damga yeniden basılır.
 const _bulutSonYazma = {};
-function bulutYazmaDamgala(tablo) { _bulutSonYazma[tablo] = Date.now(); }
-function bulutSonYazma(tablo) { return _bulutSonYazma[tablo] || 0; }
+const _bulutYoldakiYazma = {};
+function bulutYazmaBasladi(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = (_bulutYoldakiYazma[tablo] || 0) + 1; }
+function bulutYazmaBitti(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = Math.max(0, (_bulutYoldakiYazma[tablo] || 0) - 1); }
+function bulutSonYazma(tablo) { return (_bulutYoldakiYazma[tablo] || 0) > 0 ? Date.now() : (_bulutSonYazma[tablo] || 0); }
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
     if (!supabaseAcikMi())
         return yerel;
-    bulutYazmaDamgala(tablo);
+    bulutYazmaBasladi(tablo);
     const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
     // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
     // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
@@ -5046,6 +5065,7 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
         body: JSON.stringify([{ id: "tekil", veri: v }]),
     }));
     const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
+    gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
         gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
@@ -5161,6 +5181,22 @@ function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayi
 // zaten o projenin verisini taşıyor (seçimsiz = ana proje): AYNI PROJE seçilince saklama/temizleme YAPILMAZ ve bekleyen
 // kayıt ENGEL DEĞİLDİR — defter aynı projeye gidecek; yalnız seçim kaydı yazılır. Engel ve saklama kutusu yalnız
 // gerçekten BAŞKA projeye geçerken.
+// Bir projenin saklama kutusunu geri koyar. BEKLEYEN DEFTER DE GERİ GELİR (v1.645.3): kutuya ancak o projeden ayrılırken
+// girer ve yalnız AYNI projeye dönüşte açılır; defterin işaret ettiği yerel veri o projenin kendi deposunda
+// (depo-koprusu, firma başına ayrı) duruyor — yeniden gönderim aynı buluta gider. Cihazda zaten bir defter varsa
+// (beklenmez) dokunulmaz: ezilirse o kayıtlar kaybolurdu.
+function firmaSaklamaKutusunuAc(ref, depo) {
+    try {
+        const geri = JSON.parse(depo.getItem(`firma:sakli:${ref}`) || "{}") || {};
+        for (const [a, d] of Object.entries(geri)) {
+            if (/^bekleyen:/.test(a) && depo.getItem(a))
+                continue;
+            depo.setItem(a, d);
+        }
+    }
+    catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
+    depo.removeItem(`firma:sakli:${ref}`);
+}
 function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOku()) {
     const demoMu = !!(yeni && yeni.demo === true);
     if (!yeni || (!demoMu && !firmaBaglantisiGecerli(yeni)))
@@ -5171,11 +5207,18 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
     const eskiRef = firmaDepoKimligi(mevcut || VARSAYILAN_FIRMA);
     const yeniRef = firmaDepoKimligi(yeni);
     if (yeniRef === eskiRef) {
+        // Demodan "Çık" seçimi siler; ana firmaya dönen cihaz seçimsiz görünür (= ana proje). O projenin kutusu varsa
+        // (demoya geçerken saklanan oturum + bekleyen defter) şimdi geri gelir.
+        if (depo.getItem(`firma:sakli:${yeniRef}`) !== null)
+            firmaSaklamaKutusunuAc(yeniRef, depo);
         const degisti = depo.getItem(FIRMA_SECIM_ANAHTARI) !== kayit;
         depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
         return degisti;
     }
-    const engel = firmaDegisimEngeli();
+    // DEMOYA GEÇİŞ bekleyen kayıtla da serbest (v1.645.3 — kullanıcı: "Demoda girişe tıklayınca tepkisiz kalıyor"):
+    // demo buluta hiçbir şey göndermez, defter saklama kutusunda bekler ve aynı projeye dönünce geri gelir. GERÇEK başka
+    // firmaya geçiş yine yasak — orada defterin sahibi olmayan bir buluta gitme ihtimali var.
+    const engel = demoMu ? null : firmaDegisimEngeli();
     if (engel)
         throw new Error(engel);
     const sakli = {};
@@ -5186,16 +5229,7 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
         depo.removeItem(a);
     }
     depo.setItem(`firma:sakli:${eskiRef}`, JSON.stringify(sakli));
-    try {
-        const geri = JSON.parse(depo.getItem(`firma:sakli:${yeniRef}`) || "{}") || {};
-        // Bekleyen defter GERİ KONMAZ: değişim ancak defter boşken yapılabiliyor, saklanan hâl de boş olmalı; olmayan bir
-        // ihtimalde bile eski defteri canlandırmak, gönderilmiş kaydı ikinci kez göndermeye yol açardı.
-        for (const [a, d] of Object.entries(geri))
-            if (!/^bekleyen:/.test(a))
-                depo.setItem(a, d);
-    }
-    catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
-    depo.removeItem(`firma:sakli:${yeniRef}`);
+    firmaSaklamaKutusunuAc(yeniRef, depo);
     depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
     return true;
 }
@@ -5232,7 +5266,8 @@ function adresFirmaParametresi() {
     }
 }
 function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
-    const [kod, setKod] = useState(kodBaslangic);
+    const [kod, setKodHam] = useState(FIRMA_PENCERE_DURUMU.kod !== null ? FIRMA_PENCERE_DURUMU.kod : kodBaslangic);
+    const setKod = (d) => { FIRMA_PENCERE_DURUMU.kod = d; setKodHam(d); };
     const [gelismis, setGelismis] = useState(false);
     const [adres, setAdres] = useState("");
     const [anahtar, setAnahtar] = useState("");
@@ -5240,7 +5275,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
     const [hata, setHata] = useState(null);
     // Bekleyen kayıt ancak BAŞKA projeye geçişi engeller; ilk seçimde (tam ekran) proje henüz bilinmiyor — kontrol
     // `firmaSeciminiDegistir`de, hedef proje belli olunca yapılır ve sebep hata kutusunda görünür.
-    const engel = tamEkran ? null : firmaDegisimEngeli();
+    const engel = tamEkran || firmaKoduNormal(kod) === "demo" ? null : firmaDegisimEngeli();
     async function uygula(demo = false) {
         setBekliyor(true);
         setHata(null);
@@ -5277,7 +5312,10 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
         }
         catch (e) {
             setBekliyor(false);
-            setHata(String((e && e.message) || e));
+            const m = String((e && e.message) || e);
+            // Engel metni zaten üstteki kutuda; aynısını ikinci kez yazmak yerine kısa sonuç — ama SONUÇSUZ bırakmamak şart
+            // (v1.645.3: hata gizlenince "Bağlan" tepkisiz görünüyordu).
+            setHata(m === engel ? "Geçilemedi — önce yukarıdaki gönderilmemiş kayıt buluta gitmeli." : m);
         }
     }
     return (React.createElement("div", { "data-firma-penceresi": "1", onClick: tamEkran ? undefined : onKapat, style: { position: "fixed", inset: 0, background: tamEkran ? "var(--erp-panel-2, #f4f1ec)" : "rgba(0,0,0,.45)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
@@ -5305,7 +5343,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
                         React.createElement("input", { "data-firma-adres": "1", value: adres, onChange: (e) => setAdres(e.target.value), style: inputStyle, placeholder: "https://xxxx.supabase.co" })),
                     React.createElement(Field, { label: "Publishable anahtar (gizli anahtar DE\u011E\u0130L)" },
                         React.createElement("input", { "data-firma-anahtar": "1", value: anahtar, onChange: (e) => setAnahtar(e.target.value), style: inputStyle, placeholder: "sb_publishable_\u2026" })))) : null),
-            hata && hata !== engel ? (React.createElement("div", { "data-firma-hata": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px" } }, hata)) : null,
+            hata ? (React.createElement("div", { "data-firma-hata": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px" } }, hata)) : null,
             React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" } },
                 React.createElement("button", { type: "button", className: "btn-primary", "data-firma-uygula": "1", disabled: bekliyor || (!gelismis && firmaKoduNormal(kod).length < 3), onClick: () => uygula() }, bekliyor ? "Kontrol ediliyor…" : "Bağlan"),
                 tamEkran ? null : React.createElement("button", { type: "button", className: "btn-ghost", onClick: onKapat }, "Vazge\u00E7"),
@@ -5313,10 +5351,16 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
 }
 // Giriş ekranlarının ve Tanımlar'ın altındaki satır: hangi firmadasın + Değiştir. `?firma=KOD` ile açıldıysa ve kod
 // bugünkünden farklıysa pencere kodla dolu kendiliğinden açılır.
+// PENCERE DURUMU BİLEŞEN DIŞINDA (v1.645.4): giriş ekranı ve Tanımlar, bulut okuması bitince yeniden kuruluyor;
+// pencerenin açık/kapalı bilgisi ve yazılan kod bileşen içinde tutulunca pencere kendiliğinden kapanıyor, kod
+// kayboluyor, o an basılan "Bağlan" boşa gidiyordu. Sayfa boyunca tek değer — yeniden kurulan satır kaldığı yerden açar.
+const FIRMA_PENCERE_DURUMU = { acik: null, kod: null };
 function FirmaSatiri({ kucuk = false }) {
     const parametre = adresFirmaParametresi();
     const farkliParametre = !!parametre && firmaKoduNormal(parametre) !== (AKTIF_FIRMA.kod || "");
-    const [acik, setAcik] = useState(farkliParametre);
+    const [acik, setAcikHam] = useState(FIRMA_PENCERE_DURUMU.acik === null ? farkliParametre : FIRMA_PENCERE_DURUMU.acik);
+    const setAcik = (d) => { FIRMA_PENCERE_DURUMU.acik = d; if (!d)
+        FIRMA_PENCERE_DURUMU.kod = null; setAcikHam(d); };
     return (React.createElement(React.Fragment, null,
         React.createElement("div", { "data-firma-satiri": "1", style: { fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3, #888888)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
             React.createElement("span", null,
@@ -5706,7 +5750,8 @@ async function demoyuSifirla() {
     await demoVerisiniYukle(true);
 }
 // Demodan çık: seçim ve demoya ait doğrudan anahtarlar silinir (oturum, tema önbelleği); demo deposu cihazda kalır,
-// tekrar girilince kaldığı yerden devam eder.
+// tekrar girilince kaldığı yerden devam eder. Bekleyen defter silinmez (demoda hiç oluşmaz; demoya geçerken ana
+// firmanınki saklama kutusuna kalktı — firma kodu yeniden girilince 032 `firmaSaklamaKutusunuAc` geri koyar).
 function demodanCik() {
     for (const a of FIRMAYA_OZEL_ANAHTARLAR)
         if (!/^bekleyen:/.test(a))
@@ -6382,10 +6427,13 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
             tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin
         return Promise.resolve(yerel).then(() => ({ ok: true, bulut: false }));
     }
-    bulutYazmaDamgala(tablo);
+    // Yoldaki yazma (v1.645.2, 030): bitene kadar değişiklik yoklaması bu tabloyu "bizim yazmamız" sayar.
+    bulutYazmaBasladi(tablo);
+    const bulutIsi = supabaseTabloEsitle(tablo, kayitlar);
+    bulutIsi.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
-        supabaseTabloEsitle(tablo, kayitlar).then((sayim) => {
+        bulutIsi.then((sayim) => {
             // Çakışma: yazma OLMADI. Başarı gibi raporlamak çağıranın "silindi" demesine yol açıyordu.
             if (sayim && sayim.__cakisma) {
                 return { ok: false, bulut: true, cakisma: true, hata: "sürüm çakışması — buluta yazılmadı" };
@@ -6734,7 +6782,13 @@ function degisiklikFarki(onceki, yeni, { sonYazma, simdi, bekleyenAnahtarlar } =
             return;
         if (Number(sayi) === Number((onceki || {})[tablo] || 0))
             return;
-        if (sonYazma && simdi != null && simdi - (sonYazma(tablo) || 0) < DEGISIKLIK_KENDI_YAZMA_MS) {
+        // KENDİ YAZMAMIZ ALAN BAZINDA (v1.645.2 — kullanıcı tek cihazla çalışırken "Başka cihazdan güncellendi: Kasa / Banka"
+        // gördü). Damga ana tablo adıyla basılıyor (urunler) ama aynı kayıt alt tabloları da (varyantlar, stok_hareketleri…)
+        // yazıyor ve onların sayacı da artıyor; tablo bazında bakınca alt tablonun artışı "başka cihaz" sayılıyordu. Aynı
+        // alana ait HERHANGİ bir tabloya bu cihaz son 12 sn içinde yazdıysa (ya da yazma hâlâ yoldaysa — 030
+        // `bulutSonYazma` o durumda "şimdi" döner) bu turda ertelenir.
+        const kendiYazma = sonYazma ? Math.max(0, ...alaninTablolari(alan).map((t) => Number(sonYazma(t)) || 0)) : 0;
+        if (sonYazma && simdi != null && simdi - kendiYazma < DEGISIKLIK_KENDI_YAZMA_MS) {
             ertelenen.push(tablo);
             return;
         }
@@ -59302,7 +59356,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.645.1)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.645.4)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

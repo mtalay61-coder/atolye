@@ -15,13 +15,29 @@ const rehberRotasi = async (sayfa) => {
     body: JSON.stringify("-- Atölye ERP — yeni firma kurulum betiği\nbegin;\ncreate table if not exists public.tanimlar (id text);\ncommit;\n") }));
   await sayfa.route("**/auth/v1/settings", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
 };
+// "Bağlan"a bas ve sonucu bekle. Giriş ekranı / Tanımlar bulut okuması bitince bir kez yeniden çiziliyor; pencere tam o
+// anda yeniden kurulursa tıklama boşa gidiyordu (kullanıcı için "bir daha bas"; veri riski yok). En çok 3 deneme.
+async function baglanVeBekle(sayfa, kosul) {
+  for (let i = 0; i < 3; i++) {
+    await sayfa.click("[data-firma-uygula]").catch(() => {});
+    if (await sayfa.waitForFunction(kosul, null, { timeout: 6000 }).then(() => true).catch(() => false)) return true;
+  }
+  if (process.env.TESHIS) console.error("TESHIS", await sayfa.evaluate(() => ({ dugme: (document.querySelector("[data-firma-uygula]") || {}).textContent, pencere: !!document.querySelector("[data-firma-penceresi]"), kod: (document.querySelector("[data-firma-kodu]") || {}).value, secim: localStorage.getItem("firma:secim") })));
+  return false;
+}
 const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: [], bedenler: [] }) };
 
 (async () => {
   const sonuc = { hatalar: [] };
   // 1) Tanımlar'dan kodla firma seç.
   {
-    const { tarayici, sayfa } = await uygulamaAc(tohum, { hataYaz: false, onceRota: rehberRotasi });
+    // Bulut yazmaları başarılı sayılır (GET düşer, yerel tohum kalır): düşen yazma bekleyen deftere girip geçişi
+    // engelliyordu — koruma doğru ama bu bölümün konusu değil, ölçüm yarışlı oluyordu.
+    const { tarayici, sayfa } = await uygulamaAc(tohum, { hataYaz: false, onceRota: async (s) => {
+      // Önce genel kural: Playwright'ta SON eklenen kural önce çalışır — rehber/rpc taklidi onu ezmeli.
+      await s.route("**/rest/v1/**", (r) => (r.request().method() === "GET" ? r.abort() : r.fulfill({ status: 200, contentType: "application/json", body: "[]" })));
+      await rehberRotasi(s);
+    } });
     sayfa.on("pageerror", (e) => sonuc.hatalar.push(e.message.split("\n")[0]));
     await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
     await bekle(600);
@@ -42,9 +58,10 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     await sayfa.click("[data-firma-satiri] [data-firma-degistir]");
     await sayfa.fill("[data-firma-kodu]", "Deneme");
     // Yeniden yükleme: test kabuğu uygulamayı elle çiziyor; yüklemeden sonra yeniden çizilir.
-    const yuklendi = sayfa.waitForEvent("load", { timeout: 8000 }).catch(() => null);
-    await sayfa.click("[data-firma-uygula]");
-    if (!(await yuklendi)) sonuc.hatalar.push("yeniden yüklenmedi: " + await sayfa.evaluate(() => (document.querySelector("[data-firma-hata]") || {}).textContent || "-"));
+    await baglanVeBekle(sayfa, () => /deneme/.test(localStorage.getItem("firma:secim") || "") || !!document.querySelector("[data-firma-hata]"));
+    await bekle(1500);
+    const kalanHata = await sayfa.evaluate(() => (document.querySelector("[data-firma-hata]") || {}).textContent || "");
+    if (kalanHata) sonuc.hatalar.push("geçiş: " + kalanHata);
     sonuc.secim = await sayfa.evaluate(() => JSON.parse(localStorage.getItem("firma:secim") || "null"));
     const istekler = [];
     sayfa.on("request", (r) => { if (/supabase\.co\/rest/.test(r.url())) istekler.push(new URL(r.url()).host); });
@@ -68,8 +85,7 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
       engel: !!document.querySelector("[data-firma-engel]"),
     }));
     // Bekleyen kayıt varken BAŞKA projeye geçiş reddedilir (sebep hata kutusunda), seçim değişmez.
-    await sayfa.click("[data-firma-uygula]");
-    await bekle(800);
+    await baglanVeBekle(sayfa, () => !!document.querySelector("[data-firma-hata]"));
     sonuc.baglanti.baskaProjeyeEngel = await sayfa.evaluate(() => ({
       hata: /gönderilmemiş/.test(((document.querySelector("[data-firma-hata]") || document.querySelector("[data-firma-engel]")) || {}).textContent || ""),
       sonucGorunur: /Geçilemedi/.test((document.querySelector("[data-firma-hata]") || {}).textContent || ""),
@@ -82,8 +98,7 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     await sayfa.click("text=Gelişmiş: sunucu adresi ve anahtar");
     await sayfa.fill("[data-firma-adres]", YENI_URL);
     await sayfa.fill("[data-firma-anahtar]", "sb_secret_GIZLIANAHTAR123");
-    await sayfa.click("[data-firma-uygula]");
-    await bekle(500);
+    await baglanVeBekle(sayfa, () => !!document.querySelector("[data-firma-hata]"));
     sonuc.gizliAnahtar = await sayfa.evaluate(() => ({
       hata: /GİZLİ/.test((document.querySelector("[data-firma-hata]") || {}).textContent || ""),
       secimDegismedi: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) === "nds",
@@ -111,9 +126,9 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
       uygulamaYok: !document.querySelector("[data-nav]"),
       kod: (document.querySelector("[data-firma-kodu]") || {}).value || "",
     }));
-    const yuklendi = sayfa.waitForEvent("load", { timeout: 8000 }).catch(() => null);
-    await sayfa.click("[data-firma-uygula]");
-    if (!(await yuklendi)) sonuc.hatalar.push("kapı: yeniden yüklenmedi: " + await sayfa.evaluate(() => (document.querySelector("[data-firma-hata]") || {}).textContent || "-"));
+    // Yükleme olayını beklemek yarışlıydı (ölçüm yeniden yüklemeyle çakışıp eski seçimi okuyabiliyordu): sabit bekleme.
+    await baglanVeBekle(sayfa, () => /nds/.test(localStorage.getItem("firma:secim") || "") || !!document.querySelector("[data-firma-hata]"));
+    await bekle(1500);
     sonuc.kapi.sonra = await sayfa.evaluate(() => ({
       secim: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) || null,
       bekleyenYerinde: !!localStorage.getItem("bekleyen:yazma"),
@@ -134,8 +149,8 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     } });
     await bekle(1500);
     sonuc.demoyaGecis = { engelYok: await sayfa.evaluate(() => !document.querySelector("[data-firma-engel]")) };
-    await sayfa.click("[data-firma-uygula]");
-    await bekle(2000);
+    await baglanVeBekle(sayfa, () => /demo/.test(localStorage.getItem("firma:secim") || "") || !!document.querySelector("[data-firma-hata]"));
+    await bekle(1500);
     sonuc.demoyaGecis.sonra = await sayfa.evaluate(() => ({
       secim: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) || null,
       defterOrtada: !!localStorage.getItem("bekleyen:yazma"),

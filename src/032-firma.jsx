@@ -160,7 +160,8 @@ function adresFirmaParametresi() {
 }
 
 function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
-  const [kod, setKod] = useState(kodBaslangic);
+  const [kod, setKodHam] = useState(FIRMA_PENCERE_DURUMU.kod !== null ? FIRMA_PENCERE_DURUMU.kod : kodBaslangic);
+  const setKod = (d) => { FIRMA_PENCERE_DURUMU.kod = d; setKodHam(d); };
   const [gelismis, setGelismis] = useState(false);
   const [adres, setAdres] = useState("");
   const [anahtar, setAnahtar] = useState("");
@@ -256,10 +257,15 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
 
 // Giriş ekranlarının ve Tanımlar'ın altındaki satır: hangi firmadasın + Değiştir. `?firma=KOD` ile açıldıysa ve kod
 // bugünkünden farklıysa pencere kodla dolu kendiliğinden açılır.
+// PENCERE DURUMU BİLEŞEN DIŞINDA (v1.645.4): giriş ekranı ve Tanımlar, bulut okuması bitince yeniden kuruluyor;
+// pencerenin açık/kapalı bilgisi ve yazılan kod bileşen içinde tutulunca pencere kendiliğinden kapanıyor, kod
+// kayboluyor, o an basılan "Bağlan" boşa gidiyordu. Sayfa boyunca tek değer — yeniden kurulan satır kaldığı yerden açar.
+const FIRMA_PENCERE_DURUMU = { acik: null, kod: null };
 function FirmaSatiri({ kucuk = false }) {
   const parametre = adresFirmaParametresi();
   const farkliParametre = !!parametre && firmaKoduNormal(parametre) !== (AKTIF_FIRMA.kod || "");
-  const [acik, setAcik] = useState(farkliParametre);
+  const [acik, setAcikHam] = useState(FIRMA_PENCERE_DURUMU.acik === null ? farkliParametre : FIRMA_PENCERE_DURUMU.acik);
+  const setAcik = (d) => { FIRMA_PENCERE_DURUMU.acik = d; if (!d) FIRMA_PENCERE_DURUMU.kod = null; setAcikHam(d); };
   return (
     <>
       <div data-firma-satiri="1" style={{ fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3, #888888)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
