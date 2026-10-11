@@ -1150,7 +1150,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                 title="Bu tedarikçinin açık alış siparişlerinden kalem al — satırlar siparişe bağlı yazılır, teslim alınan artar">
                 <ClipboardList size={12} /> Siparişten seç ({acikSiparisler.length} açık {tip === "Alış" ? "alış" : "satış"} siparişi)
               </button>
-              {siparistenSecAcik && acikSiparisler.map((s) => {
+              {/* SABİT YÜKSEKLİK (v1.645.7 — kullanıcı: "liste uzadıkça aşağı uzamasın"): siparişler 420 px'lik çerçevede
+                  kendi içinde kayar; fiş formu aşağı itilmez. */}
+              {siparistenSecAcik && <div data-siparisten-sec-cerceve="1" style={{ display: "grid", gap: 6, maxHeight: 420, overflowY: "auto", paddingRight: 2 }}>
+              {acikSiparisler.map((s) => {
                 // KOLİDE / KOLİSİZ AYRI (v1.508.0 — kullanıcı: "Kolilenmiş malları ayrı listelesin, kolisiz malları
                 // ayrı listelesin; ikisinin toplamı toplam adedi versin. Kolilenmiş ayrı bir stokta durur,
                 // kolilenmemiş ayrı bir stokta durur."). Önce "Kolisiz kalanı ekle" siparişin BÜTÜN kalanını
@@ -1325,6 +1328,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Ürün</th>
                         <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Renk</th>
                         {bedenler.map((b) => <th key={b} className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>)}
+                        <th style={{ fontSize: 10, color: "var(--erp-text-2)", padding: "2px 6px", textAlign: "left" }}>Durum</th>
                         <th></th>
                       </tr></thead>
                       <tbody>{satirlar.map((r) => (
@@ -1332,6 +1336,23 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                           <td style={{ fontSize: 11, padding: "2px 6px", fontWeight: 600 }}>{r.urunAd}</td>
                           <td className="mono" style={{ fontSize: 11, padding: "2px 6px" }}>{olcuGoster(r.renk)}</td>
                           {bedenler.map((b) => <td key={b} className="mono" style={{ fontSize: 11, padding: "2px 6px", textAlign: "center" }}>{r.hucre[b] || "—"}</td>)}
+                          {/* TEDARİK DURUMU (v1.645.7 — kullanıcı: "burada detay versin, üretimden depo girişi, planlanacak
+                              v.s."): sipariş kartındaki satır durumunun aynısı (330 `siparisKalemTedarikDurumu`), altında
+                              nereden geldiği. Satırın bedenleri farklı durumdaysa en gerideki yazılır (kartla aynı kural). */}
+                          <td data-siparisten-sec-durum={`${s.siparisNo}|${r.urunAd}|${r.renk}`} style={{ fontSize: 10, padding: "2px 6px", whiteSpace: "nowrap" }}>
+                            {(() => {
+                              const ds = r.kalemler.map(({ k }) => siparisKalemTedarikDurumu(k, siparisler, uretim)).sort((x, y) => x.sira - y.sira);
+                              const d = ds[0];
+                              if (!d) return null;
+                              return (<>
+                                <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 700, padding: "1px 7px",
+                                  borderRadius: "var(--erp-r-pill)", background: alfaEkle(d.renk, "22"), color: d.renk }}>
+                                  {d.metin}{d.adim && <span style={{ opacity: 0.75, fontWeight: 400 }}>{d.adim}</span>}
+                                </span>
+                                {d.detay && <span style={{ marginLeft: 6, color: "var(--erp-text-3)" }}>{d.detay}</span>}
+                              </>);
+                            })()}
+                          </td>
                           <td style={{ padding: "2px 6px", textAlign: "right" }}>
                             <button type="button" className="btn-primary" data-siparis-satir-ekle={`${s.siparisNo}|${r.urunAd}|${r.renk}`}
                               title="Bu satırı Kalem Ekle alanına yükle — adetleri asorti ya da elle değiştirip ekleyin (siparişe bağlı)"
@@ -1347,6 +1368,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                   </div>
                 );
               })}
+              </div>}
             </div>
           );
         })()}

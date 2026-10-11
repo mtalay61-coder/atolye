@@ -72,3 +72,18 @@ function degisiklikGoruldu(onceki, yeni, ertelenen) {
   e.forEach((t) => { if ((onceki || {})[t] !== undefined) sonuc[t] = onceki[t]; else delete sonuc[t]; });
   return sonuc;
 }
+
+// İÇERİK AYNI MI (v1.645.7 — kullanıcı tek cihazla koli etiketi basarken "Başka cihazdan güncellendi: Koliler" gördü).
+// Kendi yazmamızı SÜREYLE ayırt etmek (12 sn) yetmiyor: yoklama sekme gizliyken durur — etiket yazdırma penceresi,
+// başka uygulamaya geçiş — ve dönüşte kendi kaydımızın sayaç artışı 12 sn'yi aşmış oluyor. Son kapı içerik: buluttan
+// okunan hâl ekrandakiyle aynıysa hiçbir şey değişmemiştir; tazeleme ve not yapılmaz. Anahtar sırası önemsiz (jsonb
+// anahtarları yeniden sıralar), `undefined` alan yok sayılır (JSON gibi). Fark çıkarsa — gerçekten başka cihaz ya da
+// bulutun eklediği alan — eski davranış: tazelenir ve not çıkar. Saf.
+function kararliJson(x) {
+  if (x === null || typeof x !== "object") return JSON.stringify(x === undefined ? null : x);
+  if (Array.isArray(x)) return "[" + x.map(kararliJson).join(",") + "]";
+  return "{" + Object.keys(x).filter((k) => x[k] !== undefined).sort().map((k) => JSON.stringify(k) + ":" + kararliJson(x[k])).join(",") + "}";
+}
+function degisiklikIcerikAyni(a, b) {
+  try { return kararliJson(a) === kararliJson(b); } catch (e) { return false; }
+}

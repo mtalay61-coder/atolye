@@ -989,44 +989,8 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     en geride olan gösterilir. */}
                                 <td style={{ padding: "5px 12px", whiteSpace: "nowrap" }}>
                                   {(() => {
-                                    const durumlar = rg.kalemler.map((k) => {
-                                      // FAZLA SEVK UYARISI (kullanıcı, 19 Eylül: "fazla satış
-                                      // yaptık, bunu belirtmesi gerekli"). Karşılanan miktar
-                                      // siparişi AŞTIĞINDA eskiden yine "Teslim edildi" yazıyordu;
-                                      // 136 çiftlik siparişe 160 çift sevk edildiği ekranda hiçbir
-                                      // yerde görünmüyordu. Fazla sevk bir hata değil (müşteri
-                                      // fazladan istemiş olabilir) ama SESSİZ kalması hata: fatura
-                                      // ile sipariş tutmaz ve fark aylar sonra bulunur.
-                                      if ((k.karsilanan || 0) > k.miktar) {
-                                        return {
-                                          metin: `Fazla sevk (+${(k.karsilanan || 0) - k.miktar})`,
-                                          renk: "var(--erp-warn)", sira: 5,
-                                          ipucu: `Sipariş ${k.miktar}, sevk edilen ${k.karsilanan || 0} — aradaki fark faturaya yansımalı`,
-                                        };
-                                      }
-                                      if ((k.karsilanan || 0) >= k.miktar) return { metin: "Teslim edildi", renk: "var(--erp-primary)", sira: 5 };
-                                      if (!k.planlama) return { metin: "Planlanacak", renk: "var(--erp-text-3)", sira: 0 };
-                                      if (k.planlama.tip === "Satınalma") {
-                                        const alis = (tumSiparisler || []).find((s) => s.siparisNo === k.planlama.referansNo);
-                                        if (alis && alis.durum === "Tamamlandı") return { metin: "Geldi", renk: "var(--erp-primary)", sira: 4 };
-                                        if (alis && alis.durum === "Kısmi Teslim") return { metin: "Kısmen geldi", renk: "#C97B3D", sira: 2 };
-                                        return { metin: `Alış siparişi ${k.planlama.referansNo}`, renk: "var(--erp-brown)", sira: 1, ikon: "alis" };
-                                      }
-                                      const ur = (uretimSiparisleri || []).find((o) => o.siparisNo === k.planlama.referansNo);
-                                      if (!ur) return { metin: "Üretilecek", renk: "var(--erp-info)", sira: 1 };
-                                      const ilerleme = ur.prosesIlerleme || [];
-                                      const biten = ilerleme.filter((p) => p.tamamlandiMi).length;
-                                      const siradaki = ilerleme.find((p) => !p.tamamlandiMi);
-                                      const basladi = ilerleme.some((p) => p.tamamlandiMi || (p.atamalar || []).some((a) => a.verildiMi));
-                                      if (ur.stogaEklendiMi) return { metin: "Üretildi", renk: "var(--erp-primary)", sira: 4 };
-                                      if (!basladi) return { metin: "Üretilecek", renk: "var(--erp-info)", sira: 1 };
-                                      return {
-                                        metin: siradaki ? siradaki.proses : (ur.asama || "Üretim"),
-                                        adim: `${biten}/${ilerleme.length}`,
-                                        renk: prosesRengi(siradaki ? siradaki.proses : "Üretim"),
-                                        sira: 2, ikon: "uretim",
-                                      };
-                                    });
+                                    // Kalem başına hesap ortak (330 `siparisKalemTedarikDurumu`) — fişteki "Siparişten seç" de kullanıyor.
+                                    const durumlar = rg.kalemler.map((k) => siparisKalemTedarikDurumu(k, tumSiparisler, uretimSiparisleri));
                                     durumlar.sort((a, b) => a.sira - b.sira);
                                     // FAZLA SEVK HER ZAMAN ÖNE ÇIKAR (19 Eylül): renk grubunda en
                                     // "geri"deki durum gösteriliyor; fazla sevk en ileri aşama
