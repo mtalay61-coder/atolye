@@ -30,6 +30,8 @@
   const FIRMA_EK = (function () {
     try {
       const f = JSON.parse(localStorage.getItem("firma:secim") || "null");
+      // DEMO FİRMA (v1.645.0): bulutsuz, kendi deposu — gerçek firmanın yerel kopyasına asla karışmaz.
+      if (f && f.demo === true) return "demo";
       const m = f && /^https:\/\/([a-z0-9]{8,40})\.supabase\.co$/.exec(String(f.url || ""));
       const anahtar = String((f && f.anahtar) || "").trim();
       const anahtarAcik = /^sb_publishable_/.test(anahtar) || anahtar.split(".").length === 3;

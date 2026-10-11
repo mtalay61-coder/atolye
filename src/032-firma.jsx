@@ -40,6 +40,11 @@ function firmaRefi(url) {
   const m = /^https:\/\/([a-z0-9]{8,40})\.supabase\.co$/.exec(String(url || ""));
   return m ? m[1] : "";
 }
+// Yerel depo / saklama kutusu kimliği: demo için "demo", gerçek firmada proje kimliği (depo-koprusu ile aynı kural).
+function firmaDepoKimligi(f) {
+  return f && f.demo === true ? "demo" : firmaRefi(f && f.url);
+}
+const DEMO_FIRMA = Object.freeze({ kod: "demo", demo: true });
 async function firmaKoduOzeti(kod) {
   const veri = new TextEncoder().encode("atolye-firma:" + firmaKoduNormal(kod));
   const ozet = await crypto.subtle.digest("SHA-256", veri);
@@ -86,11 +91,13 @@ function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayi
 // kayıt ENGEL DEĞİLDİR — defter aynı projeye gidecek; yalnız seçim kaydı yazılır. Engel ve saklama kutusu yalnız
 // gerçekten BAŞKA projeye geçerken.
 function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOku()) {
-  if (!yeni || !firmaBaglantisiGecerli(yeni)) throw new Error((yeni && firmaAnahtariSorunu(yeni.anahtar)) || "Adres geçersiz — https://<proje>.supabase.co olmalı");
-  const kayit = JSON.stringify({ kod: firmaKoduNormal(yeni.kod), url: yeni.url, anahtar: String(yeni.anahtar).trim() });
+  const demoMu = !!(yeni && yeni.demo === true);
+  if (!yeni || (!demoMu && !firmaBaglantisiGecerli(yeni))) throw new Error((yeni && firmaAnahtariSorunu(yeni.anahtar)) || "Adres geçersiz — https://<proje>.supabase.co olmalı");
+  const kayit = demoMu ? JSON.stringify({ kod: "demo", demo: true })
+    : JSON.stringify({ kod: firmaKoduNormal(yeni.kod), url: yeni.url, anahtar: String(yeni.anahtar).trim() });
   // Seçimsiz cihazın verisi ana projeye ait (v1.642 öncesi hep ana proje).
-  const eskiRef = firmaRefi((mevcut || VARSAYILAN_FIRMA).url);
-  const yeniRef = firmaRefi(yeni.url);
+  const eskiRef = firmaDepoKimligi(mevcut || VARSAYILAN_FIRMA);
+  const yeniRef = firmaDepoKimligi(yeni);
   if (yeniRef === eskiRef) {
     const degisti = depo.getItem(FIRMA_SECIM_ANAHTARI) !== kayit;
     depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
@@ -128,7 +135,7 @@ function firmaDegistirVeYenile(yeni) {
 // Ekranda görünen ad: girilen kod; elle (Gelişmiş) bağlanıldıysa proje kimliği.
 function firmaGorunenAdi() {
   const f = firmaSecimiOku();
-  return (f && (f.kod || firmaRefi(f.url))) || "—";
+  return (f && (f.demo ? "demo" : f.kod || firmaRefi(f.url))) || "—";
 }
 // Seçimsiz cihazın açılış ekranı (100 AtolyeERP kapısı). ?firma=KOD varsa kod dolu gelir.
 function FirmaGirisEkrani() {
@@ -149,21 +156,25 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
   // `firmaSeciminiDegistir`de, hedef proje belli olunca yapılır ve sebep hata kutusunda görünür.
   const engel = tamEkran ? null : firmaDegisimEngeli();
 
-  async function uygula() {
+  async function uygula(demo = false) {
     setBekliyor(true); setHata(null);
     try {
       let f;
-      if (gelismis) {
+      if (demo === true) {
+        f = DEMO_FIRMA;
+      } else if (gelismis) {
         f = { kod: firmaKoduNormal(kod), url: adres.trim().replace(/\/+$/, ""), anahtar: anahtar.trim() };
         if (!firmaAdresiGecerli(f.url)) throw new Error("Adres https://<proje>.supabase.co biçiminde olmalı");
         const sorun = firmaAnahtariSorunu(f.anahtar);
         if (sorun) throw new Error(sorun);
+      } else if (firmaKoduNormal(kod) === "demo") {
+        f = DEMO_FIRMA;
       } else {
         f = await firmaKoduCoz(kod);
         if (!f) throw new Error("Bu kodla kayıtlı firma bulunamadı — kodu kontrol edin");
         if (!firmaBaglantisiGecerli(f)) throw new Error("Firma kaydı bozuk — yöneticinize başvurun");
       }
-      await firmaBaglantisiniDene(f);
+      if (!f.demo) await firmaBaglantisiniDene(f);
       // Bekleyen kayıt engeli burada (hedef proje belli olunca): aynı projeye seçim serbest, başka projeye yasak.
       if (!firmaDegistirVeYenile(f)) { setBekliyor(false); onKapat(); }
     } catch (e) {
@@ -181,6 +192,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 14 }}>
           {tamEkran ? null : <>Şu an: <b data-firma-aktif="1">{firmaGorunenAdi()}</b>. </>}
           Firma kodunu size uygulamayı kuran kişi verir. Bu cihazda bir kez sorulur.
+          {tamEkran ? <> Kodunuz yoksa <b>Demoyu dene</b>: örnek verilerle dolu bir atölye, yalnız bu cihazda.</> : null}
         </div>
         {engel ? (
           <div data-firma-engel="1" style={{ fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 }}>{engel}</div>
@@ -212,6 +224,12 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
             {bekliyor ? "Kontrol ediliyor…" : "Bağlan"}
           </button>
           {tamEkran ? null : <button type="button" className="btn-ghost" onClick={onKapat}>Vazgeç</button>}
+          {tamEkran ? (
+            <button type="button" className="btn-ghost" data-demo-dene="1" disabled={bekliyor} style={{ marginLeft: "auto" }}
+              onClick={() => { setKod("demo"); setGelismis(false); setTimeout(() => uygula(true), 0); }}>
+              Demoyu dene
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

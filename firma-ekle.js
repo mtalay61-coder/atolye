@@ -52,6 +52,8 @@ const [kodHam, url, anahtarHam] = arg;
 const kod = firmaKoduNormal(kodHam);
 const anahtar = String(anahtarHam || "").trim();
 if (kod.length < 3) { console.error("Kod en az 3 harf/rakam ([a-z0-9-])"); process.exit(1); }
+// "demo" uygulamada yerel demo firmaya ayrılmış (034) — rehbere yazılsa da asla çözülmez; karışıklığı baştan önle.
+if (kod === "demo") { console.error("\"demo\" kodu demo firmaya ayrılmış — başka bir kod seçin"); process.exit(1); }
 if (!/^https:\/\/[a-z0-9]{8,40}\.supabase\.co$/.test(String(url || ""))) { console.error("Adres https://<proje>.supabase.co olmalı"); process.exit(1); }
 const sorun = anahtarSorunu(anahtar);
 if (sorun) { console.error(sorun); process.exit(1); }
