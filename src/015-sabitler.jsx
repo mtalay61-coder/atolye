@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.0";
+const SURUM = "1.645.1";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Demo firma: firma kodu ekraninda Demoyu dene, ornek verili atolye yalniz bu cihazda";
+const SURUM_NOTU = "Firma penceresi giris ekraninda saydam gorunuyordu (tema renkleri girisle yukleniyor); uyari iki kez yazilmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Demo firma: firma kodu ekraninda Demoyu dene, ornek verili a
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.1", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Giriş ekranında açılan firma penceresi saydamdı (tema renkleri girişten sonra yükleniyor) — sabit yedek renkler", "Bekleyen kayıt uyarısı pencerede iki kez yazılıyordu"] },
   { surum: "1.645.0", tarih: "11.10.2026",
     eklenen: ["Demo firma: firma kodu ekranında \"Demoyu dene\" (ya da kod: demo) — örnek ürün, reçete, cari ve siparişlerle dolu atölye; buluta bağlanmaz, yalnız o cihazda",
       "Demo şeridi: Sıfırla (örnek veriye dön) · Çık (firma kodu ekranına)"],

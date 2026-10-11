@@ -129,12 +129,12 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
     <button type="button" key={etiket} onClick={onClick} data-kurulum-cip={veri || etiket}
       style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, fontSize: 13, cursor: "pointer",
         border: `1.5px solid ${secili ? "var(--erp-accent, #5B3E96)" : "var(--erp-line, #ddd)"}`,
-        background: secili ? "var(--erp-accent-bg, #EEE8F7)" : "var(--erp-panel, #fff)", color: "var(--erp-text)" }}>
+        background: secili ? "var(--erp-accent-bg, #EEE8F7)" : "var(--erp-panel, #fff)", color: "var(--erp-text, #1f1f1f)" }}>
       {renk ? <span style={{ width: 12, height: 12, borderRadius: 999, background: renk, border: "1px solid rgba(0,0,0,.2)" }} /> : null}
       {etiket}
     </button>
   );
-  const not = (metin) => <div style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px", lineHeight: 1.5 }}>{metin}</div>;
+  const not = (metin) => <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", margin: "0 0 12px", lineHeight: 1.5 }}>{metin}</div>;
 
   function bitir() {
     onKaydet(kurulumTanimlariniUygula(tanimlar, { firma, olculer, renkler, prosesler, kdvAktif }));
@@ -142,14 +142,14 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
 
   return (
     <div data-kurulum-sihirbazi="1" style={{ position: "fixed", inset: 0, zIndex: 650, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div style={{ background: "var(--erp-panel, #fff)", borderRadius: "var(--erp-r-lg)", width: 560, maxWidth: "100%", maxHeight: "92vh", display: "flex", flexDirection: "column", fontFamily: "var(--erp-font, 'Inter', sans-serif)" }}>
-        <div style={{ padding: "18px 22px 10px", borderBottom: "1px solid var(--erp-line-soft)" }}>
+      <div style={{ background: "var(--erp-panel, #fff)", borderRadius: "var(--erp-r-lg, 12px)", width: 560, maxWidth: "100%", maxHeight: "92vh", display: "flex", flexDirection: "column", fontFamily: "var(--erp-font, 'Inter', sans-serif)" }}>
+        <div style={{ padding: "18px 22px 10px", borderBottom: "1px solid var(--erp-line-soft, #e6e2da)" }}>
           <div style={{ fontSize: 18, fontWeight: 700 }}>Hoş geldiniz — kurulum</div>
-          <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 }}>Beş kısa adım. Hepsi sonradan Tanımlar'dan değiştirilebilir.</div>
+          <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 2 }}>Beş kısa adım. Hepsi sonradan Tanımlar'dan değiştirilebilir.</div>
           <div style={{ display: "flex", gap: 4, marginTop: 12 }}>
             {ADIMLAR.map((a, i) => (
               <div key={a} data-kurulum-adim-gostergesi={i} style={{ flex: 1, textAlign: "center", fontSize: 11, fontWeight: i === adim ? 700 : 500,
-                color: i <= adim ? "var(--erp-text)" : "var(--erp-text-3)", borderTop: `3px solid ${i <= adim ? "var(--erp-accent, #5B3E96)" : "var(--erp-line, #ddd)"}`, paddingTop: 4 }}>
+                color: i <= adim ? "var(--erp-text, #1f1f1f)" : "var(--erp-text-3, #888888)", borderTop: `3px solid ${i <= adim ? "var(--erp-accent, #5B3E96)" : "var(--erp-line, #ddd)"}`, paddingTop: 4 }}>
                 {i + 1}. {a}
               </div>
             ))}
@@ -180,7 +180,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
               <Field label="Ek ölçüler (virgülle ayırın)">
                 <input data-kurulum-olcu-ek="1" value={olcuEk} onChange={(e) => setOlcuEk(e.target.value)} style={inputStyle} placeholder="örn. 34, 42" />
               </Field>
-              <div data-kurulum-olcu-ozet="1" style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2)" }}>
+              <div data-kurulum-olcu-ozet="1" style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" }}>
                 {olculer.length ? `Eklenecek: ${olculer.join(" · ")}` : "Ölçü eklenmeyecek."}
               </div>
             </div>
@@ -199,7 +199,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
               <Field label="Başka renkler (virgülle ayırın)">
                 <input data-kurulum-renk-ek="1" value={renkEk} onChange={(e) => setRenkEk(e.target.value)} style={inputStyle} placeholder="örn. Pudra, Antrasit" />
               </Field>
-              <div style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2)" }}>{renkler.length} renk eklenecek.</div>
+              <div style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" }}>{renkler.length} renk eklenecek.</div>
             </div>
           ) : null}
 
@@ -212,7 +212,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
               <Field label="Ek prosesler (virgülle ayırın, sırayla)">
                 <input data-kurulum-proses-ek="1" value={prosesEk} onChange={(e) => setProsesEk(e.target.value)} style={inputStyle} placeholder="örn. Boya, Kalite kontrol" />
               </Field>
-              <div style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2)" }}>
+              <div style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" }}>
                 {prosesler.length ? `Sıra: ${prosesler.join(" → ")}` : "Proses eklenmeyecek."}
               </div>
             </div>
@@ -222,23 +222,23 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
             <div>
               <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, marginBottom: 14 }}>
                 <input type="checkbox" data-kurulum-kdv="1" checked={kdvAktif} onChange={(e) => setKdvAktif(e.target.checked)} style={{ marginTop: 3 }} />
-                <span>Fişlerde KDV kullan <span style={{ display: "block", fontSize: 11, color: "var(--erp-text-3)" }}>Faturalı çalışıyorsanız açın. Sonradan Tanımlar › Firma'dan değiştirilir.</span></span>
+                <span>Fişlerde KDV kullan <span style={{ display: "block", fontSize: 11, color: "var(--erp-text-3, #888888)" }}>Faturalı çalışıyorsanız açın. Sonradan Tanımlar › Firma'dan değiştirilir.</span></span>
               </label>
-              <div data-kurulum-ozet="1" style={{ fontSize: 13, lineHeight: 1.8, background: "var(--erp-panel-2, #f6f4f0)", borderRadius: "var(--erp-r-md)", padding: "10px 12px" }}>
+              <div data-kurulum-ozet="1" style={{ fontSize: 13, lineHeight: 1.8, background: "var(--erp-panel-2, #f6f4f0)", borderRadius: "var(--erp-r-md, 8px)", padding: "10px 12px" }}>
                 <div><b>Firma:</b> {firma.unvan || "—"}</div>
                 <div><b>Ölçüler:</b> {olculer.length ? olculer.join(", ") : "yok"}</div>
                 <div><b>Renkler:</b> {renkler.length ? renkler.map((r) => r.ad).join(", ") : "yok"}</div>
                 <div><b>Prosesler:</b> {prosesler.length ? prosesler.join(" → ") : "yok"}</div>
                 <div><b>KDV:</b> {kdvAktif ? "açık" : "kapalı"}</div>
               </div>
-              <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginTop: 12 }}>
+              <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 12 }}>
                 Sonraki adım: Stok'tan ilk ürününüzü, Cari'den ilk müşteri ya da tedarikçinizi ekleyin.
               </div>
             </div>
           ) : null}
         </div>
 
-        <div style={{ padding: "12px 22px", borderTop: "1px solid var(--erp-line-soft)", display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ padding: "12px 22px", borderTop: "1px solid var(--erp-line-soft, #e6e2da)", display: "flex", gap: 8, alignItems: "center" }}>
           <button type="button" className="btn-ghost" data-kurulum-atla="1" style={{ fontSize: 12 }}
             onClick={() => onKaydet({ ...tanimlar, kurulumTamamlandi: true }, true)} title="Sihirbaz bir daha açılmaz; tanımları Tanımlar ekranından yaparsınız">
             Atla

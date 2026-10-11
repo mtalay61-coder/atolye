@@ -81,7 +81,7 @@ async function firmaBaglantisiniDene(f) {
 function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayit = bekleyenKayitlariOku()) {
   const sayi = Object.keys(bekleyenYazma || {}).length + Object.keys(bekleyenKayit || {}).length;
   if (!sayi) return null;
-  return `Bu cihazda buluta gönderilmemiş ${sayi} kayıt grubu var. Önce internete bağlanıp gönderin; gönderilmemiş kayıt varken firma değiştirilemez (kayıt öteki firmanın bulutuna gidebilirdi).`;
+  return `Bu cihazda buluta gönderilmemiş ${sayi} kayıt grubu var. Önce bu firmada giriş yapın — kayıtlar internet varken kendiliğinden gönderilir. Gönderilmemiş kayıt varken firma değiştirilemez (kayıt öteki firmanın bulutuna gidebilirdi).`;
 }
 // Seçimi yazar (sayfayı YENİDEN YÜKLEMEZ — çağıran yükler). Dönüş: seçim değişti mi. Engel varsa hata fırlatır.
 //
@@ -187,15 +187,15 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
     <div data-firma-penceresi="1" onClick={tamEkran ? undefined : onKapat}
       style={{ position: "fixed", inset: 0, background: tamEkran ? "var(--erp-panel-2, #f4f1ec)" : "rgba(0,0,0,.45)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={(e) => e.stopPropagation()}
-        style={{ background: "var(--erp-panel)", borderRadius: "var(--erp-r-lg)", padding: 24, width: 400, maxWidth: "100%", fontFamily: "'Inter', sans-serif" }}>
+        style={{ background: "var(--erp-panel, #ffffff)", color: "var(--erp-text, #1f1f1f)", borderRadius: "var(--erp-r-lg, 12px)", padding: 24, boxShadow: "0 8px 30px rgba(0,0,0,.25)", width: 400, maxWidth: "100%", fontFamily: "'Inter', sans-serif" }}>
         <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>{tamEkran ? "Atölye ERP — Firma kodu" : "Firma seç"}</div>
-        <div style={{ fontSize: 12, color: "var(--erp-text-2)", marginBottom: 14 }}>
+        <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", marginBottom: 14 }}>
           {tamEkran ? null : <>Şu an: <b data-firma-aktif="1">{firmaGorunenAdi()}</b>. </>}
           Firma kodunu size uygulamayı kuran kişi verir. Bu cihazda bir kez sorulur.
           {tamEkran ? <> Kodunuz yoksa <b>Demoyu dene</b>: örnek verilerle dolu bir atölye, yalnız bu cihazda.</> : null}
         </div>
         {engel ? (
-          <div data-firma-engel="1" style={{ fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 }}>{engel}</div>
+          <div data-firma-engel="1" style={{ fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px", marginBottom: 12 }}>{engel}</div>
         ) : null}
         <div style={{ display: "grid", gap: 10 }}>
           <Field label="Firma kodu">
@@ -216,8 +216,9 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
             </>
           ) : null}
         </div>
-        {hata ? (
-          <div data-firma-hata="1" style={{ marginTop: 12, fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>{hata}</div>
+        {/* Engel kutusundaki metnin aynısı hata olarak geldiyse ikinci kez yazılmaz. */}
+        {hata && hata !== engel ? (
+          <div data-firma-hata="1" style={{ marginTop: 12, fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px" }}>{hata}</div>
         ) : null}
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
           <button type="button" className="btn-primary" data-firma-uygula="1" disabled={bekliyor || (!gelismis && firmaKoduNormal(kod).length < 3)} onClick={() => uygula()}>
@@ -244,7 +245,7 @@ function FirmaSatiri({ kucuk = false }) {
   const [acik, setAcik] = useState(farkliParametre);
   return (
     <>
-      <div data-firma-satiri="1" style={{ fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+      <div data-firma-satiri="1" style={{ fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3, #888888)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
         <span>Firma: <b>{firmaGorunenAdi()}</b></span>
         <button type="button" className="btn-ghost" data-firma-degistir="1" style={{ padding: "1px 6px", fontSize: kucuk ? 11 : 12 }} onClick={() => setAcik(true)}>Değiştir</button>
       </div>
@@ -279,12 +280,12 @@ function KurulumDosyasiDugmesi() {
     }
   }
   return (
-    <div style={{ marginBottom: 12, fontSize: 12, color: "var(--erp-text-2)" }}>
+    <div style={{ marginBottom: 12, fontSize: 12, color: "var(--erp-text-2, #555555)" }}>
       <button type="button" className="btn-ghost" data-kurulum-indir="1" disabled={durum === "bekliyor"} onClick={indir} style={{ fontSize: 12 }}>
         {durum === "bekliyor" ? "Hazırlanıyor…" : "Yeni firma kurulum dosyasını indir (.sql)"}
       </button>
-      <span style={{ marginLeft: 8, color: "var(--erp-text-3)" }}>Yalnız Yönetici · veri içermez, yalnız tablo ve kurallar</span>
-      {durum && durum.hata ? <div data-kurulum-hata="1" style={{ marginTop: 6, color: "var(--erp-warn)" }}>{durum.hata}</div> : null}
+      <span style={{ marginLeft: 8, color: "var(--erp-text-3, #888888)" }}>Yalnız Yönetici · veri içermez, yalnız tablo ve kurallar</span>
+      {durum && durum.hata ? <div data-kurulum-hata="1" style={{ marginTop: 6, color: "var(--erp-warn, #b3261e)" }}>{durum.hata}</div> : null}
       {durum && durum.tamam ? <div style={{ marginTop: 6, color: "var(--erp-ok, #2F6B4F)" }}>İndirildi — yeni firmanın boş projesinde SQL Editor'da çalıştırın.</div> : null}
     </div>
   );
