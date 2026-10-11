@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.645.0</title>
+<title>Atölye ERP 1.645.3</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2262,9 +2262,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.645.0";
+const SURUM = "1.645.3";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Demo firma: firma kodu ekraninda Demoyu dene, ornek verili atolye yalniz bu cihazda";
+const SURUM_NOTU = "Demoya gecis bekleyen kayitla da serbest (kayit saklanir, donunce gonderilir); Baglan artik sonucsuz kalmiyor";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2272,6 +2272,19 @@ const SURUM_NOTU = "Demo firma: firma kodu ekraninda Demoyu dene, ornek verili a
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+    { surum: "1.645.3", tarih: "11.10.2026",
+        eklenen: [],
+        degisen: ["Bekleyen kayıt varken de demoya geçilebilir: kayıt saklanır, firma koduna dönünce gönderilir (gerçek başka firmaya geçiş yine yasak)"],
+        duzeltilen: ["Firma penceresinde \"Bağlan\" engellendiğinde hiçbir şey göstermiyordu (tepkisiz görünüyordu)"] },
+    { surum: "1.645.2", tarih: "11.10.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Tek cihazla çalışırken \"Başka cihazdan güncellendi\" yanlış uyarısı: yavaş ağda geç biten kendi kaydımız ve ürün/cari/sipariş alt tablolarına yazmamız başka cihaz sanılıyordu",
+            "Aynı tabloya yazma sürerken buluttan yeniden okuma ekrandaki yeni hâli eskisiyle değiştirebiliyordu — yazma bitene kadar okunmaz"] },
+    { surum: "1.645.1", tarih: "11.10.2026",
+        eklenen: [],
+        degisen: [],
+        duzeltilen: ["Giriş ekranında açılan firma penceresi saydamdı (tema renkleri girişten sonra yükleniyor) — sabit yedek renkler", "Bekleyen kayıt uyarısı pencerede iki kez yazılıyordu"] },
     { surum: "1.645.0", tarih: "11.10.2026",
         eklenen: ["Demo firma: firma kodu ekranında \"Demoyu dene\" (ya da kod: demo) — örnek ürün, reçete, cari ve siparişlerle dolu atölye; buluta bağlanmaz, yalnız o cihazda",
             "Demo şeridi: Sıfırla (örnek veriye dön) · Çık (firma kodu ekranına)"],
@@ -5004,14 +5017,20 @@ function bekleyenYazmaSil(anahtar) {
 const _tekilSayac = {};
 // BU CİHAZIN SON BULUT YAZMASI (v1.611.0, değişiklik sayacı): tablo → zaman. Yoklama, sayacı artan tablonun
 // yazması bizden geldiyse (son 12 sn) tazelemeyi erteler — kendi kaydımızı buluttan geri okumak boşa iş.
+// YOLDAKİ YAZMA (v1.645.2): damga yazma SIRAYA GİRERKEN basılıyordu. Kuyrukta bekleyen ya da yavaş ağda (mobil) 12 sn'den
+// geç biten yazmanın sayaç artışı "başka cihaz" sanılıyor, tablo buluttan yeniden okunuyordu — üstelik o sırada aynı
+// tabloya yoldaki DAHA YENİ bir yazma varsa ekrandaki yeni hâl buluttaki eski hâlle değişirdi. Artık yazma bitene kadar
+// tablo "yazılıyor" sayılır (bulutSonYazma = şimdi) ve bittiğinde damga yeniden basılır.
 const _bulutSonYazma = {};
-function bulutYazmaDamgala(tablo) { _bulutSonYazma[tablo] = Date.now(); }
-function bulutSonYazma(tablo) { return _bulutSonYazma[tablo] || 0; }
+const _bulutYoldakiYazma = {};
+function bulutYazmaBasladi(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = (_bulutYoldakiYazma[tablo] || 0) + 1; }
+function bulutYazmaBitti(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = Math.max(0, (_bulutYoldakiYazma[tablo] || 0) - 1); }
+function bulutSonYazma(tablo) { return (_bulutYoldakiYazma[tablo] || 0) > 0 ? Date.now() : (_bulutSonYazma[tablo] || 0); }
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
     if (!supabaseAcikMi())
         return yerel;
-    bulutYazmaDamgala(tablo);
+    bulutYazmaBasladi(tablo);
     const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
     // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
     // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
@@ -5042,6 +5061,7 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
         body: JSON.stringify([{ id: "tekil", veri: v }]),
     }));
     const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
+    gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
         gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
@@ -5148,7 +5168,7 @@ function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayi
     const sayi = Object.keys(bekleyenYazma || {}).length + Object.keys(bekleyenKayit || {}).length;
     if (!sayi)
         return null;
-    return `Bu cihazda buluta gönderilmemiş ${sayi} kayıt grubu var. Önce internete bağlanıp gönderin; gönderilmemiş kayıt varken firma değiştirilemez (kayıt öteki firmanın bulutuna gidebilirdi).`;
+    return `Bu cihazda buluta gönderilmemiş ${sayi} kayıt grubu var. Önce bu firmada giriş yapın — kayıtlar internet varken kendiliğinden gönderilir. Gönderilmemiş kayıt varken firma değiştirilemez (kayıt öteki firmanın bulutuna gidebilirdi).`;
 }
 // Seçimi yazar (sayfayı YENİDEN YÜKLEMEZ — çağıran yükler). Dönüş: seçim değişti mi. Engel varsa hata fırlatır.
 //
@@ -5157,6 +5177,22 @@ function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayi
 // zaten o projenin verisini taşıyor (seçimsiz = ana proje): AYNI PROJE seçilince saklama/temizleme YAPILMAZ ve bekleyen
 // kayıt ENGEL DEĞİLDİR — defter aynı projeye gidecek; yalnız seçim kaydı yazılır. Engel ve saklama kutusu yalnız
 // gerçekten BAŞKA projeye geçerken.
+// Bir projenin saklama kutusunu geri koyar. BEKLEYEN DEFTER DE GERİ GELİR (v1.645.3): kutuya ancak o projeden ayrılırken
+// girer ve yalnız AYNI projeye dönüşte açılır; defterin işaret ettiği yerel veri o projenin kendi deposunda
+// (depo-koprusu, firma başına ayrı) duruyor — yeniden gönderim aynı buluta gider. Cihazda zaten bir defter varsa
+// (beklenmez) dokunulmaz: ezilirse o kayıtlar kaybolurdu.
+function firmaSaklamaKutusunuAc(ref, depo) {
+    try {
+        const geri = JSON.parse(depo.getItem(`firma:sakli:${ref}`) || "{}") || {};
+        for (const [a, d] of Object.entries(geri)) {
+            if (/^bekleyen:/.test(a) && depo.getItem(a))
+                continue;
+            depo.setItem(a, d);
+        }
+    }
+    catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
+    depo.removeItem(`firma:sakli:${ref}`);
+}
 function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOku()) {
     const demoMu = !!(yeni && yeni.demo === true);
     if (!yeni || (!demoMu && !firmaBaglantisiGecerli(yeni)))
@@ -5167,11 +5203,18 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
     const eskiRef = firmaDepoKimligi(mevcut || VARSAYILAN_FIRMA);
     const yeniRef = firmaDepoKimligi(yeni);
     if (yeniRef === eskiRef) {
+        // Demodan "Çık" seçimi siler; ana firmaya dönen cihaz seçimsiz görünür (= ana proje). O projenin kutusu varsa
+        // (demoya geçerken saklanan oturum + bekleyen defter) şimdi geri gelir.
+        if (depo.getItem(`firma:sakli:${yeniRef}`) !== null)
+            firmaSaklamaKutusunuAc(yeniRef, depo);
         const degisti = depo.getItem(FIRMA_SECIM_ANAHTARI) !== kayit;
         depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
         return degisti;
     }
-    const engel = firmaDegisimEngeli();
+    // DEMOYA GEÇİŞ bekleyen kayıtla da serbest (v1.645.3 — kullanıcı: "Demoda girişe tıklayınca tepkisiz kalıyor"):
+    // demo buluta hiçbir şey göndermez, defter saklama kutusunda bekler ve aynı projeye dönünce geri gelir. GERÇEK başka
+    // firmaya geçiş yine yasak — orada defterin sahibi olmayan bir buluta gitme ihtimali var.
+    const engel = demoMu ? null : firmaDegisimEngeli();
     if (engel)
         throw new Error(engel);
     const sakli = {};
@@ -5182,16 +5225,7 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
         depo.removeItem(a);
     }
     depo.setItem(`firma:sakli:${eskiRef}`, JSON.stringify(sakli));
-    try {
-        const geri = JSON.parse(depo.getItem(`firma:sakli:${yeniRef}`) || "{}") || {};
-        // Bekleyen defter GERİ KONMAZ: değişim ancak defter boşken yapılabiliyor, saklanan hâl de boş olmalı; olmayan bir
-        // ihtimalde bile eski defteri canlandırmak, gönderilmiş kaydı ikinci kez göndermeye yol açardı.
-        for (const [a, d] of Object.entries(geri))
-            if (!/^bekleyen:/.test(a))
-                depo.setItem(a, d);
-    }
-    catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
-    depo.removeItem(`firma:sakli:${yeniRef}`);
+    firmaSaklamaKutusunuAc(yeniRef, depo);
     depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
     return true;
 }
@@ -5236,7 +5270,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
     const [hata, setHata] = useState(null);
     // Bekleyen kayıt ancak BAŞKA projeye geçişi engeller; ilk seçimde (tam ekran) proje henüz bilinmiyor — kontrol
     // `firmaSeciminiDegistir`de, hedef proje belli olunca yapılır ve sebep hata kutusunda görünür.
-    const engel = tamEkran ? null : firmaDegisimEngeli();
+    const engel = tamEkran || firmaKoduNormal(kod) === "demo" ? null : firmaDegisimEngeli();
     async function uygula(demo = false) {
         setBekliyor(true);
         setHata(null);
@@ -5273,13 +5307,16 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
         }
         catch (e) {
             setBekliyor(false);
-            setHata(String((e && e.message) || e));
+            const m = String((e && e.message) || e);
+            // Engel metni zaten üstteki kutuda; aynısını ikinci kez yazmak yerine kısa sonuç — ama SONUÇSUZ bırakmamak şart
+            // (v1.645.3: hata gizlenince "Bağlan" tepkisiz görünüyordu).
+            setHata(m === engel ? "Geçilemedi — önce yukarıdaki gönderilmemiş kayıt buluta gitmeli." : m);
         }
     }
     return (React.createElement("div", { "data-firma-penceresi": "1", onClick: tamEkran ? undefined : onKapat, style: { position: "fixed", inset: 0, background: tamEkran ? "var(--erp-panel-2, #f4f1ec)" : "rgba(0,0,0,.45)", zIndex: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
-        React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { background: "var(--erp-panel)", borderRadius: "var(--erp-r-lg)", padding: 24, width: 400, maxWidth: "100%", fontFamily: "'Inter', sans-serif" } },
+        React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { background: "var(--erp-panel, #ffffff)", color: "var(--erp-text, #1f1f1f)", borderRadius: "var(--erp-r-lg, 12px)", padding: 24, boxShadow: "0 8px 30px rgba(0,0,0,.25)", width: 400, maxWidth: "100%", fontFamily: "'Inter', sans-serif" } },
             React.createElement("div", { style: { fontSize: 17, fontWeight: 700, marginBottom: 4 } }, tamEkran ? "Atölye ERP — Firma kodu" : "Firma seç"),
-            React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginBottom: 14 } },
+            React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2, #555555)", marginBottom: 14 } },
                 tamEkran ? null : React.createElement(React.Fragment, null,
                     "\u015Eu an: ",
                     React.createElement("b", { "data-firma-aktif": "1" }, firmaGorunenAdi()),
@@ -5289,7 +5326,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
                     " Kodunuz yoksa ",
                     React.createElement("b", null, "Demoyu dene"),
                     ": \u00F6rnek verilerle dolu bir at\u00F6lye, yaln\u0131z bu cihazda.") : null),
-            engel ? (React.createElement("div", { "data-firma-engel": "1", style: { fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 12 } }, engel)) : null,
+            engel ? (React.createElement("div", { "data-firma-engel": "1", style: { fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px", marginBottom: 12 } }, engel)) : null,
             React.createElement("div", { style: { display: "grid", gap: 10 } },
                 React.createElement(Field, { label: "Firma kodu" },
                     React.createElement("input", { "data-firma-kodu": "1", value: kod, onChange: (e) => setKod(e.target.value), style: inputStyle, autoFocus: true, onKeyDown: (e) => e.key === "Enter" && !bekliyor && !engel && uygula(), placeholder: "\u00F6rn. ozderi" })),
@@ -5301,7 +5338,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
                         React.createElement("input", { "data-firma-adres": "1", value: adres, onChange: (e) => setAdres(e.target.value), style: inputStyle, placeholder: "https://xxxx.supabase.co" })),
                     React.createElement(Field, { label: "Publishable anahtar (gizli anahtar DE\u011E\u0130L)" },
                         React.createElement("input", { "data-firma-anahtar": "1", value: anahtar, onChange: (e) => setAnahtar(e.target.value), style: inputStyle, placeholder: "sb_publishable_\u2026" })))) : null),
-            hata ? (React.createElement("div", { "data-firma-hata": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn)", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } }, hata)) : null,
+            hata ? (React.createElement("div", { "data-firma-hata": "1", style: { marginTop: 12, fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px" } }, hata)) : null,
             React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" } },
                 React.createElement("button", { type: "button", className: "btn-primary", "data-firma-uygula": "1", disabled: bekliyor || (!gelismis && firmaKoduNormal(kod).length < 3), onClick: () => uygula() }, bekliyor ? "Kontrol ediliyor…" : "Bağlan"),
                 tamEkran ? null : React.createElement("button", { type: "button", className: "btn-ghost", onClick: onKapat }, "Vazge\u00E7"),
@@ -5314,7 +5351,7 @@ function FirmaSatiri({ kucuk = false }) {
     const farkliParametre = !!parametre && firmaKoduNormal(parametre) !== (AKTIF_FIRMA.kod || "");
     const [acik, setAcik] = useState(farkliParametre);
     return (React.createElement(React.Fragment, null,
-        React.createElement("div", { "data-firma-satiri": "1", style: { fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
+        React.createElement("div", { "data-firma-satiri": "1", style: { fontSize: kucuk ? 11 : 12, color: "var(--erp-text-3, #888888)", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
             React.createElement("span", null,
                 "Firma: ",
                 React.createElement("b", null, firmaGorunenAdi())),
@@ -5350,10 +5387,10 @@ function KurulumDosyasiDugmesi() {
                     : m });
         }
     }
-    return (React.createElement("div", { style: { marginBottom: 12, fontSize: 12, color: "var(--erp-text-2)" } },
+    return (React.createElement("div", { style: { marginBottom: 12, fontSize: 12, color: "var(--erp-text-2, #555555)" } },
         React.createElement("button", { type: "button", className: "btn-ghost", "data-kurulum-indir": "1", disabled: durum === "bekliyor", onClick: indir, style: { fontSize: 12 } }, durum === "bekliyor" ? "Hazırlanıyor…" : "Yeni firma kurulum dosyasını indir (.sql)"),
-        React.createElement("span", { style: { marginLeft: 8, color: "var(--erp-text-3)" } }, "Yaln\u0131z Y\u00F6netici \u00B7 veri i\u00E7ermez, yaln\u0131z tablo ve kurallar"),
-        durum && durum.hata ? React.createElement("div", { "data-kurulum-hata": "1", style: { marginTop: 6, color: "var(--erp-warn)" } }, durum.hata) : null,
+        React.createElement("span", { style: { marginLeft: 8, color: "var(--erp-text-3, #888888)" } }, "Yaln\u0131z Y\u00F6netici \u00B7 veri i\u00E7ermez, yaln\u0131z tablo ve kurallar"),
+        durum && durum.hata ? React.createElement("div", { "data-kurulum-hata": "1", style: { marginTop: 6, color: "var(--erp-warn, #b3261e)" } }, durum.hata) : null,
         durum && durum.tamam ? React.createElement("div", { style: { marginTop: 6, color: "var(--erp-ok, #2F6B4F)" } }, "\u0130ndirildi \u2014 yeni firman\u0131n bo\u015F projesinde SQL Editor'da \u00E7al\u0131\u015Ft\u0131r\u0131n.") : null));
 }
 // =============================================================================================
@@ -5486,20 +5523,20 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
         React.createElement("input", { "data-kurulum-alan": ad, value: firma[ad], onChange: (e) => setFirma({ ...firma, [ad]: e.target.value }), style: inputStyle, ...ek })));
     const cip = (secili, etiket, onClick, renk, veri) => (React.createElement("button", { type: "button", key: etiket, onClick: onClick, "data-kurulum-cip": veri || etiket, style: { display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 10px", borderRadius: 999, fontSize: 13, cursor: "pointer",
             border: `1.5px solid ${secili ? "var(--erp-accent, #5B3E96)" : "var(--erp-line, #ddd)"}`,
-            background: secili ? "var(--erp-accent-bg, #EEE8F7)" : "var(--erp-panel, #fff)", color: "var(--erp-text)" } },
+            background: secili ? "var(--erp-accent-bg, #EEE8F7)" : "var(--erp-panel, #fff)", color: "var(--erp-text, #1f1f1f)" } },
         renk ? React.createElement("span", { style: { width: 12, height: 12, borderRadius: 999, background: renk, border: "1px solid rgba(0,0,0,.2)" } }) : null,
         etiket));
-    const not = (metin) => React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px", lineHeight: 1.5 } }, metin);
+    const not = (metin) => React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2, #555555)", margin: "0 0 12px", lineHeight: 1.5 } }, metin);
     function bitir() {
         onKaydet(kurulumTanimlariniUygula(tanimlar, { firma, olculer, renkler, prosesler, kdvAktif }));
     }
     return (React.createElement("div", { "data-kurulum-sihirbazi": "1", style: { position: "fixed", inset: 0, zIndex: 650, background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 } },
-        React.createElement("div", { style: { background: "var(--erp-panel, #fff)", borderRadius: "var(--erp-r-lg)", width: 560, maxWidth: "100%", maxHeight: "92vh", display: "flex", flexDirection: "column", fontFamily: "var(--erp-font, 'Inter', sans-serif)" } },
-            React.createElement("div", { style: { padding: "18px 22px 10px", borderBottom: "1px solid var(--erp-line-soft)" } },
+        React.createElement("div", { style: { background: "var(--erp-panel, #fff)", borderRadius: "var(--erp-r-lg, 12px)", width: 560, maxWidth: "100%", maxHeight: "92vh", display: "flex", flexDirection: "column", fontFamily: "var(--erp-font, 'Inter', sans-serif)" } },
+            React.createElement("div", { style: { padding: "18px 22px 10px", borderBottom: "1px solid var(--erp-line-soft, #e6e2da)" } },
                 React.createElement("div", { style: { fontSize: 18, fontWeight: 700 } }, "Ho\u015F geldiniz \u2014 kurulum"),
-                React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 } }, "Be\u015F k\u0131sa ad\u0131m. Hepsi sonradan Tan\u0131mlar'dan de\u011Fi\u015Ftirilebilir."),
+                React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 2 } }, "Be\u015F k\u0131sa ad\u0131m. Hepsi sonradan Tan\u0131mlar'dan de\u011Fi\u015Ftirilebilir."),
                 React.createElement("div", { style: { display: "flex", gap: 4, marginTop: 12 } }, ADIMLAR.map((a, i) => (React.createElement("div", { key: a, "data-kurulum-adim-gostergesi": i, style: { flex: 1, textAlign: "center", fontSize: 11, fontWeight: i === adim ? 700 : 500,
-                        color: i <= adim ? "var(--erp-text)" : "var(--erp-text-3)", borderTop: `3px solid ${i <= adim ? "var(--erp-accent, #5B3E96)" : "var(--erp-line, #ddd)"}`, paddingTop: 4 } },
+                        color: i <= adim ? "var(--erp-text, #1f1f1f)" : "var(--erp-text-3, #888888)", borderTop: `3px solid ${i <= adim ? "var(--erp-accent, #5B3E96)" : "var(--erp-line, #ddd)"}`, paddingTop: 4 } },
                     i + 1,
                     ". ",
                     a))))),
@@ -5518,7 +5555,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 } }, KURULUM_OLCU_SABLONLARI.map((s) => cip(olcuSablonu === s.id, s.ad, () => setOlcuSablonu(s.id), null, `olcu-${s.id}`))),
                     React.createElement(Field, { label: "Ek \u00F6l\u00E7\u00FCler (virg\u00FClle ay\u0131r\u0131n)" },
                         React.createElement("input", { "data-kurulum-olcu-ek": "1", value: olcuEk, onChange: (e) => setOlcuEk(e.target.value), style: inputStyle, placeholder: "\u00F6rn. 34, 42" })),
-                    React.createElement("div", { "data-kurulum-olcu-ozet": "1", style: { marginTop: 10, fontSize: 12, color: "var(--erp-text-2)" } }, olculer.length ? `Eklenecek: ${olculer.join(" · ")}` : "Ölçü eklenmeyecek."))) : null,
+                    React.createElement("div", { "data-kurulum-olcu-ozet": "1", style: { marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" } }, olculer.length ? `Eklenecek: ${olculer.join(" · ")}` : "Ölçü eklenmeyecek."))) : null,
                 adim === 2 ? (React.createElement("div", null,
                     not("Sık kullandığınız renkleri seçin. Her renge otomatik barkod kodu verilir."),
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 } }, KURULUM_RENK_ONERILERI.map((r) => cip(renkSecili.has(r.ad), r.ad, () => {
@@ -5531,7 +5568,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
                     }, r.kod, `renk-${r.ad}`))),
                     React.createElement(Field, { label: "Ba\u015Fka renkler (virg\u00FClle ay\u0131r\u0131n)" },
                         React.createElement("input", { "data-kurulum-renk-ek": "1", value: renkEk, onChange: (e) => setRenkEk(e.target.value), style: inputStyle, placeholder: "\u00F6rn. Pudra, Antrasit" })),
-                    React.createElement("div", { style: { marginTop: 10, fontSize: 12, color: "var(--erp-text-2)" } },
+                    React.createElement("div", { style: { marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" } },
                         renkler.length,
                         " renk eklenecek."))) : null,
                 adim === 3 ? (React.createElement("div", null,
@@ -5539,14 +5576,14 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
                     React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 } }, KURULUM_PROSES_SABLONLARI.map((s) => cip(prosesSablonu === s.id, s.ad, () => setProsesSablonu(s.id), null, `proses-${s.id}`))),
                     React.createElement(Field, { label: "Ek prosesler (virg\u00FClle ay\u0131r\u0131n, s\u0131rayla)" },
                         React.createElement("input", { "data-kurulum-proses-ek": "1", value: prosesEk, onChange: (e) => setProsesEk(e.target.value), style: inputStyle, placeholder: "\u00F6rn. Boya, Kalite kontrol" })),
-                    React.createElement("div", { style: { marginTop: 10, fontSize: 12, color: "var(--erp-text-2)" } }, prosesler.length ? `Sıra: ${prosesler.join(" → ")}` : "Proses eklenmeyecek."))) : null,
+                    React.createElement("div", { style: { marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" } }, prosesler.length ? `Sıra: ${prosesler.join(" → ")}` : "Proses eklenmeyecek."))) : null,
                 adim === 4 ? (React.createElement("div", null,
                     React.createElement("label", { style: { display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, marginBottom: 14 } },
                         React.createElement("input", { type: "checkbox", "data-kurulum-kdv": "1", checked: kdvAktif, onChange: (e) => setKdvAktif(e.target.checked), style: { marginTop: 3 } }),
                         React.createElement("span", null,
                             "Fi\u015Flerde KDV kullan ",
-                            React.createElement("span", { style: { display: "block", fontSize: 11, color: "var(--erp-text-3)" } }, "Fatural\u0131 \u00E7al\u0131\u015F\u0131yorsan\u0131z a\u00E7\u0131n. Sonradan Tan\u0131mlar \u203A Firma'dan de\u011Fi\u015Ftirilir."))),
-                    React.createElement("div", { "data-kurulum-ozet": "1", style: { fontSize: 13, lineHeight: 1.8, background: "var(--erp-panel-2, #f6f4f0)", borderRadius: "var(--erp-r-md)", padding: "10px 12px" } },
+                            React.createElement("span", { style: { display: "block", fontSize: 11, color: "var(--erp-text-3, #888888)" } }, "Fatural\u0131 \u00E7al\u0131\u015F\u0131yorsan\u0131z a\u00E7\u0131n. Sonradan Tan\u0131mlar \u203A Firma'dan de\u011Fi\u015Ftirilir."))),
+                    React.createElement("div", { "data-kurulum-ozet": "1", style: { fontSize: 13, lineHeight: 1.8, background: "var(--erp-panel-2, #f6f4f0)", borderRadius: "var(--erp-r-md, 8px)", padding: "10px 12px" } },
                         React.createElement("div", null,
                             React.createElement("b", null, "Firma:"),
                             " ",
@@ -5567,8 +5604,8 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
                             React.createElement("b", null, "KDV:"),
                             " ",
                             kdvAktif ? "açık" : "kapalı")),
-                    React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", marginTop: 12 } }, "Sonraki ad\u0131m: Stok'tan ilk \u00FCr\u00FCn\u00FCn\u00FCz\u00FC, Cari'den ilk m\u00FC\u015Fteri ya da tedarik\u00E7inizi ekleyin."))) : null),
-            React.createElement("div", { style: { padding: "12px 22px", borderTop: "1px solid var(--erp-line-soft)", display: "flex", gap: 8, alignItems: "center" } },
+                    React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 12 } }, "Sonraki ad\u0131m: Stok'tan ilk \u00FCr\u00FCn\u00FCn\u00FCz\u00FC, Cari'den ilk m\u00FC\u015Fteri ya da tedarik\u00E7inizi ekleyin."))) : null),
+            React.createElement("div", { style: { padding: "12px 22px", borderTop: "1px solid var(--erp-line-soft, #e6e2da)", display: "flex", gap: 8, alignItems: "center" } },
                 React.createElement("button", { type: "button", className: "btn-ghost", "data-kurulum-atla": "1", style: { fontSize: 12 }, onClick: () => onKaydet({ ...tanimlar, kurulumTamamlandi: true }, true), title: "Sihirbaz bir daha a\u00E7\u0131lmaz; tan\u0131mlar\u0131 Tan\u0131mlar ekran\u0131ndan yapars\u0131n\u0131z" }, "Atla"),
                 React.createElement("div", { style: { flex: 1 } }),
                 adim > 0 ? React.createElement("button", { type: "button", className: "btn-ghost", "data-kurulum-geri": "1", onClick: () => setAdim(adim - 1) }, "Geri") : null,
@@ -5702,7 +5739,8 @@ async function demoyuSifirla() {
     await demoVerisiniYukle(true);
 }
 // Demodan çık: seçim ve demoya ait doğrudan anahtarlar silinir (oturum, tema önbelleği); demo deposu cihazda kalır,
-// tekrar girilince kaldığı yerden devam eder.
+// tekrar girilince kaldığı yerden devam eder. Bekleyen defter silinmez (demoda hiç oluşmaz; demoya geçerken ana
+// firmanınki saklama kutusuna kalktı — firma kodu yeniden girilince 032 `firmaSaklamaKutusunuAc` geri koyar).
 function demodanCik() {
     for (const a of FIRMAYA_OZEL_ANAHTARLAR)
         if (!/^bekleyen:/.test(a))
@@ -6378,10 +6416,13 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
             tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin
         return Promise.resolve(yerel).then(() => ({ ok: true, bulut: false }));
     }
-    bulutYazmaDamgala(tablo);
+    // Yoldaki yazma (v1.645.2, 030): bitene kadar değişiklik yoklaması bu tabloyu "bizim yazmamız" sayar.
+    bulutYazmaBasladi(tablo);
+    const bulutIsi = supabaseTabloEsitle(tablo, kayitlar);
+    bulutIsi.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
-        supabaseTabloEsitle(tablo, kayitlar).then((sayim) => {
+        bulutIsi.then((sayim) => {
             // Çakışma: yazma OLMADI. Başarı gibi raporlamak çağıranın "silindi" demesine yol açıyordu.
             if (sayim && sayim.__cakisma) {
                 return { ok: false, bulut: true, cakisma: true, hata: "sürüm çakışması — buluta yazılmadı" };
@@ -6730,7 +6771,13 @@ function degisiklikFarki(onceki, yeni, { sonYazma, simdi, bekleyenAnahtarlar } =
             return;
         if (Number(sayi) === Number((onceki || {})[tablo] || 0))
             return;
-        if (sonYazma && simdi != null && simdi - (sonYazma(tablo) || 0) < DEGISIKLIK_KENDI_YAZMA_MS) {
+        // KENDİ YAZMAMIZ ALAN BAZINDA (v1.645.2 — kullanıcı tek cihazla çalışırken "Başka cihazdan güncellendi: Kasa / Banka"
+        // gördü). Damga ana tablo adıyla basılıyor (urunler) ama aynı kayıt alt tabloları da (varyantlar, stok_hareketleri…)
+        // yazıyor ve onların sayacı da artıyor; tablo bazında bakınca alt tablonun artışı "başka cihaz" sayılıyordu. Aynı
+        // alana ait HERHANGİ bir tabloya bu cihaz son 12 sn içinde yazdıysa (ya da yazma hâlâ yoldaysa — 030
+        // `bulutSonYazma` o durumda "şimdi" döner) bu turda ertelenir.
+        const kendiYazma = sonYazma ? Math.max(0, ...alaninTablolari(alan).map((t) => Number(sonYazma(t)) || 0)) : 0;
+        if (sonYazma && simdi != null && simdi - kendiYazma < DEGISIKLIK_KENDI_YAZMA_MS) {
             ertelenen.push(tablo);
             return;
         }
@@ -59298,7 +59345,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.645.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.645.3)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

@@ -124,7 +124,8 @@ async function demoyuSifirla() {
 }
 
 // Demodan çık: seçim ve demoya ait doğrudan anahtarlar silinir (oturum, tema önbelleği); demo deposu cihazda kalır,
-// tekrar girilince kaldığı yerden devam eder.
+// tekrar girilince kaldığı yerden devam eder. Bekleyen defter silinmez (demoda hiç oluşmaz; demoya geçerken ana
+// firmanınki saklama kutusuna kalktı — firma kodu yeniden girilince 032 `firmaSaklamaKutusunuAc` geri koyar).
 function demodanCik() {
   for (const a of FIRMAYA_OZEL_ANAHTARLAR) if (!/^bekleyen:/.test(a)) localStorage.removeItem(a);
   localStorage.removeItem(FIRMA_SECIM_ANAHTARI);

@@ -90,6 +90,20 @@ function firmaDegisimEngeli(bekleyenYazma = bekleyenYazmalariOku(), bekleyenKayi
 // zaten o projenin verisini taşıyor (seçimsiz = ana proje): AYNI PROJE seçilince saklama/temizleme YAPILMAZ ve bekleyen
 // kayıt ENGEL DEĞİLDİR — defter aynı projeye gidecek; yalnız seçim kaydı yazılır. Engel ve saklama kutusu yalnız
 // gerçekten BAŞKA projeye geçerken.
+// Bir projenin saklama kutusunu geri koyar. BEKLEYEN DEFTER DE GERİ GELİR (v1.645.3): kutuya ancak o projeden ayrılırken
+// girer ve yalnız AYNI projeye dönüşte açılır; defterin işaret ettiği yerel veri o projenin kendi deposunda
+// (depo-koprusu, firma başına ayrı) duruyor — yeniden gönderim aynı buluta gider. Cihazda zaten bir defter varsa
+// (beklenmez) dokunulmaz: ezilirse o kayıtlar kaybolurdu.
+function firmaSaklamaKutusunuAc(ref, depo) {
+  try {
+    const geri = JSON.parse(depo.getItem(`firma:sakli:${ref}`) || "{}") || {};
+    for (const [a, d] of Object.entries(geri)) {
+      if (/^bekleyen:/.test(a) && depo.getItem(a)) continue;
+      depo.setItem(a, d);
+    }
+  } catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
+  depo.removeItem(`firma:sakli:${ref}`);
+}
 function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOku()) {
   const demoMu = !!(yeni && yeni.demo === true);
   if (!yeni || (!demoMu && !firmaBaglantisiGecerli(yeni))) throw new Error((yeni && firmaAnahtariSorunu(yeni.anahtar)) || "Adres geçersiz — https://<proje>.supabase.co olmalı");
@@ -99,11 +113,17 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
   const eskiRef = firmaDepoKimligi(mevcut || VARSAYILAN_FIRMA);
   const yeniRef = firmaDepoKimligi(yeni);
   if (yeniRef === eskiRef) {
+    // Demodan "Çık" seçimi siler; ana firmaya dönen cihaz seçimsiz görünür (= ana proje). O projenin kutusu varsa
+    // (demoya geçerken saklanan oturum + bekleyen defter) şimdi geri gelir.
+    if (depo.getItem(`firma:sakli:${yeniRef}`) !== null) firmaSaklamaKutusunuAc(yeniRef, depo);
     const degisti = depo.getItem(FIRMA_SECIM_ANAHTARI) !== kayit;
     depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
     return degisti;
   }
-  const engel = firmaDegisimEngeli();
+  // DEMOYA GEÇİŞ bekleyen kayıtla da serbest (v1.645.3 — kullanıcı: "Demoda girişe tıklayınca tepkisiz kalıyor"):
+  // demo buluta hiçbir şey göndermez, defter saklama kutusunda bekler ve aynı projeye dönünce geri gelir. GERÇEK başka
+  // firmaya geçiş yine yasak — orada defterin sahibi olmayan bir buluta gitme ihtimali var.
+  const engel = demoMu ? null : firmaDegisimEngeli();
   if (engel) throw new Error(engel);
   const sakli = {};
   for (const a of FIRMAYA_OZEL_ANAHTARLAR) {
@@ -112,13 +132,7 @@ function firmaSeciminiDegistir(yeni, depo = localStorage, mevcut = firmaSecimiOk
     depo.removeItem(a);
   }
   depo.setItem(`firma:sakli:${eskiRef}`, JSON.stringify(sakli));
-  try {
-    const geri = JSON.parse(depo.getItem(`firma:sakli:${yeniRef}`) || "{}") || {};
-    // Bekleyen defter GERİ KONMAZ: değişim ancak defter boşken yapılabiliyor, saklanan hâl de boş olmalı; olmayan bir
-    // ihtimalde bile eski defteri canlandırmak, gönderilmiş kaydı ikinci kez göndermeye yol açardı.
-    for (const [a, d] of Object.entries(geri)) if (!/^bekleyen:/.test(a)) depo.setItem(a, d);
-  } catch (e) { /* bozuk saklama kutusu: temiz başlanır */ }
-  depo.removeItem(`firma:sakli:${yeniRef}`);
+  firmaSaklamaKutusunuAc(yeniRef, depo);
   depo.setItem(FIRMA_SECIM_ANAHTARI, kayit);
   return true;
 }
@@ -154,7 +168,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
   const [hata, setHata] = useState(null);
   // Bekleyen kayıt ancak BAŞKA projeye geçişi engeller; ilk seçimde (tam ekran) proje henüz bilinmiyor — kontrol
   // `firmaSeciminiDegistir`de, hedef proje belli olunca yapılır ve sebep hata kutusunda görünür.
-  const engel = tamEkran ? null : firmaDegisimEngeli();
+  const engel = tamEkran || firmaKoduNormal(kod) === "demo" ? null : firmaDegisimEngeli();
 
   async function uygula(demo = false) {
     setBekliyor(true); setHata(null);
@@ -179,7 +193,10 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
       if (!firmaDegistirVeYenile(f)) { setBekliyor(false); onKapat(); }
     } catch (e) {
       setBekliyor(false);
-      setHata(String((e && e.message) || e));
+      const m = String((e && e.message) || e);
+      // Engel metni zaten üstteki kutuda; aynısını ikinci kez yazmak yerine kısa sonuç — ama SONUÇSUZ bırakmamak şart
+      // (v1.645.3: hata gizlenince "Bağlan" tepkisiz görünüyordu).
+      setHata(m === engel ? "Geçilemedi — önce yukarıdaki gönderilmemiş kayıt buluta gitmeli." : m);
     }
   }
 
@@ -217,7 +234,7 @@ function FirmaPenceresi({ onKapat, kodBaslangic = "", tamEkran = false }) {
           ) : null}
         </div>
         {/* Engel kutusundaki metnin aynısı hata olarak geldiyse ikinci kez yazılmaz. */}
-        {hata && hata !== engel ? (
+        {hata ? (
           <div data-firma-hata="1" style={{ marginTop: 12, fontSize: 12, color: "var(--erp-warn, #b3261e)", background: "var(--erp-orange-bg, #fdeee4)", borderRadius: "var(--erp-r-md, 8px)", padding: "8px 10px" }}>{hata}</div>
         ) : null}
         <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>

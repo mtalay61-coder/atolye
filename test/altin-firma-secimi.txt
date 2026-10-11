@@ -17,7 +17,7 @@
   "engel": true,
   "baskaProjeyeEngel": {
    "hata": true,
-   "tekKez": true,
+   "sonucGorunur": true,
    "secimAyni": true
   }
  },
@@ -31,10 +31,18 @@
   "uygulamaYok": true,
   "kod": "NDS",
   "sonra": {
-   "secim": "nds",
+   "secim": null,
    "bekleyenYerinde": true,
    "oturumYerinde": true,
    "sakliKutuYok": true
+  }
+ },
+ "demoyaGecis": {
+  "engelYok": true,
+  "sonra": {
+   "secim": "demo",
+   "defterOrtada": false,
+   "defterKutuda": true
   }
  }
 }

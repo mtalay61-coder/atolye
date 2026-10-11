@@ -46,7 +46,13 @@ function degisiklikFarki(onceki, yeni, { sonYazma, simdi, bekleyenAnahtarlar } =
     const alan = DEGISIKLIK_TABLO_ALANI[tablo];
     if (!alan) return;
     if (Number(sayi) === Number((onceki || {})[tablo] || 0)) return;
-    if (sonYazma && simdi != null && simdi - (sonYazma(tablo) || 0) < DEGISIKLIK_KENDI_YAZMA_MS) { ertelenen.push(tablo); return; }
+    // KENDİ YAZMAMIZ ALAN BAZINDA (v1.645.2 — kullanıcı tek cihazla çalışırken "Başka cihazdan güncellendi: Kasa / Banka"
+    // gördü). Damga ana tablo adıyla basılıyor (urunler) ama aynı kayıt alt tabloları da (varyantlar, stok_hareketleri…)
+    // yazıyor ve onların sayacı da artıyor; tablo bazında bakınca alt tablonun artışı "başka cihaz" sayılıyordu. Aynı
+    // alana ait HERHANGİ bir tabloya bu cihaz son 12 sn içinde yazdıysa (ya da yazma hâlâ yoldaysa — 030
+    // `bulutSonYazma` o durumda "şimdi" döner) bu turda ertelenir.
+    const kendiYazma = sonYazma ? Math.max(0, ...alaninTablolari(alan).map((t) => Number(sonYazma(t)) || 0)) : 0;
+    if (sonYazma && simdi != null && simdi - kendiYazma < DEGISIKLIK_KENDI_YAZMA_MS) { ertelenen.push(tablo); return; }
     const anahtar = DEGISIKLIK_ALAN_ANAHTARI[alan];
     if (anahtar && bekleyen.has(anahtar)) { ertelenen.push(tablo); return; }
     alanlar.add(alan); tablolar.push(tablo);
