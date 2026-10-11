@@ -111,6 +111,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       aciklama: odemeHedefi.siparisNo ? `Sipariş ${odemeHedefi.siparisNo}` : "",
       siparisId: odemeHedefi.siparisId || null,
       siparisNo: odemeHedefi.siparisNo || null,
+      // Ödeme & Tahsilat ekranından (v1.645.8) seçilen ödeme şekli: Nakit / Havale/EFT / Kredi Kartı / Çek / Senet.
+      ...(odemeHedefi.odemeSekli ? { odemeSekli: odemeHedefi.odemeSekli } : {}),
     });
     setShowHareket(true);
     if (kartRef.current && kartRef.current.scrollIntoView) kartRef.current.scrollIntoView({ block: "start", behavior: "smooth" });
