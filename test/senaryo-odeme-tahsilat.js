@@ -13,7 +13,7 @@ const { TOHUM } = require("./tohum.js");
 
 (async () => {
   const t = { ...TOHUM };
-  t["muhasebe:data"] = JSON.stringify({ kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [] }], bankalar: [], cekler: [] });
+  t["muhasebe:data"] = JSON.stringify({ kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [] }], bankalar: [{ id: "b1", ad: "Ziraat", paraBirimi: "TRY", hareketler: [] }], cekler: [] });
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
@@ -32,21 +32,36 @@ const { TOHUM } = require("./tohum.js");
   const kutu = sayfa.locator("[data-odeme-cari]:visible").first();
   await kutu.click(); await kutu.fill("Müşteri B"); await sayfa.waitForTimeout(300); await kutu.press("Enter");
   await sayfa.waitForTimeout(1000);
-  // v1.645.10: nakitte cari kartı değil Kasa & Banka işlemi gibi KISA FORM; kasa kendiliğinden seçili.
-  sonuc.kisaForm = await sayfa.evaluate(() => {
-    const f = [...document.querySelectorAll("[data-odeme-kisa-form]")].find((x) => x.getBoundingClientRect().width > 0);
-    const h = f && f.querySelector("[data-siparis-odeme-hesap]");
-    return f ? { hesap: h ? h.options[h.selectedIndex].text : null, cariKartiYok: !f.closest("[data-odeme-tahsilat]").querySelector("[data-cari-kart-id]") } : null;
+  // v1.645.13: şekil → KASA/BANKA çipleri (nakitte yalnız kasalar) → cari; form TEK SATIR, ödeme şekli alanı yok.
+  sonuc.hesapCipleri = await sayfa.evaluate(() => [...document.querySelectorAll("[data-odeme-hesap]")].filter((x) => x.getBoundingClientRect().width > 0).map((x) => x.dataset.odemeHesap));
+  sonuc.tekSatir = await sayfa.evaluate(() => {
+    const f = [...document.querySelectorAll("[data-odeme-satiri]")].find((x) => x.getBoundingClientRect().width > 0);
+    if (!f) return null;
+    const ustler = new Set([...f.children].map((c) => Math.round(c.getBoundingClientRect().bottom)));   // alt kenar: alanlar farklı yükseklikte
+    return { satirSayisi: ustler.size, odemeSekliAlaniYok: ![...f.querySelectorAll("select")].some((x) => [...x.options].some((o) => o.value === "Senet")), cariKartiYok: !f.closest("[data-odeme-tahsilat]").querySelector("[data-cari-kart-id]") };
   });
-  await sayfa.locator("[data-odeme-kisa-form] [data-siparis-odeme-tutar]:visible").fill("500");
-  await sayfa.locator("[data-odeme-kisa-form] [data-siparis-odeme-kaydet]:visible").click();
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("500");
+  await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click();
   await sayfa.waitForTimeout(1500);
-  sonuc.kayittanSonraBos = await sayfa.evaluate(() => (document.querySelector("[data-odeme-kisa-form] [data-siparis-odeme-tutar]") || {}).value);
+  sonuc.kayittanSonraBos = await sayfa.evaluate(() => (document.querySelector("[data-odeme-satiri-tutar]") || {}).value);
   const m = await depoOku(sayfa, "muhasebe:data");
   sonuc.kasa = ((((m || {}).kasalar || [])[0] || {}).hareketler || []).map((h) => [h.yon, h.tutar]);
   const c = ((await depoOku(sayfa, "cari:data")) || []).find((x) => x.unvan === "Müşteri B") || {};
   sonuc.cariTahsilat = (c.hareketler || []).filter((h) => /^THS-/.test(h.fisNo || "")).map((h) => [h.tutar, h.odemeSekli]);
   sonuc.sonListe = await sayfa.evaluate(() => [...document.querySelectorAll("[data-odeme-son-satir]")].map((r) => [...r.cells].slice(1, 5).map((x) => x.innerText.trim()).join(" | ")));
+
+  // KREDİ KARTI: bankalar listelenir, "hesaba geçiş (vade)" tarihi var; banka hareketi o tarihte, cari hareketinde vade.
+  await sayfa.locator('[data-odeme-sekli="Kredi Kartı"]:visible').click();
+  await sayfa.waitForTimeout(600);
+  sonuc.kartHesaplari = await sayfa.evaluate(() => [...document.querySelectorAll("[data-odeme-hesap]")].filter((x) => x.getBoundingClientRect().width > 0).map((x) => x.dataset.odemeHesap));
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("200");
+  await sayfa.locator("[data-odeme-satiri-vade]:visible").fill("2099-02-15");
+  await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click();
+  await sayfa.waitForTimeout(1500);
+  const m2 = await depoOku(sayfa, "muhasebe:data");
+  sonuc.bankaHareketi = ((((m2 || {}).bankalar || [])[0] || {}).hareketler || []).map((h) => [h.yon, h.tutar, h.tarih]);
+  const c2 = ((await depoOku(sayfa, "cari:data")) || []).find((x) => x.unvan === "Müşteri B") || {};
+  sonuc.kartCariHareketi = (c2.hareketler || []).filter((h) => h.odemeSekli === "Kredi Kartı").map((h) => [h.tutar, h.vade]);
 
   // Ödeme + Çek: form çek bilgileriyle açılır.
   await sayfa.locator('[data-odeme-tip="Ödeme"]:visible').click();
@@ -58,10 +73,10 @@ const { TOHUM } = require("./tohum.js");
     return { sekil: s ? s.value : null, cekBilgileri: /Çek bilgileri/.test(k) };
   });
   // v1.645.10 — TEK ALAN: üç ekranda da ortak sekme şeridi; özet kartı (kasa bakiyesi) Kasa & Banka'yı açar.
-  sonuc.ozetler = await sayfa.evaluate(() => [...document.querySelectorAll("[data-odeme-ozet]")].filter((x) => x.getBoundingClientRect().width > 0).map((x) => x.innerText.replace(/\s+/g, " ").trim()));
+  sonuc.ozetKartlariYok = await sayfa.evaluate(() => !document.querySelector("[data-odeme-ozet]"));
   const seritSekmeleri = () => sayfa.evaluate(() => { const s = [...document.querySelectorAll("[data-odeme-alani-seridi]")].find((x) => x.getBoundingClientRect().width > 0); return s ? [...s.querySelectorAll("[data-odeme-alani-sekme]")].map((b) => `${b.dataset.odemeAlaniSekme}:${getComputedStyle(b).color === "rgb(255, 255, 255)" ? "seçili" : "-"}`) : null; });
   sonuc.seritGiris = await seritSekmeleri();
-  await sayfa.locator('[data-odeme-ozet="Kasa-k1"]:visible').click();
+  await sayfa.locator('[data-odeme-alani-sekme="muhasebe"]:visible').click();
   await sayfa.waitForTimeout(600);
   sonuc.seritKasa = await seritSekmeleri();
   await sayfa.locator('[data-odeme-alani-sekme="cekler"]:visible').click();

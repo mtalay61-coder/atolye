@@ -25,7 +25,7 @@ async function calistir() {
   await sayfa.waitForTimeout(1800);
   const girisSonrasi = {
     rol: ((await depoOku(sayfa, "tanimlar:data")).kullanicilar || [])[0].rol,
-    tanimlarMenude: await sayfa.evaluate(() => [...document.querySelectorAll("button")].some((b) => /Tanımlar/.test(b.textContent) && b.getBoundingClientRect().width > 0)),
+    tanimlarMenude: await sayfa.evaluate(() => [...document.querySelectorAll("button")].some((b) => /Tanımlar/.test(b.textContent + " " + (b.title || "") + " " + (b.getAttribute("aria-label") || "")) && b.getBoundingClientRect().width > 0)),
   };
 
   // Yeni veritabanı: kullanıcı yok, giriş pasif → Tanımlar'dan "Kullanıcı" rolüyle ekle → Yönetici olmalı;

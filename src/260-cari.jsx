@@ -21,8 +21,8 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
   const [odemeCariId, setOdemeCariId] = useState("");
   const [odemeYerelHedef, setOdemeYerelHedef] = useState(null);
   const [odemeListeSuzgec, setOdemeListeSuzgec] = useState("Tümü");
-  const [odemeFormSayaci, setOdemeFormSayaci] = useState(0);   // kayıttan sonra kısa form boş açılsın (anahtar)
-  const [odemeKartGoster, setOdemeKartGoster] = useState(false);   // kısa form yerine carinin kartı (hareketlerine bakmak için)
+  const [odemeKartGoster, setOdemeKartGoster] = useState(false);
+  const [odemeHesapSecim, setOdemeHesapSecim] = useState({});   // { Nakit: "kasa:id", "Havale/EFT": "banka:id", … } — şekil başına hatırlanır   // kısa form yerine carinin kartı (hareketlerine bakmak için)
   const odemeFormunuAc = (cariId, tip, sekil) => {
     setOdemeKartGoster(false);
     setOdemeCariId(cariId || "");
@@ -286,34 +286,17 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
         </button>
       );
     };
-    // ALANIN ÖZETİ (v1.645.10 — "kasa, banka, çek, senet hepsi dahil, toparlayacak alan"): her kasa/bankanın bakiyesi ve
-    // portföydeki çek/senet; karta dokununca ilgili sekme (Kasa & Banka / Çek & Senet) açılır.
-    const para = (x, pb) => `${Number(x || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb || "TRY"] || pb || ""}`;
-    const hesapKartlari = [
-      ...(((muhasebe && muhasebe.kasalar) || []).map((k) => ({ tur: "Kasa", h: k }))),
-      ...(((muhasebe && muhasebe.bankalar) || []).map((k) => ({ tur: "Banka", h: k }))),
-    ];
-    const portfoy = ((muhasebe && muhasebe.cekler) || []).filter((c) => (c.durum || "Portföyde") === "Portföyde");
-    const portfoyToplam = {};
-    portfoy.forEach((c) => { const pb = c.paraBirimi || "TRY"; portfoyToplam[pb] = (portfoyToplam[pb] || 0) + (Number(c.tutar) || 0); });
-    const ozetKarti = (anahtar, ust, alt, renk, hedef) => (
-      <button key={anahtar} type="button" data-odeme-ozet={anahtar} onClick={() => onOdemeAlaniGit && onOdemeAlaniGit(hedef)}
-        style={{ textAlign: "left", cursor: "pointer", padding: "8px 12px", minWidth: 150, borderRadius: "var(--erp-r-md)",
-          border: "1px solid var(--erp-line)", background: "#fff", display: "grid", gap: 2 }}>
-        <span style={{ fontSize: 11, color: "var(--erp-text-3)", fontWeight: 700 }}>{ust}</span>
-        <span className="mono" style={{ fontSize: 14, fontWeight: 700, color: renk }}>{alt}</span>
-      </button>
-    );
+    // KASA / BANKA SEÇİMİ (v1.645.13 — kullanıcı: "cari seçilen yere kasa banka seçilsin, hepsi kendi bölümünde"): nakitte
+    // yalnız kasalar, havale/EFT ve kredi kartında yalnız bankalar. Seçim şekil başına hatırlanır; yoksa carinin para
+    // birimindeki ilk hesap, o da yoksa ilk hesap. (Üstteki kasa/banka/çek özet kartları kullanıcı isteğiyle kalktı.)
+    const kisaSekil = KISA_FORM_SEKILLERI.includes(odemeSekliSecim);
+    const hesapListesi = !kisaSekil ? [] : (odemeSekliSecim === "Nakit"
+      ? ((muhasebe && muhasebe.kasalar) || []).filter((h) => !h.pasif).map((h) => ({ deger: `kasa:${h.id}`, kisaAd: h.ad, pb: h.paraBirimi || "TRY", h }))
+      : ((muhasebe && muhasebe.bankalar) || []).filter((h) => !h.pasif).map((h) => ({ deger: `banka:${h.id}`, kisaAd: h.ad, pb: h.paraBirimi || "TRY", h })));
+    const seciliHesap = hesapListesi.find((x) => x.deger === odemeHesapSecim[odemeSekliSecim])
+      || hesapListesi.find((x) => odemeCari && x.pb === (odemeCari.paraBirimi || "TRY")) || hesapListesi[0] || null;
     return (
       <div data-odeme-tahsilat="1">
-        <div data-odeme-ozetler="1" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          {hesapKartlari.map(({ tur, h }) => {
-            const b = hesapBakiyesi(h);
-            return ozetKarti(`${tur}-${h.id}`, `${tur} · ${h.ad}`, para(b, h.paraBirimi), b < 0 ? "var(--erp-danger, #B3261E)" : "#2F6B4F", "muhasebe");
-          })}
-          {ozetKarti("portfoy", `Portföyde çek / senet · ${portfoy.length}`,
-            Object.keys(portfoyToplam).length ? Object.entries(portfoyToplam).map(([pb, t]) => para(t, pb)).join(" · ") : "—", "var(--erp-text)", "cekler")}
-        </div>
         <div style={{ ...MOR_SERIT_STIL, padding: "10px 12px", marginBottom: 12, display: "grid", gap: 10 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             {tipDugmesi("Tahsilat")}{tipDugmesi("Ödeme")}
@@ -336,6 +319,25 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
               );
             })}
           </div>
+          {kisaSekil && (
+            <div data-odeme-hesaplar={odemeSekliSecim} style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>{odemeSekliSecim === "Nakit" ? "Kasa" : "Banka"}</span>
+              {hesapListesi.length === 0 ? (
+                <span style={{ fontSize: 12, color: "var(--erp-warn)" }}>{odemeSekliSecim === "Nakit" ? "Kasa" : "Banka"} tanımlı değil — Kasa & Banka sekmesinden açın.</span>
+              ) : hesapListesi.map((x) => {
+                const aktif = seciliHesap && seciliHesap.deger === x.deger;
+                return (
+                  <button key={x.deger} type="button" data-odeme-hesap={x.kisaAd}
+                    onClick={() => setOdemeHesapSecim((o) => ({ ...o, [odemeSekliSecim]: x.deger }))}
+                    style={{ padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
+                      border: `1.5px solid ${aktif ? "#2F6B4F" : "var(--erp-line)"}`, background: aktif ? "#2F6B4F" : "#fff",
+                      color: aktif ? "#fff" : "var(--erp-text-2)" }}>
+                    {x.kisaAd} <span className="mono" style={{ fontWeight: 400, opacity: 0.85 }}>· {Math.round(hesapBakiyesi(x.h)).toLocaleString("tr-TR")} {PARA_SEMBOLU[x.pb] || x.pb}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Cari</span>
             <div style={{ minWidth: 280, flex: "0 1 420px" }}>
@@ -361,14 +363,11 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
                 onClick={() => { setOdemeYerelHedef(null); setOdemeKartGoster(true); }}
                 title="Cari kartını aç (hareketler, çek/senet)">Cari kartı</button>
             </div>
-            <SiparisOdemeFormu key={`${odemeCari.id}|${odemeTip}|${odemeSekliSecim}|${odemeFormSayaci}`}
-              siparis={null} cari={odemeCari} tip={odemeTip} tutar={0} paraBirimi={odemeCari.paraBirimi || "TRY"}
-              odemeSekli={odemeSekliSecim} hesapOnSecim muhasebe={muhasebe} kurlar={kurlar} showToast={showToast}
-              onVazgec={() => odemeFormunuAc("", odemeTip, odemeSekliSecim)}
+            <OdemeSatiri key={`${odemeCari.id}|${odemeTip}|${odemeSekliSecim}`}
+              tip={odemeTip} odemeSekli={odemeSekliSecim} hesap={seciliHesap} cari={odemeCari} kurlar={kurlar} showToast={showToast}
               onKaydet={(k) => {
                 onOdemeKaydet(k);
-                showToast(`${odemeTip} kaydedildi — ${odemeCari.unvan}`);
-                setOdemeFormSayaci((n) => n + 1);
+                showToast(`${odemeTip} kaydedildi — ${odemeCari.unvan}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`);
               }} />
           </div>
         ) : odemeCari ? (

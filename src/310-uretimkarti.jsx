@@ -412,9 +412,28 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
       <div
         onClick={() => setAcik((v) => !v)}
         data-uretim-kart-serit={o.siparisNo}
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: acik ? 10 : 0, cursor: "pointer" }}
+        style={{ display: "flex", justifyContent: "space-between", alignItems: acik ? "flex-start" : "center", flexWrap: acik ? "wrap" : "nowrap", gap: 10, marginBottom: acik ? 10 : 0, cursor: "pointer" }}
       >
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        {/* TEK SATIR (v1.645.13 — kullanıcı, üretim listesi görüntüsüyle: "Tek satıra düşsün, bedenler görünmesin; sipariş no,
+            müşteri, stok, renk, adet yeterli"). Kart KAPALIYKEN yalnız bu satır; açınca eski ayrıntılı başlık. */}
+        {!acik && (
+          <div data-uretim-tek-satir={o.siparisNo} style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0, flexWrap: "wrap", fontSize: 13 }}>
+            <ColorSwatch src={urunGorseli} editable={false} size={28} />
+            {bagliSatisSiparisi ? (
+              <button type="button" className="mono" title="Bağlı satış siparişini aç"
+                onClick={(e) => { e.stopPropagation(); onGoToSiparis && onGoToSiparis(bagliSatisSiparisi.id); }}
+                style={{ fontWeight: 700, color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>
+                {bagliSatisSiparisi.siparisNo}
+              </button>
+            ) : <span className="mono" style={{ color: "var(--erp-text-3)" }}>{o.siparisNo}</span>}
+            <span style={{ color: "var(--erp-text-2)" }}>{bagliMusteri ? bagliMusteri.unvan : "—"}</span>
+            <b>{o.model}</b>
+            <span>{olcuGoster(o.renk) || ""}</span>
+            <b className="mono">{o.adet} çift</b>
+            <span style={{ fontSize: 11, fontWeight: 700, color: renkKartCizgi }}>{tamamlandi ? (o.stogaEklendiMi ? "Tamamlandı · stokta" : "Tamamlandı") : (o.asama || "—")}</span>
+          </div>
+        )}
+        {acik && <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
           <ColorSwatch src={urunGorseli} editable={false} size={40} />
           <div>
             <div style={{ fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -454,13 +473,8 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                 <PackageCheck size={12} /> Stoğa eklendi
               </div>
             )}
-            {!acik && (
-              <div style={{ fontSize: 11, color: renkKartCizgi, fontWeight: 700, marginTop: 4 }}>
-                {tamamlandi ? "Tamamlandı" : `Aşama: ${o.asama || "—"}`}
-              </div>
-            )}
           </div>
-        </div>
+        </div>}
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {/* TAM EKRAN — üretim üzerinde uzun süre çalışılıyor (iş ver, teslim al, fire gir).
               Bu sırada stok bakmak ya da sipariş açmak gerektiğinde kartı kaybetmemek için
