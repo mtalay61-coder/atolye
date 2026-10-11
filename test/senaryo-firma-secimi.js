@@ -72,7 +72,7 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     await bekle(800);
     sonuc.baglanti.baskaProjeyeEngel = await sayfa.evaluate(() => ({
       hata: /gönderilmemiş/.test(((document.querySelector("[data-firma-hata]") || document.querySelector("[data-firma-engel]")) || {}).textContent || ""),
-      tekKez: document.querySelectorAll("[data-firma-penceresi] [data-firma-hata], [data-firma-penceresi] [data-firma-engel]").length === 1,
+      sonucGorunur: /Geçilemedi/.test((document.querySelector("[data-firma-hata]") || {}).textContent || ""),
       secimAyni: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) === "nds",
     }));
     // 3) Engel kalkınca gizli anahtar elle girilirse reddedilir.
@@ -119,6 +119,27 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
       bekleyenYerinde: !!localStorage.getItem("bekleyen:yazma"),
       oturumYerinde: localStorage.getItem("atolye:oturum") === "ESKI-OTURUM",
       sakliKutuYok: !Object.keys(localStorage).some((a) => a.startsWith("firma:sakli:")),
+    }));
+    await tarayici.close();
+  }
+  // 5) v1.645.3 — kullanıcının ekranı: ana firmada (nds) bekleyen kayıt varken ?firma=demo → Bağlan GEÇER; defter ana
+  // firmanın saklama kutusuna kalkar (silinmez).
+  {
+    const girisli = { "tanimlar:data": JSON.stringify({ girisAktifMi: true, kullanicilar: [{ id: "k1", ad: "M", kullaniciAdi: "mahmut", rol: "Yönetici" }] }) };
+    const yol = "file://" + require("path").join(__dirname, "test.html") + "?firma=demo";
+    const { tarayici, sayfa } = await uygulamaAc(girisli, { hataYaz: false, adres: yol, onceRota: async (s) => {
+      await s.addInitScript(() => {
+        if (!localStorage.getItem("__kuruldu5")) { localStorage.setItem("__kuruldu5", "1"); localStorage.setItem("bekleyen:yazma", JSON.stringify({ "stok:items": { tablo: "urunler" } })); }
+      });
+    } });
+    await bekle(1500);
+    sonuc.demoyaGecis = { engelYok: await sayfa.evaluate(() => !document.querySelector("[data-firma-engel]")) };
+    await sayfa.click("[data-firma-uygula]");
+    await bekle(2000);
+    sonuc.demoyaGecis.sonra = await sayfa.evaluate(() => ({
+      secim: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) || null,
+      defterOrtada: !!localStorage.getItem("bekleyen:yazma"),
+      defterKutuda: /bekleyen:yazma/.test(localStorage.getItem("firma:sakli:mqdgucoomgqcvhvgixbl") || ""),
     }));
     await tarayici.close();
   }

@@ -506,14 +506,20 @@ function bekleyenYazmaSil(anahtar) {
 const _tekilSayac = {};
 // BU CİHAZIN SON BULUT YAZMASI (v1.611.0, değişiklik sayacı): tablo → zaman. Yoklama, sayacı artan tablonun
 // yazması bizden geldiyse (son 12 sn) tazelemeyi erteler — kendi kaydımızı buluttan geri okumak boşa iş.
+// YOLDAKİ YAZMA (v1.645.2): damga yazma SIRAYA GİRERKEN basılıyordu. Kuyrukta bekleyen ya da yavaş ağda (mobil) 12 sn'den
+// geç biten yazmanın sayaç artışı "başka cihaz" sanılıyor, tablo buluttan yeniden okunuyordu — üstelik o sırada aynı
+// tabloya yoldaki DAHA YENİ bir yazma varsa ekrandaki yeni hâl buluttaki eski hâlle değişirdi. Artık yazma bitene kadar
+// tablo "yazılıyor" sayılır (bulutSonYazma = şimdi) ve bittiğinde damga yeniden basılır.
 const _bulutSonYazma = {};
-function bulutYazmaDamgala(tablo) { _bulutSonYazma[tablo] = Date.now(); }
-function bulutSonYazma(tablo) { return _bulutSonYazma[tablo] || 0; }
+const _bulutYoldakiYazma = {};
+function bulutYazmaBasladi(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = (_bulutYoldakiYazma[tablo] || 0) + 1; }
+function bulutYazmaBitti(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = Math.max(0, (_bulutYoldakiYazma[tablo] || 0) - 1); }
+function bulutSonYazma(tablo) { return (_bulutYoldakiYazma[tablo] || 0) > 0 ? Date.now() : (_bulutSonYazma[tablo] || 0); }
 
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
-  bulutYazmaDamgala(tablo);
+  bulutYazmaBasladi(tablo);
   const benimSiram = (_tekilSayac[anahtar] = (_tekilSayac[anahtar] || 0) + 1);
   // TANIMLAR BULUTLA BİRLEŞEREK YAZILIR (v1.552.0, 089). Tanımlar tek satır; bütün hâli yazılınca başka
   // cihazda açılmış model renkleri/renkler bu cihazın eski listesiyle siliniyordu (kullanıcı: Paketleme'de
@@ -541,6 +547,7 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
       body: JSON.stringify([{ id: "tekil", veri: v }]),
     }));
   const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
+  gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
   return Promise.all([
     yerel,
     gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {

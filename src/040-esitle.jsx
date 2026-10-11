@@ -321,10 +321,13 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
     if (!TABLO_SEMA[tablo]) tabloFarki(tablo, kayitlar); // fark belleği yine de güncellensin
     return Promise.resolve(yerel).then(() => ({ ok: true, bulut: false }));
   }
-  bulutYazmaDamgala(tablo);
+  // Yoldaki yazma (v1.645.2, 030): bitene kadar değişiklik yoklaması bu tabloyu "bizim yazmamız" sayar.
+  bulutYazmaBasladi(tablo);
+  const bulutIsi = supabaseTabloEsitle(tablo, kayitlar);
+  bulutIsi.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
   return Promise.all([
     yerel,
-    supabaseTabloEsitle(tablo, kayitlar).then(
+    bulutIsi.then(
       (sayim) => {
         // Çakışma: yazma OLMADI. Başarı gibi raporlamak çağıranın "silindi" demesine yol açıyordu.
         if (sayim && sayim.__cakisma) {

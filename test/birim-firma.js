@@ -38,4 +38,15 @@ bekle("aynı proje ilk seçim: değişti (yenile)", E.firmaSeciminiDegistir(ana,
 bekle("aynı proje: oturum yerinde, saklama kutusu yok, kod sade", { oturum: eski.getItem("atolye:oturum"), kutu: [...eski.m.keys()].filter((a) => a.startsWith("firma:sakli")).length, kod: JSON.parse(eski.getItem("firma:secim")).kod },
   { oturum: "ESKI", kutu: 0, kod: "nds" });
 bekle("aynı seçim ikinci kez: değişiklik yok", E.firmaSeciminiDegistir(ana, eski, JSON.parse(eski.getItem("firma:secim"))), false);
+// v1.645.3: bekleyen kayıtla DEMOYA geçiş serbest; defter ana projenin kutusunda bekler, "Çık" + ana kod ile geri gelir.
+// (Engel kontrolü gerçek localStorage'ı okur; Node'da boş — burada kutunun taşınması ölçülüyor.)
+const d2 = (() => { const m = new Map(); return { m, getItem: (a) => (m.has(a) ? m.get(a) : null), setItem: (a, d) => m.set(a, String(d)), removeItem: (a) => m.delete(a) }; })();
+d2.setItem("firma:secim", JSON.stringify({ kod: "nds", url: ana.url, anahtar: ana.anahtar }));
+d2.setItem("bekleyen:yazma", "DEFTER"); d2.setItem("atolye:oturum", "OT");
+bekle("demoya geçiş", E.firmaSeciminiDegistir({ kod: "demo", demo: true }, d2, JSON.parse(d2.getItem("firma:secim"))), true);
+bekle("defter + oturum ana kutusunda, ortada yok", { ortada: d2.getItem("bekleyen:yazma"), kutu: JSON.parse(d2.getItem("firma:sakli:mqdgucoomgqcvhvgixbl")) },
+  { ortada: null, kutu: { "atolye:oturum": "OT", "bekleyen:yazma": "DEFTER" } });
+d2.removeItem("firma:secim");   // demodan Çık
+bekle("ana koda dönüş (seçimsiz = ana proje)", E.firmaSeciminiDegistir(ana, d2, null), true);
+bekle("defter ve oturum geri geldi, kutu kapandı", [d2.getItem("bekleyen:yazma"), d2.getItem("atolye:oturum"), d2.getItem("firma:sakli:mqdgucoomgqcvhvgixbl")], ["DEFTER", "OT", null]);
 process.exit(hata);

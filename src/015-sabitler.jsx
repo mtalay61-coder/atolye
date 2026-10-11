@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.1";
+const SURUM = "1.645.3";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Firma penceresi giris ekraninda saydam gorunuyordu (tema renkleri girisle yukleniyor); uyari iki kez yazilmiyor";
+const SURUM_NOTU = "Demoya gecis bekleyen kayitla da serbest (kayit saklanir, donunce gonderilir); Baglan artik sonucsuz kalmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,15 @@ const SURUM_NOTU = "Firma penceresi giris ekraninda saydam gorunuyordu (tema ren
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.3", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: ["Bekleyen kayıt varken de demoya geçilebilir: kayıt saklanır, firma koduna dönünce gönderilir (gerçek başka firmaya geçiş yine yasak)"],
+    duzeltilen: ["Firma penceresinde \"Bağlan\" engellendiğinde hiçbir şey göstermiyordu (tepkisiz görünüyordu)"] },
+  { surum: "1.645.2", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: [],
+    duzeltilen: ["Tek cihazla çalışırken \"Başka cihazdan güncellendi\" yanlış uyarısı: yavaş ağda geç biten kendi kaydımız ve ürün/cari/sipariş alt tablolarına yazmamız başka cihaz sanılıyordu",
+      "Aynı tabloya yazma sürerken buluttan yeniden okuma ekrandaki yeni hâli eskisiyle değiştirebiliyordu — yazma bitene kadar okunmaz"] },
   { surum: "1.645.1", tarih: "11.10.2026",
     eklenen: [],
     degisen: [],
