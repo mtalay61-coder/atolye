@@ -71,7 +71,8 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     await sayfa.click("[data-firma-uygula]");
     await bekle(800);
     sonuc.baglanti.baskaProjeyeEngel = await sayfa.evaluate(() => ({
-      hata: /gönderilmemiş/.test((document.querySelector("[data-firma-hata]") || {}).textContent || ""),
+      hata: /gönderilmemiş/.test(((document.querySelector("[data-firma-hata]") || document.querySelector("[data-firma-engel]")) || {}).textContent || ""),
+      tekKez: document.querySelectorAll("[data-firma-penceresi] [data-firma-hata], [data-firma-penceresi] [data-firma-engel]").length === 1,
       secimAyni: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) === "nds",
     }));
     // 3) Engel kalkınca gizli anahtar elle girilirse reddedilir.

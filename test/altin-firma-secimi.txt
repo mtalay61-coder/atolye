@@ -17,6 +17,7 @@
   "engel": true,
   "baskaProjeyeEngel": {
    "hata": true,
+   "tekKez": true,
    "secimAyni": true
   }
  },
