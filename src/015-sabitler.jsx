@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.11";
+const SURUM = "1.645.12";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Kasa & Banka ve Cek & Senet menuden kalkti; Odeme & Tahsilat alaninin sekmeleri";
+const SURUM_NOTU = "Odeme & Tahsilat tek sekme: Kasa & Banka, Cek & Senet ve Rapor ustte ayri sekme acmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -489,7 +489,15 @@ const SURUM_NOTU = "Kasa & Banka ve Cek & Senet menuden kalkti; Odeme & Tahsilat
 // Her sürümde EN ÜSTE yeni kayıt eklenir. `surumdenetim.js` en üst kaydın SURUM ile aynı olmasını
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
+// TEK SAYFA SEKMESİ (v1.645.12 — kullanıcı: "Birden fazla oldu, kasa banka vs. iki girişe gerek yok, hepsini teke düşür"):
+// Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
+const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
+
 const SURUM_GECMISI = [
+  { surum: "1.645.12", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: ["Ödeme & Tahsilat tek sayfa sekmesi: Kasa & Banka, Çek & Senet ve Rapor üst şeritte ayrı sekme açmıyor (eski açık sekmeler de tek sekmeye katlanır); menüden ya da sekmeden dönünce en son bakılan ekran açılır; alan şeridindeki tekrar eden 'Ödeme & Tahsilat' yazısı kalktı"],
+    duzeltilen: [] },
   { surum: "1.645.11", tarih: "11.10.2026",
     eklenen: [],
     degisen: ["Finans menüsünde Kasa & Banka ve Çek & Senet kalktı — ikisi Ödeme & Tahsilat alanının üstündeki sekmelerden açılıyor; açıkken menüde Ödeme & Tahsilat seçili görünür"],

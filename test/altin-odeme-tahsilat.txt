@@ -60,5 +60,10 @@
    "Müşteri B | Tahsilat | Nakit | 500,00 ₺ | Test Kullanıcısı"
   ]
  },
+ "ustSeritSekmeleri": [
+  "anasayfa",
+  "odemetahsilat"
+ ],
+ "donusteSonEkran": true,
  "hatalar": []
 }

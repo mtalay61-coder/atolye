@@ -76,6 +76,12 @@ const { TOHUM } = require("./tohum.js");
     const tablo = (sel) => [...r.querySelectorAll(`${sel} tbody tr`)].map((t) => [...t.cells].map((c) => c.innerText.trim()).join(" | "));
     return { ozet: tablo("[data-odeme-rapor-ozet]"), hesaplar: tablo("[data-odeme-rapor-hesaplar]"), liste: tablo("[data-odeme-rapor-liste]").map((x) => x.split(" | ").filter((_, i) => i !== 0 && i !== 5).join(" | ")) };   // tarih ve fiş no güne bağlı
   });
+  // v1.645.12 — TEK SAYFA SEKMESİ: kasa, çek ve rapor açıldıktan sonra üst şeritte yalnız Ödeme & Tahsilat.
+  sonuc.ustSeritSekmeleri = await sayfa.evaluate(() => [...document.querySelectorAll("[data-serit-sekme]")].map((x) => x.dataset.seritSekme));
+  // Menüden dönünce en son bakılan ekran (Rapor) açılır.
+  await modulAc(sayfa, "Anasayfa"); await sayfa.waitForTimeout(400);
+  await modulAc(sayfa, "Ödeme & Tahsilat"); await sayfa.waitForTimeout(600);
+  sonuc.donusteSonEkran = await sayfa.evaluate(() => !!([...document.querySelectorAll("[data-odeme-raporu]")].find((x) => x.getBoundingClientRect().width > 0)));
   sonuc.hatalar = hatalar;
   console.log(JSON.stringify(sonuc, null, 1));
   await tarayici.close();
