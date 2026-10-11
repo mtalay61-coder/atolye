@@ -599,6 +599,9 @@ function ProductMatrixCard({
   const [yeniTekliRenkGiris, setYeniTekliRenkGiris] = useState(false);
   const [ymrPozisyonSecimleri, setYmrPozisyonSecimleri] = useState({}); // { [pozisyon]: renkAdi }
   const [stokMatrisAcik, setStokMatrisAcik] = useState(false); // "Renkler ve Bedenler" tek başlık altında tüm matris
+  // RENK LİSTESİ ARAMASI (v1.645.6 — kullanıcı: "renkler arttıkça ekran uzuyor, arama filtre olsun"): ad, ton kodu ya
+  // da barkod renk koduyla süzer. Kart değişince sıfırlanmaz; aynı kartta açıp kapamak aramayı korur.
+  const [stokRenkArama, setStokRenkArama] = useState("");
   // HAMMADDEDE ALIŞ'LA AÇILIR (v1.594.0 — kullanıcı: "Fort Bombe fiyatlar tanımlı ama 350 ₺ çekiyor"): sekme hep SATIŞ'la
   // açılıyordu; kullanıcı hammaddenin renk fiyatlarını satışa yazdı, maliyet ALIŞ'ı okuyup kart fiyatına (350) düştü.
   // Hammaddenin günlük işi alış fiyatıdır; mamulde satış.
@@ -2165,10 +2168,36 @@ function ProductMatrixCard({
           </span>
         </button>
 
-        {stokMatrisAcik && (
-          <div style={{ overflowX: "auto" }}>
+        {stokMatrisAcik && (() => {
+          // RENK KODU (v1.645.6 — kullanıcı: "renk kodları da yazsın"): satırda iki kod — barkod renk kodu (Tanımlar'daki
+          // 4 haneli "Renk kodu", etikette basılı olan) ve varsa kullanıcının elle girdiği ton kodu (`renk.kod`).
+          const renkKodlari = (r) => {
+            const v = (product.variants || []).find((x) => kodEsit(x.renk, r));
+            const t = renkTanimiBul(barkodTanimlari, v && v.renkId, r);
+            const barkod = t && t.barkodKodu ? String(t.barkodKodu).padStart(4, "0") : "";
+            const ton = t && !t.modelRengiMi && t.kod != null && String(t.kod).trim() && String(t.kod) !== barkod ? String(t.kod).trim() : "";
+            return { barkod, ton };
+          };
+          const aranan = stokRenkArama.trim();
+          const gorunenRenkler = !aranan ? renkler : renkler.filter((r) => {
+            const k = renkKodlari(r);
+            // Her kelime adda ya da kodlarda geçmeli ("siyah 12" → Siyah Süet 0012).
+            const havuz = `${r} ${k.barkod} ${k.ton}`.toLocaleLowerCase("tr-TR");
+            return aranan.toLocaleLowerCase("tr-TR").split(/\s+/).every((p) => havuz.includes(p));
+          });
+          // SABİT ÇERÇEVE (v1.645.6): 47 renkli deride liste sayfayı aşağı uzatıyordu; tablo en fazla ~10 satır
+          // yüksekliğinde, kendi içinde kayıyor, başlık satırı yapışkan.
+          return (<>
+          {renkler.length > 6 && (
+            <div style={{ position: "relative", maxWidth: 320, marginBottom: 8 }}>
+              <input data-stok-renk-arama="1" value={stokRenkArama} onChange={(e) => setStokRenkArama(e.target.value)}
+                placeholder={`${renkBasligi(product)} adı ya da kodu ara…`} style={{ width: "100%", paddingRight: 28 }} />
+              <AramaTemizle deger={stokRenkArama} onTemizle={() => setStokRenkArama("")} veri="stok-renk" />
+            </div>
+          )}
+          <div data-stok-matrisi-cerceve="1" style={{ overflow: "auto", maxHeight: 520, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)" }}>
             <table data-stok-matrisi="kart" style={{ width: "auto", minWidth: "100%" }}>
-              <thead>
+              <thead style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--erp-surface, #fff)" }}>
                 <tr>
                   <th>{matrisKoseBasligi(renkler, bedenler, renkBasligi(product), product.olcuTipi || "Beden")}</th>
                   {bedenler.map((b) => (
@@ -2182,7 +2211,10 @@ function ProductMatrixCard({
                 </tr>
               </thead>
               <tbody>
-                {renkler.map((r) => (
+                {gorunenRenkler.length === 0 && (
+                  <tr><td colSpan={bedenler.length + 2} style={{ textAlign: "center", color: "var(--erp-text-3)", padding: 14 }}>"{aranan}" ile eşleşen yok</td></tr>
+                )}
+                {gorunenRenkler.map((r) => { const kod = renkKodlari(r); return (
                   <tr key={r}>
                     <td style={{ fontWeight: 600, whiteSpace: "nowrap" }}>
                       <ColorSwatch
@@ -2193,6 +2225,11 @@ function ProductMatrixCard({
                         damga={stokResmiDamgasi(firmaBilgileri, [product.ad, kodEsit(r, OLCUSUZ_AD) ? "" : r])}
                       />
                       {olcuGoster(r)}
+                      {(kod.barkod || kod.ton) && (
+                        <span className="mono" data-stok-renk-kodu="1" style={{ marginLeft: 8, fontSize: 11, fontWeight: 500, color: "var(--erp-text-3)" }}>
+                          {[kod.barkod, kod.ton].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
                       <SilOnayButonu onConfirm={() => onRemoveRenk(product.id, r)} boyut={12} baslikNormal={`${r} rengi bu üründen kaldırılsın mı?`} />
                     </td>
                     {bedenler.map((b) => {
@@ -2218,11 +2255,12 @@ function ProductMatrixCard({
                     })}
                     <td></td>
                   </tr>
-                ))}
+                ); })}
               </tbody>
             </table>
           </div>
-        )}
+          </>);
+        })()}
       </div>) },
       { id: "renkBedenEkle", ad: "Renk / beden ekle", icerik: (
 
