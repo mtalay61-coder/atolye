@@ -21,6 +21,9 @@ async function baglanVeBekle(sayfa, kosul) {
   for (let i = 0; i < 3; i++) {
     await sayfa.click("[data-firma-uygula]").catch(() => {});
     if (await sayfa.waitForFunction(kosul, null, { timeout: 6000 }).then(() => true).catch(() => false)) return true;
+    // Bağlan yeniden yükleme başlatıyor: bekleme o sırada "bağlam yok oldu" ile düşebilir, koşul aslında sağlanmıştır.
+    await bekle(800);
+    if (await sayfa.evaluate(kosul).catch(() => false)) return true;
   }
   if (process.env.TESHIS) console.error("TESHIS", await sayfa.evaluate(() => ({ dugme: (document.querySelector("[data-firma-uygula]") || {}).textContent, pencere: !!document.querySelector("[data-firma-penceresi]"), kod: (document.querySelector("[data-firma-kodu]") || {}).value, secim: localStorage.getItem("firma:secim") })));
   return false;
@@ -129,6 +132,8 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     // Yükleme olayını beklemek yarışlıydı (ölçüm yeniden yüklemeyle çakışıp eski seçimi okuyabiliyordu): sabit bekleme.
     await baglanVeBekle(sayfa, () => /nds/.test(localStorage.getItem("firma:secim") || "") || !!document.querySelector("[data-firma-hata]"));
     await bekle(1500);
+    // Yeniden yükleme bitmeden okunursa boş sayfa görülebiliyor: uygulama yeniden çizilene kadar bekle.
+    await sayfa.waitForFunction(() => /nds/.test(localStorage.getItem("firma:secim") || ""), null, { timeout: 8000 }).catch(() => {});
     sonuc.kapi.sonra = await sayfa.evaluate(() => ({
       secim: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) || null,
       bekleyenYerinde: !!localStorage.getItem("bekleyen:yazma"),

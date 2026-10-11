@@ -287,21 +287,8 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
             // sıkışır" diye muaf tutulmuştu; o gerekçe yanlıştı — hemen üstteki "Teslim Al"
             // tablosu zaten beden sütunlu ve içinde giriş kutuları var. Düz liste, beş bedenli
             // bir tabanı beş kez yazıyordu.
-            const satirIndex = {};
-            const iadeSatirlari = [];
-            (iadeAdaylari || []).forEach((h2) => {
-              const a = `${h2.urunId}|${h2.renk}`;
-              if (!(a in satirIndex)) {
-                satirIndex[a] = iadeSatirlari.length;
-                iadeSatirlari.push({ ad: h2.ad, renk: h2.renk, birim: h2.birim, hucreler: {} });
-              }
-              iadeSatirlari[satirIndex[a]].hucreler[h2.beden] = h2;
-            });
-            const matrisSatirlari = iadeSatirlari.filter((r) => Object.keys(r.hucreler).length > 1);
-            const tekilSatirlar = iadeSatirlari.filter((r) => Object.keys(r.hucreler).length <= 1);
-            const iadeBedenleri = bedenSirala(
-              Array.from(new Set(matrisSatirlari.flatMap((r) => Object.keys(r.hucreler))))
-            );
+            // Gruplama iş verme ekranıyla ORTAK (070 malzemeMatrisiGrupla, v1.645.5).
+            const { matris: matrisSatirlari, tekil: tekilSatirlar, bedenler: iadeBedenleri } = malzemeMatrisiGrupla(iadeAdaylari);
 
             // Tek hücre çizici: matriste de tekil satırda da aynı kutu kullanılıyor ki
             // ikisi zamanla ayrışmasın.
@@ -397,7 +384,7 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                           <tr key={ri}>
                             <td style={{ fontSize: 12, fontWeight: 600, padding: "3px 6px", whiteSpace: "nowrap" }}>
                               {r.ad}
-                              <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", fontWeight: 400 }}> · {r.renk} · {r.birim}</span>
+                              <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", fontWeight: 400 }}> · {olcuMetni([r.renk, r.birim])}</span>
                             </td>
                             {iadeBedenleri.map((b) => (
                               <td key={b} style={{ padding: "2px 3px", textAlign: "center" }}>{iadeKutusu(r.hucreler[b], true)}</td>
@@ -417,7 +404,10 @@ function TeslimAlmaFormu({ atama, prosesler, buProses, hammaddeler, iadeAdaylari
                         <div key={ri} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ flex: "1 1 160px", minWidth: 130, fontSize: 12, fontWeight: 600 }}>
                             {r.ad}
-                            <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 400 }}> · {r.renk}</span>
+                            {/* Ölçü de yazılır (v1.645.5): "Bağcık · Kahve" yerine "Bağcık · Kahve · 120 cm" — iş verme ekranıyla aynı. */}
+                            {olcuMetni([h2 && h2.renk, h2 && h2.beden]) ? (
+                              <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 400 }}> · {olcuMetni([h2 && h2.renk, h2 && h2.beden])}</span>
+                            ) : null}
                           </span>
                           {iadeKutusu(h2, false)}
                           <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", minWidth: 34 }}>{r.birim}</span>
