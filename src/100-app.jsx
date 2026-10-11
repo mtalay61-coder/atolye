@@ -870,22 +870,36 @@ function AtolyeUygulamasi() {
   // state ve fark tabanı yenilenir, kısa toast. Stok görselsiz okunur (15 MB inmesin), görseller ekrandakinden korunur.
   // Tablo yoksa (SQL çalıştırılmadı) ilk hata sonrası yoklama 5 dk susar — konsolda bir kez söylenir.
   const degisiklikRef = useRef({ gorulen: null, mesgul: false, susturulana: 0 });
+  // Ekrandaki son hâl (v1.645.7): tazelemede buluttan gelenle karşılaştırmak için — aynıysa "başka cihaz" değil (047
+  // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
+  const guncelDurumRef = useRef({});
+  guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, fisDefteri, modeller };
+  // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
   const bulutDegisikligiUygula = useCallback(async (alanlar) => {
     const tablolar = alanlar.flatMap(alaninTablolari);
     const bulut = await supabasedenOku({ yalniz: tablolar, resimsiz: true });
+    const g = guncelDurumRef.current;
+    const degisen = [];
+    const ayni = (alan, yeni) => { if (degisiklikIcerikAyni(g[alan], yeni)) return true; degisen.push(alan); return false; };
     alanlar.forEach((alan) => {
       if (alan === "stok") {
         const mevcutGorsel = {};
-        (stokGuncelRef.current || sonStokRef.current || []).forEach((u) => { const g = urunGorselleri(u); if (g) mevcutGorsel[u.id] = g; });
+        (stokGuncelRef.current || sonStokRef.current || []).forEach((u) => { const gr = urunGorselleri(u); if (gr) mevcutGorsel[u.id] = gr; });
         const yeni = gorselleriBirlestir(bulut.stok, mevcutGorsel);
-        setStok(yeni); tabloBaslangicTam("urunler", yeni);
-      } else if (alan === "cariler") { setCariler(bulut.cariler); tabloBaslangicTam("cariler", bulut.cariler); }
-      else if (alan === "siparisler") { setSiparisler(bulut.siparisler); tabloBaslangicTam("siparisler", bulut.siparisler); }
-      else if (alan === "uretim") { setUretim(bulut.uretim); tabloBaslangicTam("uretim", bulut.uretim); }
-      else if (alan === "stokRezervasyonlari") { setStokRezervasyonlari(bulut.stokRezervasyonlari || []); tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari || []); }
-      else if (alan === "onaylar") { setOnaylar(bulut.onaylar || []); tabloBaslangicTam("onaylar", bulut.onaylar || []); }
-      else if (alan === "cop") { const c = copuBuda(bulut.cop || []); setCop(c); tabloBaslangicTam("cop", bulut.cop || []); }
-      else if (alan === "tanimlar") { if (bulut.tanimlar) setTanimlar((t) => ({ ...t, ...bulut.tanimlar })); }
+        if (!ayni("stok", yeni)) { setStok(yeni); tabloBaslangicTam("urunler", yeni); }
+      } else if (alan === "cariler") { if (!ayni(alan, bulut.cariler)) { setCariler(bulut.cariler); tabloBaslangicTam("cariler", bulut.cariler); } }
+      else if (alan === "siparisler") { if (!ayni(alan, bulut.siparisler)) { setSiparisler(bulut.siparisler); tabloBaslangicTam("siparisler", bulut.siparisler); } }
+      else if (alan === "uretim") { if (!ayni(alan, bulut.uretim)) { setUretim(bulut.uretim); tabloBaslangicTam("uretim", bulut.uretim); } }
+      else if (alan === "stokRezervasyonlari") { if (!ayni(alan, bulut.stokRezervasyonlari || [])) { setStokRezervasyonlari(bulut.stokRezervasyonlari || []); tabloBaslangicTam("stok_rezervasyonlari", bulut.stokRezervasyonlari || []); } }
+      else if (alan === "onaylar") { if (!ayni(alan, bulut.onaylar || [])) { setOnaylar(bulut.onaylar || []); tabloBaslangicTam("onaylar", bulut.onaylar || []); } }
+      else if (alan === "cop") { const c = copuBuda(bulut.cop || []); if (!ayni(alan, c)) { setCop(c); tabloBaslangicTam("cop", bulut.cop || []); } }
+      else if (alan === "tanimlar") {
+        // Tanımlar bulut hâli ekrandakine EKLENİR: yalnız buluttan gelen anahtarlar karşılaştırılır.
+        if (bulut.tanimlar) {
+          const mevcut = Object.fromEntries(Object.keys(bulut.tanimlar).map((k) => [k, (g.tanimlar || {})[k]]));
+          if (!ayni(alan, mevcut)) setTanimlar((t) => ({ ...t, ...bulut.tanimlar }));
+        }
+      }
     });
     // Tek satırlık tablolar: `veri` sütunu bütün hâl.
     const tekil = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, fis_defteri: setFisDefteri, modeller: setModeller };
@@ -893,8 +907,9 @@ function AtolyeUygulamasi() {
     for (const [tablo, setX] of Object.entries(tekil)) {
       if (!alanlar.includes(tekilAlan[tablo])) continue;
       const sat = await supabaseTumSatirlar(tablo);
-      if (sat[0] && sat[0].veri != null) setX(sat[0].veri);
+      if (sat[0] && sat[0].veri != null && !ayni(tekilAlan[tablo], sat[0].veri)) setX(sat[0].veri);
     }
+    return degisen;
   }, []);
   useEffect(() => {
     if (loading || !supabaseAcikMi()) return undefined;
@@ -908,9 +923,13 @@ function AtolyeUygulamasi() {
         if (d.gorulen === null) { d.gorulen = yeni; return; }
         const f = degisiklikFarki(d.gorulen, yeni, { sonYazma: bulutSonYazma, simdi: Date.now(), bekleyenAnahtarlar: Object.keys(bekleyenYazmalariOku()) });
         if (f.alanlar.length) {
-          await bulutDegisikligiUygula(f.alanlar);
-          gunlukYaz(`Başka cihazdan güncellendi: ${f.alanlar.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ")}`, "veri", { tablolar: f.tablolar });
-          showToast(`Başka cihazdan güncellendi: ${f.alanlar.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ")}`);
+          const degisen = await bulutDegisikligiUygula(f.alanlar);
+          // İçeriği aynı çıkan alan (kendi geç görülen yazmamız) notta yazılmaz; hiçbiri değişmediyse not yok.
+          if (degisen.length) {
+            const adlar = degisen.map((a) => DEGISIKLIK_ALAN_ADI[a] || a).join(", ");
+            gunlukYaz(`Başka cihazdan güncellendi: ${adlar}`, "veri", { tablolar: f.tablolar });
+            showToast(`Başka cihazdan güncellendi: ${adlar}`);
+          }
         }
         d.gorulen = degisiklikGoruldu(d.gorulen, yeni, f.ertelenen);
       } catch (e) {

@@ -3,7 +3,7 @@
 // Ölçülen: sayacı artan tablo alanına düşer (kalem → siparişler); değişmeyen geçilir; bu cihazın 12 sn içindeki yazması
 // ertelenir (görüldü sayılmaz, yaşlanınca tazelenir); bekleyen yazması olan alan ertelenir; bilinmeyen tablo yok sayılır;
 // görüldü haritasında ertelenenler eski değerde kalır.
-const { degisiklikFarki, degisiklikGoruldu, alaninTablolari } = require("./erp.cjs");
+const { degisiklikFarki, degisiklikGoruldu, alaninTablolari, degisiklikIcerikAyni } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -28,5 +28,9 @@ const f4 = degisiklikFarki({ urunler: 1, varyantlar: 1, stok_hareketleri: 1 }, {
 bekle("ana tablo damgası alt tabloları da kapsar (alan bazında)", [f4.alanlar, f4.ertelenen], [[], ["urunler", "varyantlar", "stok_hareketleri"]]);
 const f5 = degisiklikFarki({ cari_hareketleri: 1 }, { cari_hareketleri: 2 }, { sonYazma: (t) => (t === "urunler" ? 97000 : 0), simdi: 100000, bekleyenAnahtarlar: [] });
 bekle("başka alanın damgası kapsamaz (stok yazması carileri ertelemez)", f5.alanlar, ["cariler"]);
+// v1.645.7: yoklama sekme gizliyken durur, dönüşte kendi yazmamız 12 sn'yi aşar — son kapı içerik karşılaştırması.
+bekle("anahtar sırası önemsiz (jsonb yeniden sıralar)", degisiklikIcerikAyni([{ id: "k1", kod: "K-1", kalemler: [{ adet: 2, beden: "37" }] }], [{ kod: "K-1", id: "k1", kalemler: [{ beden: "37", adet: 2 }] }]), true);
+bekle("undefined alan yok sayılır", degisiklikIcerikAyni({ a: 1, b: undefined }, { a: 1 }), true);
+bekle("dizi sırası önemli, değer farkı yakalanır", [degisiklikIcerikAyni([1, 2], [2, 1]), degisiklikIcerikAyni({ a: 1 }, { a: 2 })], [false, false]);
 if (hata) { console.log("BİRİM TESTİ HATA: değişiklik sayacı"); process.exit(1); }
 console.log("── değişiklik sayacı testi temiz ──");

@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.6";
+const SURUM = "1.645.7";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Stok kartinda renk listesi: renk kodu, arama ve sabit yukseklikte kaydirma";
+const SURUM_NOTU = "Siparisten secte tedarik durumu + kayan liste; koli etiketinde siparis bilgileri; tek cihazda Baska cihazdan guncellendi uyarisi duzeltildi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,11 @@ const SURUM_NOTU = "Stok kartinda renk listesi: renk kodu, arama ve sabit yuksek
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.7", tarih: "11.10.2026",
+    eklenen: ["Fiş formunda 'Siparişten seç' listesinde her satıra Durum: Planlanacak / Üretilecek / proses adımı / Üretildi — üretimden depoya girdi / Alış siparişi / Geldi (sipariş kartıyla aynı hesap)"],
+    degisen: ["'Siparişten seç' listesi sabit yükseklikte kendi içinde kayıyor — siparişler arttıkça fiş formu aşağı uzamıyor",
+      "Koli etiketinde sipariş bilgileri: Sipariş No (üretimden kurulan kolide de), belge no, sezon, sipariş ve teslim tarihi"],
+    duzeltilen: ["Tek cihazda koli etiketi basınca \"Başka cihazdan güncellendi: Koliler\": yazdırma penceresi açıkken değişiklik yoklaması duruyor, dönüşte kendi kaydımız başka cihaz sanılıyordu — artık buluttaki hâl ekrandakiyle aynıysa tazeleme ve uyarı yok"] },
   { surum: "1.645.6", tarih: "11.10.2026",
     eklenen: ["Stok kartında Renkler ve Bedenler: renk kodu (barkod renk kodu + varsa ton kodu) her rengin yanında; 6'dan çok renkte ad ya da kodla arama"],
     degisen: ["Renk listesi sabit yükseklikte bir çerçevede kendi içinde kayıyor, başlık satırı yapışkan — renkler arttıkça sayfa aşağı uzamıyor"],

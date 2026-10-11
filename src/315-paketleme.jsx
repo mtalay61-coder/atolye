@@ -831,7 +831,7 @@ function PaketlemeModule({
               <button type="button" className="btn-primary" data-toplu-yazdir="1"
                 style={{ fontSize: 12, padding: "5px 12px" }}
                 onClick={() => koliEtiketleriYazdir(
-                  gorunen.filter((k) => seciliKoliler.includes(k.id)), stok, cariler, siparisler, tanimlar)}>
+                  gorunen.filter((k) => seciliKoliler.includes(k.id)), stok, cariler, siparisler, tanimlar, uretim)}>
                 <Printer size={12} /> Koli etiketlerini yazdır ({seciliKoliler.length})
               </button>
               {/* ELLE KAPAT (23 Eylül, v1.423.0): malı koli okutmadan düz satırla satılmış koliler
@@ -887,7 +887,7 @@ function PaketlemeModule({
                   {ur && <span className="mono" style={{ fontSize: 11, color: "var(--erp-brown)" }}>üretim {ur.siparisNo}</span>}
                   <span className="mono" style={{ fontSize: 12, fontWeight: 700 }}>{adet} çift</span>
                   <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-                    <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => koliEtiketiYazdir(k, stok, cariler, siparisler, tanimlar)}>
+                    <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => koliEtiketiYazdir(k, stok, cariler, siparisler, tanimlar, uretim)}>
                       <Printer size={12} /> Koli Etiketi (15×10)
                     </button>
                     <button className="btn-ghost" style={{ padding: "4px 10px", fontSize: 12 }} onClick={() => kutuEtiketleriYazdir(k, stok, tanimlar)}>
@@ -992,21 +992,30 @@ const KOLI_ETIKET = { genislikMM: 150, yukseklikMM: 100 };
 // Asortili koli kurunca bir seferde 3-10 koli çıkıyor ve her birinin etiketini tek tek bastırmak
 // aynı işi onlarca kez yapmak demekti. Etiket İÇERİĞİ ile YAZDIRMA ayrıldı: içerik üreten
 // fonksiyon tek koli için çalışıyor, yazdırma listeyi alıyor.
-function koliEtiketleriYazdir(koliler, stok, cariler, siparisler, tanimlar) {
-  const etiketler = (koliler || []).map((k) => koliEtiketiIcerigi(k, stok, cariler, siparisler, tanimlar));
+function koliEtiketleriYazdir(koliler, stok, cariler, siparisler, tanimlar, uretim) {
+  const etiketler = (koliler || []).map((k) => koliEtiketiIcerigi(k, stok, cariler, siparisler, tanimlar, uretim));
   if (etiketler.length === 0) return;
   etiketYazdir(etiketler, KOLI_ETIKET);
 }
 
-function koliEtiketiYazdir(koli, stok, cariler, siparisler, tanimlar) {
-  koliEtiketleriYazdir([koli], stok, cariler, siparisler, tanimlar);
+function koliEtiketiYazdir(koli, stok, cariler, siparisler, tanimlar, uretim) {
+  koliEtiketleriYazdir([koli], stok, cariler, siparisler, tanimlar, uretim);
 }
 
-function koliEtiketiIcerigi(koli, stok, cariler, siparisler, tanimlar) {
+function koliEtiketiIcerigi(koli, stok, cariler, siparisler, tanimlar, uretim) {
   const { satirlar, bedenler } = koliMatrisi(koli, stok, tanimlar);
   const adet = (koli.kalemler || []).reduce((t, x) => t + (x.adet || 0), 0);
-  const cari = (cariler || []).find((c) => c.id === koli.cariId);
-  const sip = (siparisler || []).find((x) => x.id === koli.siparisId);
+  // SİPARİŞ KOLİNİN BAĞINDAN (v1.645.7 — kullanıcı etiket görüntüsüyle: "sipariş detayları da yazılsın, sipariş no
+  // gibi"). Yalnız `koli.siparisId`e bakılıyordu; üretimden kurulan kolide bağ üretim üzerinden (`uretimId` → üretimin
+  // planlandığı satış siparişi) ve etikette sipariş satırı BOŞ kalıyordu. Fişin koli okutmada kullandığı çözüm (237).
+  const sip = koliSiparisiniCoz(koli, siparisler, uretim).siparis;
+  const cari = (cariler || []).find((c) => c.id === (koli.cariId || (sip && sip.cariId)));
+  const ayrinti = sip ? [
+    sip.belgeNo ? `Belge: ${sip.belgeNo}` : "",
+    sip.sezon ? `Sezon: ${sip.sezon}` : "",
+    sip.tarih ? `Sipariş tarihi: ${tarihTr(String(sip.tarih).slice(0, 10))}` : "",
+    sip.teslimTarihi ? `Teslim: ${tarihTr(String(sip.teslimTarihi).slice(0, 10))}` : "",
+  ].filter(Boolean).join(" · ") : "";
 
   const basliklar = bedenler.map((b) => `<th>${olcuGoster(b, "Miktar")}</th>`).join("");
   const govde = satirlar.map((r) => `
@@ -1023,10 +1032,12 @@ function koliEtiketiIcerigi(koli, stok, cariler, siparisler, tanimlar) {
     <div style="width:100%;text-align:left;font-size:15px;font-weight:700;line-height:1.2">
       ${cari ? cari.unvan : "—"}
     </div>
-    <div style="width:100%;display:flex;justify-content:space-between;font-size:11px;margin-bottom:1mm">
-      <span>${sip ? `Sipariş: ${sip.siparisNo}` : (koli.not || "")}</span>
+    <div style="width:100%;display:flex;justify-content:space-between;align-items:baseline;font-size:13px;margin-bottom:0.5mm">
+      <span style="font-weight:700">${sip ? `Sipariş No: ${sip.siparisNo}` : (koli.not || "")}</span>
       <span style="font-weight:700">${adet} çift</span>
     </div>
+    ${ayrinti ? `<div style="width:100%;text-align:left;font-size:10px;margin-bottom:1mm">${ayrinti}</div>` : ""}
+    ${sip && koli.not ? `<div style="width:100%;text-align:left;font-size:10px;margin-bottom:1mm">Not: ${koli.not}</div>` : ""}
     ${barkodSvg(koli.kod, { birim: 2, yukseklik: 52 })}
     <table style="margin-top:1mm">
       <thead><tr style="border-bottom:0.4mm solid #000">
