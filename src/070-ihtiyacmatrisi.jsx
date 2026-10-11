@@ -66,6 +66,30 @@ function ihtiyacSatirlariniTopla(kalemler) {
 
 // Beden sıralaması: 36 < 37 < ... sayısalsa sayıya göre, değilse alfabetik. Metin sıralaması
 // kullanılsaydı "10" bedeni "9"dan önce gelirdi.
+// MALZEME MATRİSİ (v1.645.5 — kullanıcı: "üretim verirken ki alırkenki dizayn farklı, verirkenki renkler v.s daha
+// doğru, aynı dizayn yap"). İş VERİRKEN (310 "Verilen hammadde") ve TESLİM ALIRKEN (305 "Artan ve eksik malzeme") aynı
+// malzeme listesi iki ayrı düzende çiziliyordu. İkisi de bunu kullanır: aynı malzeme+renk tek satır; birden çok ölçüsü
+// olan (taban, fusbet) beden sütunlu matrise, tek ölçülü olan (bağcık 120 cm, kutu) tekil satıra düşer.
+//   liste: [{ urunId, ad, renk, beden, birim, ... }]  →  { matris: [satır], tekil: [satır], bedenler: [sıralı] }
+//   satır: { urunId, ad, renk, birim, hucreler: { beden: öğe } }
+function malzemeMatrisiGrupla(liste) {
+  const indeks = {};
+  const satirlar = [];
+  (liste || []).forEach((h) => {
+    const a = `${h.urunId}|${h.renk}`;
+    if (!(a in indeks)) { indeks[a] = satirlar.length; satirlar.push({ urunId: h.urunId, ad: h.ad, renk: h.renk, birim: h.birim, hucreler: {} }); }
+    satirlar[indeks[a]].hucreler[h.beden] = h;
+  });
+  const matris = satirlar.filter((r) => Object.keys(r.hucreler).length > 1);
+  const tekil = satirlar.filter((r) => Object.keys(r.hucreler).length <= 1);
+  const bedenler = bedenSirala(Array.from(new Set(matris.flatMap((r) => Object.keys(r.hucreler)))));
+  return { matris, tekil, bedenler };
+}
+// Tekil satırın etiketi: ad · renk · ölçü ("Standart" ve boşlar atlanır) — "Bağcık · Kahve · 120 cm".
+function malzemeEtiketi(h) {
+  return olcuMetni([h && h.ad, h && h.renk, h && h.beden]);
+}
+
 function bedenSirala(liste) {
   return [...liste].sort((a, b) => {
     const na = parseFloat(a), nb = parseFloat(b);

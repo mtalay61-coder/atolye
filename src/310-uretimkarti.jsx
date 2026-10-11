@@ -934,29 +934,82 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                   boş bırakırsanız reçete kadar verilmiş sayılır — artan teslim alırken hesaplanır
                                 </span>
                               </div>
-                              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                {verilecekHammaddeler.map((h2) => {
+                              {(() => {
+                                // AYNI DÜZEN — teslim alma ekranıyla (305 "Artan ve eksik malzeme") ortak gruplama (070
+                                // malzemeMatrisiGrupla, v1.645.5 — kullanıcı: "verirken ki alırkenki dizayn farklı, aynı dizayn
+                                // yap"): çok ölçülü malzeme (taban, fusbet) beden sütunlu matriste, tek ölçülü olan (bağcık 120 cm,
+                                // kutu) tam etiketle tekil satırda. "Standart" yer tutucusu yazılmaz.
+                                const { matris, tekil, bedenler: vBedenler } = malzemeMatrisiGrupla(verilecekHammaddeler);
+                                const verilenKutusu = (h2, dar) => {
+                                  if (!h2) return <span style={{ color: "var(--erp-border)" }}>–</span>;
                                   const anahtar = `${h2.urunId}|${h2.renk}|${h2.beden}`;
                                   const deger = verilenGirisleri[anahtar];
                                   return (
-                                    <label key={anahtar} style={{ display: "grid", gap: 2, fontSize: 11, color: "var(--erp-text-2)" }}>
-                                      <span>{h2.ad} · {h2.renk}{h2.beden ? ` · ${h2.beden}` : ""}</span>
-                                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                        <input
-                                          type="number" min="0" step="any"
-                                          value={deger === undefined ? "" : deger}
-                                          onChange={(e) => setVerilenGirisleri({ ...verilenGirisleri, [anahtar]: e.target.value })}
-                                          placeholder={String(h2.beklenen)}
-                                          title={`Reçeteye göre ${h2.beklenen} ${h2.birim} gerekiyor`}
-                                          className="mono"
-                                          style={{ width: 84, padding: "4px 6px", fontSize: 12, fontWeight: 700, textAlign: "right", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
-                                        />
-                                        <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)" }}>/{h2.beklenen} {h2.birim}</span>
-                                      </span>
-                                    </label>
+                                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                      <input
+                                        type="number" min="0" step="any"
+                                        data-verilen-kutusu={anahtar}
+                                        value={deger === undefined ? "" : deger}
+                                        onChange={(e) => setVerilenGirisleri({ ...verilenGirisleri, [anahtar]: e.target.value })}
+                                        placeholder={String(h2.beklenen)}
+                                        title={`Reçeteye göre ${h2.beklenen} ${h2.birim} gerekiyor`}
+                                        className="mono"
+                                        style={{ width: dar ? 66 : 82, padding: "4px 6px", fontSize: 12, fontWeight: 700, textAlign: "right", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}
+                                      />
+                                      <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-2)", whiteSpace: "nowrap" }}>/{h2.beklenen}</span>
+                                    </span>
                                   );
-                                })}
-                              </div>
+                                };
+                                return (
+                                  <div style={{ display: "grid", gap: 8 }}>
+                                    {matris.length > 0 && (
+                                      <div style={{ overflowX: "auto" }}>
+                                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                          <thead>
+                                            <tr>
+                                              <th style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-brown)", textAlign: "left", padding: "2px 6px" }}>MALZEME</th>
+                                              {vBedenler.map((b) => (
+                                                <th key={b} className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-brown)", textAlign: "center", padding: "2px 4px" }}>{olcuGoster(b, "Miktar")}</th>
+                                              ))}
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {matris.map((r, ri) => (
+                                              <tr key={ri} data-verilen-matris-satiri={r.ad}>
+                                                <td style={{ fontSize: 12, fontWeight: 600, padding: "3px 6px", whiteSpace: "nowrap" }}>
+                                                  {r.ad}
+                                                  <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)", fontWeight: 400 }}> · {olcuMetni([r.renk, r.birim])}</span>
+                                                </td>
+                                                {vBedenler.map((b) => (
+                                                  <td key={b} style={{ padding: "2px 3px", textAlign: "center" }}>{verilenKutusu(r.hucreler[b], true)}</td>
+                                                ))}
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                    {tekil.length > 0 && (
+                                      <div style={{ display: "grid", gap: 5 }}>
+                                        {tekil.map((r, ri) => {
+                                          const h2 = Object.values(r.hucreler)[0];
+                                          const ek = olcuMetni([h2 && h2.renk, h2 && h2.beden]);
+                                          return (
+                                            <div key={ri} data-verilen-tekil-satir={malzemeEtiketi(h2)} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                              <span style={{ flex: "1 1 160px", minWidth: 130, fontSize: 12, fontWeight: 600 }}>
+                                                {r.ad}
+                                                {ek ? <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 400 }}> · {ek}</span> : null}
+                                              </span>
+                                              {verilenKutusu(h2, false)}
+                                              <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", minWidth: 34 }}>{r.birim}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                           <button

@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.4";
+const SURUM = "1.645.5";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Firma penceresi ekran yenilenince kendiliginden kapanmiyor, yazilan kod kaybolmuyor";
+const SURUM_NOTU = "Recete renk sutunlari hizali; is verme hammaddesi teslim alma duzeninde; eksik-siparis yok kirmizi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,12 @@ const SURUM_NOTU = "Firma penceresi ekran yenilenince kendiliginden kapanmiyor, 
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.5", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: ["Reçetede hammadde kartlarının renk sütunları ürünün renk sırasıyla ve sabit genişlikte — kartlar alt alta hizalı; eksik renk sona değil kendi yerine",
+      "Üretimde iş verirken \"Verilen hammadde\" teslim alırkenki düzende: çok ölçülü malzeme beden sütunlu tabloda, tek ölçülü olan tam etiketle (renk + boy) satırda; teslim alırken de boy yazılıyor, \"Standart\" yazılmıyor",
+      "Hammadde ihtiyacında \"Eksik — sipariş yok\" kırmızı (\"Kısmen siparişte\" turuncu kalır)"],
+    duzeltilen: [] },
   { surum: "1.645.4", tarih: "11.10.2026",
     eklenen: [],
     degisen: [],
@@ -1639,13 +1645,15 @@ function erpTokenHexCss() {
 //   yeterli — stok ihtiyacı karşılıyor (eksik yok)                            → yeşil  (--erp-primary)
 //   yolda   — eksik var ama eksiğin TAMAMI alış siparişiyle sipariş edilmiş   → mavi   (--erp-info)
 //   kismen  — eksiğin bir kısmı sipariş edilmiş, kalanı hâlâ sipariş yok      → turuncu (--erp-warn) + kamyon ikonu
-//   eksik   — eksik var, hiç sipariş edilmemiş                                 → turuncu (--erp-warn)
+//   eksik   — eksik var, hiç sipariş edilmemiş                                 → KIRMIZI (--erp-danger)
+//   (v1.645.5 — kullanıcı: "kısmen eksik ve eksik aynı renk olmuş": ikisi de turuncuydu, yalnız kamyon ikonu ayırıyordu.
+//    En acil durum — hiç sipariş yok — kırmızı; kısmen siparişte turuncu kalır.)
 // "Yolda" = alış siparişine bu satış siparişi için ayrılmış, henüz teslim alınmamış miktar (hammaddeSatinAlmaDurumu).
 const HAMMADDE_DURUMLARI = {
   yeterli: { ad: "Stokta var", renk: "var(--erp-primary)", aciklama: "Stok ihtiyacı karşılıyor" },
   yolda: { ad: "Siparişte (yolda)", renk: "var(--erp-info)", aciklama: "Eksiğin tamamı alış siparişiyle sipariş edilmiş, teslim bekleniyor" },
   kismen: { ad: "Kısmen siparişte", renk: "var(--erp-warn)", aciklama: "Eksiğin bir kısmı sipariş edilmiş; kalanı için sipariş yok", kamyon: true },
-  eksik: { ad: "Eksik — sipariş yok", renk: "var(--erp-warn)", aciklama: "Stok yetmiyor ve alış siparişi verilmemiş" },
+  eksik: { ad: "Eksik — sipariş yok", renk: "var(--erp-danger, #B3261E)", aciklama: "Stok yetmiyor ve alış siparişi verilmemiş" },
 };
 function hammaddeDurumu(eksik, yolda) {
   if (!(eksik > 0)) return "yeterli";
