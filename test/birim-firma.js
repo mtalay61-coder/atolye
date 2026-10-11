@@ -30,4 +30,12 @@ bekle("ana firmanın oturumu saklandı, ortada kalmadı", { ortada: depo.getItem
   { ortada: null, sakli: { "atolye:oturum": "ANA-OTURUM", "firma:gorunum": "ANA-TEMA" } });
 bekle("cihaz ayarı yerinde", depo.getItem("gorunum:boyut"), "CIHAZ");
 bekle("gizli anahtarla değişim reddedilir", (() => { try { E.firmaSeciminiDegistir({ ...yeni, anahtar: "sb_secret_XXXXXXXXXXXX" }, depo); return "geçti"; } catch (e) { return "ret"; } })(), "ret");
+// v1.643.0: seçimsiz (eski) cihaz ana firmanın kodunu girer → aynı proje: yalnız seçim yazılır, oturum yerinde kalır.
+const eski = (() => { const m = new Map(); return { m, getItem: (a) => (m.has(a) ? m.get(a) : null), setItem: (a, d) => m.set(a, String(d)), removeItem: (a) => m.delete(a) }; })();
+eski.setItem("atolye:oturum", "ESKI");
+const ana = { kod: "NDS", url: "https://mqdgucoomgqcvhvgixbl.supabase.co", anahtar: "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2" };
+bekle("aynı proje ilk seçim: değişti (yenile)", E.firmaSeciminiDegistir(ana, eski, null), true);
+bekle("aynı proje: oturum yerinde, saklama kutusu yok, kod sade", { oturum: eski.getItem("atolye:oturum"), kutu: [...eski.m.keys()].filter((a) => a.startsWith("firma:sakli")).length, kod: JSON.parse(eski.getItem("firma:secim")).kod },
+  { oturum: "ESKI", kutu: 0, kod: "nds" });
+bekle("aynı seçim ikinci kez: değişiklik yok", E.firmaSeciminiDegistir(ana, eski, JSON.parse(eski.getItem("firma:secim"))), false);
 process.exit(hata);

@@ -6,9 +6,11 @@ const { uygulamaAc, modulAc, bekle } = require("./ortak.js");
 const YENI_URL = "https://abcdefghij12.supabase.co";
 const YENI_ANAHTAR = "sb_publishable_DENEMEANAHTARI_1";
 const ozet = crypto.createHash("sha256").update("atolye-firma:deneme").digest("hex");
+const ozetAna = crypto.createHash("sha256").update("atolye-firma:nds").digest("hex");
+const ANA = { url: "https://mqdgucoomgqcvhvgixbl.supabase.co", anahtar: "sb_publishable_MKOjcTQ8Dod9Ofh-P-V-uA_3kKm_Ei2" };
 const rehberRotasi = async (sayfa) => {
   await sayfa.route("**/firmalar.json**", (r) => r.fulfill({ status: 200, contentType: "application/json",
-    body: JSON.stringify({ surum: 1, firmalar: { [ozet]: { url: YENI_URL, anahtar: YENI_ANAHTAR } } }) }));
+    body: JSON.stringify({ surum: 1, firmalar: { [ozet]: { url: YENI_URL, anahtar: YENI_ANAHTAR }, [ozetAna]: ANA } }) }));
   await sayfa.route("**/rest/v1/rpc/kurulum_betigi", (r) => r.fulfill({ status: 200, contentType: "application/json",
     body: JSON.stringify("-- Atölye ERP — yeni firma kurulum betiği\nbegin;\ncreate table if not exists public.tanimlar (id text);\ncommit;\n") }));
   await sayfa.route("**/auth/v1/settings", (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
@@ -64,7 +66,13 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
       pencere: !!document.querySelector("[data-firma-penceresi]"),
       kod: (document.querySelector("[data-firma-kodu]") || {}).value || "",
       engel: !!document.querySelector("[data-firma-engel]"),
-      dugmeKapali: !!(document.querySelector("[data-firma-uygula]") || {}).disabled,
+    }));
+    // Bekleyen kayıt varken BAŞKA projeye geçiş reddedilir (sebep hata kutusunda), seçim değişmez.
+    await sayfa.click("[data-firma-uygula]");
+    await bekle(800);
+    sonuc.baglanti.baskaProjeyeEngel = await sayfa.evaluate(() => ({
+      hata: /gönderilmemiş/.test((document.querySelector("[data-firma-hata]") || {}).textContent || ""),
+      secimAyni: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) === "nds",
     }));
     // 3) Engel kalkınca gizli anahtar elle girilirse reddedilir.
     await sayfa.evaluate(() => { localStorage.removeItem("bekleyen:yazma"); localStorage.removeItem("bekleyen:kayitlar"); });
@@ -77,7 +85,39 @@ const tohum = { "tanimlar:data": JSON.stringify({ girisAktifMi: false, renkler: 
     await bekle(500);
     sonuc.gizliAnahtar = await sayfa.evaluate(() => ({
       hata: /GİZLİ/.test((document.querySelector("[data-firma-hata]") || {}).textContent || ""),
-      secimYok: localStorage.getItem("firma:secim") === null,
+      secimDegismedi: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) === "nds",
+    }));
+    await tarayici.close();
+  }
+  // 4) FİRMA KAPISI (v1.643.0): seçimsiz cihazda yalnız firma kodu ekranı; ana firmanın eski cihazı (bekleyen kaydı var)
+  // kendi kodunu girince seçim yazılır — aynı proje, bekleyen kayıt engel değil, veri taşınmaz.
+  {
+    const yol = "file://" + require("path").join(__dirname, "test.html") + "?firma=NDS";
+    const { tarayici, sayfa } = await uygulamaAc(tohum, { hataYaz: false, adres: yol, firmaSecili: false, yuklemeyiBekle: false, onceRota: async (s) => {
+      await rehberRotasi(s);
+      await s.addInitScript(() => {
+        if (!localStorage.getItem("__kuruldu")) {
+          localStorage.setItem("__kuruldu", "1");
+          localStorage.setItem("bekleyen:yazma", JSON.stringify({ "stok:items": { tablo: "urunler" } }));
+          localStorage.setItem("atolye:oturum", "ESKI-OTURUM");
+        }
+      });
+    } });
+    await bekle(1200);
+    sonuc.kapi = await sayfa.evaluate(() => ({
+      kodEkrani: !!document.querySelector("[data-firma-penceresi]"),
+      vazgecYok: ![...document.querySelectorAll("[data-firma-penceresi] button")].some((b) => b.textContent.trim() === "Vazgeç"),
+      uygulamaYok: !document.querySelector("[data-nav]"),
+      kod: (document.querySelector("[data-firma-kodu]") || {}).value || "",
+    }));
+    const yuklendi = sayfa.waitForEvent("load", { timeout: 8000 }).catch(() => null);
+    await sayfa.click("[data-firma-uygula]");
+    if (!(await yuklendi)) sonuc.hatalar.push("kapı: yeniden yüklenmedi: " + await sayfa.evaluate(() => (document.querySelector("[data-firma-hata]") || {}).textContent || "-"));
+    sonuc.kapi.sonra = await sayfa.evaluate(() => ({
+      secim: (JSON.parse(localStorage.getItem("firma:secim") || "{}").kod) || null,
+      bekleyenYerinde: !!localStorage.getItem("bekleyen:yazma"),
+      oturumYerinde: localStorage.getItem("atolye:oturum") === "ESKI-OTURUM",
+      sakliKutuYok: !Object.keys(localStorage).some((a) => a.startsWith("firma:sakli:")),
     }));
     await tarayici.close();
   }

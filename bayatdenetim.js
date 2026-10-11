@@ -480,7 +480,7 @@ const BORC = new Map(process.env.SAYIM || process.env.BORCSUZ ? [] : [
   ["uretimProsesAtamaTeslimAl|siparisler|A", "zararsız: yalnız rezervasyon değişti, okunan `karsilanan`"],
   ["uretimProsesVer|cariler|A", "zararsız: okunan personel unvanı, hareketle değişmiyor"],
   ["yedegiUygula|stok|B", "zararsız: yalnız mevcut görselleri korumak için, geri yükleme her şeyi değiştiriyor"],
-  ["AtolyeERP›adsız|aktifKullanici|A", "zararsız: okunan `ad`/`id` set ile değişmiyor; useEffect'teki iki koşul birbirini dışlıyor"],
+  ["AtolyeUygulamasi›adsız|aktifKullanici|A", "zararsız: okunan `ad`/`id` set ile değişmiyor; useEffect'teki iki koşul birbirini dışlıyor"],
   ["StokModule›adsız|yeniOlcuAdi|A", "zararsız: Escape dalı sonraki satırda return ediyor"],
   ["grupEkle|eklenenGruplar|A", "zararsız: yeni anahtar filtrede ayrıca eleniyor"],
   // — C, efektlerde SONRADAN çalışan kullanım (22 Eylül incelemesi) —

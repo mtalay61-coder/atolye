@@ -19,7 +19,15 @@ function pencereIkonu(p) {
   return <B size={13} />;
 }
 
+// FİRMA KAPISI (v1.643.0 — kullanıcı: "Firma adı benim şuan kullandığım dahil herkeste istensin, standart olsun"):
+// cihazda firma seçimi yoksa uygulamanın HİÇBİR parçası çalışmaz — yalnız firma kodu ekranı. Kapı uygulama bileşeninin
+// DIŞINDA: içeride erken dönüş olsaydı yükleme efektleri yine çalışır, varsayılan projeye bağlanıp yerel veri açardı.
 export default function AtolyeERP() {
+  if (!firmaSecimiOku()) return <FirmaGirisEkrani />;
+  return <AtolyeUygulamasi />;
+}
+
+function AtolyeUygulamasi() {
   useFonts();
   // ---- SEKME KURALI (kullanıcı, 6 Eylül) --------------------------------------------------
   //

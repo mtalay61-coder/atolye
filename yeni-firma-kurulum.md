@@ -1,7 +1,8 @@
 # Yeni firma kurulumu (v1.642.0)
 
-Her müşteri firmanın **ayrı bir Supabase projesi** olur. Uygulama aynıdır. Firma, girişte "Firma kodu" ya da
-`?firma=KOD` bağlantısıyla seçilir. Bir firmanın verisi ötekine hiçbir yoldan karışmaz.
+Her müşteri firmanın **ayrı bir Supabase projesi** olur. Uygulama aynıdır. Firma kodu **her cihazda bir kez** sorulur
+(ana firma dahil — ana firmanın kodu `nds`); seçilmeden uygulama açılmaz. `?firma=KOD` bağlantısı kodu doldurur.
+Bir firmanın verisi ötekine hiçbir yoldan karışmaz.
 
 Bir kerelik hazırlık (yalnız ilk müşteride): **ana projede** `kurulum-betigi.sql` dosyasını Supabase › SQL Editor'da
 bir kez çalıştırın. Bu, kurulum dosyasını üreten fonksiyonu kurar.

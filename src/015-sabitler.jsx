@@ -475,9 +475,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.642.0";
+const SURUM = "1.643.0";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Coklu firma: firma kodu ile her firma kendi Supabase projesine baglanir, cihazdaki yerel kopya firma basina ayri";
+const SURUM_NOTU = "Firma kodu herkeste sorulur (ana firma: nds); secilmemis cihazda uygulama acilmaz";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +486,10 @@ const SURUM_NOTU = "Coklu firma: firma kodu ile her firma kendi Supabase projesi
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.643.0", tarih: "11.10.2026",
+    eklenen: ["Firma kodu her cihazda bir kez sorulur — ana firma dahil (kod: nds); firma seçilmeden uygulama açılmaz"],
+    degisen: ["Aynı projeye ilk seçim veriyi taşımaz, bekleyen kayıt engellemez; \"Ana firmaya dön\" kalktı"],
+    duzeltilen: [] },
   { surum: "1.642.0", tarih: "11.10.2026",
     eklenen: ["Firma kodu: giriş ekranında ve Tanımlar › Bulut Veritabanı'nda \"Firma: … · Değiştir\"; her firma kendi Supabase projesine bağlanır",
       "Müşteriye tek tıklık bağlantı: …/atolye/?firma=KOD",

@@ -1,6 +1,6 @@
 {
  "hatalar": [],
- "satir": "Firma: ana firma Değiştir",
+ "satir": "Firma: nds Değiştir",
  "kurulumDosyasi": {
   "ad": true,
   "icerik": true
@@ -15,10 +15,25 @@
   "pencere": true,
   "kod": "deneme",
   "engel": true,
-  "dugmeKapali": true
+  "baskaProjeyeEngel": {
+   "hata": true,
+   "secimAyni": true
+  }
  },
  "gizliAnahtar": {
   "hata": true,
-  "secimYok": true
+  "secimDegismedi": true
+ },
+ "kapi": {
+  "kodEkrani": true,
+  "vazgecYok": true,
+  "uygulamaYok": true,
+  "kod": "NDS",
+  "sonra": {
+   "secim": "nds",
+   "bekleyenYerinde": true,
+   "oturumYerinde": true,
+   "sakliKutuYok": true
+  }
  }
 }
