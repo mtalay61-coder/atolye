@@ -57,13 +57,13 @@ async function calistir() {
   // Aktif modülün grubu kendiliğinden açık: Muhasebe'ye gidince Finans açılmalı.
   await sayfa.evaluate(() => { const b = document.querySelector('[data-nav-grup="Finans"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(400);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Kasa & Banka"]'); if (b) b.click(); });
+  await require("./ortak.js").modulAc(sayfa, "Kasa & Banka");   // v1.645.11: menüden kalktı, Ödeme & Tahsilat şeridinden
   await sayfa.waitForTimeout(700);
   // Finans grubunu elle kapat; aktif modül içinde olduğu için açık kalmalı.
   await sayfa.evaluate(() => { const b = document.querySelector('[data-nav-grup="Finans"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(500);
   const aktifGrupAcikKaldi = await sayfa.evaluate(() =>
-    [...document.querySelectorAll("[data-nav]")].some((e) => e.offsetParent && e.getAttribute("data-nav") === "Kasa & Banka"));
+    [...document.querySelectorAll("[data-nav]")].some((e) => e.offsetParent && e.getAttribute("data-nav") === "Ödeme & Tahsilat"));   // v1.645.11: Kasa & Banka alanın sekmesi
 
   // FİŞ KARTI İŞLEMLER MENÜSÜ (18 Eylül): bağlantı düğmeleri açıkta duruyordu, artık tek
   // düğmenin arkasında; cari adı başlıkta tıklanabilir ve alttaki ikinci "carisine git" kalktı.

@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.10";
+const SURUM = "1.645.11";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Odeme & Tahsilat tek alan (giris, Kasa & Banka, Cek & Senet, Rapor); nakit/havale kisa formla; tek cihazda Baska cihazdan guncellendi: Cariler duzeltildi";
+const SURUM_NOTU = "Kasa & Banka ve Cek & Senet menuden kalkti; Odeme & Tahsilat alaninin sekmeleri";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -490,6 +490,10 @@ const SURUM_NOTU = "Odeme & Tahsilat tek alan (giris, Kasa & Banka, Cek & Senet,
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.11", tarih: "11.10.2026",
+    eklenen: [],
+    degisen: ["Finans menüsünde Kasa & Banka ve Çek & Senet kalktı — ikisi Ödeme & Tahsilat alanının üstündeki sekmelerden açılıyor; açıkken menüde Ödeme & Tahsilat seçili görünür"],
+    duzeltilen: [] },
   { surum: "1.645.10", tarih: "11.10.2026",
     eklenen: ["Ödeme & Tahsilat girişinin üstünde her kasa ve bankanın bakiyesi ile portföydeki çek/senet sayısı ve toplamı — karta dokununca ilgili sekme açılır",
       "Ödeme & Tahsilat › Rapor: tarih aralığı (bugün / hafta / ay / geçen ay / yıl), ödeme şekline göre tahsilat-ödeme-net, kasa/banka giriş-çıkış ve bakiye, vadesi 30 gün içinde dolan çek/senet, kayıt listesi (kullanıcıyla)"],

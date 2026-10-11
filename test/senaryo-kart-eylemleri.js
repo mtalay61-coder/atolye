@@ -58,7 +58,7 @@ async function calistir() {
   const siparisAcik = await kartEylemleri(sayfa);
 
   // KASA/BANKA KARTI: hesap kartı başlığında Düzenle · Sil; düzenlemede Kaydet · Vazgeç.
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Kasa & Banka"]'); if (b) b.click(); });
+  await require("./ortak.js").modulAc(sayfa, "Kasa & Banka");   // v1.645.11: menüden kalktı, Ödeme & Tahsilat şeridinden
   await sayfa.waitForTimeout(900);
   // Kart, listeden hesap seçilince açılıyor ("Soldan bir kasa seçin").
   await sayfa.locator('[data-hesap-satir="k1"]').first().click();

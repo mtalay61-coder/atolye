@@ -20,8 +20,6 @@
   "Planlama",
   "Cari",
   "Ödeme & Tahsilat",
-  "Kasa & Banka",
-  "Çek & Senet",
   "Finans Raporu",
   "Gelir / Gider",
   "Fişler",

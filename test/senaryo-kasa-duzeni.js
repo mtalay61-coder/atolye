@@ -26,7 +26,7 @@ async function calistir(ekranGoruntusu) {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.setViewportSize({ width: 1150, height: 700 });
   await sayfa.waitForTimeout(2300);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Kasa & Banka"]'); if (b) b.click(); });
+  await require("./ortak.js").modulAc(sayfa, "Kasa & Banka");   // v1.645.11: menüden kalktı, Ödeme & Tahsilat şeridinden
   await sayfa.waitForTimeout(900);
   await sayfa.locator('[data-hesap-satir="k1"]').first().click();
   await sayfa.waitForTimeout(700);
