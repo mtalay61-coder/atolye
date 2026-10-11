@@ -3,7 +3,7 @@
 const SEKME_IKON_BILESENI = {
   anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck,
   uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
-  cari: Users, muhasebe: Wallet, cekler: Receipt, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
+  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
   gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
 };
 function sekmeIkonu(anahtar) {
@@ -326,6 +326,9 @@ function AtolyeUygulamasi() {
   const muhasebeKapsamRef = useRef("kasabanka");
   if (tab === "muhasebe") muhasebeKapsamRef.current = "kasabanka";
   if (tab === "cekler") muhasebeKapsamRef.current = "cek";
+  const cariKapsamRef = useRef("cari");
+  if (tab === "cari") cariKapsamRef.current = "cari";
+  if (tab === "odemetahsilat") cariKapsamRef.current = "odeme";
   // Bir ürüne gidilince (uruneGit — sipariş, reçete, anasayfa…) doğru stok sekmesi: mamul ürün
   // "Mamul Stok"ta, diğerleri "Stok"ta açılsın; yoksa ürün penceresinin arkasında yanlış liste kalır.
   useEffect(() => {
@@ -1038,7 +1041,7 @@ function AtolyeUygulamasi() {
   // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
   // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
   const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
-    cekler: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
+    cekler: "muhasebe", odemetahsilat: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
   useEffect(() => {
     const m = SEKME_MODULU[tab];
     if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme")) return;
@@ -3495,6 +3498,7 @@ function AtolyeUygulamasi() {
     gelirgider: "Gelir / Gider Kartları",
     muhasebe: "Kasa & Banka",
     cekler: "Çek & Senet",
+    odemetahsilat: "Ödeme & Tahsilat",
     finansrapor: "Finans Raporu",
     planlama: "Planlama",
     // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
@@ -4155,6 +4159,8 @@ function AtolyeUygulamasi() {
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
                     yetki("cari") && ["cari", "Cari", <Users size={16} />], yetki("muhasebe") && ["muhasebe", "Kasa & Banka", <Wallet size={16} />],
                     yetki("muhasebe") && ["cekler", "Çek & Senet", <Receipt size={16} />],
+                    // ÖDEME & TAHSİLAT (v1.645.8): kasa, banka, çek, senet — bütün ödeme/tahsilat girişi tek ekranda (260 kapsam "odeme").
+                    yetki("muhasebe") && yetki("cari") && ["odemetahsilat", "Ödeme & Tahsilat", <ArrowDownCircle size={16} />],
                     // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
                     yetki("muhasebe") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
@@ -4714,8 +4720,10 @@ function AtolyeUygulamasi() {
               onAsortiOlustur={asortiOlustur}
             />
           </GizliModul>
-          <GizliModul aktif={tab === "cari"}>
+          {/* Cari ve Ödeme & Tahsilat AYNI örnek (Mamul Stok / Çek & Senet deseni): kapsam son görünen sekmeden. */}
+          <GizliModul aktif={tab === "cari" || tab === "odemetahsilat"}>
             <CariModule
+              kapsam={cariKapsamRef.current}
               onFiseGitNo={fiseGit}
               muhasebe={muhasebe}
               kurlar={muhasebe.kurlar}

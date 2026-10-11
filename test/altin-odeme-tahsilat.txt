@@ -1,0 +1,27 @@
+{
+ "menuVar": true,
+ "ekran": true,
+ "bosDurum": true,
+ "formAcik": true,
+ "odemeSekli": "Nakit",
+ "kasa": [
+  [
+   "Giriş",
+   500
+  ]
+ ],
+ "cariTahsilat": [
+  [
+   500,
+   "Nakit"
+  ]
+ ],
+ "sonListe": [
+  "Müşteri B | Tahsilat | Nakit | 500 ₺"
+ ],
+ "cekFormu": {
+  "sekil": "Çek",
+  "cekBilgileri": true
+ },
+ "hatalar": []
+}

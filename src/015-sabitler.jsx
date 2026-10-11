@@ -256,6 +256,7 @@ const MODUL_RENK = {
   fisler: "var(--erp-purple)",     // damga moru
   muhasebe: "#2F6B4F",
   cekler: "#2F6B4F",
+  odemetahsilat: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
   finansrapor: "#2F6B4F",     // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
   planlama: "#B8860B",
   gorevler: "var(--erp-purple)",  // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
@@ -278,6 +279,7 @@ const SEKME_BILGISI = {
   fisler: { ad: "Fişler" },
   muhasebe: { ad: "Kasa & Banka" },
   cekler: { ad: "Çek & Senet" },
+  odemetahsilat: { ad: "Ödeme & Tahsilat" },
   finansrapor: { ad: "Finans Raporu" },
   // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
   gelirgider: { ad: "Gelir / Gider" },
@@ -475,9 +477,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.7";
+const SURUM = "1.645.8";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Siparisten secte tedarik durumu + kayan liste; koli etiketinde siparis bilgileri; tek cihazda Baska cihazdan guncellendi uyarisi duzeltildi";
+const SURUM_NOTU = "Finans altinda Odeme & Tahsilat: kasa, banka, kredi karti, cek ve senet tek ekranda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -486,6 +488,10 @@ const SURUM_NOTU = "Siparisten secte tedarik durumu + kayan liste; koli etiketin
 // şart koşuyor: geçmişi yazmadan sürüm çıkarılamaz. GitHub'a yayınlarken "not" bu listeden gelir.
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 const SURUM_GECMISI = [
+  { surum: "1.645.8", tarih: "11.10.2026",
+    eklenen: ["Finans > Ödeme & Tahsilat: Tahsilat / Ödeme seç, ödeme şekli (Nakit-kasa, Havale/EFT-banka, Kredi Kartı, Çek, Senet), cariyi seç — carinin kartı form dolu açılır (kasa/banka, kur, çek/senet bilgileri cari kartındaki formun aynısı); altta son tahsilat ve ödemeler listesi"],
+    degisen: [],
+    duzeltilen: [] },
   { surum: "1.645.7", tarih: "11.10.2026",
     eklenen: ["Fiş formunda 'Siparişten seç' listesinde her satıra Durum: Planlanacak / Üretilecek / proses adımı / Üretildi — üretimden depoya girdi / Alış siparişi / Geldi (sipariş kartıyla aynı hesap)"],
     degisen: ["'Siparişten seç' listesi sabit yükseklikte kendi içinde kayıyor — siparişler arttıkça fiş formu aşağı uzamıyor",

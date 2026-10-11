@@ -1,4 +1,4 @@
-function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ kapsam = "cari", onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -11,6 +11,20 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
   const [personelProsesSekme, setPersonelProsesSekme] = useState("Tümü");
   // ÜST SEKME (v1.619.0 — kullanıcı: "cari bölümüne rapor yapalım"): Liste (kartlar) · Raporlar (262 CariRaporlari).
   const [cariUstSekme, setCariUstSekme] = useState("liste");
+  // ÖDEME & TAHSİLAT GÖRÜNÜMÜ (v1.645.8 — kullanıcı: "Ödeme & Tahsilat sekme olsun; kasa, banka, çek, senet hepsi
+  // içerisinde olsun, ödemeler ve tahsilatların girileceği yer"). Finans menüsünde ayrı öğe ama AYNI CariModule örneği
+  // (`kapsam="odeme"`, 100'de Mamul Stok / Çek & Senet deseni): form cari kartındaki formun KENDİSİ (265 — kasa/banka,
+  // kur çevrimi, çek/senet bilgileri ve Çek & Senet'e kaydı) — ikinci bir ödeme formu yazılmadı, kurallar tek yerde.
+  // Akış: Tahsilat/Ödeme → ödeme şekli → cari; seçilen carinin kartı açık gelir, form dolu (`odemeHedefi` yolu).
+  const [odemeTip, setOdemeTip] = useState("Tahsilat");
+  const [odemeSekliSecim, setOdemeSekliSecim] = useState("Nakit");
+  const [odemeCariId, setOdemeCariId] = useState("");
+  const [odemeYerelHedef, setOdemeYerelHedef] = useState(null);
+  const [odemeListeSuzgec, setOdemeListeSuzgec] = useState("Tümü");
+  const odemeFormunuAc = (cariId, tip, sekil) => {
+    setOdemeCariId(cariId || "");
+    setOdemeYerelHedef(cariId ? { cariId, tip, odemeSekli: sekil } : null);
+  };
   // SİPARİŞTEN GELEN TAHSİLAT/ÖDEME HEDEFİ (v1.612.0): süzgeçleri sıfırla (kart listede görünsün) ve o kartı aç.
   // Formu doldurma işi kartın kendisinde (CariCard, `odemeHedefi` etkisi); hedefi de o tüketir.
   useEffect(() => {
@@ -241,6 +255,130 @@ function CariModule({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler
       else if (t < 0) toplamBorc[pb] = (toplamBorc[pb] || 0) - t;
     });
   });
+
+  if (kapsam === "odeme") {
+    const odemeCari = cariler.find((c) => c.id === odemeCariId) || null;
+    // SON TAHSİLAT VE ÖDEMELER: bütün carilerin para hareketleri (THS-/ODM- fişleri, 200 `paraHareketiMi`), yeniden eskiye.
+    const sonHareketler = [];
+    cariler.forEach((c) => (c.hareketler || []).forEach((h) => {
+      if (!paraHareketiMi(h)) return;
+      const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
+      if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec) return;
+      sonHareketler.push({ c, h, tip });
+    }));
+    sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
+    const tipDugmesi = (tip) => {
+      const renk = HAREKET_TIPI_RENK[tip];
+      const aktif = odemeTip === tip;
+      return (
+        <button key={tip} type="button" data-odeme-tip={tip}
+          onClick={() => { setOdemeTip(tip); if (odemeCariId) odemeFormunuAc(odemeCariId, tip, odemeSekliSecim); }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer",
+            borderRadius: "var(--erp-r-md)", border: `2px solid ${renk}`, background: aktif ? renk : "#fff", color: aktif ? "#fff" : renk }}>
+          <HareketIkonu tip={tip} size={16} /> {tip}
+        </button>
+      );
+    };
+    return (
+      <div data-odeme-tahsilat="1">
+        <div style={{ ...MOR_SERIT_STIL, padding: "10px 12px", marginBottom: 12, display: "grid", gap: 10 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            {tipDugmesi("Tahsilat")}{tipDugmesi("Ödeme")}
+            <span style={{ fontSize: 12, color: "var(--erp-text-2)", marginLeft: 6 }}>
+              {odemeTip === "Tahsilat" ? "Müşteriden / cariden para, çek ya da senet alındı" : "Tedarikçiye / cariye para, çek ya da senet verildi"}
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Ödeme şekli</span>
+            {ODEME_SEKILLERI.map((o) => {
+              const aktif = odemeSekliSecim === o;
+              return (
+                <button key={o} type="button" data-odeme-sekli={o}
+                  onClick={() => { setOdemeSekliSecim(o); if (odemeCariId) odemeFormunuAc(odemeCariId, odemeTip, o); }}
+                  style={{ padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
+                    border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-line)"}`, background: aktif ? "var(--erp-purple)" : "#fff",
+                    color: aktif ? "#fff" : "var(--erp-text-2)" }}>
+                  {o === "Nakit" ? "Nakit (kasa)" : o === "Havale/EFT" ? "Havale / EFT (banka)" : o}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Cari</span>
+            <div style={{ minWidth: 280, flex: "0 1 420px" }}>
+              <CariSecici cariler={cariler.filter((c) => !c.pasif)} deger={odemeCariId} veriAdi="data-odeme-cari"
+                onDegis={(id) => odemeFormunuAc(id, odemeTip, odemeSekliSecim)} />
+            </div>
+          </div>
+        </div>
+
+        {odemeCari ? (
+          <CariCard
+            onFiseGitNo={onFiseGitNo} muhasebe={muhasebe} kurlar={kurlar} onMuhasebeHareketi={onMuhasebeHareketi} showToast={showToast}
+            key={odemeCari.id} cari={odemeCari} acik onAcKapa={() => odemeFormunuAc("", odemeTip, odemeSekliSecim)}
+            onCekEkle={onCekEkle} bakiye={cariBakiyeleri(odemeCari)} listeBakiye={cariBakiyeleri(odemeCari, listeDefter)}
+            genelBakiye={cariBakiyeleri(odemeCari, "Genel")} resmiBakiye={cariBakiyeleri(odemeCari, "Resmi")}
+            onAddHareket={addHareket} onFisSil={onFisSil} onRemove={removeCari} onFieldChange={updateCariField} onFieldsChange={updateCariFields}
+            siparisler={siparisler} onGoToSiparis={onGoToSiparis} stok={stok} firmaBilgileri={firmaBilgileri}
+            tanimlarProsesler={tanimlarProsesler} tanimlarAraProsesler={tanimlarAraProsesler} onBagliProsesToggle={bagliProsesToggle}
+            onBarkodOtomatikAta={barkodOtomatikAta} tumCariler={cariler} onStokFisiAc={onStokFisiAc} tanimlarFiyatGruplari={tanimlarFiyatGruplari}
+            onPencereAc={onPencereAc} odemeHedefi={odemeYerelHedef} onOdemeHedefiTuketildi={() => setOdemeYerelHedef(null)}
+          />
+        ) : (
+          <EmptyState text={`${odemeTip} girmek için yukarıdan cariyi seçin — kasa, banka, çek ve senet aynı formda.`} />
+        )}
+
+        {/* SON KAYITLAR: satıra dokununca o carinin kartı açılır (form açılmaz — kayda bakmak için). */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
+            <b style={{ fontSize: 13 }}>Son tahsilat ve ödemeler</b>
+            {["Tümü", "Tahsilat", "Ödeme"].map((t) => (
+              <button key={t} type="button" data-odeme-liste-suzgec={t} onClick={() => setOdemeListeSuzgec(t)}
+                style={{ padding: "2px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
+                  border: "1px solid var(--erp-line)", background: odemeListeSuzgec === t ? "var(--erp-text)" : "#fff",
+                  color: odemeListeSuzgec === t ? "#fff" : "var(--erp-text-2)" }}>{t}</button>
+            ))}
+          </div>
+          {sonHareketler.length === 0 ? (
+            <div style={{ fontSize: 12, color: "var(--erp-text-3)", padding: 10 }}>Henüz kayıt yok.</div>
+          ) : (
+            <div data-odeme-son-liste="1" style={{ maxHeight: 420, overflowY: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
+                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Tutar", "Fiş No", "Açıklama"].map((b) => (
+                    <th key={b} style={{ fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" }}>{b}</th>
+                  ))}</tr>
+                </thead>
+                <tbody>
+                  {sonHareketler.slice(0, 200).map(({ c, h, tip }, i) => {
+                    const renk = HAREKET_TIPI_RENK[tip];
+                    return (
+                      <tr key={`${c.id}-${h.id || i}`} data-odeme-son-satir={h.fisNo || i} onClick={() => { setOdemeCariId(c.id); setOdemeYerelHedef(null); }}
+                        style={{ cursor: "pointer", borderTop: "1px solid var(--erp-line-soft)" }}>
+                        <td className="mono" style={{ fontSize: 11, padding: "5px 8px", whiteSpace: "nowrap" }}>{tarihTr(String(h.tarih || "").slice(0, 10))}</td>
+                        <td style={{ fontSize: 12, padding: "5px 8px", fontWeight: 600 }}>{c.unvan}</td>
+                        <td style={{ padding: "5px 8px" }}>
+                          <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk }}>
+                            <HareketIkonu tip={tip} size={11} />{tip}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 11, padding: "5px 8px" }}>{h.odemeSekli || "—"}</td>
+                        <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
+                          {Number(h.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[h.paraBirimi || c.paraBirimi || "TRY"] || h.paraBirimi}
+                        </td>
+                        <td className="mono" style={{ fontSize: 11, padding: "5px 8px" }}>{h.fisNo || ""}</td>
+                        <td style={{ fontSize: 11, padding: "5px 8px", color: "var(--erp-text-2)" }}>{h.aciklama || ""}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const ustSekmeSeridi = (
     <div style={{ display: "flex", gap: 4, marginBottom: 10, borderBottom: "1px solid var(--erp-line)" }}>
