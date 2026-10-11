@@ -1,0 +1,5 @@
+{
+  "surum": 1,
+  "aciklama": "Firma kodu rehberi (v1.642.0). Anahtar: SHA-256('atolye-firma:' + normal kod). Değer: Supabase proje adresi + AÇIK (publishable) anahtar. Elle düzenlemeyin: node firma-ekle.js <kod> <adres> <anahtar>",
+  "firmalar": {}
+}

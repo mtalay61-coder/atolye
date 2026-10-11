@@ -68,6 +68,7 @@ function IlkKurulumEkrani({ onOlustur }) {
         >
           {bekliyor ? "Bulut hesabı doğrulanıyor…" : "Yönetici Hesabı Oluştur ve Başla"}
         </button>
+        <div style={{ marginTop: 14 }}><FirmaSatiri kucuk /></div>
       </div>
     </div>
   );
@@ -143,6 +144,7 @@ function GirisEkrani({ kullanicilar, onGiris, showToast }) {
         <button className="btn-primary" disabled={bekliyor} style={{ width: "100%", justifyContent: "center", marginTop: 20, opacity: bekliyor ? 0.6 : 1 }} onClick={girisYap}>
           {bekliyor ? "Doğrulanıyor…" : "Giriş Yap"}
         </button>
+        <div style={{ marginTop: 14 }}><FirmaSatiri kucuk /></div>
       </div>
     </div>
   );
@@ -211,6 +213,7 @@ function BulutGirisEkrani({ sebep, onGiris, showToast }) {
               : "Veritabanı anahtarla okunamadı (2. aşama etkin). Bulut hesabınız yoksa yöneticinize başvurun."}
           </div>
         )}
+        <div style={{ marginTop: 14 }}><FirmaSatiri kucuk /></div>
       </div>
     </div>
   );

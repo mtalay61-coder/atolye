@@ -69,7 +69,10 @@
   function git(v) {
     if (!v || !v.url) return false;
     durumEl.textContent = "Sürüm " + (v.surum || "") + " açılıyor…";
-    location.replace(v.url);   // `replace`: geri tuşu buraya dönüp döngü kurmasın
+    // Sorgu + çapa AYNEN TAŞINIR (v1.642.0): müşteriye verilen `…/atolye/?firma=KOD` bağlantısındaki firma kodu
+    // uygulamaya ulaşsın (032 FirmaSatiri bunu okuyup firma penceresini açıyor).
+    var ek = (v.url.indexOf("?") >= 0 ? location.search.replace(/^\?/, "&") : location.search) + location.hash;
+    location.replace(v.url + ek);   // `replace`: geri tuşu buraya dönüp döngü kurmasın
     return true;
   }
 

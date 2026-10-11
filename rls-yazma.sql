@@ -69,9 +69,30 @@ begin
   end if;
   moduller := string_to_array(tg_argv[0], '|');
   -- muhasebe: yalnız kurlar değişiyorsa serbest.
-  if tg_table_name = 'muhasebe' and tg_op = 'UPDATE'
-     and (new.veri - 'kurlar') is not distinct from (old.veri - 'kurlar') then
-    return new;
+  -- İÇ İÇE IF ŞART (v1.642.0 düzeltmesi — yerel PostgreSQL sınamasında bulundu): PL/pgSQL bir koşul ifadesini TEK
+  -- parça derler ve `and` kısa devresine rağmen `new.veri` alanını her tabloda çözmeye çalışır. Tek satırlık
+  -- hâlde urunler / cariler / siparisler / uretim SİLMESİ (NEW yok, `veri` sütunu yok) "record new has no field
+  -- veri" hatasıyla HERKES için (Yönetici dâhil) reddediliyordu. İçteki ifade yalnız muhasebe güncellemesinde çalışır.
+  if tg_table_name = 'muhasebe' and tg_op = 'UPDATE' then
+    if (new.veri - 'kurlar') is not distinct from (old.veri - 'kurlar') then
+      return new;
+    end if;
+  end if;
+  -- UPSERT (v1.642.0 düzeltmesi — yerel PostgreSQL sınamasında bulundu): uygulama tek satırlık tabloları (muhasebe,
+  -- faturalar) `POST … resolution=merge-duplicates` ile yazıyor = INSERT … ON CONFLICT DO UPDATE. PostgreSQL bunda
+  -- ÖNCE "before insert" tetikleyicisini çalıştırır; satır zaten varsa ardından "before update" de çalışır. Eklemede
+  -- yetki sorulunca kasa yetkisi olmayan kullanıcının açılıştaki KUR güncellemesi de reddediliyordu (kurlar istisnası
+  -- yalnız UPDATE dalındaydı). Satır VARSA karar UPDATE tetikleyicisine bırakılır — orada aynı kural + kurlar istisnası
+  -- işler. Satır yoksa gerçek bir ekleme: yetki burada sorulur. `to_jsonb(new)`: sütun adına derleme anında bağlanmamak için.
+  if tg_op = 'INSERT' then
+    if exists (select 1 from public.muhasebe m where tg_table_name = 'muhasebe' and m.id::text = to_jsonb(new) ->> 'id') then
+      return new;
+    end if;
+    if tg_table_name = 'faturalar' then
+      if exists (select 1 from public.faturalar f where f.id::text = to_jsonb(new) ->> 'id') then
+        return new;
+      end if;
+    end if;
   end if;
   if not public.yetki_var_mi(moduller, tg_argv[1]) then
     raise exception 'Bu işlem için yetkiniz yok (%: %)', tg_table_name, tg_argv[1] using errcode = '42501';

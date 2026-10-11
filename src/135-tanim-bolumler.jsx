@@ -26,6 +26,9 @@ function SupabaseBolumu({ supabaseBagli, gocDurumu, onSupabaseyeGoc }) {
           </span>
         )}
       </div>
+      {/* FİRMA (v1.642.0): bu cihaz hangi firmanın projesine bağlı; değiştirme penceresi 032'de. */}
+      <div style={{ marginBottom: 10 }}><FirmaSatiri /></div>
+      {supabaseBagli ? <KurulumDosyasiDugmesi /> : null}
 
       {!supabaseBagli ? (
         <div style={{ fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.7 }}>
