@@ -3713,6 +3713,12 @@ function AtolyeUygulamasi() {
       <CevrimdisiKilit yerelAcildi={yerelAcildi} bekleyenSayisi={Object.keys(bekleyenYazmalar).length}
         sebep={veriKaynagi && veriKaynagi.hata} onDene={() => baglantiSina()} />
     )}
+    {/* KURULUM SİHİRBAZI (v1.644.0, 033): yalnız boş firmada, Yöneticiye. Testlerde kapalı (`__kurulumSihirbaziKapali`):
+        tohumların çoğu boş tanımla açılıyor; sihirbazı ölçen senaryo bayrağı kaldırır. */}
+    {!loading && storageOk && !kilitli && !(typeof window !== "undefined" && window.__kurulumSihirbaziKapali)
+      && kurulumSihirbaziGerekli({ tanimlar, stok, cariler, aktifKullanici, girisAktif: girisSistemiAktif }) ? (
+      <KurulumSihirbazi tanimlar={tanimlar} onKaydet={(t, atlandi) => { saveTanimlar(t); showToast(atlandi ? "Kurulum atlandı — tanımları Tanımlar ekranından yapabilirsiniz" : "Kurulum tamamlandı"); }} />
+    ) : null}
     <div
       style={{
         // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu
