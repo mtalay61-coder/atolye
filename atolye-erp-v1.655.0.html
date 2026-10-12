@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.652.0</title>
+<title>Atölye ERP 1.655.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2266,9 +2266,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.652.0";
+const SURUM = "1.655.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Site gruplari (musteri yalniz grubundaki modelleri gorur), fiyatsiz model ve siparis, odeme sekli, talepte indirim, resim buyutme";
+const SURUM_NOTU = "SITEDE rozeti stok listesinde; stok kartindan site yayini ve grup secimi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,10 +2279,17 @@ const SURUM_NOTU = "Site gruplari (musteri yalniz grubundaki modelleri gorur), f
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.655.0", tarih: "12.10.2026",
+        eklenen: ["Stok listesindeki her satırda 🌐 SİTEDE rozeti (grup adlarıyla; turuncu = grupsuz)", "Açık mamul kartında adın altında site şeridi: 'Sitede yayınla' + grup çipleri (tıkla → ekle/çıkar) + 'Yeni grup'"] },
+    { surum: "1.654.0", tarih: "12.10.2026",
+        eklenen: ["Sitede yayınlanan ürünün 🌐 SİTEDE rozeti artık ürün kartı AÇIKKEN de adın yanında görünür (önce yalnız kapalı başlıktaydı)."] },
+    { surum: "1.653.0", tarih: "12.10.2026",
+        eklenen: ["Sitede ödeme şekli yalnız işaretli müşteriden istenir: cari kartı › Web sitesi girişi › 'Siparişte ödeme şeklini sorsun' — yeni açılan müşteride açık gelir, mevcut müşterilerde kapalı"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.652.0", tarih: "12.10.2026",
         eklenen: ["Site grupları: Tanımlar › Firma › Web Sitesi › 'Site grupları' — grup aç, yayındaki modelleri ve müşterileri toplu ekle; müşteri sitede YALNIZ dahil olduğu grupların modellerini görür. Mamul sağ tık › 'Site grubu: …' ile tek tek ekle/çıkar",
             "Stokta sitede yayınlanan model belirgin: başlıkta 'SİTEDE · grup adları' (grupsuzsa turuncu 'grupsuz')",
-            "Fiyatı olmayan model de sitede listelenir ('Fiyat onayda') ve sipariş edilebilir; sitede müşteri ödeme şeklini seçer (nakit, havale/EFT, kart, çek, senet, açık hesap + vade gün)",
+            "Fiyatı olmayan model de sitede listelenir ('Fiyat onayda') ve sipariş edilebilir",
             "Siteden gelen talepte ödeme şekli ve fiyatsız satır sayısı görünür; 'İndirim %' girip Siparişe çevir — fiyatlar indirimli, ödeme bilgisi siparişin notunda. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
         degisen: ["Sitede model görünürlüğü artık fiyata değil site grubuna bağlı"], duzeltilen: [] },
     { surum: "1.651.0", tarih: "12.10.2026",
@@ -21165,6 +21172,8 @@ function AtolyeUygulamasi() {
         const cari = {
             id: uid("cari"), unvan: ad, tip: tip || "Tedarikçi",
             telefon: "", vergiNo: "", adres: "", notlar: "", hareketler: [],
+            // Yeni müşteride sitede ödeme şekli sorulur (v1.652.0, bkz. 260 cari ekleme).
+            ...(tip === "Müşteri" || tip === "Her İkisi" ? { siteOdemeSor: true } : {}),
         };
         saveCariler([cari, ...cariler]);
         showToast(`"${ad}" ${(tip || "Tedarikçi").toLowerCase()} olarak eklendi`);
@@ -30146,7 +30155,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                                 " renk",
                                 musteriGorunumu ? "" : ` · stok ${katalogStok(p)}`)))));
             }))))),
-        !katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : filterCat !== "Tümü" ? (React.createElement("div", { style: { display: "grid", gap: 8 } }, filtered.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari }))))) : (React.createElement("div", { style: { display: "grid", gap: 28 } }, kapsamKategorileri.map((kat) => {
+        !katalogMod && (filtered.length === 0 ? (React.createElement(EmptyState, { text: kapsamItems.length === 0 ? "Henüz stok kaydı yok. İlk ürünü ekleyerek başlayın." : "Aramanızla eşleşen ürün yok." })) : filterCat !== "Tümü" ? (React.createElement("div", { style: { display: "grid", gap: 8 } }, filtered.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari, siteGruplari: tanimlar.siteGruplari }))))) : (React.createElement("div", { style: { display: "grid", gap: 28 } }, kapsamKategorileri.map((kat) => {
             const grup = filtered.filter((p) => p.kategori === kat);
             if (grup.length === 0)
                 return null;
@@ -30163,7 +30172,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                         React.createElement("span", { style: { fontSize: 14, fontWeight: 700 } }, kat),
                         React.createElement("span", { className: "mono", style: { fontSize: 11, fontWeight: 700, padding: "1px 8px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22") } }, grup.length)));
                 })(),
-                React.createElement("div", { style: { display: "grid", gap: 8 } }, grup.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler }))))));
+                React.createElement("div", { style: { display: "grid", gap: 8 } }, grup.map((p) => (React.createElement(UrunOzetSatiri, { key: p.id, product: p, onAc: () => urunAc(p.id), ozelKodAlanlari: ozelKodAlanlari, siteGruplari: tanimlar.siteGruplari, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler }))))));
         })))),
         (acikUrunIdleri || []).map((acikId) => {
             const p = items.find((x) => x.id === acikId);
@@ -30293,7 +30302,18 @@ function StokGirisHucre({ qty, low, minStok, onMinStokChange, rezerve, onGoToSip
 // Kayıtlı bir reçete grubunu (hammadde+renk) Stok kartındaki gibi açılır/kapanır tek satır olarak gösterir;
 // tıklandığında satırın hemen altında kendi bağımsız düzenleme formu açılır.
 // Stok listesinde tıklanınca ürünü ayrı bir pencerede (modal) açan kısa özet satırı.
-function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, ozelKodAlanlari }) {
+// SİTEDE ROZETİ (v1.655.0 — kullanıcı: stok listesinde "burada da görünsün"). Ortak: liste satırı (155) + ürün kartı (160).
+// Mavi = bir site grubunda (o gruptaki müşteriler görür), turuncu = grupsuz (yayında ama kimse göremez).
+function SiteRozeti({ product, gruplar, boyut = 10 }) {
+    if (!product || !product.sitedeGoster)
+        return null;
+    const g = siteGrupUyeleri(gruplar, "urun", product.id);
+    return (React.createElement("span", { className: "mono", "data-urun-sitede": "1", title: "Web sitesinde yayında" + (g.length ? " · gruplar: " + g.map((x) => x.ad).join(", ") : " · hiçbir site grubunda değil — müşteri göremez"), style: { fontSize: boyut, fontWeight: 800, color: "#fff", background: g.length ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", display: "inline-flex", alignItems: "center", gap: 3, verticalAlign: "middle", whiteSpace: "nowrap" } },
+        React.createElement(Globe, { size: boyut }),
+        " S\u0130TEDE",
+        g.length ? " · " + g.map((x) => x.ad).join(", ") : " · grupsuz"));
+}
+function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, ozelKodAlanlari, siteGruplari }) {
     // ÖZEL KODLAR — dolu olanlar satırda rozet olarak. Alan adıyla birlikte yazılıyor
     // ("Taban: 147"): çıplak bir "147", listede hangi alana ait olduğunu söylemiyordu.
     const dolikodlar = ozelKodCiftleri(product, ozelKodAlanlari);
@@ -30339,6 +30359,7 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
                 React.createElement("span", null,
                     product.variants.length,
                     " renk/beden"),
+                React.createElement(SiteRozeti, { product: product, gruplar: siteGruplari, boyut: 9 }),
                 dolikodlar.map((x) => (React.createElement("span", { key: x.etiket, className: "mono", title: `${x.etiket}: ${x.deger}`, style: { fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: "var(--erp-r-pill)", background: "#3D6B8A18", color: "var(--erp-info)" } },
                     x.etiket,
                     ": ",
@@ -32593,6 +32614,9 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
         setTumBedenlerBeden("");
         setTopluBedenBilgi("");
     }
+    // SİTEDE ROZETİ (v1.654.0, ortak bileşen v1.655.0 → 155 `SiteRozeti`): kapalı başlık + açık şeritte adın yanı.
+    const siteRozeti = product.sitedeGoster ? React.createElement("span", { style: { marginLeft: 6 } },
+        React.createElement(SiteRozeti, { product: product, gruplar: tanimlarSiteGruplari })) : null;
     return (React.createElement("div", { ...sagTikIsleyicileri((x, y) => setUrunSagMenu({ x, y }), !showEdit), style: {
             background: "var(--erp-panel)",
             border: `1px solid ${alfaEkle((CAT_COLORS[product.kategori] || "var(--erp-border-2)"), "55")}`,
@@ -32642,7 +32666,10 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                         React.createElement("div", { style: { display: "flex", gap: 12, alignItems: "center" } },
                             React.createElement(ColorSwatch, { src: product.kapakResmi, onUrlSave: (url) => onKapakResmiChange(product.id, url), onRemove: () => onKapakResmiChange(product.id, ""), size: 52, damga: stokResmiDamgasi(firmaBilgileri, [product.ad]) }),
                             React.createElement("div", { style: { minWidth: 0 } },
-                                React.createElement("div", { "data-urun-serit-ad": "1", style: { fontWeight: 700, fontSize: 16, overflowWrap: "anywhere", marginBottom: 4, color: product.pasif ? "var(--erp-text-3)" : undefined } }, product.ad),
+                                React.createElement("div", { "data-urun-serit-ad": "1", style: { fontWeight: 700, fontSize: 16, overflowWrap: "anywhere", marginBottom: 4, color: product.pasif ? "var(--erp-text-3)" : undefined } },
+                                    product.ad,
+                                    siteRozeti),
+                                React.createElement(UrunSiteGrupSeridi, { product: product, gruplar: tanimlarSiteGruplari, onSiteGruplariKaydet: onSiteGruplariKaydet, onUrunGuncelle: onUrunGuncelle }),
                                 React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
                                     React.createElement("select", { value: product.kategori, onChange: (e) => onKategoriChange(product.id, e.target.value), className: "mono", 
                                         // Soluk zeminli etiket yerine DOLU rozet: kategori, karttaki en belirgin ikinci öğe.
@@ -32821,10 +32848,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                     !open && React.createElement("span", { style: { fontWeight: 700, fontSize: 16, flex: 1, overflowWrap: "anywhere", color: product.pasif ? "var(--erp-text-3)" : undefined } },
                         product.ad,
                         product.pasif && (React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 } }, "pasif")),
-                        product.sitedeGoster && (React.createElement("span", { className: "mono", "data-urun-sitede": "1", title: `Web sitesinde yayında${(() => { const g = siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id); return g.length ? " · gruplar: " + g.map((x) => x.ad).join(", ") : " · hiçbir site grubunda değil — müşteri göremez"; })()}`, style: { fontSize: 10, fontWeight: 800, color: "#fff", background: siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id).length ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", marginLeft: 6, display: "inline-flex", alignItems: "center", gap: 3 } },
-                            React.createElement(Globe, { size: 10 }),
-                            " S\u0130TEDE",
-                            (() => { const g = siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id); return g.length ? " · " + g.map((x) => x.ad).join(", ") : " · grupsuz"; })()))),
+                        siteRozeti),
                     open ? React.createElement(ChevronDown, { size: 18, color: "var(--erp-text-3)" }) : React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" })),
                 showEdit && editForm && (React.createElement(React.Fragment, null,
                     React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-kart-eylem": "kaydet", title: "Kaydet \u00B7 Ctrl+S", onClick: (e) => { e.stopPropagation(); editKaydet(); }, style: { padding: "5px 12px", fontSize: 12 } },
@@ -45905,6 +45929,9 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
             ...(form.ulke && form.ulke.trim() ? { ulke: form.ulke.trim() } : {}),
             notlar: form.notlar.trim(),
             paraBirimi: form.paraBirimi || "TRY",
+            // SİTEDE ÖDEME ŞEKLİ SORULSUN (v1.652.0 — kullanıcı: "herkes bu şekilde devam etmesin; yeni müşteri ve seçtiğimiz
+            // müşteri için bu şekilde olsun"): yeni müşteride açık başlar; eski müşterilerde kapalı (cari kartından açılır).
+            ...(form.tip === "Müşteri" || form.tip === "Her İkisi" ? { siteOdemeSor: true } : {}),
             hareketler: [],
         };
         onSave([cari, ...cariler]);
@@ -48302,6 +48329,9 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
                 React.createElement("button", { type: "button", className: "btn-secondary", style: kucukDugme, onClick: ac, "data-site-hesap-duzenle": "1" }, "Kullan\u0131c\u0131 ad\u0131 / \u015Fifre de\u011Fi\u015Ftir"),
                 React.createElement("button", { type: "button", className: "btn-secondary", style: { ...kucukDugme, color: "var(--erp-danger)" }, onClick: kapat }, "Eri\u015Fimi kapat"))),
             bilgi === null && !duzen && (React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "4px 10px" }, onClick: ac, disabled: !!hata, "data-site-hesap-ac": "1" }, "Giri\u015F bilgisi olu\u015Ftur")),
+            bilgi && !duzen && (React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }, title: "Sepette nakit / havale / kart / \u00E7ek / senet / a\u00E7\u0131k hesap se\u00E7tirilir; talepte g\u00F6r\u00FCrs\u00FCn\u00FCz" },
+                React.createElement("input", { type: "checkbox", "data-site-odeme-sor": "1", checked: !!cari.siteOdemeSor, onChange: (e) => onFieldChange(cari.id, "siteOdemeSor", e.target.checked ? true : undefined) }),
+                "Sipari\u015Fte \u00F6deme \u015Feklini sorsun")),
             bilgi !== undefined && !duzen && (bilgi || cari.siteDefter) && (React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 } },
                 "Hesab\u0131nda g\u00F6r\u00FCnen defter",
                 React.createElement("select", { value: cari.siteDefter || "Genel", "data-site-defter": "1", onChange: (e) => onFieldChange(cari.id, "siteDefter", e.target.value === "Genel" ? undefined : e.target.value), style: { fontSize: 11, padding: "2px 4px", border: "1px solid #BFD3BB", borderRadius: 6 } },
@@ -48939,6 +48969,57 @@ function SiteGruplariPaneli({ tanimlar, onSave, showToast, stok, cariler }) {
                     React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, x.ad),
                     x.alt && React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, x.alt)))),
                 !liste.length && React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, sekme === "urun" ? "Sitede yayınlanan mamul yok." : "Müşteri yok."))))));
+}
+// STOK KARTINDAN SİTE YAYINI + GRUPLAMA (v1.655.0 — kullanıcı: "stok kartı içerisinden de gruplandırma olsun").
+// Açık mamul kartında, adın altında: yayın aç/kapa + grup çipleri (tıkla → gruba ekle/çıkar) + yeni grup. Sağ tık ve
+// Tanımlar › Web Sitesi › Site grupları ile AYNI veri (`tanimlar.siteGruplari`); toplu ekleme yine Tanımlar'da.
+function UrunSiteGrupSeridi({ product, gruplar, onSiteGruplariKaydet, onUrunGuncelle }) {
+    const [yeniAd, setYeniAd] = useState("");
+    const [ekleAcik, setEkleAcik] = useState(false);
+    if (!product || product.kategori !== "Mamul")
+        return null;
+    const liste = gruplar || [];
+    const cip = (secili) => ({ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+        border: "1px solid var(--erp-info)", background: secili ? "var(--erp-info)" : "transparent", color: secili ? "#fff" : "var(--erp-info)" });
+    const degistir = (g) => {
+        const icinde = (g.urunIdleri || []).includes(product.id);
+        onSiteGruplariKaydet(liste.map((x) => (x.id === g.id ? { ...x, urunIdleri: icinde ? (x.urunIdleri || []).filter((i) => i !== product.id) : [...(x.urunIdleri || []), product.id] } : x)));
+    };
+    const grupEkle = () => {
+        const ad = yeniAd.trim();
+        if (!ad)
+            return;
+        // Aynı adlı grup varsa yenisini açmak yerine ürünü ona ekle (iki "Kış 2026" karışıklık çıkarır).
+        const var_ = liste.find((g) => g.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"));
+        if (var_) {
+            if (!(var_.urunIdleri || []).includes(product.id))
+                degistir(var_);
+        }
+        else
+            onSiteGruplariKaydet([...liste, { id: uid("sgrup"), ad, urunIdleri: [product.id], cariIdleri: [] }]);
+        setYeniAd("");
+        setEkleAcik(false);
+    };
+    return (React.createElement("div", { "data-urun-site-serit": "1", style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: 6 } },
+        React.createElement("button", { type: "button", "data-urun-site-yayin": "1", onClick: () => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster }), title: product.sitedeGoster ? "Web sitesinden kaldır" : "Web sitesinde yayınla", style: { ...cip(product.sitedeGoster), display: "inline-flex", alignItems: "center", gap: 4 } },
+            React.createElement(Globe, { size: 11 }),
+            " ",
+            product.sitedeGoster ? "Sitede ✓" : "Sitede yayınla"),
+        product.sitedeGoster && onSiteGruplariKaydet && (React.createElement(React.Fragment, null,
+            React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Gruplar:"),
+            liste.map((g) => {
+                const icinde = (g.urunIdleri || []).includes(product.id);
+                return (React.createElement("button", { key: g.id, type: "button", "data-urun-site-grup": g.ad, onClick: () => degistir(g), style: cip(icinde), title: icinde ? "Gruptan çıkar" : "Gruba ekle — bu gruptaki müşteriler modeli görür" },
+                    icinde ? "✓ " : "+ ",
+                    g.ad));
+            }),
+            ekleAcik ? (React.createElement("input", { autoFocus: true, value: yeniAd, "data-urun-site-grup-yeni": "1", placeholder: "Yeni grup ad\u0131, Enter", onChange: (e) => setYeniAd(e.target.value), onBlur: () => { if (!yeniAd.trim())
+                    setEkleAcik(false); }, onKeyDown: (e) => { if (e.key === "Enter")
+                    grupEkle(); if (e.key === "Escape") {
+                    setYeniAd("");
+                    setEkleAcik(false);
+                } }, style: { fontSize: 11, padding: "2px 8px", width: 150 } })) : (React.createElement("button", { type: "button", "data-urun-site-grup-ekle": "1", onClick: () => setEkleAcik(true), style: { ...cip(false), borderStyle: "dashed" } }, "+ Yeni grup")),
+            !liste.some((g) => (g.urunIdleri || []).includes(product.id)) && (React.createElement("span", { style: { fontSize: 11, color: "#C77700", fontWeight: 700 } }, "Grupsuz \u2014 m\u00FC\u015Fteri g\u00F6remez"))))));
 }
 // =============================================================================================
 // İFADE HESAPLAYAN MİKTAR ALANI
@@ -61068,7 +61149,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.652.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.655.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

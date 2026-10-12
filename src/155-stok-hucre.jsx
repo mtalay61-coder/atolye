@@ -129,7 +129,21 @@ function StokGirisHucre({ qty, low, minStok, onMinStokChange, rezerve, onGoToSip
 // tıklandığında satırın hemen altında kendi bağımsız düzenleme formu açılır.
 
 // Stok listesinde tıklanınca ürünü ayrı bir pencerede (modal) açan kısa özet satırı.
-function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, ozelKodAlanlari }) {
+// SİTEDE ROZETİ (v1.655.0 — kullanıcı: stok listesinde "burada da görünsün"). Ortak: liste satırı (155) + ürün kartı (160).
+// Mavi = bir site grubunda (o gruptaki müşteriler görür), turuncu = grupsuz (yayında ama kimse göremez).
+function SiteRozeti({ product, gruplar, boyut = 10 }) {
+  if (!product || !product.sitedeGoster) return null;
+  const g = siteGrupUyeleri(gruplar, "urun", product.id);
+  return (
+    <span className="mono" data-urun-sitede="1"
+      title={"Web sitesinde yayında" + (g.length ? " · gruplar: " + g.map((x) => x.ad).join(", ") : " · hiçbir site grubunda değil — müşteri göremez")}
+      style={{ fontSize: boyut, fontWeight: 800, color: "#fff", background: g.length ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", display: "inline-flex", alignItems: "center", gap: 3, verticalAlign: "middle", whiteSpace: "nowrap" }}>
+      <Globe size={boyut} /> SİTEDE{g.length ? " · " + g.map((x) => x.ad).join(", ") : " · grupsuz"}
+    </span>
+  );
+}
+
+function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, ozelKodAlanlari, siteGruplari }) {
   // ÖZEL KODLAR — dolu olanlar satırda rozet olarak. Alan adıyla birlikte yazılıyor
   // ("Taban: 147"): çıplak bir "147", listede hangi alana ait olduğunu söylemiyordu.
   const dolikodlar = ozelKodCiftleri(product, ozelKodAlanlari);
@@ -202,6 +216,7 @@ function UrunOzetSatiri({ product, onAc, stokRezervasyonlari, tumSiparisler, oze
             </span>
           )}
           <span>{product.variants.length} renk/beden</span>
+          <SiteRozeti product={product} gruplar={siteGruplari} boyut={9} />
           {dolikodlar.map((x) => (
             <span
               key={x.etiket}
