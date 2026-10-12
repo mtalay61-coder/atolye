@@ -285,7 +285,11 @@ begin
         -- FİYAT + TUTAR (v1.650 — kullanıcı: "sipariş fiyat ve tutar da görünsün"): beden fiyatı farklı olabilir; satırda
         -- tutar = Σ miktar×fiyat, birim fiyat = tutar ÷ miktar (ortalama). Para birimi ayrı grup.
         'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunId', g.urun_id, 'urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar),
-            'tutar', round(g.tutar, 2), 'fiyat', case when g.miktar > 0 then round(g.tutar / g.miktar, 2) else 0 end, 'paraBirimi', g.pb) order by g.urun_ad, g.renk)
+            'tutar', round(g.tutar, 2), 'fiyat', case when g.miktar > 0 then round(g.tutar / g.miktar, 2) else 0 end, 'paraBirimi', g.pb,
+            -- BEDEN DAĞILIMI (kullanıcı: "sipariş asorti de görünsün"): beden → çift; site asortiye denk geliyorsa "n koli <asorti>" yazar.
+            'bedenler', (select jsonb_object_agg(z.b, z.m) from (select coalesce(k2.beden, '') b, sum(k2.miktar) m from siparis_kalemleri k2
+                          where k2.siparis_id = s.id and k2.urun_id is not distinct from g.urun_id and k2.renk is not distinct from g.renk
+                            and public.site_pb(k2.para_birimi) = g.pb group by 1) z)) order by g.urun_ad, g.renk)
           from (select k.urun_id, k.urun_ad, k.renk, public.site_pb(k.para_birimi) pb, sum(k.miktar) miktar, sum(k.miktar * coalesce(k.fiyat, 0))::numeric tutar,
                   sum(case when exists (select 1 from stok_hareketleri sh where sh.siparis_id = s.id)
                            then greatest(coalesce((select -sum(sh.miktar) from stok_hareketleri sh where sh.siparis_id = s.id and sh.kalem_id = k.id), 0), 0)

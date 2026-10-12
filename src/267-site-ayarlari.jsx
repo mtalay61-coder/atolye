@@ -37,6 +37,48 @@ const SITE_VARSAYILAN = {
   altYazi: "",
 };
 
+// ÇOKLU DİL (v1.651.0 — kullanıcı: "çoklu dil desteği olsun… ERP'de her dil için ayrıca yazsın fakat bunu otomatik
+// yapsın ve değiştirebilir olsun"). Diller: İngilizce, Rusça (kullanıcı seçti). "OTOMATİK": dışarıya veri gönderen çeviri
+// servisi KULLANILMAZ (proje kuralı 7a) — ilk metinlerin çevirisi burada hazır (SITE_CEVIRI) ve Türkçe metin ilk hâlindeyse
+// o dilin kutusu kendiliğinden dolar; değiştirilebilir. Türkçe metin sonradan değişirse o dilin kutusunda "Türkçesi
+// değişti" uyarısı çıkar (çeviri yapılırken Türkçenin ne olduğu `_kaynak`ta saklanır). Site (newdiamond-web dil.js) aynı
+// sırayı izler: yazılmış çeviri → Türkçe değişmemişse hazır çeviri → Türkçe.
+// Çevrilmeyenler: marka, iletişim bilgileri, renk/tema/logo (dilden bağımsız).
+const SITE_DILLERI = [["tr", "Türkçe"], ["en", "English"], ["ru", "Русский"]];
+const SITE_CEVRILIR = ["ustEtiket", "baslik", "aciklama", "dugme1", "dugme2", "koleksiyonBaslik", "koleksiyonAlt", "uretimBaslik", "uretimAlt", "iletisimBaslik", "iletisimAlt", "altYazi"];
+const SITE_CEVIRI = {
+  en: {
+    ustEtiket: "Shoe manufacturing", baslik: "From leather to shipment, craftsmanship at every step.",
+    aciklama: "New Diamond carries out all production in its own workshop — from pattern and cutting to uppers and assembly. Sign in to browse the collection and place your order directly.",
+    dugme1: "Customer login", dugme2: "Request a quote", koleksiyonBaslik: "Collection", koleksiyonAlt: "For our customers: models, your prices and ordering.",
+    uretimBaslik: "How we make shoes", uretimAlt: "Every pair with the same care, tracked step by step.",
+    iletisimBaslik: "Contact", iletisimAlt: "Get in touch for wholesale orders and partnerships.",
+    uretimKartlari: [["Cutting", "Selected leathers are cut with model-specific patterns, keeping waste to a minimum."], ["Uppers", "Stitched by skilled hands, the upper gives each model its character."], ["Assembly & sole", "Sole and upper are joined into a strong, long-lasting bond."], ["Quality & shipping", "Every pair is checked, packed in assorted cartons and shipped on time."]],
+  },
+  ru: {
+    ustEtiket: "Производство обуви", baslik: "От кожи до отгрузки — мастерство на каждом этапе.",
+    aciklama: "New Diamond выполняет всё производство в собственном цеху — от модели и раскроя до заготовки и сборки. Войдите, чтобы посмотреть коллекцию и оформить заказ напрямую.",
+    dugme1: "Вход для клиентов", dugme2: "Запросить предложение", koleksiyonBaslik: "Коллекция", koleksiyonAlt: "Для наших клиентов: модели, ваши цены и заказ.",
+    uretimBaslik: "Как мы производим", uretimAlt: "Каждая пара — с одинаковой тщательностью, этап за этапом.",
+    iletisimBaslik: "Контакты", iletisimAlt: "Свяжитесь с нами по оптовым заказам и сотрудничеству.",
+    uretimKartlari: [["Раскрой", "Отборная кожа кроится по лекалам модели, отходы сводятся к минимуму."], ["Заготовка", "Заготовка, сшитая мастерами, определяет характер модели."], ["Сборка и подошва", "Подошва и заготовка соединяются прочно и надолго."], ["Качество и отгрузка", "Каждая пара проверяется, упаковывается в ассортиментные коробки и отгружается вовремя."]],
+  },
+};
+// Bir dilde alanın görünen değeri: yazılmış çeviri, yoksa (Türkçe ilk hâlindeyse) hazır çeviri, yoksa boş.
+function siteCeviriDegeri(ayar, dil, alan) {
+  const d = (ayar.diller && ayar.diller[dil]) || {};
+  if (typeof d[alan] === "string" && d[alan] !== "") return d[alan];
+  if ((ayar[alan] || "") === (SITE_VARSAYILAN[alan] || "") && SITE_CEVIRI[dil]) return SITE_CEVIRI[dil][alan] || "";
+  return "";
+}
+function siteKartCevirisi(ayar, dil, i) {
+  const d = (ayar.diller && ayar.diller[dil] && ayar.diller[dil].uretimKartlari) || [];
+  if (d[i] && (d[i].baslik || d[i].metin)) return d[i];
+  const k = ayar.uretimKartlari[i]; const v = SITE_VARSAYILAN.uretimKartlari[i]; const c = SITE_CEVIRI[dil] && SITE_CEVIRI[dil].uretimKartlari[i];
+  if (k && v && c && k.baslik === v.baslik && k.metin === v.metin) return { baslik: c[0], metin: c[1] };
+  return { baslik: "", metin: "" };
+}
+
 function siteAyarlariBirlestir(kayitli) {
   const k = kayitli || {};
   return { ...SITE_VARSAYILAN, ...k, uretimKartlari: Array.isArray(k.uretimKartlari) ? k.uretimKartlari : SITE_VARSAYILAN.uretimKartlari };
@@ -49,26 +91,89 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
   const [kirli, setKirli] = useState(false);
   useEffect(() => { if (!kirli) setTaslak(kayitli); }, [kayitli]); // eslint-disable-line react-hooks/exhaustive-deps
   const ata = (alan, deger) => { setTaslak((t) => ({ ...t, [alan]: deger })); setKirli(true); };
+  const [dil, setDil] = useState("tr");
+  // Çeviri yazımı: diller[dil][alan] + yazıldığı andaki Türkçe (`_kaynak`) — Türkçe sonra değişirse uyarı için.
+  const ceviriAta = (alan, deger) => {
+    setTaslak((t) => {
+      const d = { ...((t.diller || {})[dil] || {}) };
+      d[alan] = deger; d._kaynak = { ...(d._kaynak || {}), [alan]: t[alan] || "" };
+      return { ...t, diller: { ...(t.diller || {}), [dil]: d } };
+    });
+    setKirli(true);
+  };
+  const kartCeviriAta = (i, alan, deger) => {
+    setTaslak((t) => {
+      const d = { ...((t.diller || {})[dil] || {}) };
+      const l = [...(d.uretimKartlari || [])];
+      while (l.length <= i) l.push({ baslik: "", metin: "" });
+      l[i] = { ...siteKartCevirisi(t, dil, i), ...l[i], [alan]: deger, _kaynak: { baslik: (t.uretimKartlari[i] || {}).baslik || "", metin: (t.uretimKartlari[i] || {}).metin || "" } };
+      d.uretimKartlari = l;
+      return { ...t, diller: { ...(t.diller || {}), [dil]: d } };
+    });
+    setKirli(true);
+  };
   const kartAta = (i, alan, deger) => { setTaslak((t) => ({ ...t, uretimKartlari: t.uretimKartlari.map((k, j) => (j === i ? { ...k, [alan]: deger } : k)) })); setKirli(true); };
-  const kartSil = (i) => { setTaslak((t) => ({ ...t, uretimKartlari: t.uretimKartlari.filter((_, j) => j !== i) })); setKirli(true); };
+  // Kart silinir/taşınırken çevirileri de aynı işlemi görür (kart ↔ çeviri sırası kaymasın). Eksik çeviri satırı o
+  // anki görünen değerle (hazır çeviri dahil) doldurulur — hazır çeviri "Türkçe ilk hâlinde mi" sırasına bağlı, sıra
+  // değişince kaybolmasın.
+  const cevirileriDuzenle = (t, islem) => {
+    const diller = { ...(t.diller || {}) };
+    SITE_DILLERI.filter(([k]) => k !== "tr").forEach(([k]) => {
+      const d = { ...(diller[k] || {}) };
+      const l = t.uretimKartlari.map((_, i) => ({ ...siteKartCevirisi(t, k, i), ...(((d.uretimKartlari || [])[i]) || {}) }));
+      d.uretimKartlari = islem(l); diller[k] = d;
+    });
+    return diller;
+  };
+  const kartSil = (i) => { setTaslak((t) => ({ ...t, diller: cevirileriDuzenle(t, (l) => l.filter((_, j) => j !== i)), uretimKartlari: t.uretimKartlari.filter((_, j) => j !== i) })); setKirli(true); };
   const kartEkle = () => { setTaslak((t) => ({ ...t, uretimKartlari: [...t.uretimKartlari, { ikon: "★", baslik: "", metin: "" }] })); setKirli(true); };
-  const kartTasi = (i, d) => { setTaslak((t) => { const l = [...t.uretimKartlari]; const j = i + d; if (j < 0 || j >= l.length) return t; [l[i], l[j]] = [l[j], l[i]]; return { ...t, uretimKartlari: l }; }); setKirli(true); };
+  const kartTasi = (i, d) => { setTaslak((t) => { const l = [...t.uretimKartlari]; const j = i + d; if (j < 0 || j >= l.length) return t; [l[i], l[j]] = [l[j], l[i]];
+    const takas = (x) => { const y = [...x]; [y[i], y[j]] = [y[j], y[i]]; return y; };
+    return { ...t, diller: cevirileriDuzenle(t, takas), uretimKartlari: l }; }); setKirli(true); };
   const kaydet = () => {
+    // Boş kartlar atılırken çevirileri de aynı sırayla süzülür (kart ↔ çeviri eşleşmesi kaymasın).
+    const tutulan = taslak.uretimKartlari.map((k, i) => (String(k.baslik || "").trim() || String(k.metin || "").trim() ? i : -1)).filter((i) => i >= 0);
+    const diller = {};
+    SITE_DILLERI.filter(([k]) => k !== "tr").forEach(([k]) => {
+      const d = { ...((taslak.diller || {})[k] || {}) };
+      // Otomatik (hazır) çeviri kayda yazılır: site eski sürümdeki gibi kendi hazır metnine güvenmesin, ERP'de ne
+      // görünüyorsa sitede o olsun. Kaynak = şu anki Türkçe.
+      SITE_CEVRILIR.forEach((alan) => { if (!d[alan]) { const v = siteCeviriDegeri(taslak, k, alan); if (v) { d[alan] = v; d._kaynak = { ...(d._kaynak || {}), [alan]: taslak[alan] || "" }; } } });
+      d.uretimKartlari = tutulan.map((i) => { const c = siteKartCevirisi(taslak, k, i); return c.baslik || c.metin ? { ...c, _kaynak: c._kaynak || { baslik: taslak.uretimKartlari[i].baslik || "", metin: taslak.uretimKartlari[i].metin || "" } } : { baslik: "", metin: "" }; });
+      diller[k] = d;
+    });
     const temiz = { ...taslak, whatsapp: String(taslak.whatsapp || "").trim() ? whatsappNumarasi(taslak.whatsapp) : "",
-      uretimKartlari: taslak.uretimKartlari.filter((k) => String(k.baslik || "").trim() || String(k.metin || "").trim()) };
+      uretimKartlari: tutulan.map((i) => taslak.uretimKartlari[i]), diller };
     onSave({ ...tanimlar, siteAyarlari: temiz });
     setKirli(false);
     if (showToast) showToast("Web sitesi ayarları kaydedildi — site yenilenince görünür");
   };
   const vazgec = () => { setTaslak(kayitli); setKirli(false); };
   const siteAdresi = String((tanimlar.firmaBilgileri || {}).website || "").trim();
-  const metin = (alan, etiket, yer, uzun) => (
-    <Field label={etiket}>
-      {uzun
-        ? <textarea value={taslak[alan] || ""} placeholder={yer || ""} rows={3} data-site-ayar={alan} onChange={(e) => ata(alan, e.target.value)} style={{ ...inputStyle, resize: "vertical" }} />
-        : <input value={taslak[alan] || ""} placeholder={yer || ""} data-site-ayar={alan} onChange={(e) => ata(alan, e.target.value)} style={inputStyle} />}
-    </Field>
-  );
+  const metin = (alan, etiket, yer, uzun) => {
+    if (dil !== "tr") {
+      // Başka dil sekmesi: yalnız çevrilen alanlar; diğerleri (iletişim, marka) dilden bağımsız → gizli.
+      if (!SITE_CEVRILIR.includes(alan)) return null;
+      const deger = siteCeviriDegeri(taslak, dil, alan);
+      const yazilmis = !!(((taslak.diller || {})[dil] || {})[alan]);
+      const kaynak = ((((taslak.diller || {})[dil] || {})._kaynak) || {})[alan];
+      const eskidi = yazilmis && kaynak != null && kaynak !== (taslak[alan] || "");
+      const ozellik = { value: deger, placeholder: taslak[alan] || "", "data-site-ayar": `${dil}-${alan}`, onChange: (e) => ceviriAta(alan, e.target.value), style: { ...inputStyle, ...(eskidi ? { borderColor: "var(--erp-warning, #C77700)" } : {}) } };
+      return (
+        <Field label={<>{etiket}{!yazilmis && deger ? <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 }}> · hazır çeviri</span> : null}{eskidi ? <span style={{ fontSize: 10, color: "#C77700", fontWeight: 600 }} title={`Çeviri yapılırken Türkçesi: "${kaynak}"`}> · Türkçesi değişti, kontrol edin</span> : null}</>}>
+          {uzun ? <textarea rows={3} {...ozellik} style={{ ...ozellik.style, resize: "vertical" }} /> : <input {...ozellik} />}
+          <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>TR: {taslak[alan] || "—"}</span>
+        </Field>
+      );
+    }
+    return (
+      <Field label={etiket}>
+        {uzun
+          ? <textarea value={taslak[alan] || ""} placeholder={yer || ""} rows={3} data-site-ayar={alan} onChange={(e) => ata(alan, e.target.value)} style={{ ...inputStyle, resize: "vertical" }} />
+          : <input value={taslak[alan] || ""} placeholder={yer || ""} data-site-ayar={alan} onChange={(e) => ata(alan, e.target.value)} style={inputStyle} />}
+      </Field>
+    );
+  };
   const altBaslik = (ad) => <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--erp-text-3)", margin: "14px 0 6px" }}>{ad}</div>;
   const izgara = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 };
   return (
@@ -87,8 +192,22 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
         </div>
       )}
 
-      {altBaslik("Görünüm")}
-      <div style={izgara}>
+      <div data-site-dil-sekmeleri="1" style={{ display: "flex", gap: 4, borderBottom: "1px solid var(--erp-line)", margin: "4px 0 2px" }}>
+        {SITE_DILLERI.map(([k, ad]) => (
+          <button key={k} type="button" data-site-dil={k} onClick={() => setDil(k)}
+            style={{ padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", background: "none", border: "none", borderBottom: `3px solid ${dil === k ? "var(--erp-text)" : "transparent"}`, color: dil === k ? "var(--erp-text)" : "var(--erp-text-3)" }}>
+            {k.toUpperCase()} · {ad}
+          </button>
+        ))}
+      </div>
+      {dil !== "tr" && (
+        <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "6px 0 0" }}>
+          Ziyaretçi siteyi bu dilde açınca görünen metinler. İlk metinlerin çevirisi hazır gelir, istediğinizi değiştirin. Boş bırakılan alanda Türkçesi görünür.
+          Menü, düğme, tablo başlıkları gibi sabit yazılar sitede zaten çevrili. İletişim bilgileri, marka, renk ve logo dilden bağımsızdır (TR sekmesinde).
+        </p>
+      )}
+      {dil === "tr" && altBaslik("Görünüm")}
+      {dil === "tr" && <div style={izgara}>
         {metin("marka", "Marka adı")}
         <Field label="Logo">
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12 }}>
@@ -110,7 +229,7 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
             <option value="koyu">Hep koyu</option>
           </select>
         </Field>
-      </div>
+      </div>}
 
       {altBaslik("Karşılama")}
       <div style={izgara}>
@@ -125,14 +244,29 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
       <div style={izgara}>{metin("koleksiyonBaslik", "Başlık")}{metin("koleksiyonAlt", "Alt yazı")}</div>
 
       {altBaslik("Nasıl üretiyoruz")}
-      <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, marginBottom: 6 }}>
-        <input type="checkbox" checked={taslak.uretimGoster !== false} onChange={(e) => ata("uretimGoster", e.target.checked)} /> Bu bölüm sitede görünsün
-      </label>
+      {dil === "tr" && (
+        <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, marginBottom: 6 }}>
+          <input type="checkbox" checked={taslak.uretimGoster !== false} onChange={(e) => ata("uretimGoster", e.target.checked)} /> Bu bölüm sitede görünsün
+        </label>
+      )}
       {taslak.uretimGoster !== false && (
         <>
           <div style={izgara}>{metin("uretimBaslik", "Başlık")}{metin("uretimAlt", "Alt yazı")}</div>
           <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
-            {taslak.uretimKartlari.map((k, i) => (
+            {dil !== "tr" && taslak.uretimKartlari.map((k, i) => {
+              const c = siteKartCevirisi(taslak, dil, i);
+              const yazilan = ((((taslak.diller || {})[dil] || {}).uretimKartlari) || [])[i];
+              const eskidi = yazilan && yazilan._kaynak && (yazilan._kaynak.baslik !== (k.baslik || "") || yazilan._kaynak.metin !== (k.metin || ""));
+              return (
+                <div key={i} data-site-kart-ceviri={i} style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{ width: 46, textAlign: "center" }}>{k.ikon}</span>
+                  <input value={c.baslik || ""} placeholder={k.baslik || ""} onChange={(e) => kartCeviriAta(i, "baslik", e.target.value)} style={{ ...inputStyle, width: 170, ...(eskidi ? { borderColor: "#C77700" } : {}) }} />
+                  <input value={c.metin || ""} placeholder={k.metin || ""} onChange={(e) => kartCeviriAta(i, "metin", e.target.value)} style={{ ...inputStyle, flex: "1 1 260px", minWidth: 0, ...(eskidi ? { borderColor: "#C77700" } : {}) }} />
+                  {eskidi && <span style={{ fontSize: 10, color: "#C77700", fontWeight: 600 }}>Türkçesi değişti</span>}
+                </div>
+              );
+            })}
+            {dil === "tr" && taslak.uretimKartlari.map((k, i) => (
               <div key={i} data-site-kart-satiri={i} style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
                 <input value={k.ikon || ""} onChange={(e) => kartAta(i, "ikon", e.target.value)} title="Simge (emoji)" style={{ ...inputStyle, width: 46, textAlign: "center" }} />
                 <input value={k.baslik || ""} placeholder="Kart başlığı" onChange={(e) => kartAta(i, "baslik", e.target.value)} style={{ ...inputStyle, width: 170 }} />
@@ -142,7 +276,7 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
                 <button type="button" className="btn-ghost" title="Kartı sil" style={{ color: "var(--erp-danger)" }} onClick={() => kartSil(i)}>✕</button>
               </div>
             ))}
-            <button type="button" className="btn-secondary" style={{ justifySelf: "start", fontSize: 12 }} onClick={kartEkle}>+ Kart ekle</button>
+            {dil === "tr" && <button type="button" className="btn-secondary" style={{ justifySelf: "start", fontSize: 12 }} onClick={kartEkle}>+ Kart ekle</button>}
           </div>
         </>
       )}

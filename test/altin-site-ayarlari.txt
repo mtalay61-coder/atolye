@@ -4,6 +4,20 @@
   "kartSayisi": 4,
   "var": 1
  },
+ "dil": {
+  "enAcilis": {
+   "baslikBos": "",
+   "iletisimGizli": true,
+   "ustEtiketHazir": "Shoe manufacturing"
+  },
+  "kaydedilen": {
+   "baslik": "New headline",
+   "ilkKart": "Uppers",
+   "kartSayisi": 3,
+   "ustEtiket": "Shoe manufacturing"
+  },
+  "turkceDegisinceUyari": true
+ },
  "hatalar": [],
  "kaydedilen": {
   "baslik": "Yeni başlık",

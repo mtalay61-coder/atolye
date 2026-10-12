@@ -40,8 +40,27 @@ async function calistir() {
   await panel.locator('button:has-text("Vazgeç")').click();
   await sayfa.waitForTimeout(300);
   const vazgec = { eposta: await panel.locator('[data-site-ayar="eposta"]').inputValue(), depoda: (((await depoOku(sayfa, "tanimlar:data")) || {}).siteAyarlari || {}).eposta };
+  // ÇOKLU DİL (v1.650.0): EN sekmesi — değişmeyen Türkçe alanda hazır çeviri, değişen başlıkta boş (Türkçesi görünür);
+  // yazılan çeviri + hazır çeviriler kayda girer, Türkçesi sonradan değişince uyarı.
+  await panel.locator('[data-site-dil="en"]').click();
+  await sayfa.waitForTimeout(200);
+  const enAcilis = {
+    ustEtiketHazir: await panel.locator('[data-site-ayar="en-ustEtiket"]').inputValue(),
+    baslikBos: await panel.locator('[data-site-ayar="en-baslik"]').inputValue(),
+    iletisimGizli: (await panel.locator('[data-site-ayar="telefon"]').count()) === 0,
+  };
+  await panel.locator('[data-site-ayar="en-baslik"]').fill("New headline");
+  await panel.locator("[data-site-ayar-kaydet]").click();
+  await sayfa.waitForTimeout(500);
+  const en = ((((await depoOku(sayfa, "tanimlar:data")) || {}).siteAyarlari || {}).diller || {}).en || {};
+  await panel.locator('[data-site-dil="tr"]').click();
+  await panel.locator('[data-site-ayar="baslik"]').fill("Başka başlık");
+  await panel.locator('[data-site-dil="en"]').click();
+  await sayfa.waitForTimeout(200);
+  const dil = { enAcilis, kaydedilen: { baslik: en.baslik, ustEtiket: en.ustEtiket, kartSayisi: (en.uretimKartlari || []).length, ilkKart: (en.uretimKartlari || [])[0] && en.uretimKartlari[0].baslik },
+    turkceDegisinceUyari: /Türkçesi değişti/.test(await panel.textContent()) };
   await tarayici.close();
-  return { hatalar, acilis, yazarkenDepoyaGitmedi: taslakta === null, kaydedilen, vazgec };
+  return { hatalar, acilis, yazarkenDepoyaGitmedi: taslakta === null, kaydedilen, vazgec, dil };
 }
 
 if (require.main === module) {

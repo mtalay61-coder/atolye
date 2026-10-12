@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.649.0";
+const SURUM = "1.650.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Web sitesi musteri girisi kullanici adi ve sifre ile; cari kartindan olusturulur";
+const SURUM_NOTU = "Web sitesi cok dilli (Turkce, Ingilizce, Rusca): Tanimlar > Web Sitesi dil sekmeleri, hazir ceviri, degistirilebilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,10 @@ const SURUM_NOTU = "Web sitesi musteri girisi kullanici adi ve sifre ile; cari k
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.650.0", tarih: "12.10.2026",
+    eklenen: ["Web sitesi çok dilli: Türkçe, İngilizce, Rusça — ziyaretçi sağ üstten seçer (tarayıcı diline göre başlar). Tanımlar › Firma › Web Sitesi'nde TR / EN / RU sekmeleri: karşılama, başlıklar ve 'Nasıl üretiyoruz' kartlarının çevirisi hazır gelir, değiştirilebilir; Türkçesi sonradan değişen çeviride uyarı",
+      "Sitede Siparişlerim: her model/renk için beden dağılımı; tanımlı bir asortinin katıysa 'n koli <asorti>'. Supabase'de site-portal.sql'deki portal_hesap yeniden çalıştırılmalı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.649.0", tarih: "12.10.2026",
     eklenen: ["Web sitesi müşteri girişi KULLANICI ADI + ŞİFRE ile: cari kartı › Bilgiler › Web sitesi girişi — 'Giriş bilgisi oluştur' (ünvandan kullanıcı adı önerisi + rastgele şifre), değiştir, erişimi kapat; kaydedince bilgiler ve 'WhatsApp ile gönder'. Şifre sunucuda özetlenir, geri okunamaz; 5 hatalı denemede 15 dk kilit; oturum 30 gün. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
     degisen: ["Müşteri kodu (v1.646) kalktı — eski kodlar artık çalışmaz, müşterilere kullanıcı adı/şifre verilmeli"], duzeltilen: [] },
