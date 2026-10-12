@@ -293,6 +293,7 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
       </div>
       {metin("adres", "Adres", "", true)}
       {metin("altYazi", "Sayfa altı yazısı (isteğe bağlı)")}
+      <KayitCevirileriPaneli tanimlar={tanimlar} onSave={onSave} showToast={showToast} />
     </div>
   );
 }

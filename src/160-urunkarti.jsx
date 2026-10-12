@@ -306,9 +306,11 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   const [urunSagMenu, setUrunSagMenu] = useState(null);
+  // Sitede görünen adların çevirisi (v1.651.0, 268): sağ tık › "Çeviriler".
+  const [ceviriAcik, setCeviriAcik] = useState(false);
   // Reçeteden yeni renk (v1.571.0): seçim sırasında hammaddeye eklenecek renk burada bekler; reçete yazımı
   // (`onReceteGrubuGuncelle`) onu alıp hammadde kartına AYNI yazımda ekler. Tek kullanımlık.
   const receteRenkEkleRef = React.useRef(null);
@@ -1460,12 +1462,18 @@ function ProductMatrixCard({
         // Alan `sitedeGoster` şema dışı → `ek`te (035).
         ...(product.kategori === "Mamul" ? [{ k: "site", etiket: product.sitedeGoster ? "Web sitesinden kaldır" : "Web sitesinde göster", ikon: product.sitedeGoster ? X : Check,
           renk: "var(--erp-info)", baslik: "newdiamond.com.tr koleksiyonunda görünür — fiyat ve stok gösterilmez",
-          onClick: () => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster }) }] : []),
+          onClick: () => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster }) },
+          ...(onCevirilerKaydet ? [{ k: "ceviri", etiket: "Çeviriler (sitede EN / RU)", ikon: Globe, renk: "var(--erp-info)", baslik: "Model adı, renkler ve tip — yabancı müşteri sitede kendi dilinde görür",
+            onClick: () => setCeviriAcik(true) }] : [])] : []),
         { k: "pasif", etiket: product.pasif ? "Kullanıma aç" : "Pasife al", ikon: product.pasif ? Check : Archive, renk: "var(--erp-purple)",
           onClick: () => onPasifDegistir(product.id, !product.pasif),
           baslik: product.pasif ? "Seçim listelerinde tekrar görünür" : "Kayıt, stok ve geçmişi durur; yalnız YENİ işlemlerde seçilemez" },
         { k: "sil", etiket: "Ürünü sil", ikon: Trash2, renk: "var(--erp-warn)", onClick: () => { setOpen(true); setUrunSilOnay(true); } },
       ]} />
+      {ceviriAcik && (
+        <UrunCeviriPenceresi urun={product} ceviriler={tanimlarCeviriler} onUrunKaydet={onUrunGuncelle} onCevirilerKaydet={onCevirilerKaydet}
+          onKapat={() => setCeviriAcik(false)} showToast={showToast} />
+      )}
       <div data-urun-ust-serit={open ? "1" : undefined} data-urun-kart-serit={product.ad}
         style={open ? { margin: "10px 14px 10px", padding: "8px 10px 0", background: "#EDE7F2", border: "1px solid #C9B3D9", borderRadius: "var(--erp-r-md)" } : undefined}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: open ? "0 0 8px" : "16px 16px 16px 16px" }}>

@@ -137,7 +137,14 @@ begin
   return jsonb_build_object(
     'unvan', c.unvan,
     'asortiler', coalesce((select t.veri->'asortiler' from tanimlar t where t.id = 'tekil'), '[]'::jsonb),
-    'modeller', coalesce((select jsonb_agg(to_jsonb(m)) from public.site_modeller(c.id, nullif(c.ek->>'fiyatGrubuId', '')) m), '[]'::jsonb)
+    'modeller', coalesce((select jsonb_agg(to_jsonb(m)) from public.site_modeller(c.id, nullif(c.ek->>'fiyatGrubuId', '')) m), '[]'::jsonb),
+    -- KAYIT ÇEVİRİLERİ (v1.651.0 — "stok, renk, beden vs. de dil değişimi"): renk / mamul tipi / asorti adı sözlüğü
+    -- (`tanimlar.ceviriler`) ve model adlarının çevirisi — yalnız bu müşterinin görebildiği modeller ile sipariş ettikleri.
+    'ceviriler', coalesce((select t.veri->'ceviriler' from tanimlar t where t.id = 'tekil'), '{}'::jsonb),
+    'urunCevirileri', coalesce((select jsonb_object_agg(u.id::text, u.ek->'ceviriler') from urunler u
+      where jsonb_typeof(u.ek->'ceviriler') = 'object'
+        and (u.id::text in (select m.id from public.site_modeller(c.id, nullif(c.ek->>'fiyatGrubuId', '')) m)
+             or u.id::text in (select k.urun_id::text from siparis_kalemleri k join siparisler s on s.id = k.siparis_id where s.cari_id = c.id))), '{}'::jsonb)
   );
 end;
 $$;

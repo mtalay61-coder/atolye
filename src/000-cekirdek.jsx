@@ -20,6 +20,7 @@ import {
   Tag,
   // Para hareketi simgeleri (v1.618.0, 200 HAREKET_TIPI_IKON): tahsilat (giren), ödeme (çıkan), virman, serbest kayıt.
   ArrowDownCircle, ArrowUpCircle, ArrowLeftRight, PenLine,
+  Globe,
 } from "lucide-react";
 
 /* ---------------------------------------------------------

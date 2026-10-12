@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.650.0";
+const SURUM = "1.651.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Web sitesi cok dilli (Turkce, Ingilizce, Rusca): Tanimlar > Web Sitesi dil sekmeleri, hazir ceviri, degistirilebilir";
+const SURUM_NOTU = "Sitede kayit adlari musterinin dilinde: stok sag tik > Ceviriler (model, renk, tip), Tanimlar > Web Sitesi > kayit cevirileri";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,10 @@ const SURUM_NOTU = "Web sitesi cok dilli (Turkce, Ingilizce, Rusca): Tanimlar > 
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.651.0", tarih: "12.10.2026",
+    eklenen: ["Mamul kartı sağ tık › 'Çeviriler (sitede EN / RU)': model adı, mamul tipi ve modelin renkleri İngilizce/Rusça — yabancı müşteri sitede kendi dilinde görür; 'Boşları öner' sık renk/malzeme/tip kelimelerini doldurur (Siyah → Black / Чёрный), değiştirilebilir",
+      "Tanımlar › Firma › Web Sitesi › 'Kayıt adlarının çevirisi': bütün renkler, mamul tipleri ve asortiler tek tabloda. ERP ekranları Türkçe kalır. Supabase'de site-portal.sql'deki portal() yeniden çalıştırılmalı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.650.0", tarih: "12.10.2026",
     eklenen: ["Web sitesi çok dilli: Türkçe, İngilizce, Rusça — ziyaretçi sağ üstten seçer (tarayıcı diline göre başlar). Tanımlar › Firma › Web Sitesi'nde TR / EN / RU sekmeleri: karşılama, başlıklar ve 'Nasıl üretiyoruz' kartlarının çevirisi hazır gelir, değiştirilebilir; Türkçesi sonradan değişen çeviride uyarı",
       "Sitede Siparişlerim: her model/renk için beden dağılımı; tanımlı bir asortinin katıysa 'n koli <asorti>'. Supabase'de site-portal.sql'deki portal_hesap yeniden çalıştırılmalı"],
