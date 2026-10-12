@@ -1,0 +1,27 @@
+{
+ "hatalar": [],
+ "kod": {
+  "cariyeYazildi": true,
+  "kapatinciKodVerDugmesi": true,
+  "kapatinciSilindi": true,
+  "karisanHarfYok": true,
+  "panelVar": true,
+  "tedarikciKartindaPanel": 0,
+  "uzunluk": 10
+ },
+ "talep": {
+  "cevirmeKaydetmedi": true,
+  "formAcildi": true,
+  "panel": true,
+  "paneldenDustu": true,
+  "siparis": {
+   "cari": "c2",
+   "kalemler": [
+    "Bot Siyah 41 ×3 @30 USD"
+   ],
+   "not": "Web sitesinden — Acil",
+   "tip": "Satış"
+  },
+  "tabloOkundu": true
+ }
+}
