@@ -7650,7 +7650,11 @@ otomatik fiyat versin." + (Reçete) "Standart hammadde için renk dağılımına
   400, Tanımlar'da 50; eşitle → 400), `recete-standart-kart` (Yapıştırıcı notu var, kart içinde Pozisyon başlığı yok; Deri'de var).
   15 fiyat/reçete senaryosu AYNI.
 
-## Site — sipariş resimleri (12 Ekim, ERP sürümü değişmedi)
+## Site — sipariş resimleri + fiyat/tutar (12 Ekim, ERP sürümü değişmedi)
+
+Kullanıcı: "Sipariş fiyat ve tutar da görünsün." portal_hesap kalemleri para birimi başına gruplu: tutar = Σ miktar×fiyat,
+fiyat = tutar ÷ miktar (beden fiyatı farklıysa ortalama); talep kalemlerinde tutar. Site: Fiyat + Tutar sütunları, dipte
+para birimi başına toplam (toplanmaz). KULLANICI SQL'i YENİDEN ÇALIŞTIRMALI.
 
 Kullanıcı: "Sitede ürün resimleri de olsun, sipariş verilen için." site-portal.sql §9 `portal_hesap`: sipariş kalemleri
 ve talepler `urunId` ile (talep kalemleri model+renk toplamı), cevapta `resimler` sözlüğü ("urunId|renk" → rengin resmi,
