@@ -4,72 +4,123 @@
 // verebilsin, ona özel fiyatlar ve modeller listelensin." Karar: müşteriye özel KOD (Supabase üyeliği değil — o hesap
 // rls-kimlik.sql yüzünden ERP'nin bütün verisini okurdu; bkz. site-portal.sql başı).
 //
-// Kod carinin `siteKodu` alanında (`ek`e gider, sütun gerekmez). Sitedeki `portal()` kodu bu alandan bulur; boş kod ya
-// da pasif cari = erişim yok. Müşterinin gördüğü modeller: sitede işaretli VE bu cariye (cariye özel ya da fiyat
+// v1.649.0'dan beri kod değil KULLANICI ADI + ŞİFRE (aşağıda); pasif cari = erişim yok. Müşterinin gördüğü modeller: sitede işaretli VE bu cariye (cariye özel ya da fiyat
 // grubu) fiyatı olan mamuller — fiyatı olmayan model o müşteriye görünmez.
 
-// 10 karakter, karışan harfler (0/O, 1/I/L) yok: 31^10 ≈ 49 bit — tahminle bulunamaz, telefonda okunabilir.
-const SITE_KOD_ALFABESI = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-function siteKoduUret(mevcutKodlar) {
-  const kume = new Set((mevcutKodlar || []).map((k) => String(k || "").toUpperCase()));
-  for (let deneme = 0; deneme < 20; deneme++) {
-    // 248 = 31×8: üstündeki baytlar atılır, her harf eşit olasılıkta kalsın (mod yanlılığı yok).
-    let kod = "";
-    while (kod.length < 10) {
-      crypto.getRandomValues(new Uint8Array(16)).forEach((n) => { if (n < 248 && kod.length < 10) kod += SITE_KOD_ALFABESI[n % 31]; });
-    }
-    if (!kume.has(kod)) return kod;
-  }
-  return null;
+// KULLANICI ADI + ŞİFRE (v1.649.0 — kullanıcı: "Müşteri giriş yaparken kullanıcı adı ve şifre ile girsin"). v1.646'daki
+// tek kodun (`siteKodu`) yerini aldı. Hesap ERP'nin cari kaydında DEĞİL, Supabase'de ayrı tabloda (`site_hesaplari`,
+// site-portal.sql §2/§10): cari kaydı her yazımda baştan gidiyor, şifre özeti orada ezilirdi; ayrıca şifre özeti
+// ERP'nin yerel kopyasına/yedeğine hiç girmesin. Okuma/yazma yalnız fonksiyonlarla (site_hesap_bilgi / kaydet / sil);
+// şifre bcrypt ile sunucuda özetlenir, geri okunamaz — bu yüzden "WhatsApp ile gönder" yalnız şifre YENİ
+// belirlendiğinde (bu ekranda, kaydettikten hemen sonra) çıkar.
+
+// Rastgele şifre: 8 karakter, karışan harfler (0/O, 1/I/L) yok; mod yanlılığı yok (248 = 31×8).
+const SITE_SIFRE_ALFABESI = "abcdefghjkmnpqrstuvwxyz23456789";
+function siteSifresiUret() {
+  let s = "";
+  while (s.length < 8) crypto.getRandomValues(new Uint8Array(16)).forEach((n) => { if (n < 248 && s.length < 8) s += SITE_SIFRE_ALFABESI[n % 31]; });
+  return s;
+}
+// Ünvandan kullanıcı adı önerisi: "Ali Ayakkabı Ltd." → "ali.ayakkabi"
+function siteKullaniciOner(unvan) {
+  const tr = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" };
+  return String(unvan || "").toLocaleLowerCase("tr-TR").replace(/[çğıöşü]/g, (h) => tr[h])
+    .replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter((k) => !["ltd", "sti", "as", "ve", "tic", "san"].includes(k)).slice(0, 2).join(".") || "musteri";
 }
 
-function SiteErisimPaneli({ cari, tumCariler, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
-  const kod = cari.siteKodu || "";
+function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
+  const [bilgi, setBilgi] = useState(undefined);      // undefined = okunuyor, null = hesap yok, {kullanici, sonGiris…}
+  const [hata, setHata] = useState("");
+  const [duzen, setDuzen] = useState(false);
+  const [ad, setAd] = useState("");
+  const [sifre, setSifre] = useState("");
+  const [yeniGiris, setYeniGiris] = useState(null);   // {ad, sifre} — kaydedildiği an, gönderilsin diye
+  const [mesgul, setMesgul] = useState(false);
+  const oku = useCallback(() => {
+    if (!supabaseAcikMi()) { setBilgi(null); return; }
+    supabaseIstek("rpc/site_hesap_bilgi", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id }) })
+      .then((b) => { setBilgi(b || null); setHata(""); },
+        (e) => { setBilgi(null); setHata(/site_hesap_bilgi|PGRST202|404/.test(String(e && e.message)) ? "Supabase'de site-portal.sql'in son hâli çalıştırılmamış." : String((e && e.message) || e)); });
+  }, [cari.id]);
+  useEffect(() => { oku(); }, [oku]);
+  const ac = () => { setAd((bilgi && bilgi.kullanici) || siteKullaniciOner(cari.unvan)); setSifre(bilgi ? "" : siteSifresiUret()); setDuzen(true); setYeniGiris(null); };
+  const kaydet = () => {
+    setMesgul(true);
+    supabaseIstek("rpc/site_hesap_kaydet", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id, p_kullanici: ad, p_sifre: sifre }) })
+      .then(() => {
+        if (sifre) setYeniGiris({ ad: ad.trim().toLowerCase(), sifre });
+        setDuzen(false); setMesgul(false); oku();
+        if (showToast) showToast(sifre ? "Web sitesi girişi kaydedildi" : "Kullanıcı adı güncellendi");
+      }, (e) => { setMesgul(false); const m = String((e && e.message) || e); if (showToast) showToast((m.match(/"message"\s*:\s*"([^"]+)"/) || [])[1] || m); });
+  };
+  const kapat = () => {
+    if (!window.confirm(`${cari.unvan}: web sitesi girişi kapatılsın mı? Müşteri siteye giremez (açık oturumu da kapanır).`)) return;
+    supabaseIstek("rpc/site_hesap_sil", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id }) })
+      .then(() => { setYeniGiris(null); oku(); if (showToast) showToast("Web sitesi erişimi kapatıldı"); }, (e) => showToast && showToast(String((e && e.message) || e)));
+  };
   const site = String((firmaBilgileri && firmaBilgileri.website) || "").trim();
-  const kodVer = () => {
-    const yeni = siteKoduUret((tumCariler || []).map((c) => c.siteKodu).filter(Boolean));
-    if (!yeni) return showToast && showToast("Kod üretilemedi, tekrar deneyin");
-    onFieldChange(cari.id, "siteKodu", yeni);
-    if (showToast) showToast(kod ? "Yeni kod verildi — eski kod artık çalışmaz" : "Web sitesi kodu verildi");
-  };
-  const kapat = () => { onFieldChange(cari.id, "siteKodu", undefined); if (showToast) showToast("Web sitesi erişimi kapatıldı"); };
-  const kopyala = () => {
-    try { navigator.clipboard.writeText(kod).then(() => showToast && showToast("Kod kopyalandı"), () => {}); } catch (e) { /* izin yok */ }
-  };
-  const mesaj = `${site ? site + " — " : ""}Koleksiyonumuzu görmek ve sipariş vermek için müşteri kodunuz: ${kod}`;
-  const numara = whatsappNumarasi(cari.whatsapp || cari.telefon || "");
-  const waAdres = numara ? `https://wa.me/${numara}?text=${encodeURIComponent(mesaj)}` : `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+  const waAdres = yeniGiris ? (() => {
+    const mesaj = `${site ? site + "\n" : ""}Koleksiyon, siparişleriniz ve hesabınız için giriş bilgileriniz:\nKullanıcı adı: ${yeniGiris.ad}\nŞifre: ${yeniGiris.sifre}`;
+    const numara = whatsappNumarasi(cari.whatsapp || cari.telefon || "");
+    return numara ? `https://wa.me/${numara}?text=${encodeURIComponent(mesaj)}` : `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+  })() : null;
+  const kucukDugme = { fontSize: 11, padding: "3px 8px" };
   return (
     <div data-site-erisim="1" style={{ marginBottom: 14, padding: "8px 10px", background: "#EEF3EC", borderRadius: "var(--erp-r-md)", display: "grid", gap: 6 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, color: "#2F6B3A", fontWeight: 700 }}>Web sitesi erişimi:</span>
-        {kod ? (
+        <span style={{ fontSize: 12, color: "#2F6B3A", fontWeight: 700 }}>Web sitesi girişi:</span>
+        {bilgi === undefined && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>okunuyor…</span>}
+        {bilgi && !duzen && (
           <>
-            <span className="mono" data-site-kodu="1" style={{ fontSize: 14, fontWeight: 800, letterSpacing: ".12em", padding: "2px 8px", background: "#fff", border: "1px solid #BFD3BB", borderRadius: 6 }}>{kod}</span>
-            <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={kopyala}>Kopyala</button>
-            <a className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px", textDecoration: "none" }} href={waAdres} target="_blank" rel="noopener noreferrer">WhatsApp ile gönder</a>
-            <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={kodVer} title="Eski kod çalışmaz olur">Yeni kod</button>
-            <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px", color: "var(--erp-danger)" }} onClick={kapat}>Erişimi kapat</button>
-            {/* HESABIM'DA HANGİ DEFTER (v1.648.0 — kullanıcı kararı: "cariye göre seçilsin"): sitede müşteri bakiye ve
-                ekstresini bu defter(ler)den görür; "Muhasebe" kaydı ERP'deki gibi ikisine de girer. Boş = Genel. */}
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }}>
-              Hesabında görünen defter
-              <select value={cari.siteDefter || "Genel"} data-site-defter="1" onChange={(e) => onFieldChange(cari.id, "siteDefter", e.target.value === "Genel" ? undefined : e.target.value)}
-                style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #BFD3BB", borderRadius: 6 }}>
-                <option value="Genel">Genel</option>
-                <option value="Resmi">Resmi</option>
-                <option value="Ikisi">Genel + Resmi (ayrı ayrı)</option>
-              </select>
-            </label>
+            <span className="mono" data-site-kullanici="1" style={{ fontSize: 13, fontWeight: 800, padding: "2px 8px", background: "#fff", border: "1px solid #BFD3BB", borderRadius: 6 }}>{bilgi.kullanici}</span>
+            <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{bilgi.sonGiris ? `son giriş ${String(bilgi.sonGiris).slice(0, 16).replace("T", " ")}` : "henüz giriş yapmadı"}{bilgi.kilitli ? " · çok hatalı deneme, 15 dk kilitli" : ""}</span>
+            <button type="button" className="btn-secondary" style={kucukDugme} onClick={ac} data-site-hesap-duzenle="1">Kullanıcı adı / şifre değiştir</button>
+            <button type="button" className="btn-secondary" style={{ ...kucukDugme, color: "var(--erp-danger)" }} onClick={kapat}>Erişimi kapat</button>
           </>
-        ) : (
-          <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={kodVer} data-site-kod-ver="1">Kod ver</button>
+        )}
+        {bilgi === null && !duzen && (
+          <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={ac} disabled={!!hata} data-site-hesap-ac="1">Giriş bilgisi oluştur</button>
+        )}
+        {bilgi !== undefined && !duzen && (bilgi || cari.siteDefter) && (
+          // HESABIM'DA HANGİ DEFTER (v1.648.0 — kullanıcı kararı: "cariye göre seçilsin"). Cari alanı; boş = Genel.
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }}>
+            Hesabında görünen defter
+            <select value={cari.siteDefter || "Genel"} data-site-defter="1" onChange={(e) => onFieldChange(cari.id, "siteDefter", e.target.value === "Genel" ? undefined : e.target.value)}
+              style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #BFD3BB", borderRadius: 6 }}>
+              <option value="Genel">Genel</option>
+              <option value="Resmi">Resmi</option>
+              <option value="Ikisi">Genel + Resmi (ayrı ayrı)</option>
+            </select>
+          </label>
         )}
       </div>
+      {duzen && (
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}>
+          <label style={{ display: "grid", gap: 2, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }}>Kullanıcı adı
+            <input value={ad} data-site-kullanici-gir="1" onChange={(e) => setAd(e.target.value)} autoComplete="off" style={{ ...inputStyle, width: 170, padding: "4px 6px" }} />
+          </label>
+          <label style={{ display: "grid", gap: 2, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }}>{bilgi ? "Yeni şifre (boş = değişmesin)" : "Şifre"}
+            <span style={{ display: "flex", gap: 4 }}>
+              <input value={sifre} data-site-sifre-gir="1" onChange={(e) => setSifre(e.target.value)} autoComplete="new-password" className="mono" style={{ ...inputStyle, width: 130, padding: "4px 6px" }} />
+              <button type="button" className="btn-ghost" style={kucukDugme} onClick={() => setSifre(siteSifresiUret())} title="Rastgele şifre üret">↻</button>
+            </span>
+          </label>
+          <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "5px 12px" }} disabled={mesgul} onClick={kaydet} data-site-hesap-kaydet="1">Kaydet</button>
+          <button type="button" className="btn-secondary" style={kucukDugme} onClick={() => setDuzen(false)}>Vazgeç</button>
+        </div>
+      )}
+      {yeniGiris && (
+        <div data-site-yeni-giris="1" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, background: "#fff", border: "1px dashed #BFD3BB", borderRadius: 6, padding: "5px 8px" }}>
+          <span>Müşteriye iletin — kullanıcı adı <b className="mono">{yeniGiris.ad}</b>, şifre <b className="mono">{yeniGiris.sifre}</b></span>
+          <a className="btn-secondary" style={{ ...kucukDugme, textDecoration: "none" }} href={waAdres} target="_blank" rel="noopener noreferrer">WhatsApp ile gönder</a>
+          <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>Şifre bir daha gösterilmez (özeti saklanır); unutulursa yenisi verilir.</span>
+        </div>
+      )}
+      {hata && <span style={{ fontSize: 11, color: "var(--erp-danger)" }}>{hata}</span>}
       <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>
-        {kod
-          ? `Müşteri bu kodla sitede, "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür ve sipariş talebi gönderir (Siparişler › Siteden gelenler); "Hesabım"da seçili defterin bakiyesini, ekstresini, siparişlerini ve çeklerini görür.`
-          : "Kod verilmeyen müşteri sitedeki koleksiyonu göremez."}
+        {bilgi
+          ? `Müşteri sitede bu bilgilerle girer: "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür, sipariş talebi gönderir (Siparişler › Siteden gelenler); "Hesabım"da seçili defterin bakiyesini, ekstresini, siparişlerini ve çeklerini görür.`
+          : "Giriş bilgisi olmayan müşteri sitedeki koleksiyonu ve hesabını göremez."}
       </span>
     </div>
   );

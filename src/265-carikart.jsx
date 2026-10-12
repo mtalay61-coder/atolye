@@ -891,7 +891,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           )}
 
           {cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (
-            <SiteErisimPaneli cari={cari} tumCariler={tumCariler} firmaBilgileri={firmaBilgileri} onFieldChange={onFieldChange} showToast={showToast}
+            <SiteErisimPaneli cari={cari} firmaBilgileri={firmaBilgileri} onFieldChange={onFieldChange} showToast={showToast}
               fiyatGrubuAdi={((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || ""} />
           )}
 

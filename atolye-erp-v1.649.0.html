@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.646.0</title>
+<title>Atölye ERP 1.649.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2266,9 +2266,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.646.0";
+const SURUM = "1.649.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Web sitesi musteri portali: cariye site kodu, musteriye ozel model ve fiyat, siteden siparis talebi";
+const SURUM_NOTU = "Web sitesi musteri girisi kullanici adi ve sifre ile; cari kartindan olusturulur";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,6 +2279,16 @@ const SURUM_NOTU = "Web sitesi musteri portali: cariye site kodu, musteriye ozel
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.649.0", tarih: "12.10.2026",
+        eklenen: ["Web sitesi müşteri girişi KULLANICI ADI + ŞİFRE ile: cari kartı › Bilgiler › Web sitesi girişi — 'Giriş bilgisi oluştur' (ünvandan kullanıcı adı önerisi + rastgele şifre), değiştir, erişimi kapat; kaydedince bilgiler ve 'WhatsApp ile gönder'. Şifre sunucuda özetlenir, geri okunamaz; 5 hatalı denemede 15 dk kilit; oturum 30 gün. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
+        degisen: ["Müşteri kodu (v1.646) kalktı — eski kodlar artık çalışmaz, müşterilere kullanıcı adı/şifre verilmeli"], duzeltilen: [] },
+    { surum: "1.648.0", tarih: "12.10.2026",
+        eklenen: ["Web sitesinde müşteri ekranı: kodla giren müşteri 'Hesabım'da güncel bakiyesini, tarih aralığına göre hesap ekstresini (devir + yürüyen bakiye, yazdırılabilir) ve çek/senetlerini; 'Siparişlerim'de siparişlerini (model/renk: sipariş, teslim, kalan; durum) ve siteden gönderip henüz onaylanmamış taleplerini görür",
+            "Cari kartı › Web sitesi erişimi: 'Hesabında görünen defter' — Genel, Resmi ya da ikisi ayrı ayrı. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.647.0", tarih: "12.10.2026",
+        eklenen: ["Tanımlar › Firma › Web Sitesi: sitenin marka adı, logosu (firma logosu), ana rengi, teması (otomatik/açık/koyu), karşılama yazıları, Koleksiyon ve İletişim başlıkları, 'Nasıl üretiyoruz' kartları (ekle/sil/sırala, bölümü gizle), telefon, WhatsApp, e-posta, adres, harita, Instagram ve sayfa altı yazısı — 'Siteye kaydet' ile siteye yansır. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.646.0", tarih: "12.10.2026",
         eklenen: ["Web sitesi müşteri portalı: koleksiyon artık yalnız kodla görünür. Cari kartı (müşteri) › 'Web sitesi erişimi': Kod ver / Kopyala / WhatsApp ile gönder / Yeni kod / Erişimi kapat",
             "Müşteri sitede yalnız 'Web sitesinde göster' işaretli VE kendisine (cariye özel ya da fiyat grubunda) fiyatı olan modelleri, kendi fiyatıyla görür; asorti × koli ya da beden beden sepete ekleyip sipariş gönderir",
@@ -26154,7 +26164,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                         e.sifre ? (React.createElement("button", { type: "button", className: "btn-ghost", "data-eposta-sifre-sil": "1", style: { marginLeft: 6, padding: "2px 8px", fontSize: 11, color: "var(--erp-warn)" }, onClick: () => guncelle("sifre", ""), title: "Tan\u0131mlardaki eski \u015Fifre kayd\u0131n\u0131 siler \u2014 \u00F6nce Supabase'de SMTP_SIFRE s\u0131rr\u0131n\u0131 ekleyin" }, "Buradaki eski \u015Fifreyi sil")) : null)),
                                 React.createElement(Field, { label: "G\u00F6nderen ad\u0131" },
                                     React.createElement("input", { value: e.gonderenAd || "", placeholder: "New Diamond Shoes", onChange: (ev) => guncelle("gonderenAd", ev.target.value), style: inputStyle })))));
-                    })())))),
+                    })())),
+            React.createElement(WebSitesiAyarlari, { tanimlar: tanimlar, onSave: onSave, showToast: showToast }))),
         aktifTanimSekme === "urun" && (React.createElement(React.Fragment, null,
             React.createElement("div", { className: "tanimlar-grid", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" } },
                 React.createElement("div", null,
@@ -47584,7 +47595,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 g.tip,
                                 ")"))),
                         React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r.")))),
-                cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (React.createElement(SiteErisimPaneli, { cari: cari, tumCariler: tumCariler, firmaBilgileri: firmaBilgileri, onFieldChange: onFieldChange, showToast: showToast, fiyatGrubuAdi: ((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || "" })),
+                cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (React.createElement(SiteErisimPaneli, { cari: cari, firmaBilgileri: firmaBilgileri, onFieldChange: onFieldChange, showToast: showToast, fiyatGrubuAdi: ((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || "" })),
                 cardTab === "bilgiler" && cari.tip === "Personel" && (React.createElement("div", { style: { display: "grid", gap: 10, marginBottom: 14, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" } },
                     React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } },
                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-purple)", fontWeight: 600 } },
@@ -48180,59 +48191,116 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 // verebilsin, ona özel fiyatlar ve modeller listelensin." Karar: müşteriye özel KOD (Supabase üyeliği değil — o hesap
 // rls-kimlik.sql yüzünden ERP'nin bütün verisini okurdu; bkz. site-portal.sql başı).
 //
-// Kod carinin `siteKodu` alanında (`ek`e gider, sütun gerekmez). Sitedeki `portal()` kodu bu alandan bulur; boş kod ya
-// da pasif cari = erişim yok. Müşterinin gördüğü modeller: sitede işaretli VE bu cariye (cariye özel ya da fiyat
+// v1.649.0'dan beri kod değil KULLANICI ADI + ŞİFRE (aşağıda); pasif cari = erişim yok. Müşterinin gördüğü modeller: sitede işaretli VE bu cariye (cariye özel ya da fiyat
 // grubu) fiyatı olan mamuller — fiyatı olmayan model o müşteriye görünmez.
-// 10 karakter, karışan harfler (0/O, 1/I/L) yok: 31^10 ≈ 49 bit — tahminle bulunamaz, telefonda okunabilir.
-const SITE_KOD_ALFABESI = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-function siteKoduUret(mevcutKodlar) {
-    const kume = new Set((mevcutKodlar || []).map((k) => String(k || "").toUpperCase()));
-    for (let deneme = 0; deneme < 20; deneme++) {
-        // 248 = 31×8: üstündeki baytlar atılır, her harf eşit olasılıkta kalsın (mod yanlılığı yok).
-        let kod = "";
-        while (kod.length < 10) {
-            crypto.getRandomValues(new Uint8Array(16)).forEach((n) => { if (n < 248 && kod.length < 10)
-                kod += SITE_KOD_ALFABESI[n % 31]; });
-        }
-        if (!kume.has(kod))
-            return kod;
-    }
-    return null;
+// KULLANICI ADI + ŞİFRE (v1.649.0 — kullanıcı: "Müşteri giriş yaparken kullanıcı adı ve şifre ile girsin"). v1.646'daki
+// tek kodun (`siteKodu`) yerini aldı. Hesap ERP'nin cari kaydında DEĞİL, Supabase'de ayrı tabloda (`site_hesaplari`,
+// site-portal.sql §2/§10): cari kaydı her yazımda baştan gidiyor, şifre özeti orada ezilirdi; ayrıca şifre özeti
+// ERP'nin yerel kopyasına/yedeğine hiç girmesin. Okuma/yazma yalnız fonksiyonlarla (site_hesap_bilgi / kaydet / sil);
+// şifre bcrypt ile sunucuda özetlenir, geri okunamaz — bu yüzden "WhatsApp ile gönder" yalnız şifre YENİ
+// belirlendiğinde (bu ekranda, kaydettikten hemen sonra) çıkar.
+// Rastgele şifre: 8 karakter, karışan harfler (0/O, 1/I/L) yok; mod yanlılığı yok (248 = 31×8).
+const SITE_SIFRE_ALFABESI = "abcdefghjkmnpqrstuvwxyz23456789";
+function siteSifresiUret() {
+    let s = "";
+    while (s.length < 8)
+        crypto.getRandomValues(new Uint8Array(16)).forEach((n) => { if (n < 248 && s.length < 8)
+            s += SITE_SIFRE_ALFABESI[n % 31]; });
+    return s;
 }
-function SiteErisimPaneli({ cari, tumCariler, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
-    const kod = cari.siteKodu || "";
-    const site = String((firmaBilgileri && firmaBilgileri.website) || "").trim();
-    const kodVer = () => {
-        const yeni = siteKoduUret((tumCariler || []).map((c) => c.siteKodu).filter(Boolean));
-        if (!yeni)
-            return showToast && showToast("Kod üretilemedi, tekrar deneyin");
-        onFieldChange(cari.id, "siteKodu", yeni);
-        if (showToast)
-            showToast(kod ? "Yeni kod verildi — eski kod artık çalışmaz" : "Web sitesi kodu verildi");
-    };
-    const kapat = () => { onFieldChange(cari.id, "siteKodu", undefined); if (showToast)
-        showToast("Web sitesi erişimi kapatıldı"); };
-    const kopyala = () => {
-        try {
-            navigator.clipboard.writeText(kod).then(() => showToast && showToast("Kod kopyalandı"), () => { });
+// Ünvandan kullanıcı adı önerisi: "Ali Ayakkabı Ltd." → "ali.ayakkabi"
+function siteKullaniciOner(unvan) {
+    const tr = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" };
+    return String(unvan || "").toLocaleLowerCase("tr-TR").replace(/[çğıöşü]/g, (h) => tr[h])
+        .replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter((k) => !["ltd", "sti", "as", "ve", "tic", "san"].includes(k)).slice(0, 2).join(".") || "musteri";
+}
+function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
+    const [bilgi, setBilgi] = useState(undefined); // undefined = okunuyor, null = hesap yok, {kullanici, sonGiris…}
+    const [hata, setHata] = useState("");
+    const [duzen, setDuzen] = useState(false);
+    const [ad, setAd] = useState("");
+    const [sifre, setSifre] = useState("");
+    const [yeniGiris, setYeniGiris] = useState(null); // {ad, sifre} — kaydedildiği an, gönderilsin diye
+    const [mesgul, setMesgul] = useState(false);
+    const oku = useCallback(() => {
+        if (!supabaseAcikMi()) {
+            setBilgi(null);
+            return;
         }
-        catch (e) { /* izin yok */ }
+        supabaseIstek("rpc/site_hesap_bilgi", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id }) })
+            .then((b) => { setBilgi(b || null); setHata(""); }, (e) => { setBilgi(null); setHata(/site_hesap_bilgi|PGRST202|404/.test(String(e && e.message)) ? "Supabase'de site-portal.sql'in son hâli çalıştırılmamış." : String((e && e.message) || e)); });
+    }, [cari.id]);
+    useEffect(() => { oku(); }, [oku]);
+    const ac = () => { setAd((bilgi && bilgi.kullanici) || siteKullaniciOner(cari.unvan)); setSifre(bilgi ? "" : siteSifresiUret()); setDuzen(true); setYeniGiris(null); };
+    const kaydet = () => {
+        setMesgul(true);
+        supabaseIstek("rpc/site_hesap_kaydet", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id, p_kullanici: ad, p_sifre: sifre }) })
+            .then(() => {
+            if (sifre)
+                setYeniGiris({ ad: ad.trim().toLowerCase(), sifre });
+            setDuzen(false);
+            setMesgul(false);
+            oku();
+            if (showToast)
+                showToast(sifre ? "Web sitesi girişi kaydedildi" : "Kullanıcı adı güncellendi");
+        }, (e) => { setMesgul(false); const m = String((e && e.message) || e); if (showToast)
+            showToast((m.match(/"message"\s*:\s*"([^"]+)"/) || [])[1] || m); });
     };
-    const mesaj = `${site ? site + " — " : ""}Koleksiyonumuzu görmek ve sipariş vermek için müşteri kodunuz: ${kod}`;
-    const numara = whatsappNumarasi(cari.whatsapp || cari.telefon || "");
-    const waAdres = numara ? `https://wa.me/${numara}?text=${encodeURIComponent(mesaj)}` : `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+    const kapat = () => {
+        if (!window.confirm(`${cari.unvan}: web sitesi girişi kapatılsın mı? Müşteri siteye giremez (açık oturumu da kapanır).`))
+            return;
+        supabaseIstek("rpc/site_hesap_sil", { method: "POST", body: JSON.stringify({ p_cari_id: cari.id }) })
+            .then(() => { setYeniGiris(null); oku(); if (showToast)
+            showToast("Web sitesi erişimi kapatıldı"); }, (e) => showToast && showToast(String((e && e.message) || e)));
+    };
+    const site = String((firmaBilgileri && firmaBilgileri.website) || "").trim();
+    const waAdres = yeniGiris ? (() => {
+        const mesaj = `${site ? site + "\n" : ""}Koleksiyon, siparişleriniz ve hesabınız için giriş bilgileriniz:\nKullanıcı adı: ${yeniGiris.ad}\nŞifre: ${yeniGiris.sifre}`;
+        const numara = whatsappNumarasi(cari.whatsapp || cari.telefon || "");
+        return numara ? `https://wa.me/${numara}?text=${encodeURIComponent(mesaj)}` : `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+    })() : null;
+    const kucukDugme = { fontSize: 11, padding: "3px 8px" };
     return (React.createElement("div", { "data-site-erisim": "1", style: { marginBottom: 14, padding: "8px 10px", background: "#EEF3EC", borderRadius: "var(--erp-r-md)", display: "grid", gap: 6 } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
-            React.createElement("span", { style: { fontSize: 12, color: "#2F6B3A", fontWeight: 700 } }, "Web sitesi eri\u015Fimi:"),
-            kod ? (React.createElement(React.Fragment, null,
-                React.createElement("span", { className: "mono", "data-site-kodu": "1", style: { fontSize: 14, fontWeight: 800, letterSpacing: ".12em", padding: "2px 8px", background: "#fff", border: "1px solid #BFD3BB", borderRadius: 6 } }, kod),
-                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: kopyala }, "Kopyala"),
-                React.createElement("a", { className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px", textDecoration: "none" }, href: waAdres, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp ile g\u00F6nder"),
-                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: kodVer, title: "Eski kod \u00E7al\u0131\u015Fmaz olur" }, "Yeni kod"),
-                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px", color: "var(--erp-danger)" }, onClick: kapat }, "Eri\u015Fimi kapat"))) : (React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "4px 10px" }, onClick: kodVer, "data-site-kod-ver": "1" }, "Kod ver"))),
-        React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, kod
-            ? `Müşteri bu kodla sitede, "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür ve sipariş talebi gönderir (Siparişler › Siteden gelenler).`
-            : "Kod verilmeyen müşteri sitedeki koleksiyonu göremez.")));
+            React.createElement("span", { style: { fontSize: 12, color: "#2F6B3A", fontWeight: 700 } }, "Web sitesi giri\u015Fi:"),
+            bilgi === undefined && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "okunuyor\u2026"),
+            bilgi && !duzen && (React.createElement(React.Fragment, null,
+                React.createElement("span", { className: "mono", "data-site-kullanici": "1", style: { fontSize: 13, fontWeight: 800, padding: "2px 8px", background: "#fff", border: "1px solid #BFD3BB", borderRadius: 6 } }, bilgi.kullanici),
+                React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } },
+                    bilgi.sonGiris ? `son giriş ${String(bilgi.sonGiris).slice(0, 16).replace("T", " ")}` : "henüz giriş yapmadı",
+                    bilgi.kilitli ? " · çok hatalı deneme, 15 dk kilitli" : ""),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: kucukDugme, onClick: ac, "data-site-hesap-duzenle": "1" }, "Kullan\u0131c\u0131 ad\u0131 / \u015Fifre de\u011Fi\u015Ftir"),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { ...kucukDugme, color: "var(--erp-danger)" }, onClick: kapat }, "Eri\u015Fimi kapat"))),
+            bilgi === null && !duzen && (React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "4px 10px" }, onClick: ac, disabled: !!hata, "data-site-hesap-ac": "1" }, "Giri\u015F bilgisi olu\u015Ftur")),
+            bilgi !== undefined && !duzen && (bilgi || cari.siteDefter) && (React.createElement("label", { style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 } },
+                "Hesab\u0131nda g\u00F6r\u00FCnen defter",
+                React.createElement("select", { value: cari.siteDefter || "Genel", "data-site-defter": "1", onChange: (e) => onFieldChange(cari.id, "siteDefter", e.target.value === "Genel" ? undefined : e.target.value), style: { fontSize: 11, padding: "2px 4px", border: "1px solid #BFD3BB", borderRadius: 6 } },
+                    React.createElement("option", { value: "Genel" }, "Genel"),
+                    React.createElement("option", { value: "Resmi" }, "Resmi"),
+                    React.createElement("option", { value: "Ikisi" }, "Genel + Resmi (ayr\u0131 ayr\u0131)"))))),
+        duzen && (React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 8, flexWrap: "wrap" } },
+            React.createElement("label", { style: { display: "grid", gap: 2, fontSize: 11, color: "#2F6B3A", fontWeight: 600 } },
+                "Kullan\u0131c\u0131 ad\u0131",
+                React.createElement("input", { value: ad, "data-site-kullanici-gir": "1", onChange: (e) => setAd(e.target.value), autoComplete: "off", style: { ...inputStyle, width: 170, padding: "4px 6px" } })),
+            React.createElement("label", { style: { display: "grid", gap: 2, fontSize: 11, color: "#2F6B3A", fontWeight: 600 } },
+                bilgi ? "Yeni şifre (boş = değişmesin)" : "Şifre",
+                React.createElement("span", { style: { display: "flex", gap: 4 } },
+                    React.createElement("input", { value: sifre, "data-site-sifre-gir": "1", onChange: (e) => setSifre(e.target.value), autoComplete: "new-password", className: "mono", style: { ...inputStyle, width: 130, padding: "4px 6px" } }),
+                    React.createElement("button", { type: "button", className: "btn-ghost", style: kucukDugme, onClick: () => setSifre(siteSifresiUret()), title: "Rastgele \u015Fifre \u00FCret" }, "\u21BB"))),
+            React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "5px 12px" }, disabled: mesgul, onClick: kaydet, "data-site-hesap-kaydet": "1" }, "Kaydet"),
+            React.createElement("button", { type: "button", className: "btn-secondary", style: kucukDugme, onClick: () => setDuzen(false) }, "Vazge\u00E7"))),
+        yeniGiris && (React.createElement("div", { "data-site-yeni-giris": "1", style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, background: "#fff", border: "1px dashed #BFD3BB", borderRadius: 6, padding: "5px 8px" } },
+            React.createElement("span", null,
+                "M\u00FC\u015Fteriye iletin \u2014 kullan\u0131c\u0131 ad\u0131 ",
+                React.createElement("b", { className: "mono" }, yeniGiris.ad),
+                ", \u015Fifre ",
+                React.createElement("b", { className: "mono" }, yeniGiris.sifre)),
+            React.createElement("a", { className: "btn-secondary", style: { ...kucukDugme, textDecoration: "none" }, href: waAdres, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp ile g\u00F6nder"),
+            React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, "\u015Eifre bir daha g\u00F6sterilmez (\u00F6zeti saklan\u0131r); unutulursa yenisi verilir."))),
+        hata && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-danger)" } }, hata),
+        React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, bilgi
+            ? `Müşteri sitede bu bilgilerle girer: "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür, sipariş talebi gönderir (Siparişler › Siteden gelenler); "Hesabım"da seçili defterin bakiyesini, ekstresini, siparişlerini ve çeklerini görür.`
+            : "Giriş bilgisi olmayan müşteri sitedeki koleksiyonu ve hesabını göremez.")));
 }
 // ================= SİTEDEN GELEN SİPARİŞ TALEPLERİ =================
 // Site `portal_siparis()` ile `site_talepleri` tablosuna yazar (fiyat sunucuda yeniden bulunur). Talep doğrudan sipariş
@@ -48287,6 +48355,144 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
                 React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: !cari, title: cari ? "" : "Cari bulunamadı", onClick: () => onSipariseCevir(t) }, "Sipari\u015Fe \u00E7evir"),
                 React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: () => reddet(t) }, "Reddet")));
         })))));
+}
+// ================= WEB SİTESİ AYARLARI (v1.647.0) =================
+//
+// Kullanıcı: "İletişim bilgilerini … uygulama içerisinden yapalım, site tasarımı v.s tüm hepsini." Sitenin bütün
+// yazıları, iletişim bilgileri, rengi, logosu ve "Nasıl üretiyoruz" kartları `tanimlar.siteAyarlari`nda; site açılışta
+// `site_ayarlari()` (site-portal.sql, anonim) ile okur. Sitenin kendi dosyalarındaki metinler yalnız yedek: ayar
+// gelmezse (fonksiyon kurulmamış / ağ) site yine düzgün görünür.
+//
+// Siteye giden YALNIZ bu nesne (+ seçilirse firma logosu). Tanımlar'ın kalanı (kullanıcılar, e-posta sunucusu…)
+// fonksiyonda hiç seçilmez.
+//
+// Yazarken buluta gitmez: taslak bu ekranda tutulur, "Siteye kaydet" ile tek yazım (her tuşta tanımlar yazmasın).
+const SITE_VARSAYILAN = {
+    marka: "New Diamond",
+    firmaLogosu: false,
+    vurguRengi: "#8A5A2B",
+    tema: "otomatik", // "otomatik" | "acik" | "koyu"
+    ustEtiket: "Ayakkabı üretimi",
+    baslik: "Deriden sevkiyata, her adımda ustalık.",
+    aciklama: "New Diamond; modelden kesime, sayadan montaja kadar bütün üretimi kendi atölyesinde yapar. Müşteri kodunuzla koleksiyonu inceleyin ve siparişinizi doğrudan verin.",
+    dugme1: "Müşteri girişi",
+    dugme2: "Teklif isteyin",
+    koleksiyonBaslik: "Koleksiyon",
+    koleksiyonAlt: "Müşterilerimize özel: modeller, size özel fiyatlar ve sipariş.",
+    uretimGoster: true,
+    uretimBaslik: "Nasıl üretiyoruz",
+    uretimAlt: "Her çift aynı titizlikle, aşama aşama izlenerek.",
+    uretimKartlari: [
+        { ikon: "✂", baslik: "Kesim", metin: "Seçilmiş deriler, modele özel kalıplarla kesilir; fire en aza indirilir." },
+        { ikon: "🧵", baslik: "Saya", metin: "Usta ellerde dikilen saya, modelin karakterini belirler." },
+        { ikon: "🔨", baslik: "Montaj ve taban", metin: "Taban ve saya sağlam, uzun ömürlü bir birleşimle buluşur." },
+        { ikon: "📦", baslik: "Kalite ve sevkiyat", metin: "Her çift kontrol edilir, asorti kolilere yerleştirilip zamanında sevk edilir." },
+    ],
+    iletisimBaslik: "İletişim",
+    iletisimAlt: "Toptan sipariş ve iş birliği için bize ulaşın.",
+    telefon: "", whatsapp: "", eposta: "", adres: "", haritaSorgusu: "", instagram: "",
+    altYazi: "",
+};
+function siteAyarlariBirlestir(kayitli) {
+    const k = kayitli || {};
+    return { ...SITE_VARSAYILAN, ...k, uretimKartlari: Array.isArray(k.uretimKartlari) ? k.uretimKartlari : SITE_VARSAYILAN.uretimKartlari };
+}
+function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
+    const kayitli = React.useMemo(() => siteAyarlariBirlestir(tanimlar.siteAyarlari), [tanimlar.siteAyarlari]);
+    const [taslak, setTaslak] = useState(kayitli);
+    // Başka cihaz kaydederse ve burada bekleyen değişiklik yoksa taslak tazelenir.
+    const [kirli, setKirli] = useState(false);
+    useEffect(() => { if (!kirli)
+        setTaslak(kayitli); }, [kayitli]); // eslint-disable-line react-hooks/exhaustive-deps
+    const ata = (alan, deger) => { setTaslak((t) => ({ ...t, [alan]: deger })); setKirli(true); };
+    const kartAta = (i, alan, deger) => { setTaslak((t) => ({ ...t, uretimKartlari: t.uretimKartlari.map((k, j) => (j === i ? { ...k, [alan]: deger } : k)) })); setKirli(true); };
+    const kartSil = (i) => { setTaslak((t) => ({ ...t, uretimKartlari: t.uretimKartlari.filter((_, j) => j !== i) })); setKirli(true); };
+    const kartEkle = () => { setTaslak((t) => ({ ...t, uretimKartlari: [...t.uretimKartlari, { ikon: "★", baslik: "", metin: "" }] })); setKirli(true); };
+    const kartTasi = (i, d) => { setTaslak((t) => { const l = [...t.uretimKartlari]; const j = i + d; if (j < 0 || j >= l.length)
+        return t; [l[i], l[j]] = [l[j], l[i]]; return { ...t, uretimKartlari: l }; }); setKirli(true); };
+    const kaydet = () => {
+        const temiz = { ...taslak, whatsapp: String(taslak.whatsapp || "").trim() ? whatsappNumarasi(taslak.whatsapp) : "",
+            uretimKartlari: taslak.uretimKartlari.filter((k) => String(k.baslik || "").trim() || String(k.metin || "").trim()) };
+        onSave({ ...tanimlar, siteAyarlari: temiz });
+        setKirli(false);
+        if (showToast)
+            showToast("Web sitesi ayarları kaydedildi — site yenilenince görünür");
+    };
+    const vazgec = () => { setTaslak(kayitli); setKirli(false); };
+    const siteAdresi = String((tanimlar.firmaBilgileri || {}).website || "").trim();
+    const metin = (alan, etiket, yer, uzun) => (React.createElement(Field, { label: etiket }, uzun
+        ? React.createElement("textarea", { value: taslak[alan] || "", placeholder: yer || "", rows: 3, "data-site-ayar": alan, onChange: (e) => ata(alan, e.target.value), style: { ...inputStyle, resize: "vertical" } })
+        : React.createElement("input", { value: taslak[alan] || "", placeholder: yer || "", "data-site-ayar": alan, onChange: (e) => ata(alan, e.target.value), style: inputStyle })));
+    const altBaslik = (ad) => React.createElement("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--erp-text-3)", margin: "14px 0 6px" } }, ad);
+    const izgara = { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 10 };
+    return (React.createElement("div", { "data-web-sitesi-ayarlari": "1", style: { marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 } },
+        React.createElement(TanimBasligi, { ad: "Web Sitesi" }),
+        React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px" } },
+            "Sitenin yaz\u0131lar\u0131, ileti\u015Fim bilgileri, rengi ve logosu. Bo\u015F b\u0131rak\u0131lan ileti\u015Fim alan\u0131 sitede gizlenir. Koleksiyon m\u00FC\u015Fteriye \u00F6zel koddad\u0131r (cari kart\u0131 \u203A Bilgiler \u203A Web sitesi eri\u015Fimi).",
+            siteAdresi && React.createElement(React.Fragment, null,
+                " \u00B7 ",
+                React.createElement("a", { href: /^https?:/.test(siteAdresi) ? siteAdresi : `https://${siteAdresi}`, target: "_blank", rel: "noopener noreferrer" }, "Siteyi a\u00E7"))),
+        kirli && (React.createElement("div", { className: "kayit-seridi", style: { display: "flex", gap: 8, alignItems: "center", padding: "6px 10px", background: "#EFE6F7", borderRadius: 8, marginBottom: 8, position: "sticky", top: 0, zIndex: 2 } },
+            React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-purple)" } }, "Kaydedilmemi\u015F de\u011Fi\u015Fiklik var"),
+            React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-site-ayar-kaydet": "1", style: { marginLeft: "auto", padding: "5px 12px", fontSize: 12 }, onClick: kaydet }, "Siteye kaydet"),
+            React.createElement("button", { type: "button", className: "btn-secondary", style: { padding: "5px 10px", fontSize: 12 }, onClick: vazgec }, "Vazge\u00E7"))),
+        altBaslik("Görünüm"),
+        React.createElement("div", { style: izgara },
+            metin("marka", "Marka adı"),
+            React.createElement(Field, { label: "Logo" },
+                React.createElement("label", { style: { display: "flex", gap: 6, alignItems: "center", fontSize: 12 } },
+                    React.createElement("input", { type: "checkbox", checked: !!taslak.firmaLogosu, onChange: (e) => ata("firmaLogosu", e.target.checked) }),
+                    "Firma logosunu kullan ",
+                    !(tanimlar.firmaBilgileri || {}).logo && React.createElement("span", { style: { color: "var(--erp-text-3)" } }, "(Firma Bilgileri'nde logo yok)"))),
+            React.createElement(Field, { label: "Ana renk" },
+                React.createElement("span", { style: { display: "flex", gap: 6, alignItems: "center" } },
+                    React.createElement("input", { type: "color", value: /^#[0-9a-f]{6}$/i.test(taslak.vurguRengi) ? taslak.vurguRengi : "#8A5A2B", onChange: (e) => ata("vurguRengi", e.target.value), style: { width: 44, height: 30, padding: 0, border: "1px solid var(--erp-line)", borderRadius: 6 } }),
+                    React.createElement("span", { className: "mono", style: { fontSize: 12 } }, taslak.vurguRengi),
+                    React.createElement("button", { type: "button", className: "btn-ghost", style: { fontSize: 11 }, onClick: () => ata("vurguRengi", SITE_VARSAYILAN.vurguRengi) }, "Varsay\u0131lan"))),
+            React.createElement(Field, { label: "Tema" },
+                React.createElement("select", { value: taslak.tema, onChange: (e) => ata("tema", e.target.value), style: inputStyle },
+                    React.createElement("option", { value: "otomatik" }, "Ziyaret\u00E7inin cihaz\u0131na g\u00F6re"),
+                    React.createElement("option", { value: "acik" }, "Hep a\u00E7\u0131k"),
+                    React.createElement("option", { value: "koyu" }, "Hep koyu")))),
+        altBaslik("Karşılama"),
+        React.createElement("div", { style: izgara },
+            metin("ustEtiket", "Üst etiket"),
+            metin("baslik", "Büyük başlık"),
+            metin("dugme1", "1. düğme (koleksiyona)"),
+            metin("dugme2", "2. düğme (iletişime)")),
+        metin("aciklama", "Açıklama", "", true),
+        altBaslik("Koleksiyon"),
+        React.createElement("div", { style: izgara },
+            metin("koleksiyonBaslik", "Başlık"),
+            metin("koleksiyonAlt", "Alt yazı")),
+        altBaslik("Nasıl üretiyoruz"),
+        React.createElement("label", { style: { display: "flex", gap: 6, alignItems: "center", fontSize: 12, marginBottom: 6 } },
+            React.createElement("input", { type: "checkbox", checked: taslak.uretimGoster !== false, onChange: (e) => ata("uretimGoster", e.target.checked) }),
+            " Bu b\u00F6l\u00FCm sitede g\u00F6r\u00FCns\u00FCn"),
+        taslak.uretimGoster !== false && (React.createElement(React.Fragment, null,
+            React.createElement("div", { style: izgara },
+                metin("uretimBaslik", "Başlık"),
+                metin("uretimAlt", "Alt yazı")),
+            React.createElement("div", { style: { display: "grid", gap: 6, marginTop: 8 } },
+                taslak.uretimKartlari.map((k, i) => (React.createElement("div", { key: i, "data-site-kart-satiri": i, style: { display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" } },
+                    React.createElement("input", { value: k.ikon || "", onChange: (e) => kartAta(i, "ikon", e.target.value), title: "Simge (emoji)", style: { ...inputStyle, width: 46, textAlign: "center" } }),
+                    React.createElement("input", { value: k.baslik || "", placeholder: "Kart ba\u015Fl\u0131\u011F\u0131", onChange: (e) => kartAta(i, "baslik", e.target.value), style: { ...inputStyle, width: 170 } }),
+                    React.createElement("input", { value: k.metin || "", placeholder: "Kart metni", onChange: (e) => kartAta(i, "metin", e.target.value), style: { ...inputStyle, flex: "1 1 260px", minWidth: 0 } }),
+                    React.createElement("button", { type: "button", className: "btn-ghost", title: "Yukar\u0131", onClick: () => kartTasi(i, -1) }, "\u25B2"),
+                    React.createElement("button", { type: "button", className: "btn-ghost", title: "A\u015Fa\u011F\u0131", onClick: () => kartTasi(i, 1) }, "\u25BC"),
+                    React.createElement("button", { type: "button", className: "btn-ghost", title: "Kart\u0131 sil", style: { color: "var(--erp-danger)" }, onClick: () => kartSil(i) }, "\u2715")))),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { justifySelf: "start", fontSize: 12 }, onClick: kartEkle }, "+ Kart ekle")))),
+        altBaslik("İletişim"),
+        React.createElement("div", { style: izgara },
+            metin("iletisimBaslik", "Başlık"),
+            metin("iletisimAlt", "Alt yazı"),
+            metin("telefon", "Telefon", "0212 000 00 00"),
+            metin("whatsapp", "WhatsApp", "05xx xxx xx xx"),
+            metin("eposta", "E-posta", "info@firma.com.tr"),
+            metin("instagram", "Instagram adresi", "https://instagram.com/…"),
+            metin("haritaSorgusu", "Harita (Google'da aranacak)", "New Diamond Ayakkabı İstanbul")),
+        metin("adres", "Adres", "", true),
+        metin("altYazi", "Sayfa altı yazısı (isteğe bağlı)")));
 }
 // =============================================================================================
 // İFADE HESAPLAYAN MİKTAR ALANI
@@ -60410,7 +60616,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.646.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.649.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

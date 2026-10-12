@@ -2,8 +2,10 @@
 //
 // Kullanıcı: "Herkes koleksiyonumuzu görmesin" · "Müşteri sipariş de verebilsin, ona özel fiyatlar ve modeller".
 // Ölçülen:
-//   1) Müşteri cari kartı › Bilgiler: "Kod ver" → 10 karakterlik, karışan harfsiz kod; cariye `siteKodu` yazılır.
-//      Tedarikçi kartında panel YOK. "Erişimi kapat" kodu siler.
+//   1) Müşteri cari kartı › Bilgiler (v1.649.0 — kullanıcı adı + şifre): hesap yoksa "Giriş bilgisi oluştur" →
+//      ünvandan kullanıcı adı önerisi + 8 karakterlik rastgele şifre; Kaydet `site_hesap_kaydet` rpc'sine gider (taklit
+//      sunucu), cari kaydına ŞİFRE YAZILMAZ; kaydettikten sonra bilgiler + WhatsApp bağlantısı görünür. Defter
+//      seçimi cariye yazılır. "Erişimi kapat" `site_hesap_sil` çağırır. Tedarikçi kartında panel YOK.
 //   2) Siparişler › Satış: Supabase'deki `site_talepleri` (taklit) "Siteden gelen" panelinde; "Siparişe çevir" formu
 //      doldurur (cari, kalem, fiyat, not) — KAYDETMEZ; "Kaydet" siparişe `siteTalepId` yazar ve talep panelden düşer.
 //      ERP'de olmayan renk/beden satırı forma alınmaz.
@@ -23,11 +25,22 @@ const TALEP = {
 async function calistir() {
   const t = { ...TOHUM };
   let talepOkuma = 0;
+  // Taklit sunucu: site hesabı tablosu bellekte.
+  let hesap = null; const rpcCagrilari = [];
   const onceRota = async (sayfa) => {
     await sayfa.route("**/rest/v1/site_talepleri*", (r) => { talepOkuma++; r.fulfill({ contentType: "application/json", body: JSON.stringify([TALEP]) }); });
+    await sayfa.route("**/rest/v1/rpc/site_hesap_*", (r) => {
+      const ad = r.request().url().split("/rpc/")[1]; const g = JSON.parse(r.request().postData() || "{}");
+      rpcCagrilari.push(ad);
+      if (ad === "site_hesap_bilgi") return r.fulfill({ contentType: "application/json", body: JSON.stringify(hesap) });
+      if (ad === "site_hesap_kaydet") { hesap = { kullanici: g.p_kullanici, sonGiris: null, kilitli: false, _sifre: g.p_sifre }; return r.fulfill({ status: 204, body: "" }); }
+      if (ad === "site_hesap_sil") { hesap = null; return r.fulfill({ status: 204, body: "" }); }
+      r.fulfill({ status: 404, body: "" });
+    });
   };
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
+  await sayfa.on("dialog", (d) => d.accept());
   await sayfa.waitForTimeout(2200);
 
   // ---- 1) Cari kartı ----
@@ -36,27 +49,34 @@ async function calistir() {
   await sayfa.locator('button:has-text("Müşteri B"):visible').last().click();
   await sayfa.waitForTimeout(300);
   await sayfa.locator('[data-cari-sekme="bilgiler"]:visible').last().click();
-  await sayfa.waitForTimeout(300);
-  const panelOnce = await sayfa.locator("[data-site-erisim]:visible").count();
-  await sayfa.locator("[data-site-kod-ver]:visible").last().click();
   await sayfa.waitForTimeout(500);
-  const kodEkranda = (await sayfa.locator("[data-site-kodu]:visible").last().textContent()) || "";
+  const panelOnce = await sayfa.locator("[data-site-erisim]:visible").count();
+  await sayfa.locator("[data-site-hesap-ac]:visible").last().click();
+  await sayfa.waitForTimeout(300);
+  const oneri = await sayfa.locator("[data-site-kullanici-gir]:visible").last().inputValue();
+  const sifre = await sayfa.locator("[data-site-sifre-gir]:visible").last().inputValue();
+  await sayfa.locator("[data-site-hesap-kaydet]:visible").last().click();
+  await sayfa.waitForTimeout(600);
   const c2 = ((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {};
+  const yeniGiris = ((await sayfa.locator("[data-site-yeni-giris]:visible").last().textContent().catch(() => "")) || "").replace(/\s+/g, " ");
   const kod = {
     panelVar: panelOnce > 0,
-    uzunluk: kodEkranda.length,
-    karisanHarfYok: /^[A-HJKMNP-Z2-9]{10}$/.test(kodEkranda),
-    cariyeYazildi: c2.siteKodu === kodEkranda,
+    kullaniciOnerisi: oneri,
+    sifreUzunluk: sifre.length, sifreKarisanHarfYok: /^[a-hjkmnp-z2-9]{8}$/.test(sifre),
+    sunucuyaGitti: !!hesap && hesap.kullanici === oneri && hesap._sifre === sifre,
+    cariyeSifreYazilmadi: !JSON.stringify(c2).includes(sifre),
+    kayittanSonraGosterildi: yeniGiris.includes(oneri) && yeniGiris.includes(sifre) && /WhatsApp ile gönder/.test(yeniGiris),
+    kullaniciRozeti: await sayfa.locator("[data-site-kullanici]:visible").last().textContent(),
   };
   // Hesabım'da görünen defter (v1.648.0): Genel varsayılan (alan yok), seçilince cariye yazılır.
   await sayfa.locator("[data-site-defter]:visible").last().selectOption("Ikisi");
   await sayfa.waitForTimeout(300);
   kod.defterYazildi = (((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {}).siteDefter;
   await sayfa.locator('button:has-text("Erişimi kapat"):visible').last().click();
-  await sayfa.waitForTimeout(400);
-  const c2Sonra = ((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {};
-  kod.kapatinciSilindi = !c2Sonra.siteKodu;
-  kod.kapatinciKodVerDugmesi = (await sayfa.locator("[data-site-kod-ver]:visible").count()) > 0;
+  await sayfa.waitForTimeout(500);
+  kod.kapatinciSilindi = hesap === null;
+  kod.kapatinciOlusturDugmesi = (await sayfa.locator("[data-site-hesap-ac]:visible").count()) > 0;
+  kod.rpc = Array.from(new Set(rpcCagrilari)).sort();
 
   await sayfa.locator('button:has-text("Tedarikçi A"):visible').last().click();
   await sayfa.waitForTimeout(300);

@@ -1,14 +1,23 @@
 {
  "hatalar": [],
  "kod": {
-  "cariyeYazildi": true,
+  "cariyeSifreYazilmadi": true,
   "defterYazildi": "Ikisi",
-  "kapatinciKodVerDugmesi": true,
+  "kapatinciOlusturDugmesi": true,
   "kapatinciSilindi": true,
-  "karisanHarfYok": true,
+  "kayittanSonraGosterildi": true,
+  "kullaniciOnerisi": "musteri.b",
+  "kullaniciRozeti": "musteri.b",
   "panelVar": true,
-  "tedarikciKartindaPanel": 0,
-  "uzunluk": 10
+  "rpc": [
+   "site_hesap_bilgi",
+   "site_hesap_kaydet",
+   "site_hesap_sil"
+  ],
+  "sifreKarisanHarfYok": true,
+  "sifreUzunluk": 8,
+  "sunucuyaGitti": true,
+  "tedarikciKartindaPanel": 0
  },
  "talep": {
   "cevirmeKaydetmedi": true,
