@@ -188,3 +188,79 @@ as $$
 $$;
 revoke all on function public.site_ayarlari() from public;
 grant execute on function public.site_ayarlari() to anon, authenticated;
+
+-- ---------- 9) Müşteri hesabı: bakiye, ekstre, siparişler, çekler (v1.648.0) ----------
+-- Kullanıcı: "Carinin de ekranı olsun, hesaplarını ve siparişlerini de kontrol edebileceği." Kararlar: defter cariye
+-- göre (cari kartı › Web sitesi erişimi: Genel / Resmi / ikisi — `ek->>'siteDefter'`, boşsa Genel); bakiye + ekstre +
+-- siparişler + çekler. Kural ERP'deki gibi: "Muhasebe" defterindeki kayıt hem Genel'e hem Resmi'ye girer
+-- (defterKapsar); bakiye = Borç − Alacak, para birimi başına (cariBakiyeleri).
+-- Teslim edilen miktar ERP gibi STOK HAREKETLERİNDEN türetilir (013 siparisKarsilananlariHesapla); hareketi hiç
+-- olmayan eski siparişte kalemdeki sayı kullanılır.
+create or replace function public.portal_hesap(p_kod text, p_baslangic date default null, p_bitis date default null)
+returns jsonb
+language plpgsql stable security definer set search_path = public
+as $$
+declare
+  c record;
+  defterler text[];
+  d text;
+  bas date := coalesce(p_baslangic, (current_date - interval '3 months')::date);
+  bit date := coalesce(p_bitis, current_date);
+  hesap jsonb := '[]'::jsonb;
+begin
+  select * into c from public.site_kod_cari(p_kod);
+  if c.id is null then raise exception 'GECERSIZ_KOD' using errcode = 'P0001'; end if;
+  if bit < bas or bit - bas > 3700 then raise exception 'GECERSIZ_TARIH'; end if;
+  defterler := case coalesce(c.ek->>'siteDefter', 'Genel') when 'Resmi' then array['Resmi'] when 'Ikisi' then array['Genel', 'Resmi'] else array['Genel'] end;
+
+  foreach d in array defterler loop
+    hesap := hesap || jsonb_build_array(jsonb_build_object(
+      'defter', d,
+      'bakiye', coalesce((select jsonb_object_agg(pb, t) from (
+          select coalesce(h.para_birimi, 'TRY') pb, round(sum(case when h.yon = 'Borç' then h.tutar else -h.tutar end)::numeric, 2) t
+          from cari_hareketleri h where h.cari_id = c.id and coalesce(h.defter, 'Genel') in (d, 'Muhasebe')
+          group by 1 having round(sum(case when h.yon = 'Borç' then h.tutar else -h.tutar end)::numeric, 2) <> 0) x), '{}'::jsonb),
+      'devir', coalesce((select jsonb_object_agg(pb, t) from (
+          select coalesce(h.para_birimi, 'TRY') pb, round(sum(case when h.yon = 'Borç' then h.tutar else -h.tutar end)::numeric, 2) t
+          from cari_hareketleri h where h.cari_id = c.id and coalesce(h.defter, 'Genel') in (d, 'Muhasebe') and h.tarih < bas
+          group by 1) x), '{}'::jsonb),
+      'hareketler', coalesce((select jsonb_agg(jsonb_build_object(
+          'tarih', h.tarih, 'fisNo', h.fis_no, 'siparisNo', h.siparis_no, 'aciklama', h.aciklama, 'urunAd', h.urun_ad,
+          'renk', h.renk, 'yon', h.yon, 'tutar', h.tutar, 'paraBirimi', coalesce(h.para_birimi, 'TRY'),
+          'odemeSekli', h.odeme_sekli, 'vade', h.vade) order by h.tarih, h.zaman nulls first, h.id)
+        from (select * from cari_hareketleri h where h.cari_id = c.id and coalesce(h.defter, 'Genel') in (d, 'Muhasebe')
+              and h.tarih between bas and bit order by h.tarih, h.zaman nulls first limit 2000) h), '[]'::jsonb)
+    ));
+  end loop;
+
+  return jsonb_build_object(
+    'unvan', c.unvan, 'baslangic', bas, 'bitis', bit, 'hesap', hesap,
+    'siparisler', coalesce((select jsonb_agg(x order by x->>'tarih' desc) from (
+      select jsonb_build_object(
+        'siparisNo', s.siparis_no, 'tarih', s.tarih, 'teslimTarihi', s.teslim_tarihi, 'durum', s.durum,
+        'belgeNo', s.ek->>'belgeNo', 'siteden', (s.ek->>'siteTalepId') is not null,
+        'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar)) order by g.urun_ad, g.renk)
+          from (select k.urun_ad, k.renk, sum(k.miktar) miktar,
+                  sum(case when exists (select 1 from stok_hareketleri sh where sh.siparis_id = s.id)
+                           then greatest(coalesce((select -sum(sh.miktar) from stok_hareketleri sh where sh.siparis_id = s.id and sh.kalem_id = k.id), 0), 0)
+                           else coalesce(k.karsilanan, 0) end) teslim
+                from siparis_kalemleri k where k.siparis_id = s.id group by k.urun_ad, k.renk) g), '[]'::jsonb)
+      ) x
+      from siparisler s
+      where s.cari_id = c.id and s.tip = 'Satış' and coalesce(s.durum, '') <> 'İptal'
+      order by s.tarih desc nulls last limit 200) y), '[]'::jsonb),
+    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni) order by t.olusturma desc)
+      from site_talepleri t
+      where t.cari_id = c.id and t.olusturma > now() - interval '60 days'
+        and not exists (select 1 from siparisler s where s.ek->>'siteTalepId' = t.id)), '[]'::jsonb),
+    'cekler', coalesce((select jsonb_agg(jsonb_build_object('cekNo', k->>'cekNo', 'banka', k->>'banka', 'tutar', k->'tutar',
+          'paraBirimi', coalesce(k->>'paraBirimi', 'TRY'), 'vade', k->>'vadeTarihi', 'durum', coalesce(k->>'durum', 'Portföyde'), 'tip', coalesce(k->>'tip', 'Alınan'))
+        order by k->>'vadeTarihi')
+      from muhasebe m, jsonb_array_elements(coalesce(m.veri->'cekler', '[]'::jsonb)) k
+      where k->>'cariId' = c.id and coalesce(k->>'defter', 'Genel') = any (defterler || array['Muhasebe'])
+        and coalesce(k->>'durum', 'Portföyde') not in ('İade Edildi')), '[]'::jsonb)
+  );
+end;
+$$;
+revoke all on function public.portal_hesap(text, date, date) from public;
+grant execute on function public.portal_hesap(text, date, date) to anon, authenticated;

@@ -48,6 +48,10 @@ async function calistir() {
     karisanHarfYok: /^[A-HJKMNP-Z2-9]{10}$/.test(kodEkranda),
     cariyeYazildi: c2.siteKodu === kodEkranda,
   };
+  // Hesabım'da görünen defter (v1.648.0): Genel varsayılan (alan yok), seçilince cariye yazılır.
+  await sayfa.locator("[data-site-defter]:visible").last().selectOption("Ikisi");
+  await sayfa.waitForTimeout(300);
+  kod.defterYazildi = (((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {}).siteDefter;
   await sayfa.locator('button:has-text("Erişimi kapat"):visible').last().click();
   await sayfa.waitForTimeout(400);
   const c2Sonra = ((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {};
