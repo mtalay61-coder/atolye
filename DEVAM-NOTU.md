@@ -7650,7 +7650,13 @@ otomatik fiyat versin." + (Reçete) "Standart hammadde için renk dağılımına
   400, Tanımlar'da 50; eşitle → 400), `recete-standart-kart` (Yapıştırıcı notu var, kart içinde Pozisyon başlığı yok; Deri'de var).
   15 fiyat/reçete senaryosu AYNI.
 
-## Site — sipariş resimleri + fiyat/tutar (12 Ekim, ERP sürümü değişmedi)
+## Site — sipariş resimleri + fiyat/tutar + kapora (12 Ekim, ERP sürümü değişmedi)
+
+Kullanıcı: "Sütunlar kayıyor; siparişe dayalı kapora var ise o da görünsün." Site: sipariş tabloları table-layout fixed +
+ortak colgroup. portal_hesap siparişlerinde `odenen` (ERP siparisOdemeOzeti kuralı: cari hareketi ek.siparisId = sipariş,
+tip Tahsilat — islemTipi / THS- / "tahsilat" açıklaması; iade sayılmaz) ve `kdvDahil` (kalem ek.kdvOrani); sitede
+"KDV dahil toplam / Ödenen (kapora) / Kalan" kutusu (kalan aynı para biriminde). Yerel PG: 4×500×1,1+6×520=5320, kapora
+1000, iade hariç.
 
 Kullanıcı: "Sipariş fiyat ve tutar da görünsün." portal_hesap kalemleri para birimi başına gruplu: tutar = Σ miktar×fiyat,
 fiyat = tutar ÷ miktar (beden fiyatı farklıysa ortalama); talep kalemlerinde tutar. Site: Fiyat + Tutar sütunları, dipte
