@@ -173,3 +173,18 @@ as $$
 $$;
 revoke all on function public.site_talep_reddet(text) from public, anon;
 grant execute on function public.site_talep_reddet(text) to authenticated;
+
+-- ---------- 8) Sitenin yazıları ve iletişim bilgileri (v1.647.0) ----------
+-- ERP › Tanımlar › Firma › Web Sitesi (`tanimlar.siteAyarlari`). Herkese açık: yalnız bu nesne (+ "firma logosunu
+-- kullan" seçiliyse firma logosu) döner; Tanımlar'ın kalanı (kullanıcılar, e-posta sunucusu…) seçilmez.
+create or replace function public.site_ayarlari()
+returns jsonb
+language sql stable security definer set search_path = public
+as $$
+  select coalesce(t.veri->'siteAyarlari', '{}'::jsonb)
+    || case when coalesce(t.veri->'siteAyarlari'->>'firmaLogosu', 'false') = 'true'
+            then jsonb_build_object('logo', t.veri->'firmaBilgileri'->'logo') else '{}'::jsonb end
+  from tanimlar t where t.id = 'tekil';
+$$;
+revoke all on function public.site_ayarlari() from public;
+grant execute on function public.site_ayarlari() to anon, authenticated;
