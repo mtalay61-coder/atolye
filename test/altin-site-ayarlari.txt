@@ -1,0 +1,24 @@
+{
+ "acilis": {
+  "baslik": "Deriden sevkiyata, her adımda ustalık.",
+  "kartSayisi": 4,
+  "var": 1
+ },
+ "hatalar": [],
+ "kaydedilen": {
+  "baslik": "Yeni başlık",
+  "kartlar": [
+   "Saya",
+   "Montaj ve taban",
+   "Kalite ve sevkiyat"
+  ],
+  "seritKalkti": true,
+  "telefon": "0212 555 11 22",
+  "whatsapp": "905321112233"
+ },
+ "vazgec": {
+  "depoda": "",
+  "eposta": ""
+ },
+ "yazarkenDepoyaGitmedi": true
+}

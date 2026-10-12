@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.646.0";
+const SURUM = "1.647.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Web sitesi musteri portali: cariye site kodu, musteriye ozel model ve fiyat, siteden siparis talebi";
+const SURUM_NOTU = "Tanimlar > Firma > Web Sitesi: sitenin yazilari, iletisim bilgileri, rengi, temasi ve logosu uygulamadan";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,9 @@ const SURUM_NOTU = "Web sitesi musteri portali: cariye site kodu, musteriye ozel
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.647.0", tarih: "12.10.2026",
+    eklenen: ["Tanımlar › Firma › Web Sitesi: sitenin marka adı, logosu (firma logosu), ana rengi, teması (otomatik/açık/koyu), karşılama yazıları, Koleksiyon ve İletişim başlıkları, 'Nasıl üretiyoruz' kartları (ekle/sil/sırala, bölümü gizle), telefon, WhatsApp, e-posta, adres, harita, Instagram ve sayfa altı yazısı — 'Siteye kaydet' ile siteye yansır. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.646.0", tarih: "12.10.2026",
     eklenen: ["Web sitesi müşteri portalı: koleksiyon artık yalnız kodla görünür. Cari kartı (müşteri) › 'Web sitesi erişimi': Kod ver / Kopyala / WhatsApp ile gönder / Yeni kod / Erişimi kapat",
       "Müşteri sitede yalnız 'Web sitesinde göster' işaretli VE kendisine (cariye özel ya da fiyat grubunda) fiyatı olan modelleri, kendi fiyatıyla görür; asorti × koli ya da beden beden sepete ekleyip sipariş gönderir",
