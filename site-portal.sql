@@ -237,6 +237,7 @@ declare
   bas date := coalesce(p_baslangic, (current_date - interval '3 months')::date);
   bit date := coalesce(p_bitis, current_date);
   hesap jsonb := '[]'::jsonb;
+  sonuc jsonb;
 begin
   select * into c from public.site_kod_cari(p_kod);
   if c.id is null then raise exception 'GECERSIZ_KOD' using errcode = 'P0001'; end if;
@@ -263,23 +264,26 @@ begin
     ));
   end loop;
 
-  return jsonb_build_object(
+  sonuc := jsonb_build_object(
     'unvan', c.unvan, 'baslangic', bas, 'bitis', bit, 'hesap', hesap,
     'siparisler', coalesce((select jsonb_agg(x order by x->>'tarih' desc) from (
       select jsonb_build_object(
         'siparisNo', s.siparis_no, 'tarih', s.tarih, 'teslimTarihi', s.teslim_tarihi, 'durum', s.durum,
         'belgeNo', s.ek->>'belgeNo', 'siteden', (s.ek->>'siteTalepId') is not null,
-        'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar)) order by g.urun_ad, g.renk)
-          from (select k.urun_ad, k.renk, sum(k.miktar) miktar,
+        'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunId', g.urun_id, 'urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar)) order by g.urun_ad, g.renk)
+          from (select k.urun_id, k.urun_ad, k.renk, sum(k.miktar) miktar,
                   sum(case when exists (select 1 from stok_hareketleri sh where sh.siparis_id = s.id)
                            then greatest(coalesce((select -sum(sh.miktar) from stok_hareketleri sh where sh.siparis_id = s.id and sh.kalem_id = k.id), 0), 0)
                            else coalesce(k.karsilanan, 0) end) teslim
-                from siparis_kalemleri k where k.siparis_id = s.id group by k.urun_ad, k.renk) g), '[]'::jsonb)
+                from siparis_kalemleri k where k.siparis_id = s.id group by k.urun_id, k.urun_ad, k.renk) g), '[]'::jsonb)
       ) x
       from siparisler s
       where s.cari_id = c.id and s.tip = 'Satış' and coalesce(s.durum, '') <> 'İptal'
       order by s.tarih desc nulls last limit 200) y), '[]'::jsonb),
-    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni) order by t.olusturma desc)
+    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni,
+          'kalemler', (select coalesce(jsonb_agg(jsonb_build_object('urunId', g.u, 'urunAd', g.a, 'renk', g.r, 'miktar', g.m) order by g.a, g.r), '[]'::jsonb)
+                       from (select k->>'urunId' u, k->>'urunAd' a, k->>'renk' r, sum((k->>'miktar')::numeric) m
+                             from jsonb_array_elements(t.kalemler) k group by 1, 2, 3) g)) order by t.olusturma desc)
       from site_talepleri t
       where t.cari_id = c.id and t.olusturma > now() - interval '60 days'
         and not exists (select 1 from siparisler s where s.ek->>'siteTalepId' = t.id)), '[]'::jsonb),
@@ -290,6 +294,20 @@ begin
       where k->>'cariId' = c.id and coalesce(k->>'defter', 'Genel') = any (defterler || array['Muhasebe'])
         and coalesce(k->>'durum', 'Portföyde') not in ('İade Edildi')), '[]'::jsonb)
   );
+  -- ÜRÜN RESİMLERİ (v1.650.0 — kullanıcı: "sitede ürün resimleri de olsun, sipariş verilen için"): siparişlerde ve
+  -- taleplerde geçen her model+renk için BİR KEZ (rengin resmi, yoksa kapak). Resimler satırlara gömülmez: aynı model
+  -- onlarca siparişte tekrar eder, görsel başına ~50 KB. Anahtar "urunId|renk".
+  sonuc := sonuc || jsonb_build_object('resimler', coalesce((
+    select jsonb_object_agg(x.u || '|' || x.r, x.src) from (
+      select distinct on (mr.u, mr.r) mr.u, mr.r, coalesce(nullif(u.renk_resimleri::jsonb->>mr.r, ''), nullif(u.kapak_resmi, '')) src
+      from (select k->>'urunId' u, coalesce(k->>'renk', '') r
+              from jsonb_array_elements(sonuc->'siparisler') s, jsonb_array_elements(s->'kalemler') k
+            union
+            select k->>'urunId', coalesce(k->>'renk', '')
+              from jsonb_array_elements(sonuc->'talepler') t, jsonb_array_elements(t->'kalemler') k) mr
+      join urunler u on u.id::text = mr.u
+    ) x where x.src is not null), '{}'::jsonb));
+  return sonuc;
 end;
 $$;
 revoke all on function public.portal_hesap(text, date, date) from public;
