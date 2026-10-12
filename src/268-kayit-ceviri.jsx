@@ -250,3 +250,62 @@ function SiteGruplariPaneli({ tanimlar, onSave, showToast, stok, cariler }) {
     </div>
   );
 }
+
+// STOK KARTINDAN SİTE YAYINI + GRUPLAMA (v1.655.0 — kullanıcı: "stok kartı içerisinden de gruplandırma olsun").
+// Açık mamul kartında, adın altında: yayın aç/kapa + grup çipleri (tıkla → gruba ekle/çıkar) + yeni grup. Sağ tık ve
+// Tanımlar › Web Sitesi › Site grupları ile AYNI veri (`tanimlar.siteGruplari`); toplu ekleme yine Tanımlar'da.
+function UrunSiteGrupSeridi({ product, gruplar, onSiteGruplariKaydet, onUrunGuncelle }) {
+  const [yeniAd, setYeniAd] = useState("");
+  const [ekleAcik, setEkleAcik] = useState(false);
+  if (!product || product.kategori !== "Mamul") return null;
+  const liste = gruplar || [];
+  const cip = (secili) => ({ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+    border: "1px solid var(--erp-info)", background: secili ? "var(--erp-info)" : "transparent", color: secili ? "#fff" : "var(--erp-info)" });
+  const degistir = (g) => {
+    const icinde = (g.urunIdleri || []).includes(product.id);
+    onSiteGruplariKaydet(liste.map((x) => (x.id === g.id ? { ...x, urunIdleri: icinde ? (x.urunIdleri || []).filter((i) => i !== product.id) : [...(x.urunIdleri || []), product.id] } : x)));
+  };
+  const grupEkle = () => {
+    const ad = yeniAd.trim();
+    if (!ad) return;
+    // Aynı adlı grup varsa yenisini açmak yerine ürünü ona ekle (iki "Kış 2026" karışıklık çıkarır).
+    const var_ = liste.find((g) => g.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"));
+    if (var_) { if (!(var_.urunIdleri || []).includes(product.id)) degistir(var_); }
+    else onSiteGruplariKaydet([...liste, { id: uid("sgrup"), ad, urunIdleri: [product.id], cariIdleri: [] }]);
+    setYeniAd(""); setEkleAcik(false);
+  };
+  return (
+    <div data-urun-site-serit="1" style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: 6 }}>
+      <button type="button" data-urun-site-yayin="1" onClick={() => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster })}
+        title={product.sitedeGoster ? "Web sitesinden kaldır" : "Web sitesinde yayınla"}
+        style={{ ...cip(product.sitedeGoster), display: "inline-flex", alignItems: "center", gap: 4 }}>
+        <Globe size={11} /> {product.sitedeGoster ? "Sitede ✓" : "Sitede yayınla"}
+      </button>
+      {product.sitedeGoster && onSiteGruplariKaydet && (
+        <>
+          <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Gruplar:</span>
+          {liste.map((g) => {
+            const icinde = (g.urunIdleri || []).includes(product.id);
+            return (
+              <button key={g.id} type="button" data-urun-site-grup={g.ad} onClick={() => degistir(g)} style={cip(icinde)}
+                title={icinde ? "Gruptan çıkar" : "Gruba ekle — bu gruptaki müşteriler modeli görür"}>
+                {icinde ? "✓ " : "+ "}{g.ad}
+              </button>
+            );
+          })}
+          {ekleAcik ? (
+            <input autoFocus value={yeniAd} data-urun-site-grup-yeni="1" placeholder="Yeni grup adı, Enter"
+              onChange={(e) => setYeniAd(e.target.value)} onBlur={() => { if (!yeniAd.trim()) setEkleAcik(false); }}
+              onKeyDown={(e) => { if (e.key === "Enter") grupEkle(); if (e.key === "Escape") { setYeniAd(""); setEkleAcik(false); } }}
+              style={{ fontSize: 11, padding: "2px 8px", width: 150 }} />
+          ) : (
+            <button type="button" data-urun-site-grup-ekle="1" onClick={() => setEkleAcik(true)} style={{ ...cip(false), borderStyle: "dashed" }}>+ Yeni grup</button>
+          )}
+          {!liste.some((g) => (g.urunIdleri || []).includes(product.id)) && (
+            <span style={{ fontSize: 11, color: "#C77700", fontWeight: 700 }}>Grupsuz — müşteri göremez</span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

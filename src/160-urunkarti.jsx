@@ -1422,16 +1422,8 @@ function ProductMatrixCard({
     setTumBedenlerBeden(""); setTopluBedenBilgi("");
   }
 
-  // SİTEDE ROZETİ (v1.654.0 — kullanıcı: "sitede yayınlanan üründe işaret olacaktı?"): eskiden yalnız KAPALI kart
-  // başlığındaydı, kart açılınca kayboluyordu. Tek tanım, iki yer: kapalı başlık + açık şeritte adın yanı.
-  const siteGrup = product.sitedeGoster ? siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id) : [];
-  const siteRozeti = product.sitedeGoster ? (
-    <span className="mono" data-urun-sitede="1"
-      title={"Web sitesinde yayında" + (siteGrup.length ? " · gruplar: " + siteGrup.map((x) => x.ad).join(", ") : " · hiçbir site grubunda değil — müşteri göremez")}
-      style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: siteGrup.length ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", marginLeft: 6, display: "inline-flex", alignItems: "center", gap: 3, verticalAlign: "middle" }}>
-      <Globe size={10} /> SİTEDE{siteGrup.length ? " · " + siteGrup.map((x) => x.ad).join(", ") : " · grupsuz"}
-    </span>
-  ) : null;
+  // SİTEDE ROZETİ (v1.654.0, ortak bileşen v1.655.0 → 155 `SiteRozeti`): kapalı başlık + açık şeritte adın yanı.
+  const siteRozeti = product.sitedeGoster ? <span style={{ marginLeft: 6 }}><SiteRozeti product={product} gruplar={tanimlarSiteGruplari} /></span> : null;
   return (
     // Kartın tamamı kategori renginde çerçevelenir ve üstünde kalın bir şerit taşır.
     // Kategori önceden yalnızca küçük bir açılır etiketti; bir ürün kartına baktığında hammadde mi
@@ -1512,6 +1504,7 @@ function ProductMatrixCard({
           <div data-urun-serit-ad="1" style={{ fontWeight: 700, fontSize: 16, overflowWrap: "anywhere", marginBottom: 4, color: product.pasif ? "var(--erp-text-3)" : undefined }}>
             {product.ad}{siteRozeti}
           </div>
+          <UrunSiteGrupSeridi product={product} gruplar={tanimlarSiteGruplari} onSiteGruplariKaydet={onSiteGruplariKaydet} onUrunGuncelle={onUrunGuncelle} />
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <select
               value={product.kategori}

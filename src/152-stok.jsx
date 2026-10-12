@@ -2648,7 +2648,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
         // Belirli bir kategori sekmesindeyken tek düz liste — başlık gereksiz, sekme zaten kategoriyi gösteriyor.
         <div style={{ display: "grid", gap: 8 }}>
           {filtered.map((p) => (
-            <UrunOzetSatiri key={p.id} product={p} onAc={() => urunAc(p.id)} ozelKodAlanlari={ozelKodAlanlari} />
+            <UrunOzetSatiri key={p.id} product={p} onAc={() => urunAc(p.id)} ozelKodAlanlari={ozelKodAlanlari} siteGruplari={tanimlar.siteGruplari} />
           ))}
         </div>
       ) : (
@@ -2691,6 +2691,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                       product={p}
                       onAc={() => urunAc(p.id)}
                       ozelKodAlanlari={ozelKodAlanlari}
+                      siteGruplari={tanimlar.siteGruplari}
                       stokRezervasyonlari={stokRezervasyonlari}
                       tumSiparisler={tumSiparisler}
                     />
