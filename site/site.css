@@ -1,0 +1,91 @@
+/* NEW DIAMOND — web sitesi (newdiamond.com.tr). Tek stil dosyası; derleme yok. Renkler ERP'nin deri/kahve diline yakın. */
+:root {
+  --zemin: #FAF6F1;
+  --kart: #FFFFFF;
+  --yazi: #2A211B;
+  --yazi-2: #6B5D52;
+  --yazi-3: #9A8B7F;
+  --vurgu: #8A5A2B;
+  --vurgu-koyu: #5E3B19;
+  --cizgi: #E8DFD5;
+  --koyu: #1F1814;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --zemin: #171210; --kart: #221B17; --yazi: #F3EBE3; --yazi-2: #C9BBAE; --yazi-3: #9A8B7F;
+    --vurgu: #D49A5E; --vurgu-koyu: #E8B47E; --cizgi: #3A2F28; --koyu: #0E0B09;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--zemin); color: var(--yazi);
+  font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.55;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+.kap { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+
+/* Üst menü */
+.ust { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--zemin) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--cizgi); }
+.ust .kap { display: flex; align-items: center; gap: 18px; height: 64px; }
+.marka { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 18px; }
+.marka-isaret { width: 36px; height: 36px; border-radius: 10px; background: var(--vurgu); color: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; letter-spacing: .04em; }
+.menu { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+.menu a { text-decoration: none; padding: 8px 12px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--yazi-2); }
+.menu a:hover, .menu a.etkin { background: var(--kart); color: var(--yazi); }
+.menu a.dugme { background: var(--vurgu); color: #fff; }
+@media (max-width: 640px) { .menu a:not(.dugme) { display: none; } }
+
+/* Karşılama */
+.giris { padding: 72px 0 56px; }
+.giris h1 { font-size: clamp(32px, 6vw, 56px); line-height: 1.08; margin: 0 0 16px; letter-spacing: -0.02em; max-width: 14ch; }
+.giris p { font-size: 18px; color: var(--yazi-2); max-width: 56ch; margin: 0 0 28px; }
+.ust-etiket { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--vurgu); margin-bottom: 14px; }
+.dugmeler { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 999px; font-weight: 700; font-size: 15px; text-decoration: none; border: 1.5px solid var(--vurgu); }
+.btn.dolu { background: var(--vurgu); color: #fff; }
+.btn.bos { color: var(--vurgu); }
+
+/* Bölümler */
+section { padding: 56px 0; }
+.bolum-bas { display: flex; align-items: end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.bolum-bas h2 { font-size: clamp(24px, 4vw, 34px); margin: 0; letter-spacing: -0.01em; }
+.bolum-bas p { margin: 4px 0 0; color: var(--yazi-2); }
+
+/* Koleksiyon */
+.suzgec { display: flex; gap: 6px; flex-wrap: wrap; }
+.suzgec button { border: 1px solid var(--cizgi); background: var(--kart); color: var(--yazi-2); padding: 7px 14px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.suzgec button.etkin { background: var(--yazi); color: var(--zemin); border-color: var(--yazi); }
+.izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 16px; }
+.urun { background: var(--kart); border: 1px solid var(--cizgi); border-radius: var(--r); overflow: hidden; display: flex; flex-direction: column; }
+.urun-resim { aspect-ratio: 4 / 3; background: #F1EAE2; display: grid; place-items: center; overflow: hidden; }
+.urun-resim img { width: 100%; height: 100%; object-fit: cover; transition: opacity .2s; }
+.urun-resim .yok { color: var(--yazi-3); font-size: 13px; }
+.urun-govde { padding: 12px 14px 14px; display: grid; gap: 6px; }
+.urun-ad { font-weight: 700; font-size: 16px; }
+.urun-alt { font-size: 12px; color: var(--yazi-3); }
+.renkler { display: flex; gap: 6px; flex-wrap: wrap; }
+.renk { border: 1px solid var(--cizgi); background: transparent; color: var(--yazi-2); font: inherit; font-size: 12px; padding: 3px 9px; border-radius: 999px; cursor: pointer; }
+.renk.etkin { border-color: var(--vurgu); color: var(--vurgu); font-weight: 700; }
+.bilgi { padding: 28px; text-align: center; color: var(--yazi-2); background: var(--kart); border: 1px dashed var(--cizgi); border-radius: var(--r); }
+
+/* Özellik kartları */
+.kartlar { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: var(--r); padding: 20px; }
+.kart h3 { margin: 0 0 6px; font-size: 17px; }
+.kart p { margin: 0; color: var(--yazi-2); font-size: 15px; }
+.kart .ikon { width: 40px; height: 40px; border-radius: 10px; background: color-mix(in srgb, var(--vurgu) 14%, transparent); color: var(--vurgu); display: grid; place-items: center; margin-bottom: 12px; font-size: 20px; }
+
+/* İletişim */
+.iletisim { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .iletisim { grid-template-columns: 1fr; } }
+.iletisim .kart a { font-weight: 700; color: var(--vurgu); text-decoration: none; }
+.harita { border: 0; width: 100%; min-height: 280px; border-radius: var(--r); }
+
+footer { border-top: 1px solid var(--cizgi); padding: 28px 0 40px; color: var(--yazi-3); font-size: 13px; }
+footer .kap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* WhatsApp düğmesi */
+.wa { position: fixed; right: 18px; bottom: 18px; z-index: 20; background: #1F9D55; color: #fff; text-decoration: none; font-weight: 700; padding: 12px 16px; border-radius: 999px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
