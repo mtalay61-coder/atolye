@@ -18,6 +18,20 @@
   },
   "turkceDegisinceUyari": true
  },
+ "gruplar": {
+  "kayit": {
+   "ad": "Kış 2026",
+   "cariIdleri": [
+    "c2"
+   ],
+   "urunIdleri": [
+    "u2"
+   ]
+  },
+  "yalnizYayindakiler": [
+   "Bot"
+  ]
+ },
  "hatalar": [],
  "kaydedilen": {
   "baslik": "Yeni başlık",

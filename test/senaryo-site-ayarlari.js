@@ -9,7 +9,9 @@ const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function calistir() {
-  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false });
+  // Site grupları (v1.652.0) için Bot sitede yayında.
+  const tohum = { ...TOHUM, "stok:items": JSON.stringify(JSON.parse(TOHUM["stok:items"]).map((u) => (u.id === "u2" ? { ...u, sitedeGoster: true } : u))) };
+  const { tarayici, sayfa } = await uygulamaAc(tohum, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
@@ -59,8 +61,20 @@ async function calistir() {
   await sayfa.waitForTimeout(200);
   const dil = { enAcilis, kaydedilen: { baslik: en.baslik, ustEtiket: en.ustEtiket, kartSayisi: (en.uretimKartlari || []).length, ilkKart: (en.uretimKartlari || [])[0] && en.uretimKartlari[0].baslik },
     turkceDegisinceUyari: /Türkçesi değişti/.test(await panel.textContent()) };
+  // SİTE GRUPLARI (v1.652.0): grup aç, yayındaki modeli ve müşteriyi ekle → tanimlar.siteGruplari.
+  await panel.locator('[data-site-dil="tr"]').click();
+  await panel.locator("[data-site-grup-yeni]").fill("Kış 2026");
+  await panel.locator("[data-site-grup-ekle]").click();
+  await sayfa.waitForTimeout(300);
+  const yalnizYayindakiler = await panel.locator("[data-site-grup-uye]").evaluateAll((l) => l.map((x) => x.dataset.siteGrupUye));
+  await panel.locator("[data-site-grup-hepsi]").click();
+  await panel.locator('[data-site-grup-sekme="cari"]').click();
+  await panel.locator('[data-site-grup-uye="Müşteri B"] input').check();
+  await sayfa.waitForTimeout(300);
+  const g = ((((await depoOku(sayfa, "tanimlar:data")) || {}).siteGruplari) || [])[0] || {};
+  const gruplar = { yalnizYayindakiler, kayit: { ad: g.ad, urunIdleri: g.urunIdleri, cariIdleri: g.cariIdleri } };
   await tarayici.close();
-  return { hatalar, acilis, yazarkenDepoyaGitmedi: taslakta === null, kaydedilen, vazgec, dil };
+  return { hatalar, acilis, yazarkenDepoyaGitmedi: taslakta === null, kaydedilen, vazgec, dil, gruplar };
 }
 
 if (require.main === module) {

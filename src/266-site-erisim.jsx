@@ -141,6 +141,9 @@ function siteTalepleriniOku() {
 function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }) {
   const [talepler, setTalepler] = useState(null);   // null = okunmadı / tablo yok
   const [acik, setAcik] = useState(true);
+  // Talep başına indirim % (v1.652.0 — "o bilgileri görüp indirim tanımlar ve fiyat belirleriz"): Siparişe çevirirken
+  // fiyatlara uygulanır; fiyatı olmayan satır formda boş (0) gelir, orada girilir.
+  const [indirim, setIndirim] = useState({});
   const yenile = useCallback(() => {
     if (!supabaseAcikMi()) return;
     siteTalepleriniOku().then((l) => setTalepler(Array.isArray(l) ? l : []), () => setTalepler(null));
@@ -166,13 +169,21 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
           {bekleyen.map((t) => {
             const cari = (cariler || []).find((c) => c.id === t.cari_id);
             const modeller = Array.from(new Set((t.kalemler || []).map((k) => `${k.urunAd} · ${k.renk}`)));
+            const fiyatsiz = (t.kalemler || []).filter((k) => k.birimFiyat == null || !(Number(k.birimFiyat) > 0)).length;
+            const od = t.odeme || null;
             return (
               <div key={t.id} data-site-talep={t.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", background: "#fff", border: "1px solid #DCE7D8", borderRadius: 8, padding: "6px 8px", fontSize: 12 }}>
                 <span className="mono" style={{ color: "var(--erp-text-3)" }}>{String(t.olusturma || "").slice(0, 16).replace("T", " ")}</span>
                 <b>{(cari && cari.unvan) || t.cari_unvan || "?"}</b>
                 <span>{t.toplam_cift} çift</span>
                 <span style={{ color: "var(--erp-text-2)", flex: "1 1 200px", minWidth: 0 }}>{modeller.join(", ")}{t.not_metni ? ` — “${t.not_metni}”` : ""}</span>
-                <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={!cari} title={cari ? "" : "Cari bulunamadı"} onClick={() => onSipariseCevir(t)}>Siparişe çevir</button>
+                {od && <span data-site-talep-odeme="1" style={{ fontWeight: 700, color: "#5B3F75", background: "#EFE6F7", borderRadius: 6, padding: "1px 6px" }}>Ödeme: {od.tip}{od.vadeGun ? ` · ${od.vadeGun} gün vade` : ""}</span>}
+                {fiyatsiz > 0 && <span style={{ fontWeight: 700, color: "#C77700" }} title="Bu satırların fiyatını sipariş formunda girin">{fiyatsiz} satır fiyatsız</span>}
+                <label style={{ display: "inline-flex", alignItems: "center", gap: 3 }} title="Siparişe çevirirken bütün satır fiyatlarına uygulanır">
+                  İndirim %<input type="number" min="0" max="100" step="0.5" value={indirim[t.id] || ""} data-site-talep-indirim="1"
+                    onChange={(e) => setIndirim((x) => ({ ...x, [t.id]: e.target.value }))} style={{ width: 52, fontSize: 11, padding: "2px 4px", border: "1px solid #BFD3BB", borderRadius: 6 }} />
+                </label>
+                <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={!cari} title={cari ? "" : "Cari bulunamadı"} onClick={() => onSipariseCevir(t, { indirim: Math.min(100, Math.max(0, parseFloat(indirim[t.id]) || 0)) })}>Siparişe çevir</button>
                 <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => reddet(t)}>Reddet</button>
               </div>
             );

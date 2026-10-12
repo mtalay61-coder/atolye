@@ -162,3 +162,91 @@ function KayitCevirileriPaneli({ tanimlar, onSave, showToast }) {
     </div>
   );
 }
+
+// ================= SİTE GRUPLARI (v1.652.0) =================
+// Kullanıcı: "Fiyatları olmayan ürünler de listelensin … toplu gruplama olsun, müşteriyi o gruplamaya dahil edip
+// listelensin." Karar: YALNIZ GRUBU — müşteri sitede yalnız dahil olduğu grupların (yayındaki) modellerini görür; hiçbir
+// gruba dahil olmayan müşteri model görmez. Grup = { id, ad, urunIdleri[], cariIdleri[] } (`tanimlar.siteGruplari`).
+// Üyelik ürün/cari kaydında değil grupta: toplu ekleme TEK tanımlar yazımı olsun (yüz ürün = yüz ürün yazımı olmasın)
+// ve sunucu (site_modeller) tek yerden okusun.
+function siteGrupUyeleri(gruplar, tur, id) {
+  const alan = tur === "urun" ? "urunIdleri" : "cariIdleri";
+  return (gruplar || []).filter((g) => (g[alan] || []).includes(id));
+}
+
+function SiteGruplariPaneli({ tanimlar, onSave, showToast, stok, cariler }) {
+  const gruplar = tanimlar.siteGruplari || [];
+  const [seciliId, setSeciliId] = useState(gruplar[0] ? gruplar[0].id : "");
+  const [yeniAd, setYeniAd] = useState("");
+  const [ara, setAra] = useState("");
+  const [sekme, setSekme] = useState("urun");   // "urun" | "cari"
+  const secili = gruplar.find((g) => g.id === seciliId) || null;
+  const yaz = (yeni) => onSave({ ...tanimlar, siteGruplari: yeni });
+  const grupEkle = () => {
+    const ad = yeniAd.trim(); if (!ad) return;
+    if (gruplar.some((g) => g.ad.toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"))) return showToast && showToast("Bu adla grup var");
+    const g = { id: uid("sgrup"), ad, urunIdleri: [], cariIdleri: [] };
+    yaz([...gruplar, g]); setSeciliId(g.id); setYeniAd("");
+  };
+  const grupSil = () => {
+    if (!secili || !window.confirm(`"${secili.ad}" grubu silinsin mi? Bu gruptaki müşteriler gruptaki modelleri artık görmez.`)) return;
+    yaz(gruplar.filter((g) => g.id !== secili.id)); setSeciliId("");
+  };
+  const uyeDegistir = (alan, ids, ekle) => {
+    if (!secili) return;
+    const kume = new Set(secili[alan] || []);
+    ids.forEach((id) => (ekle ? kume.add(id) : kume.delete(id)));
+    yaz(gruplar.map((g) => (g.id === secili.id ? { ...g, [alan]: Array.from(kume) } : g)));
+  };
+  const nrm = (x) => String(x || "").toLocaleLowerCase("tr-TR");
+  const urunler = (stok || []).filter((u) => u.kategori === "Mamul" && !u.pasif && u.sitedeGoster && (!ara || nrm(u.ad).includes(nrm(ara)) || nrm(u.mamulTipi).includes(nrm(ara))));
+  const musteriler = (cariler || []).filter((c) => !c.pasif && (c.tip === "Müşteri" || c.tip === "Her İkisi") && (!ara || nrm(c.unvan).includes(nrm(ara))));
+  const liste = sekme === "urun" ? urunler.map((u) => ({ id: u.id, ad: u.ad, alt: u.mamulTipi || "" })) : musteriler.map((c) => ({ id: c.id, ad: c.unvan, alt: c.il || "" }));
+  const alan = sekme === "urun" ? "urunIdleri" : "cariIdleri";
+  const uyeler = new Set((secili && secili[alan]) || []);
+  const yayindaOlmayan = sekme === "urun" ? (stok || []).filter((u) => u.kategori === "Mamul" && !u.pasif && !u.sitedeGoster).length : 0;
+  const cip = (aktif) => ({ padding: "4px 10px", fontSize: 12, fontWeight: 700, cursor: "pointer", borderRadius: 999, border: "1px solid var(--erp-line)", background: aktif ? "var(--erp-text)" : "var(--erp-panel)", color: aktif ? "var(--erp-panel)" : "var(--erp-text-2)" });
+  return (
+    <div data-site-gruplari="1" style={{ marginTop: 16, borderTop: "1px solid var(--erp-line)", paddingTop: 10, display: "grid", gap: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--erp-text-3)" }}>Site grupları — müşteri hangi modelleri görür</div>
+      <p style={{ margin: 0, fontSize: 11, color: "var(--erp-text-2)" }}>
+        Müşteri sitede yalnız dahil olduğu grupların modellerini görür (gruba dahil olmayan müşteri model görmez). Gruba
+        yalnız sitede yayınlanan mamuller eklenir (stok sağ tık › "Web sitesinde göster"). Fiyatı olmayan model de listelenir;
+        fiyatı sipariş onayında belirlersiniz.
+      </p>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        {gruplar.map((g) => (
+          <button key={g.id} type="button" data-site-grup={g.ad} onClick={() => setSeciliId(g.id)} style={cip(g.id === seciliId)}>
+            {g.ad} <span style={{ opacity: 0.7, fontWeight: 500 }}>· {(g.urunIdleri || []).length} model · {(g.cariIdleri || []).length} müşteri</span>
+          </button>
+        ))}
+        <input value={yeniAd} onChange={(e) => setYeniAd(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") grupEkle(); }} placeholder="Yeni grup (ör. Kış 2026 bayi)" data-site-grup-yeni="1" style={{ ...inputStyle, width: 200, padding: "4px 8px", fontSize: 12 }} />
+        <button type="button" className="btn-secondary" style={{ fontSize: 12 }} onClick={grupEkle} data-site-grup-ekle="1"><Plus size={13} /> Grup</button>
+      </div>
+      {secili && (
+        <div style={{ display: "grid", gap: 6, background: "var(--erp-panel-2, #F7F4F9)", border: "1px solid var(--erp-line-soft)", borderRadius: 8, padding: 8 }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <b style={{ fontSize: 13 }}>{secili.ad}</b>
+            <button type="button" style={cip(sekme === "urun")} onClick={() => setSekme("urun")} data-site-grup-sekme="urun">Modeller ({(secili.urunIdleri || []).length})</button>
+            <button type="button" style={cip(sekme === "cari")} onClick={() => setSekme("cari")} data-site-grup-sekme="cari">Müşteriler ({(secili.cariIdleri || []).length})</button>
+            <input value={ara} onChange={(e) => setAra(e.target.value)} placeholder="Ara…" style={{ ...inputStyle, width: 160, padding: "3px 8px", fontSize: 12, marginLeft: "auto" }} />
+            <button type="button" className="btn-ghost" style={{ fontSize: 11 }} onClick={() => uyeDegistir(alan, liste.map((x) => x.id), true)} data-site-grup-hepsi="1">Listelenenlerin hepsini ekle</button>
+            <button type="button" className="btn-ghost" style={{ fontSize: 11 }} onClick={() => uyeDegistir(alan, liste.map((x) => x.id), false)}>Hepsini çıkar</button>
+            <button type="button" className="btn-ghost" style={{ fontSize: 11, color: "var(--erp-danger)" }} onClick={grupSil}>Grubu sil</button>
+          </div>
+          {sekme === "urun" && yayindaOlmayan > 0 && <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{yayindaOlmayan} mamul sitede yayında değil — listede yok.</span>}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 4, maxHeight: 320, overflow: "auto" }}>
+            {liste.map((x) => (
+              <label key={x.id} data-site-grup-uye={x.ad} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, padding: "3px 6px", borderRadius: 6, background: uyeler.has(x.id) ? "#E5F0E2" : "transparent" }}>
+                <input type="checkbox" checked={uyeler.has(x.id)} onChange={(e) => uyeDegistir(alan, [x.id], e.target.checked)} />
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.ad}</span>
+                {x.alt && <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{x.alt}</span>}
+              </label>
+            ))}
+            {!liste.length && <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>{sekme === "urun" ? "Sitede yayınlanan mamul yok." : "Müşteri yok."}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

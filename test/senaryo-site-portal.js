@@ -15,9 +15,10 @@ const { normalles } = require("./senaryo-fis.js");
 
 const TALEP = {
   id: "talep-1", cari_id: "c2", cari_unvan: "Müşteri B", olusturma: "2026-10-12T10:15:00+00:00", durum: "yeni",
-  not_metni: "Acil", toplam_cift: 5,
+  not_metni: "Acil", toplam_cift: 5, odeme: { tip: "Çek", vadeGun: 90 },
   kalemler: [
     { urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "41", miktar: 3, birimFiyat: 30, paraBirimi: "USD" },
+    { urunId: "u2", urunAd: "Bot", renk: "Siyah", beden: "40", miktar: 1, birimFiyat: null, paraBirimi: "USD" },
     { urunId: "u2", urunAd: "Bot", renk: "Mor", beden: "41", miktar: 2, birimFiyat: 30, paraBirimi: "USD" },
   ],
 };
@@ -88,6 +89,8 @@ async function calistir() {
   await modulAc(sayfa, "Sipariş");
   await sayfa.waitForTimeout(900);
   const panelMetni = ((await sayfa.locator("[data-site-talepleri]").first().textContent().catch(() => "")) || "").replace(/\s+/g, " ");
+  const talepSatiri = ((await sayfa.locator('[data-site-talep="talep-1"]').textContent()) || "").replace(/\s+/g, " ");
+  await sayfa.locator('[data-site-talep="talep-1"] [data-site-talep-indirim]').fill("10");
   await sayfa.locator('[data-site-talep="talep-1"] button:has-text("Siparişe çevir")').click();
   await sayfa.waitForTimeout(600);
   const kayitOncesi = ((await depoOku(sayfa, "siparis:data")) || []).filter((s) => s.siteTalepId).length;
@@ -103,6 +106,7 @@ async function calistir() {
       cari: yeni.cariId, tip: yeni.tip, not: yeni.not,
       kalemler: (yeni.kalemler || []).map((k) => `${k.urunAd} ${k.renk} ${k.beden} ×${k.miktar} @${k.birimFiyat} ${k.paraBirimi}`),
     } : null,
+    odemeGorunur: /Ödeme: Çek · 90 gün vade/.test(talepSatiri), fiyatsizUyari: /1 satır fiyatsız/.test(talepSatiri),
     paneldenDustu: (await sayfa.locator("[data-site-talepleri]").count()) === 0,
     tabloOkundu: talepOkuma > 0,
   };
