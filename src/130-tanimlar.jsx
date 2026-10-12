@@ -1055,7 +1055,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         })()}
       </div>
     </div>
-    <WebSitesiAyarlari tanimlar={tanimlar} onSave={onSave} showToast={showToast} />
+    <WebSitesiAyarlari tanimlar={tanimlar} onSave={onSave} showToast={showToast} stok={stok} cariler={cariler} />
     </>
     )}
 

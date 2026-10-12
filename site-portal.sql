@@ -25,6 +25,8 @@ create table if not exists public.site_talepleri (
   kalemler jsonb not null default '[]'::jsonb, -- [{urunId, urunAd, renk, beden, miktar, birimFiyat, paraBirimi}]
   toplam_cift integer not null default 0
 );
+-- v1.652.0: müşterinin seçtiği ödeme şekli {tip, vadeGun} (ERP fiyat/indirim belirlerken görür).
+alter table public.site_talepleri add column if not exists odeme jsonb;
 alter table public.site_talepleri enable row level security;
 drop policy if exists "giris_yapmis_hersey" on public.site_talepleri;
 create policy "giris_yapmis_hersey" on public.site_talepleri for all to authenticated using (true) with check (true);
@@ -83,8 +85,11 @@ returns text language sql immutable as $$
 $$;
 
 -- ---------- 3) Müşterinin modelleri ve fiyatları ----------
--- Fiyat, ERP'deki fiyatBul ile aynı öncelik (renk/beden kırılımsız): cariye özel → carinin fiyat grubu. İkisi de yoksa
--- model bu müşteriye GÖRÜNMEZ ("o grupta fiyatı boş bırakırsanız gizlenir").
+-- Fiyat, ERP'deki fiyatBul ile aynı öncelik (renk/beden kırılımsız): cariye özel → carinin fiyat grubu.
+-- GÖRÜNÜRLÜK (v1.652.0 — kullanıcı: "fiyatı olmayan ürünler de listelensin … toplu gruplama olsun, müşteriyi o gruplamaya
+-- dahil edip listelensin"; karar: YALNIZ GRUBU): model sitede yayında (sitedeGoster) VE müşterinin dahil olduğu bir site
+-- grubunda (`tanimlar.siteGruplari[].urunIdleri / cariIdleri`). Gruba dahil olmayan müşteri hiçbir model görmez.
+-- Fiyatı yoksa da listelenir (fiyat NULL → sitede "Fiyat onayda"; fiyatı ERP sipariş onayında belirler).
 create or replace function public.site_modeller(p_cari_id text, p_grup text)
 returns table (id text, ad text, tip text, sezon text, sezon_yili text, renkler jsonb, bedenler jsonb,
                renk_resimleri jsonb, kapak_resmi text, fiyat numeric, para_birimi text)
@@ -106,6 +111,8 @@ as $$
     where coalesce(u.ek->>'sitedeGoster', 'false') = 'true'
       and not coalesce(u.pasif, false)
       and u.kategori = 'Mamul'
+      and exists (select 1 from tanimlar t, jsonb_array_elements(coalesce(t.veri->'siteGruplari', '[]'::jsonb)) g
+                  where t.id = 'tekil' and coalesce(g->'cariIdleri', '[]'::jsonb) ? p_cari_id and coalesce(g->'urunIdleri', '[]'::jsonb) ? u.id::text)
   )
   select f.id::text, f.ad::text, f.mamul_tipi::text,
     coalesce(f.ek->>'sezon', '')::text, coalesce(f.sezon_yili::text, ''),
@@ -116,7 +123,6 @@ as $$
     (f.kural->>'fiyat')::numeric,
     public.site_pb(coalesce(f.kural->>'paraBirimi', f.satis_para_birimi))
   from f
-  where f.kural is not null
   order by f.ad;
 $$;
 revoke all on function public.site_modeller(text, text) from public, anon, authenticated;
@@ -136,6 +142,8 @@ begin
   end if;
   return jsonb_build_object(
     'unvan', c.unvan,
+    -- Ödeme şekli yalnız işaretli müşteriden istenir (v1.652.0; yeni müşteride açık — ERP 260).
+    'odemeSor', coalesce(c.ek->>'siteOdemeSor', 'false') = 'true',
     'asortiler', coalesce((select t.veri->'asortiler' from tanimlar t where t.id = 'tekil'), '[]'::jsonb),
     'modeller', coalesce((select jsonb_agg(to_jsonb(m)) from public.site_modeller(c.id, nullif(c.ek->>'fiyatGrubuId', '')) m), '[]'::jsonb),
     -- KAYIT ÇEVİRİLERİ (v1.651.0 — "stok, renk, beden vs. de dil değişimi"): renk / mamul tipi / asorti adı sözlüğü
@@ -153,8 +161,12 @@ grant execute on function public.portal(text) to anon, authenticated;
 
 -- ---------- 5) Sipariş talebi ----------
 -- Siteden gelen hiçbir şeye güvenilmez: model müşteriye görünür olmalı, renk/beden modelde olmalı, miktar tam sayı
--- 1..5000; FİYAT SUNUCUDA yeniden bulunur (sitenin gönderdiği fiyat yok sayılır). Günde en çok 20 talep.
-create or replace function public.portal_siparis(p_kod text, p_kalemler jsonb, p_not text)
+-- 1..5000; FİYAT SUNUCUDA yeniden bulunur (sitenin gönderdiği fiyat yok sayılır; fiyatsız modelde NULL — ERP onaylarken
+-- belirler). Günde en çok 20 talep.
+-- ÖDEME (v1.652.0 — kullanıcı: "ödeme aşamasında nakit, çek hangi tip ödeme ile olacak ise müşteri belirlesin; o bilgileri
+-- görüp indirim tanımlar ve fiyat belirleriz"): p_odeme = {tip, vadeGun}; tip listeden, vade 0..365 gün.
+drop function if exists public.portal_siparis(text, jsonb, text);
+create or replace function public.portal_siparis(p_kod text, p_kalemler jsonb, p_not text, p_odeme jsonb default null)
 returns text
 language plpgsql volatile security definer set search_path = public
 as $$
@@ -166,6 +178,8 @@ declare
   toplam integer := 0;
   adet integer;
   yeni_id text;
+  odeme jsonb := null;
+  vade integer;
 begin
   select * into c from public.site_kod_cari(p_kod);
   if c.id is null then raise exception 'GECERSIZ_KOD' using errcode = 'P0001'; end if;
@@ -173,6 +187,12 @@ begin
   if jsonb_array_length(p_kalemler) > 500 then raise exception 'COK_KALEM'; end if;
   if (select count(*) from site_talepleri t where t.cari_id = c.id and t.olusturma > now() - interval '1 day') >= 20 then
     raise exception 'GUNLUK_SINIR';
+  end if;
+  if p_odeme is not null and jsonb_typeof(p_odeme) = 'object' then
+    if coalesce(p_odeme->>'tip', '') not in ('Nakit', 'Havale/EFT', 'Kredi kartı', 'Çek', 'Senet', 'Açık hesap') then raise exception 'GECERSIZ_ODEME'; end if;
+    vade := case when jsonb_typeof(p_odeme->'vadeGun') = 'number' then (p_odeme->>'vadeGun')::numeric else null end;
+    if vade is not null and (vade < 0 or vade > 365) then raise exception 'GECERSIZ_ODEME'; end if;
+    odeme := jsonb_build_object('tip', p_odeme->>'tip', 'vadeGun', vade);
   end if;
 
   for k in select * from jsonb_array_elements(p_kalemler) loop
@@ -188,14 +208,14 @@ begin
       'birimFiyat', m.fiyat, 'paraBirimi', m.para_birimi));
   end loop;
 
-  insert into site_talepleri (cari_id, cari_unvan, not_metni, kalemler, toplam_cift)
-  values (c.id, c.unvan, left(nullif(trim(coalesce(p_not, '')), ''), 1000), temiz, toplam)
+  insert into site_talepleri (cari_id, cari_unvan, not_metni, kalemler, toplam_cift, odeme)
+  values (c.id, c.unvan, left(nullif(trim(coalesce(p_not, '')), ''), 1000), temiz, toplam, odeme)
   returning id into yeni_id;
   return yeni_id;
 end;
 $$;
-revoke all on function public.portal_siparis(text, jsonb, text) from public;
-grant execute on function public.portal_siparis(text, jsonb, text) to anon, authenticated;
+revoke all on function public.portal_siparis(text, jsonb, text, jsonb) from public;
+grant execute on function public.portal_siparis(text, jsonb, text, jsonb) to anon, authenticated;
 
 -- ---------- 6) Kodsuz eski vitrin kapanır ----------
 drop function if exists public.vitrin();
@@ -306,7 +326,7 @@ begin
       from siparisler s
       where s.cari_id = c.id and s.tip = 'Satış' and coalesce(s.durum, '') <> 'İptal'
       order by s.tarih desc nulls last limit 200) y), '[]'::jsonb),
-    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni,
+    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni, 'odeme', t.odeme,
           'kalemler', (select coalesce(jsonb_agg(jsonb_build_object('urunId', g.u, 'urunAd', g.a, 'renk', g.r, 'miktar', g.m, 'tutar', round(g.t, 2), 'paraBirimi', g.pb) order by g.a, g.r), '[]'::jsonb)
                        from (select k->>'urunId' u, k->>'urunAd' a, k->>'renk' r, coalesce(k->>'paraBirimi', 'TRY') pb, sum((k->>'miktar')::numeric) m,
                                     sum((k->>'miktar')::numeric * coalesce((k->>'birimFiyat')::numeric, 0)) t

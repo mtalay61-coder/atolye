@@ -84,7 +84,7 @@ function siteAyarlariBirlestir(kayitli) {
   return { ...SITE_VARSAYILAN, ...k, uretimKartlari: Array.isArray(k.uretimKartlari) ? k.uretimKartlari : SITE_VARSAYILAN.uretimKartlari };
 }
 
-function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
+function WebSitesiAyarlari({ tanimlar, onSave, showToast, stok, cariler }) {
   const kayitli = React.useMemo(() => siteAyarlariBirlestir(tanimlar.siteAyarlari), [tanimlar.siteAyarlari]);
   const [taslak, setTaslak] = useState(kayitli);
   // Başka cihaz kaydederse ve burada bekleyen değişiklik yoksa taslak tazelenir.
@@ -293,6 +293,7 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast }) {
       </div>
       {metin("adres", "Adres", "", true)}
       {metin("altYazi", "Sayfa altı yazısı (isteğe bağlı)")}
+      <SiteGruplariPaneli tanimlar={tanimlar} onSave={onSave} showToast={showToast} stok={stok} cariler={cariler} />
       <KayitCevirileriPaneli tanimlar={tanimlar} onSave={onSave} showToast={showToast} />
     </div>
   );

@@ -829,23 +829,29 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // SİTE TALEBİNİ FORMA DÖK (v1.646.0). Talep doğrudan sipariş olmaz (kullanıcı kararı): form doldurulup açılır, kullanıcı
   // kontrol edip "Kaydet"e basar. Ürün/renk ERP'de bulunamayan satır ALINMAZ ve söylenir — sessizce yanlış ürün
   // yazmaktansa eksik dökülür. Fiyat talebinkidir (sunucu müşterinin fiyatını bulmuştu); formda değiştirilebilir.
-  function siteTalebiniAc(t) {
+  function siteTalebiniAc(t, secenek = {}) {
+    // İNDİRİM + ÖDEME (v1.652.0): indirim % satır fiyatlarına uygulanır (fiyatsız satır 0 gelir — formda girilir);
+    // müşterinin seçtiği ödeme şekli siparişin notuna ve `siteOdeme` alanına yazılır.
+    const indirim = Number(secenek.indirim) || 0;
+    const od = t.odeme || null;
     const atlanan = [];
     const yeniKalemler = (t.kalemler || []).flatMap((k) => {
       const u = (stok || []).find((x) => x.id === k.urunId);
       if (!u || !(u.variants || []).some((v) => v.renk === k.renk && v.beden === k.beden)) { atlanan.push(`${k.urunAd} ${k.renk} ${k.beden}`); return []; }
       return [{ id: uid("kalem"), urunId: u.id, urunAd: u.ad, birim: u.birim || "çift", renk: k.renk, beden: k.beden,
-        miktar: Number(k.miktar) || 0, birimFiyat: Number(k.birimFiyat) || 0, paraBirimi: k.paraBirimi || "TRY",
+        miktar: Number(k.miktar) || 0, birimFiyat: Math.round((Number(k.birimFiyat) || 0) * (1 - indirim / 100) * 100) / 100, paraBirimi: k.paraBirimi || "TRY",
         ...(kdvAktif ? { kdvOrani: urunKdvOrani(u, firmaBilgileri) } : {}), ambalaj: null }];
     }).filter((k) => k.miktar > 0);
     if (!yeniKalemler.length) return showToast("Talepteki ürünler stokta bulunamadı");
     resetForm();
     setSiparisSekme("satis"); setTip("Satış"); setDuzenlenenId(null);
     setCariId(t.cari_id); setKalemler(yeniKalemler); setSiteTalepId(t.id);
-    setNot(["Web sitesinden", t.not_metni].filter(Boolean).join(" — "));
+    setNot(["Web sitesinden", od ? `Ödeme: ${od.tip}${od.vadeGun ? `, ${od.vadeGun} gün vade` : ""}` : "", indirim ? `İndirim %${indirim}` : "", t.not_metni].filter(Boolean).join(" — "));
     setShowForm(true);
     setTimeout(() => { const el = typeof document !== "undefined" ? document.getElementById("siparis-yeni-form") : null; if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
-    showToast(atlanan.length ? `Forma döküldü — bulunamayan satır: ${atlanan.join(", ")}` : "Talep forma döküldü; kontrol edip kaydedin");
+    const fiyatsiz = yeniKalemler.filter((k) => !(k.birimFiyat > 0)).length;
+    showToast([atlanan.length ? `Forma döküldü — bulunamayan satır: ${atlanan.join(", ")}` : "Talep forma döküldü; kontrol edip kaydedin",
+      fiyatsiz ? `${fiyatsiz} satırın fiyatı yok, girin` : ""].filter(Boolean).join(" · "));
   }
 
   function siparisKaydet() {

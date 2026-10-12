@@ -89,6 +89,9 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
       ...(form.ulke && form.ulke.trim() ? { ulke: form.ulke.trim() } : {}),
       notlar: form.notlar.trim(),
       paraBirimi: form.paraBirimi || "TRY",
+      // SİTEDE ÖDEME ŞEKLİ SORULSUN (v1.652.0 — kullanıcı: "herkes bu şekilde devam etmesin; yeni müşteri ve seçtiğimiz
+      // müşteri için bu şekilde olsun"): yeni müşteride açık başlar; eski müşterilerde kapalı (cari kartından açılır).
+      ...(form.tip === "Müşteri" || form.tip === "Her İkisi" ? { siteOdemeSor: true } : {}),
       hareketler: [],
     };
     onSave([cari, ...cariler]);

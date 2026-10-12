@@ -306,7 +306,7 @@ function ProductMatrixCard({
   onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc,
   onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal,
   onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle,
-  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet }) {
+  onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
   const [open, setOpen] = useState(!!baslangicAcik);
   const [urunSagMenu, setUrunSagMenu] = useState(null);
   // Sitede görünen adların çevirisi (v1.651.0, 268): sağ tık › "Çeviriler".
@@ -1464,7 +1464,15 @@ function ProductMatrixCard({
           renk: "var(--erp-info)", baslik: "newdiamond.com.tr koleksiyonunda görünür — fiyat ve stok gösterilmez",
           onClick: () => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster }) },
           ...(onCevirilerKaydet ? [{ k: "ceviri", etiket: "Çeviriler (sitede EN / RU)", ikon: Globe, renk: "var(--erp-info)", baslik: "Model adı, renkler ve tip — yabancı müşteri sitede kendi dilinde görür",
-            onClick: () => setCeviriAcik(true) }] : [])] : []),
+            onClick: () => setCeviriAcik(true) }] : []),
+          // SİTE GRUPLARI (v1.652.0): modeli gruba ekle/çıkar (müşteri yalnız grubundaki modelleri görür). Toplu ekleme
+          // Tanımlar › Web Sitesi › Site grupları'nda.
+          ...(onSiteGruplariKaydet && product.sitedeGoster ? (tanimlarSiteGruplari || []).map((g) => {
+            const icinde = (g.urunIdleri || []).includes(product.id);
+            return { k: `sgrup-${g.id}`, etiket: `${icinde ? "✓ " : ""}Site grubu: ${g.ad}`, ikon: icinde ? X : Plus, renk: "var(--erp-info)",
+              baslik: icinde ? "Gruptan çıkar" : "Gruba ekle — bu gruptaki müşteriler modeli görür",
+              onClick: () => onSiteGruplariKaydet((tanimlarSiteGruplari || []).map((x) => (x.id === g.id ? { ...x, urunIdleri: icinde ? (x.urunIdleri || []).filter((i) => i !== product.id) : [...(x.urunIdleri || []), product.id] } : x))) };
+          }) : [])] : []),
         { k: "pasif", etiket: product.pasif ? "Kullanıma aç" : "Pasife al", ikon: product.pasif ? Check : Archive, renk: "var(--erp-purple)",
           onClick: () => onPasifDegistir(product.id, !product.pasif),
           baslik: product.pasif ? "Seçim listelerinde tekrar görünür" : "Kayıt, stok ve geçmişi durur; yalnız YENİ işlemlerde seçilemez" },
@@ -1840,7 +1848,11 @@ function ProductMatrixCard({
               <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>pasif</span>
             )}
             {product.sitedeGoster && (
-              <span className="mono" data-urun-sitede="1" title="Web sitesinde görünüyor" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-info)", background: "#2D5B8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>sitede</span>
+              <span className="mono" data-urun-sitede="1"
+                title={`Web sitesinde yayında${(() => { const g = siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id); return g.length ? " · gruplar: " + g.map((x) => x.ad).join(", ") : " · hiçbir site grubunda değil — müşteri göremez"; })()}`}
+                style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id).length ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", marginLeft: 6, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Globe size={10} /> SİTEDE{(() => { const g = siteGrupUyeleri(tanimlarSiteGruplari, "urun", product.id); return g.length ? " · " + g.map((x) => x.ad).join(", ") : " · grupsuz"; })()}
+              </span>
             )}
           </span>}
           {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
