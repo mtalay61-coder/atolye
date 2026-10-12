@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.652.0";
+const SURUM = "1.653.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Site gruplari (musteri yalniz grubundaki modelleri gorur), fiyatsiz model ve siparis, odeme sekli, talepte indirim, resim buyutme";
+const SURUM_NOTU = "Site gruplari, fiyatsiz siparis, talepte indirim; odeme sekli yalniz secili ve yeni musteride sorulur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,10 +494,13 @@ const SURUM_NOTU = "Site gruplari (musteri yalniz grubundaki modelleri gorur), f
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.653.0", tarih: "12.10.2026",
+    eklenen: ["Sitede ödeme şekli yalnız işaretli müşteriden istenir: cari kartı › Web sitesi girişi › 'Siparişte ödeme şeklini sorsun' — yeni açılan müşteride açık gelir, mevcut müşterilerde kapalı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.652.0", tarih: "12.10.2026",
     eklenen: ["Site grupları: Tanımlar › Firma › Web Sitesi › 'Site grupları' — grup aç, yayındaki modelleri ve müşterileri toplu ekle; müşteri sitede YALNIZ dahil olduğu grupların modellerini görür. Mamul sağ tık › 'Site grubu: …' ile tek tek ekle/çıkar",
       "Stokta sitede yayınlanan model belirgin: başlıkta 'SİTEDE · grup adları' (grupsuzsa turuncu 'grupsuz')",
-      "Fiyatı olmayan model de sitede listelenir ('Fiyat onayda') ve sipariş edilebilir; sitede müşteri ödeme şeklini seçer (nakit, havale/EFT, kart, çek, senet, açık hesap + vade gün)",
+      "Fiyatı olmayan model de sitede listelenir ('Fiyat onayda') ve sipariş edilebilir",
       "Siteden gelen talepte ödeme şekli ve fiyatsız satır sayısı görünür; 'İndirim %' girip Siparişe çevir — fiyatlar indirimli, ödeme bilgisi siparişin notunda. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
     degisen: ["Sitede model görünürlüğü artık fiyata değil site grubuna bağlı"], duzeltilen: [] },
   { surum: "1.651.0", tarih: "12.10.2026",

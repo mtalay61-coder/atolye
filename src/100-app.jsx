@@ -2596,6 +2596,8 @@ function AtolyeUygulamasi() {
     const cari = {
       id: uid("cari"), unvan: ad, tip: tip || "Tedarikçi",
       telefon: "", vergiNo: "", adres: "", notlar: "", hareketler: [],
+      // Yeni müşteride sitede ödeme şekli sorulur (v1.652.0, bkz. 260 cari ekleme).
+      ...(tip === "Müşteri" || tip === "Her İkisi" ? { siteOdemeSor: true } : {}),
     };
     saveCariler([cari, ...cariler]);
     showToast(`"${ad}" ${(tip || "Tedarikçi").toLowerCase()} olarak eklendi`);

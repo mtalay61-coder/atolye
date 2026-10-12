@@ -69,6 +69,11 @@ async function calistir() {
     kayittanSonraGosterildi: yeniGiris.includes(oneri) && yeniGiris.includes(sifre) && /WhatsApp ile gönder/.test(yeniGiris),
     kullaniciRozeti: await sayfa.locator("[data-site-kullanici]:visible").last().textContent(),
   };
+  // Sitede ödeme şekli sorulsun (v1.652.0): eski müşteride kapalı, işaretlenince cariye yazılır.
+  kod.odemeSorBaslangic = await sayfa.locator("[data-site-odeme-sor]:visible").last().isChecked();
+  await sayfa.locator("[data-site-odeme-sor]:visible").last().check();
+  await sayfa.waitForTimeout(300);
+  kod.odemeSorYazildi = (((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {}).siteOdemeSor === true;
   // Hesabım'da görünen defter (v1.648.0): Genel varsayılan (alan yok), seçilince cariye yazılır.
   await sayfa.locator("[data-site-defter]:visible").last().selectOption("Ikisi");
   await sayfa.waitForTimeout(300);

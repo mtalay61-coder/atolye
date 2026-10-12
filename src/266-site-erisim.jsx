@@ -81,6 +81,13 @@ function SiteErisimPaneli({ cari, firmaBilgileri, onFieldChange, showToast, fiya
         {bilgi === null && !duzen && (
           <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={ac} disabled={!!hata} data-site-hesap-ac="1">Giriş bilgisi oluştur</button>
         )}
+        {bilgi && !duzen && (
+          // ÖDEME ŞEKLİ (v1.652.0): yalnız işaretli müşteriden sitede sipariş verirken ödeme şekli istenir; yeni müşteride açık.
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }} title="Sepette nakit / havale / kart / çek / senet / açık hesap seçtirilir; talepte görürsünüz">
+            <input type="checkbox" data-site-odeme-sor="1" checked={!!cari.siteOdemeSor} onChange={(e) => onFieldChange(cari.id, "siteOdemeSor", e.target.checked ? true : undefined)} />
+            Siparişte ödeme şeklini sorsun
+          </label>
+        )}
         {bilgi !== undefined && !duzen && (bilgi || cari.siteDefter) && (
           // HESABIM'DA HANGİ DEFTER (v1.648.0 — kullanıcı kararı: "cariye göre seçilsin"). Cari alanı; boş = Genel.
           <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }}>

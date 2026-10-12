@@ -8,6 +8,8 @@
   "kayittanSonraGosterildi": true,
   "kullaniciOnerisi": "musteri.b",
   "kullaniciRozeti": "musteri.b",
+  "odemeSorBaslangic": false,
+  "odemeSorYazildi": true,
   "panelVar": true,
   "rpc": [
    "site_hesap_bilgi",

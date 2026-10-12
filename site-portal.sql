@@ -142,6 +142,8 @@ begin
   end if;
   return jsonb_build_object(
     'unvan', c.unvan,
+    -- Ödeme şekli yalnız işaretli müşteriden istenir (v1.652.0; yeni müşteride açık — ERP 260).
+    'odemeSor', coalesce(c.ek->>'siteOdemeSor', 'false') = 'true',
     'asortiler', coalesce((select t.veri->'asortiler' from tanimlar t where t.id = 'tekil'), '[]'::jsonb),
     'modeller', coalesce((select jsonb_agg(to_jsonb(m)) from public.site_modeller(c.id, nullif(c.ek->>'fiyatGrubuId', '')) m), '[]'::jsonb),
     -- KAYIT ÇEVİRİLERİ (v1.651.0 — "stok, renk, beden vs. de dil değişimi"): renk / mamul tipi / asorti adı sözlüğü
