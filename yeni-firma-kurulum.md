@@ -59,7 +59,7 @@ Her dosyanın başındaki KURULUM notunu (ör. "Verify JWT" ayarı) uygulayın. 
    "firma ekle: kod ozderi, adres https://xxxx.supabase.co, anahtar sb_publishable_…"
    Claude bunu `node firma-ekle.js ozderi https://xxxx.supabase.co sb_publishable_…` ile `firmalar.json`'a ekler ve yayına alır.
    Rehberde kod düz yazılmaz (özeti tutulur); müşteri listesi depodan okunamaz.
-2. Müşteriye bağlantıyı gönderin: `https://mtalay61-coder.github.io/atolye/?firma=ozderi`
+2. Müşteriye bağlantıyı gönderin: `https://erp.newdiamond.com.tr/?firma=ozderi`
 3. Müşteri bağlantıyı açar, "Bağlan"a basar, 3. adımdaki kullanıcı adı ve şifreyle girer.
 
 Alternatif: rehbere eklemeden, giriş ekranında **Firma: … › Değiştir › Gelişmiş** ile adres ve publishable
