@@ -890,6 +890,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             </div>
           )}
 
+          {cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (
+            <SiteErisimPaneli cari={cari} tumCariler={tumCariler} firmaBilgileri={firmaBilgileri} onFieldChange={onFieldChange} showToast={showToast}
+              fiyatGrubuAdi={((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || ""} />
+          )}
+
           {cardTab === "bilgiler" && cari.tip === "Personel" && (
             <div style={{ display: "grid", gap: 10, marginBottom: 14, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" }}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.645.13</title>
+<title>Atölye ERP 1.646.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2266,9 +2266,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.645.13";
-const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Anasayfa gosterge panosu; Odeme & Tahsilat: once kasa/banka sonra cari, tek satir form, kredi kartinda hesaba gecis tarihi";
+const SURUM = "1.646.0";
+const SURUM_TARIHI = "2026-10-12";
+const SURUM_NOTU = "Web sitesi musteri portali: cariye site kodu, musteriye ozel model ve fiyat, siteden siparis talebi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,6 +2279,16 @@ const SURUM_NOTU = "Anasayfa gosterge panosu; Odeme & Tahsilat: once kasa/banka 
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.646.0", tarih: "12.10.2026",
+        eklenen: ["Web sitesi müşteri portalı: koleksiyon artık yalnız kodla görünür. Cari kartı (müşteri) › 'Web sitesi erişimi': Kod ver / Kopyala / WhatsApp ile gönder / Yeni kod / Erişimi kapat",
+            "Müşteri sitede yalnız 'Web sitesinde göster' işaretli VE kendisine (cariye özel ya da fiyat grubunda) fiyatı olan modelleri, kendi fiyatıyla görür; asorti × koli ya da beden beden sepete ekleyip sipariş gönderir",
+            "Siparişler › Satış: 'Siteden gelen sipariş talepleri' — Siparişe çevir (formu doldurur, kontrol edip kaydedersiniz) / Reddet. Supabase'de site-portal.sql bir kez çalıştırılmalı"],
+        degisen: ["Kodsuz koleksiyon (vitrin) kapatıldı"], duzeltilen: [] },
+    { surum: "1.645.15", tarih: "12.10.2026",
+        eklenen: ["Ürün kartı sağ tık: 'Web sitesinde göster' (mamul) — işaretli ürünler newdiamond.com.tr koleksiyonunda canlı görünür (ad, tip, renkler, resimler; fiyat ve stok gitmez); listede 'sitede' rozeti. Supabase'de vitrin.sql bir kez çalıştırılmalı"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.645.14", tarih: "11.10.2026",
+        eklenen: [], degisen: ["Üretim listesinde kapalı kartın tek satırında üretim numarası da (küçük) — bohça etiketi ve aramayla eşleşsin"], duzeltilen: [] },
     { surum: "1.645.13", tarih: "11.10.2026",
         eklenen: ["Anasayfa gösterge panosu: kasa & banka bakiyeleri, bu ay ve geçen ay tahsilat / ödeme, toplam borç, portföydeki çek/senet ve en yakın vade, yaklaşan teslimler (açık satış siparişleri teslim tarihine göre, geçen kırmızı), üretimin hangi aşamada kaç adet beklediği — her kart ilgili ekranı açar"],
         degisen: ["Anasayfadaki Modüller kartları (Tanımlar, Stok, Üretim, Cari, Sipariş) kaldırıldı — üst menünün tekrarıydı",
@@ -32576,6 +32586,12 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                 ...[["stok", "Stok bilgileri"], ...(product.kategori === "Mamul" ? [["recete", "Reçete"], ["maliyet", "Maliyet"]] : []), ["fiyat", "Fiyatlandırma"], ["barkodlar", "Barkodlar"], ["hareketler", "Stok hareketleri"]]
                     .map(([k, et]) => ({ k: `sekme-${k}`, etiket: et, ikon: ChevronRight, onClick: () => { setOpen(true); setCardTab(k); } })),
                 { ayrac: true },
+                // WEB SİTESİNDE GÖSTER (v1.645.15 — kullanıcı: "Ürün kataloğu sitede ERP'den canlı gelsin"). Yalnız mamulde. İşaretli
+                // ürün newdiamond.com.tr koleksiyonunda görünür: ad, tip, renkler, resimler — fiyat/stok GİTMEZ (vitrin.sql `vitrin()`).
+                // Alan `sitedeGoster` şema dışı → `ek`te (035).
+                ...(product.kategori === "Mamul" ? [{ k: "site", etiket: product.sitedeGoster ? "Web sitesinden kaldır" : "Web sitesinde göster", ikon: product.sitedeGoster ? X : Check,
+                        renk: "var(--erp-info)", baslik: "newdiamond.com.tr koleksiyonunda görünür — fiyat ve stok gösterilmez",
+                        onClick: () => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster }) }] : []),
                 { k: "pasif", etiket: product.pasif ? "Kullanıma aç" : "Pasife al", ikon: product.pasif ? Check : Archive, renk: "var(--erp-purple)",
                     onClick: () => onPasifDegistir(product.id, !product.pasif),
                     baslik: product.pasif ? "Seçim listelerinde tekrar görünür" : "Kayıt, stok ve geçmişi durur; yalnız YENİ işlemlerde seçilemez" },
@@ -32766,7 +32782,8 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                         React.createElement(KategoriIkonu, { kategori: product.kategori, size: 21 }))),
                     !open && React.createElement("span", { style: { fontWeight: 700, fontSize: 16, flex: 1, overflowWrap: "anywhere", color: product.pasif ? "var(--erp-text-3)" : undefined } },
                         product.ad,
-                        product.pasif && (React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 } }, "pasif"))),
+                        product.pasif && (React.createElement("span", { className: "mono", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 } }, "pasif")),
+                        product.sitedeGoster && (React.createElement("span", { className: "mono", "data-urun-sitede": "1", title: "Web sitesinde g\u00F6r\u00FCn\u00FCyor", style: { fontSize: 9, fontWeight: 700, color: "var(--erp-info)", background: "#2D5B8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 } }, "sitede"))),
                     open ? React.createElement(ChevronDown, { size: 18, color: "var(--erp-text-3)" }) : React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" })),
                 showEdit && editForm && (React.createElement(React.Fragment, null,
                     React.createElement("button", { type: "button", className: "btn-primary btn-save", "data-kart-eylem": "kaydet", title: "Kaydet \u00B7 Ctrl+S", onClick: (e) => { e.stopPropagation(); editKaydet(); }, style: { padding: "5px 12px", fontSize: 12 } },
@@ -47567,6 +47584,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 g.tip,
                                 ")"))),
                         React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r.")))),
+                cardTab === "bilgiler" && (cari.tip === "Müşteri" || cari.tip === "Her İkisi") && (React.createElement(SiteErisimPaneli, { cari: cari, tumCariler: tumCariler, firmaBilgileri: firmaBilgileri, onFieldChange: onFieldChange, showToast: showToast, fiyatGrubuAdi: ((tanimlarFiyatGruplari || []).find((g) => g.id === cari.fiyatGrubuId) || {}).ad || "" })),
                 cardTab === "bilgiler" && cari.tip === "Personel" && (React.createElement("div", { style: { display: "grid", gap: 10, marginBottom: 14, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" } },
                     React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } },
                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-purple)", fontWeight: 600 } },
@@ -48155,6 +48173,120 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                             React.createElement(ChevronRight, { size: 16, color: "var(--erp-text-3)" })));
                     })));
                 })())))));
+}
+// ================= WEB SİTESİ MÜŞTERİ ERİŞİMİ (v1.646.0) =================
+//
+// Kullanıcı: "Site için üyelik sistemi yapabilir miyiz? Herkes koleksiyonumuzu görmesin." · "Müşteri sipariş de
+// verebilsin, ona özel fiyatlar ve modeller listelensin." Karar: müşteriye özel KOD (Supabase üyeliği değil — o hesap
+// rls-kimlik.sql yüzünden ERP'nin bütün verisini okurdu; bkz. site-portal.sql başı).
+//
+// Kod carinin `siteKodu` alanında (`ek`e gider, sütun gerekmez). Sitedeki `portal()` kodu bu alandan bulur; boş kod ya
+// da pasif cari = erişim yok. Müşterinin gördüğü modeller: sitede işaretli VE bu cariye (cariye özel ya da fiyat
+// grubu) fiyatı olan mamuller — fiyatı olmayan model o müşteriye görünmez.
+// 10 karakter, karışan harfler (0/O, 1/I/L) yok: 31^10 ≈ 49 bit — tahminle bulunamaz, telefonda okunabilir.
+const SITE_KOD_ALFABESI = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function siteKoduUret(mevcutKodlar) {
+    const kume = new Set((mevcutKodlar || []).map((k) => String(k || "").toUpperCase()));
+    for (let deneme = 0; deneme < 20; deneme++) {
+        // 248 = 31×8: üstündeki baytlar atılır, her harf eşit olasılıkta kalsın (mod yanlılığı yok).
+        let kod = "";
+        while (kod.length < 10) {
+            crypto.getRandomValues(new Uint8Array(16)).forEach((n) => { if (n < 248 && kod.length < 10)
+                kod += SITE_KOD_ALFABESI[n % 31]; });
+        }
+        if (!kume.has(kod))
+            return kod;
+    }
+    return null;
+}
+function SiteErisimPaneli({ cari, tumCariler, firmaBilgileri, onFieldChange, showToast, fiyatGrubuAdi }) {
+    const kod = cari.siteKodu || "";
+    const site = String((firmaBilgileri && firmaBilgileri.website) || "").trim();
+    const kodVer = () => {
+        const yeni = siteKoduUret((tumCariler || []).map((c) => c.siteKodu).filter(Boolean));
+        if (!yeni)
+            return showToast && showToast("Kod üretilemedi, tekrar deneyin");
+        onFieldChange(cari.id, "siteKodu", yeni);
+        if (showToast)
+            showToast(kod ? "Yeni kod verildi — eski kod artık çalışmaz" : "Web sitesi kodu verildi");
+    };
+    const kapat = () => { onFieldChange(cari.id, "siteKodu", undefined); if (showToast)
+        showToast("Web sitesi erişimi kapatıldı"); };
+    const kopyala = () => {
+        try {
+            navigator.clipboard.writeText(kod).then(() => showToast && showToast("Kod kopyalandı"), () => { });
+        }
+        catch (e) { /* izin yok */ }
+    };
+    const mesaj = `${site ? site + " — " : ""}Koleksiyonumuzu görmek ve sipariş vermek için müşteri kodunuz: ${kod}`;
+    const numara = whatsappNumarasi(cari.whatsapp || cari.telefon || "");
+    const waAdres = numara ? `https://wa.me/${numara}?text=${encodeURIComponent(mesaj)}` : `https://wa.me/?text=${encodeURIComponent(mesaj)}`;
+    return (React.createElement("div", { "data-site-erisim": "1", style: { marginBottom: 14, padding: "8px 10px", background: "#EEF3EC", borderRadius: "var(--erp-r-md)", display: "grid", gap: 6 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
+            React.createElement("span", { style: { fontSize: 12, color: "#2F6B3A", fontWeight: 700 } }, "Web sitesi eri\u015Fimi:"),
+            kod ? (React.createElement(React.Fragment, null,
+                React.createElement("span", { className: "mono", "data-site-kodu": "1", style: { fontSize: 14, fontWeight: 800, letterSpacing: ".12em", padding: "2px 8px", background: "#fff", border: "1px solid #BFD3BB", borderRadius: 6 } }, kod),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: kopyala }, "Kopyala"),
+                React.createElement("a", { className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px", textDecoration: "none" }, href: waAdres, target: "_blank", rel: "noopener noreferrer" }, "WhatsApp ile g\u00F6nder"),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: kodVer, title: "Eski kod \u00E7al\u0131\u015Fmaz olur" }, "Yeni kod"),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px", color: "var(--erp-danger)" }, onClick: kapat }, "Eri\u015Fimi kapat"))) : (React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "4px 10px" }, onClick: kodVer, "data-site-kod-ver": "1" }, "Kod ver"))),
+        React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-2)" } }, kod
+            ? `Müşteri bu kodla sitede, "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür ve sipariş talebi gönderir (Siparişler › Siteden gelenler).`
+            : "Kod verilmeyen müşteri sitedeki koleksiyonu göremez.")));
+}
+// ================= SİTEDEN GELEN SİPARİŞ TALEPLERİ =================
+// Site `portal_siparis()` ile `site_talepleri` tablosuna yazar (fiyat sunucuda yeniden bulunur). Talep doğrudan sipariş
+// OLMAZ (kullanıcı kararı): "Siparişe çevir" sipariş formunu doldurup açar, kullanıcı kontrol edip kaydeder; kaydedilen
+// siparişin `siteTalepId`'si talebi listeden düşürür (ayrı bir "işlendi" yazımı gerekmez, yarım kalan çevirme talebi
+// kaybettirmez). "Reddet" talebin durumunu yazar.
+//
+// Okuma doğrudan Supabase'den (talepler ERP'nin yerel kopyasına/yedeğine girmez — siteye ait, ERP verisi değil).
+// Tablo yoksa (site-portal.sql çalıştırılmadıysa) panel hiç görünmez.
+function siteTalepleriniOku() {
+    return supabaseIstek("site_talepleri?select=*&durum=eq.yeni&order=olusturma.desc&limit=100");
+}
+function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }) {
+    const [talepler, setTalepler] = useState(null); // null = okunmadı / tablo yok
+    const [acik, setAcik] = useState(true);
+    const yenile = useCallback(() => {
+        if (!supabaseAcikMi())
+            return;
+        siteTalepleriniOku().then((l) => setTalepler(Array.isArray(l) ? l : []), () => setTalepler(null));
+    }, []);
+    useEffect(() => { yenile(); const t = setInterval(yenile, 120000); return () => clearInterval(t); }, [yenile]);
+    const islenenler = React.useMemo(() => new Set((siparisler || []).map((s) => s.siteTalepId).filter(Boolean)), [siparisler]);
+    const bekleyen = (talepler || []).filter((t) => !islenenler.has(t.id));
+    if (!bekleyen.length)
+        return null;
+    const reddet = (t) => {
+        if (!window.confirm(`${t.cari_unvan || "Müşteri"} talebi reddedilsin mi? (${t.toplam_cift} çift)`))
+            return;
+        // Fonksiyonla (site-portal.sql): yalnız hâlâ 'yeni' olan talep reddedilir — iki cihaz aynı anda basarsa ikincisi boşa düşer.
+        supabaseIstek("rpc/site_talep_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
+            .then(() => { setTalepler((l) => (l || []).filter((x) => x.id !== t.id)); if (showToast)
+            showToast("Talep reddedildi"); }, (e) => showToast && showToast("Reddedilemedi: " + ((e && e.message) || e)));
+    };
+    return (React.createElement("div", { "data-site-talepleri": "1", style: { margin: "0 0 12px", border: "1px solid #BFD3BB", background: "#F3F8F1", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } },
+        React.createElement("button", { type: "button", onClick: () => setAcik(!acik), style: { all: "unset", cursor: "pointer", fontWeight: 700, color: "#2F6B3A", fontSize: 13 } },
+            acik ? "▾" : "▸",
+            " Siteden gelen sipari\u015F talepleri (",
+            bekleyen.length,
+            ")"),
+        acik && (React.createElement("div", { style: { display: "grid", gap: 6, marginTop: 8 } }, bekleyen.map((t) => {
+            const cari = (cariler || []).find((c) => c.id === t.cari_id);
+            const modeller = Array.from(new Set((t.kalemler || []).map((k) => `${k.urunAd} · ${k.renk}`)));
+            return (React.createElement("div", { key: t.id, "data-site-talep": t.id, style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", background: "#fff", border: "1px solid #DCE7D8", borderRadius: 8, padding: "6px 8px", fontSize: 12 } },
+                React.createElement("span", { className: "mono", style: { color: "var(--erp-text-3)" } }, String(t.olusturma || "").slice(0, 16).replace("T", " ")),
+                React.createElement("b", null, (cari && cari.unvan) || t.cari_unvan || "?"),
+                React.createElement("span", null,
+                    t.toplam_cift,
+                    " \u00E7ift"),
+                React.createElement("span", { style: { color: "var(--erp-text-2)", flex: "1 1 200px", minWidth: 0 } },
+                    modeller.join(", "),
+                    t.not_metni ? ` — “${t.not_metni}”` : ""),
+                React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: !cari, title: cari ? "" : "Cari bulunamadı", onClick: () => onSipariseCevir(t) }, "Sipari\u015Fe \u00E7evir"),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: () => reddet(t) }, "Reddet")));
+        })))));
 }
 // =============================================================================================
 // İFADE HESAPLAYAN MİKTAR ALANI
@@ -51319,7 +51451,8 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
         React.createElement("div", { onClick: () => setAcik((v) => !v), "data-uretim-kart-serit": o.siparisNo, style: { display: "flex", justifyContent: "space-between", alignItems: acik ? "flex-start" : "center", flexWrap: acik ? "wrap" : "nowrap", gap: 10, marginBottom: acik ? 10 : 0, cursor: "pointer" } },
             !acik && (React.createElement("div", { "data-uretim-tek-satir": o.siparisNo, style: { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0, flexWrap: "wrap", fontSize: 13 } },
                 React.createElement(ColorSwatch, { src: urunGorseli, editable: false, size: 28 }),
-                bagliSatisSiparisi ? (React.createElement("button", { type: "button", className: "mono", title: "Ba\u011Fl\u0131 sat\u0131\u015F sipari\u015Fini a\u00E7", onClick: (e) => { e.stopPropagation(); onGoToSiparis && onGoToSiparis(bagliSatisSiparisi.id); }, style: { fontWeight: 700, color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } }, bagliSatisSiparisi.siparisNo)) : React.createElement("span", { className: "mono", style: { color: "var(--erp-text-3)" } }, o.siparisNo),
+                bagliSatisSiparisi ? (React.createElement("button", { type: "button", className: "mono", title: "Ba\u011Fl\u0131 sat\u0131\u015F sipari\u015Fini a\u00E7", onClick: (e) => { e.stopPropagation(); onGoToSiparis && onGoToSiparis(bagliSatisSiparisi.id); }, style: { fontWeight: 700, color: "var(--erp-info)", background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" } }, bagliSatisSiparisi.siparisNo)) : null,
+                React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } }, o.siparisNo),
                 React.createElement("span", { style: { color: "var(--erp-text-2)" } }, bagliMusteri ? bagliMusteri.unvan : "—"),
                 React.createElement("b", null, o.model),
                 React.createElement("span", null, olcuGoster(o.renk) || ""),
@@ -52957,6 +53090,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     const [kayitParaBirimi, setKayitParaBirimi] = useState(null); // Fiş toplamının hangi para biriminde takip edileceği (opsiyonel).
     const [kayitKurlari, setKayitKurlari] = useState({});
     const [kalemler, setKalemler] = useState([]);
+    // SİTEDEN GELEN TALEP (v1.646.0): form bir site talebinden doldurulduysa onun kimliği; kaydedilen siparişe
+    // `siteTalepId` olarak yazılır ve talep "Siteden gelen" listesinden düşer (bkz. 266-site-erisim).
+    const [siteTalepId, setSiteTalepId] = useState(null);
     // Asorti barkodu okutma kutusu (fuar akışı).
     const [barkodGirisi, setBarkodGirisi] = useState("");
     // SON OKUTMANIN SONUCU, kutunun altında KALICI (v1.541.0). Toast ekranın tepesinde birkaç saniye
@@ -53286,6 +53422,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         setKayitParaBirimi(null);
         setKayitKurlari({});
         setKAmbalajRenk("");
+        setSiteTalepId(null);
         // ÖNCEKİ SİPARİŞİN OKUTMA SONUCU TEMİZLENİR (v1.614.0 — kullanıcı: "Yeni sipariş açınca eski barkodu gösteriyor
         // ekranda hâlâ 27454, önceki siparişten kalma"). Sonuç satırı bir sonraki okutmaya kadar kalıyordu; yeni sipariş
         // de "sonraki" sayılmıyordu.
@@ -53704,6 +53841,36 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         // Kutu (ambalaj) tercihi ürüne özgü; ürün değişince geçersiz.
         grupDegistir(grupKalemIdleri, { urunId: urun.id, urunAd: urun.ad, birim: urun.birim, renk, ambalaj: null });
     }
+    // SİTE TALEBİNİ FORMA DÖK (v1.646.0). Talep doğrudan sipariş olmaz (kullanıcı kararı): form doldurulup açılır, kullanıcı
+    // kontrol edip "Kaydet"e basar. Ürün/renk ERP'de bulunamayan satır ALINMAZ ve söylenir — sessizce yanlış ürün
+    // yazmaktansa eksik dökülür. Fiyat talebinkidir (sunucu müşterinin fiyatını bulmuştu); formda değiştirilebilir.
+    function siteTalebiniAc(t) {
+        const atlanan = [];
+        const yeniKalemler = (t.kalemler || []).flatMap((k) => {
+            const u = (stok || []).find((x) => x.id === k.urunId);
+            if (!u || !(u.variants || []).some((v) => v.renk === k.renk && v.beden === k.beden)) {
+                atlanan.push(`${k.urunAd} ${k.renk} ${k.beden}`);
+                return [];
+            }
+            return [{ id: uid("kalem"), urunId: u.id, urunAd: u.ad, birim: u.birim || "çift", renk: k.renk, beden: k.beden,
+                    miktar: Number(k.miktar) || 0, birimFiyat: Number(k.birimFiyat) || 0, paraBirimi: k.paraBirimi || "TRY",
+                    ...(kdvAktif ? { kdvOrani: urunKdvOrani(u, firmaBilgileri) } : {}), ambalaj: null }];
+        }).filter((k) => k.miktar > 0);
+        if (!yeniKalemler.length)
+            return showToast("Talepteki ürünler stokta bulunamadı");
+        resetForm();
+        setSiparisSekme("satis");
+        setTip("Satış");
+        setDuzenlenenId(null);
+        setCariId(t.cari_id);
+        setKalemler(yeniKalemler);
+        setSiteTalepId(t.id);
+        setNot(["Web sitesinden", t.not_metni].filter(Boolean).join(" — "));
+        setShowForm(true);
+        setTimeout(() => { const el = typeof document !== "undefined" ? document.getElementById("siparis-yeni-form") : null; if (el)
+            el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
+        showToast(atlanan.length ? `Forma döküldü — bulunamayan satır: ${atlanan.join(", ")}` : "Talep forma döküldü; kontrol edip kaydedin");
+    }
     function siparisKaydet() {
         if (!cariId)
             return showToast(tip === "Satış" ? "Müşteri seçin" : "Tedarikçi seçin");
@@ -53719,6 +53886,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             durum: "Bekliyor", kalemler,
             defterTercihi: siparisDefter,
             olusturuldu: new Date().toISOString(),
+            ...(siteTalepId ? { siteTalepId } : {}),
         };
         onSave([siparis, ...siparisler]);
         resetForm();
@@ -54482,6 +54650,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                                         })())));
                                 })())) },
                     ] })))),
+        siparisSekme === "satis" && ustSekme !== "raporlar" && (React.createElement(SiteTalepleriPaneli, { siparisler: siparisler, cariler: cariler, onSipariseCevir: siteTalebiniAc, showToast: showToast })),
         React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" } },
             React.createElement("div", { style: { position: "relative", flex: "1 1 220px", maxWidth: 420 } },
                 React.createElement(Search, { size: 14, style: { position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" } }),
@@ -60241,7 +60410,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.645.13)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.646.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
