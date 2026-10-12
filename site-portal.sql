@@ -270,6 +270,18 @@ begin
       select jsonb_build_object(
         'siparisNo', s.siparis_no, 'tarih', s.tarih, 'teslimTarihi', s.teslim_tarihi, 'durum', s.durum,
         'belgeNo', s.ek->>'belgeNo', 'siteden', (s.ek->>'siteTalepId') is not null,
+        -- KAPORA / ÖDENEN (kullanıcı: "siparişe dayalı kapora var ise o da görünsün"): ERP'deki siparisOdemeOzeti (320) ile
+        -- aynı kural — carinin `siparisId`'si bu sipariş olan TAHSİLAT hareketleri (tip: islemTipi alanı, yoksa THS- fiş
+        -- öneki, yoksa "tahsilat…" açıklaması), para birimi başına. Karşılaştırma KDV DAHİL toplamla (teslim fişi cariye KDV
+        -- dahil yazılıyor; kalemin oranı `ek->>'kdvOrani'`).
+        'odenen', coalesce((select jsonb_object_agg(pb, t) from (
+            select coalesce(h.para_birimi, 'TRY') pb, round(sum(h.tutar)::numeric, 2) t from cari_hareketleri h
+            where h.cari_id = c.id and h.ek->>'siparisId' = s.id::text
+              and coalesce(h.ek->>'islemTipi', case when h.fis_no like 'THS-%' then 'Tahsilat' when h.aciklama ilike 'tahsilat%' then 'Tahsilat' end) = 'Tahsilat'
+            group by 1) o), '{}'::jsonb),
+        'kdvDahil', coalesce((select jsonb_object_agg(pb, t) from (
+            select public.site_pb(k.para_birimi) pb, round(sum(k.miktar * coalesce(k.fiyat, 0) * (1 + coalesce(nullif(k.ek->>'kdvOrani', '')::numeric, 0) / 100))::numeric, 2) t
+            from siparis_kalemleri k where k.siparis_id = s.id group by 1) v), '{}'::jsonb),
         -- FİYAT + TUTAR (v1.650 — kullanıcı: "sipariş fiyat ve tutar da görünsün"): beden fiyatı farklı olabilir; satırda
         -- tutar = Σ miktar×fiyat, birim fiyat = tutar ÷ miktar (ortalama). Para birimi ayrı grup.
         'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunId', g.urun_id, 'urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar),
