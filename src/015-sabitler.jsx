@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.653.0";
+const SURUM = "1.654.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Site gruplari, fiyatsiz siparis, talepte indirim; odeme sekli yalniz secili ve yeni musteride sorulur";
+const SURUM_NOTU = "Sitede yayinlanan urunun SITEDE rozeti acik kartta da gorunur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Site gruplari, fiyatsiz siparis, talepte indirim; odeme sekl
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.654.0", tarih: "12.10.2026",
+    eklenen: ["Sitede yayınlanan ürünün 🌐 SİTEDE rozeti artık ürün kartı AÇIKKEN de adın yanında görünür (önce yalnız kapalı başlıktaydı)."] },
   { surum: "1.653.0", tarih: "12.10.2026",
     eklenen: ["Sitede ödeme şekli yalnız işaretli müşteriden istenir: cari kartı › Web sitesi girişi › 'Siparişte ödeme şeklini sorsun' — yeni açılan müşteride açık gelir, mevcut müşterilerde kapalı"],
     degisen: [], duzeltilen: [] },
