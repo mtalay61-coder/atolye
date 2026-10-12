@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.645.14";
+const SURUM = "1.645.15";
 const SURUM_TARIHI = "2026-10-11";
-const SURUM_NOTU = "Uretim listesi tek satirinda uretim numarasi da gorunuyor";
+const SURUM_NOTU = "Urun kartinda Web sitesinde goster: isaretli mamuller newdiamond.com.tr koleksiyonunda (fiyat/stok gitmez)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,9 @@ const SURUM_NOTU = "Uretim listesi tek satirinda uretim numarasi da gorunuyor";
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.645.15", tarih: "12.10.2026",
+    eklenen: ["Ürün kartı sağ tık: 'Web sitesinde göster' (mamul) — işaretli ürünler newdiamond.com.tr koleksiyonunda canlı görünür (ad, tip, renkler, resimler; fiyat ve stok gitmez); listede 'sitede' rozeti. Supabase'de vitrin.sql bir kez çalıştırılmalı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.645.14", tarih: "11.10.2026",
     eklenen: [], degisen: ["Üretim listesinde kapalı kartın tek satırında üretim numarası da (küçük) — bohça etiketi ve aramayla eşleşsin"], duzeltilen: [] },
   { surum: "1.645.13", tarih: "11.10.2026",

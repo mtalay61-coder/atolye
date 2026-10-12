@@ -1455,6 +1455,12 @@ function ProductMatrixCard({
         ...[["stok", "Stok bilgileri"], ...(product.kategori === "Mamul" ? [["recete", "Reçete"], ["maliyet", "Maliyet"]] : []), ["fiyat", "Fiyatlandırma"], ["barkodlar", "Barkodlar"], ["hareketler", "Stok hareketleri"]]
           .map(([k, et]) => ({ k: `sekme-${k}`, etiket: et, ikon: ChevronRight, onClick: () => { setOpen(true); setCardTab(k); } })),
         { ayrac: true },
+        // WEB SİTESİNDE GÖSTER (v1.645.15 — kullanıcı: "Ürün kataloğu sitede ERP'den canlı gelsin"). Yalnız mamulde. İşaretli
+        // ürün newdiamond.com.tr koleksiyonunda görünür: ad, tip, renkler, resimler — fiyat/stok GİTMEZ (vitrin.sql `vitrin()`).
+        // Alan `sitedeGoster` şema dışı → `ek`te (035).
+        ...(product.kategori === "Mamul" ? [{ k: "site", etiket: product.sitedeGoster ? "Web sitesinden kaldır" : "Web sitesinde göster", ikon: product.sitedeGoster ? X : Check,
+          renk: "var(--erp-info)", baslik: "newdiamond.com.tr koleksiyonunda görünür — fiyat ve stok gösterilmez",
+          onClick: () => onUrunGuncelle(product.id, { sitedeGoster: !product.sitedeGoster }) }] : []),
         { k: "pasif", etiket: product.pasif ? "Kullanıma aç" : "Pasife al", ikon: product.pasif ? Check : Archive, renk: "var(--erp-purple)",
           onClick: () => onPasifDegistir(product.id, !product.pasif),
           baslik: product.pasif ? "Seçim listelerinde tekrar görünür" : "Kayıt, stok ve geçmişi durur; yalnız YENİ işlemlerde seçilemez" },
@@ -1824,6 +1830,9 @@ function ProductMatrixCard({
             {product.ad}
             {product.pasif && (
               <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-purple)", background: "#6B4E8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>pasif</span>
+            )}
+            {product.sitedeGoster && (
+              <span className="mono" data-urun-sitede="1" title="Web sitesinde görünüyor" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-info)", background: "#2D5B8A18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)", marginLeft: 6 }}>sitede</span>
             )}
           </span>}
           {open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />}
