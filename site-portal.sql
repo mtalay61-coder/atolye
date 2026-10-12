@@ -270,20 +270,24 @@ begin
       select jsonb_build_object(
         'siparisNo', s.siparis_no, 'tarih', s.tarih, 'teslimTarihi', s.teslim_tarihi, 'durum', s.durum,
         'belgeNo', s.ek->>'belgeNo', 'siteden', (s.ek->>'siteTalepId') is not null,
-        'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunId', g.urun_id, 'urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar)) order by g.urun_ad, g.renk)
-          from (select k.urun_id, k.urun_ad, k.renk, sum(k.miktar) miktar,
+        -- FİYAT + TUTAR (v1.650 — kullanıcı: "sipariş fiyat ve tutar da görünsün"): beden fiyatı farklı olabilir; satırda
+        -- tutar = Σ miktar×fiyat, birim fiyat = tutar ÷ miktar (ortalama). Para birimi ayrı grup.
+        'kalemler', coalesce((select jsonb_agg(jsonb_build_object('urunId', g.urun_id, 'urunAd', g.urun_ad, 'renk', g.renk, 'miktar', g.miktar, 'teslim', least(g.teslim, g.miktar),
+            'tutar', round(g.tutar, 2), 'fiyat', case when g.miktar > 0 then round(g.tutar / g.miktar, 2) else 0 end, 'paraBirimi', g.pb) order by g.urun_ad, g.renk)
+          from (select k.urun_id, k.urun_ad, k.renk, public.site_pb(k.para_birimi) pb, sum(k.miktar) miktar, sum(k.miktar * coalesce(k.fiyat, 0))::numeric tutar,
                   sum(case when exists (select 1 from stok_hareketleri sh where sh.siparis_id = s.id)
                            then greatest(coalesce((select -sum(sh.miktar) from stok_hareketleri sh where sh.siparis_id = s.id and sh.kalem_id = k.id), 0), 0)
                            else coalesce(k.karsilanan, 0) end) teslim
-                from siparis_kalemleri k where k.siparis_id = s.id group by k.urun_id, k.urun_ad, k.renk) g), '[]'::jsonb)
+                from siparis_kalemleri k where k.siparis_id = s.id group by k.urun_id, k.urun_ad, k.renk, public.site_pb(k.para_birimi)) g), '[]'::jsonb)
       ) x
       from siparisler s
       where s.cari_id = c.id and s.tip = 'Satış' and coalesce(s.durum, '') <> 'İptal'
       order by s.tarih desc nulls last limit 200) y), '[]'::jsonb),
     'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni,
-          'kalemler', (select coalesce(jsonb_agg(jsonb_build_object('urunId', g.u, 'urunAd', g.a, 'renk', g.r, 'miktar', g.m) order by g.a, g.r), '[]'::jsonb)
-                       from (select k->>'urunId' u, k->>'urunAd' a, k->>'renk' r, sum((k->>'miktar')::numeric) m
-                             from jsonb_array_elements(t.kalemler) k group by 1, 2, 3) g)) order by t.olusturma desc)
+          'kalemler', (select coalesce(jsonb_agg(jsonb_build_object('urunId', g.u, 'urunAd', g.a, 'renk', g.r, 'miktar', g.m, 'tutar', round(g.t, 2), 'paraBirimi', g.pb) order by g.a, g.r), '[]'::jsonb)
+                       from (select k->>'urunId' u, k->>'urunAd' a, k->>'renk' r, coalesce(k->>'paraBirimi', 'TRY') pb, sum((k->>'miktar')::numeric) m,
+                                    sum((k->>'miktar')::numeric * coalesce((k->>'birimFiyat')::numeric, 0)) t
+                             from jsonb_array_elements(t.kalemler) k group by 1, 2, 3, 4) g)) order by t.olusturma desc)
       from site_talepleri t
       where t.cari_id = c.id and t.olusturma > now() - interval '60 days'
         and not exists (select 1 from siparisler s where s.ek->>'siteTalepId' = t.id)), '[]'::jsonb),
