@@ -1,0 +1,25 @@
+{
+ "hatalar": [],
+ "kaydedilen": {
+  "renk": {
+   "en": "Black",
+   "ru": "Чёрный"
+  },
+  "urun": {
+   "en": {
+    "ad": "Boot"
+   }
+  }
+ },
+ "menudeVar": true,
+ "oneri": {
+  "adEn": "Boot",
+  "renkEn": "Black",
+  "renkRu": "Чёрный"
+ },
+ "pencereKapandi": true,
+ "satirlar": [
+  "ad",
+  "renk-Siyah"
+ ]
+}

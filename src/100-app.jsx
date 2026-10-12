@@ -4704,6 +4704,7 @@ function AtolyeUygulamasi() {
               onYeniOlcuKaydet={yeniOlcuKaydet}
               onReceteSablonuKaydet={receteSablonuKaydet}
               onYeniMamulTipiKaydet={yeniMamulTipiKaydet}
+              onCevirilerKaydet={(c) => tanimlarKodluYaz({ ...tanimlar, ceviriler: c })}
               onYeniOzelKodAlani={yeniOzelKodAlaniKaydet}
               onFiyatGrubuMarj={fiyatGrubuMarjKaydet}
               onKombinasyonOlustur={kombinasyonOlusturGlobal}

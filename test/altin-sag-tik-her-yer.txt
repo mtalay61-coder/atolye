@@ -23,6 +23,7 @@
       "sekme-barkodlar",
       "sekme-hareketler",
       "site",
+      "ceviri",
       "pasif",
       "sil"
     ]
