@@ -7650,6 +7650,14 @@ otomatik fiyat versin." + (Reçete) "Standart hammadde için renk dağılımına
   400, Tanımlar'da 50; eşitle → 400), `recete-standart-kart` (Yapıştırıcı notu var, kart içinde Pozisyon başlığı yok; Deri'de var).
   15 fiyat/reçete senaryosu AYNI.
 
+## Site — sipariş resimleri (12 Ekim, ERP sürümü değişmedi)
+
+Kullanıcı: "Sitede ürün resimleri de olsun, sipariş verilen için." site-portal.sql §9 `portal_hesap`: sipariş kalemleri
+ve talepler `urunId` ile (talep kalemleri model+renk toplamı), cevapta `resimler` sözlüğü ("urunId|renk" → rengin resmi,
+yoksa kapak) — model+renk başına BİR KEZ (resim ~50 KB, satırlara gömülmez). Site: Siparişlerim tablosunda, "Siteden
+gönderdikleriniz" kartlarında ve sepette 44 px resim (`minik`, yalnız data:image/ ya da https:). KULLANICI SQL'i
+YENİDEN ÇALIŞTIRMALI. Yerel PG + Chromium'da sınandı.
+
 ## v1.649.0 — Site girişi kullanıcı adı + şifre (12 Ekim)
 
 Kullanıcı: "Müşteri giriş yaparken kullanıcı adı ve şifre ile girsin." v1.646'nın tek kodu (`siteKodu`) kalktı.
