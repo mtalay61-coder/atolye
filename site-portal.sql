@@ -9,8 +9,7 @@
 -- kaydolan müşteri ERP'nin bütün verisini okuyabilirdi. Kod yolu hiçbir hesap açmaz: site anonim kalır ve yalnız
 -- aşağıdaki fonksiyonları çağırabilir; tablolar anonim role kapalı kalır.
 --
--- KOD NEREDE: carinin `ek->>'siteKodu'` alanı (ERP › cari kartı › "Web sitesi erişimi"). Pasif cari ya da boş kod =
--- erişim yok. Kod 10 harf/rakam (≈50 bit), tahmin edilemez.
+-- GİRİŞ (v1.649.0): kullanıcı adı + şifre → oturum anahtarı (§2, §10). v1.646'daki cari `siteKodu` artık kullanılmıyor.
 --
 -- Çalıştırma: Supabase › SQL Editor › yapıştır › Run. Tekrar çalıştırmak zararsız. vitrin.sql'in YERİNE geçer:
 -- kodsuz eski `vitrin()` kaldırılır (koleksiyon artık kodsuz görünmez).
@@ -31,15 +30,46 @@ drop policy if exists "giris_yapmis_hersey" on public.site_talepleri;
 create policy "giris_yapmis_hersey" on public.site_talepleri for all to authenticated using (true) with check (true);
 revoke all on public.site_talepleri from anon;
 
--- ---------- 2) Kod → cari ----------
+-- ---------- 2) Müşteri hesabı: kullanıcı adı + şifre → oturum → cari (v1.649.0) ----------
+-- Kullanıcı: "Müşteri giriş yaparken kullanıcı adı ve şifre ile girsin." (v1.646'daki tek kod yerine.)
+-- Hesaplar ERP'nin cari kaydında DEĞİL, ayrı tabloda: cari `ek`i ERP her kayıtta baştan yazıyor, şifre özeti orada
+-- ezilirdi. Şifre düz tutulmaz: pgcrypto bcrypt (`crypt`/`gen_salt('bf')`). Giriş başarılıysa 30 günlük rastgele
+-- OTURUM ANAHTARI döner; site onu saklar ve bütün çağrılara (portal, portal_siparis, portal_hesap) `p_kod` diye geçer —
+-- fonksiyonların imzası değişmedi. 5 hatalı denemede hesap 15 dk kilitlenir.
+-- İki tablo da anonim role KAPALI; ERP (authenticated) yalnız aşağıdaki fonksiyonlarla dokunur — şifre özeti hiçbir
+-- yoldan okunmaz.
+create extension if not exists pgcrypto with schema extensions;
+
+create table if not exists public.site_hesaplari (
+  cari_id text primary key,
+  kullanici text not null unique,           -- küçük harf
+  sifre_ozeti text not null,
+  olusturma timestamptz not null default now(),
+  son_giris timestamptz,
+  hatali_deneme integer not null default 0,
+  kilit_bitis timestamptz
+);
+alter table public.site_hesaplari enable row level security;
+revoke all on public.site_hesaplari from anon, authenticated;
+
+create table if not exists public.site_oturumlari (
+  anahtar text primary key,
+  cari_id text not null,
+  bitis timestamptz not null
+);
+alter table public.site_oturumlari enable row level security;
+revoke all on public.site_oturumlari from anon, authenticated;
+
+-- Oturum anahtarı → cari. (Adı eski: v1.646'da kod çözüyordu; çağıranlar değişmesin diye korundu.)
 create or replace function public.site_kod_cari(p_kod text)
 returns table (id text, unvan text, ek jsonb)
 language sql stable security definer set search_path = public
 as $$
   select c.id::text, c.unvan::text, coalesce(c.ek, '{}'::jsonb)
-  from cariler c
-  where length(trim(coalesce(p_kod, ''))) >= 6
-    and upper(c.ek->>'siteKodu') = upper(trim(p_kod))
+  from site_oturumlari o
+  join site_hesaplari h on h.cari_id = o.cari_id
+  join cariler c on c.id::text = o.cari_id
+  where o.anahtar = coalesce(p_kod, '') and o.bitis > now()
     and not coalesce(c.pasif, false)
   limit 1;
 $$;
@@ -264,3 +294,87 @@ end;
 $$;
 revoke all on function public.portal_hesap(text, date, date) from public;
 grant execute on function public.portal_hesap(text, date, date) to anon, authenticated;
+
+
+-- ---------- 10) Giriş / çıkış (site) ve hesap yönetimi (ERP) — v1.649.0 ----------
+create or replace function public.portal_giris(p_kullanici text, p_sifre text)
+returns text
+language plpgsql volatile security definer set search_path = public, extensions
+as $$
+declare
+  h record;
+  anahtar text;
+begin
+  select * into h from site_hesaplari where kullanici = lower(trim(coalesce(p_kullanici, '')));
+  -- Kullanıcı yoksa da aynı hata: hangi adların var olduğu dışarıdan sınanamasın.
+  -- Hatalı girişte HATA FIRLATILMAZ, boş döner: hata işlemi geri alır ve hatalı deneme sayacı hiç artmazdı (kilit
+  -- çalışmazdı). Site boş cevabı "kullanıcı adı ya da şifre hatalı" diye gösterir.
+  if h.cari_id is null then perform pg_sleep(0.3); return null; end if;
+  if h.kilit_bitis is not null and h.kilit_bitis > now() then raise exception 'HESAP_KILITLI' using errcode = 'P0001'; end if;
+  if h.sifre_ozeti <> crypt(coalesce(p_sifre, ''), h.sifre_ozeti) then
+    update site_hesaplari set hatali_deneme = hatali_deneme + 1,
+      kilit_bitis = case when hatali_deneme + 1 >= 5 then now() + interval '15 minutes' else null end
+    where cari_id = h.cari_id;
+    return null;
+  end if;
+  if exists (select 1 from cariler c where c.id::text = h.cari_id and coalesce(c.pasif, false)) then return null; end if;
+  anahtar := encode(gen_random_bytes(32), 'hex');
+  delete from site_oturumlari where bitis < now();
+  insert into site_oturumlari values (anahtar, h.cari_id, now() + interval '30 days');
+  update site_hesaplari set son_giris = now(), hatali_deneme = 0, kilit_bitis = null where cari_id = h.cari_id;
+  return anahtar;
+end;
+$$;
+revoke all on function public.portal_giris(text, text) from public;
+grant execute on function public.portal_giris(text, text) to anon, authenticated;
+
+create or replace function public.portal_cikis(p_kod text)
+returns void language sql volatile security definer set search_path = public
+as $$ delete from site_oturumlari where anahtar = p_kod; $$;
+revoke all on function public.portal_cikis(text) from public;
+grant execute on function public.portal_cikis(text) to anon, authenticated;
+
+-- ERP: hesap bilgisi (şifre özeti DÖNMEZ).
+create or replace function public.site_hesap_bilgi(p_cari_id text)
+returns jsonb language sql stable security definer set search_path = public
+as $$
+  select jsonb_build_object('kullanici', h.kullanici, 'olusturma', h.olusturma, 'sonGiris', h.son_giris,
+    'kilitli', h.kilit_bitis is not null and h.kilit_bitis > now())
+  from site_hesaplari h where h.cari_id = p_cari_id;
+$$;
+-- ERP: kullanıcı adı / şifre belirle. Şifre boşsa yalnız kullanıcı adı değişir (hesap varsa). Şifre değişince açık
+-- oturumlar kapanır.
+create or replace function public.site_hesap_kaydet(p_cari_id text, p_kullanici text, p_sifre text)
+returns void language plpgsql volatile security definer set search_path = public, extensions
+as $$
+declare
+  ad text := lower(trim(coalesce(p_kullanici, '')));
+begin
+  if ad !~ '^[a-z0-9._-]{3,40}$' then raise exception 'Kullanıcı adı 3-40 karakter: harf, rakam, nokta, tire, alt çizgi'; end if;
+  if not exists (select 1 from cariler where id::text = p_cari_id) then raise exception 'Cari bulunamadı'; end if;
+  if exists (select 1 from site_hesaplari where kullanici = ad and cari_id <> p_cari_id) then raise exception 'Bu kullanıcı adı başka bir caride kullanılıyor'; end if;
+  if coalesce(p_sifre, '') = '' then
+    if not exists (select 1 from site_hesaplari where cari_id = p_cari_id) then raise exception 'Şifre gerekli'; end if;
+    update site_hesaplari set kullanici = ad where cari_id = p_cari_id;
+    return;
+  end if;
+  if length(p_sifre) < 6 then raise exception 'Şifre en az 6 karakter olmalı'; end if;
+  insert into site_hesaplari (cari_id, kullanici, sifre_ozeti) values (p_cari_id, ad, crypt(p_sifre, gen_salt('bf', 10)))
+  on conflict (cari_id) do update set kullanici = excluded.kullanici, sifre_ozeti = excluded.sifre_ozeti, hatali_deneme = 0, kilit_bitis = null;
+  delete from site_oturumlari where cari_id = p_cari_id;
+end;
+$$;
+-- ERP: erişimi kapat (hesap ve oturumları silinir).
+create or replace function public.site_hesap_sil(p_cari_id text)
+returns void language sql volatile security definer set search_path = public
+as $$
+  delete from site_oturumlari where cari_id = p_cari_id;
+  delete from site_hesaplari where cari_id = p_cari_id;
+$$;
+-- ERP'deki hesaplar listesi (cari kartlarında "hesabı var" göstermek için) — yalnız cari_id + kullanıcı adı.
+create or replace function public.site_hesap_listesi()
+returns table (cari_id text, kullanici text, son_giris timestamptz)
+language sql stable security definer set search_path = public
+as $$ select h.cari_id, h.kullanici, h.son_giris from site_hesaplari h; $$;
+revoke all on function public.site_hesap_bilgi(text), public.site_hesap_kaydet(text, text, text), public.site_hesap_sil(text), public.site_hesap_listesi() from public, anon;
+grant execute on function public.site_hesap_bilgi(text), public.site_hesap_kaydet(text, text, text), public.site_hesap_sil(text), public.site_hesap_listesi() to authenticated;

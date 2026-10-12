@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.648.0";
+const SURUM = "1.649.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Web sitesinde musteri ekrani: Hesabim (bakiye, ekstre, cekler) ve Siparislerim; defter cari kartindan secilir";
+const SURUM_NOTU = "Web sitesi musteri girisi kullanici adi ve sifre ile; cari kartindan olusturulur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,9 @@ const SURUM_NOTU = "Web sitesinde musteri ekrani: Hesabim (bakiye, ekstre, cekle
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.649.0", tarih: "12.10.2026",
+    eklenen: ["Web sitesi müşteri girişi KULLANICI ADI + ŞİFRE ile: cari kartı › Bilgiler › Web sitesi girişi — 'Giriş bilgisi oluştur' (ünvandan kullanıcı adı önerisi + rastgele şifre), değiştir, erişimi kapat; kaydedince bilgiler ve 'WhatsApp ile gönder'. Şifre sunucuda özetlenir, geri okunamaz; 5 hatalı denemede 15 dk kilit; oturum 30 gün. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
+    degisen: ["Müşteri kodu (v1.646) kalktı — eski kodlar artık çalışmaz, müşterilere kullanıcı adı/şifre verilmeli"], duzeltilen: [] },
   { surum: "1.648.0", tarih: "12.10.2026",
     eklenen: ["Web sitesinde müşteri ekranı: kodla giren müşteri 'Hesabım'da güncel bakiyesini, tarih aralığına göre hesap ekstresini (devir + yürüyen bakiye, yazdırılabilir) ve çek/senetlerini; 'Siparişlerim'de siparişlerini (model/renk: sipariş, teslim, kalan; durum) ve siteden gönderip henüz onaylanmamış taleplerini görür",
       "Cari kartı › Web sitesi erişimi: 'Hesabında görünen defter' — Genel, Resmi ya da ikisi ayrı ayrı. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
