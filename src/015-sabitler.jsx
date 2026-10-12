@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.647.0";
+const SURUM = "1.648.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Tanimlar > Firma > Web Sitesi: sitenin yazilari, iletisim bilgileri, rengi, temasi ve logosu uygulamadan";
+const SURUM_NOTU = "Web sitesinde musteri ekrani: Hesabim (bakiye, ekstre, cekler) ve Siparislerim; defter cari kartindan secilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,10 @@ const SURUM_NOTU = "Tanimlar > Firma > Web Sitesi: sitenin yazilari, iletisim bi
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.648.0", tarih: "12.10.2026",
+    eklenen: ["Web sitesinde müşteri ekranı: kodla giren müşteri 'Hesabım'da güncel bakiyesini, tarih aralığına göre hesap ekstresini (devir + yürüyen bakiye, yazdırılabilir) ve çek/senetlerini; 'Siparişlerim'de siparişlerini (model/renk: sipariş, teslim, kalan; durum) ve siteden gönderip henüz onaylanmamış taleplerini görür",
+      "Cari kartı › Web sitesi erişimi: 'Hesabında görünen defter' — Genel, Resmi ya da ikisi ayrı ayrı. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.647.0", tarih: "12.10.2026",
     eklenen: ["Tanımlar › Firma › Web Sitesi: sitenin marka adı, logosu (firma logosu), ana rengi, teması (otomatik/açık/koyu), karşılama yazıları, Koleksiyon ve İletişim başlıkları, 'Nasıl üretiyoruz' kartları (ekle/sil/sırala, bölümü gizle), telefon, WhatsApp, e-posta, adres, harita, Instagram ve sayfa altı yazısı — 'Siteye kaydet' ile siteye yansır. Supabase'de site-portal.sql yeniden çalıştırılmalı"],
     degisen: [], duzeltilen: [] },

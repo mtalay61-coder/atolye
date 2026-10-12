@@ -2,6 +2,7 @@
  "hatalar": [],
  "kod": {
   "cariyeYazildi": true,
+  "defterYazildi": "Ikisi",
   "kapatinciKodVerDugmesi": true,
   "kapatinciSilindi": true,
   "karisanHarfYok": true,

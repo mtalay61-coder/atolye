@@ -50,6 +50,17 @@ function SiteErisimPaneli({ cari, tumCariler, firmaBilgileri, onFieldChange, sho
             <a className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px", textDecoration: "none" }} href={waAdres} target="_blank" rel="noopener noreferrer">WhatsApp ile gönder</a>
             <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={kodVer} title="Eski kod çalışmaz olur">Yeni kod</button>
             <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px", color: "var(--erp-danger)" }} onClick={kapat}>Erişimi kapat</button>
+            {/* HESABIM'DA HANGİ DEFTER (v1.648.0 — kullanıcı kararı: "cariye göre seçilsin"): sitede müşteri bakiye ve
+                ekstresini bu defter(ler)den görür; "Muhasebe" kaydı ERP'deki gibi ikisine de girer. Boş = Genel. */}
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "#2F6B3A", fontWeight: 600 }}>
+              Hesabında görünen defter
+              <select value={cari.siteDefter || "Genel"} data-site-defter="1" onChange={(e) => onFieldChange(cari.id, "siteDefter", e.target.value === "Genel" ? undefined : e.target.value)}
+                style={{ fontSize: 11, padding: "2px 4px", border: "1px solid #BFD3BB", borderRadius: 6 }}>
+                <option value="Genel">Genel</option>
+                <option value="Resmi">Resmi</option>
+                <option value="Ikisi">Genel + Resmi (ayrı ayrı)</option>
+              </select>
+            </label>
           </>
         ) : (
           <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "4px 10px" }} onClick={kodVer} data-site-kod-ver="1">Kod ver</button>
@@ -57,7 +68,7 @@ function SiteErisimPaneli({ cari, tumCariler, firmaBilgileri, onFieldChange, sho
       </div>
       <span style={{ fontSize: 10, color: "var(--erp-text-2)" }}>
         {kod
-          ? `Müşteri bu kodla sitede, "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür ve sipariş talebi gönderir (Siparişler › Siteden gelenler).`
+          ? `Müşteri bu kodla sitede, "Web sitesinde göster" işaretli ve ${fiyatGrubuAdi ? `"${fiyatGrubuAdi}" grubunda ya da` : ""} cariye özel fiyatı olan modelleri görür ve sipariş talebi gönderir (Siparişler › Siteden gelenler); "Hesabım"da seçili defterin bakiyesini, ekstresini, siparişlerini ve çeklerini görür.`
           : "Kod verilmeyen müşteri sitedeki koleksiyonu göremez."}
       </span>
     </div>
