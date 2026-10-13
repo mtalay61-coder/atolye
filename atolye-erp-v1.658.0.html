@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.656.0</title>
+<title>Atölye ERP 1.658.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2266,9 +2266,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.656.0";
+const SURUM = "1.658.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Sitede herkese acik vitrin: galeri resimleri ve Herkese acik modeller (girissiz, fiyatsiz)";
+const SURUM_NOTU = "Site bildirimi ust cubukta, talep reddinde sebep, sitede arama ve stok durumu";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,6 +2279,10 @@ const SURUM_NOTU = "Sitede herkese acik vitrin: galeri resimleri ve Herkese acik
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.658.0", tarih: "13.10.2026",
+        eklenen: ["Üst çubukta 🌐 site bildirimi: bekleyen siteden sipariş + kayıt talebi sayısı, yeni gelince uyarı; tıklayınca ilgili ekran", "Site talebini reddederken müşteriye görünen sebep; müşteri Siparişlerim'de talebin onay bekliyor / reddedildi (sebebiyle) / siparişe çevrildi (sipariş no) durumunu görür", "Sitede koleksiyonda arama (model, renk, tip) ve renk başına stok durumu: Stokta / Üretimde / Sipariş üzerine — rakam gösterilmez (site-portal.sql — KULLANICI ÇALIŞTIRMALI)"] },
+    { surum: "1.657.0", tarih: "13.10.2026",
+        eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"] },
     { surum: "1.656.0", tarih: "13.10.2026",
         eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"] },
     { surum: "1.655.0", tarih: "12.10.2026",
@@ -22142,6 +22146,7 @@ function AtolyeUygulamasi() {
         catch (e) { /* */ }
     };
     const [onayPaneliAcik, setOnayPaneliAcik] = useState(false);
+    const siteBildirim = useSiteBildirimleri(siparisler, showToast);
     const bekleyenOnaylar = onaylar.filter((o) => o.durum === "Bekliyor");
     const girisSistemiAktif = !!tanimlar.girisAktifMi;
     // HAREKETSİZLİKTE OTOMATİK ÇIKIŞ (v1.641.0, denetim — kullanıcı: güvenlik maddeleri). Sayfa yenilenince 12 saatlik
@@ -22734,6 +22739,9 @@ function AtolyeUygulamasi() {
                         aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement("button", { type: "button", "aria-label": "Onay Bekleyenler", title: "Onay Bekleyenler", onClick: () => setOnayPaneliAcik(true), style: { ...ikonDugme, color: bekleyenOnaylar.length > 0 ? "var(--erp-wait)" : "var(--erp-text-2)" } },
                             React.createElement(AlertTriangle, { size: 18 }),
                             bekleyenOnaylar.length > 0 && React.createElement("span", { className: "mono", style: { ...rozetStili, background: "var(--erp-wait)" } }, bekleyenOnaylar.length))),
+                        (siteBildirim.siparis + siteBildirim.kayit) > 0 && (React.createElement("button", { type: "button", "data-site-bildirim": "1", "aria-label": "Siteden gelen talepler", title: `Siteden: ${siteBildirim.siparis} sipariş talebi · ${siteBildirim.kayit} kayıt talebi`, onClick: () => git(siteBildirim.siparis > 0 ? "siparis" : "cari"), style: { ...ikonDugme, color: "#2F6B3A" } },
+                            React.createElement(Globe, { size: 18 }),
+                            React.createElement("span", { className: "mono", style: { ...rozetStili, background: "#2F6B3A" } }, siteBildirim.siparis + siteBildirim.kayit))),
                         kullaniciYetkisiVar("tanimlar", "goruntuleme") && (React.createElement("button", { type: "button", "aria-label": "Tan\u0131mlar / Ayarlar", title: "Tan\u0131mlar / Ayarlar", onClick: () => git("tanimlar"), style: { ...ikonDugme, ...(tab === "tanimlar" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) } },
                             React.createElement(Settings, { size: 18 }))),
                         React.createElement("div", { style: { position: "relative", marginLeft: 4 } },
@@ -46283,6 +46291,7 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
             React.createElement("button", { className: "btn-primary", style: { marginLeft: "auto" }, onClick: () => setShowForm((s) => !s) },
                 React.createElement(Plus, { size: 15 }),
                 " Cari Ekle")),
+        kapsam === "cari" && React.createElement(SiteKayitTalepleriPaneli, { cariler: cariler, onSave: onSave, showToast: showToast }),
         showForm && (React.createElement("div", { style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 } },
             React.createElement(KayitSeridi, { baslik: "Yeni Cari", ikon: React.createElement(Users, { size: 15, color: "#5B3F75" }), veri: "data-cari-form-seridi" },
                 React.createElement("button", { className: "btn-primary btn-save", onClick: addCari },
@@ -48393,10 +48402,12 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
     if (!bekleyen.length)
         return null;
     const reddet = (t) => {
-        if (!window.confirm(`${t.cari_unvan || "Müşteri"} talebi reddedilsin mi? (${t.toplam_cift} çift)`))
+        // SEBEP (v1.658.0 — öneri 2): müşteri sitede "Siparişlerim"de görür; boş bırakılabilir. İptal = reddetme.
+        const sebep = window.prompt(`${t.cari_unvan || "Müşteri"} talebi reddedilsin mi? (${t.toplam_cift} çift)\n\nMüşteriye görünecek sebep (isteğe bağlı):`, "");
+        if (sebep === null)
             return;
         // Fonksiyonla (site-portal.sql): yalnız hâlâ 'yeni' olan talep reddedilir — iki cihaz aynı anda basarsa ikincisi boşa düşer.
-        supabaseIstek("rpc/site_talep_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
+        supabaseIstek("rpc/site_talep_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id, p_sebep: sebep.trim() || null }) })
             .then(() => { setTalepler((l) => (l || []).filter((x) => x.id !== t.id)); if (showToast)
             showToast("Talep reddedildi"); }, (e) => showToast && showToast("Reddedilemedi: " + ((e && e.message) || e)));
     };
@@ -48433,6 +48444,131 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
                 React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: !cari, title: cari ? "" : "Cari bulunamadı", onClick: () => onSipariseCevir(t, { indirim: Math.min(100, Math.max(0, parseFloat(indirim[t.id]) || 0)) }) }, "Sipari\u015Fe \u00E7evir"),
                 React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: () => reddet(t) }, "Reddet")));
         })))));
+}
+// ================= SİTEDEN KAYIT TALEPLERİ (v1.657.0) =================
+// Kullanıcı: "Kaydı olmayan için kayıt ol butonu da olsun, cari bilgileri, adresi vs. ekleyip kayıt olsun. Sisteme
+// düşsün, onaylayıp kayıt ekleyelim." Site `site_kayit_ol()` ile bekleyen talep yazar (kullanıcı adı + şifre özeti
+// dahil). Burada Onayla: (1) aynı unvan / vergi no'lu cari varsa ona bağlamak sorulur, yoksa yeni MÜŞTERİ carisi
+// açılır; (2) `site_kayit_onayla` site hesabını talepteki şifreyle kurar. Cari buluta yazılmadan (2) "Cari
+// bulunamadı" der — birkaç saniye arayla yeniden denenir. Okuma `site_kayit_listesi()` (şifre özeti gelmez).
+function siteKayitCarisi(b) {
+    const notlar = [b.yetkili ? `Yetkili: ${b.yetkili}` : "", b.not ? `Site notu: ${b.not}` : "", "Web sitesinden kayıt"].filter(Boolean).join(" · ");
+    return {
+        id: uid("cari"), unvan: String(b.unvan || "").trim(), tip: "Müşteri",
+        telefon: b.telefon || "", vergiNo: vergiNoKaydedilecek(b.vergiNo || ""), adres: b.adres || "", notlar,
+        paraBirimi: "TRY", hareketler: [], siteOdemeSor: true,
+        ...(b.eposta ? { eposta: b.eposta } : {}), ...(b.vergiDairesi ? { vergiDairesi: b.vergiDairesi } : {}),
+        ...(b.ulke ? { ulke: b.ulke } : {}), ...(b.il ? { il: b.il } : {}), ...(b.ilce ? { ilce: b.ilce } : {}),
+    };
+}
+function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
+    const [talepler, setTalepler] = useState(null);
+    const [acik, setAcik] = useState(true);
+    const [isleniyor, setIsleniyor] = useState({});
+    const yenile = useCallback(() => {
+        if (!supabaseAcikMi())
+            return;
+        supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).then((l) => setTalepler(Array.isArray(l) ? l : []), () => setTalepler(null));
+    }, []);
+    useEffect(() => { yenile(); const t = setInterval(yenile, 120000); return () => clearInterval(t); }, [yenile]);
+    const liste = (talepler || []).filter((t) => !isleniyor[t.id] || isleniyor[t.id] === "hata");
+    if (!liste.length)
+        return null;
+    const dus = (t) => setTalepler((l) => (l || []).filter((x) => x.id !== t.id));
+    const hesabiKur = (t, cariId, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+        .then(() => { dus(t); showToast(`Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`); }, (e) => {
+        const m = String((e && e.message) || e);
+        if (/Cari bulunamad/.test(m) && deneme < 8)
+            return new Promise((r) => setTimeout(r, 3000)).then(() => hesabiKur(t, cariId, deneme + 1));
+        setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
+        showToast("Site hesabı açılamadı: " + m);
+    });
+    const onayla = (t) => {
+        const b = t.bilgiler || {};
+        const nrm = (s) => String(s || "").toLocaleLowerCase("tr-TR").trim();
+        const vn = String(b.vergiNo || "").replace(/\D/g, "");
+        const mevcut = (cariler || []).find((c) => (nrm(c.unvan) && nrm(c.unvan) === nrm(b.unvan)) || (vn.length >= 10 && String(c.vergiNo || "").replace(/\D/g, "") === vn));
+        let cariId;
+        if (mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`)) {
+            cariId = mevcut.id;
+        }
+        else {
+            if (!window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`))
+                return;
+            const cari = siteKayitCarisi(b);
+            onSave([cari, ...(cariler || [])]);
+            cariId = cari.id;
+        }
+        setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+        hesabiKur(t, cariId);
+    };
+    const reddet = (t) => {
+        if (!window.confirm(`${(t.bilgiler || {}).unvan || t.kullanici} kayıt talebi reddedilsin mi?`))
+            return;
+        supabaseIstek("rpc/site_kayit_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
+            .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => showToast("Reddedilemedi: " + ((e && e.message) || e)));
+    };
+    return (React.createElement("div", { "data-site-kayitlari": "1", style: { margin: "0 0 12px", border: "1px solid #BFD3BB", background: "#F3F8F1", borderRadius: "var(--erp-r-md)", padding: "8px 10px" } },
+        React.createElement("button", { type: "button", onClick: () => setAcik(!acik), style: { all: "unset", cursor: "pointer", fontWeight: 700, color: "#2F6B3A", fontSize: 13 } },
+            acik ? "▾" : "▸",
+            " Siteden gelen kay\u0131t talepleri (",
+            liste.length,
+            ")"),
+        acik && (React.createElement("div", { style: { display: "grid", gap: 6, marginTop: 8 } }, liste.map((t) => {
+            const b = t.bilgiler || {};
+            const yer = [b.ilce, b.il, b.ulke].filter(Boolean).join(" / ");
+            return (React.createElement("div", { key: t.id, "data-site-kayit": t.kullanici, style: { display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", background: "#fff", border: "1px solid #DCE7D8", borderRadius: 8, padding: "6px 8px", fontSize: 12 } },
+                React.createElement("span", { className: "mono", style: { color: "var(--erp-text-3)" } }, String(t.olusturma || "").slice(0, 16).replace("T", " ")),
+                React.createElement("b", null, b.unvan),
+                b.yetkili && React.createElement("span", null, b.yetkili),
+                React.createElement("span", { className: "mono" }, b.telefon),
+                b.eposta && React.createElement("span", null, b.eposta),
+                (b.vergiNo || b.vergiDairesi) && React.createElement("span", { style: { color: "var(--erp-text-2)" } },
+                    "VN: ",
+                    [b.vergiDairesi, b.vergiNo].filter(Boolean).join(" · ")),
+                React.createElement("span", { style: { color: "var(--erp-text-2)", flex: "1 1 200px", minWidth: 0 } },
+                    [b.adres, yer].filter(Boolean).join(" — "),
+                    b.not ? ` — “${b.not}”` : ""),
+                React.createElement("span", { className: "mono", title: "M\u00FC\u015Fterinin se\u00E7ti\u011Fi kullan\u0131c\u0131 ad\u0131", style: { fontWeight: 700, color: "var(--erp-info)" } },
+                    "\uD83D\uDC64 ",
+                    t.kullanici),
+                React.createElement("button", { type: "button", className: "btn-primary", style: { fontSize: 11, padding: "3px 10px" }, disabled: isleniyor[t.id] === "suruyor", onClick: () => onayla(t) }, "Onayla \u2014 cari a\u00E7"),
+                React.createElement("button", { type: "button", className: "btn-secondary", style: { fontSize: 11, padding: "3px 8px" }, onClick: () => reddet(t) }, "Reddet")));
+        })))));
+}
+// ================= SİTE BİLDİRİMİ (v1.658.0) =================
+// Kullanıcı (öneri 1): "Siteden sipariş ya da kayıt talebi düşünce ERP'de haber." Üst çubukta 🌐 düğmesi + sayaç
+// (bekleyen sipariş talebi + kayıt talebi); sayı ARTINCA bir kez bildirim. 2 dakikada bir yoklar — panellerle aynı
+// sıklık. Siparişe çevrilmiş talep (`siteTalepId`) sayılmaz. Tablo/fonksiyon yoksa (SQL çalışmadı) sessizce 0.
+function useSiteBildirimleri(siparisler, showToast) {
+    const [sayi, setSayi] = useState({ siparis: 0, kayit: 0 });
+    const onceki = useRef(null);
+    const sipRef = useRef(siparisler);
+    sipRef.current = siparisler;
+    useEffect(() => {
+        if (!supabaseAcikMi())
+            return undefined;
+        let iptal = false;
+        const yokla = () => Promise.all([
+            siteTalepleriniOku().catch(() => []),
+            supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).catch(() => []),
+        ]).then(([t, k]) => {
+            if (iptal)
+                return;
+            const islenen = new Set((sipRef.current || []).map((s) => s.siteTalepId).filter(Boolean));
+            const yeni = { siparis: (Array.isArray(t) ? t : []).filter((x) => !islenen.has(x.id)).length, kayit: Array.isArray(k) ? k.length : 0 };
+            const o = onceki.current;
+            if (o && (yeni.siparis > o.siparis || yeni.kayit > o.kayit) && showToast) {
+                showToast(`🌐 Siteden yeni ${yeni.siparis > o.siparis ? "sipariş talebi" : "kayıt talebi"} geldi`);
+            }
+            onceki.current = yeni;
+            setSayi(yeni);
+        });
+        yokla();
+        const z = setInterval(yokla, 120000);
+        return () => { iptal = true; clearInterval(z); };
+    }, [showToast]);
+    return sayi;
 }
 // ================= WEB SİTESİ AYARLARI (v1.647.0) =================
 //
@@ -61178,7 +61314,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.656.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.658.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

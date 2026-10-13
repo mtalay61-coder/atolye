@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.657.0";
+const SURUM = "1.658.1";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Siteden musteri kaydi: Kayit ol formu, Cari ekraninda onayla - cari ve site hesabi acilir";
+const SURUM_NOTU = "Site bildirimi ust cubukta, talep reddinde sebep, sitede arama ve stok durumu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,14 +494,23 @@ const SURUM_NOTU = "Siteden musteri kaydi: Kayit ol formu, Cari ekraninda onayla
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.658.1", tarih: "13.10.2026", eklenen: [], degisen: [],
+    duzeltilen: ["Sürüm geçmişi penceresi açılmıyordu (v1.654–1.658 kayıtlarında boş alanlar eksikti)"] },
+  { surum: "1.658.0", tarih: "13.10.2026",
+    eklenen: ["Üst çubukta 🌐 site bildirimi: bekleyen siteden sipariş + kayıt talebi sayısı, yeni gelince uyarı; tıklayınca ilgili ekran", "Site talebini reddederken müşteriye görünen sebep; müşteri Siparişlerim'de talebin onay bekliyor / reddedildi (sebebiyle) / siparişe çevrildi (sipariş no) durumunu görür", "Sitede koleksiyonda arama (model, renk, tip) ve renk başına stok durumu: Stokta / Üretimde / Sipariş üzerine — rakam gösterilmez (site-portal.sql — KULLANICI ÇALIŞTIRMALI)"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.657.0", tarih: "13.10.2026",
-    eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"] },
+    eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.656.0", tarih: "13.10.2026",
-    eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"] },
+    eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.655.0", tarih: "12.10.2026",
-    eklenen: ["Stok listesindeki her satırda 🌐 SİTEDE rozeti (grup adlarıyla; turuncu = grupsuz)", "Açık mamul kartında adın altında site şeridi: 'Sitede yayınla' + grup çipleri (tıkla → ekle/çıkar) + 'Yeni grup'"] },
+    eklenen: ["Stok listesindeki her satırda 🌐 SİTEDE rozeti (grup adlarıyla; turuncu = grupsuz)", "Açık mamul kartında adın altında site şeridi: 'Sitede yayınla' + grup çipleri (tıkla → ekle/çıkar) + 'Yeni grup'"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.654.0", tarih: "12.10.2026",
-    eklenen: ["Sitede yayınlanan ürünün 🌐 SİTEDE rozeti artık ürün kartı AÇIKKEN de adın yanında görünür (önce yalnız kapalı başlıktaydı)."] },
+    eklenen: ["Sitede yayınlanan ürünün 🌐 SİTEDE rozeti artık ürün kartı AÇIKKEN de adın yanında görünür (önce yalnız kapalı başlıktaydı)."],
+    degisen: [], duzeltilen: [] },
   { surum: "1.653.0", tarih: "12.10.2026",
     eklenen: ["Sitede ödeme şekli yalnız işaretli müşteriden istenir: cari kartı › Web sitesi girişi › 'Siparişte ödeme şeklini sorsun' — yeni açılan müşteride açık gelir, mevcut müşterilerde kapalı"],
     degisen: [], duzeltilen: [] },
