@@ -281,6 +281,13 @@ function UrunSiteGrupSeridi({ product, gruplar, onSiteGruplariKaydet, onUrunGunc
         style={{ ...cip(product.sitedeGoster), display: "inline-flex", alignItems: "center", gap: 4 }}>
         <Globe size={11} /> {product.sitedeGoster ? "Sitede ✓" : "Sitede yayınla"}
       </button>
+      {product.sitedeGoster && (
+        <button type="button" data-urun-herkese-acik="1" onClick={() => onUrunGuncelle(product.id, { herkeseAcik: !product.herkeseAcik })}
+          title="Girişsiz ziyaretçi de görür: resim + ad (fiyat görünmez, sipariş için giriş gerekir)"
+          style={{ ...cip(product.herkeseAcik), borderColor: "#2E7D4F", background: product.herkeseAcik ? "#2E7D4F" : "transparent", color: product.herkeseAcik ? "#fff" : "#2E7D4F" }}>
+          {product.herkeseAcik ? "✓ Herkese açık" : "Herkese açık yap"}
+        </button>
+      )}
       {product.sitedeGoster && onSiteGruplariKaydet && (
         <>
           <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Gruplar:</span>

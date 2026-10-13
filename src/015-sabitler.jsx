@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.655.0";
+const SURUM = "1.656.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "SITEDE rozeti stok listesinde; stok kartindan site yayini ve grup secimi";
+const SURUM_NOTU = "Sitede herkese acik vitrin: galeri resimleri ve Herkese acik modeller (girissiz, fiyatsiz)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "SITEDE rozeti stok listesinde; stok kartindan site yayini ve
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.656.0", tarih: "13.10.2026",
+    eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"] },
   { surum: "1.655.0", tarih: "12.10.2026",
     eklenen: ["Stok listesindeki her satırda 🌐 SİTEDE rozeti (grup adlarıyla; turuncu = grupsuz)", "Açık mamul kartında adın altında site şeridi: 'Sitede yayınla' + grup çipleri (tıkla → ekle/çıkar) + 'Yeni grup'"] },
   { surum: "1.654.0", tarih: "12.10.2026",

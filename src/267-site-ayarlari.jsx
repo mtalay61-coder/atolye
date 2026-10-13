@@ -22,6 +22,12 @@ const SITE_VARSAYILAN = {
   dugme2: "Teklif isteyin",
   koleksiyonBaslik: "Koleksiyon",
   koleksiyonAlt: "Müşterilerimize özel: modeller, size özel fiyatlar ve sipariş.",
+  // HERKESE AÇIK VİTRİN (v1.656.0 — kullanıcı: "herkesin göreceği resim de koyalım, müşteri girişi haricinde"): girişsiz
+  // ziyaretçi galeri resimlerini (`galeri`: sıkıştırılmış data URL, en fazla 12) ve stok kartında "Herkese açık" işaretli
+  // modelleri (resim + ad, FİYATSIZ) görür. Sipariş için yine giriş gerekir.
+  vitrinBaslik: "Koleksiyondan",
+  vitrinAlt: "Modellerimizden bir seçki. Fiyat ve sipariş için müşteri girişi yapın.",
+  galeri: [],
   uretimGoster: true,
   uretimBaslik: "Nasıl üretiyoruz",
   uretimAlt: "Her çift aynı titizlikle, aşama aşama izlenerek.",
@@ -45,9 +51,10 @@ const SITE_VARSAYILAN = {
 // sırayı izler: yazılmış çeviri → Türkçe değişmemişse hazır çeviri → Türkçe.
 // Çevrilmeyenler: marka, iletişim bilgileri, renk/tema/logo (dilden bağımsız).
 const SITE_DILLERI = [["tr", "Türkçe"], ["en", "English"], ["ru", "Русский"]];
-const SITE_CEVRILIR = ["ustEtiket", "baslik", "aciklama", "dugme1", "dugme2", "koleksiyonBaslik", "koleksiyonAlt", "uretimBaslik", "uretimAlt", "iletisimBaslik", "iletisimAlt", "altYazi"];
+const SITE_CEVRILIR = ["vitrinBaslik", "vitrinAlt", "ustEtiket", "baslik", "aciklama", "dugme1", "dugme2", "koleksiyonBaslik", "koleksiyonAlt", "uretimBaslik", "uretimAlt", "iletisimBaslik", "iletisimAlt", "altYazi"];
 const SITE_CEVIRI = {
   en: {
+    vitrinBaslik: "From the collection", vitrinAlt: "A selection of our models. Sign in for prices and ordering.",
     ustEtiket: "Shoe manufacturing", baslik: "From leather to shipment, craftsmanship at every step.",
     aciklama: "New Diamond carries out all production in its own workshop — from pattern and cutting to uppers and assembly. Sign in to browse the collection and place your order directly.",
     dugme1: "Customer login", dugme2: "Request a quote", koleksiyonBaslik: "Collection", koleksiyonAlt: "For our customers: models, your prices and ordering.",
@@ -56,6 +63,7 @@ const SITE_CEVIRI = {
     uretimKartlari: [["Cutting", "Selected leathers are cut with model-specific patterns, keeping waste to a minimum."], ["Uppers", "Stitched by skilled hands, the upper gives each model its character."], ["Assembly & sole", "Sole and upper are joined into a strong, long-lasting bond."], ["Quality & shipping", "Every pair is checked, packed in assorted cartons and shipped on time."]],
   },
   ru: {
+    vitrinBaslik: "Из коллекции", vitrinAlt: "Подборка наших моделей. Для цен и заказа войдите как клиент.",
     ustEtiket: "Производство обуви", baslik: "От кожи до отгрузки — мастерство на каждом этапе.",
     aciklama: "New Diamond выполняет всё производство в собственном цеху — от модели и раскроя до заготовки и сборки. Войдите, чтобы посмотреть коллекцию и оформить заказ напрямую.",
     dugme1: "Вход для клиентов", dugme2: "Запросить предложение", koleksiyonBaslik: "Коллекция", koleksiyonAlt: "Для наших клиентов: модели, ваши цены и заказ.",
@@ -242,6 +250,34 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast, stok, cariler }) {
 
       {altBaslik("Koleksiyon")}
       <div style={izgara}>{metin("koleksiyonBaslik", "Başlık")}{metin("koleksiyonAlt", "Alt yazı")}</div>
+
+      {altBaslik("Herkese açık vitrin (girişsiz)")}
+      <div style={izgara}>{metin("vitrinBaslik", "Başlık")}{metin("vitrinAlt", "Alt yazı")}</div>
+      {dil === "tr" && (
+        <div data-site-galeri="1" style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 6 }}>
+            Galeri resimleri (atölye, koleksiyon afişi…) — en fazla 12. Modelleri buraya eklemek için stok kartında "Herkese açık"ı işaretleyin
+            (resim + ad görünür, fiyat görünmez).
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {(taslak.galeri || []).map((url, i) => (
+              <span key={i} data-site-galeri-resim={i} style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <ColorSwatch src={url} size={72} onUrlSave={(u) => ata("galeri", (taslak.galeri || []).map((x, j) => (j === i ? u : x)))}
+                  onRemove={() => ata("galeri", (taslak.galeri || []).filter((_, j) => j !== i))} />
+                <span style={{ display: "flex", gap: 2 }}>
+                  <button type="button" className="btn-ghost" style={{ fontSize: 10, padding: "0 4px" }} title="Sola" onClick={() => { const l = [...(taslak.galeri || [])]; if (i > 0) { [l[i - 1], l[i]] = [l[i], l[i - 1]]; ata("galeri", l); } }}>◀</button>
+                  <button type="button" className="btn-ghost" style={{ fontSize: 10, padding: "0 4px", color: "var(--erp-danger)" }} title="Sil" onClick={() => ata("galeri", (taslak.galeri || []).filter((_, j) => j !== i))}>✕</button>
+                </span>
+              </span>
+            ))}
+            {(taslak.galeri || []).length < 12 && (
+              <span data-site-galeri-ekle="1" title="Resim ekle">
+                <ColorSwatch key={(taslak.galeri || []).length} src="" size={72} onUrlSave={(u) => ata("galeri", [...(taslak.galeri || []), u])} onRemove={() => {}} />
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {altBaslik("Nasıl üretiyoruz")}
       {dil === "tr" && (
