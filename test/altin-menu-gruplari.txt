@@ -7,7 +7,7 @@
  "depoAcik": [
   "Anasayfa",
   "Stok",
-  "Mamul Stok",
+  "Ürün Stok",
   "Fiyat Listesi",
   "Depo",
   "Paketleme",

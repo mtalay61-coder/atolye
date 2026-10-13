@@ -31,7 +31,7 @@ async function calistir() {
   };
   await kartAc("Stok", "Deri", "Fiyatlandırma");
   const varsayilanSekme = await sayfa.evaluate(() => { const p = document.querySelector("[data-fk-panel-tip]"); return p ? p.getAttribute("data-fk-panel-tip") : "yok"; });
-  await kartAc("Mamul Stok", "Bot", "Maliyet");
+  await kartAc("Ürün Stok", "Bot", "Maliyet");
   const satir = () => sayfa.evaluate(() => {
     const kutu = document.querySelector('[data-maliyet-duzenle="hm-u1-Siyah-"]');
     const u = document.querySelector('[data-maliyet-satis-uyari="u1"]');

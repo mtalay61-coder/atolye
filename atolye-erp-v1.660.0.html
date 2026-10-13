@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.658.0</title>
+<title>Atölye ERP 1.660.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2066,7 +2066,7 @@ const SEKME_BILGISI = {
     anasayfa: { ad: "Anasayfa" },
     tanimlar: { ad: "Tanımlar" },
     stok: { ad: "Stok" },
-    mamulstok: { ad: "Mamul Stok" },
+    mamulstok: { ad: "Ürün Stok" },
     fiyatlistesi: { ad: "Fiyat Listesi" },
     uretim: { ad: "Üretim" },
     cari: { ad: "Cari" },
@@ -2266,9 +2266,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.658.0";
+const SURUM = "1.660.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Site bildirimi ust cubukta, talep reddinde sebep, sitede arama ve stok durumu";
+const SURUM_NOTU = "Mamul Stok ekraninin adi Urun Stok oldu";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,16 +2279,28 @@ const SURUM_NOTU = "Site bildirimi ust cubukta, talep reddinde sebep, sitede ara
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.660.0", tarih: "13.10.2026", eklenen: [],
+        degisen: ["Menüdeki 'Mamul Stok' ekranının adı 'Ürün Stok' oldu (üst menü, sekme, mobil liste)"], duzeltilen: [] },
+    { surum: "1.659.0", tarih: "13.10.2026",
+        eklenen: ["Tanımlar › Web Sitesi › 'Site raporu': müşteri başına talep, çift, siparişe dönen (oranıyla), reddedilen, bekleyen, son talep; giriş sayısı, hatalı deneme, son giriş — 7 gün / 30 gün / 90 gün / 1 yıl", "Sitede giriş kaydı (başarılı / hatalı, 180 gün) — site-portal.sql KULLANICI ÇALIŞTIRMALI"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.658.1", tarih: "13.10.2026", eklenen: [], degisen: [],
+        duzeltilen: ["Sürüm geçmişi penceresi açılmıyordu (v1.654–1.658 kayıtlarında boş alanlar eksikti)"] },
     { surum: "1.658.0", tarih: "13.10.2026",
-        eklenen: ["Üst çubukta 🌐 site bildirimi: bekleyen siteden sipariş + kayıt talebi sayısı, yeni gelince uyarı; tıklayınca ilgili ekran", "Site talebini reddederken müşteriye görünen sebep; müşteri Siparişlerim'de talebin onay bekliyor / reddedildi (sebebiyle) / siparişe çevrildi (sipariş no) durumunu görür", "Sitede koleksiyonda arama (model, renk, tip) ve renk başına stok durumu: Stokta / Üretimde / Sipariş üzerine — rakam gösterilmez (site-portal.sql — KULLANICI ÇALIŞTIRMALI)"] },
+        eklenen: ["Üst çubukta 🌐 site bildirimi: bekleyen siteden sipariş + kayıt talebi sayısı, yeni gelince uyarı; tıklayınca ilgili ekran", "Site talebini reddederken müşteriye görünen sebep; müşteri Siparişlerim'de talebin onay bekliyor / reddedildi (sebebiyle) / siparişe çevrildi (sipariş no) durumunu görür", "Sitede koleksiyonda arama (model, renk, tip) ve renk başına stok durumu: Stokta / Üretimde / Sipariş üzerine — rakam gösterilmez (site-portal.sql — KULLANICI ÇALIŞTIRMALI)"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.657.0", tarih: "13.10.2026",
-        eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"] },
+        eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.656.0", tarih: "13.10.2026",
-        eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"] },
+        eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.655.0", tarih: "12.10.2026",
-        eklenen: ["Stok listesindeki her satırda 🌐 SİTEDE rozeti (grup adlarıyla; turuncu = grupsuz)", "Açık mamul kartında adın altında site şeridi: 'Sitede yayınla' + grup çipleri (tıkla → ekle/çıkar) + 'Yeni grup'"] },
+        eklenen: ["Stok listesindeki her satırda 🌐 SİTEDE rozeti (grup adlarıyla; turuncu = grupsuz)", "Açık mamul kartında adın altında site şeridi: 'Sitede yayınla' + grup çipleri (tıkla → ekle/çıkar) + 'Yeni grup'"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.654.0", tarih: "12.10.2026",
-        eklenen: ["Sitede yayınlanan ürünün 🌐 SİTEDE rozeti artık ürün kartı AÇIKKEN de adın yanında görünür (önce yalnız kapalı başlıktaydı)."] },
+        eklenen: ["Sitede yayınlanan ürünün 🌐 SİTEDE rozeti artık ürün kartı AÇIKKEN de adın yanında görünür (önce yalnız kapalı başlıktaydı)."],
+        degisen: [], duzeltilen: [] },
     { surum: "1.653.0", tarih: "12.10.2026",
         eklenen: ["Sitede ödeme şekli yalnız işaretli müşteriden istenir: cari kartı › Web sitesi girişi › 'Siparişte ödeme şeklini sorsun' — yeni açılan müşteride açık gelir, mevcut müşterilerde kapalı"],
         degisen: [], duzeltilen: [] },
@@ -22092,7 +22104,7 @@ function AtolyeUygulamasi() {
         anasayfa: "Atölye ERP",
         tanimlar: "Tanımlar",
         stok: "Stok Yönetimi",
-        mamulstok: "Mamul Stok",
+        mamulstok: "Ürün Stok",
         fiyatlistesi: "Fiyat Listesi",
         uretim: "Üretim Takibi",
         cari: "Cari Hesaplar",
@@ -22683,7 +22695,7 @@ function AtolyeUygulamasi() {
                             { ad: "Depo", ikon: React.createElement(Layers, { size: 15 }), ogeler: [
                                     // MAMUL STOK ayrı öğe (v1.455.0, kullanıcı: "stokta mamul stoğunu ayıralım, deponun
                                     // alt sekmesi olsun"): Stok hammadde/yarı mamul/hizmet, Mamul Stok yalnız mamul.
-                                    ["stok", "Stok", React.createElement(Boxes, { size: 16 })], ["mamulstok", "Mamul Stok", React.createElement(Package, { size: 16 })],
+                                    ["stok", "Stok", React.createElement(Boxes, { size: 16 })], ["mamulstok", "Ürün Stok", React.createElement(Package, { size: 16 })],
                                     // FİYAT LİSTESİ (v1.550.0): fiyat grubu seç → modellerin o fiyatı, düzelt, toplu % / tutar, farklı kaydet.
                                     yetki("stok") && ["fiyatlistesi", "Fiyat Listesi", React.createElement(Tag, { size: 16 })],
                                     ["depo", "Depo", React.createElement(Layers, { size: 16 })], ["paketleme", "Paketleme", React.createElement(PackageCheck, { size: 16 })]
@@ -48570,6 +48582,87 @@ function useSiteBildirimleri(siparisler, showToast) {
     }, [showToast]);
     return sayi;
 }
+// ================= SİTE RAPORU (v1.659.0 — "güven ve düzen") =================
+// Tanımlar › Web Sitesi altında. Cari başına dönemdeki site talepleri (kaçı siparişe döndü / reddedildi / bekliyor),
+// girişler ve hatalı denemeler, son giriş. Veri `site_raporu(gün)` (site-portal.sql §13); fonksiyon yoksa panel söyler.
+function SiteRaporuPaneli({ cariler }) {
+    const [gun, setGun] = useState(90);
+    const [veri, setVeri] = useState(null);
+    const [hata, setHata] = useState("");
+    const [acik, setAcik] = useState(false);
+    useEffect(() => {
+        if (!acik || !supabaseAcikMi())
+            return;
+        setVeri(null);
+        setHata("");
+        supabaseIstek("rpc/site_raporu", { method: "POST", body: JSON.stringify({ p_gun: gun }) })
+            .then((l) => setVeri(Array.isArray(l) ? l : []), (e) => setHata(String((e && e.message) || e)));
+    }, [acik, gun]);
+    const ad = (id) => ((cariler || []).find((c) => c.id === id) || {}).unvan || id;
+    const tarih = (t) => (t ? String(t).slice(0, 16).replace("T", " ") : "—");
+    const top = (veri || []).reduce((a, r) => ({ talep: a.talep + r.talep, cift: a.cift + Number(r.cift || 0), siparis: a.siparis + r.siparis, red: a.red + r.red, bekleyen: a.bekleyen + r.bekleyen, giris: a.giris + r.giris, hatali: a.hatali + r.hatali }), { talep: 0, cift: 0, siparis: 0, red: 0, bekleyen: 0, giris: 0, hatali: 0 });
+    const th = { textAlign: "left", padding: "4px 6px", fontSize: 11, color: "var(--erp-text-3)", borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+    const td = { padding: "4px 6px", fontSize: 12, borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+    const sag = { ...td, textAlign: "right" };
+    return (React.createElement("div", { "data-site-raporu": "1", style: { marginTop: 18 } },
+        React.createElement("button", { type: "button", onClick: () => setAcik(!acik), style: { all: "unset", cursor: "pointer", fontWeight: 700, fontSize: 13 } },
+            acik ? "▾" : "▸",
+            " Site raporu \u2014 talepler ve giri\u015Fler"),
+        acik && (React.createElement("div", { style: { marginTop: 8 } },
+            React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" } }, [[7, "7 gün"], [30, "30 gün"], [90, "90 gün"], [365, "1 yıl"]].map(([g, e]) => (React.createElement("button", { key: g, type: "button", className: gun === g ? "btn-primary" : "btn-secondary", style: { fontSize: 11, padding: "3px 10px" }, onClick: () => setGun(g) }, e)))),
+            hata && React.createElement("div", { style: { color: "var(--erp-danger)", fontSize: 12 } },
+                "Rapor okunamad\u0131 (site-portal.sql \u00E7al\u0131\u015Ft\u0131r\u0131ld\u0131 m\u0131?): ",
+                hata),
+            !hata && !veri && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "Y\u00FCkleniyor\u2026"),
+            veri && (React.createElement("div", { style: { overflowX: "auto" } },
+                React.createElement("table", { "data-site-raporu-tablo": "1", style: { borderCollapse: "collapse", width: "100%" } },
+                    React.createElement("thead", null,
+                        React.createElement("tr", null,
+                            React.createElement("th", { style: th }, "M\u00FC\u015Fteri"),
+                            React.createElement("th", { style: th }, "Kullan\u0131c\u0131"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "Talep"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "\u00C7ift"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "Sipari\u015Fe d\u00F6nen"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "Reddedilen"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "Bekleyen"),
+                            React.createElement("th", { style: th }, "Son talep"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "Giri\u015F"),
+                            React.createElement("th", { style: { ...th, textAlign: "right" } }, "Hatal\u0131 deneme"),
+                            React.createElement("th", { style: th }, "Son giri\u015F"))),
+                    React.createElement("tbody", null,
+                        veri.map((r) => (React.createElement("tr", { key: r.cariId },
+                            React.createElement("td", { style: { ...td, fontWeight: 600 } }, ad(r.cariId)),
+                            React.createElement("td", { style: { ...td, color: "var(--erp-info)" }, className: "mono" },
+                                r.kullanici || "—",
+                                r.kilitli ? " 🔒" : ""),
+                            React.createElement("td", { style: sag }, r.talep),
+                            React.createElement("td", { style: sag }, r.cift),
+                            React.createElement("td", { style: { ...sag, color: r.siparis ? "#2E7D4F" : undefined } },
+                                r.siparis,
+                                r.talep ? ` (%${Math.round((r.siparis / r.talep) * 100)})` : ""),
+                            React.createElement("td", { style: sag }, r.red),
+                            React.createElement("td", { style: { ...sag, fontWeight: r.bekleyen ? 700 : 400 } }, r.bekleyen),
+                            React.createElement("td", { style: td }, tarih(r.sonTalep)),
+                            React.createElement("td", { style: sag }, r.giris),
+                            React.createElement("td", { style: { ...sag, color: r.hatali >= 3 ? "var(--erp-danger)" : undefined } }, r.hatali),
+                            React.createElement("td", { style: td }, tarih(r.sonGiris))))),
+                        React.createElement("tr", { style: { fontWeight: 700 } },
+                            React.createElement("td", { style: td },
+                                "Toplam (",
+                                veri.length,
+                                ")"),
+                            React.createElement("td", { style: td }),
+                            React.createElement("td", { style: sag }, top.talep),
+                            React.createElement("td", { style: sag }, top.cift),
+                            React.createElement("td", { style: sag }, top.siparis),
+                            React.createElement("td", { style: sag }, top.red),
+                            React.createElement("td", { style: sag }, top.bekleyen),
+                            React.createElement("td", { style: td }),
+                            React.createElement("td", { style: sag }, top.giris),
+                            React.createElement("td", { style: sag }, top.hatali),
+                            React.createElement("td", { style: td })))),
+                React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 4 } }, "\uD83D\uDD12 = 5 hatal\u0131 denemeden sonra 15 dk kilitli. Giri\u015F kayd\u0131 180 g\u00FCn saklan\u0131r.")))))));
+}
 // ================= WEB SİTESİ AYARLARI (v1.647.0) =================
 //
 // Kullanıcı: "İletişim bilgilerini … uygulama içerisinden yapalım, site tasarımı v.s tüm hepsini." Sitenin bütün
@@ -48878,7 +48971,8 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast, stok, cariler }) {
         metin("adres", "Adres", "", true),
         metin("altYazi", "Sayfa altı yazısı (isteğe bağlı)"),
         React.createElement(SiteGruplariPaneli, { tanimlar: tanimlar, onSave: onSave, showToast: showToast, stok: stok, cariler: cariler }),
-        React.createElement(KayitCevirileriPaneli, { tanimlar: tanimlar, onSave: onSave, showToast: showToast })));
+        React.createElement(KayitCevirileriPaneli, { tanimlar: tanimlar, onSave: onSave, showToast: showToast }),
+        React.createElement(SiteRaporuPaneli, { cariler: cariler })));
 }
 // ================= KAYIT ÇEVİRİLERİ — SİTEDE GÖRÜNEN ADLAR (v1.651.0) =================
 //
@@ -59717,7 +59811,7 @@ const MOBIL_MODULLER = [
     { key: "stok", ad: "Stok" },
     // v1.608.0 (kullanıcı, iPhone: "Mobilde mamul stok yok, Stok hammadde açıyor"): üst menüdeki Depo › Mamul Stok ve
     // Fiyat Listesi mobil listede hiç yoktu — ne alt çubuğa ne ☰'ye konabiliyordu.
-    { key: "mamulstok", ad: "Mamul Stok" },
+    { key: "mamulstok", ad: "Ürün Stok" },
     { key: "fiyatlistesi", ad: "Fiyat Listesi" },
     { key: "uretim", ad: "Üretim" },
     { key: "depo", ad: "Depo" },
@@ -61314,7 +61408,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.658.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.660.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

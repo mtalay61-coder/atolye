@@ -40,7 +40,7 @@ async function calistir() {
   const dorduncuDenemesi = await katalogListesi();
   const bulut = ((await depoOku(sayfa, "tanimlar:data")) || {}).katalogFiyatKaynaklari;
   // Katalog
-  await sayfa.evaluate(() => document.querySelector('[data-nav="Mamul Stok"]').click());
+  await sayfa.evaluate(() => document.querySelector('[data-nav="Ürün Stok"]').click());
   await sayfa.waitForTimeout(800);
   await sayfa.locator('button:has-text("Katalog"):visible').first().click();
   await sayfa.waitForTimeout(600);
@@ -59,7 +59,7 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   await kaynakSecVeEkle("fgA");
   const alisListesi = await katalogListesi();
-  await sayfa.evaluate(() => document.querySelector('[data-nav="Mamul Stok"]').click());
+  await sayfa.evaluate(() => document.querySelector('[data-nav="Ürün Stok"]').click());
   await sayfa.waitForTimeout(700);
   const alisPersonel = await kart();
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Personel görünümü"); b.click(); });

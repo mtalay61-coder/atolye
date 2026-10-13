@@ -58,7 +58,7 @@ async function calistir() {
   await sayfa.waitForTimeout(500);
 
   // 2. 125 Model — asorti barkodları
-  await kartAc(sayfa, "Mamul Stok", "125 Model");
+  await kartAc(sayfa, "Ürün Stok", "125 Model");
   const asortiOnce = await sayfa.evaluate(() => { const x = document.querySelector("[data-asorti-barkodlari]"); return x ? x.innerText.replace(/\s+/g, " ").trim() : "yok"; });
   const ekle = async () => {
     await sayfa.locator("[data-asorti-barkod-ekle]").click();

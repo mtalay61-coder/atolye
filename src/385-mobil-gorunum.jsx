@@ -24,7 +24,7 @@ const MOBIL_MODULLER = [
   { key: "stok", ad: "Stok" },
   // v1.608.0 (kullanıcı, iPhone: "Mobilde mamul stok yok, Stok hammadde açıyor"): üst menüdeki Depo › Mamul Stok ve
   // Fiyat Listesi mobil listede hiç yoktu — ne alt çubuğa ne ☰'ye konabiliyordu.
-  { key: "mamulstok", ad: "Mamul Stok" },
+  { key: "mamulstok", ad: "Ürün Stok" },
   { key: "fiyatlistesi", ad: "Fiyat Listesi" },
   { key: "uretim", ad: "Üretim" },
   { key: "depo", ad: "Depo" },

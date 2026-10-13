@@ -3510,7 +3510,7 @@ function AtolyeUygulamasi() {
     anasayfa: "Atölye ERP",
     tanimlar: "Tanımlar",
     stok: "Stok Yönetimi",
-    mamulstok: "Mamul Stok",
+    mamulstok: "Ürün Stok",
     fiyatlistesi: "Fiyat Listesi",
     uretim: "Üretim Takibi",
     cari: "Cari Hesaplar",
@@ -4178,7 +4178,7 @@ function AtolyeUygulamasi() {
                   { ad: "Depo", ikon: <Layers size={15} />, ogeler: [
                     // MAMUL STOK ayrı öğe (v1.455.0, kullanıcı: "stokta mamul stoğunu ayıralım, deponun
                     // alt sekmesi olsun"): Stok hammadde/yarı mamul/hizmet, Mamul Stok yalnız mamul.
-                    ["stok", "Stok", <Boxes size={16} />], ["mamulstok", "Mamul Stok", <Package size={16} />],
+                    ["stok", "Stok", <Boxes size={16} />], ["mamulstok", "Ürün Stok", <Package size={16} />],
                     // FİYAT LİSTESİ (v1.550.0): fiyat grubu seç → modellerin o fiyatı, düzelt, toplu % / tutar, farklı kaydet.
                     yetki("stok") && ["fiyatlistesi", "Fiyat Listesi", <Tag size={16} />],
                     ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />]] },

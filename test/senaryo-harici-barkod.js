@@ -33,7 +33,7 @@ async function calistir() {
   });
 
   // ---- 1-2. ÜRÜN KARTI › BARKODLAR -------------------------------------------------------------------
-  await modulAc(sayfa, "Mamul Stok");
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.getByText("125 Model", { exact: true }).first().click();
   await sayfa.waitForTimeout(900);

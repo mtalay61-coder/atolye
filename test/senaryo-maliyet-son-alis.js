@@ -38,7 +38,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.slice(0, 150)));
   await sayfa.setViewportSize({ width: 1100, height: 900 });
   await sayfa.waitForTimeout(2500);
-  await sayfa.evaluate(() => { const b = document.querySelector("[data-nav=\"Mamul Stok\"]"); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector("[data-nav=\"Ürün Stok\"]"); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0); let p = el; for (let i = 0; i < 8 && p; i++, p = p.parentElement) { if (p.onclick || p.tagName === "BUTTON") { p.click(); return; } } });
   await sayfa.waitForTimeout(1200);

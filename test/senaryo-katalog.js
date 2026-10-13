@@ -102,7 +102,7 @@ async function calistir() {
     };
   });
 
-  await modulAc(sayfa, "Mamul Stok");
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(800);
 
   // SIKI BAŞLIK (kullanıcı, 12 Eylül: "ekranın yarısına yakını arama, sekme vs."): Liste/Katalog
@@ -117,7 +117,7 @@ async function calistir() {
     const kart = [...document.querySelectorAll("button")].find((b) => /renk\/beden/.test(b.textContent) && gorunur(b));
     const h1 = document.querySelector("h1");
     return {
-      // Mamul Stok'ta (v1.455.0) kategori sekmesi yok — tek kategori; anahtar tek başına duruyor.
+      // Ürün Stok'ta (v1.455.0) kategori sekmesi yok — tek kategori; anahtar tek başına duruyor.
       anahtarSekmelerleAyniSatirda: tumu ? !!liste && Math.abs(liste.getBoundingClientRect().top - tumu.getBoundingClientRect().top) < 12 : !!liste,
       ilkKartBasligaYakin: !!(kart && h1) && (kart.getBoundingClientRect().top - h1.getBoundingClientRect().top) < 200,
     };
@@ -245,7 +245,7 @@ async function calistir() {
   });
   await sayfa.locator('button:has-text("Kapat"):visible').first().click();
   await sayfa.waitForTimeout(600);
-  await modulAc(sayfa, "Mamul Stok");
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(800);
 
   // ARAMA: etikete göre. "taban" yazmak, taban kodu dolu olan ürünleri getirmeli.

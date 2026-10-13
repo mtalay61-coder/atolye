@@ -33,7 +33,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2500);
 
   // ---- 1) Kart › Maliyet › Maliyet OK ----
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ürün Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0);

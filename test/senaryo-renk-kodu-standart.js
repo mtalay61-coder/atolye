@@ -41,7 +41,7 @@ async function calistir() {
   await sayfa.waitForTimeout(2500);
 
   const urunAc = async (ad) => {
-    await modulAc(sayfa, "Mamul Stok");
+    await modulAc(sayfa, "Ürün Stok");
     await sayfa.waitForTimeout(600);
     await sayfa.evaluate((ad) => {
       const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === ad && e.children.length === 0);
