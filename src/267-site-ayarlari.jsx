@@ -331,6 +331,7 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast, stok, cariler }) {
       {metin("altYazi", "Sayfa altı yazısı (isteğe bağlı)")}
       <SiteGruplariPaneli tanimlar={tanimlar} onSave={onSave} showToast={showToast} stok={stok} cariler={cariler} />
       <KayitCevirileriPaneli tanimlar={tanimlar} onSave={onSave} showToast={showToast} />
+      <SiteRaporuPaneli cariler={cariler} />
     </div>
   );
 }

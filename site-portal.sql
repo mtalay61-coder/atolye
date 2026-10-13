@@ -379,6 +379,19 @@ revoke all on function public.portal_hesap(text, date, date) from public;
 grant execute on function public.portal_hesap(text, date, date) to anon, authenticated;
 
 
+-- ---------- 9b) Giriş kaydı (v1.659.0 — "güven ve düzen") ----------
+-- Hangi müşteri ne zaman girdi / hatalı denedi. Yalnız VAR OLAN hesaplar yazılır (bilinmeyen ad kaydedilmez, tablo
+-- şişmesin); 180 günden eski satırlar başarılı girişte silinir. Anonim role ve ERP'ye kapalı; ERP `site_giris_ozeti()`.
+create table if not exists public.site_giris_kaydi (
+  id bigserial primary key,
+  cari_id text not null,
+  zaman timestamptz not null default now(),
+  basarili boolean not null
+);
+create index if not exists site_giris_kaydi_cari on public.site_giris_kaydi (cari_id, zaman desc);
+alter table public.site_giris_kaydi enable row level security;
+revoke all on public.site_giris_kaydi from anon, authenticated;
+
 -- ---------- 10) Giriş / çıkış (site) ve hesap yönetimi (ERP) — v1.649.0 ----------
 create or replace function public.portal_giris(p_kullanici text, p_sifre text)
 returns text
@@ -398,6 +411,7 @@ begin
     update site_hesaplari set hatali_deneme = hatali_deneme + 1,
       kilit_bitis = case when hatali_deneme + 1 >= 5 then now() + interval '15 minutes' else null end
     where cari_id = h.cari_id;
+    insert into site_giris_kaydi (cari_id, basarili) values (h.cari_id, false);
     return null;
   end if;
   if exists (select 1 from cariler c where c.id::text = h.cari_id and coalesce(c.pasif, false)) then return null; end if;
@@ -405,6 +419,8 @@ begin
   delete from site_oturumlari where bitis < now();
   insert into site_oturumlari values (anahtar, h.cari_id, now() + interval '30 days');
   update site_hesaplari set son_giris = now(), hatali_deneme = 0, kilit_bitis = null where cari_id = h.cari_id;
+  insert into site_giris_kaydi (cari_id, basarili) values (h.cari_id, true);
+  delete from site_giris_kaydi where zaman < now() - interval '180 days';
   return anahtar;
 end;
 $$;
@@ -564,3 +580,31 @@ as $$ update site_kayit_talepleri set durum = 'reddedildi', sifre_ozeti = null w
 
 revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) from public, anon;
 grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) to authenticated;
+
+-- ---------- 13) Site raporu (v1.659.0 — "güven ve düzen") ----------
+-- Cari başına: dönemdeki talep sayısı / çift / siparişe dönen / reddedilen / bekleyen, son talep; giriş sayısı, hatalı deneme,
+-- son giriş. ERP › Tanımlar › Web Sitesi › Site raporu okur. Dönem gün olarak (1..730).
+create or replace function public.site_raporu(p_gun integer default 90)
+returns jsonb language sql stable security definer set search_path = public
+as $$
+  with d as (select now() - make_interval(days => greatest(1, least(coalesce(p_gun, 90), 730))) bas),
+  t as (
+    select t.cari_id, count(*) talep, sum(t.toplam_cift) cift,
+      count(*) filter (where exists (select 1 from siparisler s where s.ek->>'siteTalepId' = t.id)) siparis,
+      count(*) filter (where t.durum = 'reddedildi') red,
+      count(*) filter (where t.durum = 'yeni' and not exists (select 1 from siparisler s where s.ek->>'siteTalepId' = t.id)) bekleyen,
+      max(t.olusturma) son_talep
+    from site_talepleri t, d where t.olusturma >= d.bas group by t.cari_id),
+  g as (
+    select k.cari_id, count(*) filter (where k.basarili) giris, count(*) filter (where not k.basarili) hatali
+    from site_giris_kaydi k, d where k.zaman >= d.bas group by k.cari_id),
+  c as (select cari_id from t union select cari_id from g union select cari_id from site_hesaplari)
+  select coalesce(jsonb_agg(jsonb_build_object(
+      'cariId', c.cari_id, 'kullanici', h.kullanici, 'sonGiris', h.son_giris, 'kilitli', h.kilit_bitis > now(),
+      'talep', coalesce(t.talep, 0), 'cift', coalesce(t.cift, 0), 'siparis', coalesce(t.siparis, 0), 'red', coalesce(t.red, 0),
+      'bekleyen', coalesce(t.bekleyen, 0), 'sonTalep', t.son_talep, 'giris', coalesce(g.giris, 0), 'hatali', coalesce(g.hatali, 0))
+    order by coalesce(t.talep, 0) desc, h.son_giris desc nulls last), '[]'::jsonb)
+  from c left join t using (cari_id) left join g using (cari_id) left join site_hesaplari h using (cari_id);
+$$;
+revoke all on function public.site_raporu(integer) from public, anon;
+grant execute on function public.site_raporu(integer) to authenticated;
