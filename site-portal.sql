@@ -443,3 +443,28 @@ language sql stable security definer set search_path = public
 as $$ select h.cari_id, h.kullanici, h.son_giris from site_hesaplari h; $$;
 revoke all on function public.site_hesap_bilgi(text), public.site_hesap_kaydet(text, text, text), public.site_hesap_sil(text), public.site_hesap_listesi() from public, anon;
 grant execute on function public.site_hesap_bilgi(text), public.site_hesap_kaydet(text, text, text), public.site_hesap_sil(text), public.site_hesap_listesi() to authenticated;
+
+-- ---------- 11) Herkese açık vitrin (v1.656.0) ----------
+-- Kullanıcı: "Siteye herkesin göreceği resim de koyalım, müşteri girişi haricinde." GİRİŞSİZ ziyaretçi, stok kartında
+-- hem "Sitede" hem "Herkese açık" (`ek->>'herkeseAcik'`) işaretli mamulleri görür: ad, tip, renkler, resimler + çeviriler.
+-- FİYAT, STOK, BEDEN, GRUP GİTMEZ; sipariş için giriş gerekir. Galeri resimleri `site_ayarlari()` içinde (`galeri`).
+create or replace function public.herkese_acik_vitrin()
+returns jsonb
+language sql stable security definer set search_path = public
+as $$
+  select jsonb_build_object(
+    'modeller', coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'id', u.id::text, 'ad', u.ad, 'tip', u.mamul_tipi,
+        'renkler', coalesce((select jsonb_agg(distinct v.renk) from varyantlar v where v.urun_id::text = u.id::text and coalesce(v.renk, '') <> ''), '[]'::jsonb),
+        'renkResimleri', coalesce(u.renk_resimleri::jsonb, '{}'::jsonb),
+        'kapakResmi', u.kapak_resmi) order by u.ad)
+      from urunler u
+      where coalesce(u.ek->>'sitedeGoster', 'false') = 'true' and coalesce(u.ek->>'herkeseAcik', 'false') = 'true'
+        and not coalesce(u.pasif, false) and u.kategori = 'Mamul'), '[]'::jsonb),
+    'ceviriler', coalesce((select t.veri->'ceviriler' from tanimlar t where t.id = 'tekil'), '{}'::jsonb),
+    'urunCevirileri', coalesce((select jsonb_object_agg(u.id::text, u.ek->'ceviriler') from urunler u
+      where coalesce(u.ek->>'herkeseAcik', 'false') = 'true' and coalesce(u.ek->>'sitedeGoster', 'false') = 'true' and u.ek ? 'ceviriler'), '{}'::jsonb));
+$$;
+revoke all on function public.herkese_acik_vitrin() from public;
+grant execute on function public.herkese_acik_vitrin() to anon, authenticated;

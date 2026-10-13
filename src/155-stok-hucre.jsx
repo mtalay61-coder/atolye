@@ -137,8 +137,8 @@ function SiteRozeti({ product, gruplar, boyut = 10 }) {
   return (
     <span className="mono" data-urun-sitede="1"
       title={"Web sitesinde yayında" + (g.length ? " · gruplar: " + g.map((x) => x.ad).join(", ") : " · hiçbir site grubunda değil — müşteri göremez")}
-      style={{ fontSize: boyut, fontWeight: 800, color: "#fff", background: g.length ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", display: "inline-flex", alignItems: "center", gap: 3, verticalAlign: "middle", whiteSpace: "nowrap" }}>
-      <Globe size={boyut} /> SİTEDE{g.length ? " · " + g.map((x) => x.ad).join(", ") : " · grupsuz"}
+      style={{ fontSize: boyut, fontWeight: 800, color: "#fff", background: g.length || product.herkeseAcik ? "var(--erp-info)" : "#C77700", padding: "1px 7px", borderRadius: "var(--erp-r-pill)", display: "inline-flex", alignItems: "center", gap: 3, verticalAlign: "middle", whiteSpace: "nowrap" }}>
+      <Globe size={boyut} /> SİTEDE{product.herkeseAcik ? " · herkese açık" : ""}{g.length ? " · " + g.map((x) => x.ad).join(", ") : product.herkeseAcik ? "" : " · grupsuz"}
     </span>
   );
 }
