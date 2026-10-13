@@ -332,7 +332,13 @@ begin
             -- BEDEN DAĞILIMI (kullanıcı: "sipariş asorti de görünsün"): beden → çift; site asortiye denk geliyorsa "n koli <asorti>" yazar.
             'bedenler', (select jsonb_object_agg(z.b, z.m) from (select coalesce(k2.beden, '') b, sum(k2.miktar) m from siparis_kalemleri k2
                           where k2.siparis_id = s.id and k2.urun_id is not distinct from g.urun_id and k2.renk is not distinct from g.renk
-                            and public.site_pb(k2.para_birimi) = g.pb group by 1) z)) order by g.urun_ad, g.renk)
+                            and public.site_pb(k2.para_birimi) = g.pb group by 1) z),
+            -- ÜRETİMDE (v1.660.0 — kullanıcı: "siparişe çevrilen stoklar sipariş durumuna göre güncellensin: üretimde,
+            -- bekliyor, sevk edildi"): bu siparişe bağlı (rezervasyon kimliği ya da sipariş no) o model+renkte bitmemiş
+            -- üretim var mı. Site satır durumunu teslim + bu bayraktan kurar.
+            'uretimde', exists (select 1 from uretim e where (e.rezervasyon_siparis_id::text = s.id::text or e.siparis_no = s.siparis_no)
+                and e.urun_id::text is not distinct from g.urun_id::text and e.renk is not distinct from g.renk
+                and not coalesce(e.stoga_eklendi_mi, false) and coalesce(e.asama, '') not in ('Tamamlandı', 'Üretildi (stokta)'))) order by g.urun_ad, g.renk)
           from (select k.urun_id, k.urun_ad, k.renk, public.site_pb(k.para_birimi) pb, sum(k.miktar) miktar, sum(k.miktar * coalesce(k.fiyat, 0))::numeric tutar,
                   sum(case when exists (select 1 from stok_hareketleri sh where sh.siparis_id = s.id)
                            then greatest(coalesce((select -sum(sh.miktar) from stok_hareketleri sh where sh.siparis_id = s.id and sh.kalem_id = k.id), 0), 0)
