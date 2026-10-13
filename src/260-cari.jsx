@@ -583,6 +583,8 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
         </button>
       </div>
 
+      {/* Siteden gelen müşteri kayıtları (v1.657.0, 266): onaylanınca cari + site hesabı açılır. */}
+      {kapsam === "cari" && <SiteKayitTalepleriPaneli cariler={cariler} onSave={onSave} showToast={showToast} />}
       {showForm && (
         <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20 }}>
           {/* MOR KAYIT ŞERİDİ (v1.625.0): Kaydet · Vazgeç formun üstünde (önce dipteydi). */}

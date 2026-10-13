@@ -468,3 +468,81 @@ as $$
 $$;
 revoke all on function public.herkese_acik_vitrin() from public;
 grant execute on function public.herkese_acik_vitrin() to anon, authenticated;
+
+-- ---------- 12) Siteden müşteri kaydı (v1.657.0) ----------
+-- Kullanıcı: "Kaydı olmayan için kayıt ol butonu da olsun, cari bilgileri, adresi vs. ekleyip kayıt olsun. Sisteme
+-- düşsün, onaylayıp kayıt ekleyelim." Ziyaretçi firma bilgilerini + İSTEDİĞİ kullanıcı adı ve şifreyi girer; kayıt
+-- TALEP olarak bekler (giriş YOK). ERP › Cari › "Siteden gelen kayıt talepleri" › Onayla: cari açılır, ardından
+-- `site_kayit_onayla` talepteki şifre özetiyle site hesabını kurar (şifre bir daha sorulmaz, düz hâli hiç saklanmaz).
+-- Talep tablosu anonim role ve ERP'ye KAPALI; ERP listeyi şifre özeti olmadan `site_kayit_listesi()` ile okur.
+-- Kötüye kullanıma karşı: günde en fazla 30 yeni talep (hepsi), aynı kullanıcı adı ne hesapta ne bekleyen talepte olabilir.
+create table if not exists public.site_kayit_talepleri (
+  id text primary key default gen_random_uuid()::text,
+  olusturma timestamptz not null default now(),
+  durum text not null default 'yeni',        -- 'yeni' | 'onaylandi' | 'reddedildi'
+  bilgiler jsonb not null default '{}'::jsonb, -- {unvan, yetkili, telefon, eposta, vergiDairesi, vergiNo, ulke, il, ilce, adres, not}
+  kullanici text not null,
+  sifre_ozeti text,                          -- onay/redde silinir
+  cari_id text
+);
+alter table public.site_kayit_talepleri enable row level security;
+revoke all on public.site_kayit_talepleri from anon, authenticated;
+
+create or replace function public.site_kayit_ol(p_bilgi jsonb, p_kullanici text, p_sifre text)
+returns text language plpgsql volatile security definer set search_path = public, extensions
+as $$
+declare
+  ad text := lower(trim(coalesce(p_kullanici, '')));
+  b jsonb := '{}'::jsonb;
+  k text;
+begin
+  -- Yalnız bilinen alanlar, her biri en fazla 300 karakter (adres 600).
+  foreach k in array array['unvan','yetkili','telefon','eposta','vergiDairesi','vergiNo','ulke','il','ilce','adres','not'] loop
+    if jsonb_typeof(p_bilgi->k) = 'string' and trim(p_bilgi->>k) <> '' then
+      b := b || jsonb_build_object(k, left(trim(p_bilgi->>k), case when k in ('adres','not') then 600 else 300 end));
+    end if;
+  end loop;
+  if length(coalesce(b->>'unvan', '')) < 2 or length(regexp_replace(coalesce(b->>'telefon', ''), '\D', '', 'g')) < 7 then
+    raise exception 'GECERSIZ_BILGI';
+  end if;
+  if ad !~ '^[a-z0-9._-]{3,40}$' then raise exception 'GECERSIZ_KULLANICI'; end if;
+  if length(coalesce(p_sifre, '')) < 6 or length(p_sifre) > 100 then raise exception 'GECERSIZ_SIFRE'; end if;
+  if (select count(*) from site_kayit_talepleri where olusturma > now() - interval '1 day') >= 30 then raise exception 'GUNLUK_SINIR'; end if;
+  if exists (select 1 from site_hesaplari where kullanici = ad)
+     or exists (select 1 from site_kayit_talepleri where kullanici = ad and durum = 'yeni') then
+    raise exception 'KULLANICI_ALINMIS';
+  end if;
+  insert into site_kayit_talepleri (bilgiler, kullanici, sifre_ozeti) values (b, ad, crypt(p_sifre, gen_salt('bf', 10)));
+  return 'ok';
+end;
+$$;
+revoke all on function public.site_kayit_ol(jsonb, text, text) from public;
+grant execute on function public.site_kayit_ol(jsonb, text, text) to anon, authenticated;
+
+create or replace function public.site_kayit_listesi()
+returns table (id text, olusturma timestamptz, bilgiler jsonb, kullanici text)
+language sql stable security definer set search_path = public
+as $$ select t.id, t.olusturma, t.bilgiler, t.kullanici from site_kayit_talepleri t where t.durum = 'yeni' order by t.olusturma desc limit 100; $$;
+
+-- ERP cariyi AÇTIKTAN sonra çağırır (cari buluta yazılmış olmalı — yoksa 'Cari bulunamadı', ERP biraz bekleyip yeniden dener).
+create or replace function public.site_kayit_onayla(p_id text, p_cari_id text)
+returns void language plpgsql volatile security definer set search_path = public
+as $$
+declare t record;
+begin
+  select * into t from site_kayit_talepleri where id = p_id and durum = 'yeni' for update;
+  if not found then raise exception 'Talep bulunamadı ya da işlenmiş'; end if;
+  if not exists (select 1 from cariler where id::text = p_cari_id) then raise exception 'Cari bulunamadı'; end if;
+  if exists (select 1 from site_hesaplari where kullanici = t.kullanici) then raise exception 'Bu kullanıcı adı artık kullanılıyor'; end if;
+  insert into site_hesaplari (cari_id, kullanici, sifre_ozeti) values (p_cari_id, t.kullanici, t.sifre_ozeti)
+  on conflict (cari_id) do update set kullanici = excluded.kullanici, sifre_ozeti = excluded.sifre_ozeti, hatali_deneme = 0, kilit_bitis = null;
+  update site_kayit_talepleri set durum = 'onaylandi', cari_id = p_cari_id, sifre_ozeti = null where id = p_id;
+end;
+$$;
+
+create or replace function public.site_kayit_reddet(p_id text)
+returns void language sql volatile security definer set search_path = public
+as $$ update site_kayit_talepleri set durum = 'reddedildi', sifre_ozeti = null where id = p_id and durum = 'yeni'; $$;
+
+revoke all on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) from public, anon;
+grant execute on function public.site_kayit_listesi(), public.site_kayit_onayla(text, text), public.site_kayit_reddet(text) to authenticated;

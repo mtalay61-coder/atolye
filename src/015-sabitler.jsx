@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.656.0";
+const SURUM = "1.657.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Sitede herkese acik vitrin: galeri resimleri ve Herkese acik modeller (girissiz, fiyatsiz)";
+const SURUM_NOTU = "Siteden musteri kaydi: Kayit ol formu, Cari ekraninda onayla - cari ve site hesabi acilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Sitede herkese acik vitrin: galeri resimleri ve Herkese acik
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.657.0", tarih: "13.10.2026",
+    eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"] },
   { surum: "1.656.0", tarih: "13.10.2026",
     eklenen: ["Sitede girişsiz herkesin gördüğü vitrin: Tanımlar › Web Sitesi › 'Herkese açık vitrin' galeri resimleri (en fazla 12) + başlık/alt yazı (TR/EN/RU)", "Mamul kartındaki site şeridinde 'Herkese açık yap': model girişsiz ziyaretçiye resim + ad + renklerle görünür, fiyat görünmez (site-portal.sql §11 herkese_acik_vitrin — KULLANICI ÇALIŞTIRMALI)"] },
   { surum: "1.655.0", tarih: "12.10.2026",

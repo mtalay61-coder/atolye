@@ -200,3 +200,93 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
     </div>
   );
 }
+
+// ================= SİTEDEN KAYIT TALEPLERİ (v1.657.0) =================
+// Kullanıcı: "Kaydı olmayan için kayıt ol butonu da olsun, cari bilgileri, adresi vs. ekleyip kayıt olsun. Sisteme
+// düşsün, onaylayıp kayıt ekleyelim." Site `site_kayit_ol()` ile bekleyen talep yazar (kullanıcı adı + şifre özeti
+// dahil). Burada Onayla: (1) aynı unvan / vergi no'lu cari varsa ona bağlamak sorulur, yoksa yeni MÜŞTERİ carisi
+// açılır; (2) `site_kayit_onayla` site hesabını talepteki şifreyle kurar. Cari buluta yazılmadan (2) "Cari
+// bulunamadı" der — birkaç saniye arayla yeniden denenir. Okuma `site_kayit_listesi()` (şifre özeti gelmez).
+function siteKayitCarisi(b) {
+  const notlar = [b.yetkili ? `Yetkili: ${b.yetkili}` : "", b.not ? `Site notu: ${b.not}` : "", "Web sitesinden kayıt"].filter(Boolean).join(" · ");
+  return {
+    id: uid("cari"), unvan: String(b.unvan || "").trim(), tip: "Müşteri",
+    telefon: b.telefon || "", vergiNo: vergiNoKaydedilecek(b.vergiNo || ""), adres: b.adres || "", notlar,
+    paraBirimi: "TRY", hareketler: [], siteOdemeSor: true,
+    ...(b.eposta ? { eposta: b.eposta } : {}), ...(b.vergiDairesi ? { vergiDairesi: b.vergiDairesi } : {}),
+    ...(b.ulke ? { ulke: b.ulke } : {}), ...(b.il ? { il: b.il } : {}), ...(b.ilce ? { ilce: b.ilce } : {}),
+  };
+}
+
+function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
+  const [talepler, setTalepler] = useState(null);
+  const [acik, setAcik] = useState(true);
+  const [isleniyor, setIsleniyor] = useState({});
+  const yenile = useCallback(() => {
+    if (!supabaseAcikMi()) return;
+    supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).then((l) => setTalepler(Array.isArray(l) ? l : []), () => setTalepler(null));
+  }, []);
+  useEffect(() => { yenile(); const t = setInterval(yenile, 120000); return () => clearInterval(t); }, [yenile]);
+  const liste = (talepler || []).filter((t) => !isleniyor[t.id] || isleniyor[t.id] === "hata");
+  if (!liste.length) return null;
+  const dus = (t) => setTalepler((l) => (l || []).filter((x) => x.id !== t.id));
+  const hesabiKur = (t, cariId, deneme = 0) => supabaseIstek("rpc/site_kayit_onayla", { method: "POST", body: JSON.stringify({ p_id: t.id, p_cari_id: cariId }) })
+    .then(() => { dus(t); showToast(`Site hesabı açıldı: ${t.kullanici} — müşteri kendi şifresiyle girebilir`); },
+      (e) => {
+        const m = String((e && e.message) || e);
+        if (/Cari bulunamad/.test(m) && deneme < 8) return new Promise((r) => setTimeout(r, 3000)).then(() => hesabiKur(t, cariId, deneme + 1));
+        setIsleniyor((x) => ({ ...x, [t.id]: "hata" }));
+        showToast("Site hesabı açılamadı: " + m);
+      });
+  const onayla = (t) => {
+    const b = t.bilgiler || {};
+    const nrm = (s) => String(s || "").toLocaleLowerCase("tr-TR").trim();
+    const vn = String(b.vergiNo || "").replace(/\D/g, "");
+    const mevcut = (cariler || []).find((c) => (nrm(c.unvan) && nrm(c.unvan) === nrm(b.unvan)) || (vn.length >= 10 && String(c.vergiNo || "").replace(/\D/g, "") === vn));
+    let cariId;
+    if (mevcut && window.confirm(`"${mevcut.unvan}" zaten kayıtlı. Site hesabı bu cariye bağlansın mı?\n\nTamam = mevcut cariye bağla · İptal = yeni cari aç`)) {
+      cariId = mevcut.id;
+    } else {
+      if (!window.confirm(`"${b.unvan}" yeni müşteri carisi olarak açılsın ve siteye "${t.kullanici}" ile girebilsin mi?`)) return;
+      const cari = siteKayitCarisi(b);
+      onSave([cari, ...(cariler || [])]);
+      cariId = cari.id;
+    }
+    setIsleniyor((x) => ({ ...x, [t.id]: "suruyor" }));
+    hesabiKur(t, cariId);
+  };
+  const reddet = (t) => {
+    if (!window.confirm(`${(t.bilgiler || {}).unvan || t.kullanici} kayıt talebi reddedilsin mi?`)) return;
+    supabaseIstek("rpc/site_kayit_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
+      .then(() => { dus(t); showToast("Kayıt talebi reddedildi"); }, (e) => showToast("Reddedilemedi: " + ((e && e.message) || e)));
+  };
+  return (
+    <div data-site-kayitlari="1" style={{ margin: "0 0 12px", border: "1px solid #BFD3BB", background: "#F3F8F1", borderRadius: "var(--erp-r-md)", padding: "8px 10px" }}>
+      <button type="button" onClick={() => setAcik(!acik)} style={{ all: "unset", cursor: "pointer", fontWeight: 700, color: "#2F6B3A", fontSize: 13 }}>
+        {acik ? "▾" : "▸"} Siteden gelen kayıt talepleri ({liste.length})
+      </button>
+      {acik && (
+        <div style={{ display: "grid", gap: 6, marginTop: 8 }}>
+          {liste.map((t) => {
+            const b = t.bilgiler || {};
+            const yer = [b.ilce, b.il, b.ulke].filter(Boolean).join(" / ");
+            return (
+              <div key={t.id} data-site-kayit={t.kullanici} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", background: "#fff", border: "1px solid #DCE7D8", borderRadius: 8, padding: "6px 8px", fontSize: 12 }}>
+                <span className="mono" style={{ color: "var(--erp-text-3)" }}>{String(t.olusturma || "").slice(0, 16).replace("T", " ")}</span>
+                <b>{b.unvan}</b>
+                {b.yetkili && <span>{b.yetkili}</span>}
+                <span className="mono">{b.telefon}</span>
+                {b.eposta && <span>{b.eposta}</span>}
+                {(b.vergiNo || b.vergiDairesi) && <span style={{ color: "var(--erp-text-2)" }}>VN: {[b.vergiDairesi, b.vergiNo].filter(Boolean).join(" · ")}</span>}
+                <span style={{ color: "var(--erp-text-2)", flex: "1 1 200px", minWidth: 0 }}>{[b.adres, yer].filter(Boolean).join(" — ")}{b.not ? ` — “${b.not}”` : ""}</span>
+                <span className="mono" title="Müşterinin seçtiği kullanıcı adı" style={{ fontWeight: 700, color: "var(--erp-info)" }}>👤 {t.kullanici}</span>
+                <button type="button" className="btn-primary" style={{ fontSize: 11, padding: "3px 10px" }} disabled={isleniyor[t.id] === "suruyor"} onClick={() => onayla(t)}>Onayla — cari aç</button>
+                <button type="button" className="btn-secondary" style={{ fontSize: 11, padding: "3px 8px" }} onClick={() => reddet(t)}>Reddet</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
