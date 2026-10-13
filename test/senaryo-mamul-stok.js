@@ -4,9 +4,9 @@
 //
 // Ölçülenler:
 //   1. Depo ▸ Stok: hammadde görünüyor, mamul görünmüyor; kategori sekmelerinde "Mamul" yok.
-//   2. Depo ▸ Mamul Stok: yalnız mamul; kategori sekmesi yok; eklenen yeni ürün MAMUL.
+//   2. Depo ▸ Ürün Stok: yalnız mamul; kategori sekmesi yok; eklenen yeni ürün MAMUL.
 //   4. Sezon/yıl (v1.457.0): sezon yazarak listeden seçiliyor, yıl rakamla ve öneriyle.
-//   3. Şeritten mamul ürünün penceresine dönünce Mamul Stok'a geçiliyor (Stok'ta açık kalmıyor).
+//   3. Şeritten mamul ürünün penceresine dönünce Ürün Stok'a geçiliyor (Stok'ta açık kalmıyor).
 const { uygulamaAc, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -52,8 +52,8 @@ async function calistir() {
   await sayfa.waitForTimeout(700);
   const stok = await liste();
 
-  // 2. Mamul Stok + yeni ürün.
-  await modulAc(sayfa, "Mamul Stok");
+  // 2. Ürün Stok + yeni ürün.
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(700);
   const mamul = await liste();
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ürün Ekle/.test(x.textContent) && x.getBoundingClientRect().width > 0); if (b) b.click(); });

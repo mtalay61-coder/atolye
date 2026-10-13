@@ -268,7 +268,7 @@ const SEKME_BILGISI = {
   anasayfa: { ad: "Anasayfa" },
   tanimlar: { ad: "Tanımlar" },
   stok: { ad: "Stok" },
-  mamulstok: { ad: "Mamul Stok" },
+  mamulstok: { ad: "Ürün Stok" },
   fiyatlistesi: { ad: "Fiyat Listesi" },
   uretim: { ad: "Üretim" },
   cari: { ad: "Cari" },
@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.659.0";
+const SURUM = "1.660.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Site raporu (talepler, siparise donen, girisler), giris kaydi; sitede Google icin bilgiler";
+const SURUM_NOTU = "Mamul Stok ekraninin adi Urun Stok oldu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Site raporu (talepler, siparise donen, girisler), giris kayd
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.660.0", tarih: "13.10.2026", eklenen: [],
+    degisen: ["Menüdeki 'Mamul Stok' ekranının adı 'Ürün Stok' oldu (üst menü, sekme, mobil liste)"], duzeltilen: [] },
   { surum: "1.659.0", tarih: "13.10.2026",
     eklenen: ["Tanımlar › Web Sitesi › 'Site raporu': müşteri başına talep, çift, siparişe dönen (oranıyla), reddedilen, bekleyen, son talep; giriş sayısı, hatalı deneme, son giriş — 7 gün / 30 gün / 90 gün / 1 yıl", "Sitede giriş kaydı (başarılı / hatalı, 180 gün) — site-portal.sql KULLANICI ÇALIŞTIRMALI"],
     degisen: [], duzeltilen: [] },

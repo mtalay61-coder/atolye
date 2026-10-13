@@ -1,14 +1,14 @@
 {
  "depoOgeleri": [
   "Stok",
-  "Mamul Stok",
+  "Ürün Stok",
   "Fiyat Listesi",
   "Depo",
   "Paketleme"
  ],
  "hatalar": [],
  "mamul": {
-  "baslik": "Mamul Stok",
+  "baslik": "Ürün Stok",
   "bot": true,
   "deri": false,
   "kategoriSekmeleri": []

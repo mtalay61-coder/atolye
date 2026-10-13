@@ -29,7 +29,7 @@ async function calistir() {
   sayfa.on("dialog", (d) => d.accept());
   await sayfa.waitForTimeout(2500);
   const maliyetAc = async () => {
-    await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+    await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ürün Stok"]'); if (b) b.click(); });
     await sayfa.waitForTimeout(800);
     await sayfa.evaluate(() => {
       const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0);

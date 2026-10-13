@@ -25,7 +25,7 @@ async function calistir(ekran) {
   sonuc.cariPasifYazildi = !!(((await depoOku(sayfa, "cari:data")) || []).find((c) => c.id === "c2") || {}).pasif;
   sonuc.cariSeritteIkonYok = await sayfa.evaluate(() => !document.querySelector('[data-cari-kart-serit] [data-kart-eylem="pasif"], [data-cari-kart-serit] [data-kart-eylem="sil"]'));
 
-  await modulAc(sayfa, "Mamul Stok"); await sayfa.waitForTimeout(600);
+  await modulAc(sayfa, "Ürün Stok"); await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Bot" && e.children.length === 0); let p = el; for (let i = 0; i < 6 && p; i++, p = p.parentElement) { if (p.onclick || p.tagName === "BUTTON") { p.click(); return; } } });
   await sayfa.waitForTimeout(900);
   await sagTikAc(sayfa, '[data-urun-kart-serit="Bot"]'); await sayfa.waitForTimeout(300);

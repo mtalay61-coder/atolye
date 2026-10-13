@@ -29,8 +29,8 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
 
-  // Yeni ürünün kategorisi açık listeden geliyor: Mamul Stok'tan (v1.455.0) eklenen ürün mamul.
-  await modulAc(sayfa, "Mamul Stok");
+  // Yeni ürünün kategorisi açık listeden geliyor: Ürün Stok'tan (v1.455.0) eklenen ürün mamul.
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ürün Ekle/.test(x.textContent) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
   await sayfa.waitForTimeout(700);

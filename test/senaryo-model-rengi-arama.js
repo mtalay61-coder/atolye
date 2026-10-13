@@ -23,7 +23,7 @@ async function calistir() {
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2500);
 
-  await modulAc(sayfa, "Mamul Stok");
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Bot" && e.children.length === 0);

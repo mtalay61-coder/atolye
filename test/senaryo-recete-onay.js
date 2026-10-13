@@ -50,7 +50,7 @@ async function calistir() {
 
   // 2-3) Ürün kartları.
   const kartAc = async (ad) => {
-    await modulAc(sayfa, "Mamul Stok"); await sayfa.waitForTimeout(600);
+    await modulAc(sayfa, "Ürün Stok"); await sayfa.waitForTimeout(600);
     await sayfa.evaluate((ad) => {
       const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === ad && e.children.length === 0);
       let p = el; for (let i = 0; i < 6 && p; i++, p = p.parentElement) { if (p.onclick || p.tagName === "BUTTON") { p.click(); return; } }

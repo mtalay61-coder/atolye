@@ -28,7 +28,7 @@ async function calistir() {
 
   // Bir kaydetme tetikle: stok ekranından ürüne dokunmadan, tohumdaki görselli ürünü açıp kapat
   // yetmez — yazma yolu ancak saveStok çağrılınca çalışır. Ürün adını değiştirmek en kısa yol.
-  await modulAc(sayfa, "Mamul Stok");
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => {
     const satir = [...document.querySelectorAll("button")]
@@ -77,7 +77,7 @@ async function calistir() {
 
   const ikinci = await uygulamaAc(bolunmusDepo, { hataYaz: false });
   await ikinci.sayfa.waitForTimeout(2400);
-  await modulAc(ikinci.sayfa, "Mamul Stok");
+  await modulAc(ikinci.sayfa, "Ürün Stok");
   await ikinci.sayfa.waitForTimeout(700);
   await ikinci.sayfa.evaluate(() => {
     const satir = [...document.querySelectorAll("button")]

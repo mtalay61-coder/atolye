@@ -35,7 +35,7 @@ async function calistir() {
     const kutu = tr.querySelector("input[data-maliyet-duzenle]");
     return `${ad}: ${kutu ? kutu.value : tr.children[3].textContent.trim()}`;
   }));
-  await kartAc("Mamul Stok", "Bot", "Maliyet");
+  await kartAc("Ürün Stok", "Bot", "Maliyet");
   const once = await dokum();
   const kutu = sayfa.locator('[data-maliyet-duzenle="hm-u1-Siyah-"]').first();
   await kutu.fill("120"); await kutu.blur(); await sayfa.waitForTimeout(800);

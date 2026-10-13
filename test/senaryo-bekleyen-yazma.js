@@ -49,7 +49,7 @@ async function calistir() {
   sayfa = ikinci.sayfa; tarayici = ikinci.tarayici;
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2600);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ürün Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(700);
   const yerelKazandi = await sayfa.evaluate(() => {
     const m = document.body.innerText;

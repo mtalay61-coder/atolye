@@ -26,7 +26,7 @@ async function calistir(ekran) {
   await sayfa.setViewportSize({ width: 1400, height: 900 });
   await sayfa.waitForTimeout(2300);
   const sonuc = { zoom: await sayfa.evaluate(() => getComputedStyle(document.documentElement).zoom) };
-  await modulAc(sayfa, "Mamul Stok"); await sayfa.waitForTimeout(600);
+  await modulAc(sayfa, "Ürün Stok"); await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Model X" && e.children.length === 0); let p = el; for (let i = 0; i < 6 && p; i++, p = p.parentElement) { if (p.onclick || p.tagName === "BUTTON") { p.click(); return; } } });
   await sayfa.waitForTimeout(900);
   await sayfa.locator('button:has-text("Reçete"):visible').first().click(); await sayfa.waitForTimeout(800);

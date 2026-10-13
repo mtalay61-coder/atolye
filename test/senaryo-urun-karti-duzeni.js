@@ -17,7 +17,7 @@ async function calistir(ekranGoruntusu) {
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.setViewportSize({ width: 1100, height: 1000 });
   await sayfa.waitForTimeout(2300);
-  await modulAc(sayfa, "Mamul Stok");
+  await modulAc(sayfa, "Ürün Stok");
   await sayfa.waitForTimeout(700);
   const ac = async (ad) => {
     await sayfa.evaluate((ad) => {

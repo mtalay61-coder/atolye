@@ -53,7 +53,7 @@ async function calistir() {
   });
   await sayfa.mouse.click(700, 880); await sayfa.waitForTimeout(200);
   // ÜRÜN KARTI: aç, sekme alanına (şerit dışı) sağ tık.
-  await modulAc(sayfa, "Mamul Stok"); await sayfa.waitForTimeout(700);
+  await modulAc(sayfa, "Ürün Stok"); await sayfa.waitForTimeout(700);
   await sayfa.evaluate(() => { const s = [...document.querySelectorAll("button")].find((b) => /renk\/beden/.test(b.textContent) && /^Bot/.test(b.textContent.trim())); if (s) s.click(); });
   await sayfa.waitForTimeout(900);
   const urunGovde = await sayfa.evaluateHandle(() => {

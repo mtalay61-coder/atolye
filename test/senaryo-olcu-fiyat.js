@@ -35,7 +35,7 @@ async function fiyatlandirma(hatalar) {
   const { tarayici, sayfa } = await uygulamaAc(tohum(), { hataYaz: false });
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ürün Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0);
@@ -94,7 +94,7 @@ async function fiyatlandirma(hatalar) {
 }
 
 async function kartiAc(sayfa) {
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ürün Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent || "").trim() === "Bot" && e.getBoundingClientRect().width > 0);

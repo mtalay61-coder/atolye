@@ -21,7 +21,7 @@ async function calistir() {
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Mamul Stok"]'); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Ürün Stok"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(800);
   await sayfa.evaluate(() => {
     const el = [...document.querySelectorAll("*")].find((e) => e.getBoundingClientRect().width > 0 && (e.textContent || "").trim() === "Sandalet" && e.children.length === 0);
