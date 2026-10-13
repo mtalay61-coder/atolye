@@ -737,6 +737,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         { obek: "Tanımlar", key: "firma", ad: "Firma" },
         { key: "urun", ad: "Ürün" },
         { key: "uretim", ad: "Üretim" },
+        // WEB SİTESİ AYRI SEKME (v1.661.0 — kullanıcı: "Tanımlarda web sitesini ayrı sekmeye al"): önce Firma'nın dibindeydi.
+        { key: "websitesi", ad: "Web Sitesi" },
         { obek: "Sistem", key: "kullanicilar", ad: "Kullanıcılar" },
         { key: "gorunum", ad: "Görünüm" },
         { key: "surumGecmisi", ad: "Sürüm geçmişi" },
@@ -1055,8 +1057,11 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         })()}
       </div>
     </div>
-    <WebSitesiAyarlari tanimlar={tanimlar} onSave={onSave} showToast={showToast} stok={stok} cariler={cariler} />
     </>
+    )}
+
+    {aktifTanimSekme === "websitesi" && (
+      <WebSitesiAyarlari tanimlar={tanimlar} onSave={onSave} showToast={showToast} stok={stok} cariler={cariler} />
     )}
 
     {aktifTanimSekme === "urun" && (

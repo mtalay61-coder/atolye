@@ -16,6 +16,9 @@ async function calistir() {
   await sayfa.waitForTimeout(2200);
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(700);
+  // v1.661.0: Web Sitesi ayrı sekme.
+  await sayfa.locator('[data-tanim-sekme="websitesi"]').click();
+  await sayfa.waitForTimeout(300);
   const panel = sayfa.locator("[data-web-sitesi-ayarlari]");
   const acilis = {
     var: await panel.count(),
