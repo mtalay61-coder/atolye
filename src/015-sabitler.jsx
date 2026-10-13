@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.661.0";
+const SURUM = "1.662.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Tanimlarda Web Sitesi ayri sekme";
+const SURUM_NOTU = "Site blok duzenleyici: bolum sirasi, banner, metin+resim, arka plan, canli onizleme";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,9 @@ const SURUM_NOTU = "Tanimlarda Web Sitesi ayri sekme";
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.662.0", tarih: "13.10.2026",
+    eklenen: ["Tanımlar › Web Sitesi › Sayfa düzeni: bölümleri sürükleyip sırala, gizle, arka plan rengi / resmi ve yazı rengi; yeni Banner (tam genişlik resim + başlık + düğme) ve Metin + resim blokları (EN/RU çevirili)", "Canlı önizleme: sağda site, kaydedilmemiş hâliyle; masaüstü / telefon genişliği"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.661.0", tarih: "13.10.2026", eklenen: [],
     degisen: ["Tanımlar'da Web Sitesi ayarları ayrı sekmede (önce Firma sekmesinin altındaydı)"], duzeltilen: [] },
   { surum: "1.660.0", tarih: "13.10.2026", eklenen: [],

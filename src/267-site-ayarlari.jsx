@@ -214,6 +214,10 @@ function WebSitesiAyarlari({ tanimlar, onSave, showToast, stok, cariler }) {
           Menü, düğme, tablo başlıkları gibi sabit yazılar sitede zaten çevrili. İletişim bilgileri, marka, renk ve logo dilden bağımsızdır (TR sekmesinde).
         </p>
       )}
+      {/* SAYFA DÜZENİ (v1.662.0, 269): bloklar + canlı önizleme. */}
+      {altBaslik("Sayfa düzeni (bloklar)")}
+      <SiteBlokDuzenleyici taslak={taslak} ata={ata} dil={dil} inputStyle={inputStyle} />
+      <SiteOnizleme taslak={taslak} kirli={kirli} onKaydet={kaydet} adres={siteAdresi ? (/^(https?|file):/.test(siteAdresi) ? siteAdresi : `https://${siteAdresi}`) : ""} />
       {dil === "tr" && altBaslik("Görünüm")}
       {dil === "tr" && <div style={izgara}>
         {metin("marka", "Marka adı")}
