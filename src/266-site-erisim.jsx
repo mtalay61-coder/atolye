@@ -325,3 +325,75 @@ function useSiteBildirimleri(siparisler, showToast) {
   }, [showToast]);
   return sayi;
 }
+
+// ================= SİTE RAPORU (v1.659.0 — "güven ve düzen") =================
+// Tanımlar › Web Sitesi altında. Cari başına dönemdeki site talepleri (kaçı siparişe döndü / reddedildi / bekliyor),
+// girişler ve hatalı denemeler, son giriş. Veri `site_raporu(gün)` (site-portal.sql §13); fonksiyon yoksa panel söyler.
+function SiteRaporuPaneli({ cariler }) {
+  const [gun, setGun] = useState(90);
+  const [veri, setVeri] = useState(null);
+  const [hata, setHata] = useState("");
+  const [acik, setAcik] = useState(false);
+  useEffect(() => {
+    if (!acik || !supabaseAcikMi()) return;
+    setVeri(null); setHata("");
+    supabaseIstek("rpc/site_raporu", { method: "POST", body: JSON.stringify({ p_gun: gun }) })
+      .then((l) => setVeri(Array.isArray(l) ? l : []), (e) => setHata(String((e && e.message) || e)));
+  }, [acik, gun]);
+  const ad = (id) => ((cariler || []).find((c) => c.id === id) || {}).unvan || id;
+  const tarih = (t) => (t ? String(t).slice(0, 16).replace("T", " ") : "—");
+  const top = (veri || []).reduce((a, r) => ({ talep: a.talep + r.talep, cift: a.cift + Number(r.cift || 0), siparis: a.siparis + r.siparis, red: a.red + r.red, bekleyen: a.bekleyen + r.bekleyen, giris: a.giris + r.giris, hatali: a.hatali + r.hatali }),
+    { talep: 0, cift: 0, siparis: 0, red: 0, bekleyen: 0, giris: 0, hatali: 0 });
+  const th = { textAlign: "left", padding: "4px 6px", fontSize: 11, color: "var(--erp-text-3)", borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+  const td = { padding: "4px 6px", fontSize: 12, borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" };
+  const sag = { ...td, textAlign: "right" };
+  return (
+    <div data-site-raporu="1" style={{ marginTop: 18 }}>
+      <button type="button" onClick={() => setAcik(!acik)} style={{ all: "unset", cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+        {acik ? "▾" : "▸"} Site raporu — talepler ve girişler
+      </button>
+      {acik && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+            {[[7, "7 gün"], [30, "30 gün"], [90, "90 gün"], [365, "1 yıl"]].map(([g, e]) => (
+              <button key={g} type="button" className={gun === g ? "btn-primary" : "btn-secondary"} style={{ fontSize: 11, padding: "3px 10px" }} onClick={() => setGun(g)}>{e}</button>
+            ))}
+          </div>
+          {hata && <div style={{ color: "var(--erp-danger)", fontSize: 12 }}>Rapor okunamadı (site-portal.sql çalıştırıldı mı?): {hata}</div>}
+          {!hata && !veri && <div style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Yükleniyor…</div>}
+          {veri && (
+            <div style={{ overflowX: "auto" }}>
+              <table data-site-raporu-tablo="1" style={{ borderCollapse: "collapse", width: "100%" }}>
+                <thead><tr>
+                  <th style={th}>Müşteri</th><th style={th}>Kullanıcı</th><th style={{ ...th, textAlign: "right" }}>Talep</th><th style={{ ...th, textAlign: "right" }}>Çift</th>
+                  <th style={{ ...th, textAlign: "right" }}>Siparişe dönen</th><th style={{ ...th, textAlign: "right" }}>Reddedilen</th><th style={{ ...th, textAlign: "right" }}>Bekleyen</th>
+                  <th style={th}>Son talep</th><th style={{ ...th, textAlign: "right" }}>Giriş</th><th style={{ ...th, textAlign: "right" }}>Hatalı deneme</th><th style={th}>Son giriş</th>
+                </tr></thead>
+                <tbody>
+                  {veri.map((r) => (
+                    <tr key={r.cariId}>
+                      <td style={{ ...td, fontWeight: 600 }}>{ad(r.cariId)}</td>
+                      <td style={{ ...td, color: "var(--erp-info)" }} className="mono">{r.kullanici || "—"}{r.kilitli ? " 🔒" : ""}</td>
+                      <td style={sag}>{r.talep}</td><td style={sag}>{r.cift}</td>
+                      <td style={{ ...sag, color: r.siparis ? "#2E7D4F" : undefined }}>{r.siparis}{r.talep ? ` (%${Math.round((r.siparis / r.talep) * 100)})` : ""}</td>
+                      <td style={sag}>{r.red}</td><td style={{ ...sag, fontWeight: r.bekleyen ? 700 : 400 }}>{r.bekleyen}</td>
+                      <td style={td}>{tarih(r.sonTalep)}</td>
+                      <td style={sag}>{r.giris}</td><td style={{ ...sag, color: r.hatali >= 3 ? "var(--erp-danger)" : undefined }}>{r.hatali}</td>
+                      <td style={td}>{tarih(r.sonGiris)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ fontWeight: 700 }}>
+                    <td style={td}>Toplam ({veri.length})</td><td style={td} />
+                    <td style={sag}>{top.talep}</td><td style={sag}>{top.cift}</td><td style={sag}>{top.siparis}</td><td style={sag}>{top.red}</td><td style={sag}>{top.bekleyen}</td>
+                    <td style={td} /><td style={sag}>{top.giris}</td><td style={sag}>{top.hatali}</td><td style={td} />
+                  </tr>
+                </tbody>
+              </table>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 4 }}>🔒 = 5 hatalı denemeden sonra 15 dk kilitli. Giriş kaydı 180 gün saklanır.</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
