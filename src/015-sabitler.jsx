@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.657.0";
+const SURUM = "1.658.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Siteden musteri kaydi: Kayit ol formu, Cari ekraninda onayla - cari ve site hesabi acilir";
+const SURUM_NOTU = "Site bildirimi ust cubukta, talep reddinde sebep, sitede arama ve stok durumu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Siteden musteri kaydi: Kayit ol formu, Cari ekraninda onayla
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.658.0", tarih: "13.10.2026",
+    eklenen: ["Üst çubukta 🌐 site bildirimi: bekleyen siteden sipariş + kayıt talebi sayısı, yeni gelince uyarı; tıklayınca ilgili ekran", "Site talebini reddederken müşteriye görünen sebep; müşteri Siparişlerim'de talebin onay bekliyor / reddedildi (sebebiyle) / siparişe çevrildi (sipariş no) durumunu görür", "Sitede koleksiyonda arama (model, renk, tip) ve renk başına stok durumu: Stokta / Üretimde / Sipariş üzerine — rakam gösterilmez (site-portal.sql — KULLANICI ÇALIŞTIRMALI)"] },
   { surum: "1.657.0", tarih: "13.10.2026",
     eklenen: ["Sitede 'Kayıt ol': firma bilgileri, adres, kullanıcı adı ve şifre — talep olarak düşer", "Cari ekranında 'Siteden gelen kayıt talepleri': Onayla → müşteri carisi açılır (aynı unvan/vergi no varsa ona bağlamak sorulur) ve site hesabı müşterinin seçtiği şifreyle kurulur; Reddet (site-portal.sql §12 — KULLANICI ÇALIŞTIRMALI)"] },
   { surum: "1.656.0", tarih: "13.10.2026",

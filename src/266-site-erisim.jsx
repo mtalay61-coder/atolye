@@ -160,9 +160,11 @@ function SiteTalepleriPaneli({ siparisler, cariler, onSipariseCevir, showToast }
   const bekleyen = (talepler || []).filter((t) => !islenenler.has(t.id));
   if (!bekleyen.length) return null;
   const reddet = (t) => {
-    if (!window.confirm(`${t.cari_unvan || "Müşteri"} talebi reddedilsin mi? (${t.toplam_cift} çift)`)) return;
+    // SEBEP (v1.658.0 — öneri 2): müşteri sitede "Siparişlerim"de görür; boş bırakılabilir. İptal = reddetme.
+    const sebep = window.prompt(`${t.cari_unvan || "Müşteri"} talebi reddedilsin mi? (${t.toplam_cift} çift)\n\nMüşteriye görünecek sebep (isteğe bağlı):`, "");
+    if (sebep === null) return;
     // Fonksiyonla (site-portal.sql): yalnız hâlâ 'yeni' olan talep reddedilir — iki cihaz aynı anda basarsa ikincisi boşa düşer.
-    supabaseIstek("rpc/site_talep_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id }) })
+    supabaseIstek("rpc/site_talep_reddet", { method: "POST", body: JSON.stringify({ p_id: t.id, p_sebep: sebep.trim() || null }) })
       .then(() => { setTalepler((l) => (l || []).filter((x) => x.id !== t.id)); if (showToast) showToast("Talep reddedildi"); },
         (e) => showToast && showToast("Reddedilemedi: " + ((e && e.message) || e)));
   };
@@ -289,4 +291,37 @@ function SiteKayitTalepleriPaneli({ cariler, onSave, showToast }) {
       )}
     </div>
   );
+}
+
+// ================= SİTE BİLDİRİMİ (v1.658.0) =================
+// Kullanıcı (öneri 1): "Siteden sipariş ya da kayıt talebi düşünce ERP'de haber." Üst çubukta 🌐 düğmesi + sayaç
+// (bekleyen sipariş talebi + kayıt talebi); sayı ARTINCA bir kez bildirim. 2 dakikada bir yoklar — panellerle aynı
+// sıklık. Siparişe çevrilmiş talep (`siteTalepId`) sayılmaz. Tablo/fonksiyon yoksa (SQL çalışmadı) sessizce 0.
+function useSiteBildirimleri(siparisler, showToast) {
+  const [sayi, setSayi] = useState({ siparis: 0, kayit: 0 });
+  const onceki = useRef(null);
+  const sipRef = useRef(siparisler);
+  sipRef.current = siparisler;
+  useEffect(() => {
+    if (!supabaseAcikMi()) return undefined;
+    let iptal = false;
+    const yokla = () => Promise.all([
+      siteTalepleriniOku().catch(() => []),
+      supabaseIstek("rpc/site_kayit_listesi", { method: "POST", body: "{}" }).catch(() => []),
+    ]).then(([t, k]) => {
+      if (iptal) return;
+      const islenen = new Set((sipRef.current || []).map((s) => s.siteTalepId).filter(Boolean));
+      const yeni = { siparis: (Array.isArray(t) ? t : []).filter((x) => !islenen.has(x.id)).length, kayit: Array.isArray(k) ? k.length : 0 };
+      const o = onceki.current;
+      if (o && (yeni.siparis > o.siparis || yeni.kayit > o.kayit) && showToast) {
+        showToast(`🌐 Siteden yeni ${yeni.siparis > o.siparis ? "sipariş talebi" : "kayıt talebi"} geldi`);
+      }
+      onceki.current = yeni;
+      setSayi(yeni);
+    });
+    yokla();
+    const z = setInterval(yokla, 120000);
+    return () => { iptal = true; clearInterval(z); };
+  }, [showToast]);
+  return sayi;
 }

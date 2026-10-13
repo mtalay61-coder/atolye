@@ -27,6 +27,8 @@ create table if not exists public.site_talepleri (
 );
 -- v1.652.0: müşterinin seçtiği ödeme şekli {tip, vadeGun} (ERP fiyat/indirim belirlerken görür).
 alter table public.site_talepleri add column if not exists odeme jsonb;
+-- v1.658.0: reddederken müşteriye görünen kısa sebep.
+alter table public.site_talepleri add column if not exists red_sebebi text;
 alter table public.site_talepleri enable row level security;
 drop policy if exists "giris_yapmis_hersey" on public.site_talepleri;
 create policy "giris_yapmis_hersey" on public.site_talepleri for all to authenticated using (true) with check (true);
@@ -90,9 +92,11 @@ $$;
 -- dahil edip listelensin"; karar: YALNIZ GRUBU): model sitede yayında (sitedeGoster) VE müşterinin dahil olduğu bir site
 -- grubunda (`tanimlar.siteGruplari[].urunIdleri / cariIdleri`). Gruba dahil olmayan müşteri hiçbir model görmez.
 -- Fiyatı yoksa da listelenir (fiyat NULL → sitede "Fiyat onayda"; fiyatı ERP sipariş onayında belirler).
+-- Dönüş sütunu değişince (v1.658.0 stok_durumu) 'create or replace' yetmez; önce kaldırılır.
+drop function if exists public.site_modeller(text, text);
 create or replace function public.site_modeller(p_cari_id text, p_grup text)
 returns table (id text, ad text, tip text, sezon text, sezon_yili text, renkler jsonb, bedenler jsonb,
-               renk_resimleri jsonb, kapak_resmi text, fiyat numeric, para_birimi text)
+               renk_resimleri jsonb, kapak_resmi text, fiyat numeric, para_birimi text, stok_durumu jsonb)
 language sql stable security definer set search_path = public
 as $$
   with f as (
@@ -121,7 +125,17 @@ as $$
     coalesce(f.renk_resimleri::jsonb, '{}'::jsonb),
     f.kapak_resmi::text,
     (f.kural->>'fiyat')::numeric,
-    public.site_pb(coalesce(f.kural->>'paraBirimi', f.satis_para_birimi))
+    public.site_pb(coalesce(f.kural->>'paraBirimi', f.satis_para_birimi)),
+    -- STOK DURUMU (v1.658.0 — kullanıcı onayı, öneri 6): renk başına KABA işaret, RAKAM GİTMEZ. 'stokta' = o rengin
+    -- varyantlarında toplam > 0; değilse 'uretimde' = o model+renkte stoğa girmemiş, tamamlanmamış üretim var; yoksa
+    -- 'siparis' (sipariş üzerine üretilir).
+    coalesce((select jsonb_object_agg(r.renk, case
+        when r.miktar > 0 then 'stokta'
+        when exists (select 1 from uretim e where e.urun_id::text = f.id::text and e.renk is not distinct from r.renk
+                     and not coalesce(e.stoga_eklendi_mi, false) and coalesce(e.asama, '') not in ('Tamamlandı', 'Üretildi (stokta)')) then 'uretimde'
+        else 'siparis' end)
+      from (select v.renk, sum(coalesce(v.miktar, 0)) miktar from varyantlar v
+            where v.urun_id::text = f.id::text and coalesce(v.renk, '') <> '' group by v.renk) r), '{}'::jsonb)
   from f
   order by f.ad;
 $$;
@@ -222,14 +236,16 @@ drop function if exists public.vitrin();
 
 -- ---------- 7) ERP: talebi reddet ----------
 -- Yalnız giriş yapmış ERP kullanıcısı; yalnız hâlâ 'yeni' olan talep (iki cihaz aynı anda basarsa ikincisi etkisiz).
-create or replace function public.site_talep_reddet(p_id text)
+-- v1.658.0: sebep (isteğe bağlı) — müşteri Siparişlerim'de görür. Eski tek parametreli sürüm kalkar.
+drop function if exists public.site_talep_reddet(text);
+create or replace function public.site_talep_reddet(p_id text, p_sebep text default null)
 returns void
 language sql volatile security invoker set search_path = public
 as $$
-  update site_talepleri set durum = 'reddedildi' where id = p_id and durum = 'yeni';
+  update site_talepleri set durum = 'reddedildi', red_sebebi = nullif(left(trim(coalesce(p_sebep, '')), 300), '') where id = p_id and durum = 'yeni';
 $$;
-revoke all on function public.site_talep_reddet(text) from public, anon;
-grant execute on function public.site_talep_reddet(text) to authenticated;
+revoke all on function public.site_talep_reddet(text, text) from public, anon;
+grant execute on function public.site_talep_reddet(text, text) to authenticated;
 
 -- ---------- 8) Sitenin yazıları ve iletişim bilgileri (v1.647.0) ----------
 -- ERP › Tanımlar › Firma › Web Sitesi (`tanimlar.siteAyarlari`). Herkese açık: yalnız bu nesne (+ "firma logosunu
@@ -326,14 +342,16 @@ begin
       from siparisler s
       where s.cari_id = c.id and s.tip = 'Satış' and coalesce(s.durum, '') <> 'İptal'
       order by s.tarih desc nulls last limit 200) y), '[]'::jsonb),
-    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'durum', t.durum, 'toplamCift', t.toplam_cift, 'not', t.not_metni, 'odeme', t.odeme,
+    -- v1.658.0: siparişe çevrilen talep de listede kalır ('siparis' + sipariş no); reddedilende sebep (`red_sebebi`).
+    'talepler', coalesce((select jsonb_agg(jsonb_build_object('tarih', t.olusturma, 'toplamCift', t.toplam_cift, 'not', t.not_metni, 'odeme', t.odeme,
+          'durum', case when sp.siparis_no is not null then 'siparis' else t.durum end, 'siparisNo', sp.siparis_no, 'redSebebi', t.red_sebebi,
           'kalemler', (select coalesce(jsonb_agg(jsonb_build_object('urunId', g.u, 'urunAd', g.a, 'renk', g.r, 'miktar', g.m, 'tutar', round(g.t, 2), 'paraBirimi', g.pb) order by g.a, g.r), '[]'::jsonb)
                        from (select k->>'urunId' u, k->>'urunAd' a, k->>'renk' r, coalesce(k->>'paraBirimi', 'TRY') pb, sum((k->>'miktar')::numeric) m,
                                     sum((k->>'miktar')::numeric * coalesce((k->>'birimFiyat')::numeric, 0)) t
                              from jsonb_array_elements(t.kalemler) k group by 1, 2, 3, 4) g)) order by t.olusturma desc)
       from site_talepleri t
-      where t.cari_id = c.id and t.olusturma > now() - interval '60 days'
-        and not exists (select 1 from siparisler s where s.ek->>'siteTalepId' = t.id)), '[]'::jsonb),
+      left join lateral (select s.siparis_no from siparisler s where s.ek->>'siteTalepId' = t.id limit 1) sp on true
+      where t.cari_id = c.id and t.olusturma > now() - interval '60 days'), '[]'::jsonb),
     'cekler', coalesce((select jsonb_agg(jsonb_build_object('cekNo', k->>'cekNo', 'banka', k->>'banka', 'tutar', k->'tutar',
           'paraBirimi', coalesce(k->>'paraBirimi', 'TRY'), 'vade', k->>'vadeTarihi', 'durum', coalesce(k->>'durum', 'Portföyde'), 'tip', coalesce(k->>'tip', 'Alınan'))
         order by k->>'vadeTarihi')

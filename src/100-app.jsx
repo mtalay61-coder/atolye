@@ -3562,6 +3562,7 @@ function AtolyeUygulamasi() {
     try { window.localStorage.removeItem("oturum:sonEtkinlik"); } catch (e) { /* */ }
   };
   const [onayPaneliAcik, setOnayPaneliAcik] = useState(false);
+  const siteBildirim = useSiteBildirimleri(siparisler, showToast);
   const bekleyenOnaylar = onaylar.filter((o) => o.durum === "Bekliyor");
   const girisSistemiAktif = !!tanimlar.girisAktifMi;
   // HAREKETSİZLİKTE OTOMATİK ÇIKIŞ (v1.641.0, denetim — kullanıcı: güvenlik maddeleri). Sayfa yenilenince 12 saatlik
@@ -4269,6 +4270,16 @@ function AtolyeUygulamasi() {
                   style={{ ...ikonDugme, color: bekleyenOnaylar.length > 0 ? "var(--erp-wait)" : "var(--erp-text-2)" }}>
                   <AlertTriangle size={18} />
                   {bekleyenOnaylar.length > 0 && <span className="mono" style={{ ...rozetStili, background: "var(--erp-wait)" }}>{bekleyenOnaylar.length}</span>}
+                </button>
+              )}
+              {/* SİTE BİLDİRİMİ (v1.658.0, 266 useSiteBildirimleri): bekleyen siteden sipariş + kayıt talebi. */}
+              {(siteBildirim.siparis + siteBildirim.kayit) > 0 && (
+                <button type="button" data-site-bildirim="1" aria-label="Siteden gelen talepler"
+                  title={`Siteden: ${siteBildirim.siparis} sipariş talebi · ${siteBildirim.kayit} kayıt talebi`}
+                  onClick={() => git(siteBildirim.siparis > 0 ? "siparis" : "cari")}
+                  style={{ ...ikonDugme, color: "#2F6B3A" }}>
+                  <Globe size={18} />
+                  <span className="mono" style={{ ...rozetStili, background: "#2F6B3A" }}>{siteBildirim.siparis + siteBildirim.kayit}</span>
                 </button>
               )}
               {kullaniciYetkisiVar("tanimlar", "goruntuleme") && (
