@@ -99,7 +99,7 @@ async function calistir() {
   await sayfa.waitForTimeout(800);
 
   const hesapAlaniVar = await sayfa.evaluate(() =>
-    /Hangi kasaya\/bankaya girdi/.test(document.body.innerText));
+    /Giren kasa\/banka/.test(document.body.innerText));  // v1.663.0: çip satırı
 
   await sayfa.evaluate(() => {
     const yaz = (el, v) => {
@@ -112,8 +112,7 @@ async function calistir() {
     if (tutar) yaz(tutar, "750");
   });
   await sayfa.waitForTimeout(300);
-  await sayfa.locator('select:has(option:text-is("Kasa: TL Kasa")):visible').first()
-    .selectOption({ label: "Kasa: TL Kasa" });
+  await sayfa.locator('[data-cari-hareket-hesap-cip^="kasa:"]:has-text("TL Kasa"):visible').first().click();
   await sayfa.waitForTimeout(300);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
@@ -175,8 +174,7 @@ async function calistir() {
     if (t) yaz(t, "100");
   });
   await sayfa.waitForTimeout(300);
-  await sayfa.locator('select:has(option:text-is("Kasa: TL Kasa (TRY)")):visible').first()
-    .selectOption({ label: "Kasa: TL Kasa (TRY)" });
+  await sayfa.locator('[data-cari-hareket-hesap-cip^="kasa:"]:has-text("TL Kasa"):visible').first().click();
   await sayfa.waitForTimeout(500);
 
   const cevrim = await sayfa.evaluate(() => ({
