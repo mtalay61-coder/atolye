@@ -112,7 +112,7 @@ async function calistir() {
     if (tutar) yaz(tutar, "750");
   });
   await sayfa.waitForTimeout(300);
-  await sayfa.locator('[data-cari-hareket-hesap-cip^="kasa:"]:has-text("TL Kasa"):visible').first().click();
+  await sayfa.evaluate(() => { const s = document.querySelector("[data-cari-hareket-hesap]"); const o = [...s.options].find((x) => x.textContent.startsWith("TL Kasa")); s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true })); });  // v1.663.2: liste
   await sayfa.waitForTimeout(300);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
@@ -174,7 +174,7 @@ async function calistir() {
     if (t) yaz(t, "100");
   });
   await sayfa.waitForTimeout(300);
-  await sayfa.locator('[data-cari-hareket-hesap-cip^="kasa:"]:has-text("TL Kasa"):visible').first().click();
+  await sayfa.evaluate(() => { const s = document.querySelector("[data-cari-hareket-hesap]"); const o = [...s.options].find((x) => x.textContent.startsWith("TL Kasa")); s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true })); });  // v1.663.2: liste
   await sayfa.waitForTimeout(500);
 
   const cevrim = await sayfa.evaluate(() => ({

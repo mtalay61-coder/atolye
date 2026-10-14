@@ -1122,21 +1122,26 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                         <span style={{ fontSize: 12, color: "var(--erp-warn)" }}>
                           Kasa/banka tanımlı değil — Kasa & Banka ekranından açın. Hesap seçilmeden ödeme/tahsilat kaydedilemez: para bir yere girmeli.
                         </span>
-                      ) : uygunHesaplar.map((h) => {
-                        const sec = hForm.hesap === h.deger;
-                        const banka = h.deger.startsWith("banka:");
-                        const renk = banka ? "#2B6CB0" : "#2E7D4F";
-                        return (
-                          <button key={h.deger} type="button" data-cari-hareket-hesap-cip={h.deger} onClick={() => hesapSec(h.deger)}
-                            style={{ padding: "8px 14px", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
-                              border: `2px solid ${renk}`, background: sec ? renk : alfaEkle(renk, "12"), color: sec ? "#fff" : renk,
-                              boxShadow: sec ? `0 2px 8px ${alfaEkle(renk, "55")}` : "none" }}>
-                            {banka ? "🏦" : "💵"} {h.ad.replace(/^(Kasa|Banka): /, "")}
-                            <span className="mono" style={{ fontSize: 10, opacity: 0.85 }}>{h.pb}</span>
-                          </button>
-                        );
-                      })}
-                      {!hForm.hesap && uygunHesaplar.length > 0 && <span style={{ fontSize: 11, color: "var(--erp-warn)", fontWeight: 700 }}>← seçin</span>}
+                      ) : (
+                        // AÇILIR LİSTE (v1.663.2 — kullanıcı: "seçmeli yapılsın, kasa banka büyüdükçe ekran kapanır"): çipler
+                        // her hesap için yer kaplıyordu; liste kasa / banka gruplu, seçilince kutu hesabın renginde.
+                        <select data-cari-hareket-hesap="1" value={hForm.hesap} onChange={(e) => hesapSec(e.target.value)}
+                          style={{ ...inputStyle, flex: "1 1 260px", maxWidth: 420, fontSize: 14, fontWeight: 700, padding: "8px 10px",
+                            border: `2px solid ${!hForm.hesap ? "var(--erp-warn)" : hForm.hesap.startsWith("banka:") ? "#2B6CB0" : "#2E7D4F"}`,
+                            background: !hForm.hesap ? "#FFF8EC" : hForm.hesap.startsWith("banka:") ? "#2B6CB012" : "#2E7D4F12",
+                            color: !hForm.hesap ? "var(--erp-text)" : hForm.hesap.startsWith("banka:") ? "#2B6CB0" : "#2E7D4F" }}>
+                          <option value="">— Kasa / banka seçin —</option>
+                          {[["kasa:", "💵 Kasalar"], ["banka:", "🏦 Bankalar"]].map(([on, baslik]) => {
+                            const l = uygunHesaplar.filter((h) => h.deger.startsWith(on));
+                            return l.length ? (
+                              <optgroup key={on} label={baslik}>
+                                {l.map((h) => <option key={h.deger} value={h.deger}>{h.ad.replace(/^(Kasa|Banka): /, "")} · {h.pb}</option>)}
+                              </optgroup>
+                            ) : null;
+                          })}
+                        </select>
+                      )}
+                      
                     </div>
                   )}
                 </div>
