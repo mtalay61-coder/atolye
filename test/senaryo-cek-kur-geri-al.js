@@ -45,9 +45,10 @@ async function calistir() {
     // v1.663.0: kasa/banka cari formunda çip — önce çip aranır.
     const cip = [...document.querySelectorAll("[data-cari-hareket-hesap-cip]")].find((x) => x.getBoundingClientRect().width > 0 && x.textContent.includes(m.replace(/^(Kasa|Banka): /, "")));
     if (cip) { cip.click(); return; }
+    const m2 = m.replace(/^(Kasa|Banka): /, "");  // v1.663.2: cari formunda önek yok ("Ziraat TL · TRY")
     const s = [...document.querySelectorAll("select")].filter((x) => x.getBoundingClientRect().width > 0)
-      .find((x) => [...x.options].some((o) => o.textContent.includes(m)));
-    const o = [...s.options].find((x) => x.textContent.includes(m));
+      .find((x) => [...x.options].some((o) => o.textContent.includes(m) || o.textContent.startsWith(m2 + " ·")));
+    const o = [...s.options].find((x) => x.textContent.includes(m) || x.textContent.startsWith(m2 + " ·"));
     s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
   }, secenekMetni);
   const yaz = async (secici, deger) => { await sayfa.locator(secici).first().fill(String(deger)); await sayfa.waitForTimeout(150); };
