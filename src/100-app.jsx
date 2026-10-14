@@ -3775,7 +3775,11 @@ function AtolyeUygulamasi() {
       <KurulumSihirbazi tanimlar={tanimlar} onKaydet={(t, atlandi) => { saveTanimlar(t); showToast(atlandi ? "Kurulum atlandı — tanımları Tanımlar ekranından yapabilirsiniz" : "Kurulum tamamlandı"); }} />
     ) : null}
     <div
+      // RENKLİ KENARLIK HER YERDE (v1.664.0 — kullanıcı: "tüm uygulamada bu şekilde renkli kenarlıklar olsun"): uygulama
+      // kabuğu .renkli-form; varsayılan renk tema vurgusu. İç formlar (fiş, cari hareket, kasa) kendi --hrk-renk'ini verir.
+      className="renkli-form"
       style={{
+        "--hrk-renk": "var(--erp-accent)",
         // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu
         // kapsayıcı kendi fontunu (Inter) ve yeşil gradyanını basıp temayı EZİYORDU — görünen
         // tek fark birkaç düğmeydi. Font ve zemin artık standarttan: Archivo, --erp-page.
@@ -3802,9 +3806,12 @@ function AtolyeUygulamasi() {
         /* RENKLİ FORM (v1.663.5 — kullanıcı: cari ödeme formu gibi "kasa banka ekranı da, fiş ekranı da renkli olsun"):
            .renkli-form kabındaki bütün kutular kabın --hrk-renk renginde kalın çerçeveli; satır içi inputStyle çerçevesini
            !important ezer. Kendi rengini koruması gereken kutu data-renk-koru taşır. */
-        .renkli-form input:not([type=checkbox]):not([type=radio]):not([type=color]):not([data-renk-koru]),
-        .renkli-form select:not([data-renk-koru]), .renkli-form textarea:not([data-renk-koru]) {
+        .renkli-form input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]):not([data-renk-koru]):not(td *),
+        .renkli-form select:not([data-renk-koru]):not(td *), .renkli-form textarea:not([data-renk-koru]):not(td *) {
           border: 2px solid var(--hrk-renk, var(--erp-accent)) !important; background-color: #fff; border-radius: 8px; }
+        /* Tablo / matris hücresindeki kutular: ince ama renkli (kalın çerçeve hücreyi boğardı). */
+        .renkli-form td input:not([type=checkbox]):not([type=radio]):not([data-renk-koru]), .renkli-form td select:not([data-renk-koru]) {
+          border-color: color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 60%, transparent) !important; }
         .renkli-form input:focus, .renkli-form select:focus, .renkli-form textarea:focus {
           outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 25%, transparent); }
         /* ---- TASARIM TOKENLARI (ERP standardı, 20 Eylül) ----

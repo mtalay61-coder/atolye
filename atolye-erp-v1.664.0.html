@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.663.3</title>
+<title>Atölye ERP 1.664.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2266,9 +2266,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.663.3";
+const SURUM = "1.664.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Cari odeme/tahsilat formunda butun kutular islem renginde cerceveli";
+const SURUM_NOTU = "Tum uygulamada kutular renkli cerceveli";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,7 +2279,11 @@ const SURUM_NOTU = "Cari odeme/tahsilat formunda butun kutular islem renginde ce
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
-    { surum: "1.663.3", tarih: "14.10.2026", eklenen: [],
+    { surum: "1.664.0", tarih: "14.10.2026", eklenen: [],
+        degisen: ["Bütün ekranlarda giriş kutuları ve açılır listeler renkli kalın çerçeveli (tema vurgu rengi; fiş, cari ödeme ve kasa kendi renginde; tablo hücrelerinde ince)"], duzeltilen: [] },
+    { surum: "1.663.5", tarih: "14.10.2026", eklenen: [],
+        degisen: ["Satış / alış fişi ve Kasa & Banka ekranlarında da kutular renkli çerçeveli (satış mavi, alış kahve, kasa yeşil)"], duzeltilen: [] },
+    { surum: "1.663.4", tarih: "14.10.2026", eklenen: [],
         degisen: ["Cari ödeme/tahsilat formunda tarih, tutar, defter, fiş no, açıklama kutuları işlem renginde kalın çerçeveli"], duzeltilen: [] },
     { surum: "1.663.2", tarih: "14.10.2026", eklenen: [],
         degisen: ["Cari ödeme/tahsilatta kasa/banka seçimi çip yerine renkli açılır liste (kasa / banka gruplu) — hesap sayısı artınca ekranı kaplamasın"], duzeltilen: [] },
@@ -22391,7 +22395,11 @@ function AtolyeUygulamasi() {
         AKTIF_FIRMA.demo ? React.createElement(DemoSeridi, null) : null,
         !loading && storageOk && !kilitli && !(typeof window !== "undefined" && window.__kurulumSihirbaziKapali)
             && kurulumSihirbaziGerekli({ tanimlar, stok, cariler, aktifKullanici, girisAktif: girisSistemiAktif }) ? (React.createElement(KurulumSihirbazi, { tanimlar: tanimlar, onKaydet: (t, atlandi) => { saveTanimlar(t); showToast(atlandi ? "Kurulum atlandı — tanımları Tanımlar ekranından yapabilirsiniz" : "Kurulum tamamlandı"); } })) : null,
-        React.createElement("div", { style: {
+        React.createElement("div", { 
+            // RENKLİ KENARLIK HER YERDE (v1.664.0 — kullanıcı: "tüm uygulamada bu şekilde renkli kenarlıklar olsun"): uygulama
+            // kabuğu .renkli-form; varsayılan renk tema vurgusu. İç formlar (fiş, cari hareket, kasa) kendi --hrk-renk'ini verir.
+            className: "renkli-form", style: {
+                "--hrk-renk": "var(--erp-accent)",
                 // TEMA KABUĞU (kullanıcı, 21 Eylül: "tema olmadı mı?"). Token CSS yüklüydü ama bu
                 // kapsayıcı kendi fontunu (Inter) ve yeşil gradyanını basıp temayı EZİYORDU — görünen
                 // tek fark birkaç düğmeydi. Font ve zemin artık standarttan: Archivo, --erp-page.
@@ -22412,6 +22420,17 @@ function AtolyeUygulamasi() {
             } },
             React.createElement("div", { dangerouslySetInnerHTML: { __html: ERP_ICONS_SVG }, "aria-hidden": "true" }),
             React.createElement("style", null, `
+        /* RENKLİ FORM (v1.663.5 — kullanıcı: cari ödeme formu gibi "kasa banka ekranı da, fiş ekranı da renkli olsun"):
+           .renkli-form kabındaki bütün kutular kabın --hrk-renk renginde kalın çerçeveli; satır içi inputStyle çerçevesini
+           !important ezer. Kendi rengini koruması gereken kutu data-renk-koru taşır. */
+        .renkli-form input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]):not([data-renk-koru]):not(td *),
+        .renkli-form select:not([data-renk-koru]):not(td *), .renkli-form textarea:not([data-renk-koru]):not(td *) {
+          border: 2px solid var(--hrk-renk, var(--erp-accent)) !important; background-color: #fff; border-radius: 8px; }
+        /* Tablo / matris hücresindeki kutular: ince ama renkli (kalın çerçeve hücreyi boğardı). */
+        .renkli-form td input:not([type=checkbox]):not([type=radio]):not([data-renk-koru]), .renkli-form td select:not([data-renk-koru]) {
+          border-color: color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 60%, transparent) !important; }
+        .renkli-form input:focus, .renkli-form select:focus, .renkli-form textarea:focus {
+          outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 25%, transparent); }
         /* ---- TASARIM TOKENLARI (ERP standardı, 20 Eylül) ----
            Kullanıcı: "tasarımı ortak yapmamız lazım." 3.625 renk kullanımı, 119 farklı ton
            vardı; en sık 16'sı burada tek kaynakta. Kullanıcının erp-tokens.css'i gelince
@@ -37581,7 +37600,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
         return { toplam, eksikPB: Array.from(eksikPB) };
     }
     const tlKarsiligi = tlKarsiligiHesapla();
-    return (React.createElement("div", null,
+    return (React.createElement("div", { className: "renkli-form", style: { "--hrk-renk": "#2E7D4F" } },
         React.createElement("div", { style: { background: "#F0F5EE", border: "1px solid #8FA888", borderRadius: "var(--erp-r-md)", padding: "10px 12px", marginBottom: 16 } },
             React.createElement("span", { style: { fontSize: 13, color: "var(--erp-text)" } }, "Genel TL Kar\u015F\u0131l\u0131\u011F\u0131 (Kasa + Banka + Portf\u00F6ydeki \u00C7ekler): "),
             React.createElement("span", { className: "mono", style: { fontWeight: 700, fontSize: 16, color: "var(--erp-primary)" } },
@@ -45152,7 +45171,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         showToast(`${koli.kod} eklendi · ${satirlar.length} satır${siparis ? ` · ${siparis.siparisNo} (${yol})` : " · serbest"}${uyarilar.length ? ` · ⚠ ${uyarilar[0]}` : ""}`);
         return true;
     }
-    return (React.createElement("div", { style: { display: "grid", gap: 16 } },
+    return (React.createElement("div", { className: "renkli-form", "data-stok-fisi-formu": tip, style: { display: "grid", gap: 16, "--hrk-renk": HAREKET_TIPI_RENK[tip] || "var(--erp-accent)" } },
         (koliUyarilari.length > 0 || onayGoster) && (React.createElement("div", { "data-fis-eylemler": "1", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" } },
             koliUyarilari.length > 0 && (React.createElement("div", { "data-fis-koli-uyarisi": "1", style: { flexBasis: "100%", fontSize: 12, color: "var(--erp-danger)", background: "#FBEFEA", border: "1px solid #E4B8A8", borderRadius: "var(--erp-r-md)", padding: "6px 10px" } },
                 "\u26A0 Bu mal kolide. Koliyi okutmadan d\u00FCz satarsan\u0131z stok d\u00FC\u015Fer ama koliler \"Haz\u0131r\" kal\u0131r.",
@@ -47782,13 +47801,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                     } }, ap.ad))))));
                         })()))),
                 cardTab === "hareketler" && (React.createElement(DuzenAlani, { ekran: "cariHareketler", aralik: 0, acRef: duzenAcRef, disIkon: true, bloklar: [
-                        { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (React.createElement(React.Fragment, null, showHareket ? (React.createElement("div", { "data-cari-hareket-formu": hareketTipi || "", style: { background: alfaEkle((HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75"), "0A"), border: `2px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`,
+                        { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (React.createElement(React.Fragment, null, showHareket ? (React.createElement("div", { "data-cari-hareket-formu": hareketTipi || "", className: "renkli-form", style: { background: alfaEkle((HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75"), "0A"), border: `2px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`,
                                     borderLeft: `8px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12,
                                     "--hrk-renk": HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line)" } },
-                                React.createElement("style", null, `[data-cari-hareket-formu] input:not([type=checkbox]):not([type=radio]), [data-cari-hareket-formu] select, [data-cari-hareket-formu] textarea {
-                border: 2px solid var(--hrk-renk); background: #fff; border-radius: 8px; }
-                [data-cari-hareket-formu] input:focus, [data-cari-hareket-formu] select:focus, [data-cari-hareket-formu] textarea:focus {
-                outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hrk-renk) 25%, transparent); }`),
                                 React.createElement("div", { "data-cari-hareket-seridi": "1", style: { ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", flexWrap: "wrap" } },
                                     React.createElement("span", { className: "mono", style: {
                                             fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: "var(--erp-r-pill)",
@@ -47817,7 +47832,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                         React.createElement("span", { style: { fontSize: 11, fontWeight: 800, color: "var(--erp-text-2)", minWidth: 92 } },
                                             "2 \u00B7 ",
                                             hareketTipi === "Tahsilat" ? "Giren kasa/banka" : "Çıkan kasa/banka"),
-                                        uygunHesaplar.length === 0 ? (React.createElement("span", { style: { fontSize: 12, color: "var(--erp-warn)" } }, "Kasa/banka tan\u0131ml\u0131 de\u011Fil \u2014 Kasa & Banka ekran\u0131ndan a\u00E7\u0131n. Hesap se\u00E7ilmeden \u00F6deme/tahsilat kaydedilemez: para bir yere girmeli.")) : (React.createElement("select", { "data-cari-hareket-hesap": "1", value: hForm.hesap, onChange: (e) => hesapSec(e.target.value), style: { ...inputStyle, flex: "1 1 260px", maxWidth: 420, fontSize: 14, fontWeight: 700, padding: "8px 10px",
+                                        uygunHesaplar.length === 0 ? (React.createElement("span", { style: { fontSize: 12, color: "var(--erp-warn)" } }, "Kasa/banka tan\u0131ml\u0131 de\u011Fil \u2014 Kasa & Banka ekran\u0131ndan a\u00E7\u0131n. Hesap se\u00E7ilmeden \u00F6deme/tahsilat kaydedilemez: para bir yere girmeli.")) : (React.createElement("select", { "data-cari-hareket-hesap": "1", "data-renk-koru": "1", value: hForm.hesap, onChange: (e) => hesapSec(e.target.value), style: { ...inputStyle, flex: "1 1 260px", maxWidth: 420, fontSize: 14, fontWeight: 700, padding: "8px 10px",
                                                 border: `2px solid ${!hForm.hesap ? "var(--erp-warn)" : hForm.hesap.startsWith("banka:") ? "#2B6CB0" : "#2E7D4F"}`,
                                                 background: !hForm.hesap ? "#FFF8EC" : hForm.hesap.startsWith("banka:") ? "#2B6CB012" : "#2E7D4F12",
                                                 color: !hForm.hesap ? "var(--erp-text)" : hForm.hesap.startsWith("banka:") ? "#2B6CB0" : "#2E7D4F" } },
@@ -47835,7 +47850,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                     React.createElement(Field, { label: "Tutar" },
                                         React.createElement("div", { style: { display: "flex", gap: 4 } },
                                             React.createElement("input", { type: "number", step: "0.01", "data-cari-hareket-tutar": "1", value: hForm.tutar, onChange: (e) => setHForm({ ...hForm, tutar: e.target.value }), style: { ...inputStyle, flex: 1 } }),
-                                            React.createElement("select", { "data-cari-hareket-pb": "1", value: hForm.paraBirimi || "TRY", onChange: (e) => setHForm({ ...hForm, paraBirimi: e.target.value }), style: { ...inputStyle, width: 68 } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb))))),
+                                            React.createElement("select", { "data-cari-hareket-pb": "1", value: hForm.paraBirimi || "TRY", onChange: (e) => setHForm({ ...hForm, paraBirimi: e.target.value }), style: { ...inputStyle, width: 82 } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb))))),
                                     React.createElement(Field, { label: "Defter" },
                                         React.createElement("select", { value: hForm.defter, onChange: (e) => setHForm({ ...hForm, defter: e.target.value }), style: inputStyle },
                                             React.createElement("option", { value: "Genel" }, "Genel"),
@@ -61618,7 +61633,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.663.3)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.664.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
