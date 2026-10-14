@@ -42,6 +42,9 @@ async function calistir() {
     if (b) b.click(); return !!b;
   }, metin);
   const secimYap = (secenekMetni) => sayfa.evaluate((m) => {
+    // v1.663.0: kasa/banka cari formunda çip — önce çip aranır.
+    const cip = [...document.querySelectorAll("[data-cari-hareket-hesap-cip]")].find((x) => x.getBoundingClientRect().width > 0 && x.textContent.includes(m.replace(/^(Kasa|Banka): /, "")));
+    if (cip) { cip.click(); return; }
     const s = [...document.querySelectorAll("select")].filter((x) => x.getBoundingClientRect().width > 0)
       .find((x) => [...x.options].some((o) => o.textContent.includes(m)));
     const o = [...s.options].find((x) => x.textContent.includes(m));
@@ -157,8 +160,8 @@ async function calistir() {
   await gorunurTikla("Tahsilat");
   await sayfa.waitForTimeout(500);
   await sayfa.evaluate(() => {
-    const s = [...document.querySelectorAll("select")].filter((x) => x.getBoundingClientRect().width > 0).find((x) => [...x.options].some((o) => o.value === "Çek"));
-    s.value = "Çek"; s.dispatchEvent(new Event("change", { bubbles: true }));
+    // v1.663.0: ödeme şekli çiplerle.
+    [...document.querySelectorAll('[data-odeme-sekli-cip="Çek"]')].find((x) => x.getBoundingClientRect().width > 0).click();
   });
   await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => {

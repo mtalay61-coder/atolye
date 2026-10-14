@@ -27,7 +27,7 @@ async function calistir() {
 
   const nakitken = await sayfa.evaluate(() => /Çek bilgileri|Senet bilgileri/.test(document.body.innerText));
 
-  await sayfa.locator('select:has(option:text-is("Çek")):visible').first().selectOption("Çek");
+  await sayfa.locator('[data-odeme-sekli-cip="Çek"]:visible').first().click();  // v1.663.0: çip
   await sayfa.waitForTimeout(400);
   const cekSecilince = await sayfa.evaluate(() => {
     const t = document.body.innerText.replace(/\s+/g, " ");

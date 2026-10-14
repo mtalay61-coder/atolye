@@ -299,6 +299,18 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       .map((b) => ({ deger: `banka:${b.id}`, ad: `Banka: ${b.ad}`, pb: b.paraBirimi || "TRY" }))),
   ];
   const seciliHesap = uygunHesaplar.find((h) => h.deger === hForm.hesap) || null;
+  // Hesap seçimi (v1.663.0'dan beri çiplerden): para birimi farklıysa tutar GÜNCEL KURLA ön doldurulur; kullanıcı
+  // gerçekte hareket eden parayı biliyorsa üzerine yazar.
+  const hesapSec = (deger) => {
+    const yeni = uygunHesaplar.find((h) => h.deger === deger);
+    let hesapTutar = "";
+    if (yeni && yeni.pb !== (hForm.paraBirimi || "TRY")) {
+      const t = parseFloat(hForm.tutar);
+      const c = t > 0 ? paraCevirGenel(t, hForm.paraBirimi || "TRY", yeni.pb, kurlar) : null;
+      hesapTutar = c != null ? String(stokYuvarla(c)) : "";
+    }
+    setHForm({ ...hForm, hesap: deger, hesapTutar, kurGirdi: "" });
+  };
   const cariPB = hForm.paraBirimi || "TRY";
   // ÇEVRİM GEREKİYOR MU: hesabın para birimi cari hareketinkinden farklıysa.
   const cevrimGerekli = !!seciliHesap && seciliHesap.pb !== cariPB;
@@ -1056,7 +1068,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           <DuzenAlani ekran="cariHareketler" aralik={0} acRef={duzenAcRef} disIkon bloklar={[
           { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (<>
           {showHareket ? (
-            <div style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
+            <div data-cari-hareket-formu={hareketTipi || ""} style={{ background: alfaEkle((HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75"), "0A"), border: `2px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`,
+              borderLeft: `8px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
               {/* MOR KAYIT ŞERİDİ (v1.625.0 — "Tüm kaydetler üst mor şeritte olsun"): işlem tipi, yön açıklaması ve
                   Kaydet · Vazgeç tek satırda, formun üstünde (önce düğmeler formun dibindeydi). */}
               <div data-cari-hareket-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", flexWrap: "wrap" }}>
@@ -1081,6 +1094,53 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   <button className="btn-ghost" onClick={() => { setShowHareket(false); setHareketTipi(null); }}><X size={14} /> Vazgeç</button>
                 </span>
               </div>
+              {/* ÖNCE ÖDEME ŞEKLİ VE KASA/BANKA (v1.663.0 — kullanıcı: "cariden ödeme tahsilat için ilk olarak kasa banka
+                  seçimi yapılsın; daha canlı olsun, renkli"): açılır kutular yerine formun başında büyük renkli çipler.
+                  Kasa yeşil, banka mavi; seçili olan dolu. Çek/senette para kasaya girmez → kasa satırı yok. */}
+              {(hareketTipi === "Tahsilat" || hareketTipi === "Ödeme") && (
+                <div data-cari-hareket-adimlar="1" style={{ display: "grid", gap: 8, marginBottom: 10 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "var(--erp-text-2)", minWidth: 92 }}>1 · Ödeme şekli</span>
+                    {ODEME_SEKILLERI.map((o) => {
+                      const sec = hForm.odemeSekli === o;
+                      const renk = HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75";
+                      return (
+                        <button key={o} type="button" data-odeme-sekli-cip={o} data-secili={sec ? "1" : undefined} onClick={() => setHForm({ ...hForm, odemeSekli: o })}
+                          style={{ padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                            border: `2px solid ${renk}`, background: sec ? renk : "#fff", color: sec ? "#fff" : renk }}>
+                          {o}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {paraHareketi && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: "var(--erp-text-2)", minWidth: 92 }}>
+                        2 · {hareketTipi === "Tahsilat" ? "Giren kasa/banka" : "Çıkan kasa/banka"}
+                      </span>
+                      {uygunHesaplar.length === 0 ? (
+                        <span style={{ fontSize: 12, color: "var(--erp-warn)" }}>
+                          Kasa/banka tanımlı değil — Kasa & Banka ekranından açın. Hesap seçilmeden ödeme/tahsilat kaydedilemez: para bir yere girmeli.
+                        </span>
+                      ) : uygunHesaplar.map((h) => {
+                        const sec = hForm.hesap === h.deger;
+                        const banka = h.deger.startsWith("banka:");
+                        const renk = banka ? "#2B6CB0" : "#2E7D4F";
+                        return (
+                          <button key={h.deger} type="button" data-cari-hareket-hesap-cip={h.deger} onClick={() => hesapSec(h.deger)}
+                            style={{ padding: "8px 14px", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
+                              border: `2px solid ${renk}`, background: sec ? renk : alfaEkle(renk, "12"), color: sec ? "#fff" : renk,
+                              boxShadow: sec ? `0 2px 8px ${alfaEkle(renk, "55")}` : "none" }}>
+                            {banka ? "🏦" : "💵"} {h.ad.replace(/^(Kasa|Banka): /, "")}
+                            <span className="mono" style={{ fontSize: 10, opacity: 0.85 }}>{h.pb}</span>
+                          </button>
+                        );
+                      })}
+                      {!hForm.hesap && uygunHesaplar.length > 0 && <span style={{ fontSize: 11, color: "var(--erp-warn)", fontWeight: 700 }}>← seçin</span>}
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 }}>
                 <Field label="Tarih">
                   <input type="date" value={hForm.tarih} onChange={(e) => setHForm({ ...hForm, tarih: e.target.value })} style={inputStyle} />
@@ -1101,51 +1161,13 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   </select>
                 </Field>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: cekSenet ? "1fr 1fr 1fr 2fr" : "1fr 1fr 2fr", gap: 8, marginTop: 8 }}>
+              <div style={{ display: "grid", gridTemplateColumns: cekSenet ? "1fr 1fr 2fr" : "1fr 2fr", gap: 8, marginTop: 8 }}>
                 <Field label="Fiş No">
                   <input value={hForm.fisNo} onChange={(e) => setHForm({ ...hForm, fisNo: e.target.value })} placeholder="Opsiyonel" style={inputStyle} />
-                </Field>
-                <Field label="Ödeme Şekli">
-                  <select value={hForm.odemeSekli} onChange={(e) => setHForm({ ...hForm, odemeSekli: e.target.value })} style={inputStyle}>
-                    {ODEME_SEKILLERI.map((o) => <option key={o}>{o}</option>)}
-                  </select>
                 </Field>
                 {/* PARANIN NEREYE YAZILACAĞI. Tahsilat/ödeme tanımı gereği para hareketidir;
                     hesap seçilmezse cari bakiyesi düzelir ama para havada kalır — kasa ile cari
                     birbirini tutmaz. */}
-                {paraHareketi && (
-                  <Field label={hareketTipi === "Tahsilat" ? "Hangi kasaya/bankaya girdi?" : "Hangi kasadan/bankadan çıktı?"}>
-                    {uygunHesaplar.length === 0 ? (
-                      <span style={{ fontSize: 11, color: "var(--erp-warn)", padding: "6px 0", display: "block" }}>
-                        {hForm.paraBirimi} hesabı tanımlı değil — Kasa & Banka ekranından kasa/banka
-                        açın. Hesap seçilmeden ödeme/tahsilat kaydedilemez: para bir yere girmeli.
-                      </span>
-                    ) : (
-                      <select
-                        data-cari-hareket-hesap="1"
-                        value={hForm.hesap}
-                        onChange={(e) => {
-                          const yeni = uygunHesaplar.find((h) => h.deger === e.target.value);
-                          // Para birimi farklıysa tutar GÜNCEL KURLA ön dolduruluyor; kullanıcı
-                          // gerçekte hareket eden parayı biliyorsa üzerine yazar.
-                          let hesapTutar = "";
-                          if (yeni && yeni.pb !== cariPB) {
-                            const t = parseFloat(hForm.tutar);
-                            const c = t > 0 ? paraCevirGenel(t, cariPB, yeni.pb, kurlar) : null;
-                            hesapTutar = c != null ? String(stokYuvarla(c)) : "";
-                          }
-                          setHForm({ ...hForm, hesap: e.target.value, hesapTutar, kurGirdi: "" });
-                        }}
-                        style={inputStyle}
-                      >
-                        <option value="">Seçin…</option>
-                        {uygunHesaplar.map((h) => (
-                          <option key={h.deger} value={h.deger}>{h.ad}{h.pb !== cariPB ? ` (${h.pb})` : ""}</option>
-                        ))}
-                      </select>
-                    )}
-                  </Field>
-                )}
                 {/* KUR ÇEVİRİCİ — hesabın para birimi cari hareketininkinden farklıysa.
                     Örn. dolar borcuna TL kasadan tahsilat. İki tutar da kayda giriyor; kur
                     ikisinden TÜRETİLİYOR, ayrıca sorulmuyor. */}
