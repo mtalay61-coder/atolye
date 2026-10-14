@@ -1068,16 +1068,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           <DuzenAlani ekran="cariHareketler" aralik={0} acRef={duzenAcRef} disIkon bloklar={[
           { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (<>
           {showHareket ? (
-            <div data-cari-hareket-formu={hareketTipi || ""} style={{ background: alfaEkle((HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75"), "0A"), border: `2px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`,
+            <div data-cari-hareket-formu={hareketTipi || ""} className="renkli-form" style={{ background: alfaEkle((HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75"), "0A"), border: `2px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`,
               borderLeft: `8px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12,
               "--hrk-renk": HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line)" }}>
               {/* ALANLARIN ÇERÇEVESİ (v1.663.3 — kullanıcı: "tarih, defter vs. onların da etrafı çizili olsun, tek renk
                   olabilir"): formdaki bütün kutular işlem renginde çerçeveli. Satır içi stili olan kasa listesi kendi
-                  rengini korur (:not ile dışarıda; öbürlerinde satır içi inputStyle çerçevesini !important ezer). */}
-              <style>{`[data-cari-hareket-formu] input:not([type=checkbox]):not([type=radio]), [data-cari-hareket-formu] select:not([data-cari-hareket-hesap]), [data-cari-hareket-formu] textarea {
-                border: 2px solid var(--hrk-renk) !important; background-color: #fff; border-radius: 8px; }
-                [data-cari-hareket-formu] input:focus, [data-cari-hareket-formu] select:focus, [data-cari-hareket-formu] textarea:focus {
-                outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hrk-renk) 25%, transparent); }`}</style>
+                  rengini korur (data-renk-koru). Kural 100'deki ortak .renkli-form sınıfında. */}
               {/* MOR KAYIT ŞERİDİ (v1.625.0 — "Tüm kaydetler üst mor şeritte olsun"): işlem tipi, yön açıklaması ve
                   Kaydet · Vazgeç tek satırda, formun üstünde (önce düğmeler formun dibindeydi). */}
               <div data-cari-hareket-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", flexWrap: "wrap" }}>
@@ -1133,7 +1129,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                       ) : (
                         // AÇILIR LİSTE (v1.663.2 — kullanıcı: "seçmeli yapılsın, kasa banka büyüdükçe ekran kapanır"): çipler
                         // her hesap için yer kaplıyordu; liste kasa / banka gruplu, seçilince kutu hesabın renginde.
-                        <select data-cari-hareket-hesap="1" value={hForm.hesap} onChange={(e) => hesapSec(e.target.value)}
+                        <select data-cari-hareket-hesap="1" data-renk-koru="1" value={hForm.hesap} onChange={(e) => hesapSec(e.target.value)}
                           style={{ ...inputStyle, flex: "1 1 260px", maxWidth: 420, fontSize: 14, fontWeight: 700, padding: "8px 10px",
                             border: `2px solid ${!hForm.hesap ? "var(--erp-warn)" : hForm.hesap.startsWith("banka:") ? "#2B6CB0" : "#2E7D4F"}`,
                             background: !hForm.hesap ? "#FFF8EC" : hForm.hesap.startsWith("banka:") ? "#2B6CB012" : "#2E7D4F12",

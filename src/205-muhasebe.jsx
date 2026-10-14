@@ -438,7 +438,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
   const tlKarsiligi = tlKarsiligiHesapla();
 
   return (
-    <div>
+    // RENKLİ FORM (v1.663.5 — "kasa banka ekranı da aynı şekilde renkli olsun"): kutular yeşil çerçeveli (100 .renkli-form).
+    <div className="renkli-form" style={{ "--hrk-renk": "#2E7D4F" }}>
       {/* GENEL TL KARŞILIĞI — kur kutuları ve "TCMB'den Kur Çek" düğmesi BURADAN KALDIRILDI
           (kullanıcı, 7 Eylül: "en üstte kur var, buna gerek yok daha").
           Kur artık üst şeritte: değerler orada, elle giriş (kalem) orada, yenileme orada.

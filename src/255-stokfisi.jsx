@@ -593,7 +593,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
 
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
+    // RENKLİ FORM (v1.663.5): kutular fişin renginde çerçeveli (satış mavi, alış kahve) — 100 .renkli-form.
+    <div className="renkli-form" data-stok-fisi-formu={tip} style={{ display: "grid", gap: 16, "--hrk-renk": HAREKET_TIPI_RENK[tip] || "var(--erp-accent)" }}>
       {/* KAYDET / VAZGEÇ ÜSTTE (v1.520.0 — kullanıcı: "Fiş formunda da kaydet vazgeç üstte olsun"; sipariş
           formunda v1.519.0). Kaydetmeden önceki ONAY PANELİ ve koli uyarısı da burada: "Kaydet"e basan kişi
           sonucu düğmenin olduğu yerde görür, sayfanın dibine kaydırmaz. Kalem girişindeki yeşil "Ekle" ile

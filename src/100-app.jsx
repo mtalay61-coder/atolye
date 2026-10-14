@@ -3799,6 +3799,14 @@ function AtolyeUygulamasi() {
           <svg><use href="#i-plus"/></svg> ile kullanılır. */}
       <div dangerouslySetInnerHTML={{ __html: ERP_ICONS_SVG }} aria-hidden="true" />
       <style>{`
+        /* RENKLİ FORM (v1.663.5 — kullanıcı: cari ödeme formu gibi "kasa banka ekranı da, fiş ekranı da renkli olsun"):
+           .renkli-form kabındaki bütün kutular kabın --hrk-renk renginde kalın çerçeveli; satır içi inputStyle çerçevesini
+           !important ezer. Kendi rengini koruması gereken kutu data-renk-koru taşır. */
+        .renkli-form input:not([type=checkbox]):not([type=radio]):not([type=color]):not([data-renk-koru]),
+        .renkli-form select:not([data-renk-koru]), .renkli-form textarea:not([data-renk-koru]) {
+          border: 2px solid var(--hrk-renk, var(--erp-accent)) !important; background-color: #fff; border-radius: 8px; }
+        .renkli-form input:focus, .renkli-form select:focus, .renkli-form textarea:focus {
+          outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 25%, transparent); }
         /* ---- TASARIM TOKENLARI (ERP standardı, 20 Eylül) ----
            Kullanıcı: "tasarımı ortak yapmamız lazım." 3.625 renk kullanımı, 119 farklı ton
            vardı; en sık 16'sı burada tek kaynakta. Kullanıcının erp-tokens.css'i gelince
