@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.663.2";
+const SURUM = "1.663.4";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Cari odeme/tahsilat: kasa/banka renkli acilir liste";
+const SURUM_NOTU = "Cari odeme/tahsilat formunda butun kutular islem renginde cerceveli";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Cari odeme/tahsilat: kasa/banka renkli acilir liste";
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.663.4", tarih: "14.10.2026", eklenen: [],
+    degisen: ["Cari ödeme/tahsilat formunda tarih, tutar, defter, fiş no, açıklama kutuları işlem renginde kalın çerçeveli"], duzeltilen: [] },
   { surum: "1.663.2", tarih: "14.10.2026", eklenen: [],
     degisen: ["Cari ödeme/tahsilatta kasa/banka seçimi çip yerine renkli açılır liste (kasa / banka gruplu) — hesap sayısı artınca ekranı kaplamasın"], duzeltilen: [] },
   { surum: "1.663.1", tarih: "14.10.2026", eklenen: [],
