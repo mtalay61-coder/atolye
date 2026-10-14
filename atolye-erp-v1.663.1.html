@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.663.0</title>
+<title>Atölye ERP 1.663.1</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2266,7 +2266,7 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.663.0";
+const SURUM = "1.663.1";
 const SURUM_TARIHI = "2026-10-12";
 const SURUM_NOTU = "Cari odeme/tahsilat: once odeme sekli ve kasa/banka renkli ciplerle";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
@@ -2279,7 +2279,7 @@ const SURUM_NOTU = "Cari odeme/tahsilat: once odeme sekli ve kasa/banka renkli c
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
-    { surum: "1.663.0", tarih: "14.10.2026", eklenen: [],
+    { surum: "1.663.1", tarih: "14.10.2026", eklenen: [],
         degisen: ["Cari kartında Ödeme / Tahsilat formu: önce ödeme şekli ve kasa/banka büyük renkli çiplerle (kasa yeşil, banka mavi), form işlem renginde çerçeveli"], duzeltilen: [] },
     { surum: "1.662.0", tarih: "13.10.2026",
         eklenen: ["Tanımlar › Web Sitesi › Sayfa düzeni: bölümleri sürükleyip sırala, gizle, arka plan rengi / resmi ve yazı rengi; yeni Banner (tam genişlik resim + başlık + düğme) ve Metin + resim blokları (EN/RU çevirili)", "Canlı önizleme: sağda site, kaydedilmemiş hâliyle; masaüstü / telefon genişliği"],
@@ -47801,7 +47801,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                         ODEME_SEKILLERI.map((o) => {
                                             const sec = hForm.odemeSekli === o;
                                             const renk = HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75";
-                                            return (React.createElement("button", { key: o, type: "button", "data-odeme-sekli-cip": o, onClick: () => setHForm({ ...hForm, odemeSekli: o }), style: { padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                                            return (React.createElement("button", { key: o, type: "button", "data-odeme-sekli-cip": o, "data-secili": sec ? "1" : undefined, onClick: () => setHForm({ ...hForm, odemeSekli: o }), style: { padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
                                                     border: `2px solid ${renk}`, background: sec ? renk : "#fff", color: sec ? "#fff" : renk } }, o));
                                         })),
                                     paraHareketi && (React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" } },
@@ -61610,7 +61610,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.663.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.663.1)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

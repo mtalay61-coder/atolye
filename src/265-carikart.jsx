@@ -1105,7 +1105,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                       const sec = hForm.odemeSekli === o;
                       const renk = HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75";
                       return (
-                        <button key={o} type="button" data-odeme-sekli-cip={o} onClick={() => setHForm({ ...hForm, odemeSekli: o })}
+                        <button key={o} type="button" data-odeme-sekli-cip={o} data-secili={sec ? "1" : undefined} onClick={() => setHForm({ ...hForm, odemeSekli: o })}
                           style={{ padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
                             border: `2px solid ${renk}`, background: sec ? renk : "#fff", color: sec ? "#fff" : renk }}>
                           {o}

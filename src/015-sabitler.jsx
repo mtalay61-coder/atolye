@@ -479,7 +479,7 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.663.0";
+const SURUM = "1.663.1";
 const SURUM_TARIHI = "2026-10-12";
 const SURUM_NOTU = "Cari odeme/tahsilat: once odeme sekli ve kasa/banka renkli ciplerle";
 
@@ -494,7 +494,7 @@ const SURUM_NOTU = "Cari odeme/tahsilat: once odeme sekli ve kasa/banka renkli c
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
-  { surum: "1.663.0", tarih: "14.10.2026", eklenen: [],
+  { surum: "1.663.1", tarih: "14.10.2026", eklenen: [],
     degisen: ["Cari kartında Ödeme / Tahsilat formu: önce ödeme şekli ve kasa/banka büyük renkli çiplerle (kasa yeşil, banka mavi), form işlem renginde çerçeveli"], duzeltilen: [] },
   { surum: "1.662.0", tarih: "13.10.2026",
     eklenen: ["Tanımlar › Web Sitesi › Sayfa düzeni: bölümleri sürükleyip sırala, gizle, arka plan rengi / resmi ve yazı rengi; yeni Banner (tam genişlik resim + başlık + düğme) ve Metin + resim blokları (EN/RU çevirili)", "Canlı önizleme: sağda site, kaydedilmemiş hâliyle; masaüstü / telefon genişliği"],

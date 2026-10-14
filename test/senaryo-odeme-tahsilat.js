@@ -69,8 +69,9 @@ const { TOHUM } = require("./tohum.js");
   await sayfa.waitForTimeout(800);
   sonuc.cekFormu = await sayfa.evaluate(() => {
     const k = document.querySelector("[data-odeme-tahsilat]").innerText;
-    const s = [...document.querySelectorAll("[data-odeme-tahsilat] select")].find((x) => [...x.options].some((o) => o.value === "Senet"));
-    return { sekil: s ? s.value : null, cekBilgileri: /Çek bilgileri/.test(k) };
+    // v1.663.0: ödeme şekli çiplerle (seçili çip data-secili).
+    const s = document.querySelector("[data-odeme-tahsilat] [data-odeme-sekli-cip][data-secili]");
+    return { sekil: s ? s.dataset.odemeSekliCip : null, cekBilgileri: /Çek bilgileri/.test(k) };
   });
   // v1.645.10 — TEK ALAN: üç ekranda da ortak sekme şeridi; özet kartı (kasa bakiyesi) Kasa & Banka'yı açar.
   sonuc.ozetKartlariYok = await sayfa.evaluate(() => !document.querySelector("[data-odeme-ozet]"));
