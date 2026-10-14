@@ -1069,7 +1069,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           { id: "islem", ad: "Fiş ve işlem düğmeleri", icerik: (<>
           {showHareket ? (
             <div data-cari-hareket-formu={hareketTipi || ""} style={{ background: alfaEkle((HAREKET_TIPI_RENK[hareketTipi] || "#5B3F75"), "0A"), border: `2px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`,
-              borderLeft: `8px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
+              borderLeft: `8px solid ${HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line-soft)"}`, borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12,
+              "--hrk-renk": HAREKET_TIPI_RENK[hareketTipi] || "var(--erp-line)" }}>
+              {/* ALANLARIN ÇERÇEVESİ (v1.663.3 — kullanıcı: "tarih, defter vs. onların da etrafı çizili olsun, tek renk
+                  olabilir"): formdaki bütün kutular işlem renginde çerçeveli. Satır içi stili olan kasa listesi kendi
+                  rengini korur (:not ile dışarıda; öbürlerinde satır içi inputStyle çerçevesini !important ezer). */}
+              <style>{`[data-cari-hareket-formu] input:not([type=checkbox]):not([type=radio]), [data-cari-hareket-formu] select:not([data-cari-hareket-hesap]), [data-cari-hareket-formu] textarea {
+                border: 2px solid var(--hrk-renk) !important; background-color: #fff; border-radius: 8px; }
+                [data-cari-hareket-formu] input:focus, [data-cari-hareket-formu] select:focus, [data-cari-hareket-formu] textarea:focus {
+                outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--hrk-renk) 25%, transparent); }`}</style>
               {/* MOR KAYIT ŞERİDİ (v1.625.0 — "Tüm kaydetler üst mor şeritte olsun"): işlem tipi, yön açıklaması ve
                   Kaydet · Vazgeç tek satırda, formun üstünde (önce düğmeler formun dibindeydi). */}
               <div data-cari-hareket-seridi="1" style={{ ...MOR_SERIT_STIL, display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "6px 10px", flexWrap: "wrap" }}>
@@ -1153,7 +1161,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 <Field label="Tutar">
                   <div style={{ display: "flex", gap: 4 }}>
                     <input type="number" step="0.01" data-cari-hareket-tutar="1" value={hForm.tutar} onChange={(e) => setHForm({ ...hForm, tutar: e.target.value })} style={{ ...inputStyle, flex: 1 }} />
-                    <select data-cari-hareket-pb="1" value={hForm.paraBirimi || "TRY"} onChange={(e) => setHForm({ ...hForm, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 68 }}>
+                    <select data-cari-hareket-pb="1" value={hForm.paraBirimi || "TRY"} onChange={(e) => setHForm({ ...hForm, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 82 }}>
                       {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
                     </select>
                   </div>
