@@ -11,6 +11,8 @@
   "Fiyat Listesi",
   "Depo",
   "Paketleme",
+  "Sevkiyat",
+  "Alış / Satış",
   "Planlama",
   "Sohbet",
   "Günlük"
