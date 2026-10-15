@@ -179,7 +179,9 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
   const renk = HAREKET_TIPI_RENK[tip];
   return (
     <div data-odeme-satiri={odemeSekli} style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", padding: "10px 12px",
-      background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)" }}>
+      background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)",
+      // Kutu çerçeveleri de işlemin renginde (v1.665.1 — "giriş çıkış renk durumuna göre değişsin"; 100 .renkli-form).
+      "--hrk-renk": renk }}>
       {alan(kart ? "İşlem tarihi" : "Tarih", <input type="date" value={f.tarih} onChange={(e) => setF({ ...f, tarih: e.target.value })} style={{ ...kutu, width: 140 }} />)}
       {alan("Tutar", (
         <span style={{ display: "flex", gap: 4 }}>
