@@ -464,6 +464,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
         {[
           { key: "kasa", label: "Kasa", icon: <Wallet size={14} /> },
           { key: "banka", label: "Banka", icon: <Landmark size={14} /> },
+          // TÜM HAREKETLER (v1.674.0, 211): kasa + banka hareketleri tek listede, süzgeçli.
+          { key: "hareketler", label: "Tüm hareketler", icon: <FileText size={14} /> },
           kapsam !== "kasabanka" && { key: "cek", label: "Çek", icon: <Receipt size={14} /> },
           // KÂR / ZARAR sekmesi v1.587.0'da Finans › Gelir / Gider'e taşındı (kullanıcı: "kasa-banka içerisinde
           // olması mantıksız") — rapor gider kartlarının meyvesi, kartların yanında durmalı.
@@ -536,6 +538,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
           showToast={showToast}
         />
       )}
+      {altSekme === "hareketler" && <KasaBankaHareketleri muhasebe={muhasebe} cariler={cariler} />}
       {altSekme === "cek" && (
         <CekListesi cekler={cekler} cariler={cariler} kurlar={kurlar} onEkle={cekEkle} onSil={cekSil} onIslem={onCekIslem} onSonIslemiGeriAl={cekSonIslemiGeriAl} onYazdir={onCekYazdir} bankalar={bankalar} kasalar={kasalar} gorseller={cekGorselleri} onGorselKaydet={onCekGorselKaydet} />
       )}

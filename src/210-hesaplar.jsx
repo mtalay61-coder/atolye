@@ -459,10 +459,10 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       // RENKLER HAREKET_TIPI_RENK'TEN (v1.535.0 — kullanıcı: "Ödeme, tahsilat renkleri var, butonları o renge
                       // boyayalım"): satırdaki Tahsilat/Ödeme rozeti ve cari kartındaki fiş düğmeleriyle aynı renk.
                       // SİMGELİ (v1.618.0): HAREKET_TIPI_IKON — cari kartı ve sipariş kartıyla aynı simgeler.
-                      { k: "tahsilat", ad: "Tahsilat", ikon: "Tahsilat", ipucu: "Cariden para girdi", renk: HAREKET_TIPI_RENK["Tahsilat"] },
-                      { k: "odeme", ad: "Ödeme", ikon: "Ödeme", ipucu: "Cariye para çıktı", renk: HAREKET_TIPI_RENK["Ödeme"] },
+                      // HAREKET GİRİŞİ KALDIRILDI (v1.674.0 — kullanıcı: "kasa banka ekranında hareket girmesin, ödeme ve
+                      // tahsilatta giriliyor"). Tahsilat / ödeme / gelir-gider kartı girişi Ödeme & Tahsilat'ta; burada yalnız
+                      // hesaplar arası VİRMAN kaldı (şirket içi para yer değiştirmesi, karşı tarafı yok).
                       { k: "virman", ad: "Virman", ikon: "Virman", ipucu: "Kasalar/bankalar arası aktarım", renk: "var(--erp-info)" },
-                      { k: "serbest", ad: "Serbest kayıt", ikon: "Serbest", ipucu: "Cariye bağlı olmayan giriş/çıkış", renk: "var(--erp-text-2)" },
                     ].map((x) => (
                       <button
                       key={x.k} type="button" data-islem={x.k} title={x.ipucu}
@@ -607,7 +607,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                   </div>
                 )}
 
-                {acik && islem && islem !== "virman" && (
+                {acik && (
+                  <div style={{ padding: "6px 12px 0", fontSize: 11, color: "var(--erp-text-3)" }}>
+                    Tahsilat, ödeme ve gelir/gider kaydı Ödeme & Tahsilat › Tahsilat / Ödeme gir ekranından girilir.
+                  </div>
+                )}
+                {false && acik && islem && islem !== "virman" && (
                   <div style={{ padding: "0 12px 12px" }}>
                     {(() => {
                       // "P.Birimi" HER ZAMAN bu hesabın kendi para birimidir (sabit) — kasa/banka

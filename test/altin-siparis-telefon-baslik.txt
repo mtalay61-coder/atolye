@@ -19,9 +19,7 @@
    "Müşteri"
   ]
  },
- "kasaKutusuVar": true,
- "oneri": [
-  "Tedarikçi A"
- ],
- "secilen": "c1"
+ "kasaKutusuVar": false,
+ "oneri": [],
+ "secilen": null
 }

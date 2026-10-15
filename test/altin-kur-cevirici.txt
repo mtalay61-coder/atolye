@@ -1,15 +1,12 @@
 {
+ "cari": [
+  "1000 USD",
+  "1000 USD"
+ ],
  "hatalar": [],
- "hedeftenKura": {
-  "hedef": "800",
-  "kur": "52.5"
- },
- "kurdanHedefe": {
-  "hedef": "1050",
-  "kur": "40"
- },
- "tutarSonrasi": {
-  "hedef": "1000",
-  "kur": "42"
- }
+ "kasa": [
+  "Giriş:41500",
+  "Giriş:42000"
+ ],
+ "oneri": "42000"
 }

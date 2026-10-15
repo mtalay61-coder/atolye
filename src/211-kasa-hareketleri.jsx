@@ -1,0 +1,106 @@
+// ================= KASA & BANKA › TÜM HAREKETLER (v1.674.0) =================
+//
+// Kullanıcı: "Burada kasalar ve bankalar listelensin, yeni kasa açılsın. Hareketler listelensin topluca, kasa / banka
+// ayrımı olarak, genel ve resmi şeklinde de ayrım, filtreleme vs." Hareket GİRİŞİ bu ekrandan kalktı (Ödeme &
+// Tahsilat'ta); bu liste yalnız okuma. Defter kuralı ERP'nin geri kalanıyla aynı (`defterKapsar`: Muhasebe defteri
+// hem Genel'de hem Resmi'de sayılır). Toplamlar para birimi başına — farklı birimleri toplamak yapılmamış kur
+// çevrimi olurdu.
+
+function KasaBankaHareketleri({ muhasebe, cariler }) {
+  const [tur, setTur] = useState("Tümü");          // Tümü | Kasa | Banka
+  const [hesapId, setHesapId] = useState("");
+  const [defter, setDefter] = useState("Tümü");    // Tümü | Genel | Resmi
+  const [yon, setYon] = useState("Tümü");          // Tümü | Giriş | Çıkış
+  const [bas, setBas] = useState("");
+  const [bit, setBit] = useState("");
+  const [arama, setArama] = useState("");
+
+  const hesaplar = [
+    ...((muhasebe && muhasebe.kasalar) || []).map((h) => ({ ...h, tur: "Kasa" })),
+    ...((muhasebe && muhasebe.bankalar) || []).map((h) => ({ ...h, tur: "Banka" })),
+  ];
+  const cariAd = (id) => { const c = (cariler || []).find((x) => x.id === id); return c ? c.unvan : ""; };
+  const q = arama.trim().toLocaleLowerCase("tr-TR");
+
+  const satirlar = React.useMemo(() => hesaplar
+    .filter((h) => (tur === "Tümü" || h.tur === tur) && (!hesapId || h.id === hesapId))
+    .flatMap((h) => (h.hareketler || []).map((x) => ({ ...x, hesap: h })))
+    .filter((x) => defter === "Tümü" || defterKapsar(x.defter, defter))
+    .filter((x) => yon === "Tümü" || x.yon === yon)
+    .filter((x) => { const t = String(x.tarih || "").slice(0, 10); return (!bas || t >= bas) && (!bit || t <= bit); })
+    .filter((x) => !q || `${x.aciklama || ""} ${x.fisNo || ""} ${cariAd(x.cariId)} ${x.giderKartAd || ""} ${x.hesap.ad}`.toLocaleLowerCase("tr-TR").includes(q))
+    .sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || ""))),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [muhasebe, cariler, tur, hesapId, defter, yon, bas, bit, q]);
+
+  const toplam = {};
+  satirlar.forEach((x) => {
+    const pb = x.hesap.paraBirimi || "TRY";
+    toplam[pb] = toplam[pb] || { giris: 0, cikis: 0 };
+    if (x.yon === "Giriş") toplam[pb].giris += Number(x.tutar) || 0; else toplam[pb].cikis += Number(x.tutar) || 0;
+  });
+  const para = (t, pb) => `${t.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+  const cip = (deger, set, secenekler, veri) => (
+    <div style={{ display: "flex", gap: 4 }}>
+      {secenekler.map((s) => (
+        <button key={s} type="button" data-kbh-cip={`${veri}:${s}`} onClick={() => set(s)}
+          className={deger === s ? "btn-primary" : "btn-ghost"} style={{ fontSize: 12, padding: "4px 10px" }}>{s}</button>
+      ))}
+    </div>
+  );
+  const kutu = { border: "1.5px solid var(--hrk-renk)", borderRadius: 10, padding: 10, background: "#fff", marginBottom: 10 };
+
+  return (
+    <div data-kasa-banka-hareketleri="1">
+      <div style={{ ...kutu, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        {cip(tur, (v) => { setTur(v); setHesapId(""); }, ["Tümü", "Kasa", "Banka"], "tur")}
+        <select value={hesapId} onChange={(e) => setHesapId(e.target.value)} style={{ minWidth: 180 }}>
+          <option value="">Tüm hesaplar</option>
+          {hesaplar.filter((h) => tur === "Tümü" || h.tur === tur).map((h) => <option key={h.id} value={h.id}>{h.tur}: {h.ad} · {h.paraBirimi || "TRY"}</option>)}
+        </select>
+        {cip(defter, setDefter, ["Tümü", "Genel", "Resmi"], "defter")}
+        {cip(yon, setYon, ["Tümü", "Giriş", "Çıkış"], "yon")}
+        <input type="date" value={bas} onChange={(e) => setBas(e.target.value)} title="Başlangıç" />
+        <input type="date" value={bit} onChange={(e) => setBit(e.target.value)} title="Bitiş" />
+        <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Açıklama, cari, fiş no ara…" style={{ flex: "1 1 200px" }} />
+      </div>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, marginBottom: 8 }} data-kbh-toplam="1">
+        <b>{satirlar.length} hareket</b>
+        {Object.entries(toplam).map(([pb, t]) => (
+          <span key={pb} className="mono">
+            <span style={{ color: HAREKET_TIPI_RENK["Tahsilat"] }}>+{para(t.giris, pb)}</span>{"  "}
+            <span style={{ color: HAREKET_TIPI_RENK["Ödeme"] }}>−{para(t.cikis, pb)}</span>{"  "}
+            <b>= {para(t.giris - t.cikis, pb)}</b>
+          </span>
+        ))}
+      </div>
+      <div style={{ overflow: "auto", maxHeight: "65vh", border: "1px solid var(--erp-line-soft)", borderRadius: 8, background: "#fff" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1, boxShadow: "0 1px 0 var(--erp-line)" }}>
+            <tr style={{ textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 }}>
+              <th style={{ padding: 6 }}>Tarih</th><th style={{ padding: 6 }}>Hesap</th><th style={{ padding: 6 }}>Karşı taraf</th>
+              <th style={{ padding: 6 }}>Açıklama</th><th style={{ padding: 6 }}>Defter</th><th style={{ padding: 6 }}>Fiş</th>
+              <th style={{ padding: 6, textAlign: "right" }}>Giriş</th><th style={{ padding: 6, textAlign: "right" }}>Çıkış</th>
+            </tr>
+          </thead>
+          <tbody>{satirlar.map((x) => {
+            const pb = x.hesap.paraBirimi || "TRY";
+            return (
+              <tr key={`${x.hesap.id}|${x.id}`} data-kbh-satir="1" style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                <td className="mono" style={{ padding: 6, whiteSpace: "nowrap" }}>{tarihYaz(String(x.tarih || "").slice(0, 10))}</td>
+                <td style={{ padding: 6, whiteSpace: "nowrap" }}><span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>{x.hesap.tur}</span> {x.hesap.ad}</td>
+                <td style={{ padding: 6 }}>{x.cariId ? cariAd(x.cariId) : x.giderKartAd ? <i>{x.giderKartAd}</i> : x.virmanMi ? "virman" : "—"}</td>
+                <td style={{ padding: 6, color: "var(--erp-text-2)" }}>{x.aciklama}</td>
+                <td style={{ padding: 6 }}>{x.defter || "Genel"}</td>
+                <td className="mono" style={{ padding: 6, whiteSpace: "nowrap" }}>{x.fisNo || ""}</td>
+                <td className="mono" style={{ padding: 6, textAlign: "right", color: HAREKET_TIPI_RENK["Tahsilat"] }}>{x.yon === "Giriş" ? para(Number(x.tutar) || 0, pb) : ""}</td>
+                <td className="mono" style={{ padding: 6, textAlign: "right", color: HAREKET_TIPI_RENK["Ödeme"] }}>{x.yon !== "Giriş" ? para(Number(x.tutar) || 0, pb) : ""}</td>
+              </tr>
+            );
+          })}</tbody>
+        </table>
+        {satirlar.length === 0 && <EmptyState text="Süzgece uyan hareket yok." />}
+      </div>
+    </div>
+  );
+}

@@ -95,7 +95,7 @@ function bankaCariOner(aciklama, cariler) {
   return en;
 }
 
-function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, showToast }) {
+function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, onBankaHareketi, showToast }) {
   const bankalar = (muhasebe && muhasebe.bankalar) || [];
   const [bankaId, setBankaId] = useState(bankalar.length === 1 ? bankalar[0].id : "");
   const [defter, setDefter] = useState("Genel");
@@ -197,8 +197,15 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
 
   const durum = (k) => {
     const s = secim[k.no] || {};
-    const varsayilan = !k.onceden && !k.kilitli && !mutabakat.eslesme[k.no];
-    return { sec: k.kilitli ? false : (s.sec != null ? s.sec : varsayilan), cariId: s.cariId != null ? s.cariId : k.oneriId };
+    // KİLİTLİ SATIR (v1.674.0): daha önce aktarılmış ya da kapalı dönemdeki satır hiçbir yoldan (tümünü seç dahil)
+    // seçilemez — "tümünü seç" önceden aktarılanları da işaretliyordu, ikinci aktarım aynı hareketleri iki kez yazardı.
+    const kilit = k.kilitli || k.onceden;
+    const varsayilan = !kilit && !mutabakat.eslesme[k.no];
+    // ÖNERİ KENDİLİĞİNDEN SEÇİLMEZ (v1.674.0 — kullanıcı: "boş seçilen cari New Diamond carisine aktardı"). Banka
+    // açıklamasında ALICI olarak firmanın kendi adı geçiyordu ("… - NEW DİAMOND"), öneri onu cari sanıp kutuyu
+    // doldurmuştu. Artık öneri yalnız tıklanırsa uygulanır; karşı taraf her satırda kullanıcının seçimi.
+    const cariId = s.cariId || "";
+    return { sec: kilit ? false : (s.sec != null ? s.sec : varsayilan), cariId, kartId: s.kartId || "", kilit };
   };
   const degistir = (no, alan, deger) => setSecim((o) => ({ ...o, [no]: { ...(o[no] || {}), [alan]: deger } }));
   const secilenler = kalemler.filter((k) => durum(k).sec);
@@ -207,12 +214,17 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
   const pb = (banka && banka.paraBirimi) || "TRY";
   const para = (t) => `${t.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
 
+  // KARŞI TARAF ZORUNLU (v1.674.0 — kullanıcı: "cari boş seçilmesin, gelir veya gider kartlarımız listelensin,
+  // mutlaka birini seçelim; boş ödeme olmaz"). Kasa & Banka'nın elle girişindeki kuralla aynı (210, 17 Eylül).
+  const karsiliksiz = secilenler.filter((k) => { const d = durum(k); return !d.cariId && !d.kartId; });
   const kaydet = () => {
     if (!banka) { showToast("Önce banka hesabını seçin"); return; }
     if (secilenler.length === 0) { showToast("Aktarılacak satır seçilmedi"); return; }
+    if (karsiliksiz.length > 0) { showToast(`${karsiliksiz.length} seçili satırda karşı taraf yok — cari ya da gelir/gider kartı seçin`); return; }
     let cariSay = 0, bankaSay = 0;
     secilenler.forEach((k) => {
-      const { cariId } = durum(k);
+      const { cariId, kartId } = durum(k);
+      const kart = kartId ? (giderKartlari || []).find((x) => x.id === kartId) : null;
       const cari = cariId ? (cariler || []).find((c) => c.id === cariId) : null;
       const tutar = Math.abs(k.tutar);
       if (cari) {
@@ -228,12 +240,13 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
       } else {
         onBankaHareketi({ hesapTur: "banka", hesapId: banka.id, hareket: {
           id: uid("mhrk"), tarih: k.tarih, yon: k.tutar > 0 ? "Giriş" : "Çıkış", tutar, defter,
-          aciklama: k.aciklama || "Banka hareketi (Excel)", bankaRef: k.ref, kullanici: islemKullanicisiAd(),
+          giderKartId: kart ? kart.id : null, giderKartAd: kart ? kart.ad : null, giderGrubu: kart ? (kart.grup || null) : null,
+          aciklama: `${kart ? kart.ad : "Banka hareketi"}${k.aciklama ? ` · ${k.aciklama}` : ""}`, bankaRef: k.ref, kullanici: islemKullanicisiAd(),
         } });
         bankaSay++;
       }
     });
-    showToast(`${secilenler.length} satır aktarıldı — ${cariSay} cariye işlendi, ${bankaSay} yalnız bankaya`);
+    showToast(`${secilenler.length} satır aktarıldı — ${cariSay} cariye, ${bankaSay} gelir/gider kartına işlendi`);
     setSecim({});
   };
 
@@ -291,8 +304,9 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
             <span style={{ color: HAREKET_TIPI_RENK["Ödeme"] }}>Çıkış {para(toplamCikis)}</span>
             {/* BANKA SEÇİLMEDEN DÜĞME PASİFTİ, sebebi yazmıyordu (kullanıcı, v1.673.1: "seçilenleri aktar neden aktif
                 olmuyor?"). Birden çok banka hesabı varsa kendiliğinden seçilmez; düğme sebebi söyler, üstteki seçici kırmızı. */}
+            {banka && karsiliksiz.length > 0 && <span data-banka-excel-karsiliksiz="1" style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-danger, #B3261E)" }}>{karsiliksiz.length} satırda karşı taraf seçilmedi</span>}
             {!banka && <span data-banka-excel-banka-yok="1" style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-danger, #B3261E)" }}>↑ Önce yukarıdan banka hesabını seçin</span>}
-            <button className="btn-primary" data-banka-excel-kaydet="1" style={{ marginLeft: banka ? "auto" : 0 }} onClick={kaydet} disabled={!banka || secilenler.length === 0}>
+            <button className="btn-primary" data-banka-excel-kaydet="1" style={{ marginLeft: banka && !karsiliksiz.length ? "auto" : 0 }} onClick={kaydet} disabled={!banka || secilenler.length === 0 || karsiliksiz.length > 0}>
               Seçilenleri aktar ({secilenler.length})
             </button>
           </div>
@@ -301,28 +315,40 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
           <div data-banka-excel-liste="1" style={{ overflow: "auto", maxHeight: "60vh", border: "1px solid var(--erp-line-soft)", borderRadius: 8 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
               <thead style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1, boxShadow: "0 1px 0 var(--erp-line)" }}><tr style={{ textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 }}>
-                <th style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={secilenler.length === kalemler.length}
-                  onChange={(e) => setSecim((o) => { const y = { ...o }; kalemler.forEach((k) => { y[k.no] = { ...(y[k.no] || {}), sec: e.target.checked }; }); return y; })} /></th>
+                <th style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={secilenler.length > 0 && secilenler.length === kalemler.filter((k) => !durum(k).kilit).length}
+                  onChange={(e) => setSecim((o) => { const y = { ...o }; kalemler.forEach((k) => { if (!durum(k).kilit) y[k.no] = { ...(y[k.no] || {}), sec: e.target.checked }; }); return y; })} /></th>
                 <th style={{ padding: 4 }}>Tarih</th><th style={{ padding: 4 }}>Açıklama</th><th style={{ padding: 4 }}>İşlem</th>
-                <th style={{ padding: 4, textAlign: "right" }}>Tutar</th><th style={{ padding: 4, minWidth: 220 }}>Cari (boş = yalnız banka)</th>
+                <th style={{ padding: 4, textAlign: "right" }}>Tutar</th><th style={{ padding: 4, minWidth: 220 }}>Karşı taraf: cari ya da gelir/gider kartı</th>
               </tr></thead>
               <tbody>{kalemler.map((k) => {
                 const d = durum(k);
                 const tip = k.tutar > 0 ? "Tahsilat" : "Ödeme";
                 return (
                   <tr key={k.no} data-banka-excel-satir={k.no} style={{ borderTop: "1px solid var(--erp-line-soft)", opacity: d.sec ? 1 : 0.5 }}>
-                    <td style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={d.sec} disabled={k.kilitli} onChange={(e) => degistir(k.no, "sec", e.target.checked)} /></td>
+                    <td style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={d.sec} disabled={d.kilit} onChange={(e) => degistir(k.no, "sec", e.target.checked)} /></td>
                     <td style={{ padding: 4, whiteSpace: "nowrap" }}>{tarihYaz(k.tarih)}</td>
                     <td style={{ padding: 4 }}>{k.aciklama}{k.onceden && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-warn)", fontWeight: 700 }}>daha önce aktarıldı</span>}
                       {mutabakat.eslesme[k.no] && <span data-banka-excel-sistemde="1" title={mutabakat.eslesme[k.no].aciklama || ""} style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-info)", fontWeight: 700 }}>
                         sistemde var ({tarihYaz(mutabakat.eslesme[k.no].tarih)}{mutabakat.eslesme[k.no].aciklama ? ` · ${String(mutabakat.eslesme[k.no].aciklama).slice(0, 40)}` : ""})</span>}
                       {k.kilitli && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-danger, #B3261E)", fontWeight: 700 }}>kapalı dönem</span>}</td>
                     <td style={{ padding: 4, color: d.cariId ? HAREKET_TIPI_RENK[tip] : "var(--erp-text-2)", fontWeight: 700, whiteSpace: "nowrap" }}>
-                      {d.cariId ? tip : (k.tutar > 0 ? "Banka girişi" : "Banka çıkışı")}
+                      {d.cariId ? tip : d.kartId ? (k.tutar > 0 ? "Gelir" : "Gider") : <span style={{ color: d.sec ? "var(--erp-danger, #B3261E)" : undefined }}>seçilmedi</span>}
                     </td>
                     <td className="mono" style={{ padding: 4, textAlign: "right", whiteSpace: "nowrap", color: k.tutar > 0 ? HAREKET_TIPI_RENK["Tahsilat"] : HAREKET_TIPI_RENK["Ödeme"] }}>{para(k.tutar)}</td>
                     <td style={{ padding: 4 }}>
-                      <CariSecici cariler={aktifCariler} deger={d.cariId || null} onDegis={(id) => degistir(k.no, "cariId", id || "")} kucuk placeholder="Cari seç…" />
+                      <div style={{ display: "grid", gap: 3, outline: d.sec && !d.cariId && !d.kartId ? "2px solid var(--erp-danger, #B3261E)" : "none", borderRadius: 6 }}>
+                        <CariSecici cariler={aktifCariler} deger={d.cariId || null} onDegis={(id) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: id || "", kartId: id ? "" : (o[k.no] || {}).kartId } }))} kucuk placeholder="Cari seç…" />
+                        {k.oneriId && !d.cariId && !d.kartId && (() => { const oc = (cariler || []).find((c) => c.id === k.oneriId); return oc && (
+                          <button type="button" className="btn-ghost" data-banka-excel-oneri={k.no} style={{ fontSize: 11, padding: "1px 6px", justifySelf: "start" }}
+                            onClick={() => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: oc.id, kartId: "" } }))}>öneri: {oc.unvan} — seç</button>); })()}
+                        {(giderKartlari || []).length > 0 && (
+                          <select data-renk-koru="1" data-banka-excel-kart={k.no} value={d.kartId} style={{ fontSize: 12, padding: "3px 6px" }}
+                            onChange={(e) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), kartId: e.target.value, cariId: e.target.value ? "" : (o[k.no] || {}).cariId } }))}>
+                            <option value="">— ya da gelir/gider kartı —</option>
+                            {giderKartlari.map((g) => <option key={g.id} value={g.id}>{g.ad}</option>)}
+                          </select>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

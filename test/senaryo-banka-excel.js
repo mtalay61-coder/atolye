@@ -7,8 +7,10 @@ const { TOHUM } = require("./tohum.js");
 const EKSTRE = path.join(os.tmpdir(), "banka-ekstre-senaryo.csv");
 fs.writeFileSync(EKSTRE, 'Hesap: Test Bankasi\n\nTarih,Açıklama,Tutar,Bakiye\n15.10.2026,EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ,"1.500,00","1.500,00"\n16.10.2026,HAVALE MASRAFI,"-12,50","1.487,50"\n');
 (async () => {
+  // v1.674.0: karşı taraf zorunlu — gider kartı tanımlı, cari önerisi kendiliğinden SEÇİLMEZ ("öneri: … — seç").
+  const tan = JSON.parse(TOHUM["tanimlar:data"]); tan.giderKartlari = [{ id: "g1", ad: "Banka masrafı", grup: "finansman", tur: "gider" }];
   const m = JSON.parse(TOHUM["muhasebe:data"]); m.bankalar = [{ id: "b1", ad: "Test Bankası", paraBirimi: "TRY", hareketler: [] }];
-  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM, "muhasebe:data": JSON.stringify(m) }, { hataYaz: false });
+  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM, "tanimlar:data": JSON.stringify(tan), "muhasebe:data": JSON.stringify(m) }, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2000);
   const git = async () => { await sayfa.locator('[data-odeme-alani-sekme="bankaexcel"]:visible').first().click(); await sayfa.waitForTimeout(600); };
@@ -18,11 +20,15 @@ fs.writeFileSync(EKSTRE, 'Hesap: Test Bankasi\n\nTarih,Açıklama,Tutar,Bakiye\n
   const ekran = sayfa.locator('[data-banka-excel]:visible');
   await ekran.locator('[data-banka-excel-dosya]').setInputFiles(EKSTRE); await sayfa.waitForTimeout(800);
   console.log("ONIZLEME", (await ekran.locator("tbody").innerText()).split("\n").join(" | "));
+  console.log("KARSILIKSIZ", await ekran.locator("[data-banka-excel-karsiliksiz]").innerText(), "aktar pasif:", await ekran.locator("[data-banka-excel-kaydet]").isDisabled());
+  console.log("ONERI", await ekran.locator("[data-banka-excel-oneri]").allInnerTexts());
+  await ekran.locator('[data-banka-excel-oneri="0"]').click(); await sayfa.waitForTimeout(200);
+  await ekran.locator('[data-banka-excel-kart="1"]').selectOption("g1"); await sayfa.waitForTimeout(200);
   await ekran.locator('[data-banka-excel-kaydet]').click(); await sayfa.waitForTimeout(1500);
   await ekran.locator('[data-banka-excel-dosya]').setInputFiles(EKSTRE); await sayfa.waitForTimeout(800);
   console.log("TEKRAR", (await ekran.locator("tbody").innerText()).split("\n").join(" | "));
   const mh = await depoOku(sayfa, "muhasebe:data"); const cr = await depoOku(sayfa, "cari:data");
-  console.log("BANKA", JSON.stringify((mh.bankalar[0].hareketler||[]).map(h=>[h.yon,h.tutar,h.aciklama,!!h.bankaRef])));
+  console.log("BANKA", JSON.stringify((mh.bankalar[0].hareketler||[]).map(h=>[h.yon,h.tutar,h.aciklama,!!h.bankaRef,h.giderKartAd||null])));
   console.log("CARI", JSON.stringify(cr.find(c=>c.unvan==="Müşteri B").hareketler.map(h=>[String(h.fisNo).slice(0,4),h.yon,h.tutar,h.aciklama])));
   console.log("hatalar", hatalar); await tarayici.close();
 })();
