@@ -96,29 +96,50 @@ function kasaCariHareketiKur(girdi) {
 // RESMİ P. TİPİ ALANI (v1.676.0 — kullanıcı: "Ödeme tahsilat ve cari kartına da ekle"; v1.675.0 Banka Excel'iyle aynı
 // kural). Defter "Muhasebe" iken aynı kayıt Resmi defterde başka para biriminde tutulabilir: `resmiPB` + `resmiTutar`
 // (tek kayıt; 200 hareketDefterde). Tutar boş bırakılırsa sistemdeki kurla önerilen değer yazılır.
+// KUR KUTUSU (v1.678.0 — kullanıcı: "Muhasebe seçince çift kur girmek gerekli, Resmi ve Genel için"). Alan iki
+// yönlü: kur yazılırsa tutar = ana tutar ÷ kur; tutar yazılırsa kur = ana tutar ÷ tutar. Kur "1 <seçilen PB> = ? <ana PB>"
+// biçiminde (üst şeritteki kurla aynı okuma). İkisi de boşsa sistem kuruyla öneri.
+function resmiTutarHesapla(anaPB, anaTutar, deger, kurlar) {
+  const pb = (deger && deger.pb) || anaPB;
+  if (pb === anaPB) return { pb, tutar: anaTutar, kur: 1 };
+  const sayi = (v) => parseFloat(String(v || "").replace(",", "."));
+  const elleTutar = sayi(deger && deger.tutar);
+  const elleKur = sayi(deger && deger.kur);
+  // TERS YÖN: seçilen birim TRY ise kur "1 <ana PB> = ? TRY" okunur (1 TRY = 0,025 USD yazmak okunaksız).
+  const ters = pb === "TRY";
+  const sistemKur = ters ? paraCevirGenel(1, anaPB, pb, kurlar) : paraCevirGenel(1, pb, anaPB, kurlar);
+  if (elleTutar > 0) return { pb, ters, tutar: elleTutar, kur: anaTutar > 0 ? (ters ? elleTutar / anaTutar : anaTutar / elleTutar) : null };
+  const kur = elleKur > 0 ? elleKur : sistemKur;
+  return { pb, ters, tutar: kur > 0 && anaTutar > 0 ? (ters ? anaTutar * kur : anaTutar / kur) : null, kur };
+}
 function resmiAlanlari(defter, anaPB, anaTutar, deger, kurlar) {
   const pb = deger && deger.pb;
   if (defter !== "Muhasebe" || !pb || pb === anaPB) return {};
-  const elle = parseFloat(String((deger && deger.tutar) || "").replace(",", "."));
-  const oneri = anaTutar > 0 ? paraCevirGenel(anaTutar, anaPB, pb, kurlar) : null;
-  const tutar = elle > 0 ? elle : oneri;
-  return tutar > 0 ? { resmiPB: pb, resmiTutar: stokYuvarla(tutar) } : {};
+  const h = resmiTutarHesapla(anaPB, anaTutar, deger, kurlar);
+  return h.tutar > 0 ? { resmiPB: pb, resmiTutar: stokYuvarla(h.tutar) } : {};
 }
 function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil, etiket = "Resmi", veri = "resmi" }) {
   if (defter !== "Muhasebe") return null;
   const pb = (deger && deger.pb) || anaPB;
-  const oneri = pb !== anaPB && anaTutar > 0 ? paraCevirGenel(anaTutar, anaPB, pb, kurlar) : null;
+  const h = resmiTutarHesapla(anaPB, anaTutar, deger, kurlar);
+  const kutu = { fontSize: 12, padding: "3px 6px" };
   return (
     <div data-resmi-tutar-alani="1" style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap", fontSize: 12, ...(stil || {}) }}>
       <span style={{ fontWeight: 700, color: "var(--erp-info)" }}>{etiket}</span>
-      <select data-resmi-pb={veri === "resmi" ? "1" : undefined} data-karsi-pb={veri === "karsi" ? "1" : undefined} data-renk-koru="1" value={pb} onChange={(e) => onDegis({ pb: e.target.value, tutar: "" })} style={{ fontSize: 12, padding: "3px 6px" }}>
+      <select data-resmi-pb={veri === "resmi" ? "1" : undefined} data-karsi-pb={veri === "karsi" ? "1" : undefined} data-renk-koru="1" value={pb} onChange={(e) => onDegis({ pb: e.target.value, tutar: "", kur: "" })} style={kutu}>
         {MUHASEBE_PARA_BIRIMLERI.map((p) => <option key={p} value={p}>{p === anaPB ? `${p} (${veri === "karsi" ? "kasa ile" : "Genel ile"} aynı)` : p}</option>)}
       </select>
-      {pb !== anaPB && (
-        <input data-resmi-tutar={veri === "resmi" ? "1" : undefined} data-karsi-tutar={veri === "karsi" ? "1" : undefined} data-renk-koru="1" inputMode="decimal" value={(deger && deger.tutar) || ""}
-          placeholder={oneri != null ? String(stokYuvarla(oneri)) : "tutar"} onChange={(e) => onDegis({ pb, tutar: e.target.value })}
-          style={{ width: 110, fontSize: 12, padding: "3px 6px" }} title="Boş bırakılırsa sistemdeki kurla önerilen tutar yazılır" />
-      )}
+      {pb !== anaPB && (<>
+        <span>kur 1 {h.ters ? anaPB : pb} =</span>
+        <input data-resmi-kur={veri === "resmi" ? "1" : undefined} data-karsi-kur={veri === "karsi" ? "1" : undefined} data-renk-koru="1" inputMode="decimal"
+          value={deger && deger.kur ? deger.kur : (h.kur > 0 ? String(Math.round(h.kur * 10000) / 10000) : "")}
+          onChange={(e) => onDegis({ pb, kur: e.target.value, tutar: "" })} style={{ ...kutu, width: 72 }} />
+        <span>{h.ters ? pb : anaPB} →</span>
+        <input data-resmi-tutar={veri === "resmi" ? "1" : undefined} data-karsi-tutar={veri === "karsi" ? "1" : undefined} data-renk-koru="1" inputMode="decimal"
+          value={deger && deger.tutar ? deger.tutar : (h.tutar > 0 ? String(stokYuvarla(h.tutar)) : "")}
+          onChange={(e) => onDegis({ pb, tutar: e.target.value, kur: "" })} style={{ ...kutu, width: 100, fontWeight: 700 }} />
+        <span>{PARA_SEMBOLU[pb] || pb}</span>
+      </>)}
     </div>
   );
 }
