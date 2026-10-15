@@ -169,7 +169,8 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
       hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(hesapTutari),
       defter: f.defter, aciklama: f.aciklama.trim(), odemeSekli, kur: cevrim && t > 0 ? hesapTutari / t : undefined,
     });
-    const cariHareketi = kart ? { ...k.cariHareketi, vade: f.vade } : k.cariHareketi;
+    const resmiEk = resmiAlanlari(f.defter, f.pb, t, f.resmi, kurlar);   // v1.676.0: Resmi ayrı P. tipi
+    const cariHareketi = { ...(kart ? { ...k.cariHareketi, vade: f.vade } : k.cariHareketi), ...resmiEk };
     const hareket = k.muhasebeHareketi && kart ? { ...k.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k.muhasebeHareketi;
     onKaydet({ cariId: cari.id, cariHareketi, muhasebe: hareket ? { hesapTur, hesapId, hareket } : null });
     setF((o) => ({ ...o, tutar: "", hesapTutar: "", aciklama: "" }));
@@ -202,6 +203,9 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
         <select value={f.defter} onChange={(e) => setF({ ...f, defter: e.target.value })} style={{ ...kutu, width: 110 }}>
           <option value="Genel">Genel</option><option value="Resmi">Resmi</option><option value="Muhasebe">Muhasebe</option>
         </select>
+      ))}
+      {f.defter === "Muhasebe" && alan("Resmi P. tipi", (
+        <ResmiTutarAlani defter={f.defter} anaPB={f.pb} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.resmi} onDegis={(v) => setF({ ...f, resmi: v })} />
       ))}
       {alan("Açıklama", <input value={f.aciklama} placeholder="Opsiyonel" onChange={(e) => setF({ ...f, aciklama: e.target.value })}
         onKeyDown={(e) => { if (e.key === "Enter") kaydet(); }} style={{ ...kutu, width: "100%" }} />, 160)}
