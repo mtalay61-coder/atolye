@@ -24,7 +24,7 @@
   ]
  ],
  "sonListe": [
-  "Müşteri B | Tahsilat | Nakit | 500 ₺"
+  "Müşteri B | Tahsilat | Nakit | Genel"
  ],
  "kartHesaplari": [
   "Ziraat"
