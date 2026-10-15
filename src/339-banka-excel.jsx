@@ -245,7 +245,8 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
       <div style={{ ...kutu, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <label style={{ display: "grid", gap: 3 }}>
           <span style={{ fontSize: 11, fontWeight: 700 }}>Banka hesabı</span>
-          <select data-banka-excel-hesap="1" value={bankaId} onChange={(e) => setBankaId(e.target.value)} style={{ minWidth: 220 }}>
+          <select data-banka-excel-hesap="1" data-renk-koru="1" value={bankaId} onChange={(e) => setBankaId(e.target.value)}
+            style={{ minWidth: 220, border: `2px solid ${banka ? "var(--hrk-renk)" : "var(--erp-danger, #B3261E)"}`, borderRadius: 6, padding: "4px 6px" }}>
             <option value="">— seçin —</option>
             {bankalar.map((b) => <option key={b.id} value={b.id}>{b.ad} · {b.paraBirimi || "TRY"}</option>)}
           </select>
@@ -288,13 +289,18 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
             <b>{secilenler.length} / {kalemler.length} satır seçili</b>
             <span style={{ color: HAREKET_TIPI_RENK["Tahsilat"] }}>Giriş {para(toplamGiris)}</span>
             <span style={{ color: HAREKET_TIPI_RENK["Ödeme"] }}>Çıkış {para(toplamCikis)}</span>
-            <button className="btn-primary" data-banka-excel-kaydet="1" style={{ marginLeft: "auto" }} onClick={kaydet} disabled={!banka}>
-              Seçilenleri aktar
+            {/* BANKA SEÇİLMEDEN DÜĞME PASİFTİ, sebebi yazmıyordu (kullanıcı, v1.673.1: "seçilenleri aktar neden aktif
+                olmuyor?"). Birden çok banka hesabı varsa kendiliğinden seçilmez; düğme sebebi söyler, üstteki seçici kırmızı. */}
+            {!banka && <span data-banka-excel-banka-yok="1" style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-danger, #B3261E)" }}>↑ Önce yukarıdan banka hesabını seçin</span>}
+            <button className="btn-primary" data-banka-excel-kaydet="1" style={{ marginLeft: banka ? "auto" : 0 }} onClick={kaydet} disabled={!banka || secilenler.length === 0}>
+              Seçilenleri aktar ({secilenler.length})
             </button>
           </div>
-          <div style={{ overflowX: "auto" }}>
+          {/* LİSTE KENDİ İÇİNDE KAYAR (v1.673.1 — kullanıcı: "banka hareketleri aşağı kaysın, ekran aşağı inmesin"):
+              özet satırı ve Aktar düğmesi hep görünür, başlık satırı yapışkan. */}
+          <div data-banka-excel-liste="1" style={{ overflow: "auto", maxHeight: "60vh", border: "1px solid var(--erp-line-soft)", borderRadius: 8 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead><tr style={{ textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 }}>
+              <thead style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1, boxShadow: "0 1px 0 var(--erp-line)" }}><tr style={{ textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 }}>
                 <th style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={secilenler.length === kalemler.length}
                   onChange={(e) => setSecim((o) => { const y = { ...o }; kalemler.forEach((k) => { y[k.no] = { ...(y[k.no] || {}), sec: e.target.checked }; }); return y; })} /></th>
                 <th style={{ padding: 4 }}>Tarih</th><th style={{ padding: 4 }}>Açıklama</th><th style={{ padding: 4 }}>İşlem</th>
