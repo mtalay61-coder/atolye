@@ -1,0 +1,11 @@
+{
+ "matris": [
+  "KULLANICI | CARİ | OTURUM | SİPARİŞ | STOK | TOPLAM",
+  "Mahmut | 2 | 1 | · | · | 3",
+  "Ayşe | · | · | 1 | 1 | 2"
+ ],
+ "akis": [
+  "Ayşe | Sipariş | Sipariş açıldı | siparisNo: SP-1"
+ ],
+ "hatalar": []
+}

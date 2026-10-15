@@ -260,7 +260,8 @@ const MODUL_RENK = {
   cekler: "#2F6B4F",
   odemetahsilat: "#2F6B4F",
   odemerapor: "#2F6B4F",
-  bankaexcel: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
+  bankaexcel: "#2F6B4F",
+  mutabakat: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
   finansrapor: "#2F6B4F",     // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
   planlama: "#B8860B",
   gorevler: "var(--erp-purple)",  // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
@@ -288,6 +289,7 @@ const SEKME_BILGISI = {
   odemetahsilat: { ad: "Ödeme & Tahsilat" },
   odemerapor: { ad: "Ödeme & Tahsilat Raporu" },
   bankaexcel: { ad: "Banka Excel'i" },
+  mutabakat: { ad: "Cari Mutabakat" },
   finansrapor: { ad: "Finans Raporu" },
   // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
   gelirgider: { ad: "Gelir / Gider" },
@@ -485,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.672.0";
+const SURUM = "1.673.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Banka mutabakati, siparis termin takibi, donem kapanisi";
+const SURUM_NOTU = "Banka mutabakati, termin, donem kapanisi, cari mutabakat mektubu, gunluk matrisi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -518,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.673.0", tarih: "15.10.2026", eklenen: ["Günlük: Matris görünümü (kullanıcı × modül ve gün × kullanıcı işlem sayıları; hücreye tıklayınca o işlemler), tarih (Bugün/7/30 gün) ve kullanıcı süzgeci, akış tablo düzeninde (Zaman · Kullanıcı · Modül · İşlem · Ayrıntı)", "Finans › Cari Mutabakat: dönem sonu bakiyesiyle mutabakat mektubu (cevap bölümlü) — Yazdır / PDF / WhatsApp / E-posta; seçilen carilere toplu PDF ekli e-posta; gönderim carinin kaydında; ayın ilk 10 günü anasayfada hatırlatma kartı"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.672.0", tarih: "15.10.2026", eklenen: [
     "Banka Excel'i › Mutabakat: elle girilmiş banka hareketiyle eşleşen ekstre satırı 'sistemde var' (işaretsiz), ekstrenin tarih aralığında sistemde olup ekstrede olmayan hareketler ayrı listede",
     "Sipariş listesinde termin rozeti (X gün gecikti / bugün / X gün kaldı) ve ⏰ Geciken / 7 gün içinde süzgeçleri",

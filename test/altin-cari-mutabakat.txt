@@ -1,0 +1,19 @@
+{
+ "satirlar": [
+  [
+   "Müşteri B / Müşteri B Ticaret A.Ş.",
+   "b@ornek.com",
+   "+1.000 ₺",
+   "gönderilmedi"
+  ]
+ ],
+ "smtpUyari": 1,
+ "topluKapali": true,
+ "mektup": [
+  true,
+  true,
+  true,
+  true
+ ],
+ "hatalar": []
+}

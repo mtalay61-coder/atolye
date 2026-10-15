@@ -825,6 +825,9 @@ function AnasayfaGostergesi({ cariler, siparisler, uretim, muhasebe, onNavigate,
       <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 10 }}>Gösterge</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 14 }}>
         {kart("nakit", `Kasa & Banka · ${hesaplar.length} hesap`, "#2F6B4F", () => onNavigate("muhasebe"), satirlar(nakit, "#2F6B4F"))}
+        {/* AY BAŞI MUTABAKAT HATIRLATMASI (v1.673.0, 263): geçen ayın mektubu gitmemiş bakiyeli cari varsa. */}
+        {(() => { const n = mutabakatHatirlatmaSayisi(cariler); return n > 0 && kart("mutabakat", `${mutabakatDonemAdi(mutabakatVarsayilanDonem())} mutabakatı`, "#B8860B", () => onNavigate("mutabakat"),
+          (<><div className="mono" style={{ fontSize: 20, fontWeight: 700, color: "#B8860B" }}>{n} cari</div><div style={{ fontSize: 11, color: "var(--erp-text-2)" }}>mektuplar hazır — gönder</div></>)); })()}
         {kart("buay", "Bu ay tahsilat / ödeme", "var(--erp-primary)", () => onNavigate("odemerapor"), (<>
           {(() => { const a = ay[ayAnahtari]; const pbs = pbSirala(Object.fromEntries([...new Set([...Object.keys(a.Tahsilat), ...Object.keys(a["Ödeme"]), "TRY"])].map((pb) => [pb, 1])));
             const ana = (pbs[0] || ["TRY"])[0];
