@@ -242,7 +242,8 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
     .filter((c) => (pasifSekme ? !!c.pasif : !c.pasif))
     .filter((c) =>
       // KOD DA ARANIYOR: kodun görünür olmasının tek anlamı onunla bulunabilmesi.
-      `${c.unvan} ${c.telefon} ${c.vergiNo} ${cariKodMetni(c)}`.toLowerCase().includes(query.toLowerCase())
+      // RESMİ ÜNVAN DA ARANIYOR (v1.666.0 — "aramalarda ikisi de görünsün").
+      `${c.unvan} ${c.resmiUnvan || ""} ${c.telefon} ${c.vergiNo} ${cariKodMetni(c)}`.toLocaleLowerCase("tr-TR").includes(query.toLocaleLowerCase("tr-TR"))
     );
 
   const filtered = cariTaban
