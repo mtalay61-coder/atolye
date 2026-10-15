@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.682.0";
+const SURUM = "1.683.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Aciklama deftere gore: Genel ve Resmi karsiligi kendi tarafinda";
+const SURUM_NOTU = "Cari karti tam ekran";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.683.0", tarih: "15.10.2026", eklenen: ["Cari kartı başlığında tam ekran düğmesi (ve sağ tık menüsünde) — kart ekranı kaplar, ✕ ya da Esc ile eski düzene döner"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.682.0", tarih: "15.10.2026", eklenen: [],
     degisen: ["Muhasebe defterli tahsilat/ödemede açıklama deftere göre: Genel bakışta Genel karşılığı (ör. 1.000 ₺ → 20 $), Resmi bakışta Resmi karşılığı (1.000 ₺ → 18 €) — ekstre ve son tahsilat/ödemeler listesinde"], duzeltilen: [] },
   { surum: "1.681.0", tarih: "15.10.2026", eklenen: [],
