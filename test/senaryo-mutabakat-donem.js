@@ -46,6 +46,7 @@ const tr = (d) => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth()
     kilitli: r.querySelector("input[type=checkbox]").disabled,
   })));
   const eksik = await ekran.locator("[data-banka-excel-eksik-satir]").allInnerTexts();
+  await ekran.locator('[data-banka-excel-oneri="0"]').click(); await sayfa.waitForTimeout(200);   // v1.674.0: öneri elle seçilir
   await ekran.locator('[data-banka-excel-kaydet]').click(); await sayfa.waitForTimeout(1200);
   const mh = await depoOku(sayfa, "muhasebe:data");
   const bankaHareketleri = mh.bankalar[0].hareketler.map((h) => `${h.yon} ${h.tutar}`).sort();

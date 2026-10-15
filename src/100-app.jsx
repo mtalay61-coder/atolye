@@ -4809,11 +4809,12 @@ function AtolyeUygulamasi() {
             <MutabakatEkrani cariler={cariler} firmaBilgileri={tanimlar.firmaBilgileri || {}} onCarilerKaydet={saveCariler} showToast={showToast} />
           </GizliModul>
           <GizliModul aktif={tab === "bankaexcel"}>
-            <BankaExcelEkrani muhasebe={muhasebe} cariler={cariler} showToast={showToast}
+            <BankaExcelEkrani muhasebe={muhasebe} cariler={cariler} giderKartlari={tanimlar.giderKartlari || []} showToast={showToast}
               onCariliKaydet={siparisOdemesiKaydet} onBankaHareketi={muhasebeyePesinIsle} />
           </GizliModul>
           <GizliModul aktif={tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor"}>
             <CariModule
+              giderKartlari={tanimlar.giderKartlari || []}
               kapsam={cariKapsamRef.current}
               onOdemeAlaniGit={(t) => setTab(t, true)}
               onOdemeKaydet={siparisOdemesiKaydet}
