@@ -183,16 +183,18 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
       // yazılacak; Genel ve Resmi için ayrı ayrı"). Ör. "1.000 ₺ → Genel 20,23 $ (kur 49,42) · Resmi 18,05 € (kur 55,41)".
       const yaz = (x, pb) => `${Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
       const kurYaz = (h2) => (h2.pb === hesapPB ? "" : ` (kur ${Number(h2.kur).toLocaleString("tr-TR", { maximumFractionDigits: 4 })})`);
-      const cevrimMetni = (genelH.pb !== hesapPB || (muhasebeMi && resmiH.pb !== hesapPB))
-        ? `${yaz(t, hesapPB)} → ${muhasebeMi ? "Genel " : ""}${yaz(genelH.tutar, genelH.pb)}${kurYaz(genelH)}${muhasebeMi ? ` · Resmi ${yaz(resmiH.tutar, resmiH.pb)}${kurYaz(resmiH)}` : ""}`
-        : "";
-      const aciklama2 = [cevrimMetni, f.aciklama.trim()].filter(Boolean).join(" · ");
+      // DEFTERE GÖRE AYRI AÇIKLAMA (v1.682.0): asıl açıklama Genel karşılığını, `resmiAciklama` Resmi karşılığını taşır;
+      // her defter bakışı kendi tarafını gösterir (200 hareketDefterde).
+      const cevrim = (h2) => (h2.pb !== hesapPB ? `${yaz(t, hesapPB)} → ${yaz(h2.tutar, h2.pb)}${kurYaz(h2)}` : "");
+      const aciklama2 = [cevrim(genelH), f.aciklama.trim()].filter(Boolean).join(" · ");
+      const resmiAciklamaGovde = muhasebeMi ? [cevrim(resmiH), f.aciklama.trim()].filter(Boolean).join(" · ") : "";
       const k2 = kasaCariHareketiKur({
         islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: stokYuvarla(genelH.tutar), cariPB: genelH.pb,
         hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(t),
         defter: f.defter, aciklama: aciklama2, odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
       });
-      const resmiEk2 = muhasebeMi && (resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004) ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar) } : {};
+      const resmiEk2 = muhasebeMi && (resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004)
+        ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar), resmiAciklama: `${tip} (${hesap.kisaAd})${resmiAciklamaGovde ? `: ${resmiAciklamaGovde}` : ""}` } : {};
       const ch2 = { ...(kart ? { ...k2.cariHareketi, vade: f.vade } : k2.cariHareketi), ...resmiEk2 };
       const mh2 = k2.muhasebeHareketi && kart ? { ...k2.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k2.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k2.muhasebeHareketi;
       onKaydet({ cariId: cari.id, cariHareketi: ch2, muhasebe: mh2 ? { hesapTur, hesapId, hareket: mh2 } : null });

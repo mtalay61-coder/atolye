@@ -284,7 +284,8 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
       const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
       if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec) return;
       if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(h.defter || "Genel", odemeDefterSuzgec)) return;
-      sonHareketler.push({ c, h, tip });
+      // Defter süzgeci Resmi ise satır Resmi tutar/açıklamasıyla (200 hareketDefterde).
+      sonHareketler.push({ c, h: hareketDefterde(h, odemeDefterSuzgec), tip });
     }));
     sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
     const tipDugmesi = (tip) => {
