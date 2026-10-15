@@ -92,3 +92,33 @@ function kasaCariHareketiKur(girdi) {
 
   return { bagId, cariHareketi, muhasebeHareketi, hesapTur, hesapId };
 }
+
+// RESMİ P. TİPİ ALANI (v1.676.0 — kullanıcı: "Ödeme tahsilat ve cari kartına da ekle"; v1.675.0 Banka Excel'iyle aynı
+// kural). Defter "Muhasebe" iken aynı kayıt Resmi defterde başka para biriminde tutulabilir: `resmiPB` + `resmiTutar`
+// (tek kayıt; 200 hareketDefterde). Tutar boş bırakılırsa sistemdeki kurla önerilen değer yazılır.
+function resmiAlanlari(defter, anaPB, anaTutar, deger, kurlar) {
+  const pb = deger && deger.pb;
+  if (defter !== "Muhasebe" || !pb || pb === anaPB) return {};
+  const elle = parseFloat(String((deger && deger.tutar) || "").replace(",", "."));
+  const oneri = anaTutar > 0 ? paraCevirGenel(anaTutar, anaPB, pb, kurlar) : null;
+  const tutar = elle > 0 ? elle : oneri;
+  return tutar > 0 ? { resmiPB: pb, resmiTutar: stokYuvarla(tutar) } : {};
+}
+function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil }) {
+  if (defter !== "Muhasebe") return null;
+  const pb = (deger && deger.pb) || anaPB;
+  const oneri = pb !== anaPB && anaTutar > 0 ? paraCevirGenel(anaTutar, anaPB, pb, kurlar) : null;
+  return (
+    <div data-resmi-tutar-alani="1" style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap", fontSize: 12, ...(stil || {}) }}>
+      <span style={{ fontWeight: 700, color: "var(--erp-info)" }}>Resmi</span>
+      <select data-resmi-pb="1" data-renk-koru="1" value={pb} onChange={(e) => onDegis({ pb: e.target.value, tutar: "" })} style={{ fontSize: 12, padding: "3px 6px" }}>
+        {MUHASEBE_PARA_BIRIMLERI.map((p) => <option key={p} value={p}>{p === anaPB ? `${p} (Genel ile aynı)` : p}</option>)}
+      </select>
+      {pb !== anaPB && (
+        <input data-resmi-tutar="1" data-renk-koru="1" inputMode="decimal" value={(deger && deger.tutar) || ""}
+          placeholder={oneri != null ? String(stokYuvarla(oneri)) : "tutar"} onChange={(e) => onDegis({ pb, tutar: e.target.value })}
+          style={{ width: 110, fontSize: 12, padding: "3px 6px" }} title="Boş bırakılırsa sistemdeki kurla önerilen tutar yazılır" />
+      )}
+    </div>
+  );
+}

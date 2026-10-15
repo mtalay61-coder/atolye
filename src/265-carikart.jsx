@@ -208,7 +208,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       hesapPB: seciliHesap.pb,
       hesapTutar: cevrimGerekli ? (parseFloat(hForm.hesapTutar) || 0) : tutar,
     } : {};
-    const hareketler = [{ ...ortak, fisNo: ortak.fisNo, id: uid("hrk"), kullanici: islemKullanicisiAd(), defter: hForm.defter, muhasebeBagId: bagId || undefined, ...hesapBilgisi }];
+    // v1.676.0: Muhasebe defterinde Resmi için ayrı P. tipi (207 resmiAlanlari).
+    const resmiEk = resmiAlanlari(hForm.defter, ortak.paraBirimi || hForm.paraBirimi || "TRY", ortak.tutar, hForm.resmi, kurlar);
+    const hareketler = [{ ...ortak, fisNo: ortak.fisNo, id: uid("hrk"), kullanici: islemKullanicisiAd(), defter: hForm.defter, muhasebeBagId: bagId || undefined, ...hesapBilgisi, ...resmiEk }];
     onAddHareket(cari.id, hareketler);
 
     if (bagId) {
@@ -1181,6 +1183,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                     <option value="Resmi">Resmi</option>
                     <option value="Muhasebe">Muhasebe (ikisine de)</option>
                   </select>
+                  <ResmiTutarAlani defter={hForm.defter} anaPB={hForm.paraBirimi || "TRY"} anaTutar={parseFloat(hForm.tutar) || 0} kurlar={kurlar}
+                    deger={hForm.resmi} onDegis={(v) => setHForm({ ...hForm, resmi: v })} stil={{ marginTop: 4 }} />
                 </Field>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: cekSenet ? "1fr 1fr 2fr" : "1fr 2fr", gap: 8, marginTop: 8 }}>
