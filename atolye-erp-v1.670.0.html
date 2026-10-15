@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.667.0</title>
+<title>Atölye ERP 1.670.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2275,9 +2275,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.667.0";
+const SURUM = "1.670.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Depo menusune Sevkiyat merkezi ve Alis / Satis ekrani";
+const SURUM_NOTU = "Acik Siparisler ve Bakiye: siparis kalani KDV ve iskonto dahil";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2288,6 +2288,12 @@ const SURUM_NOTU = "Depo menusune Sevkiyat merkezi ve Alis / Satis ekrani";
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.670.0", tarih: "15.10.2026", eklenen: [],
+        degisen: ["Cari kartı › Açık Siparişler & Bakiye: sipariş kalan tutarı siparişteki iskontolu fiyat ve KDV oranıyla (KDV dahil) hesaplanır"], duzeltilen: [] },
+    { surum: "1.669.0", tarih: "15.10.2026", eklenen: ["Cari kartı › Açık Siparişler & Bakiye sekmesi: güncel bakiye, açık siparişlerin kalan adet ve tutarı, siparişler bitince oluşacak bakiye"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.668.0", tarih: "15.10.2026", eklenen: ["Depo › Sevkiyat › Sevk bekleyen: Sevk et ekranı böler — solda sipariş listesi, sağda (dar ekranda altta) satış fişi; koli okut, siparişten koli ya da beden beden seç, asorti ekle; Fişi kaydet ile kaydedilir"],
+        degisen: ["Cari hareketlerinde tahsilat/ödeme satırı rozetin başında TAHSİLAT / ÖDEME yazıyor, tek satırda; kendiliğinden yazılan 'Tahsilat (banka)' açıklaması altta tekrar edilmiyor"], duzeltilen: [] },
     { surum: "1.667.0", tarih: "15.10.2026", eklenen: ["Depo › Sevkiyat: sevk bekleyen siparişler (kalan çift, termin, hazır koli, Sevk et), koli okutarak sevk, irsaliye (plaka, şoför, adres, koli sayısı; yazdır) ve sevkiyat geçmişi", "Depo › Alış / Satış: tip ve cari seç, cari kartındaki fiş ekranı açılır; altında son alış/satış fişleri"],
         degisen: [], duzeltilen: [] },
     { surum: "1.666.1", tarih: "15.10.2026", eklenen: [],
@@ -23050,7 +23056,7 @@ function AtolyeUygulamasi() {
                             // duruyor, yani Depo'nun kaydırma konumu ve açık satırları yerinde kalıyor.
                             onGoToUrun: (id) => uruneGit(id, null, { tab: "depo", etiket: "Depoya dön" }), onSatinAlPlanla: hammaddeyiPlanla, onAlisFisi: alisFisiAc })),
                     React.createElement(GizliModul, { aktif: tab === "sevkiyat" },
-                        React.createElement(SevkiyatMerkezi, { koliler: koliler, siparisler: siparisler, cariler: cariler, stok: stok, tanimlar: tanimlar, uretim: uretim, onFisAc: stokFisiAc, onSatisFisiAc: satisFisiAcSiparisten, onCarilerKaydet: saveCariler, showToast: showToast, onGoToSiparis: sipariseGit })),
+                        React.createElement(SevkiyatMerkezi, { koliler: koliler, siparisler: siparisler, cariler: cariler, stok: stok, tanimlar: tanimlar, uretim: uretim, onFisAc: stokFisiAc, muhasebe: muhasebe, onFisKaydet: (cariId, tip, fis) => stokFisiKaydet(cariId, tip, fis), onCarilerKaydet: saveCariler, showToast: showToast, onGoToSiparis: sipariseGit })),
                     React.createElement(GizliModul, { aktif: tab === "alissatis" },
                         React.createElement(AlisSatisEkrani, { cariler: cariler, stok: stok, onFisAc: stokFisiAc, onFiseGit: fiseGit })),
                     React.createElement(GizliModul, { aktif: tab === "siparis" },
@@ -41399,8 +41405,12 @@ function irsaliyeHTML(f, cari) {
 <tbody>${satirlar}</tbody><tfoot><tr><td colspan="3"><b>Toplam</b></td><td style="text-align:right"><b>${f.cift}</b></td></tr></tfoot></table>
 <p style="margin-top:40px">Teslim eden: ____________ &nbsp;&nbsp;&nbsp; Teslim alan: ____________</p>`;
 }
-function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim, onFisAc, onSatisFisiAc, onCarilerKaydet, showToast, onGoToSiparis }) {
+function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim, muhasebe, onFisAc, onFisKaydet, onCarilerKaydet, showToast, onGoToSiparis }) {
     const [sekme, setSekme] = useState("bekleyen");
+    // BÖLÜNMÜŞ EKRAN (v1.668.0 — kullanıcı: "Sevk et tıklayınca sağda veya altta ekran bölünsün, oraya koli ve
+    // asortili eklensin; hangisini eklerse o ekrana gelsin; fiş bitince kaydetsin"). Ayrı pencere yerine aynı
+    // satış fişi formu (255 StokFisiFormu) burada gömülü açılıyor; kayıt yine tek kapıdan (`useCariFisiKaydet`).
+    const [sevkSiparisId, setSevkSiparisId] = useState(null);
     const [arama, setArama] = useState("");
     const [seciliFisNo, setSeciliFisNo] = useState(null);
     const [form, setForm] = useState({ plaka: "", sofor: "", adres: "", koliSayisi: "" });
@@ -41442,30 +41452,37 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
                 ad,
                 k === "bekleyen" ? ` (${bekleyenler.length})` : ""))),
             (sekme === "gecmis" || sekme === "irsaliye") && (React.createElement("input", { value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Cari ara\u2026", style: { marginLeft: "auto", minWidth: 180 } }))),
-        sekme === "bekleyen" && (React.createElement("div", { style: kutu, "data-sevk-bekleyen": "1" }, bekleyenler.length === 0 ? React.createElement("div", { style: { color: "var(--erp-muted)" } }, "Sevk bekleyen sat\u0131\u015F sipari\u015Fi yok.") : (React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
-            React.createElement("thead", null,
-                React.createElement("tr", null,
-                    React.createElement("th", { style: th }, "Sipari\u015F"),
-                    React.createElement("th", { style: th }, "Cari"),
-                    React.createElement("th", { style: th }, "Termin"),
-                    React.createElement("th", { style: { ...th, textAlign: "right" } }, "Kalan \u00E7ift"),
-                    React.createElement("th", { style: { ...th, textAlign: "right" } }, "Haz\u0131r koli"),
-                    React.createElement("th", { style: th }))),
-            React.createElement("tbody", null, bekleyenler.map(({ s, kalan, hazirKoli }) => {
-                const c = cariBul(s.cariId);
-                const gecikti = s.teslimTarihi && s.teslimTarihi < new Date().toISOString().slice(0, 10);
-                return (React.createElement("tr", { key: s.id, "data-sevk-bekleyen-satir": s.siparisNo },
-                    React.createElement("td", { style: td },
-                        React.createElement("a", { href: "#", onClick: (e) => { e.preventDefault(); onGoToSiparis && onGoToSiparis(s.id); } }, s.siparisNo)),
-                    React.createElement("td", { style: td }, c ? c.unvan : "—"),
-                    React.createElement("td", { style: { ...td, color: gecikti ? "var(--erp-danger)" : undefined } },
-                        s.teslimTarihi ? tarihYaz(s.teslimTarihi) : "—",
-                        gecikti ? " · gecikti" : ""),
-                    React.createElement("td", { style: { ...td, textAlign: "right", fontWeight: 700 } }, kalan),
-                    React.createElement("td", { style: { ...td, textAlign: "right" } }, hazirKoli || "—"),
-                    React.createElement("td", { style: { ...td, textAlign: "right" } },
-                        React.createElement("button", { className: "btn-primary", "data-sevk-et": s.siparisNo, onClick: () => onSatisFisiAc(s, []) }, "Sevk et"))));
-            })))))),
+        sekme === "bekleyen" && (React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-start" } },
+            React.createElement("div", { style: { ...kutu, flex: sevkSiparisId ? "1 1 380px" : "1 1 100%", minWidth: 0, maxWidth: sevkSiparisId ? 560 : undefined }, "data-sevk-bekleyen": "1" }, bekleyenler.length === 0 ? React.createElement("div", { style: { color: "var(--erp-muted)" } }, "Sevk bekleyen sat\u0131\u015F sipari\u015Fi yok.") : (React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
+                React.createElement("thead", null,
+                    React.createElement("tr", null,
+                        React.createElement("th", { style: th }, "Sipari\u015F"),
+                        React.createElement("th", { style: th }, "Cari"),
+                        React.createElement("th", { style: th }, "Termin"),
+                        React.createElement("th", { style: { ...th, textAlign: "right" } }, "Kalan \u00E7ift"),
+                        React.createElement("th", { style: { ...th, textAlign: "right" } }, "Haz\u0131r koli"),
+                        React.createElement("th", { style: th }))),
+                React.createElement("tbody", null, bekleyenler.map(({ s, kalan, hazirKoli }) => {
+                    const c = cariBul(s.cariId);
+                    const gecikti = s.teslimTarihi && s.teslimTarihi < new Date().toISOString().slice(0, 10);
+                    return (React.createElement("tr", { key: s.id, "data-sevk-bekleyen-satir": s.siparisNo },
+                        React.createElement("td", { style: td },
+                            React.createElement("a", { href: "#", onClick: (e) => { e.preventDefault(); onGoToSiparis && onGoToSiparis(s.id); } }, s.siparisNo)),
+                        React.createElement("td", { style: td }, c ? c.unvan : "—"),
+                        React.createElement("td", { style: { ...td, color: gecikti ? "var(--erp-danger)" : undefined } },
+                            s.teslimTarihi ? tarihYaz(s.teslimTarihi) : "—",
+                            gecikti ? " · gecikti" : ""),
+                        React.createElement("td", { style: { ...td, textAlign: "right", fontWeight: 700 } }, kalan),
+                        React.createElement("td", { style: { ...td, textAlign: "right" } }, hazirKoli || "—"),
+                        React.createElement("td", { style: { ...td, textAlign: "right" } },
+                            React.createElement("button", { className: sevkSiparisId === s.id ? "btn-ghost" : "btn-primary", "data-sevk-et": s.siparisNo, onClick: () => setSevkSiparisId(sevkSiparisId === s.id ? null : s.id) }, sevkSiparisId === s.id ? "Kapat" : "Sevk et"))));
+                }))))),
+            sevkSiparisId && (() => {
+                const sp = (siparisler || []).find((x) => x.id === sevkSiparisId);
+                if (!sp)
+                    return null;
+                return (React.createElement(SevkFisPaneli, { key: sp.id, siparis: sp, cari: cariBul(sp.cariId), cariler: cariler, stok: stok, siparisler: siparisler, koliler: koliler, uretim: uretim, tanimlar: tanimlar, muhasebe: muhasebe, showToast: showToast, onKapat: () => setSevkSiparisId(null), onKaydet: (fis) => { onFisKaydet(fis.cariId || sp.cariId, "Satış", fis); setSevkSiparisId(null); } }));
+            })())),
         sekme === "okut" && (React.createElement(SevkiyatEkrani, { koliler: koliler, siparisler: siparisler, cariler: cariler, stok: stok, tanimlar: tanimlar, uretim: uretim, onFisAc: onFisAc, showToast: showToast, onGoToSiparis: onGoToSiparis })),
         sekme === "irsaliye" && (React.createElement("div", { style: { display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 10 }, "data-sevk-irsaliye": "1" },
             React.createElement("div", { style: { ...kutu, maxHeight: 480, overflow: "auto" } },
@@ -41569,6 +41586,35 @@ function AlisSatisEkrani({ cariler, stok, onFisAc, onFiseGit }) {
                 React.createElement("span", null,
                     g.hareketler.filter((h) => h.kaynakTip === "stok").reduce((t, h) => t + Math.abs(h.miktar || 0), 0),
                     " adet")))))));
+}
+// Sevk et'in bölünmüş paneli: üstte siparişin kalanı (renk × beden) ve hazır kolileri, altında satış fişi formu.
+// Fişin kendi araçları (Koli barkodu okut, Siparişten seç — koli ya da beden beden, asorti girişi) aynen burada;
+// eklenen her şey formun kalem listesine düşer. Kaydet/Vazgeç formun kendi düğmeleri — kaydet mantığına (onay
+// penceresi, peşin, defter) hiç dokunulmuyor; kayıt bitince panel kapanır.
+function SevkFisPaneli({ siparis, cari, cariler, stok, siparisler, koliler, uretim, tanimlar, muhasebe, showToast, onKapat, onKaydet }) {
+    const panelId = `sevk-panel-${siparis.id}`;
+    const kalanlar = (siparis.kalemler || []).map((k) => ({ k, kalan: Math.max(0, (k.miktar || 0) - (k.karsilanan || 0)) })).filter((x) => x.kalan > 0);
+    const hazirKoliler = (koliler || []).filter((k) => k.siparisId === siparis.id && (k.durum || "Hazır") !== "Sevk edildi");
+    return (React.createElement("div", { "data-sevk-fis-paneli": siparis.siparisNo, style: { flex: "2 1 560px", minWidth: 0, border: "2px solid var(--erp-info)", borderRadius: 10, background: "var(--erp-surface)" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderBottom: "1px solid var(--erp-border)", flexWrap: "wrap" } },
+            React.createElement(Truck, { size: 16 }),
+            React.createElement("b", null,
+                "Sevk: ",
+                siparis.siparisNo),
+            React.createElement("span", null,
+                "\u00B7 ",
+                cari ? cari.unvan : ""),
+            React.createElement("span", { style: { marginLeft: "auto", display: "flex", gap: 6 } },
+                React.createElement("button", { className: "btn-ghost", "data-sevk-kapat": "1", onClick: onKapat, title: "Fi\u015Fi kaydetmeden kapat" }, "\u2715"))),
+        React.createElement("div", { style: { padding: "6px 10px", fontSize: 12, color: "var(--erp-muted)", display: "flex", gap: 12, flexWrap: "wrap" } },
+            React.createElement("span", null,
+                "Kalan: ",
+                kalanlar.map((x) => `${x.k.urunAd || ""} ${x.k.renk || ""} ${x.k.beden || ""} ×${x.kalan}`).join(" · ") || "—"),
+            hazirKoliler.length > 0 && React.createElement("span", null,
+                "Haz\u0131r koli: ",
+                hazirKoliler.map((k) => k.kod).join(", "))),
+        React.createElement("div", { style: { padding: 10 } },
+            React.createElement(StokFisiFormu, { pencereId: panelId, tip: "Sat\u0131\u015F", cari: cari, cariler: cariler, stok: stok, siparisler: siparisler, koliler: koliler, uretim: uretim, asortiler: tanimlar.asortiler || [], kurlar: (muhasebe && muhasebe.kurlar) || {}, muhasebe: muhasebe, firmaBilgileri: tanimlar.firmaBilgileri, showToast: showToast, baslangicKalemler: null, onCariDegisti: () => { }, onVazgec: onKapat, onKaydet: onKaydet }))));
 }
 // "Sipariş Planlama" alt sekmesi — bekleyen kalemi olan TÜM satış siparişlerini SOL panelde listeler.
 // Her sipariş satırındaki "Üret" ya da "Satın Al" butonuna basıldığında, o sipariş SAĞ paneldeki ilgili
@@ -47967,6 +48013,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             React.createElement(React.Fragment, null,
                 React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 14 } }, [
                     { key: "hareketler", label: "Hareketler" },
+                    { key: "ozet", label: "Açık Siparişler & Bakiye" },
                     { key: "siparisler", label: `Siparişler (${(siparisler || []).filter((s) => s.cariId === cari.id).length})` },
                     { key: "bilgiler", label: "Bilgiler" },
                 ].map((t) => (React.createElement("button", { key: t.key, "data-cari-sekme": t.key, onClick: () => setCardTab(t.key), style: {
@@ -48490,7 +48537,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                                                     } }, defterEtiketi)))),
                                                         React.createElement("td", { style: { padding: "6px 6px" } },
                                                             g.odemeSekli && (g.odemeSekli === "Çek" || g.odemeSekli === "Senet" || paraHareketiMi(ilk)) && (React.createElement("div", { className: "mono", style: {
-                                                                    display: "inline-flex", alignItems: "center", gap: 4, flexWrap: sadeGorunum ? "nowrap" : "wrap",
+                                                                    display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "nowrap", whiteSpace: "nowrap", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis",
                                                                     // SADE KİPTE TEK SATIR (v1.505.0): rozet ile özet yan yana — rozet kendi satırına
                                                                     // düşünce ödeme satırı ürün satırlarının iki katı yüksekliğe çıkıyordu.
                                                                     fontSize: 10, fontWeight: 700, marginBottom: sadeGorunum ? 0 : 3, marginRight: sadeGorunum ? 6 : 0,
@@ -48503,7 +48550,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                                                     background: `${alfaEkle(HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)", "14")}`,
                                                                     color: HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)",
                                                                 } },
-                                                                React.createElement(FileText, { size: 10 }),
+                                                                paraHareketiMi(ilk) ? React.createElement(React.Fragment, null,
+                                                                    React.createElement(HareketIkonu, { tip: hareketIslemTipi(ilk), size: 11 }),
+                                                                    React.createElement("span", { "data-ekstre-islem-tipi": "1", style: { textTransform: "uppercase" } }, hareketIslemTipi(ilk)),
+                                                                    " \u00B7 ") : React.createElement(FileText, { size: 10 }),
                                                                 g.odemeSekli,
                                                                 g.vade ? ` · vade ${g.vade}` : "",
                                                                 ilk.hesapAd && ` · ${ilk.hesapAd}`,
@@ -48521,7 +48571,16 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                                             ilk.aciklama && urunGruplari.length === 0 && yapisizHareketler.length === 0 && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 3 } }, ilk.aciklama)),
                                                             sadeGorunum ? (React.createElement("div", { "data-ekstre-sade-ozet": "1", style: { display: "inline-block", verticalAlign: "middle", maxWidth: "100%", fontSize: 11, color: "var(--erp-text-2)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, hareketSadeOzet(urunGruplari, yapisizHareketler, ilk, g))) : (React.createElement(React.Fragment, null,
                                                                 urunGruplari.length > 0 && (React.createElement(FisKalemMatrisi, { urunGruplari: urunGruplari, stok: stok, kompakt: true })),
-                                                                yapisizHareketler.map((h) => {
+                                                                yapisizHareketler.filter((h) => {
+                                                                    // OTOMATİK AÇIKLAMA TEKRARI (v1.668.0 — kullanıcı: "alt açıklamada tahsilat banka adı yazıyor,
+                                                                    // banka adı üst satırda var, tek satıra sığsın"). "Tahsilat (Kuveyt TL)" gibi kendiliğinden
+                                                                    // yazılan açıklama, rozet zaten tipi + hesabı gösterdiğinde atlanır; elle yazılan açıklama kalır.
+                                                                    if (!(g.odemeSekli && paraHareketiMi(h)))
+                                                                        return true;
+                                                                    const a = String(h.aciklama || "").trim();
+                                                                    const tip = hareketIslemTipi(h);
+                                                                    return !(a === "" || a === tip || a === `${tip} (${h.hesapAd || ""})` || (h.hesapAd && a === h.hesapAd));
+                                                                }).map((h) => {
                                                                     let urunAdiIcin = h.urunAd || null;
                                                                     if (!urunAdiIcin && h.aciklama) {
                                                                         // İKİ BİÇİM birden tanınır. Eski kayıtlar "Üretim (Kesim): SS Model ·",
@@ -48580,6 +48639,61 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 })();
                             })())) },
                     ] })),
+                cardTab === "ozet" && (() => {
+                    const acik = (siparisler || []).filter((s) => s.cariId === cari.id && s.durum !== "İptal" && s.durum !== "Tamamlandı")
+                        .map((s) => {
+                        const kalan = {};
+                        let adet = 0;
+                        (s.kalemler || []).forEach((k) => {
+                            const q = Math.max(0, (k.miktar || 0) - (k.karsilanan || 0));
+                            if (q <= 0)
+                                return;
+                            adet += q;
+                            const pb = k.paraBirimi || "TRY";
+                            // KDV DAHİL (v1.670.0 — kullanıcı: "siparişte KDV ve iskonto girilmişse dahil etsin"). İskonto siparişte
+                            // birim fiyata işlenmiş geliyor (site indirimi dahil); KDV kalemin kendi oranından — teslim fişi de
+                            // cariye KDV dahil yazıyor (078, 320 siparisOdemeDurumu ile aynı kural).
+                            const kdv = 1 + (Number(k.kdvOrani) || 0) / 100;
+                            kalan[pb] = Math.round(((kalan[pb] || 0) + q * (Number(k.birimFiyat) || 0) * kdv) * 100) / 100;
+                        });
+                        return { s, adet, kalan, yon: s.tip === "Alış" ? -1 : 1 };
+                    }).filter((x) => x.adet > 0);
+                    const yaz = (obj, isaretli) => {
+                        const e = Object.entries(obj || {}).filter(([, t]) => Math.abs(t) > 0.004);
+                        if (e.length === 0)
+                            return "0 ₺";
+                        return e.map(([pb, t]) => `${isaretli && t > 0 ? "+" : ""}${t.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`).join(" · ");
+                    };
+                    const etki = bakiyeleriTopla(acik.map((x) => Object.fromEntries(Object.entries(x.kalan).map(([pb, t]) => [pb, t * x.yon]))));
+                    const sonrasi = bakiyeleriTopla([bakiye || {}, etki]);
+                    const renk = (obj) => { const t = Object.values(obj || {}).reduce((a, b) => a + b, 0); return t > 0.004 ? "var(--erp-primary)" : t < -0.004 ? "var(--erp-warn)" : "var(--erp-text-2)"; };
+                    const kutu = (baslik, deger, alt, r) => (React.createElement("div", { style: { flex: "1 1 200px", border: `1.5px solid ${r}`, borderRadius: 10, padding: "10px 12px", background: "#fff" } },
+                        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textTransform: "uppercase" } }, baslik),
+                        React.createElement("div", { className: "mono", style: { fontSize: 20, fontWeight: 800, color: r } }, deger),
+                        alt && React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)" } }, alt)));
+                    const toplamAdet = acik.reduce((t, x) => t + x.adet, 0);
+                    return (React.createElement("div", { "data-cari-ozet": "1" },
+                        React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 } },
+                            kutu("Güncel bakiye", yaz(bakiye), "+ alacağımız · − borcumuz", renk(bakiye)),
+                            kutu("Açık sipariş kalanı", `${toplamAdet} adet`, yaz(etki, true) + " (teslim edilince)", "var(--erp-info)"),
+                            kutu("Siparişler bitince bakiye", yaz(sonrasi), "Siparişteki fiyat, iskonto ve KDV ile", renk(sonrasi))),
+                        acik.length === 0 ? React.createElement(EmptyState, { text: "A\u00E7\u0131k sipari\u015F yok." }) : (React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13, background: "#fff" } },
+                            React.createElement("thead", null,
+                                React.createElement("tr", { style: { textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 } },
+                                    React.createElement("th", { style: { padding: 6 } }, "Sipari\u015F"),
+                                    React.createElement("th", { style: { padding: 6 } }, "Tip"),
+                                    React.createElement("th", { style: { padding: 6 } }, "Durum"),
+                                    React.createElement("th", { style: { padding: 6 } }, "Termin"),
+                                    React.createElement("th", { style: { padding: 6, textAlign: "right" } }, "Kalan adet"),
+                                    React.createElement("th", { style: { padding: 6, textAlign: "right" } }, "Kalan tutar"))),
+                            React.createElement("tbody", null, acik.map(({ s, adet, kalan, yon }) => (React.createElement("tr", { key: s.id, "data-cari-ozet-siparis": s.siparisNo, onClick: () => onGoToSiparis(s.id), style: { cursor: "pointer", borderTop: "1px solid var(--erp-line-soft)" } },
+                                React.createElement("td", { style: { padding: 6, fontWeight: 700 } }, s.siparisNo),
+                                React.createElement("td", { style: { padding: 6, color: yon < 0 ? "var(--erp-brown)" : "var(--erp-info)" } }, s.tip),
+                                React.createElement("td", { style: { padding: 6, color: SIPARIS_DURUM_RENK[s.durum] || "var(--erp-text-2)" } }, s.durum),
+                                React.createElement("td", { style: { padding: 6 } }, s.teslimTarihi ? tarihYaz(s.teslimTarihi) : "—"),
+                                React.createElement("td", { className: "mono", style: { padding: 6, textAlign: "right" } }, adet),
+                                React.createElement("td", { className: "mono", style: { padding: 6, textAlign: "right" } }, yaz(kalan))))))))));
+                })(),
                 cardTab === "siparisler" && (() => {
                     const ilgiliSiparisler = (siparisler || [])
                         .filter((s) => s.cariId === cari.id)
@@ -61956,7 +62070,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.667.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.670.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
