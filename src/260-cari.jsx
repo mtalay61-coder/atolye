@@ -298,8 +298,9 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
       : ((muhasebe && muhasebe.bankalar) || []).filter((h) => !h.pasif).map((h) => ({ deger: `banka:${h.id}`, kisaAd: h.ad, pb: h.paraBirimi || "TRY", h })));
     const seciliHesap = hesapListesi.find((x) => x.deger === odemeHesapSecim[odemeSekliSecim])
       || hesapListesi.find((x) => odemeCari && x.pb === (odemeCari.paraBirimi || "TRY")) || hesapListesi[0] || null;
+    // Kutular tahsilatta yeşil, ödemede turuncu (v1.665.1 — 100 .renkli-form).
     return (
-      <div data-odeme-tahsilat="1">
+      <div data-odeme-tahsilat="1" style={{ "--hrk-renk": odemeTip === "Tahsilat" ? "#2E7D4F" : "#B7791F" }}>
         <div style={{ ...MOR_SERIT_STIL, padding: "10px 12px", marginBottom: 12, display: "grid", gap: 10 }}>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             {tipDugmesi("Tahsilat")}{tipDugmesi("Ödeme")}
