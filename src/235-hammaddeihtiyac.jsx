@@ -209,81 +209,13 @@ function HammaddeIhtiyacSekmesi({ kurlar, siparisler, stok, uretim, onGoToSipari
     return <EmptyState text={bosDurumMetni || "Bekleyen satış siparişi kalemi yok — hesaplanacak bir hammadde ihtiyacı bulunamadı."} />;
   }
 
-  // STOK KAYDI EKSİ OLAN KALEMLER — listenin başında toplu uyarı.
-  //
-  // Kullanıcı (7 Eylül): "Eksi stok olamaz, yoktan var olamaz. Eksi stoğu ihtiyaç için değil,
-  // DEĞERLENDİRME için kullanalım."
-  //
-  // Tek tek hücreleri gezip ⚠ işareti aramak zorunda kalmamak için: kaç kalemin kaydı bozuk,
-  // hangileri — hepsi burada. Bu bir satın alma listesi DEĞİL, bir düzeltme listesi.
-  const stokBilinmeyenler = (() => {
-    const m = new Map();
-    (mrpSonuclari || []).forEach((r) => {
-      if (!r.stokBilinmiyor) return;
-      const anahtar = `${r.hammaddeUrunId}|${r.renk}|${r.beden}`;
-      if (!m.has(anahtar)) m.set(anahtar, r);
-    });
-    return [...m.values()];
-  })();
-
   return (
     <div>
-      {stokBilinmeyenler.length > 0 && (
-        <div style={{ background: "var(--erp-hover)", border: "1.5px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-            <AlertTriangle size={15} color="var(--erp-brown)" />
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-brown)" }}>
-              {stokBilinmeyenler.length} kalemin stok kaydı eksiye düşmüş — gerçek miktar bilinmiyor
-            </span>
-          </div>
-          {/* NEDEN SATIN ALMA ÖNERİSİ YOK: eksi değer bir miktar değil, bir kayıt hatası.
-              −112 görüp 112 sipariş etmek, depoda duran malı ikinci kez almak olabilir. */}
-          <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8, lineHeight: 1.6 }}>
-            Eksi stok "şu kadar eksiğim" demek değil, kaydın bozulduğu anlamına gelir. İki sebebi
-            olabilir: <b>alış girişi yapılmadan</b> malzeme kullanılmıştır, ya da <b>reçete
-            tükettiğinden fazlasını düşüyordur</b>. Aşağıda her kalem için, üretim ölçümlerine
-            bakılarak hangisi olduğu tahmin ediliyor.
-            <br />
-            Hesapta bu kalemlerin stoğu <b>0 kabul edildi</b> — ihtiyaç, elde hiç mal yokmuş gibi
-            hesaplandı. Gerçek miktar <b>sayımla</b> bulunur.
-          </div>
-          <div style={{ display: "grid", gap: 6 }}>
-            {stokBilinmeyenler.map((r) => {
-              // SEBEP TAHMİNİ — kullanıcı (7 Eylül): "İKİSİ DE OLABİLİR."
-              // İkisi de olabiliyorsa hangisi olduğu VERİDEN çıkarılmalı; reçete gerçekleşmesi
-              // (7z-29) tam bunu ayırt ediyor. Ölçüm yoksa bir şey UYDURULMUYOR.
-              const sebep = eksiStokSebebi(stok || [], r.hammaddeUrunId, r.renk, r.beden);
-              return (
-                <div key={`${r.hammaddeUrunId}|${r.renk}|${r.beden}`}>
-                  <div className="mono" style={{ fontSize: 12, color: "var(--erp-text)" }}>
-                    <b>{r.hammaddeAd}</b>
-                    <span style={{ color: "var(--erp-text-2)" }}> {olcuMetni([r.renk, r.beden])}</span>
-                    <span style={{ color: "var(--erp-warn)", fontWeight: 700, marginLeft: 8 }}>kayıt: {r.hamStok} {r.birim}</span>
-                  </div>
-                  {sebep.tur === "recete" && (
-                    <div style={{ fontSize: 11, color: "var(--erp-brown)", marginLeft: 4, marginTop: 2, lineHeight: 1.5 }}>
-                      ↳ <b>Reçete fazla düşüyor olabilir.</b>{" "}
-                      {sebep.supheliler.map((x) => `${x.urunAd}: reçete ${x.planlanan} → ölçülen ${x.olculen} (${x.olcum} ölçüm)`).join(" · ")}
-                      {" "}— reçeteyi düzeltmek eksinin BİRİKMESİNİ durdurur, ama biriken kısım yine sayımla kapanır.
-                    </div>
-                  )}
-                  {sebep.tur === "giris" && (
-                    <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginLeft: 4, marginTop: 2, lineHeight: 1.5 }}>
-                      ↳ Ölçülen tüketim reçeteyle uyumlu — düşülen miktar doğru. Eksi büyük ihtimalle
-                      <b> alış girişinin yapılmamasından</b>.
-                    </div>
-                  )}
-                  {sebep.tur === "bilinmiyor" && (
-                    <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginLeft: 4, marginTop: 2, lineHeight: 1.5 }}>
-                      ↳ Bu hammadde için henüz üretim ölçümü yok; sebep söylenemez.
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* STOK DURUMU MATRİSİ (v1.665.0 — kullanıcı: "şu an görünen stokları matris düzeninde yapalım, sekmeler halinde:
+          stoğu olan, stok olmayan, eksik stok vs."). Önce yalnız eksi kayıtlar uzun bir liste hâlinde duruyordu; artık
+          bütün ihtiyaç kalemleri sekmelere ayrılıyor ve her sekme hammadde+renk satırı × beden sütunu matrisi. Eksi kaydın
+          sebep tahmini (alış girişi yok / reçete fazla düşüyor) "Eksi kayıt" sekmesinde satır altında. */}
+      <StokDurumMatrisi satirlar={mrpSonuclari} stok={stok} />
 
       <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
         <div style={{ fontSize: 11, color: "var(--erp-text-2)", maxWidth: 480 }}>
@@ -1035,3 +967,125 @@ function HammaddeIhtiyacSekmesi({ kurlar, siparisler, stok, uretim, onGoToSipari
   );
 }
 
+
+
+// Planlama › hammadde ihtiyacı: bütün kalemler 4 sekmede, hammadde+renk × beden matrisi.
+//   Eksik       — ihtiyaç stoktan fazla (hücrede eksik miktar, kırmızı)
+//   Stoğu yetiyor — stok ihtiyacı karşılıyor (hücrede stok, yeşil)
+//   Stok yok    — kayıtlı stok 0 (hücrede ihtiyaç, gri)
+//   Eksi kayıt  — kayıt eksiye düşmüş, gerçek miktar bilinmiyor (hücrede kayıt, turuncu) + sebep tahmini
+function StokDurumMatrisi({ satirlar, stok }) {
+  const SEKMELER = [
+    { k: "eksik", ad: "Eksik", renk: "#C0392B", f: (r) => r.eksikMi && !r.stokBilinmiyor, deger: (r) => r.eksikMiktar },
+    { k: "yeterli", ad: "Stoğu yetiyor", renk: "#2E7D4F", f: (r) => !r.eksikMi && !r.stokBilinmiyor && (r.mevcutStok || 0) > 0, deger: (r) => r.mevcutStok },
+    { k: "yok", ad: "Stok yok", renk: "#6B7280", f: (r) => !r.stokBilinmiyor && (r.hamStok || 0) === 0, deger: (r) => r.gereken },
+    { k: "eksi", ad: "Eksi kayıt", renk: "#B7791F", f: (r) => r.stokBilinmiyor, deger: (r) => r.hamStok },
+  ];
+  const tekil = (() => { const m = new Map(); (satirlar || []).forEach((r) => { const a = `${r.hammaddeUrunId}|${r.renk}|${r.beden}`; if (!m.has(a)) m.set(a, r); }); return [...m.values()]; })();
+  const sayilar = Object.fromEntries(SEKMELER.map((x) => [x.k, tekil.filter(x.f).length]));
+  const [sekme, setSekme] = useState(() => SEKMELER.find((x) => sayilar[x.k] > 0)?.k || "eksik");
+  const [acik, setAcik] = useState(true);
+  const aktif = SEKMELER.find((x) => x.k === sekme) || SEKMELER[0];
+  const liste = tekil.filter(aktif.f);
+  // Satır = hammadde + renk; sütun = beden (sayısal sıralı; bedensiz "—").
+  const gruplar = new Map();
+  liste.forEach((r) => {
+    const a = `${r.hammaddeUrunId}|${r.renk || ""}`;
+    if (!gruplar.has(a)) gruplar.set(a, { ad: r.hammaddeAd, renk: r.renk, birim: r.birim, urunId: r.hammaddeUrunId, hucre: {} });
+    gruplar.get(a).hucre[r.beden || ""] = r;
+  });
+  const bedenler = [...new Set(liste.map((r) => r.beden || ""))].sort((x, y) => (parseFloat(x) - parseFloat(y)) || String(x).localeCompare(String(y), "tr"));
+  const fmt = (n) => (Math.round((Number(n) || 0) * 100) / 100).toLocaleString("tr-TR");
+  const th = { padding: "5px 8px", fontSize: 11, fontWeight: 800, color: "var(--erp-text-2)", background: "var(--erp-panel)", borderBottom: `2px solid ${aktif.renk}`, whiteSpace: "nowrap", position: "sticky", top: 0 };
+  return (
+    <div data-stok-durum-matrisi="1" style={{ border: `2px solid ${aktif.renk}`, borderRadius: "var(--erp-r-md)", marginBottom: 12, background: "#fff" }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", padding: "8px 10px", borderBottom: acik ? "1px solid var(--erp-line)" : "none" }}>
+        <button type="button" onClick={() => setAcik(!acik)} style={{ all: "unset", cursor: "pointer", fontWeight: 800, fontSize: 13, marginRight: 6 }}>{acik ? "▾" : "▸"} Stok durumu</button>
+        {SEKMELER.map((x) => {
+          const sec = x.k === sekme;
+          return (
+            <button key={x.k} type="button" data-stok-durum-sekme={x.k} onClick={() => { setSekme(x.k); setAcik(true); }}
+              style={{ padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                border: `2px solid ${x.renk}`, background: sec ? x.renk : "#fff", color: sec ? "#fff" : x.renk }}>
+              {x.ad} ({sayilar[x.k]})
+            </button>
+          );
+        })}
+      </div>
+      {sayilar.eksi > 0 && (
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#B7791F", padding: "6px 10px", background: "#FFF8EC", borderBottom: "1px solid var(--erp-line)" }}>
+          ⚠ {sayilar.eksi} kalemin stok kaydı eksiye düşmüş — gerçek miktar bilinmiyor (Eksi kayıt sekmesi)
+        </div>
+      )}
+      {acik && (
+        <div style={{ padding: 10 }}>
+          {aktif.k === "eksi" && liste.length > 0 && (
+            <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8, lineHeight: 1.6 }}>
+              Eksi stok "şu kadar eksiğim" değil, kaydın bozulduğu anlamına gelir: <b>alış girişi yapılmadan</b> kullanılmış ya da
+              <b> reçete fazla düşüyor</b>. Hesapta bu kalemlerin stoğu <b>0 kabul edildi</b>; gerçek miktar <b>sayımla</b> bulunur.
+            </div>
+          )}
+          {liste.length === 0 ? (
+            <div style={{ fontSize: 12, color: "var(--erp-text-3)", padding: 12, textAlign: "center" }}>Bu sekmede kalem yok.</div>
+          ) : (
+            <div style={{ overflow: "auto", maxHeight: 460 }}>
+              <table data-stok-durum-tablo={aktif.k} style={{ borderCollapse: "collapse", width: "100%" }}>
+                <thead><tr>
+                  <th style={{ ...th, textAlign: "left" }}>Hammadde · renk</th>
+                  {bedenler.map((b) => <th key={b} style={{ ...th, textAlign: "center" }}>{b || "—"}</th>)}
+                  <th style={{ ...th, textAlign: "right" }}>Toplam</th>
+                </tr></thead>
+                <tbody>
+                  {[...gruplar.values()].map((g) => {
+                    const top = Object.values(g.hucre).reduce((t, r) => t + (Number(aktif.deger(r)) || 0), 0);
+                    const sebep = aktif.k === "eksi" ? eksiStokSebebi(stok || [], g.urunId, g.renk, Object.values(g.hucre)[0].beden) : null;
+                    return (
+                      <React.Fragment key={g.urunId + "|" + g.renk}>
+                        <tr>
+                          <td style={{ padding: "5px 8px", fontSize: 12, borderBottom: "1px solid var(--erp-line)", whiteSpace: "nowrap" }}>
+                            <b>{g.ad}</b> {g.renk ? <span style={{ color: "var(--erp-text-2)" }}>· {g.renk}</span> : null}
+                            <span style={{ color: "var(--erp-text-3)", fontSize: 10 }}> {g.birim}</span>
+                          </td>
+                          {bedenler.map((b) => {
+                            const r = g.hucre[b];
+                            return (
+                              <td key={b} className="mono" style={{ padding: "5px 8px", fontSize: 12, textAlign: "center", borderBottom: "1px solid var(--erp-line)",
+                                fontWeight: r ? 700 : 400, color: r ? aktif.renk : "var(--erp-text-3)", background: r ? alfaEkle(aktif.renk, "12") : "transparent" }}
+                                title={r ? `İhtiyaç ${fmt(r.gereken)} · stok ${fmt(r.hamStok)}${r.eksikMiktar ? ` · eksik ${fmt(r.eksikMiktar)}` : ""}` : ""}>
+                                {r ? fmt(aktif.deger(r)) : "·"}
+                              </td>
+                            );
+                          })}
+                          <td className="mono" style={{ padding: "5px 8px", fontSize: 12, textAlign: "right", fontWeight: 800, borderBottom: "1px solid var(--erp-line)", color: aktif.renk }}>{fmt(top)}</td>
+                        </tr>
+                        {sebep && sebep.tur === "recete" && (
+                          <tr><td colSpan={bedenler.length + 2} style={{ fontSize: 11, color: "var(--erp-brown)", padding: "0 8px 6px" }}>
+                            ↳ <b>Reçete fazla düşüyor olabilir.</b> {sebep.supheliler.map((x) => `${x.urunAd}: reçete ${x.planlanan} → ölçülen ${x.olculen} (${x.olcum} ölçüm)`).join(" · ")}
+                            {" "}— reçeteyi düzeltmek eksinin BİRİKMESİNİ durdurur, ama biriken kısım yine sayımla kapanır.
+                          </td></tr>
+                        )}
+                        {sebep && sebep.tur === "bilinmiyor" && (
+                          <tr><td colSpan={bedenler.length + 2} style={{ fontSize: 11, color: "var(--erp-text-3)", padding: "0 8px 6px" }}>
+                            ↳ Bu hammadde için henüz üretim ölçümü yok; sebep söylenemez.
+                          </td></tr>
+                        )}
+                        {sebep && sebep.tur === "giris" && (
+                          <tr><td colSpan={bedenler.length + 2} style={{ fontSize: 11, color: "var(--erp-text-2)", padding: "0 8px 6px" }}>
+                            ↳ Tüketim reçeteyle uyumlu — büyük ihtimalle <b>alış girişi yapılmamış</b>.
+                          </td></tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 6 }}>
+            Hücrede: {aktif.k === "eksik" ? "eksik miktar" : aktif.k === "yeterli" ? "mevcut stok" : aktif.k === "yok" ? "gereken miktar" : "kayıttaki (eksi) miktar"} · üzerine gelince ihtiyaç ve stok.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
