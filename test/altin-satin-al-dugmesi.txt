@@ -47,7 +47,7 @@
   "gorunen": [
    "Anasayfa Depo Üretim Planlama Siparişler Finans TK",
    "Anasayfa Depo Satın Al: Deri $ 48,00 € 56,00",
-   "DEPO · HAMMADDE İHTİYAÇ Deri − Kapat Bekleyen (henüz tam karşılanmamış) satış si"
+   "DEPO · HAMMADDE İHTİYAÇ Deri − Kapat ▾ Stok durumu Eksik (2) Stoğu yetiyor (0) S"
   ],
   "ihtiyacEkraniAcildi": true,
   "malzemeListede": true,
