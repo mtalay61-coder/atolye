@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.673.0";
+const SURUM = "1.673.1";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Banka mutabakati, termin, donem kapanisi, cari mutabakat mektubu, gunluk matrisi";
+const SURUM_NOTU = "Banka Excel: liste kendi icinde kayar, banka secilmeden aktar sebebi yazilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.673.1", tarih: "15.10.2026", eklenen: [],
+    degisen: ["Banka Excel'i: hareket listesi kendi içinde kayar (başlık ve Aktar düğmesi sabit), düğmede seçili satır sayısı"],
+    duzeltilen: ["Banka Excel'i: banka hesabı seçilmeden 'Seçilenleri aktar' sebebi söylemeden pasifti — seçici kırmızı çerçeveli, yanında 'Önce banka hesabını seçin' uyarısı"] },
   { surum: "1.673.0", tarih: "15.10.2026", eklenen: ["Günlük: Matris görünümü (kullanıcı × modül ve gün × kullanıcı işlem sayıları; hücreye tıklayınca o işlemler), tarih (Bugün/7/30 gün) ve kullanıcı süzgeci, akış tablo düzeninde (Zaman · Kullanıcı · Modül · İşlem · Ayrıntı)", "Finans › Cari Mutabakat: dönem sonu bakiyesiyle mutabakat mektubu (cevap bölümlü) — Yazdır / PDF / WhatsApp / E-posta; seçilen carilere toplu PDF ekli e-posta; gönderim carinin kaydında; ayın ilk 10 günü anasayfada hatırlatma kartı"],
     degisen: [], duzeltilen: [] },
   { surum: "1.672.0", tarih: "15.10.2026", eklenen: [
