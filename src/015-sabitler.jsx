@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.681.0";
+const SURUM = "1.682.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Odeme & Tahsilat: listede kasa tutari, aciklamada Genel/Resmi kur karsiligi";
+const SURUM_NOTU = "Aciklama deftere gore: Genel ve Resmi karsiligi kendi tarafinda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.682.0", tarih: "15.10.2026", eklenen: [],
+    degisen: ["Muhasebe defterli tahsilat/ödemede açıklama deftere göre: Genel bakışta Genel karşılığı (ör. 1.000 ₺ → 20 $), Resmi bakışta Resmi karşılığı (1.000 ₺ → 18 €) — ekstre ve son tahsilat/ödemeler listesinde"], duzeltilen: [] },
   { surum: "1.681.0", tarih: "15.10.2026", eklenen: [],
     degisen: ["Ödeme & Tahsilat: para birimi çevrilen kayıtta açıklamaya kasa tutarı ve Genel/Resmi kur karşılıkları ayrı ayrı yazılır; 'Son tahsilat ve ödemeler' listesinde tutar kasanın biriminde", "Ödeme & Tahsilat ve Banka Excel'i: cari ve gelir/gider kartı aynı arama kutusundan seçilir (ayrı kart seçicisi kalktı)"], duzeltilen: [] },
   { surum: "1.680.0", tarih: "15.10.2026", eklenen: [],

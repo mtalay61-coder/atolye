@@ -890,7 +890,10 @@ function cariResmiAdi(c) {
 // yaşlandırma, mutabakat) bu tutar okunur; Genel ve Tümü bakışında asıl tutar — böylece Tümü'de çift sayılmaz.
 // Kullanım: `cariDefterHareketleri(hareketler, defter)` = defterKapsar süzgeci + Resmi'de tutar/PB değişimi.
 function hareketDefterde(h, defter) {
-  if (defter === "Resmi" && h && h.resmiPB && h.resmiTutar != null) return { ...h, tutar: h.resmiTutar, paraBirimi: h.resmiPB };
+  // AÇIKLAMA DA DEFTERE GÖRE (v1.682.0 — kullanıcı: "açıklamalar deftere göre değişsin; hepsi kendi tarafında görünsün"):
+  // Resmi bakışında `resmiAciklama` (Resmi karşılığı), diğerlerinde asıl açıklama (Genel karşılığı).
+  if (defter === "Resmi" && h && h.resmiPB && h.resmiTutar != null)
+    return { ...h, tutar: h.resmiTutar, paraBirimi: h.resmiPB, aciklama: h.resmiAciklama || h.aciklama };
   return h;
 }
 function cariDefterHareketleri(hareketler, defter) {
