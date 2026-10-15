@@ -118,7 +118,7 @@ function resmiAlanlari(defter, anaPB, anaTutar, deger, kurlar) {
   const h = resmiTutarHesapla(anaPB, anaTutar, deger, kurlar);
   return h.tutar > 0 ? { resmiPB: pb, resmiTutar: stokYuvarla(h.tutar) } : {};
 }
-function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil, etiket = "Resmi", veri = "resmi" }) {
+function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil, etiket = "Resmi", veri = "resmi", ayniAd }) {
   if (defter !== "Muhasebe") return null;
   const pb = (deger && deger.pb) || anaPB;
   const h = resmiTutarHesapla(anaPB, anaTutar, deger, kurlar);
@@ -127,7 +127,7 @@ function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil
     <div data-resmi-tutar-alani="1" style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap", fontSize: 12, ...(stil || {}) }}>
       <span style={{ fontWeight: 700, color: "var(--erp-info)" }}>{etiket}</span>
       <select data-resmi-pb={veri === "resmi" ? "1" : undefined} data-karsi-pb={veri === "karsi" ? "1" : undefined} data-renk-koru="1" value={pb} onChange={(e) => onDegis({ pb: e.target.value, tutar: "", kur: "" })} style={kutu}>
-        {MUHASEBE_PARA_BIRIMLERI.map((p) => <option key={p} value={p}>{p === anaPB ? `${p} (${veri === "karsi" ? "kasa ile" : "Genel ile"} aynı)` : p}</option>)}
+        {MUHASEBE_PARA_BIRIMLERI.map((p) => <option key={p} value={p}>{p === anaPB ? `${p} (${ayniAd || (veri === "karsi" ? "kasa ile" : "Genel ile")} aynı)` : p}</option>)}
       </select>
       {pb !== anaPB && (<>
         <span>kur 1 {h.ters ? anaPB : pb} =</span>

@@ -152,9 +152,15 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
   const cariPB0 = cari.paraBirimi || "TRY";
   const [f, setF] = useState({ tarih: bugunYerel(), tutar: "", pb: cariPB0, hesapTutar: "", vade: bugunYerel(), defter: "Genel", aciklama: "" });
   const kart = odemeSekli === "Kredi Kartı";
+  // MUHASEBE DEFTERİNDE İKİ P. TİPİ (v1.679.0 — kullanıcı: "genel ve resmi 2 adet p. tipi girilmesi gerekli, Excel'den
+  // aktardığımız gibi"). Banka Excel'iyle aynı düzen: tutar KASAYA GİREN para (kasanın biriminde); altında Genel
+  // (cariye işlenecek birim + kur) ve Resmi (Resmi defter birimi + kur) — ikisi de kasa tutarından çevrilir.
+  const ikili = f.defter === "Muhasebe" && !!hesap;
   const t = parseFloat(f.tutar);
   const hesapPB = hesap ? hesap.pb : f.pb;
-  const cevrim = !!hesap && hesapPB !== f.pb;
+  const genelH = ikili ? resmiTutarHesapla(hesapPB, t > 0 ? t : 0, f.genel || { pb: cariPB0 }, kurlar) : null;
+  const resmiH = ikili ? resmiTutarHesapla(hesapPB, t > 0 ? t : 0, f.resmi || { pb: hesapPB }, kurlar) : null;
+  const cevrim = !ikili && !!hesap && hesapPB !== f.pb;
   const oneriHesapTutari = cevrim && t > 0 ? paraCevirGenel(t, f.pb, hesapPB, kurlar) : null;
   // GENEL KUR KUTUSU (v1.678.0): "1 <cari PB> = ? <kasa PB>" — yazılırsa hesaba geçen = tutar × kur; hesaba geçen
   // elle yazılırsa o geçerli (kur ondan okunur). İkisi boşsa sistem kuruyla öneri.
@@ -166,7 +172,21 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
     if (!(t > 0)) { showToast("Tutar girin"); return; }
     if (cevrim && !(hesapTutari > 0)) { showToast(`Hesaba geçecek tutarı girin (${hesapPB})`); return; }
     if (kart && !f.vade) { showToast("Hesaba geçiş tarihini girin"); return; }
+    if (ikili && (!(genelH.tutar > 0) || !(resmiH.tutar > 0))) { showToast("Genel ve Resmi için kur ya da tutar girin"); return; }
     const [hesapTur, hesapId] = hesap.deger.split(":");
+    if (ikili) {
+      const k2 = kasaCariHareketiKur({
+        islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: stokYuvarla(genelH.tutar), cariPB: genelH.pb,
+        hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(t),
+        defter: "Muhasebe", aciklama: f.aciklama.trim(), odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
+      });
+      const resmiEk2 = resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004 ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar) } : {};
+      const ch2 = { ...(kart ? { ...k2.cariHareketi, vade: f.vade } : k2.cariHareketi), ...resmiEk2 };
+      const mh2 = k2.muhasebeHareketi && kart ? { ...k2.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k2.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k2.muhasebeHareketi;
+      onKaydet({ cariId: cari.id, cariHareketi: ch2, muhasebe: mh2 ? { hesapTur, hesapId, hareket: mh2 } : null });
+      setF((o) => ({ ...o, tutar: "", aciklama: "", genel: o.genel ? { pb: o.genel.pb } : o.genel, resmi: o.resmi ? { pb: o.resmi.pb } : o.resmi }));
+      return;
+    }
     const k = kasaCariHareketiKur({
       islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: t, cariPB: f.pb,
       hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(hesapTutari),
@@ -187,13 +207,13 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
       // Kutu çerçeveleri de işlemin renginde (v1.665.1 — "giriş çıkış renk durumuna göre değişsin"; 100 .renkli-form).
       "--hrk-renk": renk }}>
       {alan(kart ? "İşlem tarihi" : "Tarih", <input type="date" value={f.tarih} onChange={(e) => setF({ ...f, tarih: e.target.value })} style={{ ...kutu, width: 140 }} />)}
-      {alan("Tutar", (
+      {alan(ikili ? `Kasaya ${tip === "Tahsilat" ? "giren" : "çıkan"} (${hesapPB})` : "Tutar", (
         <span style={{ display: "flex", gap: 4 }}>
           <input type="number" step="0.01" data-odeme-satiri-tutar="1" value={f.tutar} autoFocus onChange={(e) => setF({ ...f, tutar: e.target.value, hesapTutar: "" })}
             onKeyDown={(e) => { if (e.key === "Enter") kaydet(); }} style={{ ...kutu, width: 120 }} />
-          <select value={f.pb} onChange={(e) => setF({ ...f, pb: e.target.value, hesapTutar: "" })} style={{ ...kutu, width: 66 }}>
+          {!ikili && <select value={f.pb} onChange={(e) => setF({ ...f, pb: e.target.value, hesapTutar: "" })} style={{ ...kutu, width: 66 }}>
             {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
-          </select>
+          </select>}
         </span>
       ))}
       {cevrim && alan(`Kur (1 ${f.pb} = ? ${hesapPB})`, (
@@ -212,9 +232,14 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
           <option value="Genel">Genel</option><option value="Resmi">Resmi</option><option value="Muhasebe">Muhasebe</option>
         </select>
       ))}
-      {f.defter === "Muhasebe" && alan("Resmi P. tipi", (
-        <ResmiTutarAlani defter={f.defter} anaPB={f.pb} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.resmi} onDegis={(v) => setF({ ...f, resmi: v })} />
-      ))}
+      {ikili && (
+        <div data-odeme-ikili-pb="1" style={{ display: "grid", gap: 4, flex: "1 1 100%" }}>
+          <ResmiTutarAlani defter="Muhasebe" anaPB={hesapPB} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.genel || { pb: cariPB0 }}
+            onDegis={(v) => setF({ ...f, genel: v })} etiket="Genel" veri="karsi" />
+          <ResmiTutarAlani defter="Muhasebe" anaPB={hesapPB} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.resmi || { pb: hesapPB }}
+            onDegis={(v) => setF({ ...f, resmi: v })} ayniAd="kasa ile" />
+        </div>
+      )}
       {alan("Açıklama", <input value={f.aciklama} placeholder="Opsiyonel" onChange={(e) => setF({ ...f, aciklama: e.target.value })}
         onKeyDown={(e) => { if (e.key === "Enter") kaydet(); }} style={{ ...kutu, width: "100%" }} />, 160)}
       <button type="button" className="btn-primary btn-save" data-odeme-satiri-kaydet="1" onClick={kaydet}
