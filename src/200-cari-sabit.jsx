@@ -880,6 +880,12 @@ function fisinDefteri(fis) {
   return cariAyaklari[0].defter || "Genel";
 }
 
+// RESMİ BELGEDE CARİ ADI (v1.666.1 — kullanıcı: "sipariş ve fiş çıktılarında da resmi ünvan olsun"): resmi ünvan
+// girilmişse o, yoksa ekrandaki (marka) ad. Çıktılar, e-fatura ve ekstre bunu kullanır; ekranlar marka adını.
+function cariResmiAdi(c) {
+  return (c && (String(c.resmiUnvan || "").trim() || c.unvan)) || "";
+}
+
 function defterKapsar(kayitDefteri, secilen) {
   if (!secilen || secilen === "Tümü") return true;
   const d = kayitDefteri || "Genel";

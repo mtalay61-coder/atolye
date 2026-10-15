@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.666.0";
+const SURUM = "1.666.1";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Caride resmi unvan: kartta, aramalarda ve e-faturada";
+const SURUM_NOTU = "Siparis, fis ve ekstre ciktilarinda caride resmi unvan";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Caride resmi unvan: kartta, aramalarda ve e-faturada";
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.666.1", tarih: "15.10.2026", eklenen: [],
+    degisen: ["Sipariş çıktısı, fiş çıktısı ve cari ekstresinde müşteri/tedarikçi adı olarak resmi ünvan (girilmemişse ekrandaki ad)"], duzeltilen: [] },
   { surum: "1.666.0", tarih: "15.10.2026", eklenen: ["Cari kartı › Bilgiler: Resmi ünvan (ör. Fatih Ticaret A.Ş.) — kart başlığında marka adının yanında, cari listesinde ve bütün cari seçicilerde aramada bulunur, e-faturada alıcı adı olarak kullanılır"],
     degisen: [], duzeltilen: [] },
   { surum: "1.665.2", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat › Son tahsilat ve ödemeler: defter süzgeci (Tüm defterler / Genel / Resmi / Muhasebe) ve Defter sütunu"],

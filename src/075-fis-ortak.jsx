@@ -449,7 +449,7 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
     </div>
     <div style="margin-bottom:12px">
       <div style="font-size:11px;color:#7A6A50">${siparis.tip === "Alış" ? "Tedarikçi" : "Müşteri"}</div>
-      <div style="font-size:14px;font-weight:700">${esc(cari ? cari.unvan : "")}</div>
+      <div style="font-size:14px;font-weight:700">${esc(cariResmiAdi(cari))}</div>
       <div style="font-size:11px;color:#7A6A50">${[cari && cari.adres, cari && cari.telefon, siparis.musteriKodu && `Müşteri kodu: ${siparis.musteriKodu}`,
         siparis.belgeNo && `Belge no: ${siparis.belgeNo}`, siparis.sezon && `Sezon: ${siparis.sezon}`].filter(Boolean).map(esc).join(" · ")}</div>
     </div>

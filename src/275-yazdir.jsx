@@ -264,7 +264,7 @@ function FisYazdir({ fis, siparis, cari, stok, onClose, onMinimize, firmaBilgile
           <StitchDivider color={tipRenk} />
 
           <div style={{ marginBottom: 16, fontSize: 13 }}>
-            <div><b>{siparis.tip === "Alış" ? "Tedarikçi" : "Müşteri"}:</b> {cari ? cari.unvan : "—"}</div>
+            <div><b>{siparis.tip === "Alış" ? "Tedarikçi" : "Müşteri"}:</b> {cari ? cariResmiAdi(cari) : "—"}</div>
             {cari && cari.telefon && <div style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{cari.telefon}</div>}
           </div>
 
@@ -463,7 +463,7 @@ function CariEkstre({ cari, onClose, onMinimize, firmaBilgileri, defterFiltre })
           <StitchDivider />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18, fontSize: 13 }}>
-            <div><b>Unvan:</b> {cari.unvan}</div>
+            <div><b>Unvan:</b> {cariResmiAdi(cari)}</div>
             <div><b>Tip:</b> {cari.tip}</div>
             {cari.telefon && <div><b>Telefon:</b> {cari.telefon}</div>}
             {cari.vergiNo && <div><b>Vergi No:</b> {cari.vergiNo}</div>}
