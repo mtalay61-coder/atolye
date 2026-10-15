@@ -1,111 +1,47 @@
-// SENARYO — ÇİFT YÖNLÜ KUR ÇEVİRİCİ.
+// SENARYO — KUR ÇEVRİMİ (cari ile kasa farklı para biriminde).
 //
-// Kullanıcı (6 Eylül): "Cari için 42000 TL ödeme verdi ve 1000 USD tutuluyor. Kur ayarlamak yerine
-// cariye işlenecek olan yere 1000 yazdığımızda kuru otomatik düzenlesin. Bu kural tüm para birimi
-// çeviricilerde olsun."
+// Kullanıcı (6 Eylül): "Cari için 42000 TL ödeme verdi ve 1000 USD tutuluyor…" Eskiden Kasa & Banka formunda çift
+// yönlü kur çevirici vardı. v1.674.0'da kasa ekranında hareket girişi kalktı (kullanıcı: "ödeme ve tahsilatta
+// giriliyor"); aynı iş Ödeme & Tahsilat kısa formunda: cariye işlenecek tutar cari biriminde, kasaya geçen tutar
+// kasanın biriminde ("Hesaba geçen"). Boş bırakılırsa güncel kurla önerilen tutar yazılır; elle yazılırsa o geçer.
 //
-// Hangi sayının bilindiği duruma göre değişiyor: bazen kur ("bugün dolar 42"), bazen karşı
-// taraftaki tutar ("1000 dolara sayıyoruz"). Tek yönlü bir form, bilinmeyeni bilinenden ELLE
-// hesaplatıyordu.
-//
-// Ölçülen üç şey:
-//   1. Tutar girilince kur ÖN DOLUYOR ve hedef tutar hesaplanıyor.
-//   2. HEDEF TUTAR yazılınca kur geri hesaplanıyor.
-//   3. KUR yazılınca hedef tutar yeniden hesaplanıyor.
-const { uygulamaAc, modulAc, cariSec, sagTikAc, sagTikSec } = require("./ortak.js");
+// Ölçülen: (1) USD tutar girince öneri 42000 ₺; (2) boş bırakılınca kasa 42000, cari 1000 USD; (3) elle 41500
+// yazılınca kasa 41500, cari yine 1000 USD (kur farkı kasada, cari tutarı değişmez).
+const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
 async function calistir() {
   const t = { ...TOHUM };
-  t["muhasebe:data"] = JSON.stringify({
-    kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [] }],
-    bankalar: [], cekler: [], kurlar: { USD: 42, EUR: 56 },
-  });
-
+  t["muhasebe:data"] = JSON.stringify({ kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [] }], bankalar: [], cekler: [], kurlar: { USD: 42, EUR: 56 } });
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
-  const hatalar = [];
-  sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
+  const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2300);
-
-  await modulAc(sayfa, "Kasa & Banka");
-  await sayfa.waitForTimeout(1000);
-  await sayfa.evaluate(() => {
-    const e = [...document.querySelectorAll("*")]
-      .filter((x) => x.children.length === 0 && /^TL Kasa$/.test(x.textContent.trim()))[0];
-    if (e) e.click();
-  });
+  await modulAc(sayfa, "Ödeme & Tahsilat"); await sayfa.waitForTimeout(800);
+  await sayfa.locator('[data-odeme-tip="Tahsilat"]:visible').click();
+  await sayfa.locator('[data-odeme-sekli="Nakit"]:visible').click();
+  const kutu = sayfa.locator("[data-odeme-cari]:visible").first();
+  await kutu.click(); await kutu.fill("Müşteri B"); await sayfa.waitForTimeout(300); await kutu.press("Enter");
   await sayfa.waitForTimeout(900);
-  // İŞLEM ÇUBUĞU (17 Eylül): kasa formu artık işlem seçilince açılıyor.
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-islem="tahsilat"]'); if (b) b.click(); });
-  await sayfa.waitForTimeout(600);
-
-  // Cari seç ve dönüştürülecek para birimini USD yap: TL kasa → USD cari, yani çevrim gerekiyor.
-  await cariSec(sayfa, "Müşteri B", "", "data-kasa-cari");   // v1.622.0: aramalı kutu
-  await sayfa.waitForTimeout(400);
-  await sayfa.evaluate(() => {
-    const s = [...document.querySelectorAll("select")]
-      .filter((x) => [...x.options].map((o) => o.textContent).join() === "TRY,USD,EUR")[0];
-    s.value = "USD";
-    s.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-  await sayfa.waitForTimeout(500);
-
-  // ALANLAR ETİKETİNDEN BULUNUYOR, İNDEKSTEN DEĞİL.
-  //
-  // Önce görünür sayı kutularının sırasına dayanıyordu ([2]=tutar, [3]=kur…). Muhasebe ekranının
-  // üstündeki USD/EUR kur kutuları kaldırılınca (7 Eylül) bütün indeksler kaydı ve senaryo
-  // anlamsız yerlere yazmaya başladı. Etiket, ekran düzeni değişince de doğru alanı bulur.
-  const alan = (etiketDeseni) => sayfa.evaluate((desen) => {
-    const l = [...document.querySelectorAll("label")].find((x) => new RegExp(desen).test(x.textContent));
-    const i = l ? l.querySelector("input") : null;
-    return i ? i.value : null;
-  }, etiketDeseni);
-
-  const kutular = async () => ({
-    tutar: await alan("^Tutar"),
-    kur: await alan("^Kur \\(1"),
-    hedef: await alan("Cariye İşlecek Tutar"),
-  });
-
-  const yaz = async (etiketDeseni, deger) => {
-    await sayfa.evaluate(([desen, v]) => {
-      const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      const l = [...document.querySelectorAll("label")].find((x) => new RegExp(desen).test(x.textContent));
-      const el = l ? l.querySelector("input") : null;
-      if (!el) throw new Error(`alan bulunamadı: ${desen}`);
-      set.call(el, v);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    }, [etiketDeseni, deger]);
-    await sayfa.waitForTimeout(600);
+  const usdSec = async () => {
+    await sayfa.evaluate(() => { const f = [...document.querySelectorAll("[data-odeme-satiri]")].find((x) => x.getBoundingClientRect().width > 0);
+      const s = [...f.querySelectorAll("select")].find((x) => [...x.options].some((o) => o.value === "USD") && [...x.options].some((o) => o.value === "TRY"));
+      const set = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set; set.call(s, "USD"); s.dispatchEvent(new Event("change", { bubbles: true })); });
+    await sayfa.waitForTimeout(300);
   };
-
-  await yaz("^Tutar", "42000");
-  const tutarSonrasi = await kutular();
-
-  // 2. HEDEF TUTARDAN KURA: 42000 / 800 = 52,5.
-  await yaz("Cariye İşlecek Tutar", "800");
-  const hedeftenKura = await kutular();
-
-  // 3. KURDAN HEDEF TUTARA: 42000 / 40 = 1050.
-  await yaz("^Kur \\(1", "40");
-  const kurdanHedefe = await kutular();
-
+  await usdSec();
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("1000"); await sayfa.waitForTimeout(300);
+  const oneri = await sayfa.locator("[data-odeme-satiri-hesap-tutar]:visible").getAttribute("placeholder");
+  await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click(); await sayfa.waitForTimeout(1300);
+  await usdSec();
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("1000");
+  await sayfa.locator("[data-odeme-satiri-hesap-tutar]:visible").fill("41500");
+  await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click(); await sayfa.waitForTimeout(1300);
+  const kasa = ((await depoOku(sayfa, "muhasebe:data")).kasalar[0].hareketler || []).map((h) => `${h.yon}:${h.tutar}`).sort();
+  const cari = ((await depoOku(sayfa, "cari:data")).find((c) => c.unvan === "Müşteri B").hareketler || []).filter((h) => /^THS-/.test(h.fisNo || "")).map((h) => `${h.tutar} ${h.paraBirimi}`);
   await tarayici.close();
-  return {
-    hatalar,
-    // Tutar girilince kur güncel kurdan ön doluyor, hedef ondan hesaplanıyor.
-    tutarSonrasi: { kur: tutarSonrasi.kur, hedef: tutarSonrasi.hedef },
-    hedeftenKura: { kur: hedeftenKura.kur, hedef: hedeftenKura.hedef },
-    kurdanHedefe: { kur: kurdanHedefe.kur, hedef: kurdanHedefe.hedef },
-  };
+  return { hatalar, oneri, kasa, cari };
 }
 
-if (require.main === module) {
-  calistir().then((s) => {
-    if (s.hatalar.length) console.log("SAYFA HATASI:", s.hatalar.join(" | "));
-    console.log(normalles(s));
-  });
-}
-
+if (require.main === module) calistir().then((s) => console.log(normalles(s)));
 module.exports = { calistir };

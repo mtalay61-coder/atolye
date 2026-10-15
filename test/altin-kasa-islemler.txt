@@ -3,10 +3,7 @@
   "formKapali": true,
   "hareketGorunur": true,
   "islemDugmeleri": [
-   "tahsilat",
-   "odeme",
-   "virman",
-   "serbest"
+   "virman"
   ]
  },
  "duzenleme": {

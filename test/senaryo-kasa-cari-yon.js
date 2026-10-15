@@ -17,31 +17,17 @@ async function kasaHareketi(yon, tutar) {
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2400);
-  await modulAc(sayfa, "Kasa & Banka");
-  await sayfa.waitForTimeout(900);
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /Ana Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
+  // v1.674.0: kasa ekranında hareket girişi kalktı — aynı işlem Ödeme & Tahsilat'ın kısa formundan
+  // (Tahsilat/Ödeme + Nakit + cari + tutar). Kural aynı çekirdekten (`kasaCariHareketiKur` → `hareketYonu`).
+  await modulAc(sayfa, "Ödeme & Tahsilat");
   await sayfa.waitForTimeout(800);
-
-  // İŞLEM ÇUBUĞU (17 Eylül): form artık işlem seçilince açılıyor. Giriş→Tahsilat, Çıkış→Ödeme.
-  await sayfa.evaluate((y) => {
-    const b = document.querySelector(y === "Giriş" ? '[data-islem="tahsilat"]' : '[data-islem="odeme"]');
-    if (b) b.click();
-  }, yon);
-  await sayfa.waitForTimeout(600);
-
-  // Yön + cari + tutar.
-  await sayfa.evaluate((y) => {
-    const s = [...document.querySelectorAll("select")].find((x) => [...x.options].some((o) => /Giriş/.test(o.textContent)));
-    const o = [...s.options].find((x) => x.textContent.includes(y));
-    s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
-  }, yon);
-  await sayfa.waitForTimeout(300);
-  // v1.622.0: cari kutusu aramalı (CariSecici).
-  await cariSec(sayfa, "Tedarikçi A", "", "data-kasa-cari");
-  await sayfa.waitForTimeout(400);
-  await sayfa.locator('input[type="number"]').first().fill(String(tutar));
-  await sayfa.waitForTimeout(300);
-  await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Ekle" && x.offsetParent); if (b) b.click(); });
+  await sayfa.locator(`[data-odeme-tip="${yon === "Giriş" ? "Tahsilat" : "Ödeme"}"]:visible`).click();
+  await sayfa.locator('[data-odeme-sekli="Nakit"]:visible').click();
+  const kutu = sayfa.locator("[data-odeme-cari]:visible").first();
+  await kutu.click(); await kutu.fill("Tedarikçi A"); await sayfa.waitForTimeout(300); await kutu.press("Enter");
+  await sayfa.waitForTimeout(900);
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill(String(tutar));
+  await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click();
   await sayfa.waitForTimeout(1600);
 
   const cari = (await depoOku(sayfa, "cari:data")).find((c) => c.id === "c1");

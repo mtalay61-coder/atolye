@@ -6,7 +6,7 @@
 // olmayan giderlerde karşı taraf yoktu, para "hiçbir yere" gidiyordu ve kârlılık hesaplanamıyordu.
 //
 // Ölçülen: (1) Tanımlar'da kart açılıyor, hazır kartlarla başlanabiliyor; (2) kasa formunda kart
-// karşı taraf olarak seçilebiliyor; (3) karşı taraf seçilmeden kayıt REDDEDİLİYOR; (4) kaydedilen
+// karşı taraf olarak seçilebiliyor (v1.674.0: Ödeme & Tahsilat'ta); (3) karşı taraf seçilmeden kayıt formu AÇILMIYOR; (4) kaydedilen
 // hareket kartın adını ve GRUBUNU taşıyor (kârlılık raporu bu gruplardan çıkacak).
 const { uygulamaAc, depoOku, modulAc, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
@@ -56,35 +56,19 @@ async function calistir() {
   const ikinci = await uygulamaAc(t2, { hataYaz: false });
   ikinci.sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await ikinci.sayfa.waitForTimeout(2400);
-  await modulAc(ikinci.sayfa, "Kasa & Banka");
-  await ikinci.sayfa.waitForTimeout(900);
-  await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => /TL Kasa/.test(x.textContent) && x.offsetParent); if (b) b.click(); });
-  await ikinci.sayfa.waitForTimeout(700);
-  await ikinci.sayfa.evaluate(() => { const b = document.querySelector('[data-islem="serbest"]'); if (b) b.click(); });
-  await ikinci.sayfa.waitForTimeout(500);
-  const kartSecici = await ikinci.sayfa.evaluate(() => !!document.querySelector("[data-gider-kart-sec]"));
-
-  // Karşı taraf seçmeden kaydet → reddedilmeli.
-  await ikinci.sayfa.locator('input[type="number"]').first().fill("12000");
-  await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Ekle" && x.offsetParent); if (b) b.click(); });
+  // v1.674.0: kasa formu kalktı — kart karşı taraf olarak ÖDEME & TAHSİLAT'ta seçiliyor (Ödeme + Nakit + kart).
+  // Karşı taraf seçilmeden form hiç açılmıyor (cari ya da kart seçimi şart) — "karşılıksız reddedildi" bunu ölçer.
+  await modulAc(ikinci.sayfa, "Ödeme & Tahsilat");
   await ikinci.sayfa.waitForTimeout(800);
-  const karsiliksizReddedildi = (((await depoOku(ikinci.sayfa, "muhasebe:data")).kasalar[0].hareketler) || []).length === 0;
-
-  // Kart + çıkış + tutar → kaydedilmeli.
-  await ikinci.sayfa.evaluate(() => {
-    const s = document.querySelector("[data-gider-kart-sec]");
-    const o = [...s.options].find((x) => /kirası/.test(x.textContent));
-    s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
-  });
+  await ikinci.sayfa.locator('[data-odeme-tip="Ödeme"]:visible').click();
+  await ikinci.sayfa.locator('[data-odeme-sekli="Nakit"]:visible').click();
   await ikinci.sayfa.waitForTimeout(300);
-  await ikinci.sayfa.evaluate(() => {
-    const s = [...document.querySelectorAll("select")].find((x) => [...x.options].some((o) => /Çıkış/.test(o.textContent)));
-    const o = [...s.options].find((x) => /Çıkış/.test(x.textContent));
-    s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true }));
-  });
-  await ikinci.sayfa.waitForTimeout(300);
-  await ikinci.sayfa.locator('input[type="number"]').first().fill("12000");
-  await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Ekle" && x.offsetParent); if (b) b.click(); });
+  const kartSecici = await ikinci.sayfa.evaluate(() => !!document.querySelector("[data-odeme-gider-kart]"));
+  const karsiliksizReddedildi = await ikinci.sayfa.evaluate(() => !document.querySelector("[data-kart-odeme-satiri]") && !document.querySelector("[data-odeme-satiri]"));
+  await ikinci.sayfa.locator("[data-odeme-gider-kart]:visible").selectOption("gk1");
+  await ikinci.sayfa.waitForTimeout(400);
+  await ikinci.sayfa.locator("[data-kart-odeme-tutar]:visible").fill("12000");
+  await ikinci.sayfa.locator("[data-kart-odeme-kaydet]:visible").click();
   await ikinci.sayfa.waitForTimeout(1500);
   const kayit = (((await depoOku(ikinci.sayfa, "muhasebe:data")).kasalar[0].hareketler) || [])
     .map((x) => `${x.yon}:${x.tutar}:${x.giderKartAd}:${x.giderGrubu}`);

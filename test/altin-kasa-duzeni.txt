@@ -12,8 +12,8 @@
  ],
  "defterTablonunAltinda": true,
  "dugmeRenkleri": {
-  "odeme": "rgb(161, 92, 7)",
-  "tahsilat": "rgb(47, 125, 74)"
+  "odeme": null,
+  "tahsilat": null
  },
  "duzenlemede": {
   "form": 1,
