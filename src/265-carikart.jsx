@@ -512,6 +512,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               </span>
             )}
             <span style={{ fontWeight: 700, fontSize: 15 }}>{cari.unvan}</span>
+            {/* RESMİ ÜNVAN (v1.666.0 — kullanıcı: "ekranda görünen firma markası, bir de resmi adı var; resmi işlemler bu
+                isimle yapılacak, aramalarda ikisi de görünsün"). Marka adı (unvan) her yerde; resmi ad yanında soluk. */}
+            {cari.resmiUnvan && <span data-cari-resmi-unvan="1" style={{ fontSize: 12, color: "var(--erp-text-2)", fontStyle: "italic" }}>({cari.resmiUnvan})</span>}
             <span
               className="mono"
               style={{
@@ -763,6 +766,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
               Hareketler'i aşağı itiyordu. Artık ayrı sekmede ve sekme açıkken her zaman düzenlenebilir (kalem gerekmez). */}
           {cardTab === "bilgiler" && (
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+            {cari.tip !== "Personel" && (
+              <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}
+                title="Faturada ve resmi belgelerde kullanılan tam ünvan (ör. Fatih Ticaret A.Ş.). Boşsa ekrandaki ad kullanılır.">
+                Resmi ünvan
+                <input defaultValue={cari.resmiUnvan || ""} data-cari-resmi-unvan-gir="1" placeholder={cari.unvan}
+                  onBlur={(e) => { const v = e.target.value.trim(); if (v !== (cari.resmiUnvan || "")) onFieldChange(cari.id, "resmiUnvan", v); }}
+                  style={{ ...inputStyle, width: 240, padding: "4px 6px", fontWeight: 400 }} />
+              </label>
+            )}
             <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
               Vergi No
               <span style={{ display: "inline-flex", flexDirection: "column" }}>

@@ -161,7 +161,8 @@ function faturaKur({ fis, cari, firma, kurlar, kayit, faturalar, bugun, saat }) 
       mersisNo: fb.mersisNo || "", ticaretSicilNo: fb.ticaretSicilNo || "", etiket: fb.efaturaGondericiEtiketi || "",
     },
     alici: {
-      unvan: (cari && cari.unvan) || "", vergiNo: aliciNo, vknMi: vknMi(aliciNo), vergiDairesi: (cari && cari.vergiDairesi) || "",
+      // Resmi işlemlerde resmi ünvan (v1.666.0); girilmemişse ekrandaki ad.
+      unvan: (cari && (cari.resmiUnvan || cari.unvan)) || "", vergiNo: aliciNo, vknMi: vknMi(aliciNo), vergiDairesi: (cari && cari.vergiDairesi) || "",
       adres: (cari && cari.adres) || "", il: (cari && cari.il) || "", ilce: (cari && cari.ilce) || "", ulke: (cari && cari.ulke) || "Türkiye",
       telefon: (cari && cari.telefon) || "", eposta: (cari && cari.eposta) || "",
       efaturaMukellef: (cari && cari.efaturaMukellef) || "", etiket: (cari && cari.efaturaEtiket) || "",

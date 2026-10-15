@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.665.0</title>
+<title>Atölye ERP 1.666.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -802,7 +802,7 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
             const ad = String(c.unvan || "").toLocaleLowerCase("tr-TR");
             // Kod hem "7" hem listede görünen "0007" biçimiyle bulunur.
             const kodlar = c.kod != null && c.kod !== "" ? [String(c.kod), String(c.kod).padStart(4, "0")] : [];
-            const diger = [...kodlar, c.telefon, c.whatsapp].filter(Boolean).map((x) => String(x).toLocaleLowerCase("tr-TR"));
+            const diger = [...kodlar, c.telefon, c.whatsapp, c.resmiUnvan].filter(Boolean).map((x) => String(x).toLocaleLowerCase("tr-TR"));
             if (ad.startsWith(q) || ad.split(/\s+/).some((k) => k.startsWith(q)) || diger.some((d) => d.startsWith(q)))
                 bas.push(c);
             else if (ad.includes(q) || diger.some((d) => d.includes(q)))
@@ -845,7 +845,12 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
             "\" ile e\u015Fle\u015Fen cari yok")) : sonuclar.map((c, i) => (React.createElement("button", { key: c.id, type: "button", role: "option", "aria-selected": c.id === deger, "data-cari-secenek": c.unvan, onMouseDown: (e) => { e.preventDefault(); sec(c); }, onMouseEnter: () => setVurgulu(i), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
                 background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 14, cursor: "pointer", fontWeight: c.id === deger ? 800 : 400 } },
             c.kod != null && c.kod !== "" && React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-info)", minWidth: 34 } }, String(c.kod).padStart(4, "0")),
-            React.createElement("span", { style: { flex: 1 } }, c.unvan),
+            React.createElement("span", { style: { flex: 1 } },
+                c.unvan,
+                c.resmiUnvan ? React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)", fontStyle: "italic" } },
+                    " (",
+                    c.resmiUnvan,
+                    ")") : null),
             c.ulke && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, c.ulke))))))));
 }
 // ================= ÖZEL KOD ALANLARI =================
@@ -2266,9 +2271,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.665.0";
+const SURUM = "1.666.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Planlama: stok durumu matrisi sekmeli (eksik, stogu yetiyor, stok yok, eksi kayit)";
+const SURUM_NOTU = "Caride resmi unvan: kartta, aramalarda ve e-faturada";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2279,6 +2284,12 @@ const SURUM_NOTU = "Planlama: stok durumu matrisi sekmeli (eksik, stogu yetiyor,
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.666.0", tarih: "15.10.2026", eklenen: ["Cari kartı › Bilgiler: Resmi ünvan (ör. Fatih Ticaret A.Ş.) — kart başlığında marka adının yanında, cari listesinde ve bütün cari seçicilerde aramada bulunur, e-faturada alıcı adı olarak kullanılır"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.665.2", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat › Son tahsilat ve ödemeler: defter süzgeci (Tüm defterler / Genel / Resmi / Muhasebe) ve Defter sütunu"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.665.1", tarih: "15.10.2026", eklenen: [],
+        degisen: ["Ödeme & Tahsilat ekranında kutu çerçeveleri işlem renginde: tahsilat yeşil, ödeme turuncu"], duzeltilen: [] },
     { surum: "1.665.0", tarih: "15.10.2026",
         eklenen: ["Planlama › hammadde ihtiyacı: Stok durumu matrisi — Eksik / Stoğu yetiyor / Stok yok / Eksi kayıt sekmeleri, hammadde+renk satırı × beden sütunu, satır toplamı; eksi kayıtta sebep tahmini satır altında"],
         degisen: ["Eksi stok uzun listesi kaldırıldı (Eksi kayıt sekmesine taşındı)"], duzeltilen: [] },
@@ -14517,7 +14528,8 @@ function faturaKur({ fis, cari, firma, kurlar, kayit, faturalar, bugun, saat }) 
             mersisNo: fb.mersisNo || "", ticaretSicilNo: fb.ticaretSicilNo || "", etiket: fb.efaturaGondericiEtiketi || "",
         },
         alici: {
-            unvan: (cari && cari.unvan) || "", vergiNo: aliciNo, vknMi: vknMi(aliciNo), vergiDairesi: (cari && cari.vergiDairesi) || "",
+            // Resmi işlemlerde resmi ünvan (v1.666.0); girilmemişse ekrandaki ad.
+            unvan: (cari && (cari.resmiUnvan || cari.unvan)) || "", vergiNo: aliciNo, vknMi: vknMi(aliciNo), vergiDairesi: (cari && cari.vergiDairesi) || "",
             adres: (cari && cari.adres) || "", il: (cari && cari.il) || "", ilce: (cari && cari.ilce) || "", ulke: (cari && cari.ulke) || "Türkiye",
             telefon: (cari && cari.telefon) || "", eposta: (cari && cari.eposta) || "",
             efaturaMukellef: (cari && cari.efaturaMukellef) || "", etiket: (cari && cari.efaturaEtiket) || "",
@@ -45958,6 +45970,9 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
     const [odemeCariId, setOdemeCariId] = useState("");
     const [odemeYerelHedef, setOdemeYerelHedef] = useState(null);
     const [odemeListeSuzgec, setOdemeListeSuzgec] = useState("Tümü");
+    // DEFTER SÜZGECİ (v1.665.2 — kullanıcı: "son tahsilatları genel ve muhasebe olarak defterlere ayır"). Kural ERP'nin
+    // geri kalanıyla aynı: "Muhasebe" defterindeki kayıt hem Genel'de hem Resmi'de sayılır (defterKapsar).
+    const [odemeDefterSuzgec, setOdemeDefterSuzgec] = useState("Tümü");
     const [odemeKartGoster, setOdemeKartGoster] = useState(false);
     const [odemeHesapSecim, setOdemeHesapSecim] = useState({}); // { Nakit: "kasa:id", "Havale/EFT": "banka:id", … } — şekil başına hatırlanır   // kısa form yerine carinin kartı (hareketlerine bakmak için)
     const odemeFormunuAc = (cariId, tip, sekil) => {
@@ -46164,7 +46179,8 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
         .filter((c) => (pasifSekme ? !!c.pasif : !c.pasif))
         .filter((c) => 
     // KOD DA ARANIYOR: kodun görünür olmasının tek anlamı onunla bulunabilmesi.
-    `${c.unvan} ${c.telefon} ${c.vergiNo} ${cariKodMetni(c)}`.toLowerCase().includes(query.toLowerCase()));
+    // RESMİ ÜNVAN DA ARANIYOR (v1.666.0 — "aramalarda ikisi de görünsün").
+    `${c.unvan} ${c.resmiUnvan || ""} ${c.telefon} ${c.vergiNo} ${cariKodMetni(c)}`.toLocaleLowerCase("tr-TR").includes(query.toLocaleLowerCase("tr-TR")));
     const filtered = cariTaban
         .filter((c) => cariTipSekme === "Tümü" || c.tip === cariTipSekme)
         .filter((c) => cariTipSekme !== "Personel" || personelProsesSekme === "Tümü" || (c.bagliProsesler || []).includes(personelProsesSekme));
@@ -46196,6 +46212,8 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
             const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
             if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec)
                 return;
+            if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(h.defter || "Genel", odemeDefterSuzgec))
+                return;
             sonHareketler.push({ c, h, tip });
         }));
         sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
@@ -46218,7 +46236,8 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
             : ((muhasebe && muhasebe.bankalar) || []).filter((h) => !h.pasif).map((h) => ({ deger: `banka:${h.id}`, kisaAd: h.ad, pb: h.paraBirimi || "TRY", h })));
         const seciliHesap = hesapListesi.find((x) => x.deger === odemeHesapSecim[odemeSekliSecim])
             || hesapListesi.find((x) => odemeCari && x.pb === (odemeCari.paraBirimi || "TRY")) || hesapListesi[0] || null;
-        return (React.createElement("div", { "data-odeme-tahsilat": "1" },
+        // Kutular tahsilatta yeşil, ödemede turuncu (v1.665.1 — 100 .renkli-form).
+        return (React.createElement("div", { "data-odeme-tahsilat": "1", style: { "--hrk-renk": odemeTip === "Tahsilat" ? "#2E7D4F" : "#B7791F" } },
             React.createElement("div", { style: { ...MOR_SERIT_STIL, padding: "10px 12px", marginBottom: 12, display: "grid", gap: 10 } },
                 React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
                     tipDugmesi("Tahsilat"),
@@ -46271,11 +46290,15 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
                     React.createElement("b", { style: { fontSize: 13 } }, "Son tahsilat ve \u00F6demeler"),
                     ["Tümü", "Tahsilat", "Ödeme"].map((t) => (React.createElement("button", { key: t, type: "button", "data-odeme-liste-suzgec": t, onClick: () => setOdemeListeSuzgec(t), style: { padding: "2px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
                             border: "1px solid var(--erp-line)", background: odemeListeSuzgec === t ? "var(--erp-text)" : "#fff",
-                            color: odemeListeSuzgec === t ? "#fff" : "var(--erp-text-2)" } }, t)))),
+                            color: odemeListeSuzgec === t ? "#fff" : "var(--erp-text-2)" } }, t))),
+                    React.createElement("span", { style: { width: 1, height: 18, background: "var(--erp-line)", margin: "0 4px" } }),
+                    [["Tümü", "Tüm defterler"], ["Genel", "Genel"], ["Resmi", "Resmi"], ["Muhasebe", "Muhasebe"]].map(([d, ad]) => (React.createElement("button", { key: d, type: "button", "data-odeme-defter-suzgec": d, onClick: () => setOdemeDefterSuzgec(d), style: { padding: "2px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
+                            border: "1px solid #5B3F75", background: odemeDefterSuzgec === d ? "#5B3F75" : "#fff",
+                            color: odemeDefterSuzgec === d ? "#fff" : "#5B3F75" } }, ad)))),
                 sonHareketler.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", padding: 10 } }, "Hen\u00FCz kay\u0131t yok.")) : (React.createElement("div", { "data-odeme-son-liste": "1", style: { maxHeight: 420, overflowY: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" } },
                     React.createElement("table", { style: { width: "100%", borderCollapse: "collapse" } },
                         React.createElement("thead", { style: { position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 } },
-                            React.createElement("tr", null, ["Tarih", "Cari", "İşlem", "Şekli", "Tutar", "Fiş No", "Açıklama"].map((b) => (React.createElement("th", { key: b, style: { fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" } }, b))))),
+                            React.createElement("tr", null, ["Tarih", "Cari", "İşlem", "Şekli", "Defter", "Tutar", "Fiş No", "Açıklama"].map((b) => (React.createElement("th", { key: b, style: { fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" } }, b))))),
                         React.createElement("tbody", null, sonHareketler.slice(0, 200).map(({ c, h, tip }, i) => {
                             const renk = HAREKET_TIPI_RENK[tip];
                             return (React.createElement("tr", { key: `${c.id}-${h.id || i}`, "data-odeme-son-satir": h.fisNo || i, onClick: () => { setOdemeCariId(c.id); setOdemeYerelHedef(null); setOdemeKartGoster(true); }, style: { cursor: "pointer", borderTop: "1px solid var(--erp-line-soft)" } },
@@ -46286,6 +46309,7 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
                                         React.createElement(HareketIkonu, { tip: tip, size: 11 }),
                                         tip)),
                                 React.createElement("td", { style: { fontSize: 11, padding: "5px 8px" } }, h.odemeSekli || "—"),
+                                React.createElement("td", { style: { fontSize: 11, padding: "5px 8px", color: "#5B3F75", fontWeight: 600 } }, h.defter || "Genel"),
                                 React.createElement("td", { className: "mono", style: { fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" } },
                                     Number(h.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
                                     " ",
@@ -47592,6 +47616,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 border: "1px solid #D9E2E9", background: "#EEF4F8", color: "var(--erp-info)",
                             } }, cariKodMetni(cari))),
                         React.createElement("span", { style: { fontWeight: 700, fontSize: 15 } }, cari.unvan),
+                        cari.resmiUnvan && React.createElement("span", { "data-cari-resmi-unvan": "1", style: { fontSize: 12, color: "var(--erp-text-2)", fontStyle: "italic" } },
+                            "(",
+                            cari.resmiUnvan,
+                            ")"),
                         React.createElement("span", { className: "mono", style: {
                                 fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: "var(--erp-r-pill)",
                                 background: alfaEkle((CARI_TIP_RENK[cari.tip] || "var(--erp-text-2)"), "22"), color: CARI_TIP_RENK[cari.tip] || "var(--erp-text-2)",
@@ -47706,6 +47734,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                         background: cardTab === t.key ? "var(--erp-orange-bg)" : "#fff",
                     } }, t.label)))),
                 cardTab === "bilgiler" && (React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 } },
+                    cari.tip !== "Personel" && (React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }, title: "Faturada ve resmi belgelerde kullan\u0131lan tam \u00FCnvan (\u00F6r. Fatih Ticaret A.\u015E.). Bo\u015Fsa ekrandaki ad kullan\u0131l\u0131r." },
+                        "Resmi \u00FCnvan",
+                        React.createElement("input", { defaultValue: cari.resmiUnvan || "", "data-cari-resmi-unvan-gir": "1", placeholder: cari.unvan, onBlur: (e) => { const v = e.target.value.trim(); if (v !== (cari.resmiUnvan || ""))
+                                onFieldChange(cari.id, "resmiUnvan", v); }, style: { ...inputStyle, width: 240, padding: "4px 6px", fontWeight: 400 } }))),
                     React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
                         "Vergi No",
                         React.createElement("span", { style: { display: "inline-flex", flexDirection: "column" } },
@@ -57208,7 +57240,9 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
         icerik);
     const renk = HAREKET_TIPI_RENK[tip];
     return (React.createElement("div", { "data-odeme-satiri": odemeSekli, style: { display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap", padding: "10px 12px",
-            background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)" } },
+            background: "#fff", border: `1.5px solid ${renk}`, borderRadius: "var(--erp-r-md)",
+            // Kutu çerçeveleri de işlemin renginde (v1.665.1 — "giriş çıkış renk durumuna göre değişsin"; 100 .renkli-form).
+            "--hrk-renk": renk } },
         alan(kart ? "İşlem tarihi" : "Tarih", React.createElement("input", { type: "date", value: f.tarih, onChange: (e) => setF({ ...f, tarih: e.target.value }), style: { ...kutu, width: 140 } })),
         alan("Tutar", (React.createElement("span", { style: { display: "flex", gap: 4 } },
             React.createElement("input", { type: "number", step: "0.01", "data-odeme-satiri-tutar": "1", value: f.tutar, autoFocus: true, onChange: (e) => setF({ ...f, tutar: e.target.value, hesapTutar: "" }), onKeyDown: (e) => { if (e.key === "Enter")
@@ -61679,7 +61713,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.665.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.666.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

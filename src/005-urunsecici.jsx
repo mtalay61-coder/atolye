@@ -488,7 +488,7 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
       const ad = String(c.unvan || "").toLocaleLowerCase("tr-TR");
       // Kod hem "7" hem listede görünen "0007" biçimiyle bulunur.
       const kodlar = c.kod != null && c.kod !== "" ? [String(c.kod), String(c.kod).padStart(4, "0")] : [];
-      const diger = [...kodlar, c.telefon, c.whatsapp].filter(Boolean).map((x) => String(x).toLocaleLowerCase("tr-TR"));
+      const diger = [...kodlar, c.telefon, c.whatsapp, c.resmiUnvan].filter(Boolean).map((x) => String(x).toLocaleLowerCase("tr-TR"));
       if (ad.startsWith(q) || ad.split(/\s+/).some((k) => k.startsWith(q)) || diger.some((d) => d.startsWith(q))) bas.push(c);
       else if (ad.includes(q) || diger.some((d) => d.includes(q))) ic.push(c);
     });
@@ -536,7 +536,7 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
               style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", padding: "8px 10px", border: "none", borderRadius: "var(--erp-r-sm)",
                 background: i === vurgulu ? "var(--erp-hover)" : "transparent", color: "var(--erp-text)", fontSize: 14, cursor: "pointer", fontWeight: c.id === deger ? 800 : 400 }}>
               {c.kod != null && c.kod !== "" && <span className="mono" style={{ fontSize: 11, color: "var(--erp-info)", minWidth: 34 }}>{String(c.kod).padStart(4, "0")}</span>}
-              <span style={{ flex: 1 }}>{c.unvan}</span>
+              <span style={{ flex: 1 }}>{c.unvan}{c.resmiUnvan ? <span style={{ fontSize: 11, color: "var(--erp-text-3)", fontStyle: "italic" }}> ({c.resmiUnvan})</span> : null}</span>
               {c.ulke && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{c.ulke}</span>}
             </button>
           ))}
