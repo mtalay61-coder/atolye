@@ -5,8 +5,8 @@
 // giriliyor"); aynı iş Ödeme & Tahsilat kısa formunda: cariye işlenecek tutar cari biriminde, kasaya geçen tutar
 // kasanın biriminde ("Hesaba geçen"). Boş bırakılırsa güncel kurla önerilen tutar yazılır; elle yazılırsa o geçer.
 //
-// Ölçülen: (1) USD tutar girince öneri 42000 ₺; (2) boş bırakılınca kasa 42000, cari 1000 USD; (3) elle 41500
-// yazılınca kasa 41500, cari yine 1000 USD (kur farkı kasada, cari tutarı değişmez).
+// Ölçülen: (1) kasa 42000 ₺ + Cariye USD → kur önerisi 42; (2) kasa 42000, cari 1000 USD; (3) kasa 41500 + karşı tutar
+// 1000 USD elle → cari 1000 USD (kur 41,5). v1.680.0: tutar kasanın biriminde sabit.
 const { uygulamaAc, depoOku, modulAc } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
@@ -23,19 +23,13 @@ async function calistir() {
   const kutu = sayfa.locator("[data-odeme-cari]:visible").first();
   await kutu.click(); await kutu.fill("Müşteri B"); await sayfa.waitForTimeout(300); await kutu.press("Enter");
   await sayfa.waitForTimeout(900);
-  const usdSec = async () => {
-    await sayfa.evaluate(() => { const f = [...document.querySelectorAll("[data-odeme-satiri]")].find((x) => x.getBoundingClientRect().width > 0);
-      const s = [...f.querySelectorAll("select")].find((x) => [...x.options].some((o) => o.value === "USD") && [...x.options].some((o) => o.value === "TRY"));
-      const set = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, "value").set; set.call(s, "USD"); s.dispatchEvent(new Event("change", { bubbles: true })); });
-    await sayfa.waitForTimeout(300);
-  };
-  await usdSec();
-  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("1000"); await sayfa.waitForTimeout(300);
-  const oneri = await sayfa.locator("[data-odeme-satiri-hesap-tutar]:visible").getAttribute("placeholder");
+  // v1.680.0: tutar KASANIN biriminde (TL, değiştirilemez); cariye işlenecek birim ve kur ayrı satırda ("Cariye").
+  const usdSec = async () => { await sayfa.locator("[data-karsi-pb]:visible").selectOption("USD"); await sayfa.waitForTimeout(300); };
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("42000"); await usdSec();
+  const oneri = await sayfa.locator("[data-karsi-kur]:visible").inputValue();   // sistem kuru (1 USD = 42 TRY)
   await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click(); await sayfa.waitForTimeout(1300);
-  await usdSec();
-  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("1000");
-  await sayfa.locator("[data-odeme-satiri-hesap-tutar]:visible").fill("41500");
+  await sayfa.locator("[data-odeme-satiri-tutar]:visible").fill("41500"); await usdSec();
+  await sayfa.locator("[data-karsi-tutar]:visible").fill("1000");               // karşı tutar elle → kur 41,5
   await sayfa.locator("[data-odeme-satiri-kaydet]:visible").click(); await sayfa.waitForTimeout(1300);
   const kasa = ((await depoOku(sayfa, "muhasebe:data")).kasalar[0].hareketler || []).map((h) => `${h.yon}:${h.tutar}`).sort();
   const cari = ((await depoOku(sayfa, "cari:data")).find((c) => c.unvan === "Müşteri B").hareketler || []).filter((h) => /^THS-/.test(h.fisNo || "")).map((h) => `${h.tutar} ${h.paraBirimi}`);

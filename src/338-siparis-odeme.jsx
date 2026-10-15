@@ -155,11 +155,15 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
   // MUHASEBE DEFTERİNDE İKİ P. TİPİ (v1.679.0 — kullanıcı: "genel ve resmi 2 adet p. tipi girilmesi gerekli, Excel'den
   // aktardığımız gibi"). Banka Excel'iyle aynı düzen: tutar KASAYA GİREN para (kasanın biriminde); altında Genel
   // (cariye işlenecek birim + kur) ve Resmi (Resmi defter birimi + kur) — ikisi de kasa tutarından çevrilir.
-  const ikili = f.defter === "Muhasebe" && !!hesap;
+  // KASA BİRİMİ SABİT (v1.680.0 — kullanıcı: "tutardan sonra kasanın p. birimi ne ise değiştirilemez; kasaya girecek TL
+  // ise TL olmak zorunda; cari hesaba işleyecek p. tipi değiştirilebilir"). Hesap seçiliyse HER defterde bu düzen:
+  // tutar kasanın biriminde, altında cariye işlenecek birim + kur; Muhasebe defterinde ayrıca Resmi satırı.
+  const ikili = !!hesap;
+  const muhasebeMi = f.defter === "Muhasebe";
   const t = parseFloat(f.tutar);
   const hesapPB = hesap ? hesap.pb : f.pb;
   const genelH = ikili ? resmiTutarHesapla(hesapPB, t > 0 ? t : 0, f.genel || { pb: cariPB0 }, kurlar) : null;
-  const resmiH = ikili ? resmiTutarHesapla(hesapPB, t > 0 ? t : 0, f.resmi || { pb: hesapPB }, kurlar) : null;
+  const resmiH = ikili && muhasebeMi ? resmiTutarHesapla(hesapPB, t > 0 ? t : 0, f.resmi || { pb: hesapPB }, kurlar) : null;
   const cevrim = !ikili && !!hesap && hesapPB !== f.pb;
   const oneriHesapTutari = cevrim && t > 0 ? paraCevirGenel(t, f.pb, hesapPB, kurlar) : null;
   // GENEL KUR KUTUSU (v1.678.0): "1 <cari PB> = ? <kasa PB>" — yazılırsa hesaba geçen = tutar × kur; hesaba geçen
@@ -172,15 +176,15 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
     if (!(t > 0)) { showToast("Tutar girin"); return; }
     if (cevrim && !(hesapTutari > 0)) { showToast(`Hesaba geçecek tutarı girin (${hesapPB})`); return; }
     if (kart && !f.vade) { showToast("Hesaba geçiş tarihini girin"); return; }
-    if (ikili && (!(genelH.tutar > 0) || !(resmiH.tutar > 0))) { showToast("Genel ve Resmi için kur ya da tutar girin"); return; }
+    if (ikili && (!(genelH.tutar > 0) || (muhasebeMi && !(resmiH.tutar > 0)))) { showToast(muhasebeMi ? "Genel ve Resmi için kur ya da tutar girin" : "Cariye işlenecek tutar için kur girin"); return; }
     const [hesapTur, hesapId] = hesap.deger.split(":");
     if (ikili) {
       const k2 = kasaCariHareketiKur({
         islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: stokYuvarla(genelH.tutar), cariPB: genelH.pb,
         hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(t),
-        defter: "Muhasebe", aciklama: f.aciklama.trim(), odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
+        defter: f.defter, aciklama: f.aciklama.trim(), odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
       });
-      const resmiEk2 = resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004 ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar) } : {};
+      const resmiEk2 = muhasebeMi && (resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004) ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar) } : {};
       const ch2 = { ...(kart ? { ...k2.cariHareketi, vade: f.vade } : k2.cariHareketi), ...resmiEk2 };
       const mh2 = k2.muhasebeHareketi && kart ? { ...k2.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k2.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k2.muhasebeHareketi;
       onKaydet({ cariId: cari.id, cariHareketi: ch2, muhasebe: mh2 ? { hesapTur, hesapId, hareket: mh2 } : null });
@@ -233,11 +237,11 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
         </select>
       ))}
       {ikili && (
-        <div data-odeme-ikili-pb="1" style={{ display: "grid", gap: 4, flex: "1 1 100%" }}>
+        <div data-odeme-ikili-pb="1" style={{ display: "grid", gap: 4, flex: muhasebeMi ? "1 1 100%" : "0 0 auto", alignSelf: "flex-end" }}>
           <ResmiTutarAlani defter="Muhasebe" anaPB={hesapPB} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.genel || { pb: cariPB0 }}
-            onDegis={(v) => setF({ ...f, genel: v })} etiket="Genel" veri="karsi" />
-          <ResmiTutarAlani defter="Muhasebe" anaPB={hesapPB} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.resmi || { pb: hesapPB }}
-            onDegis={(v) => setF({ ...f, resmi: v })} ayniAd="kasa ile" />
+            onDegis={(v) => setF({ ...f, genel: v })} etiket={muhasebeMi ? "Genel" : "Cariye"} veri="karsi" />
+          {muhasebeMi && <ResmiTutarAlani defter="Muhasebe" anaPB={hesapPB} anaTutar={t > 0 ? t : 0} kurlar={kurlar} deger={f.resmi || { pb: hesapPB }}
+            onDegis={(v) => setF({ ...f, resmi: v })} ayniAd="kasa ile" />}
         </div>
       )}
       {alan("Açıklama", <input value={f.aciklama} placeholder="Opsiyonel" onChange={(e) => setF({ ...f, aciklama: e.target.value })}

@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.679.0";
+const SURUM = "1.680.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Odeme & Tahsilat: Muhasebe defterinde Genel ve Resmi icin iki P. tipi";
+const SURUM_NOTU = "Odeme & Tahsilat: tutar kasanin biriminde sabit, cariye islenecek birim ve kur ayri";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.680.0", tarih: "15.10.2026", eklenen: [],
+    degisen: ["Ödeme & Tahsilat kısa formu: tutar kasanın/bankanın biriminde sabit (değiştirilemez); altında 'Cariye' işlenecek para birimi + kur (her defterde), Muhasebe defterinde ayrıca Resmi"], duzeltilen: [] },
   { surum: "1.679.0", tarih: "15.10.2026", eklenen: [],
     degisen: ["Ödeme & Tahsilat kısa formu, defter Muhasebe iken Banka Excel'i gibi: tutar kasaya giren/çıkan para, altında Genel ve Resmi için ayrı P. tipi + kur (ikisi de kasa tutarından çevrilir)"], duzeltilen: [] },
   { surum: "1.678.0", tarih: "15.10.2026", eklenen: ["Kasa & Banka › Tüm hareketler: Çevrilmiş sütunu — Genel (cari/kart para birimi) ve Resmi tutarları", "Ödeme & Tahsilat ve cari kartı: Genel ve Resmi çevriminde kur kutusu (kur ↔ tutar çift yönlü)"],
