@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.674.0";
+const SURUM = "1.674.1";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Kasa & Banka: tum hareketler listesi, giris Odeme & Tahsilatta; banka excel karsi taraf zorunlu";
+const SURUM_NOTU = "Banka Excel: cari satirinda para birimi ve kur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.674.1", tarih: "15.10.2026", eklenen: ["Banka Excel'i: cari seçilen satırda P. tipi (cariye işlenecek para birimi) ve kur — sistemdeki kurla dolu gelir, değiştirilebilir; cariye çevrilmiş tutar yazılır"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.674.0", tarih: "15.10.2026", eklenen: ["Kasa & Banka › Tüm hareketler: kasa ve banka hareketleri tek listede — Kasa/Banka, hesap, Genel/Resmi, Giriş/Çıkış, tarih aralığı ve arama süzgeçleri, para birimi başına toplam", "Ödeme & Tahsilat: cari yerine gelir/gider kartı seçilerek kasa/banka girişi (kira, elektrik, banka masrafı…)"],
     degisen: ["Kasa & Banka ekranında tahsilat/ödeme/serbest kayıt girişi kalktı — giriş Ödeme & Tahsilat'ta; hesaplar arası virman yerinde", "Banka Excel'i: her satırda karşı taraf zorunlu (cari ya da gelir/gider kartı); cari önerisi kendiliğinden seçilmez, 'öneri: … — seç' düğmesiyle uygulanır"],
     duzeltilen: ["Banka Excel'i: açıklamada firmanın kendi adı geçen satır otomatik öneriyle yanlış cariye (New Diamond) işleniyordu", "Banka Excel'i: 'tümünü seç' daha önce aktarılmış satırları da işaretliyordu — ikinci aktarım aynı hareketi iki kez yazardı; artık seçilemez"] },
