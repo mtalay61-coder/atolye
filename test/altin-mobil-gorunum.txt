@@ -93,7 +93,7 @@
  "tumuPaneli": {
   "acik": true,
   "masaustuDugmesi": true,
-  "moduller": 14
+  "moduller": 16
  },
  "uyariMetni": "Mobil görünüm varsayılana döndü",
  "zorlaMobil": {

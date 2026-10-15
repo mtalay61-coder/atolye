@@ -1,7 +1,7 @@
 // SEKME İKONLARI (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): üst şeritteki sayfa ve kayıt
 // sekmeleri menüdeki ikonun küçüğüyle; Lucide bileşenleri 000'da içe aktarılıyor. Rengi 015 MODUL_RENK / pencereRengi.
 const SEKME_IKON_BILESENI = {
-  anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck,
+  anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck, sevkiyat: Truck, alissatis: ArrowLeftRight,
   uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
   cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
   gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
@@ -3511,6 +3511,8 @@ function AtolyeUygulamasi() {
     tanimlar: "Tanımlar",
     stok: "Stok Yönetimi",
     mamulstok: "Ürün Stok",
+    sevkiyat: "Sevkiyat",
+    alissatis: "Alış / Satış",
     fiyatlistesi: "Fiyat Listesi",
     uretim: "Üretim Takibi",
     cari: "Cari Hesaplar",
@@ -4011,7 +4013,7 @@ function AtolyeUygulamasi() {
             ekrana sığdırmaya çalışmak yerine dördü burada, gerisi "Tümü" listesinde. */}
         {(() => {
           const ikonlar = {
-            anasayfa: <Home size={18} />, tanimlar: <Palette size={18} />, stok: <Boxes size={18} />, mamulstok: <Package size={18} />, fiyatlistesi: <Tag size={18} />,
+            anasayfa: <Home size={18} />, tanimlar: <Palette size={18} />, stok: <Boxes size={18} />, mamulstok: <Package size={18} />, fiyatlistesi: <Tag size={18} />, sevkiyat: <Truck size={18} />, alissatis: <ArrowLeftRight size={18} />,
             uretim: <Hammer size={18} />, cari: <Users size={18} />, siparis: <ClipboardList size={18} />,
             satinalma: <PackageCheck size={18} />, depo: <Layers size={18} />, paketleme: <PackageCheck size={18} />,
             gorevler: <MessageCircle size={18} />, planlama: <Compass size={18} />, fisler: <FileText size={18} />,
@@ -4196,7 +4198,9 @@ function AtolyeUygulamasi() {
                     ["stok", "Stok", <Boxes size={16} />], ["mamulstok", "Ürün Stok", <Package size={16} />],
                     // FİYAT LİSTESİ (v1.550.0): fiyat grubu seç → modellerin o fiyatı, düzelt, toplu % / tutar, farklı kaydet.
                     yetki("stok") && ["fiyatlistesi", "Fiyat Listesi", <Tag size={16} />],
-                    ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />]] },
+                    ["depo", "Depo", <Layers size={16} />], ["paketleme", "Paketleme", <PackageCheck size={16} />],
+                    // SEVKİYAT + ALIŞ/SATIŞ (v1.667.0, 239): ürün satışı depodan; ikisi de aynı fiş penceresini açar.
+                    ["sevkiyat", "Sevkiyat", <Truck size={16} />], ["alissatis", "Alış / Satış", <ArrowLeftRight size={16} />]] },
                   { ad: "Üretim", ikon: <Hammer size={15} />, ogeler: [
                     yetki("uretim") && ["uretim", "Üretim", <Hammer size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
                   { tek: "planlama", ad: "Planlama", ikon: <Compass size={15} /> },
@@ -4933,6 +4937,14 @@ function AtolyeUygulamasi() {
               onSatinAlPlanla={hammaddeyiPlanla}
               onAlisFisi={alisFisiAc}
             />
+          </GizliModul>
+          <GizliModul aktif={tab === "sevkiyat"}>
+            <SevkiyatMerkezi koliler={koliler} siparisler={siparisler} cariler={cariler} stok={stok} tanimlar={tanimlar}
+              uretim={uretim} onFisAc={stokFisiAc} onSatisFisiAc={satisFisiAcSiparisten} onCarilerKaydet={saveCariler}
+              showToast={showToast} onGoToSiparis={sipariseGit} />
+          </GizliModul>
+          <GizliModul aktif={tab === "alissatis"}>
+            <AlisSatisEkrani cariler={cariler} stok={stok} onFisAc={stokFisiAc} onFiseGit={fiseGit} />
           </GizliModul>
           <GizliModul aktif={tab === "siparis"}>
             <SiparisModule

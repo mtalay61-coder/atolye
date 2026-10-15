@@ -4,7 +4,9 @@
   "Ürün Stok",
   "Fiyat Listesi",
   "Depo",
-  "Paketleme"
+  "Paketleme",
+  "Sevkiyat",
+  "Alış / Satış"
  ],
  "hatalar": [],
  "mamul": {
