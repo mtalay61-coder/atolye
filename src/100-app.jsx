@@ -3,7 +3,7 @@
 const SEKME_IKON_BILESENI = {
   anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck, sevkiyat: Truck, alissatis: ArrowLeftRight,
   uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
-  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
+  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, bankaexcel: Upload, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
   gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
 };
 function sekmeIkonu(anahtar) {
@@ -1062,7 +1062,7 @@ function AtolyeUygulamasi() {
   // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
   // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
   const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
-    cekler: "muhasebe", odemetahsilat: "muhasebe", odemerapor: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
+    cekler: "muhasebe", odemetahsilat: "muhasebe", odemerapor: "muhasebe", bankaexcel: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
   useEffect(() => {
     const m = SEKME_MODULU[tab];
     if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme")) return;
@@ -3528,6 +3528,7 @@ function AtolyeUygulamasi() {
     cekler: "Çek & Senet",
     odemetahsilat: "Ödeme & Tahsilat",
     odemerapor: "Ödeme & Tahsilat Raporu",
+    bankaexcel: "Banka Excel'i",
     finansrapor: "Finans Raporu",
     planlama: "Planlama",
     // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
@@ -4137,7 +4138,7 @@ function AtolyeUygulamasi() {
           background: "var(--erp-accent)", color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" };
         // ALAN ÜYELERİ (v1.645.11): Kasa & Banka, Çek & Senet ve Rapor menüde yok, Ödeme & Tahsilat alanının sekmeleri —
         // açıkken menüde "Ödeme & Tahsilat" ve Finans grubu seçili görünür.
-        const menuSekmesi = ({ muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" })[tab] || tab;
+        const menuSekmesi = ({ muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" })[tab] || tab;
         const Grup = ({ ad, ikon, sekmeler, children }) => {
           const icindeAktif = sekmeler.includes(menuSekmesi);
           const acik = acikUstMenu === ad;
@@ -4787,6 +4788,10 @@ function AtolyeUygulamasi() {
           {/* ÖDEME & TAHSİLAT ALANI (v1.645.10, 260): giriş, Kasa & Banka ve Çek & Senet tek alanın sekmeleri. */}
           <OdemeAlaniSeridi tab={tab} onGit={(t) => setTab(t, true)} />
           {/* Cari ve Ödeme & Tahsilat AYNI örnek (Mamul Stok / Çek & Senet deseni): kapsam son görünen sekmeden. */}
+          <GizliModul aktif={tab === "bankaexcel"}>
+            <BankaExcelEkrani muhasebe={muhasebe} cariler={cariler} showToast={showToast}
+              onCariliKaydet={siparisOdemesiKaydet} onBankaHareketi={muhasebeyePesinIsle} />
+          </GizliModul>
           <GizliModul aktif={tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor"}>
             <CariModule
               kapsam={cariKapsamRef.current}

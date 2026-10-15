@@ -989,6 +989,8 @@ const ODEME_ALANI_SEKMELERI = [
   { tab: "muhasebe", ad: "Kasa & Banka", Ikon: Wallet },
   { tab: "cekler", ad: "Çek & Senet", Ikon: Receipt },
   { tab: "odemerapor", ad: "Rapor", Ikon: TrendingUp },
+  // v1.671.0: bankanın Excel ekstresinden toplu giriş (339).
+  { tab: "bankaexcel", ad: "Banka Excel'i", Ikon: Upload },
 ];
 function OdemeAlaniSeridi({ tab, onGit }) {
   if (!ODEME_ALANI_SEKMELERI.some((s) => s.tab === tab)) return null;
