@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.665.1";
+const SURUM = "1.665.2";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Odeme & Tahsilat: kutu cerceveleri tahsilatta yesil, odemede turuncu";
+const SURUM_NOTU = "Odeme & Tahsilat: son hareketlerde defter suzgeci ve Defter sutunu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,8 @@ const SURUM_NOTU = "Odeme & Tahsilat: kutu cerceveleri tahsilatta yesil, odemede
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.665.2", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat › Son tahsilat ve ödemeler: defter süzgeci (Tüm defterler / Genel / Resmi / Muhasebe) ve Defter sütunu"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.665.1", tarih: "15.10.2026", eklenen: [],
     degisen: ["Ödeme & Tahsilat ekranında kutu çerçeveleri işlem renginde: tahsilat yeşil, ödeme turuncu"], duzeltilen: [] },
   { surum: "1.665.0", tarih: "15.10.2026",

@@ -21,6 +21,9 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
   const [odemeCariId, setOdemeCariId] = useState("");
   const [odemeYerelHedef, setOdemeYerelHedef] = useState(null);
   const [odemeListeSuzgec, setOdemeListeSuzgec] = useState("Tümü");
+  // DEFTER SÜZGECİ (v1.665.2 — kullanıcı: "son tahsilatları genel ve muhasebe olarak defterlere ayır"). Kural ERP'nin
+  // geri kalanıyla aynı: "Muhasebe" defterindeki kayıt hem Genel'de hem Resmi'de sayılır (defterKapsar).
+  const [odemeDefterSuzgec, setOdemeDefterSuzgec] = useState("Tümü");
   const [odemeKartGoster, setOdemeKartGoster] = useState(false);
   const [odemeHesapSecim, setOdemeHesapSecim] = useState({});   // { Nakit: "kasa:id", "Havale/EFT": "banka:id", … } — şekil başına hatırlanır   // kısa form yerine carinin kartı (hareketlerine bakmak için)
   const odemeFormunuAc = (cariId, tip, sekil) => {
@@ -274,6 +277,7 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
       if (!paraHareketiMi(h)) return;
       const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
       if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec) return;
+      if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(h.defter || "Genel", odemeDefterSuzgec)) return;
       sonHareketler.push({ c, h, tip });
     }));
     sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
@@ -400,6 +404,13 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
                   border: "1px solid var(--erp-line)", background: odemeListeSuzgec === t ? "var(--erp-text)" : "#fff",
                   color: odemeListeSuzgec === t ? "#fff" : "var(--erp-text-2)" }}>{t}</button>
             ))}
+            <span style={{ width: 1, height: 18, background: "var(--erp-line)", margin: "0 4px" }} />
+            {[["Tümü", "Tüm defterler"], ["Genel", "Genel"], ["Resmi", "Resmi"], ["Muhasebe", "Muhasebe"]].map(([d, ad]) => (
+              <button key={d} type="button" data-odeme-defter-suzgec={d} onClick={() => setOdemeDefterSuzgec(d)}
+                style={{ padding: "2px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", borderRadius: "var(--erp-r-pill)",
+                  border: "1px solid #5B3F75", background: odemeDefterSuzgec === d ? "#5B3F75" : "#fff",
+                  color: odemeDefterSuzgec === d ? "#fff" : "#5B3F75" }}>{ad}</button>
+            ))}
           </div>
           {sonHareketler.length === 0 ? (
             <div style={{ fontSize: 12, color: "var(--erp-text-3)", padding: 10 }}>Henüz kayıt yok.</div>
@@ -407,7 +418,7 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
             <div data-odeme-son-liste="1" style={{ maxHeight: 420, overflowY: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
-                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Tutar", "Fiş No", "Açıklama"].map((b) => (
+                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Defter", "Tutar", "Fiş No", "Açıklama"].map((b) => (
                     <th key={b} style={{ fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" }}>{b}</th>
                   ))}</tr>
                 </thead>
@@ -425,6 +436,7 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
                           </span>
                         </td>
                         <td style={{ fontSize: 11, padding: "5px 8px" }}>{h.odemeSekli || "—"}</td>
+                        <td style={{ fontSize: 11, padding: "5px 8px", color: "#5B3F75", fontWeight: 600 }}>{h.defter || "Genel"}</td>
                         <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
                           {Number(h.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[h.paraBirimi || c.paraBirimi || "TRY"] || h.paraBirimi}
                         </td>
