@@ -19,6 +19,27 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
     ...((muhasebe && muhasebe.kasalar) || []).map((h) => ({ ...h, tur: "Kasa" })),
     ...((muhasebe && muhasebe.bankalar) || []).map((h) => ({ ...h, tur: "Banka" })),
   ];
+  // ÇEVRİLMİŞ TUTARLAR (v1.678.0 — kullanıcı: "tüm hareketlerde de çevrilmiş tutar görünsün"). Kasa hareketinin
+  // kendisi kasa biriminde; karşılığı: gelir/gider kartında karsi/resmi alanları, cariye bağlıda cari tutarı + cari
+  // hareketinin Resmi tutarı (bağ `muhasebeBagId`).
+  const cariHareketBag = React.useMemo(() => {
+    const m = {};
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => { if (h.muhasebeBagId) m[h.muhasebeBagId] = h; }));
+    return m;
+  }, [cariler]);
+  const cevrilmis = (x) => {
+    const hpb = x.hesap.paraBirimi || "TRY";
+    const yaz = (t, pb) => `${Number(t).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+    const parcalar = [];
+    const ch = x.muhasebeBagId ? cariHareketBag[x.muhasebeBagId] : null;
+    const genelPB = x.karsiPB || (ch && ch.paraBirimi) || (x.cariPB);
+    const genelT = x.karsiPB ? x.karsiTutar : ch ? ch.tutar : x.cariTutar;
+    if (genelPB && genelPB !== hpb && genelT != null) parcalar.push(["Genel", yaz(genelT, genelPB)]);
+    const resmiPB = x.resmiPB || (ch && ch.resmiPB);
+    const resmiT = x.resmiPB ? x.resmiTutar : ch ? ch.resmiTutar : null;
+    if (resmiPB && resmiT != null) parcalar.push(["Resmi", yaz(resmiT, resmiPB)]);
+    return parcalar;
+  };
   const cariAd = (id) => { const c = (cariler || []).find((x) => x.id === id); return c ? c.unvan : ""; };
   const q = arama.trim().toLocaleLowerCase("tr-TR");
 
@@ -81,6 +102,7 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
               <th style={{ padding: 6 }}>Tarih</th><th style={{ padding: 6 }}>Hesap</th><th style={{ padding: 6 }}>Karşı taraf</th>
               <th style={{ padding: 6 }}>Açıklama</th><th style={{ padding: 6 }}>Defter</th><th style={{ padding: 6 }}>Fiş</th>
               <th style={{ padding: 6, textAlign: "right" }}>Giriş</th><th style={{ padding: 6, textAlign: "right" }}>Çıkış</th>
+              <th style={{ padding: 6 }}>Çevrilmiş</th>
             </tr>
           </thead>
           <tbody>{satirlar.map((x) => {
@@ -95,6 +117,9 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
                 <td className="mono" style={{ padding: 6, whiteSpace: "nowrap" }}>{x.fisNo || ""}</td>
                 <td className="mono" style={{ padding: 6, textAlign: "right", color: HAREKET_TIPI_RENK["Tahsilat"] }}>{x.yon === "Giriş" ? para(Number(x.tutar) || 0, pb) : ""}</td>
                 <td className="mono" style={{ padding: 6, textAlign: "right", color: HAREKET_TIPI_RENK["Ödeme"] }}>{x.yon !== "Giriş" ? para(Number(x.tutar) || 0, pb) : ""}</td>
+                <td data-kbh-cevrilmis="1" className="mono" style={{ padding: 6, fontSize: 11, whiteSpace: "nowrap" }}>
+                  {cevrilmis(x).map(([d, t]) => <div key={d}><span style={{ color: d === "Resmi" ? "var(--erp-info)" : "var(--erp-text-2)" }}>{d}:</span> <b>{t}</b></div>)}
+                </td>
               </tr>
             );
           })}</tbody>

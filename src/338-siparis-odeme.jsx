@@ -156,7 +156,10 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
   const hesapPB = hesap ? hesap.pb : f.pb;
   const cevrim = !!hesap && hesapPB !== f.pb;
   const oneriHesapTutari = cevrim && t > 0 ? paraCevirGenel(t, f.pb, hesapPB, kurlar) : null;
-  const hesapTutari = cevrim ? (parseFloat(f.hesapTutar) || oneriHesapTutari) : t;
+  // GENEL KUR KUTUSU (v1.678.0): "1 <cari PB> = ? <kasa PB>" — yazılırsa hesaba geçen = tutar × kur; hesaba geçen
+  // elle yazılırsa o geçerli (kur ondan okunur). İkisi boşsa sistem kuruyla öneri.
+  const elleKur = parseFloat(String(f.kur || "").replace(",", "."));
+  const hesapTutari = cevrim ? (parseFloat(f.hesapTutar) || (elleKur > 0 && t > 0 ? t * elleKur : oneriHesapTutari)) : t;
   const kutu = { ...inputStyle, padding: "7px 9px" };
   function kaydet() {
     if (!hesap) { showToast(odemeSekli === "Nakit" ? "Kasayı seçin" : "Bankayı seçin"); return; }
@@ -193,10 +196,15 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
           </select>
         </span>
       ))}
+      {cevrim && alan(`Kur (1 ${f.pb} = ? ${hesapPB})`, (
+        <input inputMode="decimal" data-odeme-satiri-kur="1" value={f.kur || ""}
+          placeholder={t > 0 && hesapTutari > 0 ? String(Math.round((hesapTutari / t) * 10000) / 10000) : ""}
+          onChange={(e) => setF({ ...f, kur: e.target.value, hesapTutar: "" })} style={{ ...kutu, width: 90 }} />
+      ))}
       {cevrim && alan(`Hesaba geçen (${hesapPB})`, (
         <input type="number" step="0.01" data-odeme-satiri-hesap-tutar="1" value={f.hesapTutar}
-          placeholder={oneriHesapTutari != null ? String(stokYuvarla(oneriHesapTutari)) : ""}
-          onChange={(e) => setF({ ...f, hesapTutar: e.target.value })} style={{ ...kutu, width: 120 }} />
+          placeholder={hesapTutari != null && hesapTutari > 0 ? String(stokYuvarla(hesapTutari)) : (oneriHesapTutari != null ? String(stokYuvarla(oneriHesapTutari)) : "")}
+          onChange={(e) => setF({ ...f, hesapTutar: e.target.value, kur: "" })} style={{ ...kutu, width: 120 }} />
       ))}
       {kart && alan("Hesaba geçiş (vade)", <input type="date" data-odeme-satiri-vade="1" value={f.vade} onChange={(e) => setF({ ...f, vade: e.target.value })} style={{ ...kutu, width: 140 }} />)}
       {alan("Defter", (
