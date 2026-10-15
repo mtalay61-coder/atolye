@@ -19,6 +19,7 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   const alisMi = tip === "Alış";
   const kalemler = (fis.kalemler || []).filter((k) => (k.miktar || 0) > 0);
   if (kalemler.length === 0) { showToast("Fişte kalem yok"); return; }
+  if (donemKilidiEngel(fis.tarih, showToast, "Fiş")) return;
 
   // Kullanıcının yazdığı numara (tedarikçinin gerçek irsaliye no'su) varsa o korunur.
   // Sıra numarası: "AF-20260902-001". Rastgele son blok yerine sayılabilir bir numara —

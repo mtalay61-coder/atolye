@@ -161,3 +161,16 @@ function KalemNotDuzenleyici({ notlar, prosesler, onDegis, onTaslak, salt = fals
 function htmlKacis(v) {
   return String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
 }
+
+// TERMİN DURUMU (v1.672.0): açık ve kalanı olan sipariş için teslim tarihine kalan gün. Tamamlanan/iptal ya da
+// tamamı karşılanmış siparişin termini yoktur (gecikme sayılmaz). gun < 0 → gecikti, 0..7 → bu hafta.
+function siparisTermin(s) {
+  if (!s || !s.teslimTarihi || s.durum === "Tamamlandı" || s.durum === "İptal") return null;
+  const kalan = (s.kalemler || []).reduce((t, k) => t + Math.max(0, (k.miktar || 0) - (k.karsilanan || 0)), 0);
+  if (kalan <= 0) return null;
+  const bugun = new Date(`${bugunYerel()}T00:00:00`);
+  const hedef = new Date(`${String(s.teslimTarihi).slice(0, 10)}T00:00:00`);
+  if (isNaN(hedef)) return null;
+  const gun = Math.round((hedef - bugun) / 86400000);
+  return { gun, durum: gun < 0 ? "gecikti" : gun <= 7 ? "hafta" : "ileri" };
+}

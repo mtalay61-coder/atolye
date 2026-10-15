@@ -152,6 +152,7 @@ function CariModule({ kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGit
   // hareket tekil bir obje ya da (Muhasebe defterinde olduğu gibi) bir dizi olabilir — hepsi TEK seferde eklenir.
   function addHareket(cariId, hareketVeyaDizi) {
     const gelenler = Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi];
+    if (donemKilidiEngel(gelenler.map((h) => h && h.tarih), showToast, "Cari hareketi")) return false;
     // TEK ÇAĞRI = TEK FİŞ. Muhasebe defterinde aynı işlem Genel+Resmi olarak iki kayıt üretiyor;
     // numarayı kayıt başına üretmek onlara AYRI numaralar verir ve tek işlem iki fiş gibi görünürdü.
     const yeniNo = fisNoSiradaki(fisOnEki((gelenler[0] || {}).islemTipi), tumFisNumaralari(cariler));

@@ -10,6 +10,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const siparisSekme = sabitTip ? (sabitTip === "Alış" ? "alis" : "satis") : siparisSekmeSerbest;
   const setSiparisSekme = sabitTip ? (() => {}) : setSiparisSekmeSerbest;
   const [durumFiltre, setDurumFiltre] = useState("Bekliyor");
+  // TERMİN SÜZGECİ (v1.672.0): durum süzgecinin üstüne biner — "Geciken" / "Bu hafta" (siparisTermin, 320).
+  const [terminFiltre, setTerminFiltre] = useState(null);
   const [siparisArama, setSiparisArama] = useState("");
   // Alan bazlı filtre. Üstteki genel arama kutusu "her yerde ara" yapar; bu şerit ise her kutunun
   // KENDİ alanında arar — "cari adında Ahmet geçen" ile "notunda Ahmet geçen" ayrımı burada kurulur.
@@ -969,8 +971,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     return true;
   }
 
-  const satisListe = satisListeTumu.filter((s) => (durumFiltre === "Tümü" || s.durum === durumFiltre) && siparisAramaEslesiyor(s) && siparisKolonEslesiyor(s));
-  const alisListe = alisListeTumu.filter((s) => (durumFiltre === "Tümü" || s.durum === durumFiltre) && siparisAramaEslesiyor(s) && siparisKolonEslesiyor(s));
+  const terminTutar = (s) => { if (!terminFiltre) return true; const t = siparisTermin(s); return !!t && (terminFiltre === "gecikti" ? t.durum === "gecikti" : t.durum !== "ileri"); };
+  const satisListe = satisListeTumu.filter((s) => (terminFiltre || durumFiltre === "Tümü" || s.durum === durumFiltre) && terminTutar(s) && siparisAramaEslesiyor(s) && siparisKolonEslesiyor(s));
+  const alisListe = alisListeTumu.filter((s) => (terminFiltre || durumFiltre === "Tümü" || s.durum === durumFiltre) && terminTutar(s) && siparisAramaEslesiyor(s) && siparisKolonEslesiyor(s));
 
 
   // Model rengi pozisyonlarında seçilebilecek MAMUL renkleri. Kombinasyon etiketleri havuza girmez
@@ -2373,6 +2376,19 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               }}
             >
               {d} <span className="mono" style={{ fontWeight: 400 }}>({sayi})</span>
+            </button>
+          );
+        })}
+        {[["gecikti", "Geciken", "var(--erp-danger, #B3261E)"], ["hafta", "7 gün içinde", "var(--erp-warn, #B8860B)"]].map(([k, ad, renk]) => {
+          const kaynak = siparisSekme === "satis" ? satisListeTumu : alisListeTumu;
+          const sayi = kaynak.filter((s) => { const t = siparisTermin(s); return !!t && (k === "gecikti" ? t.durum === "gecikti" : t.durum !== "ileri"); }).length;
+          const aktif = terminFiltre === k;
+          return (
+            <button key={k} type="button" data-termin-cip={k} onClick={() => setTerminFiltre(aktif ? null : k)}
+              title="Termin süzgeci — durumdan bağımsız, açık siparişler"
+              style={{ padding: "3px 8px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer", marginLeft: k === "gecikti" ? 10 : 0,
+                border: `1.5px solid ${aktif || sayi > 0 ? renk : "var(--erp-border)"}`, background: aktif ? alfaEkle(renk, "1A") : "#fff", color: sayi > 0 ? renk : "var(--erp-text-2)" }}>
+              ⏰ {ad} <span className="mono" style={{ fontWeight: 400 }}>({sayi})</span>
             </button>
           );
         })}

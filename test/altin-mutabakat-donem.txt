@@ -1,0 +1,32 @@
+{
+ "satirlar": [
+  {
+   "metin": "EFT MÜŞTERİ B",
+   "secili": true,
+   "kilitli": false
+  },
+  {
+   "metin": "HAVALE MASRAFIsistemde var (TARİH · elle girilen masraf)",
+   "secili": false,
+   "kilitli": false
+  },
+  {
+   "metin": "ESKİ DÖNEM GİRİŞİkapalı dönem",
+   "secili": false,
+   "kilitli": true
+  }
+ ],
+ "eksik": [
+  "+999,00 ₺\nekstrede olmayan giriş"
+ ],
+ "bankaHareketleri": [
+  "Giriş 1500",
+  "Giriş 999",
+  "Çıkış 12.5"
+ ],
+ "rozet": [
+  "gecikti"
+ ],
+ "cip": "⏰ Geciken (1)",
+ "hatalar": []
+}

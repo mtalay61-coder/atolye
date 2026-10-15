@@ -2153,6 +2153,24 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
               <span style={{ color: "var(--erp-text-3) " }}>açık bırakılan uygulamaya bu kadar süre dokunulmazsa oturum kapanır, şifre yeniden sorulur (sayfa yenilemede 12 saat kuralı zaten var)</span>
             </div>
           )}
+          {/* DÖNEM KAPANIŞI (v1.672.0): bu gün ve öncesi kilitli — kayıt girilmez, silinmez (015 donemKilitliMi).
+              Giriş sistemi açıksa yalnız Yönetici değiştirir; kilidi açmak = tarihi geri almak ya da boşaltmak. */}
+          {(() => {
+            const yetkili = !tanimlar.girisAktifMi || (aktifKullanici && aktifKullanici.rol === "Yönetici");
+            const deger = (tanimlar.firmaBilgileri || {}).donemKapanis || "";
+            return (
+              <div data-donem-kapanis="1" style={{ display: "flex", alignItems: "center", gap: 8, margin: "0 0 10px", fontSize: 12, flexWrap: "wrap" }}>
+                <span style={{ fontWeight: 600, color: "var(--erp-text-2)" }}>Dönem kapanışı:</span>
+                <input type="date" data-donem-kapanis-tarih="1" value={deger} disabled={!yetkili}
+                  onChange={(ev) => firmaBilgisiGuncelle("donemKapanis", ev.target.value || null)} style={{ ...inputStyle, width: 160, padding: "4px 8px", fontSize: 12 }} />
+                {deger && yetkili && <button type="button" className="btn-ghost" onClick={() => firmaBilgisiGuncelle("donemKapanis", null)}>Kilidi kaldır</button>}
+                <span style={{ color: "var(--erp-text-3)" }}>
+                  {deger ? `${tarihYaz(deger)} ve öncesine kayıt girilmez, o döneme ait fiş ve hareket silinmez.` : "Kapalı dönem yok."}
+                  {!yetkili && " Yalnız Yönetici değiştirebilir."}
+                </span>
+              </div>
+            );
+          })()}
           <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
             {tanimlar.girisAktifMi ? (
               <>Yönetici rolü her zaman tam yetkiye sahiptir. Diğer kullanıcılar için, her modülde ayrı ayrı
