@@ -2005,9 +2005,8 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
           {/* AÇIK SİPARİŞLER & BAKİYE (v1.668.0 — kullanıcı: "güncel bakiye, altında sipariş kalan adetler ve sipariş
               kalan borcuna istinaden sipariş bittiğinde oluşacak alacak"). Kalan = miktar − karsilanan (013 türetilmiş);
-              kalan tutar = kalan × birim fiyat, para birimi kalemin kendi birimi. İşaret bakiye kuralıyla aynı: + cari
-              bize borçlu. Satış siparişinin kalanı teslim edilince bakiyeye +, alış siparişininki − eklenir. KDV ve iskonto
-              hesaba katılmaz — tahmindir, kesin tutar fiş kesilince oluşur. */}
+              kalan tutar = kalan × birim fiyat × (1 + KDV), para birimi kalemin kendi birimi. İşaret bakiye kuralıyla aynı: + cari
+              bize borçlu. Satış siparişinin kalanı teslim edilince bakiyeye +, alış siparişininki − eklenir. */}
           {cardTab === "ozet" && (() => {
             const acik = (siparisler || []).filter((s) => s.cariId === cari.id && s.durum !== "İptal" && s.durum !== "Tamamlandı")
               .map((s) => {
@@ -2017,7 +2016,11 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   if (q <= 0) return;
                   adet += q;
                   const pb = k.paraBirimi || "TRY";
-                  kalan[pb] = Math.round(((kalan[pb] || 0) + q * (k.birimFiyat || 0)) * 100) / 100;
+                  // KDV DAHİL (v1.670.0 — kullanıcı: "siparişte KDV ve iskonto girilmişse dahil etsin"). İskonto siparişte
+                  // birim fiyata işlenmiş geliyor (site indirimi dahil); KDV kalemin kendi oranından — teslim fişi de
+                  // cariye KDV dahil yazıyor (078, 320 siparisOdemeDurumu ile aynı kural).
+                  const kdv = 1 + (Number(k.kdvOrani) || 0) / 100;
+                  kalan[pb] = Math.round(((kalan[pb] || 0) + q * (Number(k.birimFiyat) || 0) * kdv) * 100) / 100;
                 });
                 return { s, adet, kalan, yon: s.tip === "Alış" ? -1 : 1 };
               }).filter((x) => x.adet > 0);
@@ -2042,7 +2045,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
                   {kutu("Güncel bakiye", yaz(bakiye), "+ alacağımız · − borcumuz", renk(bakiye))}
                   {kutu("Açık sipariş kalanı", `${toplamAdet} adet`, yaz(etki, true) + " (teslim edilince)", "var(--erp-info)")}
-                  {kutu("Siparişler bitince bakiye", yaz(sonrasi), "KDV / iskonto hariç tahmin", renk(sonrasi))}
+                  {kutu("Siparişler bitince bakiye", yaz(sonrasi), "Siparişteki fiyat, iskonto ve KDV ile", renk(sonrasi))}
                 </div>
                 {acik.length === 0 ? <EmptyState text="Açık sipariş yok." /> : (
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: "#fff" }}>
