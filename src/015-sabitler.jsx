@@ -479,9 +479,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.664.0";
+const SURUM = "1.665.0";
 const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Tum uygulamada kutular renkli cerceveli";
+const SURUM_NOTU = "Planlama: stok durumu matrisi sekmeli (eksik, stogu yetiyor, stok yok, eksi kayit)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +494,9 @@ const SURUM_NOTU = "Tum uygulamada kutular renkli cerceveli";
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.665.0", tarih: "15.10.2026",
+    eklenen: ["Planlama › hammadde ihtiyacı: Stok durumu matrisi — Eksik / Stoğu yetiyor / Stok yok / Eksi kayıt sekmeleri, hammadde+renk satırı × beden sütunu, satır toplamı; eksi kayıtta sebep tahmini satır altında"],
+    degisen: ["Eksi stok uzun listesi kaldırıldı (Eksi kayıt sekmesine taşındı)"], duzeltilen: [] },
   { surum: "1.664.0", tarih: "14.10.2026", eklenen: [],
     degisen: ["Bütün ekranlarda giriş kutuları ve açılır listeler renkli kalın çerçeveli (tema vurgu rengi; fiş, cari ödeme ve kasa kendi renginde; tablo hücrelerinde ince)"], duzeltilen: [] },
   { surum: "1.663.5", tarih: "14.10.2026", eklenen: [],

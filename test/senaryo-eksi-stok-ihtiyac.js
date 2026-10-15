@@ -52,8 +52,13 @@ async function birDurum(receteFazla) {
     if (b) b.click();
   });
   await sayfa.waitForTimeout(1200);
+  // v1.665.0: stok durumu matrisi — toplu uyarı şeritte, ayrıntı "Eksi kayıt" sekmesinde.
+  const seritte = /stok kaydı eksiye düşmüş/.test(await sayfa.evaluate(() => document.body.innerText));
+  await sayfa.locator('[data-stok-durum-sekme="eksi"]').click().catch(() => {});
+  await sayfa.waitForTimeout(300);
 
   const metin = await sayfa.evaluate(() => document.body.innerText);
+  const eksiHucre = await sayfa.evaluate(() => [...document.querySelectorAll('[data-stok-durum-tablo="eksi"] td')].map((x) => x.textContent.trim()));
   // TEŞHİS SATIRI — kullanıcı (7 Eylül): "İKİSİ DE OLABİLİR."
   // İkisi de olabiliyorsa hangisi olduğu VERİDEN çıkarılmalı; reçete gerçekleşmesi bunu ayırt
   // ediyor. Ölçüm yoksa bir şey UYDURULMUYOR.
@@ -66,9 +71,9 @@ async function birDurum(receteFazla) {
     // Sipariş olmadan da listede — görünürlük korunuyor.
     hammaddeGorunuyor: /Deri/.test(metin),
     // LİSTE BAŞINDA TOPLU UYARI: tek tek hücre gezip işaret aramak gerekmesin.
-    topluUyari: /stok kaydı eksiye düşmüş/.test(metin),
+    topluUyari: seritte,
     // Gerçek kayıt değeri gösteriliyor: sayımı yapacak kişi o sayıyı arayacak.
-    kayitDegeri: /kayıt: -7/.test(metin),
+    kayitDegeri: eksiHucre.includes("-7"),
     // SIFIR SAYILDIĞI AÇIKÇA YAZILI.
     sifirKabulYazili: /0 kabul edildi/.test(metin),
     // ASIL KURAL: eksi değerden satın alma miktarı TÜREMİYOR. "−7" bir eksik rozeti olarak
