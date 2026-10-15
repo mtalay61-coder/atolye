@@ -353,22 +353,13 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
             </div>
           )}
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Cari</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>Cari / kart</span>
             <div style={{ minWidth: 280, flex: "0 1 420px" }}>
-              <CariSecici cariler={cariler.filter((c) => !c.pasif)} deger={odemeCariId} veriAdi="data-odeme-cari"
-                onDegis={(id) => odemeFormunuAc(id, odemeTip, odemeSekliSecim)} />
+              <CariSecici cariler={karsiTarafListesi(cariler, giderKartlari)} deger={odemeKartId ? `kart:${odemeKartId}` : odemeCariId} veriAdi="data-odeme-cari"
+                placeholder="Cari ya da gelir/gider kartı ara…"
+                onDegis={(id) => { const k = karsiTarafCoz(id); setOdemeKartId(k.kartId); odemeFormunuAc(k.cariId, odemeTip, odemeSekliSecim); }} />
             </div>
           </div>
-          {(giderKartlari || []).length > 0 && (
-            <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", minWidth: 90 }}>ya da kart</span>
-              <select data-odeme-gider-kart="1" value={odemeKartId} style={{ minWidth: 280 }}
-                onChange={(e) => { setOdemeKartId(e.target.value); if (e.target.value) odemeFormunuAc("", odemeTip, odemeSekliSecim); }}>
-                <option value="">— gelir / gider kartı (kira, elektrik, maaş, banka masrafı…) —</option>
-                {giderKartlari.map((k) => <option key={k.id} value={k.id}>{k.ad}{k.tur === "gelir" ? " (gelir)" : ""}</option>)}
-              </select>
-            </div>
-          )}
         </div>
 
         {odemeKartId && !odemeCari ? (
@@ -460,7 +451,11 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
                         <td style={{ fontSize: 11, padding: "5px 8px" }}>{h.odemeSekli || "—"}</td>
                         <td style={{ fontSize: 11, padding: "5px 8px", color: "#5B3F75", fontWeight: 600 }}>{h.defter || "Genel"}</td>
                         <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
-                          {Number(h.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[h.paraBirimi || c.paraBirimi || "TRY"] || h.paraBirimi}
+                          {/* KASA TUTARI (v1.681.0 — kullanıcı: "p. birimi çevrildiğinde tutar kasa p. birimiyle olan tutar olacak").
+                              Kasaya giren/çıkan para birimi farklıysa kasa tutarı; cariye işlenen karşılık açıklamada. */}
+                          {h.hesapPB && h.hesapTutar != null && h.hesapPB !== (h.paraBirimi || "TRY")
+                            ? <>{Number(h.hesapTutar).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[h.hesapPB] || h.hesapPB}</>
+                            : <>{Number(h.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[h.paraBirimi || c.paraBirimi || "TRY"] || h.paraBirimi}</>}
                         </td>
                         <td className="mono" style={{ fontSize: 11, padding: "5px 8px" }}>{h.fisNo || ""}</td>
                         <td style={{ fontSize: 11, padding: "5px 8px", color: "var(--erp-text-2)" }}>{h.aciklama || ""}</td>

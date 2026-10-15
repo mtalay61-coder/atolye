@@ -63,9 +63,12 @@ async function calistir() {
   await ikinci.sayfa.locator('[data-odeme-tip="Ödeme"]:visible').click();
   await ikinci.sayfa.locator('[data-odeme-sekli="Nakit"]:visible').click();
   await ikinci.sayfa.waitForTimeout(300);
-  const kartSecici = await ikinci.sayfa.evaluate(() => !!document.querySelector("[data-odeme-gider-kart]"));
+  // v1.681.0: kart cari kutusunda ("Cari / kart") — ayrı seçici yok.
+  const kutu2 = ikinci.sayfa.locator("[data-odeme-cari]:visible").first();
+  await kutu2.click(); await kutu2.fill("İşyeri"); await ikinci.sayfa.waitForTimeout(300);
+  const kartSecici = await ikinci.sayfa.evaluate(() => [...document.querySelectorAll("[data-cari-secenek]")].some((b) => /İşyeri kirası/.test(b.textContent) && /gider kartı/.test(b.textContent)));
   const karsiliksizReddedildi = await ikinci.sayfa.evaluate(() => !document.querySelector("[data-kart-odeme-satiri]") && !document.querySelector("[data-odeme-satiri]"));
-  await ikinci.sayfa.locator("[data-odeme-gider-kart]:visible").selectOption("gk1");
+  await kutu2.press("Enter");
   await ikinci.sayfa.waitForTimeout(400);
   await ikinci.sayfa.locator("[data-kart-odeme-tutar]:visible").fill("12000");
   await ikinci.sayfa.locator("[data-kart-odeme-kaydet]:visible").click();
