@@ -4940,7 +4940,7 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "sevkiyat"}>
             <SevkiyatMerkezi koliler={koliler} siparisler={siparisler} cariler={cariler} stok={stok} tanimlar={tanimlar}
-              uretim={uretim} onFisAc={stokFisiAc} onSatisFisiAc={satisFisiAcSiparisten} onCarilerKaydet={saveCariler}
+              uretim={uretim} onFisAc={stokFisiAc} muhasebe={muhasebe} onFisKaydet={(cariId, tip, fis) => stokFisiKaydet(cariId, tip, fis)} onCarilerKaydet={saveCariler}
               showToast={showToast} onGoToSiparis={sipariseGit} />
           </GizliModul>
           <GizliModul aktif={tab === "alissatis"}>

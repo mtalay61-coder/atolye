@@ -52,8 +52,12 @@ function irsaliyeHTML(f, cari) {
 <p style="margin-top:40px">Teslim eden: ____________ &nbsp;&nbsp;&nbsp; Teslim alan: ____________</p>`;
 }
 
-function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim, onFisAc, onSatisFisiAc, onCarilerKaydet, showToast, onGoToSiparis }) {
+function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim, muhasebe, onFisAc, onFisKaydet, onCarilerKaydet, showToast, onGoToSiparis }) {
   const [sekme, setSekme] = useState("bekleyen");
+  // BÖLÜNMÜŞ EKRAN (v1.668.0 — kullanıcı: "Sevk et tıklayınca sağda veya altta ekran bölünsün, oraya koli ve
+  // asortili eklensin; hangisini eklerse o ekrana gelsin; fiş bitince kaydetsin"). Ayrı pencere yerine aynı
+  // satış fişi formu (255 StokFisiFormu) burada gömülü açılıyor; kayıt yine tek kapıdan (`useCariFisiKaydet`).
+  const [sevkSiparisId, setSevkSiparisId] = useState(null);
   const [arama, setArama] = useState("");
   const [seciliFisNo, setSeciliFisNo] = useState(null);
   const [form, setForm] = useState({ plaka: "", sofor: "", adres: "", koliSayisi: "" });
@@ -109,7 +113,8 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
       </div>
 
       {sekme === "bekleyen" && (
-        <div style={kutu} data-sevk-bekleyen="1">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "flex-start" }}>
+        <div style={{ ...kutu, flex: sevkSiparisId ? "1 1 380px" : "1 1 100%", minWidth: 0, maxWidth: sevkSiparisId ? 560 : undefined }} data-sevk-bekleyen="1">
           {bekleyenler.length === 0 ? <div style={{ color: "var(--erp-muted)" }}>Sevk bekleyen satış siparişi yok.</div> : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead><tr><th style={th}>Sipariş</th><th style={th}>Cari</th><th style={th}>Termin</th><th style={{ ...th, textAlign: "right" }}>Kalan çift</th><th style={{ ...th, textAlign: "right" }}>Hazır koli</th><th style={th}></th></tr></thead>
@@ -124,13 +129,25 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
                     <td style={{ ...td, textAlign: "right", fontWeight: 700 }}>{kalan}</td>
                     <td style={{ ...td, textAlign: "right" }}>{hazirKoli || "—"}</td>
                     <td style={{ ...td, textAlign: "right" }}>
-                      <button className="btn-primary" data-sevk-et={s.siparisNo} onClick={() => onSatisFisiAc(s, [])}>Sevk et</button>
+                      <button className={sevkSiparisId === s.id ? "btn-ghost" : "btn-primary"} data-sevk-et={s.siparisNo}
+                        onClick={() => setSevkSiparisId(sevkSiparisId === s.id ? null : s.id)}>{sevkSiparisId === s.id ? "Kapat" : "Sevk et"}</button>
                     </td>
                   </tr>
                 );
               })}</tbody>
             </table>
           )}
+        </div>
+        {sevkSiparisId && (() => {
+          const sp = (siparisler || []).find((x) => x.id === sevkSiparisId);
+          if (!sp) return null;
+          return (
+            <SevkFisPaneli key={sp.id} siparis={sp} cari={cariBul(sp.cariId)} cariler={cariler} stok={stok} siparisler={siparisler}
+              koliler={koliler} uretim={uretim} tanimlar={tanimlar} muhasebe={muhasebe} showToast={showToast}
+              onKapat={() => setSevkSiparisId(null)}
+              onKaydet={(fis) => { onFisKaydet(fis.cariId || sp.cariId, "Satış", fis); setSevkSiparisId(null); }} />
+          );
+        })()}
         </div>
       )}
 
@@ -240,6 +257,37 @@ function AlisSatisEkrani({ cariler, stok, onFisAc, onFiseGit }) {
             <span>{g.hareketler.filter((h) => h.kaynakTip === "stok").reduce((t, h) => t + Math.abs(h.miktar || 0), 0)} adet</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Sevk et'in bölünmüş paneli: üstte siparişin kalanı (renk × beden) ve hazır kolileri, altında satış fişi formu.
+// Fişin kendi araçları (Koli barkodu okut, Siparişten seç — koli ya da beden beden, asorti girişi) aynen burada;
+// eklenen her şey formun kalem listesine düşer. Kaydet/Vazgeç formun kendi düğmeleri — kaydet mantığına (onay
+// penceresi, peşin, defter) hiç dokunulmuyor; kayıt bitince panel kapanır.
+function SevkFisPaneli({ siparis, cari, cariler, stok, siparisler, koliler, uretim, tanimlar, muhasebe, showToast, onKapat, onKaydet }) {
+  const panelId = `sevk-panel-${siparis.id}`;
+  const kalanlar = (siparis.kalemler || []).map((k) => ({ k, kalan: Math.max(0, (k.miktar || 0) - (k.karsilanan || 0)) })).filter((x) => x.kalan > 0);
+  const hazirKoliler = (koliler || []).filter((k) => k.siparisId === siparis.id && (k.durum || "Hazır") !== "Sevk edildi");
+  return (
+    <div data-sevk-fis-paneli={siparis.siparisNo} style={{ flex: "2 1 560px", minWidth: 0, border: "2px solid var(--erp-info)", borderRadius: 10, background: "var(--erp-surface)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderBottom: "1px solid var(--erp-border)", flexWrap: "wrap" }}>
+        <Truck size={16} />
+        <b>Sevk: {siparis.siparisNo}</b><span>· {cari ? cari.unvan : ""}</span>
+        <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          <button className="btn-ghost" data-sevk-kapat="1" onClick={onKapat} title="Fişi kaydetmeden kapat">✕</button>
+        </span>
+      </div>
+      <div style={{ padding: "6px 10px", fontSize: 12, color: "var(--erp-muted)", display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <span>Kalan: {kalanlar.map((x) => `${x.k.urunAd || ""} ${x.k.renk || ""} ${x.k.beden || ""} ×${x.kalan}`).join(" · ") || "—"}</span>
+        {hazirKoliler.length > 0 && <span>Hazır koli: {hazirKoliler.map((k) => k.kod).join(", ")}</span>}
+      </div>
+      <div style={{ padding: 10 }}>
+        <StokFisiFormu pencereId={panelId} tip="Satış" cari={cari} cariler={cariler} stok={stok} siparisler={siparisler}
+          koliler={koliler} uretim={uretim} asortiler={tanimlar.asortiler || []} kurlar={(muhasebe && muhasebe.kurlar) || {}}
+          muhasebe={muhasebe} firmaBilgileri={tanimlar.firmaBilgileri} showToast={showToast} baslangicKalemler={null}
+          onCariDegisti={() => {}} onVazgec={onKapat} onKaydet={onKaydet} />
       </div>
     </div>
   );

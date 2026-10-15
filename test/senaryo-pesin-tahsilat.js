@@ -206,7 +206,8 @@ async function calistir() {
   // Kullanıcı bildirdi (6 Eylül): bazı satırlarda "Tahsilat (TL Kasa)" yazıyor, bazılarında yalnız
   // "Tahsilat". Muhasebe ekranından girilen hareket hesabı yazıyordu, cari kartından girilen
   // yazmıyordu — ekstreye bakan kişi paranın nereye gittiğini yalnız bazı satırlarda görüyordu.
-  const hesapAdiEkstrede = await sayfa.evaluate(() => /Tahsilat \(TL Kasa\)/.test(document.body.innerText));
+  // v1.668.0: hesap adı artık rozette ("Tahsilat · Nakit · TL Kasa"); otomatik açıklama alt satırda tekrarlanmıyor.
+  const hesapAdiEkstrede = await sayfa.evaluate(() => /Tahsilat · Nakit · TL Kasa/.test(document.body.textContent));
 
   const m2 = await depoOku(sayfa, "muhasebe:data");
   const kasa2 = ((m2 || {}).kasalar || [])[0] || {};

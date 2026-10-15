@@ -742,6 +742,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             {[
               { key: "hareketler", label: "Hareketler" },
+              { key: "ozet", label: "Açık Siparişler & Bakiye" },
               { key: "siparisler", label: `Siparişler (${(siparisler || []).filter((s) => s.cariId === cari.id).length})` },
               { key: "bilgiler", label: "Bilgiler" },
             ].map((t) => (
@@ -1808,7 +1809,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                               <div
                                 className="mono"
                                 style={{
-                                  display: "inline-flex", alignItems: "center", gap: 4, flexWrap: sadeGorunum ? "nowrap" : "wrap",
+                                  display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "nowrap", whiteSpace: "nowrap", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis",
                                   // SADE KİPTE TEK SATIR (v1.505.0): rozet ile özet yan yana — rozet kendi satırına
                                   // düşünce ödeme satırı ürün satırlarının iki katı yüksekliğe çıkıyordu.
                                   fontSize: 10, fontWeight: 700, marginBottom: sadeGorunum ? 0 : 3, marginRight: sadeGorunum ? 6 : 0,
@@ -1822,7 +1823,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                   color: HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)",
                                 }}
                               >
-                                <FileText size={10} />
+                                {/* İŞLEM TİPİ ROZETİN BAŞINDA (v1.668.0 — kullanıcı: "tahsilat girildi, ekranda tahsilat
+                                    yazmıyor, belli etsin"): yalnız "Havale/EFT" yazınca yönü tutar sütunundan çıkarmak gerekiyordu. */}
+                                {paraHareketiMi(ilk) ? <><HareketIkonu tip={hareketIslemTipi(ilk)} size={11} /><span data-ekstre-islem-tipi="1" style={{ textTransform: "uppercase" }}>{hareketIslemTipi(ilk)}</span> · </> : <FileText size={10} />}
                                 {g.odemeSekli}
                                 {g.vade ? ` · vade ${g.vade}` : ""}
                                 {/* PARANIN NEREYE İŞLENDİĞİ (kullanıcı, 6 Eylül: "1000 USD ödeme,
@@ -1867,7 +1870,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                             {urunGruplari.length > 0 && (
                               <FisKalemMatrisi urunGruplari={urunGruplari} stok={stok} kompakt />
                             )}
-                            {yapisizHareketler.map((h) => {
+                            {yapisizHareketler.filter((h) => {
+                              // OTOMATİK AÇIKLAMA TEKRARI (v1.668.0 — kullanıcı: "alt açıklamada tahsilat banka adı yazıyor,
+                              // banka adı üst satırda var, tek satıra sığsın"). "Tahsilat (Kuveyt TL)" gibi kendiliğinden
+                              // yazılan açıklama, rozet zaten tipi + hesabı gösterdiğinde atlanır; elle yazılan açıklama kalır.
+                              if (!(g.odemeSekli && paraHareketiMi(h))) return true;
+                              const a = String(h.aciklama || "").trim();
+                              const tip = hareketIslemTipi(h);
+                              return !(a === "" || a === tip || a === `${tip} (${h.hesapAd || ""})` || (h.hesapAd && a === h.hesapAd));
+                            }).map((h) => {
                               let urunAdiIcin = h.urunAd || null;
                               if (!urunAdiIcin && h.aciklama) {
                                 // İKİ BİÇİM birden tanınır. Eski kayıtlar "Üretim (Kesim): SS Model ·",
@@ -1992,6 +2003,70 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           ]} />
           )}
 
+          {/* AÇIK SİPARİŞLER & BAKİYE (v1.668.0 — kullanıcı: "güncel bakiye, altında sipariş kalan adetler ve sipariş
+              kalan borcuna istinaden sipariş bittiğinde oluşacak alacak"). Kalan = miktar − karsilanan (013 türetilmiş);
+              kalan tutar = kalan × birim fiyat × (1 + KDV), para birimi kalemin kendi birimi. İşaret bakiye kuralıyla aynı: + cari
+              bize borçlu. Satış siparişinin kalanı teslim edilince bakiyeye +, alış siparişininki − eklenir. */}
+          {cardTab === "ozet" && (() => {
+            const acik = (siparisler || []).filter((s) => s.cariId === cari.id && s.durum !== "İptal" && s.durum !== "Tamamlandı")
+              .map((s) => {
+                const kalan = {}; let adet = 0;
+                (s.kalemler || []).forEach((k) => {
+                  const q = Math.max(0, (k.miktar || 0) - (k.karsilanan || 0));
+                  if (q <= 0) return;
+                  adet += q;
+                  const pb = k.paraBirimi || "TRY";
+                  // KDV DAHİL (v1.670.0 — kullanıcı: "siparişte KDV ve iskonto girilmişse dahil etsin"). İskonto siparişte
+                  // birim fiyata işlenmiş geliyor (site indirimi dahil); KDV kalemin kendi oranından — teslim fişi de
+                  // cariye KDV dahil yazıyor (078, 320 siparisOdemeDurumu ile aynı kural).
+                  const kdv = 1 + (Number(k.kdvOrani) || 0) / 100;
+                  kalan[pb] = Math.round(((kalan[pb] || 0) + q * (Number(k.birimFiyat) || 0) * kdv) * 100) / 100;
+                });
+                return { s, adet, kalan, yon: s.tip === "Alış" ? -1 : 1 };
+              }).filter((x) => x.adet > 0);
+            const yaz = (obj, isaretli) => {
+              const e = Object.entries(obj || {}).filter(([, t]) => Math.abs(t) > 0.004);
+              if (e.length === 0) return "0 ₺";
+              return e.map(([pb, t]) => `${isaretli && t > 0 ? "+" : ""}${t.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`).join(" · ");
+            };
+            const etki = bakiyeleriTopla(acik.map((x) => Object.fromEntries(Object.entries(x.kalan).map(([pb, t]) => [pb, t * x.yon]))));
+            const sonrasi = bakiyeleriTopla([bakiye || {}, etki]);
+            const renk = (obj) => { const t = Object.values(obj || {}).reduce((a, b) => a + b, 0); return t > 0.004 ? "var(--erp-primary)" : t < -0.004 ? "var(--erp-warn)" : "var(--erp-text-2)"; };
+            const kutu = (baslik, deger, alt, r) => (
+              <div style={{ flex: "1 1 200px", border: `1.5px solid ${r}`, borderRadius: 10, padding: "10px 12px", background: "#fff" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", textTransform: "uppercase" }}>{baslik}</div>
+                <div className="mono" style={{ fontSize: 20, fontWeight: 800, color: r }}>{deger}</div>
+                {alt && <div style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{alt}</div>}
+              </div>
+            );
+            const toplamAdet = acik.reduce((t, x) => t + x.adet, 0);
+            return (
+              <div data-cari-ozet="1">
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+                  {kutu("Güncel bakiye", yaz(bakiye), "+ alacağımız · − borcumuz", renk(bakiye))}
+                  {kutu("Açık sipariş kalanı", `${toplamAdet} adet`, yaz(etki, true) + " (teslim edilince)", "var(--erp-info)")}
+                  {kutu("Siparişler bitince bakiye", yaz(sonrasi), "Siparişteki fiyat, iskonto ve KDV ile", renk(sonrasi))}
+                </div>
+                {acik.length === 0 ? <EmptyState text="Açık sipariş yok." /> : (
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, background: "#fff" }}>
+                    <thead><tr style={{ textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 }}>
+                      <th style={{ padding: 6 }}>Sipariş</th><th style={{ padding: 6 }}>Tip</th><th style={{ padding: 6 }}>Durum</th><th style={{ padding: 6 }}>Termin</th>
+                      <th style={{ padding: 6, textAlign: "right" }}>Kalan adet</th><th style={{ padding: 6, textAlign: "right" }}>Kalan tutar</th></tr></thead>
+                    <tbody>{acik.map(({ s, adet, kalan, yon }) => (
+                      <tr key={s.id} data-cari-ozet-siparis={s.siparisNo} onClick={() => onGoToSiparis(s.id)} style={{ cursor: "pointer", borderTop: "1px solid var(--erp-line-soft)" }}>
+                        <td style={{ padding: 6, fontWeight: 700 }}>{s.siparisNo}</td>
+                        <td style={{ padding: 6, color: yon < 0 ? "var(--erp-brown)" : "var(--erp-info)" }}>{s.tip}</td>
+                        <td style={{ padding: 6, color: SIPARIS_DURUM_RENK[s.durum] || "var(--erp-text-2)" }}>{s.durum}</td>
+                        <td style={{ padding: 6 }}>{s.teslimTarihi ? tarihYaz(s.teslimTarihi) : "—"}</td>
+                        <td className="mono" style={{ padding: 6, textAlign: "right" }}>{adet}</td>
+                        <td className="mono" style={{ padding: 6, textAlign: "right" }}>{yaz(kalan)}</td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })()}
           {cardTab === "siparisler" && (() => {
             const ilgiliSiparisler = (siparisler || [])
               .filter((s) => s.cariId === cari.id)

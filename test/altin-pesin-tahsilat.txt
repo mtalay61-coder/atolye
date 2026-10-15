@@ -9,9 +9,9 @@
   "kurGosteriliyor": true
  },
  "ekstreGorunumu": {
-  "aciklamaTekrari": 1,
+  "aciklamaTekrari": 0,
   "hesapRozeti": [
-   "Nakit · TL Kasa"
+   "Tahsilat · Nakit · TL Kasa"
   ],
   "rozetRenkleri": [
    "rgb(47, 125, 74)"
