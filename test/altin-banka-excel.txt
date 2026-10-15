@@ -1,7 +1,7 @@
-ONIZLEME 	15.10.2026	EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ	seçilmedi	1.500,00 ₺	 | öneri: Müşteri B — seç | — ya da gelir/gider kartı — | Banka masrafı |  | 	16.10.2026	HAVALE MASRAFI	seçilmedi	-12,50 ₺	 | — ya da gelir/gider kartı — | Banka masrafı
+ONIZLEME 	15.10.2026	EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ	seçilmedi	1.500,00 ₺	 | öneri: Müşteri B — seç |  | 	16.10.2026	HAVALE MASRAFI	seçilmedi	-12,50 ₺	
 KARSILIKSIZ 2 satırda karşı taraf seçilmedi aktar pasif: true
 ONERI [ 'öneri: Müşteri B — seç' ]
-TEKRAR 	15.10.2026	EFT MÜŞTERİ B SİPARİŞ ÖDEMESİdaha önce aktarıldı	seçilmedi	1.500,00 ₺	 | öneri: Müşteri B — seç | — ya da gelir/gider kartı — | Banka masrafı |  | 	16.10.2026	HAVALE MASRAFIdaha önce aktarıldı	seçilmedi	-12,50 ₺	 | — ya da gelir/gider kartı — | Banka masrafı
+TEKRAR 	15.10.2026	EFT MÜŞTERİ B SİPARİŞ ÖDEMESİdaha önce aktarıldı	seçilmedi	1.500,00 ₺	 | öneri: Müşteri B — seç |  | 	16.10.2026	HAVALE MASRAFIdaha önce aktarıldı	seçilmedi	-12,50 ₺	
 BANKA [["Çıkış",12.5,"Banka masrafı · HAVALE MASRAFI",true,"Banka masrafı"],["Giriş",1500,"Tahsilat · Müşteri B · EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ",true,null]]
 CARI [["THS-","Alacak",1500,"Tahsilat (Test Bankası): EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ"]]
 hatalar []

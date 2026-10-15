@@ -143,3 +143,17 @@ function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil
     </div>
   );
 }
+
+// KARŞI TARAF TEK LİSTEDE (v1.681.0 — kullanıcı: "cari ve gelir gider kartları aynı yerden seçilsin, farklı olmasına
+// gerek yok"). CariSecici'ye carilerle birlikte gelir/gider kartları da verilir; kart kimliği "kart:<id>" önekiyle
+// ayrılır, seçenekte "gelir/gider kartı" diye işaretlenir. Çağıran `karsiTarafCoz(id)` ile hangisi olduğunu ayırır.
+function karsiTarafListesi(cariler, kartlar) {
+  return [
+    ...(cariler || []).filter((c) => !c.pasif),
+    ...(kartlar || []).map((k) => ({ id: `kart:${k.id}`, unvan: k.ad, resmiUnvan: k.tur === "gelir" ? "gelir kartı" : "gelir/gider kartı", kod: "" })),
+  ];
+}
+function karsiTarafCoz(id) {
+  const s = String(id || "");
+  return s.startsWith("kart:") ? { kartId: s.slice(5), cariId: "" } : { kartId: "", cariId: s };
+}

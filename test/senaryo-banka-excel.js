@@ -23,7 +23,9 @@ fs.writeFileSync(EKSTRE, 'Hesap: Test Bankasi\n\nTarih,Açıklama,Tutar,Bakiye\n
   console.log("KARSILIKSIZ", await ekran.locator("[data-banka-excel-karsiliksiz]").innerText(), "aktar pasif:", await ekran.locator("[data-banka-excel-kaydet]").isDisabled());
   console.log("ONERI", await ekran.locator("[data-banka-excel-oneri]").allInnerTexts());
   await ekran.locator('[data-banka-excel-oneri="0"]').click(); await sayfa.waitForTimeout(200);
-  await ekran.locator('[data-banka-excel-kart="1"]').selectOption("g1"); await sayfa.waitForTimeout(200);
+  // v1.681.0: kart da aynı kutudan (cari ya da gelir/gider kartı).
+  { const kk = ekran.locator('[data-banka-excel-satir="1"] input').nth(1); await kk.click(); await kk.fill("Banka masr"); await sayfa.waitForTimeout(300); await kk.press("Enter"); }
+  await sayfa.waitForTimeout(200);
   await ekran.locator('[data-banka-excel-kaydet]').click(); await sayfa.waitForTimeout(1500);
   await ekran.locator('[data-banka-excel-dosya]').setInputFiles(EKSTRE); await sayfa.waitForTimeout(800);
   console.log("TEKRAR", (await ekran.locator("tbody").innerText()).split("\n").join(" | "));

@@ -370,7 +370,7 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
                 <th style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={secilenler.length > 0 && secilenler.length === kalemler.filter((k) => !durum(k).kilit).length}
                   onChange={(e) => setSecim((o) => { const y = { ...o }; kalemler.forEach((k) => { if (!durum(k).kilit) y[k.no] = { ...(y[k.no] || {}), sec: e.target.checked }; }); return y; })} /></th>
                 <th style={{ padding: 4 }}>Tarih</th><th style={{ padding: 4 }}>Açıklama</th><th style={{ padding: 4 }}>İşlem</th>
-                <th style={{ padding: 4, textAlign: "right" }}>Tutar</th><th style={{ padding: 4, minWidth: 220 }}>Karşı taraf: cari ya da gelir/gider kartı</th>
+                <th style={{ padding: 4, textAlign: "right" }}>Tutar</th><th style={{ padding: 4, minWidth: 220 }}>Karşı taraf: cari / gelir-gider kartı</th>
               </tr></thead>
               <tbody>{kalemler.map((k) => {
                 const d = durum(k);
@@ -389,19 +389,15 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
                     <td className="mono" style={{ padding: 4, textAlign: "right", whiteSpace: "nowrap", color: k.tutar > 0 ? HAREKET_TIPI_RENK["Tahsilat"] : HAREKET_TIPI_RENK["Ödeme"] }}>{para(k.tutar)}</td>
                     <td style={{ padding: 4 }}>
                       <div style={{ display: "grid", gap: 3, outline: d.sec && !d.cariId && !d.kartId ? "2px solid var(--erp-danger, #B3261E)" : "none", borderRadius: 6 }}>
-                        <CariSecici cariler={aktifCariler} deger={d.cariId || null} onDegis={(id) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: id || "", kartId: id ? "" : (o[k.no] || {}).kartId } }))} kucuk placeholder="Cari seç…" />
+                        <CariSecici cariler={karsiTarafListesi(cariler, giderKartlari)} deger={d.kartId ? `kart:${d.kartId}` : (d.cariId || null)}
+                          onDegis={(id) => { const kt = karsiTarafCoz(id); setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: kt.cariId, kartId: kt.kartId } })); }}
+                          kucuk placeholder="Cari ya da gelir/gider kartı…" />
                         {d.cariId && pbSatiri(k, d, "", defter === "Muhasebe" ? "Genel" : "P. tipi")}
                         {d.cariId && defter === "Muhasebe" && pbSatiri(k, d, "resmi", "Resmi")}
                         {k.oneriId && !d.cariId && !d.kartId && (() => { const oc = (cariler || []).find((c) => c.id === k.oneriId); return oc && (
                           <button type="button" className="btn-ghost" data-banka-excel-oneri={k.no} style={{ fontSize: 11, padding: "1px 6px", justifySelf: "start" }}
                             onClick={() => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: oc.id, kartId: "" } }))}>öneri: {oc.unvan} — seç</button>); })()}
-                        {(giderKartlari || []).length > 0 && (
-                          <select data-renk-koru="1" data-banka-excel-kart={k.no} value={d.kartId} style={{ fontSize: 12, padding: "3px 6px" }}
-                            onChange={(e) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), kartId: e.target.value, cariId: e.target.value ? "" : (o[k.no] || {}).cariId } }))}>
-                            <option value="">— ya da gelir/gider kartı —</option>
-                            {giderKartlari.map((g) => <option key={g.id} value={g.id}>{g.ad}</option>)}
-                          </select>
-                        )}
+
                       </div>
                     </td>
                   </tr>

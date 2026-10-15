@@ -179,10 +179,18 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
     if (ikili && (!(genelH.tutar > 0) || (muhasebeMi && !(resmiH.tutar > 0)))) { showToast(muhasebeMi ? "Genel ve Resmi için kur ya da tutar girin" : "Cariye işlenecek tutar için kur girin"); return; }
     const [hesapTur, hesapId] = hesap.deger.split(":");
     if (ikili) {
+      // AÇIKLAMAYA ÇEVRİM (v1.681.0 — kullanıcı: "açıklamada giriş yapılan para ve kur karşılığı giriş yapılan tutar
+      // yazılacak; Genel ve Resmi için ayrı ayrı"). Ör. "1.000 ₺ → Genel 20,23 $ (kur 49,42) · Resmi 18,05 € (kur 55,41)".
+      const yaz = (x, pb) => `${Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+      const kurYaz = (h2) => (h2.pb === hesapPB ? "" : ` (kur ${Number(h2.kur).toLocaleString("tr-TR", { maximumFractionDigits: 4 })})`);
+      const cevrimMetni = (genelH.pb !== hesapPB || (muhasebeMi && resmiH.pb !== hesapPB))
+        ? `${yaz(t, hesapPB)} → ${muhasebeMi ? "Genel " : ""}${yaz(genelH.tutar, genelH.pb)}${kurYaz(genelH)}${muhasebeMi ? ` · Resmi ${yaz(resmiH.tutar, resmiH.pb)}${kurYaz(resmiH)}` : ""}`
+        : "";
+      const aciklama2 = [cevrimMetni, f.aciklama.trim()].filter(Boolean).join(" · ");
       const k2 = kasaCariHareketiKur({
         islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: stokYuvarla(genelH.tutar), cariPB: genelH.pb,
         hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(t),
-        defter: f.defter, aciklama: f.aciklama.trim(), odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
+        defter: f.defter, aciklama: aciklama2, odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
       });
       const resmiEk2 = muhasebeMi && (resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004) ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar) } : {};
       const ch2 = { ...(kart ? { ...k2.cariHareketi, vade: f.vade } : k2.cariHareketi), ...resmiEk2 };
