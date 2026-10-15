@@ -11,6 +11,13 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   const [kodAtamaProsesSecim, setKodAtamaProsesSecim] = useState("");
   // Açıklık durumu ARTIK ÜST BİLEŞENDE: aynı anda tek kart açık kalsın diye.
   const open = acik;
+  const [tamEkran, setTamEkran] = useState(false);
+  useEffect(() => {
+    if (!tamEkran) return undefined;
+    const kapat = (e) => { if (e.key === "Escape") setTamEkran(false); };
+    window.addEventListener("keydown", kapat);
+    return () => window.removeEventListener("keydown", kapat);
+  }, [tamEkran]);
   const setOpen = (v) => { const hedef = typeof v === "function" ? v(acik) : v; if (hedef !== acik) onAcKapa(); };
   const [duzenleModu, setDuzenleModu] = useState(false);
   // Düzenleme başlangıcındaki kayıt (v1.640.0, denetim; 160 ile aynı gerekçe): form açıkken gelen değişiklik ezilmesin.
@@ -369,9 +376,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
 
   return (
     // Sağ tık kartın HER YERİNDE (v1.636.1; önce yalnız başlıktaydı).
-    <div ref={kartRef} data-cari-kart-id={cari.id} {...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    // TAM EKRAN (v1.683.0 — kullanıcı: "cari kartı tam ekran yapma da olsun, şu anki düzen haricinde"): kart aynı
+    // bileşen, yalnız sabit konumlu tam ekran katmana çıkar; Esc ya da düğmeyle eski yerine döner.
+    <div ref={kartRef} data-cari-kart-id={cari.id} data-cari-tam-ekran={tamEkran ? "1" : undefined} {...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu)}
+      style={tamEkran
+        ? { position: "fixed", inset: 0, zIndex: 900, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
+        : { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <SagTikMenusu konum={sagMenu} onKapat={() => setSagMenu(null)} veri="cari" baslik={`CARİ · ${cari.unvan}`} ogeler={[
         { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
+        { k: "tamekran", etiket: tamEkran ? "Tam ekrandan çık" : "Tam ekran aç", ikon: Maximize2, onClick: () => { setOpen(true); setTamEkran((v) => !v); } },
         { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },
         { ayrac: true },
         { k: "ekstre", etiket: `Ekstre yazdır (PDF)${defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}`, ikon: Printer, gizli: !onPencereAc,
@@ -586,6 +599,13 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         })()}
         {!duzenleModu && (open ? <ChevronDown size={18} color="var(--erp-text-3)" /> : <ChevronRight size={18} color="var(--erp-text-3)" />)}
           </>
+        )}
+        {!duzenleModu && (
+          <button type="button" data-kart-eylem="tam-ekran" title={tamEkran ? "Tam ekrandan çık (Esc)" : "Tam ekran"}
+            onClick={(e) => { e.stopPropagation(); setOpen(true); setTamEkran((v) => !v); }}
+            style={{ border: "none", background: tamEkran ? "var(--erp-purple)" : "none", color: tamEkran ? "#fff" : "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6, flexShrink: 0 }}>
+            {tamEkran ? <X size={15} /> : <Maximize2 size={15} />}
+          </button>
         )}
         {!duzenleModu && (
           <button

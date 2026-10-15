@@ -1,6 +1,7 @@
 {
  "cari": {
   "kapali": [
+   "tam-ekran",
    "duzenle"
   ]
  },
