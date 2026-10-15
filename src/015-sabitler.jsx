@@ -483,9 +483,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.668.0";
+const SURUM = "1.669.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Sevk et bolunmus ekranda satis fisi; caride tahsilat satiri belirgin";
+const SURUM_NOTU = "Cari kartinda Acik Siparisler ve Bakiye sekmesi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -498,6 +498,8 @@ const SURUM_NOTU = "Sevk et bolunmus ekranda satis fisi; caride tahsilat satiri 
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.669.0", tarih: "15.10.2026", eklenen: ["Cari kartı › Açık Siparişler & Bakiye sekmesi: güncel bakiye, açık siparişlerin kalan adet ve tutarı, siparişler bitince oluşacak bakiye"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.668.0", tarih: "15.10.2026", eklenen: ["Depo › Sevkiyat › Sevk bekleyen: Sevk et ekranı böler — solda sipariş listesi, sağda (dar ekranda altta) satış fişi; koli okut, siparişten koli ya da beden beden seç, asorti ekle; Fişi kaydet ile kaydedilir"],
     degisen: ["Cari hareketlerinde tahsilat/ödeme satırı rozetin başında TAHSİLAT / ÖDEME yazıyor, tek satırda; kendiliğinden yazılan 'Tahsilat (banka)' açıklaması altta tekrar edilmiyor"], duzeltilen: [] },
   { surum: "1.667.0", tarih: "15.10.2026", eklenen: ["Depo › Sevkiyat: sevk bekleyen siparişler (kalan çift, termin, hazır koli, Sevk et), koli okutarak sevk, irsaliye (plaka, şoför, adres, koli sayısı; yazdır) ve sevkiyat geçmişi", "Depo › Alış / Satış: tip ve cari seç, cari kartındaki fiş ekranı açılır; altında son alış/satış fişleri"],
