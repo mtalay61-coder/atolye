@@ -381,7 +381,7 @@ function CariEkstre({ cari, onClose, onMinimize, firmaBilgileri, defterFiltre })
   // hiçbir defterde görünmezdi.)
   const filtreliHareketlerKaynagi = (!defterFiltre || defterFiltre === "Tümü")
     ? (cari.hareketler || [])
-    : (cari.hareketler || []).filter((h) => defterKapsar(h.defter, defterFiltre));
+    : cariDefterHareketleri(cari.hareketler, defterFiltre);
   const siraliHareketler = [...filtreliHareketlerKaynagi].sort((a, b) => {
     const ta = new Date(a.tarih).getTime() || 0;
     const tb = new Date(b.tarih).getTime() || 0;

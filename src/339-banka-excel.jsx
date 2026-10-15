@@ -197,6 +197,29 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
 
   const bankaPB = (banka && banka.paraBirimi) || "TRY";
   const kurlar = (muhasebe && muhasebe.kurlar) || {};
+  // Satır içi P. tipi + kur. alan "" → Genel (cariPB/kur), "resmi" → Resmi (resmiPB/resmiKur).
+  const pbSatiri = (k, d, alan, etiket) => {
+    const pbAd = alan ? "resmiPB" : "cariPB"; const kurAd = alan ? "resmiKur" : "kur";
+    const secPB = d[pbAd]; const secKur = d[kurAd]; const oneri = alan ? d.resmiOneriKur : d.oneriKur;
+    const ham = (secim[k.no] || {})[kurAd];
+    return (
+      <div data-banka-excel-pb={alan ? `${k.no}-resmi` : k.no} style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11, flexWrap: "wrap" }}>
+        <span style={{ minWidth: 38, fontWeight: 700 }}>{etiket}</span>
+        <select data-renk-koru="1" value={secPB} style={{ fontSize: 11, padding: "2px 4px" }}
+          onChange={(e) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), [pbAd]: e.target.value, [kurAd]: "" } }))}>
+          {MUHASEBE_PARA_BIRIMLERI.map((p2) => <option key={p2} value={p2}>{p2}</option>)}
+        </select>
+        {secPB !== bankaPB && (<>
+          <span>kur 1 {secPB} =</span>
+          <input data-renk-koru="1" data-banka-excel-kur={alan ? `${k.no}-resmi` : k.no} inputMode="decimal" style={{ width: 64, fontSize: 11, padding: "2px 4px" }}
+            value={ham != null && ham !== "" ? ham : (oneri ? String(stokYuvarla(oneri)) : "")}
+            onChange={(e) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), [kurAd]: e.target.value } }))} />
+          <span>{bankaPB}</span>
+          <b className="mono">→ {secKur > 0 ? `${stokYuvarla(Math.abs(k.tutar) / secKur).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[secPB] || secPB}` : "kur yok"}</b>
+        </>)}
+      </div>
+    );
+  };
   const durum = (k) => {
     const s = secim[k.no] || {};
     // KİLİTLİ SATIR (v1.674.0): daha önce aktarılmış ya da kapalı dönemdeki satır hiçbir yoldan (tümünü seç dahil)
@@ -214,7 +237,12 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
     const cariPB = s.cariPB || (cariK && cariK.paraBirimi) || bankaPB;
     const oneriKur = cariPB === bankaPB ? 1 : paraCevirGenel(1, cariPB, bankaPB, kurlar);
     const kur = cariPB === bankaPB ? 1 : (parseFloat(String(s.kur || "").replace(",", ".")) || oneriKur || 0);
-    return { sec: kilit ? false : (s.sec != null ? s.sec : varsayilan), cariId, kartId: s.kartId || "", kilit, cariPB, kur, oneriKur };
+    // DEFTERE GÖRE P. TİPİ (v1.675.0): defter "Muhasebe" iken Resmi için ayrı P. tipi + kur (varsayılan banka birimi,
+    // ör. TL); aynı kayıt Genel'de USD, Resmi'de TL olur (200 hareketDefterde, `resmiTutar`/`resmiPB`).
+    const resmiPB = s.resmiPB || bankaPB;
+    const resmiOneriKur = resmiPB === bankaPB ? 1 : paraCevirGenel(1, resmiPB, bankaPB, kurlar);
+    const resmiKur = resmiPB === bankaPB ? 1 : (parseFloat(String(s.resmiKur || "").replace(",", ".")) || resmiOneriKur || 0);
+    return { sec: kilit ? false : (s.sec != null ? s.sec : varsayilan), cariId, kartId: s.kartId || "", kilit, cariPB, kur, oneriKur, resmiPB, resmiKur, resmiOneriKur };
   };
   const degistir = (no, alan, deger) => setSecim((o) => ({ ...o, [no]: { ...(o[no] || {}), [alan]: deger } }));
   const secilenler = kalemler.filter((k) => durum(k).sec);
@@ -229,12 +257,12 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
   const kaydet = () => {
     if (!banka) { showToast("Önce banka hesabını seçin"); return; }
     if (secilenler.length === 0) { showToast("Aktarılacak satır seçilmedi"); return; }
-    const kursuz = secilenler.filter((k) => { const d = durum(k); return d.cariId && d.cariPB !== bankaPB && !(d.kur > 0); });
+    const kursuz = secilenler.filter((k) => { const d = durum(k); return d.cariId && ((d.cariPB !== bankaPB && !(d.kur > 0)) || (defter === "Muhasebe" && d.resmiPB !== bankaPB && !(d.resmiKur > 0))); });
     if (kursuz.length > 0) { showToast(`${kursuz.length} satırda kur yok — ${kursuz.map((k) => durum(k).cariPB).join(", ")} kurunu girin`); return; }
     if (karsiliksiz.length > 0) { showToast(`${karsiliksiz.length} seçili satırda karşı taraf yok — cari ya da gelir/gider kartı seçin`); return; }
     let cariSay = 0, bankaSay = 0;
     secilenler.forEach((k) => {
-      const { cariId, kartId, cariPB, kur: satirKur } = durum(k);
+      const { cariId, kartId, cariPB, kur: satirKur, resmiPB, resmiKur } = durum(k);
       const kart = kartId ? (giderKartlari || []).find((x) => x.id === kartId) : null;
       const cari = cariId ? (cariler || []).find((c) => c.id === cariId) : null;
       const tutar = Math.abs(k.tutar);
@@ -246,7 +274,10 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
           hesapTur: "banka", hesapId: banka.id, hesapAd: banka.ad, hesapPB: pb, hesapTutar: tutar,
           defter, aciklama: k.aciklama, odemeSekli: "Havale/EFT",
         });
-        onCariliKaydet({ cariId: cari.id, cariHareketi: { ...kur.cariHareketi, bankaRef: k.ref },
+        // Resmi tutarı yalnız Muhasebe defterinde ve birimi Genel'den farklıysa yazılır (aynıysa tek tutar yeter).
+        const resmiEk = defter === "Muhasebe" && resmiPB !== cariPB
+          ? { resmiPB, resmiTutar: resmiPB === pb ? tutar : stokYuvarla(tutar / resmiKur) } : {};
+        onCariliKaydet({ cariId: cari.id, cariHareketi: { ...kur.cariHareketi, ...resmiEk, bankaRef: k.ref },
           muhasebe: { hesapTur: "banka", hesapId: banka.id, hareket: { ...kur.muhasebeHareketi, bankaRef: k.ref } } });
         cariSay++;
       } else {
@@ -350,23 +381,8 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
                     <td style={{ padding: 4 }}>
                       <div style={{ display: "grid", gap: 3, outline: d.sec && !d.cariId && !d.kartId ? "2px solid var(--erp-danger, #B3261E)" : "none", borderRadius: 6 }}>
                         <CariSecici cariler={aktifCariler} deger={d.cariId || null} onDegis={(id) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: id || "", kartId: id ? "" : (o[k.no] || {}).kartId } }))} kucuk placeholder="Cari seç…" />
-                        {d.cariId && (
-                          <div data-banka-excel-pb={k.no} style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 11, flexWrap: "wrap" }}>
-                            <span>P. tipi</span>
-                            <select data-renk-koru="1" value={d.cariPB} style={{ fontSize: 11, padding: "2px 4px" }}
-                              onChange={(e) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariPB: e.target.value, kur: "" } }))}>
-                              {MUHASEBE_PARA_BIRIMLERI.map((p2) => <option key={p2} value={p2}>{p2}</option>)}
-                            </select>
-                            {d.cariPB !== bankaPB && (<>
-                              <span>kur 1 {d.cariPB} =</span>
-                              <input data-renk-koru="1" data-banka-excel-kur={k.no} inputMode="decimal" style={{ width: 64, fontSize: 11, padding: "2px 4px" }}
-                                value={(secim[k.no] || {}).kur != null && (secim[k.no] || {}).kur !== "" ? secim[k.no].kur : (d.oneriKur ? String(stokYuvarla(d.oneriKur)) : "")}
-                                onChange={(e) => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), kur: e.target.value } }))} />
-                              <span>{bankaPB}</span>
-                              <b className="mono">→ {d.kur > 0 ? `${stokYuvarla(Math.abs(k.tutar) / d.kur).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[d.cariPB] || d.cariPB}` : "kur yok"}</b>
-                            </>)}
-                          </div>
-                        )}
+                        {d.cariId && pbSatiri(k, d, "", defter === "Muhasebe" ? "Genel" : "P. tipi")}
+                        {d.cariId && defter === "Muhasebe" && pbSatiri(k, d, "resmi", "Resmi")}
                         {k.oneriId && !d.cariId && !d.kartId && (() => { const oc = (cariler || []).find((c) => c.id === k.oneriId); return oc && (
                           <button type="button" className="btn-ghost" data-banka-excel-oneri={k.no} style={{ fontSize: 11, padding: "1px 6px", justifySelf: "start" }}
                             onClick={() => setSecim((o) => ({ ...o, [k.no]: { ...(o[k.no] || {}), cariId: oc.id, kartId: "" } }))}>öneri: {oc.unvan} — seç</button>); })()}

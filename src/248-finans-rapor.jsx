@@ -277,8 +277,8 @@ function finansGunEkle(t, n) {
 
 function cariYaslandirma(cari, { defter = "Tümü", tarih, varsayilanVade = 0 } = {}) {
   const bugun = tarih || bugunYerel();
-  const hareketler = ((cari && cari.hareketler) || [])
-    .filter((h) => defterKapsar(h.defter, defter) && finansGun(h.tarih) && finansGun(h.tarih) <= bugun)
+  const hareketler = cariDefterHareketleri((cari && cari.hareketler) || [], defter)
+    .filter((h) => finansGun(h.tarih) && finansGun(h.tarih) <= bugun)
     .sort((a, b) => finansGun(a.tarih).localeCompare(finansGun(b.tarih)) || String(a.zaman || "").localeCompare(String(b.zaman || "")));
   const pbler = [...new Set(hareketler.map((h) => h.paraBirimi || "TRY"))];
   const yuv = (x) => Math.round(x * 100) / 100;

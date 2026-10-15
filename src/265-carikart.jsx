@@ -1484,7 +1484,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             // "Muhasebe" kaydı iki defterde de listeleniyor (bkz. defterKapsar).
             const defterUygulanmis = defterFiltre === "Tümü"
               ? (cari.hareketler || [])
-              : (cari.hareketler || []).filter((h) => defterKapsar(h.defter, defterFiltre));
+              : cariDefterHareketleri(cari.hareketler, defterFiltre);
             const mevcutPBler = Array.from(new Set(defterUygulanmis.map((h) => h.paraBirimi || "TRY")));
             if (mevcutPBler.length <= 1) return null;
             return (
@@ -1522,7 +1522,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             // "Muhasebe" kaydı iki defterde de listeleniyor (bkz. defterKapsar).
             const defterUygulanmis = defterFiltre === "Tümü"
               ? (cari.hareketler || [])
-              : (cari.hareketler || []).filter((h) => defterKapsar(h.defter, defterFiltre));
+              : cariDefterHareketleri(cari.hareketler, defterFiltre);
             const filtreliHareketler = pbFiltre === "Tümü"
               ? defterUygulanmis
               : defterUygulanmis.filter((h) => (h.paraBirimi || "TRY") === pbFiltre);
@@ -1790,6 +1790,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                   }}
                                 >
                                   {defterEtiketi}
+                                </span>
+                              )}
+                              {/* RESMİ TUTARI AYRI KAYIT (v1.675.0): Genel'de USD, Resmi'de TL gibi — Resmi süzgecinde zaten o tutar görünür. */}
+                              {ilk.resmiPB && ilk.resmiTutar != null && defterFiltre !== "Resmi" && (
+                                <span data-ekstre-resmi-tutar="1" className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-info)" }}>
+                                  Resmi: {Number(ilk.resmiTutar).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[ilk.resmiPB] || ilk.resmiPB}
                                 </span>
                               )}
                             </div>

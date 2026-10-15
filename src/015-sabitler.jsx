@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.674.1";
+const SURUM = "1.675.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Banka Excel: cari satirinda para birimi ve kur";
+const SURUM_NOTU = "Muhasebe defterinde Genel ve Resmi icin ayri para birimi (tek kayit)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.675.0", tarih: "15.10.2026", eklenen: ["Banka Excel'i: defter Muhasebe iken Genel ve Resmi için ayrı P. tipi + kur — aynı kayıt Genel'de USD, Resmi'de TL (tek kayıt; Resmi bakiye, ekstre, yaşlandırma ve mutabakat Resmi tutarı okur, Tümü'de çift sayılmaz)"],
+    degisen: ["Cari ekstresinde Resmi tutarı farklı kayıtta 'Resmi: …' etiketi"], duzeltilen: [] },
   { surum: "1.674.1", tarih: "15.10.2026", eklenen: ["Banka Excel'i: cari seçilen satırda P. tipi (cariye işlenecek para birimi) ve kur — sistemdeki kurla dolu gelir, değiştirilebilir; cariye çevrilmiş tutar yazılır"],
     degisen: [], duzeltilen: [] },
   { surum: "1.674.0", tarih: "15.10.2026", eklenen: ["Kasa & Banka › Tüm hareketler: kasa ve banka hareketleri tek listede — Kasa/Banka, hesap, Genel/Resmi, Giriş/Çıkış, tarih aralığı ve arama süzgeçleri, para birimi başına toplam", "Ödeme & Tahsilat: cari yerine gelir/gider kartı seçilerek kasa/banka girişi (kira, elektrik, banka masrafı…)"],

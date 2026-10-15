@@ -27,8 +27,8 @@ function mutabakatDonemAdi(donem) {
 // Dönem sonu bakiyesi — cariBakiyeleri (200) ile aynı kural, yalnız tarih ≤ dönem sonu.
 function cariMutabakatBakiyesi(cari, donem, defter) {
   const toplam = {};
-  ((cari && cari.hareketler) || [])
-    .filter((h) => defterKapsar(h.defter, defter) && String(h.tarih || "").slice(0, 10) <= donem)
+  cariDefterHareketleri((cari && cari.hareketler) || [], defter)
+    .filter((h) => String(h.tarih || "").slice(0, 10) <= donem)
     .forEach((h) => {
       const pb = h.paraBirimi || "TRY";
       toplam[pb] = (toplam[pb] || 0) + (h.yon === "Borç" ? (h.tutar || 0) : -(h.tutar || 0));
