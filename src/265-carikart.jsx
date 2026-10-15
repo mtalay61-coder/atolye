@@ -1808,7 +1808,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                               <div
                                 className="mono"
                                 style={{
-                                  display: "inline-flex", alignItems: "center", gap: 4, flexWrap: sadeGorunum ? "nowrap" : "wrap",
+                                  display: "inline-flex", alignItems: "center", gap: 4, flexWrap: "nowrap", whiteSpace: "nowrap", maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis",
                                   // SADE KİPTE TEK SATIR (v1.505.0): rozet ile özet yan yana — rozet kendi satırına
                                   // düşünce ödeme satırı ürün satırlarının iki katı yüksekliğe çıkıyordu.
                                   fontSize: 10, fontWeight: 700, marginBottom: sadeGorunum ? 0 : 3, marginRight: sadeGorunum ? 6 : 0,
@@ -1822,7 +1822,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                   color: HAREKET_TIPI_RENK[hareketIslemTipi(ilk)] || "var(--erp-brown)",
                                 }}
                               >
-                                <FileText size={10} />
+                                {/* İŞLEM TİPİ ROZETİN BAŞINDA (v1.668.0 — kullanıcı: "tahsilat girildi, ekranda tahsilat
+                                    yazmıyor, belli etsin"): yalnız "Havale/EFT" yazınca yönü tutar sütunundan çıkarmak gerekiyordu. */}
+                                {paraHareketiMi(ilk) ? <><HareketIkonu tip={hareketIslemTipi(ilk)} size={11} /><span data-ekstre-islem-tipi="1" style={{ textTransform: "uppercase" }}>{hareketIslemTipi(ilk)}</span> · </> : <FileText size={10} />}
                                 {g.odemeSekli}
                                 {g.vade ? ` · vade ${g.vade}` : ""}
                                 {/* PARANIN NEREYE İŞLENDİĞİ (kullanıcı, 6 Eylül: "1000 USD ödeme,
@@ -1867,7 +1869,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                             {urunGruplari.length > 0 && (
                               <FisKalemMatrisi urunGruplari={urunGruplari} stok={stok} kompakt />
                             )}
-                            {yapisizHareketler.map((h) => {
+                            {yapisizHareketler.filter((h) => {
+                              // OTOMATİK AÇIKLAMA TEKRARI (v1.668.0 — kullanıcı: "alt açıklamada tahsilat banka adı yazıyor,
+                              // banka adı üst satırda var, tek satıra sığsın"). "Tahsilat (Kuveyt TL)" gibi kendiliğinden
+                              // yazılan açıklama, rozet zaten tipi + hesabı gösterdiğinde atlanır; elle yazılan açıklama kalır.
+                              if (!(g.odemeSekli && paraHareketiMi(h))) return true;
+                              const a = String(h.aciklama || "").trim();
+                              const tip = hareketIslemTipi(h);
+                              return !(a === "" || a === tip || a === `${tip} (${h.hesapAd || ""})` || (h.hesapAd && a === h.hesapAd));
+                            }).map((h) => {
                               let urunAdiIcin = h.urunAd || null;
                               if (!urunAdiIcin && h.aciklama) {
                                 // İKİ BİÇİM birden tanınır. Eski kayıtlar "Üretim (Kesim): SS Model ·",
