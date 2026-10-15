@@ -252,7 +252,9 @@ const MODUL_RENK = {
   cari: "var(--erp-info)",       // defter mavisi
   siparis: "#9C3D3D",    // mühür/fiş bordosu — SATIŞ tarafı
   satinalma: "var(--erp-brown)",  // saddle — alış tarafı, stok/hammadde ile aynı dil
-  depo: "#5A6B4E",       // depo yeşili — stoğa yakın ama ondan ayrı bir bakış
+  depo: "#5A6B4E",
+  sevkiyat: "#5A6B4E",
+  alissatis: "var(--erp-info)",       // depo yeşili — stoğa yakın ama ondan ayrı bir bakış
   fisler: "var(--erp-purple)",     // damga moru
   muhasebe: "#2F6B4F",
   cekler: "#2F6B4F",
@@ -276,6 +278,8 @@ const SEKME_BILGISI = {
   satinalma: { ad: "Alış Siparişi" },
   depo: { ad: "Depo" },
   paketleme: { ad: "Paketleme" },
+  sevkiyat: { ad: "Sevkiyat" },
+  alissatis: { ad: "Alış / Satış" },
   planlama: { ad: "Planlama" },
   fisler: { ad: "Fişler" },
   muhasebe: { ad: "Kasa & Banka" },
@@ -479,9 +483,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.666.1";
-const SURUM_TARIHI = "2026-10-12";
-const SURUM_NOTU = "Siparis, fis ve ekstre ciktilarinda caride resmi unvan";
+const SURUM = "1.667.0";
+const SURUM_TARIHI = "2026-10-15";
+const SURUM_NOTU = "Depo menusune Sevkiyat merkezi ve Alis / Satis ekrani";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -494,6 +498,8 @@ const SURUM_NOTU = "Siparis, fis ve ekstre ciktilarinda caride resmi unvan";
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.667.0", tarih: "15.10.2026", eklenen: ["Depo › Sevkiyat: sevk bekleyen siparişler (kalan çift, termin, hazır koli, Sevk et), koli okutarak sevk, irsaliye (plaka, şoför, adres, koli sayısı; yazdır) ve sevkiyat geçmişi", "Depo › Alış / Satış: tip ve cari seç, cari kartındaki fiş ekranı açılır; altında son alış/satış fişleri"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.666.1", tarih: "15.10.2026", eklenen: [],
     degisen: ["Sipariş çıktısı, fiş çıktısı ve cari ekstresinde müşteri/tedarikçi adı olarak resmi ünvan (girilmemişse ekrandaki ad)"], duzeltilen: [] },
   { surum: "1.666.0", tarih: "15.10.2026", eklenen: ["Cari kartı › Bilgiler: Resmi ünvan (ör. Fatih Ticaret A.Ş.) — kart başlığında marka adının yanında, cari listesinde ve bütün cari seçicilerde aramada bulunur, e-faturada alıcı adı olarak kullanılır"],

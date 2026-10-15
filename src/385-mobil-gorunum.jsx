@@ -29,6 +29,8 @@ const MOBIL_MODULLER = [
   { key: "uretim", ad: "Üretim" },
   { key: "depo", ad: "Depo" },
   { key: "paketleme", ad: "Paketleme" },
+  { key: "sevkiyat", ad: "Sevkiyat" },
+  { key: "alissatis", ad: "Alış / Satış" },
   { key: "planlama", ad: "Planlama" },
   { key: "fisler", ad: "Fişler" },
   { key: "muhasebe", ad: "Muhasebe" },
