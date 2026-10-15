@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.676.0";
+const SURUM = "1.677.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Odeme & Tahsilat ve cari kartinda Resmi icin ayri para birimi";
+const SURUM_NOTU = "Gelir/gider kartinda para birimi ceviricisi (Genel ve Resmi)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.677.0", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat › gelir/gider kartı girişi: P. birimi çevirici — gider Genel'de başka para biriminde (ör. kasa TL, gider USD), defter Muhasebe iken Resmi için ayrıca; Gelir/Gider raporu deftere göre çevrilmiş tutarı kullanır"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.676.0", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat ve cari kartı tahsilat/ödeme formu: defter Muhasebe iken 'Resmi P. tipi' — Resmi defterde başka para birimi ve tutar (boşsa sistem kuruyla önerilen); tek kayıt", "Banka Excel'i: çevrilen karşı tutar da yazılabilir — kur ondan hesaplanır (çift yönlü)"],
     degisen: [], duzeltilen: [] },
   { surum: "1.675.0", tarih: "15.10.2026", eklenen: ["Banka Excel'i: defter Muhasebe iken Genel ve Resmi için ayrı P. tipi + kur — aynı kayıt Genel'de USD, Resmi'de TL (tek kayıt; Resmi bakiye, ekstre, yaşlandırma ve mutabakat Resmi tutarı okur, Tümü'de çift sayılmaz)"],
