@@ -313,6 +313,8 @@ function AtolyeUygulamasi() {
   });
   // Görünen logo/unvan değişince cihazda sakla (bir sonraki açılışın ilk karesi için). Büyük logo
   // (≈1,5 MB üstü) saklanmaz: localStorage kotası küçük, başka tercihler de orada.
+  // Dönem kilidi tek kaynakta (015 DONEM_KAPANIS_TARIHI); her çizimde güncellenir, hunilerde okunur.
+  DONEM_KAPANIS_TARIHI = (tanimlar.firmaBilgileri || {}).donemKapanis || null;
   const firmaLogosu = (tanimlar.firmaBilgileri || {}).logo || "";
   const firmaUnvani = (tanimlar.firmaBilgileri || {}).unvan || "";
   useEffect(() => {
@@ -1385,12 +1387,13 @@ function AtolyeUygulamasi() {
   // kopya sayısı yanıltıcı olurdu.
   const muhasebeyePesinIsle = useCallback((p) => {
     if (!p || !p.hesapId) return;
+    if (donemKilidiEngel(p.hareket && p.hareket.tarih, showToast, "Kasa/banka hareketi")) return;
     setMuhasebe((onceki) => {
       const yeni = hesabaHareketEkle(onceki, p.hesapTur, p.hesapId, p.hareket);
       yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeni), "Muhasebe", yeni);
       return yeni;
     });
-  }, []);
+  }, [showToast]);
 
   const acilisFisiKes = useCallback(() => {
     const sonuc = acilisFisleriUret(stok, {
@@ -3068,6 +3071,7 @@ function AtolyeUygulamasi() {
   }, [tanimlar, showToast, tanimlarKodluYaz]);
 
   const addCariHareketFromStok = useCallback((cariId, hareketVeyaDizi) => {
+    if (donemKilidiEngel((Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi]).map((h) => h && h.tarih), showToast, "Cari hareketi")) return;
     setCariler((prev) => {
       const gelenler = Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi];
       // TEK ÇAĞRI = TEK FİŞ (bkz. CariModule'deki aynı huni).
@@ -3095,7 +3099,7 @@ function AtolyeUygulamasi() {
       yazimiIzle(tabloYaz("cari:data", "cariler", next), "Cari kartları", next);
       return next;
     });
-  }, [aktifKullanici]);
+  }, [aktifKullanici, showToast]);
 
 
 
@@ -3319,6 +3323,14 @@ function AtolyeUygulamasi() {
   // Kaynağı (sipariş/üretim) artık var olmayan "yetim" bir fişi tamamen temizler — o fişe ait TÜM
   // stok ve cari hareketlerini siler, stok miktarlarını da (o hareketlerin etkisini geri alarak) düzeltir.
   const yetimFisTemizle = useCallback(async (fis) => {
+    // KAPALI DÖNEM FİŞİ SİLİNMEZ: fişin cari/stok hareketlerinden biri kapalı dönemdeyse (id ya da fiş no ile bulunur).
+    {
+      const idler = new Set(((fis && fis.hareketler) || []).map((h) => h.id));
+      const tarihler = [];
+      (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => { if (idler.has(h.id) || (fis && fis.fisNo && h.fisNo === fis.fisNo)) tarihler.push(h.tarih); }));
+      (stok || []).forEach((u) => (u.hareketler || []).forEach((h) => { if (idler.has(h.id) || (fis && fis.fisNo && h.fisNo === fis.fisNo)) tarihler.push(h.tarih); }));
+      if (donemKilidiEngel(tarihler, showToast, "Silme")) return;
+    }
     // Bu fonksiyon eskiden mesajı KOŞULSUZ basıyordu: hiçbir hareket eşleşmese bile "temizlendi"
     // diyordu. Kullanıcı temizlendiğini sanıp fişin listede durmasına anlam veremiyordu.
     // Artık her dal kendi gerçeğini söylüyor.
@@ -3501,9 +3513,11 @@ function AtolyeUygulamasi() {
   // THS-/ODM-, zaman, kullanıcı), kasa/banka hareketi muhasebeyePesinIsle'den — yeni yazıcı kapısı açılmıyor (denetim 16).
   const siparisOdemesiKaydet = useCallback((k) => {
     if (!k || !k.cariId || !k.cariHareketi) return;
+    // Önce tek kontrol: cari ve kasa ayağından biri kapalı dönemdeyse İKİSİ de yazılmaz (yarım kayıt olmasın).
+    if (donemKilidiEngel([k.cariHareketi.tarih, k.muhasebe && k.muhasebe.hareket && k.muhasebe.hareket.tarih], showToast)) return;
     addCariHareketFromStok(k.cariId, k.cariHareketi);
     if (k.muhasebe && k.muhasebe.hesapId) muhasebeyePesinIsle({ hesapTur: k.muhasebe.hesapTur, hesapId: k.muhasebe.hesapId, hareket: k.muhasebe.hareket });
-  }, [addCariHareketFromStok, muhasebeyePesinIsle]);
+  }, [addCariHareketFromStok, muhasebeyePesinIsle, showToast]);
 
 
   const TAB_TITLES = {

@@ -163,13 +163,42 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
       tutar = Math.round(tutar * 100) / 100;
       const ref = `${tarih}|${tutar}|${bankaNorm(aciklama)}`;
       const oneri = bankaCariOner(aciklama, cariler);
-      return { no: i, tarih, aciklama, tutar, ref, onceden: oncekiRefler.has(ref), oneriId: oneri ? oneri.id : "" };
+      return { no: i, tarih, aciklama, tutar, ref, onceden: oncekiRefler.has(ref), oneriId: oneri ? oneri.id : "",
+        kilitli: donemKilitliMi(tarih) };
     }).filter(Boolean);
   }, [ham, esleme, cariler, oncekiRefler]);
 
+  // BANKA MUTABAKATI (v1.672.0). Ekstre satırı sistemdeki banka hareketleriyle eşleştirilir:
+  //   1) aynı parmak izi (`bankaRef`) → "daha önce aktarıldı";
+  //   2) elle girilmiş hareket: aynı yön, aynı tutar, tarih ±3 gün → "sistemde var" (işaretsiz gelir, iki kez girilmez).
+  // Bir hareket yalnız BİR satırla eşleşir (aynı gün iki eşit havale ayrı ayrı sayılsın). Ekstrenin tarih aralığında
+  // sistemde olup ekstrede karşılığı olmayan hareketler ayrıca listelenir — yanlış/eksik girişi bulmak için.
+  const mutabakat = React.useMemo(() => {
+    const hareketler = ((banka && banka.hareketler) || []).filter((h) => h && h.tarih);
+    const kullanilan = new Set();
+    const eslesme = {};
+    kalemler.forEach((k) => {
+      const ayniRef = hareketler.find((h) => h.bankaRef === k.ref && !kullanilan.has(h.id));
+      if (ayniRef) { kullanilan.add(ayniRef.id); return; }
+      const yon = k.tutar > 0 ? "Giriş" : "Çıkış";
+      const gunFark = (a, b) => Math.abs((new Date(`${a}T00:00:00`) - new Date(`${String(b).slice(0, 10)}T00:00:00`)) / 86400000);
+      const aday = hareketler.filter((h) => !kullanilan.has(h.id) && !h.bankaRef && h.yon === yon
+        && Math.abs((Number(h.tutar) || 0) - Math.abs(k.tutar)) < 0.01 && gunFark(k.tarih, h.tarih) <= 3)
+        .sort((a, b) => gunFark(k.tarih, a.tarih) - gunFark(k.tarih, b.tarih))[0];
+      if (aday) { kullanilan.add(aday.id); eslesme[k.no] = aday; }
+    });
+    const tarihler = kalemler.map((k) => k.tarih).sort();
+    const eksikler = tarihler.length === 0 ? [] : hareketler.filter((h) => {
+      const t = String(h.tarih).slice(0, 10);
+      return t >= tarihler[0] && t <= tarihler[tarihler.length - 1] && !kullanilan.has(h.id);
+    });
+    return { eslesme, eksikler };
+  }, [kalemler, banka]);
+
   const durum = (k) => {
     const s = secim[k.no] || {};
-    return { sec: s.sec != null ? s.sec : !k.onceden, cariId: s.cariId != null ? s.cariId : k.oneriId };
+    const varsayilan = !k.onceden && !k.kilitli && !mutabakat.eslesme[k.no];
+    return { sec: k.kilitli ? false : (s.sec != null ? s.sec : varsayilan), cariId: s.cariId != null ? s.cariId : k.oneriId };
   };
   const degistir = (no, alan, deger) => setSecim((o) => ({ ...o, [no]: { ...(o[no] || {}), [alan]: deger } }));
   const secilenler = kalemler.filter((k) => durum(k).sec);
@@ -276,9 +305,12 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
                 const tip = k.tutar > 0 ? "Tahsilat" : "Ödeme";
                 return (
                   <tr key={k.no} data-banka-excel-satir={k.no} style={{ borderTop: "1px solid var(--erp-line-soft)", opacity: d.sec ? 1 : 0.5 }}>
-                    <td style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={d.sec} onChange={(e) => degistir(k.no, "sec", e.target.checked)} /></td>
+                    <td style={{ padding: 4 }}><input type="checkbox" data-renk-koru="1" checked={d.sec} disabled={k.kilitli} onChange={(e) => degistir(k.no, "sec", e.target.checked)} /></td>
                     <td style={{ padding: 4, whiteSpace: "nowrap" }}>{tarihYaz(k.tarih)}</td>
-                    <td style={{ padding: 4 }}>{k.aciklama}{k.onceden && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-warn)", fontWeight: 700 }}>daha önce aktarıldı</span>}</td>
+                    <td style={{ padding: 4 }}>{k.aciklama}{k.onceden && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-warn)", fontWeight: 700 }}>daha önce aktarıldı</span>}
+                      {mutabakat.eslesme[k.no] && <span data-banka-excel-sistemde="1" title={mutabakat.eslesme[k.no].aciklama || ""} style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-info)", fontWeight: 700 }}>
+                        sistemde var ({tarihYaz(mutabakat.eslesme[k.no].tarih)}{mutabakat.eslesme[k.no].aciklama ? ` · ${String(mutabakat.eslesme[k.no].aciklama).slice(0, 40)}` : ""})</span>}
+                      {k.kilitli && <span style={{ marginLeft: 6, fontSize: 10, color: "var(--erp-danger, #B3261E)", fontWeight: 700 }}>kapalı dönem</span>}</td>
                     <td style={{ padding: 4, color: d.cariId ? HAREKET_TIPI_RENK[tip] : "var(--erp-text-2)", fontWeight: 700, whiteSpace: "nowrap" }}>
                       {d.cariId ? tip : (k.tutar > 0 ? "Banka girişi" : "Banka çıkışı")}
                     </td>
@@ -291,6 +323,29 @@ function BankaExcelEkrani({ muhasebe, cariler, onCariliKaydet, onBankaHareketi, 
               })}</tbody>
             </table>
           </div>
+        </div>
+      )}
+      {kalemler.length > 0 && banka && (
+        <div style={kutu} data-banka-excel-eksik="1">
+          <b style={{ fontSize: 12 }}>Mutabakat</b>
+          <div style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "4px 0 8px" }}>
+            Ekstrede {kalemler.length} satır · {kalemler.filter((k) => k.onceden).length} daha önce aktarılmış · {Object.keys(mutabakat.eslesme).length} sistemde elle girilmiş ·{" "}
+            {kalemler.filter((k) => !k.onceden && !mutabakat.eslesme[k.no]).length} yeni
+          </div>
+          {mutabakat.eksikler.length === 0
+            ? <div style={{ fontSize: 12, color: "var(--erp-primary)" }}>Bu tarih aralığında sistemdeki bütün banka hareketlerinin ekstrede karşılığı var.</div>
+            : (<>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-danger, #B3261E)", marginBottom: 4 }}>
+                Sistemde olup ekstrede olmayan {mutabakat.eksikler.length} hareket (yanlış tutar/tarih ya da bankaya hiç geçmemiş olabilir):
+              </div>
+              {mutabakat.eksikler.map((h) => (
+                <div key={h.id} data-banka-excel-eksik-satir="1" style={{ display: "flex", gap: 10, fontSize: 12, padding: "2px 0" }}>
+                  <span>{tarihYaz(h.tarih)}</span>
+                  <span className="mono" style={{ color: h.yon === "Giriş" ? HAREKET_TIPI_RENK["Tahsilat"] : HAREKET_TIPI_RENK["Ödeme"] }}>{h.yon === "Giriş" ? "+" : "−"}{para(Number(h.tutar) || 0)}</span>
+                  <span style={{ color: "var(--erp-text-2)" }}>{h.aciklama}</span>
+                </div>
+              ))}
+            </>)}
         </div>
       )}
       {!ham && bankalar.length === 0 && <EmptyState text="Önce Kasa & Banka'da bir banka hesabı açın." />}

@@ -488,6 +488,17 @@ function SiparisOzetSatiri({ siparis, cariler, onAc, onTamEkran, tumSiparisler, 
         </span>
       )}
       <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Teslim: {siparis.teslimTarihi ? tarihYaz(siparis.teslimTarihi) : "—"}</span>
+      {(() => {
+        // TERMİN ROZETİ (v1.672.0): gecikmiş kırmızı, 7 gün içinde turuncu. Sipariş listesinde göze çarpsın.
+        const t = siparisTermin(siparis);
+        if (!t || t.durum === "ileri") return null;
+        const renk = t.durum === "gecikti" ? "var(--erp-danger, #B3261E)" : "var(--erp-warn, #B8860B)";
+        return (
+          <span data-termin-rozet={t.durum} className="mono" style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "1A"), color: renk }}>
+            {t.durum === "gecikti" ? `${-t.gun} gün gecikti` : t.gun === 0 ? "bugün teslim" : `${t.gun} gün kaldı`}
+          </span>
+        );
+      })()}
       <span
         className="mono"
         style={{

@@ -485,9 +485,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.671.0";
+const SURUM = "1.672.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Odeme & Tahsilat: banka hareketlerini Excel ekstresinden aktarma";
+const SURUM_NOTU = "Banka mutabakati, siparis termin takibi, donem kapanisi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -497,9 +497,32 @@ const SURUM_NOTU = "Odeme & Tahsilat: banka hareketlerini Excel ekstresinden akt
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 // TEK SAYFA SEKMESİ (v1.645.12 — kullanıcı: "Birden fazla oldu, kasa banka vs. iki girişe gerek yok, hepsini teke düşür"):
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
+// DÖNEM KAPANIŞI (v1.672.0 — kullanıcı onayıyla önerilen 10. madde). Tanımlar › Kullanıcılar sekmesinde Yönetici bir gün seçer;
+// o gün DAHİL öncesine tarihli kayıt girilmez, o döneme ait fiş/hareket silinmez. Değer App'te her çizimde buraya
+// yazılır (AKTIF_FIRMA gibi tek kaynak): kayıt hunileri (089 fiş, 100 cari/kasa hunisi, 205 kasa/banka, 260 cari
+// kartı, fiş silme) prop zinciri kurmadan okur. Kilidi açmak = tarihi geri çekmek ya da boşaltmak (yalnız Yönetici).
+let DONEM_KAPANIS_TARIHI = null;
+function donemKilitliMi(tarih) {
+  const t = String(tarih || "").slice(0, 10);
+  return !!(DONEM_KAPANIS_TARIHI && t && t <= DONEM_KAPANIS_TARIHI);
+}
+// Kilitliyse uyarır ve true döner — çağıran `if (donemKilidiEngel(t, showToast)) return;` der.
+function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
+  const liste = (Array.isArray(tarihler) ? tarihler : [tarihler]).filter(Boolean);
+  const kilitli = liste.find(donemKilitliMi);
+  if (!kilitli) return false;
+  if (showToast) showToast(`${islem} yapılamaz: ${tarihYaz(DONEM_KAPANIS_TARIHI)} ve öncesi kapalı dönem (Tanımlar › Kullanıcılar › Dönem kapanışı)`);
+  return true;
+}
+
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.672.0", tarih: "15.10.2026", eklenen: [
+    "Banka Excel'i › Mutabakat: elle girilmiş banka hareketiyle eşleşen ekstre satırı 'sistemde var' (işaretsiz), ekstrenin tarih aralığında sistemde olup ekstrede olmayan hareketler ayrı listede",
+    "Sipariş listesinde termin rozeti (X gün gecikti / bugün / X gün kaldı) ve ⏰ Geciken / 7 gün içinde süzgeçleri",
+    "Tanımlar › Kullanıcılar › Dönem kapanışı: seçilen gün ve öncesine fiş, cari ve kasa/banka hareketi girilmez, o döneme ait kayıt silinmez (yalnız Yönetici değiştirir)"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.671.0", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat › Banka Excel'i: banka hesabı seç, ekstreyi (Excel/CSV) yükle, sütunlar kendiliğinden eşlenir; açıklamadaki ünvana göre cari önerilir; carili satır Tahsilat/Ödeme olarak cariye ve bankaya, carisiz satır yalnız bankaya işlenir; aynı satır ikinci kez aktarılmaz"],
     degisen: [], duzeltilen: [] },
   { surum: "1.670.0", tarih: "15.10.2026", eklenen: [],

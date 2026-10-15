@@ -85,6 +85,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
 
 
   async function hareketEkle(tur, hesapId, hareket) {
+    if (donemKilidiEngel(hareket && hareket.tarih ? hareket.tarih : bugunYerel(), showToast, "Kasa/banka hareketi")) return;
     const key = tur === "kasa" ? "kasalar" : "bankalar";
     const hesap = muhasebe[key].find((h) => h.id === hesapId);
 
@@ -222,6 +223,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
     const key = tur === "kasa" ? "kasalar" : "bankalar";
     const hesap = muhasebe[key].find((h) => h.id === hesapId);
     const silinecekHareket = hesap ? (hesap.hareketler || []).find((h) => h.id === hareketId) : null;
+    if (silinecekHareket && donemKilidiEngel(silinecekHareket.tarih, showToast, "Silme")) return;
 
     // Kasa/banka hareketi silmek para kaydını değiştirir; yetkisi olmayan kullanıcı doğrudan
     // yapamaz, isteği yöneticinin onayına düşer. Yönetici rolü kullaniciYetkisiVar içinde zaten
