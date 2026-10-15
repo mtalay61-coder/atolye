@@ -175,10 +175,8 @@ function hareketYonu(tip) {
 // liste ondan ayrışmıştı.
 function cariBakiyeleri(cari, defter) {
   const toplam = {};
-  ((cari && cari.hareketler) || [])
-    // `defterKapsar`: "Muhasebe" kaydı hem Genel hem Resmi bakiyesine giriyor. Kasa
-    // tarafındaki kuralın aynısı; iki taraf ayrışmasın diye tek fonksiyon.
-    .filter((h) => defterKapsar(h.defter, defter))
+  // `defterKapsar`: "Muhasebe" kaydı hem Genel hem Resmi bakiyesine giriyor (Resmi'de varsa resmiTutar/resmiPB ile).
+  cariDefterHareketleri((cari && cari.hareketler) || [], defter)
     .forEach((h) => {
       const pb = h.paraBirimi || "TRY";
       toplam[pb] = (toplam[pb] || 0) + (h.yon === "Borç" ? (h.tutar || 0) : -(h.tutar || 0));
@@ -884,6 +882,19 @@ function fisinDefteri(fis) {
 // girilmişse o, yoksa ekrandaki (marka) ad. Çıktılar, e-fatura ve ekstre bunu kullanır; ekranlar marka adını.
 function cariResmiAdi(c) {
   return (c && (String(c.resmiUnvan || "").trim() || c.unvan)) || "";
+}
+
+// DEFTERE GÖRE TUTAR (v1.675.0 — kullanıcı: "P. tipini defter olarak ayıralım; aynı kayıt Resmi'de TL, Genel'de USD
+// olabilir"). Kullanıcı kararı: TEK KAYIT kalır (6 Eylül "tek kayda düşsün" kuralı bozulmaz). "Muhasebe" defterindeki
+// kayıt Resmi için ayrı tutar taşıyabilir: `resmiTutar` + `resmiPB` (şema dışı → ek). Resmi bakışında (bakiye, ekstre,
+// yaşlandırma, mutabakat) bu tutar okunur; Genel ve Tümü bakışında asıl tutar — böylece Tümü'de çift sayılmaz.
+// Kullanım: `cariDefterHareketleri(hareketler, defter)` = defterKapsar süzgeci + Resmi'de tutar/PB değişimi.
+function hareketDefterde(h, defter) {
+  if (defter === "Resmi" && h && h.resmiPB && h.resmiTutar != null) return { ...h, tutar: h.resmiTutar, paraBirimi: h.resmiPB };
+  return h;
+}
+function cariDefterHareketleri(hareketler, defter) {
+  return (hareketler || []).filter((h) => defterKapsar(h.defter, defter)).map((h) => hareketDefterde(h, defter));
 }
 
 function defterKapsar(kayitDefteri, secilen) {
