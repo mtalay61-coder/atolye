@@ -1,0 +1,5 @@
+ONIZLEME 	15.10.2026	EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ	Tahsilat	1.500,00 ₺	 |  | 	16.10.2026	HAVALE MASRAFI	Banka çıkışı	-12,50 ₺	
+TEKRAR 	15.10.2026	EFT MÜŞTERİ B SİPARİŞ ÖDEMESİdaha önce aktarıldı	Tahsilat	1.500,00 ₺	 |  | 	16.10.2026	HAVALE MASRAFIdaha önce aktarıldı	Banka çıkışı	-12,50 ₺	
+BANKA [["Çıkış",12.5,"HAVALE MASRAFI",true],["Giriş",1500,"Tahsilat · Müşteri B · EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ",true]]
+CARI [["THS-","Alacak",1500,"Tahsilat (Test Bankası): EFT MÜŞTERİ B SİPARİŞ ÖDEMESİ"]]
+hatalar []

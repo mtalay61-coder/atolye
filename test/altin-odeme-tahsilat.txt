@@ -51,19 +51,22 @@
   "odemetahsilat:seçili",
   "muhasebe:-",
   "cekler:-",
-  "odemerapor:-"
+  "odemerapor:-",
+  "bankaexcel:-"
  ],
  "seritKasa": [
   "odemetahsilat:-",
   "muhasebe:seçili",
   "cekler:-",
-  "odemerapor:-"
+  "odemerapor:-",
+  "bankaexcel:-"
  ],
  "seritCek": [
   "odemetahsilat:-",
   "muhasebe:-",
   "cekler:seçili",
-  "odemerapor:-"
+  "odemerapor:-",
+  "bankaexcel:-"
  ],
  "rapor": {
   "ozet": [

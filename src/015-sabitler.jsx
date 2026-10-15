@@ -259,7 +259,8 @@ const MODUL_RENK = {
   muhasebe: "#2F6B4F",
   cekler: "#2F6B4F",
   odemetahsilat: "#2F6B4F",
-  odemerapor: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
+  odemerapor: "#2F6B4F",
+  bankaexcel: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
   finansrapor: "#2F6B4F",     // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
   planlama: "#B8860B",
   gorevler: "var(--erp-purple)",  // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
@@ -286,6 +287,7 @@ const SEKME_BILGISI = {
   cekler: { ad: "Çek & Senet" },
   odemetahsilat: { ad: "Ödeme & Tahsilat" },
   odemerapor: { ad: "Ödeme & Tahsilat Raporu" },
+  bankaexcel: { ad: "Banka Excel'i" },
   finansrapor: { ad: "Finans Raporu" },
   // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
   gelirgider: { ad: "Gelir / Gider" },
@@ -483,9 +485,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.670.0";
+const SURUM = "1.671.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Acik Siparisler ve Bakiye: siparis kalani KDV ve iskonto dahil";
+const SURUM_NOTU = "Odeme & Tahsilat: banka hareketlerini Excel ekstresinden aktarma";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -495,9 +497,11 @@ const SURUM_NOTU = "Acik Siparisler ve Bakiye: siparis kalani KDV ve iskonto dah
 // Tarih: GG.AA.YYYY. Maddeler kullanıcı dilinde, kısa (teknik ayrıntı DEVAM-NOTU.md'de).
 // TEK SAYFA SEKMESİ (v1.645.12 — kullanıcı: "Birden fazla oldu, kasa banka vs. iki girişe gerek yok, hepsini teke düşür"):
 // Ödeme & Tahsilat alanının ekranları üst şeritte AYRI sayfa sekmesi açmaz; hepsi "odemetahsilat" sekmesinde (100 setTab).
-const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat" };
+const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.671.0", tarih: "15.10.2026", eklenen: ["Ödeme & Tahsilat › Banka Excel'i: banka hesabı seç, ekstreyi (Excel/CSV) yükle, sütunlar kendiliğinden eşlenir; açıklamadaki ünvana göre cari önerilir; carili satır Tahsilat/Ödeme olarak cariye ve bankaya, carisiz satır yalnız bankaya işlenir; aynı satır ikinci kez aktarılmaz"],
+    degisen: [], duzeltilen: [] },
   { surum: "1.670.0", tarih: "15.10.2026", eklenen: [],
     degisen: ["Cari kartı › Açık Siparişler & Bakiye: sipariş kalan tutarı siparişteki iskontolu fiyat ve KDV oranıyla (KDV dahil) hesaplanır"], duzeltilen: [] },
   { surum: "1.669.0", tarih: "15.10.2026", eklenen: ["Cari kartı › Açık Siparişler & Bakiye sekmesi: güncel bakiye, açık siparişlerin kalan adet ve tutarı, siparişler bitince oluşacak bakiye"],
