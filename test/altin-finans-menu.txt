@@ -11,6 +11,7 @@
  "finansOgeleri": [
   "Cari",
   "Ödeme & Tahsilat",
+  "Cari Mutabakat",
   "Finans Raporu",
   "Gelir / Gider",
   "Fişler"
