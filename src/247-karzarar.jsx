@@ -144,7 +144,11 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
       if (!h.giderKartId || h.virmanMi) return;
       if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter)) return;
       const kart = kartAdi[h.giderKartId] || { ad: h.giderKartAd || "Bilinmeyen", grup: h.giderGrubu || "yonetim", tur: "gider" };
-      const tutar = kzTL(h.tutar || 0, hes.paraBirimi, kurlar, kurEksik);
+      // DEFTERE GÖRE TUTAR (v1.677.0): Resmi raporda `resmiTutar/resmiPB`, aksi halde Genel çevrimi `karsiTutar/karsiPB`
+      // (kasa TL çıksa da gider USD tutulmuş olabilir); yoksa kasanın kendi tutarı.
+      const tutar = (defter === "Resmi" && h.resmiPB && h.resmiTutar != null) ? kzTL(h.resmiTutar, h.resmiPB, kurlar, kurEksik)
+        : (defter !== "Resmi" && h.karsiPB && h.karsiTutar != null) ? kzTL(h.karsiTutar, h.karsiPB, kurlar, kurEksik)
+        : kzTL(h.tutar || 0, hes.paraBirimi, kurlar, kurEksik);
       if (h.yon === "Giriş") { digerGelir += tutar; return; }
       giderToplam += tutar;
       const anahtar = kart.grup || "yonetim";

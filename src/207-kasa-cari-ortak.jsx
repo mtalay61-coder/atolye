@@ -104,18 +104,18 @@ function resmiAlanlari(defter, anaPB, anaTutar, deger, kurlar) {
   const tutar = elle > 0 ? elle : oneri;
   return tutar > 0 ? { resmiPB: pb, resmiTutar: stokYuvarla(tutar) } : {};
 }
-function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil }) {
+function ResmiTutarAlani({ defter, anaPB, anaTutar, kurlar, deger, onDegis, stil, etiket = "Resmi", veri = "resmi" }) {
   if (defter !== "Muhasebe") return null;
   const pb = (deger && deger.pb) || anaPB;
   const oneri = pb !== anaPB && anaTutar > 0 ? paraCevirGenel(anaTutar, anaPB, pb, kurlar) : null;
   return (
     <div data-resmi-tutar-alani="1" style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap", fontSize: 12, ...(stil || {}) }}>
-      <span style={{ fontWeight: 700, color: "var(--erp-info)" }}>Resmi</span>
-      <select data-resmi-pb="1" data-renk-koru="1" value={pb} onChange={(e) => onDegis({ pb: e.target.value, tutar: "" })} style={{ fontSize: 12, padding: "3px 6px" }}>
-        {MUHASEBE_PARA_BIRIMLERI.map((p) => <option key={p} value={p}>{p === anaPB ? `${p} (Genel ile aynı)` : p}</option>)}
+      <span style={{ fontWeight: 700, color: "var(--erp-info)" }}>{etiket}</span>
+      <select data-resmi-pb={veri === "resmi" ? "1" : undefined} data-karsi-pb={veri === "karsi" ? "1" : undefined} data-renk-koru="1" value={pb} onChange={(e) => onDegis({ pb: e.target.value, tutar: "" })} style={{ fontSize: 12, padding: "3px 6px" }}>
+        {MUHASEBE_PARA_BIRIMLERI.map((p) => <option key={p} value={p}>{p === anaPB ? `${p} (${veri === "karsi" ? "kasa ile" : "Genel ile"} aynı)` : p}</option>)}
       </select>
       {pb !== anaPB && (
-        <input data-resmi-tutar="1" data-renk-koru="1" inputMode="decimal" value={(deger && deger.tutar) || ""}
+        <input data-resmi-tutar={veri === "resmi" ? "1" : undefined} data-karsi-tutar={veri === "karsi" ? "1" : undefined} data-renk-koru="1" inputMode="decimal" value={(deger && deger.tutar) || ""}
           placeholder={oneri != null ? String(stokYuvarla(oneri)) : "tutar"} onChange={(e) => onDegis({ pb, tutar: e.target.value })}
           style={{ width: 110, fontSize: 12, padding: "3px 6px" }} title="Boş bırakılırsa sistemdeki kurla önerilen tutar yazılır" />
       )}

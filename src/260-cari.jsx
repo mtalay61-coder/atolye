@@ -375,7 +375,7 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
           !KISA_FORM_SEKILLERI.includes(odemeSekliSecim)
             ? <div style={{ fontSize: 12, color: "var(--erp-warn)" }}>Gelir/gider kartına çek/senet girilmez — nakit, havale ya da kredi kartı seçin.</div>
             : <KartOdemeSatiri key={`${odemeKartId}|${odemeTip}|${odemeSekliSecim}`} tip={odemeTip} kart={giderKartlari.find((k) => k.id === odemeKartId)}
-                hesap={seciliHesap} showToast={showToast}
+                hesap={seciliHesap} showToast={showToast} kurlar={kurlar}
                 onKaydet={(p) => { onMuhasebeHareketi(p); showToast(`${odemeTip === "Tahsilat" ? "Gelir" : "Gider"} kaydedildi — ${p.hareket.giderKartAd}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`); }} />
         ) : odemeCari && !odemeKartGoster && KISA_FORM_SEKILLERI.includes(odemeSekliSecim) && onOdemeKaydet ? (
           // KASA & BANKA İŞLEMİ GİBİ (v1.645.10 — kullanıcı: "ödeme için kasa banka işlemleri gibi açabilir"): nakit /
@@ -1194,15 +1194,20 @@ function OdemeRaporu({ cariler, muhasebe, onCariAc }) {
 
 // Gelir/gider kartına kasa/banka hareketi — cari yok, karşı taraf kart (210'daki eski elle girişle aynı alanlar:
 // giderKartId/Ad/Grup; Gelir/Gider raporu (247) bunları okur). Tahsilat = kasaya giriş (gelir), Ödeme = çıkış (gider).
-function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast }) {
-  const [f, setF] = useState({ tarih: bugunYerel(), tutar: "", defter: "Genel", aciklama: "" });
+function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar }) {
+  // P. BİRİMİ ÇEVİRİCİ (v1.677.0 — kullanıcı: "burada p. birimi çevirici ekleyelim, Genel ve Muhasebe olarak"). Kasa
+  // kendi biriminde değişir (tutar); gider Genel'de başka birimde tutulabilir (`karsiPB`/`karsiTutar`), defter Muhasebe
+  // iken Resmi için ayrıca (`resmiPB`/`resmiTutar`, 207 ResmiTutarAlani). Gelir/Gider raporu (247) bunları okur.
+  const [f, setF] = useState({ tarih: bugunYerel(), tutar: "", defter: "Genel", aciklama: "", karsi: null, resmi: null });
   if (!kart) return null;
   const kaydet = () => {
     if (!hesap) { showToast("Kasa / banka seçin"); return; }
     const t = parseFloat(String(f.tutar).replace(",", "."));
     if (!(t > 0)) { showToast("Tutar girin"); return; }
     const [hesapTur, hesapId] = hesap.deger.split(":");
-    onKaydet({ hesapTur, hesapId, hareket: {
+    const genelEk = (() => { const o = resmiAlanlari("Muhasebe", hesap.pb, t, f.karsi, kurlar); return o.resmiPB ? { karsiPB: o.resmiPB, karsiTutar: o.resmiTutar } : {}; })();
+    const resmiEk = resmiAlanlari(f.defter, hesap.pb, t, f.resmi, kurlar);
+    onKaydet({ hesapTur, hesapId, hareket: { ...genelEk, ...resmiEk,
       id: uid("mhrk"), tarih: f.tarih, yon: tip === "Tahsilat" ? "Giriş" : "Çıkış", tutar: stokYuvarla(t), defter: f.defter,
       giderKartId: kart.id, giderKartAd: kart.ad, giderGrubu: kart.grup || null,
       aciklama: `${kart.ad}${f.aciklama.trim() ? ` · ${f.aciklama.trim()}` : ""}`, kullanici: islemKullanicisiAd(),
@@ -1217,6 +1222,16 @@ function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast }) {
       <label style={{ display: "grid", gap: 2 }}><span style={{ fontSize: 10, fontWeight: 700 }}>Tutar{hesap ? ` (${hesap.pb})` : ""}</span><input data-kart-odeme-tutar="1" inputMode="decimal" value={f.tutar} onChange={(e) => setF({ ...f, tutar: e.target.value })} style={{ ...kutu, width: 140 }} /></label>
       <label style={{ display: "grid", gap: 2 }}><span style={{ fontSize: 10, fontWeight: 700 }}>Defter</span>
         <select value={f.defter} onChange={(e) => setF({ ...f, defter: e.target.value })} style={kutu}>{["Genel", "Resmi", "Muhasebe"].map((d) => <option key={d}>{d}</option>)}</select></label>
+      {hesap && (
+        <label style={{ display: "grid", gap: 2 }}><span style={{ fontSize: 10, fontWeight: 700 }}>{f.defter === "Muhasebe" ? "Genel P. birimi" : "P. birimi"}</span>
+          <ResmiTutarAlani defter="Muhasebe" anaPB={hesap.pb} anaTutar={parseFloat(String(f.tutar).replace(",", ".")) || 0} kurlar={kurlar}
+            deger={f.karsi} onDegis={(v) => setF({ ...f, karsi: v })} etiket={f.defter === "Muhasebe" ? "Genel" : "Çevir"} veri="karsi" /></label>
+      )}
+      {hesap && f.defter === "Muhasebe" && (
+        <label style={{ display: "grid", gap: 2 }}><span style={{ fontSize: 10, fontWeight: 700 }}>Resmi P. birimi</span>
+          <ResmiTutarAlani defter="Muhasebe" anaPB={hesap.pb} anaTutar={parseFloat(String(f.tutar).replace(",", ".")) || 0} kurlar={kurlar}
+            deger={f.resmi} onDegis={(v) => setF({ ...f, resmi: v })} /></label>
+      )}
       <label style={{ display: "grid", gap: 2, flex: "1 1 200px" }}><span style={{ fontSize: 10, fontWeight: 700 }}>Açıklama</span><input value={f.aciklama} onChange={(e) => setF({ ...f, aciklama: e.target.value })} style={kutu} /></label>
       <button className="btn-primary" data-kart-odeme-kaydet="1" onClick={kaydet}>Kaydet</button>
     </div>
