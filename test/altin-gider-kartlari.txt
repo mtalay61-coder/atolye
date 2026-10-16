@@ -6,8 +6,13 @@
  "hatalar": [],
  "karsiliksizReddedildi": true,
  "kartSecici": true,
+ "kartSilme": {
+  "kalanHareket": 0,
+  "kartAcildi": 0,
+  "kartKilitli": 1
+ },
  "kayit": [
-  "Çıkış:12000:İşyeri kirası:yonetim"
+  "Çıkış:12000:İşyeri kirası:yonetim:fişNo"
  ],
  "sonListe": [
   "İşyeri kirası | Gider | Nakit | Genel"

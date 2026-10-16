@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.687.0";
+const SURUM = "1.688.0";
 const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Gun sonu raporu sunucudan otomatik gonderilir; stok urun bazinda miktar, alis fiyati, tutar";
+const SURUM_NOTU = "Gelir/gider kartı girişlerine fiş no; son tahsilat/ödemeler fiş no sırasıyla";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.688.0", tarih: "16.10.2026", eklenen: ["Gelir/gider kartı girişleri fiş numarası alır (THS-/ODM-, cari tahsilat/ödemeyle aynı sıra)"], degisen: ["Ödeme & Tahsilat › Son tahsilat ve ödemeler: aynı gün içinde fiş numarasına göre sıralı (yeni üstte)", "Gelir / Gider: kart hareketi kartın ekstresinden silinir (dönem kilidi, silme yetkisi/onay, çöp — Kasa & Banka ile aynı); hareketi olan kart silinemez (cari gibi)"], duzeltilen: [] },
   { surum: "1.687.0", tarih: "16.10.2026", eklenen: ["Gün sonu raporu SUNUCUDAN otomatik gönderilir (uygulama kapalı olsa da): Supabase fonksiyonu gun-sonu + gun-sonu.sql zamanlayıcısı; rapor e-postanın içinde ve ek dosyada; 'Sunucudan şimdi gönder (deneme)' düğmesi"], degisen: ["Gün Sonu Raporu ayrı menüden Finans Raporu'nun içine taşındı (Görünüm: Gün Sonu)", "Ödeme & Tahsilat › Son tahsilat ve ödemeler listesinde gelir/gider kartı hareketleri de görünür (Gelir / Gider olarak)", "Gün sonu raporunda stok ürün bazında: miktar, alış fiyatı (son alış ya da kart) ve stok tutarı — renk/beden kırılımı yok; özette stok tutarı"], duzeltilen: [] },
   { surum: "1.686.0", tarih: "16.10.2026", eklenen: ["Finans › Gün Sonu Raporu: günün alış/satış fişleri, tahsilat/ödemeler, kasa/banka hareketleri, üretim (stok hareketleri + proses atamaları) ve diğer stok hareketleri; gün sonu kasa/banka bakiyeleri, portföydeki çekler, cari bakiyeleri ve stok miktarları — Yazdır, PDF ve Excel indir, e-posta; her gün belirlenen saatte otomatik e-posta (Yönetici oturumu)"], degisen: [], duzeltilen: [] },
   { surum: "1.685.0", tarih: "16.10.2026", eklenen: ["Alış/Satış fişinde çift para birimi: defter Muhasebe iken Resmi para birimi + kur (ya da tutar); her cari hareketine Resmi tutar düşer, kayıt tek"], degisen: [], duzeltilen: [] },
