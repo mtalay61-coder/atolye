@@ -69,7 +69,7 @@ async function calistir(ekranGoruntusu) {
   await sayfa.waitForTimeout(800);
   const defterAltta = await sira();
   const defterTablonunAltinda = await sayfa.evaluate(() => {
-    const d = document.querySelector("[data-hesap-defter-secimi]"); const t = document.querySelector('[data-duzen-blok="hareketler"] table');
+    const d = document.querySelector("[data-hesap-defter-secimi]"); const t = document.querySelector('[data-duzen-blok="hareketler"] [data-hesap-hareket-kutu]') || document.querySelector('[data-duzen-blok="hareketler"] table');  // v1.688.5: tablo kaydırmalı kutuda
     return !!(d && t && d.getBoundingClientRect().top > t.getBoundingClientRect().bottom);
   });
   // Kasa işlem düğmelerinin rengi (v1.535.0): Tahsilat/Ödeme kendi renginde.
