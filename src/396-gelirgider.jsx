@@ -35,6 +35,11 @@ async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYe
   showToast("Hareket silindi");
 }
 
+// KISIT (v1.689): onay sistemi kapalıyken muhasebe silme yetkisi olmayan kullanıcı kart hareketi
+// silme düğmesini hiç görmez (önceden "yönetici onayına gider" yoluna düşüyordu).
+function kartSilGizliMi(kullaniciYetkisiVar, onayAcik) {
+  return !!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onayAcik;
+}
 function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
   const kartHareketiSil = (h) => kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast });
   // Hangi bölüm açık (20 Eylül).
@@ -302,7 +307,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                                     {h.yon === "Giriş" ? "+" : "−"}{(h.tutar || 0).toLocaleString("tr-TR")}
                                   </span>
                                   {/* Maaş tahakkuku cari hareketidir (personelin kartından yönetilir); burada yalnız kasa/banka hareketi silinir. */}
-                                  {h.hesapId && onMuhasebeKaydet ? (
+                                  {h.hesapId && onMuhasebeKaydet && !kartSilGizliMi(kullaniciYetkisiVar, onaySistemiAcikMi(tanimlar)) ? (
                                     <span data-kart-hareket-sil={h.fisNo || h.id || "eski"}><SilOnayButonu onConfirm={() => kartHareketiSil(h)} boyut={11} /></span>
                                   ) : <span style={{ width: 22 }} />}
                                 </div>

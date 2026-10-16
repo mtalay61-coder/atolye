@@ -614,8 +614,11 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
   // (alacak, açık sipariş): günü onlar belirliyor.
   //
   // Kullanıcı tanımlı dashboard geldiğinde bu liste oradan beslenecek.
+  // KISIT (v1.689): finans bilgisi görme izni olmayan kullanıcı alacak kartını ve gösterge
+  // panosunu (kasa/alacak/borç/çek) görmez — bkz. gorebilirMi (094).
+  const finansGorur = gorebilirMi(tanimlar, aktifKullanici, "finansRaporlari");
   const statCards = [
-    {
+    finansGorur && {
       label: "Toplam Alacak",
       // Birden çok para biriminde alacak varsa kartta hepsi görünüyor: ilki büyük, kalanlar alt
       // satırda. Tek para birimi varsa kart eskisi gibi tek satır.
@@ -731,7 +734,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
         })()}
         {/* İstatistik kartları */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 28 }}>
-          {statCards.map((s) => (
+          {statCards.filter(Boolean).map((s) => (
             <div
               key={s.label}
               style={{
@@ -773,8 +776,8 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
         />
 
         {/* GÖSTERGE PANOSU (v1.645.13): modül kartları yerine — bkz. AnasayfaGostergesi. */}
-        <AnasayfaGostergesi cariler={cariler} siparisler={siparisler} uretim={uretim} muhasebe={muhasebe}
-          onNavigate={onNavigate} onGoToSiparis={onGoToSiparis} onGoToUretim={onGoToUretim} />
+        {finansGorur && <AnasayfaGostergesi cariler={cariler} siparisler={siparisler} uretim={uretim} muhasebe={muhasebe}
+          onNavigate={onNavigate} onGoToSiparis={onGoToSiparis} onGoToUretim={onGoToUretim} />}
       </div>
     </div>
   );

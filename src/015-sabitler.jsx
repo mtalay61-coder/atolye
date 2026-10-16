@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.688.10";
+const SURUM = "1.689.0";
 const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Yeni sipariş tam ekran; sipariş listesi kaydırmalı; Son İşlemler cari ve tutar";
+const SURUM_NOTU = "Kullanıcı kısıtları: finans raporları gizlenebilir, onay sistemi kapalı (yetkisiz düğmeler gizli)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.689.0", tarih: "16.10.2026", eklenen: ["Tanımlar › Kullanıcılar: \"Görebileceği bilgiler\" kutuları — ilk madde Finans raporları (Finans Raporu/Gün Sonu, Gelir / Gider, Ödeme & Tahsilat raporu, anasayfa alacak/kasa/çek özetleri); yönetici dışındakiler için varsayılan kapalı", "Onay sistemi aç/kapa ayarı (varsayılan kapalı)"], degisen: ["Form çerçeveleri soluk (üst şerit tonunda, 1px); aramalı seçicilerde (müşteri, ürün) kutu içinde ikinci çerçeve çıkmıyor", "Asorti Uygula düğmesi dolu ana düğme", "Onay sistemi kapalıyken yetkisiz kullanıcı silme/düzenleme düğmelerini görmez (Kasa & Banka, gelir/gider kart hareketleri); yine de denerse \"yetkiniz yok\" der, istek oluşmaz"], duzeltilen: [] },
   { surum: "1.688.10", tarih: "16.10.2026", eklenen: [], degisen: ["Yeni sipariş girişi tam ekran açılır (düzenleme gibi)", "Sipariş listesi çerçeveli kutuda kayar; tarih süzgeci gg.aa biçimini tanır", "Anasayfa › Son İşlemler: siparişlerde cari adı ve tutar; saati olmayan kayıtta uydurma 03:00 yerine yalnız tarih; gelir/gider kaydı saatini taşır"], duzeltilen: ["Fişler süzgeç kutuları <label> olduğu için gizli ekrandaki \"Tutar\" etiketi çek formunun alanı sanılıyordu (v1.688.9)"] },
   { surum: "1.688.9", tarih: "16.10.2026", eklenen: ["Fişler: tür, fiş no, cari, tarih, sipariş, defter ve tutar için ayrı süzgeç kutuları (tarih gg.aa; tutar >, <, aralık)"], degisen: ["Fiş listesi çerçeveli kutuda kayar, süzgeç satırı üstte sabit"], duzeltilen: [] },
   { surum: "1.688.8", tarih: "16.10.2026", eklenen: ["Depo › Alış / Satış: fiş aynı ekranda bölünmüş panelde açılır, carinin açık siparişleri için Siparişten seç listesi açık gelir (Ekle: koli / asorti / beden, birden fazla satır); \"Pencerede aç\" eski yol"], degisen: ["Son alış/satış fişleri: çerçeveli, kaydırmalı tablo — her sütunda süzgeç; tutar ve defter sütunu"], duzeltilen: ["Alış / Satış › son fişler listesi hiç dolmuyordu (cari hareketinde olmayan bir alana bakıyordu)"] },

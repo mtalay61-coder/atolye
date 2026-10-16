@@ -1,4 +1,4 @@
-function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -530,7 +530,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
                             hareketinin cari kartı yok; silme Gelir/Gider ekranındakiyle aynı işlem (396 kartHareketiSilIslem).
                             Cari satırları cari kartından silinir (satıra dokununca açılır). */}
                         <td style={{ padding: "2px 6px" }} onClick={(e) => e.stopPropagation()}>
-                          {c.kartMi && ham && onMuhasebeKaydet && (
+                          {c.kartMi && ham && onMuhasebeKaydet && !kartSilGizliMi(kullaniciYetkisiVar, onayAcik) && (
                             <span data-odeme-son-sil={h.fisNo || h.id || "eski"}>
                               <SilOnayButonu boyut={11} onConfirm={() => kartHareketiSilIslem(ham, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast })} />
                             </span>
@@ -1085,12 +1085,12 @@ const ODEME_ALANI_SEKMELERI = [
   // v1.671.0: bankanın Excel ekstresinden toplu giriş (339).
   { tab: "bankaexcel", ad: "Banka Excel'i", Ikon: Upload },
 ];
-function OdemeAlaniSeridi({ tab, onGit }) {
+function OdemeAlaniSeridi({ tab, onGit, gizli = [] }) {
   if (!ODEME_ALANI_SEKMELERI.some((s) => s.tab === tab)) return null;
   return (
     <div data-odeme-alani-seridi="1" style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginBottom: 12,
       padding: "6px 8px", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
-      {ODEME_ALANI_SEKMELERI.map(({ tab: t, ad, Ikon }) => {
+      {ODEME_ALANI_SEKMELERI.filter((x) => !gizli.includes(x.tab)).map(({ tab: t, ad, Ikon }) => {
         const aktif = t === tab;
         return (
           <button key={t} type="button" data-odeme-alani-sekme={t} onClick={() => onGit(t)}

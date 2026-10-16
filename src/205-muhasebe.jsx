@@ -496,6 +496,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
           onHesapSil={(id) => hesapSil("kasa", id)}
           onHesapPasifDegistir={(id, d) => hesapPasifDegistir("kasa", id, d)}
           silmeYetkisiVar={!kullaniciYetkisiVar || kullaniciYetkisiVar("muhasebe", "silme")}
+          silmeGizli={!!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onaySistemiAcikMi(tanimlar)}
           tumHesaplar={[
             ...(muhasebe.kasalar || []).map((k) => ({ ...k, tur: "kasa" })),
             ...(muhasebe.bankalar || []).map((b2) => ({ ...b2, tur: "banka" })),
@@ -524,6 +525,7 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
           onHesapSil={(id) => hesapSil("banka", id)}
           onHesapPasifDegistir={(id, d) => hesapPasifDegistir("banka", id, d)}
           silmeYetkisiVar={!kullaniciYetkisiVar || kullaniciYetkisiVar("muhasebe", "silme")}
+          silmeGizli={!!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onaySistemiAcikMi(tanimlar)}
           tumHesaplar={[
             ...(muhasebe.kasalar || []).map((k) => ({ ...k, tur: "kasa" })),
             ...(muhasebe.bankalar || []).map((b2) => ({ ...b2, tur: "banka" })),
