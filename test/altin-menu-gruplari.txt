@@ -23,7 +23,6 @@
   "Cari",
   "Ödeme & Tahsilat",
   "Cari Mutabakat",
-  "Gün Sonu Raporu",
   "Finans Raporu",
   "Gelir / Gider",
   "Fişler",

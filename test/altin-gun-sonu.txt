@@ -16,8 +16,8 @@
    "Kasa/Banka çıkış —",
    "Kasa + Banka gün sonu 1.300,00 ₺",
    "Portföydeki çekler 750,00 ₺",
-   "Üretimden stoğa giriş 3",
-   "Fiş sayısı 1"
+   "Stok tutarı (alış fiyatıyla) —",
+   "Üretimden stoğa giriş 3"
   ],
   "bolumler": {
    "Alış / Satış fişleri": [
@@ -48,9 +48,9 @@
     "Müşteri B | Müşteri | +200 ₺",
     "Personel C | Personel | -30 ₺"
    ],
-   "Stok miktarları (gün sonu)": [
-    "Hammadde | Deri | Siyah |  | -3 metre",
-    "Mamul | Bot | Siyah | 41 | 3 çift"
+   "Stok (gün sonu)": [
+    "Hammadde | Deri | -3 metre | fiyat yok | ",
+    "Mamul | Bot | 3 çift | fiyat yok | "
    ]
   }
  },
@@ -62,8 +62,8 @@
    "Kasa/Banka çıkış —",
    "Kasa + Banka gün sonu 1.300,00 ₺",
    "Portföydeki çekler 750,00 ₺",
-   "Üretimden stoğa giriş 0",
-   "Fiş sayısı 0"
+   "Stok tutarı (alış fiyatıyla) —",
+   "Üretimden stoğa giriş 0"
   ],
   "hareketBolumleri": [
    [

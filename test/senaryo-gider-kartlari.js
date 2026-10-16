@@ -75,9 +75,12 @@ async function calistir() {
   await ikinci.sayfa.waitForTimeout(1500);
   const kayit = (((await depoOku(ikinci.sayfa, "muhasebe:data")).kasalar[0].hareketler) || [])
     .map((x) => `${x.yon}:${x.tutar}:${x.giderKartAd}:${x.giderGrubu}`);
+  // v1.687.0 (kullanıcı: "gelir gider altta görünmüyor"): kart hareketi "Son tahsilat ve ödemeler" listesinde.
+  const sonListe = await ikinci.sayfa.evaluate(() => [...document.querySelectorAll("[data-odeme-son-kart]")]
+    .map((tr) => [...tr.children].map((td) => td.textContent.trim()).filter(Boolean).slice(1, 5).join(" | ")));
   await ikinci.tarayici.close();
 
-  return { hatalar, bosDurum, tanimlar, kartSecici, karsiliksizReddedildi, kayit };
+  return { hatalar, bosDurum, tanimlar, kartSecici, karsiliksizReddedildi, kayit, sonListe };
 }
 
 if (require.main === module) {

@@ -23,6 +23,7 @@ kalıpları" bölümlerini, ayrıca dokunacağın konunun bölümünü oku (`gre
 - `test/` — birim testleri (`birim-*.js`) ve Chromium senaryoları (`senaryo-*.js`, çıktı
   `altin-*.txt` ile karşılaştırılır).
 - `*.sql`, `supabase-*.ts` — Supabase şeması ve fonksiyonları (kullanıcı elle çalıştırır).
+- `supabase-gun-sonu-fonksiyonu.ts` ÜRETİLİR (`gun-sonu-sunucu.js`, yap.sh içinde: 264 rapor çekirdeği + `gun-sonu-sablon.ts`); elle düzenlenmez. Rapor değişince kullanıcı Supabase'e yeniden yapıştırır.
 - `index.html` — başlatıcı: `surum.json`'u okuyup yayındaki sürüme yönlendirir. `manifest.json`,
   `sw.js`, `ikon-*.png` — kurulabilir uygulama (PWA).
 - `atolye-erp-vX.Y.Z.html` — yayınlanmış sürümler (ÜRETİLEN dosyalar). `yap.sh` her derlemede yalnız

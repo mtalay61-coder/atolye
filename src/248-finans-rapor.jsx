@@ -705,7 +705,7 @@ function finansOzet(satirlar) {
 // GRID TAŞMASI: grid öğesinin varsayılan min-width'i içeriği kadar; geniş tablo (yaşlandırma,
 // 20+ sütunlu rapor) kabı büyütüp bütün sayfayı yana kaydırıyordu (ekran görüntüsünde ölçüldü).
 // Kaplar `minmax(0, 1fr)` ile daraltılıyor; tablo kendi kabında kayıyor.
-function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar, onRaporlarKaydet, aktifKullanici, showToast, firmaBilgileri }) {
+function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar, onRaporlarKaydet, aktifKullanici, showToast, firmaBilgileri, tanimlar, saveTanimlar }) {
   const [defter, setDefter] = useState("Tümü");   // "Tümü" | "Genel" | "Resmi" | "YanYana"
   const [tarih, setTarih] = useState("");
   const [mamulDegerleme, setMamulDegerleme] = useState("maliyet");
@@ -752,8 +752,11 @@ function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar,
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "flex-end", background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 12 }}>
         <div style={{ display: "grid", gap: 4 }}>
           <span style={etiket}>Görünüm</span>
-          {secim(gorunum, setGorunum, [["ozet", "Varlık Özeti"], ["yas", "Yaşlandırma"], ["donem", "Dönem Karşılaştırma"], ["nakit", "Nakit Akışı"], ["maliyet", "Maliyet Farkı"]])}
+          {secim(gorunum, setGorunum, [["ozet", "Varlık Özeti"], ["yas", "Yaşlandırma"], ["donem", "Dönem Karşılaştırma"], ["nakit", "Nakit Akışı"], ["maliyet", "Maliyet Farkı"], ["gunsonu", "Gün Sonu"]])}
         </div>
+        {/* GÜN SONU (v1.687.0 — kullanıcı: "gün sonu finans raporunun içine alınabilir, benzer"): kendi gün/defter
+            seçicisi ve indirme/e-posta düğmeleri var (264); buradaki ortak süzgeçler ona uygulanmaz, gizlenir. */}
+        {gorunum !== "gunsonu" && <>
         <div style={{ display: "grid", gap: 4 }}>
           <span style={etiket}>Defter</span>
           {secim(defter, setDefter, [["Tümü", "Tümü"], ["Genel", "Genel"], ["Resmi", "Resmi"], ["YanYana", "Genel · Resmi yan yana"]])}
@@ -772,7 +775,10 @@ function FinansRaporu({ cariler, muhasebe, stok, uretim, araProsesler, raporlar,
           <span style={etiket}>Mamul değerleme</span>
           {secim(mamulDegerleme, setMamulDegerleme, [["maliyet", "Hammadde + işçilik"], ["hammadde", "Yalnız hammadde"], ["satis", "Satış fiyatı"], ["alis", "Kart alış fiyatı"]])}
         </div>}
+        </>}
       </div>
+      {gorunum === "gunsonu" && <GunSonuRaporu cariler={cariler} muhasebe={muhasebe} stok={stok} uretim={uretim} tanimlar={tanimlar}
+        saveTanimlar={saveTanimlar} aktifKullanici={aktifKullanici} showToast={showToast} />}
 
       {gorunum === "yas" && (
         <div id="finans-yas-yazdir" style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 14, display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 14 }}>

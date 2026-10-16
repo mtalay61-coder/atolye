@@ -287,6 +287,21 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
       // Defter süzgeci Resmi ise satır Resmi tutar/açıklamasıyla (200 hareketDefterde).
       sonHareketler.push({ c, h: hareketDefterde(h, odemeDefterSuzgec), tip });
     }));
+    // GELİR / GİDER KARTI HAREKETLERİ DE LİSTEDE (v1.687.0 — kullanıcı: "gelir gider altta görünmüyor"). Kart girişleri
+    // cariye değil yalnız kasaya/bankaya yazılıyor (`giderKartId`); liste yalnız cari hareketlerini dolaştığı için
+    // görünmüyorlardı. Giriş = gelir (Tahsilat), çıkış = gider (Ödeme); tutar kasanın biriminde; Resmi süzgecinde
+    // kartın Resmi tutarı (resmiPB/resmiTutar, 260 KartOdemeSatiri).
+    [...((muhasebe && muhasebe.kasalar) || []).map((hs) => ({ hs, sekil: "Nakit" })), ...((muhasebe && muhasebe.bankalar) || []).map((hs) => ({ hs, sekil: "Havale" }))]
+      .forEach(({ hs, sekil }) => (hs.hareketler || []).forEach((x) => {
+        if (!x.giderKartId) return;
+        const tip = x.yon === "Giriş" ? "Tahsilat" : "Ödeme";
+        if (odemeListeSuzgec !== "Tümü" && tip !== odemeListeSuzgec) return;
+        if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(x.defter || "Genel", odemeDefterSuzgec)) return;
+        const resmi = odemeDefterSuzgec === "Resmi" && x.resmiPB && x.resmiTutar != null;
+        sonHareketler.push({ c: { id: null, unvan: x.giderKartAd || "Gelir/gider kartı", kartMi: true }, tip,
+          h: { ...x, odemeSekli: x.odemeSekli || sekil, paraBirimi: resmi ? x.resmiPB : (hs.paraBirimi || "TRY"), tutar: resmi ? x.resmiTutar : x.tutar,
+            aciklama: (resmi && x.resmiAciklama) || x.aciklama || `${tip === "Tahsilat" ? "Gelir" : "Gider"} (${hs.ad})` } });
+      }));
     sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
     const tipDugmesi = (tip) => {
       const renk = HAREKET_TIPI_RENK[tip];
@@ -440,13 +455,14 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
                   {sonHareketler.slice(0, 200).map(({ c, h, tip }, i) => {
                     const renk = HAREKET_TIPI_RENK[tip];
                     return (
-                      <tr key={`${c.id}-${h.id || i}`} data-odeme-son-satir={h.fisNo || i} onClick={() => { setOdemeCariId(c.id); setOdemeYerelHedef(null); setOdemeKartGoster(true); }}
+                      <tr key={`${c.id || "kart"}-${h.id || i}`} data-odeme-son-satir={h.fisNo || i} data-odeme-son-kart={c.kartMi ? "1" : undefined}
+                        onClick={() => { if (c.kartMi) return; setOdemeCariId(c.id); setOdemeYerelHedef(null); setOdemeKartGoster(true); }}
                         style={{ cursor: "pointer", borderTop: "1px solid var(--erp-line-soft)" }}>
                         <td className="mono" style={{ fontSize: 11, padding: "5px 8px", whiteSpace: "nowrap" }}>{tarihTr(String(h.tarih || "").slice(0, 10))}</td>
-                        <td style={{ fontSize: 12, padding: "5px 8px", fontWeight: 600 }}>{c.unvan}</td>
+                        <td style={{ fontSize: 12, padding: "5px 8px", fontWeight: 600 }}>{c.kartMi ? <i title="Gelir/gider kartı">{c.unvan}</i> : c.unvan}</td>
                         <td style={{ padding: "5px 8px" }}>
                           <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: alfaEkle(renk, "22"), color: renk }}>
-                            <HareketIkonu tip={tip} size={11} />{tip}
+                            <HareketIkonu tip={tip} size={11} />{c.kartMi ? (tip === "Tahsilat" ? "Gelir" : "Gider") : tip}
                           </span>
                         </td>
                         <td style={{ fontSize: 11, padding: "5px 8px" }}>{h.odemeSekli || "—"}</td>

@@ -24,8 +24,11 @@ async function calistir() {
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false });
   const hatalar = []; sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
-  await modulAc(sayfa, "Gün Sonu Raporu");
+  // v1.687.0: ayrı menü değil, Finans Raporu › Görünüm: Gün Sonu.
+  await modulAc(sayfa, "Finans Raporu");
   await sayfa.waitForTimeout(600);
+  await sayfa.locator('[data-finans-secim="gunsonu"]').first().click();
+  await sayfa.waitForTimeout(500);
   const oku = async (gun) => {
     await sayfa.locator("[data-gun-sonu-tarih]").fill(gun);
     await sayfa.waitForTimeout(500);
