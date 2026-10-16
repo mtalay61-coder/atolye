@@ -80,6 +80,9 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
   const [pesinHesap, setPesinHesap] = useState("");        // "kasa:<id>" | "banka:<id>" | ""
   const [pesinTutar, setPesinTutar] = useState("");
   const [defter, setDefter] = useState("Genel");
+  // ÇİFT P. TİPİ (v1.685.0 — kullanıcı: "Çift p.tipini faturaya da yapalım"): defter Muhasebe iken fişin Resmi
+  // defterdeki para birimi + kuru. Kayıt yine TEK (6 Eylül kuralı); her cari hareketine resmiPB/resmiTutar düşer.
+  const [resmi, setResmi] = useState({ pb: "", kur: "", tutar: "" });
   const [aciklama, setAciklama] = useState("");
   const [kalemler, setKalemler] = useState([]);
   useEffect(() => { setOnayGoster(false); }, [kalemler]);
@@ -481,6 +484,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
       // `paraBirimi` fişin KAYIT para birimi; satırlar kendi para birimini taşımaya devam eder.
       // `kayitKurlari` da gönderilir: kayıt anındaki kur, fişin bir parçasıdır.
       paraBirimi, kayitKurlari: birlesikKurlar, defter, aciklama: aciklama.trim(),
+      // Resmi oran fiş toplamından: kalem kalem yazılan hareketler aynı oranla çevrilir (078 son kalemde yuvarlamayı kapatır).
+      resmi: (() => {
+        const r = resmiAlanlari(defter, paraBirimi, cevrimSonucu.toplam, resmi, birlesikKurlar);
+        return r.resmiPB && cevrimSonucu.toplam > 0 ? { pb: r.resmiPB, toplam: r.resmiTutar, oran: r.resmiTutar / cevrimSonucu.toplam } : null;
+      })(),
       // KDV açıksa her kalem oranını TAŞIR (anlık kopya): ürünün oranı sonradan değişse de fiş değişmez.
       kalemler: kdvAktif ? kalemler.map((k) => ({ ...k, kdvOrani: kalemOrani(k) })) : kalemler,
       // Seçilen cari fişin bir parçası: pencere hangi cariyle açılmış olursa olsun, KAYIT
@@ -743,6 +751,10 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
               <option value="Resmi">Resmi</option>
               <option value="Muhasebe">Muhasebe (ikisine de)</option>
             </select>
+            <span data-fis-resmi="1" style={{ display: "contents" }}>
+              <ResmiTutarAlani defter={defter} anaPB={paraBirimi} anaTutar={cevrimSonucu.toplam} kurlar={birlesikKurlar}
+                deger={resmi} onDegis={(d) => setResmi((o) => ({ ...o, ...d }))} />
+            </span>
             {/* KAYDET / VAZGEÇ BAŞLIK SATIRINDA (v1.520.0 — kullanıcı: "Fiş formunda da kaydet vazgeç üstte olsun",
                 ardından "başlığın sağına gelsin, ekran toparlanır"). Fişin adı, para birimi, defter ve kayıt tek
                 satırda; kalem girişindeki yeşil "Ekle"den uzak. Kaydetmeden önceki onay kutusu hemen altta açılır. */}

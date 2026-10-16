@@ -234,8 +234,19 @@ function fisYaz(stok, cariler, fis) {
     // kopmadığını kontrol et). Kasa/banka tarafı zaten tek kayıttı; iki taraf artık aynı.
     // `fisNo` yayılan nesnede zaten var; burada TEKRAR yazılması bilinçli. Fişsiz hareket
     // yasağının (12. denetim) hareketin doğduğu satırda görünür olmasını sağlıyor.
+    // ÇİFT P. TİPİ (v1.685.0): Muhasebe defterli fişte Resmi tutar kalemin Genel tutarından fişin oranıyla.
+    if (fis.resmi && fis.resmi.pb && fis.defter === "Muhasebe") {
+      ortak.resmiPB = fis.resmi.pb;
+      ortak.resmiTutar = kuruslaYuvarla(ortak.tutar * fis.resmi.oran);
+    }
     cariHareketleri.push({ ...ortak, fisNo: fis.fisNo, id: kimlikler.get(k), defter: fis.defter || "Genel" });
   });
+  // Kalem kalem yuvarlama farkı son harekete: Resmi satırların toplamı formda gösterilen tutara eşit kalsın.
+  if (fis.resmi && fis.resmi.pb && fis.defter === "Muhasebe" && cariHareketleri.length > 0 && fis.resmi.toplam > 0) {
+    const fark = kuruslaYuvarla(fis.resmi.toplam - cariHareketleri.reduce((t, h) => t + (h.resmiTutar || 0), 0));
+    const son = cariHareketleri[cariHareketleri.length - 1];
+    if (fark) son.resmiTutar = kuruslaYuvarla(son.resmiTutar + fark);
+  }
 
   // ---- 4) PEŞİN TAHSİLAT / ÖDEME --------------------------------------------------------------
   //
