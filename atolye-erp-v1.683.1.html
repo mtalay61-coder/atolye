@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.681.0</title>
+<title>Atölye ERP 1.683.1</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2279,9 +2279,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.681.0";
+const SURUM = "1.683.1";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Odeme & Tahsilat: listede kasa tutari, aciklamada Genel/Resmi kur karsiligi";
+const SURUM_NOTU = "Tam ekran cari kartindan acilan fis penceresi ustte gorunur";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2311,6 +2311,12 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.683.1", tarih: "16.10.2026", eklenen: [], degisen: ["Tam ekran cari kartı üst menünün altından başlar"],
+        duzeltilen: ["Tam ekran cari kartından açılan Alış/Satış fişi (ve ekstre) penceresi kartın altında kalıyordu"] },
+    { surum: "1.683.0", tarih: "15.10.2026", eklenen: ["Cari kartı başlığında tam ekran düğmesi (ve sağ tık menüsünde) — kart ekranı kaplar, ✕ ya da Esc ile eski düzene döner"],
+        degisen: [], duzeltilen: [] },
+    { surum: "1.682.0", tarih: "15.10.2026", eklenen: [],
+        degisen: ["Muhasebe defterli tahsilat/ödemede açıklama deftere göre: Genel bakışta Genel karşılığı (ör. 1.000 ₺ → 20 $), Resmi bakışta Resmi karşılığı (1.000 ₺ → 18 €) — ekstre ve son tahsilat/ödemeler listesinde"], duzeltilen: [] },
     { surum: "1.681.0", tarih: "15.10.2026", eklenen: [],
         degisen: ["Ödeme & Tahsilat: para birimi çevrilen kayıtta açıklamaya kasa tutarı ve Genel/Resmi kur karşılıkları ayrı ayrı yazılır; 'Son tahsilat ve ödemeler' listesinde tutar kasanın biriminde", "Ödeme & Tahsilat ve Banka Excel'i: cari ve gelir/gider kartı aynı arama kutusundan seçilir (ayrı kart seçicisi kalktı)"], duzeltilen: [] },
     { surum: "1.680.0", tarih: "15.10.2026", eklenen: [],
@@ -37146,8 +37152,10 @@ function cariResmiAdi(c) {
 // yaşlandırma, mutabakat) bu tutar okunur; Genel ve Tümü bakışında asıl tutar — böylece Tümü'de çift sayılmaz.
 // Kullanım: `cariDefterHareketleri(hareketler, defter)` = defterKapsar süzgeci + Resmi'de tutar/PB değişimi.
 function hareketDefterde(h, defter) {
+    // AÇIKLAMA DA DEFTERE GÖRE (v1.682.0 — kullanıcı: "açıklamalar deftere göre değişsin; hepsi kendi tarafında görünsün"):
+    // Resmi bakışında `resmiAciklama` (Resmi karşılığı), diğerlerinde asıl açıklama (Genel karşılığı).
     if (defter === "Resmi" && h && h.resmiPB && h.resmiTutar != null)
-        return { ...h, tutar: h.resmiTutar, paraBirimi: h.resmiPB };
+        return { ...h, tutar: h.resmiTutar, paraBirimi: h.resmiPB, aciklama: h.resmiAciklama || h.aciklama };
     return h;
 }
 function cariDefterHareketleri(hareketler, defter) {
@@ -46909,7 +46917,8 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
                 return;
             if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(h.defter || "Genel", odemeDefterSuzgec))
                 return;
-            sonHareketler.push({ c, h, tip });
+            // Defter süzgeci Resmi ise satır Resmi tutar/açıklamasıyla (200 hareketDefterde).
+            sonHareketler.push({ c, h: hareketDefterde(h, odemeDefterSuzgec), tip });
         }));
         sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
         const tipDugmesi = (tip) => {
@@ -48140,6 +48149,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const [kodAtamaProsesSecim, setKodAtamaProsesSecim] = useState("");
     // Açıklık durumu ARTIK ÜST BİLEŞENDE: aynı anda tek kart açık kalsın diye.
     const open = acik;
+    const [tamEkran, setTamEkran] = useState(false);
+    useEffect(() => {
+        if (!tamEkran)
+            return undefined;
+        const kapat = (e) => { if (e.key === "Escape")
+            setTamEkran(false); };
+        window.addEventListener("keydown", kapat);
+        return () => window.removeEventListener("keydown", kapat);
+    }, [tamEkran]);
     const setOpen = (v) => { const hedef = typeof v === "function" ? v(acik) : v; if (hedef !== acik)
         onAcKapa(); };
     const [duzenleModu, setDuzenleModu] = useState(false);
@@ -48506,9 +48524,14 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const subeOnerileri = open && hForm.cek
         ? bilinenSubeler((tumCariler || []).flatMap((c) => (c.hareketler || []).map((h) => h.cek)).filter(Boolean), hForm.cek.banka)
         : [];
-    return (React.createElement("div", { ref: kartRef, "data-cari-kart-id": cari.id, ...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu), style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+    return (React.createElement("div", { ref: kartRef, "data-cari-kart-id": cari.id, "data-cari-tam-ekran": tamEkran ? "1" : undefined, ...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu), style: tamEkran
+            // KATMAN (v1.683.1 — kullanıcı: "tam ekranda alış/satış fişi açınca ekranda göstermiyor"): fiş/ekstre pencereleri
+            // 100, üst menü 510 katmanında — kart onların ALTINDA (90) ve üst menünün altından başlar; pencere üstte açılır.
+            ? { position: "fixed", top: "var(--ust-menu-h, 0px)", left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
+            : { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
         React.createElement(SagTikMenusu, { konum: sagMenu, onKapat: () => setSagMenu(null), veri: "cari", baslik: `CARİ · ${cari.unvan}`, ogeler: [
                 { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
+                { k: "tamekran", etiket: tamEkran ? "Tam ekrandan çık" : "Tam ekran aç", ikon: Maximize2, onClick: () => { setOpen(true); setTamEkran((v) => !v); } },
                 { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },
                 { ayrac: true },
                 { k: "ekstre", etiket: `Ekstre yazdır (PDF)${defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}`, ikon: Printer, gizli: !onPencereAc,
@@ -48620,6 +48643,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                         hucre("BORÇ", borc, "var(--erp-warn)", "borc")));
                 })(),
                 !duzenleModu && (open ? React.createElement(ChevronDown, { size: 18, color: "var(--erp-text-3)" }) : React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" })))),
+            !duzenleModu && (React.createElement("button", { type: "button", "data-kart-eylem": "tam-ekran", title: tamEkran ? "Tam ekrandan çık (Esc)" : "Tam ekran", onClick: (e) => { e.stopPropagation(); setOpen(true); setTamEkran((v) => !v); }, style: { border: "none", background: tamEkran ? "var(--erp-purple)" : "none", color: tamEkran ? "#fff" : "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6, flexShrink: 0 } }, tamEkran ? React.createElement(X, { size: 15 }) : React.createElement(Maximize2, { size: 15 }))),
             !duzenleModu && (React.createElement("button", { type: "button", onClick: () => {
                     setDuzenleUnvan(cari.unvan);
                     setDuzenleTip(cari.tip);
@@ -58329,16 +58353,18 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
             // yazılacak; Genel ve Resmi için ayrı ayrı"). Ör. "1.000 ₺ → Genel 20,23 $ (kur 49,42) · Resmi 18,05 € (kur 55,41)".
             const yaz = (x, pb) => `${Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
             const kurYaz = (h2) => (h2.pb === hesapPB ? "" : ` (kur ${Number(h2.kur).toLocaleString("tr-TR", { maximumFractionDigits: 4 })})`);
-            const cevrimMetni = (genelH.pb !== hesapPB || (muhasebeMi && resmiH.pb !== hesapPB))
-                ? `${yaz(t, hesapPB)} → ${muhasebeMi ? "Genel " : ""}${yaz(genelH.tutar, genelH.pb)}${kurYaz(genelH)}${muhasebeMi ? ` · Resmi ${yaz(resmiH.tutar, resmiH.pb)}${kurYaz(resmiH)}` : ""}`
-                : "";
-            const aciklama2 = [cevrimMetni, f.aciklama.trim()].filter(Boolean).join(" · ");
+            // DEFTERE GÖRE AYRI AÇIKLAMA (v1.682.0): asıl açıklama Genel karşılığını, `resmiAciklama` Resmi karşılığını taşır;
+            // her defter bakışı kendi tarafını gösterir (200 hareketDefterde).
+            const cevrim = (h2) => (h2.pb !== hesapPB ? `${yaz(t, hesapPB)} → ${yaz(h2.tutar, h2.pb)}${kurYaz(h2)}` : "");
+            const aciklama2 = [cevrim(genelH), f.aciklama.trim()].filter(Boolean).join(" · ");
+            const resmiAciklamaGovde = muhasebeMi ? [cevrim(resmiH), f.aciklama.trim()].filter(Boolean).join(" · ") : "";
             const k2 = kasaCariHareketiKur({
                 islemTipi: tip, tarih: f.tarih, cariId: cari.id, cariUnvan: cari.unvan, cariTutar: stokYuvarla(genelH.tutar), cariPB: genelH.pb,
                 hesapTur, hesapId, hesapAd: hesap.kisaAd, hesapPB, hesapTutar: stokYuvarla(t),
                 defter: f.defter, aciklama: aciklama2, odemeSekli, kur: genelH.pb !== hesapPB ? t / genelH.tutar : undefined,
             });
-            const resmiEk2 = muhasebeMi && (resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004) ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar) } : {};
+            const resmiEk2 = muhasebeMi && (resmiH.pb !== genelH.pb || Math.abs(resmiH.tutar - genelH.tutar) > 0.004)
+                ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar), resmiAciklama: `${tip} (${hesap.kisaAd})${resmiAciklamaGovde ? `: ${resmiAciklamaGovde}` : ""}` } : {};
             const ch2 = { ...(kart ? { ...k2.cariHareketi, vade: f.vade } : k2.cariHareketi), ...resmiEk2 };
             const mh2 = k2.muhasebeHareketi && kart ? { ...k2.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k2.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k2.muhasebeHareketi;
             onKaydet({ cariId: cari.id, cariHareketi: ch2, muhasebe: mh2 ? { hesapTur, hesapId, hareket: mh2 } : null });
@@ -63321,7 +63347,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.681.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.683.1)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
