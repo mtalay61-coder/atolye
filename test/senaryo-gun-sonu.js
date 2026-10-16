@@ -35,20 +35,26 @@ async function calistir() {
     return sayfa.evaluate(() => {
       const kok = document.querySelector("[data-gun-sonu-icerik]");
       const bolumler = {};
-      [...kok.querySelectorAll("h3")].forEach((h) => {
-        const ad = h.childNodes[0].textContent.trim();
-        const tablo = h.nextElementSibling && h.nextElementSibling.tagName === "TABLE" ? h.nextElementSibling : null;
-        bolumler[ad] = tablo ? [...tablo.querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((td) => td.textContent.trim()).join(" | ")) : [];
+      // v1.688.4: bölümler ekranda ayrı çerçeveli, süzgeçli listeler (data-gun-sonu-bolum).
+      [...kok.querySelectorAll("[data-gun-sonu-bolum]")].forEach((d) => {
+        bolumler[d.getAttribute("data-gun-sonu-bolum")] = [...d.querySelectorAll("tbody tr")].map((tr) => [...tr.children].map((td) => td.textContent.trim()).join(" | "));
       });
       const ozet = [...kok.querySelectorAll("table")[0].querySelectorAll("td")].map((td) => td.innerText.replace(/\s+/g, " ").trim());
       return { ozet, bolumler };
     });
   };
   const gun30 = await oku("2026-08-30");
+  // Süzgeç: Kasa bakiyeleri listesinde olmayan hesap aranınca satır kalmaz, temizlenince döner.
+  const kutu = sayfa.locator('[data-gun-sonu-ara="Kasa ve banka bakiyeleri (gün sonu)|Hesap"]');
+  await kutu.fill("yok"); await sayfa.waitForTimeout(200);
+  const suzgec = [await sayfa.locator('[data-gun-sonu-bolum="Kasa ve banka bakiyeleri (gün sonu)"] tbody tr').count()];
+  await kutu.fill("tl"); await sayfa.waitForTimeout(200);
+  suzgec.push(await sayfa.locator('[data-gun-sonu-bolum="Kasa ve banka bakiyeleri (gün sonu)"] tbody tr').count());
+  await kutu.fill("");
   const gun31 = await oku("2026-08-31");
   const dugmeler = await sayfa.evaluate(() => ["pdf", "excel", "gonder", "otomatik", "saat", "alicilar"].filter((d) => !!document.querySelector(`[data-gun-sonu-${d}]`)));
   await tarayici.close();
-  return { hatalar, dugmeler, gun30, gun31: { ozet: gun31.ozet, hareketBolumleri: ["Alış / Satış fişleri", "Kasa / banka hareketleri", "Üretim — stok hareketleri"].map((b) => [b, (gun31.bolumler[b] || []).length]), kasa: gun31.bolumler["Kasa ve banka bakiyeleri (gün sonu)"], cari: gun31.bolumler["Cari bakiyeleri (gün sonu, Genel defter)"] } };
+  return { hatalar, dugmeler, suzgec, gun30, gun31: { ozet: gun31.ozet, hareketBolumleri: ["Alış / Satış fişleri", "Kasa / banka hareketleri", "Üretim — stok hareketleri"].map((b) => [b, (gun31.bolumler[b] || []).length]), kasa: gun31.bolumler["Kasa ve banka bakiyeleri (gün sonu)"], cari: gun31.bolumler["Cari bakiyeleri (gün sonu, Genel defter)"] } };
 }
 
 if (require.main === module) {

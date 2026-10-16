@@ -37,7 +37,7 @@ const yanit = (durum: number, govde: unknown) =>
   new Response(JSON.stringify(govde), { status: durum, headers: { ...CORS, "Content-Type": "application/json" } });
 
 // ---- ÇEKİRDEK: atolye-erp.jsx'ten OTOMATİK çıkarıldı (gun-sonu-sunucu.js) — ELLE DÜZENLEMEYİN ----
-// Tanımlar: alisPbKodu, OKUMA_ISTISNA, alanAdi, ekiKokeAc, kayitaCevir, TARIH_BICIM, SAAT_BICIM, tarihYaz, stokYuvarla, FIS_ON_EKI, fisOnEki, PDF_CIKTI_STILI, pdfCiktiBelgesi, bakiyeMetni, hareketDefterde, cariDefterHareketleri, defterKapsar, PARA_SEMBOLU, cariMutabakatBakiyesi, gunSonuGun, gunSonuPara, gunSonuPBToplam, gunSonuSonAlislar, gunSonuAlisFiyati, gunSonuVerisi, gunSonuPBMetni, gunSonuHTML, gunSonuAlicilari, htmlKacis
+// Tanımlar: alisPbKodu, OKUMA_ISTISNA, alanAdi, ekiKokeAc, kayitaCevir, TARIH_BICIM, SAAT_BICIM, tarihYaz, stokYuvarla, FIS_ON_EKI, fisOnEki, PDF_CIKTI_STILI, pdfCiktiBelgesi, bakiyeMetni, hareketDefterde, cariDefterHareketleri, defterKapsar, PARA_SEMBOLU, cariMutabakatBakiyesi, gunSonuGun, gunSonuPara, gunSonuPBToplam, gunSonuSonAlislar, gunSonuAlisFiyati, gunSonuVerisi, gunSonuPBMetni, gunSonuBolumleri, gunSonuHTML, gunSonuAlicilari, htmlKacis
 
 function alisPbKodu(urun) {
   const ham = String((urun && urun.alisParaBirimi) || "").trim();
@@ -309,7 +309,34 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
 
 const gunSonuPBMetni = (m) => (Object.keys(m || {}).length ? Object.entries(m).map(([pb, t]) => gunSonuPara(t, pb)).join(" · ") : "—");
 
-function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR")) {
+function gunSonuBolumleri(v) {
+  const sonuc = [];
+  const b = (baslik, kolonlar, satirlar) => sonuc.push({ baslik, kolonlar, satirlar });
+  b("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]],
+    v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]));
+  b("Tahsilat / ödeme ve diğer cari hareketleri", [["Cari"], ["İşlem"], ["Açıklama"], ["Borç", 1], ["Alacak", 1]],
+    v.cariHareketleri.map((x) => [x.cari, x.tip, x.aciklama, x.yon === "Borç" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Borç" ? gunSonuPara(x.tutar, x.pb) : ""]));
+  b("Kasa / banka hareketleri", [["Hesap"], ["Karşı taraf"], ["Açıklama"], ["Giriş", 1], ["Çıkış", 1]],
+    v.kasaHareketleri.map((x) => [x.hesap, x.karsi, x.aciklama, x.yon === "Giriş" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Giriş" ? gunSonuPara(x.tutar, x.pb) : ""]));
+  b("Üretim — stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Sipariş"], ["Fiş"], ["Miktar", 1]],
+    v.uretimHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.siparisNo, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+  b("Üretim — proses atamaları", [["Sipariş"], ["Model"], ["Proses"], ["Olay"], ["Personel"], ["Miktar", 1]],
+    v.uretimAsamalari.map((x) => [x.siparisNo, `${x.model} ${x.renk}`.trim(), x.proses, x.olay, x.personel, x.miktar.toLocaleString("tr-TR")]));
+  b("Diğer stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Kaynak"], ["Cari"], ["Fiş"], ["Miktar", 1]],
+    v.stokHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.kaynak, x.cari, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+  b("Kasa ve banka bakiyeleri (gün sonu)", [["Hesap"], ["Giriş", 1], ["Çıkış", 1], ["Bakiye", 1]],
+    v.hesapBakiyeleri.map((x) => [x.hesap, gunSonuPara(x.giris, x.pb), gunSonuPara(x.cikis, x.pb), gunSonuPara(x.bakiye, x.pb)]));
+  b("Portföydeki çekler (bugünkü durum)", [["Vade"], ["Çek No"], ["Banka"], ["Cari"], ["Tutar", 1]],
+    v.cekler.map((x) => [x.vade ? tarihYaz(x.vade) : "", x.cekNo, x.banka, x.cari, gunSonuPara(x.tutar, x.pb)]));
+  b(`Cari bakiyeleri (gün sonu, ${v.bakiyeDefter} defter)`, [["Cari"], ["Tip"], ["Bakiye (+ bize borçlu / − bizden alacaklı)", 1]],
+    v.cariBakiyeListesi.map((x) => [x.cari, x.tip, bakiyeMetni(x.bakiye)]));
+  b("Stok (gün sonu)", [["Kategori"], ["Ürün"], ["Miktar", 1], ["Alış fiyatı", 1], ["Stok tutarı", 1]],
+    v.stokMiktarlari.map((x) => [x.kategori, x.urun, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`,
+      x.fiyat != null ? `${gunSonuPara(x.fiyat, x.pb)} (${x.kaynak})` : "fiyat yok", x.tutar != null ? gunSonuPara(x.tutar, x.pb) : ""]));
+  return sonuc;
+}
+
+function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR"), yalnizUst = false) {
   const e = htmlKacis;
   const f = firma || {};
   const tablo = (baslik, kolonlar, satirlar, bosMetin = "Kayıt yok") => `
@@ -328,27 +355,7 @@ function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR")) 
     </tr><tr>
       ${kutu("Kasa + Banka gün sonu", gunSonuPBMetni(o.kasaBakiye))}${kutu("Portföydeki çekler", gunSonuPBMetni(o.cekToplam))}${kutu("Stok tutarı (alış fiyatıyla)", gunSonuPBMetni(o.stokTutar))}${kutu("Üretimden stoğa giriş", `${o.uretimGiris.toLocaleString("tr-TR")}`)}
     </tr></table>
-    ${tablo("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]],
-      v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]))}
-    ${tablo("Tahsilat / ödeme ve diğer cari hareketleri", [["Cari"], ["İşlem"], ["Açıklama"], ["Borç", 1], ["Alacak", 1]],
-      v.cariHareketleri.map((x) => [x.cari, x.tip, x.aciklama, x.yon === "Borç" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Borç" ? gunSonuPara(x.tutar, x.pb) : ""]))}
-    ${tablo("Kasa / banka hareketleri", [["Hesap"], ["Karşı taraf"], ["Açıklama"], ["Giriş", 1], ["Çıkış", 1]],
-      v.kasaHareketleri.map((x) => [x.hesap, x.karsi, x.aciklama, x.yon === "Giriş" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Giriş" ? gunSonuPara(x.tutar, x.pb) : ""]))}
-    ${tablo("Üretim — stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Sipariş"], ["Fiş"], ["Miktar", 1]],
-      v.uretimHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.siparisNo, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]))}
-    ${tablo("Üretim — proses atamaları", [["Sipariş"], ["Model"], ["Proses"], ["Olay"], ["Personel"], ["Miktar", 1]],
-      v.uretimAsamalari.map((x) => [x.siparisNo, `${x.model} ${x.renk}`.trim(), x.proses, x.olay, x.personel, x.miktar.toLocaleString("tr-TR")]))}
-    ${tablo("Diğer stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Kaynak"], ["Cari"], ["Fiş"], ["Miktar", 1]],
-      v.stokHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.kaynak, x.cari, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]))}
-    ${tablo("Kasa ve banka bakiyeleri (gün sonu)", [["Hesap"], ["Giriş", 1], ["Çıkış", 1], ["Bakiye", 1]],
-      v.hesapBakiyeleri.map((x) => [x.hesap, gunSonuPara(x.giris, x.pb), gunSonuPara(x.cikis, x.pb), gunSonuPara(x.bakiye, x.pb)]))}
-    ${tablo("Portföydeki çekler (bugünkü durum)", [["Vade"], ["Çek No"], ["Banka"], ["Cari"], ["Tutar", 1]],
-      v.cekler.map((x) => [x.vade ? tarihYaz(x.vade) : "", x.cekNo, x.banka, x.cari, gunSonuPara(x.tutar, x.pb)]))}
-    ${tablo(`Cari bakiyeleri (gün sonu, ${v.bakiyeDefter} defter)`, [["Cari"], ["Tip"], ["Bakiye (+ bize borçlu / − bizden alacaklı)", 1]],
-      v.cariBakiyeListesi.map((x) => [x.cari, x.tip, bakiyeMetni(x.bakiye)]))}
-    ${tablo("Stok (gün sonu)", [["Kategori"], ["Ürün"], ["Miktar", 1], ["Alış fiyatı", 1], ["Stok tutarı", 1]],
-      v.stokMiktarlari.map((x) => [x.kategori, x.urun, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`,
-        x.fiyat != null ? `${gunSonuPara(x.fiyat, x.pb)} (${x.kaynak})` : "fiyat yok", x.tutar != null ? gunSonuPara(x.tutar, x.pb) : ""]))}
+    ${yalnizUst ? "" : gunSonuBolumleri(v).map((x) => tablo(x.baslik, x.kolonlar, x.satirlar)).join("")}
   `;
 }
 

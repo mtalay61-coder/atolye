@@ -440,6 +440,9 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
         miktarlar.set(k, (miktarlar.get(k) || 0) + (Number(v.miktar) || 0));
       });
     }
+    // ÜRÜN BAŞINA TEK SATIR (v1.688.4 — kullanıcı: "taban da renk beden olmasına gerek yok"): değer renk/beden başına
+    // hesaplanır (fiyat ve maliyet renge göre değişebiliyor) ama tek satırda toplanır; birim değer = toplam ÷ miktar.
+    const top = { miktar: 0, deger: 0, kurYok: null, fiyatsiz: false, iscilikYok: false, eksi: false, hammaddeDegeri: 0, iscilikDegeri: 0, payVar: false };
     miktarlar.forEach((miktar, k) => {
       miktar = stokYuvarla(miktar);
       if (Math.abs(miktar) < 0.0005) return;
@@ -448,20 +451,31 @@ function finansRaporSatirlari({ cariler, muhasebe, stok, uretim, araProsesler, k
       if (mamul) {
         const d = finansMamulBirimDegeri(p, renk, beden, mamulDegerleme, stok, kurTablosu, araProsesler, maliyetBaglami);
         birim = d.tl; kurYok = d.kurYok; fiyatsiz = d.fiyatsiz; iscilikYok = d.iscilikYok;
-        if (d.hammadde != null) pay = { hammaddeDegeri: yuv(miktar * d.hammadde), iscilikDegeri: yuv(miktar * d.iscilik) };
+        if (d.hammadde != null) pay = { hammaddeDegeri: miktar * d.hammadde, iscilikDegeri: miktar * d.iscilik };
       } else {
         const bf = hammaddeBirimFiyati(p, renk, beden, kurTablosu, maliyetBaglami);
         birim = bf.tl; fiyatsiz = !(bf.kendiFiyat > 0);
         if (bf.pb !== "TRY" && !(parseFloat(kurTablosu[bf.pb]) > 0) && bf.kendiFiyat > 0) kurYok = bf.pb;
       }
-      const deger = kurYok ? null : miktar * birim;
-      ekle({
-        taraf: "Varlık", grup: "Stoklar", kalem: p.kategori || "Hammadde", ad: p.ad,
-        ayrinti: [olcuGoster(renk), olcuGoster(beden)].filter(Boolean).join(" · "),
-        paraBirimi: "TRY", tutar: deger || 0, tlKarsiligi: deger, kurYok, miktar, birimDeger: kurYok ? null : yuv(birim),
-        ...(pay || (!mamul && deger != null ? { hammaddeDegeri: yuv(deger), iscilikDegeri: 0 } : {})),
-        not: [fiyatsiz ? "fiyat/maliyet yok — değer 0" : "", iscilikYok && !fiyatsiz ? "proses ücreti yok — işçilik 0" : "", miktar < 0 ? "eksi stok" : ""].filter(Boolean).join(" · "),
-      });
+      top.miktar += miktar;
+      if (miktar < 0) top.eksi = true;
+      if (kurYok) top.kurYok = top.kurYok || kurYok;
+      else top.deger += miktar * birim;
+      if (fiyatsiz) top.fiyatsiz = true;
+      if (iscilikYok) top.iscilikYok = true;
+      if (pay) { top.payVar = true; top.hammaddeDegeri += pay.hammaddeDegeri; top.iscilikDegeri += pay.iscilikDegeri; }
+      else if (!mamul && !kurYok) { top.payVar = true; top.hammaddeDegeri += miktar * birim; }
+    });
+    const miktar = stokYuvarla(top.miktar);
+    if (Math.abs(miktar) < 0.0005 && miktarlar.size === 0) return;
+    if (Math.abs(miktar) < 0.0005 && Math.abs(top.deger) < 0.005) return;
+    const deger = top.kurYok ? null : top.deger;
+    ekle({
+      taraf: "Varlık", grup: "Stoklar", kalem: p.kategori || "Hammadde", ad: p.ad,
+      ayrinti: `${miktar.toLocaleString("tr-TR")} ${p.birim || ""}`.trim(),
+      paraBirimi: "TRY", tutar: deger || 0, tlKarsiligi: deger, kurYok: top.kurYok, miktar, birimDeger: top.kurYok || !miktar ? null : yuv(top.deger / miktar),
+      ...(top.payVar ? { hammaddeDegeri: yuv(top.hammaddeDegeri), iscilikDegeri: yuv(top.iscilikDegeri) } : {}),
+      not: [top.fiyatsiz ? "fiyat/maliyet yok — değer 0" : "", top.iscilikYok && !top.fiyatsiz ? "proses ücreti yok — işçilik 0" : "", top.eksi ? "eksi stok" : ""].filter(Boolean).join(" · "),
     });
   });
 

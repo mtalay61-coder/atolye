@@ -166,7 +166,36 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
 const gunSonuPBMetni = (m) => (Object.keys(m || {}).length ? Object.entries(m).map(([pb, t]) => gunSonuPara(t, pb)).join(" · ") : "—");
 
 // PDF / yazdır / e-posta gövdesi. Tablolar sade (PDF_CIKTI_STILI ile çizilir).
-function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR")) {
+// BÖLÜMLER (v1.688.4): her bölüm { baslik, kolonlar: [[ad, sağaYaslı]], satirlar: [[hücre…]] } — e-posta/PDF (gunSonuHTML)
+// ve ekran (GunSonuListe: süzgeç, kaydırma, çerçeve — kullanıcı: "her liste rapor mantığında olsun") AYNI listeden çizer.
+function gunSonuBolumleri(v) {
+  const sonuc = [];
+  const b = (baslik, kolonlar, satirlar) => sonuc.push({ baslik, kolonlar, satirlar });
+  b("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]],
+    v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]));
+  b("Tahsilat / ödeme ve diğer cari hareketleri", [["Cari"], ["İşlem"], ["Açıklama"], ["Borç", 1], ["Alacak", 1]],
+    v.cariHareketleri.map((x) => [x.cari, x.tip, x.aciklama, x.yon === "Borç" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Borç" ? gunSonuPara(x.tutar, x.pb) : ""]));
+  b("Kasa / banka hareketleri", [["Hesap"], ["Karşı taraf"], ["Açıklama"], ["Giriş", 1], ["Çıkış", 1]],
+    v.kasaHareketleri.map((x) => [x.hesap, x.karsi, x.aciklama, x.yon === "Giriş" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Giriş" ? gunSonuPara(x.tutar, x.pb) : ""]));
+  b("Üretim — stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Sipariş"], ["Fiş"], ["Miktar", 1]],
+    v.uretimHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.siparisNo, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+  b("Üretim — proses atamaları", [["Sipariş"], ["Model"], ["Proses"], ["Olay"], ["Personel"], ["Miktar", 1]],
+    v.uretimAsamalari.map((x) => [x.siparisNo, `${x.model} ${x.renk}`.trim(), x.proses, x.olay, x.personel, x.miktar.toLocaleString("tr-TR")]));
+  b("Diğer stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Kaynak"], ["Cari"], ["Fiş"], ["Miktar", 1]],
+    v.stokHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.kaynak, x.cari, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]));
+  b("Kasa ve banka bakiyeleri (gün sonu)", [["Hesap"], ["Giriş", 1], ["Çıkış", 1], ["Bakiye", 1]],
+    v.hesapBakiyeleri.map((x) => [x.hesap, gunSonuPara(x.giris, x.pb), gunSonuPara(x.cikis, x.pb), gunSonuPara(x.bakiye, x.pb)]));
+  b("Portföydeki çekler (bugünkü durum)", [["Vade"], ["Çek No"], ["Banka"], ["Cari"], ["Tutar", 1]],
+    v.cekler.map((x) => [x.vade ? tarihYaz(x.vade) : "", x.cekNo, x.banka, x.cari, gunSonuPara(x.tutar, x.pb)]));
+  b(`Cari bakiyeleri (gün sonu, ${v.bakiyeDefter} defter)`, [["Cari"], ["Tip"], ["Bakiye (+ bize borçlu / − bizden alacaklı)", 1]],
+    v.cariBakiyeListesi.map((x) => [x.cari, x.tip, bakiyeMetni(x.bakiye)]));
+  b("Stok (gün sonu)", [["Kategori"], ["Ürün"], ["Miktar", 1], ["Alış fiyatı", 1], ["Stok tutarı", 1]],
+    v.stokMiktarlari.map((x) => [x.kategori, x.urun, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`,
+      x.fiyat != null ? `${gunSonuPara(x.fiyat, x.pb)} (${x.kaynak})` : "fiyat yok", x.tutar != null ? gunSonuPara(x.tutar, x.pb) : ""]));
+  return sonuc;
+}
+
+function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR"), yalnizUst = false) {
   const e = htmlKacis;
   const f = firma || {};
   const tablo = (baslik, kolonlar, satirlar, bosMetin = "Kayıt yok") => `
@@ -185,27 +214,7 @@ function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR")) 
     </tr><tr>
       ${kutu("Kasa + Banka gün sonu", gunSonuPBMetni(o.kasaBakiye))}${kutu("Portföydeki çekler", gunSonuPBMetni(o.cekToplam))}${kutu("Stok tutarı (alış fiyatıyla)", gunSonuPBMetni(o.stokTutar))}${kutu("Üretimden stoğa giriş", `${o.uretimGiris.toLocaleString("tr-TR")}`)}
     </tr></table>
-    ${tablo("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]],
-      v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]))}
-    ${tablo("Tahsilat / ödeme ve diğer cari hareketleri", [["Cari"], ["İşlem"], ["Açıklama"], ["Borç", 1], ["Alacak", 1]],
-      v.cariHareketleri.map((x) => [x.cari, x.tip, x.aciklama, x.yon === "Borç" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Borç" ? gunSonuPara(x.tutar, x.pb) : ""]))}
-    ${tablo("Kasa / banka hareketleri", [["Hesap"], ["Karşı taraf"], ["Açıklama"], ["Giriş", 1], ["Çıkış", 1]],
-      v.kasaHareketleri.map((x) => [x.hesap, x.karsi, x.aciklama, x.yon === "Giriş" ? gunSonuPara(x.tutar, x.pb) : "", x.yon !== "Giriş" ? gunSonuPara(x.tutar, x.pb) : ""]))}
-    ${tablo("Üretim — stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Sipariş"], ["Fiş"], ["Miktar", 1]],
-      v.uretimHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.siparisNo, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]))}
-    ${tablo("Üretim — proses atamaları", [["Sipariş"], ["Model"], ["Proses"], ["Olay"], ["Personel"], ["Miktar", 1]],
-      v.uretimAsamalari.map((x) => [x.siparisNo, `${x.model} ${x.renk}`.trim(), x.proses, x.olay, x.personel, x.miktar.toLocaleString("tr-TR")]))}
-    ${tablo("Diğer stok hareketleri", [["Ürün"], ["Renk/Beden"], ["Kaynak"], ["Cari"], ["Fiş"], ["Miktar", 1]],
-      v.stokHareketleri.map((x) => [x.urun, [x.renk, x.beden].filter(Boolean).join(" / "), x.kaynak, x.cari, x.fisNo, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]))}
-    ${tablo("Kasa ve banka bakiyeleri (gün sonu)", [["Hesap"], ["Giriş", 1], ["Çıkış", 1], ["Bakiye", 1]],
-      v.hesapBakiyeleri.map((x) => [x.hesap, gunSonuPara(x.giris, x.pb), gunSonuPara(x.cikis, x.pb), gunSonuPara(x.bakiye, x.pb)]))}
-    ${tablo("Portföydeki çekler (bugünkü durum)", [["Vade"], ["Çek No"], ["Banka"], ["Cari"], ["Tutar", 1]],
-      v.cekler.map((x) => [x.vade ? tarihYaz(x.vade) : "", x.cekNo, x.banka, x.cari, gunSonuPara(x.tutar, x.pb)]))}
-    ${tablo(`Cari bakiyeleri (gün sonu, ${v.bakiyeDefter} defter)`, [["Cari"], ["Tip"], ["Bakiye (+ bize borçlu / − bizden alacaklı)", 1]],
-      v.cariBakiyeListesi.map((x) => [x.cari, x.tip, bakiyeMetni(x.bakiye)]))}
-    ${tablo("Stok (gün sonu)", [["Kategori"], ["Ürün"], ["Miktar", 1], ["Alış fiyatı", 1], ["Stok tutarı", 1]],
-      v.stokMiktarlari.map((x) => [x.kategori, x.urun, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`,
-        x.fiyat != null ? `${gunSonuPara(x.fiyat, x.pb)} (${x.kaynak})` : "fiyat yok", x.tutar != null ? gunSonuPara(x.tutar, x.pb) : ""]))}
+    ${yalnizUst ? "" : gunSonuBolumleri(v).map((x) => tablo(x.baslik, x.kolonlar, x.satirlar)).join("")}
   `;
 }
 
@@ -252,6 +261,45 @@ async function gunSonuEpostaGonder({ veri, firma, alicilar }) {
 function gunSonuAlicilari(ayar) {
   return String((ayar && ayar.alicilar) || "").split(/[,;\s]+/).map((x) => x.trim()).filter((x) => /@/.test(x));
 }
+// EKRAN LİSTESİ (v1.688.4 — kullanıcı: "her liste rapor mantığında olsun: filtreleme, kayma ve çerçeve"): bölüm çerçeveli
+// kutuda, sabit yükseklikte kayar (başlık ve süzgeç satırı üstte sabit), her sütunun altında arama kutusu (içerir; tutar
+// sütununda da metin olarak arar — "20.000" yazmak yeter). E-posta/PDF bu bileşeni kullanmaz (gunSonuHTML).
+function GunSonuListe({ baslik, kolonlar, satirlar }) {
+  const [ara, setAra] = useState({});
+  const q = (i) => String(ara[i] || "").toLocaleLowerCase("tr-TR").trim();
+  const suzulen = satirlar.filter((s) => kolonlar.every((_, i) => !q(i) || String(s[i] == null ? "" : s[i]).toLocaleLowerCase("tr-TR").includes(q(i))));
+  const suzgecVar = kolonlar.some((_, i) => q(i));
+  return (
+    <div data-gun-sonu-bolum={baslik} style={{ marginTop: 14 }}>
+      <h3 style={{ margin: "0 0 6px", fontSize: 14, display: "flex", alignItems: "baseline", gap: 6 }}>
+        {baslik} <span style={{ fontWeight: 400, color: "var(--erp-text-3)", fontSize: 11 }}>({suzgecVar ? `${suzulen.length} / ` : ""}{satirlar.length})</span>
+        {suzgecVar && <button type="button" className="btn-ghost" onClick={() => setAra({})} style={{ marginLeft: "auto", padding: "1px 8px", fontSize: 11 }}>Süzgeci temizle</button>}
+      </h3>
+      {satirlar.length === 0 ? <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Kayıt yok</div> : (
+        <div data-gun-sonu-kutu="1" style={{ maxHeight: 340, overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)" }}>
+          <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse", fontSize: 12 }}>
+            <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
+              <tr>{kolonlar.map(([k, sag]) => <th key={k} style={{ fontSize: 10, padding: "6px 8px", textAlign: sag ? "right" : "left", color: "var(--erp-text-2)" }}>{k}</th>)}</tr>
+              <tr>{kolonlar.map(([k, sag], i) => (
+                <th key={k} style={{ padding: "0 4px 5px" }}>
+                  <input data-gun-sonu-ara={`${baslik}|${k}`} value={ara[i] || ""} onChange={(e) => setAra((o) => ({ ...o, [i]: e.target.value }))} placeholder="ara…"
+                    style={{ width: "100%", minWidth: 50, boxSizing: "border-box", fontSize: 11, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: 4, fontWeight: 400, textAlign: sag ? "right" : "left" }} />
+                </th>
+              ))}</tr>
+            </thead>
+            <tbody>{suzulen.map((s, j) => (
+              <tr key={j} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                {s.map((h, i) => <td key={i} style={{ padding: "5px 8px", textAlign: kolonlar[i][1] ? "right" : "left", whiteSpace: kolonlar[i][1] ? "nowrap" : undefined }}>{h}</td>)}
+              </tr>
+            ))}</tbody>
+          </table>
+          {suzulen.length === 0 && <div style={{ fontSize: 11, color: "var(--erp-text-3)", padding: 8 }}>Süzgece uyan kayıt yok.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar, aktifKullanici, showToast }) {
   const [gun, setGun] = useState(bugunYerel());
   const [defter, setDefter] = useState("Tümü");
@@ -263,6 +311,7 @@ function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar
   const yonetici = aktifKullanici && aktifKullanici.rol === "Yönetici";
   const veri = React.useMemo(() => gunSonuVerisi({ gun, defter, cariler, muhasebe, stok, uretim }), [gun, defter, cariler, muhasebe, stok, uretim]);
   const html = React.useMemo(() => gunSonuHTML(veri, firma), [veri, firma]);
+  const ustHtml = React.useMemo(() => gunSonuHTML(veri, firma, undefined, true), [veri, firma]);
 
   // Sunucunun son gönderimi (`gun_sonu_gonderim` tablosu). Tablo yoksa ya da okunamazsa sessiz: bilgi amaçlı.
   const [sonGonderim, setSonGonderim] = useState(undefined);
@@ -358,7 +407,10 @@ function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar
           {!yonetici && <span> Ayarları yalnız Yönetici değiştirebilir.</span>}
         </div>
       </div>
-      <div style={{ ...kutu, overflowX: "auto" }} data-gun-sonu-icerik="1" dangerouslySetInnerHTML={{ __html: html }} />
+      <div style={{ ...kutu, overflowX: "auto" }} data-gun-sonu-icerik="1">
+        <div dangerouslySetInnerHTML={{ __html: ustHtml }} />
+        {gunSonuBolumleri(veri).map((b) => <GunSonuListe key={b.baslik} {...b} />)}
+      </div>
     </div>
   );
 }

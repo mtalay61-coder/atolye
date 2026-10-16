@@ -8,6 +8,10 @@
   "saat",
   "alicilar"
  ],
+ "suzgec": [
+  0,
+  1
+ ],
  "gun30": {
   "ozet": [
    "Satış 500,00 ₺",

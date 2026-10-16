@@ -50,6 +50,16 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
   const [yeniGiderKart, setYeniGiderKart] = useState({ ad: "", grup: "yonetim", tdhp: "" });
   // Ekstresi açık olan kart (20 Eylül).
   const [acikKart, setAcikKart] = useState(null);
+  // GRUP BAŞLIKLARI AÇILIR/KAPANIR (v1.688.3 — kullanıcı: "başlıklar tıklayınca açılsın; liste büyüdükçe ekran büyür,
+  // toparlansın"). Kapalı başlar; açılanlar bu cihazda hatırlanır (Tanımlar başlıklarıyla aynı, v1.588.0).
+  const [acikGruplar, setAcikGruplar] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("gelirgider:acikGruplar") || "[]")); } catch (e) { return new Set(); }
+  });
+  const grupAcKapa = (key) => setAcikGruplar((o) => {
+    const y = new Set(o); if (y.has(key)) y.delete(key); else y.add(key);
+    try { localStorage.setItem("gelirgider:acikGruplar", JSON.stringify([...y])); } catch (e) { /* depo yoksa yalnız bu oturum */ }
+    return y;
+  });
 
   // KART HAREKETLERİ: bütün kasa ve banka hareketlerinden o karta yazılmış olanlar. Ayrı bir
   // defter tutulmuyor — hareketin kendisi zaten `giderKartId` taşıyor; ikinci bir kayıt, iki
@@ -222,12 +232,22 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                 {gruplar.map((g) => {
                   const grubun = kartlar.filter((k) => k.grup === g.key);
                   if (grubun.length === 0) return null;
+                  const grupAcik = acikGruplar.has(g.key);
+                  const grupToplam = grubun.reduce((t, k) => t + kartToplami(k.id), 0);
                   return (
                     <div key={g.key}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", margin: "6px 0 2px" }}>
-                        {g.ad} <span className="mono" style={{ color: "var(--erp-text-3)" }}>{g.tdhp}</span>
-                      </div>
-                      {grubun.map((k) => (
+                      <button type="button" data-gg-grup={g.key} data-acik={grupAcik ? "1" : "0"} onClick={() => grupAcKapa(g.key)}
+                        style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", textAlign: "left", cursor: "pointer",
+                          background: grupAcik ? "transparent" : "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)",
+                          padding: "7px 10px", margin: "6px 0 3px", fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>
+                        {grupAcik ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                        {g.ad} <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)", fontWeight: 400 }}>{g.tdhp}</span>
+                        <span style={{ fontSize: 11, color: "var(--erp-text-3)", fontWeight: 400 }}>· {grubun.length} kart</span>
+                        <span className="mono" style={{ marginLeft: "auto", fontSize: 12, color: grupToplam ? "var(--erp-warn)" : "var(--erp-text-3)" }}>
+                          {grupToplam.toLocaleString("tr-TR")} ₺
+                        </span>
+                      </button>
+                      {grupAcik && grubun.map((k) => (
                         <div key={k.id} data-gider-kart={k.ad} style={{ display: "flex", alignItems: "center", gap: 8,
                           background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px", marginBottom: 3 }}>
                           <b style={{ fontSize: 13 }}>{k.ad}</b>
@@ -263,7 +283,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                           )}
                         </div>
                       )).concat([])}
-                      {grubun.filter((k) => acikKart === k.id).map((k) => (
+                      {grupAcik && grubun.filter((k) => acikKart === k.id).map((k) => (
                         <div key={`ekstre-${k.id}`} data-kart-hareketleri={k.ad}
                           style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: "8px 10px", marginBottom: 6 }}>
                           {kartHareketleri(k.id).length === 0 ? (
