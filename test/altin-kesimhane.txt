@@ -20,7 +20,7 @@
    "rozet": true,
    "satir": "Kesimhane işçiliği 730 bölüm · maaş tahakkuku 20.000 ₺ Hareketler"
   },
-  "kartEkstre": "GG.AA.YYYY Maaş tahakkuku · Personel C Kesimhane — AY YYYY maaşı −20.000"
+  "kartEkstre": "GG.AA.YYYY Maaş tahakkuku · Personel C Kesimhane — AY YYYY maaşı MAAS-<tarih>03 −20.000"
  },
  "hatalar": [],
  "karZarar": {

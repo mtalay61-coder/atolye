@@ -74,13 +74,29 @@ async function calistir() {
   await ikinci.sayfa.locator("[data-kart-odeme-kaydet]:visible").click();
   await ikinci.sayfa.waitForTimeout(1500);
   const kayit = (((await depoOku(ikinci.sayfa, "muhasebe:data")).kasalar[0].hareketler) || [])
-    .map((x) => `${x.yon}:${x.tutar}:${x.giderKartAd}:${x.giderGrubu}`);
+    .map((x) => `${x.yon}:${x.tutar}:${x.giderKartAd}:${x.giderGrubu}:${/^ODM-\d{7}$/.test(x.fisNo || "") ? "fişNo" : "fişsiz"}`);
   // v1.687.0 (kullanıcı: "gelir gider altta görünmüyor"): kart hareketi "Son tahsilat ve ödemeler" listesinde.
   const sonListe = await ikinci.sayfa.evaluate(() => [...document.querySelectorAll("[data-odeme-son-kart]")]
     .map((tr) => [...tr.children].map((td) => td.textContent.trim()).filter(Boolean).slice(1, 5).join(" | ")));
+  // v1.688.0 (kullanıcı: "kart olarak silinebilir sadece; kontrolleri koyalım, cari gibi"): hareketi olan kart silinemez;
+  // hareket kartın ekstresinden silinir, sonra kart silinebilir.
+  await modulAc(ikinci.sayfa, "Gelir / Gider");
+  await ikinci.sayfa.waitForTimeout(700);
+  const kartKilitli = await ikinci.sayfa.locator('[data-gider-kart-silinemez="İşyeri kirası"]').count();
+  await ikinci.sayfa.locator('[data-kart-ekstre="İşyeri kirası"]').first().click();
+  await ikinci.sayfa.waitForTimeout(300);
+  const sil = ikinci.sayfa.locator("[data-kart-hareket-sil] button").first();
+  await sil.click(); await ikinci.sayfa.waitForTimeout(200);
+  await ikinci.sayfa.locator("[data-kart-hareket-sil] button").last().click().catch(() => {});
+  await ikinci.sayfa.waitForTimeout(300);
+  // SilOnayButonu onay penceresi: "Sil" onayı.
+  await ikinci.sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].reverse().find((x) => /^(Evet, sil|Sil|Onayla)$/.test(x.textContent.trim()) && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await ikinci.sayfa.waitForTimeout(1200);
+  const kalanHareket = ((((await depoOku(ikinci.sayfa, "muhasebe:data")).kasalar[0].hareketler) || []).filter((x) => x.giderKartId)).length;
+  const kartAcildi = await ikinci.sayfa.locator('[data-gider-kart-silinemez="İşyeri kirası"]').count();
   await ikinci.tarayici.close();
 
-  return { hatalar, bosDurum, tanimlar, kartSecici, karsiliksizReddedildi, kayit, sonListe };
+  return { hatalar, bosDurum, tanimlar, kartSecici, karsiliksizReddedildi, kayit, sonListe, kartSilme: { kartKilitli, kalanHareket, kartAcildi } };
 }
 
 if (require.main === module) {

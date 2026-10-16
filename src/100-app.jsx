@@ -5141,6 +5141,7 @@ function AtolyeUygulamasi() {
                 cariler={cariler}
                 uretim={uretim}
                 showToast={showToast}
+                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste} onCopaAt={copaAt}
               />
             )
           )}

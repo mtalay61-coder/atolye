@@ -302,7 +302,13 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
           h: { ...x, odemeSekli: x.odemeSekli || sekil, paraBirimi: resmi ? x.resmiPB : (hs.paraBirimi || "TRY"), tutar: resmi ? x.resmiTutar : x.tutar,
             aciklama: (resmi && x.resmiAciklama) || x.aciklama || `${tip === "Tahsilat" ? "Gelir" : "Gider"} (${hs.ad})` } });
       }));
-    sonHareketler.sort((a, b) => String(b.h.tarih || "").localeCompare(String(a.h.tarih || "")) || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
+    // SIRA: tarih (yeni üstte), aynı gün içinde FİŞ NO'ya göre (v1.688.0 — kullanıcı: "fiş no olsun, ona göre sıralansın").
+    // Numara gün kodunu ve sırayı taşıdığından (THS-1016001…) büyük numara sonra girilen kayıttır; numarasız eski kayıtlar
+    // günün sonunda (altta). THS ile ODM aynı gün aynı sırayı paylaşmıyor: karşılaştırma ön ekten sonraki sayıyla.
+    const fisSira = (no) => { const m = String(no || "").match(/(\d+)$/); return m ? m[1].padStart(12, "0") : ""; };
+    sonHareketler.sort((a, b) => String(b.h.tarih || "").slice(0, 10).localeCompare(String(a.h.tarih || "").slice(0, 10))
+      || fisSira(b.h.fisNo).localeCompare(fisSira(a.h.fisNo))
+      || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
     const tipDugmesi = (tip) => {
       const renk = HAREKET_TIPI_RENK[tip];
       const aktif = odemeTip === tip;
@@ -382,6 +388,7 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
           !KISA_FORM_SEKILLERI.includes(odemeSekliSecim)
             ? <div style={{ fontSize: 12, color: "var(--erp-warn)" }}>Gelir/gider kartına çek/senet girilmez — nakit, havale ya da kredi kartı seçin.</div>
             : <KartOdemeSatiri key={`${odemeKartId}|${odemeTip}|${odemeSekliSecim}`} tip={odemeTip} kart={giderKartlari.find((k) => k.id === odemeKartId)}
+                fisNumaralari={() => [...tumFisNumaralari(cariler), ...[...((muhasebe && muhasebe.kasalar) || []), ...((muhasebe && muhasebe.bankalar) || [])].flatMap((hs) => (hs.hareketler || []).map((x) => x.fisNo).filter(Boolean))]}
                 hesap={seciliHesap} showToast={showToast} kurlar={kurlar}
                 onKaydet={(p) => { onMuhasebeHareketi(p); showToast(`${odemeTip === "Tahsilat" ? "Gelir" : "Gider"} kaydedildi — ${p.hareket.giderKartAd}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`); }} />
         ) : odemeCari && !odemeKartGoster && KISA_FORM_SEKILLERI.includes(odemeSekliSecim) && onOdemeKaydet ? (
@@ -1206,7 +1213,7 @@ function OdemeRaporu({ cariler, muhasebe, onCariAc }) {
 
 // Gelir/gider kartına kasa/banka hareketi — cari yok, karşı taraf kart (210'daki eski elle girişle aynı alanlar:
 // giderKartId/Ad/Grup; Gelir/Gider raporu (247) bunları okur). Tahsilat = kasaya giriş (gelir), Ödeme = çıkış (gider).
-function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar }) {
+function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar, fisNumaralari }) {
   // P. BİRİMİ ÇEVİRİCİ (v1.677.0 — kullanıcı: "burada p. birimi çevirici ekleyelim, Genel ve Muhasebe olarak"). Kasa
   // kendi biriminde değişir (tutar); gider Genel'de başka birimde tutulabilir (`karsiPB`/`karsiTutar`), defter Muhasebe
   // iken Resmi için ayrıca (`resmiPB`/`resmiTutar`, 207 ResmiTutarAlani). Gelir/Gider raporu (247) bunları okur.
@@ -1221,6 +1228,9 @@ function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar }) {
     const resmiEk = resmiAlanlari(f.defter, hesap.pb, t, f.resmi, kurlar);
     onKaydet({ hesapTur, hesapId, hareket: { ...genelEk, ...resmiEk,
       id: uid("mhrk"), tarih: f.tarih, yon: tip === "Tahsilat" ? "Giriş" : "Çıkış", tutar: stokYuvarla(t), defter: f.defter,
+      // FİŞ NO (v1.688.0 — kullanıcı: "fiş no olsun, ona göre sıralansın"): cari tahsilat/ödemeyle AYNI sıra (THS-/ODM-
+      // + gün + sıra); `fisNumaralari` cari ve kasa/banka numaralarının hepsi → iki yol aynı numarayı veremez.
+      fisNo: fisNoSiradaki(fisOnEki(tip), typeof fisNumaralari === "function" ? fisNumaralari() : (fisNumaralari || [])),
       giderKartId: kart.id, giderKartAd: kart.ad, giderGrubu: kart.grup || null,
       aciklama: `${kart.ad}${f.aciklama.trim() ? ` · ${f.aciklama.trim()}` : ""}`, kullanici: islemKullanicisiAd(),
     } });

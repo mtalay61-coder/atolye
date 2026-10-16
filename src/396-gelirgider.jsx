@@ -6,7 +6,30 @@
 // şeyler. Gelir/gider kartları ise her gün kullanılan bir defter: yeni gider çıkar, kart eklenir,
 // rapor oradan okunur. İkisini aynı sayfada tutmak, günlük işi kurulum ayarlarının arasına
 // gömmekti.
-function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast }) {
+function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
+  // KART HAREKETİ SİLME (v1.688.0 — kullanıcı: "gelir gider silindiğinde buradan silinmiyor, kart olarak silinebilir sadece;
+  // kontrolleri koyalım, cari gibi hareket etsin"). Hareket kartın ekstresinden silinir; kurallar Kasa & Banka'daki
+  // silmeyle aynı (205 `hareketSil`): dönem kilidi, silme yetkisi yoksa yönetici onayına ("muhasebeHareketSil" — onaylanınca
+  // 205 aynı işi yapar), çöpe kayıt. Kart hareketi cariye ve çeke bağlı olmadığı için yalnız hesabın listesinden düşer.
+  const kartHareketiSil = async (h) => {
+    if (!onMuhasebeKaydet) return;
+    if (donemKilidiEngel(h.tarih, showToast, "Silme")) return;
+    const tur = h.hesapTur;
+    const hesap = ((muhasebe && muhasebe[tur === "kasa" ? "kasalar" : "bankalar"]) || []).find((x) => x.id === h.hesapId);
+    if (!hesap) return;
+    const ozet = `${h.yon || ""} ${h.tutar || 0} ${PARA_SEMBOLU[hesap.paraBirimi || "TRY"] || ""}${h.aciklama ? " — " + h.aciklama : ""}`;
+    if (kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme")) {
+      if (onayIste) onayIste("muhasebe", "Sil", `"${hesap.ad}" hesabından ${ozet} kaydını sil`, "muhasebeHareketSil", { tur, hesapId: hesap.id, hareketId: h.id });
+      else showToast("Silme yetkiniz yok");
+      return;
+    }
+    const asil = (hesap.hareketler || []).find((x) => x.id === h.id);
+    if (asil && onCopaAt) onCopaAt(tur === "kasa" ? "kasaHareketi" : "bankaHareketi", hesap.ad, asil,
+      { ozet: `${ozet}${h.tarih ? " · " + h.tarih : ""}`, ustKayit: { tur, id: hesap.id, ad: hesap.ad }, yanEtkiliMi: false, geriAlinabilirMi: false });
+    const anahtar = tur === "kasa" ? "kasalar" : "bankalar";
+    await onMuhasebeKaydet({ ...muhasebe, [anahtar]: (muhasebe[anahtar] || []).map((x) => (x.id === hesap.id ? { ...x, hareketler: (x.hareketler || []).filter((y) => y.id !== h.id) } : x)) });
+    showToast("Hareket silindi");
+  };
   // Hangi bölüm açık (20 Eylül).
   const [bolum, setBolum] = useState("kartlar");
   // Yeni grup formu (20 Eylül).
@@ -26,9 +49,9 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
   // yerde iki gerçek demek olurdu.
   const kartHareketleri = (kartId) => {
     const liste = [];
-    [...((muhasebe && muhasebe.kasalar) || []), ...((muhasebe && muhasebe.bankalar) || [])].forEach((hes) => {
+    [...((muhasebe && muhasebe.kasalar) || []).map((hes) => [hes, "kasa"]), ...((muhasebe && muhasebe.bankalar) || []).map((hes) => [hes, "banka"])].forEach(([hes, hesapTur]) => {
       (hes.hareketler || []).forEach((h) => {
-        if (h.giderKartId === kartId) liste.push({ ...h, hesapAd: hes.ad, paraBirimi: hes.paraBirimi || "TRY" });
+        if (h.giderKartId === kartId) liste.push({ ...h, hesapAd: hes.ad, paraBirimi: hes.paraBirimi || "TRY", hesapTur, hesapId: hes.id });
       });
     });
     // BÖLÜM İŞÇİLİĞİ (v1.587.0): bölüme bağlı kartın hareketi personele tahakkuk eden MAAŞ (cari hareketi) —
@@ -221,9 +244,16 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                             onClick={() => setAcikKart(acikKart === k.id ? null : k.id)}>
                             {acikKart === k.id ? "Kapat" : "Hareketler"}
                           </button>
-                          <span>
-                            <SilOnayButonu onConfirm={() => kaydet(kartlar.filter((x) => x.id !== k.id))} boyut={11} />
-                          </span>
+                          {/* HAREKETİ OLAN KART SİLİNMEZ (v1.688.0 — cari gibi): kart silinince hareketleri kasada kartsız kalıyor,
+                              Gelir/Gider ve Kâr/Zarar'da hiçbir karta yazılmamış para oluyordu. Önce hareketler silinir. */}
+                          {kartHareketleri(k.id).length > 0 ? (
+                            <span className="btn-ikon" data-gider-kart-silinemez={k.ad} title={`Kart silinemez — ${kartHareketleri(k.id).length} hareket kayıtlı. Önce hareketleri silin.`}
+                              style={{ opacity: 0.35, cursor: "not-allowed" }}><Trash2 size={14} /></span>
+                          ) : (
+                            <span>
+                              <SilOnayButonu onConfirm={() => kaydet(kartlar.filter((x) => x.id !== k.id))} boyut={11} />
+                            </span>
+                          )}
                         </div>
                       )).concat([])}
                       {grubun.filter((k) => acikKart === k.id).map((k) => (
@@ -240,9 +270,14 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                                   <span style={{ color: "var(--erp-text-2)" }}>{tarihYaz(h.tarih)}</span>
                                   <span style={{ color: "var(--erp-text-3)" }}>{h.hesapAd}</span>
                                   <span style={{ flex: 1 }}>{h.aciklama || ""}</span>
+                                  {h.fisNo && <span style={{ color: "var(--erp-text-3)" }}>{h.fisNo}</span>}
                                   <span style={{ fontWeight: 700, color: h.yon === "Giriş" ? "var(--erp-primary)" : "var(--erp-warn)" }}>
                                     {h.yon === "Giriş" ? "+" : "−"}{(h.tutar || 0).toLocaleString("tr-TR")}
                                   </span>
+                                  {/* Maaş tahakkuku cari hareketidir (personelin kartından yönetilir); burada yalnız kasa/banka hareketi silinir. */}
+                                  {h.hesapId && onMuhasebeKaydet ? (
+                                    <span data-kart-hareket-sil={h.fisNo || h.id}><SilOnayButonu onConfirm={() => kartHareketiSil(h)} boyut={11} /></span>
+                                  ) : <span style={{ width: 22 }} />}
                                 </div>
                               ))}
                             </div>
