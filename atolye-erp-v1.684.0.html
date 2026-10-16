@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.682.0</title>
+<title>Atölye ERP 1.684.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2279,9 +2279,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.682.0";
+const SURUM = "1.684.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Aciklama deftere gore: Genel ve Resmi karsiligi kendi tarafinda";
+const SURUM_NOTU = "Cari karti tahsilat/odeme formu: kasa birimi sabit, Genel/Resmi kur";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2311,6 +2311,12 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.684.0", tarih: "16.10.2026", eklenen: [],
+        degisen: ["Cari kartı tahsilat/ödeme formu Ödeme & Tahsilat ile aynı: tutar kasanın/bankanın biriminde sabit, 'Cariye' (Muhasebe'de Genel + Resmi) para birimi ve kur, açıklama deftere göre"], duzeltilen: [] },
+    { surum: "1.683.1", tarih: "16.10.2026", eklenen: [], degisen: ["Tam ekran cari kartı üst menünün altından başlar"],
+        duzeltilen: ["Tam ekran cari kartından açılan Alış/Satış fişi (ve ekstre) penceresi kartın altında kalıyordu"] },
+    { surum: "1.683.0", tarih: "15.10.2026", eklenen: ["Cari kartı başlığında tam ekran düğmesi (ve sağ tık menüsünde) — kart ekranı kaplar, ✕ ya da Esc ile eski düzene döner"],
+        degisen: [], duzeltilen: [] },
     { surum: "1.682.0", tarih: "15.10.2026", eklenen: [],
         degisen: ["Muhasebe defterli tahsilat/ödemede açıklama deftere göre: Genel bakışta Genel karşılığı (ör. 1.000 ₺ → 20 $), Resmi bakışta Resmi karşılığı (1.000 ₺ → 18 €) — ekstre ve son tahsilat/ödemeler listesinde"], duzeltilen: [] },
     { surum: "1.681.0", tarih: "15.10.2026", eklenen: [],
@@ -48145,6 +48151,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const [kodAtamaProsesSecim, setKodAtamaProsesSecim] = useState("");
     // Açıklık durumu ARTIK ÜST BİLEŞENDE: aynı anda tek kart açık kalsın diye.
     const open = acik;
+    const [tamEkran, setTamEkran] = useState(false);
+    useEffect(() => {
+        if (!tamEkran)
+            return undefined;
+        const kapat = (e) => { if (e.key === "Escape")
+            setTamEkran(false); };
+        window.addEventListener("keydown", kapat);
+        return () => window.removeEventListener("keydown", kapat);
+    }, [tamEkran]);
     const setOpen = (v) => { const hedef = typeof v === "function" ? v(acik) : v; if (hedef !== acik)
         onAcKapa(); };
     const [duzenleModu, setDuzenleModu] = useState(false);
@@ -48263,9 +48278,31 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             onOdemeHedefiTuketildi();
     }, [odemeHedefi, open]);
     function submitHareket() {
-        const tutar = parseFloat(hForm.tutar);
+        let tutar = parseFloat(hForm.tutar);
         if (!tutar || tutar <= 0)
             return;
+        // KASA BİRİMİ SABİT (v1.684.0 — kullanıcı: "cari kartı formunu da aynı yap", Ödeme & Tahsilat v1.680–1.682 ile aynı):
+        // para hareketinde hesap seçiliyse yazılan tutar KASAYA giren/çıkan para (hesabın biriminde); cariye işlenecek
+        // birim + kur "Cariye/Genel" satırından, Muhasebe defterinde Resmi ayrıca. Açıklama deftere göre ayrı.
+        const ikiliK = paraHareketi && !!seciliHesap;
+        const kasaTutari = tutar;
+        let ikiliGenel = null, ikiliResmi = null;
+        if (ikiliK) {
+            ikiliGenel = resmiTutarHesapla(seciliHesap.pb, kasaTutari, hForm.genel || { pb: cari.paraBirimi || "TRY" }, kurlar);
+            ikiliResmi = hForm.defter === "Muhasebe" ? resmiTutarHesapla(seciliHesap.pb, kasaTutari, hForm.resmi || { pb: seciliHesap.pb }, kurlar) : null;
+            if (!(ikiliGenel.tutar > 0) || (ikiliResmi && !(ikiliResmi.tutar > 0))) {
+                if (showToast)
+                    showToast(ikiliResmi ? "Genel ve Resmi için kur ya da tutar girin" : "Cariye işlenecek tutar için kur girin");
+                return;
+            }
+            tutar = stokYuvarla(ikiliGenel.tutar);
+        }
+        const cariPBs = ikiliK ? ikiliGenel.pb : cariPB;
+        const cevrimS = ikiliK ? ikiliGenel.pb !== seciliHesap.pb : cevrimGerekli;
+        const hesapTutarS = ikiliK ? kasaTutari : (parseFloat(hForm.hesapTutar) || 0);
+        const yazP = (x, pb) => `${Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+        const cevrimYazi = (h2) => (ikiliK && h2 && h2.pb !== seciliHesap.pb
+            ? `${yazP(kasaTutari, seciliHesap.pb)} → ${yazP(h2.tutar, h2.pb)} (kur ${Number(h2.kur).toLocaleString("tr-TR", { maximumFractionDigits: 4 })})` : "");
         const cekAyrintiliMi = cekSenet && !!(hForm.cek.cekNo || hForm.cek.banka || hForm.cek.kesideci);
         if (cekSenet && cekCevrim.farkli && !(cekCevrim.cekTutar > 0)) {
             if (showToast)
@@ -48285,7 +48322,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             // Elle seçilen `hForm.yon` yalnız serbest (tipsiz) girişte kullanılıyor.
             yon: hareketTipi ? hareketYonu(hareketTipi) : hForm.yon,
             tutar,
-            paraBirimi: hForm.paraBirimi || "TRY",
+            paraBirimi: ikiliK ? cariPBs : (hForm.paraBirimi || "TRY"),
             odemeSekli: hForm.odemeSekli,
             // Yalnızca çek/senet hareketinde yazılıyor: boş bir `cek` nesnesini her harekete iliştirmek
             // kaydı şişirir ve "çeki var mı" sorusunu belirsizleştirirdi.
@@ -48313,7 +48350,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             aciklama: (() => {
                 const yazi = hForm.aciklama.trim() || hareketTipi || "";
                 const hesapAd = paraHareketi && seciliHesap ? seciliHesap.ad.replace(/^(Kasa|Banka): /, "") : "";
-                return hesapAd ? `${yazi} (${hesapAd})` : yazi;
+                const cv = cevrimYazi(ikiliGenel);
+                const govde = hesapAd ? `${yazi} (${hesapAd})` : yazi;
+                return cv ? `${govde}: ${cv}` : govde;
             })(),
         };
         // İKİ DAL DA AYNI ŞEYİ DÖNDÜRÜYORDU. İkiz kayıt kaldırıldığında (7t) bu blok yarım kalmış;
@@ -48324,7 +48363,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         // ile kuruluyor — fişteki peşin ayağın ve kasa ekranından girilen hareketin kullandığı bağın
         // aynısı; üç yol da aynı çifti üretiyor.
         // ÇEVRİMDE HESAP TUTARI ZORUNLU: boş bırakılırsa kasaya sıfır yazılır ve para kaybolur.
-        if (paraHareketi && hForm.hesap && cevrimGerekli && !(parseFloat(hForm.hesapTutar) > 0)) {
+        if (!ikiliK && paraHareketi && hForm.hesap && cevrimGerekli && !(parseFloat(hForm.hesapTutar) > 0)) {
             showToast(`Hesaba işlenecek tutarı girin (${seciliHesap.pb})`);
             return;
         }
@@ -48351,10 +48390,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
         const hesapBilgisi = bagId ? {
             hesapAd: seciliHesap.ad.replace(/^(Kasa|Banka): /, ""),
             hesapPB: seciliHesap.pb,
-            hesapTutar: cevrimGerekli ? (parseFloat(hForm.hesapTutar) || 0) : tutar,
+            hesapTutar: cevrimS ? hesapTutarS : tutar,
         } : {};
-        // v1.676.0: Muhasebe defterinde Resmi için ayrı P. tipi (207 resmiAlanlari).
-        const resmiEk = resmiAlanlari(hForm.defter, ortak.paraBirimi || hForm.paraBirimi || "TRY", ortak.tutar, hForm.resmi, kurlar);
+        // v1.676.0: Muhasebe defterinde Resmi için ayrı P. tipi (207 resmiAlanlari). İkili kipte kasa tutarından (v1.684.0).
+        const resmiEk = ikiliK
+            ? (ikiliResmi && (ikiliResmi.pb !== ikiliGenel.pb || Math.abs(ikiliResmi.tutar - ikiliGenel.tutar) > 0.004)
+                ? { resmiPB: ikiliResmi.pb, resmiTutar: stokYuvarla(ikiliResmi.tutar),
+                    resmiAciklama: (() => { const yazi = hForm.aciklama.trim() || hareketTipi || ""; const g = `${yazi} (${seciliHesap.ad.replace(/^(Kasa|Banka): /, "")})`; const cv = cevrimYazi(ikiliResmi); return cv ? `${g}: ${cv}` : g; })() }
+                : {})
+            : resmiAlanlari(hForm.defter, ortak.paraBirimi || hForm.paraBirimi || "TRY", ortak.tutar, hForm.resmi, kurlar);
         const hareketler = [{ ...ortak, fisNo: ortak.fisNo, id: uid("hrk"), kullanici: islemKullanicisiAd(), defter: hForm.defter, muhasebeBagId: bagId || undefined, ...hesapBilgisi, ...resmiEk }];
         onAddHareket(cari.id, hareketler);
         if (bagId) {
@@ -48368,12 +48412,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                     // 207-kasa-cari-ortak). Muhasebe ekranı da aynı fonksiyonu kullanıyor; sözlük tek yerde.
                     yon: kasaHesapYonu(hareketTipi),
                     // HESABIN KENDİ PARA BİRİMİNDEKİ tutar. Çevrim yoksa cari tutarının aynısı.
-                    tutar: cevrimGerekli ? (parseFloat(hForm.hesapTutar) || 0) : tutar,
+                    tutar: cevrimS ? hesapTutarS : tutar,
                     // Karşı tarafın tutarı ve kur da kayda giriyor — muhasebe ekranından girilen hareketin
                     // taşıdığı alanların aynısı, iki yön birbirine benzesin diye.
                     cariTutar: tutar,
-                    cariPB: cariPB,
-                    kur: cevrimGerekli && hamOran ? hamOran : undefined,
+                    cariPB: cariPBs,
+                    kur: ikiliK ? (cevrimS ? hesapTutarS / tutar : undefined) : (cevrimGerekli && hamOran ? hamOran : undefined),
                     cariId: cari.id,
                     muhasebeBagId: bagId,
                     defter: hForm.defter,
@@ -48511,9 +48555,14 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const subeOnerileri = open && hForm.cek
         ? bilinenSubeler((tumCariler || []).flatMap((c) => (c.hareketler || []).map((h) => h.cek)).filter(Boolean), hForm.cek.banka)
         : [];
-    return (React.createElement("div", { ref: kartRef, "data-cari-kart-id": cari.id, ...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu), style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+    return (React.createElement("div", { ref: kartRef, "data-cari-kart-id": cari.id, "data-cari-tam-ekran": tamEkran ? "1" : undefined, ...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu), style: tamEkran
+            // KATMAN (v1.683.1 — kullanıcı: "tam ekranda alış/satış fişi açınca ekranda göstermiyor"): fiş/ekstre pencereleri
+            // 100, üst menü 510 katmanında — kart onların ALTINDA (90) ve üst menünün altından başlar; pencere üstte açılır.
+            ? { position: "fixed", top: "var(--ust-menu-h, 0px)", left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
+            : { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
         React.createElement(SagTikMenusu, { konum: sagMenu, onKapat: () => setSagMenu(null), veri: "cari", baslik: `CARİ · ${cari.unvan}`, ogeler: [
                 { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
+                { k: "tamekran", etiket: tamEkran ? "Tam ekrandan çık" : "Tam ekran aç", ikon: Maximize2, onClick: () => { setOpen(true); setTamEkran((v) => !v); } },
                 { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },
                 { ayrac: true },
                 { k: "ekstre", etiket: `Ekstre yazdır (PDF)${defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}`, ikon: Printer, gizli: !onPencereAc,
@@ -48625,6 +48674,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                         hucre("BORÇ", borc, "var(--erp-warn)", "borc")));
                 })(),
                 !duzenleModu && (open ? React.createElement(ChevronDown, { size: 18, color: "var(--erp-text-3)" }) : React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" })))),
+            !duzenleModu && (React.createElement("button", { type: "button", "data-kart-eylem": "tam-ekran", title: tamEkran ? "Tam ekrandan çık (Esc)" : "Tam ekran", onClick: (e) => { e.stopPropagation(); setOpen(true); setTamEkran((v) => !v); }, style: { border: "none", background: tamEkran ? "var(--erp-purple)" : "none", color: tamEkran ? "#fff" : "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, borderRadius: 6, flexShrink: 0 } }, tamEkran ? React.createElement(X, { size: 15 }) : React.createElement(Maximize2, { size: 15 }))),
             !duzenleModu && (React.createElement("button", { type: "button", onClick: () => {
                     setDuzenleUnvan(cari.unvan);
                     setDuzenleTip(cari.tip);
@@ -48898,25 +48948,28 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                                 React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 8 } },
                                     React.createElement(Field, { label: "Tarih" },
                                         React.createElement("input", { type: "date", value: hForm.tarih, onChange: (e) => setHForm({ ...hForm, tarih: e.target.value }), style: inputStyle })),
-                                    React.createElement(Field, { label: "Tutar" },
+                                    React.createElement(Field, { label: paraHareketi && seciliHesap ? `${hareketTipi === "Tahsilat" ? "Kasaya giren" : "Kasadan çıkan"} (${seciliHesap.pb})` : "Tutar" },
                                         React.createElement("div", { style: { display: "flex", gap: 4 } },
                                             React.createElement("input", { type: "number", step: "0.01", "data-cari-hareket-tutar": "1", value: hForm.tutar, onChange: (e) => setHForm({ ...hForm, tutar: e.target.value }), style: { ...inputStyle, flex: 1 } }),
-                                            React.createElement("select", { "data-cari-hareket-pb": "1", value: hForm.paraBirimi || "TRY", onChange: (e) => setHForm({ ...hForm, paraBirimi: e.target.value }), style: { ...inputStyle, width: 82 } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb))))),
+                                            !(paraHareketi && seciliHesap) && React.createElement("select", { "data-cari-hareket-pb": "1", value: hForm.paraBirimi || "TRY", onChange: (e) => setHForm({ ...hForm, paraBirimi: e.target.value }), style: { ...inputStyle, width: 82 } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb))))),
                                     React.createElement(Field, { label: "Defter" },
                                         React.createElement("select", { value: hForm.defter, onChange: (e) => setHForm({ ...hForm, defter: e.target.value }), style: inputStyle },
                                             React.createElement("option", { value: "Genel" }, "Genel"),
                                             React.createElement("option", { value: "Resmi" }, "Resmi"),
                                             React.createElement("option", { value: "Muhasebe" }, "Muhasebe (ikisine de)")),
-                                        React.createElement(ResmiTutarAlani, { defter: hForm.defter, anaPB: hForm.paraBirimi || "TRY", anaTutar: parseFloat(hForm.tutar) || 0, kurlar: kurlar, deger: hForm.resmi, onDegis: (v) => setHForm({ ...hForm, resmi: v }), stil: { marginTop: 4 } }))),
+                                        !(paraHareketi && seciliHesap) && React.createElement(ResmiTutarAlani, { defter: hForm.defter, anaPB: hForm.paraBirimi || "TRY", anaTutar: parseFloat(hForm.tutar) || 0, kurlar: kurlar, deger: hForm.resmi, onDegis: (v) => setHForm({ ...hForm, resmi: v }), stil: { marginTop: 4 } }))),
+                                paraHareketi && seciliHesap && (React.createElement("div", { "data-cari-ikili-pb": "1", style: { display: "grid", gap: 4, marginTop: 6 } },
+                                    React.createElement(ResmiTutarAlani, { defter: "Muhasebe", anaPB: seciliHesap.pb, anaTutar: parseFloat(hForm.tutar) || 0, kurlar: kurlar, deger: hForm.genel || { pb: cari.paraBirimi || "TRY" }, onDegis: (v) => setHForm({ ...hForm, genel: v }), etiket: hForm.defter === "Muhasebe" ? "Genel" : "Cariye", veri: "karsi" }),
+                                    hForm.defter === "Muhasebe" && (React.createElement(ResmiTutarAlani, { defter: "Muhasebe", anaPB: seciliHesap.pb, anaTutar: parseFloat(hForm.tutar) || 0, kurlar: kurlar, deger: hForm.resmi || { pb: seciliHesap.pb }, onDegis: (v) => setHForm({ ...hForm, resmi: v }), ayniAd: "kasa ile" })))),
                                 React.createElement("div", { style: { display: "grid", gridTemplateColumns: cekSenet ? "1fr 1fr 2fr" : "1fr 2fr", gap: 8, marginTop: 8 } },
                                     React.createElement(Field, { label: "Fi\u015F No" },
                                         React.createElement("input", { value: hForm.fisNo, onChange: (e) => setHForm({ ...hForm, fisNo: e.target.value }), placeholder: "Opsiyonel", style: inputStyle })),
-                                    paraHareketi && cevrimGerekli && (React.createElement(Field, { label: `Hesaba işlenecek (${seciliHesap.pb})` },
+                                    false && paraHareketi && cevrimGerekli && (React.createElement(Field, { label: `Hesaba işlenecek (${seciliHesap.pb})` },
                                         React.createElement("input", { type: "number", step: "any", min: "0", value: hForm.hesapTutar, 
                                             // Tutar elle yazılınca kur girdisi SERBEST: kutu yeniden tutarlardan
                                             // türetilmiş kuru gösterir, ekranda tutmayan bir çift kalmaz.
                                             onChange: (e) => setHForm({ ...hForm, hesapTutar: e.target.value, kurGirdi: "" }), title: "Kasa/bankada ger\u00E7ekten hareket eden tutar", style: inputStyle }))),
-                                    paraHareketi && cevrimGerekli && (React.createElement(Field, { label: kurSoruAlan ? `Kur (1 ${kurSoruAlan.a} = ? ${kurSoruAlan.b})` : "Kur" },
+                                    false && paraHareketi && cevrimGerekli && (React.createElement(Field, { label: kurSoruAlan ? `Kur (1 ${kurSoruAlan.a} = ? ${kurSoruAlan.b})` : "Kur" },
                                         React.createElement("input", { type: "number", step: "any", min: "0", value: kurKutusu, onChange: (e) => {
                                                 const kur = parseFloat(e.target.value);
                                                 const kaynak = parseFloat(hForm.tutar);
@@ -63328,7 +63381,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.682.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.684.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.683.1";
+const SURUM = "1.684.0";
 const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Tam ekran cari kartindan acilan fis penceresi ustte gorunur";
+const SURUM_NOTU = "Cari karti tahsilat/odeme formu: kasa birimi sabit, Genel/Resmi kur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.684.0", tarih: "16.10.2026", eklenen: [],
+    degisen: ["Cari kartı tahsilat/ödeme formu Ödeme & Tahsilat ile aynı: tutar kasanın/bankanın biriminde sabit, 'Cariye' (Muhasebe'de Genel + Resmi) para birimi ve kur, açıklama deftere göre"], duzeltilen: [] },
   { surum: "1.683.1", tarih: "16.10.2026", eklenen: [], degisen: ["Tam ekran cari kartı üst menünün altından başlar"],
     duzeltilen: ["Tam ekran cari kartından açılan Alış/Satış fişi (ve ekstre) penceresi kartın altında kalıyordu"] },
   { surum: "1.683.0", tarih: "15.10.2026", eklenen: ["Cari kartı başlığında tam ekran düğmesi (ve sağ tık menüsünde) — kart ekranı kaplar, ✕ ya da Esc ile eski düzene döner"],

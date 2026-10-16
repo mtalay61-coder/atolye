@@ -127,8 +127,29 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   }, [odemeHedefi, open]);
 
   function submitHareket() {
-    const tutar = parseFloat(hForm.tutar);
+    let tutar = parseFloat(hForm.tutar);
     if (!tutar || tutar <= 0) return;
+    // KASA BİRİMİ SABİT (v1.684.0 — kullanıcı: "cari kartı formunu da aynı yap", Ödeme & Tahsilat v1.680–1.682 ile aynı):
+    // para hareketinde hesap seçiliyse yazılan tutar KASAYA giren/çıkan para (hesabın biriminde); cariye işlenecek
+    // birim + kur "Cariye/Genel" satırından, Muhasebe defterinde Resmi ayrıca. Açıklama deftere göre ayrı.
+    const ikiliK = paraHareketi && !!seciliHesap;
+    const kasaTutari = tutar;
+    let ikiliGenel = null, ikiliResmi = null;
+    if (ikiliK) {
+      ikiliGenel = resmiTutarHesapla(seciliHesap.pb, kasaTutari, hForm.genel || { pb: cari.paraBirimi || "TRY" }, kurlar);
+      ikiliResmi = hForm.defter === "Muhasebe" ? resmiTutarHesapla(seciliHesap.pb, kasaTutari, hForm.resmi || { pb: seciliHesap.pb }, kurlar) : null;
+      if (!(ikiliGenel.tutar > 0) || (ikiliResmi && !(ikiliResmi.tutar > 0))) {
+        if (showToast) showToast(ikiliResmi ? "Genel ve Resmi için kur ya da tutar girin" : "Cariye işlenecek tutar için kur girin");
+        return;
+      }
+      tutar = stokYuvarla(ikiliGenel.tutar);
+    }
+    const cariPBs = ikiliK ? ikiliGenel.pb : cariPB;
+    const cevrimS = ikiliK ? ikiliGenel.pb !== seciliHesap.pb : cevrimGerekli;
+    const hesapTutarS = ikiliK ? kasaTutari : (parseFloat(hForm.hesapTutar) || 0);
+    const yazP = (x, pb) => `${Number(x).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`;
+    const cevrimYazi = (h2) => (ikiliK && h2 && h2.pb !== seciliHesap.pb
+      ? `${yazP(kasaTutari, seciliHesap.pb)} → ${yazP(h2.tutar, h2.pb)} (kur ${Number(h2.kur).toLocaleString("tr-TR", { maximumFractionDigits: 4 })})` : "");
     const cekAyrintiliMi = cekSenet && !!(hForm.cek.cekNo || hForm.cek.banka || hForm.cek.kesideci);
     if (cekSenet && cekCevrim.farkli && !(cekCevrim.cekTutar > 0)) {
       if (showToast) showToast(`Çek ${cekCevrim.cekPB}, hareket ${cariPB} — çekin tutarını yazın`);
@@ -147,7 +168,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       // Elle seçilen `hForm.yon` yalnız serbest (tipsiz) girişte kullanılıyor.
       yon: hareketTipi ? hareketYonu(hareketTipi) : hForm.yon,
       tutar,
-      paraBirimi: hForm.paraBirimi || "TRY",
+      paraBirimi: ikiliK ? cariPBs : (hForm.paraBirimi || "TRY"),
       odemeSekli: hForm.odemeSekli,
       // Yalnızca çek/senet hareketinde yazılıyor: boş bir `cek` nesnesini her harekete iliştirmek
       // kaydı şişirir ve "çeki var mı" sorusunu belirsizleştirirdi.
@@ -175,7 +196,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       aciklama: (() => {
         const yazi = hForm.aciklama.trim() || hareketTipi || "";
         const hesapAd = paraHareketi && seciliHesap ? seciliHesap.ad.replace(/^(Kasa|Banka): /, "") : "";
-        return hesapAd ? `${yazi} (${hesapAd})` : yazi;
+        const cv = cevrimYazi(ikiliGenel);
+        const govde = hesapAd ? `${yazi} (${hesapAd})` : yazi;
+        return cv ? `${govde}: ${cv}` : govde;
       })(),
     };
     // İKİ DAL DA AYNI ŞEYİ DÖNDÜRÜYORDU. İkiz kayıt kaldırıldığında (7t) bu blok yarım kalmış;
@@ -186,7 +209,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     // ile kuruluyor — fişteki peşin ayağın ve kasa ekranından girilen hareketin kullandığı bağın
     // aynısı; üç yol da aynı çifti üretiyor.
     // ÇEVRİMDE HESAP TUTARI ZORUNLU: boş bırakılırsa kasaya sıfır yazılır ve para kaybolur.
-    if (paraHareketi && hForm.hesap && cevrimGerekli && !(parseFloat(hForm.hesapTutar) > 0)) {
+    if (!ikiliK && paraHareketi && hForm.hesap && cevrimGerekli && !(parseFloat(hForm.hesapTutar) > 0)) {
       showToast(`Hesaba işlenecek tutarı girin (${seciliHesap.pb})`);
       return;
     }
@@ -213,10 +236,15 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     const hesapBilgisi = bagId ? {
       hesapAd: seciliHesap.ad.replace(/^(Kasa|Banka): /, ""),
       hesapPB: seciliHesap.pb,
-      hesapTutar: cevrimGerekli ? (parseFloat(hForm.hesapTutar) || 0) : tutar,
+      hesapTutar: cevrimS ? hesapTutarS : tutar,
     } : {};
-    // v1.676.0: Muhasebe defterinde Resmi için ayrı P. tipi (207 resmiAlanlari).
-    const resmiEk = resmiAlanlari(hForm.defter, ortak.paraBirimi || hForm.paraBirimi || "TRY", ortak.tutar, hForm.resmi, kurlar);
+    // v1.676.0: Muhasebe defterinde Resmi için ayrı P. tipi (207 resmiAlanlari). İkili kipte kasa tutarından (v1.684.0).
+    const resmiEk = ikiliK
+      ? (ikiliResmi && (ikiliResmi.pb !== ikiliGenel.pb || Math.abs(ikiliResmi.tutar - ikiliGenel.tutar) > 0.004)
+        ? { resmiPB: ikiliResmi.pb, resmiTutar: stokYuvarla(ikiliResmi.tutar),
+            resmiAciklama: (() => { const yazi = hForm.aciklama.trim() || hareketTipi || ""; const g = `${yazi} (${seciliHesap.ad.replace(/^(Kasa|Banka): /, "")})`; const cv = cevrimYazi(ikiliResmi); return cv ? `${g}: ${cv}` : g; })() }
+        : {})
+      : resmiAlanlari(hForm.defter, ortak.paraBirimi || hForm.paraBirimi || "TRY", ortak.tutar, hForm.resmi, kurlar);
     const hareketler = [{ ...ortak, fisNo: ortak.fisNo, id: uid("hrk"), kullanici: islemKullanicisiAd(), defter: hForm.defter, muhasebeBagId: bagId || undefined, ...hesapBilgisi, ...resmiEk }];
     onAddHareket(cari.id, hareketler);
 
@@ -231,12 +259,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           // 207-kasa-cari-ortak). Muhasebe ekranı da aynı fonksiyonu kullanıyor; sözlük tek yerde.
           yon: kasaHesapYonu(hareketTipi),
           // HESABIN KENDİ PARA BİRİMİNDEKİ tutar. Çevrim yoksa cari tutarının aynısı.
-          tutar: cevrimGerekli ? (parseFloat(hForm.hesapTutar) || 0) : tutar,
+          tutar: cevrimS ? hesapTutarS : tutar,
           // Karşı tarafın tutarı ve kur da kayda giriyor — muhasebe ekranından girilen hareketin
           // taşıdığı alanların aynısı, iki yön birbirine benzesin diye.
           cariTutar: tutar,
-          cariPB: cariPB,
-          kur: cevrimGerekli && hamOran ? hamOran : undefined,
+          cariPB: cariPBs,
+          kur: ikiliK ? (cevrimS ? hesapTutarS / tutar : undefined) : (cevrimGerekli && hamOran ? hamOran : undefined),
           cariId: cari.id,
           muhasebeBagId: bagId,
           defter: hForm.defter,
@@ -1191,12 +1219,12 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 <Field label="Tarih">
                   <input type="date" value={hForm.tarih} onChange={(e) => setHForm({ ...hForm, tarih: e.target.value })} style={inputStyle} />
                 </Field>
-                <Field label="Tutar">
+                <Field label={paraHareketi && seciliHesap ? `${hareketTipi === "Tahsilat" ? "Kasaya giren" : "Kasadan çıkan"} (${seciliHesap.pb})` : "Tutar"}>
                   <div style={{ display: "flex", gap: 4 }}>
                     <input type="number" step="0.01" data-cari-hareket-tutar="1" value={hForm.tutar} onChange={(e) => setHForm({ ...hForm, tutar: e.target.value })} style={{ ...inputStyle, flex: 1 }} />
-                    <select data-cari-hareket-pb="1" value={hForm.paraBirimi || "TRY"} onChange={(e) => setHForm({ ...hForm, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 82 }}>
+                    {!(paraHareketi && seciliHesap) && <select data-cari-hareket-pb="1" value={hForm.paraBirimi || "TRY"} onChange={(e) => setHForm({ ...hForm, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 82 }}>
                       {MUHASEBE_PARA_BIRIMLERI.map((pb) => <option key={pb} value={pb}>{pb}</option>)}
-                    </select>
+                    </select>}
                   </div>
                 </Field>
                 <Field label="Defter">
@@ -1205,10 +1233,21 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                     <option value="Resmi">Resmi</option>
                     <option value="Muhasebe">Muhasebe (ikisine de)</option>
                   </select>
-                  <ResmiTutarAlani defter={hForm.defter} anaPB={hForm.paraBirimi || "TRY"} anaTutar={parseFloat(hForm.tutar) || 0} kurlar={kurlar}
-                    deger={hForm.resmi} onDegis={(v) => setHForm({ ...hForm, resmi: v })} stil={{ marginTop: 4 }} />
+                  {!(paraHareketi && seciliHesap) && <ResmiTutarAlani defter={hForm.defter} anaPB={hForm.paraBirimi || "TRY"} anaTutar={parseFloat(hForm.tutar) || 0} kurlar={kurlar}
+                    deger={hForm.resmi} onDegis={(v) => setHForm({ ...hForm, resmi: v })} stil={{ marginTop: 4 }} />}
                 </Field>
               </div>
+              {paraHareketi && seciliHesap && (
+                <div data-cari-ikili-pb="1" style={{ display: "grid", gap: 4, marginTop: 6 }}>
+                  <ResmiTutarAlani defter="Muhasebe" anaPB={seciliHesap.pb} anaTutar={parseFloat(hForm.tutar) || 0} kurlar={kurlar}
+                    deger={hForm.genel || { pb: cari.paraBirimi || "TRY" }} onDegis={(v) => setHForm({ ...hForm, genel: v })}
+                    etiket={hForm.defter === "Muhasebe" ? "Genel" : "Cariye"} veri="karsi" />
+                  {hForm.defter === "Muhasebe" && (
+                    <ResmiTutarAlani defter="Muhasebe" anaPB={seciliHesap.pb} anaTutar={parseFloat(hForm.tutar) || 0} kurlar={kurlar}
+                      deger={hForm.resmi || { pb: seciliHesap.pb }} onDegis={(v) => setHForm({ ...hForm, resmi: v })} ayniAd="kasa ile" />
+                  )}
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: cekSenet ? "1fr 1fr 2fr" : "1fr 2fr", gap: 8, marginTop: 8 }}>
                 <Field label="Fiş No">
                   <input value={hForm.fisNo} onChange={(e) => setHForm({ ...hForm, fisNo: e.target.value })} placeholder="Opsiyonel" style={inputStyle} />
@@ -1219,7 +1258,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 {/* KUR ÇEVİRİCİ — hesabın para birimi cari hareketininkinden farklıysa.
                     Örn. dolar borcuna TL kasadan tahsilat. İki tutar da kayda giriyor; kur
                     ikisinden TÜRETİLİYOR, ayrıca sorulmuyor. */}
-                {paraHareketi && cevrimGerekli && (
+                {false && paraHareketi && cevrimGerekli && (
                   <Field label={`Hesaba işlenecek (${seciliHesap.pb})`}>
                     <input
                       type="number" step="any" min="0"
@@ -1235,7 +1274,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 {/* KUR DA YAZILABİLİR — çevirinin İKİNCİ yönü (kullanıcı, 6 Eylül: "bu kural tüm
                     para birimi çeviricilerde olsun"). Kuru bilip tutarı bilmeyen buraya yazıyor,
                     üstteki tutar kendiliğinden hesaplanıyor. İki alan tek gerçeğin iki yüzü. */}
-                {paraHareketi && cevrimGerekli && (
+                {false && paraHareketi && cevrimGerekli && (
                   <Field label={kurSoruAlan ? `Kur (1 ${kurSoruAlan.a} = ? ${kurSoruAlan.b})` : "Kur"}>
                     <input
                       type="number" step="any" min="0"
