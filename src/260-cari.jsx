@@ -1,4 +1,4 @@
-function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -299,6 +299,7 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
         if (odemeDefterSuzgec !== "Tümü" && !defterKapsar(x.defter || "Genel", odemeDefterSuzgec)) return;
         const resmi = odemeDefterSuzgec === "Resmi" && x.resmiPB && x.resmiTutar != null;
         sonHareketler.push({ c: { id: null, unvan: x.giderKartAd || "Gelir/gider kartı", kartMi: true }, tip,
+          ham: { ...x, hesapTur: sekil === "Nakit" ? "kasa" : "banka", hesapId: hs.id },
           h: { ...x, odemeSekli: x.odemeSekli || sekil, paraBirimi: resmi ? x.resmiPB : (hs.paraBirimi || "TRY"), tutar: resmi ? x.resmiTutar : x.tutar,
             aciklama: (resmi && x.resmiAciklama) || x.aciklama || `${tip === "Tahsilat" ? "Gelir" : "Gider"} (${hs.ad})` } });
       }));
@@ -454,12 +455,12 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
             <div data-odeme-son-liste="1" style={{ maxHeight: 420, overflowY: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
-                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Defter", "Tutar", "Fiş No", "Açıklama"].map((b) => (
+                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Defter", "Tutar", "Fiş No", "Açıklama", ""].map((b) => (
                     <th key={b} style={{ fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" }}>{b}</th>
                   ))}</tr>
                 </thead>
                 <tbody>
-                  {sonHareketler.slice(0, 200).map(({ c, h, tip }, i) => {
+                  {sonHareketler.slice(0, 200).map(({ c, h, tip, ham }, i) => {
                     const renk = HAREKET_TIPI_RENK[tip];
                     return (
                       <tr key={`${c.id || "kart"}-${h.id || i}`} data-odeme-son-satir={h.fisNo || i} data-odeme-son-kart={c.kartMi ? "1" : undefined}
@@ -483,6 +484,16 @@ function CariModule({ giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKa
                         </td>
                         <td className="mono" style={{ fontSize: 11, padding: "5px 8px" }}>{h.fisNo || ""}</td>
                         <td style={{ fontSize: 11, padding: "5px 8px", color: "var(--erp-text-2)" }}>{h.aciklama || ""}</td>
+                        {/* GELİR/GİDER KAYDI BURADAN DA SİLİNİR (v1.688.1 — kullanıcı: "önceki eklenenleri silemiyorum"): kart
+                            hareketinin cari kartı yok; silme Gelir/Gider ekranındakiyle aynı işlem (396 kartHareketiSilIslem).
+                            Cari satırları cari kartından silinir (satıra dokununca açılır). */}
+                        <td style={{ padding: "2px 6px" }} onClick={(e) => e.stopPropagation()}>
+                          {c.kartMi && ham && onMuhasebeKaydet && (
+                            <span data-odeme-son-sil={h.fisNo || h.id || "eski"}>
+                              <SilOnayButonu boyut={11} onConfirm={() => kartHareketiSilIslem(ham, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast })} />
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
