@@ -9,7 +9,8 @@
    "Teslim Tarihi",
    "Müşteri Sipariş Kodu (op",
    "Belge No",
-   "Sezon"
+   "Sezon",
+   "Not"
   ]
  },
  "telefon": {
