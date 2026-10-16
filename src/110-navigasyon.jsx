@@ -252,7 +252,7 @@ function GecikenIslerPaneli({ siparisler, uretim, stok, cariler, muhasebe, onGoT
 // Tutar biçimleyicisi bir kez: `toLocaleString(..., {seçenek})` her fiş için yeni Intl kuruyordu.
 const SON_ISLEM_TUTAR_BICIM = new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 2 });
 
-function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSiparis, onGoToUrun }) {
+function SonIslemlerPaneli({ cariler, stok, siparisler, muhasebe, onGoToCari, onGoToSiparis, onGoToUrun, onNavigate }) {
   const [kisiSuzgec, setKisiSuzgec] = useState("");
   const [turSuzgec, setTurSuzgec] = useState("");
   // KAPALI AÇILIR. Ana sayfa bir ÖZET ekranı; on iki satırlık akış onu aşağı itiyordu.
@@ -265,7 +265,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
   // kuruluyordu. Yalnız veri değişince yeniden kuruluyor. Git düğmeleri o anki işleyicileri ref'ten okuyor —
   // önbellekteki kapanış eski bir işleyiciye bağlı kalmasın.
   const gitRef = useRef(null);
-  gitRef.current = { cari: onGoToCari, siparis: onGoToSiparis, urun: onGoToUrun };
+  gitRef.current = { cari: onGoToCari, siparis: onGoToSiparis, urun: onGoToUrun, sekme: onNavigate };
   const olaylar = React.useMemo(() => {
     const olaylar = [];
     const zamanAl = (h) => h.zaman || (h.tarih ? `${String(h.tarih).slice(0, 10)}T00:00:00.000Z` : null);
@@ -342,6 +342,27 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
       });
     });
 
+    // KASA / BANKA HAREKETLERİ (v1.688.6 — kullanıcı: "son işlemler düzgün çalışmıyor"): yalnız cari hareketleri ve stok
+    // dolaşılıyordu; cariye bağlı OLMAYAN para hareketleri (gelir/gider kartı ödemeleri, virman, elle kasa girişi) akışa
+    // hiç girmiyordu — bugün yapılan gider ödemeleri görünmüyordu. Cariye bağlı olanlar (`muhasebeBagId`/`cariId`) cari
+    // tarafında zaten bir satır; ikinci kez yazılmaz. Virmanın iki ayağı tek satır (bağ kimliğiyle).
+    const virmanGorulen = new Set();
+    [...((muhasebe && muhasebe.kasalar) || []).map((hs) => [hs, "Kasa"]), ...((muhasebe && muhasebe.bankalar) || []).map((hs) => [hs, "Banka"])]
+      .forEach(([hs, hesapTuru]) => (hs.hareketler || []).forEach((x) => {
+        if (x.cariId || (x.muhasebeBagId && !x.virmanMi)) return;
+        if (x.virmanMi) { if (virmanGorulen.has(x.muhasebeBagId)) return; virmanGorulen.add(x.muhasebeBagId); }
+        const tur = x.virmanMi ? "Virman" : x.giderKartId ? (x.yon === "Giriş" ? "Gelir" : "Gider") : (x.yon === "Giriş" ? "Kasa girişi" : "Kasa çıkışı");
+        olaylar.push({
+          zaman: zamanAl(x),
+          kullanici: x.kullanici || null,
+          tur,
+          renk: x.yon === "Giriş" ? "var(--erp-primary)" : "var(--erp-warn)",
+          metin: `${x.giderKartAd || x.aciklama || hs.ad} · ${SON_ISLEM_TUTAR_BICIM.format(Number(x.tutar) || 0)} ${PARA_SEMBOLU[hs.paraBirimi || "TRY"] || ""}`,
+          alt: [x.fisNo, `${hesapTuru}: ${hs.ad}`, x.giderKartAd && x.aciklama !== x.giderKartAd ? x.aciklama : ""].filter(Boolean).join(" · "),
+          git: () => gitRef.current.sekme && gitRef.current.sekme(x.giderKartId ? "gelirgider" : "muhasebe"),
+        });
+      }));
+
     (siparisler || []).forEach((sp) => {
       if (!sp.olusturuldu && !sp.tarih) return;
       olaylar.push({
@@ -357,7 +378,7 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
 
     olaylar.sort((a, b) => String(b.zaman || "").localeCompare(String(a.zaman || "")));
     return olaylar;
-  }, [cariler, stok, siparisler]);
+  }, [cariler, stok, siparisler, muhasebe]);
 
   const kisiler = Array.from(new Set(olaylar.map((o) => o.kullanici).filter(Boolean)));
 
@@ -386,7 +407,8 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, onGoToCari, onGoToSipari
   // Kişi başına özet: "kullanıcı bu kadar fatura kesti, bu kadar ödeme girdi".
   const ozet = {};
   suzulmus.slice(0, 200).forEach((o) => {
-    const k = o.kullanici || "—";
+    // Kullanıcısı yazılmamış eski kayıt (v1.645.9 öncesi sipariş, sistem kaydı): "— — 6 satış" yerine okunur ad.
+    const k = o.kullanici || "Kullanıcı yok";
     ozet[k] = ozet[k] || {};
     ozet[k][o.tur] = (ozet[k][o.tur] || 0) + 1;
   });
@@ -731,6 +753,7 @@ function AnaSayfaModule({ stok, uretim, tanimlar, cariler, siparisler, muhasebe,
         />
 
         <SonIslemlerPaneli
+          muhasebe={muhasebe} onNavigate={onNavigate}
           cariler={cariler}
           stok={stok}
           siparisler={siparisler}

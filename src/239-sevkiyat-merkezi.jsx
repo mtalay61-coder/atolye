@@ -270,23 +270,101 @@ function SevkFisPaneli({ siparis, cari, cariler, stok, siparisler, koliler, uret
   const panelId = `sevk-panel-${siparis.id}`;
   const kalanlar = (siparis.kalemler || []).map((k) => ({ k, kalan: Math.max(0, (k.miktar || 0) - (k.karsilanan || 0)) })).filter((x) => x.kalan > 0);
   const hazirKoliler = (koliler || []).filter((k) => k.siparisId === siparis.id && (k.durum || "Hazır") !== "Sevk edildi");
+  // DEPODAKİ MİKTAR (v1.688.7 — kullanıcı: "sevkiyatta sorun var, daha gelişmiş olması gerekli"): kalemin renk/beden
+  // varyantındaki stok. Fiş bununla dolar; eksik kalan stok matriste kırmızı görünür.
+  const stokta = (k) => {
+    const p = (stok || []).find((u) => u.id === k.urunId);
+    const v = p && (p.variants || []).find((x) => stokAnahtarNrm(x.renk) === stokAnahtarNrm(k.renk) && stokAnahtarNrm(x.beden) === stokAnahtarNrm(k.beden));
+    return v ? Math.max(0, Number(v.miktar) || 0) : 0;
+  };
+  // FİŞ DOLDURMA (kullanıcı: "cariye satış fişi açılacak, Ekle'ye tıklayınca koli, asorti, beden olarak eklenebilecek;
+  // birden fazla satırda"): varsayılan BOŞ fiş + "Siparişten seç" listesi AÇIK — her satırın Ekle'si satırı Kalem Ekle
+  // alanına yükler (asorti / beden elle), hazır koliler koli adedi olarak eklenir; istenen kadar satır. Kısayol: fişi
+  // stoktakilerle ya da kalanın tümüyle tek seferde doldur. Satırlar siparişe bağlı (089 karşılananı artırır).
+  // Seçim değişince form baştan kurulur (key).
+  const [dolum, setDolum] = useState("bos");
+  const baslangic = React.useMemo(() => {
+    if (dolum === "bos") return null;
+    const liste = kalanlar.map(({ k, kalan }) => {
+      const miktar = dolum === "stok" ? Math.min(kalan, stokta(k)) : kalan;
+      return miktar > 0 ? {
+        urunId: k.urunId, urunAd: k.urunAd, renk: k.renk || "", beden: k.beden || "", miktar, birim: k.birim || "",
+        birimFiyat: k.birimFiyat || 0, paraBirimi: k.paraBirimi || "TRY", kalemId: k.id,
+        siparis: { id: siparis.id, siparisNo: siparis.siparisNo, rezervasyonSiparisId: siparis.rezervasyonSiparisId || null },
+        ...(typeof k.kdvOrani === "number" ? { kdvOrani: k.kdvOrani } : {}),
+      } : null;
+    }).filter(Boolean);
+    return liste.length ? liste : null;
+  }, [dolum, siparis, stok]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  // MATRİS: satır = ürün + renk, sütun = beden; hücrede kalan ve altında stok (yetmiyorsa kırmızı).
+  const bedenler = [...new Set(kalanlar.map((x) => x.k.beden || ""))].sort((a, b) => String(a).localeCompare(String(b), "tr", { numeric: true }));
+  const satirlar = [];
+  kalanlar.forEach(({ k, kalan }) => {
+    const anahtar = `${k.urunAd || ""}|${k.renk || ""}`;
+    let r = satirlar.find((x) => x.anahtar === anahtar);
+    if (!r) { r = { anahtar, urun: k.urunAd || "", renk: k.renk || "", hucre: {} }; satirlar.push(r); }
+    const h = r.hucre[k.beden || ""] || { kalan: 0, stok: 0 };
+    h.kalan += kalan; h.stok = stokta(k);
+    r.hucre[k.beden || ""] = h;
+  });
+  const toplamKalan = kalanlar.reduce((t, x) => t + x.kalan, 0);
+  const toplamSevkEdilir = kalanlar.reduce((t, x) => t + Math.min(x.kalan, stokta(x.k)), 0);
+  const th = { padding: "5px 8px", fontSize: 10, color: "var(--erp-text-2)", textAlign: "center", position: "sticky", top: 0, background: "var(--erp-panel)" };
   return (
     <div data-sevk-fis-paneli={siparis.siparisNo} style={{ flex: "2 1 560px", minWidth: 0, border: "2px solid var(--erp-info)", borderRadius: 10, background: "var(--erp-surface)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderBottom: "1px solid var(--erp-border)", flexWrap: "wrap" }}>
         <Truck size={16} />
         <b>Sevk: {siparis.siparisNo}</b><span>· {cari ? cari.unvan : ""}</span>
+        <span className="mono" style={{ fontSize: 12, color: "var(--erp-text-2)" }}>· kalan <b>{toplamKalan}</b> · stokta sevk edilebilir <b style={{ color: toplamSevkEdilir < toplamKalan ? "var(--erp-warn)" : "var(--erp-primary)" }}>{toplamSevkEdilir}</b></span>
         <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
           <button className="btn-ghost" data-sevk-kapat="1" onClick={onKapat} title="Fişi kaydetmeden kapat">✕</button>
         </span>
       </div>
-      <div style={{ padding: "6px 10px", fontSize: 12, color: "var(--erp-muted)", display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <span>Kalan: {kalanlar.map((x) => `${x.k.urunAd || ""} ${x.k.renk || ""} ${x.k.beden || ""} ×${x.kalan}`).join(" · ") || "—"}</span>
-        {hazirKoliler.length > 0 && <span>Hazır koli: {hazirKoliler.map((k) => k.kod).join(", ")}</span>}
+      <div style={{ padding: "8px 10px" }}>
+        {hazirKoliler.length > 0 && <div style={{ fontSize: 12, marginBottom: 6 }}>Hazır koli: {hazirKoliler.map((k) => k.kod).join(", ")} — kolileri "Koli okut" sekmesinden sevk edebilirsiniz.</div>}
+        <div data-sevk-matris="1" style={{ maxHeight: 280, overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: 8, background: "#fff" }}>
+          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
+            <thead><tr>
+              <th style={{ ...th, textAlign: "left" }}>Ürün</th><th style={{ ...th, textAlign: "left" }}>Renk</th>
+              {bedenler.map((b) => <th key={b} style={th}>{b || "—"}</th>)}
+              <th style={th}>Toplam</th>
+            </tr></thead>
+            <tbody>{satirlar.map((r) => {
+              const top = Object.values(r.hucre).reduce((t, h) => t + h.kalan, 0);
+              return (
+                <tr key={r.anahtar} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                  <td style={{ padding: "4px 8px", fontWeight: 600 }}>{r.urun}</td>
+                  <td style={{ padding: "4px 8px" }}>{r.renk}</td>
+                  {bedenler.map((b) => {
+                    const h = r.hucre[b];
+                    if (!h) return <td key={b} />;
+                    const eksik = h.stok < h.kalan;
+                    return (
+                      <td key={b} className="mono" style={{ padding: "3px 6px", textAlign: "center", lineHeight: 1.15 }} title={`Kalan ${h.kalan} · stokta ${h.stok}`}>
+                        <b>{h.kalan}</b><div style={{ fontSize: 9, color: eksik ? "var(--erp-accent)" : "var(--erp-primary)" }}>stok {h.stok}</div>
+                      </td>
+                    );
+                  })}
+                  <td className="mono" style={{ padding: "4px 8px", textAlign: "center", fontWeight: 700 }}>{top}</td>
+                </tr>
+              );
+            })}</tbody>
+          </table>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginTop: 8, fontSize: 12 }}>
+          <span style={{ fontWeight: 700 }}>Fişi doldur:</span>
+          {[["bos", "Satır satır ekle"], ["stok", `Stoktakilerle doldur (${toplamSevkEdilir})`], ["tumu", `Kalanın tümüyle doldur (${toplamKalan})`]].map(([k, ad]) => (
+            <button key={k} type="button" data-sevk-dolum={k} className={dolum === k ? "btn-primary" : "btn-ghost"} onClick={() => setDolum(k)}
+              style={{ padding: "3px 10px", fontSize: 12 }}>{ad}</button>
+          ))}
+          <span style={{ color: "var(--erp-text-3)" }}>{dolum === "bos" ? "Aşağıda \"Siparişten seç\" listesinden satırın Ekle'sine basın: koli, asorti ya da beden beden girip ekleyin." : "Satırlar siparişe bağlı; fişte miktarı değiştirip silebilirsiniz."}</span>
+        </div>
       </div>
       <div style={{ padding: 10 }}>
-        <StokFisiFormu pencereId={panelId} tip="Satış" cari={cari} cariler={cariler} stok={stok} siparisler={siparisler}
+        <StokFisiFormu key={`${panelId}|${dolum}`} pencereId={panelId} tip="Satış" cari={cari} cariler={cariler} stok={stok} siparisler={siparisler}
           koliler={koliler} uretim={uretim} asortiler={tanimlar.asortiler || []} kurlar={(muhasebe && muhasebe.kurlar) || {}}
-          muhasebe={muhasebe} firmaBilgileri={tanimlar.firmaBilgileri} showToast={showToast} baslangicKalemler={null}
+          muhasebe={muhasebe} firmaBilgileri={tanimlar.firmaBilgileri} showToast={showToast} baslangicKalemler={baslangic} siparistenSecAcikBasla={dolum === "bos"}
           onCariDegisti={() => {}} onVazgec={onKapat} onKaydet={onKaydet} />
       </div>
     </div>

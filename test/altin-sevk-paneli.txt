@@ -1,0 +1,24 @@
+{
+ "hatalar": [],
+ "matris": [
+  "Bot | Siyah | 5 stok 9 | 10 stok 7 | 15"
+ ],
+ "bos": {
+  "siparistenSecAcik": [
+   "SAT-9"
+  ],
+  "kalemSatiri": 0
+ },
+ "doluSatir": true,
+ "karsilanan": [
+  [
+   "41",
+   5
+  ],
+  [
+   "42",
+   7
+  ]
+ ],
+ "durum": "Kısmi Teslim"
+}

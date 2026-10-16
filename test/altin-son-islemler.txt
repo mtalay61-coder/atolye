@@ -16,7 +16,7 @@
  },
  "panel": {
   "alisGorunuyor": true,
-  "kesit": "Son İşlemler 11 kayıt Kapat Herkes Test Kullanıcısı Tümü (11) Açılış (5) Alış (2) Üretim (2) Alış siparişi (1) Satış (1) Test Kullanıcısı — 1 alış — — 1 alış <tarih saat> Alış Tedarikçi A · 4.320 ₺ <fisno-001> · 2 kalem · Deri · Siyah · Bot · Siyah Test Kul",
+  "kesit": "Son İşlemler 11 kayıt Kapat Herkes Test Kullanıcısı Tümü (11) Açılış (5) Alış (2) Üretim (2) Alış siparişi (1) Satış (1) Test Kullanıcısı — 1 alış Kullanıcı yok — 1 alış <tarih saat> Alış Tedarikçi A · 4.320 ₺ <fisno-001> · 2 kalem · Deri · Siyah · Bot · Si",
   "kullaniciGorunuyor": true,
   "ozetVar": true,
   "panelVar": true
