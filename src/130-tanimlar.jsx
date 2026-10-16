@@ -2331,11 +2331,33 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                             })}
                           </tbody>
                         </table>
+                        {/* GÖRÜNÜRLÜK (v1.689): yetki tablosu "ne YAPABİLİR"i söyler; bu kutular "ne GÖREBİLİR"i.
+                            Liste GORUNURLUK_ALANLARI'ndan (094) gelir — yeni gizli bilgi türü oraya bir satırla eklenir.
+                            Varsayılan KAPALI: patronun görmesini istemediği bilgi, açıkça izin verilmedikçe gizli. */}
+                        <div data-gorunurluk-kutu={k.kullaniciAdi} style={{ marginTop: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>Görebileceği bilgiler</div>
+                          {GORUNURLUK_ALANLARI.map((g) => (
+                            <div key={g.key} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, marginBottom: 4 }}>
+                              <input type="checkbox" data-gorunurluk={g.key} data-gorunurluk-kullanici={k.kullaniciAdi}
+                                checked={!!(k.gorunurluk || {})[g.key]}
+                                onChange={(e) => kullaniciAlanDegistir(k.id, { gorunurluk: { ...(k.gorunurluk || {}), [g.key]: e.target.checked } })}
+                                style={{ cursor: "pointer", marginTop: 2 }} />
+                              <div><b>{g.ad}</b><div style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{g.aciklama}</div></div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 );
               })}
+              {/* ONAY SİSTEMİ (v1.689, kullanıcı: "onay sistemini deaktif etmemiz lazım"): varsayılan KAPALI —
+                  yetkisiz işlemin düğmesi gizlenir. Açılırsa eski yol: istek yönetici onayına düşer. */}
+              <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, marginTop: 10 }}>
+                <input type="checkbox" data-onay-sistemi checked={onaySistemiAcikMi(tanimlar)}
+                  onChange={(e) => onSave({ ...tanimlar, onaySistemiAcik: e.target.checked })} style={{ cursor: "pointer" }} />
+                <span>Yetkisiz işlem yönetici onayına gitsin (eski yöntem) — kapalıyken yetkisiz işlemin düğmesi gizlenir</span>
+              </div>
             </div>
           )}
         </div>

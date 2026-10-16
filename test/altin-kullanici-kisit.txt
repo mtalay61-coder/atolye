@@ -1,0 +1,11 @@
+{
+ "acik": {
+  "finansMenusu": true,
+  "toplamAlacakKarti": true
+ },
+ "hatalar": [],
+ "kapali": {
+  "finansMenusu": false,
+  "toplamAlacakKarti": false
+ }
+}

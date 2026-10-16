@@ -18,7 +18,7 @@ function kasaAciklamaSade(aciklama, cariAdi, tip) {
   return String(aciklama).split(" · ").filter((p) => !tekrar(p)).join(" · ").trim();
 }
 
-function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, onHareketGuncelle, hesaplar, birimAdi, ekleAlanlari, onHesapEkle, onHesapSil, onHesapPasifDegistir, onHareketEkle, onHareketSil, cariler, kurlar, showToast, silmeYetkisiVar }) {
+function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, onHareketGuncelle, hesaplar, birimAdi, ekleAlanlari, onHesapEkle, onHesapSil, onHesapPasifDegistir, onHareketEkle, onHareketSil, cariler, kurlar, showToast, silmeYetkisiVar, silmeGizli }) {
   // Düzenlenen hesabın kimliği ve form içeriği (19 Eylül).
   const [duzenlenen, setDuzenlenen] = useState(null);
   const [duzenForm, setDuzenForm] = useState({});
@@ -130,11 +130,12 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
       <SagTikMenusu konum={hareketMenu} onKapat={() => setHareketMenu(null)} veri="kasa-hareket"
         baslik={hareketMenu ? `HAREKET · ${hareketMenu.hareket.tarih || ""} · ${(hareketMenu.hareket.tutar || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })}` : ""}
         ogeler={hareketMenu ? [
-          { k: "duzenle", etiket: "Düzenle", ikon: Pencil, gizli: !!hareketMenu.hareket.virmanMi,
+          { k: "duzenle", etiket: "Düzenle", ikon: Pencil, gizli: !!hareketMenu.hareket.virmanMi || !!silmeGizli,
             onClick: () => { const hr = hareketMenu.hareket; setDuzenle({ hesapId: hareketMenu.hesapId, hareketId: hr.id, tutar: String(hr.tutar || ""), tarih: hr.tarih || "", aciklama: hr.aciklama || "" }); } },
           { k: "virman-not", etiket: "Virman düzenlenmez — silip yeniden yapın", ikon: Lock, pasif: true, gizli: !hareketMenu.hareket.virmanMi },
           { ayrac: true },
-          { k: "sil", etiket: silmeYetkisiVar === false ? "Silme isteği gönder" : "Sil", ikon: Trash2, renk: "var(--erp-warn)",
+          // KISIT (v1.689): onay sistemi kapalıyken yetkisiz kullanıcı silme/düzenleme düğmesini hiç görmez.
+          { k: "sil", gizli: !!silmeGizli, etiket: silmeYetkisiVar === false ? "Silme isteği gönder" : "Sil", ikon: Trash2, renk: "var(--erp-warn)",
             baslik: silmeYetkisiVar === false ? "Silme yetkiniz yok — istek yönetici onayına gönderilir" : "Satırda onay istenir",
             onClick: () => setHareketSilOnay({ hesapId: hareketMenu.hesapId, id: hareketMenu.hareket.id }) },
         ] : []} />
@@ -392,7 +393,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                     {duzenlenen !== h.id && (h.hareketler || []).length > 0 && (
                       <span className="btn-ikon" title={`${birimAdi} silinemez — ${(h.hareketler || []).length} hareket kayıtlı`} style={{ opacity: 0.35, cursor: "not-allowed" }}><Trash2 size={14} /></span>
                     )}
-                    {duzenlenen !== h.id && (h.hareketler || []).length === 0 && (
+                    {duzenlenen !== h.id && (h.hareketler || []).length === 0 && !silmeGizli && (
                       <SilOnayButonu kartEylemi
                         onConfirm={() => onHesapSil(h.id)}
                         boyut={14}

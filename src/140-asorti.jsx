@@ -255,7 +255,8 @@ function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi,
           <span style={{ fontSize: 11 }}>×</span>
           <input type="number" min="1" value={setSayisi} onChange={(e) => setSetSayisi(e.target.value)} title="Set sayısı"
             style={{ ...inputStyle, width: 38, fontSize: 11, padding: "4px 2px", textAlign: "center" }} />
-          <button type="button" className="btn-ghost" data-asorti-uygula="1" style={{ fontSize: 11, padding: "4px 8px", flex: 1 }} disabled={!asortiId} onClick={uygula}>
+          {/* v1.689: kullanıcı "Uygula butonu daha belirgin olsun" — soluk btn-ghost yerine dolu ana düğme. */}
+          <button type="button" className="btn-primary" data-asorti-uygula="1" style={{ fontSize: 12, fontWeight: 700, padding: "5px 10px", flex: 1 }} disabled={!asortiId} onClick={uygula}>
             Uygula
           </button>
         </span>
@@ -275,7 +276,7 @@ function AsortiUygulaKontrolu({ asortiler, bedenSecenekleri, onUygula, olcuTipi,
         style={{ ...inputStyle, width: 50, fontSize: 12, padding: "6px 4px", textAlign: "center" }}
       />
       <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>set</span>
-      <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: "5px 10px" }} disabled={!asortiId} onClick={uygula}>
+      <button type="button" className="btn-primary" style={{ fontSize: 12, fontWeight: 700, padding: "6px 12px" }} disabled={!asortiId} onClick={uygula}>
         Uygula
       </button>
       {/* Kalan bilgisi verilmişse "tümünü asortile" düğmesi çıkar. */}

@@ -1066,6 +1066,10 @@ function AtolyeUygulamasi() {
   const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
     cekler: "muhasebe", odemetahsilat: "muhasebe", odemerapor: "muhasebe", bankaexcel: "muhasebe", mutabakat: "cari", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
   useEffect(() => {
+    // FİNANS RAPORLARI GÖRÜNÜRLÜĞÜ (v1.689.0, 094): modül yetkisi olsa da görünürlük kutusu kapalıysa girilmez.
+    if (FINANS_RAPOR_SEKMELERI.includes(tab) && aktifKullanici && !gorebilirMi(tanimlar, aktifKullanici, "finansRaporlari")) {
+      setTab("anasayfa"); showToast("Bu bölüm için yetkiniz yok"); return;
+    }
     const m = SEKME_MODULU[tab];
     if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme")) return;
     setTab("anasayfa");
@@ -1137,7 +1141,7 @@ function AtolyeUygulamasi() {
   const {
     onaySave, onayIste, onayUygula, onayaKarar, onayliIslem, setOnayliIslem,
     muhasebeOnayliIslem, setMuhasebeOnayliIslem,
-  } = useOnaySistemi({ onaylar, setOnaylar, aktifKullanici, showToast, siparisler, setSiparisler, islerRef: onayIsleriRef });
+  } = useOnaySistemi({ onaylar, setOnaylar, aktifKullanici, showToast, siparisler, setSiparisler, islerRef: onayIsleriRef, tanimlar });
 
   const kaydetmeHatasiBildir = useCallback((hata, etiket, veri) => {
     const mesaj = String((hata && hata.message) || "");
@@ -3824,9 +3828,13 @@ function AtolyeUygulamasi() {
         /* RENKLİ FORM (v1.663.5 — kullanıcı: cari ödeme formu gibi "kasa banka ekranı da, fiş ekranı da renkli olsun"):
            .renkli-form kabındaki bütün kutular kabın --hrk-renk renginde kalın çerçeveli; satır içi inputStyle çerçevesini
            !important ezer. Kendi rengini koruması gereken kutu data-renk-koru taşır. */
-        .renkli-form input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]):not([data-renk-koru]):not(td *),
-        .renkli-form select:not([data-renk-koru]):not(td *), .renkli-form textarea:not([data-renk-koru]):not(td *) {
-          border: 2px solid var(--hrk-renk, var(--erp-accent)) !important; background-color: #fff; border-radius: 8px; }
+        /* v1.689: kullanıcı "çerçeve renkleri baskın, üst bar gibi soluk olsun" — 2px tam renk yerine 1px, rengin %35'i
+           (başlık şeridinin çerçevesiyle aynı tonda). ARAMA KABI (.arama-kabi: büyüteç + içteki input) tek kutu sayılır:
+           çerçeve kapta, içteki input çerçevesiz — yoksa kutu içinde ikinci, oturmayan bir çerçeve çıkıyordu. */
+        .renkli-form input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]):not([data-renk-koru]):not(td *):not(.arama-kabi input),
+        .renkli-form select:not([data-renk-koru]):not(td *), .renkli-form textarea:not([data-renk-koru]):not(td *), .renkli-form .arama-kabi:not(td *) {
+          border: 1px solid color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 35%, var(--erp-line)) !important; background-color: #fff; border-radius: 8px; }
+        .renkli-form .arama-kabi input { border: none !important; box-shadow: none !important; background: transparent; }
         /* Tablo / matris hücresindeki kutular: ince ama renkli (kalın çerçeve hücreyi boğardı). */
         .renkli-form td input:not([type=checkbox]):not([type=radio]):not([data-renk-koru]), .renkli-form td select:not([data-renk-koru]) {
           border-color: color-mix(in srgb, var(--hrk-renk, var(--erp-accent)) 60%, transparent) !important; }
@@ -4232,9 +4240,9 @@ function AtolyeUygulamasi() {
                     // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
                     // CARİ MUTABAKAT (v1.673.0, 263): dönem sonu mutabakat mektupları.
                     yetki("cari") && ["mutabakat", "Cari Mutabakat", <FileText size={16} />],
-                    yetki("muhasebe") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
+                    yetki("muhasebe") && gorebilirMi(tanimlar, aktifKullanici, "finansRaporlari") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
-                    yetki("muhasebe") && ["gelirgider", "Gelir / Gider", <FileText size={16} />], yetki("fisler") && ["fisler", "Fişler", <FileText size={16} />]] },
+                    yetki("muhasebe") && gorebilirMi(tanimlar, aktifKullanici, "finansRaporlari") && ["gelirgider", "Gelir / Gider", <FileText size={16} />], yetki("fisler") && ["fisler", "Fişler", <FileText size={16} />]] },
                 ].map((g) => (g.ogeler ? { ...g, ogeler: g.ogeler.filter(Boolean) } : g));
                 return (
                   <>
@@ -4803,7 +4811,7 @@ function AtolyeUygulamasi() {
             />
           </GizliModul>
           {/* ÖDEME & TAHSİLAT ALANI (v1.645.10, 260): giriş, Kasa & Banka ve Çek & Senet tek alanın sekmeleri. */}
-          <OdemeAlaniSeridi tab={tab} onGit={(t) => setTab(t, true)} />
+          <OdemeAlaniSeridi tab={tab} onGit={(t) => setTab(t, true)} gizli={gorebilirMi(tanimlar, aktifKullanici, "finansRaporlari") ? [] : FINANS_RAPOR_SEKMELERI} />
           {/* Cari ve Ödeme & Tahsilat AYNI örnek (Mamul Stok / Çek & Senet deseni): kapsam son görünen sekmeden. */}
           <GizliModul aktif={tab === "mutabakat"}>
             <MutabakatEkrani cariler={cariler} firmaBilgileri={tanimlar.firmaBilgileri || {}} onCarilerKaydet={saveCariler} showToast={showToast} />
@@ -4822,7 +4830,7 @@ function AtolyeUygulamasi() {
               muhasebe={muhasebe}
               kurlar={muhasebe.kurlar}
               onMuhasebeHareketi={muhasebeyePesinIsle}
-              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste}
+              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)}
               cariler={cariler}
               onSave={saveCariler}
               // ÇEK KAYDI TEK YERE DÜŞSÜN: caride girilen çek Muhasebe > Çekler listesine de
@@ -5143,7 +5151,7 @@ function AtolyeUygulamasi() {
                 cariler={cariler}
                 uretim={uretim}
                 showToast={showToast}
-                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste} onCopaAt={copaAt}
+                onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste} onayAcik={onaySistemiAcikMi(tanimlar)} onCopaAt={copaAt}
               />
             )
           )}

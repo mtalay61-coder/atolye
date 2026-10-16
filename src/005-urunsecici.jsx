@@ -88,7 +88,7 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
 
   return (
     <div ref={sarmalayiciRef} style={{ position: "relative" }}>
-      <div
+      <div className="arama-kabi"
         style={{
           display: "flex", alignItems: "center", gap: 6, width: "100%", boxSizing: "border-box",
           padding: kucuk ? "3px 6px" : "6px 8px", borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-brown)" : "var(--erp-border)"}`, background: "#fff",
@@ -288,7 +288,7 @@ function AramaliSecici({ secenekler, onSec, placeholder, temizle = true, veriAdi
 
   return (
     <div style={{ position: "relative", width: genislik, maxWidth: "100%" }}>
-      <div style={{
+      <div className="arama-kabi" style={{
         display: "flex", alignItems: "center", gap: 6, boxSizing: "border-box", padding: "7px 10px",
         borderRadius: "var(--erp-r-md)", border: `1px solid ${acik ? "var(--erp-accent)" : "var(--erp-line)"}`, background: "#fff",
       }}>
@@ -497,7 +497,7 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
   const sec = (c) => { onDegis(c.id); setSorgu(null); setAcik(false); setVurgulu(0); };
   return (
     <div style={{ position: "relative", minWidth: minGenislik || undefined }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, ...inputStyle, padding: "0 8px", opacity: disabled ? 0.6 : 1,
+      <div className="arama-kabi" style={{ display: "flex", alignItems: "center", gap: 6, ...inputStyle, padding: "0 8px", opacity: disabled ? 0.6 : 1,
         border: `1px solid ${acik ? "var(--erp-accent)" : "var(--erp-line)"}` }}>
         <Search size={14} color="var(--erp-text-3)" style={{ flexShrink: 0 }} />
         <input

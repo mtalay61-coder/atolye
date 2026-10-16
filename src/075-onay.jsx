@@ -14,7 +14,7 @@
 // `islerRef`: silme zincirleri App'te bu hook'tan SONRA tanımlanıyor. Doğrudan parametre almak
 // yerine ref üzerinden çağrılıyorlar — tanım sırası artık bir bağımlılık değil.
 function useOnaySistemi(d) {
-  const { onaylar, setOnaylar, aktifKullanici, showToast, siparisler, setSiparisler, islerRef } = d;
+  const { onaylar, setOnaylar, aktifKullanici, showToast, siparisler, setSiparisler, islerRef, tanimlar } = d;
   const [onayliIslem, setOnayliIslem] = useState(null);
 
 const onaySave = useCallback((next) => {
@@ -27,6 +27,9 @@ const onaySave = useCallback((next) => {
 // gerçekten çalıştırılacak asıl işlemdir (parametresiz bir kapanış/closure olarak saklanamayacağı
 // için, onay kaydına işlemi YENİDEN ÇALIŞTIRABİLECEK bir "tip" ve "parametreler" bilgisi yazılır).
 function onayIste(modul, islemTipi, aciklama, uygulaTipi, uygulaParametreleri) {
+  // Onay sistemi kapalıyken (v1.689.0 varsayılanı) istek açılmaz; düğmeler zaten gizli, buraya yine de gelinirse
+  // (eski bir yol, sağ tık) yalnız söylenir.
+  if (!onaySistemiAcikMi(tanimlar)) { showToast("Bu işlem için yetkiniz yok"); return; }
   const yeni = {
     id: uid("onay"),
     kullaniciId: aktifKullanici ? aktifKullanici.id : null,
