@@ -1,0 +1,22 @@
+{
+ "hatalar": [],
+ "panel": {
+  "panel": true,
+  "pencereYok": true,
+  "siparisler": [
+   "SAT-9"
+  ]
+ },
+ "karsilanan": [
+  [
+   "41",
+   5
+  ]
+ ],
+ "durum": "Tamamlandı",
+ "panelKapandi": true,
+ "liste": [
+  "Müşteri B | Genel | 5 | 500 ₺"
+ ],
+ "suzgec": 0
+}

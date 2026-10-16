@@ -220,43 +220,113 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
 
 // ALIŞ / SATIŞ: "caridekinin aynısı" — önce tip ve cari seçilir, sonra cari kartındaki fiş penceresi açılır.
 // Altında son alış/satış fişleri (Fişler ekranıyla aynı gruplama).
-function AlisSatisEkrani({ cariler, stok, onFisAc, onFiseGit }) {
+// ALIŞ / SATIŞ (v1.688.8 — kullanıcı: "Alış / Satış ekranını da böyle yap"): Sevk et paneli gibi fiş AYNI ekranda
+// bölünmüş panelde açılır (ayrı pencere yerine) ve carinin açık siparişleri için "Siparişten seç" listesi açık gelir —
+// satırın Ekle'siyle koli / asorti / beden olarak, birden fazla satır. Son fişler raporlar gibi: çerçeveli, kaydırmalı,
+// her sütunda süzgeç (245 raporKolonAra). "Pencerede aç" eski yolu (ayrı fiş penceresi) korur.
+function AlisSatisEkrani({ cariler, stok, siparisler, koliler, uretim, tanimlar, muhasebe, showToast, onFisAc, onFiseGit, onFisKaydet }) {
   const [tip, setTip] = useState("Satış");
   const [cariId, setCariId] = useState(null);
+  const [panelAcik, setPanelAcik] = useState(false);
+  const [panelSayac, setPanelSayac] = useState(0);
+  const [kolonAra, setKolonAra] = useState({});
   const cari = (cariler || []).find((c) => c.id === cariId) || null;
   const son = React.useMemo(() => tumFisleriTopla(cariler, stok)
-    .filter((g) => g.fisNo && g.hareketler.some((h) => h.kaynakTip === "cari" && h.tip === tip && !h.muhasebeBagId))
+    // FİŞ TÜRÜ YÖNDEN (v1.688.8): cari hareketinde `tip` alanı YOK — eski süzgeç (`h.tip === tip`) hiçbir fişi
+    // geçirmiyordu, liste hep "Kayıt yok"tu. Ürünlü cari hareketi: Borç = satış (cari bize borçlandı), Alacak = alış
+    // (078 `hareketYonu`). Peşin tahsilat/ödeme satırları ürünsüz olduğundan karışmaz.
+    .filter((g) => g.fisNo && g.hareketler.some((h) => h.kaynakTip === "cari" && h.urunAd && !h.muhasebeBagId
+      && (tip === "Satış" ? h.yon === "Borç" : h.yon !== "Borç")))
     .sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")))
-    .slice(0, 30), [cariler, stok, tip]);
+    .slice(0, 500)
+    .map((g) => {
+      const cariH = g.hareketler.filter((h) => h.kaynakTip === "cari" && h.urunAd);
+      const tutar = {};
+      cariH.forEach((h) => { const pb = h.paraBirimi || "TRY"; tutar[pb] = stokYuvarla((tutar[pb] || 0) + (Number(h.tutar) || 0)); });
+      return {
+        g, fisNo: g.fisNo, tarih: String(g.gunTarihi || g.tarih || "").slice(0, 10), cari: g.cariAd || "",
+        adet: g.hareketler.filter((h) => h.kaynakTip === "stok").reduce((t, h) => t + Math.abs(h.miktar || 0), 0),
+        tutarSayi: Object.values(tutar)[0] || 0,
+        tutarMetin: Object.entries(tutar).map(([pb, t]) => `${t.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[pb] || pb}`).join(" · "),
+        defter: (cariH[0] && cariH[0].defter) || "Genel",
+      };
+    }), [cariler, stok, tip]);
+  const ALANLAR = [{ anahtar: "fisNo", tip: "metin" }, { anahtar: "tarih", tip: "tarih" }, { anahtar: "cari", tip: "metin" },
+    { anahtar: "defter", tip: "metin" }, { anahtar: "adet", tip: "sayi" }, { anahtar: "tutarSayi", tip: "sayi" }];
+  const suzgecVar = Object.values(kolonAra).some((v) => String(v || "").trim());
+  const gorunen = suzgecVar ? raporKolonAra(son, ALANLAR, kolonAra) : son;
   const renk = HAREKET_TIPI_RENK[tip];
+  const fisAc = () => { if (!cari) return; setPanelSayac((n) => n + 1); setPanelAcik(true); };
+  const th = { padding: "6px 8px", fontSize: 10, color: "var(--erp-text-2)", textAlign: "left" };
   return (
     <div data-alis-satis="1" className="renkli-form" style={{ "--hrk-renk": renk }}>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
         {["Satış", "Alış"].map((t) => (
           <button key={t} data-alis-satis-tip={t} data-secili={tip === t ? "1" : undefined}
-            onClick={() => setTip(t)} className={tip === t ? "btn-primary" : "btn-ghost"}
+            onClick={() => { setTip(t); setPanelAcik(false); }} className={tip === t ? "btn-primary" : "btn-ghost"}
             style={tip === t ? { background: HAREKET_TIPI_RENK[t], borderColor: HAREKET_TIPI_RENK[t] } : undefined}>
             <HareketIkonu tip={t} /> {t}
           </button>
         ))}
-        <CariSecici cariler={(cariler || []).filter((c) => !c.pasif)} deger={cariId} onDegis={setCariId} veriAdi="alis-satis-cari" minGenislik={260} />
+        <CariSecici cariler={(cariler || []).filter((c) => !c.pasif)} deger={cariId} onDegis={(id) => { setCariId(id); setPanelAcik(false); }} veriAdi="alis-satis-cari" minGenislik={260} />
         <button className="btn-primary" data-alis-satis-ac="1" disabled={!cari}
-          style={{ background: renk, borderColor: renk }}
-          onClick={() => cari && onFisAc(cari.id, tip, cari.unvan, null, "Depo › Alış / Satış")}>
+          style={{ background: renk, borderColor: renk }} onClick={fisAc}>
           {tip} fişi aç
         </button>
+        {onFisAc && (
+          <button className="btn-ghost" data-alis-satis-pencere="1" disabled={!cari} title="Fişi ayrı pencerede aç (eski yol)"
+            onClick={() => cari && onFisAc(cari.id, tip, cari.unvan, null, "Depo › Alış / Satış")}>Pencerede aç</button>
+        )}
       </div>
-      <div style={{ border: "1px solid var(--erp-border)", borderRadius: 8, padding: 10 }}>
-        <div style={{ fontWeight: 700, marginBottom: 6 }}>Son {tip.toLocaleLowerCase("tr-TR")} fişleri</div>
-        {son.length === 0 && <div style={{ color: "var(--erp-muted)" }}>Kayıt yok.</div>}
-        {son.map((g) => (
-          <div key={g.fisNo} data-alis-satis-fis={g.fisNo} style={{ display: "flex", gap: 10, padding: "4px 0", borderBottom: "1px solid var(--erp-border)" }}>
-            <a href="#" onClick={(e) => { e.preventDefault(); onFiseGit && onFiseGit(g.fisNo); }}><b>{g.fisNo}</b></a>
-            <span>{tarihYaz(g.gunTarihi || g.tarih)}</span>
-            <span style={{ flex: 1 }}>{g.cariAd}</span>
-            <span>{g.hareketler.filter((h) => h.kaynakTip === "stok").reduce((t, h) => t + Math.abs(h.miktar || 0), 0)} adet</span>
+
+      {panelAcik && cari && (
+        <div data-alis-satis-panel={tip} style={{ border: `2px solid ${renk}`, borderRadius: 10, background: "var(--erp-surface)", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderBottom: "1px solid var(--erp-border)" }}>
+            <HareketIkonu tip={tip} /><b>{tip} fişi</b><span>· {cari.unvan}</span>
+            <button className="btn-ghost" data-alis-satis-kapat="1" style={{ marginLeft: "auto" }} onClick={() => setPanelAcik(false)} title="Fişi kaydetmeden kapat">✕</button>
           </div>
-        ))}
+          <div style={{ padding: 10 }}>
+            <StokFisiFormu key={`alis-satis-${tip}-${cari.id}-${panelSayac}`} pencereId={`alis-satis-${panelSayac}`} tip={tip} cari={cari} cariler={cariler} stok={stok}
+              siparisler={siparisler} koliler={koliler} uretim={uretim} asortiler={(tanimlar && tanimlar.asortiler) || []}
+              kurlar={(muhasebe && muhasebe.kurlar) || {}} muhasebe={muhasebe} firmaBilgileri={tanimlar && tanimlar.firmaBilgileri}
+              showToast={showToast} baslangicKalemler={null} siparistenSecAcikBasla
+              onCariDegisti={(id) => id && setCariId(id)} onVazgec={() => setPanelAcik(false)}
+              onKaydet={(fis) => { onFisKaydet && onFisKaydet(fis.cariId || cari.id, tip, fis); setPanelAcik(false); }} />
+          </div>
+        </div>
+      )}
+
+      <div style={{ border: "1px solid var(--erp-border)", borderRadius: 8, padding: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+          <b>Son {tip.toLocaleLowerCase("tr-TR")} fişleri</b>
+          <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>{suzgecVar ? `${gorunen.length} / ` : ""}{son.length}</span>
+          {suzgecVar && <button className="btn-ghost" data-alis-satis-temizle="1" style={{ marginLeft: "auto", padding: "1px 8px", fontSize: 11 }} onClick={() => setKolonAra({})}>Süzgeci temizle</button>}
+        </div>
+        <div data-alis-satis-liste="1" style={{ maxHeight: "min(60vh, 520px)", overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: 8, background: "#fff" }}>
+          <table style={{ width: "100%", minWidth: 620, borderCollapse: "collapse", fontSize: 12 }}>
+            <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
+              <tr>{[["Fiş No"], ["Tarih"], ["Cari"], ["Defter"], ["Adet", 1], ["Tutar", 1]].map(([b, sag]) => <th key={b} style={{ ...th, textAlign: sag ? "right" : "left" }}>{b}</th>)}</tr>
+              <tr>{ALANLAR.map((a) => (
+                <th key={a.anahtar} style={{ padding: "0 4px 5px" }}>
+                  <input data-alis-satis-ara={a.anahtar} value={kolonAra[a.anahtar] || ""} onChange={(e) => setKolonAra((o) => ({ ...o, [a.anahtar]: e.target.value }))}
+                    placeholder={a.tip === "sayi" ? ">0" : a.tip === "tarih" ? "gg.aa" : "ara…"}
+                    style={{ width: "100%", minWidth: 50, boxSizing: "border-box", fontSize: 11, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: 4, fontWeight: 400, textAlign: a.tip === "sayi" ? "right" : "left" }} />
+                </th>
+              ))}</tr>
+            </thead>
+            <tbody>{gorunen.map((r) => (
+              <tr key={r.fisNo} data-alis-satis-fis={r.fisNo} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
+                <td style={{ padding: "5px 8px" }}><a href="#" onClick={(e) => { e.preventDefault(); onFiseGit && onFiseGit(r.fisNo); }}><b className="mono">{r.fisNo}</b></a></td>
+                <td className="mono" style={{ padding: "5px 8px", whiteSpace: "nowrap" }}>{tarihYaz(r.tarih)}</td>
+                <td style={{ padding: "5px 8px" }}>{r.cari}</td>
+                <td style={{ padding: "5px 8px" }}>{r.defter}</td>
+                <td className="mono" style={{ padding: "5px 8px", textAlign: "right" }}>{r.adet.toLocaleString("tr-TR")}</td>
+                <td className="mono" style={{ padding: "5px 8px", textAlign: "right", whiteSpace: "nowrap", fontWeight: 700 }}>{r.tutarMetin}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+          {gorunen.length === 0 && <div style={{ color: "var(--erp-muted)", padding: 10, fontSize: 12 }}>{son.length ? "Süzgece uyan fiş yok." : "Kayıt yok."}</div>}
+        </div>
       </div>
     </div>
   );

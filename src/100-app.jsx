@@ -4971,7 +4971,8 @@ function AtolyeUygulamasi() {
               showToast={showToast} onGoToSiparis={sipariseGit} />
           </GizliModul>
           <GizliModul aktif={tab === "alissatis"}>
-            <AlisSatisEkrani cariler={cariler} stok={stok} onFisAc={stokFisiAc} onFiseGit={fiseGit} />
+            <AlisSatisEkrani cariler={cariler} stok={stok} siparisler={siparisler} koliler={koliler} uretim={uretim} tanimlar={tanimlar} muhasebe={muhasebe}
+              showToast={showToast} onFisAc={stokFisiAc} onFiseGit={fiseGit} onFisKaydet={(cariId, tip, fis) => stokFisiKaydet(cariId, tip, fis)} />
           </GizliModul>
           <GizliModul aktif={tab === "siparis"}>
             <SiparisModule
