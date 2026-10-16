@@ -24,7 +24,7 @@
   ]
  ],
  "sonListe": [
-  "Müşteri B | Tahsilat | Nakit | Genel"
+  "Müşteri B | Tahsilat | Nakit | TL Kasa"
  ],
  "kartHesaplari": [
   "Ziraat"

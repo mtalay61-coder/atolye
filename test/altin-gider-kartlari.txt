@@ -15,7 +15,7 @@
   "Çıkış:12000:İşyeri kirası:yonetim:fişNo"
  ],
  "sonListe": [
-  "İşyeri kirası | Gider | Nakit | Genel"
+  "İşyeri kirası | Gider | Nakit | TL Kasa"
  ],
  "tanimlar": {
   "elleEklenen": [
