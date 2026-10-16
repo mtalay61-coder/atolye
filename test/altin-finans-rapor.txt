@@ -89,8 +89,8 @@
    "Varlık | Hazır Değerler | Kasa | 1.500,00 | 1",
    "Varlık | Ticari Alacaklar | Müşteri alacağı | 13.000,00 | 1",
    "Varlık | Alınan Çekler | Portföydeki çek | 4.000,00 | 1",
-   "Varlık | Stoklar | Hammadde | 0,00 | 2",
-   "Varlık | Stoklar | Mamul | 0,00 | 3",
+   "Varlık | Stoklar | Hammadde | 0,00 | 1",
+   "Varlık | Stoklar | Mamul | 0,00 | 1",
    "Yükümlülük | Ticari Borçlar | Tedarikçi borcu | -2.000,00 | 1",
    "Yükümlülük | Ticari Borçlar | Personel borcu | -30,00 | 1",
    "Yükümlülük | Verilen Çekler | Ödenecek şahsi çek | -1.000,00 | 1"
@@ -98,7 +98,7 @@
   "toplam": [
    "Toplam",
    "15.470,00",
-   "11"
+   "8"
   ]
  },
  "yanYana": {
