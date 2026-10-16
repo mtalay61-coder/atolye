@@ -3,6 +3,7 @@
     "tur": "cari",
     "ogeler": [
       "ac",
+      "tamekran",
       "duzenle",
       "ekstre",
       "pasif",

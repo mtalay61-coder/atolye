@@ -161,38 +161,30 @@ async function calistir() {
   // Hesap listesi önce aynı para birimiyle SÜZÜLÜYORDU; dolar borcuna TL tahsilat girilemiyordu.
   await sayfa.locator('button:has-text("Tahsilat"):visible').first().click();
   await sayfa.waitForTimeout(700);
-  // Cari hareketinin para birimini USD yap: hesap TL, yani çevrim gerekiyor.
-  await sayfa.locator('select:has(option:text-is("USD")):visible').first().selectOption({ label: "USD" }).catch(() => {});
-  await sayfa.waitForTimeout(400);
-  await sayfa.evaluate(() => {
-    const yaz = (el, v) => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      setter.call(el, v);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    };
-    const t = [...document.querySelectorAll('input[type="number"]')].find((i) => i.getBoundingClientRect().width > 0);
-    if (t) yaz(t, "100");
-  });
-  await sayfa.waitForTimeout(300);
-  await sayfa.evaluate(() => { const s = document.querySelector("[data-cari-hareket-hesap]"); const o = [...s.options].find((x) => x.textContent.startsWith("TL Kasa")); s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true })); });  // v1.663.2: liste
+  // v1.684.0: form Ödeme & Tahsilat düzeninde — önce hesap seçilir, tutar KASANIN biriminde girilir (4200 ₺),
+  // cariye geçecek birim + kur "Cariye" satırında (USD, kur 42 → 100 $).
+  await sayfa.evaluate(() => { const s = document.querySelector("[data-cari-hareket-hesap]"); const o = [...s.options].find((x) => x.textContent.startsWith("TL Kasa")); s.value = o.value; s.dispatchEvent(new Event("change", { bubbles: true })); });
   await sayfa.waitForTimeout(500);
+  const yazInput = async (sec, v) => sayfa.evaluate(([sec, v]) => {
+    const el = [...document.querySelectorAll(sec)].find((i) => i.getBoundingClientRect().width > 0);
+    if (!el) return;
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+    setter.call(el, v);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }, [sec, v]);
+  await yazInput('input[type="number"]', "4200");
+  await sayfa.waitForTimeout(300);
+  await sayfa.locator("[data-cari-ikili-pb] select[data-karsi-pb]").first().selectOption("USD").catch(() => {});
+  await sayfa.waitForTimeout(300);
+  await yazInput("[data-cari-ikili-pb] input[data-karsi-kur]", "42");
+  await sayfa.waitForTimeout(300);
 
   const cevrim = await sayfa.evaluate(() => ({
-    // Farklı para birimli hesap ARTIK LİSTELENİYOR ve çevrim alanı açılıyor.
-    alanVar: /Hesaba işlenecek \(TRY\)/.test(document.body.innerText),
-    kurGosteriliyor: /1 USD = /.test(document.body.innerText),
+    // Farklı para birimli hesap LİSTELENİYOR; cariye çevrim satırı açılıyor ve tutar hesaplanıyor.
+    alanVar: !!document.querySelector("[data-cari-ikili-pb]"),
+    kurGosteriliyor: /100/.test((document.querySelector("[data-cari-ikili-pb] [data-karsi-tutar]") || {}).value || (document.querySelector("[data-cari-ikili-pb] [data-karsi-tutar]") || {}).textContent || ""),
   }));
 
-  await sayfa.evaluate(() => {
-    const yaz = (el, v) => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
-      setter.call(el, v);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    };
-    const kutu = [...document.querySelectorAll('input[title="Kasa/bankada gerçekten hareket eden tutar"]')]
-      .find((i) => i.getBoundingClientRect().width > 0);
-    if (kutu) yaz(kutu, "4200");
-  });
   await sayfa.waitForTimeout(300);
   await sayfa.evaluate(() => {
     const b = [...document.querySelectorAll("button")]
