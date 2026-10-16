@@ -38,6 +38,16 @@
   "Resmi": "450 ₺",
   "Tümü": "1.450 ₺"
  },
+ "kolonSuzgec": {
+  "fisNo": {
+   "bos": 0,
+   "kart": 1
+  },
+  "yokCari": {
+   "bos": 1,
+   "kart": 0
+  }
+ },
  "rozetler": [
   "Genel + Resmi",
   "Resmi"

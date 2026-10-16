@@ -1281,6 +1281,7 @@ function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar, fisNum
     const resmiEk = resmiAlanlari(f.defter, hesap.pb, t, f.resmi, kurlar);
     onKaydet({ hesapTur, hesapId, hareket: { ...genelEk, ...resmiEk,
       id: uid("mhrk"), tarih: f.tarih, yon: tip === "Tahsilat" ? "Giriş" : "Çıkış", tutar: stokYuvarla(t), defter: f.defter,
+      zaman: new Date().toISOString(),   // Son İşlemler sırası ve saati (v1.688.10)
       // FİŞ NO (v1.688.0 — kullanıcı: "fiş no olsun, ona göre sıralansın"): cari tahsilat/ödemeyle AYNI sıra (THS-/ODM-
       // + gün + sıra); `fisNumaralari` cari ve kasa/banka numaralarının hepsi → iki yol aynı numarayı veremez.
       fisNo: fisNoSiradaki(fisOnEki(tip), typeof fisNumaralari === "function" ? fisNumaralari() : (fisNumaralari || [])),

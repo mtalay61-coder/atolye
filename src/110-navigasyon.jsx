@@ -268,7 +268,9 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, muhasebe, onGoToCari, on
   gitRef.current = { cari: onGoToCari, siparis: onGoToSiparis, urun: onGoToUrun, sekme: onNavigate };
   const olaylar = React.useMemo(() => {
     const olaylar = [];
-    const zamanAl = (h) => h.zaman || (h.tarih ? `${String(h.tarih).slice(0, 10)}T00:00:00.000Z` : null);
+    // Saati olmayan kayıt (yalnız gün): "T00:00Z" eklemek ekranda uydurma "03:00" gösteriyordu (v1.688.10) — yalnız gün
+    // döner; sıralamada aynı günün saatli kayıtlarının altında kalır.
+    const zamanAl = (h) => h.zaman || (h.tarih ? (String(h.tarih).length > 10 ? h.tarih : String(h.tarih).slice(0, 10)) : null);
 
     // FİŞ BAŞINA TEK SATIR (kullanıcı, 9 Eylül: "fişleri satır olarak gir, tek fiş görünsün").
     //
@@ -370,8 +372,16 @@ function SonIslemlerPaneli({ cariler, stok, siparisler, muhasebe, onGoToCari, on
         kullanici: sp.olusturan || null,
         tur: `${sp.tip} siparişi`,
         renk: sp.tip === "Satış" ? "#8A3D6B" : "var(--erp-info)",
-        metin: `${sp.siparisNo} · ${(sp.kalemler || []).length} kalem`,
-        alt: sp.durum || "",
+        // CARİ ADI VE TUTAR (v1.688.10 — kullanıcı: "son işlemlerde cari adı ve tutar yazılsın"): tutar kalemlerin
+        // miktar × birim fiyatı, para birimi başına (karışık birimler toplanmaz).
+        metin: (() => {
+          const c = (cariler || []).find((x) => x.id === sp.cariId);
+          const t = {};
+          (sp.kalemler || []).forEach((k) => { const pb = k.paraBirimi || "TRY"; t[pb] = (t[pb] || 0) + (Number(k.miktar) || 0) * (Number(k.birimFiyat) || 0); });
+          const tutar = Object.entries(t).filter(([, v]) => v).map(([pb, v]) => `${SON_ISLEM_TUTAR_BICIM.format(v)} ${PARA_SEMBOLU[pb] || pb}`).join(" · ");
+          return [c ? c.unvan : "", tutar].filter(Boolean).join(" · ") || sp.siparisNo;
+        })(),
+        alt: [sp.siparisNo, `${(sp.kalemler || []).length} kalem`, sp.durum || ""].filter(Boolean).join(" · "),
         git: () => gitRef.current.siparis && gitRef.current.siparis(sp.id),
       });
     });

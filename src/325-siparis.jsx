@@ -966,7 +966,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     if (siparisKolonFiltre.tarih.trim()) {
       // Sipariş tarihi ve teslim tarihi birlikte taranır — kullanıcı hangi tarihi aradığını
       // önceden seçmek zorunda kalmasın.
-      if (!esle(s.tarih, siparisKolonFiltre.tarih.trim()) && !esle(s.teslimTarihi, siparisKolonFiltre.tarih.trim())) return false;
+      // "16.10" / "16.10.2026" (ekrandaki biçim) kayıttaki "2026-10-16" ile eşlensin (245 raporTarihGirdisi, v1.688.10).
+      const tq = raporTarihGirdisi(siparisKolonFiltre.tarih.trim());
+      if (!esle(s.tarih, tq) && !esle(s.teslimTarihi, tq)) return false;
     }
     return true;
   }
@@ -1146,7 +1148,10 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         // kaydedince/vazgeçince kapanıyor ve kart güncel hâliyle yerinde duruyor.
         <div
           data-siparis-duzenleme={duzenlenenId || undefined}
-          style={duzenlenenId ? {
+          data-siparis-yeni-tam-ekran={duzenlenenId ? undefined : "1"}
+          // YENİ SİPARİŞ DE TAM EKRAN (v1.688.10 — kullanıcı: "yeni sipariş girişi tam ekranda olsun"): liste ve süzgeçler
+          // formun altında kalıyor, uzun siparişte form sayfanın ortasında sıkışıyordu. Düzenlemeyle aynı katman.
+          style={showForm ? {
             position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: "var(--menu-genislik, 0px)", right: 0, bottom: 0,
             zIndex: 110, background: "var(--erp-panel-2)", overflowY: "auto", padding: "0 0 16px",
           } : undefined}
@@ -1176,7 +1181,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             </div>
           );
         })()}
-        <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20, ...(duzenlenenId ? { margin: "0 16px" } : {}) }}>
+        <div id="siparis-yeni-form" style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 16, marginBottom: 20, margin: duzenlenenId ? "0 16px" : "12px 16px" }}>
           {/* KAYDET / VAZGEÇ ÜSTTE (v1.519.0 — kullanıcı: "Satın almayı kaydet ile Ekle karışıyor, kaydet vazgeç
               butonlarını üste alalım standart gibi; not ve cari defteri de yukarıda olsun, bunları standart yapmak
               lazım"). Eskiden kalem girişinin hemen altındaydılar: yeşil "Ekle" ile koyu yeşil "Satın Almayı Kaydet"
@@ -2513,7 +2518,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             )}
           </>
         ) : (
-          <div style={{ display: "grid", gap: 12 }}>
+          // KUTU + KAYDIRICI (v1.688.10 — kullanıcı: "Siparişler ekranını da böyle yap"): liste çerçeveli kutuda kayar.
+          <div data-siparis-liste-kutu="satis" style={{ display: "grid", gap: 12, maxHeight: "min(72vh, 820px)", overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
             {satisListe.map((s) => (
               /* Her sipariş TEK bir dış çerçeve içinde: özet satırı ve açık detay birlikte.
                  Önceden ikisi ayrı kutulardı ve aralarındaki boşluk, bir siparişin nerede bitip
@@ -2604,7 +2610,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             )}
           </>
         ) : (
-          <div style={{ display: "grid", gap: 12 }}>
+          <div data-siparis-liste-kutu="alis" style={{ display: "grid", gap: 12, maxHeight: "min(72vh, 820px)", overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 8, background: "#fff" }}>
             {alisListe.map((s) => (
               <div
                 key={s.id}

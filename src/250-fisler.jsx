@@ -39,6 +39,9 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
   const [fisMenu, setFisMenu] = useState(null);
   // DEFTER SÜZGECİ (v1.543.0 — kullanıcı: "Resmi defter olmayan yer kaldı mı?" → "Diğerlerini yap").
   const [filtreDefter, setFiltreDefter] = useState("Tümü");
+  // SÜTUN SÜZGEÇLERİ (v1.688.9 — kullanıcı: "Fişler ekranını da böyle yap"): raporlardaki gibi alan başına arama
+  // (245 raporKolonAra: metin içerir, tarih "gg.aa", tutar ">1000" / "100-200"). Üstteki genel arama da durur.
+  const [kolonAra, setKolonAra] = useState({});
 
   // KAPSAM (17 Eylül): liste, sayaçlar ve tip çipleri hepsi aynı kapsamdan beslenmeli; yalnız
   // listeyi süzmek, sayaçların kapsam dışı fişleri saymasına ve çiplerin boş süzgeç göstermesine
@@ -67,10 +70,21 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
   // fazla" düğmesi. Arama/süzgeç bütün fişlerde çalışıyor — yalnız ÇİZİLEN sayı sınırlı. Süzgeç değişince
   // sınır başa dönüyor: yeni sonuç kümesinde 900. sıradan başlamak anlamsız.
   const [gorunenSayi, setGorunenSayi] = useState(FIS_SAYFA);
-  useEffect(() => { setGorunenSayi(FIS_SAYFA); }, [query, filtreTip, filtreDefter]);
+  useEffect(() => { setGorunenSayi(FIS_SAYFA); }, [query, filtreTip, filtreDefter, kolonAra]);
 
   const q = query.trim().toLowerCase();
+  const FIS_KOLONLARI = [
+    { anahtar: "tip", ad: "Tür", tip: "metin" }, { anahtar: "fisNo", ad: "Fiş No", tip: "metin" }, { anahtar: "cari", ad: "Cari", tip: "metin" },
+    { anahtar: "tarih", ad: "Tarih", tip: "tarih" }, { anahtar: "siparisNo", ad: "Sipariş", tip: "metin" }, { anahtar: "defter", ad: "Defter", tip: "metin" },
+    { anahtar: "toplam", ad: "Tutar", tip: "sayi" },
+  ];
+  const kolonSuzgecVar = Object.values(kolonAra).some((v) => String(v || "").trim());
+  const kolonGecen = !kolonSuzgecVar ? null : new Set(raporKolonAra(tumFisler.map((f) => ({
+    key: f.key, tip: f.tip, fisNo: f.fisNo || "", cari: f.cariAd || "Dahili işlem", tarih: String(f.tarih || "").slice(0, 10),
+    siparisNo: f.siparisNo || "", defter: fisinDefteri(f) || "", toplam: Number(f.toplam) || 0,
+  })), FIS_KOLONLARI, kolonAra).map((x) => x.key));
   const filtreli = tumFisler.filter((f) => {
+    if (kolonGecen && !kolonGecen.has(f.key)) return false;
     // KAPSAM SÜZGECİ: menüden hangi girişle geldiysek yalnız o kapsamın tipleri.
     if (filtreTip !== "Tümü" && f.tip !== filtreTip) return false;
     // Defteri olmayan (cari ayağı yok: üretim, dahili stok) fiş para kaydı değil — her süzgeçte görünür.
@@ -290,10 +304,30 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
         ))}
       </div>
 
-      {filtreli.length === 0 ? (
+      {filtreli.length === 0 && !kolonSuzgecVar ? (
         <EmptyState text="Gösterilecek fiş bulunamadı." />
       ) : (
-        <div style={{ display: "grid", gap: 10 }}>
+        // KUTU + KAYDIRICI (v1.688.9): liste çerçeveli kutuda sabit yükseklikte kayar; süzgeç satırı üstte sabit.
+        <div data-fis-liste-kutu="1" style={{ maxHeight: "min(70vh, 760px)", overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--erp-panel)", borderBottom: "1px solid var(--erp-line)", padding: "6px 8px",
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 6, alignItems: "end" }}>
+          {FIS_KOLONLARI.map((a) => (
+            // <label> DEĞİL <div>: gizli duran Fişler ekranındaki "Tutar"/"Tarih" etiketleri başka formlarda etiketle alan
+            // arayan kodu (ve testleri) yanıltıyordu (çek formunda "Tutar" bu kutuya düşüyordu).
+            <div key={a.anahtar} style={{ display: "grid", gap: 2 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)" }}>{a.ad}</span>
+              <input data-fis-kolon-ara={a.anahtar} value={kolonAra[a.anahtar] || ""} onChange={(e) => setKolonAra((o) => ({ ...o, [a.anahtar]: e.target.value }))}
+                placeholder={a.tip === "sayi" ? ">0" : a.tip === "tarih" ? "gg.aa" : "ara…"}
+                style={{ width: "100%", boxSizing: "border-box", fontSize: 11, padding: "4px 6px", border: "1px solid var(--erp-line)", borderRadius: 4, textAlign: a.tip === "sayi" ? "right" : "left" }} />
+            </div>
+          ))}
+          <span style={{ fontSize: 11, color: "var(--erp-text-2)", display: "flex", gap: 6, alignItems: "center" }}>
+            <b className="mono">{filtreli.length}</b> fiş
+            {kolonSuzgecVar && <button type="button" className="btn-ghost" data-fis-kolon-temizle="1" onClick={() => setKolonAra({})} style={{ padding: "1px 6px", fontSize: 11 }}>×</button>}
+          </span>
+        </div>
+        <div style={{ display: "grid", gap: 10, padding: 8 }}>
+          {filtreli.length === 0 && <div data-fis-suzgec-bos="1" style={{ fontSize: 12, color: "var(--erp-text-3)", padding: 10 }}>Süzgece uyan fiş yok.</div>}
           {filtreli.slice(0, gorunenSayi).map((f) => {
             const acik = acikFis === f.key;
             // ÇİFT SAYIM: bir fiş HEM stok hareketi HEM cari hareketi taşır ve ikisi de aynı
@@ -457,6 +491,7 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
               Daha fazla göster ({gorunenSayi} / {filtreli.length})
             </button>
           )}
+        </div>
         </div>
       )}
     </div>

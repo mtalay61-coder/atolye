@@ -62,6 +62,11 @@ async function calistir() {
   await tikla('[data-fis-defter-sec="Tümü"]');
   const rozetler = await sayfa.evaluate(() => [...document.querySelectorAll("[data-fis-defter-rozet]")].filter((x) => x.offsetParent)
     .map((x) => x.textContent.trim()).sort());
+  // v1.688.9: sütun süzgeçleri — fiş no "R-1" yalnız SF-R-1; olmayan cari → boş mesajı, kutular yerinde (temizlenebilir).
+  const kolon = async (k, v) => { await sayfa.locator(`[data-fis-kolon-ara="${k}"]`).fill(v); await sayfa.waitForTimeout(300);
+    const r = { kart: await sayfa.locator("[data-fis-kart]").count(), bos: await sayfa.locator("[data-fis-suzgec-bos]").count() };
+    await sayfa.locator(`[data-fis-kolon-ara="${k}"]`).fill(""); await sayfa.waitForTimeout(200); return r; };
+  const kolonSuzgec = { fisNo: await kolon("fisNo", "R-1"), yokCari: await kolon("cari", "olmayan cari") };
 
   // ---- 4. KÂR-ZARAR -------------------------------------------------------------------------------------
   // v1.587.0: Kâr / Zarar Finans › Gelir / Gider ekranında.
@@ -78,7 +83,7 @@ async function calistir() {
   for (const d of ["Tümü", "Genel", "Resmi"]) { await tikla(`[data-kz-defter="${d}"]`); kz[d] = await gelir(); }
 
   await tarayici.close();
-  return { hatalar, iscilikAyari: { varsayilan: ayarVarsayilan, kaydedilen }, cari, fisler, rozetler, karZararSatisGeliri: kz };
+  return { hatalar, iscilikAyari: { varsayilan: ayarVarsayilan, kaydedilen }, cari, fisler, rozetler, kolonSuzgec, karZararSatisGeliri: kz };
 }
 
 if (require.main === module) {
