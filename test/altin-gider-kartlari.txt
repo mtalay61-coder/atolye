@@ -9,6 +9,9 @@
  "kayit": [
   "Çıkış:12000:İşyeri kirası:yonetim"
  ],
+ "sonListe": [
+  "İşyeri kirası | Gider | Nakit | Genel"
+ ],
  "tanimlar": {
   "elleEklenen": [
    "Numune giderleri:uretim:gider"

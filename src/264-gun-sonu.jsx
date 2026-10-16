@@ -11,11 +11,14 @@
 // ÇEKLER BUGÜNKÜ DURUMLA: çekin durum geçmişi tarih tarih tutulmuyor; geçmiş bir günün raporunda "portföy" şu anki
 // portföydür (rapor bunu başlıkta yazar).
 //
-// OTOMATİK GÖNDERİM (`useGunSonuOtomatik`): Tanımlar'daki `firmaBilgileri.gunSonu` = { otomatik, saat, alicilar,
-// sonGonderilen }. Belirlenen saatten sonra açık olan bir YÖNETİCİ oturumu raporu PDF ekli gönderir; o saatte kimse
-// açık değilse ertesi açılışta önceki günün raporu gider. Rapor uygulamanın içinde hesaplandığı için (bakiye kuralı
-// birebir aynı olsun diye — mutabakattaki gerekçe) gönderim için bir oturumun açılması gerekir. Çok cihazda iki kez
-// gitmesin diye gönderimden ÖNCE `sonGonderilen` Tanımlar'a yazılır (ilk yazan sahiplenir).
+// OTOMATİK GÖNDERİM SUNUCUDA (v1.687.0 — kullanıcı: "sunucudan otomatik gönderilsin, uygulama açık olmasa da"):
+// `supabase-gun-sonu-fonksiyonu.ts` (Edge Function `gun-sonu`), Supabase zamanlayıcısı (pg_cron, `gun-sonu.sql`) her 15
+// dakikada çağırır. Ayarlar Tanımlar'da `firmaBilgileri.gunSonu` = { otomatik, saat, alicilar, defter }; fonksiyon
+// İstanbul saatiyle saat geçmişse ve o günün raporu gönderilmemişse gönderir. Gönderim kaydı AYRI tabloda
+// (`gun_sonu_gonderim`, gün birincil anahtar → aynı gün iki kez gitmez); Tanımlar'a yazılmaz, çünkü uygulama
+// Tanımlar'ı bütün olarak yazıyor ve sunucunun işaretini ezerdi. FONKSİYON BU DOSYADAN ÜRETİLİR (`gun-sonu-sunucu.js`):
+// hesap ve görünüm burada değişince sunucudaki de aynı kalsın — yalnız yeniden yapıştırılması gerekir. Bu yüzden
+// `gunSonuVerisi`/`gunSonuHTML` ve kullandıkları SAF kalmalı (React/window/document yok; üretici denetler).
 
 function gunSonuGun(t) { return String(t || "").slice(0, 10); }
 function gunSonuPara(t, pb) {
@@ -25,6 +28,30 @@ function gunSonuPBToplam(liste, tutarAl, pbAl) {
   const m = {};
   liste.forEach((x) => { const pb = pbAl(x) || "TRY"; m[pb] = stokYuvarla((m[pb] || 0) + (Number(tutarAl(x)) || 0)); });
   return m;
+}
+
+// ALIŞ FİYATI: ürünün gün sonuna kadarki EN SON alış fişi fiyatı (renk/beden ayırmadan; kalemin kendi birimi — çevrildiyse
+// ham fiyat, 077 `alisDizini` ile aynı okuma); alış fişi yoksa kart alış fiyatı (`alisFiyati` + `alisPbKodu`).
+function gunSonuSonAlislar(cariler, gun) {
+  const onEk = `${fisOnEki("Alış")}-`;
+  const m = new Map();
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    if (!h || !h.fisNo || !String(h.fisNo).startsWith(onEk) || gunSonuGun(h.tarih) > gun) return;
+    const ad = String(h.urunAd || "").toLocaleLowerCase("tr-TR").trim();
+    const cevrildi = h.hamBirimFiyat != null && h.kalemParaBirimi;
+    const fiyat = Number(cevrildi ? h.hamBirimFiyat : h.birimFiyat);
+    if (!ad || !(fiyat > 0)) return;
+    const anahtar = `${gunSonuGun(h.tarih)}${h.zaman || ""}`;
+    const onceki = m.get(ad);
+    if (!onceki || anahtar > onceki.anahtar) m.set(ad, { anahtar, fiyat, pb: cevrildi ? h.kalemParaBirimi : (h.paraBirimi || "TRY"), kaynak: `son alış ${tarihYaz(gunSonuGun(h.tarih))}` });
+  }));
+  return m;
+}
+function gunSonuAlisFiyati(urun, gun, sonAlislar) {
+  const son = sonAlislar.get(String(urun.ad || "").toLocaleLowerCase("tr-TR").trim());
+  if (son) return son;
+  const f = Number(urun.alisFiyati) || 0;
+  return f > 0 ? { fiyat: f, pb: alisPbKodu(urun), kaynak: "kart" } : null;
 }
 
 function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim }) {
@@ -78,6 +105,7 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
   // ---- 3) STOK: günün hareketleri (üretim ayrı başlıkta) + gün sonu miktarları ----
   const stokHareketleri = [];
   const uretimHareketleri = [];
+  const sonAlislar = gunSonuSonAlislar(cariler, gun);
   const stokMiktarlari = [];
   (stok || []).forEach((p) => {
     if (!p || p.kategori === "Hizmet") return;
@@ -86,22 +114,18 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
       const satir = { urun: p.ad, kategori: p.kategori || "", renk: x.renk || "", beden: x.beden || "", miktar: x.miktar || 0, birim: p.birim || "", kaynak: x.kaynak || "", fisNo: x.fisNo || "", cari: x.cariId ? (cariAd[x.cariId] || "") : "", siparisNo: x.siparisNo || "" };
       (x.kaynak === "Üretim" ? uretimHareketleri : stokHareketleri).push(satir);
     });
-    const m = new Map();
-    if (hareketler.length) {
-      hareketler.filter((x) => gunSonuGun(x.tarih) <= gun).forEach((x) => {
-        const a = `${x.renk || ""}|${x.beden || ""}`;
-        m.set(a, stokYuvarla((m.get(a) || 0) + (Number(x.miktar) || 0)));
-      });
-    } else {
-      (p.variants || []).forEach((v) => m.set(`${v.renk || ""}|${v.beden || ""}`, Number(v.miktar) || 0));
-    }
-    m.forEach((miktar, a) => {
-      if (!miktar) return;
-      const [renk, beden] = a.split("|");
-      stokMiktarlari.push({ urun: p.ad, kategori: p.kategori || "", renk, beden, miktar, birim: p.birim || "" });
-    });
+    // ÜRÜN BAŞINA TEK SATIR (v1.687.0 — kullanıcı: "stok miktarları detaysız olsun; stok miktarı, alış fiyatı ve stok
+    // tutarı yeterli, renk beden gerek yok"). Miktar = renk/beden toplamı.
+    const miktar = stokYuvarla(hareketler.length
+      ? hareketler.filter((x) => gunSonuGun(x.tarih) <= gun).reduce((t, x) => t + (Number(x.miktar) || 0), 0)
+      : (p.variants || []).reduce((t, v) => t + (Number(v.miktar) || 0), 0));
+    if (!miktar) return;
+    const fiyat = gunSonuAlisFiyati(p, gun, sonAlislar);
+    stokMiktarlari.push({ urun: p.ad, kategori: p.kategori || "", miktar, birim: p.birim || "",
+      fiyat: fiyat ? fiyat.fiyat : null, pb: fiyat ? fiyat.pb : "", kaynak: fiyat ? fiyat.kaynak : "",
+      tutar: fiyat ? stokYuvarla(miktar * fiyat.fiyat) : null });
   });
-  stokMiktarlari.sort((a, b) => a.kategori.localeCompare(b.kategori, "tr") || a.urun.localeCompare(b.urun, "tr") || a.renk.localeCompare(b.renk, "tr") || a.beden.localeCompare(b.beden, "tr", { numeric: true }));
+  stokMiktarlari.sort((a, b) => a.kategori.localeCompare(b.kategori, "tr") || a.urun.localeCompare(b.urun, "tr"));
 
   // ---- 4) ÜRETİM AŞAMALARI: o gün verilen / tamamlanan proses atamaları ----
   const uretimAsamalari = [];
@@ -133,6 +157,7 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
       kasaCikis: gunSonuPBToplam(kasaHareketleri.filter((x) => x.yon !== "Giriş"), (x) => x.tutar, (x) => x.pb),
       kasaBakiye: gunSonuPBToplam(hesapBakiyeleri, (x) => x.bakiye, (x) => x.pb),
       cekToplam: gunSonuPBToplam(cekler, (x) => x.tutar, (x) => x.pb),
+      stokTutar: gunSonuPBToplam(stokMiktarlari.filter((x) => x.tutar != null), (x) => x.tutar, (x) => x.pb),
       uretimGiris: stokYuvarla(uretimHareketleri.filter((x) => x.miktar > 0).reduce((t, x) => t + x.miktar, 0)),
     },
   };
@@ -141,7 +166,7 @@ function gunSonuVerisi({ gun, defter = "Tümü", cariler, muhasebe, stok, uretim
 const gunSonuPBMetni = (m) => (Object.keys(m || {}).length ? Object.entries(m).map(([pb, t]) => gunSonuPara(t, pb)).join(" · ") : "—");
 
 // PDF / yazdır / e-posta gövdesi. Tablolar sade (PDF_CIKTI_STILI ile çizilir).
-function gunSonuHTML(v, firma) {
+function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR")) {
   const e = htmlKacis;
   const f = firma || {};
   const tablo = (baslik, kolonlar, satirlar, bosMetin = "Kayıt yok") => `
@@ -153,12 +178,12 @@ function gunSonuHTML(v, firma) {
   return `
     <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #2F6B4F;padding-bottom:6px">
       <div><div style="font-size:18px;font-weight:800">${e(f.unvan || "")}</div><div style="font-size:15px">Gün Sonu Raporu — ${e(tarihYaz(v.gun))}</div></div>
-      <div style="font-size:10px;color:#666;text-align:right">Defter: ${e(v.defter)}${v.defter === "Tümü" ? ` (bakiyeler ${e(v.bakiyeDefter)})` : ""}<br/>Hazırlanma: ${e(new Date().toLocaleString("tr-TR"))}</div>
+      <div style="font-size:10px;color:#666;text-align:right">Defter: ${e(v.defter)}${v.defter === "Tümü" ? ` (bakiyeler ${e(v.bakiyeDefter)})` : ""}<br/>Hazırlanma: ${e(hazirlanma)}</div>
     </div>
     <table style="margin-top:10px"><tr>
       ${kutu("Satış", gunSonuPBMetni(o.satis))}${kutu("Alış", gunSonuPBMetni(o.alis))}${kutu("Kasa/Banka giriş", gunSonuPBMetni(o.kasaGiris))}${kutu("Kasa/Banka çıkış", gunSonuPBMetni(o.kasaCikis))}
     </tr><tr>
-      ${kutu("Kasa + Banka gün sonu", gunSonuPBMetni(o.kasaBakiye))}${kutu("Portföydeki çekler", gunSonuPBMetni(o.cekToplam))}${kutu("Üretimden stoğa giriş", `${o.uretimGiris.toLocaleString("tr-TR")}`)}${kutu("Fiş sayısı", `${v.fisler.length}`)}
+      ${kutu("Kasa + Banka gün sonu", gunSonuPBMetni(o.kasaBakiye))}${kutu("Portföydeki çekler", gunSonuPBMetni(o.cekToplam))}${kutu("Stok tutarı (alış fiyatıyla)", gunSonuPBMetni(o.stokTutar))}${kutu("Üretimden stoğa giriş", `${o.uretimGiris.toLocaleString("tr-TR")}`)}
     </tr></table>
     ${tablo("Alış / Satış fişleri", [["Tür"], ["Fiş No"], ["Cari"], ["Kalemler"], ["Tutar", 1]],
       v.fisler.map((x) => [x.tur, x.fisNo, x.cari, x.kalemler.map((k) => `${k.urun} ${[k.renk, k.beden].filter(Boolean).join("/")} × ${k.miktar.toLocaleString("tr-TR")} ${k.birim}`).join("; "), gunSonuPBMetni(x.toplam)]))}
@@ -178,8 +203,9 @@ function gunSonuHTML(v, firma) {
       v.cekler.map((x) => [x.vade ? tarihYaz(x.vade) : "", x.cekNo, x.banka, x.cari, gunSonuPara(x.tutar, x.pb)]))}
     ${tablo(`Cari bakiyeleri (gün sonu, ${v.bakiyeDefter} defter)`, [["Cari"], ["Tip"], ["Bakiye (+ bize borçlu / − bizden alacaklı)", 1]],
       v.cariBakiyeListesi.map((x) => [x.cari, x.tip, bakiyeMetni(x.bakiye)]))}
-    ${tablo("Stok miktarları (gün sonu)", [["Kategori"], ["Ürün"], ["Renk"], ["Beden"], ["Miktar", 1]],
-      v.stokMiktarlari.map((x) => [x.kategori, x.urun, x.renk, x.beden, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`]))}
+    ${tablo("Stok (gün sonu)", [["Kategori"], ["Ürün"], ["Miktar", 1], ["Alış fiyatı", 1], ["Stok tutarı", 1]],
+      v.stokMiktarlari.map((x) => [x.kategori, x.urun, `${x.miktar.toLocaleString("tr-TR")} ${x.birim}`,
+        x.fiyat != null ? `${gunSonuPara(x.fiyat, x.pb)} (${x.kaynak})` : "fiyat yok", x.tutar != null ? gunSonuPara(x.tutar, x.pb) : ""]))}
   `;
 }
 
@@ -199,7 +225,7 @@ function gunSonuExcel(v) {
   sayfa("Kasa-Banka bakiyeleri", v.hesapBakiyeleri.map((x) => ({ Hesap: x.hesap, Giriş: x.giris, Çıkış: x.cikis, Bakiye: x.bakiye, "P.B.": x.pb })));
   sayfa("Çekler", v.cekler.map((x) => ({ Vade: x.vade, "Çek No": x.cekNo, Banka: x.banka, Cari: x.cari, Tutar: x.tutar, "P.B.": x.pb })));
   sayfa("Cari bakiyeleri", v.cariBakiyeListesi.flatMap((x) => Object.entries(x.bakiye).map(([pb, t]) => ({ Cari: x.cari, Tip: x.tip, Bakiye: stokYuvarla(t), "P.B.": pb }))));
-  sayfa("Stok miktarları", v.stokMiktarlari.map((x) => ({ Kategori: x.kategori, Ürün: x.urun, Renk: x.renk, Beden: x.beden, Miktar: x.miktar, Birim: x.birim })));
+  sayfa("Stok", v.stokMiktarlari.map((x) => ({ Kategori: x.kategori, Ürün: x.urun, Miktar: x.miktar, Birim: x.birim, "Alış fiyatı": x.fiyat, "P.B.": x.pb, "Fiyat kaynağı": x.kaynak, "Stok tutarı": x.tutar })));
   XLSX.writeFile(wb, `gun-sonu-${v.gun}.xlsx`);
   return true;
 }
@@ -213,6 +239,7 @@ async function gunSonuEpostaGonder({ veri, firma, alicilar }) {
     `Satış: ${gunSonuPBMetni(o.satis)}\nAlış: ${gunSonuPBMetni(o.alis)}\n` +
     `Kasa/Banka giriş: ${gunSonuPBMetni(o.kasaGiris)}\nKasa/Banka çıkış: ${gunSonuPBMetni(o.kasaCikis)}\n` +
     `Kasa + Banka gün sonu: ${gunSonuPBMetni(o.kasaBakiye)}\nPortföydeki çekler: ${gunSonuPBMetni(o.cekToplam)}\n` +
+    `Stok tutarı (alış fiyatıyla): ${gunSonuPBMetni(o.stokTutar)}\n` +
     `Üretimden stoğa giriş: ${o.uretimGiris.toLocaleString("tr-TR")}\n\nAyrıntılı rapor ektedir.\n${(firma && firma.unvan) || ""}`;
   const hatalar = [];
   for (const kime of alicilar) {
@@ -225,49 +252,6 @@ async function gunSonuEpostaGonder({ veri, firma, alicilar }) {
 function gunSonuAlicilari(ayar) {
   return String((ayar && ayar.alicilar) || "").split(/[,;\s]+/).map((x) => x.trim()).filter((x) => /@/.test(x));
 }
-// Otomatik gönderimde hangi günün raporu gidecek: saat geçtiyse bugün, geçmediyse dün (kaçırılan gün).
-function gunSonuHedefGun(ayar, simdi = new Date()) {
-  const [s, d] = String((ayar && ayar.saat) || "19:00").split(":").map((x) => parseInt(x, 10) || 0);
-  const bugun = bugunYerel();
-  if (simdi.getHours() * 60 + simdi.getMinutes() >= s * 60 + d) return bugun;
-  const dun = new Date(`${bugun}T12:00:00`); dun.setDate(dun.getDate() - 1);
-  return `${dun.getFullYear()}-${String(dun.getMonth() + 1).padStart(2, "0")}-${String(dun.getDate()).padStart(2, "0")}`;
-}
-
-// App'te bir kez çağrılır. 5 dakikada bir bakar; yalnız Yönetici, çevrimiçi, SMTP ve alıcı varken çalışır.
-function useGunSonuOtomatik({ tanimlar, saveTanimlar, cariler, muhasebe, stok, uretim, aktifKullanici, baglantiYok, yuklendi }) {
-  const ref = React.useRef({});
-  ref.current = { tanimlar, saveTanimlar, cariler, muhasebe, stok, uretim, aktifKullanici, baglantiYok, yuklendi };
-  const calisiyor = React.useRef(false);
-  React.useEffect(() => {
-    const bak = async () => {
-      const r = ref.current;
-      if (calisiyor.current || !r.yuklendi || r.baglantiYok || typeof navigator !== "undefined" && navigator.onLine === false) return;
-      if (!r.aktifKullanici || r.aktifKullanici.rol !== "Yönetici") return;
-      const firma = (r.tanimlar && r.tanimlar.firmaBilgileri) || {};
-      const ayar = firma.gunSonu || {};
-      const smtp = firma.eposta || {};
-      const alicilar = gunSonuAlicilari(ayar);
-      if (!ayar.otomatik || !smtp.sunucu || !smtp.kullanici || alicilar.length === 0) return;
-      const hedef = gunSonuHedefGun(ayar);
-      if (ayar.sonGonderilen && ayar.sonGonderilen >= hedef) return;
-      calisiyor.current = true;
-      try {
-        // ÖNCE SAHİPLEN: başka bir cihaz aynı anda bakıyorsa ikinci gönderim olmasın.
-        await r.saveTanimlar({ ...r.tanimlar, firmaBilgileri: { ...firma, gunSonu: { ...ayar, sonGonderilen: hedef, sonDurum: "gönderiliyor" } } });
-        const veri = gunSonuVerisi({ gun: hedef, defter: ayar.defter || "Tümü", cariler: r.cariler, muhasebe: r.muhasebe, stok: r.stok, uretim: r.uretim });
-        const sonuc = await gunSonuEpostaGonder({ veri, firma, alicilar });
-        const t2 = ref.current.tanimlar;
-        const f2 = (t2 && t2.firmaBilgileri) || {};
-        await ref.current.saveTanimlar({ ...t2, firmaBilgileri: { ...f2, gunSonu: { ...(f2.gunSonu || ayar), sonGonderilen: hedef, sonDurum: sonuc.tamam ? `gönderildi ${new Date().toLocaleString("tr-TR")}` : `HATA: ${sonuc.hata}` } } });
-      } catch (e) { /* bir sonraki turda sonDurum'dan görülür */ } finally { calisiyor.current = false; }
-    };
-    const ilk = setTimeout(bak, 15000);
-    const z = setInterval(bak, 5 * 60 * 1000);
-    return () => { clearTimeout(ilk); clearInterval(z); };
-  }, []);
-}
-
 function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar, aktifKullanici, showToast }) {
   const [gun, setGun] = useState(bugunYerel());
   const [defter, setDefter] = useState("Tümü");
@@ -280,6 +264,30 @@ function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar
   const veri = React.useMemo(() => gunSonuVerisi({ gun, defter, cariler, muhasebe, stok, uretim }), [gun, defter, cariler, muhasebe, stok, uretim]);
   const html = React.useMemo(() => gunSonuHTML(veri, firma), [veri, firma]);
 
+  // Sunucunun son gönderimi (`gun_sonu_gonderim` tablosu). Tablo yoksa ya da okunamazsa sessiz: bilgi amaçlı.
+  const [sonGonderim, setSonGonderim] = useState(undefined);
+  const sonGonderimOku = React.useCallback(() => {
+    if (typeof supabaseIstek !== "function" || !supabaseAcikMi()) return;
+    supabaseIstek("gun_sonu_gonderim?select=gun,durum,zaman&order=gun.desc&limit=1")
+      .then((r) => setSonGonderim(Array.isArray(r) && r[0] ? r[0] : null)).catch(() => {});
+  }, []);
+  React.useEffect(() => { sonGonderimOku(); }, [sonGonderimOku]);
+  const [sunucuDeneniyor, setSunucuDeneniyor] = useState(false);
+  const sunucudanDene = React.useCallback(async () => {
+    setSunucuDeneniyor(true);
+    try {
+      const yanit = await fetch(`${SUPABASE_URL}/functions/v1/gun-sonu`, {
+        method: "POST", headers: { ...(await yetkiBasliklari()), "Content-Type": "application/json" },
+        body: JSON.stringify({ deneme: true }),
+      });
+      const j = await yanit.json().catch(() => ({}));
+      showToast(j.tamam ? `Sunucu raporu gönderdi: ${j.mesaj || ""}` : `Sunucu: ${j.hata || `HTTP ${yanit.status} — fonksiyon kurulu mu?`}`);
+    } catch (e) {
+      showToast(`Sunucuya ulaşılamadı: ${String((e && e.message) || e)}`);
+    }
+    setSunucuDeneniyor(false);
+    sonGonderimOku();
+  }, [showToast, sonGonderimOku]);
   const ayarYaz = (d) => saveTanimlar({ ...tanimlar, firmaBilgileri: { ...firma, gunSonu: { ...ayar, ...d } } });
   const yazdir = () => {
     const w = window.open("", "_blank");
@@ -337,9 +345,15 @@ function GunSonuRaporu({ cariler, muhasebe, stok, uretim, tanimlar, saveTanimlar
         <label style={{ display: "flex", gap: 4, alignItems: "center" }}>defter
           <select disabled={!yonetici} value={ayar.defter || "Tümü"} onChange={(e) => ayarYaz({ defter: e.target.value })}>{["Tümü", "Genel", "Resmi"].map((d) => <option key={d}>{d}</option>)}</select>
         </label>
+        <button className="btn-ghost" data-gun-sonu-sunucu-dene="1" disabled={sunucuDeneniyor} onClick={sunucudanDene}
+          title="Sunucu fonksiyonunu şimdi çalıştırır: bugünün raporunu alıcılara gönderir (kurulumu sınamak için)">
+          {sunucuDeneniyor ? "Sunucu çalışıyor…" : "Sunucudan şimdi gönder (deneme)"}
+        </button>
         <div style={{ width: "100%", color: "var(--erp-text-2)" }}>
-          Belirlenen saatten sonra açık olan bir Yönetici oturumu raporu PDF ekli gönderir; o saatte uygulama kapalıysa ertesi açılışta bir önceki günün raporu gider.
-          {ayar.sonGonderilen && <> Son: <b>{tarihYaz(ayar.sonGonderilen)}</b> — {ayar.sonDurum || ""}</>}
+          Rapor SUNUCUDAN gider (uygulama kapalı olsa da): her gün belirlenen saatten sonra, o günün raporu e-postanın
+          içinde ve ekinde (indirilip yazdırılabilir HTML). Kurulum: Supabase'de <span className="mono">gun-sonu</span> fonksiyonu ve <span className="mono">gun-sonu.sql</span>.
+          {sonGonderim && <> Son sunucu gönderimi: <b data-gun-sonu-son="1">{tarihYaz(sonGonderim.gun)}</b> — {sonGonderim.durum}</>}
+          {sonGonderim === null && <> Sunucudan henüz gönderim kaydı yok.</>}
           {!smtpVar && <span style={{ color: "var(--erp-warn)" }}> E-posta için Tanımlar › Firma › E-posta gönderim ayarları ve Supabase'de SMTP_SIFRE gerekli.</span>}
           {!yonetici && <span> Ayarları yalnız Yönetici değiştirebilir.</span>}
         </div>

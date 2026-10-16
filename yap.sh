@@ -12,6 +12,8 @@ node tema-gom.js
 node birlestir.js src atolye-erp.jsx
 ./kontrol.sh atolye-erp.jsx
 ./oludenetim.sh atolye-erp.jsx
+# GÜN SONU SUNUCU FONKSİYONU (v1.687.0): rapor çekirdeği uygulamadan çıkarılıp Edge Function'a gömülür (gun-sonu-sunucu.js).
+node gun-sonu-sunucu.js
 
 SURUM="$(node -e 'console.log(require("fs").readFileSync("atolye-erp.jsx","utf8").match(/const SURUM = "([^"]+)"/)[1])')"
 CIKTI="atolye-erp-v${SURUM}.html"
