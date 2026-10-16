@@ -262,6 +262,7 @@ const MODUL_RENK = {
   odemerapor: "#2F6B4F",
   bankaexcel: "#2F6B4F",
   mutabakat: "#2F6B4F",   // Ödeme & Tahsilat (v1.645.8) — kasa/banka/çek ile aynı defter yeşili
+  gunsonu: "#2F6B4F",
   finansrapor: "#2F6B4F",     // Kasa & Banka'dan ayrıldı; aynı hesap defteri yeşili   // hesap defteri koyu yeşili
   planlama: "#B8860B",
   gorevler: "var(--erp-purple)",  // görev moru — iş akışına ait, modüllerin hiçbirinin rengiyle çakışmıyor   // pusula/plan sarısı-kahvesi
@@ -290,6 +291,7 @@ const SEKME_BILGISI = {
   odemerapor: { ad: "Ödeme & Tahsilat Raporu" },
   bankaexcel: { ad: "Banka Excel'i" },
   mutabakat: { ad: "Cari Mutabakat" },
+  gunsonu: { ad: "Gün Sonu Raporu" },
   finansrapor: { ad: "Finans Raporu" },
   // GELİR / GİDER ve MODELHANE sekme adı yoktu — şeritte ham anahtar ("gelirgider") görünüyordu (v1.589.0).
   gelirgider: { ad: "Gelir / Gider" },
@@ -487,9 +489,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.685.0";
+const SURUM = "1.686.0";
 const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Alis/satis fisinde cift para birimi: Muhasebe defterinde Resmi PB + kur";
+const SURUM_NOTU = "Gun sonu raporu: gunun hareketleri + gun sonu bakiyeleri, PDF/Excel indir, otomatik e-posta";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +522,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.686.0", tarih: "16.10.2026", eklenen: ["Finans › Gün Sonu Raporu: günün alış/satış fişleri, tahsilat/ödemeler, kasa/banka hareketleri, üretim (stok hareketleri + proses atamaları) ve diğer stok hareketleri; gün sonu kasa/banka bakiyeleri, portföydeki çekler, cari bakiyeleri ve stok miktarları — Yazdır, PDF ve Excel indir, e-posta; her gün belirlenen saatte otomatik e-posta (Yönetici oturumu)"], degisen: [], duzeltilen: [] },
   { surum: "1.685.0", tarih: "16.10.2026", eklenen: ["Alış/Satış fişinde çift para birimi: defter Muhasebe iken Resmi para birimi + kur (ya da tutar); her cari hareketine Resmi tutar düşer, kayıt tek"], degisen: [], duzeltilen: [] },
   { surum: "1.684.0", tarih: "16.10.2026", eklenen: [],
     degisen: ["Cari kartı tahsilat/ödeme formu Ödeme & Tahsilat ile aynı: tutar kasanın/bankanın biriminde sabit, 'Cariye' (Muhasebe'de Genel + Resmi) para birimi ve kur, açıklama deftere göre"], duzeltilen: [] },

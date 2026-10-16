@@ -3,7 +3,7 @@
 const SEKME_IKON_BILESENI = {
   anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck, sevkiyat: Truck, alissatis: ArrowLeftRight,
   uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
-  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, bankaexcel: Upload, mutabakat: FileText, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
+  cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, bankaexcel: Upload, mutabakat: FileText, gunsonu: FileText, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
   gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
 };
 function sekmeIkonu(anahtar) {
@@ -1064,7 +1064,7 @@ function AtolyeUygulamasi() {
   // süzüyordu. Ürün/sipariş kartındaki "cariye git" gibi bağlantılar yetkisiz kullanıcıya Cari'yi, Üretim'i açıyordu.
   // Menüde yetkiye bağlı her sekme burada da bağlı; yetkisiz sekmeye geçilirse Anasayfa'ya dönülür.
   const SEKME_MODULU = { cari: "cari", uretim: "uretim", modelhane: "stok", fiyatlistesi: "stok", muhasebe: "muhasebe",
-    cekler: "muhasebe", odemetahsilat: "muhasebe", odemerapor: "muhasebe", bankaexcel: "muhasebe", mutabakat: "cari", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
+    cekler: "muhasebe", odemetahsilat: "muhasebe", odemerapor: "muhasebe", bankaexcel: "muhasebe", mutabakat: "cari", gunsonu: "muhasebe", finansrapor: "muhasebe", gelirgider: "muhasebe", fisler: "fisler", tanimlar: "tanimlar" };
   useEffect(() => {
     const m = SEKME_MODULU[tab];
     if (!m || !aktifKullanici || yetkiVarMi(tanimlar, aktifKullanici, m, "goruntuleme")) return;
@@ -1262,6 +1262,8 @@ function AtolyeUygulamasi() {
       kaydetmeHatasiBildir(e, "Tanımlar", kodlu);
     }
   }, [showToast, kaydetmeHatasiBildir, tanimSilinenleriCopeAt]);
+  // GÜN SONU RAPORU OTOMATİK E-POSTASI (v1.686.0, 264): belirlenen saatten sonra açık Yönetici oturumu gönderir.
+  useGunSonuOtomatik({ tanimlar, saveTanimlar, cariler, muhasebe, stok, uretim, aktifKullanici, baglantiYok, yuklendi: !loading });
 
   // ESKİ GITHUB ANAHTARI SİLİNİR (v1.636.0): "GitHub'a yayınla" bölümü kalktı (bkz. 137); bu cihazda kalmış yazma
   // yetkili anahtar gereksiz risk.
@@ -3544,6 +3546,7 @@ function AtolyeUygulamasi() {
     odemerapor: "Ödeme & Tahsilat Raporu",
     bankaexcel: "Banka Excel'i",
     mutabakat: "Cari Mutabakat",
+    gunsonu: "Gün Sonu Raporu",
     finansrapor: "Finans Raporu",
     planlama: "Planlama",
     // DEPO BAŞLIĞI EKSİKTİ (kullanıcı ekran görüntüsüyle, 12 Eylül): üst şeritte boş bir nokta ve
@@ -4232,6 +4235,8 @@ function AtolyeUygulamasi() {
                     // FİNANS RAPORU (v1.463.0): varlık özeti ve kayıtlı finans raporları.
                     // CARİ MUTABAKAT (v1.673.0, 263): dönem sonu mutabakat mektupları.
                     yetki("cari") && ["mutabakat", "Cari Mutabakat", <FileText size={16} />],
+                    // GÜN SONU RAPORU (v1.686.0, 264): günün hareketleri + gün sonu bakiyeleri; indir / e-posta / otomatik.
+                    yetki("muhasebe") && ["gunsonu", "Gün Sonu Raporu", <FileText size={16} />],
                     yetki("muhasebe") && ["finansrapor", "Finans Raporu", <TrendingUp size={16} />],
                     // GELİR / GİDER (20 Eylül): her gün kullanılan bir defter, finansın içinde.
                     yetki("muhasebe") && ["gelirgider", "Gelir / Gider", <FileText size={16} />], yetki("fisler") && ["fisler", "Fişler", <FileText size={16} />]] },
@@ -5108,6 +5113,15 @@ function AtolyeUygulamasi() {
           )}
           {/* FİNANS RAPORU (v1.463.0): varlık özeti + kayıtlı finans raporları (248-finans-rapor).
               Yalnız açıkken çiziliyor — bütün cari/stok/çek verisini dolaşan ağır bir hesap. */}
+          {/* GÜN SONU RAPORU (v1.686.0, 264): yalnız açıkken çizilir (bütün veriyi dolaşan hesap). */}
+          {tab === "gunsonu" && (
+            !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (
+              <EmptyState text="Gün sonu raporunu görüntüleme yetkiniz yok." />
+            ) : (
+              <GunSonuRaporu cariler={cariler} muhasebe={muhasebe} stok={stok} uretim={uretim} tanimlar={tanimlar}
+                saveTanimlar={saveTanimlar} aktifKullanici={aktifKullanici} showToast={showToast} />
+            )
+          )}
           {tab === "finansrapor" && (
             !kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (
               <EmptyState text="Finans raporunu görüntüleme yetkiniz yok." />

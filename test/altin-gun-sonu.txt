@@ -1,0 +1,90 @@
+{
+ "hatalar": [],
+ "dugmeler": [
+  "pdf",
+  "excel",
+  "gonder",
+  "otomatik",
+  "saat",
+  "alicilar"
+ ],
+ "gun30": {
+  "ozet": [
+   "Satış 500,00 ₺",
+   "Alış —",
+   "Kasa/Banka giriş 300,00 ₺",
+   "Kasa/Banka çıkış —",
+   "Kasa + Banka gün sonu 1.300,00 ₺",
+   "Portföydeki çekler 750,00 ₺",
+   "Üretimden stoğa giriş 3",
+   "Fiş sayısı 1"
+  ],
+  "bolumler": {
+   "Alış / Satış fişleri": [
+    "Satış | SF-1 | Müşteri B | Bot Siyah/41 × 2 çift | 500,00 ₺"
+   ],
+   "Tahsilat / ödeme ve diğer cari hareketleri": [
+    "Müşteri B | Tahsilat | Tahsilat (TL Kasa) |  | 300,00 ₺",
+    "Personel C | Alacak | Kesim işçiliği · 3 çift |  | 30,00 ₺"
+   ],
+   "Kasa / banka hareketleri": [
+    "Kasa: TL Kasa | Müşteri B | Tahsilat | 300,00 ₺ | "
+   ],
+   "Üretim — stok hareketleri": [
+    "Deri | Siyah | 1001 | 1001-Kesim | -3 metre",
+    "Bot | Siyah / 41 | 1001 | 1001-Kesim-Giriş | 3 çift"
+   ],
+   "Üretim — proses atamaları": [
+    "1001 | Bot Siyah | Kesim | Tamamlandı | Personel C | 3"
+   ],
+   "Diğer stok hareketleri": [],
+   "Kasa ve banka bakiyeleri (gün sonu)": [
+    "Kasa: TL Kasa | 300,00 ₺ | 0,00 ₺ | 1.300,00 ₺"
+   ],
+   "Portföydeki çekler (bugünkü durum)": [
+    "01.10.2026 | 123 | Ziraat | Müşteri B | 750,00 ₺"
+   ],
+   "Cari bakiyeleri (gün sonu, Genel defter)": [
+    "Müşteri B | Müşteri | +200 ₺",
+    "Personel C | Personel | -30 ₺"
+   ],
+   "Stok miktarları (gün sonu)": [
+    "Hammadde | Deri | Siyah |  | -3 metre",
+    "Mamul | Bot | Siyah | 41 | 3 çift"
+   ]
+  }
+ },
+ "gun31": {
+  "ozet": [
+   "Satış —",
+   "Alış —",
+   "Kasa/Banka giriş —",
+   "Kasa/Banka çıkış —",
+   "Kasa + Banka gün sonu 1.300,00 ₺",
+   "Portföydeki çekler 750,00 ₺",
+   "Üretimden stoğa giriş 0",
+   "Fiş sayısı 0"
+  ],
+  "hareketBolumleri": [
+   [
+    "Alış / Satış fişleri",
+    0
+   ],
+   [
+    "Kasa / banka hareketleri",
+    0
+   ],
+   [
+    "Üretim — stok hareketleri",
+    0
+   ]
+  ],
+  "kasa": [
+   "Kasa: TL Kasa | 0,00 ₺ | 0,00 ₺ | 1.300,00 ₺"
+  ],
+  "cari": [
+   "Müşteri B | Müşteri | +200 ₺",
+   "Personel C | Personel | -30 ₺"
+  ]
+ }
+}
