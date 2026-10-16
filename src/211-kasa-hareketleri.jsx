@@ -14,6 +14,13 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
   const [bas, setBas] = useState("");
   const [bit, setBit] = useState("");
   const [arama, setArama] = useState("");
+  // BAŞLIK SÜZGEÇLERİ (v1.688.5 — kullanıcı: "Kasa & Banka listelerini de böyle yap"): raporlardaki gibi her sütunun altında
+  // arama kutusu (245 `raporKolonAra`: metin içerir, tarih "gg.aa", tutar ">1000", "100-200").
+  const [kolonAra, setKolonAra] = useState({});
+  const KBH_ALANLAR = [
+    { anahtar: "tarih", tip: "tarih" }, { anahtar: "hesap", tip: "metin" }, { anahtar: "karsi", tip: "metin" }, { anahtar: "aciklama", tip: "metin" },
+    { anahtar: "defter", tip: "metin" }, { anahtar: "fisNo", tip: "metin" }, { anahtar: "giris", tip: "sayi" }, { anahtar: "cikis", tip: "sayi" }, { anahtar: "cevrilmis", tip: "metin" },
+  ];
 
   const hesaplar = [
     ...((muhasebe && muhasebe.kasalar) || []).map((h) => ({ ...h, tur: "Kasa" })),
@@ -54,8 +61,18 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [muhasebe, cariler, tur, hesapId, defter, yon, bas, bit, q]);
 
+  const kolonSuzgecVar = Object.values(kolonAra).some((v) => String(v || "").trim());
+  const gorunen = !kolonSuzgecVar ? satirlar : (() => {
+    const gecen = new Set(raporKolonAra(satirlar.map((x, i) => ({
+      __i: i, tarih: String(x.tarih || "").slice(0, 10), hesap: `${x.hesap.tur} ${x.hesap.ad}`,
+      karsi: x.cariId ? cariAd(x.cariId) : x.giderKartAd || (x.virmanMi ? "virman" : ""), aciklama: x.aciklama || "",
+      defter: x.defter || "Genel", fisNo: x.fisNo || "", giris: x.yon === "Giriş" ? Number(x.tutar) || 0 : null,
+      cikis: x.yon !== "Giriş" ? Number(x.tutar) || 0 : null, cevrilmis: cevrilmis(x).map(([d, t]) => `${d} ${t}`).join(" "),
+    })), KBH_ALANLAR, kolonAra).map((r) => r.__i));
+    return satirlar.filter((_, i) => gecen.has(i));
+  })();
   const toplam = {};
-  satirlar.forEach((x) => {
+  gorunen.forEach((x) => {
     const pb = x.hesap.paraBirimi || "TRY";
     toplam[pb] = toplam[pb] || { giris: 0, cikis: 0 };
     if (x.yon === "Giriş") toplam[pb].giris += Number(x.tutar) || 0; else toplam[pb].cikis += Number(x.tutar) || 0;
@@ -86,7 +103,7 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
         <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Açıklama, cari, fiş no ara…" style={{ flex: "1 1 200px" }} />
       </div>
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 13, marginBottom: 8 }} data-kbh-toplam="1">
-        <b>{satirlar.length} hareket</b>
+        <b>{kolonSuzgecVar ? `${gorunen.length} / ` : ""}{satirlar.length} hareket</b>
         {Object.entries(toplam).map(([pb, t]) => (
           <span key={pb} className="mono">
             <span style={{ color: HAREKET_TIPI_RENK["Tahsilat"] }}>+{para(t.giris, pb)}</span>{"  "}
@@ -95,8 +112,8 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
           </span>
         ))}
       </div>
-      <div style={{ overflow: "auto", maxHeight: "65vh", border: "1px solid var(--erp-line-soft)", borderRadius: 8, background: "#fff" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+      <div data-kbh-kutu="1" style={{ overflow: "auto", maxHeight: "65vh", border: "1.5px solid var(--erp-line)", borderRadius: 8, background: "#fff" }}>
+        <table style={{ width: "100%", minWidth: 900, borderCollapse: "collapse", fontSize: 12 }}>
           <thead style={{ position: "sticky", top: 0, background: "#fff", zIndex: 1, boxShadow: "0 1px 0 var(--erp-line)" }}>
             <tr style={{ textAlign: "left", color: "var(--erp-text-2)", fontSize: 11 }}>
               <th style={{ padding: 6 }}>Tarih</th><th style={{ padding: 6 }}>Hesap</th><th style={{ padding: 6 }}>Karşı taraf</th>
@@ -104,8 +121,15 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
               <th style={{ padding: 6, textAlign: "right" }}>Giriş</th><th style={{ padding: 6, textAlign: "right" }}>Çıkış</th>
               <th style={{ padding: 6 }}>Çevrilmiş</th>
             </tr>
+            <tr>{KBH_ALANLAR.map((a) => (
+              <th key={a.anahtar} style={{ padding: "0 4px 5px" }}>
+                <input data-kbh-kolon-ara={a.anahtar} value={kolonAra[a.anahtar] || ""} onChange={(e) => setKolonAra((o) => ({ ...o, [a.anahtar]: e.target.value }))}
+                  placeholder={a.tip === "sayi" ? ">0" : a.tip === "tarih" ? "gg.aa" : "ara…"}
+                  style={{ width: "100%", minWidth: 50, boxSizing: "border-box", fontSize: 11, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: 4, fontWeight: 400, textAlign: a.tip === "sayi" ? "right" : "left" }} />
+              </th>
+            ))}</tr>
           </thead>
-          <tbody>{satirlar.map((x) => {
+          <tbody>{gorunen.map((x) => {
             const pb = x.hesap.paraBirimi || "TRY";
             return (
               <tr key={`${x.hesap.id}|${x.id}`} data-kbh-satir="1" style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
@@ -124,7 +148,7 @@ function KasaBankaHareketleri({ muhasebe, cariler }) {
             );
           })}</tbody>
         </table>
-        {satirlar.length === 0 && <EmptyState text="Süzgece uyan hareket yok." />}
+        {gorunen.length === 0 && <EmptyState text="Süzgece uyan hareket yok." />}
       </div>
     </div>
   );

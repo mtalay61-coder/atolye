@@ -909,9 +909,11 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           {satirlar.length === 0 ? (
                             <div style={{ fontSize: 12, color: "var(--erp-text-3)" }}>{defterFiltre} defterinde hareket yok.</div>
                           ) : (
-                          <div style={{ overflowX: "auto" }}>
-                          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                            <thead>
+                          // KUTU + KAYDIRICI (v1.688.5 — kullanıcı: "Kasa & Banka listelerini de böyle yap"): hesap hareketleri
+                          // çerçeveli kutuda sabit yükseklikte kayar; başlık ve süzgeç satırı üstte sabit.
+                          <div data-hesap-hareket-kutu="1" style={{ maxHeight: "min(60vh, 520px)", overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
+                          <table style={{ width: "100%", minWidth: 560, borderCollapse: "collapse", fontSize: 12 }}>
+                            <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
                               <tr style={{ borderBottom: "1.5px solid var(--erp-line)" }}>
                                 <th style={{ textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" }}>Tarih</th>
                                 <th style={{ textAlign: "left", padding: "4px 6px", color: "var(--erp-text-2)" }}>Açıklama</th>

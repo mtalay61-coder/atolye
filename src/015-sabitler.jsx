@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.688.4";
+const SURUM = "1.688.5";
 const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Gelir/Gider grupları açılır/kapanır; Finans Raporu stok tek satır; Gün Sonu listeleri süzgeçli";
+const SURUM_NOTU = "Kasa & Banka listeleri: başlık süzgeçleri, kaydırmalı çerçeveli kutu";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.688.5", tarih: "16.10.2026", eklenen: ["Kasa & Banka › Tüm hareketler: her sütunun altında arama kutusu (tarih gg.aa, tutar >, <, aralık)"], degisen: ["Kasa & Banka hesap hareketleri ve Tüm hareketler listesi çerçeveli kutuda kayar, başlık + süzgeç üstte sabit"], duzeltilen: [] },
   { surum: "1.688.4", tarih: "16.10.2026", eklenen: [], degisen: ["Gelir / Gider: grup başlıkları tıklayınca açılır/kapanır (kapalı başlar, başlıkta kart sayısı ve toplam; açık gruplar cihazda hatırlanır)", "Finans Raporu: stok ürün başına tek satır (renk/beden kırılımı yok; değer renk/beden başına hesaplanıp toplanır)", "Gün Sonu ekranı: her liste çerçeveli, kaydırmalı ve sütun süzgeçli (e-posta/PDF aynı)"], duzeltilen: [] },
   { surum: "1.688.3", tarih: "16.10.2026", eklenen: ["Ödeme & Tahsilat › Son tahsilat ve ödemeler: her başlığın altında arama kutusu (raporlardaki gibi; tutar >, <, aralık; tarih gg.aa)"], degisen: ["Liste kendi kutusunda sabit yükseklikte kayar (yatay da), başlık ve süzgeçler üstte sabit"], duzeltilen: [] },
   { surum: "1.688.2", tarih: "16.10.2026", eklenen: ["Ödeme & Tahsilat › Son tahsilat ve ödemeler: Hesap sütunu (işlemin yapıldığı kasa / banka)"], degisen: [], duzeltilen: [] },
