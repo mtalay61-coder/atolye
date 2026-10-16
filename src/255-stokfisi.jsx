@@ -22,7 +22,7 @@
 // Depo'dan tek ürünle geliniyordu; o tedarikçiden alınacak DİĞER eksikler ekranda görünmüş olsa
 // bile fişe tek tek yazılıyordu. Aynı tedarikçiye zaten fiş kesiliyorsa, onun bütün eksiklerini
 // aynı fişe koymak işin doğal hâli.
-function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortiler, kurlar, muhasebe, onKaydet, onVazgec, showToast, baslangicKalemler, onCariDegisti, siparisler, koliler, uretim, firmaBilgileri }) {
+function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortiler, kurlar, muhasebe, onKaydet, onVazgec, showToast, baslangicKalemler, onCariDegisti, siparisler, koliler, uretim, firmaBilgileri, siparistenSecAcikBasla = false }) {
   // CARİ SEÇİMİ FORMUN İÇİNDE.
   //
   // Fiş, cari kartından açıldığında cari zaten belliydi ve seçim gerekmiyordu. Ama Depo'dan
@@ -99,7 +99,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     // kalemde iki ayrı yeri düzeltmek demekti.
     setKParaBirimi(pb);
   }, [seciliCariId, paraBirimiElle, kalemler]);   // eslint-disable-line react-hooks/exhaustive-deps
-  const [siparistenSecAcik, setSiparistenSecAcik] = useState(false);
+  // Sevkiyat panelinden açılınca (239) liste açık başlar: "Ekle"ye basınca satır koli / asorti / beden olarak eklenir (v1.688.7).
+  const [siparistenSecAcik, setSiparistenSecAcik] = useState(!!siparistenSecAcikBasla);
   // ONAY ADIMI (23 Eylül, v1.431.0 — kullanıcı 1. seçeneği seçti: "onay penceresini ortak fiş
   // ekranına taşı, alış ve satışta da çalışsın"). Sipariş kartındaki alış teslim formunda vardı;
   // alış tek ekrana taşınırken kaybolmasın diye buraya alındı. Kaydet artık DOĞRUDAN yazmıyor:

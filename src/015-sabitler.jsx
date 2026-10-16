@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.688.6";
+const SURUM = "1.688.7";
 const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Son işlemler: gelir/gider ve kasa/banka hareketleri de görünür";
+const SURUM_NOTU = "Sevkiyat: kalan/stok matrisi, fiş kalanlarla hazır gelir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.688.7", tarih: "16.10.2026", eklenen: ["Depo › Sevkiyat › Sevk et: sipariş kalanı renk × beden matrisinde, her hücrede stok (yetmeyen kırmızı); başlıkta kalan ve stokta sevk edilebilir toplam", "Sevk fişi: Siparişten seç listesi açık gelir — satırın Ekle'si ile koli / asorti / beden olarak, birden fazla satır; kısayol: stoktakilerle ya da kalanın tümüyle doldur"], degisen: [], duzeltilen: ["Sevk et boş fiş açıyordu (0 kalem); kalanlar okunmaz tek paragraftı"] },
   { surum: "1.688.6", tarih: "16.10.2026", eklenen: [], degisen: [], duzeltilen: ["Anasayfa › Son İşlemler: cariye bağlı olmayan kasa/banka hareketleri (gelir/gider kartı ödemeleri, virman, elle giriş) hiç görünmüyordu", "Kullanıcısı olmayan eski kayıtların özeti \"— —\" yerine \"Kullanıcı yok\" yazar"] },
   { surum: "1.688.5", tarih: "16.10.2026", eklenen: ["Kasa & Banka › Tüm hareketler: her sütunun altında arama kutusu (tarih gg.aa, tutar >, <, aralık)"], degisen: ["Kasa & Banka hesap hareketleri ve Tüm hareketler listesi çerçeveli kutuda kayar, başlık + süzgeç üstte sabit"], duzeltilen: [] },
   { surum: "1.688.4", tarih: "16.10.2026", eklenen: [], degisen: ["Gelir / Gider: grup başlıkları tıklayınca açılır/kapanır (kapalı başlar, başlıkta kart sayısı ve toplam; açık gruplar cihazda hatırlanır)", "Finans Raporu: stok ürün başına tek satır (renk/beden kırılımı yok; değer renk/beden başına hesaplanıp toplanır)", "Gün Sonu ekranı: her liste çerçeveli, kaydırmalı ve sütun süzgeçli (e-posta/PDF aynı)"], duzeltilen: [] },
