@@ -6,30 +6,37 @@
 // şeyler. Gelir/gider kartları ise her gün kullanılan bir defter: yeni gider çıkar, kart eklenir,
 // rapor oradan okunur. İkisini aynı sayfada tutmak, günlük işi kurulum ayarlarının arasına
 // gömmekti.
+// KART HAREKETİ SİLME (v1.688.0 — kullanıcı: "gelir gider silindiğinde buradan silinmiyor, kart olarak silinebilir sadece;
+// kontrolleri koyalım, cari gibi hareket etsin"). Gelir/Gider kart ekstresi (396) ve Ödeme & Tahsilat son listesi (260) bunu çağırır. Hareket kartın ekstresinden silinir; kurallar Kasa & Banka'daki
+// silmeyle aynı (205 `hareketSil`): dönem kilidi, silme yetkisi yoksa yönetici onayına ("muhasebeHareketSil" — onaylanınca
+// 205 aynı işi yapar), çöpe kayıt. Kart hareketi cariye ve çeke bağlı olmadığı için yalnız hesabın listesinden düşer.
+async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast }) {
+  if (!onMuhasebeKaydet) return;
+  if (donemKilidiEngel(h.tarih, showToast, "Silme")) return;
+  const tur = h.hesapTur;
+  const hesap = ((muhasebe && muhasebe[tur === "kasa" ? "kasalar" : "bankalar"]) || []).find((x) => x.id === h.hesapId);
+  if (!hesap) return;
+  const ozet = `${h.yon || ""} ${h.tutar || 0} ${PARA_SEMBOLU[hesap.paraBirimi || "TRY"] || ""}${h.aciklama ? " — " + h.aciklama : ""}`;
+  if (kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme")) {
+    if (onayIste) onayIste("muhasebe", "Sil", `"${hesap.ad}" hesabından ${ozet} kaydını sil`, "muhasebeHareketSil", { tur, hesapId: hesap.id, hareketId: h.id });
+    else showToast("Silme yetkiniz yok");
+    return;
+  }
+  // KİMLİKSİZ ESKİ KAYIT: kimlik yoksa `id !== undefined` süzgeci hesabın kimliksiz BÜTÜN hareketlerini silerdi; o kayıt
+  // içerik (tarih + tutar + kart + açıklama) ile ve YALNIZ ilki bulunur.
+  const ayni = (x) => (h.id ? x.id === h.id
+    : !x.id && x.tarih === h.tarih && x.tutar === h.tutar && x.giderKartId === h.giderKartId && (x.aciklama || "") === (h.aciklama || ""));
+  const asil = (hesap.hareketler || []).find(ayni);
+  if (!asil) { showToast("Kayıt bulunamadı — sayfayı yenileyip tekrar deneyin"); return; }
+  if (onCopaAt) onCopaAt(tur === "kasa" ? "kasaHareketi" : "bankaHareketi", hesap.ad, asil,
+    { ozet: `${ozet}${h.tarih ? " · " + h.tarih : ""}`, ustKayit: { tur, id: hesap.id, ad: hesap.ad }, yanEtkiliMi: false, geriAlinabilirMi: false });
+  const anahtar = tur === "kasa" ? "kasalar" : "bankalar";
+  await onMuhasebeKaydet({ ...muhasebe, [anahtar]: (muhasebe[anahtar] || []).map((x) => (x.id === hesap.id ? { ...x, hareketler: (x.hareketler || []).filter((y) => y !== asil) } : x)) });
+  showToast("Hareket silindi");
+}
+
 function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
-  // KART HAREKETİ SİLME (v1.688.0 — kullanıcı: "gelir gider silindiğinde buradan silinmiyor, kart olarak silinebilir sadece;
-  // kontrolleri koyalım, cari gibi hareket etsin"). Hareket kartın ekstresinden silinir; kurallar Kasa & Banka'daki
-  // silmeyle aynı (205 `hareketSil`): dönem kilidi, silme yetkisi yoksa yönetici onayına ("muhasebeHareketSil" — onaylanınca
-  // 205 aynı işi yapar), çöpe kayıt. Kart hareketi cariye ve çeke bağlı olmadığı için yalnız hesabın listesinden düşer.
-  const kartHareketiSil = async (h) => {
-    if (!onMuhasebeKaydet) return;
-    if (donemKilidiEngel(h.tarih, showToast, "Silme")) return;
-    const tur = h.hesapTur;
-    const hesap = ((muhasebe && muhasebe[tur === "kasa" ? "kasalar" : "bankalar"]) || []).find((x) => x.id === h.hesapId);
-    if (!hesap) return;
-    const ozet = `${h.yon || ""} ${h.tutar || 0} ${PARA_SEMBOLU[hesap.paraBirimi || "TRY"] || ""}${h.aciklama ? " — " + h.aciklama : ""}`;
-    if (kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme")) {
-      if (onayIste) onayIste("muhasebe", "Sil", `"${hesap.ad}" hesabından ${ozet} kaydını sil`, "muhasebeHareketSil", { tur, hesapId: hesap.id, hareketId: h.id });
-      else showToast("Silme yetkiniz yok");
-      return;
-    }
-    const asil = (hesap.hareketler || []).find((x) => x.id === h.id);
-    if (asil && onCopaAt) onCopaAt(tur === "kasa" ? "kasaHareketi" : "bankaHareketi", hesap.ad, asil,
-      { ozet: `${ozet}${h.tarih ? " · " + h.tarih : ""}`, ustKayit: { tur, id: hesap.id, ad: hesap.ad }, yanEtkiliMi: false, geriAlinabilirMi: false });
-    const anahtar = tur === "kasa" ? "kasalar" : "bankalar";
-    await onMuhasebeKaydet({ ...muhasebe, [anahtar]: (muhasebe[anahtar] || []).map((x) => (x.id === hesap.id ? { ...x, hareketler: (x.hareketler || []).filter((y) => y.id !== h.id) } : x)) });
-    showToast("Hareket silindi");
-  };
+  const kartHareketiSil = (h) => kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast });
   // Hangi bölüm açık (20 Eylül).
   const [bolum, setBolum] = useState("kartlar");
   // Yeni grup formu (20 Eylül).
@@ -276,7 +283,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                                   </span>
                                   {/* Maaş tahakkuku cari hareketidir (personelin kartından yönetilir); burada yalnız kasa/banka hareketi silinir. */}
                                   {h.hesapId && onMuhasebeKaydet ? (
-                                    <span data-kart-hareket-sil={h.fisNo || h.id}><SilOnayButonu onConfirm={() => kartHareketiSil(h)} boyut={11} /></span>
+                                    <span data-kart-hareket-sil={h.fisNo || h.id || "eski"}><SilOnayButonu onConfirm={() => kartHareketiSil(h)} boyut={11} /></span>
                                   ) : <span style={{ width: 22 }} />}
                                 </div>
                               ))}

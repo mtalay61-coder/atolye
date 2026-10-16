@@ -4822,6 +4822,7 @@ function AtolyeUygulamasi() {
               muhasebe={muhasebe}
               kurlar={muhasebe.kurlar}
               onMuhasebeHareketi={muhasebeyePesinIsle}
+              onMuhasebeKaydet={saveMuhasebe} kullaniciYetkisiVar={kullaniciYetkisiVar} onayIste={onayIste}
               cariler={cariler}
               onSave={saveCariler}
               // ÇEK KAYDI TEK YERE DÜŞSÜN: caride girilen çek Muhasebe > Çekler listesine de
