@@ -312,12 +312,14 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
         <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--erp-panel)", borderBottom: "1px solid var(--erp-line)", padding: "6px 8px",
           display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 6, alignItems: "end" }}>
           {FIS_KOLONLARI.map((a) => (
-            <label key={a.anahtar} style={{ display: "grid", gap: 2 }}>
+            // <label> DEĞİL <div>: gizli duran Fişler ekranındaki "Tutar"/"Tarih" etiketleri başka formlarda etiketle alan
+            // arayan kodu (ve testleri) yanıltıyordu (çek formunda "Tutar" bu kutuya düşüyordu).
+            <div key={a.anahtar} style={{ display: "grid", gap: 2 }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: "var(--erp-text-2)" }}>{a.ad}</span>
               <input data-fis-kolon-ara={a.anahtar} value={kolonAra[a.anahtar] || ""} onChange={(e) => setKolonAra((o) => ({ ...o, [a.anahtar]: e.target.value }))}
                 placeholder={a.tip === "sayi" ? ">0" : a.tip === "tarih" ? "gg.aa" : "ara…"}
                 style={{ width: "100%", boxSizing: "border-box", fontSize: 11, padding: "4px 6px", border: "1px solid var(--erp-line)", borderRadius: 4, textAlign: a.tip === "sayi" ? "right" : "left" }} />
-            </label>
+            </div>
           ))}
           <span style={{ fontSize: 11, color: "var(--erp-text-2)", display: "flex", gap: 6, alignItems: "center" }}>
             <b className="mono">{filtreli.length}</b> fiş

@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.688.9";
+const SURUM = "1.688.10";
 const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Fişler: sütun süzgeçleri, kaydırmalı çerçeveli liste";
+const SURUM_NOTU = "Yeni sipariş tam ekran; sipariş listesi kaydırmalı; Son İşlemler cari ve tutar";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.688.10", tarih: "16.10.2026", eklenen: [], degisen: ["Yeni sipariş girişi tam ekran açılır (düzenleme gibi)", "Sipariş listesi çerçeveli kutuda kayar; tarih süzgeci gg.aa biçimini tanır", "Anasayfa › Son İşlemler: siparişlerde cari adı ve tutar; saati olmayan kayıtta uydurma 03:00 yerine yalnız tarih; gelir/gider kaydı saatini taşır"], duzeltilen: ["Fişler süzgeç kutuları <label> olduğu için gizli ekrandaki \"Tutar\" etiketi çek formunun alanı sanılıyordu (v1.688.9)"] },
   { surum: "1.688.9", tarih: "16.10.2026", eklenen: ["Fişler: tür, fiş no, cari, tarih, sipariş, defter ve tutar için ayrı süzgeç kutuları (tarih gg.aa; tutar >, <, aralık)"], degisen: ["Fiş listesi çerçeveli kutuda kayar, süzgeç satırı üstte sabit"], duzeltilen: [] },
   { surum: "1.688.8", tarih: "16.10.2026", eklenen: ["Depo › Alış / Satış: fiş aynı ekranda bölünmüş panelde açılır, carinin açık siparişleri için Siparişten seç listesi açık gelir (Ekle: koli / asorti / beden, birden fazla satır); \"Pencerede aç\" eski yol"], degisen: ["Son alış/satış fişleri: çerçeveli, kaydırmalı tablo — her sütunda süzgeç; tutar ve defter sütunu"], duzeltilen: ["Alış / Satış › son fişler listesi hiç dolmuyordu (cari hareketinde olmayan bir alana bakıyordu)"] },
   { surum: "1.688.7", tarih: "16.10.2026", eklenen: ["Depo › Sevkiyat › Sevk et: sipariş kalanı renk × beden matrisinde, her hücrede stok (yetmeyen kırmızı); başlıkta kalan ve stokta sevk edilebilir toplam", "Sevk fişi: Siparişten seç listesi açık gelir — satırın Ekle'si ile koli / asorti / beden olarak, birden fazla satır; kısayol: stoktakilerle ya da kalanın tümüyle doldur"], degisen: [], duzeltilen: ["Sevk et boş fiş açıyordu (0 kalem); kalanlar okunmaz tek paragraftı"] },
