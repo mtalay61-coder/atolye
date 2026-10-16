@@ -55,6 +55,7 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
     yon: hareketYonu(tip),
     kullanici: (aktifKullanici && aktifKullanici.ad) || null,
     defter: fis.defter || "Genel",
+    resmi: fis.resmi || null,   // v1.685.0: Muhasebe defterinde Resmi PB + oran (078 kalemlere dağıtır)
     odemeSekli: fis.odemeSekli || "Nakit",
     vade: fis.vade || "",
     // PEŞİN TAHSİLAT/ÖDEME — yalnızca formda hesap seçilmişse dolu gelir. Boşsa fiş eskisi

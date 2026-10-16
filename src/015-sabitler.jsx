@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.684.0";
-const SURUM_TARIHI = "2026-10-15";
-const SURUM_NOTU = "Cari karti tahsilat/odeme formu: kasa birimi sabit, Genel/Resmi kur";
+const SURUM = "1.685.0";
+const SURUM_TARIHI = "2026-10-16";
+const SURUM_NOTU = "Alis/satis fisinde cift para birimi: Muhasebe defterinde Resmi PB + kur";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.685.0", tarih: "16.10.2026", eklenen: ["Alış/Satış fişinde çift para birimi: defter Muhasebe iken Resmi para birimi + kur (ya da tutar); her cari hareketine Resmi tutar düşer, kayıt tek"], degisen: [], duzeltilen: [] },
   { surum: "1.684.0", tarih: "16.10.2026", eklenen: [],
     degisen: ["Cari kartı tahsilat/ödeme formu Ödeme & Tahsilat ile aynı: tutar kasanın/bankanın biriminde sabit, 'Cariye' (Muhasebe'de Genel + Resmi) para birimi ve kur, açıklama deftere göre"], duzeltilen: [] },
   { surum: "1.683.1", tarih: "16.10.2026", eklenen: [], degisen: ["Tam ekran cari kartı üst menünün altından başlar"],
