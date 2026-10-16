@@ -33,6 +33,8 @@ async function calistir() {
   await sayfa.waitForTimeout(500);
   await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Gelir / Gider"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(900);
+  await sayfa.evaluate(() => document.querySelectorAll('[data-gg-grup][data-acik="0"]').forEach((b) => b.click()));  // v1.688.3: gruplar kapalı başlar
+  await sayfa.waitForTimeout(300);
 
   const ekran = await sayfa.evaluate(() => ({
     kartSayisi: document.querySelectorAll("[data-gider-kart]").length,

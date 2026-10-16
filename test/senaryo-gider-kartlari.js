@@ -82,6 +82,8 @@ async function calistir() {
   // hareket kartın ekstresinden silinir, sonra kart silinebilir.
   await modulAc(ikinci.sayfa, "Gelir / Gider");
   await ikinci.sayfa.waitForTimeout(700);
+  await ikinci.sayfa.evaluate(() => document.querySelectorAll('[data-gg-grup][data-acik="0"]').forEach((b) => b.click()));  // v1.688.3: gruplar kapalı başlar
+  await ikinci.sayfa.waitForTimeout(300);
   const kartKilitli = await ikinci.sayfa.locator('[data-gider-kart-silinemez="İşyeri kirası"]').count();
   await ikinci.sayfa.locator('[data-kart-ekstre="İşyeri kirası"]').first().click();
   await ikinci.sayfa.waitForTimeout(300);

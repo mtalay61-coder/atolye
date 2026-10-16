@@ -71,6 +71,9 @@ async function calistir() {
   });
   // Gelir / Gider Kartları: bölümle açılan "Kesimhane işçiliği" kartı, rozeti ve ekstresinde maaş tahakkuku.
   await sayfa.evaluate(() => { const b = document.querySelector('[data-gg-sekme="kartlar"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(400);
+  await sayfa.evaluate(() => document.querySelectorAll('[data-gg-grup][data-acik="0"]').forEach((b) => b.click()));  // v1.688.3: gruplar kapalı başlar
+  await sayfa.waitForTimeout(300);
   await sayfa.waitForTimeout(600);
   const kart = await sayfa.evaluate(() => {
     const r = document.querySelector('[data-gider-kart="Kesimhane işçiliği"]');

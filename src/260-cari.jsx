@@ -21,6 +21,10 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
   const [odemeCariId, setOdemeCariId] = useState("");
   const [odemeYerelHedef, setOdemeYerelHedef] = useState(null);
   const [odemeListeSuzgec, setOdemeListeSuzgec] = useState("Tümü");
+  // BAŞLIK SÜZGEÇLERİ (v1.688.3 — kullanıcı: "girilen kayıtlar rapor gibi filtre olsun başlıklara"): raporlardaki başlık
+  // altı kutularla aynı kural (245 `raporKolonAra`): metin içerir, tarih "16.10" ya da "16.10.2026", tutar ">1000",
+  // "<500", "100-200".
+  const [odemeKolonArama, setOdemeKolonArama] = useState({});
   // DEFTER SÜZGECİ (v1.665.2 — kullanıcı: "son tahsilatları genel ve muhasebe olarak defterlere ayır"). Kural ERP'nin
   // geri kalanıyla aynı: "Muhasebe" defterindeki kayıt hem Genel'de hem Resmi'de sayılır (defterKapsar).
   const [odemeDefterSuzgec, setOdemeDefterSuzgec] = useState("Tümü");
@@ -312,9 +316,25 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
     // Numara gün kodunu ve sırayı taşıdığından (THS-1016001…) büyük numara sonra girilen kayıttır; numarasız eski kayıtlar
     // günün sonunda (altta). THS ile ODM aynı gün aynı sırayı paylaşmıyor: karşılaştırma ön ekten sonraki sayıyla.
     const fisSira = (no) => { const m = String(no || "").match(/(\d+)$/); return m ? m[1].padStart(12, "0") : ""; };
+    const ODEME_SON_ALANLAR = [
+      { anahtar: "tarih", ad: "Tarih", tip: "tarih" }, { anahtar: "cari", ad: "Cari", tip: "metin" }, { anahtar: "islem", ad: "İşlem", tip: "metin" },
+      { anahtar: "sekil", ad: "Şekli", tip: "metin" }, { anahtar: "hesap", ad: "Hesap", tip: "metin" }, { anahtar: "defter", ad: "Defter", tip: "metin" },
+      { anahtar: "tutar", ad: "Tutar", tip: "sayi" }, { anahtar: "fisNo", ad: "Fiş No", tip: "metin" }, { anahtar: "aciklama", ad: "Açıklama", tip: "metin" },
+    ];
     sonHareketler.sort((a, b) => String(b.h.tarih || "").slice(0, 10).localeCompare(String(a.h.tarih || "").slice(0, 10))
       || fisSira(b.h.fisNo).localeCompare(fisSira(a.h.fisNo))
       || String(b.h.zaman || "").localeCompare(String(a.h.zaman || "")));
+    // Süzgeç satırları ekranda görünen değerlerle kurulur (hesap adı, Gelir/Gider etiketi) — kullanıcı gördüğünü arar.
+    const sonSatirDegeri = ({ c, h, tip }) => ({
+      tarih: String(h.tarih || "").slice(0, 10), cari: c.unvan, islem: c.kartMi ? (tip === "Tahsilat" ? "Gelir" : "Gider") : tip,
+      sekil: h.odemeSekli || "", hesap: h.hesapAd || (h.muhasebeBagId && bagHesap[h.muhasebeBagId]) || "", defter: h.defter || "Genel",
+      tutar: h.hesapPB && h.hesapTutar != null && h.hesapPB !== (h.paraBirimi || "TRY") ? h.hesapTutar : (h.tutar || 0),
+      fisNo: h.fisNo || "", aciklama: h.aciklama || "",
+    });
+    const suzulenSon = Object.values(odemeKolonArama).some((v) => String(v || "").trim())
+      ? (() => { const gecen = new Set(raporKolonAra(sonHareketler.map((x, i) => ({ ...sonSatirDegeri(x), __i: i })), ODEME_SON_ALANLAR, odemeKolonArama).map((r) => r.__i));
+          return sonHareketler.filter((_, i) => gecen.has(i)); })()
+      : sonHareketler;
     const tipDugmesi = (tip) => {
       const renk = HAREKET_TIPI_RENK[tip];
       const aktif = odemeTip === tip;
@@ -457,15 +477,31 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
           {sonHareketler.length === 0 ? (
             <div style={{ fontSize: 12, color: "var(--erp-text-3)", padding: 10 }}>Henüz kayıt yok.</div>
           ) : (
-            <div data-odeme-son-liste="1" style={{ maxHeight: 420, overflowY: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            // KUTU + KAYDIRICI (v1.688.3 — kullanıcı: "ekran kaydırıcı olsun, kutu içine alınsın"): liste sabit yükseklikte
+            // kendi kutusunda kayar (yatay da — dar ekranda sütunlar sıkışmasın), başlık ve süzgeç satırı üstte sabit.
+            <div data-odeme-son-liste="1" style={{ height: "min(60vh, 520px)", overflow: "auto", border: "1.5px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff", boxShadow: "inset 0 -8px 8px -8px rgba(0,0,0,.08)" }}>
+              <table style={{ width: "100%", minWidth: 900, borderCollapse: "collapse" }}>
                 <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
                   <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Hesap", "Defter", "Tutar", "Fiş No", "Açıklama", ""].map((b) => (
                     <th key={b} style={{ fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" }}>{b}</th>
                   ))}</tr>
+                  <tr>{ODEME_SON_ALANLAR.map((a) => (
+                    <th key={a.anahtar} style={{ padding: "0 4px 5px" }}>
+                      <input data-odeme-kolon-ara={a.anahtar} value={odemeKolonArama[a.anahtar] || ""}
+                        onChange={(e) => setOdemeKolonArama((o) => ({ ...o, [a.anahtar]: e.target.value }))}
+                        placeholder={a.tip === "sayi" ? ">0" : a.tip === "tarih" ? "gg.aa" : "ara…"}
+                        style={{ width: "100%", minWidth: 50, boxSizing: "border-box", fontSize: 11, padding: "3px 5px", border: "1px solid var(--erp-line)", borderRadius: 4, fontWeight: 400, textAlign: a.tip === "sayi" ? "right" : "left" }} />
+                    </th>
+                  ))}<th style={{ padding: "0 4px 5px" }}>
+                    {Object.values(odemeKolonArama).some((v) => String(v || "").trim()) && (
+                      <button type="button" className="btn-ghost" data-odeme-kolon-temizle="1" title="Süzgeçleri temizle" onClick={() => setOdemeKolonArama({})}
+                        style={{ padding: "1px 6px", fontSize: 11 }}>×</button>
+                    )}
+                  </th></tr>
                 </thead>
                 <tbody>
-                  {sonHareketler.slice(0, 200).map(({ c, h, tip, ham }, i) => {
+                  {suzulenSon.length === 0 && <tr><td colSpan={10} style={{ fontSize: 12, color: "var(--erp-text-3)", padding: 10 }}>Süzgece uyan kayıt yok.</td></tr>}
+                  {suzulenSon.slice(0, 300).map(({ c, h, tip, ham }, i) => {
                     const renk = HAREKET_TIPI_RENK[tip];
                     return (
                       <tr key={`${c.id || "kart"}-${h.id || i}`} data-odeme-son-satir={h.fisNo || i} data-odeme-son-kart={c.kartMi ? "1" : undefined}
