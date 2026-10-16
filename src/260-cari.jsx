@@ -279,6 +279,11 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
     const odemeCari = cariler.find((c) => c.id === odemeCariId) || null;
     // SON TAHSİLAT VE ÖDEMELER: bütün carilerin para hareketleri (THS-/ODM- fişleri, 200 `paraHareketiMi`), yeniden eskiye.
     const sonHareketler = [];
+    // İŞLEM YAPILAN HESAP (v1.688.2 — kullanıcı: "işlem yapılan hesap da çıksın"): cari hareketinde `hesapAd` (yoksa
+    // kasa/banka tarafındaki bağlı hareketten, `muhasebeBagId`), kart hareketinde hareketin bulunduğu hesap.
+    const bagHesap = {};
+    [...((muhasebe && muhasebe.kasalar) || []), ...((muhasebe && muhasebe.bankalar) || [])]
+      .forEach((hs) => (hs.hareketler || []).forEach((x) => { if (x.muhasebeBagId) bagHesap[x.muhasebeBagId] = hs.ad; }));
     cariler.forEach((c) => (c.hareketler || []).forEach((h) => {
       if (!paraHareketiMi(h)) return;
       const tip = /^ODM-/.test(String(h.fisNo || "")) || /^ödeme$/i.test(String(h.aciklama || "").trim()) ? "Ödeme" : "Tahsilat";
@@ -300,7 +305,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
         const resmi = odemeDefterSuzgec === "Resmi" && x.resmiPB && x.resmiTutar != null;
         sonHareketler.push({ c: { id: null, unvan: x.giderKartAd || "Gelir/gider kartı", kartMi: true }, tip,
           ham: { ...x, hesapTur: sekil === "Nakit" ? "kasa" : "banka", hesapId: hs.id },
-          h: { ...x, odemeSekli: x.odemeSekli || sekil, paraBirimi: resmi ? x.resmiPB : (hs.paraBirimi || "TRY"), tutar: resmi ? x.resmiTutar : x.tutar,
+          h: { ...x, hesapAd: hs.ad, odemeSekli: x.odemeSekli || sekil, paraBirimi: resmi ? x.resmiPB : (hs.paraBirimi || "TRY"), tutar: resmi ? x.resmiTutar : x.tutar,
             aciklama: (resmi && x.resmiAciklama) || x.aciklama || `${tip === "Tahsilat" ? "Gelir" : "Gider"} (${hs.ad})` } });
       }));
     // SIRA: tarih (yeni üstte), aynı gün içinde FİŞ NO'ya göre (v1.688.0 — kullanıcı: "fiş no olsun, ona göre sıralansın").
@@ -455,7 +460,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
             <div data-odeme-son-liste="1" style={{ maxHeight: 420, overflowY: "auto", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ position: "sticky", top: 0, background: "var(--erp-panel)", zIndex: 1 }}>
-                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Defter", "Tutar", "Fiş No", "Açıklama", ""].map((b) => (
+                  <tr>{["Tarih", "Cari", "İşlem", "Şekli", "Hesap", "Defter", "Tutar", "Fiş No", "Açıklama", ""].map((b) => (
                     <th key={b} style={{ fontSize: 10, textAlign: b === "Tutar" ? "right" : "left", padding: "6px 8px", color: "var(--erp-text-2)" }}>{b}</th>
                   ))}</tr>
                 </thead>
@@ -474,6 +479,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, giderKart
                           </span>
                         </td>
                         <td style={{ fontSize: 11, padding: "5px 8px" }}>{h.odemeSekli || "—"}</td>
+                        <td data-odeme-son-hesap="1" style={{ fontSize: 11, padding: "5px 8px", fontWeight: 600 }}>{h.hesapAd || (h.muhasebeBagId && bagHesap[h.muhasebeBagId]) || "—"}</td>
                         <td style={{ fontSize: 11, padding: "5px 8px", color: "#5B3F75", fontWeight: 600 }}>{h.defter || "Genel"}</td>
                         <td className="mono" style={{ fontSize: 12, padding: "5px 8px", textAlign: "right", fontWeight: 700, whiteSpace: "nowrap" }}>
                           {/* KASA TUTARI (v1.681.0 — kullanıcı: "p. birimi çevrildiğinde tutar kasa p. birimiyle olan tutar olacak").
