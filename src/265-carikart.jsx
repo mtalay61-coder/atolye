@@ -380,7 +380,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
     // bileşen, yalnız sabit konumlu tam ekran katmana çıkar; Esc ya da düğmeyle eski yerine döner.
     <div ref={kartRef} data-cari-kart-id={cari.id} data-cari-tam-ekran={tamEkran ? "1" : undefined} {...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu)}
       style={tamEkran
-        ? { position: "fixed", inset: 0, zIndex: 900, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
+        // KATMAN (v1.683.1 — kullanıcı: "tam ekranda alış/satış fişi açınca ekranda göstermiyor"): fiş/ekstre pencereleri
+        // 100, üst menü 510 katmanında — kart onların ALTINDA (90) ve üst menünün altından başlar; pencere üstte açılır.
+        ? { position: "fixed", top: "var(--ust-menu-h, 0px)", left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
         : { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <SagTikMenusu konum={sagMenu} onKapat={() => setSagMenu(null)} veri="cari" baslik={`CARİ · ${cari.unvan}`} ogeler={[
         { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
