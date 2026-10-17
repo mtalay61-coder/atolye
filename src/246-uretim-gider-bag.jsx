@@ -216,7 +216,19 @@ function prosesGiderKartlariniTamamla(tanimlar) {
     degisti = true;
   }
   if (!alId || !kartlar.some((k) => k.id === alId)) { alId = kartBulAc("Alışlar (mal ve hammadde)"); degisti = true; }
-  return degisti ? { ...tanimlar, giderKartlari: kartlar, prosesGiderKartlari: bag, hammaddeCikisGiderKartId: hamId, stokGirisGelirKartId: sgId, stokCikisGiderKartId: scId, satisGelirKartId: saId, alisGiderKartId: alId } : tanimlar;
+  // SATIŞLAR GRUBU (v1.696, kullanıcı: "satışlar ayrı Satışlar grubunda görünsün"): gelir türünde "Satışlar" grubu (600)
+  // açılır ve satış kartı oraya alınır. BİR KEZ (`satisGrubuKuruldu`): kullanıcı kartı sonra başka gruba taşırsa geri çekilmez.
+  let gruplarYeni = null;
+  if (!tanimlar.satisGrubuKuruldu) {
+    const mevcutGruplar = giderGelirGruplari(tanimlar);
+    const sg = mevcutGruplar.find((g) => g.key === "satislar" || kodEsit(g.ad, "Satışlar"));
+    const grupKey = sg ? sg.key : "satislar";
+    if (!sg) gruplarYeni = [...mevcutGruplar, { key: "satislar", ad: "Satışlar", tur: "gelir", tdhp: "600" }];
+    kartlar = kartlar.map((k) => (k.id === saId ? { ...k, grup: grupKey, tur: "gelir" } : k));
+    degisti = true;
+  }
+  return degisti ? { ...tanimlar, ...(gruplarYeni ? { giderGruplari: gruplarYeni } : {}), satisGrubuKuruldu: true,
+    giderKartlari: kartlar, prosesGiderKartlari: bag, hammaddeCikisGiderKartId: hamId, stokGirisGelirKartId: sgId, stokCikisGiderKartId: scId, satisGelirKartId: saId, alisGiderKartId: alId } : tanimlar;
 }
 
 // Sistemin kendiliğinden açtığı kart mı (proses işçiliği, hammadde çıkışı, bölüm)?

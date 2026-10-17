@@ -85,6 +85,44 @@
    "website": ""
   },
   "fiyatGruplari": [],
+  "giderGruplari": [
+   {
+    "ad": "Üretim gideri",
+    "key": "uretim",
+    "tdhp": "730",
+    "tur": "gider"
+   },
+   {
+    "ad": "Satış ve pazarlama",
+    "key": "satis",
+    "tdhp": "760",
+    "tur": "gider"
+   },
+   {
+    "ad": "Genel yönetim",
+    "key": "yonetim",
+    "tdhp": "770",
+    "tur": "gider"
+   },
+   {
+    "ad": "Finansman",
+    "key": "finansman",
+    "tdhp": "780",
+    "tur": "gider"
+   },
+   {
+    "ad": "Diğer gelir",
+    "key": "gelir",
+    "tdhp": "649",
+    "tur": "gelir"
+   },
+   {
+    "ad": "Satışlar",
+    "key": "satislar",
+    "tdhp": "600",
+    "tur": "gelir"
+   }
+  ],
   "giderKartlari": [
    {
     "ad": "Kesim işçiliği",
@@ -116,7 +154,7 @@
    },
    {
     "ad": "Satış gelirleri",
-    "grup": "gelir",
+    "grup": "satislar",
     "id": "#6",
     "tdhp": "600",
     "tur": "gelir"
@@ -197,6 +235,7 @@
    }
   ],
   "satisGelirKartId": "#6",
+  "satisGrubuKuruldu": true,
   "stokCikisGiderKartId": "#5",
   "stokGirisGelirKartId": "#4"
  }

@@ -55,4 +55,9 @@ bekle("stok çıkışı gider kartında, açılış sayılmaz", stokKartHareketl
 const cs = [{ id: "m", unvan: "Müşteri", hareketler: [{ fisNo: "SF-1", tutar: 100, paraBirimi: "TRY", tarih: bugun }, { fisNo: "SF-1", tutar: 10, paraBirimi: "USD", tarih: bugun }, { fisNo: "AF-1", tutar: 50, tarih: bugun }, { fisNo: "THS-1", tutar: 5, tarih: bugun }] }];
 bekle("satış gelir kartında", satisAlisKartHareketleri(t1, cs, { USD: 40 }, t1.satisGelirKartId).map((h) => [h.fisNo, h.tutar, h.yon]), [["SF-1", 500, "Giriş"]]);
 bekle("alış gider kartında", satisAlisKartHareketleri(t1, cs, {}, t1.alisGiderKartId).map((h) => [h.fisNo, h.tutar, h.yon]), [["AF-1", 50, "Çıkış"]]);
+
+// SATIŞLAR GRUBU (v1.696)
+bekle("satış kartı Satışlar grubunda", [t1.giderKartlari.find((k) => k.id === t1.satisGelirKartId).grup, (t1.giderGruplari || []).some((g) => g.key === "satislar" && g.tur === "gelir")], ["satislar", true]);
+const t3 = prosesGiderKartlariniTamamla({ ...t1, giderKartlari: t1.giderKartlari.map((k) => (k.id === t1.satisGelirKartId ? { ...k, grup: "gelir" } : k)) });
+bekle("elle taşınan satış kartı geri çekilmez", t3.giderKartlari.find((k) => k.id === t1.satisGelirKartId).grup, "gelir");
 process.exit(hata);
