@@ -79,6 +79,8 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
     // BÖLÜM İŞÇİLİĞİ (v1.587.0): bölüme bağlı kartın hareketi personele tahakkuk eden MAAŞ (cari hareketi) —
     // "Kesimhane işçiliği" gideri ödendiği gün değil hak edildiği ay doğar. Kasadan cariye ödeme kartı tekrar yazmaz.
     bolumMaasHareketleri(tanimlar, cariler, kartId).forEach((h) => liste.push({ ...h, yon: "Çıkış", hesapAd: `Maaş tahakkuku · ${h.cariUnvan}` }));
+    // ÜRETİM KARŞILIKLARI (v1.692, 246): prosese bağlı işçilik fişleri ve üretim hammadde çıkışları.
+    kartUretimHareketleri(tanimlar, cariler, stok, (muhasebe && muhasebe.kurlar) || {}, kartId).forEach((h) => liste.push(h));
     return liste.sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
   };
   // HESABIN PARA BİRİMİYLE TL'YE (v1.639.0, denetim): USD kasasından 100 $ çıkış "100 ₺" sayılıyordu; Kâr-Zarar (247)
@@ -108,6 +110,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
       <GenelGiderEkrani tanimlar={tanimlar} onSave={onSave} stok={stok} muhasebe={muhasebe} showToast={showToast} />
     ) : (
     <>
+    <UretimGiderBaglari tanimlar={tanimlar} onSave={onSave} cariler={cariler} stok={stok} kurlar={(muhasebe && muhasebe.kurlar) || {}} />
     {/* GELİR / GİDER KARTLARI (17 Eylül) — para hareketinin cari dışındaki karşı tarafı. */}
     <div style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
       <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" }}>Gelir / Gider Kartları</h3>

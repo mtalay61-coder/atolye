@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.691.0</title>
+<title>Atölye ERP 1.692.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2307,9 +2307,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.691.0";
+const SURUM = "1.692.0";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Stok kodu, Ürün Stok renk işareti ve renk açıklaması, reçetede sonradan eklenen hammadde rengi uyarısı";
+const SURUM_NOTU = "Üretim fişleri gelir/gider kartına bağlanır (proses işçiliği, hammadde çıkışı)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2339,6 +2339,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.692.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Üretim fişlerinin gider karşılığı\": her prosesin işçiliği bir gider kartına (ör. Kesim → Kesim işçiliği), üretim hammadde çıkışı bir gider kartına bağlanır; bağ geçmiş fişler için de geçerli, kart ekstresinde ve toplamında görünür; karşılığı olmayan fiş sayısı uyarısı"], degisen: ["Kâr/Zarar: prosesi karta bağlı işçilik \"Üretim işçiliği\" yerine kartının grubunda gider olarak sayılır (toplam değişmez); hammadde çıkışı SMM içinde olduğundan ikinci kez eklenmez"], duzeltilen: [] },
+    { surum: "1.691.2", tarih: "18.10.2026", eklenen: [], degisen: ["Üretim › işi verirken \"Kime\" personel seçimi İşi Ver düğmesinin hemen solunda (hammadde tablosunun altında)"], duzeltilen: [] },
+    { surum: "1.691.1", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › Renkler: Ürün Stok ve açıklama eklenince dar ekranda renk adı kutusu eziliyor, ad görünmüyordu — satır sarar, ad en az 140px"] },
     { surum: "1.691.0", tarih: "17.10.2026", eklenen: ["Stok kartı: değiştirilebilir Stok Kodu (yeni ürün formu ve kart düzenleme; ürünler arasında tekil; aramada bulunur, kart başlığında görünür) — barkoddaki stok no ayrı ve değişmez", "Tanımlar › Renkler: her renge \"Ürün Stok\" işareti ve açıklama alanı; Ürün Stok'ta renk eklerken yalnız işaretli renkler listelenir (hiç işaretli yoksa hepsi)", "Reçete: hammaddeye sonradan renk eklenmişse kartta uyarı + her model rengi için hammadde rengi seçimi, aynı adlıları tek düğmeyle eşleme"], degisen: ["Reçete: \"geçmişten\" renk önerisi prosesi dikkate alır (aynı hammadde aynı proseste hangi renkle kullanıldıysa o; proses değişince yeniden önerilir)", "Maliyet dökümü: fiyatı 0 olan hammadde satırı kırmızı zeminde, \"fiyat yok\" yazar", "Reçeteye hammadde eklerken renk eşleştirme seçicilerinde arama kutusu (yazdıkça süzülür, tek sonuç kalınca seçilir)", "Hammaddenin malzeme tipi sonradan değiştirilince mevcut renkleri de yeni tipe bağlanır"], duzeltilen: [] },
     { surum: "1.690.0", tarih: "17.10.2026", eklenen: ["Cari tipi seçicisinde \"+ Yeni tip…\": ad ve hangi tip gibi davranacağı (Müşteri / Tedarikçi / Her İkisi / Personel) seçilir; özel tip cari listesinde kendi sekmesinde ve kartta etiket olarak görünür, siparişte/fişte ana tipi gibi çalışır"], degisen: [], duzeltilen: [] },
     { surum: "1.689.0", tarih: "16.10.2026", eklenen: ["Tanımlar › Kullanıcılar: \"Görebileceği bilgiler\" kutuları — ilk madde Finans raporları (Finans Raporu/Gün Sonu, Gelir / Gider, Ödeme & Tahsilat raporu, anasayfa alacak/kasa/çek özetleri); yönetici dışındakiler için varsayılan kapalı", "Onay sistemi aç/kapa ayarı (varsayılan kapalı)"], degisen: ["Form çerçeveleri soluk (üst şerit tonunda, 1px); aramalı seçicilerde (müşteri, ürün) kutu içinde ikinci çerçeve çıkmıyor", "Asorti Uygula düğmesi dolu ana düğme", "Onay sistemi kapalıyken yetkisiz kullanıcı silme/düzenleme düğmelerini görmez (Kasa & Banka, gelir/gider kart hareketleri); yine de denerse \"yetkiniz yok\" der, istek oluşmaz"], duzeltilen: [] },
@@ -24611,11 +24614,13 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                     React.createElement(X, { size: 12 })))))),
             gorunen.length === 0 && (React.createElement("div", { style: { padding: "14px 12px", textAlign: "center", fontSize: 12, color: "var(--erp-text-3)" } }, "Bu filtreyle e\u015Fle\u015Fen kay\u0131t yok.")),
             gorunen.map((item, i) => (React.createElement("div", { key: item.id, className: mono ? "mono" : undefined, style: {
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    // SATIR SARAR (v1.691.1, kullanıcı: "renk adı görünmüyor"): Ürün Stok + açıklama eklenince dar ekranda
+                    // ad kutusu sıfır genişliğe eziliyordu; artık ad en az 140px, sığmayanlar alt satıra iner.
+                    display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", rowGap: 6,
                     padding: "8px 12px", fontSize: 14, fontWeight: 600,
                     borderBottom: i < gorunen.length - 1 ? "1px solid var(--erp-line-soft)" : "none",
                 } },
-                React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 } },
+                React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8, flex: "1 1 160px", minWidth: 140 } },
                     onRenkKoduChange && (React.createElement("input", { type: "color", value: item.renkKodu || "#C9B99A", onChange: (e) => onRenkKoduChange(item.id, e.target.value), title: "Renk tonunu (g\u00F6rsel) de\u011Fi\u015Ftir", style: {
                             width: 20, height: 20, padding: 0, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)",
                             cursor: "pointer", background: "none", flexShrink: 0,
@@ -43739,6 +43744,133 @@ function siparisHazirKalemleri(siparis, tumSiparisler, uretimler, stok) {
         };
     }).filter((h) => h.hazir > 0);
 }
+// ================= ÜRETİM FİŞLERİ → GELİR/GİDER KARTI (v1.692) =================
+//
+// Kullanıcı: "Üretim fişleri gelir giderden bağlanması gerekiyor, rapor alırken karşılık olarak denge
+// sağlanması için. Kesim için yapılan işçiliği kesim işçiliği giderine bağlayacağız, hangi prosesin hangi
+// gidere bağlanacağı seçilecek. Üretim hammadde çıkışı da bir gidere bağlanmalı — boşa giden hiçbir fiş
+// olmaması gerekir."
+//
+// BAĞ TANIMDA, FİŞTE DEĞİL: `tanimlar.prosesGiderKartlari` { [proses adı]: kartId } ve
+// `tanimlar.hammaddeCikisGiderKartId`. Fişlere kart kimliği YAZILMAZ — bağ sonradan kurulsa da değişse de
+// geçmiş fişler hemen doğru karta düşer (bölüm maaşının `bolumId` ile bağlanması gibi, 015 maasGiderKarti).
+//
+// İŞÇİLİK: proses `-<Proses>-İşçilik` fiş ekinden okunur (hareket proses alanı taşımıyor). Bağlı işçilik
+// Kâr/Zarar'da "Üretim işçiliği" satırından çıkıp kartın grubunda gider olarak görünür — çift sayım yok.
+//
+// HAMMADDE ÇIKIŞI: üretimde tüketilen hammadde (stok hareketi, kaynak "Üretim", eksi miktar; iade artı) ×
+// hammadde birim fiyatı (maliyetle aynı `hammaddeBirimFiyati`). Kartın ekstresinde ve toplamında görünür;
+// Kâr/Zarar'a AYRICA eklenmez: satılan malın maliyeti (SMM) bu hammaddeyi zaten içeriyor, eklemek iki kez
+// düşmek olurdu. Kart "karşılık"tır: tüketim nereye gitti sorusunun cevabı.
+function iscilikFisProsesi(fisNo, prosesler) {
+    const f = String(fisNo || "");
+    if (!/-İşçilik$/.test(f))
+        return "";
+    const govde = f.slice(0, -"-İşçilik".length);
+    // En uzun eşleşen proses adı (ör. "Üste ve Temizleme" ile "Temizleme" ikisi de tanımlıysa uzunu).
+    const adaylar = (prosesler || []).map((p) => p.ad || p).filter(Boolean).sort((a, b) => b.length - a.length);
+    const bulunan = adaylar.find((ad) => govde.endsWith(`-${ad}`));
+    if (bulunan)
+        return bulunan;
+    const i = govde.lastIndexOf("-");
+    return i >= 0 ? govde.slice(i + 1) : "";
+}
+function iscilikGiderKarti(tanimlar, h) {
+    const proses = iscilikFisProsesi(h && h.fisNo, tanimlar && tanimlar.prosesler);
+    const id = proses && ((tanimlar && tanimlar.prosesGiderKartlari) || {})[proses];
+    return (id && ((tanimlar && tanimlar.giderKartlari) || []).find((k) => k.id === id)) || null;
+}
+function hammaddeCikisGiderKarti(tanimlar) {
+    const id = tanimlar && tanimlar.hammaddeCikisGiderKartId;
+    return (id && ((tanimlar && tanimlar.giderKartlari) || []).find((k) => k.id === id)) || null;
+}
+// Bağa bakmadan bütün üretim işçiliği cari hareketleri (maaş hariç) — karşılıksız sayımı ve kart ekstresi için.
+function uretimIscilikHareketleri(cariler) {
+    const l = [];
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+        if (h.fisNo && /-İşçilik$/.test(h.fisNo))
+            l.push({ ...h, cariUnvan: c.unvan });
+    }));
+    return l;
+}
+// Üretim hammadde çıkışları — fiş başına bir satır (tutar TL). Mamul girişi (-Giriş) sayılmaz.
+function uretimHammaddeCikislari(stok, kurlar) {
+    const fisler = {};
+    (stok || []).forEach((p) => {
+        if (p.kategori === "Mamul")
+            return;
+        (p.hareketler || []).forEach((h) => {
+            if (h.kaynak !== "Üretim" || !h.fisNo || /-Giriş$/.test(h.fisNo))
+                return;
+            const m = -(parseFloat(h.miktar) || 0);
+            if (!m)
+                return;
+            let tl = 0;
+            try {
+                tl = (hammaddeBirimFiyati(p, h.renk, h.beden, kurlar || {}) || {}).tl || 0;
+            }
+            catch (e) {
+                tl = 0;
+            }
+            const f = fisler[h.fisNo] || (fisler[h.fisNo] = { fisNo: h.fisNo, tarih: String(h.tarih || "").slice(0, 10), tutar: 0, kalem: 0, siparisNo: h.siparisNo });
+            f.tutar += m * tl;
+            f.kalem += 1;
+        });
+    });
+    return Object.values(fisler);
+}
+// Kartın üretim karşılıkları — 396 kart ekstresine eklenir (yon Çıkış = gider).
+function kartUretimHareketleri(tanimlar, cariler, stok, kurlar, kartId) {
+    const liste = [];
+    uretimIscilikHareketleri(cariler).forEach((h) => {
+        const k = iscilikGiderKarti(tanimlar, h);
+        if (k && k.id === kartId)
+            liste.push({ ...h, yon: "Çıkış", paraBirimi: h.paraBirimi || "TRY", hesapAd: `İşçilik tahakkuku · ${h.cariUnvan}`, uretimKarsiligi: true });
+    });
+    const hk = hammaddeCikisGiderKarti(tanimlar);
+    if (hk && hk.id === kartId) {
+        uretimHammaddeCikislari(stok, kurlar).forEach((f) => liste.push({ id: `uhc-${f.fisNo}`, fisNo: f.fisNo, tarih: f.tarih, tutar: Math.round(f.tutar * 100) / 100,
+            yon: "Çıkış", paraBirimi: "TRY", hesapAd: `Hammadde çıkışı · ${f.kalem} kalem`, aciklama: `Üretim ${f.siparisNo || ""} hammadde tüketimi`, uretimKarsiligi: true }));
+    }
+    return liste;
+}
+// Karşılığı olmayan üretim fişleri (bağ kurulmamış).
+function karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar) {
+    const iscilik = uretimIscilikHareketleri(cariler).filter((h) => !iscilikGiderKarti(tanimlar, h));
+    const prosesler = Array.from(new Set(iscilik.map((h) => iscilikFisProsesi(h.fisNo, tanimlar && tanimlar.prosesler)).filter(Boolean)));
+    const hammadde = hammaddeCikisGiderKarti(tanimlar) ? [] : uretimHammaddeCikislari(stok, kurlar);
+    return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length };
+}
+// Gelir/Gider ekranındaki bağlantı paneli.
+function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
+    const kartlar = (tanimlar && tanimlar.giderKartlari) || [];
+    const giderKartlari = kartlar.filter((k) => (k.tur || "gider") !== "gelir");
+    const bag = (tanimlar && tanimlar.prosesGiderKartlari) || {};
+    // Hem tanımlı prosesler hem işçilik fişlerinde geçen (tanımdan silinmiş olabilir) prosesler.
+    const fisProsesleri = uretimIscilikHareketleri(cariler).map((h) => iscilikFisProsesi(h.fisNo, tanimlar && tanimlar.prosesler)).filter(Boolean);
+    const prosesler = Array.from(new Set([...((tanimlar && tanimlar.prosesler) || []).map((p) => p.ad).filter(Boolean), ...fisProsesleri]));
+    const eksik = karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar);
+    const secici = (deger, onDegis, veri) => (React.createElement("select", { value: deger || "", "data-uretim-gider-bag": veri, onChange: (e) => onDegis(e.target.value), style: { ...inputStyle, width: 220, fontSize: 12, borderColor: deger ? "var(--erp-line)" : "var(--erp-warn)" } },
+        React.createElement("option", { value: "" }, "\u2014 ba\u011Fl\u0131 de\u011Fil \u2014"),
+        giderKartlari.map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad))));
+    return (React.createElement("div", { "data-uretim-gider-baglari": true, style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
+        React.createElement("h3", { style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" } }, "\u00DCretim fi\u015Flerinin gider kar\u015F\u0131l\u0131\u011F\u0131"),
+        React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px", lineHeight: 1.5 } }, "Her prosesin i\u015F\u00E7ilik fi\u015Fi ve \u00FCretimde \u00E7\u0131kan hammadde bir gider kart\u0131na ba\u011Flan\u0131r; kart ekstresinde ve toplam\u0131nda g\u00F6r\u00FCn\u00FCr. Ba\u011F ge\u00E7mi\u015F fi\u015Fler i\u00E7in de ge\u00E7erlidir. Ba\u011Fl\u0131 i\u015F\u00E7ilik K\u00E2r/Zarar'da kart\u0131n grubunda gider olarak say\u0131l\u0131r; hammadde \u00E7\u0131k\u0131\u015F\u0131 sat\u0131lan mal\u0131n maliyeti i\u00E7inde oldu\u011Fundan K\u00E2r/Zarar'a ikinci kez eklenmez."),
+        (eksik.iscilikSayisi > 0 || eksik.hammaddeSayisi > 0) && (React.createElement("div", { "data-karsiliksiz-uretim": true, style: { padding: "6px 10px", marginBottom: 10, borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)", background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 } },
+            "\u26A0 Kar\u015F\u0131l\u0131\u011F\u0131 olmayan fi\u015F: ",
+            eksik.iscilikSayisi > 0 ? `${eksik.iscilikSayisi} işçilik (${eksik.prosesler.join(", ")})` : "",
+            eksik.iscilikSayisi > 0 && eksik.hammaddeSayisi > 0 ? " · " : "",
+            eksik.hammaddeSayisi > 0 ? `${eksik.hammaddeSayisi} hammadde çıkışı` : "")),
+        giderKartlari.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "\u00D6nce a\u015Fa\u011F\u0131dan gider kart\u0131 ekleyin (\u00F6r. \"Kesim i\u015F\u00E7ili\u011Fi\", \"\u00DCretim hammadde gideri\").")) : (React.createElement("div", { style: { display: "grid", gap: 6 } },
+            prosesler.map((p) => (React.createElement("div", { key: p, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
+                React.createElement("span", { style: { width: 180, fontSize: 13, fontWeight: 600 } },
+                    p,
+                    " i\u015F\u00E7ili\u011Fi \u2192"),
+                secici(bag[p], (v) => onSave({ ...tanimlar, prosesGiderKartlari: { ...bag, [p]: v || undefined } }), p)))),
+            React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 4, paddingTop: 6, borderTop: "1px solid var(--erp-line-soft)" } },
+                React.createElement("span", { style: { width: 180, fontSize: 13, fontWeight: 600 } }, "\u00DCretim hammadde \u00E7\u0131k\u0131\u015F\u0131 \u2192"),
+                secici(tanimlar && tanimlar.hammaddeCikisGiderKartId, (v) => onSave({ ...tanimlar, hammaddeCikisGiderKartId: v || null }), "hammadde-cikisi"))))));
+}
 // ================= KÂR / ZARAR =================
 //
 // Kullanıcı (17 Eylül): *"Kârlılığımızı kontrol edecek, giderleri listeleyecek... kartlar olması
@@ -43946,6 +44078,9 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
             const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
             if (maasMi && maasGiderKarti(tanimlar, h))
                 return;
+            // Prosesi gider kartına bağlı işçilik (v1.692, 246) aşağıda kartında sayılır.
+            if (!maasMi && iscilikGiderKarti(tanimlar, h))
+                return;
             if (!maasMi && (!h.fisNo || !/-İşçilik$/.test(h.fisNo)))
                 return;
             // YÖNE BAKILMIYOR (v1.409.0): işçilik v1.408'e kadar yanlışlıkla "Borç", sonra doğru
@@ -43966,6 +44101,25 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
             if (!maasMi)
                 return;
             const kart = maasGiderKarti(tanimlar, h);
+            if (!kart)
+                return;
+            if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter))
+                return;
+            const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
+            giderToplam += tutar;
+            const anahtar = kart.grup || "uretim";
+            if (!gruplar[anahtar])
+                gruplar[anahtar] = { toplam: 0, kartlar: {} };
+            gruplar[anahtar].toplam += tutar;
+            gruplar[anahtar].kartlar[kart.ad] = (gruplar[anahtar].kartlar[kart.ad] || 0) + tutar;
+        });
+    });
+    // BAĞLI İŞÇİLİK → GİDER KARTI (v1.692): prosesin kartına, kartın grubunda.
+    (cariler || []).forEach((c) => {
+        (c.hareketler || []).forEach((h) => {
+            if (!h.fisNo || !/-İşçilik$/.test(h.fisNo))
+                return;
+            const kart = iscilikGiderKarti(tanimlar, h);
             if (!kart)
                 return;
             if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter))
@@ -55083,7 +55237,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                             "kalan ",
                                             bd.kalan))))),
                                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--erp-line-soft)" } },
-                                        personelListesi.length > 0 ? (React.createElement(React.Fragment, null,
+                                        personelListesi.length > 0 ? (React.createElement("span", { style: { order: 2, marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10 } },
                                             React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, "Kime:"),
                                             React.createElement("select", { value: secim.personelId || "", onChange: (e) => setSeciliPersonel({ ...seciliPersonel, [p.proses]: { ...secim, personelId: e.target.value } }), style: {
                                                     ...inputStyle, width: 210, padding: "8px 10px", fontSize: 14, fontWeight: 700,
@@ -55091,8 +55245,8 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                                     color: secim.personelId ? "var(--erp-text)" : "var(--erp-warn)",
                                                 } },
                                                 React.createElement("option", { value: "" }, "\u26A0 Personel se\u00E7in"),
-                                                secilebilirPersonel.map((per) => React.createElement("option", { key: per.id, value: per.id }, per.unvan))))) : (React.createElement("button", { type: "button", className: "btn-ghost", onClick: onGoToCari, style: { fontSize: 11 } }, "Personel ekle")),
-                                        verilecekHammaddeler.length > 0 && (React.createElement("div", { style: { flexBasis: "100%", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 } },
+                                                secilebilirPersonel.map((per) => React.createElement("option", { key: per.id, value: per.id }, per.unvan))))) : (React.createElement("button", { type: "button", className: "btn-ghost", onClick: onGoToCari, style: { fontSize: 11, order: 2, marginLeft: "auto" } }, "Personel ekle")),
+                                        verilecekHammaddeler.length > 0 && (React.createElement("div", { style: { order: 1, flexBasis: "100%", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 } },
                                             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, marginBottom: 6, flexWrap: "wrap" } },
                                                 React.createElement(Layers, { size: 13, color: "var(--erp-brown)" }),
                                                 React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-brown)" } }, "Verilen hammadde"),
@@ -55141,7 +55295,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                                             React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)", minWidth: 34 } }, r.birim)));
                                                     })))));
                                             })())),
-                                        React.createElement("button", { className: "btn-primary", style: { marginLeft: "auto", padding: "8px 20px", fontSize: 14, fontWeight: 700 }, onClick: () => {
+                                        React.createElement("button", { className: "btn-primary", style: { order: 3, padding: "8px 20px", fontSize: 14, fontWeight: 700 }, onClick: () => {
                                                 // Kullanıcı hiç dokunmamış (state'te değeri olmayan) bedenler için, ekranda
                                                 // zaten varsayılan olarak GÖSTERİLEN "kalan" miktarı gönderilir — böylece
                                                 // "tümünü dağıt" için tek tek her kutuyu doldurmaya gerek kalmaz.
@@ -64080,6 +64234,8 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
         // BÖLÜM İŞÇİLİĞİ (v1.587.0): bölüme bağlı kartın hareketi personele tahakkuk eden MAAŞ (cari hareketi) —
         // "Kesimhane işçiliği" gideri ödendiği gün değil hak edildiği ay doğar. Kasadan cariye ödeme kartı tekrar yazmaz.
         bolumMaasHareketleri(tanimlar, cariler, kartId).forEach((h) => liste.push({ ...h, yon: "Çıkış", hesapAd: `Maaş tahakkuku · ${h.cariUnvan}` }));
+        // ÜRETİM KARŞILIKLARI (v1.692, 246): prosese bağlı işçilik fişleri ve üretim hammadde çıkışları.
+        kartUretimHareketleri(tanimlar, cariler, stok, (muhasebe && muhasebe.kurlar) || {}, kartId).forEach((h) => liste.push(h));
         return liste.sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
     };
     // HESABIN PARA BİRİMİYLE TL'YE (v1.639.0, denetim): USD kasasından 100 $ çıkış "100 ₺" sayılıyordu; Kâr-Zarar (247)
@@ -64091,6 +64247,7 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                 border: `1.5px solid ${bolum === x.k ? "var(--erp-primary)" : "var(--erp-border)"}`,
                 background: bolum === x.k ? "var(--erp-primary)" : "#fff", color: bolum === x.k ? "#fff" : "var(--erp-text-2)" } }, x.ad)))),
         bolum === "karzarar" ? (React.createElement(KarZararPaneli, { stok: stok, cariler: cariler, muhasebe: muhasebe, giderKartlari: tanimlar.giderKartlari || [], tanimlar: tanimlar, uretim: uretim })) : bolum === "genel" ? (React.createElement(GenelGiderEkrani, { tanimlar: tanimlar, onSave: onSave, stok: stok, muhasebe: muhasebe, showToast: showToast })) : (React.createElement(React.Fragment, null,
+            React.createElement(UretimGiderBaglari, { tanimlar: tanimlar, onSave: onSave, cariler: cariler, stok: stok, kurlar: (muhasebe && muhasebe.kurlar) || {} }),
             React.createElement("div", { style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
                 React.createElement("h3", { style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" } }, "Gelir / Gider Kartlar\u0131"),
                 React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px", lineHeight: 1.5 } },
@@ -64450,7 +64607,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.691.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.692.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
