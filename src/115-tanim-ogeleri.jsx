@@ -506,12 +506,14 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
               key={item.id}
               className={mono ? "mono" : undefined}
               style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
+                // SATIR SARAR (v1.691.1, kullanıcı: "renk adı görünmüyor"): Ürün Stok + açıklama eklenince dar ekranda
+                // ad kutusu sıfır genişliğe eziliyordu; artık ad en az 140px, sığmayanlar alt satıra iner.
+                display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", rowGap: 6,
                 padding: "8px 12px", fontSize: 14, fontWeight: 600,
                 borderBottom: i < gorunen.length - 1 ? "1px solid var(--erp-line-soft)" : "none",
               }}
             >
-              <span style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 160px", minWidth: 140 }}>
                 {onRenkKoduChange && (
                   <input
                     type="color"
