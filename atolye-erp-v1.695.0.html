@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.692.0</title>
+<title>Atölye ERP 1.695.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2307,9 +2307,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.692.0";
+const SURUM = "1.695.0";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Üretim fişleri gelir/gider kartına bağlanır (proses işçiliği, hammadde çıkışı)";
+const SURUM_NOTU = "Satış ve alış fişleri gelir/gider kartına bağlanır";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2339,6 +2339,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.695.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Fişlerin gelir / gider karşılığı\" paneli toplandı: başlıktan açılır/kapanır (kapalı başlar, özet: kaç bağlı, kaç karşılıksız), arama kutusu yazdıkça satırları süzer, iki sütunlu sıkı liste", "Satış fişleri \"Satış gelirleri\" gelir kartına, alış fişleri \"Alışlar (mal ve hammadde)\" gider kartına bağlanır (otomatik açılır, Gelir / Gider panelinden değiştirilebilir); kart ekstresinde fiş başına bir satır; karşılıksız fiş uyarısı satış/alışı da sayar"], degisen: ["Kâr/Zarar değişmez: satış zaten satış geliri, alış satılınca SMM olarak sayılıyor — çift sayım olmasın diye karta yazılan satış/alış Kâr/Zarar'a ayrıca eklenmez"], duzeltilen: [] },
+    { surum: "1.694.0", tarih: "18.10.2026", eklenen: ["Bağımsız Stok Girişi/Çıkışı fişleri (MNL-) gelir/gidere bağlanır: bütün ürünlerin girişleri tek gelir kartına (\"Stok girişi (sayım fazlası)\"), çıkışları tek gider kartına (\"Stok çıkışı (fire / sayım eksiği)\"); kartlar otomatik açılır, Gelir / Gider panelinden değiştirilebilir; tutar birim fiyatla; kart ekstresinde fiş başına bir satır", "Kâr/Zarar: bağımsız stok girişi Diğer gelir, çıkışı gider kartının grubunda", "Ara proseslere de işçilik gider kartı otomatik açılır ve bağlanır; Tanımlar › Ara Prosesler satırında kart seçici"], degisen: [], duzeltilen: [] },
+    { surum: "1.693.0", tarih: "18.10.2026", eklenen: ["Her prosese \"<Proses> işçiliği\" gider kartı otomatik açılıp bağlanır (açılışta mevcut prosesler, yeni proses eklenince o); hammadde çıkışına \"Üretim hammadde gideri\"; aynı adlı kart varsa o kullanılır, elle kurulan bağa dokunulmaz", "Tanımlar › Prosesler: her proses satırında gider kartı seçici"], degisen: [], duzeltilen: [] },
     { surum: "1.692.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Üretim fişlerinin gider karşılığı\": her prosesin işçiliği bir gider kartına (ör. Kesim → Kesim işçiliği), üretim hammadde çıkışı bir gider kartına bağlanır; bağ geçmiş fişler için de geçerli, kart ekstresinde ve toplamında görünür; karşılığı olmayan fiş sayısı uyarısı"], degisen: ["Kâr/Zarar: prosesi karta bağlı işçilik \"Üretim işçiliği\" yerine kartının grubunda gider olarak sayılır (toplam değişmez); hammadde çıkışı SMM içinde olduğundan ikinci kez eklenmez"], duzeltilen: [] },
     { surum: "1.691.2", tarih: "18.10.2026", eklenen: [], degisen: ["Üretim › işi verirken \"Kime\" personel seçimi İşi Ver düğmesinin hemen solunda (hammadde tablosunun altında)"], duzeltilen: [] },
     { surum: "1.691.1", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › Renkler: Ürün Stok ve açıklama eklenince dar ekranda renk adı kutusu eziliyor, ad görünmüyordu — satır sarar, ad en az 140px"] },
@@ -21574,12 +21577,13 @@ function AtolyeUygulamasi() {
     useEffect(() => {
         if (loading || baglantiYok || bolumKartImzaRef.current)
             return;
-        const next = bolumKartlariniTamamla(tanimlar);
+        // PROSES GİDER KARTLARI da (v1.693, 246): bağı olmayan prosese "<Proses> işçiliği", hammadde çıkışına kart.
+        const next = prosesGiderKartlariniTamamla(bolumKartlariniTamamla(tanimlar));
         if (next === tanimlar)
             return;
         bolumKartImzaRef.current = true;
         saveTanimlar(next);
-        showToast("Bölüm işçilik gider kartı açıldı (Finans › Gelir / Gider)");
+        showToast("İşçilik gider kartları açılıp proseslere bağlandı (Finans › Gelir / Gider)");
     }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast]);
     // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları
     // çakışıyor, burayı düzeltmiştik daha önce!" — iki cihazın aynı anda verdiği barkod kodları tanım
@@ -26020,7 +26024,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         let aday = 1000;
         while (kullanilanBaslangiclar.has(aday))
             aday += 1000;
-        onSave({ ...tanimlar, prosesler: [...mevcut, { id: uid("proses"), ad, sira: maxSira + 1, baslangicNo: aday }] });
+        // Yeni prosese "<Proses> işçiliği" gider kartı da açılıp bağlanır (v1.693, 246).
+        onSave(prosesGiderKartlariniTamamla({ ...tanimlar, prosesler: [...mevcut, { id: uid("proses"), ad, sira: maxSira + 1, baslangicNo: aday }] }));
         setYeniProses("");
     }
     function prosesBaslangicNoGuncelle(id, deger) {
@@ -26105,7 +26110,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         if (mevcut.some((p) => p.ad.toLowerCase() === temizAd.toLowerCase())) {
             return showToast("Bu ara proses zaten tanımlı");
         }
-        onSave({ ...tanimlar, araProsesler: [...mevcut, { id: uid("araproses"), ad: temizAd, cariId, ucret: parseFloat(ucret) || 0 }] });
+        onSave(prosesGiderKartlariniTamamla({ ...tanimlar, araProsesler: [...mevcut, { id: uid("araproses"), ad: temizAd, cariId, ucret: parseFloat(ucret) || 0 }] }));
     }
     function araProsesUcretGuncelle(id, ucret) {
         onSave({
@@ -27018,6 +27023,9 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                         React.createElement("span", { style: { display: "flex", alignItems: "center", color: prosesRengi(p.ad, i), flexShrink: 0 } },
                             React.createElement(ProsesIkonu, { proses: p.ad, tanimlarProsesler: tanimlar.prosesler, size: 18 })),
                         React.createElement("span", { style: { fontSize: 14, fontWeight: 600, flex: 1, color: prosesRengi(p.ad, i) } }, p.ad),
+                        React.createElement("select", { "data-proses-gider-karti": p.ad, value: (tanimlar.prosesGiderKartlari || {})[p.ad] || "", title: "Bu prosesin i\u015F\u00E7ilik fi\u015Flerinin yaz\u0131ld\u0131\u011F\u0131 gider kart\u0131", onChange: (e) => onSave({ ...tanimlar, prosesGiderKartlari: { ...(tanimlar.prosesGiderKartlari || {}), [p.ad]: e.target.value || undefined } }), style: { fontSize: 11, padding: "2px 4px", maxWidth: 160, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" } },
+                            React.createElement("option", { value: "" }, "Gider kart\u0131 yok"),
+                            (tanimlar.giderKartlari || []).filter((k) => (k.tur || "gider") !== "gelir").map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad))),
                         React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4 }, title: "Bu proses i\u00E7in otomatik barkod kodlar\u0131 bu numaradan ba\u015Flayarak s\u0131ralan\u0131r" },
                             React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, "Barkod Ba\u015Flang\u0131\u00E7:"),
                             React.createElement("input", { type: "number", defaultValue: p.baslangicNo ?? 1000, onBlur: (e) => prosesBaslangicNoGuncelle(p.id, e.target.value), className: "mono", style: { width: 60, padding: "2px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } })),
@@ -27060,6 +27068,9 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                             React.createElement("label", { style: { display: "flex", alignItems: "center", gap: 4 } },
                                 React.createElement("input", { type: "number", step: "0.01", min: "0", defaultValue: p.ucret || "", onBlur: (e) => araProsesUcretGuncelle(p.id, e.target.value), placeholder: "0", className: "mono", style: { width: 64, padding: "3px 5px", fontSize: 11, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
                                 React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)" } }, "\u20BA/adet")),
+                            React.createElement("select", { "data-proses-gider-karti": p.ad, value: (tanimlar.prosesGiderKartlari || {})[p.ad] || "", title: "Bu ara prosesin i\u015F\u00E7ilik fi\u015Flerinin yaz\u0131ld\u0131\u011F\u0131 gider kart\u0131", onChange: (e) => onSave({ ...tanimlar, prosesGiderKartlari: { ...(tanimlar.prosesGiderKartlari || {}), [p.ad]: e.target.value || undefined } }), style: { fontSize: 11, padding: "2px 4px", maxWidth: 160, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" } },
+                                React.createElement("option", { value: "" }, "Gider kart\u0131 yok"),
+                                (tanimlar.giderKartlari || []).filter((k) => (k.tur || "gider") !== "gelir").map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad))),
                             React.createElement("button", { onClick: () => araProsesSil(p.id), style: { border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex" } },
                                 React.createElement(X, { size: 14 }))));
                     }))))))),
@@ -43762,6 +43773,11 @@ function siparisHazirKalemleri(siparis, tumSiparisler, uretimler, stok) {
 // hammadde birim fiyatı (maliyetle aynı `hammaddeBirimFiyati`). Kartın ekstresinde ve toplamında görünür;
 // Kâr/Zarar'a AYRICA eklenmez: satılan malın maliyeti (SMM) bu hammaddeyi zaten içeriyor, eklemek iki kez
 // düşmek olurdu. Kart "karşılık"tır: tüketim nereye gitti sorusunun cevabı.
+// ANA + ARA PROSESLER (v1.694, kullanıcı: "ara proseslere de aynı şekilde olması gerekli"): ara proses işçiliği de
+// `<sipariş>-<AraProses>-İşçilik` fişiyle yazılır; aynı bağ tablosu (prosesGiderKartlari) ikisini de tutar.
+function tumProsesTanimlari(tanimlar) {
+    return [...((tanimlar && tanimlar.prosesler) || []), ...((tanimlar && tanimlar.araProsesler) || [])];
+}
 function iscilikFisProsesi(fisNo, prosesler) {
     const f = String(fisNo || "");
     if (!/-İşçilik$/.test(f))
@@ -43776,7 +43792,7 @@ function iscilikFisProsesi(fisNo, prosesler) {
     return i >= 0 ? govde.slice(i + 1) : "";
 }
 function iscilikGiderKarti(tanimlar, h) {
-    const proses = iscilikFisProsesi(h && h.fisNo, tanimlar && tanimlar.prosesler);
+    const proses = iscilikFisProsesi(h && h.fisNo, tumProsesTanimlari(tanimlar));
     const id = proses && ((tanimlar && tanimlar.prosesGiderKartlari) || {})[proses];
     return (id && ((tanimlar && tanimlar.giderKartlari) || []).find((k) => k.id === id)) || null;
 }
@@ -43827,6 +43843,8 @@ function kartUretimHareketleri(tanimlar, cariler, stok, kurlar, kartId) {
         if (k && k.id === kartId)
             liste.push({ ...h, yon: "Çıkış", paraBirimi: h.paraBirimi || "TRY", hesapAd: `İşçilik tahakkuku · ${h.cariUnvan}`, uretimKarsiligi: true });
     });
+    stokKartHareketleri(tanimlar, stok, kurlar, kartId).forEach((h) => liste.push(h));
+    satisAlisKartHareketleri(tanimlar, cariler, kurlar, kartId).forEach((h) => liste.push(h));
     const hk = hammaddeCikisGiderKarti(tanimlar);
     if (hk && hk.id === kartId) {
         uretimHammaddeCikislari(stok, kurlar).forEach((f) => liste.push({ id: `uhc-${f.fisNo}`, fisNo: f.fisNo, tarih: f.tarih, tutar: Math.round(f.tutar * 100) / 100,
@@ -43837,39 +43855,250 @@ function kartUretimHareketleri(tanimlar, cariler, stok, kurlar, kartId) {
 // Karşılığı olmayan üretim fişleri (bağ kurulmamış).
 function karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar) {
     const iscilik = uretimIscilikHareketleri(cariler).filter((h) => !iscilikGiderKarti(tanimlar, h));
-    const prosesler = Array.from(new Set(iscilik.map((h) => iscilikFisProsesi(h.fisNo, tanimlar && tanimlar.prosesler)).filter(Boolean)));
+    const prosesler = Array.from(new Set(iscilik.map((h) => iscilikFisProsesi(h.fisNo, tumProsesTanimlari(tanimlar))).filter(Boolean)));
     const hammadde = hammaddeCikisGiderKarti(tanimlar) ? [] : uretimHammaddeCikislari(stok, kurlar);
-    return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length };
+    const kv = (id) => id && ((tanimlar && tanimlar.giderKartlari) || []).some((k) => k.id === id);
+    const manuel = stokManuelFisleri(stok, kurlar);
+    const stokSayisi = manuel.filter((f) => (f.giris > 0 && !kv(tanimlar && tanimlar.stokGirisGelirKartId)) || (f.cikis > 0 && !kv(tanimlar && tanimlar.stokCikisGiderKartId))).length;
+    const satisAlisSayisi = satisAlisFisleri(cariler, kurlar).filter((f) => !kv(f.tip === "Satış" ? (tanimlar && tanimlar.satisGelirKartId) : (tanimlar && tanimlar.alisGiderKartId))).length;
+    return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length, stokSayisi, satisAlisSayisi };
 }
 // Gelir/Gider ekranındaki bağlantı paneli.
+// TOPLU VE SÜZÜLEN (v1.695, kullanıcı: "bu ekranı toparlamak lazım, filtreli, yazınca daralan liste şeklinde"): başlık
+// tıklanınca açılır/kapanır (kapalı başlar, cihazda hatırlanır); kapalıyken özet (kaç bağ, kaç karşılıksız). Açıkken arama
+// kutusu satırları hem sol etikete hem bağlı karta göre süzer; satırlar iki sütunlu sıkı ızgarada.
 function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
     const kartlar = (tanimlar && tanimlar.giderKartlari) || [];
     const giderKartlari = kartlar.filter((k) => (k.tur || "gider") !== "gelir");
+    const gelirKartlari = kartlar.filter((k) => (k.tur || "gider") === "gelir");
     const bag = (tanimlar && tanimlar.prosesGiderKartlari) || {};
+    const [acik, setAcik] = useState(() => { try {
+        return localStorage.getItem("ugb-acik") === "1";
+    }
+    catch (e) {
+        return false;
+    } });
+    const [ara, setAra] = useState("");
+    const ac = (v) => { setAcik(v); try {
+        localStorage.setItem("ugb-acik", v ? "1" : "0");
+    }
+    catch (e) { /* yoksay */ } };
     // Hem tanımlı prosesler hem işçilik fişlerinde geçen (tanımdan silinmiş olabilir) prosesler.
-    const fisProsesleri = uretimIscilikHareketleri(cariler).map((h) => iscilikFisProsesi(h.fisNo, tanimlar && tanimlar.prosesler)).filter(Boolean);
-    const prosesler = Array.from(new Set([...((tanimlar && tanimlar.prosesler) || []).map((p) => p.ad).filter(Boolean), ...fisProsesleri]));
+    const fisProsesleri = uretimIscilikHareketleri(cariler).map((h) => iscilikFisProsesi(h.fisNo, tumProsesTanimlari(tanimlar))).filter(Boolean);
+    const prosesler = Array.from(new Set([...tumProsesTanimlari(tanimlar).map((p) => p.ad).filter(Boolean), ...fisProsesleri]));
     const eksik = karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar);
-    const secici = (deger, onDegis, veri) => (React.createElement("select", { value: deger || "", "data-uretim-gider-bag": veri, onChange: (e) => onDegis(e.target.value), style: { ...inputStyle, width: 220, fontSize: 12, borderColor: deger ? "var(--erp-line)" : "var(--erp-warn)" } },
-        React.createElement("option", { value: "" }, "\u2014 ba\u011Fl\u0131 de\u011Fil \u2014"),
-        giderKartlari.map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad))));
+    const set = (alan) => (v) => onSave({ ...tanimlar, [alan]: v || null });
+    const satirlar = [
+        ...prosesler.map((p) => ({ grup: "İşçilik", etiket: `${p} işçiliği`, deger: bag[p], veri: p,
+            onDegis: (v) => onSave({ ...tanimlar, prosesGiderKartlari: { ...bag, [p]: v || undefined } }) })),
+        { grup: "Stok", etiket: "Üretim hammadde çıkışı", deger: tanimlar && tanimlar.hammaddeCikisGiderKartId, veri: "hammadde-cikisi", onDegis: set("hammaddeCikisGiderKartId") },
+        { grup: "Stok", etiket: "Stok girişi (bağımsız)", deger: tanimlar && tanimlar.stokGirisGelirKartId, veri: "stok-girisi", gelirMi: true, onDegis: set("stokGirisGelirKartId") },
+        { grup: "Stok", etiket: "Stok çıkışı (bağımsız)", deger: tanimlar && tanimlar.stokCikisGiderKartId, veri: "stok-cikisi", onDegis: set("stokCikisGiderKartId") },
+        { grup: "Fiş", etiket: "Satış fişleri", deger: tanimlar && tanimlar.satisGelirKartId, veri: "satis-fisleri", gelirMi: true, onDegis: set("satisGelirKartId") },
+        { grup: "Fiş", etiket: "Alış fişleri", deger: tanimlar && tanimlar.alisGiderKartId, veri: "alis-fisleri", onDegis: set("alisGiderKartId") },
+    ];
+    const kartAdi = (id) => ((kartlar.find((k) => k.id === id) || {}).ad) || "";
+    const nrm = (x) => String(x || "").toLocaleLowerCase("tr-TR");
+    const q = nrm(ara.trim());
+    const gorunen = satirlar.filter((r) => !q || nrm(r.etiket).includes(q) || nrm(kartAdi(r.deger)).includes(q) || nrm(r.grup).includes(q));
+    const bagli = satirlar.filter((r) => r.deger && kartlar.some((k) => k.id === r.deger)).length;
+    const karsiliksiz = eksik.iscilikSayisi + eksik.hammaddeSayisi + eksik.stokSayisi + eksik.satisAlisSayisi;
     return (React.createElement("div", { "data-uretim-gider-baglari": true, style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
-        React.createElement("h3", { style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: "0 0 4px" } }, "\u00DCretim fi\u015Flerinin gider kar\u015F\u0131l\u0131\u011F\u0131"),
-        React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px", lineHeight: 1.5 } }, "Her prosesin i\u015F\u00E7ilik fi\u015Fi ve \u00FCretimde \u00E7\u0131kan hammadde bir gider kart\u0131na ba\u011Flan\u0131r; kart ekstresinde ve toplam\u0131nda g\u00F6r\u00FCn\u00FCr. Ba\u011F ge\u00E7mi\u015F fi\u015Fler i\u00E7in de ge\u00E7erlidir. Ba\u011Fl\u0131 i\u015F\u00E7ilik K\u00E2r/Zarar'da kart\u0131n grubunda gider olarak say\u0131l\u0131r; hammadde \u00E7\u0131k\u0131\u015F\u0131 sat\u0131lan mal\u0131n maliyeti i\u00E7inde oldu\u011Fundan K\u00E2r/Zarar'a ikinci kez eklenmez."),
-        (eksik.iscilikSayisi > 0 || eksik.hammaddeSayisi > 0) && (React.createElement("div", { "data-karsiliksiz-uretim": true, style: { padding: "6px 10px", marginBottom: 10, borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)", background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 } },
-            "\u26A0 Kar\u015F\u0131l\u0131\u011F\u0131 olmayan fi\u015F: ",
-            eksik.iscilikSayisi > 0 ? `${eksik.iscilikSayisi} işçilik (${eksik.prosesler.join(", ")})` : "",
-            eksik.iscilikSayisi > 0 && eksik.hammaddeSayisi > 0 ? " · " : "",
-            eksik.hammaddeSayisi > 0 ? `${eksik.hammaddeSayisi} hammadde çıkışı` : "")),
-        giderKartlari.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "\u00D6nce a\u015Fa\u011F\u0131dan gider kart\u0131 ekleyin (\u00F6r. \"Kesim i\u015F\u00E7ili\u011Fi\", \"\u00DCretim hammadde gideri\").")) : (React.createElement("div", { style: { display: "grid", gap: 6 } },
-            prosesler.map((p) => (React.createElement("div", { key: p, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" } },
-                React.createElement("span", { style: { width: 180, fontSize: 13, fontWeight: 600 } },
-                    p,
-                    " i\u015F\u00E7ili\u011Fi \u2192"),
-                secici(bag[p], (v) => onSave({ ...tanimlar, prosesGiderKartlari: { ...bag, [p]: v || undefined } }), p)))),
-            React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 4, paddingTop: 6, borderTop: "1px solid var(--erp-line-soft)" } },
-                React.createElement("span", { style: { width: 180, fontSize: 13, fontWeight: 600 } }, "\u00DCretim hammadde \u00E7\u0131k\u0131\u015F\u0131 \u2192"),
-                secici(tanimlar && tanimlar.hammaddeCikisGiderKartId, (v) => onSave({ ...tanimlar, hammaddeCikisGiderKartId: v || null }), "hammadde-cikisi"))))));
+        React.createElement("button", { type: "button", "data-ugb-baslik": acik ? "acik" : "kapali", onClick: () => ac(!acik), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", border: "none", background: "none", padding: 0, cursor: "pointer", textAlign: "left" } },
+            acik ? React.createElement(ChevronDown, { size: 16 }) : React.createElement(ChevronRight, { size: 16 }),
+            React.createElement("span", { style: { fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, fontWeight: 700, color: "var(--erp-text)" } }, "Fi\u015Flerin gelir / gider kar\u015F\u0131l\u0131\u011F\u0131"),
+            React.createElement("span", { className: "mono", style: { fontSize: 12, color: "var(--erp-text-2)" } },
+                bagli,
+                "/",
+                satirlar.length,
+                " ba\u011Fl\u0131"),
+            karsiliksiz > 0 && React.createElement("span", { "data-karsiliksiz-uretim": true, style: { fontSize: 12, fontWeight: 700, color: "var(--erp-warn)" } },
+                "\u26A0 ",
+                karsiliksiz,
+                " kar\u015F\u0131l\u0131ks\u0131z fi\u015F")),
+        acik && (React.createElement("div", { style: { marginTop: 10 } },
+            React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 8px", lineHeight: 1.5 } }, "\u0130\u015F\u00E7ilik, hammadde \u00E7\u0131k\u0131\u015F\u0131, ba\u011F\u0131ms\u0131z stok giri\u015F/\u00E7\u0131k\u0131\u015F\u0131, sat\u0131\u015F ve al\u0131\u015F fi\u015Fleri bir karta ba\u011Flan\u0131r; kart ekstresinde ve toplam\u0131nda g\u00F6r\u00FCn\u00FCr, ba\u011F ge\u00E7mi\u015F fi\u015Fler i\u00E7in de ge\u00E7erlidir. Ba\u011Fl\u0131 i\u015F\u00E7ilik ve ba\u011F\u0131ms\u0131z stok giri\u015F/\u00E7\u0131k\u0131\u015F\u0131 K\u00E2r/Zarar'a girer; hammadde \u00E7\u0131k\u0131\u015F\u0131, sat\u0131\u015F ve al\u0131\u015F K\u00E2r/Zarar'da zaten (ciro / sat\u0131lan mal\u0131n maliyeti) say\u0131ld\u0131\u011F\u0131ndan ikinci kez eklenmez."),
+            karsiliksiz > 0 && (React.createElement("div", { style: { padding: "6px 10px", marginBottom: 8, borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)", background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 } },
+                "\u26A0 Kar\u015F\u0131l\u0131\u011F\u0131 olmayan fi\u015F: ",
+                [eksik.iscilikSayisi && `${eksik.iscilikSayisi} işçilik (${eksik.prosesler.join(", ")})`, eksik.hammaddeSayisi && `${eksik.hammaddeSayisi} hammadde çıkışı`,
+                    eksik.stokSayisi && `${eksik.stokSayisi} stok giriş/çıkış`, eksik.satisAlisSayisi && `${eksik.satisAlisSayisi} satış/alış`].filter(Boolean).join(" · "))),
+            React.createElement("input", { "data-ugb-ara": true, value: ara, onChange: (e) => setAra(e.target.value), placeholder: "Ara: proses, kart ad\u0131, stok, sat\u0131\u015F\u2026", style: { ...inputStyle, width: "100%", maxWidth: 360, marginBottom: 8, fontSize: 13 } }),
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "4px 16px", maxHeight: 420, overflowY: "auto" } },
+                gorunen.map((r) => (React.createElement("div", { key: r.veri, style: { display: "flex", gap: 8, alignItems: "center", padding: "3px 0", borderBottom: "1px solid var(--erp-line-soft)" } },
+                    React.createElement("span", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, title: r.etiket }, r.etiket),
+                    React.createElement("select", { value: r.deger || "", "data-uretim-gider-bag": r.veri, onChange: (e) => r.onDegis(e.target.value), style: { ...inputStyle, width: 190, fontSize: 12, padding: "3px 6px", borderColor: r.deger ? "var(--erp-line)" : "var(--erp-warn)" } },
+                        React.createElement("option", { value: "" }, "\u2014 ba\u011Fl\u0131 de\u011Fil \u2014"),
+                        (r.gelirMi ? gelirKartlari : giderKartlari).map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad)))))),
+                gorunen.length === 0 && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "E\u015Fle\u015Fen sat\u0131r yok."))))));
+}
+// OTOMATİK KART (v1.693, kullanıcı: "gider kartlarını otomatik oluştur prosesler için, bunu tanımlar prosese ekle").
+// Bağı olmayan (ya da bağlı kartı silinmiş) her prosese "<Proses> işçiliği" kartı: aynı adlı kart varsa o bağlanır,
+// yoksa Üretim grubunda açılır. Hammadde çıkışı için "Üretim hammadde gideri". Kullanıcının elle kurduğu bağa
+// dokunulmaz. Değişiklik yoksa AYNI nesne döner (çağıran yazıp yazmayacağını buna bakarak bilir).
+function prosesKartAdi(proses) { return `${proses} işçiliği`; }
+function prosesGiderKartlariniTamamla(tanimlar) {
+    const prosesler = Array.from(new Set(tumProsesTanimlari(tanimlar).map((p) => p.ad).filter(Boolean)));
+    if (!prosesler.length)
+        return tanimlar;
+    let kartlar = tanimlar.giderKartlari || [];
+    const bag = { ...(tanimlar.prosesGiderKartlari || {}) };
+    let hamId = tanimlar.hammaddeCikisGiderKartId || null;
+    let degisti = false;
+    const gruplar = giderGelirGruplari(tanimlar);
+    const grup = gruplar.find((g) => g.key === "uretim") || gruplar.find((g) => g.tur !== "gelir") || gruplar[0] || { key: "uretim", tur: "gider", tdhp: "730" };
+    const kartBulAc = (ad) => {
+        const var_ = kartlar.find((k) => kodEsit(k.ad, ad));
+        if (var_)
+            return var_.id;
+        const yeni = { id: uid("gkart"), ad, grup: grup.key, tur: grup.tur, tdhp: grup.tdhp };
+        kartlar = [...kartlar, yeni];
+        return yeni.id;
+    };
+    prosesler.forEach((p) => {
+        if (bag[p] && kartlar.some((k) => k.id === bag[p]))
+            return;
+        bag[p] = kartBulAc(prosesKartAdi(p));
+        degisti = true;
+    });
+    if (!hamId || !kartlar.some((k) => k.id === hamId)) {
+        hamId = kartBulAc("Üretim hammadde gideri");
+        degisti = true;
+    }
+    // Bağımsız stok giriş/çıkış kartları (v1.694): giriş "Diğer gelir" grubunda gelir kartı.
+    let sgId = tanimlar.stokGirisGelirKartId || null, scId = tanimlar.stokCikisGiderKartId || null;
+    if (!sgId || !kartlar.some((k) => k.id === sgId)) {
+        const gg = gruplar.find((g) => g.tur === "gelir") || { key: "gelir", tur: "gelir", tdhp: "649" };
+        const var_ = kartlar.find((k) => kodEsit(k.ad, "Stok girişi (sayım fazlası)"));
+        if (var_)
+            sgId = var_.id;
+        else {
+            const y = { id: uid("gkart"), ad: "Stok girişi (sayım fazlası)", grup: gg.key, tur: gg.tur, tdhp: gg.tdhp };
+            kartlar = [...kartlar, y];
+            sgId = y.id;
+        }
+        degisti = true;
+    }
+    if (!scId || !kartlar.some((k) => k.id === scId)) {
+        scId = kartBulAc("Stok çıkışı (fire / sayım eksiği)");
+        degisti = true;
+    }
+    // Satış / alış fişleri (v1.695): satış "Diğer gelir" grubunda gelir kartı, alış Üretim grubunda gider kartı.
+    let saId = tanimlar.satisGelirKartId || null, alId = tanimlar.alisGiderKartId || null;
+    if (!saId || !kartlar.some((k) => k.id === saId)) {
+        const gg = gruplar.find((g) => g.tur === "gelir") || { key: "gelir", tur: "gelir", tdhp: "649" };
+        const var_ = kartlar.find((k) => kodEsit(k.ad, "Satış gelirleri"));
+        if (var_)
+            saId = var_.id;
+        else {
+            const y = { id: uid("gkart"), ad: "Satış gelirleri", grup: gg.key, tur: gg.tur, tdhp: "600" };
+            kartlar = [...kartlar, y];
+            saId = y.id;
+        }
+        degisti = true;
+    }
+    if (!alId || !kartlar.some((k) => k.id === alId)) {
+        alId = kartBulAc("Alışlar (mal ve hammadde)");
+        degisti = true;
+    }
+    return degisti ? { ...tanimlar, giderKartlari: kartlar, prosesGiderKartlari: bag, hammaddeCikisGiderKartId: hamId, stokGirisGelirKartId: sgId, stokCikisGiderKartId: scId, satisGelirKartId: saId, alisGiderKartId: alId } : tanimlar;
+}
+// Sistemin kendiliğinden açtığı kart mı (proses işçiliği, hammadde çıkışı, bölüm)?
+function otomatikGiderKartiMi(tanimlar, k) {
+    if (!k)
+        return false;
+    if (k.bolumId)
+        return true;
+    if (tanimlar && [tanimlar.hammaddeCikisGiderKartId, tanimlar.stokGirisGelirKartId, tanimlar.stokCikisGiderKartId, tanimlar.satisGelirKartId, tanimlar.alisGiderKartId].includes(k.id))
+        return true;
+    return Object.values((tanimlar && tanimlar.prosesGiderKartlari) || {}).includes(k.id);
+}
+// ================= BAĞIMSIZ STOK GİRİŞ / ÇIKIŞ → GELİR / GİDER KARTI (v1.694) =================
+// Kullanıcı: "Stok çıkış ve girişini de gelir gidere bağlayalım; 100 farklı ürün girişi ve çıkışı olduğunda tek gelir
+// ve gider olarak yazabiliriz." Bağımsız Stok Girişi/Çıkışı (MNL- fişi; sayım fazlası/eksiği, fire, numune) cari
+// karşılığı olmayan tek stok hareketidir. Ürün ne olursa olsun hepsi TEK karta: girişler `stokGirisGelirKartId`
+// (gelir), çıkışlar `stokCikisGiderKartId` (gider). Tutar = miktar × birim fiyat (maliyetle aynı `hammaddeBirimFiyati`).
+// Açılış (ACILIS-) devirdir, gelir/gider değildir — sayılmaz. Bunlar SMM'de olmadığı için Kâr/Zarar'a da girer.
+function stokManuelFisleri(stok, kurlar) {
+    const fisler = {};
+    (stok || []).forEach((p) => (p.hareketler || []).forEach((h) => {
+        if (h.kaynak !== "Manuel" || !/^MNL-/.test(String(h.fisNo || "")))
+            return;
+        const m = parseFloat(h.miktar) || 0;
+        if (!m)
+            return;
+        let tl = 0;
+        try {
+            tl = (hammaddeBirimFiyati(p, h.renk, h.beden, kurlar || {}) || {}).tl || 0;
+        }
+        catch (e) {
+            tl = 0;
+        }
+        const f = fisler[h.fisNo] || (fisler[h.fisNo] = { fisNo: h.fisNo, tarih: String(h.tarih || "").slice(0, 10), giris: 0, cikis: 0, urunler: new Set() });
+        if (m > 0)
+            f.giris += m * tl;
+        else
+            f.cikis += -m * tl;
+        f.urunler.add(p.ad);
+    }));
+    return Object.values(fisler).map((f) => ({ ...f, urunSayisi: f.urunler.size, urunler: undefined }));
+}
+function stokKartHareketleri(tanimlar, stok, kurlar, kartId) {
+    const gi = tanimlar && tanimlar.stokGirisGelirKartId, ci = tanimlar && tanimlar.stokCikisGiderKartId;
+    if (kartId !== gi && kartId !== ci)
+        return [];
+    const l = [];
+    stokManuelFisleri(stok, kurlar).forEach((f) => {
+        if (kartId === gi && f.giris > 0)
+            l.push({ id: `sg-${f.fisNo}`, fisNo: f.fisNo, tarih: f.tarih, tutar: Math.round(f.giris * 100) / 100, yon: "Giriş", paraBirimi: "TRY", hesapAd: `Stok girişi · ${f.urunSayisi} ürün`, aciklama: "Bağımsız stok girişi", uretimKarsiligi: true });
+        if (kartId === ci && f.cikis > 0)
+            l.push({ id: `sc-${f.fisNo}`, fisNo: f.fisNo, tarih: f.tarih, tutar: Math.round(f.cikis * 100) / 100, yon: "Çıkış", paraBirimi: "TRY", hesapAd: `Stok çıkışı · ${f.urunSayisi} ürün`, aciklama: "Bağımsız stok çıkışı", uretimKarsiligi: true });
+    });
+    return l;
+}
+// Kâr/Zarar için dönem toplamları (tarih süzgeci dışarıdan).
+function stokManuelToplamlari(tanimlar, stok, kurlar, tarihUygun) {
+    const gk = ((tanimlar && tanimlar.giderKartlari) || []);
+    const giris = gk.find((k) => k.id === (tanimlar && tanimlar.stokGirisGelirKartId)) || null;
+    const cikis = gk.find((k) => k.id === (tanimlar && tanimlar.stokCikisGiderKartId)) || null;
+    let g = 0, c = 0;
+    stokManuelFisleri(stok, kurlar).forEach((f) => { if (tarihUygun && !tarihUygun(f.tarih))
+        return; g += f.giris; c += f.cikis; });
+    return { girisKart: giris, cikisKart: cikis, giris: g, cikis: c };
+}
+// ================= SATIŞ / ALIŞ FİŞLERİ → GELİR / GİDER KARTI (v1.695) =================
+// Kullanıcı: "Satış ve alış fişlerini de gelir gidere bağlayalım" (ilke: "her hareketin cari, tutar veya fiş karşılığı
+// olmak zorunda"). Satış fişleri (SF-/SAT-) `satisGelirKartId` gelir kartına, alış fişleri (AF-/ALS-) `alisGiderKartId`
+// gider kartına — fiş başına bir satır, tutar cari hareketlerinin toplamı (TL'ye çevrilmiş). Kâr/Zarar'a EKLENMEZ: satış
+// zaten "Satış geliri", alış da stoğa girip satılınca SMM olarak sayılıyor; kart karşılık ve döküm içindir.
+function satisAlisFisTipi(fisNo) {
+    const f = String(fisNo || "");
+    if (f.startsWith("SF-") || f.startsWith("SAT-"))
+        return "Satış";
+    if (f.startsWith("AF-") || f.startsWith("ALS-"))
+        return "Alış";
+    return "";
+}
+function satisAlisFisleri(cariler, kurlar) {
+    const fisler = {};
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+        const tip = satisAlisFisTipi(h.fisNo);
+        if (!tip)
+            return;
+        const pb = h.paraBirimi || "TRY";
+        const kur = pb === "TRY" ? 1 : ((kurlar || {})[pb] || 1);
+        const f = fisler[h.fisNo] || (fisler[h.fisNo] = { fisNo: h.fisNo, tip, tarih: String(h.tarih || "").slice(0, 10), tutar: 0, cari: c.unvan });
+        f.tutar += (parseFloat(h.tutar) || 0) * kur;
+    }));
+    return Object.values(fisler);
+}
+function satisAlisKartHareketleri(tanimlar, cariler, kurlar, kartId) {
+    const si = tanimlar && tanimlar.satisGelirKartId, ai = tanimlar && tanimlar.alisGiderKartId;
+    if (kartId !== si && kartId !== ai)
+        return [];
+    return satisAlisFisleri(cariler, kurlar)
+        .filter((f) => (f.tip === "Satış" && kartId === si) || (f.tip === "Alış" && kartId === ai))
+        .map((f) => ({ id: `sa-${f.fisNo}`, fisNo: f.fisNo, tarih: f.tarih, tutar: Math.round(f.tutar * 100) / 100, yon: f.tip === "Satış" ? "Giriş" : "Çıkış",
+        paraBirimi: "TRY", hesapAd: `${f.tip} fişi · ${f.cari}`, aciklama: `${f.tip} fişi`, uretimKarsiligi: true }));
 }
 // ================= KÂR / ZARAR =================
 //
@@ -44133,6 +44362,18 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
             gruplar[anahtar].kartlar[kart.ad] = (gruplar[anahtar].kartlar[kart.ad] || 0) + tutar;
         });
     });
+    // BAĞIMSIZ STOK GİRİŞ/ÇIKIŞ (v1.694, 246): giriş Diğer gelir, çıkış kartının grubunda gider.
+    const sm = stokManuelToplamlari(tanimlar, stok, kurlar, (t) => kzTarihUygun(t, aralik));
+    if (sm.girisKart && sm.giris > 0)
+        digerGelir += sm.giris;
+    if (sm.cikisKart && sm.cikis > 0) {
+        giderToplam += sm.cikis;
+        const anahtar = sm.cikisKart.grup || "uretim";
+        if (!gruplar[anahtar])
+            gruplar[anahtar] = { toplam: 0, kartlar: {} };
+        gruplar[anahtar].toplam += sm.cikis;
+        gruplar[anahtar].kartlar[sm.cikisKart.ad] = (gruplar[anahtar].kartlar[sm.cikisKart.ad] || 0) + sm.cikis;
+    }
     const brutKar = satisGeliri - smm - uretimIscilik;
     const netKar = brutKar - giderToplam + digerGelir;
     // ATÖLYE İÇİ BÖLÜMLER (v1.585.0): bölümün dönem tahakkuku (ürünlere yüklenen parça başı) − maaşları.
@@ -64312,11 +64553,11 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                                 } },
                                 React.createElement(Plus, { size: 13 }),
                                 " Ekle"),
-                            kartlar.length === 0 && (React.createElement("button", { type: "button", className: "btn-ghost", "data-gider-hazir": "1", style: { padding: "6px 12px", fontSize: 12 }, title: "At\u00F6lyede en s\u0131k kullan\u0131lan kalemlerle ba\u015Fla; sonra ekler/silersiniz", onClick: () => {
-                                    kaydet(HAZIR_GIDER_KARTLARI.map((k) => {
-                                        const g = gruplar.find((x) => x.key === k.grup);
-                                        return { id: uid("gkart"), ad: k.ad, grup: k.grup, tur: g.tur, tdhp: g.tdhp };
-                                    }));
+                            kartlar.filter((k) => !otomatikGiderKartiMi(tanimlar, k)).length === 0 && (React.createElement("button", { type: "button", className: "btn-ghost", "data-gider-hazir": "1", style: { padding: "6px 12px", fontSize: 12 }, title: "At\u00F6lyede en s\u0131k kullan\u0131lan kalemlerle ba\u015Fla; sonra ekler/silersiniz", onClick: () => {
+                                    kaydet([...kartlar, ...HAZIR_GIDER_KARTLARI.filter((k) => !kartlar.some((x) => kodEsit(x.ad, k.ad))).map((k) => {
+                                            const g = gruplar.find((x) => x.key === k.grup);
+                                            return { id: uid("gkart"), ad: k.ad, grup: k.grup, tur: g.tur, tdhp: g.tdhp };
+                                        })]);
                                     showToast(`${HAZIR_GIDER_KARTLARI.length} hazır kart eklendi`);
                                 } }, "Haz\u0131r kartlarla ba\u015Fla"))),
                         kartlar.length === 0 ? (React.createElement(EmptyState, { text: "Hen\u00FCz kart yok. Kira, elektrik, personel gibi kalemleri ekleyin." })) : (React.createElement("div", { style: { display: "grid", gap: 4 } }, gruplar.map((g) => {
@@ -64607,7 +64848,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.692.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.695.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

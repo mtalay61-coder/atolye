@@ -21,7 +21,7 @@
   "elleEklenen": [
    "Numune giderleri:uretim:gider"
   ],
-  "hazirSayisi": 15,
+  "hazirSayisi": 17,
   "kiraKarti": [
    "yonetim:770"
   ]
