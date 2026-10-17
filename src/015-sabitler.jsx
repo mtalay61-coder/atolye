@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.691.2";
+const SURUM = "1.692.0";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Üretimde personel seçimi İşi Ver düğmesinin solunda";
+const SURUM_NOTU = "Üretim fişleri gelir/gider kartına bağlanır (proses işçiliği, hammadde çıkışı)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.692.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Üretim fişlerinin gider karşılığı\": her prosesin işçiliği bir gider kartına (ör. Kesim → Kesim işçiliği), üretim hammadde çıkışı bir gider kartına bağlanır; bağ geçmiş fişler için de geçerli, kart ekstresinde ve toplamında görünür; karşılığı olmayan fiş sayısı uyarısı"], degisen: ["Kâr/Zarar: prosesi karta bağlı işçilik \"Üretim işçiliği\" yerine kartının grubunda gider olarak sayılır (toplam değişmez); hammadde çıkışı SMM içinde olduğundan ikinci kez eklenmez"], duzeltilen: [] },
   { surum: "1.691.2", tarih: "18.10.2026", eklenen: [], degisen: ["Üretim › işi verirken \"Kime\" personel seçimi İşi Ver düğmesinin hemen solunda (hammadde tablosunun altında)"], duzeltilen: [] },
   { surum: "1.691.1", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › Renkler: Ürün Stok ve açıklama eklenince dar ekranda renk adı kutusu eziliyor, ad görünmüyordu — satır sarar, ad en az 140px"] },
   { surum: "1.691.0", tarih: "17.10.2026", eklenen: ["Stok kartı: değiştirilebilir Stok Kodu (yeni ürün formu ve kart düzenleme; ürünler arasında tekil; aramada bulunur, kart başlığında görünür) — barkoddaki stok no ayrı ve değişmez", "Tanımlar › Renkler: her renge \"Ürün Stok\" işareti ve açıklama alanı; Ürün Stok'ta renk eklerken yalnız işaretli renkler listelenir (hiç işaretli yoksa hepsi)", "Reçete: hammaddeye sonradan renk eklenmişse kartta uyarı + her model rengi için hammadde rengi seçimi, aynı adlıları tek düğmeyle eşleme"], degisen: ["Reçete: \"geçmişten\" renk önerisi prosesi dikkate alır (aynı hammadde aynı proseste hangi renkle kullanıldıysa o; proses değişince yeniden önerilir)", "Maliyet dökümü: fiyatı 0 olan hammadde satırı kırmızı zeminde, \"fiyat yok\" yazar", "Reçeteye hammadde eklerken renk eşleştirme seçicilerinde arama kutusu (yazdıkça süzülür, tek sonuç kalınca seçilir)", "Hammaddenin malzeme tipi sonradan değiştirilince mevcut renkleri de yeni tipe bağlanır"], duzeltilen: [] },

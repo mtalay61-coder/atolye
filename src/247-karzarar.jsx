@@ -182,6 +182,8 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
       // maaş hareketi yine işçilik sayılır ki rapordan düşmesin.
       const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
       if (maasMi && maasGiderKarti(tanimlar, h)) return;
+      // Prosesi gider kartına bağlı işçilik (v1.692, 246) aşağıda kartında sayılır.
+      if (!maasMi && iscilikGiderKarti(tanimlar, h)) return;
       if (!maasMi && (!h.fisNo || !/-İşçilik$/.test(h.fisNo))) return;
       // YÖNE BAKILMIYOR (v1.409.0): işçilik v1.408'e kadar yanlışlıkla "Borç", sonra doğru
       // yönde "Alacak" yazıldı. İkisi de aynı olayı (hak edilen ücret) anlatıyor; işçilik
@@ -200,6 +202,22 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
       const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
       if (!maasMi) return;
       const kart = maasGiderKarti(tanimlar, h);
+      if (!kart) return;
+      if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter)) return;
+      const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
+      giderToplam += tutar;
+      const anahtar = kart.grup || "uretim";
+      if (!gruplar[anahtar]) gruplar[anahtar] = { toplam: 0, kartlar: {} };
+      gruplar[anahtar].toplam += tutar;
+      gruplar[anahtar].kartlar[kart.ad] = (gruplar[anahtar].kartlar[kart.ad] || 0) + tutar;
+    });
+  });
+
+  // BAĞLI İŞÇİLİK → GİDER KARTI (v1.692): prosesin kartına, kartın grubunda.
+  (cariler || []).forEach((c) => {
+    (c.hareketler || []).forEach((h) => {
+      if (!h.fisNo || !/-İşçilik$/.test(h.fisNo)) return;
+      const kart = iscilikGiderKarti(tanimlar, h);
       if (!kart) return;
       if (!kzTarihUygun(h.tarih, aralik) || !kapsar(h.defter)) return;
       const tutar = kzTL(h.tutar || 0, h.paraBirimi, kurlar, kurEksik);
