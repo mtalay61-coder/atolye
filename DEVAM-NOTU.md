@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.693.0** · 18 Ekim 2026
+Son sürüm: **v1.694.0** · 18 Ekim 2026
 
 ---
 
@@ -26,7 +26,7 @@ sorma.** Yeni bir SQL eklenirse yalnız onu ver; tablo ekleyen SQL'den sonra rls
 **E-POSTA GÖNDERİMİ KURULU DEĞİL (11 Ekim): Tanımlar'da SMTP şifresi hiç yoktu; kullanıcı SMTP_SIFRE sırrı + `eposta` fonksiyonu kurulumunu "Atlayalım" dedi — kendisi istemedikçe tekrar önerme.** **rls-yazma.sql + v1.642.0 DÜZELTMESİ (yazma_yetkisi_koruma, iç içe IF + upsert) ÇALIŞTIRILDI (kullanıcı bildirdi, 11 Ekim) — bir daha sorma.** **rls-rol.sql ÇALIŞTIRILDI (kullanıcı bildirdi, 10 Ekim, v1.640.0).** Kullanıcı listesini yalnız Yönetici değiştirir,
 günlüğü yalnız Yönetici siler (tetikleyici; rls-kimlik.sql yeniden çalışsa da kalır). **Bir daha sorma.**
 
-**Son iş (18 Ekim, v1.693.0): proseslere OTOMATİK işçilik gider kartı — 246 prosesGiderKartlariniTamamla (açılışta 100 bölüm kartıyla birlikte bir kez + addProses); "<Proses> işçiliği" (aynı adlı kart varsa o), hammadde çıkışı "Üretim hammadde gideri"; elle bağa dokunmaz. Tanımlar › Prosesler satırında kart seçici (data-proses-gider-karti). "Hazır kartlarla başla" otomatik kartları saymaz, mevcutlara ekler (otomatikGiderKartiMi). Altınlar: bekleyen-yazma, gider-kartlari, kar-zarar (işçilik artık kartta), gelir-gider (senaryo kira kartını adıyla açar). v1.692: üretim fişi → gider kartı (246).**
+**Son iş (18 Ekim, v1.694.0): BAĞIMSIZ STOK GİRİŞ/ÇIKIŞ (MNL- fişleri, kaynak Manuel) → tek gelir kartı (stokGirisGelirKartId, "Stok girişi (sayım fazlası)", Diğer gelir) + tek gider kartı (stokCikisGiderKartId, "Stok çıkışı (fire / sayım eksiği)"); fiş başına bir satır, miktar × hammaddeBirimFiyati; ACILIS- sayılmaz; Kâr/Zarar'a girer (SMM'de değil). ARA PROSESLER de prosesGiderKartlari'nda (tumProsesTanimlari), Tanımlar › Ara Prosesler satırında seçici. Kullanıcı ilkesi: "her hareketin cari, tutar veya fiş karşılığı olmak zorunda". Hepsi 246.**
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
