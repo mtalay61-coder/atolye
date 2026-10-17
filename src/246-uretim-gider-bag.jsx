@@ -134,3 +134,41 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
     </div>
   );
 }
+
+// OTOMATİK KART (v1.693, kullanıcı: "gider kartlarını otomatik oluştur prosesler için, bunu tanımlar prosese ekle").
+// Bağı olmayan (ya da bağlı kartı silinmiş) her prosese "<Proses> işçiliği" kartı: aynı adlı kart varsa o bağlanır,
+// yoksa Üretim grubunda açılır. Hammadde çıkışı için "Üretim hammadde gideri". Kullanıcının elle kurduğu bağa
+// dokunulmaz. Değişiklik yoksa AYNI nesne döner (çağıran yazıp yazmayacağını buna bakarak bilir).
+function prosesKartAdi(proses) { return `${proses} işçiliği`; }
+function prosesGiderKartlariniTamamla(tanimlar) {
+  const prosesler = ((tanimlar && tanimlar.prosesler) || []).map((p) => p.ad).filter(Boolean);
+  if (!prosesler.length) return tanimlar;
+  let kartlar = tanimlar.giderKartlari || [];
+  const bag = { ...(tanimlar.prosesGiderKartlari || {}) };
+  let hamId = tanimlar.hammaddeCikisGiderKartId || null;
+  let degisti = false;
+  const gruplar = giderGelirGruplari(tanimlar);
+  const grup = gruplar.find((g) => g.key === "uretim") || gruplar.find((g) => g.tur !== "gelir") || gruplar[0] || { key: "uretim", tur: "gider", tdhp: "730" };
+  const kartBulAc = (ad) => {
+    const var_ = kartlar.find((k) => kodEsit(k.ad, ad));
+    if (var_) return var_.id;
+    const yeni = { id: uid("gkart"), ad, grup: grup.key, tur: grup.tur, tdhp: grup.tdhp };
+    kartlar = [...kartlar, yeni];
+    return yeni.id;
+  };
+  prosesler.forEach((p) => {
+    if (bag[p] && kartlar.some((k) => k.id === bag[p])) return;
+    bag[p] = kartBulAc(prosesKartAdi(p));
+    degisti = true;
+  });
+  if (!hamId || !kartlar.some((k) => k.id === hamId)) { hamId = kartBulAc("Üretim hammadde gideri"); degisti = true; }
+  return degisti ? { ...tanimlar, giderKartlari: kartlar, prosesGiderKartlari: bag, hammaddeCikisGiderKartId: hamId } : tanimlar;
+}
+
+// Sistemin kendiliğinden açtığı kart mı (proses işçiliği, hammadde çıkışı, bölüm)?
+function otomatikGiderKartiMi(tanimlar, k) {
+  if (!k) return false;
+  if (k.bolumId) return true;
+  if (tanimlar && tanimlar.hammaddeCikisGiderKartId === k.id) return true;
+  return Object.values((tanimlar && tanimlar.prosesGiderKartlari) || {}).includes(k.id);
+}

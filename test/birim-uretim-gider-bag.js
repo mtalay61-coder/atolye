@@ -1,7 +1,7 @@
 // BİRİM TESTİ — ÜRETİM FİŞLERİ → GİDER KARTI (v1.692, 246).
 // Kullanıcı: "kesim için yapılan işçiliği kesim işçiliği giderine bağlayacağız… üretim hammadde çıkışı da bir
 // gidere bağlanmalı, boşa giden hiçbir fiş olmamalı."
-const { iscilikFisProsesi, kartUretimHareketleri, karsiliksizUretimFisleri, karZararHesapla } = require("./erp.cjs");
+const { prosesGiderKartlariniTamamla, iscilikFisProsesi, kartUretimHareketleri, karsiliksizUretimFisleri, karZararHesapla } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => { const ok = JSON.stringify(a) === JSON.stringify(b); console.log(`  ${ok ? "✓" : "✗"} ${ad}`); if (!ok) { hata = 1; console.log("    beklenen:", JSON.stringify(b), "· çıkan:", JSON.stringify(a)); } };
 
@@ -33,4 +33,12 @@ const kz0 = karZararHesapla({ stok, cariler, muhasebe: {}, giderKartlari: kartla
 const kz1 = karZararHesapla({ stok, cariler, muhasebe: {}, giderKartlari: kartlar, donem: "tumu", defter: "Tümü", uretim: [], tanimlar: bagli });
 bekle("Kâr/Zarar: bağlı işçilik karta geçer", [kz1.uretimIscilik, kz1.giderToplam, (kz1.gruplar.uretim || {}).kartlar], [100, 500, { "Kesim işçiliği": 500 }]);
 bekle("Kâr/Zarar: net kâr değişmez (çift sayım yok)", kz1.netKar, kz0.netKar);
+
+// OTOMATİK KART (v1.693)
+const t0 = { prosesler: [{ ad: "Kesim" }, { ad: "Kalfa" }], giderKartlari: [{ id: "x", ad: "Kesim işçiliği", grup: "uretim", tur: "gider" }], prosesGiderKartlari: {} };
+const t1 = prosesGiderKartlariniTamamla(t0);
+bekle("aynı adlı kart bağlanır, eksik açılır", [t1.prosesGiderKartlari.Kesim, t1.giderKartlari.map((k) => k.ad)], ["x", ["Kesim işçiliği", "Kalfa işçiliği", "Üretim hammadde gideri"]]);
+bekle("ikinci çağrı değişiklik yapmaz", prosesGiderKartlariniTamamla(t1) === t1, true);
+const t2 = prosesGiderKartlariniTamamla({ ...t1, prosesGiderKartlari: { ...t1.prosesGiderKartlari, Kalfa: "x" } });
+bekle("elle kurulan bağa dokunulmaz", t2.prosesGiderKartlari.Kalfa, "x");
 process.exit(hata);

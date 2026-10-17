@@ -218,14 +218,15 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
                 }}>
                 <Plus size={13} /> Ekle
               </button>
-              {kartlar.length === 0 && (
+              {/* Otomatik açılan işçilik/hammadde/bölüm kartları (v1.693) sayılmaz: yalnız onlar varken de hazır set sunulur. */}
+              {kartlar.filter((k) => !otomatikGiderKartiMi(tanimlar, k)).length === 0 && (
                 <button type="button" className="btn-ghost" data-gider-hazir="1" style={{ padding: "6px 12px", fontSize: 12 }}
                   title="Atölyede en sık kullanılan kalemlerle başla; sonra ekler/silersiniz"
                   onClick={() => {
-                    kaydet(HAZIR_GIDER_KARTLARI.map((k) => {
+                    kaydet([...kartlar, ...HAZIR_GIDER_KARTLARI.filter((k) => !kartlar.some((x) => kodEsit(x.ad, k.ad))).map((k) => {
                       const g = gruplar.find((x) => x.key === k.grup);
                       return { id: uid("gkart"), ad: k.ad, grup: k.grup, tur: g.tur, tdhp: g.tdhp };
-                    }));
+                    })]);
                     showToast(`${HAZIR_GIDER_KARTLARI.length} hazır kart eklendi`);
                   }}>
                   Hazır kartlarla başla

@@ -42,7 +42,7 @@ async function calistir() {
     toplamGorunuyor: /24\.000/.test(document.body.innerText),
   }));
 
-  await sayfa.evaluate(() => { const b = document.querySelector("[data-kart-ekstre]"); if (b) b.click(); });
+  await sayfa.evaluate(() => { const b = document.querySelector("[data-kart-ekstre=\"İşyeri kirası\"]"); if (b) b.click(); });
   await sayfa.waitForTimeout(500);
   const ekstre = await sayfa.evaluate(() => {
     const e = document.querySelector("[data-kart-hareketleri]");
