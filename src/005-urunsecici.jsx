@@ -24,7 +24,7 @@ function AramaliUrunSecici({ urunler, seciliId, onSec, placeholder, oncelikliPro
       // ikisinin ayrı davranması, "taban 147'yi Stok'ta buluyorum ama siparişte bulamıyorum"
       // demekti. Etiketler `tanimlar`dan geliyor; verilmezse yalnız değerler aranır — seçici
       // etiketsiz de çalışmaya devam etsin.
-      const havuz = `${u.ad} ${u.kod || ""} ${u.malzemeTipi || ""} ${u.mamulTipi || ""} ${ozelKodMetni(u, ozelKodAlanlari)}`.toLocaleLowerCase("tr-TR");
+      const havuz = `${u.ad} ${u.stokKodu || ""} ${u.kod || ""} ${u.malzemeTipi || ""} ${u.mamulTipi || ""} ${ozelKodMetni(u, ozelKodAlanlari)}`.toLocaleLowerCase("tr-TR");
       return havuz.includes(q);
     };
     const liste = urunler.filter((u) => (!u.pasif || u.id === seciliId) && eslesir(u));
@@ -543,5 +543,41 @@ function CariSecici({ cariler, deger, onDegis, disabled = false, placeholder = "
         </div>
       )}
     </div>
+  );
+}
+
+// STOK KODU (v1.691, kullanıcı: "stok kartına değiştirilebilir stok kodu da verelim").
+// `stokNo` barkodun içindeki sayıdır, bir kez atanır ve DEĞİŞMEZ (değişirse basılmış etiketler
+// tutmaz). Firmanın kendi kullandığı kod (AYK-402 gibi) ayrı bir alan: serbest, sonradan
+// değiştirilebilir, ürünler arasında tekil (büyük/küçük harf ve boşluk farkı yok sayılır).
+// Sütun yok, `ek`e gider (semaDisiHam). Aramada (stok ekranı + aramalı ürün seçici) taranır.
+function stokKoduAnahtari(k) { return String(k || "").trim().toLocaleUpperCase("tr-TR").replace(/\s+/g, ""); }
+
+// SÜZÜLEN SEÇİCİ (v1.691, kullanıcı: "reçete renk eşleştirme filtreli arama olsun"). Hammadde rengi
+// seçicileri uzun listelerde (yüzlerce renk) kaydırarak aranıyordu. Asıl <select> AYNEN kalır (değeri,
+// data-* işaretleri, testler ve klavye yolu bozulmasın); yanına küçük bir arama kutusu gelir: yazdıkça
+// seçeneklerin listesi daralır, tek seçenek kalırsa o seçilir. Seçili değer süzgeçte olmasa da listede kalır.
+function SuzulenSelect({ value, onChange, secenekler, bosEtiket, style, aramaGenislik = 70, ...rest }) {
+  const [q, setQ] = useState("");
+  const nrm = (x) => String(x || "").trim().toLocaleLowerCase("tr-TR");
+  const t = nrm(q);
+  const liste = (secenekler || []).filter((s) => !t || nrm(s).includes(t) || s === value);
+  return (
+    <span style={{ display: "inline-flex", gap: 3, alignItems: "center", flexShrink: 0 }}>
+      {(secenekler || []).length > 6 && (
+        <input data-suzulen-ara value={q} placeholder="ara…" title="Renkleri süz"
+          onChange={(e) => {
+            const v = e.target.value; setQ(v);
+            const n = nrm(v);
+            const uyan = n ? (secenekler || []).filter((s) => nrm(s).includes(n)) : [];
+            if (uyan.length === 1 && uyan[0] !== value) onChange({ target: { value: uyan[0] } });
+          }}
+          style={{ width: aramaGenislik, fontSize: 12, padding: "4px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }} />
+      )}
+      <select value={value} onChange={onChange} style={style} {...rest}>
+        <option value="">{bosEtiket}</option>
+        {liste.map((r) => <option key={r} value={r}>{r}</option>)}
+      </select>
+    </span>
   );
 }

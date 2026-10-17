@@ -98,6 +98,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik,
       // ÜLKE (v1.612.0 — kullanıcı: "caride ülke de girebilelim"): yurt dışı müşteri (Tiran, Arnavutluk gibi) için.
       // Sütun değil `ek` (semaDisiHam); e-faturada alıcı ülkesi buradan, boşsa Türkiye.
       ...(form.ulke && form.ulke.trim() ? { ulke: form.ulke.trim() } : {}),
+      ...(form.altTip ? { altTip: form.altTip } : {}),
       notlar: form.notlar.trim(),
       paraBirimi: form.paraBirimi || "TRY",
       // SİTEDE ÖDEME ŞEKLİ SORULSUN (v1.652.0 — kullanıcı: "herkes bu şekilde devam etmesin; yeni müşteri ve seçtiğimiz
@@ -256,7 +257,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik,
     );
 
   const filtered = cariTaban
-    .filter((c) => cariTipSekme === "Tümü" || c.tip === cariTipSekme)
+    .filter((c) => cariTipSekme === "Tümü" || cariTipEtiketi(c) === cariTipSekme)
     .filter((c) =>
       cariTipSekme !== "Personel" || personelProsesSekme === "Tümü" || (c.bagliProsesler || []).includes(personelProsesSekme)
     );
@@ -590,10 +591,10 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik,
             Pasifler ({pasifCariSayisi})
           </button>
         )}
-        {["Tümü", ...CARI_TIPLERI.filter((t) => t !== "Her İkisi")].map((t) => {
+        {["Tümü", ...CARI_TIPLERI.filter((t) => t !== "Her İkisi"), ...ozelCariTipleri(cariTaban).map((o) => o.ad)].map((t) => {
           const aktif = cariTipSekme === t;
           const renkT = t === "Tümü" ? "var(--erp-text)" : (CARI_TIP_RENK[t] || "var(--erp-text-2)");
-          const sayi = t === "Tümü" ? cariTaban.length : cariTaban.filter((c) => c.tip === t).length;
+          const sayi = t === "Tümü" ? cariTaban.length : cariTaban.filter((c) => cariTipEtiketi(c) === t).length;
           return (
             <button
               key={t}
@@ -704,9 +705,8 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik,
               <input value={form.unvan} onChange={(e) => setForm({ ...form, unvan: e.target.value })} placeholder="Örn. Deniz Ayakkabıcılık" style={inputStyle} />
             </Field>
             <Field label="Tip">
-              <select value={form.tip} onChange={(e) => setForm({ ...form, tip: e.target.value })} style={inputStyle}>
-                {CARI_TIPLERI.map((t) => <option key={t}>{t}</option>)}
-              </select>
+              <CariTipSecici tip={form.tip} altTip={form.altTip} cariler={cariler} style={inputStyle}
+                onDegis={({ tip, altTip }) => setForm({ ...form, tip, altTip })} />
             </Field>
             <Field label="Telefon">
               <input value={form.telefon} onChange={(e) => setForm({ ...form, telefon: e.target.value })} placeholder="05xx xxx xx xx" style={inputStyle} />

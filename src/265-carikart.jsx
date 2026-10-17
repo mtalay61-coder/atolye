@@ -25,6 +25,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
   useEffect(() => { if (duzenleModu) duzenlemeKaynagiRef.current = cari; }, [duzenleModu]);   // bayat-muaf: yalnız açılış anındaki kayıt istenir
   const [duzenleUnvan, setDuzenleUnvan] = useState(cari.unvan);
   const [duzenleTip, setDuzenleTip] = useState(cari.tip);
+  const [duzenleAltTip, setDuzenleAltTip] = useState(cari.altTip || null);
   const [duzenleParaBirimi, setDuzenleParaBirimi] = useState(cari.paraBirimi || "TRY");
   const [cardTab, setCardTab] = useState("hareketler"); // "hareketler" | "siparisler" | "bilgiler"
   // KART AÇILINCA DÜZENLEME ALANLARI GİZLİ. Telefon/vergi no/adres/fotoğraf ve personelin barkod
@@ -415,7 +416,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
       <SagTikMenusu konum={sagMenu} onKapat={() => setSagMenu(null)} veri="cari" baslik={`CARİ · ${cari.unvan}`} ogeler={[
         { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
         { k: "tamekran", etiket: tamEkran ? "Tam ekrandan çık" : "Tam ekran aç", ikon: Maximize2, onClick: () => { setOpen(true); setTamEkran((v) => !v); } },
-        { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },
+        { k: "duzenle", etiket: "Düzenle", ikon: Pencil, onClick: () => { setDuzenleUnvan(cari.unvan); setDuzenleTip(cari.tip); setDuzenleAltTip(cari.altTip || null); setDuzenleModu(true); setOpen(true); setCardTab("bilgiler"); } },
         { ayrac: true },
         { k: "ekstre", etiket: `Ekstre yazdır (PDF)${defterFiltre !== "Tümü" ? ` — ${defterFiltre}` : ""}`, ikon: Printer, gizli: !onPencereAc,
           onClick: () => onPencereAc("ekstre", `${cari.id}-${defterFiltre}`, `Ekstre: ${cari.unvan}${defterFiltre !== "Tümü" ? ` (${defterFiltre})` : ""}`,
@@ -486,13 +487,9 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 className="mono"
                 style={{ fontWeight: 700, fontSize: 14, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", minWidth: 140 }}
               />
-              <select
-                value={duzenleTip}
-                onChange={(e) => setDuzenleTip(e.target.value)}
-                style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }}
-              >
-                {["Müşteri", "Tedarikçi", "Her İkisi", "Personel"].map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <CariTipSecici tip={duzenleTip} altTip={duzenleAltTip} cariler={tumCariler}
+                onDegis={({ tip, altTip }) => { setDuzenleTip(tip); setDuzenleAltTip(altTip); }}
+                style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
               <select
                 value={duzenleParaBirimi}
                 onChange={(e) => setDuzenleParaBirimi(e.target.value)}
@@ -516,6 +513,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                   onFieldsChange(cari.id, {
                     unvan: yeniUnvan,
                     tip: duzenleTip,
+                    altTip: duzenleAltTip || null,
                     paraBirimi: duzenleParaBirimi,
                   });
                   setDuzenleModu(false);
@@ -529,7 +527,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 type="button"
                 onClick={() => {
                   setDuzenleUnvan(cari.unvan);
-                  setDuzenleTip(cari.tip);
+                  setDuzenleTip(cari.tip); setDuzenleAltTip(cari.altTip || null);
                   setDuzenleParaBirimi(cari.paraBirimi || "TRY");
                   setDuzenleModu(false);
                 }}
@@ -567,7 +565,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
                 background: alfaEkle((CARI_TIP_RENK[cari.tip] || "var(--erp-text-2)"), "22"), color: CARI_TIP_RENK[cari.tip] || "var(--erp-text-2)",
               }}
             >
-              {cari.tip}
+              {cariTipEtiketi(cari)}
             </span>
             {(cari.paraBirimi || "TRY") !== "TRY" && (
               <span
@@ -642,7 +640,7 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
             type="button"
             onClick={() => {
               setDuzenleUnvan(cari.unvan);
-              setDuzenleTip(cari.tip);
+              setDuzenleTip(cari.tip); setDuzenleAltTip(cari.altTip || null);
               setDuzenleModu(true);
               setOpen(true);
               // Kalem "bilgileri düzenle" demek: adres/vergi alanları Bilgiler sekmesinde (v1.623.0).

@@ -1130,3 +1130,58 @@ function paraHareketiMi(h) {
   if (/^(THS|ODM)-/.test(String(h.fisNo || ""))) return true;
   return /^(tahsilat|ödeme)$/i.test(String(h.aciklama || "").trim());
 }
+
+// ÖZEL CARİ TİPLERİ (v1.690, kullanıcı: "cari tiplerine yeni tip ekleyebilelim").
+// Programın 25'ten fazla yeri `c.tip`e bakar (sipariş/fiş seçicileri tedarikçi-müşteri süzer,
+// atölye ekranları personeli). Yeni tip bu kontrollere tek tek eklenseydi her yer ayrı ayrı
+// bozulabilirdi. Bunun yerine özel tip bir ETİKETTİR (`altTip`); `tip` alanı davranışı belirleyen
+// ana tip olarak kalır ("Fasoncu" → Tedarikçi gibi davranır, alış siparişinde çıkar). Liste ayrı bir
+// tanımda tutulmuyor; carilerdeki altTip'lerden türetiliyor (kaydı olmayan tip listede kalmaz).
+function cariTipEtiketi(c) { return (c && (c.altTip || c.tip)) || ""; }
+function ozelCariTipleri(cariler) {
+  const m = new Map();
+  (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip)) m.set(c.altTip, c.tip || "Müşteri"); });
+  return [...m.entries()].map(([ad, temel]) => ({ ad, temel })).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
+}
+// Tip seçici: standart tipler + özel tipler + "Yeni tip…" (ad + nasıl davranacağı).
+function CariTipSecici({ tip, altTip, cariler, onDegis, style }) {
+  const [yeni, setYeni] = useState(null); // { ad, temel }
+  const ozeller = ozelCariTipleri(cariler);
+  if (altTip && !ozeller.some((o) => o.ad === altTip)) ozeller.push({ ad: altTip, temel: tip });
+  const deger = yeni ? "__yeni" : (altTip ? "ozel:" + altTip : tip);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <select data-cari-tip-secici value={deger} style={style}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === "__yeni") { setYeni({ ad: "", temel: tip || "Müşteri" }); return; }
+          setYeni(null);
+          if (v.startsWith("ozel:")) { const o = ozeller.find((x) => x.ad === v.slice(5)); onDegis({ tip: o ? o.temel : tip, altTip: v.slice(5) }); }
+          else onDegis({ tip: v, altTip: null });
+        }}>
+        {CARI_TIPLERI.map((t) => <option key={t} value={t}>{t}</option>)}
+        {ozeller.map((o) => <option key={o.ad} value={"ozel:" + o.ad}>{o.ad} ({o.temel} gibi)</option>)}
+        <option value="__yeni">+ Yeni tip…</option>
+      </select>
+      {yeni && (
+        <div data-cari-yeni-tip style={{ display: "flex", gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+          <input data-cari-yeni-tip-ad autoFocus placeholder="Tip adı (örn. Fasoncu)" value={yeni.ad}
+            onChange={(e) => setYeni({ ...yeni, ad: e.target.value })} style={{ ...style, width: 140 }} />
+          <select data-cari-yeni-tip-temel value={yeni.temel} onChange={(e) => setYeni({ ...yeni, temel: e.target.value })} style={{ ...style, width: 150 }}
+            title="Bu tip programda hangi tip gibi davransın (sipariş/fiş listeleri, personel ekranları)">
+            {CARI_TIPLERI.map((t) => <option key={t} value={t}>{t} gibi</option>)}
+          </select>
+          <button type="button" className="btn-primary" data-cari-yeni-tip-tamam style={{ fontSize: 12, padding: "5px 10px" }}
+            disabled={!yeni.ad.trim()}
+            onClick={() => {
+              const ad = yeni.ad.trim();
+              // Standart tip adı yazıldıysa özel tip açılmaz, doğrudan o seçilir.
+              const std = CARI_TIPLERI.find((t) => t.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"));
+              onDegis(std ? { tip: std, altTip: null } : { tip: yeni.temel, altTip: ad });
+              setYeni(null);
+            }}>Tamam</button>
+        </div>
+      )}
+    </div>
+  );
+}

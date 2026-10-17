@@ -248,16 +248,22 @@ function gecmisRenkEslesmeleri(urunler) {
     const anahtar = nrm(receteSatirPozisyonRengi(r));
     if (!anahtar) return;
     const liste = harita.get(anahtar) || [];
-    liste.push({ hammaddeId: r.hammaddeUrunId, renk: r.renk, tarih: String(r.eklemeTarihi || "") });
+    liste.push({ hammaddeId: r.hammaddeUrunId, renk: r.renk, tarih: String(r.eklemeTarihi || ""), proses: nrm(r.proses) });
     harita.set(anahtar, liste);
   }));
   return harita;
 }
-function gecmisRenkOnerisi(harita, mamulPozisyonRengi, hammaddeId, hammaddeRenkleri) {
+// PROSES ÖNCELİĞİ (v1.691, kullanıcı: "geçmişten kontrolde prosesi dikkate al — yapıştırıcı kalfa prosesinde sarı,
+// üste ve temizlemede beyaz olur"). Aynı hammadde farklı proseste farklı renkte kullanılabiliyor; `proses` verilirse
+// önce AYNI hammadde + AYNI proses, sonra aynı hammadde (herhangi proses), sonra başka hammadde aranır.
+function gecmisRenkOnerisi(harita, mamulPozisyonRengi, hammaddeId, hammaddeRenkleri, proses) {
   const nrm = (s) => String(s || "").trim().toLocaleLowerCase("tr-TR");
   const liste = (harita && harita.get(nrm(mamulPozisyonRengi))) || [];
   const var_ = (r) => (hammaddeRenkleri || []).find((x) => nrm(x) === nrm(r));
   const enSon = (l) => l.reduce((m, x) => (m == null || x.tarih > m.tarih ? x : m), null);
+  const pr = nrm(proses);
+  const ayniProses = pr ? enSon(liste.filter((x) => x.hammaddeId === hammaddeId && x.proses === pr && var_(x.renk))) : null;
+  if (ayniProses) return var_(ayniProses.renk);
   const ayni = enSon(liste.filter((x) => x.hammaddeId === hammaddeId && var_(x.renk)));
   if (ayni) return var_(ayni.renk);
   const baska = enSon(liste.filter((x) => x.hammaddeId !== hammaddeId && var_(x.renk)));

@@ -1199,6 +1199,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
             kullanimGetir={hammaddeRenkKullanildigiUrunler}
             hammaddeTipleri={tanimlar.hammaddeTipleri || []}
             onMalzemeTipiToggle={renkMalzemeTipiToggle}
+            onUrunStokToggle={(id) => onSave({ ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === id ? { ...r, urunStok: !r.urunStok } : r)) })}
+            onAciklamaChange={(id, v) => onSave({ ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === id ? { ...r, aciklama: v } : r)) })}
             defaultOpen
           />
         </Bolum>

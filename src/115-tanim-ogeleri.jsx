@@ -401,7 +401,7 @@ function KullanimGosterge({ urunler }) {
   );
 }
 
-function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, onRenkKoduChange, onRenkTonKoduChange, onAdDegistir, bagliKombinasyonSayisi, kullanimGetir, hammaddeTipleri, onMalzemeTipiToggle, barkodKodu }) {
+function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, onRenkKoduChange, onRenkTonKoduChange, onAdDegistir, bagliKombinasyonSayisi, kullanimGetir, hammaddeTipleri, onMalzemeTipiToggle, barkodKodu, onUrunStokToggle, onAciklamaChange }) {
   const [open, setOpen] = useState(!!defaultOpen);
   // SÜTUN FİLTRESİ — başlık satırının altında, her sütun kendi kutusuyla süzülür.
   // Üstteki malzeme tipi çipleri "hangi gruba bakıyorum", bu satır ise "o grupta neyi arıyorum"
@@ -615,6 +615,21 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                   </span>
                 );
               })()}
+              {/* ÜRÜN STOK İŞARETİ + AÇIKLAMA (v1.691, kullanıcı: "ürün stokta tüm renkler çıkmasın sadece ürün stok
+                  tiki olanlar çıksın · renklere renk açıklaması alanı da ekleyelim"). Renk havuzu ortak (hammadde
+                  ölçüleri "0.8 mm Sulu" gibi adlar da burada); mamul renk seçicisi yalnız işaretlileri gösterir. */}
+              {onUrunStokToggle && (
+                <label title="İşaretli renkler Ürün Stok'ta (mamul kartında) renk olarak seçilebilir"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 6, fontSize: 10, fontWeight: 700, color: item.urunStok ? "var(--erp-primary)" : "var(--erp-text-3)", whiteSpace: "nowrap", cursor: "pointer" }}>
+                  <input type="checkbox" data-renk-urun-stok={item.ad} checked={!!item.urunStok} onChange={() => onUrunStokToggle(item.id)} />
+                  Ürün Stok
+                </label>
+              )}
+              {onAciklamaChange && (
+                <input data-renk-aciklama={item.ad} value={item.aciklama || ""} onChange={(e) => onAciklamaChange(item.id, e.target.value)}
+                  placeholder="açıklama" title="Renk açıklaması"
+                  style={{ width: 140, marginLeft: 6, fontSize: 12, padding: "4px 7px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }} />
+              )}
               {kullanimGetir && <KullanimGosterge urunler={kullanimGetir(item.id)} />}
               {(() => {
                 const bagliSayi = bagliKombinasyonSayisi ? bagliKombinasyonSayisi(item.id) : 0;

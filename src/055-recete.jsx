@@ -471,7 +471,7 @@ function sablonRengiCoz(sa, mr, ctx, gecmisHarita) {
   const pozisyonRengi = kombi ? (kombinasyonRengiCoz(mr, sa.pozisyon || 1) || mr) : mr;
   const isim = hRenkler.find((a) => nrm(a) === nrm(pozisyonRengi));
   if (isim) return { renk: isim, gecmis: false };
-  const gecmis = gecmisRenkOnerisi(gecmisHarita, pozisyonRengi, h.id, hRenkler);
+  const gecmis = gecmisRenkOnerisi(gecmisHarita, pozisyonRengi, h.id, hRenkler, sa.proses);
   if (gecmis) return { renk: gecmis, gecmis: true };
   const standart = hRenkler.find((a) => nrm(a) === "standart");
   if (standart) return { renk: standart, gecmis: false };
