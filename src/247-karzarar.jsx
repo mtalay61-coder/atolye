@@ -229,6 +229,16 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
     });
   });
 
+  // BAĞIMSIZ STOK GİRİŞ/ÇIKIŞ (v1.694, 246): giriş Diğer gelir, çıkış kartının grubunda gider.
+  const sm = stokManuelToplamlari(tanimlar, stok, kurlar, (t) => kzTarihUygun(t, aralik));
+  if (sm.girisKart && sm.giris > 0) digerGelir += sm.giris;
+  if (sm.cikisKart && sm.cikis > 0) {
+    giderToplam += sm.cikis;
+    const anahtar = sm.cikisKart.grup || "uretim";
+    if (!gruplar[anahtar]) gruplar[anahtar] = { toplam: 0, kartlar: {} };
+    gruplar[anahtar].toplam += sm.cikis;
+    gruplar[anahtar].kartlar[sm.cikisKart.ad] = (gruplar[anahtar].kartlar[sm.cikisKart.ad] || 0) + sm.cikis;
+  }
   const brutKar = satisGeliri - smm - uretimIscilik;
   const netKar = brutKar - giderToplam + digerGelir;
   // ATÖLYE İÇİ BÖLÜMLER (v1.585.0): bölümün dönem tahakkuku (ürünlere yüklenen parça başı) − maaşları.

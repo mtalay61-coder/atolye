@@ -98,6 +98,20 @@
     "id": "#2",
     "tdhp": "730",
     "tur": "gider"
+   },
+   {
+    "ad": "Stok girişi (sayım fazlası)",
+    "grup": "gelir",
+    "id": "#3",
+    "tdhp": "649",
+    "tur": "gelir"
+   },
+   {
+    "ad": "Stok çıkışı (fire / sayım eksiği)",
+    "grup": "uretim",
+    "id": "#4",
+    "tdhp": "730",
+    "tur": "gider"
    }
   ],
   "girisAktifMi": false,
@@ -120,7 +134,7 @@
   "ozelKodAlanlari": [
    {
     "ad": "Özel Kod 1",
-    "id": "#3",
+    "id": "#5",
     "kapsamAd": "",
     "kapsamTuru": "genel"
    }
@@ -161,11 +175,13 @@
    {
     "ad": "Bordo",
     "barkodKodu": 3,
-    "id": "#4",
+    "id": "#6",
     "kod": "101",
     "renkKodu": "#C9B99A",
     "tip": "Hammadde"
    }
-  ]
+  ],
+  "stokCikisGiderKartId": "#4",
+  "stokGirisGelirKartId": "#3"
  }
 }

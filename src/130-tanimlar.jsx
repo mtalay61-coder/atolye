@@ -398,7 +398,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     if (mevcut.some((p) => p.ad.toLowerCase() === temizAd.toLowerCase())) {
       return showToast("Bu ara proses zaten tanımlı");
     }
-    onSave({ ...tanimlar, araProsesler: [...mevcut, { id: uid("araproses"), ad: temizAd, cariId, ucret: parseFloat(ucret) || 0 }] });
+    onSave(prosesGiderKartlariniTamamla({ ...tanimlar, araProsesler: [...mevcut, { id: uid("araproses"), ad: temizAd, cariId, ucret: parseFloat(ucret) || 0 }] }));
   }
 
   function araProsesUcretGuncelle(id, ucret) {
@@ -2016,6 +2016,14 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                     />
                     <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>₺/adet</span>
                   </label>
+                  {/* GİDER KARTI (v1.694): ara proses işçiliği de bir gider kartına yazılır. */}
+                  <select data-proses-gider-karti={p.ad} value={(tanimlar.prosesGiderKartlari || {})[p.ad] || ""}
+                    title="Bu ara prosesin işçilik fişlerinin yazıldığı gider kartı"
+                    onChange={(e) => onSave({ ...tanimlar, prosesGiderKartlari: { ...(tanimlar.prosesGiderKartlari || {}), [p.ad]: e.target.value || undefined } })}
+                    style={{ fontSize: 11, padding: "2px 4px", maxWidth: 160, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
+                    <option value="">Gider kartı yok</option>
+                    {(tanimlar.giderKartlari || []).filter((k) => (k.tur || "gider") !== "gelir").map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
+                  </select>
                   <button onClick={() => araProsesSil(p.id)} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--erp-text-3)", display: "flex" }}>
                     <X size={14} />
                   </button>
