@@ -85,8 +85,14 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
   };
   // HESABIN PARA BİRİMİYLE TL'YE (v1.639.0, denetim): USD kasasından 100 $ çıkış "100 ₺" sayılıyordu; Kâr-Zarar (247)
   // aynı hareketi kurla çeviriyor — aynı kart iki ekranda farklı çıkıyordu. Aynı çevirici (`kzTL`), kurlar Tanımlar'dan.
-  const kartToplami = (kartId) => kartHareketleri(kartId)
-    .reduce((t, h) => t + (h.yon === "Giriş" ? -1 : 1) * kzTL(h.tutar || 0, h.paraBirimi, (muhasebe && muhasebe.kurlar) || {}), 0);
+  // YÖN KARTIN TÜRÜNE GÖRE (v1.695.1, kullanıcı: "neden başında - var, karışıklık var gibi"): toplam kartın kendi
+  // yönünde artı. Gider kartında çıkış (+), giriş (iade) eksi; GELİR kartında giriş (+), çıkış eksi. Önceden her kart
+  // gider gibi sayılıyor, satış gelirleri "-1.000 ₺" görünüyordu.
+  const kartToplami = (kartId) => {
+    const gelirMi = (((tanimlar.giderKartlari || []).find((k) => k.id === kartId)) || {}).tur === "gelir";
+    return kartHareketleri(kartId)
+      .reduce((t, h) => t + (h.yon === "Giriş" ? -1 : 1) * (gelirMi ? -1 : 1) * kzTL(h.tutar || 0, h.paraBirimi, (muhasebe && muhasebe.kurlar) || {}), 0);
+  };
   return (
     <div style={{ display: "grid", gap: 14 }}>
     {/* İKİ BÖLÜM (20 Eylül): kartlar GERÇEKLEŞEN ödemeyi izler, genel gider defteri PLANLANAN
