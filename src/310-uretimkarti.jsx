@@ -917,8 +917,10 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                             yanlışlıkla personelsiz veriliyordu. Sıra da mantıksızdı: önce "kaç tane",
                             sonra "kime" — kullanıcı zaten miktarları girdikten sonra karar veriyor. */}
                         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--erp-line-soft)" }}>
+                          {/* KİME, İŞİ VER'İN SOLUNDA (v1.691.2, kullanıcı: "personel seçimini işi ver butonunun soluna alın"):
+                              DOM sırası aynı (hammadde tablosu arada), görsel sıra `order` ile — seçim ve onay yan yana. */}
                           {personelListesi.length > 0 ? (
-                            <>
+                            <span style={{ order: 2, marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10 }}>
                               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Kime:</span>
                               <select
                                 value={secim.personelId || ""}
@@ -932,9 +934,9 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                 <option value="">⚠ Personel seçin</option>
                                 {secilebilirPersonel.map((per) => <option key={per.id} value={per.id}>{per.unvan}</option>)}
                               </select>
-                            </>
+                            </span>
                           ) : (
-                            <button type="button" className="btn-ghost" onClick={onGoToCari} style={{ fontSize: 11 }}>
+                            <button type="button" className="btn-ghost" onClick={onGoToCari} style={{ fontSize: 11, order: 2, marginLeft: "auto" }}>
                               Personel ekle
                             </button>
                           )}
@@ -942,7 +944,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                               Aynı hammaddeler, aynı düzen: kullanıcı verirken ne verdiğini yazıyor,
                               teslim alırken fark kendiliğinden geliyor. */}
                           {verilecekHammaddeler.length > 0 && (
-                            <div style={{ flexBasis: "100%", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
+                            <div style={{ order: 1, flexBasis: "100%", background: "var(--erp-panel)", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 8 }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6, flexWrap: "wrap" }}>
                                 <Layers size={13} color="var(--erp-brown)" />
                                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-brown)" }}>Verilen hammadde</span>
@@ -1030,7 +1032,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                           )}
                           <button
                             className="btn-primary"
-                            style={{ marginLeft: "auto", padding: "8px 20px", fontSize: 14, fontWeight: 700 }}
+                            style={{ order: 3, padding: "8px 20px", fontSize: 14, fontWeight: 700 }}
                             onClick={() => {
                               // Kullanıcı hiç dokunmamış (state'te değeri olmayan) bedenler için, ekranda
                               // zaten varsayılan olarak GÖSTERİLEN "kalan" miktarı gönderilir — böylece
