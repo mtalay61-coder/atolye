@@ -2755,11 +2755,12 @@ function AtolyeUygulamasi() {
   const bolumKartImzaRef = useRef(false);
   useEffect(() => {
     if (loading || baglantiYok || bolumKartImzaRef.current) return;
-    const next = bolumKartlariniTamamla(tanimlar);
+    // PROSES GİDER KARTLARI da (v1.693, 246): bağı olmayan prosese "<Proses> işçiliği", hammadde çıkışına kart.
+    const next = prosesGiderKartlariniTamamla(bolumKartlariniTamamla(tanimlar));
     if (next === tanimlar) return;
     bolumKartImzaRef.current = true;
     saveTanimlar(next);
-    showToast("Bölüm işçilik gider kartı açıldı (Finans › Gelir / Gider)");
+    showToast("İşçilik gider kartları açılıp proseslere bağlandı (Finans › Gelir / Gider)");
   }, [loading, baglantiYok, tanimlar, saveTanimlar, showToast]);
 
   // KOD ÇAKIŞMASI KENDİLİĞİNDEN ONARILIR (v1.556.0, 089 `tanimKodlariniOnar`). Kullanıcı: "Renk kodları

@@ -311,7 +311,8 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
     const kullanilanBaslangiclar = new Set(mevcut.map((p) => p.baslangicNo ?? 1000));
     let aday = 1000;
     while (kullanilanBaslangiclar.has(aday)) aday += 1000;
-    onSave({ ...tanimlar, prosesler: [...mevcut, { id: uid("proses"), ad, sira: maxSira + 1, baslangicNo: aday }] });
+    // Yeni prosese "<Proses> işçiliği" gider kartı da açılıp bağlanır (v1.693, 246).
+    onSave(prosesGiderKartlariniTamamla({ ...tanimlar, prosesler: [...mevcut, { id: uid("proses"), ad, sira: maxSira + 1, baslangicNo: aday }] }));
     setYeniProses("");
   }
 
@@ -1900,6 +1901,14 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                   <ProsesIkonu proses={p.ad} tanimlarProsesler={tanimlar.prosesler} size={18} />
                 </span>
                 <span style={{ fontSize: 14, fontWeight: 600, flex: 1, color: prosesRengi(p.ad, i) }}>{p.ad}</span>
+                {/* GİDER KARTI (v1.693): prosesin işçilik fişleri bu karta yazılır (Gelir / Gider, Kâr/Zarar). */}
+                <select data-proses-gider-karti={p.ad} value={(tanimlar.prosesGiderKartlari || {})[p.ad] || ""}
+                  title="Bu prosesin işçilik fişlerinin yazıldığı gider kartı"
+                  onChange={(e) => onSave({ ...tanimlar, prosesGiderKartlari: { ...(tanimlar.prosesGiderKartlari || {}), [p.ad]: e.target.value || undefined } })}
+                  style={{ fontSize: 11, padding: "2px 4px", maxWidth: 160, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", background: "#fff" }}>
+                  <option value="">Gider kartı yok</option>
+                  {(tanimlar.giderKartlari || []).filter((k) => (k.tur || "gider") !== "gelir").map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
+                </select>
                 <label style={{ display: "flex", alignItems: "center", gap: 4 }} title="Bu proses için otomatik barkod kodları bu numaradan başlayarak sıralanır">
                   <span style={{ fontSize: 10, color: "var(--erp-text-3)" }}>Barkod Başlangıç:</span>
                   <input

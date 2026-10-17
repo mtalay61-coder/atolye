@@ -20,7 +20,7 @@
    "zaman": "<zaman>"
   },
   "tanimlar:data": {
-   "deneme": 6,
+   "deneme": 7,
    "hata": "Failed to fetch",
    "tablo": "tanimlar",
    "zaman": "<zaman>"
@@ -84,7 +84,24 @@
    "website": ""
   },
   "fiyatGruplari": [],
+  "giderKartlari": [
+   {
+    "ad": "Kesim işçiliği",
+    "grup": "uretim",
+    "id": "#1",
+    "tdhp": "730",
+    "tur": "gider"
+   },
+   {
+    "ad": "Üretim hammadde gideri",
+    "grup": "uretim",
+    "id": "#2",
+    "tdhp": "730",
+    "tur": "gider"
+   }
+  ],
   "girisAktifMi": false,
+  "hammaddeCikisGiderKartId": "#2",
   "hammaddeTipleri": [],
   "kodSayaclari": {
    "beden": 3,
@@ -103,7 +120,7 @@
   "ozelKodAlanlari": [
    {
     "ad": "Özel Kod 1",
-    "id": "#1",
+    "id": "#3",
     "kapsamAd": "",
     "kapsamTuru": "genel"
    }
@@ -111,6 +128,9 @@
   "ozelKodEtiketleri": [
    "Özel Kod 1"
   ],
+  "prosesGiderKartlari": {
+   "Kesim": "#1"
+  },
   "prosesler": [
    {
     "ad": "Kesim",
@@ -141,7 +161,7 @@
    {
     "ad": "Bordo",
     "barkodKodu": 3,
-    "id": "#2",
+    "id": "#4",
     "kod": "101",
     "renkKodu": "#C9B99A",
     "tip": "Hammadde"
