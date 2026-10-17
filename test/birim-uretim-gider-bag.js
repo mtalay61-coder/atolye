@@ -1,7 +1,7 @@
 // BİRİM TESTİ — ÜRETİM FİŞLERİ → GİDER KARTI (v1.692, 246).
 // Kullanıcı: "kesim için yapılan işçiliği kesim işçiliği giderine bağlayacağız… üretim hammadde çıkışı da bir
 // gidere bağlanmalı, boşa giden hiçbir fiş olmamalı."
-const { stokKartHareketleri, prosesGiderKartlariniTamamla, iscilikFisProsesi, kartUretimHareketleri, karsiliksizUretimFisleri, karZararHesapla } = require("./erp.cjs");
+const { satisAlisKartHareketleri, stokKartHareketleri, prosesGiderKartlariniTamamla, iscilikFisProsesi, kartUretimHareketleri, karsiliksizUretimFisleri, karZararHesapla } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => { const ok = JSON.stringify(a) === JSON.stringify(b); console.log(`  ${ok ? "✓" : "✗"} ${ad}`); if (!ok) { hata = 1; console.log("    beklenen:", JSON.stringify(b), "· çıkan:", JSON.stringify(a)); } };
 
@@ -37,7 +37,7 @@ bekle("Kâr/Zarar: net kâr değişmez (çift sayım yok)", kz1.netKar, kz0.netK
 // OTOMATİK KART (v1.693)
 const t0 = { prosesler: [{ ad: "Kesim" }, { ad: "Kalfa" }], giderKartlari: [{ id: "x", ad: "Kesim işçiliği", grup: "uretim", tur: "gider" }], prosesGiderKartlari: {} };
 const t1 = prosesGiderKartlariniTamamla(t0);
-bekle("aynı adlı kart bağlanır, eksik açılır", [t1.prosesGiderKartlari.Kesim, t1.giderKartlari.map((k) => k.ad)], ["x", ["Kesim işçiliği", "Kalfa işçiliği", "Üretim hammadde gideri", "Stok girişi (sayım fazlası)", "Stok çıkışı (fire / sayım eksiği)"]]);
+bekle("aynı adlı kart bağlanır, eksik açılır", [t1.prosesGiderKartlari.Kesim, t1.giderKartlari.map((k) => k.ad)], ["x", ["Kesim işçiliği", "Kalfa işçiliği", "Üretim hammadde gideri", "Stok girişi (sayım fazlası)", "Stok çıkışı (fire / sayım eksiği)", "Satış gelirleri", "Alışlar (mal ve hammadde)"]]);
 bekle("ikinci çağrı değişiklik yapmaz", prosesGiderKartlariniTamamla(t1) === t1, true);
 const t2 = prosesGiderKartlariniTamamla({ ...t1, prosesGiderKartlari: { ...t1.prosesGiderKartlari, Kalfa: "x" } });
 bekle("elle kurulan bağa dokunulmaz", t2.prosesGiderKartlari.Kalfa, "x");
@@ -50,4 +50,9 @@ const st2 = [
 ];
 bekle("stok girişi gelir kartında (2×10 + 4×5)", stokKartHareketleri(t1, st2, {}, t1.stokGirisGelirKartId).map((h) => [h.fisNo, h.tutar, h.yon]), [["MNL-1", 40, "Giriş"]]);
 bekle("stok çıkışı gider kartında, açılış sayılmaz", stokKartHareketleri(t1, st2, {}, t1.stokCikisGiderKartId).map((h) => [h.fisNo, h.tutar, h.yon]), [["MNL-2", 10, "Çıkış"]]);
+
+// SATIŞ / ALIŞ (v1.695): iki satırlı satış fişi tek satır, USD kurla
+const cs = [{ id: "m", unvan: "Müşteri", hareketler: [{ fisNo: "SF-1", tutar: 100, paraBirimi: "TRY", tarih: bugun }, { fisNo: "SF-1", tutar: 10, paraBirimi: "USD", tarih: bugun }, { fisNo: "AF-1", tutar: 50, tarih: bugun }, { fisNo: "THS-1", tutar: 5, tarih: bugun }] }];
+bekle("satış gelir kartında", satisAlisKartHareketleri(t1, cs, { USD: 40 }, t1.satisGelirKartId).map((h) => [h.fisNo, h.tutar, h.yon]), [["SF-1", 500, "Giriş"]]);
+bekle("alış gider kartında", satisAlisKartHareketleri(t1, cs, {}, t1.alisGiderKartId).map((h) => [h.fisNo, h.tutar, h.yon]), [["AF-1", 50, "Çıkış"]]);
 process.exit(hata);

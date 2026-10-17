@@ -37,6 +37,7 @@
  },
  "yerelTanimlar": {
   "acilisGocuYapildi": true,
+  "alisGiderKartId": "#1",
   "araProsesler": [],
   "asortiler": [],
   "bedenler": [
@@ -88,34 +89,48 @@
    {
     "ad": "Kesim işçiliği",
     "grup": "uretim",
-    "id": "#1",
+    "id": "#2",
     "tdhp": "730",
     "tur": "gider"
    },
    {
     "ad": "Üretim hammadde gideri",
     "grup": "uretim",
-    "id": "#2",
+    "id": "#3",
     "tdhp": "730",
     "tur": "gider"
    },
    {
     "ad": "Stok girişi (sayım fazlası)",
     "grup": "gelir",
-    "id": "#3",
+    "id": "#4",
     "tdhp": "649",
     "tur": "gelir"
    },
    {
     "ad": "Stok çıkışı (fire / sayım eksiği)",
     "grup": "uretim",
-    "id": "#4",
+    "id": "#5",
+    "tdhp": "730",
+    "tur": "gider"
+   },
+   {
+    "ad": "Satış gelirleri",
+    "grup": "gelir",
+    "id": "#6",
+    "tdhp": "600",
+    "tur": "gelir"
+   },
+   {
+    "ad": "Alışlar (mal ve hammadde)",
+    "grup": "uretim",
+    "id": "#1",
     "tdhp": "730",
     "tur": "gider"
    }
   ],
   "girisAktifMi": false,
-  "hammaddeCikisGiderKartId": "#2",
+  "hammaddeCikisGiderKartId": "#3",
   "hammaddeTipleri": [],
   "kodSayaclari": {
    "beden": 3,
@@ -134,7 +149,7 @@
   "ozelKodAlanlari": [
    {
     "ad": "Özel Kod 1",
-    "id": "#5",
+    "id": "#7",
     "kapsamAd": "",
     "kapsamTuru": "genel"
    }
@@ -143,7 +158,7 @@
    "Özel Kod 1"
   ],
   "prosesGiderKartlari": {
-   "Kesim": "#1"
+   "Kesim": "#2"
   },
   "prosesler": [
    {
@@ -175,13 +190,14 @@
    {
     "ad": "Bordo",
     "barkodKodu": 3,
-    "id": "#6",
+    "id": "#8",
     "kod": "101",
     "renkKodu": "#C9B99A",
     "tip": "Hammadde"
    }
   ],
-  "stokCikisGiderKartId": "#4",
-  "stokGirisGelirKartId": "#3"
+  "satisGelirKartId": "#6",
+  "stokCikisGiderKartId": "#5",
+  "stokGirisGelirKartId": "#4"
  }
 }

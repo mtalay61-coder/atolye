@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.694.0** · 18 Ekim 2026
+Son sürüm: **v1.695.0** · 18 Ekim 2026
 
 ---
 
@@ -26,7 +26,7 @@ sorma.** Yeni bir SQL eklenirse yalnız onu ver; tablo ekleyen SQL'den sonra rls
 **E-POSTA GÖNDERİMİ KURULU DEĞİL (11 Ekim): Tanımlar'da SMTP şifresi hiç yoktu; kullanıcı SMTP_SIFRE sırrı + `eposta` fonksiyonu kurulumunu "Atlayalım" dedi — kendisi istemedikçe tekrar önerme.** **rls-yazma.sql + v1.642.0 DÜZELTMESİ (yazma_yetkisi_koruma, iç içe IF + upsert) ÇALIŞTIRILDI (kullanıcı bildirdi, 11 Ekim) — bir daha sorma.** **rls-rol.sql ÇALIŞTIRILDI (kullanıcı bildirdi, 10 Ekim, v1.640.0).** Kullanıcı listesini yalnız Yönetici değiştirir,
 günlüğü yalnız Yönetici siler (tetikleyici; rls-kimlik.sql yeniden çalışsa da kalır). **Bir daha sorma.**
 
-**Son iş (18 Ekim, v1.694.0): BAĞIMSIZ STOK GİRİŞ/ÇIKIŞ (MNL- fişleri, kaynak Manuel) → tek gelir kartı (stokGirisGelirKartId, "Stok girişi (sayım fazlası)", Diğer gelir) + tek gider kartı (stokCikisGiderKartId, "Stok çıkışı (fire / sayım eksiği)"); fiş başına bir satır, miktar × hammaddeBirimFiyati; ACILIS- sayılmaz; Kâr/Zarar'a girer (SMM'de değil). ARA PROSESLER de prosesGiderKartlari'nda (tumProsesTanimlari), Tanımlar › Ara Prosesler satırında seçici. Kullanıcı ilkesi: "her hareketin cari, tutar veya fiş karşılığı olmak zorunda". Hepsi 246.**
+**Son iş (18 Ekim, v1.695.0): SATIŞ/ALIŞ fişleri → satisGelirKartId ("Satış gelirleri", gelir) / alisGiderKartId ("Alışlar (mal ve hammadde)"); fiş başına bir satır (cari hareketleri TL toplamı); Kâr/Zarar'a EKLENMEZ (ciro + SMM zaten). Panel (246 UretimGiderBaglari) "Fişlerin gelir / gider karşılığı": kapalı başlar (localStorage ugb-acik), özet bağlı/karşılıksız, data-ugb-ara arama süzer, iki sütunlu ızgara. v1.694: bağımsız stok giriş/çıkış + ara proses. İlke: her hareketin cari, tutar veya fiş karşılığı olmalı.**
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
