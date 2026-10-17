@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.691.0** · 17 Ekim 2026
+Son sürüm: **v1.691.1** · 18 Ekim 2026
 
 ---
 
@@ -26,7 +26,7 @@ sorma.** Yeni bir SQL eklenirse yalnız onu ver; tablo ekleyen SQL'den sonra rls
 **E-POSTA GÖNDERİMİ KURULU DEĞİL (11 Ekim): Tanımlar'da SMTP şifresi hiç yoktu; kullanıcı SMTP_SIFRE sırrı + `eposta` fonksiyonu kurulumunu "Atlayalım" dedi — kendisi istemedikçe tekrar önerme.** **rls-yazma.sql + v1.642.0 DÜZELTMESİ (yazma_yetkisi_koruma, iç içe IF + upsert) ÇALIŞTIRILDI (kullanıcı bildirdi, 11 Ekim) — bir daha sorma.** **rls-rol.sql ÇALIŞTIRILDI (kullanıcı bildirdi, 10 Ekim, v1.640.0).** Kullanıcı listesini yalnız Yönetici değiştirir,
 günlüğü yalnız Yönetici siler (tetikleyici; rls-kimlik.sql yeniden çalışsa da kalır). **Bir daha sorma.**
 
-**Son iş (17 Ekim, v1.691.0): STOK KODU (u.stokKodu, ek; serbest/değiştirilebilir/tekil — stokKoduAnahtari 005; stokNo barkod sayısı AYRI ve değişmez), RENK "Ürün Stok" işareti (r.urunStok; mamul renk seçicileri yalnız işaretlileri gösterir, hiç işaretli yoksa hepsi) + renk açıklaması (r.aciklama) — 115 TanimListesi onUrunStokToggle/onAciklamaChange; REÇETE: hammaddeye sonradan renk eklenince kartta data-recete-renk-eklendi uyarısı + eşleştirme (aynı adlıları eşle); renk eşleştirme seçicileri SuzulenSelect (005; asıl <select> korunur, yanında süzgeç); hammaddenin malzeme tipi değişince renkleri yeni tipe bağlanır (editKaydet → onRenkleriTipeBagla). v1.690: özel cari tipleri (altTip etiketi, tip davranış). Senaryolar: cari-ozel-tip, recete-renk-eklendi.**
+**Son iş (18 Ekim, v1.691.1 — Tanımlar renk satırı sarar, ad min 140px; önceki v1.691.0): STOK KODU (u.stokKodu, ek; serbest/değiştirilebilir/tekil — stokKoduAnahtari 005; stokNo barkod sayısı AYRI ve değişmez), RENK "Ürün Stok" işareti (r.urunStok; mamul renk seçicileri yalnız işaretlileri gösterir, hiç işaretli yoksa hepsi) + renk açıklaması (r.aciklama) — 115 TanimListesi onUrunStokToggle/onAciklamaChange; REÇETE: hammaddeye sonradan renk eklenince kartta data-recete-renk-eklendi uyarısı + eşleştirme (aynı adlıları eşle); renk eşleştirme seçicileri SuzulenSelect (005; asıl <select> korunur, yanında süzgeç); hammaddenin malzeme tipi değişince renkleri yeni tipe bağlanır (editKaydet → onRenkleriTipeBagla). v1.690: özel cari tipleri (altTip etiketi, tip davranış). Senaryolar: cari-ozel-tip, recete-renk-eklendi.**
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
