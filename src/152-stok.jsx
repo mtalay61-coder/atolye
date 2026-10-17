@@ -236,9 +236,13 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
         variants.push({ renk: r, renkId: renkKimligiBul(r, (tanimlar.renkler || [])), beden: b, miktar: parseFloat(matrix.values[cellKey(r, b)]) || 0, minStok: varsayilanMinStok });
       })
     );
+    const yeniStokKodu = (form.stokKodu || "").trim();
+    const kodCakisan = yeniStokKodu && items.find((p) => stokKoduAnahtari(p.stokKodu) === stokKoduAnahtari(yeniStokKodu));
+    if (kodCakisan) { showToast(`"${yeniStokKodu}" stok kodu "${kodCakisan.ad}" ürününde kullanılıyor`); return; }
     const product = {
       id: uid("stok"),
       ad: form.ad.trim(),
+      ...(yeniStokKodu ? { stokKodu: yeniStokKodu } : {}),
       kategori: form.kategori,
       birim: form.birim,
       alisFiyati: parseFloat(form.alisFiyati) || 0,
@@ -924,7 +928,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     // "hammadde" yazmak kategoriyi, "yazlık" sezonu, "2027" yılı, "taban" özel kod alanını
     // süzüyor — eskiden bunların her biri ayrı bir açılır listeydi.
     const haystack = [
-      p.ad,
+      p.ad, p.stokKodu,
       p.kategori,
       p.malzemeTipi, p.mamulTipi,
       p.sezon, p.sezonYili,
@@ -1533,9 +1537,12 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
               Renkten bağımsız, ürünün genel görseli — listede detaya girmeden görünür.
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 0.8fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr 0.8fr", gap: 10 }}>
             <Field label="Ürün Adı">
               <input value={form.ad} onChange={(e) => setForm({ ...form, ad: e.target.value })} placeholder="Örn. Klasik Loafer 402" style={inputStyle} />
+            </Field>
+            <Field label="Stok Kodu">
+              <input data-yeni-stok-kodu value={form.stokKodu || ""} onChange={(e) => setForm({ ...form, stokKodu: e.target.value })} placeholder="opsiyonel, örn. AYK-402" style={inputStyle} />
             </Field>
             <Field label="Kategori">
               <div
@@ -1946,7 +1953,9 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                     .map((r) => [r.ad, r])
                 ).values()
               );
-              const secilebilirRenkler = tumRenklerTekil.filter((r) => !selRenkler.includes(r.ad));
+              // Yalnız "Ürün Stok" işaretli renkler (v1.691). Hiç işaretli renk yoksa (eski kurulum) hepsi — liste boş kalmasın.
+              const urunStokRenkleri = tumRenklerTekil.some((r) => r.urunStok) ? tumRenklerTekil.filter((r) => r.urunStok) : tumRenklerTekil;
+              const secilebilirRenkler = urunStokRenkleri.filter((r) => !selRenkler.includes(r.ad));
               const mamulRenkTanimli = tumRenklerTekil;
               return (
                 <div>

@@ -1,0 +1,9 @@
+{
+ "hatalar": [],
+ "satirlar": [
+  "Siyah→Siyah",
+  "Taba→Taba"
+ ],
+ "uyari": "⚠ Yapıştırıcı kartına sonradan renk eklendi (Siyah, Taba) — reçetede hâlâ renksiz. Her mod",
+ "uyariSonra": false
+}

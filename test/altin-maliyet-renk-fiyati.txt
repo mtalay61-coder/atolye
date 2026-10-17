@@ -11,7 +11,7 @@
  },
  "once": [
   "Deri · Siyah: 100",
-  "Taban · Siyah · 41: 0,00 ₺yok fiyatı"
+  "Taban · Siyahfiyat yok · 41: 0,00 ₺yok fiyatı"
  ],
  "rozet": {
   "siyah": "maliyetten · Maliyet ekranından: Bot · GG.AA.YYYY SS:DD",
@@ -19,6 +19,6 @@
  },
  "sonra": [
   "Deri · Siyah: 120",
-  "Taban · Siyah · 41: 0,00 ₺yok fiyatı"
+  "Taban · Siyahfiyat yok · 41: 0,00 ₺yok fiyatı"
  ]
 }

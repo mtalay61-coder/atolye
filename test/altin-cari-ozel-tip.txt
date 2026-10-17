@@ -1,0 +1,6 @@
+{
+ "altTip": "Fasoncu",
+ "hatalar": [],
+ "sekme": true,
+ "tip": "Tedarikçi"
+}

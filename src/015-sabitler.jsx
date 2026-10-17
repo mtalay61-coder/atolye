@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.689.0";
-const SURUM_TARIHI = "2026-10-16";
-const SURUM_NOTU = "Kullanıcı kısıtları: finans raporları gizlenebilir, onay sistemi kapalı (yetkisiz düğmeler gizli)";
+const SURUM = "1.691.0";
+const SURUM_TARIHI = "2026-10-17";
+const SURUM_NOTU = "Stok kodu, Ürün Stok renk işareti ve renk açıklaması, reçetede sonradan eklenen hammadde rengi uyarısı";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.691.0", tarih: "17.10.2026", eklenen: ["Stok kartı: değiştirilebilir Stok Kodu (yeni ürün formu ve kart düzenleme; ürünler arasında tekil; aramada bulunur, kart başlığında görünür) — barkoddaki stok no ayrı ve değişmez", "Tanımlar › Renkler: her renge \"Ürün Stok\" işareti ve açıklama alanı; Ürün Stok'ta renk eklerken yalnız işaretli renkler listelenir (hiç işaretli yoksa hepsi)", "Reçete: hammaddeye sonradan renk eklenmişse kartta uyarı + her model rengi için hammadde rengi seçimi, aynı adlıları tek düğmeyle eşleme"], degisen: ["Reçete: \"geçmişten\" renk önerisi prosesi dikkate alır (aynı hammadde aynı proseste hangi renkle kullanıldıysa o; proses değişince yeniden önerilir)", "Maliyet dökümü: fiyatı 0 olan hammadde satırı kırmızı zeminde, \"fiyat yok\" yazar", "Reçeteye hammadde eklerken renk eşleştirme seçicilerinde arama kutusu (yazdıkça süzülür, tek sonuç kalınca seçilir)", "Hammaddenin malzeme tipi sonradan değiştirilince mevcut renkleri de yeni tipe bağlanır"], duzeltilen: [] },
+  { surum: "1.690.0", tarih: "17.10.2026", eklenen: ["Cari tipi seçicisinde \"+ Yeni tip…\": ad ve hangi tip gibi davranacağı (Müşteri / Tedarikçi / Her İkisi / Personel) seçilir; özel tip cari listesinde kendi sekmesinde ve kartta etiket olarak görünür, siparişte/fişte ana tipi gibi çalışır"], degisen: [], duzeltilen: [] },
   { surum: "1.689.0", tarih: "16.10.2026", eklenen: ["Tanımlar › Kullanıcılar: \"Görebileceği bilgiler\" kutuları — ilk madde Finans raporları (Finans Raporu/Gün Sonu, Gelir / Gider, Ödeme & Tahsilat raporu, anasayfa alacak/kasa/çek özetleri); yönetici dışındakiler için varsayılan kapalı", "Onay sistemi aç/kapa ayarı (varsayılan kapalı)"], degisen: ["Form çerçeveleri soluk (üst şerit tonunda, 1px); aramalı seçicilerde (müşteri, ürün) kutu içinde ikinci çerçeve çıkmıyor", "Asorti Uygula düğmesi dolu ana düğme", "Onay sistemi kapalıyken yetkisiz kullanıcı silme/düzenleme düğmelerini görmez (Kasa & Banka, gelir/gider kart hareketleri); yine de denerse \"yetkiniz yok\" der, istek oluşmaz"], duzeltilen: [] },
   { surum: "1.688.10", tarih: "16.10.2026", eklenen: [], degisen: ["Yeni sipariş girişi tam ekran açılır (düzenleme gibi)", "Sipariş listesi çerçeveli kutuda kayar; tarih süzgeci gg.aa biçimini tanır", "Anasayfa › Son İşlemler: siparişlerde cari adı ve tutar; saati olmayan kayıtta uydurma 03:00 yerine yalnız tarih; gelir/gider kaydı saatini taşır"], duzeltilen: ["Fişler süzgeç kutuları <label> olduğu için gizli ekrandaki \"Tutar\" etiketi çek formunun alanı sanılıyordu (v1.688.9)"] },
   { surum: "1.688.9", tarih: "16.10.2026", eklenen: ["Fişler: tür, fiş no, cari, tarih, sipariş, defter ve tutar için ayrı süzgeç kutuları (tarih gg.aa; tutar >, <, aralık)"], degisen: ["Fiş listesi çerçeveli kutuda kayar, süzgeç satırı üstte sabit"], duzeltilen: [] },
