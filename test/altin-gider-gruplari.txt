@@ -7,10 +7,11 @@
    "Genel yönetim",
    "Finansman",
    "Diğer gelir",
+   "Satışlar",
    "Fason işçilik",
    "Hurda satışı"
   ],
-  "baslangicSayisi": 5,
+  "baslangicSayisi": 6,
   "turler": [
    "Fason işçilik:gider",
    "Hurda satışı:gelir"
