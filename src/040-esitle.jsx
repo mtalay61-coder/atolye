@@ -334,6 +334,7 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
           return { ok: false, bulut: true, cakisma: true, hata: "sürüm çakışması — buluta yazılmadı" };
         }
         bekleyenYazmaSil(anahtar);   // gitti — defterdeyse çık
+        if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo);
         // OTOMATİK TABAN: her veri değişikliği, kimse çağırmayı unutmasa da unutsa da günlüğe
         // düşer. Değişiklik yoksa yazılmaz — yoksa günlük gürültüden okunmaz hâle gelir.
         if (sayim && (sayim.eklenen || sayim.guncellenen || sayim.silinen)) {
