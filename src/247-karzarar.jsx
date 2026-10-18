@@ -180,7 +180,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
       // v1.585'te maaş "Üretim işçiliği" satırına giriyordu; artık bölümün "<Bölüm> işçiliği" gider kartına yazılır ve
       // aşağıda Giderler altında o kartla görünür. Burada SAYILMAZ — çift sayım olmasın. Kartı olmayan (bölümsüz) bir
       // maaş hareketi yine işçilik sayılır ki rapordan düşmesin.
-      const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+      const maasMi = maasHareketiMi(h);
       if (maasMi && maasGiderKarti(tanimlar, h)) return;
       // Prosesi gider kartına bağlı işçilik (v1.692, 246) aşağıda kartında sayılır.
       if (!maasMi && iscilikGiderKarti(tanimlar, h)) return;
@@ -199,7 +199,7 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
   // BÖLÜM MAAŞLARI → GİDER KARTI (v1.587.0): kasa hareketi gibi kartın grubuna ve kartına eklenir.
   (cariler || []).forEach((c) => {
     (c.hareketler || []).forEach((h) => {
-      const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+      const maasMi = maasHareketiMi(h);
       if (!maasMi) return;
       const kart = maasGiderKarti(tanimlar, h);
       if (!kart) return;

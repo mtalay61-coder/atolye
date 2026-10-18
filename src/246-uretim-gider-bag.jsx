@@ -96,7 +96,7 @@ function karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar) {
   // MAAŞ (v1.697): bölümünün gider kartı olmayan maaş fişleri (015 maasGiderKarti).
   let maasSayisi = 0;
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
-    if ((h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))) && !maasGiderKarti(tanimlar, h)) maasSayisi++;
+    if ((maasHareketiMi(h)) && !maasGiderKarti(tanimlar, h)) maasSayisi++;
   }));
   return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length, stokSayisi, satisAlisSayisi, maasSayisi };
 }

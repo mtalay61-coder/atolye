@@ -216,7 +216,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   let nextCariler = cariler;
   // ATÖLYE İÇİ BÖLÜM (v1.585.0, bkz. 015 `prosesBolumu`): proses bir bölüme (Kesimhane) bağlıysa parça başı tutar
   // CARİYE YAZILMAZ — maaşlı personelin carisi alacaklanmaz; tutar üretim kaydına bölüm tahakkuku olarak gider.
-  const bolum = prosesBolumu(tanimlar, prosesAdi);
+  const bolum = iscilikBolumu(tanimlar, cariler, prosesAdi, atama.personelId);   // v1.700: kişi önce (015)
   let bolumTahakkuku = null;
   if (bolum && ucret > 0) {
     const ucretliAdet = Math.max(0, sonucToplam - hurdaAdet);

@@ -104,7 +104,7 @@ function tumFisleriTopla(cariler, stok) {
     else if (g.fisNo && g.fisNo.startsWith("ODM-")) tip = "Ödeme";
     // MAAŞ (v1.589.0 — kullanıcı: "maaş fişlerini de gruplandırmak lazım"): MAAS-YYYY-MM-<kod> fişleri "Diğer"e
     // düşüyordu; artık kendi çipi var (rengi FIS_TIP_RENK "Maaş").
-    else if (g.fisNo && g.fisNo.startsWith("MAAS-")) tip = "Maaş";
+    else if (g.fisNo && (g.fisNo.startsWith("MAAS-") || g.fisNo.startsWith("MESAI-"))) tip = "Maaş";   // mesai de (v1.700)
 
     else if (g.fisNo && /^\d/.test(g.fisNo)) {
       // Üretim sipariş kodları artık salt sayısal (örn. "1023") — SAT-/ALS- ile başlamayıp
@@ -1119,6 +1119,7 @@ function hareketIslemTipi(h) {
   // o kayıtlarda tip fiş numarasının "-İşçilik" ekinden okunuyor. Yeni kayıtlar alanı taşıyor.
   if (/-İşçilik$/.test(fis)) return "İşçilik";
   if (/^MAAS-/.test(fis)) return "Maaş";
+  if (/^MESAI-/.test(fis)) return "Mesai";
   const yazi = String(h.aciklama || "").trim();
   if (/^tahsilat/i.test(yazi)) return "Tahsilat";
   if (/^ödeme/i.test(yazi)) return "Ödeme";
@@ -1140,6 +1141,9 @@ function paraHareketiMi(h) {
 function cariTipEtiketi(c) { return (c && (c.altTip || c.tip)) || ""; }
 function ozelCariTipleri(cariler) {
   const m = new Map();
+  // FASONCU HAZIR (v1.700, kullanıcı: "fason personel cari gibi hareket edecek"): her zaman seçilebilir, Personel gibi
+  // üretim listelerinde çıkar; teslimde işçilik CARİYE yazılır (015 iscilikBolumu).
+  m.set("Fasoncu", "Personel");
   (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip)) m.set(c.altTip, c.tip || "Müşteri"); });
   return [...m.entries()].map(([ad, temel]) => ({ ad, temel })).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
 }

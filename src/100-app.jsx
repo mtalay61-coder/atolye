@@ -4836,6 +4836,7 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor"}>
             <CariModule
+              tanimlar={tanimlar} onTanimlarKaydet={saveTanimlar}
               giderKartlari={tanimlar.giderKartlari || []}
               kapsam={cariKapsamRef.current}
               onOdemeAlaniGit={(t) => setTab(t, true)}

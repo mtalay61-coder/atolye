@@ -66,6 +66,13 @@ const KILAVUZ = [
     "Bölüme bağlı prosesin teslimi cariye yazılmaz; tutar bölüm tahakkuku olur. Her ay başı maaşlar personel carisine \"Maaş\" olarak yazılır ve bölümün \"<Bölüm> işçiliği\" gider kartına düşer.",
     "Finans › Gelir / Gider › Kâr / Zarar'da her bölüm için tahakkuk − maaş farkı (bölümün kârı/zararı) görünür.",
   ] },
+  { b: "yonetici", baslik: "Personel, fasoncu ve mesai", adimlar: [
+    "Cari tipini doğru seçin: \"Fasoncu\" fason ustadır — teslimde işçilik carisine alacak yazılır. \"Personel\" atölye içi maaşlı çalışandır.",
+    "Personel cari kartı › Bilgiler: \"Personel bilgileri\" bölümünde bölümü, aylık maaşı, işe başlangıç tarihini ve aylık çalışma saatini girin. Maaş her ay başı otomatik yazılır.",
+    "Bir bölümde kayıtlı personelin teslimleri hangi proseste olursa olsun cariye yazılmaz, bölüm tahakkuku olur.",
+    "Mesai: aynı bölümde ayı seçip hafta içi, Cumartesi ve Pazar saatlerini girin, \"Mesaiyi yaz\". Tutar = saat ücreti (maaş ÷ aylık saat) × kat; katlar Tanımlar › Atölye İçi Bölümler'den değişir.",
+    "Mesai ayrı MESAI fişi olarak personele yazılır ve bölümün işçilik gider kartına düşer. Bir ay için tek mesai fişi olur; değiştirmek için fişi silip yeniden yazın.",
+  ] },
   { b: "yonetici", baslik: "Ürün kartı, reçete ve maliyet", adimlar: [
     "Ürün kartında stok kodu (değiştirilebilir) ve barkoddaki stok no (değişmez) ayrıdır.",
     "Reçete sekmesinde proses seçip hammaddeyi ekleyin; renk eşleştirme kutularında arama yapabilirsiniz. Geçmişten gelen öneriler kırmızı işaretlidir — kontrol edin.",

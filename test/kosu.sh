@@ -10,6 +10,7 @@ node paket-test.js
 HATA=0
 node birim-fisyaz-gerial.js || HATA=1
 node birim-uretim-gider-bag.js || HATA=1
+node birim-personel-mesai.js || HATA=1
 node birim-ambalaj.js || HATA=1
 node birim-fiyat-kurali.js || HATA=1
 node birim-satir-esitle.js || HATA=1

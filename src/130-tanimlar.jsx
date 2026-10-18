@@ -1534,6 +1534,18 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
         YAZMAZ; tutar bölüm tahakkuku olur (ürün maliyeti değişmez). Her ay başı buradaki maaş personel carisine "Maaş" olarak
         tahakkuk eder, kasadan ödeme kapatır. Finans › Kâr-Zarar'da bölümün tahakkuk − maaş farkı görünür.
       </p>
+      {/* MESAİ AYARI (v1.700, 272): saat ücreti = maaş ÷ aylık çalışma saati; mesai = saat ücreti × kat. Personel kartında
+          kişiye özel aylık saat girilebilir; boşsa buradaki. */}
+      <div data-mesai-ayar style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10, fontSize: 12 }}>
+        <b>Mesai:</b>
+        {[["aylikSaat", "Aylık çalışma saati"], ["haftaIci", "Hafta içi kat"], ["cumartesi", "Cumartesi kat"], ["pazar", "Pazar kat"]].map(([k, et]) => (
+          <label key={k} style={{ display: "flex", alignItems: "center", gap: 4 }}>{et}
+            <input type="number" step="0.1" data-mesai-ayar-alan={k} key={`${k}${mesaiAyari(tanimlar)[k]}`} defaultValue={mesaiAyari(tanimlar)[k]}
+              onBlur={(e) => { const v = parseFloat(e.target.value); if (v > 0 && v !== mesaiAyari(tanimlar)[k]) onSave({ ...tanimlar, mesaiAyar: { ...(tanimlar.mesaiAyar || {}), [k]: v } }); }}
+              style={{ width: 64, padding: "3px 5px", fontSize: 12, border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
+          </label>
+        ))}
+      </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
         <input value={yeniBolum} data-bolum-ad="1" onChange={(e) => setYeniBolum(e.target.value)} placeholder="Örn. Kesimhane" style={inputStyle}
           onKeyDown={(e) => { if (e.key === "Enter") { bolumEkle(yeniBolum); setYeniBolum(""); } }} />

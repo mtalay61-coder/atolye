@@ -1,4 +1,4 @@
-function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -442,7 +442,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik,
               }} />
           </div>
         ) : odemeCari ? (
-          <CariCard
+          <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet}
             onFiseGitNo={onFiseGitNo} muhasebe={muhasebe} kurlar={kurlar} onMuhasebeHareketi={onMuhasebeHareketi} showToast={showToast}
             key={odemeCari.id} cari={odemeCari} acik onAcKapa={() => odemeFormunuAc("", odemeTip, odemeSekliSecim)}
             onCekEkle={onCekEkle} bakiye={cariBakiyeleri(odemeCari)} listeBakiye={cariBakiyeleri(odemeCari, listeDefter)}
@@ -751,7 +751,7 @@ function CariModule({ onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik,
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
           {filtered.map((c) => (
-            <CariCard
+            <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet}
               onFiseGitNo={onFiseGitNo}
               muhasebe={muhasebe}
               kurlar={kurlar}

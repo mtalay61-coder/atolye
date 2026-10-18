@@ -475,7 +475,7 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
                     {yapisizHareketler.map((h) => (
                       <div key={h.id} style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{h.aciklama || "—"}
                         {/* MAAŞIN GİDER KARŞILIĞI (v1.697): bölüm kartı; yoksa uyarı. */}
-                        {tanimlar && (h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))) && (() => {
+                        {tanimlar && (maasHareketiMi(h)) && (() => {
                           const k = maasGiderKarti(tanimlar, h);
                           return <span data-maas-karti={k ? k.ad : ""} style={{ marginLeft: 8, fontWeight: 700, color: k ? "var(--erp-primary)" : "var(--erp-warn)" }}>{k ? `→ ${k.ad}` : "⚠ gider kartı yok (personel bir bölüme bağlı değil)"}</span>;
                         })()}
