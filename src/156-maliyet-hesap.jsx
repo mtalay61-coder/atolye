@@ -64,8 +64,10 @@ function urunMaliyetHesabi(urun, ctx = {}) {
   const ozelGenel = urun.genelGiderCiftBasi != null && urun.genelGiderCiftBasi !== "" ? parseFloat(urun.genelGiderCiftBasi) : null;
   const genel = ozelGenel != null && !Number.isNaN(ozelGenel) ? ozelGenel : (hedefAdet > 0 ? aylikGenel / hedefAdet : 0);
   if (ozelGenel == null && aylikGenel > 0 && !(hedefAdet > 0)) eksikler.push("genel gider var ama aylık üretim hedefi girilmemiş");
-  const tamTL = Math.round((hammadde + iscilik + genel) * 100) / 100;
-  return { tur: "recete", hammadde, iscilik, genel, tamTL: tamTL > 0 ? tamTL : null, eksikler };
+  // DEMİRBAŞ PAYI (v1.705.0, 273): bağlı kalıp/makine alımı ÷ ömür (çift). Tanımlar verilmezse 0 (eski çağrılar).
+  const demirbas = ctx.tanimlar ? urunDemirbasPayi(urun, ctx.tanimlar, ctx.cariler || [], kurlar).toplam : 0;
+  const tamTL = Math.round((hammadde + iscilik + genel + demirbas) * 100) / 100;
+  return { tur: "recete", hammadde, iscilik, genel, demirbas, tamTL: tamTL > 0 ? tamTL : null, eksikler };
 }
 
 // MALİYET OK DURUMU. `urun.maliyetOnay = { tarih, kim, tamTL, tur }` — kullanıcı "Maliyet OK" dediği an.

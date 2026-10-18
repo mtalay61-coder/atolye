@@ -239,6 +239,15 @@ function karZararHesapla({ stok, cariler, muhasebe, giderKartlari, donem, defter
     gruplar[anahtar].toplam += sm.cikis;
     gruplar[anahtar].kartlar[sm.cikisKart.ad] = (gruplar[anahtar].kartlar[sm.cikisKart.ad] || 0) + sm.cikis;
   }
+  // DEMİRBAŞ AMORTİSMANI (v1.705.0, 273): makine/kalıp/bıçak alımının bu döneme düşen aylık payı, "Üretim" grubunda
+  // "Makine Amortismanı" gibi kartlara. Alım hareketi (Alış) rapora tam girmiyor; yalnız bu pay → çift sayım yok.
+  const amort = donemAmortismani(cariler, kurlar, aralik, kapsar);
+  Object.entries(amort.kartlar).forEach(([ad, v]) => {
+    giderToplam += v;
+    if (!gruplar.uretim) gruplar.uretim = { toplam: 0, kartlar: {} };
+    gruplar.uretim.toplam += v;
+    gruplar.uretim.kartlar[ad] = (gruplar.uretim.kartlar[ad] || 0) + v;
+  });
   const brutKar = satisGeliri - smm - uretimIscilik;
   const netKar = brutKar - giderToplam + digerGelir;
   // ATÖLYE İÇİ BÖLÜMLER (v1.585.0): bölümün dönem tahakkuku (ürünlere yüklenen parça başı) − maaşları.

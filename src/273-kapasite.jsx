@@ -74,7 +74,7 @@ function isYukuHesapla(tanimlar, urun, proses, bedenAdet) {
   return { saat: Math.round(saat * 100) / 100, gun: Math.round((saat / gunlukSaat) * 100) / 100, eksik: Array.from(new Set(eksik)) };
 }
 
-function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
+function KapasiteTanimi({ tanimlar, onSave, cariler, stok, onCariHareketEkle, showToast }) {
   const kt = kapasiteTanimi(tanimlar);
   const yaz = (alan, liste) => onSave({ ...tanimlar, kapasite: { ...kt, [alan]: liste } });
   const prosesAdlari = (tanimlar.prosesler || []).map((p) => p.ad);
@@ -176,6 +176,8 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
                 <button type="button" className="btn-ghost" onClick={() => sil("makineler", m.id, m.ad)} title="Sil" style={{ marginLeft: "auto" }}><Trash2 size={14} /></button>
               </div>
               {prosesCipleri(m.prosesler, (l) => makineGuncelle(m.id, { prosesler: l }), m.ad)}
+              <DemirbasBolumu kayit={m} tur="Makine" tanimlar={tanimlar} cariler={cariler} stok={stok} onGuncelle={(d) => makineGuncelle(m.id, d)}
+                onCariHareketEkle={onCariHareketEkle} showToast={showToast} />
             </div>
           ))}
         </div>
@@ -229,6 +231,8 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
                   </label>
                 ))}
               </div>
+              <DemirbasBolumu kayit={k} tur={k.tur || "Kalıp"} tanimlar={tanimlar} cariler={cariler} stok={stok} onGuncelle={(d) => kalipGuncelle(k.id, d)}
+                onCariHareketEkle={onCariHareketEkle} showToast={showToast} />
             </div>
           ))}
         </div>
@@ -350,6 +354,165 @@ function UrunKapasiteBagi({ product, tanimlar, cariler, onKaydet }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ================= DEMİRBAŞ: ALIM, AMORTİSMAN, ÜRÜN PAYI (v1.705.0) =================
+// Kullanıcı: "Makine, kalıp, bıçak satın alınırken ürün bağlantısı yapılabilir ve makine, kalıp… giderleri olarak
+// işlenir." Kararlar (kullanıcı seçti): alım hem cari › Ürünsüz kayıt'tan hem Tanımlar › Kapasite'den girilir;
+// gider AMORTİSMANLA (girilen ay sayısına bölünüp her ay); ürün bağı maliyete PAY olarak girer.
+//
+// TEK KAYNAK = CARİ HAREKETİ. Alım, tedarikçiye normal "Alış" hareketi (fişli, cariye borç) ve üzerinde
+// `demirbas: { id, tur, ad, amortismanAy }`. Ayrı bir alım listesi tutulmaz — iki kaynak ayrışırdı; hareket silinirse
+// amortisman ve pay da kendiliğinden düşer. Alış hareketi Gelir/Gider'e TAM yazılmaz (alışlar zaten kâr/zarara
+// girmiyor); gider yalnız aylık amortisman payıdır → çift sayım yok.
+// ÜRÜN PAYI: kalıp/makinenin toplam alım tutarı ÷ "ömür (çift)". Hangi ürünlere? Ürün kartı › Kapasite'de o kalıbı/
+// makineyi kullanan ürünler + kalıp kartında elle bağlanan ürünler (`urunIdler`). Ömür girilmemişse pay yok.
+
+function demirbasKaydi(tanimlar, id) {
+  const kt = kapasiteTanimi(tanimlar);
+  const m = kt.makineler.find((x) => x.id === id);
+  if (m) return { tur: "Makine", kayit: m };
+  const k = kt.kaliplar.find((x) => x.id === id);
+  return k ? { tur: k.tur || "Kalıp", kayit: k } : null;
+}
+
+function demirbasTL(h, kurlar) {
+  const pb = h.paraBirimi || "TRY";
+  const kur = pb === "TRY" ? 1 : parseFloat((kurlar || {})[pb]) || 0;
+  return (Number(h.tutar) || 0) * kur;
+}
+
+// Bütün demirbaş alımları: [{ h, cari }]
+function demirbasAlimlari(cariler) {
+  const l = [];
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => { if (h.demirbas && h.demirbas.id) l.push({ h, cari: c }); }));
+  return l;
+}
+
+// Bir alımın aralığa düşen amortismanı: tutar ÷ ay; alım ayından başlayıp `ay` ay. Ayın 1'i aralıktaysa o ay sayılır.
+function amortismanAraligi(tutarTL, tarih, ay, aralik) {
+  const n = Math.max(1, Math.round(Number(ay) || 1));
+  const t = new Date(tarih || Date.now());
+  if (Number.isNaN(t.getTime())) return 0;
+  let toplam = 0;
+  for (let i = 0; i < n; i++) {
+    const d = new Date(t.getFullYear(), t.getMonth() + i, 1);
+    if (d >= new Date(aralik.bas.getFullYear(), aralik.bas.getMonth(), 1) && d <= aralik.son) toplam += tutarTL / n;
+  }
+  return Math.round(toplam * 100) / 100;
+}
+
+// Dönem amortismanı, gider kartı adına göre: { toplam, kartlar: { "Kalıp Amortismanı": x } }
+function donemAmortismani(cariler, kurlar, aralik, kapsar) {
+  const kartlar = {}; let toplam = 0;
+  demirbasAlimlari(cariler).forEach(({ h }) => {
+    if (kapsar && !kapsar(h.defter)) return;
+    const v = amortismanAraligi(demirbasTL(h, kurlar), h.tarih, h.demirbas.amortismanAy, aralik);
+    if (!v) return;
+    const ad = `${h.demirbas.tur || "Demirbaş"} Amortismanı`;
+    kartlar[ad] = Math.round(((kartlar[ad] || 0) + v) * 100) / 100;
+    toplam += v;
+  });
+  return { toplam: Math.round(toplam * 100) / 100, kartlar };
+}
+
+// Ürünün çift başı demirbaş payı: { toplam, satirlar: [{ ad, tur, alim, omur, pay }] }
+function urunDemirbasPayi(urun, tanimlar, cariler, kurlar) {
+  if (!urun || !tanimlar) return { toplam: 0, satirlar: [] };
+  const kt = kapasiteTanimi(tanimlar);
+  const idler = new Set();
+  Object.values(urun.kapasite || {}).forEach((b) => { if (!b) return; if (b.makineId) idler.add(b.makineId); (b.kalipIdler || []).forEach((x) => idler.add(x)); });
+  [...kt.makineler, ...kt.kaliplar].forEach((x) => { if ((x.urunIdler || []).includes(urun.id)) idler.add(x.id); });
+  const alimlar = demirbasAlimlari(cariler);
+  const satirlar = [];
+  idler.forEach((id) => {
+    const d = demirbasKaydi(tanimlar, id);
+    if (!d) return;
+    const omur = sayiYa(d.kayit.omurAdet);
+    const alim = alimlar.filter((a) => a.h.demirbas.id === id).reduce((t, a) => t + demirbasTL(a.h, kurlar), 0);
+    if (!omur || !alim) return;
+    satirlar.push({ ad: d.kayit.ad, tur: d.tur, alim: Math.round(alim * 100) / 100, omur, pay: Math.round((alim / omur) * 10000) / 10000 });
+  });
+  return { toplam: Math.round(satirlar.reduce((t, s) => t + s.pay, 0) * 100) / 100, satirlar };
+}
+
+// Tanımlar › Kapasite kartlarının altındaki demirbaş bölümü: ömür, ürün bağı, alımlar, "Satın alındı".
+function DemirbasBolumu({ kayit, tur, tanimlar, cariler, stok, onGuncelle, onCariHareketEkle, showToast }) {
+  const [acik, setAcik] = useState(false);
+  const [f, setF] = useState({ cariId: "", tutar: "", paraBirimi: "TRY", tarih: bugunYerel(), ay: "24", defter: "Genel" });
+  const alimlar = demirbasAlimlari(cariler).filter((a) => a.h.demirbas.id === kayit.id);
+  const mamuller = (stok || []).filter((p) => p.tip === "Mamul" && !p.pasif);
+  const bagli = kayit.urunIdler || [];
+  const tedarikciler = (cariler || []).filter((c) => c.tip !== "Personel" && c.tip !== "Müşteri" && !c.pasif);
+  const kaydet = () => {
+    const tutar = parseFloat(String(f.tutar).replace(",", "."));
+    if (!f.cariId || !(tutar > 0)) { if (showToast) showToast("Tedarikçi ve tutar girin"); return; }
+    const ay = Math.max(1, parseInt(f.ay, 10) || 1);
+    const ok = onCariHareketEkle(f.cariId, [{
+      tarih: f.tarih, yon: hareketYonu("Alış"), tutar, paraBirimi: f.paraBirimi, odemeSekli: "Nakit", vade: "", defter: f.defter,
+      islemTipi: "Alış", aciklama: `${tur} alımı — ${kayit.ad}`, kullanici: islemKullanicisiAd(),
+      demirbas: { id: kayit.id, tur, ad: kayit.ad, amortismanAy: ay },
+    }]);
+    if (ok === false) return;
+    setF({ ...f, tutar: "" }); setAcik(false);
+    if (showToast) showToast(`${kayit.ad} alımı cariye yazıldı — ${ay} ay amortisman`);
+  };
+  return (
+    <div data-demirbas={kayit.ad} style={{ borderTop: "1px dashed var(--erp-line-soft)", paddingTop: 8, display: "grid", gap: 6, fontSize: 12 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ color: "var(--erp-text-3)" }}>Ömür (çift)</span>
+        <input inputMode="numeric" data-demirbas-omur value={kayit.omurAdet ?? ""} placeholder="ör. 20000"
+          onChange={(e) => onGuncelle({ omurAdet: e.target.value })} style={{ ...inputStyle, width: 90 }} />
+        <select data-demirbas-urun value="" onChange={(e) => e.target.value && onGuncelle({ urunIdler: [...bagli, e.target.value] })} style={{ ...inputStyle, width: 200 }}>
+          <option value="">+ Ürün bağla…</option>
+          {mamuller.filter((p) => !bagli.includes(p.id)).map((p) => <option key={p.id} value={p.id}>{p.ad}</option>)}
+        </select>
+        {bagli.map((id) => {
+          const p = (stok || []).find((x) => x.id === id);
+          return (
+            <span key={id} style={{ padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: "var(--erp-line-soft)" }}>
+              {p ? p.ad : "?"} <button type="button" onClick={() => onGuncelle({ urunIdler: bagli.filter((x) => x !== id) })}
+                style={{ border: "none", background: "none", cursor: "pointer", padding: 0 }}>×</button>
+            </span>
+          );
+        })}
+        {onCariHareketEkle && (
+          <button type="button" className="btn-ghost" data-demirbas-satin-al onClick={() => setAcik(!acik)} style={{ marginLeft: "auto" }}>
+            Satın alındı…
+          </button>
+        )}
+      </div>
+      {alimlar.map(({ h, cari }) => (
+        <div key={h.id} style={{ color: "var(--erp-text-2)" }}>
+          {h.tarih} · {cari.unvan} · <b>{(Number(h.tutar) || 0).toLocaleString("tr-TR")} {h.paraBirimi || "TRY"}</b> · {h.demirbas.amortismanAy} ay amortisman · <span className="mono">{h.fisNo}</span>
+        </div>
+      ))}
+      {acik && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", background: "var(--erp-page)", padding: 8, borderRadius: "var(--erp-r-md)" }}>
+          <Field label="Tedarikçi">
+            <select data-demirbas-cari value={f.cariId} onChange={(e) => setF({ ...f, cariId: e.target.value })} style={{ ...inputStyle, width: 200 }}>
+              <option value="">Seçin…</option>
+              {tedarikciler.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+            </select>
+          </Field>
+          <Field label="Tutar"><input inputMode="decimal" data-demirbas-tutar value={f.tutar} onChange={(e) => setF({ ...f, tutar: e.target.value })} style={{ ...inputStyle, width: 100 }} /></Field>
+          <Field label="PB">
+            <select value={f.paraBirimi} onChange={(e) => setF({ ...f, paraBirimi: e.target.value })} style={{ ...inputStyle, width: 70 }}>
+              {["TRY", "USD", "EUR"].map((x) => <option key={x}>{x}</option>)}
+            </select>
+          </Field>
+          <Field label="Tarih"><input type="date" value={f.tarih} onChange={(e) => setF({ ...f, tarih: e.target.value })} style={{ ...inputStyle, width: 140 }} /></Field>
+          <Field label="Amortisman (ay)"><input inputMode="numeric" data-demirbas-ay value={f.ay} onChange={(e) => setF({ ...f, ay: e.target.value })} style={{ ...inputStyle, width: 70 }} /></Field>
+          <Field label="Defter">
+            <select value={f.defter} onChange={(e) => setF({ ...f, defter: e.target.value })} style={{ ...inputStyle, width: 90 }}>
+              <option>Genel</option><option>Resmi</option>
+            </select>
+          </Field>
+          <button type="button" className="btn-primary" data-demirbas-kaydet onClick={kaydet}>Cariye yaz</button>
+        </div>
+      )}
     </div>
   );
 }

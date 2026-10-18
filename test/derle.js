@@ -17,7 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
-  "prosesKuyrugu", "prosesPlanTakvimi", "prosesPlaniniDegistir", "isGunuEkle", "prosesKapasitesi", "isYukuHesapla", "elemanGunlukSaat", "iscilikFisProsesi", "mesaiHesapla", "iscilikBolumu", "maasHareketiMi", "personelKaydiniYaz", "satisAlisKartHareketleri", "stokKartHareketleri", "prosesGiderKartlariniTamamla", "iscilikGiderKarti", "kartUretimHareketleri", "karsiliksizUretimFisleri", "karZararHesapla",   // üretim → gider kartı (v1.692)
+  "amortismanAraligi", "donemAmortismani", "urunDemirbasPayi", "prosesKuyrugu", "prosesPlanTakvimi", "prosesPlaniniDegistir", "isGunuEkle", "prosesKapasitesi", "isYukuHesapla", "elemanGunlukSaat", "iscilikFisProsesi", "mesaiHesapla", "iscilikBolumu", "maasHareketiMi", "personelKaydiniYaz", "satisAlisKartHareketleri", "stokKartHareketleri", "prosesGiderKartlariniTamamla", "iscilikGiderKarti", "kartUretimHareketleri", "karsiliksizUretimFisleri", "karZararHesapla",   // üretim → gider kartı (v1.692)
   "firmaKoduNormal", "firmaAnahtariSorunu", "firmaAdresiGecerli", "firmaBaglantisiGecerli", "firmaRefi", "firmaDegisimEngeli", "firmaSeciminiDegistir",   // çoklu firma (v1.642.0)
   "kurulumTanimlariniUygula", "kurulumSihirbaziGerekli", "kurulumListesi",   // kurulum sihirbazı (v1.644.0)
   "demoVerisi",   // demo firma (v1.645.0)
