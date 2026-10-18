@@ -27,11 +27,19 @@ async function calistir() {
   const ilkBeden = await sayfa.evaluate(() => { const i = document.querySelector('[data-kalip="Kalıp A"] [data-kalip-beden]'); return i && i.getAttribute("data-kalip-beden"); });
   if (ilkBeden) await set(`[data-kalip="Kalıp A"] [data-kalip-beden="${ilkBeden}"]`, "40");
   await sayfa.waitForTimeout(1500);
+  // Proses sekmesi (v1.704.1): Kesim'de yeni makine Kesim'le doğar; prossesiz makine bu sekmede görünmez.
+  await sayfa.locator('[data-kapasite-sekme="Kesim"]').first().click();
+  await sayfa.waitForTimeout(400);
+  await set("[data-makine-yeni]", "Pres");
+  await sayfa.evaluate(() => document.querySelector("[data-makine-ekle]").click());
+  await sayfa.waitForTimeout(1200);
+  const kesimGorunen = await sayfa.evaluate(() => [...document.querySelectorAll("[data-makine]")].map((e) => e.getAttribute("data-makine")));
   const k = ((await depoOku(sayfa, "tanimlar:data")) || {}).kapasite || {};
   await tarayici.close();
   const m = (k.makineler || [])[0] || {};
   const kl = (k.kaliplar || [])[0] || {};
-  return { hatalar, makine: `${m.ad}:${m.saatlikAdet}:${m.gunlukSaat}`, kalip: `${kl.ad}:${kl.tur}:${kl.makineId === m.id}`, bedenYazildi: ilkBeden ? kl.bedenSaatlik[ilkBeden] : "beden yok" };
+  const pres = (k.makineler || []).find((x) => x.ad === "Pres") || {};
+  return { kesimGorunen, presProsesi: pres.prosesler, hatalar, makine: `${m.ad}:${m.saatlikAdet}:${m.gunlukSaat}`, kalip: `${kl.ad}:${kl.tur}:${kl.makineId === m.id}`, bedenYazildi: ilkBeden ? kl.bedenSaatlik[ilkBeden] : "beden yok" };
 }
 if (require.main === module) calistir().then((s) => console.log(normalles(s)));
 module.exports = { calistir };

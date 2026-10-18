@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.704.0";
+const SURUM = "1.704.1";
 const SURUM_TARIHI = "2026-10-18";
-const SURUM_NOTU = "Planlama › Proses Planlama: her proses ayrı sekme, bekleyen/planlanan kuyruk, kapasiteye göre gün ve bitiş";
+const SURUM_NOTU = "Tanımlar › Kapasite proses proses: her proseste o prosesin makine, kalıp/bıçak ve elemanları";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.704.1", tarih: "18.10.2026", eklenen: ["Tanımlar › Kapasite proses sekmeleri: makine, kalıp/bıçak ve elemanlar prosese göre süzülür; yeni makine açık prosesle doğar; prosese eleman ekleme"], degisen: [], duzeltilen: [] },
   { surum: "1.704.0", tarih: "18.10.2026", eklenen: ["Planlama › Proses Planlama: her proses ayrı sekme; Bekleyen (verilmemiş adımlar) ve Planlanan çerçeveleri, tikle toplu planla, sıra değiştir, plandan çıkar", "Planlananlarda kapasiteden gün, birikimli süre ve bitiş tahmini (pazar çalışılmaz)"], degisen: [], duzeltilen: [] },
   { surum: "1.703.2", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tam ekran cari kartının başlığı sekme şeridinin altında kalıyordu"] },
   { surum: "1.703.1", tarih: "18.10.2026", eklenen: ["Kalıp/bıçakta Adet: boşsa makinenin tüm adetlerinde ortak, girilirse aynı anda o kadar makinede çalışır"], degisen: [], duzeltilen: [] },
