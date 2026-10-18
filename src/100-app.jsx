@@ -4,7 +4,7 @@ const SEKME_IKON_BILESENI = {
   anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck, sevkiyat: Truck, alissatis: ArrowLeftRight,
   uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
   cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, bankaexcel: Upload, mutabakat: FileText, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
-  gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
+  gorevler: ClipboardList, gunluk: ScrollText, kilavuz: BookOpen, atolye: ScanLine,
 };
 function sekmeIkonu(anahtar) {
   const B = SEKME_IKON_BILESENI[anahtar] || FileText;
@@ -4310,6 +4310,11 @@ function AtolyeUygulamasi() {
                 <MessageCircle size={18} />
                 {sohbetRozeti > 0 && <span className="mono" data-nav-rozet={sohbetRozeti} style={rozetStili}>{sohbetRozeti}</span>}
               </button>
+              {/* KILAVUZ (v1.698, 271): herkes görür; rolüne göre ilgili bölüm önde açılır. */}
+              <button type="button" data-nav="Kılavuz" aria-label="Kullanım kılavuzu" title="Kullanım kılavuzu" onClick={() => git("kilavuz")}
+                style={{ ...ikonDugme, ...(tab === "kilavuz" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) }}>
+                <BookOpen size={18} />
+              </button>
               {kullaniciYetkisiVar("tanimlar", "goruntuleme") && (
                 <button type="button" data-nav="Günlük" aria-label="Günlük" title="Günlük" onClick={() => git("gunluk")}
                   style={{ ...ikonDugme, ...(tab === "gunluk" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) }}>
@@ -5123,6 +5128,7 @@ function AtolyeUygulamasi() {
           {/* Menüyü gizlemek TEK BAŞINA yeterli değil (bkz. muhasebe): gövde de yetkiye bağlı.
               Günlük ayrıca `display:none` ile gizlenmiyor, HİÇ RENDER EDİLMİYOR — gizli bir
               sekmede duran veri, ağ sekmesini açan herkese görünür olurdu. */}
+          {tab === "kilavuz" && <KilavuzEkrani aktifKullanici={aktifKullanici} tanimlar={tanimlar} />}
           {tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (
             <GunlukPaneli showToast={showToast} />
           )}

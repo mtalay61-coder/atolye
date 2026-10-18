@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.696.0</title>
+<title>Atölye ERP 1.698.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -242,7 +242,7 @@ import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { Hammer, Plus, Trash2, Search, AlertTriangle, Palette, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, X, Loader2, Boxes, Image as ImageIcon, Check, Home, TrendingUp, PackageCheck, ArrowRight, Users, FileText, ClipboardList, Printer, Pencil, Truck, Save, Upload, Wallet, Landmark, Receipt, Compass, RefreshCw, Archive, Package, Scissors, Layers, Maximize2, ArrowLeft, ScanLine, 
 // Proses ikonları için: atölyedeki iş adımlarını temsil eden ikonlar.
-Footprints, PackageOpen, Sparkles, Wrench, Armchair, Shirt, Brush, Ruler, Flame, Droplet, Zap, Paintbrush, ScrollText, Lock, Camera, 
+Footprints, PackageOpen, Sparkles, Wrench, Armchair, Shirt, Brush, Ruler, Flame, Droplet, Zap, Paintbrush, ScrollText, Lock, Camera, BookOpen, 
 // Rapor sekmesi (245-rapor): kurucu, dışa aktarma, kapsam rozetleri.
 Settings, Download, User, MessageCircle, Mail, LogOut, Menu, 
 // Sipariş formu "Ekle" düğmesi (v1.470.0).
@@ -2127,6 +2127,7 @@ const SEKME_BILGISI = {
     modelhane: { ad: "Modelhane" },
     gorevler: { ad: "Görevler" },
     gunluk: { ad: "Günlük" },
+    kilavuz: { ad: "Kılavuz" },
     atolye: { ad: "Atölye" },
 };
 // KAYIT PENCERESİ RENGİ (v1.589.0 — kullanıcı: "sekmeler logo ile ve renkli olsun"): şeritteki kayıt
@@ -2307,9 +2308,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.696.0";
+const SURUM = "1.698.0";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Satışlar ayrı Satışlar grubunda";
+const SURUM_NOTU = "Uygulama içi Kullanım Kılavuzu (sağ üstte kitap ikonu)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2339,6 +2340,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.698.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: sağ üstteki kitap ikonundan açılır; Çalışan (sipariş, iş verme/teslim, sevkiyat, tahsilat, stok giriş/çıkış) ve Yönetici (Tanımlar, yetkiler, fason/iç üretim ve maaş, reçete/maliyet, cari tipleri, gelir/gider karşılıkları, raporlar, güvenlik) bölümleri; aranabilir, adım adım"], degisen: [], duzeltilen: [] },
+    { surum: "1.697.0", tarih: "18.10.2026", eklenen: ["Fişlerin gelir / gider karşılığı panelinde her atölye içi bölüm için \"<Bölüm> maaşları\" satırı (kart değiştirilebilir); bölümü ya da kartı olmayan maaş fişi karşılıksız sayılır", "Fişler: maaş fişinin altında bağlı gider kartı (→ Kesimhane işçiliği) ya da uyarı"], degisen: [], duzeltilen: [] },
+    { surum: "1.696.1", tarih: "18.10.2026", eklenen: [], degisen: ["\"Buluta yazılamadı\" uyarısına dokununca hatanın tam metni açılır (telefonda da okunur)"], duzeltilen: ["Uyarı, aynı tablo sonra başarıyla yazılsa da elle kapatılana kadar kalıyordu — geçici kesinti sürekli hata gibi görünüyordu; artık sonraki başarılı yazmada kendiliğinden kalkar"] },
     { surum: "1.696.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider: \"Satışlar\" gelir grubu (600) açılır, \"Satış gelirleri\" kartı oraya taşınır (bir kez; sonra elle taşınan karta dokunulmaz)"], degisen: [], duzeltilen: [] },
     { surum: "1.695.1", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Gelir / Gider: gelir kartlarının (Satış gelirleri gibi) toplamı ve grup toplamı eksi görünüyordu — her kart gider gibi sayılıyordu; artık kart kendi yönünde artı"] },
     { surum: "1.695.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Fişlerin gelir / gider karşılığı\" paneli toplandı: başlıktan açılır/kapanır (kapalı başlar, özet: kaç bağlı, kaç karşılıksız), arama kutusu yazdıkça satırları süzer, iki sütunlu sıkı liste", "Satış fişleri \"Satış gelirleri\" gelir kartına, alış fişleri \"Alışlar (mal ve hammadde)\" gider kartına bağlanır (otomatik açılır, Gelir / Gider panelinden değiştirilebilir); kart ekstresinde fiş başına bir satır; karşılıksız fiş uyarısı satış/alışı da sayar"], degisen: ["Kâr/Zarar değişmez: satış zaten satış geliri, alış satılınca SMM olarak sayılıyor — çift sayım olmasın diye karta yazılan satış/alış Kâr/Zarar'a ayrıca eklenmez"], duzeltilen: [] },
@@ -5338,7 +5342,8 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
-        gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
+        gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir)
+            window.__supabaseBasariBildir(tablo); }).catch((e) => {
             console.error("Supabase yazma hatası:", tablo, e);
             bekleyenYazmaEkle(anahtar, tablo, e && e.message);
             if (typeof window !== "undefined" && window.__supabaseHataBildir) {
@@ -6709,6 +6714,8 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
                 return { ok: false, bulut: true, cakisma: true, hata: "sürüm çakışması — buluta yazılmadı" };
             }
             bekleyenYazmaSil(anahtar); // gitti — defterdeyse çık
+            if (typeof window !== "undefined" && window.__supabaseBasariBildir)
+                window.__supabaseBasariBildir(tablo);
             // OTOMATİK TABAN: her veri değişikliği, kimse çağırmayı unutmasa da unutsa da günlüğe
             // düşer. Değişiklik yoksa yazılmaz — yoksa günlük gürültüden okunmaz hâle gelir.
             if (sayim && (sayim.eklenen || sayim.guncellenen || sayim.silinen)) {
@@ -18651,7 +18658,7 @@ const SEKME_IKON_BILESENI = {
     anasayfa: Home, tanimlar: Settings, stok: Boxes, mamulstok: Package, fiyatlistesi: Tag, depo: Layers, paketleme: PackageCheck, sevkiyat: Truck, alissatis: ArrowLeftRight,
     uretim: Hammer, modelhane: Palette, planlama: Compass, siparis: ClipboardList, satinalma: PackageCheck,
     cari: Users, muhasebe: Wallet, cekler: Receipt, odemetahsilat: ArrowDownCircle, odemerapor: TrendingUp, bankaexcel: Upload, mutabakat: FileText, finansrapor: TrendingUp, gelirgider: FileText, fisler: FileText,
-    gorevler: ClipboardList, gunluk: ScrollText, atolye: ScanLine,
+    gorevler: ClipboardList, gunluk: ScrollText, kilavuz: BookOpen, atolye: ScanLine,
 };
 function sekmeIkonu(anahtar) {
     const B = SEKME_IKON_BILESENI[anahtar] || FileText;
@@ -19153,9 +19160,14 @@ function AtolyeUygulamasi() {
     useEffect(() => {
         // Yazma katmanı bileşen dışında olduğu için hatayı bu köprüyle bildiriyor.
         window.__supabaseHataBildir = (tablo, mesaj) => setYazmaHatasi({ tablo, mesaj, zaman: Date.now() });
+        // KENDİLİĞİNDEN KALKAR (v1.696.1, kullanıcı: "buluta yazılamadı çok karşılaşıyorum"): uyarı, aynı tablo sonra
+        // başarıyla yazılsa da elle kapatılana kadar duruyordu — geçici bir ağ kesintisi saatlerce "hata" gibi görünüyordu.
+        // Aynı tablonun sonraki başarılı yazması uyarıyı kaldırır (veri artık bulutta).
+        window.__supabaseBasariBildir = (tablo) => setYazmaHatasi((h) => (h && h.tablo === tablo ? null : h));
         window.__surumCakismaBildir = (tablo, idler, teshis) => setSurumCakismasi({ tablo, adet: (idler || []).length, teshis: teshis || [], zaman: Date.now() });
         return () => {
             delete window.__supabaseHataBildir;
+            delete window.__supabaseBasariBildir;
             delete window.__surumCakismaBildir;
         };
     }, []);
@@ -23013,6 +23025,8 @@ function AtolyeUygulamasi() {
                         React.createElement("button", { type: "button", "data-nav": "Sohbet", "aria-label": "Sohbet", title: "Sohbet", onClick: () => git("gorevler"), style: { ...ikonDugme, ...(tab === "gorevler" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) } },
                             React.createElement(MessageCircle, { size: 18 }),
                             sohbetRozeti > 0 && React.createElement("span", { className: "mono", "data-nav-rozet": sohbetRozeti, style: rozetStili }, sohbetRozeti)),
+                        React.createElement("button", { type: "button", "data-nav": "K\u0131lavuz", "aria-label": "Kullan\u0131m k\u0131lavuzu", title: "Kullan\u0131m k\u0131lavuzu", onClick: () => git("kilavuz"), style: { ...ikonDugme, ...(tab === "kilavuz" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) } },
+                            React.createElement(BookOpen, { size: 18 })),
                         kullaniciYetkisiVar("tanimlar", "goruntuleme") && (React.createElement("button", { type: "button", "data-nav": "G\u00FCnl\u00FCk", "aria-label": "G\u00FCnl\u00FCk", title: "G\u00FCnl\u00FCk", onClick: () => git("gunluk"), style: { ...ikonDugme, ...(tab === "gunluk" ? { background: "var(--erp-accent-tint)", color: "var(--erp-accent)" } : {}) } },
                             React.createElement(ScrollText, { size: 18 }))),
                         aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement("button", { type: "button", "aria-label": "Onay Bekleyenler", title: "Onay Bekleyenler", onClick: () => setOnayPaneliAcik(true), style: { ...ikonDugme, color: bekleyenOnaylar.length > 0 ? "var(--erp-wait)" : "var(--erp-text-2)" } },
@@ -23120,7 +23134,10 @@ function AtolyeUygulamasi() {
                     React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2, flexWrap: "wrap", rowGap: 6 } },
                         React.createElement("h1", { style: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "var(--erp-text)", whiteSpace: "nowrap" } }, TAB_TITLES[tab]),
                         React.createElement("div", { id: "modul-baslik-eylemleri", "data-modul-baslik-eylemleri": "1", style: { display: "flex", gap: 8, alignItems: "center", marginLeft: 12, flexShrink: 0 } }),
-                        yazmaHatasi && (React.createElement("button", { type: "button", onClick: () => setYazmaHatasi(null), title: `Buluta yazılamadı — ${yazmaHatasi.tablo}\n${yazmaHatasi.mesaj}\n\nVeri bu bilgisayarda kayıtlı; bağlantı düzelince yeniden denenecek. Kapatmak için tıklayın.`, style: {
+                        yazmaHatasi && (React.createElement("button", { type: "button", "data-yazma-hatasi": yazmaHatasi.tablo, 
+                            // TELEFONDA OKUNUR (v1.696.1): ayrıntı yalnız fareyle üzerine gelince (title) görünüyordu; dokununca
+                            // hata metni pencerede açılır, sonra uyarı kapanır.
+                            onClick: () => { hataGoster(`Buluta yazılamadı: ${yazmaHatasi.tablo}`, `${new Date(yazmaHatasi.zaman).toLocaleString("tr-TR")}\n${yazmaHatasi.mesaj}\n\nVeri bu cihazda kayıtlı; bağlantı düzelince yeniden gönderilir.`); setYazmaHatasi(null); }, title: `Buluta yazılamadı — ${yazmaHatasi.tablo}\n${yazmaHatasi.mesaj}\n\nVeri bu bilgisayarda kayıtlı; bağlantı düzelince yeniden denenecek. Kapatmak için tıklayın.`, style: {
                                 display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", marginRight: 10,
                                 background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-pill)",
                                 padding: "4px 12px", fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", cursor: "pointer",
@@ -23272,7 +23289,8 @@ function AtolyeUygulamasi() {
                     React.createElement(GizliModul, { aktif: tab === "satinalma" },
                         React.createElement(SiparisModule, { cop: cop, aktifSekme: tab === "satinalma", onSiparisGitGlobal: sipariseGit, mobilBolumAyari: mobilBolumCoz(tanimlar.mobilGorunum, "satinalma"), onFiseGitNo: fiseGit, koliler: koliler, sabitTip: "Al\u0131\u015F", stokRezervasyonlari: stokRezervasyonlari, siparisler: siparisler, onSave: saveSiparisler, showToast: showToast, cariler: cariler, stok: stok, uretim: uretim, onGoToCari: cariyeGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onGerceklestir: siparisGerceklestir, onSatisFisiAc: satisFisiAcSiparisten, onOdemeGir: siparisOdemesineGit, muhasebe: muhasebe, onOdemeKaydet: siparisOdemesiKaydet, onSiparisKapat: siparisKapat, onCopaAt: copaAt, onPlanlaUretim: planlaUretim, onPlanlaSatinAlma: planlaSatinAlma, onPlanlamaTemizle: planlamaTemizle, asortiler: tanimlar.asortiler || [], hedefSiparisId: siparisHedefId, onHedefTuketildi: () => setSiparisHedefId(null), onAsortiOlustur: asortiOlustur, firmaBilgileri: tanimlar.firmaBilgileri, onPencereAc: pencereAc, aktifPencereId: aktifPencereId, onPencereKapat: pencereKapat, onPencereKucult: () => setAktifPencereId(null), acikSiparisPencereleri: acikSiparisPencereleri, raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, tanimlarProsesler: tanimlar.prosesler || [], onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle, tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [], tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {} })),
                     React.createElement(GizliModul, { aktif: tab === "fisler" },
-                        React.createElement(FislerModule, { muhasebe: muhasebe, hedefFisNo: hedefFisNo, onHedefTuketildi: () => setHedefFisNo(null), cariler: cariler, stok: stok, siparisler: siparisler, uretim: uretim, onGoToCari: cariyeGit, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYetimFisTemizle: yetimFisTemizle, faturalar: faturalar, onFaturaAc: (fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo }) })),
+                        React.createElement(FislerModule, { tanimlar: tanimlar, muhasebe: muhasebe, hedefFisNo: hedefFisNo, onHedefTuketildi: () => setHedefFisNo(null), cariler: cariler, stok: stok, siparisler: siparisler, uretim: uretim, onGoToCari: cariyeGit, onGoToSiparis: sipariseGit, onGoToUretim: (uretimId) => { setUretimHedefId(uretimId || null); setTab("uretim"); }, onYetimFisTemizle: yetimFisTemizle, faturalar: faturalar, onFaturaAc: (fisNo) => pencereAc("fatura", fisNo, `Fatura: ${fisNo}`, { fisNo }) })),
+                    tab === "kilavuz" && React.createElement(KilavuzEkrani, { aktifKullanici: aktifKullanici, tanimlar: tanimlar }),
                     tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement(GunlukPaneli, { showToast: showToast })),
                     tab === "finansrapor" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Finans raporunu g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(FinansRaporu, { cariler: cariler, muhasebe: muhasebe, stok: stok, uretim: uretim, araProsesler: tanimlar.araProsesler || [], raporlar: tanimlar.raporlar || [], onRaporlarKaydet: raporlariKaydet, aktifKullanici: aktifKullanici, showToast: showToast, firmaBilgileri: tanimlar.firmaBilgileri, tanimlar: tanimlar, saveTanimlar: saveTanimlar }))),
                     tab === "gelirgider" && (!kullaniciYetkisiVar("muhasebe", "goruntuleme") ? (React.createElement(EmptyState, { text: "Gelir / Gider ekran\u0131n\u0131 g\u00F6r\u00FCnt\u00FCleme yetkiniz yok." })) : (React.createElement(GelirGiderEkrani, { stok: stok, tanimlar: tanimlar, onSave: saveTanimlar, muhasebe: muhasebe, cariler: cariler, uretim: uretim, showToast: showToast, onMuhasebeKaydet: saveMuhasebe, kullaniciYetkisiVar: kullaniciYetkisiVar, onayIste: onayIste, onayAcik: onaySistemiAcikMi(tanimlar), onCopaAt: copaAt }))),
@@ -43863,7 +43881,13 @@ function karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar) {
     const manuel = stokManuelFisleri(stok, kurlar);
     const stokSayisi = manuel.filter((f) => (f.giris > 0 && !kv(tanimlar && tanimlar.stokGirisGelirKartId)) || (f.cikis > 0 && !kv(tanimlar && tanimlar.stokCikisGiderKartId))).length;
     const satisAlisSayisi = satisAlisFisleri(cariler, kurlar).filter((f) => !kv(f.tip === "Satış" ? (tanimlar && tanimlar.satisGelirKartId) : (tanimlar && tanimlar.alisGiderKartId))).length;
-    return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length, stokSayisi, satisAlisSayisi };
+    // MAAŞ (v1.697): bölümünün gider kartı olmayan maaş fişleri (015 maasGiderKarti).
+    let maasSayisi = 0;
+    (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+        if ((h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))) && !maasGiderKarti(tanimlar, h))
+            maasSayisi++;
+    }));
+    return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length, stokSayisi, satisAlisSayisi, maasSayisi };
 }
 // Gelir/Gider ekranındaki bağlantı paneli.
 // TOPLU VE SÜZÜLEN (v1.695, kullanıcı: "bu ekranı toparlamak lazım, filtreli, yazınca daralan liste şeklinde"): başlık
@@ -43893,6 +43917,10 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
     const satirlar = [
         ...prosesler.map((p) => ({ grup: "İşçilik", etiket: `${p} işçiliği`, deger: bag[p], veri: p,
             onDegis: (v) => onSave({ ...tanimlar, prosesGiderKartlari: { ...bag, [p]: v || undefined } }) })),
+        // MAAŞ BÖLÜM BAŞINA (v1.697, kullanıcı: "maaşlar bölüm başına ayrılsın, kesimhane maaşı gibi"): her atölye içi bölümün
+        // maaşı kendi kartına. Bağ kartın `bolumId` alanında (015 bolumGiderKarti) — seçilen kart bölüme bağlanır, eskisi çözülür.
+        ...((tanimlar && tanimlar.bolumler) || []).map((b) => ({ grup: "Maaş", etiket: `${b.ad} maaşları`, deger: (bolumGiderKarti(tanimlar, b) || {}).id, veri: `maas-${b.ad}`,
+            onDegis: (v) => onSave({ ...tanimlar, giderKartlari: kartlar.map((k) => (k.id === v ? { ...k, bolumId: b.id } : k.bolumId === b.id ? { ...k, bolumId: undefined } : k)) }) })),
         { grup: "Stok", etiket: "Üretim hammadde çıkışı", deger: tanimlar && tanimlar.hammaddeCikisGiderKartId, veri: "hammadde-cikisi", onDegis: set("hammaddeCikisGiderKartId") },
         { grup: "Stok", etiket: "Stok girişi (bağımsız)", deger: tanimlar && tanimlar.stokGirisGelirKartId, veri: "stok-girisi", gelirMi: true, onDegis: set("stokGirisGelirKartId") },
         { grup: "Stok", etiket: "Stok çıkışı (bağımsız)", deger: tanimlar && tanimlar.stokCikisGiderKartId, veri: "stok-cikisi", onDegis: set("stokCikisGiderKartId") },
@@ -43904,7 +43932,7 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
     const q = nrm(ara.trim());
     const gorunen = satirlar.filter((r) => !q || nrm(r.etiket).includes(q) || nrm(kartAdi(r.deger)).includes(q) || nrm(r.grup).includes(q));
     const bagli = satirlar.filter((r) => r.deger && kartlar.some((k) => k.id === r.deger)).length;
-    const karsiliksiz = eksik.iscilikSayisi + eksik.hammaddeSayisi + eksik.stokSayisi + eksik.satisAlisSayisi;
+    const karsiliksiz = eksik.iscilikSayisi + eksik.hammaddeSayisi + eksik.stokSayisi + eksik.satisAlisSayisi + eksik.maasSayisi;
     return (React.createElement("div", { "data-uretim-gider-baglari": true, style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" } },
         React.createElement("button", { type: "button", "data-ugb-baslik": acik ? "acik" : "kapali", onClick: () => ac(!acik), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", border: "none", background: "none", padding: 0, cursor: "pointer", textAlign: "left" } },
             acik ? React.createElement(ChevronDown, { size: 16 }) : React.createElement(ChevronRight, { size: 16 }),
@@ -43923,7 +43951,7 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
             karsiliksiz > 0 && (React.createElement("div", { style: { padding: "6px 10px", marginBottom: 8, borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)", background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 } },
                 "\u26A0 Kar\u015F\u0131l\u0131\u011F\u0131 olmayan fi\u015F: ",
                 [eksik.iscilikSayisi && `${eksik.iscilikSayisi} işçilik (${eksik.prosesler.join(", ")})`, eksik.hammaddeSayisi && `${eksik.hammaddeSayisi} hammadde çıkışı`,
-                    eksik.stokSayisi && `${eksik.stokSayisi} stok giriş/çıkış`, eksik.satisAlisSayisi && `${eksik.satisAlisSayisi} satış/alış`].filter(Boolean).join(" · "))),
+                    eksik.stokSayisi && `${eksik.stokSayisi} stok giriş/çıkış`, eksik.satisAlisSayisi && `${eksik.satisAlisSayisi} satış/alış`, eksik.maasSayisi && `${eksik.maasSayisi} maaş (bölümü ya da bölüm kartı yok)`].filter(Boolean).join(" · "))),
             React.createElement("input", { "data-ugb-ara": true, value: ara, onChange: (e) => setAra(e.target.value), placeholder: "Ara: proses, kart ad\u0131, stok, sat\u0131\u015F\u2026", style: { ...inputStyle, width: "100%", maxWidth: 360, marginBottom: 8, fontSize: 13 } }),
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "4px 16px", maxHeight: 420, overflowY: "auto" } },
                 gorunen.map((r) => (React.createElement("div", { key: r.veri, style: { display: "flex", gap: 8, alignItems: "center", padding: "3px 0", borderBottom: "1px solid var(--erp-line-soft)" } },
@@ -45832,7 +45860,7 @@ function MaliyetFarkiGorunumu({ uretim, stok, cariler, kurlar, kurGecmisi, tarih
 // ilgilendiriyor — onu iki listede göstermek, aynı belgeyi iki yerde aramak demek. Ayrım kalktı,
 // yerine tip süzgeçleri geldi: tek liste, isteyen çipiyle daraltıyor.
 const FIS_SAYFA = 100;
-function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi, faturalar, onFaturaAc }) {
+function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi, faturalar, onFaturaAc }) {
     const [filtreTip, setFiltreTip] = useState("Tümü");
     const [query, setQuery] = useState("");
     const [acikFis, setAcikFis] = useState(null);
@@ -46195,7 +46223,12 @@ function FislerModule({ kapsam, muhasebe, cariler, stok, siparisler, uretim, onG
                                         React.createElement("button", { className: "btn-ghost", style: { padding: "6px 12px", fontSize: 12 }, onClick: () => setTemizlemeOnayi(null) }, "Vazge\u00E7")))),
                                 urunGruplari.length > 0 && (React.createElement("div", { style: { marginBottom: yapisizHareketler.length > 0 ? 8 : 0 } },
                                     React.createElement(FisKalemMatrisi, { urunGruplari: urunGruplari, stok: stok }))),
-                                yapisizHareketler.map((h) => (React.createElement("div", { key: h.id, style: { fontSize: 12, color: "var(--erp-text-2)" } }, h.aciklama || "—")))));
+                                yapisizHareketler.map((h) => (React.createElement("div", { key: h.id, style: { fontSize: 12, color: "var(--erp-text-2)" } },
+                                    h.aciklama || "—",
+                                    tanimlar && (h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))) && (() => {
+                                        const k = maasGiderKarti(tanimlar, h);
+                                        return React.createElement("span", { "data-maas-karti": k ? k.ad : "", style: { marginLeft: 8, fontWeight: 700, color: k ? "var(--erp-primary)" : "var(--erp-warn)" } }, k ? `→ ${k.ad}` : "⚠ gider kartı yok (personel bir bölüme bağlı değil)");
+                                    })())))));
                         })()));
                 }),
                 filtreli.length > gorunenSayi && (React.createElement("button", { type: "button", className: "btn-ghost", "data-fis-daha-fazla": "1", onClick: () => setGorunenSayi((n) => n + FIS_SAYFA), style: { justifySelf: "center", padding: "8px 18px", fontSize: 13, fontWeight: 700 } },
@@ -52208,6 +52241,132 @@ function MiktarGirisi({ deger, onKaydet, genislik = 50 }) {
             "= ",
             hesaplanan)),
         gecersiz && (React.createElement("span", { className: "mono", style: { fontSize: 10, color: "var(--erp-warn)", lineHeight: 1.4 } }, "ge\u00E7ersiz"))));
+}
+// ================= KULLANIM KILAVUZU (v1.698) =================
+// Kullanıcı: "Kullanım kılavuzu yapabilir miyiz" — karar: uygulamanın İÇİNDE (sürümle birlikte güncel kalır), çalışan ve
+// yönetici için ayrı bölümler; kullanıcının rolüne göre ilgili bölüm önde açılır. İçerik veri olarak (KILAVUZ) tutulur:
+// yeni bir ekran ya da iş akışı eklenince buraya bir madde eklemek yeter. Arama başlık + adım + ipucu metninde yapılır.
+// Ekran adları menüdeki adlarla AYNI yazılır (kullanıcı ekranda aradığını burada da aynı adla bulsun).
+const KILAVUZ = [
+    // ---------------- ÇALIŞAN ----------------
+    { b: "calisan", baslik: "Ekran düzeni ve temel kurallar", adimlar: [
+            "Üstte ana menü var: Anasayfa, Depo, Üretim, Planlama, Siparişler, Finans. Açtığınız her ekran altta sekme olarak durur; sekmenin × işaretiyle kapanır.",
+            "Sağ üstteki ikonlar: Sohbet (görevler ve mesajlar), Günlük (yalnız yetkililer), Uyarılar, Tanımlar (dişli) ve kullanıcı menüsü.",
+            "İnternet yokken uygulama kilitlenir ve kayıt girilmez — yarım kayıt olmasın diye. Bağlantı gelince kendiliğinden açılır.",
+            "\"Buluta yazılamadı\" uyarısı çıkarsa veri bu cihazda saklanmıştır; bağlantı düzelince yeniden gönderilir. Uyarıya dokunursanız hata metnini görürsünüz.",
+            "Listelerdeki başlıkların altındaki küçük kutular süzgeçtir: yazdıkça liste daralır. Tarih için gg.aa, tutar için >1000, <500 ya da 100-500 yazabilirsiniz.",
+        ] },
+    { b: "calisan", baslik: "Sipariş girmek", adimlar: [
+            "Siparişler › Sipariş › Yeni Sipariş. Form tam ekran açılır.",
+            "Müşteri kutusuna ünvan, kod ya da telefon yazıp listeden seçin. Sipariş ve teslim tarihini girin.",
+            "Kalem Ekle: ürünü (model) arayıp seçin, rengi seçin.",
+            "Asorti varsa asortiyi ve set sayısını seçip \"Uygula\"ya basın — beden miktarları dolar. Asortisiz girişte miktarları beden kutularına tek tek yazın.",
+            "Birim fiyat ve KDV'yi kontrol edip \"Ekle\"ye basın. Başka renk/model için aynı adımları tekrarlayın.",
+            "Bitince üstteki \"Siparişi Kaydet\". Kaydedilen sipariş listede \"Bekliyor\" durumunda görünür.",
+        ], ipucu: "Barkod okut · kamera · ses · fotoğraf bölümünden ürünü okutarak da kalem ekleyebilirsiniz." },
+    { b: "calisan", baslik: "Üretimde iş vermek", adimlar: [
+            "Üretim ekranında üretim kartını açın; Prosesler sekmesinde sıradaki proses (ör. Kesim) açık gelir.",
+            "Beden kutularına bu personele verilecek miktarları yazın (boş bırakılan beden kalanın tamamı sayılır).",
+            "Verilen hammadde tablosunda verdiğiniz malzemeyi kontrol edin; boş bırakırsanız reçete kadar verilmiş sayılır.",
+            "\"Kime\" kutusundan personeli seçip yanındaki \"İşi Ver\"e basın.",
+        ] },
+    { b: "calisan", baslik: "Üretimde işi teslim almak", adimlar: [
+            "Üretim kartında verilmiş prosesin satırını açın, teslim alınan miktarları beden beden girin.",
+            "Hurda ya da tamir varsa ilgili kutulara yazın; hurdaya ücret yazılmaz.",
+            "Artan ya da eksik malzeme varsa tabloda düzeltin — fark stoğa işlenir.",
+            "Teslimle birlikte fason personelin carisine işçilik alacağı yazılır; atölye içi bölüme bağlı proseste cariye yazılmaz.",
+        ] },
+    { b: "calisan", baslik: "Sevkiyat ve satış fişi", adimlar: [
+            "Depo › Sevkiyat: siparişin \"Sevk et\" düğmesi kalanı renk × beden tablosunda ve stokla birlikte gösterir.",
+            "Sevk fişinde \"Siparişten seç\" listesi açık gelir; satırdaki Ekle ile koli, asorti ya da beden olarak ekleyin. \"Stoktakilerle doldur\" kısayolu da var.",
+            "Depo › Alış / Satış: cariyi seçip fiş açın; carinin açık siparişleri listelenir, aynı şekilde eklenir.",
+            "Kaydedilen fiş cariye borç/alacak, stoğa çıkış/giriş olarak işlenir.",
+        ] },
+    { b: "calisan", baslik: "Tahsilat ve ödeme", adimlar: [
+            "Finans › Ödeme & Tahsilat: cariyi seçin, tutarı ve ödeme şeklini (nakit, kart, havale, çek) girin.",
+            "Kasa ya da banka hesabını seçip kaydedin; fiş numarası (THS-/ODM-) kendiliğinden verilir.",
+            "Çekle tahsilatta çek bilgilerini doldurun; çek, Çek & Senet ekranında portföye girer.",
+        ] },
+    { b: "calisan", baslik: "Stok giriş / çıkış (sayım, fire)", adimlar: [
+            "Depo › Stok ya da Ürün Stok › Stok Girişi: ürünü ve rengi seçin, yönü (Giriş / Çıkış) seçip beden miktarlarını girin.",
+            "Not alanına sebebini yazın (sayım farkı, fire, numune…). Kaydedilen fiş MNL- numarası alır.",
+        ], ipucu: "Siparişe ya da cariye bağlı olmayan stok hareketleri yalnız bu yolla girilir; doğrudan miktar değiştirilmez." },
+    // ---------------- YÖNETİCİ ----------------
+    { b: "yonetici", baslik: "Tanımlar — nerede ne var", adimlar: [
+            "Tanımlar (sağ üstteki dişli). Sekmeler: Firma, Ürün, Üretim, Kullanıcılar ve diğerleri. Başlıklar kapalı gelir, dokununca açılır.",
+            "Ürün sekmesi: Renkler, Bedenler & Boyutlar, Birimler, Asortiler, Atölye İçi Bölümler, Fiyat Grupları, Özel Kod Alanları.",
+            "Üretim sekmesi: Prosesler (sıra, barkod başlangıcı, gider kartı), Ara Prosesler (ücret, gider kartı), Reçete şablonları.",
+            "Renklerde \"Ürün Stok\" işaretli olanlar mamul (ürün) kartında renk olarak çıkar; açıklama alanına not düşebilirsiniz.",
+        ] },
+    { b: "yonetici", baslik: "Kullanıcılar, yetkiler ve görünürlük", adimlar: [
+            "Tanımlar › Kullanıcılar ve Yetkiler: kullanıcı ekleyin, rol şablonu seçin (Üretim, Muhasebe, Panel…) ya da modül yetkilerini tek tek işaretleyin.",
+            "\"Görebileceği bilgiler\" kutuları: işaretlenmezse kullanıcı Finans raporlarını, Gelir/Gider'i ve anasayfadaki alacak/kasa özetlerini görmez.",
+            "Onay sistemi varsayılan kapalıdır: yetkisi olmayan kullanıcı ilgili düğmeyi (sil, düzenle) hiç görmez. \"Yetkisiz işlem yönetici onayına gitsin\" işaretlenirse eski onay yöntemi döner.",
+        ] },
+    { b: "yonetici", baslik: "Fason üretim ve atölye içi bölüm (maaşlı personel)", adimlar: [
+            "Fason: prosesi yapan dışarıdaki ustadır; teslimde proses ücreti × adet ustanın carisine alacak yazılır ve prosesin işçilik gider kartına düşer.",
+            "İç üretim: Tanımlar › Ürün › Atölye İçi Bölümler'de bölüm açın (ör. Kesimhane), bağlı prosesleri işaretleyin, personeli ve aylık maaşını ekleyin.",
+            "Bölüme bağlı prosesin teslimi cariye yazılmaz; tutar bölüm tahakkuku olur. Her ay başı maaşlar personel carisine \"Maaş\" olarak yazılır ve bölümün \"<Bölüm> işçiliği\" gider kartına düşer.",
+            "Finans › Gelir / Gider › Kâr / Zarar'da her bölüm için tahakkuk − maaş farkı (bölümün kârı/zararı) görünür.",
+        ] },
+    { b: "yonetici", baslik: "Ürün kartı, reçete ve maliyet", adimlar: [
+            "Ürün kartında stok kodu (değiştirilebilir) ve barkoddaki stok no (değişmez) ayrıdır.",
+            "Reçete sekmesinde proses seçip hammaddeyi ekleyin; renk eşleştirme kutularında arama yapabilirsiniz. Geçmişten gelen öneriler kırmızı işaretlidir — kontrol edin.",
+            "Hammaddeye sonradan renk eklenirse reçete kartında uyarı çıkar; \"Aynı adlıları eşle\" ile hızla bağlayın.",
+            "Maliyet sekmesinde fiyatı 0 olan satırlar kırmızıdır; fiyatını girmeden maliyet eksik çıkar.",
+        ] },
+    { b: "yonetici", baslik: "Cari kartlar ve cari tipleri", adimlar: [
+            "Cari › Cari Ekle: tip seçicisinde \"+ Yeni tip…\" ile kendi tipinizi açabilirsiniz (ör. Fasoncu); hangi ana tip gibi davranacağını seçin.",
+            "Özel tip cari listesinde kendi sekmesinde görünür; sipariş ve fişlerde ana tipi gibi çalışır.",
+        ] },
+    { b: "yonetici", baslik: "Gelir / Gider kartları ve fişlerin karşılığı", adimlar: [
+            "Finans › Gelir / Gider: kira, elektrik gibi alışı olmayan giderler kartlara yazılır; kasa/banka hareketinde karşı taraf olarak kart seçilir.",
+            "\"Fişlerin gelir / gider karşılığı\" panelinde her fiş türünün kartı görünür: proses işçilikleri, bölüm maaşları, hammadde çıkışı, bağımsız stok giriş/çıkış, satış ve alış fişleri.",
+            "Panel başlığındaki \"karşılıksız fiş\" uyarısı, bir karta bağlanmamış fiş olduğunu söyler; ilgili satırdan kart seçin.",
+            "Kâr / Zarar sekmesinde dönem seçip satış geliri, satılan malın maliyeti, işçilik ve gider gruplarını görürsünüz.",
+        ] },
+    { b: "yonetici", baslik: "Finans raporu ve gün sonu", adimlar: [
+            "Finans › Finans Raporu: varlıklar, alacak/borç, stok değeri; Görünüm › Gün Sonu ile günün hareketleri.",
+            "Gün sonu raporu her akşam sunucudan e-postayla gönderilir (uygulama kapalı olsa da); \"Sunucudan şimdi gönder\" ile deneme yapılabilir.",
+        ] },
+    { b: "yonetici", baslik: "Güvenlik: günlük, çöp ve yedek", adimlar: [
+            "Günlük (sağ üstte): kim, ne zaman, ne yaptı.",
+            "Silinen kayıtlar Çöp'e gider; 30 gün içinde geri alınabilir.",
+            "Tanımlar › Veri Yedekleme: tüm veriyi dosya olarak indirin; düzenli aralıklarla almanız önerilir.",
+            "Yeni sürüm çıkınca uygulama kendiliğinden geçer; çalışırken üstte şerit görünür.",
+        ] },
+];
+function KilavuzEkrani({ aktifKullanici, tanimlar }) {
+    const yonetici = !tanimlar || !tanimlar.girisAktifMi || (aktifKullanici && aktifKullanici.rol === "Yönetici");
+    const [bolum, setBolum] = useState(yonetici ? "yonetici" : "calisan");
+    const [ara, setAra] = useState("");
+    const [acik, setAcik] = useState({});
+    const nrm = (x) => String(x || "").toLocaleLowerCase("tr-TR");
+    const q = nrm(ara.trim());
+    const liste = KILAVUZ.filter((m) => (q ? true : m.b === bolum))
+        .filter((m) => !q || nrm([m.baslik, ...(m.adimlar || []), m.ipucu].join(" ")).includes(q));
+    return (React.createElement("div", { "data-kilavuz": true, style: { maxWidth: 900 } },
+        React.createElement("h2", { style: { fontFamily: "'Space Grotesk', sans-serif", margin: "0 0 4px" } }, "Kullan\u0131m K\u0131lavuzu"),
+        React.createElement("p", { style: { fontSize: 13, color: "var(--erp-text-2)", margin: "0 0 12px" } }, "Ad\u0131m ad\u0131m nas\u0131l yap\u0131l\u0131r. Arad\u0131\u011F\u0131n\u0131z i\u015Fi yaz\u0131n ya da b\u00F6l\u00FCm se\u00E7in."),
+        React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 } },
+            [{ k: "calisan", ad: "Çalışan" }, { k: "yonetici", ad: "Yönetici" }].map((x) => (React.createElement("button", { key: x.k, type: "button", "data-kilavuz-bolum": x.k, onClick: () => { setBolum(x.k); setAra(""); }, style: { padding: "7px 16px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                    border: `1.5px solid ${bolum === x.k && !q ? "var(--erp-primary)" : "var(--erp-border)"}`,
+                    background: bolum === x.k && !q ? "var(--erp-primary)" : "#fff", color: bolum === x.k && !q ? "#fff" : "var(--erp-text-2)" } }, x.ad))),
+            React.createElement("input", { "data-kilavuz-ara": true, value: ara, onChange: (e) => setAra(e.target.value), placeholder: "Ara: sipari\u015F, maa\u015F, sevkiyat\u2026", style: { ...inputStyle, flex: "1 1 220px", maxWidth: 360, fontSize: 13 } })),
+        liste.length === 0 && React.createElement(EmptyState, { text: "Bu aramayla e\u015Fle\u015Fen konu yok." }),
+        React.createElement("div", { style: { display: "grid", gap: 8 } }, liste.map((m) => {
+            const ac = q ? true : !!acik[m.baslik];
+            return (React.createElement("div", { key: m.baslik, "data-kilavuz-konu": m.baslik, style: { border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", background: "#fff" } },
+                React.createElement("button", { type: "button", onClick: () => setAcik({ ...acik, [m.baslik]: !acik[m.baslik] }), style: { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "10px 12px", border: "none", background: "none", cursor: "pointer", textAlign: "left" } },
+                    ac ? React.createElement(ChevronDown, { size: 16 }) : React.createElement(ChevronRight, { size: 16 }),
+                    React.createElement("span", { style: { fontSize: 15, fontWeight: 700, color: "var(--erp-text)" } }, m.baslik),
+                    q && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, m.b === "yonetici" ? "Yönetici" : "Çalışan")),
+                ac && (React.createElement("div", { style: { padding: "0 14px 12px 36px" } },
+                    React.createElement("ol", { style: { margin: 0, paddingLeft: 18, display: "grid", gap: 6, fontSize: 13, lineHeight: 1.5, color: "var(--erp-text)" } }, m.adimlar.map((a, i) => React.createElement("li", { key: i }, a))),
+                    m.ipucu && React.createElement("div", { style: { marginTop: 8, fontSize: 12, color: "var(--erp-text-2)", background: "var(--erp-panel)", borderRadius: "var(--erp-r-sm)", padding: "6px 10px" } },
+                        "\uD83D\uDCA1 ",
+                        m.ipucu)))));
+        }))));
 }
 function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProsesler, onClose, onMinimize, firmaBilgileri }) {
     // Satırın hammadde kaydı (renk başlığı için, v1.495.0): önce kimlikle, yoksa adla.
@@ -64869,7 +65028,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.696.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.698.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

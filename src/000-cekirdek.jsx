@@ -8,7 +8,7 @@ import {
   Home, TrendingUp, PackageCheck, ArrowRight, Users, FileText, ClipboardList, Printer, Pencil, Truck, Save, Upload, Wallet, Landmark, Receipt, Compass, RefreshCw, Archive, Package, Scissors, Layers, Maximize2, ArrowLeft, ScanLine,
   // Proses ikonları için: atölyedeki iş adımlarını temsil eden ikonlar.
   Footprints, PackageOpen, Sparkles, Wrench, Armchair, Shirt, Brush, Ruler, Flame, Droplet, Zap, Paintbrush,
-  ScrollText, Lock, Camera,
+  ScrollText, Lock, Camera, BookOpen,
   // Rapor sekmesi (245-rapor): kurucu, dışa aktarma, kapsam rozetleri.
   Settings, Download, User,
   MessageCircle, Mail, LogOut, Menu,
