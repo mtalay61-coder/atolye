@@ -1139,18 +1139,24 @@ function paraHareketiMi(h) {
 // ana tip olarak kalır ("Fasoncu" → Tedarikçi gibi davranır, alış siparişinde çıkar). Liste ayrı bir
 // tanımda tutulmuyor; carilerdeki altTip'lerden türetiliyor (kaydı olmayan tip listede kalmaz).
 function cariTipEtiketi(c) { return (c && (c.altTip || c.tip)) || ""; }
-function ozelCariTipleri(cariler) {
+// TANIMLI LİSTE (v1.701, kullanıcı: "cari tipini tanımlardan değiştirebilir olsun, ekleme oluyor silme yok"):
+// `tanimlar.cariTipleri` [{ad, temel}] — Tanımlar › Firma › Cari Tipleri'nden eklenir, adı/davranışı değişir, kullanılmayan
+// silinir. Hiç tanımlanmamışsa varsayılan Fasoncu (v1.700: Personel gibi listelenir, teslimde işçilik CARİYE). Carilerde
+// geçip listede olmayan eski tipler de görünür (veri kaybolmasın).
+const CARI_TIPLERI_VARSAYILAN = [{ ad: "Fasoncu", temel: "Personel" }];
+function tanimliCariTipleri(tanimlar) {
+  return Array.isArray(tanimlar && tanimlar.cariTipleri) ? tanimlar.cariTipleri : CARI_TIPLERI_VARSAYILAN;
+}
+function ozelCariTipleri(cariler, tanimlar) {
   const m = new Map();
-  // FASONCU HAZIR (v1.700, kullanıcı: "fason personel cari gibi hareket edecek"): her zaman seçilebilir, Personel gibi
-  // üretim listelerinde çıkar; teslimde işçilik CARİYE yazılır (015 iscilikBolumu).
-  m.set("Fasoncu", "Personel");
+  tanimliCariTipleri(tanimlar).forEach((t) => { if (t && t.ad) m.set(t.ad, t.temel || "Müşteri"); });
   (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip)) m.set(c.altTip, c.tip || "Müşteri"); });
   return [...m.entries()].map(([ad, temel]) => ({ ad, temel })).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
 }
 // Tip seçici: standart tipler + özel tipler + "Yeni tip…" (ad + nasıl davranacağı).
-function CariTipSecici({ tip, altTip, cariler, onDegis, style }) {
+function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
   const [yeni, setYeni] = useState(null); // { ad, temel }
-  const ozeller = ozelCariTipleri(cariler);
+  const ozeller = ozelCariTipleri(cariler, tanimlar);
   if (altTip && !ozeller.some((o) => o.ad === altTip)) ozeller.push({ ad: altTip, temel: tip });
   const deger = yeni ? "__yeni" : (altTip ? "ozel:" + altTip : tip);
   return (
@@ -1186,6 +1192,70 @@ function CariTipSecici({ tip, altTip, cariler, onDegis, style }) {
             }}>Tamam</button>
         </div>
       )}
+    </div>
+  );
+}
+
+// Tanımlar › Firma › Cari Tipleri (v1.701). Ad değişince o tipteki carilerin etiketi, davranış değişince ana tipi de
+// değişir (aynı işlemle). Kullanımdaki tip silinmez — önce carileri başka tipe alınmalı.
+function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToast }) {
+  const [yeni, setYeni] = useState({ ad: "", temel: "Müşteri" });
+  const liste = ozelCariTipleri(cariler, tanimlar);
+  const kullanan = (ad) => (cariler || []).filter((c) => c.altTip === ad).length;
+  const listeYaz = (l) => onSave({ ...tanimlar, cariTipleri: l.map((t) => ({ ad: t.ad, temel: t.temel })) });
+  const standartMi = (ad) => CARI_TIPLERI.some((t) => t.toLocaleLowerCase("tr") === String(ad).trim().toLocaleLowerCase("tr"));
+  const ekle = () => {
+    const ad = yeni.ad.trim();
+    if (!ad) return;
+    if (standartMi(ad) || liste.some((t) => t.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"))) { if (showToast) showToast(`"${ad}" zaten var`); return; }
+    listeYaz([...liste, { ad, temel: yeni.temel }]);
+    setYeni({ ad: "", temel: yeni.temel });
+  };
+  const degistir = (eski, alanlar) => {
+    const ad = (alanlar.ad != null ? alanlar.ad : eski.ad).trim();
+    if (!ad) return;
+    if (ad !== eski.ad && (standartMi(ad) || liste.some((t) => t.ad === ad))) { if (showToast) showToast(`"${ad}" zaten var`); return; }
+    const temel = alanlar.temel || eski.temel;
+    listeYaz(liste.map((t) => (t.ad === eski.ad ? { ad, temel } : t)));
+    if (kullanan(eski.ad) > 0 && onCarilerKaydet && (ad !== eski.ad || temel !== eski.temel)) {
+      onCarilerKaydet((cariler || []).map((c) => (c.altTip === eski.ad ? { ...c, altTip: ad, tip: temel } : c)));
+    }
+  };
+  return (
+    <div data-cari-tipleri style={{ marginTop: 28 }}>
+      <TanimBasligi ad="Cari Tipleri" />
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" }}>
+        Müşteri, Tedarikçi, Personel ve Her İkisi sabittir. Kendi tiplerinizi (Fasoncu, Kargo…) buradan ekleyin; her tip bir
+        ana tip gibi davranır — sipariş/fiş listelerinde ve üretimde o ana tipin yerinde görünür. Kullanılan tip silinmez.
+      </p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+        <input data-cari-tipi-yeni value={yeni.ad} onChange={(e) => setYeni({ ...yeni, ad: e.target.value })} placeholder="Örn. Fasoncu"
+          onKeyDown={(e) => e.key === "Enter" && ekle()} style={{ ...inputStyle, width: 180 }} />
+        <select value={yeni.temel} onChange={(e) => setYeni({ ...yeni, temel: e.target.value })} style={{ ...inputStyle, width: 170 }}>
+          {CARI_TIPLERI.map((t) => <option key={t} value={t}>{t} gibi</option>)}
+        </select>
+        <button type="button" className="btn-primary" data-cari-tipi-ekle onClick={ekle}><Plus size={14} /></button>
+      </div>
+      <div style={{ display: "grid", gap: 6 }}>
+        {liste.map((t) => {
+          const n = kullanan(t.ad);
+          return (
+            <div key={t.ad} data-cari-tipi={t.ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "6px 10px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" }}>
+              <input defaultValue={t.ad} key={t.ad} data-cari-tipi-ad={t.ad} onBlur={(e) => e.target.value.trim() !== t.ad && degistir(t, { ad: e.target.value })}
+                onKeyDown={(e) => e.key === "Enter" && e.target.blur()} style={{ ...inputStyle, width: 180, fontWeight: 600 }} />
+              <select value={t.temel} data-cari-tipi-temel={t.ad} onChange={(e) => degistir(t, { temel: e.target.value })} style={{ ...inputStyle, width: 170 }}>
+                {CARI_TIPLERI.map((x) => <option key={x} value={x}>{x} gibi</option>)}
+              </select>
+              <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{n} cari</span>
+              <span style={{ marginLeft: "auto" }}>
+                {n > 0
+                  ? <span title={`${n} caride kullanılıyor — önce carileri başka tipe alın`} style={{ opacity: 0.35, display: "flex" }}><Trash2 size={14} /></span>
+                  : <SilOnayButonu onConfirm={() => listeYaz(liste.filter((x) => x.ad !== t.ad))} boyut={14} baslikNormal={`"${t.ad}" tipini sil`} baslikOnay="Silinecek — tekrar dokunun" />}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

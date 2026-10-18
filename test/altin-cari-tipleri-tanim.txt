@@ -1,0 +1,13 @@
+{
+ "araTipler": [
+  "Fasoncu",
+  "Kargo"
+ ],
+ "cariTipi": "Personel/Fason Usta",
+ "hatalar": [],
+ "silinemez": true,
+ "tipler": [
+  "Fason Usta:Personel",
+  "Kargo:Müşteri"
+ ]
+}
