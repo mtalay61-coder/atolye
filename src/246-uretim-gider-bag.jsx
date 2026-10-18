@@ -93,7 +93,12 @@ function karsiliksizUretimFisleri(tanimlar, cariler, stok, kurlar) {
   const manuel = stokManuelFisleri(stok, kurlar);
   const stokSayisi = manuel.filter((f) => (f.giris > 0 && !kv(tanimlar && tanimlar.stokGirisGelirKartId)) || (f.cikis > 0 && !kv(tanimlar && tanimlar.stokCikisGiderKartId))).length;
   const satisAlisSayisi = satisAlisFisleri(cariler, kurlar).filter((f) => !kv(f.tip === "Satış" ? (tanimlar && tanimlar.satisGelirKartId) : (tanimlar && tanimlar.alisGiderKartId))).length;
-  return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length, stokSayisi, satisAlisSayisi };
+  // MAAŞ (v1.697): bölümünün gider kartı olmayan maaş fişleri (015 maasGiderKarti).
+  let maasSayisi = 0;
+  (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
+    if ((h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""))) && !maasGiderKarti(tanimlar, h)) maasSayisi++;
+  }));
+  return { iscilikSayisi: iscilik.length, prosesler, hammaddeSayisi: hammadde.length, stokSayisi, satisAlisSayisi, maasSayisi };
 }
 
 // Gelir/Gider ekranındaki bağlantı paneli.
@@ -116,6 +121,10 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
   const satirlar = [
     ...prosesler.map((p) => ({ grup: "İşçilik", etiket: `${p} işçiliği`, deger: bag[p], veri: p,
       onDegis: (v) => onSave({ ...tanimlar, prosesGiderKartlari: { ...bag, [p]: v || undefined } }) })),
+    // MAAŞ BÖLÜM BAŞINA (v1.697, kullanıcı: "maaşlar bölüm başına ayrılsın, kesimhane maaşı gibi"): her atölye içi bölümün
+    // maaşı kendi kartına. Bağ kartın `bolumId` alanında (015 bolumGiderKarti) — seçilen kart bölüme bağlanır, eskisi çözülür.
+    ...((tanimlar && tanimlar.bolumler) || []).map((b) => ({ grup: "Maaş", etiket: `${b.ad} maaşları`, deger: (bolumGiderKarti(tanimlar, b) || {}).id, veri: `maas-${b.ad}`,
+      onDegis: (v) => onSave({ ...tanimlar, giderKartlari: kartlar.map((k) => (k.id === v ? { ...k, bolumId: b.id } : k.bolumId === b.id ? { ...k, bolumId: undefined } : k)) }) })),
     { grup: "Stok", etiket: "Üretim hammadde çıkışı", deger: tanimlar && tanimlar.hammaddeCikisGiderKartId, veri: "hammadde-cikisi", onDegis: set("hammaddeCikisGiderKartId") },
     { grup: "Stok", etiket: "Stok girişi (bağımsız)", deger: tanimlar && tanimlar.stokGirisGelirKartId, veri: "stok-girisi", gelirMi: true, onDegis: set("stokGirisGelirKartId") },
     { grup: "Stok", etiket: "Stok çıkışı (bağımsız)", deger: tanimlar && tanimlar.stokCikisGiderKartId, veri: "stok-cikisi", onDegis: set("stokCikisGiderKartId") },
@@ -127,7 +136,7 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
   const q = nrm(ara.trim());
   const gorunen = satirlar.filter((r) => !q || nrm(r.etiket).includes(q) || nrm(kartAdi(r.deger)).includes(q) || nrm(r.grup).includes(q));
   const bagli = satirlar.filter((r) => r.deger && kartlar.some((k) => k.id === r.deger)).length;
-  const karsiliksiz = eksik.iscilikSayisi + eksik.hammaddeSayisi + eksik.stokSayisi + eksik.satisAlisSayisi;
+  const karsiliksiz = eksik.iscilikSayisi + eksik.hammaddeSayisi + eksik.stokSayisi + eksik.satisAlisSayisi + eksik.maasSayisi;
   return (
     <div data-uretim-gider-baglari style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, marginBottom: 14, background: "#fff" }}>
       <button type="button" data-ugb-baslik={acik ? "acik" : "kapali"} onClick={() => ac(!acik)}
@@ -147,7 +156,7 @@ function UretimGiderBaglari({ tanimlar, onSave, cariler, stok, kurlar }) {
           {karsiliksiz > 0 && (
             <div style={{ padding: "6px 10px", marginBottom: 8, borderRadius: "var(--erp-r-md)", border: "1.5px solid var(--erp-warn)", background: "var(--erp-orange-bg)", color: "var(--erp-warn)", fontSize: 12, fontWeight: 600 }}>
               ⚠ Karşılığı olmayan fiş: {[eksik.iscilikSayisi && `${eksik.iscilikSayisi} işçilik (${eksik.prosesler.join(", ")})`, eksik.hammaddeSayisi && `${eksik.hammaddeSayisi} hammadde çıkışı`,
-                eksik.stokSayisi && `${eksik.stokSayisi} stok giriş/çıkış`, eksik.satisAlisSayisi && `${eksik.satisAlisSayisi} satış/alış`].filter(Boolean).join(" · ")}
+                eksik.stokSayisi && `${eksik.stokSayisi} stok giriş/çıkış`, eksik.satisAlisSayisi && `${eksik.satisAlisSayisi} satış/alış`, eksik.maasSayisi && `${eksik.maasSayisi} maaş (bölümü ya da bölüm kartı yok)`].filter(Boolean).join(" · ")}
             </div>
           )}
           <input data-ugb-ara value={ara} onChange={(e) => setAra(e.target.value)} placeholder="Ara: proses, kart adı, stok, satış…"

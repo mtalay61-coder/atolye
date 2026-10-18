@@ -5104,6 +5104,7 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "fisler"}>
             <FislerModule
+              tanimlar={tanimlar}
               muhasebe={muhasebe}
               hedefFisNo={hedefFisNo}
               onHedefTuketildi={() => setHedefFisNo(null)}
