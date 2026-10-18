@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-**Son sürüm:** v1.702.0 (18 Ekim 2026)
+**Son sürüm:** v1.703.0 (18 Ekim 2026)
 
 ---
 
@@ -26,7 +26,7 @@ sorma.** Yeni bir SQL eklenirse yalnız onu ver; tablo ekleyen SQL'den sonra rls
 **E-POSTA GÖNDERİMİ KURULU DEĞİL (11 Ekim): Tanımlar'da SMTP şifresi hiç yoktu; kullanıcı SMTP_SIFRE sırrı + `eposta` fonksiyonu kurulumunu "Atlayalım" dedi — kendisi istemedikçe tekrar önerme.** **rls-yazma.sql + v1.642.0 DÜZELTMESİ (yazma_yetkisi_koruma, iç içe IF + upsert) ÇALIŞTIRILDI (kullanıcı bildirdi, 11 Ekim) — bir daha sorma.** **rls-rol.sql ÇALIŞTIRILDI (kullanıcı bildirdi, 10 Ekim, v1.640.0).** Kullanıcı listesini yalnız Yönetici değiştirir,
 günlüğü yalnız Yönetici siler (tetikleyici; rls-kimlik.sql yeniden çalışsa da kalır). **Bir daha sorma.**
 
-**Son iş:** v1.702.0 — Tanımlar'da ayrı "E-Fatura & KDV" sekmesi (Firma'dan taşındı); bildirimler (toast) sol altta (dar, 360px); html scroll-padding-top ile scrollIntoView kartları sabit menü+şeridin altında kalmıyor (cari kartı). Sırada: planlama proses proses + kapasite yönetimi (makine/kalıp/bıçak/eleman) — kullanıcıdan tasarım kararı bekleniyor.
+**Son iş:** v1.703.0 — KAPASİTE YÖNETİMİ (src/273-kapasite.jsx): tanimlar.kapasite {makineler, kaliplar (beden beden saatlik), elemanlar (başlangıç/bitiş/mola)}; ürün kartı › Kapasite sekmesi: proses başına makine + kalıp/bıçak + personel (urun.kapasite). Kullanıcı kararı: günlük kapasite = makine+kalıp darboğazı × makine adedi × günlük saat; eleman yalnız saat bilgisi. prosesKapasitesi/isYukuHesapla birim-kapasite. v1.702.0: E-Fatura & KDV sekmesi, toast sol altta, scroll-padding. SIRADA (kullanıcı onayladı): Planlama proses proses ayrı sekme — her proseste Bekleyen çerçeve (kayan) + altında Planlanan çerçeve, tikle toplu Üret/Satın Al, isYukuHesapla ile gün.
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.

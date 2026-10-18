@@ -298,6 +298,7 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat, secili }) {
 }
 
 function ProductMatrixCard({
+  tanimlarTum, onKapasiteKaydet,
   kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet,
   tanimlarAylikUretimHedefi, tanimlarGenelGiderler,
   onFiseGitNo,
@@ -2086,7 +2087,9 @@ function ProductMatrixCard({
                   const prosessiz = gruplar.filter((g) => !(g.satirlar[0] && g.satirlar[0].proses)).length;
                   return `Reçete (${gruplar.length})${prosessiz > 0 ? ` ⚠ ${prosessiz} prosessiz` : ""}`;
                 })(),
-              }, { key: "maliyet", label: "Maliyet" }]
+              }, { key: "maliyet", label: "Maliyet" },
+              // KAPASİTE (v1.703.0): proses başına makine + kalıp/bıçak bağı; planlama gün hesabını buradan yapar.
+              ...(onKapasiteKaydet && tanimlarTum ? [{ key: "kapasite", label: `Kapasite${Object.values(product.kapasite || {}).filter((b) => b && b.makineId).length ? ` (${Object.values(product.kapasite).filter((b) => b && b.makineId).length})` : ""}` }] : [])]
             : []),
           { key: "fiyat", label: `Fiyatlandırma${(product.fiyatKurallari || []).length > 0 ? ` (${(product.fiyatKurallari || []).length})` : ""}` },
           { key: "siparisler", label: `Siparişler (${siparisSayisi})` },
@@ -5762,6 +5765,9 @@ function ProductMatrixCard({
           Kodlar varyantların üstünde saklanıyor ama yalnızca etiket basarken görülüyordu.
           Burada renk · beden · kod olarak listeleniyor; koda bakıp "bu hangi ürün" sorusunu
           tersinden cevaplamak da mümkün oluyor. */}
+      {isMamul && cardTab === "kapasite" && onKapasiteKaydet && tanimlarTum && (
+        <UrunKapasiteBagi product={product} tanimlar={tanimlarTum} cariler={cariler} onKaydet={onKapasiteKaydet} />
+      )}
       {cardTab === "teknik" && (
         <div data-teknik-cizim="1" style={{ display: "grid", gap: 14 }}>
           <div style={{ fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.5 }}>
