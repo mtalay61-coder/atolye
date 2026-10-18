@@ -108,7 +108,7 @@ async function calistir() {
   // 5. Tanımlar > Firma > E-Fatura
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(500);
-  await sayfa.locator('[data-tanim-sekme="firma"]').first().click();
+  await sayfa.locator('[data-tanim-sekme="efatura"]').first().click();
   await sayfa.waitForTimeout(400);
   const seri = sayfa.locator('[data-efatura-alan="efaturaSeri"]').first();
   await seri.fill("ab1x");

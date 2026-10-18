@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.700.0</title>
+<title>Atölye ERP 1.702.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -402,6 +402,12 @@ body { font-family: var(--erp-font); color: var(--erp-text); background: var(--e
   :root { --erp-icon-btn: 44px; --erp-icon: 18px; --erp-row-h: 44px; --erp-toolbar-h: 52px; }
   .erp-shell { grid-template-columns: 1fr; }
 }
+
+/* KAYDIRMA PAYI (v1.702.0 — kullanıcı: "Cari kartı ekranda sekmenin altında kalıyor"). Kart açılınca
+   scrollIntoView({block:"start"}) kartı pencerenin en tepesine getiriyordu; tepede sabit üst menü +
+   sekme şeridi (~100px) durduğu için kartın başlığı onların ALTINDA kalıyordu. Pay = menü + şerit + 8px.
+   Genel kural: tüm scrollIntoView çağrıları buna uyar. */
+html { scroll-padding-top: calc(var(--ust-menu-h, 0px) + 56px); }
 `;
 const ERP_ICONS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 <defs>
@@ -2308,9 +2314,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.700.0";
-const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Fasoncu / atölye içi personel ayrımı; personel bilgileri ve mesai";
+const SURUM = "1.702.0";
+const SURUM_TARIHI = "2026-10-18";
+const SURUM_NOTU = "Tanımlar'da E-Fatura & KDV sekmesi; bildirimler sol altta; cari kartı sekmenin altında kalmaz";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2340,6 +2346,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.702.0", tarih: "18.10.2026", eklenen: ["Tanımlar'da ayrı E-Fatura & KDV sekmesi (Firma'dan taşındı)"], degisen: ["Bilgi bildirimleri üst ortadan sol alta taşındı (sekmeleri örtmesin)"], duzeltilen: ["Cari kartı açılınca başlığı üst menü ve sekme şeridinin altında kalıyordu"] },
+    { surum: "1.701.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Firma › Cari Tipleri: özel tip ekleme, adını ve hangi ana tip gibi davranacağını değiştirme (o tipteki cariler de güncellenir), kullanılmayan tipi silme"], degisen: ["Cari listesinde özel tip sekmesi yalnız o tipte cari varsa görünür"], duzeltilen: [] },
     { surum: "1.700.0", tarih: "18.10.2026", eklenen: ["Cari tipi \"Fasoncu\" hazır seçenek: fason usta — teslimde işçilik cariye alacak", "Personel cari kartında \"Personel bilgileri\": bölüm, aylık maaş, işe başlangıç, aylık çalışma saati, saat ücreti", "Mesai: ay seçip hafta içi / Cumartesi / Pazar saatleri girilir; saat ücreti × kat ile hesaplanır, ayrı MESAI fişi olarak personele yazılır ve bölümün işçilik gider kartına düşer", "Tanımlar › Atölye İçi Bölümler: mesai katları ve varsayılan aylık çalışma saati"], degisen: ["Teslimde işçiliğin cariye mi bölüme mi yazılacağını önce kişi belirler: Fasoncu → cariye; bir bölümde kayıtlı personel → bölüm tahakkuku; ikisi de değilse eski kural (prosesin bölümü)"], duzeltilen: [] },
     { surum: "1.699.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: \"PDF (bu bölüm)\" ve \"PDF (tümü)\" düğmeleri — kapak (firma, bölüm, sürüm, tarih), numaralı konular; bir konu iki sayfaya bölünmez; arama varken eşleşen konular indirilir"], degisen: [], duzeltilen: [] },
     { surum: "1.698.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: sağ üstteki kitap ikonundan açılır; Çalışan (sipariş, iş verme/teslim, sevkiyat, tahsilat, stok giriş/çıkış) ve Yönetici (Tanımlar, yetkiler, fason/iç üretim ve maaş, reçete/maliyet, cari tipleri, gelir/gider karşılıkları, raporlar, güvenlik) bölümleri; aranabilir, adım adım"], degisen: [], duzeltilen: [] },
@@ -23244,7 +23252,7 @@ function AtolyeUygulamasi() {
                     React.createElement(GizliModul, { aktif: tab === "anasayfa" },
                         React.createElement(AnaSayfaModule, { gorevler: gorevler, aktifKullanici: aktifKullanici, onGoreveGit: () => setTab("gorevler"), stok: stok, uretim: uretim, tanimlar: tanimlar, cariler: cariler, siparisler: siparisler, muhasebe: muhasebe, uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, onNavigate: setTab, onGoToSiparis: sipariseGit, onGoToUretim: (id) => { setUretimHedefId(id || null); setTab("uretim"); }, onGoToUrun: (urunId) => uruneGit(urunId, null, { tab: "anasayfa", etiket: "Ana sayfaya dön" }), onGoToCari: cariyeGit })),
                     React.createElement(GizliModul, { aktif: tab === "tanimlar" },
-                        React.createElement(TanimlarModule, { fisDefteri: fisDefteri, onYetimSiparisBagiCoz: yetimSiparisBaglariniTemizle, muhasebe: muhasebe, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: mobilDuzenKipiAyarla, mobilDuzenAktif: mobilDuzen, kullanimdakiOlculer: kullanimdakiOlculer, onTanimsizOlcuCevir: tanimsizOlcuCevir, onAktifKullaniciGuncelle: setAktifKullanici, onAcilisFisiKes: acilisFisiKes, tanimlar: tanimlar, onSave: (sonraki) => {
+                        React.createElement(TanimlarModule, { onCarilerKaydet: saveCariler, fisDefteri: fisDefteri, onYetimSiparisBagiCoz: yetimSiparisBaglariniTemizle, muhasebe: muhasebe, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: mobilDuzenKipiAyarla, mobilDuzenAktif: mobilDuzen, kullanimdakiOlculer: kullanimdakiOlculer, onTanimsizOlcuCevir: tanimsizOlcuCevir, onAktifKullaniciGuncelle: setAktifKullanici, onAcilisFisiKes: acilisFisiKes, tanimlar: tanimlar, onSave: (sonraki) => {
                                 // TANIMLARDA DÜZENLEME YETKİSİ (v1.569.0): görüntüleme yetkisi olan herkes her şeyi değiştirip silebiliyordu.
                                 // Yöneticisiz listede (kurtarma: "Bu hesabı Yönetici yap") kayda izin var.
                                 const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");
@@ -23568,12 +23576,14 @@ function AtolyeUygulamasi() {
                     // "Bilgi butonların üzerini kapatıyor." Sol alttaydı — fiş/sipariş formlarında Kaydet ve
                     // Vazgeç tam orada. Üstte yalnız menü çubuğunu birkaç saniye örter; o sırada zaten
                     // yapılan işe bakılıyor, menüye değil. Dokununca kapanır.
-                    top: 10,
-                    left: mobilDuzen ? 12 : "50%",
+                    // SOL ALT (v1.701.1). Kullanıcı: "Üstte çıkan bilgiler sekmeleri kapatıyor, sol alttaki
+                    // olsa daha iyi." v1.487'deki Kaydet/Vazgeç örtme şikâyeti için dar tutulur (masaüstü
+                    // 360px); dokununca kapanır, birkaç saniyede kendiliğinden kaybolur.
+                    bottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+                    left: 12,
                     right: mobilDuzen ? 12 : undefined,
-                    transform: mobilDuzen ? undefined : "translateX(-50%)",
                     width: mobilDuzen ? undefined : "max-content",
-                    maxWidth: mobilDuzen ? undefined : 480,
+                    maxWidth: mobilDuzen ? undefined : 360,
                     // Üst menü (510) ve sekme şeridinin (500) ÜSTÜNDE (v1.639.0, denetim: 300 ile masaüstünde menünün, telefonda şeridin arkasında kalıyordu).
                     zIndex: 600,
                     background: "var(--erp-toast)",
@@ -25773,7 +25783,7 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, muhasebe, onYetimSipa
                         React.createElement("div", { style: { display: "grid", gap: 3, maxHeight: 300, overflowY: "auto" } }, g.kayitlar.map((d, i) => (React.createElement("div", { key: i, className: "mono", style: { fontSize: 11, color: "var(--erp-text)", background: "var(--erp-panel)", borderRadius: "var(--erp-r-sm)", padding: "4px 8px" } }, d))))))));
             }))))));
 }
-function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
     // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
     // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
     // yazmalar bu ref'ten okur.
@@ -26517,6 +26527,7 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
             { key: "urun", ad: "Ürün" },
             { key: "uretim", ad: "Üretim" },
             // WEB SİTESİ AYRI SEKME (v1.661.0 — kullanıcı: "Tanımlarda web sitesini ayrı sekmeye al"): önce Firma'nın dibindeydi.
+            { key: "efatura", ad: "E-Fatura & KDV" },
             { key: "websitesi", ad: "Web Sitesi" },
             { obek: "Sistem", key: "kullanicilar", ad: "Kullanıcılar" },
             { key: "gorunum", ad: "Görünüm" },
@@ -26592,60 +26603,6 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                             React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "\u00DCretim tesliminde ve ara proseste personel carisine yaz\u0131lan i\u015F\u00E7ilik \u00FCcretinin defteri. \u00D6nceki kay\u0131tlar de\u011Fi\u015Fmez.")));
                     })(),
                     (() => {
-                        const fb = tanimlar.firmaBilgileri || {};
-                        const oranSec = (alan) => (React.createElement("select", { value: fb[alan] ?? 20, "data-kdv-varsayilan": alan, onChange: (e) => firmaBilgisiGuncelle(alan, Number(e.target.value)), style: { ...inputStyle, width: 90 } }, KDV_ORANLARI.map((o) => React.createElement("option", { key: o, value: o },
-                            "%",
-                            o))));
-                        return (React.createElement("div", { "data-kdv-ayarlari": "1", style: { marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 10 } },
-                            React.createElement("div", { style: { fontSize: 13, fontWeight: 700 } }, "KDV"),
-                            React.createElement("label", { style: { display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, cursor: "pointer" } },
-                                React.createElement("input", { type: "checkbox", "data-kdv-aktif": "1", checked: !!fb.kdvAktif, onChange: (e) => firmaBilgisiGuncelle("kdvAktif", e.target.checked), style: { marginTop: 3 } }),
-                                React.createElement("span", null,
-                                    React.createElement("b", null, "Fi\u015Flerde KDV uygula"),
-                                    React.createElement("span", { style: { display: "block", fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 } },
-                                        "A\u00E7\u0131kken yeni al\u0131\u015F/sat\u0131\u015F fi\u015Flerinde sat\u0131r KDV'si hesaplan\u0131r ve cariye ",
-                                        React.createElement("b", null, "KDV dahil"),
-                                        " tutar yaz\u0131l\u0131r. Birim fiyatlar KDV hari\u00E7 girilir; stok maliyeti ve k\u00E2r KDV hari\u00E7 kal\u0131r. \u00D6nceki fi\u015Fler de\u011Fi\u015Fmez. Oranlar\u0131 mali m\u00FC\u015Favirinizle teyit etmeden a\u00E7may\u0131n."))),
-                            React.createElement("div", { style: { display: "flex", gap: 14, flexWrap: "wrap" } },
-                                React.createElement(Field, { label: "Varsay\u0131lan KDV \u2014 mamul" }, oranSec("kdvMamul")),
-                                React.createElement(Field, { label: "Varsay\u0131lan KDV \u2014 hammadde ve di\u011Fer" }, oranSec("kdvDiger"))),
-                            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Farkl\u0131 oranl\u0131 \u00FCr\u00FCn i\u00E7in \u00FCr\u00FCn kart\u0131nda KDV oran\u0131 se\u00E7ilebilir; fi\u015Fte sat\u0131r baz\u0131nda da de\u011Fi\u015Ftirilebilir.")));
-                    })(),
-                    (() => {
-                        const fb = tanimlar.firmaBilgileri || {};
-                        const metin = (alan, etiket, ipucu, ek = {}) => (React.createElement(Field, { label: etiket },
-                            React.createElement("input", { value: fb[alan] || "", placeholder: ipucu || "", "data-efatura-alan": alan, onChange: (e) => firmaBilgisiGuncelle(alan, ek.buyuk ? e.target.value.toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]/g, "").slice(0, 3) : e.target.value), style: { ...inputStyle, ...(ek.genislik ? { width: ek.genislik } : {}) } })));
-                        const seriUyari = (alan) => fb[alan] && !faturaSeriGecerliMi(fb[alan])
-                            ? React.createElement("div", { style: { fontSize: 11, color: "var(--erp-danger)" } }, "3 harf/rakam olmal\u0131") : null;
-                        return (React.createElement("div", { "data-efatura-ayarlari": "1", style: { marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 10 } },
-                            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } },
-                                React.createElement("div", { style: { fontSize: 13, fontWeight: 700 } }, "E-Fatura"),
-                                React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
-                                    "Entegrat\u00F6r: ",
-                                    React.createElement("b", null, "QNB eFinans")),
-                                React.createElement("span", { "data-efatura-baglanti": "yok", style: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)",
-                                        background: "var(--erp-panel-2)", color: "var(--erp-text-2)", border: "1px solid var(--erp-line)" } }, "Ba\u011Flant\u0131 kurulmad\u0131 \u2014 taslak ve \u00F6nizleme \u00E7al\u0131\u015F\u0131r, g\u00F6nderim yok")),
-                            React.createElement("div", { style: { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" } },
-                                React.createElement("div", null,
-                                    metin("efaturaSeri", "e-Fatura serisi", "Ör. ATL", { buyuk: true, genislik: 90 }),
-                                    seriUyari("efaturaSeri")),
-                                React.createElement("div", null,
-                                    metin("earsivSeri", "e-Arşiv serisi", "Ör. ARS", { buyuk: true, genislik: 90 }),
-                                    seriUyari("earsivSeri")),
-                                React.createElement(Field, { label: "e-Fatura senaryosu" },
-                                    React.createElement("select", { value: fb.efaturaProfil || "TEMELFATURA", "data-efatura-alan": "efaturaProfil", onChange: (e) => firmaBilgisiGuncelle("efaturaProfil", e.target.value), style: { ...inputStyle, width: 170 } }, EFATURA_SENARYOLARI.filter((x) => x.key !== "EARSIVFATURA").map((x) => React.createElement("option", { key: x.key, value: x.key }, x.ad))))),
-                            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 } },
-                                metin("efaturaGondericiEtiketi", "Gönderici birim etiketi", "urn:mail:defaultgb@…"),
-                                metin("mersisNo", "MERSİS no", "Opsiyonel"),
-                                metin("ticaretSicilNo", "Ticaret sicil no", "Opsiyonel")),
-                            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 } },
-                                "Seriyi ve etiketi eFinans'tan al\u0131n; True'daki seriden ",
-                                React.createElement("b", null, "farkl\u0131"),
-                                " olmal\u0131 (iki program ayn\u0131 seriden numara verirse \u00E7ak\u0131\u015F\u0131r). Fatura tasla\u011F\u0131 Fi\u015Fler ekran\u0131nda sat\u0131\u015F fi\u015Finin \"\u0130\u015Flemler\" men\u00FCs\u00FCnden a\u00E7\u0131l\u0131r. Fatura yaln\u0131z ",
-                                React.createElement("b", null, "KDV'li"),
-                                " kesilmi\u015F fi\u015Ften \u00E7\u0131kar.")));
-                    })(),
-                    (() => {
                         const e = (tanimlar.firmaBilgileri || {}).eposta || {};
                         const guncelle = (alan, deger) => firmaBilgisiGuncelle("eposta", { ...e, [alan]: deger });
                         return (React.createElement("div", { "data-eposta-ayarlari": "1", style: { marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12 } },
@@ -26677,6 +26634,62 @@ function TanimlarModule({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisB
                                 React.createElement(Field, { label: "G\u00F6nderen ad\u0131" },
                                     React.createElement("input", { value: e.gonderenAd || "", placeholder: "New Diamond Shoes", onChange: (ev) => guncelle("gonderenAd", ev.target.value), style: inputStyle })))));
                     })())))),
+        aktifTanimSekme === "firma" && (React.createElement(CariTipleriTanimi, { tanimlar: tanimlar, onSave: onSave, cariler: cariler, onCarilerKaydet: onCarilerKaydet, showToast: showToast })),
+        aktifTanimSekme === "efatura" && (React.createElement("div", { style: { marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16, display: "grid", gap: 18 } },
+            (() => {
+                const fb = tanimlar.firmaBilgileri || {};
+                const oranSec = (alan) => (React.createElement("select", { value: fb[alan] ?? 20, "data-kdv-varsayilan": alan, onChange: (e) => firmaBilgisiGuncelle(alan, Number(e.target.value)), style: { ...inputStyle, width: 90 } }, KDV_ORANLARI.map((o) => React.createElement("option", { key: o, value: o },
+                    "%",
+                    o))));
+                return (React.createElement("div", { "data-kdv-ayarlari": "1", style: { display: "grid", gap: 10 } },
+                    React.createElement("div", { style: { fontSize: 13, fontWeight: 700 } }, "KDV"),
+                    React.createElement("label", { style: { display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, cursor: "pointer" } },
+                        React.createElement("input", { type: "checkbox", "data-kdv-aktif": "1", checked: !!fb.kdvAktif, onChange: (e) => firmaBilgisiGuncelle("kdvAktif", e.target.checked), style: { marginTop: 3 } }),
+                        React.createElement("span", null,
+                            React.createElement("b", null, "Fi\u015Flerde KDV uygula"),
+                            React.createElement("span", { style: { display: "block", fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 } },
+                                "A\u00E7\u0131kken yeni al\u0131\u015F/sat\u0131\u015F fi\u015Flerinde sat\u0131r KDV'si hesaplan\u0131r ve cariye ",
+                                React.createElement("b", null, "KDV dahil"),
+                                " tutar yaz\u0131l\u0131r. Birim fiyatlar KDV hari\u00E7 girilir; stok maliyeti ve k\u00E2r KDV hari\u00E7 kal\u0131r. \u00D6nceki fi\u015Fler de\u011Fi\u015Fmez. Oranlar\u0131 mali m\u00FC\u015Favirinizle teyit etmeden a\u00E7may\u0131n."))),
+                    React.createElement("div", { style: { display: "flex", gap: 14, flexWrap: "wrap" } },
+                        React.createElement(Field, { label: "Varsay\u0131lan KDV \u2014 mamul" }, oranSec("kdvMamul")),
+                        React.createElement(Field, { label: "Varsay\u0131lan KDV \u2014 hammadde ve di\u011Fer" }, oranSec("kdvDiger"))),
+                    React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Farkl\u0131 oranl\u0131 \u00FCr\u00FCn i\u00E7in \u00FCr\u00FCn kart\u0131nda KDV oran\u0131 se\u00E7ilebilir; fi\u015Fte sat\u0131r baz\u0131nda da de\u011Fi\u015Ftirilebilir.")));
+            })(),
+            (() => {
+                const fb = tanimlar.firmaBilgileri || {};
+                const metin = (alan, etiket, ipucu, ek = {}) => (React.createElement(Field, { label: etiket },
+                    React.createElement("input", { value: fb[alan] || "", placeholder: ipucu || "", "data-efatura-alan": alan, onChange: (e) => firmaBilgisiGuncelle(alan, ek.buyuk ? e.target.value.toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]/g, "").slice(0, 3) : e.target.value), style: { ...inputStyle, ...(ek.genislik ? { width: ek.genislik } : {}) } })));
+                const seriUyari = (alan) => fb[alan] && !faturaSeriGecerliMi(fb[alan])
+                    ? React.createElement("div", { style: { fontSize: 11, color: "var(--erp-danger)" } }, "3 harf/rakam olmal\u0131") : null;
+                return (React.createElement("div", { "data-efatura-ayarlari": "1", style: { borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14, display: "grid", gap: 10 } },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } },
+                        React.createElement("div", { style: { fontSize: 13, fontWeight: 700 } }, "E-Fatura"),
+                        React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
+                            "Entegrat\u00F6r: ",
+                            React.createElement("b", null, "QNB eFinans")),
+                        React.createElement("span", { "data-efatura-baglanti": "yok", style: { fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)",
+                                background: "var(--erp-panel-2)", color: "var(--erp-text-2)", border: "1px solid var(--erp-line)" } }, "Ba\u011Flant\u0131 kurulmad\u0131 \u2014 taslak ve \u00F6nizleme \u00E7al\u0131\u015F\u0131r, g\u00F6nderim yok")),
+                    React.createElement("div", { style: { display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" } },
+                        React.createElement("div", null,
+                            metin("efaturaSeri", "e-Fatura serisi", "Ör. ATL", { buyuk: true, genislik: 90 }),
+                            seriUyari("efaturaSeri")),
+                        React.createElement("div", null,
+                            metin("earsivSeri", "e-Arşiv serisi", "Ör. ARS", { buyuk: true, genislik: 90 }),
+                            seriUyari("earsivSeri")),
+                        React.createElement(Field, { label: "e-Fatura senaryosu" },
+                            React.createElement("select", { value: fb.efaturaProfil || "TEMELFATURA", "data-efatura-alan": "efaturaProfil", onChange: (e) => firmaBilgisiGuncelle("efaturaProfil", e.target.value), style: { ...inputStyle, width: 170 } }, EFATURA_SENARYOLARI.filter((x) => x.key !== "EARSIVFATURA").map((x) => React.createElement("option", { key: x.key, value: x.key }, x.ad))))),
+                    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 } },
+                        metin("efaturaGondericiEtiketi", "Gönderici birim etiketi", "urn:mail:defaultgb@…"),
+                        metin("mersisNo", "MERSİS no", "Opsiyonel"),
+                        metin("ticaretSicilNo", "Ticaret sicil no", "Opsiyonel")),
+                    React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 } },
+                        "Seriyi ve etiketi eFinans'tan al\u0131n; True'daki seriden ",
+                        React.createElement("b", null, "farkl\u0131"),
+                        " olmal\u0131 (iki program ayn\u0131 seriden numara verirse \u00E7ak\u0131\u015F\u0131r). Fatura tasla\u011F\u0131 Fi\u015Fler ekran\u0131nda sat\u0131\u015F fi\u015Finin \"\u0130\u015Flemler\" men\u00FCs\u00FCnden a\u00E7\u0131l\u0131r. Fatura yaln\u0131z ",
+                        React.createElement("b", null, "KDV'li"),
+                        " kesilmi\u015F fi\u015Ften \u00E7\u0131kar.")));
+            })())),
         aktifTanimSekme === "websitesi" && (React.createElement(WebSitesiAyarlari, { tanimlar: tanimlar, onSave: onSave, showToast: showToast, stok: stok, cariler: cariler })),
         aktifTanimSekme === "urun" && (React.createElement(React.Fragment, null,
             React.createElement("div", { className: "tanimlar-grid", style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" } },
@@ -37724,19 +37737,26 @@ function paraHareketiMi(h) {
 // ana tip olarak kalır ("Fasoncu" → Tedarikçi gibi davranır, alış siparişinde çıkar). Liste ayrı bir
 // tanımda tutulmuyor; carilerdeki altTip'lerden türetiliyor (kaydı olmayan tip listede kalmaz).
 function cariTipEtiketi(c) { return (c && (c.altTip || c.tip)) || ""; }
-function ozelCariTipleri(cariler) {
+// TANIMLI LİSTE (v1.701, kullanıcı: "cari tipini tanımlardan değiştirebilir olsun, ekleme oluyor silme yok"):
+// `tanimlar.cariTipleri` [{ad, temel}] — Tanımlar › Firma › Cari Tipleri'nden eklenir, adı/davranışı değişir, kullanılmayan
+// silinir. Hiç tanımlanmamışsa varsayılan Fasoncu (v1.700: Personel gibi listelenir, teslimde işçilik CARİYE). Carilerde
+// geçip listede olmayan eski tipler de görünür (veri kaybolmasın).
+const CARI_TIPLERI_VARSAYILAN = [{ ad: "Fasoncu", temel: "Personel" }];
+function tanimliCariTipleri(tanimlar) {
+    return Array.isArray(tanimlar && tanimlar.cariTipleri) ? tanimlar.cariTipleri : CARI_TIPLERI_VARSAYILAN;
+}
+function ozelCariTipleri(cariler, tanimlar) {
     const m = new Map();
-    // FASONCU HAZIR (v1.700, kullanıcı: "fason personel cari gibi hareket edecek"): her zaman seçilebilir, Personel gibi
-    // üretim listelerinde çıkar; teslimde işçilik CARİYE yazılır (015 iscilikBolumu).
-    m.set("Fasoncu", "Personel");
+    tanimliCariTipleri(tanimlar).forEach((t) => { if (t && t.ad)
+        m.set(t.ad, t.temel || "Müşteri"); });
     (cariler || []).forEach((c) => { if (c && c.altTip && !m.has(c.altTip))
         m.set(c.altTip, c.tip || "Müşteri"); });
     return [...m.entries()].map(([ad, temel]) => ({ ad, temel })).sort((a, b) => a.ad.localeCompare(b.ad, "tr"));
 }
 // Tip seçici: standart tipler + özel tipler + "Yeni tip…" (ad + nasıl davranacağı).
-function CariTipSecici({ tip, altTip, cariler, onDegis, style }) {
+function CariTipSecici({ tip, altTip, cariler, tanimlar, onDegis, style }) {
     const [yeni, setYeni] = useState(null); // { ad, temel }
-    const ozeller = ozelCariTipleri(cariler);
+    const ozeller = ozelCariTipleri(cariler, tanimlar);
     if (altTip && !ozeller.some((o) => o.ad === altTip))
         ozeller.push({ ad: altTip, temel: tip });
     const deger = yeni ? "__yeni" : (altTip ? "ozel:" + altTip : tip);
@@ -37774,6 +37794,67 @@ function CariTipSecici({ tip, altTip, cariler, onDegis, style }) {
                     onDegis(std ? { tip: std, altTip: null } : { tip: yeni.temel, altTip: ad });
                     setYeni(null);
                 } }, "Tamam")))));
+}
+// Tanımlar › Firma › Cari Tipleri (v1.701). Ad değişince o tipteki carilerin etiketi, davranış değişince ana tipi de
+// değişir (aynı işlemle). Kullanımdaki tip silinmez — önce carileri başka tipe alınmalı.
+function CariTipleriTanimi({ tanimlar, onSave, cariler, onCarilerKaydet, showToast }) {
+    const [yeni, setYeni] = useState({ ad: "", temel: "Müşteri" });
+    const liste = ozelCariTipleri(cariler, tanimlar);
+    const kullanan = (ad) => (cariler || []).filter((c) => c.altTip === ad).length;
+    const listeYaz = (l) => onSave({ ...tanimlar, cariTipleri: l.map((t) => ({ ad: t.ad, temel: t.temel })) });
+    const standartMi = (ad) => CARI_TIPLERI.some((t) => t.toLocaleLowerCase("tr") === String(ad).trim().toLocaleLowerCase("tr"));
+    const ekle = () => {
+        const ad = yeni.ad.trim();
+        if (!ad)
+            return;
+        if (standartMi(ad) || liste.some((t) => t.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"))) {
+            if (showToast)
+                showToast(`"${ad}" zaten var`);
+            return;
+        }
+        listeYaz([...liste, { ad, temel: yeni.temel }]);
+        setYeni({ ad: "", temel: yeni.temel });
+    };
+    const degistir = (eski, alanlar) => {
+        const ad = (alanlar.ad != null ? alanlar.ad : eski.ad).trim();
+        if (!ad)
+            return;
+        if (ad !== eski.ad && (standartMi(ad) || liste.some((t) => t.ad === ad))) {
+            if (showToast)
+                showToast(`"${ad}" zaten var`);
+            return;
+        }
+        const temel = alanlar.temel || eski.temel;
+        listeYaz(liste.map((t) => (t.ad === eski.ad ? { ad, temel } : t)));
+        if (kullanan(eski.ad) > 0 && onCarilerKaydet && (ad !== eski.ad || temel !== eski.temel)) {
+            onCarilerKaydet((cariler || []).map((c) => (c.altTip === eski.ad ? { ...c, altTip: ad, tip: temel } : c)));
+        }
+    };
+    return (React.createElement("div", { "data-cari-tipleri": true, style: { marginTop: 28 } },
+        React.createElement(TanimBasligi, { ad: "Cari Tipleri" }),
+        React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" } }, "M\u00FC\u015Fteri, Tedarik\u00E7i, Personel ve Her \u0130kisi sabittir. Kendi tiplerinizi (Fasoncu, Kargo\u2026) buradan ekleyin; her tip bir ana tip gibi davran\u0131r \u2014 sipari\u015F/fi\u015F listelerinde ve \u00FCretimde o ana tipin yerinde g\u00F6r\u00FCn\u00FCr. Kullan\u0131lan tip silinmez."),
+        React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } },
+            React.createElement("input", { "data-cari-tipi-yeni": true, value: yeni.ad, onChange: (e) => setYeni({ ...yeni, ad: e.target.value }), placeholder: "\u00D6rn. Fasoncu", onKeyDown: (e) => e.key === "Enter" && ekle(), style: { ...inputStyle, width: 180 } }),
+            React.createElement("select", { value: yeni.temel, onChange: (e) => setYeni({ ...yeni, temel: e.target.value }), style: { ...inputStyle, width: 170 } }, CARI_TIPLERI.map((t) => React.createElement("option", { key: t, value: t },
+                t,
+                " gibi"))),
+            React.createElement("button", { type: "button", className: "btn-primary", "data-cari-tipi-ekle": true, onClick: ekle },
+                React.createElement(Plus, { size: 14 }))),
+        React.createElement("div", { style: { display: "grid", gap: 6 } }, liste.map((t) => {
+            const n = kullanan(t.ad);
+            return (React.createElement("div", { key: t.ad, "data-cari-tipi": t.ad, style: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", padding: "6px 10px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "#fff" } },
+                React.createElement("input", { defaultValue: t.ad, key: t.ad, "data-cari-tipi-ad": t.ad, onBlur: (e) => e.target.value.trim() !== t.ad && degistir(t, { ad: e.target.value }), onKeyDown: (e) => e.key === "Enter" && e.target.blur(), style: { ...inputStyle, width: 180, fontWeight: 600 } }),
+                React.createElement("select", { value: t.temel, "data-cari-tipi-temel": t.ad, onChange: (e) => degistir(t, { temel: e.target.value }), style: { ...inputStyle, width: 170 } }, CARI_TIPLERI.map((x) => React.createElement("option", { key: x, value: x },
+                    x,
+                    " gibi"))),
+                React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)" } },
+                    n,
+                    " cari"),
+                React.createElement("span", { style: { marginLeft: "auto" } }, n > 0
+                    ? React.createElement("span", { title: `${n} caride kullanılıyor — önce carileri başka tipe alın`, style: { opacity: 0.35, display: "flex" } },
+                        React.createElement(Trash2, { size: 14 }))
+                    : React.createElement(SilOnayButonu, { onConfirm: () => listeYaz(liste.filter((x) => x.ad !== t.ad)), boyut: 14, baslikNormal: `"${t.ad}" tipini sil`, baslikOnay: "Silinecek \u2014 tekrar dokunun" }))));
+        }))));
 }
 function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
     const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
@@ -48112,7 +48193,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
                 "Pasifler (",
                 pasifCariSayisi,
                 ")")),
-            ["Tümü", ...CARI_TIPLERI.filter((t) => t !== "Her İkisi"), ...ozelCariTipleri(cariTaban).map((o) => o.ad)].map((t) => {
+            ["Tümü", ...CARI_TIPLERI.filter((t) => t !== "Her İkisi"), ...ozelCariTipleri(cariTaban, tanimlar).filter((o) => cariTaban.some((c) => c.altTip === o.ad)).map((o) => o.ad)].map((t) => {
                 const aktif = cariTipSekme === t;
                 const renkT = t === "Tümü" ? "var(--erp-text)" : (CARI_TIP_RENK[t] || "var(--erp-text-2)");
                 const sayi = t === "Tümü" ? cariTaban.length : cariTaban.filter((c) => cariTipEtiketi(c) === t).length;
@@ -48192,7 +48273,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
                 React.createElement(Field, { label: "Unvan / Ad Soyad" },
                     React.createElement("input", { value: form.unvan, onChange: (e) => setForm({ ...form, unvan: e.target.value }), placeholder: "\u00D6rn. Deniz Ayakkab\u0131c\u0131l\u0131k", style: inputStyle })),
                 React.createElement(Field, { label: "Tip" },
-                    React.createElement(CariTipSecici, { tip: form.tip, altTip: form.altTip, cariler: cariler, style: inputStyle, onDegis: ({ tip, altTip }) => setForm({ ...form, tip, altTip }) })),
+                    React.createElement(CariTipSecici, { tip: form.tip, altTip: form.altTip, cariler: cariler, tanimlar: tanimlar, style: inputStyle, onDegis: ({ tip, altTip }) => setForm({ ...form, tip, altTip }) })),
                 React.createElement(Field, { label: "Telefon" },
                     React.createElement("input", { value: form.telefon, onChange: (e) => setForm({ ...form, telefon: e.target.value }), placeholder: "05xx xxx xx xx", style: inputStyle })),
                 React.createElement(Field, { label: "Vergi No / TCKN" },
@@ -50079,7 +50160,7 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
                 React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                     duzenleModu ? (React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } },
                         React.createElement("input", { value: duzenleUnvan, onChange: (e) => setDuzenleUnvan(e.target.value), autoFocus: true, className: "mono", style: { fontWeight: 700, fontSize: 14, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", minWidth: 140 } }),
-                        React.createElement(CariTipSecici, { tip: duzenleTip, altTip: duzenleAltTip, cariler: tumCariler, onDegis: ({ tip, altTip }) => { setDuzenleTip(tip); setDuzenleAltTip(altTip); }, style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
+                        React.createElement(CariTipSecici, { tip: duzenleTip, altTip: duzenleAltTip, cariler: tumCariler, tanimlar: tanimlar, onDegis: ({ tip, altTip }) => { setDuzenleTip(tip); setDuzenleAltTip(altTip); }, style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }),
                         React.createElement("select", { value: duzenleParaBirimi, onChange: (e) => setDuzenleParaBirimi(e.target.value), title: "Bu carinin hesab\u0131 hangi para biriminde tutuluyor", style: { fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" } }, MUHASEBE_PARA_BIRIMLERI.map((pb) => React.createElement("option", { key: pb, value: pb }, pb))),
                         React.createElement("button", { type: "button", onClick: () => {
                                 const yeniUnvan = duzenleUnvan.trim();
@@ -65278,7 +65359,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.700.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.702.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
