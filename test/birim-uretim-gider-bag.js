@@ -60,4 +60,9 @@ bekle("alış gider kartında", satisAlisKartHareketleri(t1, cs, {}, t1.alisGide
 bekle("satış kartı Satışlar grubunda", [t1.giderKartlari.find((k) => k.id === t1.satisGelirKartId).grup, (t1.giderGruplari || []).some((g) => g.key === "satislar" && g.tur === "gelir")], ["satislar", true]);
 const t3 = prosesGiderKartlariniTamamla({ ...t1, giderKartlari: t1.giderKartlari.map((k) => (k.id === t1.satisGelirKartId ? { ...k, grup: "gelir" } : k)) });
 bekle("elle taşınan satış kartı geri çekilmez", t3.giderKartlari.find((k) => k.id === t1.satisGelirKartId).grup, "gelir");
+
+// MAAŞ (v1.697): bölüm kartı olan maaş karşılıklı, bölümsüz maaş karşılıksız
+const tm = { ...t1, bolumler: [{ id: "b1", ad: "Kesimhane", prosesler: [], personel: [] }], giderKartlari: [...t1.giderKartlari, { id: "bk", ad: "Kesimhane işçiliği", bolumId: "b1", grup: "uretim", tur: "gider" }] };
+const cm = [{ id: "p", unvan: "P", hareketler: [{ fisNo: "MAAS-2026-10-0001", islemTipi: "Maaş", bolumId: "b1", tutar: 10 }, { fisNo: "MAAS-2026-10-0002", islemTipi: "Maaş", tutar: 10 }] }];
+bekle("bölümsüz maaş karşılıksız sayılır", karsiliksizUretimFisleri(tm, cm, [], {}).maasSayisi, 1);
 process.exit(hata);
