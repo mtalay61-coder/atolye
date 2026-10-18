@@ -295,7 +295,7 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
     }
 
     // ATÖLYE İÇİ BÖLÜM (v1.585.0): ara proses bir bölüme bağlıysa cariye değil üretim kaydına tahakkuk.
-    const araBolum = prosesBolumu(tanimlar, araTanim ? araTanim.ad : "");
+    const araBolum = iscilikBolumu(tanimlar, cariler, araTanim ? araTanim.ad : "", araTanim ? araTanim.cariId : null);   // v1.700: kişi önce
     if (araBolum && araTutar > 0) {
       araTahakkuklar.push(bolumTahakkukKaydi(araBolum, { proses: araTanim.ad, atamaId: null, fisNo: `${araFisNo}-İşçilik`,
         adet: toplamAdet, ucret: araUcret, personelId: araCariId || null, model: siparis.model, renk: siparis.renk }));

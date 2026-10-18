@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.699.0";
+const SURUM = "1.700.0";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Kullanım kılavuzu PDF olarak indirilebilir";
+const SURUM_NOTU = "Fasoncu / atölye içi personel ayrımı; personel bilgileri ve mesai";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.700.0", tarih: "18.10.2026", eklenen: ["Cari tipi \"Fasoncu\" hazır seçenek: fason usta — teslimde işçilik cariye alacak", "Personel cari kartında \"Personel bilgileri\": bölüm, aylık maaş, işe başlangıç, aylık çalışma saati, saat ücreti", "Mesai: ay seçip hafta içi / Cumartesi / Pazar saatleri girilir; saat ücreti × kat ile hesaplanır, ayrı MESAI fişi olarak personele yazılır ve bölümün işçilik gider kartına düşer", "Tanımlar › Atölye İçi Bölümler: mesai katları ve varsayılan aylık çalışma saati"], degisen: ["Teslimde işçiliğin cariye mi bölüme mi yazılacağını önce kişi belirler: Fasoncu → cariye; bir bölümde kayıtlı personel → bölüm tahakkuku; ikisi de değilse eski kural (prosesin bölümü)"], duzeltilen: [] },
   { surum: "1.699.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: \"PDF (bu bölüm)\" ve \"PDF (tümü)\" düğmeleri — kapak (firma, bölüm, sürüm, tarih), numaralı konular; bir konu iki sayfaya bölünmez; arama varken eşleşen konular indirilir"], degisen: [], duzeltilen: [] },
   { surum: "1.698.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: sağ üstteki kitap ikonundan açılır; Çalışan (sipariş, iş verme/teslim, sevkiyat, tahsilat, stok giriş/çıkış) ve Yönetici (Tanımlar, yetkiler, fason/iç üretim ve maaş, reçete/maliyet, cari tipleri, gelir/gider karşılıkları, raporlar, güvenlik) bölümleri; aranabilir, adım adım"], degisen: [], duzeltilen: [] },
   { surum: "1.697.0", tarih: "18.10.2026", eklenen: ["Fişlerin gelir / gider karşılığı panelinde her atölye içi bölüm için \"<Bölüm> maaşları\" satırı (kart değiştirilebilir); bölümü ya da kartı olmayan maaş fişi karşılıksız sayılır", "Fişler: maaş fişinin altında bağlı gider kartı (→ Kesimhane işçiliği) ya da uyarı"], degisen: [], duzeltilen: [] },
@@ -1980,6 +1981,42 @@ function bolumTahakkukKaydi(bolum, k) {
     tarih: bugunYerel(), zaman: new Date().toISOString(), adet, ucret, tutar: Math.round(adet * ucret * 100) / 100,
     personelId: k.personelId || null, model: k.model || "", renk: k.renk || "" };
 }
+// MAAŞ + MESAİ (v1.700): mesai fişi (MESAI-YYYY-MM-<kod>, islemTipi "Mesai") maaşla aynı yolu izler — bölümün gider
+// kartına, bölüm kâr/zararına ve karşılık sayımına maaş gibi girer. Tek yerde karar verilir.
+function maasHareketiMi(h) {
+  if (!h) return false;
+  const f = String(h.fisNo || "");
+  return h.islemTipi === "Maaş" || h.islemTipi === "Mesai" || /^MAAS-/.test(f) || /^MESAI-/.test(f);
+}
+function mesaiFisNo(ay, cari) {
+  return `MESAI-${ay}-${Number(cari && cari.kod) > 0 ? String(cari.kod).padStart(4, "0") : (cari && cari.id)}`;
+}
+// MESAİ ÜCRETİ (v1.700, kullanıcı kararı: "maaştan saat ücreti × kat"). Saat ücreti = maaş ÷ aylık çalışma saati;
+// hafta içi, Cumartesi ve Pazar saatleri kendi katıyla. Katlar ve varsayılan aylık saat Tanımlar'dan (mesaiAyar).
+const MESAI_VARSAYILAN = { aylikSaat: 225, haftaIci: 1.5, cumartesi: 1.5, pazar: 2 };
+function mesaiAyari(tanimlar) { return { ...MESAI_VARSAYILAN, ...((tanimlar && tanimlar.mesaiAyar) || {}) }; }
+function mesaiHesapla(maas, aylikSaat, saatler, ayar) {
+  const a = { ...MESAI_VARSAYILAN, ...(ayar || {}) };
+  const s = Number(aylikSaat) > 0 ? Number(aylikSaat) : a.aylikSaat;
+  const saatUcreti = (Number(maas) || 0) / s;
+  const hi = Number(saatler && saatler.haftaIci) || 0, ct = Number(saatler && saatler.cumartesi) || 0, pz = Number(saatler && saatler.pazar) || 0;
+  const tutar = saatUcreti * (hi * a.haftaIci + ct * a.cumartesi + pz * a.pazar);
+  return { saatUcreti: Math.round(saatUcreti * 100) / 100, tutar: Math.round(tutar * 100) / 100 };
+}
+// KİŞİYE GÖRE İŞÇİLİK (v1.700, kullanıcı: "C.tipi fason personel cari gibi hareket edecek, personel seçince atölye içi
+// personel gibi hareket edecek"). Teslimde işçiliğin cariye mi bölüme mi yazılacağını önce KİŞİ belirler:
+//   • Fasoncu (altTip) → cariye alacak (proses bölüme bağlı olsa da);
+//   • bir bölümün personel listesindeki kişi → o bölümün tahakkuku (maaşlı, cariye yazılmaz);
+//   • ikisi de değilse eski kural: prosesin bölümü (Tanımlar'daki bağ).
+function iscilikBolumu(tanimlar, cariler, prosesAdi, personelId) {
+  const c = personelId ? (cariler || []).find((x) => x.id === personelId) : null;
+  if (c && c.altTip === "Fasoncu") return null;
+  if (c) {
+    const b = ((tanimlar && tanimlar.bolumler) || []).find((x) => (x.personel || []).some((p) => p.cariId === c.id));
+    if (b) return b;
+  }
+  return prosesBolumu(tanimlar, prosesAdi);
+}
 function maasFisNo(ay, cari) {
   return `MAAS-${ay}-${Number(cari && cari.kod) > 0 ? String(cari.kod).padStart(4, "0") : (cari && cari.id)}`;
 }
@@ -1992,7 +2029,7 @@ function bolumKarZarar(bolum, uretim, cariler, tarihUygun) {
   }));
   const uyeler = new Set((bolum.personel || []).map((p) => p.cariId));
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
-    if (!(h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || "")))) return;
+    if (!(maasHareketiMi(h))) return;
     if (!(h.bolumId === bolum.id || (!h.bolumId && uyeler.has(c.id)))) return;
     if (!tarihUygun(h.tarih)) return;
     maas += Number(h.tutar) || 0;
@@ -2038,7 +2075,7 @@ function bolumMaasHareketleri(tanimlar, cariler, kartId) {
   if (!kart) return [];
   const liste = [];
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
-    const maasMi = h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || ""));
+    const maasMi = maasHareketiMi(h);
     if (!maasMi) return;
     if (h.giderKartId === kartId || (kart.bolumId && h.bolumId === kart.bolumId)) liste.push({ ...h, cariUnvan: c.unvan });
   }));
@@ -2069,7 +2106,7 @@ function bolumAylikDokum(bolum, uretim, cariler) {
   }));
   const uyeler = new Set((bolum.personel || []).map((p) => p.cariId));
   (cariler || []).forEach((c) => (c.hareketler || []).forEach((h) => {
-    if (!(h.islemTipi === "Maaş" || /^MAAS-/.test(String(h.fisNo || "")))) return;
+    if (!(maasHareketiMi(h))) return;
     if (!(h.bolumId === bolum.id || (!h.bolumId && uyeler.has(c.id)))) return;
     if (!h.tarih) return;
     al(String(h.tarih).slice(0, 7)).maas += Number(h.tutar) || 0;

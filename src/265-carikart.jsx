@@ -1,4 +1,4 @@
-function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
+function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
   // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
   // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
   // gittiği söylenmezse silindi sanılıyor.
@@ -944,6 +944,10 @@ function CariCard({ onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast
           </div>
           )}
 
+          {/* PERSONEL BİLGİLERİ + MESAİ (v1.700, 272): atölye içi personel (Fasoncu değil). */}
+          {cardTab === "bilgiler" && cari.tip === "Personel" && cari.altTip !== "Fasoncu" && tanimlar && onTanimlarKaydet && (
+            <PersonelBilgileriPaneli cari={cari} tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet} onAddHareket={onAddHareket} showToast={showToast} />
+          )}
           {cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (
             <div style={{ marginBottom: 14, padding: "8px 10px", background: "#EAF0F4", borderRadius: "var(--erp-r-md)" }}>
               <label style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

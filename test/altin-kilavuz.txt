@@ -1,9 +1,10 @@
 {
  "arama": [
   "Fason üretim ve atölye içi bölüm (maaşlı personel)",
+  "Personel, fasoncu ve mesai",
   "Gelir / Gider kartları ve fişlerin karşılığı"
  ],
  "calisanSayi": 7,
  "hatalar": [],
- "ilkSayi": 8
+ "ilkSayi": 9
 }
