@@ -90,7 +90,7 @@ async function ayarlar(hatalar) {
   await sayfa.waitForTimeout(2200);
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(500);
-  await sayfa.locator('[data-tanim-sekme="firma"]').first().click();
+  await sayfa.locator('[data-tanim-sekme="efatura"]').first().click();
   await sayfa.waitForTimeout(400);
   const once = await sayfa.evaluate(() => { const c = document.querySelector("[data-kdv-aktif]"); return c ? c.checked : null; });
   await sayfa.locator("[data-kdv-aktif]").first().click();

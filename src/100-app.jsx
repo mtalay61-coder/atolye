@@ -5742,12 +5742,14 @@ function AtolyeUygulamasi() {
             // "Bilgi butonların üzerini kapatıyor." Sol alttaydı — fiş/sipariş formlarında Kaydet ve
             // Vazgeç tam orada. Üstte yalnız menü çubuğunu birkaç saniye örter; o sırada zaten
             // yapılan işe bakılıyor, menüye değil. Dokununca kapanır.
-            top: 10,
-            left: mobilDuzen ? 12 : "50%",
+            // SOL ALT (v1.701.1). Kullanıcı: "Üstte çıkan bilgiler sekmeleri kapatıyor, sol alttaki
+            // olsa daha iyi." v1.487'deki Kaydet/Vazgeç örtme şikâyeti için dar tutulur (masaüstü
+            // 360px); dokununca kapanır, birkaç saniyede kendiliğinden kaybolur.
+            bottom: "calc(12px + env(safe-area-inset-bottom, 0px))",
+            left: 12,
             right: mobilDuzen ? 12 : undefined,
-            transform: mobilDuzen ? undefined : "translateX(-50%)",
             width: mobilDuzen ? undefined : "max-content",
-            maxWidth: mobilDuzen ? undefined : 480,
+            maxWidth: mobilDuzen ? undefined : 360,
             // Üst menü (510) ve sekme şeridinin (500) ÜSTÜNDE (v1.639.0, denetim: 300 ile masaüstünde menünün, telefonda şeridin arkasında kalıyordu).
             zIndex: 600,
             background: "var(--erp-toast)",

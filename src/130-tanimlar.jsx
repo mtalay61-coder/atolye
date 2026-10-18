@@ -739,6 +739,7 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
         { key: "urun", ad: "Ürün" },
         { key: "uretim", ad: "Üretim" },
         // WEB SİTESİ AYRI SEKME (v1.661.0 — kullanıcı: "Tanımlarda web sitesini ayrı sekmeye al"): önce Firma'nın dibindeydi.
+        { key: "efatura", ad: "E-Fatura & KDV" },
         { key: "websitesi", ad: "Web Sitesi" },
         { obek: "Sistem", key: "kullanicilar", ad: "Kullanıcılar" },
         { key: "gorunum", ad: "Görünüm" },
@@ -926,90 +927,6 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
           );
         })()}
 
-        {/* KDV (v1.496.0 — e-fatura yol haritası, Aşama 1). Açma anahtarı VARSAYILAN KAPALI: açılınca yeni
-            fişlerde satır KDV'si hesaplanır ve cariye KDV DAHİL tutar yazılır (eski fişler değişmez). Oranlar
-            mali müşavirle teyit edilmeden açılmamalı — bu yüzden uyarı metni anahtarın hemen yanında. */}
-        {(() => {
-          const fb = tanimlar.firmaBilgileri || {};
-          const oranSec = (alan) => (
-            <select value={fb[alan] ?? 20} data-kdv-varsayilan={alan}
-              onChange={(e) => firmaBilgisiGuncelle(alan, Number(e.target.value))} style={{ ...inputStyle, width: 90 }}>
-              {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
-            </select>
-          );
-          return (
-            <div data-kdv-ayarlari="1" style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 10 }}>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>KDV</div>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, cursor: "pointer" }}>
-                <input type="checkbox" data-kdv-aktif="1" checked={!!fb.kdvAktif}
-                  onChange={(e) => firmaBilgisiGuncelle("kdvAktif", e.target.checked)} style={{ marginTop: 3 }} />
-                <span>
-                  <b>Fişlerde KDV uygula</b>
-                  <span style={{ display: "block", fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 }}>
-                    Açıkken yeni alış/satış fişlerinde satır KDV'si hesaplanır ve cariye <b>KDV dahil</b> tutar yazılır.
-                    Birim fiyatlar KDV hariç girilir; stok maliyeti ve kâr KDV hariç kalır. Önceki fişler değişmez.
-                    Oranları mali müşavirinizle teyit etmeden açmayın.
-                  </span>
-                </span>
-              </label>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                <Field label="Varsayılan KDV — mamul">{oranSec("kdvMamul")}</Field>
-                <Field label="Varsayılan KDV — hammadde ve diğer">{oranSec("kdvDiger")}</Field>
-              </div>
-              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
-                Farklı oranlı ürün için ürün kartında KDV oranı seçilebilir; fişte satır bazında da değiştirilebilir.
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* E-FATURA (v1.500.0 — e-fatura yol haritası, Aşama 2). Seri ve etiketler QNB eFinans'tan alınır; burada
-            yalnız yazılır. BAĞLANTI YOK: kullanıcı adı/şifre bu ekranda SORULMAZ — Aşama 3'te Supabase
-            secrets'a girilecek (tarayıcıda, Tanımlar kaydında durursa veritabanını okuyan herkes görürdü). */}
-        {(() => {
-          const fb = tanimlar.firmaBilgileri || {};
-          const metin = (alan, etiket, ipucu, ek = {}) => (
-            <Field label={etiket}>
-              <input value={fb[alan] || ""} placeholder={ipucu || ""} data-efatura-alan={alan}
-                onChange={(e) => firmaBilgisiGuncelle(alan, ek.buyuk ? e.target.value.toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]/g, "").slice(0, 3) : e.target.value)}
-                style={{ ...inputStyle, ...(ek.genislik ? { width: ek.genislik } : {}) }} />
-            </Field>
-          );
-          const seriUyari = (alan) => fb[alan] && !faturaSeriGecerliMi(fb[alan])
-            ? <div style={{ fontSize: 11, color: "var(--erp-danger)" }}>3 harf/rakam olmalı</div> : null;
-          return (
-            <div data-efatura-ayarlari="1" style={{ marginTop: 14, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 12, display: "grid", gap: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>E-Fatura</div>
-                <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Entegratör: <b>QNB eFinans</b></span>
-                <span data-efatura-baglanti="yok" style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)",
-                  background: "var(--erp-panel-2)", color: "var(--erp-text-2)", border: "1px solid var(--erp-line)" }}>
-                  Bağlantı kurulmadı — taslak ve önizleme çalışır, gönderim yok
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" }}>
-                <div>{metin("efaturaSeri", "e-Fatura serisi", "Ör. ATL", { buyuk: true, genislik: 90 })}{seriUyari("efaturaSeri")}</div>
-                <div>{metin("earsivSeri", "e-Arşiv serisi", "Ör. ARS", { buyuk: true, genislik: 90 })}{seriUyari("earsivSeri")}</div>
-                <Field label="e-Fatura senaryosu">
-                  <select value={fb.efaturaProfil || "TEMELFATURA"} data-efatura-alan="efaturaProfil"
-                    onChange={(e) => firmaBilgisiGuncelle("efaturaProfil", e.target.value)} style={{ ...inputStyle, width: 170 }}>
-                    {EFATURA_SENARYOLARI.filter((x) => x.key !== "EARSIVFATURA").map((x) => <option key={x.key} value={x.key}>{x.ad}</option>)}
-                  </select>
-                </Field>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
-                {metin("efaturaGondericiEtiketi", "Gönderici birim etiketi", "urn:mail:defaultgb@…")}
-                {metin("mersisNo", "MERSİS no", "Opsiyonel")}
-                {metin("ticaretSicilNo", "Ticaret sicil no", "Opsiyonel")}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 }}>
-                Seriyi ve etiketi eFinans'tan alın; True'daki seriden <b>farklı</b> olmalı (iki program aynı seriden numara verirse çakışır).
-                Fatura taslağı Fişler ekranında satış fişinin "İşlemler" menüsünden açılır. Fatura yalnız <b>KDV'li</b> kesilmiş fişten çıkar.
-              </div>
-            </div>
-          );
-        })()}
-
         {/* E-POSTA GÖNDERİM AYARLARI (kullanıcı, 13 Eylül: "kullanıcı mail bilgilerini girsin, o mail
             ile PDF gönderelim"). Gönderimi Supabase `eposta` fonksiyonu yapıyor; ayarları buradan
             (Tanımlar kaydı) okuyor. Şifre burada tutuluyor — 2. aşama bitmeden veritabanı anahtarla
@@ -1063,6 +980,97 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
 
     {aktifTanimSekme === "firma" && (
       <CariTipleriTanimi tanimlar={tanimlar} onSave={onSave} cariler={cariler} onCarilerKaydet={onCarilerKaydet} showToast={showToast} />
+    )}
+    {/* E-FATURA AYRI SEKME (v1.702.0 — kullanıcı: "Tanımlarda e-fatura sekmesi açılsın, tanımlar çok
+        karışacak, toparlayalım"). KDV ve e-fatura ayarları Firma'nın dibindeydi; ikisi birbirine bağlı
+        (fatura yalnız KDV'li fişten çıkar) olduğu için aynı sekmede. İçerik ve veri aynı, yalnız yeri. */}
+    {aktifTanimSekme === "efatura" && (
+    <div style={{ marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16, display: "grid", gap: 18 }}>
+        {/* KDV (v1.496.0 — e-fatura yol haritası, Aşama 1). Açma anahtarı VARSAYILAN KAPALI: açılınca yeni
+            fişlerde satır KDV'si hesaplanır ve cariye KDV DAHİL tutar yazılır (eski fişler değişmez). Oranlar
+            mali müşavirle teyit edilmeden açılmamalı — bu yüzden uyarı metni anahtarın hemen yanında. */}
+        {(() => {
+          const fb = tanimlar.firmaBilgileri || {};
+          const oranSec = (alan) => (
+            <select value={fb[alan] ?? 20} data-kdv-varsayilan={alan}
+              onChange={(e) => firmaBilgisiGuncelle(alan, Number(e.target.value))} style={{ ...inputStyle, width: 90 }}>
+              {KDV_ORANLARI.map((o) => <option key={o} value={o}>%{o}</option>)}
+            </select>
+          );
+          return (
+            <div data-kdv-ayarlari="1" style={{ display: "grid", gap: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>KDV</div>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, cursor: "pointer" }}>
+                <input type="checkbox" data-kdv-aktif="1" checked={!!fb.kdvAktif}
+                  onChange={(e) => firmaBilgisiGuncelle("kdvAktif", e.target.checked)} style={{ marginTop: 3 }} />
+                <span>
+                  <b>Fişlerde KDV uygula</b>
+                  <span style={{ display: "block", fontSize: 12, color: "var(--erp-text-2)", marginTop: 2 }}>
+                    Açıkken yeni alış/satış fişlerinde satır KDV'si hesaplanır ve cariye <b>KDV dahil</b> tutar yazılır.
+                    Birim fiyatlar KDV hariç girilir; stok maliyeti ve kâr KDV hariç kalır. Önceki fişler değişmez.
+                    Oranları mali müşavirinizle teyit etmeden açmayın.
+                  </span>
+                </span>
+              </label>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                <Field label="Varsayılan KDV — mamul">{oranSec("kdvMamul")}</Field>
+                <Field label="Varsayılan KDV — hammadde ve diğer">{oranSec("kdvDiger")}</Field>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>
+                Farklı oranlı ürün için ürün kartında KDV oranı seçilebilir; fişte satır bazında da değiştirilebilir.
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* E-FATURA (v1.500.0 — e-fatura yol haritası, Aşama 2). Seri ve etiketler QNB eFinans'tan alınır; burada
+            yalnız yazılır. BAĞLANTI YOK: kullanıcı adı/şifre bu ekranda SORULMAZ — Aşama 3'te Supabase
+            secrets'a girilecek (tarayıcıda, Tanımlar kaydında durursa veritabanını okuyan herkes görürdü). */}
+        {(() => {
+          const fb = tanimlar.firmaBilgileri || {};
+          const metin = (alan, etiket, ipucu, ek = {}) => (
+            <Field label={etiket}>
+              <input value={fb[alan] || ""} placeholder={ipucu || ""} data-efatura-alan={alan}
+                onChange={(e) => firmaBilgisiGuncelle(alan, ek.buyuk ? e.target.value.toLocaleUpperCase("tr-TR").replace(/[^A-Z0-9]/g, "").slice(0, 3) : e.target.value)}
+                style={{ ...inputStyle, ...(ek.genislik ? { width: ek.genislik } : {}) }} />
+            </Field>
+          );
+          const seriUyari = (alan) => fb[alan] && !faturaSeriGecerliMi(fb[alan])
+            ? <div style={{ fontSize: 11, color: "var(--erp-danger)" }}>3 harf/rakam olmalı</div> : null;
+          return (
+            <div data-efatura-ayarlari="1" style={{ borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14, display: "grid", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>E-Fatura</div>
+                <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>Entegratör: <b>QNB eFinans</b></span>
+                <span data-efatura-baglanti="yok" style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: "var(--erp-r-pill)",
+                  background: "var(--erp-panel-2)", color: "var(--erp-text-2)", border: "1px solid var(--erp-line)" }}>
+                  Bağlantı kurulmadı — taslak ve önizleme çalışır, gönderim yok
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-start" }}>
+                <div>{metin("efaturaSeri", "e-Fatura serisi", "Ör. ATL", { buyuk: true, genislik: 90 })}{seriUyari("efaturaSeri")}</div>
+                <div>{metin("earsivSeri", "e-Arşiv serisi", "Ör. ARS", { buyuk: true, genislik: 90 })}{seriUyari("earsivSeri")}</div>
+                <Field label="e-Fatura senaryosu">
+                  <select value={fb.efaturaProfil || "TEMELFATURA"} data-efatura-alan="efaturaProfil"
+                    onChange={(e) => firmaBilgisiGuncelle("efaturaProfil", e.target.value)} style={{ ...inputStyle, width: 170 }}>
+                    {EFATURA_SENARYOLARI.filter((x) => x.key !== "EARSIVFATURA").map((x) => <option key={x.key} value={x.key}>{x.ad}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10 }}>
+                {metin("efaturaGondericiEtiketi", "Gönderici birim etiketi", "urn:mail:defaultgb@…")}
+                {metin("mersisNo", "MERSİS no", "Opsiyonel")}
+                {metin("ticaretSicilNo", "Ticaret sicil no", "Opsiyonel")}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)", lineHeight: 1.5 }}>
+                Seriyi ve etiketi eFinans'tan alın; True'daki seriden <b>farklı</b> olmalı (iki program aynı seriden numara verirse çakışır).
+                Fatura taslağı Fişler ekranında satış fişinin "İşlemler" menüsünden açılır. Fatura yalnız <b>KDV'li</b> kesilmiş fişten çıkar.
+              </div>
+            </div>
+          );
+        })()}
+
+    </div>
     )}
     {aktifTanimSekme === "websitesi" && (
       <WebSitesiAyarlari tanimlar={tanimlar} onSave={onSave} showToast={showToast} stok={stok} cariler={cariler} />

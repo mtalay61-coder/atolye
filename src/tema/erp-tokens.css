@@ -120,3 +120,9 @@ body { font-family: var(--erp-font); color: var(--erp-text); background: var(--e
   :root { --erp-icon-btn: 44px; --erp-icon: 18px; --erp-row-h: 44px; --erp-toolbar-h: 52px; }
   .erp-shell { grid-template-columns: 1fr; }
 }
+
+/* KAYDIRMA PAYI (v1.702.0 — kullanıcı: "Cari kartı ekranda sekmenin altında kalıyor"). Kart açılınca
+   scrollIntoView({block:"start"}) kartı pencerenin en tepesine getiriyordu; tepede sabit üst menü +
+   sekme şeridi (~100px) durduğu için kartın başlığı onların ALTINDA kalıyordu. Pay = menü + şerit + 8px.
+   Genel kural: tüm scrollIntoView çağrıları buna uyar. */
+html { scroll-padding-top: calc(var(--ust-menu-h, 0px) + 56px); }
