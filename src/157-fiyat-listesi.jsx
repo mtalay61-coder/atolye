@@ -218,7 +218,7 @@ function fiyatListesiTablosu(satirlar, { kaynak, ozelAlanlar, islemAktif } = {})
 function FiyatListesiModule({ stok, tanimlar, kurlar, cariler, kurGecmisi, onStokKaydet, onTanimlarKaydet, showToast, aktifKullanici }) {
   const kaynaklar = fiyatListesiKaynaklari(tanimlar.fiyatGruplari);
   const maliyetCtx = { tumUrunler: stok, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [],
-    kurlar, cariler: cariler || [], kurGecmisi: kurGecmisi || [], aylikUretimHedefi: tanimlar.aylikUretimHedefi, genelGiderler: tanimlar.genelGiderler };
+    kurlar, cariler: cariler || [], kurGecmisi: kurGecmisi || [], aylikUretimHedefi: tanimlar.aylikUretimHedefi, genelGiderler: tanimlar.genelGiderler, tanimlar };
   // Maliyet kaynağında varsayılan: yalnız "Maliyet OK" olanlar — onaylanmamış maliyetin üstüne fiyat kurmayalım.
   const [yalnizOk, setYalnizOk] = useState(true);
   // Varsayılan: ilk SATIŞ fiyat grubu (kullanıcının örneği "Toptan TL"); grup yoksa genel satış.

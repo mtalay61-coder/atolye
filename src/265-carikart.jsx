@@ -182,6 +182,12 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
       fisNo: hForm.fisNo.trim() || "",
       // Huninin doğru ön eki seçebilmesi için işlem tipi kayda giriyor.
       islemTipi: hareketTipi || null,
+      // DEMİRBAŞ (v1.705.0, 273): ürünsüz alışta makine/kalıp/bıçak seçildiyse alım ona bağlanır — amortisman
+      // Gelir/Gider'e aylık, maliyete ömür payı olarak girer.
+      ...(hareketTipi === "Alış" && hForm.demirbasId && demirbasKaydi(tanimlar, hForm.demirbasId) ? (() => {
+        const d = demirbasKaydi(tanimlar, hForm.demirbasId);
+        return { demirbas: { id: hForm.demirbasId, tur: d.tur, ad: d.kayit.ad, amortismanAy: Math.max(1, parseInt(hForm.amortismanAy, 10) || 24) } };
+      })() : {}),
       // SİPARİŞ BAĞI (v1.612.0): siparişten gelen tahsilat/ödeme siparişine bağlı kalır.
       ...(hForm.siparisId ? { siparisId: hForm.siparisId, siparisNo: hForm.siparisNo || null } : {}),
       // Aciklama boş bırakılırsa, hangi butonla (Alış/Satış/Ödeme/Tahsilat) girildiği otomatik eklenir —
@@ -195,7 +201,8 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
       // diğeri söylemiyordu — ekstreye bakan kişi paranın nereye gittiğini yalnız bazı
       // satırlarda görebiliyordu.
       aciklama: (() => {
-        const yazi = hForm.aciklama.trim() || hareketTipi || "";
+        const dmb = hareketTipi === "Alış" && hForm.demirbasId ? demirbasKaydi(tanimlar, hForm.demirbasId) : null;
+        const yazi = hForm.aciklama.trim() || (dmb ? `${dmb.tur} alımı — ${dmb.kayit.ad}` : "") || hareketTipi || "";
         const hesapAd = paraHareketi && seciliHesap ? seciliHesap.ad.replace(/^(Kasa|Banka): /, "") : "";
         const cv = cevrimYazi(ikiliGenel);
         const govde = hesapAd ? `${yazi} (${hesapAd})` : yazi;
@@ -1302,6 +1309,20 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
                     <input type="date" value={hForm.vade} onChange={(e) => setHForm({ ...hForm, vade: e.target.value })} style={inputStyle} />
                   </Field>
                 )}
+                {hareketTipi === "Alış" && tanimlar && (kapasiteTanimi(tanimlar).makineler.length + kapasiteTanimi(tanimlar).kaliplar.length) > 0 && (<>
+                  <Field label="Demirbaş (makine/kalıp/bıçak)">
+                    <select data-cari-demirbas value={hForm.demirbasId || ""} onChange={(e) => setHForm({ ...hForm, demirbasId: e.target.value })} style={inputStyle}>
+                      <option value="">— demirbaş değil —</option>
+                      {kapasiteTanimi(tanimlar).makineler.map((m) => <option key={m.id} value={m.id}>Makine · {m.ad}</option>)}
+                      {kapasiteTanimi(tanimlar).kaliplar.map((k) => <option key={k.id} value={k.id}>{k.tur || "Kalıp"} · {k.ad}</option>)}
+                    </select>
+                  </Field>
+                  {hForm.demirbasId && (
+                    <Field label="Amortisman (ay)">
+                      <input inputMode="numeric" data-cari-amortisman value={hForm.amortismanAy ?? "24"} onChange={(e) => setHForm({ ...hForm, amortismanAy: e.target.value })} style={{ ...inputStyle, width: 90 }} />
+                    </Field>
+                  )}
+                </>)}
                 <Field label="Açıklama">
                   <input data-cari-hareket-aciklama="1" value={hForm.aciklama} onChange={(e) => setHForm({ ...hForm, aciklama: e.target.value })} placeholder={`Opsiyonel — boş kalırsa "${hareketTipi}" yazılır`} style={inputStyle} />
                 </Field>

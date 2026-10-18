@@ -1,0 +1,9 @@
+{
+ "aciklama": "Makine alımı — Kesim Presi",
+ "demirbas": "Makine:Kesim Presi:36",
+ "fisVar": true,
+ "hatalar": [],
+ "kartta": true,
+ "tutar": 36000,
+ "yon": "Alacak"
+}

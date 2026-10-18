@@ -4965,7 +4965,7 @@ function ProductMatrixCard({
               alınan) üründe maliyet alış fiyatıdır; onu da burada onaylar. Fiyat listesi bu onayı okur. */}
           <MaliyetOnayKutusu urun={product} onUrunGuncelle={onUrunGuncelle}
             hesap={urunMaliyetHesabi(product, { tumUrunler, tanimlarProsesler, tanimlarAraProsesler, kurlar, cariler, kurGecmisi,
-              aylikUretimHedefi: tanimlarAylikUretimHedefi, genelGiderler: tanimlarGenelGiderler })} />
+              aylikUretimHedefi: tanimlarAylikUretimHedefi, genelGiderler: tanimlarGenelGiderler, tanimlar: tanimlarTum })} />
           {(product.recete || []).length > 0 && (
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button type="button" className="btn-ghost" data-maliyet-yazdir-ac="1"
@@ -5310,7 +5310,9 @@ function ProductMatrixCard({
                   // genel gider defteri ÷ aylık hedef.
                   const ozelGenel = product.genelGiderCiftBasi != null && product.genelGiderCiftBasi !== "" ? parseFloat(product.genelGiderCiftBasi) : null;
                   const ciftBasiGenel = ozelGenel != null && !Number.isNaN(ozelGenel) ? ozelGenel : (hedefAdet > 0 ? aylikGenel / hedefAdet : 0);
-                  const tamMaliyet = genelToplam + ciftBasiGenel;
+                  // DEMİRBAŞ PAYI (v1.705.0, 273): bağlı kalıp/makine alımı ÷ ömür; 156'daki hesapla aynı.
+                  const demirbasPay = urunDemirbasPayi(product, tanimlarTum, cariler, kurlar);
+                  const tamMaliyet = genelToplam + ciftBasiGenel + demirbasPay.toplam;
                   const marj = parseFloat(product.karMarji) != null && !Number.isNaN(parseFloat(product.karMarji))
                     ? parseFloat(product.karMarji) : 30;
                   const satisFiyati = marjlaSatisFiyati(tamMaliyet, marj);   // kâr satıştan (v1.583.0)
@@ -5360,6 +5362,12 @@ function ProductMatrixCard({
                           </button>
                         )}
                       </span>
+                      {demirbasPay.satirlar.map((d) => (
+                        <React.Fragment key={`dmb-${d.ad}`}>
+                          <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>{d.tur} payı · {d.ad} <span style={{ fontSize: 10 }}>({yaz(d.alim)} / {d.omur} çift)</span></span>
+                          <span className="mono" data-ozet-demirbas={d.ad} style={{ textAlign: "right", fontSize: 12, color: "var(--erp-text-2)" }}>{yaz(d.pay)}</span>
+                        </React.Fragment>
+                      ))}
                       <span style={{ borderTop: "1px solid var(--erp-border)", paddingTop: 4, fontWeight: 700 }}>Tam maliyet</span>
                       <span className="mono" data-ozet-tam="1" style={{ borderTop: "1px solid var(--erp-border)", paddingTop: 4, textAlign: "right", fontWeight: 700 }}>{yaz(tamMaliyet)}</span>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
