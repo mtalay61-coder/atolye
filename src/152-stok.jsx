@@ -860,6 +860,10 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     onSave(next);
   }
 
+  function kapasiteKaydet(productId, kapasite) {
+    onSave(items.map((p) => (p.id === productId ? { ...p, kapasite } : p)));
+  }
+
   function teknikNotDegistir(productId, metin) {
     const next = items.map((p) => (p.id === productId ? { ...p, teknikNot: metin } : p));
     onSave(next);
@@ -2860,6 +2864,8 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                   onTeknikCizimSil={teknikCizimSil}
                   onTeknikCizimGuncelle={teknikCizimGuncelle}
                   onTeknikNotChange={teknikNotDegistir}
+                  tanimlarTum={tanimlar}
+                  onKapasiteKaydet={kapasiteKaydet}
                   // Büyütme, katalogdaki büyük görsel penceresinin aynısı: { url, ad } bekliyor.
                   onTeknikCizimAc={(c) => setBuyukGorsel({ url: c.gorsel, ad: c.baslik || "Teknik çizim" })}
                   cariler={cariler}

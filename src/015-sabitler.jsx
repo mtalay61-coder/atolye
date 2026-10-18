@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.702.0";
+const SURUM = "1.703.0";
 const SURUM_TARIHI = "2026-10-18";
-const SURUM_NOTU = "Tanımlar'da E-Fatura & KDV sekmesi; bildirimler sol altta; cari kartı sekmenin altında kalmaz";
+const SURUM_NOTU = "Kapasite yönetimi: makine, kalıp/bıçak (beden beden), eleman saatleri; ürün kartında proses bağı";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.703.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Kapasite: makine/teçhizat (adet, günlük saat, saatlik adet), kalıp/bıçak (makineye bağlı, beden beden saatlik adet), eleman çalışma saatleri", "Ürün kartı › Kapasite: her proses için makine + kalıp/bıçak seçimi, bedene göre günlük adet"], degisen: [], duzeltilen: [] },
   { surum: "1.702.0", tarih: "18.10.2026", eklenen: ["Tanımlar'da ayrı E-Fatura & KDV sekmesi (Firma'dan taşındı)"], degisen: ["Bilgi bildirimleri üst ortadan sol alta taşındı (sekmeleri örtmesin)"], duzeltilen: ["Cari kartı açılınca başlığı üst menü ve sekme şeridinin altında kalıyordu"] },
   { surum: "1.701.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Firma › Cari Tipleri: özel tip ekleme, adını ve hangi ana tip gibi davranacağını değiştirme (o tipteki cariler de güncellenir), kullanılmayan tipi silme"], degisen: ["Cari listesinde özel tip sekmesi yalnız o tipte cari varsa görünür"], duzeltilen: [] },
   { surum: "1.700.0", tarih: "18.10.2026", eklenen: ["Cari tipi \"Fasoncu\" hazır seçenek: fason usta — teslimde işçilik cariye alacak", "Personel cari kartında \"Personel bilgileri\": bölüm, aylık maaş, işe başlangıç, aylık çalışma saati, saat ücreti", "Mesai: ay seçip hafta içi / Cumartesi / Pazar saatleri girilir; saat ücreti × kat ile hesaplanır, ayrı MESAI fişi olarak personele yazılır ve bölümün işçilik gider kartına düşer", "Tanımlar › Atölye İçi Bölümler: mesai katları ve varsayılan aylık çalışma saati"], degisen: ["Teslimde işçiliğin cariye mi bölüme mi yazılacağını önce kişi belirler: Fasoncu → cariye; bir bölümde kayıtlı personel → bölüm tahakkuku; ikisi de değilse eski kural (prosesin bölümü)"], duzeltilen: [] },

@@ -1,0 +1,6 @@
+{
+ "bedenYazildi": "40",
+ "hatalar": [],
+ "kalip": "Kalıp A:Kalıp:true",
+ "makine": "Kesim Makinesi:50:9"
+}

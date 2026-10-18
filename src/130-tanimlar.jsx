@@ -739,6 +739,7 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
         { key: "urun", ad: "Ürün" },
         { key: "uretim", ad: "Üretim" },
         // WEB SİTESİ AYRI SEKME (v1.661.0 — kullanıcı: "Tanımlarda web sitesini ayrı sekmeye al"): önce Firma'nın dibindeydi.
+        { key: "kapasite", ad: "Kapasite" },
         { key: "efatura", ad: "E-Fatura & KDV" },
         { key: "websitesi", ad: "Web Sitesi" },
         { obek: "Sistem", key: "kullanicilar", ad: "Kullanıcılar" },
@@ -980,6 +981,10 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
 
     {aktifTanimSekme === "firma" && (
       <CariTipleriTanimi tanimlar={tanimlar} onSave={onSave} cariler={cariler} onCarilerKaydet={onCarilerKaydet} showToast={showToast} />
+    )}
+    {/* KAPASİTE (v1.703.0): makine, kalıp/bıçak (beden beden saatlik adet), eleman çalışma saatleri — 273-kapasite. */}
+    {aktifTanimSekme === "kapasite" && (
+      <KapasiteTanimi tanimlar={tanimlar} onSave={onSave} cariler={cariler} showToast={showToast} />
     )}
     {/* E-FATURA AYRI SEKME (v1.702.0 — kullanıcı: "Tanımlarda e-fatura sekmesi açılsın, tanımlar çok
         karışacak, toparlayalım"). KDV ve e-fatura ayarları Firma'nın dibindeydi; ikisi birbirine bağlı
