@@ -1,0 +1,11 @@
+{
+ "hatalar": [],
+ "hedef": "250",
+ "ozet": "3",
+ "personel": [
+  "3"
+ ],
+ "prosesler": [
+  "Kesim:3"
+ ]
+}
