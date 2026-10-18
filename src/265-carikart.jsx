@@ -487,7 +487,7 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
                 className="mono"
                 style={{ fontWeight: 700, fontSize: 14, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)", minWidth: 140 }}
               />
-              <CariTipSecici tip={duzenleTip} altTip={duzenleAltTip} cariler={tumCariler}
+              <CariTipSecici tip={duzenleTip} altTip={duzenleAltTip} cariler={tumCariler} tanimlar={tanimlar}
                 onDegis={({ tip, altTip }) => { setDuzenleTip(tip); setDuzenleAltTip(altTip); }}
                 style={{ fontSize: 12, padding: "3px 6px", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-sm)" }} />
               <select

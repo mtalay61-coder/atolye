@@ -591,7 +591,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
             Pasifler ({pasifCariSayisi})
           </button>
         )}
-        {["Tümü", ...CARI_TIPLERI.filter((t) => t !== "Her İkisi"), ...ozelCariTipleri(cariTaban).map((o) => o.ad)].map((t) => {
+        {["Tümü", ...CARI_TIPLERI.filter((t) => t !== "Her İkisi"), ...ozelCariTipleri(cariTaban, tanimlar).filter((o) => cariTaban.some((c) => c.altTip === o.ad)).map((o) => o.ad)].map((t) => {
           const aktif = cariTipSekme === t;
           const renkT = t === "Tümü" ? "var(--erp-text)" : (CARI_TIP_RENK[t] || "var(--erp-text-2)");
           const sayi = t === "Tümü" ? cariTaban.length : cariTaban.filter((c) => cariTipEtiketi(c) === t).length;
@@ -705,7 +705,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
               <input value={form.unvan} onChange={(e) => setForm({ ...form, unvan: e.target.value })} placeholder="Örn. Deniz Ayakkabıcılık" style={inputStyle} />
             </Field>
             <Field label="Tip">
-              <CariTipSecici tip={form.tip} altTip={form.altTip} cariler={cariler} style={inputStyle}
+              <CariTipSecici tip={form.tip} altTip={form.altTip} cariler={cariler} tanimlar={tanimlar} style={inputStyle}
                 onDegis={({ tip, altTip }) => setForm({ ...form, tip, altTip })} />
             </Field>
             <Field label="Telefon">

@@ -4705,6 +4705,7 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "tanimlar"}>
             <TanimlarModule
+              onCarilerKaydet={saveCariler}
               fisDefteri={fisDefteri}
               onYetimSiparisBagiCoz={yetimSiparisBaglariniTemizle}
               muhasebe={muhasebe}
