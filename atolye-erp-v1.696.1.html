@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.695.0</title>
+<title>Atölye ERP 1.696.1</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2307,9 +2307,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.695.0";
+const SURUM = "1.696.1";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Satış ve alış fişleri gelir/gider kartına bağlanır";
+const SURUM_NOTU = "Buluta yazılamadı uyarısı: dokununca hata metni, sonraki başarılı yazmada kendiliğinden kalkar";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2339,6 +2339,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.696.1", tarih: "18.10.2026", eklenen: [], degisen: ["\"Buluta yazılamadı\" uyarısına dokununca hatanın tam metni açılır (telefonda da okunur)"], duzeltilen: ["Uyarı, aynı tablo sonra başarıyla yazılsa da elle kapatılana kadar kalıyordu — geçici kesinti sürekli hata gibi görünüyordu; artık sonraki başarılı yazmada kendiliğinden kalkar"] },
+    { surum: "1.696.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider: \"Satışlar\" gelir grubu (600) açılır, \"Satış gelirleri\" kartı oraya taşınır (bir kez; sonra elle taşınan karta dokunulmaz)"], degisen: [], duzeltilen: [] },
+    { surum: "1.695.1", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Gelir / Gider: gelir kartlarının (Satış gelirleri gibi) toplamı ve grup toplamı eksi görünüyordu — her kart gider gibi sayılıyordu; artık kart kendi yönünde artı"] },
     { surum: "1.695.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Fişlerin gelir / gider karşılığı\" paneli toplandı: başlıktan açılır/kapanır (kapalı başlar, özet: kaç bağlı, kaç karşılıksız), arama kutusu yazdıkça satırları süzer, iki sütunlu sıkı liste", "Satış fişleri \"Satış gelirleri\" gelir kartına, alış fişleri \"Alışlar (mal ve hammadde)\" gider kartına bağlanır (otomatik açılır, Gelir / Gider panelinden değiştirilebilir); kart ekstresinde fiş başına bir satır; karşılıksız fiş uyarısı satış/alışı da sayar"], degisen: ["Kâr/Zarar değişmez: satış zaten satış geliri, alış satılınca SMM olarak sayılıyor — çift sayım olmasın diye karta yazılan satış/alış Kâr/Zarar'a ayrıca eklenmez"], duzeltilen: [] },
     { surum: "1.694.0", tarih: "18.10.2026", eklenen: ["Bağımsız Stok Girişi/Çıkışı fişleri (MNL-) gelir/gidere bağlanır: bütün ürünlerin girişleri tek gelir kartına (\"Stok girişi (sayım fazlası)\"), çıkışları tek gider kartına (\"Stok çıkışı (fire / sayım eksiği)\"); kartlar otomatik açılır, Gelir / Gider panelinden değiştirilebilir; tutar birim fiyatla; kart ekstresinde fiş başına bir satır", "Kâr/Zarar: bağımsız stok girişi Diğer gelir, çıkışı gider kartının grubunda", "Ara proseslere de işçilik gider kartı otomatik açılır ve bağlanır; Tanımlar › Ara Prosesler satırında kart seçici"], degisen: [], duzeltilen: [] },
     { surum: "1.693.0", tarih: "18.10.2026", eklenen: ["Her prosese \"<Proses> işçiliği\" gider kartı otomatik açılıp bağlanır (açılışta mevcut prosesler, yeni proses eklenince o); hammadde çıkışına \"Üretim hammadde gideri\"; aynı adlı kart varsa o kullanılır, elle kurulan bağa dokunulmaz", "Tanımlar › Prosesler: her proses satırında gider kartı seçici"], degisen: [], duzeltilen: [] },
@@ -5336,7 +5339,8 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
-        gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
+        gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir)
+            window.__supabaseBasariBildir(tablo); }).catch((e) => {
             console.error("Supabase yazma hatası:", tablo, e);
             bekleyenYazmaEkle(anahtar, tablo, e && e.message);
             if (typeof window !== "undefined" && window.__supabaseHataBildir) {
@@ -6707,6 +6711,8 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
                 return { ok: false, bulut: true, cakisma: true, hata: "sürüm çakışması — buluta yazılmadı" };
             }
             bekleyenYazmaSil(anahtar); // gitti — defterdeyse çık
+            if (typeof window !== "undefined" && window.__supabaseBasariBildir)
+                window.__supabaseBasariBildir(tablo);
             // OTOMATİK TABAN: her veri değişikliği, kimse çağırmayı unutmasa da unutsa da günlüğe
             // düşer. Değişiklik yoksa yazılmaz — yoksa günlük gürültüden okunmaz hâle gelir.
             if (sayim && (sayim.eklenen || sayim.guncellenen || sayim.silinen)) {
@@ -19151,9 +19157,14 @@ function AtolyeUygulamasi() {
     useEffect(() => {
         // Yazma katmanı bileşen dışında olduğu için hatayı bu köprüyle bildiriyor.
         window.__supabaseHataBildir = (tablo, mesaj) => setYazmaHatasi({ tablo, mesaj, zaman: Date.now() });
+        // KENDİLİĞİNDEN KALKAR (v1.696.1, kullanıcı: "buluta yazılamadı çok karşılaşıyorum"): uyarı, aynı tablo sonra
+        // başarıyla yazılsa da elle kapatılana kadar duruyordu — geçici bir ağ kesintisi saatlerce "hata" gibi görünüyordu.
+        // Aynı tablonun sonraki başarılı yazması uyarıyı kaldırır (veri artık bulutta).
+        window.__supabaseBasariBildir = (tablo) => setYazmaHatasi((h) => (h && h.tablo === tablo ? null : h));
         window.__surumCakismaBildir = (tablo, idler, teshis) => setSurumCakismasi({ tablo, adet: (idler || []).length, teshis: teshis || [], zaman: Date.now() });
         return () => {
             delete window.__supabaseHataBildir;
+            delete window.__supabaseBasariBildir;
             delete window.__surumCakismaBildir;
         };
     }, []);
@@ -23118,7 +23129,10 @@ function AtolyeUygulamasi() {
                     React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2, flexWrap: "wrap", rowGap: 6 } },
                         React.createElement("h1", { style: { fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", margin: 0, color: "var(--erp-text)", whiteSpace: "nowrap" } }, TAB_TITLES[tab]),
                         React.createElement("div", { id: "modul-baslik-eylemleri", "data-modul-baslik-eylemleri": "1", style: { display: "flex", gap: 8, alignItems: "center", marginLeft: 12, flexShrink: 0 } }),
-                        yazmaHatasi && (React.createElement("button", { type: "button", onClick: () => setYazmaHatasi(null), title: `Buluta yazılamadı — ${yazmaHatasi.tablo}\n${yazmaHatasi.mesaj}\n\nVeri bu bilgisayarda kayıtlı; bağlantı düzelince yeniden denenecek. Kapatmak için tıklayın.`, style: {
+                        yazmaHatasi && (React.createElement("button", { type: "button", "data-yazma-hatasi": yazmaHatasi.tablo, 
+                            // TELEFONDA OKUNUR (v1.696.1): ayrıntı yalnız fareyle üzerine gelince (title) görünüyordu; dokununca
+                            // hata metni pencerede açılır, sonra uyarı kapanır.
+                            onClick: () => { hataGoster(`Buluta yazılamadı: ${yazmaHatasi.tablo}`, `${new Date(yazmaHatasi.zaman).toLocaleString("tr-TR")}\n${yazmaHatasi.mesaj}\n\nVeri bu cihazda kayıtlı; bağlantı düzelince yeniden gönderilir.`); setYazmaHatasi(null); }, title: `Buluta yazılamadı — ${yazmaHatasi.tablo}\n${yazmaHatasi.mesaj}\n\nVeri bu bilgisayarda kayıtlı; bağlantı düzelince yeniden denenecek. Kapatmak için tıklayın.`, style: {
                                 display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", marginRight: 10,
                                 background: "var(--erp-orange-bg)", border: "1.5px solid #E1611F", borderRadius: "var(--erp-r-pill)",
                                 padding: "4px 12px", fontSize: 11, fontWeight: 700, color: "var(--erp-warn)", cursor: "pointer",
@@ -44000,7 +44014,20 @@ function prosesGiderKartlariniTamamla(tanimlar) {
         alId = kartBulAc("Alışlar (mal ve hammadde)");
         degisti = true;
     }
-    return degisti ? { ...tanimlar, giderKartlari: kartlar, prosesGiderKartlari: bag, hammaddeCikisGiderKartId: hamId, stokGirisGelirKartId: sgId, stokCikisGiderKartId: scId, satisGelirKartId: saId, alisGiderKartId: alId } : tanimlar;
+    // SATIŞLAR GRUBU (v1.696, kullanıcı: "satışlar ayrı Satışlar grubunda görünsün"): gelir türünde "Satışlar" grubu (600)
+    // açılır ve satış kartı oraya alınır. BİR KEZ (`satisGrubuKuruldu`): kullanıcı kartı sonra başka gruba taşırsa geri çekilmez.
+    let gruplarYeni = null;
+    if (!tanimlar.satisGrubuKuruldu) {
+        const mevcutGruplar = giderGelirGruplari(tanimlar);
+        const sg = mevcutGruplar.find((g) => g.key === "satislar" || kodEsit(g.ad, "Satışlar"));
+        const grupKey = sg ? sg.key : "satislar";
+        if (!sg)
+            gruplarYeni = [...mevcutGruplar, { key: "satislar", ad: "Satışlar", tur: "gelir", tdhp: "600" }];
+        kartlar = kartlar.map((k) => (k.id === saId ? { ...k, grup: grupKey, tur: "gelir" } : k));
+        degisti = true;
+    }
+    return degisti ? { ...tanimlar, ...(gruplarYeni ? { giderGruplari: gruplarYeni } : {}), satisGrubuKuruldu: true,
+        giderKartlari: kartlar, prosesGiderKartlari: bag, hammaddeCikisGiderKartId: hamId, stokGirisGelirKartId: sgId, stokCikisGiderKartId: scId, satisGelirKartId: saId, alisGiderKartId: alId } : tanimlar;
 }
 // Sistemin kendiliğinden açtığı kart mı (proses işçiliği, hammadde çıkışı, bölüm)?
 function otomatikGiderKartiMi(tanimlar, k) {
@@ -64481,8 +64508,14 @@ function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, s
     };
     // HESABIN PARA BİRİMİYLE TL'YE (v1.639.0, denetim): USD kasasından 100 $ çıkış "100 ₺" sayılıyordu; Kâr-Zarar (247)
     // aynı hareketi kurla çeviriyor — aynı kart iki ekranda farklı çıkıyordu. Aynı çevirici (`kzTL`), kurlar Tanımlar'dan.
-    const kartToplami = (kartId) => kartHareketleri(kartId)
-        .reduce((t, h) => t + (h.yon === "Giriş" ? -1 : 1) * kzTL(h.tutar || 0, h.paraBirimi, (muhasebe && muhasebe.kurlar) || {}), 0);
+    // YÖN KARTIN TÜRÜNE GÖRE (v1.695.1, kullanıcı: "neden başında - var, karışıklık var gibi"): toplam kartın kendi
+    // yönünde artı. Gider kartında çıkış (+), giriş (iade) eksi; GELİR kartında giriş (+), çıkış eksi. Önceden her kart
+    // gider gibi sayılıyor, satış gelirleri "-1.000 ₺" görünüyordu.
+    const kartToplami = (kartId) => {
+        const gelirMi = (((tanimlar.giderKartlari || []).find((k) => k.id === kartId)) || {}).tur === "gelir";
+        return kartHareketleri(kartId)
+            .reduce((t, h) => t + (h.yon === "Giriş" ? -1 : 1) * (gelirMi ? -1 : 1) * kzTL(h.tutar || 0, h.paraBirimi, (muhasebe && muhasebe.kurlar) || {}), 0);
+    };
     return (React.createElement("div", { style: { display: "grid", gap: 14 } },
         React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [{ k: "kartlar", ad: "Gelir / Gider Kartları" }, { k: "genel", ad: "Genel Gider ve Çift Başı Maliyet" }, { k: "karzarar", ad: "Kâr / Zarar" }].map((x) => (React.createElement("button", { key: x.k, type: "button", "data-gg-sekme": x.k, onClick: () => setBolum(x.k), style: { padding: "7px 16px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
                 border: `1.5px solid ${bolum === x.k ? "var(--erp-primary)" : "var(--erp-border)"}`,
@@ -64848,7 +64881,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.695.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.696.1)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

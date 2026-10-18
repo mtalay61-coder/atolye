@@ -550,7 +550,7 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
   return Promise.all([
     yerel,
-    gidecek.then(() => { bekleyenYazmaSil(anahtar); }).catch((e) => {
+    gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
       bekleyenYazmaEkle(anahtar, tablo, e && e.message);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {

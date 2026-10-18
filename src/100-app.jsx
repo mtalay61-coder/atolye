@@ -452,10 +452,15 @@ function AtolyeUygulamasi() {
   useEffect(() => {
     // Yazma katmanı bileşen dışında olduğu için hatayı bu köprüyle bildiriyor.
     window.__supabaseHataBildir = (tablo, mesaj) => setYazmaHatasi({ tablo, mesaj, zaman: Date.now() });
+    // KENDİLİĞİNDEN KALKAR (v1.696.1, kullanıcı: "buluta yazılamadı çok karşılaşıyorum"): uyarı, aynı tablo sonra
+    // başarıyla yazılsa da elle kapatılana kadar duruyordu — geçici bir ağ kesintisi saatlerce "hata" gibi görünüyordu.
+    // Aynı tablonun sonraki başarılı yazması uyarıyı kaldırır (veri artık bulutta).
+    window.__supabaseBasariBildir = (tablo) => setYazmaHatasi((h) => (h && h.tablo === tablo ? null : h));
     window.__surumCakismaBildir = (tablo, idler, teshis) =>
       setSurumCakismasi({ tablo, adet: (idler || []).length, teshis: teshis || [], zaman: Date.now() });
     return () => {
       delete window.__supabaseHataBildir;
+      delete window.__supabaseBasariBildir;
       delete window.__surumCakismaBildir;
     };
   }, []);
@@ -4535,7 +4540,10 @@ function AtolyeUygulamasi() {
               {yazmaHatasi && (
                 <button
                   type="button"
-                  onClick={() => setYazmaHatasi(null)}
+                  data-yazma-hatasi={yazmaHatasi.tablo}
+                  // TELEFONDA OKUNUR (v1.696.1): ayrıntı yalnız fareyle üzerine gelince (title) görünüyordu; dokununca
+                  // hata metni pencerede açılır, sonra uyarı kapanır.
+                  onClick={() => { hataGoster(`Buluta yazılamadı: ${yazmaHatasi.tablo}`, `${new Date(yazmaHatasi.zaman).toLocaleString("tr-TR")}\n${yazmaHatasi.mesaj}\n\nVeri bu cihazda kayıtlı; bağlantı düzelince yeniden gönderilir.`); setYazmaHatasi(null); }}
                   title={`Buluta yazılamadı — ${yazmaHatasi.tablo}\n${yazmaHatasi.mesaj}\n\nVeri bu bilgisayarda kayıtlı; bağlantı düzelince yeniden denenecek. Kapatmak için tıklayın.`}
                   style={{
                     display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", marginRight: 10,

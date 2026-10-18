@@ -487,9 +487,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.696.0";
+const SURUM = "1.696.1";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Satışlar ayrı Satışlar grubunda";
+const SURUM_NOTU = "Buluta yazılamadı uyarısı: dokununca hata metni, sonraki başarılı yazmada kendiliğinden kalkar";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -520,6 +520,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.696.1", tarih: "18.10.2026", eklenen: [], degisen: ["\"Buluta yazılamadı\" uyarısına dokununca hatanın tam metni açılır (telefonda da okunur)"], duzeltilen: ["Uyarı, aynı tablo sonra başarıyla yazılsa da elle kapatılana kadar kalıyordu — geçici kesinti sürekli hata gibi görünüyordu; artık sonraki başarılı yazmada kendiliğinden kalkar"] },
   { surum: "1.696.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider: \"Satışlar\" gelir grubu (600) açılır, \"Satış gelirleri\" kartı oraya taşınır (bir kez; sonra elle taşınan karta dokunulmaz)"], degisen: [], duzeltilen: [] },
   { surum: "1.695.1", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Gelir / Gider: gelir kartlarının (Satış gelirleri gibi) toplamı ve grup toplamı eksi görünüyordu — her kart gider gibi sayılıyordu; artık kart kendi yönünde artı"] },
   { surum: "1.695.0", tarih: "18.10.2026", eklenen: ["Gelir / Gider › \"Fişlerin gelir / gider karşılığı\" paneli toplandı: başlıktan açılır/kapanır (kapalı başlar, özet: kaç bağlı, kaç karşılıksız), arama kutusu yazdıkça satırları süzer, iki sütunlu sıkı liste", "Satış fişleri \"Satış gelirleri\" gelir kartına, alış fişleri \"Alışlar (mal ve hammadde)\" gider kartına bağlanır (otomatik açılır, Gelir / Gider panelinden değiştirilebilir); kart ekstresinde fiş başına bir satır; karşılıksız fiş uyarısı satış/alışı da sayar"], degisen: ["Kâr/Zarar değişmez: satış zaten satış geliri, alış satılınca SMM olarak sayılıyor — çift sayım olmasın diye karta yazılan satış/alış Kâr/Zarar'a ayrıca eklenmez"], duzeltilen: [] },

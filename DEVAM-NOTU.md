@@ -4,7 +4,7 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-Son sürüm: **v1.696.0** · 18 Ekim 2026
+Son sürüm: **v1.696.1** · 18 Ekim 2026
 
 ---
 
@@ -26,7 +26,7 @@ sorma.** Yeni bir SQL eklenirse yalnız onu ver; tablo ekleyen SQL'den sonra rls
 **E-POSTA GÖNDERİMİ KURULU DEĞİL (11 Ekim): Tanımlar'da SMTP şifresi hiç yoktu; kullanıcı SMTP_SIFRE sırrı + `eposta` fonksiyonu kurulumunu "Atlayalım" dedi — kendisi istemedikçe tekrar önerme.** **rls-yazma.sql + v1.642.0 DÜZELTMESİ (yazma_yetkisi_koruma, iç içe IF + upsert) ÇALIŞTIRILDI (kullanıcı bildirdi, 11 Ekim) — bir daha sorma.** **rls-rol.sql ÇALIŞTIRILDI (kullanıcı bildirdi, 10 Ekim, v1.640.0).** Kullanıcı listesini yalnız Yönetici değiştirir,
 günlüğü yalnız Yönetici siler (tetikleyici; rls-kimlik.sql yeniden çalışsa da kalır). **Bir daha sorma.**
 
-**Son iş (18 Ekim, v1.696.0 — "Satışlar" gelir grubu (600) açılır, satış kartı oraya bir kez taşınır (satisGrubuKuruldu bayrağı, 246); v1.695.1 — 396 kartToplami kart türüne göre yön: gelir kartında giriş artı; v1.695.0): SATIŞ/ALIŞ fişleri → satisGelirKartId ("Satış gelirleri", gelir) / alisGiderKartId ("Alışlar (mal ve hammadde)"); fiş başına bir satır (cari hareketleri TL toplamı); Kâr/Zarar'a EKLENMEZ (ciro + SMM zaten). Panel (246 UretimGiderBaglari) "Fişlerin gelir / gider karşılığı": kapalı başlar (localStorage ugb-acik), özet bağlı/karşılıksız, data-ugb-ara arama süzer, iki sütunlu ızgara. v1.694: bağımsız stok giriş/çıkış + ara proses. İlke: her hareketin cari, tutar veya fiş karşılığı olmalı.**
+**Son iş (18 Ekim, v1.696.1 — "Buluta yazılamadı" rozeti: dokununca hataGoster ile tam mesaj; window.__supabaseBasariBildir (030 tekil + 040 tablo başarı yolu) aynı tablonun sonraki başarılı yazmasında rozeti kaldırır. Kullanıcı sık görüyordu; kök neden için mesajı isteyeceğiz; v1.696.0 — "Satışlar" gelir grubu (600) açılır, satış kartı oraya bir kez taşınır (satisGrubuKuruldu bayrağı, 246); v1.695.1 — 396 kartToplami kart türüne göre yön: gelir kartında giriş artı; v1.695.0): SATIŞ/ALIŞ fişleri → satisGelirKartId ("Satış gelirleri", gelir) / alisGiderKartId ("Alışlar (mal ve hammadde)"); fiş başına bir satır (cari hareketleri TL toplamı); Kâr/Zarar'a EKLENMEZ (ciro + SMM zaten). Panel (246 UretimGiderBaglari) "Fişlerin gelir / gider karşılığı": kapalı başlar (localStorage ugb-acik), özet bağlı/karşılıksız, data-ugb-ara arama süzer, iki sütunlu ızgara. v1.694: bağımsız stok giriş/çıkış + ara proses. İlke: her hareketin cari, tutar veya fiş karşılığı olmalı.**
 Önceki (v1.453.0): hammadde formunda da renk tek arama kutusu.
 Önceki (v1.452.0): mamul formunda renk yazarak ekleniyor (`AramaliSecici`).
 Önceki (v1.451.0): dar ekranda üst menü tek "Menü" (☰) düğmesinde.
