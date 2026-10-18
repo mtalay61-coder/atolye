@@ -17,5 +17,9 @@ bekle("bağsız proses eksik", prosesKapasitesi(tanimlar, urun, "Kalfa", "37").e
 bekle("iş yükü", isYukuHesapla(tanimlar, urun, "Kesim", { "37": 160, "38": 80, "40": 0 }), { saat: 4, gun: 0.44, eksik: [] });
 bekle("eleman günlük saat (mola düşer)", elemanGunlukSaat({ baslangic: "08:00", bitis: "18:00", molaDk: 60 }), 9);
 bekle("gece vardiyası", elemanGunlukSaat({ baslangic: "22:00", bitis: "06:00" }), 8);
+const t2 = JSON.parse(JSON.stringify(tanimlar)); t2.kapasite.makineler[0].adet = 3; t2.kapasite.kaliplar[1].adet = 1;
+bekle("3 pres, 1 bıçak → aynı anda tek pres", prosesKapasitesi(t2, urun, "Kesim", "37").saatlik, 40);
+t2.kapasite.kaliplar[1].adet = ""; 
+bekle("bıçak adedi boş → 3 preste ortak", prosesKapasitesi(t2, urun, "Kesim", "37").saatlik, 120);
 console.log(hata ? "── kapasite testi HATALI ──" : "── kapasite testi temiz ──");
 process.exit(hata);

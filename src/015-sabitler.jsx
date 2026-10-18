@@ -488,7 +488,7 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.703.0";
+const SURUM = "1.703.1";
 const SURUM_TARIHI = "2026-10-18";
 const SURUM_NOTU = "Kapasite yönetimi: makine, kalıp/bıçak (beden beden), eleman saatleri; ürün kartında proses bağı";
 
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.703.1", tarih: "18.10.2026", eklenen: ["Kalıp/bıçakta Adet: boşsa makinenin tüm adetlerinde ortak, girilirse aynı anda o kadar makinede çalışır"], degisen: [], duzeltilen: [] },
   { surum: "1.703.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Kapasite: makine/teçhizat (adet, günlük saat, saatlik adet), kalıp/bıçak (makineye bağlı, beden beden saatlik adet), eleman çalışma saatleri", "Ürün kartı › Kapasite: her proses için makine + kalıp/bıçak seçimi, bedene göre günlük adet"], degisen: [], duzeltilen: [] },
   { surum: "1.702.0", tarih: "18.10.2026", eklenen: ["Tanımlar'da ayrı E-Fatura & KDV sekmesi (Firma'dan taşındı)"], degisen: ["Bilgi bildirimleri üst ortadan sol alta taşındı (sekmeleri örtmesin)"], duzeltilen: ["Cari kartı açılınca başlığı üst menü ve sekme şeridinin altında kalıyordu"] },
   { surum: "1.701.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Firma › Cari Tipleri: özel tip ekleme, adını ve hangi ana tip gibi davranacağını değiştirme (o tipteki cariler de güncellenir), kullanılmayan tipi silme"], degisen: ["Cari listesinde özel tip sekmesi yalnız o tipte cari varsa görünür"], duzeltilen: [] },
