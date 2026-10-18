@@ -1,0 +1,21 @@
+{
+ "bas": [
+  "PP-1",
+  "PP-2"
+ ],
+ "hatalar": [],
+ "kayit": [
+  "PP-1:1",
+  "PP-2:2"
+ ],
+ "planlanan": [
+  "PP-1",
+  "PP-2"
+ ],
+ "sonBekleyen": [
+  "PP-1"
+ ],
+ "sonPlanlanan": [
+  "PP-2"
+ ]
+}

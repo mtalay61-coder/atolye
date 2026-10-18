@@ -124,10 +124,12 @@ function mrpHesapla(siparisler, stok, uretim, sadeceUretimPlanli, kurlar) {
 
 // "Planlama" ana sekmesi, alt sekmelerden oluşur — şu an sadece "Hammadde İhtiyaç" (MRP) var, ama
 // yapı, ileride "Merkezi Tedarik Planlama" gibi başka alt sekmeler eklemeye hazır şekilde kuruldu.
-function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, kurlar, onGoToSiparis, onGoToUrun, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlaHammaddeSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
+function PlanlamaModule({ tanimlar, onUretimKaydet, siparisler, stok, uretim, cariler, asortiler, kurlar, onGoToSiparis, onGoToUrun, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlaHammaddeSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
   const [altSekme, setAltSekme] = useState("siparisPlanlama");
   const ALT_SEKMELER = [
     { key: "siparisPlanlama", label: "Sipariş Planlama" },
+    // PROSES PLANLAMA (v1.704.0, 274): her proses ayrı sekme, kapasiteye göre kuyruk.
+    ...(tanimlar && onUretimKaydet ? [{ key: "proses", label: "Proses Planlama" }] : []),
     { key: "siparisIhtiyac", label: "Sipariş İhtiyaç Planlama" },
     { key: "hammadde", label: "Hammadde İhtiyaç" },
   ];
@@ -142,6 +144,7 @@ function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, kurlar, 
             <button
               key={s.key}
               type="button"
+              data-planlama-alt={s.key}
               onClick={() => setAltSekme(s.key)}
               style={{
                 padding: "7px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
@@ -170,6 +173,9 @@ function PlanlamaModule({ siparisler, stok, uretim, cariler, asortiler, kurlar, 
           onPlanlamaTemizle={onPlanlamaTemizle}
           onAsortiOlustur={onAsortiOlustur}
         />
+      )}
+      {altSekme === "proses" && tanimlar && onUretimKaydet && (
+        <ProsesPlanlamaSekmesi uretim={uretim} stok={stok} tanimlar={tanimlar} onUretimKaydet={onUretimKaydet} onGoToUretim={onGoToUretim} />
       )}
       {altSekme === "siparisIhtiyac" && (
         <HammaddeIhtiyacSekmesi kurlar={kurlar}

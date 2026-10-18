@@ -5219,6 +5219,8 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "planlama"}>
             <PlanlamaModule
+              tanimlar={tanimlar}
+              onUretimKaydet={saveUretim}
               kurlar={muhasebe.kurlar || {}}
               siparisler={siparisler}
               stok={stok}
