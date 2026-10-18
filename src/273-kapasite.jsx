@@ -11,7 +11,7 @@
 // VERİ (tanimlar.kapasite):
 //   makineler: [{ id, ad, prosesler: [proses adı], adet, gunlukSaat, saatlikAdet }]
 //     saatlikAdet: kalıpsız işte (dikiş gibi) makinenin saatlik genel hacmi.
-//   kaliplar:  [{ id, ad, tur: "Kalıp"|"Bıçak", makineId, bedenSaatlik: { "<beden adı>": saatlik adet } }]
+//   kaliplar:  [{ id, ad, tur: "Kalıp"|"Bıçak", makineId, adet (boş = ortak), bedenSaatlik: { "<beden adı>": saatlik adet } }]
 //     Kalıp/bıçak beden beden ayrı hızda çalışır (büyük numarada pastal az sığar); boş beden = o kalıp o bedeni kesmez.
 //   elemanlar: [{ cariId, prosesler: [ad], baslangic: "08:00", bitis: "18:00", molaDk, saatlikAdet }]
 // ÜRÜN (urun.kapasite): { "<proses adı>": { makineId, kalipIdler: [id], elemanIdler: [cariId] } } — Ürün kartı › Kapasite sekmesi.
@@ -51,9 +51,14 @@ function prosesKapasitesi(tanimlar, urun, proses, beden) {
     saatlik = sayiYa(makine.saatlikAdet);
     if (!saatlik) return { makine, kaliplar, eksik: "makinenin saatlik adedi yok" };
   }
-  const adet = Math.max(1, sayiYa(makine.adet) || 1);
+  // AYNI ANDA ÇALIŞAN MAKİNE (v1.703.1 — kullanıcı: "3 adet pres var, bıçaklar 3'ünde de kullanılabilir; makineyi
+  // kesim makinesi olarak ekler adet artırırım, bıçaklar ortak"). Aynı tip makineler TEK kayıt + Adet. Kalıp/bıçak o
+  // kayda bağlanınca tüm preslerde ortak; ama bir bıçak aynı anda tek preste durur — kalıpta Adet girilmişse çalışan
+  // pres sayısı en az olanla sınırlanır. Boş Adet = "yeterince var", sınır yok.
+  const makineAdet = Math.max(1, sayiYa(makine.adet) || 1);
+  const adet = Math.min(makineAdet, ...kaliplar.map((k) => sayiYa(k.adet) || makineAdet));
   const gunlukSaat = sayiYa(makine.gunlukSaat) || 8;
-  return { makine, kaliplar, saatlik: saatlik * adet, gunluk: saatlik * adet * gunlukSaat, gunlukSaat };
+  return { makine, kaliplar, calisanMakine: adet, saatlik: saatlik * adet, gunluk: saatlik * adet * gunlukSaat, gunlukSaat };
 }
 
 // Beden → adet tablosu için gereken saat ve gün. Bir beden bile bilinmiyorsa `eksik` listelenir, kalanlar toplanır.
@@ -121,6 +126,7 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
         <TanimBasligi ad="Makine / Teçhizat" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" }}>
           Her makinenin hangi proseste kullanıldığını, kaç tane olduğunu ve günde kaç saat çalıştığını girin.
+          Aynı tip makineleri (3 pres gibi) <b>tek kayıt</b> yapıp Adet'i artırın; kalıp ve bıçaklar hepsinde ortak kullanılır.
           Kalıpsız işlerde (dikiş gibi) saatlik adet makinenin kendi hızıdır; kalıplı işte hızı kalıp belirler.
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -180,7 +186,13 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
                 </select>
                 <button type="button" className="btn-ghost" onClick={() => sil("kaliplar", k.id, k.ad)} title="Sil" style={{ marginLeft: "auto" }}><Trash2 size={14} /></button>
               </div>
-              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Saatlik adet — beden beden</div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" }}>
+                Adet
+                <input inputMode="numeric" data-kalip-adet value={k.adet ?? ""} placeholder="ortak"
+                  onChange={(e) => kalipGuncelle(k.id, { adet: e.target.value })} style={{ ...inputStyle, width: 70 }} />
+                <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>boş = makinenin tüm adetlerinde ortak; 1 girerseniz aynı anda tek makinede çalışır</span>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>Saatlik adet — beden beden (tek makinede)</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {bedenAdlari.map((b) => (
                   <label key={b} style={{ display: "grid", gap: 2, fontSize: 11, textAlign: "center" }}>
