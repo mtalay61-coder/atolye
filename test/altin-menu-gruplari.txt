@@ -2,7 +2,7 @@
  "aktifGrupAcikKaldi": true,
  "daraltilmis": {
   "grupSayisi": 4,
-  "navSayisi": 4
+  "navSayisi": 5
  },
  "depoAcik": [
   "Anasayfa",
@@ -15,6 +15,7 @@
   "Alış / Satış",
   "Planlama",
   "Sohbet",
+  "Kılavuz",
   "Günlük"
  ],
  "finansAltinda": [
@@ -27,6 +28,7 @@
   "Gelir / Gider",
   "Fişler",
   "Sohbet",
+  "Kılavuz",
   "Günlük"
  ],
  "fisKarti": {
@@ -46,6 +48,7 @@
    "Anasayfa",
    "Planlama",
    "Sohbet",
+   "Kılavuz",
    "Günlük"
   ]
  },
