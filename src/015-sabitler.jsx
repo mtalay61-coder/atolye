@@ -297,6 +297,7 @@ const SEKME_BILGISI = {
   gorevler: { ad: "Görevler" },
   gunluk: { ad: "Günlük" },
   kilavuz: { ad: "Kılavuz" },
+  uretimrapor: { ad: "Üretim Raporu" },
   atolye: { ad: "Atölye" },
 };
 
@@ -487,10 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-
-const SURUM = "1.705.0";
+const SURUM = "1.706.0";
 const SURUM_TARIHI = "2026-10-18";
-const SURUM_NOTU = "Demirbaş: makine/kalıp/bıçak alımı cariye, amortismanı Gelir/Gider'e, payı ürün maliyetine";
+const SURUM_NOTU = "Üretim Raporu: günlük/haftalık/aylık proses hedef-gerçekleşen, personel üretimi, açık üretimlerin proses ilerlemesi";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.706.0", tarih: "18.10.2026", eklenen: ["Üretim › Üretim Raporu: günlük/haftalık/aylık dönem, anlık özet (açık üretim, personelde olan), proses hedef–gerçekleşen–oran–hurda–bekleyen, personelin gün gün teslim aldığı çift, açık üretimlerin proses proses ilerlemesi", "Proses günlük hedefi rapordan girilir; boşsa makine kapasitesinden hesaplanır"], degisen: [], duzeltilen: [] },
   { surum: "1.705.0", tarih: "18.10.2026", eklenen: ["Makine/kalıp/bıçak alımı: Tanımlar › Kapasite \"Satın alındı\" ya da cari Alış (ürünsüz) formunda demirbaş seçimi; tedarikçiye fişli Alış hareketi", "Amortisman: alım tutarı girilen ay sayısına bölünüp her ay Gelir/Gider'de Makine/Kalıp/Bıçak Amortismanı olarak", "Ürün maliyetine demirbaş payı: alım ÷ ömür (çift); ürün kartı Kapasite bağı ya da kalıp kartında Ürün bağla"], degisen: [], duzeltilen: [] },
   { surum: "1.704.1", tarih: "18.10.2026", eklenen: ["Tanımlar › Kapasite proses sekmeleri: makine, kalıp/bıçak ve elemanlar prosese göre süzülür; yeni makine açık prosesle doğar; prosese eleman ekleme"], degisen: [], duzeltilen: [] },
   { surum: "1.704.0", tarih: "18.10.2026", eklenen: ["Planlama › Proses Planlama: her proses ayrı sekme; Bekleyen (verilmemiş adımlar) ve Planlanan çerçeveleri, tikle toplu planla, sıra değiştir, plandan çıkar", "Planlananlarda kapasiteden gün, birikimli süre ve bitiş tahmini (pazar çalışılmaz)"], degisen: [], duzeltilen: [] },

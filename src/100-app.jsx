@@ -3546,6 +3546,7 @@ function AtolyeUygulamasi() {
     // karşılığı olmadığı için başlık başka bir yerden düşüyordu.
     satinalma: "Alış Siparişi",
     modelhane: "Modelhane",
+    uretimrapor: "Üretim Raporu",
     fisler: "Fişler",
     gelirgider: "Gelir / Gider Kartları",
     muhasebe: "Kasa & Banka",
@@ -4232,7 +4233,9 @@ function AtolyeUygulamasi() {
                     // SEVKİYAT + ALIŞ/SATIŞ (v1.667.0, 239): ürün satışı depodan; ikisi de aynı fiş penceresini açar.
                     ["sevkiyat", "Sevkiyat", <Truck size={16} />], ["alissatis", "Alış / Satış", <ArrowLeftRight size={16} />]] },
                   { ad: "Üretim", ikon: <Hammer size={15} />, ogeler: [
-                    yetki("uretim") && ["uretim", "Üretim", <Hammer size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
+                    yetki("uretim") && ["uretim", "Üretim", <Hammer size={16} />],
+                    // ÜRETİM RAPORU (v1.706.0, 276): anlık durum, proses hedef/gerçekleşen, personel günlük üretimi.
+                    yetki("uretim") && ["uretimrapor", "Üretim Raporu", <TrendingUp size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
                   { tek: "planlama", ad: "Planlama", ikon: <Compass size={15} /> },
                   { ad: "Siparişler", ikon: <ClipboardList size={15} />, ogeler: [
                     ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
@@ -5131,6 +5134,8 @@ function AtolyeUygulamasi() {
           {/* Menüyü gizlemek TEK BAŞINA yeterli değil (bkz. muhasebe): gövde de yetkiye bağlı.
               Günlük ayrıca `display:none` ile gizlenmiyor, HİÇ RENDER EDİLMİYOR — gizli bir
               sekmede duran veri, ağ sekmesini açan herkese görünür olurdu. */}
+          {tab === "uretimrapor" && <UretimRaporu uretim={uretim} cariler={cariler} tanimlar={tanimlar} onSave={saveTanimlar}
+            onGoToUretim={(id) => { setUretimHedefId(id || null); setTab("uretim"); }} />}
           {tab === "kilavuz" && <KilavuzEkrani aktifKullanici={aktifKullanici} tanimlar={tanimlar} showToast={showToast} />}
           {tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (
             <GunlukPaneli showToast={showToast} />
