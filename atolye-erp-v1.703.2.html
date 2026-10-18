@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.702.0</title>
+<title>Atölye ERP 1.703.2</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2314,9 +2314,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.702.0";
+const SURUM = "1.703.2";
 const SURUM_TARIHI = "2026-10-18";
-const SURUM_NOTU = "Tanımlar'da E-Fatura & KDV sekmesi; bildirimler sol altta; cari kartı sekmenin altında kalmaz";
+const SURUM_NOTU = "Kapasite yönetimi: makine, kalıp/bıçak (beden beden), eleman saatleri; ürün kartında proses bağı";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2346,6 +2346,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.703.2", tarih: "18.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tam ekran cari kartının başlığı sekme şeridinin altında kalıyordu"] },
+    { surum: "1.703.1", tarih: "18.10.2026", eklenen: ["Kalıp/bıçakta Adet: boşsa makinenin tüm adetlerinde ortak, girilirse aynı anda o kadar makinede çalışır"], degisen: [], duzeltilen: [] },
+    { surum: "1.703.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Kapasite: makine/teçhizat (adet, günlük saat, saatlik adet), kalıp/bıçak (makineye bağlı, beden beden saatlik adet), eleman çalışma saatleri", "Ürün kartı › Kapasite: her proses için makine + kalıp/bıçak seçimi, bedene göre günlük adet"], degisen: [], duzeltilen: [] },
     { surum: "1.702.0", tarih: "18.10.2026", eklenen: ["Tanımlar'da ayrı E-Fatura & KDV sekmesi (Firma'dan taşındı)"], degisen: ["Bilgi bildirimleri üst ortadan sol alta taşındı (sekmeleri örtmesin)"], duzeltilen: ["Cari kartı açılınca başlığı üst menü ve sekme şeridinin altında kalıyordu"] },
     { surum: "1.701.0", tarih: "18.10.2026", eklenen: ["Tanımlar › Firma › Cari Tipleri: özel tip ekleme, adını ve hangi ana tip gibi davranacağını değiştirme (o tipteki cariler de güncellenir), kullanılmayan tipi silme"], degisen: ["Cari listesinde özel tip sekmesi yalnız o tipte cari varsa görünür"], duzeltilen: [] },
     { surum: "1.700.0", tarih: "18.10.2026", eklenen: ["Cari tipi \"Fasoncu\" hazır seçenek: fason usta — teslimde işçilik cariye alacak", "Personel cari kartında \"Personel bilgileri\": bölüm, aylık maaş, işe başlangıç, aylık çalışma saati, saat ücreti", "Mesai: ay seçip hafta içi / Cumartesi / Pazar saatleri girilir; saat ücreti × kat ile hesaplanır, ayrı MESAI fişi olarak personele yazılır ve bölümün işçilik gider kartına düşer", "Tanımlar › Atölye İçi Bölümler: mesai katları ve varsayılan aylık çalışma saati"], degisen: ["Teslimde işçiliğin cariye mi bölüme mi yazılacağını önce kişi belirler: Fasoncu → cariye; bir bölümde kayıtlı personel → bölüm tahakkuku; ikisi de değilse eski kural (prosesin bölümü)"], duzeltilen: [] },
@@ -26527,6 +26530,7 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
             { key: "urun", ad: "Ürün" },
             { key: "uretim", ad: "Üretim" },
             // WEB SİTESİ AYRI SEKME (v1.661.0 — kullanıcı: "Tanımlarda web sitesini ayrı sekmeye al"): önce Firma'nın dibindeydi.
+            { key: "kapasite", ad: "Kapasite" },
             { key: "efatura", ad: "E-Fatura & KDV" },
             { key: "websitesi", ad: "Web Sitesi" },
             { obek: "Sistem", key: "kullanicilar", ad: "Kullanıcılar" },
@@ -26635,6 +26639,7 @@ function TanimlarModule({ onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe
                                     React.createElement("input", { value: e.gonderenAd || "", placeholder: "New Diamond Shoes", onChange: (ev) => guncelle("gonderenAd", ev.target.value), style: inputStyle })))));
                     })())))),
         aktifTanimSekme === "firma" && (React.createElement(CariTipleriTanimi, { tanimlar: tanimlar, onSave: onSave, cariler: cariler, onCarilerKaydet: onCarilerKaydet, showToast: showToast })),
+        aktifTanimSekme === "kapasite" && (React.createElement(KapasiteTanimi, { tanimlar: tanimlar, onSave: onSave, cariler: cariler, showToast: showToast })),
         aktifTanimSekme === "efatura" && (React.createElement("div", { style: { marginBottom: 24, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16, display: "grid", gap: 18 } },
             (() => {
                 const fb = tanimlar.firmaBilgileri || {};
@@ -29757,6 +29762,9 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
             : p));
         onSave(next);
     }
+    function kapasiteKaydet(productId, kapasite) {
+        onSave(items.map((p) => (p.id === productId ? { ...p, kapasite } : p)));
+    }
     function teknikNotDegistir(productId, metin) {
         const next = items.map((p) => (p.id === productId ? { ...p, teknikNot: metin } : p));
         onSave(next);
@@ -30786,7 +30794,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
                             // bileşen yeniden kurulur ve istenen sekme uygulanır. Aksi halde başlangıç değeri
                             // yalnızca ilk kurulumda okunduğu için ikinci yönlendirme etkisiz kalırdı.
                             key: `${p.id}-${hedef ? hedef.sayac : 0}`, product: p, baslangicAcik: true, baslangicSekme: hedef ? hedef.sekme : null, tanimlarRenkler: tanimlar.renkler, tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [], tanimlarBedenler: tanimlar.bedenler, tanimlarBedenGruplari: tanimlar.bedenGruplari || [], onAddRenk: addRenkToProduct, onRenkleriTipeBagla: onRenkleriTipeBagla, onAddBeden: addBedenToProduct, onRemoveRenk: removeRenkFromProduct, onRemoveBeden: removeBedenFromProduct, onRemoveProduct: (id, cascade) => { if (removeProduct(id, cascade) && onPencereKapat)
-                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, tanimlarCeviriler: tanimlar.ceviriler || {}, onCevirilerKaydet: onCevirilerKaydet, tanimlarSiteGruplari: tanimlar.siteGruplari || [], onSiteGruplariKaydet: onSiteGruplariKaydet, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, onFiyatGrubuMarj: onFiyatGrubuMarj, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, 
+                                onPencereKapat(pencereId); }, onEkFiyatEkle: ekFiyatEkle, onEkFiyatSil: ekFiyatSil, tumUrunler: items, tanimlarProsesler: tanimlar.prosesler || [], tanimlarAraProsesler: tanimlar.araProsesler || [], tanimlarBirimler: tanimlar.birimler || [], tanimlarHammaddeTipleri: tanimlar.hammaddeTipleri || [], onUrunGuncelle: urunGuncelle, tanimlarCeviriler: tanimlar.ceviriler || {}, onCevirilerKaydet: onCevirilerKaydet, tanimlarSiteGruplari: tanimlar.siteGruplari || [], onSiteGruplariKaydet: onSiteGruplariKaydet, onMinStokGuncelle: minStokGuncelle, onReceteGrubuGuncelle: receteGrubuGuncelle, onProsesUcretGuncelle: prosesUcretGuncelle, tanimlarOzelKodAlanlari: ozelKodAlanlari, onReceteSilToplu: receteSatirlariSilToplu, onYeniRenkKaydet: onYeniRenkKaydet, onBarkodTamamla: onBarkodTamamla, onPasifDegistir: pasifDegistir, onDefterDuzeltmeYaz: defterDuzeltmeYaz, stokRezervasyonlari: stokRezervasyonlari, tumSiparisler: tumSiparisler, onKullanilanUrunAc: urunAc, onHizliCariEkle: onHizliCariEkle, onHizliHammaddeEkle: hizliHammaddeEkle, onYeniOlcuKaydet: onYeniOlcuKaydet, receteSablonlari: tanimlar.receteSablonlari || [], onReceteSablonuKaydet: onReceteSablonuKaydet, onYeniOzelKodAlani: onYeniOzelKodAlani, onFiyatGrubuMarj: onFiyatGrubuMarj, showToast: showToast, onKategoriChange: updateKategori, onKapakResmiChange: updateKapakResmi, onTeknikCizimEkle: teknikCizimEkle, onTeknikCizimSil: teknikCizimSil, onTeknikCizimGuncelle: teknikCizimGuncelle, onTeknikNotChange: teknikNotDegistir, tanimlarTum: tanimlar, onKapasiteKaydet: kapasiteKaydet, 
                             // Büyütme, katalogdaki büyük görsel penceresinin aynısı: { url, ad } bekliyor.
                             onTeknikCizimAc: (c) => setBuyukGorsel({ url: c.gorsel, ad: c.baslik || "Teknik çizim" }), cariler: cariler, onGoToCari: onGoToCari, onRemoveHareketGlobal: onRemoveHareketGlobal, onRenkResmiChange: updateRenkResmi, onRenkResmiRemove: removeRenkResmi, siparisler: siparisler, uretim: uretim, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, firmaBilgileri: tanimlar.firmaBilgileri, tanimlarFiyatGruplari: tanimlar.fiyatGruplari || [], onPencereAc: onPencereAc, onKombinasyonOlustur: onKombinasyonOlustur, onGoToUrun: urunAc })))));
         })));
@@ -31980,7 +31988,7 @@ function ReceteRenkArama({ hammaddeId, yr, onSec, onKapat, secili }) {
             React.createElement("input", { type: "color", value: renkKodu, title: "G\u00F6r\u00FCn\u00FCm rengi", "data-recete-renk-yeni-hex": "1", onChange: (e) => setRenkKodu(e.target.value), style: { width: 28, height: 24, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4 } }))),
         t && !tam && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Tan\u0131mlar'a ortak renk olarak eklenir (renk kodu, barkod kodu otomatik), hammadde stok kart\u0131na da a\u00E7\u0131l\u0131r.")));
 }
-function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet, tanimlarAylikUretimHedefi, tanimlarGenelGiderler, onFiseGitNo, product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onFiyatGrubuMarj, onDefterDuzeltmeYaz, baslangicSekme, stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir, onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc, onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal, onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle, onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
+function ProductMatrixCard({ tanimlarTum, onKapasiteKaydet, kurlar, kurGecmisi, receteSablonlari, onReceteSablonuKaydet, tanimlarAylikUretimHedefi, tanimlarGenelGiderler, onFiseGitNo, product, tanimlarRenkler, tanimlarBedenler, tanimlarBedenGruplari, onYeniOlcuKaydet, onYeniOzelKodAlani, onFiyatGrubuMarj, onDefterDuzeltmeYaz, baslangicSekme, stokRezervasyonlari, tumSiparisler, onAddRenk, onAddBeden, onRemoveRenk, onRemoveBeden, onRemoveProduct, onPasifDegistir, onTeknikCizimEkle, onTeknikCizimSil, onTeknikCizimGuncelle, onTeknikNotChange, onTeknikCizimAc, onRenkResmiChange, onRenkResmiRemove, onKategoriChange, onKapakResmiChange, cariler, onGoToCari, onRemoveHareketGlobal, onEkFiyatEkle, onEkFiyatSil, tumUrunler, onKullanilanUrunAc, onHizliCariEkle, onHizliHammaddeEkle, onReceteSilToplu, onReceteGrubuGuncelle: receteGrubuGuncelleHam, onProsesUcretGuncelle, tanimlarProsesler, tanimlarAraProsesler, tanimlarBirimler, tanimlarHammaddeTipleri, onUrunGuncelle, onMinStokGuncelle, baslangicAcik, siparisler, uretim, onGoToSiparis, onGoToUretim, tanimlarOzelKodAlanlari, tanimlarKombinasyonlar, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, firmaBilgileri, tanimlarFiyatGruplari, onPencereAc, onKombinasyonOlustur, onGoToUrun, showToast, asortiler, tanimlarCeviriler, onCevirilerKaydet, tanimlarSiteGruplari, onSiteGruplariKaydet }) {
     const [open, setOpen] = useState(!!baslangicAcik);
     const [urunSagMenu, setUrunSagMenu] = useState(null);
     // Sitede görünen adların çevirisi (v1.651.0, 268): sağ tık › "Çeviriler".
@@ -33546,7 +33554,9 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                     const prosessiz = gruplar.filter((g) => !(g.satirlar[0] && g.satirlar[0].proses)).length;
                                     return `Reçete (${gruplar.length})${prosessiz > 0 ? ` ⚠ ${prosessiz} prosessiz` : ""}`;
                                 })(),
-                            }, { key: "maliyet", label: "Maliyet" }]
+                            }, { key: "maliyet", label: "Maliyet" },
+                            // KAPASİTE (v1.703.0): proses başına makine + kalıp/bıçak bağı; planlama gün hesabını buradan yapar.
+                            ...(onKapasiteKaydet && tanimlarTum ? [{ key: "kapasite", label: `Kapasite${Object.values(product.kapasite || {}).filter((b) => b && b.makineId).length ? ` (${Object.values(product.kapasite).filter((b) => b && b.makineId).length})` : ""}` }] : [])]
                         : []),
                     { key: "fiyat", label: `Fiyatlandırma${(product.fiyatKurallari || []).length > 0 ? ` (${(product.fiyatKurallari || []).length})` : ""}` },
                     { key: "siparisler", label: `Siparişler (${siparisSayisi})` },
@@ -35756,6 +35766,7 @@ function ProductMatrixCard({ kurlar, kurGecmisi, receteSablonlari, onReceteSablo
                                 k.miktarMetni))),
                     React.createElement(ChevronRight, { size: 18, color: "var(--erp-text-3)" })))))));
         })(),
+        isMamul && cardTab === "kapasite" && onKapasiteKaydet && tanimlarTum && (React.createElement(UrunKapasiteBagi, { product: product, tanimlar: tanimlarTum, cariler: cariler, onKaydet: onKapasiteKaydet })),
         cardTab === "teknik" && (React.createElement("div", { "data-teknik-cizim": "1", style: { display: "grid", gap: 14 } },
             React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", lineHeight: 1.5 } }, "\u00DCretimin bu modeli nas\u0131l yapaca\u011F\u0131n\u0131 anlatan teknik \u00E7izimler ve \u00F6l\u00E7\u00FCler. Kal\u0131p\u00E7\u0131ya, sayac\u0131ya ve montaja ayn\u0131 bilgiyi vermek i\u00E7in; i\u015F emrine de bas\u0131labilir."),
             React.createElement("div", null,
@@ -50115,7 +50126,9 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
     return (React.createElement("div", { ref: kartRef, "data-cari-kart-id": cari.id, "data-cari-tam-ekran": tamEkran ? "1" : undefined, ...sagTikIsleyicileri((x, y) => setSagMenu({ x, y }), !duzenleModu), style: tamEkran
             // KATMAN (v1.683.1 — kullanıcı: "tam ekranda alış/satış fişi açınca ekranda göstermiyor"): fiş/ekstre pencereleri
             // 100, üst menü 510 katmanında — kart onların ALTINDA (90) ve üst menünün altından başlar; pencere üstte açılır.
-            ? { position: "fixed", top: "var(--ust-menu-h, 0px)", left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
+            // v1.703.2 (kullanıcı: "ekran yine kayıyor"): üst menünün değil SEKME ŞERİDİNİN altından başlar — şerit (500)
+            // menünün hemen altında duruyor ve kartın başlığını örtüyordu.
+            ? { position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
             : { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
         React.createElement(SagTikMenusu, { konum: sagMenu, onKapat: () => setSagMenu(null), veri: "cari", baslik: `CARİ · ${cari.unvan}`, ogeler: [
                 { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
@@ -52698,6 +52711,285 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
                     " yaz\u0131lm\u0131\u015F (",
                     (mevcut.tutar || 0).toLocaleString("tr-TR"),
                     " \u20BA)"))))));
+}
+// KAPASİTE YÖNETİMİ (v1.703.0 — kullanıcı: "Kapasite yönetimi yapalım; tanımlara makine teçhizat, makinenin günlük
+// iş yapabilme hacmi, makineye bağlı kalıp ve kalıpların her beden için ayrı günlük kapasitesi, elemanların günlük
+// kapasitesi çalışma saatleri ile birlikte" + "Ürün stok içinde kullanılacak makine, kalıp bağla; örnek: modelin kesim
+// prosesi kesim makinesi, x kalıp, x bıçak kullanacak; x kalıp ve bıçak kesim makinesinde saatlik … adet üretir.
+// Planlamayı bunun üzerinden yapacağız").
+//
+// KARARLAR (kullanıcı seçti): tanımlar Tanımlar › Kapasite sekmesinde; günlük kapasiteyi MAKİNE + KALIP belirler
+// (kalıbın o bedendeki saatlik adedi × makinenin günlük çalışma saati × makine adedi); eleman yalnız saat bilgisi
+// (planlamada kimin ne kadar saati var — kapasiteyi kısmaz).
+//
+// VERİ (tanimlar.kapasite):
+//   makineler: [{ id, ad, prosesler: [proses adı], adet, gunlukSaat, saatlikAdet }]
+//     saatlikAdet: kalıpsız işte (dikiş gibi) makinenin saatlik genel hacmi.
+//   kaliplar:  [{ id, ad, tur: "Kalıp"|"Bıçak", makineId, adet (boş = ortak), bedenSaatlik: { "<beden adı>": saatlik adet } }]
+//     Kalıp/bıçak beden beden ayrı hızda çalışır (büyük numarada pastal az sığar); boş beden = o kalıp o bedeni kesmez.
+//   elemanlar: [{ cariId, prosesler: [ad], baslangic: "08:00", bitis: "18:00", molaDk, saatlikAdet }]
+// ÜRÜN (urun.kapasite): { "<proses adı>": { makineId, kalipIdler: [id], elemanIdler: [cariId] } } — Ürün kartı › Kapasite sekmesi.
+function kapasiteTanimi(tanimlar) {
+    const k = (tanimlar && tanimlar.kapasite) || {};
+    return { makineler: k.makineler || [], kaliplar: k.kaliplar || [], elemanlar: k.elemanlar || [] };
+}
+const sayiYa = (x) => { const n = Number(String(x == null ? "" : x).replace(",", ".")); return Number.isFinite(n) && n > 0 ? n : 0; };
+// "08:00"–"18:00", 60 dk mola → 9 saat. Bitiş başlangıçtan önceyse (gece vardiyası) ertesi güne sayılır.
+function elemanGunlukSaat(e) {
+    const dk = (s) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || "")); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+    const b = dk(e && e.baslangic), s = dk(e && e.bitis);
+    if (b == null || s == null)
+        return 0;
+    const fark = (s > b ? s - b : s + 1440 - b) - sayiYa(e.molaDk);
+    return Math.max(0, Math.round((fark / 60) * 100) / 100);
+}
+// Bir ürünün bir prosesinde, verilen bedende SAATLİK ve GÜNLÜK kapasite.
+// Kalıp/bıçak seçiliyse darboğaz en yavaş olanıdır (kalıp 40, bıçak 60 → saatte 40); seçili kalıp o bedeni
+// tanımlamamışsa `eksik` döner — planlama "kapasite bilinmiyor" der, sıfırla bölmez.
+function prosesKapasitesi(tanimlar, urun, proses, beden) {
+    const kt = kapasiteTanimi(tanimlar);
+    const bag = ((urun && urun.kapasite) || {})[proses];
+    if (!bag || !bag.makineId)
+        return { eksik: "makine bağlı değil" };
+    const makine = kt.makineler.find((m) => m.id === bag.makineId);
+    if (!makine)
+        return { eksik: "makine silinmiş" };
+    const kaliplar = (bag.kalipIdler || []).map((id) => kt.kaliplar.find((k) => k.id === id)).filter(Boolean);
+    let saatlik;
+    if (kaliplar.length) {
+        const hizlar = kaliplar.map((k) => sayiYa((k.bedenSaatlik || {})[beden]));
+        if (hizlar.some((h) => !h))
+            return { makine, kaliplar, eksik: `${beden} bedeni kalıpta tanımlı değil` };
+        saatlik = Math.min(...hizlar);
+    }
+    else {
+        saatlik = sayiYa(makine.saatlikAdet);
+        if (!saatlik)
+            return { makine, kaliplar, eksik: "makinenin saatlik adedi yok" };
+    }
+    // AYNI ANDA ÇALIŞAN MAKİNE (v1.703.1 — kullanıcı: "3 adet pres var, bıçaklar 3'ünde de kullanılabilir; makineyi
+    // kesim makinesi olarak ekler adet artırırım, bıçaklar ortak"). Aynı tip makineler TEK kayıt + Adet. Kalıp/bıçak o
+    // kayda bağlanınca tüm preslerde ortak; ama bir bıçak aynı anda tek preste durur — kalıpta Adet girilmişse çalışan
+    // pres sayısı en az olanla sınırlanır. Boş Adet = "yeterince var", sınır yok.
+    const makineAdet = Math.max(1, sayiYa(makine.adet) || 1);
+    const adet = Math.min(makineAdet, ...kaliplar.map((k) => sayiYa(k.adet) || makineAdet));
+    const gunlukSaat = sayiYa(makine.gunlukSaat) || 8;
+    return { makine, kaliplar, calisanMakine: adet, saatlik: saatlik * adet, gunluk: saatlik * adet * gunlukSaat, gunlukSaat };
+}
+// Beden → adet tablosu için gereken saat ve gün. Bir beden bile bilinmiyorsa `eksik` listelenir, kalanlar toplanır.
+function isYukuHesapla(tanimlar, urun, proses, bedenAdet) {
+    let saat = 0;
+    const eksik = [];
+    let gunlukSaat = 8;
+    Object.entries(bedenAdet || {}).forEach(([beden, adet]) => {
+        const n = sayiYa(adet);
+        if (!n)
+            return;
+        const k = prosesKapasitesi(tanimlar, urun, proses, beden);
+        if (k.eksik) {
+            eksik.push(k.eksik);
+            return;
+        }
+        gunlukSaat = k.gunlukSaat;
+        saat += n / k.saatlik;
+    });
+    return { saat: Math.round(saat * 100) / 100, gun: Math.round((saat / gunlukSaat) * 100) / 100, eksik: Array.from(new Set(eksik)) };
+}
+function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
+    const kt = kapasiteTanimi(tanimlar);
+    const yaz = (alan, liste) => onSave({ ...tanimlar, kapasite: { ...kt, [alan]: liste } });
+    const prosesAdlari = (tanimlar.prosesler || []).map((p) => p.ad);
+    const bedenAdlari = (tanimlar.bedenler || []).filter((b) => (b.tip || "Beden") === "Beden").map((b) => b.ad);
+    const personeller = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
+    const [yeniMakine, setYeniMakine] = useState("");
+    const [yeniKalip, setYeniKalip] = useState({ ad: "", tur: "Kalıp", makineId: "" });
+    const kutu = { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", display: "grid", gap: 8 };
+    const kucuk = { ...inputStyle, width: 80 };
+    const prosesCipleri = (secili, onDegis, veri) => (React.createElement("div", { style: { display: "flex", gap: 4, flexWrap: "wrap" } }, prosesAdlari.map((p) => {
+        const on = (secili || []).includes(p);
+        return (React.createElement("button", { key: p, type: "button", "data-kapasite-proses": `${veri}:${p}`, onClick: () => onDegis(on ? secili.filter((x) => x !== p) : [...(secili || []), p]), style: { padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 12, cursor: "pointer",
+                border: `1px solid ${on ? "var(--erp-accent, #2F6FB0)" : "var(--erp-border)"}`, background: on ? "#2F6FB01A" : "#fff",
+                fontWeight: on ? 700 : 400 } }, p));
+    })));
+    const makineEkle = () => {
+        const ad = yeniMakine.trim();
+        if (!ad)
+            return;
+        if (kt.makineler.some((m) => m.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"))) {
+            if (showToast)
+                showToast(`"${ad}" zaten var`);
+            return;
+        }
+        yaz("makineler", [...kt.makineler, { id: uid("mak"), ad, prosesler: [], adet: 1, gunlukSaat: 9, saatlikAdet: "" }]);
+        setYeniMakine("");
+    };
+    const makineGuncelle = (id, d) => yaz("makineler", kt.makineler.map((m) => (m.id === id ? { ...m, ...d } : m)));
+    const kalipEkle = () => {
+        const ad = yeniKalip.ad.trim();
+        if (!ad || !yeniKalip.makineId) {
+            if (showToast)
+                showToast("Kalıp adı ve makine seçin");
+            return;
+        }
+        yaz("kaliplar", [...kt.kaliplar, { id: uid("klp"), ad, tur: yeniKalip.tur, makineId: yeniKalip.makineId, bedenSaatlik: {} }]);
+        setYeniKalip({ ...yeniKalip, ad: "" });
+    };
+    const kalipGuncelle = (id, d) => yaz("kaliplar", kt.kaliplar.map((k) => (k.id === id ? { ...k, ...d } : k)));
+    const elemanGuncelle = (cariId, d) => {
+        const var_ = kt.elemanlar.some((e) => e.cariId === cariId);
+        yaz("elemanlar", var_ ? kt.elemanlar.map((e) => (e.cariId === cariId ? { ...e, ...d } : e))
+            : [...kt.elemanlar, { cariId, prosesler: [], baslangic: "08:00", bitis: "18:00", molaDk: 60, ...d }]);
+    };
+    // Makine/kalıp silinirken ürünlerdeki bağ ürün kartında "makine silinmiş" diye görünür; burada sessizce silmek
+    // yerine kullanıcıya sorulur.
+    const sil = (alan, id, ad) => { if (window.confirm(`"${ad}" silinsin mi?`))
+        yaz(alan, kt[alan].filter((x) => x.id !== id)); };
+    return (React.createElement("div", { "data-kapasite-tanimi": true, style: { display: "grid", gap: 22 } },
+        React.createElement("div", null,
+            React.createElement(TanimBasligi, { ad: "Makine / Te\u00E7hizat" }),
+            React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" } },
+                "Her makinenin hangi proseste kullan\u0131ld\u0131\u011F\u0131n\u0131, ka\u00E7 tane oldu\u011Funu ve g\u00FCnde ka\u00E7 saat \u00E7al\u0131\u015Ft\u0131\u011F\u0131n\u0131 girin. Ayn\u0131 tip makineleri (3 pres gibi) ",
+                React.createElement("b", null, "tek kay\u0131t"),
+                " yap\u0131p Adet'i art\u0131r\u0131n; kal\u0131p ve b\u0131\u00E7aklar hepsinde ortak kullan\u0131l\u0131r. Kal\u0131ps\u0131z i\u015Flerde (diki\u015F gibi) saatlik adet makinenin kendi h\u0131z\u0131d\u0131r; kal\u0131pl\u0131 i\u015Fte h\u0131z\u0131 kal\u0131p belirler."),
+            React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 10 } },
+                React.createElement("input", { "data-makine-yeni": true, value: yeniMakine, onChange: (e) => setYeniMakine(e.target.value), onKeyDown: (e) => e.key === "Enter" && makineEkle(), placeholder: "\u00D6rn. Kesim Makinesi 1", style: { ...inputStyle, width: 220 } }),
+                React.createElement("button", { type: "button", className: "btn-primary", "data-makine-ekle": true, onClick: makineEkle },
+                    React.createElement(Plus, { size: 14 }))),
+            React.createElement("div", { style: { display: "grid", gap: 8 } }, kt.makineler.map((m) => (React.createElement("div", { key: m.id, "data-makine": m.ad, style: kutu },
+                React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } },
+                    React.createElement(Field, { label: "Ad" },
+                        React.createElement("input", { value: m.ad, onChange: (e) => makineGuncelle(m.id, { ad: e.target.value }), style: { ...inputStyle, width: 200 } })),
+                    React.createElement(Field, { label: "Adet" },
+                        React.createElement("input", { inputMode: "numeric", "data-makine-alan": "adet", value: m.adet ?? 1, onChange: (e) => makineGuncelle(m.id, { adet: e.target.value }), style: kucuk })),
+                    React.createElement(Field, { label: "G\u00FCnl\u00FCk saat" },
+                        React.createElement("input", { inputMode: "decimal", "data-makine-alan": "gunlukSaat", value: m.gunlukSaat ?? "", onChange: (e) => makineGuncelle(m.id, { gunlukSaat: e.target.value }), style: kucuk })),
+                    React.createElement(Field, { label: "Saatlik adet (kal\u0131ps\u0131z)" },
+                        React.createElement("input", { inputMode: "numeric", "data-makine-alan": "saatlikAdet", value: m.saatlikAdet ?? "", onChange: (e) => makineGuncelle(m.id, { saatlikAdet: e.target.value }), style: kucuk })),
+                    sayiYa(m.saatlikAdet) > 0 && (React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)", paddingBottom: 8 } },
+                        "G\u00FCnl\u00FCk: ",
+                        React.createElement("b", null, Math.round(sayiYa(m.saatlikAdet) * (sayiYa(m.gunlukSaat) || 8) * Math.max(1, sayiYa(m.adet) || 1))),
+                        " adet")),
+                    React.createElement("button", { type: "button", className: "btn-ghost", onClick: () => sil("makineler", m.id, m.ad), title: "Sil", style: { marginLeft: "auto" } },
+                        React.createElement(Trash2, { size: 14 }))),
+                prosesCipleri(m.prosesler, (l) => makineGuncelle(m.id, { prosesler: l }), m.ad)))))),
+        React.createElement("div", null,
+            React.createElement(TanimBasligi, { ad: "Kal\u0131p / B\u0131\u00E7ak" }),
+            React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" } }, "Kal\u0131p ve b\u0131\u00E7ak bir makinede kullan\u0131l\u0131r; saatlik adedi beden beden girin. Bo\u015F b\u0131rak\u0131lan beden o kal\u0131pla kesilmiyor demektir."),
+            React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 } },
+                React.createElement("input", { "data-kalip-yeni": true, value: yeniKalip.ad, onChange: (e) => setYeniKalip({ ...yeniKalip, ad: e.target.value }), onKeyDown: (e) => e.key === "Enter" && kalipEkle(), placeholder: "\u00D6rn. 27080 kesim kal\u0131b\u0131", style: { ...inputStyle, width: 200 } }),
+                React.createElement("select", { value: yeniKalip.tur, onChange: (e) => setYeniKalip({ ...yeniKalip, tur: e.target.value }), style: { ...inputStyle, width: 100 } },
+                    React.createElement("option", null, "Kal\u0131p"),
+                    React.createElement("option", null, "B\u0131\u00E7ak")),
+                React.createElement("select", { "data-kalip-makine": true, value: yeniKalip.makineId, onChange: (e) => setYeniKalip({ ...yeniKalip, makineId: e.target.value }), style: { ...inputStyle, width: 180 } },
+                    React.createElement("option", { value: "" }, "Makine se\u00E7in\u2026"),
+                    kt.makineler.map((m) => React.createElement("option", { key: m.id, value: m.id }, m.ad))),
+                React.createElement("button", { type: "button", className: "btn-primary", "data-kalip-ekle": true, onClick: kalipEkle },
+                    React.createElement(Plus, { size: 14 }))),
+            React.createElement("div", { style: { display: "grid", gap: 8 } }, kt.kaliplar.map((k) => (React.createElement("div", { key: k.id, "data-kalip": k.ad, style: kutu },
+                React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" } },
+                    React.createElement("input", { value: k.ad, onChange: (e) => kalipGuncelle(k.id, { ad: e.target.value }), style: { ...inputStyle, width: 200 } }),
+                    React.createElement("select", { value: k.tur || "Kalıp", onChange: (e) => kalipGuncelle(k.id, { tur: e.target.value }), style: { ...inputStyle, width: 100 } },
+                        React.createElement("option", null, "Kal\u0131p"),
+                        React.createElement("option", null, "B\u0131\u00E7ak")),
+                    React.createElement("select", { value: k.makineId || "", onChange: (e) => kalipGuncelle(k.id, { makineId: e.target.value }), style: { ...inputStyle, width: 180 } },
+                        React.createElement("option", { value: "" }, "Makine se\u00E7in\u2026"),
+                        kt.makineler.map((m) => React.createElement("option", { key: m.id, value: m.id }, m.ad))),
+                    React.createElement("button", { type: "button", className: "btn-ghost", onClick: () => sil("kaliplar", k.id, k.ad), title: "Sil", style: { marginLeft: "auto" } },
+                        React.createElement(Trash2, { size: 14 }))),
+                React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", fontSize: 12, color: "var(--erp-text-2)" } },
+                    "Adet",
+                    React.createElement("input", { inputMode: "numeric", "data-kalip-adet": true, value: k.adet ?? "", placeholder: "ortak", onChange: (e) => kalipGuncelle(k.id, { adet: e.target.value }), style: { ...inputStyle, width: 70 } }),
+                    React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "bo\u015F = makinenin t\u00FCm adetlerinde ortak; 1 girerseniz ayn\u0131 anda tek makinede \u00E7al\u0131\u015F\u0131r")),
+                React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "Saatlik adet \u2014 beden beden (tek makinede)"),
+                React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, bedenAdlari.map((b) => (React.createElement("label", { key: b, style: { display: "grid", gap: 2, fontSize: 11, textAlign: "center" } },
+                    b,
+                    React.createElement("input", { inputMode: "numeric", "data-kalip-beden": b, value: (k.bedenSaatlik || {})[b] ?? "", onChange: (e) => kalipGuncelle(k.id, { bedenSaatlik: { ...(k.bedenSaatlik || {}), [b]: e.target.value } }), style: { ...inputStyle, width: 56, textAlign: "center", padding: "4px" } })))))))))),
+        React.createElement("div", null,
+            React.createElement(TanimBasligi, { ad: "Eleman \u00C7al\u0131\u015Fma Saatleri" }),
+            React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" } }, "Personel tipindeki carilerin mesai ba\u015Flang\u0131\u00E7-biti\u015Fi, molas\u0131 ve \u00E7al\u0131\u015Ft\u0131\u011F\u0131 prosesler. G\u00FCnl\u00FCk saat planlamada kimin ne kadar zaman\u0131 oldu\u011Funu g\u00F6sterir."),
+            React.createElement("div", { style: { display: "grid", gap: 8 } },
+                personeller.length === 0 && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)" } }, "Personel tipinde cari yok."),
+                personeller.map((c) => {
+                    const e = kt.elemanlar.find((x) => x.cariId === c.id) || { baslangic: "", bitis: "", molaDk: "", prosesler: [] };
+                    return (React.createElement("div", { key: c.id, "data-eleman": c.unvan, style: kutu },
+                        React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } },
+                            React.createElement("b", { style: { minWidth: 140, paddingBottom: 8 } }, c.unvan),
+                            React.createElement(Field, { label: "Ba\u015Flang\u0131\u00E7" },
+                                React.createElement("input", { type: "time", value: e.baslangic || "", onChange: (ev) => elemanGuncelle(c.id, { baslangic: ev.target.value }), style: { ...inputStyle, width: 110 } })),
+                            React.createElement(Field, { label: "Biti\u015F" },
+                                React.createElement("input", { type: "time", value: e.bitis || "", onChange: (ev) => elemanGuncelle(c.id, { bitis: ev.target.value }), style: { ...inputStyle, width: 110 } })),
+                            React.createElement(Field, { label: "Mola (dk)" },
+                                React.createElement("input", { inputMode: "numeric", value: e.molaDk ?? "", onChange: (ev) => elemanGuncelle(c.id, { molaDk: ev.target.value }), style: kucuk })),
+                            React.createElement(Field, { label: "Saatlik adet" },
+                                React.createElement("input", { inputMode: "numeric", value: e.saatlikAdet ?? "", onChange: (ev) => elemanGuncelle(c.id, { saatlikAdet: ev.target.value }), style: kucuk })),
+                            React.createElement("span", { style: { fontSize: 12, color: "var(--erp-text-2)", paddingBottom: 8 } },
+                                "G\u00FCnl\u00FCk: ",
+                                React.createElement("b", { "data-eleman-saat": true }, elemanGunlukSaat(e)),
+                                " saat",
+                                sayiYa(e.saatlikAdet) > 0 && React.createElement(React.Fragment, null,
+                                    " \u00B7 ",
+                                    React.createElement("b", null, Math.round(sayiYa(e.saatlikAdet) * elemanGunlukSaat(e))),
+                                    " adet"))),
+                        prosesCipleri(e.prosesler, (l) => elemanGuncelle(c.id, { prosesler: l }), c.unvan)));
+                })))));
+}
+// Ürün kartı › Kapasite: reçetedeki her proses için makine ve kalıp/bıçak seçimi + bedene göre günlük adet önizlemesi.
+function UrunKapasiteBagi({ product, tanimlar, cariler, onKaydet }) {
+    const kt = kapasiteTanimi(tanimlar);
+    const sira = {};
+    (tanimlar.prosesler || []).forEach((p) => { sira[p.ad] = p.sira ?? 999; });
+    const prosesler = Array.from(new Set((product.recete || []).map((r) => r.proses).filter(Boolean)))
+        .sort((a, b) => (sira[a] ?? 999) - (sira[b] ?? 999));
+    const bedenler = Array.from(new Set((product.variants || []).map((v) => v.beden).filter(Boolean)));
+    const bag = product.kapasite || {};
+    const yaz = (proses, d) => onKaydet(product.id, { ...bag, [proses]: { ...(bag[proses] || {}), ...d } });
+    if (!prosesler.length)
+        return React.createElement("div", { style: { fontSize: 13, color: "var(--erp-text-3)", padding: 12 } }, "Re\u00E7etede proses yok; \u00F6nce re\u00E7eteye proses ekleyin.");
+    return (React.createElement("div", { "data-urun-kapasite": true, style: { display: "grid", gap: 10, padding: "4px 0" } },
+        kt.makineler.length === 0 && (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, "Makine tan\u0131ml\u0131 de\u011Fil \u2014 Tan\u0131mlar \u203A Kapasite'den ekleyin.")),
+        prosesler.map((p) => {
+            const b = bag[p] || {};
+            const makineler = kt.makineler.filter((m) => !(m.prosesler || []).length || m.prosesler.includes(p));
+            const kaliplar = kt.kaliplar.filter((k) => k.makineId === b.makineId);
+            // PERSONEL (kullanıcı: "ürün için kapasiteyi kalıp, makine, personel olarak girebiliriz"): o prosesi
+            // yapan elemanlar. Tanımlar › Kapasite'de bu prosese işaretlenmiş olanlar önce, hiçbiri yoksa tüm personel.
+            const elemanTanimi = (id) => kt.elemanlar.find((e) => e.cariId === id) || {};
+            const personeller = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
+            const prosesPersoneli = personeller.filter((c) => (elemanTanimi(c.id).prosesler || []).includes(p));
+            const personelSecenek = prosesPersoneli.length ? prosesPersoneli : personeller;
+            return (React.createElement("div", { key: p, "data-kapasite-proses-satiri": p, style: { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, display: "grid", gap: 8 } },
+                React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" } },
+                    React.createElement("b", { style: { minWidth: 110 } }, p),
+                    React.createElement("select", { "data-kapasite-makine": p, value: b.makineId || "", onChange: (e) => yaz(p, { makineId: e.target.value, kalipIdler: [] }), style: { ...inputStyle, width: 200 } },
+                        React.createElement("option", { value: "" }, "Makine yok"),
+                        makineler.map((m) => React.createElement("option", { key: m.id, value: m.id }, m.ad))),
+                    kaliplar.map((k) => {
+                        const on = (b.kalipIdler || []).includes(k.id);
+                        return (React.createElement("label", { key: k.id, style: { display: "flex", gap: 4, alignItems: "center", fontSize: 12, cursor: "pointer" } },
+                            React.createElement("input", { type: "checkbox", "data-kapasite-kalip": k.ad, checked: on, onChange: () => yaz(p, { kalipIdler: on ? b.kalipIdler.filter((x) => x !== k.id) : [...(b.kalipIdler || []), k.id] }) }),
+                            k.tur || "Kalıp",
+                            ": ",
+                            k.ad));
+                    })),
+                personelSecenek.length > 0 && (React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", fontSize: 12 } },
+                    React.createElement("span", { style: { color: "var(--erp-text-3)", minWidth: 110 } }, "Personel"),
+                    personelSecenek.map((c) => {
+                        const on = (b.elemanIdler || []).includes(c.id);
+                        const saat = elemanGunlukSaat(elemanTanimi(c.id));
+                        return (React.createElement("label", { key: c.id, style: { display: "flex", gap: 4, alignItems: "center", cursor: "pointer" } },
+                            React.createElement("input", { type: "checkbox", "data-kapasite-personel": c.unvan, checked: on, onChange: () => yaz(p, { elemanIdler: on ? b.elemanIdler.filter((x) => x !== c.id) : [...(b.elemanIdler || []), c.id] }) }),
+                            c.unvan,
+                            saat ? ` (${saat} s)` : ""));
+                    }))),
+                b.makineId && bedenler.length > 0 && (React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", fontSize: 12 } }, bedenler.map((bd) => {
+                    const k = prosesKapasitesi(tanimlar, product, p, bd);
+                    return (React.createElement("span", { key: bd, "data-kapasite-gunluk": `${p}:${bd}`, title: k.eksik || `saatte ${k.saatlik}`, style: { color: k.eksik ? "var(--erp-danger, #B23B3B)" : "var(--erp-text-2)" } },
+                        bd,
+                        ": ",
+                        React.createElement("b", null, k.eksik ? "?" : Math.round(k.gunluk)),
+                        "/g\u00FCn"));
+                })))));
+        })));
 }
 function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProsesler, onClose, onMinimize, firmaBilgileri }) {
     // Satırın hammadde kaydı (renk başlığı için, v1.495.0): önce kimlikle, yoksa adla.
@@ -65359,7 +65651,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.702.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.703.2)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
