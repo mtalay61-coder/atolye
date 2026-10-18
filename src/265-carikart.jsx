@@ -411,7 +411,9 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
       style={tamEkran
         // KATMAN (v1.683.1 — kullanıcı: "tam ekranda alış/satış fişi açınca ekranda göstermiyor"): fiş/ekstre pencereleri
         // 100, üst menü 510 katmanında — kart onların ALTINDA (90) ve üst menünün altından başlar; pencere üstte açılır.
-        ? { position: "fixed", top: "var(--ust-menu-h, 0px)", left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
+        // v1.703.2 (kullanıcı: "ekran yine kayıyor"): üst menünün değil SEKME ŞERİDİNİN altından başlar — şerit (500)
+        // menünün hemen altında duruyor ve kartın başlığını örtüyordu.
+        ? { position: "fixed", top: PENCERE_SERIT_YUKSEKLIGI, left: 0, right: 0, bottom: 0, zIndex: 90, background: "var(--erp-panel)", overflow: "auto", padding: 12 }
         : { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       <SagTikMenusu konum={sagMenu} onKapat={() => setSagMenu(null)} veri="cari" baslik={`CARİ · ${cari.unvan}`} ogeler={[
         { k: "ac", etiket: open ? "Kartı kapat" : "Kartı aç", ikon: open ? ChevronUp : ChevronDown, onClick: () => setOpen((v) => !v) },
