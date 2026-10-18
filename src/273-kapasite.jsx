@@ -81,6 +81,18 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
   const bedenAdlari = (tanimlar.bedenler || []).filter((b) => (b.tip || "Beden") === "Beden").map((b) => b.ad);
   const personeller = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
   const [yeniMakine, setYeniMakine] = useState("");
+  // PROSES PROSES (v1.704.1 — kullanıcı: "Kapasiteyi proses proses yapalım"): üstte proses sekmeleri; her sekmede
+  // yalnız o prosesin makineleri, onlara bağlı kalıp/bıçaklar ve o proseste çalışan elemanlar. Yeni makine açık
+  // sekmenin prosesiyle doğar. "Tümü" eski düz görünüm. Veri aynı (makine.prosesler, eleman.prosesler) — yalnız süzgeç.
+  const [kp, setKp] = useState(() => { try { return localStorage.getItem("kapasite-proses") || ""; } catch (e) { return ""; } });
+  const p = prosesAdlari.includes(kp) ? kp : "";
+  const kpSec = (x) => { setKp(x); try { localStorage.setItem("kapasite-proses", x); } catch (e) { /* yoksay */ } };
+  const makinelerG = p ? kt.makineler.filter((m) => (m.prosesler || []).includes(p)) : kt.makineler;
+  const makineIdG = new Set(makinelerG.map((m) => m.id));
+  const kaliplarG = p ? kt.kaliplar.filter((k) => makineIdG.has(k.makineId)) : kt.kaliplar;
+  const elemanProsesleri = (id) => ((kt.elemanlar.find((e) => e.cariId === id) || {}).prosesler || []);
+  const personellerG = p ? personeller.filter((c) => elemanProsesleri(c.id).includes(p)) : personeller;
+  const eklenebilirPersonel = p ? personeller.filter((c) => !elemanProsesleri(c.id).includes(p)) : [];
   const [yeniKalip, setYeniKalip] = useState({ ad: "", tur: "Kalıp", makineId: "" });
   const kutu = { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 10, background: "var(--erp-panel)", display: "grid", gap: 8 };
   const kucuk = { ...inputStyle, width: 80 };
@@ -101,7 +113,7 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
   const makineEkle = () => {
     const ad = yeniMakine.trim(); if (!ad) return;
     if (kt.makineler.some((m) => m.ad.toLocaleLowerCase("tr") === ad.toLocaleLowerCase("tr"))) { if (showToast) showToast(`"${ad}" zaten var`); return; }
-    yaz("makineler", [...kt.makineler, { id: uid("mak"), ad, prosesler: [], adet: 1, gunlukSaat: 9, saatlikAdet: "" }]);
+    yaz("makineler", [...kt.makineler, { id: uid("mak"), ad, prosesler: p ? [p] : [], adet: 1, gunlukSaat: 9, saatlikAdet: "" }]);
     setYeniMakine("");
   };
   const makineGuncelle = (id, d) => yaz("makineler", kt.makineler.map((m) => (m.id === id ? { ...m, ...d } : m)));
@@ -122,6 +134,19 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
 
   return (
     <div data-kapasite-tanimi style={{ display: "grid", gap: 22 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {["", ...prosesAdlari].map((x) => {
+          const on = x === p;
+          const n = x ? kt.makineler.filter((m) => (m.prosesler || []).includes(x)).length : kt.makineler.length;
+          return (
+            <button key={x || "tumu"} type="button" data-kapasite-sekme={x || "Tümü"} onClick={() => kpSec(x)}
+              style={{ padding: "6px 14px", borderRadius: "var(--erp-r-pill)", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                border: `1.5px solid ${on ? "#6B7A8F" : "var(--erp-border)"}`, background: on ? "#6B7A8F1A" : "#fff", color: on ? "#6B7A8F" : "var(--erp-text)" }}>
+              {x || "Tümü"}{n ? ` (${n})` : ""}
+            </button>
+          );
+        })}
+      </div>
       <div>
         <TanimBasligi ad="Makine / Teçhizat" />
         <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" }}>
@@ -135,7 +160,8 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
           <button type="button" className="btn-primary" data-makine-ekle onClick={makineEkle}><Plus size={14} /></button>
         </div>
         <div style={{ display: "grid", gap: 8 }}>
-          {kt.makineler.map((m) => (
+          {p && makinelerG.length === 0 && <div style={{ fontSize: 12, color: "var(--erp-text-3)" }}>{p} prosesinde makine yok — yukarıdan ekleyin.</div>}
+          {makinelerG.map((m) => (
             <div key={m.id} data-makine={m.ad} style={kutu}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
                 <Field label="Ad"><input value={m.ad} onChange={(e) => makineGuncelle(m.id, { ad: e.target.value })} style={{ ...inputStyle, width: 200 }} /></Field>
@@ -168,12 +194,12 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
           </select>
           <select data-kalip-makine value={yeniKalip.makineId} onChange={(e) => setYeniKalip({ ...yeniKalip, makineId: e.target.value })} style={{ ...inputStyle, width: 180 }}>
             <option value="">Makine seçin…</option>
-            {kt.makineler.map((m) => <option key={m.id} value={m.id}>{m.ad}</option>)}
+            {makinelerG.map((m) => <option key={m.id} value={m.id}>{m.ad}</option>)}
           </select>
           <button type="button" className="btn-primary" data-kalip-ekle onClick={kalipEkle}><Plus size={14} /></button>
         </div>
         <div style={{ display: "grid", gap: 8 }}>
-          {kt.kaliplar.map((k) => (
+          {kaliplarG.map((k) => (
             <div key={k.id} data-kalip={k.ad} style={kutu}>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                 <input value={k.ad} onChange={(e) => kalipGuncelle(k.id, { ad: e.target.value })} style={{ ...inputStyle, width: 200 }} />
@@ -216,7 +242,14 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, showToast }) {
         </p>
         <div style={{ display: "grid", gap: 8 }}>
           {personeller.length === 0 && <div style={{ fontSize: 12, color: "var(--erp-text-3)" }}>Personel tipinde cari yok.</div>}
-          {personeller.map((c) => {
+          {p && eklenebilirPersonel.length > 0 && (
+            <select data-kapasite-eleman-ekle value="" onChange={(e) => e.target.value && elemanGuncelle(e.target.value, { prosesler: [...elemanProsesleri(e.target.value), p] })}
+              style={{ ...inputStyle, width: 240 }}>
+              <option value="">+ {p} prosesine eleman ekle…</option>
+              {eklenebilirPersonel.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+            </select>
+          )}
+          {personellerG.map((c) => {
             const e = kt.elemanlar.find((x) => x.cariId === c.id) || { baslangic: "", bitis: "", molaDk: "", prosesler: [] };
             return (
               <div key={c.id} data-eleman={c.unvan} style={kutu}>
