@@ -94,11 +94,64 @@ const KILAVUZ = [
   ] },
 ];
 
-function KilavuzEkrani({ aktifKullanici, tanimlar }) {
+// PDF (v1.699, kullanıcı: "kılavuzu PDF olarak da indirilebilir yapalım"). Ortak `htmldenPdfBlob` (075) uzun çıktıyı tek
+// resim olarak çizip sayfa boyunda DİLİMLİYOR — bir satır iki sayfanın arasında ikiye bölünebiliyordu. Kılavuzda her konu
+// AYRI çizilir ve sayfaya sığmıyorsa yeni sayfaya geçer; konu ortasından kesilmez. Kapak: firma adı, bölüm, sürüm, tarih.
+function kilavuzKonuHTML(m, sira) {
+  const kac = (x) => String(x || "").replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  return `<div style="padding:4px 2px 10px"><div style="font-size:17px;font-weight:700;margin:0 0 6px;color:#5B3F25">${sira}. ${kac(m.baslik)}</div>` +
+    `<ol style="margin:0;padding-left:20px;font-size:13px;line-height:1.55">${m.adimlar.map((a) => `<li style="margin:0 0 4px">${kac(a)}</li>`).join("")}</ol>` +
+    (m.ipucu ? `<div style="margin-top:6px;font-size:12px;background:#F4EFE8;border-radius:6px;padding:6px 10px">İpucu: ${kac(m.ipucu)}</div>` : "") + "</div>";
+}
+async function kilavuzPdfBlob(bolumler, firmaAdi) {
+  const kut = await pdfKutuphaneleriniYukle();
+  if (!kut) return null;
+  const cerceve = document.createElement("iframe");
+  cerceve.setAttribute("aria-hidden", "true");
+  cerceve.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;";
+  document.body.appendChild(cerceve);
+  const ciz = async (html) => {
+    // Çerçeve önce KÜÇÜLTÜLÜR: yükseklik bir önceki çizimden kalırsa gövde o kadar uzun ölçülür ve her konu tam sayfa
+    // yer kaplar (ilk denemede 15 konu 17 sayfa çıktı). Sonra içeriğin kendi yüksekliğine açılır.
+    cerceve.style.height = "10px";
+    const belge = cerceve.contentDocument;
+    belge.open(); belge.write(pdfCiktiBelgesi(html)); belge.close();
+    if (belge.fonts && belge.fonts.ready) { try { await belge.fonts.ready; } catch (e) { /* devam */ } }
+    belge.body.style.minHeight = "0";
+    const yuk = Math.ceil(belge.body.getBoundingClientRect().height);
+    cerceve.style.height = `${yuk}px`;
+    return kut.html2canvas(belge.body, { scale: 2, backgroundColor: "#ffffff", windowWidth: 794, height: yuk, windowHeight: yuk });
+  };
+  try {
+    const pdf = new kut.jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    const G = pdf.internal.pageSize.getWidth(), Y = pdf.internal.pageSize.getHeight();
+    let y = 0, ilk = true;
+    const yerlestir = (tuval, yeniSayfa) => {
+      const h = (tuval.height * G) / tuval.width;
+      if (!ilk && (yeniSayfa || y + h > Y)) { pdf.addPage(); y = 0; }
+      ilk = false;
+      pdf.addImage(tuval.toDataURL("image/jpeg", 0.9), "JPEG", 0, y, G, h);
+      y += h;
+    };
+    for (const b of bolumler) {
+      const kapak = `<div style="font-size:24px;font-weight:700">${firmaAdi ? firmaAdi + " — " : ""}Kullanım Kılavuzu</div>` +
+        `<div style="font-size:15px;margin-top:4px">${b.ad}</div><div style="font-size:11px;color:#7A6A58;margin-top:2px">Sürüm ${SURUM} · ${new Date().toLocaleDateString("tr-TR")}</div><hr style="border:0;border-top:2px solid #C9A063;margin:10px 0 4px">`;
+      yerlestir(await ciz(kapak), true);
+      let i = 0;
+      for (const m of b.konular) yerlestir(await ciz(kilavuzKonuHTML(m, ++i)), false);
+    }
+    return pdf.output("blob");
+  } finally {
+    document.body.removeChild(cerceve);
+  }
+}
+
+function KilavuzEkrani({ aktifKullanici, tanimlar, showToast }) {
   const yonetici = !tanimlar || !tanimlar.girisAktifMi || (aktifKullanici && aktifKullanici.rol === "Yönetici");
   const [bolum, setBolum] = useState(yonetici ? "yonetici" : "calisan");
   const [ara, setAra] = useState("");
   const [acik, setAcik] = useState({});
+  const [pdfHazirlaniyor, setPdfHazirlaniyor] = useState(false);
   const nrm = (x) => String(x || "").toLocaleLowerCase("tr-TR");
   const q = nrm(ara.trim());
   const liste = KILAVUZ.filter((m) => (q ? true : m.b === bolum))
@@ -114,6 +167,26 @@ function KilavuzEkrani({ aktifKullanici, tanimlar }) {
               border: `1.5px solid ${bolum === x.k && !q ? "var(--erp-primary)" : "var(--erp-border)"}`,
               background: bolum === x.k && !q ? "var(--erp-primary)" : "#fff", color: bolum === x.k && !q ? "#fff" : "var(--erp-text-2)" }}>
             {x.ad}
+          </button>
+        ))}
+        {/* PDF İNDİR: görünen bölüm (aramada eşleşenler); "Tümü" iki bölümü ayrı kapaklarla. */}
+        {["bolum", "tumu"].map((kapsam) => (
+          <button key={kapsam} type="button" className="btn-ghost" data-kilavuz-pdf={kapsam} disabled={pdfHazirlaniyor}
+            style={{ fontSize: 12, padding: "6px 10px" }}
+            onClick={async () => {
+              const anBolum = bolum, anAra = ara.trim(), anListe = liste;   // await öncesi fotoğraf
+              setPdfHazirlaniyor(true);
+              try {
+                const ad = (x) => (x === "yonetici" ? "Yönetici bölümü" : "Çalışan bölümü");
+                const bolumler = kapsam === "tumu"
+                  ? ["calisan", "yonetici"].map((k) => ({ ad: ad(k), konular: KILAVUZ.filter((m) => m.b === k) }))
+                  : [{ ad: anAra ? `Arama: ${anAra}` : ad(anBolum), konular: anListe }];
+                const blob = await kilavuzPdfBlob(bolumler, ((tanimlar && tanimlar.firmaBilgileri) || {}).unvan || "");
+                if (!blob) { if (showToast) showToast("PDF hazırlanamadı (bağlantı?)"); return; }
+                blobIndir(blob, `Kullanim kilavuzu - ${kapsam === "tumu" ? "tum" : (anAra ? "arama" : anBolum)}.pdf`);
+              } finally { setPdfHazirlaniyor(false); }
+            }}>
+            {pdfHazirlaniyor ? "Hazırlanıyor…" : kapsam === "tumu" ? "PDF (tümü)" : "PDF (bu bölüm)"}
           </button>
         ))}
         <input data-kilavuz-ara value={ara} onChange={(e) => setAra(e.target.value)} placeholder="Ara: sipariş, maaş, sevkiyat…"

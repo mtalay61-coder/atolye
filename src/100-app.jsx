@@ -5128,7 +5128,7 @@ function AtolyeUygulamasi() {
           {/* Menüyü gizlemek TEK BAŞINA yeterli değil (bkz. muhasebe): gövde de yetkiye bağlı.
               Günlük ayrıca `display:none` ile gizlenmiyor, HİÇ RENDER EDİLMİYOR — gizli bir
               sekmede duran veri, ağ sekmesini açan herkese görünür olurdu. */}
-          {tab === "kilavuz" && <KilavuzEkrani aktifKullanici={aktifKullanici} tanimlar={tanimlar} />}
+          {tab === "kilavuz" && <KilavuzEkrani aktifKullanici={aktifKullanici} tanimlar={tanimlar} showToast={showToast} />}
           {tab === "gunluk" && aktifKullanici && aktifKullanici.rol === "Yönetici" && (
             <GunlukPaneli showToast={showToast} />
           )}

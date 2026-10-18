@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Kasa devri",
 ];
 
-const SURUM = "1.698.0";
+const SURUM = "1.699.0";
 const SURUM_TARIHI = "2026-10-17";
-const SURUM_NOTU = "Uygulama içi Kullanım Kılavuzu (sağ üstte kitap ikonu)";
+const SURUM_NOTU = "Kullanım kılavuzu PDF olarak indirilebilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.699.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: \"PDF (bu bölüm)\" ve \"PDF (tümü)\" düğmeleri — kapak (firma, bölüm, sürüm, tarih), numaralı konular; bir konu iki sayfaya bölünmez; arama varken eşleşen konular indirilir"], degisen: [], duzeltilen: [] },
   { surum: "1.698.0", tarih: "18.10.2026", eklenen: ["Kullanım Kılavuzu: sağ üstteki kitap ikonundan açılır; Çalışan (sipariş, iş verme/teslim, sevkiyat, tahsilat, stok giriş/çıkış) ve Yönetici (Tanımlar, yetkiler, fason/iç üretim ve maaş, reçete/maliyet, cari tipleri, gelir/gider karşılıkları, raporlar, güvenlik) bölümleri; aranabilir, adım adım"], degisen: [], duzeltilen: [] },
   { surum: "1.697.0", tarih: "18.10.2026", eklenen: ["Fişlerin gelir / gider karşılığı panelinde her atölye içi bölüm için \"<Bölüm> maaşları\" satırı (kart değiştirilebilir); bölümü ya da kartı olmayan maaş fişi karşılıksız sayılır", "Fişler: maaş fişinin altında bağlı gider kartı (→ Kesimhane işçiliği) ya da uyarı"], degisen: [], duzeltilen: [] },
   { surum: "1.696.1", tarih: "18.10.2026", eklenen: [], degisen: ["\"Buluta yazılamadı\" uyarısına dokununca hatanın tam metni açılır (telefonda da okunur)"], duzeltilen: ["Uyarı, aynı tablo sonra başarıyla yazılsa da elle kapatılana kadar kalıyordu — geçici kesinti sürekli hata gibi görünüyordu; artık sonraki başarılı yazmada kendiliğinden kalkar"] },
