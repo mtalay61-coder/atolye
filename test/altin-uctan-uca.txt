@@ -1,0 +1,77 @@
+{
+ "adimlar": [
+  {
+   "ad": "üretim açıldı",
+   "adet": 5,
+   "adimlar": [
+    "Kesim",
+    "Kampre(ara)",
+    "Saya",
+    "Kalfa"
+   ]
+  },
+  {
+   "acikIsVerFormu": 1,
+   "ad": "Kesim",
+   "durum": "Kesim:✓ Kampre:- Saya:- Kalfa:-",
+   "kime": "ok",
+   "teslimAlindi": true,
+   "verildi": true
+  },
+  {
+   "acikIsVerFormu": 1,
+   "ad": "Saya",
+   "durum": "Kesim:✓ Kampre:✓ Saya:✓ Kalfa:-",
+   "kime": "ok",
+   "teslimAlindi": true,
+   "verildi": true
+  },
+  {
+   "acikIsVerFormu": 1,
+   "ad": "Kalfa",
+   "durum": "Kesim:✓ Kampre:✓ Saya:✓ Kalfa:✓",
+   "kime": "ok",
+   "teslimAlindi": true,
+   "verildi": true
+  },
+  {
+   "ad": "satış fişi",
+   "siparistenEklendi": true
+  }
+ ],
+ "cariler": [
+  "Müşteri B: Borç 600 [<fisno-001>], Borç 400 [<fisno-001>]",
+  "Kesimci: Alacak 50 [N-Kesim-İşçilik]",
+  "Sayacı: Alacak 100 [N-Saya-İşçilik]",
+  "Kalfacı: Alacak 75 [N-Kalfa-İşçilik]",
+  "Kampreci: Alacak 15 [N-Kampre-İşçilik]"
+ ],
+ "fissizHareket": 0,
+ "gelirGider": {
+  "brutKar": 400,
+  "giderToplam": 240,
+  "gruplar": "{\"uretim\":{\"toplam\":240,\"kartlar\":{\"Kesim işçiliği\":50,\"Saya işçiliği\":100,\"Kalfa işçiliği\":75,\"Kampre işçiliği\":15}}}",
+  "netKar": 160,
+  "satisGeliri": 1000,
+  "smm": 600,
+  "uretimIscilik": 0
+ },
+ "hatalar": [],
+ "ihlal": 0,
+ "siparisDurum": "Tamamlandı",
+ "siparisKalemleri": [
+  "40: 3 · karşılanan 3 · planlı",
+  "41: 2 · karşılanan 2 · planlı"
+ ],
+ "sonUretim": {
+  "asama": "Tamamlandı",
+  "stogaEklendi": true
+ },
+ "stok": {
+  "Bot 40": 0,
+  "Bot 41": 0,
+  "Deri": 90,
+  "Taban 40": 47,
+  "Taban 41": 48
+ }
+}
