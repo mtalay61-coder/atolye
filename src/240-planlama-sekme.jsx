@@ -208,7 +208,6 @@ function SagPanelKart({ secim, arkaplan, cerceveRenk, cikarFonk, varsayilanTip, 
 }
 
 function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, onGoToSiparis, onGoToUretim, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, onAsortiOlustur }) {
-  const [icSekme, setIcSekme] = useState("bekleyen"); // "bekleyen" | "planlanmis"
   // ÖNEMLİ: artık TÜM sipariş değil, TIKLANAN satırın (sipariş+ürün+renk) kendisi seçiliyor — kullanıcı
   // "sadece o satırın işlemi açılsın" istedi, bu yüzden bütün siparişi değil, o renge ait kalemleri
   // sağ panele gönderiyoruz.
@@ -252,61 +251,57 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
     return liste.some((x) => satirAnahtari(x) === satirAnahtari(secim));
   }
 
-  const IC_SEKMELER = [
-    { key: "bekleyen", label: "Bekleyen" },
-    { key: "planlanmis", label: "Planlanmış" },
-  ];
-  const sekmeSecici = (
-    <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-      {IC_SEKMELER.map((sk) => {
-        const aktif = icSekme === sk.key;
-        return (
-          <button
-            key={sk.key}
-            type="button"
-            onClick={() => setIcSekme(sk.key)}
-            style={{
-              padding: "5px 12px", borderRadius: "var(--erp-r-pill)", fontSize: 12, fontWeight: 700, cursor: "pointer",
-              border: `1.5px solid ${aktif ? "#C97B3D" : "var(--erp-border)"}`,
-              background: aktif ? "#C97B3D1A" : "#fff",
-              color: aktif ? "#C97B3D" : "var(--erp-text)",
-            }}
-          >
-            {sk.label}
-          </button>
-        );
-      })}
+  // ÇERÇEVELİ DÜZEN + TOPLU İŞLEM (v1.707.0 — kullanıcı: "planlama bekleyen raporlarda gibi çerçeve içine alıp aşağı
+  // kayan şekilde olsun, alta aynı şekilde planlananları atsın, oradan toplu şekilde üretim veya satın alma yapılabilsin").
+  // Bekleyen/Planlanmış sekmeleri kalktı: Bekleyen kendi içinde kayan çerçevede, Planlanmış onun ALTINDA ikinci çerçeve.
+  // Satırlar tiklenir; "Seçilenleri üret" her sipariş için `onPlanlaUretim`i doğrudan çağırır (reçete onay kapısı orada —
+  // onaysız model varsa hiçbiri açılmaz, false döner). Satın alma tedarikçi istediği için seçilenler sağdaki Satınalma
+  // paneline toplu gönderilir; tedarikçi orada seçilir. Satır başı Üret/Satın Al düğmeleri aynen duruyor.
+  const [secili, setSecili] = useState([]);   // satirAnahtari listesi
+  const seciliMi = (secim) => secili.includes(satirAnahtari(secim));
+  const secimDegistir = (secim) => setSecili((p) => (p.includes(satirAnahtari(secim)) ? p.filter((x) => x !== satirAnahtari(secim)) : [...p, satirAnahtari(secim)]));
+  const tumSatirlar = bekleyenSiparisler.flatMap((s) => Array.from(new Set(s.kalemler
+    .filter((k) => k.miktar - (k.karsilanan || 0) > 0 && !k.planlama).map((k) => `${k.urunId}|${k.renk}`)))
+    .map((ur) => { const [urunId, renk] = ur.split("|"); return { siparisId: s.id, urunId, renk }; }));
+  const seciliSatirlar = tumSatirlar.filter(seciliMi);
+  const topluUret = () => {
+    const sipBazli = {};
+    seciliSatirlar.forEach((x) => { (sipBazli[x.siparisId] = sipBazli[x.siparisId] || []).push(x); });
+    let acilan = 0;
+    for (const [sid, satirlar] of Object.entries(sipBazli)) {
+      const s = bekleyenSiparisler.find((y) => y.id === sid);
+      const kalemIdler = s.kalemler.filter((k) => k.miktar - (k.karsilanan || 0) > 0 && !k.planlama
+        && satirlar.some((x) => x.urunId === k.urunId && x.renk === k.renk)).map((k) => k.id);
+      if (kalemIdler.length && onPlanlaUretim(sid, kalemIdler) === false) break;
+      acilan += satirlar.length;
+    }
+    if (acilan) setSecili([]);
+  };
+  const topluSatinAl = () => { seciliSatirlar.forEach(satinAlEkle); setSecili([]); };
+  const cerceve = { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", background: "var(--erp-panel)" };
+  const cerceveBaslik = { position: "sticky", top: 0, zIndex: 2, background: "var(--erp-panel)", padding: "10px 12px",
+    borderBottom: "1px solid var(--erp-line-soft)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" };
+  const planlanmisCerceve = (
+    <div data-planlanmis-cerceve style={{ ...cerceve, marginTop: 16, maxHeight: "55vh", overflowY: "auto" }}>
+      <div style={cerceveBaslik}><b style={{ fontSize: 14 }}>Planlanmış</b></div>
+      <div style={{ padding: 12 }}>
+        <PlanlanmisSekmesi siparisler={siparisler} uretim={uretim} cariler={cariler}
+          onGoToSiparis={onGoToSiparis} onGoToUretim={onGoToUretim} onPlanlamaTemizle={onPlanlamaTemizle} />
+      </div>
     </div>
   );
-
-  if (icSekme === "planlanmis") {
-    return (
-      <div>
-        {sekmeSecici}
-        <PlanlanmisSekmesi
-          siparisler={siparisler}
-          uretim={uretim}
-          cariler={cariler}
-          onGoToSiparis={onGoToSiparis}
-          onGoToUretim={onGoToUretim}
-          onPlanlamaTemizle={onPlanlamaTemizle}
-        />
-      </div>
-    );
-  }
 
   if (bekleyenSiparisler.length === 0) {
     return (
       <div>
-        {sekmeSecici}
         <EmptyState text="Planlanması gereken (bekleyen kalemi olan) bir satış siparişi yok." />
+        {planlanmisCerceve}
       </div>
     );
   }
 
   return (
     <div>
-      {sekmeSecici}
       <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
       {/* SOL: stok/renk/beden bazlı matris — her satırın kendi Üret/Satın Al butonu var. Bir satıra
           tıklamak, o satırın AİT OLDUĞU siparişin TAMAMINI sağ panele gönderir — asıl renk/beden bazlı
@@ -314,7 +309,25 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
           yapılır; burada İKİ AYRI mekanizma icat edilmez, sadece hangi siparişin sağ panele gönderileceğine
           dair daha DETAYLI (satır bazlı) bir giriş noktası sağlanır.
        */}
-      <div style={{ flex: "1 1 480px", minWidth: 340 }}>
+      <div data-bekleyen-cerceve style={{ flex: "1 1 480px", minWidth: 340, ...cerceve, maxHeight: "60vh", overflowY: "auto" }}>
+        <div style={cerceveBaslik}>
+          <b style={{ fontSize: 14 }}>Bekleyen</b>
+          <span style={{ fontSize: 12, color: "var(--erp-text-3)" }}>{bekleyenSiparisler.length} sipariş · {tumSatirlar.length} satır</span>
+          <label style={{ fontSize: 12, display: "flex", gap: 4, alignItems: "center" }}>
+            <input type="checkbox" data-planlama-hepsi checked={tumSatirlar.length > 0 && seciliSatirlar.length === tumSatirlar.length}
+              onChange={(e) => setSecili(e.target.checked ? tumSatirlar.map(satirAnahtari) : [])} /> tümü
+          </label>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+            <button type="button" className="btn-primary" data-toplu-uret disabled={!seciliSatirlar.length} onClick={topluUret}>
+              <Hammer size={13} /> Seçilenleri üret{seciliSatirlar.length ? ` (${seciliSatirlar.length})` : ""}
+            </button>
+            <button type="button" className="btn-ghost" data-toplu-satinal disabled={!seciliSatirlar.length} onClick={topluSatinAl}
+              title="Seçilenleri sağdaki Satınalma paneline gönderir — tedarikçi orada seçilir">
+              <PackageCheck size={13} /> Satın almaya gönder
+            </button>
+          </div>
+        </div>
+        <div style={{ padding: 12 }}>
         <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 12 }}>
           Bekleyen kalemi olan tüm satış siparişlerinin ürün/renk/beden satırları ({bekleyenSiparisler.length} sipariş) —
           bir satırdaki "Üret" ya da "Satın Al" ile SADECE O SATIRI (o ürün/rengi) sağ panele gönderin.
@@ -372,6 +385,8 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
                             return (
                             <tr key={g.anahtar} style={{ borderTop: "1px solid var(--erp-head)" }}>
                               <td style={{ fontSize: 11, padding: "5px 10px", whiteSpace: "nowrap" }}>
+                                <input type="checkbox" data-planlama-satir={`${s.siparisNo}|${g.urunAd}|${g.renk}`} checked={seciliMi(secim)}
+                                  onChange={() => secimDegistir(secim)} style={{ marginRight: 6, verticalAlign: "middle" }} />
                                 <span style={{ fontWeight: 600 }}>{g.urunAd}</span>
                                 <span className="mono" style={{ color: "var(--erp-text-2)" }}> · {g.renk}</span>
                               </td>
@@ -424,6 +439,8 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
             );
           })}
         </div>
+      </div>
+
       </div>
 
       {/* SAĞ: Üret + Satınalma bölümleri, alt alta */}
@@ -481,6 +498,7 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
         </div>
       </div>
       </div>
+      {planlanmisCerceve}
     </div>
   );
 }
