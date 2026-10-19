@@ -251,6 +251,46 @@ function stokRezervasyonTuket(defter, satisSiparisId, urunId, renk, beden, mikta
   return { defter: yeni, dusulen: stokYuvarla(miktar - kalanIhtiyac), kalanIhtiyac, kapananlar };
 }
 
+// REZERVASYON FARKINI GÜNCEL LİSTEYE UYGULA (v1.713.1 — kullanıcı: "üçünü de düzelt"). Teslim (079), iş verme (080) ve ad
+// değiştirme (082) rezervasyon defterini kapanıştaki (render anındaki) listeden hesaplayıp BÜTÜN listeyi yazıyordu. Bu arada
+// silinen bir üretimin satırları kapanışta hâlâ durduğu için yazma onları buluta geri getiriyordu (10033'ün 136'lık
+// talebi böyle hayatta kalmış olmalı). Hesap yine kapanış listesinde yapılır (FIFO planı, uyarılar, kapanan rezervasyon
+// listesi orada); ama YAZILAN liste güncel listedir: eski→yeni farkı (tuketilen, renk, beden) kayıt kimliğiyle güncel
+// listeye uygulanır. Güncel listede olmayan kayıt (bu arada silinmiş) ATLANIR — geri gelmez. Kimliksiz eski kayıtlar
+// sipariş+ürün+renk+beden+tarih ile eşlenir. Hiçbir şey değişmediyse aynı dizi döner. Saf; birim-gecerli-rezervasyon.
+function rezervasyonAnahtari(r) {
+  if (!r) return "";
+  if (r.id != null) return `id:${r.id}`;
+  return `k:${r.siparisId}|${r.urunId}|${r.renk}|${r.beden}|${r.tarih}`;
+}
+function rezervasyonFarkiniUygula(guncel, eskiListe, yeniListe) {
+  const eski = new Map((eskiListe || []).map((r) => [rezervasyonAnahtari(r), r]));
+  const degisen = new Map();
+  (yeniListe || []).forEach((y) => {
+    const k = rezervasyonAnahtari(y);
+    const e = eski.get(k);
+    if (!e || e === y) return;
+    const fark = {};
+    if ((y.tuketilen || 0) !== (e.tuketilen || 0)) fark.tuketilenFarki = stokYuvarla((y.tuketilen || 0) - (e.tuketilen || 0));
+    if (y.renk !== e.renk) fark.renk = y.renk;
+    if (y.beden !== e.beden) fark.beden = y.beden;
+    if (Object.keys(fark).length) degisen.set(k, fark);
+  });
+  if (degisen.size === 0) return guncel;
+  let degisti = false;
+  const sonuc = (guncel || []).map((r) => {
+    const f = degisen.get(rezervasyonAnahtari(r));
+    if (!f) return r;
+    degisti = true;
+    const yeni = { ...r };
+    if (f.tuketilenFarki) yeni.tuketilen = stokYuvarla((r.tuketilen || 0) + f.tuketilenFarki);
+    if (f.renk !== undefined) yeni.renk = f.renk;
+    if (f.beden !== undefined) yeni.beden = f.beden;
+    return yeni;
+  });
+  return degisti ? sonuc : guncel;
+}
+
 // =============================================================================================
 // STOK DURUMU — tek varyantın tam tablosu
 //

@@ -380,8 +380,13 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
     yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
   }
   if (nextStokRez !== stokRezervasyonlari) {
-    setStokRezervasyonlari(nextStokRez);
-    yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
+    // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
+    // üretimin satırları) bütün listeyi yazmak o satırları buluta geri getiriyordu.
+    setStokRezervasyonlari((onceki) => {
+      const guncel = rezervasyonFarkiniUygula(onceki, stokRezervasyonlari, nextStokRez);
+      if (guncel !== onceki) yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", guncel), "Stok rezervasyonları", guncel);
+      return guncel;
+    });
   }
   if (nextSiparislerRez !== siparisler && setSiparisler) {
     setSiparisler(nextSiparislerRez);

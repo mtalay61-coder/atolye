@@ -583,8 +583,13 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
   }
   if (nextStokRez !== stokRezervasyonlari) {
-    setStokRezervasyonlari(nextStokRez);
-    yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
+    // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
+    // üretimin satırları) bütün listeyi yazmak o satırları buluta geri getiriyordu.
+    setStokRezervasyonlari((onceki) => {
+      const guncel = rezervasyonFarkiniUygula(onceki, stokRezervasyonlari, nextStokRez);
+      if (guncel !== onceki) yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", guncel), "Stok rezervasyonları", guncel);
+      return guncel;
+    });
   }
 
   // Bu üretim bir satış siparişi için rezerve edilmişti ama üretim bitene kadar o satış BAŞKA

@@ -89,10 +89,13 @@ const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
   setUretim(nextUretim); yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
   // Stok rezervasyonları da beden ADIYLA (v1.639.0, denetim): 020 birebir eşleştiriyor, ad değişince rezervasyon kayboluyordu.
-  const nextRez = (stokRezervasyonlari || []).map((r) => (es(r.beden) ? { ...r, beden: yeniAd } : r));
-  if (nextRez.some((r, i) => r !== stokRezervasyonlari[i])) {
-    setStokRezervasyonlari(nextRez); yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
-  }
+  // Güncel listeden (v1.713.1): kapanış listesi bayatsa silinmiş üretimin satırları buluta geri gelirdi.
+  setStokRezervasyonlari((onceki) => {
+    const nextRez = (onceki || []).map((r) => (es(r.beden) ? { ...r, beden: yeniAd } : r));
+    if (!nextRez.some((r, i) => r !== (onceki || [])[i])) return onceki;
+    yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
+    return nextRez;
+  });
 
   gunlukYaz(`Ölçü adı değişti: ${eskiAd} → ${yeniAd}`, "tanimlar", { olcuId });
   showToast(`"${eskiAd}" → "${yeniAd}" · kayıtlar hizalandı`);
@@ -144,10 +147,13 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
   setSiparisler(nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
   setUretim(nextUretim); yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
-  const nextRez = (stokRezervasyonlari || []).map((r) => (es(r.beden) ? { ...r, beden: yeniAd } : r));
-  if (nextRez.some((r, i) => r !== stokRezervasyonlari[i])) {
-    setStokRezervasyonlari(nextRez); yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
-  }
+  // Güncel listeden (v1.713.1): kapanış listesi bayatsa silinmiş üretimin satırları buluta geri gelirdi.
+  setStokRezervasyonlari((onceki) => {
+    const nextRez = (onceki || []).map((r) => (es(r.beden) ? { ...r, beden: yeniAd } : r));
+    if (!nextRez.some((r, i) => r !== (onceki || [])[i])) return onceki;
+    yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
+    return nextRez;
+  });
   gunlukYaz(`Tanımsız ölçü birleştirildi: ${eskiAd} → ${yeniAd}`, "tanimlar", {});
   showToast(`"${eskiAd}" → "${yeniAd}" · kayıtlar hizalandı`);
 }, [stok, siparisler, uretim, koliler, stokRezervasyonlari, showToast]);
@@ -312,14 +318,16 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
 
     // Stok rezervasyonları da renk taşıyor. Güncellenmezse rezervasyon, adı değişmiş
     // hammaddeyle eşleşmez ve talep karşılanmamış görünür.
-    const nextRez = stokRezervasyonlari.map((r) => {
-      const eslesme = eslesmeBul(r.renk);
-      return eslesme ? { ...r, renk: eslesme.yeniEtiket } : r;
-    });
-    if (nextRez.some((r, i) => r !== stokRezervasyonlari[i])) {
-      setStokRezervasyonlari(nextRez);
+    // Güncel listeden (v1.713.1): kapanış listesi bayatsa silinmiş üretimin satırları buluta geri gelirdi.
+    setStokRezervasyonlari((onceki) => {
+      const nextRez = (onceki || []).map((r) => {
+        const eslesme = eslesmeBul(r.renk);
+        return eslesme ? { ...r, renk: eslesme.yeniEtiket } : r;
+      });
+      if (!nextRez.some((r, i) => r !== (onceki || [])[i])) return onceki;
       yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextRez), "Stok rezervasyonları", nextRez);
-    }
+      return nextRez;
+    });
   }
 
   showToast(
