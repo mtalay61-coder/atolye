@@ -140,12 +140,20 @@ async function calistir() {
 
   // ---- Bulut sayımı + arşivden geri yükleme (v1.712.0) — en sonda: geri yükleme sayfayı yeniler.
   await copSekme();
+  await sayfa.locator('[data-tanim-sekme="bakim"]').first().click();   // sayım Bakım'da (v1.712.1)
+  await sayfa.waitForTimeout(500);
   await sayfa.locator("[data-bulut-sayimi-al]").first().click();
-  await sayfa.waitForTimeout(800);
-  const sayim = await sayfa.evaluate(() => [...document.querySelectorAll("[data-sayim-tablo]")].map((tr) => {
-    const h = [...tr.querySelectorAll("td")].map((td) => td.textContent.trim());
-    return `${tr.getAttribute("data-sayim-tablo")}: cihaz ${h[1]} · bulut ${h[2]} · arşiv ${h[3]} · ${h[4]}`;
-  }));
+  // Satırlar sayım bitince okunur (24 HEAD isteği); yoklayarak beklenir. Çöp sekmesine SONRA dönülür.
+  let sayim = [];
+  for (let i = 0; i < 40 && sayim.length === 0; i++) {
+    await sayfa.waitForTimeout(250);
+    sayim = await sayfa.evaluate(() => [...document.querySelectorAll("[data-sayim-tablo]")].map((tr) => {
+      const h = [...tr.querySelectorAll("td")].map((td) => td.textContent.trim());
+      return `${tr.getAttribute("data-sayim-tablo")}: cihaz ${h[1]} · bulut ${h[2]} · arşiv ${h[3]} · ${h[4]}`;
+    }));
+  }
+  await sayfa.locator('[data-tanim-sekme="cop"]').first().click();
+  await sayfa.waitForTimeout(500);
   await sayfa.locator("[data-sunucu-arsivi] select").first().selectOption("uretim");
   await sayfa.waitForTimeout(200);
   await sayfa.locator("[data-arsiv-yukle]").first().click();

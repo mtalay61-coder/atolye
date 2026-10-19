@@ -4711,6 +4711,7 @@ function AtolyeUygulamasi() {
           <GizliModul aktif={tab === "tanimlar"}>
             <TanimlarModule
               onaylar={onaylar}
+              stokRezervasyonlari={stokRezervasyonlari}
               onCariHareketEkle={addCariHareketFromStok}
               onCarilerKaydet={saveCariler}
               fisDefteri={fisDefteri}

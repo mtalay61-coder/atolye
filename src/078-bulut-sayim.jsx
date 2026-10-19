@@ -168,7 +168,7 @@ function BulutSayimiBolumu({ cihaz }) {
   };
   const farkli = (satirlar || []).filter((s) => s.durum !== "aynı");
   return (
-    <div data-bulut-sayimi="1" style={{ marginTop: 22, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14 }}>
+    <div data-bulut-sayimi="1" style={{ marginTop: 12 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
         <Database size={15} color="var(--erp-brown)" />
         <b style={{ fontSize: 13 }}>Bulut sayımı</b>
@@ -208,7 +208,7 @@ function BulutSayimiBolumu({ cihaz }) {
           {farkli.length === 0 && <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 }}>Bu cihaz ile bulut birebir aynı.</div>}
           {farkli.length > 0 && (
             <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6, lineHeight: 1.5 }}>
-              Bulutta silinmiş görünen satırlar aşağıdaki <b>Sunucu arşivi</b>nden tablo seçilip geri yüklenebilir. Günlük'te
+              Bulutta silinmiş görünen satırlar <b>Çöp Kutusu</b> sekmesinin altındaki <b>Sunucu arşivi</b>nden tablo seçilip geri yüklenebilir. Günlük'te
               "silindi" ve "TOPLU SİLME" araması hangi cihazın ne zaman sildiğini gösterir.
             </div>
           )}
