@@ -424,6 +424,9 @@ function AtolyeUygulamasi() {
   // Bu yüzden ayrı bir defter: { id, urunId, renk, beden, siparisId, siparisNo, miktar, tuketilen }
   // İki kaynak da aynı soruyu cevaplar: "bu hammaddenin ne kadarı hangi siparişe ayrılmış?"
   const [stokRezervasyonlari, setStokRezervasyonlari] = useState([]);
+  // EKRANLARA GEÇERLİ LİSTE (v1.713.0, 020 `gecerliRezervasyonlar`): silinmiş üretimin rezervasyonu talebe girmez. Ham liste
+  // yazma kancalarında ve Tanımlar (veri denetimi) ekranında kalır.
+  const stokRezervasyonlariGecerli = useMemo(() => gecerliRezervasyonlar(stokRezervasyonlari, uretim), [stokRezervasyonlari, uretim]);
   const [gocDurumu, setGocDurumu] = useState(null);
   // Verinin nereden geldiği: buluttan mı, yerel kopyadan mı. Kullanıcı hangi hâle baktığını
   // bilmeli — bulut okunamadığında sessizce eski veriyle çalışmak, farkında olmadan yanlış
@@ -1670,6 +1673,23 @@ function AtolyeUygulamasi() {
   // Bir satış kalemindeki geçersiz (bağlı kaydı silinmiş) planlama referansını temizler.
   // TEK ya da ÇOK kalem, GÜNCEL listeden (v1.537.0 — son denetim): kapanıştaki `siparisler`'den tam dizi kurup
   // yazıyordu; bir döngüde art arda çağrılınca her çağrı aynı eski diziden başlıyor, yalnız SONUNCUSU kalıyordu.
+  // YETİM REZERVASYONLARI SİL (v1.713.0): veri denetiminin "Silinmiş üretimin rezervasyonu duruyor" bulgusundan, kullanıcı
+  // onayıyla. Güncel listeden (işlevsel güncelleme), kimlikle; günlüğe yazar. Ekranlar zaten türetilmiş listeyi gördüğü
+  // için bu yalnız defteri temizler.
+  const yetimRezervasyonlariSil = useCallback(async (idler) => {
+    const kume = new Set((idler || []).filter(Boolean));
+    if (kume.size === 0) return;
+    // Güncel liste ekrandaki son hâlden (guncelDurumRef, her çizimde yenilenir) — kapanış bayat olabilir.
+    const onceki = (guncelDurumRef.current && guncelDurumRef.current.stokRezervasyonlari) || stokRezervasyonlari || [];
+    const next = onceki.filter((r) => !(r && kume.has(r.id)));
+    if (next.length === onceki.length) { showToast("Silinecek yetim rezervasyon bulunamadı"); return; }
+    setStokRezervasyonlari(next);
+    const sonuc = await yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", next), "Stok rezervasyonları", next);
+    if (sonuc && sonuc.ok === false) { showToast(`Yetim rezervasyonlar silinemedi: ${sonuc.hata || "yazılamadı"}`); return; }
+    gunlukYaz(`Yetim rezervasyonlar silindi: ${onceki.length - next.length} kayıt (üretimi silinmiş)`, "stok", { idler: [...kume] });
+    showToast(`${onceki.length - next.length} yetim rezervasyon silindi`);
+  }, [showToast, stokRezervasyonlari]);
+
   const planlamaTemizle = useCallback((satisSiparisId, kalemIdOrIds) => {
     const idler = new Set(Array.isArray(kalemIdOrIds) ? kalemIdOrIds : [kalemIdOrIds]);
     setSiparisler((onceki) => {
@@ -4700,7 +4720,7 @@ function AtolyeUygulamasi() {
               stok={stok} uretim={uretim} tanimlar={tanimlar} cariler={cariler} siparisler={siparisler}
               muhasebe={muhasebe}
               uretim={uretim}
-              stokRezervasyonlari={stokRezervasyonlari}
+              stokRezervasyonlari={stokRezervasyonlariGecerli}
               onNavigate={setTab}
               onGoToSiparis={sipariseGit}
               onGoToUretim={(id) => { setUretimHedefId(id || null); setTab("uretim"); }}
@@ -4712,6 +4732,7 @@ function AtolyeUygulamasi() {
             <TanimlarModule
               onaylar={onaylar}
               stokRezervasyonlari={stokRezervasyonlari}
+              onYetimRezervasyonSil={yetimRezervasyonlariSil}
               onCariHareketEkle={addCariHareketFromStok}
               onCarilerKaydet={saveCariler}
               fisDefteri={fisDefteri}
@@ -4757,8 +4778,8 @@ function AtolyeUygulamasi() {
               kurlar={muhasebe.kurlar || {}}
               kurGecmisi={muhasebe.kurGecmisi}
               onFiseGitNo={fiseGit}
-              stokRezervasyonlari={stokRezervasyonlari}
-              stokRezervasyonlari={stokRezervasyonlari}
+              stokRezervasyonlari={stokRezervasyonlariGecerli}
+              stokRezervasyonlari={stokRezervasyonlariGecerli}
               tumSiparisler={siparisler}
               hedefUrunId={stokHedefUrunId}
               hedefSekme={stokHedefSekme}
@@ -4986,7 +5007,7 @@ function AtolyeUygulamasi() {
               showToast={showToast}
               siparisler={siparisler}
               stok={stok}
-              stokRezervasyonlari={stokRezervasyonlari}
+              stokRezervasyonlari={stokRezervasyonlariGecerli}
               uretim={uretim}
               cariler={cariler}
               onGoToSiparis={sipariseGit}
@@ -5016,7 +5037,7 @@ function AtolyeUygulamasi() {
               onFiseGitNo={fiseGit}
               koliler={koliler}
               sabitTip="Satış"
-              stokRezervasyonlari={stokRezervasyonlari}
+              stokRezervasyonlari={stokRezervasyonlariGecerli}
               siparisler={siparisler}
               onSave={saveSiparisler}
               showToast={showToast}
@@ -5073,7 +5094,7 @@ function AtolyeUygulamasi() {
               onFiseGitNo={fiseGit}
               koliler={koliler}
               sabitTip="Alış"
-              stokRezervasyonlari={stokRezervasyonlari}
+              stokRezervasyonlari={stokRezervasyonlariGecerli}
               siparisler={siparisler}
               onSave={saveSiparisler}
               showToast={showToast}
@@ -5628,7 +5649,7 @@ function AtolyeUygulamasi() {
               onFiseGitNo={fiseGit}
               koliler={koliler}
                             sabitTip="Alış"
-                            stokRezervasyonlari={stokRezervasyonlari}
+                            stokRezervasyonlari={stokRezervasyonlariGecerli}
                             siparisler={siparisler}
                             onSave={saveSiparisler}
                             showToast={showToast}

@@ -194,9 +194,13 @@ const planlaUretim = useCallback((satisSiparisId, girdiler) => {
     });
 
     if (yeniStokRez.length > 0) {
-      const nextStokRez = [...stokRezervasyonlari, ...yeniStokRez];
-      setStokRezervasyonlari(nextStokRez);
-      yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
+      // GÜNCEL LİSTEYE EKLENİR (v1.713.0): kapanıştaki `stokRezervasyonlari` bayat olabilir (az önce silinen üretimin
+      // satırlarını hâlâ taşır) ve bütün liste yazıldığı için silinen rezervasyonu buluta geri getirirdi.
+      setStokRezervasyonlari((onceki) => {
+        const nextStokRez = [...(onceki || []), ...yeniStokRez];
+        yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRez), "Stok rezervasyonları", nextStokRez);
+        return nextStokRez;
+      });
     }
 
     // ÖNEMLİ: bir kalemin SADECE BİR KISMI planlanmışsa (örn. 2 çiftlik bir kalemin 1 çifti üretime

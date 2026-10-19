@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from "react";
 // createPortal (v1.520.0): form eylemleri (Kaydet/Vazgeç) modül başlığının sağındaki yuvaya çiziliyor — bkz. 325.
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";

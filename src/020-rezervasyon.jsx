@@ -26,6 +26,20 @@
 //    kilitlemek, atölyenin fiilen çalışma biçimine aykırı.
 const rezervasyonKalan = (r) => Math.max(0, (r.miktar || 0) - (r.tuketilen || 0));
 
+// GEÇERLİ REZERVASYONLAR (v1.713.0 — kullanıcı: "üretimi ben sildim bilerek, sorunum hatanın çıkması"). Üretim silinince
+// silme zinciri rezervasyonunu da siler (076); ama rezervasyon defteri bütün liste hâlinde yazılan bir tablo ve başka bir
+// yazma (iş verme, teslim, planlama) bayat kapanış listesiyle silinmiş üretimin satırlarını geri getirebiliyor — kullanıcıda
+// üretim 10033 yokken 136 birimlik talebi duruyordu, Deri "3016 açık" gösteriyordu. Talep ARTIK TÜRETİLİR: üretim
+// numarası taşıyan rezervasyon, o üretim listede yoksa kapanmış sayılır ve hiçbir ekranda talebe girmez (karşılanan
+// sayacında v1.367.0'da yapılan geçişin aynısı). Ham defter yazma yollarında ve veri denetiminde olduğu gibi kalır;
+// denetim yetimleri bildirir, kullanıcı isterse tek düğmeyle siler. Saf; birim testi `birim-gecerli-rezervasyon`.
+function gecerliRezervasyonlar(rezervasyonlar, uretimListesi) {
+  const nolar = new Set((uretimListesi || []).map((u) => u && String(u.siparisNo)));
+  const liste = rezervasyonlar || [];
+  const sonuc = liste.filter((r) => r && (!r.uretimNo || nolar.has(String(r.uretimNo))));
+  return sonuc.length === liste.length ? liste : sonuc;
+}
+
 // =============================================================================================
 // REZERVASYON KARŞILAMA
 //

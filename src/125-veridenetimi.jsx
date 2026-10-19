@@ -233,7 +233,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
           `Üretim ${r.uretimNo} · ${r.urunAd || r.urunId} ${r.renk || ""} ${r.beden || ""} · `
           + `kalan ${stokYuvarla(Math.max(0, (r.miktar || 0) - (r.tuketilen || 0)))}`,
           `Bu üretim artık yok ama talebi defterde duruyor; Depo'da açık ihtiyaç olduğundan yüksek `
-          + `görünüyor (toplam ${stokYuvarla(toplam)} birim). Onarım, yetim kayıtları siler.`,
+          + `görünüyor (toplam ${stokYuvarla(toplam)} birim). Ekranlar bu talebi artık saymıyor; "Yetim rezervasyonları sil" defteri temizler.`,
           { rezId: r.id || null, uretimNo: r.uretimNo });
       });
     }
@@ -439,7 +439,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
 // Tutarlılık bulgularını gösteren ekran. Denetim İSTEK ÜZERİNE çalışır, kendiliğinden değil:
 // bütün hareketleri tarıyor ve büyük veride pahalı; her ekran açılışında koşturmak uygulamayı
 // yavaşlatırdı.
-function VeriDenetimiEkrani({ onDefterFisIptal, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes }) {
+function VeriDenetimiEkrani({ onYetimRezervasyonSil, onDefterFisIptal, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes }) {
   const [sonuc, setSonuc] = useState(null);
   const [calisiyor, setCalisiyor] = useState(false);
   const [acikKod, setAcikKod] = useState(null);
@@ -636,6 +636,17 @@ function VeriDenetimiEkrani({ onDefterFisIptal, uretim, stokRezervasyonlari, muh
                         yanlış fiş için <b>fişi geri alıp yeniden kesmek</b>, yetim kayıt için
                         kaynağını (üretim/sipariş) düzeltmek.
                       </div>
+                      {g.kod === "hayalet-rezervasyon" && onYetimRezervasyonSil && (() => {
+                        // v1.713.0: ekranlar bu satırları zaten talebe saymıyor (020 gecerliRezervasyonlar); düğme yalnız defteri temizler.
+                        const idler = Array.from(new Set((g.veriler || []).map((v) => v && v.rezId).filter(Boolean)));
+                        const nolar = Array.from(new Set((g.veriler || []).map((v) => v && v.uretimNo).filter(Boolean)));
+                        return idler.length > 0 ? (
+                          <button type="button" className="btn-ghost" data-yetim-rez-sil style={{ marginBottom: 8, fontSize: 12 }}
+                            onClick={() => { if (window.confirm(`${idler.length} yetim rezervasyon silinecek (silinmiş üretim: ${nolar.join(", ")}). Stok ve siparişe dokunulmaz. Devam?`)) onYetimRezervasyonSil(idler); }}>
+                            Yetim rezervasyonları sil ({idler.length})
+                          </button>
+                        ) : null;
+                      })()}
                       {g.kod === "defter-silinmis-uretim" && onDefterFisIptal && (() => {
                         const nolar = Array.from(new Set((g.veriler || []).map((v) => v && v.fisNo).filter(Boolean)));
                         return (

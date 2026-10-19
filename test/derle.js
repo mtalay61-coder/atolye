@@ -17,7 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
-  "topluSilmeEngeliMi", "topluSilmeEngeliBul", "TOPLU_SILME_ESIGI", "yedekSilinecekleri", "cihazSayimlari", "sayimKarsilastir", "contentRangeSayisi", "arsivSatirlariniHazirla", "arsivGeriYuklemeSirasi", "arsivCakismaSutunlari",   // toplu silme kilidi (v1.712.0)
+  "gecerliRezervasyonlar", "topluSilmeEngeliMi", "topluSilmeEngeliBul", "TOPLU_SILME_ESIGI", "yedekSilinecekleri", "cihazSayimlari", "sayimKarsilastir", "contentRangeSayisi", "arsivSatirlariniHazirla", "arsivGeriYuklemeSirasi", "arsivCakismaSutunlari",   // toplu silme kilidi (v1.712.0)
   "adimSirasiIhlalleri", "oncekiAdimdanMevcutBedenler", "uretimRaporDonemi", "uretimRaporuHesapla", "prosesGunlukHedef", "amortismanAraligi", "donemAmortismani", "urunDemirbasPayi", "prosesKuyrugu", "prosesPlanTakvimi", "prosesPlaniniDegistir", "isGunuEkle", "prosesKapasitesi", "isYukuHesapla", "elemanGunlukSaat", "iscilikFisProsesi", "mesaiHesapla", "iscilikBolumu", "maasHareketiMi", "personelKaydiniYaz", "satisAlisKartHareketleri", "stokKartHareketleri", "prosesGiderKartlariniTamamla", "iscilikGiderKarti", "kartUretimHareketleri", "karsiliksizUretimFisleri", "karZararHesapla",   // üretim → gider kartı (v1.692)
   "firmaKoduNormal", "firmaAnahtariSorunu", "firmaAdresiGecerli", "firmaBaglantisiGecerli", "firmaRefi", "firmaDegisimEngeli", "firmaSeciminiDegistir",   // çoklu firma (v1.642.0)
   "kurulumTanimlariniUygula", "kurulumSihirbaziGerekli", "kurulumListesi",   // kurulum sihirbazı (v1.644.0)
@@ -49,7 +49,7 @@ let kaynak = fs.readFileSync(girdi, "utf8");
 // lucide-react ve xlsx testte hiç çizilmiyor; her ikon adı için boş bir bileşen yeterli.
 kaynak = kaynak.replace(/^import React[\s\S]*?from "react";/m,
   'const React = require("react");\n' +
-  'const { useState, useEffect, useLayoutEffect, useCallback, useRef } = React;');
+  'const { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } = React;');
 kaynak = kaynak.replace(/^import \{ createPortal \} from "react-dom";/m, 'const { createPortal } = require("react-dom");');
 // XLSX sahte: dosya yazmıyor, ama `raporExcelAktar` çağrılabilsin (çıktı `window.__sonRaporExcel`e düşüyor).
 kaynak = kaynak.replace(/^import \* as XLSX from "xlsx";/m, "const XLSX = { utils: { book_new: () => ({}), aoa_to_sheet: (a) => a, json_to_sheet: (a) => a, book_append_sheet: () => {} }, writeFile: () => {} };");

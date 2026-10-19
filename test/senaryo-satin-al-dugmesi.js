@@ -23,6 +23,12 @@ async function calistir() {
   // Planlamada karşılığı YOK (bekleyen satış siparişi yok), yani boş durum yolu çalışacak.
   // İKİ RENK: Depo satırı bir ürünün bütün renklerini tek grupta topluyor, o yüzden düğmenin
   // gönderdiği veride renk BAŞINA satır olmalı (kullanıcı, 12 Eylül).
+  // Üretim 10007 tohumda VAR (v1.713.0): üretimi olmayan rezervasyon artık talebe sayılmıyor (020 gecerliRezervasyonlar).
+  t["uretim:siparisler"] = JSON.stringify([...JSON.parse(TOHUM["uretim:siparisler"]), {
+    id: "up10007", siparisNo: "10007", takipKodu: "10007", model: "Bot", urunId: "u2", renk: "Siyah", adet: 10,
+    bedenMiktarlari: [{ beden: "41", miktar: 10 }], stogaEklendiMi: false, asama: "Planlandı", durum: "Devam",
+    rezervasyonSiparisId: "s9", olusturuldu: "2026-09-01T08:00:00.000Z", prosesIlerleme: [],
+  }]);
   t["stokrez:data"] = JSON.stringify([{
     id: "sr1", urunId: "u1", urunAd: "Deri", renk: "Siyah", beden: "", birim: "metre",
     siparisId: "s9", siparisNo: "SAT-9", uretimNo: "10007", miktar: 20, tuketilen: 0,
