@@ -51,5 +51,27 @@
       "sayi": "20"
     }
   ],
+  "sayim": [
+    "urunler: cihaz 2 · bulut 1 · arşiv 0 · cihazda 1 fazla — bulutta silinmiş olabilir",
+    "varyantlar: cihaz 5 · bulut 1 · arşiv 0 · cihazda 4 fazla — bulutta silinmiş olabilir",
+    "stok_hareketleri: cihaz 7 · bulut 1 · arşiv 0 · cihazda 6 fazla — bulutta silinmiş olabilir",
+    "cariler: cihaz 3 · bulut 1 · arşiv 0 · cihazda 2 fazla — bulutta silinmiş olabilir",
+    "cari_hareketleri: cihaz 1 · bulut 1 · arşiv 0 · aynı",
+    "siparisler: cihaz 1 · bulut 1 · arşiv 0 · aynı",
+    "siparis_kalemleri: cihaz 2 · bulut 1 · arşiv 0 · cihazda 1 fazla — bulutta silinmiş olabilir",
+    "uretim: cihaz 0 · bulut 0 · arşiv 2 · aynı",
+    "uretim_atamalari: cihaz 0 · bulut 1 · arşiv 2 · bulutta 1 fazla — bu cihaz eksik/bayat, sayfayı yenileyin",
+    "stok_rezervasyonlari: cihaz 0 · bulut 1 · arşiv 0 · bulutta 1 fazla — bu cihaz eksik/bayat, sayfayı yenileyin",
+    "onaylar: cihaz 0 · bulut 1 · arşiv 0 · bulutta 1 fazla — bu cihaz eksik/bayat, sayfayı yenileyin",
+    "cop: cihaz 21 · bulut 1 · arşiv 0 · cihazda 20 fazla — bulutta silinmiş olabilir"
+  ],
+  "geriYukleDugmesi": "Bu 2 satırı geri yükle",
+  "geriYazilan": [
+    [
+      "r2",
+      "r1"
+    ]
+  ],
+  "geriYuklemeToast": "2 satır geri yazıldı — sayfa yenileniyor",
   "hatalar": []
 }

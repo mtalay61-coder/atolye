@@ -90,11 +90,49 @@ function satirlariEsitle(satirlar) {
   });
 }
 
-function supabaseTabloEsitle(tablo, kayitlar) {
-  return tabloKuyrugunaAl(tablo, () => _tabloEsitleUygula(tablo, kayitlar));
+function supabaseTabloEsitle(tablo, kayitlar, secenek) {
+  return tabloKuyrugunaAl(tablo, () => _tabloEsitleUygula(tablo, kayitlar, secenek));
 }
 
-async function _tabloEsitleUygula(tablo, kayitlar) {
+// =============================================================================================
+// TOPLU SİLME KİLİDİ (v1.712.0 — kullanıcı, 19 Ekim: "Üretim fişleri silindi … çok sıkı kontrol etmemiz
+// gerekiyor, bu çok önemli. Bunun yüzünden hâlâ kullanmaya başlamadım!")
+//
+// Fark katmanı "bellekteki eski hâlde olup yeni hâlde olmayan" her kaydı SİLİNECEK sayar ve buluta DELETE
+// gönderir. Bu, tek kaydın silinmesi için doğru; ama ekrandaki liste bir sebeple EKSİK ya da BAYAT gelmişse
+// (eski bir JSON yedeği, bekleyen yazması olan eski bir yerel kopya, yarım okunmuş bir tablo) aynı mekanizma
+// buluttaki bütün üretimleri / hareketleri sessizce siler — ve bunu "N silindi" diye günlüğe yazıp geçer.
+// Kullanıcının hiçbir işlemi "bütün üretimleri sil" demek değildir; o ölçekte silme ancak sıfırlama ya da
+// çöp boşaltma gibi AÇIKÇA izin verilen yollardan gelebilir.
+//
+// Kural (saf, birim testi `birim-toplu-silme-kilidi`): bir yazmada bir tablodan (ana ya da alt) silinecek kayıt
+// sayısı hem TOPLU_SILME_ESIGI'ne ulaşıyor hem de bellekteki eski hâlin yarısından azı kalmıyorsa yazma
+// DURUR — hiçbir istek gitmez, bellek geri alınır, bekleyen deftere YAZILMAZ (yazılsaydı açılışta yeniden
+// denenirdi), günlüğe "TOPLU SİLME ENGELLENDİ" düşer ve kullanıcıya şerit çıkar. Tek siparişin 40 kalemi,
+// bir üretimin 60 hareketi (tablonun küçük bir yüzdesi) geçer; tablonun yarısını götüren yazma geçmez.
+// Yeni kurulumdaki küçük tablolarda (20 kayıttan az) kilit devreye girmez — eşik mutlak sayıyla da korunur.
+const TOPLU_SILME_ESIGI = 20;
+function topluSilmeEngeliMi(silinenSayisi, oncekiSayi) {
+  const silinen = Number(silinenSayisi) || 0;
+  const onceki = Number(oncekiSayi) || 0;
+  return silinen >= TOPLU_SILME_ESIGI && silinen * 2 >= onceki;
+}
+// Yazma öncesi bütün ana/alt farkları ölçer; engel varsa ilkini döner, yoksa null.
+function topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi) {
+  const boy = (ad) => (bellekYedegi && bellekYedegi[ad] ? bellekYedegi[ad].size : 0);
+  if (topluSilmeEngeliMi((fark.silinen || []).length, boy(tablo))) {
+    return { tablo, silinen: fark.silinen.length, onceki: boy(tablo) };
+  }
+  for (const { cocuk, cFark } of cocukFarklari || []) {
+    const ad = `${tablo}::${cocuk.tablo}`;
+    if (topluSilmeEngeliMi((cFark.silinen || []).length, boy(ad))) {
+      return { tablo: cocuk.tablo, silinen: cFark.silinen.length, onceki: boy(ad) };
+    }
+  }
+  return null;
+}
+
+async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
   const sema = TABLO_SEMA[tablo];
   if (!sema) return;
 
@@ -123,6 +161,19 @@ async function _tabloEsitleUygula(tablo, kayitlar) {
     return { cocuk, cFark: tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k }))) };
   });
   let _sayim = null;
+  // TOPLU SİLME KİLİDİ — ağa çıkmadan önce (yukarıdaki yorum). `secenek.topluSilmeIzni` yalnız sıfırlama,
+  // çöp boşaltma ve kullanıcının silinecek sayıyı görüp onayladığı yedek geri yüklemesinden gelir.
+  const engel = secenek && secenek.topluSilmeIzni ? null : topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi);
+  if (engel) {
+    bellegiGeriAl();
+    gunlukYaz(`TOPLU SİLME ENGELLENDİ: ${engel.tablo} — ${engel.silinen} kayıt silinecekti (eski hâlde ${engel.onceki})`, "guvenlik",
+      { tablo: engel.tablo, anaTablo: tablo, silinen: engel.silinen, onceki: engel.onceki });
+    const e = new Error(`Toplu silme engellendi: ${engel.tablo} tablosundan ${engel.silinen} kayıt (eldeki ${engel.onceki} kayıttan) `
+      + `tek yazmada silinecekti; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin. `
+      + `Silme gerçekten isteniyorsa Tanımlar › Bakım'dan (sıfırlama / çöp / yedek) açık onayla yapılır.`);
+    e.topluSilmeEngeli = true;
+    throw e;
+  }
   try {
   if (!_surumler[tablo]) _surumler[tablo] = new Map();
   const surumMap = _surumler[tablo];
@@ -314,7 +365,8 @@ function yazimiIzle(soz, etiket, veri) {
 // Kural artık tek yerde: yerel kopya verilmediyse burada ayrılır. Buluta yine görselli gider (ürün satırında).
 // Görsel deposuna (`gorselleriYaz`) BURADAN yazılmıyor: listede olmayan ürünün görselini siliyor, görselsiz
 // bir liste gelirse depo boşalırdı; depo zaten ürün kaydedilirken (`saveStok`) ve açılış göçünde güncelleniyor.
-function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
+// `secenek.topluSilmeIzni` (v1.712.0): toplu silme kilidini yalnız bu yazma için açar — bkz. `topluSilmeEngeliMi`.
+function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
   if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar)) yerelKayitlar = gorselleriAyir(kayitlar).stok;
   const yerel = guvenliYaz(anahtar, JSON.stringify(yerelKayitlar || kayitlar), true);
   if (!supabaseAcikMi() || !TABLO_SEMA[tablo]) {
@@ -323,7 +375,7 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
   }
   // Yoldaki yazma (v1.645.2, 030): bitene kadar değişiklik yoklaması bu tabloyu "bizim yazmamız" sayar.
   bulutYazmaBasladi(tablo);
-  const bulutIsi = supabaseTabloEsitle(tablo, kayitlar);
+  const bulutIsi = supabaseTabloEsitle(tablo, kayitlar, secenek);
   bulutIsi.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
   return Promise.all([
     yerel,
@@ -350,7 +402,9 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar) {
         console.error("Supabase yazma hatası:", tablo, e);
         const mesaj = String((e && e.message) || e);
         supabaseSonHata = { tablo, mesaj, zaman: Date.now() };
-        bekleyenYazmaEkle(anahtar, tablo, mesaj);   // yerel güncel, bulut değil: açılışta yerel kazansın
+        // TOPLU SİLME ENGELİ bekleyen yazma DEĞİLDİR: deftere düşerse açılışta "yerel kazanır" ve eksik liste
+        // bulutun önüne geçer — korumanın engellediği şeyin ta kendisi. Yalnız şerit ve günlük.
+        if (!(e && e.topluSilmeEngeli)) bekleyenYazmaEkle(anahtar, tablo, mesaj);   // yerel güncel, bulut değil: açılışta yerel kazansın
         if (typeof window !== "undefined" && window.__supabaseHataBildir) {
           window.__supabaseHataBildir(tablo, mesaj);
         }

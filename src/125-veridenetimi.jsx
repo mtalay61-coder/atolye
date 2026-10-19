@@ -108,13 +108,30 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
   // Yoksa hareket kaybolmuştur (yazma yarım kaldı, kayıt silindi) — ve defterde kesin kaydı
   // durduğu için TAHMİNE gerek yok, birebir yeniden yazılabilir.
   const stokHareketIdleri = new Set(stokHareketleri.map((h) => h.id));
+  // SİLİNMİŞ ÜRETİMİN FİŞİ (v1.711.1): üretim silinmişse hareketlerinin yokluğu doğrudur; yanlış olan defter kaydının
+  // hâlâ "geçerli" durması (v1.711.1 öncesi silme defteri işaretlemiyordu). Ayrı kod: onarımı farklı (defterde iptal).
+  const uretimIdleri = new Set((uretim || []).map((u) => u.id));
+  const uretimNolari = new Set((uretim || []).map((u) => String(u.siparisNo)));
+  const uretimiSilinmisMi = (f) => {
+    if (f.uretimId) return !uretimIdleri.has(f.uretimId);
+    const m = /^(\d+)-/.exec(String(f.fisNo || ""));
+    return !!(m && !uretimNolari.has(m[1]));
+  };
   (fisDefteri || []).forEach((f) => {
     if (f.iptal) return;
+    const silinmis = uretimiSilinmisMi(f);
     (f.stokHareketleri || []).forEach((h) => {
       if (!h.id || stokHareketIdleri.has(h.id)) return;
+      if (silinmis) {
+        ekle("orta", "defter-silinmis-uretim", "Silinmiş üretimin fişi defterde geçerli duruyor",
+          `${f.fisNo} · ${olcuMetni([h.urunAd || h.urunId, h.renk, h.beden])} — ${h.miktar}`,
+          "Bu fişin üretimi silinmiş; stok ve cari hareketleri silmeyle gitti (doğru). Yalnız fiş defterindeki kayıt iptal işaretlenmemiş — aşağıdaki düğme işaretler, başka bir şeye dokunmaz.",
+          { fisNo: f.fisNo, hareket: h });
+        return;
+      }
       ekle("yuksek", "defter-eksik-hareket", "Fiş defterinde var, stokta yok",
         `${f.fisNo} · ${olcuMetni([h.urunAd || h.urunId, h.renk, h.beden])} — ${h.miktar}`,
-        "Defterdeki fiş kaydı bu hareketi içeriyor ama stok hareketlerinde yok. \"Defterden yeniden kur\" hareketi birebir geri yazar (tahmin değil, kayıttan).",
+        "Defterdeki fiş kaydı bu hareketi içeriyor ama stok hareketlerinde yok: fişin stok yazması buluta gidememiş ya da hareket elle silinmiş. Fişi (üretimse teslimi) geri alıp yeniden kesmek doğru yoldur; otomatik düzeltme yok.",
         { fisNo: f.fisNo, hareket: h });
     });
   });
@@ -422,7 +439,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
 // Tutarlılık bulgularını gösteren ekran. Denetim İSTEK ÜZERİNE çalışır, kendiliğinden değil:
 // bütün hareketleri tarıyor ve büyük veride pahalı; her ekran açılışında koşturmak uygulamayı
 // yavaşlatırdı.
-function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes }) {
+function VeriDenetimiEkrani({ onDefterFisIptal, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, stok, cariler, siparisler, tanimlar, fisDefteri, onAcilisFisiKes }) {
   const [sonuc, setSonuc] = useState(null);
   const [calisiyor, setCalisiyor] = useState(false);
   const [acikKod, setAcikKod] = useState(null);
@@ -619,6 +636,15 @@ function VeriDenetimiEkrani({ uretim, stokRezervasyonlari, muhasebe, onYetimSipa
                         yanlış fiş için <b>fişi geri alıp yeniden kesmek</b>, yetim kayıt için
                         kaynağını (üretim/sipariş) düzeltmek.
                       </div>
+                      {g.kod === "defter-silinmis-uretim" && onDefterFisIptal && (() => {
+                        const nolar = Array.from(new Set((g.veriler || []).map((v) => v && v.fisNo).filter(Boolean)));
+                        return (
+                          <button type="button" className="btn-ghost" data-defter-fis-iptal style={{ marginBottom: 8, fontSize: 12 }}
+                            onClick={() => { if (window.confirm(`${nolar.length} fiş defterde iptal işaretlenecek (${nolar.join(", ")}). Stok ve cariye dokunulmaz. Devam?`)) onDefterFisIptal(nolar); }}>
+                            Defterde iptal işaretle ({nolar.length} fiş)
+                          </button>
+                        );
+                      })()}
                       <div style={{ display: "grid", gap: 3, maxHeight: 300, overflowY: "auto" }}>
                         {g.kayitlar.map((d, i) => (
                           <div key={i} className="mono" style={{ fontSize: 11, color: "var(--erp-text)", background: "var(--erp-panel)", borderRadius: "var(--erp-r-sm)", padding: "4px 8px" }}>

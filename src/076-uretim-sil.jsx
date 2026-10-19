@@ -14,7 +14,7 @@ function useUretimSil(d) {
   const {
     uretim, siparisler, stok, cariler, showToast, adimlariYurut,
     setUretim, setSiparisler, setStok, setCariler, copaAt,
-    stokRezervasyonlari, setStokRezervasyonlari, aktifKullanici,
+    stokRezervasyonlari, setStokRezervasyonlari, aktifKullanici, fisDefteriniDonustur,
   } = d;
 
 const uretimSil = useCallback(async (uretimId, cascade) => {
@@ -204,6 +204,28 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       yaz: () => tabloYaz("uretim:siparisler", "uretim", nextUretimListesi) });
 
     const sonuc = await adimlariYurut(adimlar);
+    // FİŞ DEFTERİNDE İPTAL (v1.711.1 — kullanıcı: silinen 10032 üretiminin fişi denetimde "Fiş defterinde var, stokta
+    // yok" diye 29 satır çıkardı). Teslim geri alma (`fisDefterindeIptal`) defteri işaretliyordu, üretim SİLME hiç
+    // işaretlemiyordu: hareketler gidiyor, defterdeki fiş "geçerli" kalıyordu. Üretim kimliği taşıyan her defter kaydı
+    // + eski kayıtlar için fiş ailesi (taban, -İşçilik, -Giriş, -İade, -EkMalzeme) iptal edilir.
+    if (sonuc.ok && fisDefteriniDonustur) {
+      const aile = new Set();
+      fisNolar.forEach((f) => ["", "-İşçilik", "-Giriş", "-İade", "-EkMalzeme"].forEach((e) => aile.add(f + e)));
+      if (mamulFisNo) aile.add(mamulFisNo);
+      const iptalZamani = new Date().toISOString();
+      fisDefteriniDonustur((defter) => {
+        let degisti = false;
+        const sonra = (defter || []).map((f) => {
+          if (!f || f.iptal) return f;
+          const ait = f.uretimId ? f.uretimId === uretimId
+            : (typeof f.fisNo === "string" && (aile.has(f.fisNo) || f.fisNo.startsWith(`${siparis.siparisNo}-`)));
+          if (!ait) return f;
+          degisti = true;
+          return { ...f, iptal: true, iptalZamani };
+        });
+        return degisti ? sonra : defter;
+      });
+    }
     // Başarı da başarısızlık da yazılır. Yarım kalan işlem, tamamlanandan DAHA çok iz gerektirir.
     gunlukYaz(
       sonuc.ok ? `Üretim silindi: ${siparis.siparisNo}` : `Üretim silme YARIM KALDI: ${siparis.siparisNo}`,
@@ -249,7 +271,7 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
   }
   showToast("Üretim siparişi silindi" + (etkilendiMi ? " — bağlı satış kalemi yeniden planlanabilir" : ""));
   return { ok: true };
-}, [uretim, siparisler, stok, cariler, showToast, adimlariYurut, stokRezervasyonlari, copaAt]);
+}, [uretim, siparisler, stok, cariler, showToast, adimlariYurut, stokRezervasyonlari, copaAt, fisDefteriniDonustur]);
 
   return uretimSil;
 }

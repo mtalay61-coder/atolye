@@ -1,3 +1,41 @@
+// YEDEĞİN SİLECEKLERİ (v1.712.0, saf; birim testi `birim-toplu-silme-kilidi`). Bugünkü hâlde olup yedekte olmayan
+// ana kayıtlar (kimlikle) ve alt kayıt toplamları (hareket, varyant, kalem, atama) tablo tablo sayılır. Toplu silme
+// kilidini (040 `topluSilmeEngeliMi`) aşacak satırlar `kilitliSatirlar`a düşer — geri yükleme onlar için açık onay ister.
+function yedekSilinecekleri(mevcut, yedek) {
+  const satirlar = [];
+  const kilitliSatirlar = [];
+  const say = (ad, eski, yeni) => {
+    const yeniIdler = new Set((yeni || []).map((k) => k && k.id));
+    const silinen = (eski || []).filter((k) => k && !yeniIdler.has(k.id)).length;
+    if (silinen > 0) {
+      const satir = `${ad}: ${silinen} kayıt silinecek (bugün ${(eski || []).length}, yedekte ${(yeni || []).length})`;
+      satirlar.push(satir);
+      if (topluSilmeEngeliMi(silinen, (eski || []).length)) kilitliSatirlar.push(satir);
+    }
+  };
+  const altSay = (ad, eski, yeni, cikar) => {
+    const eskiN = (eski || []).reduce((t, k) => t + cikar(k).length, 0);
+    const yeniN = (yeni || []).reduce((t, k) => t + cikar(k).length, 0);
+    if (eskiN > yeniN) {
+      const satir = `${ad}: bugün ${eskiN}, yedekte ${yeniN} (${eskiN - yeniN} eksik)`;
+      satirlar.push(satir);
+      if (topluSilmeEngeliMi(eskiN - yeniN, eskiN)) kilitliSatirlar.push(satir);
+    }
+  };
+  say("Ürün", mevcut.stok, yedek.stok);
+  altSay("Stok hareketi", mevcut.stok, yedek.stok, (u) => (u && u.hareketler) || []);
+  altSay("Ürün varyantı", mevcut.stok, yedek.stok, (u) => (u && u.variants) || []);
+  say("Sipariş", mevcut.siparisler, yedek.siparisler);
+  altSay("Sipariş kalemi", mevcut.siparisler, yedek.siparisler, (s) => (s && s.kalemler) || []);
+  say("Üretim", mevcut.uretim, yedek.uretim);
+  altSay("İş ataması", mevcut.uretim, yedek.uretim, (u) => ((u && u.prosesIlerleme) || []).flatMap((p) => (p && p.atamalar) || []));
+  say("Cari", mevcut.cariler, yedek.cariler);
+  altSay("Cari hareketi", mevcut.cariler, yedek.cariler, (c) => (c && c.hareketler) || []);
+  if (Array.isArray(yedek.stokRezervasyonlari)) say("Rezervasyon", mevcut.stokRezervasyonlari, yedek.stokRezervasyonlari);
+  if (Array.isArray(yedek.onaylar)) say("Onay", mevcut.onaylar, yedek.onaylar);
+  return { satirlar, kilitliSatirlar };
+}
+
 // ================= YEDEKLEME VE GERİ YÜKLEME =================
 //
 // 19 Eylül (2. madde, 2. tur): `100-app.jsx`ten çıkarılan ikinci büyük parça (~258 satır).
@@ -111,6 +149,19 @@ useEffect(() => {
 // yükleme YOKTU; yedekte muhasebe (kasa/banka/ÇEK) ve koliler de yoktu.
 const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (!y || !Array.isArray(y.stok)) { showToast("Yedek okunamadı veya bozuk"); return false; }
+  // SİLİNECEKLER ÖNCE GÖSTERİLİR (v1.712.0, toplu silme kilidi — 040 `topluSilmeEngeliMi`). Eski bir yedek, bugünkü
+  // üretimleri / hareketleri "yedekte yok" diye buluttan siler; bu, uygulamadaki en kolay veri kaybı yolu. Kayıt
+  // sayıları kullanıcıya yazılır; kilidi aşacak ölçüde silme varsa ayrıca onay istenir ve yazmalar ancak o onayla
+  // kilit açık gider. Onay yoksa hiçbir şey değişmez.
+  const silinecekOzeti = yedekSilinecekleri({ stok, siparisler, uretim, cariler, stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [] }, y);
+  if (silinecekOzeti.kilitliSatirlar.length > 0) {
+    const onay = typeof window !== "undefined" && typeof window.confirm === "function"
+      ? window.confirm(`DİKKAT — bu yedek bugünkü veriden ŞUNLARI SİLECEK:\n\n${silinecekOzeti.satirlar.join("\n")}\n\nYedek eski olabilir. Devam edilsin mi?`)
+      : false;
+    if (!onay) { showToast("Geri yükleme iptal edildi — hiçbir şey değişmedi"); return false; }
+    gunlukYaz(`Yedek geri yükleme onayı: toplu silme kabul edildi (${kaynakAd})`, "guvenlik", { satirlar: silinecekOzeti.satirlar });
+  }
+  const yazmaSecenegi = silinecekOzeti.kilitliSatirlar.length > 0 ? { topluSilmeIzni: true } : undefined;
   // Geri yüklemeden ÖNCE mevcut hâlin yedeği alınır: yanlış bir yedeğe dönmek, dönüşü olmayan
   // bir hata olmasın. Ayrı bir anahtara yazılır ki günlük yedeğin üzerine binmesin.
   await guvenliYaz("yedek:geri-yukleme-oncesi", JSON.stringify({
@@ -144,18 +195,18 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
 
   // Geri yükleme TOPLU yazar: yedekteki hâl bütünüyle geçerli olmalı, kayıt kayıt fark almak
   // burada anlamsız. Katmanın "son bilinen hâl" belleği de yenilenir.
-  await tabloYaz("stok:items", "urunler", yedekStok);
-  await tabloYaz("siparis:data", "siparisler", y.siparisler || []);
-  await tabloYaz("uretim:siparisler", "uretim", y.uretim || []);
-  await tabloYaz("cari:data", "cariler", y.cariler || []);
+  await tabloYaz("stok:items", "urunler", yedekStok, undefined, yazmaSecenegi);
+  await tabloYaz("siparis:data", "siparisler", y.siparisler || [], undefined, yazmaSecenegi);
+  await tabloYaz("uretim:siparisler", "uretim", y.uretim || [], undefined, yazmaSecenegi);
+  await tabloYaz("cari:data", "cariler", y.cariler || [], undefined, yazmaSecenegi);
   if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false });   // yedek bütünüyle döner
   if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
   if (Array.isArray(y.koliler)) await tekilYaz("koli:data", "koliler", y.koliler);
   if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
   if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar);
   if (Array.isArray(y.faturalar)) await tekilYaz("fatura:data", "faturalar", y.faturalar);
-  if (Array.isArray(y.stokRezervasyonlari)) await tabloYaz("stokrez:data", "stok_rezervasyonlari", y.stokRezervasyonlari);
-  if (Array.isArray(y.onaylar)) await tabloYaz("onaylar:data", "onaylar", y.onaylar);
+  if (Array.isArray(y.stokRezervasyonlari)) await tabloYaz("stokrez:data", "stok_rezervasyonlari", y.stokRezervasyonlari, undefined, yazmaSecenegi);
+  if (Array.isArray(y.onaylar)) await tabloYaz("onaylar:data", "onaylar", y.onaylar, undefined, yazmaSecenegi);
   if (y.fisDefteri) await tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", y.fisDefteri);
   if (Array.isArray(y.modeller)) await tekilYaz("model:data", "modeller", y.modeller);
   // Çek görselleri (varsa): toplu tablo yazımı + yerel kopya (cekGorselKaydet'in yaptığı iş,

@@ -23,11 +23,39 @@ async function calistir() {
   t["cop:data"] = JSON.stringify([ck("c-yeni", "Yeni Cari", 10), ck("c-eski", "Eski Cari", 40), ck("c-dusecek", "Düşecek Cari", 85), ck("c-asmis", "Asmis Cari", 120)]);
 
   // Sunucu arşivi isteği örnek satırlarla cevaplanır (ortamda bulut yok); görünümün okuduğu biçim sınanır.
+  // Bulut sayımı (v1.712.0): HEAD istekleri Content-Range ile cevaplanır — üretim bulutta 0 (silinmiş), ötekiler 1.
+  // Arşivden geri yükleme: üretim tablosu seçilince arşiv 2 silinmiş üretim döner, POST uretim kaydedilir.
+  const geriYazilan = [];
   const onceRota = async (sayfa) => {
-    await sayfa.route("**/rest/v1/silinen_arsiv**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([
-      { id: 2, tablo: "cariler", islem: "DELETE", satir_id: "c7", veri: { id: "c7", unvan: "Silinen Cari" }, silen_eposta: "test@atolye.local", zaman: "2026-10-03T09:00:00Z" },
-      { id: 1, tablo: "tanimlar", islem: "GORUNTU", satir_id: "tekil", veri: { id: "tekil", veri: { kullanicilar: [{ ad: "A", sifre: "gizli" }] } }, silen_eposta: null, zaman: "2026-10-03T08:00:00Z" },
-    ]) }));
+    await sayfa.route("**/rest/v1/**", (r) => {
+      const url = r.request().url();
+      const tablo = (url.match(/rest\/v1\/([a-z_]+)/) || [])[1] || "";
+      if (r.request().method() === "HEAD") {
+        const n = tablo === "silinen_arsiv" ? (/tablo=eq\.uretim/.test(url) ? 2 : 0) : tablo === "uretim" ? 0 : 1;
+        return r.fulfill({ status: 206, headers: { "content-range": `0-0/${n}`, "access-control-expose-headers": "content-range" }, body: "" });
+      }
+      if (tablo === "uretim" && r.request().method() === "POST") {
+        geriYazilan.push(JSON.parse(r.request().postData() || "[]").map((x) => x.id));
+        return r.fulfill({ status: 201, body: "" });
+      }
+      // Ötekiler: ortamda bulut yok — hemen düşsün (continue() ağ zaman aşımını bekletiyor, çöp testinin zamanlamasını bozuyordu).
+      return r.abort("failed");
+    });
+    await sayfa.route("**/rest/v1/silinen_arsiv**", (r) => {
+      if (r.request().method() === "HEAD") return r.fallback();
+      const url = r.request().url();
+      if (/tablo=eq\.uretim/.test(url)) {
+        return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([
+          { id: 5, tablo: "uretim", islem: "DELETE", satir_id: "r2", veri: { id: "r2", siparis_no: "SAT-9", adet: 5, surum: 2 }, silen_eposta: "test@atolye.local", zaman: "2026-10-19T09:00:00Z" },
+          { id: 4, tablo: "uretim", islem: "DELETE", satir_id: "r1", veri: { id: "r1", siparis_no: "SAT-8", adet: 3, surum: 4 }, silen_eposta: "test@atolye.local", zaman: "2026-10-19T08:59:00Z" },
+          { id: 3, tablo: "uretim", islem: "DELETE", satir_id: "r1", veri: { id: "r1", siparis_no: "SAT-8", adet: 3, surum: 1 }, silen_eposta: "test@atolye.local", zaman: "2026-10-10T08:00:00Z" },
+        ]) });
+      }
+      return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([
+        { id: 2, tablo: "cariler", islem: "DELETE", satir_id: "c7", veri: { id: "c7", unvan: "Silinen Cari" }, silen_eposta: "test@atolye.local", zaman: "2026-10-03T09:00:00Z" },
+        { id: 1, tablo: "tanimlar", islem: "GORUNTU", satir_id: "tekil", veri: { id: "tekil", veri: { kullanicilar: [{ ad: "A", sifre: "gizli" }] } }, silen_eposta: null, zaman: "2026-10-03T08:00:00Z" },
+      ]) });
+    });
   };
   const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota });
   const hatalar = [];
@@ -110,8 +138,26 @@ async function calistir() {
   const kalanTip = ((await depoOku(sayfa, "tanimlar:data")).hammaddeTipleri || []).length;
   const mesajlar = ((await depoOku(sayfa, "mesaj:data")) || []).map((m) => ({ kanal: m.kanal, uyari: /Güvenlik uyarısı/.test(m.metin), sayi: (m.metin.match(/(\d+) kayıt sildi/) || [])[1] }));
 
+  // ---- Bulut sayımı + arşivden geri yükleme (v1.712.0) — en sonda: geri yükleme sayfayı yeniler.
+  await copSekme();
+  await sayfa.locator("[data-bulut-sayimi-al]").first().click();
+  await sayfa.waitForTimeout(800);
+  const sayim = await sayfa.evaluate(() => [...document.querySelectorAll("[data-sayim-tablo]")].map((tr) => {
+    const h = [...tr.querySelectorAll("td")].map((td) => td.textContent.trim());
+    return `${tr.getAttribute("data-sayim-tablo")}: cihaz ${h[1]} · bulut ${h[2]} · arşiv ${h[3]} · ${h[4]}`;
+  }));
+  await sayfa.locator("[data-sunucu-arsivi] select").first().selectOption("uretim");
+  await sayfa.waitForTimeout(200);
+  await sayfa.locator("[data-arsiv-yukle]").first().click();
+  await sayfa.waitForTimeout(500);
+  const geriYukleDugmesi = (await metin("[data-arsiv-geri-yukle]"))[0] || "yok";
+  sayfa.on("dialog", (d) => d.accept());
+  await sayfa.locator("[data-arsiv-geri-yukle]").first().click();
+  await sayfa.waitForTimeout(600);
+  const geriYuklemeToast = await sayfa.evaluate(() => (document.body.innerText.match(/\d+ satır geri yazıldı[^\n]*/) || ["yok"])[0]);
+  await sayfa.waitForTimeout(2000);   // sayfa yenilenir; hata vermeden açılmalı
   await tarayici.close();
-  return { baslangic, arsivSatirlari, arsivIcerik, silindi, renkSonra, copSonra, renkGeri, copGeri, bosaltSonra, kalanTip, mesajlar, hatalar };
+  return { baslangic, arsivSatirlari, arsivIcerik, silindi, renkSonra, copSonra, renkGeri, copGeri, bosaltSonra, kalanTip, mesajlar, sayim, geriYukleDugmesi, geriYazilan, geriYuklemeToast, hatalar };
 }
 
 if (require.main === module) {

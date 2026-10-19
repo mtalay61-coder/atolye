@@ -1664,6 +1664,7 @@ function AtolyeUygulamasi() {
   // ÜRETİM SİLME AYRI DOSYADA (19 Eylül, 2. madde, 13. tur): `076-uretim-sil.jsx`.
   const uretimSil = useUretimSil({
     uretim, siparisler, stok, cariler, showToast, adimlariYurut, setUretim, setSiparisler, setStok, setCariler, copaAt, stokRezervasyonlari, setStokRezervasyonlari, aktifKullanici,
+    fisDefteriniDonustur,
   });
 
   // Bir satış kalemindeki geçersiz (bağlı kaydı silinmiş) planlama referansını temizler.
@@ -2533,7 +2534,8 @@ function AtolyeUygulamasi() {
       let basarili = false;
       while (denemeSayisi < 2 && !basarili) {
         try {
-          await tabloYaz(key, tablo, deger);
+          // Sıfırlama bilerek her şeyi siler: toplu silme kilidi (040) bu yazma için açık.
+          await tabloYaz(key, tablo, deger, undefined, { topluSilmeIzni: true });
           basarili = true;
         } catch (e) {
           denemeSayisi++;
@@ -4708,6 +4710,7 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "tanimlar"}>
             <TanimlarModule
+              onaylar={onaylar}
               onCariHareketEkle={addCariHareketFromStok}
               onCarilerKaydet={saveCariler}
               fisDefteri={fisDefteri}
@@ -4718,7 +4721,8 @@ function AtolyeUygulamasi() {
               mobilDuzenAktif={mobilDuzen}
               kullanimdakiOlculer={kullanimdakiOlculer}
               onTanimsizOlcuCevir={tanimsizOlcuCevir}
-              onAktifKullaniciGuncelle={setAktifKullanici} onAcilisFisiKes={acilisFisiKes} tanimlar={tanimlar} onSave={(sonraki) => {
+              onAktifKullaniciGuncelle={setAktifKullanici} onAcilisFisiKes={acilisFisiKes}
+              onDefterFisIptal={(nolar) => { (nolar || []).forEach(fisDefterindeIptal); gunlukYaz(`Silinmiş üretimin fişleri defterde iptal işaretlendi: ${(nolar || []).join(", ")}`, "uretim", { fisler: nolar }); }} tanimlar={tanimlar} onSave={(sonraki) => {
                 // TANIMLARDA DÜZENLEME YETKİSİ (v1.569.0): görüntüleme yetkisi olan herkes her şeyi değiştirip silebiliyordu.
                 // Yöneticisiz listede (kurtarma: "Bu hesabı Yönetici yap") kayda izin var.
                 const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");

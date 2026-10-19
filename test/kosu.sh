@@ -8,6 +8,8 @@ cd "$KOK"
 node derle.js
 node paket-test.js
 HATA=0
+node birim-toplu-silme-kilidi.js || HATA=1
+node birim-bulut-sayim.js || HATA=1
 node birim-fisyaz-gerial.js || HATA=1
 node birim-uretim-gider-bag.js || HATA=1
 node birim-personel-mesai.js || HATA=1

@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.711.0";
+const SURUM = "1.712.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Kılavuz ayrıntılı ve ekran görüntülü: 33 konu, her ekran için resim, PDF'te resimler";
+const SURUM_NOTU = "Veri koruması: toplu silme kilidi (bir yazmada tablonun yarısı silinemez), Bakım'da bulut sayımı ve sunucu arşivinden geri yükleme; üretim silinince fişleri defterde iptal";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,14 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.712.0", tarih: "19.10.2026", eklenen: [
+    "Toplu silme kilidi: bir yazmada bir tablodan (üretim, stok hareketi, cari hareketi…) 20 ve üstü kayıt silinecek ve bu eldekinin yarısı ya da fazlasıysa yazma durur, buluta dokunulmaz, günlüğe \"TOPLU SİLME ENGELLENDİ\" düşer ve şerit çıkar. Sıfırlama, çöp boşaltma ve onaylı yedek geri yükleme açık izinle geçer",
+    "Yedek geri yüklemede silinecekler önce sayılır ve yazılır (\"Üretim: 30 kayıt silinecek…\"); kilidi aşan silme için ayrıca onay istenir",
+    "Tanımlar › Bakım › Bulut sayımı (Yönetici): her tablonun bu cihazdaki / buluttaki kayıt sayısı ve son 30 günde sunucu arşivine düşen silinmiş satır sayısı — \"veri gitti mi, cihaz mı eksik okudu?\"",
+    "Sunucu arşivi: tablo seçilince tarihten beri silinen satırların tamamı (en çok 5000) okunur ve \"geri yükle\" ile olduğu gibi buluta geri yazılır (onaylı, günlüğe yazar, sonra sayfa yenilenir)",
+    "Veri denetimi: \"Silinmiş üretimin fişi defterde geçerli duruyor\" bulgusu ve \"Defterde iptal işaretle\" düğmesi (yalnız defteri işaretler, günlüğe yazar)",
+  ], degisen: [], duzeltilen: ["Üretim silinince fiş defterindeki fişleri iptal işaretlenmiyordu — denetim \"Fiş defterinde var, stokta yok\" diye silinen üretimin hareketlerini listeliyordu (10032)"] },
+  { surum: "1.711.1", tarih: "19.10.2026", eklenen: ["Veri denetimi: \"Silinmiş üretimin fişi defterde geçerli duruyor\" bulgusu ve \"Defterde iptal işaretle\" düğmesi (yalnız defteri işaretler, günlüğe yazar)"], degisen: [], duzeltilen: ["Üretim silinince fiş defterindeki fişleri iptal işaretlenmiyordu — denetim \"Fiş defterinde var, stokta yok\" diye silinen üretimin hareketlerini listeliyordu (10032)"] },
   { surum: "1.711.0", tarih: "19.10.2026", eklenen: ["Kılavuz baştan yazıldı: 33 konu (sipariş, planlama, proses planlama, üretim, atölye ekranı, stok, sevkiyat, alış/satış, cari, kasa, çek, fişler; tanımlar, prosesler, kapasite, demirbaş, kullanıcılar, fason/bölüm, cari tipleri, reçete/maliyet, gelir-gider, üretim raporu, finans raporu, güvenlik)", "Her konuda uygulamadan alınmış ekran görüntüsü (kilavuz/ klasörü, sanal firma verisiyle); PDF'te de resimler", "Kılavuzda \"Hepsini aç\" ve konu numaraları"], degisen: [], duzeltilen: [] },
   { surum: "1.710.0", tarih: "19.10.2026", eklenen: ["Tanımlar › Bakım › Üretim adım sırası denetimi: önceki adım teslim etmeden sonraki adıma iş verilmiş üretimleri listeler (salt okunur)"], degisen: [], duzeltilen: [] },
   { surum: "1.709.4", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim listesinde aşama etiketi geri almadan sonra yanlış adımı gösteriyordu (Kesim verilmemişken Kampre) — artık ilk tamamlanmamış adım"] },
