@@ -2488,6 +2488,7 @@ function TanimlarModule({ onCariHareketEkle, onCarilerKaydet, uretim, stokRezerv
     {aktifTanimSekme === "bakim" && (
     <>
       <VeriDenetimiEkrani uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
+    <AdimSirasiDenetimi uretim={uretim} />
     <div style={{ marginTop: 20 }}>
       <DefterOnarimBolumu stok={stok} onOnar={onDefterTopluOnar} />
     </div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.709.2</title>
+<title>Atölye ERP 1.710.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2315,9 +2315,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.709.2";
+const SURUM = "1.710.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Planlanan cari üretim kartında Kime'ye dolu gelir; barkod ekranında kişiye planlanan işler";
+const SURUM_NOTU = "Tanımlar › Bakım: üretim adım sırası denetimi (sırası atlanmış üretimleri bulur)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2347,6 +2347,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.710.0", tarih: "19.10.2026", eklenen: ["Tanımlar › Bakım › Üretim adım sırası denetimi: önceki adım teslim etmeden sonraki adıma iş verilmiş üretimleri listeler (salt okunur)"], degisen: [], duzeltilen: [] },
+    { surum: "1.709.4", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim listesinde aşama etiketi geri almadan sonra yanlış adımı gösteriyordu (Kesim verilmemişken Kampre) — artık ilk tamamlanmamış adım"] },
+    { surum: "1.709.3", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Adım adım kuralı: ara prosesten (ör. Kampre) sonraki adıma, ara prosesten önceki adım (ör. Kesim) teslim edilmeden iş verilebiliyordu — artık önceki asıl adımın teslim ettiği kadar verilir"] },
     { surum: "1.709.2", tarih: "19.10.2026", eklenen: ["Barkod ekranı Alabileceğim işler: kişiye planlanan iş üstte ve \"Size planlandı\"; başkasına planlıysa adıyla not"], degisen: [], duzeltilen: [] },
     { surum: "1.709.1", tarih: "19.10.2026", eklenen: [], degisen: ["Sipariş Planlama: Üret ve Satınalma panelleri de kendi içinde kayan çerçevede"], duzeltilen: [] },
     { surum: "1.709.0", tarih: "19.10.2026", eklenen: ["Üretim kartı: proses sırası gelince \"Planlandı: <cari>\" etiketi ve Kime alanı planlanan cariyle dolu", "Barkod atölye ekranı: kişi girişinde \"Bana planlanan işler\" (sırası gelen / önceki proseste)"], degisen: ["Proses Planlama: plan iş vermez, işi yapacak cariyi ayırır (seçici \"Cari seçilmedi\", İşi ver düğmesi \"Kart\")"], duzeltilen: [] },
@@ -10530,8 +10533,12 @@ function oncekiAdimdanMevcutBedenler(prosesIlerleme, adimIndex, siparisBedenMikt
         // (henüz false olsa bile) TÜM sipariş miktarının aktığı kabul edilir; aksi halde, ara prosesten
         // sonraki gerçek proses, ara proses "az önce otomatik tamamlanacak olsa bile" yanlışlıkla akışsız
         // (sıfır) görünür ve iş verilemez hale gelirdi.
-        (siparisBedenMiktarlari || []).forEach((bm) => { sonuc[bm.beden] = bm.miktar; });
-        return sonuc;
+        //
+        // DÜZELTME (v1.709.3 — kullanıcı: "Kural bozuk, kesim bitmeden Saya bitti!"): ara proses kendisi bekletmez ama
+        // ÖNCESİNDEKİ asıl adımın sınırını da kaldırmamalı. Önceden burada siparişin TAMAMI akmış sayılıyordu: Kesim →
+        // Kampre (ara) → Saya zincirinde Kesim hiç verilmeden Saya'ya 144 çift dağıtılabildi ("adım adım ilerler" kuralı
+        // bozuldu). Artık ara proses şeffaf: sınır, ondan önceki adımdan (o da ara ise bir öncekinden) akan miktar.
+        return oncekiAdimdanMevcutBedenler(prosesIlerleme, adimIndex - 1, siparisBedenMiktarlari);
     }
     // Sonraki prosese yalnızca SAĞLAM çiftler akar. Hurda gitmiştir; tamirdeki çift ise geri
     // döndüğü proseste yeniden akışa girecektir — ikisini de burada akıtmak, olmayan malı bir
@@ -27390,6 +27397,7 @@ function TanimlarModule({ onCariHareketEkle, onCarilerKaydet, uretim, stokRezerv
                 React.createElement(OtomatikYedekBolumu, { sonYedekTarihi: sonYedekTarihi, onSimdiYedekle: onSimdiYedekle, onGeriYukle: onYedektenGeriYukle })))),
         aktifTanimSekme === "bakim" && (React.createElement(React.Fragment, null,
             React.createElement(VeriDenetimiEkrani, { uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, muhasebe: muhasebe, onYetimSiparisBagiCoz: onYetimSiparisBagiCoz, fisDefteri: fisDefteri, stok: stok, cariler: cariler, siparisler: siparisler, tanimlar: tanimlar, onAcilisFisiKes: onAcilisFisiKes }),
+            React.createElement(AdimSirasiDenetimi, { uretim: uretim }),
             React.createElement("div", { style: { marginTop: 20 } },
                 React.createElement(DefterOnarimBolumu, { stok: stok, onOnar: onDefterTopluOnar })),
             React.createElement(VeritabaniSifirlaBolumu, { onVeritabaniSifirla: onVeritabaniSifirla, supabaseBagli: supabaseBagli }))),
@@ -54606,6 +54614,72 @@ function UretimRaporu({ uretim, cariler, tanimlar, onSave, onGoToUretim }) {
                     r.acik.length === 0 && React.createElement("tr", null,
                         React.createElement("td", { colSpan: 4 + prosesSirasi.length, style: { ...td, color: "var(--erp-text-3)" } }, "A\u00E7\u0131k \u00FCretim yok.")))))));
 }
+// ADIM SIRASI DENETİMİ (v1.710.0). v1.709.3'te kapatılan açık: ara prosesten (Kampre) sonraki adıma, ara prosesten
+// önceki adım (Kesim) teslim edilmeden iş verilebiliyordu. O sürede açılmış üretimlerde "önceki adımın teslim ettiğinden
+// fazlası sonraki adıma dağıtılmış" kayıtlar kalmış olabilir. Bu denetim onları BULUR, düzeltmez — düzeltme üretim
+// kartından sondan geriye geri alma ile yapılır (stok/cari/fiş zinciri o yoldan doğru çözülür; otomatik silme kuralı
+// "adım adım silinir" kuralını atlardı).
+// Saf: [{ uretimId, siparisNo, model, renk, proses, onceki, beden, dagitilan, akan }]
+function adimSirasiIhlalleri(uretim) {
+    const l = [];
+    (uretim || []).forEach((o) => {
+        if (o.iptal)
+            return;
+        const pi = o.prosesIlerleme || [];
+        pi.forEach((adim, i) => {
+            if (i === 0 || adim.araProsesMi)
+                return;
+            const akan = oncekiAdimdanMevcutBedenler(pi, i, o.bedenMiktarlari);
+            const dagitilan = {};
+            (adim.atamalar || []).forEach((a) => {
+                if (a.tamirMi)
+                    return; // tamir dönüşü ayrı akış — sınır dışı
+                Object.entries(a.bedenMiktarlari || {}).forEach(([b, m]) => { dagitilan[b] = (dagitilan[b] || 0) + (Number(m) || 0); });
+            });
+            let k = i - 1;
+            while (k > 0 && pi[k].araProsesMi)
+                k--;
+            Object.entries(dagitilan).forEach(([beden, m]) => {
+                if (m > (akan[beden] || 0) + 0.0001) {
+                    l.push({ uretimId: o.id, siparisNo: o.siparisNo, model: o.model, renk: o.renk, proses: adim.proses,
+                        onceki: pi[k] ? pi[k].proses : "", beden, dagitilan: m, akan: akan[beden] || 0 });
+                }
+            });
+        });
+    });
+    return l;
+}
+function AdimSirasiDenetimi({ uretim }) {
+    const [acik, setAcik] = useState(false);
+    const l = acik ? adimSirasiIhlalleri(uretim) : null;
+    return (React.createElement("div", { "data-adim-denetimi": true, style: { marginTop: 20, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 14, background: "var(--erp-panel)" } },
+        React.createElement(TanimBasligi, { ad: "\u00DCretim ad\u0131m s\u0131ras\u0131 denetimi" }),
+        React.createElement("p", { style: { fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" } }, "\u00D6nceki ad\u0131m teslim etmeden sonraki ad\u0131ma i\u015F verilmi\u015F \u00FCretimleri bulur (v1.709.3 \u00F6ncesi ara proses a\u00E7\u0131\u011F\u0131). Yaln\u0131z listeler; d\u00FCzeltmek i\u00E7in \u00FCretim kart\u0131nda sondan geriye geri al\u0131n, sonra s\u0131rayla yeniden verin."),
+        React.createElement("button", { type: "button", className: "btn-ghost", "data-adim-denetle": true, onClick: () => setAcik(true) }, "Denetle"),
+        l && (l.length === 0
+            ? React.createElement("div", { "data-adim-sonuc": "temiz", style: { marginTop: 10, fontSize: 13, color: "var(--erp-ok)", fontWeight: 700 } }, "\u2713 S\u0131ras\u0131 atlanm\u0131\u015F \u00FCretim yok.")
+            : (React.createElement("div", { "data-adim-sonuc": l.length, style: { marginTop: 10, display: "grid", gap: 4 } },
+                React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-warn)" } },
+                    new Set(l.map((x) => x.uretimId)).size,
+                    " \u00FCretimde s\u0131ra atlanm\u0131\u015F:"),
+                l.map((x, i) => (React.createElement("div", { key: i, style: { fontSize: 12 } },
+                    React.createElement("b", { className: "mono" }, x.siparisNo),
+                    " ",
+                    x.model,
+                    " \u00B7 ",
+                    x.renk,
+                    " \u2014 ",
+                    React.createElement("b", null, x.proses),
+                    " ",
+                    x.beden ? `(${x.beden})` : "",
+                    ": ",
+                    x.dagitilan,
+                    " \u00E7ift verilmi\u015F, \u00F6nceki ad\u0131m (",
+                    x.onceki,
+                    ") yaln\u0131z ",
+                    x.akan,
+                    " teslim etmi\u015F"))))))));
+}
 // ================= FATURA PENCERESİ (27 Eylül, v1.500.0 — e-fatura altyapısı, Aşama 2) =================
 //
 // Satış fişinin "İşlemler" menüsünden açılır. Üç iş yapar, hiçbiri dışarıya bağlanmaz:
@@ -56663,7 +56737,11 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
     const kartRef = React.useRef(null);
     const prosesIlerleme = o.prosesIlerleme || [];
     const tamamlandi = prosesIlerleme.length > 0 && prosesIlerleme.every((p) => p.tamamlandiMi);
-    const renkKartCizgi = tamamlandi ? "var(--erp-primary)" : ASAMA_RENK[o.asama] || "var(--erp-text-3)";
+    // GÜNCEL AŞAMA prosesIlerleme'den TÜRETİLİR (v1.709.4 — kullanıcı: "iş kesime verilmedi ama Kampre'de görünüyor").
+    // Saklı `o.asama` teslimde "son teslim edilen", geri almada "geri alınan adım" oluyordu — ikisi de "şu an nerede"
+    // değil. Liste süzgeci (300 mevcutAsama) zaten türetiyordu; etiket de aynı kural: ilk tamamlanmamış adım.
+    const guncelAsama = ((o.prosesIlerleme || []).find((p) => !p.tamamlandiMi) || {}).proses || o.asama;
+    const renkKartCizgi = tamamlandi ? "var(--erp-primary)" : ASAMA_RENK[guncelAsama] || ASAMA_RENK[o.asama] || "var(--erp-text-3)";
     const urun = uretimUrunu(o, stok);
     const urunGorseli = urun ? ((urun.renkResimleri || {})[o.renk] || urun.kapakResmi) : null;
     useEffect(() => {
@@ -56856,7 +56934,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                 React.createElement("b", { className: "mono" },
                     o.adet,
                     " \u00E7ift"),
-                React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: renkKartCizgi } }, tamamlandi ? (o.stogaEklendiMi ? "Tamamlandı · stokta" : "Tamamlandı") : (o.asama || "—")))),
+                React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: renkKartCizgi } }, tamamlandi ? (o.stogaEklendiMi ? "Tamamlandı · stokta" : "Tamamlandı") : (guncelAsama || "—")))),
             acik && React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "flex-start" } },
                 React.createElement(ColorSwatch, { src: urunGorseli, editable: false, size: 40 }),
                 React.createElement("div", null,
@@ -66481,7 +66559,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.709.2)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.710.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
