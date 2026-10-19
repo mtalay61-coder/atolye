@@ -488,7 +488,7 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.712.0";
+const SURUM = "1.712.1";
 const SURUM_TARIHI = "2026-10-19";
 const SURUM_NOTU = "Veri koruması: toplu silme kilidi (bir yazmada tablonun yarısı silinemez), Bakım'da bulut sayımı ve sunucu arşivinden geri yükleme; üretim silinince fişleri defterde iptal";
 
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.712.1", tarih: "19.10.2026", eklenen: [], degisen: ["Bulut sayımı Tanımlar › Bakım sekmesinde (Çöp Kutusu'nun altında kalmıştı)"], duzeltilen: ["Tanımlar'a rezervasyon listesi geçirilmiyordu: Veri denetimi \"Silinmiş üretimin rezervasyonu duruyor\" bulgusunu hiç göremiyor, bulut sayımı rezervasyonu 0 sayıyordu"] },
   { surum: "1.712.0", tarih: "19.10.2026", eklenen: [
     "Toplu silme kilidi: bir yazmada bir tablodan (üretim, stok hareketi, cari hareketi…) 20 ve üstü kayıt silinecek ve bu eldekinin yarısı ya da fazlasıysa yazma durur, buluta dokunulmaz, günlüğe \"TOPLU SİLME ENGELLENDİ\" düşer ve şerit çıkar. Sıfırlama, çöp boşaltma ve onaylı yedek geri yükleme açık izinle geçer",
     "Yedek geri yüklemede silinecekler önce sayılır ve yazılır (\"Üretim: 30 kayıt silinecek…\"); kilidi aşan silme için ayrıca onay istenir",

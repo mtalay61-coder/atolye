@@ -2489,6 +2489,12 @@ function TanimlarModule({ onaylar, onDefterFisIptal, onCariHareketEkle, onCarile
     <>
       <VeriDenetimiEkrani onDefterFisIptal={onDefterFisIptal} uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
     <AdimSirasiDenetimi uretim={uretim} />
+    {/* BULUT SAYIMI (v1.712.0, 078-bulut-sayim; v1.712.1'de Çöp Kutusu'ndan buraya): "veri gitti mi, cihaz mı eksik okudu?" */}
+    {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
+      <div style={{ marginTop: 20, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "4px 18px 14px" }}>
+        <BulutSayimiBolumu cihaz={cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop })} />
+      </div>
+    )}
     <div style={{ marginTop: 20 }}>
       <DefterOnarimBolumu stok={stok} onOnar={onDefterTopluOnar} />
     </div>
@@ -2663,8 +2669,7 @@ function TanimlarModule({ onaylar, onDefterFisIptal, onCariHareketEkle, onCarile
               })}
             </div>
           )}
-          {/* BULUT SAYIMI + ARŞİVDEN GERİ YÜKLEME (v1.712.0, 078-bulut-sayim): "veri gitti mi, cihaz mı eksik okudu?" */}
-          {yonetici && <BulutSayimiBolumu cihaz={cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop })} />}
+          {/* ARŞİVDEN GERİ YÜKLEME (v1.712.0, 078-bulut-sayim); Bulut sayımı Bakım sekmesinde (kullanıcı orada aradı, v1.712.1). */}
           {yonetici && <SunucuArsiviBolumu kullanicilar={tanimlar.kullanicilar} supabaseBagli={supabaseBagli} showToast={showToast} />}
         </div>
       );
