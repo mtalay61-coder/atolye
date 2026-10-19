@@ -960,8 +960,12 @@ function oncekiAdimdanMevcutBedenler(prosesIlerleme, adimIndex, siparisBedenMikt
     // (henüz false olsa bile) TÜM sipariş miktarının aktığı kabul edilir; aksi halde, ara prosesten
     // sonraki gerçek proses, ara proses "az önce otomatik tamamlanacak olsa bile" yanlışlıkla akışsız
     // (sıfır) görünür ve iş verilemez hale gelirdi.
-    (siparisBedenMiktarlari || []).forEach((bm) => { sonuc[bm.beden] = bm.miktar; });
-    return sonuc;
+    //
+    // DÜZELTME (v1.709.3 — kullanıcı: "Kural bozuk, kesim bitmeden Saya bitti!"): ara proses kendisi bekletmez ama
+    // ÖNCESİNDEKİ asıl adımın sınırını da kaldırmamalı. Önceden burada siparişin TAMAMI akmış sayılıyordu: Kesim →
+    // Kampre (ara) → Saya zincirinde Kesim hiç verilmeden Saya'ya 144 çift dağıtılabildi ("adım adım ilerler" kuralı
+    // bozuldu). Artık ara proses şeffaf: sınır, ondan önceki adımdan (o da ara ise bir öncekinden) akan miktar.
+    return oncekiAdimdanMevcutBedenler(prosesIlerleme, adimIndex - 1, siparisBedenMiktarlari);
   }
   // Sonraki prosese yalnızca SAĞLAM çiftler akar. Hurda gitmiştir; tamirdeki çift ise geri
   // döndüğü proseste yeniden akışa girecektir — ikisini de burada akıtmak, olmayan malı bir
