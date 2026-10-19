@@ -444,19 +444,20 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
       </div>
 
       {/* SAĞ: Üret + Satınalma bölümleri, alt alta */}
+      {/* ÜRET / SATINALMA DA KAYAN ÇERÇEVE (v1.709.1 — kullanıcı: "üretim ve satınalmayı da kayar liste yap"). */}
       <div style={{ flex: "1 1 420px", minWidth: 320, display: "grid", gap: 18 }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <div data-uret-cerceve style={{ ...cerceve, maxHeight: "60vh", overflowY: "auto" }}>
+          <div style={{ ...cerceveBaslik, gap: 6 }}>
             <Hammer size={15} color="var(--erp-primary)" />
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-primary)" }}>Üret</span>
             <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({uretimGosterilecek.length})</span>
           </div>
           {uretimGosterilecek.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "6px 0" }}>
+            <div style={{ fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "10px 12px" }}>
               Henüz bir sipariş eklenmedi — soldan "Üret" ile ekleyin.
             </div>
           ) : (
-            <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "grid", gap: 10, padding: 10 }}>
               {uretimGosterilecek.map((secim) => (
                 <SagPanelKart
                   key={satirAnahtari(secim)} secim={secim} cerceveRenk="#8FA888" arkaplan="#F0F5EE" cikarFonk={uretimdenCikar}
@@ -471,18 +472,18 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
           )}
         </div>
 
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+        <div data-satinalma-cerceve style={{ ...cerceve, maxHeight: "60vh", overflowY: "auto" }}>
+          <div style={{ ...cerceveBaslik, gap: 6 }}>
             <PackageCheck size={15} color="var(--erp-info)" />
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-info)" }}>Satınalma</span>
             <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({satinalmaGosterilecek.length})</span>
           </div>
           {satinalmaGosterilecek.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "6px 0" }}>
+            <div style={{ fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "10px 12px" }}>
               Henüz bir sipariş eklenmedi — soldan "Satın Al" ile ekleyin.
             </div>
           ) : (
-            <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "grid", gap: 10, padding: 10 }}>
               {satinalmaGosterilecek.map((secim) => (
                 <SagPanelKart
                   key={satirAnahtari(secim)} secim={secim} cerceveRenk="#9BB0C4" arkaplan="#EAF1F6" cikarFonk={satinalmadanCikar}
