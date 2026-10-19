@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.710.0";
+const SURUM = "1.711.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Tanımlar › Bakım: üretim adım sırası denetimi (sırası atlanmış üretimleri bulur)";
+const SURUM_NOTU = "Kılavuz ayrıntılı ve ekran görüntülü: 33 konu, her ekran için resim, PDF'te resimler";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.711.0", tarih: "19.10.2026", eklenen: ["Kılavuz baştan yazıldı: 33 konu (sipariş, planlama, proses planlama, üretim, atölye ekranı, stok, sevkiyat, alış/satış, cari, kasa, çek, fişler; tanımlar, prosesler, kapasite, demirbaş, kullanıcılar, fason/bölüm, cari tipleri, reçete/maliyet, gelir-gider, üretim raporu, finans raporu, güvenlik)", "Her konuda uygulamadan alınmış ekran görüntüsü (kilavuz/ klasörü, sanal firma verisiyle); PDF'te de resimler", "Kılavuzda \"Hepsini aç\" ve konu numaraları"], degisen: [], duzeltilen: [] },
   { surum: "1.710.0", tarih: "19.10.2026", eklenen: ["Tanımlar › Bakım › Üretim adım sırası denetimi: önceki adım teslim etmeden sonraki adıma iş verilmiş üretimleri listeler (salt okunur)"], degisen: [], duzeltilen: [] },
   { surum: "1.709.4", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim listesinde aşama etiketi geri almadan sonra yanlış adımı gösteriyordu (Kesim verilmemişken Kampre) — artık ilk tamamlanmamış adım"] },
   { surum: "1.709.3", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Adım adım kuralı: ara prosesten (ör. Kampre) sonraki adıma, ara prosesten önceki adım (ör. Kesim) teslim edilmeden iş verilebiliyordu — artık önceki asıl adımın teslim ettiği kadar verilir"] },
