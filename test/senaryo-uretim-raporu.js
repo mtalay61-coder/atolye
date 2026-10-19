@@ -22,7 +22,7 @@ async function calistir() {
   const oku = () => sayfa.evaluate(() => ({
     prosesler: [...document.querySelectorAll("[data-rapor-proses]")].map((e) => `${e.getAttribute("data-rapor-proses")}:${e.querySelector("[data-rapor-gerceklesen]").innerText}`),
     personel: [...document.querySelectorAll("[data-rapor-personel-toplam]")].map((e) => e.innerText),
-    ozet: document.querySelector('[data-rapor-ozet="gerceklesen"]').innerText,
+    ozet: document.querySelector('[data-rapor-ozet="biten"]').innerText,
   }));
   const ilk = await oku();
   await sayfa.evaluate(() => { const i = document.querySelector('[data-proses-hedef="Kesim"]'); i.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(i, "250"); i.dispatchEvent(new Event("input", { bubbles: true })); i.dispatchEvent(new FocusEvent("focusout", { bubbles: true })); });

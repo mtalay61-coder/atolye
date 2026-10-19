@@ -1,0 +1,11 @@
+{
+ "basSayi": 2,
+ "cerceveler": {
+  "bekleyenKayar": "auto",
+  "planlanmis": true
+ },
+ "dustu": true,
+ "hatalar": [],
+ "sonSayi": 1,
+ "yeniUretim": 1
+}

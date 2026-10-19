@@ -54,8 +54,14 @@ function uretimRaporuHesapla(uretim, cariler, tanimlar, donem) {
   const personel = {};    // id → { ad, toplam, gun: {anahtar: n}, prosesler: {ad: n} }
   const P = (p) => (proses[p] = proses[p] || { gerceklesen: 0, hurda: 0, uzerinde: 0, bekleyen: 0 });
   const acik = [];
+  // BİTEN ÜRETİM (v1.707.0 — kullanıcı: "dönemde teslim alınan tüm proseslerin toplamı yanıltıcı; bizim için önemli olan
+  // biten üretim, stoğa giren tamamlanma"): üretimin SON asıl adımında dönem içinde teslim alınan sağlam çift.
+  let biten = 0;
   (uretim || []).forEach((o) => {
     if (o.iptal) return;
+    const asillar = (o.prosesIlerleme || []).filter((a) => !a.araProsesMi);
+    const son = asillar[asillar.length - 1];
+    if (son) (son.atamalar || []).forEach((a) => { if (a.tamamlandiMi && icinde(a.tamamlanmaTarihi)) biten += atamaSaglam(a); });
     const bitti = o.asama === "Tamamlandı";
     const satir = bitti ? null : { id: o.id, siparisNo: o.siparisNo, model: o.model, renk: o.renk, adet: Number(o.adet) || 0, prosesler: {} };
     (o.prosesIlerleme || []).forEach((adim) => {
@@ -95,6 +101,7 @@ function uretimRaporuHesapla(uretim, cariler, tanimlar, donem) {
     ozet: {
       acikUretim: acik.length,
       acikCift: acik.reduce((t, s) => t + s.adet, 0),
+      biten,
       gerceklesen: prosesSatirlari.reduce((t, s) => t + s.gerceklesen, 0),
       uzerinde: prosesSatirlari.reduce((t, s) => t + s.uzerinde, 0),
     },
@@ -143,11 +150,21 @@ function UretimRaporu({ uretim, cariler, tanimlar, onSave, onGoToUretim }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
         {[["Açık üretim", r.ozet.acikUretim, "acik"], ["Açık üretimde çift", r.ozet.acikCift, "acikCift"],
-          ["Dönemde teslim alınan", r.ozet.gerceklesen, "gerceklesen"], ["Şu an personelde", r.ozet.uzerinde, "uzerinde"]].map(([a, v, k]) => (
+          ["Biten üretim (stoğa giren)", r.ozet.biten, "biten"], ["Şu an personelde", r.ozet.uzerinde, "uzerinde"]].map(([a, v, k]) => (
           <div key={k} style={{ ...kart, padding: 10 }}>
             <div style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{a}</div>
             <div data-rapor-ozet={k} style={{ fontSize: 22, fontWeight: 700 }}>{v}</div>
           </div>
+        ))}
+      </div>
+
+      {/* PROSES PROSES BİTEN (kullanıcı: "saya 100 çift, kesim 200 çift bitti gibi"). */}
+      <div data-rapor-proses-biten style={{ ...kart, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontSize: 12, color: "var(--erp-text-3)", marginRight: 4 }}>Dönemde biten (proses proses):</span>
+        {r.prosesler.map((p) => (
+          <span key={p.proses} style={{ padding: "4px 10px", borderRadius: "var(--erp-r-pill)", background: "var(--erp-line-soft)", fontSize: 13 }}>
+            {p.proses} <b>{p.gerceklesen}</b> çift
+          </span>
         ))}
       </div>
 

@@ -25,6 +25,7 @@ bekle("Kesim haftalık: gerçekleşen/hurda/bekleyen/hedef(6 iş günü)/oran", 
 bekle("Saya personelde", r.prosesler.find((x) => x.proses === "Saya").uzerinde, 50);
 bekle("personel gün gün", [r.personel[0].ad, r.personel[0].toplam, r.personel[0].gun["2026-10-20"]], ["Ali", 108, 38]);
 bekle("açık üretimler (biten hariç) ve Kesim ✓", r.acik.map((s) => `${s.siparisNo}:${(s.prosesler.Kesim || {}).tamam}`), ["1:true", "2:false"]);
+bekle("biten üretim = son proseste teslim (u1 Saya bitmedi, u3 Kesim son adım)", r.ozet.biten, 10);
 const gun = uretimRaporuHesapla(uretim, cariler, tanimlar, uretimRaporDonemi("gun", "2026-10-20"));
 bekle("günlük yalnız o gün", gun.prosesler.find((x) => x.proses === "Kesim").gerceklesen, 38);
 console.log(hata ? "── üretim raporu testi HATALI ──" : "── üretim raporu testi temiz ──");
