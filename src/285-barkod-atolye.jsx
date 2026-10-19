@@ -149,6 +149,21 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
     });
   });
 
+  // BANA PLANLANAN İŞLER (v1.709.0 — kullanıcı: "barkod ekranında cari kendi ekranına girdiğinde ona planlanan işleri
+  // görecek"). Planlama › Proses Planlama'da bu kişiye ayrılmış, henüz verilmemiş adımlar; sırası gelmişse "hazır".
+  const planlananlar = [];
+  if (personel) {
+    (uretim || []).forEach((u) => {
+      if (u.iptal || u.asama === "Tamamlandı") return;
+      Object.entries(u.prosesPlani || {}).forEach(([proses, plan]) => {
+        if (!plan || plan.personelId !== personel.id) return;
+        const d = prosesAdimDurumu(u, proses);
+        if (d) planlananlar.push({ uretim: u, proses, hazir: d.hazir, sira: plan.sira || 0 });
+      });
+    });
+    planlananlar.sort((a, b) => (b.hazir - a.hazir) || (a.sira - b.sira));
+  }
+
   // Bu personelin ALABİLECEĞİ işler: bağlı olduğu proseslerde sırası gelmiş ve dağıtılmamış
   // miktarı olan üretimler. Bağlı proses tanımlı değilse hiçbir şey gösterilmiyor — herkesin her
   // işi alabilmesi, atölyede kimin ne yaptığını izlenemez hale getirirdi.
@@ -400,6 +415,24 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
               {g.metin}
             </div>
           ))}
+        </div>
+      )}
+
+      {personel && planlananlar.length > 0 && (
+        <div data-bana-planlanan style={{ background: "#B8860B14", border: "1px solid #B8860B55", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#8A6508", marginBottom: 6 }}>Bana planlanan işler ({planlananlar.length})</div>
+          {planlananlar.map(({ uretim: u, proses, hazir }) => {
+            const urun = (stok || []).find((x) => x.id === u.urunId);
+            return (
+              <div key={`${u.id}-${proses}`} data-planlanan-satir={u.siparisNo} style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: 13, padding: "4px 0", borderTop: "1px solid #B8860B22", opacity: hazir ? 1 : 0.6 }}>
+                <b className="mono">{u.siparisNo}</b>
+                <span>{u.model || (urun && urun.ad) || ""} · {u.renk}</span>
+                <span style={{ fontWeight: 700 }}>{proses}</span>
+                <span>{u.adet} çift</span>
+                <span style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: hazir ? "var(--erp-ok)" : "var(--erp-text-3)" }}>{hazir ? "sırası geldi" : "önceki proseste"}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
