@@ -12,6 +12,7 @@
   "PP-1",
   "PP-2"
  ],
+ "planliCari": true,
  "sonBekleyen": [
   "PP-1"
  ],

@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.708.0";
+const SURUM = "1.709.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Proses planlamada personel ataması: kişi kişi kuyruk, kişinin saatine göre süre ve bitiş";
+const SURUM_NOTU = "Planlanan cari üretim kartında Kime'ye dolu gelir; barkod ekranında kişiye planlanan işler";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.709.0", tarih: "19.10.2026", eklenen: ["Üretim kartı: proses sırası gelince \"Planlandı: <cari>\" etiketi ve Kime alanı planlanan cariyle dolu", "Barkod atölye ekranı: kişi girişinde \"Bana planlanan işler\" (sırası gelen / önceki proseste)"], degisen: ["Proses Planlama: plan iş vermez, işi yapacak cariyi ayırır (seçici \"Cari seçilmedi\", İşi ver düğmesi \"Kart\")"], duzeltilen: [] },
   { surum: "1.708.0", tarih: "19.10.2026", degisen: ["Üretim kartı: tamamlanan prosesin hammaddesi tek matriste (hammadde · renk × beden, çıkan ve beklenen, eksik turuncu)"], eklenen: ["Proses Planlama: planlanan işe personel atanır; her kişinin kuyruğu ayrı birikir, süre kişinin saatlik adedi ve çalışma saatinden (yoksa makine kapasitesinden), başlıkta kişi kişi gün"], degisen: [], duzeltilen: [] },
   { surum: "1.707.0", tarih: "19.10.2026", eklenen: ["Sipariş Planlama: satırları tikleyip \"Seçilenleri üret\" (siparişler için üretim doğrudan açılır) ya da \"Satın almaya gönder\" (Satınalma paneline toplu)"], degisen: ["Bekleyen ve Planlanmış sekmeleri kalktı: Bekleyen kendi içinde kayan çerçevede, Planlanmış altında ikinci çerçeve", "Üretim Raporu: özet kartı artık \"Biten üretim (stoğa giren)\" — son proseste teslim alınan; altında proses proses biten çift"], duzeltilen: [] },
   { surum: "1.706.0", tarih: "18.10.2026", eklenen: ["Üretim › Üretim Raporu: günlük/haftalık/aylık dönem, anlık özet (açık üretim, personelde olan), proses hedef–gerçekleşen–oran–hurda–bekleyen, personelin gün gün teslim aldığı çift, açık üretimlerin proses proses ilerlemesi", "Proses günlük hedefi rapordan girilir; boşsa makine kapasitesinden hesaplanır"], degisen: [], duzeltilen: [] },

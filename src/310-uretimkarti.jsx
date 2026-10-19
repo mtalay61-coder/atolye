@@ -850,7 +850,12 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                   })}
 
                   {kalanMiktar > 0 && (() => {
-                    const secim = seciliPersonel[p.proses] || {};
+                    // PLANLANAN CARİ (v1.709.0 — kullanıcı: "planlama işi vermek değil, o işi yapacak cariyi seçmek; üretim
+                    // kartında o proses geldiğinde bu cariye planlandığı belli olacak"). Planlama › Proses Planlama'da seçilen
+                    // kişi Kime'ye önceden dolu gelir; kullanıcı değiştirebilir (değiştirdiği an kendi seçimi geçerli).
+                    const planliId = (((o.prosesPlani || {})[p.proses]) || {}).personelId || "";
+                    const secimHam = seciliPersonel[p.proses] || {};
+                    const secim = { ...secimHam, personelId: secimHam.personelId !== undefined ? secimHam.personelId : planliId };
                     const bedenGirisleri = secim.bedenMiktarlar || {};
                     const kalanBedenler = bedenDurumu.filter((bd) => bd.kalan > 0);
                     const bedenSecenekleri = kalanBedenler.map((bd) => bd.beden);
@@ -868,7 +873,9 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                     // kimse bu prosese bağlı değilse (henüz tanımlanmamışsa) tüm personel gösterilir —
                     // böylece sistem hiçbir zaman kilitlenip iş dağıtımını engellemez.
                     const bagliPersonel = personelListesi.filter((per) => (per.bagliProsesler || []).includes(p.proses));
-                    const secilebilirPersonel = bagliPersonel.length > 0 ? bagliPersonel : personelListesi;
+                    const secilebilirPersonel0 = bagliPersonel.length > 0 ? bagliPersonel : personelListesi;
+                    const planliKisi = planliId ? personelListesi.find((per) => per.id === planliId) : null;
+                    const secilebilirPersonel = planliKisi && !secilebilirPersonel0.includes(planliKisi) ? [planliKisi, ...secilebilirPersonel0] : secilebilirPersonel0;
                     // Bu proseste, ÖNCEKİ adımdan henüz akmış (kısmen dahi olsa teslim alınmış) ama bu
                     // adıma henüz dağıtılmamış bir miktar yoksa, kalanBedenler boş çıkar — bu, bedenlerin
                     // "kaldırıldığı" anlamına gelmez, sadece şu an dağıtılacak yeni birim olmadığı
@@ -921,6 +928,11 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                               DOM sırası aynı (hammadde tablosu arada), görsel sıra `order` ile — seçim ve onay yan yana. */}
                           {personelListesi.length > 0 ? (
                             <span style={{ order: 2, marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10 }}>
+                              {planliKisi && (
+                                <span data-planli-cari={planliKisi.unvan} style={{ fontSize: 12, fontWeight: 700, color: "#B8860B", background: "#B8860B1A", padding: "3px 10px", borderRadius: "var(--erp-r-pill)" }}>
+                                  Planlandı: {planliKisi.unvan}
+                                </span>
+                              )}
                               <span style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)" }}>Kime:</span>
                               <select
                                 value={secim.personelId || ""}

@@ -183,7 +183,7 @@ function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, cariler, onUretimKaydet
             {!hazir && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>önceki proseste</span>}
             <select data-plan-personel value={personelId || ""} onChange={(e) => degistir("personel", [o.id], e.target.value)}
               style={{ ...inputStyle, width: 160, padding: "3px 6px", fontSize: 12 }}>
-              <option value="">Personel atanmadı</option>
+              <option value="">Cari seçilmedi</option>
               {personelSecenek.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
             </select>
             <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--erp-text-2)" }} title={yuk.kaynak === "personel" ? "Kişinin saatlik adedi ve çalışma saatinden" : "Makine/kalıp kapasitesinden"}>
@@ -193,7 +193,7 @@ function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, cariler, onUretimKaydet
             <button type="button" className="btn-ghost" title="Yukarı" disabled={i === 0} onClick={() => degistir("kaydir", [o.id], -1)}><ChevronUp size={14} /></button>
             <button type="button" className="btn-ghost" title="Aşağı" disabled={i === takvim.length - 1} onClick={() => degistir("kaydir", [o.id], 1)}><ChevronDown size={14} /></button>
             <button type="button" className="btn-ghost" data-plan-cikar title="Plandan çıkar" onClick={() => degistir("cikar", [o.id])}><X size={14} /></button>
-            {onGoToUretim && <button type="button" className="btn-ghost" onClick={() => onGoToUretim(o.id)}>İşi ver</button>}
+            {onGoToUretim && <button type="button" className="btn-ghost" onClick={() => onGoToUretim(o.id)} title="Üretim kartını aç">Kart</button>}
           </div>
         ))}
       </div>

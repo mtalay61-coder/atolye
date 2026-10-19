@@ -36,10 +36,21 @@ async function calistir() {
   const kayit = ((await depoOku(sayfa, "uretim:siparisler")) || []).map((o) => `${o.siparisNo}:${((o.prosesPlani || {}).Saya || {}).sira || "-"}`);
   await sayfa.locator('[data-planlanan-is="PP-1"] [data-plan-cikar]').first().click();
   await sayfa.waitForTimeout(1000);
+  // CARİ PLANLAMA (v1.708–709): PP-2'ye ilk personeli seç → üretimde prosesPlani.Saya.personelId.
+  const cariSecildi = await sayfa.evaluate(() => {
+    const sel = document.querySelector('[data-planlanan-is="PP-2"] [data-plan-personel]');
+    if (!sel || sel.options.length < 2) return false;
+    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set.call(sel, sel.options[1].value);
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  });
+  await sayfa.waitForTimeout(1000);
+  const pp2 = ((await depoOku(sayfa, "uretim:siparisler")) || []).find((o) => o.id === "pp2") || {};
+  const planliCari = cariSecildi ? !!(((pp2.prosesPlani || {}).Saya || {}).personelId) : "personel yok";
   const sonBekleyen = await liste("[data-bekleyen-is]");
   const sonPlanlanan = await liste("[data-planlanan-is]");
   await tarayici.close();
-  return { hatalar, bas, planlanan, kayit, sonBekleyen, sonPlanlanan };
+  return { hatalar, bas, planlanan, kayit, planliCari, sonBekleyen, sonPlanlanan };
 }
 if (require.main === module) calistir().then((s) => console.log(normalles(s)));
 module.exports = { calistir };
