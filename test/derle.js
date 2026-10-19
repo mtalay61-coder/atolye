@@ -17,7 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
-  "gecerliRezervasyonlar", "rezervasyonFarkiniUygula", "topluSilmeEngeliMi", "topluSilmeEngeliBul", "TOPLU_SILME_ESIGI", "yedekSilinecekleri", "cihazSayimlari", "sayimKarsilastir", "contentRangeSayisi", "arsivSatirlariniHazirla", "arsivGeriYuklemeSirasi", "arsivCakismaSutunlari",   // toplu silme kilidi (v1.712.0)
+  "gecerliRezervasyonlar", "rezervasyonFarkiniUygula", "yazmaDogrulamaEksikleri", "topluSilmeEngeliMi", "topluSilmeEngeliBul", "TOPLU_SILME_ESIGI", "yedekSilinecekleri", "cihazSayimlari", "sayimKarsilastir", "contentRangeSayisi", "arsivSatirlariniHazirla", "arsivGeriYuklemeSirasi", "arsivCakismaSutunlari",   // toplu silme kilidi (v1.712.0)
   "adimSirasiIhlalleri", "oncekiAdimdanMevcutBedenler", "uretimRaporDonemi", "uretimRaporuHesapla", "prosesGunlukHedef", "amortismanAraligi", "donemAmortismani", "urunDemirbasPayi", "prosesKuyrugu", "prosesPlanTakvimi", "prosesPlaniniDegistir", "isGunuEkle", "prosesKapasitesi", "isYukuHesapla", "elemanGunlukSaat", "iscilikFisProsesi", "mesaiHesapla", "iscilikBolumu", "maasHareketiMi", "personelKaydiniYaz", "satisAlisKartHareketleri", "stokKartHareketleri", "prosesGiderKartlariniTamamla", "iscilikGiderKarti", "kartUretimHareketleri", "karsiliksizUretimFisleri", "karZararHesapla",   // üretim → gider kartı (v1.692)
   "firmaKoduNormal", "firmaAnahtariSorunu", "firmaAdresiGecerli", "firmaBaglantisiGecerli", "firmaRefi", "firmaDegisimEngeli", "firmaSeciminiDegistir",   // çoklu firma (v1.642.0)
   "kurulumTanimlariniUygula", "kurulumSihirbaziGerekli", "kurulumListesi",   // kurulum sihirbazı (v1.644.0)

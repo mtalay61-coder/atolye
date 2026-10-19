@@ -319,7 +319,48 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
   }
   // Hepsi gitti: defterdeki önceki bekleyenler de bu yazmayla gönderildi (tabanda yoklardı).
   bekleyenKayitTemizle(tablo);
+  // YAZMA SONRASI DOĞRULAMA (v1.714.0, aşağıda): "yazdım" demekle "bulutta öyle duruyor" aynı şey değil.
+  await yazmayiDogrula(tablo, sema, _sayim, cocukFarklari);
   return _sayim;
+}
+
+// =============================================================================================
+// YAZMA SONRASI DOĞRULAMA (v1.714.0 — kullanıcı: "Veri buluta giderken hâlâ korkularım var", seçtiği madde: 2)
+//
+// Yazma katmanı her isteğin HTTP cevabına bakıyor; ama "istek 2xx döndü" ile "tablo bizim elimizdeki hâlde" arasında
+// boşluk var: sessiz bir RLS reddi (0 satır etkilenir, 2xx döner), yarıda kalmış parça, başka cihazın aynı anda sildiği
+// satırlar. Artık kritik tablolarda yazma bitince tablonun BULUTTAKİ SATIR SAYISI geri okunur (HEAD + count=exact, 078
+// `supabaseSatirSayisi`; satır inmez, tek başlık) ve elimizdeki sayıyla (fark belleği `_sonHal`, az önce yazılan hâl)
+// karşılaştırılır. Yalnız BULUTTA EKSİK varsa alarm: bulutta fazla olması normaldir (başka cihaz eklemiş, biz henüz
+// tazelemedik); eksik olması ise ya bizim yazmamızın yere inmediği ya da birinin sildiği anlamına gelir — ikisi de
+// kullanıcının BİLMESİ gereken şey. Alarm yazmayı geri almaz (geri alınacak bir şey yok), günlüğe "YAZMA DOĞRULAMA" düşer
+// ve üstte kırmızı şerit çıkar (100 `__yazmaDogrulamaBildir`); kullanıcı Bakım › Bulut sayımı'ndan ayrıntıya gider.
+// Yalnız değişiklik olan yazmalarda ve yalnız kritik tablolarda (iş verisi; onaylar/çöp/çek görseli değil). Doğrulama
+// okunamazsa (ağ) sessiz geçilir: yazma zaten tamamlandı. Köprü (`window.__yazmaDogrulamaBildir`) yoksa — birim testleri,
+// sunucu — hiç çalışmaz. Kuyruğun İÇİNDE beklenir: aynı tablonun sıradaki yazması sayıyı değiştirmeden ölçülsün.
+const DOGRULANAN_TABLOLAR = new Set(["urunler", "cariler", "siparisler", "uretim", "stok_rezervasyonlari"]);
+// Saf: beklenen/bulut çiftlerinden eksik olanları döner. `bulut == null` (okunamadı) atlanır.
+function yazmaDogrulamaEksikleri(olcumler) {
+  return (olcumler || []).filter((o) => o && o.bulut != null && Number(o.bulut) < Number(o.beklenen))
+    .map((o) => ({ tablo: o.tablo, beklenen: Number(o.beklenen), bulut: Number(o.bulut), eksik: Number(o.beklenen) - Number(o.bulut) }));
+}
+async function yazmayiDogrula(tablo, sema, sayim, cocukFarklari) {
+  if (typeof window === "undefined" || typeof window.__yazmaDogrulamaBildir !== "function") return;
+  if (!DOGRULANAN_TABLOLAR.has(tablo) || typeof supabaseSatirSayisi !== "function") return;
+  const anaDegisti = sayim && (sayim.eklenen || sayim.guncellenen || sayim.silinen);
+  const cocukDegisti = (cocukFarklari || []).some(({ cFark }) => cFark && (cFark.eklenen.length || cFark.guncellenen.length || cFark.silinen.length));
+  if (!anaDegisti && !cocukDegisti) return;
+  const hedefler = [{ tablo, bellek: tablo }, ...((sema && sema.cocuklar) || []).map((c) => ({ tablo: c.tablo, bellek: `${tablo}::${c.tablo}` }))];
+  const olcumler = await Promise.all(hedefler.map(async (h) => {
+    const beklenen = _sonHal[h.bellek] ? _sonHal[h.bellek].size : 0;
+    let bulut = null;
+    try { bulut = await supabaseSatirSayisi(h.tablo); } catch (e) { /* okunamadı: sessiz */ }
+    return { tablo: h.tablo, beklenen, bulut };
+  }));
+  const eksikler = yazmaDogrulamaEksikleri(olcumler);
+  if (eksikler.length === 0) return;
+  gunlukYaz(`YAZMA DOĞRULAMA: ${eksikler.map((e) => `${e.tablo} bulutta ${e.eksik} eksik (elde ${e.beklenen}, bulut ${e.bulut})`).join("; ")}`, "guvenlik", { anaTablo: tablo, eksikler });
+  try { window.__yazmaDogrulamaBildir(tablo, eksikler); } catch (e) { /* köprü hatası yazmayı etkilemesin */ }
 }
 
 // Dizi tabanlı tablolar için tek giriş noktası.
