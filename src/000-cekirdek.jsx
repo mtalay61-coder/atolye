@@ -10,7 +10,7 @@ import {
   Footprints, PackageOpen, Sparkles, Wrench, Armchair, Shirt, Brush, Ruler, Flame, Droplet, Zap, Paintbrush,
   ScrollText, Lock, Camera, BookOpen,
   // Rapor sekmesi (245-rapor): kurucu, dışa aktarma, kapsam rozetleri.
-  Settings, Download, User,
+  Settings, Download, User, Database,
   MessageCircle, Mail, LogOut, Menu,
   // Sipariş formu "Ekle" düğmesi (v1.470.0).
   PackagePlus,

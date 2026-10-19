@@ -176,7 +176,8 @@ const copuBosalt = useCallback(async () => {
   let soz = null;
   setCop((prev) => {
     const next = prev.filter((k) => !ids.has(k.id));
-    soz = yazimiIzle(tabloYaz("cop:data", "cop", next), "Çöp kutusu", next);
+    // Çöp boşaltma bilerek çok kayıt siler: toplu silme kilidi (040) bu yazma için açık.
+    soz = yazimiIzle(tabloYaz("cop:data", "cop", next, undefined, { topluSilmeIzni: true }), "Çöp kutusu", next);
     return next;
   });
   const sonuc = soz ? await soz : { ok: true };

@@ -1,4 +1,4 @@
-function TanimlarModule({ onCariHareketEkle, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ onaylar, onDefterFisIptal, onCariHareketEkle, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
   // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
   // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
   // yazmalar bu ref'ten okur.
@@ -2487,7 +2487,7 @@ function TanimlarModule({ onCariHareketEkle, onCarilerKaydet, uretim, stokRezerv
 
     {aktifTanimSekme === "bakim" && (
     <>
-      <VeriDenetimiEkrani uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
+      <VeriDenetimiEkrani onDefterFisIptal={onDefterFisIptal} uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
     <AdimSirasiDenetimi uretim={uretim} />
     <div style={{ marginTop: 20 }}>
       <DefterOnarimBolumu stok={stok} onOnar={onDefterTopluOnar} />
@@ -2663,7 +2663,9 @@ function TanimlarModule({ onCariHareketEkle, onCarilerKaydet, uretim, stokRezerv
               })}
             </div>
           )}
-          {yonetici && <SunucuArsiviBolumu kullanicilar={tanimlar.kullanicilar} supabaseBagli={supabaseBagli} />}
+          {/* BULUT SAYIMI + ARŞİVDEN GERİ YÜKLEME (v1.712.0, 078-bulut-sayim): "veri gitti mi, cihaz mı eksik okudu?" */}
+          {yonetici && <BulutSayimiBolumu cihaz={cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop })} />}
+          {yonetici && <SunucuArsiviBolumu kullanicilar={tanimlar.kullanicilar} supabaseBagli={supabaseBagli} showToast={showToast} />}
         </div>
       );
     })()}
@@ -2674,17 +2676,28 @@ function TanimlarModule({ onCariHareketEkle, onCarilerKaydet, uretim, stokRezerv
 // SUNUCU ARŞİVİ GÖRÜNÜMÜ (v1.549.0) — yalnız Yönetici. `silinen_arsiv` tablosunu (silinen-arsiv.sql) OKUR;
 // yazma/silme düğmesi bilerek yok: tablo uygulamaya zaten kapalı, arayüz de öyle görünmeli. İstek elle
 // (düğmeyle) atılır — her Tanımlar açılışında buluttan 200 satır çekmek gereksiz.
-function SunucuArsiviBolumu({ kullanicilar, supabaseBagli }) {
+// GERİ YÜKLEME (v1.712.0, 078-bulut-sayim): tablo seçiliyse o tablonun seçilen tarihten beri silinen satırlarının TAMAMI
+// (sayfalı, en çok 5000) okunur ve "geri yükle" ile olduğu gibi tabloya yazılır. Tablo seçili değilse eski davranış:
+// son 200 satır, yalnız bakılır. Üst tablo (üretim) alt tablodan (iş ataması) ÖNCE yüklenmeli; bölüm bunu yazar.
+function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
   const [satirlar, setSatirlar] = useState(null);
   const [durum, setDurum] = useState("");
   const [acikId, setAcikId] = useState(null);
   const [tablo, setTablo] = useState("");
+  const [baslangic, setBaslangic] = useState(() => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+  const [geriYukleniyor, setGeriYukleniyor] = useState(false);
   const yukle = async () => {
     if (!supabaseAcikMi()) { setDurum("Bulut bağlı değil — arşiv yalnız bulutta tutulur."); return; }
     setDurum("Yükleniyor…");
     try {
-      const filtre = tablo ? `&tablo=eq.${encodeURIComponent(tablo)}` : "";
-      const r = await supabaseIstek(`silinen_arsiv?select=id,tablo,islem,satir_id,veri,silen_eposta,zaman&order=zaman.desc&limit=200${filtre}`);
+      const secim = "select=id,tablo,islem,satir_id,veri,silen_eposta,zaman&order=zaman.desc";
+      let r;
+      if (tablo) {
+        const tarih = /^\d{4}-\d{2}-\d{2}$/.test(baslangic) ? `&zaman=gte.${encodeURIComponent(`${baslangic}T00:00:00Z`)}` : "";
+        r = await supabaseTumSatirlar("silinen_arsiv", `${secim}&tablo=eq.${encodeURIComponent(tablo)}${tarih}&limit=5000`);
+      } else {
+        r = await supabaseIstek(`silinen_arsiv?${secim}&limit=200`);
+      }
       setSatirlar(Array.isArray(r) ? r : []);
       setDurum("");
     } catch (e) {
@@ -2707,11 +2720,50 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli }) {
           <option value="">Tüm tablolar</option>
           {Object.entries(ARSIV_TABLO_ADLARI).map(([t, ad]) => <option key={t} value={t}>{ad}</option>)}
         </select>
+        {tablo && (
+          <input type="date" value={baslangic} onChange={(e) => setBaslangic(e.target.value)} title="Bu tarihten beri silinenler"
+            data-arsiv-baslangic="1" style={{ ...inputStyle, width: 140, fontSize: 12 }} />
+        )}
         <button type="button" className="btn-ghost" data-arsiv-yukle="1" style={{ padding: "5px 10px", fontSize: 11 }} onClick={yukle} disabled={!supabaseBagli && !supabaseAcikMi()}>
           <RefreshCw size={12} /> {satirlar ? "Yenile" : "Arşivi getir"}
         </button>
       </div>
       {durum && <div className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>{durum}</div>}
+      {tablo && satirlar && satirlar.length > 0 && (() => {
+        const hazir = arsivSatirlariniHazirla(tablo, satirlar);
+        const geriYukle = async () => {
+          if (geriYukleniyor || hazir.length === 0) return;
+          // Seçim bekleme öncesinde sabitlenir: kullanıcı yazma sürerken listeyi değiştirse de günlük/ileti doğru tabloyu yazar.
+          const secilenTablo = tablo;
+          const secilenBaslangic = baslangic;
+          const onay = window.confirm(`${ARSIV_TABLO_ADLARI[secilenTablo] || secilenTablo}: arşivdeki ${hazir.length} silinmiş satır buluta OLDUĞU GİBİ geri yazılacak.\n\n`
+            + `Üst tablo önce yüklenmeli (ürün → hareket/varyant, cari → cari hareketi, sipariş → kalem, üretim → iş ataması). `
+            + `Bitince sayfa yenilenir. Devam?`);
+          if (!onay) return;
+          setGeriYukleniyor(true);
+          try {
+            const n = await arsivSatirlariniGeriYukle(secilenTablo, hazir);
+            gunlukYaz(`Sunucu arşivinden geri yüklendi: ${ARSIV_TABLO_ADLARI[secilenTablo] || secilenTablo} ${n} satır`, "guvenlik", { tablo: secilenTablo, satir: n, baslangic: secilenBaslangic });
+            if (showToast) showToast(`${n} satır geri yazıldı — sayfa yenileniyor`);
+            // EKRANDAKİ HÂL BAYAT: geri gelen satırlar ekranda yok; bu hâlle yazılan ilk kayıt onları yine siler (toplu
+            // silme kilidi tutar ama tek tek silmeleri tutmaz). Yenilemeden devam edilmez.
+            setTimeout(() => window.location.reload(), 1500);
+          } catch (e) {
+            setDurum(`Geri yükleme başarısız: ${String((e && e.message) || e).slice(0, 220)}`);
+            setGeriYukleniyor(false);
+          }
+        };
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8, padding: "8px 10px", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-sm)" }}>
+            <span style={{ fontSize: 11, flex: 1, minWidth: 220 }}>
+              <b>{hazir.length}</b> silinmiş {ARSIV_TABLO_ADLARI[tablo] || tablo} satırı ({baslangic} tarihinden beri; aynı kayıt birden çok silindiyse en yenisi).
+            </span>
+            <button type="button" className="btn-primary" data-arsiv-geri-yukle="1" disabled={geriYukleniyor || hazir.length === 0} style={{ padding: "5px 12px", fontSize: 11 }} onClick={geriYukle}>
+              {geriYukleniyor ? "Yazılıyor…" : `Bu ${hazir.length} satırı geri yükle`}
+            </button>
+          </div>
+        );
+      })()}
       {satirlar && satirlar.length === 0 && !durum && <EmptyState text="Arşivde kayıt yok." />}
       {satirlar && satirlar.length > 0 && (
         <div style={{ display: "grid", gap: 4 }}>

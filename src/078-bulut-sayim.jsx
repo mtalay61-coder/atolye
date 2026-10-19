@@ -1,0 +1,219 @@
+// =============================================================================================
+// BULUT SAYIMI + SUNUCU ARŞİVİNDEN GERİ YÜKLEME (v1.712.0)
+//
+// Kullanıcı (19 Ekim): "Üretim fişleri silindi, talep de görünüyor 10033 nolu üretime ait, çok sıkı kontrol
+// etmemiz gerekiyor, bu çok önemli. Bunun yüzünden hâlâ kullanmaya başlamadım!" Ekranda üretim listesi boş, stok
+// hareketleri 0, varyant miktarları 0 — ama rezervasyon hâlâ 10033'ü gösteriyordu. İlk soru "veri bulutta gerçekten
+// silindi mi, yoksa bu cihaz mı eksik okudu?" idi ve uygulamada bunu söyleyen tek bir ekran yoktu.
+//
+// Üç parça:
+//   1. `supabaseSatirSayisi`: tabloyu İNDİRMEDEN satır sayısı (HEAD + `Prefer: count=exact`, Content-Range'den okunur).
+//   2. `cihazSayimlari` / `sayimKarsilastir` (saf): ekrandaki sayılar ile bulut sayıları yan yana, arşivdeki (son 30
+//      gün silinen) sayıyla birlikte. "Bulutta var, cihazda yok" → cihaz bayat (sayfayı yenile); "cihazda var, bulutta
+//      yok" → bulutta silinmiş; "arşivde var" → geri yüklenebilir.
+//   3. `arsivSatirlariniGeriYukle`: sunucu arşivindeki (silinen-arsiv.sql, `to_jsonb(OLD)`) satırlar olduğu gibi tabloya
+//      geri yazılır (upsert). Satır bütün sütunlarıyla saklandığı için fiş numarası, sürüm, ek alanlar aynen döner.
+//      Üst tablo önce (üretim → iş ataması, ürün → hareket): alt satır üstü olmadan yazılamaz (FK).
+// Bulut sayımı ve geri yükleme yalnız Yönetici'ye açık (Tanımlar › Bakım). Geri yükleme kullanıcı onayıyla ve günlüğe
+// yazarak yapılır; sonra sayfa yenilenir — ekrandaki (eksik) hâlle yazmaya devam etmek, geri geleni yine silebilirdi.
+// =============================================================================================
+
+// Sayım tabloları ve sıralama: üst tablolar önce (geri yükleme sırası da bu).
+const SAYIM_TABLOLARI = [
+  "urunler", "varyantlar", "stok_hareketleri", "cariler", "cari_hareketleri", "siparisler", "siparis_kalemleri",
+  "uretim", "uretim_atamalari", "stok_rezervasyonlari", "onaylar", "cop",
+];
+const ARSIV_GERI_YUKLEME_SIRASI = [
+  "urunler", "cariler", "siparisler", "uretim",
+  "varyantlar", "stok_hareketleri", "cari_hareketleri", "siparis_kalemleri", "uretim_atamalari",
+  "stok_rezervasyonlari", "onaylar", "cop",
+];
+
+// Ekrandaki (bu cihaz) kayıt sayıları — saf.
+function cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop } = {}) {
+  const topla = (liste, cikar) => (liste || []).reduce((t, k) => t + (k ? cikar(k).length : 0), 0);
+  return {
+    urunler: (stok || []).length,
+    varyantlar: topla(stok, (u) => u.variants || []),
+    stok_hareketleri: topla(stok, (u) => u.hareketler || []),
+    cariler: (cariler || []).length,
+    cari_hareketleri: topla(cariler, (c) => c.hareketler || []),
+    siparisler: (siparisler || []).length,
+    siparis_kalemleri: topla(siparisler, (s) => s.kalemler || []),
+    uretim: (uretim || []).length,
+    uretim_atamalari: topla(uretim, (u) => (u.prosesIlerleme || []).flatMap((p) => (p && p.atamalar) || [])),
+    stok_rezervasyonlari: (stokRezervasyonlari || []).length,
+    onaylar: (onaylar || []).length,
+    cop: (cop || []).length,
+  };
+}
+
+// Cihaz / bulut / arşiv sayılarını satırlara çevirir — saf. `bulut[t]` sayı ya da null (okunamadı).
+function sayimKarsilastir(cihaz, bulut, arsiv30) {
+  return SAYIM_TABLOLARI.map((tablo) => {
+    const c = Number((cihaz || {})[tablo]) || 0;
+    const bHam = (bulut || {})[tablo];
+    const b = bHam == null ? null : Number(bHam) || 0;
+    const a = Number((arsiv30 || {})[tablo]) || 0;
+    let durum = "okunamadı";
+    if (b != null) {
+      if (b === c) durum = "aynı";
+      else if (b > c) durum = `bulutta ${b - c} fazla — bu cihaz eksik/bayat, sayfayı yenileyin`;
+      else durum = `cihazda ${c - b} fazla — bulutta silinmiş olabilir${a > 0 ? ` (arşivde ${a} silinmiş satır var)` : ""}`;
+    }
+    return { tablo, ad: ARSIV_TABLO_ADLARI[tablo] || tablo, cihaz: c, bulut: b, arsiv30: a, durum };
+  });
+}
+
+// Content-Range: "0-0/1234" ya da "*/0". Sayı sondaki parça.
+function contentRangeSayisi(deger) {
+  const m = String(deger || "").match(/\/(\d+)\s*$/);
+  return m ? Number(m[1]) : null;
+}
+
+// Tabloyu indirmeden satır sayısı. HEAD + count=exact; Range 0-0 ile tek satırlık pencere.
+async function supabaseSatirSayisi(tablo, sorgu = "select=id") {
+  const yanit = await fetch(`${SUPABASE_URL}/rest/v1/${tablo}?${sorgu}`, {
+    method: "HEAD",
+    headers: { ...(await yetkiBasliklari()), Prefer: "count=exact", Range: "0-0" },
+  });
+  if (!yanit.ok && yanit.status !== 206) throw new Error(`${tablo}: HTTP ${yanit.status}`);
+  const n = contentRangeSayisi(yanit.headers.get("content-range"));
+  if (n == null) throw new Error(`${tablo}: sayı okunamadı`);
+  return n;
+}
+
+// Bütün sayım tablolarının bulut ve arşiv (son 30 gün, DELETE) sayıları. Okunamayan tablo null.
+async function bulutSayimiAl(gunOnce = 30) {
+  const esik = new Date(Date.now() - gunOnce * 24 * 60 * 60 * 1000).toISOString();
+  const bulut = {};
+  const arsiv30 = {};
+  const hatalar = [];
+  await Promise.all(SAYIM_TABLOLARI.map(async (tablo) => {
+    try { bulut[tablo] = await supabaseSatirSayisi(tablo); }
+    catch (e) { bulut[tablo] = null; hatalar.push(`${tablo}: ${String((e && e.message) || e).slice(0, 80)}`); }
+    try {
+      arsiv30[tablo] = await supabaseSatirSayisi("silinen_arsiv",
+        `select=id&islem=eq.DELETE&tablo=eq.${encodeURIComponent(tablo)}&zaman=gte.${encodeURIComponent(esik)}`);
+    } catch (e) { arsiv30[tablo] = null; }
+  }));
+  return { bulut, arsiv30, hatalar };
+}
+
+// Arşiv satırlarını geri yüklemeye hazırlar — saf. Yalnız DELETE satırları; aynı kayıt birden çok kez silinmişse en
+// yenisi (liste zaman sırasına göre yeniden eskiye verilir); varyant gibi kimliksiz tabloda anahtar sütun değerleri.
+function arsivSatirlariniHazirla(tablo, satirlar) {
+  const anahtarSutunlari = arsivCakismaSutunlari(tablo);
+  const anahtar = (veri) => (anahtarSutunlari
+    ? anahtarSutunlari.map((s) => String(veri[s] == null ? "" : veri[s])).join("|")
+    : String(veri.id == null ? "" : veri.id));
+  const gorulen = new Set();
+  const sonuc = [];
+  (satirlar || []).forEach((a) => {
+    if (!a || a.islem !== "DELETE" || a.tablo !== tablo || !a.veri || typeof a.veri !== "object") return;
+    const k = anahtar(a.veri);
+    if (!k || gorulen.has(k)) return;
+    gorulen.add(k);
+    sonuc.push(a.veri);
+  });
+  return sonuc;
+}
+// Bileşik anahtarlı alt tablo (varyantlar: urun_id+renk+beden) şemadan okunur; `id`li tablolarda null.
+function arsivCakismaSutunlari(tablo) {
+  for (const sema of Object.values(TABLO_SEMA || {})) {
+    for (const cocuk of (sema && sema.cocuklar) || []) {
+      if (cocuk.tablo === tablo && cocuk.cakisma) return cocuk.cakisma.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+  }
+  return null;
+}
+// Geri yükleme sırası: üst tablolar önce — saf.
+function arsivGeriYuklemeSirasi(tablolar) {
+  const sira = new Map(ARSIV_GERI_YUKLEME_SIRASI.map((t, i) => [t, i]));
+  return [...new Set(tablolar || [])].sort((a, b) => (sira.has(a) ? sira.get(a) : 99) - (sira.has(b) ? sira.get(b) : 99));
+}
+
+// Hazırlanmış satırları tabloya geri yazar (100'lük parçalar, upsert). Döner: yazılan satır sayısı.
+async function arsivSatirlariniGeriYukle(tablo, satirlar) {
+  const cakisma = arsivCakismaSutunlari(tablo);
+  const yol = cakisma ? `${tablo}?on_conflict=${cakisma.join(",")}` : tablo;
+  let yazilan = 0;
+  for (let i = 0; i < satirlar.length; i += 100) {
+    const parca = satirlar.slice(i, i + 100);
+    await supabaseIstek(yol, {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(satirlariEsitle(parca)),
+    });
+    yazilan += parca.length;
+  }
+  return yazilan;
+}
+
+// ---------------------------------------------------------------------------------------------
+// BULUT SAYIMI BÖLÜMÜ (Tanımlar › Bakım, yalnız Yönetici)
+function BulutSayimiBolumu({ cihaz }) {
+  const [satirlar, setSatirlar] = useState(null);
+  const [durum, setDurum] = useState("");
+  const yukle = async () => {
+    if (!supabaseAcikMi()) { setDurum("Bulut bağlı değil."); return; }
+    setDurum("Sayılıyor…");
+    try {
+      const { bulut, arsiv30, hatalar } = await bulutSayimiAl(30);
+      setSatirlar(sayimKarsilastir(cihaz, bulut, arsiv30));
+      setDurum(hatalar.length ? `Okunamayan: ${hatalar.join("; ")}` : "");
+    } catch (e) {
+      setDurum(`Sayım alınamadı: ${String((e && e.message) || e).slice(0, 160)}`);
+    }
+  };
+  const farkli = (satirlar || []).filter((s) => s.durum !== "aynı");
+  return (
+    <div data-bulut-sayimi="1" style={{ marginTop: 22, borderTop: "1px solid var(--erp-line-soft)", paddingTop: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+        <Database size={15} color="var(--erp-brown)" />
+        <b style={{ fontSize: 13 }}>Bulut sayımı</b>
+        <span style={{ fontSize: 11, color: "var(--erp-text-3)", flex: 1, minWidth: 200 }}>
+          Her tablonun bu cihazdaki ve buluttaki kayıt sayısı, yanında son 30 günde sunucu arşivine düşen (silinen) satır sayısı.
+          "Veri gitti mi, bu cihaz mı eksik okudu?" sorusunun cevabı burada.
+        </span>
+        <button type="button" className="btn-ghost" data-bulut-sayimi-al="1" style={{ padding: "5px 10px", fontSize: 11 }} onClick={yukle}>
+          <RefreshCw size={12} /> {satirlar ? "Yeniden say" : "Bulutu say"}
+        </button>
+      </div>
+      {durum && <div className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>{durum}</div>}
+      {satirlar && (
+        <div style={{ overflowX: "auto" }}>
+          <table className="mono" style={{ borderCollapse: "collapse", fontSize: 11, minWidth: 520 }}>
+            <thead>
+              <tr style={{ color: "var(--erp-text-3)", textAlign: "left" }}>
+                <th style={{ padding: "3px 8px" }}>Tablo</th>
+                <th style={{ padding: "3px 8px", textAlign: "right" }}>Bu cihaz</th>
+                <th style={{ padding: "3px 8px", textAlign: "right" }}>Bulut</th>
+                <th style={{ padding: "3px 8px", textAlign: "right" }}>Arşiv (30 gün)</th>
+                <th style={{ padding: "3px 8px" }}>Durum</th>
+              </tr>
+            </thead>
+            <tbody>
+              {satirlar.map((s) => (
+                <tr key={s.tablo} data-sayim-tablo={s.tablo} style={{ borderTop: "1px solid var(--erp-line-soft)", background: s.durum === "aynı" ? "transparent" : "var(--erp-orange-bg)" }}>
+                  <td style={{ padding: "3px 8px" }}>{s.ad}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.cihaz}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.bulut == null ? "—" : s.bulut}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.arsiv30}</td>
+                  <td style={{ padding: "3px 8px", color: s.durum === "aynı" ? "var(--erp-text-3)" : "var(--erp-warn)", fontWeight: s.durum === "aynı" ? 400 : 700 }}>{s.durum}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {farkli.length === 0 && <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 }}>Bu cihaz ile bulut birebir aynı.</div>}
+          {farkli.length > 0 && (
+            <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6, lineHeight: 1.5 }}>
+              Bulutta silinmiş görünen satırlar aşağıdaki <b>Sunucu arşivi</b>nden tablo seçilip geri yüklenebilir. Günlük'te
+              "silindi" ve "TOPLU SİLME" araması hangi cihazın ne zaman sildiğini gösterir.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
