@@ -22,6 +22,11 @@ const t = prosesPlanTakvimi(uretim, stok, tanimlar, "Saya", pzt);
 bekle("kaydırınca sıra + birikimli gün", t.map((x) => `${x.o.id}:${x.yuk.gun}:${x.birikimGun}`), ["u2:1:1", "u1:2:3"]);
 bekle("bitiş: 1 gün bugün, 3 gün çarşamba", t.map((x) => x.bitis.getDate()), [19, 21]);
 bekle("cumartesiden 2 gün → pazartesi", isGunuEkle(new Date(2026, 9, 24), 2).getDate(), 26);
+// PERSONEL (v1.708): u1 Ali'ye — Ali saatte 20, 08:00–18:00 mola 60 → 9 saat; 160/20 = 8 saat = 0.89 gün; ayrı kuyruk
+uretim = prosesPlaniniDegistir(uretim, "Saya", "personel", ["u1"], "ali");
+const t2 = { ...tanimlar, kapasite: { ...tanimlar.kapasite, elemanlar: [{ cariId: "ali", saatlikAdet: 20, baslangic: "08:00", bitis: "18:00", molaDk: 60 }] } };
+const tp = prosesPlanTakvimi(uretim, stok, t2, "Saya", pzt);
+bekle("personel kuyruğu ayrı ve kişinin hızıyla", tp.map((x) => `${x.o.id}:${x.personelId}:${x.yuk.gun}:${x.birikimGun}:${x.yuk.kaynak}`), ["u2::1:1:makine", "u1:ali:0.89:0.89:personel"]);
 uretim = prosesPlaniniDegistir(uretim, "Saya", "cikar", ["u1"]);
 bekle("çıkar", prosesKuyrugu(uretim, "Saya").filter((x) => x.plan).map((x) => x.o.id), ["u2"]);
 console.log(hata ? "── proses planlama testi HATALI ──" : "── proses planlama testi temiz ──");
