@@ -1,4 +1,4 @@
-function TanimlarModule({ onaylar, onDefterFisIptal, onCariHareketEkle, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCariHareketEkle, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
   // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
   // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
   // yazmalar bu ref'ten okur.
@@ -2487,7 +2487,7 @@ function TanimlarModule({ onaylar, onDefterFisIptal, onCariHareketEkle, onCarile
 
     {aktifTanimSekme === "bakim" && (
     <>
-      <VeriDenetimiEkrani onDefterFisIptal={onDefterFisIptal} uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
+      <VeriDenetimiEkrani onYetimRezervasyonSil={onYetimRezervasyonSil} onDefterFisIptal={onDefterFisIptal} uretim={uretim} stokRezervasyonlari={stokRezervasyonlari} muhasebe={muhasebe} onYetimSiparisBagiCoz={onYetimSiparisBagiCoz} fisDefteri={fisDefteri} stok={stok} cariler={cariler} siparisler={siparisler} tanimlar={tanimlar} onAcilisFisiKes={onAcilisFisiKes} />
     <AdimSirasiDenetimi uretim={uretim} />
     {/* BULUT SAYIMI (v1.712.0, 078-bulut-sayim; v1.712.1'de Çöp Kutusu'ndan buraya): "veri gitti mi, cihaz mı eksik okudu?" */}
     {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
