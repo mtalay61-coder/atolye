@@ -12,15 +12,22 @@ const bellek = {};
 global.window = global.window || {};
 global.window.localStorage = { getItem: (k) => (k in bellek ? bellek[k] : null), setItem: (k, v) => { bellek[k] = String(v); }, removeItem: (k) => { delete bellek[k]; } };
 const istekler = [];
+// HEAD (yazma sonrası doğrulama, v1.714.0): `bulutSayisi[tablo]` varsa Content-Range ile döner, yoksa 404 (okunamadı).
+const bulutSayisi = {};
 global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
   const yontem = sec.method || "GET";
   istekler.push({ yontem, yol, govde: sec.body ? String(sec.body) : "" });
+  if (yontem === "HEAD") {
+    const t = yol.split("?")[0];
+    if (bulutSayisi[t] == null) return { ok: false, status: 404, headers: { get: () => null }, json: async () => [], text: async () => "" };
+    return { ok: true, status: 206, headers: { get: (h) => (h === "content-range" ? `0-0/${bulutSayisi[t]}` : null) }, json: async () => [], text: async () => "" };
+  }
   const govde = yontem === "PATCH" ? [{ id: "x" }] : [];
   return { ok: true, status: 200, json: async () => govde, text: async () => "" };
 };
 const { supabaseTabloEsitle, tabloBaslangicTam, bekleyenKayitlariOku, surumleriYukle,
-  topluSilmeEngeliMi, topluSilmeEngeliBul, TOPLU_SILME_ESIGI, yedekSilinecekleri } = require("./erp.cjs");
+  topluSilmeEngeliMi, topluSilmeEngeliBul, TOPLU_SILME_ESIGI, yedekSilinecekleri, yazmaDogrulamaEksikleri } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -96,6 +103,42 @@ const gunlukKayitlari = () => istekler.filter((r) => r.yol.startsWith("gunluk"))
   bekle("kilidi aşanlar: hareket ve üretim (varyant 1 değil)", oz.kilitliSatirlar.length, 2);
   bekle("güncel yedek: silinecek yok", yedekSilinecekleri(bugun, { ...bugun }), { satirlar: [], kilitliSatirlar: [] });
 
+
+  // 7) YAZMA SONRASI DOĞRULAMA (v1.714.0): köprü yokken HEAD gitmez; köprü varken bulutta eksik → bildirim + günlük;
+  //    fazla → sessiz; okunamadı → sessiz.
+  bekle("saf: yalnız eksik olanlar", yazmaDogrulamaEksikleri([{ tablo: "a", beklenen: 5, bulut: 3 }, { tablo: "b", beklenen: 5, bulut: 9 }, { tablo: "c", beklenen: 5, bulut: null }]),
+    [{ tablo: "a", beklenen: 5, bulut: 3, eksik: 2 }]);
+  istekler.length = 0;
+  tabloBaslangicTam("uretim", otuz.slice(0, 29));
+  await supabaseTabloEsitle("uretim", otuz);   // 1 eklenen
+  bekle("köprü yokken HEAD gitmez", istekler.filter((r) => r.yontem === "HEAD").length, 0);
+  const bildirimler = [];
+  global.window.__yazmaDogrulamaBildir = (tablo, eksikler) => bildirimler.push({ tablo, eksikler });
+  bulutSayisi.uretim = 30; bulutSayisi.uretim_atamalari = 0;
+  istekler.length = 0;
+  tabloBaslangicTam("uretim", otuz.slice(0, 29));
+  await supabaseTabloEsitle("uretim", otuz);
+  bekle("köprü varken üretim + iş ataması sayıldı", istekler.filter((r) => r.yontem === "HEAD").map((r) => r.yol.split("?")[0]).sort(), ["uretim", "uretim_atamalari"]);
+  bekle("bulut = elde → bildirim yok", bildirimler.length, 0);
+  bulutSayisi.uretim = 27;
+  tabloBaslangicTam("uretim", otuz.slice(0, 29));
+  await supabaseTabloEsitle("uretim", otuz);
+  bekle("bulutta 3 eksik → bildirim", bildirimler, [{ tablo: "uretim", eksikler: [{ tablo: "uretim", beklenen: 30, bulut: 27, eksik: 3 }] }]);
+  bekle("günlüğe YAZMA DOĞRULAMA düştü", gunlukKayitlari().some((g) => /YAZMA DOĞRULAMA: uretim bulutta 3 eksik/.test(g)), true);
+  bildirimler.length = 0;
+  bulutSayisi.uretim = 45;
+  tabloBaslangicTam("uretim", otuz.slice(0, 29));
+  await supabaseTabloEsitle("uretim", otuz);
+  bekle("bulutta fazla → sessiz (başka cihaz eklemiş olabilir)", bildirimler.length, 0);
+  delete bulutSayisi.uretim;
+  tabloBaslangicTam("uretim", otuz.slice(0, 29));
+  await supabaseTabloEsitle("uretim", otuz);
+  bekle("sayı okunamadı → sessiz", bildirimler.length, 0);
+  tabloBaslangicTam("uretim", otuz);
+  istekler.length = 0;
+  await supabaseTabloEsitle("uretim", otuz);
+  bekle("değişiklik yoksa doğrulama yok", istekler.filter((r) => r.yontem === "HEAD").length, 0);
+  delete global.window.__yazmaDogrulamaBildir;
   if (hata) { console.log("BİRİM TESTİ HATA: toplu silme kilidi"); process.exit(1); }
   console.log("birim-toplu-silme-kilidi: tamam");
 })().catch((e) => { console.error(e); process.exit(1); });

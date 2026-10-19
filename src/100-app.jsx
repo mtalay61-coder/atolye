@@ -451,6 +451,8 @@ function AtolyeUygulamasi() {
   // bu bilgisayarda duruyor ve bağlantı düzelince gidiyor, çakışmada ise değişiklik KALICI OLARAK
   // kaydedilmedi ve kullanıcının yenileyip yeniden yapması gerekiyor.
   const [surumCakismasi, setSurumCakismasi] = useState(null);
+  // Yazma sonrası doğrulama (v1.714.0, 040 `yazmayiDogrula`): bulutta bizdekinden az satır varsa kırmızı şerit.
+  const [yazmaDogrulama, setYazmaDogrulama] = useState(null);
 
   useEffect(() => {
     // Yazma katmanı bileşen dışında olduğu için hatayı bu köprüyle bildiriyor.
@@ -461,10 +463,12 @@ function AtolyeUygulamasi() {
     window.__supabaseBasariBildir = (tablo) => setYazmaHatasi((h) => (h && h.tablo === tablo ? null : h));
     window.__surumCakismaBildir = (tablo, idler, teshis) =>
       setSurumCakismasi({ tablo, adet: (idler || []).length, teshis: teshis || [], zaman: Date.now() });
+    window.__yazmaDogrulamaBildir = (tablo, eksikler) => setYazmaDogrulama({ tablo, eksikler: eksikler || [], zaman: Date.now() });
     return () => {
       delete window.__supabaseHataBildir;
       delete window.__supabaseBasariBildir;
       delete window.__surumCakismaBildir;
+      delete window.__yazmaDogrulamaBildir;
     };
   }, []);
 
@@ -4583,6 +4587,31 @@ function AtolyeUygulamasi() {
                 >
                   <AlertTriangle size={13} />
                   Buluta yazılamadı: {yazmaHatasi.tablo}
+                </button>
+              )}
+              {/* YAZMA DOĞRULAMA (v1.714.0): yazma bitti ama bulutta elimizdekinden az satır var. Kırmızı: bu bir ağ
+                  kesintisi değil, "bulutta eksik var" bilgisidir; kullanıcı tıklayıp ne olduğunu okur, Bakım'a gider. */}
+              {yazmaDogrulama && (
+                <button
+                  type="button"
+                  data-yazma-dogrulama={yazmaDogrulama.tablo}
+                  onClick={() => {
+                    hataGoster("Bulutta eksik satır var",
+                      `${new Date(yazmaDogrulama.zaman).toLocaleString("tr-TR")}\n`
+                      + yazmaDogrulama.eksikler.map((e) => `${ARSIV_TABLO_ADLARI[e.tablo] || e.tablo}: bu cihazda ${e.beklenen}, bulutta ${e.bulut} (${e.eksik} eksik)`).join("\n")
+                      + "\n\nYazma tamamlandı dendi ama bulut geri okununca satır sayısı bu cihazdakinden az çıktı. Ya yazma yere inmedi ya da biri aynı anda sildi. "
+                      + "Tanımlar › Bakım › Bulut sayımı ile tablo tablo bakın; Günlük'te \"YAZMA DOĞRULAMA\" satırı ayrıntıyı tutar. Sayfayı yenilemek bulutun hâlini gösterir.");
+                    setYazmaDogrulama(null);
+                  }}
+                  title="Bulutta bu cihazdakinden az satır var — tıklayın"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", marginRight: 10,
+                    background: "#FDECEC", border: "1.5px solid #C62828", borderRadius: "var(--erp-r-pill)",
+                    padding: "4px 12px", fontSize: 11, fontWeight: 700, color: "#B71C1C", cursor: "pointer",
+                  }}
+                >
+                  <AlertTriangle size={13} />
+                  Bulutta eksik: {yazmaDogrulama.eksikler.map((e) => `${ARSIV_TABLO_ADLARI[e.tablo] || e.tablo} ${e.eksik}`).join(", ")}
                 </button>
               )}
               {veriKaynagi && veriKaynagi.tur === "yerel" && veriKaynagi.hata && (

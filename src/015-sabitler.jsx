@@ -488,9 +488,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.713.1";
+const SURUM = "1.714.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Rezervasyon defteri her yolda güncel listeye yazılır (teslim, iş verme, ad değiştirme): silinmiş üretimin rezervasyonu bir daha geri gelmez";
+const SURUM_NOTU = "Yazma sonrası doğrulama: kritik tablolarda yazma bitince bulut satır sayısı geri okunur, bu cihazdakinden azsa kırmızı şerit ve günlük uyarısı";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.714.0", tarih: "19.10.2026", eklenen: ["Yazma sonrası doğrulama: ürün/varyant/stok hareketi, cari/cari hareketi, sipariş/kalem, üretim/iş ataması ve rezervasyon tablolarında yazma bitince buluttaki satır sayısı geri okunur (satır inmez, yalnız sayı); bu cihazdakinden azsa üstte kırmızı \"Bulutta eksik\" şeridi çıkar ve günlüğe \"YAZMA DOĞRULAMA\" düşer. Bulutta fazla olması (başka cihaz eklemiş) uyarı değildir"], degisen: [], duzeltilen: [] },
   { surum: "1.713.1", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim teslimi, iş verme ve ölçü/renk adı değiştirme, rezervasyon defterini ekranın o anki (bayat olabilen) kopyasından bütün liste hâlinde yazıyordu; az önce silinmiş üretimin rezervasyonları buluta geri gelebiliyordu. Artık hesaplanan fark güncel listeye uygulanır, silinmiş satır geri gelmez"] },
   { surum: "1.713.0", tarih: "19.10.2026", eklenen: ["Veri denetimi: \"Silinmiş üretimin rezervasyonu duruyor\" bulgusunda \"Yetim rezervasyonları sil\" düğmesi (onaylı, günlüğe yazar)"], degisen: ["Üretim numarası taşıyan rezervasyon, o üretim artık yoksa talebe sayılmaz (Depo / Stok Durumu / ihtiyaç); silinen üretimin talebi ekranda kalmaz"], duzeltilen: ["Planlama, rezervasyonları bayat listeye ekleyip az önce silinmiş üretimin rezervasyonlarını buluta geri getirebiliyordu — artık güncel listeye ekler"] },
   { surum: "1.712.1", tarih: "19.10.2026", eklenen: [], degisen: ["Bulut sayımı Tanımlar › Bakım sekmesinde (Çöp Kutusu'nun altında kalmıştı)"], duzeltilen: ["Tanımlar'a rezervasyon listesi geçirilmiyordu: Veri denetimi \"Silinmiş üretimin rezervasyonu duruyor\" bulgusunu hiç göremiyor, bulut sayımı rezervasyonu 0 sayıyordu"] },
