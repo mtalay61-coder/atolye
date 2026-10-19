@@ -175,7 +175,7 @@ function PlanlamaModule({ tanimlar, onUretimKaydet, siparisler, stok, uretim, ca
         />
       )}
       {altSekme === "proses" && tanimlar && onUretimKaydet && (
-        <ProsesPlanlamaSekmesi uretim={uretim} stok={stok} tanimlar={tanimlar} onUretimKaydet={onUretimKaydet} onGoToUretim={onGoToUretim} />
+        <ProsesPlanlamaSekmesi uretim={uretim} stok={stok} tanimlar={tanimlar} cariler={cariler} onUretimKaydet={onUretimKaydet} onGoToUretim={onGoToUretim} />
       )}
       {altSekme === "siparisIhtiyac" && (
         <HammaddeIhtiyacSekmesi kurlar={kurlar}

@@ -1076,122 +1076,74 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                         çıkması gerektiğini ve gerçekte ne kadar çıktığını yan yana gösterir.
                         Bu karşılaştırma olmadan eksik tüketim (reçete kapsamı eksikse ya da bir
                         atama henüz teslim alınmadıysa) hiçbir yerde görünmüyordu. */}
-                    {beklenenler.length > 0 && (
-                      <div style={{ marginBottom: 10, background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
-                        <span style={{ color: "var(--erp-text-2)", fontWeight: 600, fontSize: 11 }}>
-                          Reçeteye göre beklenen (tüm sipariş için):
-                        </span>
-                        <div style={{ display: "grid", gap: 3, marginTop: 5 }}>
-                          {beklenenler.map((b, i) => {
-                            // Gerçekleşen: bu hammadde+renk+beden için bu proseste düşülmüş toplam.
-                            const grup = hammaddeGruplari.find((g) => g.urunAd === b.ad);
-                            const gerceklesen = grup
-                              ? Math.abs(grup.hareketler
-                                  .filter((h) => h.renk === b.renk && h.beden === b.beden)
-                                  .reduce((s, h) => s + h.miktar, 0))
-                              : 0;
-                            const yuvarlanan = Math.round(gerceklesen * 1000) / 1000;
-                            const eksikMi = yuvarlanan + 0.0001 < b.toplam;
-                            return (
-                              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", fontSize: 11 }}>
-                                <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)", minWidth: 110 }}>{b.ad}</span>
-                                <span className="mono" style={{ color: "var(--erp-text-3)", fontSize: 10 }}>
-                                  {b.parcalar.slice(0, 5).join(" + ")}{b.parcalar.length > 5 ? " + …" : ""}
-                                </span>
-                                <span className="mono" style={{ fontWeight: 700, color: "var(--erp-text)" }}>= {b.toplam} {b.birim}</span>
-                                <span className="mono" style={{ fontWeight: 700, color: eksikMi ? "var(--erp-warn)" : "var(--erp-primary)" }}>
-                                  · çıkan: {yuvarlanan} {b.birim}
-                                </span>
-                                {eksikMi && (
-                                  <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-warn)", background: "#B85C2E18", padding: "1px 6px", borderRadius: "var(--erp-r-pill)" }}>
-                                    {Math.round((b.toplam - yuvarlanan) * 1000) / 1000} eksik
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 5, lineHeight: 1.5 }}>
-                          Eksik varsa: ya bu prosesin bir kısmı henüz teslim alınmadı, ya da reçete bazı
-                          bedenleri kapsamıyor (Ürün kartı &gt; Reçete sekmesindeki uyarıya bakın).
-                        </div>
-                      </div>
-                    )}
-                    {hammaddeGruplari.length > 0 ? (
-                      <div style={{ display: "grid", gap: 10, marginBottom: 8 }}>
-                        <span style={{ color: "var(--erp-text-2)", fontWeight: 600, fontSize: 11 }}>Çıkan Hammadde:</span>
-                        {hammaddeGruplari.map((g) => {
-                          const renkler = Array.from(new Set(g.hareketler.map((h) => h.renk)));
-                          const bedenler = Array.from(new Set(g.hareketler.map((h) => h.beden)));
-                          return (
-                            <div key={g.urunId} style={{ background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 8 }}>
-                              <div style={{ fontWeight: 700, fontSize: 12, marginBottom: 6 }}>{g.urunAd}</div>
-                              <div style={{ overflowX: "auto" }}>
-                                <table style={{ width: "auto", minWidth: "100%" }}>
-                                  <thead>
-                                    <tr>
-                                      <th style={{ fontSize: 10 }}>{matrisKoseBasligi(renkler, bedenler, renkBasligi((stok || []).find((p) => p.id === g.urunId)))}</th>
-                                      {bedenler.map((b) => (
-                                        <th key={b} className="mono" style={{ fontSize: 10, textAlign: "center" }}>{olcuGoster(b, "Miktar")}</th>
-                                      ))}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {renkler.map((r) => (
-                                      // Bu blok ÜRETİM çıkışlarını gösterir; satırlar uygulamanın üretim
-                                      // rengiyle (KAYNAK_RENK.Üretim) işaretlenir. Böylece aynı hareket,
-                                      // stok ekstresinde göründüğü renkte burada da görünür.
-                                      <tr key={r} style={kaynakRenkStili("Üretim")}>
-                                        <td style={{ fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", padding: "3px 6px" }}>
-                                          <ColorSwatch src={g.renkResimleri[r]} editable={false} size={18} /> {olcuGoster(r)}
+                    {/* TEK MATRİS (v1.708.0 — kullanıcı: "üretimde burası çok yer kaplıyor, alttaki satırlar çok yüksek, üstte ve
+                        altta aynı hammaddeleri listeliyor, matris düzeninde toparlansın"). Önce "reçeteye göre beklenen" listesi,
+                        altında her hammadde için ayrı kart+tablo vardı — aynı bilgi iki kez. Şimdi tek tablo: satır = hammadde ·
+                        renk, sütun = beden, hücre = çıkan (beklenenden azsa "çıkan/beklenen" turuncu), sonda toplam ve beklenen.
+                        Aynı hücreye düşen birden çok hareket TOPLANIR (eski düzeltme korunuyor). */}
+                    {(() => {
+                      const satirlar = {}; const sira = [];
+                      const satir = (ad, renk, birim) => {
+                        const k = `${ad}|${renk || ""}`;
+                        if (!satirlar[k]) { satirlar[k] = { ad, renk: renk || "", birim: birim || "", cikan: {}, beklenen: {} }; sira.push(k); }
+                        if (birim && !satirlar[k].birim) satirlar[k].birim = birim;
+                        return satirlar[k];
+                      };
+                      beklenenler.forEach((b) => { const x = satir(b.ad, b.renk, b.birim); x.beklenen[b.beden || ""] = (x.beklenen[b.beden || ""] || 0) + b.toplam; });
+                      hammaddeGruplari.forEach((g) => g.hareketler.forEach((h) => {
+                        const x = satir(g.urunAd, h.renk); x.cikan[h.beden || ""] = (x.cikan[h.beden || ""] || 0) + Math.abs(h.miktar || 0);
+                      }));
+                      if (!sira.length) return <div style={{ color: "var(--erp-text-3)", fontSize: 11, marginBottom: 8 }}>Bu proses için reçetede hammadde tanımlı değildi.</div>;
+                      const yuv = (v) => Math.round((v || 0) * 1000) / 1000;
+                      const bedenler = Array.from(new Set(sira.flatMap((k) => [...Object.keys(satirlar[k].cikan), ...Object.keys(satirlar[k].beklenen)])))
+                        .sort((x, y) => (parseFloat(x) || 0) - (parseFloat(y) || 0) || String(x).localeCompare(String(y)));
+                      const tekSutun = bedenler.length === 1 && !bedenler[0];
+                      const th = { fontSize: 10, color: "var(--erp-text-3)", fontWeight: 700, padding: "3px 6px", textAlign: "center", whiteSpace: "nowrap" };
+                      const td = { fontSize: 11, padding: "3px 6px", textAlign: "center", borderTop: "1px solid var(--erp-line-soft)", whiteSpace: "nowrap" };
+                      let eksikVar = false;
+                      return (
+                        <div data-uretim-hammadde-matris style={{ marginBottom: 8, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: 6, overflowX: "auto" }}>
+                          <table style={{ borderCollapse: "collapse", minWidth: "100%" }}>
+                            <thead><tr>
+                              <th style={{ ...th, textAlign: "left" }}>Hammadde · renk</th>
+                              {!tekSutun && bedenler.map((bd) => <th key={bd} style={th} className="mono">{bd ? olcuGoster(bd, "Miktar") : "—"}</th>)}
+                              <th style={th}>Çıkan</th><th style={th}>Beklenen</th>
+                            </tr></thead>
+                            <tbody>
+                              {sira.map((k) => {
+                                const x = satirlar[k];
+                                const topC = yuv(Object.values(x.cikan).reduce((t, v) => t + v, 0));
+                                const topB = yuv(Object.values(x.beklenen).reduce((t, v) => t + v, 0));
+                                const eksik = topB > 0 && topC + 0.0001 < topB;
+                                if (eksik) eksikVar = true;
+                                return (
+                                  <tr key={k} style={kaynakRenkStili("Üretim")}>
+                                    <td style={{ ...td, textAlign: "left", fontWeight: 600 }}>{x.ad}{x.renk ? <span style={{ fontWeight: 400, color: "var(--erp-text-2)" }}> · {olcuGoster(x.renk)}</span> : null}</td>
+                                    {!tekSutun && bedenler.map((bd) => {
+                                      const c = yuv(x.cikan[bd]); const be = yuv(x.beklenen[bd]);
+                                      const az = be > 0 && c + 0.0001 < be;
+                                      return (
+                                        <td key={bd} className="mono" style={{ ...td, fontWeight: 700, color: az ? "var(--erp-warn)" : c ? "var(--erp-text)" : "var(--erp-border)" }}
+                                          title={be ? `beklenen ${be}` : undefined}>
+                                          {c || be ? (az ? `${c}/${be}` : c) : "—"}
                                         </td>
-                                        {bedenler.map((b) => {
-                                          // HATA DÜZELTMESİ: burada `find` kullanılıyordu ve aynı renk/beden için
-                                          // birden fazla hareket varsa YALNIZCA İLKİ gösteriliyordu.
-                                          //
-                                          // Bu durum kural dışı değil, olağan: reçetede her mamul beden için ayrı
-                                          // satır bulunur ve tüketim satır satır işlenir. Bedensiz bir hammadde
-                                          // (tek renk/beden varyantı) 5 mamul bedeni için kullanıldığında AYNI
-                                          // varyanta 5 ayrı hareket yazılır. Ekranda bunlardan biri (−1) görünüyor,
-                                          // gerçekte düşülen ise toplamıydı (−8) — stok doğru düşüyordu, GÖSTERİM
-                                          // yanlıştı. Artık hepsi toplanır.
-                                          const eslesenler = g.hareketler.filter((x) => x.renk === r && x.beden === b);
-                                          const toplam = Math.round(eslesenler.reduce((s, x) => s + x.miktar, 0) * 1000) / 1000;
-                                          return (
-                                            <td key={b} style={{ textAlign: "center" }}>
-                                              {eslesenler.length > 0 ? (
-                                                <span
-                                                  className="mono"
-                                                  title={
-                                                    eslesenler.length > 1
-                                                      ? `${eslesenler.length} hareketin toplamı: ${eslesenler.map((x) => x.miktar).join(" + ")}`
-                                                      : undefined
-                                                  }
-                                                  style={{ fontSize: 11, fontWeight: 700, color: toplam < 0 ? "var(--erp-warn)" : "var(--erp-primary)" }}
-                                                >
-                                                  {toplam > 0 ? "+" : ""}{toplam}
-                                                  {eslesenler.length > 1 && (
-                                                    <span style={{ fontSize: 9, fontWeight: 400, color: "var(--erp-text-3)" }}> ({eslesenler.length})</span>
-                                                  )}
-                                                </span>
-                                              ) : (
-                                                <span className="mono" style={{ fontSize: 11, color: "var(--erp-border)" }}>—</span>
-                                              )}
-                                            </td>
-                                          );
-                                        })}
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
+                                      );
+                                    })}
+                                    <td className="mono" style={{ ...td, fontWeight: 700, color: eksik ? "var(--erp-warn)" : "var(--erp-primary)" }}>{topC} {x.birim}</td>
+                                    <td className="mono" style={{ ...td, color: "var(--erp-text-2)" }}>{topB || "—"}{eksik ? <span style={{ marginLeft: 4, fontSize: 9, fontWeight: 700, color: "var(--erp-warn)" }}>{yuv(topB - topC)} eksik</span> : null}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                          {eksikVar && (
+                            <div style={{ fontSize: 10, color: "var(--erp-text-3)", marginTop: 4 }}>
+                              Eksik: prosesin bir kısmı henüz teslim alınmadı ya da reçete bazı bedenleri kapsamıyor (Ürün kartı › Reçete).
                             </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div style={{ color: "var(--erp-text-3)", fontSize: 11 }}>Bu proses için reçetede hammadde tanımlı değildi.</div>
-                    )}
+                          )}
+                        </div>
+                      );
+                    })()}
                     {!p.araProsesMi && atamalar.length > 0 && (() => {
                       // TAMAMLANMIŞ bir prosesin atamaları burada, açılan detayda listelenir.
                       // Geri alma düğmesi eskiden YALNIZCA "tamamlanmamış ve sıradaki" adımda

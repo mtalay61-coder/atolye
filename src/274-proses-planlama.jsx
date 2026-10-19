@@ -38,8 +38,13 @@ function isGunuEkle(bugun, gun) {
 }
 
 // Planlananlar sırayla, birikimli gün ve bitiş tahminiyle. Kapasitesi bilinmeyen iş süreye katılmaz, `eksik` taşır.
+// PERSONEL (v1.708.0 — kullanıcı seçti: "planlanan işe kişi atansın, kişinin günlük saati/kapasitesine göre yük ve bitiş
+// günü"): `plan.personelId`. Her kişinin kuyruğu AYRI birikir (aynı anda çalışırlar); atanmamış işler ortak kuyrukta.
+// Süre: kişinin Tanımlar › Kapasite'de saatlik adedi ve çalışma saati varsa ondan (adet ÷ saatlik ÷ günlük saat), yoksa
+// makine/kalıp kapasitesinden.
 function prosesPlanTakvimi(uretim, stok, tanimlar, proses, bugun) {
-  let birikim = 0;
+  const birikimler = {};
+  const elemanlar = kapasiteTanimi(tanimlar).elemanlar;
   return prosesKuyrugu(uretim, proses)
     .filter((x) => x.plan)
     .sort((a, b) => (a.plan.sira || 0) - (b.plan.sira || 0))
@@ -47,9 +52,18 @@ function prosesPlanTakvimi(uretim, stok, tanimlar, proses, bugun) {
       const urun = (stok || []).find((p) => p.id === x.o.urunId);
       const bedenAdet = {};
       (x.o.bedenMiktarlari || []).forEach((b) => { bedenAdet[b.beden] = (bedenAdet[b.beden] || 0) + (Number(b.miktar) || 0); });
-      const yuk = isYukuHesapla(tanimlar, urun, proses, bedenAdet);
-      birikim += yuk.gun;
-      return { ...x, yuk, birikimGun: Math.round(birikim * 100) / 100, bitis: yuk.gun > 0 ? isGunuEkle(bugun || new Date(), birikim) : null };
+      const pid = x.plan.personelId || "";
+      const el = pid ? elemanlar.find((e) => e.cariId === pid) : null;
+      const elSaat = el ? elemanGunlukSaat(el) : 0;
+      const elHiz = el ? sayiYa(el.saatlikAdet) : 0;
+      let yuk;
+      if (elHiz && elSaat) {
+        const saat = (Number(x.o.adet) || 0) / elHiz;
+        yuk = { saat: Math.round(saat * 100) / 100, gun: Math.round((saat / elSaat) * 100) / 100, eksik: [], kaynak: "personel" };
+      } else yuk = { ...isYukuHesapla(tanimlar, urun, proses, bedenAdet), kaynak: "makine" };
+      birikimler[pid] = (birikimler[pid] || 0) + yuk.gun;
+      const birikim = birikimler[pid];
+      return { ...x, yuk, personelId: pid, birikimGun: Math.round(birikim * 100) / 100, bitis: yuk.gun > 0 ? isGunuEkle(bugun || new Date(), birikim) : null };
     });
 }
 
@@ -62,6 +76,7 @@ function prosesPlaniniDegistir(uretim, proses, islem, idler, yon) {
     const tarih = new Date().toISOString();
     return uretim.map((o) => (idler.includes(o.id) && !plan(o) ? yaz(o, { sira: ++sira, tarih }) : o));
   }
+  if (islem === "personel") return uretim.map((o) => (idler.includes(o.id) && plan(o) ? yaz(o, { ...plan(o), personelId: yon || null }) : o));
   if (islem === "cikar") return uretim.map((o) => (idler.includes(o.id) ? yaz(o, null) : o));
   if (islem === "kaydir") {
     const sirali = prosesKuyrugu(uretim, proses).filter((x) => x.plan).sort((a, b) => a.plan.sira - b.plan.sira);
@@ -74,7 +89,7 @@ function prosesPlaniniDegistir(uretim, proses, islem, idler, yon) {
   return uretim;
 }
 
-function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, onUretimKaydet, onGoToUretim }) {
+function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, cariler, onUretimKaydet, onGoToUretim }) {
   const prosesler = (tanimlar.prosesler || []).slice().sort((a, b) => (a.sira ?? 999) - (b.sira ?? 999)).map((p) => p.ad);
   const [proses, setProses] = useState(() => { try { const k = localStorage.getItem("proses-planlama-sekme"); if (k) return k; } catch (e) { /* yoksay */ } return null; });
   const aktif = prosesler.includes(proses) ? proses : prosesler[0];
@@ -84,7 +99,15 @@ function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, onUretimKaydet, onGoToU
   const kuyruk = prosesKuyrugu(uretim, aktif);
   const bekleyen = kuyruk.filter((x) => !x.plan).sort((a, b) => (b.hazir - a.hazir));
   const takvim = prosesPlanTakvimi(uretim, stok, tanimlar, aktif, new Date());
-  const toplamGun = takvim.length ? takvim[takvim.length - 1].birikimGun : 0;
+  // Toplam süre: kuyruklar paralel, en uzun kuyruk belirler.
+  const kuyrukGunleri = {};
+  takvim.forEach((x) => { kuyrukGunleri[x.personelId] = x.birikimGun; });
+  const toplamGun = Math.max(0, ...Object.values(kuyrukGunleri));
+  // Seçilebilir personel: Tanımlar › Kapasite'de bu prosese işaretlenenler; hiç yoksa tüm Personel tipi cariler.
+  const tumPersonel = (cariler || []).filter((c) => c.tip === "Personel" && !c.pasif);
+  const prosesElemanlari = kapasiteTanimi(tanimlar).elemanlar.filter((e) => (e.prosesler || []).includes(aktif)).map((e) => e.cariId);
+  const personelSecenek = prosesElemanlari.length ? tumPersonel.filter((c) => prosesElemanlari.includes(c.id)) : tumPersonel;
+  const personelAdi = (id) => ((cariler || []).find((c) => c.id === id) || {}).unvan || "Atanmamış";
   const degistir = (islem, idler, yon) => onUretimKaydet(prosesPlaniniDegistir(uretim, aktif, islem, idler, yon));
   const urunAdi = (o) => o.model || ((stok || []).find((p) => p.id === o.urunId) || {}).ad || "";
   const cerceve = { border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", background: "var(--erp-panel)", maxHeight: "42vh", overflowY: "auto" };
@@ -144,16 +167,26 @@ function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, onUretimKaydet, onGoToU
       <div style={cerceve} data-proses-planlanan>
         <div style={baslik}>
           Planlanan <span style={{ fontWeight: 400, color: "var(--erp-text-3)" }}>{takvim.length} iş · toplam <b data-proses-toplam-gun>{toplamGun}</b> gün</span>
+          {Object.keys(kuyrukGunleri).length > 1 && Object.entries(kuyrukGunleri).map(([pid, g]) => (
+            <span key={pid || "yok"} data-personel-kuyruk={personelAdi(pid)} style={{ fontWeight: 400, fontSize: 12, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: "var(--erp-line-soft)" }}>
+              {personelAdi(pid)}: {g} gün
+            </span>
+          ))}
         </div>
         {takvim.length === 0 && <div style={{ padding: 16, color: "var(--erp-text-3)", fontSize: 13 }}>Planlanan iş yok — yukarıdan seçip planlayın.</div>}
-        {takvim.map(({ o, hazir, yuk, birikimGun, bitis }, i) => (
+        {takvim.map(({ o, hazir, yuk, birikimGun, bitis, personelId }, i) => (
           <div key={o.id} data-planlanan-is={o.siparisNo} style={satir}>
             <span style={{ width: 22, color: "var(--erp-text-3)" }}>{i + 1}.</span>
             <b className="mono">{o.siparisNo}</b>
             <span>{urunAdi(o)} · {o.renk}</span>
             <span style={{ fontWeight: 700 }}>{o.adet} çift</span>
             {!hazir && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>önceki proseste</span>}
-            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--erp-text-2)" }}>
+            <select data-plan-personel value={personelId || ""} onChange={(e) => degistir("personel", [o.id], e.target.value)}
+              style={{ ...inputStyle, width: 160, padding: "3px 6px", fontSize: 12 }}>
+              <option value="">Personel atanmadı</option>
+              {personelSecenek.map((c) => <option key={c.id} value={c.id}>{c.unvan}</option>)}
+            </select>
+            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--erp-text-2)" }} title={yuk.kaynak === "personel" ? "Kişinin saatlik adedi ve çalışma saatinden" : "Makine/kalıp kapasitesinden"}>
               {yuk.eksik.length ? <span style={{ color: "var(--erp-danger, #B23B3B)" }} title={yuk.eksik.join(", ")}>kapasite ?</span>
                 : <>{yuk.gun} gün · bitiş <b>{tarihMetni(bitis)}</b> <span style={{ color: "var(--erp-text-3)" }}>({birikimGun})</span></>}
             </span>
