@@ -216,7 +216,11 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
   const kartRef = React.useRef(null);
   const prosesIlerleme = o.prosesIlerleme || [];
   const tamamlandi = prosesIlerleme.length > 0 && prosesIlerleme.every((p) => p.tamamlandiMi);
-  const renkKartCizgi = tamamlandi ? "var(--erp-primary)" : ASAMA_RENK[o.asama] || "var(--erp-text-3)";
+  // GÜNCEL AŞAMA prosesIlerleme'den TÜRETİLİR (v1.709.4 — kullanıcı: "iş kesime verilmedi ama Kampre'de görünüyor").
+  // Saklı `o.asama` teslimde "son teslim edilen", geri almada "geri alınan adım" oluyordu — ikisi de "şu an nerede"
+  // değil. Liste süzgeci (300 mevcutAsama) zaten türetiyordu; etiket de aynı kural: ilk tamamlanmamış adım.
+  const guncelAsama = ((o.prosesIlerleme || []).find((p) => !p.tamamlandiMi) || {}).proses || o.asama;
+  const renkKartCizgi = tamamlandi ? "var(--erp-primary)" : ASAMA_RENK[guncelAsama] || ASAMA_RENK[o.asama] || "var(--erp-text-3)";
   const urun = uretimUrunu(o, stok);
   const urunGorseli = urun ? ((urun.renkResimleri || {})[o.renk] || urun.kapakResmi) : null;
 
@@ -432,7 +436,7 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
             <b>{o.model}</b>
             <span>{olcuGoster(o.renk) || ""}</span>
             <b className="mono">{o.adet} çift</b>
-            <span style={{ fontSize: 11, fontWeight: 700, color: renkKartCizgi }}>{tamamlandi ? (o.stogaEklendiMi ? "Tamamlandı · stokta" : "Tamamlandı") : (o.asama || "—")}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: renkKartCizgi }}>{tamamlandi ? (o.stogaEklendiMi ? "Tamamlandı · stokta" : "Tamamlandı") : (guncelAsama || "—")}</span>
           </div>
         )}
         {acik && <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
