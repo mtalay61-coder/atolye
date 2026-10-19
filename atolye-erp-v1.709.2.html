@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.708.0</title>
+<title>Atölye ERP 1.709.2</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2315,9 +2315,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.708.0";
+const SURUM = "1.709.2";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Proses planlamada personel ataması: kişi kişi kuyruk, kişinin saatine göre süre ve bitiş";
+const SURUM_NOTU = "Planlanan cari üretim kartında Kime'ye dolu gelir; barkod ekranında kişiye planlanan işler";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2347,6 +2347,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.709.2", tarih: "19.10.2026", eklenen: ["Barkod ekranı Alabileceğim işler: kişiye planlanan iş üstte ve \"Size planlandı\"; başkasına planlıysa adıyla not"], degisen: [], duzeltilen: [] },
+    { surum: "1.709.1", tarih: "19.10.2026", eklenen: [], degisen: ["Sipariş Planlama: Üret ve Satınalma panelleri de kendi içinde kayan çerçevede"], duzeltilen: [] },
+    { surum: "1.709.0", tarih: "19.10.2026", eklenen: ["Üretim kartı: proses sırası gelince \"Planlandı: <cari>\" etiketi ve Kime alanı planlanan cariyle dolu", "Barkod atölye ekranı: kişi girişinde \"Bana planlanan işler\" (sırası gelen / önceki proseste)"], degisen: ["Proses Planlama: plan iş vermez, işi yapacak cariyi ayırır (seçici \"Cari seçilmedi\", İşi ver düğmesi \"Kart\")"], duzeltilen: [] },
     { surum: "1.708.0", tarih: "19.10.2026", degisen: ["Üretim kartı: tamamlanan prosesin hammaddesi tek matriste (hammadde · renk × beden, çıkan ve beklenen, eksik turuncu)"], eklenen: ["Proses Planlama: planlanan işe personel atanır; her kişinin kuyruğu ayrı birikir, süre kişinin saatlik adedi ve çalışma saatinden (yoksa makine kapasitesinden), başlıkta kişi kişi gün"], degisen: [], duzeltilen: [] },
     { surum: "1.707.0", tarih: "19.10.2026", eklenen: ["Sipariş Planlama: satırları tikleyip \"Seçilenleri üret\" (siparişler için üretim doğrudan açılır) ya da \"Satın almaya gönder\" (Satınalma paneline toplu)"], degisen: ["Bekleyen ve Planlanmış sekmeleri kalktı: Bekleyen kendi içinde kayan çerçevede, Planlanmış altında ikinci çerçeve", "Üretim Raporu: özet kartı artık \"Biten üretim (stoğa giren)\" — son proseste teslim alınan; altında proses proses biten çift"], duzeltilen: [] },
     { surum: "1.706.0", tarih: "18.10.2026", eklenen: ["Üretim › Üretim Raporu: günlük/haftalık/aylık dönem, anlık özet (açık üretim, personelde olan), proses hedef–gerçekleşen–oran–hurda–bekleyen, personelin gün gün teslim aldığı çift, açık üretimlerin proses proses ilerlemesi", "Proses günlük hedefi rapordan girilir; boşsa makine kapasitesinden hesaplanır"], degisen: [], duzeltilen: [] },
@@ -43007,24 +43010,24 @@ function SiparisPlanlamaSekmesi({ siparisler, stok, cariler, uretim, asortiler, 
                             })())));
                     })))),
             React.createElement("div", { style: { flex: "1 1 420px", minWidth: 320, display: "grid", gap: 18 } },
-                React.createElement("div", null,
-                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8 } },
+                React.createElement("div", { "data-uret-cerceve": true, style: { ...cerceve, maxHeight: "60vh", overflowY: "auto" } },
+                    React.createElement("div", { style: { ...cerceveBaslik, gap: 6 } },
                         React.createElement(Hammer, { size: 15, color: "var(--erp-primary)" }),
                         React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-primary)" } }, "\u00DCret"),
                         React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } },
                             "(",
                             uretimGosterilecek.length,
                             ")")),
-                    uretimGosterilecek.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "6px 0" } }, "Hen\u00FCz bir sipari\u015F eklenmedi \u2014 soldan \"\u00DCret\" ile ekleyin.")) : (React.createElement("div", { style: { display: "grid", gap: 10 } }, uretimGosterilecek.map((secim) => (React.createElement(SagPanelKart, { key: satirAnahtari(secim), secim: secim, cerceveRenk: "#8FA888", arkaplan: "#F0F5EE", cikarFonk: uretimdenCikar, varsayilanTip: "Uretim", stok: stok, cariler: cariler, siparisler: siparisler, uretim: uretim, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur })))))),
-                React.createElement("div", null,
-                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 8 } },
+                    uretimGosterilecek.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "10px 12px" } }, "Hen\u00FCz bir sipari\u015F eklenmedi \u2014 soldan \"\u00DCret\" ile ekleyin.")) : (React.createElement("div", { style: { display: "grid", gap: 10, padding: 10 } }, uretimGosterilecek.map((secim) => (React.createElement(SagPanelKart, { key: satirAnahtari(secim), secim: secim, cerceveRenk: "#8FA888", arkaplan: "#F0F5EE", cikarFonk: uretimdenCikar, varsayilanTip: "Uretim", stok: stok, cariler: cariler, siparisler: siparisler, uretim: uretim, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur })))))),
+                React.createElement("div", { "data-satinalma-cerceve": true, style: { ...cerceve, maxHeight: "60vh", overflowY: "auto" } },
+                    React.createElement("div", { style: { ...cerceveBaslik, gap: 6 } },
                         React.createElement(PackageCheck, { size: 15, color: "var(--erp-info)" }),
                         React.createElement("span", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-info)" } }, "Sat\u0131nalma"),
                         React.createElement("span", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-3)" } },
                             "(",
                             satinalmaGosterilecek.length,
                             ")")),
-                    satinalmaGosterilecek.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "6px 0" } }, "Hen\u00FCz bir sipari\u015F eklenmedi \u2014 soldan \"Sat\u0131n Al\" ile ekleyin.")) : (React.createElement("div", { style: { display: "grid", gap: 10 } }, satinalmaGosterilecek.map((secim) => (React.createElement(SagPanelKart, { key: satirAnahtari(secim), secim: secim, cerceveRenk: "#9BB0C4", arkaplan: "#EAF1F6", cikarFonk: satinalmadanCikar, varsayilanTip: "Sat\u0131nalma", stok: stok, cariler: cariler, siparisler: siparisler, uretim: uretim, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur })))))))),
+                    satinalmaGosterilecek.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", fontStyle: "italic", padding: "10px 12px" } }, "Hen\u00FCz bir sipari\u015F eklenmedi \u2014 soldan \"Sat\u0131n Al\" ile ekleyin.")) : (React.createElement("div", { style: { display: "grid", gap: 10, padding: 10 } }, satinalmaGosterilecek.map((secim) => (React.createElement(SagPanelKart, { key: satirAnahtari(secim), secim: secim, cerceveRenk: "#9BB0C4", arkaplan: "#EAF1F6", cikarFonk: satinalmadanCikar, varsayilanTip: "Sat\u0131nalma", stok: stok, cariler: cariler, siparisler: siparisler, uretim: uretim, onPlanlaUretim: onPlanlaUretim, onPlanlaSatinAlma: onPlanlaSatinAlma, onGoToSiparis: onGoToSiparis, onGoToUretim: onGoToUretim, onPlanlamaTemizle: onPlanlamaTemizle, asortiler: asortiler, onAsortiOlustur: onAsortiOlustur })))))))),
         planlanmisCerceve));
 }
 // ================= RAPOR MOTORU — KULLANICININ KURDUĞU RAPORLAR =================
@@ -53501,7 +53504,7 @@ function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, cariler, onUretimKaydet
                     " \u00E7ift"),
                 !hazir && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "\u00F6nceki proseste"),
                 React.createElement("select", { "data-plan-personel": true, value: personelId || "", onChange: (e) => degistir("personel", [o.id], e.target.value), style: { ...inputStyle, width: 160, padding: "3px 6px", fontSize: 12 } },
-                    React.createElement("option", { value: "" }, "Personel atanmad\u0131"),
+                    React.createElement("option", { value: "" }, "Cari se\u00E7ilmedi"),
                     personelSecenek.map((c) => React.createElement("option", { key: c.id, value: c.id }, c.unvan))),
                 React.createElement("span", { style: { marginLeft: "auto", fontSize: 12, color: "var(--erp-text-2)" }, title: yuk.kaynak === "personel" ? "Kişinin saatlik adedi ve çalışma saatinden" : "Makine/kalıp kapasitesinden" }, yuk.eksik.length ? React.createElement("span", { style: { color: "var(--erp-danger, #B23B3B)" }, title: yuk.eksik.join(", ") }, "kapasite ?")
                     : React.createElement(React.Fragment, null,
@@ -53519,7 +53522,7 @@ function ProsesPlanlamaSekmesi({ uretim, stok, tanimlar, cariler, onUretimKaydet
                     React.createElement(ChevronDown, { size: 14 })),
                 React.createElement("button", { type: "button", className: "btn-ghost", "data-plan-cikar": true, title: "Plandan \u00E7\u0131kar", onClick: () => degistir("cikar", [o.id]) },
                     React.createElement(X, { size: 14 })),
-                onGoToUretim && React.createElement("button", { type: "button", className: "btn-ghost", onClick: () => onGoToUretim(o.id) }, "\u0130\u015Fi ver"))))),
+                onGoToUretim && React.createElement("button", { type: "button", className: "btn-ghost", onClick: () => onGoToUretim(o.id), title: "\u00DCretim kart\u0131n\u0131 a\u00E7" }, "Kart"))))),
         React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)" } }, "S\u00FCre, \u00FCr\u00FCn kart\u0131 \u203A Kapasite'de bu prosese ba\u011Fl\u0131 makine ve kal\u0131ptan hesaplan\u0131r (pazar \u00E7al\u0131\u015F\u0131lmaz say\u0131l\u0131r). \"kapasite ?\" \u00E7\u0131kan i\u015Fin \u00FCr\u00FCn\u00FCne makine/kal\u0131p ba\u011Flanmam\u0131\u015F ya da o beden kal\u0131pta tan\u0131ml\u0131 de\u011Fil. Plan yaln\u0131z s\u0131rad\u0131r; i\u015F, \u00FCretim kart\u0131ndan verilir.")));
 }
 function ReceteYazdir({ product, tumUrunler, tanimlarProsesler, tanimlarAraProsesler, onClose, onMinimize, firmaBilgileri }) {
@@ -55424,6 +55427,28 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
             });
         });
     });
+    // PLAN = ÖNERİ (v1.709.2 — kullanıcı: "sırası gelmeyen proses verilemesin, adım adım ilerler ve adım adım silinir; cari
+    // ekranında bu cari işi yapacak diye önerecek"). Plan hiçbir şey VERMEZ: alınabilir işler yine yalnız sırası gelenler
+    // (önceki adımın teslim aldığı kadar). Planlanan kişiye "Size planlandı" rozeti ve üstte; başkasına planlıysa adıyla uyarı
+    // — okutmak yine serbest (plan öneri, kilit değil).
+    const planliKisi = (u, proses) => ((((u.prosesPlani || {})[proses]) || {}).personelId) || null;
+    // BANA PLANLANAN İŞLER (v1.709.0 — kullanıcı: "barkod ekranında cari kendi ekranına girdiğinde ona planlanan işleri
+    // görecek"). Planlama › Proses Planlama'da bu kişiye ayrılmış, henüz verilmemiş adımlar; sırası gelmişse "hazır".
+    const planlananlar = [];
+    if (personel) {
+        (uretim || []).forEach((u) => {
+            if (u.iptal || u.asama === "Tamamlandı")
+                return;
+            Object.entries(u.prosesPlani || {}).forEach(([proses, plan]) => {
+                if (!plan || plan.personelId !== personel.id)
+                    return;
+                const d = prosesAdimDurumu(u, proses);
+                if (d)
+                    planlananlar.push({ uretim: u, proses, hazir: d.hazir, sira: plan.sira || 0 });
+            });
+        });
+        planlananlar.sort((a, b) => (b.hazir - a.hazir) || (a.sira - b.sira));
+    }
     // Bu personelin ALABİLECEĞİ işler: bağlı olduğu proseslerde sırası gelmiş ve dağıtılmamış
     // miktarı olan üretimler. Bağlı proses tanımlı değilse hiçbir şey gösterilmiyor — herkesin her
     // işi alabilmesi, atölyede kimin ne yaptığını izlenemez hale getirirdi.
@@ -55650,6 +55675,25 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
                         borderRadius: "var(--erp-r-md)", border: "2px solid #C9A063", background: "var(--erp-panel)",
                     } })))),
         gunluk.length > 0 && (React.createElement("div", { style: { marginBottom: 12 } }, gunluk.slice(0, 4).map((g, i) => (React.createElement("div", { key: i, style: { fontSize: i === 0 ? 16 : 13, fontWeight: i === 0 ? 700 : 400, color: i === 0 ? RENK[g.tur] : "var(--erp-border)", background: i === 0 ? "var(--erp-panel)" : "transparent", borderRadius: "var(--erp-r-md)", padding: i === 0 ? "8px 12px" : "2px 12px" } }, g.metin))))),
+        personel && planlananlar.length > 0 && (React.createElement("div", { "data-bana-planlanan": true, style: { background: "#B8860B14", border: "1px solid #B8860B55", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12 } },
+            React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "#8A6508", marginBottom: 6 } },
+                "Bana planlanan i\u015Fler (",
+                planlananlar.length,
+                ")"),
+            planlananlar.map(({ uretim: u, proses, hazir }) => {
+                const urun = (stok || []).find((x) => x.id === u.urunId);
+                return (React.createElement("div", { key: `${u.id}-${proses}`, "data-planlanan-satir": u.siparisNo, style: { display: "flex", gap: 8, flexWrap: "wrap", fontSize: 13, padding: "4px 0", borderTop: "1px solid #B8860B22", opacity: hazir ? 1 : 0.6 } },
+                    React.createElement("b", { className: "mono" }, u.siparisNo),
+                    React.createElement("span", null,
+                        u.model || (urun && urun.ad) || "",
+                        " \u00B7 ",
+                        u.renk),
+                    React.createElement("span", { style: { fontWeight: 700 } }, proses),
+                    React.createElement("span", null,
+                        u.adet,
+                        " \u00E7ift"),
+                    React.createElement("span", { style: { marginLeft: "auto", fontSize: 12, fontWeight: 700, color: hazir ? "var(--erp-ok)" : "var(--erp-text-3)" } }, hazir ? "sırası geldi" : "önceki proseste")));
+            }))),
         personel && (React.createElement("div", { style: { display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" } },
             React.createElement("div", { style: { background: "var(--erp-panel-2)", borderRadius: "var(--erp-r-md)", padding: 10 } },
                 React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--erp-text)", marginBottom: 6 } },
@@ -55658,7 +55702,10 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
                     ")"),
                 alinabilirler.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)" } }, (personel.bagliProsesler || []).length === 0
                     ? "Cari kartınızda bağlı proses tanımlı değil."
-                    : "Sıradaki işlerde size uygun iş yok.")) : alinabilirler.map(({ uretim: u, adim, kalan, parcaKod }) => {
+                    : "Sıradaki işlerde size uygun iş yok.")) : alinabilirler.slice().sort((a, b) => (planliKisi(b.uretim, b.adim.proses) === personel.id) - (planliKisi(a.uretim, a.adim.proses) === personel.id))
+                    .map(({ uretim: u, adim, kalan, parcaKod }) => {
+                    const planli = planliKisi(u, adim.proses);
+                    const baskasi = planli && planli !== personel.id ? ((cariler || []).find((c) => c.id === planli) || {}).unvan : null;
                     const adet = kalan.reduce((t, k) => t + k.miktar, 0);
                     const urun = (stok || []).find((x) => x.id === u.urunId);
                     return (React.createElement("div", { key: `${u.id}|${adim.proses}|${parcaKod || ""}`, style: { display: "flex", alignItems: "center", gap: 8, padding: "5px 0", borderTop: "1px solid var(--erp-line-soft)", fontSize: 13 } },
@@ -55667,6 +55714,10 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
                             (urun && urun.ad) || u.model || "",
                             " \u00B7 ",
                             adim.proses),
+                        planli === personel.id && React.createElement("span", { "data-size-planli": true, style: { fontSize: 11, fontWeight: 700, color: "#8A6508", background: "#B8860B1A", padding: "1px 8px", borderRadius: "var(--erp-r-pill)" } }, "Size planland\u0131"),
+                        baskasi && React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-3)" } },
+                            baskasi,
+                            "'e planl\u0131"),
                         React.createElement("span", { className: "mono", style: { marginLeft: "auto", fontWeight: 700 } },
                             adet,
                             " \u00E7ift")));
@@ -57012,7 +57063,12 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                     a.verildiMi && !a.tamamlandiMi && (React.createElement(TeslimAlmaFormu, { atama: a, prosesler: (o.prosesIlerleme || []).map((x) => x.proses), buProses: p.proses, hammaddeler: hammaddeSecenekleri, iadeAdaylari: atamaHammaddeleri(a, p.proses), fireSebepleri: fireSebepleri, personeller: personelListesi, onKaydet: (sonuc) => onProsesTamamla(o.id, p.proses, a.id, sonuc) }))));
                             }),
                             kalanMiktar > 0 && (() => {
-                                const secim = seciliPersonel[p.proses] || {};
+                                // PLANLANAN CARİ (v1.709.0 — kullanıcı: "planlama işi vermek değil, o işi yapacak cariyi seçmek; üretim
+                                // kartında o proses geldiğinde bu cariye planlandığı belli olacak"). Planlama › Proses Planlama'da seçilen
+                                // kişi Kime'ye önceden dolu gelir; kullanıcı değiştirebilir (değiştirdiği an kendi seçimi geçerli).
+                                const planliId = (((o.prosesPlani || {})[p.proses]) || {}).personelId || "";
+                                const secimHam = seciliPersonel[p.proses] || {};
+                                const secim = { ...secimHam, personelId: secimHam.personelId !== undefined ? secimHam.personelId : planliId };
                                 const bedenGirisleri = secim.bedenMiktarlar || {};
                                 const kalanBedenler = bedenDurumu.filter((bd) => bd.kalan > 0);
                                 const bedenSecenekleri = kalanBedenler.map((bd) => bd.beden);
@@ -57031,7 +57087,9 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                 // kimse bu prosese bağlı değilse (henüz tanımlanmamışsa) tüm personel gösterilir —
                                 // böylece sistem hiçbir zaman kilitlenip iş dağıtımını engellemez.
                                 const bagliPersonel = personelListesi.filter((per) => (per.bagliProsesler || []).includes(p.proses));
-                                const secilebilirPersonel = bagliPersonel.length > 0 ? bagliPersonel : personelListesi;
+                                const secilebilirPersonel0 = bagliPersonel.length > 0 ? bagliPersonel : personelListesi;
+                                const planliKisi = planliId ? personelListesi.find((per) => per.id === planliId) : null;
+                                const secilebilirPersonel = planliKisi && !secilebilirPersonel0.includes(planliKisi) ? [planliKisi, ...secilebilirPersonel0] : secilebilirPersonel0;
                                 // Bu proseste, ÖNCEKİ adımdan henüz akmış (kısmen dahi olsa teslim alınmış) ama bu
                                 // adıma henüz dağıtılmamış bir miktar yoksa, kalanBedenler boş çıkar — bu, bedenlerin
                                 // "kaldırıldığı" anlamına gelmez, sadece şu an dağıtılacak yeni birim olmadığı
@@ -57052,6 +57110,9 @@ function UretimSiparisKarti({ order: o, onTamEkran, baslangicAcik, acikDisaridan
                                             bd.kalan))))),
                                     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 4, paddingTop: 10, borderTop: "1px solid var(--erp-line-soft)" } },
                                         personelListesi.length > 0 ? (React.createElement("span", { style: { order: 2, marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10 } },
+                                            planliKisi && (React.createElement("span", { "data-planli-cari": planliKisi.unvan, style: { fontSize: 12, fontWeight: 700, color: "#B8860B", background: "#B8860B1A", padding: "3px 10px", borderRadius: "var(--erp-r-pill)" } },
+                                                "Planland\u0131: ",
+                                                planliKisi.unvan)),
                                             React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)" } }, "Kime:"),
                                             React.createElement("select", { value: secim.personelId || "", onChange: (e) => setSeciliPersonel({ ...seciliPersonel, [p.proses]: { ...secim, personelId: e.target.value } }), style: {
                                                     ...inputStyle, width: 210, padding: "8px 10px", fontSize: 14, fontWeight: 700,
@@ -66420,7 +66481,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.708.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.709.2)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

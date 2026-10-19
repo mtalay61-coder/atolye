@@ -149,6 +149,12 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
     });
   });
 
+  // PLAN = ÖNERİ (v1.709.2 — kullanıcı: "sırası gelmeyen proses verilemesin, adım adım ilerler ve adım adım silinir; cari
+  // ekranında bu cari işi yapacak diye önerecek"). Plan hiçbir şey VERMEZ: alınabilir işler yine yalnız sırası gelenler
+  // (önceki adımın teslim aldığı kadar). Planlanan kişiye "Size planlandı" rozeti ve üstte; başkasına planlıysa adıyla uyarı
+  // — okutmak yine serbest (plan öneri, kilit değil).
+  const planliKisi = (u, proses) => ((((u.prosesPlani || {})[proses]) || {}).personelId) || null;
+
   // BANA PLANLANAN İŞLER (v1.709.0 — kullanıcı: "barkod ekranında cari kendi ekranına girdiğinde ona planlanan işleri
   // görecek"). Planlama › Proses Planlama'da bu kişiye ayrılmış, henüz verilmemiş adımlar; sırası gelmişse "hazır".
   const planlananlar = [];
@@ -448,7 +454,10 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
                   ? "Cari kartınızda bağlı proses tanımlı değil."
                   : "Sıradaki işlerde size uygun iş yok."}
               </div>
-            ) : alinabilirler.map(({ uretim: u, adim, kalan, parcaKod }) => {
+            ) : alinabilirler.slice().sort((a, b) => (planliKisi(b.uretim, b.adim.proses) === personel.id) - (planliKisi(a.uretim, a.adim.proses) === personel.id))
+              .map(({ uretim: u, adim, kalan, parcaKod }) => {
+              const planli = planliKisi(u, adim.proses);
+              const baskasi = planli && planli !== personel.id ? ((cariler || []).find((c) => c.id === planli) || {}).unvan : null;
               const adet = kalan.reduce((t, k) => t + k.miktar, 0);
               const urun = (stok || []).find((x) => x.id === u.urunId);
               return (
@@ -456,6 +465,8 @@ function BarkodAtolyeEkrani({ cariler, uretim, stok, onProsesVer, onProsesTamaml
                   {/* Bölünmüş üretimde PARÇA kodu görünür; ana kod artık kapalı. */}
                   <span className="mono" style={{ fontWeight: 700 }}>{parcaKod || u.takipKodu}</span>
                   <span>{(urun && urun.ad) || u.model || ""} · {adim.proses}</span>
+                  {planli === personel.id && <span data-size-planli style={{ fontSize: 11, fontWeight: 700, color: "#8A6508", background: "#B8860B1A", padding: "1px 8px", borderRadius: "var(--erp-r-pill)" }}>Size planlandı</span>}
+                  {baskasi && <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{baskasi}'e planlı</span>}
                   <span className="mono" style={{ marginLeft: "auto", fontWeight: 700 }}>{adet} çift</span>
                 </div>
               );

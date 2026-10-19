@@ -488,7 +488,7 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.709.1";
+const SURUM = "1.709.2";
 const SURUM_TARIHI = "2026-10-19";
 const SURUM_NOTU = "Planlanan cari üretim kartında Kime'ye dolu gelir; barkod ekranında kişiye planlanan işler";
 
@@ -521,6 +521,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.709.2", tarih: "19.10.2026", eklenen: ["Barkod ekranı Alabileceğim işler: kişiye planlanan iş üstte ve \"Size planlandı\"; başkasına planlıysa adıyla not"], degisen: [], duzeltilen: [] },
   { surum: "1.709.1", tarih: "19.10.2026", eklenen: [], degisen: ["Sipariş Planlama: Üret ve Satınalma panelleri de kendi içinde kayan çerçevede"], duzeltilen: [] },
   { surum: "1.709.0", tarih: "19.10.2026", eklenen: ["Üretim kartı: proses sırası gelince \"Planlandı: <cari>\" etiketi ve Kime alanı planlanan cariyle dolu", "Barkod atölye ekranı: kişi girişinde \"Bana planlanan işler\" (sırası gelen / önceki proseste)"], degisen: ["Proses Planlama: plan iş vermez, işi yapacak cariyi ayırır (seçici \"Cari seçilmedi\", İşi ver düğmesi \"Kart\")"], duzeltilen: [] },
   { surum: "1.708.0", tarih: "19.10.2026", degisen: ["Üretim kartı: tamamlanan prosesin hammaddesi tek matriste (hammadde · renk × beden, çıkan ve beklenen, eksik turuncu)"], eklenen: ["Proses Planlama: planlanan işe personel atanır; her kişinin kuyruğu ayrı birikir, süre kişinin saatlik adedi ve çalışma saatinden (yoksa makine kapasitesinden), başlıkta kişi kişi gün"], degisen: [], duzeltilen: [] },
