@@ -22,37 +22,42 @@ async function calistir() {
   await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Teklif"]'); if (b) b.click(); });
   await sayfa.waitForTimeout(600);
   const modulVar = await sayfa.locator("[data-teklif-modulu]").count();
+  // Giriş formu = sipariş formu (v1.716.0, teklif kipi, tam ekran katman): cari, model, renk, ölçü matrisi, kalemlere ekle.
   await tikla("[data-teklif-yeni]");
-  await sayfa.locator("[data-teklif-cari]").first().click();
-  await sayfa.locator("[data-teklif-cari]").first().fill("Müşteri");
-  await sayfa.waitForTimeout(300);
-  await sayfa.locator("[data-teklif-cari]").first().press("Enter");
-  await sayfa.waitForTimeout(200);
-  const seciliCari = await sayfa.locator("[data-teklif-cari]").first().getAttribute("data-cari-id");
-  await sayfa.locator("[data-teklif-urun]").first().click();
-  await sayfa.locator("[data-teklif-urun]").first().fill("Bot");
-  await sayfa.waitForTimeout(300);
-  await sayfa.locator("[data-teklif-urun]").first().press("Enter");
-  await sayfa.waitForTimeout(300);
-  const seciliUrun = (await metin("[data-teklif-secili-urun]"))[0] || "";
-  await sayfa.locator("[data-teklif-renk]").selectOption("Siyah");
-  await sayfa.waitForTimeout(300);
-  const fiyatOnerisi = await sayfa.locator("[data-teklif-fiyat]").inputValue();
-  await sayfa.locator("[data-teklif-fiyat]").fill("150");
-  await sayfa.locator('[data-teklif-miktar="40"]').fill("2");
-  await sayfa.locator('[data-teklif-miktar="41"]').fill("3");
-  await tikla("[data-teklif-kalem-ekle]");
-  const kalemGruplari = await sayfa.evaluate(() => [...document.querySelectorAll("[data-teklif-kalem-grup]")].map((e) => e.getAttribute("data-teklif-kalem-grup")));
-  await sayfa.locator("[data-teklif-not]").fill("30 gün vade");
-  await tikla("[data-teklif-kaydet]");
+  await sayfa.waitForTimeout(400);
+  const formBasligi = (await metin("[data-siparis-form-eylemler]"))[0] || "yok";
+  const gecerlilikVar = await sayfa.locator("[data-teklif-gecerlilik]").count();
+  const cariKutusu = sayfa.locator("[data-siparis-cari]:visible").first();
+  await cariKutusu.click(); await cariKutusu.fill("Müşteri"); await sayfa.waitForTimeout(250); await cariKutusu.press("Enter"); await sayfa.waitForTimeout(200);
+  const seciliCari = await cariKutusu.getAttribute("data-cari-id");
+  const urunKutusu = sayfa.locator("[data-siparis-urun]:visible").first();
+  await urunKutusu.click(); await urunKutusu.fill("Bot"); await sayfa.waitForTimeout(250); await urunKutusu.press("Enter"); await sayfa.waitForTimeout(300);
+  const renkKutusu = sayfa.locator("[data-siparis-renk-arama]:visible").first();
+  await renkKutusu.click(); await renkKutusu.fill("Siy"); await sayfa.waitForTimeout(200);
+  await sayfa.locator('[data-aramali-oneri="Siyah"]').first().dispatchEvent("mousedown"); await sayfa.waitForTimeout(300);
+  const matrisOlculeri = await sayfa.evaluate(() => [...document.querySelectorAll("[data-olcu-miktar]")].map((e) => e.getAttribute("data-olcu-miktar")));
+  await sayfa.locator('[data-olcu-miktar="40"]').fill("2");
+  await sayfa.locator('[data-olcu-miktar="41"]').fill("3");
+  await sayfa.locator("[data-kalemlere-ekle]:visible").first().click(); await sayfa.waitForTimeout(400);
+  const kalemSayisi = await sayfa.evaluate(() => (document.querySelector("[data-siparis-form-kalem-sayisi]") || {}).getAttribute("data-siparis-form-kalem-sayisi"));
+  await sayfa.locator("[data-siparis-kaydet]:visible").first().click();
   await sayfa.waitForTimeout(500);
   const satirlar = await sayfa.evaluate(() => [...document.querySelectorAll("[data-teklif-satir]")].map((e) => e.getAttribute("data-teklif-satir")));
   const durum1 = await sayfa.evaluate(() => [...document.querySelectorAll("[data-teklif-durum]")].map((e) => e.getAttribute("data-teklif-durum")));
   const teklifYerel1 = (await depoOku(sayfa, "teklif:data")) || [];
 
-  // ---- 2) Gönderildi
+  // ---- 1b) Düzenle: aynı form teklif kaydıyla açılır (başlıkta numara, 2 kalem), Vazgeç ile kapanır.
   await tikla("[data-teklif-satir] > button");
   await sayfa.waitForTimeout(300);
+  await tikla("[data-teklif-duzenle]");
+  await sayfa.waitForTimeout(500);
+  const duzenlemeBasligi = (await metin("[data-siparis-form-eylemler]"))[0] || "yok";
+  const duzenlemeKalem = await sayfa.evaluate(() => (document.querySelector("[data-siparis-form-kalem-sayisi]") || {}).getAttribute("data-siparis-form-kalem-sayisi"));
+  await sayfa.locator("[data-siparis-form-vazgec]:visible").first().click();
+  await sayfa.waitForTimeout(400);
+  const formKapandi = (await sayfa.locator("[data-siparis-form-eylemler]").count()) === 0;
+  // ---- 2) Gönderildi (satır hâlâ açık)
+  if ((await sayfa.locator("[data-teklif-gonderildi]").count()) === 0) { await tikla("[data-teklif-satir] > button"); await sayfa.waitForTimeout(300); }
   await tikla("[data-teklif-gonderildi]");
   const durum2 = await sayfa.evaluate(() => [...document.querySelectorAll("[data-teklif-durum]")].map((e) => e.getAttribute("data-teklif-durum")));
 
@@ -81,9 +86,9 @@ async function calistir() {
 
   await tarayici.close();
   return {
-    modulVar, seciliCari, seciliUrun, fiyatOnerisi, kalemGruplari, satirlar, durum1,
-    teklif1: teklifYerel1.map((t) => ({ no: t.teklifNo, durum: t.durum, cari: t.cariId, kalem: (t.kalemler || []).map((k) => `${k.urunAd} ${k.renk} ${k.beden}:${k.miktar}@${k.birimFiyat}${k.paraBirimi}`), not: t.not, gecerlilikVar: !!t.gecerlilikTarihi })),
-    durum2,
+    modulVar, formBasligi, gecerlilikVar, seciliCari, matrisOlculeri, kalemSayisi, satirlar, durum1,
+    teklif1: teklifYerel1.map((t) => ({ no: t.teklifNo, durum: t.durum, cari: t.cariId, kalem: (t.kalemler || []).map((k) => `${k.urunAd} ${k.renk} ${k.beden}:${k.miktar}@${k.birimFiyat}${k.paraBirimi}`), not: t.not, gecerlilikVar: !!t.gecerlilikTarihi, defter: t.defterTercihi })),
+    duzenlemeBasligi, duzenlemeKalem, formKapandi, durum2,
     yeniSiparis: yeniSiparis && { no: /^SAT-1\d{3}$/.test(yeniSiparis.siparisNo), tip: yeniSiparis.tip, durum: yeniSiparis.durum, cari: yeniSiparis.cariId, teklifNo: yeniSiparis.teklifNo,
       kalem: yeniSiparis.kalemler.map((k) => `${k.urunAd} ${k.renk} ${k.beden}:${k.miktar}@${k.birimFiyat} k=${k.karsilanan}`), not: yeniSiparis.not },
     teklif2: teklifYerel2.map((t) => ({ no: t.teklifNo, durum: t.durum, siparisNoVar: /^SAT-1\d{3}$/.test(t.siparisNo || "") })),

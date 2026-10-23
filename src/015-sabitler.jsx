@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.715.0";
+const SURUM = "1.716.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Teklif: Siparişler menüsünde ayrı alan — müşteri, kalemler, fiyat, geçerlilik; Gönderildi/Reddedildi; onaylanınca tek tıkla satış siparişine dönüşür; yazdırılabilir teklif formu (teklifler.sql çalıştırılmalı)";
+const SURUM_NOTU = "Teklif girişi sipariş formunun birebir aynısı: aramalı ürün/renk, ölçü matrisi, asorti, barkod, satır notu, ambalaj, para birimi; geçerlilik tarihi formda";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.716.0", tarih: "23.10.2026", eklenen: [], degisen: ["Teklif girişi artık sipariş formunun kendisi (tam ekran): aramalı ürün ve renk seçimi, ölçü matrisi, asorti, barkod okutma, satır notları, ambalaj, kayıt para birimi, defter — siparişte ne varsa teklifte de var; ek olarak \"Geçerlilik Tarihi\" alanı. Düzenleme de aynı formda. Dönüştürmede kalemler notlarıyla, ambalajıyla birebir siparişe geçer"], duzeltilen: [] },
   { surum: "1.715.0", tarih: "23.10.2026", eklenen: [
     "Siparişler › Teklif: müşteriye fiyat teklifi — müşteri, tarih, geçerlilik, teslim, kalemler (ürün · renk · ölçü · miktar · fiyat; fiyat kuraldan önerilir), not; TKL- numarası",
     "Teklif durumları: Hazırlanıyor → Gönderildi → Siparişe dönüştü / Reddedildi; geçerliliği geçen açık teklif \"Süresi doldu\" görünür",

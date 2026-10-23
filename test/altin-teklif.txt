@@ -1,11 +1,14 @@
 {
   "modulVar": 1,
+  "formBasligi": "Yeni Teklif0 kalem Teklifi Kaydet Vazgeç",
+  "gecerlilikVar": 1,
   "seciliCari": "c2",
-  "seciliUrun": "Bot",
-  "fiyatOnerisi": "",
-  "kalemGruplari": [
-    "Bot|Siyah"
+  "matrisOlculeri": [
+    "40",
+    "41",
+    "42"
   ],
+  "kalemSayisi": "2",
   "satirlar": [
     "TKL-1001"
   ],
@@ -18,13 +21,17 @@
       "durum": "Hazırlanıyor",
       "cari": "c2",
       "kalem": [
-        "Bot Siyah 40:2@150TRY",
-        "Bot Siyah 41:3@150TRY"
+        "Bot Siyah 40:2@0TRY",
+        "Bot Siyah 41:3@0TRY"
       ],
-      "not": "30 gün vade",
-      "gecerlilikVar": true
+      "not": "",
+      "gecerlilikVar": true,
+      "defter": "Genel"
     }
   ],
+  "duzenlemeBasligi": "TKL-1001 düzenleniyor2 kalem Değişiklikleri Kaydet Vazgeç",
+  "duzenlemeKalem": "2",
+  "formKapandi": true,
   "durum2": [
     "Gönderildi"
   ],
@@ -35,10 +42,10 @@
     "cari": "c2",
     "teklifNo": "TKL-1001",
     "kalem": [
-      "Bot Siyah 40:2@150 k=0",
-      "Bot Siyah 41:3@150 k=0"
+      "Bot Siyah 40:2@0 k=0",
+      "Bot Siyah 41:3@0 k=0"
     ],
-    "not": "30 gün vade"
+    "not": ""
   },
   "teklif2": [
     {

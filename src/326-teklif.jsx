@@ -65,13 +65,11 @@ function teklifToplami(teklif) {
 // kalemler yeni kimlikle ve `karsilanan: 0`. Teklifin notu ve müşteri kodu geçer; teklif numarası siparişte `teklifNo`.
 // Teslim tarihi teklifte yazıldıysa o, yoksa boş (sipariş kartından girilir).
 function teklifiSipariseCevir(teklif, { siparisler, cop, simdi, bugun }) {
+  // Kalem sipariş formunun ürettiği kalemin TAM kopyası (notlar, ambalaj, KDV, para birimi… — v1.716.0, form birebir aynı):
+  // yalnız kimlik yenilenir, karşılanan sıfırlanır, planlama bağı taşınmaz.
   const kalemler = ((teklif && teklif.kalemler) || []).map((k) => ({
-    id: uid("kalem"), urunId: k.urunId, urunAd: k.urunAd, renk: k.renk || "", beden: k.beden || "",
-    miktar: Number(k.miktar) || 0, karsilanan: 0, birim: k.birim || "çift",
-    birimFiyat: Number(k.birimFiyat) || 0, paraBirimi: k.paraBirimi || "TRY",
-    ...(k.kdvOrani != null ? { kdvOrani: Number(k.kdvOrani) } : {}),
-    ...(k.aciklama ? { aciklama: k.aciklama } : {}),
-    ambalaj: null,
+    ...k, id: uid("kalem"), miktar: Number(k.miktar) || 0, karsilanan: 0, planlama: undefined,
+    birim: k.birim || "çift", birimFiyat: Number(k.birimFiyat) || 0, paraBirimi: k.paraBirimi || "TRY", ambalaj: k.ambalaj || null,
   })).filter((k) => k.miktar > 0);
   return {
     id: uid("sip"),
@@ -79,7 +77,7 @@ function teklifiSipariseCevir(teklif, { siparisler, cop, simdi, bugun }) {
     tip: "Satış", cariId: teklif.cariId, tarih: bugun, teslimTarihi: teklif.teslimTarihi || "",
     not: teklif.not || "", musteriKodu: teklif.musteriKodu || "",
     ...(teklif.belgeNo ? { belgeNo: teklif.belgeNo } : {}), ...(teklif.sezon ? { sezon: teklif.sezon } : {}),
-    kayitParaBirimi: null, kayitKurlari: {},
+    kayitParaBirimi: teklif.kayitParaBirimi || null, kayitKurlari: teklif.kayitKurlari || {},
     durum: "Bekliyor", kalemler,
     defterTercihi: teklif.defterTercihi || "Genel",
     olusturuldu: simdi,
@@ -156,37 +154,21 @@ function teklifYazdirHtml(teklif, cari, firmaBilgileri, stok) {
 }
 
 // ---------------------------------------------------------------------------------------------
-function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgileri, tanimlar, showToast, onSipariseDonustur, onSil, onGoToSiparis, onGoToCari, aktifKullanici, cop, hedefTeklifId, onHedefTuketildi }) {
+// TEKLİF EKRANI. Giriş formu SİPARİŞ FORMUNUN KENDİSİDİR (v1.716.0 — kullanıcı: "Teklifte ürün girişi siparişin aynısı
+// olacak, bire bir"): 325 SiparisModule `teklifKipi`nde yalnız form olarak çizilir — aramalı ürün/renk seçimi, ölçü
+// matrisi, asorti, barkod, satır notları, ambalaj, para birimi, defter… ne varsa aynısı. Kayıt `onTeklifKaydet` ile buraya
+// gelir; teklif numarası, durum ve geçerlilik burada eklenir. Liste, durum akışı, dönüştürme, yazdırma bu dosyada.
+function teklifiFormaCevir(t) {
+  // Sipariş formu `siparisler` listesinde `siparisNo`/`tip` bekler; teklif kaydı aynı alanlarla verilir.
+  return { ...t, tip: "Satış", siparisNo: t.teklifNo, durum: "Bekliyor" };
+}
+function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgileri, tanimlar, showToast, onSipariseDonustur, onSil, onGoToSiparis, onGoToCari, aktifKullanici, cop, hedefTeklifId, onHedefTuketildi, siparisFormuProps }) {
   const bugun = bugunYerel();
   const [durumFiltre, setDurumFiltre] = useState("Açık");
   const [arama, setArama] = useState("");
   const [formAcik, setFormAcik] = useState(false);
-  const [duzenlenenId, setDuzenlenenId] = useState(null);
+  const [duzenlenen, setDuzenlenen] = useState(null);   // düzenlenen teklif kaydı (form o kayıtla açılır)
   const [acikId, setAcikId] = useState(null);
-  // Form alanları
-  const [cariId, setCariId] = useState("");
-  const [tarih, setTarih] = useState(bugun);
-  const [gecerlilikTarihi, setGecerlilikTarihi] = useState(teklifGecerlilikVarsayilani(bugun));
-  const [teslimTarihi, setTeslimTarihi] = useState("");
-  const [musteriKodu, setMusteriKodu] = useState("");
-  const [not, setNot] = useState("");
-  const [kalemler, setKalemler] = useState([]);
-  // Kalem ekleme satırı
-  const [kUrunId, setKUrunId] = useState("");
-  const [kRenk, setKRenk] = useState("");
-  const [kFiyat, setKFiyat] = useState("");
-  const [kParaBirimi, setKParaBirimi] = useState("TRY");
-  const [kMiktarlar, setKMiktarlar] = useState({});   // beden -> miktar (metin)
-  const [kAciklama, setKAciklama] = useState("");
-
-  const kdvAktif = kdvAktifMi(firmaBilgileri);
-  const cariUygun = (cariler || []).filter((c) => (c.tip === "Müşteri" || c.tip === "Her İkisi") && (!c.pasif || c.id === cariId));
-  const urunUygun = (stok || []).filter((p) => p.kategori === "Mamul");
-  const seciliUrun = urunUygun.find((u) => u.id === kUrunId) || null;
-  const urunRenkleri = (u) => Array.from(new Set(((u && u.variants) || []).map((v) => v.renk).filter(Boolean)));
-  const urunBedenleri = (u, renk) => bedenSirala(Array.from(new Set(((u && u.variants) || []).filter((v) => !renk || v.renk === renk).map((v) => v.beden || "").filter((b) => b !== ""))));
-  const renkler = urunRenkleri(seciliUrun);
-  const bedenler = seciliUrun ? urunBedenleri(seciliUrun, kRenk) : [];
 
   // Hedefe gidiş (anasayfa / cari kartından).
   useEffect(() => {
@@ -195,96 +177,48 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
     if (onHedefTuketildi) onHedefTuketildi();
   }, [hedefTeklifId, onHedefTuketildi]);
 
-  // Ürün/renk/cari değişince fiyat önerisi (fiyat kuralı). Kullanıcı elle yazdıysa ezilmez: öneri yalnız kutu boşken.
-  useEffect(() => {
-    if (!seciliUrun) return;
-    const f = fiyatBul(seciliUrun, kRenk, bedenler[0] || "", cariId, "Satış", cariler);
-    setKFiyat(f.fiyat > 0 ? String(f.fiyat) : "");
-    setKParaBirimi(["TRY", "USD", "EUR"].includes(f.paraBirimi) ? f.paraBirimi : (paraKoduna(f.paraBirimi) || "TRY"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kUrunId, kRenk, cariId]);
-
-  function formuSifirla() {
-    setCariId(""); setTarih(bugun); setGecerlilikTarihi(teklifGecerlilikVarsayilani(bugun)); setTeslimTarihi("");
-    setMusteriKodu(""); setNot(""); setKalemler([]); kalemSatiriniSifirla(); setDuzenlenenId(null);
-  }
-  function kalemSatiriniSifirla() { setKUrunId(""); setKRenk(""); setKFiyat(""); setKMiktarlar({}); setKAciklama(""); }
-
-  function kalemEkle() {
-    if (!seciliUrun) return showToast("Ürün seçin");
-    if (renkler.length > 0 && !kRenk) return showToast("Renk seçin");
-    const fiyat = parseFloat(String(kFiyat).replace(",", ".")) || 0;
-    const olculer = bedenler.length ? bedenler : [""];
-    const yeniler = olculer
-      .map((b) => ({ beden: b, miktar: Number(String(kMiktarlar[b] || "").replace(",", ".")) || 0 }))
-      .filter((x) => x.miktar > 0)
-      .map((x) => ({
-        id: uid("kalem"), urunId: seciliUrun.id, urunAd: seciliUrun.ad, birim: seciliUrun.birim || "çift",
-        renk: kRenk || "", beden: x.beden, miktar: x.miktar, birimFiyat: fiyat, paraBirimi: kParaBirimi,
-        ...(kdvAktif ? { kdvOrani: urunKdvOrani(seciliUrun, firmaBilgileri) } : {}),
-        ...(kAciklama.trim() ? { aciklama: kAciklama.trim() } : {}),
-      }));
-    if (yeniler.length === 0) return showToast("En az bir ölçüye miktar girin");
-    // Aynı ürün+renk+beden zaten varsa miktar üstüne eklenir (sipariş formuyla aynı kural).
-    let sonuc = kalemler.slice();
-    yeniler.forEach((y) => {
-      const i = sonuc.findIndex((k) => k.urunId === y.urunId && k.renk === y.renk && k.beden === y.beden);
-      if (i >= 0) sonuc[i] = { ...sonuc[i], miktar: sonuc[i].miktar + y.miktar, birimFiyat: y.birimFiyat, paraBirimi: y.paraBirimi };
-      else sonuc.push(y);
-    });
-    setKalemler(sonuc);
-    kalemSatiriniSifirla();
-    showToast(`${seciliUrun.ad}${kRenk ? ` · ${kRenk}` : ""}: ${yeniler.length} ölçü eklendi`);
-  }
-  function grupSil(g) { setKalemler(kalemler.filter((k) => !(k.urunId === g.urunId && (k.renk || "") === g.renk))); }
-  function grupFiyatDegistir(g, deger) {
-    const f = parseFloat(String(deger).replace(",", ".")) || 0;
-    setKalemler(kalemler.map((k) => (k.urunId === g.urunId && (k.renk || "") === g.renk ? { ...k, birimFiyat: f } : k)));
-  }
-  function kalemMiktarDegistir(id, deger) {
-    const m = Number(String(deger).replace(",", ".")) || 0;
-    setKalemler(m > 0 ? kalemler.map((k) => (k.id === id ? { ...k, miktar: m } : k)) : kalemler.filter((k) => k.id !== id));
-  }
-
+  function formuKapat() { setFormAcik(false); setDuzenlenen(null); }
+  function yeniTeklif() { setDuzenlenen(null); setFormAcik(true); }
   function duzenle(t) {
-    setDuzenlenenId(t.id); setCariId(t.cariId || ""); setTarih(t.tarih || bugun); setGecerlilikTarihi(t.gecerlilikTarihi || "");
-    setTeslimTarihi(t.teslimTarihi || ""); setMusteriKodu(t.musteriKodu || ""); setNot(t.not || "");
-    setKalemler((t.kalemler || []).map((k) => ({ ...k }))); kalemSatiriniSifirla(); setFormAcik(true);
-    setTimeout(() => { const el = typeof document !== "undefined" ? document.getElementById("teklif-form") : null; if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }, 60);
+    if (t.durum === "Siparişe dönüştü") return showToast("Siparişe dönüşmüş teklif düzenlenemez");
+    setDuzenlenen(t); setFormAcik(true);
   }
-  function kopyala(t) {
-    setDuzenlenenId(null); setCariId(t.cariId || ""); setTarih(bugun); setGecerlilikTarihi(teklifGecerlilikVarsayilani(bugun));
-    setTeslimTarihi(""); setMusteriKodu(t.musteriKodu || ""); setNot(t.not || "");
-    setKalemler((t.kalemler || []).map((k) => ({ ...k, id: uid("kalem") }))); kalemSatiriniSifirla(); setFormAcik(true);
-    showToast(`${t.teklifNo} kopyalandı — yeni teklif olarak kaydedilecek`);
-  }
-
-  function kaydet() {
-    if (!cariId) return showToast("Müşteri seçin");
-    const hata = teklifKalemHatasi(kalemler);
+  // Sipariş formundan gelen kayıt: yeni teklif ya da düzenleme.
+  function formdanKaydet(nesne, duzenlenenId) {
+    const hata = teklifKalemHatasi(nesne.kalemler);
     if (hata) return showToast(hata);
+    const alanlar = {
+      cariId: nesne.cariId, tarih: nesne.tarih, gecerlilikTarihi: nesne.gecerlilikTarihi || "", teslimTarihi: nesne.teslimTarihi || "",
+      not: nesne.not || "", musteriKodu: nesne.musteriKodu || "", belgeNo: nesne.belgeNo, sezon: nesne.sezon,
+      defterTercihi: nesne.defterTercihi || "Genel", kayitParaBirimi: nesne.kayitParaBirimi || null, kayitKurlari: nesne.kayitKurlari || {},
+      kalemler: nesne.kalemler,
+    };
     if (duzenlenenId) {
       const mevcut = (teklifler || []).find((t) => t.id === duzenlenenId);
-      if (!mevcut) return showToast("Teklif bulunamadı");
-      if (mevcut.durum === "Siparişe dönüştü") return showToast("Siparişe dönüşmüş teklif düzenlenemez");
-      onSave((teklifler || []).map((t) => (t.id !== duzenlenenId ? t : {
-        ...t, cariId, tarih, gecerlilikTarihi, teslimTarihi, musteriKodu: musteriKodu.trim(), not: not.trim(), kalemler,
-        guncellendi: new Date().toISOString(),
-      })));
+      if (!mevcut) { formuKapat(); return showToast("Teklif bulunamadı"); }
+      onSave((teklifler || []).map((t) => (t.id !== duzenlenenId ? t : { ...t, ...alanlar, guncellendi: new Date().toISOString() })));
       showToast(`${mevcut.teklifNo} güncellendi`);
     } else {
       const teklif = {
-        id: uid("tkl"), teklifNo: sonrakiTeklifNo(teklifler, cop),
-        cariId, tarih, gecerlilikTarihi, teslimTarihi, musteriKodu: musteriKodu.trim(), not: not.trim(),
-        durum: "Hazırlanıyor", kalemler, defterTercihi: "Genel",
-        olusturuldu: new Date().toISOString(), olusturan: (aktifKullanici && aktifKullanici.ad) || undefined,
+        id: uid("tkl"), teklifNo: sonrakiTeklifNo(teklifler, cop), ...alanlar,
+        durum: "Hazırlanıyor", olusturuldu: new Date().toISOString(), olusturan: (aktifKullanici && aktifKullanici.ad) || undefined,
       };
       onSave([teklif, ...(teklifler || [])]);
       showToast(`${teklif.teklifNo} oluşturuldu`);
     }
-    formuSifirla(); setFormAcik(false);
+    formuKapat();
   }
-
+  function kopyala(t) {
+    const yeni = {
+      ...t, id: uid("tkl"), teklifNo: sonrakiTeklifNo(teklifler, cop), tarih: bugun, gecerlilikTarihi: teklifGecerlilikVarsayilani(bugun),
+      teslimTarihi: "", durum: "Hazırlanıyor", siparisId: undefined, siparisNo: undefined, redSebebi: undefined, durumZamani: undefined,
+      kalemler: (t.kalemler || []).map((k) => ({ ...k, id: uid("kalem"), karsilanan: 0, planlama: undefined })),
+      olusturuldu: new Date().toISOString(), olusturan: (aktifKullanici && aktifKullanici.ad) || undefined,
+    };
+    onSave([yeni, ...(teklifler || [])]);
+    showToast(`${t.teklifNo} → ${yeni.teklifNo} olarak kopyalandı`);
+    setDurumFiltre("Açık"); setAcikId(yeni.id);
+  }
   function durumDegistir(t, durum, ek = {}) {
     onSave((teklifler || []).map((x) => (x.id === t.id ? { ...x, durum, ...ek, durumZamani: new Date().toISOString() } : x)));
   }
@@ -318,15 +252,32 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
   });
   const sayilar = TEKLIF_DURUMLARI.concat(["Süresi doldu"]).reduce((m, d) => { m[d] = (teklifler || []).filter((t) => teklifDurumu(t, bugun) === d).length; return m; }, {});
   const acikSayi = sayilar["Hazırlanıyor"] + sayilar["Gönderildi"] + sayilar["Süresi doldu"];
-
-  const kucukInput = { ...inputStyle, padding: "6px 8px", fontSize: 13 };
-  const etiket = (m) => <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-3)", marginBottom: 3, textTransform: "uppercase", letterSpacing: ".04em" }}>{m}</div>;
+  const formKaydi = duzenlenen ? teklifiFormaCevir(duzenlenen) : null;
 
   return (
     <div data-teklif-modulu="1">
+      {/* GİRİŞ FORMU = SİPARİŞ FORMU (teklif kipi, tam ekran katman). Kapanınca kaldırılır; yeniden açılış temiz başlar. */}
+      {formAcik && (
+        <SiparisModule
+          {...(siparisFormuProps || {})}
+          sabitTip="Satış"
+          teklifKipi
+          teklifDuzenle={formKaydi}
+          siparisler={formKaydi ? [formKaydi] : []}
+          onSave={() => {}}
+          onTeklifKaydet={formdanKaydet}
+          onTeklifVazgec={formuKapat}
+          showToast={showToast}
+          cariler={cariler}
+          stok={stok}
+          cop={cop}
+          firmaBilgileri={firmaBilgileri}
+          aktifKullanici={aktifKullanici}
+        />
+      )}
       <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-        <button type="button" data-teklif-yeni="1" style={EKLE_DUGMESI} onClick={() => { if (formAcik && !duzenlenenId) { setFormAcik(false); return; } formuSifirla(); setFormAcik(true); }}>
-          <Plus size={15} /> {formAcik && !duzenlenenId ? "Formu kapat" : "Yeni Teklif"}
+        <button type="button" data-teklif-yeni="1" style={EKLE_DUGMESI} onClick={yeniTeklif}>
+          <Plus size={15} /> Yeni Teklif
         </button>
         <input value={arama} onChange={(e) => setArama(e.target.value)} placeholder="Teklif no, müşteri, ürün ara…" data-teklif-arama="1"
           style={{ ...inputStyle, maxWidth: 320, padding: "7px 10px", fontSize: 13 }} />
@@ -344,116 +295,6 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
           })}
         </div>
       </div>
-
-      {formAcik && (
-        <div id="teklif-form" data-teklif-form="1" style={{ background: "#fff", border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 14 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-            <b style={{ fontSize: 14 }}>{duzenlenenId ? `Teklifi düzenle — ${((teklifler || []).find((t) => t.id === duzenlenenId) || {}).teklifNo || ""}` : "Yeni teklif"}</b>
-            <button type="button" className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { formuSifirla(); setFormAcik(false); }}>Vazgeç</button>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10, marginBottom: 10 }}>
-            <div style={{ gridColumn: "span 2" }}>{etiket("Müşteri")}
-              <CariSecici cariler={cariUygun} deger={cariId} onDegis={setCariId} placeholder="Müşteri ara…" veriAdi="data-teklif-cari" />
-            </div>
-            <div>{etiket("Tarih")}<input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} data-teklif-tarih="1" style={kucukInput} /></div>
-            <div>{etiket("Geçerlilik")}<input type="date" value={gecerlilikTarihi} onChange={(e) => setGecerlilikTarihi(e.target.value)} data-teklif-gecerlilik="1" style={kucukInput} /></div>
-            <div>{etiket("Teslim (isteğe bağlı)")}<input type="date" value={teslimTarihi} onChange={(e) => setTeslimTarihi(e.target.value)} data-teklif-teslim="1" style={kucukInput} /></div>
-            <div>{etiket("Müşteri referansı")}<input value={musteriKodu} onChange={(e) => setMusteriKodu(e.target.value)} placeholder="Müşterinin talep no'su" style={kucukInput} /></div>
-          </div>
-
-          {/* KALEM EKLEME: ürün → renk → o rengin ölçüleri miktar kutularıyla; fiyat kuraldan önerilir. */}
-          <div style={{ background: "var(--erp-panel)", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 10 }}>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
-              <div style={{ minWidth: 220, flex: "1 1 220px" }}>{etiket("Ürün")}
-                {seciliUrun ? (
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <b data-teklif-secili-urun="1" style={{ fontSize: 13 }}>{seciliUrun.ad}</b>
-                    <button type="button" className="btn-ghost" style={{ fontSize: 11, padding: "2px 8px" }} onClick={() => { setKUrunId(""); setKRenk(""); setKMiktarlar({}); }}>değiştir</button>
-                  </div>
-                ) : (
-                  <AramaliSecici secenekler={urunUygun.map((u) => ({ deger: u.id, etiket: u.ad }))} onSec={(id) => { setKUrunId(id); setKRenk(""); setKMiktarlar({}); }}
-                    placeholder="Ürün ara…" veriAdi="data-teklif-urun" genislik={260} />
-                )}
-              </div>
-              {seciliUrun && renkler.length > 0 && (
-                <div style={{ minWidth: 150 }}>{etiket("Renk")}
-                  <select value={kRenk} onChange={(e) => { setKRenk(e.target.value); setKMiktarlar({}); }} data-teklif-renk="1" style={kucukInput}>
-                    <option value="">Renk seçin</option>
-                    {renkler.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </div>
-              )}
-              {seciliUrun && (
-                <>
-                  <div style={{ width: 120 }}>{etiket("Birim fiyat")}
-                    <input value={kFiyat} onChange={(e) => setKFiyat(e.target.value)} inputMode="decimal" data-teklif-fiyat="1" style={kucukInput} placeholder="0" />
-                  </div>
-                  <div style={{ width: 90 }}>{etiket("Para")}
-                    <select value={kParaBirimi} onChange={(e) => setKParaBirimi(e.target.value)} style={kucukInput}>
-                      {["TRY", "USD", "EUR"].map((pb) => <option key={pb} value={pb}>{PARA_SEMBOLU[pb]} {pb}</option>)}
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-            {seciliUrun && (renkler.length === 0 || kRenk) && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginTop: 10 }}>
-                {(bedenler.length ? bedenler : [""]).map((b) => (
-                  <div key={b || "tek"} style={{ width: 70 }}>
-                    {etiket(b || "Miktar")}
-                    <input value={kMiktarlar[b] || ""} onChange={(e) => setKMiktarlar({ ...kMiktarlar, [b]: e.target.value })} inputMode="decimal"
-                      data-teklif-miktar={b || "tek"} style={{ ...kucukInput, textAlign: "center" }} placeholder="0"
-                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); kalemEkle(); } }} />
-                  </div>
-                ))}
-                <div style={{ flex: "1 1 160px", minWidth: 160 }}>{etiket("Satır notu")}
-                  <input value={kAciklama} onChange={(e) => setKAciklama(e.target.value)} placeholder="isteğe bağlı" style={kucukInput} />
-                </div>
-                <button type="button" data-teklif-kalem-ekle="1" style={EKLE_DUGMESI} onClick={kalemEkle}><Plus size={14} /> Kalemi ekle</button>
-              </div>
-            )}
-          </div>
-
-          {kalemler.length > 0 && (
-            <div data-teklif-kalemler="1" style={{ display: "grid", gap: 6, marginBottom: 10 }}>
-              {teklifKalemGruplari(kalemler).map((g) => (
-                <div key={`${g.urunId}|${g.renk}`} data-teklif-kalem-grup={`${g.urunAd}|${g.renk}`} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-sm)", padding: "6px 10px" }}>
-                  <b style={{ fontSize: 13, minWidth: 160 }}>{g.urunAd}{g.renk ? ` · ${g.renk}` : ""}</b>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
-                    {g.kalemler.map((k) => (
-                      <span key={k.id} className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, background: "var(--erp-panel)", borderRadius: "var(--erp-r-sm)", padding: "2px 6px" }}>
-                        {k.beden || "—"}:
-                        <input value={k.miktar} onChange={(e) => kalemMiktarDegistir(k.id, e.target.value)} inputMode="decimal" style={{ width: 44, border: "1px solid var(--erp-line)", borderRadius: 4, fontSize: 12, textAlign: "center", padding: "1px 2px" }} />
-                      </span>
-                    ))}
-                  </div>
-                  <span className="mono" style={{ fontSize: 12, display: "inline-flex", gap: 4, alignItems: "center" }}>
-                    <input value={g.kalemler[0].birimFiyat} onChange={(e) => grupFiyatDegistir(g, e.target.value)} inputMode="decimal" title="Birim fiyat" style={{ width: 80, border: "1px solid var(--erp-line)", borderRadius: 4, fontSize: 12, textAlign: "right", padding: "2px 4px" }} />
-                    {PARA_SEMBOLU[g.paraBirimi] || g.paraBirimi}
-                  </span>
-                  <span className="mono" style={{ fontSize: 12, fontWeight: 700, minWidth: 90, textAlign: "right" }}>
-                    {teklifParaYaz(g.kalemler.reduce((t, k) => t + k.miktar * (k.birimFiyat || 0), 0), g.paraBirimi)}
-                  </span>
-                  <button type="button" title="Satırı çıkar" className="btn-ghost" style={{ padding: "2px 6px" }} onClick={() => grupSil(g)}><X size={13} /></button>
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{ marginBottom: 10 }}>{etiket("Not")}
-            <textarea value={not} onChange={(e) => setNot(e.target.value)} rows={2} placeholder="Ödeme şartı, teslim koşulu, açıklama…" data-teklif-not="1" style={{ ...kucukInput, resize: "vertical" }} />
-          </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <button type="button" className="btn-primary" data-teklif-kaydet="1" onClick={kaydet} style={{ padding: "8px 18px" }}>
-              {duzenlenenId ? "Değişiklikleri kaydet" : "Teklifi kaydet"}
-            </button>
-            {Object.entries(teklifToplami({ kalemler })).map(([pb, t]) => (
-              <span key={pb} className="mono" style={{ fontSize: 13 }}>
-                {kdvAktif ? `${teklifParaYaz(t.matrah, pb)} + KDV ${teklifParaYaz(t.kdv, pb)} = ` : ""}<b>{teklifParaYaz(t.toplam, pb)}</b> · {t.adet} {kalemler[0] && kalemler[0].birim}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {liste.length === 0 ? (
         <EmptyState text={(teklifler || []).length === 0 ? "Henüz teklif yok. \"Yeni Teklif\" ile başlayın." : "Bu süzgeçte teklif yok."} />
