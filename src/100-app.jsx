@@ -5123,6 +5123,18 @@ function AtolyeUygulamasi() {
               cop={cop}
               hedefTeklifId={hedefTeklifId}
               onHedefTuketildi={() => setHedefTeklifId(null)}
+              // SİPARİŞ FORMUNUN İHTİYAÇLARI (v1.716.0): teklif girişi 325 SiparisModule'ün teklif kipi — Satış modülüne verilen
+              // form bağımlılıklarının aynısı (liste/pencere/teslim kancaları hariç).
+              siparisFormuProps={{
+                uretim, stokRezervasyonlari: stokRezervasyonlariGecerli, koliler, muhasebe,
+                asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur,
+                onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle,
+                tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [],
+                tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [],
+                tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [],
+                tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {},
+                onPencereAc: pencereAc, acikSiparisPencereleri: [], raporlar: [],
+              }}
             />
           </GizliModul>
           <GizliModul aktif={tab === "siparis"}>

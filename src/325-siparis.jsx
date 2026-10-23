@@ -1,6 +1,10 @@
 // sabitTip: "Satış" | "Alış". Verildiğinde modül tek tarafa kilitlenir ve iç sekme çubuğu
 // gösterilmez — sol menüde zaten ayrı iki giriş var, ikinci bir sekme katmanı gereksiz tekrar olurdu.
-function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, onOdemeGir, muhasebe, onOdemeKaydet }) {
+function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, onFiseGitNo, sabitTip, siparisler, onSave, showToast, cariler, stok, stokRezervasyonlari, uretim, onGoToCari, onGoToUretim, onGerceklestir, onSatisFisiAc, onSiparisKapat, onCopaAt, onPlanlaUretim, onPlanlaSatinAlma, onPlanlamaTemizle, asortiler, hedefSiparisId, onHedefTuketildi, hedefYeniAlis, onYeniAlisTuketildi, onAsortiOlustur, firmaBilgileri, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikSiparisPencereleri, onUruneGit, onModelRengiVeRecete, onYeniRenkKaydet, tanimlarRenkler, tanimlarKombinasyonlar, tanimlarBedenler, tanimlarOzelKodAlanlari, kurlar , koliler, raporlar, onRaporlarKaydet, aktifKullanici, tanimlarProsesler, tanimlarAraProsesler, onOdemeGir, muhasebe, onOdemeKaydet,
+  // TEKLİF KİPİ (v1.716.0 — kullanıcı: "Teklifte ürün girişi siparişin aynısı olacak, bire bir"): modül YALNIZ FORM olarak
+  // çizilir (liste, sekme, pencereler yok), kayıt `onSave` yerine `onTeklifKaydet(nesne, duzenlenenId)`e gider, kapanınca
+  // `onTeklifVazgec`. `teklifDuzenle` verilirse form o kayıtla açılır (siparisler=[o kayıt] ile). 326 TeklifModule sarmalar.
+  teklifKipi = false, teklifDuzenle = null, onTeklifKaydet, onTeklifVazgec }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
@@ -23,7 +27,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const [acikSiparisId, setAcikSiparisId] = useState(null);
   // Listeden sağ tık (v1.636.0): hangi kartın menüsü, nerede açılacak (bkz. SiparisCard `disMenuIstegi`).
   const [listeMenuIstegi, setListeMenuIstegi] = useState(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(!!teklifKipi);
   // VAR OLAN SİPARİŞE KALEM EKLEME. Karta ayrı bir kalem formu yazmak yerine, ZATEN OLAN form
   // hedefe yönlendiriliyor: ürün seçici, asorti uygulama, barkod okutma, fiyat bulma, ölçü
   // matrisi — hepsi burada. İkinci bir form, ayrışacak ikinci bir form demekti.
@@ -37,6 +41,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   const [cariId, setCariId] = useState("");
   const [tarih, setTarih] = useState(bugunYerel());
   const [teslimTarihi, setTeslimTarihi] = useState("");
+  const [gecerlilikTarihi, setGecerlilikTarihi] = useState("");   // yalnız teklif kipinde (v1.716.0)
   const [not, setNot] = useState("");
   // FORMDA NOTLAR PANELİ (v1.621.0 — kullanıcı: "Sipariş girişinde not ekleyebilelim, şu anda sipariş girdikten sonra not
   // giriyoruz, aynı not mantığı sipariş girişinde de olsun"). Kartın "Notlar" penceresiyle aynı içerik, ama düzenlenebilir.
@@ -428,8 +433,25 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     return v ? v.miktar : 0;
   }
 
+  // TEKLİF KİPİ AÇILIŞI (v1.716.0): düzenlenecek teklif verildiyse formu onunla aç; yoksa boş form + varsayılan geçerlilik.
+  // Form kapanınca (Kaydet ya da Vazgeç → showForm=false) sarmalayıcıya haber ver ki modülü kaldırsın.
+  const teklifAcildiRef = useRef(false);
+  useEffect(() => {
+    if (!teklifKipi) return;
+    if (teklifDuzenle && teklifDuzenle.id) siparisDuzenlemeyiBaslat(teklifDuzenle.id);
+    else { setShowForm(true); setGecerlilikTarihi((g) => g || teklifGecerlilikVarsayilani(bugunYerel())); }
+    teklifAcildiRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teklifKipi, teklifDuzenle && teklifDuzenle.id]);
+  useEffect(() => {
+    if (!teklifKipi || !teklifAcildiRef.current || showForm) return;
+    if (onTeklifVazgec) onTeklifVazgec();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showForm]);
+
   function resetForm() {
     setCariId(""); setTarih(bugunYerel()); setTeslimTarihi(""); setNot("");
+    setGecerlilikTarihi(teklifKipi ? teklifGecerlilikVarsayilani(bugunYerel()) : "");
     setKalemler([]); setKUrunId(""); setKRenk(""); setKMiktarlar({}); setKFiyat(""); setKNotlar([]); setKNotTaslak(null); setKNotAnahtar((x) => x + 1); setSiparisDefter("Genel");
     setMusteriKodu(""); setBelgeNo(""); setSezon(""); setKayitParaBirimi(null); setKayitKurlari({});
     setKAmbalajRenk(""); setSiteTalepId(null);
@@ -698,6 +720,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     setCariId(siparis.cariId || "");
     setTarih(siparis.tarih || bugunYerel());
     setTeslimTarihi(siparis.teslimTarihi || "");
+    setGecerlilikTarihi(siparis.gecerlilikTarihi || "");
     setNot(siparis.not || "");
     setMusteriKodu(siparis.musteriKodu || "");
     setBelgeNo(siparis.belgeNo || ""); setSezon(siparis.sezon || "");
@@ -756,13 +779,15 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
     });
     kilitliAsil.forEach((k) => { if (!kalemler.some((x) => x.id === k.id)) sonKalemler.push(k); });
 
-    onSave(siparisler.map((s) => (s.id !== siparis.id ? s : {
-      ...s,
+    const guncelAlanlar = {
       cariId, tarih, teslimTarihi, not: not.trim(), musteriKodu: musteriKodu.trim(),
       belgeNo: belgeNo.trim() || undefined, sezon: sezon.trim() || undefined,
       defterTercihi: siparisDefter, kayitParaBirimi, kayitKurlari,
       kalemler: sonKalemler,
-    })));
+    };
+    // TEKLİF KİPİ: kayıt sarmalayıcıya (326) gider; sipariş listesine dokunulmaz.
+    if (teklifKipi) { if (onTeklifKaydet) onTeklifKaydet({ ...siparis, ...guncelAlanlar, gecerlilikTarihi }, siparis.id); duzenlemedenCik(); return; }
+    onSave(siparisler.map((s) => (s.id !== siparis.id ? s : { ...s, ...guncelAlanlar })));
     showToast(`${siparis.siparisNo} güncellendi`);
     duzenlemedenCik();
   }
@@ -871,6 +896,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
       olusturuldu: new Date().toISOString(),
       ...(siteTalepId ? { siteTalepId } : {}),
     };
+    // TEKLİF KİPİ: aynı kayıt nesnesi (kalemler, not, defter, para birimi…) + geçerlilik, sarmalayıcıya (326).
+    if (teklifKipi) { if (onTeklifKaydet) onTeklifKaydet({ ...siparis, gecerlilikTarihi }, null); resetForm(); setShowForm(false); return; }
     onSave([siparis, ...siparisler]);
     resetForm();
     setShowForm(false);
@@ -1170,7 +1197,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               <Pencil size={18} />
               <span style={{ display: "flex", flexDirection: "column", minWidth: 0, lineHeight: 1.25 }}>
                 <span className="mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", opacity: 0.75 }}>
-                  {hedef.tip === "Alış" ? "Alış siparişi düzenleniyor" : "Satış siparişi düzenleniyor"}
+                  {teklifKipi ? "Teklif düzenleniyor" : (hedef.tip === "Alış" ? "Alış siparişi düzenleniyor" : "Satış siparişi düzenleniyor")}
                 </span>
                 <span style={{ fontSize: 17, fontWeight: 700, overflowWrap: "anywhere" }}>
                   {(cariler.find((c) => c.id === hedef.cariId) || {}).unvan || "—"}
@@ -1199,7 +1226,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             return (
               <KayitSeridi yapiskan veri="data-siparis-form-eylemler"
                 ikon={duzenlenenId ? <Pencil size={15} color="#5B3F75" /> : (tip === "Alış" ? <PackageCheck size={15} color="#5B3F75" /> : <Truck size={15} color="#5B3F75" />)}
-                baslik={duzenlenenId ? `${hedef.siparisNo} düzenleniyor` : (tip === "Alış" ? "Yeni Alış Siparişi" : "Yeni Satış Siparişi")}
+                baslik={duzenlenenId ? `${hedef.siparisNo} düzenleniyor` : (teklifKipi ? "Yeni Teklif" : (tip === "Alış" ? "Yeni Alış Siparişi" : "Yeni Satış Siparişi"))}
                 ozet={<span className="mono" data-siparis-form-kalem-sayisi={kalemSayisi} style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{kalemSayisi} kalem</span>}>
                 {duzenlenenId ? (
                   <button className="btn-primary btn-save" onClick={siparisDuzenlemeKaydet} data-siparis-duzenle-kaydet="1" style={{ padding: "6px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
@@ -1207,7 +1234,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                   </button>
                 ) : (
                   <button className="btn-primary btn-save" onClick={siparisKaydet} data-siparis-kaydet="1" style={{ padding: "6px 12px", fontSize: 13, whiteSpace: "nowrap" }}>
-                    <Save size={14} /> {tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet"}
+                    <Save size={14} /> {teklifKipi ? "Teklifi Kaydet" : (tip === "Alış" ? "Satın Almayı Kaydet" : "Siparişi Kaydet")}
                   </button>
                 )}
                 <button className="btn-ghost" data-siparis-form-vazgec="1" style={{ padding: "6px 12px", fontSize: 13 }}
@@ -1272,7 +1299,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
             </Field>
             </div>
             <div style={{ flex: "1 1 140px", minWidth: 0 }}>
-            <Field label="Sipariş Tarihi">
+            <Field label={teklifKipi ? "Teklif Tarihi" : "Sipariş Tarihi"}>
               <input type="date" value={tarih} onChange={(e) => setTarih(e.target.value)} style={inputStyle} />
             </Field>
             </div>
@@ -1281,6 +1308,13 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
               <input type="date" value={teslimTarihi} onChange={(e) => setTeslimTarihi(e.target.value)} style={inputStyle} />
             </Field>
             </div>
+            {teklifKipi && (
+            <div style={{ flex: "1 1 140px", minWidth: 0 }}>
+            <Field label="Geçerlilik Tarihi">
+              <input type="date" value={gecerlilikTarihi} onChange={(e) => setGecerlilikTarihi(e.target.value)} data-teklif-gecerlilik="1" style={inputStyle} />
+            </Field>
+            </div>
+            )}
             <div style={{ flex: "1 1 180px", minWidth: 0 }}>
             <Field label={tip === "Satış" ? "Müşteri Sipariş Kodu (opsiyonel)" : "Tedarikçi Sipariş Kodu (opsiyonel)"}>
               <input
@@ -1708,6 +1742,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
                 {/* Sipariş girişinde de aramalı seçici: stok büyüdükçe açılır listeden ürün bulmak
                     reçetedeki kadar yavaşlıyor ve sipariş girişi seri yapılan bir iş. */}
                 <AramaliUrunSecici
+                  veriAdi="data-siparis-urun"
                   urunler={urunUygun}
                   seciliId={kUrunId}
                   onSec={urunSec}
@@ -2251,6 +2286,8 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         </div>
       )}
 
+      {/* TEKLİF KİPİNDE YALNIZ FORM (v1.716.0): aşağısı sipariş listesi/sekmeleri — teklifte çizilmez. */}
+      {!teklifKipi && (<>
       {siparisSekme === "satis" && ustSekme !== "raporlar" && (
         <SiteTalepleriPaneli siparisler={siparisler} cariler={cariler} onSipariseCevir={siteTalebiniAc} showToast={showToast} />
       )}
@@ -2680,7 +2717,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
         )
       )}
       </div>
+      </>)}
     </div>
   );
 }
-

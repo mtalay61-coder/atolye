@@ -22,7 +22,9 @@ const s = teklifiSipariseCevir(t, { siparisler: [{ siparisNo: "SAT-1004", tip: "
 bekle("sipariş: SAT numarası, Satış, Bekliyor, teklif bağı", [s.siparisNo, s.tip, s.durum, s.teklifNo, s.teklifId, s.cariId, s.teslimTarihi, s.not, s.musteriKodu], ["SAT-1005", "Satış", "Bekliyor", "TKL-1001", "t1", "c2", "2026-11-20", "30 gün vade", "REF-9"]);
 bekle("sipariş kalemleri birebir, yeni kimlik, karşılanan 0", s.kalemler.map((k) => [k.urunAd, k.renk, k.beden, k.miktar, k.karsilanan, k.birimFiyat, k.paraBirimi, k.kdvOrani, k.id !== "a"]),
   [["Bot", "Siyah", "41", 3, 0, 100, "TRY", 20, true], ["Bot", "Siyah", "40", 2, 0, 100, "TRY", 20, true], ["Çizme", "Taba", "42", 1, 0, 50, "USD", undefined, true]]);
-bekle("sipariş kalemi ambalaj null, kdvsiz kalemde kdvOrani yok", [s.kalemler[0].ambalaj, "kdvOrani" in s.kalemler[2]], [null, false]);
+bekle("sipariş kalemi ambalaj null, kdvsiz kalemde kdvOrani yok, planlama taşınmaz", [s.kalemler[0].ambalaj, "kdvOrani" in s.kalemler[2], s.kalemler[0].planlama], [null, false, undefined]);
+const sNot = teklifiSipariseCevir({ ...t, kalemler: [{ ...t.kalemler[0], notlar: [{ proses: "Kesim", metin: "dikkat" }], ambalaj: { renk: "Kahve" }, planlama: { tip: "Üretim" } }] }, { siparisler: [], cop: [], simdi: "x", bugun: "2026-10-23" });
+bekle("kalem notu ve ambalaj birebir geçer (form aynı)", [sNot.kalemler[0].notlar, sNot.kalemler[0].ambalaj, sNot.kalemler[0].planlama], [[{ proses: "Kesim", metin: "dikkat" }], { renk: "Kahve" }, undefined]);
 bekle("doğrulama: boş", teklifKalemHatasi([]), "En az 1 kalem ekleyin");
 bekle("doğrulama: miktarsız", teklifKalemHatasi([{ urunId: "u", urunAd: "Bot", miktar: 0 }]), "Bot: miktar girin");
 bekle("doğrulama: tamam", teklifKalemHatasi(t.kalemler), null);
