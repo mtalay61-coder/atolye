@@ -19,7 +19,7 @@ function useAcilisYukleme(d) {
     setFisDefteri, setGorevler, setKoliler, setLoading, setMesajOkumalari, setMesajlar, setModeller,
     setMuhasebe, setOnaylar, setSiparisler, setStok, setStokRezervasyonlari, setStorageOk,
     setTanimlar, setUretim, setVeriKaynagi, setVeriKilidiSebep,
-    setFaturalar,
+    setFaturalar, setTeklifler,
   } = d;
 
 // ---- yükleme ----
@@ -216,6 +216,8 @@ useEffect(() => {
           // FATURALAR (v1.500.0) — aynı kalıp. Tablo yoksa (faturalar.sql çalıştırılmadıysa) yerel kopya;
           // yazma uyarısı ekranda görünür, veri kaybolmaz.
           { const v = await tekilOku("faturalar", "fatura:data"); if (v != null) setFaturalar(v); }
+          // TEKLİFLER (v1.715.0) — aynı kalıp.
+          { const v = await tekilOku("teklifler", "teklif:data"); if (v != null && setTeklifler) setTeklifler(v); }
 
           // FİŞ DEFTERİ: bekleyen yazma varsa yerel esas (v1.545.0) — artık buluttaki yenilerle BİRLEŞİK (v1.556.0).
           {
@@ -625,6 +627,8 @@ useEffect(() => {
         if (okumaMd.deger) { try { setModeller(JSON.parse(okumaMd.deger)); } catch (e) { /* bozuksa boş */ } }
         const okumaFt = await guvenliOku("fatura:data", anahtarKumesi);
         if (okumaFt.deger) { try { setFaturalar(JSON.parse(okumaFt.deger)); } catch (e) { /* bozuksa boş */ } }
+        const okumaTk = await guvenliOku("teklif:data", anahtarKumesi);
+        if (okumaTk.deger && setTeklifler) { try { setTeklifler(JSON.parse(okumaTk.deger)); } catch (e) { /* bozuksa boş */ } }
         const okumaF = await guvenliOku("fisdefter:data", anahtarKumesi);
         if (okumaF.deger) { try { setFisDefteri(JSON.parse(okumaF.deger)); } catch (e) { /* bozuksa boş */ } }
         const okumaG = await guvenliOku("gorev:data", anahtarKumesi);
