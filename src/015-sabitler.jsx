@@ -252,6 +252,7 @@ const MODUL_RENK = {
   cari: "var(--erp-info)",       // defter mavisi
   siparis: "#9C3D3D",    // mühür/fiş bordosu — SATIŞ tarafı
   satinalma: "var(--erp-brown)",  // saddle — alış tarafı, stok/hammadde ile aynı dil
+  teklif: "#9C3D3D",     // satış tarafının rengi — teklif satışın öncüsü
   depo: "#5A6B4E",
   sevkiyat: "#5A6B4E",
   alissatis: "var(--erp-info)",       // depo yeşili — stoğa yakın ama ondan ayrı bir bakış
@@ -278,6 +279,7 @@ const SEKME_BILGISI = {
   cari: { ad: "Cari" },
   siparis: { ad: "Sipariş" },
   satinalma: { ad: "Alış Siparişi" },
+  teklif: { ad: "Teklif" },
   depo: { ad: "Depo" },
   paketleme: { ad: "Paketleme" },
   sevkiyat: { ad: "Sevkiyat" },
@@ -332,6 +334,8 @@ const TABLO_ACIKLAMALARI = {
   mesajlar: { ad: "Sohbet", ayrinti: "Ekip mesajları" },
   koliler: { ad: "Paketleme", ayrinti: "Koliler ve içerikleri" },
   cek_gorselleri: { ad: "Çek görselleri", ayrinti: "Çeklerin ön/arka fotoğrafları" },
+  faturalar: { ad: "Faturalar", ayrinti: "E-fatura taslakları ve gönderim durumları" },
+  teklifler: { ad: "Teklifler", ayrinti: "Müşteriye verilen fiyat teklifleri (teklifler.sql çalıştırılmadıysa tablo yoktur)" },
 };
 
 function tabloAciklamasi(tablo) {
@@ -488,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.714.0";
+const SURUM = "1.715.0";
 const SURUM_TARIHI = "2026-10-19";
-const SURUM_NOTU = "Yazma sonrası doğrulama: kritik tablolarda yazma bitince bulut satır sayısı geri okunur, bu cihazdakinden azsa kırmızı şerit ve günlük uyarısı";
+const SURUM_NOTU = "Teklif: Siparişler menüsünde ayrı alan — müşteri, kalemler, fiyat, geçerlilik; Gönderildi/Reddedildi; onaylanınca tek tıkla satış siparişine dönüşür; yazdırılabilir teklif formu (teklifler.sql çalıştırılmalı)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -521,6 +525,13 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.715.0", tarih: "23.10.2026", eklenen: [
+    "Siparişler › Teklif: müşteriye fiyat teklifi — müşteri, tarih, geçerlilik, teslim, kalemler (ürün · renk · ölçü · miktar · fiyat; fiyat kuraldan önerilir), not; TKL- numarası",
+    "Teklif durumları: Hazırlanıyor → Gönderildi → Siparişe dönüştü / Reddedildi; geçerliliği geçen açık teklif \"Süresi doldu\" görünür",
+    "\"Onaylandı — siparişe dönüştür\": kalemler birebir kopyalanıp satış siparişi (SAT-) açılır, planlama/rezervasyon oradan yürür; teklifte sipariş no, siparişte teklif no bağı kalır",
+    "Teklif yazdırma (firma başlığı, müşteri, kalemler, KDV, geçerlilik), kopyalama, düzenleme, çöp kutusuna silme ve geri yükleme",
+    "Teklifler ayrı tabloda (teklifler.sql — Supabase'de çalıştırılmalı); yedek ve değişiklik yoklamasına dahil",
+  ], degisen: [], duzeltilen: [] },
   { surum: "1.714.0", tarih: "19.10.2026", eklenen: ["Yazma sonrası doğrulama: ürün/varyant/stok hareketi, cari/cari hareketi, sipariş/kalem, üretim/iş ataması ve rezervasyon tablolarında yazma bitince buluttaki satır sayısı geri okunur (satır inmez, yalnız sayı); bu cihazdakinden azsa üstte kırmızı \"Bulutta eksik\" şeridi çıkar ve günlüğe \"YAZMA DOĞRULAMA\" düşer. Bulutta fazla olması (başka cihaz eklemiş) uyarı değildir"], degisen: [], duzeltilen: [] },
   { surum: "1.713.1", tarih: "19.10.2026", eklenen: [], degisen: [], duzeltilen: ["Üretim teslimi, iş verme ve ölçü/renk adı değiştirme, rezervasyon defterini ekranın o anki (bayat olabilen) kopyasından bütün liste hâlinde yazıyordu; az önce silinmiş üretimin rezervasyonları buluta geri gelebiliyordu. Artık hesaplanan fark güncel listeye uygulanır, silinmiş satır geri gelmez"] },
   { surum: "1.713.0", tarih: "19.10.2026", eklenen: ["Veri denetimi: \"Silinmiş üretimin rezervasyonu duruyor\" bulgusunda \"Yetim rezervasyonları sil\" düğmesi (onaylı, günlüğe yazar)"], degisen: ["Üretim numarası taşıyan rezervasyon, o üretim artık yoksa talebe sayılmaz (Depo / Stok Durumu / ihtiyaç); silinen üretimin talebi ekranda kalmaz"], duzeltilen: ["Planlama, rezervasyonları bayat listeye ekleyip az önce silinmiş üretimin rezervasyonlarını buluta geri getirebiliyordu — artık güncel listeye ekler"] },

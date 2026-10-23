@@ -1,0 +1,62 @@
+{
+  "modulVar": 1,
+  "seciliCari": "c2",
+  "seciliUrun": "Bot",
+  "fiyatOnerisi": "",
+  "kalemGruplari": [
+    "Bot|Siyah"
+  ],
+  "satirlar": [
+    "TKL-1001"
+  ],
+  "durum1": [
+    "Hazırlanıyor"
+  ],
+  "teklif1": [
+    {
+      "no": "TKL-1001",
+      "durum": "Hazırlanıyor",
+      "cari": "c2",
+      "kalem": [
+        "Bot Siyah 40:2@150TRY",
+        "Bot Siyah 41:3@150TRY"
+      ],
+      "not": "30 gün vade",
+      "gecerlilikVar": true
+    }
+  ],
+  "durum2": [
+    "Gönderildi"
+  ],
+  "yeniSiparis": {
+    "no": true,
+    "tip": "Satış",
+    "durum": "Bekliyor",
+    "cari": "c2",
+    "teklifNo": "TKL-1001",
+    "kalem": [
+      "Bot Siyah 40:2@150 k=0",
+      "Bot Siyah 41:3@150 k=0"
+    ],
+    "not": "30 gün vade"
+  },
+  "teklif2": [
+    {
+      "no": "TKL-1001",
+      "durum": "Siparişe dönüştü",
+      "siparisNoVar": true
+    }
+  ],
+  "sekmeBasligi": "Sipariş Yönetimi",
+  "siparisEkranda": true,
+  "dugmeler": {
+    "donustur": 0,
+    "duzenle": 0,
+    "sil": 0,
+    "siparisGit": "Siparişe git (SAT-1001)"
+  },
+  "durum3": [
+    "Siparişe dönüştü · SAT-1001"
+  ],
+  "hatalar": []
+}

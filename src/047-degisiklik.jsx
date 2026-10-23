@@ -17,20 +17,20 @@ const DEGISIKLIK_TABLO_ALANI = {
   uretim: "uretim", uretim_atamalari: "uretim",
   stok_rezervasyonlari: "stokRezervasyonlari", onaylar: "onaylar", cop: "cop",
   tanimlar: "tanimlar", muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler",
-  faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller",
+  faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller", teklifler: "teklifler",
   // mesajlar: sohbet kendi 6 sn yoklamasıyla tazeleniyor (100); cek_gorselleri: kendi yazma yolu, nadir — burada yok.
 };
 // Alan → yerel anahtar (bekleyen yazma defteri bu anahtarla tutuluyor): bekleyeni olan alan TAZELENMEZ, yerel kazanır.
 const DEGISIKLIK_ALAN_ANAHTARI = {
   stok: "stok:items", cariler: "cari:data", siparisler: "siparis:data", uretim: "uretim:siparisler",
   stokRezervasyonlari: "stokrez:data", onaylar: "onaylar:data", cop: "cop:data", tanimlar: "tanimlar:data",
-  muhasebe: "muhasebe:data", koliler: "koli:data", gorevler: "gorev:data", faturalar: "fatura:data",
+  muhasebe: "muhasebe:data", koliler: "koli:data", gorevler: "gorev:data", faturalar: "fatura:data", teklifler: "teklif:data",
   fisDefteri: "fisdefter:data", modeller: "model:data",
 };
 const DEGISIKLIK_ALAN_ADI = {
   stok: "Stok", cariler: "Cariler", siparisler: "Siparişler", uretim: "Üretim", stokRezervasyonlari: "Rezervasyonlar",
   onaylar: "Onaylar", cop: "Çöp", tanimlar: "Tanımlar", muhasebe: "Kasa / Banka", koliler: "Koliler", gorevler: "Görevler",
-  faturalar: "Faturalar", fisDefteri: "Fiş defteri", modeller: "Modelhane",
+  faturalar: "Faturalar", fisDefteri: "Fiş defteri", modeller: "Modelhane", teklifler: "Teklifler",
 };
 const DEGISIKLIK_YOKLAMA_MS = 8000;
 const DEGISIKLIK_KENDI_YAZMA_MS = 12000;

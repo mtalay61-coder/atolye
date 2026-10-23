@@ -99,6 +99,7 @@ function demoVerisi(bugun = bugunYerel()) {
     "uretim:siparisler": [],
     "stokrez:data": [],
     "onaylar:data": [],
+    "teklif:data": [],
     "cop:data": [],
     "muhasebe:data": { hesaplar: [], kasalar: [], bankalar: [], cekler: [], defter: [], kurlar: { USD: 41, EUR: 48 } },
   };

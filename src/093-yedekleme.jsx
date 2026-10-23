@@ -66,6 +66,7 @@ function useYedekleme(d) {
     // yükleme stok/siparişi eski hâle çekerken bunlar olduğu gibi kalıyor, rezervasyon olmayan siparişi gösteriyordu.
     stokRezervasyonlari, onaylar, fisDefteri, modeller,
     setStokRezervasyonlari, setOnaylar, setFisDefteri, setModeller,
+    teklifler, setTeklifler,   // v1.715.0
   } = d;
 
 const otomatikYedekAl = useCallback(async (sessiz) => {
@@ -93,6 +94,7 @@ const otomatikYedekAl = useCallback(async (sessiz) => {
     // Faturalar (v1.500.0): gönderilmiş faturanın yasal kopyası entegratörde; burada taslaklar ve durum.
     faturalar: faturalar || [],
     stokRezervasyonlari: stokRezervasyonlari || [], onaylar: onaylar || [], fisDefteri: fisDefteri || null, modeller: modeller || [],
+    teklifler: teklifler || [],
   };
 
   const yedekMetni = JSON.stringify(yedek);
@@ -122,7 +124,7 @@ const otomatikYedekAl = useCallback(async (sessiz) => {
     if (!sessiz) showToast("Yedek alınamadı");
     return false;
   }
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast, stokRezervasyonlari, onaylar, fisDefteri, modeller]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, showToast, stokRezervasyonlari, onaylar, fisDefteri, modeller, teklifler]);
 
 // Günde BİR kez, veriler yüklendikten sonra. Ref ile korunuyor: her render'da tekrar denemek
 // gereksiz yazma trafiği üretirdi.
@@ -188,6 +190,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (Array.isArray(y.gorevler)) setGorevler(y.gorevler);
   if (Array.isArray(y.mesajlar)) setMesajlar(y.mesajlar);
   if (Array.isArray(y.faturalar) && setFaturalar) setFaturalar(y.faturalar);
+  if (Array.isArray(y.teklifler) && setTeklifler) setTeklifler(y.teklifler);
   if (Array.isArray(y.stokRezervasyonlari) && setStokRezervasyonlari) setStokRezervasyonlari(y.stokRezervasyonlari);
   if (Array.isArray(y.onaylar) && setOnaylar) setOnaylar(y.onaylar);
   if (y.fisDefteri && setFisDefteri) setFisDefteri(y.fisDefteri);
@@ -205,6 +208,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
   if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar);
   if (Array.isArray(y.faturalar)) await tekilYaz("fatura:data", "faturalar", y.faturalar);
+  if (Array.isArray(y.teklifler)) await tekilYaz("teklif:data", "teklifler", y.teklifler);
   if (Array.isArray(y.stokRezervasyonlari)) await tabloYaz("stokrez:data", "stok_rezervasyonlari", y.stokRezervasyonlari, undefined, yazmaSecenegi);
   if (Array.isArray(y.onaylar)) await tabloYaz("onaylar:data", "onaylar", y.onaylar, undefined, yazmaSecenegi);
   if (y.fisDefteri) await tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", y.fisDefteri);
@@ -219,7 +223,7 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   }
   showToast(`${kaynakAd} geri yüklendi — geri yükleme öncesi hâl de ayrıca saklandı`);
   return true;
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, stokRezervasyonlari, onaylar, fisDefteri, modeller, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, stokRezervasyonlari, onaylar, fisDefteri, modeller, showToast, teklifler, setTeklifler]);
 
 // JSON DOSYASINDAN geri yükleme: Tanımlar > Veri Yedekleme > "JSON Yedeğinden Geri Yükle".
 const jsonDosyasindanGeriYukle = useCallback(async (dosya) => {
@@ -303,7 +307,7 @@ const verileriJsonYedekle = useCallback(() => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast("JSON yedeği indirildi");
-}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar, faturalar, stokRezervasyonlari, onaylar, fisDefteri, modeller, showToast]);
+}, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, cekGorselleri, gorevler, mesajlar, faturalar, stokRezervasyonlari, onaylar, fisDefteri, modeller, showToast, teklifler]);
 
 // İnsan gözüyle hızlıca kontrol edilebilecek, okunabilir bir Excel özeti indirir (yedek amaçlı değil,
 // gözden geçirme/rapor amaçlıdır — tam geri yükleme için JSON yedeğini kullanın).

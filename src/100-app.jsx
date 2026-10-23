@@ -129,6 +129,11 @@ function AtolyeUygulamasi() {
   // FATURALAR (27 Eylül, v1.500.0 — e-fatura Aşama 2): tekil tablo (`faturalar`), görevlerle aynı kalıp.
   // Taslakta yalnız kullanıcı seçimleri durur; içerik fişten kurulur (bkz. 080-efatura).
   const [faturalar, setFaturalar] = useState([]);
+  // TEKLİFLER (v1.715.0, 326-teklif): tekil tablo (`teklifler`), faturalar kalıbı. Siparişten AYRI liste — bkz. 326 başlığı.
+  const [teklifler, setTeklifler] = useState([]);
+  const teklifRef = useRef([]);
+  teklifRef.current = teklifler;
+  const [hedefTeklifId, setHedefTeklifId] = useState(null);
   const [gorevler, setGorevler] = useState([]);
   const [hedefGorevId, setHedefGorevId] = useState(null);
   // SOHBET (14 Eylül): mesajlar görevlerle aynı kalıpta tekil tablo. `okumalar` kanal başına son
@@ -743,7 +748,7 @@ function AtolyeUygulamasi() {
   useAcilisYukleme({
     yuklemeSayaci, acilisGocuUygula, showToast,
     setBekleyenYazmalar, setBulutGirisGerekli, setCariler, setCekGorselleri, setCop, setFisDefteri, setGorevler, setKoliler, setLoading, setMesajOkumalari, setMesajlar, setModeller, setMuhasebe, setOnaylar, setSiparisler, setStok, setStokRezervasyonlari, setStorageOk, setTanimlar, setUretim, setVeriKaynagi, setVeriKilidiSebep,
-    setFaturalar,
+    setFaturalar, setTeklifler,
   });
 
   // PEŞİN ÖDEME YÖNÜ GÖÇÜ (v1.537.0 — son denetim): alış fişinden peşin ödenen tutar cariye yanlış yönle
@@ -851,6 +856,7 @@ function AtolyeUygulamasi() {
     if (d["gorev:data"]) isler.push(tekilYaz("gorev:data", "gorevler", gorevler));
     if (d["mesaj:data"]) isler.push(tekilYaz("mesaj:data", "mesajlar", mesajlar));
     if (d["fatura:data"]) isler.push(tekilYaz("fatura:data", "faturalar", faturalar));
+    if (d["teklif:data"]) isler.push(tekilYaz("teklif:data", "teklifler", teklifler));
     // Fiş defteri bu listede YOKTU (v1.545.0): "Yeniden dene" onu hiç göndermiyor, uyarı ancak bir sonraki fişte kalkıyordu.
     if (d[FIS_DEFTERI_ANAHTAR]) isler.push(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", fisDefteri));
     // EKSİK BEŞ TABLO (v1.639.0, denetim): çöp, onaylar, rezervasyonlar, modeller, çek görselleri listede yoktu — biri
@@ -863,7 +869,7 @@ function AtolyeUygulamasi() {
     await Promise.all(isler.map((p2) => Promise.resolve(p2).catch(() => {})));
     const kalan = Object.keys(bekleyenYazmalariOku()).length;
     if (!sessiz || kalan === 0) showToast(kalan === 0 ? "Bekleyen kayıtların hepsi buluta gönderildi" : `${kalan} tablo hâlâ gönderilemedi — "Hata" düğmesinden sebebini okuyun`);
-  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, fisDefteri, cop, onaylar, stokRezervasyonlari, modeller, cekGorselleri, showToast]);
+  }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, teklifler, fisDefteri, cop, onaylar, stokRezervasyonlari, modeller, cekGorselleri, showToast]);
   // Bağlantı gelince ve açılıştan kısa süre sonra kendiliğinden dene.
   // Kendiliğinden deneme: bağlantı geri gelince ve dakikada bir — SESSİZ (toast yok), yalnız
   // başarı bildirilir. Her açılışta hemen denemek, ağ yokken sürekli hata üretirdi.
@@ -905,7 +911,7 @@ function AtolyeUygulamasi() {
   // Ekrandaki son hâl (v1.645.7): tazelemede buluttan gelenle karşılaştırmak için — aynıysa "başka cihaz" değil (047
   // `degisiklikIcerikAyni`). Her çizimde güncellenir; geri çağırma bayat kapanış yerine bunu okur.
   const guncelDurumRef = useRef({});
-  guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, fisDefteri, modeller };
+  guncelDurumRef.current = { stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop, tanimlar, muhasebe, koliler, gorevler, faturalar, teklifler, fisDefteri, modeller };
   // Döner: içeriği GERÇEKTEN değişen alanlar (not yalnız bunlar için çıkar). Aynı olan alan state'e yazılmaz.
   const bulutDegisikligiUygula = useCallback(async (alanlar) => {
     const tablolar = alanlar.flatMap(alaninTablolari);
@@ -940,8 +946,8 @@ function AtolyeUygulamasi() {
       }
     });
     // Tek satırlık tablolar: `veri` sütunu bütün hâl.
-    const tekil = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, fis_defteri: setFisDefteri, modeller: setModeller };
-    const tekilAlan = { muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler", faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller" };
+    const tekil = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, teklifler: setTeklifler, fis_defteri: setFisDefteri, modeller: setModeller };
+    const tekilAlan = { muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler", faturalar: "faturalar", teklifler: "teklifler", fis_defteri: "fisDefteri", modeller: "modeller" };
     for (const [tablo, setX] of Object.entries(tekil)) {
       if (!alanlar.includes(tekilAlan[tablo])) continue;
       const sat = await supabaseTumSatirlar(tablo);
@@ -1949,6 +1955,21 @@ function AtolyeUygulamasi() {
     showToast(`${model.kod} koleksiyona alındı — Stok'ta "${model.ad}" ürün kartı açıldı`);
   }, [stok, modeller, saveModeller, showToast, tanimlar]);
 
+  // TEKLİFLER (v1.715.0, 326): kaydet / sil (çöpe) / siparişe dönüştür.
+  const saveTeklifler = useCallback(async (next) => {
+    teklifRef.current = next;
+    setTeklifler(next);
+    try { await tekilYaz("teklif:data", "teklifler", next); }
+    catch (e) { kaydetmeHatasiBildir(e, "Teklifler", next); }
+  }, [kaydetmeHatasiBildir]);
+  const teklifSil = useCallback((t) => {
+    if (!t) return;
+    copaAt("teklif", `Teklif ${t.teklifNo}`, t, { ozet: `${(cariler.find((c) => c.id === t.cariId) || {}).unvan || "—"} · ${(t.kalemler || []).length} kalem · ${t.durum || "Hazırlanıyor"}` });
+    saveTeklifler((teklifRef.current || []).filter((x) => x.id !== t.id));
+    gunlukYaz(`Teklif silindi: ${t.teklifNo}`, "siparis", { teklifId: t.id });
+    showToast(`${t.teklifNo} çöpe taşındı`);
+  }, [copaAt, cariler, saveTeklifler, showToast]);
+
   const saveGorevler = useCallback(async (next) => {
     // Silinen görev çöpe (v1.549.0).
     if (copaAtRef.current) listedenDusenler(gorevRef.current, next).forEach((g) => {
@@ -1976,6 +1997,11 @@ function AtolyeUygulamasi() {
     gorev: async (g) => {
       if ((gorevRef.current || []).some((x) => x.id === g.id)) return { ok: false, mesaj: "Bu görev zaten listede" };
       await saveGorevler([g, ...(gorevRef.current || [])]);
+      return { ok: true };
+    },
+    teklif: async (t) => {
+      if ((teklifRef.current || []).some((x) => x.id === t.id)) return { ok: false, mesaj: "Bu teklif zaten listede" };
+      await saveTeklifler([t, ...(teklifRef.current || [])]);
       return { ok: true };
     },
     model: async (m) => {
@@ -2084,6 +2110,24 @@ function AtolyeUygulamasi() {
       kaydetmeHatasiBildir(e, "Sipariş", next);
     }
   }, [showToast, kaydetmeHatasiBildir]);
+
+  // ONAYLANAN TEKLİF → SATIŞ SİPARİŞİ (326 `teklifiSipariseCevir`, saf). Sipariş formunun kaydıyla aynı kapıdan
+  // (`saveSiparisler`: damga + yazma) geçer; o andan sonra planlama/rezervasyon/sevkiyat her zamanki yolundan.
+  const teklifiSipariseDonustur = useCallback((teklifId) => {
+    const t = (teklifRef.current || []).find((x) => x.id === teklifId);
+    if (!t) { showToast("Teklif bulunamadı"); return; }
+    if (t.durum === "Siparişe dönüştü") { showToast(`${t.teklifNo} zaten siparişe dönüştü`); return; }
+    const guncelSiparisler = siparislerGuncelRef.current || siparisler;
+    const siparis = teklifiSipariseCevir(t, { siparisler: guncelSiparisler, cop, simdi: new Date().toISOString(), bugun: bugunYerel() });
+    if (!siparis.kalemler.length) { showToast("Teklifte miktarlı kalem yok"); return; }
+    saveSiparisler([siparis, ...guncelSiparisler]);
+    saveTeklifler((teklifRef.current || []).map((x) => (x.id === teklifId
+      ? { ...x, durum: "Siparişe dönüştü", siparisId: siparis.id, siparisNo: siparis.siparisNo, durumZamani: new Date().toISOString() } : x)));
+    gunlukYaz(`Teklif siparişe dönüştü: ${t.teklifNo} → ${siparis.siparisNo}`, "siparis", { teklifId, siparisId: siparis.id, kalem: siparis.kalemler.length });
+    showToast(`${t.teklifNo} → ${siparis.siparisNo} siparişi açıldı`);
+    setSiparisHedefId(siparis.id);
+    setTab("siparis");
+  }, [siparisler, cop, saveSiparisler, saveTeklifler, showToast]);
 
   const karsilananTuretmeRef = useRef(false);
   useEffect(() => {
@@ -2654,6 +2698,7 @@ function AtolyeUygulamasi() {
     setStok, setCariler, setSiparisler, setUretim, setMuhasebe, setTanimlar, setGorevler,
     setMesajlar, setKoliler, setFaturalar, setCekGorselleri, setSonYedekTarihi,
     stokRezervasyonlari, onaylar, fisDefteri, modeller, setStokRezervasyonlari, setOnaylar, setFisDefteri, setModeller,
+    teklifler, setTeklifler,
   });
 
 
@@ -4264,7 +4309,9 @@ function AtolyeUygulamasi() {
                     yetki("uretim") && ["uretimrapor", "Üretim Raporu", <TrendingUp size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
                   { tek: "planlama", ad: "Planlama", ikon: <Compass size={15} /> },
                   { ad: "Siparişler", ikon: <ClipboardList size={15} />, ogeler: [
-                    ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
+                    ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />],
+                    // TEKLİF (v1.715.0, 326): siparişin aynısı, onaylanınca siparişe dönüşür.
+                    ["teklif", "Teklif", <FileText size={16} />]] },
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
                     yetki("cari") && ["cari", "Cari", <Users size={16} />],
                     // ÖDEME & TAHSİLAT ALANI (v1.645.8 / v1.645.10 / v1.645.11): giriş + Kasa & Banka + Çek & Senet + Rapor tek alan
@@ -5056,6 +5103,27 @@ function AtolyeUygulamasi() {
           <GizliModul aktif={tab === "alissatis"}>
             <AlisSatisEkrani cariler={cariler} stok={stok} siparisler={siparisler} koliler={koliler} uretim={uretim} tanimlar={tanimlar} muhasebe={muhasebe}
               showToast={showToast} onFisAc={stokFisiAc} onFiseGit={fiseGit} onFisKaydet={(cariId, tip, fis) => stokFisiKaydet(cariId, tip, fis)} />
+          </GizliModul>
+          {/* TEKLİF (v1.715.0, 326-teklif): ayrı liste, ayrı tablo; dönüştürme satış siparişi açar. */}
+          <GizliModul aktif={tab === "teklif"}>
+            <TeklifModule
+              teklifler={teklifler}
+              onSave={saveTeklifler}
+              siparisler={siparisler}
+              cariler={cariler}
+              stok={stok}
+              firmaBilgileri={tanimlar.firmaBilgileri}
+              tanimlar={tanimlar}
+              showToast={showToast}
+              onSipariseDonustur={teklifiSipariseDonustur}
+              onSil={teklifSil}
+              onGoToSiparis={sipariseGit}
+              onGoToCari={cariyeGit}
+              aktifKullanici={aktifKullanici}
+              cop={cop}
+              hedefTeklifId={hedefTeklifId}
+              onHedefTuketildi={() => setHedefTeklifId(null)}
+            />
           </GizliModul>
           <GizliModul aktif={tab === "siparis"}>
             <SiparisModule
