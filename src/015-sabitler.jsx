@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.720.0";
+const SURUM = "1.721.0";
 const SURUM_TARIHI = "2026-10-24";
-const SURUM_NOTU = "Teklif kartı sipariş kartıyla birebir: resimli ürün kutusu, ölçü matrisi, adet/birim/tutar, satır notları";
+const SURUM_NOTU = "Tanımlar: model rengi ve hammadde rengi listeleri çerçeve içinde kaydırmalı (başlık, çip ve süzgeç sabit)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.721.0", tarih: "24.10.2026", eklenen: [], degisen: ["Tanımlar › Model Rengi: kartlar çerçeveli, en çok ~9 satır boyunda kaydırmalı kutuda; çipler ve arama üstte sabit", "Tanımlar › Renkler (ve diğer tanım listeleri): satırlar en çok ~12 satır boyunda kaydırmalı; başlık ve süzgeç satırı sabit"], duzeltilen: [] },
   { surum: "1.720.0", tarih: "24.10.2026", eklenen: [], degisen: ["Teklif › açılan teklif artık sipariş kartının aynısı: resimli ürün kutusu, renk satırları × ölçü matrisi, adet / birim / tutar, satır notları (tedarik \"Durum\" sütunu ve sipariş eylemleri yok)"], duzeltilen: [] },
   { surum: "1.719.0", tarih: "24.10.2026", eklenen: [], degisen: ["Tanımlar › Model Rengi: \"1. Renk / 2. Renk…\" seçimi 100+ renkli açılır liste yerine yazdıkça süzülen kutu — sipariş formu ve ürün kartındaki pozisyon kutularıyla aynı"], duzeltilen: [] },
   { surum: "1.718.0", tarih: "24.10.2026", eklenen: ["Tanımlar › Model Rengi: liste grup çipleri (Tümü / 1 Renkli / 2 Renkli… / Mükerrer) ve kod-ad araması; kod sırasıyla"], degisen: ["Model Rengi bölümü toparlandı: ekleme formu tek satır, tanımlı liste tam genişlikte sık kartlar (ekrana sığdığı kadar sütun) — tek renkli model rengi sayısı arttıkça ekranı doldurmasın"], duzeltilen: [] },

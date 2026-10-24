@@ -679,7 +679,10 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
           {gorunen.length === 0 ? (
             <div style={{ fontSize: 12, color: "var(--erp-text-3)", padding: "8px 2px" }}>Eşleşen model rengi yok.</div>
           ) : (
-            <div data-model-rengi-liste={gorunen.length} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(250px, 100%), 1fr))", gap: 6 }}>
+            // ÇERÇEVE + KAYDIRMA (v1.721.0 — kullanıcı, 106 model rengi: "kaydırmalı liste haline gelsin, çerçeve içine alalım").
+            // Çipler ve arama üstte sabit; kartlar en çok ~9 satır boyunda kutuda kayar. Sütun en az 280 px: adlar daha az kırpılsın.
+            <div data-model-rengi-liste={gorunen.length} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))", gap: 6, alignContent: "start",
+              maxHeight: 380, overflowY: "auto", padding: 8, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel-2)" }}>
               {gorunen.map((k) => {
                 const ilk = ilkKayit(k);
                 const mukerrer = !!(ilk && ilk.id !== k.id);

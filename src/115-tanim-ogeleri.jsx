@@ -501,6 +501,10 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
               Bu filtreyle eşleşen kayıt yok.
             </div>
           )}
+          {/* KAYDIRMALI GÖVDE (v1.721.0 — kullanıcı, 120+ hammadde rengi: "kaydırmalı liste haline gelsin, çerçeve içine
+              alalım"). Başlık ve süzgeç satırı sabit kalır, satırlar en çok ~12 satır boyunda kutuda kayar; kısa listede
+              kutu içeriği kadar. */}
+          <div data-tanim-liste-govde={gorunen.length} style={{ maxHeight: 440, overflowY: "auto" }}>
           {gorunen.map((item, i) => (
             <div
               key={item.id}
@@ -658,6 +662,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
               })()}
             </div>
           ))}
+          </div>
         </div>
       )}
     </div>

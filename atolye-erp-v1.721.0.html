@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.718.0</title>
+<title>Atölye ERP 1.721.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.718.0";
+const SURUM = "1.721.0";
 const SURUM_TARIHI = "2026-10-24";
-const SURUM_NOTU = "Tanımlar › Model Rengi toparlandı: ekleme tek satır, liste tam genişlikte sık kartlar, Tümü/1 Renkli/2 Renkli/Mükerrer çipleri ve kod-ad araması";
+const SURUM_NOTU = "Tanımlar: model rengi ve hammadde rengi listeleri çerçeve içinde kaydırmalı (başlık, çip ve süzgeç sabit)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 const SURUM_GECMISI = [
+    { surum: "1.721.0", tarih: "24.10.2026", eklenen: [], degisen: ["Tanımlar › Model Rengi: kartlar çerçeveli, en çok ~9 satır boyunda kaydırmalı kutuda; çipler ve arama üstte sabit", "Tanımlar › Renkler (ve diğer tanım listeleri): satırlar en çok ~12 satır boyunda kaydırmalı; başlık ve süzgeç satırı sabit"], duzeltilen: [] },
+    { surum: "1.720.0", tarih: "24.10.2026", eklenen: [], degisen: ["Teklif › açılan teklif artık sipariş kartının aynısı: resimli ürün kutusu, renk satırları × ölçü matrisi, adet / birim / tutar, satır notları (tedarik \"Durum\" sütunu ve sipariş eylemleri yok)"], duzeltilen: [] },
+    { surum: "1.719.0", tarih: "24.10.2026", eklenen: [], degisen: ["Tanımlar › Model Rengi: \"1. Renk / 2. Renk…\" seçimi 100+ renkli açılır liste yerine yazdıkça süzülen kutu — sipariş formu ve ürün kartındaki pozisyon kutularıyla aynı"], duzeltilen: [] },
     { surum: "1.718.0", tarih: "24.10.2026", eklenen: ["Tanımlar › Model Rengi: liste grup çipleri (Tümü / 1 Renkli / 2 Renkli… / Mükerrer) ve kod-ad araması; kod sırasıyla"], degisen: ["Model Rengi bölümü toparlandı: ekleme formu tek satır, tanımlı liste tam genişlikte sık kartlar (ekrana sığdığı kadar sütun) — tek renkli model rengi sayısı arttıkça ekranı doldurmasın"], duzeltilen: [] },
     { surum: "1.717.0", tarih: "24.10.2026", eklenen: ["Tanımlar › Bakım › Kodsuz Mamul Renkleri: düz adlı mamul renklerini listeler, ne olacağını gösterir; onayla hepsini Tanımlar'da 1 renkli model rengi açıp varyant, reçete, hareket, harici barkod, sipariş, üretim, koli ve teklif kalemlerinde yeniden adlandırır (yalnız Yönetici, iki adımlı onay)"], degisen: ["Mamul ürüne eklenen HER renk model rengi olur (\"1058 - Taba Süet\"): ürün kartındaki renk ekleme ve \"renk aç\" sorusu, yeni stok formu — sipariş/teklif formuyla aynı kural. Hammadde renkleri değişmedi"], duzeltilen: ["Aynı ürünün renkleri yarı kodlu yarı düz kalıyor, barkod/reçete/asorti düz adlıyı başka renk sayıyordu"] },
     { surum: "1.716.0", tarih: "23.10.2026", eklenen: [], degisen: ["Teklif girişi artık sipariş formunun kendisi (tam ekran): aramalı ürün ve renk seçimi, ölçü matrisi, asorti, barkod okutma, satır notları, ambalaj, kayıt para birimi, defter — siparişte ne varsa teklifte de var; ek olarak \"Geçerlilik Tarihi\" alanı. Düzenleme de aynı formda. Dönüştürmede kalemler notlarıyla, ambalajıyla birebir siparişe geçer"], duzeltilen: [] },
@@ -25597,7 +25600,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                 React.createElement("span", { style: { width: 22, display: "flex", justifyContent: "center" } }, filtreAktif && (React.createElement("button", { type: "button", onClick: () => setKolonFiltre({ ad: "", kod: "", tip: "" }), title: "Filtreleri temizle", className: "btn-ikon", style: { padding: 2 } },
                     React.createElement(X, { size: 12 })))))),
             gorunen.length === 0 && (React.createElement("div", { style: { padding: "14px 12px", textAlign: "center", fontSize: 12, color: "var(--erp-text-3)" } }, "Bu filtreyle e\u015Fle\u015Fen kay\u0131t yok.")),
-            gorunen.map((item, i) => (React.createElement("div", { key: item.id, className: mono ? "mono" : undefined, style: {
+            React.createElement("div", { "data-tanim-liste-govde": gorunen.length, style: { maxHeight: 440, overflowY: "auto" } }, gorunen.map((item, i) => (React.createElement("div", { key: item.id, className: mono ? "mono" : undefined, style: {
                     // SATIR SARAR (v1.691.1, kullanıcı: "renk adı görünmüyor"): Ürün Stok + açıklama eklenince dar ekranda
                     // ad kutusu sıfır genişliğe eziliyordu; artık ad en az 140px, sığmayanlar alt satıra iner.
                     display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", rowGap: 6,
@@ -25661,7 +25664,7 @@ function TanimListesi({ adIpucu, list, onRemove, emptyText, mono, defaultOpen, o
                     }
                     return (React.createElement("button", { onClick: () => onRemove(item.id), style: { border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4, marginLeft: 8 } },
                         React.createElement(X, { size: 14 })));
-                })())))))));
+                })()))))))));
 }
 // AÇILIR BAŞLIK (v1.588.0 — kullanıcı: "Tanımlarda tüm başlıkları açılır yap, çok fazla yer kaplıyor büyüdükçe").
 // Tanımlar'daki her ana bölümün h3'ü: dokununca kapanır/açılır. İçerik ayrıca sarmalanmıyor — CSS kardeş kuralı
@@ -28958,6 +28961,10 @@ function VeritabaniSifirlaBolumu({ onVeritabaniSifirla, supabaseBagli }) {
 function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil, kullanimGetir }) {
     const [renkSayisi, setRenkSayisi] = useState(1);
     const [pozisyonSecimleri, setPozisyonSecimleri] = useState({}); // { [pozisyon]: renkId }
+    // YAZARAK SEÇİM (v1.719.0 — kullanıcı, 100+ renkli açılır liste: "bu liste de aramadan filtrelenerek olsun"): sipariş
+    // formu / ürün kartı pozisyon kutularıyla aynı `AramaliMetin`; kutuda "Ad (kod)" yazısı, seçim kimlikle (`pozisyonSecimleri`).
+    const [pozisyonYazilari, setPozisyonYazilari] = useState({}); // { [pozisyon]: kutudaki yazı }
+    const renkEtiketi = (r) => `${r.ad}${r.kod ? ` (${r.kod})` : ""}`;
     // LİSTE TOPARLANDI (v1.718.0 — kullanıcı, 49 tek renkli model rengi ekranı doldurunca: "Burayı toparlayalım").
     // v1.717.0 ile her mamul rengi model rengi olduğu için liste uzayacak: form tek satır, liste tam genişlikte
     // sık kartlar (ekrana sığdığı kadar sütun), grup çipleri (Tümü / 1 Renkli / 2 Renkli… / mükerrer) ve arama.
@@ -28978,6 +28985,7 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
         const renkIdler = Array.from({ length: renkSayisi }, (_, i) => pozisyonSecimleri[i + 1]);
         onEkle(renkIdler);
         setPozisyonSecimleri({});
+        setPozisyonYazilari({});
     }
     // Aynı renk seti AYNI SIRAYLA (index index) daha önce (daha küçük kod ile) tanımlıysa bu kayıt MÜKERRERDİR. Farklı
     // sırayla aynı renkleri kullananlar (Siyah/Kahve/Siyah ile Kahve/Siyah/Siyah) FARKLI modeldir, mükerrer sayılmaz.
@@ -29001,7 +29009,7 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
         React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 10, flexWrap: "wrap", padding: "10px 12px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", marginBottom: 14 } },
             React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3 } },
                 React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } }, "Ka\u00E7 renkten olu\u015Fuyor?"),
-                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, height: 34 } }, [1, 2, 3, 4].map((n) => (React.createElement("button", { key: n, type: "button", onClick: () => { setRenkSayisi(n); setPozisyonSecimleri({}); }, style: {
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, height: 34 } }, [1, 2, 3, 4].map((n) => (React.createElement("button", { key: n, type: "button", onClick: () => { setRenkSayisi(n); setPozisyonSecimleri({}); setPozisyonYazilari({}); }, style: {
                         width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${renkSayisi === n ? "var(--erp-primary)" : "var(--erp-border)"}`,
                         background: renkSayisi === n ? "#E5EEE3" : "#fff", color: renkSayisi === n ? "var(--erp-primary)" : "var(--erp-text-2)",
                         cursor: "pointer", fontSize: 12, fontWeight: 700,
@@ -29017,11 +29025,16 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
                     React.createElement("span", { style: { fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 } },
                         poz,
                         ". Renk"),
-                    React.createElement("select", { value: pozisyonSecimleri[poz] || "", onChange: (e) => setPozisyonSecimleri({ ...pozisyonSecimleri, [poz]: e.target.value }), style: { ...inputStyle, width: 150 } },
-                        React.createElement("option", { value: "" }, "Se\u00E7in\u2026"),
-                        hammaddeRenkleri.filter((r) => !tekBasinaZatenTanimli.includes(r.id)).map((r) => (React.createElement("option", { key: r.id, value: r.id },
-                            r.ad,
-                            r.kod ? ` (${r.kod})` : ""))))));
+                    (() => {
+                        const secenekler = hammaddeRenkleri.filter((r) => !tekBasinaZatenTanimli.includes(r.id));
+                        const secili = secenekler.find((r) => r.id === pozisyonSecimleri[poz]);
+                        return (React.createElement("div", { style: { width: 190 } },
+                            React.createElement(AramaliMetin, { veriAdi: `data-model-rengi-tanim-poz-${poz}`, deger: pozisyonYazilari[poz] != null ? pozisyonYazilari[poz] : (secili ? renkEtiketi(secili) : ""), onDegis: (v) => {
+                                    setPozisyonYazilari((y) => ({ ...y, [poz]: v }));
+                                    const bulunan = secenekler.find((r) => renkEtiketi(r) === v);
+                                    setPozisyonSecimleri((p) => ({ ...p, [poz]: bulunan ? bulunan.id : "" }));
+                                }, oneriler: secenekler.map(renkEtiketi), yalnizListeden: true, bulanikSecim: false, placeholder: secenekler.length === 0 ? "Renk tanımlı değil" : "Yazın ya da seçin…" })));
+                    })()));
             }),
             React.createElement("button", { className: "btn-primary", onClick: kaydet, disabled: !tumPozisyonlarDolu, style: { height: 34 } },
                 React.createElement(Plus, { size: 14 }),
@@ -29041,7 +29054,8 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
                 Object.keys(sayilar).map(Number).sort((a, b) => a - b).map((n) => cip(String(n), `${n} Renkli (${sayilar[n]})`)),
                 mukerrerSayisi > 0 && cip("mukerrer", `Mükerrer (${mukerrerSayisi})`, "var(--erp-warn)"),
                 React.createElement("input", { "data-model-rengi-arama": "1", value: arama, onChange: (e) => setArama(e.target.value), placeholder: "Kod ya da ad ara\u2026", style: { ...inputStyle, width: 180, padding: "4px 8px", fontSize: 12, marginLeft: "auto" } })),
-            gorunen.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", padding: "8px 2px" } }, "E\u015Fle\u015Fen model rengi yok.")) : (React.createElement("div", { "data-model-rengi-liste": gorunen.length, style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(250px, 100%), 1fr))", gap: 6 } }, gorunen.map((k) => {
+            gorunen.length === 0 ? (React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-3)", padding: "8px 2px" } }, "E\u015Fle\u015Fen model rengi yok.")) : (React.createElement("div", { "data-model-rengi-liste": gorunen.length, style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))", gap: 6, alignContent: "start",
+                    maxHeight: 380, overflowY: "auto", padding: 8, border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel-2)" } }, gorunen.map((k) => {
                 const ilk = ilkKayit(k);
                 const mukerrer = !!(ilk && ilk.id !== k.id);
                 return (React.createElement("div", { key: k.id, "data-model-rengi-kart": k.kod, title: mukerrer ? `Bu renk seti zaten "${ilk.kod}" kodunda tanımlı — güvenle silebilirsiniz` : etiket(k), style: {
@@ -61963,24 +61977,8 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
                         t.siparisNo ? ` · ${t.siparisNo}` : ""),
                     acik ? React.createElement(ChevronUp, { size: 14 }) : React.createElement(ChevronDown, { size: 14 })),
                 acik && (React.createElement("div", { style: { padding: "0 12px 10px" } },
-                    React.createElement("table", { className: "mono", style: { borderCollapse: "collapse", fontSize: 12, width: "100%", marginBottom: 8 } },
-                        React.createElement("thead", null,
-                            React.createElement("tr", { style: { color: "var(--erp-text-3)", textAlign: "left" } },
-                                React.createElement("th", { style: { padding: "3px 6px" } }, "\u00DCr\u00FCn"),
-                                React.createElement("th", { style: { padding: "3px 6px" } }, "Renk"),
-                                React.createElement("th", { style: { padding: "3px 6px" } }, "\u00D6l\u00E7\u00FCler"),
-                                React.createElement("th", { style: { padding: "3px 6px", textAlign: "right" } }, "Fiyat"),
-                                React.createElement("th", { style: { padding: "3px 6px", textAlign: "right" } }, "Tutar"))),
-                        React.createElement("tbody", null, teklifKalemGruplari(t.kalemler).map((g) => (React.createElement("tr", { key: `${g.urunId}|${g.renk}`, style: { borderTop: "1px solid var(--erp-line-soft)" } },
-                            React.createElement("td", { style: { padding: "3px 6px" } }, g.urunAd),
-                            React.createElement("td", { style: { padding: "3px 6px" } }, g.renk || "—"),
-                            React.createElement("td", { style: { padding: "3px 6px" } }, g.kalemler.map((k) => `${k.beden || "—"}:${k.miktar}`).join("  ")),
-                            React.createElement("td", { style: { padding: "3px 6px", textAlign: "right" } }, teklifParaYaz(g.kalemler[0].birimFiyat, g.paraBirimi)),
-                            React.createElement("td", { style: { padding: "3px 6px", textAlign: "right" } }, teklifParaYaz(g.kalemler.reduce((x, k) => x + k.miktar * (k.birimFiyat || 0), 0), g.paraBirimi))))))),
-                    t.not && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-text-2)", whiteSpace: "pre-wrap", marginBottom: 8 } },
-                        React.createElement("b", null, "Not:"),
-                        " ",
-                        t.not),
+                    React.createElement("div", { "data-teklif-kart": t.teklifNo, style: { marginBottom: 8 } },
+                        React.createElement(SiparisCard, { key: t.id, siparis: { ...t, siparisNo: t.teklifNo, tip: "Satış", durum: "Bekliyor", kalemler: (t.kalemler || []).map((k) => ({ ...k, karsilanan: 0, planlama: undefined })) }, cariler: cariler, stok: stok, tumSiparisler: siparisler || [], uretimSiparisleri: [], stokRezervasyonlari: [], koliler: [], kurlar: (siparisFormuProps && siparisFormuProps.kurlar) || {}, muhasebe: siparisFormuProps && siparisFormuProps.muhasebe, firmaBilgileri: firmaBilgileri, showToast: showToast, onUruneGit: siparisFormuProps && siparisFormuProps.onUruneGit, baslangicAcik: true, saltOkunur: true, listeIcinde: true, teklifKipi: true })),
                     t.redSebebi && React.createElement("div", { style: { fontSize: 12, color: "var(--erp-warn)", marginBottom: 8 } },
                         React.createElement("b", null, "Red sebebi:"),
                         " ",
@@ -63717,7 +63715,11 @@ function mobilBolumGizliMi(ayar, bolumKey) {
         return false;
     return (ayar.gizli || new Set()).has(bolumKey);
 }
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde, onCariGit, onUruneGit }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde, onCariGit, onUruneGit, teklifKipi = false }) {
+    // TEKLİF KİPİ (v1.720.0 — kullanıcı: "kaydedilen teklif de sipariş gibi resimli olsun, siparişin aynısını buraya kopyalamak
+    // daha zahmetsiz değil mi?"): 326 TeklifModule açık teklifi bu kartla çizer (saltOkunur + listeIcinde). Teklifin tedariği
+    // yoktur: "Durum" sütunu çizilmez, sağ tık menüsü (sipariş eylemleri) kapalı. Gerisi siparişle birebir — resimli ürün
+    // kutusu, ölçü matrisi, adet/birim/tutar, satır notları.
     // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
     const [showOdeme, setShowOdeme] = useState(false);
     // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
@@ -63913,7 +63915,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     return (React.createElement("div", { ...sagTikIsleyicileri((x, y, hedef) => {
             const u = hedef && hedef.closest ? hedef.closest("[data-siparis-urun]") : null;
             setIslemMenu({ x, y, urunId: u ? u.getAttribute("data-siparis-urun") : null });
-        }, open), style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
+        }, open && !teklifKipi), style: { background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" } },
         !listeIcinde && (React.createElement("div", { role: baslangicAcik ? undefined : "button", tabIndex: baslangicAcik ? undefined : 0, onClick: baslangicAcik ? undefined : () => setOpen((v) => !v), 
             // SAĞ TIK / UZUN BASMA = İŞLEMLER MENÜSÜ (v1.636.0). Yazdır/PDF/WhatsApp/E-posta, tahsilat ve iptal/sil şeritte düğme
             // olarak durmuyor (kullanıcı: "ekranda gizlemek istediğimiz menüler sağ tıklama ile"); hepsi bu menüde.
@@ -64277,7 +64279,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                             React.createElement("col", { style: { width: "10%" } }),
                                                             React.createElement("col", { style: { width: "10%" } }),
                                                             React.createElement("col", { style: { width: "12%" } }),
-                                                            React.createElement("col", { style: { width: "14%" } })),
+                                                            !teklifKipi && React.createElement("col", { style: { width: "14%" } })),
                                                         React.createElement("tbody", null,
                                                             React.createElement("tr", { "data-siparis-kart-baslik": "1", style: { height: 34 } },
                                                                 React.createElement("th", { "data-siparis-kart-renk-basligi": "1", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", textAlign: "center", padding: "5px 8px" } }, renkBasligi(urun)),
@@ -64285,7 +64287,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                                 React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Adet"),
                                                                 React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Birim"),
                                                                 React.createElement("th", { className: "mono", style: { fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Tutar"),
-                                                                React.createElement("th", { style: { fontSize: 12, fontWeight: 700, textAlign: "left", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Durum")),
+                                                                !teklifKipi && React.createElement("th", { style: { fontSize: 12, fontWeight: 700, textAlign: "left", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" } }, "Durum")),
                                                             renkGruplari.map((rg) => {
                                                                 // SİPARİŞ MİKTARI BÖLÜNMÜŞ KALEMLERDE DE TAM (kullanıcı, 19 Eylül:
                                                                 // "üstte siparişin tamamı görünecek, sipariş planlandığında üstte
@@ -64376,7 +64378,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                                                 .toLocaleString("tr-TR", { maximumFractionDigits: 2 }),
                                                                             " ",
                                                                             PARA_SEMBOLU[rg.kalemler[0].paraBirimi || "TRY"] || rg.kalemler[0].paraBirimi),
-                                                                        React.createElement("td", { style: { padding: "5px 12px", whiteSpace: "nowrap" } }, (() => {
+                                                                        !teklifKipi && React.createElement("td", { style: { padding: "5px 12px", whiteSpace: "nowrap" } }, (() => {
                                                                             // Kalem başına hesap ortak (330 `siparisKalemTedarikDurumu`) — fişteki "Siparişten seç" de kullanıyor.
                                                                             const durumlar = rg.kalemler.map((k) => siparisKalemTedarikDurumu(k, tumSiparisler, uretimSiparisleri));
                                                                             durumlar.sort((a, b) => a.sira - b.sira);
@@ -64399,7 +64401,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                                                                 d.adim && React.createElement("span", { style: { opacity: 0.75, fontWeight: 400 } }, d.adim)));
                                                                         })())),
                                                                     notAcik && (React.createElement("tr", { "data-kart-not-satiri": rg.renk, onClick: () => notSatiriDegistir(notAnahtari), style: { cursor: "pointer" } },
-                                                                        React.createElement("td", { colSpan: tumBedenler.length + 5, style: { padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" } }, satirNotlari.map((n) => (React.createElement("div", { key: notEtiketi(n), "data-kart-kalem-aciklama": "1", style: { fontSize: 13, color: "var(--erp-text)", whiteSpace: "pre-wrap", padding: "2px 0" } },
+                                                                        React.createElement("td", { colSpan: tumBedenler.length + (teklifKipi ? 4 : 5), style: { padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" } }, satirNotlari.map((n) => (React.createElement("div", { key: notEtiketi(n), "data-kart-kalem-aciklama": "1", style: { fontSize: 13, color: "var(--erp-text)", whiteSpace: "pre-wrap", padding: "2px 0" } },
                                                                             n.proses && React.createElement("b", { style: { color: "#8A6A2E" } },
                                                                                 n.proses,
                                                                                 ": "),
@@ -64420,7 +64422,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     return (React.createElement("div", { "data-siparis-genel-toplam": "1", style: { display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "8px 14px",
                                             background: siparis.tip === "Alış" ? "#F1E6DA" : "#E3EDF5", color: siparis.tip === "Alış" ? "#6B4426" : "#1F4E73",
                                             border: `1px solid ${siparis.tip === "Alış" ? "#D9C2A8" : "#BFD3E4"}`, borderRadius: "var(--erp-r-md)" } },
-                                        React.createElement("span", { style: { fontSize: 13, fontWeight: 800, letterSpacing: ".04em" } }, "S\u0130PAR\u0130\u015E TOPLAMI"),
+                                        React.createElement("span", { style: { fontSize: 13, fontWeight: 800, letterSpacing: ".04em" } }, teklifKipi ? "TEKLİF TOPLAMI" : "SİPARİŞ TOPLAMI"),
                                         React.createElement("span", { style: { fontSize: 12 } },
                                             modelSayisi,
                                             " model \u00B7 ",
@@ -68200,7 +68202,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.718.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.721.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
