@@ -320,21 +320,20 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
                 </button>
                 {acik && (
                   <div style={{ padding: "0 12px 10px" }}>
-                    <table className="mono" style={{ borderCollapse: "collapse", fontSize: 12, width: "100%", marginBottom: 8 }}>
-                      <thead><tr style={{ color: "var(--erp-text-3)", textAlign: "left" }}><th style={{ padding: "3px 6px" }}>Ürün</th><th style={{ padding: "3px 6px" }}>Renk</th><th style={{ padding: "3px 6px" }}>Ölçüler</th><th style={{ padding: "3px 6px", textAlign: "right" }}>Fiyat</th><th style={{ padding: "3px 6px", textAlign: "right" }}>Tutar</th></tr></thead>
-                      <tbody>
-                        {teklifKalemGruplari(t.kalemler).map((g) => (
-                          <tr key={`${g.urunId}|${g.renk}`} style={{ borderTop: "1px solid var(--erp-line-soft)" }}>
-                            <td style={{ padding: "3px 6px" }}>{g.urunAd}</td>
-                            <td style={{ padding: "3px 6px" }}>{g.renk || "—"}</td>
-                            <td style={{ padding: "3px 6px" }}>{g.kalemler.map((k) => `${k.beden || "—"}:${k.miktar}`).join("  ")}</td>
-                            <td style={{ padding: "3px 6px", textAlign: "right" }}>{teklifParaYaz(g.kalemler[0].birimFiyat, g.paraBirimi)}</td>
-                            <td style={{ padding: "3px 6px", textAlign: "right" }}>{teklifParaYaz(g.kalemler.reduce((x, k) => x + k.miktar * (k.birimFiyat || 0), 0), g.paraBirimi)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {t.not && <div style={{ fontSize: 12, color: "var(--erp-text-2)", whiteSpace: "pre-wrap", marginBottom: 8 }}><b>Not:</b> {t.not}</div>}
+                    {/* SİPARİŞ KARTIYLA BİREBİR (v1.720.0 — kullanıcı: "kaydedilen teklif de sipariş gibi resimli olsun, siparişin
+                        aynısını buraya kopyalamak daha zahmetsiz değil mi?"): 340 SiparisCard, teklif kipinde (resimli ürün kutusu, ölçü
+                        matrisi, adet/birim/tutar, satır notları; Durum sütunu ve sipariş eylemleri yok). Teklif, sipariş biçimine
+                        çevrilip verilir — `teklifiSipariseCevir`in kayıt yazmayan, yalnız görünüm için hâli. */}
+                    <div data-teklif-kart={t.teklifNo} style={{ marginBottom: 8 }}>
+                      <SiparisCard
+                        key={t.id}
+                        siparis={{ ...t, siparisNo: t.teklifNo, tip: "Satış", durum: "Bekliyor", kalemler: (t.kalemler || []).map((k) => ({ ...k, karsilanan: 0, planlama: undefined })) }}
+                        cariler={cariler} stok={stok} tumSiparisler={siparisler || []} uretimSiparisleri={[]} stokRezervasyonlari={[]} koliler={[]}
+                        kurlar={(siparisFormuProps && siparisFormuProps.kurlar) || {}} muhasebe={siparisFormuProps && siparisFormuProps.muhasebe}
+                        firmaBilgileri={firmaBilgileri} showToast={showToast} onUruneGit={siparisFormuProps && siparisFormuProps.onUruneGit}
+                        baslangicAcik saltOkunur listeIcinde teklifKipi
+                      />
+                    </div>
                     {t.redSebebi && <div style={{ fontSize: 12, color: "var(--erp-warn)", marginBottom: 8 }}><b>Red sebebi:</b> {t.redSebebi}</div>}
                     <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginBottom: 8 }}>
                       {t.olusturan ? `Hazırlayan: ${t.olusturan} · ` : ""}{t.teslimTarihi ? `Teslim: ${t.teslimTarihi} · ` : ""}{t.musteriKodu ? `Müşteri ref: ${t.musteriKodu}` : ""}
