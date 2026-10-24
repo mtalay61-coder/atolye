@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.718.0";
+const SURUM = "1.719.0";
 const SURUM_TARIHI = "2026-10-24";
-const SURUM_NOTU = "Tanımlar › Model Rengi toparlandı: ekleme tek satır, liste tam genişlikte sık kartlar, Tümü/1 Renkli/2 Renkli/Mükerrer çipleri ve kod-ad araması";
+const SURUM_NOTU = "Tanımlar › Model Rengi: pozisyon renkleri açılır liste yerine yazarak süzülen kutu (sipariş formu ve ürün kartıyla aynı)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat" };
 
 const SURUM_GECMISI = [
+  { surum: "1.719.0", tarih: "24.10.2026", eklenen: [], degisen: ["Tanımlar › Model Rengi: \"1. Renk / 2. Renk…\" seçimi 100+ renkli açılır liste yerine yazdıkça süzülen kutu — sipariş formu ve ürün kartındaki pozisyon kutularıyla aynı"], duzeltilen: [] },
   { surum: "1.718.0", tarih: "24.10.2026", eklenen: ["Tanımlar › Model Rengi: liste grup çipleri (Tümü / 1 Renkli / 2 Renkli… / Mükerrer) ve kod-ad araması; kod sırasıyla"], degisen: ["Model Rengi bölümü toparlandı: ekleme formu tek satır, tanımlı liste tam genişlikte sık kartlar (ekrana sığdığı kadar sütun) — tek renkli model rengi sayısı arttıkça ekranı doldurmasın"], duzeltilen: [] },
   { surum: "1.717.0", tarih: "24.10.2026", eklenen: ["Tanımlar › Bakım › Kodsuz Mamul Renkleri: düz adlı mamul renklerini listeler, ne olacağını gösterir; onayla hepsini Tanımlar'da 1 renkli model rengi açıp varyant, reçete, hareket, harici barkod, sipariş, üretim, koli ve teklif kalemlerinde yeniden adlandırır (yalnız Yönetici, iki adımlı onay)"], degisen: ["Mamul ürüne eklenen HER renk model rengi olur (\"1058 - Taba Süet\"): ürün kartındaki renk ekleme ve \"renk aç\" sorusu, yeni stok formu — sipariş/teklif formuyla aynı kural. Hammadde renkleri değişmedi"], duzeltilen: ["Aynı ürünün renkleri yarı kodlu yarı düz kalıyor, barkod/reçete/asorti düz adlıyı başka renk sayıyordu"] },
   { surum: "1.716.0", tarih: "23.10.2026", eklenen: [], degisen: ["Teklif girişi artık sipariş formunun kendisi (tam ekran): aramalı ürün ve renk seçimi, ölçü matrisi, asorti, barkod okutma, satır notları, ambalaj, kayıt para birimi, defter — siparişte ne varsa teklifte de var; ek olarak \"Geçerlilik Tarihi\" alanı. Düzenleme de aynı formda. Dönüştürmede kalemler notlarıyla, ambalajıyla birebir siparişe geçer"], duzeltilen: [] },
