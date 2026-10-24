@@ -1,0 +1,84 @@
+{
+  "tabaSonra": {
+    "renkler": [
+      "Siyah",
+      "1001 - Taba"
+    ],
+    "tanim": {
+      "renkler": [
+        "Siyah",
+        "Taba"
+      ],
+      "kombiler": [
+        "1001 - Taba"
+      ]
+    },
+    "toast": "Bot: barkod oluşturuldu — stok no 0002"
+  },
+  "soru": "Light",
+  "lightSonra": {
+    "renkler": [
+      "Siyah",
+      "1001 - Taba",
+      "1002 - Light"
+    ],
+    "tanim": {
+      "renkler": [
+        "Siyah",
+        "Taba",
+        "Light"
+      ],
+      "kombiler": [
+        "1001 - Taba",
+        "1002 - Light"
+      ]
+    },
+    "light": {
+      "sayi": 1,
+      "kodVar": true,
+      "renkKodu": "#e8d9b0"
+    },
+    "toast": true
+  },
+  "bakimOnce": {
+    "sayi": "1",
+    "satirlar": [
+      "BotSiyah → 1003 - Siyah"
+    ],
+    "onayYok": 0
+  },
+  "onayGoruldu": 1,
+  "bakimSonra": {
+    "bolumKaldi": 0,
+    "botRenkleri": [
+      "1003 - Siyah",
+      "1001 - Taba",
+      "1002 - Light"
+    ],
+    "deriRenkleri": [
+      "Siyah",
+      "Taba"
+    ],
+    "siparisKalemleri": [
+      "u1:Siyah",
+      "u2:1003 - Siyah"
+    ],
+    "uretim": [
+      "u2:1003 - Siyah"
+    ],
+    "tanim": {
+      "renkler": [
+        "Siyah",
+        "Taba",
+        "Light"
+      ],
+      "kombiler": [
+        "1001 - Taba",
+        "1002 - Light",
+        "1003 - Siyah"
+      ]
+    },
+    "toast": true
+  },
+  "hatalar": []
+}

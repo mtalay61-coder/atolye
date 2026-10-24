@@ -92,6 +92,57 @@ function SupabaseBolumu({ supabaseBagli, gocDurumu, onSupabaseyeGoc }) {
 //
 // Ürün ürün gezip düğmeye basmak, 50 ürünlük bir stokta yapılabilir bir iş değil. Üstelik hangi
 // ürünün bozuk olduğunu bulmak için hepsini tek tek açmak gerekiyordu.
+// MAMUL RENKLERİNİ KODLA (v1.717.0, 083): kodsuz (düz adlı) mamul renklerini listeler, "ne olacağı"nı gösterir
+// (Tanımlar'daki plan — yazmaz), kullanıcı iki adımda onaylayınca `onKodla` bütün kayıtlarda yeniden adlandırır.
+// Kodsuz renk yoksa görünmez. Yalnız Yönetici'ye (130'da sarılı).
+function MamulRenkKodlamaBolumu({ stok, tanimlar, onKodla }) {
+  const [onay, setOnay] = useState(false);
+  const [calisiyor, setCalisiyor] = useState(false);
+  const kodsuz = kodsuzMamulRenkleri(stok);
+  if (kodsuz.length === 0) return null;
+  const plan = mamulRenkKodlamaPlani(tanimlar, kodsuz.map((k) => k.renk), { uidUret: (o) => `${o}-onizleme` });
+  const urunSayisi = new Set(kodsuz.map((k) => k.urunId)).size;
+  return (
+    <div data-mamul-renk-kodlama={kodsuz.length} style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--erp-line-soft)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+        <Palette size={14} color="var(--erp-warn)" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>Kodsuz Mamul Renkleri</span>
+        <span className="mono" style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: "#B85C2E22", color: "var(--erp-warn)" }}>
+          {kodsuz.length} renk · {urunSayisi} ürün
+        </span>
+      </div>
+      <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 10px", lineHeight: 1.6 }}>
+        Mamul renkleri artık her yerde <b>model rengi</b> biçiminde ("1058 - Taba Süet"). Bu ürünlerde eski düz adlı renkler var;
+        dönüştürünce her biri için Tanımlar'da 1 renkli model rengi açılır (renk tanımı yoksa o da) ve ad <b>bütün kayıtlarda</b>
+        değişir: varyant, reçete, stok hareketi, harici barkod, sipariş kalemi, üretim, koli ve teklif kalemi. Stok miktarları değişmez.
+        {plan.acilanRenkler.length ? ` ${plan.acilanRenkler.length} yeni renk tanımı açılacak.` : ""} Önce yedek almanız önerilir.
+      </p>
+      <div style={{ display: "grid", gap: 4, marginBottom: 10, maxHeight: 200, overflowY: "auto" }}>
+        {kodsuz.map((k) => (
+          <div key={`${k.urunId}|${k.renk}`} data-mamul-renk-kodsuz={k.renk} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 600, minWidth: 130 }}>{k.urunAd}</span>
+            <span className="mono" style={{ color: "var(--erp-text-2)" }}>{k.renk} → <b style={{ color: "var(--erp-text)" }}>{plan.etiketler[k.renk] || "?"}</b></span>
+          </div>
+        ))}
+      </div>
+      {!onay ? (
+        <button className="btn-primary" data-mamul-renk-kodla="1" disabled={calisiyor} style={{ background: "var(--erp-brown)" }} onClick={() => setOnay(true)}>
+          <Palette size={13} /> {kodsuz.length} rengi model rengine dönüştür…
+        </button>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "8px 10px", background: "#B85C2E11", border: "1px solid #B85C2E55", borderRadius: "var(--erp-r-sm)" }}>
+          <span style={{ fontSize: 12 }}><b>{kodsuz.length} renk, {urunSayisi} ürün</b> ve bağlı bütün kayıtlar yeniden adlandırılacak. Geri alınamaz; emin misiniz?</span>
+          <button className="btn-primary btn-save" data-mamul-renk-kodla-onay="1" disabled={calisiyor} style={{ padding: "5px 12px", fontSize: 12 }}
+            onClick={async () => { setCalisiyor(true); try { await onKodla(); } finally { setCalisiyor(false); setOnay(false); } }}>
+            <Check size={13} /> Evet, dönüştür
+          </button>
+          <button className="btn-ghost" style={{ padding: "5px 10px", fontSize: 12 }} disabled={calisiyor} onClick={() => setOnay(false)}>Vazgeç</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DefterOnarimBolumu({ stok, onOnar }) {
   const [calisiyor, setCalisiyor] = useState(false);
 
