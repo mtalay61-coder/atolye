@@ -533,6 +533,11 @@ function VeritabaniSifirlaBolumu({ onVeritabaniSifirla, supabaseBagli }) {
 function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil, kullanimGetir }) {
   const [renkSayisi, setRenkSayisi] = useState(1);
   const [pozisyonSecimleri, setPozisyonSecimleri] = useState({}); // { [pozisyon]: renkId }
+  // LİSTE TOPARLANDI (v1.718.0 — kullanıcı, 49 tek renkli model rengi ekranı doldurunca: "Burayı toparlayalım").
+  // v1.717.0 ile her mamul rengi model rengi olduğu için liste uzayacak: form tek satır, liste tam genişlikte
+  // sık kartlar (ekrana sığdığı kadar sütun), grup çipleri (Tümü / 1 Renkli / 2 Renkli… / mükerrer) ve arama.
+  const [grup, setGrup] = useState("hepsi");   // "hepsi" | "1" | "2" … | "mukerrer"
+  const [arama, setArama] = useState("");
 
   function renkAdiGetir(id) {
     return (hammaddeRenkleri.find((r) => r.id === id) || {}).ad || "?";
@@ -553,19 +558,41 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
     setPozisyonSecimleri({});
   }
 
+  // Aynı renk seti AYNI SIRAYLA (index index) daha önce (daha küçük kod ile) tanımlıysa bu kayıt MÜKERRERDİR. Farklı
+  // sırayla aynı renkleri kullananlar (Siyah/Kahve/Siyah ile Kahve/Siyah/Siyah) FARKLI modeldir, mükerrer sayılmaz.
+  const ilkKayit = (k) => kombinasyonlar.find((d) => d.renkIdler.length === k.renkIdler.length && d.renkIdler.every((id, i) => id === k.renkIdler[i]));
+  const mukerrerMi = (k) => { const ilk = ilkKayit(k); return !!(ilk && ilk.id !== k.id); };
+  const etiket = (k) => k.renkIdler.map((id) => renkAdiGetir(id)).join(" / ");
+  const sayilar = {};
+  kombinasyonlar.forEach((k) => { const n = k.renkIdler.length; sayilar[n] = (sayilar[n] || 0) + 1; });
+  const mukerrerSayisi = kombinasyonlar.filter(mukerrerMi).length;
+  const aramaNrm = trKucuk(arama.trim());
+  const gorunen = kombinasyonlar
+    .filter((k) => grup === "hepsi" || (grup === "mukerrer" ? mukerrerMi(k) : k.renkIdler.length === Number(grup)))
+    .filter((k) => !aramaNrm || trKucuk(`${k.kod} ${etiket(k)}`).includes(aramaNrm))
+    .sort((a, b) => (parseInt(a.kod, 10) || 0) - (parseInt(b.kod, 10) || 0));
+  const cip = (deger, yazi, renk) => (
+    <button key={deger} type="button" data-model-rengi-grup={deger} onClick={() => setGrup(deger)} className="mono"
+      style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: "var(--erp-r-pill)", cursor: "pointer",
+        border: `1px solid ${grup === deger ? (renk || "var(--erp-primary)") : "var(--erp-border)"}`,
+        background: grup === deger ? `${renk || "#4E6B4E"}22` : "#fff", color: grup === deger ? (renk || "var(--erp-primary)") : "var(--erp-text-2)" }}>
+      {yazi}
+    </button>
+  );
+
   return (
     <div style={{ marginTop: 28 }}>
       <TanimBasligi ad="Model Rengi" />
-      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
-        Tek bir hammadde renginden (örn. sadece Siyah) ya da birden fazla renkten oluşan modeller için
-        (örn. Siyah-Beyaz-Kırmızı deri kombinasyonu) uzun ismi tekrarlamak yerine otomatik kısa bir kod atanır.
-        Stokta ürüne renk eklerken bu model rengini tek seçenek olarak seçebilirsiniz.
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 10px" }}>
+        Mamul rengi: tek hammadde renginden (sadece Siyah) ya da birkaç renkten (Siyah-Beyaz-Kırmızı) oluşan modele
+        otomatik kısa kod verilir; stokta ürüne renk eklerken bu kodla seçilir.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>Kaç renkten oluşuyor?</span>
+      {/* EKLEME — tek satır: kaç renkli · pozisyon seçimleri · seçilenler · düğme */}
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, flexWrap: "wrap", padding: "10px 12px", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", background: "var(--erp-panel)", marginBottom: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <span style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>Kaç renkten oluşuyor?</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, height: 34 }}>
             {[1, 2, 3, 4].map((n) => (
               <button
                 key={n}
@@ -581,141 +608,109 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
               </button>
             ))}
           </div>
+        </div>
+        {Array.from({ length: renkSayisi }, (_, i) => i + 1).map((poz) => {
+          // 2+ renkli kombinasyonlarda AYNI renk birden fazla pozisyonda tekrar edebilir (1. Siyah, 2. Kahve, 3. Siyah
+          // geçerli, FARKLI bir modeldir) — pozisyonlar arasında kısıt YOK. Yalnız TEK renkli kipte, zaten tek başına
+          // model rengi olan renkler listeden çıkar (seçilip eklenince "zaten var" diye reddediliyordu).
+          const tekBasinaZatenTanimli = renkSayisi === 1
+            ? kombinasyonlar.filter((k) => k.renkIdler.length === 1).map((k) => k.renkIdler[0])
+            : [];
+          return (
+            <label key={poz} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>{poz}. Renk</span>
+              <select
+                value={pozisyonSecimleri[poz] || ""}
+                onChange={(e) => setPozisyonSecimleri({ ...pozisyonSecimleri, [poz]: e.target.value })}
+                style={{ ...inputStyle, width: 150 }}
+              >
+                <option value="">Seçin…</option>
+                {hammaddeRenkleri.filter((r) => !tekBasinaZatenTanimli.includes(r.id)).map((r) => (
+                  <option key={r.id} value={r.id}>{r.ad}{r.kod ? ` (${r.kod})` : ""}</option>
+                ))}
+              </select>
+            </label>
+          );
+        })}
+        <button className="btn-primary" onClick={kaydet} disabled={!tumPozisyonlarDolu} style={{ height: 34 }}>
+          <Plus size={14} /> Model Rengi Ekle
+        </button>
+        <span style={{ fontSize: 11, color: "var(--erp-text-3)", alignSelf: "center" }}>
+          {secili.length > 0
+            ? <>Seçilen: <b style={{ color: "var(--erp-text)" }}>{secili.map((id) => renkKoduGetir(id)).join("-")}</b> ({secili.map((id) => renkAdiGetir(id)).join(" / ")}) — kod otomatik atanır</>
+            : "kod otomatik atanır"}
+        </span>
+      </div>
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-            {Array.from({ length: renkSayisi }, (_, i) => i + 1).map((poz) => {
-              // Not: 2+ renkli kombinasyonlarda AYNI renk birden fazla pozisyonda tekrar edebilir
-              // (örn. 1. Renk=Siyah, 2. Renk=Kahve, 3. Renk=Siyah geçerli, FARKLI bir modeldir) —
-              // bu yüzden pozisyonlar arasında bir kısıtlama YOK. Sadece TEK renkli (N=1) modunda,
-              // zaten TEK BAŞINA bir Model Rengi olarak tanımlanmış renkler listeden çıkarılır —
-              // aksi halde seçilip "Model Rengi Ekle" denince zaten var olduğu için reddediliyordu.
-              const tekBasinaZatenTanimli = renkSayisi === 1
-                ? kombinasyonlar.filter((k) => k.renkIdler.length === 1).map((k) => k.renkIdler[0])
-                : [];
-              return (
-                <label key={poz} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  <span style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>{poz}. Renk</span>
-                  <select
-                    value={pozisyonSecimleri[poz] || ""}
-                    onChange={(e) => setPozisyonSecimleri({ ...pozisyonSecimleri, [poz]: e.target.value })}
-                    style={{ ...inputStyle, width: 150 }}
-                  >
-                    <option value="">Seçin…</option>
-                    {hammaddeRenkleri.filter((r) => !tekBasinaZatenTanimli.includes(r.id)).map((r) => (
-                      <option key={r.id} value={r.id}>{r.ad}{r.kod ? ` (${r.kod})` : ""}</option>
-                    ))}
-                  </select>
-                </label>
-              );
-            })}
+      {/* LİSTE — grup çipleri + arama, sık kartlar */}
+      {kombinasyonlar.length === 0 ? (
+        <EmptyState text="Henüz model rengi tanımlanmadı." />
+      ) : (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", marginRight: 4 }}>Tanımlı model renkleri</span>
+            {cip("hepsi", `Tümü (${kombinasyonlar.length})`)}
+            {Object.keys(sayilar).map(Number).sort((a, b) => a - b).map((n) => cip(String(n), `${n} Renkli (${sayilar[n]})`))}
+            {mukerrerSayisi > 0 && cip("mukerrer", `Mükerrer (${mukerrerSayisi})`, "var(--erp-warn)")}
+            <input
+              data-model-rengi-arama="1"
+              value={arama}
+              onChange={(e) => setArama(e.target.value)}
+              placeholder="Kod ya da ad ara…"
+              style={{ ...inputStyle, width: 180, padding: "4px 8px", fontSize: 12, marginLeft: "auto" }}
+            />
           </div>
-
-          {secili.length > 0 && (
-            <div style={{ fontSize: 12, color: "var(--erp-text)", marginBottom: 10 }}>
-              Seçilenler: <b>{secili.map((id) => renkKoduGetir(id)).join("-")}</b>
-              {" "}({secili.map((id) => renkAdiGetir(id)).join(" / ")})
+          {gorunen.length === 0 ? (
+            <div style={{ fontSize: 12, color: "var(--erp-text-3)", padding: "8px 2px" }}>Eşleşen model rengi yok.</div>
+          ) : (
+            <div data-model-rengi-liste={gorunen.length} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(250px, 100%), 1fr))", gap: 6 }}>
+              {gorunen.map((k) => {
+                const ilk = ilkKayit(k);
+                const mukerrer = !!(ilk && ilk.id !== k.id);
+                return (
+                  <div
+                    key={k.id}
+                    data-model-rengi-kart={k.kod}
+                    title={mukerrer ? `Bu renk seti zaten "${ilk.kod}" kodunda tanımlı — güvenle silebilirsiniz` : etiket(k)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, minWidth: 0,
+                      border: `1px solid ${mukerrer ? "var(--erp-warn)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-sm)", padding: "4px 6px 4px 8px",
+                      background: mukerrer ? "#FCEAEA" : "var(--erp-panel)",
+                    }}
+                  >
+                    <span className="mono" style={{ fontSize: 12, fontWeight: 700, color: "var(--erp-text)", flexShrink: 0 }}>{k.kod}</span>
+                    <div style={{ display: "flex", flexShrink: 0 }}>
+                      {k.renkIdler.map((id, i) => (
+                        <span
+                          key={`${id}-${i}`}
+                          title={renkAdiGetir(id)}
+                          style={{
+                            width: 12, height: 12, borderRadius: "50%",
+                            background: ((hammaddeRenkleri.find((r) => r.id === id) || {}).renkKodu) || "var(--erp-border)",
+                            border: "1px solid #fff", marginLeft: i === 0 ? 0 : -4,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 12, color: "var(--erp-text-2)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {etiket(k)}
+                    </span>
+                    {mukerrer && <span className="mono" style={{ fontSize: 9, fontWeight: 700, color: "var(--erp-warn)", flexShrink: 0 }}>mükerrer · {ilk.kod}</span>}
+                    {kullanimGetir && <KullanimGosterge urunler={kullanimGetir(k.id)} />}
+                    <button
+                      onClick={() => onSil(k.id)}
+                      title="Model rengini sil"
+                      style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 2, flexShrink: 0 }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
-          <button className="btn-primary" onClick={kaydet} disabled={!tumPozisyonlarDolu}>
-            <Plus size={14} /> Model Rengi Ekle (kod otomatik atanır)
-          </button>
         </div>
-
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 6 }}>Tanımlı model renkleri:</div>
-          {kombinasyonlar.length === 0 ? (
-            <EmptyState text="Henüz model rengi tanımlanmadı." />
-          ) : (() => {
-            // Asıl ihtiyaç: kombinasyonlar "kaç renkli" olduğuna göre AYRIŞMIŞ görünsün — Stok'ta renk
-            // eklerken de seçim tam olarak bu sayıya göre filtrelendiği için, burada da aynı gruplama
-            // kullanılıyor; bir bakışta "2 renkli"lerin hepsini bir arada görebilirsiniz.
-            const gruplar = {};
-            kombinasyonlar.forEach((k) => {
-              const n = k.renkIdler.length;
-              if (!gruplar[n]) gruplar[n] = [];
-              gruplar[n].push(k);
-            });
-            const sayilar = Object.keys(gruplar).map(Number).sort((a, b) => a - b);
-            return (
-              <div style={{ display: "grid", gap: 14 }}>
-                {sayilar.map((n) => (
-                  <div key={n}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <span
-                        className="mono"
-                        style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: "var(--erp-r-pill)", background: "#4E6B4E22", color: "var(--erp-primary)" }}
-                      >
-                        {n} Renkli
-                      </span>
-                      <span style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({gruplar[n].length})</span>
-                    </div>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      {gruplar[n].map((k) => {
-                        // Aynı renk seti AYNI SIRAYLA (index index) bu gruptaki BAŞKA bir kombinasyonda
-                        // daha önce (daha küçük kod ile) tanımlıysa, bu kayıt bir MÜKERRERDİR. Farklı
-                        // sırayla aynı renkleri kullanan (örn. Siyah/Kahve/Siyah ile Kahve/Siyah/Siyah)
-                        // kombinasyonlar FARKLI modeller kabul edilir, mükerrer sayılmaz.
-                        const ayniSetIlkKayit = gruplar[n].find(
-                          (d) => d.renkIdler.length === k.renkIdler.length && d.renkIdler.every((id, i) => id === k.renkIdler[i])
-                        );
-                        const mukerrer = ayniSetIlkKayit && ayniSetIlkKayit.id !== k.id;
-                        return (
-                        <div
-                          key={k.id}
-                          style={{
-                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                            border: `1px solid ${mukerrer ? "var(--erp-warn)" : "var(--erp-border-2)"}`, borderRadius: "var(--erp-r-md)", padding: "8px 10px",
-                            background: mukerrer ? "#FCEAEA" : "var(--erp-panel)",
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: "var(--erp-text)" }}>{k.kod}</span>
-                            <div style={{ display: "flex" }}>
-                              {k.renkIdler.map((id, i) => (
-                                <span
-                                  key={id}
-                                  title={renkAdiGetir(id)}
-                                  style={{
-                                    width: 14, height: 14, borderRadius: "50%",
-                                    background: ((hammaddeRenkleri.find((r) => r.id === id) || {}).renkKodu) || "var(--erp-border)",
-                                    border: "1px solid #fff", marginLeft: i === 0 ? 0 : -5,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                            <span style={{ fontSize: 12, color: "var(--erp-text-2)" }}>
-                              {k.renkIdler.map((id) => renkAdiGetir(id)).join(" / ")}
-                            </span>
-                            {mukerrer && (
-                              <span
-                                className="mono"
-                                style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: "var(--erp-r-pill)", background: "#B85C2E22", color: "var(--erp-warn)" }}
-                                title={`Bu renk seti zaten "${ayniSetIlkKayit.kod}" kodunda tanımlı — güvenle silebilirsiniz`}
-                              >
-                                mükerrer · {ayniSetIlkKayit.kod} ile aynı
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            {kullanimGetir && <KullanimGosterge urunler={kullanimGetir(k.id)} />}
-                            <button
-                              onClick={() => onSil(k.id)}
-                              style={{ border: "none", background: "none", color: "var(--erp-text-3)", cursor: "pointer", display: "flex", padding: 4 }}
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
