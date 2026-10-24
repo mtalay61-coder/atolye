@@ -3141,7 +3141,19 @@ function AtolyeUygulamasi() {
     const eslesmeler = kodsuz.map((k) => ({ urunId: k.urunId, eski: k.renk, yeni: plan.etiketler[k.renk] })).filter((e) => e.yeni && e.yeni !== e.eski);
     const sonuc = mamulRenkleriniYenidenAdlandir({ stok, siparisler, uretim, koliler, teklifler }, eslesmeler);
     const isler = [];
-    if (sonuc.stok !== stok) isler.push(saveStok(sonuc.stok));
+    // KİLİT İZNİ (v1.724.0 — kullanıcı, 305 renk · 57 ürün dönüştürdükten sonra: "kodsuz ürünlere kod da verilmişti, o da
+    // kayıt olmamış"): varyantlar bulutta urun_id+renk+beden ile anahtarlı; 305 rengin adı değişince binlerce eski varyant
+    // satırı silinip yenisi yazılıyor, bu da TOPLU SİLME KİLİDİNE (040) takılıp stok yazmasını düşürüyordu (günlükte
+    // "TOPLU SİLME ENGELLENDİ: varyantlar"). Sipariş/üretim/koli/teklif yazmaları geçtiği için kayıtlar yarım kalmıştı.
+    // Bu işlem kullanıcının iki adımla onayladığı, satır sayısını koruyan bir YENİDEN ADLANDIRMA: izinle yazılır.
+    // `saveStok` kalıbı (görseller ayrı), yalnız seçenek eklendi.
+    if (sonuc.stok !== stok) {
+      setStok(sonuc.stok);
+      const { stok: yerelStok, gorseller } = gorselleriAyir(sonuc.stok);
+      isler.push(tabloYaz("stok:items", "urunler", sonuc.stok, yerelStok, { topluSilmeIzni: true })
+        .then(() => { gorselleriYaz(gorseller).catch((e) => console.error("Görsel yazılamadı:", e)); })
+        .catch((e) => kaydetmeHatasiBildir(e, "Stok", yerelStok)));
+    }
     if (sonuc.siparisler !== siparisler) isler.push(saveSiparisler(sonuc.siparisler));
     if (sonuc.uretim !== uretim) isler.push(saveUretim(sonuc.uretim));
     if (sonuc.koliler !== koliler) isler.push(saveKoliler(sonuc.koliler));
@@ -3155,7 +3167,7 @@ function AtolyeUygulamasi() {
     });
     showToast(`${eslesmeler.length} mamul rengi kodlandı · ${s.urun} ürün, ${s.kalem} sipariş kalemi, ${s.uretim} üretim, ${s.koli} koli kalemi, ${s.teklif} teklif kalemi güncellendi`);
     return sonuc.sayilar;
-  }, [stok, siparisler, uretim, koliler, teklifler, tanimlarKodluYaz, saveStok, saveSiparisler, saveUretim, saveKoliler, saveTeklifler, showToast]);
+  }, [stok, siparisler, uretim, koliler, teklifler, tanimlarKodluYaz, saveSiparisler, saveUretim, saveKoliler, saveTeklifler, showToast, kaydetmeHatasiBildir]);
 
   // Sipariş ekranından MODEL RENGİ oluşturup ürüne ekler ve reçetesini kurar.
   //
