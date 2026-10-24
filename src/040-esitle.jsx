@@ -31,16 +31,50 @@ async function supabaseSil(tablo, idler) {
 // sayılıp soyulur. Böylece virgül, parantez ve nokta içeren renk adları da güvenle geçer,
 // bedensiz malzemenin boş dizesi (`in.("")`) de belirsizlik bırakmaz. `eq.` tarafında tırnak
 // değerin PARÇASI sayılır — bu proje tam o yüzden yedi sürüm boyunca buluta hiç yazamadı.
+// GRUPLU (v1.724.1 — kullanıcı, telefonda 305 renk · 57 ürün dönüştürürken "Failed to fetch"): yeniden adlandırma binlerce
+// varyantı siliyor; satır başına bir istek telefon bağlantısında kopuyordu. Son alan dışındaki alanları aynı olan satırlar
+// tek istekte gider: `urun_id=in.("X")&renk=in.("R")&beden=in.("40","41",…)` — filtreler VE'lenir, son alan listede olanlar
+// tam o satırlardır (çapraz çarpım yok; ürün+renk grubu içinde beden listesi). Son alanı NULL olan satır listeye giremez
+// (`is.null` gerekir), o satır tek başına gider. Liste 100'er parça (URL uzunluğu).
 async function supabaseSilBilesik(tablo, alanlar, kayitlar) {
+  const kosul = (alan, deger) => {
+    // Yazarken alan hiç gönderilmediyse sütun NULL'dır; eşitlik NULL'a denk gelmez, `is.null` gelir.
+    if (deger === null || deger === undefined) return `${alan}=is.null`;
+    return `${alan}=in.(${encodeURIComponent(`"${String(deger).replace(/"/g, '\\"')}"`)})`;
+  };
+  const sonAlan = alanlar[alanlar.length - 1];
+  const onAlanlar = alanlar.slice(0, -1);
+  const gruplar = new Map();   // ön alanların koşul dizesi → son alan değerleri
+  const tekler = [];           // son alanı NULL olanlar
   for (const k of kayitlar) {
-    const kosullar = alanlar.map((alan) => {
-      const deger = k[alan];
-      // Yazarken alan hiç gönderilmediyse sütun NULL'dır; eşitlik NULL'a denk gelmez, `is.null` gelir.
-      if (deger === null || deger === undefined) return `${alan}=is.null`;
-      const tirnakli = `"${String(deger).replace(/"/g, '\\"')}"`;
-      return `${alan}=in.(${encodeURIComponent(tirnakli)})`;
-    }).join("&");
-    await supabaseIstek(`${tablo}?${kosullar}`, { method: "DELETE" });
+    if (k[sonAlan] === null || k[sonAlan] === undefined) { tekler.push(k); continue; }
+    const anahtar = onAlanlar.map((a) => kosul(a, k[a])).join("&");
+    if (!gruplar.has(anahtar)) gruplar.set(anahtar, []);
+    gruplar.get(anahtar).push(String(k[sonAlan]));
+  }
+  for (const [onKosul, degerler] of gruplar) {
+    for (let i = 0; i < degerler.length; i += 100) {
+      const liste = degerler.slice(i, i + 100).map((d) => encodeURIComponent(`"${d.replace(/"/g, '\\"')}"`)).join(",");
+      await supabaseIstek(`${tablo}?${onKosul ? `${onKosul}&` : ""}${sonAlan}=in.(${liste})`, { method: "DELETE" });
+    }
+  }
+  for (const k of tekler) {
+    await supabaseIstek(`${tablo}?${alanlar.map((a) => kosul(a, k[a])).join("&")}`, { method: "DELETE" });
+  }
+}
+
+// PARÇALI EKLEME/GÜNCELLEME (v1.724.1, aynı olay): binlerce satır tek POST gövdesinde (birkaç MB) gidince telefonda
+// istek düşüyordu. Satırlar `satirlariEsitle`den sonra 400'erlik parçalarla sırayla gönderilir; merge-duplicates
+// olduğu için yarıda kalan bir parça bir sonraki denemede yeniden gönderilebilir.
+const POST_PARCA_BOYU = 400;
+async function supabasePostParcali(yol, satirlar) {
+  const esit = satirlariEsitle(satirlar);
+  for (let i = 0; i < esit.length; i += POST_PARCA_BOYU) {
+    await supabaseIstek(yol, {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify(esit.slice(i, i + POST_PARCA_BOYU)),
+    });
   }
 }
 
@@ -190,13 +224,9 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
   });
 
   if (yeniler.length > 0) {
-    await supabaseIstek(tablo, {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify(satirlariEsitle(yeniler.map((k) => (
-        surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 }
-      )))),
-    });
+    await supabasePostParcali(tablo, yeniler.map((k) => (
+      surumDesteklenmiyor ? sema.satir(k) : { ...sema.satir(k), surum: 1 }
+    )));
     if (!surumDesteklenmiyor) yeniler.forEach((k) => surumMap.set(k.id, 1));
   }
 
@@ -282,11 +312,7 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
     );
     if (cYaz.length > 0) {
       const yol = cocuk.cakisma ? `${cocuk.tablo}?on_conflict=${cocuk.cakisma}` : cocuk.tablo;
-      await supabaseIstek(yol, {
-        method: "POST",
-        headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-        body: JSON.stringify(satirlariEsitle(cYaz)),
-      });
+      await supabasePostParcali(yol, cYaz);
     }
     // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)
     // veritabanından da düşer. Bileşik anahtarlı tablolarda `id` sütunu olmadığı için silme

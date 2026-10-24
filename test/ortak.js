@@ -22,6 +22,9 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
   // ÇEVRİMDIŞI KİLİT (v1.556.1) testlerde kapalı: senaryolar ağsız koşuyor (bulut istekleri hep düşüyor).
   // Kilidin kendisini ölçen senaryo `cevrimdisiKilidi: true` verir.
   if (!cevrimdisiKilidi) await sayfa.addInitScript(() => { window.__cevrimdisiSerbest = true; });
+  // Ağ hatasında yeniden deneme (v1.724.1) senaryolarda beklemesiz: davranış aynı (3 deneme), aralar 20 ms — kopuk ağ
+  // senaryoları (bekleyen yazma, çevrimdışı kilit) saniyeler beklemesin. Gerçek aralar birim testinde (birim-yazma-dayaniklilik).
+  await sayfa.addInitScript(() => { window.__supabaseYenidenDenemeMs = [20, 20, 20]; });
   // TANIMLAR BAŞLIKLARI (v1.588.0) kapalı başlıyor; senaryolar bölüm içine doğrudan dokunduğu için testte hepsi açık.
   // Açılır davranışı ölçen senaryo `tanimBasliklariKapali: true` verir.
   if (!tanimBasliklariKapali) await sayfa.addInitScript(() => { window.__tanimBasliklariAcik = true; });
