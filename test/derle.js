@@ -17,7 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
-  "sonrakiTeklifNo", "teklifDurumu", "teklifToplami", "teklifiSipariseCevir", "teklifKalemHatasi", "teklifKalemGruplari", "teklifYazdirHtml",   // teklif (v1.715.0)
+  "sonrakiTeklifNo", "teklifDurumu", "teklifToplami", "teklifiSipariseCevir", "teklifKalemHatasi", "teklifKalemGruplari", "teklifYazdirHtml", "teklifMetinOzeti", "teklifSiparisGorunumu",   // teklif (v1.715.0, v1.722.0)
   "mamulRenkKodlamaPlani", "kodsuzMamulRenkleri", "mamulRenkleriniYenidenAdlandir",   // mamul renk kodlama (v1.717.0)
   "gecerliRezervasyonlar", "rezervasyonFarkiniUygula", "yazmaDogrulamaEksikleri", "topluSilmeEngeliMi", "topluSilmeEngeliBul", "TOPLU_SILME_ESIGI", "yedekSilinecekleri", "cihazSayimlari", "sayimKarsilastir", "contentRangeSayisi", "arsivSatirlariniHazirla", "arsivGeriYuklemeSirasi", "arsivCakismaSutunlari",   // toplu silme kilidi (v1.712.0)
   "adimSirasiIhlalleri", "oncekiAdimdanMevcutBedenler", "uretimRaporDonemi", "uretimRaporuHesapla", "prosesGunlukHedef", "amortismanAraligi", "donemAmortismani", "urunDemirbasPayi", "prosesKuyrugu", "prosesPlanTakvimi", "prosesPlaniniDegistir", "isGunuEkle", "prosesKapasitesi", "isYukuHesapla", "elemanGunlukSaat", "iscilikFisProsesi", "mesaiHesapla", "iscilikBolumu", "maasHareketiMi", "personelKaydiniYaz", "satisAlisKartHareketleri", "stokKartHareketleri", "prosesGiderKartlariniTamamla", "iscilikGiderKarti", "kartUretimHareketleri", "karsiliksizUretimFisleri", "karZararHesapla",   // üretim → gider kartı (v1.692)

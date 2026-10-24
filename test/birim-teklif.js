@@ -30,7 +30,7 @@ bekle("doğrulama: miktarsız", teklifKalemHatasi([{ urunId: "u", urunAd: "Bot",
 bekle("doğrulama: tamam", teklifKalemHatasi(t.kalemler), null);
 bekle("gruplama ürün+renk, ölçüler sıralı", teklifKalemGruplari(t.kalemler).map((g) => `${g.urunAd}|${g.renk}:${g.kalemler.map((k) => k.beden).join(",")}`), ["Bot|Siyah:40,41", "Çizme|Taba:42"]);
 const html = teklifYazdirHtml(t, { unvan: "Müşteri B", adres: "İzmir" }, { unvan: "Test Atölye", kdvAktif: true }, []);
-bekle("çıktı: başlık, müşteri, kalem, KDV ve toplam", [/TEKLİF/.test(html), /TKL-1001/.test(html), /Müşteri B/.test(html), /Bot/.test(html), /KDV/.test(html), /600,00/.test(html), /2026-11-07/.test(html)], [true, true, true, true, true, true, true]);
+bekle("çıktı: başlık, müşteri, kalem, KDV ve toplam", [/TEKLİF/.test(html), /TKL-1001/.test(html), /Müşteri B/.test(html), /Bot/.test(html), /KDV/.test(html), /600(,00)? ₺/.test(html), /2026-11-07/.test(html)], [true, true, true, true, true, true, true]);
 bekle("çıktı: HTML kaçışı", /&lt;b&gt;/.test(teklifYazdirHtml({ ...t, not: "<b>x</b>" }, {}, {}, [])), true);
 if (hata) { console.log("BİRİM TESTİ HATA: teklif"); process.exit(1); }
 console.log("birim-teklif: tamam");

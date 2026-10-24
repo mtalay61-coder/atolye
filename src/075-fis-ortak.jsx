@@ -356,7 +356,11 @@ function siparisWhatsappBaglantisi(siparis, cari) {
   return numara ? `https://wa.me/${numara}?text=${metin}` : `https://wa.me/?text=${metin}`;
 }
 
-function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
+// `secenek.teklif` (v1.722.0 — kullanıcı: "teklif yazdır formu resimli olsun, WhatsApp vs. vardı o şekilde"): aynı şablon
+// TEKLİF belgesi olarak — başlık "TEKLİF", numara teklif no, tarih satırında geçerlilik; ödeme bölümü yok; KDV açıksa
+// dipte KDV ve KDV dahil toplam (teklifToplami, 326); altta geçerlilik cümlesi. 326 `teklifYazdirHtml` buradan geçer.
+function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok, secenek = {}) {
+  const teklif = secenek.teklif || null;
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
   const f = firmaBilgileri || {};
   const gruplar = [];
@@ -398,6 +402,7 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
   // tahsilatlar (satış) / ödemeler (alış): tarih · fiş no · kasa/banka · tutar; altta Ödenen ve (tek para birimli
   // siparişte) Kalan. Kaynak sipariş kartındakiyle aynı: `siparisOdemeOzeti` (320). Ödeme yoksa bölüm hiç çizilmez.
   const odemeBolumu = (() => {
+    if (teklif) return "";   // teklifin bağlı tahsilatı olmaz
     const pbler = Object.keys(pbToplam);
     const siparisPB = pbler.length === 1 ? pbler[0] : null;
     const genelToplam = siparisPB ? pbToplam[siparisPB] : 0;
@@ -442,9 +447,9 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
         <div style="font-size:11px;color:#7A6A50">${esc(f.adres || "")}${f.telefon ? ` · ${esc(f.telefon)}` : ""}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:11px;letter-spacing:1px;color:#7A6A50">${siparis.tip === "Alış" ? "ALIŞ SİPARİŞİ" : "SATIŞ SİPARİŞİ"}</div>
+        <div style="font-size:${teklif ? 20 : 11}px;letter-spacing:1px;${teklif ? "font-weight:800" : "color:#7A6A50"}">${teklif ? "TEKLİF" : (siparis.tip === "Alış" ? "ALIŞ SİPARİŞİ" : "SATIŞ SİPARİŞİ")}</div>
         <div class="mono" style="font-size:18px;font-weight:700">${esc(siparis.siparisNo || "")}</div>
-        <div class="mono" style="font-size:11px">Tarih: ${esc((siparis.tarih || "").slice(0, 10))}${siparis.teslimTarihi ? ` · Teslim: ${esc(siparis.teslimTarihi)}` : ""}</div>
+        <div class="mono" style="font-size:11px">Tarih: ${esc((siparis.tarih || "").slice(0, 10))}${teklif && teklif.gecerlilikTarihi ? ` · Geçerlilik: ${esc(teklif.gecerlilikTarihi)}` : ""}${siparis.teslimTarihi ? ` · Teslim: ${esc(siparis.teslimTarihi)}` : ""}</div>
       </div>
     </div>
     <div style="margin-bottom:12px">
@@ -491,8 +496,16 @@ function siparisCiktisiHTML(siparis, cari, firmaBilgileri, stok) {
       <td class="mono" style="text-align:right;width:110px;font-size:13px">${toplamAdet}${gruplar[0] && gruplar.every((g) => g.birim === gruplar[0].birim) ? ` ${esc(gruplar[0].birim)}` : ""}</td>
       <td class="mono" style="text-align:right;width:160px;font-size:13px">${Object.entries(pbToplam).map(([pb, v]) => para(v, pb)).join(" + ")}</td>
     </tr></tbody></table>
+    ${teklif && kdvAktifMi(f) ? (() => {
+      // KDV DİPNOTU (teklif): kalem KDV oranlarından (326 `teklifToplami`) para birimi başına matrah · KDV · KDV dahil toplam.
+      const t = teklifToplami(teklif);
+      return `<table data-teklif-kdv="1" style="width:100%;border-collapse:collapse;margin-top:2px"><tbody>${Object.entries(t).map(([pb, x]) => `
+        <tr><td style="text-align:right;font-size:12px;color:#7A6A50">KDV</td><td class="mono" style="text-align:right;width:160px;font-size:12px">${para(x.kdv, pb)}</td></tr>
+        <tr style="font-weight:700"><td style="text-align:right;font-size:13px">KDV dahil toplam</td><td class="mono" style="text-align:right;width:160px;font-size:13px">${para(x.toplam, pb)}</td></tr>`).join("")}</tbody></table>`;
+    })() : ""}
     ${siparis.not ? `<div style="margin-top:12px;font-size:12px"><b>Not:</b> ${esc(siparis.not)}</div>` : ""}
     ${odemeBolumu}
+    ${teklif ? `<div style="margin-top:20px;font-size:11px;color:#7A6A50">Bu teklif ${teklif.gecerlilikTarihi ? `${esc(teklif.gecerlilikTarihi)} tarihine kadar` : "belirtilen süre boyunca"} geçerlidir. Onayınızla siparişe dönüştürülür.</div>` : ""}
     <div style="margin-top:24px;font-size:10px;color:#9B8B72">Atölye ERP · ${new Date().toLocaleDateString("tr-TR")}</div>`;
 }
 
