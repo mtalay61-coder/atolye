@@ -33,6 +33,20 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
+// KONU SATIRI GÜVENLİ (v1.724.2 — kullanıcı, Gmail'de ham MIME görünen gün sonu raporu: "Gün sonu raporu bozuldu"). denomailer
+// 1.6.0 konuyu `=?utf-8?Q?…?=` ile kodlarken 76. karakterde yumuşak satır sonu ("=\r\n") koyuyor; başlık satırının devamı
+// boşlukla başlamadığı için posta sunucusu başlıkları orada bitmiş sayıyor, gövde ve ekler ham metin olarak görünüyor. Firma
+// ünvanı uzayınca (Talay Ayakkabı Tekstil İnşaat San Tic Ltd Şti) konu bu sınırı aştı. Konu ASCII'ye çevrilir (ğ→g, ş→s, ı→i…)
+// ve 60 karakterle sınırlanır: ASCII metin kodlanınca uzamaz, 60 + 12 sarmalayıcı < 76. Kelime ortasından kesmez.
+const TR_ASCII: Record<string, string> = { "ç": "c", "Ç": "C", "ğ": "g", "Ğ": "G", "ı": "i", "İ": "I", "ö": "o", "Ö": "O", "ş": "s", "Ş": "S", "ü": "u", "Ü": "U", "—": "-", "–": "-", "·": "-", "’": "'", "“": "\"", "”": "\"" };
+function konuGuvenli(konu: string, enFazla = 60): string {
+  const ascii = String(konu || "").split("").map((h) => TR_ASCII[h] ?? (h.charCodeAt(0) < 128 ? h : "-")).join("").replace(/\s+/g, " ").trim();
+  if (ascii.length <= enFazla) return ascii;
+  const kesik = ascii.slice(0, enFazla);
+  const bosluk = kesik.lastIndexOf(" ");
+  return (bosluk > enFazla - 20 ? kesik.slice(0, bosluk) : kesik).trim();
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "apikey, authorization, content-type",
@@ -90,7 +104,7 @@ Deno.serve(async (istek: Request) => {
     await istemci.send({
       from: ayar.gonderenAd ? `${ayar.gonderenAd} <${ayar.kullanici}>` : ayar.kullanici,
       to: kime,
-      subject: govde.konu || "Sipariş",
+      subject: konuGuvenli(govde.konu || "Siparis"),
       content: govde.metin || "",
       attachments: govde.pdfBase64
         ? [{ filename: govde.dosyaAdi || "siparis.pdf", contentType: "application/pdf", encoding: "base64", content: govde.pdfBase64 }]

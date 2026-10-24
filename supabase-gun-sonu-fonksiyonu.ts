@@ -426,6 +426,20 @@ async function veriOku(db) {
   return { tanimlar: (tanimS.data && tanimS.data.veri) || {}, muhasebe: (muhasebeS.data && muhasebeS.data.veri) || {}, cariler, stok, uretim };
 }
 
+// KONU SATIRI GÜVENLİ (v1.724.2 — kullanıcı, Gmail'de ham MIME görünen gün sonu raporu: "Gün sonu raporu bozuldu"). denomailer
+// 1.6.0 konuyu `=?utf-8?Q?…?=` ile kodlarken 76. karakterde yumuşak satır sonu ("=\r\n") koyuyor; başlık satırının devamı
+// boşlukla başlamadığı için posta sunucusu başlıkları orada bitmiş sayıyor, gövde ve ekler ham metin olarak görünüyor. Firma
+// ünvanı uzayınca (Talay Ayakkabı Tekstil İnşaat San Tic Ltd Şti) konu bu sınırı aştı. Konu ASCII'ye çevrilir (ğ→g, ş→s, ı→i…)
+// ve 60 karakterle sınırlanır: ASCII metin kodlanınca uzamaz, 60 + 12 sarmalayıcı < 76. Kelime ortasından kesmez.
+const TR_ASCII: Record<string, string> = { "ç": "c", "Ç": "C", "ğ": "g", "Ğ": "G", "ı": "i", "İ": "I", "ö": "o", "Ö": "O", "ş": "s", "Ş": "S", "ü": "u", "Ü": "U", "—": "-", "–": "-", "·": "-", "’": "'", "“": "\"", "”": "\"" };
+function konuGuvenli(konu: string, enFazla = 60): string {
+  const ascii = String(konu || "").split("").map((h) => TR_ASCII[h] ?? (h.charCodeAt(0) < 128 ? h : "-")).join("").replace(/\s+/g, " ").trim();
+  if (ascii.length <= enFazla) return ascii;
+  const kesik = ascii.slice(0, enFazla);
+  const bosluk = kesik.lastIndexOf(" ");
+  return (bosluk > enFazla - 20 ? kesik.slice(0, bosluk) : kesik).trim();
+}
+
 function base64Utf8(metin: string) {
   const bayt = new TextEncoder().encode(metin);
   let ikili = "";
@@ -454,7 +468,7 @@ async function raporGonder(veriler, gun: string, saatMetni: string) {
     await istemci.send({
       from: smtp.gonderenAd ? `${smtp.gonderenAd} <${smtp.kullanici}>` : smtp.kullanici,
       to: alicilar,
-      subject: `Gün sonu raporu — ${gun.split("-").reverse().join(".")} — ${firma.unvan || ""}`.trim(),
+      subject: konuGuvenli(`Gun sonu raporu - ${gun.split("-").reverse().join(".")} - ${firma.unvan || ""}`),
       content: metin,
       html,
       attachments: [{ filename: `Gun-sonu-${gun}.html`, contentType: "text/html; charset=utf-8", encoding: "base64", content: base64Utf8(html) }],
