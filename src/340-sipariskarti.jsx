@@ -62,7 +62,11 @@ function mobilBolumGizliMi(ayar, bolumKey) {
   return (ayar.gizli || new Set()).has(bolumKey);
 }
 
-function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde, onCariGit, onUruneGit }) {
+function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokRezervasyonlari, tumSiparisler, uretimSiparisleri, onSil, onFiseGitNo, onGerceklestir, onPlanlaUretim, onPlanlaSatinAlma, baslangicAcik, saltOkunur, onGoruldu, onSiparisGit, onGoToUretim, onPlanlamaTemizle, asortiler, onAsortiOlustur, firmaBilgileri, onPencereAc, onDuzenle, kurlar, onKayitParaGuncelle, onKalemleriBirlestir, koliler, onSatisFisiAc, onOdemeGir, muhasebe, onOdemeKaydet, disMenuIstegi, listeIcinde, onCariGit, onUruneGit, teklifKipi = false }) {
+  // TEKLİF KİPİ (v1.720.0 — kullanıcı: "kaydedilen teklif de sipariş gibi resimli olsun, siparişin aynısını buraya kopyalamak
+  // daha zahmetsiz değil mi?"): 326 TeklifModule açık teklifi bu kartla çizer (saltOkunur + listeIcinde). Teklifin tedariği
+  // yoktur: "Durum" sütunu çizilmez, sağ tık menüsü (sipariş eylemleri) kapalı. Gerisi siparişle birebir — resimli ürün
+  // kutusu, ölçü matrisi, adet/birim/tutar, satır notları.
   // TAHSİLAT/ÖDEME FORMU KARTIN İÇİNDE (v1.613.0 — kullanıcı: "Tahsilat girişi siparişin kendi kartında da açılsın").
   const [showOdeme, setShowOdeme] = useState(false);
   // İŞLEMLER MENÜSÜ (v1.615.0 — kullanıcı: "üst bara mouse sağ tıklama gibi tuş ekle, İşlemler diyebilirsin, tahsilat
@@ -252,7 +256,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     <div {...sagTikIsleyicileri((x, y, hedef) => {
       const u = hedef && hedef.closest ? hedef.closest("[data-siparis-urun]") : null;
       setIslemMenu({ x, y, urunId: u ? u.getAttribute("data-siparis-urun") : null });
-    }, open)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
+    }, open && !teklifKipi)} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
       {/* LİSTEDE MOR ŞERİT YOK (v1.636.1 — kullanıcı: "sağ tık olduğu için mor alan ile üst bilgiyi birleştir, 2 kere aynı
           bilgiler veriyor"). Liste içinde açılan kartın şeridi belge/sezon/durumu, hemen üstündeki özet satırıyla
           (330 SiparisOzetSatiri) birebir tekrarlıyordu; düğmeleri de sağ tık menüsüne taşınmıştı. Artık başlık özet
@@ -832,7 +836,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                           <col style={{ width: "10%" }} />
                           <col style={{ width: "10%" }} />
                           <col style={{ width: "12%" }} />
-                          <col style={{ width: "14%" }} />
+                          {!teklifKipi && <col style={{ width: "14%" }} />}
                         </colgroup>
                         <tbody>
                           <tr data-siparis-kart-baslik="1" style={{ height: 34 }}>
@@ -846,7 +850,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                             <th className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" }}>Adet</th>
                             <th className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" }}>Birim</th>
                             <th className="mono" style={{ fontSize: 12, fontWeight: 700, textAlign: "right", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" }}>Tutar</th>
-                            <th style={{ fontSize: 12, fontWeight: 700, textAlign: "left", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" }}>Durum</th>
+                            {!teklifKipi && <th style={{ fontSize: 12, fontWeight: 700, textAlign: "left", padding: "5px 10px", whiteSpace: "nowrap", color: "var(--erp-text)" }}>Durum</th>}
                           </tr>
                           {renkGruplari.map((rg) => {
                             // SİPARİŞ MİKTARI BÖLÜNMÜŞ KALEMLERDE DE TAM (kullanıcı, 19 Eylül:
@@ -987,7 +991,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                     Kalemler aynı renkte farklı bedenler olsa da planlama renk
                                     bazında yapıldığı için tek bir durum yeterli; farklıysa
                                     en geride olan gösterilir. */}
-                                <td style={{ padding: "5px 12px", whiteSpace: "nowrap" }}>
+                                {!teklifKipi && <td style={{ padding: "5px 12px", whiteSpace: "nowrap" }}>
                                   {(() => {
                                     // Kalem başına hesap ortak (330 `siparisKalemTedarikDurumu`) — fişteki "Siparişten seç" de kullanıyor.
                                     const durumlar = rg.kalemler.map((k) => siparisKalemTedarikDurumu(k, tumSiparisler, uretimSiparisleri));
@@ -1016,11 +1020,11 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                                       </span>
                                     );
                                   })()}
-                                </td>
+                                </td>}
                               </tr>
                               {notAcik && (
                                 <tr data-kart-not-satiri={rg.renk} onClick={() => notSatiriDegistir(notAnahtari)} style={{ cursor: "pointer" }}>
-                                  <td colSpan={tumBedenler.length + 5} style={{ padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" }}>
+                                  <td colSpan={tumBedenler.length + (teklifKipi ? 4 : 5)} style={{ padding: "6px 12px 8px", borderTop: "1px dashed #E3C77A" }}>
                                     {satirNotlari.map((n) => (
                                       <div key={notEtiketi(n)} data-kart-kalem-aciklama="1" style={{ fontSize: 13, color: "var(--erp-text)", whiteSpace: "pre-wrap", padding: "2px 0" }}>
                                         {n.proses && <b style={{ color: "#8A6A2E" }}>{n.proses}: </b>}{n.metin}
@@ -1057,7 +1061,7 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                 <div data-siparis-genel-toplam="1" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", padding: "8px 14px",
                   background: siparis.tip === "Alış" ? "#F1E6DA" : "#E3EDF5", color: siparis.tip === "Alış" ? "#6B4426" : "#1F4E73",
                   border: `1px solid ${siparis.tip === "Alış" ? "#D9C2A8" : "#BFD3E4"}`, borderRadius: "var(--erp-r-md)" }}>
-                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".04em" }}>SİPARİŞ TOPLAMI</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".04em" }}>{teklifKipi ? "TEKLİF TOPLAMI" : "SİPARİŞ TOPLAMI"}</span>
                   <span style={{ fontSize: 12 }}>{modelSayisi} model · {siparis.kalemler.length} kalem</span>
                   <span className="mono" data-siparis-genel-adet={Object.entries(adetler).map(([b, n]) => `${n} ${b}`).join(" + ")} style={{ marginLeft: "auto", fontSize: 14, fontWeight: 700 }}>
                     {Object.entries(adetler).map(([b, n]) => `${n.toLocaleString("tr-TR")} ${b}`).join(" + ")}
