@@ -533,6 +533,10 @@ function VeritabaniSifirlaBolumu({ onVeritabaniSifirla, supabaseBagli }) {
 function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil, kullanimGetir }) {
   const [renkSayisi, setRenkSayisi] = useState(1);
   const [pozisyonSecimleri, setPozisyonSecimleri] = useState({}); // { [pozisyon]: renkId }
+  // YAZARAK SEÇİM (v1.719.0 — kullanıcı, 100+ renkli açılır liste: "bu liste de aramadan filtrelenerek olsun"): sipariş
+  // formu / ürün kartı pozisyon kutularıyla aynı `AramaliMetin`; kutuda "Ad (kod)" yazısı, seçim kimlikle (`pozisyonSecimleri`).
+  const [pozisyonYazilari, setPozisyonYazilari] = useState({}); // { [pozisyon]: kutudaki yazı }
+  const renkEtiketi = (r) => `${r.ad}${r.kod ? ` (${r.kod})` : ""}`;
   // LİSTE TOPARLANDI (v1.718.0 — kullanıcı, 49 tek renkli model rengi ekranı doldurunca: "Burayı toparlayalım").
   // v1.717.0 ile her mamul rengi model rengi olduğu için liste uzayacak: form tek satır, liste tam genişlikte
   // sık kartlar (ekrana sığdığı kadar sütun), grup çipleri (Tümü / 1 Renkli / 2 Renkli… / mükerrer) ve arama.
@@ -556,6 +560,7 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
     const renkIdler = Array.from({ length: renkSayisi }, (_, i) => pozisyonSecimleri[i + 1]);
     onEkle(renkIdler);
     setPozisyonSecimleri({});
+    setPozisyonYazilari({});
   }
 
   // Aynı renk seti AYNI SIRAYLA (index index) daha önce (daha küçük kod ile) tanımlıysa bu kayıt MÜKERRERDİR. Farklı
@@ -597,7 +602,7 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
               <button
                 key={n}
                 type="button"
-                onClick={() => { setRenkSayisi(n); setPozisyonSecimleri({}); }}
+                onClick={() => { setRenkSayisi(n); setPozisyonSecimleri({}); setPozisyonYazilari({}); }}
                 style={{
                   width: 26, height: 26, borderRadius: "50%", border: `1.5px solid ${renkSayisi === n ? "var(--erp-primary)" : "var(--erp-border)"}`,
                   background: renkSayisi === n ? "#E5EEE3" : "#fff", color: renkSayisi === n ? "var(--erp-primary)" : "var(--erp-text-2)",
@@ -619,16 +624,27 @@ function RenkKombinasyonBolumu({ hammaddeRenkleri, kombinasyonlar, onEkle, onSil
           return (
             <label key={poz} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <span style={{ fontSize: 11, color: "var(--erp-text-2)", fontWeight: 600 }}>{poz}. Renk</span>
-              <select
-                value={pozisyonSecimleri[poz] || ""}
-                onChange={(e) => setPozisyonSecimleri({ ...pozisyonSecimleri, [poz]: e.target.value })}
-                style={{ ...inputStyle, width: 150 }}
-              >
-                <option value="">Seçin…</option>
-                {hammaddeRenkleri.filter((r) => !tekBasinaZatenTanimli.includes(r.id)).map((r) => (
-                  <option key={r.id} value={r.id}>{r.ad}{r.kod ? ` (${r.kod})` : ""}</option>
-                ))}
-              </select>
+              {(() => {
+                const secenekler = hammaddeRenkleri.filter((r) => !tekBasinaZatenTanimli.includes(r.id));
+                const secili = secenekler.find((r) => r.id === pozisyonSecimleri[poz]);
+                return (
+                  <div style={{ width: 190 }}>
+                    <AramaliMetin
+                      veriAdi={`data-model-rengi-tanim-poz-${poz}`}
+                      deger={pozisyonYazilari[poz] != null ? pozisyonYazilari[poz] : (secili ? renkEtiketi(secili) : "")}
+                      onDegis={(v) => {
+                        setPozisyonYazilari((y) => ({ ...y, [poz]: v }));
+                        const bulunan = secenekler.find((r) => renkEtiketi(r) === v);
+                        setPozisyonSecimleri((p) => ({ ...p, [poz]: bulunan ? bulunan.id : "" }));
+                      }}
+                      oneriler={secenekler.map(renkEtiketi)}
+                      yalnizListeden
+                      bulanikSecim={false}
+                      placeholder={secenekler.length === 0 ? "Renk tanımlı değil" : "Yazın ya da seçin…"}
+                    />
+                  </div>
+                );
+              })()}
             </label>
           );
         })}
