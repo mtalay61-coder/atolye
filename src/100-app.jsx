@@ -47,9 +47,9 @@ function AtolyeUygulamasi() {
   // YENİLEMEDE EKRAN KORUNUYOR (25 Eylül, v1.448.0 — bkz. `arayuzDurumuOku`): sekmeler ve canlı
   // pencereler sayfa yenilenince geri geliyor. İlk değerler kayıttan; kayıt yoksa ana sayfa.
   const kayitliArayuz = useRef(arayuzDurumuOku()).current;
-  const [tab, setTabHam] = useState(kayitliArayuz ? kayitliArayuz.tab : "anasayfa");
   // Kayıtlı sekmelerde alan ekranları (eski sürümden "muhasebe", "cekler"…) tek sayfa sekmesine katlanır (v1.645.12).
   const sayfaSekmesi = (k) => SAYFA_SEKMESI_ALANI[k] || k;
+  const [tab, setTabHam] = useState(kayitliArayuz ? sayfaSekmesi(kayitliArayuz.tab) : "anasayfa");
   const katla = (liste) => Array.from(new Set((liste || []).map(sayfaSekmesi)));
   const [acikSekmeler, setAcikSekmeler] = useState(kayitliArayuz ? katla(kayitliArayuz.acikSekmeler) : ["anasayfa"]);
   // Ziyaret sırası. Sekme kapatılınca ÖNCEKİNE dönmek için gerekiyor: liste sırası "hangi sırayla
@@ -4352,9 +4352,8 @@ function AtolyeUygulamasi() {
                     yetki("uretim") && ["uretimrapor", "Üretim Raporu", <TrendingUp size={16} />], yetki("stok") && ["modelhane", "Modelhane", <Palette size={16} />]] },
                   { tek: "planlama", ad: "Planlama", ikon: <Compass size={15} /> },
                   { ad: "Siparişler", ikon: <ClipboardList size={15} />, ogeler: [
-                    ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />],
-                    // TEKLİF (v1.715.0, 326): siparişin aynısı, onaylanınca siparişe dönüşür.
-                    ["teklif", "Teklif", <FileText size={16} />]] },
+                    // TEKLİF menüden kalktı (v1.723.0): Sipariş'in alt sekmesi (Liste · Raporlar · Teklif).
+                    ["siparis", "Sipariş", <ClipboardList size={16} />], ["satinalma", "Alış Siparişi", <PackageCheck size={16} />]] },
                   { ad: "Finans", ikon: <Wallet size={15} />, ogeler: [
                     yetki("cari") && ["cari", "Cari", <Users size={16} />],
                     // ÖDEME & TAHSİLAT ALANI (v1.645.8 / v1.645.10 / v1.645.11): giriş + Kasa & Banka + Çek & Senet + Rapor tek alan
@@ -5148,44 +5147,46 @@ function AtolyeUygulamasi() {
             <AlisSatisEkrani cariler={cariler} stok={stok} siparisler={siparisler} koliler={koliler} uretim={uretim} tanimlar={tanimlar} muhasebe={muhasebe}
               showToast={showToast} onFisAc={stokFisiAc} onFiseGit={fiseGit} onFisKaydet={(cariId, tip, fis) => stokFisiKaydet(cariId, tip, fis)} />
           </GizliModul>
-          {/* TEKLİF (v1.715.0, 326-teklif): ayrı liste, ayrı tablo; dönüştürme satış siparişi açar. */}
-          <GizliModul aktif={tab === "teklif"}>
-            <TeklifModule
-              teklifler={teklifler}
-              onSave={saveTeklifler}
-              siparisler={siparisler}
-              cariler={cariler}
-              stok={stok}
-              firmaBilgileri={tanimlar.firmaBilgileri}
-              tanimlar={tanimlar}
-              showToast={showToast}
-              onSipariseDonustur={teklifiSipariseDonustur}
-              onSil={teklifSil}
-              onGoToSiparis={sipariseGit}
-              onGoToCari={cariyeGit}
-              aktifKullanici={aktifKullanici}
-              cop={cop}
-              hedefTeklifId={hedefTeklifId}
-              onHedefTuketildi={() => setHedefTeklifId(null)}
-              // SİPARİŞ FORMUNUN İHTİYAÇLARI (v1.716.0): teklif girişi 325 SiparisModule'ün teklif kipi — Satış modülüne verilen
-              // form bağımlılıklarının aynısı (liste/pencere/teslim kancaları hariç).
-              siparisFormuProps={{
-                uretim, stokRezervasyonlari: stokRezervasyonlariGecerli, koliler, muhasebe,
-                asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur,
-                onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle,
-                tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [],
-                tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [],
-                tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [],
-                tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {},
-                onPencereAc: pencereAc, acikSiparisPencereleri: [], raporlar: [],
-              }}
-            />
-          </GizliModul>
           <GizliModul aktif={tab === "siparis"}>
             <SiparisModule
               cop={cop}
               aktifSekme={tab === "siparis"}
               onSiparisGitGlobal={sipariseGit}
+              hedefTeklifId={hedefTeklifId}
+              // TEKLİF SİPARİŞİN ALT SEKMESİ (v1.723.0 — kullanıcı: "teklifi siparişin içine al, alt sekmesi olsun"). 326 TeklifModule
+              // ayrı menü/sekme değil, Satış Siparişi ekranının "Teklif" üst sekmesi; dönüştürme aynı ekranın listesine düşer.
+              teklifSekmesi={(
+                <TeklifModule
+                  teklifler={teklifler}
+                  onSave={saveTeklifler}
+                  siparisler={siparisler}
+                  cariler={cariler}
+                  stok={stok}
+                  firmaBilgileri={tanimlar.firmaBilgileri}
+                  tanimlar={tanimlar}
+                  showToast={showToast}
+                  onSipariseDonustur={teklifiSipariseDonustur}
+                  onSil={teklifSil}
+                  onGoToSiparis={sipariseGit}
+                  onGoToCari={cariyeGit}
+                  aktifKullanici={aktifKullanici}
+                  cop={cop}
+                  hedefTeklifId={hedefTeklifId}
+                  onHedefTuketildi={() => setHedefTeklifId(null)}
+                  // SİPARİŞ FORMUNUN İHTİYAÇLARI (v1.716.0): teklif girişi 325 SiparisModule'ün teklif kipi — Satış modülüne verilen
+                  // form bağımlılıklarının aynısı (liste/pencere/teslim kancaları hariç).
+                  siparisFormuProps={{
+                    uretim, stokRezervasyonlari: stokRezervasyonlariGecerli, koliler, muhasebe,
+                    asortiler: tanimlar.asortiler || [], onAsortiOlustur: asortiOlustur,
+                    onUruneGit: uruneGit, onYeniRenkKaydet: yeniRenkKaydet, onModelRengiVeRecete: modelRengiVeReceteEkle,
+                    tanimlarRenkler: tanimlar.renkler || [], tanimlarKombinasyonlar: tanimlar.renkKombinasyonlari || [],
+                    tanimlarBedenler: tanimlar.bedenler || [], tanimlarBedenGruplari: tanimlar.bedenGruplari || [],
+                    tanimlarOzelKodAlanlari: tanimlar.ozelKodAlanlari || [], tanimlarProsesler: tanimlar.prosesler || [],
+                    tanimlarAraProsesler: tanimlar.araProsesler || [], kurlar: muhasebe.kurlar || {},
+                    onPencereAc: pencereAc, acikSiparisPencereleri: [], raporlar: [],
+                  }}
+                />
+              )}
               mobilBolumAyari={mobilBolumCoz(tanimlar.mobilGorunum, "siparis")}
               onFiseGitNo={fiseGit}
               koliler={koliler}

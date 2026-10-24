@@ -19,7 +19,10 @@ async function calistir() {
 
   // ---- 1) Menü → Teklif
   // Menü düğmeleri kapalıyken de DOM'da (data-nav) — doğrudan tıklanır.
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Teklif"]'); if (b) b.click(); });
+  // TEKLİF SİPARİŞ'İN ALT SEKMESİ (v1.723.0): menüden Sipariş, üst sekmeden Teklif.
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Sipariş"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(400);
+  await sayfa.locator('[data-ust-sekme="teklif"]').first().click();
   await sayfa.waitForTimeout(600);
   const modulVar = await sayfa.locator("[data-teklif-modulu]").count();
   // Giriş formu = sipariş formu (v1.716.0, teklif kipi, tam ekran katman): cari, model, renk, ölçü matrisi, kalemlere ekle.
@@ -71,7 +74,10 @@ async function calistir() {
   // Sipariş listesinde görünüyor mu (hedef verildi → liste süzgeci "Tümü")?
   const siparisEkranda = await sayfa.evaluate(() => /SAT-1\d{3}/.test(document.body.innerText));
   // Teklif sekmesine dön: dönüşen teklif için düzenle/sil/dönüştür yok, "Siparişe git" var.
-  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Teklif"]'); if (b) b.click(); });
+  // TEKLİF SİPARİŞ'İN ALT SEKMESİ (v1.723.0): menüden Sipariş, üst sekmeden Teklif.
+  await sayfa.evaluate(() => { const b = document.querySelector('[data-nav="Sipariş"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(400);
+  await sayfa.locator('[data-ust-sekme="teklif"]').first().click();
   await sayfa.waitForTimeout(500);
   await tikla('[data-teklif-durum-filtre="Tümü"]');
   // Satır daha önce açıldıysa açık kalır (acikId); kapalıysa aç.
