@@ -84,7 +84,9 @@ const olcuAdDegistir = useCallback((olcuId, yeniAdHam) => {
     ...k, kalemler: (k.kalemler || []).map((x) => (es(x.beden) ? { ...x, beden: yeniAd } : x)),
   }));
 
-  setStok(nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
+  // KİLİT İZNİ (v1.724.0): varyantlar urun_id+renk+beden ile anahtarlı — ad değişince eski satırlar silinip yenileri yazılır;
+  // yaygın bir ölçüde bu toplu silme kilidine takılıyordu (buluta hiç gitmiyordu). Kullanıcının açık isteği: izinle.
+  setStok(nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", nextStok, undefined, { topluSilmeIzni: true }), "Stok kartları", nextStok);
   setSiparisler(nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
   setUretim(nextUretim); yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
@@ -143,7 +145,9 @@ const tanimsizOlcuCevir = useCallback((eskiAdHam, yeniAdHam) => {
     })),
   }));
   const nextKoliler = (koliler || []).map((k) => ({ ...k, kalemler: (k.kalemler || []).map((x) => (es(x.beden) ? { ...x, beden: yeniAd } : x)) }));
-  setStok(nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
+  // KİLİT İZNİ (v1.724.0): varyantlar urun_id+renk+beden ile anahtarlı — ad değişince eski satırlar silinip yenileri yazılır;
+  // yaygın bir ölçüde bu toplu silme kilidine takılıyordu (buluta hiç gitmiyordu). Kullanıcının açık isteği: izinle.
+  setStok(nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", nextStok, undefined, { topluSilmeIzni: true }), "Stok kartları", nextStok);
   setSiparisler(nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparisler), "Siparişler", nextSiparisler);
   setUretim(nextUretim); yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   setKoliler(nextKoliler); yazimiIzle(tekilYaz("koli:data", "koliler", nextKoliler), "Koliler", nextKoliler);
@@ -284,7 +288,9 @@ const hammaddeRenkAdDegistir = useCallback((renkId, yeniAdHam) => {
       return degisti ? { ...p, variants: nextVariants, renkResimleri: nextRenkResimleri, recete: nextRecete, hareketler: nextHareketler, ...(Array.isArray(nextHarici) ? { hariciBarkodlar: nextHarici } : {}) } : p;
     });
     setStok(nextStok);
-    yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
+    // KİLİT İZNİ (v1.724.0): renk adı değişince o rengin bütün varyant satırları silinip yeniden yazılır (anahtar
+    // urun_id+renk+beden); yaygın renkte toplu silme kilidi yazmayı düşürüyordu. Kullanıcının açık isteği: izinle.
+    yazimiIzle(tabloYaz("stok:items", "urunler", nextStok, undefined, { topluSilmeIzni: true }), "Stok kartları", nextStok);
 
     const nextSiparisler = siparisler.map((s) => {
       let degisti = false;

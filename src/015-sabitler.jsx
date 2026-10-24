@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.723.0";
+const SURUM = "1.724.0";
 const SURUM_TARIHI = "2026-10-24";
-const SURUM_NOTU = "Teklif, Sipariş ekranının alt sekmesi oldu (Liste · Raporlar · Teklif); menüden ayrı Teklif kalktı";
+const SURUM_NOTU = "Düzeltme: Bakım › mamul renk kodlama ve renk/ölçü adı değiştirme stok yazması toplu silme kilidine takılıp buluta gitmiyordu; artık onaylı yeniden adlandırma olarak izinle yazılır";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.724.0", tarih: "24.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › Bakım › Kodsuz Mamul Renkleri dönüştürmesi stokta kayıt olmuyordu: yüzlerce varyantın adı değişince eski satırların silinmesi toplu silme kilidine takılıyor, stok yazması düşüyor (sipariş/üretim/koli/teklif yazılmış kalıyordu). Kullanıcının onayladığı yeniden adlandırma artık kilit izniyle yazılır; aracı yeniden çalıştırmak yeter", "Tanımlar'da renk adı ve ölçü adı değiştirme de aynı kilide takılabiliyordu (yaygın renk/ölçü); izinle yazılır"] },
   { surum: "1.723.0", tarih: "24.10.2026", eklenen: [], degisen: ["Teklif artık Siparişler › Sipariş ekranının üst sekmesi (Liste · Raporlar · Teklif); menüdeki ayrı \"Teklif\" kalktı. Kayıtlı açık \"Teklif\" sekmesi Sipariş'e katlanır"], duzeltilen: [] },
   { surum: "1.722.0", tarih: "24.10.2026", eklenen: ["Teklif › PDF indir, WhatsApp'tan gönder, E-posta ile gönder — sipariş kartındaki yolların aynısı"], degisen: ["Teklif yazdır çıktısı sipariş çıktısıyla birebir: model model resimli bloklar, renk × ölçü matrisi, adet / birim / tutar, satır notları, genel toplam; KDV açıksa KDV dipnotu; geçerlilik cümlesi"], duzeltilen: [] },
   { surum: "1.721.0", tarih: "24.10.2026", eklenen: [], degisen: ["Tanımlar › Model Rengi: kartlar çerçeveli, en çok ~9 satır boyunda kaydırmalı kutuda; çipler ve arama üstte sabit", "Tanımlar › Renkler (ve diğer tanım listeleri): satırlar en çok ~12 satır boyunda kaydırmalı; başlık ve süzgeç satırı sabit"], duzeltilen: [] },
