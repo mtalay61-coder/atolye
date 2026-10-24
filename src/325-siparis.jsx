@@ -4,11 +4,14 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
   // TEKLİF KİPİ (v1.716.0 — kullanıcı: "Teklifte ürün girişi siparişin aynısı olacak, bire bir"): modül YALNIZ FORM olarak
   // çizilir (liste, sekme, pencereler yok), kayıt `onSave` yerine `onTeklifKaydet(nesne, duzenlenenId)`e gider, kapanınca
   // `onTeklifVazgec`. `teklifDuzenle` verilirse form o kayıtla açılır (siparisler=[o kayıt] ile). 326 TeklifModule sarmalar.
-  teklifKipi = false, teklifDuzenle = null, onTeklifKaydet, onTeklifVazgec }) {
+  teklifKipi = false, teklifDuzenle = null, onTeklifKaydet, onTeklifVazgec, teklifSekmesi = null, hedefTeklifId = null }) {
   // RAPORLAR SEKMESİ (kullanıcı, 12 Eylül: "her modülün içine sekme olarak rapor"). Liste ile
   // raporlar aynı ekranda yan yana durmasın diye üst sekme; motor 245-rapor'da, burada yalnız
   // sipariş kalemleri düz satıra çevriliyor.
-  const [ustSekme, setUstSekme] = useState("liste"); // "liste" | "raporlar"
+  const [ustSekme, setUstSekme] = useState("liste"); // "liste" | "raporlar" | "teklif"
+  // TEKLİF SİPARİŞİN ALT SEKMESİ (v1.723.0 — kullanıcı: "teklifi siparişin içine al, alt sekmesi olsun"): `teklifSekmesi`
+  // App'in kurduğu <TeklifModule/>; Liste · Raporlar · Teklif. Hedef teklif (ana sayfa / cari kartından) gelince sekme açılır.
+  useEffect(() => { if (hedefTeklifId && teklifSekmesi) setUstSekme("teklif"); }, [hedefTeklifId, teklifSekmesi]);
   // sabitTip verilmişse sekme ona kilitlenir; setSiparisSekme çağrıları etkisiz kalır.
   const [siparisSekmeSerbest, setSiparisSekmeSerbest] = useState("satis");
   const siparisSekme = sabitTip ? (sabitTip === "Alış" ? "alis" : "satis") : siparisSekmeSerbest;
@@ -169,6 +172,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
       setDurumFiltre("Tümü");
       setSiparisArama(hedef.siparisNo || "");
       setAcikSiparisId(hedefSiparisId);
+      setUstSekme("liste");   // Teklif / Raporlar sekmesindeyken "Siparişe git" (v1.723.0): hedef listede, sekme oraya dönsün
       if (onHedefTuketildi) onHedefTuketildi();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2288,13 +2292,14 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
 
       {/* TEKLİF KİPİNDE YALNIZ FORM (v1.716.0): aşağısı sipariş listesi/sekmeleri — teklifte çizilmez. */}
       {!teklifKipi && (<>
-      {siparisSekme === "satis" && ustSekme !== "raporlar" && (
+      {siparisSekme === "satis" && ustSekme === "liste" && (
         <SiteTalepleriPaneli siparisler={siparisler} cariler={cariler} onSipariseCevir={siteTalebiniAc} showToast={showToast} />
       )}
 
       {/* SIKI ÜST (kullanıcı, 13 Eylül: "sekmeler, üst bilgiler çok yer kaplıyor"): arama ve
           "Yeni Sipariş" tek satırda; modül alt başlığı sekme satırına küçük metin olarak; dolgular küçük. */}
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+      {/* Teklif sekmesinde sipariş araması / Yeni Sipariş yok — Teklif modülünün kendi araması ve "Yeni Teklif"i var. */}
+      <div style={{ display: ustSekme === "teklif" ? "none" : "flex", gap: 8, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
       <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 420 }}>
         <Search size={14} style={{ position: "absolute", left: 9, top: 8, color: "var(--erp-text-3)" }} />
         <input
@@ -2343,7 +2348,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
 
       {/* ÜST SEKME: Liste · Raporlar — sağda modül alt başlığı (20px h2 yerine küçük metin) */}
       <div style={{ display: "flex", gap: 4, marginBottom: 8, borderBottom: "1px solid var(--erp-line)", alignItems: "center" }}>
-        {[{ key: "liste", ad: "Liste" }, { key: "raporlar", ad: "Raporlar" }].map((t) => (
+        {[{ key: "liste", ad: "Liste" }, { key: "raporlar", ad: "Raporlar" }, ...(teklifSekmesi ? [{ key: "teklif", ad: "Teklif" }] : [])].map((t) => (
           <button key={t.key} type="button" data-ust-sekme={t.key} onClick={() => setUstSekme(t.key)}
             style={{
               padding: "5px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", background: "none",
@@ -2360,6 +2365,9 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
           </span>
         )}
       </div>
+      {ustSekme === "teklif" && teklifSekmesi && (
+        <div data-siparis-teklif-sekmesi="1">{teklifSekmesi}</div>
+      )}
       {ustSekme === "raporlar" && onRaporlarKaydet && (
         <RaporSekmesi
           modulAnahtari={sabitTip === "Alış" ? "siparis-alis" : "siparis-satis"}
@@ -2374,7 +2382,7 @@ function SiparisModule({ cop, aktifSekme, onSiparisGitGlobal, mobilBolumAyari, o
           tanimlarProsesler={tanimlarProsesler}
         />
       )}
-      <div style={{ display: ustSekme === "raporlar" ? "none" : undefined }}>
+      <div style={{ display: ustSekme === "raporlar" || ustSekme === "teklif" ? "none" : undefined }}>
       <div style={{ display: sabitTip ? "none" : "flex", gap: 6, marginBottom: 8 }}>
         {[
           { key: "satis", label: "Sipariş", renk: "var(--erp-info)", sayi: satisListeTumu.length, Icon: Truck },
