@@ -1,4 +1,4 @@
-function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri, onCevirilerKaydet, onSiteGruplariKaydet }) {
+function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onMamulRenkEtiketleri, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri, onCevirilerKaydet, onSiteGruplariKaydet }) {
   const [showForm, setShowForm] = useState(false);
   // ARAMA KAPSAMA GÖRE AYRI (v1.596.0 — kullanıcı: "mamul arama ile stok arama aynıları kalıyor, hammadde ile ayrılsın"):
   // Stok ve Mamul Stok aynı bileşen (kapsam prop'u), tek `query` iki ekranda da görünüyordu. Metin kapsam başına tutulur.
@@ -231,11 +231,15 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     // renk/beden bazında girilir (StokGirisHucre > "min: 0").
     const varsayilanMinStok = 0;
     const variants = [];
-    matrix.renkler.forEach((r) =>
+    // MAMULDE DÜZ RENK ADI → KODLU MODEL RENGİ (v1.717.0, 083): formda listeden/yeni girilen tek renkler düz adla duruyor;
+    // kayıtta Tanımlar'da 1 renkli model rengi açılır ("1058 - Siyah"). Kombinasyon biçimli olanlar olduğu gibi kalır.
+    const mamulEtiket = form.kategori === "Mamul" && onMamulRenkEtiketleri ? onMamulRenkEtiketleri(matrix.renkler) : {};
+    matrix.renkler.forEach((rHam) => {
+      const r = mamulEtiket[rHam] || rHam;
       matrix.bedenler.forEach((b) => {
-        variants.push({ renk: r, renkId: renkKimligiBul(r, (tanimlar.renkler || [])), beden: b, miktar: parseFloat(matrix.values[cellKey(r, b)]) || 0, minStok: varsayilanMinStok });
-      })
-    );
+        variants.push({ renk: r, renkId: renkKimligiBul(r, (tanimlar.renkler || [])), beden: b, miktar: parseFloat(matrix.values[cellKey(rHam, b)]) || 0, minStok: varsayilanMinStok });
+      });
+    });
     const yeniStokKodu = (form.stokKodu || "").trim();
     const kodCakisan = yeniStokKodu && items.find((p) => stokKoduAnahtari(p.stokKodu) === stokKoduAnahtari(yeniStokKodu));
     if (kodCakisan) { showToast(`"${yeniStokKodu}" stok kodu "${kodCakisan.ad}" ürününde kullanılıyor`); return; }
@@ -483,9 +487,19 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     return p.variants.length === 1 && !olcuGoster(p.variants[0].renk) && !olcuGoster(p.variants[0].beden);
   }
 
-  function addRenkToProduct(productId, renk) {
+  // `secenek.renkKodu`: kartın "renk aç" sorusundan gelen görünüm rengi (yeni açılan renk tanımına yazılır).
+  function addRenkToProduct(productId, renk, secenek = {}) {
     renk = renk.trim();
     if (!renk) return;
+    // MAMULE TEK RENK DE MODEL RENGİ (v1.717.0, 083): "Taba Süet" → "1058 - Taba Süet". Sipariş/teklif formu zaten
+    // böyle açıyordu; kart ve stok formu düz ad yazıyor, aynı ürünün renkleri iki biçimde kalıyordu.
+    const hedef = items.find((p) => p.id === productId);
+    let modelRengiOldu = false;
+    if (hedef && hedef.kategori === "Mamul" && onMamulRenkEtiketleri && !kombinasyonEtiketiFormatindaMi(renk)) {
+      const etiketler = onMamulRenkEtiketleri([renk], { renkKodlari: secenek.renkKodu ? { [renk]: secenek.renkKodu } : undefined });
+      modelRengiOldu = !!etiketler[renk] && etiketler[renk] !== renk;
+      renk = etiketler[renk] || renk;
+    }
     let receteOzeti = null;
     const next = items.map((p) => {
       if (p.id !== productId) return p;
@@ -494,9 +508,11 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
       return s.urun;
     });
     onSave(next);
+    // Model rengine çevrildiyse etiket bildirimde görünsün: kullanıcı karttaki "1058 - Taba Süet" adının nereden geldiğini bilsin.
+    const eklendi = modelRengiOldu ? `Model rengi ${renk} eklendi` : "Renk eklendi";
     showToast(receteOzeti && (receteOzeti.satirlar.length || receteOzeti.bosGruplar.length)
-      ? `Renk eklendi · reçete: ${receteOzeti.satirlar.length} satır kopyalandı${receteOzeti.gecmisSayisi ? ` · ${receteOzeti.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${receteOzeti.bosGruplar.length ? ` · ${receteOzeti.bosGruplar.length} hammadde boş (turuncu "eşleştir…")` : ""}`
-      : "Renk eklendi");
+      ? `${eklendi} · reçete: ${receteOzeti.satirlar.length} satır kopyalandı${receteOzeti.gecmisSayisi ? ` · ${receteOzeti.gecmisSayisi} renk geçmişten (kırmızı) — kontrol edin` : ""}${receteOzeti.bosGruplar.length ? ` · ${receteOzeti.bosGruplar.length} hammadde boş (turuncu "eşleştir…")` : ""}`
+      : eklendi);
   }
 
   // Ürüne renk ekle — SAF (v1.571.0'da `addRenkToProduct`tan ayrıldı; reçeteden yeni renk de kullanıyor).

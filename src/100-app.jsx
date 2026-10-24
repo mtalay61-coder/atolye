@@ -3114,6 +3114,49 @@ function AtolyeUygulamasi() {
     return `${otomatikKod} - ${renkAdlari.join("/")}`;
   }, [tanimlar, showToast, tanimlarKodluYaz]);
 
+  // MAMUL RENGİ HER YERDE KODLU (v1.717.0, 083 — kullanıcı: "İKİSİNİ DE YAP"). Ürün kartı / stok formu mamule tek renk
+  // eklerken buradan geçer: verilen düz adlar için Tanımlar'da renk + 1 renkli model rengi hazırlanır, "KOD - Ad"
+  // etiketleri döner. `tanimRef` okunur: aynı tıklamada az önce `yeniRenkKaydet`in açtığı renk de görünsün (state
+  // henüz tazelenmemiş olur). Kodlu ad olduğu gibi döner; değişiklik yoksa tanımlar yazılmaz.
+  const mamulRenkEtiketleri = useCallback((adlar, secenek = {}) => {
+    const plan = mamulRenkKodlamaPlani(tanimRef.current, adlar, { uidUret: uid, renkKodlari: secenek.renkKodlari });
+    if (plan.degisti) {
+      tanimlarKodluYaz(plan.tanimlar);
+      const renkAdi = (id) => ((plan.tanimlar.renkler || []).find((r) => r.id === id) || {}).ad || "?";
+      const acilan = plan.acilanKombinasyonlar.map((k) => `${k.kod} - ${k.renkIdler.map(renkAdi).join("/")}`);
+      const renkNotu = plan.acilanRenkler.map((r) => `"${r.ad}" renk kodu ${r.kod}`).join(", ");
+      showToast(`Model rengi açıldı: ${acilan.join(", ")}${renkNotu ? ` · ${renkNotu}` : ""}`);
+    }
+    return plan.etiketler;
+  }, [tanimlarKodluYaz, showToast]);
+
+  // MEVCUT KODSUZ MAMUL RENKLERİNİ DÖNÜŞTÜR (v1.717.0, Tanımlar › Bakım; yalnız kullanıcı düğmesiyle — "veri denetimi
+  // yalnız bildirir" kuralı). Önce tanımlar (kombinasyon var olsun), sonra stok, sipariş, üretim, koli, teklif — yalnız
+  // değişen listeler yazılır. Hepsi beklenir, sonuç günlüğe ve bildirime; yazma hataları `kaydetmeHatasiBildir`den geçer.
+  const mamulRenkleriniKodla = useCallback(async () => {
+    const kodsuz = kodsuzMamulRenkleri(stok);
+    if (kodsuz.length === 0) { showToast("Kodsuz mamul rengi yok"); return null; }
+    const plan = mamulRenkKodlamaPlani(tanimRef.current, kodsuz.map((k) => k.renk), { uidUret: uid });
+    if (plan.degisti) tanimlarKodluYaz(plan.tanimlar);
+    const eslesmeler = kodsuz.map((k) => ({ urunId: k.urunId, eski: k.renk, yeni: plan.etiketler[k.renk] })).filter((e) => e.yeni && e.yeni !== e.eski);
+    const sonuc = mamulRenkleriniYenidenAdlandir({ stok, siparisler, uretim, koliler, teklifler }, eslesmeler);
+    const isler = [];
+    if (sonuc.stok !== stok) isler.push(saveStok(sonuc.stok));
+    if (sonuc.siparisler !== siparisler) isler.push(saveSiparisler(sonuc.siparisler));
+    if (sonuc.uretim !== uretim) isler.push(saveUretim(sonuc.uretim));
+    if (sonuc.koliler !== koliler) isler.push(saveKoliler(sonuc.koliler));
+    if (sonuc.teklifler !== teklifler) isler.push(saveTeklifler(sonuc.teklifler));
+    await Promise.all(isler);
+    const s = sonuc.sayilar;
+    gunlukYaz(`Mamul renkleri kodlandı: ${eslesmeler.length} renk`, "tanimlar", {
+      renk: eslesmeler.length, yeniRenkTanimi: plan.acilanRenkler.length, yeniModelRengi: plan.acilanKombinasyonlar.length,
+      urun: s.urun, siparisKalemi: s.kalem, uretim: s.uretim, koliKalemi: s.koli, teklifKalemi: s.teklif,
+      eslesmeler: eslesmeler.map((e) => `${e.eski} → ${e.yeni}`),
+    });
+    showToast(`${eslesmeler.length} mamul rengi kodlandı · ${s.urun} ürün, ${s.kalem} sipariş kalemi, ${s.uretim} üretim, ${s.koli} koli kalemi, ${s.teklif} teklif kalemi güncellendi`);
+    return sonuc.sayilar;
+  }, [stok, siparisler, uretim, koliler, teklifler, tanimlarKodluYaz, saveStok, saveSiparisler, saveUretim, saveKoliler, saveTeklifler, showToast]);
+
   // Sipariş ekranından MODEL RENGİ oluşturup ürüne ekler ve reçetesini kurar.
   //
   // Serbest metinle renk yazmak yerine Tanımlar'daki Model Rengi mantığı kullanılır: pozisyon
@@ -4826,7 +4869,7 @@ function AtolyeUygulamasi() {
                 const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");
                 if (yoneticiVar && !kullaniciYetkisiVar("tanimlar", "duzenleme")) { showToast("Tanımlarda değişiklik yetkiniz yok"); return undefined; }
                 return saveTanimlar(sonraki);
-              }} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onOlcuAdDegistir={olcuAdDegistir} onOzelKodBirlestir={ozelKodAlanlariniBirlestirYaz} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
+              }} showToast={showToast} onVeritabaniSifirla={veritabaniSifirla} supabaseBagli={supabaseAcikMi()} gocDurumu={gocDurumu} onSupabaseyeGoc={supabaseyeGoc} onDefterTopluOnar={defterTopluOnar} onHammaddeRenkAdDegistir={hammaddeRenkAdDegistir} onMamulRenkleriniKodla={mamulRenkleriniKodla} onOlcuAdDegistir={olcuAdDegistir} onOzelKodBirlestir={ozelKodAlanlariniBirlestirYaz} stok={stok} cariler={cariler} siparisler={siparisler} aktifKullanici={aktifKullanici} MODULLER={MODULLER} MODUL_ADLARI={MODUL_ADLARI} onJsonYedekle={verileriJsonYedekle} onJsonGeriYukle={jsonDosyasindanGeriYukle} onExcelAktar={verileriExcelAktar} sonYedekTarihi={sonYedekTarihi} onSimdiYedekle={() => otomatikYedekAl(false)} onYedektenGeriYukle={yedektenGeriYukle} cop={cop} onCopGeriYukle={coptanGeriYukle} onCopKaliciSil={coptanKaliciSil} onCopBosalt={copuBosalt} />
           </GizliModul>
           {tab === "modelhane" && (
             <ModelhaneModule
@@ -4888,6 +4931,7 @@ function AtolyeUygulamasi() {
               onYeniOzelKodAlani={yeniOzelKodAlaniKaydet}
               onFiyatGrubuMarj={fiyatGrubuMarjKaydet}
               onKombinasyonOlustur={kombinasyonOlusturGlobal}
+              onMamulRenkEtiketleri={mamulRenkEtiketleri}
               onAsortiOlustur={asortiOlustur}
               kullaniciYetkisiVar={kullaniciYetkisiVar}
               onayIste={onayIste}

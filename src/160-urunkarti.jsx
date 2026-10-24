@@ -2419,8 +2419,10 @@ function ProductMatrixCard({
                         <button type="button" className="btn-primary btn-save" data-renk-ac-evet="1" style={{ padding: "5px 12px", fontSize: 12 }}
                           onClick={() => {
                             // Önce ürüne, SONRA tanıma: tanımın bildirimi (renk kodu, barkod kodu) son kalsın, görülsün.
-                            onAddRenk(product.id, renkAcSorusu.ad);
-                            if (onYeniRenkKaydet) onYeniRenkKaydet(renkAcSorusu.ad, "Hammadde", !isMamul ? product.malzemeTipi : undefined, renkAcSorusu.renkKodu);
+                            // MAMUL (v1.717.0): rengi ve 1 renkli model rengini `onAddRenk` açar (152 → 083); burada ayrıca
+                            // `onYeniRenkKaydet` çağrılsaydı bayat tanımlarla aynı rengi ikinci kez açar, model rengini ezerdi.
+                            onAddRenk(product.id, renkAcSorusu.ad, { renkKodu: renkAcSorusu.renkKodu });
+                            if (onYeniRenkKaydet && !isMamul) onYeniRenkKaydet(renkAcSorusu.ad, "Hammadde", product.malzemeTipi, renkAcSorusu.renkKodu);
                             setRenkAcSorusu(null); setNewRenk(""); setAddingRenk(false); setRenkEkleSayisi(1);
                           }}>
                           <Check size={13} /> Evet, renk aç ve ekle
