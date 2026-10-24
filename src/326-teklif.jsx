@@ -111,46 +111,24 @@ function teklifGecerlilikVarsayilani(tarih) {
   return bugunYerel(d);
 }
 
-// Yazdırılabilir teklif formu (HTML gövdesi; 075 `pdfCiktiBelgesi` sarar). Saf.
+// Teklifi sipariş çıktısının biçimine çevirir (yalnız görünüm — kayıt yazılmaz): sipariş no = teklif no, tip Satış.
+function teklifSiparisGorunumu(teklif) {
+  return { ...teklif, siparisNo: teklif.teklifNo, tip: "Satış", durum: "Bekliyor", kalemler: (teklif.kalemler || []).map((k) => ({ ...k, karsilanan: 0, planlama: undefined })) };
+}
+
+// Yazdırılabilir teklif belgesi — SİPARİŞ ÇIKTISININ AYNISI (v1.722.0 — kullanıcı: "yazdır formu resimli olsun ve WhatsApp
+// vs. vardı, o şekilde"): 075 `siparisCiktisiHTML` teklif seçeneğiyle (model model resimli bloklar, renk × ölçü matrisi,
+// adet / birim / tutar, satır notları, genel toplam; KDV açıksa KDV dipnotu; geçerlilik cümlesi). Saf.
 function teklifYazdirHtml(teklif, cari, firmaBilgileri, stok) {
-  const fb = firmaBilgileri || {};
-  const kdvli = kdvAktifMi(fb);
-  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]));
-  const gruplar = teklifKalemGruplari(teklif.kalemler);
-  const satirlar = gruplar.map((g) => g.kalemler.map((k) => {
-    const matrah = (Number(k.miktar) || 0) * (Number(k.birimFiyat) || 0);
-    return `<tr><td>${esc(g.urunAd)}</td><td>${esc(g.renk || "—")}</td><td>${esc(k.beden || "—")}</td><td class="sag">${esc(k.miktar)} ${esc(g.birim || "")}</td>`
-      + `<td class="sag">${esc(teklifParaYaz(k.birimFiyat, g.paraBirimi))}</td>${kdvli ? `<td class="sag">%${esc(k.kdvOrani != null ? k.kdvOrani : "")}</td>` : ""}<td class="sag">${esc(teklifParaYaz(matrah, g.paraBirimi))}</td></tr>`;
-  }).join("")).join("");
-  const toplam = teklifToplami(teklif);
-  const toplamSatirlari = Object.entries(toplam).map(([pb, t]) => (kdvli
-    ? `<tr><td colspan="${kdvli ? 6 : 5}" class="sag">Ara toplam</td><td class="sag">${esc(teklifParaYaz(t.matrah, pb))}</td></tr>`
-      + `<tr><td colspan="6" class="sag">KDV</td><td class="sag">${esc(teklifParaYaz(t.kdv, pb))}</td></tr>`
-      + `<tr class="kalin"><td colspan="6" class="sag">Genel toplam</td><td class="sag">${esc(teklifParaYaz(t.toplam, pb))}</td></tr>`
-    : `<tr class="kalin"><td colspan="5" class="sag">Toplam</td><td class="sag">${esc(teklifParaYaz(t.toplam, pb))}</td></tr>`)).join("");
-  const logo = fb.logo ? `<img src="${esc(fb.logo)}" alt="" style="max-height:64px;max-width:200px;object-fit:contain" />` : "";
-  return `
-<div style="font-family:Arial,sans-serif;font-size:12px;color:#222;padding:24px 28px">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid #333;padding-bottom:12px">
-    <div>${logo}<div style="font-size:18px;font-weight:700">${esc(fb.unvan || "")}</div>
-      <div style="color:#555">${[fb.adres, fb.telefon, fb.email, fb.website].filter(Boolean).map(esc).join(" · ")}</div></div>
-    <div style="text-align:right"><div style="font-size:22px;font-weight:700;letter-spacing:.04em">TEKLİF</div>
-      <div><b>${esc(teklif.teklifNo)}</b></div><div>Tarih: ${esc(teklif.tarih || "")}</div>
-      ${teklif.gecerlilikTarihi ? `<div>Geçerlilik: ${esc(teklif.gecerlilikTarihi)}</div>` : ""}
-      ${teklif.teslimTarihi ? `<div>Teslim: ${esc(teklif.teslimTarihi)}</div>` : ""}</div>
-  </div>
-  <div style="margin:14px 0"><div style="color:#777;font-size:11px;text-transform:uppercase">Sayın</div>
-    <div style="font-size:14px;font-weight:700">${esc((cari && (cari.resmiUnvan || cari.unvan)) || "")}</div>
-    <div style="color:#555">${[cari && cari.adres, cari && cari.telefon, cari && cari.vergiNo ? `VKN ${cari.vergiNo}` : ""].filter(Boolean).map(esc).join(" · ")}</div>
-    ${teklif.musteriKodu ? `<div style="color:#555">Müşteri referansı: ${esc(teklif.musteriKodu)}</div>` : ""}</div>
-  <style>.tk th,.tk td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left}.tk th{background:#f3f3f3;font-size:11px;text-transform:uppercase}.sag{text-align:right!important}.kalin td{font-weight:700;border-top:2px solid #333}</style>
-  <table class="tk" style="width:100%;border-collapse:collapse">
-    <thead><tr><th>Ürün</th><th>Renk</th><th>Ölçü</th><th class="sag">Miktar</th><th class="sag">Birim fiyat</th>${kdvli ? "<th class=\"sag\">KDV</th>" : ""}<th class="sag">Tutar</th></tr></thead>
-    <tbody>${satirlar}${toplamSatirlari}</tbody>
-  </table>
-  ${teklif.not ? `<div style="margin-top:14px;white-space:pre-wrap"><b>Not:</b> ${esc(teklif.not)}</div>` : ""}
-  <div style="margin-top:28px;color:#777;font-size:11px">Bu teklif ${teklif.gecerlilikTarihi ? `${esc(teklif.gecerlilikTarihi)} tarihine kadar` : "belirtilen süre boyunca"} geçerlidir. Onayınızla sipariş olarak işleme alınır.</div>
-</div>`;
+  return siparisCiktisiHTML(teklifSiparisGorunumu(teklif), cari, firmaBilgileri, stok, { teklif });
+}
+
+// WhatsApp / e-posta metin özeti: sipariş özetinin başlığı TEKLİF, geçerlilik eklenir.
+function teklifMetinOzeti(teklif, cari) {
+  const satirlar = siparisMetinOzeti(teklifSiparisGorunumu(teklif), cari).split("\n");
+  satirlar[0] = `*TEKLİF ${teklif.teklifNo || ""}*`;
+  if (teklif.gecerlilikTarihi) satirlar.splice(satirlar[1] && !satirlar[1].startsWith("Tarih:") ? 3 : 2, 0, `Geçerlilik: ${teklif.gecerlilikTarihi}`);
+  return satirlar.join("\n");
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -222,12 +200,16 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
   function durumDegistir(t, durum, ek = {}) {
     onSave((teklifler || []).map((x) => (x.id === t.id ? { ...x, durum, ...ek, durumZamani: new Date().toISOString() } : x)));
   }
-  function yazdir(t) {
+  // YAZDIR · PDF · WHATSAPP · E-POSTA (v1.722.0): sipariş kartındaki paylaşım yollarının aynısı (075 `belgeyiPaylas`).
+  function paylas(t, yol) {
     const cari = (cariler || []).find((c) => c.id === t.cariId);
-    const w = window.open("", "_blank");
-    if (!w) { showToast("Açılır pencere engellendi"); return; }
-    w.document.write(pdfCiktiBelgesi(teklifYazdirHtml(t, cari, firmaBilgileri, stok))); w.document.close(); w.focus();
-    setTimeout(() => w.print(), 400);
+    belgeyiPaylas(yol, {
+      govdeHTML: teklifYazdirHtml(t, cari, firmaBilgileri, stok),
+      dosyaAdi: `${t.teklifNo || "teklif"} - ${(cari && cari.unvan) || "cari"}`,
+      cari,
+      konu: `Teklif ${t.teklifNo || ""} — ${(firmaBilgileri && firmaBilgileri.unvan) || ""}`.trim(),
+      ozet: teklifMetinOzeti(t, cari), showToast, firmaBilgileri,
+    });
   }
   function donustur(t) {
     const d = teklifDurumu(t, bugun);
@@ -345,7 +327,10 @@ function TeklifModule({ teklifler, onSave, siparisler, cariler, stok, firmaBilgi
                       {donusebilir && <button type="button" className="btn-ghost" data-teklif-reddet="1" style={{ fontSize: 12, color: "var(--erp-warn)" }} onClick={() => { const s = window.prompt(`${t.teklifNo} reddedildi olarak işaretlenecek. Sebep (isteğe bağlı):`, ""); if (s === null) return; durumDegistir(t, "Reddedildi", { redSebebi: s.trim() }); }}>Reddedildi</button>}
                       {d === "Reddedildi" && <button type="button" className="btn-ghost" data-teklif-yeniden-ac="1" style={{ fontSize: 12 }} onClick={() => durumDegistir(t, "Hazırlanıyor", { redSebebi: undefined })}>Yeniden aç</button>}
                       {t.siparisId && onGoToSiparis && <button type="button" className="btn-ghost" data-teklif-siparise-git="1" style={{ fontSize: 12 }} onClick={() => onGoToSiparis(t.siparisId)}><ArrowRight size={12} /> Siparişe git ({t.siparisNo})</button>}
-                      <button type="button" className="btn-ghost" data-teklif-yazdir="1" style={{ fontSize: 12 }} onClick={() => yazdir(t)}><Printer size={12} /> Yazdır</button>
+                      <button type="button" className="btn-ghost" data-teklif-yazdir="1" style={{ fontSize: 12 }} onClick={() => paylas(t, "yazdir")}><Printer size={12} /> Yazdır</button>
+                      <button type="button" className="btn-ghost" data-teklif-pdf="1" style={{ fontSize: 12 }} onClick={() => paylas(t, "pdf")}><FileText size={12} /> PDF</button>
+                      <button type="button" className="btn-ghost" data-teklif-whatsapp="1" style={{ fontSize: 12, color: "#25763D" }} title="WhatsApp'tan PDF gönder (cari kartındaki numaraya)" onClick={() => paylas(t, "whatsapp")}><MessageCircle size={12} /> WhatsApp</button>
+                      <button type="button" className="btn-ghost" data-teklif-eposta="1" style={{ fontSize: 12 }} title="E-posta ile PDF gönder (cari kartındaki adrese)" onClick={() => paylas(t, "eposta")}><Mail size={12} /> E-posta</button>
                       <button type="button" className="btn-ghost" data-teklif-kopyala="1" style={{ fontSize: 12 }} onClick={() => kopyala(t)}>Kopyala</button>
                       {onGoToCari && <button type="button" className="btn-ghost" style={{ fontSize: 12 }} onClick={() => onGoToCari(t.cariId)}>Cari kartı</button>}
                       {d !== "Siparişe dönüştü" && onSil && <button type="button" className="btn-ghost" data-teklif-sil="1" style={{ fontSize: 12, color: "var(--erp-warn)", marginLeft: "auto" }} onClick={() => { if (window.confirm(`${t.teklifNo} silinecek (çöp kutusuna gider). Devam?`)) onSil(t); }}><Trash2 size={12} /> Sil</button>}
