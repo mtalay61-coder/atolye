@@ -42,7 +42,9 @@ async function calistir() {
   // 2. Verileri boşalt (depoyu sıfırla) ve dosyadan geri yükle.
   await sayfa.evaluate(() => { ["stok:items", "cari:data", "siparis:data", "muhasebe:data", "koli:data"].forEach((k) => { window.__depo[k] = k === "muhasebe:data" ? "{}" : "[]"; }); });
   await sayfa.locator('[data-json-geri-yukle] input[type="file"]').setInputFiles(yol);
-  await sayfa.waitForTimeout(2500);
+  // Geri yükleme tabloları sırayla yazar; test ortamında her bulut yazması düşer ve (v1.724.1) 3 kez yeniden denenir —
+  // son tablo (koli) yerelde ancak hepsi bitince görünür. Bekleme o yüzden uzun.
+  await sayfa.waitForTimeout(4500);
   const sonra = {
     stok: ((await depoOku(sayfa, "stok:items")) || []).length,
     cari: ((await depoOku(sayfa, "cari:data")) || []).length,

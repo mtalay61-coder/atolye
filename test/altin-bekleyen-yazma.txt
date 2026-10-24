@@ -2,25 +2,25 @@
  "bulguOnce": "1",
  "defter": {
   "cari:data": {
-   "deneme": 1,
+   "deneme": "var",
    "hata": "Failed to fetch",
    "tablo": "cariler",
    "zaman": "<zaman>"
   },
   "fisdefter:data": {
-   "deneme": 1,
+   "deneme": "var",
    "hata": "Failed to fetch",
    "tablo": "fis_defteri",
    "zaman": "<zaman>"
   },
   "stok:items": {
-   "deneme": 1,
+   "deneme": "var",
    "hata": "Failed to fetch",
    "tablo": "urunler",
    "zaman": "<zaman>"
   },
   "tanimlar:data": {
-   "deneme": 7,
+   "deneme": "var",
    "hata": "Failed to fetch",
    "tablo": "tanimlar",
    "zaman": "<zaman>"

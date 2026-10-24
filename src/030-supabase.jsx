@@ -414,20 +414,39 @@ async function baglantiSina() {
   }
 }
 
+// AĞ HATASINDA YENİDEN DENEME (v1.724.1 — kullanıcı, telefonda 305 renk dönüştürürken: "Failed to fetch"). `fetch`in
+// kendisi atarsa (cevap yok: bağlantı koptu, zaman aşımı) istek kısa aralıklarla 3 kez daha denenir. HTTP hatası (4xx/5xx)
+// denenmez. Yazmalar bu yinelemeye dayanıklı: POST merge-duplicates ve DELETE aynı sonucu verir; sürüm koşullu PATCH ilk
+// seferde yere inmişse ikinci deneme 0 satır döner, bunu 040'taki teşhis "sunucu bir fazla → sahte çakışma" olarak çözer.
+const SUPABASE_YENIDEN_DENEME_MS = [700, 1500, 3000];
 async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
   let yanit;
-  try {
-    yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
-      ...secenekler,
-      headers: {
-        ...(await yetkiBasliklari()),
-        "Content-Type": "application/json",
-        ...(secenekler.headers || {}),
-      },
-    });
-  } catch (e) {
-    baglantiBildir(false, String((e && e.message) || e));
-    throw e;
+  for (let deneme = 0; ; deneme++) {
+    try {
+      yanit = await fetch(`${SUPABASE_URL}/rest/v1/${yol}`, {
+        ...secenekler,
+        headers: {
+          ...(await yetkiBasliklari()),
+          "Content-Type": "application/json",
+          ...(secenekler.headers || {}),
+        },
+      });
+      break;
+    } catch (e) {
+      // Tarayıcı "çevrimdışı" diyorsa beklemenin anlamı yok: kilit (v1.557) hemen insin. Testler `window.__supabaseYenidenDenemeMs`
+      // ile aralıkları kısaltır (davranış aynı, bekleme yok).
+      const aralar = (typeof window !== "undefined" && Array.isArray(window.__supabaseYenidenDenemeMs)) ? window.__supabaseYenidenDenemeMs : SUPABASE_YENIDEN_DENEME_MS;
+      const cevrimdisi = typeof navigator !== "undefined" && navigator.onLine === false;
+      // YALNIZ YAZMALAR denenir: okumalar (açılış yüklemesi, yoklamalar) hemen düşsün ki bulut yokken yerel kopyaya geçiş ve
+      // çevrimdışı kilit gecikmesin — 15 okuma × 5 sn beklemek açılışı dakikaya çıkarırdı.
+      const yazma = /^(POST|PATCH|DELETE|PUT)$/i.test(String(secenekler.method || "GET"));
+      if (yazma && !cevrimdisi && deneme < aralar.length) {
+        await new Promise((r) => setTimeout(r, aralar[deneme]));
+        continue;
+      }
+      baglantiBildir(false, String((e && e.message) || e));
+      throw e;
+    }
   }
   baglantiBildir(true);
   // Jeton istek yoldayken dolmuş olabilir. Bir kez yenileyip tekrar deniyoruz; ikinci 401

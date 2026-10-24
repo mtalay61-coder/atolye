@@ -9,6 +9,7 @@ node derle.js
 node paket-test.js
 HATA=0
 node birim-toplu-silme-kilidi.js || HATA=1
+node birim-yazma-dayaniklilik.js || HATA=1
 node birim-bulut-sayim.js || HATA=1
 node birim-gecerli-rezervasyon.js || HATA=1
 node birim-teklif.js || HATA=1
