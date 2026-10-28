@@ -42,6 +42,10 @@ begin
   if auth.jwt() is not null then
     raise exception 'Göç yalnız Supabase SQL Editor''den çalıştırılır' using errcode = '42501';
   end if;
+  -- Geçişten sonra `varyantlar` / `stok_hareketleri` v2'nin görünümüdür: göç kendi çıktısını okuyup silerdi.
+  if exists (select 1 from public.stk_ayar where aktif) then
+    raise exception 'Stok v2 etkin (geçiş yapıldı) — göç yeniden çalıştırılamaz; geri dönmek için stk_geri_don()' using errcode = '55000';
+  end if;
   if not p_zorla and exists (select 1 from public.stk_fis where not goc) then
     raise exception 'stk_fis''te uygulamadan yazılmış fiş var — göç yeniden çalıştırılırsa silinirdi (bilerek: p_zorla => true)'
       using errcode = '55000';
@@ -107,9 +111,7 @@ begin
   insert into public.stk_fis (id, tur, kaynak, tarih, cari_id, siparis_id, siparis_no, uretim_id, aciklama, kullanici, goc, ek)
   select g.fis_id,
          coalesce(nullif(dx ->> 'tip', ''),
-                  case g.kaynak when 'Satınalma' then 'Alış' when 'Satış' then 'Satış' when 'Üretim' then 'Üretim'
-                                when 'Açılış' then 'Açılış' when 'Numune' then 'Numune' when 'Manuel' then 'Manuel'
-                                else coalesce(nullif(g.kaynak, ''), 'Manuel') end),
+                  public.stk_kaynak_tur(g.kaynak)),
          g.kaynak,
          coalesce(public.stk_zaman(dx ->> 'stokTarihi'), public.stk_zaman(dx ->> 'zaman'), g.tarih),
          coalesce(dx ->> 'cariId', g.cari_id), coalesce(dx ->> 'siparisId', g.siparis_id), coalesce(dx ->> 'siparisNo', g.siparis_no),
@@ -232,3 +234,102 @@ language sql stable security definer set search_path = public as $$
   from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden
 $$;
 revoke all on function public.stk_goc_karsilastir() from public, anon, authenticated;
+
+-- =====================================================================================================================
+--  GEÇİŞ VE GERİ DÖNÜŞ (SQL Editor'dan; uygulama çağıramaz)
+-- =====================================================================================================================
+--
+--  GEÇİŞ — `select jsonb_pretty(public.stk_gecis());`
+--    1. Göç son kez çalışır (bugünkü veri → v2, rapor döner).
+--    2. Bugünkü `varyantlar` / `stok_hareketleri` TABLOLARI silinmez, adları `eski_varyantlar` / `eski_stok_hareketleri`
+--       olur. Aynı adlarla v2'yi bugünkü biçimde gösteren salt-okunur GÖRÜNÜMLER açılır: uygulama, gün sonu raporu ve
+--       bulut sayımı okumaya değişmeden devam eder.
+--    3. `stk_ayar.aktif` açılır: yeni sürüm (v1.726.0+) açılışta bunu görür, stok yazmalarını `stk_yaz`'a gönderir.
+--       Eski sürümde kalmış bir cihaz görünüme YAZAMAZ (hata verir) — sessizce eski tabloya yazıp ayrışamaz.
+--  GERİ DÖNÜŞ — `select jsonb_pretty(public.stk_geri_don());`
+--    Görünümler kalkar, eski tablolar adlarına döner ve İÇERİKLERİ v2'nin o anki hâliyle yenilenir (geçişten sonra
+--    girilen fişler kaybolmaz). `stk_ayar.aktif` kapanır; uygulama bir sonraki açılışta eski yola döner. v2 tabloları
+--    yerinde kalır (yeniden geçişte göç onları baştan kurar).
+create or replace function public.stk_gecis(p_fark_fisi boolean default true) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  rapor jsonb;
+begin
+  if auth.jwt() is not null then
+    raise exception 'Geçiş yalnız Supabase SQL Editor''den yapılır' using errcode = '42501';
+  end if;
+  if exists (select 1 from public.stk_ayar where aktif) then
+    raise exception 'Stok v2 zaten etkin' using errcode = '55000';
+  end if;
+  if to_regclass('public.eski_varyantlar') is not null or to_regclass('public.eski_stok_hareketleri') is not null then
+    raise exception 'eski_varyantlar / eski_stok_hareketleri zaten var — önceki geçiş yarım kalmış olabilir, elle bakın' using errcode = '55000';
+  end if;
+  rapor := public.stk_goc(p_fark_fisi, true);
+  alter table public.varyantlar rename to eski_varyantlar;
+  alter table public.stok_hareketleri rename to eski_stok_hareketleri;
+  create view public.varyantlar with (security_invoker = true) as select * from public.stk_eski_varyantlar_g;
+  create view public.stok_hareketleri with (security_invoker = true) as select * from public.stk_eski_hareketler_g;
+  revoke all on public.varyantlar, public.stok_hareketleri from anon, authenticated;
+  grant select on public.varyantlar, public.stok_hareketleri to authenticated;
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant select on public.varyantlar, public.stok_hareketleri to service_role;
+  end if;
+  update public.stk_ayar set aktif = true, gecis = now() where id = 'tekil';
+  notify pgrst, 'reload schema';
+  return jsonb_build_object('gecis', 'tamam', 'goc', rapor);
+end $$;
+
+create or replace function public.stk_geri_yaz(p_tablo text, p_kaynak text) returns int
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  sutunlar text;
+  n int;
+begin
+  execute format($q$select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position)
+                    from information_schema.columns c
+                    where c.table_schema = 'public' and c.table_name = %L
+                      and c.column_name in (select jsonb_object_keys(j) from (select j from pg_temp.%I limit 1) x)$q$, p_tablo, p_kaynak)
+    into sutunlar;
+  if sutunlar is null then return 0; end if;   -- kaynak boş
+  execute format('insert into public.%I (%s) select %s from pg_temp.%I k, jsonb_populate_record(null::public.%I, k.j) r',
+                 p_tablo, sutunlar, (select string_agg('r.' || x, ', ') from unnest(string_to_array(sutunlar, ', ')) x), p_kaynak, p_tablo);
+  get diagnostics n = row_count;
+  return n;
+end $$;
+
+create or replace function public.stk_geri_don() returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  n_v int;
+  n_h int;
+begin
+  if auth.jwt() is not null then
+    raise exception 'Geri dönüş yalnız Supabase SQL Editor''den yapılır' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public.stk_ayar where aktif) or to_regclass('public.eski_varyantlar') is null then
+    raise exception 'Stok v2 etkin değil — geri dönülecek bir şey yok' using errcode = '55000';
+  end if;
+  -- v2'nin o anki hâli, bugünkü biçimde
+  drop table if exists _gd_v, _gd_h;
+  create temp table _gd_v on commit drop as select to_jsonb(x) as j from public.stk_eski_varyantlar_g x
+    where exists (select 1 from public.urunler u where u.id = x.urun_id);
+  create temp table _gd_h on commit drop as select to_jsonb(x) as j from public.stk_eski_hareketler_g x
+    where exists (select 1 from public.urunler u where u.id = x.urun_id);
+  drop view public.varyantlar;
+  drop view public.stok_hareketleri;
+  alter table public.eski_varyantlar rename to varyantlar;
+  alter table public.eski_stok_hareketleri rename to stok_hareketleri;
+  -- TRUNCATE: satır satır silme arşive binlerce satır yazardı; içerik hemen aşağıda v2'den yeniden yazılıyor.
+  truncate public.varyantlar, public.stok_hareketleri;
+  -- Yalnız görünümün taşıdığı sütunlar yazılır (tablonun başka sütunu varsa varsayılanını alır); jsonb_populate_record
+  -- değeri tablodaki tipe çevirir (tarih metin mi zaman damgası mı, fark etmez).
+  n_v := public.stk_geri_yaz('varyantlar', '_gd_v');
+  n_h := public.stk_geri_yaz('stok_hareketleri', '_gd_h');
+  update public.stk_ayar set aktif = false, geri_donus = now() where id = 'tekil';
+  notify pgrst, 'reload schema';
+  return jsonb_build_object('geriDonus', 'tamam', 'varyant', n_v, 'hareket', n_h);
+end $$;
+
+revoke all on function public.stk_gecis(boolean) from public, anon, authenticated;
+revoke all on function public.stk_geri_don() from public, anon, authenticated;
+revoke all on function public.stk_geri_yaz(text, text) from public, anon, authenticated;
