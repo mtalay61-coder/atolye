@@ -101,3 +101,19 @@ insert into public.fis_defteri values ('tekil', '[
   {"id": "F-3", "fisNo": "F-3", "tip": "Manuel", "kaynak": "Manuel", "zaman": "2026-10-07T08:00:00Z", "iptal": true,
    "stokHareketleri": [{"id": "h9", "urunId": "u-canta", "renk": "Kahve", "beden": "37", "miktar": 0.5}]}
 ]'::jsonb);
+
+-- CARİ (cari v2 sınaması). Tarih alanları bugünkü tablodaki gibi tipli: tarih gün, zaman zaman damgası — göç METNE çevirir,
+-- uygulamanın bugün okuduğu biçim aynen kalmalı.
+create table public.cariler (id text primary key, unvan text not null, tip text, ek jsonb);
+create table public.cari_hareketleri (
+  id text primary key, cari_id text references public.cariler(id) on delete cascade, tarih date, zaman timestamptz, yon text,
+  tutar numeric, para_birimi text, odeme_sekli text, vade text, defter text, fis_no text, siparis_no text, uretim_id text,
+  urun_ad text, renk text, aciklama text, ek jsonb
+);
+insert into public.cariler values ('c-1', 'Ege Deri', 'Tedarikçi', null), ('c-2', 'Yıldız Mağazaları', 'Müşteri', null);
+insert into public.cari_hareketleri values
+  ('ch1', 'c-1', '2026-10-01', '2026-10-01T09:00:00Z', 'Borç', 840, 'TRY', 'Nakit', null, 'Genel', 'F-1', null, null, 'Kösele', 'Taba', 'Alış fişi', '{"miktar": 7, "birim": "m", "kullanici": "Ali"}'),
+  ('ch2', 'c-2', '2026-10-05', '2026-10-05T14:30:00Z', 'Alacak', 1250.5, 'TRY', 'Vadeli', '2026-11-05', 'Genel', 'F-4', 'S-100', null, 'Deri Çanta', null, 'Satış fişi', '{}'),
+  ('ch3', 'c-2', '2026-10-06', null, 'Borç', 1000, 'TRY', 'Havale', null, 'Genel', 'TH-1', null, null, null, null, 'Tahsilat', '{"islemTipi": "Tahsilat"}'),
+  -- Carisi olmayan bozuk satır → göçte atlanır, raporlanır.
+  ('ch4', null, '2026-09-01', null, 'Borç', 5, 'TRY', null, null, 'Genel', null, null, null, null, null, 'yetim', null);
