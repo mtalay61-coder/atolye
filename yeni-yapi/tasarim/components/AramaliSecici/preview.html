@@ -1,0 +1,20 @@
+<!-- @dsCard group="Formlar" height=440 subtitle="Yazdıkça daralır, içinde geçen kelimeyle bulur" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="padding:16px;background:var(--erp-page)">
+<div class="erp-form-satir">
+  <div class="erp-field" style="width:300px"><label for="cari">Müşteri</label><div id="cariKok"></div></div>
+  <div class="erp-field" style="width:300px"><label for="urun">Ürün</label><div id="urunKok"></div></div>
+</div>
+<p class="erp-field__yardim" style="margin-top:8px">Örnek veri. Dene: "deri", "cevik ltd", "taba", "siyah 41", "8690…".</p>
+<script>window.Atolye && window.Atolye.ikonlariYerlestir();
+var A=window.Atolye;
+var cariler=[{kod:"CAR-0012",ad:"Çevik Deri Ltd. Şti.",il:"İstanbul",bakiye:-12450},{kod:"CAR-0019",ad:"Talay Ayakkabı San. Tic.",il:"Konya",bakiye:38600},{kod:"CAR-0031",ad:"Işık Mağazaları",il:"İzmir",bakiye:0},{kod:"CAR-0042",ad:"Kardeşler Deri Saraciye",il:"İstanbul",bakiye:7440},{kod:"CAR-0057",ad:"Ege Toptan Ayakkabı",il:"Manisa",bakiye:-1200},{kod:"CAR-0063",ad:"Yıldız Mağazaları",il:"Ankara",bakiye:9300}];
+var urunler=[{kod:"8690000100586",ad:"Bot · 1058 - Taba Süet",tip:"Mamul",stok:36},{kod:"8690000100036",ad:"Bot · 1003 - Siyah",tip:"Mamul",stok:-4},{kod:"8690000200111",ad:"Deri · Siyah Floter",tip:"Hammadde",stok:212},{kod:"8690000200128",ad:"Deri · Taba Süet",tip:"Hammadde",stok:88},{kod:"8690000300015",ad:"Taban · Kauçuk 41",tip:"Hammadde",stok:140}];
+var tl=function(n){return '<span class="'+(n<0?"erp-eksi":"")+'">'+A.sayiYaz(n,2)+" ₺</span>";};
+A.aramaliSecici(document.getElementById("cariKok"),{id:"cari",kaynak:cariler,etiket:"cari",alanlar:function(c){return [c.ad,c.il];},kod:function(c){return c.kod;},alt:function(c){return c.il;},ek:function(c){return tl(c.bakiye);},son:[cariler[1],cariler[3]],yeni:function(){}});
+A.aramaliSecici(document.getElementById("urunKok"),{id:"urun",kaynak:urunler,etiket:"ürün",alanlar:function(u){return [u.ad,u.tip];},kod:function(u){return u.kod;},alt:function(u){return u.tip;},ek:function(u){return '<span class="'+(u.stok<0?"erp-eksi":"")+'">'+A.sayiYaz(u.stok)+" stok</span>";}});
+</script>
+</body>
+</html>

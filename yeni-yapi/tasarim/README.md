@@ -21,7 +21,15 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 - `erp-text-3` yalnız ipucu yazısı, pasif metin ve giriş kutusu çerçevesidir; asıl bilgi onunla yazılmaz.
 - Zemin katmanları: `erp-page` sayfa → `erp-panel` kart ve tablo → `erp-zebra`/`erp-hover`/`erp-accent-tint` satır durumları. Yan menü ve bildirim koyu `erp-shell` zeminindedir.
 - Kayda yazılan renk (ürün renginin kodu, kullanıcının seçtiği etiket rengi) veri olarak hex saklanır; token adı veriye yazılmaz.
-- Şimdilik tek tema vardır: Açık.
+
+## Tema
+
+- Renkler temadan gelir. Dört tema var: **Atölye** (varsayılan, ERP standardı), **Gece** (koyu), **Deniz** (soğuk tonlu açık), **Yüksek kontrast** (bütün yazılar ≥7:1). Hepsi aynı token adlarını taşır; her yazı çifti her temada okunabilirlik eşiğini geçer.
+- Tema Tanımlar › Görünüm'den seçilir (`TemaSecici`): firma varsayılanı Yönetici seçer, her kullanıcı kendine başkasını seçebilir; ikisi de `ayar` tablosunda.
+- Uygulama yalnız `<html data-theme="…">` değiştirir (`Atolye.temaUygula`). Kodda renk değeri yazılmaz; yazılırsa tema o noktada kırılır.
+- Serbest renk seçtirilmez. Yeni tema bu sisteme eklenir ve okunabilirlik denetiminden geçer.
+- Gece temasında dolu kırmızı düğmenin yazısı koyudur (`erp-on-accent`); koyu menü ve bildirim zeminindeki açık yazı her temada `erp-shell-ink-guclu`'dur.
+- Yazdırma ve Excel temadan bağımsızdır: kâğıda açık zeminde basılır.
 
 ## Yazı
 
@@ -36,6 +44,23 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 - Köşeler yuvarlaktır (kullanıcı kararı; standarttaki 0px bilerek uygulanmaz): `erp-r-sm` küçük kontroller, `erp-r-md` panel ve kart, `erp-r-lg` pencere, `erp-r-pill` hap.
 - **Gölge yok.** Katmanlar 1px `erp-line` çizgiyle ayrılır. Yalnız onay penceresi ve çekmece perdeyle öne çıkar.
 - Form alanları ekrana yayılmaz, içerik kadar sabit genişliktedir: ürün 190, renk 130, ölçü 130, fiyat 120, tarih 150, fiş no 160, ödeme şekli 140 px. Dar ekranda alt satıra sarar.
+
+## Menüler
+
+- Uygulamada **tek menü tasarımı** vardır (`AcilirMenu`): açılır menü, sağ tık menüsü, kart başlığındaki "İşlemler" menüsü ve kullanıcı menüsü aynı görünür ve aynı klavyeyle çalışır.
+- Sağ tık menüsü araç çubuğunun kopyasıdır: aynı eylemler, aynı sıra, aynı ad. Yalnız menüde duran eylem yoktur. Dokunmatikte uzun basma aynı menüyü açar.
+- Tehlikeli öğe en altta, ayırıcıdan sonra ve kırmızı; tıklanınca `SilOnayi` açılır.
+- Yan menü (`Kabuk`) modül gruplarıyla sabit sıradadır ve yapı şemasındaki modüllerle aynı adları taşır. Yetkisi olmayan modül menüde görünmez (pasif değil, yok).
+- Ekran içi bölümler `Sekmeler` ile ayrılır; sekme içinde ikinci sekme sırası açılmaz.
+
+## Seçim kutuları
+
+- Listeden seçim **her zaman** `AramaliSecici` iledir: cari, ürün, renk, beden seti, proses, depo, hesap, kullanıcı.
+- Kutuya yazdıkça liste daralır. Yazılan her kelime kaydın içinde herhangi bir yerde geçmelidir; sıra önemsiz, Türkçe harf ve büyük/küçük farkı yok ("cevik ltd" → "Çevik Deri Ltd. Şti."). Eşleşen kısım vurgulanır.
+- Satırda kod, ad, ikinci satırda ayırt edici bilgi (il, tip); sağda işe yarayan sayı: üründe stok, caride bakiye, eksiyse kırmızı.
+- Birebir kod ya da okutulan barkod listeyi açmadan seçer. Boş kutuya odaklanınca son kullanılanlar gelir.
+- Eşleşme yoksa ne arandığı yazılır ve yetki varsa "+ yeni … aç" çıkar; açılan kart kaydedilince seçili döner.
+- `<select>` yalnız 7 ya da daha az SABİT seçenek için (para birimi, ödeme şekli, durum).
 
 ## Düğmeler ve kısayollar
 
@@ -76,3 +101,38 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 
 - Renk, boşluk ve köşe yalnız token'dan gelir (`var(--erp-…)`); bileşen kodunda hex, px köşe ya da gölge yazılmaz.
 - Bileşen sınıfları `components/bundle.css`'te, `erp-` önekiyle. İkonlar ve kural tabloları (araç çubuğu sırası, kısayollar, bildirim süresi) `components/bundle.js`'teki `window.Atolye` nesnesinde; uygulama bu tabloları kopyalamaz, buradan alır.
+
+---
+
+## Consuming this system (generated — do not edit)
+
+Every path named below is under `project/` in this design system: read `project/api/tokens.md`, not `api/tokens.md`.
+
+`components/bundle.js` defines `window.Atolye` (14 components); `components/bundle.css` is its stylesheet; `tokens.css` is every token as a CSS variable plus `@font-face` for the fonts. `components/bundle.css` reads its variables from `tokens.css`. Build any UI by mounting these components; never hand-build a control or draw an icon the system provides.
+
+- **Standalone page:** inline `tokens.css` and `components/bundle.css` in a `<style>`, then `components/bundle.js` as a classic script (a file containing `</style`, `</script` or `<!--` breaks an inline element: write the sequence `<\/style`, `<\/script` or `\x3C!--` in your copy, or load that file by URL).
+- **Design canvas:** bring `tokens.css`, `components/bundle.css` and `components/bundle.js` onto the canvas in full, as the canvas type’s design-system components reference says (a server-side copy first where it offers one); in each artboard that uses this system, right after the `support.js` line, load `tokens.css` first, then the stylesheet, then the script; mount with `<x-import component-from-global-scope="Atolye.<Comp>" …>`.
+- **Slides deck, or any surface that cannot run the bundle:** tokens only — the values are on `api/tokens.md`; the deck takes `tokens.json` by file path for its colour pickers.
+
+**Read, per thing:** a component’s props, parts and examples: `api/components/<Comp>.md`; token values: `api/tokens.md`; stored assets and their paths: `api/assets/<Group>.md`. After this README, fetch the cards and fonts you need in ONE message as parallel calls — none depends on another.
+
+**Two rules.** Before you use a thing — a component, a token group, an icon, an asset — read its card from the index below; a value you did not read from a card is a guess. `tokens.json`, `manifest.json` and `design-system.json` are sources for tools: hand them over. `components/<Comp>/README.md` and `assets/<Group>/README.md` are the long-form second read a card links to; `SKILL.md` and `artifact-type/` beside them are authoring guidance, not needed to consume the system.
+
+## Index (generated — do not edit)
+
+**Tokens**
+
+- `api/tokens.md` — Every token: surface, text, fill, palette, type, spacing, radius, z-index. (9.4k)
+
+**Icons and assets**
+
+- `api/assets/Ikonlar.md` — 20 files, by asset id. (2.8k)
+
+**Components** (`api/components/<Comp>.md`, 14)
+
+- **Eylemler**: `AracCubugu` — Ekranın bütün aksiyonlarının durduğu tek çubuk; sıra bileşenin içinde sabittir: Yeni · Kaydet · Düzenle · Kopyala · Sil ┆ Ara · Filtre ⟶ Yenile · Yazdır · Exce… · `Dugme` — Yazılı düğme; yalnız onay penceresinin dibinde, uzun formun altında ve kart başlığındaki özel işlemlerde kullanılır · `IkonDugme` — Araç çubuğunun ve kart başlığının yazısız düğmesi: 30×30 (dokunmada 44×44), 16px ikon · `KartBasligi` — Kartın ve tam ekran pencerenin başlığı: solda kod + ad + durum rozeti, sağda kartın bütün eylemleri
+- **Geri bildirim**: `Bildirim` — İşlemin sonucunu söyleyen kısa mesaj; sol altta, koyu erp-shell zeminde · `Serit` — Ekranın üstünde, kapanmayan durum bildirimi: çevrimdışı kilidi ve gönderilemeyen yazma · `SilOnayi` — Her silme işleminin onay penceresi; ne silineceğini cümleyle söyler, düğmesi "Sil"dir
+- **Listeler**: `BosDurum` — Boş liste ya da sonuçsuz arama; "Kayıt yok" demek yerine neyin görüneceğini ve ilk kaydın nasıl ekleneceğini söyler · `Matris` — Tek değişken boyutu beden olan her liste için zorunlu görünüm: satırda malzeme (ve renk), sütunda beden, hücrede tek sayı · `Rozet` — Bir kaydın durumu; her zaman renk, ikon ve kelime birlikte (Atolye.rozet(durum, metin)) · `Tablo` — Bütün listelerin ve raporların tek tablosu: yapışık başlık, süzgeç satırı, zebra, seçili satır, toplam satırı
+- **Formlar**: `FormAlani` — Etiketi üstte, genişliği içeriğe göre SABİT giriş alanı; alanlar ekrana yayılmaz, dar ekranda alt satıra sarar
+- **Kabuk**: `Kabuk` — Her ekranın çerçevesi: solda koyu yan menü, üstte firma ve oturum çubuğu, altında ekranın araç çubuğu ve içerik
+- **Raporlar**: `RaporCercevesi` — Bütün raporların ortak düzeni: araç çubuğu (yalnız Yenile · Yazdır · Excel), süzgeç bandı, özet sayıları, tablo

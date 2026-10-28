@@ -28,8 +28,8 @@ Bir siparişin, carinin, ürünün ayrıntısı. Tam ekran pencere ya da listeni
 Sipariş, alış, sevk, tahsilat, iş verme, teslim alma.
 
 1. Pencere başlığı: belge tipi + numara ("SAT-2026-000123"), sağda Kaydet · Sil ┆ Küçült · Kapat.
-2. **Üst bölge**: belgenin tamamını ilgilendiren alanlar tek satırda: cari, tarih, belge no; para birimi ve defter sağ üstte küçük.
-3. **Kalem satırı ekleme**: ürün → renk → ölçü → miktar → fiyat aynı hizada, sabit genişlikli alanlar.
+2. **Üst bölge**: belgenin tamamını ilgilendiren alanlar tek satırda: cari (`AramaliSecici`, sağında bakiye), tarih, belge no; para birimi ve defter sağ üstte küçük.
+3. **Kalem satırı ekleme**: ürün (`AramaliSecici`, sağında stok) → renk → ölçü → miktar → fiyat aynı hizada, sabit genişlikli alanlar; barkod okutmak ürünü doğrudan seçer.
 4. **Kalemler**: beden boyutluysa `Matris`, değilse `Tablo`.
 5. **Alt bölge**: not, toplamlar (sağda), uzun formun altında ikinci Kaydet.
 6. Onaylı belge düzenlenmez: başlıkta Düzenle yerine **Düzelt** (iptal + yeni belge) ve **İptal et** vardır.

@@ -13,10 +13,12 @@ Canlı şema: https://claude.ai/artifact/H3p9BBWRBqhRRkQhLad7RJ (yalnız sahibin
 ## Tasarım sistemi
 
 Canlı: https://claude.ai/artifact/PZKn1D9oKuRqeY9BctGby4 · kopyası `tasarim/`.
+Örnek ekranlar (dört tema): https://claude.ai/artifact/AfF6jCq2jWZtL6YnXJyXtx · kaynağı `tasarim/ekran-ornekleri.html`.
 Kullanıcının ERP arayüz standardı (`src/tema/erp-tokens.css`, `erp-icons.svg`) ve eski uygulamanın arayüz
 kararları üzerine kurulu. Ekran yazmadan önce `tasarim/README.md`, `tasarim/ekran-kaliplari.md` ve
 `tasarim/denetim-listesi.md` okunur. Değerler `tasarim/tokens.json`'dan, sınıflar `components/bundle.css`'ten,
-araç çubuğu sırası, kısayollar, bildirim süresi ve ikonlar `components/bundle.js`'teki `window.Atolye`'den gelir.
+araç çubuğu sırası, kısayollar, bildirim süresi, temalar, menü, aramalı seçici (`aramaliSecici`, `eslesme`) ve ikonlar
+`components/bundle.js`'teki `window.Atolye`'den gelir. Uygulama bu davranışları yeniden yazmaz, buradan taşır.
 
 ## Kavramlar
 

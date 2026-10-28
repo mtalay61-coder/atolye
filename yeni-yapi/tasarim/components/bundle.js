@@ -64,7 +64,156 @@
       el.innerHTML = aracCubugu(veri, el.getAttribute("data-baslik") || "");
     });
   }
-  window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir };
+
+  // ===== ARAMA: yazdıkça daralan liste =====
+  // Kural: yazılan her kelime kaydın aranan alanlarından birinin İÇİNDE geçmeli (baştan olması gerekmez),
+  // sıra önemsiz, Türkçe büyük/küçük harf ve şapka/nokta farkı yok ("cevik" → "Çevik", "IŞIK" → "ışık").
+  var KATLA = { "ç": "c", "ğ": "g", "ı": "i", "ö": "o", "ş": "s", "ü": "u", "â": "a", "î": "i", "û": "u" };
+  // Karakter karakter katlar; uzunluk korunur, böylece vurgu konumları özgün metne aynen uyar.
+  function katla(metin) {
+    var s = String(metin == null ? "" : metin), o = "";
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i].toLocaleLowerCase("tr");
+      c = c.length === 1 ? c : c[0];
+      o += KATLA[c] || c;
+    }
+    return o;
+  }
+  // kayit: aranan alanların metinleri dizisi; kod: varsa birebir kod/barkod eşleşmesi öne alınır.
+  // Dönüş: null (eşleşmedi) ya da { puan, vurgular: [[alanSirasi, bas, son], …] }.
+  function eslesme(sorgu, alanlar, kod) {
+    var kelimeler = katla(sorgu).split(/\s+/).filter(Boolean);
+    if (!kelimeler.length) return { puan: 0, vurgular: [] };
+    var katli = alanlar.map(katla), puan = 0, vurgular = [];
+    if (kod != null && katla(kod) === kelimeler.join(" ")) puan += 100;
+    for (var k = 0; k < kelimeler.length; k++) {
+      var w = kelimeler[k], bulundu = false;
+      for (var a = 0; a < katli.length; a++) {
+        var yer = katli[a].indexOf(w);
+        if (yer < 0) continue;
+        bulundu = true;
+        vurgular.push([a, yer, yer + w.length]);
+        puan += yer === 0 ? 6 : /[\s\-·.,/()]/.test(katli[a][yer - 1]) ? 4 : 1;
+        puan += a === 0 ? 1 : 0;
+        break;
+      }
+      if (!bulundu) return null;
+    }
+    return { puan: puan, vurgular: vurgular };
+  }
+  function vurgula(metin, araliklar) {
+    var s = String(metin == null ? "" : metin);
+    if (!araliklar.length) return kac(s);
+    araliklar = araliklar.slice().sort(function (x, y) { return x[0] - y[0]; });
+    var o = "", i = 0;
+    araliklar.forEach(function (r) { if (r[0] < i) return; o += kac(s.slice(i, r[0])) + "<mark>" + kac(s.slice(r[0], r[1])) + "</mark>"; i = r[1]; });
+    return o + kac(s.slice(i));
+  }
+  function kac(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function sayiYaz(n, ondalik) {
+    return Number(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: ondalik || 0, maximumFractionDigits: ondalik || 0 });
+  }
+
+  // aramaliSecici(kok, ayar) — uygulamadaki BÜTÜN liste seçimlerinin tek bileşeni.
+  // ayar: { kaynak: [kayit], alanlar: function(kayit) -> [ad, kod, …ek aranan alanlar],
+  //         kod: function(kayit) -> kod/barkod, alt: function(kayit) -> ikinci satır,
+  //         ek: function(kayit) -> sağ sütun HTML (stok, bakiye), etiket: "cari",
+  //         yeni: function(yazilan) (varsa "+ Yeni … aç" satırı), sec: function(kayit),
+  //         secili: kayit, son: [kayit] (boşken gösterilen son kullanılanlar), enCok: 50 }
+  function aramaliSecici(kok, ayar) {
+    var enCok = ayar.enCok || 50, etkin = 0, sonuc = [], secili = ayar.secili || null;
+    kok.classList.add("erp-ara");
+    kok.innerHTML = '<div class="erp-ara__kutu">' + ikon("i-search") + '<input class="erp-input" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list"><button type="button" class="erp-ara__temizle" aria-label="Seçimi temizle" hidden>' + ikon("i-close") + '</button></div><div class="erp-ara__liste" role="listbox" hidden></div>';
+    var giris = kok.querySelector("input"), liste = kok.querySelector(".erp-ara__liste"), temizle = kok.querySelector(".erp-ara__temizle");
+    if (ayar.id) giris.id = ayar.id;
+    giris.placeholder = ayar.ipucu || "Yaz: ad, kod ya da içinde geçen kelime";
+    function etiketYaz(k) { var a = ayar.alanlar(k); var kd = ayar.kod ? ayar.kod(k) : ""; return (kd ? kd + " · " : "") + a[0]; }
+    function goster() {
+      var q = giris.value.trim();
+      var adaylar = q ? ayar.kaynak : (ayar.son && ayar.son.length ? ayar.son : ayar.kaynak);
+      sonuc = [];
+      adaylar.forEach(function (k) {
+        var alanlar = ayar.alanlar(k), kd = ayar.kod ? ayar.kod(k) : null;
+        var e = eslesme(q, [alanlar[0], kd || ""].concat(alanlar.slice(1)), kd);
+        if (e) sonuc.push({ k: k, e: e });
+      });
+      if (q) sonuc.sort(function (x, y) { return y.e.puan - x.e.puan; });
+      // Okutulan barkod/kod birebir tutuyorsa liste açılmadan seçilir.
+      if (q && sonuc.length && sonuc[0].e.puan >= 100 && ayar.kod && katla(ayar.kod(sonuc[0].k)) === katla(q) && ayar.barkodlaSec !== false) { sec(sonuc[0].k); return; }
+      var gorunen = sonuc.slice(0, enCok); etkin = 0;
+      var html = !q && ayar.son && ayar.son.length ? '<div class="erp-ara__bilgi">Son kullanılanlar</div>' : "";
+      html += gorunen.map(function (r, i) {
+        var alanlar = ayar.alanlar(r.k), kd = ayar.kod ? ayar.kod(r.k) : "";
+        var v0 = r.e.vurgular.filter(function (v) { return v[0] === 0; }).map(function (v) { return [v[1], v[2]]; });
+        var v1 = r.e.vurgular.filter(function (v) { return v[0] === 1; }).map(function (v) { return [v[1], v[2]]; });
+        var alt = ayar.alt ? ayar.alt(r.k) : "";
+        return '<div class="erp-ara__satir" role="option" data-i="' + i + '" aria-selected="' + (i === 0) + '"><span class="erp-ara__ad">' + (kd ? '<span class="erp-ara__kod">' + vurgula(kd, v1) + "</span>" : "") + vurgula(alanlar[0], v0) + (alt ? '<span class="erp-ara__alt">' + kac(alt) + "</span>" : "") + '</span><span class="erp-ara__ek">' + (ayar.ek ? ayar.ek(r.k) : "") + "</span></div>";
+      }).join("");
+      if (q && !sonuc.length) html += '<div class="erp-ara__bilgi">"' + kac(q) + '" ile eşleşen ' + (ayar.etiket || "kayıt") + " yok.</div>";
+      if (sonuc.length > enCok) html += '<div class="erp-ara__bilgi">' + (sonuc.length - enCok) + " sonuç daha var; yazmaya devam et.</div>";
+      if (ayar.yeni && q) html += '<button type="button" class="erp-ara__yeni" data-yeni="1">' + ikon("i-plus") + '"' + kac(q) + '" adıyla yeni ' + (ayar.etiket || "kayıt") + " aç</button>";
+      liste.innerHTML = html; liste.hidden = false; giris.setAttribute("aria-expanded", "true");
+    }
+    function kapat() { liste.hidden = true; giris.setAttribute("aria-expanded", "false"); }
+    function sec(k) { secili = k; giris.value = etiketYaz(k); temizle.hidden = false; kapat(); if (ayar.sec) ayar.sec(k); }
+    function etkinYap(i) {
+      var satirlar = liste.querySelectorAll(".erp-ara__satir"); if (!satirlar.length) return;
+      etkin = (i + satirlar.length) % satirlar.length;
+      satirlar.forEach(function (s, j) { s.setAttribute("aria-selected", String(j === etkin)); });
+      satirlar[etkin].scrollIntoView({ block: "nearest" });
+    }
+    giris.addEventListener("focus", function () { if (secili) giris.select(); else goster(); });
+    giris.addEventListener("input", function () { secili = null; temizle.hidden = !giris.value; goster(); });
+    giris.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") { e.preventDefault(); if (liste.hidden) goster(); else etkinYap(etkin + 1); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); etkinYap(etkin - 1); }
+      else if (e.key === "Enter") { if (!liste.hidden && sonuc[etkin]) { e.preventDefault(); sec(sonuc[etkin].k); } }
+      else if (e.key === "Escape") { if (!liste.hidden) { e.stopPropagation(); kapat(); } }
+    });
+    liste.addEventListener("mousedown", function (e) {
+      e.preventDefault();
+      var y = e.target.closest("[data-yeni]"); if (y) { kapat(); ayar.yeni(giris.value.trim()); return; }
+      var s = e.target.closest(".erp-ara__satir"); if (s) sec(sonuc[+s.getAttribute("data-i")].k);
+    });
+    giris.addEventListener("blur", function () {
+      setTimeout(kapat, 120);
+      // Seçilmeden bırakılan yazı kayıt sayılmaz: kutu son seçime döner.
+      if (!secili) { giris.value = ""; temizle.hidden = true; } else giris.value = etiketYaz(secili);
+    });
+    temizle.addEventListener("click", function () { secili = null; giris.value = ""; temizle.hidden = true; if (ayar.sec) ayar.sec(null); giris.focus(); });
+    if (secili) { giris.value = etiketYaz(secili); temizle.hidden = false; }
+    return { sec: sec, deger: function () { return secili; }, odak: function () { giris.focus(); } };
+  }
+
+  // ===== TEMA =====
+  // Tema Tanımlar › Görünüm'den seçilir: firmanın varsayılanı + kullanıcının kendi seçimi (ayar tablosu).
+  // Uygulanması tek satır: <html data-theme="…">. Kod hiçbir yerde renk değeri yazmaz.
+  var TEMALAR = [
+    { id: "light", ad: "Atölye", aciklama: "Varsayılan. Sıcak nötrler, tek kırmızı aksiyon." },
+    { id: "gece", ad: "Gece", aciklama: "Koyu zemin; akşam vardiyası ve loş ortam." },
+    { id: "deniz", ad: "Deniz", aciklama: "Soğuk tonlu açık tema, mavi aksiyon." },
+    { id: "kontrast", ad: "Yüksek kontrast", aciklama: "Bütün yazılar en az 7:1; zayıf görme ve güneşli atölye." }
+  ];
+  function temaUygula(id, kok) {
+    var gecerli = TEMALAR.some(function (t) { return t.id === id; }) ? id : "light";
+    (kok || document.documentElement).setAttribute("data-theme", gecerli);
+    return gecerli;
+  }
+
+  // ===== MENÜ =====
+  // menuHtml([{ tur?, ad, ikon?, kisayol?, pasif?: "neden", tehlike? } | "-" | { baslik }]).
+  // Bağlam menüsünde araç çubuğundaki eylemler AYNI sırayla ve aynı adla durur; menüye özel eylem yoktur.
+  function menuHtml(ogeler) {
+    return '<div class="erp-menu" role="menu">' + ogeler.map(function (o) {
+      if (o === "-") return '<div class="erp-menu__ayrac" role="separator"></div>';
+      if (o.baslik) return '<div class="erp-menu__baslik">' + kac(o.baslik) + "</div>";
+      var tur = o.tur ? EYLEMLER.filter(function (e) { return e.tur === o.tur; })[0] : null;
+      var ad = o.ad || (tur && tur.ad) || "", ik = o.ikon || (tur && tur.ikon), ks = o.kisayol || (tur && tur.kisayol) || "";
+      var tehlike = o.tehlike || (tur && tur.tehlike);
+      return '<button type="button" role="menuitem" class="erp-menu__oge' + (tehlike ? " erp-menu__oge--tehlike" : "") + '"' + (o.pasif ? ' disabled title="' + kac(o.pasif) + '"' : "") + ">" + (ik ? ikon(ik) : "<span></span>") + "<span>" + kac(ad) + '</span><span class="erp-menu__kisayol">' + kac(ks) + "</span></button>";
+    }).join("") + "</div>";
+  }
+  window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir, katla: katla, eslesme: eslesme, vurgula: vurgula, sayiYaz: sayiYaz, aramaliSecici: aramaliSecici, TEMALAR: TEMALAR, temaUygula: temaUygula, menuHtml: menuHtml };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { ikonlariYerlestir(); });
   else ikonlariYerlestir();
 })();

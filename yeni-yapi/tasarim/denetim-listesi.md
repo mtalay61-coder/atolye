@@ -18,4 +18,7 @@ Bir ekran "bitti" denmeden önce bu listeden geçer. Her madde eski uygulamada e
 - [ ] Çevrimdışıyken yazma düğmeleri pasif, şerit görünüyor.
 - [ ] 720px altında dokunma ölçüleri geçerli, sayfa yana kaymıyor.
 - [ ] Bileşen kodunda hex renk, px köşe, gölge yok; hepsi token.
+- [ ] Listeden her seçim AramaliSecici ile; `<select>` yalnız ≤7 sabit seçenekte.
+- [ ] Sağ tık menüsü araç çubuğuyla aynı eylemleri aynı sırada taşıyor; menüye özel eylem yok.
+- [ ] Ekran dört temada da (Atölye, Gece, Deniz, Yüksek kontrast) okunuyor; kodda renk değeri yok.
 - [ ] Ekranın kılavuz konusu yapı şemasında var ve adımlar ekranla aynı.
