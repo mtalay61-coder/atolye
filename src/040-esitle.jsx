@@ -335,7 +335,12 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
 
   // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır (fark yukarıda hesaplandı).
   // Böylece 500 hareketi olan bir üründe tek hareket eklendiğinde yalnızca o satır gider.
-  for (const { cocuk, cFark } of cocukFarklari) {
+  // STOK v2 (v1.726.0, 038): geçiş yapılmışsa ürünün varyant ve hareket farkı REST'e satır satır değil, tek sunucu
+  // işlemine (`stk_yaz`) gider — tek işlem, tekrara dayanıklı, ad değişikliği yazma değil. Hata yukarıdaki catch'e düşer:
+  // bellek geri, bekleyen defter (bugünkü koruma aynen).
+  if (tablo === "urunler" && stokV2Aktif()) {
+    await stokV2Gonder(cocukFarklari, bellekYedegi, kayitlar);
+  } else for (const { cocuk, cFark } of cocukFarklari) {
 
     const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) =>
       // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
@@ -408,7 +413,11 @@ async function yazmayiDogrula(tablo, sema, sayim, cocukFarklari) {
   const anaDegisti = sayim && (sayim.eklenen || sayim.guncellenen || sayim.silinen);
   const cocukDegisti = (cocukFarklari || []).some(({ cFark }) => cFark && (cFark.eklenen.length || cFark.guncellenen.length || cFark.silinen.length));
   if (!anaDegisti && !cocukDegisti) return;
-  const hedefler = [{ tablo, bellek: tablo }, ...((sema && sema.cocuklar) || []).map((c) => ({ tablo: c.tablo, bellek: `${tablo}::${c.tablo}` }))];
+  // Stok v2'de ürünün alt tabloları sunucu işlemiyle (tek işlem) yazılıyor; `varyantlar` / `stok_hareketleri` birer görünüm
+  // ve satır sayıları bellekle bire bir değil (sıfır miktarlı hareket yazılmaz, aynı adlı varyantlar tek satır) — yalnız
+  // ana tablo sayılır.
+  const cocuklarSayilir = !(tablo === "urunler" && stokV2Aktif());
+  const hedefler = [{ tablo, bellek: tablo }, ...(cocuklarSayilir ? ((sema && sema.cocuklar) || []) : []).map((c) => ({ tablo: c.tablo, bellek: `${tablo}::${c.tablo}` }))];
   const olcumler = await Promise.all(hedefler.map(async (h) => {
     const beklenen = _sonHal[h.bellek] ? _sonHal[h.bellek].size : 0;
     let bulut = null;

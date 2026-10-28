@@ -91,6 +91,13 @@ async function supabasedenOku(secenek = {}) {
   // Sürüm sütunu var mı? Yazma başlamadan önce bilinmesi gerekiyor; sonra öğrenilirse ilk yazma
   // 400 alıp boşa giderdi.
   if (!yalniz) await surumDesteginiYokla();
+  // STOK v2 BAYRAĞI (v1.726.0, 038): geçiş yapıldıysa stok yazmaları sunucu işlemine gider. Tablo yoksa (stok-v2.sql
+  // çalıştırılmamış) okuma hata verir → bugünkü yol. Okunamazsa (ağ) önceki değer kalır: yolda bir okuma hatası açık
+  // bayrağı kapatıp yazmaları görünüme (yazılamaz) yöneltmesin.
+  // Öteki okumalarla AYNI ANDA gider (açılış bir istek kadar uzamasın); aşağıda, satırlar işlenmeden önce beklenir.
+  const stokV2Ayari = yalniz ? null : supabaseTumSatirlar("stk_ayar", "select=aktif").then(
+    (ayar) => stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif)),
+    () => { /* önceki değer */ });
 
   const [
     tanimSatir, cariSatir, cariHareket, urunSatir, varyantSatir, hareketSatir,
@@ -111,6 +118,8 @@ async function supabasedenOku(secenek = {}) {
     oku("cop"),
     oku("cek_gorselleri"),
   ]);
+
+  if (stokV2Ayari) await stokV2Ayari;
 
   // Sürüm sayaçları uygulama kaydına DEĞİL, ayrı haritaya alınır (bkz. _surumler yorumu).
   // Ham satırlar burada elde olduğu için okuma yeri burası.

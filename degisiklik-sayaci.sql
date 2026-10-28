@@ -41,6 +41,10 @@ begin
   if to_regclass('public.' || t) is null then
     return t || ': tablo yok, atlandi';
   end if;
+  -- Görünüm (stok v2 geçişinden sonra varyantlar / stok_hareketleri) tetikleyici almaz; sayacı v2 tabloları artırır.
+  if (select relkind from pg_class where oid = to_regclass('public.' || t)) <> 'r' then
+    return t || ': tablo değil (görünüm), atlandi';
+  end if;
   execute format('drop trigger if exists degisiklik_izle on public.%I', t);
   execute format('create trigger degisiklik_izle after insert or update or delete on public.%I for each statement execute function public.degisiklik_bump()', t);
   return t || ': kuruldu';

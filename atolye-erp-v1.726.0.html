@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.724.2</title>
+<title>Atölye ERP 1.726.0</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.724.2";
-const SURUM_TARIHI = "2026-10-24";
-const SURUM_NOTU = "E-posta konusu düzeltildi: uzun/Türkçe konu başlığı Gmail'de ham MIME gösteriyordu (gün sonu + sipariş/teklif e-postası) — Supabase'de gun-sonu ve eposta fonksiyonları yeniden yapıştırılmalı";
+const SURUM = "1.726.0";
+const SURUM_TARIHI = "2026-10-28";
+const SURUM_NOTU = "Stok v2 köprüsü: Supabase'de stok v2 geçişi yapılınca stok yazmaları tek sunucu işlemiyle (fiş/satır, ya hep ya hiç) gider; renk adı değişikliği artık stok satırı yazmaz";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.726.0", tarih: "28.10.2026", eklenen: ["Stok v2 köprüsü (yeniden kurulumun 1. modülü): Supabase'de stok v2 kurulup geçiş yapılınca stok kayıtları buluta fiş ve satır olarak, TEK bir sunucu işlemiyle gider — biri düşerse hiçbiri yazılmaz, ağda düşüp yeniden gönderilen kayıt stoğu iki kez değiştirmez. Renk ve beden buluta kimlikle bağlanır: ad değişikliği stok satırı silip yazmaz. Silinen hareket silinmez, iptal edilir (iz kalır). Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },
+    { surum: "1.725.1", tarih: "28.10.2026", eklenen: ["Buluta gönderilemeyen kayıt ayrıntısında (şeritteki çipe dokunun) Yönetici için \"Bu cihazdakini bırak, buluttan yükle\": günlerce gidemeyen yazma, ne bırakılacağı sayıyla gösterilip onaylanarak bırakılır; sayfa buluttaki hâlle açılır, günlüğe düşer"], degisen: ["\"Failed to fetch\" hatası artık düşen isteği yazar (yöntem, tablo, gövde boyutu, adres uzunluğu)", "Buluta toplu ekleme/güncelleme 400 satırın yanında ~900 KB ile de bölünür (görselli ürün satırları tek istekte onlarca MB edebiliyordu)"], duzeltilen: [] },
+    { surum: "1.725.0", tarih: "28.10.2026", eklenen: ["Tanımlar › Bakım › Sunucu arşivi: tek parça tablonun (Kasa & Banka, teklifler, koliler…) eski görüntüsü özetiyle görülür ve bugünkü hâlle birleştirilerek geri getirilir — o tarihten sonra girilen kayıtlar kaybolmaz"], degisen: ["Kasa & Banka, teklifler, koliler, faturalar, görevler, modelhane, mesajlar ve fiş defteri buluta yazılırken önce buluttaki hâl okunup üç yönlü birleştirilir: başka cihazın eklediği/değiştirdiği kayıt silinmez, açılışta bulutu okuyamamış cihaz boş listeyle bulutu ezemez; bulut okunamazsa yazma bekletilir ve yeniden denenir"], duzeltilen: ["Telefonda 24 Ekim'den beri süren \"Buluta gönderilemeyen kayıt: Stok kartları\": renk kodlamasının ağda düşen yazması \"Yeniden dene\"de toplu silme kilidine takılıyordu (renk adı değişimi silme sayılıyordu) ve ekranda eski \"Failed to fetch\" kalıyordu. Kilit artık ürün başına net kaybı sayar; yeniden adlandırma geçer, gerçek toplu silme yine durur. Engel olursa ekrandaki sebep güncellenir"] },
     { surum: "1.724.2", tarih: "24.10.2026", eklenen: [], degisen: [], duzeltilen: ["Gün sonu raporu e-postası Gmail'de ham MIME metni olarak geliyordu: posta kütüphanesi uzun Türkçe konuyu 76. karakterde bölüyor, başlıklar orada bitiyordu. Konu artık ASCII ve en çok 60 karakter (gün sonu ve sipariş/teklif e-postası). Supabase'de `gun-sonu` ve `eposta` fonksiyonları yeni dosyalarla yeniden yapıştırılmalı"] },
     { surum: "1.724.1", tarih: "24.10.2026", eklenen: [], degisen: [], duzeltilen: ["Büyük yazmalar (305 renk dönüştürme gibi) telefonda \"Failed to fetch\" ile düşüyordu: binlerce satır tek istekte, silmeler satır başına ayrı istekle gidiyordu. Artık ağ hatasında istek 3 kez yeniden denenir, ekleme/güncelleme 400 satırlık parçalarla gider, bileşik anahtarlı silmeler (varyant) ürün+renk başına tek istekte toplanır"] },
     { surum: "1.724.0", tarih: "24.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar › Bakım › Kodsuz Mamul Renkleri dönüştürmesi stokta kayıt olmuyordu: yüzlerce varyantın adı değişince eski satırların silinmesi toplu silme kilidine takılıyor, stok yazması düşüyor (sipariş/üretim/koli/teklif yazılmış kalıyordu). Kullanıcının onayladığı yeniden adlandırma artık kilit izniyle yazılır; aracı yeniden çalıştırmak yeter", "Tanımlar'da renk adı ve ölçü adı değiştirme de aynı kilide takılabiliyordu (yaygın renk/ölçü); izinle yazılır"] },
@@ -5388,7 +5391,15 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
                 continue;
             }
             baglantiBildir(false, String((e && e.message) || e));
-            throw e;
+            // HANGİ İSTEK DÜŞTÜ (v1.725.1 — kullanıcı, telefonda 5 denemede de "Failed to fetch"). Tarayıcı, sunucunun CORS
+            // başlıksız döndüğü hatayı (gövde çok büyük, adres çok uzun, ağ geçidi reddi) da "Failed to fetch" diye verir; mesaj
+            // hangi tablonun, ne boyutta isteğin düştüğünü söylemiyordu. Asıl metin başta kalır (bağlantı yok sınıflandırması
+            // `bulutHatasiAciklamasi` ona bakıyor), istek özeti eklenir.
+            const govdeBoyu = typeof secenekler.body === "string" ? secenekler.body.length : 0;
+            const ozet = `${String(secenekler.method || "GET").toUpperCase()} ${String(yol).split("?")[0]} · gövde ${Math.round(govdeBoyu / 1024)} KB · adres ${String(yol).length} karakter`;
+            const hata = new Error(`${String((e && e.message) || e)} — ${ozet}`);
+            hata.agHatasi = true;
+            throw hata;
         }
     }
     baglantiBildir(true);
@@ -5487,6 +5498,23 @@ const _bulutYoldakiYazma = {};
 function bulutYazmaBasladi(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = (_bulutYoldakiYazma[tablo] || 0) + 1; }
 function bulutYazmaBitti(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = Math.max(0, (_bulutYoldakiYazma[tablo] || 0) - 1); }
 function bulutSonYazma(tablo) { return (_bulutYoldakiYazma[tablo] || 0) > 0 ? Date.now() : (_bulutSonYazma[tablo] || 0); }
+// TEK PARÇA TABLO TABANI (v1.725.0, 089 `ucYonluBirlestir`): tablo → bu cihazın en son bildiği bulut hâli. Açılış okuması
+// (090), değişiklik yoklaması (100 `bulutDegisikligiUygula`) ve bu cihazın başarılı yazması kurar. Yoksa (bulut okunamamış)
+// yazma birleşimle gider: buluttaki hiçbir kayıt düşmez.
+const _tekilTaban = {};
+function tekilTabanAyarla(tablo, veri) {
+    if (veri === undefined || veri === null) {
+        delete _tekilTaban[tablo];
+        return;
+    }
+    try {
+        _tekilTaban[tablo] = JSON.parse(JSON.stringify(veri));
+    }
+    catch (e) {
+        delete _tekilTaban[tablo];
+    }
+}
+function tekilTabanOku(tablo) { return _tekilTaban[tablo]; }
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
     if (!supabaseAcikMi())
@@ -5499,6 +5527,12 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     // eksik öğeler eklenir. Bulut okunamazsa birleştirmesiz yazılır. Yedekten geri yükleme ve sıfırlama
     // bilerek bütününü yazar: `{ birlestirme: false }`.
     const birlestir = tablo === "tanimlar" && secenek.birlestirme !== false && typeof tanimlariBirlestir === "function";
+    // DİĞER TEK PARÇA TABLOLAR BULUTLA ÜÇ YÖNLÜ BİRLEŞEREK (v1.725.0 — kullanıcı: teklif başka cihazdan kayboldu; telefonda
+    // Kasa & Banka "0 hesap"). Bütün hâli basmak, eski listeyi tutan cihazın başka cihazın kaydını silmesi demekti. Bulut
+    // OKUNAMAZSA yazılmaz (hata → bekleyen defter, yeniden denenir): birleştirmesiz basmak tam da kapatılan delik.
+    // `{ birlestirme: false }` (bilerek bütününü yazanlar: sıfırlama, arşivden geri dönüş) ikisini de kapatır.
+    const ucYonlu = tablo !== "tanimlar" && secenek.birlestirme !== false && typeof ucYonluBirlestir === "function";
+    const gonderilen = veri;
     // SIRALI (v1.569.0, denetim): tek satırlık tablolar kuyruğa girmiyordu; iki hızlı kayıtta önce başlayan (okuma +
     // birleştirme + yazma) SONRA bitebiliyor, bulutta eski liste kalıyordu. `tabloYaz` ile aynı tablo kuyruğu.
     const isi = () => (birlestir
@@ -5516,10 +5550,29 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
                 window.__tanimlarBirlesti(bulut, b.eklenen, b.cikarilan);
             return b.tanimlar;
         }).catch(() => veri)
-        : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
+        : ucYonlu
+            ? supabaseIstek(`${tablo}?id=eq.tekil&select=veri`).then((r) => {
+                const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
+                if (bulut === null || bulut === undefined)
+                    return veri;
+                const b = ucYonluBirlestir(veri, bulut, tekilTabanOku(tablo));
+                if (JSON.stringify(b) !== JSON.stringify(veri)) {
+                    // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
+                    if (_tekilSayac[anahtar] === benimSiram)
+                        guvenliYaz(anahtar, JSON.stringify(b), true);
+                    if (typeof window !== "undefined" && window.__tekilBirlesti)
+                        window.__tekilBirlesti(tablo, b, gonderilen);
+                }
+                return b;
+            })
+            : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
         method: "POST",
         headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
         body: JSON.stringify([{ id: "tekil", veri: v }]),
+    }).then(() => {
+        // Taban = bu cihazın ekranındaki hâl (gönderdiği), birleşik hâl değil: ekran henüz birleşiği göstermiyorsa bir sonraki
+        // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
+        tekilTabanAyarla(tablo, gonderilen);
     }));
     const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
     gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
@@ -6569,6 +6622,313 @@ const TABLO_SEMA = {
     onaylar: { satir: (o) => ({ id: o.id, tip: o.tip || null, veri: o, durum: o.durum || "bekliyor" }), cocuklar: [] },
     cop: { satir: (c) => ({ id: c.id, tur: c.tur || null, baslik: c.baslik || null, veri: c, silen: c.silen || null }), cocuklar: [] },
 };
+// =============================================================================================================
+// STOK v2 KÖPRÜSÜ (v1.726.0) — stok yazmaları buluta FİŞ/SATIR olarak, TEK SUNUCU İŞLEMİYLE gider
+// =============================================================================================================
+//
+// Kullanıcı (28 Ekim): "Uygulama düzgün çalışmıyor sürekli hata ve yanlış yapıyor, sil baştan kurgulamamız lazım" →
+// karar: "Modül modül kuralım, veriyi taşı, stokla başla." Plan ve veritabanı: stok-v2/PLAN.md, stok-v2/*.sql.
+//
+// NEDEN KÖPRÜ: uygulamanın bütün stok akışları (fiş, sipariş sevki, üretim teslimi, numune, açılış, fiş geri al,
+// ad değişikliği, onarımlar — 25'ten fazla kapı) TEK bir geçitten yazıyor: bellekteki ürün listesinin farkı
+// (040 `_tabloEsitleUygula`, alt tablolar varyantlar + stok_hareketleri). Bu farkı satır satır REST'e göndermek
+// bugünkü hataların kaynağıydı: varyant renk ADIYLA anahtarlı olduğu için ad değişikliği yüzlerce silme + ekleme
+// oluyor, istekler ayrı ayrı gidiyor, biri düşerse yazma yarım kalıyordu. Köprü aynı farkı TEK bir isteğe çevirir
+// (`stk_yaz`), sunucu tek işlemde uygular — ya hepsi ya hiçbiri. Ekranlar ve akışlar DEĞİŞMEDİ; değişen yazma ve
+// okumanın altındaki yapı. Akışlar modül modül doğrudan fiş işlemine (stk_fis_kaydet) taşındıkça köprü incelir.
+//
+// NE ZAMAN ÇALIŞIR: Supabase'de `stk_gecis()` yapılmışsa (`stk_ayar.aktif`). Açılış okuması (045) bayrağı okur;
+// tablo yoksa (SQL çalıştırılmamış) ya da kapalıysa bugünkü yol aynen sürer. Geçişten sonra `varyantlar` ve
+// `stok_hareketleri` adları v2'nin bugünkü biçimdeki GÖRÜNÜMLERİDİR: okuyan her yer (bu uygulama, gün sonu raporu,
+// bulut sayımı) değişmeden v2'den okur; eski sürümde kalmış bir cihaz görünüme YAZAMAZ, hata alır.
+//
+// FARKTAN İSTEĞE (saf `stokV2Yuku`, birim testi `birim-stok-v2-kopru`):
+//   · Renk ve ölçü buluta KİMLİKLE gider: ad, Tanımlar'dan kimliğe çevrilir (model rengi "1058 - Taba/Siyah" kodundan,
+//     hammadde rengi adından, beden adından). Ad Tanımlar'da yoksa adıyla gider (sunucu 'serbest' renk açar; aynı ad
+//     Tanımlar'a girince sunucu kendiliğinden bağlar).
+//   · YENİDEN ADLANDIRMA YAZMA DEĞİLDİR: adı değişen varyantın eski/yeni satırları aynı kimliğe çıkar, birbirini götürür;
+//     hareketin yalnız renk/beden YAZISI değiştiyse (kimlik aynı) satır gönderilmez. Bugün 305 rengin kodlanması binlerce
+//     satır silip yazıyordu; köprüde sıfır istek.
+//   · Kimliği DEĞİŞEN hareket (kodsuz rengin model rengine çevrilmesi gibi) yeniden yazılır: sunucu eski varyanttan düşer,
+//     yenisine yazar.
+//   · Silinen hareket SİLİNMEZ, iptal edilir (iz kalır, stoktan düşer). Kaldırılan varyant: stoğu yoksa kalkar.
+//   · Hareketin fiş numarası yoksa (yazma geçidini atlayan eski bir yol) `OTO-<hareket>` fişine bağlanır — fişsiz satır
+//     sunucuda yazılamaz, yazılamayan istek de bekleyen defterde sonsuza dek takılırdı.
+// HATA: istek düşerse 040'ın bugünkü koruması aynen işler — fark belleği geri alınır, bekleyen kayıt defterine yazılır,
+// yeniden denenir. `stk_yaz` her parçası tekrara dayanıklı olduğu için yeniden gönderim stoğu İKİ KEZ değiştirmez.
+let _stokV2Aktif = false;
+let _stokV2Tanimlar = null;
+let _stokV2OncekiTanimlar = null;
+let _stokV2TanimImzasi = "";
+function stokV2Aktif() { return _stokV2Aktif; }
+function stokV2AktifAyarla(aktif) { _stokV2Aktif = !!aktif; }
+// Renk/beden tanımlarının imzası (kimlik + ad + kod): Tanımlar nesnesi her kayıtta yenilenir, ama köprüyü ilgilendiren
+// yalnız bu üç liste.
+function stokV2TanimImzasi(t) {
+    if (!t)
+        return "";
+    const r = (t.renkler || []).map((x) => `${x && x.id}=${x && x.ad}`).join("|");
+    const k = (t.renkKombinasyonlari || []).map((x) => `${x && x.id}=${x && x.kod}`).join("|");
+    const b = (t.bedenler || []).map((x) => `${x && x.id}=${x && x.ad}=${x && x.tip}`).join("|");
+    return `${r}#${k}#${b}`;
+}
+// App, Tanımlar her değiştiğinde verir (100): adı kimliğe çeviren sözlük yazma anındaki Tanımlar'la kurulur. Bir
+// ÖNCEKİ hâl de saklanır: yeniden adlandırmada farkın ESKİ satırı eski adı taşır ("Taba"); o ad güncel Tanımlar'da
+// artık yok, kimliği ancak önceki hâlden bulunur. Bulunamasaydı eski ve yeni satır farklı görünür, ad değişikliği
+// gereksiz yazmaya dönerdi.
+function stokV2TanimlarAyarla(tanimlar) {
+    const t = tanimlar || null;
+    if (t === _stokV2Tanimlar)
+        return;
+    const imza = stokV2TanimImzasi(t);
+    if (imza !== _stokV2TanimImzasi) {
+        _stokV2OncekiTanimlar = _stokV2Tanimlar;
+        _stokV2TanimImzasi = imza;
+    }
+    _stokV2Tanimlar = t;
+}
+// Ad karşılaştırma anahtarı — sunucudaki `stk_nrm` ile aynı: baş/son ve çoklu boşluk yok sayılır, Türkçe küçük harf.
+function stokV2Nrm(x) {
+    return String(x == null ? "" : x).trim().replace(/\s+/g, " ").toLocaleLowerCase("tr");
+}
+function stokV2YerTutucuMu(x) {
+    const n = stokV2Nrm(x);
+    return n === "" || n === "standart";
+}
+// Tanımlardan ad → kimlik sözlüğü. Saf. `onceki` verilirse güncelde bulunamayan ad orada aranır (yalnız farkın ESKİ
+// satırları için — yeni satır her zaman güncel Tanımlar'la çözülür).
+function stokV2Cozucu(tanimlar, onceki) {
+    const yedek = onceki ? stokV2Cozucu(onceki) : null;
+    const t = tanimlar || {};
+    const renk = new Map();
+    (t.renkler || []).forEach((r) => {
+        if (!r || !r.id || !r.ad)
+            return;
+        const k = stokV2Nrm(r.ad);
+        if (!renk.has(k))
+            renk.set(k, r.id);
+    });
+    const kombi = new Map();
+    (t.renkKombinasyonlari || []).forEach((k) => {
+        if (k && k.id && k.kod != null && String(k.kod).trim())
+            kombi.set(String(k.kod).trim(), k.id);
+    });
+    const olcu = new Map(); // ad → [{ id, tip }]
+    (t.bedenler || []).forEach((b) => {
+        if (!b || !b.id || !b.ad)
+            return;
+        const k = stokV2Nrm(b.ad);
+        if (!olcu.has(k))
+            olcu.set(k, []);
+        olcu.get(k).push({ id: b.id, tip: b.tip || "Beden" });
+    });
+    return {
+        // Model rengi etiketi "KOD - Ad1/Ad2": kod esas (bileşen adı değişse de aynı model rengi). Değilse hammadde rengi adı.
+        renk(ad) {
+            if (stokV2YerTutucuMu(ad))
+                return null;
+            const m = /^\s*(\S+)\s+-\s+\S/.exec(String(ad));
+            if (m && kombi.has(m[1]))
+                return kombi.get(m[1]);
+            return renk.get(stokV2Nrm(ad)) || (yedek ? yedek.renk(ad) : null);
+        },
+        olcu(ad, tip) {
+            if (stokV2YerTutucuMu(ad))
+                return null;
+            const adaylar = olcu.get(stokV2Nrm(ad)) || [];
+            const uyan = adaylar.find((a) => a.tip === (tip || "Beden")) || adaylar[0];
+            return uyan ? uyan.id : (yedek ? yedek.olcu(ad, tip) : null);
+        },
+    };
+}
+// Bir satırın (varyant ya da hareket; 035 şemasının sütun adlarıyla) renk/ölçü kimliği ve karşılaştırma anahtarı.
+function stokV2SatirKimligi(satir, cozucu, olcuTipi) {
+    const renkYok = stokV2YerTutucuMu(satir.renk);
+    const olcuYok = stokV2YerTutucuMu(satir.beden);
+    const renkId = renkYok ? null : cozucu.renk(satir.renk);
+    const olcuId = olcuYok ? null : cozucu.olcu(satir.beden, olcuTipi);
+    const rk = renkYok ? "" : (renkId || `ad:${stokV2Nrm(satir.renk)}`);
+    const ok = olcuYok ? "" : (olcuId || `ad:${stokV2Nrm(satir.beden)}`);
+    return {
+        renkId, olcuId,
+        renk: renkYok ? null : satir.renk,
+        olcu: olcuYok ? null : satir.beden,
+        anahtar: `${satir.urun_id}|${rk}|${ok}`,
+    };
+}
+const STOK_V2_HAREKET_ALANLARI = ["fis_no", "miktar", "kaynak", "tarih", "siparis_id", "siparis_no", "kalem_id", "cari_id",
+    "uretim_id", "rezervasyon_siparis_id", "fazla_gonderim", "aciklama", "ek"];
+function stokV2HareketSatiri(h, kim) {
+    return {
+        id: h.id, fisId: h.fis_no || `OTO-${h.id}`, urunId: h.urun_id,
+        renkId: kim.renkId, renk: kim.renk, olcuId: kim.olcuId, olcu: kim.olcu,
+        miktar: Number(h.miktar) || 0, kaynak: h.kaynak || null, tarih: h.tarih || null,
+        siparisId: h.siparis_id || null, siparisNo: h.siparis_no || null, kalemId: h.kalem_id || null,
+        cariId: h.cari_id || null, uretimId: h.uretim_id || null, rezervasyonSiparisId: h.rezervasyon_siparis_id || null,
+        fazlaGonderim: !!h.fazla_gonderim, aciklama: h.aciklama || null, ek: h.ek || {},
+    };
+}
+// FARK → `stk_yaz` YÜKÜ. Saf.
+//   varyantFarki / hareketFarki: 040'ın alt tablo farkları ({ eklenen, guncellenen, silinen, silinenKayitlar }).
+//   eskiVaryant / eskiHareket: fark belleğinin YAZMADAN ÖNCEKİ hâli (Map: kimlik → JSON) — güncellenen satırın neyinin
+//   değiştiğini görmek için.
+//   olcuTipleri: Map ürün kimliği → ölçü tipi (Beden/Boyut).
+// Döner: { varyantAc, satirlar, iptal, varyantKaldir, otoFis } — `otoFis`: fiş numarası olmadığı için OTO- fişine
+// bağlanan hareketler (günlüğe yazılır).
+function stokV2Yuku({ varyantFarki, hareketFarki, eskiVaryant, eskiHareket, tanimlar, oncekiTanimlar, olcuTipleri }) {
+    const cozucu = stokV2Cozucu(tanimlar);
+    const eskiCozucu = stokV2Cozucu(tanimlar, oncekiTanimlar); // farkın eski satırları (silinen varyant, hareketin önceki hâli)
+    const tip = (urunId) => (olcuTipleri && olcuTipleri.get ? olcuTipleri.get(urunId) : null) || "Beden";
+    const eski = (harita, id) => {
+        const d = harita && harita.get ? harita.get(id) : undefined;
+        if (d === undefined)
+            return null;
+        try {
+            return JSON.parse(d);
+        }
+        catch (e) {
+            return null;
+        }
+    };
+    const vf = varyantFarki || { eklenen: [], guncellenen: [], silinenKayitlar: [] };
+    const hf = hareketFarki || { eklenen: [], guncellenen: [], silinen: [] };
+    // VARYANTLAR — adı değişen varyant: eski ve yeni satırı aynı kimliğe çıkar, birbirini götürür. Eski ad Tanımlar'dan
+    // çoktan kalkmış olabilir (adı çözülemez): o zaman varyantın kendi renk kimliği (renk_id, ad değişince korunur) eşler.
+    const varyantKaldirHarita = new Map();
+    const renkIdAnahtari = (v, cz) => (v.renk_id ? `${v.urun_id}|id:${v.renk_id}|${stokV2SatirKimligi(v, cz, tip(v.urun_id)).anahtar.split("|")[2]}` : null);
+    const renkIdIleSilinen = new Map();
+    (vf.silinenKayitlar || []).forEach((v) => {
+        const kim = stokV2SatirKimligi(v, eskiCozucu, tip(v.urun_id));
+        varyantKaldirHarita.set(kim.anahtar, { satir: v, kim });
+        const ra = renkIdAnahtari(v, eskiCozucu);
+        if (ra)
+            renkIdIleSilinen.set(ra, kim.anahtar);
+    });
+    const acilacak = new Map();
+    const varyantAcEkle = (v, kim) => {
+        acilacak.set(kim.anahtar, { urunId: v.urun_id, renkId: kim.renkId, renk: kim.renk, olcuId: kim.olcuId, olcu: kim.olcu, minStok: Number(v.min_stok) || 0 });
+    };
+    (vf.eklenen || []).forEach((v) => {
+        const kim = stokV2SatirKimligi(v, cozucu, tip(v.urun_id));
+        const ra = renkIdAnahtari(v, cozucu);
+        const gidenAnahtar = varyantKaldirHarita.has(kim.anahtar) ? kim.anahtar : (ra && renkIdIleSilinen.get(ra));
+        const giden = gidenAnahtar ? varyantKaldirHarita.get(gidenAnahtar) : null;
+        if (giden) {
+            varyantKaldirHarita.delete(gidenAnahtar);
+            if ((Number(giden.satir.min_stok) || 0) !== (Number(v.min_stok) || 0))
+                varyantAcEkle(v, kim);
+            return;
+        }
+        varyantAcEkle(v, kim);
+    });
+    (vf.guncellenen || []).forEach((v) => {
+        // Varyant satırı her stok değişiminde "güncellenir" (miktar türetilmiş, 012). Sunucuda miktar saklanmaz: yalnız
+        // minimum stok değiştiyse gider.
+        const o = eski(eskiVaryant, v.id);
+        if (o && (Number(o.min_stok) || 0) === (Number(v.min_stok) || 0))
+            return;
+        varyantAcEkle(v, stokV2SatirKimligi(v, cozucu, tip(v.urun_id)));
+    });
+    // Aynı anahtar hem açılıyor hem kaldırılıyorsa (iki ad aynı kimliğe çıktı) kaldırılmaz.
+    acilacak.forEach((_, k) => varyantKaldirHarita.delete(k));
+    // HAREKETLER
+    const satirlar = [];
+    const otoFis = [];
+    const satirEkle = (h) => {
+        const kim = stokV2SatirKimligi(h, cozucu, tip(h.urun_id));
+        if (!h.fis_no)
+            otoFis.push(h.id);
+        satirlar.push(stokV2HareketSatiri(h, kim));
+    };
+    (hf.eklenen || []).forEach(satirEkle);
+    (hf.guncellenen || []).forEach((h) => {
+        const o = eski(eskiHareket, h.id);
+        if (o && o.urun_id === h.urun_id) {
+            const ayniKimlik = stokV2SatirKimligi(o, eskiCozucu, tip(o.urun_id)).anahtar === stokV2SatirKimligi(h, cozucu, tip(h.urun_id)).anahtar;
+            const ayniAlanlar = STOK_V2_HAREKET_ALANLARI.every((a) => JSON.stringify(o[a] ?? null) === JSON.stringify(h[a] ?? null));
+            // Yalnız renk/beden YAZISI değişti (yeniden adlandırma): sunucuda ad kimlikten gelir, gönderilecek bir şey yok.
+            if (ayniKimlik && ayniAlanlar)
+                return;
+        }
+        satirEkle(h);
+    });
+    const iptal = (hf.silinen || []).map(String);
+    return {
+        varyantAc: Array.from(acilacak.values()),
+        satirlar,
+        iptal,
+        varyantKaldir: Array.from(varyantKaldirHarita.values()).map(({ satir, kim }) => ({
+            urunId: satir.urun_id, renkId: kim.renkId, renk: kim.renk, olcuId: kim.olcuId, olcu: kim.olcu,
+        })),
+        otoFis,
+    };
+}
+function stokV2YukBosMu(yuk) {
+    return !yuk || (!yuk.varyantAc.length && !yuk.satirlar.length && !yuk.iptal.length && !yuk.varyantKaldir.length);
+}
+// Büyük yük (yedek geri yükleme, ilk eşitleme) parçalara bölünür: istek gövdesi ~800 KB'ı geçmesin (v1.725.1: büyük
+// gövde ağ geçidinde "Failed to fetch" diye düşüyordu). Her parça kendi işleminde ve tekrara dayanıklı; yarıda düşen
+// yazmanın yeniden gönderimi zarar vermez. Varyant açma ilk parçada (satırlar ona yazılır), iptal ve varyant kaldırma
+// son parçada (taşınan satırlar önce yeni varyanta geçsin, eski varyant boşalınca kalksın).
+const STOK_V2_PARCA_BAYT = 800 * 1024;
+const STOK_V2_PARCA_SATIR = 500;
+function stokV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STOK_V2_PARCA_SATIR) {
+    const gruplar = [];
+    let grup = [];
+    let bayt = 0;
+    (yuk.satirlar || []).forEach((s) => {
+        const b = JSON.stringify(s).length;
+        if (grup.length && (grup.length >= enFazlaSatir || bayt + b > enFazlaBayt)) {
+            gruplar.push(grup);
+            grup = [];
+            bayt = 0;
+        }
+        grup.push(s);
+        bayt += b;
+    });
+    if (grup.length || gruplar.length === 0)
+        gruplar.push(grup);
+    return gruplar.map((satirlar, i) => ({
+        varyantAc: i === 0 ? yuk.varyantAc : [],
+        satirlar,
+        iptal: i === gruplar.length - 1 ? yuk.iptal : [],
+        varyantKaldir: i === gruplar.length - 1 ? yuk.varyantKaldir : [],
+    }));
+}
+// GÖNDERİCİ — 040 `_tabloEsitleUygula` urunler'in alt tablolarını REST yerine buradan yazar. Hata yukarı gider
+// (bellek geri + bekleyen defter 040'ta).
+async function stokV2Gonder(cocukFarklari, bellekYedegi, kayitlar) {
+    const fark = (ad) => ((cocukFarklari || []).find((c) => c.cocuk && c.cocuk.tablo === ad) || {}).cFark;
+    const olcuTipleri = new Map((kayitlar || []).filter(Boolean).map((u) => [u.id, u.olcuTipi || "Beden"]));
+    const yuk = stokV2Yuku({
+        varyantFarki: fark("varyantlar"),
+        hareketFarki: fark("stok_hareketleri"),
+        eskiVaryant: bellekYedegi && bellekYedegi["urunler::varyantlar"],
+        eskiHareket: bellekYedegi && bellekYedegi["urunler::stok_hareketleri"],
+        tanimlar: _stokV2Tanimlar,
+        oncekiTanimlar: _stokV2OncekiTanimlar,
+        olcuTipleri,
+    });
+    if (stokV2YukBosMu(yuk))
+        return null;
+    const toplam = { varyantAc: 0, satir: 0, iptal: 0, varyantKaldir: 0, atlanan: [] };
+    for (const parca of stokV2Parcala(yuk)) {
+        const sonuc = await supabaseIstek("rpc/stk_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
+        if (sonuc && typeof sonuc === "object") {
+            ["varyantAc", "satir", "iptal", "varyantKaldir"].forEach((k) => { toplam[k] += Number(sonuc[k]) || 0; });
+            if (Array.isArray(sonuc.atlanan))
+                toplam.atlanan.push(...sonuc.atlanan);
+        }
+    }
+    if (yuk.otoFis.length) {
+        gunlukYaz(`Stok v2: fiş numarası olmayan ${yuk.otoFis.length} hareket OTO- fişine bağlandı`, "veri", { hareketler: yuk.otoFis.slice(0, 50) });
+    }
+    if (toplam.atlanan.length) {
+        // Kaldırılan ama stoğu olan varyant sunucuda kalır (stok kaybolmasın) — ekranda da hareketlerden geri gelir.
+        gunlukYaz(`Stok v2: stoğu olduğu için kaldırılmayan ${toplam.atlanan.length} varyant`, "veri", { atlanan: toplam.atlanan.slice(0, 50) });
+    }
+    return toplam;
+}
 // Kimlik listesiyle silme. Kimlikler URL'ye gömüldüğü için KAÇIŞ ŞART:
 // içinde nokta, virgül, eğik çizgi ya da parantez geçen bir kimlik sorguyu bozar ve
 // PostgREST'in yanlış satırları hedeflemesine — ya da isteğin tamamen başarısız olmasına — yol açar.
@@ -6640,14 +7000,33 @@ async function supabaseSilBilesik(tablo, alanlar, kayitlar) {
 // PARÇALI EKLEME/GÜNCELLEME (v1.724.1, aynı olay): binlerce satır tek POST gövdesinde (birkaç MB) gidince telefonda
 // istek düşüyordu. Satırlar `satirlariEsitle`den sonra 400'erlik parçalarla sırayla gönderilir; merge-duplicates
 // olduğu için yarıda kalan bir parça bir sonraki denemede yeniden gönderilebilir.
+// BOYUTA GÖRE DE (v1.725.1 — telefonda her denemede düşen stok yazması): ürün satırı görselleri (base64) taşıyor; 400 ürünlük
+// bir parça onlarca MB edebiliyor. Parça hem 400 satırı hem ~900 KB'ı aşmaz; tek satır sınırdan büyükse tek başına gider.
 const POST_PARCA_BOYU = 400;
+const POST_PARCA_BAYT = 900 * 1024;
+function postParcalari(satirlar, enFazlaSatir = POST_PARCA_BOYU, enFazlaBayt = POST_PARCA_BAYT) {
+    const parcalar = [];
+    let parca = [], boy = 2;
+    (satirlar || []).forEach((r) => {
+        const b = JSON.stringify(r).length + 1;
+        if (parca.length && (parca.length >= enFazlaSatir || boy + b > enFazlaBayt)) {
+            parcalar.push(parca);
+            parca = [];
+            boy = 2;
+        }
+        parca.push(r);
+        boy += b;
+    });
+    if (parca.length)
+        parcalar.push(parca);
+    return parcalar;
+}
 async function supabasePostParcali(yol, satirlar) {
-    const esit = satirlariEsitle(satirlar);
-    for (let i = 0; i < esit.length; i += POST_PARCA_BOYU) {
+    for (const parca of postParcalari(satirlariEsitle(satirlar))) {
         await supabaseIstek(yol, {
             method: "POST",
             headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-            body: JSON.stringify(esit.slice(i, i + POST_PARCA_BOYU)),
+            body: JSON.stringify(parca),
         });
     }
 }
@@ -6732,11 +7111,31 @@ function topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi) {
     }
     for (const { cocuk, cFark } of cocukFarklari || []) {
         const ad = `${tablo}::${cocuk.tablo}`;
-        if (topluSilmeEngeliMi((cFark.silinen || []).length, boy(ad))) {
-            return { tablo: cocuk.tablo, silinen: cFark.silinen.length, onceki: boy(ad) };
+        const silinen = cocuk.cakisma ? bilesikNetKayip(cocuk.cakisma, cFark) : (cFark.silinen || []).length;
+        if (topluSilmeEngeliMi(silinen, boy(ad))) {
+            return { tablo: cocuk.tablo, silinen, onceki: boy(ad) };
         }
     }
     return null;
+}
+// YENİDEN ADLANDIRMA SİLME DEĞİLDİR (v1.725.0 — kullanıcı, 28 Ekim: telefonda 24 Ekim'den beri "Buluta gönderilemeyen kayıt
+// var: Stok kartları", "Yeniden dene" sonuç vermiyor). Bileşik anahtarlı alt tabloda (varyantlar: urun_id+renk+beden) renk adı
+// değişince kimlik değişir: fark katmanı eski satırı SİLİNEN, yenisini EKLENEN sayar. 305 rengin kodlanması binlerce "silinen"
+// üretti; ilk yazma ağda düştü (Failed to fetch), izinli çağrı bir daha yapılmadı, dakikada bir çalışan "Yeniden dene" ise
+// izinsiz gittiği için her seferinde bu kilide takıldı — üstelik kilit hatası deftere yazılmadığından ekranda dört gün boyunca
+// eski "Failed to fetch" kaldı. Ölçü artık NET KAYIP: ana kayıt (urun_id) başına silinen − eklenen, eksiye düşmez, toplanır.
+// Ürünün bütün satırları gidip yerine bir şey gelmezse (gerçek toplu silme) sayılır; adı değişen satırlar sayılmaz. Bir ürünün
+// kaybını başka ürünün artışı örtemez (ürün başına hesap). Kimlikli alt tablolarda (hareketler…) ad değişikliği güncellemedir,
+// kural değişmedi. Saf; birim testi `birim-toplu-silme-kilidi`.
+function bilesikNetKayip(cakisma, cFark) {
+    const ebeveyn = String(cakisma).split(",")[0].trim();
+    const fark = new Map();
+    (cFark.silinenKayitlar || []).forEach((k) => { const p = String(k && k[ebeveyn]); fark.set(p, (fark.get(p) || 0) + 1); });
+    (cFark.eklenen || []).forEach((k) => { const p = String(k && k[ebeveyn]); fark.set(p, (fark.get(p) || 0) - 1); });
+    let net = 0;
+    fark.forEach((n) => { if (n > 0)
+        net += n; });
+    return net;
 }
 async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
     const sema = TABLO_SEMA[tablo];
@@ -6873,30 +7272,37 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
         }
         // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır (fark yukarıda hesaplandı).
         // Böylece 500 hareketi olan bir üründe tek hareket eklendiğinde yalnızca o satır gider.
-        for (const { cocuk, cFark } of cocukFarklari) {
-            const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) => 
-            // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
-            // Hareket gibi gerçek kimliği olan tablolarda geri konur.
-            cocuk.cakisma ? temiz : { ...temiz, id: __k });
-            if (cYaz.length > 0) {
-                const yol = cocuk.cakisma ? `${cocuk.tablo}?on_conflict=${cocuk.cakisma}` : cocuk.tablo;
-                await supabasePostParcali(yol, cYaz);
-            }
-            // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)
-            // veritabanından da düşer. Bileşik anahtarlı tablolarda `id` sütunu olmadığı için silme
-            // sütun değerleriyle kurulur — eskiden bu tablolar silmeden büsbütün muaftı.
-            if (cFark.silinen.length > 0) {
-                if (cocuk.cakisma) {
-                    // Alan listesi `cakisma` dizesinden okunuyor: ikisini ayrı tutmak, birini
-                    // güncelleyip diğerini unutma riskiydi.
-                    const alanlar = cocuk.cakisma.split(",").map((a) => a.trim()).filter(Boolean);
-                    await supabaseSilBilesik(cocuk.tablo, alanlar, cFark.silinenKayitlar);
-                }
-                else {
-                    await supabaseSil(cocuk.tablo, cFark.silinen);
-                }
-            }
+        // STOK v2 (v1.726.0, 038): geçiş yapılmışsa ürünün varyant ve hareket farkı REST'e satır satır değil, tek sunucu
+        // işlemine (`stk_yaz`) gider — tek işlem, tekrara dayanıklı, ad değişikliği yazma değil. Hata yukarıdaki catch'e düşer:
+        // bellek geri, bekleyen defter (bugünkü koruma aynen).
+        if (tablo === "urunler" && stokV2Aktif()) {
+            await stokV2Gonder(cocukFarklari, bellekYedegi, kayitlar);
         }
+        else
+            for (const { cocuk, cFark } of cocukFarklari) {
+                const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) => 
+                // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
+                // Hareket gibi gerçek kimliği olan tablolarda geri konur.
+                cocuk.cakisma ? temiz : { ...temiz, id: __k });
+                if (cYaz.length > 0) {
+                    const yol = cocuk.cakisma ? `${cocuk.tablo}?on_conflict=${cocuk.cakisma}` : cocuk.tablo;
+                    await supabasePostParcali(yol, cYaz);
+                }
+                // Silinen alt kayıtlar (kalem çıkarıldı, hareket geri alındı, renk/beden kaldırıldı)
+                // veritabanından da düşer. Bileşik anahtarlı tablolarda `id` sütunu olmadığı için silme
+                // sütun değerleriyle kurulur — eskiden bu tablolar silmeden büsbütün muaftı.
+                if (cFark.silinen.length > 0) {
+                    if (cocuk.cakisma) {
+                        // Alan listesi `cakisma` dizesinden okunuyor: ikisini ayrı tutmak, birini
+                        // güncelleyip diğerini unutma riskiydi.
+                        const alanlar = cocuk.cakisma.split(",").map((a) => a.trim()).filter(Boolean);
+                        await supabaseSilBilesik(cocuk.tablo, alanlar, cFark.silinenKayitlar);
+                    }
+                    else {
+                        await supabaseSil(cocuk.tablo, cFark.silinen);
+                    }
+                }
+            }
         // 3) SİLİNEN ANA KAYITLAR — alt kayıtlar cascade ile birlikte gider.
         if (fark.silinen.length > 0) {
             await supabaseSil(tablo, fark.silinen);
@@ -6947,7 +7353,11 @@ async function yazmayiDogrula(tablo, sema, sayim, cocukFarklari) {
     const cocukDegisti = (cocukFarklari || []).some(({ cFark }) => cFark && (cFark.eklenen.length || cFark.guncellenen.length || cFark.silinen.length));
     if (!anaDegisti && !cocukDegisti)
         return;
-    const hedefler = [{ tablo, bellek: tablo }, ...((sema && sema.cocuklar) || []).map((c) => ({ tablo: c.tablo, bellek: `${tablo}::${c.tablo}` }))];
+    // Stok v2'de ürünün alt tabloları sunucu işlemiyle (tek işlem) yazılıyor; `varyantlar` / `stok_hareketleri` birer görünüm
+    // ve satır sayıları bellekle bire bir değil (sıfır miktarlı hareket yazılmaz, aynı adlı varyantlar tek satır) — yalnız
+    // ana tablo sayılır.
+    const cocuklarSayilir = !(tablo === "urunler" && stokV2Aktif());
+    const hedefler = [{ tablo, bellek: tablo }, ...(cocuklarSayilir ? ((sema && sema.cocuklar) || []) : []).map((c) => ({ tablo: c.tablo, bellek: `${tablo}::${c.tablo}` }))];
     const olcumler = await Promise.all(hedefler.map(async (h) => {
         const beklenen = _sonHal[h.bellek] ? _sonHal[h.bellek].size : 0;
         let bulut = null;
@@ -7048,7 +7458,9 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
             supabaseSonHata = { tablo, mesaj, zaman: Date.now() };
             // TOPLU SİLME ENGELİ bekleyen yazma DEĞİLDİR: deftere düşerse açılışta "yerel kazanır" ve eksik liste
             // bulutun önüne geçer — korumanın engellediği şeyin ta kendisi. Yalnız şerit ve günlük.
-            if (!(e && e.topluSilmeEngeli))
+            // AMA anahtar defterde ZATEN varsa (önceki bir ağ hatasından) kaydın metni güncellenir (v1.725.0): yoksa ekranda
+            // eski sebep ("Failed to fetch") kalıyor, asıl engel hiç görünmüyordu. Yeni kayıt açılmaz.
+            if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar])
                 bekleyenYazmaEkle(anahtar, tablo, mesaj); // yerel güncel, bulut değil: açılışta yerel kazansın
             if (typeof window !== "undefined" && window.__supabaseHataBildir) {
                 window.__supabaseHataBildir(tablo, mesaj);
@@ -7151,6 +7563,11 @@ async function supabasedenOku(secenek = {}) {
     // 400 alıp boşa giderdi.
     if (!yalniz)
         await surumDesteginiYokla();
+    // STOK v2 BAYRAĞI (v1.726.0, 038): geçiş yapıldıysa stok yazmaları sunucu işlemine gider. Tablo yoksa (stok-v2.sql
+    // çalıştırılmamış) okuma hata verir → bugünkü yol. Okunamazsa (ağ) önceki değer kalır: yolda bir okuma hatası açık
+    // bayrağı kapatıp yazmaları görünüme (yazılamaz) yöneltmesin.
+    // Öteki okumalarla AYNI ANDA gider (açılış bir istek kadar uzamasın); aşağıda, satırlar işlenmeden önce beklenir.
+    const stokV2Ayari = yalniz ? null : supabaseTumSatirlar("stk_ayar", "select=aktif").then((ayar) => stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif)), () => { });
     const [tanimSatir, cariSatir, cariHareket, urunSatir, varyantSatir, hareketSatir, sipSatir, kalemSatir, uretSatir, atamaSatir, rezSatir, onaySatir, copSatir, cekGorselSatir,] = await Promise.all([
         oku("tanimlar"),
         oku("cariler"),
@@ -7167,6 +7584,8 @@ async function supabasedenOku(secenek = {}) {
         oku("cop"),
         oku("cek_gorselleri"),
     ]);
+    if (stokV2Ayari)
+        await stokV2Ayari;
     // Sürüm sayaçları uygulama kaydına DEĞİL, ayrı haritaya alınır (bkz. _surumler yorumu).
     // Ham satırlar burada elde olduğu için okuma yeri burası.
     if (okunur("urunler"))
@@ -7337,6 +7756,8 @@ function renkKimlikleriniDamgala(urunler, tanimliRenkler) {
 // Bulut tablosu → uygulama alanı (state). Alt tablolar ana alana düşer: kalem değişince siparişler tazelenir.
 const DEGISIKLIK_TABLO_ALANI = {
     urunler: "stok", varyantlar: "stok", stok_hareketleri: "stok",
+    // Stok v2 (v1.726.0): geçişten sonra varyantlar / stok_hareketleri görünüm — sayacı v2 tabloları artırır.
+    stk_varyant: "stok", stk_hareket: "stok", stk_fis: "stok", stk_renk: "stok", stk_olcu: "stok",
     cariler: "cariler", cari_hareketleri: "cariler",
     siparisler: "siparisler", siparis_kalemleri: "siparisler",
     uretim: "uretim", uretim_atamalari: "uretim",
@@ -12568,18 +12989,46 @@ function useCopKutusu(d) {
 // yalnız OKUR (yazma/silme yetkisi yok). Çöp kutusu boşaltılsa ya da hesabı ele geçen biri çöpü de
 // silse bile iz orada kalır. Aşağıdakiler okunan satırı insan diline çevirir.
 const ARSIV_TABLO_ADLARI = {
-    urunler: "Ürün", varyantlar: "Ürün varyantı", stok_hareketleri: "Stok hareketi", cariler: "Cari",
+    urunler: "Ürün", varyantlar: "Ürün varyantı", stok_hareketleri: "Stok hareketi", stk_varyant: "Ürün varyantı", stk_hareket: "Stok hareketi", stk_fis: "Stok fişi", cariler: "Cari",
     cari_hareketleri: "Cari hareketi", siparisler: "Sipariş", siparis_kalemleri: "Sipariş kalemi",
     uretim: "Üretim", uretim_atamalari: "İş ataması", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay",
     cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
-    gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka",
+    gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka", teklifler: "Teklifler",
 };
+// TEK PARÇA TABLO GÖRÜNTÜSÜNE DÖNÜŞ (v1.725.0 — kullanıcı, 28 Ekim: telefonda Kasa & Banka "0 hesap"; "yapıda sorun varsa
+// yapıyı baştan kuralım"). Sunucu arşivi tek parça tabloların değişiklik öncesi hâlini günde bir kez, 30 gün tutuyor
+// (silinen-arsiv.sql `arsive_kopyala_goruntu`, teklifler.sql). Bakım › Sunucu arşivi'nde görüntü özetlenir ve bugünkü
+// hâlle BİRLEŞTİRİLEREK geri yazılır (089 `derinBirlestir`: ortak kayıtta bugünkü hâl, yalnız görüntüde olan kayıtlar geri
+// gelir) — görüntüden sonra girilen hiçbir kayıt kaybolmaz; bilinen bedel: o tarihten sonra silinenler de geri gelir.
+// Tanımlar hariç (kendi silinenler defteriyle birleşiyor, 089 `tanimlariBirlestir`).
+const TEKIL_GORUNTU_TABLOLARI = { muhasebe: "muhasebe:data", teklifler: "teklif:data", koliler: "koli:data", faturalar: "fatura:data", gorevler: "gorev:data", modeller: "model:data" };
+// Görüntünün kısa özeti — hangi günün görüntüsünün dolu olduğu listeden okunabilsin. Saf.
+function tekilGoruntuOzeti(tablo, veri) {
+    if (veri == null)
+        return "boş";
+    if (tablo === "muhasebe" && typeof veri === "object" && !Array.isArray(veri)) {
+        const hesaplar = [...(veri.kasalar || []), ...(veri.bankalar || [])];
+        const hareket = hesaplar.reduce((t, h) => t + ((h && h.hareketler) || []).length, 0);
+        return `${(veri.kasalar || []).length} kasa · ${(veri.bankalar || []).length} banka · ${hareket} hareket · ${(veri.cekler || []).length} çek`;
+    }
+    if (Array.isArray(veri))
+        return `${veri.length} kayıt`;
+    if (typeof veri === "object")
+        return `${Object.keys(veri).length} alan`;
+    return String(veri).slice(0, 40);
+}
+// Görüntü + bugünkü hâl → geri yazılacak hâl. Saf.
+function tekilGoruntuBirlestir(guncel, goruntu) {
+    if (guncel === null || guncel === undefined)
+        return goruntu;
+    return derinBirlestir(guncel, goruntu);
+}
 function arsivSatiriOzeti(satir, kullanicilar) {
     const v = (satir && satir.veri) || {};
     // Satır tablolarında `veri` sütunu yoksa satırın kendisi; varsa (cop, onaylar) asıl kayıt içeride.
     const ic = v.veri && typeof v.veri === "object" && !Array.isArray(v.veri) ? v.veri : v;
     const baslik = satir && satir.islem === "GORUNTU"
-        ? "Değişiklik öncesi anlık görüntü"
+        ? `Değişiklik öncesi anlık görüntü${TEKIL_GORUNTU_TABLOLARI[satir.tablo] ? ` · ${tekilGoruntuOzeti(satir.tablo, v.veri)}` : ""}`
         : (v.baslik || ic.ad || ic.unvan || ic.siparisNo || ic.urunAdi || ic.aciklama || ic.no || satir.satir_id || "—");
     const ep = String((satir && satir.silen_eposta) || "").toLowerCase();
     const k = ep && (kullanicilar || []).find((x) => String(kullaniciEposta(x)).toLowerCase() === ep);
@@ -17828,6 +18277,67 @@ function derinBirlestir(yerel, bulut) {
     }
     return yerel;
 }
+// ÜÇ YÖNLÜ BİRLEŞTİRME (v1.725.0) — tek parça tabloların her YAZMASINDA (030 `tekilYaz`). Kullanıcı (24–28 Ekim): "Girilen
+// teklif başka cihazdan kayboldu", ardından telefonda Kasa & Banka "0 hesap". Tek parça tablo (muhasebe, teklifler, koliler…)
+// bütün hâliyle yazılıyordu: eski listeyi tutan cihaz herhangi bir işlemde (yeni teklif, kur güncellemesi…) kendi listesini
+// buluta basıyor, başka cihazın eklediği kaydı siliyordu; açılışta bulut okunamamış bir cihaz ise boş hâli basabiliyordu.
+// Artık yazmadan önce bulut okunur ve üç hâl birleştirilir:
+//   yerel  = bu cihazın yazmak istediği hâl
+//   bulut  = şu an buluttaki hâl
+//   taban  = bu cihazın en son bildiği bulut hâli (açılış okuması, değişiklik yoklaması, kendi son yazması)
+// Kural her düğümde: yerel tabandan değişmediyse BULUT alınır (başka cihazın değişikliği/silmesi korunur); bulut değişmediyse
+// YEREL alınır (bu cihazın değişikliği/silmesi gider); ikisi de değiştiyse kimlikli dizilerde kayıt kayıt, düz nesnelerde
+// alan alan içe inilir; düz değerlerde YEREL kazanır. Bir tarafın sildiği kaydı öbür taraf değiştirdiyse kayıt KALIR
+// (kaybetmektense). Taban bilinmiyorsa (açılışta bulut okunamamıştı) `derinBirlestir`: birleşim — buluttaki hiçbir kayıt
+// düşmez, bu cihazın silmesi o yazmada gitmez. Saf; birim testi `birim-tekil-birlestir`.
+function ucYonluBirlestir(yerel, bulut, taban) {
+    if (taban === undefined)
+        return derinBirlestir(yerel, bulut);
+    const es = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+    if (es(yerel, taban))
+        return bulut;
+    if (es(bulut, taban))
+        return yerel;
+    if (yerel === undefined)
+        return bulut; // yerel sildi, bulut değiştirdi → değişiklik kalır
+    if (bulut === undefined || bulut === null)
+        return yerel;
+    const kimlikliDizi = (d) => Array.isArray(d) && d.every((x) => x && typeof x === "object" && !Array.isArray(x) && x.id !== undefined);
+    if (kimlikliDizi(yerel) && kimlikliDizi(bulut)) {
+        const tabanHarita = new Map(kimlikliDizi(taban) ? taban.map((x) => [x.id, x]) : []);
+        const bulutHarita = new Map(bulut.map((x) => [x.id, x]));
+        const yerelIdler = new Set(yerel.map((x) => x.id));
+        const sonuc = [];
+        yerel.forEach((x) => {
+            if (bulutHarita.has(x.id)) {
+                const r = ucYonluBirlestir(x, bulutHarita.get(x.id), tabanHarita.get(x.id));
+                if (r !== undefined)
+                    sonuc.push(r);
+            }
+            else if (!tabanHarita.has(x.id) || !es(x, tabanHarita.get(x.id)))
+                sonuc.push(x); // yeni ya da (bulut silmiş ama) yerelde değişmiş
+        });
+        bulut.forEach((y) => {
+            if (yerelIdler.has(y.id))
+                return;
+            if (!tabanHarita.has(y.id) || !es(y, tabanHarita.get(y.id)))
+                sonuc.push(y); // başka cihazın yenisi ya da (yerel silmiş ama) bulutta değişmiş
+        });
+        return sonuc;
+    }
+    const duzNesne = (o) => o && typeof o === "object" && !Array.isArray(o);
+    if (duzNesne(yerel) && duzNesne(bulut)) {
+        const t = duzNesne(taban) ? taban : {};
+        const sonuc = {};
+        new Set([...Object.keys(bulut), ...Object.keys(yerel)]).forEach((k) => {
+            const r = ucYonluBirlestir(yerel[k], bulut[k], duzNesne(taban) ? t[k] : undefined);
+            if (r !== undefined)
+                sonuc[k] = r;
+        });
+        return sonuc;
+    }
+    return yerel;
+}
 // RENK / ÖLÇÜ / ASORTİ KODU ONARIMI (v1.556.0 — kullanıcı: "Renk kodları çakışıyor, burayı düzeltmiştik daha
 // önce!" — ekranda iki renk "Renk kodu: 0044"). Barkod kodu her cihazda kendi sayacıyla veriliyor; tek cihazda
 // `kodlariAta` var olanları atlıyor, çakışmıyor. Ama iki cihaz aynı anda yeni renk açınca ikisi de 44'ü verdi;
@@ -18033,6 +18543,10 @@ function useAcilisYukleme(d) {
                                     yerelVeri = JSON.parse(o.deger);
                             }
                             catch (e) { /* */ }
+                            // TABAN (v1.725.0, 030 `tekilTabanAyarla`): bu cihazın bildiği bulut hâli — sonraki yazmalar bununla üç yönlü birleşir.
+                            // Bulut okunamadıysa taban kurulmaz: yazma birleşimle gider, buluttaki hiçbir kayıt düşmez.
+                            if (bulutVeri != null)
+                                tekilTabanAyarla(tablo, bulutVeri);
                             if (bulutVeri == null)
                                 return yerelVeri;
                             if (bekleyenler[anahtar] && yerelVeri != null) {
@@ -20029,6 +20543,14 @@ function AtolyeUygulamasi() {
     useEffect(() => {
         // Yazma katmanı bileşen dışında olduğu için hatayı bu köprüyle bildiriyor.
         window.__supabaseHataBildir = (tablo, mesaj) => setYazmaHatasi({ tablo, mesaj, zaman: Date.now() });
+        // TEK PARÇA TABLO BİRLEŞTİ (v1.725.0, 030 `tekilYaz`): yazma sırasında buluttan gelen kayıtlar (başka cihazın yeni teklifi,
+        // kasa hareketi…) ekrana da işlenir. Ekran o arada değiştiyse aynı üç yönlü kuralla (taban = gönderilen hâl) birleştirilir.
+        window.__tekilBirlesti = (tablo, birlesik, gonderilen) => {
+            const ayarla = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, teklifler: setTeklifler,
+                fis_defteri: setFisDefteri, modeller: setModeller, mesajlar: setMesajlar }[tablo];
+            if (ayarla)
+                ayarla((cur) => (cur === gonderilen ? birlesik : ucYonluBirlestir(cur, birlesik, gonderilen)));
+        };
         // KENDİLİĞİNDEN KALKAR (v1.696.1, kullanıcı: "buluta yazılamadı çok karşılaşıyorum"): uyarı, aynı tablo sonra
         // başarıyla yazılsa da elle kapatılana kadar duruyordu — geçici bir ağ kesintisi saatlerce "hata" gibi görünüyordu.
         // Aynı tablonun sonraki başarılı yazması uyarıyı kaldırır (veri artık bulutta).
@@ -20577,8 +21099,12 @@ function AtolyeUygulamasi() {
             if (!alanlar.includes(tekilAlan[tablo]))
                 continue;
             const sat = await supabaseTumSatirlar(tablo);
-            if (sat[0] && sat[0].veri != null && !ayni(tekilAlan[tablo], sat[0].veri))
-                setX(sat[0].veri);
+            if (sat[0] && sat[0].veri != null) {
+                // Ekran bulut hâline geçiyor → taban da (v1.725.0, 030): sonraki yazma bu hâlden üç yönlü birleşir.
+                if (!ayni(tekilAlan[tablo], sat[0].veri))
+                    setX(sat[0].veri);
+                tekilTabanAyarla(tablo, sat[0].veri);
+            }
         }
         return degisen;
     }, []);
@@ -20883,6 +21409,8 @@ function AtolyeUygulamasi() {
     const topluSilmeBildirRef = useRef(null);
     const tanimRef = useRef(tanimlar);
     tanimRef.current = tanimlar;
+    // Stok v2 köprüsü (038) renk/beden adını Tanımlar'dan kimliğe çevirir: yazma anındaki Tanımlar'ı bilsin.
+    stokV2TanimlarAyarla(tanimlar);
     const gorevRef = useRef(gorevler);
     gorevRef.current = gorevler;
     const modelRef = useRef(modeller);
@@ -20912,6 +21440,8 @@ function AtolyeUygulamasi() {
             });
         }
         tanimRef.current = sonraki;
+        // Yeni renk aynı işlemde stoğa girebilir (ürün kartında "renk aç"): köprü kimliği çizimi beklemeden görsün.
+        stokV2TanimlarAyarla(sonraki);
     }, []);
     // Katman (030 tekilYaz) buluttaki tanımlarla birleştirip eksik öğe eklediğinde ekran da güncellensin.
     useEffect(() => {
@@ -24126,7 +24656,24 @@ function AtolyeUygulamasi() {
                                 v.zaman ? tarihYaz(v.zaman) : "—"),
                             v.hata && bulutHatasiAciklamasi(v.hata) && (React.createElement("div", { "data-bulut-hata-aciklama": "1", style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text)", marginTop: 4 } }, bulutHatasiAciklamasi(v.hata))),
                             v.hata && (React.createElement("div", { className: "mono", style: { fontSize: bulutHatasiAciklamasi(v.hata) ? 9 : 11, color: "var(--erp-danger)", marginTop: 4, wordBreak: "break-word" } }, v.hata)),
-                            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 4 } }, "Bu cihazdaki kay\u0131t g\u00FCncel. G\u00F6nderilene kadar di\u011Fer cihazlar bu veriyi eksik g\u00F6r\u00FCr.")));
+                            React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 4 } }, "Bu cihazdaki kay\u0131t g\u00FCncel. G\u00F6nderilene kadar di\u011Fer cihazlar bu veriyi eksik g\u00F6r\u00FCr."),
+                            (!aktifKullanici || aktifKullanici.rol === "Yönetici") && (React.createElement("button", { type: "button", className: "btn-ghost", "data-bekleyen-birak": v.tablo, style: { marginTop: 8, padding: "4px 10px", fontSize: 11, color: "var(--erp-danger, #B3261E)", borderColor: "var(--erp-danger, #B3261E)" }, onClick: () => {
+                                    const anahtar = bekleyenAcikAnahtar;
+                                    const d = bekleyenKayitlariOku()[v.tablo] || { ana: {}, cocuk: {} };
+                                    const anaYaz = Object.values(d.ana || {}).filter((x) => x === "yaz").length;
+                                    const anaSil = Object.values(d.ana || {}).filter((x) => x === "sil").length;
+                                    const cocuk = Object.entries(d.cocuk || {}).map(([t, k]) => `${Object.keys(k || {}).length} ${(ARSIV_TABLO_ADLARI[t] || t).toLocaleLowerCase("tr-TR")}`).filter((x) => !/^0 /.test(x));
+                                    const ozet = [anaYaz ? `${anaYaz} kayıt değişikliği` : "", anaSil ? `${anaSil} kayıt silme` : "", ...cocuk].filter(Boolean).join(", ") || "ayrıntı yok";
+                                    if (!window.confirm(`${bilgi.ad}: bu cihazda bekleyen ve buluta gidemeyen değişiklikler BIRAKILACAK (${ozet}).\n\n`
+                                        + `Sayfa buluttaki hâlle yeniden açılır; bu cihazda yapılıp gönderilemeyen ${bilgi.ad.toLocaleLowerCase("tr-TR")} değişiklikleri kaybolur. `
+                                        + `Başka cihazlardaki ve buluttaki kayıtlara dokunulmaz. Devam?`))
+                                        return;
+                                    gunlukYaz(`Bekleyen yazma bırakıldı: ${bilgi.ad} (${ozet})`, "guvenlik", { tablo: v.tablo, anahtar, deneme: v.deneme, hata: v.hata });
+                                    bekleyenKayitTemizle(v.tablo);
+                                    bekleyenYazmaSil(anahtar);
+                                    showToast(`${bilgi.ad} bırakıldı — sayfa buluttan yeniden açılıyor`);
+                                    setTimeout(() => window.location.reload(), 1200);
+                                } }, "Bu cihazdakini b\u0131rak, buluttan y\u00FCkle"))));
                     })())),
                 yayinSurum && !surumSeridiKapali && surumDahaYeniMi(yayinSurum.surum, SURUM) && (React.createElement("span", { "data-surum-seridi": yayinSurum.surum, style: { display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", marginRight: 10,
                         background: "#E7F0E3", border: "1.5px solid #4E6B4E", borderRadius: "var(--erp-r-pill)", padding: "4px 12px", fontSize: 11, fontWeight: 700, color: "#3F5A33" } },
@@ -28577,7 +29124,14 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
                 " ",
                 satirlar ? "Yenile" : "Arşivi getir")),
         durum && React.createElement("div", { className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 } }, durum),
-        tablo && satirlar && satirlar.length > 0 && (() => {
+        tablo && satirlar && satirlar.length > 0 && TEKIL_GORUNTU_TABLOLARI[tablo] && arsivSatirlariniHazirla(tablo, satirlar).length === 0 && (React.createElement("div", { "data-arsiv-tekil-ipucu": "1", style: { fontSize: 11, marginBottom: 8, padding: "8px 10px", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-sm)" } },
+            ARSIV_TABLO_ADLARI[tablo] || tablo,
+            " tek par\u00E7a bir kay\u0131tt\u0131r: ar\u015Fivde g\u00FCnde bir ",
+            React.createElement("b", null, "de\u011Fi\u015Fiklik \u00F6ncesi g\u00F6r\u00FCnt\u00FCs\u00FC"),
+            " tutulur. A\u015Fa\u011F\u0131da dolu g\u00F6r\u00FCnen g\u00FCn\u00FCn sat\u0131r\u0131n\u0131 a\u00E7\u0131p ",
+            React.createElement("b", null, "Bug\u00FCnk\u00FC h\u00E2lle birle\u015Ftir"),
+            "'e bas\u0131n \u2014 bug\u00FCn olan hi\u00E7bir kay\u0131t silinmez.")),
+        tablo && satirlar && satirlar.length > 0 && !(TEKIL_GORUNTU_TABLOLARI[tablo] && arsivSatirlariniHazirla(tablo, satirlar).length === 0) && (() => {
             const hazir = arsivSatirlariniHazirla(tablo, satirlar);
             const geriYukle = async () => {
                 if (geriYukleniyor || hazir.length === 0)
@@ -28628,8 +29182,66 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
                         " \u00B7 ",
                         o.kim),
                     acik ? React.createElement(ChevronUp, { size: 12 }) : React.createElement(ChevronDown, { size: 12 })),
+                acik && a.islem === "GORUNTU" && TEKIL_GORUNTU_TABLOLARI[a.tablo] && (React.createElement(TekilGoruntuDonusu, { satir: a, tabloAdi: o.tabloAdi, showToast: showToast })),
                 acik && (React.createElement("pre", { className: "mono", style: { margin: 0, padding: 10, fontSize: 10, background: "var(--erp-panel)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" } }, JSON.stringify(gizliAlanlariAt(a.veri), null, 2)))));
         })))));
+}
+// TEK PARÇA TABLO GÖRÜNTÜSÜNE BİRLEŞTİREREK DÖNÜŞ (v1.725.0, 077 `TEKIL_GORUNTU_TABLOLARI`). Açılan arşiv satırında: görüntünün
+// ve buluttaki BUGÜNKÜ hâlin özeti yan yana, "Bugünkü hâlle birleştir" → bugünkü + yalnız görüntüde olan kayıtlar buluta
+// bütün olarak yazılır (`birlestirme: false` — birleştirmeyi kendisi yaptı), günlüğe düşer, sayfa yenilenir (ekrandaki hâl bayat).
+function TekilGoruntuDonusu({ satir, tabloAdi, showToast }) {
+    const [guncel, setGuncel] = useState(undefined); // undefined: okunmadı, null: bulutta satır yok
+    const [hata, setHata] = useState("");
+    const [yaziliyor, setYaziliyor] = useState(false);
+    const tablo = satir.tablo;
+    const goruntu = satir.veri && satir.veri.veri;
+    useEffect(() => {
+        let iptal = false;
+        supabaseIstek(`${tablo}?id=eq.tekil&select=veri`)
+            .then((r) => { if (!iptal)
+            setGuncel(Array.isArray(r) && r[0] ? r[0].veri : null); })
+            .catch((e) => { if (!iptal)
+            setHata(`Bugünkü hâl okunamadı: ${String((e && e.message) || e).slice(0, 120)}`); });
+        return () => { iptal = true; };
+    }, [tablo]);
+    const birlestir = async () => {
+        if (yaziliyor || guncel === undefined)
+            return;
+        // Bekleme öncesinin fotoğrafı sabitlenir (bayat okuma denetimi): günlükteki "önce" özeti tam birleştirilen hâli anlatsın.
+        const once = guncel;
+        const sonuc = tekilGoruntuBirlestir(once, goruntu);
+        const onay = window.confirm(`${tabloAdi}: ${new Date(satir.zaman).toLocaleString("tr-TR")} görüntüsü bugünkü hâlle birleştirilecek.\n\n`
+            + `Görüntü: ${tekilGoruntuOzeti(tablo, goruntu)}\nBugün: ${tekilGoruntuOzeti(tablo, once)}\nSonuç: ${tekilGoruntuOzeti(tablo, sonuc)}\n\n`
+            + `Bugün olan hiçbir kayıt silinmez; yalnız görüntüde olup bugün olmayanlar geri gelir (o tarihten sonra bilerek silinenler de). `
+            + `Bitince sayfa yenilenir. Devam?`);
+        if (!onay)
+            return;
+        setYaziliyor(true);
+        try {
+            await tekilYaz(TEKIL_GORUNTU_TABLOLARI[tablo], tablo, sonuc, { birlestirme: false });
+            const kalan = bekleyenYazmalariOku()[TEKIL_GORUNTU_TABLOLARI[tablo]];
+            if (kalan)
+                throw new Error(kalan.hata || "buluta yazılamadı");
+            gunlukYaz(`Sunucu arşivinden görüntüye dönüldü: ${tabloAdi} (${new Date(satir.zaman).toLocaleString("tr-TR")})`, "guvenlik", { tablo, arsivId: satir.id, goruntu: tekilGoruntuOzeti(tablo, goruntu), once: tekilGoruntuOzeti(tablo, once), sonra: tekilGoruntuOzeti(tablo, sonuc) });
+            if (showToast)
+                showToast(`${tabloAdi} birleştirildi (${tekilGoruntuOzeti(tablo, sonuc)}) — sayfa yenileniyor`);
+            setTimeout(() => window.location.reload(), 1500);
+        }
+        catch (e) {
+            setHata(`Yazılamadı: ${String((e && e.message) || e).slice(0, 200)}`);
+            setYaziliyor(false);
+        }
+    };
+    return (React.createElement("div", { "data-arsiv-goruntu": tablo, style: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 10px", background: "var(--erp-orange-bg)", borderTop: "1px solid var(--erp-line-soft)" } },
+        React.createElement("span", { style: { fontSize: 11, flex: 1, minWidth: 220, display: "grid", gap: 2 } },
+            React.createElement("span", null,
+                "G\u00F6r\u00FCnt\u00FC: ",
+                React.createElement("b", { "data-arsiv-goruntu-ozet": "1" }, tekilGoruntuOzeti(tablo, goruntu))),
+            React.createElement("span", null,
+                "Bug\u00FCn (bulut): ",
+                React.createElement("b", { "data-arsiv-guncel-ozet": "1" }, guncel === undefined ? (hata ? "—" : "okunuyor…") : tekilGoruntuOzeti(tablo, guncel))),
+            hata && React.createElement("span", { style: { color: "var(--erp-danger, #B3261E)" } }, hata)),
+        React.createElement("button", { type: "button", className: "btn-primary", "data-arsiv-goruntu-birlestir": "1", disabled: yaziliyor || guncel === undefined, style: { padding: "5px 12px", fontSize: 11 }, onClick: birlestir }, yaziliyor ? "Yazılıyor…" : "Bugünkü hâlle birleştir")));
 }
 // Kullanıcı satırında şifre değiştirme / bulut hesabı açma kutusu: tıklanınca açılır, Enter ya da
 // Uygula ile gönderir; bulut kabul edince kapanır.
@@ -68277,7 +68889,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.724.2)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.726.0)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

@@ -12,6 +12,8 @@
 // Bulut tablosu → uygulama alanı (state). Alt tablolar ana alana düşer: kalem değişince siparişler tazelenir.
 const DEGISIKLIK_TABLO_ALANI = {
   urunler: "stok", varyantlar: "stok", stok_hareketleri: "stok",
+  // Stok v2 (v1.726.0): geçişten sonra varyantlar / stok_hareketleri görünüm — sayacı v2 tabloları artırır.
+  stk_varyant: "stok", stk_hareket: "stok", stk_fis: "stok", stk_renk: "stok", stk_olcu: "stok",
   cariler: "cariler", cari_hareketleri: "cariler",
   siparisler: "siparisler", siparis_kalemleri: "siparisler",
   uretim: "uretim", uretim_atamalari: "uretim",
