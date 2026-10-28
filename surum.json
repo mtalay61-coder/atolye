@@ -1,1 +1,1 @@
-{"surum": "1.726.0", "url": "atolye-erp-v1.726.0.html", "not": "Stok v2 köprüsü: Supabase'de stok v2 geçişi yapılınca stok yazmaları tek sunucu işlemiyle (fiş/satır, ya hep ya hiç) gider; renk adı değişikliği artık stok satırı yazmaz"}
+{"surum": "1.727.0", "url": "atolye-erp-v1.727.0.html", "not": "Cari v2 ve yazma zarfı: Supabase'de cari v2 geçişi yapılınca fişin stok ve cari satırları tek sunucu işlemiyle (ya ikisi ya hiçbiri) yazılır; cari hareketi silinmez, iptal edilir"}

@@ -17,7 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
-  "stokV2Yuku", "stokV2Parcala", "stokV2Cozucu", "stokV2Nrm", "stokV2AktifAyarla", "stokV2TanimlarAyarla", "stokV2Aktif",   // stok v2 köprüsü (v1.726.0)
+  "yazmaZarfi", "birlikteYaz", "cariV2Yuku", "cariV2AktifAyarla", "cariV2Aktif", "v2KopruYuku", "stokV2Yuku", "stokV2Parcala", "stokV2Cozucu", "stokV2Nrm", "stokV2AktifAyarla", "stokV2TanimlarAyarla", "stokV2Aktif",   // stok v2 köprüsü (v1.726.0)
   "sonrakiTeklifNo", "teklifDurumu", "teklifToplami", "teklifiSipariseCevir", "teklifKalemHatasi", "teklifKalemGruplari", "teklifYazdirHtml", "teklifMetinOzeti", "teklifSiparisGorunumu",   // teklif (v1.715.0, v1.722.0)
   "mamulRenkKodlamaPlani", "kodsuzMamulRenkleri", "mamulRenkleriniYenidenAdlandir",   // mamul renk kodlama (v1.717.0)
   "gecerliRezervasyonlar", "rezervasyonFarkiniUygula", "yazmaDogrulamaEksikleri", "topluSilmeEngeliMi", "topluSilmeEngeliBul", "TOPLU_SILME_ESIGI", "yedekSilinecekleri", "cihazSayimlari", "sayimKarsilastir", "contentRangeSayisi", "arsivSatirlariniHazirla", "arsivGeriYuklemeSirasi", "arsivCakismaSutunlari",   // toplu silme kilidi (v1.712.0)

@@ -227,8 +227,10 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
   // birleşir ve yazılır (`tabloYaz` zaten sıraya alıp yeniden deniyor; 100-app `yazimiIzle` hatayı şeride taşır).
   setSiparisler((onceki) => { const n = degisenKayitlariBirlestir(onceki, siparisler, nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n); return n; });   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
   if (koliIslemi) koliIslemi();
-  setStok((onceki) => { const n = degisenKayitlariBirlestir(onceki, stok, nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", n), "Stok kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
-  setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, cariler, nextCariler); yazimiIzle(tabloYaz("cari:data", "cariler", n), "Cari kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
+  // Stok çıkışı ve cari (satış) TEK ZARFTA (v1.727.0): iki güncelleyici aynı çizimde çalışır, zarf ikisini birlikte yazar.
+  const zarf = yazmaZarfi(["urunler", "cariler"]);
+  setStok((onceki) => { const n = degisenKayitlariBirlestir(onceki, stok, nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", n, undefined, { zarf }), "Stok kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
+  setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, cariler, nextCariler); yazimiIzle(tabloYaz("cari:data", "cariler", n, undefined, { zarf }), "Cari kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
   showToast(bildirim);
   return true;
 }, [siparisler, stok, cariler, showToast, muhasebe, aktifKullanici, koliler, saveKoliler, fisDefterineKayitYaz, tanimlar]);

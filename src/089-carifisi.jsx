@@ -108,9 +108,12 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   }
   // Güncel listeye yalnız değişen ürünler işlenir (v1.639.0, bkz. 075 `degisenKayitlariBirlestir`): defter yazımı beklenirken
   // gelen başka değişiklik ezilmesin.
+  // Stok ve cari TEK ZARFTA (v1.727.0): fişin malı ile borcu v2'de tek sunucu işlemiyle yazılır — biri düşüp öteki
+  // kalamaz. Cari tarafı aşağıda huniden (`addCariHareketFromStok`) aynı zarfla gelir.
+  const zarf = yazmaZarfi(["urunler", "cariler"]);
   setStok((onceki) => {
     const next = degisenKayitlariBirlestir(onceki, stok, sonuc.stok);   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
-    yazimiIzle(tabloYaz("stok:items", "urunler", next), "Stok kartları", next);
+    yazimiIzle(tabloYaz("stok:items", "urunler", next, undefined, { zarf }), "Stok kartları", next);
     return next;
   });
   // OKUTULAN KOLİLER (23 Eylül, v1.420.0): satırlar `koliId` taşıyorsa koli "Sevk edildi"ye geçer ve
@@ -122,7 +125,7 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
     saveKoliler((koliler || []).map((k) => (koliIdler.includes(k.id) ? { ...k, durum: "Sevk edildi", sevkFisNo: fisNo, sevkZamani: zaman } : k)));
   }
   // Cari tarafı huniden geçiyor (fiş no / kimlik / zaman güvencesi orada).
-  addCariHareketFromStok(cariId, sonuc.cariHareketleri);
+  addCariHareketFromStok(cariId, sonuc.cariHareketleri, { zarf });
 
   // PEŞİN KISIM: kasa/banka hareketi. Cari tarafı yukarıda yazıldı (fişin açtığı borcu kapatan
   // kayıt); burada yalnız hesabın kendi defteri güncelleniyor. İkisi `muhasebeBagId` ile bağlı,

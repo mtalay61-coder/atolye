@@ -138,6 +138,8 @@ function satirlariEsitle(satirlar) {
 }
 
 function supabaseTabloEsitle(tablo, kayitlar, secenek) {
+  // Yazma zarfı (v1.727.0, aşağıda): işlemin öteki tablolarıyla birlikte tek sunucu işleminde yazılır.
+  if (secenek && secenek.zarf && secenek.zarf.kabul(tablo)) return secenek.zarf.ekle(tablo, kayitlar, secenek);
   return tabloKuyrugunaAl(tablo, () => _tabloEsitleUygula(tablo, kayitlar, secenek));
 }
 
@@ -198,9 +200,15 @@ function bilesikNetKayip(cakisma, cFark) {
   return net;
 }
 
-async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
+// ---------------------------------------------------------------------------------------------------------------------
+// YAZMA AŞAMALARA AYRILDI (v1.727.0 — YAZMA ZARFI). Bir fişin stok ve cari farkı TEK sunucu işlemiyle (fis_yaz) gidebilsin
+// diye tek tablonun yazması dört aşamaya bölündü: hazırlık (fark + bellek yedeği + toplu silme kilidi) → ana kayıtlar
+// (sürüm kilitli) → alt kayıtlar (REST ya da v2 köprüsü, 038) → silinen ana kayıtlar. Tek tablo `_tabloEsitleUygula`,
+// birden çok tablo `_zarfUygula` bu aşamaları sırayla çağırır; hata yolu (bellek geri + bekleyen defter) ikisinde aynı.
+// Davranış tek tablo için DEĞİŞMEDİ.
+// ---------------------------------------------------------------------------------------------------------------------
+function _yazmaHazirla(tablo, kayitlar, secenek = {}) {
   const sema = TABLO_SEMA[tablo];
-  if (!sema) return;
 
   // BELLEK YEDEĞİ — ANA + ALT (v1.556.0). tabloFarki belleği çağrıldığı anda "yazıldı" diye işaretliyor.
   // Yazma DÜŞERSE (internet/elektrik kesintisi, sunucu hatası) bu yalan olur ve kayıt bir daha hiç
@@ -226,7 +234,6 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
     const kimlikli = duz.map((c) => ({ ...c, __k: cocuk.anahtar(c) }));
     return { cocuk, cFark: tabloFarki(`${tablo}::${cocuk.tablo}`, kimlikli.map((c) => ({ ...c, id: c.__k }))) };
   });
-  let _sayim = null;
   // TOPLU SİLME KİLİDİ — ağa çıkmadan önce (yukarıdaki yorum). `secenek.topluSilmeIzni` yalnız sıfırlama,
   // çöp boşaltma ve kullanıcının silinecek sayıyı görüp onayladığı yedek geri yüklemesinden gelir.
   const engel = secenek && secenek.topluSilmeIzni ? null : topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi);
@@ -240,7 +247,12 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
     e.topluSilmeEngeli = true;
     throw e;
   }
-  try {
+  return { tablo, kayitlar, secenek: secenek || {}, sema, bellekYedegi, bellegiGeriAl, fark, cocukFarklari, sayim: null };
+}
+
+// Ana kayıtlar (ekle / sürüm kilitli güncelle). Çakışmada bellek geri alınır ve { __cakisma } döner — alt kayıtlara geçilmez.
+async function _anaKayitlariYaz(y) {
+  const { tablo, sema, fark, bellegiGeriAl } = y;
   if (!_surumler[tablo]) _surumler[tablo] = new Map();
   const surumMap = _surumler[tablo];
   const degisen = [...fark.eklenen, ...fark.guncellenen];
@@ -282,7 +294,7 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
       else surumMap.set(k.id, beklenen + 1);
     }));
   }
-  _sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
+  y.sayim = { eklenen: fark.eklenen.length, guncellenen: fark.guncellenen.length, silinen: fark.silinen.length };
 
   // ÇAKIŞMA VARSA BURADA DURULUR — alt kayıtlara hiç dokunulmaz.
   //
@@ -330,17 +342,16 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
 
     // ÇAKIŞMA BİR BAŞARISIZLIKTIR. Eskiden buradan normal dönülüyor, `tabloYaz` da { ok: true }
     // üretiyordu; sonuçta üstte "kaydedilmedi" şeridi çıkarken altta "silindi" yazıyordu.
-    return { __cakisma: true, sayim: _sayim, teshis };
+    return { __cakisma: true, sayim: y.sayim, teshis };
   }
+  return null;
+}
 
+// Alt kayıtlar — bugünkü yol: REST, satır satır fark. v2'ye geçmiş tablolarda (038) bunun yerine köprü çalışır.
+async function _altKayitlariRestYaz(y) {
   // 2) ALT KAYITLAR — hepsi düzleştirilip kendi tablosu gibi fark alınır (fark yukarıda hesaplandı).
   // Böylece 500 hareketi olan bir üründe tek hareket eklendiğinde yalnızca o satır gider.
-  // STOK v2 (v1.726.0, 038): geçiş yapılmışsa ürünün varyant ve hareket farkı REST'e satır satır değil, tek sunucu
-  // işlemine (`stk_yaz`) gider — tek işlem, tekrara dayanıklı, ad değişikliği yazma değil. Hata yukarıdaki catch'e düşer:
-  // bellek geri, bekleyen defter (bugünkü koruma aynen).
-  if (tablo === "urunler" && stokV2Aktif()) {
-    await stokV2Gonder(cocukFarklari, bellekYedegi, kayitlar);
-  } else for (const { cocuk, cFark } of cocukFarklari) {
+  for (const { cocuk, cFark } of y.cocukFarklari) {
 
     const cYaz = [...cFark.eklenen, ...cFark.guncellenen].map(({ id, __k, ...temiz }) =>
       // Varyantta `id` yapay bir anahtardır, sütun değil — çıkarılır.
@@ -366,6 +377,13 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
     }
   }
 
+}
+
+// Silinen ana kayıtlar.
+async function _silinenAnaKayitlariYaz(y) {
+  const { tablo, fark } = y;
+  if (!_surumler[tablo]) _surumler[tablo] = new Map();
+  const surumMap = _surumler[tablo];
   // 3) SİLİNEN ANA KAYITLAR — alt kayıtlar cascade ile birlikte gider.
   if (fark.silinen.length > 0) {
     await supabaseSil(tablo, fark.silinen);
@@ -373,18 +391,129 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
     // POST gitsin — yoksa sahte çakışma.
     fark.silinen.forEach((id) => surumMap.delete(id));
   }
+}
+
+// Yazma düştü: bellek geri, gönderilemeyenler kalıcı deftere (hata yukarı gider; tabloYaz bekleyen şeridini açar).
+function _yazmaDustu(y) {
+  y.bellegiGeriAl();
+  bekleyenKayitEkle(y.tablo, y.fark, y.cocukFarklari);
+}
+// Hepsi gitti: defterdeki önceki bekleyenler de bu yazmayla gönderildi (tabanda yoklardı); yazma sonrası doğrulama.
+async function _yazmaBitti(y) {
+  bekleyenKayitTemizle(y.tablo);
+  await yazmayiDogrula(y.tablo, y.sema, y.sayim, y.cocukFarklari);
+  return y.sayim;
+}
+
+// Alt kayıtlar: tablo v2'ye geçtiyse köprüyle (tek sunucu işlemi), değilse REST.
+async function _altKayitlariYaz(y) {
+  const kopru = v2KopruYuku(y);
+  if (kopru) await v2KopruGonder([kopru]);
+  else await _altKayitlariRestYaz(y);
+}
+
+async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
+  if (!TABLO_SEMA[tablo]) return;
+  const y = _yazmaHazirla(tablo, kayitlar, secenek);
+  try {
+    const cakisma = await _anaKayitlariYaz(y);
+    if (cakisma) return cakisma;
+    await _altKayitlariYaz(y);
+    await _silinenAnaKayitlariYaz(y);
   } catch (e) {
-    // YAZMA DÜŞTÜ: bellek geri, gönderilemeyenler kalıcı deftere. Hata yukarı gider (tabloYaz bekleyen
-    // yazma şeridini açar, çağıran "kaydedilemedi" der).
-    bellegiGeriAl();
-    bekleyenKayitEkle(tablo, fark, cocukFarklari);
+    _yazmaDustu(y);
     throw e;
   }
-  // Hepsi gitti: defterdeki önceki bekleyenler de bu yazmayla gönderildi (tabanda yoklardı).
-  bekleyenKayitTemizle(tablo);
-  // YAZMA SONRASI DOĞRULAMA (v1.714.0, aşağıda): "yazdım" demekle "bulutta öyle duruyor" aynı şey değil.
-  await yazmayiDogrula(tablo, sema, _sayim, cocukFarklari);
-  return _sayim;
+  return _yazmaBitti(y);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// YAZMA ZARFI (v1.727.0) — bir işlemin birden çok tablosu (fiş: ürünler + cariler) TEK SUNUCU İŞLEMİYLE.
+//
+// Kullanıcı (28 Ekim, stok v2'den sonra): "devam et" — plan: fişin cari satırları stokla aynı işlemde. Bir alış/satış fişi
+// stoğu ve cariyi AYRI isteklerle yazıyordu; biri düşerse mal stoktan çıkmış, borç yazılmamış kalıyordu. Akış zarfı açar
+// (`yazmaZarfi(["urunler", "cariler"])`) ve iki `tabloYaz` çağrısına `{ zarf }` verir; zarf ikisi de gelince (ya da
+// `beklemeMs` dolunca — gelmeyen tablo olursa takılmasın) ikisinin kuyruğunu birlikte tutar ve:
+//   1. iki tablonun farkını hazırlar (kilit herhangi birinde tutarsa HİÇBİRİ yazılmaz),
+//   2. ana kayıtları yazar (sürüm çakışması → hiçbirinin altı yazılmaz, bellekler geri),
+//   3. v2'ye geçmiş tabloların alt farkını TEK `fis_yaz` isteğinde gönderir (stok + cari aynı veritabanı işlemi);
+//      geçmemiş tablo bugünkü REST yolundan,
+//   4. hata olursa İKİSİNİN de belleği geri alınır, ikisi de bekleyen deftere yazılır (yeniden gönderim her parçada
+//      tekrara dayanıklı).
+// Her çağrının sözü kendi tablosunun sonucuyla çözülür — çağıranlar (`yazimiIzle`) değişmez.
+// ---------------------------------------------------------------------------------------------------------------------
+function cokluKuyrugaAl(tablolar, is) {
+  const oncekiler = tablolar.map((t) => _bulutYazmaKuyrugu[t] || Promise.resolve());
+  const yeni = Promise.all(oncekiler).then(is, is);
+  tablolar.forEach((t) => { _bulutYazmaKuyrugu[t] = yeni.then(() => {}, () => {}); });
+  return yeni;
+}
+
+async function _zarfUygula(isler) {
+  const hazir = [];
+  try {
+    isler.forEach((i) => { if (TABLO_SEMA[i.tablo]) hazir.push(_yazmaHazirla(i.tablo, i.kayitlar, i.secenek)); });
+  } catch (e) {
+    hazir.forEach((y) => y.bellegiGeriAl());   // kilit: hiçbiri yazılmaz (hazırlananın da belleği geri)
+    throw e;
+  }
+  const sonuclar = {};
+  try {
+    for (const y of hazir) {
+      const cakisma = await _anaKayitlariYaz(y);
+      if (cakisma) {
+        // Bir tablo bayat: zarfın hiçbir alt kaydı yazılmaz. Öteki tabloların belleği de geri — sonraki yazma
+        // (yenilemeden sonra) hepsini yeniden gönderir.
+        hazir.forEach((x) => { if (x !== y) x.bellegiGeriAl(); });
+        hazir.forEach((x) => { sonuclar[x.tablo] = cakisma; });
+        return sonuclar;
+      }
+    }
+    const kopruler = [];
+    for (const y of hazir) {
+      const kopru = v2KopruYuku(y);
+      if (kopru) kopruler.push(kopru);
+      else await _altKayitlariRestYaz(y);
+    }
+    if (kopruler.length) await v2KopruGonder(kopruler);
+    for (const y of hazir) await _silinenAnaKayitlariYaz(y);
+  } catch (e) {
+    hazir.forEach(_yazmaDustu);
+    throw e;
+  }
+  for (const y of hazir) sonuclar[y.tablo] = await _yazmaBitti(y);
+  return sonuclar;
+}
+
+function yazmaZarfi(tablolar, beklemeMs = 4000) {
+  const beklenen = new Set(tablolar || []);
+  const isler = new Map();   // tablo → { kayitlar, secenek, cozenler }
+  let basladi = false;
+  let zamanlayici = null;
+  const baslat = () => {
+    if (basladi) return;
+    basladi = true;
+    if (zamanlayici) clearTimeout(zamanlayici);
+    const liste = Array.from(isler.entries());
+    cokluKuyrugaAl(liste.map(([t]) => t), () => _zarfUygula(liste.map(([tablo, i]) => ({ tablo, kayitlar: i.kayitlar, secenek: i.secenek }))))
+      .then((sonuclar) => liste.forEach(([t, i]) => i.cozenler.forEach(({ coz }) => coz(sonuclar && sonuclar[t]))),
+        (e) => liste.forEach(([, i]) => i.cozenler.forEach(({ red }) => red(e))));
+  };
+  return {
+    kabul: (tablo) => !basladi && beklenen.has(tablo),
+    ekle(tablo, kayitlar, secenek) {
+      return new Promise((coz, red) => {
+        const i = isler.get(tablo) || { cozenler: [] };
+        // Aynı tablo iki kez gelirse (React güncelleyicisi iki kez çalıştı) son liste geçerli: tam liste, öncekini kapsar.
+        i.kayitlar = kayitlar;
+        i.secenek = { ...(secenek || {}), zarf: undefined };
+        i.cozenler.push({ coz, red });
+        isler.set(tablo, i);
+        if (Array.from(beklenen).every((t) => isler.has(t))) Promise.resolve().then(baslat);
+        else if (!zamanlayici) zamanlayici = setTimeout(baslat, beklemeMs);
+      });
+    },
+  };
 }
 
 // =============================================================================================
@@ -474,6 +603,21 @@ function yazimiIzle(soz, etiket, veri) {
 // Görsel deposuna (`gorselleriYaz`) BURADAN yazılmıyor: listede olmayan ürünün görselini siliyor, görselsiz
 // bir liste gelirse depo boşalırdı; depo zaten ürün kaydedilirken (`saveStok`) ve açılış göçünde güncelleniyor.
 // `secenek.topluSilmeIzni` (v1.712.0): toplu silme kilidini yalnız bu yazma için açar — bkz. `topluSilmeEngeliMi`.
+// BİRLİKTE YAZ (v1.727.0) — aynı işlemin birden çok tablosunu tek zarfla yazar (bkz. `yazmaZarfi`). Sıralı `await` eden
+// akışlar için: zarf ikinci tabloyu beklerken birinciyi `await` etmek kilitlenirdi (zarf beklemesi dolana kadar).
+// yazmalar: [{ anahtar, tablo, kayitlar, etiket? }] → { ok, hata, sonuclar } (adim yürütücüsünün beklediği biçim).
+function birlikteYaz(yazmalar) {
+  const liste = (yazmalar || []).filter(Boolean);
+  const zarf = yazmaZarfi(liste.map((y) => y.tablo));
+  return Promise.all(liste.map((y) => {
+    const soz = tabloYaz(y.anahtar, y.tablo, y.kayitlar, undefined, { zarf });
+    return y.etiket ? yazimiIzle(soz, y.etiket, y.kayitlar) : soz;
+  })).then((sonuclar) => {
+    const dusen = sonuclar.find((r) => !r || r.ok === false);
+    return { ok: !dusen, hata: dusen ? (dusen.hata || "bilinmeyen hata") : null, sonuclar };
+  });
+}
+
 function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
   if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar)) yerelKayitlar = gorselleriAyir(kayitlar).stok;
   const yerel = guvenliYaz(anahtar, JSON.stringify(yerelKayitlar || kayitlar), true);

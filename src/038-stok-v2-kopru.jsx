@@ -258,35 +258,107 @@ function stokV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STO
   }));
 }
 
-// GÖNDERİCİ — 040 `_tabloEsitleUygula` urunler'in alt tablolarını REST yerine buradan yazar. Hata yukarı gider
-// (bellek geri + bekleyen defter 040'ta).
-async function stokV2Gonder(cocukFarklari, bellekYedegi, kayitlar) {
-  const fark = (ad) => ((cocukFarklari || []).find((c) => c.cocuk && c.cocuk.tablo === ad) || {}).cFark;
-  const olcuTipleri = new Map((kayitlar || []).filter(Boolean).map((u) => [u.id, u.olcuTipi || "Beden"]));
-  const yuk = stokV2Yuku({
-    varyantFarki: fark("varyantlar"),
-    hareketFarki: fark("stok_hareketleri"),
-    eskiVaryant: bellekYedegi && bellekYedegi["urunler::varyantlar"],
-    eskiHareket: bellekYedegi && bellekYedegi["urunler::stok_hareketleri"],
-    tanimlar: _stokV2Tanimlar,
-    oncekiTanimlar: _stokV2OncekiTanimlar,
-    olcuTipleri,
+// =============================================================================================================
+// CARİ v2 KÖPRÜSÜ (v1.727.0) — cari hareketleri de tek kapıdan (`car_yaz`), silme yerine iptal
+// =============================================================================================================
+// Cari hareketinin kendi kimliği var, adı kimliğe çevrilecek bir şey yok (stoğun renk/beden derdi yok): fark aynen
+// gider. Eklenen ve değişen satır `satirlar` (bugünkü cari_hareketleri sütun adlarıyla), silinen satır `iptal`.
+// Supabase'de `car_gecis()` yapılmışsa (`stk_ayar.cari_aktif`) çalışır; yoksa bugünkü REST yolu.
+let _cariV2Aktif = false;
+function cariV2Aktif() { return _cariV2Aktif; }
+function cariV2AktifAyarla(aktif) { _cariV2Aktif = !!aktif; }
+
+// Saf. hareketFarki: 040'ın cariler::cari_hareketleri farkı (satırlarda `id` = `__k` = hareket kimliği).
+function cariV2Yuku(hareketFarki) {
+  const hf = hareketFarki || { eklenen: [], guncellenen: [], silinen: [] };
+  const temiz = ({ __k, ...satir }) => satir;
+  return {
+    satirlar: [...(hf.eklenen || []), ...(hf.guncellenen || [])].map(temiz),
+    iptal: (hf.silinen || []).map(String),
+  };
+}
+function cariV2YukBosMu(yuk) { return !yuk || (!yuk.satirlar.length && !yuk.iptal.length); }
+function cariV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STOK_V2_PARCA_SATIR) {
+  const gruplar = [];
+  let grup = [];
+  let bayt = 0;
+  (yuk.satirlar || []).forEach((s) => {
+    const b = JSON.stringify(s).length;
+    if (grup.length && (grup.length >= enFazlaSatir || bayt + b > enFazlaBayt)) { gruplar.push(grup); grup = []; bayt = 0; }
+    grup.push(s);
+    bayt += b;
   });
-  if (stokV2YukBosMu(yuk)) return null;
-  const toplam = { varyantAc: 0, satir: 0, iptal: 0, varyantKaldir: 0, atlanan: [] };
-  for (const parca of stokV2Parcala(yuk)) {
-    const sonuc = await supabaseIstek("rpc/stk_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
-    if (sonuc && typeof sonuc === "object") {
-      ["varyantAc", "satir", "iptal", "varyantKaldir"].forEach((k) => { toplam[k] += Number(sonuc[k]) || 0; });
-      if (Array.isArray(sonuc.atlanan)) toplam.atlanan.push(...sonuc.atlanan);
+  if (grup.length || gruplar.length === 0) gruplar.push(grup);
+  return gruplar.map((satirlar, i) => ({ satirlar, iptal: i === gruplar.length - 1 ? yuk.iptal : [] }));
+}
+
+// =============================================================================================================
+// 040 İLE BAĞ — bir tablonun alt farkı köprüden mi gidecek? (040 `_yazmaHazirla` bağlamı `y`)
+// =============================================================================================================
+// Döner: null (köprü yok → REST) ya da { tur: "stok" | "cari", yuk, ozet } — yük boş olabilir (köprü açık ama
+// gönderilecek bir şey yok: REST'e DÜŞMEZ, çünkü o tablolar artık görünüm).
+function v2KopruYuku(y) {
+  if (!y) return null;
+  const fark = (ad) => ((y.cocukFarklari || []).find((c) => c.cocuk && c.cocuk.tablo === ad) || {}).cFark;
+  if (y.tablo === "urunler" && stokV2Aktif()) {
+    const olcuTipleri = new Map((y.kayitlar || []).filter(Boolean).map((u) => [u.id, u.olcuTipi || "Beden"]));
+    const yuk = stokV2Yuku({
+      varyantFarki: fark("varyantlar"),
+      hareketFarki: fark("stok_hareketleri"),
+      eskiVaryant: y.bellekYedegi && y.bellekYedegi["urunler::varyantlar"],
+      eskiHareket: y.bellekYedegi && y.bellekYedegi["urunler::stok_hareketleri"],
+      tanimlar: _stokV2Tanimlar,
+      oncekiTanimlar: _stokV2OncekiTanimlar,
+      olcuTipleri,
+    });
+    return { tur: "stok", yuk: stokV2YukBosMu(yuk) ? null : yuk };
+  }
+  if (y.tablo === "cariler" && cariV2Aktif()) {
+    const yuk = cariV2Yuku(fark("cari_hareketleri"));
+    return { tur: "cari", yuk: cariV2YukBosMu(yuk) ? null : yuk };
+  }
+  return null;
+}
+
+// GÖNDERİCİ — bir ya da birkaç köprü yükü. Stok ve cari birlikteyse ve ikisi de tek parçaya sığıyorsa TEK `fis_yaz`
+// isteği (tek veritabanı işlemi: ya ikisi ya hiçbiri). Sığmıyorsa (yedek geri yükleme gibi büyük yazma) her biri kendi
+// işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider (bellek geri + bekleyen defter 040'ta).
+async function v2KopruGonder(kopruler) {
+  const dolu = (kopruler || []).filter((k) => k && k.yuk);
+  if (!dolu.length) return null;
+  const stok = dolu.find((k) => k.tur === "stok");
+  const cari = dolu.find((k) => k.tur === "cari");
+  const stokParcalari = stok ? stokV2Parcala(stok.yuk) : [];
+  const cariParcalari = cari ? cariV2Parcala(cari.yuk) : [];
+  const sonuc = { stok: null, cari: null };
+  if (stok && cari && stokParcalari.length === 1 && cariParcalari.length === 1) {
+    const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p: { stok: stokParcalari[0], cari: cariParcalari[0] } }) });
+    sonuc.stok = r && r.stok;
+    sonuc.cari = r && r.cari;
+  } else {
+    if (stok) {
+      const toplam = { varyantAc: 0, satir: 0, iptal: 0, varyantKaldir: 0, atlanan: [] };
+      for (const parca of stokParcalari) {
+        const r = await supabaseIstek("rpc/stk_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
+        if (r && typeof r === "object") {
+          ["varyantAc", "satir", "iptal", "varyantKaldir"].forEach((k) => { toplam[k] += Number(r[k]) || 0; });
+          if (Array.isArray(r.atlanan)) toplam.atlanan.push(...r.atlanan);
+        }
+      }
+      sonuc.stok = toplam;
+    }
+    if (cari) {
+      for (const parca of cariParcalari) await supabaseIstek("rpc/car_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
+      sonuc.cari = { satir: cari.yuk.satirlar.length, iptal: cari.yuk.iptal.length };
     }
   }
-  if (yuk.otoFis.length) {
-    gunlukYaz(`Stok v2: fiş numarası olmayan ${yuk.otoFis.length} hareket OTO- fişine bağlandı`, "veri", { hareketler: yuk.otoFis.slice(0, 50) });
+  if (stok && stok.yuk.otoFis.length) {
+    gunlukYaz(`Stok v2: fiş numarası olmayan ${stok.yuk.otoFis.length} hareket OTO- fişine bağlandı`, "veri", { hareketler: stok.yuk.otoFis.slice(0, 50) });
   }
-  if (toplam.atlanan.length) {
+  const atlanan = (sonuc.stok && Array.isArray(sonuc.stok.atlanan)) ? sonuc.stok.atlanan : [];
+  if (atlanan.length) {
     // Kaldırılan ama stoğu olan varyant sunucuda kalır (stok kaybolmasın) — ekranda da hareketlerden geri gelir.
-    gunlukYaz(`Stok v2: stoğu olduğu için kaldırılmayan ${toplam.atlanan.length} varyant`, "veri", { atlanan: toplam.atlanan.slice(0, 50) });
+    gunlukYaz(`Stok v2: stoğu olduğu için kaldırılmayan ${atlanan.length} varyant`, "veri", { atlanan: atlanan.slice(0, 50) });
   }
-  return toplam;
+  return sonuc;
 }

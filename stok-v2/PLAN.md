@@ -103,6 +103,13 @@ kilitler; yeni kayıtları silemez.
 Geri dönüş tek komut: `select jsonb_pretty(public.stk_geri_don());`. Eski tablolar v2'nin o anki hâliyle geri gelir;
 geçişten sonra girilen fişler kaybolmaz.
 
+**Aşama 2b — cari v2 ve yazma zarfı: YAPILDI (v1.727.0)**
+- **Cari hareketleri tek kapıdan.** Cari hareketleri `car_hareket` tablosuna `car_yaz` işlemiyle yazılır. Silinen hareket
+  silinmez, iptal edilir.
+- **Stok ve cari tek işlemde.** Bir fişin, sipariş sevkinin, üretim tesliminin ve fiş geri almanın stok ve cari satırları
+  tek `fis_yaz` isteğiyle gider: biri düşerse hiçbiri yazılmaz.
+- **Geçiş:** SQL Editor'da `stok-v2/editor/` altındaki 4–5–6. adımlar.
+
 **Aşama 3 — akışları doğrudan fiş işlemine taşımak** (sonraki)
 - **Akışlar `stk_fis_kaydet`'e.** Akışlar (stok fişi, sipariş sevki, üretim teslimi…) farkı değil fişin kendisini
   gönderir; fişin cari satırları da aynı işlemde yazılır.

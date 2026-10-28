@@ -1641,8 +1641,11 @@ function AtolyeUygulamasi() {
     setStok(sonuc.stok);
     setCariler(sonuc.cariler);
     setUretim(sonuc.uretim);
-    yazimiIzle(tabloYaz("stok:items", "urunler", sonuc.stok), "Stok kartları", sonuc.stok);
-    yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler), "Cari kartları", sonuc.cariler);
+    // Stok ve cari geri alması TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
+    birlikteYaz([
+      { anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok, etiket: "Stok kartları" },
+      { anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" },
+    ]);
     yazimiIzle(tabloYaz("uretim:siparisler", "uretim", sonuc.uretim), "Üretim", sonuc.uretim);
     if (nextSiparislerRez !== siparisler) {
       setSiparisler(nextSiparislerRez);
@@ -3221,7 +3224,8 @@ function AtolyeUygulamasi() {
     showToast(`"${temizAd}" asortisi oluşturuldu`);
   }, [tanimlar, showToast, tanimlarKodluYaz]);
 
-  const addCariHareketFromStok = useCallback((cariId, hareketVeyaDizi) => {
+  // `secenek.zarf` (v1.727.0): fiş akışı stokla aynı yazma zarfını verir — cari satırları stokla tek sunucu işleminde gider.
+  const addCariHareketFromStok = useCallback((cariId, hareketVeyaDizi, secenek) => {
     if (donemKilidiEngel((Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi]).map((h) => h && h.tarih), showToast, "Cari hareketi")) return;
     setCariler((prev) => {
       const gelenler = Array.isArray(hareketVeyaDizi) ? hareketVeyaDizi : [hareketVeyaDizi];
@@ -3247,7 +3251,7 @@ function AtolyeUygulamasi() {
       const next = prev.map((c) =>
         c.id === cariId ? { ...c, hareketler: [...eklenecekler, ...(c.hareketler || [])] } : c
       );
-      yazimiIzle(tabloYaz("cari:data", "cariler", next), "Cari kartları", next);
+      yazimiIzle(tabloYaz("cari:data", "cariler", next, undefined, secenek && secenek.zarf ? { zarf: secenek.zarf } : undefined), "Cari kartları", next);
       return next;
     });
   }, [aktifKullanici, showToast]);
@@ -3369,15 +3373,18 @@ function AtolyeUygulamasi() {
       });
     });
 
+    // Stok ve cari geri alması TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
+    const geriAlYazmalari = [];
     if (sonuc.silinenStok > 0) {
       (sonuc.silinenFisNolar || []).forEach(fisDefterindeIptal);   // defterde iptal işareti (Adım 1)
-    setStok(sonuc.stok);
-      yazimiIzle(tabloYaz("stok:items", "urunler", sonuc.stok), "Stok kartları", sonuc.stok);
+      setStok(sonuc.stok);
+      geriAlYazmalari.push({ anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok, etiket: "Stok kartları" });
     }
     if (sonuc.silinenCari > 0) {
       setCariler(sonuc.cariler);
-      yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler), "Cari kartları", sonuc.cariler);
+      geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" });
     }
+    if (geriAlYazmalari.length) birlikteYaz(geriAlYazmalari);
     if (sonuc.etkilenenSiparisler.size > 0) {
       setSiparisler(sonuc.siparisler);
       yazimiIzle(tabloYaz("siparis:data", "siparisler", sonuc.siparisler), "Siparişler", sonuc.siparisler);
@@ -3552,8 +3559,11 @@ function AtolyeUygulamasi() {
     // aksi halde kullanıcı silindiğini sanıp diğer bilgisayarda fişi görmeye devam ederdi.
     const sonuclar = [];
     (sonuc.silinenFisNolar || []).forEach(fisDefterindeIptal);   // defterde iptal işareti (Adım 1)
-    if (sonuc.silinenStok > 0) { setStok(sonuc.stok); sonuclar.push(await tabloYaz("stok:items", "urunler", sonuc.stok)); }
-    if (sonuc.silinenCari > 0) { setCariler(sonuc.cariler); sonuclar.push(await tabloYaz("cari:data", "cariler", sonuc.cariler)); }
+    // Stok ve cari TEK ZARFTA (v1.727.0) — sıralı `await` zarfı kilitlerdi; ikisi birlikte başlatılıp birlikte beklenir.
+    const geriAlYazmalari = [];
+    if (sonuc.silinenStok > 0) { setStok(sonuc.stok); geriAlYazmalari.push({ anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok }); }
+    if (sonuc.silinenCari > 0) { setCariler(sonuc.cariler); geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler }); }
+    if (geriAlYazmalari.length) sonuclar.push(...(await birlikteYaz(geriAlYazmalari)).sonuclar);
     if (sonuc.etkilenenSiparisler.size > 0) { setSiparisler(sonuc.siparisler); sonuclar.push(await tabloYaz("siparis:data", "siparisler", sonuc.siparisler)); }
     // ÇEK: fişe bağlı çek kayıtları gider, ciro fişi silindiyse çek portföye döner
     // (bkz. removeHareketEverywhere).

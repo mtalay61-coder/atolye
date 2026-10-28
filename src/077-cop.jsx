@@ -263,7 +263,7 @@ const coptanGeriYukle = useCallback(async (copId) => {
 // yalnız OKUR (yazma/silme yetkisi yok). Çöp kutusu boşaltılsa ya da hesabı ele geçen biri çöpü de
 // silse bile iz orada kalır. Aşağıdakiler okunan satırı insan diline çevirir.
 const ARSIV_TABLO_ADLARI = {
-  urunler: "Ürün", varyantlar: "Ürün varyantı", stok_hareketleri: "Stok hareketi", stk_varyant: "Ürün varyantı", stk_hareket: "Stok hareketi", stk_fis: "Stok fişi", cariler: "Cari",
+  urunler: "Ürün", varyantlar: "Ürün varyantı", stok_hareketleri: "Stok hareketi", stk_varyant: "Ürün varyantı", stk_hareket: "Stok hareketi", stk_fis: "Stok fişi", car_hareket: "Cari hareketi", cariler: "Cari",
   cari_hareketleri: "Cari hareketi", siparisler: "Sipariş", siparis_kalemleri: "Sipariş kalemi",
   uretim: "Üretim", uretim_atamalari: "İş ataması", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay",
   cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
