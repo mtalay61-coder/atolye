@@ -305,10 +305,11 @@ declare
   sutunlar text;
   n int;
 begin
-  execute format($q$select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position)
-                    from information_schema.columns c
-                    where c.table_schema = 'public' and c.table_name = %L
-                      and c.column_name in (select jsonb_object_keys(j) from (select j from pg_temp.%I limit 1) x)$q$, p_tablo, p_kaynak)
+  -- İç içe dolar tırnağı yok (Supabase SQL Editor ayırıcısı tanımıyor): sorgu düz metinle kurulur.
+  execute 'select string_agg(quote_ident(c.column_name), '', '' order by c.ordinal_position)'
+       || ' from information_schema.columns c'
+       || ' where c.table_schema = ''public'' and c.table_name = ' || quote_literal(p_tablo)
+       || ' and c.column_name in (select jsonb_object_keys(j) from (select j from pg_temp.' || quote_ident(p_kaynak) || ' limit 1) x)'
     into sutunlar;
   if sutunlar is null then return 0; end if;   -- kaynak boş
   execute format('insert into public.%I (%s) select %s from pg_temp.%I k, jsonb_populate_record(null::public.%I, k.j) r',

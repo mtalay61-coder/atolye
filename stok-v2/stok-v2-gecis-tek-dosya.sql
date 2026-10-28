@@ -1,64 +1,13 @@
--- =====================================================================================================================
---  STOK v2 — KURULUM + GEÇİŞ, TEK DOSYA (ÜRETİLDİ: stok-v2/tek-dosya.sh — elle düzenlemeyin)
---  Supabase › SQL Editor › New query › bu dosyanın TAMAMI › Run.
---  ÖNCE uygulamanın v1.726.0 (ya da sonrası) yayında olmalı: eski sürüm geçişten sonra stok yazamaz.
---  Sonuçta geçiş raporu döner (taşınan ürün/varyant/fiş/hareket, tanımsız renkler, farklar).
---  Geri dönmek için:  select jsonb_pretty(public.stk_geri_don());
--- =====================================================================================================================
-
--- =====================================================================================================================
---  stok-v2.sql — STOK MODÜLÜNÜN YENİ VERİTABANI YAPISI (stok v2, 1. aşama)
--- =====================================================================================================================
---
---  NEDEN (kullanıcı, 28 Ekim: "Uygulama düzgün çalışmıyor, sürekli hata ve yanlış yapıyor, sil baştan kurgulamamız lazım"
---  → karar: "Modül modül kuralım, veriyi taşı, stokla başla"). Bugünkü yapıda:
---    · "Fiş" diye bir kayıt yok — aynı fiş numarasını taşıyan hareketlerin grubu; fiş defteri (fis_defteri) tek satırlık
---      bir JSON listesi olarak ayrıca tutuluyor.
---    · Varyant renk ve beden ADIYLA tutuluyor (anahtar urun_id+renk+beden): ad değişimi binlerce satırı silip yeniden yazıyor.
---    · Stok miktarı varyantta ayrıca saklanıyor; hareket toplamıyla ayrışabiliyor ("Defter onarımı", "açılış farkı").
---    · Bir fiş stok, cari, sipariş, koli, kasa ve fiş defterine 6–7 AYRI istekle yazılıyor; biri düşerse kayıt yarım kalıyor.
---    · Cihaz bütün listeyi bellekte tutup farkı gönderiyor; eski listeli cihaz başkasının kaydını silebiliyor.
---
---  YENİ YAPI — dört ilke:
---    1. KİMLİK: renk, ölçü, varyant, fiş ve hareket kimlikle bağlanır. Renk adını değiştirmek tek satırlık güncellemedir.
---    2. FİŞ GERÇEK KAYIT: `stk_fis` başlık, `stk_hareket` satırları. Hareket fişsiz OLAMAZ (fis_id NOT NULL) — "fişsiz hareket
---       olmaz" kuralı artık veritabanının kendisinde.
---    3. STOK TEK KAYNAKTAN: miktar saklanmaz; `stk_stok` görünümü iptal edilmemiş hareketleri toplar. "Hareketsiz stok olmaz"
---       ve "eksi stok kırpılmaz" kendiliğinden doğru (toplam ne çıkarsa o; sıfıra kırpılmaz).
---    4. YAZMA YALNIZ SUNUCU İŞLEMİYLE: uygulama tablolara doğrudan yazamaz (RLS: yalnız okuma). Fiş kaydı, fiş iptali, varyant
---       açma/kaldırma birer veritabanı işlemidir (RPC) — ya hepsi yazılır ya hiçbiri. Fiş kimliği istemcide üretilir: ağda
---       düşüp yeniden gönderilen fiş İKİNCİ KEZ yazılmaz (aynı kimlik → "zaten var").
---
---  1. AŞAMA KAPSAMI: renk/ölçü kimlikleri, varyant, fiş, hareket, stok görünümü ve bunları yazan işlemler + bugünkü veriden
---  göç (`stk_goc`). Ürün kartı (urunler: ad, fiyat, reçete, görsel…) yerinde kalır; renk/ölçü TANIMLARI da şimdilik Tanımlar'da
---  (tanimlar.veri) kalır ve bir tetikleyiciyle `stk_renk` / `stk_olcu`'ya aynalanır. Cari, sipariş, üretim sonraki modüller.
---
---  ÇALIŞTIRMA (onaydan sonra): Supabase › SQL Editor › bu dosyanın tamamı › Run. Bugünkü tablolara DOKUNMAZ (yalnız `stk_`
---  ile başlayan yeni tablolar ve tanimlar'a bir aynalama tetikleyicisi ekler). Tekrar çalıştırmak zararsız.
---  Ardından göç: `select public.stk_goc();` — tekrar çalıştırılabilir (geçişe kadar), sonuç raporu döner.
---  Yerel sınama: stok-v2/test/kos.sh (yerel PostgreSQL; Supabase'e dokunmaz).
--- =====================================================================================================================
-
-begin;
-
--- ---------------------------------------------------------------------------------------------------------------------
--- 0) YARDIMCILAR
--- ---------------------------------------------------------------------------------------------------------------------
-
--- Ad karşılaştırma anahtarı: Türkçe büyük/küçük harf, baş/son boşluk ve çoklu boşluk farkı yok sayılır.
--- (`lower` C yereli altında İ/I'yı doğru çevirmez; önce elle çevrilir.)
 create or replace function public.stk_nrm(x text) returns text
 language sql immutable as $$
   select nullif(lower(translate(regexp_replace(btrim(coalesce(x, '')), '\s+', ' ', 'g'), 'İIĞÜŞÖÇ', 'iığüşöç')), '')
 $$;
 
--- "Standart" ve boş: renk/ölçü YOK demek (bugünkü yer tutucu; 012 `stokAnahtarNrm`).
 create or replace function public.stk_yer_tutucu_mu(x text) returns boolean
 language sql immutable as $$
   select public.stk_nrm(x) is null or public.stk_nrm(x) = 'standart'
 $$;
 
--- Hatasız zaman çevirisi: bugünkü tabloda tarih metin de olabilir, zaman damgası da.
 create or replace function public.stk_zaman(x text) returns timestamptz
 language plpgsql immutable as $$
 begin
@@ -68,8 +17,6 @@ exception when others then
   return null;
 end $$;
 
--- Hatasız sayı / doğru-yanlış çevirisi (göç, bugünkü JSON'dan okurken): boş ya da bozuk değer NULL — tek bozuk kayıt
--- bütün geçişi durdurmasın (28 Ekim: tek tutarsız fiş defteri kaydı geçişi durdurdu).
 create or replace function public.stk_sayi(x text) returns numeric
 language plpgsql immutable as $$
 begin
@@ -78,7 +25,6 @@ begin
 exception when others then
   return null;
 end $$;
--- Dizi olmayan JSON (bozuk ya da eski biçimli alan) boş dizi sayılır: jsonb_array_elements hata vermesin.
 create or replace function public.stk_dizi(j jsonb) returns jsonb
 language sql immutable as $$
   select case when jsonb_typeof(j) = 'array' then j else '[]'::jsonb end
@@ -88,12 +34,6 @@ language sql immutable as $$
   select lower(btrim(coalesce(x, ''))) in ('true', 't', '1', 'evet', 'yes')
 $$;
 
--- ---------------------------------------------------------------------------------------------------------------------
--- 1) TABLOLAR
--- ---------------------------------------------------------------------------------------------------------------------
-
--- RENK — hem hammadde rengi (tanimlar.renkler) hem model rengi (tanimlar.renkKombinasyonlari, "1058 - Taba Süet") hem de
--- tanımda karşılığı olmayan eski adlar (tur = 'serbest', göçte açılır). Görünen ad `ad`; varyantlar kimliğe bağlıdır.
 create table if not exists public.stk_renk (
   id           text primary key,
   ad           text not null,
@@ -105,7 +45,6 @@ create table if not exists public.stk_renk (
   guncelleme   timestamptz not null default now()
 );
 
--- ÖLÇÜ — beden / boyut (tanimlar.bedenler) ve tanımsız eski adlar (tur = 'serbest').
 create table if not exists public.stk_olcu (
   id           text primary key,
   ad           text not null,
@@ -114,12 +53,8 @@ create table if not exists public.stk_olcu (
   guncelleme   timestamptz not null default now()
 );
 
--- VARYANT — ürün × renk × ölçü. Renk ya da ölçü yoksa NULL ("Standart"). Miktar YOK: stok hareketlerden hesaplanır.
 create table if not exists public.stk_varyant (
   id           text primary key default ('vry-' || replace(gen_random_uuid()::text, '-', '')),
-  -- urunler'e yabancı anahtar YOK (bilerek): geçiş döneminde bugünkü uygulama ürün siliyor; bağ olsaydı hareketli ürünün
-  -- silinmesi veritabanında reddedilir, bugünkü ekran bozulurdu. Ürünün varlığını işlemler denetler (stk_varyant_coz);
-  -- ürün modülü v2'ye geçince silme yerine pasife alma gelecek ve bağ o zaman eklenecek.
   urun_id      text not null,
   renk_id      text references public.stk_renk(id),
   olcu_id      text references public.stk_olcu(id),
@@ -130,12 +65,10 @@ create table if not exists public.stk_varyant (
 create unique index if not exists stk_varyant_tekil on public.stk_varyant (urun_id, coalesce(renk_id, ''), coalesce(olcu_id, ''));
 create index if not exists stk_varyant_urun on public.stk_varyant (urun_id);
 
--- FİŞ — başlık. Kimlik = fiş numarası (bugünkü fiş defteri de fiş no ile anahtarlı). İptal edilen fiş SİLİNMEZ: iz kalır,
--- hareketleri stoktan düşer.
 create table if not exists public.stk_fis (
   id             text primary key,
-  tur            text not null,                    -- Giriş / Çıkış / Alış / Satış / Üretim / Açılış / Manuel / Numune / Sayım / Fire / Transfer / Göç
-  kaynak         text,                             -- bugünkü `kaynak` (Satınalma, Satış, Üretim, Açılış, Manuel, Numune…)
+  tur            text not null,
+  kaynak         text,
   tarih          timestamptz not null default now(),
   cari_id        text,
   siparis_id     text,
@@ -143,25 +76,24 @@ create table if not exists public.stk_fis (
   uretim_id      text,
   aciklama       text,
   kullanici      text,
-  olusturan      text,                             -- bulut kimliği (e-posta) — sunucu doldurur
+  olusturan      text,
   olusturma      timestamptz not null default now(),
   iptal          boolean not null default false,
   iptal_zamani   timestamptz,
   iptal_eden     text,
   iptal_sebebi   text,
-  goc            boolean not null default false,   -- bugünkü veriden taşındı (stk_goc)
+  goc            boolean not null default false,
   ek             jsonb not null default '{}'::jsonb
 );
 create index if not exists stk_fis_tarih on public.stk_fis (tarih);
 create index if not exists stk_fis_siparis on public.stk_fis (siparis_id);
 create index if not exists stk_fis_uretim on public.stk_fis (uretim_id);
 
--- HAREKET — fiş satırı. Miktar işaretli: + giriş, − çıkış.
 create table if not exists public.stk_hareket (
   id                       text primary key,
   fis_id                   text not null references public.stk_fis(id),
   varyant_id               text not null references public.stk_varyant(id),
-  urun_id                  text not null,           -- sorgu kolaylığı (varyanttan türetilir; işlem doldurur)
+  urun_id                  text not null,
   miktar                   numeric not null check (miktar <> 0),
   kaynak                   text,
   tarih                    timestamptz not null default now(),
@@ -174,8 +106,6 @@ create table if not exists public.stk_hareket (
   fazla_gonderim           boolean not null default false,
   aciklama                 text,
   ek                       jsonb not null default '{}'::jsonb,
-  -- SATIR İPTALİ: bugünkü uygulama tek bir hareketi de silebiliyor (bağlantısız hareket temizliği, üretim silme, fiş geri
-  -- al). Satır SİLİNMEZ, iptal işaretlenir; stoktan düşer, iz kalır.
   iptal                    boolean not null default false,
   iptal_zamani             timestamptz,
   iptal_eden               text
@@ -188,7 +118,6 @@ create index if not exists stk_hareket_varyant on public.stk_hareket (varyant_id
 create index if not exists stk_hareket_urun on public.stk_hareket (urun_id);
 create index if not exists stk_hareket_siparis on public.stk_hareket (siparis_id, kalem_id);
 
--- STOK — tek kaynak: iptal edilmemiş fişlerin hareket toplamı. Kırpılmaz (eksi stok = girdi eksik).
 create or replace view public.stk_stok with (security_invoker = true) as
 select v.id as varyant_id, v.urun_id, v.renk_id, r.ad as renk_ad, v.olcu_id, o.ad as olcu_ad, v.min_stok, v.aktif,
        coalesce(sum(h.miktar) filter (where not f.iptal and not h.iptal), 0) as miktar
@@ -199,7 +128,6 @@ left join public.stk_hareket h on h.varyant_id = v.id
 left join public.stk_fis f on f.id = h.fis_id
 group by v.id, r.ad, o.ad;
 
--- GEÇİŞ AYARI — uygulama açılışta okur: aktif ise stok yazmaları `stk_yaz` işlemine gider (src/041 köprüsü).
 create table if not exists public.stk_ayar (
   id          text primary key default 'tekil' check (id = 'tekil'),
   aktif       boolean not null default false,
@@ -208,13 +136,6 @@ create table if not exists public.stk_ayar (
 );
 insert into public.stk_ayar (id) values ('tekil') on conflict (id) do nothing;
 
--- BUGÜNKÜ BİÇİMDE OKUMA (geçişte `varyantlar` / `stok_hareketleri` adları bunlara bağlanır — stk_gecis). Uygulamanın,
--- gün sonu raporunun, bulut sayımının okuduğu sütunlar birebir aynı: okuyan hiçbir yer değişmeden v2'den okur.
---  · Renk/ölçü adı kimlikten gelir (ad değişince burada da değişir). Yok = "Standart" (bugünkü yer tutucu).
---  · renk_id bugünkü anlamıyla: Tanımlar'daki hammadde renginin kimliği (model/serbest renkte boş).
---  · Aynı adı taşıyan iki varyant (ör. birleşmemiş serbest renk) tek satıra toplanır: bugünkü anahtar urun_id+renk+beden.
---  · Pasif ve stoğu sıfır varyant görünmez (ürün kartından kaldırılmış).
---  · tarih uygulamanın yazdığı biçimde (ISO, UTC, milisaniye): okunan hâl ekrandakiyle aynı kalsın.
 create or replace view public.stk_eski_varyantlar_g with (security_invoker = true) as
 select s.urun_id, coalesce(s.renk_ad, 'Standart') as renk,
        max(case when r.tur = 'renk' then s.renk_id end) as renk_id,
@@ -227,7 +148,7 @@ group by s.urun_id, coalesce(s.renk_ad, 'Standart'), coalesce(s.olcu_ad, 'Standa
 create or replace view public.stk_eski_hareketler_g with (security_invoker = true) as
 select h.id, h.urun_id, coalesce(r.ad, 'Standart') as renk, coalesce(o.ad, 'Standart') as beden, h.miktar, h.kaynak,
        to_char(h.tarih at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') as tarih,
-       h.fis_id as fis_no,   -- göçte fişsiz eski hareket "ESKI-<id>" fişini aldı: uygulama yeniden numaralamasın
+       h.fis_id as fis_no,
        h.siparis_no, h.cari_id, h.uretim_id, h.siparis_id, h.kalem_id, h.rezervasyon_siparis_id, h.fazla_gonderim,
        h.aciklama, h.ek
 from public.stk_hareket h
@@ -237,16 +158,10 @@ left join public.stk_renk r on r.id = v.renk_id
 left join public.stk_olcu o on o.id = v.olcu_id
 where not h.iptal and not f.iptal;
 
--- ---------------------------------------------------------------------------------------------------------------------
--- 2) RENK / ÖLÇÜ AYNASI — Tanımlar şimdilik tanimlar.veri'de; her yazmada stk_renk / stk_olcu güncellenir.
---    Tanımdan çıkan renk SİLİNMEZ (varyant bağlı olabilir), pasife alınır. 'serbest' renkler (göçte açılan tanımsız adlar)
---    tanımda olmadığı için pasife alınmaz.
--- ---------------------------------------------------------------------------------------------------------------------
 create or replace function public.stk_tanim_esitle(t jsonb) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if t is null then return; end if;
-  -- Hammadde renkleri
   insert into public.stk_renk (id, ad, tur, kod, barkod_kodu, renk_kodu, aktif, guncelleme)
   select distinct on (r ->> 'id') r ->> 'id', btrim(r ->> 'ad'), 'renk', r ->> 'kod', r ->> 'barkodKodu', r ->> 'renkKodu', true, now()
   from jsonb_array_elements(public.stk_dizi(t -> 'renkler')) r
@@ -256,7 +171,6 @@ begin
     renk_kodu = excluded.renk_kodu, aktif = true, guncelleme = now()
   where (stk_renk.ad, stk_renk.tur, stk_renk.kod, stk_renk.barkod_kodu, stk_renk.renk_kodu, stk_renk.aktif)
     is distinct from (excluded.ad, 'renk', excluded.kod, excluded.barkod_kodu, excluded.renk_kodu, true);
-  -- Model renkleri: etiket "KOD - Ad1/Ad2" (uygulamanın etiketiyle aynı, 100 `kombinasyonOlusturGlobal`)
   insert into public.stk_renk (id, ad, tur, kod, barkod_kodu, aktif, guncelleme)
   select distinct on (k ->> 'id') k ->> 'id',
          (k ->> 'kod') || ' - ' || (
@@ -271,12 +185,10 @@ begin
     aktif = true, guncelleme = now()
   where (stk_renk.ad, stk_renk.tur, stk_renk.kod, stk_renk.barkod_kodu, stk_renk.aktif)
     is distinct from (excluded.ad, 'model', excluded.kod, excluded.barkod_kodu, true);
-  -- Tanımdan düşen renk/model renkleri pasif
   update public.stk_renk s set aktif = false, guncelleme = now()
   where s.aktif and s.tur in ('renk', 'model')
     and not exists (select 1 from jsonb_array_elements(public.stk_dizi(t -> 'renkler')) r where r ->> 'id' = s.id)
     and not exists (select 1 from jsonb_array_elements(public.stk_dizi(t -> 'renkKombinasyonlari')) k where k ->> 'id' = s.id);
-  -- Ölçüler
   insert into public.stk_olcu (id, ad, tur, aktif, guncelleme)
   select distinct on (b ->> 'id') b ->> 'id', btrim(b ->> 'ad'), coalesce(b ->> 'tip', 'Beden'), true, now()
   from jsonb_array_elements(public.stk_dizi(t -> 'bedenler')) b
@@ -287,15 +199,12 @@ begin
   update public.stk_olcu s set aktif = false, guncelleme = now()
   where s.aktif and s.tur <> 'serbest'
     and not exists (select 1 from jsonb_array_elements(public.stk_dizi(t -> 'bedenler')) b where b ->> 'id' = s.id);
-  -- Tanımsız adla açılmış (serbest) renk/ölçü artık tanımda varsa ona bağlanır.
   perform public.stk_serbest_birlestir();
 end $$;
 
 create or replace function public.stk_tanim_tetik() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  -- Ayna hata verirse Tanımlar kaydı DÜŞMEMELİ (bugünkü uygulama her renk/beden değişikliğinde bu satırı yazıyor):
-  -- hata uyarıya çevrilir, ayna bir sonraki Tanımlar kaydında ya da elle `select stk_tanim_esitle(...)` ile tamamlanır.
   if new.id = 'tekil' then
     begin
       perform public.stk_tanim_esitle(new.veri);
@@ -309,12 +218,6 @@ drop trigger if exists stk_tanim_aynasi on public.tanimlar;
 create trigger stk_tanim_aynasi after insert or update of veri on public.tanimlar
   for each row execute function public.stk_tanim_tetik();
 
--- ---------------------------------------------------------------------------------------------------------------------
--- 3) ÇÖZÜCÜLER — istemci renk/ölçüyü kimlikle ya da (geçiş döneminde, eski ekranlardan) adla verir.
--- ---------------------------------------------------------------------------------------------------------------------
-
--- Renk: kimlik varsa o; yoksa ad (önce tanımlı renk, sonra model, sonra serbest); hiç yoksa yeni 'serbest' renk açılır.
--- Yer tutucu ("Standart"/boş) → NULL.
 create or replace function public.stk_renk_coz(p_id text, p_ad text) returns text
 language plpgsql security definer set search_path = public as $$
 declare
@@ -354,7 +257,6 @@ begin
   return r;
 end $$;
 
--- Varyant: ürün + renk + ölçü; yoksa açılır.
 create or replace function public.stk_varyant_coz(p_urun_id text, p_renk_id text, p_renk text, p_olcu_id text, p_olcu text)
 returns text
 language plpgsql security definer set search_path = public as $$
@@ -380,7 +282,6 @@ begin
   return v;
 end $$;
 
--- Yetki: bugünkü kural (rls-yazma.sql `yetki_var_mi`) kuruluysa o; değilse giriş yapmış herkes. SQL Editor (jwt yok) serbest.
 create or replace function public.stk_yetki(moduller text[], islem text) returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -388,14 +289,13 @@ declare
 begin
   if auth.jwt() is null then return; end if;
   if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'yetki_var_mi') then
-    execute 'select public.yetki_var_mi($1, $2)' into ok using moduller, islem;
+    ok := public.yetki_var_mi(moduller, islem);
   end if;
   if not coalesce(ok, false) then
     raise exception 'Bu işlem için yetkiniz yok (stok: %)', islem using errcode = '42501';
   end if;
 end $$;
 
--- Etkilenen varyantların güncel stoğu (işlemler bunu döner; ekran yeniden okumadan güncellenir).
 create or replace function public.stk_bakiye_json(p_varyantlar text[]) returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object('varyantId', s.varyant_id, 'urunId', s.urun_id, 'renkId', s.renk_id, 'renk', s.renk_ad,
@@ -403,7 +303,6 @@ language sql stable security definer set search_path = public as $$
   from public.stk_stok s where s.varyant_id = any(p_varyantlar)
 $$;
 
--- Varyantı BUL (açmadan): kaldırma ve karşılaştırma için. Ad hiçbir renge uymuyorsa yeni renk AÇILMAZ, NULL döner.
 create or replace function public.stk_varyant_bul(p_urun_id text, p_renk_id text, p_renk text, p_olcu_id text, p_olcu text)
 returns text
 language plpgsql stable security definer set search_path = public as $$
@@ -430,9 +329,6 @@ begin
   return v;
 end $$;
 
--- SERBEST RENK/ÖLÇÜ BİRLEŞTİRME. Tanımsız bir adla açılan renk (göçte eski ad, ya da Tanımlar kaydı buluta varmadan
--- fişe giren yeni renk) aynı adla Tanımlar'a girince ona bağlanır: varyantlar tanımlı renge taşınır, aynı varyant
--- zaten varsa hareketler ona aktarılır ve serbest kopya kalkar. Böylece aynı ad için iki ayrı stok kalmaz.
 create or replace function public.stk_serbest_birlestir() returns int
 language plpgsql security definer set search_path = public as $$
 declare
@@ -486,7 +382,6 @@ begin
   return n;
 end $$;
 
--- Hareket kaynağından fiş türü (bugünkü `kaynak` → fiş başlığı).
 create or replace function public.stk_kaynak_tur(k text) returns text
 language sql immutable as $$
   select case k when 'Satınalma' then 'Alış' when 'Satış' then 'Satış' when 'Üretim' then 'Üretim' when 'Açılış' then 'Açılış'
@@ -495,19 +390,6 @@ language sql immutable as $$
                 else coalesce(nullif(k, ''), 'Manuel') end
 $$;
 
--- ---------------------------------------------------------------------------------------------------------------------
--- 4) İŞLEMLER (RPC) — tek veritabanı işleminde; hata olursa hiçbir şey yazılmaz.
--- ---------------------------------------------------------------------------------------------------------------------
-
--- FİŞ KAYDET.
---  p = { id (fiş no — zorunlu, istemci üretir), tur, kaynak, tarih, cariId, siparisId, siparisNo, uretimId, aciklama,
---        kullanici, ek,
---        satirlar: [{ id (hareket kimliği — zorunlu), urunId, renkId?, renk?, olcuId?, olcu?, miktar (işaretli, ≠ 0),
---                     kaynak?, tarih?, siparisId?, siparisNo?, kalemId?, cariId?, uretimId?, rezervasyonSiparisId?,
---                     fazlaGonderim?, aciklama?, ek? }] }
---  AYNI FİŞ YENİDEN GELİRSE (ağda düşüp tekrar gönderilen): satır kimlikleri ve miktarları aynıysa hiçbir şey yazılmaz,
---  "zatenVar: true" döner. Fiş no başka içerikle kullanılmışsa reddedilir.
---  Döner: { fisId, zatenVar, hareketler: [{ id, varyantId }], bakiye: [...] }
 create or replace function public.stk_fis_kaydet(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -525,7 +407,6 @@ begin
   if jsonb_typeof(p -> 'satirlar') <> 'array' or jsonb_array_length(p -> 'satirlar') = 0 then
     raise exception 'Fiş % boş: en az bir satır gerekli', fid using errcode = '22023';
   end if;
-  -- Aynı kimlik daha önce yazıldı mı?
   if exists (select 1 from public.stk_fis where id = fid) then
     select string_agg(h.id || ':' || h.miktar::text, ',' order by h.id) into mevcut_imza from public.stk_hareket h where h.fis_id = fid;
     select string_agg((x ->> 'id') || ':' || ((x ->> 'miktar')::numeric)::text, ',' order by x ->> 'id') into yeni_imza
@@ -563,7 +444,6 @@ begin
   return jsonb_build_object('fisId', fid, 'zatenVar', false, 'hareketler', hareketler, 'bakiye', public.stk_bakiye_json(varyantlar));
 end $$;
 
--- FİŞ İPTAL (bugünkü "fiş geri al"). Fiş ve satırları SİLİNMEZ; iptal işaretlenir, stoktan düşer. Tekrar çağrı zararsız.
 create or replace function public.stk_fis_iptal(p_fis_id text, p_sebep text default null) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -581,7 +461,6 @@ begin
   return jsonb_build_object('fisId', p_fis_id, 'zatenIptal', f.iptal, 'bakiye', public.stk_bakiye_json(coalesce(varyantlar, '{}')));
 end $$;
 
--- VARYANT AÇ (ürün kartında renk/ölçü ekleme). Varsa aynısını döner (pasifse etkinleştirir).
 create or replace function public.stk_varyant_ac(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -593,7 +472,6 @@ begin
   return jsonb_build_object('varyantId', vid, 'bakiye', public.stk_bakiye_json(array[vid]));
 end $$;
 
--- VARYANT KALDIR. Hareketi olan varyant silinmez (geçmiş korunur): pasife alınır. Hiç hareketi yoksa silinir.
 create or replace function public.stk_varyant_kaldir(p_varyant_id text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -613,7 +491,6 @@ begin
   return jsonb_build_object('varyantId', p_varyant_id, 'sonuc', 'silindi');
 end $$;
 
--- MİNİMUM STOK.
 create or replace function public.stk_min_stok(p_varyant_id text, p_min numeric) returns jsonb
 language plpgsql security definer set search_path = public as $$
 begin
@@ -623,19 +500,6 @@ begin
   return public.stk_bakiye_json(array[p_varyant_id]);
 end $$;
 
--- STOK YAZ — GEÇİŞ DÖNEMİNİN TEK YAZMA KAPISI (src/041 köprüsü). Bugünkü uygulamanın bütün stok akışları (fiş, sipariş
--- sevki, üretim teslimi, numune, açılış, fiş geri al, ad değişikliği, onarımlar) tek bir geçitten yazıyor: bellekteki
--- ürün listesinin farkı. Köprü bu farkı tek bir istek yapar; burada TEK İŞLEMDE uygulanır — yarım kalmaz.
---  p = { varyantAc:     [{ urunId, renkId?, renk?, olcuId?, olcu?, minStok? }],
---        satirlar:      [{ id, fisId, urunId, renkId?, renk?, olcuId?, olcu?, miktar, kaynak, tarih, siparisId, siparisNo,
---                          kalemId, cariId, uretimId, rezervasyonSiparisId, fazlaGonderim, aciklama, ek }],
---        iptal:         [hareket kimliği, …],
---        varyantKaldir: [{ urunId, renkId?, renk?, olcuId?, olcu? }] }
---  HER PARÇA TEKRARA DAYANIKLI: satır kimliğiyle yazılır (aynı satır yeniden gelirse üzerine, değişmediyse dokunulmaz),
---  iptal zaten iptalse bir şey yapmaz, açık varyant yeniden açılmaz. Ağda düşüp yeniden gönderilen istek (bekleyen kayıt
---  defteri) stoğu İKİ KEZ değiştirmez.
---  Miktarı 0 olan satır yazılmaz (varsa iptal edilir) — yeni yapıda hareket ≠ 0.
---  Kaldırılan varyant: stoğu varsa dokunulmaz (raporlanır), hareketi varsa pasif, hiç yoksa silinir.
 create or replace function public.stk_yaz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -656,7 +520,6 @@ declare
 begin
   perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim'], 'kaydetme');
 
-  -- 1) Varyant aç / min stok
   for s in select * from jsonb_array_elements(coalesce(p -> 'varyantAc', '[]'::jsonb)) loop
     vid := public.stk_varyant_coz(s ->> 'urunId', s ->> 'renkId', s ->> 'renk', s ->> 'olcuId', coalesce(s ->> 'olcu', s ->> 'beden'));
     update public.stk_varyant set aktif = true, min_stok = coalesce((s ->> 'minStok')::numeric, min_stok)
@@ -665,7 +528,6 @@ begin
     n_ac := n_ac + 1;
   end loop;
 
-  -- 2) Satırlar
   for s in select * from jsonb_array_elements(coalesce(p -> 'satirlar', '[]'::jsonb)) loop
     fid := nullif(btrim(coalesce(s ->> 'fisId', '')), '');
     if coalesce(s ->> 'id', '') = '' then raise exception 'Stok satırında hareket kimliği yok' using errcode = '22023'; end if;
@@ -681,8 +543,6 @@ begin
       values (fid, public.stk_kaynak_tur(s ->> 'kaynak'), s ->> 'kaynak', coalesce(public.stk_zaman(s ->> 'tarih'), now()),
               s ->> 'cariId', s ->> 'siparisId', s ->> 'siparisNo', s ->> 'uretimId', s -> 'ek' ->> 'kullanici', eposta);
     elsif f.iptal then
-      -- İptal edilmiş fişe satır geldi (köprü fiş iptali kullanmaz; göçteki eski iptal fişi): fiş açılır, öteki satırları
-      -- iptal kalır — stoğa sayılmayanlar sayılmaya başlamasın.
       update public.stk_hareket set iptal = true, iptal_zamani = coalesce(f.iptal_zamani, now()), iptal_eden = f.iptal_eden
        where fis_id = fid and not iptal and id <> s ->> 'id';
       update public.stk_fis set iptal = false where id = fid;
@@ -707,16 +567,12 @@ begin
     n_satir := n_satir + 1;
   end loop;
 
-  -- 3) Satır iptali (hareket silindi / geri alındı)
   update public.stk_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta
    where id in (select jsonb_array_elements_text(coalesce(p -> 'iptal', '[]'::jsonb))) and not iptal;
   get diagnostics n_iptal = row_count;
 
-  -- 4) Varyant kaldır
   for s in select * from jsonb_array_elements(coalesce(p -> 'varyantKaldir', '[]'::jsonb)) loop
     vid := public.stk_varyant_bul(s ->> 'urunId', s ->> 'renkId', s ->> 'renk', s ->> 'olcuId', coalesce(s ->> 'olcu', s ->> 'beden'));
-    -- Aynı istekte açılan varyant kaldırılmaz: yeniden adlandırmada eski ad (Tanımlar henüz buluta varmadıysa) hâlâ aynı
-    -- varyanta çıkar — "aç" ile "kaldır" aynı varyantı gösterir, kaldırmak açılanı pasife alırdı.
     continue when vid is null or vid = any(acilan);
     select miktar into bakiye from public.stk_stok where varyant_id = vid;
     if coalesce(bakiye, 0) <> 0 then
@@ -733,13 +589,8 @@ begin
   return jsonb_build_object('varyantAc', n_ac, 'satir', n_satir, 'iptal', n_iptal, 'varyantKaldir', n_kaldir, 'atlanan', atlanan);
 end $$;
 
--- ---------------------------------------------------------------------------------------------------------------------
--- 5) GÜVENLİK — tablolar yalnız okunur; yazma yalnız yukarıdaki işlemlerle (security definer).
---    Not (degisiklik-sayaci.sql, 7 Ekim): Supabase SQL düzenleyicisi `do $$ … array[…]` bloğunda "syntax error at or near )"
---    verdi. Bu yüzden döngüler adlı dolar tırnaklı ($stk$) geçici bir kurulum fonksiyonunda; düz `select` ile çağrılıp silinir.
--- ---------------------------------------------------------------------------------------------------------------------
 create or replace function public.stk_kurulum_tamamla() returns text
-language plpgsql security definer set search_path = public as $stk$
+language plpgsql security definer set search_path = public as $$
 declare
   t text;
   f text;
@@ -756,7 +607,6 @@ begin
     execute format('revoke all on public.%I from anon, authenticated', t);
     execute format('grant select on public.%I to authenticated', t);
   end loop;
-  -- Gün sonu raporu (Edge Function, servis rolü) geçişten sonra `varyantlar` / `stok_hareketleri` görünümlerinden okur.
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     foreach t in array array['stk_renk', 'stk_olcu', 'stk_varyant', 'stk_fis', 'stk_hareket', 'stk_ayar', 'stk_stok',
                              'stk_eski_varyantlar_g', 'stk_eski_hareketler_g'] loop
@@ -764,7 +614,6 @@ begin
     end loop;
   end if;
 
-  -- İç yardımcılar dışarıdan çağrılamaz; uygulama yalnız beş işlemi çağırır.
   foreach f in array array['stk_nrm(text)', 'stk_yer_tutucu_mu(text)', 'stk_zaman(text)', 'stk_sayi(text)', 'stk_mantik(text)', 'stk_dizi(jsonb)',
                            'stk_tanim_esitle(jsonb)', 'stk_tanim_tetik()',
                            'stk_renk_coz(text,text)', 'stk_olcu_coz(text,text)', 'stk_varyant_coz(text,text,text,text,text)',
@@ -778,7 +627,6 @@ begin
     execute format('grant execute on function public.%s to authenticated', f);
   end loop;
 
-  -- Değişiklik sayacı (başka cihaz anında görsün) ve silme arşivi — kuruluysa.
   if to_regprocedure('public.degisiklik_izle_kur(text)') is not null then
     foreach t in array array['stk_renk', 'stk_olcu', 'stk_varyant', 'stk_fis', 'stk_hareket'] loop
       perform public.degisiklik_izle_kur(t);
@@ -793,38 +641,11 @@ begin
     rapor := rapor || 'silme arşivi kuruldu; ';
   end if;
   return rapor || 'stok v2 kuruldu';
-end $stk$;
+end $$;
 select public.stk_kurulum_tamamla();
 drop function public.stk_kurulum_tamamla();
 
--- İlk aynalama: bugünkü tanımlar.
 select public.stk_tanim_esitle((select veri from public.tanimlar where id = 'tekil'));
-
-commit;
-
--- =====================================================================================================================
---  stok-v2-goc.sql — BUGÜNKÜ STOK VERİSİNİ STOK v2'YE TAŞIYAN GÖÇ (stok-v2.sql'den SONRA çalıştırılır)
--- =====================================================================================================================
---
---  NE YAPAR: urunler / varyantlar / stok_hareketleri / fis_defteri / tanimlar'ı OKUR (hiçbirine yazmaz), stk_* tablolarını
---  baştan kurar ve bir rapor döner. Geçişe kadar istendiği kadar tekrar çalıştırılabilir: her seferinde stk_* boşaltılıp
---  yeniden doldurulur. stk_fis'e uygulamadan YENİ fiş yazıldıktan sonra (geçişten sonra) çalışmaz — yanlışlıkla yeni kayıtları
---  silmesin (`p_zorla => true` yalnız bilerek).
---
---  KURALLAR:
---   · Renk: varyantın renk kimliği tanımdaki adla tutuyorsa o; tutmuyorsa ad ile (model rengi "1058 - Taba Süet", hammadde
---     rengi "Siyah"); tanımda hiç yoksa 'serbest' renk açılır ve raporda listelenir. "Standart"/boş = renksiz.
---   · Ölçü: adla (tanimlar.bedenler); tanımsızsa 'serbest' ölçü. "Standart"/boş = ölçüsüz.
---   · Fiş: aynı fiş numarasını taşıyan hareketler tek fiş olur; başlık bilgisi (tip, kullanıcı, zaman) fiş defterinden
---     tamamlanır. Fiş numarası olmayan eski hareket kendi fişini alır ("ESKI-<hareket>").
---   · İptal edilmiş fişler (fiş defterinde iptal) satırlarıyla birlikte taşınır ama stoğa SAYILMAZ — iz kalır.
---   · Stok farkı: bugün ekranda görünen miktar (varyantlar.miktar) hareket toplamından farklıysa, fark TEK bir göç fişiyle
---     ("GOC-ACILIS-<tarih>", tür Açılış) kapatılır; böylece geçişten sonra her ürünün stoğu bugünküyle aynı kalır ve fark
---     raporda satır satır görünür. İstenmezse `p_fark_fisi => false`.
---
---  KULLANIM: Supabase › SQL Editor:  select jsonb_pretty(public.stk_goc());
--- =====================================================================================================================
-
 create or replace function public.stk_goc(p_fark_fisi boolean default true, p_zorla boolean default false)
 returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -846,7 +667,6 @@ begin
   if auth.jwt() is not null then
     raise exception 'Göç yalnız Supabase SQL Editor''den çalıştırılır' using errcode = '42501';
   end if;
-  -- Geçişten sonra `varyantlar` / `stok_hareketleri` v2'nin görünümüdür: göç kendi çıktısını okuyup silerdi.
   if exists (select 1 from public.stk_ayar where aktif) then
     raise exception 'Stok v2 etkin (geçiş yapıldı) — göç yeniden çalıştırılamaz; geri dönmek için stk_geri_don()' using errcode = '55000';
   end if;
@@ -855,8 +675,6 @@ begin
       using errcode = '55000';
   end if;
 
-  -- 0) Temizle, tanımları yeniden aynala
-  -- TRUNCATE: satır satır silme arşive (silinen_arsiv) binlerce göç satırı yazardı; göç kendi ürettiğini siliyor.
   truncate public.stk_hareket, public.stk_fis, public.stk_varyant;
   delete from public.stk_renk where tur = 'serbest';
   delete from public.stk_olcu where tur = 'serbest';
@@ -865,7 +683,6 @@ begin
   select veri into defter from public.fis_defteri where id = 'tekil';
   defter := case when jsonb_typeof(defter) = 'array' then defter else '[]'::jsonb end;
 
-  -- 1) Eski satırlar — sütun tipinden bağımsız okunur (to_jsonb)
   drop table if exists _ev, _eh, _vm, _fark;
   create temp table _ev on commit drop as
     select j ->> 'urun_id' as urun_id, j ->> 'renk' as renk, j ->> 'renk_id' as renk_id, coalesce(j ->> 'beden', '') as beden,
@@ -882,7 +699,6 @@ begin
            coalesce(j -> 'ek', '{}'::jsonb) as ek
     from (select to_jsonb(h) as j from public.stok_hareketleri h) x;
 
-  -- 2) Varyant eşleme tablosu: (ürün, renk kimliği, renk adı, ölçü adı) → yeni varyant
   create temp table _vm (urun_id text, renk_id text, renk_nrm text, beden_nrm text, varyant_id text, eski_miktar numeric) on commit drop;
 
   for r in
@@ -898,7 +714,6 @@ begin
       atlanan := atlanan || jsonb_build_object('neden', 'ürün yok', 'urunId', r.urun_id, 'renk', r.renk, 'beden', r.beden);
       continue;
     end if;
-    -- Renk kimliği adla tutuyorsa kimlik; değilse ad.
     rid := null;
     if coalesce(r.renk_id, '') <> '' and exists (select 1 from public.stk_renk where id = r.renk_id and public.stk_nrm(ad) = public.stk_nrm(r.renk)) then
       rid := r.renk_id;
@@ -911,7 +726,6 @@ begin
                             public.stk_nrm(case when public.stk_yer_tutucu_mu(r.beden) then '' else r.beden end), vid, r.miktar);
   end loop;
 
-  -- 3) Fiş başlıkları (canlı hareketlerden) + fiş defterinden tamamlama
   insert into public.stk_fis (id, tur, kaynak, tarih, cari_id, siparis_id, siparis_no, uretim_id, aciklama, kullanici, goc, ek)
   select g.fis_id,
          coalesce(nullif(dx ->> 'tip', ''),
@@ -930,12 +744,10 @@ begin
   ) g
   left join lateral (select x from jsonb_array_elements(defter) x where coalesce(x ->> 'id', x ->> 'fisNo') = g.fis_id limit 1) dd(dx) on true;
 
-  -- Canlı hareketi olan ama defterde İPTAL görünen fiş: bugün stokta sayılıyor → iptal SAYILMAZ, raporlanır.
   select coalesce(jsonb_agg(f.id), '[]'::jsonb) into tutarsiz_iptal
   from public.stk_fis f
   where exists (select 1 from jsonb_array_elements(defter) x where coalesce(x ->> 'id', x ->> 'fisNo') = f.id and public.stk_mantik(x ->> 'iptal'));
 
-  -- 4) Hareketler
   insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, kaynak, tarih, siparis_id, siparis_no, kalem_id, cari_id,
                                   uretim_id, rezervasyon_siparis_id, fazla_gonderim, aciklama, ek)
   select h.id, h.fis_id, m.varyant_id, h.urun_id, h.miktar, h.kaynak, h.tarih, h.siparis_id, h.siparis_no, h.kalem_id, h.cari_id,
@@ -952,11 +764,6 @@ begin
     into atlanan
   from _eh h where not exists (select 1 from public.stk_hareket x where x.id = h.id);
 
-  -- 5) İptal edilmiş fişler (canlıda hareketi yok, defterde iptal): satırlarıyla, stoğa sayılmadan.
-  -- AYNI FİŞ DEFTERDE BİRDEN ÇOK KEZ olabilir (canlı veride görüldü, 28 Ekim: "10032-Saya" iki iptal kaydı → stk_fis_pkey
-  -- çakışması, geçiş durdu). Döngü fiş numarası başına BİR kez döner; başlık ilk kayıttan, satırlar o numaranın BÜTÜN
-  -- kayıtlarından (aynı satır kimliği bir kez). Döngü sorgusu başlarken alınan görüntüyle çalışır — içeride eklenen başlığı
-  -- görmez; bu yüzden "zaten var mı" süzgeci yetmiyordu.
   for d in select distinct on (coalesce(x ->> 'id', x ->> 'fisNo')) x
            from jsonb_array_elements(defter) with ordinality as e(x, sira)
            where public.stk_mantik(x ->> 'iptal')
@@ -965,7 +772,6 @@ begin
              and jsonb_array_length(public.stk_dizi(x -> 'stokHareketleri')) > 0
            order by coalesce(x ->> 'id', x ->> 'fisNo'), sira
   loop
-    -- Yazılacak satırı olmayan iptal fişi (ürünü silinmiş, miktar 0, satırı canlıda zaten var) başlık da açmaz.
     continue when not exists (
       select 1 from jsonb_array_elements(defter) x, jsonb_array_elements(public.stk_dizi(x -> 'stokHareketleri')) y
       where coalesce(x ->> 'id', x ->> 'fisNo') = coalesce(d ->> 'id', d ->> 'fisNo')
@@ -994,7 +800,6 @@ begin
     end loop;
   end loop;
 
-  -- 6) Stok farkı: varyantlar.miktar (bugün görünen) − hareket toplamı → tek göç fişi
   if p_fark_fisi then
     create temp table _fark on commit drop as
       select m.varyant_id, m.urun_id, sum(m.eski_miktar) as eski,
@@ -1011,7 +816,6 @@ begin
     end if;
   end if;
 
-  -- 7) Rapor
   select jsonb_build_object(
     'urun', (select count(distinct urun_id) from public.stk_varyant),
     'varyant', (select count(*) from public.stk_varyant),
@@ -1036,8 +840,6 @@ end $$;
 
 revoke all on function public.stk_goc(boolean, boolean) from public, anon, authenticated;
 
--- DOĞRULAMA (göçten sonra, SQL Editor): bugünkü ekran stoğu ile v2 stoğu ürün × renk × ölçü bazında eşit olmalı.
---   select count(*) as fark from public.stk_goc_karsilastir() where fark <> 0;   → 0
 create or replace function public.stk_goc_karsilastir()
 returns table (urun_id text, renk text, beden text, eski numeric, yeni numeric, fark numeric)
 language sql stable security definer set search_path = public as $$
@@ -1059,21 +861,6 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.stk_goc_karsilastir() from public, anon, authenticated;
 
--- =====================================================================================================================
---  GEÇİŞ VE GERİ DÖNÜŞ (SQL Editor'dan; uygulama çağıramaz)
--- =====================================================================================================================
---
---  GEÇİŞ — `select jsonb_pretty(public.stk_gecis());`
---    1. Göç son kez çalışır (bugünkü veri → v2, rapor döner).
---    2. Bugünkü `varyantlar` / `stok_hareketleri` TABLOLARI silinmez, adları `eski_varyantlar` / `eski_stok_hareketleri`
---       olur. Aynı adlarla v2'yi bugünkü biçimde gösteren salt-okunur GÖRÜNÜMLER açılır: uygulama, gün sonu raporu ve
---       bulut sayımı okumaya değişmeden devam eder.
---    3. `stk_ayar.aktif` açılır: yeni sürüm (v1.726.0+) açılışta bunu görür, stok yazmalarını `stk_yaz`'a gönderir.
---       Eski sürümde kalmış bir cihaz görünüme YAZAMAZ (hata verir) — sessizce eski tabloya yazıp ayrışamaz.
---  GERİ DÖNÜŞ — `select jsonb_pretty(public.stk_geri_don());`
---    Görünümler kalkar, eski tablolar adlarına döner ve İÇERİKLERİ v2'nin o anki hâliyle yenilenir (geçişten sonra
---    girilen fişler kaybolmaz). `stk_ayar.aktif` kapanır; uygulama bir sonraki açılışta eski yola döner. v2 tabloları
---    yerinde kalır (yeniden geçişte göç onları baştan kurar).
 create or replace function public.stk_gecis(p_fark_fisi boolean default true) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -1109,10 +896,10 @@ declare
   sutunlar text;
   n int;
 begin
-  execute format($q$select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position)
-                    from information_schema.columns c
-                    where c.table_schema = 'public' and c.table_name = %L
-                      and c.column_name in (select jsonb_object_keys(j) from (select j from pg_temp.%I limit 1) x)$q$, p_tablo, p_kaynak)
+  execute 'select string_agg(quote_ident(c.column_name), '', '' order by c.ordinal_position)'
+       || ' from information_schema.columns c'
+       || ' where c.table_schema = ''public'' and c.table_name = ' || quote_literal(p_tablo)
+       || ' and c.column_name in (select jsonb_object_keys(j) from (select j from pg_temp.' || quote_ident(p_kaynak) || ' limit 1) x)'
     into sutunlar;
   if sutunlar is null then return 0; end if;   -- kaynak boş
   execute format('insert into public.%I (%s) select %s from pg_temp.%I k, jsonb_populate_record(null::public.%I, k.j) r',
@@ -1133,7 +920,6 @@ begin
   if not exists (select 1 from public.stk_ayar where aktif) or to_regclass('public.eski_varyantlar') is null then
     raise exception 'Stok v2 etkin değil — geri dönülecek bir şey yok' using errcode = '55000';
   end if;
-  -- v2'nin o anki hâli, bugünkü biçimde
   drop table if exists _gd_v, _gd_h;
   create temp table _gd_v on commit drop as select to_jsonb(x) as j from public.stk_eski_varyantlar_g x
     where exists (select 1 from public.urunler u where u.id = x.urun_id);
@@ -1143,10 +929,7 @@ begin
   drop view public.stok_hareketleri;
   alter table public.eski_varyantlar rename to varyantlar;
   alter table public.eski_stok_hareketleri rename to stok_hareketleri;
-  -- TRUNCATE: satır satır silme arşive binlerce satır yazardı; içerik hemen aşağıda v2'den yeniden yazılıyor.
   truncate public.varyantlar, public.stok_hareketleri;
-  -- Yalnız görünümün taşıdığı sütunlar yazılır (tablonun başka sütunu varsa varsayılanını alır); jsonb_populate_record
-  -- değeri tablodaki tipe çevirir (tarih metin mi zaman damgası mı, fark etmez).
   n_v := public.stk_geri_yaz('varyantlar', '_gd_v');
   n_h := public.stk_geri_yaz('stok_hareketleri', '_gd_h');
   update public.stk_ayar set aktif = false, geri_donus = now() where id = 'tekil';
@@ -1157,6 +940,4 @@ end $$;
 revoke all on function public.stk_gecis(boolean) from public, anon, authenticated;
 revoke all on function public.stk_geri_don() from public, anon, authenticated;
 revoke all on function public.stk_geri_yaz(text, text) from public, anon, authenticated;
-
--- GEÇİŞ
 select jsonb_pretty(public.stk_gecis());
