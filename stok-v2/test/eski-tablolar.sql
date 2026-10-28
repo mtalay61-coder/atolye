@@ -4,6 +4,8 @@
 -- zaman damgası mı) sonucu değiştirmez — burada bilerek karışık: tarih metin.
 --
 -- Örnek veri, göçün karşılaşacağı zor durumların her birinden bir tane içerir (yorumlarda hangisi olduğu yazılı).
+-- Fiş defterinde AYNI fiş iki kez iptal kaydı olarak durabiliyor (canlı veride görüldü: "10032-Saya", 28 Ekim): F-2 iki kez.
+-- Bozuk kayıtlar da (F-9: satırlar dizi değil, iptal metin; F-10: miktar boş; düz metin kayıt) geçişi durdurmamalı.
 
 create table public.urunler (id text primary key, ad text not null, kategori text, veri jsonb);
 create table public.varyantlar (
@@ -89,6 +91,13 @@ insert into public.fis_defteri values ('tekil', '[
   {"id": "F-2", "fisNo": "F-2", "tip": "Giriş", "kaynak": "Manuel", "zaman": "2026-10-03T11:00:00Z", "kullanici": "Ali",
    "iptal": true, "iptalZamani": "2026-10-03T12:00:00Z",
    "stokHareketleri": [{"id": "h-iptal-1", "urunId": "u-canta", "renk": "1058 - Taba/Siyah", "beden": "36", "miktar": 50, "kaynak": "Manuel"}]},
+  {"id": "F-2", "fisNo": "F-2", "tip": "Giriş", "kaynak": "Manuel", "zaman": "2026-10-03T11:00:00Z", "kullanici": "Ali",
+   "iptal": true, "iptalZamani": "2026-10-03T12:05:00Z",
+   "stokHareketleri": [{"id": "h-iptal-1", "urunId": "u-canta", "renk": "1058 - Taba/Siyah", "beden": "36", "miktar": 50, "kaynak": "Manuel"},
+                       {"id": "h-iptal-2", "urunId": "u-kosele", "renk": "Siyah", "beden": "Standart", "miktar": 3, "kaynak": "Manuel"}]},
+  {"id": "F-9", "iptal": "true", "stokHareketleri": {"bozuk": 1}},
+  {"id": "F-10", "iptal": true, "stokHareketleri": [{"id": "h-b1", "urunId": "u-iplik", "miktar": ""}]},
+  "bozuk kayıt",
   {"id": "F-3", "fisNo": "F-3", "tip": "Manuel", "kaynak": "Manuel", "zaman": "2026-10-07T08:00:00Z", "iptal": true,
    "stokHareketleri": [{"id": "h9", "urunId": "u-canta", "renk": "Kahve", "beden": "37", "miktar": 0.5}]}
 ]'::jsonb);

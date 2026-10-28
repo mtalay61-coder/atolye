@@ -68,6 +68,26 @@ exception when others then
   return null;
 end $$;
 
+-- Hatasız sayı / doğru-yanlış çevirisi (göç, bugünkü JSON'dan okurken): boş ya da bozuk değer NULL — tek bozuk kayıt
+-- bütün geçişi durdurmasın (28 Ekim: tek tutarsız fiş defteri kaydı geçişi durdurdu).
+create or replace function public.stk_sayi(x text) returns numeric
+language plpgsql immutable as $$
+begin
+  if x is null or btrim(x) = '' then return null; end if;
+  return replace(btrim(x), ',', '.')::numeric;
+exception when others then
+  return null;
+end $$;
+-- Dizi olmayan JSON (bozuk ya da eski biçimli alan) boş dizi sayılır: jsonb_array_elements hata vermesin.
+create or replace function public.stk_dizi(j jsonb) returns jsonb
+language sql immutable as $$
+  select case when jsonb_typeof(j) = 'array' then j else '[]'::jsonb end
+$$;
+create or replace function public.stk_mantik(x text) returns boolean
+language sql immutable as $$
+  select lower(btrim(coalesce(x, ''))) in ('true', 't', '1', 'evet', 'yes')
+$$;
+
 -- ---------------------------------------------------------------------------------------------------------------------
 -- 1) TABLOLAR
 -- ---------------------------------------------------------------------------------------------------------------------
@@ -229,7 +249,7 @@ begin
   -- Hammadde renkleri
   insert into public.stk_renk (id, ad, tur, kod, barkod_kodu, renk_kodu, aktif, guncelleme)
   select distinct on (r ->> 'id') r ->> 'id', btrim(r ->> 'ad'), 'renk', r ->> 'kod', r ->> 'barkodKodu', r ->> 'renkKodu', true, now()
-  from jsonb_array_elements(coalesce(t -> 'renkler', '[]'::jsonb)) r
+  from jsonb_array_elements(public.stk_dizi(t -> 'renkler')) r
   where coalesce(r ->> 'id', '') <> '' and coalesce(btrim(r ->> 'ad'), '') <> ''
   order by r ->> 'id'
   on conflict (id) do update set ad = excluded.ad, tur = 'renk', kod = excluded.kod, barkod_kodu = excluded.barkod_kodu,
@@ -240,11 +260,11 @@ begin
   insert into public.stk_renk (id, ad, tur, kod, barkod_kodu, aktif, guncelleme)
   select distinct on (k ->> 'id') k ->> 'id',
          (k ->> 'kod') || ' - ' || (
-           select string_agg(coalesce((select btrim(r ->> 'ad') from jsonb_array_elements(coalesce(t -> 'renkler', '[]'::jsonb)) r
+           select string_agg(coalesce((select btrim(r ->> 'ad') from jsonb_array_elements(public.stk_dizi(t -> 'renkler')) r
                                        where r ->> 'id' = ri.v), '?'), '/' order by ri.n)
-           from jsonb_array_elements_text(coalesce(k -> 'renkIdler', '[]'::jsonb)) with ordinality as ri(v, n)),
+           from jsonb_array_elements_text(public.stk_dizi(k -> 'renkIdler')) with ordinality as ri(v, n)),
          'model', k ->> 'kod', k ->> 'barkodKodu', true, now()
-  from jsonb_array_elements(coalesce(t -> 'renkKombinasyonlari', '[]'::jsonb)) k
+  from jsonb_array_elements(public.stk_dizi(t -> 'renkKombinasyonlari')) k
   where coalesce(k ->> 'id', '') <> '' and coalesce(k ->> 'kod', '') <> ''
   order by k ->> 'id'
   on conflict (id) do update set ad = excluded.ad, tur = 'model', kod = excluded.kod, barkod_kodu = excluded.barkod_kodu,
@@ -254,19 +274,19 @@ begin
   -- Tanımdan düşen renk/model renkleri pasif
   update public.stk_renk s set aktif = false, guncelleme = now()
   where s.aktif and s.tur in ('renk', 'model')
-    and not exists (select 1 from jsonb_array_elements(coalesce(t -> 'renkler', '[]'::jsonb)) r where r ->> 'id' = s.id)
-    and not exists (select 1 from jsonb_array_elements(coalesce(t -> 'renkKombinasyonlari', '[]'::jsonb)) k where k ->> 'id' = s.id);
+    and not exists (select 1 from jsonb_array_elements(public.stk_dizi(t -> 'renkler')) r where r ->> 'id' = s.id)
+    and not exists (select 1 from jsonb_array_elements(public.stk_dizi(t -> 'renkKombinasyonlari')) k where k ->> 'id' = s.id);
   -- Ölçüler
   insert into public.stk_olcu (id, ad, tur, aktif, guncelleme)
   select distinct on (b ->> 'id') b ->> 'id', btrim(b ->> 'ad'), coalesce(b ->> 'tip', 'Beden'), true, now()
-  from jsonb_array_elements(coalesce(t -> 'bedenler', '[]'::jsonb)) b
+  from jsonb_array_elements(public.stk_dizi(t -> 'bedenler')) b
   where coalesce(b ->> 'id', '') <> '' and coalesce(btrim(b ->> 'ad'), '') <> ''
   order by b ->> 'id'
   on conflict (id) do update set ad = excluded.ad, tur = excluded.tur, aktif = true, guncelleme = now()
   where (stk_olcu.ad, stk_olcu.tur, stk_olcu.aktif) is distinct from (excluded.ad, excluded.tur, true);
   update public.stk_olcu s set aktif = false, guncelleme = now()
   where s.aktif and s.tur <> 'serbest'
-    and not exists (select 1 from jsonb_array_elements(coalesce(t -> 'bedenler', '[]'::jsonb)) b where b ->> 'id' = s.id);
+    and not exists (select 1 from jsonb_array_elements(public.stk_dizi(t -> 'bedenler')) b where b ->> 'id' = s.id);
   -- Tanımsız adla açılmış (serbest) renk/ölçü artık tanımda varsa ona bağlanır.
   perform public.stk_serbest_birlestir();
 end $$;
@@ -745,7 +765,8 @@ begin
   end if;
 
   -- İç yardımcılar dışarıdan çağrılamaz; uygulama yalnız beş işlemi çağırır.
-  foreach f in array array['stk_nrm(text)', 'stk_yer_tutucu_mu(text)', 'stk_zaman(text)', 'stk_tanim_esitle(jsonb)', 'stk_tanim_tetik()',
+  foreach f in array array['stk_nrm(text)', 'stk_yer_tutucu_mu(text)', 'stk_zaman(text)', 'stk_sayi(text)', 'stk_mantik(text)', 'stk_dizi(jsonb)',
+                           'stk_tanim_esitle(jsonb)', 'stk_tanim_tetik()',
                            'stk_renk_coz(text,text)', 'stk_olcu_coz(text,text)', 'stk_varyant_coz(text,text,text,text,text)',
                            'stk_yetki(text[],text)', 'stk_bakiye_json(text[])', 'stk_varyant_bul(text,text,text,text,text)',
                            'stk_serbest_birlestir()', 'stk_kaynak_tur(text)'] loop
@@ -848,16 +869,16 @@ begin
   drop table if exists _ev, _eh, _vm, _fark;
   create temp table _ev on commit drop as
     select j ->> 'urun_id' as urun_id, j ->> 'renk' as renk, j ->> 'renk_id' as renk_id, coalesce(j ->> 'beden', '') as beden,
-           coalesce((j ->> 'miktar')::numeric, 0) as miktar, coalesce((j ->> 'min_stok')::numeric, 0) as min_stok
+           coalesce(public.stk_sayi(j ->> 'miktar'), 0) as miktar, coalesce(public.stk_sayi(j ->> 'min_stok'), 0) as min_stok
     from (select to_jsonb(v) as j from public.varyantlar v) x;
   create temp table _eh on commit drop as
     select j ->> 'id' as id, j ->> 'urun_id' as urun_id, j ->> 'renk' as renk, coalesce(j ->> 'beden', '') as beden,
-           (j ->> 'miktar')::numeric as miktar, j ->> 'kaynak' as kaynak,
+           public.stk_sayi(j ->> 'miktar') as miktar, j ->> 'kaynak' as kaynak,
            coalesce(public.stk_zaman(j ->> 'tarih'), now()) as tarih,
            coalesce(nullif(btrim(j ->> 'fis_no'), ''), 'ESKI-' || (j ->> 'id')) as fis_id,
            j ->> 'siparis_no' as siparis_no, j ->> 'cari_id' as cari_id, j ->> 'uretim_id' as uretim_id,
            j ->> 'siparis_id' as siparis_id, j ->> 'kalem_id' as kalem_id, j ->> 'rezervasyon_siparis_id' as rezervasyon_siparis_id,
-           coalesce((j ->> 'fazla_gonderim')::boolean, false) as fazla_gonderim, j ->> 'aciklama' as aciklama,
+           public.stk_mantik(j ->> 'fazla_gonderim') as fazla_gonderim, j ->> 'aciklama' as aciklama,
            coalesce(j -> 'ek', '{}'::jsonb) as ek
     from (select to_jsonb(h) as j from public.stok_hareketleri h) x;
 
@@ -912,7 +933,7 @@ begin
   -- Canlı hareketi olan ama defterde İPTAL görünen fiş: bugün stokta sayılıyor → iptal SAYILMAZ, raporlanır.
   select coalesce(jsonb_agg(f.id), '[]'::jsonb) into tutarsiz_iptal
   from public.stk_fis f
-  where exists (select 1 from jsonb_array_elements(defter) x where coalesce(x ->> 'id', x ->> 'fisNo') = f.id and coalesce((x ->> 'iptal')::boolean, false));
+  where exists (select 1 from jsonb_array_elements(defter) x where coalesce(x ->> 'id', x ->> 'fisNo') = f.id and public.stk_mantik(x ->> 'iptal'));
 
   -- 4) Hareketler
   insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, kaynak, tarih, siparis_id, siparis_no, kalem_id, cari_id,
@@ -931,25 +952,45 @@ begin
     into atlanan
   from _eh h where not exists (select 1 from public.stk_hareket x where x.id = h.id);
 
-  -- 5) İptal edilmiş fişler (canlıda hareketi yok, defterde iptal): satırlarıyla, stoğa sayılmadan
-  for d in select x from jsonb_array_elements(defter) x
-           where coalesce((x ->> 'iptal')::boolean, false)
+  -- 5) İptal edilmiş fişler (canlıda hareketi yok, defterde iptal): satırlarıyla, stoğa sayılmadan.
+  -- AYNI FİŞ DEFTERDE BİRDEN ÇOK KEZ olabilir (canlı veride görüldü, 28 Ekim: "10032-Saya" iki iptal kaydı → stk_fis_pkey
+  -- çakışması, geçiş durdu). Döngü fiş numarası başına BİR kez döner; başlık ilk kayıttan, satırlar o numaranın BÜTÜN
+  -- kayıtlarından (aynı satır kimliği bir kez). Döngü sorgusu başlarken alınan görüntüyle çalışır — içeride eklenen başlığı
+  -- görmez; bu yüzden "zaten var mı" süzgeci yetmiyordu.
+  for d in select distinct on (coalesce(x ->> 'id', x ->> 'fisNo')) x
+           from jsonb_array_elements(defter) with ordinality as e(x, sira)
+           where public.stk_mantik(x ->> 'iptal')
+             and coalesce(x ->> 'id', x ->> 'fisNo', '') <> ''
              and not exists (select 1 from public.stk_fis f where f.id = coalesce(x ->> 'id', x ->> 'fisNo'))
-             and jsonb_typeof(x -> 'stokHareketleri') = 'array' and jsonb_array_length(x -> 'stokHareketleri') > 0
+             and jsonb_array_length(public.stk_dizi(x -> 'stokHareketleri')) > 0
+           order by coalesce(x ->> 'id', x ->> 'fisNo'), sira
   loop
+    -- Yazılacak satırı olmayan iptal fişi (ürünü silinmiş, miktar 0, satırı canlıda zaten var) başlık da açmaz.
+    continue when not exists (
+      select 1 from jsonb_array_elements(defter) x, jsonb_array_elements(public.stk_dizi(x -> 'stokHareketleri')) y
+      where coalesce(x ->> 'id', x ->> 'fisNo') = coalesce(d ->> 'id', d ->> 'fisNo')
+        and public.stk_mantik(x ->> 'iptal')
+        and coalesce(y ->> 'id', '') <> '' and coalesce(public.stk_sayi(y ->> 'miktar'), 0) <> 0
+        and not exists (select 1 from public.stk_hareket h where h.id = y ->> 'id')
+        and exists (select 1 from public.urunler u where u.id = y ->> 'urunId'));
     insert into public.stk_fis (id, tur, kaynak, tarih, cari_id, siparis_id, siparis_no, uretim_id, kullanici, iptal, iptal_zamani, goc)
     values (coalesce(d ->> 'id', d ->> 'fisNo'), coalesce(nullif(d ->> 'tip', ''), 'Manuel'), d ->> 'kaynak',
             coalesce(public.stk_zaman(d ->> 'stokTarihi'), public.stk_zaman(d ->> 'zaman'), now()),
             d ->> 'cariId', d ->> 'siparisId', d ->> 'siparisNo', d ->> 'uretimId', d ->> 'kullanici', true,
-            public.stk_zaman(d ->> 'iptalZamani'), true);
-    for s in select * from jsonb_array_elements(d -> 'stokHareketleri') loop
-      continue when coalesce(s ->> 'id', '') = '' or coalesce((s ->> 'miktar')::numeric, 0) = 0
+            public.stk_zaman(d ->> 'iptalZamani'), true)
+    on conflict (id) do nothing;
+    for s in select y from jsonb_array_elements(defter) x, jsonb_array_elements(public.stk_dizi(x -> 'stokHareketleri')) y
+             where coalesce(x ->> 'id', x ->> 'fisNo') = coalesce(d ->> 'id', d ->> 'fisNo')
+               and public.stk_mantik(x ->> 'iptal')
+    loop
+      continue when coalesce(s ->> 'id', '') = '' or coalesce(public.stk_sayi(s ->> 'miktar'), 0) = 0
                     or exists (select 1 from public.stk_hareket where id = s ->> 'id')
                     or not exists (select 1 from public.urunler where id = s ->> 'urunId');
       vid := public.stk_varyant_coz(s ->> 'urunId', null, s ->> 'renk', null, s ->> 'beden');
       insert into public.stk_hareket (id, fis_id, varyant_id, urun_id, miktar, kaynak, tarih, siparis_id, kalem_id, aciklama)
-      values (s ->> 'id', coalesce(d ->> 'id', d ->> 'fisNo'), vid, s ->> 'urunId', (s ->> 'miktar')::numeric, s ->> 'kaynak',
-              coalesce(public.stk_zaman(s ->> 'tarih'), now()), s ->> 'siparisId', s ->> 'kalemId', s ->> 'aciklama');
+      values (s ->> 'id', coalesce(d ->> 'id', d ->> 'fisNo'), vid, s ->> 'urunId', public.stk_sayi(s ->> 'miktar'), s ->> 'kaynak',
+              coalesce(public.stk_zaman(s ->> 'tarih'), now()), s ->> 'siparisId', s ->> 'kalemId', s ->> 'aciklama')
+      on conflict (id) do nothing;
     end loop;
   end loop;
 
@@ -1004,7 +1045,7 @@ language sql stable security definer set search_path = public as $$
     select j ->> 'urun_id' as urun_id,
            public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
            public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
-           sum(coalesce((j ->> 'miktar')::numeric, 0)) as miktar
+           sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
     from (select to_jsonb(v) as j from public.varyantlar v) x
     where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
     group by 1, 2, 3
