@@ -128,6 +128,12 @@
           "name": "i-print.svg",
           "size": 387,
           "type": "image/svg+xml"
+        },
+        "i-next.svg": {
+          "blob": "2316113ed1de3306b49437963f2157a2",
+          "name": "i-next.svg",
+          "size": 239,
+          "type": "image/svg+xml"
         }
       },
       "name": "Ikonlar",
@@ -149,6 +155,7 @@
         "i-check.svg",
         "i-alert.svg",
         "i-back.svg",
+        "i-next.svg",
         "i-clock.svg",
         "i-info.svg",
         "i-ban.svg",
@@ -173,9 +180,9 @@
     "Ikonlar"
   ],
   "lastChange": {
-    "at": "2026-10-28T15:40:00Z",
+    "at": "2026-10-28T16:30:00Z",
     "by": "Claude",
-    "note": "Dört tema, tek menü tasarımı, aramalı seçici; tema seçici ve sekmeler",
+    "note": "Kayıt gezgini (önceki/sonraki) bütün listeli kartlarda; i-next ikonu",
     "via": "Claude Code"
   },
   "layout": "files",

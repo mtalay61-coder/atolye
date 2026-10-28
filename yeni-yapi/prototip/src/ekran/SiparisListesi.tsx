@@ -19,7 +19,7 @@ export function SiparisListesi() {
   const [suzgec, setSuzgec] = useState("acik");
   const [noSuz, setNoSuz] = useState("");
   const [cariSuz, setCariSuz] = useState("");
-  const [secili, setSecili] = useState<string | null>(null);
+  const [secili, setSecili] = useState<string | null>(() => u.gezinti.siparis?.son ?? null);
   const [silinecek, setSilinecek] = useState<Siparis | null>(null);
   const sagTik = useSagTik<Siparis>();
   useEffect(() => { kaynak.siparisler().then(setSiparisler); kaynak.cariler().then(setCariler); }, []);
@@ -31,6 +31,8 @@ export function SiparisListesi() {
     return (siparisler ?? []).filter((x) => s.uyar(x) && (!noSuz || A.eslesme(noSuz, [x.no])) && (!cariSuz || A.eslesme(cariSuz, [cariAdi(x.cariId)])));
   }, [siparisler, suzgec, noSuz, cariSuz, cariler]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Kart açılınca ‹ önceki / sonraki › bu sırayla gezer: ekranda görülen süzgeç ve sıra.
+  useEffect(() => { if (siparisler) u.gezintiAyarla("siparis", { liste: satirlar.map((x) => x.no) }); }, [satirlar, siparisler]); // eslint-disable-line react-hooks/exhaustive-deps
   const seciliSiparis = satirlar.find((x) => x.no === secili) ?? null;
   const secimGerekli = seciliSiparis ? undefined : "Önce bir sipariş seç";
   const ac = (no: string) => u.git("siparis-" + no);

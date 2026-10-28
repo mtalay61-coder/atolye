@@ -1,14 +1,17 @@
 /* Atölye kuralları kod olarak: ikonlar, araç çubuğu sırası, kısayollar, bildirim süresi.
    Uygulama bu tabloları kopyalamaz, buradan alır. Sayfadaki <i data-ik="i-save"></i> yer tutucuları ikonla değiştirilir. */
 (function () {
-  var IKONLAR = {"i-plus": "<path d=\"M5 12h14\"><\/path><path d=\"M12 5v14\"><\/path>", "i-save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"><\/path><path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"><\/path><path d=\"M7 3v4a1 1 0 0 0 1 1h7\"><\/path>", "i-edit": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"><\/path><path d=\"m15 5 4 4\"><\/path>", "i-trash": "<path d=\"M10 11v6\"><\/path><path d=\"M14 11v6\"><\/path><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\"><\/path><path d=\"M3 6h18\"><\/path><path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"><\/path>", "i-copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"><\/rect><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"><\/path>", "i-search": "<path d=\"m21 21-4.34-4.34\"><\/path><circle cx=\"11\" cy=\"11\" r=\"8\"><\/circle>", "i-filter": "<path d=\"M3 6h18\"><\/path><path d=\"M7 12h10\"><\/path><path d=\"M10 18h4\"><\/path>", "i-refresh": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"><\/path><path d=\"M21 3v5h-5\"><\/path><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"><\/path><path d=\"M8 16H3v5\"><\/path>", "i-print": "<path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"><\/path><path d=\"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6\"><\/path><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\" rx=\"1\"><\/rect>", "i-export": "<path d=\"M12 3v12\"><\/path><path d=\"m7 10 5 5 5-5\"><\/path><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"><\/path>", "i-collapse": "<path d=\"m7 20 5-5 5 5\"><\/path><path d=\"m7 4 5 5 5-5\"><\/path>", "i-expand": "<path d=\"m7 15 5 5 5-5\"><\/path><path d=\"m7 9 5-5 5 5\"><\/path>", "i-close": "<path d=\"M18 6 6 18\"><\/path><path d=\"m6 6 12 12\"><\/path>", "i-undo": "<path d=\"M3 7v6h6\"><\/path><path d=\"M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6.36 2.64L3 13\"><\/path>", "i-check": "<path d=\"M21.8 10A10 10 0 1 1 17 3.34\"><\/path><path d=\"m9 11 3 3L22 4\"><\/path>", "i-alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"><\/path><path d=\"M12 9v4\"><\/path><path d=\"M12 17h.01\"><\/path>", "i-back": "<path d=\"m12 19-7-7 7-7\"><\/path><path d=\"M19 12H5\"><\/path>", "i-clock": "<path d=\"M12 6v6l4 2\"><\/path><circle cx=\"12\" cy=\"12\" r=\"10\"><\/circle>", "i-info": "<circle cx=\"12\" cy=\"12\" r=\"10\"><\/circle><path d=\"M12 16v-4\"><\/path><path d=\"M12 8h.01\"><\/path>", "i-ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"><\/circle><path d=\"m4.9 4.9 14.2 14.2\"><\/path>", "i-draft": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z\"><\/path><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"><\/path>"};
+  var IKONLAR = {"i-plus": "<path d=\"M5 12h14\"><\/path><path d=\"M12 5v14\"><\/path>", "i-save": "<path d=\"M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z\"><\/path><path d=\"M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7\"><\/path><path d=\"M7 3v4a1 1 0 0 0 1 1h7\"><\/path>", "i-edit": "<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"><\/path><path d=\"m15 5 4 4\"><\/path>", "i-trash": "<path d=\"M10 11v6\"><\/path><path d=\"M14 11v6\"><\/path><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\"><\/path><path d=\"M3 6h18\"><\/path><path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\"><\/path>", "i-copy": "<rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"><\/rect><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"><\/path>", "i-search": "<path d=\"m21 21-4.34-4.34\"><\/path><circle cx=\"11\" cy=\"11\" r=\"8\"><\/circle>", "i-filter": "<path d=\"M3 6h18\"><\/path><path d=\"M7 12h10\"><\/path><path d=\"M10 18h4\"><\/path>", "i-refresh": "<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"><\/path><path d=\"M21 3v5h-5\"><\/path><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"><\/path><path d=\"M8 16H3v5\"><\/path>", "i-print": "<path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"><\/path><path d=\"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6\"><\/path><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\" rx=\"1\"><\/rect>", "i-export": "<path d=\"M12 3v12\"><\/path><path d=\"m7 10 5 5 5-5\"><\/path><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"><\/path>", "i-collapse": "<path d=\"m7 20 5-5 5 5\"><\/path><path d=\"m7 4 5 5 5-5\"><\/path>", "i-expand": "<path d=\"m7 15 5 5 5-5\"><\/path><path d=\"m7 9 5-5 5 5\"><\/path>", "i-close": "<path d=\"M18 6 6 18\"><\/path><path d=\"m6 6 12 12\"><\/path>", "i-undo": "<path d=\"M3 7v6h6\"><\/path><path d=\"M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6.36 2.64L3 13\"><\/path>", "i-check": "<path d=\"M21.8 10A10 10 0 1 1 17 3.34\"><\/path><path d=\"m9 11 3 3L22 4\"><\/path>", "i-alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"><\/path><path d=\"M12 9v4\"><\/path><path d=\"M12 17h.01\"><\/path>", "i-back": "<path d=\"m12 19-7-7 7-7\"><\/path><path d=\"M19 12H5\"><\/path>", "i-clock": "<path d=\"M12 6v6l4 2\"><\/path><circle cx=\"12\" cy=\"12\" r=\"10\"><\/circle>", "i-info": "<circle cx=\"12\" cy=\"12\" r=\"10\"><\/circle><path d=\"M12 16v-4\"><\/path><path d=\"M12 8h.01\"><\/path>", "i-ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"><\/circle><path d=\"m4.9 4.9 14.2 14.2\"><\/path>", "i-next": "<path d=\"m12 5 7 7-7 7\"><\/path><path d=\"M5 12h14\"><\/path>", "i-draft": "<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z\"><\/path><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"><\/path>"};
   function ikon(ad) {
     var ic = IKONLAR[ad];
     if (!ic) return "";
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ic + "</svg>";
   }
   // Araç çubuğu: sıra burada sabit. Ekranda olmayan çıkar, kalanların sırası değişmez.
+  // Grup 0 yalnız kart başlığında: kayıttan kayda geçiş (Önceki · Sonraki).
   var EYLEMLER = [
+    { tur: "onceki", ad: "Önceki kayıt", ikon: "i-back", kisayol: "PageUp", grup: 0 },
+    { tur: "sonraki", ad: "Sonraki kayıt", ikon: "i-next", kisayol: "PageDown", grup: 0 },
     { tur: "yeni", ad: "Yeni", ikon: "i-plus", kisayol: "Ctrl+N", grup: 1, birincil: true },
     { tur: "kaydet", ad: "Kaydet", ikon: "i-save", kisayol: "Ctrl+S", grup: 1, birincil: true },
     { tur: "duzenle", ad: "Düzenle", ikon: "i-edit", kisayol: "F2", grup: 1 },
@@ -25,11 +28,11 @@
   // eylemler: { tur: { pasif?: "neden" } }. Sıra ve gruplar tablodan gelir.
   function aracCubugu(eylemler, baslik) {
     var html = baslik ? '<span class="erp-toolbar__baslik">' + baslik + "</span>" : "";
-    var sonGrup = 0;
+    var sonGrup = null;
     EYLEMLER.forEach(function (e) {
       if (!(e.tur in eylemler)) return;
       var d = eylemler[e.tur] || {};
-      if (sonGrup && e.grup !== sonGrup) html += e.grup === 3 ? '<span class="erp-toolbar__gap"></span>' : '<span class="erp-toolbar__sep"></span>';
+      if (sonGrup !== null && e.grup !== sonGrup) html += e.grup === 3 ? '<span class="erp-toolbar__gap"></span>' : '<span class="erp-toolbar__sep"></span>';
       sonGrup = e.grup;
       var sinif = "erp-ib" + (e.birincil && d.birincil !== false ? " erp-ib--primary" : "") + (e.tehlike ? " erp-ib--danger" : "");
       var ipucu = d.pasif ? d.pasif : e.ad + (e.kisayol ? " · " + e.kisayol : "");
@@ -42,7 +45,22 @@
     if (geriAl) return 9000;
     return Math.min(12000, 4000 + Math.floor(String(metin || "").length / 20) * 1000);
   }
-  var KISAYOLLAR = { "Ctrl+S": "kaydet", "Ctrl+N": "yeni", "F2": "duzenle", "F5": "yenile", "Delete": "sil", "Escape": "kapat" };
+  // PageUp/PageDown: önceki/sonraki kayıt. Alt+← kullanılmaz: tarayıcının "geri" tuşudur, sayfadan çıkar.
+  var KISAYOLLAR = { "Ctrl+S": "kaydet", "Ctrl+N": "yeni", "F2": "duzenle", "F5": "yenile", "Delete": "sil", "Escape": "kapat", "PageUp": "onceki", "PageDown": "sonraki" };
+
+  // ===== KAYIT GEZGİNİ =====
+  // liste: kartın açıldığı listenin O ANKİ sırası (süzgeç ve sıralama dahil) kimlik dizisi; mevcut: açık kaydın kimliği.
+  // Döngü yapmaz: ilk kayıtta önceki, son kayıtta sonraki yoktur.
+  function gezgin(liste, mevcut) {
+    var i = (liste || []).indexOf(mevcut);
+    if (i < 0) return { sira: 0, toplam: (liste || []).length, onceki: null, sonraki: null };
+    return { sira: i + 1, toplam: liste.length, onceki: i > 0 ? liste[i - 1] : null, sonraki: i < liste.length - 1 ? liste[i + 1] : null };
+  }
+  function gezginHtml(g, duzenlemede) {
+    var neden = function (yon) { return duzenlemede ? "Önce kaydet ya da vazgeç" : yon === "onceki" ? (g.onceki ? "Önceki kayıt · PageUp" : "İlk kayıt") : (g.sonraki ? "Sonraki kayıt · PageDown" : "Son kayıt"); };
+    var dugme = function (yon, ik, var_) { return '<button type="button" class="erp-ib" data-eylem="' + yon + '" aria-label="' + (yon === "onceki" ? "Önceki kayıt" : "Sonraki kayıt") + '" title="' + neden(yon) + '"' + (!var_ || duzenlemede ? " disabled" : "") + ">" + ikon(ik) + "</button>"; };
+    return '<span class="erp-gezgin">' + dugme("onceki", "i-back", g.onceki) + '<span class="erp-gezgin__sira">' + g.sira + " / " + g.toplam + "</span>" + dugme("sonraki", "i-next", g.sonraki) + "</span>";
+  }
   var DURUMLAR = {
     ok: { ikon: "i-check", sinif: "erp-badge--ok" }, wait: { ikon: "i-clock", sinif: "erp-badge--wait" },
     info: { ikon: "i-info", sinif: "erp-badge--info" }, idle: { ikon: "i-ban", sinif: "" },
@@ -57,6 +75,11 @@
       var t = document.createElement("span");
       t.innerHTML = ikon(el.getAttribute("data-ik"));
       el.replaceWith(t.firstChild || document.createTextNode(""));
+    });
+    (kok || document).querySelectorAll("[data-gezgin]").forEach(function (el) {
+      var p = (el.getAttribute("data-gezgin") || "").split("/");
+      var sira = +p[0], toplam = +p[1];
+      el.outerHTML = gezginHtml({ sira: sira, toplam: toplam, onceki: sira > 1 ? 1 : null, sonraki: sira < toplam ? 1 : null }, el.hasAttribute("data-duzenlemede"));
     });
     (kok || document).querySelectorAll("[data-arac]").forEach(function (el) {
       var veri = {};
@@ -213,7 +236,7 @@
       return '<button type="button" role="menuitem" class="erp-menu__oge' + (tehlike ? " erp-menu__oge--tehlike" : "") + '"' + (o.pasif ? ' disabled title="' + kac(o.pasif) + '"' : "") + ">" + (ik ? ikon(ik) : "<span></span>") + "<span>" + kac(ad) + '</span><span class="erp-menu__kisayol">' + kac(ks) + "</span></button>";
     }).join("") + "</div>";
   }
-  window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir, katla: katla, eslesme: eslesme, vurgula: vurgula, sayiYaz: sayiYaz, aramaliSecici: aramaliSecici, TEMALAR: TEMALAR, temaUygula: temaUygula, menuHtml: menuHtml };
+  window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir, katla: katla, eslesme: eslesme, vurgula: vurgula, sayiYaz: sayiYaz, aramaliSecici: aramaliSecici, TEMALAR: TEMALAR, temaUygula: temaUygula, menuHtml: menuHtml, gezgin: gezgin, gezginHtml: gezginHtml };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { ikonlariYerlestir(); });
   else ikonlariYerlestir();
 })();

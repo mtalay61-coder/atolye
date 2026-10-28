@@ -29,6 +29,9 @@ type Baglam = {
   cikisYap: () => void;
   bildir: (metin: string, secenek?: { ikon?: string; geriAl?: () => void }) => void;
   git: (a: string) => void;
+  // Kayıt gezgini için: her listenin o anki sırası ve son bakılan kayıt (tür: "siparis", "cari"…).
+  gezinti: Record<string, { liste?: string[]; son?: string }>;
+  gezintiAyarla: (tur: string, d: { liste?: string[]; son?: string }) => void;
 };
 const UygulamaBaglami = createContext<Baglam | null>(null);
 export const useUygulama = () => {
@@ -57,11 +60,20 @@ export function UygulamaSaglayici({ children, git }: { children: ReactNode; git:
     setBildirim({ id: Date.now(), metin, ikon: s?.ikon ?? "i-check", geriAl: s?.geriAl });
     zaman.current = window.setTimeout(() => setBildirim(null), A().bildirimSuresi(metin, !!s?.geriAl));
   }, []);
+  const [gezinti, setGezinti] = useState<Baglam["gezinti"]>({});
+  const gezintiAyarla = useCallback((tur: string, d: { liste?: string[]; son?: string }) => {
+    setGezinti((g) => {
+      const eski = g[tur] ?? {};
+      const yeni = { ...eski, ...d };
+      if (eski.son === yeni.son && (eski.liste === yeni.liste || (eski.liste && yeni.liste && eski.liste.join() === yeni.liste.join()))) return g;
+      return { ...g, [tur]: yeni };
+    });
+  }, []);
   const deger: Baglam = {
     tema, temaSec, cevrimdisi, cevrimdisiYap, kullanici,
     girisYap: (ad) => { setKullanici(ad); git("siparisler"); },
     cikisYap: () => { setKullanici(null); git(""); },
-    bildir, git,
+    bildir, git, gezinti, gezintiAyarla,
   };
   return (
     <UygulamaBaglami.Provider value={deger}>

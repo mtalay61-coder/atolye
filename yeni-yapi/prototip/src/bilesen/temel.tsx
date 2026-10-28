@@ -23,7 +23,7 @@ function kisayolYakala(e: KeyboardEvent) {
   let tus = e.key;
   if ((e.ctrlKey || e.metaKey) && /^[sn]$/i.test(e.key)) tus = "Ctrl+" + e.key.toUpperCase();
   const tur = A().KISAYOLLAR[tus];
-  if (!tur || (yazida && (tus === "Delete" || tus === "Escape"))) return;
+  if (!tur || (yazida && ["Delete", "Escape", "PageUp", "PageDown"].includes(tus))) return;
   const e2 = ust.current[tur];
   if (!e2 || !e2.onClick || e2.pasif) return;
   e.preventDefault();
@@ -78,12 +78,22 @@ export function KartBasligi(p: {
   kod?: string; baslik: ReactNode; durum?: ReactNode; pencere?: boolean;
   duzenle?: EylemTanimi; sil?: EylemTanimi; ozel?: ReactNode; kapat?: () => void;
   duzenlemede?: boolean; kaydet?: EylemTanimi; vazgec?: () => void;
+  gezgin?: { liste: string[]; mevcut: string; git: (kimlik: string) => void };
 }) {
+  const g = p.gezgin ? A().gezgin(p.gezgin.liste, p.gezgin.mevcut) : null;
+  const gezNeden = (yon: "onceki" | "sonraki") => !g ? "" : p.duzenlemede ? "Önce kaydet ya da vazgeç"
+    : yon === "onceki" ? (g.onceki ? "Önceki kayıt · PageUp" : "İlk kayıt") : (g.sonraki ? "Sonraki kayıt · PageDown" : "Son kayıt");
+  const gecis = (yon: "onceki" | "sonraki"): EylemTanimi | undefined => {
+    if (!g || !p.gezgin) return undefined;
+    const hedef = yon === "onceki" ? g.onceki : g.sonraki;
+    return hedef && !p.duzenlemede ? { onClick: () => p.gezgin!.git(hedef) } : { pasif: gezNeden(yon) };
+  };
   const e = useCevrimdisiEylemler({ duzenle: p.duzenle ?? {}, sil: p.sil ?? {}, kaydet: p.kaydet ?? {} });
   const ref = useRef<Eylemler>({});
   ref.current = p.duzenlemede
     ? { kaydet: e.kaydet, kapat: p.vazgec ? { onClick: p.vazgec } : undefined }
-    : { duzenle: p.duzenle ? e.duzenle : undefined, sil: p.sil ? e.sil : undefined, kapat: p.kapat ? { onClick: p.kapat } : undefined };
+    : { duzenle: p.duzenle ? e.duzenle : undefined, sil: p.sil ? e.sil : undefined, kapat: p.kapat ? { onClick: p.kapat } : undefined,
+        onceki: gecis("onceki"), sonraki: gecis("sonraki") };
   useEffect(() => {
     cubukYigini.push(ref);
     return () => { cubukYigini.splice(cubukYigini.indexOf(ref), 1); };
@@ -93,6 +103,16 @@ export function KartBasligi(p: {
       <span className="erp-card__title">{p.kod && <span className="erp-card__kod">{p.kod}</span>}{p.baslik}</span>
       {p.durum}
       <span className="erp-card__actions">
+        {g && (
+          <>
+            <span className="erp-gezgin">
+              <button className="erp-ib" aria-label="Önceki kayıt" title={gezNeden("onceki")} disabled={!!gecis("onceki")?.pasif} onClick={gecis("onceki")?.onClick}><Ikon ad="i-back" /></button>
+              <span className="erp-gezgin__sira">{g.sira} / {g.toplam}</span>
+              <button className="erp-ib" aria-label="Sonraki kayıt" title={gezNeden("sonraki")} disabled={!!gecis("sonraki")?.pasif} onClick={gecis("sonraki")?.onClick}><Ikon ad="i-next" /></button>
+            </span>
+            <span className="erp-toolbar__sep" />
+          </>
+        )}
         {p.duzenlemede ? (
           <>
             <button className="erp-btn" onClick={p.vazgec}>Vazgeç</button>

@@ -42,6 +42,10 @@ body { font-family: var(--font-sans); color: var(--erp-text); background: var(--
 .erp-pencere-baslik .erp-ib { color: var(--erp-shell-ink-guclu); }
 .erp-pencere-baslik .erp-ib:hover { background: var(--erp-shell-2); }
 .erp-pencere-baslik .erp-ib--primary { background: var(--erp-shell-2); }
+/* Kayıt gezgini: kart başlığında, eylemlerin solunda — ‹ 3 / 24 › */
+.erp-gezgin { display: inline-flex; align-items: center; gap: 2px; }
+.erp-gezgin__sira { min-width: 52px; text-align: center; font-size: 12px; color: var(--erp-text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.erp-pencere-baslik .erp-gezgin__sira { color: var(--erp-shell-ink); }
 .erp-ozellik { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: var(--erp-gap-1) var(--erp-gap-3); }
 .erp-ozellik dt { color: var(--erp-text-2); }
 .erp-ozellik dd { margin: 0; }

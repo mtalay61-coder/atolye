@@ -28,9 +28,12 @@ npm run build    # tasarımı eşitler, tip denetimi, dist/ ve dist/onizleme.htm
 |---|---|---|
 | (giriş) | Giriş | — |
 | `#siparisler` | Sipariş listesi: süzgeç çipleri, süzgeç satırı, seçim, sağ tık, iptal onayı | Liste |
-| `#siparis-<no>` | Sipariş kartı: Genel · Kalemler (matris, sevk işaretli) · Sevkler · Notlar, İşlemler menüsü | Kart |
+| `#siparis-<no>` | Sipariş kartı: ‹ önceki · sıra · sonraki › (PageUp/PageDown, listenin süzgeciyle), Genel · Kalemler (matris, sevk işaretli) · Sevkler · Notlar, İşlemler menüsü | Kart |
 | `#siparis-yeni` | Yeni sipariş: aramalı müşteri/ürün, beden matrisiyle kalem ekleme, toplamlar | Belge |
 | `#tanimlar` | Tanımlar › Görünüm: tema seçimi | Kart |
 | `#modul-<KOD>` | Henüz çizilmemiş modül: şemadan amaç ve kılavuz | — |
+
+Kayıt gezgini `KartBasligi`'nin `gezgin` özelliğidir; liste ekranı sırasını `gezintiAyarla(tür, { liste })` ile paylaşır.
+Cari, ürün ve diğer kartlar aynı iki satırla bağlanır.
 
 Kullanıcı menüsünde "Çevrimdışını dene": şerit çıkar, bütün yazma düğmeleri pasifleşir.

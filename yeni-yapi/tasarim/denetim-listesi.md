@@ -21,4 +21,5 @@ Bir ekran "bitti" denmeden önce bu listeden geçer. Her madde eski uygulamada e
 - [ ] Listeden her seçim AramaliSecici ile; `<select>` yalnız ≤7 sabit seçenekte.
 - [ ] Sağ tık menüsü araç çubuğuyla aynı eylemleri aynı sırada taşıyor; menüye özel eylem yok.
 - [ ] Ekran dört temada da (Atölye, Gece, Deniz, Yüksek kontrast) okunuyor; kodda renk değeri yok.
+- [ ] Listeden açılan kartta ‹ önceki · sıra · sonraki › var; PageUp/PageDown çalışıyor, sıra listenin süzgecine uyuyor, düzenlemede pasif.
 - [ ] Ekranın kılavuz konusu yapı şemasında var ve adımlar ekranla aynı.

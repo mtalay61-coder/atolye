@@ -7,16 +7,26 @@ import { BEDENLER } from "../veri/ornek";
 import { kalemCift, kalemTutar, siparisCift, siparisSevk, siparisTutar, sayi, tl, topla } from "../veri/hesap";
 import type { Cari, Siparis } from "../veri/tipler";
 
+// Açık sekme kayıttan kayda geçerken korunur (kart her kayıtta yeniden kurulur).
+let sonSekme = "kalemler";
+
 export function SiparisKarti({ no }: { no: string }) {
   const u = useUygulama();
   const [s, setS] = useState<Siparis | null | undefined>(null);
   const [cari, setCari] = useState<Cari>();
-  const [sekme, setSekme] = useState("kalemler");
+  const [sekme, setSekmeIc] = useState(sonSekme);
+  const setSekme = (s: string) => { sonSekme = s; setSekmeIc(s); };
+  const [varsayilan, setVarsayilan] = useState<string[]>([]);
   const [islemler, setIslemler] = useState(false);
   const [iptalSor, setIptalSor] = useState(false);
   useEffect(() => {
     kaynak.siparis(no).then((x) => { setS(x); if (x) kaynak.cariler().then((c) => setCari(c.find((y) => y.id === x.cariId))); });
-  }, [no]);
+    u.gezintiAyarla("siparis", { son: no });
+  }, [no]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Liste dışından açıldıysa (bağlantı, arama) gezgin modülün varsayılan listesini kullanır.
+  const liste = u.gezinti.siparis?.liste;
+  useEffect(() => { if (!liste) kaynak.siparisler().then((x) => setVarsayilan(x.map((y) => y.no))); }, [liste]);
+  const gezListe = liste && liste.includes(no) ? liste : varsayilan;
   const kapat = () => u.git("siparisler");
   if (s === null) return <div className="sayfa-govde soluk">Yükleniyor…</div>;
   if (s === undefined) return <div className="sayfa-govde"><BosDurum baslik="Sipariş bulunamadı" aciklama={`${no} numaralı sipariş yok.`} dugme={<button className="erp-btn" onClick={kapat}>Siparişlere dön</button>} /></div>;
@@ -41,6 +51,7 @@ export function SiparisKarti({ no }: { no: string }) {
               )}
             </span>
           }
+          gezgin={{ liste: gezListe, mevcut: no, git: (x) => u.git("siparis-" + x) }}
           kapat={kapat} />
         <Sekmeler secili={sekme} sec={setSekme} sekmeler={[
           { id: "genel", ad: "Genel" }, { id: "kalemler", ad: "Kalemler", sayi: s.kalemler.length },
@@ -80,7 +91,7 @@ export function SiparisKarti({ no }: { no: string }) {
           {sekme === "notlar" && <p style={{ margin: 0 }}>{s.not ?? <span className="soluk">Not yok.</span>}</p>}
         </div>
       </div>
-      <p className="soluk kucuk"><Ikon ad="i-info" /> Esc ya da Kapat: listeye döner. F2: düzenle. Del: iptal sorusu.</p>
+      <p className="soluk kucuk"><Ikon ad="i-info" /> ‹ › ya da PageUp/PageDown: önceki/sonraki sipariş. Esc ya da Kapat: listeye döner. F2: düzenle. Del: iptal sorusu.</p>
       {iptalSor && (
         <SilOnayi soru={`${s.no} iptal edilsin mi?`} dugme="İptal et"
           aciklama="Onaylı sipariş silinmez, iptal edilir: kayıt geçmişte kalır, bağlı rezervasyon ve ihtiyaçlar düşer."

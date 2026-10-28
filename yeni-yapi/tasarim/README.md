@@ -67,8 +67,9 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 - Bütün aksiyonlar **araç çubuğundadır**, sıra sabittir ve bileşenin içinde tanımlıdır: **Yeni · Kaydet · Düzenle · Kopyala · Sil ┆ Ara · Filtre ⟶ Yenile · Yazdır · Excel ┆ Küçült · Kapat**. Ekranda olmayan aksiyon listeden çıkar; kalanların sırası değişmez.
 - Kullanılamayan aksiyon **gizlenmez**, pasif olur ve nedenini `title`'da yazar.
 - Araç çubuğu düğmeleri yazısız ikon düğmedir (`IkonDugme`); adı ve kısayolu `title` ve `aria-label`'dadır: "Kaydet · Ctrl+S".
-- Kısayollar her ekranda aynıdır: **Ctrl+S** kaydet, **Ctrl+N** yeni, **F2** düzenle, **F5** yenile, **Del** sil, **Esc** vazgeç/kapat. Yazı kutusunun içindeyken Del ve Esc'e dokunulmaz.
+- Kısayollar her ekranda aynıdır: **Ctrl+S** kaydet, **Ctrl+N** yeni, **F2** düzenle, **F5** yenile, **Del** sil, **Esc** vazgeç/kapat, **PageUp/PageDown** önceki/sonraki kayıt. Yazı kutusunun içindeyken Del, Esc, PageUp ve PageDown'a dokunulmaz.
 - Kart ve pencere başlığında aynı kural: **Düzenle · (özel işlem) · Sil**; düzenlemedeyken yalnız **Kaydet · Vazgeç**. Gövdede ikinci bir Düzenle ya da Kaydet olmaz (uzun formun altındaki Kaydet istisnadır: aynı ad, aynı iş).
+- **Kayıttan kayda geçiş:** listeden açılan her kartın başlığında, eylemlerin solunda `KayitGezgini` durur: **‹ 3 / 24 ›**. Sipariş, cari, ürün, belge, üretim emri, tanım: listesi olan her kart. Sıra kartın açıldığı listenin o anki süzgeci ve sıralamasıdır; liste dışından açılan kartta modülün varsayılan listesi kullanılır. Kısayol **PageUp** önceki, **PageDown** sonraki. İlk ve son kayıtta ilgili düğme pasif ("İlk kayıt", "Son kayıt"), döngü yok. Düzenleme sırasında gezgin pasif ("Önce kaydet ya da vazgeç"). Geçişte açık sekme korunur; Kapat listeye döner ve son bakılan kayıt seçili gelir. Yeni kayıt formunda gezgin yoktur.
 - Sil, Kapat'ın yanına konmaz; kapatma refleksiyle giden parmak Sil'e çarpmasın.
 - Pencere başlığında Vazgeç ikonu yoktur; Kapat zaten oradadır, Esc çalışır.
 - Satır içinde aksiyon ikonu yoktur: satır seçilir, işlem araç çubuğundan yapılır. Tek istisna küçük tanım listeleridir (renk, beden): satır içi Sil ikonu durur ama mutlaka **Sil onayı** penceresini açar.
@@ -91,9 +92,9 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 
 ## İkonlar
 
-- Tek kaynak `assets/Ikonlar`: 21 çizgi ikon, 24×24 görünüm kutusu, 2px çizgi, yuvarlak uç. Arayüzde `currentColor` ile boyanır; dosyalar önizleme için `erp-text` renginde.
+- Tek kaynak `assets/Ikonlar`: 22 çizgi ikon, 24×24 görünüm kutusu, 2px çizgi, yuvarlak uç. Arayüzde `currentColor` ile boyanır; dosyalar önizleme için `erp-text` renginde.
 - Her araç çubuğu aksiyonunun ikonu sabittir: Yeni `i-plus`, Kaydet `i-save`, Düzenle `i-edit`, Kopyala `i-copy`, Sil `i-trash`, Ara `i-search`, Filtre `i-filter`, Yenile `i-refresh`, Yazdır `i-print`, Excel `i-export`, Küçült `i-collapse`, Büyüt `i-expand`, Kapat `i-close`.
-- Durum ikonları: tamam `i-check`, bekliyor `i-clock`, bilgi `i-info`, pasif `i-ban`, taslak `i-draft`, hata/iptal `i-alert`, geri al `i-undo`, geri `i-back`.
+- Durum ikonları: tamam `i-check`, bekliyor `i-clock`, bilgi `i-info`, pasif `i-ban`, taslak `i-draft`, hata/iptal `i-alert`, geri al `i-undo`. Gezinme: önceki kayıt `i-back`, sonraki kayıt `i-next`.
 - Yeni bir ikon gerekiyorsa aynı çizgi diliyle sete eklenir; başka kütüphaneden tek tük ikon alınmaz.
 - Logo yoktur; uygulama adı düz yazıyla `baslik-kart` stilinde yazılır.
 
