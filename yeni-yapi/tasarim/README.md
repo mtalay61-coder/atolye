@@ -20,6 +20,7 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 - Durum renkleri yalnız durum anlatır: `erp-ok` tamam, `erp-wait` bekliyor, `erp-info` bilgi/taslak, `erp-idle` pasif, `erp-void` iptal/hata/eksi. Her durum renkle birlikte **ikon ve kelime** taşır; renk tek başına anlam taşımaz.
 - `erp-text-3` yalnız ipucu yazısı, pasif metin ve giriş kutusu çerçevesidir; asıl bilgi onunla yazılmaz.
 - Zemin katmanları: `erp-page` sayfa → `erp-panel` kart ve tablo → `erp-zebra`/`erp-hover`/`erp-accent-tint` satır durumları. Yan menü ve bildirim koyu `erp-shell` zeminindedir.
+- **Bakiye tek kuralla yazılır:** işaretli (`+1.500,00 ₺`, `−12.450,00 ₺`) ve rengiyle: artı `erp-ok` (`erp-arti`) cari bize borçlu, eksi `erp-void` (`erp-eksi`) biz cariye borçluyuz, sıfır nötr. Liste, kart başlığı, ekstrenin koşan bakiyesi ve toplam satırı aynı kuraldan beslenir; mutlak değer yazılıp yön renge bırakılmaz. Dövizli cari Türk lirası toplamına karışmaz.
 - Kayda yazılan renk (ürün renginin kodu, kullanıcının seçtiği etiket rengi) veri olarak hex saklanır; token adı veriye yazılmaz.
 
 ## Tema
@@ -34,7 +35,7 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 ## Yazı
 
 - Tek yazı ailesi Archivo (`sans`). Ekran başına bir `baslik-sayfa`; kart ve pencerelerde `baslik-kart`; geri kalan her şey `govde`.
-- Tablo sütun başlıkları ve form etiketleri `etiket` stilinde, BÜYÜK HARF, 0,06em aralıklıdır.
+- Tablo sütun başlıkları ve form etiketleri `etiket` stilinde, BÜYÜK HARF, 0,06em aralıklıdır. Sayfa dili `tr` olmalıdır (`<html lang="tr">`; `bundle.js` yoksa koyar), yoksa "İL" yerine "IL" yazılır.
 - Yazı küçültülerek sığdırılmaz; sığmayan alan sarılır ya da tablo kendi içinde yana kayar.
 
 ## Boyut, boşluk, köşe, gölge

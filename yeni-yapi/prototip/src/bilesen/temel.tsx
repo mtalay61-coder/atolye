@@ -249,3 +249,28 @@ export function useSagTik<T>() {
   const [menu, setMenu] = useState<{ x: number; y: number; kayit: T } | null>(null);
   return { menu, ac: (e: React.MouseEvent, kayit: T) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, kayit }); }, kapat: () => setMenu(null) };
 }
+
+// ---------------- Kaydedilmemiş değişiklik sorusu ----------------
+// Düzenlemede Vazgeç/Kapat'a basılınca: "Kaydet · Kaydetmeden çık · Düzenlemeye dön". Değişiklik sessizce kaybolmaz.
+export function KaydetSorusu({ kaydet, at, don }: { kaydet: () => void; at: () => void; don: () => void }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); don(); } };
+    addEventListener("keydown", esc, true);
+    return () => removeEventListener("keydown", esc, true);
+  }, [don]);
+  return (
+    <div className="erp-perde" onMouseDown={(e) => { if (e.target === e.currentTarget) don(); }}>
+      <div className="erp-dialog" role="dialog" aria-modal="true" aria-labelledby="kaydet-soru">
+        <h2 id="kaydet-soru">Değişiklikler kaydedilmedi</h2>
+        <p>Kaydetmeden çıkarsan bu karttaki değişiklikler kaybolur.</p>
+        <div className="erp-dialog__dip">
+          <button ref={ref} className="erp-btn" onClick={don}>Düzenlemeye dön</button>
+          <button className="erp-btn" onClick={at}>Kaydetmeden çık</button>
+          <button className="erp-btn erp-btn--primary" onClick={kaydet}><Ikon ad="i-save" />Kaydet</button>
+        </div>
+      </div>
+    </div>
+  );
+}

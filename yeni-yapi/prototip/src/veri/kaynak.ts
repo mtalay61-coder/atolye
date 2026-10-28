@@ -1,13 +1,18 @@
 // VERİ KATMANI — ekranlar veriyi YALNIZ buradan alır.
 // Prototipte örnek veri döner ve hiçbir şey kaydedilmez. Bağlama zamanı yalnız bu dosya değişir:
 // okumalar Supabase görünümlerinden (v_…), yazmalar komut fonksiyonlarından (rpc) gelir; ekranlara dokunulmaz.
-import { CARILER, SIPARISLER, URUNLER } from "./ornek";
-import type { Cari, Siparis, Urun } from "./tipler";
+import { CARI_HAREKETLERI, CARILER, SIPARISLER, URUNLER } from "./ornek";
+import type { Cari, CariHareket, Siparis, Urun } from "./tipler";
 
 const bekle = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(structuredClone(v)), 60));
 
 export const kaynak = {
-  cariler: () => bekle<Cari[]>(CARILER),
+  // Seçiciler pasif carileri göstermez; liste ekranı "Pasif" süzgeciyle görür.
+  cariler: (pasifDahil = false) => bekle<Cari[]>(CARILER.filter((c) => pasifDahil || !c.pasif)),
+  cari: (kod: string) => bekle<Cari | undefined>(CARILER.find((c) => c.kod === kod)),
+  cariHareketleri: (cariId: string) => bekle<CariHareket[]>(CARI_HAREKETLERI.filter((x) => x.cariId === cariId)),
+  cariSiparisleri: (cariId: string) => bekle<Siparis[]>(SIPARISLER.filter((x) => x.cariId === cariId)),
+  sonrakiCariKodu: () => bekle<string>("CAR-" + String(Math.max(...CARILER.map((c) => +c.kod.slice(4))) + 1).padStart(4, "0")),
   urunler: () => bekle<Urun[]>(URUNLER),
   siparisler: () => bekle<Siparis[]>(SIPARISLER),
   siparis: (no: string) => bekle<Siparis | undefined>(SIPARISLER.find((s) => s.no === no)),
@@ -23,6 +28,9 @@ const KOMUT_MESAJI: Record<string, string> = {
   siparis_iptal: "Sipariş iptal edildi",
   siparis_kopyala: "Sipariş kopyalandı",
   teklif_siparise_cevir: "Siparişe çevrildi",
+  cari_kaydet: "Cari kaydedildi",
+  cari_pasife_al: "Cari pasife alındı",
+  cari_etkinlestir: "Cari yeniden etkin",
 };
 
 // Bildirimin sonuna eklenir: kullanıcı işlemin gerçekte yapılmadığını bilsin.

@@ -30,6 +30,9 @@ npm run build    # tasarımı eşitler, tip denetimi, dist/ ve dist/onizleme.htm
 | `#siparisler` | Sipariş listesi: süzgeç çipleri, süzgeç satırı, seçim, sağ tık, iptal onayı | Liste |
 | `#siparis-<no>` | Sipariş kartı: ‹ önceki · sıra · sonraki › (PageUp/PageDown, listenin süzgeciyle), Genel · Kalemler (matris, sevk işaretli) · Sevkler · Notlar, İşlemler menüsü | Kart |
 | `#siparis-yeni` | Yeni sipariş: aramalı müşteri/ürün, beden matrisiyle kalem ekleme, toplamlar | Belge |
+| `#cariler` | Cari listesi: rol çipleri (Müşteri, Tedarikçi, Fasoncu · personel, Bize borçlu, Pasif), geniş arama (ad, kod, yetkili, telefon, vergi no), işaretli bakiye, Türk lirası toplamları, Pasife al | Liste |
+| `#cari-<kod>` | Cari kartı: ‹ › gezgin, bakiye başlıkta, Genel · Hareketler (ekstre, koşan bakiye) · Siparişler · Notlar, İşlemler menüsü; kartın içinde düzenleme, kaydedilmemiş değişiklik sorusu | Kart |
+| `#cari-yeni` | Yeni cari: aynı kart, doğrulamalar (ünvan, rol, vergi no 10/11 hane, e-posta, telefon), benzer cari uyarısı, aramalı il seçimi | Kart |
 | `#tanimlar` | Tanımlar › Görünüm: tema seçimi | Kart |
 | `#modul-<KOD>` | Henüz çizilmemiş modül: şemadan amaç ve kılavuz | — |
 

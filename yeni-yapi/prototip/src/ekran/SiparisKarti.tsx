@@ -4,7 +4,7 @@ import { BosDurum, Ikon, KartBasligi, Menu, Rozet, Sekmeler, SilOnayi } from "..
 import { useUygulama } from "../bilesen/uygulama";
 import { kaynak, PROTOTIP_NOTU } from "../veri/kaynak";
 import { BEDENLER } from "../veri/ornek";
-import { kalemCift, kalemTutar, siparisCift, siparisSevk, siparisTutar, sayi, tl, topla } from "../veri/hesap";
+import { bakiyeSinifi, bakiyeYaz, kalemCift, kalemTutar, siparisCift, siparisSevk, siparisTutar, sayi, tl, topla } from "../veri/hesap";
 import type { Cari, Siparis } from "../veri/tipler";
 
 // Açık sekme kayıttan kayda geçerken korunur (kart her kayıtta yeniden kurulur).
@@ -60,8 +60,8 @@ export function SiparisKarti({ no }: { no: string }) {
         <div className="erp-card__body">
           {sekme === "genel" && (
             <dl className="erp-ozellik" style={{ margin: 0 }}>
-              <dt>Müşteri</dt><dd>{cari?.kod} · {cari?.ad}</dd>
-              <dt>Bakiye</dt><dd className={cari && cari.bakiye < 0 ? "erp-eksi" : ""}>{tl(cari?.bakiye ?? 0)}</dd>
+              <dt>Müşteri</dt><dd><a href={"#cari-" + cari?.kod}>{cari?.kod} · {cari?.ad}</a></dd>
+              <dt>Bakiye</dt><dd className={bakiyeSinifi(cari?.bakiye ?? 0)}>{bakiyeYaz(cari?.bakiye ?? 0, cari?.paraBirimi)}</dd>
               <dt>Tarih</dt><dd>{s.tarih}</dd><dt>Teslim</dt><dd>{s.teslim}</dd>
               <dt>Çift</dt><dd>{sayi(siparisCift(s))} · sevk edilen {sayi(siparisSevk(s))}</dd>
               <dt>Tutar</dt><dd>{tl(siparisTutar(s))}</dd>

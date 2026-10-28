@@ -5,12 +5,12 @@ import { Alan, AramaliSecici, BosDurum, Ikon, KartBasligi } from "../bilesen/tem
 import { useUygulama } from "../bilesen/uygulama";
 import { kaynak, PROTOTIP_NOTU } from "../veri/kaynak";
 import { BEDENLER } from "../veri/ornek";
-import { kalemCift, kalemTutar, sayi, tl } from "../veri/hesap";
+import { bakiyeSinifi, bakiyeYaz, kalemCift, kalemTutar, sayi, tl } from "../veri/hesap";
 import type { Cari, Kalem, Urun } from "../veri/tipler";
 
 const bosBedenler = () => Object.fromEntries(BEDENLER.map((b) => [b, 0]));
 const sayiOku = (v: string) => Number(v.replace(/\./g, "").replace(",", ".")) || 0;
-const tlHtml = (n: number) => `<span class="${n < 0 ? "erp-eksi" : ""}">${window.Atolye.sayiYaz(n, 2)} ₺</span>`;
+const tlHtml = (n: number) => `<span class="${bakiyeSinifi(n)}">${bakiyeYaz(n)}</span>`;
 
 export function SiparisFormu() {
   const u = useUygulama();

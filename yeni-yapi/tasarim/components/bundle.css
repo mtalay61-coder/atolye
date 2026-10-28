@@ -2,6 +2,7 @@
 body { font-family: var(--font-sans); color: var(--erp-text); background: var(--erp-page); font-size: 13px; line-height: 18px; margin: 0; }
 .erp-sayi { text-align: right; font-variant-numeric: tabular-nums; }
 .erp-eksi { color: var(--erp-void); }
+.erp-arti { color: var(--erp-ok); }
 
 /* İkon düğme: araç çubuğundaki bütün aksiyonların tek sınıfı */
 .erp-ib { display: inline-grid; place-items: center; width: var(--erp-icon-btn); height: var(--erp-icon-btn); padding: 0; border: 1px solid transparent; border-radius: var(--erp-r-sm); background: transparent; color: var(--erp-text); cursor: pointer; font: inherit; }

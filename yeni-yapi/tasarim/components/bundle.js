@@ -237,6 +237,8 @@
     }).join("") + "</div>";
   }
   window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir, katla: katla, eslesme: eslesme, vurgula: vurgula, sayiYaz: sayiYaz, aramaliSecici: aramaliSecici, TEMALAR: TEMALAR, temaUygula: temaUygula, menuHtml: menuHtml, gezgin: gezgin, gezginHtml: gezginHtml };
+  // Etiketler BÜYÜK HARFLE (text-transform) yazılır; sayfa dili Türkçe değilse "İL" yerine "IL" çıkar.
+  if (!document.documentElement.lang) document.documentElement.lang = "tr";
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { ikonlariYerlestir(); });
   else ikonlariYerlestir();
 })();
