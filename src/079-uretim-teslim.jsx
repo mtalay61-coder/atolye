@@ -554,8 +554,11 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   setStok(nextStok);
   setCariler(nextCariler);
   setUretim(nextUretim);
-  yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
-  yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
+  // Stok (hammadde çıkışı, mamul girişi) ve cari (işçilik) TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
+  birlikteYaz([
+    { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
+    { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
+  ]);
   yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
   // SIRA (v1.537.0 — son denetim): bu blok sipariş listesi YAZILDIKTAN SONRA çalışıyordu; alış rezervasyonundaki
   // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce.

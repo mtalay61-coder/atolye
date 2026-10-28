@@ -14,23 +14,32 @@ const bellek = {};
 global.window = { localStorage: { getItem: (k) => (k in bellek ? bellek[k] : null), setItem: (k, v) => { bellek[k] = String(v); }, removeItem: (k) => { delete bellek[k]; } },
   __supabaseYenidenDenemeMs: [] };
 let rpcSayisi = 0;
+const rpcAdlari = [];
 // Sahte ağ: rpc/stk_yaz yerel veritabanında Ali (Yönetici) olarak çalışır; urunler'e yazmalar başarılı sayılır.
 global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
-  if (yol.startsWith("rpc/stk_yaz")) {
+  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz)/) || [])[1];
+  if (rpcAdi) {
     rpcSayisi++;
+    rpcAdlari.push(rpcAdi);
     const p = JSON.parse(sec.body).p;
     const metin = JSON.stringify(p);
     if (metin.includes("$j$")) throw new Error("test: yük $j$ içeriyor");
-    const sonuc = psql(`select set_config('request.jwt.claims', '{"email":"ali@atolye.local","role":"authenticated"}', false);
-                        set role authenticated;
-                        select public.stk_yaz($j$${metin}$j$::jsonb);`).split("\n").pop();
-    return { ok: true, status: 200, json: async () => JSON.parse(sonuc), text: async () => sonuc };
+    try {
+      const sonuc = psql(`select set_config('request.jwt.claims', '{"email":"ali@atolye.local","role":"authenticated"}', false);
+                          set role authenticated;
+                          select public.${rpcAdi}($j$${metin}$j$::jsonb);`).split("\n").pop();
+      return { ok: true, status: 200, json: async () => JSON.parse(sonuc), text: async () => sonuc };
+    } catch (e) {
+      // Sunucu hatası (PostgREST 400 gibi): ağ hatası değil — yeniden denenmez, hata yukarı gider.
+      const metin = String(e.stderr || e.message);
+      return { ok: false, status: 400, json: async () => ({ message: metin }), text: async () => metin };
+    }
   }
-  if (/^(varyantlar|stok_hareketleri)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
+  if (/^(varyantlar|stok_hareketleri|cari_hareketleri)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
   return { ok: true, status: 200, json: async () => (sec.method === "PATCH" ? [{ id: "x" }] : []), text: async () => "" };
 };
-const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla } = require(path.join(__dirname, "../../test/erp.cjs"));
+const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, yazmaZarfi } = require(path.join(__dirname, "../../test/erp.cjs"));
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -163,6 +172,48 @@ const hrk = (id, renk, beden, miktar, fisNo, ek = {}) => ({ id, renk, beden, mik
   const okunan = buluttanOku().filter((p) => p.id !== "u-eski");
   bekle("7: yeniden okunan stok aynı", ozet(okunan), ozet(stok));
   bekle("7: yeniden okunan hareketler aynı", hareketIdleri(okunan), hareketIdleri(stok));
+
+  console.log("8) Cari v2 + yazma zarfı: satış fişinin stok ve cari satırı TEK fis_yaz");
+  cariV2AktifAyarla(true);
+  const cariOku = () => jsonSorgu("select id, unvan from public.cariler order by id").map((c) => ({
+    ...c, hareketler: jsonSorgu(`select * from public.cari_hareketleri where cari_id = '${c.id}' order by id`).map((h) => {
+      const { ek, cari_id, para_birimi, odeme_sekli, fis_no, siparis_no, uretim_id, urun_ad, ...kalan } = h;
+      return { ...(ek || {}), ...kalan, paraBirimi: para_birimi, odemeSekli: odeme_sekli, fisNo: fis_no, siparisNo: siparis_no,
+        uretimId: uretim_id, urunAd: urun_ad, tutar: Number(h.tutar) };
+    }) }));
+  let cariler = cariOku();
+  tabloBaslangicTam("cariler", derin(cariler));
+  surumleriYukle("cariler", cariler.map((c) => ({ id: c.id, surum: 1 })));
+  const bakiye = () => Number(psql("select coalesce(sum(case when yon = 'Alacak' then tutar else -tutar end), 0) from public.cari_hareketleri where cari_id = 'c-2';"));
+  const b0 = bakiye();
+  rpcAdlari.length = 0;
+  stok = derin(stok); cariler = derin(cariler);
+  u("u-kosele").hareketler.unshift(hrk("e8", "Gece Siyahı", "Standart", -2, "SF-E8"));
+  cariler.find((c) => c.id === "c-2").hareketler.unshift({ id: "ce8", tarih: "2026-10-28", zaman: "2026-10-28T12:00:00.000Z", yon: "Alacak", tutar: 480, paraBirimi: "TRY", fisNo: "SF-E8", aciklama: "Satış fişi" });
+  let zarf = yazmaZarfi(["urunler", "cariler"]);
+  await Promise.all([supabaseTabloEsitle("urunler", stok, { zarf }), supabaseTabloEsitle("cariler", cariler, { zarf })]);
+  bekle("8: tek istek, fis_yaz", rpcAdlari, ["fis_yaz"]);
+  bekle("8: cari bakiye arttı", bakiye(), b0 + 480);
+  bekle("8: cari görünümü uygulamanın yazdığı biçimde", psql("select tarih || '|' || zaman || '|' || fis_no from public.cari_hareketleri where id = 'ce8';"), "2026-10-28|2026-10-28T12:00:00.000Z|SF-E8");
+  karsilastir("8", stok);
+
+  console.log("9) Tek işlem: stok tarafı sunucuda düşerse cari de YAZILMAZ, iki söz de reddedilir");
+  rpcAdlari.length = 0;
+  const s9 = derin(stok); const c9 = derin(cariler);
+  // Sunucuda olmayan ürün (urunler'e REST yazması bu testte sahte): stk_yaz "Ürün bulunamadı" der → fis_yaz geri alınır.
+  s9.push({ id: "u-yok", ad: "Olmayan", variants: [], hareketler: [hrk("e9", "Standart", "Standart", 1, "ALS-E9")] });
+  c9.find((c) => c.id === "c-1").hareketler.unshift({ id: "ce9", tarih: "2026-10-28", yon: "Borç", tutar: 77, paraBirimi: "TRY", fisNo: "ALS-E9" });
+  zarf = yazmaZarfi(["urunler", "cariler"]);
+  const r9 = await Promise.allSettled([supabaseTabloEsitle("urunler", s9, { zarf }), supabaseTabloEsitle("cariler", c9, { zarf })]);
+  bekle("9: iki söz de reddedildi", r9.map((x) => x.status), ["rejected", "rejected"]);
+  bekle("9: cari satırı yazılmadı", psql("select count(*) from public.car_hareket where id = 'ce9';"), "0");
+  bekle("9: stok satırı yazılmadı", psql("select count(*) from public.stk_hareket where id = 'e9';"), "0");
+
+  console.log("10) Cari hareket silme → iptal (iz kalır), görünümden düşer");
+  const c10 = derin(cariler); c10.find((c) => c.id === "c-2").hareketler = c10.find((c) => c.id === "c-2").hareketler.filter((h) => h.id !== "ce8");
+  await supabaseTabloEsitle("cariler", c10);
+  bekle("10: iptal", psql("select iptal from public.car_hareket where id = 'ce8';"), "t");
+  bekle("10: bakiye geri", bakiye(), b0);
 
   console.log(hata ? "\nUÇTAN UCA BAŞARISIZ" : "\nUÇTAN UCA TAMAM");
   process.exit(hata);

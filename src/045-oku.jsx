@@ -95,8 +95,13 @@ async function supabasedenOku(secenek = {}) {
   // çalıştırılmamış) okuma hata verir → bugünkü yol. Okunamazsa (ağ) önceki değer kalır: yolda bir okuma hatası açık
   // bayrağı kapatıp yazmaları görünüme (yazılamaz) yöneltmesin.
   // Öteki okumalarla AYNI ANDA gider (açılış bir istek kadar uzamasın); aşağıda, satırlar işlenmeden önce beklenir.
-  const stokV2Ayari = yalniz ? null : supabaseTumSatirlar("stk_ayar", "select=aktif").then(
-    (ayar) => stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif)),
+  // `select=*` (v1.727.0): cari v2 sütunu (`cari_aktif`) cari-v2.sql çalıştırılmadan yok — sütun adıyla istenirse okuma
+  // hata verir ve stok bayrağı da okunmazdı.
+  const stokV2Ayari = yalniz ? null : supabaseTumSatirlar("stk_ayar", "select=*").then(
+    (ayar) => {
+      stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif));
+      cariV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].cari_aktif));
+    },
     () => { /* önceki değer */ });
 
   const [

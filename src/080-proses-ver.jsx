@@ -376,8 +376,11 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
 
   setUretim(nextUretim);
   if (araProsesOtomatikTamamlanacakMi) {
-    yazimiIzle(tabloYaz("stok:items", "urunler", nextStok), "Stok kartları", nextStok);
-    yazimiIzle(tabloYaz("cari:data", "cariler", nextCariler), "Cari kartları", nextCariler);
+    // Stok ve cari TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
+    birlikteYaz([
+      { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
+      { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
+    ]);
   }
   if (nextStokRez !== stokRezervasyonlari) {
     // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen

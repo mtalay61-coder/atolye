@@ -176,11 +176,13 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       yanEtkiliMi: true,
     });
     const nextUretimListesi = uretim.filter((o) => o.id !== uretimId);
+    // Stok ve cari hareketleri TEK ADIM, tek zarf (v1.727.0): v2'de tek sunucu işlemi — biri silinip öteki kalamaz.
     const adimlar = [
-      { ad: "hammadde hareketleri", yerelUygula: () => setStok(nextStok),
-        yaz: () => tabloYaz("stok:items", "urunler", nextStok) },
-      { ad: "cari hareketleri", yerelUygula: () => setCariler(nextCariler),
-        yaz: () => tabloYaz("cari:data", "cariler", nextCariler) },
+      { ad: "hammadde ve cari hareketleri", yerelUygula: () => { setStok(nextStok); setCariler(nextCariler); },
+        yaz: () => birlikteYaz([
+          { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok },
+          { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler },
+        ]) },
     ];
     if (etkilendiMi || rezEtkilendi) {
       adimlar.push({ ad: "bağlı satış siparişi", yerelUygula: () => setSiparisler(nextSiparislerRez),
