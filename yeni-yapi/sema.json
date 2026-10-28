@@ -1358,76 +1358,76 @@
   },
   "kararlar": {
     "k-01": {
-      "baslik": "Çoklu firma baştan mı?",
       "aciklama": "Eski uygulamada firma ekleme vardı. Her tabloya firma_id + RLS baştan konursa sonradan eklemek gerekmez.",
-      "oneri": "Evet, baştan.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Çoklu firma baştan mı?",
+      "durum": "verildi",
+      "karar": "Çoklu firma baştan: her tabloda firma_id, RLS politikaları firmaya göre.",
       "moduller": [
         "m-cek"
-      ]
+      ],
+      "oneri": "Evet, baştan."
     },
     "k-02": {
-      "baslik": "Onaylı belge düzenlenebilsin mi?",
       "aciklama": "Kullanıcılar fişi düzeltmeye alışkın. Düzenleme serbest olursa geçmiş kaybolur.",
-      "oneri": "\"Düzelt\" düğmesi kalsın; arkada iptal + yeni belge tek işlemde, geçmiş görünür.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Onaylı belge düzenlenebilsin mi?",
+      "durum": "verildi",
+      "karar": "Onaylı belge düzenlenmez. \"Düzelt\" düğmesi kalır; arkada iptal + yeni belge tek işlemde yapılır, ikisi de geçmişte görünür.",
       "moduller": [
         "m-bel"
-      ]
+      ],
+      "oneri": "\"Düzelt\" düğmesi kalsın; arkada iptal + yeni belge tek işlemde, geçmiş görünür."
     },
     "k-03": {
-      "baslik": "Fasoncu ve personel ayrı depo mu?",
       "aciklama": "Verilen hammadde kimde, ne kadar bekliyor görünür; eksik/fazla teslim ölçülür.",
-      "oneri": "Evet, her kişi/fasoncu sanal depo.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Fasoncu ve personel ayrı depo mu?",
+      "durum": "verildi",
+      "karar": "Her personel ve fasoncu bir sanal depodur. İş verilince malzeme o depoya geçer, teslimde oradan tüketilir.",
       "moduller": [
         "m-urt",
         "m-tan"
-      ]
+      ],
+      "oneri": "Evet, her kişi/fasoncu sanal depo."
     },
     "k-04": {
-      "baslik": "Koli stoğu ayırsın mı?",
       "aciklama": "Koliye giren mal başka siparişe satılamasın mı, yoksa koli yalnız paketleme gruplaması mı?",
-      "oneri": "Yalnız gruplama; stok sevkte düşer, koli içeriği rezerve sayılır.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Koli stoğu ayırsın mı?",
+      "durum": "verildi",
+      "karar": "Koli yalnız gruplamadır, stok ayırmaz. Stok sevk belgesiyle düşer; koli içeriği raporda rezerve görünür.",
       "moduller": [
         "m-dep"
-      ]
+      ],
+      "oneri": "Yalnız gruplama; stok sevkte düşer, koli içeriği rezerve sayılır."
     },
     "k-05": {
-      "baslik": "Rezervasyon sert mi yumuşak mı?",
       "aciklama": "Sert: siparişe ayrılan stok başkasına satılamaz. Yumuşak: yalnız uyarı ve raporda görünür.",
-      "oneri": "Yumuşak, görünümden; sevkte uyarı.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Rezervasyon sert mi yumuşak mı?",
+      "durum": "verildi",
+      "karar": "Rezervasyon yumuşak: ayrı tablo yok, görünümden hesaplanır; başka siparişe ayrılmış mal sevk edilirken uyarı çıkar.",
       "moduller": [
         "m-pln",
         "m-sip"
-      ]
+      ],
+      "oneri": "Yumuşak, görünümden; sevkte uyarı."
     },
     "k-06": {
-      "baslik": "Eski veriden ne taşınacak?",
       "aciklama": "Eski kayıtların bir kısmı test verisiydi. Geçmiş hareketlerin hepsini taşımak eski tutarsızlıkları da taşır.",
-      "oneri": "Kartlar + tanımlar + açılış bakiyeleri (ACL) + açık siparişler. Eski uygulama salt okunur arşiv olarak kalsın.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Eski veriden ne taşınacak?",
+      "durum": "verildi",
+      "karar": "Taşınacaklar: ürün kartları, tanımlar, cari kartları, açılış bakiyeleri (ACL belgesiyle) ve açık siparişler. Geçmiş hareketler taşınmaz; eski uygulama salt okunur arşiv olarak kalır.",
       "moduller": [
         "m-bak"
-      ]
+      ],
+      "oneri": "Kartlar + tanımlar + açılış bakiyeleri (ACL) + açık siparişler. Eski uygulama salt okunur arşiv olarak kalsın."
     },
     "k-07": {
-      "baslik": "Yeni depo mu, aynı depo mu?",
       "aciklama": "Kod ve şema tamamen yeni olacak.",
-      "oneri": "Yeni GitHub deposu + yeni Supabase projesi; eski ikisi dokunulmadan çalışmaya devam eder.",
-      "karar": "",
-      "durum": "acik",
+      "baslik": "Yeni depo mu, aynı depo mu?",
+      "durum": "verildi",
+      "karar": "Yeni GitHub deposu ve yeni Supabase projesi. Eski depo ve eski Supabase dokunulmadan çalışmaya devam eder.",
       "moduller": [
         "m-cek"
-      ]
+      ],
+      "oneri": "Yeni GitHub deposu + yeni Supabase projesi; eski ikisi dokunulmadan çalışmaya devam eder."
     }
   },
   "kilavuz": {
