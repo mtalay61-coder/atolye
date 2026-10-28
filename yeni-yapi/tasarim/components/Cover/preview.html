@@ -1,0 +1,66 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--erp-page); }
+  .kap { position: relative; width: 960px; height: 288px; overflow: hidden; }
+  .kap > svg { position: absolute; inset: 0; }
+  .shell { fill: var(--erp-shell); } .shell2 { fill: var(--erp-shell-2); }
+  .accent { fill: var(--erp-accent); } .tint { fill: var(--erp-accent-tint); }
+  .head { fill: var(--erp-head); } .zebra { fill: var(--erp-zebra); } .panel { fill: var(--erp-panel); stroke: var(--erp-line-soft); stroke-width: 1; }
+  .sm { rx: var(--erp-r-sm); } .md { rx: var(--erp-r-md); }
+  .ad { position: absolute; left: 40px; bottom: 40px; max-width: 440px; }
+  .ad h1 { margin: 0; font-family: var(--font-sans); font-weight: 800; font-size: 112px; line-height: .92; color: var(--erp-text); letter-spacing: -.01em; }
+  .ad p { margin: 12px 0 0; font-family: var(--font-sans); font-size: 14px; color: var(--erp-text-2); }
+</style></head>
+<body>
+<div class="kap">
+<svg viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
+<!-- bloklar: erp-shell levha 128×288 (x 496), içinde erp-shell-2 menü şeridi ve erp-accent etkin çizgi; erp-head, erp-zebra, erp-panel, erp-accent-tint matris hücreleri
+     düzen: solda tam boy koyu levha (yan menü), sağında modüler hücre ızgarası (tablo/matris) — uygulamanın kabuğu
+     desen: "geometrik, modüler, yoğun arayüz → yarıçap token'larıyla kesilmiş karolar": ERP ekranı beden matrisinden ibaret
+     ölçüler: hücre 40×26, aralık erp-gap-2 (8px), köşe erp-r-sm / erp-r-md -->
+<rect class="shell md" x="496" y="0" width="128" height="288"/>
+<rect class="shell2" x="496" y="96" width="128" height="30"/>
+<rect class="accent" x="496" y="96" width="4" height="30"/>
+<rect class="head sm" x="648" y="40" width="88" height="26"/>
+<rect class="head sm" x="744" y="40" width="40" height="26"/>
+<rect class="head sm" x="792" y="40" width="40" height="26"/>
+<rect class="head sm" x="840" y="40" width="40" height="26"/>
+<rect class="head sm" x="888" y="40" width="40" height="26"/>
+<rect class="panel sm" x="648" y="74" width="40" height="26"/>
+<rect class="panel sm" x="696" y="74" width="40" height="26"/>
+<rect class="panel sm" x="744" y="74" width="40" height="26"/>
+<rect class="panel sm" x="792" y="74" width="40" height="26"/>
+<rect class="panel sm" x="840" y="74" width="40" height="26"/>
+<rect class="panel sm" x="888" y="74" width="40" height="26"/>
+<rect class="zebra sm" x="648" y="108" width="40" height="26"/>
+<rect class="zebra sm" x="696" y="108" width="40" height="26"/>
+<rect class="zebra sm" x="744" y="108" width="40" height="26"/>
+<rect class="zebra sm" x="792" y="108" width="40" height="26"/>
+<rect class="zebra sm" x="840" y="108" width="40" height="26"/>
+<rect class="zebra sm" x="888" y="108" width="40" height="26"/>
+<rect class="tint sm" x="648" y="142" width="40" height="26"/>
+<rect class="tint sm" x="696" y="142" width="40" height="26"/>
+<rect class="accent sm" x="744" y="142" width="40" height="26"/>
+<rect class="tint sm" x="792" y="142" width="40" height="26"/>
+<rect class="tint sm" x="840" y="142" width="40" height="26"/>
+<rect class="tint sm" x="888" y="142" width="40" height="26"/>
+<rect class="zebra sm" x="648" y="176" width="40" height="26"/>
+<rect class="zebra sm" x="696" y="176" width="40" height="26"/>
+<rect class="zebra sm" x="744" y="176" width="40" height="26"/>
+<rect class="zebra sm" x="792" y="176" width="40" height="26"/>
+<rect class="zebra sm" x="840" y="176" width="40" height="26"/>
+<rect class="zebra sm" x="888" y="176" width="40" height="26"/>
+<rect class="panel sm" x="648" y="210" width="40" height="26"/>
+<rect class="panel sm" x="696" y="210" width="40" height="26"/>
+<rect class="panel sm" x="744" y="210" width="40" height="26"/>
+<rect class="panel sm" x="792" y="210" width="40" height="26"/>
+<rect class="panel sm" x="840" y="210" width="40" height="26"/>
+<rect class="panel sm" x="888" y="210" width="40" height="26"/>
+</svg>
+<div class="ad"><h1>Atölye</h1><p>Her ekran aynı kurallarla kurulur.</p></div>
+</div>
+</body>
+</html>

@@ -10,6 +10,14 @@ Canlı şema: https://claude.ai/artifact/H3p9BBWRBqhRRkQhLad7RJ (yalnız sahibin
 - `denetle.js` — aynı denetimi `sema.json` üzerinde komut satırından çalıştırır (`boz` eki kuralları
   bilerek bozulmuş bir şemayla dener).
 
+## Tasarım sistemi
+
+Canlı: https://claude.ai/artifact/PZKn1D9oKuRqeY9BctGby4 · kopyası `tasarim/`.
+Kullanıcının ERP arayüz standardı (`src/tema/erp-tokens.css`, `erp-icons.svg`) ve eski uygulamanın arayüz
+kararları üzerine kurulu. Ekran yazmadan önce `tasarim/README.md`, `tasarim/ekran-kaliplari.md` ve
+`tasarim/denetim-listesi.md` okunur. Değerler `tasarim/tokens.json`'dan, sınıflar `components/bundle.css`'ten,
+araç çubuğu sırası, kısayollar, bildirim süresi ve ikonlar `components/bundle.js`'teki `window.Atolye`'den gelir.
+
 ## Kavramlar
 
 - **Bağımlılık** (kimden → kime): kime, kimden olmadan çalışmaz; kimden önce yazılır. Yazım sırası ve

@@ -1,0 +1,182 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-28T14:43:17Z"
+  },
+  "title": "Atölye",
+  "namespace": "Atolye",
+  "libraries": [],
+  "sections": {},
+  "groups": [
+    "Ikonlar"
+  ],
+  "assetGroups": {
+    "Ikonlar": {
+      "name": "Ikonlar",
+      "tile": "s",
+      "order": [
+        "i-plus.svg",
+        "i-save.svg",
+        "i-edit.svg",
+        "i-trash.svg",
+        "i-copy.svg",
+        "i-search.svg",
+        "i-filter.svg",
+        "i-refresh.svg",
+        "i-print.svg",
+        "i-export.svg",
+        "i-collapse.svg",
+        "i-expand.svg",
+        "i-close.svg",
+        "i-undo.svg",
+        "i-check.svg",
+        "i-alert.svg",
+        "i-back.svg",
+        "i-clock.svg",
+        "i-info.svg",
+        "i-ban.svg",
+        "i-draft.svg"
+      ],
+      "files": {
+        "i-plus.svg": {
+          "name": "i-plus.svg",
+          "blob": "d8dc59d928a0103e8bc88c6fbc702e48",
+          "size": 235,
+          "type": "image/svg+xml"
+        },
+        "i-save.svg": {
+          "name": "i-save.svg",
+          "blob": "2ad841248f1f216bd777e9b5842b49e8",
+          "size": 398,
+          "type": "image/svg+xml"
+        },
+        "i-edit.svg": {
+          "name": "i-edit.svg",
+          "blob": "7e0af89c0e75c70f2a13ae4dd6982ded",
+          "size": 356,
+          "type": "image/svg+xml"
+        },
+        "i-trash.svg": {
+          "name": "i-trash.svg",
+          "blob": "ce86ccd2528bf77820b232bdcc7db0cb",
+          "size": 374,
+          "type": "image/svg+xml"
+        },
+        "i-copy.svg": {
+          "name": "i-copy.svg",
+          "blob": "2750f16085af1d34fdbd1e4c8add702f",
+          "size": 318,
+          "type": "image/svg+xml"
+        },
+        "i-search.svg": {
+          "name": "i-search.svg",
+          "blob": "cda775a148edf728590b24318192a141",
+          "size": 256,
+          "type": "image/svg+xml"
+        },
+        "i-filter.svg": {
+          "name": "i-filter.svg",
+          "blob": "af32f484e1806128396998235f097f2c",
+          "size": 260,
+          "type": "image/svg+xml"
+        },
+        "i-refresh.svg": {
+          "name": "i-refresh.svg",
+          "blob": "e888959705bd88e762e480652ca66b50",
+          "size": 375,
+          "type": "image/svg+xml"
+        },
+        "i-print.svg": {
+          "name": "i-print.svg",
+          "blob": "db7f464363f0987c24b00343ce53e986",
+          "size": 387,
+          "type": "image/svg+xml"
+        },
+        "i-export.svg": {
+          "name": "i-export.svg",
+          "blob": "2085a71c6e7146fde3159d5e86ccc9aa",
+          "size": 299,
+          "type": "image/svg+xml"
+        },
+        "i-collapse.svg": {
+          "name": "i-collapse.svg",
+          "blob": "a4f28e14d307ae3e1bb91de8d0bc01ad",
+          "size": 244,
+          "type": "image/svg+xml"
+        },
+        "i-expand.svg": {
+          "name": "i-expand.svg",
+          "blob": "c8193e5ae2f0f9b491bcbaf101338893",
+          "size": 244,
+          "type": "image/svg+xml"
+        },
+        "i-close.svg": {
+          "name": "i-close.svg",
+          "blob": "6e7a07435b524ea53ccce5195a3a51f2",
+          "size": 239,
+          "type": "image/svg+xml"
+        },
+        "i-undo.svg": {
+          "name": "i-undo.svg",
+          "blob": "8ec00152e5b15a948c82d23685fd5547",
+          "size": 272,
+          "type": "image/svg+xml"
+        },
+        "i-check.svg": {
+          "name": "i-check.svg",
+          "blob": "7e6f7cd93d0257fb1b6507579311a875",
+          "size": 261,
+          "type": "image/svg+xml"
+        },
+        "i-alert.svg": {
+          "name": "i-alert.svg",
+          "blob": "a660abfe2b4ce93d998cd01a55e78c0c",
+          "size": 326,
+          "type": "image/svg+xml"
+        },
+        "i-back.svg": {
+          "name": "i-back.svg",
+          "blob": "939354dda572652e0157ead3fc3f1e5d",
+          "size": 241,
+          "type": "image/svg+xml"
+        },
+        "i-clock.svg": {
+          "name": "i-clock.svg",
+          "blob": "abadd0f3fd5d5a29a81e6e5c8fd2cd0f",
+          "size": 252,
+          "type": "image/svg+xml"
+        },
+        "i-info.svg": {
+          "name": "i-info.svg",
+          "blob": "7d8267806955213e9bb95ea4af128bb6",
+          "size": 277,
+          "type": "image/svg+xml"
+        },
+        "i-ban.svg": {
+          "name": "i-ban.svg",
+          "blob": "b78fa49b799ed182a72a07f0927f0cf8",
+          "size": 259,
+          "type": "image/svg+xml"
+        },
+        "i-draft.svg": {
+          "name": "i-draft.svg",
+          "blob": "faf07c2312b94ac6486b67baa4d44fbf",
+          "size": 300,
+          "type": "image/svg+xml"
+        }
+      }
+    }
+  },
+  "blobs": {},
+  "docs": {
+    "sections": []
+  },
+  "lastChange": {
+    "by": "Claude",
+    "at": "2026-10-28T15:05:00Z",
+    "via": "Claude Code",
+    "note": "Kullanıcının ERP arayüz standardından ve eski uygulamanın arayüz kararlarından ilk sürüm"
+  }
+}
