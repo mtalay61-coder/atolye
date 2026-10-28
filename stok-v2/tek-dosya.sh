@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
-# Supabase'e tek yapıştırmada verilecek dosyayı üretir: kurulum (stok-v2.sql) + göç/geçiş işlevleri (stok-v2-goc.sql) +
-# geçişin kendisi. ÜRETİLEN dosya (stok-v2-gecis-tek-dosya.sql) elle düzenlenmez; kaynaklar değişince yeniden üret.
+# Supabase SQL Editor'a verilecek kopyaları üretir (editor-icin.py: yorumsuz, yalnız düz çift-dolar gövde — Editor'un
+# ayırıcısı başka türlüsünü gövdenin ortasından kesiyor, 28 Ekim). ÜRETİLEN dosyalar elle düzenlenmez.
+#   editor/1-kurulum.sql   — stok-v2.sql
+#   editor/2-goc.sql       — stok-v2-goc.sql
+#   editor/3-gecis.sql     — geçişin kendisi (tek satır)
+#   stok-v2-gecis-tek-dosya.sql — üçü birden
 set -euo pipefail
 cd "$(dirname "$0")"
+mkdir -p editor
+python3 editor-icin.py stok-v2.sql > editor/1-kurulum.sql
+python3 editor-icin.py stok-v2-goc.sql > editor/2-goc.sql
+echo "select jsonb_pretty(public.stk_gecis());" > editor/3-gecis.sql
 CIKTI=stok-v2-gecis-tek-dosya.sql
-{
-  echo "-- ====================================================================================================================="
-  echo "--  STOK v2 — KURULUM + GEÇİŞ, TEK DOSYA (ÜRETİLDİ: stok-v2/tek-dosya.sh — elle düzenlemeyin)"
-  echo "--  Supabase › SQL Editor › New query › bu dosyanın TAMAMI › Run."
-  echo "--  ÖNCE uygulamanın v1.726.0 (ya da sonrası) yayında olmalı: eski sürüm geçişten sonra stok yazamaz."
-  echo "--  Sonuçta geçiş raporu döner (taşınan ürün/varyant/fiş/hareket, tanımsız renkler, farklar)."
-  echo "--  Geri dönmek için:  select jsonb_pretty(public.stk_geri_don());"
-  echo "-- ====================================================================================================================="
-  echo
-  cat stok-v2.sql
-  echo
-  cat stok-v2-goc.sql
-  echo
-  echo "-- GEÇİŞ"
-  echo "select jsonb_pretty(public.stk_gecis());"
-} > "$CIKTI"
-echo "üretildi: stok-v2/$CIKTI ($(wc -l < "$CIKTI") satır)"
+cat editor/1-kurulum.sql editor/2-goc.sql editor/3-gecis.sql > "$CIKTI"
+python3 editor-icin.py "$CIKTI" > /dev/null   # denetim: tek dosya da kurala uysun
+echo "üretildi: stok-v2/editor/ (3 adım) ve stok-v2/$CIKTI ($(wc -l < "$CIKTI") satır)"

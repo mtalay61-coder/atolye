@@ -25,6 +25,31 @@ kur() {
 }
 kur
 calistir stok-v2/test/sinama.sql
+# SUPABASE SQL EDITOR TAKLİDİ (28 Ekim): Editor metni kendi ayırıcısıyla ifadelere bölüyor. Editor kopyası
+# (editor-icin.py: yorumsuz, yalnız düz çift-dolar) aynı biçimde bölünüp HER PARÇA AYRI OTURUMDA çalıştırılır; ardından
+# geçiş sınaması bu kurulumun üstünde koşar.
+kur_editor() {
+  psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB"
+  calistir stok-v2/test/supabase-taklit.sql
+  calistir stok-v2/test/eski-tablolar.sql
+  awk '/^create or replace function public.yetki_var_mi/,/^end \$\$;/' rls-yazma.sql | psql -X -q -v ON_ERROR_STOP=1 -d "$DB"
+  calistir degisiklik-sayaci.sql
+  calistir silinen-arsiv.sql
+  for kaynak in stok-v2/stok-v2.sql stok-v2/stok-v2-goc.sql; do
+    echo "── $kaynak (Editor kopyası, parça parça)"
+    python3 stok-v2/editor-icin.py --bol "$kaynak" | node -e '
+      const { execFileSync } = require("child_process");
+      const parcalar = require("fs").readFileSync(0, "utf8").split("\0").filter(Boolean);
+      parcalar.forEach((p, i) => {
+        try { execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", process.argv[1], "-c", p], { stdio: ["ignore", "ignore", "pipe"] }); }
+        catch (e) { console.error(`parça ${i + 1}/${parcalar.length} düştü:\n${p.slice(0, 300)}\n${e.stderr}`); process.exit(1); }
+      });
+      console.log(`   ${parcalar.length} parça, hepsi ayrı oturumda çalıştı`);
+    ' "$DB"
+  done
+}
+kur_editor
+calistir stok-v2/test/sinama-gecis.sql
 kur                                    # geçiş sınaması taze veritabanında
 calistir stok-v2/test/sinama-gecis.sql
 # Uçtan uca: uygulamanın yazma katmanı (test/erp.cjs) → stk_yaz → görünümler. erp.cjs yoksa: cd test && node derle.js

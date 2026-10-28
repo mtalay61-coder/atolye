@@ -379,8 +379,9 @@ declare
   ok boolean := true;
 begin
   if auth.jwt() is null then return; end if;
+  -- Doğrudan çağrı: PL/pgSQL çağrıyı çalışırken çözer, fonksiyon yoksa bu dala hiç girilmez.
   if exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'yetki_var_mi') then
-    execute 'select public.yetki_var_mi($1, $2)' into ok using moduller, islem;
+    ok := public.yetki_var_mi(moduller, islem);
   end if;
   if not coalesce(ok, false) then
     raise exception 'Bu işlem için yetkiniz yok (stok: %)', islem using errcode = '42501';
@@ -727,11 +728,12 @@ end $$;
 
 -- ---------------------------------------------------------------------------------------------------------------------
 -- 5) GÜVENLİK — tablolar yalnız okunur; yazma yalnız yukarıdaki işlemlerle (security definer).
---    Not (degisiklik-sayaci.sql, 7 Ekim): Supabase SQL düzenleyicisi `do $$ … array[…]` bloğunda "syntax error at or near )"
---    verdi. Bu yüzden döngüler adlı dolar tırnaklı ($stk$) geçici bir kurulum fonksiyonunda; düz `select` ile çağrılıp silinir.
+--    Supabase SQL Editor metni kendi ayırıcısıyla ifadelere bölüyor ve yalnız düz çift-dolar tırnağını tanıyor: adlı ya da
+--    iç içe tırnak, yorumdaki dolar işareti gövdeyi ortasından keser (28 Ekim: "syntax error at or near if … end if;"; 7 Ekim
+--    do-bloğu hatası da buydu). Bu dosyada YALNIZ düz çift-dolar gövde, iç içe yok; do-bloğu yerine geçici kurulum fonksiyonu.
 -- ---------------------------------------------------------------------------------------------------------------------
 create or replace function public.stk_kurulum_tamamla() returns text
-language plpgsql security definer set search_path = public as $stk$
+language plpgsql security definer set search_path = public as $$
 declare
   t text;
   f text;
@@ -785,7 +787,7 @@ begin
     rapor := rapor || 'silme arşivi kuruldu; ';
   end if;
   return rapor || 'stok v2 kuruldu';
-end $stk$;
+end $$;
 select public.stk_kurulum_tamamla();
 drop function public.stk_kurulum_tamamla();
 
