@@ -1,0 +1,38 @@
+/* Yalnız sayfa düzeni. Renk, köşe, boşluk tasarım sisteminin token'larından; bileşen görünümü bundle.css'te. */
+html, body, #kok { height: 100%; }
+body { margin: 0; background: var(--erp-page); color: var(--erp-text); }
+
+.kabuk { height: 100%; }
+.kabuk-nav { overflow-y: auto; }
+.kabuk-plan { margin-left: 6px; opacity: .6; }
+.kabuk-ana { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.kabuk-icerik { flex: 1; min-width: 0; }
+.kabuk-menu-dugme { display: none; }
+.kabuk[data-menu-acik="true"] .kabuk-ana::before { content: ""; position: fixed; inset: 0; background: color-mix(in srgb, var(--erp-shell) 45%, transparent); z-index: calc(var(--erp-z-pencere) - 1); }
+.prototip-serit { font-weight: 500; padding-block: 4px; font-size: 12px; }
+
+.sayfa-govde { padding: var(--erp-gap-4); display: grid; gap: var(--erp-gap-3); align-content: start; }
+.cipler { display: flex; flex-wrap: wrap; gap: 6px; }
+.soluk { color: var(--erp-text-2); }
+.kucuk { font-size: 12px; }
+.kucuk svg { width: 12px; height: 12px; vertical-align: -1px; }
+.sevk-isaret { font-size: 9px; color: var(--erp-ok); margin-left: 2px; }
+.kalem-ekle { display: grid; gap: var(--erp-gap-2); padding-top: var(--erp-gap-3); border-top: 1px solid var(--erp-line-soft); justify-items: start; }
+
+.planlanan-amac { margin: 0; max-width: 70ch; font-size: 14px; }
+.planlanan-konu .erp-card__body p { max-width: 70ch; }
+.planlanan-adimlar { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 70ch; }
+
+.giris { min-height: 100%; display: grid; place-items: center; padding: var(--erp-gap-4); background: var(--erp-shell); }
+.giris-kart { width: min(360px, 100%); padding: var(--erp-gap-5); display: grid; gap: var(--erp-gap-3); }
+.giris-ad { font-size: 34px; font-weight: 800; line-height: 1; }
+
+.erp-table tbody tr { cursor: default; }
+.erp-table tbody tr:focus-visible { outline: 2px solid var(--erp-accent); outline-offset: -2px; }
+
+@media (max-width: 720px) {
+  .kabuk-menu-dugme { display: inline-flex; }
+  .kabuk-nav { display: none; position: fixed; inset: 0 auto 0 0; width: var(--erp-nav-w); z-index: var(--erp-z-pencere); }
+  .kabuk[data-menu-acik="true"] .kabuk-nav { display: block; }
+  .sayfa-govde { padding: var(--erp-gap-2); }
+}

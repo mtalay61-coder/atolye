@@ -20,6 +20,12 @@ kararları üzerine kurulu. Ekran yazmadan önce `tasarim/README.md`, `tasarim/e
 araç çubuğu sırası, kısayollar, bildirim süresi, temalar, menü, aramalı seçici (`aramaliSecici`, `eslesme`) ve ikonlar
 `components/bundle.js`'teki `window.Atolye`'den gelir. Uygulama bu davranışları yeniden yazmaz, buradan taşır.
 
+## Prototip
+
+`prototip/`: veritabanı olmadan tıklanabilir ekranlar (React + TypeScript + Vite). Önizleme:
+https://claude.ai/artifact/9pSVfkv3ec7zn3a7aL5aqS. Kuralları `prototip/README.md`'de; ekranlar veriyi yalnız
+`src/veri/kaynak.ts`'ten alır, bağlama zamanı yalnız o dosya değişir.
+
 ## Kavramlar
 
 - **Bağımlılık** (kimden → kime): kime, kimden olmadan çalışmaz; kimden önce yazılır. Yazım sırası ve
