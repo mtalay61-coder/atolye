@@ -462,6 +462,13 @@ function AtolyeUygulamasi() {
   useEffect(() => {
     // Yazma katmanı bileşen dışında olduğu için hatayı bu köprüyle bildiriyor.
     window.__supabaseHataBildir = (tablo, mesaj) => setYazmaHatasi({ tablo, mesaj, zaman: Date.now() });
+    // TEK PARÇA TABLO BİRLEŞTİ (v1.725.0, 030 `tekilYaz`): yazma sırasında buluttan gelen kayıtlar (başka cihazın yeni teklifi,
+    // kasa hareketi…) ekrana da işlenir. Ekran o arada değiştiyse aynı üç yönlü kuralla (taban = gönderilen hâl) birleştirilir.
+    window.__tekilBirlesti = (tablo, birlesik, gonderilen) => {
+      const ayarla = { muhasebe: setMuhasebe, koliler: setKoliler, gorevler: setGorevler, faturalar: setFaturalar, teklifler: setTeklifler,
+        fis_defteri: setFisDefteri, modeller: setModeller, mesajlar: setMesajlar }[tablo];
+      if (ayarla) ayarla((cur) => (cur === gonderilen ? birlesik : ucYonluBirlestir(cur, birlesik, gonderilen)));
+    };
     // KENDİLİĞİNDEN KALKAR (v1.696.1, kullanıcı: "buluta yazılamadı çok karşılaşıyorum"): uyarı, aynı tablo sonra
     // başarıyla yazılsa da elle kapatılana kadar duruyordu — geçici bir ağ kesintisi saatlerce "hata" gibi görünüyordu.
     // Aynı tablonun sonraki başarılı yazması uyarıyı kaldırır (veri artık bulutta).
@@ -951,7 +958,11 @@ function AtolyeUygulamasi() {
     for (const [tablo, setX] of Object.entries(tekil)) {
       if (!alanlar.includes(tekilAlan[tablo])) continue;
       const sat = await supabaseTumSatirlar(tablo);
-      if (sat[0] && sat[0].veri != null && !ayni(tekilAlan[tablo], sat[0].veri)) setX(sat[0].veri);
+      if (sat[0] && sat[0].veri != null) {
+        // Ekran bulut hâline geçiyor → taban da (v1.725.0, 030): sonraki yazma bu hâlden üç yönlü birleşir.
+        if (!ayni(tekilAlan[tablo], sat[0].veri)) setX(sat[0].veri);
+        tekilTabanAyarla(tablo, sat[0].veri);
+      }
     }
     return degisen;
   }, []);

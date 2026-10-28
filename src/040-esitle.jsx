@@ -159,11 +159,30 @@ function topluSilmeEngeliBul(tablo, fark, cocukFarklari, bellekYedegi) {
   }
   for (const { cocuk, cFark } of cocukFarklari || []) {
     const ad = `${tablo}::${cocuk.tablo}`;
-    if (topluSilmeEngeliMi((cFark.silinen || []).length, boy(ad))) {
-      return { tablo: cocuk.tablo, silinen: cFark.silinen.length, onceki: boy(ad) };
+    const silinen = cocuk.cakisma ? bilesikNetKayip(cocuk.cakisma, cFark) : (cFark.silinen || []).length;
+    if (topluSilmeEngeliMi(silinen, boy(ad))) {
+      return { tablo: cocuk.tablo, silinen, onceki: boy(ad) };
     }
   }
   return null;
+}
+// YENİDEN ADLANDIRMA SİLME DEĞİLDİR (v1.725.0 — kullanıcı, 28 Ekim: telefonda 24 Ekim'den beri "Buluta gönderilemeyen kayıt
+// var: Stok kartları", "Yeniden dene" sonuç vermiyor). Bileşik anahtarlı alt tabloda (varyantlar: urun_id+renk+beden) renk adı
+// değişince kimlik değişir: fark katmanı eski satırı SİLİNEN, yenisini EKLENEN sayar. 305 rengin kodlanması binlerce "silinen"
+// üretti; ilk yazma ağda düştü (Failed to fetch), izinli çağrı bir daha yapılmadı, dakikada bir çalışan "Yeniden dene" ise
+// izinsiz gittiği için her seferinde bu kilide takıldı — üstelik kilit hatası deftere yazılmadığından ekranda dört gün boyunca
+// eski "Failed to fetch" kaldı. Ölçü artık NET KAYIP: ana kayıt (urun_id) başına silinen − eklenen, eksiye düşmez, toplanır.
+// Ürünün bütün satırları gidip yerine bir şey gelmezse (gerçek toplu silme) sayılır; adı değişen satırlar sayılmaz. Bir ürünün
+// kaybını başka ürünün artışı örtemez (ürün başına hesap). Kimlikli alt tablolarda (hareketler…) ad değişikliği güncellemedir,
+// kural değişmedi. Saf; birim testi `birim-toplu-silme-kilidi`.
+function bilesikNetKayip(cakisma, cFark) {
+  const ebeveyn = String(cakisma).split(",")[0].trim();
+  const fark = new Map();
+  (cFark.silinenKayitlar || []).forEach((k) => { const p = String(k && k[ebeveyn]); fark.set(p, (fark.get(p) || 0) + 1); });
+  (cFark.eklenen || []).forEach((k) => { const p = String(k && k[ebeveyn]); fark.set(p, (fark.get(p) || 0) - 1); });
+  let net = 0;
+  fark.forEach((n) => { if (n > 0) net += n; });
+  return net;
 }
 
 async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
@@ -471,7 +490,9 @@ function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
         supabaseSonHata = { tablo, mesaj, zaman: Date.now() };
         // TOPLU SİLME ENGELİ bekleyen yazma DEĞİLDİR: deftere düşerse açılışta "yerel kazanır" ve eksik liste
         // bulutun önüne geçer — korumanın engellediği şeyin ta kendisi. Yalnız şerit ve günlük.
-        if (!(e && e.topluSilmeEngeli)) bekleyenYazmaEkle(anahtar, tablo, mesaj);   // yerel güncel, bulut değil: açılışta yerel kazansın
+        // AMA anahtar defterde ZATEN varsa (önceki bir ağ hatasından) kaydın metni güncellenir (v1.725.0): yoksa ekranda
+        // eski sebep ("Failed to fetch") kalıyor, asıl engel hiç görünmüyordu. Yeni kayıt açılmaz.
+        if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, mesaj);   // yerel güncel, bulut değil: açılışta yerel kazansın
         if (typeof window !== "undefined" && window.__supabaseHataBildir) {
           window.__supabaseHataBildir(tablo, mesaj);
         }

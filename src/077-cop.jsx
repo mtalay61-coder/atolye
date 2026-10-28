@@ -267,15 +267,40 @@ const ARSIV_TABLO_ADLARI = {
   cari_hareketleri: "Cari hareketi", siparisler: "Sipariş", siparis_kalemleri: "Sipariş kalemi",
   uretim: "Üretim", uretim_atamalari: "İş ataması", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay",
   cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
-  gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka",
+  gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka", teklifler: "Teklifler",
 };
+
+// TEK PARÇA TABLO GÖRÜNTÜSÜNE DÖNÜŞ (v1.725.0 — kullanıcı, 28 Ekim: telefonda Kasa & Banka "0 hesap"; "yapıda sorun varsa
+// yapıyı baştan kuralım"). Sunucu arşivi tek parça tabloların değişiklik öncesi hâlini günde bir kez, 30 gün tutuyor
+// (silinen-arsiv.sql `arsive_kopyala_goruntu`, teklifler.sql). Bakım › Sunucu arşivi'nde görüntü özetlenir ve bugünkü
+// hâlle BİRLEŞTİRİLEREK geri yazılır (089 `derinBirlestir`: ortak kayıtta bugünkü hâl, yalnız görüntüde olan kayıtlar geri
+// gelir) — görüntüden sonra girilen hiçbir kayıt kaybolmaz; bilinen bedel: o tarihten sonra silinenler de geri gelir.
+// Tanımlar hariç (kendi silinenler defteriyle birleşiyor, 089 `tanimlariBirlestir`).
+const TEKIL_GORUNTU_TABLOLARI = { muhasebe: "muhasebe:data", teklifler: "teklif:data", koliler: "koli:data", faturalar: "fatura:data", gorevler: "gorev:data", modeller: "model:data" };
+// Görüntünün kısa özeti — hangi günün görüntüsünün dolu olduğu listeden okunabilsin. Saf.
+function tekilGoruntuOzeti(tablo, veri) {
+  if (veri == null) return "boş";
+  if (tablo === "muhasebe" && typeof veri === "object" && !Array.isArray(veri)) {
+    const hesaplar = [...(veri.kasalar || []), ...(veri.bankalar || [])];
+    const hareket = hesaplar.reduce((t, h) => t + ((h && h.hareketler) || []).length, 0);
+    return `${(veri.kasalar || []).length} kasa · ${(veri.bankalar || []).length} banka · ${hareket} hareket · ${(veri.cekler || []).length} çek`;
+  }
+  if (Array.isArray(veri)) return `${veri.length} kayıt`;
+  if (typeof veri === "object") return `${Object.keys(veri).length} alan`;
+  return String(veri).slice(0, 40);
+}
+// Görüntü + bugünkü hâl → geri yazılacak hâl. Saf.
+function tekilGoruntuBirlestir(guncel, goruntu) {
+  if (guncel === null || guncel === undefined) return goruntu;
+  return derinBirlestir(guncel, goruntu);
+}
 
 function arsivSatiriOzeti(satir, kullanicilar) {
   const v = (satir && satir.veri) || {};
   // Satır tablolarında `veri` sütunu yoksa satırın kendisi; varsa (cop, onaylar) asıl kayıt içeride.
   const ic = v.veri && typeof v.veri === "object" && !Array.isArray(v.veri) ? v.veri : v;
   const baslik = satir && satir.islem === "GORUNTU"
-    ? "Değişiklik öncesi anlık görüntü"
+    ? `Değişiklik öncesi anlık görüntü${TEKIL_GORUNTU_TABLOLARI[satir.tablo] ? ` · ${tekilGoruntuOzeti(satir.tablo, v.veri)}` : ""}`
     : (v.baslik || ic.ad || ic.unvan || ic.siparisNo || ic.urunAdi || ic.aciklama || ic.no || satir.satir_id || "—");
   const ep = String((satir && satir.silen_eposta) || "").toLowerCase();
   const k = ep && (kullanicilar || []).find((x) => String(kullaniciEposta(x)).toLowerCase() === ep);
