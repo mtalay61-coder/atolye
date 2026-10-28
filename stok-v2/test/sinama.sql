@@ -67,8 +67,12 @@ do $$ begin
   assert (select siparis_id from public.stk_fis where id = 'F-4') = 'sip-100', 'F-4 sipariş kimliği defterden gelmedi';
   -- Fişsiz eski hareket kendi fişini aldı
   assert exists (select 1 from public.stk_fis where id = 'ESKI-h6' and goc), 'fişsiz hareketin fişi yok';
-  -- İptal fiş satırlarıyla taşındı
-  assert (select count(*) from public.stk_hareket where fis_id = 'F-2') = 1, 'iptal fiş satırı yok';
+  -- İptal fiş satırlarıyla taşındı. Defterde F-2 İKİ KEZ var (canlı veride "10032-Saya"): tek fiş, satırları birleşik
+  -- (h-iptal-1 bir kez, h-iptal-2 ikinci kayıttan), stoğa sayılmadan.
+  assert (select count(*) from public.stk_fis where id = 'F-2') = 1, 'çift iptal kaydı';
+  assert (select string_agg(id, ',' order by id) from public.stk_hareket where fis_id = 'F-2') = 'h-iptal-1,h-iptal-2', 'iptal fiş satırları';
+  -- Bozuk defter kayıtları atlandı (yazılacak satırı yok → başlık da yok)
+  assert not exists (select 1 from public.stk_fis where id in ('F-9', 'F-10')), 'bozuk defter kaydından fiş açıldı';
   raise notice 'TAMAM: kimlikler ve fiş başlıkları';
 end $$;
 
