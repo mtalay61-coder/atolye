@@ -27,7 +27,7 @@ body { font-family: var(--font-sans); color: var(--erp-text); background: var(--
 .erp-ib--primary:active { background: var(--erp-accent-press); }
 .erp-ib--danger:hover { background: var(--erp-accent-press); color: var(--erp-on-accent); }
 
-/* Yazılı düğme: yalnız pencere ve form altında (Sil onayı, Kaydet · Vazgeç) */
+/* Yazılı düğme: yalnız onay penceresinde ve özel işlemde. Kaydet/Sil/Düzenle/Kapat her yerde ikon düğme. */
 .erp-btn { display: inline-flex; align-items: center; gap: var(--erp-gap-1); height: var(--erp-icon-btn); padding: 0 var(--erp-gap-3); border: 1px solid var(--erp-text-3); border-radius: var(--erp-r-sm); background: var(--erp-panel); color: var(--erp-text); font: inherit; font-weight: 600; cursor: pointer; }
 .erp-btn:hover { background: var(--erp-hover); }
 .erp-btn svg { width: var(--erp-icon); height: var(--erp-icon); }
@@ -43,8 +43,8 @@ body { font-family: var(--font-sans); color: var(--erp-text); background: var(--
 .erp-toolbar__gap { flex: 1; }
 
 /* Kart */
-.erp-card { background: var(--erp-panel); border: 1px solid var(--erp-line); border-radius: var(--erp-r-md); overflow: hidden; }
-.erp-card__head { display: flex; align-items: center; gap: var(--erp-gap-2); min-height: var(--erp-toolbar-h); padding: 0 var(--erp-gap-2) 0 var(--erp-gap-3); border-bottom: 1px solid var(--erp-line); background: var(--erp-topbar); }
+.erp-card { background: var(--erp-panel); border: 1px solid var(--erp-line); border-radius: var(--erp-r-md); overflow: clip; }
+.erp-card__head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--erp-gap-2); min-height: var(--erp-toolbar-h); padding: 0 var(--erp-gap-2) 0 var(--erp-gap-3); border-bottom: 1px solid var(--erp-line); background: var(--erp-topbar); }
 .erp-card__title { font-size: 15px; line-height: 20px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .erp-card__kod { color: var(--erp-text-2); font-weight: 600; margin-right: var(--erp-gap-2); }
 .erp-card__body { padding: var(--erp-gap-3); }
@@ -278,7 +278,7 @@ body { background: var(--erp-page); color: var(--erp-text); padding-left: max(16
   <div class="cerceve"><div class="ekran" style="background:var(--erp-page);padding:16px">
   <div class="erp-card">
     <div class="erp-card__head erp-pencere-baslik"><span class="erp-card__title"><span class="erp-card__kod">SAT · yeni</span>Satış siparişi</span>
-      <span class="erp-card__actions"><button class="erp-ib erp-ib--primary" title="Kaydet · Ctrl+S" aria-label="Kaydet"><i data-ik="i-save"></i></button><button class="erp-ib" disabled title="Kaydedilmemiş belge silinmez; Kapat ile vazgeç" aria-label="Sil"><i data-ik="i-trash"></i></button><span class="erp-toolbar__sep"></span><button class="erp-ib" title="Küçült" aria-label="Küçült"><i data-ik="i-collapse"></i></button><button class="erp-ib" title="Kapat · Esc" aria-label="Kapat"><i data-ik="i-close"></i></button></span></div>
+      <span class="erp-card__actions"><button class="erp-ib erp-ib--primary" title="Kaydet · Ctrl+S" aria-label="Kaydet"><i data-ik="i-save"></i></button><span class="erp-toolbar__sep"></span><button class="erp-ib" title="Kapat · Esc (kaydedilmemiş değişiklik varsa sorar)" aria-label="Kapat"><i data-ik="i-close"></i></button></span></div>
     <div class="erp-card__body" style="display:grid;gap:16px">
       <div class="erp-form-satir" style="justify-content:space-between">
         <div class="erp-form-satir">
@@ -306,7 +306,6 @@ body { background: var(--erp-page); color: var(--erp-text); padding-left: max(16
         <div class="erp-field" style="width:min(420px,100%)"><label for="not">Not</label><textarea id="not" class="erp-input" style="height:60px;padding-top:6px">Kutu etiketleri müşterinin barkoduyla.</textarea></div>
         <dl class="erp-ozellik" style="margin:0;min-width:240px"><dt>Ara toplam</dt><dd class="erp-sayi">9.180,00 ₺</dd><dt>KDV %10</dt><dd class="erp-sayi">918,00 ₺</dd><dt><b>Genel toplam</b></dt><dd class="erp-sayi"><b>10.098,00 ₺</b></dd></dl>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px"><button class="erp-btn">Vazgeç</button><button class="erp-btn erp-btn--primary"><i data-ik="i-save"></i>Kaydet</button></div>
     </div>
   </div>
   </div></div>

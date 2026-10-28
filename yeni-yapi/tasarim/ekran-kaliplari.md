@@ -19,7 +19,7 @@ Kural: listede Düzenle yoktur; düzenleme kartın işidir.
 Bir siparişin, carinin, ürünün ayrıntısı. Tam ekran pencere ya da listenin içinde açılan kart.
 
 1. **Kart başlığı**: solda kod + ad (`baslik-kart`) ve durum rozeti; sağda **‹ 3 / 24 ›** kayıt gezgini, sonra Düzenle · (özel işlemler) · Sil, en sağda Küçült · Kapat.
-2. Düzenlemedeyken başlıkta yalnız **Kaydet · Vazgeç**; Kaydet tek dolu kırmızı düğmedir.
+2. Düzenlemedeyken başlıkta yalnız **Kaydet ┆ Kapat** (ikon düğmeler); Kaydet tek dolu düğmedir. Kapat vazgeçer, değişiklik varsa sorar. Gövdede yazılı Kaydet/Vazgeç yoktur; başlık yapışık olduğu için uzun formda da Kaydet görünür.
 3. Gövde **sekmelere** ayrılır (Genel · Kalemler · Hareketler · …). Sekme adı tek kelime ya da iki kelime.
 4. Alanlar okuma kipinde etiket + değer çiftidir; düzenlemede aynı yerde giriş kutusu olur (yer değişmez).
 5. Önceki/sonraki kayda geçişte açık sekme korunur; Kapat listeye döner, son bakılan kayıt seçili gelir.
@@ -32,7 +32,7 @@ Sipariş, alış, sevk, tahsilat, iş verme, teslim alma.
 2. **Üst bölge**: belgenin tamamını ilgilendiren alanlar tek satırda: cari (`AramaliSecici`, sağında bakiye), tarih, belge no; para birimi ve defter sağ üstte küçük.
 3. **Kalem satırı ekleme**: ürün (`AramaliSecici`, sağında stok) → renk → ölçü → miktar → fiyat aynı hizada, sabit genişlikli alanlar; barkod okutmak ürünü doğrudan seçer.
 4. **Kalemler**: beden boyutluysa `Matris`, değilse `Tablo`.
-5. **Alt bölge**: not, toplamlar (sağda), uzun formun altında ikinci Kaydet.
+5. **Alt bölge**: not ve toplamlar (sağda). Kaydet burada tekrar edilmez; yapışık başlıktadır.
 6. Onaylı belge düzenlenmez: başlıkta Düzenle yerine **Düzelt** (iptal + yeni belge) ve **İptal et** vardır.
 
 ## 4. Rapor ekranı

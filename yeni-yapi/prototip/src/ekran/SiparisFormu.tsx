@@ -1,7 +1,7 @@
 // BELGE KALIBI — Yeni sipariş. Üst bölge (müşteri, tarihler) · kalem ekleme (ürün, renk, beden matrisi) ·
-// kalemler · not ve toplamlar · Kaydet. Hepsi bellekte; Kaydet kaydetmez, bildirim gösterir.
+// kalemler · not ve toplamlar. Kaydet yalnız yapışık başlıkta. Hepsi bellekte; Kaydet kaydetmez, bildirim gösterir.
 import { useEffect, useMemo, useState } from "react";
-import { Alan, AramaliSecici, BosDurum, Ikon, KartBasligi } from "../bilesen/temel";
+import { Alan, AramaliSecici, BosDurum, Ikon, KaydetSorusu, KartBasligi } from "../bilesen/temel";
 import { useUygulama } from "../bilesen/uygulama";
 import { kaynak, PROTOTIP_NOTU } from "../veri/kaynak";
 import { BEDENLER } from "../veri/ornek";
@@ -23,6 +23,7 @@ export function SiparisFormu() {
   const [kalemler, setKalemler] = useState<Kalem[]>([]);
   const [not, setNot] = useState("");
   const [denendi, setDenendi] = useState(false);
+  const [cikisSor, setCikisSor] = useState(false);
   useEffect(() => { kaynak.cariler().then(setCariler); kaynak.urunler().then(setUrunler); }, []);
   const musteriler = useMemo(() => cariler.filter((c) => c.roller.includes("Müşteri")), [cariler]);
   const mamuller = useMemo(() => urunler.filter((x) => x.tip === "Mamul"), [urunler]);
@@ -45,12 +46,15 @@ export function SiparisFormu() {
       u.git("siparisler");
     });
   };
+  // Kapat = vazgeç: yazılmış bir şey varsa sessizce atılmaz, cari kartındaki aynı soru gelir.
+  const degisti = !!cari || kalemler.length > 0 || !!urun || !!not.trim();
+  const vazgec = () => { if (degisti) setCikisSor(true); else u.git("siparisler"); };
 
   return (
     <div className="sayfa-govde">
       <div className="erp-card">
         <KartBasligi pencere kod="SAT · yeni" baslik="Satış siparişi" duzenlemede
-          kaydet={{ onClick: kaydet, pasif: kaydetHatasi }} vazgec={() => u.git("siparisler")} />
+          kaydet={{ onClick: kaydet, pasif: kaydetHatasi }} vazgec={vazgec} />
         <div className="erp-card__body" style={{ display: "grid", gap: 16 }}>
           <div className="erp-form-satir" style={{ justifyContent: "space-between" }}>
             <div className="erp-form-satir">
@@ -117,12 +121,9 @@ export function SiparisFormu() {
               <dt><b>Genel toplam</b></dt><dd className="erp-sayi"><b>{tl(araToplam * 1.1)}</b></dd>
             </dl>
           </div>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button className="erp-btn" onClick={() => u.git("siparisler")}>Vazgeç</button>
-            <button className="erp-btn erp-btn--primary" onClick={kaydet} disabled={u.cevrimdisi} title={u.cevrimdisi ? "İnternet yok: kayıt girilemez" : "Kaydet · Ctrl+S"}><Ikon ad="i-save" />Kaydet</button>
-          </div>
         </div>
       </div>
+      {cikisSor && <KaydetSorusu kaydet={() => { setCikisSor(false); kaydet(); }} at={() => u.git("siparisler")} don={() => setCikisSor(false)} />}
     </div>
   );
 }

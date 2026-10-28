@@ -180,9 +180,9 @@
     "Ikonlar"
   ],
   "lastChange": {
-    "at": "2026-10-28T17:10:00Z",
+    "at": "2026-10-28T18:20:00Z",
     "by": "Claude",
-    "note": "Bakiye yazım kuralı (işaret + renk, dövizli ayrı), erp-arti, sayfa dili tr",
+    "note": "Düğmeler sadık: Kaydet/Sil/Düzenle/Kapat her yerde aynı ikon düğme; yazılı düğme yalnız pencerede ve özel işlemde; kart başlığı yapışık",
     "via": "Claude Code"
   },
   "layout": "files",

@@ -1,6 +1,6 @@
 // KART KALIBI — Cari kartı; aynı bileşen yeni cari formudur.
 // Okuma kipinde alan = etiket + değer; düzenlemede AYNI yerde giriş kutusu (yer değişmez).
-// Başlık: ‹ sıra › ┆ Düzenle · İşlemler · Pasife al ┆ Kapat. Düzenlemede: Vazgeç · Kaydet, gezgin pasif.
+// Başlık: ‹ sıra › ┆ Düzenle · İşlemler · Pasife al ┆ Kapat. Düzenlemede: Kaydet ┆ Kapat (vazgeç), gezgin pasif.
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Alan, AramaliSecici, BosDurum, Cip, Ikon, KartBasligi, KaydetSorusu, Menu, Rozet, Sekmeler, SilOnayi } from "../bilesen/temel";
 import { useUygulama } from "../bilesen/uygulama";
@@ -212,12 +212,6 @@ export function CariKarti({ kod }: { kod: string | null }) {
             ? <textarea className="erp-input" style={{ height: 120, width: "min(560px, 100%)", paddingTop: 6 }} value={taslak.not ?? ""} onChange={(e) => set("not", e.target.value)} />
             : <p style={{ margin: 0, maxWidth: "70ch" }}>{cari.not ?? <span className="soluk">Not yok.</span>}</p>)}
         </div>
-        {duzenle && (
-          <div className="kart-dip">
-            <button className="erp-btn" onClick={vazgec}>Vazgeç</button>
-            <button className="erp-btn erp-btn--primary" onClick={kaydet} disabled={u.cevrimdisi} title={u.cevrimdisi ? "İnternet yok: kayıt girilemez" : "Kaydet · Ctrl+S"}><Ikon ad="i-save" />Kaydet</button>
-          </div>
-        )}
       </div>
       {!duzenle && <p className="soluk kucuk"><Ikon ad="i-info" /> ‹ › ya da PageUp/PageDown: önceki/sonraki cari. F2: düzenle. Esc: listeye döner.</p>}
       {pasifSor && (

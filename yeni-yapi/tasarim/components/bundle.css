@@ -32,8 +32,9 @@ body { font-family: var(--font-sans); color: var(--erp-text); background: var(--
 .erp-toolbar__gap { flex: 1; }
 
 /* Kart */
-.erp-card { background: var(--erp-panel); border: 1px solid var(--erp-line); border-radius: var(--erp-r-md); overflow: hidden; }
-.erp-card__head { display: flex; align-items: center; gap: var(--erp-gap-2); min-height: var(--erp-toolbar-h); padding: 0 var(--erp-gap-2) 0 var(--erp-gap-3); border-bottom: 1px solid var(--erp-line); background: var(--erp-topbar); }
+/* overflow: clip (hidden değil): köşe kırpılır ama kart kaydırma kabı olmaz, başlık sayfayla birlikte yapışık kalabilir. */
+.erp-card { background: var(--erp-panel); border: 1px solid var(--erp-line); border-radius: var(--erp-r-md); overflow: clip; }
+.erp-card__head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--erp-gap-2); min-height: var(--erp-toolbar-h); padding: 0 var(--erp-gap-2) 0 var(--erp-gap-3); border-bottom: 1px solid var(--erp-line); background: var(--erp-topbar); }
 .erp-card__title { font-size: 15px; line-height: 20px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .erp-card__kod { color: var(--erp-text-2); font-weight: 600; margin-right: var(--erp-gap-2); }
 .erp-card__body { padding: var(--erp-gap-3); }

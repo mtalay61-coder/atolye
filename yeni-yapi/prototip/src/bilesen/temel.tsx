@@ -73,7 +73,8 @@ export function AracCubugu({ baslik, eylemler, sag }: { baslik?: ReactNode; eyle
 }
 
 // ---------------- Kart başlığı ----------------
-// Okuma: Düzenle · (özel) · Sil ┆ Küçült · Kapat. Düzenleme: Vazgeç · Kaydet.
+// Okuma: Düzenle · (özel) · Sil ┆ Kapat. Düzenleme: Kaydet ┆ Kapat. Hepsi aynı ikon düğme, her ekranda aynı yerde;
+// düzenlemedeki Kapat vazgeçmektir (değişiklik varsa ekran sorar). Gövdeye ikinci Kaydet/Vazgeç konmaz.
 export function KartBasligi(p: {
   kod?: string; baslik: ReactNode; durum?: ReactNode; pencere?: boolean;
   duzenle?: EylemTanimi; sil?: EylemTanimi; ozel?: ReactNode; kapat?: () => void;
@@ -115,8 +116,8 @@ export function KartBasligi(p: {
         )}
         {p.duzenlemede ? (
           <>
-            <button className="erp-btn" onClick={p.vazgec}>Vazgeç</button>
-            <button className="erp-btn erp-btn--primary" disabled={!!e.kaydet?.pasif} title={e.kaydet?.pasif || "Kaydet · Ctrl+S"} onClick={p.kaydet?.onClick}><Ikon ad="i-save" />Kaydet</button>
+            <button className="erp-ib erp-ib--primary" aria-label="Kaydet" title={e.kaydet?.pasif || "Kaydet · Ctrl+S"} disabled={!!e.kaydet?.pasif} onClick={p.kaydet?.onClick}><Ikon ad="i-save" /></button>
+            {p.vazgec && <><span className="erp-toolbar__sep" /><button className="erp-ib" aria-label="Kapat" title="Kapat · Esc (kaydedilmemiş değişiklik varsa sorar)" onClick={p.vazgec}><Ikon ad="i-close" /></button></>}
           </>
         ) : (
           <>
