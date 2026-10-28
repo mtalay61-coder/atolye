@@ -445,7 +445,15 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
         continue;
       }
       baglantiBildir(false, String((e && e.message) || e));
-      throw e;
+      // HANGİ İSTEK DÜŞTÜ (v1.725.1 — kullanıcı, telefonda 5 denemede de "Failed to fetch"). Tarayıcı, sunucunun CORS
+      // başlıksız döndüğü hatayı (gövde çok büyük, adres çok uzun, ağ geçidi reddi) da "Failed to fetch" diye verir; mesaj
+      // hangi tablonun, ne boyutta isteğin düştüğünü söylemiyordu. Asıl metin başta kalır (bağlantı yok sınıflandırması
+      // `bulutHatasiAciklamasi` ona bakıyor), istek özeti eklenir.
+      const govdeBoyu = typeof secenekler.body === "string" ? secenekler.body.length : 0;
+      const ozet = `${String(secenekler.method || "GET").toUpperCase()} ${String(yol).split("?")[0]} · gövde ${Math.round(govdeBoyu / 1024)} KB · adres ${String(yol).length} karakter`;
+      const hata = new Error(`${String((e && e.message) || e)} — ${ozet}`);
+      hata.agHatasi = true;
+      throw hata;
     }
   }
   baglantiBildir(true);

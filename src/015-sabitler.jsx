@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.725.0";
+const SURUM = "1.725.1";
 const SURUM_TARIHI = "2026-10-28";
-const SURUM_NOTU = "Bulut yazması sağlamlaştırıldı: stok yeniden gönderimi renk adı değişiminde kilide takılmıyor; Kasa & Banka, teklif, koli, fatura gibi tek parça kayıtlar bulutla birleştirilerek yazılıyor (başka cihazın kaydı silinmez); Bakım › Sunucu arşivi'nden tek parça tabloya birleştirerek dönülebilir";
+const SURUM_NOTU = "Gönderilemeyen kayıt için: hata mesajı hangi isteğin düştüğünü yazar, büyük istekler boyuta göre de bölünür; Yönetici takılı kaydı bırakıp buluttaki hâle dönebilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.725.1", tarih: "28.10.2026", eklenen: ["Buluta gönderilemeyen kayıt ayrıntısında (şeritteki çipe dokunun) Yönetici için \"Bu cihazdakini bırak, buluttan yükle\": günlerce gidemeyen yazma, ne bırakılacağı sayıyla gösterilip onaylanarak bırakılır; sayfa buluttaki hâlle açılır, günlüğe düşer"], degisen: ["\"Failed to fetch\" hatası artık düşen isteği yazar (yöntem, tablo, gövde boyutu, adres uzunluğu)", "Buluta toplu ekleme/güncelleme 400 satırın yanında ~900 KB ile de bölünür (görselli ürün satırları tek istekte onlarca MB edebiliyordu)"], duzeltilen: [] },
   { surum: "1.725.0", tarih: "28.10.2026", eklenen: ["Tanımlar › Bakım › Sunucu arşivi: tek parça tablonun (Kasa & Banka, teklifler, koliler…) eski görüntüsü özetiyle görülür ve bugünkü hâlle birleştirilerek geri getirilir — o tarihten sonra girilen kayıtlar kaybolmaz"], degisen: ["Kasa & Banka, teklifler, koliler, faturalar, görevler, modelhane, mesajlar ve fiş defteri buluta yazılırken önce buluttaki hâl okunup üç yönlü birleştirilir: başka cihazın eklediği/değiştirdiği kayıt silinmez, açılışta bulutu okuyamamış cihaz boş listeyle bulutu ezemez; bulut okunamazsa yazma bekletilir ve yeniden denenir"], duzeltilen: ["Telefonda 24 Ekim'den beri süren \"Buluta gönderilemeyen kayıt: Stok kartları\": renk kodlamasının ağda düşen yazması \"Yeniden dene\"de toplu silme kilidine takılıyordu (renk adı değişimi silme sayılıyordu) ve ekranda eski \"Failed to fetch\" kalıyordu. Kilit artık ürün başına net kaybı sayar; yeniden adlandırma geçer, gerçek toplu silme yine durur. Engel olursa ekrandaki sebep güncellenir"] },
   { surum: "1.724.2", tarih: "24.10.2026", eklenen: [], degisen: [], duzeltilen: ["Gün sonu raporu e-postası Gmail'de ham MIME metni olarak geliyordu: posta kütüphanesi uzun Türkçe konuyu 76. karakterde bölüyor, başlıklar orada bitiyordu. Konu artık ASCII ve en çok 60 karakter (gün sonu ve sipariş/teklif e-postası). Supabase'de `gun-sonu` ve `eposta` fonksiyonları yeni dosyalarla yeniden yapıştırılmalı"] },
   { surum: "1.724.1", tarih: "24.10.2026", eklenen: [], degisen: [], duzeltilen: ["Büyük yazmalar (305 renk dönüştürme gibi) telefonda \"Failed to fetch\" ile düşüyordu: binlerce satır tek istekte, silmeler satır başına ayrı istekle gidiyordu. Artık ağ hatasında istek 3 kez yeniden denenir, ekleme/güncelleme 400 satırlık parçalarla gider, bileşik anahtarlı silmeler (varyant) ürün+renk başına tek istekte toplanır"] },

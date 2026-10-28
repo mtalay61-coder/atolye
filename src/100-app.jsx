@@ -4624,6 +4624,33 @@ function AtolyeUygulamasi() {
                   <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 4 }}>
                     Bu cihazdaki kayıt güncel. Gönderilene kadar diğer cihazlar bu veriyi eksik görür.
                   </div>
+                  {/* TAKILI KAYDI BIRAK (v1.725.1 — kullanıcı, telefonda günlerdir gönderilemeyen renk kodlaması: "Kullanmaya
+                      başlamak için ne yapmalıyım?"). Gönderilemeyen yazma bazen hiç gitmez (cihazın ağı, isteğin boyutu); kullanıcının
+                      elinde onu bırakıp buluttaki hâle dönme yolu yoktu. Yalnız Yönetici; ne bırakılacağı sayıyla gösterilir ve
+                      onaylanır; günlüğe "güvenlik" kaydı düşer; sayfa buluttan yeniden açılır. Bırakılan iş başka cihazda yeniden
+                      yapılabilir (ör. Bakım › Kodsuz Mamul Renkleri). */}
+                  {(!aktifKullanici || aktifKullanici.rol === "Yönetici") && (
+                    <button type="button" className="btn-ghost" data-bekleyen-birak={v.tablo}
+                      style={{ marginTop: 8, padding: "4px 10px", fontSize: 11, color: "var(--erp-danger, #B3261E)", borderColor: "var(--erp-danger, #B3261E)" }}
+                      onClick={() => {
+                        const anahtar = bekleyenAcikAnahtar;
+                        const d = bekleyenKayitlariOku()[v.tablo] || { ana: {}, cocuk: {} };
+                        const anaYaz = Object.values(d.ana || {}).filter((x) => x === "yaz").length;
+                        const anaSil = Object.values(d.ana || {}).filter((x) => x === "sil").length;
+                        const cocuk = Object.entries(d.cocuk || {}).map(([t, k]) => `${Object.keys(k || {}).length} ${(ARSIV_TABLO_ADLARI[t] || t).toLocaleLowerCase("tr-TR")}`).filter((x) => !/^0 /.test(x));
+                        const ozet = [anaYaz ? `${anaYaz} kayıt değişikliği` : "", anaSil ? `${anaSil} kayıt silme` : "", ...cocuk].filter(Boolean).join(", ") || "ayrıntı yok";
+                        if (!window.confirm(`${bilgi.ad}: bu cihazda bekleyen ve buluta gidemeyen değişiklikler BIRAKILACAK (${ozet}).\n\n`
+                          + `Sayfa buluttaki hâlle yeniden açılır; bu cihazda yapılıp gönderilemeyen ${bilgi.ad.toLocaleLowerCase("tr-TR")} değişiklikleri kaybolur. `
+                          + `Başka cihazlardaki ve buluttaki kayıtlara dokunulmaz. Devam?`)) return;
+                        gunlukYaz(`Bekleyen yazma bırakıldı: ${bilgi.ad} (${ozet})`, "guvenlik", { tablo: v.tablo, anahtar, deneme: v.deneme, hata: v.hata });
+                        bekleyenKayitTemizle(v.tablo);
+                        bekleyenYazmaSil(anahtar);
+                        showToast(`${bilgi.ad} bırakıldı — sayfa buluttan yeniden açılıyor`);
+                        setTimeout(() => window.location.reload(), 1200);
+                      }}>
+                      Bu cihazdakini bırak, buluttan yükle
+                    </button>
+                  )}
                 </div>
               );
             })()}

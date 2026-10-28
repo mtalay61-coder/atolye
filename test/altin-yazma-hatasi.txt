@@ -18,7 +18,7 @@
    "u-var",
    "u-sil"
   ],
-  "toast": "⚠ \"Silinen Ürün\" bu bilgisayarda geri yüklendi ama buluta yazılamadı (Failed to fetch) — bağlantı gelince kendiliğinden yeniden denenecek"
+  "toast": "⚠ \"Silinen Ürün\" bu bilgisayarda geri yüklendi ama buluta yazılamadı (Failed to fetch — POST urunler · gövde 1 KB · adres 7 karakter) — bağlantı gelince kendiliğinden yeniden denenecek"
  },
  "yardimci": {
   "bildirim": [

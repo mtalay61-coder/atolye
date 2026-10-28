@@ -1,0 +1,13 @@
+{
+  "seritOnce": 1,
+  "birakDugmesi": [
+    "Bu cihazdakini bırak, buluttan yükle"
+  ],
+  "onay": "Stok kartları: bu cihazda bekleyen ve buluta gidemeyen değişiklikler BIRAKILACAK (2 kayıt değişikliği, 5 stok hareketi).",
+  "defterHemen": {
+    "stokYazma": false,
+    "stokKayit": false
+  },
+  "stokCipiSonra": 0,
+  "hatalar": []
+}

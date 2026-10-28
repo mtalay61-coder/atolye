@@ -32,6 +32,8 @@ async function calistir() {
   const defter = await sayfa.evaluate(() => JSON.parse(localStorage.getItem("bekleyen:yazma") || "{}"));
   // Deneme SAYISI zamanlamaya bağlı (otomatik yeniden gönderim + v1.724.1 ağ yeniden denemeleri): yalnız "denenmiş mi" kaydedilir.
   Object.values(defter).forEach((d) => { if (d && typeof d.deneme === "number") d.deneme = d.deneme > 0 ? "var" : 0; });
+  // Gövde boyutu (v1.725.1 hata özeti) zamanlamaya göre değişir (tanımlar o sırada birleşmiş olabilir): sayı maskelenir.
+  Object.values(defter).forEach((d) => { if (d && typeof d.hata === "string") d.hata = d.hata.replace(/gövde \d+ KB/, "gövde N KB"); });
   const serit = await sayfa.evaluate(() => { const e = document.querySelector("[data-bekleyen-yazma]"); return e ? Number(e.getAttribute("data-bekleyen-yazma")) : 0; });
   const yerelTanimlar = await depoOku(sayfa, "tanimlar:data");
   
