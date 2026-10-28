@@ -1,0 +1,681 @@
+<title>Atölye ERP 2 Yapı Şeması</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Yerleşim: teknik çizim paftası. Solda sabit içindekiler (geniş ekranda), sağda bölümler;
+   modüller tek ızgarada, renk = modül grubu. Mürekkep laciverdi + kalıp kâğıdı. */
+:root {
+  --kagit: #f6f7f9;
+  --yuzey: #ffffff;
+  --murekkep: #172033;
+  --soluk: #5a6478;
+  --cizgi: #d7dce5;
+  --vurgu: #2b4fd8;
+  --vurgu-zemin: #e8edff;
+  --g-altyapi: #6b7280;
+  --g-anaveri: #0f8a6d;
+  --g-ticari: #2b4fd8;
+  --g-uretim: #b45309;
+  --g-finans: #9d2f8f;
+  --g-analiz: #0e7490;
+  --uyari: #b42318;
+  --uyari-zemin: #fdecea;
+  --iyi: #0f7a3d;
+  --iyi-zemin: #e6f4ec;
+  --f-baslik: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --f-govde: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-kod: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --kagit: #10141d; --yuzey: #171c27; --murekkep: #e6e9f0; --soluk: #9aa3b5; --cizgi: #2a3142;
+    --vurgu: #8ea6ff; --vurgu-zemin: #1d2645;
+    --g-altyapi: #a3aab8; --g-anaveri: #4cc9a6; --g-ticari: #8ea6ff; --g-uretim: #f0a35a; --g-finans: #e08bd6; --g-analiz: #5cc8de;
+    --uyari: #ff8a80; --uyari-zemin: #3a1d1d; --iyi: #6fd39a; --iyi-zemin: #16301f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --kagit: #10141d; --yuzey: #171c27; --murekkep: #e6e9f0; --soluk: #9aa3b5; --cizgi: #2a3142;
+  --vurgu: #8ea6ff; --vurgu-zemin: #1d2645;
+  --g-altyapi: #a3aab8; --g-anaveri: #4cc9a6; --g-ticari: #8ea6ff; --g-uretim: #f0a35a; --g-finans: #e08bd6; --g-analiz: #5cc8de;
+  --uyari: #ff8a80; --uyari-zemin: #3a1d1d; --iyi: #6fd39a; --iyi-zemin: #16301f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--kagit); color: var(--murekkep);
+  font-family: var(--f-govde); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+.sayfa { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; }
+@media (max-width: 900px) { .sayfa { grid-template-columns: minmax(0, 1fr); } .icindekiler { display: none; } }
+.icindekiler { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; padding-top: 40px; font-size: 13px; }
+.icindekiler ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; counter-reset: b; }
+.icindekiler li { counter-increment: b; }
+.icindekiler a { color: var(--soluk); text-decoration: none; display: block; padding: 3px 0; }
+.icindekiler a::before { content: counter(b, decimal-leading-zero) "  "; font-family: var(--f-kod); font-size: 11px; color: var(--cizgi); }
+.icindekiler a:hover, .icindekiler a:focus-visible { color: var(--vurgu); }
+main { min-width: 0; }
+
+header.pafta { padding-block: 40px 28px; border-bottom: 2px solid var(--murekkep); display: grid; gap: 14px; }
+.ust-etiket { font-family: var(--f-kod); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--soluk); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+h1 { font-family: var(--f-baslik); font-stretch: 80%; font-weight: 800; font-size: clamp(34px, 6vw, 56px); line-height: 1.02; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+.ozet { font-size: 17px; max-width: 68ch; margin: 0; color: var(--murekkep); }
+h2 { font-family: var(--f-baslik); font-stretch: 85%; font-weight: 700; font-size: 28px; line-height: 1.15; margin: 0 0 6px; text-wrap: balance; }
+h3 { font-family: var(--f-baslik); font-stretch: 90%; font-weight: 700; font-size: 19px; margin: 0; }
+section { padding-block: 44px 8px; scroll-margin-top: 12px; }
+.bolum-no { font-family: var(--f-kod); font-size: 12px; color: var(--vurgu); letter-spacing: .08em; }
+.giris { max-width: 70ch; color: var(--soluk); margin: 0 0 22px; }
+p { max-width: 72ch; }
+code, .kod { font-family: var(--f-kod); font-size: .88em; background: var(--vurgu-zemin); padding: 1px 5px; border-radius: 3px; }
+
+/* Ders tablosu */
+.tablo-kap { overflow-x: auto; border: 1px solid var(--cizgi); border-radius: 6px; background: var(--yuzey); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--cizgi); }
+th { font-family: var(--f-kod); font-weight: 500; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--soluk); background: var(--kagit); }
+tr:last-child td { border-bottom: 0; }
+td.eski { color: var(--uyari); }
+td.yeni { color: var(--iyi); }
+td .surum { font-family: var(--f-kod); font-size: 11.5px; color: var(--soluk); display: block; margin-top: 2px; }
+.etki { font-family: var(--f-kod); font-size: 13px; white-space: nowrap; }
+.art { color: var(--iyi); } .eks { color: var(--uyari); } .yok { color: var(--cizgi); }
+
+/* İlkeler */
+.ilkeler { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.ilke { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 16px 18px; display: grid; gap: 6px; align-content: start; }
+.ilke b { font-family: var(--f-baslik); font-stretch: 90%; font-size: 17px; }
+.ilke p { margin: 0; font-size: 14px; color: var(--soluk); }
+.ilke .ornek { font-family: var(--f-kod); font-size: 12px; color: var(--murekkep); }
+
+.diyagram { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 0 0 14px; }
+.diyagram pre.mermaid { margin: 0; background: none; text-align: center; }
+.not { font-size: 13.5px; color: var(--soluk); border-left: 3px solid var(--vurgu); padding: 4px 0 4px 12px; max-width: 72ch; }
+
+/* Modül haritası */
+.gruplar { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 14px; font-size: 13px; color: var(--soluk); }
+.gruplar span { display: inline-flex; align-items: center; gap: 6px; }
+.gruplar i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.cipler { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.cip { font-family: var(--f-kod); font-size: 12.5px; border: 1px solid var(--cizgi); background: var(--yuzey); color: var(--murekkep); border-radius: 4px; padding: 5px 9px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.cip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.cip[aria-pressed="true"] { background: var(--murekkep); color: var(--kagit); border-color: var(--murekkep); }
+.cip:focus-visible, button:focus-visible { outline: 2px solid var(--vurgu); outline-offset: 2px; }
+.secim-bilgi { font-size: 13px; color: var(--soluk); min-height: 22px; margin-bottom: 12px; }
+.moduller { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+@media (max-width: 420px) { .moduller { grid-template-columns: minmax(0, 1fr); } }
+.modul { background: var(--yuzey); border: 1px solid var(--cizgi); border-top: 4px solid var(--g); border-radius: 6px; padding: 16px 18px 14px; display: grid; gap: 10px; align-content: start; transition: opacity .2s, box-shadow .2s; min-width: 0; scroll-margin-top: 16px; }
+.modul.sonuk { opacity: .28; }
+.modul.secili { box-shadow: 0 0 0 2px var(--g); }
+.modul-bas { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.modul-kod { font-family: var(--f-kod); font-size: 12px; font-weight: 500; color: var(--g); border: 1px solid var(--g); border-radius: 3px; padding: 0 5px; }
+.modul-grup { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--soluk); margin-left: auto; }
+.modul p.amac { margin: 0; font-size: 14px; }
+.alan { display: grid; gap: 4px; }
+.alan > span { font-family: var(--f-kod); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--soluk); }
+.tablolar { display: flex; flex-wrap: wrap; gap: 4px; }
+.tablolar code { font-size: 12px; }
+ul.tetik { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+ul.tetik li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; align-items: baseline; }
+ul.tetik .ok { font-family: var(--f-kod); font-size: 11.5px; color: var(--g); white-space: nowrap; }
+ul.tetik .hedef { font-family: var(--f-kod); font-size: 11.5px; font-weight: 500; }
+.ders { font-size: 13px; color: var(--uyari); background: var(--uyari-zemin); border-radius: 4px; padding: 7px 10px; }
+.ders b { font-weight: 600; }
+
+/* Akış */
+.akis { display: grid; gap: 0; counter-reset: a; }
+.adim { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-bottom: 1px dashed var(--cizgi); }
+.adim:last-child { border-bottom: 0; }
+.adim::before { counter-increment: a; content: counter(a); font-family: var(--f-baslik); font-weight: 800; font-size: 26px; color: var(--vurgu); line-height: 1; }
+.adim h3 { font-size: 17px; margin-bottom: 4px; }
+.adim p { margin: 0 0 6px; font-size: 14px; }
+.etiketler { display: flex; flex-wrap: wrap; gap: 6px; }
+.etiket { font-family: var(--f-kod); font-size: 11.5px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--cizgi); color: var(--soluk); }
+.etiket.s { color: var(--g-uretim); border-color: currentColor; }
+.etiket.c { color: var(--g-finans); border-color: currentColor; }
+.etiket.k { color: var(--g-analiz); border-color: currentColor; }
+.etiket.d { color: var(--g-ticari); border-color: currentColor; }
+
+.iki { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.kutu { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 16px 18px; min-width: 0; }
+.kutu h3 { margin-bottom: 8px; }
+.kutu ol, .kutu ul { margin: 0; padding-left: 20px; font-size: 14px; display: grid; gap: 6px; }
+pre.agac { font-family: var(--f-kod); font-size: 12.5px; line-height: 1.55; margin: 0; overflow-x: auto; color: var(--murekkep); }
+pre.agac .y { color: var(--soluk); }
+
+.faz { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--cizgi); }
+.faz:last-child { border-bottom: 0; }
+.faz .fno { font-family: var(--f-kod); font-size: 13px; color: var(--vurgu); padding-top: 2px; }
+.faz h3 { font-size: 17px; }
+.faz p { margin: 4px 0; font-size: 14px; }
+.faz .bitti { font-size: 13px; color: var(--iyi); }
+
+.soru { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 6px; padding: 14px 18px; display: grid; gap: 6px; }
+.soru b { font-family: var(--f-baslik); font-stretch: 90%; font-size: 16.5px; }
+.soru p { margin: 0; font-size: 14px; color: var(--soluk); }
+.soru .oneri { color: var(--murekkep); }
+.soru .oneri::before { content: "Öneri · "; font-family: var(--f-kod); font-size: 11.5px; color: var(--vurgu); letter-spacing: .05em; }
+.sorular { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 2px solid var(--murekkep); font-size: 13px; color: var(--soluk); }
+@media (prefers-reduced-motion: reduce) { .modul { transition: none; } html { scroll-behavior: auto; } }
+</style>
+
+<div class="sayfa">
+<nav class="icindekiler" aria-label="İçindekiler">
+  <ol>
+    <li><a href="#dersler">Eskiden öğrenilenler</a></li>
+    <li><a href="#ilkeler">Yapı ilkeleri</a></li>
+    <li><a href="#katmanlar">Katmanlar</a></li>
+    <li><a href="#belge">Belge çekirdeği</a></li>
+    <li><a href="#moduller">Modüller ve tetikler</a></li>
+    <li><a href="#akis">Uçtan uca akış</a></li>
+    <li><a href="#veri">Veri modeli</a></li>
+    <li><a href="#kurallar">Değişmez kurallar</a></li>
+    <li><a href="#kod">Kod düzeni</a></li>
+    <li><a href="#yol">Yol haritası</a></li>
+    <li><a href="#sorular">Açık kararlar</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="pafta">
+  <div class="ust-etiket"><span>Pafta 01 · Mimari</span><span>Taslak · 28 Ekim 2026</span><span>Kaynak: atolye v1.725 deneyimi</span></div>
+  <h1>Atölye ERP 2<br>Yapı Şeması</h1>
+  <p class="ozet">Ayakkabı atölyesinin üretim, stok, sipariş, cari ve kasa takibini baştan, daha sağlam bir yapıyla kurmak için ana plan. Hangi modül var, hangi veriyi tutar, bir işlem olunca neyi tetikler ve eski uygulamada hangi hatayı yaşadığımız için neden böyle karar verdik. Yeni bir işe başlamadan önce önce bu sayfaya bakılır, karar değişirse önce bu sayfa güncellenir.</p>
+</header>
+
+<section id="dersler">
+  <div class="bolum-no">01</div>
+  <h2>Eski uygulamadan öğrendiklerimiz</h2>
+  <p class="giris">Yeni yapının her kararı, eski uygulamada en az bir kez yaşanmış bir sorundan geliyor. Sol sütun yaşananı, sağ sütun yeni yapıdaki karşılığını gösterir.</p>
+  <div class="tablo-kap"><table>
+    <thead><tr><th>Konu</th><th>Eski yapıda olan</th><th>Yeni yapıda</th></tr></thead>
+    <tbody>
+      <tr><td>Buluta yazma</td><td class="eski">Cihaz listenin tamamını tutuyor, farkını buluta yazıyordu. Bayat liste tutan cihaz başkasının kaydını sildi; üretimler, teklifler, kasa hesapları kayboldu.<span class="surum">v1.712 toplu silme kilidi · v1.725 üç yönlü birleştirme</span></td><td class="yeni">Cihaz hiçbir zaman "listenin son hâlini" yazmaz. Her iş tek bir komuttur (<code>siparis_onayla</code>, <code>is_teslim_al</code>) ve sunucuda tek işlemde (transaction) çalışır. Fark hesabı ve toplu silme yolu yoktur.</td></tr>
+      <tr><td>Stok miktarı</td><td class="eski">Miktar hem varyantta hem hareketlerde tutuldu; ikisi ayrıştı, "açılış fişi" ve onarım araçları gerekti.<span class="surum">v1.159 açılış fişi · v1.375 otomatik onarım kaldırıldı</span></td><td class="yeni">Stok yalnız hareketlerden hesaplanır (<code>v_stok</code> görünümü). Saklanan ikinci bir miktar yoktur, ayrışacak bir şey kalmaz.</td></tr>
+      <tr><td>Geri alma</td><td class="eski">Yeni bir defter yazmaya bağlanıp geri almaya bağlanmadı; aynı hata 7 kez tekrarlandı (karşılanan, koli, çek, üretim ilerlemesi…).<span class="surum">DEĞİŞMEZ KURAL — iki kapı</span></td><td class="yeni">Durumlar (karşılanan, koli sevk edildi mi, adım teslim mi, çek ciro mu) saklanmaz, belgelerden türetilir. Belge iptal edilince türetilen durum kendiliğinden geri döner; ayrıca ters çevrilecek bir şey yoktur.</td></tr>
+      <tr><td>Kayıt anahtarı</td><td class="eski">Varyant anahtarı <code>urun_id+renk adı+beden</code> idi. 305 rengin adını değiştirmek binlerce silme + ekleme demekti, toplu silme kilidine takıldı.<span class="surum">v1.724 · v1.725</span></td><td class="yeni">Her kaydın kimliği (uuid) vardır, bağlar kimlikle kurulur. Ad yalnız etikettir; renk adını değiştirmek tek satır günceller.</td></tr>
+      <tr><td>Tek parça tablolar</td><td class="eski">Muhasebe, teklif, koli, fatura, görev bütün liste tek JSON olarak yazılıyordu; iki cihaz birbirini ezdi.</td><td class="yeni">JSON yığın tablo yoktur. Her kayıt kendi satırıdır. Ayarlar bile anahtar başına bir satırdır.</td></tr>
+      <tr><td>Şema</td><td class="eski"><code>TABLO_SEMA</code>'da sayılmayan alan sessizce düşüyordu (barkod, olusturuldu).</td><td class="yeni">Şemanın tek kaynağı SQL migration dosyalarıdır. TypeScript tipleri şemadan üretilir; şemada olmayan alanı kod derlenmez.</td></tr>
+      <tr><td>Metinle eşleştirme</td><td class="eski">İşçilik fişi ile cari hareketi fiş numarası metninden eşleşiyordu (<code>1001-Kesim-İşçilik</code>); biçim değişince bağ koptu.</td><td class="yeni">Her hareket kaynak belgesinin satırına yabancı anahtarla (FK) bağlıdır. Fiş numarası yalnız insan için.</td></tr>
+      <tr><td>Rezervasyon</td><td class="eski">Rezervasyon defteri bayat kopyadan yazıldı; silinen üretimin "hayalet" talebi kaldı.<span class="surum">v1.373 · v1.713</span></td><td class="yeni">Rezervasyon ayrı defter değil; açık sipariş − sevk edilen − üretimde olan görünümüdür.</td></tr>
+      <tr><td>Kod düzeni</td><td class="eski">Tek kapsamı paylaşan 150 dosya, 17 özel denetleyici, 16 000 satırlık devam notu.</td><td class="yeni">TypeScript modülleri, import/export. Her modülün kendi klasörü ve kısa karar notu. Denetleyicilerin yakaladığı hataların çoğunu tip sistemi ve veritabanı kısıtları yakalar.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="ilkeler">
+  <div class="bolum-no">02</div>
+  <h2>Yapı ilkeleri</h2>
+  <p class="giris">Yedi ilke. Bir tasarım kararı bunlardan biriyle çelişiyorsa durup konuşulur.</p>
+  <div class="ilkeler">
+    <div class="ilke"><b>1 · Her şey belgedir</b><p>Stoğu, cariyi ya da kasayı etkileyen her olay bir belgeyle (fiş) olur. Belgesiz hareket yazılamaz; bunu veritabanı kısıtı sağlar.</p><span class="ornek">stok_hareket.belge_satir_id NOT NULL</span></div>
+    <div class="ilke"><b>2 · Defterler yalnız eklenir</b><p>Hareket defterlerine satır eklenir, güncellenmez ve silinmez. Hata düzeltmek = belgeyi iptal edip yenisini kesmek.</p><span class="ornek">UPDATE/DELETE yetkisi yok</span></div>
+    <div class="ilke"><b>3 · Türetilen saklanmaz</b><p>Stok, bakiye, karşılanan miktar, adım durumu, ihtiyaç: hepsi görünüm (view). Saklanan tek gerçek belgeler ve hareketlerdir.</p><span class="ornek">v_stok · v_cari_bakiye · v_siparis_durum</span></div>
+    <div class="ilke"><b>4 · İş kuralı sunucuda</b><p>Kurallar Postgres fonksiyonlarında çalışır. Arayüz kural koymaz, komut gönderir ve sonucu gösterir. Telefon, bilgisayar, barkod ekranı aynı kuraldan geçer.</p><span class="ornek">rpc('is_teslim_al', {...})</span></div>
+    <div class="ilke"><b>5 · Komut tekrar edilebilir</b><p>Her komut cihazda üretilen bir istek kimliği taşır. Bağlantı koptu, istek iki kez gitti: ikinci çağrı aynı sonucu döner, çift kayıt olmaz.</p><span class="ornek">istek_id uuid UNIQUE</span></div>
+    <div class="ilke"><b>6 · Kimlikle bağ</b><p>Her kaydın uuid'i vardır, bağlar yabancı anahtarla kurulur. Adlar, kodlar ve fiş numaraları etikettir; değişebilir.</p><span class="ornek">varyant(urun_id, renk_id, olcu_id)</span></div>
+    <div class="ilke"><b>7 · İnternetsiz kayıt yok</b><p>Eski uygulamanın v1.557 kararı aynen kalır: bağlantı yoksa uygulama kilitlenir. Yerel kopya yalnız okuma içindir.</p><span class="ornek">çevrimdışı = salt okunur</span></div>
+  </div>
+</section>
+
+<section id="katmanlar">
+  <div class="bolum-no">03</div>
+  <h2>Katmanlar</h2>
+  <p class="giris">Yazma ve okuma ayrı yollardan gider. Yazma yalnız komut fonksiyonlarından geçer; okuma görünümlerden yapılır. Değişiklik olunca Realtime ilgili ekranlara haber verir.</p>
+  <div class="diyagram"><pre class="mermaid">
+flowchart TB
+  subgraph Istemci["Arayüz (React + TypeScript)"]
+    E["Ekranlar: Sipariş, Üretim, Depo, Kasa…"]
+    Q["Sorgu önbelleği"]
+  end
+  subgraph Sunucu["Supabase (Postgres)"]
+    K["Komut fonksiyonları<br/>siparis_onayla, is_ver, is_teslim_al,<br/>sevk_et, tahsilat_al, belge_iptal"]
+    B[("Belgeler<br/>belge + belge_satir")]
+    H[("Hareket defterleri<br/>stok · cari · kasa<br/>yalnız eklenir")]
+    A[("Ana veri<br/>ürün, varyant, cari, reçete, tanımlar")]
+    V["Görünümler<br/>v_stok, v_cari_bakiye,<br/>v_siparis_durum, v_ihtiyac"]
+    G[("Günlük + arşiv<br/>tetikleyiciyle")]
+  end
+  F["Edge Functions<br/>gün sonu e-postası, kur, kullanıcı"]
+  E -- "yazma: rpc(komut, istek_id)" --> K
+  K --> B
+  K --> H
+  K --> A
+  B --> V
+  H --> V
+  A --> V
+  E -- "okuma: select" --> V
+  K -. "her değişiklik" .-> G
+  H -. "Realtime bildirimi" .-> Q
+  Q --> E
+  F --> V
+  </pre></div>
+  <p class="not">Arayüzün tablolara doğrudan INSERT/UPDATE/DELETE yetkisi yoktur (RLS). Yalnız ana veri düzenleme ekranları (ürün kartı, cari kartı, tanımlar) kendi tek satırını <code>kaydet_*</code> fonksiyonuyla günceller; o fonksiyon da sürüm numarasıyla çakışmayı yakalar.</p>
+</section>
+
+<section id="belge">
+  <div class="bolum-no">04</div>
+  <h2>Belge çekirdeği</h2>
+  <p class="giris">Bütün modüllerin ortak kalbi. Bir belge önce taslak olarak kaydedilir, onaylanınca hareketlerini yazar, iptal edilince aynı hareketlerin tersini yazar. Belge tipleri ve etkileri aşağıda; yeni bir iş için yeni tablo değil, önce yeni belge tipi düşünülür.</p>
+  <div class="diyagram"><pre class="mermaid">
+stateDiagram-v2
+  state "Onaylı" as Onayli
+  state "İptal" as Iptal
+  [*] --> Taslak: belge_kaydet
+  Taslak --> Taslak: düzenle
+  Taslak --> Onayli: belge_onayla (hareketler yazılır)
+  Taslak --> [*]: taslak_sil
+  Onayli --> Iptal: belge_iptal (ters hareketler yazılır)
+  Onayli --> Onayli: belge_duzelt (iptal + yeni belge, tek işlemde)
+  Iptal --> [*]
+  </pre></div>
+  <div class="tablo-kap"><table>
+    <thead><tr><th>Kod</th><th>Belge</th><th>Stok</th><th>Cari</th><th>Kasa / Banka</th><th>Kaynak modül</th></tr></thead>
+    <tbody>
+      <tr><td><code>ACL</code></td><td>Açılış (devir)</td><td class="etki art">+ giriş</td><td class="etki">± bakiye</td><td class="etki">± bakiye</td><td>Bakım · geçiş</td></tr>
+      <tr><td><code>ALS</code></td><td>Alış irsaliyesi / fişi</td><td class="etki art">+ hammadde</td><td class="etki">tedarikçi alacak</td><td class="etki yok">—</td><td>Satınalma</td></tr>
+      <tr><td><code>ALI</code></td><td>Alıştan iade</td><td class="etki eks">− hammadde</td><td class="etki">tedarikçi borç</td><td class="etki yok">—</td><td>Satınalma</td></tr>
+      <tr><td><code>ISV</code></td><td>İş verme</td><td class="etki">ana depo → kişi/fasoncu deposu</td><td class="etki yok">—</td><td class="etki yok">—</td><td>Üretim</td></tr>
+      <tr><td><code>IST</code></td><td>İş teslim alma</td><td class="etki">kişi deposundan tüketim; son adımda + mamul</td><td class="etki">işçilik: kişi/fasoncu alacak</td><td class="etki yok">—</td><td>Üretim</td></tr>
+      <tr><td><code>HRD</code></td><td>Hurda / fire</td><td class="etki eks">− çıkış</td><td class="etki yok">—</td><td class="etki yok">—</td><td>Üretim · Depo</td></tr>
+      <tr><td><code>SAT</code></td><td>Satış / sevk irsaliyesi</td><td class="etki eks">− mamul</td><td class="etki">müşteri borç</td><td class="etki yok">—</td><td>Depo · Satış</td></tr>
+      <tr><td><code>STI</code></td><td>Satıştan iade</td><td class="etki art">+ mamul</td><td class="etki">müşteri alacak</td><td class="etki yok">—</td><td>Satış</td></tr>
+      <tr><td><code>SAY</code></td><td>Sayım farkı</td><td class="etki">± fark</td><td class="etki yok">—</td><td class="etki yok">—</td><td>Depo</td></tr>
+      <tr><td><code>TRF</code></td><td>Depolar arası transfer</td><td class="etki">− kaynak / + hedef</td><td class="etki yok">—</td><td class="etki yok">—</td><td>Depo</td></tr>
+      <tr><td><code>THS</code></td><td>Tahsilat</td><td class="etki yok">—</td><td class="etki">müşteri alacak</td><td class="etki art">+ giriş</td><td>Kasa</td></tr>
+      <tr><td><code>ODM</code></td><td>Ödeme</td><td class="etki yok">—</td><td class="etki">tedarikçi borç</td><td class="etki eks">− çıkış</td><td>Kasa</td></tr>
+      <tr><td><code>VRM</code></td><td>Virman</td><td class="etki yok">—</td><td class="etki yok">—</td><td class="etki">− kaynak / + hedef (kur)</td><td>Kasa</td></tr>
+      <tr><td><code>CEK</code></td><td>Çek alma / verme / ciro / tahsil</td><td class="etki yok">—</td><td class="etki">ilgili cari</td><td class="etki">tahsilde banka</td><td>Kasa · Çek</td></tr>
+      <tr><td><code>GDR</code></td><td>Gider / gelir</td><td class="etki yok">—</td><td class="etki">varsa cari</td><td class="etki">ödendiyse ±</td><td>Gelir-Gider</td></tr>
+      <tr><td><code>MHS</code></td><td>Cari mahsup</td><td class="etki yok">—</td><td class="etki">− bir cari / + öbür</td><td class="etki yok">—</td><td>Cari</td></tr>
+    </tbody>
+  </table></div>
+  <p class="not">Numara sunucuda, belge tipi ve yıla göre sırayla verilir: <code>SAT-2026-000123</code>. İki cihaz aynı anda belge kesse bile numara çakışmaz. İşçilik ayrı satırdır (eski "İŞÇİLİK AYRI FİŞ" kuralı): <code>IST</code> belgesinin stok satırları ile işçilik satırları ayrıdır ama aynı belgededir, metinle eşleştirme gerekmez.</p>
+</section>
+
+<section id="moduller">
+  <div class="bolum-no">05</div>
+  <h2>Modüller ve tetikledikleri</h2>
+  <p class="giris">Bir modüle dokununca o modülün tetiklediği ve onu tetikleyen modüller öne çıkar, diğerleri soluklaşır. Her kartta: ne iş yaptığı, sahip olduğu tablolar, bir olay olunca neyi tetiklediği ve eski uygulamadan taşıdığı ders.</p>
+  <div class="gruplar" id="gruplar"></div>
+  <div class="cipler" id="cipler" role="toolbar" aria-label="Modül seç"></div>
+  <div class="secim-bilgi" id="secimBilgi" aria-live="polite">Hepsi gösteriliyor. Bağlantılarını görmek için bir modül seç.</div>
+  <div class="moduller" id="moduller"></div>
+
+  <h3 style="margin-top:28px;margin-bottom:10px">Tetik grafiği</h3>
+  <div class="diyagram"><pre class="mermaid">
+flowchart LR
+  MDL["Modelhane"] --> URN["Ürün & Varyant"]
+  MDL --> REC["Reçete & Rota"]
+  TAN["Tanımlar"] --> URN
+  URN --> REC
+  PRT["Web Portalı"] --> SIP
+  TEK["Teklif"] --> SIP["Sipariş"]
+  SIP --> PLN["Planlama & MRP"]
+  REC --> PLN
+  PLN --> URT["Üretim"]
+  PLN --> STN["Satınalma"]
+  STN --> BEL{{"Belge çekirdeği"}}
+  URT --> BEL
+  DEP["Depo, Koli & Sevk"] --> BEL
+  KAS["Kasa, Banka & Çek"] --> BEL
+  GG["Gelir-Gider"] --> BEL
+  BEL --> STK[("Stok")]
+  BEL --> CAR[("Cari")]
+  BEL --> KSA[("Kasa")]
+  STK --> PLN
+  STK --> MAL["Maliyet"]
+  BEL --> RAP["Raporlar"]
+  MAL --> RAP
+  SIP --> DEP
+  URT --> DEP
+  </pre></div>
+</section>
+
+<section id="akis">
+  <div class="bolum-no">06</div>
+  <h2>Uçtan uca akış: tekliften tahsilata</h2>
+  <p class="giris">Bir satış siparişinin hayatı. Her adımda hangi komutun çağrıldığı ve neyi değiştirdiği. Etiket renkleri: <span class="etiket s">stok</span> <span class="etiket c">cari / kasa</span> <span class="etiket d">belge / kayıt</span> <span class="etiket k">türetilen görünüm</span></p>
+  <div class="akis">
+    <div class="adim"><div><h3>Teklif hazırlanır ve onaylanır</h3><p><code>teklif_kaydet</code> → <code>teklif_siparise_cevir</code>. Teklif satırları siparişe kopyalanır, teklif "siparişe dönüştü" olur ve sipariş kimliğini tutar.</p><div class="etiketler"><span class="etiket d">teklif</span><span class="etiket d">siparis + siparis_satir</span></div></div></div>
+    <div class="adim"><div><h3>Sipariş onaylanır</h3><p><code>siparis_onayla</code>. Stok ya da cari değişmez. Sipariş ihtiyaç hesabına girer; müşteriye sipariş özeti e-postası istenirse gönderilir.</p><div class="etiketler"><span class="etiket k">v_ihtiyac_mamul</span><span class="etiket k">v_siparis_durum: Bekliyor</span></div></div></div>
+    <div class="adim"><div><h3>Planlama: üret mi, stoktan mı?</h3><p>İhtiyaç = sipariş − sevk edilen − serbest stok − açık üretim. Kullanıcı satırları seçip <code>uretim_emri_ac</code> der. Emir açılırken reçete ve rota o anki hâliyle emre kopyalanır; reçete sonradan değişse açık emir bozulmaz.</p><div class="etiketler"><span class="etiket d">uretim_emri + emir_adim</span><span class="etiket k">v_ihtiyac_hammadde</span></div></div></div>
+    <div class="adim"><div><h3>Hammadde eksikse satınalma</h3><p>Hammadde ihtiyacı = emirlerin reçete toplamı − stok − açık alış siparişi. <code>satinalma_onerisi_olustur</code> tedarikçi başına alış siparişi taslağı açar. Mal gelince <code>ALS</code> belgesi.</p><div class="etiketler"><span class="etiket s">+ hammadde</span><span class="etiket c">tedarikçi alacak</span></div></div></div>
+    <div class="adim"><div><h3>İş verilir (Kesim → Saya → Kalfa…)</h3><p><code>is_ver(emir, adim, kisi, bedenler)</code>. Kural: verilen adet, bir önceki asıl adımdan teslim alınandan fazla olamaz; ara proses şeffaftır (eski v1.709.3 hatası). Hammadde ana depodan kişinin/fasoncunun deposuna geçer, kimde ne malzeme var görünür.</p><div class="etiketler"><span class="etiket d">ISV</span><span class="etiket s">ana depo → kişi deposu</span><span class="etiket k">v_adim_durum: Verildi</span></div></div></div>
+    <div class="adim"><div><h3>İş teslim alınır</h3><p><code>is_teslim_al(atama, saglam, hurda)</code>. Kişi deposundaki malzeme tüketilir, işçilik kişinin/fasoncunun carisine alacak yazılır, hurda ayrı satır. Son asıl adımsa mamul ana depoya girer.</p><div class="etiketler"><span class="etiket d">IST</span><span class="etiket c">işçilik alacak</span><span class="etiket s">son adımda + mamul</span><span class="etiket k">v_siparis_durum: Üretildi</span></div></div></div>
+    <div class="adim"><div><h3>Koli ve sevk</h3><p>Barkod okutarak koli doldurulur (<code>koliye_ekle</code>). Koli yalnız gruplamadır, stok etkisi yoktur. <code>sevk_et(koliler)</code> tek <code>SAT</code> belgesi keser; koli "sevk edildi" bilgisini bu belgeden türetir.</p><div class="etiketler"><span class="etiket d">SAT</span><span class="etiket s">− mamul</span><span class="etiket c">müşteri borç</span><span class="etiket k">karşılanan ↑</span></div></div></div>
+    <div class="adim"><div><h3>Fatura</h3><p><code>fatura_kes(sat_belgeleri)</code> bir ya da birden çok sevk belgesinden fatura derler; KDV oranı satırdan gelir. Fatura stok ve cariyi ikinci kez etkilemez, yalnız resmî belgedir.</p><div class="etiketler"><span class="etiket d">fatura</span></div></div></div>
+    <div class="adim"><div><h3>Tahsilat</h3><p><code>tahsilat_al(cari, hesap, tutar, şekil)</code>. Nakit/havale ise kasa ya da banka girişi; çekse çek portföye girer, vadesinde <code>cek_tahsil</code> bankaya alır.</p><div class="etiketler"><span class="etiket d">THS / CEK</span><span class="etiket c">müşteri alacak</span><span class="etiket c">+ kasa</span><span class="etiket k">v_cari_bakiye</span></div></div></div>
+    <div class="adim"><div><h3>Bir şey yanlış girildi</h3><p><code>belge_iptal(belge, sebep)</code>. O belgenin bütün hareketlerinin tersi yazılır. Karşılanan, adım durumu, koli durumu ve bakiye görünümden geldiği için kendiliğinden düzelir. Eski yapıdaki "iki kapı" kuralına gerek kalmaz.</p><div class="etiketler"><span class="etiket s">ters hareket</span><span class="etiket c">ters hareket</span><span class="etiket k">bütün görünümler düzelir</span></div></div></div>
+  </div>
+</section>
+
+<section id="veri">
+  <div class="bolum-no">07</div>
+  <h2>Çekirdek veri modeli</h2>
+  <p class="giris">Yalnız omurga. Her tabloda ayrıca <code>firma_id</code>, <code>olusturan</code>, <code>olusturuldu</code> ve düzenlenebilenlerde <code>surum</code> sütunu vardır.</p>
+  <div class="diyagram"><pre class="mermaid">
+erDiagram
+  URUN ||--o{ VARYANT : "renk x ölçü"
+  RENK ||--o{ VARYANT : "renk"
+  OLCU ||--o{ VARYANT : "beden"
+  URUN ||--o{ RECETE : "sürümlü"
+  RECETE ||--o{ RECETE_SATIR : "hammadde"
+  RECETE ||--o{ ROTA_ADIM : "proses sırası"
+  CARI ||--o{ SIPARIS : "verir"
+  SIPARIS ||--o{ SIPARIS_SATIR : "satır"
+  VARYANT ||--o{ SIPARIS_SATIR : "ürün"
+  SIPARIS_SATIR ||--o{ URETIM_EMRI : "kaynak"
+  URETIM_EMRI ||--o{ EMIR_ADIM : "rota kopyası"
+  EMIR_ADIM ||--o{ ATAMA : "kime, kaç çift"
+  BELGE ||--o{ BELGE_SATIR : "satır"
+  BELGE_SATIR ||--o{ STOK_HAREKET : "yazar"
+  BELGE_SATIR ||--o{ CARI_HAREKET : "yazar"
+  BELGE_SATIR ||--o{ KASA_HAREKET : "yazar"
+  VARYANT ||--o{ STOK_HAREKET : "ürün"
+  DEPO ||--o{ STOK_HAREKET : "yer"
+  CARI ||--o{ CARI_HAREKET : "hesap"
+  HESAP ||--o{ KASA_HAREKET : "hesap"
+  SIPARIS_SATIR ||--o{ BELGE_SATIR : "karşılar"
+  ATAMA ||--o{ BELGE_SATIR : "ISV / IST"
+  KOLI ||--o{ KOLI_SATIR : "içerik"
+  BELGE ||--o{ KOLI : "sevk eden"
+  </pre></div>
+  <div class="iki">
+    <div class="kutu"><h3>Saklananlar (gerçek)</h3><ul>
+      <li>Ana veri: <code>urun</code>, <code>varyant</code>, <code>cari</code>, <code>recete*</code>, tanımlar</li>
+      <li>Niyetler: <code>teklif</code>, <code>siparis</code>, <code>uretim_emri</code>, <code>atama</code>, <code>koli</code></li>
+      <li>Belgeler: <code>belge</code>, <code>belge_satir</code></li>
+      <li>Defterler: <code>stok_hareket</code>, <code>cari_hareket</code>, <code>kasa_hareket</code></li>
+      <li>İz: <code>gunluk</code>, <code>arsiv</code> (tetikleyiciyle, 365 gün)</li>
+    </ul></div>
+    <div class="kutu"><h3>Türetilenler (görünüm)</h3><ul>
+      <li><code>v_stok</code>: varyant × depo miktarı, eksi olabilir</li>
+      <li><code>v_cari_bakiye</code>: para birimi başına borç/alacak</li>
+      <li><code>v_kasa_bakiye</code>: hesap bakiyesi</li>
+      <li><code>v_siparis_durum</code>: karşılanan, üretimde, kalan, durum</li>
+      <li><code>v_adim_durum</code>: verilen, teslim, hurda, bekleyen</li>
+      <li><code>v_ihtiyac_mamul</code>, <code>v_ihtiyac_hammadde</code>, <code>v_maliyet</code></li>
+    </ul></div>
+  </div>
+  <p class="not">Görünüm yavaşlarsa (on binlerce hareket) tablo değil, sunucunun kendi tuttuğu özet eklenir: belge onaylanınca aynı işlemde güncellenen <code>stok_ozet</code>. Kaynak yine hareketlerdir; özet her zaman sıfırdan yeniden üretilebilir.</p>
+</section>
+
+<section id="kurallar">
+  <div class="bolum-no">08</div>
+  <h2>Değişmez kurallar</h2>
+  <p class="giris">Eski projeden aynen taşınanlar ve yeni yapının getirdikleri. "Nasıl korunur" sütunu, kuralı kimin hatırladığını gösterir: amaç, kuralın insanın ya da Claude'un hafızasına değil, sisteme bağlı olması.</p>
+  <div class="tablo-kap"><table>
+    <thead><tr><th>Kural</th><th>Anlamı</th><th>Nasıl korunur</th></tr></thead>
+    <tbody>
+      <tr><td>Fişsiz hareket olmaz</td><td>Stok, cari, kasa hareketinin mutlaka belgesi vardır.</td><td>NOT NULL + FK kısıtı</td></tr>
+      <tr><td>Eksi stok kırpılmaz</td><td>Eksi stok "giriş eksik" bilgisidir; <code>max(0, …)</code> yazılmaz.</td><td>Görünüm ham toplamı verir; test</td></tr>
+      <tr><td>Matris kuralı</td><td>Tek değişken boyut beden ise liste malzeme × beden matrisi çizilir.</td><td>Ortak <code>&lt;Matris&gt;</code> bileşeni</td></tr>
+      <tr><td>İşçilik ayrı satır</td><td>Hammadde çıkışı, işçilik ve mamul girişi ayrı satırlardır, aynı belgede.</td><td>Belge satır tipi</td></tr>
+      <tr><td>Silme yok, iptal var</td><td>Onaylı belge silinmez. Taslak silinebilir. Ana veri pasife alınır.</td><td>RLS: DELETE yok</td></tr>
+      <tr><td>İnternetsiz kayıt yok</td><td>Bağlantı yoksa kilit; bekleyen yazma defteri tutulmaz.</td><td>Komut katmanı + kilit ekranı</td></tr>
+      <tr><td>Toplu değişiklik açık onaylı</td><td>Toplu iş (renk kodlama, fiyat güncelleme) tek komuttur, önizleme + onayla çalışır, günlüğe yazılır.</td><td><code>toplu_*</code> fonksiyonları</td></tr>
+      <tr><td>Secret anahtar koda girmez</td><td>Yalnız publishable anahtar gömülü; yetkili işler Edge Function'da.</td><td>Ortam değişkeni; tarama</td></tr>
+      <tr><td>Dışarıya veri gönderen AI entegrasyonu yok</td><td>Kullanıcı kararı (eski 7a).</td><td>Bu sayfa</td></tr>
+      <tr><td>Türkçe</td><td>Arayüz, kod adları ve yorumlar Türkçe; yorumlar "neden"i anlatır.</td><td>Gözden geçirme</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="kod">
+  <div class="bolum-no">09</div>
+  <h2>Kod düzeni ve yeni iş ekleme</h2>
+  <div class="iki">
+    <div class="kutu"><h3>Klasörler</h3><pre class="agac">atolye2/
+├─ supabase/
+│  ├─ migrations/    <span class="y">şema + fonksiyon, tek kaynak</span>
+│  ├─ tests/         <span class="y">iş kuralı testleri (pgTAP)</span>
+│  └─ functions/     <span class="y">gün sonu, e-posta, kur</span>
+├─ src/
+│  ├─ cekirdek/      <span class="y">istemci, oturum, kilit, komut()</span>
+│  ├─ ortak/         <span class="y">Matris, CariSecici, BelgeFormu</span>
+│  └─ moduller/
+│     ├─ siparis/    <span class="y">ekranlar + sorgular + NOT.md</span>
+│     ├─ uretim/
+│     └─ …
+├─ test/e2e/         <span class="y">tarayıcı senaryoları</span>
+└─ docs/
+   ├─ sema.html      <span class="y">bu sayfa</span>
+   └─ kararlar/      <span class="y">001-belge-cekirdegi.md …</span></pre></div>
+    <div class="kutu"><h3>Yeni bir iş eklerken kontrol listesi</h3><ol>
+      <li>Bu iş yeni bir belge tipi mi, var olan belgenin yeni satır tipi mi? Önce bunu yaz.</li>
+      <li>Tablo ve sütunlar migration dosyasında, RLS politikasıyla birlikte.</li>
+      <li>Yazma yalnız komut fonksiyonundan; hareket gerekiyorsa belge çekirdeğinden.</li>
+      <li>Hesaplanabilen hiçbir şey sütun olmaz; görünüm yazılır.</li>
+      <li>Test: kaydet → etkiler doğru; <b>iptal → her şey ilk hâline döndü</b>; aynı istek iki kez → tek kayıt.</li>
+      <li>Bu sayfadaki modül kartı ve tetik listesi güncellenir.</li>
+    </ol></div>
+  </div>
+  <p class="not">Yığın önerisi: Vite + React + TypeScript, TanStack Query (önbellek + Realtime ile tazeleme), Supabase (Postgres, RLS, RPC, Realtime, Edge Functions). Yayın eskisi gibi GitHub Pages'ten; tek HTML yerine Vite'ın statik çıktısı. Sürüm bilgisi ve "yeni sürüme geç" şeridi eski yapıdaki gibi kalır.</p>
+</section>
+
+<section id="yol">
+  <div class="bolum-no">10</div>
+  <h2>Yol haritası</h2>
+  <p class="giris">Her faz kendi başına kullanılabilir bir uygulama bırakır. Bir faz "bitti" sayılmadan sonrakine geçilmez.</p>
+  <div class="faz"><div class="fno">Faz 0</div><div><h3>Temel</h3><p>Firma, kullanıcı, rol/yetki, günlük ve arşiv tetikleyicisi, numaratör, belge çekirdeği (kaydet/onayla/iptal), çevrimdışı kilit, komut katmanı.</p><p class="bitti">Bitti: test belgesi onaylanıp iptal edilince bütün defterler sıfıra dönüyor; aynı istek iki kez tek kayıt.</p></div></div>
+  <div class="faz"><div class="fno">Faz 1</div><div><h3>Ana veri</h3><p>Tanımlar (renk, ölçü seti, proses, depo, birim, KDV, kur), ürün + varyant + barkod + görsel, cari kartı.</p><p class="bitti">Bitti: renk adı değişince tek satır güncelleniyor; mamul renkleri kodlu ("1058 - Taba Süet").</p></div></div>
+  <div class="faz"><div class="fno">Faz 2</div><div><h3>Stok, cari, kasa</h3><p>ALS, SAT, iade, sayım, transfer, tahsilat, ödeme, virman, çek. Stok durumu, cari ekstre, kasa ekranı. Eski uygulamadan <code>ACL</code> açılış belgesiyle devir.</p><p class="bitti">Bitti: eski uygulamayla aynı gün stok ve cari bakiyeleri birebir tutuyor.</p></div></div>
+  <div class="faz"><div class="fno">Faz 3</div><div><h3>Teklif ve sipariş</h3><p>Satış ve alış siparişi, teklif, matris girişi, sipariş çıktısı (resimli, WhatsApp/PDF), karşılanan görünümü.</p></div></div>
+  <div class="faz"><div class="fno">Faz 4</div><div><h3>Reçete ve üretim</h3><p>Reçete sürümleri, rota, üretim emri, iş verme/teslim (ISV/IST), fasoncu deposu, barkod atölye ekranı, panel rolü.</p><p class="bitti">Bitti: adım sırası kuralı sunucuda; teslim iptal edilince işçilik, stok ve adım durumu geri dönüyor.</p></div></div>
+  <div class="faz"><div class="fno">Faz 5</div><div><h3>Planlama ve MRP</h3><p>İhtiyaç görünümleri, toplu üretim emri, satınalma önerisi, proses planlama (adıma kişi atama, iş vermeden ayrı).</p></div></div>
+  <div class="faz"><div class="fno">Faz 6</div><div><h3>Depo, koli, sevkiyat, fatura</h3><p>Koli, okutma, sevkiyat merkezi, fatura derleme, e-fatura bağlantısı.</p></div></div>
+  <div class="faz"><div class="fno">Faz 7</div><div><h3>Maliyet ve raporlar</h3><p>Ortalama alış maliyeti, ürün maliyeti (hammadde + işçilik + genel gider + demirbaş payı), gelir-gider, kâr-zarar, üretim raporu, gün sonu e-postası.</p></div></div>
+  <div class="faz"><div class="fno">Faz 8</div><div><h3>Dış dünya</h3><p>Web portalı (müşteri talebi → sipariş taslağı, vitrin), modelhane, görevler ve mesajlaşma.</p></div></div>
+</section>
+
+<section id="sorular">
+  <div class="bolum-no">11</div>
+  <h2>Senin kararını bekleyenler</h2>
+  <p class="giris">Şemada öneri olarak yazdım; kesinleşince buraya "karar" olarak işlenir.</p>
+  <div class="sorular">
+    <div class="soru"><b>Çoklu firma baştan mı?</b><p>Eski uygulamada firma ekleme vardı. Her tabloya <code>firma_id</code> + RLS baştan konursa sonradan eklemek gerekmez.</p><p class="oneri">Evet, baştan.</p></div>
+    <div class="soru"><b>Onaylı belge düzenlenebilsin mi?</b><p>Kullanıcılar fişi düzeltmeye alışkın. Düzenleme serbest olursa geçmiş kaybolur.</p><p class="oneri">"Düzelt" düğmesi kalsın; arkada iptal + yeni belge tek işlemde, geçmiş görünür.</p></div>
+    <div class="soru"><b>Fasoncu ve personel ayrı depo mu?</b><p>Verilen hammadde kimde, ne kadar bekliyor görünür; eksik/fazla teslim ölçülür.</p><p class="oneri">Evet, her kişi/fasoncu sanal depo.</p></div>
+    <div class="soru"><b>Koli stoğu ayırsın mı?</b><p>Koliye giren mal başka siparişe satılamasın mı, yoksa koli yalnız paketleme gruplaması mı?</p><p class="oneri">Yalnız gruplama; stok sevkte düşer, koli içeriği rezerve sayılır.</p></div>
+    <div class="soru"><b>Rezervasyon sert mi yumuşak mı?</b><p>Sert: siparişe ayrılan stok başkasına satılamaz. Yumuşak: yalnız uyarı ve raporda görünür.</p><p class="oneri">Yumuşak, görünümden; sevkte uyarı.</p></div>
+    <div class="soru"><b>Eski veriden ne taşınacak?</b><p>Eski kayıtların bir kısmı test verisiydi. Geçmiş hareketlerin hepsini taşımak eski tutarsızlıkları da taşır.</p><p class="oneri">Kartlar + tanımlar + açılış bakiyeleri (ACL) + açık siparişler. Eski uygulama salt okunur arşiv olarak kalsın.</p></div>
+    <div class="soru"><b>Yeni depo mu, aynı depo mu?</b><p>Kod ve şema tamamen yeni olacak.</p><p class="oneri">Yeni GitHub deposu + yeni Supabase projesi; eski ikisi dokunulmadan çalışmaya devam eder.</p></div>
+  </div>
+</section>
+
+<footer>Bu sayfa <code>yeni-yapi/sema.html</code> dosyasından üretilir. Karar değişirse önce bu dosya güncellenir, sonra kod. Eski projenin ayrıntılı geçmişi: <code>DEVAM-NOTU.md</code>.</footer>
+</main>
+</div>
+
+<script>
+// Modül kartları tek veri listesinden çizilir; "tetikleyen" bağları diğer modüllerin
+// tetik listesinden türetilir, böylece bir bağ iki yerde ayrı ayrı yazılmaz.
+const GRUPLAR = {
+  altyapi: { ad: "Altyapı", renk: "var(--g-altyapi)" },
+  anaveri: { ad: "Ana veri", renk: "var(--g-anaveri)" },
+  ticari:  { ad: "Ticari", renk: "var(--g-ticari)" },
+  uretim:  { ad: "Üretim", renk: "var(--g-uretim)" },
+  finans:  { ad: "Finans", renk: "var(--g-finans)" },
+  analiz:  { ad: "Analiz ve dış dünya", renk: "var(--g-analiz)" },
+};
+
+const MODULLER = [
+  { kod: "CEK", ad: "Çekirdek", grup: "altyapi",
+    amac: "Firma, kullanıcı, rol ve yetki, oturum, çevrimdışı kilit, numaratör, ayarlar. Her komutun geçtiği kapı.",
+    tablolar: ["firma", "kullanici", "rol_yetki", "numarator", "ayar", "istek"],
+    tetik: [["BAK", "her komut: günlüğe kim, ne zaman, hangi cihaz"], ["*", "yetki yoksa komut sunucuda reddedilir"]],
+    ders: "Yetki kısmen arayüzde kontrol ediliyordu; RLS sonradan, üç SQL dosyasıyla eklendi." },
+  { kod: "BEL", ad: "Belge çekirdeği", grup: "altyapi",
+    amac: "Taslak → onay → iptal yaşam döngüsü. Stok, cari ve kasa defterlerine yazan tek yer.",
+    tablolar: ["belge", "belge_satir", "stok_hareket", "cari_hareket", "kasa_hareket"],
+    tetik: [["RAP", "onay/iptal: stok, bakiye, karşılanan görünümleri değişir"], ["MAL", "ALS onayı: ortalama alış maliyeti"], ["SIP", "SAT/STI: karşılanan miktar"], ["URT", "ISV/IST: adım durumu"]],
+    ders: "fisYaz / fisGeriAl tek kapıya ancak sonradan toplanabildi; 4 yazıcı dışarıda kaldı." },
+  { kod: "TAN", ad: "Tanımlar", grup: "anaveri",
+    amac: "Renk, ölçü seti ve bedenler, birim, proses, depo, para birimi ve kur, KDV oranı, fiyat grubu, model rengi kombinasyonları.",
+    tablolar: ["renk", "olcu_seti", "olcu", "birim", "proses", "depo", "kur", "kdv_orani", "fiyat_grubu", "model_rengi"],
+    tetik: [["URN", "yeni renk/ölçü varyant seçiminde görünür"], ["URT", "proses listesi rota adımlarını besler"]],
+    ders: "Renk adı kayıt anahtarıydı; ad değişince binlerce varyant silinip yeniden yazıldı." },
+  { kod: "URN", ad: "Ürün ve varyant", grup: "anaveri",
+    amac: "Hammadde, yarı mamul ve mamul kartları; renk × ölçü varyantları, barkod, görseller, fiyat. Miktar tutmaz.",
+    tablolar: ["urun", "varyant", "barkod", "urun_gorsel", "fiyat"],
+    tetik: [["CEK", "yeni varyant: numaratörden kalıcı barkod"], ["REC", "mamul açılınca boş reçete taslağı"], ["PRT", "\"sitede göster\" işaretli ürün vitrine düşer"]],
+    ders: "Miktar varyantta önbellekti, hareketlerle ayrıştı; görseller satırla aynı POST'ta onlarca MB oldu." },
+  { kod: "REC", ad: "Reçete ve rota", grup: "anaveri",
+    amac: "Mamulün hammadde listesi (renk eşleme, beden bazlı miktar) ve proses sırası (asıl/ara adım, işçilik ücreti). Sürümlüdür.",
+    tablolar: ["recete", "recete_satir", "rota_adim", "iscilik_ucreti"],
+    tetik: [["PLN", "hammadde ihtiyacı reçeteden hesaplanır"], ["URT", "emir açılırken o anki sürüm kopyalanır"], ["MAL", "ürün maliyeti reçeteden"]],
+    ders: "Elle verilen hammadde reçeteyi eziyordu; reçete değişince açık üretim etkileniyordu." },
+  { kod: "CAR", ad: "Cari", grup: "anaveri",
+    amac: "Müşteri, tedarikçi, fasoncu, personel (bir cari birden çok rol taşıyabilir). İletişim, vergi no, fiyat grubu, para birimi. Bakiye görünümden.",
+    tablolar: ["cari", "cari_rol", "cari_iletisim"],
+    tetik: [["SIP", "müşteri seçildiğinde fiyat grubu ve para birimi"], ["DEP", "fasoncu/personel = sanal depo"]],
+    ders: "Kasa hareketinin cariye yönü ters işleniyordu (v1.312, ciddi); yön kuralı artık belge tipinde sabit." },
+  { kod: "TEK", ad: "Teklif", grup: "ticari",
+    amac: "Siparişle aynı form; geçerlilik tarihi, durum (Hazırlanıyor, Gönderildi, Reddedildi, Süresi doldu). Çıktısı sipariş çıktısıyla aynı.",
+    tablolar: ["teklif", "teklif_satir"],
+    tetik: [["SIP", "onay: satırlar siparişe kopyalanır, teklif sipariş kimliğini tutar"]],
+    ders: "Teklif tek parça tablo olarak yazıldı; eski listeyi tutan cihaz başkasının teklifini sildi." },
+  { kod: "SIP", ad: "Sipariş", grup: "ticari",
+    amac: "Satış ve alış siparişleri; matris girişi (renk × beden), notlar, ambalaj, teslim tarihi, ödeme planı.",
+    tablolar: ["siparis", "siparis_satir", "odeme_plani"],
+    tetik: [["PLN", "onay: ihtiyaç hesabına girer"], ["DEP", "sevk edilebilir satırlar sevkiyat merkezinde"], ["CEK", "istenirse müşteriye sipariş e-postası"]],
+    ders: "Karşılanan miktar saklanıyordu; fiş silinince sipariş \"Tamamlandı\" kaldı." },
+  { kod: "PLN", ad: "Planlama ve MRP", grup: "uretim",
+    amac: "Mamul ve hammadde ihtiyacı, toplu üretim emri açma, satınalma önerisi, proses planlama (adıma kişi önceden atanır, iş verilmez).",
+    tablolar: ["proses_plani"],
+    tetik: [["URT", "seçilenleri üret: üretim emirleri"], ["STN", "eksik hammadde: tedarikçi başına alış siparişi taslağı"]],
+    ders: "Rezervasyon ayrı defterdi; bayat listeden yazılınca hayalet talep kaldı." },
+  { kod: "STN", ad: "Satınalma", grup: "ticari",
+    amac: "Alış siparişinden ya da doğrudan alış irsaliyesi (ALS), iade (ALI), ek alınan hammadde.",
+    tablolar: ["(siparis tip=Alış)", "(belge ALS/ALI)"],
+    tetik: [["BEL", "ALS: + stok, tedarikçi alacak"], ["MAL", "ortalama alış maliyeti güncellenir"]],
+    ders: "Alış ve satış fişi yön göçü test verisini bozdu; yön artık belge tipinin sabiti." },
+  { kod: "URT", ad: "Üretim", grup: "uretim",
+    amac: "Üretim emri, rota kopyası, iş verme ve teslim alma, hurda, fason. Barkod atölye ekranı ve panel cihazı bu modülün ekranlarıdır.",
+    tablolar: ["uretim_emri", "emir_adim", "atama"],
+    tetik: [["BEL", "is_ver: ISV, malzeme kişi deposuna"], ["BEL", "is_teslim_al: IST, işçilik + son adımda mamul girişi"], ["SIP", "üretilen miktar sipariş durumuna yansır"], ["DEP", "biten mamul koliye hazır"]],
+    ders: "Ara proses tüm siparişi akmış sayıyordu, Kesim verilmeden Saya verildi (v1.709.3); kural artık sunucuda." },
+  { kod: "DEP", ad: "Depo, koli ve sevk", grup: "ticari",
+    amac: "Depolar, barkod okutma, koli doldurma ve etiket, sevkiyat merkezi, sayım, transfer.",
+    tablolar: ["koli", "koli_satir", "sayim"],
+    tetik: [["BEL", "sevk_et: SAT belgesi, koli sevk edildi (türetilir)"], ["BEL", "sayım farkı: SAY belgesi"], ["FAT", "sevk belgeleri faturaya hazır"]],
+    ders: "Fiş geri alındı ama koli \"sevk edildi\" kaldı, bir daha okutulamadı (v1.83)." },
+  { kod: "FAT", ad: "Fatura", grup: "finans",
+    amac: "Bir ya da birden çok sevk belgesinden fatura derleme, KDV, e-fatura bağlantısı. Stok ve cariyi ikinci kez etkilemez.",
+    tablolar: ["fatura", "fatura_belge"],
+    tetik: [["RAP", "KDV ve satış raporları"]],
+    ders: "Fatura tek parça tablodaydı (blob)." },
+  { kod: "KAS", ad: "Kasa, banka ve çek", grup: "finans",
+    amac: "Hesaplar, tahsilat, ödeme, virman (kurlu), çek portföyü: alma, verme, ciro, tahsil, karşılıksız.",
+    tablolar: ["hesap", "cek", "cek_islem"],
+    tetik: [["BEL", "THS/ODM/VRM/CEK belgeleri"], ["CAR", "cari bakiye görünümü değişir"]],
+    ders: "Ciro fişi silinince çek \"Ciro Edildi\" kaldı, karşı caride yetim kayıt (v1.226)." },
+  { kod: "MAL", ad: "Maliyet ve gelir-gider", grup: "finans",
+    amac: "Ortalama alış maliyeti, ürün maliyeti (hammadde + işçilik + genel gider payı + demirbaş amortismanı), gider kategorileri, demirbaş.",
+    tablolar: ["gider_kategori", "demirbas", "(belge GDR)"],
+    tetik: [["RAP", "kâr-zarar, ürün kârlılığı"], ["SIP", "fiyat önerisi maliyetten"]],
+    ders: "Maliyette para birimi ve kur sonradan eklendi; her tutar baştan para birimiyle tutulur." },
+  { kod: "RAP", ad: "Raporlar", grup: "analiz",
+    amac: "Stok durumu, cari ekstre ve mutabakat, kâr-zarar, üretim raporu (günlük/haftalık/aylık), gün sonu e-postası. Hiçbir rapor veri yazmaz.",
+    tablolar: ["(yalnız görünümler)"],
+    tetik: [["CEK", "zamanlanmış gün sonu: Edge Function e-posta"]],
+    ders: "Excel ve yazdır ekrandaki tabloyla aynı olmalı (8m) kuralı ortak tablo bileşeninde." },
+  { kod: "PRT", ad: "Web portalı", grup: "analiz",
+    amac: "Müşteri girişi, sipariş talebi, kayıt talebi, herkese açık vitrin (fiyat, stok, beden gitmez).",
+    tablolar: ["site_hesap", "site_talep", "site_kayit_talebi"],
+    tetik: [["SIP", "onaylanan talep: sipariş taslağı"], ["CAR", "onaylanan kayıt: yeni müşteri carisi"]],
+    ders: "Site fonksiyonları ayrı SQL'lerle büyüdü; portal yalnız kendi fonksiyonlarını görür." },
+  { kod: "MDL", ad: "Modelhane", grup: "analiz",
+    amac: "Model geliştirme, teknik çizim, numune üretimi, katalog. Onaylanan model ürün ve reçete olur.",
+    tablolar: ["model", "numune"],
+    tetik: [["URN", "onay: mamul kartı"], ["REC", "onay: reçete taslağı"]],
+    ders: "" },
+  { kod: "BAK", ad: "Bakım ve güvenlik", grup: "altyapi",
+    amac: "Günlük, sunucu arşivi (her değişen ve silinen satır), gece yedeği, tutarlılık denetimleri, açılış devri, toplu işlemler.",
+    tablolar: ["gunluk", "arsiv", "yedek_kaydi"],
+    tetik: [["BEL", "devir: ACL açılış belgesi"], ["RAP", "denetim bulguları"]],
+    ders: "Kök neden bulunamayan veri kaybında elde arşiv vardı; arşiv tetikleyicisi baştan kurulur." },
+];
+
+const kartlar = new Map();
+const kok = document.getElementById("moduller");
+const cipKok = document.getElementById("cipler");
+const bilgi = document.getElementById("secimBilgi");
+const grupKok = document.getElementById("gruplar");
+const adBul = (k) => (MODULLER.find((m) => m.kod === k) || {}).ad || "tüm modüller";
+
+Object.values(GRUPLAR).forEach((g) => {
+  const s = document.createElement("span");
+  s.innerHTML = `<i style="background:${g.renk}"></i>${g.ad}`;
+  grupKok.appendChild(s);
+});
+
+// Gelen bağlar: başka modülün tetik listesinde bu modül hedefse.
+function gelenler(kod) {
+  const sonuc = [];
+  MODULLER.forEach((m) => m.tetik.forEach(([h, a]) => { if (h === kod) sonuc.push([m.kod, a]); }));
+  return sonuc;
+}
+
+function el(etiket, sinif, html) {
+  const e = document.createElement(etiket);
+  if (sinif) e.className = sinif;
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+
+MODULLER.forEach((m) => {
+  const g = GRUPLAR[m.grup];
+  const kart = el("article", "modul");
+  kart.id = "modul-" + m.kod;
+  kart.style.setProperty("--g", g.renk);
+  kart.appendChild(el("div", "modul-bas", `<span class="modul-kod">${m.kod}</span><h3>${m.ad}</h3><span class="modul-grup">${g.ad}</span>`));
+  kart.appendChild(el("p", "amac", m.amac));
+  kart.appendChild(el("div", "alan", `<span>Tablolar</span><div class="tablolar">${m.tablolar.map((t) => `<code>${t}</code>`).join("")}</div>`));
+  const cik = m.tetik.map(([h, a]) => `<li><span class="ok">→ <span class="hedef">${h === "*" ? "hepsi" : h}</span></span><span>${a}</span></li>`).join("");
+  kart.appendChild(el("div", "alan", `<span>Tetikler</span><ul class="tetik">${cik}</ul>`));
+  const gel = gelenler(m.kod);
+  if (gel.length) {
+    const gir = gel.map(([k, a]) => `<li><span class="ok">← <span class="hedef">${k}</span></span><span>${a}</span></li>`).join("");
+    kart.appendChild(el("div", "alan", `<span>Tetikleyenler</span><ul class="tetik">${gir}</ul>`));
+  }
+  if (m.ders) kart.appendChild(el("div", "ders", `<b>Eskiden:</b> ${m.ders}`));
+  kok.appendChild(kart);
+  kartlar.set(m.kod, kart);
+
+  const cip = el("button", "cip", `<i style="background:${g.renk}"></i>${m.kod} · ${m.ad}`);
+  cip.type = "button";
+  cip.setAttribute("aria-pressed", "false");
+  cip.dataset.kod = m.kod;
+  cip.addEventListener("click", () => sec(seciliKod === m.kod ? null : m.kod));
+  cipKok.appendChild(cip);
+});
+
+let seciliKod = null;
+function sec(kod) {
+  seciliKod = kod;
+  cipKok.querySelectorAll(".cip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.kod === kod)));
+  if (!kod) {
+    kartlar.forEach((k) => k.classList.remove("sonuk", "secili"));
+    bilgi.textContent = "Hepsi gösteriliyor. Bağlantılarını görmek için bir modül seç.";
+    return;
+  }
+  const m = MODULLER.find((x) => x.kod === kod);
+  const ilgili = new Set([kod]);
+  m.tetik.forEach(([h]) => { if (h === "*") MODULLER.forEach((x) => ilgili.add(x.kod)); else ilgili.add(h); });
+  gelenler(kod).forEach(([k]) => ilgili.add(k));
+  kartlar.forEach((k, c) => {
+    k.classList.toggle("sonuk", !ilgili.has(c));
+    k.classList.toggle("secili", c === kod);
+  });
+  const digerleri = [...ilgili].filter((k) => k !== kod).map(adBul);
+  bilgi.textContent = `${m.ad}: ${digerleri.length} modülle bağlı (${digerleri.join(", ")}). Tekrar dokununca hepsi görünür.`;
+  kartlar.get(kod).scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+}
+</script>
