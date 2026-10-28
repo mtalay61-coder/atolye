@@ -66,14 +66,27 @@ async function supabaseSilBilesik(tablo, alanlar, kayitlar) {
 // PARÇALI EKLEME/GÜNCELLEME (v1.724.1, aynı olay): binlerce satır tek POST gövdesinde (birkaç MB) gidince telefonda
 // istek düşüyordu. Satırlar `satirlariEsitle`den sonra 400'erlik parçalarla sırayla gönderilir; merge-duplicates
 // olduğu için yarıda kalan bir parça bir sonraki denemede yeniden gönderilebilir.
+// BOYUTA GÖRE DE (v1.725.1 — telefonda her denemede düşen stok yazması): ürün satırı görselleri (base64) taşıyor; 400 ürünlük
+// bir parça onlarca MB edebiliyor. Parça hem 400 satırı hem ~900 KB'ı aşmaz; tek satır sınırdan büyükse tek başına gider.
 const POST_PARCA_BOYU = 400;
+const POST_PARCA_BAYT = 900 * 1024;
+function postParcalari(satirlar, enFazlaSatir = POST_PARCA_BOYU, enFazlaBayt = POST_PARCA_BAYT) {
+  const parcalar = [];
+  let parca = [], boy = 2;
+  (satirlar || []).forEach((r) => {
+    const b = JSON.stringify(r).length + 1;
+    if (parca.length && (parca.length >= enFazlaSatir || boy + b > enFazlaBayt)) { parcalar.push(parca); parca = []; boy = 2; }
+    parca.push(r); boy += b;
+  });
+  if (parca.length) parcalar.push(parca);
+  return parcalar;
+}
 async function supabasePostParcali(yol, satirlar) {
-  const esit = satirlariEsitle(satirlar);
-  for (let i = 0; i < esit.length; i += POST_PARCA_BOYU) {
+  for (const parca of postParcalari(satirlariEsitle(satirlar))) {
     await supabaseIstek(yol, {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify(esit.slice(i, i + POST_PARCA_BOYU)),
+      body: JSON.stringify(parca),
     });
   }
 }

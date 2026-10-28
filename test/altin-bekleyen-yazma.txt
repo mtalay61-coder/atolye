@@ -3,25 +3,25 @@
  "defter": {
   "cari:data": {
    "deneme": "var",
-   "hata": "Failed to fetch",
+   "hata": "Failed to fetch — POST cariler · gövde N KB · adres 7 karakter",
    "tablo": "cariler",
    "zaman": "<zaman>"
   },
   "fisdefter:data": {
    "deneme": "var",
-   "hata": "Failed to fetch",
+   "hata": "Failed to fetch — GET fis_defteri · gövde N KB · adres 35 karakter",
    "tablo": "fis_defteri",
    "zaman": "<zaman>"
   },
   "stok:items": {
    "deneme": "var",
-   "hata": "Failed to fetch",
+   "hata": "Failed to fetch — POST urunler · gövde N KB · adres 7 karakter",
    "tablo": "urunler",
    "zaman": "<zaman>"
   },
   "tanimlar:data": {
    "deneme": "var",
-   "hata": "Failed to fetch",
+   "hata": "Failed to fetch — POST tanimlar · gövde N KB · adres 8 karakter",
    "tablo": "tanimlar",
    "zaman": "<zaman>"
   }
