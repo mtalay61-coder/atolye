@@ -535,6 +535,16 @@ function bulutYazmaBasladi(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYo
 function bulutYazmaBitti(tablo) { _bulutSonYazma[tablo] = Date.now(); _bulutYoldakiYazma[tablo] = Math.max(0, (_bulutYoldakiYazma[tablo] || 0) - 1); }
 function bulutSonYazma(tablo) { return (_bulutYoldakiYazma[tablo] || 0) > 0 ? Date.now() : (_bulutSonYazma[tablo] || 0); }
 
+// TEK PARÇA TABLO TABANI (v1.725.0, 089 `ucYonluBirlestir`): tablo → bu cihazın en son bildiği bulut hâli. Açılış okuması
+// (090), değişiklik yoklaması (100 `bulutDegisikligiUygula`) ve bu cihazın başarılı yazması kurar. Yoksa (bulut okunamamış)
+// yazma birleşimle gider: buluttaki hiçbir kayıt düşmez.
+const _tekilTaban = {};
+function tekilTabanAyarla(tablo, veri) {
+  if (veri === undefined || veri === null) { delete _tekilTaban[tablo]; return; }
+  try { _tekilTaban[tablo] = JSON.parse(JSON.stringify(veri)); } catch (e) { delete _tekilTaban[tablo]; }
+}
+function tekilTabanOku(tablo) { return _tekilTaban[tablo]; }
+
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
@@ -546,6 +556,12 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
   // eksik öğeler eklenir. Bulut okunamazsa birleştirmesiz yazılır. Yedekten geri yükleme ve sıfırlama
   // bilerek bütününü yazar: `{ birlestirme: false }`.
   const birlestir = tablo === "tanimlar" && secenek.birlestirme !== false && typeof tanimlariBirlestir === "function";
+  // DİĞER TEK PARÇA TABLOLAR BULUTLA ÜÇ YÖNLÜ BİRLEŞEREK (v1.725.0 — kullanıcı: teklif başka cihazdan kayboldu; telefonda
+  // Kasa & Banka "0 hesap"). Bütün hâli basmak, eski listeyi tutan cihazın başka cihazın kaydını silmesi demekti. Bulut
+  // OKUNAMAZSA yazılmaz (hata → bekleyen defter, yeniden denenir): birleştirmesiz basmak tam da kapatılan delik.
+  // `{ birlestirme: false }` (bilerek bütününü yazanlar: sıfırlama, arşivden geri dönüş) ikisini de kapatır.
+  const ucYonlu = tablo !== "tanimlar" && secenek.birlestirme !== false && typeof ucYonluBirlestir === "function";
+  const gonderilen = veri;
   // SIRALI (v1.569.0, denetim): tek satırlık tablolar kuyruğa girmiyordu; iki hızlı kayıtta önce başlayan (okuma +
   // birleştirme + yazma) SONRA bitebiliyor, bulutta eski liste kalıyordu. `tabloYaz` ile aynı tablo kuyruğu.
   const isi = () => (birlestir
@@ -560,10 +576,26 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
         if (typeof window !== "undefined" && window.__tanimlarBirlesti) window.__tanimlarBirlesti(bulut, b.eklenen, b.cikarilan);
         return b.tanimlar;
       }).catch(() => veri)
-    : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
+    : ucYonlu
+      ? supabaseIstek(`${tablo}?id=eq.tekil&select=veri`).then((r) => {
+          const bulut = Array.isArray(r) && r[0] ? r[0].veri : null;
+          if (bulut === null || bulut === undefined) return veri;
+          const b = ucYonluBirlestir(veri, bulut, tekilTabanOku(tablo));
+          if (JSON.stringify(b) !== JSON.stringify(veri)) {
+            // katman-muaf: tekilYaz'ın kendi gövdesi — birleşik hâl yerele de yazılır (arada daha yeni kayıt yoksa).
+            if (_tekilSayac[anahtar] === benimSiram) guvenliYaz(anahtar, JSON.stringify(b), true);
+            if (typeof window !== "undefined" && window.__tekilBirlesti) window.__tekilBirlesti(tablo, b, gonderilen);
+          }
+          return b;
+        })
+      : Promise.resolve(veri)).then((v) => supabaseIstek(tablo, {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
       body: JSON.stringify([{ id: "tekil", veri: v }]),
+    }).then(() => {
+      // Taban = bu cihazın ekranındaki hâl (gönderdiği), birleşik hâl değil: ekran henüz birleşiği göstermiyorsa bir sonraki
+      // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
+      tekilTabanAyarla(tablo, gonderilen);
     }));
   const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
   gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));

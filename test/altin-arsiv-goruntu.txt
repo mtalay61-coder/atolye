@@ -1,0 +1,30 @@
+{
+  "satirBasligi": "Kasa/BankaDeğişiklik öncesi anlık görüntü · 2 kasa · 1 banka · 3 hareket · 1 çek24.10.2026 09:00:00 · bilinmiyor",
+  "ozet": {
+    "goruntu": "2 kasa · 1 banka · 3 hareket · 1 çek",
+    "bugun": "0 kasa · 1 banka · 0 hareket · 0 çek"
+  },
+  "onayMetni": [
+    "Görüntü: 2 kasa · 1 banka · 3 hareket · 1 çek",
+    "Bugün: 0 kasa · 1 banka · 0 hareket · 0 çek",
+    "Sonuç: 2 kasa · 2 banka · 3 hareket · 1 çek"
+  ],
+  "yazmaSayisi": 1,
+  "buluttanOkumaSayisi": 1,
+  "sonuc": {
+    "kasalar": [
+      "K1:h1,h2",
+      "K2:"
+    ],
+    "bankalar": [
+      "B9",
+      "B1"
+    ],
+    "cekler": [
+      "c1"
+    ],
+    "kurUSD": 49.79
+  },
+  "toast": "Kasa/Banka birleştirildi (2 kasa · 2 banka · 3 hareket · 1 çek) — sayfa yenileniyor",
+  "hatalar": []
+}

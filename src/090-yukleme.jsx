@@ -84,6 +84,9 @@ useEffect(() => {
             try { const sat = await supabaseTumSatirlar(tablo); bulutVeri = sat[0] && sat[0].veri ? sat[0].veri : null; } catch (e) { bulutVeri = undefined; }
             let yerelVeri = null;
             try { const o = await guvenliOku(anahtar, null); if (o.deger) yerelVeri = JSON.parse(o.deger); } catch (e) { /* */ }
+            // TABAN (v1.725.0, 030 `tekilTabanAyarla`): bu cihazın bildiği bulut hâli — sonraki yazmalar bununla üç yönlü birleşir.
+            // Bulut okunamadıysa taban kurulmaz: yazma birleşimle gider, buluttaki hiçbir kayıt düşmez.
+            if (bulutVeri != null) tekilTabanAyarla(tablo, bulutVeri);
             if (bulutVeri == null) return yerelVeri;
             if (bekleyenler[anahtar] && yerelVeri != null) {
               console.warn(`Bekleyen yazma: ${anahtar} — yerel kopya esas, buluttakiyle birleştirildi`);

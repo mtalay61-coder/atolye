@@ -2738,7 +2738,14 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
         </button>
       </div>
       {durum && <div className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>{durum}</div>}
-      {tablo && satirlar && satirlar.length > 0 && (() => {
+      {tablo && satirlar && satirlar.length > 0 && TEKIL_GORUNTU_TABLOLARI[tablo] && arsivSatirlariniHazirla(tablo, satirlar).length === 0 && (
+        // Tek parça tabloda satır silinmez, hâl değişir (v1.725.0): "0 silinmiş satır" yerine yol gösterilir.
+        <div data-arsiv-tekil-ipucu="1" style={{ fontSize: 11, marginBottom: 8, padding: "8px 10px", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-sm)" }}>
+          {ARSIV_TABLO_ADLARI[tablo] || tablo} tek parça bir kayıttır: arşivde günde bir <b>değişiklik öncesi görüntüsü</b> tutulur. Aşağıda dolu
+          görünen günün satırını açıp <b>Bugünkü hâlle birleştir</b>'e basın — bugün olan hiçbir kayıt silinmez.
+        </div>
+      )}
+      {tablo && satirlar && satirlar.length > 0 && !(TEKIL_GORUNTU_TABLOLARI[tablo] && arsivSatirlariniHazirla(tablo, satirlar).length === 0) && (() => {
         const hazir = arsivSatirlariniHazirla(tablo, satirlar);
         const geriYukle = async () => {
           if (geriYukleniyor || hazir.length === 0) return;
@@ -2788,6 +2795,9 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
                   <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-3)", whiteSpace: "nowrap" }}>{new Date(a.zaman).toLocaleString("tr-TR")} · {o.kim}</span>
                   {acik ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
+                {acik && a.islem === "GORUNTU" && TEKIL_GORUNTU_TABLOLARI[a.tablo] && (
+                  <TekilGoruntuDonusu satir={a} tabloAdi={o.tabloAdi} showToast={showToast} />
+                )}
                 {acik && (
                   <pre className="mono" style={{ margin: 0, padding: 10, fontSize: 10, background: "var(--erp-panel)", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 260, overflowY: "auto" }}>
                     {JSON.stringify(gizliAlanlariAt(a.veri), null, 2)}
@@ -2803,6 +2813,61 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
 }
 
 
+
+// TEK PARÇA TABLO GÖRÜNTÜSÜNE BİRLEŞTİREREK DÖNÜŞ (v1.725.0, 077 `TEKIL_GORUNTU_TABLOLARI`). Açılan arşiv satırında: görüntünün
+// ve buluttaki BUGÜNKÜ hâlin özeti yan yana, "Bugünkü hâlle birleştir" → bugünkü + yalnız görüntüde olan kayıtlar buluta
+// bütün olarak yazılır (`birlestirme: false` — birleştirmeyi kendisi yaptı), günlüğe düşer, sayfa yenilenir (ekrandaki hâl bayat).
+function TekilGoruntuDonusu({ satir, tabloAdi, showToast }) {
+  const [guncel, setGuncel] = useState(undefined);   // undefined: okunmadı, null: bulutta satır yok
+  const [hata, setHata] = useState("");
+  const [yaziliyor, setYaziliyor] = useState(false);
+  const tablo = satir.tablo;
+  const goruntu = satir.veri && satir.veri.veri;
+  useEffect(() => {
+    let iptal = false;
+    supabaseIstek(`${tablo}?id=eq.tekil&select=veri`)
+      .then((r) => { if (!iptal) setGuncel(Array.isArray(r) && r[0] ? r[0].veri : null); })
+      .catch((e) => { if (!iptal) setHata(`Bugünkü hâl okunamadı: ${String((e && e.message) || e).slice(0, 120)}`); });
+    return () => { iptal = true; };
+  }, [tablo]);
+  const birlestir = async () => {
+    if (yaziliyor || guncel === undefined) return;
+    // Bekleme öncesinin fotoğrafı sabitlenir (bayat okuma denetimi): günlükteki "önce" özeti tam birleştirilen hâli anlatsın.
+    const once = guncel;
+    const sonuc = tekilGoruntuBirlestir(once, goruntu);
+    const onay = window.confirm(`${tabloAdi}: ${new Date(satir.zaman).toLocaleString("tr-TR")} görüntüsü bugünkü hâlle birleştirilecek.\n\n`
+      + `Görüntü: ${tekilGoruntuOzeti(tablo, goruntu)}\nBugün: ${tekilGoruntuOzeti(tablo, once)}\nSonuç: ${tekilGoruntuOzeti(tablo, sonuc)}\n\n`
+      + `Bugün olan hiçbir kayıt silinmez; yalnız görüntüde olup bugün olmayanlar geri gelir (o tarihten sonra bilerek silinenler de). `
+      + `Bitince sayfa yenilenir. Devam?`);
+    if (!onay) return;
+    setYaziliyor(true);
+    try {
+      await tekilYaz(TEKIL_GORUNTU_TABLOLARI[tablo], tablo, sonuc, { birlestirme: false });
+      const kalan = bekleyenYazmalariOku()[TEKIL_GORUNTU_TABLOLARI[tablo]];
+      if (kalan) throw new Error(kalan.hata || "buluta yazılamadı");
+      gunlukYaz(`Sunucu arşivinden görüntüye dönüldü: ${tabloAdi} (${new Date(satir.zaman).toLocaleString("tr-TR")})`, "guvenlik",
+        { tablo, arsivId: satir.id, goruntu: tekilGoruntuOzeti(tablo, goruntu), once: tekilGoruntuOzeti(tablo, once), sonra: tekilGoruntuOzeti(tablo, sonuc) });
+      if (showToast) showToast(`${tabloAdi} birleştirildi (${tekilGoruntuOzeti(tablo, sonuc)}) — sayfa yenileniyor`);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e) {
+      setHata(`Yazılamadı: ${String((e && e.message) || e).slice(0, 200)}`);
+      setYaziliyor(false);
+    }
+  };
+  return (
+    <div data-arsiv-goruntu={tablo} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "8px 10px", background: "var(--erp-orange-bg)", borderTop: "1px solid var(--erp-line-soft)" }}>
+      <span style={{ fontSize: 11, flex: 1, minWidth: 220, display: "grid", gap: 2 }}>
+        <span>Görüntü: <b data-arsiv-goruntu-ozet="1">{tekilGoruntuOzeti(tablo, goruntu)}</b></span>
+        <span>Bugün (bulut): <b data-arsiv-guncel-ozet="1">{guncel === undefined ? (hata ? "—" : "okunuyor…") : tekilGoruntuOzeti(tablo, guncel)}</b></span>
+        {hata && <span style={{ color: "var(--erp-danger, #B3261E)" }}>{hata}</span>}
+      </span>
+      <button type="button" className="btn-primary" data-arsiv-goruntu-birlestir="1" disabled={yaziliyor || guncel === undefined}
+        style={{ padding: "5px 12px", fontSize: 11 }} onClick={birlestir}>
+        {yaziliyor ? "Yazılıyor…" : "Bugünkü hâlle birleştir"}
+      </button>
+    </div>
+  );
+}
 
 // Kullanıcı satırında şifre değiştirme / bulut hesabı açma kutusu: tıklanınca açılır, Enter ya da
 // Uygula ile gönderir; bulut kabul edince kapanır.

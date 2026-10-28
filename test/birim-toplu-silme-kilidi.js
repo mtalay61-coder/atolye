@@ -91,6 +91,28 @@ const gunlukKayitlari = () => istekler.filter((r) => r.yol.startsWith("gunluk"))
   bekle("40/40 stok hareketi silmesi engellendi", sonuc, "engel");
   bekle("ürün PATCH'i bile gitmedi (varyant 0'a ezilmedi)", veriIstekleri().length, 0);
 
+  // 5b) RENK ADI DEĞİŞİMİ (v1.725.0): varyantlar bileşik anahtarlı — 40 varyantın rengi yeniden adlandırılınca 40 "silinen"
+  //     + 40 "eklenen" çıkar; ürün başına net kayıp 0 → geçer (izin gerekmez). Ürünün varyantları yerine bir şey gelmeden
+  //     giderse net kayıp 40 → engel. Bir ürünün kaybını başka ürünün artışı örtmez.
+  const kirk = new Array(40).fill(0).map((_, i) => ({ renk: "Siyah", beden: String(36 + (i % 10)) + (i >= 10 ? `-${Math.floor(i / 10)}` : ""), miktar: 1 }));
+  const bot = { id: "b1", ad: "Bot", kategori: "Mamul", birim: "çift", variants: kirk, hareketler: [], recete: [] };
+  const terlik = { id: "t1", ad: "Terlik", kategori: "Mamul", birim: "çift", variants: [{ renk: "Mavi", beden: "40", miktar: 2 }], hareketler: [], recete: [] };
+  const tabanKur = () => { tabloBaslangicTam("urunler", [bot, terlik]); surumleriYukle("urunler", [{ id: "b1", surum: 1 }, { id: "t1", surum: 1 }]); };
+  tabanKur(); istekler.length = 0; sonuc = null;
+  try { await supabaseTabloEsitle("urunler", [{ ...bot, variants: kirk.map((v) => ({ ...v, renk: "1001 - Siyah" })) }, terlik]); sonuc = "geçti"; }
+  catch (e) { sonuc = e.topluSilmeEngeli ? "engel" : `başka hata: ${e.message}`; }
+  bekle("40 varyantın rengi değişti → geçti (net kayıp 0)", sonuc, "geçti");
+  bekle("eski adlı varyantlar silindi, yenileri yazıldı", [silmeler("varyantlar") > 0, veriIstekleri().some((r) => r.yontem === "POST" && r.yol.startsWith("varyantlar") && /1001 - Siyah/.test(r.govde))], [true, true]);
+  tabanKur(); istekler.length = 0; sonuc = null;
+  try { await supabaseTabloEsitle("urunler", [{ ...bot, variants: [] }, terlik]); sonuc = "geçti"; }
+  catch (e) { sonuc = e.topluSilmeEngeli ? "engel" : `başka hata: ${e.message}`; }
+  bekle("Bot'un 40 varyantı yerine bir şey gelmeden gitti → engel", sonuc, "engel");
+  tabanKur(); istekler.length = 0; sonuc = null;
+  const terlikYeni = { ...terlik, variants: new Array(40).fill(0).map((_, i) => ({ renk: "Mavi", beden: `x${i}`, miktar: 1 })) };
+  try { await supabaseTabloEsitle("urunler", [{ ...bot, variants: [] }, terlikYeni]); sonuc = "geçti"; }
+  catch (e) { sonuc = e.topluSilmeEngeli ? "engel" : `başka hata: ${e.message}`; }
+  bekle("Bot'un kaybını Terlik'in 40 yeni satırı örtmez → engel", sonuc, "engel");
+
   // 6) Yedek geri yüklemenin silecekleri
   const bugun = { stok: [deri], siparisler: [], uretim: otuz, cariler: [], stokRezervasyonlari: [], onaylar: [] };
   const eskiYedek = { stok: [{ ...deri, hareketler: [], variants: [] }], siparisler: [], uretim: [], cariler: [] };

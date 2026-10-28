@@ -156,6 +156,55 @@ function derinBirlestir(yerel, bulut) {
   return yerel;
 }
 
+// ÜÇ YÖNLÜ BİRLEŞTİRME (v1.725.0) — tek parça tabloların her YAZMASINDA (030 `tekilYaz`). Kullanıcı (24–28 Ekim): "Girilen
+// teklif başka cihazdan kayboldu", ardından telefonda Kasa & Banka "0 hesap". Tek parça tablo (muhasebe, teklifler, koliler…)
+// bütün hâliyle yazılıyordu: eski listeyi tutan cihaz herhangi bir işlemde (yeni teklif, kur güncellemesi…) kendi listesini
+// buluta basıyor, başka cihazın eklediği kaydı siliyordu; açılışta bulut okunamamış bir cihaz ise boş hâli basabiliyordu.
+// Artık yazmadan önce bulut okunur ve üç hâl birleştirilir:
+//   yerel  = bu cihazın yazmak istediği hâl
+//   bulut  = şu an buluttaki hâl
+//   taban  = bu cihazın en son bildiği bulut hâli (açılış okuması, değişiklik yoklaması, kendi son yazması)
+// Kural her düğümde: yerel tabandan değişmediyse BULUT alınır (başka cihazın değişikliği/silmesi korunur); bulut değişmediyse
+// YEREL alınır (bu cihazın değişikliği/silmesi gider); ikisi de değiştiyse kimlikli dizilerde kayıt kayıt, düz nesnelerde
+// alan alan içe inilir; düz değerlerde YEREL kazanır. Bir tarafın sildiği kaydı öbür taraf değiştirdiyse kayıt KALIR
+// (kaybetmektense). Taban bilinmiyorsa (açılışta bulut okunamamıştı) `derinBirlestir`: birleşim — buluttaki hiçbir kayıt
+// düşmez, bu cihazın silmesi o yazmada gitmez. Saf; birim testi `birim-tekil-birlestir`.
+function ucYonluBirlestir(yerel, bulut, taban) {
+  if (taban === undefined) return derinBirlestir(yerel, bulut);
+  const es = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+  if (es(yerel, taban)) return bulut;
+  if (es(bulut, taban)) return yerel;
+  if (yerel === undefined) return bulut;          // yerel sildi, bulut değiştirdi → değişiklik kalır
+  if (bulut === undefined || bulut === null) return yerel;
+  const kimlikliDizi = (d) => Array.isArray(d) && d.every((x) => x && typeof x === "object" && !Array.isArray(x) && x.id !== undefined);
+  if (kimlikliDizi(yerel) && kimlikliDizi(bulut)) {
+    const tabanHarita = new Map(kimlikliDizi(taban) ? taban.map((x) => [x.id, x]) : []);
+    const bulutHarita = new Map(bulut.map((x) => [x.id, x]));
+    const yerelIdler = new Set(yerel.map((x) => x.id));
+    const sonuc = [];
+    yerel.forEach((x) => {
+      if (bulutHarita.has(x.id)) { const r = ucYonluBirlestir(x, bulutHarita.get(x.id), tabanHarita.get(x.id)); if (r !== undefined) sonuc.push(r); }
+      else if (!tabanHarita.has(x.id) || !es(x, tabanHarita.get(x.id))) sonuc.push(x);   // yeni ya da (bulut silmiş ama) yerelde değişmiş
+    });
+    bulut.forEach((y) => {
+      if (yerelIdler.has(y.id)) return;
+      if (!tabanHarita.has(y.id) || !es(y, tabanHarita.get(y.id))) sonuc.push(y);        // başka cihazın yenisi ya da (yerel silmiş ama) bulutta değişmiş
+    });
+    return sonuc;
+  }
+  const duzNesne = (o) => o && typeof o === "object" && !Array.isArray(o);
+  if (duzNesne(yerel) && duzNesne(bulut)) {
+    const t = duzNesne(taban) ? taban : {};
+    const sonuc = {};
+    new Set([...Object.keys(bulut), ...Object.keys(yerel)]).forEach((k) => {
+      const r = ucYonluBirlestir(yerel[k], bulut[k], duzNesne(taban) ? t[k] : undefined);
+      if (r !== undefined) sonuc[k] = r;
+    });
+    return sonuc;
+  }
+  return yerel;
+}
+
 // RENK / ÖLÇÜ / ASORTİ KODU ONARIMI (v1.556.0 — kullanıcı: "Renk kodları çakışıyor, burayı düzeltmiştik daha
 // önce!" — ekranda iki renk "Renk kodu: 0044"). Barkod kodu her cihazda kendi sayacıyla veriliyor; tek cihazda
 // `kodlariAta` var olanları atlıyor, çakışmıyor. Ama iki cihaz aynı anda yeni renk açınca ikisi de 44'ü verdi;
