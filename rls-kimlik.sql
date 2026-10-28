@@ -48,6 +48,7 @@ begin
   for t in
     select tablename from pg_tables where schemaname = 'public'
       and tablename <> 'silinen_arsiv'   -- yalnız okunur arşiv; kendi politikası silinen-arsiv.sql'de
+      and tablename not like 'stk\_%'   -- stok v2: yalnız okunur, yazma sunucu işlemleriyle (stok-v2.sql, v1.726.0)
   loop
     execute format('alter table public.%I enable row level security', t.tablename);
     -- Tablonun KENDİ kurulum dosyasından kalan eski politikalar silinir (rol sınırı yoktu).
@@ -78,6 +79,15 @@ alter default privileges in schema public revoke all on sequences from anon;
 grant usage on schema public to authenticated;
 grant all on all tables in schema public to authenticated;
 grant all on all sequences in schema public to authenticated;
+-- 3b) STOK v2 (v1.726.0): yukarıdaki "hepsine yetki" stok v2 tablolarına da yazma verdi — geri alınır. Bu tablolara
+--     yalnız sunucu işlemleri (stk_yaz, stk_fis_kaydet…) yazar; uygulama okur (stok-v2.sql § 5).
+do $$
+declare t record;
+begin
+  for t in select tablename from pg_tables where schemaname = 'public' and tablename like 'stk\_%' loop
+    execute format('revoke insert, update, delete, truncate on public.%I from authenticated', t.tablename);
+  end loop;
+end $$;
 alter default privileges in schema public grant all on tables to authenticated;
 alter default privileges in schema public grant all on sequences to authenticated;
 

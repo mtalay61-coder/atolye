@@ -624,6 +624,7 @@ declare
   n_kaldir int := 0;
   n int;
   atlanan jsonb := '[]'::jsonb;
+  acilan text[] := '{}';
 begin
   perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim'], 'kaydetme');
 
@@ -632,6 +633,7 @@ begin
     vid := public.stk_varyant_coz(s ->> 'urunId', s ->> 'renkId', s ->> 'renk', s ->> 'olcuId', coalesce(s ->> 'olcu', s ->> 'beden'));
     update public.stk_varyant set aktif = true, min_stok = coalesce((s ->> 'minStok')::numeric, min_stok)
      where id = vid and (not aktif or min_stok is distinct from coalesce((s ->> 'minStok')::numeric, min_stok));
+    acilan := array_append(acilan, vid);
     n_ac := n_ac + 1;
   end loop;
 
@@ -685,7 +687,9 @@ begin
   -- 4) Varyant kaldır
   for s in select * from jsonb_array_elements(coalesce(p -> 'varyantKaldir', '[]'::jsonb)) loop
     vid := public.stk_varyant_bul(s ->> 'urunId', s ->> 'renkId', s ->> 'renk', s ->> 'olcuId', coalesce(s ->> 'olcu', s ->> 'beden'));
-    continue when vid is null;
+    -- Aynı istekte açılan varyant kaldırılmaz: yeniden adlandırmada eski ad (Tanımlar henüz buluta varmadıysa) hâlâ aynı
+    -- varyanta çıkar — "aç" ile "kaldır" aynı varyantı gösterir, kaldırmak açılanı pasife alırdı.
+    continue when vid is null or vid = any(acilan);
     select miktar into bakiye from public.stk_stok where varyant_id = vid;
     if coalesce(bakiye, 0) <> 0 then
       atlanan := atlanan || jsonb_build_object('neden', 'stoğu var', 'varyantId', vid, 'miktar', bakiye);

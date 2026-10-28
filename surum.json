@@ -1,1 +1,1 @@
-{"surum": "1.725.1", "url": "atolye-erp-v1.725.1.html", "not": "Gönderilemeyen kayıt: hata hangi isteğin düştüğünü yazar, istekler boyuta göre de bölünür, Yönetici takılı kaydı bırakıp buluttan yükleyebilir"}
+{"surum": "1.726.0", "url": "atolye-erp-v1.726.0.html", "not": "Stok v2 köprüsü: Supabase'de stok v2 geçişi yapılınca stok yazmaları tek sunucu işlemiyle (fiş/satır, ya hep ya hiç) gider; renk adı değişikliği artık stok satırı yazmaz"}

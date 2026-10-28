@@ -1,8 +1,11 @@
 # Stok v2 — yeniden kurulum planı (onayınıza)
 
-**Durum (28 Ekim 2026):** veritabanı yapısı, sunucu işlemleri ve veri göçü yazıldı. Yerel bir PostgreSQL'de, bugünkü
-verinin biçimiyle sınandı: 16 bölüm, hepsi geçti (`stok-v2/test/kos.sh`). **Supabase'e hiçbir şey dokunmadı.**
-Uygulama da değişmedi. Bir sonraki adım sizin onayınızla başlıyor.
+**Durum (28 Ekim 2026, akşam):** yapı, göç ve **uygulama köprüsü (v1.726.0)** hazır.
+- **Sınama:** yerel PostgreSQL'de 29 bölüm ve uçtan uca sınama geçti; uçtan uca sınamada uygulamanın gerçek yazma katmanı
+  gerçek sunucu işlemine yazdı ve buluttaki stok her adımda ekrandakiyle aynı çıktı (`stok-v2/test/kos.sh`).
+- **Supabase:** henüz dokunulmadı. Geçiş tek dosya: `stok-v2/stok-v2-gecis-tek-dosya.sql`.
+- **Ayrı deneme göçü yok:** kullanıcı, 28 Ekim: "Dosyaları kopyalamaya gerek yok, zaten deneme verisi." Bu yüzden 1. aşama
+  (deneme göçü) atlandı ve köprüye geçildi.
 
 Karar (sizin): *"Modül modül kuralım, veriyi taşı, stokla başla."*
 
@@ -78,31 +81,32 @@ kilitler; yeni kayıtları silemez.
 
 ## 4. Aşamalar
 
-**Aşama 1 — kurulum ve deneme göçü (risk yok)**
-- Siz Supabase › SQL Editor'da `stok-v2.sql` ve `stok-v2-goc.sql` dosyalarını, ardından `select jsonb_pretty(stk_goc());`
-  komutunu çalıştırırsınız. Rapor bana gelir.
-- Bugünkü tablolara dokunulmaz. Uygulama aynen çalışır.
-- Tanımlar'a eklenen aynalama tetikleyicisi hata verse bile Tanımlar kaydını düşürmez; bu da sınandı.
-- Raporu birlikte inceleriz: serbest renkler, fark satırları, tutarsız iptaller.
+**Aşama 1 — deneme göçü: ATLANDI** (veri deneme verisi). Göç, geçişin içinde çalışır ve raporunu döner.
 
-**Aşama 2 — uygulamanın stok katmanı v2'ye**
+**Aşama 2 — uygulama köprüsü: YAPILDI (v1.726.0, `src/038-stok-v2-kopru.jsx`)**
+- **Tek yazma geçidi.** Uygulamanın bütün stok akışları (25'ten fazla kapı) tek bir geçitten yazıyor: bellekteki ürün
+  listesinin farkı. Köprü bu farkı tek bir sunucu işlemine (`stk_yaz`) çevirir. Ekranlar ve akışlar değişmedi.
+- **Tek işlem, çift yazma yok.** İstek tek işlemde yazılır, ya hepsi ya hiçbiri. Ağda düşüp yeniden gönderilen istek
+  stoğu iki kez değiştirmez; bekleyen kayıt defteri aynen çalışır.
+- **Renk ve beden kimlikle.** Ad Tanımlar'dan kimliğe çevrilir. Yeniden adlandırma hiçbir stok isteği üretmez: bugün 305
+  rengin kodlanması binlerce satır silip yazıyordu.
+- **Silinen hareket iptal edilir.** Satır silinmez, iz kalır, stoktan düşer.
+- **Okuma değişmedi.** Geçişte bugünkü `varyantlar` / `stok_hareketleri` adları v2'nin görünümüne döner. Uygulama, gün
+  sonu raporu ve bulut sayımı değişmeden v2'den okur. Eski sürümde kalmış bir cihaz görünüme yazamaz, hata alır.
+- **Geçiş yapılmadıkça** uygulama bugünkü yolda kalır.
 
-Bu aşamada stok yazan bütün yollar tek bir işleme bağlanır: stok fişi, sipariş gerçekleştirme/sevk, üretim teslim/ver,
-numune, bağımsız stok girişi, açılış, fiş geri al.
-- **Fişin cari satırları aynı işlemde.** Fişin cari satırları da aynı veritabanı işleminde yazılır (bugünkü cari
-  tablosuna); stok düşüp cari yazılmaması biter.
-- **Okuma ve canlı izleme.** Ekran stoğu `stk_stok`'tan okur. Başka cihazın yazdığı, değişiklik sayacıyla birkaç saniyede
-  görünür.
-- **Korumalar aynen kalır.** Çevrimdışı kilit ve bekleyen kayıt defteri sürer. Düşen fiş aynı numarayla yeniden
-  gönderilir ve sunucu çift yazmaz.
-- **Önce testte.** Bütün bunlar önce test ortamında, bugünkü senaryo testleriyle sınanır.
+**Geçiş (sizin bir adımınız)**
+1. v1.726.0 yayında olsun (main'e birleşince 1–2 dk).
+2. Supabase › SQL Editor'da `stok-v2/stok-v2-gecis-tek-dosya.sql` dosyasının tamamını çalıştırın. Rapor döner.
+3. Açık uygulamaları yenileyin.
 
-**Aşama 3 — geçiş günü**
-1. Göç son kez çalıştırılır.
-2. Yeni sürüm yayınlanır.
-3. Eski stok tabloları **silinmez**, yalnız artık yazılmaz.
-4. Geri dönüş için v2 hareketlerini eski biçime aktaran bir işlem hazır bekler.
-5. Bir hafta iki taraf karşılaştırılır.
+Geri dönüş tek komut: `select jsonb_pretty(public.stk_geri_don());`. Eski tablolar v2'nin o anki hâliyle geri gelir;
+geçişten sonra girilen fişler kaybolmaz.
+
+**Aşama 3 — akışları doğrudan fiş işlemine taşımak** (sonraki)
+- **Akışlar `stk_fis_kaydet`'e.** Akışlar (stok fişi, sipariş sevki, üretim teslimi…) farkı değil fişin kendisini
+  gönderir; fişin cari satırları da aynı işlemde yazılır.
+- **Köprü sadeleşir.** Her taşınan akışla köprü incelir.
 
 **Sonraki modüller** (her biri aynı ilkelerle, sırayla):
 1. Cari
@@ -113,18 +117,15 @@ numune, bağımsız stok girişi, açılış, fiş geri al.
 
 Ürün kartının kendisi (ad, fiyat, reçete, görsel) ürün modülüyle geçer. Ürün silme o zaman "pasife alma" olur.
 
-## 5. Onayınızı istediğim kararlar
+## 5. Kararlar (önerilerle uygulandı — itiraz ederseniz değişir)
 
-1. **Göç farkı:** kayıtlı miktar ile hareket toplamı arasındaki fark, tek bir açılış fişiyle kapatılsın mı?
-   *Önerim: evet. Stoklar bugünküyle aynı kalır, fark raporda görünür.*
-2. **Tanımsız eski renkler** "serbest" renk olarak taşınsın, sonra Bakım'dan tanımlı renklere bağlansın mı?
-   *Önerim: evet.*
-3. **Fiş iptali** fişi silmesin, iptal işaretlesin; iz kalsın mı? *Önerim: evet.*
-4. **Fiş iptal yetkisi:** fiş iptali için "silme" yetkisi istensin mi? *Önerim: evet.* Bugün bazı kullanıcılar fiş
-   geri alabiliyorsa, onlara Tanımlar › Kullanıcılar'dan silme yetkisi verilir.
-5. **Fişin cari satırları** stokla aynı işlemde yazılsın mı (Aşama 2)? *Önerim: evet.*
-
-Onay verirseniz Aşama 1 için çalıştıracağınız iki dosyayı kopyalanacak biçimde veririm.
+1. **Göç farkı** tek açılış fişiyle kapatılır: stoklar bugünküyle aynı kalır, fark raporda görünür.
+2. **Tanımsız eski renkler** "serbest" renk olarak taşınır. Aynı ad Tanımlar'a girince sunucu kendiliğinden bağlar,
+   elle işe gerek kalmaz.
+3. **İptal edilen fiş ve satır silinmez,** iptal işaretlenir; iz kalır.
+4. **Fiş iptal yetkisi:** köprüde silme de bugünkü gibi ekranın yetki kuralıyla yürür; sunucu "kaydetme" yetkisi ister.
+   Doğrudan fiş iptali (`stk_fis_iptal`, Aşama 3) "silme" yetkisi ister.
+5. **Fişin cari satırları** stokla aynı işlemde yazılacak: Aşama 3.
 
 ---
 
@@ -133,5 +134,7 @@ Onay verirseniz Aşama 1 için çalıştıracağınız iki dosyayı kopyalanacak
 | Dosya | İçerik |
 |---|---|
 | `stok-v2/stok-v2.sql` | Tablolar, aynalama, işlemler, güvenlik. Tekrar çalıştırmak zararsız. |
-| `stok-v2/stok-v2-goc.sql` | Göç ve karşılaştırma. |
-| `stok-v2/test/` | Yerel sınama: Supabase taklidi, bugünkü tabloların taklidi ve zor durumları içeren örnek veri, `sinama.sql`, `kos.sh`. |
+| `stok-v2/stok-v2-goc.sql` | Göç, karşılaştırma, geçiş (`stk_gecis`) ve geri dönüş (`stk_geri_don`). |
+| `stok-v2/stok-v2-gecis-tek-dosya.sql` | ÜRETİLİR (`stok-v2/tek-dosya.sh`): ikisi + geçiş, tek yapıştırma. |
+| `src/038-stok-v2-kopru.jsx` | Uygulama köprüsü (v1.726.0). |
+| `stok-v2/test/` | Yerel sınama: Supabase taklidi, bugünkü tabloların taklidi ve zor durumları içeren örnek veri, `sinama.sql`, `sinama-gecis.sql`, `uctan-uca.js`, `kos.sh`. |

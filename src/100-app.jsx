@@ -1240,6 +1240,8 @@ function AtolyeUygulamasi() {
   const topluSilmeBildirRef = useRef(null);
   const tanimRef = useRef(tanimlar);
   tanimRef.current = tanimlar;
+  // Stok v2 köprüsü (038) renk/beden adını Tanımlar'dan kimliğe çevirir: yazma anındaki Tanımlar'ı bilsin.
+  stokV2TanimlarAyarla(tanimlar);
   const gorevRef = useRef(gorevler);
   gorevRef.current = gorevler;
   const modelRef = useRef(modeller);
@@ -1268,6 +1270,8 @@ function AtolyeUygulamasi() {
       });
     }
     tanimRef.current = sonraki;
+    // Yeni renk aynı işlemde stoğa girebilir (ürün kartında "renk aç"): köprü kimliği çizimi beklemeden görsün.
+    stokV2TanimlarAyarla(sonraki);
   }, []);
 
   // Katman (030 tekilYaz) buluttaki tanımlarla birleştirip eksik öğe eklediğinde ekran da güncellensin.
