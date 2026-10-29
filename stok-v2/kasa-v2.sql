@@ -86,7 +86,7 @@ select 'tekil'::text as id,
           ) as veri;
 
 -- KASA YAZ — tek kapı (src/038 kasa köprüsü). Uygulama, son gördüğü belgeyle yeni hâli karşılaştırıp yalnız farkı yollar.
---  p = { hesaplar: [{ id, tur, sira, veri }], hesapSil: [id],
+--  p = { hesaplar: [{ id, tur, sira?, veri }], hesapSil: [id],
 --        hareketler: [{ id, hesap_id, veri }], hareketIptal: [id],
 --        cekler: [{ id, veri }], cekIptal: [id],
 --        ayar: { anahtar: değer }, ayarSil: [anahtar] }
@@ -125,9 +125,12 @@ begin
 
   -- Hesaplar (ekle / güncelle / yeniden etkinleştir) ve kaldırılanlar (pasif — hareketleri iz olarak kalır)
   insert into public.kas_hesap as h (id, tur, sira, veri, aktif, olusturan)
-  select distinct on (x ->> 'id') x ->> 'id', x ->> 'tur', coalesce(public.stk_sayi(x ->> 'sira'), 0),
+  -- Sıra verilmezse (uygulama vermez): var olan hesap sırasını korur, yeni hesap sona eklenir (ekran da sona ekler).
+  select distinct on (x ->> 'id') x ->> 'id', x ->> 'tur',
+         coalesce(public.stk_sayi(x ->> 'sira'), (select m.sira from public.kas_hesap m where m.id = x ->> 'id'),
+                  (select coalesce(max(m.sira), 0) from public.kas_hesap m) + e.n),
          case when jsonb_typeof(x -> 'veri') = 'object' then (x -> 'veri') - 'hareketler' - 'id' else '{}'::jsonb end, true, eposta
-  from jsonb_array_elements(public.stk_dizi(p -> 'hesaplar')) x
+  from jsonb_array_elements(public.stk_dizi(p -> 'hesaplar')) with ordinality as e(x, n)
   order by x ->> 'id'
   on conflict (id) do update set tur = excluded.tur, sira = excluded.sira, veri = excluded.veri, aktif = true, guncelleme = now()
   where (h.tur, h.sira, h.veri, h.aktif) is distinct from (excluded.tur, excluded.sira, excluded.veri, true);

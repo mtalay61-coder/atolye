@@ -51,6 +51,12 @@ begin
   r := public.kas_yaz('{"hesaplar": [{"id": "banka-2", "tur": "banka", "sira": 2, "veri": {"ad": "İş Bankası", "paraBirimi": "USD"}}],
                         "hareketler": [{"id": "mh20", "hesap_id": "banka-2", "veri": {"id": "mh20", "tarih": "2026-10-29", "yon": "Giriş", "tutar": 10}}]}');
   assert jsonb_array_length(pg_temp.belge() -> 'bankalar') = 2, 'hesap eklenmedi';
+  -- Sırasız yeni hesap sona, sırasız güncelleme sırayı korur
+  r := public.kas_yaz('{"hesaplar": [{"id": "banka-3", "tur": "banka", "veri": {"ad": "Vakıf"}}]}');
+  assert pg_temp.belge() -> 'bankalar' -> 2 ->> 'ad' = 'Vakıf', 'sırasız hesap sona ' || (pg_temp.belge() -> 'bankalar')::text;
+  r := public.kas_yaz('{"hesaplar": [{"id": "banka-2", "tur": "banka", "veri": {"ad": "İş Bankası", "paraBirimi": "USD", "iban": "TR1"}}]}');
+  assert pg_temp.belge() -> 'bankalar' -> 1 ->> 'iban' = 'TR1', 'sırasız güncelleme sırayı korur';
+  r := public.kas_yaz('{"hesapSil": ["banka-3"]}');
   r := public.kas_yaz('{"hesapSil": ["banka-2"]}');
   assert jsonb_array_length(pg_temp.belge() -> 'bankalar') = 1 and exists (select 1 from public.kas_hareket where id = 'mh20'), 'hesap pasif';
   -- Çek iptal, ayar

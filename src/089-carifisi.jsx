@@ -91,7 +91,9 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   const bagliKalemler = kalemler.filter((k) => k.siparis && k.siparis.id && k.kalemId);
   // Stok, cari ve (bağlı kalem varsa) sipariş TEK ZARFTA (v1.727.0 / v1.728.0): fişin malı, borcu ve siparişin teslim alınanı
   // v2'de tek sunucu işlemiyle yazılır — biri düşüp öteki kalamaz. Cari tarafı aşağıda huniden aynı zarfla gelir.
-  const zarf = yazmaZarfi(bagliKalemler.length > 0 ? ["siparisler", "urunler", "cariler"] : ["urunler", "cariler"]);
+  // Peşin kısım (kasa/banka hareketi) da aynı zarfta (v1.729.0) — Kasa & Banka v2'deyse; değilse zarf onu beklemez (040).
+  const pesinVar = !!(sonuc.pesinHareket && sonuc.pesinHareket.hesapId);
+  const zarf = yazmaZarfi([...(bagliKalemler.length > 0 ? ["siparisler"] : []), "urunler", "cariler", ...(pesinVar ? ["muhasebe"] : [])]);
   if (bagliKalemler.length > 0) {
     setSiparisler((prev) => {
       const next = prev.map((s) => {
@@ -130,7 +132,7 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   // PEŞİN KISIM: kasa/banka hareketi. Cari tarafı yukarıda yazıldı (fişin açtığı borcu kapatan
   // kayıt); burada yalnız hesabın kendi defteri güncelleniyor. İkisi `muhasebeBagId` ile bağlı,
   // yani fiş geri alınınca `fisGeriAl` bu hareketi de siliyor.
-  if (sonuc.pesinHareket) muhasebeyePesinIsle(sonuc.pesinHareket);
+  if (sonuc.pesinHareket) muhasebeyePesinIsle(sonuc.pesinHareket, { zarf });
 
   const toplamTutar = stokYuvarla(sonuc.cariHareketleri
     .filter((h) => h.defter !== "Resmi")

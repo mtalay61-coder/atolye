@@ -123,10 +123,10 @@ geçişten sonra girilen fişler kaybolmaz.
 - **Köprü sadeleşir.** Her taşınan akışla köprü incelir.
 
 **Sonraki modüller** (her biri aynı ilkelerle, sırayla):
-1. Cari
-2. Sipariş ve rezervasyon
-3. Üretim
-4. Kasa & Banka: bugün tek satırlık liste, satır satır kayda geçecek
+1. Cari — yapıldı (v1.727.0, geçiş 29 Ekim)
+2. Sipariş ve rezervasyon — sipariş kalemleri tek kapı (v1.728.0, geçiş 29 Ekim)
+3. Üretim — üretim atamaları tek kapı (v1.728.0)
+4. Kasa & Banka — hesap / hareket / çek ayrı satır, yalnız fark yazılır, kasa satırı cariyle tek işlem (v1.729.0)
 5. Teklif ve fatura
 
 Ürün kartının kendisi (ad, fiyat, reçete, görsel) ürün modülüyle geçer. Ürün silme o zaman "pasife alma" olur.

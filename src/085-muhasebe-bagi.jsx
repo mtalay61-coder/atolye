@@ -8,7 +8,8 @@
 function useMuhasebeBagiTemizle(d) {
   const { muhasebe, setMuhasebe, cariler, showToast } = d;
 
-const muhasebeBaglariniTemizle = useCallback(async (bagIdler, temel) => {
+// `secenek.zarf` (v1.729.0): fiş geri alınırken kasa temizliği stok / cari geri alımıyla tek sunucu işleminde (100).
+const muhasebeBaglariniTemizle = useCallback(async (bagIdler, temel, secenek) => {
   if (!bagIdler || bagIdler.length === 0) return null;
   const kume = new Set(bagIdler);
   const kaynak = temel || muhasebe;
@@ -18,7 +19,7 @@ const muhasebeBaglariniTemizle = useCallback(async (bagIdler, temel) => {
   }));
   const yeni = { ...kaynak, kasalar: temizle(kaynak.kasalar), bankalar: temizle(kaynak.bankalar) };
   setMuhasebe(yeni);
-  return tekilYaz("muhasebe:data", "muhasebe", yeni);
+  return tekilYaz("muhasebe:data", "muhasebe", yeni, secenek || {});
 }, [muhasebe]);
   return muhasebeBaglariniTemizle;
 }

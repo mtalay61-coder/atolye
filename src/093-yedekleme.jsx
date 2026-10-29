@@ -203,7 +203,9 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   await tabloYaz("uretim:siparisler", "uretim", y.uretim || [], undefined, yazmaSecenegi);
   await tabloYaz("cari:data", "cariler", y.cariler || [], undefined, yazmaSecenegi);
   if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false });   // yedek bütünüyle döner
-  if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
+  // Kasa & Banka v2 (v1.729.0): yedeğin hâli bütünüyle döner — yedekten sonra girilen hareketler iptal olur (iz kalır);
+  // toplu iptal kilidi (038) bu yazma için açık, eski sürümde belge zaten bütünüyle yazılıyordu.
+  if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe, { topluSilmeIzni: true });
   if (Array.isArray(y.koliler)) await tekilYaz("koli:data", "koliler", y.koliler);
   if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
   if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar);
@@ -276,7 +278,7 @@ const yedektenGeriYukle = useCallback(async (tarih) => {
     await tabloYaz("uretim:siparisler", "uretim", y.uretim || []);
     await tabloYaz("cari:data", "cariler", y.cariler || []);
     if (y.tanimlar) await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false });   // yedek bütünüyle döner
-    if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
+    if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe, { topluSilmeIzni: true });   // bkz. yukarı (v1.729.0)
 
     showToast(`${tarih} tarihli yedek geri yüklendi — geri yükleme öncesi hâl de ayrıca saklandı`);
   } catch (e) {

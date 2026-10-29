@@ -2492,7 +2492,8 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
     {/* BULUT SAYIMI (v1.712.0, 078-bulut-sayim; v1.712.1'de Çöp Kutusu'ndan buraya): "veri gitti mi, cihaz mı eksik okudu?" */}
     {aktifKullanici && aktifKullanici.rol === "Yönetici" && (
       <div style={{ marginTop: 20, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "4px 18px 14px" }}>
-        <BulutSayimiBolumu cihaz={cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop })} />
+        <BulutSayimiBolumu cihaz={cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop })}
+          kayitlar={{ urunler: stok, cariler, siparisler, uretim }} />
       </div>
     )}
     <div style={{ marginTop: 20 }}>

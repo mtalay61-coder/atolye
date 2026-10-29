@@ -605,13 +605,32 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
       // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
       tekilTabanAyarla(tablo, gonderilen);
     }));
-  const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
+  // KASA & BANKA v2 (v1.729.0, 038 `kasaV2Yuku`): geçiş yapıldıysa (`stk_ayar.kasa_aktif`) belge YAZILMAZ — `muhasebe` artık
+  // salt-okur görünüm. Bu cihazın tabanla yeni hâl arasındaki farkı satır olarak `kas_yaz`a gider: başka cihazın kaydına
+  // dokunulmaz, bayat ya da boş liste hiçbir şeyi silemez, silme iptaldir. Fark kuyrukta SIRASI GELİNCE hesaplanır (önceki
+  // yazmanın kurduğu taban üstünden); düşen yazmada taban ilerlemez, sonraki yazma düşen farkı da taşır. Birleştirme ve
+  // `birlestirme: false` burada anlamsız (fark zaten yalnız bu cihazın değişikliği). İşlem zarfı (`secenek.zarf`, 040):
+  // tahsilat / ödeme / peşin fişte kasa satırları cari (ve stok) satırlarıyla tek `fis_yaz`da — zarf kendi kuyruğunu tutar.
+  const kasaV2 = tablo === "muhasebe" && typeof kasaV2Aktif === "function" && kasaV2Aktif();
+  const kasaIsi = () => {
+    const yuk = kasaV2YukHazirla(gonderilen, secenek);   // toplu iptal kilidi burada (038)
+    return yuk ? v2KopruGonder([{ tur: "kasa", yuk }]) : Promise.resolve();
+  };
+  const gidecek = kasaV2
+    ? ((secenek.zarf && secenek.zarf.kabul(tablo)) ? secenek.zarf.ekle(tablo, gonderilen, secenek) : tabloKuyrugunaAl(tablo, kasaIsi))
+      .then((r) => {
+        // Zarfın öteki tablosunda sürüm çakışması: hiçbiri yazılmadı — kasa da bekleyen deftere (yeniden gönderilir).
+        if (r && r.__cakisma) throw new Error("sürüm çakışması — Kasa & Banka buluta yazılmadı");
+        tekilTabanAyarla(tablo, gonderilen);
+      })
+    : (typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi());
   gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
   return Promise.all([
     yerel,
     gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
-      bekleyenYazmaEkle(anahtar, tablo, e && e.message);
+      // Toplu silme engeli (Kasa & Banka v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
+      if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, e && e.message);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {
         window.__supabaseHataBildir(tablo, String(e && e.message || e));
       }

@@ -71,6 +71,7 @@ if [ -f test/erp.cjs ]; then
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.stk_gecis() is not null;" >/dev/null
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.car_gecis() is not null;" >/dev/null
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.alt_gecis() is not null;" >/dev/null
+  psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.kas_gecis() is not null;" >/dev/null
   echo "── stok-v2/test/uctan-uca.js"
   STOK_V2_DB="$DB" node stok-v2/test/uctan-uca.js
 else

@@ -2,7 +2,7 @@
 // Ölçülen: cihaz sayımı alt kayıtları toplar; karşılaştırma "aynı / bulutta fazla / cihazda fazla (arşivde N)" der;
 // Content-Range'den sayı okunur; arşiv satırları yalnız DELETE, tablo eşleşen, yinelenen kayıtta en yenisi; varyantta
 // bileşik anahtar; geri yükleme sırası üst tablo önce.
-const { cihazSayimlari, sayimKarsilastir, contentRangeSayisi, arsivSatirlariniHazirla, arsivGeriYuklemeSirasi, arsivCakismaSutunlari } = require("./erp.cjs");
+const { sayimKimlikFarki, cihazSayimlari, sayimKarsilastir, contentRangeSayisi, arsivSatirlariniHazirla, arsivGeriYuklemeSirasi, arsivCakismaSutunlari } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -44,5 +44,11 @@ const v = [
 ];
 bekle("varyant: bileşik anahtarla tekilleşir", arsivSatirlariniHazirla("varyantlar", v).map((x) => `${x.beden}:${x.miktar}`), ["41:5", "42:1"]);
 bekle("geri yükleme sırası: üst tablo önce", arsivGeriYuklemeSirasi(["uretim_atamalari", "stok_hareketleri", "uretim", "urunler"]), ["urunler", "uretim", "stok_hareketleri", "uretim_atamalari"]);
+// Hangi kayıt farklı (v1.729.0 — kullanıcı: "Üretim · bu cihaz 0, bulut 1").
+const kf = sayimKimlikFarki([{ id: "ur-2", siparisNo: "10040" }], [{ id: "ur-1", siparis_no: "10033" }, { id: "ur-3", siparis_no: "10041" }], "siparis_no",
+  { ana: { "ur-1": "sil" } });
+bekle("kimlik farkı: bulutta olup cihazda olmayan + bekleyen silme", kf.yalnizBulutta, [{ id: "ur-1", ad: "10033", bekleyen: "sil" }, { id: "ur-3", ad: "10041", bekleyen: null }]);
+bekle("kimlik farkı: cihazda olup bulutta olmayan", kf.yalnizCihazda, [{ id: "ur-2", ad: "10040", bekleyen: null }]);
+bekle("kimlik farkı: defter yoksa da çalışır", sayimKimlikFarki([], [{ id: 5, ad: "X" }], "ad").yalnizBulutta, [{ id: "5", ad: "X", bekleyen: null }]);
 if (hata) { console.log("BİRİM TESTİ HATA: bulut sayımı"); process.exit(1); }
 console.log("birim-bulut-sayim: tamam");

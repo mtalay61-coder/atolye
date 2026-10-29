@@ -315,6 +315,173 @@ function altV2Parcala(yuk) {
 }
 
 // =============================================================================================================
+// KASA & BANKA v2 KÖPRÜSÜ (v1.729.0, kasa-v2.sql) — tek parça belge yerine hesap / hareket / çek SATIRLARI (`kas_yaz`)
+// =============================================================================================================
+// Kasa & Banka bugün TEK SATIRLIK bir JSON belgesi (muhasebe.veri). Her kayıtta belgenin TAMAMI gidiyordu; boş ya da bayat
+// listeli bir cihaz (24 Ekim telefon: "Kasa & Banka 0 hesap") başka cihazın hesaplarını, hareketlerini silebiliyordu.
+// v1.725.0'daki üç yönlü birleştirme deliği daralttı; v2 kökten kapatır: bu cihaz yalnız KENDİ DEĞİŞİKLİĞİNİ gönderir.
+//
+// FARK (saf `kasaV2Yuku`, birim testi `birim-kasa-v2`): TABAN (030 `tekilTabanOku("muhasebe")` — bu cihazın en son bildiği
+// bulut hâli ya da en son başarıyla gönderdiği hâl) ile YENİ hâl karşılaştırılır:
+//   · yeni ya da değişen hesap (hareketleri hariç alanları) → `hesaplar`; tabanda olup yenide olmayan → `hesapSil` (pasif)
+//   · yeni / değişen / hesabı değişen hareket → `hareketler`; tabanda olup yenide olmayan → `hareketIptal` (silinmez)
+//   · çekler aynı (`cekler`, `cekIptal`); öteki anahtarlar (kurlar, kur geçmişi…) değişense `ayar`, kalktıysa `ayarSil`.
+// Başka cihazın eklediği kayıt bu cihazın ne tabanında ne yeni hâlinde var → hiç dokunulmaz. TABAN YOKSA (bulut okunamamış)
+// yalnız ekleme / güncelleme gider, HİÇBİR ŞEY silinmez. Karşılaştırma anahtar sırasından bağımsız (047 `kararliJson`; jsonb
+// anahtarları yeniden sıralar). Hesap sırası istemciden gitmez: yeni hesap sunucuda sona eklenir (ekran da sona ekler).
+// Kimliği olmayan eski kayıt (hesap, hareket, çek) içeriğinden kalıcı bir kimlik alır — aynı içerik her seferinde aynı kimlik.
+// HATA: istek düşerse 030'un bugünkü yolu — bekleyen defter, yeniden deneme; taban güncellenmediği için sonraki yazma
+// düşen farkı da kapsar. `kas_yaz` kimlikle yazdığı için yeniden gönderim çift kayıt açmaz.
+let _kasaV2Aktif = false;
+function kasaV2Aktif() { return _kasaV2Aktif; }
+function kasaV2AktifAyarla(aktif) { _kasaV2Aktif = !!aktif; }
+const KASA_V2_LISTELER = { kasalar: "kasa", bankalar: "banka" };
+
+// İçerikten kısa, kararlı kimlik (FNV-1a, iki tohum → 16 onaltılık hane). Güvenlik değil, yalnız kimlik.
+function kasaV2Ozet(metin) {
+  let a = 0x811c9dc5; let b = 0x01000193 ^ 0x5bd1e995;
+  const s = String(metin);
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    a = Math.imul(a ^ c, 0x01000193) >>> 0;
+    b = Math.imul(b ^ c, 0x01000193 + 0x2f) >>> 0;
+  }
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+
+// Belgeyi kimlikli haritalara açar. Saf.
+function kasaV2Ac(belge) {
+  const b = belge && typeof belge === "object" && !Array.isArray(belge) ? belge : {};
+  const hesaplar = new Map();
+  const hareketler = new Map();
+  const cekler = new Map();
+  Object.entries(KASA_V2_LISTELER).forEach(([anahtar, tur]) => {
+    (Array.isArray(b[anahtar]) ? b[anahtar] : []).forEach((h, i) => {
+      if (!h || typeof h !== "object") return;
+      const { hareketler: hl, id, ...veri } = h;
+      const hid = id ? String(id) : `kh-${kasaV2Ozet(`${tur}:${i}:${veri.ad || ""}`)}`;
+      if (hesaplar.has(hid)) return;   // yinelenen kimlik: ilki (sunucu göçüyle aynı kural)
+      hesaplar.set(hid, { tur, veri, json: kararliJson(veri) });
+      const sayac = new Map();
+      (Array.isArray(hl) ? hl : []).forEach((x) => {
+        if (!x || typeof x !== "object") return;
+        let xid = x.id ? String(x.id) : null;
+        if (!xid) {
+          const j = kararliJson(x);
+          const n = (sayac.get(j) || 0) + 1;
+          sayac.set(j, n);
+          xid = `mh-${kasaV2Ozet(`${hid}:${n}:${j}`)}`;
+        }
+        if (!hareketler.has(xid)) hareketler.set(xid, { hesap_id: hid, veri: x, json: kararliJson(x) });
+      });
+    });
+  });
+  const csayac = new Map();
+  (Array.isArray(b.cekler) ? b.cekler : []).forEach((c) => {
+    if (!c || typeof c !== "object") return;
+    let cid = c.id ? String(c.id) : null;
+    if (!cid) {
+      const j = kararliJson(c);
+      const n = (csayac.get(j) || 0) + 1;
+      csayac.set(j, n);
+      cid = `cek-${kasaV2Ozet(`${n}:${j}`)}`;
+    }
+    if (!cekler.has(cid)) cekler.set(cid, { veri: c, json: kararliJson(c) });
+  });
+  const ayar = {};
+  Object.keys(b).forEach((k) => { if (!(k in KASA_V2_LISTELER) && k !== "cekler" && b[k] !== undefined) ayar[k] = b[k]; });
+  return { hesaplar, hareketler, cekler, ayar };
+}
+
+// Saf. taban: bu cihazın bildiği bulut hâli (yoksa null → silme yok); yeni: gönderilecek hâl.
+function kasaV2Yuku(taban, yeni) {
+  const tabanVar = !!(taban && typeof taban === "object");
+  const t = kasaV2Ac(tabanVar ? taban : null);
+  const y = kasaV2Ac(yeni);
+  const yuk = { hesaplar: [], hesapSil: [], hareketler: [], hareketIptal: [], cekler: [], cekIptal: [], ayar: {}, ayarSil: [] };
+  y.hesaplar.forEach((h, id) => {
+    const e = t.hesaplar.get(id);
+    if (!e || e.tur !== h.tur || e.json !== h.json) yuk.hesaplar.push({ id, tur: h.tur, veri: h.veri });
+  });
+  y.hareketler.forEach((x, id) => {
+    const e = t.hareketler.get(id);
+    if (!e || e.hesap_id !== x.hesap_id || e.json !== x.json) yuk.hareketler.push({ id, hesap_id: x.hesap_id, veri: x.veri });
+  });
+  y.cekler.forEach((c, id) => {
+    const e = t.cekler.get(id);
+    if (!e || e.json !== c.json) yuk.cekler.push({ id, veri: c.veri });
+  });
+  Object.keys(y.ayar).forEach((k) => {
+    if (!(k in t.ayar) || kararliJson(t.ayar[k]) !== kararliJson(y.ayar[k])) yuk.ayar[k] = y.ayar[k];
+  });
+  if (tabanVar) {
+    t.hesaplar.forEach((_, id) => { if (!y.hesaplar.has(id)) yuk.hesapSil.push(id); });
+    t.hareketler.forEach((_, id) => { if (!y.hareketler.has(id)) yuk.hareketIptal.push(id); });
+    t.cekler.forEach((_, id) => { if (!y.cekler.has(id)) yuk.cekIptal.push(id); });
+    Object.keys(t.ayar).forEach((k) => { if (!(k in y.ayar)) yuk.ayarSil.push(k); });
+  }
+  return yuk;
+}
+function kasaV2YukBosMu(yuk) {
+  return !yuk || (!yuk.hesaplar.length && !yuk.hesapSil.length && !yuk.hareketler.length && !yuk.hareketIptal.length
+    && !yuk.cekler.length && !yuk.cekIptal.length && !Object.keys(yuk.ayar || {}).length && !(yuk.ayarSil || []).length);
+}
+// TOPLU İPTAL KİLİDİ (040 `topluSilmeEngeliMi` ile aynı ölçü, v1.712.0'ın kasa karşılığı). v2'de silme iptaldir, veri
+// kaybolmaz; ama ekranı bir hata yüzünden boşalmış ya da yarım kalmış, tabanı DOLU bir cihaz bütün hareketleri iptal
+// ettirebilirdi — ekranlarda Kasa & Banka yine "0 hesap" görünürdü. Kullanıcının hiçbir işlemi tek kayıtta hareketlerin ya da
+// çeklerin yarısını götürmez; hesap da tek tek kaldırılır (hareketi olan hesap zaten silinemez, 205). Engel: hareket / çek
+// iptali eşiği aşıyor ya da (en az iki hesap varken) hesapların HEPSİ birden kalkıyor. Saf.
+function kasaV2TopluSilmeEngeli(taban, yuk) {
+  if (!taban || typeof taban !== "object" || !yuk) return null;
+  const t = kasaV2Ac(taban);
+  if (topluSilmeEngeliMi(yuk.hareketIptal.length, t.hareketler.size)) return { tur: "hareket", silinen: yuk.hareketIptal.length, onceki: t.hareketler.size };
+  if (topluSilmeEngeliMi(yuk.cekIptal.length, t.cekler.size)) return { tur: "çek", silinen: yuk.cekIptal.length, onceki: t.cekler.size };
+  if (yuk.hesapSil.length >= 2 && yuk.hesapSil.length >= t.hesaplar.size) return { tur: "hesap", silinen: yuk.hesapSil.length, onceki: t.hesaplar.size };
+  return null;
+}
+// 030 tekilYaz ve 040 zarfın ortak hazırlığı: taban → fark → kilit. Boş farkta null. Kilit tutarsa hata (`topluSilmeEngeli`:
+// bekleyen deftere YAZILMAZ — yazılsaydı yeniden denenirdi). `secenek.topluSilmeIzni`: yedekten geri yükleme (093).
+function kasaV2YukHazirla(yeni, secenek) {
+  const taban = tekilTabanOku("muhasebe");
+  const yuk = kasaV2Yuku(taban, yeni);
+  const engel = secenek && secenek.topluSilmeIzni ? null : kasaV2TopluSilmeEngeli(taban, yuk);
+  if (engel) {
+    gunlukYaz(`TOPLU SİLME ENGELLENDİ: Kasa & Banka — ${engel.silinen} ${engel.tur} kaldırılacaktı (eski hâlde ${engel.onceki})`, "guvenlik",
+      { tablo: "muhasebe", ...engel });
+    const e = new Error(`Toplu silme engellendi: Kasa & Banka'da ${engel.silinen} ${engel.tur} (eldeki ${engel.onceki} kayıttan) tek yazmada `
+      + `kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.`);
+    e.topluSilmeEngeli = true;
+    throw e;
+  }
+  return kasaV2YukBosMu(yuk) ? null : yuk;
+}
+
+// Büyük yük (taban yokken ilk yazma, yedek geri yükleme): hareketler ve çekler parça parça; hesaplar, ayar ve iptaller
+// SON parçada (hareket hesaptan önce yazılabilir — aralarında yabancı anahtar yok; iptal, eklemelerden sonra).
+function kasaV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STOK_V2_PARCA_SATIR) {
+  const satirlar = [...yuk.hareketler.map((x) => ["hareketler", x]), ...yuk.cekler.map((x) => ["cekler", x])];
+  const gruplar = [];
+  let grup = [];
+  let bayt = 0;
+  satirlar.forEach((s) => {
+    const b = JSON.stringify(s[1]).length;
+    if (grup.length && (grup.length >= enFazlaSatir || bayt + b > enFazlaBayt)) { gruplar.push(grup); grup = []; bayt = 0; }
+    grup.push(s);
+    bayt += b;
+  });
+  if (grup.length || gruplar.length === 0) gruplar.push(grup);
+  return gruplar.map((g, i) => {
+    const son = i === gruplar.length - 1;
+    const p = { hareketler: g.filter((s) => s[0] === "hareketler").map((s) => s[1]), cekler: g.filter((s) => s[0] === "cekler").map((s) => s[1]) };
+    if (son) {
+      Object.assign(p, { hesaplar: yuk.hesaplar, hesapSil: yuk.hesapSil, hareketIptal: yuk.hareketIptal, cekIptal: yuk.cekIptal, ayarSil: yuk.ayarSil });
+      if (Object.keys(yuk.ayar).length) p.ayar = yuk.ayar;
+    }
+    return p;
+  });
+}
+
+// =============================================================================================================
 // 040 İLE BAĞ — bir tablonun alt farkı köprüden mi gidecek? (040 `_yazmaHazirla` bağlamı `y`)
 // =============================================================================================================
 // Döner: null (köprü yok → REST) ya da { tur: "stok" | "cari", yuk, ozet } — yük boş olabilir (köprü açık ama
@@ -347,7 +514,7 @@ function v2KopruYuku(y) {
   return null;
 }
 
-// GÖNDERİCİ — bir ya da birkaç köprü yükü (stok, cari, sipariş kalemi / üretim ataması). Birden çok parça varsa ve
+// GÖNDERİCİ — bir ya da birkaç köprü yükü (stok, cari, sipariş kalemi / üretim ataması, kasa & banka). Birden çok parça varsa ve
 // her biri tek parçaya sığıyorsa TEK `fis_yaz` isteği (tek veritabanı işlemi: ya hepsi ya hiçbiri). Sığmıyorsa (yedek
 // geri yükleme gibi büyük yazma) her biri kendi işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider
 // (bellek geri + bekleyen defter 040'ta).
@@ -357,20 +524,25 @@ async function v2KopruGonder(kopruler) {
   const stok = dolu.find((k) => k.tur === "stok");
   const cari = dolu.find((k) => k.tur === "cari");
   const altlar = dolu.filter((k) => k.tur === "alt");
+  const kasa = dolu.find((k) => k.tur === "kasa");
   const stokParcalari = stok ? stokV2Parcala(stok.yuk) : [];
   const cariParcalari = cari ? cariV2Parcala(cari.yuk) : [];
   const altParcalari = altlar.map((k) => ({ tablo: k.tablo, parcalar: altV2Parcala(k.yuk) }));
-  const tekParca = stokParcalari.length <= 1 && cariParcalari.length <= 1 && altParcalari.every((a) => a.parcalar.length <= 1);
-  const sonuc = { stok: null, cari: null, alt: null };
+  const kasaParcalari = kasa ? kasaV2Parcala(kasa.yuk) : [];
+  const tekParca = stokParcalari.length <= 1 && cariParcalari.length <= 1 && altParcalari.every((a) => a.parcalar.length <= 1)
+    && kasaParcalari.length <= 1;
+  const sonuc = { stok: null, cari: null, alt: null, kasa: null };
   if (tekParca && dolu.length > 1) {
     const p = {};
     if (stok) p.stok = stokParcalari[0];
     if (cari) p.cari = cariParcalari[0];
     if (altParcalari.length) p.alt = Object.fromEntries(altParcalari.map((a) => [a.tablo, a.parcalar[0]]));
+    if (kasa) p.kasa = kasaParcalari[0];
     const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p }) });
     sonuc.stok = r && r.stok;
     sonuc.cari = r && r.cari;
     sonuc.alt = r && r.alt;
+    sonuc.kasa = r && r.kasa;
   } else {
     if (stok) {
       const toplam = { varyantAc: 0, satir: 0, iptal: 0, varyantKaldir: 0, atlanan: [] };
@@ -390,6 +562,7 @@ async function v2KopruGonder(kopruler) {
     for (const a of altParcalari) {
       for (const parca of a.parcalar) await supabaseIstek("rpc/alt_yaz", { method: "POST", body: JSON.stringify({ p: { [a.tablo]: parca } }) });
     }
+    for (const parca of kasaParcalari) sonuc.kasa = await supabaseIstek("rpc/kas_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
   }
   if (stok && stok.yuk.otoFis.length) {
     gunlukYaz(`Stok v2: fiş numarası olmayan ${stok.yuk.otoFis.length} hareket OTO- fişine bağlandı`, "veri", { hareketler: stok.yuk.otoFis.slice(0, 50) });
