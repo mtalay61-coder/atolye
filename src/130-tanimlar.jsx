@@ -2748,8 +2748,9 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
       )}
       {tablo && satirlar && satirlar.length > 0 && !(TEKIL_GORUNTU_TABLOLARI[tablo] && arsivSatirlariniHazirla(tablo, satirlar).length === 0) && (() => {
         const hazir = arsivSatirlariniHazirla(tablo, satirlar);
+        const v2Engel = (arsivV2Yolu(tablo) || {}).engel;   // v1.730.1: stok v2'de varyant / hareket geri yüklenemez (078)
         const geriYukle = async () => {
-          if (geriYukleniyor || hazir.length === 0) return;
+          if (geriYukleniyor || hazir.length === 0 || v2Engel) return;
           // Seçim bekleme öncesinde sabitlenir: kullanıcı yazma sürerken listeyi değiştirse de günlük/ileti doğru tabloyu yazar.
           const secilenTablo = tablo;
           const secilenBaslangic = baslangic;
@@ -2774,8 +2775,9 @@ function SunucuArsiviBolumu({ kullanicilar, supabaseBagli, showToast }) {
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8, padding: "8px 10px", background: "var(--erp-orange-bg)", borderRadius: "var(--erp-r-sm)" }}>
             <span style={{ fontSize: 11, flex: 1, minWidth: 220 }}>
               <b>{hazir.length}</b> silinmiş {ARSIV_TABLO_ADLARI[tablo] || tablo} satırı ({baslangic} tarihinden beri; aynı kayıt birden çok silindiyse en yenisi).
+              {v2Engel && <span data-arsiv-v2-engel="1" style={{ display: "block", marginTop: 4, color: "var(--erp-warn)" }}>{v2Engel}</span>}
             </span>
-            <button type="button" className="btn-primary" data-arsiv-geri-yukle="1" disabled={geriYukleniyor || hazir.length === 0} style={{ padding: "5px 12px", fontSize: 11 }} onClick={geriYukle}>
+            <button type="button" className="btn-primary" data-arsiv-geri-yukle="1" disabled={geriYukleniyor || hazir.length === 0 || !!v2Engel} style={{ padding: "5px 12px", fontSize: 11 }} onClick={geriYukle}>
               {geriYukleniyor ? "Yazılıyor…" : `Bu ${hazir.length} satırı geri yükle`}
             </button>
           </div>

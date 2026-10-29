@@ -174,12 +174,40 @@ function arsivGeriYuklemeSirasi(tablolar) {
 }
 
 // Hazırlanmış satırları tabloya geri yazar (100'lük parçalar, upsert). Döner: yazılan satır sayısı.
+// v2 GEÇİŞİNDEN SONRA (v1.730.1 — baştan aşağı denetim, kullanıcı: "yeni değişiklik ile baştan aşağı kontrol et"). Geri yükleme
+// satırları tabloya DOĞRUDAN POST ediyordu; geçişten sonra bazı adlar görünüm (yazılamaz) ya da doğrudan yazmaya kapalı:
+//   · cari_hareketleri (cari v2) → `car_yaz` (arşivdeki satır bugünkü sütun adlarıyla, car_yaz bunu okur; iptal edilmişse açar),
+//   · siparis_kalemleri / uretim_atamalari (alt v2) → `alt_yaz` (tablonun kendi tipine çevirir),
+//   · varyantlar / stok_hareketleri (stok v2) → GERİ YÜKLENEMEZ: v2'de renk/beden kimliğe bağlı, eski satır biçimi doğrudan
+//     yazılamaz; v2'de stok hareketi zaten silinmez (iptal edilir), arşivdekiler geçiş ÖNCESİ silinenlerdir. Ekran bunu söyler.
+// Saf karar: null → bugünkü yol (doğrudan POST). Bayraklar 045'ten.
+function arsivV2Yolu(tablo) {
+  if ((tablo === "varyantlar" || tablo === "stok_hareketleri") && typeof stokV2Aktif === "function" && stokV2Aktif()) {
+    return { engel: "Stok v2'ye geçildi: varyant ve stok hareketi bu ekrandan geri yüklenemez. v2'de silinen stok hareketi iptal edilir, "
+      + "kaydı kaybolmaz; arşivdekiler geçişten ÖNCE silinmiş satırlar. Gerekirse eksik stok Bağımsız Stok Girişi (sayım fişi) ile düzeltilir." };
+  }
+  if (tablo === "cari_hareketleri" && typeof cariV2Aktif === "function" && cariV2Aktif()) {
+    return { rpc: "car_yaz", p: (parca) => ({ satirlar: parca, iptal: [] }) };
+  }
+  if ((tablo === "siparis_kalemleri" || tablo === "uretim_atamalari") && typeof altV2Aktif === "function" && altV2Aktif()) {
+    return { rpc: "alt_yaz", p: (parca) => ({ [tablo]: { satirlar: parca, sil: [] } }) };
+  }
+  return null;
+}
+
 async function arsivSatirlariniGeriYukle(tablo, satirlar) {
+  const v2 = arsivV2Yolu(tablo);
+  if (v2 && v2.engel) throw new Error(v2.engel);
   const cakisma = arsivCakismaSutunlari(tablo);
   const yol = cakisma ? `${tablo}?on_conflict=${cakisma.join(",")}` : tablo;
   let yazilan = 0;
   for (let i = 0; i < satirlar.length; i += 100) {
     const parca = satirlar.slice(i, i + 100);
+    if (v2) {
+      await supabaseIstek(`rpc/${v2.rpc}`, { method: "POST", body: JSON.stringify({ p: v2.p(parca) }) });
+      yazilan += parca.length;
+      continue;
+    }
     await supabaseIstek(yol, {
       method: "POST",
       headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
