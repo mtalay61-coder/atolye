@@ -138,3 +138,17 @@ insert into public.siparis_kalemleri values
 insert into public.uretim values ('ur-1', '10032', 'u-canta', 'Üretimde', null, 1);
 insert into public.uretim_atamalari values
   ('at-1', 'ur-1', 'Saya', 'p-1', '{"36": 5}', 5, true, '2026-10-20', false, null, null, false, null, null, 0, '[]', '10032-1', null);
+
+-- KASA & BANKA (kasa v2 sınaması) — bugünkü gibi tek satırlık belge. Kimliksiz eski hareket ve çek bilerek var.
+create table public.muhasebe (id text primary key, veri jsonb);
+insert into public.muhasebe values ('tekil', '{
+  "kasalar": [{"id": "kasa-1", "ad": "Merkez Kasa", "paraBirimi": "TRY", "hareketler": [
+     {"id": "mh1", "tarih": "2026-10-20", "yon": "Giriş", "tutar": 1000, "cariId": "c-2", "muhasebeBagId": "bag1", "defter": "Genel", "aciklama": "Tahsilat"},
+     {"id": "mh2", "tarih": "2026-10-21", "yon": "Çıkış", "tutar": 250, "defter": "Genel", "aciklama": "Kira"},
+     {"tarih": "2026-09-01", "yon": "Giriş", "tutar": 50, "aciklama": "eski, kimliksiz"}]}],
+  "bankalar": [{"id": "banka-1", "ad": "Ziraat", "paraBirimi": "TRY", "iban": "TR00", "hareketler": [
+     {"id": "mh3", "tarih": "2026-10-22", "yon": "Giriş", "tutar": 5000, "defter": "Resmi", "aciklama": "Havale"}]}],
+  "cekler": [{"id": "cek-1", "cekNo": "A1", "tutar": 750, "durum": "Portföyde"}, {"cekNo": "A0", "tutar": 10, "durum": "Tahsil edildi"}],
+  "kurlar": {"USD": 41.2, "EUR": 48.1},
+  "kurGecmisi": [{"tarih": "2026-10-20", "USD": 41}]
+}');
