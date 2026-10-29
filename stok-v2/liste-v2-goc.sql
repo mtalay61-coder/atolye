@@ -46,7 +46,9 @@ begin
     execute format('select veri from public.%I where id = %L', t, 'tekil') into belge;
     delete from public.lst_kayit where tablo = t;
     r := jsonb_build_object('eski', 0, 'tasinan', 0, 'kimliksiz', 0, 'yinelenen', '[]'::jsonb, 'nesneDegil', 0);
-    if jsonb_typeof(belge) <> 'array' then
+    -- Satırı hiç olmayan liste (özellik kurulmuş ama hiç kullanılmamış: canlıda faturalar, 29 Ekim) "belge: yok" raporlanır;
+    -- jsonb_typeof(null) null döner ve koşul hiç tutmazdı (rapor "eski: null" diyordu).
+    if belge is null or jsonb_typeof(belge) <> 'array' then
       rapor := rapor || jsonb_build_object(t, r || jsonb_build_object('belge', coalesce(jsonb_typeof(belge), 'yok')));
       continue;
     end if;

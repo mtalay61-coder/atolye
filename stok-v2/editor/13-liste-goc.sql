@@ -30,7 +30,7 @@ begin
     execute format('select veri from public.%I where id = %L', t, 'tekil') into belge;
     delete from public.lst_kayit where tablo = t;
     r := jsonb_build_object('eski', 0, 'tasinan', 0, 'kimliksiz', 0, 'yinelenen', '[]'::jsonb, 'nesneDegil', 0);
-    if jsonb_typeof(belge) <> 'array' then
+    if belge is null or jsonb_typeof(belge) <> 'array' then
       rapor := rapor || jsonb_build_object(t, r || jsonb_build_object('belge', coalesce(jsonb_typeof(belge), 'yok')));
       continue;
     end if;
