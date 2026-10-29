@@ -43,6 +43,8 @@ begin
   assert pg_temp.idler('teklifler') like '%,tkl-4', 'sona eklenen sonda değil';
   r := public.lst_yaz('{"tablo": "teklifler", "kayitlar": [{"id": "tkl-1", "veri": {"id": "tkl-1", "teklifNo": "TKL-1", "durum": "Onaylandı"}}]}');
   assert pg_temp.idler('teklifler') like 'tkl-3,tkl-2,tkl-1,%', 'sırasız güncelleme sırayı bozdu';
+  r := public.lst_yaz('{"tablo": "teklifler", "kayitlar": [{"id": "tkl-1", "sira": -9999999999999999, "veri": {"id": "tkl-1", "teklifNo": "TKL-1", "durum": "Onaylandı"}}]}');
+  assert pg_temp.idler('teklifler') like 'tkl-3,tkl-2,tkl-1,%', 'var olan kaydın sırası değişti';
   r := public.lst_yaz('{"tablo": "teklifler", "kayitlar": [{"id": "tkl-1", "veri": {"id": "tkl-1", "teklifNo": "TKL-1", "durum": "Onaylandı"}}]}');
   assert (r ->> 'yaz')::int = 0, 'aynı kayıt yeniden yazıldı';
   r := public.lst_yaz('{"tablo": "teklifler", "iptal": ["tkl-2"]}');

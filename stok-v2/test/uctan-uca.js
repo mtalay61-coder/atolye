@@ -18,7 +18,7 @@ const rpcAdlari = [];
 // Sahte ağ: rpc/stk_yaz yerel veritabanında Ali (Yönetici) olarak çalışır; urunler'e yazmalar başarılı sayılır.
 global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
-  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz|alt_yaz|kas_yaz)/) || [])[1];
+  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz|alt_yaz|kas_yaz|lst_yaz)/) || [])[1];
   if (rpcAdi) {
     rpcSayisi++;
     rpcAdlari.push(rpcAdi);
@@ -36,11 +36,11 @@ global.fetch = async (url, sec = {}) => {
       return { ok: false, status: 400, json: async () => ({ message: metin }), text: async () => metin };
     }
   }
-  if (/^(varyantlar|stok_hareketleri|cari_hareketleri|siparis_kalemleri|uretim_atamalari|muhasebe)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
+  if (/^(varyantlar|stok_hareketleri|cari_hareketleri|siparis_kalemleri|uretim_atamalari|muhasebe|teklifler|faturalar|koliler|mesajlar|fis_defteri)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
   return { ok: true, status: 200, json: async () => (sec.method === "PATCH" ? [{ id: "x" }] : []), text: async () => "" };
 };
 const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, altV2AktifAyarla, yazmaZarfi,
-  kasaV2AktifAyarla, kasaZarfiAc, tekilYaz, tekilTabanAyarla, tekilTabanOku, bekleyenYazmalariOku } = require(path.join(__dirname, "../../test/erp.cjs"));
+  kasaV2AktifAyarla, kasaZarfiAc, tekilYaz, tekilTabanAyarla, tekilTabanOku, bekleyenYazmalariOku, listeV2TablolariAyarla } = require(path.join(__dirname, "../../test/erp.cjs"));
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -307,6 +307,35 @@ const hrk = (id, renk, beden, miktar, fisNo, ek = {}) => ({ id, renk, beden, mik
   bekle("15: stok reddedildi", r15[0].status, "rejected");
   bekle("15: kasa satırı yazılmadı, bekleyen defterde, taban yerinde", [psql("select count(*) from public.kas_hareket where id = 'mk15';"),
     !!bekleyenYazmalariOku()["muhasebe:data"], tekilTabanOku("muhasebe").kasalar[0].hareketler.some((x) => x.id === "mk15")], ["0", true, false]);
+
+  console.log("16) Liste v2: teklif — yalnız fark lst_yaz, bulut belgesi = ekran belgesi (v1.730.0)");
+  listeV2TablolariAyarla(JSON.parse(psql("select to_json(liste_tablolari) from public.stk_ayar;")));
+  const listeOku = (t) => JSON.parse(psql(`select veri from public.${t} where id = 'tekil';`));
+  let teklifler = listeOku("teklifler");
+  tekilTabanAyarla("teklifler", teklifler);
+  rpcAdlari.length = 0;
+  teklifler = [{ id: "tkl-16", teklifNo: "TKL-16", durum: "Hazırlanıyor", kalemler: [{ id: "k1", miktar: 2 }] }, ...derin(teklifler)];
+  await tekilYaz("teklif:data", "teklifler", teklifler);
+  bekle("16: tek istek, lst_yaz", rpcAdlari, ["lst_yaz"]);
+  bekle("16: buluttaki belge = ekrandaki belge (sıra dahil)", kararli(listeOku("teklifler")), kararli(teklifler));
+
+  console.log("17) Mesaj: iki cihaz aynı anda yazar — ikisi de kalır, eski listeli cihaz silemez");
+  const m0 = listeOku("mesajlar");
+  tekilTabanAyarla("mesajlar", derin(m0));
+  await tekilYaz("mesaj:data", "mesajlar", [...derin(m0), { id: "mesaj-a", metin: "A cihazı" }]);
+  // B cihazı A'nın mesajını görmedi: tabanı ve ekranı eski liste.
+  tekilTabanAyarla("mesajlar", derin(m0));
+  await tekilYaz("mesaj:data", "mesajlar", [...derin(m0), { id: "mesaj-b", metin: "B cihazı" }]);
+  bekle("17: iki mesaj da bulutta, sırayla", listeOku("mesajlar").map((x) => x.id).slice(-2), ["mesaj-a", "mesaj-b"]);
+
+  console.log("18) Silme iptaldir; boş listeli cihaz silemez");
+  const k18 = listeOku("koliler");
+  tekilTabanAyarla("koliler", derin(k18));
+  await tekilYaz("koli:data", "koliler", derin(k18).slice(1));
+  bekle("18: iptal (iz kalır)", psql(`select iptal from public.lst_kayit where tablo = 'koliler' and id = '${k18[0].id}';`), "t");
+  tekilTabanAyarla("koliler", null);
+  await tekilYaz("koli:data", "koliler", []);
+  bekle("18: taban yokken boş liste hiçbir şey silmedi", listeOku("koliler").length, k18.length - 1);
 
   console.log(hata ? "\nUÇTAN UCA BAŞARISIZ" : "\nUÇTAN UCA TAMAM");
   process.exit(hata);

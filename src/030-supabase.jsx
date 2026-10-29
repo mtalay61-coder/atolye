@@ -616,7 +616,16 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yuk = kasaV2YukHazirla(gonderilen, secenek);   // toplu iptal kilidi burada (038)
     return yuk ? v2KopruGonder([{ tur: "kasa", yuk }]) : Promise.resolve();
   };
-  const gidecek = kasaV2
+  // TEK PARÇA LİSTELER v2 (v1.730.0, 038 `listeV2Yuku`): teklif, fatura, koli, görev, model, fiş defteri, mesaj — Kasa ile aynı
+  // ilke: geçiş yapılmış listede dizi YAZILMAZ, bu cihazın farkı `lst_yaz`a gider; kuyrukta, taban üstünden, kilitli.
+  const listeV2 = !kasaV2 && typeof listeV2Aktif === "function" && listeV2Aktif(tablo);
+  const listeIsi = () => {
+    const yuk = listeV2YukHazirla(tablo, gonderilen, secenek);   // toplu iptal kilidi burada (038)
+    return yuk ? listeV2Gonder(tablo, yuk) : Promise.resolve();
+  };
+  const gidecek = listeV2
+    ? tabloKuyrugunaAl(tablo, listeIsi).then(() => { tekilTabanAyarla(tablo, gonderilen); })
+    : kasaV2
     ? ((secenek.zarf && secenek.zarf.kabul(tablo)) ? secenek.zarf.ekle(tablo, gonderilen, secenek) : tabloKuyrugunaAl(tablo, kasaIsi))
       .then((r) => {
         // Zarfın öteki tablosunda sürüm çakışması: hiçbiri yazılmadı — kasa da bekleyen deftere (yeniden gönderilir).
@@ -629,7 +638,7 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     yerel,
     gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
-      // Toplu silme engeli (Kasa & Banka v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
+      // Toplu silme engeli (Kasa & Banka / liste v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
       if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, e && e.message);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {
         window.__supabaseHataBildir(tablo, String(e && e.message || e));

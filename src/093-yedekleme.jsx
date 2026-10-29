@@ -206,15 +206,17 @@ const yedegiUygula = useCallback(async (y, kaynakAd) => {
   // Kasa & Banka v2 (v1.729.0): yedeğin hâli bütünüyle döner — yedekten sonra girilen hareketler iptal olur (iz kalır);
   // toplu iptal kilidi (038) bu yazma için açık, eski sürümde belge zaten bütünüyle yazılıyordu.
   if (y.muhasebe) await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe, { topluSilmeIzni: true });
-  if (Array.isArray(y.koliler)) await tekilYaz("koli:data", "koliler", y.koliler);
-  if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler);
-  if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar);
-  if (Array.isArray(y.faturalar)) await tekilYaz("fatura:data", "faturalar", y.faturalar);
-  if (Array.isArray(y.teklifler)) await tekilYaz("teklif:data", "teklifler", y.teklifler);
+  // Liste v2 (v1.730.0): yedeğin hâli bütünüyle döner — toplu iptal kilidi (038) bu yazmalar için açık (bkz. muhasebe).
+  const listeIzni = { topluSilmeIzni: true };
+  if (Array.isArray(y.koliler)) await tekilYaz("koli:data", "koliler", y.koliler, listeIzni);
+  if (Array.isArray(y.gorevler)) await tekilYaz("gorev:data", "gorevler", y.gorevler, listeIzni);
+  if (Array.isArray(y.mesajlar)) await tekilYaz("mesaj:data", "mesajlar", y.mesajlar, listeIzni);
+  if (Array.isArray(y.faturalar)) await tekilYaz("fatura:data", "faturalar", y.faturalar, listeIzni);
+  if (Array.isArray(y.teklifler)) await tekilYaz("teklif:data", "teklifler", y.teklifler, listeIzni);
   if (Array.isArray(y.stokRezervasyonlari)) await tabloYaz("stokrez:data", "stok_rezervasyonlari", y.stokRezervasyonlari, undefined, yazmaSecenegi);
   if (Array.isArray(y.onaylar)) await tabloYaz("onaylar:data", "onaylar", y.onaylar, undefined, yazmaSecenegi);
-  if (y.fisDefteri) await tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", y.fisDefteri);
-  if (Array.isArray(y.modeller)) await tekilYaz("model:data", "modeller", y.modeller);
+  if (y.fisDefteri) await tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", y.fisDefteri, listeIzni);
+  if (Array.isArray(y.modeller)) await tekilYaz("model:data", "modeller", y.modeller, listeIzni);
   // Çek görselleri (varsa): toplu tablo yazımı + yerel kopya (cekGorselKaydet'in yaptığı iş,
   // burada toplu — o fonksiyon daha aşağıda tanımlı, bağımlılığa alınamaz).
   if (Array.isArray(y.cekGorselleri)) {

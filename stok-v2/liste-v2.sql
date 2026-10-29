@@ -68,7 +68,7 @@ create trigger lst_sayac after insert or update or delete on public.lst_kayit fo
 
 -- LİSTE YAZ — tek kapı (src/038 liste köprüsü). p = { tablo, kayitlar: [{ id, sira?, veri }], iptal: [id] }
 --  Tekrara dayanıklı: kimlikle yazılır; iptal edilen kayıt yeniden gelirse açılır. Sıra verilmezse var olanınki korunur,
---  yeni kayıt sona eklenir. Yetki (rls-yazma.sql ile aynı): faturalar → fisler | muhasebe "kaydetme"; ötekiler bugünkü gibi
+--  yeni kayıt sona eklenir; var olan kaydın sırası hiç değişmez. Yetki (rls-yazma.sql ile aynı): faturalar → fisler | muhasebe "kaydetme"; ötekiler bugünkü gibi
 --  giriş yapmış her kullanıcı.
 create or replace function public.lst_yaz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -96,9 +96,11 @@ begin
          x -> 'veri', eposta
   from jsonb_array_elements(public.stk_dizi(p -> 'kayitlar')) with ordinality as e(x, n)
   order by x ->> 'id', e.n desc
-  on conflict (tablo, id) do update set sira = excluded.sira, veri = excluded.veri, guncelleme = now(),
+  -- Var olan kaydın SIRASI değişmez (iptal edilmiş olan yerine açılır): başka cihazın eklediği kaydı bu cihaz "yeni" sanıp sıra
+  -- gönderse de (sohbet yoklaması ekrana ekler, taban bilmeyebilir) liste karışmaz.
+  on conflict (tablo, id) do update set veri = excluded.veri, guncelleme = now(),
     iptal = false, iptal_zamani = null, iptal_eden = null
-  where (k.sira, k.veri, k.iptal) is distinct from (excluded.sira, excluded.veri, false);
+  where (k.veri, k.iptal) is distinct from (excluded.veri, false);
   get diagnostics n_yaz = row_count;
 
   update public.lst_kayit set iptal = true, iptal_zamani = now(), iptal_eden = eposta, guncelleme = now()
@@ -118,8 +120,10 @@ begin
   create policy lst_okuma on public.lst_kayit for select to authenticated using (true);
   revoke all on public.lst_kayit from anon, authenticated;
   grant select on public.lst_kayit to authenticated;
+  -- Gün sonu raporu (Edge Function, servis rolü) eski adları okur: görünüm lst_belge'yi çağırır.
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant select on public.lst_kayit to service_role;
+    grant execute on function public.lst_belge(text) to service_role;
   end if;
   revoke all on function public.lst_yaz(jsonb) from public, anon;
   grant execute on function public.lst_yaz(jsonb) to authenticated;

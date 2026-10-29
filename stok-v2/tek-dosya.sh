@@ -12,6 +12,9 @@
 #   editor/9-kasa-kurulum.sql  — kasa-v2.sql (v1.729.0)
 #   editor/10-kasa-goc.sql     — kasa-v2-goc.sql
 #   editor/11-kasa-gecis.sql   — kasa geçişi (tek satır)
+#   editor/12-liste-kurulum.sql — liste-v2.sql (v1.730.0: teklif, fatura, koli, görev, model, fiş defteri, mesaj)
+#   editor/13-liste-goc.sql     — liste-v2-goc.sql
+#   editor/14-liste-gecis.sql   — liste geçişi (tek satır)
 #   stok-v2-gecis-tek-dosya.sql — stok üçlüsü (1–3)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -27,6 +30,9 @@ echo "select jsonb_pretty(public.alt_gecis());" > editor/8-siparis-uretim-gecis.
 python3 editor-icin.py kasa-v2.sql > editor/9-kasa-kurulum.sql
 python3 editor-icin.py kasa-v2-goc.sql > editor/10-kasa-goc.sql
 echo "select jsonb_pretty(public.kas_gecis());" > editor/11-kasa-gecis.sql
+python3 editor-icin.py liste-v2.sql > editor/12-liste-kurulum.sql
+python3 editor-icin.py liste-v2-goc.sql > editor/13-liste-goc.sql
+echo "select jsonb_pretty(public.lst_gecis());" > editor/14-liste-gecis.sql
 CIKTI=stok-v2-gecis-tek-dosya.sql
 cat editor/1-kurulum.sql editor/2-goc.sql editor/3-gecis.sql > "$CIKTI"
 python3 editor-icin.py "$CIKTI" > /dev/null   # denetim: tek dosya da kurala uysun
