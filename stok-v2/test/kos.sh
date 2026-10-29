@@ -98,6 +98,9 @@ if [ -f test/erp.cjs ]; then
   calistir stok-v2/cari-v2.sql
   calistir stok-v2/alt-v2.sql
   calistir stok-v2/test/sinama-duzeltme.sql
+  # v1.730.2 VERİ SIFIRLAMA — aynı veritabanında (canlının aynısı), Editor gibi
+  editor_ver stok-v2/veri-sifirla.sql
+  calistir stok-v2/test/sinama-sifirla.sql
 else
   echo "── uçtan uca atlandı: test/erp.cjs yok (cd test && node derle.js)"
 fi
