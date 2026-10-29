@@ -1,1 +1,1 @@
-select jsonb_pretty(public.veri_sifirla('SIFIRLA'));
+select jsonb_pretty(public.veri_sifirla('SIFIRLA', array['hesap_hareketleri']));

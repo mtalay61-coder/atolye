@@ -40,7 +40,7 @@ python3 duzeltme-uret.py > editor/.15-ham.sql
 python3 editor-icin.py editor/.15-ham.sql > editor/15-duzeltme.sql
 rm -f editor/.15-ham.sql
 python3 editor-icin.py veri-sifirla.sql > editor/16-sifirla-kurulum.sql
-echo "select jsonb_pretty(public.veri_sifirla('SIFIRLA'));" > editor/17-sifirla.sql
+echo "select jsonb_pretty(public.veri_sifirla('SIFIRLA', array['hesap_hareketleri']));" > editor/17-sifirla.sql
 CIKTI=stok-v2-gecis-tek-dosya.sql
 cat editor/1-kurulum.sql editor/2-goc.sql editor/3-gecis.sql > "$CIKTI"
 python3 editor-icin.py "$CIKTI" > /dev/null   # denetim: tek dosya da kurala uysun

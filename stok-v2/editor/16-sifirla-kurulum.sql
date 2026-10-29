@@ -1,4 +1,6 @@
-create or replace function public.veri_sifirla(p_onay text) returns jsonb
+drop function if exists public.veri_sifirla(text);
+
+create or replace function public.veri_sifirla(p_onay text, p_ek text[] default '{}') returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   t text;
@@ -13,12 +15,42 @@ declare
   bagli text[];
   bilinmeyen text[];
   kaldirilan_gorunum text[] := '{}';
+  hedef text[];
+  dis_bag text[];
 begin
   if auth.jwt() is not null then
     raise exception 'Sıfırlama yalnız Supabase SQL Editor''den yapılır' using errcode = '42501';
   end if;
   if p_onay is distinct from 'SIFIRLA' then
     raise exception 'Onay eksik: select public.veri_sifirla(''SIFIRLA''); — bütün iş verisi silinir, geri alınamaz' using errcode = '22023';
+  end if;
+
+  hedef := array(select x from unnest(array['stk_hareket', 'stk_fis', 'stk_varyant', 'stk_renk', 'stk_olcu', 'car_hareket',
+                           'kas_hareket', 'kas_cek', 'kas_hesap', 'lst_kayit',
+                           'siparis_kalemleri', 'uretim_atamalari', 'stok_rezervasyonlari', 'onaylar', 'cop', 'cek_gorselleri',
+                           'urunler', 'cariler', 'siparisler', 'uretim', 'gunluk', 'silinen_arsiv']) x
+                 where exists (select 1 from pg_tables where schemaname = 'public' and tablename = x));
+  foreach t in array coalesce(p_ek, '{}') loop
+    if not exists (select 1 from pg_tables where schemaname = 'public' and tablename = t) then
+      raise exception 'Ek tablo yok: %', t using errcode = '22023';
+    end if;
+    if t in ('tanimlar', 'stk_ayar', 'kas_ayar', 'degisiklik', 'surum', 'gun_sonu_gonderim') or t like 'site\_%' or t like 'eski\_%' then
+      raise exception 'Bu tablo sıfırlamaya verilemez: %', t using errcode = '22023';
+    end if;
+    if not t = any(hedef) then hedef := hedef || t; end if;
+  end loop;
+
+  select coalesce(array_agg(distinct format('%s (%s satır) → %s', r.relname, (xpath('/row/n/text()', query_to_xml(
+           format('select count(*) as n from public.%I', r.relname), false, true, '')))[1]::text, h.relname)), '{}')
+    into dis_bag
+  from pg_constraint k
+  join pg_class r on r.oid = k.conrelid
+  join pg_class h on h.oid = k.confrelid
+  where k.contype = 'f' and h.relnamespace = 'public'::regnamespace and h.relname = any(hedef)
+    and not r.relname = any(hedef) and r.relname not like 'eski\_%';
+  if array_length(dis_bag, 1) > 0 then
+    raise exception 'Boşaltılacak tablolara bağlı başka tablo var, hiçbir şey silinmedi: %. Bunlar da boşaltılsın isterseniz: select jsonb_pretty(public.veri_sifirla(''SIFIRLA'', array[...tablo adları...]));',
+      array_to_string(dis_bag, '; ') using errcode = '2BP01';
   end if;
 
   select coalesce(array_agg(distinct dv.relname::text), '{}') into bagli
@@ -55,15 +87,10 @@ begin
     silinen_islev := silinen_islev || f;
   end loop;
 
-  foreach t in array array['stk_hareket', 'stk_fis', 'stk_varyant', 'stk_renk', 'stk_olcu', 'car_hareket',
-                           'kas_hareket', 'kas_cek', 'kas_hesap', 'lst_kayit',
-                           'siparis_kalemleri', 'uretim_atamalari', 'stok_rezervasyonlari', 'onaylar', 'cop', 'cek_gorselleri',
-                           'urunler', 'cariler', 'siparisler', 'uretim', 'gunluk', 'silinen_arsiv'] loop
-    if exists (select 1 from pg_tables where schemaname = 'public' and tablename = t) then
-      execute format('select count(*) from public.%I', t) into n;
-      bosaltilan := bosaltilan || jsonb_build_object(t, n);
-      liste := liste || format('public.%I', t);
-    end if;
+  foreach t in array hedef loop
+    execute format('select count(*) from public.%I', t) into n;
+    bosaltilan := bosaltilan || jsonb_build_object(t, n);
+    liste := liste || format('public.%I', t);
   end loop;
   if array_length(liste, 1) > 0 then
     execute 'truncate table ' || array_to_string(liste, ', ');
@@ -97,4 +124,4 @@ begin
                             'veriKalanTablolar', kalan);
 end $$;
 
-revoke all on function public.veri_sifirla(text) from public, anon, authenticated;
+revoke all on function public.veri_sifirla(text, text[]) from public, anon, authenticated;
