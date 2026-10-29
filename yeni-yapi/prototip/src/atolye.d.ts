@@ -47,6 +47,7 @@ declare global {
       aramaliSecici: <T>(kok: HTMLElement, ayar: AtolyeSeciciAyar<T>) => AtolyeSecici<T>;
       temaUygula: (id: string) => string;
       menuHtml: (ogeler: AtolyeMenuOge[]) => string;
+      renkKutusu: (dilimler: string[], secenek?: { resim?: string; buyuk?: boolean; baslik?: string }) => string;
       gezgin: (liste: string[], mevcut: string) => { sira: number; toplam: number; onceki: string | null; sonraki: string | null };
     };
   }

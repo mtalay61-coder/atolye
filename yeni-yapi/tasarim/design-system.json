@@ -180,9 +180,9 @@
     "Ikonlar"
   ],
   "lastChange": {
-    "at": "2026-10-28T18:20:00Z",
+    "at": "2026-10-29T12:00:00Z",
     "by": "Claude",
-    "note": "Düğmeler sadık: Kaydet/Sil/Düzenle/Kapat her yerde aynı ikon düğme; yazılı düğme yalnız pencerede ve özel işlemde; kart başlığı yapışık",
+    "note": "Kayan tanım listesi (erp-table-kap--kaydir) ve satır sonunda Düzenle · Sil; renk kodu numaralandırma kuralı",
     "via": "Claude Code"
   },
   "layout": "files",

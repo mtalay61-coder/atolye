@@ -236,7 +236,17 @@
       return '<button type="button" role="menuitem" class="erp-menu__oge' + (tehlike ? " erp-menu__oge--tehlike" : "") + '"' + (o.pasif ? ' disabled title="' + kac(o.pasif) + '"' : "") + ">" + (ik ? ikon(ik) : "<span></span>") + "<span>" + kac(ad) + '</span><span class="erp-menu__kisayol">' + kac(ks) + "</span></button>";
     }).join("") + "</div>";
   }
-  window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir, katla: katla, eslesme: eslesme, vurgula: vurgula, sayiYaz: sayiYaz, aramaliSecici: aramaliSecici, TEMALAR: TEMALAR, temaUygula: temaUygula, menuHtml: menuHtml, gezgin: gezgin, gezginHtml: gezginHtml };
+  // ===== RENK KUTUSU =====
+  // renkKutusu(["#1d1d1d", "#f4f1ea"], { resim?, buyuk?, baslik? }): dilimler hücre sırasıyla soldan sağa.
+  // Resim varsa resim gösterilir (deri dokusu gibi); hex yoksa "görsel yok" taraması. Kutu hiçbir zaman tek başına
+  // anlam taşımaz: yanında kod ve ad yazılır (renk körlüğü, gece teması).
+  function renkKutusu(dilimler, secenek) {
+    var s = secenek || {}, d = (dilimler || []).filter(Boolean);
+    var sinif = "erp-renk" + (s.buyuk ? " erp-renk--buyuk" : "") + (!d.length && !s.resim ? " erp-renk--yok" : "");
+    var ic = s.resim ? '<img src="' + kac(s.resim) + '" alt="">' : d.map(function (h) { return '<span style="background:' + kac(h) + '"></span>'; }).join("");
+    return '<span class="' + sinif + '"' + (s.baslik ? ' title="' + kac(s.baslik) + '"' : "") + ' aria-hidden="true">' + ic + "</span>";
+  }
+  window.Atolye = { IKONLAR: IKONLAR, EYLEMLER: EYLEMLER, KISAYOLLAR: KISAYOLLAR, DURUMLAR: DURUMLAR, ikon: ikon, aracCubugu: aracCubugu, rozet: rozet, bildirimSuresi: bildirimSuresi, ikonlariYerlestir: ikonlariYerlestir, katla: katla, eslesme: eslesme, vurgula: vurgula, sayiYaz: sayiYaz, aramaliSecici: aramaliSecici, TEMALAR: TEMALAR, temaUygula: temaUygula, menuHtml: menuHtml, gezgin: gezgin, gezginHtml: gezginHtml, renkKutusu: renkKutusu };
   // Etiketler BÜYÜK HARFLE (text-transform) yazılır; sayfa dili Türkçe değilse "İL" yerine "IL" çıkar.
   if (!document.documentElement.lang) document.documentElement.lang = "tr";
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { ikonlariYerlestir(); });

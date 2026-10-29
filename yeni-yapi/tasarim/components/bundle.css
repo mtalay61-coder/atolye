@@ -186,3 +186,39 @@ body { font-family: var(--font-sans); color: var(--erp-text); background: var(--
   .erp-shell { grid-template-columns: 1fr; }
   .erp-toast { left: var(--erp-gap-2); right: var(--erp-gap-2); max-width: none; }
 }
+
+/* ===== RENK KUTUSU ve RENK HÜCRELERİ =====
+   Renk değerleri (hex) kullanıcının verisidir, token değildir; yalnız kutunun içine inline gelir.
+   Çok renkli kutu hücre sırasıyla dilimlenir: 1. renk solda, en geniş değil, eşit dilim (sıra okunur). */
+.erp-renk { display: inline-flex; flex: none; width: 20px; height: 20px; border: 1px solid var(--erp-line); border-radius: var(--erp-r-sm); overflow: clip; vertical-align: middle; background: var(--erp-page); }
+.erp-renk > span { flex: 1; }
+.erp-renk > img { width: 100%; height: 100%; object-fit: cover; }
+.erp-renk--buyuk { width: 56px; height: 56px; border-radius: var(--erp-r-md); }
+.erp-renk--yok { background: repeating-linear-gradient(45deg, var(--erp-line) 0 2px, transparent 2px 6px); }
+.erp-renk-hucreler { display: flex; flex-wrap: wrap; gap: var(--erp-gap-2); }
+.erp-renk-hucre { display: grid; gap: 6px; align-content: start; width: 220px; max-width: 100%; padding: var(--erp-gap-2); border: 1px solid var(--erp-line); border-radius: var(--erp-r-md); background: var(--erp-page); }
+.erp-renk-hucre__baslik { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--erp-text-2); }
+.erp-renk-hucre__deger { display: flex; align-items: center; gap: var(--erp-gap-2); min-height: var(--erp-icon-btn); }
+.erp-renk-hucre--hata { border-color: var(--erp-accent-press); }
+.erp-renk-hucre--bos .erp-renk-hucre__baslik { color: var(--erp-text); }
+@media (max-width: 720px) { .erp-renk-hucre { width: 100%; } }
+
+/* Dar ekranda kart başlığı iki satıra sarar: üstte kod + ad, altta sağa yaslı düğmeler. Düğmeler hiç kırpılmaz. */
+@media (max-width: 720px) {
+  .erp-card__head { flex-wrap: wrap; row-gap: 0; padding-block: 2px; }
+  .erp-card__title { flex: 1 1 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-top: 6px; }
+  .erp-card__actions { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+}
+
+/* KAYAN TANIM LİSTESİ (renk, beden, değişken): etrafı çizili kutu, kendi içinde aşağı kayar; sütun başlığı ve
+   süzgeç satırı kayarken üstte kalır. Satır sonunda Düzenle ve Sil ikonları (tanım listelerine özgü istisna). */
+.erp-table-kap--kaydir { max-height: min(62vh, 560px); overflow: auto; }
+.erp-table-kap--kaydir tr.erp-suzgec th { position: sticky; top: var(--erp-row-h); z-index: var(--erp-z-yapiskan); }
+.erp-table td.erp-satir-eylem, .erp-table th.erp-satir-eylem { width: 1%; padding: 0 4px; text-align: right; white-space: nowrap; }
+.erp-satir-eylem .erp-ib { width: 26px; height: 26px; }
+/* Dar ekranda tablo yana kayar; Düzenle · Sil sütunu sağda sabit kalır, hiçbir satırda gözden kaybolmaz. */
+@media (max-width: 720px) {
+  .erp-satir-eylem .erp-ib { width: var(--erp-icon-btn); height: var(--erp-icon-btn); }
+  .erp-table td.erp-satir-eylem, .erp-table th.erp-satir-eylem { position: sticky; right: 0; background: var(--erp-panel); border-left: 1px solid var(--erp-line-soft); }
+  .erp-table th.erp-satir-eylem { background: var(--erp-head); z-index: calc(var(--erp-z-yapiskan) + 1); }
+}

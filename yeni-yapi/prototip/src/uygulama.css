@@ -11,7 +11,8 @@ body { margin: 0; background: var(--erp-page); color: var(--erp-text); }
 .kabuk[data-menu-acik="true"] .kabuk-ana::before { content: ""; position: fixed; inset: 0; background: color-mix(in srgb, var(--erp-shell) 45%, transparent); z-index: calc(var(--erp-z-pencere) - 1); }
 .prototip-serit { font-weight: 500; padding-block: 4px; font-size: 12px; }
 
-.sayfa-govde { padding: var(--erp-gap-4); display: grid; gap: var(--erp-gap-3); align-content: start; }
+/* minmax(0, 1fr): ızgara öğesi en geniş tablonun boyuna uzamasın; tablo kendi kabında (erp-table-kap) kayar. */
+.sayfa-govde { padding: var(--erp-gap-4); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--erp-gap-3); align-content: start; }
 .cipler { display: flex; flex-wrap: wrap; gap: 6px; }
 .soluk { color: var(--erp-text-2); }
 .kucuk { font-size: 12px; }
@@ -35,6 +36,9 @@ a { color: inherit; text-decoration-color: var(--erp-text-3); text-underline-off
 .giris-ad { font-size: 34px; font-weight: 800; line-height: 1; }
 
 .erp-table tbody tr { cursor: default; }
+.gizli { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* Süzgeç satırındaki küçük seçim (≤7 sabit seçenek): yazı kutusuyla aynı boy. */
+.erp-table tr.erp-suzgec select.suzgec-secim { width: 100%; height: 24px; border: 1px solid var(--erp-text-3); border-radius: var(--erp-r-sm); font: inherit; font-size: 12px; background: var(--erp-panel); color: var(--erp-text); text-transform: none; letter-spacing: 0; }
 .erp-table tbody tr:focus-visible { outline: 2px solid var(--erp-accent); outline-offset: -2px; }
 
 @media (max-width: 720px) {

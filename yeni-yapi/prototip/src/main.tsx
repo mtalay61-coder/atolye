@@ -12,6 +12,8 @@ import { SiparisFormu } from "./ekran/SiparisFormu";
 import { Tanimlar } from "./ekran/Tanimlar";
 import { CariListesi } from "./ekran/CariListesi";
 import { CariKarti } from "./ekran/CariKarti";
+import { UrunRenkKarti } from "./ekran/UrunRenkleri";
+import { DegiskenKarti, DegiskenTuruKarti } from "./ekran/Degiskenler";
 
 function Ekran({ adres }: { adres: string }) {
   if (adres === "siparisler" || adres === "") return <SiparisListesi />;
@@ -21,6 +23,12 @@ function Ekran({ adres }: { adres: string }) {
   if (adres === "cari-yeni") return <CariKarti kod={null} />;
   if (adres.startsWith("cari-")) return <CariKarti kod={adres.slice(5)} />;
   if (adres === "tanimlar") return <Tanimlar />;
+  if (adres === "urun-renk-yeni") return <UrunRenkKarti id={null} />;
+  if (adres.startsWith("urun-renk-")) return <UrunRenkKarti id={adres.slice(10)} />;
+  if (adres === "degisken-turu-yeni") return <DegiskenTuruKarti id={null} />;
+  if (adres.startsWith("degisken-turu-")) return <DegiskenTuruKarti id={adres.slice(14)} />;
+  if (adres.startsWith("degisken-yeni-")) return <DegiskenKarti id={null} yeniTur={adres.slice(14)} />;
+  if (adres.startsWith("degisken-")) return <DegiskenKarti id={adres.slice(9)} />;
   if (adres.startsWith("modul-")) return <Planlanan kod={adres.slice(6)} />;
   return <Planlanan kod="?" />;
 }

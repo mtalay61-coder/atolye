@@ -233,6 +233,23 @@ export function AramaliSecici<T>(p: AtolyeSeciciAyar<T> & { style?: React.CSSPro
   return <div ref={kok} style={p.style} />;
 }
 
+// ---------------- Renk kutusu: rengin görseli her yerde aynı (tasarım sistemi RenkKutusu) ----------------
+export function RenkKutusu({ dilimler, resim, buyuk, baslik }: { dilimler: string[]; resim?: string; buyuk?: boolean; baslik?: string }) {
+  return <span style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: A().renkKutusu(dilimler, { resim, buyuk, baslik }) }} />;
+}
+
+// ---------------- Tanım listesi satır eylemleri: Düzenle · Sil (yalnız tanım listelerinde; tasarım sistemi istisnası) ----------------
+// Araç çubuğundakiyle aynı ikon, ipucu ve renk. Tıklama satırın çift tıkını tetiklemesin diye olay yayılmaz.
+export function SatirEylemleri({ duzenle, sil, duzenleNeden, silNeden, silAd = "Sil" }: { duzenle: () => void; sil: () => void; duzenleNeden?: string; silNeden?: string; silAd?: string }) {
+  const dur = (e: React.SyntheticEvent) => e.stopPropagation();
+  return (
+    <td className="erp-satir-eylem" onDoubleClick={dur} onPointerUp={dur}>
+      <button type="button" className="erp-ib" aria-label="Düzenle" title={duzenleNeden || "Düzenle · F2"} disabled={!!duzenleNeden} onClick={(e) => { dur(e); duzenle(); }}><Ikon ad="i-edit" /></button>
+      <button type="button" className="erp-ib erp-ib--danger" aria-label={silAd} title={silNeden || silAd + " · Del"} disabled={!!silNeden} onClick={(e) => { dur(e); sil(); }}><Ikon ad="i-trash" /></button>
+    </td>
+  );
+}
+
 // ---------------- Boş durum, şerit, alan ----------------
 export function BosDurum({ baslik, aciklama, dugme }: { baslik: string; aciklama: string; dugme?: ReactNode }) {
   return <div className="erp-bos"><Ikon ad="i-draft" /><b>{baslik}</b><span>{aciklama}</span>{dugme}</div>;

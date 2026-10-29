@@ -36,6 +36,29 @@ https://claude.ai/artifact/9pSVfkv3ec7zn3a7aL5aqS. Kuralları `prototip/README.m
 - **Kılavuz konusu**: bir modüle bağlı kullanıcı adımları. "Arkada ne olur" kısmı konunun belge
   tiplerinden ve modülün tetiklerinden kendiliğinden çizilir.
 
+## Renk yapısı (karar k-08)
+
+İki ayrı liste; ikisi de uuid ile bağlı, ad hiçbir yerde anahtar değil.
+
+- **Ürün renkleri** (`urun_renk`, `urun_renk_bilesen`): 1 renkli temel renkler kod, ad, görsel renk (hex) ve
+  resim taşır. 2, 3… (en çok 6) renkli renk, renk sayısı kadar **sıralı hücreden** kurulur; her hücre 1 renkli,
+  etkin bir renktir (iç içe kombinasyon yok). Renk sayısı saklanmaz, hücre sayısıdır. Ad hücrelerden
+  önerilir (`Siyah-Beyaz`), elle değiştirilebilir. Kurallar: ad tekil; aynı renk iki
+  hücrede olmaz; aynı sıralı kombinasyon iki kez olmaz (Siyah-Beyaz ≠ Beyaz-Siyah, 1. renk ana renk);
+  varyantta kullanılan rengin kodu ve hücreleri kilitli; bir kombinasyonda hücre olan temel renk çok renkliye
+  çevrilemez; kullanılan renk silinmez, pasife alınır.
+- **Kodlar** numaratörden, kullanıcı yazmaz, hiç değişmez: ürün rengi 4 haneli ve 1000'den (çok renkli de
+  sıradaki numarayı alır), hammadde değişkeni 3 haneli ve her tür kendi içinde 001'den.
+- **Liste**: etrafı çizili, kendi içinde aşağı kayan kutu; başlık ve sütun süzgeçleri üstte sabit; satır sonunda
+  Düzenle (kartı düzenlemede açar) ve Sil (kullanılan kayıtta "Pasife al") — tasarım sisteminin tanım listesi istisnası.
+- **Hammadde değişkenleri** (`degisken_turu`, `degisken`): hammadde her zaman renkle çeşitlenmez. Tür
+  (Deri rengi, Taban rengi, Deri kalınlığı, Fermuar boyu…) kartta görünen **etiketi** (Renk, Kalınlık, Boy)
+  ve görseli (renk kutusu ya da yok) belirler. Hammadde kartı en çok bir tür seçer. Kod ve ad tür içinde tekil.
+- **Reçete bağı**: reçete satırı "deri = 1. renk" der; model rengi seçilince hangi değişkenin kullanılacağı
+  hücre sırasından gelir (Tanımlar → Reçete tetiği, g-083).
+- Kuralların tek yeri: `prototip/src/veri/renk.ts` (saf fonksiyonlar). Veritabanında aynı kurallar benzersiz
+  indeks, check ve komut fonksiyonu olarak durur.
+
 ## Kodlamaya geçerken
 
 Bir modül "hazır" olduğunda: şemadaki tabloları migration'a, belge tiplerini belge çekirdeğinin

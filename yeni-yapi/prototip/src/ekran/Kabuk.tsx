@@ -1,4 +1,5 @@
 // Kabuk kalıbı: koyu yan menü, üst çubuk (firma, bağlantı, kullanıcı menüsü), prototip şeridi, içerik.
+import { tanimDurumu } from "./TanimSayfasi";
 import { useState, type ReactNode } from "react";
 import { Ikon, Menu } from "../bilesen/temel";
 import { useUygulama } from "../bilesen/uygulama";
@@ -36,7 +37,7 @@ export function Kabuk({ adres, children }: { adres: string; children: ReactNode 
             <button className="erp-btn" onClick={() => setKullaniciMenu(!kullaniciMenu)} aria-haspopup="menu">{u.kullanici}</button>
             {kullaniciMenu && (
               <Menu kapat={() => setKullaniciMenu(false)} ogeler={[
-                { ad: "Görünüm (tema)", ikon: "i-edit", onClick: () => u.git("tanimlar") },
+                { ad: "Görünüm (tema)", ikon: "i-edit", onClick: () => { tanimDurumu.sekme = "gorunum"; u.git("tanimlar"); } },
                 { ad: u.cevrimdisi ? "Bağlantıyı geri getir (deneme)" : "Çevrimdışını dene", ikon: "i-ban", onClick: () => u.cevrimdisiYap(!u.cevrimdisi) },
                 "-",
                 { ad: "Çıkış", ikon: "i-back", onClick: u.cikisYap },

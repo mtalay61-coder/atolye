@@ -36,7 +36,7 @@
       "grup": "anaveri",
       "faz": 1,
       "durum": "taslak",
-      "amac": "Renk, ölçü seti ve bedenler, birim, proses, depo, para birimi ve kur, KDV oranı, fiyat grubu, model rengi kombinasyonları.",
+      "amac": "Ürün renkleri (1, 2, 3… renkli kombinasyonlar), hammadde değişkenleri (renk, kalınlık, boy… türlere ayrılmış), ölçü seti ve bedenler, birim, proses, depo, para birimi ve kur, KDV oranı, fiyat grubu.",
       "ders": "Renk adı kayıt anahtarıydı; ad değişince binlerce varyant silinip yeniden yazıldı (v1.724).",
       "cekirdek": false
     },
@@ -276,12 +276,6 @@
       "sahip": "m-bel",
       "aciklama": ""
     },
-    "t-renk": {
-      "ad": "renk",
-      "tur": "tablo",
-      "sahip": "m-tan",
-      "aciklama": ""
-    },
     "t-olcu-seti": {
       "ad": "olcu_seti",
       "tur": "tablo",
@@ -330,23 +324,17 @@
       "sahip": "m-tan",
       "aciklama": ""
     },
-    "t-model-rengi": {
-      "ad": "model_rengi",
-      "tur": "tablo",
-      "sahip": "m-tan",
-      "aciklama": ""
-    },
     "t-urun": {
       "ad": "urun",
       "tur": "tablo",
       "sahip": "m-urn",
-      "aciklama": ""
+      "aciklama": "Hammadde, yarı mamul ve mamul kartı. Hammaddede degisken_turu_id (boş olabilir): kartta değişkenin adı bu türün etiketi olur (Renk, Kalınlık…). Mamul renkleri urun_renk'ten."
     },
     "t-varyant": {
       "ad": "varyant",
       "tur": "tablo",
       "sahip": "m-urn",
-      "aciklama": "uuid; urun_id + renk_id + olcu_id benzersiz"
+      "aciklama": "uuid; mamulde urun_id + urun_renk_id + olcu_id, hammaddede urun_id + degisken_id (+ olcu_id) benzersiz. degisken_id ürünün değişken türünden olmalı; urun_renk_id ile degisken_id birlikte dolu olmaz (check)."
     },
     "t-barkod": {
       "ad": "barkod",
@@ -394,7 +382,7 @@
       "ad": "recete_satir",
       "tur": "tablo",
       "sahip": "m-rec",
-      "aciklama": ""
+      "aciklama": "Hammadde satırı. Değişken eşlemesi: sabit bir değer ya da mamul renginin N. rengine göre bir değer (ör. deri = 1. renk, taban = 2. renk)."
     },
     "t-rota-adim": {
       "ad": "rota_adim",
@@ -599,6 +587,30 @@
       "tur": "tablo",
       "sahip": "m-bak",
       "aciklama": ""
+    },
+    "t-urun-renk": {
+      "ad": "urun_renk",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Mamul (model) rengi. uuid kimlik. Kod: 4 haneli sıra numarası, 1000'den başlar; kayıtta sunucudaki numaratör verir, kullanıcı yazmaz, hiç değişmez (barkod ve eski kayıtlar ona bakar). Ad firmada tekil (Türkçe katlanmış karşılaştırma). 1 renkli: kendi görsel kodu (hex) ve resmi var. Çok renkli: hücreleri urun_renk_bilesen'de; renk sayısı = bileşen sayısı, ayrıca saklanmaz; ad hücrelerden önerilir (Siyah-Beyaz), değiştirilebilir. Bir varyantta kullanıldıktan sonra hücreler kilitlenir. Silinmez, pasife alınır."
+    },
+    "t-urun-renk-bilesen": {
+      "ad": "urun_renk_bilesen",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Çok renkli ürün renginin hücreleri: urun_renk_id + sira (1..6) benzersiz. bilesen_id yalnız 1 renkli ve etkin bir ürün rengini gösterir (iç içe kombinasyon yok). Aynı renk iki hücrede olmaz. Sıralı bileşen listesi firmada tekildir: aynı kombinasyon iki kez tanımlanmaz (Siyah-Beyaz ile Beyaz-Siyah farklıdır; 1. renk ana renktir)."
+    },
+    "t-degisken-turu": {
+      "ad": "degisken_turu",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Hammadde değişkeninin türü: ad (Deri rengi, Taban rengi, Deri kalınlığı, Fermuar boyu…), etiket (hammadde kartında ve matriste sütun başlığı olarak görünen ad: Renk, Kalınlık, Boy…), görsel: renk (hex + resim gösterilir) ya da yok. Hammadde kartı en çok bir değişken türü seçer; değişkeni olmayan hammadde de olur."
+    },
+    "t-degisken": {
+      "ad": "degisken",
+      "tur": "tablo",
+      "sahip": "m-tan",
+      "aciklama": "Hammadde değişkeninin değeri: uuid, tur_id, kod, ad; hex ve resim yalnız görseli renk olan türde. Kod: 3 haneli sıra numarası, her tür kendi içinde 001'den sayar (tur_id + kod benzersiz); numaratör verir, değişmez. Ad tür içinde tekil. Kullanılan değer silinmez, pasife alınır; tür değiştirilemez."
     }
   },
   "baglar": {
@@ -928,7 +940,7 @@
       "kimden": "m-tan",
       "kime": "m-urn",
       "tur": "tetik",
-      "olay": "yeni renk/ölçü varyant seçiminde görünür",
+      "olay": "yeni ürün rengi, hammadde değişkeni ya da ölçü varyant seçiminde görünür",
       "aciklama": ""
     },
     "g-048": {
@@ -1175,6 +1187,13 @@
       "tur": "tetik",
       "olay": "denetim bulguları",
       "aciklama": ""
+    },
+    "g-083": {
+      "kimden": "m-tan",
+      "kime": "m-rec",
+      "tur": "tetik",
+      "olay": "ürün renginin hücre sırası (1. renk, 2. renk…) reçetede hammadde değişkeni eşlemesini besler",
+      "aciklama": "Reçete satırı 'deri = 1. renk' der; model rengi seçilince hangi deri değişkeninin kullanılacağı eşleme tablosundan gelir."
     }
   },
   "belgeler": {
@@ -1428,6 +1447,18 @@
         "m-cek"
       ],
       "oneri": "Yeni GitHub deposu + yeni Supabase projesi; eski ikisi dokunulmadan çalışmaya devam eder."
+    },
+    "k-08": {
+      "baslik": "Renk yapısı nasıl kurulsun?",
+      "aciklama": "Eski uygulamada renk adı anahtardı ve hammadde ile mamul renkleri aynı listedeydi. Bazı hammaddeler renkle değil kalınlık, boy gibi başka bir özellikle çeşitlenir.",
+      "oneri": "Ürün renkleri ve hammadde değişkenleri ayrı. Çok renkli ürün rengi tek renkli ürün renklerinden kurulur. Kategori yalnız hammadde tarafında, değişken türü olarak.",
+      "karar": "İki ayrı yapı. (1) Ürün renkleri: 1 renkli temel renkler + bunlardan sıralı hücrelerle kurulan 2, 3… renkli kombinasyonlar; ad hücrelerden önerilir; kombinasyon tekil; kullanıldıktan sonra hücreler kilitli. (2) Hammadde değişkenleri: tür (Deri rengi, Taban rengi, Deri kalınlığı…) + değer; türün etiketi kartta görünen addır (Renk, Kalınlık…), görseli renk olan türde hex ve resim. Kodlar numaratörden: ürün rengi 4 hane 1000'den, hammadde değişkeni 3 hane tür içinde 001'den; kod değişmez. Her şey uuid ile bağlı, ad anahtar değildir.",
+      "durum": "verildi",
+      "moduller": [
+        "m-tan",
+        "m-urn",
+        "m-rec"
+      ]
     }
   },
   "kilavuz": {
@@ -1461,17 +1492,20 @@
       "belgeler": []
     },
     "kl-03": {
-      "baslik": "Renk, beden ve proses tanımları",
+      "baslik": "Renk, değişken, beden ve proses tanımları",
       "modul": "m-tan",
       "sira": 1,
-      "ozet": "Ürün ve üretimde seçilen bütün listeler buradan gelir. Bir adı değiştirmek geçmiş kayıtları bozmaz.",
+      "ozet": "Ürün ve üretimde seçilen bütün listeler buradan gelir. Ürün renkleri ile hammadde değişkenleri ayrı tutulur. Bir adı değiştirmek geçmiş kayıtları bozmaz.",
       "adimlar": [
-        "Tanımlar'ı aç; Renkler, Ölçü setleri, Prosesler, Depolar sekmelerinden birini seç.",
-        "Yeni satırı ekle: renkte kod ve ad, ölçü setinde bedenler (ör. 36–41), proseste ad ve asıl/ara adım bilgisi.",
-        "Mamul renkleri model rengi olarak kodlanır: \"1058 - Taba Süet\".",
-        "Kullanılmayanı silmek yerine pasife al; eski kayıtlarda görünmeye devam eder."
+        "Tanımlar'ı aç; Ürün renkleri, Hammadde değişkenleri, Ölçüler, Prosesler, Depolar sekmelerinden birini seç.",
+        "Liste etrafı çizili bir kutuda, kendi içinde aşağı kayar; üstteki süzgeç satırına yazdıkça daralır. Her satırın sonunda Düzenle ve Sil var.",
+        "Ürün rengi: Yeni › 1 renkli, ad, görsel renk (renk kodu) ve istersen resim. Kodu yazmazsın: sıradaki 4 haneli numara verilir (1000, 1001…).",
+        "Çok renkli ürün rengi: Yeni › renk sayısını seç (2 renkli, 3 renkli…). O kadar hücre açılır; her hücrenin başında kaçıncı renk olduğu yazar. Her hücreye tek renklerden birini seç.",
+        "Ad seçilen renklerden önerilir (Siyah-Beyaz); istersen değiştir. Aynı sırayla aynı renkler ikinci kez tanımlanamaz.",
+        "Hammadde değişkeni: önce türü seç ya da aç (Deri rengi, Taban rengi, Deri kalınlığı…). Türün etiketi hammadde kartında görünen addır: Renk, Kalınlık, Boy. Değerin kodu tür içinde sıradaki 3 haneli numaradır (001, 002…).",
+        "Kullanılan kayıt silinmez, pasife alınır; eski kayıtlarda görünmeye devam eder."
       ],
-      "ipuclari": "Renk adını değiştirmek o rengi kullanan her kayıtta adı değiştirir; kayıtlar kimlikle bağlı olduğu için hiçbir şey silinmez.",
+      "ipuclari": "Kod hiç değişmez, ad değişebilir; kayıtlar kimlikle bağlı olduğu için ad değişince hiçbir şey silinmez. Ürünlerde kullanılmış bir rengin hücreleri değişmez: farklı bir kombinasyon için yeni renk aç.",
       "belgeler": []
     },
     "kl-04": {

@@ -1,8 +1,8 @@
 // VERİ KATMANI — ekranlar veriyi YALNIZ buradan alır.
 // Prototipte örnek veri döner ve hiçbir şey kaydedilmez. Bağlama zamanı yalnız bu dosya değişir:
 // okumalar Supabase görünümlerinden (v_…), yazmalar komut fonksiyonlarından (rpc) gelir; ekranlara dokunulmaz.
-import { CARI_HAREKETLERI, CARILER, SIPARISLER, URUNLER } from "./ornek";
-import type { Cari, CariHareket, Siparis, Urun } from "./tipler";
+import { CARI_HAREKETLERI, CARILER, DEGISKEN_TURLERI, DEGISKENLER, SIPARISLER, URUN_RENKLERI, URUNLER } from "./ornek";
+import type { Cari, CariHareket, Degisken, DegiskenTuru, Siparis, Urun, UrunRenk } from "./tipler";
 
 const bekle = <T,>(v: T) => new Promise<T>((r) => setTimeout(() => r(structuredClone(v)), 60));
 
@@ -16,6 +16,10 @@ export const kaynak = {
   urunler: () => bekle<Urun[]>(URUNLER),
   siparisler: () => bekle<Siparis[]>(SIPARISLER),
   siparis: (no: string) => bekle<Siparis | undefined>(SIPARISLER.find((s) => s.no === no)),
+  // Renkler: listeler pasifleri de döndürür (tekillik denetimi pasif kayda da bakar); seçiciler kendisi süzer.
+  urunRenkleri: () => bekle<UrunRenk[]>(URUN_RENKLERI),
+  degiskenTurleri: () => bekle<DegiskenTuru[]>(DEGISKEN_TURLERI),
+  degiskenler: () => bekle<Degisken[]>(DEGISKENLER),
   // Yazma komutları: prototipte hiçbir şey yazılmaz. Dönen nesne ekranın ne göstereceğini söyler.
   komut: async (ad: string, _veri: unknown) => {
     await bekle(null);
@@ -31,6 +35,13 @@ const KOMUT_MESAJI: Record<string, string> = {
   cari_kaydet: "Cari kaydedildi",
   cari_pasife_al: "Cari pasife alındı",
   cari_etkinlestir: "Cari yeniden etkin",
+  urun_renk_kaydet: "Renk kaydedildi",
+  urun_renk_sil: "Renk silindi",
+  urun_renk_pasife_al: "Renk pasife alındı",
+  degisken_kaydet: "Değer kaydedildi",
+  degisken_sil: "Değer silindi",
+  degisken_pasife_al: "Değer pasife alındı",
+  degisken_turu_kaydet: "Tür kaydedildi",
 };
 
 // Bildirimin sonuna eklenir: kullanıcı işlemin gerçekte yapılmadığını bilsin.

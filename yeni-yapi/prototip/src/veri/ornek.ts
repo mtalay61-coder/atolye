@@ -1,5 +1,5 @@
 // ÖRNEK VERİ — gerçek kayıt değildir. Ekranların dolu hâlini görmek için.
-import type { Cari, CariHareket, Kalem, Siparis, Urun } from "./tipler";
+import type { Cari, CariHareket, Degisken, DegiskenTuru, Kalem, Siparis, Urun, UrunRenk } from "./tipler";
 
 export const BEDENLER = ["39", "40", "41", "42", "43"];
 
@@ -15,10 +15,10 @@ export const CARILER: Cari[] = [
 ];
 
 export const URUNLER: Urun[] = [
-  { id: "u1", kod: "8690000100586", ad: "Bot", renk: "1058 - Taba Süet", tip: "Mamul", stok: 36, fiyat: 155, olcuSeti: BEDENLER },
-  { id: "u2", kod: "8690000100036", ad: "Bot", renk: "1003 - Siyah", tip: "Mamul", stok: -4, fiyat: 150, olcuSeti: BEDENLER },
-  { id: "u3", kod: "8690000100593", ad: "Çizme", renk: "1058 - Taba Süet", tip: "Mamul", stok: 12, fiyat: 210, olcuSeti: BEDENLER },
-  { id: "u4", kod: "8690000100609", ad: "Çizme", renk: "1003 - Siyah", tip: "Mamul", stok: 20, fiyat: 205, olcuSeti: BEDENLER },
+  { id: "u1", kod: "8690000100586", ad: "Bot", renk: "1002 - Taba Süet", tip: "Mamul", stok: 36, fiyat: 155, olcuSeti: BEDENLER },
+  { id: "u2", kod: "8690000100036", ad: "Bot", renk: "1000 - Siyah", tip: "Mamul", stok: -4, fiyat: 150, olcuSeti: BEDENLER },
+  { id: "u3", kod: "8690000100593", ad: "Çizme", renk: "1002 - Taba Süet", tip: "Mamul", stok: 12, fiyat: 210, olcuSeti: BEDENLER },
+  { id: "u4", kod: "8690000100609", ad: "Çizme", renk: "1000 - Siyah", tip: "Mamul", stok: 20, fiyat: 205, olcuSeti: BEDENLER },
   { id: "u5", kod: "8690000200111", ad: "Deri", renk: "Siyah Floter", tip: "Hammadde", stok: 212, fiyat: 14 },
   { id: "u6", kod: "8690000200128", ad: "Deri", renk: "Taba Süet", tip: "Hammadde", stok: 88, fiyat: 16 },
   { id: "u7", kod: "8690000300015", ad: "Taban", renk: "Kauçuk", tip: "Hammadde", stok: 140, fiyat: 22 },
@@ -80,3 +80,54 @@ CARILER.forEach((c) => { c.bakiye = CARI_HAREKETLERI.filter((x) => x.cariId === 
 
 export const FIYAT_GRUPLARI = ["Perakende", "Toptan", "Bayi", "İhracat"];
 export const ILLER = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkari","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Şanlıurfa","Siirt","Sinop","Sivas","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
+
+// Ürün renkleri: önce 1 renkli temel renkler, sonra onlardan kurulan kombinasyonlar.
+export const URUN_RENKLERI: UrunRenk[] = [
+  { id: "r1", kod: "1000", ad: "Siyah", hex: "#1d1d1d", bilesenler: [], kullanim: 12 },
+  { id: "r2", kod: "1001", ad: "Beyaz", hex: "#f4f1ea", bilesenler: [], kullanim: 4 },
+  { id: "r3", kod: "1002", ad: "Taba Süet", hex: "#8a5a33", bilesenler: [], kullanim: 8 },
+  { id: "r4", kod: "1003", ad: "Lacivert", hex: "#1f2a44", bilesenler: [], kullanim: 0 },
+  { id: "r5", kod: "1004", ad: "Kırmızı", hex: "#a3242b", bilesenler: [], kullanim: 2 },
+  { id: "r6", kod: "1005", ad: "Gri", hex: "#8c8c88", bilesenler: [], kullanim: 0 },
+  { id: "r7", kod: "1006", ad: "Bej", hex: "#d8c3a5", bilesenler: [], kullanim: 0, pasif: true },
+  { id: "r11", kod: "1010", ad: "Kahverengi", hex: "#4e3524", bilesenler: [], kullanim: 6 },
+  { id: "r12", kod: "1011", ad: "Antrasit", hex: "#383a3c", bilesenler: [], kullanim: 3 },
+  { id: "r13", kod: "1012", ad: "Haki", hex: "#6b6a3f", bilesenler: [], kullanim: 0 },
+  { id: "r14", kod: "1013", ad: "Bordo", hex: "#5e1a24", bilesenler: [], kullanim: 2 },
+  { id: "r15", kod: "1014", ad: "Vizon", hex: "#9a8574", bilesenler: [], kullanim: 4 },
+  { id: "r16", kod: "1015", ad: "Krem", hex: "#efe4cc", bilesenler: [], kullanim: 1 },
+  { id: "r17", kod: "1016", ad: "Pudra", hex: "#e3b9b0", bilesenler: [], kullanim: 0 },
+  { id: "r18", kod: "1017", ad: "Hardal", hex: "#c2922c", bilesenler: [], kullanim: 0 },
+  { id: "r19", kod: "1018", ad: "Gümüş", hex: "#b8b8b4", bilesenler: [], kullanim: 1 },
+  { id: "r20", kod: "1019", ad: "Altın", hex: "#b88a3b", bilesenler: [], kullanim: 0 },
+  { id: "r8", kod: "1007", ad: "Siyah-Beyaz", bilesenler: ["r1", "r2"], kullanim: 3 },
+  { id: "r9", kod: "1008", ad: "Taba Süet-Siyah", bilesenler: ["r3", "r1"], kullanim: 0 },
+  { id: "r10", kod: "1009", ad: "Denizci", bilesenler: ["r4", "r2", "r5"], kullanim: 1 },
+  { id: "r21", kod: "1020", ad: "Kahverengi-Krem", bilesenler: ["r11", "r16"], kullanim: 2 },
+  { id: "r22", kod: "1021", ad: "Siyah-Gümüş", bilesenler: ["r1", "r19"], kullanim: 0 },
+  { id: "r23", kod: "1022", ad: "Vizon-Kahverengi-Krem", bilesenler: ["r15", "r11", "r16"], kullanim: 0 },
+];
+
+// Hammadde değişkenleri: türün etiketi kartta görünen addır. Kalınlık ve boy renk değildir, görseli yoktur.
+export const DEGISKEN_TURLERI: DegiskenTuru[] = [
+  { id: "dt1", ad: "Deri rengi", etiket: "Renk", gorsel: "renk" },
+  { id: "dt2", ad: "Taban rengi", etiket: "Renk", gorsel: "renk" },
+  { id: "dt3", ad: "Deri kalınlığı", etiket: "Kalınlık", gorsel: "yok" },
+  { id: "dt4", ad: "Fermuar boyu", etiket: "Boy", gorsel: "yok" },
+  { id: "dt5", ad: "İp rengi", etiket: "Renk", gorsel: "renk" },
+];
+export const DEGISKENLER: Degisken[] = [
+  { id: "d1", turId: "dt1", kod: "001", ad: "Siyah Floter", hex: "#222222", kullanim: 6 },
+  { id: "d2", turId: "dt1", kod: "002", ad: "Taba Süet", hex: "#8a5a33", kullanim: 4 },
+  { id: "d3", turId: "dt1", kod: "003", ad: "Beyaz Napa", hex: "#f1ece2", kullanim: 0 },
+  { id: "d4", turId: "dt2", kod: "001", ad: "Siyah", hex: "#1a1a1a", kullanim: 5 },
+  { id: "d5", turId: "dt2", kod: "002", ad: "Beyaz", hex: "#f5f5f0", kullanim: 2 },
+  { id: "d6", turId: "dt2", kod: "003", ad: "Naturel", hex: "#d9c49a", kullanim: 0 },
+  { id: "d7", turId: "dt3", kod: "001", ad: "1,2 mm", kullanim: 3 },
+  { id: "d8", turId: "dt3", kod: "002", ad: "1,4 mm", kullanim: 5 },
+  { id: "d9", turId: "dt3", kod: "003", ad: "1,6 mm", kullanim: 0 },
+  { id: "d10", turId: "dt4", kod: "001", ad: "15 cm", kullanim: 2 },
+  { id: "d11", turId: "dt4", kod: "002", ad: "20 cm", kullanim: 0 },
+  { id: "d12", turId: "dt5", kod: "001", ad: "Siyah ip", hex: "#202020", kullanim: 4 },
+  { id: "d13", turId: "dt5", kod: "002", ad: "Bej ip", hex: "#cdb48e", kullanim: 0, pasif: true },
+];

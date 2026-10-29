@@ -18,7 +18,7 @@ export const ogeAdresi = (o: { kod: string; adres?: string }) => o.adres ?? "mod
 export function etkinKod(adres: string): string | null {
   if (adres.startsWith("siparis")) return "SIP";
   if (adres.startsWith("cari")) return "CAR";
-  if (adres.startsWith("tanimlar")) return "TAN";
+  if (adres.startsWith("tanimlar") || adres.startsWith("urun-renk-") || adres.startsWith("degisken-")) return "TAN";
   if (adres.startsWith("modul-")) return adres.slice(6);
   return null;
 }
