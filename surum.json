@@ -1,1 +1,1 @@
-{"surum": "1.729.1", "url": "atolye-erp-v1.729.1.html", "not": "Tanımlar › Bakım üretimleri görmüyordu: bulut sayımında Üretim 0 ve denetimde \"silinmiş üretimin rezervasyonu\" sahte bulguları düzeltildi"}
+{"surum": "1.730.0", "url": "atolye-erp-v1.730.0.html", "not": "Teklif, fatura, koli, görev, model, fiş defteri ve mesajlar tek kapıdan: Supabase'de geçiş yapılınca her kayıt ayrı satır; her cihaz yalnız kendi değişikliğini yazar, aynı anda yazan iki cihaz birbirinin kaydını ezemez"}

@@ -17,7 +17,7 @@ const cikti = process.argv[3] || path.join(__dirname, "erp.cjs");
 
 // Dışa aktarılacak üst düzey adlar. Test neye bakacaksa buraya eklenir.
 const DISA_AKTAR = [
-  "sayimKimlikFarki", "kasaV2Yuku", "kasaV2Parcala", "kasaV2YukBosMu", "kasaV2AktifAyarla", "kasaV2Aktif", "kasaZarfiAc", "v2KopruGonder", "bekleyenYazmalariOku",   // kasa v2 köprüsü (v1.729.0)
+  "listeV2Yuku", "listeV2TablolariAyarla", "listeV2Aktif", "sayimKimlikFarki", "kasaV2Yuku", "kasaV2Parcala", "kasaV2YukBosMu", "kasaV2AktifAyarla", "kasaV2Aktif", "kasaZarfiAc", "v2KopruGonder", "bekleyenYazmalariOku",   // kasa v2 köprüsü (v1.729.0)
   "altV2Yuku", "altV2AktifAyarla", "yazmaZarfi", "birlikteYaz", "cariV2Yuku", "cariV2AktifAyarla", "cariV2Aktif", "v2KopruYuku", "stokV2Yuku", "stokV2Parcala", "stokV2Cozucu", "stokV2Nrm", "stokV2AktifAyarla", "stokV2TanimlarAyarla", "stokV2Aktif",   // stok v2 köprüsü (v1.726.0)
   "sonrakiTeklifNo", "teklifDurumu", "teklifToplami", "teklifiSipariseCevir", "teklifKalemHatasi", "teklifKalemGruplari", "teklifYazdirHtml", "teklifMetinOzeti", "teklifSiparisGorunumu",   // teklif (v1.715.0, v1.722.0)
   "mamulRenkKodlamaPlani", "kodsuzMamulRenkleri", "mamulRenkleriniYenidenAdlandir",   // mamul renk kodlama (v1.717.0)

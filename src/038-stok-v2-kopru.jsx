@@ -482,6 +482,94 @@ function kasaV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STO
 }
 
 // =============================================================================================================
+// TEK PARÇA LİSTELER v2 KÖPRÜSÜ (v1.730.0, liste-v2.sql) — teklif, fatura, koli, görev, model, fiş defteri, mesaj
+// =============================================================================================================
+// Bu yedi liste Kasa & Banka gibi tek satırlık birer JSON dizisiydi; her kayıtta dizinin TAMAMI yazılıyordu (v1.725.0'dan
+// beri buluttakiyle üç yönlü birleşerek — ama "oku → birleştir → yaz" arasında başka cihazın kaydı yine ezilebiliyordu:
+// iki kişi aynı anda mesaj atınca biri kaybolabiliyordu). v2'de her kayıt ayrı satır; bu cihaz yalnız KENDİ FARKINI
+// gönderir (`lst_yaz`). Geçiş Supabase'de `lst_gecis()` ile; taşınan listeler `stk_ayar.liste_tablolari` (045 okur).
+// FARK (saf `listeV2Yuku`, birim testi `birim-liste-v2`): taban (030 `tekilTabanOku`) ile yeni dizi kimlikle karşılaştırılır.
+//   · yeni / değişen kayıt → `kayitlar`, tabanda olup yenide olmayan → `iptal` (silinmez). Taban yoksa silme yok.
+//   · SIRA: yalnız YENİ kayıt sıra taşır. Listenin başına konduysa (önünde bilinen kayıt yok) eksi, sonuna / arasına
+//     konduysa artı "şimdi" — yeniden okunan liste ekrandakiyle aynı sırada gelir. Var olan kaydın sırası değişmez.
+//   · Kimliksiz eski kayıt içerikten kararlı kimlik alır (göçten sonra hepsi kimlikli; bu yalnız güvence).
+//   · Toplu iptal kilidi (Kasa'daki gibi): bir yazma listenin yarısını (≥ 20 kayıt) götüremez; izin yalnız yedekten
+//     geri yüklemede (093).
+const LISTE_V2_TABLOLARI = ["teklifler", "faturalar", "koliler", "gorevler", "modeller", "fis_defteri", "mesajlar"];
+let _listeV2Tablolari = new Set();
+function listeV2Aktif(tablo) { return _listeV2Tablolari.has(tablo); }
+function listeV2TablolariAyarla(liste) {
+  _listeV2Tablolari = new Set((Array.isArray(liste) ? liste : []).filter((t) => LISTE_V2_TABLOLARI.includes(t)));
+}
+
+// Diziyi kimlik → { veri, json, sira } haritasına açar (sıra: dizideki konum). Saf.
+function listeV2Ac(dizi) {
+  const harita = new Map();
+  const sayac = new Map();
+  (Array.isArray(dizi) ? dizi : []).forEach((x, i) => {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return;
+    let id = x.id !== undefined && x.id !== null && x.id !== "" ? String(x.id) : null;
+    const json = kararliJson(x);
+    if (!id) {
+      const n = (sayac.get(json) || 0) + 1;
+      sayac.set(json, n);
+      id = `lx-${kasaV2Ozet(`${n}:${json}`)}`;
+    }
+    if (!harita.has(id)) harita.set(id, { veri: x, json, konum: i });
+  });
+  return harita;
+}
+
+// Saf. taban: bu cihazın bildiği bulut dizisi (yoksa null → silme yok, sıra yok); yeni: gönderilecek dizi; simdi: ms.
+function listeV2Yuku(taban, yeni, simdi = Date.now()) {
+  const tabanVar = Array.isArray(taban);
+  const t = listeV2Ac(tabanVar ? taban : null);
+  const y = listeV2Ac(yeni);
+  const kayitlar = [];
+  // Önünde tabandan bilinen bir kayıt olmayan yeni kayıt "başa" eklenmiştir (dizi yeniden eskiye tutulan listeler).
+  let bilinenGoruldu = false;
+  const sirali = Array.from(y.entries()).sort((a, b) => a[1].konum - b[1].konum);
+  sirali.forEach(([id, x]) => {
+    const e = t.get(id);
+    if (e) {
+      bilinenGoruldu = true;
+      if (e.json !== x.json) kayitlar.push({ id, veri: x.veri });
+      return;
+    }
+    const k = { id, veri: x.veri };
+    if (tabanVar) k.sira = (bilinenGoruldu || t.size === 0) ? simdi * 1000 + x.konum : -simdi * 1000 + x.konum;
+    kayitlar.push(k);
+  });
+  const iptal = tabanVar ? Array.from(t.keys()).filter((id) => !y.has(id)) : [];
+  return { kayitlar, iptal, tabanBoyu: t.size };
+}
+function listeV2YukBosMu(yuk) { return !yuk || (!yuk.kayitlar.length && !yuk.iptal.length); }
+
+// 030 tekilYaz'ın hazırlığı: taban → fark → toplu iptal kilidi. Boş farkta null; kilit tutarsa `topluSilmeEngeli` hatası.
+function listeV2YukHazirla(tablo, yeni, secenek) {
+  const yuk = listeV2Yuku(tekilTabanOku(tablo), yeni);
+  if (!(secenek && secenek.topluSilmeIzni) && topluSilmeEngeliMi(yuk.iptal.length, yuk.tabanBoyu)) {
+    gunlukYaz(`TOPLU SİLME ENGELLENDİ: ${tablo} — ${yuk.iptal.length} kayıt kaldırılacaktı (eski hâlde ${yuk.tabanBoyu})`, "guvenlik",
+      { tablo, silinen: yuk.iptal.length, onceki: yuk.tabanBoyu });
+    const e = new Error(`Toplu silme engellendi: ${tablo} listesinden ${yuk.iptal.length} kayıt (eldeki ${yuk.tabanBoyu} kayıttan) tek yazmada `
+      + `kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.`);
+    e.topluSilmeEngeli = true;
+    throw e;
+  }
+  return listeV2YukBosMu(yuk) ? null : yuk;
+}
+
+// Gönderici: büyük yük (model görselleri, uzun fiş defteri) parça parça; iptaller son parçada. Her parça tekrara dayanıklı.
+async function listeV2Gonder(tablo, yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STOK_V2_PARCA_SATIR) {
+  const parcalar = cariV2Parcala({ satirlar: yuk.kayitlar, iptal: yuk.iptal }, enFazlaBayt, enFazlaSatir);
+  let sonuc = null;
+  for (const p of parcalar) {
+    sonuc = await supabaseIstek("rpc/lst_yaz", { method: "POST", body: JSON.stringify({ p: { tablo, kayitlar: p.satirlar, iptal: p.iptal } }) });
+  }
+  return sonuc;
+}
+
+// =============================================================================================================
 // 040 İLE BAĞ — bir tablonun alt farkı köprüden mi gidecek? (040 `_yazmaHazirla` bağlamı `y`)
 // =============================================================================================================
 // Döner: null (köprü yok → REST) ya da { tur: "stok" | "cari", yuk, ozet } — yük boş olabilir (köprü açık ama

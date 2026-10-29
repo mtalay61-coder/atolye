@@ -127,7 +127,7 @@ geçişten sonra girilen fişler kaybolmaz.
 2. Sipariş ve rezervasyon — sipariş kalemleri tek kapı (v1.728.0, geçiş 29 Ekim)
 3. Üretim — üretim atamaları tek kapı (v1.728.0)
 4. Kasa & Banka — hesap / hareket / çek ayrı satır, yalnız fark yazılır, kasa satırı cariyle tek işlem (v1.729.0)
-5. Teklif ve fatura
+5. Teklif ve fatura — koli, görev, model, fiş defteri ve mesajla birlikte: her kayıt ayrı satır, yalnız fark yazılır (v1.730.0)
 
 Ürün kartının kendisi (ad, fiyat, reçete, görsel) ürün modülüyle geçer. Ürün silme o zaman "pasife alma" olur.
 

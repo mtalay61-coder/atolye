@@ -269,6 +269,7 @@ const ARSIV_TABLO_ADLARI = {
   cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
   gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka", teklifler: "Teklifler",
   kas_hesap: "Kasa/Banka hesabı", kas_hareket: "Kasa/Banka hareketi", kas_cek: "Çek",   // Kasa & Banka v2 (v1.729.0)
+  lst_kayit: "Liste kaydı (teklif, fatura, koli, görev, model, fiş defteri, mesaj)",   // liste v2 (v1.730.0)
 };
 
 // TEK PARÇA TABLO GÖRÜNTÜSÜNE DÖNÜŞ (v1.725.0 — kullanıcı, 28 Ekim: telefonda Kasa & Banka "0 hesap"; "yapıda sorun varsa

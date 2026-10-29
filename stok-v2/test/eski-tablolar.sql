@@ -152,3 +152,19 @@ insert into public.muhasebe values ('tekil', '{
   "kurlar": {"USD": 41.2, "EUR": 48.1},
   "kurGecmisi": [{"tarih": "2026-10-20", "USD": 41}]
 }');
+
+-- TEK PARÇA LİSTELER (liste v2 sınaması) — bugünkü gibi tek satırlık dizi belgeleri. gorevler ve modeller BİLEREK yok
+-- (o özelliği hiç kurmamış Supabase: göç atlar). Kimliksiz ve yinelenen kayıt, nesne olmayan öğe bilerek var.
+create table public.teklifler (id text primary key, veri jsonb);
+insert into public.teklifler values ('tekil', '[
+  {"id": "tkl-2", "teklifNo": "TKL-2", "durum": "Hazırlanıyor", "kalemler": [{"id": "k1", "miktar": 5}]},
+  {"id": "tkl-1", "teklifNo": "TKL-1", "durum": "Gönderildi"},
+  {"teklifNo": "TKL-0", "durum": "eski, kimliksiz"},
+  {"id": "tkl-1", "teklifNo": "TKL-1 (kopya)"}
+]');
+create table public.faturalar (id text primary key, veri jsonb);
+insert into public.faturalar values ('tekil', '[{"id": "fatura-1", "fisNo": "SF-1", "durum": "Taslak"}, "bozuk"]');
+create table public.koliler (id text primary key, veri jsonb);
+insert into public.koliler values ('tekil', '[{"id": "koli-1", "kod": "K1", "durum": "Hazır"}, {"id": "koli-2", "kod": "K2", "durum": "Sevk edildi"}]');
+create table public.mesajlar (id text primary key, veri jsonb);
+insert into public.mesajlar values ('tekil', '[{"id": "mesaj-1", "kanal": "genel", "metin": "Merhaba"}]');

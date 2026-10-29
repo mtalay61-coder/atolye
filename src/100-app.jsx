@@ -1759,6 +1759,8 @@ function AtolyeUygulamasi() {
           // Referansı ancak GERÇEKTEN değiştiyse yenile: her yoklamada yeni dizi vermek
           // sohbet ekranını boşa yeniden çizer ve yazma alanını sıçratır.
           if (Array.isArray(gelen) && gelen.length === (onceki || []).length) return onceki;
+          // Ekran bulut hâline geçti → taban da (030; liste v2'de sonraki mesaj yalnız farkını yazar, v1.730.0).
+          tekilTabanAyarla("mesajlar", gelen);
           return gelen;
         });
       } catch (e) { /* çevrimdışıysa sessizce geç: yerel liste duruyor */ }

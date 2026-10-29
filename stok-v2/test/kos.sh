@@ -27,6 +27,9 @@ kur() {
   calistir stok-v2/kasa-v2.sql
   calistir stok-v2/kasa-v2.sql         # ikinci kez: zararsız
   calistir stok-v2/kasa-v2-goc.sql
+  calistir stok-v2/liste-v2.sql
+  calistir stok-v2/liste-v2.sql        # ikinci kez: zararsız
+  calistir stok-v2/liste-v2-goc.sql
   # Supabase'te tablo ekleyen her SQL'den sonra rls-kimlik.sql yeniden çalıştırılıyor (DEVAM-NOTU): stok v2 tablolarını
   # yazılabilir yapmamalı — sinama.sql § 6 doğrudan yazmanın reddedildiğini sınar.
   calistir rls-kimlik.sql
@@ -43,7 +46,7 @@ kur_editor() {
   awk '/^create or replace function public.yetki_var_mi/,/^end \$\$;/' rls-yazma.sql | psql -X -q -v ON_ERROR_STOP=1 -d "$DB"
   calistir degisiklik-sayaci.sql
   calistir silinen-arsiv.sql
-  for kaynak in stok-v2/stok-v2.sql stok-v2/stok-v2-goc.sql stok-v2/cari-v2.sql stok-v2/cari-v2-goc.sql stok-v2/alt-v2.sql stok-v2/kasa-v2.sql stok-v2/kasa-v2-goc.sql; do
+  for kaynak in stok-v2/stok-v2.sql stok-v2/stok-v2-goc.sql stok-v2/cari-v2.sql stok-v2/cari-v2-goc.sql stok-v2/alt-v2.sql stok-v2/kasa-v2.sql stok-v2/kasa-v2-goc.sql stok-v2/liste-v2.sql stok-v2/liste-v2-goc.sql; do
     echo "── $kaynak (Editor kopyası, parça parça)"
     python3 stok-v2/editor-icin.py --bol "$kaynak" | node -e '
       const { execFileSync } = require("child_process");
@@ -62,6 +65,7 @@ calistir stok-v2/test/sinama-gecis.sql
 calistir stok-v2/test/sinama-cari.sql
 calistir stok-v2/test/sinama-alt.sql
 calistir stok-v2/test/sinama-kasa.sql
+calistir stok-v2/test/sinama-liste.sql
 kur                                    # geçiş sınaması taze veritabanında
 calistir stok-v2/test/sinama-gecis.sql
 # Uçtan uca: uygulamanın yazma katmanı (test/erp.cjs) → stk_yaz → görünümler. erp.cjs yoksa: cd test && node derle.js
@@ -72,6 +76,7 @@ if [ -f test/erp.cjs ]; then
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.car_gecis() is not null;" >/dev/null
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.alt_gecis() is not null;" >/dev/null
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.kas_gecis() is not null;" >/dev/null
+  psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.lst_gecis() is not null;" >/dev/null
   echo "── stok-v2/test/uctan-uca.js"
   STOK_V2_DB="$DB" node stok-v2/test/uctan-uca.js
 else
