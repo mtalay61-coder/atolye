@@ -623,7 +623,11 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     const yuk = listeV2YukHazirla(tablo, gonderilen, secenek);   // toplu iptal kilidi burada (038)
     return yuk ? listeV2Gonder(tablo, yuk) : Promise.resolve();
   };
-  const gidecek = listeV2
+  // Sunucu ayarı okunamadıysa (045) muhasebe ve listeler bekletilir: hangi yoldan yazılacağı bilinmiyor.
+  const ayarEngeli = typeof v2AyarYazmaEngeli === "function" ? v2AyarYazmaEngeli(tablo) : null;
+  const gidecek = ayarEngeli
+    ? Promise.reject(ayarEngeli)
+    : listeV2
     ? tabloKuyrugunaAl(tablo, listeIsi).then(() => { tekilTabanAyarla(tablo, gonderilen); })
     : kasaV2
     ? ((secenek.zarf && secenek.zarf.kabul(tablo)) ? secenek.zarf.ekle(tablo, gonderilen, secenek) : tabloKuyrugunaAl(tablo, kasaIsi))

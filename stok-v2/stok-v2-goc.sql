@@ -236,23 +236,47 @@ revoke all on function public.stk_goc(boolean, boolean) from public, anon, authe
 --   select count(*) as fark from public.stk_goc_karsilastir() where fark <> 0;   → 0
 create or replace function public.stk_goc_karsilastir()
 returns table (urun_id text, renk text, beden text, eski numeric, yeni numeric, fark numeric)
-language sql stable security definer set search_path = public as $$
-  with eski as (
-    select j ->> 'urun_id' as urun_id,
-           public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
-           public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
-           sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
-    from (select to_jsonb(v) as j from public.varyantlar v) x
-    where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
-    group by 1, 2, 3
-  ), yeni as (
-    select s.urun_id, public.stk_nrm(s.renk_ad) as renk, public.stk_nrm(s.olcu_ad) as beden, sum(s.miktar) as miktar
-    from public.stk_stok s group by 1, 2, 3
-  )
-  select coalesce(e.urun_id, y.urun_id), coalesce(e.renk, y.renk), coalesce(e.beden, y.beden),
-         coalesce(e.miktar, 0), coalesce(y.miktar, 0), coalesce(e.miktar, 0) - coalesce(y.miktar, 0)
-  from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden
-$$;
+language plpgsql stable security definer set search_path = public as $$
+#variable_conflict use_column
+begin
+  -- Geçişten SONRA `varyantlar` v2'nin görünümü: v2'yi kendisiyle karşılaştırıp hep 0 fark verirdi (v1.730.1 denetim). Eski tablo
+  -- (eski_varyantlar) varsa o okunur. PL/pgSQL tabloyu çalışırken çözer: hangi dal çalışmazsa o tablo olmasa da derlenir.
+  if to_regclass('public.eski_varyantlar') is not null then
+    return query
+      with eski as (
+        select j ->> 'urun_id' as urun_id,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
+               sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
+        from (select to_jsonb(v) as j from public.eski_varyantlar v) x
+        where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
+        group by 1, 2, 3
+      ), yeni as (
+        select s.urun_id, public.stk_nrm(s.renk_ad) as renk, public.stk_nrm(s.olcu_ad) as beden, sum(s.miktar) as miktar
+        from public.stk_stok s group by 1, 2, 3
+      )
+      select coalesce(e.urun_id, y.urun_id), coalesce(e.renk, y.renk), coalesce(e.beden, y.beden),
+             coalesce(e.miktar, 0), coalesce(y.miktar, 0), coalesce(e.miktar, 0) - coalesce(y.miktar, 0)
+      from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden;
+  else
+    return query
+      with eski as (
+        select j ->> 'urun_id' as urun_id,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
+               sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
+        from (select to_jsonb(v) as j from public.varyantlar v) x
+        where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
+        group by 1, 2, 3
+      ), yeni as (
+        select s.urun_id, public.stk_nrm(s.renk_ad) as renk, public.stk_nrm(s.olcu_ad) as beden, sum(s.miktar) as miktar
+        from public.stk_stok s group by 1, 2, 3
+      )
+      select coalesce(e.urun_id, y.urun_id), coalesce(e.renk, y.renk), coalesce(e.beden, y.beden),
+             coalesce(e.miktar, 0), coalesce(y.miktar, 0), coalesce(e.miktar, 0) - coalesce(y.miktar, 0)
+      from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden;
+  end if;
+end $$;
 revoke all on function public.stk_goc_karsilastir() from public, anon, authenticated;
 
 -- =====================================================================================================================

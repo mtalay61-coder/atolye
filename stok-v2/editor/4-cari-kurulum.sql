@@ -45,7 +45,8 @@ declare
   n_satir int := 0;
   n_iptal int := 0;
 begin
-  perform public.stk_yetki(array['cari', 'fisler', 'muhasebe', 'siparis', 'uretim', 'stok'], 'kaydetme');
+  perform public.v2_yazma_acik('cari');   -- v1.730.1: geri dönüldüyse yazma yok (stok-v2.sql)
+  perform public.stk_yetki(array['cari', 'fisler', 'muhasebe', 'siparis', 'uretim', 'stok', 'tanimlar'], 'kaydetme');
   if exists (select 1 from jsonb_array_elements(public.stk_dizi(p -> 'satirlar')) x
              where coalesce(x ->> 'id', '') = '' or coalesce(x ->> 'cari_id', '') = '') then
     raise exception 'Cari hareketinde kimlik ya da cari yok' using errcode = '22023';
@@ -81,10 +82,19 @@ language plpgsql security definer set search_path = public as $$
 declare
   s jsonb;
   c jsonb;
+  a jsonb;
+  k jsonb;
+  bilinmeyen text;
 begin
-  if p ? 'stok' and jsonb_typeof(p -> 'stok') = 'object' then s := public.stk_yaz(p -> 'stok'); end if;
-  if p ? 'cari' and jsonb_typeof(p -> 'cari') = 'object' then c := public.car_yaz(p -> 'cari'); end if;
-  return jsonb_build_object('stok', s, 'cari', c);
+  select string_agg(x, ', ') into bilinmeyen from jsonb_object_keys(coalesce(p, '{}'::jsonb)) x where x not in ('stok', 'cari', 'alt', 'kasa');
+  if bilinmeyen is not null then
+    raise exception 'fis_yaz: tanınmayan parça (%)', bilinmeyen using errcode = '22023';
+  end if;
+  if jsonb_typeof(p -> 'stok') = 'object' then s := public.stk_yaz(p -> 'stok'); end if;
+  if jsonb_typeof(p -> 'cari') = 'object' then c := public.car_yaz(p -> 'cari'); end if;
+  if jsonb_typeof(p -> 'alt') = 'object' then a := public.alt_yaz(p -> 'alt'); end if;
+  if jsonb_typeof(p -> 'kasa') = 'object' then k := public.kas_yaz(p -> 'kasa'); end if;
+  return jsonb_build_object('stok', s, 'cari', c, 'alt', a, 'kasa', k);
 end $$;
 
 create or replace function public.car_kurulum_tamamla() returns text

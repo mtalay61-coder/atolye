@@ -50,6 +50,11 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
     };
   }, tohum);
   if (onceRota) await onceRota(sayfa);
+  // v2 AYAR SATIRI (v1.730.1, 045 `v2AyarlariniOku`): gerçek Supabase'de `stk_ayar` ya vardır ya 404 döner (v2 kurulmamış). Sahte
+  // sunucu bilmiyorsa "kurulmamış" yanıtı verilir — istek düşerse uygulama ayarı "bilinmiyor" sayıp bütün yazmaları bekletirdi.
+  // onceRota'dan SONRA kaydedilir: Playwright son kaydedilen rotayı önce dener.
+  await sayfa.route("**/rest/v1/stk_ayar**", (r) => r.fulfill({ status: 404, contentType: "application/json",
+    body: JSON.stringify({ code: "PGRST205", message: "Could not find the table 'public.stk_ayar' in the schema cache" }) }));
   // HTML yolu değiştirilebilir: refaktör ÖNCESİ ve SONRASI paketleri aynı senaryoyla karşılaştırmak için.
   await sayfa.goto(adres || ("file://" + (process.env.TEST_HTML || path.join(__dirname, "test.html"))));
   await sayfa.evaluate(() => {

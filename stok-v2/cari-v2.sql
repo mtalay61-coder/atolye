@@ -72,7 +72,8 @@ declare
   n_satir int := 0;
   n_iptal int := 0;
 begin
-  perform public.stk_yetki(array['cari', 'fisler', 'muhasebe', 'siparis', 'uretim', 'stok'], 'kaydetme');
+  perform public.v2_yazma_acik('cari');   -- v1.730.1: geri dönüldüyse yazma yok (stok-v2.sql)
+  perform public.stk_yetki(array['cari', 'fisler', 'muhasebe', 'siparis', 'uretim', 'stok', 'tanimlar'], 'kaydetme');
   if exists (select 1 from jsonb_array_elements(public.stk_dizi(p -> 'satirlar')) x
              where coalesce(x ->> 'id', '') = '' or coalesce(x ->> 'cari_id', '') = '') then
     raise exception 'Cari hareketinde kimlik ya da cari yok' using errcode = '22023';
@@ -103,17 +104,29 @@ begin
   return jsonb_build_object('satir', n_satir, 'iptal', n_iptal);
 end $$;
 
--- FİŞ YAZ — bir fişin (ya da üretim teslimi, sipariş sevki gibi bir işlemin) stok ve cari satırlarını TEK İŞLEMDE yazar.
---  p = { stok: stk_yaz yükü, cari: car_yaz yükü } — ikisi de isteğe bağlı. Biri hata verirse hiçbiri yazılmaz.
+-- FİŞ YAZ — bir işlemin stok, cari, sipariş kalemi / üretim ataması ve kasa satırlarını TEK İŞLEMDE yazar; hepsi isteğe bağlı,
+--  biri hata verirse hiçbiri yazılmaz. TAM TANIM ÜÇ DOSYADA AYNI (cari-v2.sql, alt-v2.sql, kasa-v2.sql — v1.730.1): önceden her
+--  dosya kendi bildiği parçalarla tanımlıyordu; geçişten sonra cari-v2.sql ya da alt-v2.sql yeniden çalıştırılınca fis_yaz
+--  daralıyor, uygulamanın gönderdiği kasa / alt parçası HATASIZ atlanıyor, tahsilatın kasa satırı kayboluyordu (denetim). Artık
+--  tanımadığı parça gelirse ya da parçanın işlemi henüz kurulmamışsa hata verir — sessiz kayıp yok.
 create or replace function public.fis_yaz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   s jsonb;
   c jsonb;
+  a jsonb;
+  k jsonb;
+  bilinmeyen text;
 begin
-  if p ? 'stok' and jsonb_typeof(p -> 'stok') = 'object' then s := public.stk_yaz(p -> 'stok'); end if;
-  if p ? 'cari' and jsonb_typeof(p -> 'cari') = 'object' then c := public.car_yaz(p -> 'cari'); end if;
-  return jsonb_build_object('stok', s, 'cari', c);
+  select string_agg(x, ', ') into bilinmeyen from jsonb_object_keys(coalesce(p, '{}'::jsonb)) x where x not in ('stok', 'cari', 'alt', 'kasa');
+  if bilinmeyen is not null then
+    raise exception 'fis_yaz: tanınmayan parça (%)', bilinmeyen using errcode = '22023';
+  end if;
+  if jsonb_typeof(p -> 'stok') = 'object' then s := public.stk_yaz(p -> 'stok'); end if;
+  if jsonb_typeof(p -> 'cari') = 'object' then c := public.car_yaz(p -> 'cari'); end if;
+  if jsonb_typeof(p -> 'alt') = 'object' then a := public.alt_yaz(p -> 'alt'); end if;
+  if jsonb_typeof(p -> 'kasa') = 'object' then k := public.kas_yaz(p -> 'kasa'); end if;
+  return jsonb_build_object('stok', s, 'cari', c, 'alt', a, 'kasa', k);
 end $$;
 
 -- GÜVENLİK — tablo yalnız okunur; yazma yalnız işlemlerle. Değişiklik sayacı ve silme arşivi (kuruluysa).

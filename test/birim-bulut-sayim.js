@@ -2,7 +2,7 @@
 // Ölçülen: cihaz sayımı alt kayıtları toplar; karşılaştırma "aynı / bulutta fazla / cihazda fazla (arşivde N)" der;
 // Content-Range'den sayı okunur; arşiv satırları yalnız DELETE, tablo eşleşen, yinelenen kayıtta en yenisi; varyantta
 // bileşik anahtar; geri yükleme sırası üst tablo önce.
-const { sayimKimlikFarki, cihazSayimlari, sayimKarsilastir, contentRangeSayisi, arsivSatirlariniHazirla, arsivGeriYuklemeSirasi, arsivCakismaSutunlari } = require("./erp.cjs");
+const { arsivV2Yolu, stokV2AktifAyarla, cariV2AktifAyarla, altV2AktifAyarla, sayimKimlikFarki, cihazSayimlari, sayimKarsilastir, contentRangeSayisi, arsivSatirlariniHazirla, arsivGeriYuklemeSirasi, arsivCakismaSutunlari } = require("./erp.cjs");
 let hata = 0;
 const bekle = (ad, a, b) => {
   const ok = JSON.stringify(a) === JSON.stringify(b);
@@ -55,5 +55,13 @@ const kf = sayimKimlikFarki([{ id: "ur-2", siparisNo: "10040" }], [{ id: "ur-1",
 bekle("kimlik farkı: bulutta olup cihazda olmayan + bekleyen silme", kf.yalnizBulutta, [{ id: "ur-1", ad: "10033", bekleyen: "sil" }, { id: "ur-3", ad: "10041", bekleyen: null }]);
 bekle("kimlik farkı: cihazda olup bulutta olmayan", kf.yalnizCihazda, [{ id: "ur-2", ad: "10040", bekleyen: null }]);
 bekle("kimlik farkı: defter yoksa da çalışır", sayimKimlikFarki([], [{ id: 5, ad: "X" }], "ad").yalnizBulutta, [{ id: "5", ad: "X", bekleyen: null }]);
+// v1.730.1 — v2 geçişinden sonra arşivden geri yükleme: görünüme / kapalı tabloya doğrudan POST yok.
+bekle("v2 kapalı → bugünkü yol", ["varyantlar", "cari_hareketleri", "siparis_kalemleri", "urunler"].map((t) => arsivV2Yolu(t)), [null, null, null, null]);
+stokV2AktifAyarla(true); cariV2AktifAyarla(true); altV2AktifAyarla(true);
+bekle("stok v2: varyant / hareket geri yüklenemez", [!!arsivV2Yolu("varyantlar").engel, !!arsivV2Yolu("stok_hareketleri").engel], [true, true]);
+bekle("cari v2: car_yaz", [arsivV2Yolu("cari_hareketleri").rpc, arsivV2Yolu("cari_hareketleri").p([{ id: "h1" }])], ["car_yaz", { satirlar: [{ id: "h1" }], iptal: [] }]);
+bekle("alt v2: alt_yaz", [arsivV2Yolu("uretim_atamalari").rpc, arsivV2Yolu("uretim_atamalari").p([{ id: "a1" }])], ["alt_yaz", { uretim_atamalari: { satirlar: [{ id: "a1" }], sil: [] } }]);
+bekle("ana tablolar bugünkü yol", [arsivV2Yolu("urunler"), arsivV2Yolu("uretim")], [null, null]);
+stokV2AktifAyarla(false); cariV2AktifAyarla(false); altV2AktifAyarla(false);
 if (hata) { console.log("BİRİM TESTİ HATA: bulut sayımı"); process.exit(1); }
 console.log("birim-bulut-sayim: tamam");

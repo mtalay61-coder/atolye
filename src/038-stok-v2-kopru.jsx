@@ -441,8 +441,17 @@ function kasaV2TopluSilmeEngeli(taban, yuk) {
 }
 // 030 tekilYaz ve 040 zarfın ortak hazırlığı: taban → fark → kilit. Boş farkta null. Kilit tutarsa hata (`topluSilmeEngeli`:
 // bekleyen deftere YAZILMAZ — yazılsaydı yeniden denenirdi). `secenek.topluSilmeIzni`: yedekten geri yükleme (093).
+// TABAN YOKSA YAZILMAZ (v1.730.1 — baştan aşağı denetim). Taban, bu cihazın bulutta bildiği hâl; yoksa açılışta bulut
+// OKUNAMAMIŞ ve ekranda eski yerel kopya var demektir. Fark o zaman "her şey yeni" çıkıyor ve bütün eski kayıtlar buluta
+// basılıyordu: başka cihazda düzeltilen hareket eski hâline dönüyor, iptal edilen yeniden açılıyordu (ör. açılıştaki otomatik
+// kur güncellemesi). v1.725.0'daki kural geri geldi: bulut okunamadıysa yazılmaz — bekleyen deftere düşer, yeniden açılışta
+// taban kurulunca (090) yalnız bu cihazın farkı gider.
+function v2TabanYokHatasi(tablo) {
+  return new Error(`${tablo}: buluttaki hâl bu açılışta okunamadı — yazma bekletildi (sayfayı yenileyin; kayıt kaybolmaz)`);
+}
 function kasaV2YukHazirla(yeni, secenek) {
   const taban = tekilTabanOku("muhasebe");
+  if (taban === undefined || taban === null) throw v2TabanYokHatasi("Kasa & Banka");
   const yuk = kasaV2Yuku(taban, yeni);
   const engel = secenek && secenek.topluSilmeIzni ? null : kasaV2TopluSilmeEngeli(taban, yuk);
   if (engel) {
@@ -547,7 +556,9 @@ function listeV2YukBosMu(yuk) { return !yuk || (!yuk.kayitlar.length && !yuk.ipt
 
 // 030 tekilYaz'ın hazırlığı: taban → fark → toplu iptal kilidi. Boş farkta null; kilit tutarsa `topluSilmeEngeli` hatası.
 function listeV2YukHazirla(tablo, yeni, secenek) {
-  const yuk = listeV2Yuku(tekilTabanOku(tablo), yeni);
+  const taban = tekilTabanOku(tablo);
+  if (!Array.isArray(taban)) throw v2TabanYokHatasi(tablo);   // bkz. kasaV2YukHazirla (v1.730.1)
+  const yuk = listeV2Yuku(taban, yeni);
   if (!(secenek && secenek.topluSilmeIzni) && topluSilmeEngeliMi(yuk.iptal.length, yuk.tabanBoyu)) {
     gunlukYaz(`TOPLU SİLME ENGELLENDİ: ${tablo} — ${yuk.iptal.length} kayıt kaldırılacaktı (eski hâlde ${yuk.tabanBoyu})`, "guvenlik",
       { tablo, silinen: yuk.iptal.length, onceki: yuk.tabanBoyu });
@@ -627,6 +638,10 @@ async function v2KopruGonder(kopruler) {
     if (altParcalari.length) p.alt = Object.fromEntries(altParcalari.map((a) => [a.tablo, a.parcalar[0]]));
     if (kasa) p.kasa = kasaParcalari[0];
     const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p }) });
+    // GÖNDERİLEN HER PARÇA YANITTA OLMALI (v1.730.1 denetim): sunucudaki fis_yaz eski bir kurulum dosyasıyla daralırsa kasa / alt
+    // parçasını hatasız atlıyordu, istemci "yazıldı" sanıp tabanı ilerletiyordu. Eksik parça → hata → bekleyen defter.
+    const eksik = Object.keys(p).filter((k) => !r || r[k] === null || r[k] === undefined);
+    if (eksik.length) throw new Error(`fis_yaz yanıtında ${eksik.join(", ")} yok — sunucudaki fis_yaz eski; Supabase'de 15. adımı çalıştırın`);
     sonuc.stok = r && r.stok;
     sonuc.cari = r && r.cari;
     sonuc.alt = r && r.alt;

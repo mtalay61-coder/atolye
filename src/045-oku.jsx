@@ -38,6 +38,44 @@ async function supabaseTumSatirlar(tablo, sorgu = "select=*") {
   return hepsi;
 }
 
+// v2 GEÇİŞ BAYRAKLARI (038) — `stk_ayar` satırı. v1.726.0'dan beri açılış okumasının içindeydi; v1.730.1'de (baştan aşağı
+// denetim) ayrı: okuma AĞDAN düşerse ilk açılışta bayraklar "kapalı" kalıyor, yazmalar ESKİ yola — görünüme / kapalı tabloya —
+// gidip yarım kalıyordu (ana satır yazılır, alt satır 42501). Artık durum tutulur:
+//   · okundu → bayraklar ayarlandı;
+//   · tablo YOK (stok-v2.sql hiç çalıştırılmamış: 404 / PGRST205 / 42P01) → v2 yok, bayraklar kapalı — doğru durum, "okundu";
+//   · başka hata (ağ) → önce hiç okunmadıysa "bilinmiyor": v2'ye geçebilecek tabloların yazması bekletilir (040 / 030
+//     `v2AyarBilinmiyorMu`), bekleyen yeniden gönderimi önce bayrakları yeniden okur (100).
+// Başlangıç "okundu": açılış okuması hiç denenmeden yazma olmaz (uygulama önce yükler); birim testleri ayar okumadan yazar.
+let _v2AyarDurumu = "okundu";
+let _v2AyarBasarili = false;
+function v2AyarBilinmiyorMu() { return _v2AyarDurumu !== "okundu"; }
+function v2AyarDurumuAyarla(d) { _v2AyarDurumu = d; }
+function v2AyarlariniOku() {
+  return supabaseTumSatirlar("stk_ayar", "select=*").then(
+    (ayar) => {
+      stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif));
+      cariV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].cari_aktif));
+      altV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].alt_aktif));
+      kasaV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].kasa_aktif));   // Kasa & Banka v2 (v1.729.0, 030 tekilYaz)
+      // Tek parça listeler v2 (v1.730.0, 030 tekilYaz): yalnız geçişte gerçekten taşınan listeler (tablosu olmayan atlanır).
+      listeV2TablolariAyarla(ayar && ayar[0] && ayar[0].liste_aktif ? ayar[0].liste_tablolari : []);
+      _v2AyarDurumu = "okundu";
+      _v2AyarBasarili = true;
+    },
+    (e) => {
+      const m = String((e && e.message) || e);
+      if (/\b404\b|PGRST205|42P01|does not exist|bulunamad/i.test(m)) { _v2AyarDurumu = "okundu"; _v2AyarBasarili = true; return; }   // v2 kurulmamış
+      if (!_v2AyarBasarili) _v2AyarDurumu = "bilinmiyor";   // daha önce okunduysa o değer kalır
+    });
+}
+// v2'ye geçebilecek bulut tabloları: ayar bilinmezken bunlara yazılmaz (bekleyen deftere düşer).
+const V2_ETKILI_TABLOLAR = new Set(["urunler", "cariler", "siparisler", "uretim", "muhasebe",
+  "teklifler", "faturalar", "koliler", "gorevler", "modeller", "fis_defteri", "mesajlar"]);
+function v2AyarYazmaEngeli(tablo) {
+  if (!V2_ETKILI_TABLOLAR.has(tablo) || !v2AyarBilinmiyorMu()) return null;
+  return new Error(`Sunucu ayarı (v2 geçişi) henüz okunamadı — ${tablo} yazması bekletildi, bağlantı gelince gönderilir`);
+}
+
 // snake_case sütunları camelCase alanlara çevirir (okuma yönü).
 // Sütun adı ile uygulama alanı birebir örtüşmediğinde açık eşleme gerekir; otomatik kural
 // yetmez. `fiyat` sütunu uygulamada `birimFiyat` olarak yaşıyor.
@@ -97,16 +135,7 @@ async function supabasedenOku(secenek = {}) {
   // Öteki okumalarla AYNI ANDA gider (açılış bir istek kadar uzamasın); aşağıda, satırlar işlenmeden önce beklenir.
   // `select=*` (v1.727.0): cari v2 sütunu (`cari_aktif`) cari-v2.sql çalıştırılmadan yok — sütun adıyla istenirse okuma
   // hata verir ve stok bayrağı da okunmazdı.
-  const stokV2Ayari = yalniz ? null : supabaseTumSatirlar("stk_ayar", "select=*").then(
-    (ayar) => {
-      stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif));
-      cariV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].cari_aktif));
-      altV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].alt_aktif));
-      kasaV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].kasa_aktif));   // Kasa & Banka v2 (v1.729.0, 030 tekilYaz)
-      // Tek parça listeler v2 (v1.730.0, 030 tekilYaz): yalnız geçişte gerçekten taşınan listeler (tablosu olmayan atlanır).
-      listeV2TablolariAyarla(ayar && ayar[0] && ayar[0].liste_aktif ? ayar[0].liste_tablolari : []);
-    },
-    () => { /* önceki değer */ });
+  const stokV2Ayari = yalniz ? null : v2AyarlariniOku();
 
   const [
     tanimSatir, cariSatir, cariHareket, urunSatir, varyantSatir, hareketSatir,
@@ -114,12 +143,15 @@ async function supabasedenOku(secenek = {}) {
   ] = await Promise.all([
     oku("tanimlar"),
     oku("cariler"),
-    oku("cari_hareketleri", "select=*&order=tarih.desc"),
+    // KARARLI SIRA (v1.730.1 denetim): okuma 1000'lik sayfalarla (Range → LIMIT/OFFSET). Eşit sıra değerli satırlar sayfa
+    // sınırında kayabilir — biri iki kez gelir, biri hiç gelmez; v2'de bu adlar her sayfada yeniden hesaplanan görünüm.
+    // Kimlik ikinci anahtar; varyantlar bütün anahtarıyla sıralanır (ekran sırası ürün içinde zaten yeniden kurulur).
+    oku("cari_hareketleri", "select=*&order=tarih.desc,id.asc"),
     oku("urunler", secenek.resimsiz ? `select=${urunResimsizSutunlari().join(",")}` : "select=*"),
-    oku("varyantlar"),
-    oku("stok_hareketleri", "select=*&order=tarih.desc"),
+    oku("varyantlar", "select=*&order=urun_id.asc,renk.asc,beden.asc"),
+    oku("stok_hareketleri", "select=*&order=tarih.desc,id.asc"),
     oku("siparisler"),
-    oku("siparis_kalemleri", "select=*&order=sira.asc"),
+    oku("siparis_kalemleri", "select=*&order=sira.asc,id.asc"),
     oku("uretim"),
     oku("uretim_atamalari"),
     oku("stok_rezervasyonlari"),

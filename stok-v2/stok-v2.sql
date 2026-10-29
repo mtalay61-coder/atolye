@@ -372,6 +372,27 @@ begin
   return v;
 end $$;
 
+-- GERİ DÖNÜŞTEN SONRA v2 YAZMASI YOK (v1.730.1 — baştan aşağı denetim). Uygulama geçiş bayrağını yalnız açılışta okuyor; bir
+-- modülde `…_geri_don()` çalıştırılınca açık cihazlar v2 tablolarına yazmayı SÜRDÜRÜYOR, çağrı başarılı dönüyor ama okunan artık
+-- eski tablo — yazılan kaybolurdu (sonraki geçişin göçü de siler). Geri dönülmüş modülde (aktif değil VE geri dönüş zamanı var)
+-- yazma 55000 ile reddedilir: uygulama bekleyen deftere alır, yeniden açılışta eski yoldan gönderir. Geçişten ÖNCE (hiç geri
+-- dönülmemiş) yazma serbest — deneme ve sınama için. Sütunlar modüle göre: stok `aktif` / `geri_donus`, öteki `<modül>_aktif` /
+-- `<modül>_geri_donus` (to_jsonb: sütun henüz eklenmemiş kurulumda da çalışır).
+create or replace function public.v2_yazma_acik(p_modul text) returns void
+language plpgsql stable security definer set search_path = public as $$
+declare
+  a jsonb;
+  on_ek text := case when p_modul = 'stok' then '' else p_modul || '_' end;
+begin
+  select to_jsonb(s) into a from public.stk_ayar s where s.id = 'tekil';
+  if a is null then return; end if;
+  if not coalesce((a ->> (on_ek || 'aktif'))::boolean, false) and (a ->> (on_ek || 'geri_donus')) is not null then
+    raise exception '% v2 kapalı (geri dönüldü) — uygulamayı yenileyin; kayıt bekleyenlerde, yenileyince eski yoldan gönderilir', p_modul
+      using errcode = '55000';
+  end if;
+end $$;
+revoke all on function public.v2_yazma_acik(text) from public, anon, authenticated;   -- yalnız v2 işlemlerinin içinden
+
 -- Yetki: bugünkü kural (rls-yazma.sql `yetki_var_mi`) kuruluysa o; değilse giriş yapmış herkes. SQL Editor (jwt yok) serbest.
 create or replace function public.stk_yetki(moduller text[], islem text) returns void
 language plpgsql security definer set search_path = public as $$
@@ -647,7 +668,11 @@ declare
   atlanan jsonb := '[]'::jsonb;
   acilan text[] := '{}';
 begin
-  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim'], 'kaydetme');
+  perform public.v2_yazma_acik('stok');
+  -- Yetki (v1.730.1 genişledi): v1'de stok tablolarına yazma modül yetkisi istemiyordu (rls-yazma.sql); stok satırını cari
+  -- kartından fiş kesen cari yetkilisi, peşin fişte muhasebe yetkilisi, Tanımlar'da renk birleştiren kullanıcı da yazar.
+  -- Herhangi bir modülde "kaydetme" yeter; Tanımlar'da listede olmayan ya da hiç kaydetme yetkisi olmayan reddedilir.
+  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe', 'tanimlar'], 'kaydetme');
 
   -- 1) Varyant aç / min stok
   for s in select * from jsonb_array_elements(coalesce(p -> 'varyantAc', '[]'::jsonb)) loop
