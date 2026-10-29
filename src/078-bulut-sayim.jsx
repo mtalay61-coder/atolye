@@ -182,6 +182,11 @@ function arsivGeriYuklemeSirasi(tablolar) {
 //     yazılamaz; v2'de stok hareketi zaten silinmez (iptal edilir), arşivdekiler geçiş ÖNCESİ silinenlerdir. Ekran bunu söyler.
 // Saf karar: null → bugünkü yol (doğrudan POST). Bayraklar 045'ten.
 function arsivV2Yolu(tablo) {
+  // v2'nin kendi tabloları (stk_*, car_*, kas_*, lst_*) — doğrudan yazmaya kapalı; geri yükleme işlemlerden geçmeli.
+  if (/^(stk|car|kas|lst)_/.test(String(tablo))) {
+    return { engel: "Bu, yeni yapının (v2) iç tablosu: doğrudan geri yüklenemez. Silinen kayıtlar v2'de iptal edilir, kaybolmaz; "
+      + "gerekirse bildirin." };
+  }
   if ((tablo === "varyantlar" || tablo === "stok_hareketleri") && typeof stokV2Aktif === "function" && stokV2Aktif()) {
     return { engel: "Stok v2'ye geçildi: varyant ve stok hareketi bu ekrandan geri yüklenemez. v2'de silinen stok hareketi iptal edilir, "
       + "kaydı kaybolmaz; arşivdekiler geçişten ÖNCE silinmiş satırlar. Gerekirse eksik stok Bağımsız Stok Girişi (sayım fişi) ile düzeltilir." };

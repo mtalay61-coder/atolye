@@ -2826,6 +2826,9 @@ function TekilGoruntuDonusu({ satir, tabloAdi, showToast }) {
   const [yaziliyor, setYaziliyor] = useState(false);
   const tablo = satir.tablo;
   const goruntu = satir.veri && satir.veri.veri;
+  // v2'DE KAPALI (v1.730.1 denetim): geçişten sonra görüntü oluşmuyor (tetikleyici eski tabloda kaldı); geçiş öncesi görüntüye
+  // dönmek, geçişten sonra iptal edilen bütün kayıtları yeniden açardı. v2'de silinen kayıt zaten silinmez, iptal edilir.
+  const v2Kapali = (tablo === "muhasebe" && kasaV2Aktif()) || listeV2Aktif(tablo);
   useEffect(() => {
     let iptal = false;
     supabaseIstek(`${tablo}?id=eq.tekil&select=veri`)
@@ -2834,7 +2837,7 @@ function TekilGoruntuDonusu({ satir, tabloAdi, showToast }) {
     return () => { iptal = true; };
   }, [tablo]);
   const birlestir = async () => {
-    if (yaziliyor || guncel === undefined) return;
+    if (yaziliyor || guncel === undefined || v2Kapali) return;
     // Bekleme öncesinin fotoğrafı sabitlenir (bayat okuma denetimi): günlükteki "önce" özeti tam birleştirilen hâli anlatsın.
     const once = guncel;
     const sonuc = tekilGoruntuBirlestir(once, goruntu);
@@ -2864,7 +2867,9 @@ function TekilGoruntuDonusu({ satir, tabloAdi, showToast }) {
         <span>Bugün (bulut): <b data-arsiv-guncel-ozet="1">{guncel === undefined ? (hata ? "—" : "okunuyor…") : tekilGoruntuOzeti(tablo, guncel)}</b></span>
         {hata && <span style={{ color: "var(--erp-danger, #B3261E)" }}>{hata}</span>}
       </span>
-      <button type="button" className="btn-primary" data-arsiv-goruntu-birlestir="1" disabled={yaziliyor || guncel === undefined}
+      {v2Kapali && <span data-arsiv-goruntu-v2="1" style={{ fontSize: 11, color: "var(--erp-warn)", flexBasis: "100%" }}>
+        Bu liste yeni yapıya (v2) geçti: silinen kayıt silinmiyor, iptal ediliyor; görüntüye dönüş kapalı.</span>}
+      <button type="button" className="btn-primary" data-arsiv-goruntu-birlestir="1" disabled={yaziliyor || guncel === undefined || v2Kapali}
         style={{ padding: "5px 12px", fontSize: 11 }} onClick={birlestir}>
         {yaziliyor ? "Yazılıyor…" : "Bugünkü hâlle birleştir"}
       </button>

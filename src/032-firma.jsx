@@ -283,6 +283,13 @@ function FirmaSatiri({ kucuk = false }) {
 function KurulumDosyasiDugmesi() {
   const [durum, setDurum] = useState(null);   // null | "bekliyor" | { hata } | { tamam }
   async function indir() {
+    // v2'DEN SONRA DESTEKLENMİYOR (v1.730.1 denetim): betik canlı şemayı döker; geçişten sonra eski adlar görünüm, `stk_ayar`
+    // satırı yok, görünümlere grant satırı betiği bütünüyle düşürüyor. Yeni firma için doğru yol (notlarda): v2 öncesi şema +
+    // stok-v2/editor adımları. Bozuk dosya indirmek yerine söylenir.
+    if (stokV2Aktif() || cariV2Aktif() || kasaV2Aktif()) {
+      setDurum({ hata: "Veriler yeni yapıya (v2) geçtiği için kurulum dosyası şu an doğru üretilemiyor. Yeni firma gerekirse bildirin — kurulumu birlikte yapalım." });
+      return;
+    }
     setDurum("bekliyor");
     try {
       const metin = await supabaseIstek("rpc/kurulum_betigi", { method: "POST", body: "{}" });

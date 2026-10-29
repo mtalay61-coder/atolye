@@ -15,6 +15,7 @@ node birim-stok-v2-kopru.js || HATA=1
 node birim-yazma-zarfi.js || HATA=1
 node birim-kasa-v2.js || HATA=1
 node birim-liste-v2.js || HATA=1
+node birim-v2-koruma.js || HATA=1
 node birim-denetim-iptal.js || HATA=1
 node birim-bulut-sayim.js || HATA=1
 node birim-gecerli-rezervasyon.js || HATA=1

@@ -18,6 +18,12 @@ const supabaseyeGoc = useCallback(async () => {
     showToast("Supabase bağlantısı tanımlı değil");
     return;
   }
+  // v2'YE GEÇİLDİYSE KAPALI (v1.730.1 denetim): fark belleğini sıfırlayıp BÜTÜN kayıtları yeniden gönderir; v2'de bu cihazda
+  // hâlâ duran ama başka cihazda iptal edilmiş hareketleri yeniden açar. Tek seferlik ilk göç işi — v2'de gereği yok.
+  if (stokV2Aktif() || cariV2Aktif() || altV2Aktif()) {
+    showToast("Buluta aktarım kapalı: veriler yeni yapıya (v2) geçti, bulut zaten güncel. Gerekirse Bakım › Bulut sayımı'na bakın.");
+    return;
+  }
   setGocDurumu({ calisiyor: true, adim: "Başlıyor…", hata: null });
 
   // Göç, normal yazmanın TAM OLARAK aynı yolunu kullanır (TABLO_SEMA + supabaseTabloEsitle).

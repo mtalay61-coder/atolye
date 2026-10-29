@@ -19,7 +19,9 @@ global.fetch = async (url, sec = {}) => {
   const yontem = sec.method || "GET";
   istekler.push({ yontem, yol, govde: sec.body ? String(sec.body) : "" });
   if (yol.startsWith("rpc/") && dussun) throw new TypeError("Failed to fetch");
-  if (yol.startsWith("rpc/")) return { ok: true, status: 200, headers: { get: () => null }, json: async () => ({}), text: async () => "" };
+  // fis_yaz gerçeği gibi gönderilen her parçanın sonucunu döner (v1.730.1: istemci eksik parçayı hata sayar).
+  const rpcYanit = () => { try { const p = JSON.parse(sec.body || "{}").p || {}; return yol.startsWith("rpc/fis_yaz") ? Object.fromEntries(Object.keys(p).map((k) => [k, {}])) : {}; } catch (e) { return {}; } };
+  if (yol.startsWith("rpc/")) return { ok: true, status: 200, headers: { get: () => null }, json: async () => rpcYanit(), text: async () => "" };
   const govde = yontem === "PATCH" ? [{ id: "x" }] : [];
   return { ok: true, status: 200, headers: { get: () => null }, json: async () => govde, text: async () => "" };
 };

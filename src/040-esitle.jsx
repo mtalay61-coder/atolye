@@ -416,6 +416,11 @@ async function _tabloEsitleUygula(tablo, kayitlar, secenek = {}) {
   if (!TABLO_SEMA[tablo]) return;
   const y = _yazmaHazirla(tablo, kayitlar, secenek);
   try {
+    // Sunucu ayarı (v2 bayrakları) okunamadıysa ağa çıkılmaz (v1.730.1, 045 `v2AyarYazmaEngeli`): eski yola gitse alt satırlar
+    // görünüme / kapalı tabloya yazılamaz, yazma yarım kalırdı. Hazırlıktan SONRA atılır ki düşen yazmanın iki koruması işlesin
+    // (v1.556 "Jut"): fark belleği geri alınır, değişen kayıtlar bekleyen kayıt defterine yazılır.
+    const ayarEngeli = typeof v2AyarYazmaEngeli === "function" ? v2AyarYazmaEngeli(tablo) : null;
+    if (ayarEngeli) throw ayarEngeli;
     const cakisma = await _anaKayitlariYaz(y);
     if (cakisma) return cakisma;
     await _altKayitlariYaz(y);
@@ -465,6 +470,11 @@ async function _zarfUygula(isler) {
   }
   const sonuclar = {};
   try {
+    // Sunucu ayarı okunamadıysa ağa çıkılmaz (bkz. _tabloEsitleUygula) — zarfın hiçbir tablosu; hepsi bekleyen deftere.
+    for (const y of hazir) {
+      const ayarEngeli = typeof v2AyarYazmaEngeli === "function" ? v2AyarYazmaEngeli(y.tablo) : null;
+      if (ayarEngeli) throw ayarEngeli;
+    }
     for (const y of hazir) {
       const cakisma = await _anaKayitlariYaz(y);
       if (cakisma) {

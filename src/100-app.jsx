@@ -851,6 +851,13 @@ function AtolyeUygulamasi() {
   // SONRA duruyor: bağımlılık listesi tanım anında değerlendirilir, önce yazmak TDZ çöküşü.)
   // Yeniden gönder: defterdeki her anahtar için state'teki GÜNCEL veriyle yazma yolu tekrar.
   const bekleyenleriYenidenGonder = useCallback(async (sessiz) => {
+    // Sunucu ayarı açılışta okunamadıysa önce o (v1.730.1, 045): okunmadan v2'ye geçebilecek tablolar yine bekletilirdi. Okuma
+    // başlatılır, bu tur atlanır (beklenmez — bekleme sonrası ekranın eski fotoğrafı gönderilirdi); dakikalık deneme sonra gönderir.
+    if (typeof v2AyarBilinmiyorMu === "function" && v2AyarBilinmiyorMu()) {
+      v2AyarlariniOku();
+      if (!sessiz) showToast("Sunucu ayarı okunuyor — bekleyen kayıtlar birazdan gönderilecek");
+      return;
+    }
     const d = bekleyenYazmalariOku();
     const isler = [];
     if (d["stok:items"]) isler.push(tabloYaz("stok:items", "urunler", stok));
@@ -1751,6 +1758,9 @@ function AtolyeUygulamasi() {
     if (tab !== "gorevler" || !supabaseAcikMi()) return;
     let durduruldu = false;
     const tazele = async () => {
+      // YOLDAKİ YAZMA VARSA BEKLE (v1.730.1 denetim): mesaj gönderilirken yoklama mesajsız listeyi getirip ekranı ve tabanı
+      // ona çekerse, sonraki mesajın farkı ilk mesajı "silinmiş" sayıp iptal ediyordu. Yazma bitip 12 sn geçene kadar tazeleme yok.
+      if (Date.now() - bulutSonYazma("mesajlar") < DEGISIKLIK_KENDI_YAZMA_MS) return;
       try {
         const satir = await supabaseTumSatirlar("mesajlar");
         if (durduruldu || !satir[0] || !satir[0].veri) return;
@@ -1759,6 +1769,8 @@ function AtolyeUygulamasi() {
           // Referansı ancak GERÇEKTEN değiştiyse yenile: her yoklamada yeni dizi vermek
           // sohbet ekranını boşa yeniden çizer ve yazma alanını sıçratır.
           if (Array.isArray(gelen) && gelen.length === (onceki || []).length) return onceki;
+          // Okuma sürerken yazma başladıysa ekranı eski bulut hâline çekme (yukarıdaki kuralın ikinci yarısı).
+          if (Date.now() - bulutSonYazma("mesajlar") < DEGISIKLIK_KENDI_YAZMA_MS) return onceki;
           // Ekran bulut hâline geçti → taban da (030; liste v2'de sonraki mesaj yalnız farkını yazar, v1.730.0).
           tekilTabanAyarla("mesajlar", gelen);
           return gelen;

@@ -287,9 +287,11 @@ const hrk = (id, renk, beden, miktar, fisNo, ek = {}) => ({ id, renk, beden, mik
   tekilTabanAyarla("muhasebe", null);
   const hesapSayisi = () => psql("select count(*) from public.kas_hesap where aktif;");
   const hs = hesapSayisi();
+  const kur14 = kasaOku().kurlar.USD;
   await tekilYaz("muhasebe:data", "muhasebe", { kasalar: [], bankalar: [], cekler: [], kurlar: { USD: 42.5, EUR: 49.9 } });
   bekle("14: boş cihaz hesap silmedi", hesapSayisi(), hs);
-  bekle("14: kur yazıldı", kasaOku().kurlar.USD, 42.5);
+  // v1.730.1: taban yokken (bulut okunamamış) HİÇ yazılmaz — eski yerel kopya buluta basılmasın; bekleyen deftere düşer.
+  bekle("14: taban yokken yazılmadı, bekleyende", [kasaOku().kurlar.USD, !!bekleyenYazmalariOku()["muhasebe:data"]], [kur14, true]);
 
   console.log("15) Hareket silme → iptal; tek işlem: stok tarafı düşerse kasa da yazılmaz");
   kasa = kasaOku();
