@@ -44,6 +44,11 @@ const v = [
 ];
 bekle("varyant: bileşik anahtarla tekilleşir", arsivSatirlariniHazirla("varyantlar", v).map((x) => `${x.beden}:${x.miktar}`), ["41:5", "42:1"]);
 bekle("geri yükleme sırası: üst tablo önce", arsivGeriYuklemeSirasi(["uretim_atamalari", "stok_hareketleri", "uretim", "urunler"]), ["urunler", "uretim", "stok_hareketleri", "uretim_atamalari"]);
+// v1.729.1 — üretim listesi verilmediyse "0" değil "bilinmiyor" (Tanımlar'a hiç geçmiyordu → sahte "bulutta 1 fazla").
+const bilinmez = cihazSayimlari({ stok: [], cariler: [], siparisler: [] });
+bekle("üretim verilmedi → null", [bilinmez.uretim, bilinmez.uretim_atamalari], [null, null]);
+const bs = sayimKarsilastir(bilinmez, { uretim: 1 }, {}).find((x) => x.tablo === "uretim");
+bekle("üretim verilmedi → durum bilinmiyor, sahte fark yok", [bs.cihaz, bs.durum], [null, "bu cihazın sayısı bu ekranda bilinmiyor"]);
 // Hangi kayıt farklı (v1.729.0 — kullanıcı: "Üretim · bu cihaz 0, bulut 1").
 const kf = sayimKimlikFarki([{ id: "ur-2", siparisNo: "10040" }], [{ id: "ur-1", siparis_no: "10033" }, { id: "ur-3", siparis_no: "10041" }], "siparis_no",
   { ana: { "ur-1": "sil" } });

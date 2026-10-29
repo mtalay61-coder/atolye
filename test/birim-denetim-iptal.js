@@ -24,5 +24,11 @@ bekle("iptal: hareketin bağı çözüldü, karşılanan kaldı", [iptal.stok[0]
 bekle("iptal edilmiş sipariş → ciddi bulgu YOK", kodlar(veriTutarliligiDenetle(sonra)), []);
 const iptalsiz = { ...sonra, siparisler: [{ ...iptal.siparisler[0], durum: "Tamamlandı" }] };
 bekle("aynı durum iptal edilmemiş siparişte → hâlâ bulgu (kontrol çalışıyor)", kodlar(veriTutarliligiDenetle(iptalsiz)), ["hayalet-karsilanan", "siparis-karsilanan"]);
+// v1.729.1 — Tanımlar'a üretim listesi verilmiyordu: denetim her rezervasyonu "silinmiş üretimin" sayıyordu (23 kayıt).
+const rez = [{ id: "r1", uretimNo: "10040", urunId: "u1", miktar: 2, tuketilen: 0 }];
+const hayalet = (u) => veriTutarliligiDenetle({ ...veri, uretim: u, stokRezervasyonlari: rez }).bulgular.filter((b) => b.kod === "hayalet-rezervasyon").length;
+bekle("üretim listesi verilmediyse rezervasyon 'silinmiş' sayılmaz", hayalet(undefined), 0);
+bekle("üretim var → rezervasyonu yetim değil", hayalet([{ id: "ur1", siparisNo: "10040" }]), 0);
+bekle("üretim gerçekten silinmiş → bulgu", hayalet([]), 1);
 console.log(hata ? "\nBAŞARISIZ" : "\nTAMAM");
 process.exit(hata);

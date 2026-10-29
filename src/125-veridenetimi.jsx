@@ -226,8 +226,10 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
   // "üretim ihtiyacı 0,30 adet ama talep 1,96 diyor".
   //
   // (v1.373.0'dan itibaren silme defteri de temizliyor; bu kural ESKİ kayıtları bulmak için.)
-  {
-    const uretimNolari = new Set((uretim || []).map((u) => String(u.siparisNo)));
+  // Üretim listesi VERİLMEDİYSE (v1.729.1: Tanımlar'a hiç geçmiyordu — 100) bu kural çalışmaz: boş liste her rezervasyonu
+  // "silinmiş üretimin" sayar ve "sil" düğmesi geçerli rezervasyonları silerdi. Bilinmeyen, yok sayılmaz.
+  if (Array.isArray(uretim)) {
+    const uretimNolari = new Set(uretim.map((u) => String(u.siparisNo)));
     const hayaletler = (stokRezervasyonlari || []).filter(
       (r) => r && r.uretimNo && !uretimNolari.has(String(r.uretimNo))
         && Math.max(0, (r.miktar || 0) - (r.tuketilen || 0)) > 0
