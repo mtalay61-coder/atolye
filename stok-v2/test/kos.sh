@@ -22,6 +22,8 @@ kur() {
   calistir stok-v2/cari-v2.sql
   calistir stok-v2/cari-v2.sql         # ikinci kez: zararsız
   calistir stok-v2/cari-v2-goc.sql
+  calistir stok-v2/alt-v2.sql
+  calistir stok-v2/alt-v2.sql          # ikinci kez: zararsız
   # Supabase'te tablo ekleyen her SQL'den sonra rls-kimlik.sql yeniden çalıştırılıyor (DEVAM-NOTU): stok v2 tablolarını
   # yazılabilir yapmamalı — sinama.sql § 6 doğrudan yazmanın reddedildiğini sınar.
   calistir rls-kimlik.sql
@@ -38,7 +40,7 @@ kur_editor() {
   awk '/^create or replace function public.yetki_var_mi/,/^end \$\$;/' rls-yazma.sql | psql -X -q -v ON_ERROR_STOP=1 -d "$DB"
   calistir degisiklik-sayaci.sql
   calistir silinen-arsiv.sql
-  for kaynak in stok-v2/stok-v2.sql stok-v2/stok-v2-goc.sql stok-v2/cari-v2.sql stok-v2/cari-v2-goc.sql; do
+  for kaynak in stok-v2/stok-v2.sql stok-v2/stok-v2-goc.sql stok-v2/cari-v2.sql stok-v2/cari-v2-goc.sql stok-v2/alt-v2.sql; do
     echo "── $kaynak (Editor kopyası, parça parça)"
     python3 stok-v2/editor-icin.py --bol "$kaynak" | node -e '
       const { execFileSync } = require("child_process");
@@ -50,10 +52,12 @@ kur_editor() {
       console.log(`   ${parcalar.length} parça, hepsi ayrı oturumda çalıştı`);
     ' "$DB"
   done
+  calistir rls-kimlik.sql              # Supabase'teki gibi: giriş yapmış kullanıcı tabloları okur
 }
 kur_editor
 calistir stok-v2/test/sinama-gecis.sql
 calistir stok-v2/test/sinama-cari.sql
+calistir stok-v2/test/sinama-alt.sql
 kur                                    # geçiş sınaması taze veritabanında
 calistir stok-v2/test/sinama-gecis.sql
 # Uçtan uca: uygulamanın yazma katmanı (test/erp.cjs) → stk_yaz → görünümler. erp.cjs yoksa: cd test && node derle.js

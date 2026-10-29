@@ -117,3 +117,24 @@ insert into public.cari_hareketleri values
   ('ch3', 'c-2', '2026-10-06', null, 'Borç', 1000, 'TRY', 'Havale', null, 'Genel', 'TH-1', null, null, null, null, 'Tahsilat', '{"islemTipi": "Tahsilat"}'),
   -- Carisi olmayan bozuk satır → göçte atlanır, raporlanır.
   ('ch4', null, '2026-09-01', null, 'Borç', 5, 'TRY', null, null, 'Genel', null, null, null, null, null, 'yetim', null);
+
+-- SİPARİŞ VE ÜRETİM (alt-v2 sınaması) — tablolar bugünkü gibi tipli; alt_yaz bunlara tablonun kendi tipiyle yazar.
+create table public.siparisler (id text primary key, siparis_no text, tip text, cari_id text, durum text, ek jsonb, surum int default 1);
+create table public.siparis_kalemleri (
+  id text primary key, siparis_id text references public.siparisler(id) on delete cascade, urun_id text, urun_ad text, renk text,
+  beden text, miktar numeric, karsilanan numeric default 0, fiyat numeric, para_birimi text, birim text, planlama jsonb,
+  ambalaj jsonb, rezervasyonlar jsonb, sira int, ek jsonb
+);
+create table public.uretim (id text primary key, siparis_no text, urun_id text, asama text, ek jsonb, surum int default 1);
+create table public.uretim_atamalari (
+  id text primary key, uretim_id text references public.uretim(id) on delete cascade, proses text, personel_id text,
+  beden_miktarlari jsonb, miktar numeric, verildi_mi boolean, verilme_tarihi text, tamamlandi_mi boolean, tamamlanma_tarihi text,
+  sonuc text, tamir_mi boolean, tamir_kaynak_proses text, tamir_sebep text, tamir_ucret numeric, tamir_hammaddeler jsonb,
+  barkod text, ek jsonb
+);
+insert into public.siparisler values ('sip-100', 'S-100', 'Satış', 'c-2', 'Onaylandı', null, 1);
+insert into public.siparis_kalemleri values
+  ('k1', 'sip-100', 'u-canta', 'Deri Çanta', '1058 - Taba/Siyah', '36', 10, 2, 450, 'TRY', 'adet', null, null, '[]', 0, null);
+insert into public.uretim values ('ur-1', '10032', 'u-canta', 'Üretimde', null, 1);
+insert into public.uretim_atamalari values
+  ('at-1', 'ur-1', 'Saya', 'p-1', '{"36": 5}', 5, true, '2026-10-20', false, null, null, false, null, null, 0, '[]', '10032-1', null);
