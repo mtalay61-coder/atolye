@@ -4920,6 +4920,11 @@ function AtolyeUygulamasi() {
           <GizliModul aktif={tab === "tanimlar"}>
             <TanimlarModule
               onaylar={onaylar}
+              // ÜRETİM LİSTESİ EKSİKTİ (v1.729.1 — kullanıcı, 29 Ekim: Bakım › Bulut sayımı "Üretim 0, bulut 1 · İş ataması 0 / 2";
+              // "bu sorun son güncellemelerden önce de vardı"). v1.713.0'dan beri Tanımlar `uretim` prop'unu bekliyor ama burada
+              // verilmiyordu: Bakım'daki denetim üretimi BOŞ sanıp her rezervasyonu "silinmiş üretimin rezervasyonu" sayıyor
+              // (23 kayıt), bulut sayımı üretimi 0 gösteriyordu. Veri yerindeydi; yanlış olan yalnız bu ekranın gördüğüydü.
+              uretim={uretim}
               stokRezervasyonlari={stokRezervasyonlari}
               onYetimRezervasyonSil={yetimRezervasyonlariSil}
               onCariHareketEkle={addCariHareketFromStok}

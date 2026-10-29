@@ -40,8 +40,9 @@ function cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari
     cari_hareketleri: topla(cariler, (c) => c.hareketler || []),
     siparisler: (siparisler || []).length,
     siparis_kalemleri: topla(siparisler, (s) => s.kalemler || []),
-    uretim: (uretim || []).length,
-    uretim_atamalari: topla(uretim, (u) => (u.prosesIlerleme || []).flatMap((p) => (p && p.atamalar) || [])),
+    // Üretim listesi verilmediyse (v1.729.1 öncesi Tanımlar) 0 değil "bilinmiyor": sahte "bulutta fazla" çıkmasın.
+    uretim: Array.isArray(uretim) ? uretim.length : null,
+    uretim_atamalari: Array.isArray(uretim) ? topla(uretim, (u) => (u.prosesIlerleme || []).flatMap((p) => (p && p.atamalar) || [])) : null,
     stok_rezervasyonlari: (stokRezervasyonlari || []).length,
     onaylar: (onaylar || []).length,
     cop: (cop || []).length,
@@ -51,17 +52,19 @@ function cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari
 // Cihaz / bulut / arşiv sayılarını satırlara çevirir — saf. `bulut[t]` sayı ya da null (okunamadı).
 function sayimKarsilastir(cihaz, bulut, arsiv30) {
   return SAYIM_TABLOLARI.map((tablo) => {
-    const c = Number((cihaz || {})[tablo]) || 0;
+    const cHam = (cihaz || {})[tablo];
+    const c = Number(cHam) || 0;
     const bHam = (bulut || {})[tablo];
     const b = bHam == null ? null : Number(bHam) || 0;
     const a = Number((arsiv30 || {})[tablo]) || 0;
     let durum = "okunamadı";
-    if (b != null) {
+    if (cHam === null) durum = "bu cihazın sayısı bu ekranda bilinmiyor";
+    else if (b != null) {
       if (b === c) durum = "aynı";
       else if (b > c) durum = `bulutta ${b - c} fazla — bu cihaz eksik/bayat, sayfayı yenileyin`;
       else durum = `cihazda ${c - b} fazla — bulutta silinmiş olabilir${a > 0 ? ` (arşivde ${a} silinmiş satır var)` : ""}`;
     }
-    return { tablo, ad: ARSIV_TABLO_ADLARI[tablo] || tablo, cihaz: c, bulut: b, arsiv30: a, durum };
+    return { tablo, ad: ARSIV_TABLO_ADLARI[tablo] || tablo, cihaz: cHam === null ? null : c, bulut: b, arsiv30: a, durum };
   });
 }
 
@@ -239,7 +242,7 @@ function BulutSayimiBolumu({ cihaz, kayitlar }) {
               {satirlar.map((s) => (
                 <tr key={s.tablo} data-sayim-tablo={s.tablo} style={{ borderTop: "1px solid var(--erp-line-soft)", background: s.durum === "aynı" ? "transparent" : "var(--erp-orange-bg)" }}>
                   <td style={{ padding: "3px 8px" }}>{s.ad}</td>
-                  <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.cihaz}</td>
+                  <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.cihaz == null ? "—" : s.cihaz}</td>
                   <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.bulut == null ? "—" : s.bulut}</td>
                   <td style={{ padding: "3px 8px", textAlign: "right" }}>{s.arsiv30}</td>
                   <td style={{ padding: "3px 8px", color: s.durum === "aynı" ? "var(--erp-text-3)" : "var(--erp-warn)", fontWeight: s.durum === "aynı" ? 400 : 700 }}>{s.durum}</td>

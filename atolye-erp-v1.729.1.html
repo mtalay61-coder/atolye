@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.727.0</title>
+<title>Atölye ERP 1.729.1</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.727.0";
-const SURUM_TARIHI = "2026-10-28";
-const SURUM_NOTU = "Cari v2 ve yazma zarfı: Supabase'de cari v2 geçişi yapılınca fişin stok ve cari satırları tek sunucu işlemiyle (ya ikisi ya hiçbiri) yazılır; cari hareketi silinmez, iptal edilir";
+const SURUM = "1.729.1";
+const SURUM_TARIHI = "2026-10-29";
+const SURUM_NOTU = "Tanımlar › Bakım üretimleri görmüyordu: bulut sayımında Üretim 0 ve denetimde \"silinmiş üretimin rezervasyonu\" sahte bulguları düzeltildi";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.729.1", tarih: "29.10.2026", eklenen: [], degisen: [], duzeltilen: ["Tanımlar ekranına üretim listesi verilmiyordu (v1.713.0'dan beri): Bakım › Bulut sayımı Üretim ve İş atamasını 0 gösteriyor, Veri Tutarlılık Denetimi her rezervasyonu \"silinmiş üretimin rezervasyonu\" sayıyordu. Veri yerindeydi; yanlış olan bu ekranın gördüğüydü. Üretim listesi verilmezse denetim artık bu kuralı çalıştırmaz, sayım \"bilinmiyor\" der"] },
+    { surum: "1.729.0", tarih: "29.10.2026", eklenen: ["Kasa & Banka tek kapıdan (yeniden kurulumun 4. adımı): Supabase'de geçiş yapılınca Kasa & Banka tek bir belge değil; hesaplar, hareketler ve çekler ayrı satırlar. Her cihaz yalnız KENDİ değişikliğini gönderir — bayat ya da boş listeli bir cihaz (24 Ekim telefondaki \"0 hesap\") artık başka cihazın hesabını, hareketini silemez. Silinen hareket ve çek silinmez, iptal edilir (iz kalır); kaldırılan hesap pasife alınır", "Tahsilat, ödeme, hareket düzeltme / silme (cari karşılığıyla), sipariş ödemesi, peşin fiş ve fiş geri almada kasa satırı cari (ve stok) satırlarıyla TEK sunucu işleminde yazılır — biri yazılıp öteki düşemez", "Toplu iptal kilidi: bir kayıt hareketlerin ya da çeklerin yarısını, ya da hesapların hepsini birden kaldıracaksa yazma durur, buluta dokunulmaz"], degisen: [], duzeltilen: ["Veri Tutarlılık Denetimi iptal edilmiş siparişi \"Sipariş karşılananı hareketlerle uyuşmuyor\" diye ciddi bulgu sayıyordu (SAT-1023). İptal teslim fişine dokunmaz, yalnız bağı çözer; karşılanan tarihçe olarak kalır — iptal edilmiş sipariş bu iki kontrolde artık sayılmaz", "Bulut sayımı: Ürün varyantı stok v2 geçişinden beri \"okunamadı (HTTP 400)\" diyordu (varyantlar artık görünüm, id sütunu yok) — düzeltildi. Fark olan tabloda HANGİ kaydın farklı olduğu ve o kaydın bu cihazda bekleyen bir silmesi olup olmadığı da yazılıyor"] },
+    { surum: "1.728.0", tarih: "29.10.2026", eklenen: ["Sipariş kalemleri ve üretim atamaları tek kapıdan (yeniden kurulumun 3. adımı): Supabase'de geçiş yapılınca bu iki tabloya yalnız sunucu işlemi yazar. Sipariş sevkinde, siparişe bağlı fişte, üretim tesliminde, ara proseste ve fiş geri almada stok, cari, sipariş kalemi (karşılanan) ve üretim ataması TEK işlemde yazılır — biri düşüp öteki kalamaz. Veri taşınmaz; geçiş ve geri dönüş anlık"], degisen: [], duzeltilen: [] },
     { surum: "1.727.0", tarih: "28.10.2026", eklenen: ["Cari v2 (yeniden kurulumun 2. modülü): Supabase'de cari v2 geçişi yapılınca cari hareketleri tek kapıdan yazılır; silinen hareket silinmez, iptal edilir (iz kalır). Alış/satış fişi, sipariş sevki, üretim teslimi ve silmesi, ara proses ve fiş geri alma: stok ve cari satırları TEK sunucu işlemiyle gider — biri düşüp öteki kalamaz. Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },
     { surum: "1.726.0", tarih: "28.10.2026", eklenen: ["Stok v2 köprüsü (yeniden kurulumun 1. modülü): Supabase'de stok v2 kurulup geçiş yapılınca stok kayıtları buluta fiş ve satır olarak, TEK bir sunucu işlemiyle gider — biri düşerse hiçbiri yazılmaz, ağda düşüp yeniden gönderilen kayıt stoğu iki kez değiştirmez. Renk ve beden buluta kimlikle bağlanır: ad değişikliği stok satırı silip yazmaz. Silinen hareket silinmez, iptal edilir (iz kalır). Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },
     { surum: "1.725.1", tarih: "28.10.2026", eklenen: ["Buluta gönderilemeyen kayıt ayrıntısında (şeritteki çipe dokunun) Yönetici için \"Bu cihazdakini bırak, buluttan yükle\": günlerce gidemeyen yazma, ne bırakılacağı sayıyla gösterilip onaylanarak bırakılır; sayfa buluttaki hâlle açılır, günlüğe düşer"], degisen: ["\"Failed to fetch\" hatası artık düşen isteği yazar (yöntem, tablo, gövde boyutu, adres uzunluğu)", "Buluta toplu ekleme/güncelleme 400 satırın yanında ~900 KB ile de bölünür (görselli ürün satırları tek istekte onlarca MB edebiliyordu)"], duzeltilen: [] },
@@ -5575,14 +5578,35 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
         // yazmada buluttan gelen kayıtlar "bu cihaz sildi" sayılmasın. Ekran birleşiğe geçince (yoklama) taban da güncellenir.
         tekilTabanAyarla(tablo, gonderilen);
     }));
-    const gidecek = typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi();
+    // KASA & BANKA v2 (v1.729.0, 038 `kasaV2Yuku`): geçiş yapıldıysa (`stk_ayar.kasa_aktif`) belge YAZILMAZ — `muhasebe` artık
+    // salt-okur görünüm. Bu cihazın tabanla yeni hâl arasındaki farkı satır olarak `kas_yaz`a gider: başka cihazın kaydına
+    // dokunulmaz, bayat ya da boş liste hiçbir şeyi silemez, silme iptaldir. Fark kuyrukta SIRASI GELİNCE hesaplanır (önceki
+    // yazmanın kurduğu taban üstünden); düşen yazmada taban ilerlemez, sonraki yazma düşen farkı da taşır. Birleştirme ve
+    // `birlestirme: false` burada anlamsız (fark zaten yalnız bu cihazın değişikliği). İşlem zarfı (`secenek.zarf`, 040):
+    // tahsilat / ödeme / peşin fişte kasa satırları cari (ve stok) satırlarıyla tek `fis_yaz`da — zarf kendi kuyruğunu tutar.
+    const kasaV2 = tablo === "muhasebe" && typeof kasaV2Aktif === "function" && kasaV2Aktif();
+    const kasaIsi = () => {
+        const yuk = kasaV2YukHazirla(gonderilen, secenek); // toplu iptal kilidi burada (038)
+        return yuk ? v2KopruGonder([{ tur: "kasa", yuk }]) : Promise.resolve();
+    };
+    const gidecek = kasaV2
+        ? ((secenek.zarf && secenek.zarf.kabul(tablo)) ? secenek.zarf.ekle(tablo, gonderilen, secenek) : tabloKuyrugunaAl(tablo, kasaIsi))
+            .then((r) => {
+            // Zarfın öteki tablosunda sürüm çakışması: hiçbiri yazılmadı — kasa da bekleyen deftere (yeniden gönderilir).
+            if (r && r.__cakisma)
+                throw new Error("sürüm çakışması — Kasa & Banka buluta yazılmadı");
+            tekilTabanAyarla(tablo, gonderilen);
+        })
+        : (typeof tabloKuyrugunaAl === "function" ? tabloKuyrugunaAl(tablo, isi) : isi());
     gidecek.then(() => bulutYazmaBitti(tablo), () => bulutYazmaBitti(tablo));
     return Promise.all([
         yerel,
         gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir)
             window.__supabaseBasariBildir(tablo); }).catch((e) => {
             console.error("Supabase yazma hatası:", tablo, e);
-            bekleyenYazmaEkle(anahtar, tablo, e && e.message);
+            // Toplu silme engeli (Kasa & Banka v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
+            if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar])
+                bekleyenYazmaEkle(anahtar, tablo, e && e.message);
             if (typeof window !== "undefined" && window.__supabaseHataBildir) {
                 window.__supabaseHataBildir(tablo, String(e && e.message || e));
             }
@@ -6934,6 +6958,213 @@ function cariV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STO
     return gruplar.map((satirlar, i) => ({ satirlar, iptal: i === gruplar.length - 1 ? yuk.iptal : [] }));
 }
 // =============================================================================================================
+// SİPARİŞ KALEMİ / ÜRETİM ATAMASI KÖPRÜSÜ (v1.728.0, alt-v2.sql) — veri taşınmadan tek kapı (`alt_yaz`)
+// =============================================================================================================
+// Bu iki tablo zaten kimlikli, tipli satırlar; değişen yalnız yazma yolu: fark REST yerine `alt_yaz`a (ya da fişin
+// stok/cari satırlarıyla birlikte `fis_yaz`a) gider. Silinen satır sunucuda silinir — kopyası sunucu arşivine düşer.
+// Supabase'de `alt_gecis()` yapılmışsa (`stk_ayar.alt_aktif`) çalışır; geçişte bu tablolara doğrudan yazma kapanır.
+let _altV2Aktif = false;
+function altV2Aktif() { return _altV2Aktif; }
+function altV2AktifAyarla(aktif) { _altV2Aktif = !!aktif; }
+const ALT_V2_TABLOLARI = { siparisler: "siparis_kalemleri", uretim: "uretim_atamalari" };
+// Saf. hareketFarki: 040'ın alt tablo farkı (satırlarda `id` = `__k` = satır kimliği).
+function altV2Yuku(hf) {
+    const f = hf || { eklenen: [], guncellenen: [], silinen: [] };
+    const temiz = ({ __k, ...satir }) => satir;
+    return { satirlar: [...(f.eklenen || []), ...(f.guncellenen || [])].map(temiz), sil: (f.silinen || []).map(String) };
+}
+function altV2YukBosMu(yuk) { return !yuk || (!yuk.satirlar.length && !yuk.sil.length); }
+function altV2Parcala(yuk) {
+    return cariV2Parcala({ satirlar: yuk.satirlar, iptal: yuk.sil }).map((p) => ({ satirlar: p.satirlar, sil: p.iptal }));
+}
+// =============================================================================================================
+// KASA & BANKA v2 KÖPRÜSÜ (v1.729.0, kasa-v2.sql) — tek parça belge yerine hesap / hareket / çek SATIRLARI (`kas_yaz`)
+// =============================================================================================================
+// Kasa & Banka bugün TEK SATIRLIK bir JSON belgesi (muhasebe.veri). Her kayıtta belgenin TAMAMI gidiyordu; boş ya da bayat
+// listeli bir cihaz (24 Ekim telefon: "Kasa & Banka 0 hesap") başka cihazın hesaplarını, hareketlerini silebiliyordu.
+// v1.725.0'daki üç yönlü birleştirme deliği daralttı; v2 kökten kapatır: bu cihaz yalnız KENDİ DEĞİŞİKLİĞİNİ gönderir.
+//
+// FARK (saf `kasaV2Yuku`, birim testi `birim-kasa-v2`): TABAN (030 `tekilTabanOku("muhasebe")` — bu cihazın en son bildiği
+// bulut hâli ya da en son başarıyla gönderdiği hâl) ile YENİ hâl karşılaştırılır:
+//   · yeni ya da değişen hesap (hareketleri hariç alanları) → `hesaplar`; tabanda olup yenide olmayan → `hesapSil` (pasif)
+//   · yeni / değişen / hesabı değişen hareket → `hareketler`; tabanda olup yenide olmayan → `hareketIptal` (silinmez)
+//   · çekler aynı (`cekler`, `cekIptal`); öteki anahtarlar (kurlar, kur geçmişi…) değişense `ayar`, kalktıysa `ayarSil`.
+// Başka cihazın eklediği kayıt bu cihazın ne tabanında ne yeni hâlinde var → hiç dokunulmaz. TABAN YOKSA (bulut okunamamış)
+// yalnız ekleme / güncelleme gider, HİÇBİR ŞEY silinmez. Karşılaştırma anahtar sırasından bağımsız (047 `kararliJson`; jsonb
+// anahtarları yeniden sıralar). Hesap sırası istemciden gitmez: yeni hesap sunucuda sona eklenir (ekran da sona ekler).
+// Kimliği olmayan eski kayıt (hesap, hareket, çek) içeriğinden kalıcı bir kimlik alır — aynı içerik her seferinde aynı kimlik.
+// HATA: istek düşerse 030'un bugünkü yolu — bekleyen defter, yeniden deneme; taban güncellenmediği için sonraki yazma
+// düşen farkı da kapsar. `kas_yaz` kimlikle yazdığı için yeniden gönderim çift kayıt açmaz.
+let _kasaV2Aktif = false;
+function kasaV2Aktif() { return _kasaV2Aktif; }
+function kasaV2AktifAyarla(aktif) { _kasaV2Aktif = !!aktif; }
+const KASA_V2_LISTELER = { kasalar: "kasa", bankalar: "banka" };
+// İçerikten kısa, kararlı kimlik (FNV-1a, iki tohum → 16 onaltılık hane). Güvenlik değil, yalnız kimlik.
+function kasaV2Ozet(metin) {
+    let a = 0x811c9dc5;
+    let b = 0x01000193 ^ 0x5bd1e995;
+    const s = String(metin);
+    for (let i = 0; i < s.length; i++) {
+        const c = s.charCodeAt(i);
+        a = Math.imul(a ^ c, 0x01000193) >>> 0;
+        b = Math.imul(b ^ c, 0x01000193 + 0x2f) >>> 0;
+    }
+    return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+// Belgeyi kimlikli haritalara açar. Saf.
+function kasaV2Ac(belge) {
+    const b = belge && typeof belge === "object" && !Array.isArray(belge) ? belge : {};
+    const hesaplar = new Map();
+    const hareketler = new Map();
+    const cekler = new Map();
+    Object.entries(KASA_V2_LISTELER).forEach(([anahtar, tur]) => {
+        (Array.isArray(b[anahtar]) ? b[anahtar] : []).forEach((h, i) => {
+            if (!h || typeof h !== "object")
+                return;
+            const { hareketler: hl, id, ...veri } = h;
+            const hid = id ? String(id) : `kh-${kasaV2Ozet(`${tur}:${i}:${veri.ad || ""}`)}`;
+            if (hesaplar.has(hid))
+                return; // yinelenen kimlik: ilki (sunucu göçüyle aynı kural)
+            hesaplar.set(hid, { tur, veri, json: kararliJson(veri) });
+            const sayac = new Map();
+            (Array.isArray(hl) ? hl : []).forEach((x) => {
+                if (!x || typeof x !== "object")
+                    return;
+                let xid = x.id ? String(x.id) : null;
+                if (!xid) {
+                    const j = kararliJson(x);
+                    const n = (sayac.get(j) || 0) + 1;
+                    sayac.set(j, n);
+                    xid = `mh-${kasaV2Ozet(`${hid}:${n}:${j}`)}`;
+                }
+                if (!hareketler.has(xid))
+                    hareketler.set(xid, { hesap_id: hid, veri: x, json: kararliJson(x) });
+            });
+        });
+    });
+    const csayac = new Map();
+    (Array.isArray(b.cekler) ? b.cekler : []).forEach((c) => {
+        if (!c || typeof c !== "object")
+            return;
+        let cid = c.id ? String(c.id) : null;
+        if (!cid) {
+            const j = kararliJson(c);
+            const n = (csayac.get(j) || 0) + 1;
+            csayac.set(j, n);
+            cid = `cek-${kasaV2Ozet(`${n}:${j}`)}`;
+        }
+        if (!cekler.has(cid))
+            cekler.set(cid, { veri: c, json: kararliJson(c) });
+    });
+    const ayar = {};
+    Object.keys(b).forEach((k) => { if (!(k in KASA_V2_LISTELER) && k !== "cekler" && b[k] !== undefined)
+        ayar[k] = b[k]; });
+    return { hesaplar, hareketler, cekler, ayar };
+}
+// Saf. taban: bu cihazın bildiği bulut hâli (yoksa null → silme yok); yeni: gönderilecek hâl.
+function kasaV2Yuku(taban, yeni) {
+    const tabanVar = !!(taban && typeof taban === "object");
+    const t = kasaV2Ac(tabanVar ? taban : null);
+    const y = kasaV2Ac(yeni);
+    const yuk = { hesaplar: [], hesapSil: [], hareketler: [], hareketIptal: [], cekler: [], cekIptal: [], ayar: {}, ayarSil: [] };
+    y.hesaplar.forEach((h, id) => {
+        const e = t.hesaplar.get(id);
+        if (!e || e.tur !== h.tur || e.json !== h.json)
+            yuk.hesaplar.push({ id, tur: h.tur, veri: h.veri });
+    });
+    y.hareketler.forEach((x, id) => {
+        const e = t.hareketler.get(id);
+        if (!e || e.hesap_id !== x.hesap_id || e.json !== x.json)
+            yuk.hareketler.push({ id, hesap_id: x.hesap_id, veri: x.veri });
+    });
+    y.cekler.forEach((c, id) => {
+        const e = t.cekler.get(id);
+        if (!e || e.json !== c.json)
+            yuk.cekler.push({ id, veri: c.veri });
+    });
+    Object.keys(y.ayar).forEach((k) => {
+        if (!(k in t.ayar) || kararliJson(t.ayar[k]) !== kararliJson(y.ayar[k]))
+            yuk.ayar[k] = y.ayar[k];
+    });
+    if (tabanVar) {
+        t.hesaplar.forEach((_, id) => { if (!y.hesaplar.has(id))
+            yuk.hesapSil.push(id); });
+        t.hareketler.forEach((_, id) => { if (!y.hareketler.has(id))
+            yuk.hareketIptal.push(id); });
+        t.cekler.forEach((_, id) => { if (!y.cekler.has(id))
+            yuk.cekIptal.push(id); });
+        Object.keys(t.ayar).forEach((k) => { if (!(k in y.ayar))
+            yuk.ayarSil.push(k); });
+    }
+    return yuk;
+}
+function kasaV2YukBosMu(yuk) {
+    return !yuk || (!yuk.hesaplar.length && !yuk.hesapSil.length && !yuk.hareketler.length && !yuk.hareketIptal.length
+        && !yuk.cekler.length && !yuk.cekIptal.length && !Object.keys(yuk.ayar || {}).length && !(yuk.ayarSil || []).length);
+}
+// TOPLU İPTAL KİLİDİ (040 `topluSilmeEngeliMi` ile aynı ölçü, v1.712.0'ın kasa karşılığı). v2'de silme iptaldir, veri
+// kaybolmaz; ama ekranı bir hata yüzünden boşalmış ya da yarım kalmış, tabanı DOLU bir cihaz bütün hareketleri iptal
+// ettirebilirdi — ekranlarda Kasa & Banka yine "0 hesap" görünürdü. Kullanıcının hiçbir işlemi tek kayıtta hareketlerin ya da
+// çeklerin yarısını götürmez; hesap da tek tek kaldırılır (hareketi olan hesap zaten silinemez, 205). Engel: hareket / çek
+// iptali eşiği aşıyor ya da (en az iki hesap varken) hesapların HEPSİ birden kalkıyor. Saf.
+function kasaV2TopluSilmeEngeli(taban, yuk) {
+    if (!taban || typeof taban !== "object" || !yuk)
+        return null;
+    const t = kasaV2Ac(taban);
+    if (topluSilmeEngeliMi(yuk.hareketIptal.length, t.hareketler.size))
+        return { tur: "hareket", silinen: yuk.hareketIptal.length, onceki: t.hareketler.size };
+    if (topluSilmeEngeliMi(yuk.cekIptal.length, t.cekler.size))
+        return { tur: "çek", silinen: yuk.cekIptal.length, onceki: t.cekler.size };
+    if (yuk.hesapSil.length >= 2 && yuk.hesapSil.length >= t.hesaplar.size)
+        return { tur: "hesap", silinen: yuk.hesapSil.length, onceki: t.hesaplar.size };
+    return null;
+}
+// 030 tekilYaz ve 040 zarfın ortak hazırlığı: taban → fark → kilit. Boş farkta null. Kilit tutarsa hata (`topluSilmeEngeli`:
+// bekleyen deftere YAZILMAZ — yazılsaydı yeniden denenirdi). `secenek.topluSilmeIzni`: yedekten geri yükleme (093).
+function kasaV2YukHazirla(yeni, secenek) {
+    const taban = tekilTabanOku("muhasebe");
+    const yuk = kasaV2Yuku(taban, yeni);
+    const engel = secenek && secenek.topluSilmeIzni ? null : kasaV2TopluSilmeEngeli(taban, yuk);
+    if (engel) {
+        gunlukYaz(`TOPLU SİLME ENGELLENDİ: Kasa & Banka — ${engel.silinen} ${engel.tur} kaldırılacaktı (eski hâlde ${engel.onceki})`, "guvenlik", { tablo: "muhasebe", ...engel });
+        const e = new Error(`Toplu silme engellendi: Kasa & Banka'da ${engel.silinen} ${engel.tur} (eldeki ${engel.onceki} kayıttan) tek yazmada `
+            + `kaldırılacaktı; bu bir hata belirtisidir, buluta DOKUNULMADI. Sayfayı yenileyip buluttaki hâli yükleyin.`);
+        e.topluSilmeEngeli = true;
+        throw e;
+    }
+    return kasaV2YukBosMu(yuk) ? null : yuk;
+}
+// Büyük yük (taban yokken ilk yazma, yedek geri yükleme): hareketler ve çekler parça parça; hesaplar, ayar ve iptaller
+// SON parçada (hareket hesaptan önce yazılabilir — aralarında yabancı anahtar yok; iptal, eklemelerden sonra).
+function kasaV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STOK_V2_PARCA_SATIR) {
+    const satirlar = [...yuk.hareketler.map((x) => ["hareketler", x]), ...yuk.cekler.map((x) => ["cekler", x])];
+    const gruplar = [];
+    let grup = [];
+    let bayt = 0;
+    satirlar.forEach((s) => {
+        const b = JSON.stringify(s[1]).length;
+        if (grup.length && (grup.length >= enFazlaSatir || bayt + b > enFazlaBayt)) {
+            gruplar.push(grup);
+            grup = [];
+            bayt = 0;
+        }
+        grup.push(s);
+        bayt += b;
+    });
+    if (grup.length || gruplar.length === 0)
+        gruplar.push(grup);
+    return gruplar.map((g, i) => {
+        const son = i === gruplar.length - 1;
+        const p = { hareketler: g.filter((s) => s[0] === "hareketler").map((s) => s[1]), cekler: g.filter((s) => s[0] === "cekler").map((s) => s[1]) };
+        if (son) {
+            Object.assign(p, { hesaplar: yuk.hesaplar, hesapSil: yuk.hesapSil, hareketIptal: yuk.hareketIptal, cekIptal: yuk.cekIptal, ayarSil: yuk.ayarSil });
+            if (Object.keys(yuk.ayar).length)
+                p.ayar = yuk.ayar;
+        }
+        return p;
+    });
+}
+// =============================================================================================================
 // 040 İLE BAĞ — bir tablonun alt farkı köprüden mi gidecek? (040 `_yazmaHazirla` bağlamı `y`)
 // =============================================================================================================
 // Döner: null (köprü yok → REST) ya da { tur: "stok" | "cari", yuk, ozet } — yük boş olabilir (köprü açık ama
@@ -6959,24 +7190,47 @@ function v2KopruYuku(y) {
         const yuk = cariV2Yuku(fark("cari_hareketleri"));
         return { tur: "cari", yuk: cariV2YukBosMu(yuk) ? null : yuk };
     }
+    if (ALT_V2_TABLOLARI[y.tablo] && altV2Aktif()) {
+        const altTablo = ALT_V2_TABLOLARI[y.tablo];
+        const yuk = altV2Yuku(fark(altTablo));
+        return { tur: "alt", tablo: altTablo, yuk: altV2YukBosMu(yuk) ? null : yuk };
+    }
     return null;
 }
-// GÖNDERİCİ — bir ya da birkaç köprü yükü. Stok ve cari birlikteyse ve ikisi de tek parçaya sığıyorsa TEK `fis_yaz`
-// isteği (tek veritabanı işlemi: ya ikisi ya hiçbiri). Sığmıyorsa (yedek geri yükleme gibi büyük yazma) her biri kendi
-// işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider (bellek geri + bekleyen defter 040'ta).
+// GÖNDERİCİ — bir ya da birkaç köprü yükü (stok, cari, sipariş kalemi / üretim ataması, kasa & banka). Birden çok parça varsa ve
+// her biri tek parçaya sığıyorsa TEK `fis_yaz` isteği (tek veritabanı işlemi: ya hepsi ya hiçbiri). Sığmıyorsa (yedek
+// geri yükleme gibi büyük yazma) her biri kendi işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider
+// (bellek geri + bekleyen defter 040'ta).
 async function v2KopruGonder(kopruler) {
     const dolu = (kopruler || []).filter((k) => k && k.yuk);
     if (!dolu.length)
         return null;
     const stok = dolu.find((k) => k.tur === "stok");
     const cari = dolu.find((k) => k.tur === "cari");
+    const altlar = dolu.filter((k) => k.tur === "alt");
+    const kasa = dolu.find((k) => k.tur === "kasa");
     const stokParcalari = stok ? stokV2Parcala(stok.yuk) : [];
     const cariParcalari = cari ? cariV2Parcala(cari.yuk) : [];
-    const sonuc = { stok: null, cari: null };
-    if (stok && cari && stokParcalari.length === 1 && cariParcalari.length === 1) {
-        const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p: { stok: stokParcalari[0], cari: cariParcalari[0] } }) });
+    const altParcalari = altlar.map((k) => ({ tablo: k.tablo, parcalar: altV2Parcala(k.yuk) }));
+    const kasaParcalari = kasa ? kasaV2Parcala(kasa.yuk) : [];
+    const tekParca = stokParcalari.length <= 1 && cariParcalari.length <= 1 && altParcalari.every((a) => a.parcalar.length <= 1)
+        && kasaParcalari.length <= 1;
+    const sonuc = { stok: null, cari: null, alt: null, kasa: null };
+    if (tekParca && dolu.length > 1) {
+        const p = {};
+        if (stok)
+            p.stok = stokParcalari[0];
+        if (cari)
+            p.cari = cariParcalari[0];
+        if (altParcalari.length)
+            p.alt = Object.fromEntries(altParcalari.map((a) => [a.tablo, a.parcalar[0]]));
+        if (kasa)
+            p.kasa = kasaParcalari[0];
+        const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p }) });
         sonuc.stok = r && r.stok;
         sonuc.cari = r && r.cari;
+        sonuc.alt = r && r.alt;
+        sonuc.kasa = r && r.kasa;
     }
     else {
         if (stok) {
@@ -6996,6 +7250,12 @@ async function v2KopruGonder(kopruler) {
                 await supabaseIstek("rpc/car_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
             sonuc.cari = { satir: cari.yuk.satirlar.length, iptal: cari.yuk.iptal.length };
         }
+        for (const a of altParcalari) {
+            for (const parca of a.parcalar)
+                await supabaseIstek("rpc/alt_yaz", { method: "POST", body: JSON.stringify({ p: { [a.tablo]: parca } }) });
+        }
+        for (const parca of kasaParcalari)
+            sonuc.kasa = await supabaseIstek("rpc/kas_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
     }
     if (stok && stok.yuk.otoFis.length) {
         gunlukYaz(`Stok v2: fiş numarası olmayan ${stok.yuk.otoFis.length} hareket OTO- fişine bağlandı`, "veri", { hareketler: stok.yuk.otoFis.slice(0, 50) });
@@ -7463,9 +7723,15 @@ function cokluKuyrugaAl(tablolar, is) {
 }
 async function _zarfUygula(isler) {
     const hazir = [];
+    // KASA & BANKA (v1.729.0, 030 `tekilYaz`): tek parça belge, fark belleği yok — farkı taban ile yeni hâlden 038 hesaplar
+    // (toplu iptal kilidi dahil: tutarsa zarfın HİÇBİR tablosu yazılmaz). Düşerse belleği geri alınacak bir şey yok: taban
+    // ilerlemez, 030 bekleyen deftere yazar.
+    let ozelKopruler = [];
     try {
         isler.forEach((i) => { if (TABLO_SEMA[i.tablo])
             hazir.push(_yazmaHazirla(i.tablo, i.kayitlar, i.secenek)); });
+        ozelKopruler = isler.filter((i) => i.tablo === "muhasebe" && kasaV2Aktif())
+            .map((i) => ({ tur: "kasa", yuk: kasaV2YukHazirla(i.kayitlar, i.secenek) }));
     }
     catch (e) {
         hazir.forEach((y) => y.bellegiGeriAl()); // kilit: hiçbiri yazılmaz (hazırlananın da belleği geri)
@@ -7481,10 +7747,12 @@ async function _zarfUygula(isler) {
                 hazir.forEach((x) => { if (x !== y)
                     x.bellegiGeriAl(); });
                 hazir.forEach((x) => { sonuclar[x.tablo] = cakisma; });
+                if (ozelKopruler.length)
+                    sonuclar.muhasebe = cakisma;
                 return sonuclar;
             }
         }
-        const kopruler = [];
+        const kopruler = [...ozelKopruler];
         for (const y of hazir) {
             const kopru = v2KopruYuku(y);
             if (kopru)
@@ -7503,10 +7771,13 @@ async function _zarfUygula(isler) {
     }
     for (const y of hazir)
         sonuclar[y.tablo] = await _yazmaBitti(y);
+    if (ozelKopruler.length)
+        sonuclar.muhasebe = {};
     return sonuclar;
 }
 function yazmaZarfi(tablolar, beklemeMs = 4000) {
-    const beklenen = new Set(tablolar || []);
+    // Kasa & Banka zarfa yalnız v2'deyken girer (030): değilse tekilYaz belgeyi kendi yolundan yazar, zarf onu BEKLEMESİN.
+    const beklenen = new Set((tablolar || []).filter((t) => t !== "muhasebe" || kasaV2Aktif()));
     const isler = new Map(); // tablo → { kayitlar, secenek, cozenler }
     let basladi = false;
     let zamanlayici = null;
@@ -7633,17 +7904,23 @@ function yazimiIzle(soz, etiket, veri) {
 // BİRLİKTE YAZ (v1.727.0) — aynı işlemin birden çok tablosunu tek zarfla yazar (bkz. `yazmaZarfi`). Sıralı `await` eden
 // akışlar için: zarf ikinci tabloyu beklerken birinciyi `await` etmek kilitlenirdi (zarf beklemesi dolana kadar).
 // yazmalar: [{ anahtar, tablo, kayitlar, etiket? }] → { ok, hata, sonuclar } (adim yürütücüsünün beklediği biçim).
-function birlikteYaz(yazmalar) {
+// `ozeller` (v1.729.0): tabloYaz'dan geçmeyen yazmalar — [{ tablo, yaz: (zarf) => söz }] (Kasa & Banka: 030 tekilYaz). Zarfa
+// tabloları da eklenir; `yaz` zarfı kendi yazmasına verir (vermezse zarf onu beklemeden yola çıkar).
+function birlikteYaz(yazmalar, ozeller) {
     const liste = (yazmalar || []).filter(Boolean);
-    const zarf = yazmaZarfi(liste.map((y) => y.tablo));
-    return Promise.all(liste.map((y) => {
-        const soz = tabloYaz(y.anahtar, y.tablo, y.kayitlar, undefined, { zarf });
-        return y.etiket ? yazimiIzle(soz, y.etiket, y.kayitlar) : soz;
-    })).then((sonuclar) => {
+    const ozel = (ozeller || []).filter(Boolean);
+    const zarf = yazmaZarfi([...liste.map((y) => y.tablo), ...ozel.map((o) => o.tablo)]);
+    return Promise.all([...liste.map((y) => {
+            const soz = tabloYaz(y.anahtar, y.tablo, y.kayitlar, undefined, { zarf });
+            return y.etiket ? yazimiIzle(soz, y.etiket, y.kayitlar) : soz;
+        }), ...ozel.map((o) => Promise.resolve(o.yaz(zarf)).then((r) => r || { ok: true }))]).then((sonuclar) => {
         const dusen = sonuclar.find((r) => !r || r.ok === false);
         return { ok: !dusen, hata: dusen ? (dusen.hata || "bilinmeyen hata") : null, sonuclar };
     });
 }
+// KASA + CARİ ZARFI (v1.729.0, 205): kasa/banka hareketi ile cari karşılığı tek işlemde — yalnız Kasa & Banka v2'deyken.
+// Değilse null: iki yazma eskisi gibi sırayla (kasa beklenir, sonra cari).
+function kasaZarfiAc(cariVar) { return cariVar && kasaV2Aktif() ? yazmaZarfi(["muhasebe", "cariler"]) : null; }
 function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
     if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar))
         yerelKayitlar = gorselleriAyir(kayitlar).stok;
@@ -7800,6 +8077,8 @@ async function supabasedenOku(secenek = {}) {
     const stokV2Ayari = yalniz ? null : supabaseTumSatirlar("stk_ayar", "select=*").then((ayar) => {
         stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif));
         cariV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].cari_aktif));
+        altV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].alt_aktif));
+        kasaV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].kasa_aktif)); // Kasa & Banka v2 (v1.729.0, 030 tekilYaz)
     }, () => { });
     const [tanimSatir, cariSatir, cariHareket, urunSatir, varyantSatir, hareketSatir, sipSatir, kalemSatir, uretSatir, atamaSatir, rezSatir, onaySatir, copSatir, cekGorselSatir,] = await Promise.all([
         oku("tanimlar"),
@@ -7996,6 +8275,8 @@ const DEGISIKLIK_TABLO_ALANI = {
     uretim: "uretim", uretim_atamalari: "uretim",
     stok_rezervasyonlari: "stokRezervasyonlari", onaylar: "onaylar", cop: "cop",
     tanimlar: "tanimlar", muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler",
+    // Kasa & Banka v2 (v1.729.0): geçişten sonra `muhasebe` görünüm — sayacı v2 tabloları artırır.
+    kas_hesap: "muhasebe", kas_hareket: "muhasebe", kas_cek: "muhasebe", kas_ayar: "muhasebe",
     faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller", teklifler: "teklifler",
     // mesajlar: sohbet kendi 6 sn yoklamasıyla tazeleniyor (100); cek_gorselleri: kendi yazma yolu, nadir — burada yok.
 };
@@ -13229,6 +13510,7 @@ const ARSIV_TABLO_ADLARI = {
     uretim: "Üretim", uretim_atamalari: "İş ataması", stok_rezervasyonlari: "Rezervasyon", onaylar: "Onay",
     cek_gorselleri: "Çek görseli", cop: "Çöp kaydı", tanimlar: "Tanımlar", modeller: "Modeller",
     gorevler: "Görevler", koliler: "Koliler", faturalar: "Faturalar", muhasebe: "Kasa/Banka", teklifler: "Teklifler",
+    kas_hesap: "Kasa/Banka hesabı", kas_hareket: "Kasa/Banka hareketi", kas_cek: "Çek", // Kasa & Banka v2 (v1.729.0)
 };
 // TEK PARÇA TABLO GÖRÜNTÜSÜNE DÖNÜŞ (v1.725.0 — kullanıcı, 28 Ekim: telefonda Kasa & Banka "0 hesap"; "yapıda sorun varsa
 // yapıyı baştan kuralım"). Sunucu arşivi tek parça tabloların değişiklik öncesi hâlini günde bir kez, 30 gün tutuyor
@@ -13717,8 +13999,9 @@ function cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari
         cari_hareketleri: topla(cariler, (c) => c.hareketler || []),
         siparisler: (siparisler || []).length,
         siparis_kalemleri: topla(siparisler, (s) => s.kalemler || []),
-        uretim: (uretim || []).length,
-        uretim_atamalari: topla(uretim, (u) => (u.prosesIlerleme || []).flatMap((p) => (p && p.atamalar) || [])),
+        // Üretim listesi verilmediyse (v1.729.1 öncesi Tanımlar) 0 değil "bilinmiyor": sahte "bulutta fazla" çıkmasın.
+        uretim: Array.isArray(uretim) ? uretim.length : null,
+        uretim_atamalari: Array.isArray(uretim) ? topla(uretim, (u) => (u.prosesIlerleme || []).flatMap((p) => (p && p.atamalar) || [])) : null,
         stok_rezervasyonlari: (stokRezervasyonlari || []).length,
         onaylar: (onaylar || []).length,
         cop: (cop || []).length,
@@ -13727,12 +14010,15 @@ function cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari
 // Cihaz / bulut / arşiv sayılarını satırlara çevirir — saf. `bulut[t]` sayı ya da null (okunamadı).
 function sayimKarsilastir(cihaz, bulut, arsiv30) {
     return SAYIM_TABLOLARI.map((tablo) => {
-        const c = Number((cihaz || {})[tablo]) || 0;
+        const cHam = (cihaz || {})[tablo];
+        const c = Number(cHam) || 0;
         const bHam = (bulut || {})[tablo];
         const b = bHam == null ? null : Number(bHam) || 0;
         const a = Number((arsiv30 || {})[tablo]) || 0;
         let durum = "okunamadı";
-        if (b != null) {
+        if (cHam === null)
+            durum = "bu cihazın sayısı bu ekranda bilinmiyor";
+        else if (b != null) {
             if (b === c)
                 durum = "aynı";
             else if (b > c)
@@ -13740,7 +14026,7 @@ function sayimKarsilastir(cihaz, bulut, arsiv30) {
             else
                 durum = `cihazda ${c - b} fazla — bulutta silinmiş olabilir${a > 0 ? ` (arşivde ${a} silinmiş satır var)` : ""}`;
         }
-        return { tablo, ad: ARSIV_TABLO_ADLARI[tablo] || tablo, cihaz: c, bulut: b, arsiv30: a, durum };
+        return { tablo, ad: ARSIV_TABLO_ADLARI[tablo] || tablo, cihaz: cHam === null ? null : c, bulut: b, arsiv30: a, durum };
     });
 }
 // Content-Range: "0-0/1234" ya da "*/0". Sayı sondaki parça.
@@ -13761,6 +14047,44 @@ async function supabaseSatirSayisi(tablo, sorgu = "select=id") {
         throw new Error(`${tablo}: sayı okunamadı`);
     return n;
 }
+// SÜTUNU FARKLI TABLOLAR (v1.729.0 — kullanıcı, 29 Ekim ekran görüntüsü: "Ürün varyantı · okunamadı — varyantlar: HTTP 400").
+// Stok v2 geçişinden sonra `varyantlar` bir görünüm ve `id` sütunu yok (varyantın kimliği ürün + renk + beden); `select=id`
+// PostgREST'te 400 döner. Sayım yalnız satır sayar, hangi sütunun istendiği önemsiz — var olan bir sütun yeter.
+const SAYIM_SORGUSU = { varyantlar: "select=urun_id" };
+// HANGİ KAYIT FARKLI (v1.729.0 — kullanıcı, 29 Ekim: "Üretim · bu cihaz 0, bulut 1 · İş ataması 0 / 2"; "bu sorun son
+// güncellemelerden önce de vardı"). Sayı farkı "bir şey ters" der ama neyin ters olduğunu söylemez; kod okumasıyla kesin
+// sebep bulunamadı. Ana tablolarda fark varsa buluttaki kimlikler (ve okunur bir ad) indirilir, bu cihazdakilerle karşılaştırılır:
+//   · bulutta olup bu cihazda olmayan kayıt — ve bu cihazın bekleyen kayıt defterinde (025) o kayıt için "sil" var mı
+//     (cihaz silmiş, silme buluta gitmemiş) ya da yok mu (cihaz hiç görmemiş / okurken düşürmüş),
+//   · bu cihazda olup bulutta olmayan kayıt.
+// Yalnız okur, hiçbir şeyi düzeltmez — sebep görünür olsun diye. Saf karşılaştırma `sayimKimlikFarki` (birim-bulut-sayim).
+const SAYIM_KIMLIK_TABLOLARI = { urunler: "ad", cariler: "unvan", siparisler: "siparis_no", uretim: "siparis_no" };
+function sayimKimlikFarki(cihazKayitlari, bulutSatirlari, adSutunu, bekleyenDefter) {
+    const cihazIdler = new Set((cihazKayitlari || []).filter(Boolean).map((k) => String(k.id)));
+    const bulutIdler = new Set((bulutSatirlari || []).filter(Boolean).map((r) => String(r.id)));
+    const ana = (bekleyenDefter && bekleyenDefter.ana) || {};
+    const cihazAd = (k) => k.siparisNo || k.ad || k.unvan || "";
+    return {
+        yalnizBulutta: (bulutSatirlari || []).filter((r) => r && !cihazIdler.has(String(r.id)))
+            .map((r) => ({ id: String(r.id), ad: r[adSutunu] || "", bekleyen: ana[String(r.id)] || null })),
+        yalnizCihazda: (cihazKayitlari || []).filter((k) => k && !bulutIdler.has(String(k.id)))
+            .map((k) => ({ id: String(k.id), ad: cihazAd(k), bekleyen: ana[String(k.id)] || null })),
+    };
+}
+async function sayimFarkAyrintisi(tablolar, cihazListeleri) {
+    const sonuc = {};
+    const defter = typeof bekleyenKayitlariOku === "function" ? bekleyenKayitlariOku() : {};
+    await Promise.all(tablolar.filter((t) => SAYIM_KIMLIK_TABLOLARI[t] && cihazListeleri && cihazListeleri[t]).map(async (t) => {
+        try {
+            const satirlar = await supabaseTumSatirlar(t, `select=id,${SAYIM_KIMLIK_TABLOLARI[t]}`);
+            sonuc[t] = sayimKimlikFarki(cihazListeleri[t], satirlar, SAYIM_KIMLIK_TABLOLARI[t], defter[t]);
+        }
+        catch (e) {
+            sonuc[t] = { hata: String((e && e.message) || e).slice(0, 120) };
+        }
+    }));
+    return sonuc;
+}
 // Bütün sayım tablolarının bulut ve arşiv (son 30 gün, DELETE) sayıları. Okunamayan tablo null.
 async function bulutSayimiAl(gunOnce = 30) {
     const esik = new Date(Date.now() - gunOnce * 24 * 60 * 60 * 1000).toISOString();
@@ -13769,7 +14093,7 @@ async function bulutSayimiAl(gunOnce = 30) {
     const hatalar = [];
     await Promise.all(SAYIM_TABLOLARI.map(async (tablo) => {
         try {
-            bulut[tablo] = await supabaseSatirSayisi(tablo);
+            bulut[tablo] = await supabaseSatirSayisi(tablo, SAYIM_SORGUSU[tablo]);
         }
         catch (e) {
             bulut[tablo] = null;
@@ -13837,9 +14161,10 @@ async function arsivSatirlariniGeriYukle(tablo, satirlar) {
 }
 // ---------------------------------------------------------------------------------------------
 // BULUT SAYIMI BÖLÜMÜ (Tanımlar › Bakım, yalnız Yönetici)
-function BulutSayimiBolumu({ cihaz }) {
+function BulutSayimiBolumu({ cihaz, kayitlar }) {
     const [satirlar, setSatirlar] = useState(null);
     const [durum, setDurum] = useState("");
+    const [ayrinti, setAyrinti] = useState(null);
     const yukle = async () => {
         if (!supabaseAcikMi()) {
             setDurum("Bulut bağlı değil.");
@@ -13848,8 +14173,12 @@ function BulutSayimiBolumu({ cihaz }) {
         setDurum("Sayılıyor…");
         try {
             const { bulut, arsiv30, hatalar } = await bulutSayimiAl(30);
-            setSatirlar(sayimKarsilastir(cihaz, bulut, arsiv30));
+            const s = sayimKarsilastir(cihaz, bulut, arsiv30);
+            setSatirlar(s);
             setDurum(hatalar.length ? `Okunamayan: ${hatalar.join("; ")}` : "");
+            // Farklı ana tablolarda hangi kayıt (alt tablo farkı — iş ataması gibi — üst tablonun farkından okunur).
+            const farkliAna = s.filter((x) => x.bulut != null && x.durum !== "aynı").map((x) => x.tablo);
+            setAyrinti(farkliAna.length ? await sayimFarkAyrintisi(farkliAna, kayitlar) : null);
         }
         catch (e) {
             setDurum(`Sayım alınamadı: ${String((e && e.message) || e).slice(0, 160)}`);
@@ -13877,11 +14206,36 @@ function BulutSayimiBolumu({ cihaz }) {
                         React.createElement("th", { style: { padding: "3px 8px" } }, "Durum"))),
                 React.createElement("tbody", null, satirlar.map((s) => (React.createElement("tr", { key: s.tablo, "data-sayim-tablo": s.tablo, style: { borderTop: "1px solid var(--erp-line-soft)", background: s.durum === "aynı" ? "transparent" : "var(--erp-orange-bg)" } },
                     React.createElement("td", { style: { padding: "3px 8px" } }, s.ad),
-                    React.createElement("td", { style: { padding: "3px 8px", textAlign: "right" } }, s.cihaz),
+                    React.createElement("td", { style: { padding: "3px 8px", textAlign: "right" } }, s.cihaz == null ? "—" : s.cihaz),
                     React.createElement("td", { style: { padding: "3px 8px", textAlign: "right" } }, s.bulut == null ? "—" : s.bulut),
                     React.createElement("td", { style: { padding: "3px 8px", textAlign: "right" } }, s.arsiv30),
                     React.createElement("td", { style: { padding: "3px 8px", color: s.durum === "aynı" ? "var(--erp-text-3)" : "var(--erp-warn)", fontWeight: s.durum === "aynı" ? 400 : 700 } }, s.durum)))))),
             farkli.length === 0 && React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 } }, "Bu cihaz ile bulut birebir ayn\u0131."),
+            ayrinti && Object.keys(ayrinti).length > 0 && (React.createElement("div", { "data-sayim-ayrinti": "1", className: "mono", style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 8, lineHeight: 1.6 } },
+                Object.entries(ayrinti).map(([t, a]) => (React.createElement("div", { key: t },
+                    React.createElement("b", null,
+                        ARSIV_TABLO_ADLARI[t] || t,
+                        ":"),
+                    " ",
+                    a.hata ? `ayrıntı okunamadı (${a.hata})` : (React.createElement(React.Fragment, null,
+                        a.yalnizBulutta.map((x) => (React.createElement("div", { key: `b-${x.id}`, "data-sayim-yalniz-bulutta": x.id },
+                            "\u00B7 bulutta var, bu cihazda yok: ",
+                            x.ad || "—",
+                            " (",
+                            x.id,
+                            ") \u2014 ",
+                            x.bekleyen === "sil"
+                                ? "bu cihaz SİLMİŞ, silme buluta gitmemiş (bekleyen kayıt defterinde)"
+                                : "bu cihazda bekleyen silme yok: cihaz bu kaydı hiç almamış ya da okurken düşürmüş"))),
+                        a.yalnizCihazda.map((x) => (React.createElement("div", { key: `c-${x.id}`, "data-sayim-yalniz-cihazda": x.id },
+                            "\u00B7 bu cihazda var, bulutta yok: ",
+                            x.ad || "—",
+                            " (",
+                            x.id,
+                            ")",
+                            x.bekleyen === "yaz" ? " — bekleyen yazma (henüz gönderilmedi)" : ""))),
+                        a.yalnizBulutta.length === 0 && a.yalnizCihazda.length === 0 && "kayıt kimlikleri aynı (fark alt kayıtlarda)"))))),
+                React.createElement("div", { style: { marginTop: 4, color: "var(--erp-text-3)" } }, "Bu sat\u0131rlar\u0131n ekran g\u00F6r\u00FCnt\u00FCs\u00FC sebebi bulmaya yeter."))),
             farkli.length > 0 && (React.createElement("div", { style: { fontSize: 11, color: "var(--erp-text-2)", marginTop: 6, lineHeight: 1.5 } },
                 "Bulutta silinmi\u015F g\u00F6r\u00FCnen sat\u0131rlar ",
                 React.createElement("b", null, "\u00C7\u00F6p Kutusu"),
@@ -15702,12 +16056,7 @@ function useUretimTeslim(d) {
         setStok(nextStok);
         setCariler(nextCariler);
         setUretim(nextUretim);
-        // Stok (hammadde çıkışı, mamul girişi) ve cari (işçilik) TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
-        birlikteYaz([
-            { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
-            { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
-        ]);
-        yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
+        // Yazma aşağıda, sipariş rezervasyon iadesi hesaplandıktan sonra TEK ZARFTA (v1.727.0 / v1.728.0).
         // SIRA (v1.537.0 — son denetim): bu blok sipariş listesi YAZILDIKTAN SONRA çalışıyordu; alış rezervasyonundaki
         // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce.
         // Artan malzeme rezervasyonu da SERBEST bırakır: geri gelen mal aslında tüketilmemiştir.
@@ -15724,10 +16073,18 @@ function useUretimTeslim(d) {
                 }
             });
         }
+        // Stok (hammadde çıkışı, mamul girişi), cari (işçilik), üretim (atamanın teslimi) ve — değiştiyse — sipariş (rezervasyon
+        // iadesi) TEK ZARFTA (v1.728.0): v2'de satırları tek sunucu işlemiyle gider, biri düşüp öteki kalamaz.
+        const teslimYazmalari = [
+            { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
+            { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
+            { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" },
+        ];
         if (nextSiparislerRez !== siparisler) {
             setSiparisler(nextSiparislerRez);
-            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+            teslimYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
         }
+        birlikteYaz(teslimYazmalari);
         if (nextStokRez !== stokRezervasyonlari) {
             // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
             // üretimin satırları) bütün listeyi yazmak o satırları buluta geri getiriyordu.
@@ -16497,12 +16854,11 @@ function useProsesVer(d) {
         setStok(nextStok);
         setCariler(nextCariler);
         setUretim(nextUretim);
+        // Stok + cari (ara proses kendiliğinden tamamlanıyorsa), sipariş (değiştiyse) ve üretim TEK ZARFTA (v1.728.0).
+        const verYazmalari = [];
         if (araProsesOtomatikTamamlanacakMi) {
-            // Stok ve cari TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
-            birlikteYaz([
-                { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
-                { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
-            ]);
+            verYazmalari.push({ anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" });
+            verYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" });
         }
         if (nextStokRez !== stokRezervasyonlari) {
             // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
@@ -16516,9 +16872,10 @@ function useProsesVer(d) {
         }
         if (nextSiparislerRez !== siparisler && setSiparisler) {
             setSiparisler(nextSiparislerRez);
-            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+            verYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
         }
-        yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
+        verYazmalari.push({ anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" });
+        birlikteYaz(verYazmalari);
         const personelAdi = ((cariler || []).find((c) => c.id === personelId) || {}).unvan || "personel";
         const bedenOzet = Object.entries(bedenMiktarlari).map(([b, m]) => `${b}:${m}`).join(", ");
         showToast(`${toplamGirilen} adet (${bedenOzet}) ${personelAdi}'a verildi${araMesaj}`);
@@ -16745,11 +17102,11 @@ function useSiparisTeslim(d) {
         // GÜNCEL LİSTEYE YALNIZ DEĞİŞENLER (v1.639.0, denetim): defter yazımı beklenirken (yukarıdaki await) başka pencerede/
         // cihazdan gelen değişiklik tam liste set edilince eziliyor, buluta eski hâl gidiyordu. Her tablo kendi güncelleyicisinde
         // birleşir ve yazılır (`tabloYaz` zaten sıraya alıp yeniden deniyor; 100-app `yazimiIzle` hatayı şeride taşır).
-        setSiparisler((onceki) => { const n = degisenKayitlariBirlestir(onceki, siparisler, nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n); return n; }); // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
+        // Sipariş (karşılanan), stok çıkışı ve cari (satış) TEK ZARFTA (v1.727.0 / v1.728.0): üç güncelleyici aynı çizimde çalışır.
+        const zarf = yazmaZarfi(["siparisler", "urunler", "cariler"]);
+        setSiparisler((onceki) => { const n = degisenKayitlariBirlestir(onceki, siparisler, nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", n, undefined, { zarf }), "Siparişler", n); return n; }); // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
         if (koliIslemi)
             koliIslemi();
-        // Stok çıkışı ve cari (satış) TEK ZARFTA (v1.727.0): iki güncelleyici aynı çizimde çalışır, zarf ikisini birlikte yazar.
-        const zarf = yazmaZarfi(["urunler", "cariler"]);
         setStok((onceki) => { const n = degisenKayitlariBirlestir(onceki, stok, nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", n, undefined, { zarf }), "Stok kartları", n); return n; }); // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
         setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, cariler, nextCariler); yazimiIzle(tabloYaz("cari:data", "cariler", n, undefined, { zarf }), "Cari kartları", n); return n; }); // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
         showToast(bildirim);
@@ -17342,7 +17699,8 @@ function useHurdaTelafi(d) {
 // silindi, kasa kaydı yerinde durdu ve kasa bakiyesi gerçeği söylemez hale geldi.
 function useMuhasebeBagiTemizle(d) {
     const { muhasebe, setMuhasebe, cariler, showToast } = d;
-    const muhasebeBaglariniTemizle = useCallback(async (bagIdler, temel) => {
+    // `secenek.zarf` (v1.729.0): fiş geri alınırken kasa temizliği stok / cari geri alımıyla tek sunucu işleminde (100).
+    const muhasebeBaglariniTemizle = useCallback(async (bagIdler, temel, secenek) => {
         if (!bagIdler || bagIdler.length === 0)
             return null;
         const kume = new Set(bagIdler);
@@ -17353,7 +17711,7 @@ function useMuhasebeBagiTemizle(d) {
         }));
         const yeni = { ...kaynak, kasalar: temizle(kaynak.kasalar), bankalar: temizle(kaynak.bankalar) };
         setMuhasebe(yeni);
-        return tekilYaz("muhasebe:data", "muhasebe", yeni);
+        return tekilYaz("muhasebe:data", "muhasebe", yeni, secenek || {});
     }, [muhasebe]);
     return muhasebeBaglariniTemizle;
 }
@@ -18234,6 +18592,11 @@ function useCariFisiKaydet(d) {
         // alınanı artar, durum güncellenir — sipariş kartından kesilen fişle aynı sonuç. Geri alma
         // `fisGeriAl`da hareketten (`siparisId|kalemId`) okunuyor, burada ek bir şey gerekmez.
         const bagliKalemler = kalemler.filter((k) => k.siparis && k.siparis.id && k.kalemId);
+        // Stok, cari ve (bağlı kalem varsa) sipariş TEK ZARFTA (v1.727.0 / v1.728.0): fişin malı, borcu ve siparişin teslim alınanı
+        // v2'de tek sunucu işlemiyle yazılır — biri düşüp öteki kalamaz. Cari tarafı aşağıda huniden aynı zarfla gelir.
+        // Peşin kısım (kasa/banka hareketi) da aynı zarfta (v1.729.0) — Kasa & Banka v2'deyse; değilse zarf onu beklemez (040).
+        const pesinVar = !!(sonuc.pesinHareket && sonuc.pesinHareket.hesapId);
+        const zarf = yazmaZarfi([...(bagliKalemler.length > 0 ? ["siparisler"] : []), "urunler", "cariler", ...(pesinVar ? ["muhasebe"] : [])]);
         if (bagliKalemler.length > 0) {
             setSiparisler((prev) => {
                 const next = prev.map((s) => {
@@ -18248,15 +18611,12 @@ function useCariFisiKaydet(d) {
                     const hicYok = nextKalemler.every((k) => (k.karsilanan || 0) === 0);
                     return { ...s, kalemler: nextKalemler, durum: tumuTam ? "Tamamlandı" : hicYok ? s.durum : "Kısmi Teslim" };
                 });
-                yazimiIzle(tabloYaz("siparis:data", "siparisler", next), "Siparişler", next);
+                yazimiIzle(tabloYaz("siparis:data", "siparisler", next, undefined, { zarf }), "Siparişler", next);
                 return next;
             });
         }
         // Güncel listeye yalnız değişen ürünler işlenir (v1.639.0, bkz. 075 `degisenKayitlariBirlestir`): defter yazımı beklenirken
         // gelen başka değişiklik ezilmesin.
-        // Stok ve cari TEK ZARFTA (v1.727.0): fişin malı ile borcu v2'de tek sunucu işlemiyle yazılır — biri düşüp öteki
-        // kalamaz. Cari tarafı aşağıda huniden (`addCariHareketFromStok`) aynı zarfla gelir.
-        const zarf = yazmaZarfi(["urunler", "cariler"]);
         setStok((onceki) => {
             const next = degisenKayitlariBirlestir(onceki, stok, sonuc.stok); // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
             yazimiIzle(tabloYaz("stok:items", "urunler", next, undefined, { zarf }), "Stok kartları", next);
@@ -18276,7 +18636,7 @@ function useCariFisiKaydet(d) {
         // kayıt); burada yalnız hesabın kendi defteri güncelleniyor. İkisi `muhasebeBagId` ile bağlı,
         // yani fiş geri alınınca `fisGeriAl` bu hareketi de siliyor.
         if (sonuc.pesinHareket)
-            muhasebeyePesinIsle(sonuc.pesinHareket);
+            muhasebeyePesinIsle(sonuc.pesinHareket, { zarf });
         const toplamTutar = stokYuvarla(sonuc.cariHareketleri
             .filter((h) => h.defter !== "Resmi")
             .reduce((t, h) => t + h.tutar, 0));
@@ -19902,8 +20262,10 @@ function useYedekleme(d) {
         await tabloYaz("cari:data", "cariler", y.cariler || [], undefined, yazmaSecenegi);
         if (y.tanimlar)
             await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false }); // yedek bütünüyle döner
+        // Kasa & Banka v2 (v1.729.0): yedeğin hâli bütünüyle döner — yedekten sonra girilen hareketler iptal olur (iz kalır);
+        // toplu iptal kilidi (038) bu yazma için açık, eski sürümde belge zaten bütünüyle yazılıyordu.
         if (y.muhasebe)
-            await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
+            await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe, { topluSilmeIzni: true });
         if (Array.isArray(y.koliler))
             await tekilYaz("koli:data", "koliler", y.koliler);
         if (Array.isArray(y.gorevler))
@@ -20009,7 +20371,7 @@ function useYedekleme(d) {
             if (y.tanimlar)
                 await tekilYaz("tanimlar:data", "tanimlar", y.tanimlar, { birlestirme: false }); // yedek bütünüyle döner
             if (y.muhasebe)
-                await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe);
+                await tekilYaz("muhasebe:data", "muhasebe", y.muhasebe, { topluSilmeIzni: true }); // bkz. yukarı (v1.729.0)
             showToast(`${tarih} tarihli yedek geri yüklendi — geri yükleme öncesi hâl de ayrıca saklandı`);
         }
         catch (e) {
@@ -21832,14 +22194,15 @@ function AtolyeUygulamasi() {
     // kaydediyor. Ayrı bir fonksiyon olmasının sebebi kapı sayımı: `stokFisiKaydet`in içinde
     // kalsaydı o fonksiyon "hareket yazan yeni bir kapı" gibi görünür ve 16. denetimin ölçtüğü
     // kopya sayısı yanıltıcı olurdu.
-    const muhasebeyePesinIsle = useCallback((p) => {
+    // `secenek.zarf` (v1.729.0): peşin fişte kasa satırı fişin stok / cari satırlarıyla tek sunucu işleminde (030 tekilYaz).
+    const muhasebeyePesinIsle = useCallback((p, secenek) => {
         if (!p || !p.hesapId)
             return;
         if (donemKilidiEngel(p.hareket && p.hareket.tarih, showToast, "Kasa/banka hareketi"))
             return;
         setMuhasebe((onceki) => {
             const yeni = hesabaHareketEkle(onceki, p.hesapTur, p.hesapId, p.hareket);
-            yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeni), "Muhasebe", yeni);
+            yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeni, secenek || {}), "Muhasebe", yeni);
             return yeni;
         });
     }, [showToast]);
@@ -22055,16 +22418,17 @@ function AtolyeUygulamasi() {
         setStok(sonuc.stok);
         setCariler(sonuc.cariler);
         setUretim(sonuc.uretim);
-        // Stok ve cari geri alması TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
-        birlikteYaz([
+        // Stok, cari, üretim ve (değiştiyse) sipariş geri alması TEK ZARFTA (v1.727.0 / v1.728.0): v2'de tek sunucu işlemi.
+        const geriAlYazmalari = [
             { anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok, etiket: "Stok kartları" },
             { anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" },
-        ]);
-        yazimiIzle(tabloYaz("uretim:siparisler", "uretim", sonuc.uretim), "Üretim", sonuc.uretim);
+            { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: sonuc.uretim, etiket: "Üretim" },
+        ];
         if (nextSiparislerRez !== siparisler) {
             setSiparisler(nextSiparislerRez);
-            yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+            geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
         }
+        birlikteYaz(geriAlYazmalari);
         if (nextStokRezGeri !== stokRezervasyonlari) {
             setStokRezervasyonlari(nextStokRezGeri);
             yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRezGeri), "Stok rezervasyonları", nextStokRezGeri);
@@ -22519,7 +22883,7 @@ function AtolyeUygulamasi() {
         showToast(`${k.kombinasyonlar.length} model rengi geri kuruldu (${k.etiketler.map((e) => e.split(" - ")[0]).join(", ")})`
             + (k.renkler.length ? ` · ${k.renkler.length} renk de yeniden tanımlandı: ${k.renkler.map((r) => r.ad).join(", ")}` : ""));
     }, [stok, tanimlar, saveTanimlar, showToast]);
-    const saveCariler = useCallback(async (next) => {
+    const saveCariler = useCallback(async (next, secenek) => {
         // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
         // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
         // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
@@ -22531,7 +22895,7 @@ function AtolyeUygulamasi() {
                         setTanimlar(sonuc.tanimlar);
                         yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
                     });
-                yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler), "Cari kartları", sonuc.cariler);
+                yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler, undefined, secenek), "Cari kartları", sonuc.cariler);
                 return sonuc.cariler;
             });
             return;
@@ -22548,7 +22912,7 @@ function AtolyeUygulamasi() {
             showToast("Cari kod aralığı doldu — şema genişletilmeli");
         setCariler(sonuc.cariler);
         try {
-            await tabloYaz("cari:data", "cariler", sonuc.cariler);
+            await tabloYaz("cari:data", "cariler", sonuc.cariler, undefined, secenek);
         }
         catch (e) {
             kaydetmeHatasiBildir(e, "Cari", sonuc.cariler);
@@ -22995,10 +23359,11 @@ function AtolyeUygulamasi() {
     // türler `yanEtkiliMi: true` işaretlenir ve kullanıcı geri yüklemeden ÖNCE açıkça uyarılır.
     // Sessizce "geri yüklendi" demek, tutarsız bir veriyi doğruymuş gibi göstermek olurdu.
     // ---------------------------------------------------------------------------------------------
-    const saveMuhasebe = useCallback(async (next) => {
+    // `secenek.zarf` (v1.729.0): kasa tahsilat / ödemesi cari satırıyla tek sunucu işleminde (205, 040 `yazmaZarfi`).
+    const saveMuhasebe = useCallback(async (next, secenek) => {
         setMuhasebe(next);
         try {
-            await tekilYaz("muhasebe:data", "muhasebe", next);
+            await tekilYaz("muhasebe:data", "muhasebe", next, secenek || {});
         }
         catch (e) {
             kaydetmeHatasiBildir(e, "Muhasebe", next);
@@ -23858,12 +24223,20 @@ function AtolyeUygulamasi() {
             setCariler(sonuc.cariler);
             geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" });
         }
-        if (geriAlYazmalari.length)
-            birlikteYaz(geriAlYazmalari);
         if (sonuc.etkilenenSiparisler.size > 0) {
             setSiparisler(sonuc.siparisler);
-            yazimiIzle(tabloYaz("siparis:data", "siparisler", sonuc.siparisler), "Siparişler", sonuc.siparisler);
+            geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: sonuc.siparisler, etiket: "Siparişler" }); // v1.728.0: aynı zarfta
         }
+        // MUHASEBE TEK YAZIMLA. Kasa karşı kaydı ve çek değişikliği AYNI kayda (`muhasebe`) düşüyor.
+        // Eskiden önce kasa temizliği yazılıp ardından çek değişikliği `sonuc.muhasebe` ile yazılıyordu:
+        // ikincisi kasa temizliğini içermediği için onu EZİYORDU. Temizlik `sonuc.muhasebe` üzerine
+        // yapıldığında çek değişikliği de içinde; ayrı bir yazıma gerek kalmıyor.
+        // AYNI ZARFTA (v1.729.0): Kasa & Banka v2'deyse kasa satırları stok / cari geri alımıyla tek sunucu işleminde.
+        const kasaGeriAl = sonuc.muhasebeBagIdler.length > 0
+            ? { tablo: "muhasebe", yaz: (zarf) => muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe, { zarf }) }
+            : sonuc.cekDegisti ? { tablo: "muhasebe", yaz: (zarf) => saveMuhasebe(sonuc.muhasebe, { zarf }) } : null;
+        if (geriAlYazmalari.length || kasaGeriAl)
+            birlikteYaz(geriAlYazmalari, [kasaGeriAl]);
         // ÇEK: harekete bağlı çek kaydı da gider. Ödemesi silinmiş bir çekin vadesi gelince
         // hatırlatılması, kullanıcıyı olmayan bir alacağın peşine düşürürdü.
         sonuc.silinenCekler.forEach((c) => {
@@ -23884,14 +24257,7 @@ function AtolyeUygulamasi() {
                 ? `${etiket} — ${ilk.cekNo || "çek"} yeniden "${ilk.durum}"`
                 : `${sonuc.geriAlinanCekler.length} çekin işlemi geri alındı`);
         }
-        // MUHASEBE TEK YAZIMLA. Kasa karşı kaydı ve çek değişikliği AYNI kayda (`muhasebe`) düşüyor.
-        // Eskiden önce kasa temizliği yazılıp ardından çek değişikliği `sonuc.muhasebe` ile yazılıyordu:
-        // ikincisi kasa temizliğini içermediği için onu EZİYORDU. Temizlik `sonuc.muhasebe` üzerine
-        // yapıldığında çek değişikliği de içinde; ayrı bir yazıma gerek kalmıyor.
-        if (sonuc.muhasebeBagIdler.length > 0)
-            muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe);
-        else if (sonuc.cekDegisti)
-            saveMuhasebe(sonuc.muhasebe);
+        // (Muhasebe yazması yukarıda, stok / cari geri alımıyla aynı zarfta.)
         // KOLİ: sevkiyat fişi geri alınınca koli yeniden "Hazır" olur ve tekrar okutulabilir.
         if (sonuc.etkilenenKoliler.length > 0) {
             saveKoliler(sonuc.koliler);
@@ -24032,12 +24398,19 @@ function AtolyeUygulamasi() {
             setCariler(sonuc.cariler);
             geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler });
         }
-        if (geriAlYazmalari.length)
-            sonuclar.push(...(await birlikteYaz(geriAlYazmalari)).sonuclar);
         if (sonuc.etkilenenSiparisler.size > 0) {
             setSiparisler(sonuc.siparisler);
-            sonuclar.push(await tabloYaz("siparis:data", "siparisler", sonuc.siparisler));
-        }
+            geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: sonuc.siparisler });
+        } // v1.728.0: aynı zarfta
+        // Kasa karşı kaydı (peşin kısım) ve çek değişikliği de aynı zarfta (v1.729.0) — Kasa & Banka v2'deyse tek sunucu işlemi.
+        // TEK YAZIM: temizlik `sonuc.muhasebe` üzerine yapılıyor, yani çek değişikliği de içinde.
+        const kasaTemizligi = sonuc.muhasebeBagIdler.length > 0
+            ? { tablo: "muhasebe", yaz: (zarf) => muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe, { zarf }) }
+            : sonuc.cekDegisti
+                ? { tablo: "muhasebe", yaz: (zarf) => { setMuhasebe(sonuc.muhasebe); return tekilYaz("muhasebe:data", "muhasebe", sonuc.muhasebe, { zarf }); } }
+                : null;
+        if (geriAlYazmalari.length || kasaTemizligi)
+            sonuclar.push(...(await birlikteYaz(geriAlYazmalari, [kasaTemizligi])).sonuclar);
         // ÇEK: fişe bağlı çek kayıtları gider, ciro fişi silindiyse çek portföye döner
         // (bkz. removeHareketEverywhere).
         sonuc.silinenCekler.forEach((c) => {
@@ -24051,17 +24424,7 @@ function AtolyeUygulamasi() {
             gunlukYaz(`Çek işlemi geri alındı: ${c.cekNo || "no yok"}`, "muhasebe", { cekId: c.id, fisNo: fis.fisNo || null });
         });
         // KASA/BANKA KARŞI KAYDI — BU SATIR EKSİKTİ. Fişten silinen bir peşin tahsilat/ödeme cariden
-        // gidiyor ama kasada yetim kalıyordu (kullanıcı bildirdi, 6 Eylül).
-        // TEK YAZIM: temizlik `sonuc.muhasebe` üzerine yapılıyor, yani çek değişikliği de içinde.
-        if (sonuc.muhasebeBagIdler.length > 0) {
-            const r = await muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe);
-            if (r)
-                sonuclar.push(r);
-        }
-        else if (sonuc.cekDegisti) {
-            sonuclar.push(await tekilYaz("muhasebe:data", "muhasebe", sonuc.muhasebe));
-            setMuhasebe(sonuc.muhasebe);
-        }
+        // gidiyor ama kasada yetim kalıyordu (kullanıcı bildirdi, 6 Eylül). (Yazma yukarıda, stok / cariyle aynı zarfta.)
         // KOLİ: bkz. removeHareketEverywhere.
         if (sonuc.etkilenenKoliler.length > 0) {
             setKoliler(sonuc.koliler);
@@ -24147,9 +24510,11 @@ function AtolyeUygulamasi() {
         // Önce tek kontrol: cari ve kasa ayağından biri kapalı dönemdeyse İKİSİ de yazılmaz (yarım kayıt olmasın).
         if (donemKilidiEngel([k.cariHareketi.tarih, k.muhasebe && k.muhasebe.hareket && k.muhasebe.hareket.tarih], showToast))
             return;
-        addCariHareketFromStok(k.cariId, k.cariHareketi);
+        // Cari ve kasa ayağı tek sunucu işleminde (v1.729.0) — Kasa & Banka v2'deyse (040 `kasaZarfiAc`).
+        const zarf = kasaZarfiAc(!!(k.muhasebe && k.muhasebe.hesapId));
+        addCariHareketFromStok(k.cariId, k.cariHareketi, zarf ? { zarf } : undefined);
         if (k.muhasebe && k.muhasebe.hesapId)
-            muhasebeyePesinIsle({ hesapTur: k.muhasebe.hesapTur, hesapId: k.muhasebe.hesapId, hareket: k.muhasebe.hareket });
+            muhasebeyePesinIsle({ hesapTur: k.muhasebe.hesapTur, hesapId: k.muhasebe.hesapId, hareket: k.muhasebe.hareket }, zarf ? { zarf } : undefined);
     }, [addCariHareketFromStok, muhasebeyePesinIsle, showToast]);
     const TAB_TITLES = {
         anasayfa: "Atölye ERP",
@@ -25037,7 +25402,12 @@ function AtolyeUygulamasi() {
                     React.createElement(GizliModul, { aktif: tab === "anasayfa" },
                         React.createElement(AnaSayfaModule, { gorevler: gorevler, aktifKullanici: aktifKullanici, onGoreveGit: () => setTab("gorevler"), stok: stok, uretim: uretim, tanimlar: tanimlar, cariler: cariler, siparisler: siparisler, muhasebe: muhasebe, uretim: uretim, stokRezervasyonlari: stokRezervasyonlariGecerli, onNavigate: setTab, onGoToSiparis: sipariseGit, onGoToUretim: (id) => { setUretimHedefId(id || null); setTab("uretim"); }, onGoToUrun: (urunId) => uruneGit(urunId, null, { tab: "anasayfa", etiket: "Ana sayfaya dön" }), onGoToCari: cariyeGit })),
                     React.createElement(GizliModul, { aktif: tab === "tanimlar" },
-                        React.createElement(TanimlarModule, { onaylar: onaylar, stokRezervasyonlari: stokRezervasyonlari, onYetimRezervasyonSil: yetimRezervasyonlariSil, onCariHareketEkle: addCariHareketFromStok, onCarilerKaydet: saveCariler, fisDefteri: fisDefteri, onYetimSiparisBagiCoz: yetimSiparisBaglariniTemizle, muhasebe: muhasebe, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: mobilDuzenKipiAyarla, mobilDuzenAktif: mobilDuzen, kullanimdakiOlculer: kullanimdakiOlculer, onTanimsizOlcuCevir: tanimsizOlcuCevir, onAktifKullaniciGuncelle: setAktifKullanici, onAcilisFisiKes: acilisFisiKes, onDefterFisIptal: (nolar) => { (nolar || []).forEach(fisDefterindeIptal); gunlukYaz(`Silinmiş üretimin fişleri defterde iptal işaretlendi: ${(nolar || []).join(", ")}`, "uretim", { fisler: nolar }); }, tanimlar: tanimlar, onSave: (sonraki) => {
+                        React.createElement(TanimlarModule, { onaylar: onaylar, 
+                            // ÜRETİM LİSTESİ EKSİKTİ (v1.729.1 — kullanıcı, 29 Ekim: Bakım › Bulut sayımı "Üretim 0, bulut 1 · İş ataması 0 / 2";
+                            // "bu sorun son güncellemelerden önce de vardı"). v1.713.0'dan beri Tanımlar `uretim` prop'unu bekliyor ama burada
+                            // verilmiyordu: Bakım'daki denetim üretimi BOŞ sanıp her rezervasyonu "silinmiş üretimin rezervasyonu" sayıyor
+                            // (23 kayıt), bulut sayımı üretimi 0 gösteriyordu. Veri yerindeydi; yanlış olan yalnız bu ekranın gördüğüydü.
+                            uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, onYetimRezervasyonSil: yetimRezervasyonlariSil, onCariHareketEkle: addCariHareketFromStok, onCarilerKaydet: saveCariler, fisDefteri: fisDefteri, onYetimSiparisBagiCoz: yetimSiparisBaglariniTemizle, muhasebe: muhasebe, mobilDuzenKipi: mobilDuzenKipi, onMobilDuzenKipi: mobilDuzenKipiAyarla, mobilDuzenAktif: mobilDuzen, kullanimdakiOlculer: kullanimdakiOlculer, onTanimsizOlcuCevir: tanimsizOlcuCevir, onAktifKullaniciGuncelle: setAktifKullanici, onAcilisFisiKes: acilisFisiKes, onDefterFisIptal: (nolar) => { (nolar || []).forEach(fisDefterindeIptal); gunlukYaz(`Silinmiş üretimin fişleri defterde iptal işaretlendi: ${(nolar || []).join(", ")}`, "uretim", { fisler: nolar }); }, tanimlar: tanimlar, onSave: (sonraki) => {
                                 // TANIMLARDA DÜZENLEME YETKİSİ (v1.569.0): görüntüleme yetkisi olan herkes her şeyi değiştirip silebiliyordu.
                                 // Yöneticisiz listede (kurtarma: "Bu hesabı Yönetici yap") kayda izin var.
                                 const yoneticiVar = (tanimlar.kullanicilar || []).some((k) => k.rol === "Yönetici");
@@ -27105,8 +27475,13 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
     //
     // ÖLÇÜ STOK HAREKETLERİ: fiş defteri değil, çünkü sevk edilen mal stoktan çıkar ve o hareket
     // siparişin kimliğini taşır. Hareket yoksa sevk de olmamıştır.
+    // İPTAL EDİLMİŞ SİPARİŞ SAYILMAZ (v1.729.0 — kullanıcı, 29 Ekim: denetim "SAT-1023 · siparişte 2, stok hareketlerinde 0"
+    // dedi; "1023 iptal edilen sipariş"). İptal (088 `siparisBaglariniCoz`, v1.512.0 kuralı) fişlere dokunmaz, yalnız bağı çözer:
+    // hareketlerden siparisId / kalemId kalkar, kalemin `karsilanan`ı ise "ne teslim edilmişti" tarihçesi olarak bilerek kalır.
+    // Bu iki sayı iptalden sonra hiçbir zaman tutmaz — tutarsızlık değil, iptalin tanımı. Burada ve aşağıda (2) atlanır.
+    const iptalMi = (sp) => sp && sp.durum === "İptal";
     (siparisler || []).forEach((sp) => {
-        if (!sp || !Array.isArray(sp.kalemler))
+        if (!sp || !Array.isArray(sp.kalemler) || iptalMi(sp))
             return;
         const sevkEdilen = {};
         stokHareketleri.forEach((h) => {
@@ -27154,6 +27529,8 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
         kalemHareketToplami.set(anahtar, (kalemHareketToplami.get(anahtar) || 0) + Math.abs(h.miktar || 0));
     });
     (siparisler || []).forEach((sip) => {
+        if (iptalMi(sip))
+            return; // bkz. yukarı (v1.729.0): iptal bağı çözer, karşılanan tarihçe olarak kalır
         (sip.kalemler || []).forEach((k) => {
             const beklenen = kalemHareketToplami.get(`${sip.id}|${k.id}`) || 0;
             const yazan = k.karsilanan || 0;
@@ -27269,8 +27646,10 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
     // "üretim ihtiyacı 0,30 adet ama talep 1,96 diyor".
     //
     // (v1.373.0'dan itibaren silme defteri de temizliyor; bu kural ESKİ kayıtları bulmak için.)
-    {
-        const uretimNolari = new Set((uretim || []).map((u) => String(u.siparisNo)));
+    // Üretim listesi VERİLMEDİYSE (v1.729.1: Tanımlar'a hiç geçmiyordu — 100) bu kural çalışmaz: boş liste her rezervasyonu
+    // "silinmiş üretimin" sayar ve "sil" düğmesi geçerli rezervasyonları silerdi. Bilinmeyen, yok sayılmaz.
+    if (Array.isArray(uretim)) {
+        const uretimNolari = new Set(uretim.map((u) => String(u.siparisNo)));
         const hayaletler = (stokRezervasyonlari || []).filter((r) => r && r.uretimNo && !uretimNolari.has(String(r.uretimNo))
             && Math.max(0, (r.miktar || 0) - (r.tuketilen || 0)) > 0);
         if (hayaletler.length > 0) {
@@ -29209,7 +29588,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
             React.createElement(VeriDenetimiEkrani, { onYetimRezervasyonSil: onYetimRezervasyonSil, onDefterFisIptal: onDefterFisIptal, uretim: uretim, stokRezervasyonlari: stokRezervasyonlari, muhasebe: muhasebe, onYetimSiparisBagiCoz: onYetimSiparisBagiCoz, fisDefteri: fisDefteri, stok: stok, cariler: cariler, siparisler: siparisler, tanimlar: tanimlar, onAcilisFisiKes: onAcilisFisiKes }),
             React.createElement(AdimSirasiDenetimi, { uretim: uretim }),
             aktifKullanici && aktifKullanici.rol === "Yönetici" && (React.createElement("div", { style: { marginTop: 20, background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "4px 18px 14px" } },
-                React.createElement(BulutSayimiBolumu, { cihaz: cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop }) }))),
+                React.createElement(BulutSayimiBolumu, { cihaz: cihazSayimlari({ stok, cariler, siparisler, uretim, stokRezervasyonlari, onaylar, cop }), kayitlar: { urunler: stok, cariler, siparisler, uretim } }))),
             React.createElement("div", { style: { marginTop: 20 } },
                 React.createElement(DefterOnarimBolumu, { stok: stok, onOnar: onDefterTopluOnar }),
                 aktifKullanici && aktifKullanici.rol === "Yönetici" && onMamulRenkleriniKodla && (React.createElement(MamulRenkKodlamaBolumu, { stok: stok, tanimlar: tanimlar, onKodla: onMamulRenkleriniKodla }))),
@@ -40014,10 +40393,15 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
         // İki ayrı kayıt (kasa/banka + varsa cari) art arda AYNI ANDA tetiklenirse, arka plandaki depolama
         // çağrıları çakışıp birinin "kaydedilemedi" hatası vermesine yol açabiliyordu — bu yüzden burada
         // kasa/banka kaydının bitmesini (await) BEKLEYİP, cari kaydını ANCAK ONDAN SONRA başlatıyoruz.
-        await onSave({
+        // KASA & BANKA v2 (v1.729.0): kasa satırı ile cari satırı TEK SUNUCU İŞLEMİNDE (yazma zarfı, 040) — biri yazılıp öteki
+        // düşemez. Zarf ikisini birlikte beklediği için kasa yazması burada BEKLENMEZ (beklenirse zarf cariyi 4 sn bekler).
+        const zarf = kasaZarfiAc(!!(hareket.cariId && onCarilerGuncelle));
+        const kasaSozu = onSave({
             ...muhasebe,
             [key]: muhasebe[key].map((h) => (h.id === hesapId ? { ...h, hareketler: [yeniHareket, ...(h.hareketler || [])] } : h)),
-        });
+        }, zarf ? { zarf } : undefined);
+        if (!zarf)
+            await kasaSozu;
         if (hareket.cariId && onCarilerGuncelle) {
             const hesapAdi = hesap ? hesap.ad : (tur === "kasa" ? "Kasa" : "Banka");
             // TEK ÇEKİRDEK (17 Eylül): cari hareketi artık burada elle kurulmuyor; iki ekran da
@@ -40045,8 +40429,10 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
             // listeyle ezilmesin — `saveCariler` fonksiyon kabul ediyor (üç yerde de).
             onCarilerGuncelle((onceki) => onceki.map((c) => (c.id === hareket.cariId
                 ? { ...c, hareketler: [ortak, ...(c.hareketler || [])] }
-                : c)));
+                : c)), zarf ? { zarf } : undefined);
         }
+        if (zarf)
+            await kasaSozu;
     }
     // VİRMAN (17 Eylül): kasalar/bankalar arası aktarım. Kaynaktan ÇIKIŞ, hedefe GİRİŞ; aynı bağ
     // kimliğiyle. Cari YOK — para şirket içinde yer değiştiriyor, kimseye borç doğmuyor.
@@ -40103,11 +40489,14 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
             return;
         }
         const guncel = { ...eski, tutar: yeni.tutar, tarih: yeni.tarih || eski.tarih, aciklama: yeni.aciklama };
-        await onSave({
+        const zarf = kasaZarfiAc(!!(eski.muhasebeBagId && onCarilerGuncelle)); // v1.729.0: kasa + cari tek işlem
+        const kasaSozu = onSave({
             ...muhasebe,
             [key]: (muhasebe[key] || []).map((h) => (h.id === hesapId
                 ? { ...h, hareketler: (h.hareketler || []).map((x) => (x.id === hareketId ? guncel : x)) } : h)),
-        });
+        }, zarf ? { zarf } : undefined);
+        if (!zarf)
+            await kasaSozu;
         if (eski.muhasebeBagId && onCarilerGuncelle) {
             // Cari tarafındaki tutar hesabın tutarıyla AYNI değil olabilir (kur çevrimi): oran korunuyor.
             const oran = eski.tutar ? yeni.tutar / eski.tutar : 1;
@@ -40124,7 +40513,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
                         aciklama: (yeni.aciklama != null && yeni.aciklama !== eski.aciklama) ? yeni.aciklama : h.aciklama,
                     }
                     : h)),
-            })));
+            })), zarf ? { zarf } : undefined);
+            if (zarf)
+                await kasaSozu;
             showToast("Hareket ve cari karşılığı güncellendi");
         }
         else {
@@ -40181,7 +40572,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
         const hareketleriSuz = (liste) => (liste || []).filter((x) => (virmanBagi
             ? x.muhasebeBagId !== virmanBagi
             : x.id !== hareketId));
-        await onSave({
+        // v1.729.0: bağlı cari karşılığı varsa kasa + cari silmesi tek işlem (zarf aşağıda cari tarafına da verilir).
+        const zarf = kasaZarfiAc(!!(silinecekHareket && silinecekHareket.muhasebeBagId && onCarilerGuncelle));
+        const kasaSozu = onSave({
             ...muhasebe,
             // Virmanda karşı ayak ÖTEKİ hesapta olduğu için iki liste de süzülüyor.
             kasalar: (muhasebe.kasalar || []).map((h) => ((virmanBagi || h.id === hesapId)
@@ -40189,7 +40582,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
             bankalar: (muhasebe.bankalar || []).map((h) => ((virmanBagi || h.id === hesapId)
                 ? { ...h, hareketler: hareketleriSuz(h.hareketler) } : h)),
             ...(geriAlinanCekler.length > 0 ? { cekler: yeniCekler } : {}),
-        });
+        }, zarf ? { zarf } : undefined);
+        if (!zarf)
+            await kasaSozu;
         if (virmanBagi)
             showToast("Virmanın iki ayağı birlikte silindi");
         geriAlinanCekler.forEach((c) => {
@@ -40204,7 +40599,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
             onCarilerGuncelle((onceki) => onceki.map((c) => ({
                 ...c,
                 hareketler: (c.hareketler || []).filter((h) => h.muhasebeBagId !== silinecekHareket.muhasebeBagId),
-            })));
+            })), zarf ? { zarf } : undefined);
+            if (zarf)
+                await kasaSozu;
             return;
         }
         // Geriye dönük uyumluluk: muhasebeBagId TAŞIMAYAN eski kayıtlar için (bu bağlantı özelliği
@@ -69147,7 +69544,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.727.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.729.1)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),
