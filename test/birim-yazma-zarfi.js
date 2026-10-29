@@ -23,7 +23,7 @@ global.fetch = async (url, sec = {}) => {
   return { ok: true, status: 200, json: async () => govde, text: async () => "" };
 };
 const { supabaseTabloEsitle, tabloBaslangicTam, bekleyenKayitlariOku, surumleriYukle, yazmaZarfi, birlikteYaz, cariV2Yuku,
-  stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla } = require("./erp.cjs");
+  stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, altV2AktifAyarla, altV2Yuku } = require("./erp.cjs");
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -120,6 +120,27 @@ function satisFisi(stok, cariler, no, miktar, tutar) {
     { anahtar: "cari:data", tablo: "cariler", kayitlar: cariler },
   ]);
   bekle("ok + tek fis_yaz", [r6.ok, rpc("fis_yaz").length], [true, 1]);
+
+  console.log("7) Sipariş sevki: sipariş kalemi (karşılanan) + stok + cari TEK fis_yaz (v1.728.0)");
+  altV2AktifAyarla(true);
+  const sip0 = [{ id: "sip-1", siparisNo: "S-1", tip: "Satış", cariId: "c-2", durum: "Onaylandı",
+    kalemler: [{ id: "kl1", urunId: "u-kosele", urunAd: "Kösele", renk: "Siyah", beden: "Standart", miktar: 5, karsilanan: 0, birimFiyat: 10 }] }];
+  tabloBaslangicTam("siparisler", derin(sip0));
+  surumleriYukle("siparisler", [{ id: "sip-1", surum: 1 }]);
+  sifirla();
+  const sip = derin(sip0); sip[0].kalemler[0].karsilanan = 2;
+  [stok, cariler] = satisFisi(stok, cariler, 7, 2, 20);
+  zarf = yazmaZarfi(["siparisler", "urunler", "cariler"]);
+  await Promise.all([supabaseTabloEsitle("siparisler", sip, { zarf }), supabaseTabloEsitle("urunler", stok, { zarf }), supabaseTabloEsitle("cariler", cariler, { zarf })]);
+  const p7 = rpc("fis_yaz")[0];
+  bekle("tek fis_yaz: stok + cari + kalem", p7 && [!!p7.stok, !!p7.cari, p7.alt && p7.alt.siparis_kalemleri && p7.alt.siparis_kalemleri.satirlar.map((k) => [k.id, k.karsilanan, k.fiyat, "__k" in k])],
+    [true, true, [["kl1", 2, 10, false]]]);
+  bekle("kalem tablosuna REST yok", rest("siparis_kalemleri"), 0);
+  bekle("altV2Yuku silme", altV2Yuku({ eklenen: [], guncellenen: [], silinen: ["a"] }), { satirlar: [], sil: ["a"] });
+  sifirla();
+  const sip8 = derin(sip); sip8[0].kalemler = [];
+  await supabaseTabloEsitle("siparisler", sip8);
+  bekle("kalem silme → alt_yaz sil", rpc("alt_yaz").map((p) => p.siparis_kalemleri && p.siparis_kalemleri.sil), [["kl1"]]);
 
   console.log(hata ? "\nBAŞARISIZ" : "\nTAMAM");
   process.exit(hata);

@@ -110,6 +110,13 @@ geçişten sonra girilen fişler kaybolmaz.
   tek `fis_yaz` isteğiyle gider: biri düşerse hiçbiri yazılmaz.
 - **Geçiş:** SQL Editor'da `stok-v2/editor/` altındaki 4–5–6. adımlar.
 
+**Aşama 2c — sipariş kalemleri ve üretim atamaları: YAPILDI (v1.728.0)**
+- **Tek kapı, veri taşımadan.** Bu iki tablo zaten kimlikli; değişen yalnız yazma yolu: `alt_yaz`. Geçiş doğrudan yazmayı
+  uygulamadan alır.
+- **Dört taraf tek işlemde.** Sevkte, siparişe bağlı fişte, üretim tesliminde, ara proseste ve fiş geri almada stok, cari,
+  sipariş kalemi ve üretim ataması tek `fis_yaz` ile gider.
+- **Geçiş:** SQL Editor'da `stok-v2/editor/` altındaki 7. ve 8. adımlar.
+
 **Aşama 3 — akışları doğrudan fiş işlemine taşımak** (sonraki)
 - **Akışlar `stk_fis_kaydet`'e.** Akışlar (stok fişi, sipariş sevki, üretim teslimi…) farkı değil fişin kendisini
   gönderir; fişin cari satırları da aynı işlemde yazılır.

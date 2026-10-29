@@ -554,12 +554,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   setStok(nextStok);
   setCariler(nextCariler);
   setUretim(nextUretim);
-  // Stok (hammadde çıkışı, mamul girişi) ve cari (işçilik) TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
-  birlikteYaz([
-    { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
-    { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
-  ]);
-  yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
+  // Yazma aşağıda, sipariş rezervasyon iadesi hesaplandıktan sonra TEK ZARFTA (v1.727.0 / v1.728.0).
   // SIRA (v1.537.0 — son denetim): bu blok sipariş listesi YAZILDIKTAN SONRA çalışıyordu; alış rezervasyonundaki
   // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce.
   // Artan malzeme rezervasyonu da SERBEST bırakır: geri gelen mal aslında tüketilmemiştir.
@@ -581,10 +576,18 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     });
   }
 
+  // Stok (hammadde çıkışı, mamul girişi), cari (işçilik), üretim (atamanın teslimi) ve — değiştiyse — sipariş (rezervasyon
+  // iadesi) TEK ZARFTA (v1.728.0): v2'de satırları tek sunucu işlemiyle gider, biri düşüp öteki kalamaz.
+  const teslimYazmalari = [
+    { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
+    { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
+    { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" },
+  ];
   if (nextSiparislerRez !== siparisler) {
     setSiparisler(nextSiparislerRez);
-    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+    teslimYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
   }
+  birlikteYaz(teslimYazmalari);
   if (nextStokRez !== stokRezervasyonlari) {
     // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
     // üretimin satırları) bütün listeyi yazmak o satırları buluta geri getiriyordu.

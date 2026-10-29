@@ -225,10 +225,10 @@ const siparisGerceklestir = useCallback(async (siparisId, teslimler, defter = "G
   // GÜNCEL LİSTEYE YALNIZ DEĞİŞENLER (v1.639.0, denetim): defter yazımı beklenirken (yukarıdaki await) başka pencerede/
   // cihazdan gelen değişiklik tam liste set edilince eziliyor, buluta eski hâl gidiyordu. Her tablo kendi güncelleyicisinde
   // birleşir ve yazılır (`tabloYaz` zaten sıraya alıp yeniden deniyor; 100-app `yazimiIzle` hatayı şeride taşır).
-  setSiparisler((onceki) => { const n = degisenKayitlariBirlestir(onceki, siparisler, nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n); return n; });   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
+  // Sipariş (karşılanan), stok çıkışı ve cari (satış) TEK ZARFTA (v1.727.0 / v1.728.0): üç güncelleyici aynı çizimde çalışır.
+  const zarf = yazmaZarfi(["siparisler", "urunler", "cariler"]);
+  setSiparisler((onceki) => { const n = degisenKayitlariBirlestir(onceki, siparisler, nextSiparisler); yazimiIzle(tabloYaz("siparis:data", "siparisler", n, undefined, { zarf }), "Siparişler", n); return n; });   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
   if (koliIslemi) koliIslemi();
-  // Stok çıkışı ve cari (satış) TEK ZARFTA (v1.727.0): iki güncelleyici aynı çizimde çalışır, zarf ikisini birlikte yazar.
-  const zarf = yazmaZarfi(["urunler", "cariler"]);
   setStok((onceki) => { const n = degisenKayitlariBirlestir(onceki, stok, nextStok); yazimiIzle(tabloYaz("stok:items", "urunler", n, undefined, { zarf }), "Stok kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
   setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, cariler, nextCariler); yazimiIzle(tabloYaz("cari:data", "cariler", n, undefined, { zarf }), "Cari kartları", n); return n; });   // bayat-muaf: farkın tabanı (yukarıdaki gerekçe)
   showToast(bildirim);

@@ -375,12 +375,11 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
 
 
   setUretim(nextUretim);
+  // Stok + cari (ara proses kendiliğinden tamamlanıyorsa), sipariş (değiştiyse) ve üretim TEK ZARFTA (v1.728.0).
+  const verYazmalari = [];
   if (araProsesOtomatikTamamlanacakMi) {
-    // Stok ve cari TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
-    birlikteYaz([
-      { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
-      { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
-    ]);
+    verYazmalari.push({ anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" });
+    verYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" });
   }
   if (nextStokRez !== stokRezervasyonlari) {
     // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
@@ -393,9 +392,10 @@ const uretimProsesVer = useCallback((uretimId, prosesAdi, personelId, bedenMikta
   }
   if (nextSiparislerRez !== siparisler && setSiparisler) {
     setSiparisler(nextSiparislerRez);
-    yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+    verYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
   }
-  yazimiIzle(tabloYaz("uretim:siparisler", "uretim", nextUretim), "Üretim", nextUretim);
+  verYazmalari.push({ anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" });
+  birlikteYaz(verYazmalari);
   const personelAdi = ((cariler || []).find((c) => c.id === personelId) || {}).unvan || "personel";
   const bedenOzet = Object.entries(bedenMiktarlari).map(([b, m]) => `${b}:${m}`).join(", ");
   showToast(`${toplamGirilen} adet (${bedenOzet}) ${personelAdi}'a verildi${araMesaj}`);

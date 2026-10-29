@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.727.0";
+const SURUM = "1.728.0";
 const SURUM_TARIHI = "2026-10-28";
-const SURUM_NOTU = "Cari v2 ve yazma zarfı: Supabase'de cari v2 geçişi yapılınca fişin stok ve cari satırları tek sunucu işlemiyle (ya ikisi ya hiçbiri) yazılır; cari hareketi silinmez, iptal edilir";
+const SURUM_NOTU = "Sipariş kalemleri ve üretim atamaları da tek kapıdan: Supabase'de geçiş yapılınca sevk, fiş, üretim teslimi ve geri almada stok, cari, sipariş ve üretim satırları tek sunucu işlemiyle yazılır";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.728.0", tarih: "29.10.2026", eklenen: ["Sipariş kalemleri ve üretim atamaları tek kapıdan (yeniden kurulumun 3. adımı): Supabase'de geçiş yapılınca bu iki tabloya yalnız sunucu işlemi yazar. Sipariş sevkinde, siparişe bağlı fişte, üretim tesliminde, ara proseste ve fiş geri almada stok, cari, sipariş kalemi (karşılanan) ve üretim ataması TEK işlemde yazılır — biri düşüp öteki kalamaz. Veri taşınmaz; geçiş ve geri dönüş anlık"], degisen: [], duzeltilen: [] },
   { surum: "1.727.0", tarih: "28.10.2026", eklenen: ["Cari v2 (yeniden kurulumun 2. modülü): Supabase'de cari v2 geçişi yapılınca cari hareketleri tek kapıdan yazılır; silinen hareket silinmez, iptal edilir (iz kalır). Alış/satış fişi, sipariş sevki, üretim teslimi ve silmesi, ara proses ve fiş geri alma: stok ve cari satırları TEK sunucu işlemiyle gider — biri düşüp öteki kalamaz. Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },
   { surum: "1.726.0", tarih: "28.10.2026", eklenen: ["Stok v2 köprüsü (yeniden kurulumun 1. modülü): Supabase'de stok v2 kurulup geçiş yapılınca stok kayıtları buluta fiş ve satır olarak, TEK bir sunucu işlemiyle gider — biri düşerse hiçbiri yazılmaz, ağda düşüp yeniden gönderilen kayıt stoğu iki kez değiştirmez. Renk ve beden buluta kimlikle bağlanır: ad değişikliği stok satırı silip yazmaz. Silinen hareket silinmez, iptal edilir (iz kalır). Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },
   { surum: "1.725.1", tarih: "28.10.2026", eklenen: ["Buluta gönderilemeyen kayıt ayrıntısında (şeritteki çipe dokunun) Yönetici için \"Bu cihazdakini bırak, buluttan yükle\": günlerce gidemeyen yazma, ne bırakılacağı sayıyla gösterilip onaylanarak bırakılır; sayfa buluttaki hâlle açılır, günlüğe düşer"], degisen: ["\"Failed to fetch\" hatası artık düşen isteği yazar (yöntem, tablo, gövde boyutu, adres uzunluğu)", "Buluta toplu ekleme/güncelleme 400 satırın yanında ~900 KB ile de bölünür (görselli ürün satırları tek istekte onlarca MB edebiliyordu)"], duzeltilen: [] },

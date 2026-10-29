@@ -1641,16 +1641,17 @@ function AtolyeUygulamasi() {
     setStok(sonuc.stok);
     setCariler(sonuc.cariler);
     setUretim(sonuc.uretim);
-    // Stok ve cari geri alması TEK ZARFTA (v1.727.0): v2'de tek sunucu işlemi.
-    birlikteYaz([
+    // Stok, cari, üretim ve (değiştiyse) sipariş geri alması TEK ZARFTA (v1.727.0 / v1.728.0): v2'de tek sunucu işlemi.
+    const geriAlYazmalari = [
       { anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok, etiket: "Stok kartları" },
       { anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" },
-    ]);
-    yazimiIzle(tabloYaz("uretim:siparisler", "uretim", sonuc.uretim), "Üretim", sonuc.uretim);
+      { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: sonuc.uretim, etiket: "Üretim" },
+    ];
     if (nextSiparislerRez !== siparisler) {
       setSiparisler(nextSiparislerRez);
-      yazimiIzle(tabloYaz("siparis:data", "siparisler", nextSiparislerRez), "Siparişler", nextSiparislerRez);
+      geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
     }
+    birlikteYaz(geriAlYazmalari);
     if (nextStokRezGeri !== stokRezervasyonlari) {
       setStokRezervasyonlari(nextStokRezGeri);
       yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRezGeri), "Stok rezervasyonları", nextStokRezGeri);
@@ -3384,11 +3385,11 @@ function AtolyeUygulamasi() {
       setCariler(sonuc.cariler);
       geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" });
     }
-    if (geriAlYazmalari.length) birlikteYaz(geriAlYazmalari);
     if (sonuc.etkilenenSiparisler.size > 0) {
       setSiparisler(sonuc.siparisler);
-      yazimiIzle(tabloYaz("siparis:data", "siparisler", sonuc.siparisler), "Siparişler", sonuc.siparisler);
+      geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: sonuc.siparisler, etiket: "Siparişler" });   // v1.728.0: aynı zarfta
     }
+    if (geriAlYazmalari.length) birlikteYaz(geriAlYazmalari);
     // ÇEK: harekete bağlı çek kaydı da gider. Ödemesi silinmiş bir çekin vadesi gelince
     // hatırlatılması, kullanıcıyı olmayan bir alacağın peşine düşürürdü.
     sonuc.silinenCekler.forEach((c) => {
@@ -3563,8 +3564,8 @@ function AtolyeUygulamasi() {
     const geriAlYazmalari = [];
     if (sonuc.silinenStok > 0) { setStok(sonuc.stok); geriAlYazmalari.push({ anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok }); }
     if (sonuc.silinenCari > 0) { setCariler(sonuc.cariler); geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler }); }
+    if (sonuc.etkilenenSiparisler.size > 0) { setSiparisler(sonuc.siparisler); geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: sonuc.siparisler }); }   // v1.728.0: aynı zarfta
     if (geriAlYazmalari.length) sonuclar.push(...(await birlikteYaz(geriAlYazmalari)).sonuclar);
-    if (sonuc.etkilenenSiparisler.size > 0) { setSiparisler(sonuc.siparisler); sonuclar.push(await tabloYaz("siparis:data", "siparisler", sonuc.siparisler)); }
     // ÇEK: fişe bağlı çek kayıtları gider, ciro fişi silindiyse çek portföye döner
     // (bkz. removeHareketEverywhere).
     sonuc.silinenCekler.forEach((c) => {

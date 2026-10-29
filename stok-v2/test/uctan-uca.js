@@ -18,7 +18,7 @@ const rpcAdlari = [];
 // Sahte ağ: rpc/stk_yaz yerel veritabanında Ali (Yönetici) olarak çalışır; urunler'e yazmalar başarılı sayılır.
 global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
-  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz)/) || [])[1];
+  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz|alt_yaz)/) || [])[1];
   if (rpcAdi) {
     rpcSayisi++;
     rpcAdlari.push(rpcAdi);
@@ -36,10 +36,10 @@ global.fetch = async (url, sec = {}) => {
       return { ok: false, status: 400, json: async () => ({ message: metin }), text: async () => metin };
     }
   }
-  if (/^(varyantlar|stok_hareketleri|cari_hareketleri)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
+  if (/^(varyantlar|stok_hareketleri|cari_hareketleri|siparis_kalemleri|uretim_atamalari)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
   return { ok: true, status: 200, json: async () => (sec.method === "PATCH" ? [{ id: "x" }] : []), text: async () => "" };
 };
-const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, yazmaZarfi } = require(path.join(__dirname, "../../test/erp.cjs"));
+const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, altV2AktifAyarla, yazmaZarfi } = require(path.join(__dirname, "../../test/erp.cjs"));
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -212,8 +212,44 @@ const hrk = (id, renk, beden, miktar, fisNo, ek = {}) => ({ id, renk, beden, mik
   console.log("10) Cari hareket silme → iptal (iz kalır), görünümden düşer");
   const c10 = derin(cariler); c10.find((c) => c.id === "c-2").hareketler = c10.find((c) => c.id === "c-2").hareketler.filter((h) => h.id !== "ce8");
   await supabaseTabloEsitle("cariler", c10);
+  cariler = c10;   // ekrandaki hâl artık silinmiş satırsız
   bekle("10: iptal", psql("select iptal from public.car_hareket where id = 'ce8';"), "t");
   bekle("10: bakiye geri", bakiye(), b0);
+
+  console.log("11) Sipariş sevki: kalem karşılanan + stok çıkışı + cari borç TEK fis_yaz (v1.728.0)");
+  altV2AktifAyarla(true);
+  const sipOku = () => jsonSorgu("select id, siparis_no, tip, cari_id, durum from public.siparisler order by id").map((x) => ({
+    id: x.id, siparisNo: x.siparis_no, tip: x.tip, cariId: x.cari_id, durum: x.durum,
+    kalemler: jsonSorgu(`select * from public.siparis_kalemleri where siparis_id = '${x.id}' order by sira`).map((k) => ({
+      id: k.id, urunId: k.urun_id, urunAd: k.urun_ad, renk: k.renk, beden: k.beden, miktar: Number(k.miktar), karsilanan: Number(k.karsilanan),
+      birimFiyat: Number(k.fiyat), paraBirimi: k.para_birimi, birim: k.birim, planlama: k.planlama, ambalaj: k.ambalaj,
+      rezervasyonlar: k.rezervasyonlar || [], ...(k.ek || {}) })) }));
+  let siparisler = sipOku();
+  tabloBaslangicTam("siparisler", derin(siparisler));
+  surumleriYukle("siparisler", siparisler.map((x) => ({ id: x.id, surum: 1 })));
+  rpcAdlari.length = 0;
+  const b11 = bakiye();
+  stok = derin(stok); cariler = derin(cariler); siparisler = derin(siparisler);
+  siparisler[0].kalemler[0].karsilanan = 5;
+  u("u-canta").hareketler.unshift(hrk("e11", "1058 - Taba/Gece Siyahı", "36", -3, "SF-S100", { siparisId: "sip-100", kalemId: "k1", siparisNo: "S-100" }));
+  cariler.find((c) => c.id === "c-2").hareketler.unshift({ id: "ce11", tarih: "2026-10-29", zaman: "2026-10-29T09:00:00.000Z", yon: "Alacak", tutar: 1350, paraBirimi: "TRY", fisNo: "SF-S100" });
+  zarf = yazmaZarfi(["siparisler", "urunler", "cariler"]);
+  await Promise.all([supabaseTabloEsitle("siparisler", siparisler, { zarf }), supabaseTabloEsitle("urunler", stok, { zarf }), supabaseTabloEsitle("cariler", cariler, { zarf })]);
+  bekle("11: tek istek, fis_yaz", rpcAdlari, ["fis_yaz"]);
+  bekle("11: kalem karşılanan bulutta", psql("select karsilanan from public.siparis_kalemleri where id = 'k1';"), "5");
+  bekle("11: cari bakiye", bakiye(), b11 + 1350);
+  karsilastir("11", stok);
+
+  console.log("12) Sevk tek işlem: stok tarafı düşerse kalem ve cari de yazılmaz");
+  const s12 = derin(stok); const c12 = derin(cariler); const sp12 = derin(siparisler);
+  sp12[0].kalemler[0].karsilanan = 9;
+  s12.push({ id: "u-yok2", ad: "Olmayan", variants: [], hareketler: [hrk("e12", "Standart", "Standart", -1, "SF-S101")] });
+  c12.find((c) => c.id === "c-2").hareketler.unshift({ id: "ce12", tarih: "2026-10-29", yon: "Alacak", tutar: 5, paraBirimi: "TRY", fisNo: "SF-S101" });
+  zarf = yazmaZarfi(["siparisler", "urunler", "cariler"]);
+  const r12 = await Promise.allSettled([supabaseTabloEsitle("siparisler", sp12, { zarf }), supabaseTabloEsitle("urunler", s12, { zarf }), supabaseTabloEsitle("cariler", c12, { zarf })]);
+  bekle("12: üç söz de reddedildi", r12.map((x) => x.status), ["rejected", "rejected", "rejected"]);
+  bekle("12: kalem değişmedi", psql("select karsilanan from public.siparis_kalemleri where id = 'k1';"), "5");
+  bekle("12: cari yazılmadı", psql("select count(*) from public.car_hareket where id = 'ce12';"), "0");
 
   console.log(hata ? "\nUÇTAN UCA BAŞARISIZ" : "\nUÇTAN UCA TAMAM");
   process.exit(hata);
