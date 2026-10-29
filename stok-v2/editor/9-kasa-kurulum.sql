@@ -74,6 +74,7 @@ declare
   n_cek int := 0;
   n_cek_iptal int := 0;
 begin
+  perform public.v2_yazma_acik('kasa');   -- v1.730.1: geri dönüldüyse yazma yok (stok-v2.sql)
   yalniz_kur := jsonb_array_length(public.stk_dizi(p -> 'hesaplar')) = 0 and jsonb_array_length(public.stk_dizi(p -> 'hesapSil')) = 0
     and jsonb_array_length(public.stk_dizi(p -> 'hareketler')) = 0 and jsonb_array_length(public.stk_dizi(p -> 'hareketIptal')) = 0
     and jsonb_array_length(public.stk_dizi(p -> 'cekler')) = 0 and jsonb_array_length(public.stk_dizi(p -> 'cekIptal')) = 0
@@ -98,7 +99,7 @@ begin
                   (select coalesce(max(m.sira), 0) from public.kas_hesap m) + e.n),
          case when jsonb_typeof(x -> 'veri') = 'object' then (x -> 'veri') - 'hareketler' - 'id' else '{}'::jsonb end, true, eposta
   from jsonb_array_elements(public.stk_dizi(p -> 'hesaplar')) with ordinality as e(x, n)
-  order by x ->> 'id'
+  order by x ->> 'id', e.n desc   -- aynı kimlik iki kez gelirse sonuncusu (v1.730.1)
   on conflict (id) do update set tur = excluded.tur, sira = excluded.sira, veri = excluded.veri, aktif = true, guncelleme = now()
   where (h.tur, h.sira, h.veri, h.aktif) is distinct from (excluded.tur, excluded.sira, excluded.veri, true);
   get diagnostics n_hesap = row_count;
@@ -108,8 +109,8 @@ begin
 
   insert into public.kas_hareket as k (id, hesap_id, veri, olusturan)
   select distinct on (x ->> 'id') x ->> 'id', x ->> 'hesap_id', x -> 'veri', eposta
-  from jsonb_array_elements(public.stk_dizi(p -> 'hareketler')) x
-  order by x ->> 'id'
+  from jsonb_array_elements(public.stk_dizi(p -> 'hareketler')) with ordinality as e(x, n)
+  order by x ->> 'id', e.n desc
   on conflict (id) do update set hesap_id = excluded.hesap_id, veri = excluded.veri, guncelleme = now(),
     iptal = false, iptal_zamani = null, iptal_eden = null
   where (k.hesap_id, k.veri, k.iptal) is distinct from (excluded.hesap_id, excluded.veri, false);
@@ -120,8 +121,8 @@ begin
 
   insert into public.kas_cek as c (id, veri, olusturan)
   select distinct on (x ->> 'id') x ->> 'id', x -> 'veri', eposta
-  from jsonb_array_elements(public.stk_dizi(p -> 'cekler')) x
-  order by x ->> 'id'
+  from jsonb_array_elements(public.stk_dizi(p -> 'cekler')) with ordinality as e(x, n)
+  order by x ->> 'id', e.n desc
   on conflict (id) do update set veri = excluded.veri, guncelleme = now(), iptal = false, iptal_zamani = null, iptal_eden = null
   where (c.veri, c.iptal) is distinct from (excluded.veri, false);
   get diagnostics n_cek = row_count;
@@ -148,7 +149,12 @@ declare
   c jsonb;
   a jsonb;
   k jsonb;
+  bilinmeyen text;
 begin
+  select string_agg(x, ', ') into bilinmeyen from jsonb_object_keys(coalesce(p, '{}'::jsonb)) x where x not in ('stok', 'cari', 'alt', 'kasa');
+  if bilinmeyen is not null then
+    raise exception 'fis_yaz: tanınmayan parça (%)', bilinmeyen using errcode = '22023';
+  end if;
   if jsonb_typeof(p -> 'stok') = 'object' then s := public.stk_yaz(p -> 'stok'); end if;
   if jsonb_typeof(p -> 'cari') = 'object' then c := public.car_yaz(p -> 'cari'); end if;
   if jsonb_typeof(p -> 'alt') = 'object' then a := public.alt_yaz(p -> 'alt'); end if;

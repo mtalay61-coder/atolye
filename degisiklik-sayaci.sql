@@ -73,6 +73,10 @@ select public.degisiklik_izle_kur('fis_defteri');
 select public.degisiklik_izle_kur('cek_gorselleri');
 select public.degisiklik_izle_kur('modeller');
 
+-- KURULUM İŞLEVİ YALNIZ SQL EDITOR'DAN (v1.730.1 denetim): security definer ve PUBLIC'e açıktı — publishable anahtarla
+-- `rpc/degisiklik_izle_kur` herhangi bir tabloda tetikleyiciyi silip kurabilirdi.
+revoke all on function public.degisiklik_izle_kur(text) from public, anon, authenticated;
+
 -- Okuma yetkisi: rls-kimlik.sql ile aynı desen — giriş yapmış kullanıcı okur. Yazma yalnız tetikleyiciden.
 alter table public.degisiklik enable row level security;
 drop policy if exists giris_yapmis_hersey on public.degisiklik;

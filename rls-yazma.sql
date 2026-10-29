@@ -100,9 +100,15 @@ begin
   if tg_op = 'DELETE' then return old; else return new; end if;
 end $$;
 
-drop trigger if exists yazma_koruma on public.muhasebe;
-create trigger yazma_koruma before insert or update or delete on public.muhasebe
-  for each row execute function public.yazma_yetkisi_koruma('muhasebe|fisler|cari', 'kaydetme');
+-- Yalnız TABLOYSA (v1.730.1): Kasa & Banka v2'ye geçilince `muhasebe` görünüm — tetikleyici kurulamaz, dosya bütünüyle
+-- düşerdi (denetim). v2'de yazma `kas_yaz`dan, yetkisi kendi içinde.
+do $$ begin
+  if exists (select 1 from pg_tables where schemaname = 'public' and tablename = 'muhasebe') then
+    execute 'drop trigger if exists yazma_koruma on public.muhasebe';
+    execute 'create trigger yazma_koruma before insert or update or delete on public.muhasebe '
+         || 'for each row execute function public.yazma_yetkisi_koruma(''muhasebe|fisler|cari'', ''kaydetme'')';
+  end if;
+end $$;
 
 do $$ begin
   if exists (select 1 from pg_tables where schemaname = 'public' and tablename = 'faturalar') then

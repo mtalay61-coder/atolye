@@ -39,6 +39,19 @@ calistir stok-v2/test/sinama.sql
 # SUPABASE SQL EDITOR TAKLİDİ (28 Ekim): Editor metni kendi ayırıcısıyla ifadelere bölüyor. Editor kopyası
 # (editor-icin.py: yorumsuz, yalnız düz çift-dolar) aynı biçimde bölünüp HER PARÇA AYRI OTURUMDA çalıştırılır; ardından
 # geçiş sınaması bu kurulumun üstünde koşar.
+# Bir dosyayı SQL Editor gibi ver: editor-icin.py --bol ile ifadelere böl, her parçayı ayrı oturumda çalıştır.
+editor_ver() {
+  echo "── $1 (Editor kopyası, parça parça)"
+  python3 stok-v2/editor-icin.py --bol "$1" | node -e '
+    const { execFileSync } = require("child_process");
+    const parcalar = require("fs").readFileSync(0, "utf8").split("\0").filter(Boolean);
+    parcalar.forEach((p, i) => {
+      try { execFileSync("psql", ["-X", "-q", "-v", "ON_ERROR_STOP=1", "-d", process.argv[1], "-c", p], { stdio: ["ignore", "ignore", "pipe"] }); }
+      catch (e) { console.error(`parça ${i + 1}/${parcalar.length} düştü:\n${p.slice(0, 300)}\n${e.stderr}`); process.exit(1); }
+    });
+    console.log(`   ${parcalar.length} parça, hepsi ayrı oturumda çalıştı`);
+  ' "$DB"
+}
 kur_editor() {
   psql -X -q -d postgres -c "drop database if exists $DB" -c "create database $DB"
   calistir stok-v2/test/supabase-taklit.sql
@@ -79,6 +92,12 @@ if [ -f test/erp.cjs ]; then
   psql -X -q -At -v ON_ERROR_STOP=1 -d "$DB" -c "select public.lst_gecis() is not null;" >/dev/null
   echo "── stok-v2/test/uctan-uca.js"
   STOK_V2_DB="$DB" node stok-v2/test/uctan-uca.js
+  # v1.730.1 DÜZELTME ADIMI — canlının aynısı (bütün geçişler yapılmış): 15. adım Editor gibi verilir, sonra kurulum dosyaları
+  # yeniden çalıştırılır (fis_yaz daralmamalı), sonra düzeltmelerin sınaması.
+  editor_ver stok-v2/editor/15-duzeltme.sql
+  calistir stok-v2/cari-v2.sql
+  calistir stok-v2/alt-v2.sql
+  calistir stok-v2/test/sinama-duzeltme.sql
 else
   echo "── uçtan uca atlandı: test/erp.cjs yok (cd test && node derle.js)"
 fi

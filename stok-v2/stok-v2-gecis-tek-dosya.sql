@@ -282,6 +282,21 @@ begin
   return v;
 end $$;
 
+create or replace function public.v2_yazma_acik(p_modul text) returns void
+language plpgsql stable security definer set search_path = public as $$
+declare
+  a jsonb;
+  on_ek text := case when p_modul = 'stok' then '' else p_modul || '_' end;
+begin
+  select to_jsonb(s) into a from public.stk_ayar s where s.id = 'tekil';
+  if a is null then return; end if;
+  if not coalesce((a ->> (on_ek || 'aktif'))::boolean, false) and (a ->> (on_ek || 'geri_donus')) is not null then
+    raise exception '% v2 kapalı (geri dönüldü) — uygulamayı yenileyin; kayıt bekleyenlerde, yenileyince eski yoldan gönderilir', p_modul
+      using errcode = '55000';
+  end if;
+end $$;
+revoke all on function public.v2_yazma_acik(text) from public, anon, authenticated;
+
 create or replace function public.stk_yetki(moduller text[], islem text) returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -518,7 +533,8 @@ declare
   atlanan jsonb := '[]'::jsonb;
   acilan text[] := '{}';
 begin
-  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim'], 'kaydetme');
+  perform public.v2_yazma_acik('stok');
+  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe', 'tanimlar'], 'kaydetme');
 
   for s in select * from jsonb_array_elements(coalesce(p -> 'varyantAc', '[]'::jsonb)) loop
     vid := public.stk_varyant_coz(s ->> 'urunId', s ->> 'renkId', s ->> 'renk', s ->> 'olcuId', coalesce(s ->> 'olcu', s ->> 'beden'));
@@ -842,23 +858,45 @@ revoke all on function public.stk_goc(boolean, boolean) from public, anon, authe
 
 create or replace function public.stk_goc_karsilastir()
 returns table (urun_id text, renk text, beden text, eski numeric, yeni numeric, fark numeric)
-language sql stable security definer set search_path = public as $$
-  with eski as (
-    select j ->> 'urun_id' as urun_id,
-           public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
-           public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
-           sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
-    from (select to_jsonb(v) as j from public.varyantlar v) x
-    where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
-    group by 1, 2, 3
-  ), yeni as (
-    select s.urun_id, public.stk_nrm(s.renk_ad) as renk, public.stk_nrm(s.olcu_ad) as beden, sum(s.miktar) as miktar
-    from public.stk_stok s group by 1, 2, 3
-  )
-  select coalesce(e.urun_id, y.urun_id), coalesce(e.renk, y.renk), coalesce(e.beden, y.beden),
-         coalesce(e.miktar, 0), coalesce(y.miktar, 0), coalesce(e.miktar, 0) - coalesce(y.miktar, 0)
-  from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden
-$$;
+language plpgsql stable security definer set search_path = public as $$
+#variable_conflict use_column
+begin
+  if to_regclass('public.eski_varyantlar') is not null then
+    return query
+      with eski as (
+        select j ->> 'urun_id' as urun_id,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
+               sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
+        from (select to_jsonb(v) as j from public.eski_varyantlar v) x
+        where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
+        group by 1, 2, 3
+      ), yeni as (
+        select s.urun_id, public.stk_nrm(s.renk_ad) as renk, public.stk_nrm(s.olcu_ad) as beden, sum(s.miktar) as miktar
+        from public.stk_stok s group by 1, 2, 3
+      )
+      select coalesce(e.urun_id, y.urun_id), coalesce(e.renk, y.renk), coalesce(e.beden, y.beden),
+             coalesce(e.miktar, 0), coalesce(y.miktar, 0), coalesce(e.miktar, 0) - coalesce(y.miktar, 0)
+      from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden;
+  else
+    return query
+      with eski as (
+        select j ->> 'urun_id' as urun_id,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'renk') then '' else j ->> 'renk' end) as renk,
+               public.stk_nrm(case when public.stk_yer_tutucu_mu(j ->> 'beden') then '' else j ->> 'beden' end) as beden,
+               sum(coalesce(public.stk_sayi(j ->> 'miktar'), 0)) as miktar
+        from (select to_jsonb(v) as j from public.varyantlar v) x
+        where exists (select 1 from public.urunler u where u.id = j ->> 'urun_id')
+        group by 1, 2, 3
+      ), yeni as (
+        select s.urun_id, public.stk_nrm(s.renk_ad) as renk, public.stk_nrm(s.olcu_ad) as beden, sum(s.miktar) as miktar
+        from public.stk_stok s group by 1, 2, 3
+      )
+      select coalesce(e.urun_id, y.urun_id), coalesce(e.renk, y.renk), coalesce(e.beden, y.beden),
+             coalesce(e.miktar, 0), coalesce(y.miktar, 0), coalesce(e.miktar, 0) - coalesce(y.miktar, 0)
+      from eski e full join yeni y on y.urun_id = e.urun_id and y.renk is not distinct from e.renk and y.beden is not distinct from e.beden;
+  end if;
+end $$;
 revoke all on function public.stk_goc_karsilastir() from public, anon, authenticated;
 
 create or replace function public.stk_gecis(p_fark_fisi boolean default true) returns jsonb

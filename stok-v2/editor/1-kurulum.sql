@@ -282,6 +282,21 @@ begin
   return v;
 end $$;
 
+create or replace function public.v2_yazma_acik(p_modul text) returns void
+language plpgsql stable security definer set search_path = public as $$
+declare
+  a jsonb;
+  on_ek text := case when p_modul = 'stok' then '' else p_modul || '_' end;
+begin
+  select to_jsonb(s) into a from public.stk_ayar s where s.id = 'tekil';
+  if a is null then return; end if;
+  if not coalesce((a ->> (on_ek || 'aktif'))::boolean, false) and (a ->> (on_ek || 'geri_donus')) is not null then
+    raise exception '% v2 kapalı (geri dönüldü) — uygulamayı yenileyin; kayıt bekleyenlerde, yenileyince eski yoldan gönderilir', p_modul
+      using errcode = '55000';
+  end if;
+end $$;
+revoke all on function public.v2_yazma_acik(text) from public, anon, authenticated;
+
 create or replace function public.stk_yetki(moduller text[], islem text) returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -518,7 +533,8 @@ declare
   atlanan jsonb := '[]'::jsonb;
   acilan text[] := '{}';
 begin
-  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim'], 'kaydetme');
+  perform public.v2_yazma_acik('stok');
+  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe', 'tanimlar'], 'kaydetme');
 
   for s in select * from jsonb_array_elements(coalesce(p -> 'varyantAc', '[]'::jsonb)) loop
     vid := public.stk_varyant_coz(s ->> 'urunId', s ->> 'renkId', s ->> 'renk', s ->> 'olcuId', coalesce(s ->> 'olcu', s ->> 'beden'));

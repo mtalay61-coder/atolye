@@ -16,6 +16,14 @@
 
 begin;
 
+-- LİSTE v2'DEN SONRA ÇALIŞTIRILMAZ (v1.730.1): faturalar artık `lst_kayit`'in görünümü (stok-v2/liste-v2.sql). Görünüme
+-- RLS / politika kurulamaz; dosya yarıda düşerdi. Açık hata ile durur, hiçbir şey değişmez.
+do $$ begin
+  if exists (select 1 from pg_views where schemaname = 'public' and viewname in ('faturalar')) then
+    raise exception 'Bu liste v2''ye geçti (görünüm) — bu dosya artık çalıştırılmaz; yapı stok-v2/liste-v2.sql''de';
+  end if;
+end $$;
+
 create table if not exists public.faturalar (
   id text primary key,
   veri jsonb not null default '[]'::jsonb,

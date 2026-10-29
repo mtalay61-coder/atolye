@@ -78,6 +78,7 @@ declare
   n_yaz int := 0;
   n_iptal int := 0;
 begin
+  perform public.v2_yazma_acik('liste');   -- v1.730.1: geri dönüldüyse yazma yok (stok-v2.sql)
   if t is null or t not in ('teklifler', 'faturalar', 'koliler', 'gorevler', 'modeller', 'fis_defteri', 'mesajlar') then
     raise exception 'Liste tanınmıyor: %', coalesce(t, '(yok)') using errcode = '42501';
   end if;
@@ -92,7 +93,8 @@ begin
   insert into public.lst_kayit as k (tablo, id, sira, veri, olusturan)
   select distinct on (x ->> 'id') t, x ->> 'id',
          coalesce(public.stk_sayi(x ->> 'sira'), (select m.sira from public.lst_kayit m where m.tablo = t and m.id = x ->> 'id'),
-                  extract(epoch from clock_timestamp()) * 1000 + e.n),
+                  -- İstemci (038) ms × 1000 ölçeğinde sıra verir; sırasız yeni kayıt da aynı ölçekte sona (v1.730.1).
+                  extract(epoch from clock_timestamp()) * 1000000 + e.n),
          x -> 'veri', eposta
   from jsonb_array_elements(public.stk_dizi(p -> 'kayitlar')) with ordinality as e(x, n)
   order by x ->> 'id', e.n desc

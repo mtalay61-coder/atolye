@@ -61,9 +61,10 @@ begin
       where c.table_schema = 'public' and c.table_name = t
         and c.column_name in (select distinct jsonb_object_keys(x) from jsonb_array_elements(satirlar) x where jsonb_typeof(x) = 'object');
       execute format(
-        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_populate_recordset(null::public.%I, %L::jsonb) r order by r.id) s '
+        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_array_elements(%L::jsonb) with ordinality as e(x, n), '
+        || 'jsonb_populate_record(null::public.%I, e.x) r order by r.id, e.n desc) s '
         || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
-        t, sutunlar, sutunlar, t, satirlar::text);
+        t, sutunlar, sutunlar, satirlar::text, t);
       get diagnostics n_yaz = row_count;
     end if;
     silinecek := array(select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')));
@@ -76,18 +77,29 @@ begin
   return sonuc;
 end $$;
 
--- FİŞ YAZ — genişletildi: { stok, cari, alt } TEK İŞLEMDE (cari-v2.sql'deki tanımın yerine geçer).
+-- FİŞ YAZ — bir işlemin stok, cari, sipariş kalemi / üretim ataması ve kasa satırlarını TEK İŞLEMDE yazar; hepsi isteğe bağlı,
+--  biri hata verirse hiçbiri yazılmaz. TAM TANIM ÜÇ DOSYADA AYNI (cari-v2.sql, alt-v2.sql, kasa-v2.sql — v1.730.1): önceden her
+--  dosya kendi bildiği parçalarla tanımlıyordu; geçişten sonra cari-v2.sql ya da alt-v2.sql yeniden çalıştırılınca fis_yaz
+--  daralıyor, uygulamanın gönderdiği kasa / alt parçası HATASIZ atlanıyor, tahsilatın kasa satırı kayboluyordu (denetim). Artık
+--  tanımadığı parça gelirse ya da parçanın işlemi henüz kurulmamışsa hata verir — sessiz kayıp yok.
 create or replace function public.fis_yaz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   s jsonb;
   c jsonb;
   a jsonb;
+  k jsonb;
+  bilinmeyen text;
 begin
+  select string_agg(x, ', ') into bilinmeyen from jsonb_object_keys(coalesce(p, '{}'::jsonb)) x where x not in ('stok', 'cari', 'alt', 'kasa');
+  if bilinmeyen is not null then
+    raise exception 'fis_yaz: tanınmayan parça (%)', bilinmeyen using errcode = '22023';
+  end if;
   if jsonb_typeof(p -> 'stok') = 'object' then s := public.stk_yaz(p -> 'stok'); end if;
   if jsonb_typeof(p -> 'cari') = 'object' then c := public.car_yaz(p -> 'cari'); end if;
   if jsonb_typeof(p -> 'alt') = 'object' then a := public.alt_yaz(p -> 'alt'); end if;
-  return jsonb_build_object('stok', s, 'cari', c, 'alt', a);
+  if jsonb_typeof(p -> 'kasa') = 'object' then k := public.kas_yaz(p -> 'kasa'); end if;
+  return jsonb_build_object('stok', s, 'cari', c, 'alt', a, 'kasa', k);
 end $$;
 
 create or replace function public.alt_gecis() returns jsonb

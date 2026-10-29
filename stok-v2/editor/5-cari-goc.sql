@@ -74,6 +74,7 @@ create or replace function public.car_geri_don() returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   n int;
+  atlanan jsonb;
 begin
   if auth.jwt() is not null then
     raise exception 'Geri dönüş yalnız Supabase SQL Editor''den yapılır' using errcode = '42501';
@@ -83,13 +84,16 @@ begin
   end if;
   drop table if exists _gd_c;
   create temp table _gd_c on commit drop as select to_jsonb(x) as j from public.car_eski_hareketler_g x;
+  select coalesce(jsonb_agg(j ->> 'id'), '[]'::jsonb) into atlanan from _gd_c
+   where not exists (select 1 from public.cariler c where c.id::text = _gd_c.j ->> 'cari_id');
+  delete from _gd_c where not exists (select 1 from public.cariler c where c.id::text = _gd_c.j ->> 'cari_id');
   drop view public.cari_hareketleri;
   alter table public.eski_cari_hareketleri rename to cari_hareketleri;
   truncate public.cari_hareketleri;
   n := public.stk_geri_yaz('cari_hareketleri', '_gd_c');
   update public.stk_ayar set cari_aktif = false, cari_geri_donus = now() where id = 'tekil';
   notify pgrst, 'reload schema';
-  return jsonb_build_object('geriDonus', 'tamam', 'hareket', n);
+  return jsonb_build_object('geriDonus', 'tamam', 'hareket', n, 'carisiYokAtlanan', atlanan);
 end $$;
 
 revoke all on function public.car_goc(boolean) from public, anon, authenticated;

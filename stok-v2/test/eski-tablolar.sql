@@ -168,3 +168,6 @@ create table public.koliler (id text primary key, veri jsonb);
 insert into public.koliler values ('tekil', '[{"id": "koli-1", "kod": "K1", "durum": "Hazır"}, {"id": "koli-2", "kod": "K2", "durum": "Sevk edildi"}]');
 create table public.mesajlar (id text primary key, veri jsonb);
 insert into public.mesajlar values ('tekil', '[{"id": "mesaj-1", "kanal": "genel", "metin": "Merhaba"}]');
+
+-- Günlük (rls-rol.sql silme korumasını buna kurar; v1.730.1 düzeltme adımı rls-rol.sql'i içerir).
+create table public.gunluk (id text primary key, veri jsonb);

@@ -45,6 +45,15 @@ begin
   return false;
 end $$;
 
+-- GİRİŞ ANAHTARI, SİLME VE YENİDEN EKLEME DE (v1.730.1 — baştan aşağı denetim). Yalnız `kullanicilar` korunuyordu ve yalnız
+-- UPDATE'te: yetkisi olmayan kullanıcı REST'ten (a) `girisAktifMi`yi kapatıp (sunucu yetkisi `yetki_var_mi` o zaman herkese
+-- "evet" der) ya da (b) satırı silip kendini Yönetici yaparak yeniden ekleyip stk_yaz / kas_yaz / fatura yazmalarını
+-- açabiliyordu (yerel PostgreSQL'de doğrulandı). Artık:
+--   · UPDATE: `kullanicilar` ya da `girisAktifMi` değişiyorsa yalnız Yönetici.
+--   · DELETE: yalnız Yönetici.
+--   · INSERT: satır zaten varsa (uygulamanın upsert'i — PostgreSQL önce "before insert" çalıştırır) karar UPDATE'e bırakılır;
+--     tablo BOŞSA serbest (yeni firma kurulumunda ilk satır — silme korunduğu için boşaltılamaz); başka kimlikle satır yalnız
+--     Yönetici.
 create or replace function public.tanimlar_kullanici_koruma()
 returns trigger
 language plpgsql
@@ -53,17 +62,32 @@ set search_path = public
 as $$
 begin
   -- Servis rolü (jetonsuz) → yönetim işi, dokunma.
-  if auth.jwt() is null then return new; end if;
-  if (coalesce(new.veri -> 'kullanicilar', '[]'::jsonb)) is distinct from (coalesce(old.veri -> 'kullanicilar', '[]'::jsonb))
+  if auth.jwt() is null then return coalesce(new, old); end if;
+  if tg_op = 'DELETE' then
+    if not public.yonetici_mi() then
+      raise exception 'Tanımları yalnız Yönetici silebilir' using errcode = '42501';
+    end if;
+    return old;
+  end if;
+  if tg_op = 'INSERT' then
+    if exists (select 1 from public.tanimlar t where t.id = new.id) then return new; end if;
+    if not exists (select 1 from public.tanimlar) then return new; end if;
+    if not public.yonetici_mi() then
+      raise exception 'Tanımlar satırını yalnız Yönetici ekleyebilir' using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  if ((coalesce(new.veri -> 'kullanicilar', '[]'::jsonb)) is distinct from (coalesce(old.veri -> 'kullanicilar', '[]'::jsonb))
+      or (new.veri -> 'girisAktifMi') is distinct from (old.veri -> 'girisAktifMi'))
      and not public.yonetici_mi() then
-    raise exception 'Kullanıcı listesini yalnız Yönetici değiştirebilir' using errcode = '42501';
+    raise exception 'Kullanıcı listesini ve giriş ayarını yalnız Yönetici değiştirebilir' using errcode = '42501';
   end if;
   return new;
 end $$;
 
 drop trigger if exists tanimlar_kullanici_koruma on public.tanimlar;
 create trigger tanimlar_kullanici_koruma
-  before update on public.tanimlar
+  before insert or update or delete on public.tanimlar
   for each row execute function public.tanimlar_kullanici_koruma();
 
 create or replace function public.gunluk_silme_koruma()
