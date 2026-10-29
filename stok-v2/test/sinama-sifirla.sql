@@ -45,10 +45,30 @@ do $$ begin
 end $$;
 drop view public.baska_gorunum;
 
+-- 1c) Boşaltılacak tabloya dışarıdan bağlı tablo (canlıda: hesap_hareketleri → cariler): tek hatada listelenir, hiçbir şey
+--     silinmez; açıkça adı verilince boşaltılır. Korunan tablo verilemez.
+create table public.hesap_hareketleri (id text primary key, cari_id text references public.cariler(id), tutar numeric);
+insert into public.hesap_hareketleri select 'hh1', id, 5 from public.cariler limit 1;
+do $$ begin
+  begin
+    perform public.veri_sifirla('SIFIRLA');
+    raise exception 'dış bağlı tabloyla sıfırladı';
+  exception when dependent_objects_still_exist then
+    assert sqlerrm like '%hesap_hareketleri (1 satır) → cariler%', 'mesaj: ' || sqlerrm;
+  end;
+  begin
+    perform public.veri_sifirla('SIFIRLA', array['tanimlar']);
+    raise exception 'korunan tablo verildi';
+  exception when invalid_parameter_value then null; end;
+  assert to_regclass('public.eski_varyantlar') is not null and (select count(*) from public.cariler) > 0, 'bir şey silindi';
+  raise notice 'TAMAM: dış bağlı tablo tek hatada listelendi, korunan tablo verilemez, hiçbir şey silinmedi';
+end $$;
+
 -- 2) Sıfırla
 do $$
-declare r jsonb := public.veri_sifirla('SIFIRLA');
+declare r jsonb := public.veri_sifirla('SIFIRLA', array['hesap_hareketleri']);
 begin
+  assert (r -> 'bosaltilan' ->> 'hesap_hareketleri')::int = 1 and (select count(*) from public.hesap_hareketleri) = 0, 'ek tablo ' || r::text;
   assert r -> 'kaldirilanGorunumler' = '["vitrin_urunler"]'::jsonb and to_regclass('public.vitrin_urunler') is null, 'vitrin_urunler ' || r::text;
   assert jsonb_array_length(r -> 'silinenTablolar') >= 5, 'eski tablolar ' || r::text;
   assert not exists (select 1 from pg_tables where schemaname = 'public' and tablename like 'eski\_%'), 'eski tablo kaldı';
