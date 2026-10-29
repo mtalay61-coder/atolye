@@ -19,6 +19,8 @@ const DEGISIKLIK_TABLO_ALANI = {
   uretim: "uretim", uretim_atamalari: "uretim",
   stok_rezervasyonlari: "stokRezervasyonlari", onaylar: "onaylar", cop: "cop",
   tanimlar: "tanimlar", muhasebe: "muhasebe", koliler: "koliler", gorevler: "gorevler",
+  // Kasa & Banka v2 (v1.729.0): geçişten sonra `muhasebe` görünüm — sayacı v2 tabloları artırır.
+  kas_hesap: "muhasebe", kas_hareket: "muhasebe", kas_cek: "muhasebe", kas_ayar: "muhasebe",
   faturalar: "faturalar", fis_defteri: "fisDefteri", modeller: "modeller", teklifler: "teklifler",
   // mesajlar: sohbet kendi 6 sn yoklamasıyla tazeleniyor (100); cek_gorselleri: kendi yazma yolu, nadir — burada yok.
 };

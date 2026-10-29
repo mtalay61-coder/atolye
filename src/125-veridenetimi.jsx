@@ -32,8 +32,13 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
   //
   // ÖLÇÜ STOK HAREKETLERİ: fiş defteri değil, çünkü sevk edilen mal stoktan çıkar ve o hareket
   // siparişin kimliğini taşır. Hareket yoksa sevk de olmamıştır.
+  // İPTAL EDİLMİŞ SİPARİŞ SAYILMAZ (v1.729.0 — kullanıcı, 29 Ekim: denetim "SAT-1023 · siparişte 2, stok hareketlerinde 0"
+  // dedi; "1023 iptal edilen sipariş"). İptal (088 `siparisBaglariniCoz`, v1.512.0 kuralı) fişlere dokunmaz, yalnız bağı çözer:
+  // hareketlerden siparisId / kalemId kalkar, kalemin `karsilanan`ı ise "ne teslim edilmişti" tarihçesi olarak bilerek kalır.
+  // Bu iki sayı iptalden sonra hiçbir zaman tutmaz — tutarsızlık değil, iptalin tanımı. Burada ve aşağıda (2) atlanır.
+  const iptalMi = (sp) => sp && sp.durum === "İptal";
   (siparisler || []).forEach((sp) => {
-    if (!sp || !Array.isArray(sp.kalemler)) return;
+    if (!sp || !Array.isArray(sp.kalemler) || iptalMi(sp)) return;
     const sevkEdilen = {};
     stokHareketleri.forEach((h) => {
       if (h.siparisId !== sp.id) return;
@@ -89,6 +94,7 @@ function veriTutarliligiDenetle({ stok, cariler, siparisler, tanimlar, fisDefter
     kalemHareketToplami.set(anahtar, (kalemHareketToplami.get(anahtar) || 0) + Math.abs(h.miktar || 0));
   });
   (siparisler || []).forEach((sip) => {
+    if (iptalMi(sip)) return;   // bkz. yukarı (v1.729.0): iptal bağı çözer, karşılanan tarihçe olarak kalır
     (sip.kalemler || []).forEach((k) => {
       const beklenen = kalemHareketToplami.get(`${sip.id}|${k.id}`) || 0;
       const yazan = k.karsilanan || 0;

@@ -1422,12 +1422,13 @@ function AtolyeUygulamasi() {
   // kaydediyor. Ayrı bir fonksiyon olmasının sebebi kapı sayımı: `stokFisiKaydet`in içinde
   // kalsaydı o fonksiyon "hareket yazan yeni bir kapı" gibi görünür ve 16. denetimin ölçtüğü
   // kopya sayısı yanıltıcı olurdu.
-  const muhasebeyePesinIsle = useCallback((p) => {
+  // `secenek.zarf` (v1.729.0): peşin fişte kasa satırı fişin stok / cari satırlarıyla tek sunucu işleminde (030 tekilYaz).
+  const muhasebeyePesinIsle = useCallback((p, secenek) => {
     if (!p || !p.hesapId) return;
     if (donemKilidiEngel(p.hareket && p.hareket.tarih, showToast, "Kasa/banka hareketi")) return;
     setMuhasebe((onceki) => {
       const yeni = hesabaHareketEkle(onceki, p.hesapTur, p.hesapId, p.hareket);
-      yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeni), "Muhasebe", yeni);
+      yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeni, secenek || {}), "Muhasebe", yeni);
       return yeni;
     });
   }, [showToast]);
@@ -2085,7 +2086,7 @@ function AtolyeUygulamasi() {
       + (k.renkler.length ? ` · ${k.renkler.length} renk de yeniden tanımlandı: ${k.renkler.map((r) => r.ad).join(", ")}` : ""));
   }, [stok, tanimlar, saveTanimlar, showToast]);
 
-  const saveCariler = useCallback(async (next) => {
+  const saveCariler = useCallback(async (next, secenek) => {
     // FONKSİYON DA KABUL EDİLİR (v1.639.0, denetim): kasa/banka ekranı (205) kasa yazımını bekledikten sonra cari listesini
     // kapanıştaki hâliyle yazıyordu; bu arada gelen değişiklik eziliyordu. Fonksiyon verilirse güncel liste üzerinden
     // kurulur (addCariHareketFromStok kalıbı). Kod ataması yine `cariKodlariAta`; tanım yazımı mikro göreve.
@@ -2096,7 +2097,7 @@ function AtolyeUygulamasi() {
           setTanimlar(sonuc.tanimlar);
           yazimiIzle(tekilYaz("tanimlar:data", "tanimlar", sonuc.tanimlar), "Tanımlar", sonuc.tanimlar);
         });
-        yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler), "Cari kartları", sonuc.cariler);
+        yazimiIzle(tabloYaz("cari:data", "cariler", sonuc.cariler, undefined, secenek), "Cari kartları", sonuc.cariler);
         return sonuc.cariler;
       });
       return;
@@ -2112,7 +2113,7 @@ function AtolyeUygulamasi() {
     if (sonuc.doldu) showToast("Cari kod aralığı doldu — şema genişletilmeli");
     setCariler(sonuc.cariler);
     try {
-      await tabloYaz("cari:data", "cariler", sonuc.cariler);
+      await tabloYaz("cari:data", "cariler", sonuc.cariler, undefined, secenek);
     } catch (e) {
       kaydetmeHatasiBildir(e, "Cari", sonuc.cariler);
     }
@@ -2538,10 +2539,11 @@ function AtolyeUygulamasi() {
   // türler `yanEtkiliMi: true` işaretlenir ve kullanıcı geri yüklemeden ÖNCE açıkça uyarılır.
   // Sessizce "geri yüklendi" demek, tutarsız bir veriyi doğruymuş gibi göstermek olurdu.
   // ---------------------------------------------------------------------------------------------
-  const saveMuhasebe = useCallback(async (next) => {
+  // `secenek.zarf` (v1.729.0): kasa tahsilat / ödemesi cari satırıyla tek sunucu işleminde (205, 040 `yazmaZarfi`).
+  const saveMuhasebe = useCallback(async (next, secenek) => {
     setMuhasebe(next);
     try {
-      await tekilYaz("muhasebe:data", "muhasebe", next);
+      await tekilYaz("muhasebe:data", "muhasebe", next, secenek || {});
     } catch (e) {
       kaydetmeHatasiBildir(e, "Muhasebe", next);
     }
@@ -3389,7 +3391,15 @@ function AtolyeUygulamasi() {
       setSiparisler(sonuc.siparisler);
       geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: sonuc.siparisler, etiket: "Siparişler" });   // v1.728.0: aynı zarfta
     }
-    if (geriAlYazmalari.length) birlikteYaz(geriAlYazmalari);
+    // MUHASEBE TEK YAZIMLA. Kasa karşı kaydı ve çek değişikliği AYNI kayda (`muhasebe`) düşüyor.
+    // Eskiden önce kasa temizliği yazılıp ardından çek değişikliği `sonuc.muhasebe` ile yazılıyordu:
+    // ikincisi kasa temizliğini içermediği için onu EZİYORDU. Temizlik `sonuc.muhasebe` üzerine
+    // yapıldığında çek değişikliği de içinde; ayrı bir yazıma gerek kalmıyor.
+    // AYNI ZARFTA (v1.729.0): Kasa & Banka v2'deyse kasa satırları stok / cari geri alımıyla tek sunucu işleminde.
+    const kasaGeriAl = sonuc.muhasebeBagIdler.length > 0
+      ? { tablo: "muhasebe", yaz: (zarf) => muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe, { zarf }) }
+      : sonuc.cekDegisti ? { tablo: "muhasebe", yaz: (zarf) => saveMuhasebe(sonuc.muhasebe, { zarf }) } : null;
+    if (geriAlYazmalari.length || kasaGeriAl) birlikteYaz(geriAlYazmalari, [kasaGeriAl]);
     // ÇEK: harekete bağlı çek kaydı da gider. Ödemesi silinmiş bir çekin vadesi gelince
     // hatırlatılması, kullanıcıyı olmayan bir alacağın peşine düşürürdü.
     sonuc.silinenCekler.forEach((c) => {
@@ -3410,12 +3420,7 @@ function AtolyeUygulamasi() {
         ? `${etiket} — ${ilk.cekNo || "çek"} yeniden "${ilk.durum}"`
         : `${sonuc.geriAlinanCekler.length} çekin işlemi geri alındı`);
     }
-    // MUHASEBE TEK YAZIMLA. Kasa karşı kaydı ve çek değişikliği AYNI kayda (`muhasebe`) düşüyor.
-    // Eskiden önce kasa temizliği yazılıp ardından çek değişikliği `sonuc.muhasebe` ile yazılıyordu:
-    // ikincisi kasa temizliğini içermediği için onu EZİYORDU. Temizlik `sonuc.muhasebe` üzerine
-    // yapıldığında çek değişikliği de içinde; ayrı bir yazıma gerek kalmıyor.
-    if (sonuc.muhasebeBagIdler.length > 0) muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe);
-    else if (sonuc.cekDegisti) saveMuhasebe(sonuc.muhasebe);
+    // (Muhasebe yazması yukarıda, stok / cari geri alımıyla aynı zarfta.)
     // KOLİ: sevkiyat fişi geri alınınca koli yeniden "Hazır" olur ve tekrar okutulabilir.
     if (sonuc.etkilenenKoliler.length > 0) {
       saveKoliler(sonuc.koliler);
@@ -3565,7 +3570,14 @@ function AtolyeUygulamasi() {
     if (sonuc.silinenStok > 0) { setStok(sonuc.stok); geriAlYazmalari.push({ anahtar: "stok:items", tablo: "urunler", kayitlar: sonuc.stok }); }
     if (sonuc.silinenCari > 0) { setCariler(sonuc.cariler); geriAlYazmalari.push({ anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler }); }
     if (sonuc.etkilenenSiparisler.size > 0) { setSiparisler(sonuc.siparisler); geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: sonuc.siparisler }); }   // v1.728.0: aynı zarfta
-    if (geriAlYazmalari.length) sonuclar.push(...(await birlikteYaz(geriAlYazmalari)).sonuclar);
+    // Kasa karşı kaydı (peşin kısım) ve çek değişikliği de aynı zarfta (v1.729.0) — Kasa & Banka v2'deyse tek sunucu işlemi.
+    // TEK YAZIM: temizlik `sonuc.muhasebe` üzerine yapılıyor, yani çek değişikliği de içinde.
+    const kasaTemizligi = sonuc.muhasebeBagIdler.length > 0
+      ? { tablo: "muhasebe", yaz: (zarf) => muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe, { zarf }) }
+      : sonuc.cekDegisti
+        ? { tablo: "muhasebe", yaz: (zarf) => { setMuhasebe(sonuc.muhasebe); return tekilYaz("muhasebe:data", "muhasebe", sonuc.muhasebe, { zarf }); } }
+        : null;
+    if (geriAlYazmalari.length || kasaTemizligi) sonuclar.push(...(await birlikteYaz(geriAlYazmalari, [kasaTemizligi])).sonuclar);
     // ÇEK: fişe bağlı çek kayıtları gider, ciro fişi silindiyse çek portföye döner
     // (bkz. removeHareketEverywhere).
     sonuc.silinenCekler.forEach((c) => {
@@ -3579,15 +3591,7 @@ function AtolyeUygulamasi() {
       gunlukYaz(`Çek işlemi geri alındı: ${c.cekNo || "no yok"}`, "muhasebe", { cekId: c.id, fisNo: fis.fisNo || null });
     });
     // KASA/BANKA KARŞI KAYDI — BU SATIR EKSİKTİ. Fişten silinen bir peşin tahsilat/ödeme cariden
-    // gidiyor ama kasada yetim kalıyordu (kullanıcı bildirdi, 6 Eylül).
-    // TEK YAZIM: temizlik `sonuc.muhasebe` üzerine yapılıyor, yani çek değişikliği de içinde.
-    if (sonuc.muhasebeBagIdler.length > 0) {
-      const r = await muhasebeBaglariniTemizle(sonuc.muhasebeBagIdler, sonuc.muhasebe);
-      if (r) sonuclar.push(r);
-    } else if (sonuc.cekDegisti) {
-      sonuclar.push(await tekilYaz("muhasebe:data", "muhasebe", sonuc.muhasebe));
-      setMuhasebe(sonuc.muhasebe);
-    }
+    // gidiyor ama kasada yetim kalıyordu (kullanıcı bildirdi, 6 Eylül). (Yazma yukarıda, stok / cariyle aynı zarfta.)
     // KOLİ: bkz. removeHareketEverywhere.
     if (sonuc.etkilenenKoliler.length > 0) {
       setKoliler(sonuc.koliler);
@@ -3677,8 +3681,10 @@ function AtolyeUygulamasi() {
     if (!k || !k.cariId || !k.cariHareketi) return;
     // Önce tek kontrol: cari ve kasa ayağından biri kapalı dönemdeyse İKİSİ de yazılmaz (yarım kayıt olmasın).
     if (donemKilidiEngel([k.cariHareketi.tarih, k.muhasebe && k.muhasebe.hareket && k.muhasebe.hareket.tarih], showToast)) return;
-    addCariHareketFromStok(k.cariId, k.cariHareketi);
-    if (k.muhasebe && k.muhasebe.hesapId) muhasebeyePesinIsle({ hesapTur: k.muhasebe.hesapTur, hesapId: k.muhasebe.hesapId, hareket: k.muhasebe.hareket });
+    // Cari ve kasa ayağı tek sunucu işleminde (v1.729.0) — Kasa & Banka v2'deyse (040 `kasaZarfiAc`).
+    const zarf = kasaZarfiAc(!!(k.muhasebe && k.muhasebe.hesapId));
+    addCariHareketFromStok(k.cariId, k.cariHareketi, zarf ? { zarf } : undefined);
+    if (k.muhasebe && k.muhasebe.hesapId) muhasebeyePesinIsle({ hesapTur: k.muhasebe.hesapTur, hesapId: k.muhasebe.hesapId, hareket: k.muhasebe.hareket }, zarf ? { zarf } : undefined);
   }, [addCariHareketFromStok, muhasebeyePesinIsle, showToast]);
 
 

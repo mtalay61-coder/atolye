@@ -83,6 +83,43 @@ async function supabaseSatirSayisi(tablo, sorgu = "select=id") {
   return n;
 }
 
+// SÜTUNU FARKLI TABLOLAR (v1.729.0 — kullanıcı, 29 Ekim ekran görüntüsü: "Ürün varyantı · okunamadı — varyantlar: HTTP 400").
+// Stok v2 geçişinden sonra `varyantlar` bir görünüm ve `id` sütunu yok (varyantın kimliği ürün + renk + beden); `select=id`
+// PostgREST'te 400 döner. Sayım yalnız satır sayar, hangi sütunun istendiği önemsiz — var olan bir sütun yeter.
+const SAYIM_SORGUSU = { varyantlar: "select=urun_id" };
+
+// HANGİ KAYIT FARKLI (v1.729.0 — kullanıcı, 29 Ekim: "Üretim · bu cihaz 0, bulut 1 · İş ataması 0 / 2"; "bu sorun son
+// güncellemelerden önce de vardı"). Sayı farkı "bir şey ters" der ama neyin ters olduğunu söylemez; kod okumasıyla kesin
+// sebep bulunamadı. Ana tablolarda fark varsa buluttaki kimlikler (ve okunur bir ad) indirilir, bu cihazdakilerle karşılaştırılır:
+//   · bulutta olup bu cihazda olmayan kayıt — ve bu cihazın bekleyen kayıt defterinde (025) o kayıt için "sil" var mı
+//     (cihaz silmiş, silme buluta gitmemiş) ya da yok mu (cihaz hiç görmemiş / okurken düşürmüş),
+//   · bu cihazda olup bulutta olmayan kayıt.
+// Yalnız okur, hiçbir şeyi düzeltmez — sebep görünür olsun diye. Saf karşılaştırma `sayimKimlikFarki` (birim-bulut-sayim).
+const SAYIM_KIMLIK_TABLOLARI = { urunler: "ad", cariler: "unvan", siparisler: "siparis_no", uretim: "siparis_no" };
+function sayimKimlikFarki(cihazKayitlari, bulutSatirlari, adSutunu, bekleyenDefter) {
+  const cihazIdler = new Set((cihazKayitlari || []).filter(Boolean).map((k) => String(k.id)));
+  const bulutIdler = new Set((bulutSatirlari || []).filter(Boolean).map((r) => String(r.id)));
+  const ana = (bekleyenDefter && bekleyenDefter.ana) || {};
+  const cihazAd = (k) => k.siparisNo || k.ad || k.unvan || "";
+  return {
+    yalnizBulutta: (bulutSatirlari || []).filter((r) => r && !cihazIdler.has(String(r.id)))
+      .map((r) => ({ id: String(r.id), ad: r[adSutunu] || "", bekleyen: ana[String(r.id)] || null })),
+    yalnizCihazda: (cihazKayitlari || []).filter((k) => k && !bulutIdler.has(String(k.id)))
+      .map((k) => ({ id: String(k.id), ad: cihazAd(k), bekleyen: ana[String(k.id)] || null })),
+  };
+}
+async function sayimFarkAyrintisi(tablolar, cihazListeleri) {
+  const sonuc = {};
+  const defter = typeof bekleyenKayitlariOku === "function" ? bekleyenKayitlariOku() : {};
+  await Promise.all(tablolar.filter((t) => SAYIM_KIMLIK_TABLOLARI[t] && cihazListeleri && cihazListeleri[t]).map(async (t) => {
+    try {
+      const satirlar = await supabaseTumSatirlar(t, `select=id,${SAYIM_KIMLIK_TABLOLARI[t]}`);
+      sonuc[t] = sayimKimlikFarki(cihazListeleri[t], satirlar, SAYIM_KIMLIK_TABLOLARI[t], defter[t]);
+    } catch (e) { sonuc[t] = { hata: String((e && e.message) || e).slice(0, 120) }; }
+  }));
+  return sonuc;
+}
+
 // Bütün sayım tablolarının bulut ve arşiv (son 30 gün, DELETE) sayıları. Okunamayan tablo null.
 async function bulutSayimiAl(gunOnce = 30) {
   const esik = new Date(Date.now() - gunOnce * 24 * 60 * 60 * 1000).toISOString();
@@ -90,7 +127,7 @@ async function bulutSayimiAl(gunOnce = 30) {
   const arsiv30 = {};
   const hatalar = [];
   await Promise.all(SAYIM_TABLOLARI.map(async (tablo) => {
-    try { bulut[tablo] = await supabaseSatirSayisi(tablo); }
+    try { bulut[tablo] = await supabaseSatirSayisi(tablo, SAYIM_SORGUSU[tablo]); }
     catch (e) { bulut[tablo] = null; hatalar.push(`${tablo}: ${String((e && e.message) || e).slice(0, 80)}`); }
     try {
       arsiv30[tablo] = await supabaseSatirSayisi("silinen_arsiv",
@@ -152,16 +189,21 @@ async function arsivSatirlariniGeriYukle(tablo, satirlar) {
 
 // ---------------------------------------------------------------------------------------------
 // BULUT SAYIMI BÖLÜMÜ (Tanımlar › Bakım, yalnız Yönetici)
-function BulutSayimiBolumu({ cihaz }) {
+function BulutSayimiBolumu({ cihaz, kayitlar }) {
   const [satirlar, setSatirlar] = useState(null);
   const [durum, setDurum] = useState("");
+  const [ayrinti, setAyrinti] = useState(null);
   const yukle = async () => {
     if (!supabaseAcikMi()) { setDurum("Bulut bağlı değil."); return; }
     setDurum("Sayılıyor…");
     try {
       const { bulut, arsiv30, hatalar } = await bulutSayimiAl(30);
-      setSatirlar(sayimKarsilastir(cihaz, bulut, arsiv30));
+      const s = sayimKarsilastir(cihaz, bulut, arsiv30);
+      setSatirlar(s);
       setDurum(hatalar.length ? `Okunamayan: ${hatalar.join("; ")}` : "");
+      // Farklı ana tablolarda hangi kayıt (alt tablo farkı — iş ataması gibi — üst tablonun farkından okunur).
+      const farkliAna = s.filter((x) => x.bulut != null && x.durum !== "aynı").map((x) => x.tablo);
+      setAyrinti(farkliAna.length ? await sayimFarkAyrintisi(farkliAna, kayitlar) : null);
     } catch (e) {
       setDurum(`Sayım alınamadı: ${String((e && e.message) || e).slice(0, 160)}`);
     }
@@ -206,6 +248,33 @@ function BulutSayimiBolumu({ cihaz }) {
             </tbody>
           </table>
           {farkli.length === 0 && <div style={{ fontSize: 11, color: "var(--erp-text-3)", marginTop: 6 }}>Bu cihaz ile bulut birebir aynı.</div>}
+          {ayrinti && Object.keys(ayrinti).length > 0 && (
+            <div data-sayim-ayrinti="1" className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 8, lineHeight: 1.6 }}>
+              {Object.entries(ayrinti).map(([t, a]) => (
+                <div key={t}>
+                  <b>{ARSIV_TABLO_ADLARI[t] || t}:</b>{" "}
+                  {a.hata ? `ayrıntı okunamadı (${a.hata})` : (
+                    <>
+                      {a.yalnizBulutta.map((x) => (
+                        <div key={`b-${x.id}`} data-sayim-yalniz-bulutta={x.id}>
+                          · bulutta var, bu cihazda yok: {x.ad || "—"} ({x.id}) — {x.bekleyen === "sil"
+                            ? "bu cihaz SİLMİŞ, silme buluta gitmemiş (bekleyen kayıt defterinde)"
+                            : "bu cihazda bekleyen silme yok: cihaz bu kaydı hiç almamış ya da okurken düşürmüş"}
+                        </div>
+                      ))}
+                      {a.yalnizCihazda.map((x) => (
+                        <div key={`c-${x.id}`} data-sayim-yalniz-cihazda={x.id}>
+                          · bu cihazda var, bulutta yok: {x.ad || "—"} ({x.id}){x.bekleyen === "yaz" ? " — bekleyen yazma (henüz gönderilmedi)" : ""}
+                        </div>
+                      ))}
+                      {a.yalnizBulutta.length === 0 && a.yalnizCihazda.length === 0 && "kayıt kimlikleri aynı (fark alt kayıtlarda)"}
+                    </>
+                  )}
+                </div>
+              ))}
+              <div style={{ marginTop: 4, color: "var(--erp-text-3)" }}>Bu satırların ekran görüntüsü sebebi bulmaya yeter.</div>
+            </div>
+          )}
           {farkli.length > 0 && (
             <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginTop: 6, lineHeight: 1.5 }}>
               Bulutta silinmiş görünen satırlar <b>Çöp Kutusu</b> sekmesinin altındaki <b>Sunucu arşivi</b>nden tablo seçilip geri yüklenebilir. Günlük'te

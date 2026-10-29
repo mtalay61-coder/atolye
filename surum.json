@@ -1,1 +1,1 @@
-{"surum": "1.728.0", "url": "atolye-erp-v1.728.0.html", "not": "Sipariş kalemleri ve üretim atamaları da tek kapıdan: Supabase'de geçiş yapılınca sevk, fiş, üretim teslimi ve geri almada stok, cari, sipariş ve üretim satırları tek sunucu işlemiyle yazılır"}
+{"surum": "1.729.0", "url": "atolye-erp-v1.729.0.html", "not": "Kasa & Banka tek kapıdan: Supabase'de geçiş yapılınca hesaplar, hareketler ve çekler ayrı satır; her cihaz yalnız kendi değişikliğini yazar, bayat ya da boş liste hiçbir şeyi silemez; tahsilat, ödeme ve peşin fişte kasa satırı cariyle tek işlemde"}

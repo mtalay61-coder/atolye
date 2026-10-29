@@ -18,7 +18,7 @@ const rpcAdlari = [];
 // Sahte ağ: rpc/stk_yaz yerel veritabanında Ali (Yönetici) olarak çalışır; urunler'e yazmalar başarılı sayılır.
 global.fetch = async (url, sec = {}) => {
   const yol = String(url).replace(/^.*\/rest\/v1\//, "");
-  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz|alt_yaz)/) || [])[1];
+  const rpcAdi = (yol.match(/^rpc\/(stk_yaz|car_yaz|fis_yaz|alt_yaz|kas_yaz)/) || [])[1];
   if (rpcAdi) {
     rpcSayisi++;
     rpcAdlari.push(rpcAdi);
@@ -36,10 +36,11 @@ global.fetch = async (url, sec = {}) => {
       return { ok: false, status: 400, json: async () => ({ message: metin }), text: async () => metin };
     }
   }
-  if (/^(varyantlar|stok_hareketleri|cari_hareketleri|siparis_kalemleri|uretim_atamalari)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
+  if (/^(varyantlar|stok_hareketleri|cari_hareketleri|siparis_kalemleri|uretim_atamalari|muhasebe)/.test(yol)) throw new Error(`test: köprü açıkken REST alt tablo isteği: ${sec.method} ${yol}`);
   return { ok: true, status: 200, json: async () => (sec.method === "PATCH" ? [{ id: "x" }] : []), text: async () => "" };
 };
-const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, altV2AktifAyarla, yazmaZarfi } = require(path.join(__dirname, "../../test/erp.cjs"));
+const { supabaseTabloEsitle, tabloBaslangicTam, surumleriYukle, stokV2AktifAyarla, stokV2TanimlarAyarla, cariV2AktifAyarla, altV2AktifAyarla, yazmaZarfi,
+  kasaV2AktifAyarla, kasaZarfiAc, tekilYaz, tekilTabanAyarla, tekilTabanOku, bekleyenYazmalariOku } = require(path.join(__dirname, "../../test/erp.cjs"));
 
 let hata = 0;
 const bekle = (ad, a, b) => {
@@ -250,6 +251,62 @@ const hrk = (id, renk, beden, miktar, fisNo, ek = {}) => ({ id, renk, beden, mik
   bekle("12: üç söz de reddedildi", r12.map((x) => x.status), ["rejected", "rejected", "rejected"]);
   bekle("12: kalem değişmedi", psql("select karsilanan from public.siparis_kalemleri where id = 'k1';"), "5");
   bekle("12: cari yazılmadı", psql("select count(*) from public.car_hareket where id = 'ce12';"), "0");
+
+  console.log("13) Kasa & Banka v2: tahsilat — kasa satırı + cari satırı TEK fis_yaz, belge yazılmaz (v1.729.0)");
+  kasaV2AktifAyarla(true);
+  const kasaOku = () => JSON.parse(psql("select veri from public.muhasebe where id = 'tekil';"));
+  const kararli = (x) => (x === null || typeof x !== "object" ? JSON.stringify(x) : Array.isArray(x) ? `[${x.map(kararli).join(",")}]`
+    : `{${Object.keys(x).sort().map((k) => `${JSON.stringify(k)}:${kararli(x[k])}`).join(",")}}`);
+  let kasa = kasaOku();
+  tekilTabanAyarla("muhasebe", kasa);   // 090 açılış okuması
+  const kasaBakiye = (id) => Number(psql(`select coalesce(sum(case when veri ->> 'yon' = 'Giriş' then (veri ->> 'tutar')::numeric else -(veri ->> 'tutar')::numeric end), 0) from public.kas_hareket where hesap_id = '${id}' and not iptal;`));
+  const kb0 = kasaBakiye("kasa-1");
+  const b13 = bakiye();
+  rpcAdlari.length = 0;
+  kasa = derin(kasa); cariler = derin(cariler);
+  kasa.kasalar[0].hareketler.unshift({ id: "mk13", tarih: "2026-10-29", yon: "Giriş", tutar: 600, cariId: "c-2", muhasebeBagId: "bag13", defter: "Genel", aciklama: "Tahsilat" });
+  cariler.find((c) => c.id === "c-2").hareketler.unshift({ id: "ck13", tarih: "2026-10-29", zaman: "2026-10-29T10:00:00.000Z", yon: "Borç", tutar: 600, paraBirimi: "TRY", fisNo: "THS-13", muhasebeBagId: "bag13" });
+  zarf = kasaZarfiAc(true);
+  await Promise.all([tekilYaz("muhasebe:data", "muhasebe", kasa, { zarf }), supabaseTabloEsitle("cariler", cariler, { zarf })]);
+  bekle("13: tek istek, fis_yaz", rpcAdlari, ["fis_yaz"]);
+  bekle("13: kasa bakiyesi", kasaBakiye("kasa-1"), kb0 + 600);
+  bekle("13: cari bakiye", bakiye(), b13 - 600);
+  bekle("13: buluttaki belge = ekrandaki belge", kararli(kasaOku()), kararli(kasa));
+  bekle("13: taban ilerledi", tekilTabanOku("muhasebe").kasalar[0].hareketler[0].id, "mk13");
+
+  console.log("14) Bayat cihaz: eski listeyle yazan cihaz başka cihazın hareketini SİLEMEZ");
+  // B cihazı 13'ten önceki hâli tutuyor (mk13'ü görmedi) ve kendi hareketini ekliyor.
+  const bayat = derin(kasaOku()); bayat.kasalar[0].hareketler = bayat.kasalar[0].hareketler.filter((x) => x.id !== "mk13");
+  tekilTabanAyarla("muhasebe", derin(bayat));
+  bayat.kasalar[0].hareketler.unshift({ id: "mk14", tarih: "2026-10-29", yon: "Çıkış", tutar: 40, defter: "Genel", aciklama: "Kargo" });
+  rpcAdlari.length = 0;
+  await tekilYaz("muhasebe:data", "muhasebe", bayat);
+  bekle("14: tek kas_yaz", rpcAdlari, ["kas_yaz"]);
+  bekle("14: iki cihazın hareketi de bulutta", kasaOku().kasalar[0].hareketler.map((x) => x.id).slice(0, 2), ["mk14", "mk13"]);
+  // Boş listeli cihaz (bulutu okuyamamış: taban yok) yalnız kur günceller → hiçbir hesap / hareket gitmez.
+  tekilTabanAyarla("muhasebe", null);
+  const hesapSayisi = () => psql("select count(*) from public.kas_hesap where aktif;");
+  const hs = hesapSayisi();
+  await tekilYaz("muhasebe:data", "muhasebe", { kasalar: [], bankalar: [], cekler: [], kurlar: { USD: 42.5, EUR: 49.9 } });
+  bekle("14: boş cihaz hesap silmedi", hesapSayisi(), hs);
+  bekle("14: kur yazıldı", kasaOku().kurlar.USD, 42.5);
+
+  console.log("15) Hareket silme → iptal; tek işlem: stok tarafı düşerse kasa da yazılmaz");
+  kasa = kasaOku();
+  tekilTabanAyarla("muhasebe", derin(kasa));
+  const k15 = derin(kasa); k15.kasalar[0].hareketler = k15.kasalar[0].hareketler.filter((x) => x.id !== "mk14");
+  await tekilYaz("muhasebe:data", "muhasebe", k15);
+  bekle("15: iptal (iz kalır)", psql("select iptal from public.kas_hareket where id = 'mk14';"), "t");
+  bekle("15: belgeden düştü", kasaOku().kasalar[0].hareketler.some((x) => x.id === "mk14"), false);
+  kasa = k15;
+  const k15b = derin(kasa); k15b.kasalar[0].hareketler.unshift({ id: "mk15", tarih: "2026-10-29", yon: "Giriş", tutar: 9, cariId: "c-1", muhasebeBagId: "bag15" });
+  const s15 = derin(stok);
+  s15.push({ id: "u-yok3", ad: "Olmayan", variants: [], hareketler: [hrk("e15", "Standart", "Standart", 1, "ALS-E15")] });
+  zarf = yazmaZarfi(["urunler", "muhasebe"]);
+  const r15 = await Promise.allSettled([supabaseTabloEsitle("urunler", s15, { zarf }), tekilYaz("muhasebe:data", "muhasebe", k15b, { zarf })]);
+  bekle("15: stok reddedildi", r15[0].status, "rejected");
+  bekle("15: kasa satırı yazılmadı, bekleyen defterde, taban yerinde", [psql("select count(*) from public.kas_hareket where id = 'mk15';"),
+    !!bekleyenYazmalariOku()["muhasebe:data"], tekilTabanOku("muhasebe").kasalar[0].hareketler.some((x) => x.id === "mk15")], ["0", true, false]);
 
   console.log(hata ? "\nUÇTAN UCA BAŞARISIZ" : "\nUÇTAN UCA TAMAM");
   process.exit(hata);

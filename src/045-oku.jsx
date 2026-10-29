@@ -102,6 +102,7 @@ async function supabasedenOku(secenek = {}) {
       stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif));
       cariV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].cari_aktif));
       altV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].alt_aktif));
+      kasaV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].kasa_aktif));   // Kasa & Banka v2 (v1.729.0, 030 tekilYaz)
     },
     () => { /* önceki değer */ });
 

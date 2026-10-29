@@ -451,8 +451,14 @@ function cokluKuyrugaAl(tablolar, is) {
 
 async function _zarfUygula(isler) {
   const hazir = [];
+  // KASA & BANKA (v1.729.0, 030 `tekilYaz`): tek parça belge, fark belleği yok — farkı taban ile yeni hâlden 038 hesaplar
+  // (toplu iptal kilidi dahil: tutarsa zarfın HİÇBİR tablosu yazılmaz). Düşerse belleği geri alınacak bir şey yok: taban
+  // ilerlemez, 030 bekleyen deftere yazar.
+  let ozelKopruler = [];
   try {
     isler.forEach((i) => { if (TABLO_SEMA[i.tablo]) hazir.push(_yazmaHazirla(i.tablo, i.kayitlar, i.secenek)); });
+    ozelKopruler = isler.filter((i) => i.tablo === "muhasebe" && kasaV2Aktif())
+      .map((i) => ({ tur: "kasa", yuk: kasaV2YukHazirla(i.kayitlar, i.secenek) }));
   } catch (e) {
     hazir.forEach((y) => y.bellegiGeriAl());   // kilit: hiçbiri yazılmaz (hazırlananın da belleği geri)
     throw e;
@@ -466,10 +472,11 @@ async function _zarfUygula(isler) {
         // (yenilemeden sonra) hepsini yeniden gönderir.
         hazir.forEach((x) => { if (x !== y) x.bellegiGeriAl(); });
         hazir.forEach((x) => { sonuclar[x.tablo] = cakisma; });
+        if (ozelKopruler.length) sonuclar.muhasebe = cakisma;
         return sonuclar;
       }
     }
-    const kopruler = [];
+    const kopruler = [...ozelKopruler];
     for (const y of hazir) {
       const kopru = v2KopruYuku(y);
       if (kopru) kopruler.push(kopru);
@@ -482,11 +489,13 @@ async function _zarfUygula(isler) {
     throw e;
   }
   for (const y of hazir) sonuclar[y.tablo] = await _yazmaBitti(y);
+  if (ozelKopruler.length) sonuclar.muhasebe = {};
   return sonuclar;
 }
 
 function yazmaZarfi(tablolar, beklemeMs = 4000) {
-  const beklenen = new Set(tablolar || []);
+  // Kasa & Banka zarfa yalnız v2'deyken girer (030): değilse tekilYaz belgeyi kendi yolundan yazar, zarf onu BEKLEMESİN.
+  const beklenen = new Set((tablolar || []).filter((t) => t !== "muhasebe" || kasaV2Aktif()));
   const isler = new Map();   // tablo → { kayitlar, secenek, cozenler }
   let basladi = false;
   let zamanlayici = null;
@@ -606,17 +615,24 @@ function yazimiIzle(soz, etiket, veri) {
 // BİRLİKTE YAZ (v1.727.0) — aynı işlemin birden çok tablosunu tek zarfla yazar (bkz. `yazmaZarfi`). Sıralı `await` eden
 // akışlar için: zarf ikinci tabloyu beklerken birinciyi `await` etmek kilitlenirdi (zarf beklemesi dolana kadar).
 // yazmalar: [{ anahtar, tablo, kayitlar, etiket? }] → { ok, hata, sonuclar } (adim yürütücüsünün beklediği biçim).
-function birlikteYaz(yazmalar) {
+// `ozeller` (v1.729.0): tabloYaz'dan geçmeyen yazmalar — [{ tablo, yaz: (zarf) => söz }] (Kasa & Banka: 030 tekilYaz). Zarfa
+// tabloları da eklenir; `yaz` zarfı kendi yazmasına verir (vermezse zarf onu beklemeden yola çıkar).
+function birlikteYaz(yazmalar, ozeller) {
   const liste = (yazmalar || []).filter(Boolean);
-  const zarf = yazmaZarfi(liste.map((y) => y.tablo));
-  return Promise.all(liste.map((y) => {
+  const ozel = (ozeller || []).filter(Boolean);
+  const zarf = yazmaZarfi([...liste.map((y) => y.tablo), ...ozel.map((o) => o.tablo)]);
+  return Promise.all([...liste.map((y) => {
     const soz = tabloYaz(y.anahtar, y.tablo, y.kayitlar, undefined, { zarf });
     return y.etiket ? yazimiIzle(soz, y.etiket, y.kayitlar) : soz;
-  })).then((sonuclar) => {
+  }), ...ozel.map((o) => Promise.resolve(o.yaz(zarf)).then((r) => r || { ok: true }))]).then((sonuclar) => {
     const dusen = sonuclar.find((r) => !r || r.ok === false);
     return { ok: !dusen, hata: dusen ? (dusen.hata || "bilinmeyen hata") : null, sonuclar };
   });
 }
+
+// KASA + CARİ ZARFI (v1.729.0, 205): kasa/banka hareketi ile cari karşılığı tek işlemde — yalnız Kasa & Banka v2'deyken.
+// Değilse null: iki yazma eskisi gibi sırayla (kasa beklenir, sonra cari).
+function kasaZarfiAc(cariVar) { return cariVar && kasaV2Aktif() ? yazmaZarfi(["muhasebe", "cariler"]) : null; }
 
 function tabloYaz(anahtar, tablo, kayitlar, yerelKayitlar, secenek) {
   if (!yerelKayitlar && tablo === "urunler" && Array.isArray(kayitlar)) yerelKayitlar = gorselleriAyir(kayitlar).stok;

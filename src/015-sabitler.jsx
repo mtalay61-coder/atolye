@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.728.0";
-const SURUM_TARIHI = "2026-10-28";
-const SURUM_NOTU = "Sipariş kalemleri ve üretim atamaları da tek kapıdan: Supabase'de geçiş yapılınca sevk, fiş, üretim teslimi ve geri almada stok, cari, sipariş ve üretim satırları tek sunucu işlemiyle yazılır";
+const SURUM = "1.729.0";
+const SURUM_TARIHI = "2026-10-29";
+const SURUM_NOTU = "Kasa & Banka tek kapıdan: Supabase'de geçiş yapılınca hesaplar, hareketler ve çekler ayrı satır; her cihaz yalnız kendi değişikliğini yazar, bayat ya da boş liste hiçbir şeyi silemez; tahsilat, ödeme ve peşin fişte kasa satırı cariyle tek işlemde";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.729.0", tarih: "29.10.2026", eklenen: ["Kasa & Banka tek kapıdan (yeniden kurulumun 4. adımı): Supabase'de geçiş yapılınca Kasa & Banka tek bir belge değil; hesaplar, hareketler ve çekler ayrı satırlar. Her cihaz yalnız KENDİ değişikliğini gönderir — bayat ya da boş listeli bir cihaz (24 Ekim telefondaki \"0 hesap\") artık başka cihazın hesabını, hareketini silemez. Silinen hareket ve çek silinmez, iptal edilir (iz kalır); kaldırılan hesap pasife alınır", "Tahsilat, ödeme, hareket düzeltme / silme (cari karşılığıyla), sipariş ödemesi, peşin fiş ve fiş geri almada kasa satırı cari (ve stok) satırlarıyla TEK sunucu işleminde yazılır — biri yazılıp öteki düşemez", "Toplu iptal kilidi: bir kayıt hareketlerin ya da çeklerin yarısını, ya da hesapların hepsini birden kaldıracaksa yazma durur, buluta dokunulmaz"], degisen: [], duzeltilen: ["Veri Tutarlılık Denetimi iptal edilmiş siparişi \"Sipariş karşılananı hareketlerle uyuşmuyor\" diye ciddi bulgu sayıyordu (SAT-1023). İptal teslim fişine dokunmaz, yalnız bağı çözer; karşılanan tarihçe olarak kalır — iptal edilmiş sipariş bu iki kontrolde artık sayılmaz", "Bulut sayımı: Ürün varyantı stok v2 geçişinden beri \"okunamadı (HTTP 400)\" diyordu (varyantlar artık görünüm, id sütunu yok) — düzeltildi. Fark olan tabloda HANGİ kaydın farklı olduğu ve o kaydın bu cihazda bekleyen bir silmesi olup olmadığı da yazılıyor"] },
   { surum: "1.728.0", tarih: "29.10.2026", eklenen: ["Sipariş kalemleri ve üretim atamaları tek kapıdan (yeniden kurulumun 3. adımı): Supabase'de geçiş yapılınca bu iki tabloya yalnız sunucu işlemi yazar. Sipariş sevkinde, siparişe bağlı fişte, üretim tesliminde, ara proseste ve fiş geri almada stok, cari, sipariş kalemi (karşılanan) ve üretim ataması TEK işlemde yazılır — biri düşüp öteki kalamaz. Veri taşınmaz; geçiş ve geri dönüş anlık"], degisen: [], duzeltilen: [] },
   { surum: "1.727.0", tarih: "28.10.2026", eklenen: ["Cari v2 (yeniden kurulumun 2. modülü): Supabase'de cari v2 geçişi yapılınca cari hareketleri tek kapıdan yazılır; silinen hareket silinmez, iptal edilir (iz kalır). Alış/satış fişi, sipariş sevki, üretim teslimi ve silmesi, ara proses ve fiş geri alma: stok ve cari satırları TEK sunucu işlemiyle gider — biri düşüp öteki kalamaz. Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },
   { surum: "1.726.0", tarih: "28.10.2026", eklenen: ["Stok v2 köprüsü (yeniden kurulumun 1. modülü): Supabase'de stok v2 kurulup geçiş yapılınca stok kayıtları buluta fiş ve satır olarak, TEK bir sunucu işlemiyle gider — biri düşerse hiçbiri yazılmaz, ağda düşüp yeniden gönderilen kayıt stoğu iki kez değiştirmez. Renk ve beden buluta kimlikle bağlanır: ad değişikliği stok satırı silip yazmaz. Silinen hareket silinmez, iptal edilir (iz kalır). Geçiş yapılmadıkça bugünkü yol aynen sürer"], degisen: [], duzeltilen: [] },

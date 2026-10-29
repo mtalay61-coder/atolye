@@ -100,10 +100,14 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
     // İki ayrı kayıt (kasa/banka + varsa cari) art arda AYNI ANDA tetiklenirse, arka plandaki depolama
     // çağrıları çakışıp birinin "kaydedilemedi" hatası vermesine yol açabiliyordu — bu yüzden burada
     // kasa/banka kaydının bitmesini (await) BEKLEYİP, cari kaydını ANCAK ONDAN SONRA başlatıyoruz.
-    await onSave({
+    // KASA & BANKA v2 (v1.729.0): kasa satırı ile cari satırı TEK SUNUCU İŞLEMİNDE (yazma zarfı, 040) — biri yazılıp öteki
+    // düşemez. Zarf ikisini birlikte beklediği için kasa yazması burada BEKLENMEZ (beklenirse zarf cariyi 4 sn bekler).
+    const zarf = kasaZarfiAc(!!(hareket.cariId && onCarilerGuncelle));
+    const kasaSozu = onSave({
       ...muhasebe,
       [key]: muhasebe[key].map((h) => (h.id === hesapId ? { ...h, hareketler: [yeniHareket, ...(h.hareketler || [])] } : h)),
-    });
+    }, zarf ? { zarf } : undefined);
+    if (!zarf) await kasaSozu;
     if (hareket.cariId && onCarilerGuncelle) {
       const hesapAdi = hesap ? hesap.ad : (tur === "kasa" ? "Kasa" : "Banka");
       // TEK ÇEKİRDEK (17 Eylül): cari hareketi artık burada elle kurulmuyor; iki ekran da
@@ -131,8 +135,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
       // listeyle ezilmesin — `saveCariler` fonksiyon kabul ediyor (üç yerde de).
       onCarilerGuncelle((onceki) => onceki.map((c) => (c.id === hareket.cariId
         ? { ...c, hareketler: [ortak, ...(c.hareketler || [])] }
-        : c)));
+        : c)), zarf ? { zarf } : undefined);
     }
+    if (zarf) await kasaSozu;
   }
   // VİRMAN (17 Eylül): kasalar/bankalar arası aktarım. Kaynaktan ÇIKIŞ, hedefe GİRİŞ; aynı bağ
   // kimliğiyle. Cari YOK — para şirket içinde yer değiştiriyor, kimseye borç doğmuyor.
@@ -191,11 +196,13 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
       return;
     }
     const guncel = { ...eski, tutar: yeni.tutar, tarih: yeni.tarih || eski.tarih, aciklama: yeni.aciklama };
-    await onSave({
+    const zarf = kasaZarfiAc(!!(eski.muhasebeBagId && onCarilerGuncelle));   // v1.729.0: kasa + cari tek işlem
+    const kasaSozu = onSave({
       ...muhasebe,
       [key]: (muhasebe[key] || []).map((h) => (h.id === hesapId
         ? { ...h, hareketler: (h.hareketler || []).map((x) => (x.id === hareketId ? guncel : x)) } : h)),
-    });
+    }, zarf ? { zarf } : undefined);
+    if (!zarf) await kasaSozu;
     if (eski.muhasebeBagId && onCarilerGuncelle) {
       // Cari tarafındaki tutar hesabın tutarıyla AYNI değil olabilir (kur çevrimi): oran korunuyor.
       const oran = eski.tutar ? yeni.tutar / eski.tutar : 1;
@@ -212,7 +219,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
             aciklama: (yeni.aciklama != null && yeni.aciklama !== eski.aciklama) ? yeni.aciklama : h.aciklama,
           }
           : h)),
-      })));
+      })), zarf ? { zarf } : undefined);
+      if (zarf) await kasaSozu;
       showToast("Hareket ve cari karşılığı güncellendi");
     } else {
       showToast("Hareket güncellendi");
@@ -268,7 +276,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
     const hareketleriSuz = (liste) => (liste || []).filter((x) => (virmanBagi
       ? x.muhasebeBagId !== virmanBagi
       : x.id !== hareketId));
-    await onSave({
+    // v1.729.0: bağlı cari karşılığı varsa kasa + cari silmesi tek işlem (zarf aşağıda cari tarafına da verilir).
+    const zarf = kasaZarfiAc(!!(silinecekHareket && silinecekHareket.muhasebeBagId && onCarilerGuncelle));
+    const kasaSozu = onSave({
       ...muhasebe,
       // Virmanda karşı ayak ÖTEKİ hesapta olduğu için iki liste de süzülüyor.
       kasalar: (muhasebe.kasalar || []).map((h) => ((virmanBagi || h.id === hesapId)
@@ -276,7 +286,8 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
       bankalar: (muhasebe.bankalar || []).map((h) => ((virmanBagi || h.id === hesapId)
         ? { ...h, hareketler: hareketleriSuz(h.hareketler) } : h)),
       ...(geriAlinanCekler.length > 0 ? { cekler: yeniCekler } : {}),
-    });
+    }, zarf ? { zarf } : undefined);
+    if (!zarf) await kasaSozu;
     if (virmanBagi) showToast("Virmanın iki ayağı birlikte silindi");
     geriAlinanCekler.forEach((c) => {
       gunlukYaz(`Çek işlemi geri alındı: ${c.cekNo || "no yok"}`, "muhasebe", { cekId: c.id, durum: c.durum });
@@ -290,8 +301,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
         onceki.map((c) => ({
           ...c,
           hareketler: (c.hareketler || []).filter((h) => h.muhasebeBagId !== silinecekHareket.muhasebeBagId),
-        }))
+        })), zarf ? { zarf } : undefined
       );
+      if (zarf) await kasaSozu;
       return;
     }
     // Geriye dönük uyumluluk: muhasebeBagId TAŞIMAYAN eski kayıtlar için (bu bağlantı özelliği
