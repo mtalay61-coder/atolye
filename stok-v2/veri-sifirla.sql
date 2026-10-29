@@ -29,12 +29,42 @@ declare
   liste text[] := '{}';
   kalan jsonb := '{}'::jsonb;
   v jsonb;
+  bagli text[];
+  bilinmeyen text[];
+  kaldirilan_gorunum text[] := '{}';
 begin
   if auth.jwt() is not null then
     raise exception 'Sıfırlama yalnız Supabase SQL Editor''den yapılır' using errcode = '42501';
   end if;
   if p_onay is distinct from 'SIFIRLA' then
     raise exception 'Onay eksik: select public.veri_sifirla(''SIFIRLA''); — bütün iş verisi silinir, geri alınamaz' using errcode = '22023';
+  end if;
+
+  -- 0) ESKİ TABLOLARA BAĞLI NESNELER (canlıda ilk denemede: "cannot drop table eski_varyantlar because other objects depend on
+  --    it — view vitrin_urunler"). Görünüm tabloya adıyla değil kimliğiyle bağlanır: geçişte `varyantlar` → `eski_varyantlar`
+  --    olunca ona bağlı görünüm de dondurulmuş eski kopyayı okumaya başlamıştı. Bilinen tek bağımlı `vitrin_urunler` (depoda
+  --    yok, ne uygulama ne site kullanıyor; site vitrini herkese_acik_vitrin işleviyle okur — o adla çözer, v2'den okuyor;
+  --    Supabase güvenlik uyarısı da vermişti) → kaldırılır, raporlanır. Başka bağımlı görünüm ya da yabancı anahtar varsa
+  --    HİÇBİR ŞEY yapılmaz, listesi hata olarak döner (CASCADE bilerek yok: bilinmeyeni sessizce silmeyiz).
+  select coalesce(array_agg(distinct dv.relname::text), '{}') into bagli
+  from pg_depend d
+  join pg_rewrite r on r.oid = d.objid
+  join pg_class dv on dv.oid = r.ev_class
+  join pg_class t2 on t2.oid = d.refobjid
+  where t2.relnamespace = 'public'::regnamespace and t2.relname like 'eski\_%' and dv.oid <> t2.oid;
+  bilinmeyen := array(select x from unnest(bagli) x where x <> 'vitrin_urunler');
+  bilinmeyen := bilinmeyen || array(
+    select distinct c.conrelid::regclass::text || ' (yabancı anahtar)' from pg_constraint c
+    join pg_class t2 on t2.oid = c.confrelid
+    where c.contype = 'f' and t2.relnamespace = 'public'::regnamespace and t2.relname like 'eski\_%'
+      and (select relname from pg_class where oid = c.conrelid) not like 'eski\_%');
+  if array_length(bilinmeyen, 1) > 0 then
+    raise exception 'Eski tablolara bağlı bilinmeyen nesne var, hiçbir şey silinmedi: %', array_to_string(bilinmeyen, ', ')
+      using errcode = '2BP01';
+  end if;
+  if 'vitrin_urunler' = any(bagli) then
+    drop view public.vitrin_urunler;
+    kaldirilan_gorunum := kaldirilan_gorunum || 'vitrin_urunler'::text;
   end if;
 
   -- 1) Eski tablolar ve geri dönüş / göç / geçiş işlevleri
@@ -93,7 +123,7 @@ begin
     if n > 0 then kalan := kalan || jsonb_build_object(t, n); end if;
   end loop;
   select veri into v from public.tanimlar where id = 'tekil';
-  return jsonb_build_object('silinenTablolar', to_jsonb(silinen_tablo), 'silinenIslevler', jsonb_array_length(to_jsonb(silinen_islev)),
+  return jsonb_build_object('kaldirilanGorunumler', to_jsonb(kaldirilan_gorunum), 'silinenTablolar', to_jsonb(silinen_tablo), 'silinenIslevler', jsonb_array_length(to_jsonb(silinen_islev)),
                             'bosaltilan', bosaltilan, 'kalanKullanici', jsonb_array_length(coalesce(v -> 'kullanicilar', '[]'::jsonb)),
                             'veriKalanTablolar', kalan);
 end $$;

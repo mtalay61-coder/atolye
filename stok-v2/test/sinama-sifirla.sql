@@ -30,10 +30,26 @@ end $$;
 reset role;
 select pg_temp.editor() \gset
 
+-- 1b) Eski tabloya bağlı görünüm (canlıda: vitrin_urunler → eski_varyantlar). Bilinmeyen bağımlı varsa HİÇBİR ŞEY silinmez.
+create view public.vitrin_urunler with (security_invoker = true) as select urun_id, renk from public.eski_varyantlar;
+create view public.baska_gorunum as select urun_id from public.eski_varyantlar;
+do $$ begin
+  begin
+    perform public.veri_sifirla('SIFIRLA');
+    raise exception 'bilinmeyen bağımlıyla sıfırladı';
+  exception when dependent_objects_still_exist then
+    assert sqlerrm like '%baska_gorunum%' and sqlerrm not like '%vitrin_urunler%', 'mesaj: ' || sqlerrm;
+  end;
+  assert (select count(*) from public.urunler) > 0 and to_regclass('public.eski_varyantlar') is not null, 'bir şey silindi';
+  raise notice 'TAMAM: bilinmeyen bağımlı varken hiçbir şey silinmedi';
+end $$;
+drop view public.baska_gorunum;
+
 -- 2) Sıfırla
 do $$
 declare r jsonb := public.veri_sifirla('SIFIRLA');
 begin
+  assert r -> 'kaldirilanGorunumler' = '["vitrin_urunler"]'::jsonb and to_regclass('public.vitrin_urunler') is null, 'vitrin_urunler ' || r::text;
   assert jsonb_array_length(r -> 'silinenTablolar') >= 5, 'eski tablolar ' || r::text;
   assert not exists (select 1 from pg_tables where schemaname = 'public' and tablename like 'eski\_%'), 'eski tablo kaldı';
   assert to_regprocedure('public.kas_geri_don()') is null and to_regprocedure('public.stk_gecis()') is null, 'geri dönüş işlevi kaldı';
