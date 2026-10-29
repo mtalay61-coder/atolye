@@ -48,7 +48,7 @@ begin
   for t in
     select tablename from pg_tables where schemaname = 'public'
       and tablename <> 'silinen_arsiv'   -- yalnız okunur arşiv; kendi politikası silinen-arsiv.sql'de
-      and tablename not like 'stk\_%'   -- stok v2: yalnız okunur, yazma sunucu işlemleriyle (stok-v2.sql, v1.726.0)
+      and tablename not like 'stk\_%' and tablename not like 'car\_%'   -- v2: yalnız okunur, yazma sunucu işlemleriyle (v1.726.0+)
   loop
     execute format('alter table public.%I enable row level security', t.tablename);
     -- Tablonun KENDİ kurulum dosyasından kalan eski politikalar silinir (rol sınırı yoktu).
@@ -79,14 +79,21 @@ alter default privileges in schema public revoke all on sequences from anon;
 grant usage on schema public to authenticated;
 grant all on all tables in schema public to authenticated;
 grant all on all sequences in schema public to authenticated;
--- 3b) STOK v2 (v1.726.0): yukarıdaki "hepsine yetki" stok v2 tablolarına da yazma verdi — geri alınır. Bu tablolara
+-- 3b) STOK / CARİ v2 (v1.726.0+): yukarıdaki "hepsine yetki" v2 tablolarına da yazma verdi — geri alınır. Bu tablolara
 --     yalnız sunucu işlemleri (stk_yaz, stk_fis_kaydet…) yazar; uygulama okur (stok-v2.sql § 5).
 do $$
 declare t record;
 begin
-  for t in select tablename from pg_tables where schemaname = 'public' and tablename like 'stk\_%' loop
+  for t in select tablename from pg_tables where schemaname = 'public' and (tablename like 'stk\_%' or tablename like 'car\_%') loop
     execute format('revoke insert, update, delete, truncate on public.%I from authenticated', t.tablename);
   end loop;
+  -- Sipariş kalemleri ve üretim atamaları (v1.728.0, alt-v2.sql): geçiş yapıldıysa (stk_ayar.alt_aktif) yalnız `alt_yaz` yazar.
+  if to_regclass('public.stk_ayar') is not null and exists (
+       select 1 from information_schema.columns where table_schema = 'public' and table_name = 'stk_ayar' and column_name = 'alt_aktif') then
+    if (select alt_aktif from public.stk_ayar where id = 'tekil') then
+      revoke insert, update, delete, truncate on public.siparis_kalemleri, public.uretim_atamalari from authenticated;
+    end if;
+  end if;
 end $$;
 alter default privileges in schema public grant all on tables to authenticated;
 alter default privileges in schema public grant all on sequences to authenticated;

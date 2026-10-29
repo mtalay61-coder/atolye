@@ -1,1 +1,1 @@
-{"surum": "1.727.0", "url": "atolye-erp-v1.727.0.html", "not": "Cari v2 ve yazma zarfı: Supabase'de cari v2 geçişi yapılınca fişin stok ve cari satırları tek sunucu işlemiyle (ya ikisi ya hiçbiri) yazılır; cari hareketi silinmez, iptal edilir"}
+{"surum": "1.728.0", "url": "atolye-erp-v1.728.0.html", "not": "Sipariş kalemleri ve üretim atamaları da tek kapıdan: Supabase'de geçiş yapılınca sevk, fiş, üretim teslimi ve geri almada stok, cari, sipariş ve üretim satırları tek sunucu işlemiyle yazılır"}

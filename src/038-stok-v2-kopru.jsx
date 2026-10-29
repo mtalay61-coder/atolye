@@ -293,6 +293,28 @@ function cariV2Parcala(yuk, enFazlaBayt = STOK_V2_PARCA_BAYT, enFazlaSatir = STO
 }
 
 // =============================================================================================================
+// SİPARİŞ KALEMİ / ÜRETİM ATAMASI KÖPRÜSÜ (v1.728.0, alt-v2.sql) — veri taşınmadan tek kapı (`alt_yaz`)
+// =============================================================================================================
+// Bu iki tablo zaten kimlikli, tipli satırlar; değişen yalnız yazma yolu: fark REST yerine `alt_yaz`a (ya da fişin
+// stok/cari satırlarıyla birlikte `fis_yaz`a) gider. Silinen satır sunucuda silinir — kopyası sunucu arşivine düşer.
+// Supabase'de `alt_gecis()` yapılmışsa (`stk_ayar.alt_aktif`) çalışır; geçişte bu tablolara doğrudan yazma kapanır.
+let _altV2Aktif = false;
+function altV2Aktif() { return _altV2Aktif; }
+function altV2AktifAyarla(aktif) { _altV2Aktif = !!aktif; }
+const ALT_V2_TABLOLARI = { siparisler: "siparis_kalemleri", uretim: "uretim_atamalari" };
+
+// Saf. hareketFarki: 040'ın alt tablo farkı (satırlarda `id` = `__k` = satır kimliği).
+function altV2Yuku(hf) {
+  const f = hf || { eklenen: [], guncellenen: [], silinen: [] };
+  const temiz = ({ __k, ...satir }) => satir;
+  return { satirlar: [...(f.eklenen || []), ...(f.guncellenen || [])].map(temiz), sil: (f.silinen || []).map(String) };
+}
+function altV2YukBosMu(yuk) { return !yuk || (!yuk.satirlar.length && !yuk.sil.length); }
+function altV2Parcala(yuk) {
+  return cariV2Parcala({ satirlar: yuk.satirlar, iptal: yuk.sil }).map((p) => ({ satirlar: p.satirlar, sil: p.iptal }));
+}
+
+// =============================================================================================================
 // 040 İLE BAĞ — bir tablonun alt farkı köprüden mi gidecek? (040 `_yazmaHazirla` bağlamı `y`)
 // =============================================================================================================
 // Döner: null (köprü yok → REST) ya da { tur: "stok" | "cari", yuk, ozet } — yük boş olabilir (köprü açık ama
@@ -317,24 +339,38 @@ function v2KopruYuku(y) {
     const yuk = cariV2Yuku(fark("cari_hareketleri"));
     return { tur: "cari", yuk: cariV2YukBosMu(yuk) ? null : yuk };
   }
+  if (ALT_V2_TABLOLARI[y.tablo] && altV2Aktif()) {
+    const altTablo = ALT_V2_TABLOLARI[y.tablo];
+    const yuk = altV2Yuku(fark(altTablo));
+    return { tur: "alt", tablo: altTablo, yuk: altV2YukBosMu(yuk) ? null : yuk };
+  }
   return null;
 }
 
-// GÖNDERİCİ — bir ya da birkaç köprü yükü. Stok ve cari birlikteyse ve ikisi de tek parçaya sığıyorsa TEK `fis_yaz`
-// isteği (tek veritabanı işlemi: ya ikisi ya hiçbiri). Sığmıyorsa (yedek geri yükleme gibi büyük yazma) her biri kendi
-// işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider (bellek geri + bekleyen defter 040'ta).
+// GÖNDERİCİ — bir ya da birkaç köprü yükü (stok, cari, sipariş kalemi / üretim ataması). Birden çok parça varsa ve
+// her biri tek parçaya sığıyorsa TEK `fis_yaz` isteği (tek veritabanı işlemi: ya hepsi ya hiçbiri). Sığmıyorsa (yedek
+// geri yükleme gibi büyük yazma) her biri kendi işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider
+// (bellek geri + bekleyen defter 040'ta).
 async function v2KopruGonder(kopruler) {
   const dolu = (kopruler || []).filter((k) => k && k.yuk);
   if (!dolu.length) return null;
   const stok = dolu.find((k) => k.tur === "stok");
   const cari = dolu.find((k) => k.tur === "cari");
+  const altlar = dolu.filter((k) => k.tur === "alt");
   const stokParcalari = stok ? stokV2Parcala(stok.yuk) : [];
   const cariParcalari = cari ? cariV2Parcala(cari.yuk) : [];
-  const sonuc = { stok: null, cari: null };
-  if (stok && cari && stokParcalari.length === 1 && cariParcalari.length === 1) {
-    const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p: { stok: stokParcalari[0], cari: cariParcalari[0] } }) });
+  const altParcalari = altlar.map((k) => ({ tablo: k.tablo, parcalar: altV2Parcala(k.yuk) }));
+  const tekParca = stokParcalari.length <= 1 && cariParcalari.length <= 1 && altParcalari.every((a) => a.parcalar.length <= 1);
+  const sonuc = { stok: null, cari: null, alt: null };
+  if (tekParca && dolu.length > 1) {
+    const p = {};
+    if (stok) p.stok = stokParcalari[0];
+    if (cari) p.cari = cariParcalari[0];
+    if (altParcalari.length) p.alt = Object.fromEntries(altParcalari.map((a) => [a.tablo, a.parcalar[0]]));
+    const r = await supabaseIstek("rpc/fis_yaz", { method: "POST", body: JSON.stringify({ p }) });
     sonuc.stok = r && r.stok;
     sonuc.cari = r && r.cari;
+    sonuc.alt = r && r.alt;
   } else {
     if (stok) {
       const toplam = { varyantAc: 0, satir: 0, iptal: 0, varyantKaldir: 0, atlanan: [] };
@@ -350,6 +386,9 @@ async function v2KopruGonder(kopruler) {
     if (cari) {
       for (const parca of cariParcalari) await supabaseIstek("rpc/car_yaz", { method: "POST", body: JSON.stringify({ p: parca }) });
       sonuc.cari = { satir: cari.yuk.satirlar.length, iptal: cari.yuk.iptal.length };
+    }
+    for (const a of altParcalari) {
+      for (const parca of a.parcalar) await supabaseIstek("rpc/alt_yaz", { method: "POST", body: JSON.stringify({ p: { [a.tablo]: parca } }) });
     }
   }
   if (stok && stok.yuk.otoFis.length) {

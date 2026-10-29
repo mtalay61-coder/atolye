@@ -101,6 +101,7 @@ async function supabasedenOku(secenek = {}) {
     (ayar) => {
       stokV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].aktif));
       cariV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].cari_aktif));
+      altV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].alt_aktif));
     },
     () => { /* önceki değer */ });
 

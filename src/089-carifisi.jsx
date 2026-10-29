@@ -89,6 +89,9 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   // alınanı artar, durum güncellenir — sipariş kartından kesilen fişle aynı sonuç. Geri alma
   // `fisGeriAl`da hareketten (`siparisId|kalemId`) okunuyor, burada ek bir şey gerekmez.
   const bagliKalemler = kalemler.filter((k) => k.siparis && k.siparis.id && k.kalemId);
+  // Stok, cari ve (bağlı kalem varsa) sipariş TEK ZARFTA (v1.727.0 / v1.728.0): fişin malı, borcu ve siparişin teslim alınanı
+  // v2'de tek sunucu işlemiyle yazılır — biri düşüp öteki kalamaz. Cari tarafı aşağıda huniden aynı zarfla gelir.
+  const zarf = yazmaZarfi(bagliKalemler.length > 0 ? ["siparisler", "urunler", "cariler"] : ["urunler", "cariler"]);
   if (bagliKalemler.length > 0) {
     setSiparisler((prev) => {
       const next = prev.map((s) => {
@@ -102,15 +105,12 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
         const hicYok = nextKalemler.every((k) => (k.karsilanan || 0) === 0);
         return { ...s, kalemler: nextKalemler, durum: tumuTam ? "Tamamlandı" : hicYok ? s.durum : "Kısmi Teslim" };
       });
-      yazimiIzle(tabloYaz("siparis:data", "siparisler", next), "Siparişler", next);
+      yazimiIzle(tabloYaz("siparis:data", "siparisler", next, undefined, { zarf }), "Siparişler", next);
       return next;
     });
   }
   // Güncel listeye yalnız değişen ürünler işlenir (v1.639.0, bkz. 075 `degisenKayitlariBirlestir`): defter yazımı beklenirken
   // gelen başka değişiklik ezilmesin.
-  // Stok ve cari TEK ZARFTA (v1.727.0): fişin malı ile borcu v2'de tek sunucu işlemiyle yazılır — biri düşüp öteki
-  // kalamaz. Cari tarafı aşağıda huniden (`addCariHareketFromStok`) aynı zarfla gelir.
-  const zarf = yazmaZarfi(["urunler", "cariler"]);
   setStok((onceki) => {
     const next = degisenKayitlariBirlestir(onceki, stok, sonuc.stok);   // bayat-muaf: bekleme öncesi fotoğraf BİLEREK — farkın tabanı, güncel liste `onceki`
     yazimiIzle(tabloYaz("stok:items", "urunler", next, undefined, { zarf }), "Stok kartları", next);
