@@ -51,6 +51,7 @@ async function calistir() {
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(400);
   await sayfa.locator('[data-tanim-sekme="urun"]').first().click();
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "renk");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(400);
   await sayfa.evaluate(() => {
     let el = [...document.querySelectorAll("input")].find((e) => e.offsetParent && e.value === "Gri");
@@ -68,6 +69,7 @@ async function calistir() {
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(400);
   await sayfa.locator('[data-tanim-sekme="urun"]').first().click();
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "renk");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(400);
   const ekranda = await sayfa.evaluate(() => ["Siyah", "Taba", "Gri", "Lacivert"].filter((ad) =>
     [...document.querySelectorAll("input")].some((e) => e.offsetParent && e.value === ad)));

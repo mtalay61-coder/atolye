@@ -1,32 +1,22 @@
 {
  "birAcik": {
   "basliklar": [
-   "Renkler:kapalı",
-   "Bedenler & Boyutlar:kapalı",
-   "Model Rengi:kapalı",
-   "Birimler:kapalı",
-   "Asortiler:kapalı",
-   "Atölye İçi Bölümler:açık",
-   "Fiyat Grupları:kapalı",
-   "Özel Kod Alanları:kapalı"
+   "Prosesler:açık",
+   "Ara Prosesler:kapalı",
+   "Reçete şablonları:kapalı"
   ],
-  "bolumEkleKutusuGorunur": true,
-  "fiyatGrubuGorunur": false
+  "bolumEkleKutusuGorunur": false,
+  "prosesKutusuGorunur": true
  },
  "hatalar": [],
  "kapaliBaslangic": {
   "basliklar": [
-   "Renkler:kapalı",
-   "Bedenler & Boyutlar:kapalı",
-   "Model Rengi:kapalı",
-   "Birimler:kapalı",
-   "Asortiler:kapalı",
-   "Atölye İçi Bölümler:kapalı",
-   "Fiyat Grupları:kapalı",
-   "Özel Kod Alanları:kapalı"
+   "Prosesler:kapalı",
+   "Ara Prosesler:kapalı",
+   "Reçete şablonları:kapalı"
   ],
   "bolumEkleKutusuGorunur": false,
-  "fiyatGrubuGorunur": false
+  "prosesKutusuGorunur": false
  },
  "kullanicilar": {
   "baslik": true,
@@ -34,18 +24,32 @@
  },
  "kullanicilarAcik": true,
  "tekrarKapali": false,
- "yenilemeSonrasi": {
+ "urunAlt": {
   "basliklar": [
-   "Renkler:kapalı",
-   "Bedenler & Boyutlar:kapalı",
-   "Model Rengi:kapalı",
-   "Birimler:kapalı",
-   "Asortiler:kapalı",
-   "Atölye İçi Bölümler:açık",
-   "Fiyat Grupları:kapalı",
-   "Özel Kod Alanları:kapalı"
+   "Atölye İçi Bölümler:açık"
   ],
   "bolumEkleKutusuGorunur": true,
-  "fiyatGrubuGorunur": false
+  "prosesKutusuGorunur": false
+ },
+ "urunArama": [
+  "Renkler:açık",
+  "Model Rengi:açık",
+  "Bedenler & Boyutlar:açık",
+  "Asortiler:açık",
+  "Birimler:açık",
+  "Ürün Tipleri:açık",
+  "Fire Sebepleri:açık",
+  "Atölye İçi Bölümler:açık",
+  "Fiyat Grupları:açık",
+  "Özel Kod Alanları:açık"
+ ],
+ "yenilemeSonrasi": {
+  "basliklar": [
+   "Prosesler:açık",
+   "Ara Prosesler:kapalı",
+   "Reçete şablonları:kapalı"
+  ],
+  "bolumEkleKutusuGorunur": false,
+  "prosesKutusuGorunur": true
  }
 }

@@ -1,6 +1,7 @@
 // SENARYO — TANIMLAR'DA AÇILIR BAŞLIKLAR (4 Ekim, v1.588.0).
 // Kullanıcı: "Tanımlarda tüm başlıkları açılır yap, çok fazla yer kaplıyor büyüdükçe."
-// Ölçülen: Ürün sekmesinde başlıklar KAPALI başlar (içerik gizli), başlığa dokununca açılır, sayfa yenilenince
+// Ölçülen (v1.731.0: Ürün alt sekmelere ayrılınca sınama Üretim sekmesine taşındı; Ürün alt sekmesinde başlık hep açık, arama
+// yazılınca bütün bölümler görünür): başlıklar KAPALI başlar (içerik gizli), başlığa dokununca açılır, sayfa yenilenince
 // açık bırakılan başlık açık kalır (cihazda hatırlanır), öbürleri kapalı. Diğer senaryolar `__tanimBasliklariAcik`
 // ile hepsi açık koşuyor; bu senaryo kilidi kaldırıyor (`tanimBasliklariKapali: true`).
 const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
@@ -22,13 +23,14 @@ async function calistir() {
     const g = (el) => !!(el && el.getBoundingClientRect().height > 0);
     return {
       basliklar: [...document.querySelectorAll("[data-tanim-baslik]")].map((h) => `${h.getAttribute("data-tanim-baslik")}:${h.getAttribute("data-kapali") === "1" ? "kapalı" : "açık"}`),
+      prosesKutusuGorunur: g([...document.querySelectorAll("input")].find((i) => /Yeni proses/.test(i.placeholder || ""))),
       bolumEkleKutusuGorunur: g(document.querySelector("[data-bolum-ekle]")),
-      fiyatGrubuGorunur: g([...document.querySelectorAll("input")].find((i) => /fiyat grubu/i.test(i.placeholder || ""))),
     };
   });
-  await tanimlarAc("urun");
+  // Açılır başlık Üretim sekmesinde sınanır: Ürün sekmesi alt sekmelere ayrılınca (v1.731.0) oradaki başlıklar hep açık.
+  await tanimlarAc("uretim");
   const kapaliBaslangic = await durum();
-  await sayfa.locator('[data-tanim-baslik="Atölye İçi Bölümler"]').click();
+  await sayfa.locator('[data-tanim-baslik="Prosesler"]').click();
   await sayfa.waitForTimeout(300);
   const birAcik = await durum();
   // Sayfa yenilenince seçim kalıyor (localStorage).
@@ -36,11 +38,22 @@ async function calistir() {
   await sayfa.evaluate(() => { const kok = window.__ReactDOMClient.createRoot(document.getElementById("kok")); kok.render(window.__React.createElement(window.__App)); });
   await sayfa.waitForFunction(() => document.body && !document.body.innerText.includes("Yükleniyor"), null, { timeout: 20000 }).catch(() => {});
   await sayfa.waitForTimeout(1500);
-  await tanimlarAc("urun");
+  await tanimlarAc("uretim");
   const yenilemeSonrasi = await durum();
+  await sayfa.locator('[data-tanim-baslik="Prosesler"]').click();
+  await sayfa.waitForTimeout(300);
+  const tekrarKapali = (await durum()).prosesKutusuGorunur;
+  // Ürün › Atölye Bölümleri alt sekmesi: başlık hep açık, dokununca kapanmaz; arama yazılınca bütün bölümler görünür.
+  await tanimlarAc("urun");
+  await sayfa.locator('[data-urun-alt="bolum"]').click();
+  await sayfa.waitForTimeout(300);
   await sayfa.locator('[data-tanim-baslik="Atölye İçi Bölümler"]').click();
   await sayfa.waitForTimeout(300);
-  const tekrarKapali = (await durum()).bolumEkleKutusuGorunur;
+  const urunAlt = await durum();
+  await sayfa.locator('input[placeholder^="Tanımlarda ara"]').fill("zzz");
+  await sayfa.waitForTimeout(300);
+  const urunArama = (await durum()).basliklar;
+  await sayfa.locator('input[placeholder^="Tanımlarda ara"]').fill("");
   await tanimlarAc("kullanicilar");
   const kullanicilar = await sayfa.evaluate(() => ({
     baslik: !!document.querySelector('[data-tanim-baslik="Kullanıcılar ve Yetkiler"]'),
@@ -50,7 +63,7 @@ async function calistir() {
   await sayfa.waitForTimeout(300);
   const kullanicilarAcik = await sayfa.evaluate(() => [...document.querySelectorAll("button")].some((b) => b.textContent.trim() === "Pasif" && b.getBoundingClientRect().height > 0));
   await tarayici.close();
-  return { hatalar, kapaliBaslangic, birAcik, yenilemeSonrasi, tekrarKapali, kullanicilar, kullanicilarAcik };
+  return { hatalar, kapaliBaslangic, birAcik, yenilemeSonrasi, tekrarKapali, urunAlt, urunArama, kullanicilar, kullanicilarAcik };
 }
 
 if (require.main === module) {

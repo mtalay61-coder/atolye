@@ -90,6 +90,7 @@ async function calistir() {
 
   // ---- 1: renk sil → çöp → geri yükle ----
   await sayfa.locator('[data-tanim-sekme="urun"]').first().click();
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "renk");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(500);
   const silindi = await sayfa.evaluate(() => {
     // Renk adı düzenlenebilir kutuda (value), metin düğümünde değil.
@@ -121,6 +122,7 @@ async function calistir() {
 
   // ---- 6: toplu silme alarmı — 10 dakikada 20 silme (renk silmesi 1, burada 20 tip daha) ----
   await sayfa.locator('[data-tanim-sekme="urun"]').first().click();
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "tip");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(500);
   await sayfa.locator('button:has-text("20 tanımlı öğe"):visible').first().click();   // liste kapalı gelir
   await sayfa.waitForTimeout(300);

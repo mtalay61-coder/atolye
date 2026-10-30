@@ -86,6 +86,7 @@ async function calistir() {
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(700);
   await sayfa.locator('button:has-text("Ürün"):visible').first().click();
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "ozel");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(600);
   const tanimEkrani = await sayfa.evaluate(() => {
     const kutular = [...document.querySelectorAll('input[title^="Alan başlığı"]')];
