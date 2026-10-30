@@ -124,7 +124,15 @@ begin
   return null;
 end $$;
 
-create or replace function public.fis_tek_kes(f jsonb, p_stok jsonb, p_cari jsonb, p_kasa jsonb, p_istek text) returns text
+drop function if exists public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text);
+
+create or replace function public.fis_yer_tutucu(j jsonb, p_fis text, p_ana text) returns jsonb
+language sql immutable as $$
+  select case when j is null then null
+              else replace(replace(j::text, '«ANAFIS»', coalesce(p_ana, p_fis)), '«FIS»', p_fis)::jsonb end
+$$;
+
+create or replace function public.fis_tek_kes(f jsonb, p_stok jsonb, p_cari jsonb, p_kasa jsonb, p_istek text, p_ana text default null) returns text
 language plpgsql security definer set search_path = public as $$
 declare
   aile text := coalesce(nullif(f ->> 'aile', ''), '');
@@ -137,6 +145,10 @@ begin
     raise exception 'Fiş türü yok' using errcode = '22023';
   end if;
   fid := public.fis_no_al(f ->> 'onek');
+  f := public.fis_yer_tutucu(f, fid, p_ana);
+  p_stok := public.fis_yer_tutucu(p_stok, fid, p_ana);
+  p_cari := public.fis_yer_tutucu(p_cari, fid, p_ana);
+  p_kasa := public.fis_yer_tutucu(p_kasa, fid, p_ana);
   perform set_config('fis.kapi', 'acik', true);
   perform set_config('fis.aktif', fid, true);
   insert into public.stk_fis (id, aile, onek, istek, tur, kaynak, tarih, cari_id, siparis_id, siparis_no, uretim_id, aciklama,
@@ -199,7 +211,7 @@ begin
 
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
-    bid := public.fis_tek_kes(p -> 'bagli' -> 'fis', p -> 'bagli' -> 'stok', p -> 'bagli' -> 'cari', p -> 'bagli' -> 'kasa', v_istek || ':bagli');
+    bid := public.fis_tek_kes(p -> 'bagli' -> 'fis', p -> 'bagli' -> 'stok', p -> 'bagli' -> 'cari', p -> 'bagli' -> 'kasa', v_istek || ':bagli', fid);
     update public.stk_fis set bagli_fis = bid where id = fid;
     update public.stk_fis set bagli_fis = fid where id = bid;
   end if;
@@ -305,7 +317,7 @@ begin
   alter table public.fis_sayac enable row level security;
   revoke all on public.fis_sayac from anon, authenticated;
   revoke all on function public.fis_no_al(text) from public, anon, authenticated;
-  revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text) from public, anon, authenticated;
+  revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';
@@ -315,7 +327,7 @@ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant select on public.fis_listesi to service_role;
   end if;
-  return 'fiş defteri kuruldu (kurallar KAPALI — uygulama güncellenince: select public.fis_kural_ac();)';
+  return 'fiş defteri kuruldu (kurallar KAPALI — bütün işlemler fiş defterine taşınana kadar AÇMAYIN; açma adımı ayrıca verilecek)';
 end $$;
 select public.fis_kurulum_tamamla();
 drop function public.fis_kurulum_tamamla();

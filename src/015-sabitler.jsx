@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.732.0";
+const SURUM = "1.732.1";
 const SURUM_TARIHI = "2026-10-30";
-const SURUM_NOTU = "Tek fiş defteri — 1. adım: alış ve satış fişi (peşin kısım bağlı tahsilat/ödeme makbuzuyla) sunucuda tek işlemde kesilir, numarayı sunucu verir; geri alma fişi iptal eder";
+const SURUM_NOTU = "Tek fiş defteri — 2. adım: sipariş teslimi (sevk / alış girişi) sunucuda tek işlemde kesilir; fiş, stok, cari ve siparişin karşılananı birlikte yazılır";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.732.1", tarih: "30.10.2026", eklenen: ["Tek fiş defteri — 2. adım: sipariş teslimi (sevk / alış girişi) sunucuda tek işlemde kesilir; fiş, stok, cari ve siparişin karşılananı birlikte yazılır. Numarayı sunucu verir (SF / AF); birden çok siparişin kalemleri aynı fişle kapanabilir; yazılamazsa hiçbir şey değişmez ve okutulan koli listede kalır. Teslim bildiriminde \"Geri al\" var (fişi iptal eder)."], degisen: [], duzeltilen: [] },
   { surum: "1.732.0", tarih: "30.10.2026", eklenen: ["Tek fiş defteri — 1. adım: alış ve satış fişi (peşin kısım bağlı tahsilat/ödeme makbuzuyla) sunucuda tek işlemde kesilir, numarayı sunucu verir; geri alma fişi iptal eder. Sunucuda fiş defteri kuruluysa (Supabase 18. adım) çalışır; kurulu değilse bugünkü yol. Fiş, stok satırları, cari satırı, sipariş kaleminin karşılananı ve peşin kısmın makbuzu (kasa + cari) ya hepsi birlikte yazılır ya hiçbiri; yazılamazsa ekranda hiçbir şey değişmez. Tedarikçinin belge numarası fişin ek bilgisinde saklanır."], degisen: [], duzeltilen: [] },
   { surum: "1.731.3", tarih: "30.10.2026", eklenen: [], degisen: [], duzeltilen: ["Açılışta stok fiş defterinden önce yükleniyordu; hareket toplayıcı her fişi henüz boş defterle karşılaştırıp \"otomatik\" kayıt olarak yeniden kuruyor (zaman = açılış anı, kullanıcı boş, kalemler yalnız hareketten) ve buluta yazıyordu. Veri sıfırlamadan sonra eski 5 fişin geri gelmesi buydu. Artık toplanan hareketler açılış bitince gerçek defterle süzülür; başka cihazdan gelen stok deftere toplanmaz."] },
   { surum: "1.731.2", tarih: "30.10.2026", eklenen: ["Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler. Önce cariyi kaydedip kartını düzenlemek gerekiyordu. Personelde \"Kod ata\" ile proses seçince sıradaki barkod kodu gelir. Personel maaş/bölüm ve site erişimi kayıttan sonra kartta."], degisen: [], duzeltilen: [] },

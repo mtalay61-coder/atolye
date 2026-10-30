@@ -162,6 +162,79 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   bekle("3: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
   bekle("3: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
 
+  console.log("4) Sipariş teslimi (satış siparişinin 2 / 3'ü sevk) — fiş + stok + cari + kalemin karşılananı tek işlemde");
+  psql(`insert into public.siparisler (id, siparis_no, tip, cari_id, durum) values ('sip-t', 'SS-9', 'Satış', 'c-yeni', 'Bekliyor');
+        insert into public.siparis_kalemleri (id, siparis_id, urun_id, urun_ad, renk, beden, miktar, karsilanan, fiyat, para_birimi, birim, sira)
+        values ('k-t', 'sip-t', 'u-yeni', 'Yeni Ürün', 'Siyah', null, 3, 0, 100, 'TRY', 'çift', 0);`);
+  const sip = { id: "sip-t", siparisNo: "SS-9", tip: "Satış", cariId: "c-yeni", durum: "Bekliyor", defterTercihi: "Genel",
+    kalemler: [{ id: "k-t", urunId: "u-yeni", urunAd: "Yeni Ürün", renk: "Siyah", beden: null, miktar: 3, karsilanan: 0, birimFiyat: 100, paraBirimi: "TRY", birim: "çift" }] };
+  let siparisler = [sip];
+  E.tabloBaslangicTam("siparisler", derin(siparisler));
+  const fisGovdesi2 = {
+    fisNo: E.FIS_YER, tip: "Satış", cariId: "c-yeni", kaynak: "Satış", stokTarihi: `${tarih}T11:00:00.000Z`, cariTarihi: tarih, zaman: new Date().toISOString(),
+    kayitParaBirimi: null, kurlar: {}, kurZorunlu: false, tutarYuvarla: false, birimFiyatBolerek: true, yon: E.hareketYonu("Satış"), kullanici: "Ali",
+    defter: "Genel", odemeSekli: "Nakit", vade: "", siparis: { id: "sip-t", siparisNo: "SS-9", rezervasyonSiparisId: null },
+    kalemler: [{ urunId: "u-yeni", urunAd: "Yeni Ürün", renk: "Siyah", beden: null, birim: "çift", miktar: 2, birimFiyat: 100, paraBirimi: "TRY", kalemId: "k-t", kalan: 3, fazlaGonderim: false, _siparisId: "sip-t" }],
+    cariAciklama: (k) => `Satış Siparişi SS-9: ${k.urunAd} · ${k.miktar}`,
+  };
+  const sonuc2 = E.fisYaz(stok, cariler, fisGovdesi2);
+  const nextSiparisler = [{ ...sip, durum: "Kısmi Teslim", teslimSayaci: 1, kalemler: [{ ...sip.kalemler[0], karsilanan: 2 }] }];
+  const defterKaydi2 = E.fisDefterKaydiKur(fisGovdesi2, sonuc2, { kullanici: "Ali" });
+  const t = E.siparisTeslimSunucuYuku({ siparis: sip, fisGovdesi2, sonuc: sonuc2, islenenler: fisGovdesi2.kalemler, defterKaydi: defterKaydi2,
+    oncekiSiparisler: siparisler, nextSiparisler, etkilenenIdler: new Set(["sip-t"]), yeniSayac: 1, kullaniciAd: "Ali", zaman, istek: "uu-istek-teslim" });
+  const r2 = await E.fisKesGonder(t.yuk);
+  const no2 = r2.fisNo;
+  bekle("4: sunucuda fiş + satırlar + karşılanan", psql(`select (select siparis_no from public.stk_fis where id = '${no2}') || '/' || (select count(*) from public.stk_hareket where fis_id = '${no2}') || '/' || (select count(*) from public.car_hareket where fis_id = '${no2}') || '/' || (select karsilanan from public.siparis_kalemleri where id = 'k-t');`), "SS-9/1/1/2");
+  const doldur2 = (x) => E.fisYerTutucuDoldur(x, no2);
+  const stokEski2 = stok.filter((u) => u.id === "u-yeni");
+  const stokYeni2 = sonuc2.stok.filter((u) => u.id === "u-yeni").map((u) => ({ ...u, hareketler: u.hareketler.map((h) => (t.kimlikler.has(h.id) ? doldur2(h) : h)) }));
+  stok = E.stokMiktarlariniHesapla(E.degisenKayitlariBirlestir(stok, stokEski2, stokYeni2));
+  E.fisKesTabaniKur("urunler", stokEski2, E.stokMiktarlariniHesapla(stokYeni2));
+  const cariEski2 = cariler.find((c) => c.id === "c-yeni");
+  const cariYeni2 = { ...cariEski2, hareketler: [...t.cariHareketleri.map(doldur2), ...(cariEski2.hareketler || [])] };
+  cariler = cariler.map((c) => (c.id === "c-yeni" ? cariYeni2 : c));
+  E.fisKesTabaniKur("cariler", [cariEski2], [cariYeni2]);
+  E.fisKesTabaniKur("siparisler", t.etkSiparis.eskiler, t.etkSiparis.yeniler, { anaDahil: false });
+  siparisler = nextSiparisler;
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("urunler", stok);
+  await E.supabaseTabloEsitle("cariler", cariler);
+  await E.supabaseTabloEsitle("siparisler", siparisler);
+  bekle("4: eşitleme hiçbir satırı yeniden göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("4: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
+  bekle("4: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
+  bekle("4: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
+
+  console.log("5) Siparişten satış fişi (fiş formu, kalem siparişe bağlı): kalan 1 çift — sipariş kalemi tamamlanır");
+  const fisGovdesi3 = { ...fisGovdesi, pesin: null, siparis: null,
+    kalemler: [{ urunId: "u-yeni", urunAd: "Yeni Ürün", renk: "Siyah", beden: "", birim: "çift", miktar: 1, birimFiyat: 100, paraBirimi: "TRY",
+      siparis: { id: "sip-t", siparisNo: "SS-9", rezervasyonSiparisId: null }, kalemId: "k-t" }] };
+  const sonuc3 = E.fisYaz(stok, cariler, fisGovdesi3);
+  const f3 = E.stokFisiSunucuYuku({ cariId: "c-yeni", tip: "Satış", fis: {}, fisGovdesi: fisGovdesi3, sonuc: sonuc3, kalemler: fisGovdesi3.kalemler,
+    kayitPB: "TRY", fisAciklamasi: "Siparişten satış", siparisler, kullaniciAd: "Ali", zaman, istek: "uu-istek-sip" });
+  bekle("5: yükte sipariş kalemi (karşılanan 3)", ((f3.yuk.alt || {}).siparis_kalemleri || { satirlar: [] }).satirlar.map((x) => `${x.id}:${x.karsilanan}`), ["k-t:3"]);
+  const r3 = await E.fisKesGonder(f3.yuk);
+  bekle("5: sunucuda karşılanan 3, fişte sipariş bağı", psql(`select (select karsilanan from public.siparis_kalemleri where id = 'k-t') || '/' || (select siparis_no from public.stk_hareket where fis_id = '${r3.fisNo}');`), "3/SS-9");
+  const s3 = E.stokFisiSunucuSonucu({ p: f3.p, sonuc: sonuc3, yuk: f3.yuk, no: r3.fisNo, bno: null, cariId: "c-yeni", fisGovdesi: fisGovdesi3, kullaniciAd: "Ali", zaman });
+  const stokEski3 = stok.filter((u) => u.id === "u-yeni");
+  const stokYeni3 = s3.yeniStok.filter((u) => u.id === "u-yeni");
+  stok = E.stokMiktarlariniHesapla(E.degisenKayitlariBirlestir(stok, stokEski3, stokYeni3));
+  E.fisKesTabaniKur("urunler", stokEski3, E.stokMiktarlariniHesapla(stokYeni3));
+  const cariEski3 = cariler.find((c) => c.id === "c-yeni");
+  const cariYeni3 = { ...cariEski3, hareketler: [...s3.yeniCariHareketleri, ...(cariEski3.hareketler || [])] };
+  cariler = cariler.map((c) => (c.id === "c-yeni" ? cariYeni3 : c));
+  E.fisKesTabaniKur("cariler", [cariEski3], [cariYeni3]);
+  E.fisKesTabaniKur("siparisler", f3.p.etkSiparis.eskiler, f3.p.etkSiparis.yeniler, { anaDahil: false });
+  siparisler = E.degisenKayitlariBirlestir(siparisler, siparisler, f3.p.yeniSiparisler);
+  bekle("5: sipariş tamamlandı (ekranda)", siparisler[0].durum, "Tamamlandı");
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("urunler", stok);
+  await E.supabaseTabloEsitle("cariler", cariler);
+  await E.supabaseTabloEsitle("siparisler", siparisler);
+  bekle("5: eşitleme hiçbir satırı yeniden göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("5: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
+  bekle("5: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
+
   console.log(hata ? "── UÇTAN UCA (FİŞ) HATALI ──" : "── uçtan uca (fiş defteri) temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

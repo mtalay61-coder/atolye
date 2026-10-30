@@ -386,7 +386,7 @@ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant select on public.fis_listesi to service_role;
   end if;
-  return 'fiş defteri kuruldu (kurallar KAPALI — uygulama güncellenince: select public.fis_kural_ac();)';
+  return 'fiş defteri kuruldu (kurallar KAPALI — bütün işlemler fiş defterine taşınana kadar AÇMAYIN; açma adımı ayrıca verilecek)';
 end $$;
 select public.fis_kurulum_tamamla();
 drop function public.fis_kurulum_tamamla();

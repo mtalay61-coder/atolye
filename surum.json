@@ -1,1 +1,1 @@
-{"surum": "1.732.0", "url": "atolye-erp-v1.732.0.html", "not": "Tek fiş defteri — 1. adım: alış ve satış fişi (peşin kısım bağlı tahsilat/ödeme makbuzuyla) sunucuda tek işlemde kesilir, numarayı sunucu verir; geri alma fişi iptal eder"}
+{"surum": "1.732.1", "url": "atolye-erp-v1.732.1.html", "not": "Tek fiş defteri — 2. adım: sipariş teslimi (sevk / alış girişi) sunucuda tek işlemde kesilir; fiş, stok, cari ve siparişin karşılananı birlikte yazılır"}
