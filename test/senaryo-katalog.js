@@ -99,7 +99,7 @@ async function calistir() {
       tipGrubuVar: !!document.querySelector('[data-ozel-kod-kapsam="mamul|Ayakkabı"][data-secili="1"]'),
       sezonGrubuVar: !!document.querySelector('[data-ozel-kod-kapsam="sezon|İlkbahar/Yaz"][data-secili="1"]'),
       // Değerlerin NEREDE girildiği ekranda yazılı olmalı.
-      yolTarifiVar: /Özel Kod Alanları bölümünden/.test(m),
+      yolTarifiVar: /Özel Kodlar alt sekmesinden/.test(m),   // v1.731.0: Ürün alt sekmesi
     };
   });
 

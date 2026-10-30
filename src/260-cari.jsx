@@ -862,7 +862,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
                       const kod = sonrakiPersonelBarkodu(cariler, tanimlarProsesler, p, null);
                       setForm((f) => ({ ...f, barkodKodu: String(kod), bagliProsesler: f.bagliProsesler.includes(p) ? f.bagliProsesler : [...f.bagliProsesler, p] }));
                     }}>
-                    <option value="">Proses seçin → kod gelir</option>
+                    <option value="">Proses seçin…</option>
                     {(tanimlarProsesler || []).map((p) => <option key={p.id} value={p.ad}>{p.ad}</option>)}
                   </select>
                 </label>
