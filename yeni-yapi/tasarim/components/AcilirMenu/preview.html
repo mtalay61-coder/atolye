@@ -1,0 +1,16 @@
+<!-- @dsCard group="Eylemler" height=300 subtitle="Açılır, sağ tık, İşlemler menüsü: tek tasarım" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="padding:16px;background:var(--erp-page)">
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+<div><div class="erp-field__yardim" style="margin-bottom:6px">Satıra sağ tık</div><div id="m1"></div></div>
+<div><div class="erp-field__yardim" style="margin-bottom:6px">Kart başlığında "İşlemler"</div><div id="m2"></div></div>
+</div>
+<script>window.Atolye && window.Atolye.ikonlariYerlestir();
+var A=window.Atolye;
+document.getElementById("m1").innerHTML=A.menuHtml([{tur:"duzenle"},{tur:"kopyala"},{tur:"sil"},"-",{tur:"yazdir"},{tur:"excel",pasif:"Tek satır Excel'e aktarılmaz"}]);
+document.getElementById("m2").innerHTML=A.menuHtml([{baslik:"Sipariş"},{ad:"Siparişe çevir",ikon:"i-check"},{ad:"Üretime gönder",ikon:"i-refresh"},{ad:"Müşteriye gönder",ikon:"i-export",kisayol:""},"-",{ad:"İptal et",ikon:"i-ban",tehlike:true}]);
+</script>
+</body>
+</html>
