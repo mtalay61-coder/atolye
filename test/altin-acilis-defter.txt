@@ -1,0 +1,10 @@
+{
+ "gidenAf": [
+  "Ali|asil|zaman aynı"
+ ],
+ "hatalar": [],
+ "yerelDefter": [
+  "SY-1|Test Kullanıcısı|otomatik|kalem 1|zaman DEĞİŞTİ",
+  "AF-1|Ali|asil|kalem 1|zaman aynı"
+ ]
+}

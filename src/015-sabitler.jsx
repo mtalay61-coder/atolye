@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.731.2";
+const SURUM = "1.731.3";
 const SURUM_TARIHI = "2026-10-30";
-const SURUM_NOTU = "Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler";
+const SURUM_NOTU = "Açılışta fiş defteri bozulmuyor: stok fiş defterinden önce yüklendiği için her açılışta fişler otomatik kayıt olarak yeniden kurulup buluta yazılıyordu (sıfırlamadan sonra eski fişlerin geri gelmesinin sebebi)";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.731.3", tarih: "30.10.2026", eklenen: [], degisen: [], duzeltilen: ["Açılışta stok fiş defterinden önce yükleniyordu; hareket toplayıcı her fişi henüz boş defterle karşılaştırıp \"otomatik\" kayıt olarak yeniden kuruyor (zaman = açılış anı, kullanıcı boş, kalemler yalnız hareketten) ve buluta yazıyordu. Veri sıfırlamadan sonra eski 5 fişin geri gelmesi buydu. Artık toplanan hareketler açılış bitince gerçek defterle süzülür; başka cihazdan gelen stok deftere toplanmaz."] },
   { surum: "1.731.2", tarih: "30.10.2026", eklenen: ["Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler. Önce cariyi kaydedip kartını düzenlemek gerekiyordu. Personelde \"Kod ata\" ile proses seçince sıradaki barkod kodu gelir. Personel maaş/bölüm ve site erişimi kayıttan sonra kartta."], degisen: [], duzeltilen: [] },
   { surum: "1.731.1", tarih: "30.10.2026", eklenen: [], degisen: ["Finans › Gelir / Gider › Genel Gider: gider kartı seçicisi açılır liste yerine yazınca daralan arama kutusu; kartın grubu yanında soluk yazıyla görünür, kalem eklenince kutu boşalır."], duzeltilen: [] },
   { surum: "1.731.0", tarih: "30.10.2026", eklenen: [], degisen: ["Tanımlar › Ürün alt sekmelere ayrıldı: Renkler, Beden & Boyut, Asortiler, Birimler, Ürün Tipleri, Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar. Bölümlerin içeriği aynı, yalnız yerleri ayrı; Tanımlarda arama yazılıyken bütün bölümler birlikte görünür."], duzeltilen: [] },
