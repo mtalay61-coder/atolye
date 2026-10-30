@@ -32,6 +32,7 @@ async function calistir() {
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(900);
   await sayfa.evaluate(() => { const b = document.querySelector('[data-tanim-sekme="urun"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "fiyat");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(500);
   const sekmeBulundu = await sayfa.evaluate(() => !!document.querySelector('[data-fiyat-grubu-pb-duzenle="fg1"]'));
   if (!sekmeBulundu) {

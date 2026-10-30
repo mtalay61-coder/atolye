@@ -22,6 +22,7 @@ async function calistir() {
   await sayfa.waitForTimeout(900);
   // Asortiler "Ürün" tanım sekmesinde (23 Eylül düzeni).
   await sayfa.evaluate(() => { const b = document.querySelector('[data-tanim-sekme="urun"]'); if (b) b.click(); });
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "asorti");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(700);
 
   const sayi = async () => ((await depoOku(sayfa, "tanimlar:data")).asortiler || []).length;

@@ -31,6 +31,7 @@ async function calistir(ekran) {
   await sayfa.waitForTimeout(2200);
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click(); await sayfa.waitForTimeout(600);
   await sayfa.locator('[data-tanim-sekme="urun"]').first().click(); await sayfa.waitForTimeout(600);
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "ozel");   // Ürün alt sekmesi (v1.731.0)
   const satirlar = () => sayfa.evaluate(() => [...document.querySelectorAll("[data-ozel-kod-alani]")].map((r) => {
     const sec = [...r.querySelectorAll('[data-ozel-kod-kapsam][data-secili="1"]')].map((b) => b.getAttribute("data-ozel-kod-kapsam"));
     return `${r.getAttribute("data-ozel-kod-alani")}: ${sec.length ? sec.join(", ") : (r.querySelector("[data-ozel-kod-genel]") ? "GENEL" : "?")}`;

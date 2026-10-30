@@ -1,3 +1,16 @@
+// Tanımlar › Ürün alt sekmeleri (v1.731.0). Sıra kullanıcının sayışıyla: renk, beden, asorti önde; seyrek dokunulanlar sonda.
+const URUN_ALT_SEKMELERI = [
+  { key: "renk", ad: "Renkler" },
+  { key: "beden", ad: "Beden & Boyut" },
+  { key: "asorti", ad: "Asortiler" },
+  { key: "birim", ad: "Birimler" },
+  { key: "tip", ad: "Ürün Tipleri" },
+  { key: "fire", ad: "Fire Sebepleri" },
+  { key: "bolum", ad: "Atölye Bölümleri" },
+  { key: "fiyat", ad: "Fiyat Grupları" },
+  { key: "ozel", ad: "Özel Kodlar" },
+];
+
 function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCariHareketEkle, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, onMamulRenkleriniKodla, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
   // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
   // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
@@ -35,6 +48,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
   const [yeniKullaniciRol, setYeniKullaniciRol] = useState("Kullanıcı");
   const [acikYetkiKullaniciId, setAcikYetkiKullaniciId] = useState(null);
   const [aktifTanimSekme, setAktifTanimSekme] = useState("firma"); // "genel" | "renkBeden" | "uretim" | "kullanicilar" | "cop"
+  const [urunAltSekme, setUrunAltSekme] = useState("renk"); // Ürün sekmesinin alt sekmesi (v1.731.0, URUN_ALT_SEKMELERI)
   const [copTurFiltre, setCopTurFiltre] = useState("Tümü");
   const [copArama, setCopArama] = useState("");
   const [acikCopId, setAcikCopId] = useState(null);
@@ -731,6 +745,9 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
 
   const asortilerGorunen = (tanimlar.asortiler || []).filter((a) => ara(a.ad));
 
+  const aramaVar = !!aramaSorgusu.trim();
+  const urunAltGoster = (k) => aramaVar || urunAltSekme === k;
+
   return (
     <>
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
@@ -1082,352 +1099,100 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
     )}
 
     {aktifTanimSekme === "urun" && (
-    <>
-    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" }}>
-      {/* Renkler */}
+    <TanimBaslikSabitAcik.Provider value={true}>
+    {/* ÜRÜN ALT SEKMELERİ (v1.731.0 — kullanıcı: "Tanımlar tarafında renk, beden, asorti v.s bunları ayıralım alt sekme
+        olarak"). Ürün sekmesi renkten özel koda dokuz bölümü alt alta yığıyordu; aranan bölüm sayfanın dibinde
+        kalıyordu. Bölümlerin içi aynı (aynı bileşen, aynı veri), yalnız ayrı alt sekmelerde. Tanımlarda ARAMA
+        yazılıyken bütün alt sekmeler birlikte görünür: arama "hangi sekmedeydi" diye sordurmasın. */}
+    <div data-urun-alt-sekmeler="1" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18, paddingBottom: 12, borderBottom: "1px solid var(--erp-line-soft)" }}>
+      {URUN_ALT_SEKMELERI.map((s) => {
+        const aktif = !aramaVar && urunAltSekme === s.key;
+        return (
+          <button key={s.key} type="button" data-urun-alt={s.key} onClick={() => setUrunAltSekme(s.key)}
+            style={{
+              padding: "5px 13px", borderRadius: "var(--erp-r-pill)", fontWeight: 600, fontSize: 12, cursor: "pointer",
+              border: `1.5px solid ${aktif ? "var(--erp-brown)" : "var(--erp-border)"}`,
+              background: aktif ? "var(--erp-hover)" : "#fff",
+              color: aktif ? "var(--erp-brown)" : "var(--erp-text-2)",
+            }}>
+            {s.ad}
+          </button>
+        );
+      })}
+      {aramaVar && <span style={{ alignSelf: "center", fontSize: 11, color: "var(--erp-text-3)", marginLeft: 6 }}>Arama: bütün bölümler gösteriliyor</span>}
+    </div>
+    {urunAltGoster("renk") && (
+    <div data-urun-alt-icerik="renk" style={{ marginBottom: 28 }}>
       <div>
-        <TanimBasligi ad="Renkler" />
-        <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
-          Hammadde renkleri burada tanımlanır. Mamul ürünlerin renk varyantları, aşağıdaki "Model Rengi" bölümünde
-          bu hammadde renklerinin kombinasyonlarından oluşturulur.
-        </p>
+      <TanimBasligi ad="Renkler" />
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
+        Hammadde renkleri burada tanımlanır. Mamul ürünlerin renk varyantları, aşağıdaki "Model Rengi" bölümünde
+        bu hammadde renklerinin kombinasyonlarından oluşturulur.
+      </p>
 
-        {/* FİRE SEBEPLERİ — hurda ve tamir kaydedilirken seçilir. Tanımlı liste kullanmanın sebebi
-            raporlama: serbest metinle "malzeme hatası" ve "Malzeme Hatasi" ayrı satır olur ve
-            gruplama anlamını yitirir. */}
-        <Bolum baslik="Fire Sebepleri" renk="var(--erp-warn)">
-          <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
-            Üretimde bir çift hurdaya çıktığında ya da tamire gönderildiğinde seçilecek sebepler.
-            Fire raporu bu sebeplere göre gruplanır.
-          </p>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input
-              value={yeniFireSebep}
-              onChange={(e) => setYeniFireSebep(e.target.value)}
-              placeholder="Örn. Deri yırtığı"
-              style={inputStyle}
-              onKeyDown={(e) => e.key === "Enter" && addFireSebep()}
-            />
-            <button className="btn-primary" title="Fire sebebi ekle" onClick={addFireSebep}><Plus size={14} /></button>
-          </div>
-          {(tanimlar.fireSebepleri || []).length === 0 && (
-            <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9, marginBottom: 10, fontSize: 11, color: "#7A3B22", lineHeight: 1.6 }}>
-              Sebep tanımlanmadı. Bu durumda teslim alma ekranında varsayılan liste kullanılır:
-              Malzeme hatası, İşçilik hatası, Kalıp / ölçü, Makine arızası, İkinci kalite.
-              Kendi sebeplerinizi ekleyerek bu listeyi değiştirebilirsiniz.
-            </div>
-          )}
-          <TanimListesi
-            list={(tanimlar.fireSebepleri || []).map((x) => (typeof x === "string" ? { id: x, ad: x } : x)).filter((x) => ara(x.ad))}
-            onRemove={removeFireSebep}
-            emptyText=""
+
+      {/* MAMUL RENKLERİ — hammadde renklerinden tamamen ayrı liste.
+          Önceden mamul renklerini yönetecek bir yer yoktu: yalnızca ürün kartındaki "Yeni Renk"
+          kutusundan oluşturulabiliyor, sonradan adı düzeltilemiyor ya da silinemiyordu. */}
+      {cakisanRenkKodlari.length > 0 && (
+        <div data-renk-kod-cakisma={cakisanRenkKodlari.length} style={{ background: "var(--erp-orange-bg)", border: "1px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "#8A3F1A", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <b>Aynı kodu taşıyan renkler var:</b>
+          <span className="mono">{cakisanRenkKodlari.map((c) => `${c.kod} → ${c.renkler.map((r) => `${r.ad} (${r.tip || "Mamul"})`).join(", ")}`).join(" · ")}</span>
+          <button type="button" className="btn-primary" data-renk-kod-duzelt="1" style={{ padding: "4px 10px", fontSize: 11, marginLeft: "auto" }} onClick={cakisanRenkKodlariniDuzelt}>Düzelt</button>
+        </div>
+      )}
+      {/* "Mamul Renkleri" bölümü KALDIRILDI (9g, tek renk havuzu; 14 Eylül temizliğinde `{false && …}`
+          gizli bloğu da silindi). Mamulün rengi bütün renklerden ya da model rengi (kombinasyon)
+          listesinden seçilir. */}
+
+      <Bolum baslik="Renkler" renk="var(--erp-brown)">
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <input
+            value={yeniRenkHammadde}
+            onChange={(e) => setYeniRenkHammadde(e.target.value)}
+            placeholder="Örn. Ham Bej"
+            style={inputStyle}
+            onKeyDown={(e) => e.key === "Enter" && addRenk()}
           />
-        </Bolum>
+          <button className="btn-primary" onClick={() => addRenk()}><Plus size={14} /></button>
+        </div>
 
-        <Bolum baslik="Mamul Tipleri" renk="var(--erp-info)">
-          <p style={{ fontSize: 11, color: "var(--erp-text-3)", margin: "0 0 8px" }}>
-            Spor Ayakkabı, Sandalet, Bot gibi ürün türlerini tanımlayın — mamul stok kartı oluştururken
-            bu türü seçebilir, Stok listesinde bu türe göre filtreleyebilirsiniz.
-          </p>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input
-              value={yeniMamulTipi}
-              onChange={(e) => setYeniMamulTipi(e.target.value)}
-              placeholder="Örn. Sandalet"
-              style={inputStyle}
-              onKeyDown={(e) => e.key === "Enter" && addMamulTipi()}
-            />
-            <button className="btn-primary" title="Mamul tipi ekle" onClick={addMamulTipi}><Plus size={14} /></button>
-          </div>
-          <TanimListesi list={mamulTipleriGorunen} onRemove={removeMamulTipi} emptyText="Henüz mamul tipi tanımlanmadı." />
-        </Bolum>
-
-        <Bolum baslik="Hammadde Malzeme Tipleri" renk="var(--erp-purple)">
-          <p style={{ fontSize: 11, color: "var(--erp-text-3)", margin: "0 0 8px" }}>
-            Deri, taban, bağcık gibi malzeme türlerini tanımlayın — her hammadde rengini bir türe atayabilir,
-            hammadde stok kartı oluştururken de bu türü seçebilirsiniz.
-          </p>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input
-              value={yeniHammaddeTipi}
-              onChange={(e) => setYeniHammaddeTipi(e.target.value)}
-              placeholder="Örn. Taban"
-              style={inputStyle}
-              onKeyDown={(e) => e.key === "Enter" && addHammaddeTipi()}
-            />
-            <button className="btn-primary" title="Hammadde tipi ekle" onClick={addHammaddeTipi}><Plus size={14} /></button>
-          </div>
-          <TanimListesi list={hammaddeTipleriGorunen} onRemove={removeHammaddeTipi} emptyText="Henüz malzeme tipi tanımlanmadı." />
-        </Bolum>
-
-        {/* MAMUL RENKLERİ — hammadde renklerinden tamamen ayrı liste.
-            Önceden mamul renklerini yönetecek bir yer yoktu: yalnızca ürün kartındaki "Yeni Renk"
-            kutusundan oluşturulabiliyor, sonradan adı düzeltilemiyor ya da silinemiyordu. */}
-        {cakisanRenkKodlari.length > 0 && (
-          <div data-renk-kod-cakisma={cakisanRenkKodlari.length} style={{ background: "var(--erp-orange-bg)", border: "1px solid #E1611F", borderRadius: "var(--erp-r-md)", padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "#8A3F1A", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <b>Aynı kodu taşıyan renkler var:</b>
-            <span className="mono">{cakisanRenkKodlari.map((c) => `${c.kod} → ${c.renkler.map((r) => `${r.ad} (${r.tip || "Mamul"})`).join(", ")}`).join(" · ")}</span>
-            <button type="button" className="btn-primary" data-renk-kod-duzelt="1" style={{ padding: "4px 10px", fontSize: 11, marginLeft: "auto" }} onClick={cakisanRenkKodlariniDuzelt}>Düzelt</button>
+        {(tanimlar.hammaddeTipleri || []).length > 0 && (
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+            {["Tümü", "Genel", ...(tanimlar.hammaddeTipleri || []).map((h) => h.ad)].map((t) => {
+              const aktif = filtreMalzemeTipi === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setFiltreMalzemeTipi(t)}
+                  style={{
+                    padding: "4px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-border)"}`,
+                    background: aktif ? "#EDE7F2" : "#fff", color: aktif ? "var(--erp-purple)" : "var(--erp-text-2)",
+                  }}
+                >
+                  {t}
+                </button>
+              );
+            })}
           </div>
         )}
-        {/* "Mamul Renkleri" bölümü KALDIRILDI (9g, tek renk havuzu; 14 Eylül temizliğinde `{false && …}`
-            gizli bloğu da silindi). Mamulün rengi bütün renklerden ya da model rengi (kombinasyon)
-            listesinden seçilir. */}
 
-        <Bolum baslik="Renkler" renk="var(--erp-brown)">
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input
-              value={yeniRenkHammadde}
-              onChange={(e) => setYeniRenkHammadde(e.target.value)}
-              placeholder="Örn. Ham Bej"
-              style={inputStyle}
-              onKeyDown={(e) => e.key === "Enter" && addRenk()}
-            />
-            <button className="btn-primary" onClick={() => addRenk()}><Plus size={14} /></button>
-          </div>
-
-          {(tanimlar.hammaddeTipleri || []).length > 0 && (
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
-              {["Tümü", "Genel", ...(tanimlar.hammaddeTipleri || []).map((h) => h.ad)].map((t) => {
-                const aktif = filtreMalzemeTipi === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setFiltreMalzemeTipi(t)}
-                    style={{
-                      padding: "4px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 600, cursor: "pointer",
-                      border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-border)"}`,
-                      background: aktif ? "#EDE7F2" : "#fff", color: aktif ? "var(--erp-purple)" : "var(--erp-text-2)",
-                    }}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <TanimListesi
-            list={hammaddeRenkleri} onRemove={removeRenk} emptyText="Bu filtreyle eşleşen hammadde rengi yok."
-            onRenkKoduChange={renkKoduDegistir} onRenkTonKoduChange={renkTonKoduDegistir} onAdDegistir={onHammaddeRenkAdDegistir}
-            barkodKodu={{ ad: "Renk kodu", hane: 4 }}
-            bagliKombinasyonSayisi={(id) => (tanimlar.renkKombinasyonlari || []).filter((k) => k.renkIdler.includes(id)).length}
-            kullanimGetir={hammaddeRenkKullanildigiUrunler}
-            hammaddeTipleri={tanimlar.hammaddeTipleri || []}
-            onMalzemeTipiToggle={renkMalzemeTipiToggle}
-            onUrunStokToggle={(id) => onSave({ ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === id ? { ...r, urunStok: !r.urunStok } : r)) })}
-            onAciklamaChange={(id, v) => onSave({ ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === id ? { ...r, aciklama: v } : r)) })}
-            defaultOpen
-          />
-        </Bolum>
+        <TanimListesi
+          list={hammaddeRenkleri} onRemove={removeRenk} emptyText="Bu filtreyle eşleşen hammadde rengi yok."
+          onRenkKoduChange={renkKoduDegistir} onRenkTonKoduChange={renkTonKoduDegistir} onAdDegistir={onHammaddeRenkAdDegistir}
+          barkodKodu={{ ad: "Renk kodu", hane: 4 }}
+          bagliKombinasyonSayisi={(id) => (tanimlar.renkKombinasyonlari || []).filter((k) => k.renkIdler.includes(id)).length}
+          kullanimGetir={hammaddeRenkKullanildigiUrunler}
+          hammaddeTipleri={tanimlar.hammaddeTipleri || []}
+          onMalzemeTipiToggle={renkMalzemeTipiToggle}
+          onUrunStokToggle={(id) => onSave({ ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === id ? { ...r, urunStok: !r.urunStok } : r)) })}
+          onAciklamaChange={(id, v) => onSave({ ...tanimlar, renkler: tanimlar.renkler.map((r) => (r.id === id ? { ...r, aciklama: v } : r)) })}
+          defaultOpen
+        />
+      </Bolum>
       </div>
-
-      {/* Bedenler & Boyutlar */}
-      <div>
-        <TanimBasligi ad="Bedenler & Boyutlar" />
-        <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
-          Beden, sayısal ölçüler (39, 40, 42…) için; Boyut ise S/M/L gibi farklı bir ölçü sistemi için kullanılır.
-        </p>
-
-        <Bolum baslik="Beden">
-          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-            <input
-              value={yeniBeden}
-              onChange={(e) => setYeniBeden(e.target.value)}
-              placeholder="Yeni beden, örn. 42"
-              style={inputStyle}
-              onKeyDown={(e) => e.key === "Enter" && addOlcu("Beden")}
-            />
-            <button className="btn-primary" onClick={() => addOlcu("Beden")}><Plus size={14} /></button>
-          </div>
-          <TanimListesi list={bedenGrubu} onRemove={removeOlcu} emptyText="Henüz beden tanımlanmadı." mono barkodKodu={{ ad: "Beden kodu", hane: 2 }}
-            onAdDegistir={onOlcuAdDegistir} adIpucu="Bedenin adını değiştirmek için tıklayıp düzenleyin — ürün varyantları, reçete, sipariş, üretim, koli ve asorti kayıtları otomatik hizalanır" />
-        </Bolum>
-
-        {/* TANIMSIZ ÖLÇÜLER (kullanıcı, 14 Eylül: "beden adı değişen kayıt var, beden adı
-            değişikliği orada düzenlenmesi gerekiyordu"). Kayıtlarda geçip TANIMDA olmayan ölçüler —
-            geçmişte serbest yazılmış ("3840" gibi birleşmiş) ya da tanımdan silinmiş adlar. Tanım
-            listesinde görünmedikleri için düzenlenemiyorlardı. Burada iki yol var:
-            • "Tanıma ekle": olduğu gibi tanımlara girer, sonra normal yoldan adı düzenlenebilir.
-            • "Şuna çevir": kayıtlardaki adı seçilen TANIMLI ölçüyle değiştirir (birleştirme). */}
-        {(() => {
-          const tanimliAdlar = new Set((tanimlar.bedenler || []).map((b) => String(b.ad || "").trim().toLocaleLowerCase("tr-TR")));
-          const kullanilan = new Map();   // görünen ad → kaç kayıt
-          (kullanimdakiOlculer || []).forEach(({ ad, sayi }) => {
-            const n = String(ad || "").trim();
-            if (!n || tanimliAdlar.has(n.toLocaleLowerCase("tr-TR"))) return;
-            kullanilan.set(n, (kullanilan.get(n) || 0) + sayi);
-          });
-          if (kullanilan.size === 0) return null;
-          const bedenAdlari = bedenSirala(bedenGrubuTumu.map((b) => b.ad));
-          return (
-            <Bolum baslik={`Tanımsız Ölçüler (${kullanilan.size})`} renk="var(--erp-warn)">
-              <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>
-                Kayıtlarda geçen ama tanım listesinde olmayan ölçüler. Tanıma ekleyip adını düzeltebilir
-                ya da doğrudan tanımlı bir ölçüyle birleştirebilirsiniz; kayıtlar (ürün, reçete, stok
-                hareketi, sipariş, üretim, koli, asorti) hizalanır.
-              </div>
-              <div style={{ display: "grid", gap: 4 }}>
-                {[...kullanilan.entries()].map(([ad, sayi]) => (
-                  <div key={ad} data-tanimsiz-olcu={ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
-                    background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
-                    <b className="mono" style={{ fontSize: 13 }}>{ad}</b>
-                    <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{sayi} kayıtta</span>
-                    <button type="button" className="btn-ghost" data-tanimsiz-ekle={ad} style={{ padding: "3px 9px", fontSize: 11 }}
-                      title="Bu ölçüyü tanım listesine ekle — sonra adını normal yoldan düzenleyebilirsiniz"
-                      onClick={() => onSave({ ...tanimlar, bedenler: [...(tanimlar.bedenler || []), { id: uid("olcu"), ad, tip: "Beden" }] })}>
-                      <Plus size={11} /> Tanıma ekle
-                    </button>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
-                      <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>şuna çevir:</span>
-                      <select data-tanimsiz-cevir={ad} defaultValue=""
-                        onChange={(e) => {
-                          const hedef = e.target.value;
-                          e.target.value = "";
-                          if (!hedef || !onTanimsizOlcuCevir) return;
-                          if (!window.confirm(`"${ad}" geçen ${sayi} kayıt "${hedef}" olarak değiştirilecek. Devam edilsin mi?`)) return;
-                          onTanimsizOlcuCevir(ad, hedef);
-                        }}
-                        style={{ ...inputStyle, width: 120, padding: "3px 6px", fontSize: 11 }}>
-                        <option value="">Seçin…</option>
-                        {bedenAdlari.map((b) => <option key={b} value={b}>{b}</option>)}
-                      </select>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Bolum>
-          );
-        })()}
-
-        {/* BEDEN GRUPLARI (kullanıcı, 14 Eylül: "beden grupları oluşturalım — 36-40 seçince 36,37,
-            38,39,40 seçilmiş olsun"). Grup, TANIMLI bedenlerin sıralı listesinden bir ARALIK ya da
-            tek tek seçimle kurulur; ürün kartında "Beden Ekle" içinde tek dokunuşla hepsi eklenir.
-            Kayıt beden ADLARINI tutuyor (kimlik değil): beden adı değişince `olcuAdDegistir`
-            (13. bölüm) grupları da hizalıyor. */}
-        <Bolum baslik="Beden Grubu">
-          {(() => {
-            const bedenAdlari = bedenSirala(bedenGrubuTumu.map((b) => b.ad));
-            const gruplar = tanimlar.bedenGruplari || [];
-            const kaydet = (yeni) => onSave({ ...tanimlar, bedenGruplari: yeni });
-            return (
-              <div style={{ display: "grid", gap: 8 }}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "flex-end" }}>
-                  <Field label="Grup adı">
-                    <input value={yeniGrup.ad} data-beden-grup-ad="1" onChange={(e) => setYeniGrup({ ...yeniGrup, ad: e.target.value })}
-                      placeholder="örn. 36-40" style={{ ...inputStyle, width: 140 }} />
-                  </Field>
-                  <Field label="Baştan">
-                    <select value={yeniGrup.bas} data-beden-grup-bas="1" onChange={(e) => setYeniGrup({ ...yeniGrup, bas: e.target.value })} style={{ ...inputStyle, width: 110 }}>
-                      <option value="">Seçin…</option>
-                      {bedenAdlari.map((b) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </Field>
-                  <Field label="Sona">
-                    <select value={yeniGrup.son} data-beden-grup-son="1" onChange={(e) => setYeniGrup({ ...yeniGrup, son: e.target.value })} style={{ ...inputStyle, width: 110 }}>
-                      <option value="">Seçin…</option>
-                      {bedenAdlari.map((b) => <option key={b} value={b}>{b}</option>)}
-                    </select>
-                  </Field>
-                  <button className="btn-primary" data-beden-grup-ekle="1" style={{ padding: "6px 12px", fontSize: 12 }}
-                    onClick={() => {
-                      const i = bedenAdlari.indexOf(yeniGrup.bas), j = bedenAdlari.indexOf(yeniGrup.son);
-                      if (i < 0 || j < 0) return showToast("Baş ve son bedeni seçin");
-                      const secilen = bedenAdlari.slice(Math.min(i, j), Math.max(i, j) + 1);
-                      const ad = yeniGrup.ad.trim() || `${secilen[0]}-${secilen[secilen.length - 1]}`;
-                      if (gruplar.some((g) => g.ad.toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"))) return showToast("Bu grup adı zaten var");
-                      kaydet([...gruplar, { id: uid("bgrup"), ad, bedenler: secilen }]);
-                      setYeniGrup({ ad: "", bas: "", son: "" });
-                      showToast(`${ad}: ${secilen.length} beden`);
-                    }}>
-                    <Plus size={14} /> Grup Ekle
-                  </button>
-                </div>
-                {gruplar.length === 0 ? (
-                  <EmptyState text="Henüz beden grubu yok. Baş ve son bedeni seçip grup kurun." />
-                ) : (
-                  <div style={{ display: "grid", gap: 4 }}>
-                    {gruplar.map((g) => (
-                      <div key={g.id} data-beden-grup={g.ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
-                        background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
-                        <b style={{ fontSize: 13 }}>{g.ad}</b>
-                        <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{(g.bedenler || []).join(" · ")}</span>
-                        <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({(g.bedenler || []).length} beden)</span>
-                        <SilOnayButonu onConfirm={() => kaydet(gruplar.filter((x) => x.id !== g.id))} boyut={12} baslikNormal={`${g.ad} grubu silinsin mi?`} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </Bolum>
-
-        <Bolum baslik="Boyut">
-          <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
-            Bedenden farklı ölçüler: bağcık boyu, kutu ebadı, fermuar uzunluğu… Malzeme tipi seçerseniz
-            bu boyut yalnızca o tipteki hammaddelerde listelenir.
-          </p>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-            <input
-              value={yeniBoyut}
-              onChange={(e) => setYeniBoyut(e.target.value)}
-              placeholder="Yeni boyut, örn. 16 cm"
-              style={{ ...inputStyle, flex: "1 1 140px" }}
-              onKeyDown={(e) => e.key === "Enter" && addOlcu("Boyut")}
-            />
-            {(tanimlar.hammaddeTipleri || []).length > 0 && (
-              <select
-                value={yeniBoyutTipi}
-                onChange={(e) => setYeniBoyutTipi(e.target.value)}
-                style={{ ...inputStyle, width: 130 }}
-                title="Bu boyutun hangi malzeme tipine ait olduğu — boş bırakılırsa her tipte görünür"
-              >
-                <option value="">Genel</option>
-                {(tanimlar.hammaddeTipleri || []).map((h) => <option key={h.id} value={h.ad}>{h.ad}</option>)}
-              </select>
-            )}
-            <button className="btn-primary" onClick={() => addOlcu("Boyut")}><Plus size={14} /></button>
-          </div>
-
-          {(tanimlar.hammaddeTipleri || []).length > 0 && (
-            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
-              {["Tümü", "Genel", ...(tanimlar.hammaddeTipleri || []).map((h) => h.ad)].map((t) => {
-                const aktif = filtreBoyutTipi === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setFiltreBoyutTipi(t)}
-                    style={{
-                      padding: "4px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 600, cursor: "pointer",
-                      border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-border)"}`,
-                      background: aktif ? "#EDE7F2" : "#fff", color: aktif ? "var(--erp-purple)" : "var(--erp-text-2)",
-                    }}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <TanimListesi
-            list={boyutGrubu}
-            onRemove={removeOlcu}
-            emptyText={filtreBoyutTipi === "Tümü" ? "Henüz boyut tanımlanmadı." : "Bu filtreyle eşleşen boyut yok."}
-            mono
-            barkodKodu={{ ad: "Boyut kodu", hane: 2 }}
-            hammaddeTipleri={tanimlar.hammaddeTipleri || []}
-            onMalzemeTipiToggle={olcuMalzemeTipiToggle}
-            onAdDegistir={onOlcuAdDegistir}
-            adIpucu="Boyutun adını değiştirmek için tıklayıp düzenleyin — bağlı kayıtlar otomatik hizalanır"
-          />
-        </Bolum>
-      </div>
-    </div>
-
     <RenkKombinasyonBolumu
       hammaddeRenkleri={modelRengiIcinTumRenkler}
       kombinasyonlar={tanimlar.renkKombinasyonlari || []}
@@ -1438,58 +1203,216 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
         return kombi ? renkStringiniKullananUrunler(kombinasyonEtiketiHesapla(kombi)) : [];
       }}
     />
-    <div className="tanimlar-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 24, alignItems: "start" }}>
-      {/* Birimler */}
+    </div>
+    )}
+    {urunAltGoster("beden") && (
+    <div data-urun-alt-icerik="beden" style={{ marginBottom: 28 }}>
       <div>
-        <TanimBasligi ad="Birimler" />
-        <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
-          Stok kaydederken kullanacağınız ölçü birimlerini tanımlayın (örn. çift, koli, metre, top).
-        </p>
-        {/* KULLANIMDA OLUP LİSTEDE OLMAYAN BİRİMLER.
-            Ürünler bu listeden bağımsız bir birim taşıyabiliyor (eski kayıt, varsayılan değer,
-            büyük/küçük harf farkı). Böyle bir ürünün kartı açıldığında birim seçici listedeki
-            İLK değeri gösteriyor ve kullanıcı ürünün birimini yanlış biliyor — kaydete basınca da
-            gerçekten değişiyordu. Eksikleri burada tek tıkla eklemek, sorunu kaynağında kapatır. */}
-        {(() => {
-          const listedekiler = new Set((tanimlar.birimler || []).map((b) => b.ad));
-          const eksikler = Array.from(new Set(
-            (stok || []).map((u) => u.birim).filter((b) => b && !listedekiler.has(b))
-          )).sort((a, b) => a.localeCompare(b, "tr"));
-          if (eksikler.length === 0) return null;
-          return (
-            <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12 }}>
-              <div style={{ fontSize: 11, color: "#7A3B22", lineHeight: 1.6, marginBottom: 7 }}>
-                Şu birimler ürünlerde kullanılıyor ama bu listede yok. Eklenmezse o ürünlerin
-                kartında birim yanlış görünür.
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {eksikler.map((b) => (
-                  <button
-                    key={b}
-                    type="button"
-                    onClick={() => onSave({ ...tanimlar, birimler: [...(tanimlar.birimler || []), { id: uid("birim"), ad: b }] })}
-                    style={{ display: "flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer", border: "1.5px solid #C9A063", background: "#fff", color: "#7A3B22" }}
-                  >
-                    <Plus size={11} /> {b}
+      <TanimBasligi ad="Bedenler & Boyutlar" />
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
+        Beden, sayısal ölçüler (39, 40, 42…) için; Boyut ise S/M/L gibi farklı bir ölçü sistemi için kullanılır.
+      </p>
+
+      <Bolum baslik="Beden">
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <input
+            value={yeniBeden}
+            onChange={(e) => setYeniBeden(e.target.value)}
+            placeholder="Yeni beden, örn. 42"
+            style={inputStyle}
+            onKeyDown={(e) => e.key === "Enter" && addOlcu("Beden")}
+          />
+          <button className="btn-primary" onClick={() => addOlcu("Beden")}><Plus size={14} /></button>
+        </div>
+        <TanimListesi list={bedenGrubu} onRemove={removeOlcu} emptyText="Henüz beden tanımlanmadı." mono barkodKodu={{ ad: "Beden kodu", hane: 2 }}
+          onAdDegistir={onOlcuAdDegistir} adIpucu="Bedenin adını değiştirmek için tıklayıp düzenleyin — ürün varyantları, reçete, sipariş, üretim, koli ve asorti kayıtları otomatik hizalanır" />
+      </Bolum>
+
+      {/* TANIMSIZ ÖLÇÜLER (kullanıcı, 14 Eylül: "beden adı değişen kayıt var, beden adı
+          değişikliği orada düzenlenmesi gerekiyordu"). Kayıtlarda geçip TANIMDA olmayan ölçüler —
+          geçmişte serbest yazılmış ("3840" gibi birleşmiş) ya da tanımdan silinmiş adlar. Tanım
+          listesinde görünmedikleri için düzenlenemiyorlardı. Burada iki yol var:
+          • "Tanıma ekle": olduğu gibi tanımlara girer, sonra normal yoldan adı düzenlenebilir.
+          • "Şuna çevir": kayıtlardaki adı seçilen TANIMLI ölçüyle değiştirir (birleştirme). */}
+      {(() => {
+        const tanimliAdlar = new Set((tanimlar.bedenler || []).map((b) => String(b.ad || "").trim().toLocaleLowerCase("tr-TR")));
+        const kullanilan = new Map();   // görünen ad → kaç kayıt
+        (kullanimdakiOlculer || []).forEach(({ ad, sayi }) => {
+          const n = String(ad || "").trim();
+          if (!n || tanimliAdlar.has(n.toLocaleLowerCase("tr-TR"))) return;
+          kullanilan.set(n, (kullanilan.get(n) || 0) + sayi);
+        });
+        if (kullanilan.size === 0) return null;
+        const bedenAdlari = bedenSirala(bedenGrubuTumu.map((b) => b.ad));
+        return (
+          <Bolum baslik={`Tanımsız Ölçüler (${kullanilan.size})`} renk="var(--erp-warn)">
+            <div style={{ fontSize: 11, color: "var(--erp-text-2)", marginBottom: 8 }}>
+              Kayıtlarda geçen ama tanım listesinde olmayan ölçüler. Tanıma ekleyip adını düzeltebilir
+              ya da doğrudan tanımlı bir ölçüyle birleştirebilirsiniz; kayıtlar (ürün, reçete, stok
+              hareketi, sipariş, üretim, koli, asorti) hizalanır.
+            </div>
+            <div style={{ display: "grid", gap: 4 }}>
+              {[...kullanilan.entries()].map(([ad, sayi]) => (
+                <div key={ad} data-tanimsiz-olcu={ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
+                  background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
+                  <b className="mono" style={{ fontSize: 13 }}>{ad}</b>
+                  <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>{sayi} kayıtta</span>
+                  <button type="button" className="btn-ghost" data-tanimsiz-ekle={ad} style={{ padding: "3px 9px", fontSize: 11 }}
+                    title="Bu ölçüyü tanım listesine ekle — sonra adını normal yoldan düzenleyebilirsiniz"
+                    onClick={() => onSave({ ...tanimlar, bedenler: [...(tanimlar.bedenler || []), { id: uid("olcu"), ad, tip: "Beden" }] })}>
+                    <Plus size={11} /> Tanıma ekle
                   </button>
-                ))}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
+                    <span style={{ fontSize: 11, color: "var(--erp-text-2)" }}>şuna çevir:</span>
+                    <select data-tanimsiz-cevir={ad} defaultValue=""
+                      onChange={(e) => {
+                        const hedef = e.target.value;
+                        e.target.value = "";
+                        if (!hedef || !onTanimsizOlcuCevir) return;
+                        if (!window.confirm(`"${ad}" geçen ${sayi} kayıt "${hedef}" olarak değiştirilecek. Devam edilsin mi?`)) return;
+                        onTanimsizOlcuCevir(ad, hedef);
+                      }}
+                      style={{ ...inputStyle, width: 120, padding: "3px 6px", fontSize: 11 }}>
+                      <option value="">Seçin…</option>
+                      {bedenAdlari.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Bolum>
+        );
+      })()}
+
+      {/* BEDEN GRUPLARI (kullanıcı, 14 Eylül: "beden grupları oluşturalım — 36-40 seçince 36,37,
+          38,39,40 seçilmiş olsun"). Grup, TANIMLI bedenlerin sıralı listesinden bir ARALIK ya da
+          tek tek seçimle kurulur; ürün kartında "Beden Ekle" içinde tek dokunuşla hepsi eklenir.
+          Kayıt beden ADLARINI tutuyor (kimlik değil): beden adı değişince `olcuAdDegistir`
+          (13. bölüm) grupları da hizalıyor. */}
+      <Bolum baslik="Beden Grubu">
+        {(() => {
+          const bedenAdlari = bedenSirala(bedenGrubuTumu.map((b) => b.ad));
+          const gruplar = tanimlar.bedenGruplari || [];
+          const kaydet = (yeni) => onSave({ ...tanimlar, bedenGruplari: yeni });
+          return (
+            <div style={{ display: "grid", gap: 8 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "flex-end" }}>
+                <Field label="Grup adı">
+                  <input value={yeniGrup.ad} data-beden-grup-ad="1" onChange={(e) => setYeniGrup({ ...yeniGrup, ad: e.target.value })}
+                    placeholder="örn. 36-40" style={{ ...inputStyle, width: 140 }} />
+                </Field>
+                <Field label="Baştan">
+                  <select value={yeniGrup.bas} data-beden-grup-bas="1" onChange={(e) => setYeniGrup({ ...yeniGrup, bas: e.target.value })} style={{ ...inputStyle, width: 110 }}>
+                    <option value="">Seçin…</option>
+                    {bedenAdlari.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </Field>
+                <Field label="Sona">
+                  <select value={yeniGrup.son} data-beden-grup-son="1" onChange={(e) => setYeniGrup({ ...yeniGrup, son: e.target.value })} style={{ ...inputStyle, width: 110 }}>
+                    <option value="">Seçin…</option>
+                    {bedenAdlari.map((b) => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </Field>
+                <button className="btn-primary" data-beden-grup-ekle="1" style={{ padding: "6px 12px", fontSize: 12 }}
+                  onClick={() => {
+                    const i = bedenAdlari.indexOf(yeniGrup.bas), j = bedenAdlari.indexOf(yeniGrup.son);
+                    if (i < 0 || j < 0) return showToast("Baş ve son bedeni seçin");
+                    const secilen = bedenAdlari.slice(Math.min(i, j), Math.max(i, j) + 1);
+                    const ad = yeniGrup.ad.trim() || `${secilen[0]}-${secilen[secilen.length - 1]}`;
+                    if (gruplar.some((g) => g.ad.toLocaleLowerCase("tr-TR") === ad.toLocaleLowerCase("tr-TR"))) return showToast("Bu grup adı zaten var");
+                    kaydet([...gruplar, { id: uid("bgrup"), ad, bedenler: secilen }]);
+                    setYeniGrup({ ad: "", bas: "", son: "" });
+                    showToast(`${ad}: ${secilen.length} beden`);
+                  }}>
+                  <Plus size={14} /> Grup Ekle
+                </button>
               </div>
+              {gruplar.length === 0 ? (
+                <EmptyState text="Henüz beden grubu yok. Baş ve son bedeni seçip grup kurun." />
+              ) : (
+                <div style={{ display: "grid", gap: 4 }}>
+                  {gruplar.map((g) => (
+                    <div key={g.id} data-beden-grup={g.ad} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
+                      background: "#fff", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", padding: "5px 10px" }}>
+                      <b style={{ fontSize: 13 }}>{g.ad}</b>
+                      <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-2)" }}>{(g.bedenler || []).join(" · ")}</span>
+                      <span className="mono" style={{ fontSize: 11, color: "var(--erp-text-3)" }}>({(g.bedenler || []).length} beden)</span>
+                      <SilOnayButonu onConfirm={() => kaydet(gruplar.filter((x) => x.id !== g.id))} boyut={12} baslikNormal={`${g.ad} grubu silinsin mi?`} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })()}
-        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+      </Bolum>
+
+      <Bolum baslik="Boyut">
+        <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
+          Bedenden farklı ölçüler: bağcık boyu, kutu ebadı, fermuar uzunluğu… Malzeme tipi seçerseniz
+          bu boyut yalnızca o tipteki hammaddelerde listelenir.
+        </p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
           <input
-            value={yeniBirim}
-            onChange={(e) => setYeniBirim(e.target.value)}
-            placeholder="Yeni birim, örn. koli"
-            style={inputStyle}
-            onKeyDown={(e) => e.key === "Enter" && addBirim()}
+            value={yeniBoyut}
+            onChange={(e) => setYeniBoyut(e.target.value)}
+            placeholder="Yeni boyut, örn. 16 cm"
+            style={{ ...inputStyle, flex: "1 1 140px" }}
+            onKeyDown={(e) => e.key === "Enter" && addOlcu("Boyut")}
           />
-          <button className="btn-primary" title="Birim ekle" onClick={addBirim}><Plus size={14} /></button>
+          {(tanimlar.hammaddeTipleri || []).length > 0 && (
+            <select
+              value={yeniBoyutTipi}
+              onChange={(e) => setYeniBoyutTipi(e.target.value)}
+              style={{ ...inputStyle, width: 130 }}
+              title="Bu boyutun hangi malzeme tipine ait olduğu — boş bırakılırsa her tipte görünür"
+            >
+              <option value="">Genel</option>
+              {(tanimlar.hammaddeTipleri || []).map((h) => <option key={h.id} value={h.ad}>{h.ad}</option>)}
+            </select>
+          )}
+          <button className="btn-primary" onClick={() => addOlcu("Boyut")}><Plus size={14} /></button>
         </div>
-        <TanimListesi list={birimler} onRemove={removeBirim} emptyText="Henüz birim tanımlanmadı." mono />
+
+        {(tanimlar.hammaddeTipleri || []).length > 0 && (
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+            {["Tümü", "Genel", ...(tanimlar.hammaddeTipleri || []).map((h) => h.ad)].map((t) => {
+              const aktif = filtreBoyutTipi === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setFiltreBoyutTipi(t)}
+                  style={{
+                    padding: "4px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    border: `1.5px solid ${aktif ? "var(--erp-purple)" : "var(--erp-border)"}`,
+                    background: aktif ? "#EDE7F2" : "#fff", color: aktif ? "var(--erp-purple)" : "var(--erp-text-2)",
+                  }}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <TanimListesi
+          list={boyutGrubu}
+          onRemove={removeOlcu}
+          emptyText={filtreBoyutTipi === "Tümü" ? "Henüz boyut tanımlanmadı." : "Bu filtreyle eşleşen boyut yok."}
+          mono
+          barkodKodu={{ ad: "Boyut kodu", hane: 2 }}
+          hammaddeTipleri={tanimlar.hammaddeTipleri || []}
+          onMalzemeTipiToggle={olcuMalzemeTipiToggle}
+          onAdDegistir={onOlcuAdDegistir}
+          adIpucu="Boyutun adını değiştirmek için tıklayıp düzenleyin — bağlı kayıtlar otomatik hizalanır"
+        />
+      </Bolum>
       </div>
     </div>
+    )}
+    {urunAltGoster("asorti") && (
+    <>
     <div style={{ marginTop: 28 }}>
       <TanimBasligi ad="Asortiler" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
@@ -1541,6 +1464,139 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
 
       <AsortiOlusturucu bedenler={bedenGrubuTumu.concat(boyutGrubuTumu)} onKaydet={asortiEkle} />
     </div>
+    </>
+    )}
+    {urunAltGoster("birim") && (
+    <div data-urun-alt-icerik="birim" style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 28 }}>
+      <TanimBasligi ad="Birimler" />
+      <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
+        Stok kaydederken kullanacağınız ölçü birimlerini tanımlayın (örn. çift, koli, metre, top).
+      </p>
+      {/* KULLANIMDA OLUP LİSTEDE OLMAYAN BİRİMLER.
+          Ürünler bu listeden bağımsız bir birim taşıyabiliyor (eski kayıt, varsayılan değer,
+          büyük/küçük harf farkı). Böyle bir ürünün kartı açıldığında birim seçici listedeki
+          İLK değeri gösteriyor ve kullanıcı ürünün birimini yanlış biliyor — kaydete basınca da
+          gerçekten değişiyordu. Eksikleri burada tek tıkla eklemek, sorunu kaynağında kapatır. */}
+      {(() => {
+        const listedekiler = new Set((tanimlar.birimler || []).map((b) => b.ad));
+        const eksikler = Array.from(new Set(
+          (stok || []).map((u) => u.birim).filter((b) => b && !listedekiler.has(b))
+        )).sort((a, b) => a.localeCompare(b, "tr"));
+        if (eksikler.length === 0) return null;
+        return (
+          <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 10, marginBottom: 12 }}>
+            <div style={{ fontSize: 11, color: "#7A3B22", lineHeight: 1.6, marginBottom: 7 }}>
+              Şu birimler ürünlerde kullanılıyor ama bu listede yok. Eklenmezse o ürünlerin
+              kartında birim yanlış görünür.
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {eksikler.map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => onSave({ ...tanimlar, birimler: [...(tanimlar.birimler || []), { id: uid("birim"), ad: b }] })}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer", border: "1.5px solid #C9A063", background: "#fff", color: "#7A3B22" }}
+                >
+                  <Plus size={11} /> {b}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <input
+          value={yeniBirim}
+          onChange={(e) => setYeniBirim(e.target.value)}
+          placeholder="Yeni birim, örn. koli"
+          style={inputStyle}
+          onKeyDown={(e) => e.key === "Enter" && addBirim()}
+        />
+        <button className="btn-primary" title="Birim ekle" onClick={addBirim}><Plus size={14} /></button>
+      </div>
+      <TanimListesi list={birimler} onRemove={removeBirim} emptyText="Henüz birim tanımlanmadı." mono />
+      </div>
+    </div>
+    )}
+    {urunAltGoster("tip") && (
+    <div data-urun-alt-icerik="tip" style={{ marginBottom: 28 }}>
+      <TanimBasligi ad="Ürün Tipleri" />
+      <Bolum baslik="Mamul Tipleri" renk="var(--erp-info)">
+        <p style={{ fontSize: 11, color: "var(--erp-text-3)", margin: "0 0 8px" }}>
+          Spor Ayakkabı, Sandalet, Bot gibi ürün türlerini tanımlayın — mamul stok kartı oluştururken
+          bu türü seçebilir, Stok listesinde bu türe göre filtreleyebilirsiniz.
+        </p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <input
+            value={yeniMamulTipi}
+            onChange={(e) => setYeniMamulTipi(e.target.value)}
+            placeholder="Örn. Sandalet"
+            style={inputStyle}
+            onKeyDown={(e) => e.key === "Enter" && addMamulTipi()}
+          />
+          <button className="btn-primary" title="Mamul tipi ekle" onClick={addMamulTipi}><Plus size={14} /></button>
+        </div>
+        <TanimListesi list={mamulTipleriGorunen} onRemove={removeMamulTipi} emptyText="Henüz mamul tipi tanımlanmadı." />
+      </Bolum>
+
+      <Bolum baslik="Hammadde Malzeme Tipleri" renk="var(--erp-purple)">
+        <p style={{ fontSize: 11, color: "var(--erp-text-3)", margin: "0 0 8px" }}>
+          Deri, taban, bağcık gibi malzeme türlerini tanımlayın — her hammadde rengini bir türe atayabilir,
+          hammadde stok kartı oluştururken de bu türü seçebilirsiniz.
+        </p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <input
+            value={yeniHammaddeTipi}
+            onChange={(e) => setYeniHammaddeTipi(e.target.value)}
+            placeholder="Örn. Taban"
+            style={inputStyle}
+            onKeyDown={(e) => e.key === "Enter" && addHammaddeTipi()}
+          />
+          <button className="btn-primary" title="Hammadde tipi ekle" onClick={addHammaddeTipi}><Plus size={14} /></button>
+        </div>
+        <TanimListesi list={hammaddeTipleriGorunen} onRemove={removeHammaddeTipi} emptyText="Henüz malzeme tipi tanımlanmadı." />
+      </Bolum>
+    </div>
+    )}
+    {urunAltGoster("fire") && (
+    <div data-urun-alt-icerik="fire" style={{ marginBottom: 28 }}>
+      <TanimBasligi ad="Fire Sebepleri" />
+      {/* FİRE SEBEPLERİ — hurda ve tamir kaydedilirken seçilir. Tanımlı liste kullanmanın sebebi
+          raporlama: serbest metinle "malzeme hatası" ve "Malzeme Hatasi" ayrı satır olur ve
+          gruplama anlamını yitirir. */}
+      <Bolum baslik="Fire Sebepleri" renk="var(--erp-warn)">
+        <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 8px" }}>
+          Üretimde bir çift hurdaya çıktığında ya da tamire gönderildiğinde seçilecek sebepler.
+          Fire raporu bu sebeplere göre gruplanır.
+        </p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <input
+            value={yeniFireSebep}
+            onChange={(e) => setYeniFireSebep(e.target.value)}
+            placeholder="Örn. Deri yırtığı"
+            style={inputStyle}
+            onKeyDown={(e) => e.key === "Enter" && addFireSebep()}
+          />
+          <button className="btn-primary" title="Fire sebebi ekle" onClick={addFireSebep}><Plus size={14} /></button>
+        </div>
+        {(tanimlar.fireSebepleri || []).length === 0 && (
+          <div style={{ background: "var(--erp-hover)", border: "1px solid #C9A063", borderRadius: "var(--erp-r-md)", padding: 9, marginBottom: 10, fontSize: 11, color: "#7A3B22", lineHeight: 1.6 }}>
+            Sebep tanımlanmadı. Bu durumda teslim alma ekranında varsayılan liste kullanılır:
+            Malzeme hatası, İşçilik hatası, Kalıp / ölçü, Makine arızası, İkinci kalite.
+            Kendi sebeplerinizi ekleyerek bu listeyi değiştirebilirsiniz.
+          </div>
+        )}
+        <TanimListesi
+          list={(tanimlar.fireSebepleri || []).map((x) => (typeof x === "string" ? { id: x, ad: x } : x)).filter((x) => ara(x.ad))}
+          onRemove={removeFireSebep}
+          emptyText=""
+        />
+      </Bolum>
+    </div>
+    )}
+    {urunAltGoster("bolum") && (
+    <>
     {/* ATÖLYE İÇİ BÖLÜMLER (v1.585.0 — kullanıcı: kesimhane 5 maaşlı kişi, parça başı tutar cariyi alacaklandırmasın).
         Bölüm = bağlı prosesler + personel (Personel tipli cari) + aylık maaş. Bkz. 015 `prosesBolumu`. */}
     <div data-bolumler="1" style={{ marginTop: 28 }}>
@@ -1620,6 +1676,10 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
         );
       })}
     </div>
+    </>
+    )}
+    {urunAltGoster("fiyat") && (
+    <>
     <div style={{ marginTop: 28 }}>
       <TanimBasligi ad="Fiyat Grupları" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
@@ -1714,6 +1774,10 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
         </div>
       )}
     </div>
+    </>
+    )}
+    {urunAltGoster("ozel") && (
+    <>
     <div style={{ marginTop: 28 }}>
     <div style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-lg)", padding: 16 }}>
       <TanimBasligi ad="Özel Kod Alanları" />
@@ -1852,6 +1916,8 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
     </div>
     </div>
     </>
+    )}
+    </TanimBaslikSabitAcik.Provider>
     )}
 
     {aktifTanimSekme === "uretim" && (

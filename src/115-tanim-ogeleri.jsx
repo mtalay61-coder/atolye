@@ -680,9 +680,17 @@ function tanimBasliklariOku() {
   try { const h = window.localStorage.getItem(TANIM_BASLIK_ANAHTARI); const l = h ? JSON.parse(h) : []; return Array.isArray(l) ? l : []; }
   catch (e) { return []; }
 }
+// SABİT AÇIK (v1.731.0): Tanımlar › Ürün alt sekmelere ayrılınca her alt sekmede bir-iki bölüm kaldı; alt sekmeye dokunan
+// kullanıcı kapalı başlıkla karşılaşmasın diye orada başlıklar hep açık (açıp kapatma işini alt sekme görüyor). Bağlam
+// TanimlarModule'deki Ürün sarmalayıcısından gelir; öteki sekmelerin (Üretim, Kullanıcılar…) açılır başlıkları değişmedi.
+const TanimBaslikSabitAcik = React.createContext(false);
+
 function TanimBasligi({ ad, sag, stil }) {
-  const [acik, setAcik] = useState(() => (typeof window !== "undefined" && window.__tanimBasliklariAcik) || tanimBasliklariOku().includes(ad));
+  const sabitAcik = React.useContext(TanimBaslikSabitAcik);
+  const [acikSecim, setAcik] = useState(() => (typeof window !== "undefined" && window.__tanimBasliklariAcik) || tanimBasliklariOku().includes(ad));
+  const acik = sabitAcik || acikSecim;
   const degistir = () => {
+    if (sabitAcik) return;
     const yeni = !acik;
     setAcik(yeni);
     try {
@@ -691,10 +699,10 @@ function TanimBasligi({ ad, sag, stil }) {
     } catch (e) { /* özel sekme: bu oturumda kalır */ }
   };
   const h3 = (
-    <h3 data-tanim-baslik={ad} data-kapali={sag ? undefined : (acik ? "0" : "1")} onClick={degistir} title={acik ? "Kapat" : "Aç"}
-      style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: sag ? 0 : "0 0 4px", cursor: "pointer", userSelect: "none",
+    <h3 data-tanim-baslik={ad} data-kapali={sag ? undefined : (acik ? "0" : "1")} onClick={degistir} title={sabitAcik ? undefined : (acik ? "Kapat" : "Aç")}
+      style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: sag ? 0 : "0 0 4px", cursor: sabitAcik ? "default" : "pointer", userSelect: "none",
         display: "flex", alignItems: "center", gap: 6, ...(stil || {}) }}>
-      <span style={{ fontSize: 11, color: "var(--erp-text-3)", width: 10 }}>{acik ? "▾" : "▸"}</span>{ad}
+      {!sabitAcik && <span style={{ fontSize: 11, color: "var(--erp-text-3)", width: 10 }}>{acik ? "▾" : "▸"}</span>}{ad}
     </h3>
   );
   if (!sag) return h3;
