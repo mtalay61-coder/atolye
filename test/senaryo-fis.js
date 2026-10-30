@@ -156,4 +156,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { calistir, normalles, anahtarSirala };
+module.exports = { calistir, normalles, anahtarSirala, urunEtiketiBul };

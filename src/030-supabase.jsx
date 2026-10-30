@@ -554,6 +554,9 @@ function tekilTabanAyarla(tablo, veri) {
 function tekilTabanOku(tablo) { return _tekilTaban[tablo]; }
 
 function tekilYaz(anahtar, tablo, veri, secenek = {}) {
+  // SUNUCU FİŞLERİ (v1.732.0, 078 fiş kes): `sunucu: true` işaretli defter kaydı fiş defteri tablosunda (stk_fis) duruyor;
+  // eski liste tablosuna (fis_defteri) yazılırsa ikinci kopya olur. Yerel kopyaya da yazılmaz — açılışta sunucudan okunur.
+  if (tablo === "fis_defteri" && Array.isArray(veri) && veri.some((f) => f && f.sunucu)) veri = veri.filter((f) => !(f && f.sunucu));
   const yerel = guvenliYaz(anahtar, JSON.stringify(veri), true);
   if (!supabaseAcikMi()) return yerel;
   bulutYazmaBasladi(tablo);

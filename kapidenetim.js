@@ -78,6 +78,13 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
   // AY BAŞI MAAŞ TAHAKKUKU (v1.585.0, 100-app): atölye içi bölüm personelinin carisine ayda bir "Maaş" alacağı.
   // Stok hareketi yazmaz; fiş numarası (MAAS-YYYY-MM-kod) tekilliği sağlar, aynı ay ikinci kez yazılmaz.
   "maasTahakkukEt",
+  // — TEK FİŞ DEFTERİ (v1.732.0, 078) —
+  // Sunucu satır biçimine çeviriciler (hareket ÜRETMEZ, `cikar`a tek hareketli kayıt verir) ve fişi sunucuda kesen yol:
+  // hesap `fisYaz`ın, yazma `fis_kes` (tek işlem). Yerel durum sunucu yazdıktan sonra uygulanır.
+  "fisKesStokSatiri",
+  "fisKesCariSatiri",
+  "stokFisiSunucuyaKes",
+  "stokFisiSunucuYuku",          // alış/satış fişinin fis_kes yükü (saf; makbuzun kasa satırı)
 ]);
 
 // Geri alan yollar ayrı sayılır: bunlar hareket YAZMAZ, siler. Yazıcı listesiyle karıştırmak,

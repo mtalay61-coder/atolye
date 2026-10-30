@@ -59,12 +59,14 @@ function v2AyarlariniOku() {
       kasaV2AktifAyarla(!!(ayar && ayar[0] && ayar[0].kasa_aktif));   // Kasa & Banka v2 (v1.729.0, 030 tekilYaz)
       // Tek parça listeler v2 (v1.730.0, 030 tekilYaz): yalnız geçişte gerçekten taşınan listeler (tablosu olmayan atlanır).
       listeV2TablolariAyarla(ayar && ayar[0] && ayar[0].liste_aktif ? ayar[0].liste_tablolari : []);
+      // Tek fiş defteri (v1.732.0, 078): fis-defteri.sql kurulduysa `fis_aktif` sütunu var — fiş kesen yollar fis_kes'e gider.
+      fisDefteriKuruluAyarla(!!(ayar && ayar[0] && Object.prototype.hasOwnProperty.call(ayar[0], "fis_aktif")));
       _v2AyarDurumu = "okundu";
       _v2AyarBasarili = true;
     },
     (e) => {
       const m = String((e && e.message) || e);
-      if (/\b404\b|PGRST205|42P01|does not exist|bulunamad/i.test(m)) { _v2AyarDurumu = "okundu"; _v2AyarBasarili = true; return; }   // v2 kurulmamış
+      if (/\b404\b|PGRST205|42P01|does not exist|bulunamad/i.test(m)) { _v2AyarDurumu = "okundu"; _v2AyarBasarili = true; fisDefteriKuruluAyarla(false); return; }   // v2 kurulmamış
       if (!_v2AyarBasarili) _v2AyarDurumu = "bilinmiyor";   // daha önce okunduysa o değer kalır
     });
 }

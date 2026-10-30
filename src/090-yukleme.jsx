@@ -229,6 +229,11 @@ useEffect(() => {
             else {
               try { const okuma = await guvenliOku("fisdefter:data", null); if (okuma.deger) setFisDefteri(JSON.parse(okuma.deger)); } catch (e) { /* boş başlar */ }
             }
+            // SUNUCU FİŞLERİ (v1.732.0, 078): fis_kes ile kesilenler fiş defteri tablosunda — eski listeyle birleşir.
+            if (fisKesYolu()) {
+              try { const sf = await sunucuFisleriniOku(); setFisDefteri((d) => defterSunucuFisleriyleBirlestir(d, sf)); }
+              catch (e) { console.warn("Sunucu fişleri okunamadı:", e && e.message); }
+            }
           }
 
           { const v = await tekilOku("mesajlar", "mesaj:data"); if (v != null) setMesajlar(v); }

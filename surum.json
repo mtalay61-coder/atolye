@@ -1,1 +1,1 @@
-{"surum": "1.731.3", "url": "atolye-erp-v1.731.3.html", "not": "Açılışta fiş defteri bozulmuyor: stok fiş defterinden önce yüklendiği için her açılışta fişler otomatik kayıt olarak yeniden kurulup buluta yazılıyordu (sıfırlamadan sonra eski fişlerin geri gelmesinin sebebi)"}
+{"surum": "1.732.0", "url": "atolye-erp-v1.732.0.html", "not": "Tek fiş defteri — 1. adım: alış ve satış fişi (peşin kısım bağlı tahsilat/ödeme makbuzuyla) sunucuda tek işlemde kesilir, numarayı sunucu verir; geri alma fişi iptal eder"}

@@ -101,6 +101,12 @@ if [ -f test/erp.cjs ]; then
   # v1.730.2 VERİ SIFIRLAMA — aynı veritabanında (canlının aynısı), Editor gibi
   editor_ver stok-v2/veri-sifirla.sql
   calistir stok-v2/test/sinama-sifirla.sql
+  # v1.732 TEK FİŞ DEFTERİ — sıfırlanmış veritabanında (canlının bugünkü hâli), Editor gibi; ikinci kez zararsız olmalı
+  editor_ver stok-v2/fis-defteri.sql
+  editor_ver stok-v2/fis-defteri.sql
+  calistir stok-v2/test/sinama-fis.sql
+  echo "── stok-v2/test/uctan-uca-fis.js"
+  STOK_V2_DB="$DB" node stok-v2/test/uctan-uca-fis.js
 else
   echo "── uçtan uca atlandı: test/erp.cjs yok (cd test && node derle.js)"
 fi

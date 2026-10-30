@@ -124,6 +124,9 @@ function AtolyeUygulamasi() {
   // FİŞ DEFTERİ (15 Eylül, Adım 1): her fişin tek kaydı. Doğruluğun kaynağı burası; stok/sipariş/
   // cari onun türevi.
   const [fisDefteri, setFisDefteri] = useState([]);
+  const fisKaydediliyorRef = useRef(new Set());   // kaydı süren fiş pencereleri (v1.732.0: sunucu yanıtı beklenirken çift basış)
+  // Fiş defterinin ekrandaki hâli (v1.732.0): sunucu fişleri yerel depoya yazılmadığı için senaryolar ve destek buradan okur.
+  useEffect(() => { if (typeof window !== "undefined") window.__fisDefteriOku = () => fisDefteri; }, [fisDefteri]);
   // MODELHANE (17 Eylül): koleksiyona girmemiş modeller. Stok ürünü DEĞİL — ayrı tablo.
   const [modeller, setModeller] = useState([]);
   // FATURALAR (27 Eylül, v1.500.0 — e-fatura Aşama 2): tekil tablo (`faturalar`), görevlerle aynı kalıp.
@@ -981,9 +984,14 @@ function AtolyeUygulamasi() {
       const sat = await supabaseTumSatirlar(tablo);
       if (sat[0] && sat[0].veri != null) {
         // Ekran bulut hâline geçiyor → taban da (v1.725.0, 030): sonraki yazma bu hâlden üç yönlü birleşir.
-        if (!ayni(tekilAlan[tablo], sat[0].veri)) setX(sat[0].veri);
+        if (!ayni(tekilAlan[tablo], sat[0].veri)) setX(tablo === "fis_defteri" ? (onceki) => defterSunucuFisleriyleBirlestir(sat[0].veri, (onceki || []).filter((f) => f && f.sunucu)) : sat[0].veri);
         tekilTabanAyarla(tablo, sat[0].veri);
       }
+    }
+    // SUNUCU FİŞLERİ (v1.732.0, 078): stok, cari, kasa ya da defter değiştiyse fiş listesi de tazelenir (başka cihazın fişi).
+    if (fisKesYolu() && alanlar.some((a) => ["stok", "cariler", "muhasebe", "fisDefteri"].includes(a))) {
+      try { const sf = await sunucuFisleriniOku(); setFisDefteri((d) => defterSunucuFisleriyleBirlestir(d, sf)); }
+      catch (e) { /* bir sonraki turda */ }
     }
     return degisen;
   }, []);
@@ -3322,7 +3330,7 @@ function AtolyeUygulamasi() {
   const stokFisiKaydet = useCariFisiKaydet({
     fisGeriAlRef,
     addCariHareketFromStok, aktifKullanici, cariler, fisDefterineYaz, muhasebeyePesinIsle, setSiparisler, setStok, showToast, siparisler, stok,
-    koliler, saveKoliler,
+    koliler, saveKoliler, setCariler, setMuhasebe, setFisDefteri,
   });
 
   // Bir hareketi (stok veya cari tarafında oluşmuş olsun) her iki taraftan da kaldırır.
@@ -3589,6 +3597,51 @@ function AtolyeUygulamasi() {
       return;
     }
 
+    // SUNUCU FİŞİ (v1.732.0, tek fiş defteri): fiş defteri tablosunda kesilmiş fiş tek tek hareket silinerek değil, sunucuda
+    // İPTAL edilerek geri alınır — fiş, bağlı makbuzu ve bütün satırları tek işlemde. Hesap yukarıdaki `fisGeriAl`ın (sipariş
+    // karşılananı, kasa bağı); sunucu iptal edince yerel durum uygulanır, edemezse hiçbir şey değişmez.
+    const sunucuFisi = fisKesYolu() && fis.fisNo && (fisDefteri || []).find((f) => f && f.sunucu && f.fisNo === fis.fisNo);
+    if (sunucuFisi) {
+      if (sunucuFisi.iptal) { showToast(`"${fis.fisNo}" zaten iptal edilmiş`); return; }
+      const etkSip = fisKesEtkilenen(siparisler, sonuc.siparisler, [...sonuc.etkilenenSiparisler]);
+      // Taban için eski / yeni hâller bekleme ÖNCESİ (geri almayı hesaplayan fotoğraf).
+      const etkStok = fisKesEtkilenen(stok, sonuc.stok, fisKesDegisenIdler(stok, sonuc.stok));
+      const etkCari = fisKesEtkilenen(cariler, sonuc.cariler, fisKesDegisenIdler(cariler, sonuc.cariler));
+      const altSatirlar = etkSip.yeniler.flatMap((s) => fisKesSiparisKalemleri(s, (s.kalemler || []).map((k) => k.id)));
+      try {
+        await fisIptalGonder(fis.fisNo, "Geri alındı", altSatirlar.length ? { siparis_kalemleri: { satirlar: altSatirlar } } : null);
+      } catch (e) {
+        showToast(`"${fis.fisNo}" iptal edilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+        return;
+      }
+      setStok(sonuc.stok, { buluttan: true });
+      fisKesYerelYaz("stok:items", sonuc.stok);
+      fisKesTabaniKur("urunler", etkStok.eskiler, stokMiktarlariniHesapla(etkStok.yeniler));
+      setCariler(sonuc.cariler);
+      fisKesYerelYaz("cari:data", sonuc.cariler);
+      fisKesTabaniKur("cariler", etkCari.eskiler, etkCari.yeniler);
+      if (sonuc.muhasebeBagIdler.length > 0) {
+        const k = kasadanBaglariCikar(sonuc.muhasebe, sonuc.muhasebeBagIdler);
+        setMuhasebe(k.muhasebe);
+        fisKesYerelYaz("muhasebe:data", k.muhasebe);
+        fisKesKasaTabaniKur([], k.silinen);
+      }
+      if (etkSip.yeniler.length > 0) {
+        fisKesTabaniKur("siparisler", etkSip.eskiler, etkSip.yeniler, { anaDahil: false });
+        setSiparisler(sonuc.siparisler);
+        yazimiIzle(tabloYaz("siparis:data", "siparisler", sonuc.siparisler), "Siparişler", sonuc.siparisler);
+      }
+      const iptalZamani = new Date().toISOString();
+      setFisDefteri((onceki) => (onceki || []).map((f) => (f && (f.fisNo === fis.fisNo || (sunucuFisi.bagliFis && f.fisNo === sunucuFisi.bagliFis)) && !f.iptal
+        ? { ...f, iptal: true, iptalZamani } : f)));
+      if (sonuc.etkilenenKoliler.length > 0) { setKoliler(sonuc.koliler); yazimiIzle(tekilYaz("koli:data", "koliler", sonuc.koliler), "Koliler", sonuc.koliler); }
+      sonuc.silinenCariKayitlari.forEach(({ cari: c, hareket: h }) => gunlukYaz(`Fiş iptal — cari satırı: ${c.unvan} ${h.yon || ""} ${h.tutar || 0}`, "cari", { fisNo: fis.fisNo }));
+      gunlukYaz(`Fiş iptal edildi: ${fis.fisNo}${sunucuFisi.bagliFis ? ` + ${sunucuFisi.bagliFis}` : ""}`, "stok",
+        { fisNo: fis.fisNo, bagliFisNo: sunucuFisi.bagliFis || null, stokHareketi: sonuc.silinenStok, cariHareketi: sonuc.silinenCari });
+      showToast(`"${fis.fisNo}" iptal edildi${sunucuFisi.bagliFis ? ` (bağlı ${sunucuFisi.bagliFis} de)` : ""} — ${sonuc.silinenStok} stok, ${sonuc.silinenCari} cari satırı`);
+      return;
+    }
+
     // Yazmalar BEKLENİR. "Temizlendi" mesajı ancak buluta gerçekten yazıldıktan sonra verilir;
     // aksi halde kullanıcı silindiğini sanıp diğer bilgisayarda fişi görmeye devam ederdi.
     const sonuclar = [];
@@ -3650,7 +3703,7 @@ function AtolyeUygulamasi() {
       (sonuc.etkilenenUretimler.size > 0 ? ", üretim ilerlemesi geri alındı" : "") +
       (sonuc.geriAlinanCekler.length > 0 ? `, ${sonuc.geriAlinanCekler.length} çekin işlemi geri alındı (önceki durumuna döndü)` : "")
     );
-  }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal]);
+  }, [faturalar, stok, cariler, siparisler, uretim, muhasebe, koliler, showToast, copaAt, muhasebeBaglariniTemizle, aktifKullanici, fisDefterindeIptal, fisDefteri]);
   // Toast'taki "Geri al" düğmesi fiş numarasıyla buraya gelir.
   useEffect(() => {
     fisGeriAlRef.current = (fisNo, hareketIdler) => {
@@ -5871,13 +5924,21 @@ function AtolyeUygulamasi() {
                             kurlar={muhasebe.kurlar || {}}
                             showToast={showToast}
                             onVazgec={() => pencereKapat(p.id)}
-                            onKaydet={(fis) => {
+                            onKaydet={async (fis) => {
                               // Kaydettikten sonra pencere KAPANIR: fiş tek seferlik bir belgedir,
                               // açık bırakmak aynı fişin ikinci kez kaydedilme riskini doğururdu.
                               // Cari FİŞTEN okunuyor: kullanıcı formda başka bir cari seçmiş
                               // olabilir. Pencerenin açıldığı cariyi kullanmak, seçimi yok sayardı.
-                              stokFisiKaydet(fis.cariId || p.veri.cariId, p.veri.tip, fis);
-                              pencereKapat(p.id);
+                              // YALNIZ KAYIT OLUNCA KAPANIR (v1.732.0): fiş kaydedilemezse (sunucu reddi, kur yok…) pencere açık kalır,
+                              // girilen kalemler kaybolmaz. Sunucu yanıtı beklenirken ikinci basış yok sayılır (çift fiş olmasın).
+                              if (fisKaydediliyorRef.current.has(p.id)) return;
+                              fisKaydediliyorRef.current.add(p.id);
+                              try {
+                                const no = await stokFisiKaydet(fis.cariId || p.veri.cariId, p.veri.tip, fis);
+                                if (no) pencereKapat(p.id);
+                              } finally {
+                                fisKaydediliyorRef.current.delete(p.id);
+                              }
                             }}
                           />
                         ) : planlamaMi ? (
