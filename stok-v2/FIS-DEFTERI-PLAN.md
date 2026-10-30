@@ -1,6 +1,6 @@
 # Tek fiş defteri — plan (onayınıza)
 
-**Durum (30 Ekim 2026):** taslak. Hiçbir şey değişmedi; karar sizin.
+**Durum (30 Ekim 2026):** taslak, envanter tamam. Hiçbir şey değişmedi; karar sizin.
 
 ## 0. Kural (sizin sözlerinizle)
 
@@ -110,8 +110,79 @@ makbuzu. Eski defter usulüyle aynı. İkisi birbirine bağlıdır, biri iptal e
 
 ## 7. Envanter — bugün stoğa, cariye, kasaya yazan yollar
 
-_(hazırlanıyor)_
+Kodun tamamı tarandı: **43 yol**. Bugün fiş defterinden geçen yalnız **2** tanesi (alış/satış fişi formu, sipariş teslimi).
+Otomatik defter kurucu yalnız **stok** tarafını görüyor: fiş yolu dışındaki hiçbir cari ve kasa hareketi (işçilik, maaş,
+mesai, çek, kasa girişi, cari kartından hareket) deftere hiç girmiyor.
 
-## 8. Açık sorular
+### Yeni yapıda her yolun karşılığı
 
-_(envanterden sonra)_
+| Bugünkü yol (dosya) | Kullanıcı eylemi | Yeni yapıda |
+|---|---|---|
+| Alış/satış fişi formu (089) — cari kartı, Depo › Alış fişi, siparişten satış, Sevkiyat Merkezi | Fiş kes | **Alış / Satış fişi**; peşin kısım için bağlı **tahsilat/ödeme makbuzu** |
+| Sipariş teslimi (081) | Sipariş kartında teslim/sevk | **Satış fişi (sevk) / Alış fişi (giriş)** |
+| Üretim teslim alma (079) | Teslim al (kart, atölye, barkod) | **Üretim fişi**: hammadde çıkışı + mamul girişi + iade/ek malzeme + fasoncuya işçilik (cari) — tek fiş |
+| Prosese iş verme, ara proses kendiliğinden tamamlanınca (080) | İş ver | **Üretim fişi** (ara prosesin hammaddesi + işçiliği) |
+| Numune üret (100) | Modelhane › numune | **Stok fişi — numune çıkışı** |
+| Bağımsız stok giriş/çıkış (152) | Stok formu | **Stok fişi — elle giriş/çıkış** (cari bağlıysa alış/satış fişi) |
+| Yeni ürün kartında başlangıç miktarı (152) | Ürün kaydet | **Açılış fişi** (bugün aynı gün hepsi tek "ACILIS-gün" numarasında — ayrı numara alacak) |
+| Defter düzeltmesi, toplu defter onarımı (152, 086) | Ürün kartı / Bakım | **Sayım fişi** (fark) — onarım aracı kalkar |
+| Açılış fişi kes (100/076) | Veri denetimi | **Açılış fişi** |
+| Cari kartından hareket (260) — alış/satış/ödeme/tahsilat, demirbaş, çek | Cari kartı formu | **Stok fişi** (ürünlü) ya da **para fişi** (ürünsüz); iki "huni" teke iner |
+| Demirbaş satın alındı (273) | Tanımlar › Kapasite | **Alış fişi** (ürünsüz kalem) |
+| Mesai yaz (272) | Personel | **Para fişi — mesai tahakkuku** |
+| Sipariş ödemesi, Ödeme & Tahsilat kısa formu, Banka Excel cari satırı (100, 260, 339) | Ödeme/tahsilat gir | **Tahsilat / ödeme makbuzu** |
+| Kasa & Banka › hareket gir (205) | Kasa hareketi | **Para fişi** (carili ya da carisiz gider/gelir) |
+| Gelir/gider kartına ödeme (260 KartOdemeSatiri), Banka Excel kart satırı (339) | Gider gir | **Gider fişi** |
+| Virman (205) | Virman | **Virman fişi** (iki ayak tek fişte) |
+| Çek ekle, ciro, iade, tahsil (088, 100) | Çek & Senet | **Çek fişleri** (alma, verme/ciro, iade, tahsil) |
+| İrsaliye bilgisi ekle (239) | Sevkiyat Merkezi | Fişin başlığına bilgi (hareket değişmez) |
+
+### Geri alma ve iptal (bugün birbirine uymuyor)
+
+| Bugün | Sorun | Yeni yapıda |
+|---|---|---|
+| Fişi geri al / sil (100 `yetimFisTemizle`, Fişler ekranı, cari ekstresi) | — | **Fiş iptal** |
+| Hareket sil (100 `removeHareketEverywhere`) | Yalnız cari hareketi silinirse fiş defteri iptal edilmiyor | **Fiş iptal** (tek hareket silinmez, fiş bütün iptal edilir) |
+| Üretim teslimini geri al (100) | — | **Üretim fişi iptal** |
+| Üretimi sil (076) | Kendi süzgeci var, `fisGeriAl` kullanmıyor; kasaya bakmıyor | Üretimin bütün fişleri iptal |
+| Stok ekranında bağlantısız hareketi sil (152) | Fiş defterine ve cariye dokunmuyor | **Kalkar** (bağlantısız hareket olamaz) |
+| Kasa hareketi sil (205), gelir/gider hareketi sil (396) | Fiş defterini iptal etmiyor | **Para fişi iptal** |
+| Çekte son işlemi geri al, çek sil (205) | — | İlgili çek fişinin iptali |
+| Sipariş iptal/sil (087/088) | Hareketlerden sipariş bağı siliniyor | Fişler kalır; sipariş "iptal" görünür (hareket değiştirilmez) |
+| Kasa hareketini düzenle (205) | Hareket yerinde değişiyor | **İptal + yeni fiş** |
+
+### Kendiliğinden yazanlar (kullanıcı eylemi olmadan)
+
+| Bugün | Yeni yapıda |
+|---|---|
+| Her stok yazımında fişsiz harekete numara verme + otomatik defter kaydı (100, 012) — 30 Ekim hatasının kaynağı | **Kalkar** |
+| Açılışta bir kerelik açılış göçü (012) | **Kalkar** (veriler sıfır, gerek yok) |
+| Açılışta peşin ödeme yönü onarımı, defterden eksik alan tamamlama (100) | **Kalkar** |
+| Açılışta Genel+Resmi ikiz cari hareketi birleştirme (090) | **Kalkar** |
+| Ay başında maaş tahakkuku (100) | **Kalır ama** kendiliğinden yazmaz: ay başında "Maaş tahakkuku bekliyor" çıkar, onaylayınca **maaş fişi** kesilir |
+| Renk/ölçü adı değiştirince hareketleri yeniden yazma (082, 083) | Gerek kalmaz: hareket rengi kimlikle tutuyor (stok v2'de zaten öyle) |
+
+### Fiş defterini okuyanlar
+
+Bugün: tekrar yazma denetimi, otomatik defter kurucu, fiş geri alma, açılış onarımları, veri denetimi, yedek. **Fişler
+ekranı (250) defteri hiç okumuyor**, fişleri stok ve cari hareketlerinden türetiyor. Yeni yapıda Fişler ekranı, cari
+ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi aynı fiş tablosundan okur.
+
+## 8. Açık sorular (sizin kararınız)
+
+1. **Üretim fişi:** bir teslimde hammadde çıkışı, mamul girişi ve fasoncu işçiliği **tek fiş** mi, yoksa ayrı fişler mi
+   (hammadde çıkış fişi + üretim giriş fişi + işçilik fişi)? Öneri: tek fiş — teslim tek olaydır, geri alınınca hepsi
+   birlikte döner.
+2. **Düzeltme:** kayıtlı fişte yanlışlık olunca yalnız **iptal + yeni fiş** mi? (Bugün kasa hareketi yerinde
+   düzenlenebiliyor.) Öneri: evet, eski defter usulü; iptal edilen fiş üstü çizili görünür.
+3. **Maaş tahakkuku:** ay başında kendiliğinden mi kesilsin, yoksa onayla mı? Öneri: onayla (kendiliğinden yazma kalmasın).
+4. **Fiş numaraları:** tür başına önek + sıra (AF, SF, ÜRT, SYM, ACL, THS, ODM, VRM, ÇEK…) ve numarayı **sunucu** versin
+   mi? Öneri: sunucu versin — iki cihaz aynı numarayı alamaz.
+
+## 9. Aşamalar
+
+1. SQL: `fis`, `fis_kalem`, satır bağları, `fis_kes`, `fis_iptal`, kurallar — yerel PostgreSQL'de her fiş türüyle sınama.
+2. Uygulama: fiş kurucu ortak işlev + yolların taşınması (tablodaki sırayla: alış/satış → sipariş → üretim → stok
+   formları → para fişleri → çek), eski kodun kaldırılması. Her yol için senaryo.
+3. Gece denetimi (gün sonu raporuna).
+4. Siz: Supabase'de tek SQL adımı → kontrol listesi → 1–2 hafta paralel kullanım.
