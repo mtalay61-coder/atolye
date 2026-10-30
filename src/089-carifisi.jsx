@@ -9,11 +9,165 @@
 //   • TEK FİŞ NUMARASI bütün kalemleri bağlar ve cari tarafına TEK hareket yazılır — ekstre belge
 //     bazlı okunur; üç malzemelik bir alışverişin üç ayrı satır olarak görünmesi değil.
 //   • Defter yazılamazsa hiçbir türev tabloya dokunulmaz (atomik kapı, 22. bölüm).
+// SİPARİŞE BAĞLI KALEMLERİN YENİ HÂLİ (saf) — iki yol da kullanır: fişin karşıladığı miktar kaleme eklenir, durum güncellenir.
+function fisSiparisleriGuncelle(siparisListesi, bagliKalemler) {
+  return (siparisListesi || []).map((s) => {
+    const benim = bagliKalemler.filter((k) => k.siparis.id === s.id);
+    if (benim.length === 0) return s;
+    const nextKalemler = s.kalemler.map((k) => {
+      const eklenecek = benim.filter((b) => b.kalemId === k.id).reduce((t, b) => t + (b.miktar || 0), 0);
+      return eklenecek > 0 ? { ...k, karsilanan: Math.min(k.miktar, (k.karsilanan || 0) + eklenecek) } : k;
+    });
+    const tumuTam = nextKalemler.every((k) => (k.karsilanan || 0) >= k.miktar);
+    const hicYok = nextKalemler.every((k) => (k.karsilanan || 0) === 0);
+    return { ...s, kalemler: nextKalemler, durum: tumuTam ? "Tamamlandı" : hicYok ? s.durum : "Kısmi Teslim" };
+  });
+}
+
+function stokFisiSunucuYuku({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kayitPB, fisAciklamasi, siparisler, kullaniciAd, zaman, istek }) {
+  const alisMi = tip === "Alış";
+  const kimlikler = new Set([...(sonuc.kimlikler || new Map()).values()]);
+  // Cari satırlarına huninin (100 addCariHareketFromStok) damgası: kimlik, zaman, kullanıcı.
+  const damgali = (sonuc.cariHareketleri || []).map((h) => ({
+    ...h, id: h.id || uid("hrk"), fisNo: FIS_YER, zaman: h.zaman || zaman, kullanici: h.kullanici || kullaniciAd,
+    islemTipi: h.islemTipi || undefined,
+  }));
+  const pesin = sonuc.pesinHareket && sonuc.pesinHareket.hesapId ? sonuc.pesinHareket : null;
+  const pesinMi = (h) => pesin && h.muhasebeBagId && h.muhasebeBagId === pesin.bagId;
+  // Makbuzun satırları: kendi numarası «FIS», fişe atıfları «ANAFIS».
+  const makbuzYap = (x) => ({ ...JSON.parse(JSON.stringify(x).split(FIS_YER).join(ANA_FIS_YER)), fisNo: FIS_YER });
+  const anaCari = damgali.filter((h) => !pesinMi(h));
+  const makbuzCari = damgali.filter(pesinMi).map(makbuzYap);
+  const makbuzKasa = pesin ? makbuzYap(pesin.hareket) : null;
+  const toplamTutar = stokYuvarla(anaCari.filter((h) => h.defter !== "Resmi").reduce((t, h) => t + (h.tutar || 0), 0));
+  const defterKaydi = fisDefterKaydiKur(fisGovdesi, sonuc, { kullanici: kullaniciAd || "" });
+
+  // Sipariş kalemleri (fişe bağlı satırlar)
+  const bagliKalemler = kalemler.filter((k) => k.siparis && k.siparis.id && k.kalemId);
+  const yeniSiparisler = bagliKalemler.length > 0 ? fisSiparisleriGuncelle(siparisler, bagliKalemler) : siparisler;
+  const etkSiparis = fisKesEtkilenen(siparisler, yeniSiparisler, [...new Set(bagliKalemler.map((k) => k.siparis.id))]);
+  const altSatirlar = etkSiparis.yeniler.flatMap((s) => fisKesSiparisKalemleri(s, bagliKalemler.filter((k) => k.siparis.id === s.id).map((k) => k.kalemId)));
+
+  const stokSatirlari = [];
+  (sonuc.stok || []).forEach((u) => (u.hareketler || []).forEach((h) => { if (kimlikler.has(h.id)) stokSatirlari.push(fisKesStokSatiri(u.id, h)); }));
+  const belgeNo = (fis.fisNo || "").trim();
+  const yuk = {
+    istek,
+    fis: {
+      aile: "stok", tur: tip, onek: alisMi ? "AF" : "SF", kaynak: fisGovdesi.kaynak, defter: fisGovdesi.defter, tarih: fisGovdesi.stokTarihi,
+      cariId, paraBirimi: kayitPB, tutar: toplamTutar, aciklama: fisAciklamasi, kullanici: kullaniciAd, kalemler: defterKaydi.kalemler,
+      ek: { odemeSekli: fisGovdesi.odemeSekli, vade: fisGovdesi.vade, ...(belgeNo ? { belgeNo } : {}), ...(fisGovdesi.resmi ? { resmi: fisGovdesi.resmi } : {}) },
+    },
+    stok: { satirlar: stokSatirlari },
+    cari: { satirlar: anaCari.map((h) => fisKesCariSatiri(cariId, h)) },
+    ...(pesin ? {
+      bagli: {
+        fis: { aile: "para", tur: alisMi ? "Ödeme" : "Tahsilat", onek: alisMi ? "ÖD" : "TH", defter: fisGovdesi.defter, tarih: fisGovdesi.cariTarihi,
+          cariId, kasaHesapId: pesin.hesapId, paraBirimi: (makbuzCari[0] || {}).paraBirimi || kayitPB, tutar: (makbuzCari[0] || {}).tutar || null,
+          aciklama: (makbuzCari[0] || {}).aciklama || null, kullanici: kullaniciAd },
+        cari: { satirlar: makbuzCari.map((h) => fisKesCariSatiri(cariId, h)) },
+        kasa: { hareketler: [fisKesKasaHareketi(pesin.hesapId, makbuzKasa)] },
+      },
+    } : {}),
+    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar } } } : {}),
+  };
+  return { yuk, p: { kimlikler, anaCari, makbuzCari, makbuzKasa, pesin, toplamTutar, defterKaydi, bagliKalemler, yeniSiparisler, etkSiparis } };
+}
+
+// Sunucu numaraları gelince yerel kayıtların yeni hâli (saf): numaralar yerleşir, defter kayıtları kurulur.
+function stokFisiSunucuSonucu({ p, sonuc, yuk, no, bno, cariId, fisGovdesi, kullaniciAd, zaman }) {
+  const doldur = (x) => fisYerTutucuDoldur(x, no);
+  const makbuzDoldur = (x) => fisYerTutucuDoldur(x, bno || no, no);
+  const yeniStok = (sonuc.stok || []).map((u) => (u.hareketler || []).some((h) => p.kimlikler.has(h.id))
+    ? { ...u, hareketler: u.hareketler.map((h) => (p.kimlikler.has(h.id) ? doldur(h) : h)) } : u);
+  const yeniCariHareketleri = [...p.anaCari.map(doldur), ...p.makbuzCari.map(makbuzDoldur)];
+  const kasaHareketi = p.pesin ? makbuzDoldur(p.makbuzKasa) : null;
+  const anaKayit = { ...doldur(p.defterKaydi), id: no, fisNo: no, aile: "stok", sunucu: true, bagliFis: bno, ek: yuk.fis.ek, tutar: p.toplamTutar };
+  const makbuzKaydi = bno ? {
+    id: bno, fisNo: bno, aile: "para", tip: yuk.bagli.fis.tur, kaynak: yuk.bagli.fis.tur, cariId, zaman, defter: fisGovdesi.defter,
+    kullanici: kullaniciAd || "", kalemler: [], stokHareketleri: [], cariHareketleri: p.makbuzCari.map(makbuzDoldur),
+    kasaHareketleri: [kasaHareketi], iptal: false, iptalZamani: null, sunucu: true, bagliFis: no,
+  } : null;
+  return { yeniStok, yeniCariHareketleri, kasaHareketi, anaKayit, makbuzKaydi };
+}
+
 function useCariFisiKaydet(d) {
   const {
     addCariHareketFromStok, aktifKullanici, cariler, fisDefterineYaz, muhasebeyePesinIsle,
     setSiparisler, setStok, showToast, siparisler, stok, fisGeriAlRef, koliler, saveKoliler,
+    setCariler, setMuhasebe, setFisDefteri,
   } = d;
+
+// ALIŞ / SATIŞ FİŞİ — SUNUCU YOLU (v1.732.0, tek fiş defteri). Hesap `fisYaz`ın (bugünküyle aynı); yazma `fis_kes` ile TEK
+// işlemde: fiş (kalemleriyle) + stok satırları + cari satırı + sipariş kalemlerinin karşılananı; peşin kısım BAĞLI MAKBUZ
+// (tahsilat / ödeme fişi: kasa satırı + cari satırı). Sunucu yazınca numaralar yerleşir ve ekran güncellenir; yazamazsa
+// hiçbir şey değişmez.
+const stokFisiSunucuyaKes = useCallback(async ({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kayitPB, fisAciklamasi }) => {
+  const alisMi = tip === "Alış";
+  const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || null;
+  const zaman = new Date().toISOString();
+  const { yuk, p } = stokFisiSunucuYuku({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kayitPB, fisAciklamasi, siparisler, kullaniciAd, zaman, istek: uid("fis") });
+  const { kimlikler, pesin, toplamTutar, yeniSiparisler, etkSiparis } = p;
+  // Taban için ESKİ hâller bekleme ÖNCESİ alınır (fişi hesaplayan fotoğraf — farkın tabanı o).
+  const stokEskiler = (stok || []).filter((u) => kalemler.some((k) => k.urunId === u.id));
+  const cariEski = (cariler || []).find((c) => c.id === cariId);
+  let r;
+  try {
+    r = await fisKesGonder(yuk);
+  } catch (e) {
+    showToast(`Fiş kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+    gunlukYaz(`Fiş kaydedilemedi (${tip}): ${String((e && e.message) || e).slice(0, 200)}`, "cari", { cariId });
+    return null;
+  }
+  const no = r.fisNo;
+  const bno = r.bagliFisNo || null;
+  const { yeniStok, yeniCariHareketleri, kasaHareketi, anaKayit, makbuzKaydi } = stokFisiSunucuSonucu({ p, sonuc, yuk, no, bno, cariId, fisGovdesi, kullaniciAd, zaman });
+
+  // Stok: yalnız bu fişin hareketleri numaralandı; ürünlerin yeni hâli + taban
+  const stokYeniler = yeniStok.filter((u) => stokEskiler.some((e) => e.id === u.id));
+  setStok((onceki) => { const next = degisenKayitlariBirlestir(onceki, stokEskiler, stokYeniler); fisKesYerelYaz("stok:items", next); return next; }, { buluttan: true });
+  fisKesTabaniKur("urunler", stokEskiler, stokMiktarlariniHesapla(stokYeniler));
+
+  // Cari: fiş satırı + makbuz satırı
+  setCariler((onceki) => {
+    const next = (onceki || []).map((c) => (c.id === cariId ? { ...c, hareketler: [...yeniCariHareketleri, ...(c.hareketler || [])] } : c));
+    fisKesYerelYaz("cari:data", next);
+    return next;
+  });
+  if (cariEski) fisKesTabaniKur("cariler", [cariEski], [{ ...cariEski, hareketler: [...yeniCariHareketleri, ...(cariEski.hareketler || [])] }]);
+
+  // Kasa (peşin)
+  if (pesin) {
+    setMuhasebe((onceki) => { const next = hesabaHareketEkle(onceki, pesin.hesapTur, pesin.hesapId, kasaHareketi); fisKesYerelYaz("muhasebe:data", next); return next; });
+    fisKesKasaTabaniKur([{ hesapTur: pesin.hesapTur, hesapId: pesin.hesapId, hareket: kasaHareketi }]);
+  }
+
+  // Sipariş: kalemler sunucuda yazıldı (taban); durum (ana satır) bugünkü yoldan
+  if (etkSiparis.yeniler.length > 0) {
+    fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
+    setSiparisler((onceki) => {
+      const next = degisenKayitlariBirlestir(onceki, siparisler, yeniSiparisler);   // bayat-muaf: farkın tabanı fişi hesaplayan fotoğraf
+      yazimiIzle(tabloYaz("siparis:data", "siparisler", next), "Siparişler", next);
+      return next;
+    });
+  }
+
+  // Fiş defteri (sunucu fişleri — eski listeye yazılmaz)
+  setFisDefteri((onceki) => [anaKayit, ...(makbuzKaydi ? [makbuzKaydi] : []), ...(onceki || [])]);
+
+  // Okutulan koliler (bugünkü yolla aynı işaret)
+  const koliIdler = [...new Set(kalemler.map((k) => k.koliId).filter(Boolean))];
+  if (koliIdler.length && saveKoliler) {
+    saveKoliler((koliler || []).map((k) => (koliIdler.includes(k.id) ? { ...k, durum: "Sevk edildi", sevkFisNo: no, sevkZamani: zaman } : k)));
+  }
+  gunlukYaz(`${tip} fişi kesildi: ${no}${bno ? ` + ${bno}` : ""}`, "cari", { fisNo: no, bagliFisNo: bno, cariId, tutar: toplamTutar });
+  showToast(`${alisMi ? "Alış" : "Satış"} fişi kaydedildi — ${no}${bno ? ` (+ ${alisMi ? "ödeme" : "tahsilat"} ${bno})` : ""} · ${kalemler.length} kalem · ${toplamTutar.toLocaleString("tr-TR", { maximumFractionDigits: 2 })} ${PARA_SEMBOLU[kayitPB] || kayitPB}`, {
+    geriAl: () => fisGeriAlRef && fisGeriAlRef.current && fisGeriAlRef.current(no, [
+      ...kimlikler, ...yeniCariHareketleri.map((h) => h.id),
+    ]),
+  });
+  return no;
+}, [stok, cariler, siparisler, koliler, saveKoliler, aktifKullanici, showToast, fisGeriAlRef, setStok, setCariler, setMuhasebe, setSiparisler, setFisDefteri]);
 
 const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   const alisMi = tip === "Alış";
@@ -24,7 +178,10 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   // Kullanıcının yazdığı numara (tedarikçinin gerçek irsaliye no'su) varsa o korunur.
   // Sıra numarası: "AF-20260902-001". Rastgele son blok yerine sayılabilir bir numara —
   // muhasebede fişlerin sıralı olması bekleniyor.
-  const fisNo = (fis.fisNo || "").trim() || fisNoSiradaki(alisMi ? "AF" : "SF", tumFisNumaralari(cariler));
+  // TEK FİŞ DEFTERİ (v1.732.0, 078): sunucuda fiş defteri kuruluysa numarayı SUNUCU verir; o gelene kadar metinlerde yer
+  // tutucu durur. Kullanıcının yazdığı numara (tedarikçinin belge no'su) fişin ek bilgisi olarak saklanır.
+  const sunucuYolu = fisKesYolu();
+  const fisNo = sunucuYolu ? FIS_YER : ((fis.fisNo || "").trim() || fisNoSiradaki(alisMi ? "AF" : "SF", tumFisNumaralari(cariler)));
   // Stok hareketi tam zaman damgası tutar (sıralama saate duyarlı), cari hareketi gün bazlı.
   // Fiş tarihi kullanıcıdan geliyor; o günün saatini uydurmak yerine kaydın girildiği an eklenir.
   const zaman = new Date().toISOString();
@@ -80,6 +237,8 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
     return null;
   }
 
+  if (sunucuYolu) return stokFisiSunucuyaKes({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kayitPB, fisAciklamasi });
+
   // DEFTER KAPISI: buradan geçmeyen fişin hiçbir yan etkisi uygulanmaz.
   if (!(await fisDefterineYaz(fisGovdesi, sonuc))) return null;
 
@@ -96,17 +255,7 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
   const zarf = yazmaZarfi([...(bagliKalemler.length > 0 ? ["siparisler"] : []), "urunler", "cariler", ...(pesinVar ? ["muhasebe"] : [])]);
   if (bagliKalemler.length > 0) {
     setSiparisler((prev) => {
-      const next = prev.map((s) => {
-        const benim = bagliKalemler.filter((k) => k.siparis.id === s.id);
-        if (benim.length === 0) return s;
-        const nextKalemler = s.kalemler.map((k) => {
-          const eklenecek = benim.filter((b) => b.kalemId === k.id).reduce((t, b) => t + (b.miktar || 0), 0);
-          return eklenecek > 0 ? { ...k, karsilanan: Math.min(k.miktar, (k.karsilanan || 0) + eklenecek) } : k;
-        });
-        const tumuTam = nextKalemler.every((k) => (k.karsilanan || 0) >= k.miktar);
-        const hicYok = nextKalemler.every((k) => (k.karsilanan || 0) === 0);
-        return { ...s, kalemler: nextKalemler, durum: tumuTam ? "Tamamlandı" : hicYok ? s.durum : "Kısmi Teslim" };
-      });
+      const next = fisSiparisleriGuncelle(prev, bagliKalemler);
       yazimiIzle(tabloYaz("siparis:data", "siparisler", next, undefined, { zarf }), "Siparişler", next);
       return next;
     });
@@ -148,7 +297,7 @@ const stokFisiKaydet = useCallback(async (cariId, tip, fis) => {
     ]),
   });
   return fisNo;
-}, [stok, cariler, showToast, addCariHareketFromStok, muhasebeyePesinIsle, aktifKullanici, fisDefterineYaz, fisGeriAlRef, koliler, saveKoliler]);
+}, [stok, cariler, showToast, addCariHareketFromStok, muhasebeyePesinIsle, aktifKullanici, fisDefterineYaz, fisGeriAlRef, koliler, saveKoliler, stokFisiSunucuyaKes]);
 
   return stokFisiKaydet;
 }

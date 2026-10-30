@@ -99,6 +99,15 @@ begin
     perform public.fis_kes('{"fis": {"aile": "stok", "tur": "Alış", "onek": "AF"}}');
     raise exception 'istek kimliksiz fiş yazıldı';
   exception when invalid_parameter_value then null; end;
+  -- Numara yer tutucusu: açıklamalardaki «FIS» / «ANAFIS» sunucunun verdiği numarayla değişir
+  r := public.fis_kes(jsonb_build_object('istek', 'istek-yer', 'fis', jsonb_build_object('aile', 'stok', 'tur', 'Satış', 'onek', 'SF', 'aciklama', 'Satış fişi «FIS»'),
+    'stok', jsonb_build_object('satirlar', jsonb_build_array(jsonb_build_object('id', 'fk-yt1', 'urunId', 'u-yeni', 'renk', 'Siyah', 'miktar', -1, 'kaynak', 'Satış', 'aciklama', 'Satış fişi · «FIS»'))),
+    'bagli', jsonb_build_object('fis', jsonb_build_object('aile', 'para', 'tur', 'Tahsilat', 'onek', 'TH'),
+      'cari', jsonb_build_object('satirlar', jsonb_build_array(jsonb_build_object('id', 'fk-yt2', 'cari_id', 'c-yeni', 'yon', 'Tahsilat', 'tutar', 10, 'aciklama', 'Tahsilat · «ANAFIS» · makbuz «FIS»'))))));
+  assert (select aciklama from public.stk_fis where id = r ->> 'fisNo') = 'Satış fişi ' || (r ->> 'fisNo'), 'başlık yer tutucu';
+  assert (select aciklama from public.stk_hareket where id = 'fk-yt1') = 'Satış fişi · ' || (r ->> 'fisNo'), 'stok yer tutucu';
+  assert (select aciklama from public.car_hareket where id = 'fk-yt2') = 'Tahsilat · ' || (r ->> 'fisNo') || ' · makbuz ' || (r ->> 'bagliFisNo'), 'makbuz yer tutucu '
+     || (select aciklama from public.car_hareket where id = 'fk-yt2');
   raise notice 'TAMAM: yarım fiş yok, satırsız fiş yok, düşen fiş numara yakmıyor';
 end $$;
 reset role;

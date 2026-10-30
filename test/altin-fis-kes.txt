@@ -1,0 +1,71 @@
+{
+ "defter": [
+  "SF-261030001|stok|TH-261030001|1/2/0|gecerli",
+  "TH-261030001|para|SF-261030001|0/1/1|gecerli"
+ ],
+ "defterSonra": [
+  "SF-261030001|iptal",
+  "TH-261030001|iptal"
+ ],
+ "eskiListeyeSunucuFisiGitti": false,
+ "geriAlSonrasi": {
+  "botHareket": [],
+  "kasa": [],
+  "musteri": []
+ },
+ "hatalar": [],
+ "iptal": [
+  "SF-261030001"
+ ],
+ "kabulSonrasi": {
+  "toast": "Satış fişi kaydedildi — SF-NNN (+ tahsilat TH-NNN) · N kalem · N ₺ Geri al",
+  "yerel": {
+   "botHareket": [
+    "SF-261030001:-2"
+   ],
+   "kasa": [
+    "TH-261030001:Giriş:2000"
+   ],
+   "musteri": [
+    "SF-261030001:Borç:2000",
+    "TH-261030001:Tahsilat:2000"
+   ]
+  }
+ },
+ "redSonrasi": {
+  "formAcikKaldi": true,
+  "istek": 1,
+  "toast": true,
+  "yerel": {
+   "botHareket": [],
+   "kasa": [],
+   "musteri": []
+  }
+ },
+ "yuk": {
+  "bagli": {
+   "cari": [
+    "Tahsilat|2000|«FIS»|Tahsilat (TL Kasa) · «ANAFIS»"
+   ],
+   "fis": "para|Tahsilat|TH|k1|2000",
+   "kasa": [
+    "k1|Giriş|2000|«FIS»|Tahsilat (TL Kasa) · «ANAFIS»"
+   ]
+  },
+  "cari": [
+   "c2|Borç|2000|«FIS»"
+  ],
+  "fis": {
+   "aile": "stok",
+   "belgeNo": "TED-9",
+   "kalem": 1,
+   "onek": "SF",
+   "tur": "Satış",
+   "tutar": 2000
+  },
+  "istekVar": true,
+  "stok": [
+   "u2|Siyah|40|-2|«FIS»|Satış fişi · «FIS»"
+  ]
+ }
+}

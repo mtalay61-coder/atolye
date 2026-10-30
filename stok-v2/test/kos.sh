@@ -105,6 +105,8 @@ if [ -f test/erp.cjs ]; then
   editor_ver stok-v2/fis-defteri.sql
   editor_ver stok-v2/fis-defteri.sql
   calistir stok-v2/test/sinama-fis.sql
+  echo "── stok-v2/test/uctan-uca-fis.js"
+  STOK_V2_DB="$DB" node stok-v2/test/uctan-uca-fis.js
 else
   echo "── uçtan uca atlandı: test/erp.cjs yok (cd test && node derle.js)"
 fi

@@ -167,7 +167,17 @@ end $$;
 --  stok = { satirlar: [stk_yaz satırı — fisId sunucu koyar], varyantAc: [...] }
 --  cari = { satirlar: [car_yaz satırı — fis_no / fis_id sunucu koyar] }
 --  kasa = { hareketler: [kas_yaz hareketi — veri.fisNo sunucu koyar], cekler: [...] }
-create or replace function public.fis_tek_kes(f jsonb, p_stok jsonb, p_cari jsonb, p_kasa jsonb, p_istek text) returns text
+drop function if exists public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text);
+
+-- NUMARA YER TUTUCUSU: uygulama numarayı bilmeden açıklama yazar ("Alış fişi · «FIS»", peşin makbuzda "Ödeme · «ANAFIS»");
+-- sunucu numarayı verince bütün metinde değiştirir. Uygulama aynı değişikliği kendi kopyasında yapar.
+create or replace function public.fis_yer_tutucu(j jsonb, p_fis text, p_ana text) returns jsonb
+language sql immutable as $$
+  select case when j is null then null
+              else replace(replace(j::text, '«ANAFIS»', coalesce(p_ana, p_fis)), '«FIS»', p_fis)::jsonb end
+$$;
+
+create or replace function public.fis_tek_kes(f jsonb, p_stok jsonb, p_cari jsonb, p_kasa jsonb, p_istek text, p_ana text default null) returns text
 language plpgsql security definer set search_path = public as $$
 declare
   aile text := coalesce(nullif(f ->> 'aile', ''), '');
@@ -180,6 +190,10 @@ begin
     raise exception 'Fiş türü yok' using errcode = '22023';
   end if;
   fid := public.fis_no_al(f ->> 'onek');
+  f := public.fis_yer_tutucu(f, fid, p_ana);
+  p_stok := public.fis_yer_tutucu(p_stok, fid, p_ana);
+  p_cari := public.fis_yer_tutucu(p_cari, fid, p_ana);
+  p_kasa := public.fis_yer_tutucu(p_kasa, fid, p_ana);
   perform set_config('fis.kapi', 'acik', true);
   perform set_config('fis.aktif', fid, true);
   insert into public.stk_fis (id, aile, onek, istek, tur, kaynak, tarih, cari_id, siparis_id, siparis_no, uretim_id, aciklama,
@@ -247,7 +261,7 @@ begin
 
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
-    bid := public.fis_tek_kes(p -> 'bagli' -> 'fis', p -> 'bagli' -> 'stok', p -> 'bagli' -> 'cari', p -> 'bagli' -> 'kasa', v_istek || ':bagli');
+    bid := public.fis_tek_kes(p -> 'bagli' -> 'fis', p -> 'bagli' -> 'stok', p -> 'bagli' -> 'cari', p -> 'bagli' -> 'kasa', v_istek || ':bagli', fid);
     update public.stk_fis set bagli_fis = bid where id = fid;
     update public.stk_fis set bagli_fis = fid where id = bid;
   end if;
@@ -362,7 +376,7 @@ begin
   alter table public.fis_sayac enable row level security;
   revoke all on public.fis_sayac from anon, authenticated;
   revoke all on function public.fis_no_al(text) from public, anon, authenticated;
-  revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text) from public, anon, authenticated;
+  revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';
