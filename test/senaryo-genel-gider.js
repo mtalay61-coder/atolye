@@ -5,7 +5,7 @@
 // Ölçülen: (1) toplam aylık sabit gider; (2) hedefe göre çift başı; (3) kalem başına çift başı
 // katkı (şoför 0,20 · muhasebeci 0,50 gibi); (4) gerçekleşen üretime göre çift başı — hedefin
 // altında üretilirse maliyet ARTAR.
-const { uygulamaAc, sagTikAc, sagTikSec } = require("./ortak.js");
+const { uygulamaAc, depoOku, sagTikAc, sagTikSec } = require("./ortak.js");
 const { TOHUM } = require("./tohum.js");
 const { normalles } = require("./senaryo-fis.js");
 
@@ -23,7 +23,10 @@ async function calistir() {
   ];
   // GERÇEKLEŞEN (20 Eylül): kalem bir gider kartına bağlanınca o kartın bu ayki ödemeleri
   // toplanıyor; plan 60.000, gerçek 66.000 → %10 sapma.
-  tan.giderKartlari = [{ id: "gk-kira", ad: "Kira kartı", grup: "yonetim", tur: "gider" }];
+  tan.giderKartlari = [{ id: "gk-kira", ad: "Kira kartı", grup: "yonetim", tur: "gider" },
+    // Yazınca daralan seçici (v1.731.1) için: "kes" yazınca yalnız Kesim işçiliği kalmalı.
+    { id: "gk-kesim", ad: "Kesim işçiliği", grup: "yonetim", tur: "gider" },
+    { id: "gk-elektrik", ad: "Elektrik", grup: "yonetim", tur: "gider" }];
   tan.genelGiderler[0].giderKartId = "gk-kira";
   t["tanimlar:data"] = JSON.stringify(tan);
   const bugun = new Date().toISOString().slice(0, 10);
@@ -59,8 +62,23 @@ async function calistir() {
     };
   });
 
+  // YAZINCA DARALAN SEÇİCİ (v1.731.1): "kes" → yalnız Kesim işçiliği; seç, tutar gir, ekle → kalem kartıyla eklenir, kutu boşalır.
+  const kutu = sayfa.locator("input[data-gg-kart-sec]").first();
+  await kutu.click();
+  await kutu.fill("kes");
+  await sayfa.waitForTimeout(300);
+  const suzulen = await sayfa.evaluate(() => [...document.querySelectorAll("[data-aramali-secenek]")].map((b) => b.textContent));
+  await sayfa.locator('[data-aramali-secenek="gk-kesim"]').dispatchEvent("mousedown");
+  await sayfa.waitForTimeout(200);
+  await sayfa.locator("[data-gg-tutar]").fill("3000");
+  await sayfa.locator("[data-gg-ekle]").click();
+  await sayfa.waitForTimeout(600);
+  const k = ((await depoOku(sayfa, "tanimlar:data")).genelGiderler || []).find((x) => x.giderKartId === "gk-kesim");
+  const eklenen = { kalem: k ? `${k.ad}:${k.aylikTutar}` : null,
+    kutuBos: await sayfa.evaluate(() => (document.querySelector("input[data-gg-kart-sec]") || {}).value === "") };
+
   await tarayici.close();
-  return { hatalar, ozet };
+  return { hatalar, ozet, suzulen, eklenen };
 }
 
 if (require.main === module) {
