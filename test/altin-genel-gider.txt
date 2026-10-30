@@ -1,4 +1,8 @@
 {
+ "eklenen": {
+  "kalem": "Kesim işçiliği:3000",
+  "kutuBos": true
+ },
  "hatalar": [],
  "ozet": {
   "grupBasligi": true,
@@ -7,5 +11,8 @@
   "sapma": true,
   "soforCiftBasi": true,
   "toplam": "62.100 ₺"
- }
+ },
+ "suzulen": [
+  "Kesim işçiliğiGenel yönetim"
+ ]
 }

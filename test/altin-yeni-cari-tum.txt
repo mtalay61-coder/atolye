@@ -1,0 +1,27 @@
+{
+ "efaturaPersonelde": 0,
+ "hatalar": [],
+ "kutudakiKod": "1001",
+ "musteri": {
+  "bagliProsesler": "(yok)",
+  "barkodKodu": "(yok)",
+  "efaturaEtiket": "urn:mail:defaultpk@ornek.com",
+  "efaturaMukellef": "evet",
+  "eposta": "satin@ornek.com",
+  "il": "İstanbul",
+  "ilce": "(yok)",
+  "tip": "Müşteri",
+  "vergiDairesi": "Merter",
+  "whatsapp": "0555 111 22 33"
+ },
+ "personel": {
+  "bagliProsesler": [
+   "Kesim",
+   "Saya"
+  ],
+  "barkodKodu": "1001",
+  "efaturaMukellef": "(yok)",
+  "tip": "Personel",
+  "vergiDairesi": "(yok)"
+ }
+}

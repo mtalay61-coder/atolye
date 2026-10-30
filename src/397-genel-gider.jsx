@@ -192,23 +192,23 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
             tutmak demekti. */}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
           <Field label="Gider kartı" genislik={260}>
-            <select value={yeni.kartId || ""} data-gg-kart-sec="1"
-              onChange={(e) => {
-                const kart = (tanimlar.giderKartlari || []).find((k) => k.id === e.target.value);
-                setYeni({ ...yeni, kartId: e.target.value, ad: kart ? kart.ad : "", grup: kart ? kart.grup : yeni.grup });
+            {/* YAZINCA DARALAN SEÇİCİ (v1.731.1 — kullanıcı: "Seçiciyi yazınca daralan filtreli şekilde yapalım"). Açılır
+                liste telefonda ekranı kaplıyor, kart çoğaldıkça kaydırma istiyordu. AramaliSecici (005): yazdıkça süzer,
+                grubu soluk yazıyla yanında; aynı arama hem kart adında hem grup adında çalışmasın diye grup `ek`te
+                (aramaya katılmaz). `key`: kalem eklenince kutu boşalsın (bileşen yazılanı kendi tutuyor). */}
+            <AramaliSecici
+              key={`gg-sec-${kalemler.length}`}
+              veriAdi="data-gg-kart-sec"
+              placeholder="Gider kartı ara…"
+              temizle={false}
+              genislik={260}
+              secenekler={gruplar.flatMap((g) => (tanimlar.giderKartlari || []).filter((k) => k.grup === g.key)
+                .map((k) => ({ deger: k.id, etiket: k.ad, ek: g.ad })))}
+              onSec={(id) => {
+                const kart = (tanimlar.giderKartlari || []).find((k) => k.id === id);
+                setYeni({ ...yeni, kartId: id, ad: kart ? kart.ad : "", grup: kart ? kart.grup : yeni.grup });
               }}
-              style={inputStyle}>
-              <option value="">— kart seçin —</option>
-              {gruplar.map((g) => {
-                const kartlar = (tanimlar.giderKartlari || []).filter((k) => k.grup === g.key);
-                if (kartlar.length === 0) return null;
-                return (
-                  <optgroup key={g.key} label={g.ad}>
-                    {kartlar.map((k) => <option key={k.id} value={k.id}>{k.ad}</option>)}
-                  </optgroup>
-                );
-              })}
-            </select>
+            />
           </Field>
           <Field label="Aylık tutar (₺)" genislik={140}>
             <input type="number" min="0" step="any" data-gg-tutar="1" value={yeni.aylikTutar}

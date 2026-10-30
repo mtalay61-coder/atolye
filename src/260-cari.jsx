@@ -1,3 +1,18 @@
+// PERSONEL BARKOD KODU (v1.731.2'de ortak yardımcıya çıktı; kural v1.4xx'teki barkodOtomatikAta ile aynı): kod, seçilen
+// prosesin SAYI BANDINDAN (başlangıç no + 999, örn. Kesim 1000-1999) gelir — bantta kullanılan en büyük kodun bir fazlası,
+// bant boşsa başlangıç no. Kimin hangi prosese etiketli olduğuna bakılmaz: etiketler eksik/karışık olsa da numara her zaman
+// doğru prosesin aralığından çıkar. `haricId`: kendi eski kodu hesaba katılmasın (yeni caride yok).
+function sonrakiPersonelBarkodu(cariler, prosesler, prosesAdi, haricId) {
+  const prosesTanim = (prosesler || []).find((p) => p.ad === prosesAdi);
+  const baslangic = prosesTanim ? (prosesTanim.baslangicNo ?? 1000) : 1000;
+  const bandSonu = baslangic + 999;
+  const kodlar = (cariler || [])
+    .filter((c) => c.id !== haricId && c.barkodKodu && /^\d+$/.test(c.barkodKodu))
+    .map((c) => parseInt(c.barkodKodu, 10))
+    .filter((kod) => kod >= baslangic && kod <= bandSonu);
+  return kodlar.length > 0 ? Math.max(...kodlar) + 1 : baslangic;
+}
+
 function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
@@ -79,7 +94,36 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
     //
     // Varsayılan yine TRY: çoğu cari TL, her seferinde seçtirmek gereksiz. Ama artık GÖRÜNÜR ve
     // değiştirilebilir; sessiz bir varsayım değil.
-    return { unvan: "", tip: "Müşteri", telefon: "", vergiNo: "", adres: "", ulke: "", notlar: "", paraBirimi: "TRY" };
+    // TÜM BİLGİLER AÇILIŞTA (v1.731.2 — kullanıcı: "Cari açarken tüm bilgileri girebilelim, cari kaydedip sonra
+    // düzenleme ekranı açmak gerekiyor şuanda"). Kartın Bilgiler sekmesindeki ve mor şeritteki alanlar burada da var.
+    return { unvan: "", tip: "Müşteri", telefon: "", vergiNo: "", adres: "", ulke: "", notlar: "", paraBirimi: "TRY",
+      whatsapp: "", eposta: "", resmiUnvan: "", vergiDairesi: "", tckn: "", il: "", ilce: "", efaturaMukellef: "", efaturaEtiket: "",
+      fiyatGrubuId: "", resim: "", renk: "", barkodKodu: "", bagliProsesler: [] };
+  }
+
+  function yeniCariEkBilgileri(f) {
+    const personel = f.tip === "Personel";
+    const ek = {};
+    const metin = (alan) => { const v = String(f[alan] || "").trim(); if (v) ek[alan] = v; };
+    ["whatsapp", "eposta"].forEach(metin);
+    if (!personel) {
+      ["resmiUnvan", "vergiDairesi", "tckn", "il", "ilce"].forEach(metin);
+      if (f.efaturaMukellef) ek.efaturaMukellef = f.efaturaMukellef;
+      if (f.efaturaMukellef === "evet") metin("efaturaEtiket");
+      if (f.fiyatGrubuId && yeniCariFiyatGruplari(f.tip).some((g) => g.id === f.fiyatGrubuId)) ek.fiyatGrubuId = f.fiyatGrubuId;
+    }
+    if (f.resim) ek.resim = f.resim;
+    if (/^#[0-9a-f]{6}$/i.test(f.renk || "")) ek.renk = f.renk;
+    if (personel) {
+      metin("barkodKodu");
+      if ((f.bagliProsesler || []).length) ek.bagliProsesler = f.bagliProsesler;
+    }
+    return ek;
+  }
+  // Kartın Bilgiler sekmesindeki kural: tedarikçiye alış, müşteriye satış grupları; "Her İkisi" ikisini de görür.
+  function yeniCariFiyatGruplari(tip) {
+    if (tip === "Personel") return [];
+    return (tanimlarFiyatGruplari || []).filter((g) => tip === "Her İkisi" || g.tip === (tip === "Tedarikçi" ? "Alış" : "Satış"));
   }
 
   function addCari() {
@@ -101,6 +145,8 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
       ...(form.altTip ? { altTip: form.altTip } : {}),
       notlar: form.notlar.trim(),
       paraBirimi: form.paraBirimi || "TRY",
+      // Açılışta girilen öteki bilgiler (v1.731.2): yalnız doldurulanlar yazılır — kartta sonradan girilenle aynı biçim.
+      ...yeniCariEkBilgileri(form),
       // SİTEDE ÖDEME ŞEKLİ SORULSUN (v1.652.0 — kullanıcı: "herkes bu şekilde devam etmesin; yeni müşteri ve seçtiğimiz
       // müşteri için bu şekilde olsun"): yeni müşteride açık başlar; eski müşterilerde kapalı (cari kartından açılır).
       ...(form.tip === "Müşteri" || form.tip === "Her İkisi" ? { siteOdemeSor: true } : {}),
@@ -220,20 +266,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
     const cari = cariler.find((c) => c.id === cariId);
     if (!cari) return;
 
-    const prosesTanim = (tanimlarProsesler || []).find((p) => p.ad === prosesAdi);
-    const baslangic = prosesTanim ? (prosesTanim.baslangicNo ?? 1000) : 1000;
-    // Kodun hesabı "kim bu prosese etiketli" diye bakmak yerine, doğrudan bu prosesin sayı ARALIĞINA
-    // (bandına, örn. Kesim=1000-1999, Saya=2000-2999) hangi kodların düştüğüne bakar. Bu, bir
-    // personelin bağlı proses etiketleri karışık/eksik olsa bile SAYININ KENDİSİNİN her zaman doğru
-    // prosesin aralığından gelmesini garanti eder — barkod numarasına bakarak hangi prosese ait
-    // olduğu her zaman doğru anlaşılır.
-    const bandGenisligi = 1000;
-    const bandSonu = baslangic + bandGenisligi - 1;
-    const buBanttakiKodlar = cariler
-      .filter((c) => c.id !== cariId && c.barkodKodu && /^\d+$/.test(c.barkodKodu))
-      .map((c) => parseInt(c.barkodKodu, 10))
-      .filter((kod) => kod >= baslangic && kod <= bandSonu);
-    const yeniKod = buBanttakiKodlar.length > 0 ? Math.max(...buBanttakiKodlar) + 1 : baslangic;
+    const yeniKod = sonrakiPersonelBarkodu(cariler, tanimlarProsesler, prosesAdi, cariId);
 
     const mevcutBagli = cari.bagliProsesler || [];
     const yeniBagli = mevcutBagli.includes(prosesAdi) ? mevcutBagli : [...mevcutBagli, prosesAdi];
@@ -742,7 +775,120 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
                 ))}
               </select>
             </Field>
+            {yeniCariFiyatGruplari(form.tip).length > 0 && (
+              <Field label="Fiyat Grubu">
+                <select value={form.fiyatGrubuId} data-yeni-cari-fiyat-grubu="1" onChange={(e) => setForm({ ...form, fiyatGrubuId: e.target.value })} style={inputStyle}
+                  title="Bu gruba özel fiyat tanımlanmış ürünlerde, bu cariye otomatik o fiyat uygulanır">
+                  <option value="">Grupsuz (standart fiyat)</option>
+                  {yeniCariFiyatGruplari(form.tip).map((g) => <option key={g.id} value={g.id}>{g.ad} ({g.tip})</option>)}
+                </select>
+              </Field>
+            )}
           </div>
+          {/* AÇILIŞTA TÜM BİLGİLER (v1.731.2): kartın mor şeridindeki iletişim ve Bilgiler sekmesindeki alanlar. Kural ve
+              koşullar kartla aynı (265): e-fatura alanları personelde yok, posta kutusu yalnız mükellefte, barkod ve bağlı
+              prosesler yalnız personelde (Fasoncu dahil). Personel maaş/bölüm paneli ve site erişimi kayıtlı cari ister
+              (hesap/tahakkuk açıyor) — onlar kartta kaldı. */}
+          <div data-yeni-cari-ek="1" style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+            <Field label="WhatsApp" genislik={150}>
+              <input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} placeholder="Boşsa telefon" data-yeni-cari-whatsapp="1"
+                title="Sipariş çıktısı bu numaraya gönderilir. Boşsa telefon kullanılır." style={inputStyle} />
+            </Field>
+            <Field label="E-posta" genislik={210}>
+              <input value={form.eposta} onChange={(e) => setForm({ ...form, eposta: e.target.value })} placeholder="ad@firma.com" inputMode="email" data-yeni-cari-eposta="1" style={inputStyle} />
+            </Field>
+            {form.tip !== "Personel" && [
+              ["resmiUnvan", "Resmi ünvan", 220, "Faturadaki tam ünvan"],
+              ["vergiDairesi", "Vergi Dairesi", 140, ""],
+              ["tckn", "TC Kimlik No", 130, "şahıs ise"],
+              ["il", "İl", 110, ""],
+              ["ilce", "İlçe", 110, ""],
+            ].map(([alan, etiket, gen, ipucu]) => (
+              <Field key={alan} label={etiket} genislik={gen}>
+                <input value={form[alan]} onChange={(e) => setForm({ ...form, [alan]: e.target.value })} placeholder={ipucu}
+                  inputMode={alan === "tckn" ? "numeric" : undefined} data-yeni-cari-alan={alan} style={inputStyle} />
+                {alan === "tckn" && form.tckn.trim() && !tcknKontrol(form.tckn.trim()).gecerli && (
+                  <span style={{ color: "var(--erp-danger)", fontSize: 11, fontWeight: 400 }}>{tcknKontrol(form.tckn.trim()).mesaj}</span>
+                )}
+              </Field>
+            ))}
+            {form.tip !== "Personel" && (
+              <Field label="e-Fatura" genislik={170}>
+                <select value={form.efaturaMukellef} data-yeni-cari-efatura="1" onChange={(e) => setForm({ ...form, efaturaMukellef: e.target.value })} style={inputStyle}>
+                  <option value="">Bilinmiyor</option>
+                  <option value="evet">Mükellef (e-Fatura)</option>
+                  <option value="hayir">Değil (e-Arşiv)</option>
+                </select>
+              </Field>
+            )}
+            {form.tip !== "Personel" && form.efaturaMukellef === "evet" && (
+              <Field label="Posta kutusu" genislik={220}>
+                <input value={form.efaturaEtiket} onChange={(e) => setForm({ ...form, efaturaEtiket: e.target.value })} placeholder="urn:mail:defaultpk@…" style={inputStyle} />
+              </Field>
+            )}
+            <Field label={form.tip === "Personel" ? "Fotoğraf" : "Logo"}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, minHeight: 34 }}>
+                <ColorSwatch src={form.resim} size={34}
+                  onUrlSave={(url) => setForm((f) => ({ ...f, resim: url }))}
+                  onRemove={() => setForm((f) => ({ ...f, resim: "" }))} />
+                <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 }}>{form.tip === "Personel" ? "atölye ekranında görünür" : "sipariş listesinde adın yanında"}</span>
+              </div>
+            </Field>
+            <Field label="Renk">
+              <div style={{ display: "flex", alignItems: "center", gap: 6, minHeight: 34 }}>
+                <input type="color" data-yeni-cari-renk="1" value={/^#[0-9a-f]{6}$/i.test(form.renk || "") ? form.renk : "#8A8A8A"}
+                  onChange={(e) => setForm({ ...form, renk: e.target.value })}
+                  style={{ width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4, cursor: "pointer" }} />
+                {form.renk ? (
+                  <button type="button" className="btn-ghost" style={{ padding: "2px 8px", fontSize: 11 }} onClick={() => setForm({ ...form, renk: "" })}>Otomatik</button>
+                ) : <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 }}>seçilmezse otomatik</span>}
+              </div>
+            </Field>
+          </div>
+          {form.tip === "Personel" && (
+            <div data-yeni-cari-personel="1" style={{ display: "grid", gap: 8, marginTop: 10, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+                <Field label="Barkod Kodu" genislik={110}>
+                  <input value={form.barkodKodu} onChange={(e) => setForm({ ...form, barkodKodu: e.target.value })} placeholder="örn. 1000" className="mono" data-yeni-cari-barkod="1" style={inputStyle} />
+                </Field>
+                {/* Kod Ata: kartın düğmesiyle aynı kural (sonrakiPersonelBarkodu) — seçilen prosesin bandındaki sıradaki kod;
+                    proses bağlı proseslere de eklenir. Hiç proses seçilmeden kod verilmez. */}
+                <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 }}>
+                  Kod ata
+                  <select value="" data-yeni-cari-kod-ata="1" style={{ ...inputStyle, width: 180 }}
+                    onChange={(e) => {
+                      const p = e.target.value;
+                      if (!p) return;
+                      const kod = sonrakiPersonelBarkodu(cariler, tanimlarProsesler, p, null);
+                      setForm((f) => ({ ...f, barkodKodu: String(kod), bagliProsesler: f.bagliProsesler.includes(p) ? f.bagliProsesler : [...f.bagliProsesler, p] }));
+                    }}>
+                    <option value="">Proses seçin…</option>
+                    {(tanimlarProsesler || []).map((p) => <option key={p.id} value={p.ad}>{p.ad}</option>)}
+                  </select>
+                </label>
+              </div>
+              <span style={{ fontSize: 12, color: "var(--erp-purple)", fontWeight: 600 }}>Bağlı Olduğu Prosesler (barkod okutmada ve atölye ekranında bunlar listelenir)</span>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[...(tanimlarProsesler || []).map((p) => ({ ...p, ara: false })), ...(tanimlarAraProsesler || []).map((p) => ({ ...p, ara: true }))].map((p) => {
+                  const secili = form.bagliProsesler.includes(p.ad);
+                  const renk = p.ara ? "#B8860B" : "var(--erp-purple)";
+                  return (
+                    <button key={(p.ara ? "a-" : "p-") + p.id} type="button" data-yeni-cari-proses={p.ad}
+                      onClick={() => setForm((f) => ({ ...f, bagliProsesler: secili ? f.bagliProsesler.filter((x) => x !== p.ad) : [...f.bagliProsesler, p.ad] }))}
+                      title={p.ara ? "Ara proses" : undefined}
+                      style={{
+                        padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                        border: `1.5px solid ${secili ? renk : "var(--erp-border)"}`,
+                        background: secili ? (p.ara ? "#B8860B1A" : "#6B4E8A1A") : "#fff",
+                        color: secili ? renk : "var(--erp-text-2)",
+                      }}>
+                      {p.ad}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

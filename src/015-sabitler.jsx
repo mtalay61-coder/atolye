@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.731.0";
+const SURUM = "1.731.2";
 const SURUM_TARIHI = "2026-10-30";
-const SURUM_NOTU = "Tanımlar › Ürün alt sekmelere ayrıldı: Renkler, Beden & Boyut, Asortiler, Birimler, Ürün Tipleri, Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar";
+const SURUM_NOTU = "Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,8 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.731.2", tarih: "30.10.2026", eklenen: ["Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler. Önce cariyi kaydedip kartını düzenlemek gerekiyordu. Personelde \"Kod ata\" ile proses seçince sıradaki barkod kodu gelir. Personel maaş/bölüm ve site erişimi kayıttan sonra kartta."], degisen: [], duzeltilen: [] },
+  { surum: "1.731.1", tarih: "30.10.2026", eklenen: [], degisen: ["Finans › Gelir / Gider › Genel Gider: gider kartı seçicisi açılır liste yerine yazınca daralan arama kutusu; kartın grubu yanında soluk yazıyla görünür, kalem eklenince kutu boşalır."], duzeltilen: [] },
   { surum: "1.731.0", tarih: "30.10.2026", eklenen: [], degisen: ["Tanımlar › Ürün alt sekmelere ayrıldı: Renkler, Beden & Boyut, Asortiler, Birimler, Ürün Tipleri, Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar. Bölümlerin içeriği aynı, yalnız yerleri ayrı; Tanımlarda arama yazılıyken bütün bölümler birlikte görünür."], duzeltilen: [] },
   { surum: "1.730.1", tarih: "29.10.2026", eklenen: [], degisen: ["Fiş kesme yetkisi: stok satırı artık stok yetkisi olmayan ama cari, muhasebe ya da tanımlar kaydetme yetkisi olan kullanıcının fişinde de yazılır (v1'de olduğu gibi)", "Buluta Aktar (ilk göç) ve yeni firma kurulum dosyası yeni yapıya geçildikten sonra kapalı — yanlış veri yazmasınlar"], duzeltilen: ["Bulut açılışta okunamadıysa Kasa & Banka ve listeler (teklif, fatura, koli, görev, model, fiş defteri, mesaj) eski yerel kopyayı buluta basıyordu — başka cihazın düzeltmesi geri dönebilir, silinen geri gelebilirdi. Artık yazılmaz, bekleyenlere düşer", "Sohbette mesaj gönderilirken gelen yoklama, arka arkaya ikinci mesajda ilk mesajı silebiliyordu", "Sunucu ayarı okunamadığında yazmalar eski yola gidip yarım kalıyordu; artık bekletilir ve ayar yeniden okunur", "Sunucu arşivinden geri yükleme yeni yapıda çalışmıyordu (cari hareketi, sipariş kalemi, iş ataması artık yeni kapıdan; stok varyantı / hareketi için açık uyarı)", "Sunucu: kurulum dosyası yeniden çalıştırılırsa fiş işlemi kasa ve sipariş satırını sessizce atlayabiliyordu; bir modülde geri dönüldükten sonra açık cihazların yazması kayboluyordu; yetkisiz kullanıcı giriş ayarını değiştirip sunucu yetkisini aşabiliyordu — hepsi kapatıldı (Supabase 15. adım)", "Sayfalı okumada eşit tarihli hareketler sayfa sınırında kayabiliyordu; sıra kesinleşti"] },
   { surum: "1.730.0", tarih: "29.10.2026", eklenen: ["Teklif, fatura, koli, görev, model, fiş defteri ve mesajlar tek kapıdan (yeniden kurulumun 5. adımı): Supabase'de geçiş yapılınca bu listeler tek bir belge değil, her kayıt ayrı satır. Her cihaz yalnız KENDİ değişikliğini gönderir — aynı anda yazan iki cihaz (iki kişi aynı anda mesaj atar, biri teklif öteki fatura keser) birbirinin kaydını ezemez, eski listeli cihaz başkasının kaydını silemez. Silinen kayıt silinmez, iptal edilir (iz kalır). Toplu iptal kilidi: bir yazma listenin yarısını götüremez"], degisen: [], duzeltilen: [] },
