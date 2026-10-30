@@ -29489,7 +29489,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
                             React.createElement("b", null, "ba\u015Fl\u0131klar\u0131"),
                             " burada tan\u0131mlan\u0131r, ",
                             React.createElement("b", null, "de\u011Ferler"),
-                            " her \u00FCr\u00FCn\u00FCn kendi kart\u0131ndaki Tan\u0131mlar \u203A \u00DCr\u00FCn \u203A \u00D6zel Kod Alanlar\u0131 b\u00F6l\u00FCm\u00FCnden girilir (D\u00FCzenle ile). Bir alan renkler gibi ",
+                            " her \u00FCr\u00FCn\u00FCn kendi kart\u0131ndaki Tan\u0131mlar \u203A \u00DCr\u00FCn \u203A \u00D6zel Kodlar alt sekmesinden girilir (D\u00FCzenle ile). Bir alan renkler gibi ",
                             React.createElement("b", null, "birden \u00E7ok tipe"),
                             " ",
                             "ba\u011Flanabilir: sat\u0131rdaki tip rozetlerine dokunarak ekleyip \u00E7\u0131kar\u0131n. Hi\u00E7 tip se\u00E7ilmeyen alan \"Genel\"dir, her \u00FCr\u00FCnde g\u00F6r\u00FCn\u00FCr. Ba\u015Fl\u0131k sonradan de\u011Fi\u015Fse de girilmi\u015F de\u011Ferler yerinde kal\u0131r \u2014 de\u011Fer ba\u015Fl\u0131\u011Fa de\u011Fil alan\u0131n K\u0130ML\u0130\u011E\u0130NE ba\u011Fl\u0131d\u0131r."),
@@ -55351,10 +55351,10 @@ const KILAVUZ = [
     // ---------------- YÖNETİCİ ----------------
     { b: "yonetici", baslik: "Tanımlar — nerede ne var", resimler: [{ d: "tanimlar-urun", a: "Tanımlar › Ürün: renkler, bedenler, birimler, asortiler" }], adimlar: [
             "Tanımlar (sağ üstteki dişli). Sekmeler üç öbekte: TANIMLAR (Firma, Ürün, Üretim, Kapasite, E-Fatura & KDV, Web Sitesi), SİSTEM (Kullanıcılar, Görünüm, Sürüm geçmişi), VERİ (Yedek & Bulut, Bakım, Çöp Kutusu).",
-            "Başlıklar kapalı gelir; dokununca açılır ve cihaz bunu hatırlar. Üstteki arama kutusu renk, beden, birim, proses adlarında arar.",
+            "Başlıklar kapalı gelir; dokununca açılır ve cihaz bunu hatırlar (Ürün sekmesinde alt sekmeler var, orada başlıklar hep açık). Üstteki arama kutusu renk, beden, birim, proses adlarında arar; arama yazılıyken Ürün'ün bütün alt sekmeleri birlikte görünür.",
             "Firma: ünvan, vergi bilgileri, logo, dönem kapanışı, e-posta gönderim ayarları, cari tipleri (Fasoncu gibi özel tipler).",
-            "Ürün: Renkler (renk kodu, malzeme tipi, \"Ürün Stok\" işareti, açıklama), Bedenler & Boyutlar (beden grupları), Birimler, Asortiler, Atölye İçi Bölümler, Fiyat Grupları, Özel Kod Alanları, Malzeme ve Mamul tipleri.",
-            "Üretim: Prosesler (sıra, barkod bandı, gider kartı), Ara Prosesler (sabit cari, ücret), Reçete şablonları, Fire sebepleri, Stok giriş/çıkış gider kartları.",
+            "Ürün (alt sekmeler): Renkler (renk kodu, malzeme tipi, \"Ürün Stok\" işareti, açıklama; Model Rengi), Beden & Boyut (beden grupları), Asortiler, Birimler, Ürün Tipleri (mamul ve hammadde), Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar.",
+            "Üretim: Prosesler (sıra, barkod bandı, gider kartı), Ara Prosesler (sabit cari, ücret), Reçete şablonları, Stok giriş/çıkış gider kartları.",
             "E-Fatura & KDV: KDV açma anahtarı ve varsayılan oranlar; e-fatura serisi, senaryo ve gönderici etiketi.",
             "Görünüm: yazı/kutu boyutu, mobil düzen, kart düzenleri (sekme sırası ve gizleme). Sürüm geçmişi: her sürümde ne değişti.",
         ] },
@@ -55388,10 +55388,10 @@ const KILAVUZ = [
         ] },
     { b: "yonetici", baslik: "Fason üretim, atölye içi bölüm ve maaşlı personel", adimlar: [
             "Fason çalışan (dışarıdaki saya, kalfa ustası) Personel tipinde ya da Fasoncu tipinde caridir. Teslimde işçiliği carisine alacak olarak yazılır; ödeme Ödeme & Tahsilat'tan yapılır.",
-            "Atölye içi bölüm (Tanımlar › Ürün › Atölye İçi Bölümler): bölüm adı, bölümün yaptığı prosesler ve maaşlı personeli. Bu proseslerde teslimde cariye işçilik yazılmaz; bölümün tahakkukuna gider.",
+            "Atölye içi bölüm (Tanımlar › Ürün › Atölye Bölümleri): bölüm adı, bölümün yaptığı prosesler ve maaşlı personeli. Bu proseslerde teslimde cariye işçilik yazılmaz; bölümün tahakkukuna gider.",
             "Maaş: ay başında bölüm personeline \"Maaş\" fişi tahakkuk eder ve bölümün gider kartına (\"<Bölüm> maaşı\") düşer. Gelir / Gider ve Kâr / Zarar'da bölüm bazında görünür.",
             "Cari kartı › Bilgiler › Personel bilgileri: bölüm, aylık maaş, işe başlangıç, aylık çalışma saati. Mesai: ay, hafta içi / cumartesi / pazar saatleri; tutar saat ücreti × katsayıyla hesaplanır ve ayrı Mesai fişi yazılır.",
-            "Mesai katsayıları Tanımlar › Ürün › Atölye İçi Bölümler'de (varsayılan hafta içi ×1,5, cumartesi ×1,5, pazar ×2; aylık 225 saat).",
+            "Mesai katsayıları Tanımlar › Ürün › Atölye Bölümleri'nde (varsayılan hafta içi ×1,5, cumartesi ×1,5, pazar ×2; aylık 225 saat).",
         ] },
     { b: "yonetici", baslik: "Cari tipleri", adimlar: [
             "Müşteri, Tedarikçi, Personel ve Her İkisi sabittir. Tanımlar › Firma › Cari Tipleri'nde kendi tiplerinizi (Fasoncu, Kargo…) ekleyin; her tip bir ana tip gibi davranır.",
@@ -55630,7 +55630,7 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
     const yaz = (bolumId, alanlar) => {
         if (!bolumId) {
             if (showToast)
-                showToast("Önce bölüm seçin (Tanımlar › Ürün › Atölye İçi Bölümler)");
+                showToast("Önce bölüm seçin (Tanımlar › Ürün › Atölye Bölümleri)");
             return;
         }
         onTanimlarKaydet(personelKaydiniYaz(tanimlar, cari.id, bolumId, alanlar));
