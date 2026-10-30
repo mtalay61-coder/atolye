@@ -5,11 +5,11 @@ export const BEDENLER = ["39", "40", "41", "42", "43"];
 
 export const CARILER: Cari[] = [
   { id: "c1", kod: "CAR-0012", ad: "Çevik Deri Ltd. Şti.", il: "İstanbul", roller: ["Tedarikçi"], bakiye: 0, paraBirimi: "TRY" },
-  { id: "c2", kod: "CAR-0019", ad: "Talay Ayakkabı San. Tic.", il: "Konya", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY" },
+  { id: "c2", kod: "CAR-0019", ad: "Talay Ayakkabı San. Tic.", il: "Konya", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY", resmiUnvan: "Talay Ayakkabı Sanayi ve Ticaret Ltd. Şti.", ilce: "Karatay", eFatura: "e-Fatura mükellefi", webGiris: true, eposta: "siparis@talayayakkabi.com.tr" },
   { id: "c3", kod: "CAR-0031", ad: "Işık Mağazaları", il: "İzmir", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY" },
   { id: "c4", kod: "CAR-0042", ad: "Kardeşler Deri Saraciye", il: "İstanbul", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY" },
   { id: "c5", kod: "CAR-0057", ad: "Ege Toptan Ayakkabı", il: "Manisa", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY" },
-  { id: "c6", kod: "CAR-0063", ad: "Yıldız Mağazaları", il: "Ankara", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY" },
+  { id: "c6", kod: "CAR-0063", ad: "Yıldız Mağazaları", il: "Ankara", roller: ["Müşteri"], bakiye: 0, paraBirimi: "TRY", renk: "#c2922c", whatsapp: "0532 555 12 34" },
   { id: "c7", kod: "CAR-0071", ad: "Deri Dünyası Tekstil", il: "Bursa", roller: ["Müşteri", "Tedarikçi"], bakiye: 0, paraBirimi: "TRY" },
   { id: "c8", kod: "CAR-0080", ad: "Hüseyin Kaya (Kalfa)", il: "Konya", roller: ["Fasoncu"], bakiye: 0, paraBirimi: "TRY" },
 ];

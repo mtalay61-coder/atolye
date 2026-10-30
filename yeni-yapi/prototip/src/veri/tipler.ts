@@ -2,7 +2,7 @@
 // bağlama zamanı görünümler (v_siparis_durum, v_cari_bakiye, v_stok) bu biçimi döndürür.
 export type CariRolu = "Müşteri" | "Tedarikçi" | "Fasoncu" | "Personel";
 // bakiye: v_cari_bakiye'den gelir (borç − alacak). Artı: cari bize borçlu; eksi: biz cariye borçluyuz.
-export type Cari = {
+export type Cari = CariEk & {
   id: string; kod: string; ad: string; il: string; roller: CariRolu[]; bakiye: number;
   telefon?: string; eposta?: string; yetkili?: string; vergiDairesi?: string; vergiNo?: string; adres?: string;
   fiyatGrubu?: string; paraBirimi: "TRY" | "USD" | "EUR"; not?: string; pasif?: boolean;
@@ -23,3 +23,10 @@ export type UrunRenk = { id: string; kod: string; ad: string; hex?: string; resi
 // gorsel "renk" ise değerlerde hex ve resim tutulur ve RenkKutusu gösterilir; "yok" ise yalnız kod ve ad.
 export type DegiskenTuru = { id: string; ad: string; etiket: string; gorsel: "renk" | "yok"; pasif?: boolean };
 export type Degisken = { id: string; turId: string; kod: string; ad: string; hex?: string; resim?: string; kullanim: number; pasif?: boolean };
+
+// ---- Cari ek bilgileri (yeni cari formunda baştan açık; eski uygulamada kayıttan sonra "Bilgiler"de giriliyordu).
+// resmiUnvan boşsa faturada ve resmi belgede ad kullanılır. vergiNo 10 hane VKN, 11 hane TCKN (şahıs).
+// renk boşsa koddan otomatik seçilir; logo ve renk sipariş listesinde adın yanındaki işarettir.
+// webGiris: müşterinin web portalı girişi var mı (giriş bilgisi sunucuda üretilir, ekranda bir kez gösterilir).
+export type EFaturaDurumu = "Bilinmiyor" | "e-Fatura mükellefi" | "e-Arşiv";
+export type CariEk = { resmiUnvan?: string; whatsapp?: string; ilce?: string; ulke?: string; eFatura?: EFaturaDurumu; logo?: string; renk?: string; webGiris?: boolean };

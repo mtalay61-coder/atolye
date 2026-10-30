@@ -1,6 +1,6 @@
 // LİSTE KALIBI — Siparişler. Araç çubuğu · süzgeç çipleri · tablo (süzgeç satırı, seçim, sağ tık) · toplam.
 import { useEffect, useMemo, useState } from "react";
-import { AracCubugu, BosDurum, Cip, Ikon, Menu, Rozet, SilOnayi, useSagTik } from "../bilesen/temel";
+import { AracCubugu, BosDurum, Cip, Ikon, Menu, Rozet, SilOnayi, useSagTik, CariIsareti } from "../bilesen/temel";
 import { useUygulama } from "../bilesen/uygulama";
 import { kaynak, PROTOTIP_NOTU } from "../veri/kaynak";
 import { siparisCift, siparisSevk, siparisTutar, sayi, tl } from "../veri/hesap";
@@ -73,7 +73,7 @@ export function SiparisListesi() {
                     onPointerUp={(e) => { if (e.pointerType === "touch") ac(s.no); }}
                     onKeyDown={(e) => { if (e.key === "Enter") ac(s.no); }}
                     onContextMenu={(e) => { setSecili(s.no); sagTik.ac(e, s); }}>
-                    <td>{s.no}</td><td>{cariAdi(s.cariId)}</td><td>{s.teslim}</td><td><Rozet durum={s.durum} /></td>
+                    <td>{s.no}</td><td>{(() => { const c = cariler.find((x) => x.id === s.cariId); return c ? <><CariIsareti cari={c} />{c.ad}</> : null; })()}</td><td>{s.teslim}</td><td><Rozet durum={s.durum} /></td>
                     <td className="erp-sayi">{sayi(siparisCift(s))}</td><td className="erp-sayi">{sayi(siparisSevk(s))}</td><td className="erp-sayi">{tl(siparisTutar(s))}</td>
                   </tr>
                 ))}

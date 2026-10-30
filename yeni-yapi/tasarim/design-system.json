@@ -180,9 +180,9 @@
     "Ikonlar"
   ],
   "lastChange": {
-    "at": "2026-10-29T12:00:00Z",
+    "at": "2026-10-30T09:30:00Z",
     "by": "Claude",
-    "note": "Kayan tanım listesi (erp-table-kap--kaydir) ve satır sonunda Düzenle · Sil; renk kodu numaralandırma kuralı",
+    "note": "Form bölümleri (erp-bolum) ve cari işareti (erp-cari-isaret)",
     "via": "Claude Code"
   },
   "layout": "files",

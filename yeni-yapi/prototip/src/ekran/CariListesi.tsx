@@ -1,6 +1,6 @@
 // LİSTE KALIBI — Cariler. Rol çipleri · süzgeç satırı · bakiye (işaretli, tek renk kuralı) · toplamlar.
 import { useEffect, useMemo, useState } from "react";
-import { AracCubugu, BosDurum, Cip, Ikon, Menu, Rozet, SilOnayi, useSagTik } from "../bilesen/temel";
+import { AracCubugu, BosDurum, CariIsareti, Cip, Ikon, Menu, Rozet, SilOnayi, useSagTik } from "../bilesen/temel";
 import { useUygulama } from "../bilesen/uygulama";
 import { kaynak, PROTOTIP_NOTU } from "../veri/kaynak";
 import { bakiyeSinifi, bakiyeYaz } from "../veri/hesap";
@@ -80,7 +80,7 @@ export function CariListesi() {
                     onKeyDown={(e) => { if (e.key === "Enter") ac(c.kod); }}
                     onContextMenu={(e) => { setSecili(c.kod); sagTik.ac(e, c); }}>
                     <td>{c.kod}</td>
-                    <td>{c.ad}{c.pasif && <> <Rozet durum="Pasif" /></>}</td>
+                    <td><CariIsareti cari={c} />{c.ad}{c.pasif && <> <Rozet durum="Pasif" /></>}</td>
                     <td className="soluk">{c.roller.join(", ")}</td>
                     <td>{c.il}</td><td>{c.telefon}</td>
                     <td className={"erp-sayi " + bakiyeSinifi(c.bakiye)}>{bakiyeYaz(c.bakiye, c.paraBirimi)}</td>

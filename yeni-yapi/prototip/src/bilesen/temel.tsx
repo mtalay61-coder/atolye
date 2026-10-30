@@ -2,6 +2,8 @@
 // (araç çubuğu sırası, kısayollar, ikonlar, arama) window.Atolye'den gelir; burada yeniden yazılmaz.
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useUygulama } from "./uygulama";
+import { basHarfler, cariRengi, yaziRengi } from "../veri/cari";
+import type { Cari } from "../veri/tipler";
 
 const A = () => window.Atolye;
 
@@ -247,6 +249,16 @@ export function SatirEylemleri({ duzenle, sil, duzenleNeden, silNeden, silAd = "
       <button type="button" className="erp-ib" aria-label="Düzenle" title={duzenleNeden || "Düzenle · F2"} disabled={!!duzenleNeden} onClick={(e) => { dur(e); duzenle(); }}><Ikon ad="i-edit" /></button>
       <button type="button" className="erp-ib erp-ib--danger" aria-label={silAd} title={silNeden || silAd + " · Del"} disabled={!!silNeden} onClick={(e) => { dur(e); sil(); }}><Ikon ad="i-trash" /></button>
     </td>
+  );
+}
+
+// ---------------- Cari işareti: logo ya da baş harfler + carinin rengi (sipariş listesinde adın yanında) ----------------
+export function CariIsareti({ cari, buyuk }: { cari: Pick<Cari, "ad" | "kod" | "logo" | "renk">; buyuk?: boolean }) {
+  const renk = cariRengi(cari);
+  return (
+    <span className={"erp-cari-isaret" + (buyuk ? " erp-cari-isaret--buyuk" : "")} aria-hidden="true" style={cari.logo ? undefined : { background: renk, color: yaziRengi(renk) }}>
+      {cari.logo ? <img src={cari.logo} alt="" /> : basHarfler(cari.ad || "?")}
+    </span>
   );
 }
 

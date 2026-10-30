@@ -44,6 +44,8 @@ Kaynak: kullanıcının ERP arayüz standardı (`erp-tokens.css`, `erp-icons.svg
 - Boşluklar yalnız `erp-gap-1`…`erp-gap-5` adımlarıdır (4, 8, 12, 16, 24).
 - Köşeler yuvarlaktır (kullanıcı kararı; standarttaki 0px bilerek uygulanmaz): `erp-r-sm` küçük kontroller, `erp-r-md` panel ve kart, `erp-r-lg` pencere, `erp-r-pill` hap.
 - **Gölge yok.** Katmanlar 1px `erp-line` çizgiyle ayrılır. Yalnız onay penceresi ve çekmece perdeyle öne çıkar.
+- **Uzun form bölümlere ayrılır, sekmelere değil:** `erp-bolum` + `erp-bolum__baslik` (Kimlik, İletişim, Resmi bilgiler, Adres, Görünüm…). Hepsi aynı anda açık; yeni kayıt formunda da bütün alanlar baştan görünür, "kaydet sonra bilgileri gir" adımı yoktur. Rolüne göre anlamsız bölüm (tedarikçide fiyat grubu, web girişi) hiç çizilmez.
+- **Cari işareti** (`erp-cari-isaret`): carinin logosu, yoksa baş harfleri carinin rengi zemininde; listede ve siparişte adın solunda 22px, kartta 56px. Renk veridir (boşsa koddan otomatik), yazı rengi zeminin açıklığına göre seçilir.
 - Form alanları ekrana yayılmaz, içerik kadar sabit genişliktedir: ürün 190, renk 130, ölçü 130, fiyat 120, tarih 150, fiş no 160, ödeme şekli 140 px. Dar ekranda alt satıra sarar.
 
 ## Menüler

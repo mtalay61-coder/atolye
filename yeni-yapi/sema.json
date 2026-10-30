@@ -358,7 +358,7 @@
       "ad": "cari",
       "tur": "tablo",
       "sahip": "m-car",
-      "aciklama": ""
+      "aciklama": "uuid; kod (CAR-0001, numaratör). Kimlik: ad (listelerde görünen), resmi_unvan (boşsa ad; fatura ve resmi belgede), para birimi (hareketi olunca değişmez), fiyat grubu (müşteride). İletişim: yetkili, telefon, whatsapp (boşsa telefonla aynı), e-posta. Resmi: vergi dairesi, vergi_no (10 hane VKN, 11 hane TCKN), e_fatura (Bilinmiyor / e-Fatura mükellefi / e-Arşiv). Adres: adres, ilçe, il, ülke (boşsa Türkiye). Görünüm: logo (dosya deposunda, satırda yalnız adres), renk (hex; boşsa koddan otomatik) — sipariş listesinde adın yanında. web_giris: portal girişi var mı (giriş tablosu PRT'de; şifre yalnız sunucuda). Yeni cari formunda hepsi baştan açık; zorunlu yalnız ad ve en az bir rol."
     },
     "t-cari-rol": {
       "ad": "cari_rol",
@@ -1529,11 +1529,14 @@
       "sira": 1,
       "ozet": "Müşteri, tedarikçi, fasoncu ya da personel carisi açılır. Bir cari birden çok rol taşıyabilir.",
       "adimlar": [
-        "Cari › Yeni cari'ye bas.",
-        "Ünvan, telefon, vergi no ve adresi yaz; para birimini seç.",
-        "Rolleri işaretle: Müşteri, Tedarikçi, Fasoncu, Personel.",
-        "Müşteriyse fiyat grubunu seç; siparişte fiyatlar buna göre önerilir.",
-        "Kaydet. Fasoncu ya da personelse ona ait sanal depo kendiliğinden açılır."
+        "Cari › Yeni (Ctrl+N).",
+        "Kimlik: ünvanı yaz, rolleri işaretle (Müşteri, Tedarikçi, Fasoncu, Personel), para birimini seç; müşteriyse fiyat grubunu seç.",
+        "İletişim: yetkili, telefon, WhatsApp (telefonla aynıysa kutu işaretli kalır) ve e-posta.",
+        "Resmi bilgiler: resmi ünvan (faturadaki ad; boşsa ünvan), vergi dairesi, vergi no (firma 10, şahıs 11 hane), e-Fatura durumu.",
+        "Adres: adres, ilçe, il, ülke. Yurt dışı caride il serbest yazılır.",
+        "Görünüm: logo ya da renk; sipariş listesinde adın yanında görünür. Boş bırakılırsa renk otomatik verilir.",
+        "Müşteriyse web sitesi girişi istenirse işaretlenir (e-posta gerekli).",
+        "Kaydet. Hepsi tek formda; kayıttan sonra ayrı bir bilgi ekranı açmak gerekmez. Fasoncu ya da personelse sanal depo kendiliğinden açılır."
       ],
       "ipuclari": "Bakiye kartta yazılmaz; ekstre hareketlerden hesaplanır.",
       "belgeler": []
