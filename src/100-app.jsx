@@ -363,7 +363,11 @@ function AtolyeUygulamasi() {
   const defterBekleyenHareketler = useRef([]);
   const defterYazmaGerekli = useRef(false);
   const [defterTetik, setDefterTetik] = useState(0);
-  const setStok = useCallback((next) => {
+  // `secenek.buluttan` (v1.731.3): BULUTTAN gelen stok (değişiklik yoklaması) deftere TOPLANMAZ — o hareketleri yazan cihaz
+  // fişini kendi deftere yazdı; burada toplanırsa defter tazelemesi gelmeden aynı fiş numarasıyla "otomatik" kayıt kurulup
+  // buluttaki asıl fişin üstüne yazılırdı (kalemler, kullanıcı, zaman gider).
+  const setStok = useCallback((next, secenek) => {
+    const buluttan = !!(secenek && secenek.buluttan);
     setStokHam((onceki) => {
       const ham = typeof next === "function" ? next(onceki) : next;
       // FİŞSİZ HAREKET YAZILAMAZ (16 Eylül): numarasız gelen harekete burada numara veriliyor.
@@ -372,7 +376,7 @@ function AtolyeUygulamasi() {
       // sonraki açılışta hareket yine numarasız görünürdü.
       if (numarali !== ham) defterYazmaGerekli.current = true;
       const yeni = stokMiktarlariniHesapla(numarali);
-      const eklenen = defteryeGirmemisHareketler(onceki, yeni, []);
+      const eklenen = buluttan ? [] : defteryeGirmemisHareketler(onceki, yeni, []);
       if (eklenen.length > 0 || defterYazmaGerekli.current) {
         defterBekleyenHareketler.current = [...defterBekleyenHareketler.current, ...eklenen];
         sonStokRef.current = yeni;
@@ -391,6 +395,16 @@ function AtolyeUygulamasi() {
   const stokGuncelRef = useRef(null);
   useEffect(() => { stokGuncelRef.current = stok; }, [stok]);
   useEffect(() => {
+    // AÇILIŞ BİTMEDEN DEFTERE YAZILMAZ (v1.731.3 — kullanıcı, 30 Ekim: veri sıfırlamadan sonra denetim "Fiş defterinde var,
+    // stokta yok" diye 5 ESKİ fiş gösterdi; bulutta lst_kayit'te sıfırlamadan 38 sn sonra aynı saniyede yazılmış, hepsinin
+    // `zaman`ı 12:18:06.065, `kullanici`sı boş). Açılışta stok, fiş defterinden ÖNCE yükleniyor (090: setStok → muhasebe,
+    // koliler… → fis_defteri); setStok boş başlangıç hâlini "önceki" sayıp BÜTÜN hareketleri buraya topluyor, bu effect de
+    // henüz BOŞ olan defterle karşılaştırıp her fişi "otomatik" kayıt olarak yeniden kuruyordu (zaman = açılış anı, kullanıcı
+    // boş, kalemler yalnız hareketten). Yazma buluta gidemeyince (liste v2: taban henüz kurulmamış) bekleyen deftere düştü;
+    // açılış yerel kopyayı buluttakiyle birleştirdi ve yeniden gönderim bunları — sıfırlamadan sonra — boş buluta yazdı.
+    // Artık toplanan hareketler açılış bitene kadar bekler (ref'te kalır); açılış bitince gerçek defterle süzülür: yalnız
+    // GERÇEKTEN fişi olmayan hareket deftere düşer. Stok numaralama yazması da açılıştan sonra (taban kurulmadan yazmasın).
+    if (loading) return;
     // Numara verilmişse stoğu da kalıcı yaz.
     if (defterYazmaGerekli.current && sonStokRef.current) {
       defterYazmaGerekli.current = false;
@@ -412,7 +426,7 @@ function AtolyeUygulamasi() {
       yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeni), "Fiş defteri", yeni);
       return yeni;
     });
-  }, [defterTetik]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [defterTetik, loading]); // eslint-disable-line react-hooks/exhaustive-deps
   const [uretim, setUretim] = useState([]);
   const [cariler, setCariler] = useState([]);
   const [siparisler, setSiparisler] = useState([]);
@@ -944,7 +958,7 @@ function AtolyeUygulamasi() {
         const mevcutGorsel = {};
         (stokGuncelRef.current || sonStokRef.current || []).forEach((u) => { const gr = urunGorselleri(u); if (gr) mevcutGorsel[u.id] = gr; });
         const yeni = gorselleriBirlestir(bulut.stok, mevcutGorsel);
-        if (!ayni("stok", yeni)) { setStok(yeni); tabloBaslangicTam("urunler", yeni); }
+        if (!ayni("stok", yeni)) { setStok(yeni, { buluttan: true }); tabloBaslangicTam("urunler", yeni); }
       } else if (alan === "cariler") { if (!ayni(alan, bulut.cariler)) { setCariler(bulut.cariler); tabloBaslangicTam("cariler", bulut.cariler); } }
       else if (alan === "siparisler") { if (!ayni(alan, bulut.siparisler)) { setSiparisler(bulut.siparisler); tabloBaslangicTam("siparisler", bulut.siparisler); } }
       else if (alan === "uretim") { if (!ayni(alan, bulut.uretim)) { setUretim(bulut.uretim); tabloBaslangicTam("uretim", bulut.uretim); } }

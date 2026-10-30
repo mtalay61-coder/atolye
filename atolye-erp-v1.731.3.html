@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Atölye ERP 1.731.0</title>
+<title>Atölye ERP 1.731.3</title>
 <!-- KURULABİLİR UYGULAMA (24 Eylül, v1.440.0 — kullanıcı: "uygulamayı kısayol olarak nasıl
      yapacağım masaüstüne / nerede var yükleme"). Tarayıcı bir sayfayı ancak şu üçü varsa
      "kurulabilir" sayıyor: manifest + ikonlar + fetch dinleyen bir servis çalışanı. Üçü de yoktu,
@@ -2319,9 +2319,9 @@ const VIRMAN_SEBEPLERI = [
     "Hesaplar arası aktarım",
     "Kasa devri",
 ];
-const SURUM = "1.731.0";
+const SURUM = "1.731.3";
 const SURUM_TARIHI = "2026-10-30";
-const SURUM_NOTU = "Tanımlar › Ürün alt sekmelere ayrıldı: Renkler, Beden & Boyut, Asortiler, Birimler, Ürün Tipleri, Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar";
+const SURUM_NOTU = "Açılışta fiş defteri bozulmuyor: stok fiş defterinden önce yüklendiği için her açılışta fişler otomatik kayıt olarak yeniden kurulup buluta yazılıyordu (sıfırlamadan sonra eski fişlerin geri gelmesinin sebebi)";
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
 // kullanıcılar bilgilensin. Tanımlar'da sürüm geçmişi kalsın: neler eklendi, değişti, hata vs."
@@ -2351,6 +2351,9 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 }
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" }; // teklif: v1.723.0, Sipariş'in alt sekmesi
 const SURUM_GECMISI = [
+    { surum: "1.731.3", tarih: "30.10.2026", eklenen: [], degisen: [], duzeltilen: ["Açılışta stok fiş defterinden önce yükleniyordu; hareket toplayıcı her fişi henüz boş defterle karşılaştırıp \"otomatik\" kayıt olarak yeniden kuruyor (zaman = açılış anı, kullanıcı boş, kalemler yalnız hareketten) ve buluta yazıyordu. Veri sıfırlamadan sonra eski 5 fişin geri gelmesi buydu. Artık toplanan hareketler açılış bitince gerçek defterle süzülür; başka cihazdan gelen stok deftere toplanmaz."] },
+    { surum: "1.731.2", tarih: "30.10.2026", eklenen: ["Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler. Önce cariyi kaydedip kartını düzenlemek gerekiyordu. Personelde \"Kod ata\" ile proses seçince sıradaki barkod kodu gelir. Personel maaş/bölüm ve site erişimi kayıttan sonra kartta."], degisen: [], duzeltilen: [] },
+    { surum: "1.731.1", tarih: "30.10.2026", eklenen: [], degisen: ["Finans › Gelir / Gider › Genel Gider: gider kartı seçicisi açılır liste yerine yazınca daralan arama kutusu; kartın grubu yanında soluk yazıyla görünür, kalem eklenince kutu boşalır."], duzeltilen: [] },
     { surum: "1.731.0", tarih: "30.10.2026", eklenen: [], degisen: ["Tanımlar › Ürün alt sekmelere ayrıldı: Renkler, Beden & Boyut, Asortiler, Birimler, Ürün Tipleri, Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar. Bölümlerin içeriği aynı, yalnız yerleri ayrı; Tanımlarda arama yazılıyken bütün bölümler birlikte görünür."], duzeltilen: [] },
     { surum: "1.730.1", tarih: "29.10.2026", eklenen: [], degisen: ["Fiş kesme yetkisi: stok satırı artık stok yetkisi olmayan ama cari, muhasebe ya da tanımlar kaydetme yetkisi olan kullanıcının fişinde de yazılır (v1'de olduğu gibi)", "Buluta Aktar (ilk göç) ve yeni firma kurulum dosyası yeni yapıya geçildikten sonra kapalı — yanlış veri yazmasınlar"], duzeltilen: ["Bulut açılışta okunamadıysa Kasa & Banka ve listeler (teklif, fatura, koli, görev, model, fiş defteri, mesaj) eski yerel kopyayı buluta basıyordu — başka cihazın düzeltmesi geri dönebilir, silinen geri gelebilirdi. Artık yazılmaz, bekleyenlere düşer", "Sohbette mesaj gönderilirken gelen yoklama, arka arkaya ikinci mesajda ilk mesajı silebiliyordu", "Sunucu ayarı okunamadığında yazmalar eski yola gidip yarım kalıyordu; artık bekletilir ve ayar yeniden okunur", "Sunucu arşivinden geri yükleme yeni yapıda çalışmıyordu (cari hareketi, sipariş kalemi, iş ataması artık yeni kapıdan; stok varyantı / hareketi için açık uyarı)", "Sunucu: kurulum dosyası yeniden çalıştırılırsa fiş işlemi kasa ve sipariş satırını sessizce atlayabiliyordu; bir modülde geri dönüldükten sonra açık cihazların yazması kayboluyordu; yetkisiz kullanıcı giriş ayarını değiştirip sunucu yetkisini aşabiliyordu — hepsi kapatıldı (Supabase 15. adım)", "Sayfalı okumada eşit tarihli hareketler sayfa sınırında kayabiliyordu; sıra kesinleşti"] },
     { surum: "1.730.0", tarih: "29.10.2026", eklenen: ["Teklif, fatura, koli, görev, model, fiş defteri ve mesajlar tek kapıdan (yeniden kurulumun 5. adımı): Supabase'de geçiş yapılınca bu listeler tek bir belge değil, her kayıt ayrı satır. Her cihaz yalnız KENDİ değişikliğini gönderir — aynı anda yazan iki cihaz (iki kişi aynı anda mesaj atar, biri teklif öteki fatura keser) birbirinin kaydını ezemez, eski listeli cihaz başkasının kaydını silemez. Silinen kayıt silinmez, iptal edilir (iz kalır). Toplu iptal kilidi: bir yazma listenin yarısını götüremez"], degisen: [], duzeltilen: [] },
@@ -21271,7 +21274,11 @@ function AtolyeUygulamasi() {
     const defterBekleyenHareketler = useRef([]);
     const defterYazmaGerekli = useRef(false);
     const [defterTetik, setDefterTetik] = useState(0);
-    const setStok = useCallback((next) => {
+    // `secenek.buluttan` (v1.731.3): BULUTTAN gelen stok (değişiklik yoklaması) deftere TOPLANMAZ — o hareketleri yazan cihaz
+    // fişini kendi deftere yazdı; burada toplanırsa defter tazelemesi gelmeden aynı fiş numarasıyla "otomatik" kayıt kurulup
+    // buluttaki asıl fişin üstüne yazılırdı (kalemler, kullanıcı, zaman gider).
+    const setStok = useCallback((next, secenek) => {
+        const buluttan = !!(secenek && secenek.buluttan);
         setStokHam((onceki) => {
             const ham = typeof next === "function" ? next(onceki) : next;
             // FİŞSİZ HAREKET YAZILAMAZ (16 Eylül): numarasız gelen harekete burada numara veriliyor.
@@ -21281,7 +21288,7 @@ function AtolyeUygulamasi() {
             if (numarali !== ham)
                 defterYazmaGerekli.current = true;
             const yeni = stokMiktarlariniHesapla(numarali);
-            const eklenen = defteryeGirmemisHareketler(onceki, yeni, []);
+            const eklenen = buluttan ? [] : defteryeGirmemisHareketler(onceki, yeni, []);
             if (eklenen.length > 0 || defterYazmaGerekli.current) {
                 defterBekleyenHareketler.current = [...defterBekleyenHareketler.current, ...eklenen];
                 sonStokRef.current = yeni;
@@ -21299,6 +21306,17 @@ function AtolyeUygulamasi() {
     const stokGuncelRef = useRef(null);
     useEffect(() => { stokGuncelRef.current = stok; }, [stok]);
     useEffect(() => {
+        // AÇILIŞ BİTMEDEN DEFTERE YAZILMAZ (v1.731.3 — kullanıcı, 30 Ekim: veri sıfırlamadan sonra denetim "Fiş defterinde var,
+        // stokta yok" diye 5 ESKİ fiş gösterdi; bulutta lst_kayit'te sıfırlamadan 38 sn sonra aynı saniyede yazılmış, hepsinin
+        // `zaman`ı 12:18:06.065, `kullanici`sı boş). Açılışta stok, fiş defterinden ÖNCE yükleniyor (090: setStok → muhasebe,
+        // koliler… → fis_defteri); setStok boş başlangıç hâlini "önceki" sayıp BÜTÜN hareketleri buraya topluyor, bu effect de
+        // henüz BOŞ olan defterle karşılaştırıp her fişi "otomatik" kayıt olarak yeniden kuruyordu (zaman = açılış anı, kullanıcı
+        // boş, kalemler yalnız hareketten). Yazma buluta gidemeyince (liste v2: taban henüz kurulmamış) bekleyen deftere düştü;
+        // açılış yerel kopyayı buluttakiyle birleştirdi ve yeniden gönderim bunları — sıfırlamadan sonra — boş buluta yazdı.
+        // Artık toplanan hareketler açılış bitene kadar bekler (ref'te kalır); açılış bitince gerçek defterle süzülür: yalnız
+        // GERÇEKTEN fişi olmayan hareket deftere düşer. Stok numaralama yazması da açılıştan sonra (taban kurulmadan yazmasın).
+        if (loading)
+            return;
         // Numara verilmişse stoğu da kalıcı yaz.
         if (defterYazmaGerekli.current && sonStokRef.current) {
             defterYazmaGerekli.current = false;
@@ -21323,7 +21341,7 @@ function AtolyeUygulamasi() {
             yazimiIzle(tekilYaz(FIS_DEFTERI_ANAHTAR, "fis_defteri", yeni), "Fiş defteri", yeni);
             return yeni;
         });
-    }, [defterTetik]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [defterTetik, loading]); // eslint-disable-line react-hooks/exhaustive-deps
     const [uretim, setUretim] = useState([]);
     const [cariler, setCariler] = useState([]);
     const [siparisler, setSiparisler] = useState([]);
@@ -21878,7 +21896,7 @@ function AtolyeUygulamasi() {
                     mevcutGorsel[u.id] = gr; });
                 const yeni = gorselleriBirlestir(bulut.stok, mevcutGorsel);
                 if (!ayni("stok", yeni)) {
-                    setStok(yeni);
+                    setStok(yeni, { buluttan: true });
                     tabloBaslangicTam("urunler", yeni);
                 }
             }
@@ -50518,6 +50536,20 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
                     })())) },
             ] })));
 }
+// PERSONEL BARKOD KODU (v1.731.2'de ortak yardımcıya çıktı; kural v1.4xx'teki barkodOtomatikAta ile aynı): kod, seçilen
+// prosesin SAYI BANDINDAN (başlangıç no + 999, örn. Kesim 1000-1999) gelir — bantta kullanılan en büyük kodun bir fazlası,
+// bant boşsa başlangıç no. Kimin hangi prosese etiketli olduğuna bakılmaz: etiketler eksik/karışık olsa da numara her zaman
+// doğru prosesin aralığından çıkar. `haricId`: kendi eski kodu hesaba katılmasın (yeni caride yok).
+function sonrakiPersonelBarkodu(cariler, prosesler, prosesAdi, haricId) {
+    const prosesTanim = (prosesler || []).find((p) => p.ad === prosesAdi);
+    const baslangic = prosesTanim ? (prosesTanim.baslangicNo ?? 1000) : 1000;
+    const bandSonu = baslangic + 999;
+    const kodlar = (cariler || [])
+        .filter((c) => c.id !== haricId && c.barkodKodu && /^\d+$/.test(c.barkodKodu))
+        .map((c) => parseInt(c.barkodKodu, 10))
+        .filter((kod) => kod >= baslangic && kod <= bandSonu);
+    return kodlar.length > 0 ? Math.max(...kodlar) + 1 : baslangic;
+}
 function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
     const [showForm, setShowForm] = useState(false);
     const [query, setQuery] = useState("");
@@ -50603,7 +50635,43 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
         //
         // Varsayılan yine TRY: çoğu cari TL, her seferinde seçtirmek gereksiz. Ama artık GÖRÜNÜR ve
         // değiştirilebilir; sessiz bir varsayım değil.
-        return { unvan: "", tip: "Müşteri", telefon: "", vergiNo: "", adres: "", ulke: "", notlar: "", paraBirimi: "TRY" };
+        // TÜM BİLGİLER AÇILIŞTA (v1.731.2 — kullanıcı: "Cari açarken tüm bilgileri girebilelim, cari kaydedip sonra
+        // düzenleme ekranı açmak gerekiyor şuanda"). Kartın Bilgiler sekmesindeki ve mor şeritteki alanlar burada da var.
+        return { unvan: "", tip: "Müşteri", telefon: "", vergiNo: "", adres: "", ulke: "", notlar: "", paraBirimi: "TRY",
+            whatsapp: "", eposta: "", resmiUnvan: "", vergiDairesi: "", tckn: "", il: "", ilce: "", efaturaMukellef: "", efaturaEtiket: "",
+            fiyatGrubuId: "", resim: "", renk: "", barkodKodu: "", bagliProsesler: [] };
+    }
+    function yeniCariEkBilgileri(f) {
+        const personel = f.tip === "Personel";
+        const ek = {};
+        const metin = (alan) => { const v = String(f[alan] || "").trim(); if (v)
+            ek[alan] = v; };
+        ["whatsapp", "eposta"].forEach(metin);
+        if (!personel) {
+            ["resmiUnvan", "vergiDairesi", "tckn", "il", "ilce"].forEach(metin);
+            if (f.efaturaMukellef)
+                ek.efaturaMukellef = f.efaturaMukellef;
+            if (f.efaturaMukellef === "evet")
+                metin("efaturaEtiket");
+            if (f.fiyatGrubuId && yeniCariFiyatGruplari(f.tip).some((g) => g.id === f.fiyatGrubuId))
+                ek.fiyatGrubuId = f.fiyatGrubuId;
+        }
+        if (f.resim)
+            ek.resim = f.resim;
+        if (/^#[0-9a-f]{6}$/i.test(f.renk || ""))
+            ek.renk = f.renk;
+        if (personel) {
+            metin("barkodKodu");
+            if ((f.bagliProsesler || []).length)
+                ek.bagliProsesler = f.bagliProsesler;
+        }
+        return ek;
+    }
+    // Kartın Bilgiler sekmesindeki kural: tedarikçiye alış, müşteriye satış grupları; "Her İkisi" ikisini de görür.
+    function yeniCariFiyatGruplari(tip) {
+        if (tip === "Personel")
+            return [];
+        return (tanimlarFiyatGruplari || []).filter((g) => tip === "Her İkisi" || g.tip === (tip === "Tedarikçi" ? "Alış" : "Satış"));
     }
     function addCari() {
         if (!form.unvan.trim())
@@ -50626,6 +50694,8 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
             ...(form.altTip ? { altTip: form.altTip } : {}),
             notlar: form.notlar.trim(),
             paraBirimi: form.paraBirimi || "TRY",
+            // Açılışta girilen öteki bilgiler (v1.731.2): yalnız doldurulanlar yazılır — kartta sonradan girilenle aynı biçim.
+            ...yeniCariEkBilgileri(form),
             // SİTEDE ÖDEME ŞEKLİ SORULSUN (v1.652.0 — kullanıcı: "herkes bu şekilde devam etmesin; yeni müşteri ve seçtiğimiz
             // müşteri için bu şekilde olsun"): yeni müşteride açık başlar; eski müşterilerde kapalı (cari kartından açılır).
             ...(form.tip === "Müşteri" || form.tip === "Her İkisi" ? { siteOdemeSor: true } : {}),
@@ -50733,20 +50803,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
         const cari = cariler.find((c) => c.id === cariId);
         if (!cari)
             return;
-        const prosesTanim = (tanimlarProsesler || []).find((p) => p.ad === prosesAdi);
-        const baslangic = prosesTanim ? (prosesTanim.baslangicNo ?? 1000) : 1000;
-        // Kodun hesabı "kim bu prosese etiketli" diye bakmak yerine, doğrudan bu prosesin sayı ARALIĞINA
-        // (bandına, örn. Kesim=1000-1999, Saya=2000-2999) hangi kodların düştüğüne bakar. Bu, bir
-        // personelin bağlı proses etiketleri karışık/eksik olsa bile SAYININ KENDİSİNİN her zaman doğru
-        // prosesin aralığından gelmesini garanti eder — barkod numarasına bakarak hangi prosese ait
-        // olduğu her zaman doğru anlaşılır.
-        const bandGenisligi = 1000;
-        const bandSonu = baslangic + bandGenisligi - 1;
-        const buBanttakiKodlar = cariler
-            .filter((c) => c.id !== cariId && c.barkodKodu && /^\d+$/.test(c.barkodKodu))
-            .map((c) => parseInt(c.barkodKodu, 10))
-            .filter((kod) => kod >= baslangic && kod <= bandSonu);
-        const yeniKod = buBanttakiKodlar.length > 0 ? Math.max(...buBanttakiKodlar) + 1 : baslangic;
+        const yeniKod = sonrakiPersonelBarkodu(cariler, tanimlarProsesler, prosesAdi, cariId);
         const mevcutBagli = cari.bagliProsesler || [];
         const yeniBagli = mevcutBagli.includes(prosesAdi) ? mevcutBagli : [...mevcutBagli, prosesAdi];
         updateCariFields(cariId, { bagliProsesler: yeniBagli, barkodKodu: String(yeniKod) });
@@ -51087,7 +51144,70 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
                     React.createElement("select", { value: form.paraBirimi, onChange: (e) => setForm({ ...form, paraBirimi: e.target.value }), title: "Bu cariyle yap\u0131lan i\u015Flemlerde varsay\u0131lan para birimi", style: inputStyle }, MUHASEBE_PARA_BIRIMLERI.map((pb) => (React.createElement("option", { key: pb, value: pb },
                         pb,
                         " ",
-                        PARA_SEMBOLU[pb] || "")))))))),
+                        PARA_SEMBOLU[pb] || ""))))),
+                yeniCariFiyatGruplari(form.tip).length > 0 && (React.createElement(Field, { label: "Fiyat Grubu" },
+                    React.createElement("select", { value: form.fiyatGrubuId, "data-yeni-cari-fiyat-grubu": "1", onChange: (e) => setForm({ ...form, fiyatGrubuId: e.target.value }), style: inputStyle, title: "Bu gruba \u00F6zel fiyat tan\u0131mlanm\u0131\u015F \u00FCr\u00FCnlerde, bu cariye otomatik o fiyat uygulan\u0131r" },
+                        React.createElement("option", { value: "" }, "Grupsuz (standart fiyat)"),
+                        yeniCariFiyatGruplari(form.tip).map((g) => React.createElement("option", { key: g.id, value: g.id },
+                            g.ad,
+                            " (",
+                            g.tip,
+                            ")")))))),
+            React.createElement("div", { "data-yeni-cari-ek": "1", style: { display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 } },
+                React.createElement(Field, { label: "WhatsApp", genislik: 150 },
+                    React.createElement("input", { value: form.whatsapp, onChange: (e) => setForm({ ...form, whatsapp: e.target.value }), placeholder: "Bo\u015Fsa telefon", "data-yeni-cari-whatsapp": "1", title: "Sipari\u015F \u00E7\u0131kt\u0131s\u0131 bu numaraya g\u00F6nderilir. Bo\u015Fsa telefon kullan\u0131l\u0131r.", style: inputStyle })),
+                React.createElement(Field, { label: "E-posta", genislik: 210 },
+                    React.createElement("input", { value: form.eposta, onChange: (e) => setForm({ ...form, eposta: e.target.value }), placeholder: "ad@firma.com", inputMode: "email", "data-yeni-cari-eposta": "1", style: inputStyle })),
+                form.tip !== "Personel" && [
+                    ["resmiUnvan", "Resmi ünvan", 220, "Faturadaki tam ünvan"],
+                    ["vergiDairesi", "Vergi Dairesi", 140, ""],
+                    ["tckn", "TC Kimlik No", 130, "şahıs ise"],
+                    ["il", "İl", 110, ""],
+                    ["ilce", "İlçe", 110, ""],
+                ].map(([alan, etiket, gen, ipucu]) => (React.createElement(Field, { key: alan, label: etiket, genislik: gen },
+                    React.createElement("input", { value: form[alan], onChange: (e) => setForm({ ...form, [alan]: e.target.value }), placeholder: ipucu, inputMode: alan === "tckn" ? "numeric" : undefined, "data-yeni-cari-alan": alan, style: inputStyle }),
+                    alan === "tckn" && form.tckn.trim() && !tcknKontrol(form.tckn.trim()).gecerli && (React.createElement("span", { style: { color: "var(--erp-danger)", fontSize: 11, fontWeight: 400 } }, tcknKontrol(form.tckn.trim()).mesaj))))),
+                form.tip !== "Personel" && (React.createElement(Field, { label: "e-Fatura", genislik: 170 },
+                    React.createElement("select", { value: form.efaturaMukellef, "data-yeni-cari-efatura": "1", onChange: (e) => setForm({ ...form, efaturaMukellef: e.target.value }), style: inputStyle },
+                        React.createElement("option", { value: "" }, "Bilinmiyor"),
+                        React.createElement("option", { value: "evet" }, "M\u00FCkellef (e-Fatura)"),
+                        React.createElement("option", { value: "hayir" }, "De\u011Fil (e-Ar\u015Fiv)")))),
+                form.tip !== "Personel" && form.efaturaMukellef === "evet" && (React.createElement(Field, { label: "Posta kutusu", genislik: 220 },
+                    React.createElement("input", { value: form.efaturaEtiket, onChange: (e) => setForm({ ...form, efaturaEtiket: e.target.value }), placeholder: "urn:mail:defaultpk@\u2026", style: inputStyle }))),
+                React.createElement(Field, { label: form.tip === "Personel" ? "Fotoğraf" : "Logo" },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, minHeight: 34 } },
+                        React.createElement(ColorSwatch, { src: form.resim, size: 34, onUrlSave: (url) => setForm((f) => ({ ...f, resim: url })), onRemove: () => setForm((f) => ({ ...f, resim: "" })) }),
+                        React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 } }, form.tip === "Personel" ? "atölye ekranında görünür" : "sipariş listesinde adın yanında"))),
+                React.createElement(Field, { label: "Renk" },
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, minHeight: 34 } },
+                        React.createElement("input", { type: "color", "data-yeni-cari-renk": "1", value: /^#[0-9a-f]{6}$/i.test(form.renk || "") ? form.renk : "#8A8A8A", onChange: (e) => setForm({ ...form, renk: e.target.value }), style: { width: 34, height: 26, padding: 0, border: "1px solid var(--erp-border)", borderRadius: 4, cursor: "pointer" } }),
+                        form.renk ? (React.createElement("button", { type: "button", className: "btn-ghost", style: { padding: "2px 8px", fontSize: 11 }, onClick: () => setForm({ ...form, renk: "" }) }, "Otomatik")) : React.createElement("span", { style: { fontSize: 10, color: "var(--erp-text-3)", fontWeight: 400 } }, "se\u00E7ilmezse otomatik")))),
+            form.tip === "Personel" && (React.createElement("div", { "data-yeni-cari-personel": "1", style: { display: "grid", gap: 8, marginTop: 10, padding: "8px 10px", background: "#F2E7F5", borderRadius: "var(--erp-r-md)" } },
+                React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" } },
+                    React.createElement(Field, { label: "Barkod Kodu", genislik: 110 },
+                        React.createElement("input", { value: form.barkodKodu, onChange: (e) => setForm({ ...form, barkodKodu: e.target.value }), placeholder: "\u00F6rn. 1000", className: "mono", "data-yeni-cari-barkod": "1", style: inputStyle })),
+                    React.createElement("label", { style: { display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--erp-text-2)", fontWeight: 600 } },
+                        "Kod ata",
+                        React.createElement("select", { value: "", "data-yeni-cari-kod-ata": "1", style: { ...inputStyle, width: 180 }, onChange: (e) => {
+                                const p = e.target.value;
+                                if (!p)
+                                    return;
+                                const kod = sonrakiPersonelBarkodu(cariler, tanimlarProsesler, p, null);
+                                setForm((f) => ({ ...f, barkodKodu: String(kod), bagliProsesler: f.bagliProsesler.includes(p) ? f.bagliProsesler : [...f.bagliProsesler, p] }));
+                            } },
+                            React.createElement("option", { value: "" }, "Proses se\u00E7in\u2026"),
+                            (tanimlarProsesler || []).map((p) => React.createElement("option", { key: p.id, value: p.ad }, p.ad))))),
+                React.createElement("span", { style: { fontSize: 12, color: "var(--erp-purple)", fontWeight: 600 } }, "Ba\u011Fl\u0131 Oldu\u011Fu Prosesler (barkod okutmada ve at\u00F6lye ekran\u0131nda bunlar listelenir)"),
+                React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap" } }, [...(tanimlarProsesler || []).map((p) => ({ ...p, ara: false })), ...(tanimlarAraProsesler || []).map((p) => ({ ...p, ara: true }))].map((p) => {
+                    const secili = form.bagliProsesler.includes(p.ad);
+                    const renk = p.ara ? "#B8860B" : "var(--erp-purple)";
+                    return (React.createElement("button", { key: (p.ara ? "a-" : "p-") + p.id, type: "button", "data-yeni-cari-proses": p.ad, onClick: () => setForm((f) => ({ ...f, bagliProsesler: secili ? f.bagliProsesler.filter((x) => x !== p.ad) : [...f.bagliProsesler, p.ad] })), title: p.ara ? "Ara proses" : undefined, style: {
+                            padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
+                            border: `1.5px solid ${secili ? renk : "var(--erp-border)"}`,
+                            background: secili ? (p.ara ? "#B8860B1A" : "#6B4E8A1A") : "#fff",
+                            color: secili ? renk : "var(--erp-text-2)",
+                        } }, p.ad));
+                })))))),
         filtered.length === 0 ? (React.createElement(EmptyState, { text: cariler.length === 0 ? "Henüz cari kaydı yok. İlk cariyi ekleyerek başlayın." : "Aramanızla eşleşen cari yok." })) : (React.createElement("div", { style: { display: "grid", gap: 12 } },
             filtered.map((c) => (React.createElement(CariCard, { tanimlar: tanimlar, onTanimlarKaydet: onTanimlarKaydet, onFiseGitNo: onFiseGitNo, muhasebe: muhasebe, kurlar: kurlar, onMuhasebeHareketi: onMuhasebeHareketi, showToast: showToast, key: c.id, cari: c, acik: acikCariId === c.id, onAcKapa: () => setAcikCariId((onceki) => (onceki === c.id ? null : c.id)), onCekEkle: onCekEkle, bakiye: cariBakiyeleri(c), listeBakiye: cariBakiyeleri(c, listeDefter), genelBakiye: cariBakiyeleri(c, "Genel"), resmiBakiye: cariBakiyeleri(c, "Resmi"), onAddHareket: addHareket, onFisSil: onFisSil, onRemove: removeCari, onFieldChange: updateCariField, onFieldsChange: updateCariFields, siparisler: siparisler, onGoToSiparis: onGoToSiparis, stok: stok, firmaBilgileri: firmaBilgileri, tanimlarProsesler: tanimlarProsesler, tanimlarAraProsesler: tanimlarAraProsesler, onBagliProsesToggle: bagliProsesToggle, onBarkodOtomatikAta: barkodOtomatikAta, tumCariler: cariler, onStokFisiAc: onStokFisiAc, tanimlarFiyatGruplari: tanimlarFiyatGruplari, onPencereAc: onPencereAc, odemeHedefi: odemeHedefi && odemeHedefi.cariId === c.id ? odemeHedefi : null, onOdemeHedefiTuketildi: onOdemeHedefiTuketildi }))),
             (() => {
@@ -69751,17 +69871,11 @@ function GenelGiderEkrani({ tanimlar, onSave, stok, muhasebe, showToast }) {
             React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: "var(--erp-text-2)", marginBottom: 8 } }, "Gider kalemi ekle"),
             React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" } },
                 React.createElement(Field, { label: "Gider kart\u0131", genislik: 260 },
-                    React.createElement("select", { value: yeni.kartId || "", "data-gg-kart-sec": "1", onChange: (e) => {
-                            const kart = (tanimlar.giderKartlari || []).find((k) => k.id === e.target.value);
-                            setYeni({ ...yeni, kartId: e.target.value, ad: kart ? kart.ad : "", grup: kart ? kart.grup : yeni.grup });
-                        }, style: inputStyle },
-                        React.createElement("option", { value: "" }, "\u2014 kart se\u00E7in \u2014"),
-                        gruplar.map((g) => {
-                            const kartlar = (tanimlar.giderKartlari || []).filter((k) => k.grup === g.key);
-                            if (kartlar.length === 0)
-                                return null;
-                            return (React.createElement("optgroup", { key: g.key, label: g.ad }, kartlar.map((k) => React.createElement("option", { key: k.id, value: k.id }, k.ad))));
-                        }))),
+                    React.createElement(AramaliSecici, { key: `gg-sec-${kalemler.length}`, veriAdi: "data-gg-kart-sec", placeholder: "Gider kart\u0131 ara\u2026", temizle: false, genislik: 260, secenekler: gruplar.flatMap((g) => (tanimlar.giderKartlari || []).filter((k) => k.grup === g.key)
+                            .map((k) => ({ deger: k.id, etiket: k.ad, ek: g.ad }))), onSec: (id) => {
+                            const kart = (tanimlar.giderKartlari || []).find((k) => k.id === id);
+                            setYeni({ ...yeni, kartId: id, ad: kart ? kart.ad : "", grup: kart ? kart.grup : yeni.grup });
+                        } })),
                 React.createElement(Field, { label: "Ayl\u0131k tutar (\u20BA)", genislik: 140 },
                     React.createElement("input", { type: "number", min: "0", step: "any", "data-gg-tutar": "1", value: yeni.aylikTutar, onChange: (e) => setYeni({ ...yeni, aylikTutar: e.target.value }), style: inputStyle })),
                 React.createElement("button", { type: "button", className: "btn-primary", "data-gg-ekle": "1", style: { padding: "7px 14px", fontSize: 13 }, onClick: kalemEkle },
@@ -69830,7 +69944,7 @@ class HataKalkani extends React.Component {
       style: { padding: 24, fontFamily: "ui-monospace, monospace", background: "#FCE7DA",
                color: "#7A3B22", minHeight: "100vh", whiteSpace: "pre-wrap", lineHeight: 1.6 }
     },
-      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.731.0)"),
+      React.createElement("h2", { style: { marginTop: 0, color: "#B85C2E" } }, "Uygulama durdu (s\u00FCr\u00FCm 1.731.3)"),
       React.createElement("p", null, "Bu ekran\u0131n g\u00F6r\u00FCnt\u00FCs\u00FCn\u00FC g\u00F6nderin. Verileriniz diskte duruyor, silinmedi."),
       React.createElement("pre", { style: { background: "#fff", padding: 12, borderRadius: 6, overflow: "auto" } },
         String(h && h.message || h) + "\n\n" + String(h && h.stack || "")),

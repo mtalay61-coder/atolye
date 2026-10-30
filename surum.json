@@ -1,1 +1,1 @@
-{"surum": "1.731.2", "url": "atolye-erp-v1.731.2.html", "not": "Yeni cari açarken bütün bilgiler girilebiliyor: WhatsApp, e-posta, resmi ünvan, vergi dairesi, TCKN, il/ilçe, e-fatura, fiyat grubu, logo/fotoğraf, renk; personelde barkod kodu ve bağlı prosesler"}
+{"surum": "1.731.3", "url": "atolye-erp-v1.731.3.html", "not": "Açılışta fiş defteri bozulmuyor: stok fiş defterinden önce yüklendiği için her açılışta fişler otomatik kayıt olarak yeniden kurulup buluta yazılıyordu (sıfırlamadan sonra eski fişlerin geri gelmesinin sebebi)"}
