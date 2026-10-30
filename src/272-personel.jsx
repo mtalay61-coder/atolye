@@ -32,7 +32,7 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
   const [saat, setSaat] = useState({ haftaIci: "", cumartesi: "", pazar: "" });
   const bolumler = (tanimlar && tanimlar.bolumler) || [];
   const yaz = (bolumId, alanlar) => {
-    if (!bolumId) { if (showToast) showToast("Önce bölüm seçin (Tanımlar › Ürün › Atölye İçi Bölümler)"); return; }
+    if (!bolumId) { if (showToast) showToast("Önce bölüm seçin (Tanımlar › Ürün › Atölye Bölümleri)"); return; }
     onTanimlarKaydet(personelKaydiniYaz(tanimlar, cari.id, bolumId, alanlar));
   };
   const maas = Number(kayit && kayit.maas) || 0;

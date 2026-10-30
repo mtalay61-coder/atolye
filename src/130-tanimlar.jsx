@@ -1783,7 +1783,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
       <TanimBasligi ad="Özel Kod Alanları" />
       <p style={{ fontSize: 12, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
         Alan <b>başlıkları</b> burada tanımlanır, <b>değerler</b> her ürünün kendi kartındaki
-        Tanımlar › Ürün › Özel Kod Alanları bölümünden girilir (Düzenle ile). Bir alan renkler gibi <b>birden çok tipe</b>{" "}
+        Tanımlar › Ürün › Özel Kodlar alt sekmesinden girilir (Düzenle ile). Bir alan renkler gibi <b>birden çok tipe</b>{" "}
         bağlanabilir: satırdaki tip rozetlerine dokunarak ekleyip çıkarın. Hiç tip seçilmeyen alan "Genel"dir, her üründe görünür.
         Başlık sonradan değişse de girilmiş değerler yerinde kalır — değer başlığa değil alanın
         KİMLİĞİNE bağlıdır.

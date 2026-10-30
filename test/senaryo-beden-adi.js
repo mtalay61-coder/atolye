@@ -33,6 +33,7 @@ async function calistir() {
   await sayfa.getByRole("button", { name: "Tanımlar / Ayarlar", exact: true }).first().click();
   await sayfa.waitForTimeout(600);
   await sayfa.evaluate(() => { const b = [...document.querySelectorAll("button")].find((x) => x.textContent.trim() === "Ürün" && x.getBoundingClientRect().width > 0); if (b) b.click(); });
+  await sayfa.waitForTimeout(300); await sayfa.evaluate((k) => { const b = document.querySelector(`[data-urun-alt="${k}"]`); if (b) b.click(); }, "beden");   // Ürün alt sekmesi (v1.731.0)
   await sayfa.waitForTimeout(500);
   // Bölümler kapalı geliyor: "N tanımlı öğe" düğmeleriyle açılıyor. Hepsini aç.
   await sayfa.evaluate(() => { [...document.querySelectorAll("button")].filter((x) => /tanımlı öğe/.test(x.textContent) && x.getBoundingClientRect().width > 0).forEach((b) => b.click()); });

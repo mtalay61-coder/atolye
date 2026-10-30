@@ -172,10 +172,10 @@ const KILAVUZ = [
   // ---------------- YÖNETİCİ ----------------
   { b: "yonetici", baslik: "Tanımlar — nerede ne var", resimler: [{ d: "tanimlar-urun", a: "Tanımlar › Ürün: renkler, bedenler, birimler, asortiler" }], adimlar: [
     "Tanımlar (sağ üstteki dişli). Sekmeler üç öbekte: TANIMLAR (Firma, Ürün, Üretim, Kapasite, E-Fatura & KDV, Web Sitesi), SİSTEM (Kullanıcılar, Görünüm, Sürüm geçmişi), VERİ (Yedek & Bulut, Bakım, Çöp Kutusu).",
-    "Başlıklar kapalı gelir; dokununca açılır ve cihaz bunu hatırlar. Üstteki arama kutusu renk, beden, birim, proses adlarında arar.",
+    "Başlıklar kapalı gelir; dokununca açılır ve cihaz bunu hatırlar (Ürün sekmesinde alt sekmeler var, orada başlıklar hep açık). Üstteki arama kutusu renk, beden, birim, proses adlarında arar; arama yazılıyken Ürün'ün bütün alt sekmeleri birlikte görünür.",
     "Firma: ünvan, vergi bilgileri, logo, dönem kapanışı, e-posta gönderim ayarları, cari tipleri (Fasoncu gibi özel tipler).",
-    "Ürün: Renkler (renk kodu, malzeme tipi, \"Ürün Stok\" işareti, açıklama), Bedenler & Boyutlar (beden grupları), Birimler, Asortiler, Atölye İçi Bölümler, Fiyat Grupları, Özel Kod Alanları, Malzeme ve Mamul tipleri.",
-    "Üretim: Prosesler (sıra, barkod bandı, gider kartı), Ara Prosesler (sabit cari, ücret), Reçete şablonları, Fire sebepleri, Stok giriş/çıkış gider kartları.",
+    "Ürün (alt sekmeler): Renkler (renk kodu, malzeme tipi, \"Ürün Stok\" işareti, açıklama; Model Rengi), Beden & Boyut (beden grupları), Asortiler, Birimler, Ürün Tipleri (mamul ve hammadde), Fire Sebepleri, Atölye Bölümleri, Fiyat Grupları, Özel Kodlar.",
+    "Üretim: Prosesler (sıra, barkod bandı, gider kartı), Ara Prosesler (sabit cari, ücret), Reçete şablonları, Stok giriş/çıkış gider kartları.",
     "E-Fatura & KDV: KDV açma anahtarı ve varsayılan oranlar; e-fatura serisi, senaryo ve gönderici etiketi.",
     "Görünüm: yazı/kutu boyutu, mobil düzen, kart düzenleri (sekme sırası ve gizleme). Sürüm geçmişi: her sürümde ne değişti.",
   ] },
@@ -214,10 +214,10 @@ const KILAVUZ = [
 
   { b: "yonetici", baslik: "Fason üretim, atölye içi bölüm ve maaşlı personel", adimlar: [
     "Fason çalışan (dışarıdaki saya, kalfa ustası) Personel tipinde ya da Fasoncu tipinde caridir. Teslimde işçiliği carisine alacak olarak yazılır; ödeme Ödeme & Tahsilat'tan yapılır.",
-    "Atölye içi bölüm (Tanımlar › Ürün › Atölye İçi Bölümler): bölüm adı, bölümün yaptığı prosesler ve maaşlı personeli. Bu proseslerde teslimde cariye işçilik yazılmaz; bölümün tahakkukuna gider.",
+    "Atölye içi bölüm (Tanımlar › Ürün › Atölye Bölümleri): bölüm adı, bölümün yaptığı prosesler ve maaşlı personeli. Bu proseslerde teslimde cariye işçilik yazılmaz; bölümün tahakkukuna gider.",
     "Maaş: ay başında bölüm personeline \"Maaş\" fişi tahakkuk eder ve bölümün gider kartına (\"<Bölüm> maaşı\") düşer. Gelir / Gider ve Kâr / Zarar'da bölüm bazında görünür.",
     "Cari kartı › Bilgiler › Personel bilgileri: bölüm, aylık maaş, işe başlangıç, aylık çalışma saati. Mesai: ay, hafta içi / cumartesi / pazar saatleri; tutar saat ücreti × katsayıyla hesaplanır ve ayrı Mesai fişi yazılır.",
-    "Mesai katsayıları Tanımlar › Ürün › Atölye İçi Bölümler'de (varsayılan hafta içi ×1,5, cumartesi ×1,5, pazar ×2; aylık 225 saat).",
+    "Mesai katsayıları Tanımlar › Ürün › Atölye Bölümleri'nde (varsayılan hafta içi ×1,5, cumartesi ×1,5, pazar ×2; aylık 225 saat).",
   ] },
 
   { b: "yonetici", baslik: "Cari tipleri", adimlar: [
