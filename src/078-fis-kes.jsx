@@ -116,6 +116,53 @@ function uretimSunucuFisSatirlari(stokKayitlari, cariKayitlari) {
   return { fisler: [...fisler].sort(), stokIdler, cariIdler };
 }
 
+// STOK TARAFINI UYGULA (v1.733.1 — üretim, numune ve ileride stok formları ortak): sunucu yazdıktan sonra etkilenen ürünlerin yeni
+// hâli (`doldur` yer tutucuyu numarayla değiştirir) ekrana, yerel kopyaya ve fark tabanına. Ürünün ANA satırı da değiştiyse (reçete
+// gerçekleşmesi gibi — fiş satırı değil) o ana satır bugünkü yoldan yazılır; hareket ve varyant satırları tabanda (yeniden gitmez).
+function fisKesStokUygula(setStok, etkStok, doldur) {
+  const stokYeniler = doldur(etkStok.yeniler);
+  const urunSatiri = TABLO_SEMA.urunler.satir;
+  const anaDegisen = new Set(stokYeniler.filter((u) => {
+    const e = etkStok.eskiler.find((x) => x.id === u.id);
+    return !e || JSON.stringify(urunSatiri(e)) !== JSON.stringify(urunSatiri(u));
+  }).map((u) => u.id));
+  const hesapli = stokMiktarlariniHesapla(stokYeniler);
+  fisKesTabaniKur("urunler", etkStok.eskiler.filter((u) => !anaDegisen.has(u.id)), hesapli.filter((u) => !anaDegisen.has(u.id)));
+  fisKesTabaniKur("urunler", etkStok.eskiler.filter((u) => anaDegisen.has(u.id)), hesapli.filter((u) => anaDegisen.has(u.id)), { anaDahil: false });
+  setStok((onceki) => {
+    const n = degisenKayitlariBirlestir(onceki, etkStok.eskiler, stokYeniler);
+    fisKesYerelYaz("stok:items", n);
+    if (anaDegisen.size) yazimiIzle(tabloYaz("stok:items", "urunler", stokMiktarlariniHesapla(n)), "Stok kartları", n);
+    return n;
+  }, { buluttan: true });
+}
+
+// YALNIZ STOK SATIRLI FİŞ (saf, v1.733.1 — numune; ileride elle giriş, sayım, açılış): yerel hesabın yer tutuculu (FIS_YER) yeni
+// hareketlerinden `fis_kes` yükü. `fis`: { tur, onek, kaynak, aciklama, kullanici, ek, … } — aile "stok". Satır yoksa `bos`.
+function stokFisiYuku({ fis, eskiStok, yeniStok, istek }) {
+  const etkStok = fisKesEtkilenen(eskiStok, yeniStok, fisKesDegisenIdler(eskiStok, yeniStok));
+  const satirlar = [];
+  const kalemler = [];
+  const stokHareketleri = [];
+  etkStok.yeniler.forEach((u) => (u.hareketler || []).forEach((h) => {
+    if (h.fisNo !== FIS_YER) return;
+    satirlar.push(fisKesStokSatiri(u.id, h));
+    kalemler.push({ urunId: u.id, urunAd: u.ad, renk: h.renk, beden: h.beden, miktar: h.miktar, hareketId: h.id });
+    stokHareketleri.push({ ...h, urunId: u.id, urunAd: u.ad });
+  }));
+  const yuk = { istek, fis: { defter: "Genel", tarih: new Date().toISOString(), ...fis, aile: "stok", kalemler }, stok: { satirlar } };
+  return { yuk, etkStok, stokHareketleri, bos: !satirlar.length };
+}
+// Sunucu fişinin yerel defter kaydı (saf): fis_listesi biçimi, numara yerleşmiş.
+function sunucuFisKaydi(yuk, no, stokHareketleri, cariHareketleri) {
+  const d = (x) => fisYerTutucuDoldur(x, no);
+  return {
+    ...d(yuk.fis), id: no, fisNo: no, tip: yuk.fis.tur, sunucu: true, bagliFis: null, zaman: new Date().toISOString(),
+    stokTarihi: yuk.fis.tarih, stokHareketleri: d(stokHareketleri || []), cariHareketleri: d(cariHareketleri || []), kasaHareketleri: [],
+    iptal: false, iptalZamani: null,
+  };
+}
+
 // Kasa & Banka tabanı (tek parça belge, 030 `tekilTabanOku`): eklenen hareketler hesabına, iptal edilenler çıkar.
 function fisKesKasaTabaniKur(ekle, silIdler) {
   const taban = tekilTabanOku("muhasebe");

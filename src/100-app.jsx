@@ -1515,7 +1515,7 @@ function AtolyeUygulamasi() {
   // kuralına göre üretilir (aşağıda).
   // PROSESE İŞ VERME AYRI DOSYADA (19 Eylül, 2. madde, 10. tur): `080-proses-ver.jsx`.
   const uretimProsesVer = useProsesVer({
-    uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari, setSiparisler,
+    uretim, stok, cariler, tanimlar, siparisler, stokRezervasyonlari, showToast, setUretim, setStok, setCariler, setStokRezervasyonlari, setSiparisler, setFisDefteri,
   });
 
   // "Verildi" ama henüz "teslim alınmadı" bir ATAMAYI geri alır — örn. yanlış personele/miktarla iş
@@ -1903,12 +1903,18 @@ function AtolyeUygulamasi() {
   //
   // YARIM ÇİFT: miktar çift cinsinden ama 0,5 olabilir (tek ayak). Reçete çift başına
   // yazıldığı için tüketim = reçete × 0,5. Kesirli tüketim stokYuvarla ile iki hanede.
-  const numuneUret = useCallback((model, turId, { miktar, beden }) => {
+  // TEK FİŞ DEFTERİ (v1.733.1, 078): sunucuda fiş defteri kuruluysa numune fişini sunucu keser (NUM-…), stok satırlarıyla tek
+  // işlemde; yazılamazsa hiçbir şey değişmez. Çift basışta (yanıt beklenirken) ikinci numune fişi kesilmez.
+  const numuneSuruyorRef = useRef(new Set());
+  const numuneUret = useCallback(async (model, turId, { miktar, beden }) => {
     const adet = parseFloat(miktar) || 0;
     if (!(adet > 0)) { showToast("Numune miktarı girin (0,5 = tek ayak, 1 = çift)"); return false; }
     const recete = model.recete || [];
     if (recete.length === 0) { showToast("Önce reçete girin — numune neyden yapılacak?"); return false; }
-    const fisNo = fisNoUret("NUM");
+    const sunucuYolu = fisKesYolu();
+    const istekAnahtari = `${model.id}|${turId}`;
+    if (numuneSuruyorRef.current.has(istekAnahtari)) return false;
+    const fisNo = sunucuYolu ? FIS_YER : fisNoUret("NUM");
     const tarih = new Date().toISOString();
     let maliyet = 0;
     const eksikler = [];
@@ -1937,18 +1943,48 @@ function AtolyeUygulamasi() {
     });
     // OLMAYAN MALZEMEYLE NUMUNE YAPILMAZ: stok yetmiyorsa hiç yazma (satış kuralıyla aynı).
     if (eksikler.length > 0) { showToast(`Stok yetmiyor — ${eksikler.join(" · ")}`); return false; }
-    // KALICI YAZMA: `setStok` yalnız bellek; diğer kapılar gibi `saveStok` (yerel + bulut).
-    saveStok(nextStok);
-    saveModeller((modeller || []).map((m) => (m.id !== model.id ? m : {
+    // Model kaydı (numune turu) fiş numarasıyla; GÜNCEL liste ref'ten (sunucu yolunda bekleme sonrası çağrılır).
+    const modeleYaz = (no) => saveModeller((modelRef.current || []).map((m) => (m.id !== model.id ? m : {
       ...m,
       numuneler: (m.numuneler || []).map((n) => (n.id !== turId ? n : {
-        ...n, uretim: { fisNo, miktar: adet, beden: beden || "", tarih, maliyet: Math.round(maliyet * 100) / 100 },
+        ...n, uretim: { fisNo: no, miktar: adet, beden: beden || "", tarih, maliyet: Math.round(maliyet * 100) / 100 },
       })),
-      gecmis: [...(m.gecmis || []), { tarih, olay: `Numune üretildi: ${adet} çift${beden ? ` · ${beden}` : ""} · ${fisNo}` }],
+      gecmis: [...(m.gecmis || []), { tarih, olay: `Numune üretildi: ${adet} çift${beden ? ` · ${beden}` : ""} · ${no}` }],
     })));
-    showToast(`Numune üretildi — ${fisNo} · hammadde ${Math.round(maliyet)} ₺`);
+    if (sunucuYolu) {
+      const h = stokFisiYuku({
+        fis: { tur: "Numune", onek: "NUM", kaynak: "Numune", siparisNo: model.kod || null, kullanici: damgaKullaniciAdi() || null,
+          aciklama: `Numune ${model.kod || ""} · ${adet} çift${beden ? ` · ${beden}` : ""}`, ek: { modelId: model.id, numuneTurId: turId } },
+        eskiStok: stok, yeniStok: nextStok, istek: uid("fis"),
+      });
+      if (!h.bos) {
+        numuneSuruyorRef.current.add(istekAnahtari);
+        let r;
+        try {
+          r = await fisKesGonder(h.yuk);
+        } catch (e) {
+          showToast(`Numune kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+          return false;
+        } finally {
+          numuneSuruyorRef.current.delete(istekAnahtari);
+        }
+        const no = r.fisNo;
+        fisKesStokUygula(setStok, h.etkStok, (x) => fisYerTutucuDoldur(x, no));
+        setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, h.stokHareketleri), ...(onceki || [])]);
+        modeleYaz(no);
+        gunlukYaz(`Numune üretildi: ${model.kod || model.id} → ${no}`, "stok", { modelId: model.id, fisNo: no });
+        showToast(`Numune üretildi — ${no} · hammadde ${Math.round(maliyet)} ₺`);
+        return true;
+      }
+    }
+    // KALICI YAZMA: `setStok` yalnız bellek; diğer kapılar gibi `saveStok` (yerel + bulut).
+    // Sunucu yolunda satırsız numune (reçeteden düşecek miktar yok) fiş doğurmaz — kayıt eski usul numarayla.
+    const eskiNo = fisNo === FIS_YER ? fisNoUret("NUM") : fisNo;
+    saveStok(nextStok);
+    modeleYaz(eskiNo);
+    showToast(`Numune üretildi — ${eskiNo} · hammadde ${Math.round(maliyet)} ₺`);
     return true;
-  }, [stok, saveStok, modeller, saveModeller, fisNoUret, showToast]);
+  }, [stok, saveStok, saveModeller, fisNoUret, showToast, setStok]);
 
   // NUMUNE ÜRETİMİ (Modelhane 3. tur, 20 Eylül): model kartından üretim emri açılır.
   // Ürün kartı YOK — reçete ve ad emre kopyalanır, üretim modülü `uretimUrunu()` ile sanal
