@@ -1,4 +1,4 @@
-function MuhasebeModule({ onParaFisiKes, kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
+function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
   const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
   // KAPSAM (v1.458.0): menüde "Kasa & Banka" ve "Çek & Senet" ayrı öğe; ikisi de bu tek örneği
   // gösteriyor. Çek & Senet'te sekme şeridi yok, hep çek; Kasa & Banka'da Çek sekmesi yok — orada
@@ -209,6 +209,12 @@ function MuhasebeModule({ onParaFisiKes, kapsam = "genel", tanimlar, stok, ureti
         "muhasebeHareketGuncelle", { tur, hesapId, hareketId, yeni });
       return;
     }
+    // TEK FİŞ DEFTERİ (v1.737.0 — kullanıcı kararı "düzeltme = iptal + yeni fiş"): sunucu fişinin satırı yerinde değiştirilmez
+    // (sunucu kuralları açılınca reddedilir). Kullanıcı fişi silip (iptal) doğrusunu yeniden girer.
+    if (sunucuFisiMi && sunucuFisiMi(eski.fisNo)) {
+      showToast(`${eski.fisNo} fişi düzenlenmez — silin (fiş iptal edilir, iz kalır) ve doğrusunu yeniden girin`);
+      return;
+    }
     const guncel = { ...eski, tutar: yeni.tutar, tarih: yeni.tarih || eski.tarih, aciklama: yeni.aciklama };
     const zarf = kasaZarfiAc(!!(eski.muhasebeBagId && onCarilerGuncelle));   // v1.729.0: kasa + cari tek işlem
     const kasaSozu = onSave({
@@ -256,6 +262,12 @@ function MuhasebeModule({ onParaFisiKes, kapsam = "genel", tanimlar, stok, ureti
         : "hareket";
       onayIste("muhasebe", "Sil", `"${hesap ? hesap.ad : tur}" hesabından ${ozet} kaydını sil`, "muhasebeHareketSil", { tur, hesapId, hareketId });
       return;
+    }
+    // TEK FİŞ DEFTERİ (v1.737.0): satır bir sunucu fişininse silinmez, fiş BÜTÜN iptal edilir (100 sunucuFisiniIptalEt) — virmanın
+    // iki ayağı, makbuzun cari satırı ve bağlı fiş birlikte; iz kalır. Eski usul kayıt bugünkü yoldan.
+    if (onFisIptal && silinecekHareket && silinecekHareket.fisNo) {
+      const iptal = onFisIptal(silinecekHareket.fisNo, "Kasa / banka hareketi silindi");
+      if (iptal) { await iptal; return; }
     }
     if (silinecekHareket && onCopaAt) {
       onCopaAt(tur === "kasa" ? "kasaHareketi" : "bankaHareketi", hesap.ad, silinecekHareket, {

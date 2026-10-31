@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.736.0";
+const SURUM = "1.737.0";
 const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Tek fiş defteri — 7. adım: virman (VRM), gelir / gider kartı ödemesi (GL / GD) ve Banka Excel aktarımı sunucu fişiyle";
+const SURUM_NOTU = "Tek fiş defteri — 8. adım: silme fiş iptalidir — kasa / banka hareketi, gelir / gider hareketi ve cari hareketi silinince sunucu fişi bütün iptal edilir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.737.0", tarih: "31.10.2026", eklenen: [], degisen: ["Tek fiş defteri — 8. adım: sunucuda kesilmiş bir fişin satırı (kasa / banka hareketi, gelir / gider kartı hareketi, cari ekstresindeki hareket) silinince satır tek başına silinmez; fiş BÜTÜN iptal edilir — virmanın iki ayağı, makbuzun cari ve kasa satırı, bağlı fiş birlikte; iz kalır. Böyle bir fişin satırı düzenlenmez: silin (iptal) ve doğrusunu yeniden girin. Virman ve gider kaydının bildiriminde de \"Geri al\" var."], duzeltilen: [] },
   { surum: "1.736.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 7. adım: Kasa & Banka › Virman iki ayağıyla TEK fiş (VRM-…); Ödeme & Tahsilat › gelir / gider kartına ödeme GL / GD fişi; Banka Excel aktarımında her satır kendi fişini alır (carili satır TH / ÖD makbuzu, kartlı satır GL / GD). Numarayı sunucu verir; yazılamazsa form dolu kalır. Banka Excel'de yazılamayan satır seçili kalır, özet kaç satırın yazılamadığını söyler; aktarım sürerken düğme kapalı."], degisen: [], duzeltilen: [] },
   { surum: "1.735.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 6. adım: cari kartından girilen tahsilat, ödeme ve ürünsüz alış / satış; Ödeme & Tahsilat ekranındaki kısa form; sipariş kartından ödeme — numarayı sunucu verir (TH / ÖD / AF / SF), cari satırı ile kasa / banka satırı TEK işlemde yazılır. Bildirimde \"Geri al\" var (fişi iptal eder). Elle yazdığınız belge numarası fişin ek bilgisinde saklanır."], degisen: [], duzeltilen: ["Cari kartından girilen tahsilat / ödemede cari satırı ile kasa satırı ayrı ayrı yazılıyordu; biri yazılıp öteki yazılamayabiliyordu. Artık ikisi birlikte yazılır ya da hiçbiri; yazılamazsa form açık ve dolu kalır, ekranlar \"kaydedildi\" demez. Kaydet'e iki kez basmak iki makbuz kesmez."] },
   { surum: "1.734.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 5. adım: Stok › Bağımsız Stok Girişi / Çıkışı MNL-…, ürün kartındaki defter düzeltmesi ve Açılış fişi ACL-… numarasını sunucudan alır; fiş ve satırları tek işlemde yazılır. Açılış fişi artık ürün başına değil TEK fiş. Yazılamazsa hiçbir şey değişmez: bağımsız giriş formu açık ve dolu kalır, yeniden denenebilir; yanıt beklenirken ikinci basış ikinci fiş kesmez."], degisen: [], duzeltilen: [] },
