@@ -56,6 +56,19 @@ function fisKesSiparisKalemleri(siparis, kalemIdler) {
   return cocuk.cikar(siparis).filter((s) => istenen.has(s.id));
 }
 
+// Bir ana kaydın değişen alt satırları (alt_yaz biçimi, saf): yeni hâlde olup eskisinden farklı (ya da yeni) olanlar `satirlar`,
+// eskide olup yenide olmayanlar `sil`. Üretim atamaları için (teslim: atama tamamlandı + kalan / tamir ataması doğdu; geri alma:
+// tersi) — yalnız etkilenen satır gider, ötekiler (başka ustanın aynı anda aldığı iş) dokunulmadan kalır.
+function fisKesAltFarki(tablo, cocukTablo, eski, yeni) {
+  const cocuk = TABLO_SEMA[tablo].cocuklar.find((c) => c.tablo === cocukTablo);
+  const eskiler = new Map((eski ? cocuk.cikar(eski) : []).map((c) => [cocuk.anahtar(c), JSON.stringify(c)]));
+  const yeniler = yeni ? cocuk.cikar(yeni) : [];
+  const satirlar = yeniler.filter((c) => eskiler.get(cocuk.anahtar(c)) !== JSON.stringify(c));
+  const kalan = new Set(yeniler.map((c) => cocuk.anahtar(c)));
+  const sil = [...eskiler.keys()].filter((k) => !kalan.has(k));
+  return { satirlar, sil };
+}
+
 // Gönderici. Aynı `istek` ile tekrar çağrılabilir (ağ yeniden denemesi): sunucu ikinci kez yazmaz, ilk numarayı döner.
 async function fisKesGonder(yuk) {
   const r = await supabaseIstek("rpc/fis_kes", { method: "POST", body: JSON.stringify({ p: yuk }) });
@@ -84,6 +97,25 @@ function fisKesTabaniKur(tablo, eskiler, yeniler, { anaDahil = true } = {}) {
     });
   });
 }
+// SUNUCUDA İPTAL EDİLMİŞ SATIRLAR tabandan çıkar (v1.733.0): ekrandan kalkan satır, yazma katmanına "silinmiş" görünüp eski
+// yoldan bir daha gönderilmesin (fis_iptal zaten iptal etti; kurallar açılınca o silme reddedilir). Aynı yazmadaki öteki
+// farklar (eski usul satırlar, ana kayıt) bugünkü yoldan gitmeye devam eder.
+function fisKesTabandanCikar(tablo, cocukTablo, anahtarlar) {
+  const m = _sonHal[`${tablo}::${cocukTablo}`];
+  if (!m) return;
+  (anahtarlar || []).forEach((k) => m.delete(k));
+}
+// Geri alınan / silinen satırlardan SUNUCU FİŞİNE bağlı olanlar (saf): üretim satırı sunucu fişindeyse `uretimFisAdi` taşır
+// (079-uretim-teslim), numarası `fisNo`dadır. Döner: iptal edilecek fiş numaraları + satır kimlikleri.
+function uretimSunucuFisSatirlari(stokKayitlari, cariKayitlari) {
+  const fisler = new Set();
+  const stokIdler = [];
+  const cariIdler = [];
+  (stokKayitlari || []).forEach(({ hareket: h }) => { if (h && h.uretimFisAdi && h.fisNo) { fisler.add(h.fisNo); stokIdler.push(h.id); } });
+  (cariKayitlari || []).forEach(({ hareket: h }) => { if (h && h.uretimFisAdi && h.fisNo) { fisler.add(h.fisNo); cariIdler.push(h.id); } });
+  return { fisler: [...fisler].sort(), stokIdler, cariIdler };
+}
+
 // Kasa & Banka tabanı (tek parça belge, 030 `tekilTabanOku`): eklenen hareketler hesabına, iptal edilenler çıkar.
 function fisKesKasaTabaniKur(ekle, silIdler) {
   const taban = tekilTabanOku("muhasebe");

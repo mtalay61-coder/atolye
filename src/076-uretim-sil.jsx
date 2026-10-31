@@ -134,7 +134,7 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
     let rezEtkilendi = false;
     if (siparis.rezervasyonSiparisId) {
       silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
-        const fisNoH = String(h.fisNo || "");
+        const fisNoH = String(h.uretimFisAdi || h.fisNo || "");   // sunucu fişinde tür eski adda (v1.733.0)
         if (fisNoH.endsWith("-EkMalzeme")) return;
         if (h.miktar > 0) {
           if (!fisNoH.endsWith("-İade")) return;
@@ -164,6 +164,34 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       return;
     }
 
+    // Sonraki adımların listeleri bekleme ÖNCESİ (aşağıdaki sunucu iptali `await` ediyor; bayat okuma olmasın).
+    const nextUretimListesi = uretim.filter((o) => o.id !== uretimId);
+    const kalanRezervasyonlar = (stokRezervasyonlari || []).filter((r) => r.uretimNo !== siparis.siparisNo);
+    const rezervasyonAzaldi = kalanRezervasyonlar.length !== (stokRezervasyonlari || []).length;
+
+    // TEK FİŞ DEFTERİ (v1.733.0, 078): teslimleri sunucu fişiyle (ÜRT-…) kesilmiş üretimin fişleri sunucuda İPTAL edilir — satırlar
+    // silinmez. İptal edilemezse hiçbir şey değişmez (üretim yerinde kalır). İptal edilen satırlar fark tabanından çıkar; eski usul
+    // satırlar, ana kayıtlar ve üretim kaydı aşağıdaki adımlarla bugünkü yoldan.
+    const silinenCariKayitlari = cariler.flatMap((c) => (c.hareketler || []).filter(buUretimeAitCariHareketiMi).map((h) => ({ cari: c, hareket: h })));
+    const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(silinenStokKayitlari, silinenCariKayitlari) : null;
+    if (sunucuSatirlari && sunucuSatirlari.fisler.length) {
+      const iptalEdilen = [];
+      try {
+        for (const no of sunucuSatirlari.fisler) {
+          await fisIptalGonder(no, `Üretim ${siparis.siparisNo} silindi`);
+          iptalEdilen.push(no);
+        }
+      } catch (e) {
+        showToast(`⚠ Üretim SİLİNMEDİ — fiş iptal edilemedi (${String((e && e.message) || e).slice(0, 160)}).`
+          + (iptalEdilen.length ? ` İptal edilen: ${iptalEdilen.join(", ")}; sayfayı yenileyip yeniden deneyin.` : ""));
+        gunlukYaz(`Üretim silme: fiş iptal edilemedi (${siparis.siparisNo})`, "uretim", { iptalEdilen, hata: String((e && e.message) || e).slice(0, 200) });
+        return { ok: false };
+      }
+      fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
+      fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
+      gunlukYaz(`Üretim fişleri iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} silindi)`, "uretim", { uretimId });
+    }
+
     // SIRA BİLİNÇLİ: hammadde ve cari etkileri önce geri alınır, üretim kaydı EN SON silinir.
     // Yarıda kalırsa geriye "etkileri geri alınmış ama hâlâ duran" bir üretim kalır — bu
     // görünür, anlaşılır ve yeniden denenebilir. Ters sırada kalan şey ise öksüz hareket
@@ -175,7 +203,6 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
       ozet: `${siparis.urunAd || ""}${siparis.renk ? " · " + siparis.renk : ""} — ${(siparis.bedenMiktarlari || []).reduce((s, bm) => s + (bm.miktar || 0), 0)} adet`,
       yanEtkiliMi: true,
     });
-    const nextUretimListesi = uretim.filter((o) => o.id !== uretimId);
     // Stok ve cari hareketleri TEK ADIM, tek zarf (v1.727.0): v2'de tek sunucu işlemi — biri silinip öteki kalamaz.
     const adimlar = [
       { ad: "hammadde ve cari hareketleri", yerelUygula: () => { setStok(nextStok); setCariler(nextCariler); },
@@ -197,8 +224,7 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
     // silinmiyordu. Rezervasyon "açık talep" sayıldığı için Depo ekranında talep ve ihtiyaç
     // olduğundan yüksek çıkıyordu — silinmiş üretimlerin talebi defterde birikiyordu.
     // (Aynı sınıf hata `karsilanan` sayacında da vardı, v1.367.0'da türetmeye geçilerek kapandı.)
-    const kalanRezervasyonlar = (stokRezervasyonlari || []).filter((r) => r.uretimNo !== siparis.siparisNo);
-    if (kalanRezervasyonlar.length !== (stokRezervasyonlari || []).length) {
+    if (rezervasyonAzaldi) {
       adimlar.push({ ad: "stok rezervasyonları", yerelUygula: () => setStokRezervasyonlari(kalanRezervasyonlar),
         yaz: () => tabloYaz("stokrez:data", "stok_rezervasyonlari", kalanRezervasyonlar) });
     }
@@ -254,6 +280,7 @@ const uretimSil = useCallback(async (uretimId, cascade) => {
   }
 
   // Etkisiz üretim: temizlenecek hareket yok, yine de sonuç DOĞRULANIR.
+  // bayat-muaf: ayrı dal — yukarıdaki `await`ler (sunucu iptali, adımlar) yalnız temizlik dalında; buraya beklemeden gelinir.
   const kalanUretim = uretim.filter((o) => o.id !== uretimId);
   const sadeAdimlar = [];
   if (etkilendiMi) {

@@ -184,5 +184,7 @@ ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi 
 1. SQL: `fis`, `fis_kalem`, satır bağları, `fis_kes`, `fis_iptal`, kurallar — yerel PostgreSQL'de her fiş türüyle sınama.
 2. Uygulama: fiş kurucu ortak işlev + yolların taşınması (tablodaki sırayla: alış/satış → sipariş → üretim → stok
    formları → para fişleri → çek), eski kodun kaldırılması. Her yol için senaryo.
+   İlerleme: alış/satış fişi (v1.732.0), sipariş teslimi (v1.732.1), üretim teslimi + geri alma + üretim silme (v1.733.0 —
+   tek ÜRT fişi; satır türü `uretimFisAdi` alanında). Sırada: iş verme / ara proses (080), numune, stok formları.
 3. Gece denetimi (gün sonu raporuna).
 4. Siz: Supabase'de tek SQL adımı → kontrol listesi → 1–2 hafta paralel kullanım.

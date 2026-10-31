@@ -167,7 +167,8 @@ function fisGeriAl(veri, secenekler = {}) {
       // Üretim kaydı artık yoksa geri alınacak ilerleme de yok: fiş kalıntıdır, serbestçe temizlenir.
       : (uretim || []);
     for (const u of adaylar) {
-      const eslesme = uretimFisAilesi(u, h.fisNo);
+      // Sunucu fişinde (v1.733.0) numara ÜRT-…; satırın üretimdeki adı `uretimFisAdi`nda.
+      const eslesme = uretimFisAilesi(u, h.uretimFisAdi || h.fisNo);
       if (eslesme) { uretimEslesmeleri.set(u.id, { ...eslesme, uretim: u }); break; }
     }
   });
@@ -209,7 +210,7 @@ function fisGeriAl(veri, secenekler = {}) {
     const aile = new Set(eslesme.fisler);
     tumHareketler.forEach((x) => {
       // Kimliği olmayan eski kayıtlar da alınır: fiş numarası zaten o üretime özgü.
-      if (aile.has(x.fisNo) && (!x.uretimId || x.uretimId === uretimId)) idler.add(x.id);
+      if ((aile.has(x.fisNo) || aile.has(x.uretimFisAdi)) && (!x.uretimId || x.uretimId === uretimId)) idler.add(x.id);
     });
   });
   if (uretimEslesmeleri.size > 0) esGenislet();
