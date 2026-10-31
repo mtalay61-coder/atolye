@@ -320,6 +320,82 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   bekle("7: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
   bekle("7: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
 
+  console.log("8) Ardışık iki ara proses iş verirken tamamlanır: her biri kendi ÜRT fişi, yeni atama SON fişle; biri geri alınır");
+  psql(`insert into public.uretim (id, siparis_no, urun_id, asama) values ('ur-2', 'U-2', 'u-yeni', 'Saya') on conflict do nothing;`);
+  stok = stokOku();
+  cariler = carilerOku();
+  E.tabloBaslangicTam("urunler", derin(stok));
+  E.tabloBaslangicTam("cariler", derin(cariler));
+  const araAdim = (ad) => ({ proses: ad, araProsesMi: true, araProsesId: `ap-${ad}`, araProsesCariId: "c-per", tamamlandiMi: false, verildiMi: false, atamalar: [] });
+  const ur2 = { id: "ur-2", siparisNo: "U-2", urunId: "u-yeni", model: "Yeni Ürün", renk: "Siyah", asama: "Kesim", bedenMiktarlari: [{ beden: "Standart", miktar: 1 }],
+    prosesIlerleme: [{ proses: "Kesim", tamamlandiMi: true, atamalar: [] }, araAdim("Boya"), araAdim("Cila"), { proses: "Saya", tamamlandiMi: false, atamalar: [] }] };
+  uretim = [ur2];
+  E.tabloBaslangicTam("uretim", derin(uretim));
+  const yeniAtama2 = { id: "a-2", personelId: "c-per", bedenMiktarlari: { Standart: 1 }, miktar: 1, verildiMi: true, verilmeTarihi: zamanU, tamamlandiMi: false, tamamlanmaTarihi: null };
+  const satir8 = (id, ad, miktar) => ({ id, tarih: zamanU, renk: "Siyah", beden: "Standart", miktar, kaynak: "Üretim", siparisNo: "U-2", uretimId: "ur-2", fisNo: E.FIS_YER, uretimFisAdi: ad });
+  const yeniStok8 = stok.map((u) => (u.id === "u-ham" ? { ...u, hareketler: [satir8("uh-b", "U-2-Boya", -0.5), satir8("uh-c", "U-2-Cila", -0.25), ...(u.hareketler || [])] } : u));
+  const yeniCari8 = cariler.map((c) => (c.id === "c-per" ? { ...c, hareketler: [{ id: "uc-b", tarih: "2026-10-31", zaman: zamanU, islemTipi: "İşçilik", yon: E.hareketYonu("İşçilik"),
+    tutar: 5, defter: "Genel", siparisNo: "U-2", uretimId: "ur-2", fisNo: E.FIS_YER, uretimFisAdi: "U-2-Boya-İşçilik" }, ...(c.hareketler || [])] } : c));
+  const tamam = (a) => ({ ...a, tamamlandiMi: true, verildiMi: true, personelId: "c-per", tamamlanmaTarihi: zamanU });
+  const yeniUretim8 = [{ ...ur2, prosesIlerleme: [ur2.prosesIlerleme[0], tamam(ur2.prosesIlerleme[1]), tamam(ur2.prosesIlerleme[2]), { ...ur2.prosesIlerleme[3], atamalar: [yeniAtama2] }] }];
+  const ortak8 = { siparis: ur2, eskiStok: stok, yeniStok: yeniStok8, eskiCariler: cariler, yeniCariler: yeniCari8, eskiUretim: uretim, yeniUretim: yeniUretim8,
+    eskiSiparisler: [], yeniSiparisler: [], kullaniciAd: "Ali" };
+  const hz = ["Boya", "Cila"].map((p, i) => E.uretimTeslimSunucuYuku({ ...ortak8, prosesAdi: p, atamaFisAdi: `U-2-${p}`, istek: `uu-ara-${p}`,
+    aile: new Set([`U-2-${p}`, `U-2-${p}-İşçilik`]), altDahil: i === 1 }));
+  bekle("8: yükler (satır sayısı, alt yalnız sonda)", hz.map((h) => `${h.yuk.stok.satirlar.length}/${h.yuk.cari.satirlar.length}/${h.yuk.alt ? h.yuk.alt.uretim_atamalari.satirlar.map((x) => x.id).join("+") : "-"}`), ["1/1/-", "1/0/a-2"]);
+  const nolar8 = [];
+  for (const h of hz) nolar8.push((await E.fisKesGonder(h.yuk)).fisNo);
+  bekle("8: iki ayrı fiş, satırlar doğru fişte, atama yazıldı", psql(`select (select count(*) from public.stk_hareket where fis_id = '${nolar8[0]}') || '/' || (select count(*) from public.car_hareket where fis_id = '${nolar8[0]}') || '/' || (select count(*) from public.stk_hareket where fis_id = '${nolar8[1]}') || '/' || (select count(*) from public.uretim_atamalari where id = 'a-2');`), "1/1/1/1");
+  const numaralar8 = new Map([["U-2-Boya", nolar8[0]], ["U-2-Boya-İşçilik", nolar8[0]], ["U-2-Cila", nolar8[1]], ["U-2-Cila-İşçilik", nolar8[1]]]);
+  const dold8 = (x) => E.fisYerTutucuAileyeDoldur(x, numaralar8);
+  let ekranStok = stok;
+  E.fisKesStokUygula((f) => { ekranStok = E.stokMiktarlariniHesapla(f(ekranStok)); }, hz[0].etkStok, dold8);
+  stok = ekranStok;
+  const cariYeni8 = dold8(hz[0].etkCari.yeniler);
+  cariler = E.degisenKayitlariBirlestir(cariler, hz[0].etkCari.eskiler, cariYeni8);
+  E.fisKesTabaniKur("cariler", hz[0].etkCari.eskiler, cariYeni8);
+  E.fisKesTabaniKur("uretim", hz[1].etkUretim.eskiler, yeniUretim8, { anaDahil: false });
+  uretim = yeniUretim8;
+  bekle("8: ekranda her satır kendi fişinin numarası", stok.find((u) => u.id === "u-ham").hareketler.filter((h) => ["uh-b", "uh-c"].includes(h.id)).map((h) => `${h.id}:${h.fisNo === nolar8[0] ? 1 : h.fisNo === nolar8[1] ? 2 : "?"}`).sort(), ["uh-b:1", "uh-c:2"]);
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("urunler", stok);
+  await E.supabaseTabloEsitle("cariler", cariler);
+  await E.supabaseTabloEsitle("uretim", uretim);
+  bekle("8: eşitleme hiçbir satırı yeniden göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("8: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
+  bekle("8: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
+  // Cila'yı geri al (önce iş vermeyi geri almış gibi: Saya ataması kaldırılır, sonra ara proses).
+  const uretimGeri = [{ ...uretim[0], prosesIlerleme: uretim[0].prosesIlerleme.map((p) => (p.proses === "Saya" ? { ...p, atamalar: [] } : p)) }];
+  const g8 = E.fisGeriAl({ stok, cariler, siparisler: [], uretim: uretimGeri, muhasebe, koliler: [], faturalar: [] },
+    { uretimHedefi: { uretimId: "ur-2", prosesAdi: "Cila", atamaId: null }, uretimeIzinVer: true });
+  const ss8 = E.uretimSunucuFisSatirlari(g8.silinenStokKayitlari, g8.silinenCariKayitlari);
+  bekle("8: Cila geri alınınca yalnız Cila fişi", [ss8.fisler, ss8.stokIdler], [[nolar8[1]], ["uh-c"]]);
+  await E.fisIptalGonder(nolar8[1], "Ara proses geri alındı", null);
+  E.fisKesTabandanCikar("urunler", "stok_hareketleri", ss8.stokIdler);
+  stok = E.stokMiktarlariniHesapla(g8.stok);
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("urunler", stok);
+  bekle("8: geri almada satır gönderilmedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("8: Boya fişi yerinde, Cila iptal", psql(`select (select iptal from public.stk_fis where id = '${nolar8[0]}') || '/' || (select iptal from public.stk_fis where id = '${nolar8[1]}');`), "false/true");
+  bekle("8: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
+
+  console.log("9) Numune: NUM fişi sunucudan, hammadde çıkışıyla tek işlemde");
+  const yeniStok9 = stok.map((u) => (u.id === "u-ham" ? { ...u, hareketler: [{ id: "un-1", tarih: zamanU, renk: "Siyah", beden: "Standart", miktar: -0.3,
+    kaynak: "Numune", fisNo: E.FIS_YER, siparisNo: "M-7", cariId: null, aciklama: "Numune M-7 · 0.5 çift" }, ...(u.hareketler || [])] } : u));
+  const h9 = E.stokFisiYuku({ fis: { tur: "Numune", onek: "NUM", kaynak: "Numune", siparisNo: "M-7", kullanici: "Ali", aciklama: "Numune M-7 · 0.5 çift", ek: { modelId: "m-7" } },
+    eskiStok: stok, yeniStok: yeniStok9, istek: "uu-numune" });
+  const no9 = (await E.fisKesGonder(h9.yuk)).fisNo;
+  bekle("9: NUM fişi + 1 satır", [/^NUM-\d{9}$/.test(no9), psql(`select count(*) from public.stk_hareket where fis_id = '${no9}';`)], [true, "1"]);
+  ekranStok = stok;
+  E.fisKesStokUygula((f) => { ekranStok = E.stokMiktarlariniHesapla(f(ekranStok)); }, h9.etkStok, (x) => E.fisYerTutucuDoldur(x, no9));
+  stok = ekranStok;
+  bekle("9: defter kaydı", (({ fisNo, aile, tip, sunucu }) => [fisNo === no9, aile, tip, sunucu])(E.sunucuFisKaydi(h9.yuk, no9, h9.stokHareketleri)), [true, "stok", "Numune", true]);
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("urunler", stok);
+  bekle("9: eşitleme satır göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("9: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
+  bekle("9: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
+
   console.log(hata ? "── UÇTAN UCA (FİŞ) HATALI ──" : "── uçtan uca (fiş defteri) temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

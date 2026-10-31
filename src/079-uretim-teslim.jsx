@@ -16,14 +16,18 @@
 // TEK FİŞ — SUNUCU YÜKÜ (v1.733.0, saf). Teslimin yerel hesabından (bugünkü kurallar) `fis_kes` yükünü kurar: yer tutuculu
 // (FIS_YER) yeni stok ve cari satırları, değişen üretim atamaları (tamamlandı / kısmi kalan / tamir) ve rezervasyonu değişen
 // sipariş kalemleri — hepsi TEK işlemde. Satır yoksa `bos` (fiş kesilmez). Hammadde satırı yoksa (yalnız işçilik) fiş para ailesinden.
+// `aile` (080 ara proses, v1.733.1): bir işlemde BİRDEN ÇOK fiş doğuyorsa (ardışık iki ara proses aynı anda tamamlanır — her biri
+// kendi fişi, çünkü her biri ayrı geri alınır) yalnız `uretimFisAdi` bu kümede olan yer tutuculu satırlar alınır. `altDahil: false`:
+// atama / sipariş kalemi bu fişle değil, sıradaki fişle gider (alt yalnız son fişte, bkz. 080).
 function uretimTeslimSunucuYuku({ siparis, prosesAdi, atamaFisAdi, eskiStok, yeniStok, eskiCariler, yeniCariler, eskiUretim, yeniUretim,
-  eskiSiparisler, yeniSiparisler, kullaniciAd, istek }) {
+  eskiSiparisler, yeniSiparisler, kullaniciAd, istek, aile = null, altDahil = true }) {
+  const buFisin = (h) => h.fisNo === FIS_YER && (!aile || aile.has(h.uretimFisAdi));
   const etkStok = fisKesEtkilenen(eskiStok, yeniStok, fisKesDegisenIdler(eskiStok, yeniStok));
   const stokSatirlari = [];
   const kalemler = [];
   const stokHareketleri = [];
   etkStok.yeniler.forEach((u) => (u.hareketler || []).forEach((h) => {
-    if (h.fisNo !== FIS_YER) return;
+    if (!buFisin(h)) return;
     stokSatirlari.push(fisKesStokSatiri(u.id, h));
     kalemler.push({ urunId: u.id, urunAd: u.ad, renk: h.renk, beden: h.beden, miktar: h.miktar, hareketId: h.id, uretimFisAdi: h.uretimFisAdi });
     stokHareketleri.push({ ...h, urunId: u.id, urunAd: u.ad });
@@ -32,7 +36,7 @@ function uretimTeslimSunucuYuku({ siparis, prosesAdi, atamaFisAdi, eskiStok, yen
   const cariSatirlari = [];
   const cariHareketleri = [];
   etkCari.yeniler.forEach((c) => (c.hareketler || []).forEach((h) => {
-    if (h.fisNo !== FIS_YER) return;
+    if (!buFisin(h)) return;
     cariSatirlari.push(fisKesCariSatiri(c.id, h));
     cariHareketleri.push({ ...h, cariId: c.id });
   }));
@@ -42,8 +46,8 @@ function uretimTeslimSunucuYuku({ siparis, prosesAdi, atamaFisAdi, eskiStok, yen
   const kalemSatirlari = etkSiparis.yeniler.flatMap((s) => fisKesAltFarki("siparisler", "siparis_kalemleri",
     etkSiparis.eskiler.find((e) => e.id === s.id), s).satirlar);
   const alt = {};
-  if (atamaFarki.satirlar.length || atamaFarki.sil.length) alt.uretim_atamalari = atamaFarki;
-  if (kalemSatirlari.length) alt.siparis_kalemleri = { satirlar: kalemSatirlari, sil: [] };
+  if (altDahil && (atamaFarki.satirlar.length || atamaFarki.sil.length)) alt.uretim_atamalari = atamaFarki;
+  if (altDahil && kalemSatirlari.length) alt.siparis_kalemleri = { satirlar: kalemSatirlari, sil: [] };
   const iscilik = stokYuvarla(cariHareketleri.reduce((t, h) => t + (h.tutar || 0), 0));
   const yuk = {
     istek,
@@ -63,6 +67,34 @@ function uretimTeslimSunucuYuku({ siparis, prosesAdi, atamaFisAdi, eskiStok, yen
   return { yuk, bos: !stokSatirlari.length && !cariSatirlari.length, etkStok, etkCari, etkUretim, etkSiparis, stokHareketleri, cariHareketleri };
 }
 
+// SUNUCU YAZDIKTAN SONRA EKRAN (v1.733.1 — 079 teslim ve 080 ara proses ortak). Eski hâller bekleme ÖNCESİ alınmış (hazırlık);
+// `doldur` yeni hâllerde yer tutucuyu numara(lar)la değiştirir. Taban ve durum: stok + cari satırları sunucuda (taban), ürünün ana
+// satırı değiştiyse (reçete gerçekleşmesi — fiş satırı değil) o ana satır bugünkü yoldan; üretimin atamaları sunucuda (taban), ana
+// satırı (aşama, adım tamamlandı, tahakkuk) bugünkü yoldan; sipariş kalemleri sunucuda, ana satır bugünkü yoldan.
+function uretimFisleriniUygula(d, { etkStok, etkCari, etkUretim, etkSiparis, doldur, uretimYeni, kayitlar }) {
+  const { setStok, setCariler, setUretim, setSiparisler, setFisDefteri } = d;
+  fisKesStokUygula(setStok, etkStok, doldur);
+  if (etkCari.yeniler.length) {
+    const cariYeniler = doldur(etkCari.yeniler);
+    fisKesTabaniKur("cariler", etkCari.eskiler, cariYeniler);
+    setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, etkCari.eskiler, cariYeniler); fisKesYerelYaz("cari:data", n); return n; });
+  }
+  fisKesTabaniKur("uretim", etkUretim.eskiler, uretimYeni, { anaDahil: false });
+  setUretim((onceki) => {
+    const n = degisenKayitlariBirlestir(onceki, etkUretim.eskiler, uretimYeni);
+    yazimiIzle(tabloYaz("uretim:siparisler", "uretim", n), "Üretim", n);
+    return n;
+  });
+  if (etkSiparis.yeniler.length && setSiparisler) {
+    fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
+    setSiparisler((onceki) => {
+      const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkSiparis.yeniler);
+      yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n);
+      return n;
+    });
+  }
+  if (setFisDefteri && kayitlar.length) setFisDefteri((onceki) => [...kayitlar, ...(onceki || [])]);
+}
 function useUretimTeslim(d) {
   const {
     stok, cariler, uretim, siparisler, tanimlar, showToast,
@@ -89,52 +121,12 @@ const uretimTeslimSunucuyaKes = useCallback(async ({ hazirlik, siparis, atamaId,
     teslimSuruyorRef.current.delete(atamaId);
   }
   const no = r.fisNo;
-  const doldur = (x) => fisYerTutucuDoldur(x, no);
-  // Taban ve durum: eski hâller bekleme ÖNCESİ alınmış (hazırlık); yeni hâllerde yer tutucu numarayla değişir.
-  const stokYeniler = doldur(etkStok.yeniler);
-  // Ana satırı değişen ürün (mamulün reçete gerçekleşmesi) — ana satır fiş satırı değil, bugünkü yoldan yazılır.
-  const urunSatiri = TABLO_SEMA.urunler.satir;
-  const anaDegisen = new Set(stokYeniler.filter((u) => {
-    const e = etkStok.eskiler.find((x) => x.id === u.id);
-    return !e || JSON.stringify(urunSatiri(e)) !== JSON.stringify(urunSatiri(u));
-  }).map((u) => u.id));
-  const hesapli = stokMiktarlariniHesapla(stokYeniler);
-  fisKesTabaniKur("urunler", etkStok.eskiler.filter((u) => !anaDegisen.has(u.id)), hesapli.filter((u) => !anaDegisen.has(u.id)));
-  fisKesTabaniKur("urunler", etkStok.eskiler.filter((u) => anaDegisen.has(u.id)), hesapli.filter((u) => anaDegisen.has(u.id)), { anaDahil: false });
-  setStok((onceki) => {
-    const n = degisenKayitlariBirlestir(onceki, etkStok.eskiler, stokYeniler);
-    fisKesYerelYaz("stok:items", n);
-    if (anaDegisen.size) yazimiIzle(tabloYaz("stok:items", "urunler", stokMiktarlariniHesapla(n)), "Stok kartları", n);
-    return n;
-  }, { buluttan: true });
-  if (etkCari.yeniler.length) {
-    const cariYeniler = doldur(etkCari.yeniler);
-    fisKesTabaniKur("cariler", etkCari.eskiler, cariYeniler);
-    setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, etkCari.eskiler, cariYeniler); fisKesYerelYaz("cari:data", n); return n; });
-  }
-  // Üretim: atamalar sunucuda yazıldı (taban); ana satır bugünkü yoldan.
-  const uretimYeni = (nextUretim || []).filter((u) => u.id === siparis.id);
-  fisKesTabaniKur("uretim", etkUretim.eskiler, uretimYeni, { anaDahil: false });
-  setUretim((onceki) => {
-    const n = degisenKayitlariBirlestir(onceki, etkUretim.eskiler, uretimYeni);
-    yazimiIzle(tabloYaz("uretim:siparisler", "uretim", n), "Üretim", n);
-    return n;
+  uretimFisleriniUygula({ setStok, setCariler, setUretim, setSiparisler, setFisDefteri }, {
+    etkStok, etkCari, etkUretim, etkSiparis, doldur: (x) => fisYerTutucuDoldur(x, no),
+    uretimYeni: (nextUretim || []).filter((u) => u.id === siparis.id),
+    kayitlar: [sunucuFisKaydi(yuk, no, stokHareketleri, cariHareketleri)],
   });
-  if (etkSiparis.yeniler.length) {
-    fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
-    setSiparisler((onceki) => {
-      const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkSiparis.yeniler);
-      yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n);
-      return n;
-    });
-  }
   stokRezervasyonuYaz();
-  const kayit = {
-    ...doldur(yuk.fis), id: no, fisNo: no, tip: "Üretim", sunucu: true, bagliFis: null, zaman: new Date().toISOString(),
-    stokTarihi: yuk.fis.tarih, stokHareketleri: doldur(stokHareketleri), cariHareketleri: doldur(cariHareketleri), kasaHareketleri: [],
-    iptal: false, iptalZamani: null,
-  };
-  if (setFisDefteri) setFisDefteri((onceki) => [kayit, ...(onceki || [])]);
   gunlukYaz(`Üretim teslimi: ${siparis.siparisNo} → ${no}`, "uretim", { uretimId: siparis.id, atamaId, fisNo: no });
   if (bolumMesaji) showToast(bolumMesaji);
   showToast(`${no} · ${mesaj}`);
