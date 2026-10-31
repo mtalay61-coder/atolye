@@ -13,7 +13,7 @@ function sonrakiPersonelBarkodu(cariler, prosesler, prosesAdi, haricId) {
   return kodlar.length > 0 ? Math.max(...kodlar) + 1 : baslangic;
 }
 
-function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ onParaFisi, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -469,14 +469,19 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
             </div>
             <OdemeSatiri key={`${odemeCari.id}|${odemeTip}|${odemeSekliSecim}`}
               tip={odemeTip} odemeSekli={odemeSekliSecim} hesap={seciliHesap} cari={odemeCari} kurlar={kurlar} showToast={showToast}
-              onKaydet={(k) => {
-                onOdemeKaydet(k);
-                showToast(`${odemeTip} kaydedildi — ${odemeCari.unvan}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`);
+              onKaydet={async (k) => {
+                // Sonuç beklenir (v1.735.0): sunucu fişi kesemezse false — satır dolu kalır; kesince kapı numarayla bildirdi.
+                // Bildirim metni bekleme ÖNCESİ (kayıt anının tipi, carisi, hesabı).
+                const eskiYolMesaji = `${odemeTip} kaydedildi — ${odemeCari.unvan}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`;
+                const r = await onOdemeKaydet(k);
+                if (r === false) return false;
+                if (!r) showToast(eskiYolMesaji);
+                return true;
               }} />
           </div>
         ) : odemeCari ? (
           <CariCard tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet}
-            onFiseGitNo={onFiseGitNo} muhasebe={muhasebe} kurlar={kurlar} onMuhasebeHareketi={onMuhasebeHareketi} showToast={showToast}
+            onFiseGitNo={onFiseGitNo} muhasebe={muhasebe} kurlar={kurlar} onMuhasebeHareketi={onMuhasebeHareketi} onParaFisi={onParaFisi} showToast={showToast}
             key={odemeCari.id} cari={odemeCari} acik onAcKapa={() => odemeFormunuAc("", odemeTip, odemeSekliSecim)}
             onCekEkle={onCekEkle} bakiye={cariBakiyeleri(odemeCari)} listeBakiye={cariBakiyeleri(odemeCari, listeDefter)}
             genelBakiye={cariBakiyeleri(odemeCari, "Genel")} resmiBakiye={cariBakiyeleri(odemeCari, "Resmi")}
@@ -902,6 +907,7 @@ function CariModule({ tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYet
               muhasebe={muhasebe}
               kurlar={kurlar}
               onMuhasebeHareketi={onMuhasebeHareketi}
+              onParaFisi={onParaFisi}
               showToast={showToast}
               key={c.id}
               cari={c}

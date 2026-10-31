@@ -1,4 +1,4 @@
-function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
+function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, showToast, cari, acik, onAcKapa, bakiye, listeBakiye, genelBakiye, resmiBakiye, onAddHareket, onFisSil, onRemove, onFieldChange, onFieldsChange, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onBagliProsesToggle, onBarkodOtomatikAta, tumCariler, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi }) {
   // Pasife al / aktife al — başlıktaki ikon ve kart altındaki yazılı düğme aynı yoldan.
   // Bildirim: liste Aktif/Pasifler diye ayrı olduğundan kart listeden "kayboluyor"; nereye
   // gittiği söylenmezse silindi sanılıyor.
@@ -127,7 +127,10 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
     if (onOdemeHedefiTuketildi) onOdemeHedefiTuketildi();
   }, [odemeHedefi, open]);
 
-  function submitHareket() {
+  // Kayıt sürerken ikinci basış yok sayılır (v1.735.0): sunucu fişi beklenirken iki fiş kesilmesin.
+  const hareketKaydediliyorRef = useRef(false);
+  async function submitHareket() {
+    if (hareketKaydediliyorRef.current) return;
     let tutar = parseFloat(hForm.tutar);
     if (!tutar || tutar <= 0) return;
     // KASA BİRİMİ SABİT (v1.684.0 — kullanıcı: "cari kartı formunu da aynı yap", Ödeme & Tahsilat v1.680–1.682 ile aynı):
@@ -254,11 +257,10 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
         : {})
       : resmiAlanlari(hForm.defter, ortak.paraBirimi || hForm.paraBirimi || "TRY", ortak.tutar, hForm.resmi, kurlar);
     const hareketler = [{ ...ortak, fisNo: ortak.fisNo, id: uid("hrk"), kullanici: islemKullanicisiAd(), defter: hForm.defter, muhasebeBagId: bagId || undefined, ...hesapBilgisi, ...resmiEk }];
-    onAddHareket(cari.id, hareketler);
-
-    if (bagId) {
+    // Kasa / banka ayağı (para hareketinde) — iki yol da aynı hareketi kullanır.
+    const kasaAyagi = bagId ? (() => {
       const [tur, hesapId] = hForm.hesap.split(":");
-      onMuhasebeHareketi({
+      return {
         bagId, hesapTur: tur, hesapId,
         hareket: {
           id: uid("mhrk"),
@@ -278,8 +280,34 @@ function CariCard({ tanimlar, onTanimlarKaydet, onFiseGitNo, muhasebe, kurlar, o
           defter: hForm.defter,
           aciklama: `${hareketTipi} · ${cari.unvan}${ortak.aciklama ? ` · ${ortak.aciklama}` : ""}`,
         },
-      });
+      };
+    })() : null;
+
+    // TEK FİŞ DEFTERİ (v1.735.0, 100 paraFisiKes): sunucu yolunda cari satırı ve kasa / banka ayağı TEK fişte (TH / ÖD / AF / SF…),
+    // numarayı sunucu verir; kullanıcının yazdığı numara belge numarası olarak fişin ek bilgisinde. Yazılamazsa form açık ve dolu
+    // kalır. Çek / senet ayrıntılı hareket (çekler listesine de düşer) çek adımına kadar bugünkü yoldan.
+    if (onParaFisi && fisKesYolu() && !cekAyrintiliMi) {
+      hareketKaydediliyorRef.current = true;
+      let sonuc;
+      try {
+        sonuc = await onParaFisi({
+          fis: { tur: hareketTipi || "Cari hareketi", onek: paraFisOneki(hareketTipi), kaynak: "Cari kartı",
+            ...(ortak.siparisId ? { siparisId: ortak.siparisId, siparisNo: ortak.siparisNo || null } : {}),
+            ...(ortak.fisNo ? { ek: { belgeNo: ortak.fisNo } } : {}) },
+          cariId: cari.id, hareketler: hareketler.map((h) => ({ ...h, islemTipi: undefined })),
+          kasa: kasaAyagi ? { hesapTur: kasaAyagi.hesapTur, hesapId: kasaAyagi.hesapId, hareket: kasaAyagi.hareket } : null,
+          anahtar: `cari-hareket|${cari.id}`, hataEtiketi: hareketTipi || "Hareket",
+        });
+      } finally { hareketKaydediliyorRef.current = false; }
+      if (!sonuc) return;
+      setHForm(emptyHareket());
+      setShowHareket(false);
+      setHareketTipi(null);
+      return;
     }
+
+    onAddHareket(cari.id, hareketler);
+    if (kasaAyagi) onMuhasebeHareketi(kasaAyagi);
 
     // ÇEK, ÇEKLER LİSTESİNE DE DÜŞER.
     //

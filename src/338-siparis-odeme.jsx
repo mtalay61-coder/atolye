@@ -61,7 +61,10 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, odemeSekli, 
     setForm({ ...form, hesap: deger, hesapTutar });
   }
 
-  function kaydet() {
+  // Kayıt sürerken ikinci basış yok sayılır (v1.735.0): sunucu fişi beklenirken iki makbuz kesilmesin. Sonuç false ise form açık.
+  const kaydediliyorRef = useRef(false);
+  async function kaydet() {
+    if (kaydediliyorRef.current) return;
     if (!(t > 0)) { showToast("Tutar girin"); return; }
     if (!secili) {
       showToast(hesaplar.length === 0
@@ -79,7 +82,9 @@ function SiparisOdemeFormu({ siparis, cari, tip, tutar, paraBirimi, odemeSekli, 
     // SİPARİŞ BAĞI: sipariş kartı "Ödenen / Kalan"ı bu alandan sayar (siparisOdemeOzeti, 320). `islemTipi` huniye
     // fiş ön ekini seçtirir (THS-/ODM-); huni alanı kayda yazmaz, tip ön ekten okunur.
     const cariHareketi = siparis ? { ...kurulan.cariHareketi, siparisId: siparis.id, siparisNo: siparis.siparisNo } : kurulan.cariHareketi;
-    onKaydet({ cariId: cari.id, cariHareketi, muhasebe: kurulan.muhasebeHareketi ? { hesapTur, hesapId, hareket: kurulan.muhasebeHareketi } : null });
+    kaydediliyorRef.current = true;
+    try { await onKaydet({ cariId: cari.id, cariHareketi, muhasebe: kurulan.muhasebeHareketi ? { hesapTur, hesapId, hareket: kurulan.muhasebeHareketi } : null }); }
+    finally { kaydediliyorRef.current = false; }
   }
 
   const renk = HAREKET_TIPI_RENK[tip] || "var(--erp-text-2)";
@@ -171,7 +176,10 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
   const elleKur = parseFloat(String(f.kur || "").replace(",", "."));
   const hesapTutari = cevrim ? (parseFloat(f.hesapTutar) || (elleKur > 0 && t > 0 ? t * elleKur : oneriHesapTutari)) : t;
   const kutu = { ...inputStyle, padding: "7px 9px" };
-  function kaydet() {
+  // Sonuç BEKLENİR (v1.735.0, tek fiş defteri): sunucu fişi kesemezse (false) satır dolu kalır; beklerken ikinci basış yok sayılır.
+  const kaydediliyorRef = useRef(false);
+  async function kaydet() {
+    if (kaydediliyorRef.current) return;
     if (!hesap) { showToast(odemeSekli === "Nakit" ? "Kasayı seçin" : "Bankayı seçin"); return; }
     if (!(t > 0)) { showToast("Tutar girin"); return; }
     if (cevrim && !(hesapTutari > 0)) { showToast(`Hesaba geçecek tutarı girin (${hesapPB})`); return; }
@@ -197,7 +205,11 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
         ? { resmiPB: resmiH.pb, resmiTutar: stokYuvarla(resmiH.tutar), resmiAciklama: `${tip} (${hesap.kisaAd})${resmiAciklamaGovde ? `: ${resmiAciklamaGovde}` : ""}` } : {};
       const ch2 = { ...(kart ? { ...k2.cariHareketi, vade: f.vade } : k2.cariHareketi), ...resmiEk2 };
       const mh2 = k2.muhasebeHareketi && kart ? { ...k2.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k2.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k2.muhasebeHareketi;
-      onKaydet({ cariId: cari.id, cariHareketi: ch2, muhasebe: mh2 ? { hesapTur, hesapId, hareket: mh2 } : null });
+      kaydediliyorRef.current = true;
+      let ok2;
+      try { ok2 = await onKaydet({ cariId: cari.id, cariHareketi: ch2, muhasebe: mh2 ? { hesapTur, hesapId, hareket: mh2 } : null }); }
+      finally { kaydediliyorRef.current = false; }
+      if (ok2 === false) return;
       setF((o) => ({ ...o, tutar: "", aciklama: "", genel: o.genel ? { pb: o.genel.pb } : o.genel, resmi: o.resmi ? { pb: o.resmi.pb } : o.resmi }));
       return;
     }
@@ -209,7 +221,11 @@ function OdemeSatiri({ tip, odemeSekli, hesap, cari, kurlar, onKaydet, showToast
     const resmiEk = resmiAlanlari(f.defter, f.pb, t, f.resmi, kurlar);   // v1.676.0: Resmi ayrı P. tipi
     const cariHareketi = { ...(kart ? { ...k.cariHareketi, vade: f.vade } : k.cariHareketi), ...resmiEk };
     const hareket = k.muhasebeHareketi && kart ? { ...k.muhasebeHareketi, tarih: f.vade, vade: f.vade, aciklama: `${k.muhasebeHareketi.aciklama} · kredi kartı (işlem ${tarihTr(f.tarih)})` } : k.muhasebeHareketi;
-    onKaydet({ cariId: cari.id, cariHareketi, muhasebe: hareket ? { hesapTur, hesapId, hareket } : null });
+    kaydediliyorRef.current = true;
+    let ok;
+    try { ok = await onKaydet({ cariId: cari.id, cariHareketi, muhasebe: hareket ? { hesapTur, hesapId, hareket } : null }); }
+    finally { kaydediliyorRef.current = false; }
+    if (ok === false) return;
     setF((o) => ({ ...o, tutar: "", hesapTutar: "", aciklama: "" }));
   }
   const etiket = (s) => <span style={{ fontSize: 10, color: "var(--erp-text-3)", fontWeight: 700 }}>{s}</span>;
