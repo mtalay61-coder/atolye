@@ -2281,6 +2281,14 @@ function AtolyeUygulamasi() {
 
   const karsilananTuretmeRef = useRef(false);
   useEffect(() => {
+    // KARŞILANANIN TEK YAZARI SUNUCU (v1.742.3 — R1b, kontrol raporu 31 Ekim): fiş sistemi açıkken karşılanan yalnız sunucunun atomik
+    // işlemleriyle değişir (fis_kes / fis_iptal → fis_kalem_artis). Bu efekt karşılananı YEREL stok hareketlerinden hesaplayıp mutlak
+    // yazıyordu: siparişleri yenilenmiş ama stoğu henüz yenilenmemiş bir cihaz, sunucunun doğru değerini ezdi (yerel sınama: 10 → 5).
+    // Karar sunucunun GERÇEK yapılandırmasından: `fisKesYolu()` = stk_ayar'da fiş defteri kurulu (fis_aktif sütunu) + bütün v2
+    // modülleri etkin + bulut açık (045 v2AyarlariniOku). Ayar henüz OKUNAMADIYSA da yazılmaz: o anda yazılan değer bekleyen
+    // deftere düşer ve ayar okununca eski yoldan gönderilirdi. Fiş sistemi yoksa (bulutsuz ya da v2 kurulmamış) bugünkü davranış.
+    // Hesap fonksiyonu (013 siparisKarsilananlariHesapla) denetim için yerinde duruyor; yalnız bu otomatik yazma kapalı.
+    if (fisKesYolu() || (supabaseAcikMi() && v2AyarBilinmiyorMu())) return;
     const yeni = siparisKarsilananlariHesapla(siparisler, stok);
     if (yeni === siparisler) return;
     // Düzeltme KALICI olarak da yazılıyor: yalnız bellekte düzeltmek, diskte hayalet sayacı

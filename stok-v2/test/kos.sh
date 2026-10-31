@@ -115,6 +115,9 @@ if [ -f test/erp.cjs ]; then
   # v1.742.2 R1 — aynı sipariş kalemine eşzamanlı teslim, tekrar, ağ kesintisi, geri alma, iptal (kurallar açık)
   echo "── stok-v2/test/r1-yaris.js"
   STOK_V2_DB="$DB" node stok-v2/test/r1-yaris.js
+  # v1.742.3 R1b — karşılananın tek yazarı sunucu (eski veriyle cihazlar, düzenleme, fazla teslim, eski davranış)
+  echo "── stok-v2/test/r1b-turetme.js"
+  STOK_V2_DB="$DB" node stok-v2/test/r1b-turetme.js
 else
   echo "── uçtan uca atlandı: test/erp.cjs yok (cd test && node derle.js)"
 fi

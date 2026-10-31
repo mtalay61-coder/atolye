@@ -1,0 +1,17 @@
+{
+ "a_fisSistemiAcik": {
+  "hatalar": [],
+  "karsilanan": 0,
+  "karsilananYazanIstek": []
+ },
+ "b_fisSistemiYok": {
+  "hatalar": [],
+  "karsilanan": 4,
+  "karsilananYazanIstek": []
+ },
+ "c_ayarOkunamadi": {
+  "hatalar": [],
+  "karsilanan": 0,
+  "karsilananYazanIstek": []
+ }
+}

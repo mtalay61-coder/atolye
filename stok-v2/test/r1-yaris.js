@@ -78,7 +78,8 @@ function durum() {
       where h.kalem_id = '${KALEM}' and not h.iptal and not f.iptal) as stok_toplam,
     (select count(*) from public.stk_fis where siparis_id = '${SIP}' and not iptal) as gecerli_fis`)[0];
   const karsilanan = Number(r.karsilanan), miktar = Number(r.miktar), teslim = Math.abs(Number(r.stok_toplam));
-  return { karsilanan, miktar, teslimEdilen: teslim, gecerliFis: Number(r.gecerli_fis), tutarli: karsilanan === Math.min(miktar, teslim) };
+  // v1.742.3: karşılanan miktarda KIRPILMAZ — stok hareketlerine eşit olmalı (fazla teslim sipariş kaydında görünsün)
+  return { karsilanan, miktar, teslimEdilen: teslim, gecerliFis: Number(r.gecerli_fis), tutarli: karsilanan === teslim };
 }
 
 // Uygulamanın teslim hesabı: ekran fotoğrafındaki kalemden (karşılanan `ekrandaKarsilanan`) `adet` teslim.
@@ -190,13 +191,13 @@ function teslimYuku({ adet, ekrandaKarsilanan, istek, stok, cariler }) {
   const d6b = durum();
   bekle("6b: zatenIptal, karşılanan 14 kaldı", [rIptal2.ok && rIptal2.sonuc.zatenIptal, d6b.karsilanan, d6b.teslimEdilen], [true, 14, 14]);
 
-  console.log("7) Miktarı aşan eşzamanlı teslim (kalan 6; iki kullanıcı 5'er) — karşılanan miktarda kırpılır (bugünkü kural)");
+  console.log("7) Miktarı aşan eşzamanlı teslim (kalan 6; iki kullanıcı 5'er) — fazla adet sipariş kaydında görünür (v1.742.3: kırpılmaz)");
   const yG = teslimYuku({ adet: 5, ekrandaKarsilanan: 14, istek: IST("G"), stok, cariler });
   const yH = teslimYuku({ adet: 5, ekrandaKarsilanan: 14, istek: IST("H"), stok, cariler });
   const [rG, rH] = await Promise.all([rpcAyri("fis_kes", yG, { bekleSn: 0.5 }), (async () => { await uyu(150); return rpcAyri("fis_kes", yH); })()]);
   const d7 = durum();
   console.log(`    SONUÇ → teslim edilen: ${d7.teslimEdilen} · karşılanan: ${d7.karsilanan} (miktar ${d7.miktar})`);
-  bekle("7: iki fiş, teslim 24, karşılanan 20 = min(20, 24)", [rG.ok, rH.ok, d7.teslimEdilen, d7.karsilanan, d7.tutarli], [true, true, 24, 20, true]);
+  bekle("7: iki fiş, teslim 24, karşılanan 24 (fazla 4 kayıtta)", [rG.ok, rH.ok, d7.teslimEdilen, d7.karsilanan, d7.tutarli], [true, true, 24, 24, true]);
 
   console.log("8) GERİYE UYUM: eski uygulama (yalnız mutlak karşılanan, `artis` yok) yeni sunucuda bugünkü gibi işlenir");
   const yEski = teslimYuku({ adet: 1, ekrandaKarsilanan: 0, istek: IST("ESKI"), stok, cariler });

@@ -11,7 +11,7 @@ const { chromium } = require("playwright");
 // `tarayiciArgs`: Chromium bayrakları — örn. sahte kamera (`--use-file-for-fake-video-capture`).
 // `adres`: uygulamayı file:// yerine bu http(s) adresinden aç — çağıran `onceRota` ile o adresi
 // test.html'e yönlendirir (sürüm dosyası gibi göreli okumalar yalnız http'de çalışıyor).
-async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null } = {}) {
+async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayiciArgs = [], adres = null, cevrimdisiKilidi = false, yuklemeyiBekle = true, tanimBasliklariKapali = false, receteOnayKapisi = false, firmaSecili = true, kurulumSihirbazi = false, stkAyar = null, stkAyarHata = false } = {}) {
   const tarayici = await chromium.launch({ args: tarayiciArgs });
   // Geniş pencere: dar ekranda kenar çubuğu daralıyor ve sekme düğmeleri gizleniyor.
   const sayfa = await tarayici.newPage({ viewport: { width: 1400, height: 950 } });
@@ -91,7 +91,8 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
   // sunucu bilmiyorsa "kurulmamış" yanıtı verilir — istek düşerse uygulama ayarı "bilinmiyor" sayıp bütün yazmaları bekletirdi.
   // onceRota'dan SONRA kaydedilir: Playwright son kaydedilen rotayı önce dener.
   // `stkAyar` (v1.732.0): v2 / fiş defteri kurulu bir sunucuyu taklit eden senaryo ayar satırını verir.
-  await sayfa.route("**/rest/v1/stk_ayar**", (r) => (stkAyar
+  // `stkAyarHata` (v1.742.3): sunucu ayarı OKUNAMIYOR (ağ hatası) — uygulama "ayar bilinmiyor" durumunda kalır.
+  await sayfa.route("**/rest/v1/stk_ayar**", (r) => (stkAyarHata ? r.abort() : stkAyar
     ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([stkAyar]) })
     : r.fulfill({ status: 404, contentType: "application/json",
       body: JSON.stringify({ code: "PGRST205", message: "Could not find the table 'public.stk_ayar' in the schema cache" }) })));

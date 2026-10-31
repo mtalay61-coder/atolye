@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.742.2";
+const SURUM = "1.742.3";
 const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Aynı sipariş kalemine aynı anda yapılan teslimler artık birbirini ezmiyor";
+const SURUM_NOTU = "Fiş sistemi açıkken sipariş kaleminin karşılananını yalnız sunucu değiştirir";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.742.3", tarih: "31.10.2026", eklenen: [], degisen: ["Fiş sistemi açıkken sipariş kaleminin karşılanan miktarını uygulama artık kendisi yeniden hesaplayıp yazmaz; yalnız teslim ve teslim iptali (sunucuda) değiştirir.", "Miktarı aşan teslimde fazla adet sipariş kaydında da görünür (20'lik kaleme 24 teslim → karşılanan 24)."], duzeltilen: ["Başka cihazda yapılan teslim, bu cihazda siparişi düzenleyince ya da eski veriyle açık kalan ekran yüzünden geri alınmış gibi görünebiliyordu (karşılanan eski değere dönüyordu)."] },
   { surum: "1.742.2", tarih: "31.10.2026", eklenen: [], degisen: [], duzeltilen: ["İki kullanıcı aynı sipariş kalemine aynı anda teslim yapınca karşılanan miktar birinin teslimini kaybediyordu (stoktan 10 çıkıyor, karşılanan 5 görünüyordu). Karşılanan artık sunucuda güncel değere eklenir; teslim iptali de aynı şekilde düşer.", "Aynı kayıt iki kez aynı anda gönderilince ikincisi \"kaydedilemedi\" hatası alıyordu (kayıt doğruydu); artık ilk numarayı alır."] },
   { surum: "1.742.1", tarih: "31.10.2026", eklenen: [], degisen: ["İlk açılıştaki kurulum sihirbazı artık proses adımı içermiyor (dört adım: firma, ölçüler, renkler, bitir); hazır proses şablonu eklenmez, prosesleri Tanımlar › Üretim'den kendi sıranızla girersiniz."], duzeltilen: [] },
   { surum: "1.742.0", tarih: "31.10.2026", eklenen: ["Kural provası (test/kural-provasi.js): bütün senaryolar fiş defteri kurulu sunucuya karşı koşar; kurallar açılınca reddedilecek eski yol yazmaları listelenir."], degisen: ["Tanımlar › Kapasite › demirbaş \"Satın alındı\" sunucu fişiyle (AF) yazılır.", "Sipariş iptalinde fişlerin sipariş bağı sunucuda çözülür (yalnız bağ alanları; miktar, tutar, fiyat değişmez), fiş başlığına not düşer.", "Tanımlar › Bakım › Kodsuz Mamul Renkleri: renk varyant düzeyinde değişir; stok hareketlerine dokunulmaz."], duzeltilen: [] },

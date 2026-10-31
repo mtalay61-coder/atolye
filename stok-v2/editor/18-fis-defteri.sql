@@ -225,13 +225,24 @@ declare
 begin
   if jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then return 0; end if;
   update public.siparis_kalemleri k
-     set karsilanan = greatest(0, least(coalesce(k.miktar, 0), coalesce(k.karsilanan, 0) + a.miktar))
+     set karsilanan = greatest(0, coalesce(k.karsilanan, 0) + a.miktar)
     from (select x ->> 'id' as id, sum(public.stk_sayi(x ->> 'miktar')) as miktar
             from jsonb_array_elements(p_alt -> 'siparis_kalemleri' -> 'artis') x
            where coalesce(x ->> 'id', '') <> '' group by x ->> 'id') a
    where k.id::text = a.id and coalesce(a.miktar, 0) <> 0;
   get diagnostics n = row_count;
   return n;
+end $$;
+
+create or replace function public.fis_kalem_karsilanan_koru() returns trigger
+language plpgsql as $$
+begin
+  if new.karsilanan is distinct from old.karsilanan
+     and coalesce(current_setting('fis.kalem', true), '') <> 'acik'
+     and exists (select 1 from public.stk_ayar a where a.id = 'tekil' and a.aktif and a.cari_aktif and a.alt_aktif and a.kasa_aktif) then
+    new.karsilanan := old.karsilanan;
+  end if;
+  return new;
 end $$;
 
 create or replace function public.fis_kes(p jsonb) returns jsonb
@@ -261,8 +272,10 @@ begin
     update public.stk_fis set bagli_fis = fid where id = bid;
   end if;
   if jsonb_typeof(p -> 'alt') = 'object' then
+    perform set_config('fis.kalem', 'acik', true);   -- karşılanan yalnız fiş işleminde değişir (fis_kalem_karsilanan_koru)
     perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
     perform public.fis_kalem_artis(p -> 'alt');
+    perform set_config('fis.kalem', '', true);
   end if;
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', fid, 'bagliFisNo', bid, 'zatenVar', false);
@@ -294,8 +307,10 @@ begin
     update public.kas_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta, guncelleme = now() where fis_id = h and not iptal;
   end loop;
   if jsonb_typeof(p -> 'alt') = 'object' then
+    perform set_config('fis.kalem', 'acik', true);
     perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
     if not f.iptal then perform public.fis_kalem_artis(p -> 'alt'); end if;
+    perform set_config('fis.kalem', '', true);
   end if;
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', f.id, 'bagliFisNo', f.bagli_fis, 'zatenIptal', f.iptal);
@@ -429,6 +444,8 @@ begin
   create trigger fis_satir_koru before insert or update or delete on public.kas_hareket for each row execute function public.fis_satir_koru();
   drop trigger if exists fis_baslik_koru on public.stk_fis;
   create trigger fis_baslik_koru before insert or update or delete on public.stk_fis for each row execute function public.fis_baslik_koru();
+  drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;
+  create trigger fis_kalem_karsilanan_koru before update on public.siparis_kalemleri for each row execute function public.fis_kalem_karsilanan_koru();
   drop trigger if exists fis_satirsiz_denetle on public.stk_fis;
   create constraint trigger fis_satirsiz_denetle after insert on public.stk_fis deferrable initially deferred
     for each row execute function public.fis_satirsiz_denetle();

@@ -268,7 +268,9 @@ end $$;
 -- (yerel sınamada: stoktan 10 çıktı, karşılanan 5 — stok-v2/test/r1-yaris.js). İstemci artık DEĞİŞİMİ de gönderir:
 --   alt.siparis_kalemleri.artis = [{ id, miktar }]   (teslim +, iptal −)
 -- Sunucu değişimi satır kilidi altında GÜNCEL değere ekler (aynı kalemi güncelleyen ikinci işlem birincinin bitmesini bekler ve
--- onun yazdığı değeri görür). Kural uygulamadakiyle aynı: 0 ile kalemin miktarı arasında kırpılır (081 Math.min).
+-- onun yazdığı değeri görür). Alt sınır 0. ÜST SINIR YOK (v1.742.3, kontrol raporu madde 4): miktarı aşan eşzamanlı teslimde
+-- (20'lik kaleme 24) fazla adet sipariş kaydında da görünsün — stok hareketleri 24, karşılanan 24 (uygulamanın türetme tanımı 013
+-- de kırpmaz). Önce 20'ye kırpılıyordu, fazla 4 adet sipariş tarafında sessizce kayboluyordu.
 -- GERİYE UYUM: `artis` olan kalemin satırındaki mutlak `karsilanan` yazılmaz (alt_yaz'dan önce çıkarılır) — eski istemci (yalnız
 -- mutlak değer gönderen) bugünkü gibi çalışır, yeni istemci eski sunucuda da bugünkü davranışı alır; hiçbir sırada çift ekleme olmaz.
 create or replace function public.fis_alt_artissiz(p_alt jsonb) returns jsonb
@@ -289,13 +291,29 @@ declare
 begin
   if jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then return 0; end if;
   update public.siparis_kalemleri k
-     set karsilanan = greatest(0, least(coalesce(k.miktar, 0), coalesce(k.karsilanan, 0) + a.miktar))
+     set karsilanan = greatest(0, coalesce(k.karsilanan, 0) + a.miktar)
     from (select x ->> 'id' as id, sum(public.stk_sayi(x ->> 'miktar')) as miktar
             from jsonb_array_elements(p_alt -> 'siparis_kalemleri' -> 'artis') x
            where coalesce(x ->> 'id', '') <> '' group by x ->> 'id') a
    where k.id::text = a.id and coalesce(a.miktar, 0) <> 0;
   get diagnostics n = row_count;
   return n;
+end $$;
+
+-- KARŞILANANIN TEK YAZARI SUNUCU (v1.742.3 — R1b, kontrol raporu 31 Ekim). Fiş sistemi açıkken (bütün v2 modülleri etkin) sipariş
+-- kaleminin karşılananı yalnız fis_kes / fis_iptal içinde değişir (`fis.kalem` = 'acik'). Köprüden gelen kalem satırı (sipariş
+-- düzenleme, planlama, uygulamanın karşılanan türetme efekti — canlıdaki ESKİ sürüm de çalıştırıyor) EKRANDAKİ eski değeri taşır;
+-- yerel sınamada başka kullanıcının teslimini ezdi (10 → 5, düzenlemede 10 → 0). Satırın öteki alanları yazılır, karşılanan
+-- ESKİ değerinde kalır (hata verilmez — düzenleme kaydı düşmesin). Yeni kalem (ekleme) serbest. Fiş sistemi kapalıyken dokunmaz.
+create or replace function public.fis_kalem_karsilanan_koru() returns trigger
+language plpgsql as $$
+begin
+  if new.karsilanan is distinct from old.karsilanan
+     and coalesce(current_setting('fis.kalem', true), '') <> 'acik'
+     and exists (select 1 from public.stk_ayar a where a.id = 'tekil' and a.aktif and a.cari_aktif and a.alt_aktif and a.kasa_aktif) then
+    new.karsilanan := old.karsilanan;
+  end if;
+  return new;
 end $$;
 
 create or replace function public.fis_kes(p jsonb) returns jsonb
@@ -327,8 +345,10 @@ begin
     update public.stk_fis set bagli_fis = fid where id = bid;
   end if;
   if jsonb_typeof(p -> 'alt') = 'object' then
+    perform set_config('fis.kalem', 'acik', true);   -- karşılanan yalnız fiş işleminde değişir (fis_kalem_karsilanan_koru)
     perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
     perform public.fis_kalem_artis(p -> 'alt');
+    perform set_config('fis.kalem', '', true);
   end if;
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', fid, 'bagliFisNo', bid, 'zatenVar', false);
@@ -364,8 +384,10 @@ begin
   -- Karşılanan değişimi (v1.742.2) yalnız fiş bu çağrıda iptal edildiyse: zaten iptal edilmiş fişe gelen tekrar (yanıtı kaybolmuş
   -- istek) karşılananı ikinci kez düşürmesin.
   if jsonb_typeof(p -> 'alt') = 'object' then
+    perform set_config('fis.kalem', 'acik', true);
     perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
     if not f.iptal then perform public.fis_kalem_artis(p -> 'alt'); end if;
+    perform set_config('fis.kalem', '', true);
   end if;
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', f.id, 'bagliFisNo', f.bagli_fis, 'zatenIptal', f.iptal);
@@ -513,6 +535,8 @@ begin
   create trigger fis_satir_koru before insert or update or delete on public.kas_hareket for each row execute function public.fis_satir_koru();
   drop trigger if exists fis_baslik_koru on public.stk_fis;
   create trigger fis_baslik_koru before insert or update or delete on public.stk_fis for each row execute function public.fis_baslik_koru();
+  drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;
+  create trigger fis_kalem_karsilanan_koru before update on public.siparis_kalemleri for each row execute function public.fis_kalem_karsilanan_koru();
   drop trigger if exists fis_satirsiz_denetle on public.stk_fis;
   create constraint trigger fis_satirsiz_denetle after insert on public.stk_fis deferrable initially deferred
     for each row execute function public.fis_satirsiz_denetle();
