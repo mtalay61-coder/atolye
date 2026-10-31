@@ -189,6 +189,7 @@ ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi 
    kendi ÜRT fişi; numune NUM), stok formları (v1.734.0 — bağımsız giriş/çıkış MNL, defter düzeltmesi ve açılış fişi ACL).
    Para fişleri 1 (v1.735.0 — cari kartı tahsilat/ödeme, Ödeme & Tahsilat kısa formu, sipariş ödemesi: TH / ÖD, cari + kasa tek fiş).
    Para fişleri 2 (v1.736.0 — virman VRM, gelir/gider kartı GL/GD, Banka Excel satır başına fiş).
-   Sırada: silme/düzenleme yollarını fiş iptaline bağlamak, mesai, çek.
+   Silme = fiş iptali (v1.737.0 — kasa / gelir-gider / cari hareketi silme fişi bütün iptal eder; sunucu fişi düzenlenmez).
+   Sırada: mesai, çek.
 3. Gece denetimi (gün sonu raporuna).
 4. Siz: Supabase'de tek SQL adımı → kontrol listesi → 1–2 hafta paralel kullanım.

@@ -1,0 +1,19 @@
+{
+ "defter": [
+  "VRM-261031001|Virman|2|iptal"
+ ],
+ "hatalar": [],
+ "istekler": [
+  "fis_kes:Virman:k1/Çıkış/300+k3/Giriş/300",
+  "fis_iptal:VRM-261031001"
+ ],
+ "silmeSonrasi": [
+  "k1:",
+  "k3:"
+ ],
+ "toast": "\"VRM-NNN\" iptal edildi — N kasa satırı",
+ "virmanSonrasi": [
+  "k1:VRM-261031001/Çıkış/300",
+  "k3:VRM-261031001/Giriş/300"
+ ]
+}

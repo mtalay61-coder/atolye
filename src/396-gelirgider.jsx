@@ -10,7 +10,7 @@
 // kontrolleri koyalım, cari gibi hareket etsin"). Gelir/Gider kart ekstresi (396) ve Ödeme & Tahsilat son listesi (260) bunu çağırır. Hareket kartın ekstresinden silinir; kurallar Kasa & Banka'daki
 // silmeyle aynı (205 `hareketSil`): dönem kilidi, silme yetkisi yoksa yönetici onayına ("muhasebeHareketSil" — onaylanınca
 // 205 aynı işi yapar), çöpe kayıt. Kart hareketi cariye ve çeke bağlı olmadığı için yalnız hesabın listesinden düşer.
-async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast }) {
+async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast, onFisIptal }) {
   if (!onMuhasebeKaydet) return;
   if (donemKilidiEngel(h.tarih, showToast, "Silme")) return;
   const tur = h.hesapTur;
@@ -28,6 +28,11 @@ async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYe
     : !x.id && x.tarih === h.tarih && x.tutar === h.tutar && x.giderKartId === h.giderKartId && (x.aciklama || "") === (h.aciklama || ""));
   const asil = (hesap.hareketler || []).find(ayni);
   if (!asil) { showToast("Kayıt bulunamadı — sayfayı yenileyip tekrar deneyin"); return; }
+  // TEK FİŞ DEFTERİ (v1.737.0): sunucu fişinin satırı silinmez — fiş İPTAL edilir (100 sunucuFisiniIptalEt; iz kalır).
+  if (onFisIptal && asil.fisNo) {
+    const iptal = onFisIptal(asil.fisNo, "Gelir/gider hareketi silindi");
+    if (iptal) { await iptal; return; }
+  }
   if (onCopaAt) onCopaAt(tur === "kasa" ? "kasaHareketi" : "bankaHareketi", hesap.ad, asil,
     { ozet: `${ozet}${h.tarih ? " · " + h.tarih : ""}`, ustKayit: { tur, id: hesap.id, ad: hesap.ad }, yanEtkiliMi: false, geriAlinabilirMi: false });
   const anahtar = tur === "kasa" ? "kasalar" : "bankalar";
@@ -40,8 +45,8 @@ async function kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYe
 function kartSilGizliMi(kullaniciYetkisiVar, onayAcik) {
   return !!kullaniciYetkisiVar && !kullaniciYetkisiVar("muhasebe", "silme") && !onayAcik;
 }
-function GelirGiderEkrani({ tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
-  const kartHareketiSil = (h) => kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast });
+function GelirGiderEkrani({ onFisIptal, tanimlar, onSave, muhasebe, stok, cariler, uretim, showToast, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt }) {
+  const kartHareketiSil = (h) => kartHareketiSilIslem(h, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast, onFisIptal });
   // Hangi bölüm açık (20 Eylül).
   const [bolum, setBolum] = useState("kartlar");
   // Yeni grup formu (20 Eylül).

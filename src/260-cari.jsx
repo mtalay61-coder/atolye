@@ -13,7 +13,7 @@ function sonrakiPersonelBarkodu(cariler, prosesler, prosesAdi, haricId) {
   return kodlar.length > 0 ? Math.max(...kodlar) + 1 : baslangic;
 }
 
-function CariModule({ onParaFisi, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
+function CariModule({ onParaFisi, onFisIptal, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onayAcik, giderKartlari, kapsam = "cari", onOdemeAlaniGit, onOdemeKaydet, onFiseGitNo, muhasebe, kurlar, onMuhasebeHareketi, cariler, onSave, showToast, onFisSil, siparisler, onGoToSiparis, stok, firmaBilgileri, tanimlarProsesler, tanimlarAraProsesler, onCopaAt, onStokFisiAc, tanimlarFiyatGruplari, onPencereAc, onCekEkle, odemeHedefi, onOdemeHedefiTuketildi, hedefCariId, onHedefCariTuketildi }) {
   const [showForm, setShowForm] = useState(false);
   const [query, setQuery] = useState("");
   const [cariTipSekme, setCariTipSekme] = useState("Tümü");
@@ -582,7 +582,7 @@ function CariModule({ onParaFisi, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, 
                         <td style={{ padding: "2px 6px" }} onClick={(e) => e.stopPropagation()}>
                           {c.kartMi && ham && onMuhasebeKaydet && !kartSilGizliMi(kullaniciYetkisiVar, onayAcik) && (
                             <span data-odeme-son-sil={h.fisNo || h.id || "eski"}>
-                              <SilOnayButonu boyut={11} onConfirm={() => kartHareketiSilIslem(ham, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast })} />
+                              <SilOnayButonu boyut={11} onConfirm={() => kartHareketiSilIslem(ham, { muhasebe, onMuhasebeKaydet, kullaniciYetkisiVar, onayIste, onCopaAt, showToast, onFisIptal })} />
                             </span>
                           )}
                         </td>
