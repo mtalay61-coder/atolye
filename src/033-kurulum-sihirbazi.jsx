@@ -2,12 +2,13 @@
 // KURULUM SİHİRBAZI (v1.644.0 — pazarlama yol haritasının 2. adımı; kullanıcı: "Kurulum sihirbazına geç")
 //
 // Yeni firma ilk açtığında boş bir Tanımlar ekranıyla karşılaşıyordu: renk, beden, proses tanımlanmadan ürün kartı
-// açılamıyor, ama hangisinin önce gerektiğini söyleyen yoktu. Sihirbaz beş adımda en gerekli tanımları kurar:
+// açılamıyor, ama hangisinin önce gerektiğini söyleyen yoktu. Sihirbaz dört adımda en gerekli tanımları kurar:
 //   1. Firma bilgileri (unvan zorunlu — fişlerde, çıktılarda görünüyor)
 //   2. Ölçüler (beden şablonu: kadın/erkek/çocuk ayakkabı, giyim ya da bedensiz + elle ek)
 //   3. Renkler (sık kullanılanlardan seçme + elle ek)
-//   4. Prosesler (ayakkabı / giyim şablonu + elle ek)
-//   5. KDV açık mı + özet
+//   4. KDV açık mı + özet
+// PROSES SORULMAZ (v1.742.1 — kullanıcı: "ilk açılışta prosesleri kullanıcı kendi girsin veya sormasın hiç"): hazır şablon
+// (Kesim, Saya, Montaj…) her atölyeye uymuyordu; prosesleri kullanıcı Tanımlar › Üretim'den kendi sırasıyla girer.
 //
 // NE ZAMAN AÇILIR (`kurulumSihirbaziGerekli`): firma GERÇEKTEN BOŞ (ürün, cari, renk, proses yok) VE kurulum daha önce
 // bitirilmemiş/atlanmamış (`tanimlar.kurulumTamamlandi`) VE kişi Yönetici (giriş sistemi kapalıysa herkes). Veri taşıyan
@@ -27,11 +28,6 @@ const KURULUM_RENK_ONERILERI = [
   { ad: "Siyah", kod: "#1F1F1F" }, { ad: "Beyaz", kod: "#F5F5F2" }, { ad: "Kahve", kod: "#6B4A2E" }, { ad: "Taba", kod: "#A8642E" },
   { ad: "Lacivert", kod: "#1F2A44" }, { ad: "Gri", kod: "#8A8A8A" }, { ad: "Bej", kod: "#D8C3A0" }, { ad: "Bordo", kod: "#6E1F2A" },
   { ad: "Haki", kod: "#6B6B3A" }, { ad: "Kırmızı", kod: "#B3261E" }, { ad: "Krem", kod: "#EFE6D2" }, { ad: "Vizon", kod: "#9C8B7A" },
-];
-const KURULUM_PROSES_SABLONLARI = [
-  { id: "ayakkabi", ad: "Ayakkabı", prosesler: ["Kesim", "Saya", "Montaj", "Taban", "Paketleme"] },
-  { id: "giyim", ad: "Giyim", prosesler: ["Kesim", "Dikim", "Ütü", "Paketleme"] },
-  { id: "yok", ad: "Şimdilik yok", prosesler: [] },
 ];
 
 function kurulumSihirbaziGerekli({ tanimlar, stok, cariler, aktifKullanici, girisAktif }) {
@@ -105,8 +101,6 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
   const [olcuEk, setOlcuEk] = useState("");
   const [renkSecili, setRenkSecili] = useState(() => new Set(["Siyah", "Beyaz", "Kahve", "Taba"]));
   const [renkEk, setRenkEk] = useState("");
-  const [prosesSablonu, setProsesSablonu] = useState("ayakkabi");
-  const [prosesEk, setProsesEk] = useState("");
   const [kdvAktif, setKdvAktif] = useState(!!fb0.kdvAktif);
 
   const olculer = [...((KURULUM_OLCU_SABLONLARI.find((s) => s.id === olcuSablonu) || {}).olculer || []), ...kurulumListesi(olcuEk)]
@@ -115,10 +109,8 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
     ...KURULUM_RENK_ONERILERI.filter((r) => renkSecili.has(r.ad)),
     ...kurulumListesi(renkEk).map((ad) => ({ ad, kod: "#C9B99A" })),
   ].filter((r, i, l) => l.findIndex((x) => kurulumAyniAd(x.ad, r.ad)) === i);
-  const prosesler = [...((KURULUM_PROSES_SABLONLARI.find((s) => s.id === prosesSablonu) || {}).prosesler || []), ...kurulumListesi(prosesEk)]
-    .filter((ad, i, l) => l.findIndex((x) => kurulumAyniAd(x, ad)) === i);
 
-  const ADIMLAR = ["Firma", "Ölçüler", "Renkler", "Prosesler", "Bitir"];
+  const ADIMLAR = ["Firma", "Ölçüler", "Renkler", "Bitir"];
   const ileriKapali = adim === 0 && !firma.unvan.trim();
   const alan = (ad, etiket, ek = {}) => (
     <Field label={etiket}>
@@ -137,7 +129,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
   const not = (metin) => <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", margin: "0 0 12px", lineHeight: 1.5 }}>{metin}</div>;
 
   function bitir() {
-    onKaydet(kurulumTanimlariniUygula(tanimlar, { firma, olculer, renkler, prosesler, kdvAktif }));
+    onKaydet(kurulumTanimlariniUygula(tanimlar, { firma, olculer, renkler, prosesler: [], kdvAktif }));
   }
 
   return (
@@ -145,7 +137,7 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
       <div style={{ background: "var(--erp-panel, #fff)", borderRadius: "var(--erp-r-lg, 12px)", width: 560, maxWidth: "100%", maxHeight: "92vh", display: "flex", flexDirection: "column", fontFamily: "var(--erp-font, 'Inter', sans-serif)" }}>
         <div style={{ padding: "18px 22px 10px", borderBottom: "1px solid var(--erp-line-soft, #e6e2da)" }}>
           <div style={{ fontSize: 18, fontWeight: 700 }}>Hoş geldiniz — kurulum</div>
-          <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 2 }}>Beş kısa adım. Hepsi sonradan Tanımlar'dan değiştirilebilir.</div>
+          <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 2 }}>Dört kısa adım. Hepsi sonradan Tanımlar'dan değiştirilebilir.</div>
           <div style={{ display: "flex", gap: 4, marginTop: 12 }}>
             {ADIMLAR.map((a, i) => (
               <div key={a} data-kurulum-adim-gostergesi={i} style={{ flex: 1, textAlign: "center", fontSize: 11, fontWeight: i === adim ? 700 : 500,
@@ -205,21 +197,6 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
 
           {adim === 3 ? (
             <div>
-              {not("Üretimin aşamaları. Üretim kartında iş bu sırayla ustadan ustaya geçer.")}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
-                {KURULUM_PROSES_SABLONLARI.map((s) => cip(prosesSablonu === s.id, s.ad, () => setProsesSablonu(s.id), null, `proses-${s.id}`))}
-              </div>
-              <Field label="Ek prosesler (virgülle ayırın, sırayla)">
-                <input data-kurulum-proses-ek="1" value={prosesEk} onChange={(e) => setProsesEk(e.target.value)} style={inputStyle} placeholder="örn. Boya, Kalite kontrol" />
-              </Field>
-              <div style={{ marginTop: 10, fontSize: 12, color: "var(--erp-text-2, #555555)" }}>
-                {prosesler.length ? `Sıra: ${prosesler.join(" → ")}` : "Proses eklenmeyecek."}
-              </div>
-            </div>
-          ) : null}
-
-          {adim === 4 ? (
-            <div>
               <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, marginBottom: 14 }}>
                 <input type="checkbox" data-kurulum-kdv="1" checked={kdvAktif} onChange={(e) => setKdvAktif(e.target.checked)} style={{ marginTop: 3 }} />
                 <span>Fişlerde KDV kullan <span style={{ display: "block", fontSize: 11, color: "var(--erp-text-3, #888888)" }}>Faturalı çalışıyorsanız açın. Sonradan Tanımlar › Firma'dan değiştirilir.</span></span>
@@ -228,11 +205,11 @@ function KurulumSihirbazi({ tanimlar, onKaydet }) {
                 <div><b>Firma:</b> {firma.unvan || "—"}</div>
                 <div><b>Ölçüler:</b> {olculer.length ? olculer.join(", ") : "yok"}</div>
                 <div><b>Renkler:</b> {renkler.length ? renkler.map((r) => r.ad).join(", ") : "yok"}</div>
-                <div><b>Prosesler:</b> {prosesler.length ? prosesler.join(" → ") : "yok"}</div>
                 <div><b>KDV:</b> {kdvAktif ? "açık" : "kapalı"}</div>
               </div>
               <div style={{ fontSize: 12, color: "var(--erp-text-2, #555555)", marginTop: 12 }}>
-                Sonraki adım: Stok'tan ilk ürününüzü, Cari'den ilk müşteri ya da tedarikçinizi ekleyin.
+                Sonraki adım: üretim yapıyorsanız prosesleri Tanımlar › Üretim'den kendi sıranızla girin; sonra Stok'tan ilk ürününüzü,
+                Cari'den ilk müşteri ya da tedarikçinizi ekleyin.
               </div>
             </div>
           ) : null}

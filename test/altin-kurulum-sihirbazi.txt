@@ -7,7 +7,6 @@
   "Firma: Öz Deri Ayakkabı",
   "Ölçüler: 39, 40, 41, 42, 43, 44, 45, 46, 47",
   "Renkler: Siyah, Beyaz, Kahve, Lacivert, Pudra",
-  "Prosesler: Kesim → Saya → Montaj → Taban → Paketleme → Boya",
   "KDV: açık"
  ],
  "yazilan": {
@@ -32,14 +31,7 @@
    "Lacivert:104",
    "Pudra:105"
   ],
-  "prosesler": [
-   "Kesim:1000",
-   "Saya:2000",
-   "Montaj:3000",
-   "Taban:4000",
-   "Paketleme:5000",
-   "Boya:6000"
-  ],
+  "prosesler": [],
   "tamam": true
  },
  "kapandi": true,
