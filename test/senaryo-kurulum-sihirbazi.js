@@ -1,4 +1,4 @@
-// SENARYO — KURULUM SİHİRBAZI (v1.644.0): boş firmada açılır; firma unvanı zorunlu; ölçü/renk/proses şablonu + ek;
+// SENARYO — KURULUM SİHİRBAZI (v1.644.0): boş firmada açılır; firma unvanı zorunlu; ölçü/renk şablonu + ek (proses SORULMAZ, v1.742.1);
 // KDV; bitirince tanımlara yazılır ve bir daha açılmaz. Veri taşıyan firmada hiç açılmaz; "Atla" yalnız işaret koyar.
 const { uygulamaAc, depoOku, bekle } = require("./ortak.js");
 const bos = { "tanimlar:data": JSON.stringify({ girisAktifMi: false }) };
@@ -22,8 +22,6 @@ const bos = { "tanimlar:data": JSON.stringify({ girisAktifMi: false }) };
     await sayfa.click('[data-kurulum-cip="renk-Taba"]');   // varsayılan seçiliydi → çıkar
     await sayfa.click('[data-kurulum-cip="renk-Lacivert"]');
     await sayfa.fill("[data-kurulum-renk-ek]", "Pudra");
-    await sayfa.click("[data-kurulum-ileri]");
-    await sayfa.fill("[data-kurulum-proses-ek]", "Boya");
     await sayfa.click("[data-kurulum-ileri]");
     await sayfa.click("[data-kurulum-kdv]");
     sonuc.ozet = await sayfa.evaluate(() => document.querySelector("[data-kurulum-ozet]").innerText.split("\n"));

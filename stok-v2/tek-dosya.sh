@@ -43,7 +43,7 @@ python3 duzeltme-uret.py > editor/.15-ham.sql
 python3 editor-icin.py editor/.15-ham.sql > editor/15-duzeltme.sql
 rm -f editor/.15-ham.sql
 python3 editor-icin.py veri-sifirla.sql > editor/16-sifirla-kurulum.sql
-echo "select jsonb_pretty(public.veri_sifirla('SIFIRLA', array['hesap_hareketleri']));" > editor/17-sifirla.sql
+echo "select jsonb_pretty(public.veri_sifirla('SIFIRLA', array['hesap_hareketleri', 'cekler']));" > editor/17-sifirla.sql
 python3 editor-icin.py fis-defteri.sql > editor/18-fis-defteri.sql
 echo "select public.fis_kural_ac();" > editor/19-fis-kural-ac.sql
 python3 editor-icin.py fis-gece-denetimi.sql > editor/20-gece-denetimi.sql
