@@ -456,7 +456,11 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
     kaydetYaz();
   }
 
-  function kaydetYaz() {
+  // ÇİFT BASIŞ (v1.739.0, tek fiş defteri): kayıt sonucu BEKLENİR — yanıt gelene kadar ikinci basış yok sayılır (her çağıran için:
+  // cari kartı, Sevkiyat Merkezi, Alış / Satış ekranı). Önce bu koruma yalnız 100'deki sarmalayıcıdaydı.
+  const kaydediliyorRef = useRef(false);
+  async function kaydetYaz() {
+    if (kaydediliyorRef.current) return;
     if (kalemler.length === 0) return showToast("Fişte kalem yok");
     // Eksik kurla kaydetmek, cariye uydurma bir borç yazmak olurdu.
     if (cevrimEksik) {
@@ -480,7 +484,8 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         return showToast(`Hesap ${hesapPB0}, fiş ${paraBirimi} — çevrim için kur girin (Kasa & Banka › Kurlar)`);
       }
     }
-    onKaydet({
+    kaydediliyorRef.current = true;
+    try { await onKaydet({
       tarih, fisNo: fisNo.trim(), odemeSekli, vade: cekSenet ? vade : "",
       // `paraBirimi` fişin KAYIT para birimi; satırlar kendi para birimini taşımaya devam eder.
       // `kayitKurlari` da gönderilir: kayıt anındaki kur, fişin bir parçasıdır.
@@ -501,7 +506,7 @@ function StokFisiFormu({ pencereId, tip, cari: gelenCari, cariler, stok, asortil
         const hesap = liste.find((h) => h.id === id);
         return { hesapTur: tur, hesapId: id, hesapAd: hesap ? hesap.ad : "", tutar: pesinSayi, paraBirimi, hesapPB: hesap ? (hesap.paraBirimi || "TRY") : paraBirimi };
       })() : null,
-    });
+    }); } finally { kaydediliyorRef.current = false; }
   }
 
   // PENCERE BAŞLIĞINA EYLEMLER (18 Eylül): Kaydet ve Vazgeç sağ üstte, Kapat'ın solunda. Formun

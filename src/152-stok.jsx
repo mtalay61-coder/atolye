@@ -200,7 +200,7 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
     });
   }
 
-  function saveProduct() {
+  async function saveProduct() {
     if (!matrix) return;
 
     // MÜKERRER AD KONTROLÜ. Aynı ürünün iki kez açılması, stok ve reçetelerin ikiye bölünmesi
@@ -294,19 +294,35 @@ function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onRecet
       variants,
       renkResimleri: matrix.renkResimleri || {},
     };
-    onSave([product, ...items]);
+    // TEK FİŞ DEFTERİ (v1.739.0): sunucu yolunda başlangıç miktarı AÇILIŞ FİŞİ (ACL-…). Fişin satırı ürünü sunucuda bulmalı: önce
+    // ürün STOKSUZ kaydedilir (kart + renk/ölçü), sonra miktarlar fişle. Fiş yazılamazsa ürün sıfır stokla kalır, kullanıcı uyarılır
+    // (Stok Girişi'nden girilebilir). Listeler bekleme ÖNCESİ kurulur.
+    const matrisRenkleri = matrix.renkler;   // bekleme sonrası da kullanılır — ÖNCE alınır (bayat okuma olmasın)
+    const sunucuYolu = !!onStokFisiKes && fisKesYolu() && product.hareketler.length > 0;
+    if (sunucuYolu) {
+      const stoksuz = { ...product, hareketler: [], variants: product.variants.map((v) => ({ ...v, miktar: 0 })) };
+      const tam = { ...product, hareketler: product.hareketler.map((h) => ({ ...h, fisNo: FIS_YER })) };
+      const once = [stoksuz, ...items];
+      const sonra = [tam, ...items];
+      await onSave(once);
+      onStokFisiKes({ fis: { tur: "Açılış", onek: "ACL", kaynak: "Manuel", aciklama: `Açılış stoğu — ${product.ad} (ürün oluşturulurken girildi)` },
+        eskiStok: once, yeniStok: sonra, anahtar: `acilis-urun|${product.id}`, hataEtiketi: `${product.ad} başlangıç stoğu` })
+        .then((no) => { if (no) showToast(`Ürün ve matris kaydedildi — başlangıç stoğu ${no}`); else if (no === null) showToast(`Ürün kaydedildi ama başlangıç stoğu YAZILAMADI — Stok › Stok Girişi'nden girin`); });
+    } else {
+      onSave([product, ...items]);
+    }
     // BARKOD KENDİLİĞİNDEN (v1.603.0): kart kaydedilince stok no + renk/ölçü kodları atanır, Barkodlar sekmesinde
     // "Barkodları oluştur"a ya da Paketleme'ye gerek kalmaz. Ürün henüz state'te değil; 100 kuyruğa alır.
     if (onBarkodTamamla) onBarkodTamamla(product.id, true);
     // Seçilen renkler ürünün malzeme tipine bağlanıyor (v1.471.0, bkz. `renkleriTipeBagla`).
-    if (product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla(matrix.renkler, product.malzemeTipi);
+    if (product.malzemeTipi && onRenkleriTipeBagla) onRenkleriTipeBagla(matrisRenkleri, product.malzemeTipi);
     setForm(emptyForm());
     setSelRenkler([]);
     setSelBedenler([]);
     setBedensiz(false);
     setMatrix(null);
     setShowForm(false);
-    showToast("Ürün ve matris kaydedildi");
+    if (!sunucuYolu) showToast("Ürün ve matris kaydedildi");
   }
 
   // Defter ile bakiye arasındaki farkı, BAKİYEYİ DEĞİŞTİRMEDEN deftere yazar.
