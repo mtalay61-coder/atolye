@@ -105,6 +105,7 @@ if [ -f test/erp.cjs ]; then
   editor_ver stok-v2/fis-defteri.sql
   editor_ver stok-v2/fis-defteri.sql
   calistir stok-v2/test/sinama-fis.sql
+  calistir stok-v2/test/sinama-fis-ek.sql   # v1.742: eski fiş iptali, sipariş bağ çözme, renk taşıma (kurallar açık)
   echo "── stok-v2/test/uctan-uca-fis.js"
   STOK_V2_DB="$DB" node stok-v2/test/uctan-uca-fis.js
   # v1.741 GECE DENETİMİ — uçtan uca fişlerin üstünde (yanlış alarm yok mu), Editor gibi; ikinci kez zararsız

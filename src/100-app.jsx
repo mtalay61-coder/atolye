@@ -5321,6 +5321,7 @@ function AtolyeUygulamasi() {
               stokRezervasyonlari={stokRezervasyonlari}
               onYetimRezervasyonSil={yetimRezervasyonlariSil}
               onCariHareketEkle={addCariHareketFromStok}
+              onParaFisiKes={paraFisiKes}
               onCarilerKaydet={saveCariler}
               fisDefteri={fisDefteri}
               onYetimSiparisBagiCoz={yetimSiparisBaglariniTemizle}

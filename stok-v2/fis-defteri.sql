@@ -90,6 +90,10 @@ $$;
 -- Hareket satırı (stok, cari, kasa): silinmez; yalnız fiş kesilirken eklenir ve fiş iptal edilirken iptal işaretlenir.
 create or replace function public.fis_satir_koru() returns trigger
 language plpgsql as $$
+declare
+  duzen text := coalesce(current_setting('fis.duzen', true), '');
+  yeni_j jsonb;
+  eski_j jsonb;
 begin
   if not public.fis_kural_aktif() then
     return case when tg_op = 'DELETE' then old else new end;
@@ -107,8 +111,30 @@ begin
     return new;
   end if;
   -- Güncelleme: yalnız iptal alanları değişebilir (ve kayıt zamanı).
-  if (to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme')
-     is distinct from (to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme') then
+  -- DAR DÜZEN KİPLERİ (v1.742.0, kullanıcı kararı 31 Ekim): üç sunucu işlemi satırın YALNIZ belirli alanlarına dokunur; kip
+  -- (`fis.duzen`) yalnız o işlemlerin içinde açılır, işlem sonunda kapanır. Miktar, tutar, ürün, tarih hiçbir kipte değişmez.
+  --   eski    (fis_eski_iptal): fişe bağlı olmayan eski satır numarasıyla fişine BAĞLANIR (fis_id boştan dolu) — sonra iptal.
+  --   bag     (fis_bag_coz): sipariş iptalinde sipariş bağı çözülür — siparis_id / kalem_id / rezervasyon_siparis_id boşalır,
+  --           siparis_no "(iptal)" eki alır; cari satırında `ek`ten yalnız siparisId / kalemId / rezervasyonSiparisId düşer.
+  --   varyant (stk_renk_tasi): renk kodlamada hedef varyant zaten varsa hareket o varyanta taşınır (renk adı değişir, stok aynı).
+  yeni_j := to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
+  eski_j := to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
+  if yeni_j is distinct from eski_j then
+    if duzen = 'eski' and old.fis_id is null and new.fis_id is not null and (yeni_j - 'fis_id') = (eski_j - 'fis_id') then
+      return new;
+    end if;
+    if duzen = 'bag'
+       and (yeni_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
+         = (eski_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
+       and ((yeni_j -> 'ek') is not distinct from (eski_j -> 'ek')
+         or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'siparisId' - 'kalemId' - 'rezervasyonSiparisId')
+         or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'siparisId' - 'kalemId')
+         or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'rezervasyonSiparisId')) then
+      return new;
+    end if;
+    if duzen = 'varyant' and tg_table_name = 'stk_hareket' and (yeni_j - 'varyant_id') = (eski_j - 'varyant_id') then
+      return new;
+    end if;
     raise exception 'Hareket değiştirilemez — fişi iptal edip yeniden kesin (% %)', tg_table_name, new.id using errcode = '42501';
   end if;
   if old.iptal and not new.iptal then
@@ -325,6 +351,128 @@ begin
   return jsonb_build_object('fisNo', no);
 end $$;
 
+-- ESKİ FİŞ İPTALİ (v1.742.0, kullanıcı kararı 31 Ekim: "Fiş iptaline bağla"). Fiş defterinden ÖNCE yazılmış fiş: stok satırları
+-- kendi başlığına (stk_fis — stok v2 her harekete fiş açıyordu) bağlı, cari / kasa satırlarında fis_id BOŞ (numara yalnız
+-- fis_no / veri.fisNo'da). Kurallar açıkken bu satırlar köprüyle iptal edilemez. Bu işlem: başlık yoksa açar (aile: para,
+-- tür "Eski fiş"), fişsiz satırları NUMARASIYLA o başlığa bağlar ve fis_iptal ile hepsini birlikte iptal eder — yeni fişlerle
+-- aynı kural (silinmez, iz kalır). Sunucu fişi gelirse de çalışır (bağlanacak satırı yoktur, düz fis_iptal).
+-- p = { no, sebep, alt }
+create or replace function public.fis_eski_iptal(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  no text := nullif(btrim(coalesce(p ->> 'no', '')), '');
+  baslik_var boolean;
+  cari_var boolean;
+  kasa_var boolean;
+  bagli int := 0;
+  n int;
+begin
+  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
+  if no is null then raise exception 'Fiş numarası yok' using errcode = '22023'; end if;
+  baslik_var := exists (select 1 from public.stk_fis where id = no);
+  cari_var := exists (select 1 from public.car_hareket where fis_id is null and fis_no = no);
+  kasa_var := exists (select 1 from public.kas_hareket where fis_id is null and veri ->> 'fisNo' = no);
+  if not baslik_var and not cari_var and not kasa_var then
+    raise exception 'Fiş bulunamadı: %', no using errcode = 'P0002';
+  end if;
+  perform set_config('fis.kapi', 'acik', true);
+  if not baslik_var then
+    insert into public.stk_fis (id, aile, tur, kaynak, tarih, aciklama, ek)
+    values (no, 'para', 'Eski fiş', 'Eski kayıt', now(), 'Fiş defterinden önce yazılmış satırlar — iptal için bağlandı',
+            jsonb_build_object('eski', true));
+  end if;
+  perform set_config('fis.duzen', 'eski', true);
+  update public.car_hareket set fis_id = no where fis_id is null and fis_no = no;
+  get diagnostics n = row_count; bagli := bagli + n;
+  update public.kas_hareket set fis_id = no where fis_id is null and veri ->> 'fisNo' = no;
+  get diagnostics n = row_count; bagli := bagli + n;
+  perform set_config('fis.duzen', '', true);
+  perform set_config('fis.kapi', '', true);
+  return public.fis_iptal(p) || jsonb_build_object('eski', not baslik_var or bagli > 0, 'bagliSatir', bagli);
+end $$;
+
+-- SİPARİŞ BAĞINI ÇÖZ (v1.742.0, kullanıcı kararı 31 Ekim: "Yalnız bağ alanları sunucuda"). Sipariş iptalinde (087 siparisKapat,
+-- 088 siparisBaglariniCoz) fişler silinmez, bağımsız kalır: satırın sipariş bağı çözülür — miktar / tutar / ürün DEĞİŞMEZ. Satır
+-- eşleşmesi uygulamayla aynı (088 siparisHareketiMi): kimlikli satırda kimlik, kimliksiz eskide numara. Değerleri istemci
+-- VERMEZ, sunucu hesaplar ("(iptal)" eki, düşen anahtarlar) — bu işlemle başka alan değiştirilemez. Fiş başlığına not düşer.
+-- p = { siparisId, siparisNo }
+create or replace function public.fis_bag_coz(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  sid text := nullif(btrim(coalesce(p ->> 'siparisId', '')), '');
+  sno text := nullif(btrim(coalesce(p ->> 'siparisNo', '')), '');
+  ino text;
+  n_stok int := 0;
+  n_cari int := 0;
+  n_zincir int := 0;
+  n int;
+begin
+  perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
+  if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
+  ino := case when sno is null then null else sno || ' (iptal)' end;
+  perform set_config('fis.kapi', 'acik', true);
+  perform set_config('fis.duzen', 'bag', true);
+  update public.stk_hareket set siparis_id = null, kalem_id = null, siparis_no = ino
+   where not iptal and (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno));
+  get diagnostics n_stok = row_count;
+  update public.stk_hareket set rezervasyon_siparis_id = null where not iptal and rezervasyon_siparis_id = sid;
+  get diagnostics n_zincir = row_count;
+  update public.car_hareket set siparis_no = ino, ek = ek - 'siparisId' - 'kalemId', guncelleme = now()
+   where not iptal and ((ek ->> 'siparisId') = sid or ((ek ->> 'siparisId') is null and sno is not null and siparis_no = sno));
+  get diagnostics n_cari = row_count;
+  update public.car_hareket set ek = ek - 'rezervasyonSiparisId', guncelleme = now()
+   where not iptal and (ek ->> 'rezervasyonSiparisId') = sid;
+  get diagnostics n = row_count; n_zincir := n_zincir + n;
+  update public.stk_fis set ek = ek || jsonb_build_object('siparisIptal', jsonb_build_object('no', sno, 'zaman', now()))
+   where siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno);
+  perform set_config('fis.duzen', '', true);
+  perform set_config('fis.kapi', '', true);
+  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir);
+end $$;
+
+-- RENK TAŞI (v1.742.0, kullanıcı kararı 31 Ekim: "Varyant düzeyinde"). Tanımlar › Bakım › Kodsuz Mamul Renkleri ("Siyah" →
+-- "1003 - Siyah"): satırın rengi tek tek değişmez — VARYANTIN rengi değişir, hareketler aynı varyanta bağlı kalır (stok, geçmiş,
+-- fişler aynen). Hedef varyant zaten varsa (aynı ürün, yeni renk, aynı ölçü) hareketler ona taşınır ve eski varyant kalkar
+-- (stk_serbest_birlestir ile aynı yol). Yeni renk Tanımlar'a henüz varmadıysa serbest renk açılır, Tanımlar gelince birleşir.
+-- p = { eslesmeler: [{ urunId, eski, yeni }] }
+create or replace function public.stk_renk_tasi(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  e jsonb;
+  v record;
+  hedef_renk text;
+  hedef_v text;
+  n_varyant int := 0;
+  n_tasinan int := 0;
+  n int;
+begin
+  perform public.stk_yetki(array['stok', 'tanimlar'], 'kaydetme');
+  perform set_config('fis.kapi', 'acik', true);
+  perform set_config('fis.duzen', 'varyant', true);
+  for e in select * from jsonb_array_elements(public.stk_dizi(p -> 'eslesmeler')) loop
+    continue when coalesce(e ->> 'urunId', '') = '' or coalesce(e ->> 'yeni', '') = ''
+                  or public.stk_nrm(e ->> 'eski') = public.stk_nrm(e ->> 'yeni');
+    hedef_renk := public.stk_renk_coz(null, e ->> 'yeni');
+    for v in select sv.* from public.stk_varyant sv join public.stk_renk r on r.id = sv.renk_id
+              where sv.urun_id = e ->> 'urunId' and public.stk_nrm(r.ad) = public.stk_nrm(e ->> 'eski') and sv.renk_id <> hedef_renk loop
+      select id into hedef_v from public.stk_varyant
+       where urun_id = v.urun_id and renk_id = hedef_renk and coalesce(olcu_id, '') = coalesce(v.olcu_id, '');
+      if hedef_v is null then
+        update public.stk_varyant set renk_id = hedef_renk where id = v.id;
+      else
+        update public.stk_hareket set varyant_id = hedef_v where varyant_id = v.id;
+        get diagnostics n = row_count; n_tasinan := n_tasinan + n;
+        update public.stk_varyant set min_stok = greatest(min_stok, v.min_stok), aktif = aktif or v.aktif where id = hedef_v;
+        delete from public.stk_varyant where id = v.id;
+      end if;
+      n_varyant := n_varyant + 1;
+    end loop;
+  end loop;
+  perform set_config('fis.duzen', '', true);
+  perform set_config('fis.kapi', '', true);
+  return jsonb_build_object('varyant', n_varyant, 'tasinanHareket', n_tasinan);
+end $$;
+
 -- 6) FİŞ DEFTERİ OKUMASI — her fiş bir satır, eski defter kaydı biçiminde (uygulama ekranları bu biçimi okuyor).
 create or replace view public.fis_listesi with (security_invoker = true) as
 select f.id, f.olusturma, f.iptal,
@@ -377,7 +525,7 @@ begin
   revoke all on public.fis_sayac from anon, authenticated;
   revoke all on function public.fis_no_al(text) from public, anon, authenticated;
   revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
-  foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)'] loop
+  foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_eski_iptal(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';
   end loop;

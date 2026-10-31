@@ -74,7 +74,7 @@ function isYukuHesapla(tanimlar, urun, proses, bedenAdet) {
   return { saat: Math.round(saat * 100) / 100, gun: Math.round((saat / gunlukSaat) * 100) / 100, eksik: Array.from(new Set(eksik)) };
 }
 
-function KapasiteTanimi({ tanimlar, onSave, cariler, stok, onCariHareketEkle, showToast }) {
+function KapasiteTanimi({ tanimlar, onSave, cariler, stok, onCariHareketEkle, onParaFisiKes, showToast }) {
   const kt = kapasiteTanimi(tanimlar);
   const yaz = (alan, liste) => onSave({ ...tanimlar, kapasite: { ...kt, [alan]: liste } });
   const prosesAdlari = (tanimlar.prosesler || []).map((p) => p.ad);
@@ -177,7 +177,7 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, stok, onCariHareketEkle, sh
               </div>
               {prosesCipleri(m.prosesler, (l) => makineGuncelle(m.id, { prosesler: l }), m.ad)}
               <DemirbasBolumu kayit={m} tur="Makine" tanimlar={tanimlar} cariler={cariler} stok={stok} onGuncelle={(d) => makineGuncelle(m.id, d)}
-                onCariHareketEkle={onCariHareketEkle} showToast={showToast} />
+                onCariHareketEkle={onCariHareketEkle} onParaFisiKes={onParaFisiKes} showToast={showToast} />
             </div>
           ))}
         </div>
@@ -232,7 +232,7 @@ function KapasiteTanimi({ tanimlar, onSave, cariler, stok, onCariHareketEkle, sh
                 ))}
               </div>
               <DemirbasBolumu kayit={k} tur={k.tur || "Kalıp"} tanimlar={tanimlar} cariler={cariler} stok={stok} onGuncelle={(d) => kalipGuncelle(k.id, d)}
-                onCariHareketEkle={onCariHareketEkle} showToast={showToast} />
+                onCariHareketEkle={onCariHareketEkle} onParaFisiKes={onParaFisiKes} showToast={showToast} />
             </div>
           ))}
         </div>
@@ -439,23 +439,41 @@ function urunDemirbasPayi(urun, tanimlar, cariler, kurlar) {
 }
 
 // Tanımlar › Kapasite kartlarının altındaki demirbaş bölümü: ömür, ürün bağı, alımlar, "Satın alındı".
-function DemirbasBolumu({ kayit, tur, tanimlar, cariler, stok, onGuncelle, onCariHareketEkle, showToast }) {
+function DemirbasBolumu({ kayit, tur, tanimlar, cariler, stok, onGuncelle, onCariHareketEkle, onParaFisiKes, showToast }) {
   const [acik, setAcik] = useState(false);
   const [f, setF] = useState({ cariId: "", tutar: "", paraBirimi: "TRY", tarih: bugunYerel(), ay: "24", defter: "Genel" });
   const alimlar = demirbasAlimlari(cariler).filter((a) => a.h.demirbas.id === kayit.id);
   const mamuller = (stok || []).filter((p) => p.tip === "Mamul" && !p.pasif);
   const bagli = kayit.urunIdler || [];
   const tedarikciler = (cariler || []).filter((c) => c.tip !== "Personel" && c.tip !== "Müşteri" && !c.pasif);
-  const kaydet = () => {
+  const kaydediliyorRef = useRef(false);
+  const kaydet = async () => {
     const tutar = parseFloat(String(f.tutar).replace(",", "."));
     if (!f.cariId || !(tutar > 0)) { if (showToast) showToast("Tedarikçi ve tutar girin"); return; }
+    if (kaydediliyorRef.current) return;   // çift basış: aynı alım iki fiş olmasın
     const ay = Math.max(1, parseInt(f.ay, 10) || 1);
-    const ok = onCariHareketEkle(f.cariId, [{
+    const hareket = {
       tarih: f.tarih, yon: hareketYonu("Alış"), tutar, paraBirimi: f.paraBirimi, odemeSekli: "Nakit", vade: "", defter: f.defter,
       islemTipi: "Alış", aciklama: `${tur} alımı — ${kayit.ad}`, kullanici: islemKullanicisiAd(),
       demirbas: { id: kayit.id, tur, ad: kayit.ad, amortismanAy: ay },
-    }]);
-    if (ok === false) return;
+    };
+    // TEK FİŞ DEFTERİ (v1.742.0 — kural provası buldu): demirbaş alımı eski yoldan (addCariHareketFromStok → car_yaz) yazıyordu;
+    // kurallar açılınca reddedilirdi. Sunucu yolunda ürünsüz alış fişi (AF), numarayı sunucu verir — cari kartındaki ürünsüz alışla aynı.
+    if (fisKesYolu() && onParaFisiKes) {
+      kaydediliyorRef.current = true;
+      let sonuc;
+      try {
+        sonuc = await onParaFisiKes({
+          fis: { tur: "Alış", onek: paraFisOneki("Alış"), kaynak: "Demirbaş alımı", ek: { demirbasId: kayit.id } },
+          cariId: f.cariId, hareketler: [{ ...hareket, islemTipi: undefined, fisNo: FIS_YER }],
+          anahtar: `demirbas|${kayit.id}`, hataEtiketi: `${kayit.ad} alımı`,
+        });
+      } finally { kaydediliyorRef.current = false; }
+      if (!sonuc) return;
+    } else {
+      const ok = onCariHareketEkle(f.cariId, [hareket]);
+      if (ok === false) return;
+    }
     setF({ ...f, tutar: "" }); setAcik(false);
     if (showToast) showToast(`${kayit.ad} alımı cariye yazıldı — ${ay} ay amortisman`);
   };
