@@ -3792,7 +3792,10 @@ function AtolyeUygulamasi() {
     const cekDegisti = sonuc.cekDegisti || kasaCekiDegisti;
     const kasaSilinen = [...new Set([...k.silinen, ...kasaNoIdleri])];
     try {
-      await fisIptalGonder(sunucuFisi.fisNo, (fis && fis.sebep) || "Geri alındı", altSatirlar.length ? { siparis_kalemleri: { satirlar: altSatirlar } } : null);
+      // Karşılanan DEĞİŞİMİ de gider (v1.742.2, R1): fişin düşürdüğü adet (`kalemDusumu`, kırpmasız) — sunucu güncel değerden düşer;
+      // aynı anda yapılan başka teslim ezilmez.
+      const kalemArtisi = fisKesKalemArtisi(Object.entries(sonuc.kalemDusumu || {}).map(([a, d]) => ({ id: a.split("|")[1], miktar: -d })));
+      await fisIptalGonder(sunucuFisi.fisNo, (fis && fis.sebep) || "Geri alındı", altSatirlar.length ? { siparis_kalemleri: { satirlar: altSatirlar, artis: kalemArtisi } } : null);
     } catch (e) {
       showToast(`"${sunucuFisi.fisNo}" iptal edilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
       return false;

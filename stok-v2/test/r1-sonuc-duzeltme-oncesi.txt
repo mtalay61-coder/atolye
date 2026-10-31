@@ -1,0 +1,35 @@
+  ✓ 0: kurallar açık (canlının 19. adımdan sonraki hâli)
+1) İki kullanıcı aynı kaleme aynı anda 5'er adet (ikisinin ekranında karşılanan 0)
+    istemcinin gönderdiği kalem bilgisi (A): {"satirlar":[{"id":"k-r1","karsilanan":5}],"artis":null}
+    A: SF-261031006   B: SF-261031007
+    SONUÇ → stok hareketleri toplamı: 10 adet çıkış · kalemin karşılananı: 5 · geçerli fiş: 2
+  ✓ 1: iki fiş de kesildi
+  ✓ 1: stoktan 10 adet çıktı
+  ✗ 1: kalemin karşılananı 10 (DEĞİŞMEZ: karşılanan = teslim edilen)
+    beklenen: 10 
+    çıkan:    5
+2) Aynı istek SIRALI tekrar (yanıt kayboldu, istemci yeniden gönderdi)
+  ✗ 2: ilk numara döndü (zatenVar), ikinci fiş yok, karşılanan artmadı
+    beklenen: [true,true,2,10,10] 
+    çıkan:    [true,true,2,5,10]
+3) Aynı istek EŞZAMANLI iki kez (çift tıklama iki sekmede)
+    1. çağrı: {"fisNo":"SF-261031008","zatenVar":false,"bagliFisNo":null}
+    2. çağrı: ERROR:  duplicate key value violates unique constraint "stk_fis_istek"
+  ✓ 3: tek fiş, karşılanan +2 (12), stok çıkışı 12, değişmez tutuyor
+4) Ağ kesintisi: sunucu bağlantısı işlem ortasında düşer → hiçbir şey yazılmaz; yeniden gönderim bir kez işlenir
+  ✓ 4: kesilen işlem geri alındı (fiş yok, karşılanan 12, sayaç değişmedi)
+  ✓ 4: yeniden gönderim bir kez işlendi (15), üçüncü gönderim zatenVar
+5) İşlem geri alma: satırlardan biri hatalı (olmayan ürün) → fiş, satırlar, karşılanan, sayaç — hiçbiri yazılmaz
+  ✓ 5: reddedildi, hiçbir şey değişmedi
+6) Teslim İPTALİ (A'nın fişi geri alınır) ile yeni teslim (F, 4 adet) aynı anda — ikisinin ekranında karşılanan 15
+    iptal: tamam   F: SF-261031010
+    SONUÇ → teslim edilen (geçerli): 14 · karşılanan: 19
+  ✗ 6: geçerli teslim 14 (15 − 5 + 4), karşılanan 14
+    beklenen: [true,true,14,14] 
+    çıkan:    [true,true,14,19]
+7) Miktarı aşan eşzamanlı teslim (kalan 6; iki kullanıcı 5'er) — karşılanan miktarda kırpılır (bugünkü kural)
+    SONUÇ → teslim edilen: 24 · karşılanan: 19 (miktar 20)
+  ✗ 7: iki fiş, teslim 24, karşılanan 20 = min(20, 24)
+    beklenen: [true,true,24,20,true] 
+    çıkan:    [true,true,24,19,false]
+── R1 HATALI ──

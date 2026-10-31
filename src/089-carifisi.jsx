@@ -69,7 +69,9 @@ function stokFisiSunucuYuku({ cariId, tip, fis, fisGovdesi, sonuc, kalemler, kay
         kasa: { hareketler: [fisKesKasaHareketi(pesin.hesapId, makbuzKasa)] },
       },
     } : {}),
-    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar } } } : {}),
+    // Karşılanan DEĞİŞİMİ de gider (v1.742.2, R1): fişin siparişe bağlı kalem adedi — sunucu güncel değere ekler.
+    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar,
+      artis: fisKesKalemArtisi(bagliKalemler.filter((k) => (k.miktar || 0) > 0).map((k) => ({ id: k.kalemId, miktar: k.miktar }))) } } } : {}),
   };
   return { yuk, p: { kimlikler, anaCari, makbuzCari, makbuzKasa, pesin, toplamTutar, defterKaydi, bagliKalemler, yeniSiparisler, etkSiparis } };
 }

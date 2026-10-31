@@ -56,6 +56,21 @@ function fisKesSiparisKalemleri(siparis, kalemIdler) {
   return cocuk.cikar(siparis).filter((s) => istenen.has(s.id));
 }
 
+// KARŞILANAN DEĞİŞİMİ (saf, v1.742.2 — R1, teknik analiz 31 Ekim): sipariş kaleminin karşılananı yalnız MUTLAK değerle gidiyordu
+// (fisKesSiparisKalemleri); iki kullanıcı aynı kaleme aynı anda teslim edince ikincisi birincinin artışını eziyordu (yerel sınama:
+// stoktan 10 çıktı, karşılanan 5 — stok-v2/test/r1-yaris.js). Değişim GERÇEK ADETTEN kurulur (ekrandaki bayat değerden ve
+// uygulamanın kırpmasından bağımsız); sunucu (fis-defteri.sql fis_kalem_artis) güncel değere ekler, 0..miktar aralığında kırpar.
+// `liste`: [{ id: kalemId, miktar }] — teslim +, iptal −. Aynı kalem toplanır, sıfırlar atılır. Döner: alt.siparis_kalemleri.artis
+function fisKesKalemArtisi(liste) {
+  const m = new Map();
+  (liste || []).forEach((x) => {
+    if (!x || !x.id) return;
+    const d = Number(x.miktar) || 0;
+    if (d) m.set(String(x.id), stokYuvarla((m.get(String(x.id)) || 0) + d));
+  });
+  return [...m.entries()].filter(([, d]) => d).map(([id, miktar]) => ({ id, miktar }));
+}
+
 // Bir ana kaydın değişen alt satırları (alt_yaz biçimi, saf): yeni hâlde olup eskisinden farklı (ya da yeni) olanlar `satirlar`,
 // eskide olup yenide olmayanlar `sil`. Üretim atamaları için (teslim: atama tamamlandı + kalan / tamir ataması doğdu; geri alma:
 // tersi) — yalnız etkilenen satır gider, ötekiler (başka ustanın aynı anda aldığı iş) dokunulmadan kalır.

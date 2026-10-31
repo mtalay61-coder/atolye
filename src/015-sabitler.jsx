@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.742.1";
+const SURUM = "1.742.2";
 const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Kurulum sihirbazı proses sormuyor — prosesleri Tanımlar › Üretim'den siz girersiniz";
+const SURUM_NOTU = "Aynı sipariş kalemine aynı anda yapılan teslimler artık birbirini ezmiyor";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.742.2", tarih: "31.10.2026", eklenen: [], degisen: [], duzeltilen: ["İki kullanıcı aynı sipariş kalemine aynı anda teslim yapınca karşılanan miktar birinin teslimini kaybediyordu (stoktan 10 çıkıyor, karşılanan 5 görünüyordu). Karşılanan artık sunucuda güncel değere eklenir; teslim iptali de aynı şekilde düşer.", "Aynı kayıt iki kez aynı anda gönderilince ikincisi \"kaydedilemedi\" hatası alıyordu (kayıt doğruydu); artık ilk numarayı alır."] },
   { surum: "1.742.1", tarih: "31.10.2026", eklenen: [], degisen: ["İlk açılıştaki kurulum sihirbazı artık proses adımı içermiyor (dört adım: firma, ölçüler, renkler, bitir); hazır proses şablonu eklenmez, prosesleri Tanımlar › Üretim'den kendi sıranızla girersiniz."], duzeltilen: [] },
   { surum: "1.742.0", tarih: "31.10.2026", eklenen: ["Kural provası (test/kural-provasi.js): bütün senaryolar fiş defteri kurulu sunucuya karşı koşar; kurallar açılınca reddedilecek eski yol yazmaları listelenir."], degisen: ["Tanımlar › Kapasite › demirbaş \"Satın alındı\" sunucu fişiyle (AF) yazılır.", "Sipariş iptalinde fişlerin sipariş bağı sunucuda çözülür (yalnız bağ alanları; miktar, tutar, fiyat değişmez), fiş başlığına not düşer.", "Tanımlar › Bakım › Kodsuz Mamul Renkleri: renk varyant düzeyinde değişir; stok hareketlerine dokunulmaz."], duzeltilen: [] },
   { surum: "1.741.0", tarih: "31.10.2026", eklenen: ["Fişler ekranında Virman, Gider, Gelir ve Çek Tahsili çipleri: cari ayağı olmayan sunucu fişleri (VRM / GD / GL / ÇT) artık listede; fiş açılınca hangi kasadan / bankaya ne kadar girip çıktığı görünür.", "Gün sonu raporuna (sunucudan gönderilen) \"Fiş defteri denetimi\" bölümü: fişsiz cari / kasa satırı, satırsız fiş, iptal edilmiş fişin geçerli satırı, başlık tutarı ≠ satırlar; günün kesilen ve iptal edilen fişleri. Veritabanının kendisine bakar (stok-v2/editor/20-gece-denetimi.sql kurulunca)."], degisen: ["Virman fişinin tutarı tek ayak (iki ayağın toplamı değil). İptal edilmiş fiş ve fişi olmayan eski kasa hareketleri listeye girmez."], duzeltilen: [] },

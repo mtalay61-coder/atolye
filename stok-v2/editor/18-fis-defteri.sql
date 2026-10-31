@@ -207,6 +207,33 @@ begin
   return fid;
 end $$;
 
+create or replace function public.fis_alt_artissiz(p_alt jsonb) returns jsonb
+language sql immutable as $$
+  select case
+    when jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then p_alt
+    else jsonb_set(p_alt, '{siparis_kalemleri,satirlar}', coalesce((
+      select jsonb_agg(case when x ->> 'id' in (select a ->> 'id' from jsonb_array_elements(p_alt -> 'siparis_kalemleri' -> 'artis') a)
+                            then x - 'karsilanan' else x end)
+      from jsonb_array_elements(public.stk_dizi(p_alt -> 'siparis_kalemleri' -> 'satirlar')) x), '[]'::jsonb))
+  end
+$$;
+
+create or replace function public.fis_kalem_artis(p_alt jsonb) returns int
+language plpgsql security definer set search_path = public as $$
+declare
+  n int := 0;
+begin
+  if jsonb_typeof(p_alt) <> 'object' or jsonb_typeof(p_alt -> 'siparis_kalemleri' -> 'artis') <> 'array' then return 0; end if;
+  update public.siparis_kalemleri k
+     set karsilanan = greatest(0, least(coalesce(k.miktar, 0), coalesce(k.karsilanan, 0) + a.miktar))
+    from (select x ->> 'id' as id, sum(public.stk_sayi(x ->> 'miktar')) as miktar
+            from jsonb_array_elements(p_alt -> 'siparis_kalemleri' -> 'artis') x
+           where coalesce(x ->> 'id', '') <> '' group by x ->> 'id') a
+   where k.id::text = a.id and coalesce(a.miktar, 0) <> 0;
+  get diagnostics n = row_count;
+  return n;
+end $$;
+
 create or replace function public.fis_kes(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -221,6 +248,7 @@ begin
   if jsonb_typeof(p -> 'fis') <> 'object' then
     raise exception 'Fiş bilgisi yok' using errcode = '22023';
   end if;
+  perform pg_advisory_xact_lock(hashtext('fis_kes:' || v_istek));
   select * into mevcut from public.stk_fis f where f.istek = v_istek;
   if found then
     return jsonb_build_object('fisNo', mevcut.id, 'bagliFisNo', mevcut.bagli_fis, 'zatenVar', true);
@@ -233,7 +261,8 @@ begin
     update public.stk_fis set bagli_fis = fid where id = bid;
   end if;
   if jsonb_typeof(p -> 'alt') = 'object' then
-    perform public.alt_yaz(p -> 'alt');
+    perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
+    perform public.fis_kalem_artis(p -> 'alt');
   end if;
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', fid, 'bagliFisNo', bid, 'zatenVar', false);
@@ -265,7 +294,8 @@ begin
     update public.kas_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta, guncelleme = now() where fis_id = h and not iptal;
   end loop;
   if jsonb_typeof(p -> 'alt') = 'object' then
-    perform public.alt_yaz(p -> 'alt');
+    perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
+    if not f.iptal then perform public.fis_kalem_artis(p -> 'alt'); end if;
   end if;
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('fisNo', f.id, 'bagliFisNo', f.bagli_fis, 'zatenIptal', f.iptal);
@@ -407,6 +437,8 @@ begin
   revoke all on public.fis_sayac from anon, authenticated;
   revoke all on function public.fis_no_al(text) from public, anon, authenticated;
   revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
+  revoke all on function public.fis_kalem_artis(jsonb) from public, anon, authenticated;
+  revoke all on function public.fis_alt_artissiz(jsonb) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';

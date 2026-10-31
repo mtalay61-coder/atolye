@@ -32,7 +32,9 @@ function siparisTeslimSunucuYuku({ siparis, fisGovdesi2, sonuc, islenenler, deft
     },
     stok: { satirlar: stokSatirlari },
     cari: { satirlar: cariHareketleri.map((h) => fisKesCariSatiri(siparis.cariId, h)) },
-    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar } } } : {}),
+    // Karşılanan DEĞİŞİMİ de gider (v1.742.2, R1): teslim edilen adet — sunucu güncel değere ekler (eşzamanlı teslim ezilmez).
+    ...(altSatirlar.length ? { alt: { siparis_kalemleri: { satirlar: altSatirlar,
+      artis: fisKesKalemArtisi(islenenler.filter((k) => k.kalemId && k.miktar > 0).map((k) => ({ id: k.kalemId, miktar: k.miktar }))) } } } : {}),
   };
   return { yuk, kimlikler, cariHareketleri, etkSiparis };
 }
