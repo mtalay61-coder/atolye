@@ -3722,7 +3722,21 @@ function AtolyeUygulamasi() {
     const k = kasadanBaglariCikar(sonuc.muhasebe, sonuc.muhasebeBagIdler);
     const kasaNoIdleri = new Set(kasaSatirlari.map((h) => String(h.id)));
     const temizle = (liste) => (liste || []).map((hs) => ({ ...hs, hareketler: (hs.hareketler || []).filter((h) => !kasaNoIdleri.has(String(h.id))) }));
-    const yeniMuhasebe = kasaNoIdleri.size ? { ...k.muhasebe, kasalar: temizle(k.muhasebe.kasalar), bankalar: temizle(k.muhasebe.bankalar) } : k.muhasebe;
+    let yeniMuhasebe = kasaNoIdleri.size ? { ...k.muhasebe, kasalar: temizle(k.muhasebe.kasalar), bankalar: temizle(k.muhasebe.bankalar) } : k.muhasebe;
+    // ÇEK TAHSİLİ GERİ (v1.739.0): iptal edilen kasa satırı bir çekin tahsil kaydıysa çek bir önceki durumuna döner (205 hareketSil'deki
+    // kuralın aynısı — `cekIslemGeriAl`). fisGeriAl yalnız cari satırlarına bakıyor.
+    let kasaCekiDegisti = false;
+    if (kasaNoIdleri.size && (yeniMuhasebe.cekler || []).length) {
+      const cekler2 = yeniMuhasebe.cekler.map((c) => {
+        const geri = cekIslemGeriAl(c, kasaNoIdleri, { kullanici: (aktifKullanici && aktifKullanici.ad) || null });
+        if (!geri) return c;
+        kasaCekiDegisti = true;
+        gunlukYaz(`Çek işlemi geri alındı (fiş iptali): ${c.cekNo || "no yok"}`, "muhasebe", { cekId: c.id, durum: geri.durum });
+        return geri;
+      });
+      if (kasaCekiDegisti) yeniMuhasebe = { ...yeniMuhasebe, cekler: cekler2 };
+    }
+    const cekDegisti = sonuc.cekDegisti || kasaCekiDegisti;
     const kasaSilinen = [...new Set([...k.silinen, ...kasaNoIdleri])];
     try {
       await fisIptalGonder(sunucuFisi.fisNo, (fis && fis.sebep) || "Geri alındı", altSatirlar.length ? { siparis_kalemleri: { satirlar: altSatirlar } } : null);
@@ -3740,12 +3754,12 @@ function AtolyeUygulamasi() {
       fisKesYerelYaz("cari:data", sonuc.cariler);
       fisKesTabaniKur("cariler", etkCari.eskiler, etkCari.yeniler);
     }
-    if (kasaSilinen.length || sonuc.cekDegisti) {
+    if (kasaSilinen.length || cekDegisti) {
       setMuhasebe(yeniMuhasebe);
       fisKesYerelYaz("muhasebe:data", yeniMuhasebe);
       fisKesKasaTabaniKur([], kasaSilinen);
-      // Çek değişikliği (iade / ciro geri) fiş satırı değil — bugünkü yoldan.
-      if (sonuc.cekDegisti) yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeniMuhasebe), "Muhasebe", yeniMuhasebe);
+      // Çek değişikliği (iade / ciro / tahsil geri) fiş satırı değil — bugünkü yoldan.
+      if (cekDegisti) yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeniMuhasebe), "Muhasebe", yeniMuhasebe);
     }
     if (etkSip.yeniler.length > 0) {
       fisKesTabaniKur("siparisler", etkSip.eskiler, etkSip.yeniler, { anaDahil: false });
@@ -3771,6 +3785,28 @@ function AtolyeUygulamasi() {
   }, [fisDefteri, sunucuFisiniIptalEt]);
   sunucuFisiIptalRef.current = sunucuFisiIptal;   // removeHareketEverywhere bu kancadan ÖNCE tanımlı
   const sunucuFisiMi = useCallback((fisNo) => !!(fisNo && fisKesYolu() && (fisDefteri || []).some((x) => x && x.sunucu && x.fisNo === fisNo)), [fisDefteri]);
+  // İRSALİYE BİLGİSİ (v1.739.0, 239 Sevkiyat Merkezi): sunucu fişinde satır yerinde değiştirilmez (kurallar açılınca reddedilir) —
+  // bilgi fişin BAŞLIĞINA (`fis_bilgi`: ek.irsaliye) yazılır; ekranda cari satırında da görünür (yalnız bu cihazın kopyası + taban,
+  // yeniden gönderilmez). Eski usul fişte bugünkü yol (cari satırına). Döner: true / false.
+  const fisIrsaliyeKaydet = useCallback(async (fisNo, cariId, irsaliye) => {
+    // fis-muaf: satış fişinin cari satırı (irsaliye) — üretim işçiliği ("-İşçilik" eki) bu yola gelmez.
+    const isle = (c) => (c.id !== cariId ? c : { ...c, hareketler: (c.hareketler || []).map((h) => (h.fisNo === fisNo && !h.muhasebeBagId ? { ...h, irsaliye } : h)) });
+    if (!sunucuFisiMi(fisNo)) { saveCariler((cariler || []).map(isle)); return true; }
+    const eski = (cariler || []).find((c) => c.id === cariId);
+    try {
+      await supabaseIstek("rpc/fis_bilgi", { method: "POST", body: JSON.stringify({ p: { no: fisNo, ek: { irsaliye } } }) });
+    } catch (e) {
+      showToast(`İrsaliye bilgisi kaydedilemedi (${String((e && e.message) || e).slice(0, 160)})`);
+      return false;
+    }
+    if (eski) {
+      const yeni = isle(eski);
+      setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, [eski], [yeni]); fisKesYerelYaz("cari:data", n); return n; });
+      fisKesTabaniKur("cariler", [eski], [yeni]);
+    }
+    setFisDefteri((onceki) => (onceki || []).map((f) => (f && f.fisNo === fisNo ? { ...f, ek: { ...(f.ek || {}), irsaliye } } : f)));
+    return true;
+  }, [cariler, sunucuFisiMi, showToast, saveCariler]);
 
   const yetimFisTemizle = useCallback(async (fis) => {
     // KAPALI DÖNEM FİŞİ SİLİNMEZ: fişin cari/stok hareketlerinden biri kapalı dönemdeyse (id ya da fiş no ile bulunur).
@@ -5528,6 +5564,7 @@ function AtolyeUygulamasi() {
           <GizliModul aktif={tab === "sevkiyat"}>
             <SevkiyatMerkezi koliler={koliler} siparisler={siparisler} cariler={cariler} stok={stok} tanimlar={tanimlar}
               uretim={uretim} onFisAc={stokFisiAc} muhasebe={muhasebe} onFisKaydet={(cariId, tip, fis) => stokFisiKaydet(cariId, tip, fis)} onCarilerKaydet={saveCariler}
+              onIrsaliyeKaydet={fisIrsaliyeKaydet} fisDefteri={fisDefteri}
               showToast={showToast} onGoToSiparis={sipariseGit} />
           </GizliModul>
           <GizliModul aktif={tab === "alissatis"}>

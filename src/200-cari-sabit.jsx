@@ -105,6 +105,17 @@ function tumFisleriTopla(cariler, stok) {
     // MAAŞ (v1.589.0 — kullanıcı: "maaş fişlerini de gruplandırmak lazım"): MAAS-YYYY-MM-<kod> fişleri "Diğer"e
     // düşüyordu; artık kendi çipi var (rengi FIS_TIP_RENK "Maaş").
     else if (g.fisNo && (g.fisNo.startsWith("MAAS-") || g.fisNo.startsWith("MESAI-"))) tip = "Maaş";   // mesai de (v1.700)
+    // TEK FİŞ DEFTERİ ÖNEKLERİ (v1.739.0, 078 PARA_FIS_ONEKLERI — numarayı sunucu verir): eski önekler gibi okunur; tanınmazsa
+    // fişler "Diğer"e düşüyordu. Üretim fişinde (ÜRT) tür satırın eski adından (`uretimFisAdi`).
+    else if (g.fisNo && g.fisNo.startsWith("TH-")) tip = "Tahsilat";
+    else if (g.fisNo && (g.fisNo.startsWith("ÖD-") || g.fisNo.startsWith("ÇC-"))) tip = "Ödeme";
+    else if (g.fisNo && (g.fisNo.startsWith("MS-") || g.fisNo.startsWith("MAŞ-"))) tip = "Maaş";
+    else if (g.fisNo && g.fisNo.startsWith("İŞ-")) tip = "İşçilik";
+    else if (g.fisNo && g.fisNo.startsWith("ÜRT-")) {
+      const stokSatirlari = g.hareketler.filter((h) => h.kaynakTip === "stok");
+      tip = stokSatirlari.length === 0 ? "İşçilik"
+        : stokSatirlari.every((h) => String(h.uretimFisAdi || "").endsWith("-Giriş")) ? "Üretim Girişi" : "Üretim Çıkışı";
+    }
 
     else if (g.fisNo && /^\d/.test(g.fisNo)) {
       // Üretim sipariş kodları artık salt sayısal (örn. "1023") — SAT-/ALS- ile başlamayıp

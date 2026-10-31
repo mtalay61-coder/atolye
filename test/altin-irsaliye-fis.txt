@@ -1,0 +1,10 @@
+{
+ "defterEk": "34 ABC 12/Ali Usta",
+ "hatalar": [],
+ "irsaliyeIsareti": true,
+ "istekler": [
+  "fis_bilgi:SF-261031009:34 ABC 12/Ali Usta"
+ ],
+ "listede": 1,
+ "toast": "İrsaliye bilgisi kaydedildi: SF-261031009"
+}

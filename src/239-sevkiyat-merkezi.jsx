@@ -26,14 +26,16 @@ function siparisSevkKalani(s) {
 
 // Satış fişlerini (Fişler ekranıyla aynı gruplama: tumFisleriTopla) sevkiyat bakışına çevirir: kaç çift, kaç
 // koli, irsaliye bilgisi. Yalnız fiş numaralı ve cari satırı "Satış" olan gruplar.
-function sevkFisleri(cariler, stok, koliler) {
+// `fisDefteri` (v1.739.0): sunucu fişinin irsaliyesi fişin başlığında (ek.irsaliye) — cari satırında yoksa oradan.
+function sevkFisleri(cariler, stok, koliler, fisDefteri) {
+  const baslik = new Map((fisDefteri || []).filter((f) => f && f.sunucu && f.ek && f.ek.irsaliye).map((f) => [f.fisNo, f.ek.irsaliye]));
   return tumFisleriTopla(cariler, stok)
     .filter((g) => g.fisNo && g.hareketler.some((h) => h.kaynakTip === "cari" && h.tip === "Satış" && !h.muhasebeBagId))
     .map((g) => {
       const cariSatiri = g.hareketler.find((h) => h.kaynakTip === "cari" && h.tip === "Satış" && !h.muhasebeBagId);
       const cift = g.hareketler.filter((h) => h.kaynakTip === "stok").reduce((t, h) => t + Math.abs(h.miktar || 0), 0);
       const koliSay = (koliler || []).filter((k) => k.sevkFisNo === g.fisNo).length;
-      return { ...g, cariSatiri, cift, koliSay, irsaliye: (cariSatiri && cariSatiri.irsaliye) || null };
+      return { ...g, cariSatiri, cift, koliSay, irsaliye: (cariSatiri && cariSatiri.irsaliye) || baslik.get(g.fisNo) || null };
     })
     .sort((a, b) => String(b.tarih || "").localeCompare(String(a.tarih || "")));
 }
@@ -52,7 +54,7 @@ function irsaliyeHTML(f, cari) {
 <p style="margin-top:40px">Teslim eden: ____________ &nbsp;&nbsp;&nbsp; Teslim alan: ____________</p>`;
 }
 
-function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim, muhasebe, onFisAc, onFisKaydet, onCarilerKaydet, showToast, onGoToSiparis }) {
+function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim, muhasebe, onFisAc, onFisKaydet, onCarilerKaydet, onIrsaliyeKaydet, fisDefteri, showToast, onGoToSiparis }) {
   const [sekme, setSekme] = useState("bekleyen");
   // BÖLÜNMÜŞ EKRAN (v1.668.0 — kullanıcı: "Sevk et tıklayınca sağda veya altta ekran bölünsün, oraya koli ve
   // asortili eklensin; hangisini eklerse o ekrana gelsin; fiş bitince kaydetsin"). Ayrı pencere yerine aynı
@@ -72,7 +74,7 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
     .filter((x) => x.kalan > 0)
     .sort((a, b) => String(a.s.teslimTarihi || "9999").localeCompare(String(b.s.teslimTarihi || "9999"))),
   [siparisler, koliler]);
-  const fisler = React.useMemo(() => sevkFisleri(cariler, stok, koliler), [cariler, stok, koliler]);
+  const fisler = React.useMemo(() => sevkFisleri(cariler, stok, koliler, fisDefteri), [cariler, stok, koliler, fisDefteri]);
   const seciliFis = fisler.find((f) => f.fisNo === seciliFisNo) || null;
 
   const irsaliyeSec = (f) => {
@@ -81,9 +83,15 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
     const ir = f.irsaliye || {};
     setForm({ plaka: ir.plaka || "", sofor: ir.sofor || "", adres: ir.adres || (c && c.adres) || "", koliSayisi: ir.koliSayisi != null ? String(ir.koliSayisi) : String(f.koliSay || "") });
   };
-  const irsaliyeKaydet = () => {
+  const irsaliyeKaydet = async () => {
     if (!seciliFis) return;
     const irsaliye = { plaka: form.plaka.trim().toLocaleUpperCase("tr-TR"), sofor: form.sofor.trim(), adres: form.adres.trim(), koliSayisi: Number(form.koliSayisi) || 0 };
+    const fisNo = seciliFis.fisNo;
+    // v1.739.0: kapı 100'de (sunucu fişinde başlığa, eski usulde cari satırına); yoksa eski yol.
+    if (onIrsaliyeKaydet) {
+      if (await onIrsaliyeKaydet(fisNo, seciliFis.cariId, irsaliye)) showToast(`İrsaliye bilgisi kaydedildi: ${fisNo}`);
+      return;
+    }
     onCarilerKaydet((cariler || []).map((c) => c.id !== seciliFis.cariId ? c : {
       ...c, hareketler: (c.hareketler || []).map((h) => (h.fisNo === seciliFis.fisNo && !h.muhasebeBagId) ? { ...h, irsaliye } : h),
     }));
@@ -145,7 +153,13 @@ function SevkiyatMerkezi({ koliler, siparisler, cariler, stok, tanimlar, uretim,
             <SevkFisPaneli key={sp.id} siparis={sp} cari={cariBul(sp.cariId)} cariler={cariler} stok={stok} siparisler={siparisler}
               koliler={koliler} uretim={uretim} tanimlar={tanimlar} muhasebe={muhasebe} showToast={showToast}
               onKapat={() => setSevkSiparisId(null)}
-              onKaydet={(fis) => { onFisKaydet(fis.cariId || sp.cariId, "Satış", fis); setSevkSiparisId(null); }} />
+              onKaydet={async (fis) => {
+                // Sonuç beklenir (v1.739.0): fiş kesilemezse (numara dönmezse) panel açık kalır, girilenler kaybolmaz.
+                const no = await onFisKaydet(fis.cariId || sp.cariId, "Satış", fis);
+                if (!no) return null;
+                setSevkSiparisId(null);
+                return no;
+              }} />
           );
         })()}
         </div>
@@ -291,7 +305,13 @@ function AlisSatisEkrani({ cariler, stok, siparisler, koliler, uretim, tanimlar,
               kurlar={(muhasebe && muhasebe.kurlar) || {}} muhasebe={muhasebe} firmaBilgileri={tanimlar && tanimlar.firmaBilgileri}
               showToast={showToast} baslangicKalemler={null} siparistenSecAcikBasla
               onCariDegisti={(id) => id && setCariId(id)} onVazgec={() => setPanelAcik(false)}
-              onKaydet={(fis) => { onFisKaydet && onFisKaydet(fis.cariId || cari.id, tip, fis); setPanelAcik(false); }} />
+              onKaydet={async (fis) => {
+                // Sonuç beklenir (v1.739.0): fiş kesilemezse panel açık kalır.
+                const no = onFisKaydet ? await onFisKaydet(fis.cariId || cari.id, tip, fis) : null;
+                if (!no) return null;
+                setPanelAcik(false);
+                return no;
+              }} />
           </div>
         </div>
       )}
