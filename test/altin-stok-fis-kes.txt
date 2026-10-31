@@ -1,0 +1,40 @@
+{
+ "defter": [
+  "MNL-261031001|stok|Giriş|1"
+ ],
+ "hatalar": [],
+ "istekler": [
+  "fis_kes",
+  "fis_kes"
+ ],
+ "kabul": {
+  "formAcik": false,
+  "manuel": [
+   "MNL-261031001:5"
+  ],
+  "miktarKutusu": null,
+  "toast": "Stok girişi kaydedildi — fiş: MNL-261031001",
+  "v41": 14
+ },
+ "once": 9,
+ "red": {
+  "formAcik": true,
+  "manuel": [],
+  "miktarKutusu": "5",
+  "toast": true,
+  "v41": 9
+ },
+ "yuk": {
+  "fis": {
+   "aile": "stok",
+   "kalem": 1,
+   "kaynak": "Manuel",
+   "onek": "MNL",
+   "tur": "Giriş"
+  },
+  "istekVar": true,
+  "stok": [
+   "u2|Siyah|41|5|Manuel"
+  ]
+ }
+}
