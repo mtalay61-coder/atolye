@@ -613,6 +613,23 @@ function v2KopruYuku(y) {
   return null;
 }
 
+// KURAL PROVASI KAYDI (v1.742.0, test/kural-provasi.js): fiş defteri kurallar açılınca (19. adım) hareket tablolarına yalnız fis_kes /
+// fis_iptal yazar; köprüden (stk_yaz / car_yaz / kas_yaz / fis_yaz) HAREKET SATIRI taşıyan yazma reddedilir. Fiş kesici tabanı
+// önceden ilerlettiği için onun ardındaki yazmanın farkı boştur — buraya hareket satırıyla gelen her yük eski yoldur. Yalnız test
+// açar (`window.__eskiYolKaydi` dizisi); uygulamada hiçbir şey yapmaz. Hesap tanımı, çek kaydı, ayar, varyant açma kurallara takılmaz.
+function eskiYolKaydinaYaz(dolu) {
+  if (typeof window === "undefined" || !Array.isArray(window.__eskiYolKaydi)) return;
+  dolu.forEach((k) => {
+    const y = k.yuk || {};
+    const satir = k.tur === "kasa" ? (y.hareketler || []).length : (y.satirlar || []).length;
+    const iptal = k.tur === "kasa" ? (y.hareketIptal || []).length : (y.iptal || []).length;
+    if (k.tur === "alt" || (!satir && !iptal)) return;
+    const ornek = (k.tur === "kasa" ? (y.hareketler || []).map((h) => (h.veri && (h.veri.aciklama || h.veri.fisNo)) || h.id)
+      : (y.satirlar || []).map((h) => [h.kaynak || h.islemTipi || h.tip, h.fisId || h.fis_no || h.fisNo, h.aciklama].filter(Boolean).join(" · "))).slice(0, 3);
+    window.__eskiYolKaydi.push({ tur: k.tur, satir, iptal, fisYolu: typeof fisKesYolu === "function" ? fisKesYolu() : null, ornek });
+  });
+}
+
 // GÖNDERİCİ — bir ya da birkaç köprü yükü (stok, cari, sipariş kalemi / üretim ataması, kasa & banka). Birden çok parça varsa ve
 // her biri tek parçaya sığıyorsa TEK `fis_yaz` isteği (tek veritabanı işlemi: ya hepsi ya hiçbiri). Sığmıyorsa (yedek
 // geri yükleme gibi büyük yazma) her biri kendi işlemiyle, parça parça — her parça tekrara dayanıklı. Hata yukarı gider
@@ -620,6 +637,7 @@ function v2KopruYuku(y) {
 async function v2KopruGonder(kopruler) {
   const dolu = (kopruler || []).filter((k) => k && k.yuk);
   if (!dolu.length) return null;
+  eskiYolKaydinaYaz(dolu);
   const stok = dolu.find((k) => k.tur === "stok");
   const cari = dolu.find((k) => k.tur === "cari");
   const altlar = dolu.filter((k) => k.tur === "alt");

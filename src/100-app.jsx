@@ -3317,6 +3317,10 @@ function AtolyeUygulamasi() {
     if (plan.degisti) tanimlarKodluYaz(plan.tanimlar);
     const eslesmeler = kodsuz.map((k) => ({ urunId: k.urunId, eski: k.renk, yeni: plan.etiketler[k.renk] })).filter((e) => e.yeni && e.yeni !== e.eski);
     const sonuc = mamulRenkleriniYenidenAdlandir({ stok, siparisler, uretim, koliler, teklifler }, eslesmeler);
+    // Değişenler bekleme ÖNCESİ belirlenir (sunucu çağrısı `await` ediyor — sonrasında bayat state okunmasın).
+    const stokOnce = stok;
+    const degisti = { stok: sonuc.stok !== stok, siparis: sonuc.siparisler !== siparisler, uretim: sonuc.uretim !== uretim,
+      koli: sonuc.koliler !== koliler, teklif: sonuc.teklifler !== teklifler };
     const isler = [];
     // KİLİT İZNİ (v1.724.0 — kullanıcı, 305 renk · 57 ürün dönüştürdükten sonra: "kodsuz ürünlere kod da verilmişti, o da
     // kayıt olmamış"): varyantlar bulutta urun_id+renk+beden ile anahtarlı; 305 rengin adı değişince binlerce eski varyant
@@ -3324,17 +3328,30 @@ function AtolyeUygulamasi() {
     // "TOPLU SİLME ENGELLENDİ: varyantlar"). Sipariş/üretim/koli/teklif yazmaları geçtiği için kayıtlar yarım kalmıştı.
     // Bu işlem kullanıcının iki adımla onayladığı, satır sayısını koruyan bir YENİDEN ADLANDIRMA: izinle yazılır.
     // `saveStok` kalıbı (görseller ayrı), yalnız seçenek eklendi.
-    if (sonuc.stok !== stok) {
+    // TEK FİŞ DEFTERİ (v1.742.0, kullanıcı kararı 31 Ekim "Varyant düzeyinde"): hareketin rengi yerinde değişmez (kurallar açılınca
+    // köprüden satır güncellemesi reddedilir). Sunucuda VARYANTIN rengi değişir (`stk_renk_tasi`; hedef varyant varsa hareketler ona
+    // taşınır) — stok ve geçmiş aynen. Yerel kopya aynı yeniden adlandırmayı alır, fark tabanı ilerler. Sunucu yapamazsa stok
+    // tarafı durur (Tanımlar'daki yeni kodlar kalır — yeniden denendiğinde aynı kodlar kullanılır).
+    if (degisti.stok && fisKesYolu()) {
+      try {
+        await supabaseIstek("rpc/stk_renk_tasi", { method: "POST", body: JSON.stringify({ p: { eslesmeler } }) });
+      } catch (e) {
+        showToast(`Mamul renkleri stokta kodlanamadı — stok değişmedi (${String((e && e.message) || e).slice(0, 160)})`);
+        gunlukYaz(`Mamul renk kodlaması durdu (stk_renk_tasi): ${String((e && e.message) || e).slice(0, 200)}`, "tanimlar", { renk: eslesmeler.length });
+        return null;
+      }
+      fisKesStokUygula(setStok, fisKesEtkilenen(stokOnce, sonuc.stok, fisKesDegisenIdler(stokOnce, sonuc.stok)), (x) => x);
+    } else if (degisti.stok) {
       setStok(sonuc.stok);
       const { stok: yerelStok, gorseller } = gorselleriAyir(sonuc.stok);
       isler.push(tabloYaz("stok:items", "urunler", sonuc.stok, yerelStok, { topluSilmeIzni: true })
         .then(() => { gorselleriYaz(gorseller).catch((e) => console.error("Görsel yazılamadı:", e)); })
         .catch((e) => kaydetmeHatasiBildir(e, "Stok", yerelStok)));
     }
-    if (sonuc.siparisler !== siparisler) isler.push(saveSiparisler(sonuc.siparisler));
-    if (sonuc.uretim !== uretim) isler.push(saveUretim(sonuc.uretim));
-    if (sonuc.koliler !== koliler) isler.push(saveKoliler(sonuc.koliler));
-    if (sonuc.teklifler !== teklifler) isler.push(saveTeklifler(sonuc.teklifler));
+    if (degisti.siparis) isler.push(saveSiparisler(sonuc.siparisler));
+    if (degisti.uretim) isler.push(saveUretim(sonuc.uretim));
+    if (degisti.koli) isler.push(saveKoliler(sonuc.koliler));
+    if (degisti.teklif) isler.push(saveTeklifler(sonuc.teklifler));
     await Promise.all(isler);
     const s = sonuc.sayilar;
     gunlukYaz(`Mamul renkleri kodlandı: ${eslesmeler.length} renk`, "tanimlar", {
@@ -5321,6 +5338,7 @@ function AtolyeUygulamasi() {
               stokRezervasyonlari={stokRezervasyonlari}
               onYetimRezervasyonSil={yetimRezervasyonlariSil}
               onCariHareketEkle={addCariHareketFromStok}
+              onParaFisiKes={paraFisiKes}
               onCarilerKaydet={saveCariler}
               fisDefteri={fisDefteri}
               onYetimSiparisBagiCoz={yetimSiparisBaglariniTemizle}

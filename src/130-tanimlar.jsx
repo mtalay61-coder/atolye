@@ -11,7 +11,7 @@ const URUN_ALT_SEKMELERI = [
   { key: "ozel", ad: "Özel Kodlar" },
 ];
 
-function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCariHareketEkle, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, onMamulRenkleriniKodla, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
+function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCariHareketEkle, onParaFisiKes, onCarilerKaydet, uretim, stokRezervasyonlari, muhasebe, onYetimSiparisBagiCoz, fisDefteri, mobilDuzenKipi, onMobilDuzenKipi, mobilDuzenAktif, kullanimdakiOlculer, onTanimsizOlcuCevir, onOlcuAdDegistir, onOzelKodBirlestir, onAktifKullaniciGuncelle, onAcilisFisiKes, tanimlar, onSave, showToast, onVeritabaniSifirla, supabaseBagli, gocDurumu, onSupabaseyeGoc, onDefterTopluOnar, onHammaddeRenkAdDegistir, onMamulRenkleriniKodla, stok, cariler, siparisler, aktifKullanici, MODULLER, MODUL_ADLARI, onJsonYedekle, onJsonGeriYukle, onExcelAktar, cop, onCopGeriYukle, onCopKaliciSil, onCopBosalt, sonYedekTarihi, onSimdiYedekle, onYedektenGeriYukle }) {
   // GÜNCEL TANIMLAR (v1.569.0, denetim): kullanıcı ekle/sil/şifre bulut çağrısını BEKLEDİKTEN sonra, istekten önce
   // yakalanmış `tanimlar`la yazıyordu; arada gelen değişiklik (başka cihaz, kod onarımı) siliniyordu. Bekleme sonrası
   // yazmalar bu ref'ten okur.
@@ -1001,7 +1001,7 @@ function TanimlarModule({ onaylar, onYetimRezervasyonSil, onDefterFisIptal, onCa
     )}
     {/* KAPASİTE (v1.703.0): makine, kalıp/bıçak (beden beden saatlik adet), eleman çalışma saatleri — 273-kapasite. */}
     {aktifTanimSekme === "kapasite" && (
-      <KapasiteTanimi tanimlar={tanimlar} onSave={onSave} cariler={cariler} stok={stok} onCariHareketEkle={onCariHareketEkle} showToast={showToast} />
+      <KapasiteTanimi tanimlar={tanimlar} onSave={onSave} cariler={cariler} stok={stok} onCariHareketEkle={onCariHareketEkle} onParaFisiKes={onParaFisiKes} showToast={showToast} />
     )}
     {/* E-FATURA AYRI SEKME (v1.702.0 — kullanıcı: "Tanımlarda e-fatura sekmesi açılsın, tanımlar çok
         karışacak, toparlayalım"). KDV ve e-fatura ayarları Firma'nın dibindeydi; ikisi birbirine bağlı
