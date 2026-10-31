@@ -95,7 +95,7 @@ function bankaCariOner(aciklama, cariler) {
   return en;
 }
 
-function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, onBankaHareketi, showToast }) {
+function BankaExcelEkrani({ onParaFisiKes, muhasebe, cariler, giderKartlari, onCariliKaydet, onBankaHareketi, showToast }) {
   const bankalar = (muhasebe && muhasebe.bankalar) || [];
   const [bankaId, setBankaId] = useState(bankalar.length === 1 ? bankalar[0].id : "");
   const [defter, setDefter] = useState("Genel");
@@ -263,14 +263,23 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
   // KARŞI TARAF ZORUNLU (v1.674.0 — kullanıcı: "cari boş seçilmesin, gelir veya gider kartlarımız listelensin,
   // mutlaka birini seçelim; boş ödeme olmaz"). Kasa & Banka'nın elle girişindeki kuralla aynı (210, 17 Eylül).
   const karsiliksiz = secilenler.filter((k) => { const d = durum(k); return !d.cariId && !d.kartId; });
-  const kaydet = () => {
+  // TEK FİŞ DEFTERİ (v1.736.0, 100 paraFisiKes): sunucu yolunda her satır KENDİ fişi (carili: TH / ÖD makbuzu, kartlı: GL / GD),
+  // sırayla kesilir; sonunda tek özet. Yazılamayan satır seçili kalır (yeniden aktarılabilir), yazılanlar seçimden düşer.
+  const [aktariliyor, setAktariliyor] = useState(false);
+  const kaydet = async () => {
+    if (aktariliyor) return;
     if (!banka) { showToast("Önce banka hesabını seçin"); return; }
     if (secilenler.length === 0) { showToast("Aktarılacak satır seçilmedi"); return; }
     const kursuz = secilenler.filter((k) => { const d = durum(k); return d.cariId && ((d.cariPB !== bankaPB && !(d.kur > 0)) || (defter === "Muhasebe" && d.resmiPB !== bankaPB && !(d.resmiKur > 0))); });
     if (kursuz.length > 0) { showToast(`${kursuz.length} satırda kur yok — ${kursuz.map((k) => durum(k).cariPB).join(", ")} kurunu girin`); return; }
     if (karsiliksiz.length > 0) { showToast(`${karsiliksiz.length} seçili satırda karşı taraf yok — cari ya da gelir/gider kartı seçin`); return; }
     let cariSay = 0, bankaSay = 0;
-    secilenler.forEach((k) => {
+    const sunucuYolu = !!onParaFisiKes && fisKesYolu();
+    const basarili = [];
+    const dusenler = [];
+    if (sunucuYolu) setAktariliyor(true);
+    try {
+    for (const k of secilenler) {
       const { cariId, kartId, cariPB, kur: satirKur, resmiPB, resmiKur } = durum(k);
       const kart = kartId ? (giderKartlari || []).find((x) => x.id === kartId) : null;
       const cari = cariId ? (cariler || []).find((c) => c.id === cariId) : null;
@@ -286,20 +295,44 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
         // Resmi tutarı yalnız Muhasebe defterinde ve birimi Genel'den farklıysa yazılır (aynıysa tek tutar yeter).
         const resmiEk = defter === "Muhasebe" && resmiPB !== cariPB
           ? { resmiPB, resmiTutar: resmiPB === pb ? tutar : stokYuvarla(tutar / resmiKur) } : {};
-        onCariliKaydet({ cariId: cari.id, cariHareketi: { ...kur.cariHareketi, ...resmiEk, bankaRef: k.ref },
-          muhasebe: { hesapTur: "banka", hesapId: banka.id, hareket: { ...kur.muhasebeHareketi, bankaRef: k.ref } } });
+        const cariHareketi = { ...kur.cariHareketi, ...resmiEk, bankaRef: k.ref };
+        const bankaAyagi = { hesapTur: "banka", hesapId: banka.id, hareket: { ...kur.muhasebeHareketi, bankaRef: k.ref } };
+        if (sunucuYolu) {
+          const r = await onParaFisiKes({ fis: { tur: islemTipi, onek: paraFisOneki(islemTipi), kaynak: "Banka Excel", ek: { bankaRef: k.ref || null } },
+            cariId: cari.id, hareketler: [{ ...cariHareketi, islemTipi: undefined }], kasa: bankaAyagi, hataEtiketi: `${islemTipi} (satır ${k.no})` });
+          if (!r) { dusenler.push(k.no); continue; }
+          basarili.push(k.no);
+        } else {
+          onCariliKaydet({ cariId: cari.id, cariHareketi, muhasebe: bankaAyagi });
+        }
         cariSay++;
       } else {
-        onBankaHareketi({ hesapTur: "banka", hesapId: banka.id, hareket: {
+        const bankaHareketi = { hesapTur: "banka", hesapId: banka.id, hareket: {
           id: uid("mhrk"), tarih: k.tarih, yon: k.tutar > 0 ? "Giriş" : "Çıkış", tutar, defter,
           giderKartId: kart ? kart.id : null, giderKartAd: kart ? kart.ad : null, giderGrubu: kart ? (kart.grup || null) : null,
           aciklama: `${kart ? kart.ad : "Banka hareketi"}${k.aciklama ? ` · ${k.aciklama}` : ""}`, bankaRef: k.ref, kullanici: islemKullanicisiAd(),
-        } });
+        } };
+        if (sunucuYolu) {
+          const tur = k.tutar > 0 ? "Gelir" : "Gider";
+          const r = await onParaFisiKes({ fis: { tur, onek: paraFisOneki(tur), kaynak: "Banka Excel", ek: { bankaRef: k.ref || null, giderKartId: kart ? kart.id : null } },
+            cariId: null, hareketler: [], kasa: bankaHareketi, hataEtiketi: `${tur} (satır ${k.no})` });
+          if (!r) { dusenler.push(k.no); continue; }
+          basarili.push(k.no);
+        } else {
+          onBankaHareketi(bankaHareketi);
+        }
         bankaSay++;
       }
-    });
-    showToast(`${secilenler.length} satır aktarıldı — ${cariSay} cariye, ${bankaSay} gelir/gider kartına işlendi`);
-    setSecim({});
+    }
+    } finally { if (sunucuYolu) setAktariliyor(false); }
+    if (!sunucuYolu) {
+      showToast(`${secilenler.length} satır aktarıldı — ${cariSay} cariye, ${bankaSay} gelir/gider kartına işlendi`);
+      setSecim({});
+      return;
+    }
+    showToast(`${basarili.length} satır aktarıldı — ${cariSay} cariye, ${bankaSay} gelir/gider kartına işlendi`
+      + (dusenler.length ? ` · ⚠ ${dusenler.length} satır YAZILAMADI (seçili bırakıldı, yeniden aktarabilirsiniz)` : ""));
+    setSecim((o) => { const n = { ...o }; basarili.forEach((no) => { delete n[no]; }); return n; });
   };
 
   const kutu = { border: "1.5px solid var(--hrk-renk)", borderRadius: 10, padding: 12, background: "#fff", marginBottom: 12 };
@@ -358,7 +391,7 @@ function BankaExcelEkrani({ muhasebe, cariler, giderKartlari, onCariliKaydet, on
                 olmuyor?"). Birden çok banka hesabı varsa kendiliğinden seçilmez; düğme sebebi söyler, üstteki seçici kırmızı. */}
             {banka && karsiliksiz.length > 0 && <span data-banka-excel-karsiliksiz="1" style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-danger, #B3261E)" }}>{karsiliksiz.length} satırda karşı taraf seçilmedi</span>}
             {!banka && <span data-banka-excel-banka-yok="1" style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--erp-danger, #B3261E)" }}>↑ Önce yukarıdan banka hesabını seçin</span>}
-            <button className="btn-primary" data-banka-excel-kaydet="1" style={{ marginLeft: banka && !karsiliksiz.length ? "auto" : 0 }} onClick={kaydet} disabled={!banka || secilenler.length === 0 || karsiliksiz.length > 0}>
+            <button className="btn-primary" data-banka-excel-kaydet="1" style={{ marginLeft: banka && !karsiliksiz.length ? "auto" : 0 }} onClick={kaydet} disabled={aktariliyor || !banka || secilenler.length === 0 || karsiliksiz.length > 0}>
               Seçilenleri aktar ({secilenler.length})
             </button>
           </div>

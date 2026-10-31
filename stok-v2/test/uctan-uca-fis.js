@@ -459,6 +459,37 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   bekle("11: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
   bekle("11: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
 
+  console.log("12) Virman: iki kasa / banka ayağı TEK VRM fişi; gider kartı ödemesi: yalnız kasa satırlı GD fişi");
+  const hesaplar12 = jsonSorgu("select id from public.kas_hesap order by id").map((x) => x.id);
+  const [kA, kB] = [hesaplar12[0], hesaplar12[1] || hesaplar12[0]];
+  const tur12 = (id) => ((muhasebe.bankalar || []).some((b) => b.id === id) ? "banka" : "kasa");
+  const ortak12 = { tarih: "2026-10-31", virmanMi: true, virmanSebebi: "Döviz bozdurma", defter: "Muhasebe", kullanici: "Ali", muhasebeBagId: "bag-v12" };
+  const h12 = E.paraFisiYuku({ fis: { tur: "Virman", onek: E.paraFisOneki("Virman"), kaynak: "Virman", defter: "Muhasebe", ek: { sebep: "Döviz bozdurma" } },
+    cariId: null, hareketler: [], kasa: [
+      { hesapTur: tur12(kA), hesapId: kA, hareket: { ...ortak12, id: "v12-c", yon: "Çıkış", tutar: 100, aciklama: "Virman →" } },
+      { hesapTur: tur12(kB), hesapId: kB, hareket: { ...ortak12, id: "v12-g", yon: "Giriş", tutar: 100, aciklama: "Virman ←" } }],
+    istek: "uu-virman", zaman: zamanU, kullaniciAd: "Ali" });
+  const no12 = (await E.fisKesGonder(h12.yuk)).fisNo;
+  bekle("12: VRM fişi, iki kasa satırı, cari yok", [/^VRM-\d{9}$/.test(no12),
+    psql(`select (select count(*) from public.kas_hareket where fis_id = '${no12}') || '/' || (select count(*) from public.car_hareket where fis_id = '${no12}') || '/' || (select aile from public.stk_fis where id = '${no12}');`)],
+    [true, "2/0/para"]);
+  const ay12 = h12.ayaklar.map((k) => ({ hesapTur: k.hesapTur, hesapId: k.hesapId, hareket: E.fisYerTutucuDoldur(k.hareket, no12) }));
+  muhasebe = ay12.reduce((m, k) => E.hesabaHareketEkle(m, k.hesapTur, k.hesapId, k.hareket), muhasebe);
+  E.fisKesKasaTabaniKur(ay12);
+  const hg = E.paraFisiYuku({ fis: { tur: "Gider", onek: E.paraFisOneki("Gider"), kaynak: "Gelir/Gider kartı", ek: { giderKartId: "gk-kira" } }, cariId: null, hareketler: [],
+    kasa: { hesapTur: tur12(kA), hesapId: kA, hareket: { id: "g12", tarih: "2026-10-31", yon: "Çıkış", tutar: 40, defter: "Genel", giderKartId: "gk-kira", giderKartAd: "Kira", aciklama: "Kira" } },
+    istek: "uu-gider", zaman: zamanU, kullaniciAd: "Ali" });
+  const nog = (await E.fisKesGonder(hg.yuk)).fisNo;
+  bekle("12: GD fişi, tek kasa satırı", [/^GD-\d{9}$/.test(nog), psql(`select count(*) from public.kas_hareket where fis_id = '${nog}';`)], [true, "1"]);
+  const kg = { hesapTur: tur12(kA), hesapId: kA, hareket: E.fisYerTutucuDoldur(hg.ayaklar[0].hareket, nog) };
+  muhasebe = E.hesabaHareketEkle(muhasebe, kg.hesapTur, kg.hesapId, kg.hareket);
+  E.fisKesKasaTabaniKur([kg]);
+  cagrilar.length = 0;
+  await E.tekilYaz("muhasebe:data", "muhasebe", muhasebe);
+  bekle("12: eşitleme satır göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("12: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
+  bekle("12: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
+
   console.log(hata ? "── UÇTAN UCA (FİŞ) HATALI ──" : "── uçtan uca (fiş defteri) temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

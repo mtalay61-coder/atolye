@@ -3423,7 +3423,7 @@ function AtolyeUygulamasi() {
   // Döner: { no, hareketIdler } ya da null (yazılamadı — ekranda hiçbir şey değişmez, kullanıcı uyarılır). `anahtar`la çift basış yok.
   const paraFisiSuruyorRef = useRef(new Set());
   const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, anahtar, hataEtiketi }) => {
-    const tarihler = [...(hareketler || []).map((h) => h && h.tarih), kasa && kasa.hareket && kasa.hareket.tarih];
+    const tarihler = [...(hareketler || []).map((h) => h && h.tarih), ...(Array.isArray(kasa) ? kasa : [kasa]).map((k) => k && k.hareket && k.hareket.tarih)];
     if (donemKilidiEngel(tarihler.filter(Boolean), showToast, hataEtiketi || "Kayıt")) return null;
     if (anahtar && paraFisiSuruyorRef.current.has(anahtar)) return null;
     const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || damgaKullaniciAdi() || null;
@@ -3451,21 +3451,27 @@ function AtolyeUygulamasi() {
       });
       if (cariEski) fisKesTabaniKur("cariler", [cariEski], [{ ...cariEski, hareketler: [...yeniHareketler, ...(cariEski.hareketler || [])] }]);
     }
-    const kasaHareketi = h.kasaHareketi ? d(h.kasaHareketi) : null;
-    if (kasaHareketi) {
-      setMuhasebe((onceki) => { const n = hesabaHareketEkle(onceki, kasa.hesapTur, kasa.hesapId, kasaHareketi); fisKesYerelYaz("muhasebe:data", n); return n; });
-      fisKesKasaTabaniKur([{ hesapTur: kasa.hesapTur, hesapId: kasa.hesapId, hareket: kasaHareketi }]);
+    const ayaklar = h.ayaklar.map((k) => ({ hesapTur: k.hesapTur, hesapId: k.hesapId, hareket: d(k.hareket) }));
+    if (ayaklar.length) {
+      setMuhasebe((onceki) => {
+        const n = ayaklar.reduce((m, k) => hesabaHareketEkle(m, k.hesapTur, k.hesapId, k.hareket), onceki);
+        fisKesYerelYaz("muhasebe:data", n);
+        return n;
+      });
+      fisKesKasaTabaniKur(ayaklar);
     }
-    setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, [], yeniHareketler, kasaHareketi ? [kasaHareketi] : []), ...(onceki || [])]);
+    setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, [], yeniHareketler, ayaklar.map((k) => k.hareket)), ...(onceki || [])]);
     gunlukYaz(`Para fişi kesildi: ${(fis && fis.tur) || ""} → ${no}`, "cari", { fisNo: no, cariId, tutar: h.yuk.fis.tutar });
-    return { no, hareketIdler: yeniHareketler.map((x) => x.id) };
+    return { no, hareketIdler: yeniHareketler.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
   }, [cariler, aktifKullanici, showToast]);
   // Geri al (bildirimden): sunucu fişi → fis_iptal (100 yetimFisTemizle, sunucu dalı).
   const paraFisiGeriAl = useCallback((sonuc) => () => fisGeriAlRef.current && fisGeriAlRef.current(sonuc.no, sonuc.hareketIdler), []);
   // Ekranlar için: kes + numarayla bildir (Geri al düğmeli). Döner: paraFisiKes sonucu.
   const paraFisiKesBildir = useCallback(async (p) => {
     const sonuc = await paraFisiKes(p);
-    if (sonuc) showToast(`${p.hataEtiketi || "Kayıt"} kaydedildi — ${sonuc.no}`, { geriAl: paraFisiGeriAl(sonuc) });
+    // Geri al yalnız cari satırı olan fişte: yalnız kasa satırlı fiş (gider kartı, virman) bugünkü geri alma yolundan geçmiyor —
+    // kasa hareketi silme adımında fiş iptaline bağlanacak.
+    if (sonuc) showToast(`${p.hataEtiketi || "Kayıt"} kaydedildi — ${sonuc.no}`, sonuc.hareketIdler.length ? { geriAl: paraFisiGeriAl(sonuc) } : undefined);
     return sonuc;
   }, [paraFisiKes, paraFisiGeriAl, showToast]);
 
@@ -5292,7 +5298,7 @@ function AtolyeUygulamasi() {
           </GizliModul>
           <GizliModul aktif={tab === "bankaexcel"}>
             <BankaExcelEkrani muhasebe={muhasebe} cariler={cariler} giderKartlari={tanimlar.giderKartlari || []} showToast={showToast}
-              onCariliKaydet={(k) => siparisOdemesiKaydet(k, { eskiYol: true })} onBankaHareketi={muhasebeyePesinIsle} />
+              onParaFisiKes={paraFisiKes} onCariliKaydet={(k) => siparisOdemesiKaydet(k, { eskiYol: true })} onBankaHareketi={muhasebeyePesinIsle} />
           </GizliModul>
           <GizliModul aktif={tab === "cari" || tab === "odemetahsilat" || tab === "odemerapor"}>
             <CariModule
@@ -5676,6 +5682,7 @@ function AtolyeUygulamasi() {
               <EmptyState text="Kasa & Banka ekranını görüntüleme yetkiniz yok. Erişim için yöneticinize başvurun." />
             ) : (
             <MuhasebeModule
+              onParaFisiKes={paraFisiKes}
               kapsam={muhasebeKapsamRef.current}
               tanimlar={tanimlar}
               stok={stok}

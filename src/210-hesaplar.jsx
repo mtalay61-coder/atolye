@@ -37,6 +37,7 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
   // null | "tahsilat" | "odeme" | "virman" | "serbest"
   const [islem, setIslem] = useState(null);
   const [virman, setVirman] = useState({ hedef: "", tutar: "", aciklama: "" });
+  const [virmanSuruyor, setVirmanSuruyor] = useState(false);
   // Satır içi düzenleme: { hesapId, hareketId, tutar, tarih, aciklama } | null
   const [duzenle, setDuzenle] = useState(null);
   // SAĞ TIK (v1.636.0 — kullanıcı: "sağ mantığını her yer için yapalım"): hareket satırının Düzenle / Sil ikonları satıra
@@ -578,8 +579,8 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                       <input value={virman.aciklama} data-virman-aciklama="1" placeholder="Opsiyonel"
                         onChange={(e) => setVirman({ ...virman, aciklama: e.target.value })} style={{ ...inputStyle, width: 180 }} />
                     </Field>
-                    <button className="btn-primary" data-virman-kaydet="1"
-                      onClick={() => {
+                    <button className="btn-primary" data-virman-kaydet="1" disabled={virmanSuruyor}
+                      onClick={async () => {
                         const tutar = parseFloat(virman.tutar);
                         const hedefHesap = (tumHesaplar || []).find((x) => x.id === virman.hedef);
                         if (!hedefHesap) return showToast("Hedef hesabı seçin");
@@ -593,12 +594,18 @@ function HesapListesi({ onHesapGuncelle, giderKartlari, tumHesaplar, onVirman, o
                           ? tutar
                           : (parseFloat(virman.hedefTutar) || (kurSayisi > 0 ? kurUygula(tutar, kurSayisi, soru2.bolme) : 0));
                         if (!hedefTutar || hedefTutar <= 0) return showToast(`Hedefe geçen tutarı girin (${hedefPB})`);
-                        onVirman({
-                          kaynak: { tur: birimAdi === "Kasa" ? "kasa" : "banka", id: h.id, ad: h.ad, tutar },
-                          hedef: { tur: hedefHesap.tur, id: hedefHesap.id, ad: hedefHesap.ad, tutar: hedefTutar },
-                          sebep: String(virman.sebep || "").trim(),
-                          aciklama: virman.aciklama,
-                        });
+                        // Sonuç beklenir (v1.736.0): sunucu fişi kesemezse form dolu kalır; beklerken düğme kapalı.
+                        setVirmanSuruyor(true);
+                        let ok;
+                        try {
+                          ok = await onVirman({
+                            kaynak: { tur: birimAdi === "Kasa" ? "kasa" : "banka", id: h.id, ad: h.ad, tutar },
+                            hedef: { tur: hedefHesap.tur, id: hedefHesap.id, ad: hedefHesap.ad, tutar: hedefTutar },
+                            sebep: String(virman.sebep || "").trim(),
+                            aciklama: virman.aciklama,
+                          });
+                        } finally { setVirmanSuruyor(false); }
+                        if (ok === false) return;
                         setVirman({ hedef: "", tutar: "", aciklama: "", sebep: "" });
                         setIslem(null);
                       }}
