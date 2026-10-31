@@ -2,6 +2,7 @@
 // Uygulamayı gerçek Chromium'da çalıştırır. `window.storage` bellek içi sahte bir depoyla
 // değiştirilir; uygulama Supabase'e ulaşamayınca yerel kopyaya düşer, böylece veri tohumlanabilir.
 const path = require("path");
+const fs = require("fs");
 const { chromium } = require("playwright");
 
 // `onceRota(sayfa)`: sayfa yüklenmeden ÖNCE ağ rotaları kurmak için (açılıştaki Supabase
@@ -49,6 +50,41 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
       async list(on = "") { return { keys: Object.keys(kutu).filter((k) => k.startsWith(on)), prefix: on, shared: true }; },
     };
   }, tohum);
+  // KURAL PROVASI (v1.742.0, test/kural-provasi.js — `KURAL_PROVASI=1`): senaryo, fiş defteri kurulu ve bütün modülleri v2'de bir
+  // sunucuya karşı koşar (ayar satırı verilmemişse); fis_kes / fis_iptal / fis_bilgi numara verir; Kasa & Banka'nın bulut hâli
+  // tohumdan döner (taban kurulsun — yoksa kasa farkı hiç hesaplanmaz). Köprüden hareket satırıyla giden her yazma
+  // `window.__eskiYolKaydi`na düşer (038 eskiYolKaydinaYaz), tarayıcı kapanırken PROVA_DIZIN'e yazılır. Senaryonun kendi rotaları
+  // ÖNCE gelir (Playwright son kaydedileni önce dener: bunlar onceRota'dan önce kaydedilir).
+  const prova = process.env.KURAL_PROVASI === "1";
+  if (prova) {
+    if (!stkAyar) stkAyar = { id: "tekil", aktif: true, cari_aktif: true, alt_aktif: true, kasa_aktif: true, liste_aktif: true, liste_tablolari: ["fis_defteri"], fis_aktif: false };
+    // Kancanın kendi sınaması: PROVA_FISSIZ=1 → fiş defteri KURULMAMIŞ v2 sunucu (eski yol çalışmalı ve kayda düşmeli).
+    if (process.env.PROVA_FISSIZ === "1") { stkAyar = { ...stkAyar }; delete stkAyar.fis_aktif; }
+    await sayfa.addInitScript(() => { window.__eskiYolKaydi = []; });
+    let sira = 0;
+    await sayfa.route("**/rest/v1/rpc/fis_kes**", (r) => {
+      const p = (JSON.parse(r.request().postData() || "{}").p) || {};
+      sira += 1;
+      const no = `${(p.fis && p.fis.onek) || "PRV"}-261031${String(sira).padStart(3, "0")}`;
+      return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: no, bagliFisNo: p.bagli ? `${(p.bagli.fis && p.bagli.fis.onek) || "PRV"}-261031${String(sira).padStart(3, "0")}B` : null, zatenVar: false }) });
+    });
+    await sayfa.route("**/rest/v1/rpc/fis_iptal**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: ((JSON.parse(r.request().postData() || "{}").p) || {}).no, zatenIptal: false }) }));
+    await sayfa.route("**/rest/v1/rpc/fis_bilgi**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: ((JSON.parse(r.request().postData() || "{}").p) || {}).no }) }));
+    const mh = tohum["muhasebe:data"];
+    if (mh) await sayfa.route("**/rest/v1/muhasebe?**", (r) => (r.request().method() === "GET"
+      ? r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ id: "tekil", veri: JSON.parse(mh) }]) }) : r.fallback()));
+    const kapat = tarayici.close.bind(tarayici);
+    tarayici.close = async () => {
+      try {
+        const kayit = await sayfa.evaluate(() => window.__eskiYolKaydi || []);
+        const dizin = process.env.PROVA_DIZIN || "/tmp/kural-provasi";
+        fs.mkdirSync(dizin, { recursive: true });
+        const ad = path.basename(process.argv[1] || "senaryo", ".js");
+        fs.appendFileSync(path.join(dizin, `${ad}.jsonl`), kayit.map((k) => JSON.stringify(k)).join("\n") + (kayit.length ? "\n" : ""));
+      } catch (e) { /* sayfa kapanmış */ }
+      return kapat();
+    };
+  }
   if (onceRota) await onceRota(sayfa);
   // v2 AYAR SATIRI (v1.730.1, 045 `v2AyarlariniOku`): gerçek Supabase'de `stk_ayar` ya vardır ya 404 döner (v2 kurulmamış). Sahte
   // sunucu bilmiyorsa "kurulmamış" yanıtı verilir — istek düşerse uygulama ayarı "bilinmiyor" sayıp bütün yazmaları bekletirdi.
