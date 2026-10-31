@@ -26,7 +26,7 @@ const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Europ
   .formatToParts(new Date()).map((x) => [x.type, x.value]));
 const BUGUN = `${p.year}-${p.month}-${p.day}`;
 
-function veritabani(gunSonuAyar) {
+function veritabani(gunSonuAyar, fisDenetimi) {
   const tablolar = {
     tanimlar: [{ id: "tekil", veri: { firmaBilgileri: { unvan: "Test Atölye", eposta: { sunucu: "smtp.test", kullanici: "a@test", port: 465 }, gunSonu: gunSonuAyar } } }],
     muhasebe: [{ id: "tekil", veri: { kasalar: [{ id: "k1", ad: "TL Kasa", paraBirimi: "TRY", hareketler: [
@@ -70,11 +70,13 @@ function veritabani(gunSonuAyar) {
     };
     return q;
   };
-  return { tablolar, istemci: { from: sorgu, auth: { getUser: async (j) => (j === "gecerli" ? { data: { user: { id: "u" } }, error: null } : { data: null, error: { message: "x" } }) } } };
+  // Gece denetimi (v1.741.0): verilmezse istemcide `rpc` YOK — işlev kurulmamış Supabase gibi; rapor bölümsüz gitmeli.
+  const rpc = fisDenetimi === undefined ? undefined : async (ad) => (ad === "fis_gece_denetimi" ? { data: fisDenetimi, error: null } : { data: null, error: { message: "yok" } });
+  return { tablolar, istemci: { from: sorgu, ...(rpc ? { rpc } : {}), auth: { getUser: async (j) => (j === "gecerli" ? { data: { user: { id: "u" } }, error: null } : { data: null, error: { message: "x" } }) } } };
 }
 
-async function kur(gunSonuAyar) {
-  const db = veritabani(gunSonuAyar);
+async function kur(gunSonuAyar, fisDenetimi) {
+  const db = veritabani(gunSonuAyar, fisDenetimi);
   const gonderilen = [];
   let isleyici = null;
   const kaynak = fs.readFileSync(path.join(__dirname, "..", "supabase-gun-sonu-fonksiyonu.ts"), "utf8")
@@ -126,6 +128,22 @@ async function kur(gunSonuAyar) {
   bekle("yanlış anahtar reddedilir", (await d.cagir({ "x-gun-sonu-anahtar": "yanlis" })).tamam, false);
   const yd = await d.cagir({ Authorization: "Bearer gecerli" }, { deneme: true });
   bekle("deneme gönderir, kayıt yazmaz", [yd.tamam, d.gonderilen.length, d.db.tablolar.gun_sonu_gonderim.length], [true, 1, 0]);
+
+  // 4) Fiş defteri gece denetimi (v1.741.0): işlev yoksa bölüm yok (1. durum); sorunluysa bölüm kırmızı, özet metinde sorun sayısı.
+  bekle("denetim işlevi yokken bölüm yok", /Fiş defteri denetimi/.test(html), false);
+  const den = { kuralAcik: true, temiz: false, fissizCari: { sayi: 3, kuraldanSonra: 1, ornek: [] }, fissizKasa: { sayi: 0, kuraldanSonra: 0, ornek: [] },
+    satirsizFis: [{ fisNo: "AF-261031004", aile: "stok", tur: "Alış" }], iptalTutarsiz: [], tutarFarki: [{ fisNo: "SF-261031002", tur: "Satış", baslik: 507, satirlar: 500 }],
+    gun: { tarih: BUGUN, kesilen: { stok: 4, para: 6 }, iptal: [{ fisNo: "TH-261031001", tur: "Tahsilat", sebep: "yanlış tutar", eden: "ali@test" }] } };
+  const e = await kur({ otomatik: true, saat: "00:00", alicilar: "p@test" }, den);
+  await e.cagir(zaman);
+  const eh = String((e.gonderilen[0] || {}).html || "").replace(/<[^>]+>/g, "|").replace(/\s+/g, " ").replace(/\|+/g, "|");
+  bekle("denetim bölümü: 3 sorun", /Fiş defteri denetimi \| ?3 sorun/.test(eh), true);
+  bekle("kural sonrası fişsiz satır, satırsız fiş, tutar farkı, iptal listesi", [/Fişsiz cari satırı: 3 — 1 tanesi kurallar açıldıktan SONRA/.test(eh), /AF-261031004 · Alış/.test(eh),
+    /SF-261031002 · Satış: başlık 507, satırlar 500/.test(eh), /TH-261031001 · Tahsilat — yanlış tutar \(ali@test\)/.test(eh), /4 stok fişi, 6 para fişi/.test(eh)], [true, true, true, true, true]);
+  bekle("özet metinde sorun", /Fiş defteri denetimi: 3 SORUN/.test(String((e.gonderilen[0] || {}).content)), true);
+  const f = await kur({ otomatik: true, saat: "00:00", alicilar: "p@test" }, { ...den, fissizCari: { sayi: 3, kuraldanSonra: 0 }, satirsizFis: [], tutarFarki: [], temiz: true });
+  await f.cagir(zaman);
+  bekle("temiz denetim: eski fişsiz satır sorun sayılmaz", [/Fiş defteri denetimi: temiz/.test(String((f.gonderilen[0] || {}).content)), /kurallar açılmadan önceki eski kayıtlar/.test(String((f.gonderilen[0] || {}).html))], [true, true]);
 
   if (hata) { console.log("birim-gun-sonu-sunucu: HATA"); process.exit(1); }
   console.log("birim-gun-sonu-sunucu: tamam");

@@ -92,7 +92,14 @@ async function veriOku(db) {
     const atamalar = atamaMap.get(o.id) || [];
     return { ...ekiKokeAc(kayitaCevir(o)), prosesIlerleme: (o.proses_ilerleme || []).map((p) => ({ ...p, atamalar: atamalar.filter((a) => a.proses === p.proses).map((a) => ekiKokeAc(kayitaCevir(a))) })) };
   });
-  return { tanimlar: (tanimS.data && tanimS.data.veri) || {}, muhasebe: (muhasebeS.data && muhasebeS.data.veri) || {}, cariler, stok, uretim };
+  // FİŞ DEFTERİ GECE DENETİMİ (v1.741.0, stok-v2/fis-gece-denetimi.sql): işlev kurulmamışsa (ya da hata verirse) rapor bölümsüz
+  // gider — denetim raporu durdurmaz.
+  let fisDenetimi = null;
+  try {
+    const { data, error } = await db.rpc("fis_gece_denetimi", { p_gun: null });
+    if (!error && data) fisDenetimi = data;
+  } catch { /* kurulmamış */ }
+  return { tanimlar: (tanimS.data && tanimS.data.veri) || {}, muhasebe: (muhasebeS.data && muhasebeS.data.veri) || {}, cariler, stok, uretim, fisDenetimi };
 }
 
 // KONU SATIRI GÜVENLİ (v1.724.2 — kullanıcı, Gmail'de ham MIME görünen gün sonu raporu: "Gün sonu raporu bozuldu"). denomailer
@@ -125,12 +132,15 @@ async function raporGonder(veriler, gun: string, saatMetni: string) {
   if (!smtp.sunucu || !smtp.kullanici || !sifre) throw new Error("E-posta ayarları eksik — Tanımlar › Firma › E-posta ve SMTP_SIFRE sırrı");
   if (alicilar.length === 0) throw new Error("Alıcı yok — Gün Sonu Raporu › Otomatik gönderim › alıcılar");
   const veri = gunSonuVerisi({ gun, defter: ayar.defter || "Tümü", cariler: veriler.cariler, muhasebe: veriler.muhasebe, stok: veriler.stok, uretim: veriler.uretim });
+  veri.fisDenetimi = veriler.fisDenetimi || null;
   const html = pdfCiktiBelgesi(gunSonuHTML(veri, firma, `${saatMetni} (sunucu)`));
   const o = veri.ozet;
   const yaz = (m) => (Object.keys(m || {}).length ? Object.entries(m).map(([pb, t]) => `${Number(t).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${pb}`).join(" · ") : "—");
   const metin = `${gun.split("-").reverse().join(".")} gün sonu özeti\n\nSatış: ${yaz(o.satis)}\nAlış: ${yaz(o.alis)}\n` +
     `Kasa/Banka giriş: ${yaz(o.kasaGiris)}\nKasa/Banka çıkış: ${yaz(o.kasaCikis)}\nKasa + Banka gün sonu: ${yaz(o.kasaBakiye)}\n` +
-    `Portföydeki çekler: ${yaz(o.cekToplam)}\nStok tutarı (alış fiyatıyla): ${yaz(o.stokTutar)}\n\nAyrıntılı rapor ekte.\n${firma.unvan || ""}`;
+    `Portföydeki çekler: ${yaz(o.cekToplam)}\nStok tutarı (alış fiyatıyla): ${yaz(o.stokTutar)}\n` +
+    (veri.fisDenetimi ? `Fiş defteri denetimi: ${fisDenetimiSorunSayisi(veri.fisDenetimi) ? `${fisDenetimiSorunSayisi(veri.fisDenetimi)} SORUN — rapordaki bölüme bakın` : "temiz"}\n` : "") +
+    `\nAyrıntılı rapor ekte.\n${firma.unvan || ""}`;
   const port = Number(smtp.port) || 465;
   const istemci = new SMTPClient({ connection: { hostname: smtp.sunucu, port, tls: (smtp.tls || (port === 465 ? "tls" : "starttls")) === "tls", auth: { username: smtp.kullanici, password: sifre } } });
   try {

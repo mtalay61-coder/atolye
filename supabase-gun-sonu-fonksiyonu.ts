@@ -37,7 +37,7 @@ const yanit = (durum: number, govde: unknown) =>
   new Response(JSON.stringify(govde), { status: durum, headers: { ...CORS, "Content-Type": "application/json" } });
 
 // ---- ÇEKİRDEK: atolye-erp.jsx'ten OTOMATİK çıkarıldı (gun-sonu-sunucu.js) — ELLE DÜZENLEMEYİN ----
-// Tanımlar: alisPbKodu, OKUMA_ISTISNA, alanAdi, ekiKokeAc, kayitaCevir, TARIH_BICIM, SAAT_BICIM, tarihYaz, stokYuvarla, FIS_ON_EKI, fisOnEki, PDF_CIKTI_STILI, pdfCiktiBelgesi, bakiyeMetni, hareketDefterde, cariDefterHareketleri, defterKapsar, PARA_SEMBOLU, cariMutabakatBakiyesi, gunSonuGun, gunSonuPara, gunSonuPBToplam, gunSonuSonAlislar, gunSonuAlisFiyati, gunSonuVerisi, gunSonuPBMetni, gunSonuBolumleri, gunSonuHTML, gunSonuAlicilari, htmlKacis
+// Tanımlar: alisPbKodu, OKUMA_ISTISNA, alanAdi, ekiKokeAc, kayitaCevir, TARIH_BICIM, SAAT_BICIM, tarihYaz, stokYuvarla, FIS_ON_EKI, fisOnEki, PDF_CIKTI_STILI, pdfCiktiBelgesi, bakiyeMetni, hareketDefterde, cariDefterHareketleri, defterKapsar, PARA_SEMBOLU, cariMutabakatBakiyesi, gunSonuGun, gunSonuPara, gunSonuPBToplam, gunSonuSonAlislar, gunSonuAlisFiyati, gunSonuVerisi, gunSonuPBMetni, gunSonuBolumleri, fisDenetimiSorunSayisi, fisDenetimiHTML, gunSonuHTML, gunSonuAlicilari, htmlKacis
 
 function alisPbKodu(urun) {
   const ham = String((urun && urun.alisParaBirimi) || "").trim();
@@ -336,6 +336,34 @@ function gunSonuBolumleri(v) {
   return sonuc;
 }
 
+function fisDenetimiSorunSayisi(d) {
+  if (!d) return 0;
+  const n = (x) => Number(x) || 0;
+  return n(d.fissizCari && d.fissizCari.kuraldanSonra) + n(d.fissizKasa && d.fissizKasa.kuraldanSonra)
+    + (d.satirsizFis || []).length + (d.iptalTutarsiz || []).length + (d.tutarFarki || []).length;
+}
+
+function fisDenetimiHTML(d) {
+  if (!d) return "";
+  const e = htmlKacis;
+  const sorun = fisDenetimiSorunSayisi(d);
+  const g = d.gun || {};
+  const k = g.kesilen || {};
+  const satir = (baslik, liste, bicim) => (liste || []).length === 0 ? "" :
+    `<div style="margin-top:6px;font-size:11px"><b style="color:#B3261E">${e(baslik)} (${liste.length})</b><br/>${liste.map((x) => e(bicim(x))).join("<br/>")}</div>`;
+  const fissiz = (ad, x) => !x || !Number(x.sayi) ? "" : `<div style="margin-top:6px;font-size:11px">${Number(x.kuraldanSonra) ? `<b style="color:#B3261E">` : "<span>"}Fişsiz ${e(ad)} satırı: ${e(x.sayi)}${Number(x.kuraldanSonra) ? ` — ${e(x.kuraldanSonra)} tanesi kurallar açıldıktan SONRA</b>` : " (kurallar açılmadan önceki eski kayıtlar)</span>"}</div>`;
+  return `
+    <h3 style="margin:18px 0 6px;font-size:14px;border-bottom:2px solid ${sorun ? "#B3261E" : "#2F6B4F"};padding-bottom:3px">Fiş defteri denetimi
+      <span style="font-weight:700;font-size:11px;color:${sorun ? "#B3261E" : "#2F6B4F"}">${sorun ? `${sorun} sorun` : "temiz"}</span></h3>
+    <div style="font-size:11px">Bugün kesilen: ${e(k.stok || 0)} stok fişi, ${e(k.para || 0)} para fişi · iptal edilen: ${e((g.iptal || []).length)}${d.kuralAcik ? "" : " · kurallar henüz kapalı"}</div>
+    ${fissiz("cari", d.fissizCari)}${fissiz("kasa", d.fissizKasa)}
+    ${satir("Satırsız fiş", d.satirsizFis, (x) => `${x.fisNo} · ${x.tur}`)}
+    ${satir("İptal edilmiş fişin geçerli satırı", d.iptalTutarsiz, (x) => `${x.fisNo} · ${x.tur} (stok ${x.stok}, cari ${x.cari}, kasa ${x.kasa})`)}
+    ${satir("Başlık tutarı satırlardan farklı", d.tutarFarki, (x) => `${x.fisNo} · ${x.tur}: başlık ${x.baslik}, satırlar ${x.satirlar}`)}
+    ${(g.iptal || []).length ? `<div style="margin-top:6px;font-size:11px;color:#555"><b>Bugün iptal edilen fişler</b><br/>${g.iptal.map((x) => e(`${x.fisNo} · ${x.tur}${x.sebep ? ` — ${x.sebep}` : ""}${x.eden ? ` (${x.eden})` : ""}`)).join("<br/>")}</div>` : ""}
+  `;
+}
+
 function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR"), yalnizUst = false) {
   const e = htmlKacis;
   const f = firma || {};
@@ -356,6 +384,7 @@ function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR"), 
       ${kutu("Kasa + Banka gün sonu", gunSonuPBMetni(o.kasaBakiye))}${kutu("Portföydeki çekler", gunSonuPBMetni(o.cekToplam))}${kutu("Stok tutarı (alış fiyatıyla)", gunSonuPBMetni(o.stokTutar))}${kutu("Üretimden stoğa giriş", `${o.uretimGiris.toLocaleString("tr-TR")}`)}
     </tr></table>
     ${yalnizUst ? "" : gunSonuBolumleri(v).map((x) => tablo(x.baslik, x.kolonlar, x.satirlar)).join("")}
+    ${yalnizUst ? "" : fisDenetimiHTML(v.fisDenetimi)}
   `;
 }
 
@@ -423,7 +452,14 @@ async function veriOku(db) {
     const atamalar = atamaMap.get(o.id) || [];
     return { ...ekiKokeAc(kayitaCevir(o)), prosesIlerleme: (o.proses_ilerleme || []).map((p) => ({ ...p, atamalar: atamalar.filter((a) => a.proses === p.proses).map((a) => ekiKokeAc(kayitaCevir(a))) })) };
   });
-  return { tanimlar: (tanimS.data && tanimS.data.veri) || {}, muhasebe: (muhasebeS.data && muhasebeS.data.veri) || {}, cariler, stok, uretim };
+  // FİŞ DEFTERİ GECE DENETİMİ (v1.741.0, stok-v2/fis-gece-denetimi.sql): işlev kurulmamışsa (ya da hata verirse) rapor bölümsüz
+  // gider — denetim raporu durdurmaz.
+  let fisDenetimi = null;
+  try {
+    const { data, error } = await db.rpc("fis_gece_denetimi", { p_gun: null });
+    if (!error && data) fisDenetimi = data;
+  } catch { /* kurulmamış */ }
+  return { tanimlar: (tanimS.data && tanimS.data.veri) || {}, muhasebe: (muhasebeS.data && muhasebeS.data.veri) || {}, cariler, stok, uretim, fisDenetimi };
 }
 
 // KONU SATIRI GÜVENLİ (v1.724.2 — kullanıcı, Gmail'de ham MIME görünen gün sonu raporu: "Gün sonu raporu bozuldu"). denomailer
@@ -456,12 +492,15 @@ async function raporGonder(veriler, gun: string, saatMetni: string) {
   if (!smtp.sunucu || !smtp.kullanici || !sifre) throw new Error("E-posta ayarları eksik — Tanımlar › Firma › E-posta ve SMTP_SIFRE sırrı");
   if (alicilar.length === 0) throw new Error("Alıcı yok — Gün Sonu Raporu › Otomatik gönderim › alıcılar");
   const veri = gunSonuVerisi({ gun, defter: ayar.defter || "Tümü", cariler: veriler.cariler, muhasebe: veriler.muhasebe, stok: veriler.stok, uretim: veriler.uretim });
+  veri.fisDenetimi = veriler.fisDenetimi || null;
   const html = pdfCiktiBelgesi(gunSonuHTML(veri, firma, `${saatMetni} (sunucu)`));
   const o = veri.ozet;
   const yaz = (m) => (Object.keys(m || {}).length ? Object.entries(m).map(([pb, t]) => `${Number(t).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${pb}`).join(" · ") : "—");
   const metin = `${gun.split("-").reverse().join(".")} gün sonu özeti\n\nSatış: ${yaz(o.satis)}\nAlış: ${yaz(o.alis)}\n` +
     `Kasa/Banka giriş: ${yaz(o.kasaGiris)}\nKasa/Banka çıkış: ${yaz(o.kasaCikis)}\nKasa + Banka gün sonu: ${yaz(o.kasaBakiye)}\n` +
-    `Portföydeki çekler: ${yaz(o.cekToplam)}\nStok tutarı (alış fiyatıyla): ${yaz(o.stokTutar)}\n\nAyrıntılı rapor ekte.\n${firma.unvan || ""}`;
+    `Portföydeki çekler: ${yaz(o.cekToplam)}\nStok tutarı (alış fiyatıyla): ${yaz(o.stokTutar)}\n` +
+    (veri.fisDenetimi ? `Fiş defteri denetimi: ${fisDenetimiSorunSayisi(veri.fisDenetimi) ? `${fisDenetimiSorunSayisi(veri.fisDenetimi)} SORUN — rapordaki bölüme bakın` : "temiz"}\n` : "") +
+    `\nAyrıntılı rapor ekte.\n${firma.unvan || ""}`;
   const port = Number(smtp.port) || 465;
   const istemci = new SMTPClient({ connection: { hostname: smtp.sunucu, port, tls: (smtp.tls || (port === 465 ? "tls" : "starttls")) === "tls", auth: { username: smtp.kullanici, password: sifre } } });
   try {

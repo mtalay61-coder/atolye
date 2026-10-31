@@ -21,7 +21,15 @@ async function calistir() {
   };
   const stkAyar = { id: "tekil", aktif: true, cari_aktif: true, alt_aktif: true, kasa_aktif: true, liste_aktif: true,
     liste_tablolari: ["fis_defteri"], fis_aktif: false };
-  const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, onceRota, stkAyar });
+  // TOHUM FİŞ DEFTERİNE UYGUN (v1.741.0): tohumda Bot Siyah/41 varyantı 9 ama hareketleri 3 (6'sı fişsiz); eskiden açılış göçü farkı
+  // fişsiz bir açılış hareketiyle kapatıyordu. Sunucu fiş defterinde (v1.740.0) o göç çalışmaz — gerçek veride varyant miktarı
+  // zaten hareket toplamıdır (stok v2 görünümü). Tohum öyle kurulur: 6'lık açılış fişli hareket.
+  const t = { ...TOHUM };
+  const stok = JSON.parse(t["stok:items"]);
+  const bot = stok.find((u) => u.id === "u2");
+  bot.hareketler = [...(bot.hareketler || []), { id: "h-acilis-41", tarih: "2026-08-01T09:00:00.000Z", renk: "Siyah", beden: "41", miktar: 6, kaynak: "Açılış", fisNo: "ACL-260801001" }];
+  t["stok:items"] = JSON.stringify(stok);
+  const { tarayici, sayfa } = await uygulamaAc(t, { hataYaz: false, onceRota, stkAyar });
   const hatalar = [];
   sayfa.on("pageerror", (e) => hatalar.push(e.message.split("\n")[0]));
   await sayfa.waitForTimeout(2200);
