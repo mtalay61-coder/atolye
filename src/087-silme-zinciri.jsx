@@ -148,8 +148,30 @@ const siparisKapat = useCallback(async (siparisId) => {
     set(sonrasi);
     sonuclar.push(await soz(sonrasi));
   };
-  await yaz("stok", setStok, (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
-  await yaz("cariler", setCariler, (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
+  // TEK FİŞ DEFTERİ (v1.742.0, kullanıcı kararı 31 Ekim "Yalnız bağ alanları sunucuda"): fiş satırı yerinde değişmez (kurallar
+  // açılınca köprüden satır güncellemesi reddedilir). Bağ sunucuda çözülür (`fis_bag_coz`: siparis_id / kalem_id / zincir boşalır,
+  // numara "(iptal)" eki alır — 088 siparisBaglariniCoz ile aynı kural, değerleri sunucu hesaplar); yerel kopya aynı değişikliği
+  // alır ve fark tabanı ilerler (aynı satır eski yoldan bir daha gönderilmez). Sunucu çözemezse iptal durur, hiçbir şey değişmez.
+  const fisYolu = fisKesYolu() && !sil && (onizleme.ozet.stokHareketi > 0 || onizleme.ozet.cariHareketi > 0 || onizleme.ozet.zincir > 0);
+  if (fisYolu) {
+    try {
+      await supabaseIstek("rpc/fis_bag_coz", { method: "POST", body: JSON.stringify({ p: { siparisId, siparisNo: no || null } }) });
+    } catch (e) {
+      showToast(`Sipariş iptal edilemedi — fişlerin bağı çözülemedi, hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+      gunlukYaz(`Sipariş iptali durdu (fis_bag_coz): ${no}`, "siparis", { siparisId, hata: String((e && e.message) || e).slice(0, 200) });
+      return;
+    }
+  }
+  const sonVeriOnce = { stok: (sonVeriRef.current || veri).stok, cariler: (sonVeriRef.current || veri).cariler };
+  const bagYerel = (tablo, anahtar) => (x) => {
+    const once = tablo === "urunler" ? (sonVeriOnce.stok || []) : (sonVeriOnce.cariler || []);
+    const etk = fisKesEtkilenen(once, x, fisKesDegisenIdler(once, x));
+    fisKesTabaniKur(tablo, etk.eskiler, tablo === "urunler" ? stokMiktarlariniHesapla(etk.yeniler) : etk.yeniler);
+    fisKesYerelYaz(anahtar, x);
+    return { ok: true };
+  };
+  await yaz("stok", setStok, fisYolu ? bagYerel("urunler", "stok:items") : (x) => yazimiIzle(tabloYaz("stok:items", "urunler", x), "Stok kartları", x));
+  await yaz("cariler", setCariler, fisYolu ? bagYerel("cariler", "cari:data") : (x) => yazimiIzle(tabloYaz("cari:data", "cariler", x), "Cari kartları", x));
   sonuclar.push(await fisDefteriniDonustur((defter) => {
     // Yalnız hedef sipariş yeter (defterin bağı ona göre çözülüyor); bekleme öncesi listeyi okumaya gerek yok.
     const d = siparisBaglariniCoz({ siparisler: [siparis], fisDefteri: defter }, siparisId);

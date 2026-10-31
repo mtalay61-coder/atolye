@@ -474,7 +474,7 @@ function DemirbasBolumu({ kayit, tur, tanimlar, cariler, stok, onGuncelle, onCar
       const ok = onCariHareketEkle(f.cariId, [hareket]);
       if (ok === false) return;
     }
-    setF({ ...f, tutar: "" }); setAcik(false);
+    setF((o) => ({ ...o, tutar: "" })); setAcik(false);
     if (showToast) showToast(`${kayit.ad} alımı cariye yazıldı — ${ay} ay amortisman`);
   };
   return (

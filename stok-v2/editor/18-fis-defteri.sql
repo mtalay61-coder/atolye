@@ -79,9 +79,6 @@ begin
   yeni_j := to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
   eski_j := to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
   if yeni_j is distinct from eski_j then
-    if duzen = 'eski' and old.fis_id is null and new.fis_id is not null and (yeni_j - 'fis_id') = (eski_j - 'fis_id') then
-      return new;
-    end if;
     if duzen = 'bag'
        and (yeni_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
          = (eski_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
@@ -292,40 +289,6 @@ begin
   return jsonb_build_object('fisNo', no);
 end $$;
 
-create or replace function public.fis_eski_iptal(p jsonb) returns jsonb
-language plpgsql security definer set search_path = public as $$
-declare
-  no text := nullif(btrim(coalesce(p ->> 'no', '')), '');
-  baslik_var boolean;
-  cari_var boolean;
-  kasa_var boolean;
-  bagli int := 0;
-  n int;
-begin
-  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
-  if no is null then raise exception 'Fiş numarası yok' using errcode = '22023'; end if;
-  baslik_var := exists (select 1 from public.stk_fis where id = no);
-  cari_var := exists (select 1 from public.car_hareket where fis_id is null and fis_no = no);
-  kasa_var := exists (select 1 from public.kas_hareket where fis_id is null and veri ->> 'fisNo' = no);
-  if not baslik_var and not cari_var and not kasa_var then
-    raise exception 'Fiş bulunamadı: %', no using errcode = 'P0002';
-  end if;
-  perform set_config('fis.kapi', 'acik', true);
-  if not baslik_var then
-    insert into public.stk_fis (id, aile, tur, kaynak, tarih, aciklama, ek)
-    values (no, 'para', 'Eski fiş', 'Eski kayıt', now(), 'Fiş defterinden önce yazılmış satırlar — iptal için bağlandı',
-            jsonb_build_object('eski', true));
-  end if;
-  perform set_config('fis.duzen', 'eski', true);
-  update public.car_hareket set fis_id = no where fis_id is null and fis_no = no;
-  get diagnostics n = row_count; bagli := bagli + n;
-  update public.kas_hareket set fis_id = no where fis_id is null and veri ->> 'fisNo' = no;
-  get diagnostics n = row_count; bagli := bagli + n;
-  perform set_config('fis.duzen', '', true);
-  perform set_config('fis.kapi', '', true);
-  return public.fis_iptal(p) || jsonb_build_object('eski', not baslik_var or bagli > 0, 'bagliSatir', bagli);
-end $$;
-
 create or replace function public.fis_bag_coz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -444,7 +407,7 @@ begin
   revoke all on public.fis_sayac from anon, authenticated;
   revoke all on function public.fis_no_al(text) from public, anon, authenticated;
   revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
-  foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_eski_iptal(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
+  foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';
   end loop;

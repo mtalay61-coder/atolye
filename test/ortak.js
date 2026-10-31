@@ -69,6 +69,7 @@ async function uygulamaAc(tohum = {}, { hataYaz = true, onceRota = null, tarayic
       return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: no, bagliFisNo: p.bagli ? `${(p.bagli.fis && p.bagli.fis.onek) || "PRV"}-261031${String(sira).padStart(3, "0")}B` : null, zatenVar: false }) });
     });
     await sayfa.route("**/rest/v1/rpc/fis_iptal**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: ((JSON.parse(r.request().postData() || "{}").p) || {}).no, zatenIptal: false }) }));
+    for (const ad of ["fis_bag_coz", "stk_renk_tasi"]) await sayfa.route(`**/rest/v1/rpc/${ad}**`, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
     await sayfa.route("**/rest/v1/rpc/fis_bilgi**", (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ fisNo: ((JSON.parse(r.request().postData() || "{}").p) || {}).no }) }));
     const mh = tohum["muhasebe:data"];
     if (mh) await sayfa.route("**/rest/v1/muhasebe?**", (r) => (r.request().method() === "GET"

@@ -1,5 +1,5 @@
 -- FİŞ DEFTERİ EK İŞLEMLERİ SINAMASI (v1.742.0, kullanıcı kararları 31 Ekim) — sinama-fis.sql'nin bıraktığı veritabanında (kurallar
--- AÇIK). Kural provasının bulduğu üç yol: eski fiş iptali, sipariş bağ çözme, renk taşıma. Her biri yalnız izin verilen alana
+-- AÇIK). Kural provasının bulduğu iki yol: sipariş bağ çözme, renk taşıma. Her biri yalnız izin verilen alana
 -- dokunmalı; aynı değişiklik doğrudan (eski yol / düz güncelleme) reddedilmeli.
 \set ON_ERROR_STOP 1
 \pset pager off
@@ -13,47 +13,8 @@ grant all on _no to authenticated;
 -- sinama-fis.sql'nin bıraktığı gibi bulmalı.
 begin;
 
--- 0) Kurallardan ÖNCE yazılmış eski fişler (kurallar kapatılıp eski yoldan kurulur, sonra yeniden açılır)
-update public.stk_ayar set fis_aktif = false where id = 'tekil';
 set role authenticated;
 select pg_temp.kullanici('ali@atolye.local');
-do $$ begin
-  perform public.fis_yaz('{"stok": {"satirlar": [{"id": "ek-s1", "fisId": "ESKI-STK-1", "urunId": "u-yeni", "renk": "Siyah", "miktar": 2, "kaynak": "Manuel"}]},
-                          "cari": {"satirlar": [{"id": "ek-c1", "cari_id": "c-yeni", "tarih": "2026-10-29", "yon": "Borç", "tutar": 50, "fis_no": "ESKI-STK-1"},
-                                                {"id": "ek-c2", "cari_id": "c-yeni", "tarih": "2026-10-29", "yon": "Alacak", "tutar": 30, "fis_no": "ESKI-CARI-1"}]}}');
-end $$;
-reset role;
-update public.stk_ayar set fis_aktif = true where id = 'tekil';
-set role authenticated;
-select pg_temp.kullanici('ali@atolye.local');
-
--- 1) ESKİ FİŞ İPTALİ
-do $$
-declare r jsonb;
-begin
-  assert (select fis_id from public.car_hareket where id = 'ek-c1') is null, 'eski cari satırı zaten bağlı';
-  -- eski yoldan iptal reddedilir
-  begin
-    perform public.car_yaz('{"satirlar": [], "iptal": ["ek-c2"]}');
-    raise exception 'eski yoldan cari iptali GEÇTİ';
-  exception when insufficient_privilege then null;
-  end;
-  -- başlığı olan eski stok fişi: fişsiz cari satırı numarasıyla bağlanır, hepsi birlikte iptal
-  r := public.fis_eski_iptal('{"no": "ESKI-STK-1", "sebep": "eski fiş geri alındı"}');
-  assert (r ->> 'bagliSatir')::int = 1, 'bağlanan satır ' || r::text;
-  assert (select iptal from public.stk_hareket where id = 'ek-s1') and (select iptal and fis_id = 'ESKI-STK-1' from public.car_hareket where id = 'ek-c1'),
-    'eski fişin satırları birlikte iptal edilmedi';
-  -- başlığı olmayan eski cari fişi: "Eski fiş" başlığı açılır
-  r := public.fis_eski_iptal('{"no": "ESKI-CARI-1"}');
-  assert (select aile = 'para' and tur = 'Eski fiş' and iptal from public.stk_fis where id = 'ESKI-CARI-1'), 'eski cari fişine başlık açılmadı';
-  assert (select iptal from public.car_hareket where id = 'ek-c2'), 'eski cari satırı iptal edilmedi';
-  begin
-    perform public.fis_eski_iptal('{"no": "YOK-1"}');
-    raise exception 'olmayan fiş iptal edildi';
-  exception when no_data_found then null;
-  end;
-  raise notice 'TAMAM: eski fiş numarasıyla bağlanıp iptal ediliyor (başlıklı ve başlıksız); eski yol reddediliyor';
-end $$;
 
 -- 2) SİPARİŞ BAĞ ÇÖZME
 do $$

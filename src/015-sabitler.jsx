@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.741.0";
+const SURUM = "1.742.0";
 const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Tek fiş defteri — 12. adım: Fişler ekranı kasa fişlerini de gösterir (virman, gider, gelir, çek tahsili); gün sonu raporuna fiş defteri gece denetimi";
+const SURUM_NOTU = "Tek fiş defteri — 13. adım: kural provası; demirbaş alımı, sipariş iptali ve mamul renk kodlaması kurallara uygun";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.742.0", tarih: "31.10.2026", eklenen: ["Kural provası (test/kural-provasi.js): bütün senaryolar fiş defteri kurulu sunucuya karşı koşar; kurallar açılınca reddedilecek eski yol yazmaları listelenir."], degisen: ["Tanımlar › Kapasite › demirbaş \"Satın alındı\" sunucu fişiyle (AF) yazılır.", "Sipariş iptalinde fişlerin sipariş bağı sunucuda çözülür (yalnız bağ alanları; miktar, tutar, fiyat değişmez), fiş başlığına not düşer.", "Tanımlar › Bakım › Kodsuz Mamul Renkleri: renk varyant düzeyinde değişir; stok hareketlerine dokunulmaz."], duzeltilen: [] },
   { surum: "1.741.0", tarih: "31.10.2026", eklenen: ["Fişler ekranında Virman, Gider, Gelir ve Çek Tahsili çipleri: cari ayağı olmayan sunucu fişleri (VRM / GD / GL / ÇT) artık listede; fiş açılınca hangi kasadan / bankaya ne kadar girip çıktığı görünür.", "Gün sonu raporuna (sunucudan gönderilen) \"Fiş defteri denetimi\" bölümü: fişsiz cari / kasa satırı, satırsız fiş, iptal edilmiş fişin geçerli satırı, başlık tutarı ≠ satırlar; günün kesilen ve iptal edilen fişleri. Veritabanının kendisine bakar (stok-v2/editor/20-gece-denetimi.sql kurulunca)."], degisen: ["Virman fişinin tutarı tek ayak (iki ayağın toplamı değil). İptal edilmiş fiş ve fişi olmayan eski kasa hareketleri listeye girmez."], duzeltilen: [] },
   { surum: "1.740.0", tarih: "31.10.2026", eklenen: ["Ay başı maaş tahakkuku artık kendiliğinden yazılmaz: üstte \"Maaş tahakkuku bekliyor\" şeridi çıkar (ay, personel, toplam); Onayla deyince her personele maaş fişi (MAŞ-…) kesilir. Sonra ile şerit bu oturum için kapanır."], degisen: ["Tek fiş defteri — 11. adım: sunucuda fiş defteri kuruluyken uygulama kendiliğinden kayıt YAZMAZ — fişsiz harekete numara verilmez, fiş defterine \"otomatik\" kayıt kurulmaz (30 Ekim'deki eski fişlerin geri gelmesinin kaynağı), açılışta açılış göçü, peşin ödeme yönü / eksik alan onarımları ve Genel+Resmi ikiz birleştirme çalışmaz. Bütün kayıtlar fişle, kullanıcı işlemiyle."], duzeltilen: [] },
   { surum: "1.739.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 10. adım: Sevkiyat Merkezi'nde irsaliye bilgisi sunucu fişinde fişin başlığına yazılır (satır değiştirilmez)."], degisen: ["Fişler ekranı ve Sevkiyat Merkezi sunucu fişlerinin türünü tanır (TH tahsilat, ÖD ödeme, MS maaş/mesai, ÇC çek cirosu, ÜRT üretim girişi / çıkışı / işçilik); önce \"Diğer\" görünüyorlardı.", "Sevkiyat Merkezi ve Alış / Satış ekranındaki fiş paneli kayıt sonucunu bekler: fiş kesilemezse panel açık kalır. Fiş formunda Kaydet'e yanıt beklenirken ikinci kez basmak ikinci fiş kesmez (her ekranda)."], duzeltilen: ["Çek tahsilinin fişi (kasa / banka satırı) iptal edilince çek \"Tahsil Edildi\" kalıyordu; artık bir önceki durumuna döner."] },

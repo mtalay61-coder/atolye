@@ -111,18 +111,15 @@ begin
     return new;
   end if;
   -- Güncelleme: yalnız iptal alanları değişebilir (ve kayıt zamanı).
-  -- DAR DÜZEN KİPLERİ (v1.742.0, kullanıcı kararı 31 Ekim): üç sunucu işlemi satırın YALNIZ belirli alanlarına dokunur; kip
+  -- DAR DÜZEN KİPLERİ (v1.742.0, kullanıcı kararı 31 Ekim): iki sunucu işlemi satırın YALNIZ belirli alanlarına dokunur; kip
   -- (`fis.duzen`) yalnız o işlemlerin içinde açılır, işlem sonunda kapanır. Miktar, tutar, ürün, tarih hiçbir kipte değişmez.
-  --   eski    (fis_eski_iptal): fişe bağlı olmayan eski satır numarasıyla fişine BAĞLANIR (fis_id boştan dolu) — sonra iptal.
+  -- (Fiş defterinden önceki eski fişler için ayrı yol YOK — kullanıcı: veriler kurallar açılmadan sıfırlanır.)
   --   bag     (fis_bag_coz): sipariş iptalinde sipariş bağı çözülür — siparis_id / kalem_id / rezervasyon_siparis_id boşalır,
   --           siparis_no "(iptal)" eki alır; cari satırında `ek`ten yalnız siparisId / kalemId / rezervasyonSiparisId düşer.
   --   varyant (stk_renk_tasi): renk kodlamada hedef varyant zaten varsa hareket o varyanta taşınır (renk adı değişir, stok aynı).
   yeni_j := to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
   eski_j := to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
   if yeni_j is distinct from eski_j then
-    if duzen = 'eski' and old.fis_id is null and new.fis_id is not null and (yeni_j - 'fis_id') = (eski_j - 'fis_id') then
-      return new;
-    end if;
     if duzen = 'bag'
        and (yeni_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
          = (eski_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
@@ -351,46 +348,6 @@ begin
   return jsonb_build_object('fisNo', no);
 end $$;
 
--- ESKİ FİŞ İPTALİ (v1.742.0, kullanıcı kararı 31 Ekim: "Fiş iptaline bağla"). Fiş defterinden ÖNCE yazılmış fiş: stok satırları
--- kendi başlığına (stk_fis — stok v2 her harekete fiş açıyordu) bağlı, cari / kasa satırlarında fis_id BOŞ (numara yalnız
--- fis_no / veri.fisNo'da). Kurallar açıkken bu satırlar köprüyle iptal edilemez. Bu işlem: başlık yoksa açar (aile: para,
--- tür "Eski fiş"), fişsiz satırları NUMARASIYLA o başlığa bağlar ve fis_iptal ile hepsini birlikte iptal eder — yeni fişlerle
--- aynı kural (silinmez, iz kalır). Sunucu fişi gelirse de çalışır (bağlanacak satırı yoktur, düz fis_iptal).
--- p = { no, sebep, alt }
-create or replace function public.fis_eski_iptal(p jsonb) returns jsonb
-language plpgsql security definer set search_path = public as $$
-declare
-  no text := nullif(btrim(coalesce(p ->> 'no', '')), '');
-  baslik_var boolean;
-  cari_var boolean;
-  kasa_var boolean;
-  bagli int := 0;
-  n int;
-begin
-  perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
-  if no is null then raise exception 'Fiş numarası yok' using errcode = '22023'; end if;
-  baslik_var := exists (select 1 from public.stk_fis where id = no);
-  cari_var := exists (select 1 from public.car_hareket where fis_id is null and fis_no = no);
-  kasa_var := exists (select 1 from public.kas_hareket where fis_id is null and veri ->> 'fisNo' = no);
-  if not baslik_var and not cari_var and not kasa_var then
-    raise exception 'Fiş bulunamadı: %', no using errcode = 'P0002';
-  end if;
-  perform set_config('fis.kapi', 'acik', true);
-  if not baslik_var then
-    insert into public.stk_fis (id, aile, tur, kaynak, tarih, aciklama, ek)
-    values (no, 'para', 'Eski fiş', 'Eski kayıt', now(), 'Fiş defterinden önce yazılmış satırlar — iptal için bağlandı',
-            jsonb_build_object('eski', true));
-  end if;
-  perform set_config('fis.duzen', 'eski', true);
-  update public.car_hareket set fis_id = no where fis_id is null and fis_no = no;
-  get diagnostics n = row_count; bagli := bagli + n;
-  update public.kas_hareket set fis_id = no where fis_id is null and veri ->> 'fisNo' = no;
-  get diagnostics n = row_count; bagli := bagli + n;
-  perform set_config('fis.duzen', '', true);
-  perform set_config('fis.kapi', '', true);
-  return public.fis_iptal(p) || jsonb_build_object('eski', not baslik_var or bagli > 0, 'bagliSatir', bagli);
-end $$;
-
 -- SİPARİŞ BAĞINI ÇÖZ (v1.742.0, kullanıcı kararı 31 Ekim: "Yalnız bağ alanları sunucuda"). Sipariş iptalinde (087 siparisKapat,
 -- 088 siparisBaglariniCoz) fişler silinmez, bağımsız kalır: satırın sipariş bağı çözülür — miktar / tutar / ürün DEĞİŞMEZ. Satır
 -- eşleşmesi uygulamayla aynı (088 siparisHareketiMi): kimlikli satırda kimlik, kimliksiz eskide numara. Değerleri istemci
@@ -525,7 +482,7 @@ begin
   revoke all on public.fis_sayac from anon, authenticated;
   revoke all on function public.fis_no_al(text) from public, anon, authenticated;
   revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
-  foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_eski_iptal(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
+  foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';
   end loop;
