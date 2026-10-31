@@ -1,0 +1,20 @@
+{
+ "hatalar": [],
+ "istekler": [
+  "fis_kes:Tahsilat:TH:cari 1:kasa 0:cek 0012345/Portföyde/«FIS»",
+  "fis_iptal:TH-261031001"
+ ],
+ "kayit": {
+  "cari": [
+   "TH-261031001:Alacak:2500:Çek"
+  ],
+  "cekler": [
+   "0012345:Portföyde:TH-261031001:bagli"
+  ]
+ },
+ "silme": {
+  "cari": [],
+  "cekSilmesiGittiYaDaBekliyor": true,
+  "cekler": []
+ }
+}

@@ -283,42 +283,9 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
       };
     })() : null;
 
-    // TEK FİŞ DEFTERİ (v1.735.0, 100 paraFisiKes): sunucu yolunda cari satırı ve kasa / banka ayağı TEK fişte (TH / ÖD / AF / SF…),
-    // numarayı sunucu verir; kullanıcının yazdığı numara belge numarası olarak fişin ek bilgisinde. Yazılamazsa form açık ve dolu
-    // kalır. Çek / senet ayrıntılı hareket (çekler listesine de düşer) çek adımına kadar bugünkü yoldan.
-    if (onParaFisi && fisKesYolu() && !cekAyrintiliMi) {
-      hareketKaydediliyorRef.current = true;
-      let sonuc;
-      try {
-        sonuc = await onParaFisi({
-          fis: { tur: hareketTipi || "Cari hareketi", onek: paraFisOneki(hareketTipi), kaynak: "Cari kartı",
-            ...(ortak.siparisId ? { siparisId: ortak.siparisId, siparisNo: ortak.siparisNo || null } : {}),
-            ...(ortak.fisNo ? { ek: { belgeNo: ortak.fisNo } } : {}) },
-          cariId: cari.id, hareketler: hareketler.map((h) => ({ ...h, islemTipi: undefined })),
-          kasa: kasaAyagi ? { hesapTur: kasaAyagi.hesapTur, hesapId: kasaAyagi.hesapId, hareket: kasaAyagi.hareket } : null,
-          anahtar: `cari-hareket|${cari.id}`, hataEtiketi: hareketTipi || "Hareket",
-        });
-      } finally { hareketKaydediliyorRef.current = false; }
-      if (!sonuc) return;
-      setHForm(emptyHareket());
-      setShowHareket(false);
-      setHareketTipi(null);
-      return;
-    }
-
-    onAddHareket(cari.id, hareketler);
-    if (kasaAyagi) onMuhasebeHareketi(kasaAyagi);
-
-    // ÇEK, ÇEKLER LİSTESİNE DE DÜŞER.
-    //
-    // Eskiden caride girilen çek yalnızca cari hareketinde duruyordu; Muhasebe > Çekler listesi
-    // ayrı ayrı, elle dolduruluyordu. Aynı çek iki yerde ve birbirinden habersiz — vadesi gelen
-    // çeki hatırlatan liste, caride girileni hiç görmüyordu.
-    //
-    // `hareketId` bağı KURULUYOR: hangi cari hareketinden doğduğu belli olsun, ileride hareket
-    // silinince çekin de bulunabilmesi için (o temizlik henüz yapılmadı — bkz. DEVAM-NOTU).
-    if (cekAyrintiliMi && onCekEkle) {
-      onCekEkle({
+    // Çek kaydı (v1.738.0'da yukarı alındı): sunucu yolunda fişle aynı işlemde, eski yolda onCekEkle ile.
+    const cekKaydi = cekAyrintiliMi ? {
+        id: uid("cek"), durum: "Portföyde",
         // Tahsilat/Satış bize çek GELİYOR (Alınan); Ödeme/Alış çek VERİYORUZ.
         //
         // BAKİYE YÖNÜ BU AYRIMI YAPAMAZ: Satış ve Ödeme aynı yönde (ikisi de bakiyeyi artırır) ama
@@ -341,8 +308,44 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
         not: hForm.cek.not,
         hareketId: hareketler[0].id,
         fisNo: ortak.fisNo || null,
-      });
+      } : null;
+
+    // TEK FİŞ DEFTERİ (v1.735.0, 100 paraFisiKes): sunucu yolunda cari satırı ve kasa / banka ayağı TEK fişte (TH / ÖD / AF / SF…),
+    // numarayı sunucu verir; kullanıcının yazdığı numara belge numarası olarak fişin ek bilgisinde. Yazılamazsa form açık ve dolu
+    // kalır. Çek / senet ayrıntılı harekette çek kaydı da aynı fişle (v1.738.0).
+    if (onParaFisi && fisKesYolu()) {
+      hareketKaydediliyorRef.current = true;
+      let sonuc;
+      try {
+        sonuc = await onParaFisi({
+          fis: { tur: hareketTipi || "Cari hareketi", onek: paraFisOneki(hareketTipi), kaynak: "Cari kartı",
+            ...(ortak.siparisId ? { siparisId: ortak.siparisId, siparisNo: ortak.siparisNo || null } : {}),
+            ...(ortak.fisNo ? { ek: { belgeNo: ortak.fisNo } } : {}) },
+          cariId: cari.id, hareketler: hareketler.map((h) => ({ ...h, islemTipi: undefined })),
+          kasa: kasaAyagi ? { hesapTur: kasaAyagi.hesapTur, hesapId: kasaAyagi.hesapId, hareket: kasaAyagi.hareket } : null,
+          cekler: cekKaydi ? [{ ...cekKaydi, fisNo: FIS_YER }] : [],
+          anahtar: `cari-hareket|${cari.id}`, hataEtiketi: hareketTipi || "Hareket",
+        });
+      } finally { hareketKaydediliyorRef.current = false; }
+      if (!sonuc) return;
+      setHForm(emptyHareket());
+      setShowHareket(false);
+      setHareketTipi(null);
+      return;
     }
+
+    onAddHareket(cari.id, hareketler);
+    if (kasaAyagi) onMuhasebeHareketi(kasaAyagi);
+
+    // ÇEK, ÇEKLER LİSTESİNE DE DÜŞER.
+    //
+    // Eskiden caride girilen çek yalnızca cari hareketinde duruyordu; Muhasebe > Çekler listesi
+    // ayrı ayrı, elle dolduruluyordu. Aynı çek iki yerde ve birbirinden habersiz — vadesi gelen
+    // çeki hatırlatan liste, caride girileni hiç görmüyordu.
+    //
+    // `hareketId` bağı KURULUYOR: hangi cari hareketinden doğduğu belli olsun, ileride hareket
+    // silinince çekin de bulunabilmesi için (o temizlik henüz yapılmadı — bkz. DEVAM-NOTU).
+    if (cekKaydi && onCekEkle) onCekEkle(cekKaydi);
 
     setHForm(emptyHareket());
     setShowHareket(false);
@@ -983,7 +986,7 @@ function CariCard({ onParaFisi, tanimlar, onTanimlarKaydet, onFiseGitNo, muhaseb
 
           {/* PERSONEL BİLGİLERİ + MESAİ (v1.700, 272): atölye içi personel (Fasoncu değil). */}
           {cardTab === "bilgiler" && cari.tip === "Personel" && cari.altTip !== "Fasoncu" && tanimlar && onTanimlarKaydet && (
-            <PersonelBilgileriPaneli cari={cari} tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet} onAddHareket={onAddHareket} showToast={showToast} />
+            <PersonelBilgileriPaneli cari={cari} tanimlar={tanimlar} onTanimlarKaydet={onTanimlarKaydet} onAddHareket={onAddHareket} onParaFisi={onParaFisi} showToast={showToast} />
           )}
           {cardTab === "bilgiler" && cari.tip !== "Personel" && (tanimlarFiyatGruplari || []).some((g) => g.tip === (cari.tip === "Tedarikçi" ? "Alış" : "Satış") || cari.tip === "Her İkisi") && (
             <div style={{ marginBottom: 14, padding: "8px 10px", background: "#EAF0F4", borderRadius: "var(--erp-r-md)" }}>

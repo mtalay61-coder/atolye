@@ -24,7 +24,7 @@ function personelKaydiniYaz(tanimlar, cariId, bolumId, alanlar) {
   return { ...tanimlar, bolumler };
 }
 
-function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareket, showToast }) {
+function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareket, onParaFisi, showToast }) {
   const { bolum, kayit } = personelBolumKaydi(tanimlar, cari.id);
   const ayar = mesaiAyari(tanimlar);
   const bugun = new Date();
@@ -39,7 +39,10 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
   const aylikSaat = Number(kayit && kayit.aylikSaat) || ayar.aylikSaat;
   const h = mesaiHesapla(maas, aylikSaat, saat, ayar);
   const fisNo = mesaiFisNo(ay, cari);
-  const mevcut = (cari.hareketler || []).find((x) => x.fisNo === fisNo);
+  // TEKRAR KONTROLÜ (v1.738.0, tek fiş defteri): sunucu yolunda fiş numarasını sunucu verir (MS-…); ayın / kişinin anahtarı
+  // ("MESAI-2026-10-0007") satırda `mesaiAnahtari` alanında kalır. Eski kayıtlarda anahtar fiş numarasının kendisi.
+  const mevcut = (cari.hareketler || []).find((x) => (x.mesaiAnahtari || x.fisNo) === fisNo);
+  const [mesaiYaziliyor, setMesaiYaziliyor] = useState(false);
   const kutu = { ...inputStyle, width: 110, fontSize: 13 };
   return (
     <div data-personel-paneli style={{ border: "1px solid var(--erp-line)", borderRadius: "var(--erp-r-md)", padding: 12, margin: "10px 0", background: "#fff" }}>
@@ -75,21 +78,33 @@ function PersonelBilgileriPaneli({ cari, tanimlar, onTanimlarKaydet, onAddHareke
               <Field key={k} label={et}><input data-mesai-saat={k} type="number" min="0" step="0.5" value={saat[k]} onChange={(e) => setSaat({ ...saat, [k]: e.target.value })} style={{ ...kutu, width: 90 }} /></Field>
             ))}
             <div style={{ fontSize: 13, paddingBottom: 8 }}>Tutar: <b data-mesai-tutar>{h.tutar.toLocaleString("tr-TR")} ₺</b></div>
-            <button type="button" className="btn-primary" data-mesai-yaz disabled={!(h.tutar > 0) || !!mevcut} style={{ marginBottom: 4 }}
-              title={mevcut ? `${fisNo} zaten yazılmış — değiştirmek için önce fişi silin` : ""}
-              onClick={() => {
+            <button type="button" className="btn-primary" data-mesai-yaz disabled={!(h.tutar > 0) || !!mevcut || mesaiYaziliyor} style={{ marginBottom: 4 }}
+              title={mevcut ? `${mevcut.fisNo || fisNo} zaten yazılmış — değiştirmek için önce fişi silin` : ""}
+              onClick={async () => {
                 const ayAdi = new Date(`${ay}-01T12:00:00`).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
-                const ok = onAddHareket(cari.id, { tarih: `${ay}-${String(new Date(Number(ay.slice(0, 4)), Number(ay.slice(5, 7)), 0).getDate()).padStart(2, "0")}`,
+                const hareket = { tarih: `${ay}-${String(new Date(Number(ay.slice(0, 4)), Number(ay.slice(5, 7)), 0).getDate()).padStart(2, "0")}`,
                   islemTipi: "Mesai", yon: hareketYonu("Maaş"), tutar: h.tutar, paraBirimi: "TRY", odemeSekli: "Nakit", vade: "",
-                  defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri), fisNo, bolumId: bolum.id,
+                  defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri), fisNo, mesaiAnahtari: fisNo, bolumId: bolum.id,
                   giderKartId: (bolumGiderKarti(tanimlar, bolum) || {}).id,
                   aciklama: `${bolum.ad} — ${ayAdi} mesaisi: hafta içi ${Number(saat.haftaIci) || 0} s, Cmt ${Number(saat.cumartesi) || 0} s, Pzr ${Number(saat.pazar) || 0} s`,
-                  mesaiSaatleri: { haftaIci: Number(saat.haftaIci) || 0, cumartesi: Number(saat.cumartesi) || 0, pazar: Number(saat.pazar) || 0 } });
+                  mesaiSaatleri: { haftaIci: Number(saat.haftaIci) || 0, cumartesi: Number(saat.cumartesi) || 0, pazar: Number(saat.pazar) || 0 } };
+                // TEK FİŞ DEFTERİ (v1.738.0, 100 paraFisiKes): sunucu yolunda mesai tahakkuku MS fişi; yazılamazsa saatler kutuda kalır.
+                if (onParaFisi && fisKesYolu()) {
+                  setMesaiYaziliyor(true);
+                  let r;
+                  try {
+                    r = await onParaFisi({ fis: { tur: "Mesai", onek: paraFisOneki("Mesai"), kaynak: "Mesai", ek: { mesaiAnahtari: fisNo, bolumId: bolum.id } },
+                      cariId: cari.id, hareketler: [{ ...hareket, islemTipi: undefined }], anahtar: `mesai|${fisNo}`, hataEtiketi: "Mesai" });
+                  } finally { setMesaiYaziliyor(false); }
+                  if (r) setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
+                  return;
+                }
+                const ok = onAddHareket(cari.id, hareket);
                 if (ok !== false) setSaat({ haftaIci: "", cumartesi: "", pazar: "" });
               }}>
               Mesaiyi yaz
             </button>
-            {mevcut && <span style={{ fontSize: 12, color: "var(--erp-warn)", paddingBottom: 8 }}>{fisNo} yazılmış ({(mevcut.tutar || 0).toLocaleString("tr-TR")} ₺)</span>}
+            {mevcut && <span style={{ fontSize: 12, color: "var(--erp-warn)", paddingBottom: 8 }}>{mevcut.fisNo || fisNo} yazılmış ({(mevcut.tutar || 0).toLocaleString("tr-TR")} ₺)</span>}
           </div>
         </div>
       )}

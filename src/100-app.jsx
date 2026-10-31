@@ -3402,8 +3402,10 @@ function AtolyeUygulamasi() {
   // `tabloYaz`ın dördüncü parametresi. Yerel kopya çek başına ayrı anahtarda tutuluyor
   // (`cekGorselYaz`), yoksa bütün fotoğraflar tek anahtarda toplanır ve 5 MB sınırına çarpardı.
   // ÇEK İŞLEMLERİ AYRI DOSYADA (19 Eylül, 2. madde, 6. tur): `088-cekler.jsx`.
+  const paraFisiKesRef = useRef(null);   // ortak para fişi kapısı aşağıda tanımlı (fisGeriAlRef'ten sonra) — geç bağ
   const { cekGorselKaydet, cekEkleVeIsle, cekIslemYap } = useCekler({
     addCariHareketFromStok, aktifKullanici, cariler, cekGorselleri, kaydetmeHatasiBildir, muhasebe, saveMuhasebe, setCekGorselleri, showToast,
+    paraFisiKesRef,
   });
 
   // ATOMİK (Adım 1): fiş önce deftere yazılır; yazılamazsa hiçbir türev tabloya dokunulmaz.
@@ -3422,12 +3424,12 @@ function AtolyeUygulamasi() {
   // sonraki adımda. Eskiden cari ve kasa ayağı AYRI yazılıyordu (cari kartında zarfsız): biri düşüp öteki kalabiliyordu.
   // Döner: { no, hareketIdler } ya da null (yazılamadı — ekranda hiçbir şey değişmez, kullanıcı uyarılır). `anahtar`la çift basış yok.
   const paraFisiSuruyorRef = useRef(new Set());
-  const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, anahtar, hataEtiketi }) => {
+  const paraFisiKes = useCallback(async ({ fis, cariId, hareketler, kasa, cekler, anahtar, hataEtiketi }) => {
     const tarihler = [...(hareketler || []).map((h) => h && h.tarih), ...(Array.isArray(kasa) ? kasa : [kasa]).map((k) => k && k.hareket && k.hareket.tarih)];
     if (donemKilidiEngel(tarihler.filter(Boolean), showToast, hataEtiketi || "Kayıt")) return null;
     if (anahtar && paraFisiSuruyorRef.current.has(anahtar)) return null;
     const kullaniciAd = (aktifKullanici && aktifKullanici.ad) || damgaKullaniciAdi() || null;
-    const h = paraFisiYuku({ fis, cariId, hareketler, kasa, istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd });
+    const h = paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek: uid("fis"), zaman: new Date().toISOString(), kullaniciAd });
     const cariEski = cariId ? (cariler || []).find((c) => c.id === cariId) : null;   // taban: bekleme ÖNCESİ fotoğraf
     if (anahtar) paraFisiSuruyorRef.current.add(anahtar);
     let r;
@@ -3452,18 +3454,27 @@ function AtolyeUygulamasi() {
       if (cariEski) fisKesTabaniKur("cariler", [cariEski], [{ ...cariEski, hareketler: [...yeniHareketler, ...(cariEski.hareketler || [])] }]);
     }
     const ayaklar = h.ayaklar.map((k) => ({ hesapTur: k.hesapTur, hesapId: k.hesapId, hareket: d(k.hareket) }));
-    if (ayaklar.length) {
+    // Çek kayıtları (v1.738.0): fişle birlikte sunucuda yazıldı — yeni çek eklenir, değişen çek kimliğiyle yerini alır.
+    const cekKayitlari = (cekler || []).map(d);
+    if (ayaklar.length || cekKayitlari.length) {
       setMuhasebe((onceki) => {
-        const n = ayaklar.reduce((m, k) => hesabaHareketEkle(m, k.hesapTur, k.hesapId, k.hareket), onceki);
+        let n = ayaklar.reduce((m, k) => hesabaHareketEkle(m, k.hesapTur, k.hesapId, k.hareket), onceki);
+        if (cekKayitlari.length) {
+          const yeniler = new Map(cekKayitlari.map((c) => [String(c.id), c]));
+          const eskiIdler = new Set((n.cekler || []).map((c) => String(c.id)));
+          n = { ...n, cekler: [...cekKayitlari.filter((c) => !eskiIdler.has(String(c.id))),
+            ...(n.cekler || []).map((c) => yeniler.get(String(c.id)) || c)] };
+        }
         fisKesYerelYaz("muhasebe:data", n);
         return n;
       });
-      fisKesKasaTabaniKur(ayaklar);
+      fisKesKasaTabaniKur(ayaklar, [], cekKayitlari);
     }
     setFisDefteri((onceki) => [sunucuFisKaydi(h.yuk, no, [], yeniHareketler, ayaklar.map((k) => k.hareket)), ...(onceki || [])]);
     gunlukYaz(`Para fişi kesildi: ${(fis && fis.tur) || ""} → ${no}`, "cari", { fisNo: no, cariId, tutar: h.yuk.fis.tutar });
     return { no, hareketIdler: yeniHareketler.map((x) => x.id), kasaHareketIdler: ayaklar.map((k) => k.hareket.id) };
   }, [cariler, aktifKullanici, showToast]);
+  paraFisiKesRef.current = paraFisiKes;
   // Geri al (bildirimden): sunucu fişi → fis_iptal (100 yetimFisTemizle, sunucu dalı).
   const paraFisiGeriAl = useCallback((sonuc) => () => fisGeriAlRef.current && fisGeriAlRef.current(sonuc.no, sonuc.hareketIdler), []);
   // Ekranlar için: kes + numarayla bildir (Geri al düğmeli). Döner: paraFisiKes sonucu.
