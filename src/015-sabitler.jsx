@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.733.1";
+const SURUM = "1.734.0";
 const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Tek fiş defteri — 4. adım: ara prosesin kendiliğinden tamamlanması (iş verirken) ve numune üretimi sunucu fişiyle (ÜRT / NUM) tek işlemde";
+const SURUM_NOTU = "Tek fiş defteri — 5. adım: stok kartındaki bağımsız giriş/çıkış, defter düzeltmesi ve açılış fişi sunucu fişiyle (MNL / ACL) tek işlemde";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.734.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 5. adım: Stok › Bağımsız Stok Girişi / Çıkışı MNL-…, ürün kartındaki defter düzeltmesi ve Açılış fişi ACL-… numarasını sunucudan alır; fiş ve satırları tek işlemde yazılır. Açılış fişi artık ürün başına değil TEK fiş. Yazılamazsa hiçbir şey değişmez: bağımsız giriş formu açık ve dolu kalır, yeniden denenebilir; yanıt beklenirken ikinci basış ikinci fiş kesmez."], degisen: [], duzeltilen: [] },
   { surum: "1.733.1", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 4. adım: iş verirken önceki ara proses kendiliğinden tamamlanıyorsa hammadde çıkışı ve işçiliği kendi üretim fişini (ÜRT-…) alır; iş verme (yeni atama) aynı işlemde yazılır. Ardışık birden çok ara proses varsa her biri ayrı fiş (her biri ayrı geri alınır); biri yazılamazsa öncekiler iptal edilir, hiçbir şey değişmez. Numune üretimi NUM-… fişini sunucudan alır, hammadde çıkışıyla tek işlemde. İkisinde de çift basış ikinci fiş kesmez."], degisen: [], duzeltilen: [] },
   { surum: "1.733.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 3. adım: üretim teslimi TEK fiş (ÜRT-…, numarayı sunucu verir). Bir teslimde hammadde çıkışı, mamul girişi, artan iade, ek malzeme ve fasoncu işçiliği eskiden beş ayrı fiş numarası alıyordu; artık hepsi bir fişin satırları ve atamanın teslimiyle (kısmi kalan, tamir işi) birlikte tek işlemde yazılır — yazılamazsa hiçbir şey değişmez, iş ustada açık kalır. Satırın türü (çıkış, giriş, iade, ek malzeme, işçilik) satırda saklanır. Teslimi geri almak ve üretimi silmek fişi iptal eder (satırlar silinmez, iz kalır)."], degisen: [], duzeltilen: [] },
   { surum: "1.732.1", tarih: "30.10.2026", eklenen: ["Tek fiş defteri — 2. adım: sipariş teslimi (sevk / alış girişi) sunucuda tek işlemde kesilir; fiş, stok, cari ve siparişin karşılananı birlikte yazılır. Numarayı sunucu verir (SF / AF); birden çok siparişin kalemleri aynı fişle kapanabilir; yazılamazsa hiçbir şey değişmez ve okutulan koli listede kalır. Teslim bildiriminde \"Geri al\" var (fişi iptal eder)."], degisen: [], duzeltilen: [] },

@@ -396,6 +396,22 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   bekle("9: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
   bekle("9: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
 
+  console.log("10) Açılış fişi: hareket karşılığı olmayan miktarlar (iki üründe) TEK ACL fişinde");
+  const acStok = stok.map((u) => (u.id === "u-ham" || u.id === "u-yeni"
+    ? { ...u, variants: (u.variants || []).map((v, i) => (i === 0 ? { ...v, miktar: yuvarla(Number(v.miktar) + 4) } : v)) } : u));
+  const ac = E.acilisFisleriUret(acStok, { fisNoUretici: () => E.FIS_YER, tarih: "2026-10-31" });
+  const h10 = E.stokFisiYuku({ fis: { tur: "Açılış", onek: "ACL", kaynak: "Açılış", kullanici: "Ali", aciklama: "Açılış fişi" }, eskiStok: stok, yeniStok: ac.stok, istek: "uu-acilis" });
+  bekle("10: yük iki ürünün satırı", [h10.bos, new Set(h10.yuk.stok.satirlar.map((x) => x.urunId)).size], [false, 2]);
+  const no10 = (await E.fisKesGonder(h10.yuk)).fisNo;
+  bekle("10: tek ACL fişi, iki satır", [/^ACL-\d{9}$/.test(no10), psql(`select count(*) from public.stk_hareket where fis_id = '${no10}';`)], [true, String(h10.yuk.stok.satirlar.length)]);
+  ekranStok = stok;
+  E.fisKesStokUygula((f) => { ekranStok = E.stokMiktarlariniHesapla(f(ekranStok)); }, h10.etkStok, (x) => E.fisYerTutucuDoldur(x, no10));
+  stok = ekranStok;
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("urunler", stok);
+  bekle("10: eşitleme satır göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("10: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
+
   console.log(hata ? "── UÇTAN UCA (FİŞ) HATALI ──" : "── uçtan uca (fiş defteri) temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

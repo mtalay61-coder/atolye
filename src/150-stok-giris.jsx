@@ -25,9 +25,15 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
     setBedenMiktarlar({});
   }
 
-  function kaydet() {
-    if (!urun || !renk) return;
-    onKaydet(urunId, renk, bedenMiktarlar, gercekYon, not.trim(), null);
+  // Kayıt sonucu BEKLENİR (v1.734.0, tek fiş defteri): sunucu fişi kesemezse form açık ve dolu kalır (yeniden denenebilir);
+  // yanıt beklenirken ikinci basış ikinci fiş kesmez. `onKaydet` false dönerse kayıt olmadı.
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+  async function kaydet() {
+    if (!urun || !renk || kaydediliyor) return;
+    setKaydediliyor(true);
+    let ok;
+    try { ok = await onKaydet(urunId, renk, bedenMiktarlar, gercekYon, not.trim(), null); } finally { setKaydediliyor(false); }
+    if (ok === false) return;
     setUrunId(""); setRenk(""); setBedenMiktarlar({}); setNot(""); setManuelYon("Giriş");
     onKapat();
   }
@@ -36,7 +42,7 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
     <div style={{ background: "var(--erp-panel)", border: "1.5px solid #6B4E8A", borderRadius: "var(--erp-r-md)", padding: 14, marginBottom: 20 }}>
       {/* MOR KAYIT ŞERİDİ (v1.626.0): Kaydet · Vazgeç başlıkta (önce formun dibindeydi; sağ üstte ayrıca × vardı). */}
       <KayitSeridi baslik="Bağımsız Stok Girişi / Çıkışı" veri="data-stok-giris-seridi">
-        <button className="btn-primary btn-save" disabled={!renk} onClick={kaydet}><Save size={14} /> Kaydet</button>
+        <button className="btn-primary btn-save" disabled={!renk || kaydediliyor} onClick={kaydet}><Save size={14} /> Kaydet</button>
         <button className="btn-ghost" onClick={onKapat}><X size={14} /> Vazgeç</button>
       </KayitSeridi>
       <p style={{ fontSize: 11, color: "var(--erp-text-2)", margin: "0 0 12px" }}>
@@ -46,7 +52,7 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
         <Field label="Ürün">
-          <select value={urunId} onChange={(e) => urunSec(e.target.value)} style={{ ...inputStyle, minWidth: 200 }}>
+          <select data-stok-giris-urun="1" value={urunId} onChange={(e) => urunSec(e.target.value)} style={{ ...inputStyle, minWidth: 200 }}>
             <option value="">Ürün seçin…</option>
             {secilebilirler(items, urunId).map((p) => (
               <option key={p.id} value={p.id}>{secenekEtiketi(p, p.ad)} ({p.kategori})</option>
@@ -55,7 +61,7 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
         </Field>
         {urun && (
           <Field label="Renk">
-            <select value={renk} onChange={(e) => renkSec(e.target.value)} style={{ ...inputStyle, minWidth: 140 }}>
+            <select data-stok-giris-renk="1" value={renk} onChange={(e) => renkSec(e.target.value)} style={{ ...inputStyle, minWidth: 140 }}>
               <option value="">Renk seçin…</option>
               {renkler.map((r) => <option key={r}>{r}</option>)}
             </select>
@@ -102,6 +108,7 @@ function BagimsizStokGirisiFormu({ items, asortiler, onKaydet, onAsortiOlustur, 
                   <span className="mono" style={{ fontSize: 11, fontWeight: 700, color: "var(--erp-text)" }}>{olcuGoster(b, "Miktar")}</span>
                   <span className="mono" style={{ fontSize: 9, color: "var(--erp-text-3)" }}>mevcut: {varyant ? varyant.miktar : 0}</span>
                   <input
+                    data-stok-giris-miktar={b}
                     type="number"
                     min="0"
                     value={bedenMiktarlar[b] || ""}

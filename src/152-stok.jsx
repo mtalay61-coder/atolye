@@ -1,4 +1,4 @@
-function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onMamulRenkEtiketleri, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri, onCevirilerKaydet, onSiteGruplariKaydet }) {
+function StokModule({ onStokFisiKes, kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet, kurlar, kurGecmisi, onFiseGitNo, hedefUrunId, hedefSekme, onHedefTuketildi, donusHedefi, onDonusYap, stokRezervasyonlari, tumSiparisler, items, onSave, showToast, tanimlar, onGoToTanimlar, cariler, onCariHareket, onGoToCari, onRemoveHareketGlobal, siparisler, uretim, onGoToSiparis, onGoToUretim, onCopaAt, onYeniRenkKaydet, onBarkodTamamla, onRenkleriTipeBagla, onHizliCariEkle, onYeniMalzemeTipiKaydet, onYeniOlcuKaydet, onYeniMamulTipiKaydet, onYeniOzelKodAlani, onKombinasyonOlustur, onMamulRenkEtiketleri, onAsortiOlustur, kullaniciYetkisiVar, onayIste, onPencereAc, aktifPencereId, onPencereKapat, onPencereKucult, acikUrunIdleri, onCevirilerKaydet, onSiteGruplariKaydet }) {
   const [showForm, setShowForm] = useState(false);
   // ARAMA KAPSAMA GÖRE AYRI (v1.596.0 — kullanıcı: "mamul arama ile stok arama aynıları kalıyor, hammadde ile ayrılsın"):
   // Stok ve Mamul Stok aynı bileşen (kapsam prop'u), tek `query` iki ekranda da görünüyordu. Metin kapsam başına tutulur.
@@ -327,9 +327,12 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
   // hareket neti" bulunur, sıfırdan farklı olanlara ayrı hareket yazılır.
   //
   // variants BİLEREK değiştirilmiyor: kayıtlı stok doğru kabul edilir, eksik olan geçmiştir.
-  function defterDuzeltmeYaz(productId) {
+  async function defterDuzeltmeYaz(productId) {
     const urun = items.find((p) => p.id === productId);
     if (!urun) return;
+    // TEK FİŞ DEFTERİ (v1.734.0): sunucu yolunda düzeltme satırları tek açılış fişinde (ACL-…, numarayı sunucu verir).
+    const sunucuYolu = !!onStokFisiKes && fisKesYolu();
+    const duzeltmeNo = sunucuYolu ? FIS_YER : null;
 
     const hareketNeti = {};
     (urun.hareketler || []).forEach((h) => {
@@ -347,7 +350,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
         id: uid("hrk"), tarih: zaman,
         renk: v.renk, beden: v.beden, miktar: fark,
         kaynak: "Manuel", cariId: null,
-        fisNo: `ACILIS-${zaman.slice(0, 10)}`,
+        fisNo: duzeltmeNo || `ACILIS-${zaman.slice(0, 10)}`,
         aciklama: "Açılış / defter düzeltmesi — kayıtlı stok ile hareket geçmişi eşitlendi",
       });
     });
@@ -362,7 +365,7 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
         id: uid("hrk"), tarih: zaman,
         renk, beden, miktar: -net,
         kaynak: "Manuel", cariId: null,
-        fisNo: `ACILIS-${zaman.slice(0, 10)}`,
+        fisNo: duzeltmeNo || `ACILIS-${zaman.slice(0, 10)}`,
         aciklama: "Defter düzeltmesi — bu renk/beden artık üründe tanımlı değil",
       });
     });
@@ -374,18 +377,28 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
         ? { ...p, hareketler: [...yeniHareketler, ...(p.hareketler || [])].slice(0, HAREKET_GECMIS_SINIRI) }
         : p
     );
-    onSave(next);
     const toplam = stokYuvarla(yeniHareketler.reduce((t, h) => t + h.miktar, 0));
+    if (sunucuYolu) {
+      const no = await onStokFisiKes({ fis: { tur: "Açılış", onek: "ACL", kaynak: "Manuel", aciklama: `Defter düzeltmesi — ${urun.ad}` },
+        eskiStok: items, yeniStok: next, anahtar: `duzeltme|${productId}`, hataEtiketi: "Defter düzeltmesi" });
+      if (!no) return;
+      showToast(`${no} · ${yeniHareketler.length} düzeltme hareketi yazıldı (net ${toplam > 0 ? "+" : ""}${toplam} ${urun.birim || ""}) — stok miktarı değişmedi`);
+      return;
+    }
+    onSave(next);
     showToast(`${yeniHareketler.length} düzeltme hareketi yazıldı (net ${toplam > 0 ? "+" : ""}${toplam} ${urun.birim || ""}) — stok miktarı değişmedi`);
   }
 
 
   // Herhangi bir siparişe bağlı olmadan, birden fazla beden için TEK seferde (atomik) stok girişi/çıkışı yapar.
   // bedenMiktarlari: { [beden]: miktarString }, yon: "Giriş" (+) veya "Çıkış" (-).
-  function bagimsizStokGirisiYap(productId, renk, bedenMiktarlari, yon, not, cariBaglantisi) {
+  async function bagimsizStokGirisiYap(productId, renk, bedenMiktarlari, yon, not, cariBaglantisi) {
     // SIRALI NUMARA (16 Eylül): rastgele dört hane çakışabiliyordu — aynı numarayı taşıyan iki
     // ayrı giriş, geri alma ve defter eşleştirmesini bozar. `fisNoUret` sayaçlı ve tarihli.
-    const fisNo = fisNoUret("MNL");
+    // TEK FİŞ DEFTERİ (v1.734.0): sunucu yolunda numarayı SUNUCU verir (MNL-…), fiş ve satırları tek işlemde; yazılamazsa form
+    // açık kalır. Cari bağlantılı giriş (formda kullanılmıyor — hep null) eski yoldan: cari satırı bu kapıdan geçmiyor.
+    const sunucuYolu = !!onStokFisiKes && !cariBaglantisi && fisKesYolu();
+    const fisNo = sunucuYolu ? FIS_YER : fisNoUret("MNL");
     const tarih = new Date().toISOString();
     let toplamDegisen = 0;
     let toplamMiktar = 0;
@@ -418,7 +431,16 @@ function StokModule({ kapsam = "genel", onFiyatGrubuMarj, onReceteSablonuKaydet,
     });
     if (toplamDegisen === 0) {
       showToast("Girilen bir miktar yok");
-      return;
+      return false;
+    }
+    if (sunucuYolu) {
+      const no = await onStokFisiKes({
+        fis: { tur: yon === "Çıkış" ? "Çıkış" : "Giriş", onek: "MNL", kaynak, aciklama: `Bağımsız stok ${yon === "Çıkış" ? "çıkışı" : "girişi"}${not ? ` — ${not}` : ""}` },
+        eskiStok: items, yeniStok: next, anahtar: `bagimsiz|${productId}|${renk}`, hataEtiketi: `Stok ${yon === "Çıkış" ? "çıkışı" : "girişi"}`,
+      });
+      if (!no) return false;
+      showToast(`Stok ${yon === "Çıkış" ? "çıkışı" : "girişi"} kaydedildi — fiş: ${no}`);
+      return true;
     }
     onSave(next);
 

@@ -186,6 +186,7 @@ ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi 
    formları → para fişleri → çek), eski kodun kaldırılması. Her yol için senaryo.
    İlerleme: alış/satış fişi (v1.732.0), sipariş teslimi (v1.732.1), üretim teslimi + geri alma + üretim silme (v1.733.0 —
    tek ÜRT fişi; satır türü `uretimFisAdi` alanında), ara proses kendiliğinden tamamlanma + numune (v1.733.1 — her ara proses
-   kendi ÜRT fişi; numune NUM). Sırada: stok formları.
+   kendi ÜRT fişi; numune NUM), stok formları (v1.734.0 — bağımsız giriş/çıkış MNL, defter düzeltmesi ve açılış fişi ACL).
+   Sırada: para fişleri.
 3. Gece denetimi (gün sonu raporuna).
 4. Siz: Supabase'de tek SQL adımı → kontrol listesi → 1–2 hafta paralel kullanım.
