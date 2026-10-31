@@ -193,6 +193,11 @@ ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi 
    Çek işlemleri + mesai (v1.738.0 — çek alma/verme, ciro ÇC, iade Çİ, tahsil ÇT; mesai MS).
    Kalan küçük yollar (v1.739.0 — irsaliye fis_bilgi, sevk panelleri, çek tahsil iptali, Fişler ekranında yeni önekler).
    Kendiliğinden yazanlar kalktı, maaş tahakkuku onaylı (v1.740.0).
-   Sırada: Fişler ekranı sunucu listesinden + eski listeye yazma kalkar, gece denetimi, kuralların açılması (19. adım).
-3. Gece denetimi (gün sonu raporuna).
+   Fişler ekranı kasa fişlerini de gösterir (v1.741.0 — VRM / GD / GL / ÇT; eski fis_defteri listesine sunucu kaydı zaten
+   yazılmıyor, v1.732.0 tekilYaz süzgeci).
+   Sırada: kuralların açılması (19. adım) — önce 20. adım (gece denetimi işlevi) kurulur, rapor birkaç gün temiz gelir.
+3. Gece denetimi (v1.741.0 — `fis-gece-denetimi.sql` / editor/20: fişsiz cari / kasa satırı (kural öncesi / sonrası ayrı),
+   satırsız fiş, iptal fişin geçerli satırı, başlık tutarı ≠ cari satırları (Resmi hariç), günün kesilen / iptal edilen
+   fişleri; gün sonu raporu sunucu fonksiyonu çağırır, bölüm "Fiş defteri denetimi"). Yerel sınama: uçtan uca fişlerin
+   üstünde yanlış alarm yok + her sorun türü bilerek kurulup görülüyor (sinama-gece.sql).
 4. Siz: Supabase'de tek SQL adımı → kontrol listesi → 1–2 hafta paralel kullanım.

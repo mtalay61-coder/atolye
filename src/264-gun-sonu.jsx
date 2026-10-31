@@ -195,6 +195,38 @@ function gunSonuBolumleri(v) {
   return sonuc;
 }
 
+// FİŞ DEFTERİ GECE DENETİMİ (v1.741.0, stok-v2/fis-gece-denetimi.sql — FIS-DEFTERI-PLAN § 6): sunucu fonksiyonu raporu kurarken
+// `fis_gece_denetimi()` sonucunu `v.fisDenetimi`ne koyar; uygulamadaki rapor koymaz (bölüm çıkmaz). Denetim veritabanının KENDİSİNE
+// bakıyor (başka cihazın, eski sürümün yazdığı da görünür). Saf: yalnız metin üretir.
+//  Sorun (kırmızı): kurallar açıldıktan sonra yazılmış fişsiz satır, satırsız fiş, iptal edilmiş fişin geçerli satırı, başlık
+//  tutarı ≠ cari satırları. Bilgi: kurallardan önceki fişsiz satırlar (eski veri), günün kesilen / iptal edilen fişleri.
+function fisDenetimiSorunSayisi(d) {
+  if (!d) return 0;
+  const n = (x) => Number(x) || 0;
+  return n(d.fissizCari && d.fissizCari.kuraldanSonra) + n(d.fissizKasa && d.fissizKasa.kuraldanSonra)
+    + (d.satirsizFis || []).length + (d.iptalTutarsiz || []).length + (d.tutarFarki || []).length;
+}
+function fisDenetimiHTML(d) {
+  if (!d) return "";
+  const e = htmlKacis;
+  const sorun = fisDenetimiSorunSayisi(d);
+  const g = d.gun || {};
+  const k = g.kesilen || {};
+  const satir = (baslik, liste, bicim) => (liste || []).length === 0 ? "" :
+    `<div style="margin-top:6px;font-size:11px"><b style="color:#B3261E">${e(baslik)} (${liste.length})</b><br/>${liste.map((x) => e(bicim(x))).join("<br/>")}</div>`;
+  const fissiz = (ad, x) => !x || !Number(x.sayi) ? "" : `<div style="margin-top:6px;font-size:11px">${Number(x.kuraldanSonra) ? `<b style="color:#B3261E">` : "<span>"}Fişsiz ${e(ad)} satırı: ${e(x.sayi)}${Number(x.kuraldanSonra) ? ` — ${e(x.kuraldanSonra)} tanesi kurallar açıldıktan SONRA</b>` : " (kurallar açılmadan önceki eski kayıtlar)</span>"}</div>`;
+  return `
+    <h3 style="margin:18px 0 6px;font-size:14px;border-bottom:2px solid ${sorun ? "#B3261E" : "#2F6B4F"};padding-bottom:3px">Fiş defteri denetimi
+      <span style="font-weight:700;font-size:11px;color:${sorun ? "#B3261E" : "#2F6B4F"}">${sorun ? `${sorun} sorun` : "temiz"}</span></h3>
+    <div style="font-size:11px">Bugün kesilen: ${e(k.stok || 0)} stok fişi, ${e(k.para || 0)} para fişi · iptal edilen: ${e((g.iptal || []).length)}${d.kuralAcik ? "" : " · kurallar henüz kapalı"}</div>
+    ${fissiz("cari", d.fissizCari)}${fissiz("kasa", d.fissizKasa)}
+    ${satir("Satırsız fiş", d.satirsizFis, (x) => `${x.fisNo} · ${x.tur}`)}
+    ${satir("İptal edilmiş fişin geçerli satırı", d.iptalTutarsiz, (x) => `${x.fisNo} · ${x.tur} (stok ${x.stok}, cari ${x.cari}, kasa ${x.kasa})`)}
+    ${satir("Başlık tutarı satırlardan farklı", d.tutarFarki, (x) => `${x.fisNo} · ${x.tur}: başlık ${x.baslik}, satırlar ${x.satirlar}`)}
+    ${(g.iptal || []).length ? `<div style="margin-top:6px;font-size:11px;color:#555"><b>Bugün iptal edilen fişler</b><br/>${g.iptal.map((x) => e(`${x.fisNo} · ${x.tur}${x.sebep ? ` — ${x.sebep}` : ""}${x.eden ? ` (${x.eden})` : ""}`)).join("<br/>")}</div>` : ""}
+  `;
+}
+
 function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR"), yalnizUst = false) {
   const e = htmlKacis;
   const f = firma || {};
@@ -215,6 +247,7 @@ function gunSonuHTML(v, firma, hazirlanma = new Date().toLocaleString("tr-TR"), 
       ${kutu("Kasa + Banka gün sonu", gunSonuPBMetni(o.kasaBakiye))}${kutu("Portföydeki çekler", gunSonuPBMetni(o.cekToplam))}${kutu("Stok tutarı (alış fiyatıyla)", gunSonuPBMetni(o.stokTutar))}${kutu("Üretimden stoğa giriş", `${o.uretimGiris.toLocaleString("tr-TR")}`)}
     </tr></table>
     ${yalnizUst ? "" : gunSonuBolumleri(v).map((x) => tablo(x.baslik, x.kolonlar, x.satirlar)).join("")}
+    ${yalnizUst ? "" : fisDenetimiHTML(v.fisDenetimi)}
   `;
 }
 

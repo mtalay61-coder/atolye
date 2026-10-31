@@ -18,7 +18,7 @@ const KOK = __dirname;
 const KAYNAK = path.join(KOK, "atolye-erp.jsx");
 const SABLON = path.join(KOK, "gun-sonu-sablon.ts");
 const CIKTI = path.join(KOK, "supabase-gun-sonu-fonksiyonu.ts");
-const KOKLER = ["gunSonuVerisi", "gunSonuHTML", "gunSonuAlicilari", "pdfCiktiBelgesi", "kayitaCevir", "ekiKokeAc"];
+const KOKLER = ["gunSonuVerisi", "gunSonuHTML", "fisDenetimiSorunSayisi", "gunSonuAlicilari", "pdfCiktiBelgesi", "kayitaCevir", "ekiKokeAc"];
 const YASAK = /\b(window|document|localStorage|navigator|useState|useEffect|useCallback|useMemo|useRef|React)\b/;
 
 const kod = fs.readFileSync(KAYNAK, "utf8");

@@ -12,7 +12,9 @@ const HAREKET_TIPI_RENK = { "Alış": "var(--erp-brown)", "Satış": "var(--erp-
 const HAREKET_TIPI_IKON = { "Tahsilat": ArrowDownCircle, "Ödeme": ArrowUpCircle, "Virman": ArrowLeftRight, "Serbest": PenLine,
   "Alış": PackageCheck, "Satış": Truck,
   // Fişler ekranının tip çipleri (v1.619.0 — kullanıcı: "Fişler ekranına da simge ekle").
-  "Üretim Girişi": PackagePlus, "Üretim Çıkışı": PackageOpen, "İşçilik": Wrench, "Maaş": Wallet, "Diğer": FileText, "Tümü": Layers };
+  "Üretim Girişi": PackagePlus, "Üretim Çıkışı": PackageOpen, "İşçilik": Wrench, "Maaş": Wallet, "Diğer": FileText, "Tümü": Layers,
+  // Yalnız kasa satırlı fişler (v1.741.0): gider = para çıkar, gelir = para girer; çek tahsili bankaya giren çek.
+  "Gider": ArrowUpCircle, "Gelir": ArrowDownCircle, "Çek Tahsili": Landmark };
 // CARİ RENGİ (v1.636.0 — kullanıcı, sipariş listesi ekran görüntüsüyle: "müşterileri renklendirelim, gerekirse logo da
 // ekleyelim"). Listede bütün müşteri etiketleri aynı maviydi; göz müşteriyi renginden ayırt edemiyordu. Cari kartında renk
 // seçilebiliyor (`cari.renk`, şema dışı → `ek`); seçilmemişse KİMLİKTEN türetilen sabit bir renk (her açılışta aynı, iki
@@ -33,7 +35,16 @@ function HareketIkonu({ tip, size = 14 }) {
 }
 
 // Tüm carilerin hareketlerini tarayıp fiş no'ya göre gruplar; sipariş no önekinden (SAT-/ALS-/SP-) tipini çıkarır.
-function tumFisleriTopla(cariler, stok) {
+// `kasa` (v1.741.0, TEK FİŞ DEFTERİ): { muhasebe, sunucuNolari } — YALNIZ KASA SATIRI olan sunucu fişleri (virman VRM, gider GD,
+// gelir GL, çek tahsili ÇT). Fişler eskiden cari ve stok satırlarından türetiliyordu; cari ayağı olmayan fiş hiç görünmüyordu.
+// Yalnız sunucu fiş defterindeki (iptal olmamış) numaralar alınır: eski kasa hareketleri — fişi hiç olmamış satırlar — listeyi
+// doldurmasın; cari / stok satırı olan fişin kasa ayağı (peşin) da eklenmez, o fiş zaten kendi satırlarıyla görünüyor.
+const KASA_FIS_TIPLERI = { "VRM-": "Virman", "GD-": "Gider", "GL-": "Gelir", "ÇT-": "Çek Tahsili" };
+function kasaFisTipi(fisNo) {
+  const on = Object.keys(KASA_FIS_TIPLERI).find((o) => String(fisNo || "").startsWith(o));
+  return on ? KASA_FIS_TIPLERI[on] : null;
+}
+function tumFisleriTopla(cariler, stok, kasa) {
   const tumHareketler = [];
   (cariler || []).forEach((c) => {
     (c.hareketler || []).forEach((h) => {
@@ -45,6 +56,17 @@ function tumFisleriTopla(cariler, stok) {
       tumHareketler.push({ ...h, kaynakTip: "stok", urunAd: h.urunAd || p.ad, cariAd: h.cariAd || null });
     });
   });
+  if (kasa && kasa.muhasebe && kasa.sunucuNolari && kasa.sunucuNolari.size) {
+    const satirliNolar = new Set(tumHareketler.map((h) => h.fisNo).filter(Boolean));
+    [["kasa", kasa.muhasebe.kasalar], ["banka", kasa.muhasebe.bankalar]].forEach(([hesapTur, hesaplar]) => {
+      (hesaplar || []).forEach((k) => {
+        (k.hareketler || []).forEach((h) => {
+          if (!h.fisNo || satirliNolar.has(h.fisNo) || !kasa.sunucuNolari.has(h.fisNo)) return;
+          tumHareketler.push({ ...h, kaynakTip: "kasa", hesapTur, hesapId: k.id, hesapAd: k.ad, paraBirimi: h.paraBirimi || k.paraBirimi, cariAd: null, cariId: null });
+        });
+      });
+    });
+  }
 
   const gruplar = [];
   const index = {};
@@ -76,12 +98,17 @@ function tumFisleriTopla(cariler, stok) {
     const tumCariSatirlari = g.hareketler.filter((h) => h.kaynakTip === "cari");
     const fisinKendiSatirlari = tumCariSatirlari.filter((h) => !h.muhasebeBagId);
     const cariSatirlari = fisinKendiSatirlari.length > 0 ? fisinKendiSatirlari : tumCariSatirlari;
-    const toplam = cariSatirlari.reduce((s, h) => s + (h.tutar || 0), 0);
+    // Yalnız kasa satırlı fişte tutar: çıkan para (virman iki ayaklı — iki ayağı toplamak tutarı iki katı gösterirdi), çıkış yoksa
+    // giren para (gelir, çek tahsili).
+    const kasaSatirlari = g.hareketler.filter((h) => h.kaynakTip === "kasa");
+    const kasaCikis = kasaSatirlari.filter((h) => h.yon === "Çıkış");
+    const kasaToplami = (kasaCikis.length ? kasaCikis : kasaSatirlari).reduce((s, h) => s + (Number(h.tutar) || 0), 0);
+    const toplam = cariSatirlari.length || !kasaSatirlari.length ? cariSatirlari.reduce((s, h) => s + (h.tutar || 0), 0) : kasaToplami;
     // PARA BİRİMİ fişin kendi para birimidir. Toplam ekranda sabit "₺" ile yazılıyordu: dolar
     // kesilmiş bir fiş "18,67 ₺" görünüyor, rakam doğru ama para birimi YANLIŞ okunuyordu.
     // Fiş tek para biriminde yazılır (kalemler kayıt para birimine çevrilir); yine de karışık
     // bir eski kayıt gelirse ilk satırınki esas alınır.
-    const paraBirimi = (cariSatirlari[0] || {}).paraBirimi || "TRY";
+    const paraBirimi = (cariSatirlari[0] || (kasaCikis[0] || kasaSatirlari[0]) || {}).paraBirimi || "TRY";
     const odemeSekli = (cariSatirlari[0] || {}).odemeSekli || null;
     const vade = (cariSatirlari[0] || {}).vade || null;
     let tip = "Diğer";
@@ -111,6 +138,7 @@ function tumFisleriTopla(cariler, stok) {
     else if (g.fisNo && (g.fisNo.startsWith("ÖD-") || g.fisNo.startsWith("ÇC-"))) tip = "Ödeme";
     else if (g.fisNo && (g.fisNo.startsWith("MS-") || g.fisNo.startsWith("MAŞ-"))) tip = "Maaş";
     else if (g.fisNo && g.fisNo.startsWith("İŞ-")) tip = "İşçilik";
+    else if (kasaFisTipi(g.fisNo)) tip = kasaFisTipi(g.fisNo);   // v1.741.0: yalnız kasa satırlı sunucu fişleri
     else if (g.fisNo && g.fisNo.startsWith("ÜRT-")) {
       const stokSatirlari = g.hareketler.filter((h) => h.kaynakTip === "stok");
       tip = stokSatirlari.length === 0 ? "İşçilik"
@@ -147,6 +175,8 @@ const FIS_TIP_RENK = {
   // Para hareketleri cari ekstresindeki renklerle AYNI (bkz. HAREKET_TIPI_RENK): aynı olay iki
   // ekranda iki farklı renkte görünmesin.
   "Tahsilat": "var(--erp-primary)", "Ödeme": "var(--erp-warn)",
+  // Yalnız kasa satırlı fişler (v1.741.0): kasa ekranındaki işlem düğmeleriyle aynı renkler (virman mavi).
+  "Virman": "var(--erp-info)", "Gider": "var(--erp-warn)", "Gelir": "var(--erp-primary)", "Çek Tahsili": "var(--erp-brown)",
 };
 
 // ---- Muhasebe: Kasa / Banka / Çek ----

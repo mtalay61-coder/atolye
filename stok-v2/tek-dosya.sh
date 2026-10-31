@@ -20,6 +20,7 @@
 #   editor/17-sifirla.sql         — sıfırlamanın kendisi (tek satır, onay sözcüğüyle)
 #   editor/18-fis-defteri.sql     — fis-defteri.sql (tek fiş defteri; kurallar KAPALI kurulur)
 #   editor/19-fis-kural-ac.sql    — kuralları açar (bütün yollar fiş kesiciye geçince)
+#   editor/20-gece-denetimi.sql   — fis-gece-denetimi.sql (v1.741: yalnız okuyan denetim işlevi; gün sonu raporu çağırır)
 #   stok-v2-gecis-tek-dosya.sql — stok üçlüsü (1–3)
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -45,6 +46,7 @@ python3 editor-icin.py veri-sifirla.sql > editor/16-sifirla-kurulum.sql
 echo "select jsonb_pretty(public.veri_sifirla('SIFIRLA', array['hesap_hareketleri']));" > editor/17-sifirla.sql
 python3 editor-icin.py fis-defteri.sql > editor/18-fis-defteri.sql
 echo "select public.fis_kural_ac();" > editor/19-fis-kural-ac.sql
+python3 editor-icin.py fis-gece-denetimi.sql > editor/20-gece-denetimi.sql
 CIKTI=stok-v2-gecis-tek-dosya.sql
 cat editor/1-kurulum.sql editor/2-goc.sql editor/3-gecis.sql > "$CIKTI"
 python3 editor-icin.py "$CIKTI" > /dev/null   # denetim: tek dosya da kurala uysun

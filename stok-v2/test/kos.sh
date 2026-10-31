@@ -107,6 +107,10 @@ if [ -f test/erp.cjs ]; then
   calistir stok-v2/test/sinama-fis.sql
   echo "── stok-v2/test/uctan-uca-fis.js"
   STOK_V2_DB="$DB" node stok-v2/test/uctan-uca-fis.js
+  # v1.741 GECE DENETİMİ — uçtan uca fişlerin üstünde (yanlış alarm yok mu), Editor gibi; ikinci kez zararsız
+  editor_ver stok-v2/fis-gece-denetimi.sql
+  editor_ver stok-v2/fis-gece-denetimi.sql
+  calistir stok-v2/test/sinama-gece.sql
 else
   echo "── uçtan uca atlandı: test/erp.cjs yok (cd test && node derle.js)"
 fi

@@ -18,7 +18,7 @@
 
 const FIS_SAYFA = 100;
 
-function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi, faturalar, onFaturaAc }) {
+function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, uretim, onGoToCari, onGoToSiparis, onGoToUretim, onYetimFisTemizle, hedefFisNo, onHedefTuketildi, faturalar, onFaturaAc, fisDefteri }) {
   const [filtreTip, setFiltreTip] = useState("Tümü");
   const [query, setQuery] = useState("");
   const [acikFis, setAcikFis] = useState(null);
@@ -49,7 +49,10 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
   //
   // ÖNBELLEK (v1.633.0 — kullanıcı: "uygulama doldukça yavaşlama başladı"): bütün cari ve stok hareketlerini
   // dolaşıp gruplamak, arama kutusuna her harf yazışta baştan yapılıyordu. Yalnız veri değişince kuruluyor.
-  const tumFisler = React.useMemo(() => tumFisleriTopla(cariler, stok), [cariler, stok]);
+  // SUNUCU FİŞLERİ (v1.741.0): fiş defteri kuruluyken yalnız kasa satırlı sunucu fişleri de (virman, gider, gelir, çek tahsili)
+  // listeye girer — kaynağı fiş defterinin kendisi (iptal olmamış sunucu kayıtları), satırları kasa hareketleri.
+  const sunucuNolari = React.useMemo(() => new Set((fisDefteri || []).filter((f) => f && f.sunucu && !f.iptal && f.fisNo).map((f) => f.fisNo)), [fisDefteri]);
+  const tumFisler = React.useMemo(() => tumFisleriTopla(cariler, stok, fisKesYolu() ? { muhasebe, sunucuNolari } : null), [cariler, stok, muhasebe, sunucuNolari]);
   const sayilar = {
     "Tümü": tumFisler.length,
     "Satış": tumFisler.filter((f) => f.tip === "Satış").length,
@@ -62,6 +65,11 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
     "Tahsilat": tumFisler.filter((f) => f.tip === "Tahsilat").length,
     "Ödeme": tumFisler.filter((f) => f.tip === "Ödeme").length,
     "Maaş": tumFisler.filter((f) => f.tip === "Maaş").length,   // v1.589.0
+    // Yalnız kasa satırlı sunucu fişleri (v1.741.0) — sayı 0 ise çip görünmez.
+    "Virman": tumFisler.filter((f) => f.tip === "Virman").length,
+    "Gider": tumFisler.filter((f) => f.tip === "Gider").length,
+    "Gelir": tumFisler.filter((f) => f.tip === "Gelir").length,
+    "Çek Tahsili": tumFisler.filter((f) => f.tip === "Çek Tahsili").length,
     "Diğer": tumFisler.filter((f) => f.tip === "Diğer").length,
   };
 
@@ -282,7 +290,7 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
         ))}
         <span style={{ width: 1, alignSelf: "stretch", background: "var(--erp-line)", margin: "0 2px" }} />
         {/* TİP ÇİPLERİ — para fişleri de dahil (19 Eylül): tek listede hepsi var, çiple daraltılıyor. */}
-        {["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Maaş", "Diğer"].map((t) => (
+        {["Tümü", "Satış", "Alış", "Tahsilat", "Ödeme", "Üretim Girişi", "Üretim Çıkışı", "İşçilik", "Maaş", "Virman", "Gider", "Gelir", "Çek Tahsili", "Diğer"].map((t) => (
           sayilar[t] > 0 || t === "Tümü" ? (
             <button
               key={t}
@@ -354,6 +362,8 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
               .map((h) => ({ ...h, ...(fiyatIndeksi[`${h.urunAd}|${h.renk}|${h.beden}`] || {}) }));
             const urunGruplari = urunRenkGrupla(detayHareketleri);
             const yapisizHareketler = cariHareketleri.filter((h) => !h.urunAd);
+            // Kasa satırları (v1.741.0): yalnız kasa satırlı sunucu fişinde var — hangi hesaptan / hesaba, ne kadar.
+            const kasaHareketleri = f.hareketler.filter((h) => h.kaynakTip === "kasa");
             const renk = FIS_TIP_RENK[f.tip] || "var(--erp-text-2)";
             return (
               <div key={f.key} data-fis-kart={f.fisNo || f.key} data-fis-acik={acikFis === f.key ? "1" : undefined} {...sagTikIsleyicileri((x, y) => setFisMenu({ x, y, key: f.key }))} style={{ background: "var(--erp-panel)", border: "1px solid var(--erp-line-soft)", borderRadius: "var(--erp-r-md)", overflow: "hidden" }}>
@@ -479,6 +489,14 @@ function FislerModule({ tanimlar, kapsam, muhasebe, cariler, stok, siparisler, u
                           const k = maasGiderKarti(tanimlar, h);
                           return <span data-maas-karti={k ? k.ad : ""} style={{ marginLeft: 8, fontWeight: 700, color: k ? "var(--erp-primary)" : "var(--erp-warn)" }}>{k ? `→ ${k.ad}` : "⚠ gider kartı yok (personel bir bölüme bağlı değil)"}</span>;
                         })()}
+                      </div>
+                    ))}
+                    {kasaHareketleri.map((h) => (
+                      <div key={h.id} data-fis-kasa-satir={h.hesapId} style={{ fontSize: 12, color: "var(--erp-text-2)", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <b style={{ color: h.yon === "Çıkış" ? "var(--erp-warn)" : "var(--erp-primary)" }}>{h.yon === "Çıkış" ? "↑ Çıkış" : "↓ Giriş"}</b>
+                        <span>{h.hesapAd || h.hesapId}</span>
+                        <span className="mono">{(Number(h.tutar) || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} {PARA_SEMBOLU[h.paraBirimi] || h.paraBirimi || ""}</span>
+                        {h.aciklama && <span>· {h.aciklama}</span>}
                       </div>
                     ))}
                     {/* "… carisine git" düğmesi KALDIRILDI (kullanıcı, 18 Eylül: "ikisi aynı şey").
