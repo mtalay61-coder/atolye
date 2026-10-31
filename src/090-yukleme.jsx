@@ -161,7 +161,8 @@ useEffect(() => {
           // İKİZ KAYIT GÖÇÜ — "Muhasebe" defterinde eskiden Genel+Resmi diye iki satır
           // yazılıyordu; tek satıra indiriliyor. Bir kerelik ve sessiz; kodu atamadan ÖNCE
           // çalışıyor ki iki yazma tek turda birleşsin.
-          const ikizGoc = esIkizleriBirlestir(bulut.cariler);
+          // Sunucu defterinde (v1.740.0) ikiz birleştirme yok: satır yerinde değiştirilmez / silinmez.
+          const ikizGoc = fisKesYolu() ? { cariler: bulut.cariler, birlesen: 0 } : esIkizleriBirlestir(bulut.cariler);
           if (ikizGoc.birlesen > 0) console.info(`${ikizGoc.birlesen} muhasebe eş kaydı tek kayda birleştirildi`);
           const cariKod = cariKodlariAta(ikizGoc.cariler, t);
           if (cariKod.atanan > 0 || ikizGoc.birlesen > 0) {
@@ -612,7 +613,7 @@ useEffect(() => {
         setCekGorselleri(gorseller);
       } catch (e) { console.error("Çek görselleri okunamadı:", e); }
 
-      const yerelIkiz = esIkizleriBirlestir(c);
+      const yerelIkiz = fisKesYolu() ? { cariler: c, birlesen: 0 } : esIkizleriBirlestir(c);
       const yerelCariKod = cariKodlariAta(yerelIkiz.cariler, t);
       if (yerelCariKod.atanan > 0 || yerelIkiz.birlesen > 0) {
         if (yerelCariKod.atanan > 0) {

@@ -373,13 +373,17 @@ function AtolyeUygulamasi() {
     const buluttan = !!(secenek && secenek.buluttan);
     setStokHam((onceki) => {
       const ham = typeof next === "function" ? next(onceki) : next;
-      // FİŞSİZ HAREKET YAZILAMAZ (16 Eylül): numarasız gelen harekete burada numara veriliyor.
-      const numarali = fissizHareketlereNumaraVer(ham, (onEk) => fisNoUret(onEk));
+      // TEK FİŞ DEFTERİ (v1.740.0 — "kendiliğinden yazanlar kalkar"): sunucuda fiş defteri kuruluysa bütün hareket yolları fişi
+      // SUNUCUDA keser; burada numara verilmez, "otomatik" defter kaydı kurulmaz (30 Ekim hatasının kaynağı buydu). Fişsiz bir
+      // hareket gelirse sessizce numaralanmaz — sunucu kuralı (19. adım) reddeder ve görünür hata olur.
+      const sunucuDefteri = fisKesYolu();
+      // FİŞSİZ HAREKET YAZILAMAZ (16 Eylül): numarasız gelen harekete burada numara veriliyor (eski yol).
+      const numarali = sunucuDefteri ? ham : fissizHareketlereNumaraVer(ham, (onEk) => fisNoUret(onEk));
       // Numara verildiyse kalıcı yazma gerekir: aksi halde numara yalnız bellekte kalır ve bir
       // sonraki açılışta hareket yine numarasız görünürdü.
       if (numarali !== ham) defterYazmaGerekli.current = true;
       const yeni = stokMiktarlariniHesapla(numarali);
-      const eklenen = buluttan ? [] : defteryeGirmemisHareketler(onceki, yeni, []);
+      const eklenen = buluttan || sunucuDefteri ? [] : defteryeGirmemisHareketler(onceki, yeni, []);
       if (eklenen.length > 0 || defterYazmaGerekli.current) {
         defterBekleyenHareketler.current = [...defterBekleyenHareketler.current, ...eklenen];
         sonStokRef.current = yeni;
@@ -408,6 +412,8 @@ function AtolyeUygulamasi() {
     // Artık toplanan hareketler açılış bitene kadar bekler (ref'te kalır); açılış bitince gerçek defterle süzülür: yalnız
     // GERÇEKTEN fişi olmayan hareket deftere düşer. Stok numaralama yazması da açılıştan sonra (taban kurulmadan yazmasın).
     if (loading) return;
+    // Sunucu defterinde (v1.740.0) otomatik defter kaydı kurulmaz; açılıştan kalan toplama atılır.
+    if (fisKesYolu()) { defterBekleyenHareketler.current = []; defterYazmaGerekli.current = false; return; }
     // Numara verilmişse stoğu da kalıcı yaz.
     if (defterYazmaGerekli.current && sonStokRef.current) {
       defterYazmaGerekli.current = false;
@@ -748,6 +754,9 @@ function AtolyeUygulamasi() {
   // hareketi yazma riski vardı.)
   const acilisGocuUygula = useCallback((urunler, tanimlarSimdi) => {
     if (tanimlarSimdi && tanimlarSimdi.acilisGocuYapildi) return urunler;
+    // Sunucu defterinde (v1.740.0) açılış göçü yok: hareketsiz başlangıç miktarı kendiliğinden fişe dökülmez (veri sıfırdan;
+    // gerekirse Veri Denetimi › Açılış fişi kes — o da ACL fişi).
+    if (fisKesYolu()) return urunler;
     const { urunler: yeni, yazilan, satirlar } = acilisFarklariniHareketeCevir(urunler, {
       tarih: bugunYerel(),
       fisNoUret: () => fisNoUret("ACL"),
@@ -781,7 +790,8 @@ function AtolyeUygulamasi() {
   // eşleşmez); yalnız düzeltilecek kayıt varsa yazar — damga her hesaba gereksiz bir tanımlar yazması eklerdi.
   // Veri kilidi (salt okuma) varken çalışmaz.
   useEffect(() => {
-    if (loading || veriKilidiSebep) return;
+    // Sunucu defterinde (v1.740.0) açılış onarımı YOK: satırlar yerinde değiştirilmez (kurallar açılınca reddedilir); veri sıfırdan.
+    if (loading || veriKilidiSebep || fisKesYolu()) return;
     let sayi = 0;
     const yeniCariler = (cariler || []).map((c) => {
       let degisti = false;
@@ -2932,6 +2942,11 @@ function AtolyeUygulamasi() {
   // (cari bulutla birleşik okunur; aynı fiş varsa yazılmaz). Ödeme kasadan cariye — bakiye kapanır. İnternet yokken ve
   // yükleme bitmeden çalışmaz. Aynı imza ikinci kez yazılmaz (yazım düşerse döngü olmasın).
   const maasImzaRef = useRef("");
+  // ONAYLI MAAŞ TAHAKKUKU (v1.740.0 — kullanıcı kararı 3 "maaş tahakkuku onayla", tek fiş defteri): sunucu yolunda kendiliğinden
+  // YAZILMAZ; bekleyenler şeritte görünür, "Onayla" ile her personele MAŞ fişi kesilir. Ayın / kişinin anahtarı
+  // ("MAAS-2026-10-0007") satırda `maasAnahtari` alanında — sunucu numara verdiği için tekrar kontrolü onunla.
+  const [maasBekleyen, setMaasBekleyen] = useState([]);
+  const [maasErtelendi, setMaasErtelendi] = useState(false);
   // Adlı yazıcı (kapidenetim.js `IZINLI_YAZICILAR`): cari hareketini yalnız bu fonksiyon yazar; efekt yalnız çağırır.
   const maasTahakkukEt = useCallback(() => {
     const bolumler = tanimlar.bolumler || [];
@@ -2947,12 +2962,13 @@ function AtolyeUygulamasi() {
       if (!c || c.pasif) return;
       const fisNo = maasFisNo(ay, c);
       // fis-muaf: MAAS-YYYY-MM-<kod> fişi işçilik eki taşımaz, tam eşleşme doğru (fisdenetim 12).
-      if ((c.hareketler || []).some((h) => h.fisNo === fisNo)) return;
+      if ((c.hareketler || []).some((h) => (h.maasAnahtari || h.fisNo) === fisNo)) return;
       yeniler.push({ cariId: c.id, h: { id: uid("hrk"), tarih: `${ay}-01`, zaman: new Date().toISOString(), islemTipi: "Maaş",
         yon: hareketYonu("Maaş"), tutar: maas, odemeSekli: "Nakit", vade: "", defter: iscilikDefteri(tanimlar.firmaBilgileri),
         // GİDER KARTI (v1.587.0): bölümün işçilik kartı — Kâr-Zarar bu maaşı "Kesimhane işçiliği" gideri olarak sayar.
         fisNo, bolumId: b.id, giderKartId: (bolumGiderKarti(tanimlar, b) || {}).id, aciklama: `${b.ad} — ${ayAdi} maaşı`, kullanici: "sistem" } });
     }));
+    if (fisKesYolu()) { setMaasBekleyen(yeniler.map((y) => ({ ...y, ay, ayAdi }))); return; }
     if (!yeniler.length) return;
     const imza = yeniler.map((y) => y.h.fisNo).join("|");
     if (maasImzaRef.current === imza) return;
@@ -2967,6 +2983,26 @@ function AtolyeUygulamasi() {
     if (loading || baglantiYok) return;
     maasTahakkukEt();
   }, [loading, baglantiYok, maasTahakkukEt]);
+  // Onay: her personele ayrı MAŞ fişi (sırayla); yazılamayan şeritte kalır (cari değişince yeniden hesaplanır).
+  const maasOnaySuruyorRef = useRef(false);
+  const maasTahakkukOnayla = useCallback(async () => {
+    if (maasOnaySuruyorRef.current || !paraFisiKesRef.current) return;
+    maasOnaySuruyorRef.current = true;
+    let yazilan = 0;
+    try {
+      for (const y of maasBekleyen) {
+        const r = await paraFisiKesRef.current({
+          fis: { tur: "Maaş", onek: paraFisOneki("Maaş"), kaynak: "Maaş tahakkuku", ek: { maasAnahtari: y.h.fisNo, bolumId: y.h.bolumId } },
+          cariId: y.cariId, hareketler: [{ ...y.h, maasAnahtari: y.h.fisNo, islemTipi: undefined }], anahtar: `maas|${y.h.fisNo}`, hataEtiketi: "Maaş tahakkuku",
+        });
+        if (r) yazilan++;
+      }
+    } finally { maasOnaySuruyorRef.current = false; }
+    if (yazilan) {
+      gunlukYaz(`Maaş tahakkuku onaylandı: ${yazilan} personel`, "cari", { sayi: yazilan });
+      showToast(`${yazilan} personele maaş tahakkuk etti (MAŞ fişi)`);
+    }
+  }, [maasBekleyen, showToast]);
   // BÖLÜM GİDER KARTLARI (v1.587.0): kartı olmayan bölüme (v1.585'te açılmış Kesimhane gibi) "<Bölüm> işçiliği" kartı
   // açılır; maaş tahakkukları oraya bağlanır. Tanımlar bütün olarak, bulutla birleşerek yazılır (v1.552). Bir kez.
   const bolumKartImzaRef = useRef(false);
@@ -4930,6 +4966,19 @@ function AtolyeUygulamasi() {
               style={{ padding: "6px 14px", fontSize: 13 }}>
               Yeniden giriş yap
             </button>
+          </div>
+        )}
+        {/* MAAŞ TAHAKKUKU BEKLİYOR (v1.740.0, karar 3): ay başı maaşları kendiliğinden yazılmaz — onaylanınca MAŞ fişi kesilir. */}
+        {maasBekleyen.length > 0 && !maasErtelendi && (
+          <div data-maas-bekliyor={maasBekleyen.length} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8,
+            background: "var(--erp-purple-bg, #F1ECF7)", border: "1.5px solid var(--erp-purple, #6B4E8A)", borderRadius: "var(--erp-r-md)", padding: "7px 12px", fontSize: 13 }}>
+            <span style={{ flex: "1 1 260px" }}>
+              <b>Maaş tahakkuku bekliyor — {maasBekleyen[0].ayAdi}:</b> {maasBekleyen.length} personel,
+              {" "}{maasBekleyen.reduce((t, y) => t + (y.h.tutar || 0), 0).toLocaleString("tr-TR")} ₺
+              <span style={{ color: "var(--erp-text-2)" }}> ({maasBekleyen.map((y) => { const c = (cariler || []).find((x) => x.id === y.cariId); return c ? c.unvan : "?"; }).join(", ")})</span>
+            </span>
+            <button type="button" className="btn-primary" data-maas-onayla="1" onClick={maasTahakkukOnayla} style={{ padding: "6px 14px", fontSize: 13 }}>Onayla</button>
+            <button type="button" className="btn-ghost" data-maas-sonra="1" onClick={() => setMaasErtelendi(true)} style={{ padding: "6px 12px", fontSize: 12 }}>Sonra</button>
           </div>
         )}
         {Object.keys(bekleyenYazmalar).length > 0 && (

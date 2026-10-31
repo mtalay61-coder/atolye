@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.739.0";
+const SURUM = "1.740.0";
 const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Tek fiş defteri — 10. adım: irsaliye bilgisi fişin başlığına; sevk panelleri ve fiş formu kayıt sonucunu bekler; çek tahsil fişi iptalinde çek geri döner";
+const SURUM_NOTU = "Tek fiş defteri — 11. adım: kendiliğinden yazanlar kalktı (otomatik defter, fişsiz numaralama, açılış göçü ve onarımları); ay başı maaş tahakkuku onayla";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.740.0", tarih: "31.10.2026", eklenen: ["Ay başı maaş tahakkuku artık kendiliğinden yazılmaz: üstte \"Maaş tahakkuku bekliyor\" şeridi çıkar (ay, personel, toplam); Onayla deyince her personele maaş fişi (MAŞ-…) kesilir. Sonra ile şerit bu oturum için kapanır."], degisen: ["Tek fiş defteri — 11. adım: sunucuda fiş defteri kuruluyken uygulama kendiliğinden kayıt YAZMAZ — fişsiz harekete numara verilmez, fiş defterine \"otomatik\" kayıt kurulmaz (30 Ekim'deki eski fişlerin geri gelmesinin kaynağı), açılışta açılış göçü, peşin ödeme yönü / eksik alan onarımları ve Genel+Resmi ikiz birleştirme çalışmaz. Bütün kayıtlar fişle, kullanıcı işlemiyle."], duzeltilen: [] },
   { surum: "1.739.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 10. adım: Sevkiyat Merkezi'nde irsaliye bilgisi sunucu fişinde fişin başlığına yazılır (satır değiştirilmez)."], degisen: ["Fişler ekranı ve Sevkiyat Merkezi sunucu fişlerinin türünü tanır (TH tahsilat, ÖD ödeme, MS maaş/mesai, ÇC çek cirosu, ÜRT üretim girişi / çıkışı / işçilik); önce \"Diğer\" görünüyorlardı.", "Sevkiyat Merkezi ve Alış / Satış ekranındaki fiş paneli kayıt sonucunu bekler: fiş kesilemezse panel açık kalır. Fiş formunda Kaydet'e yanıt beklenirken ikinci kez basmak ikinci fiş kesmez (her ekranda)."], duzeltilen: ["Çek tahsilinin fişi (kasa / banka satırı) iptal edilince çek \"Tahsil Edildi\" kalıyordu; artık bir önceki durumuna döner."] },
   { surum: "1.738.0", tarih: "31.10.2026", eklenen: ["Tek fiş defteri — 9. adım: çek eklemek (cariye tahsilat / ödeme işleyen), ciro (ÇC), iade (Çİ) ve tahsil (ÇT) birer fiş; cari ya da kasa satırı ile çekin yeni hâli TEK işlemde yazılır. Cari kartından girilen çekli hareket de çek kaydıyla aynı fişte. Personel kartındaki mesai MS fişi; aynı ayın mesaisinin ikinci kez yazılması yine engelli. Yazılamazsa form / pencere açık kalır. Tahsile verme ve karşılıksız (satır doğurmayan) işlemler bugünkü gibi."], degisen: [], duzeltilen: [] },
   { surum: "1.737.0", tarih: "31.10.2026", eklenen: [], degisen: ["Tek fiş defteri — 8. adım: sunucuda kesilmiş bir fişin satırı (kasa / banka hareketi, gelir / gider kartı hareketi, cari ekstresindeki hareket) silinince satır tek başına silinmez; fiş BÜTÜN iptal edilir — virmanın iki ayağı, makbuzun cari ve kasa satırı, bağlı fiş birlikte; iz kalır. Böyle bir fişin satırı düzenlenmez: silin (iptal) ve doğrusunu yeniden girin. Virman ve gider kaydının bildiriminde de \"Geri al\" var."], duzeltilen: [] },
