@@ -1,0 +1,16 @@
+{
+ "acilis": {
+  "cariMaasYazildi": false,
+  "fissizNumarasi": null,
+  "otomatikDefterKaydi": [],
+  "seritMaas": "Maaş tahakkuku bekliyor — AY: 1 personel, 30.000 ₺ (Tedarikçi A) Onayla Sonra"
+ },
+ "hatalar": [],
+ "istekler": [
+  "fis_kes:Maaş:MAŞ:30000:anahtarli"
+ ],
+ "sonra": {
+  "maasSatiri": "MAŞ-261101001:30000:MAAS-AY-0001",
+  "serit": 0
+ }
+}
