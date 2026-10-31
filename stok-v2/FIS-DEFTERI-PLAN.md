@@ -195,7 +195,9 @@ ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi 
    Kendiliğinden yazanlar kalktı, maaş tahakkuku onaylı (v1.740.0).
    Fişler ekranı kasa fişlerini de gösterir (v1.741.0 — VRM / GD / GL / ÇT; eski fis_defteri listesine sunucu kaydı zaten
    yazılmıyor, v1.732.0 tekilYaz süzgeci).
-   Sırada: kuralların açılması (19. adım) — önce 20. adım (gece denetimi işlevi) kurulur, rapor birkaç gün temiz gelir.
+   Kural provası (v1.742.0 — bütün senaryolar fiş defterli sahte sunucuda; demirbaş AF, sipariş iptali `fis_bag_coz`, renk
+   kodlama `stk_renk_tasi`; eski usul fişler için kod yok — kullanıcı kararı: kurallar açılmadan veri sıfırlanır).
+   Sırada (kullanıcı): 18 (yeniden) + 20 → 16 + 17 (sıfırlama) → birkaç gün temiz gece raporu → 19. adım.
 3. Gece denetimi (v1.741.0 — `fis-gece-denetimi.sql` / editor/20: fişsiz cari / kasa satırı (kural öncesi / sonrası ayrı),
    satırsız fiş, iptal fişin geçerli satırı, başlık tutarı ≠ cari satırları (Resmi hariç), günün kesilen / iptal edilen
    fişleri; gün sonu raporu sunucu fonksiyonu çağırır, bölüm "Fiş defteri denetimi"). Yerel sınama: uçtan uca fişlerin
