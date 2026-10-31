@@ -477,7 +477,6 @@ const ETKI_BORC = new Set();
 // Yeni bir geçiş bu listede yoksa BULGU verir.
 const BORC = new Map(process.env.SAYIM || process.env.BORCSUZ ? [] : [
   // — ZARARSIZ: okunan alan set ile değişmiyor ya da yol pratikte dışlanıyor —
-  ["uretimProsesAtamaTeslimAl|siparisler|A", "zararsız: yalnız rezervasyon değişti, okunan `karsilanan`"],
   ["uretimProsesVer|cariler|A", "zararsız: okunan personel unvanı, hareketle değişmiyor"],
   ["yedegiUygula|stok|B", "zararsız: yalnız mevcut görselleri korumak için, geri yükleme her şeyi değiştiriyor"],
   ["AtolyeUygulamasi›adsız|aktifKullanici|A", "zararsız: okunan `ad`/`id` set ile değişmiyor; useEffect'teki iki koşul birbirini dışlıyor"],

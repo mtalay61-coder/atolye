@@ -13,14 +13,138 @@
 //     yazılıyor — "kaç kez tamir gitti" sorusu ancak böyle cevaplanabiliyor.
 //   • SON ADIMDA MAMUL GİRER: mamul stoğa yalnız üretim tamamlandığında girer; ara adımda girmek,
 //     satılamayacak malı satılabilir göstermekti.
+// TEK FİŞ — SUNUCU YÜKÜ (v1.733.0, saf). Teslimin yerel hesabından (bugünkü kurallar) `fis_kes` yükünü kurar: yer tutuculu
+// (FIS_YER) yeni stok ve cari satırları, değişen üretim atamaları (tamamlandı / kısmi kalan / tamir) ve rezervasyonu değişen
+// sipariş kalemleri — hepsi TEK işlemde. Satır yoksa `bos` (fiş kesilmez). Hammadde satırı yoksa (yalnız işçilik) fiş para ailesinden.
+function uretimTeslimSunucuYuku({ siparis, prosesAdi, atamaFisAdi, eskiStok, yeniStok, eskiCariler, yeniCariler, eskiUretim, yeniUretim,
+  eskiSiparisler, yeniSiparisler, kullaniciAd, istek }) {
+  const etkStok = fisKesEtkilenen(eskiStok, yeniStok, fisKesDegisenIdler(eskiStok, yeniStok));
+  const stokSatirlari = [];
+  const kalemler = [];
+  const stokHareketleri = [];
+  etkStok.yeniler.forEach((u) => (u.hareketler || []).forEach((h) => {
+    if (h.fisNo !== FIS_YER) return;
+    stokSatirlari.push(fisKesStokSatiri(u.id, h));
+    kalemler.push({ urunId: u.id, urunAd: u.ad, renk: h.renk, beden: h.beden, miktar: h.miktar, hareketId: h.id, uretimFisAdi: h.uretimFisAdi });
+    stokHareketleri.push({ ...h, urunId: u.id, urunAd: u.ad });
+  }));
+  const etkCari = fisKesEtkilenen(eskiCariler, yeniCariler, fisKesDegisenIdler(eskiCariler, yeniCariler));
+  const cariSatirlari = [];
+  const cariHareketleri = [];
+  etkCari.yeniler.forEach((c) => (c.hareketler || []).forEach((h) => {
+    if (h.fisNo !== FIS_YER) return;
+    cariSatirlari.push(fisKesCariSatiri(c.id, h));
+    cariHareketleri.push({ ...h, cariId: c.id });
+  }));
+  const etkUretim = fisKesEtkilenen(eskiUretim, yeniUretim, [siparis.id]);
+  const atamaFarki = fisKesAltFarki("uretim", "uretim_atamalari", etkUretim.eskiler[0], etkUretim.yeniler[0]);
+  const etkSiparis = fisKesEtkilenen(eskiSiparisler, yeniSiparisler, fisKesDegisenIdler(eskiSiparisler, yeniSiparisler));
+  const kalemSatirlari = etkSiparis.yeniler.flatMap((s) => fisKesAltFarki("siparisler", "siparis_kalemleri",
+    etkSiparis.eskiler.find((e) => e.id === s.id), s).satirlar);
+  const alt = {};
+  if (atamaFarki.satirlar.length || atamaFarki.sil.length) alt.uretim_atamalari = atamaFarki;
+  if (kalemSatirlari.length) alt.siparis_kalemleri = { satirlar: kalemSatirlari, sil: [] };
+  const iscilik = stokYuvarla(cariHareketleri.reduce((t, h) => t + (h.tutar || 0), 0));
+  const yuk = {
+    istek,
+    fis: {
+      aile: stokSatirlari.length ? "stok" : "para", tur: "Üretim", onek: "ÜRT", kaynak: "Üretim", defter: "Genel",
+      tarih: new Date().toISOString(), uretimId: siparis.id, siparisNo: siparis.siparisNo,
+      cariId: cariHareketleri.length ? cariHareketleri[0].cariId : null, tutar: iscilik || null,
+      aciklama: `Üretim ${siparis.siparisNo} · ${prosesAdi} teslimi — ${siparis.model || ""}${siparis.renk ? ` ${siparis.renk}` : ""}`.trim(),
+      kullanici: kullaniciAd, kalemler,
+      // Atamanın eski usul adı: fiş defterinden üretime dönüş (hangi adım, hangi atama) bununla kurulur.
+      ek: { proses: prosesAdi, uretimFisAdi: atamaFisAdi },
+    },
+    stok: { satirlar: stokSatirlari },
+    cari: { satirlar: cariSatirlari },
+    ...(Object.keys(alt).length ? { alt } : {}),
+  };
+  return { yuk, bos: !stokSatirlari.length && !cariSatirlari.length, etkStok, etkCari, etkUretim, etkSiparis, stokHareketleri, cariHareketleri };
+}
+
 function useUretimTeslim(d) {
   const {
     stok, cariler, uretim, siparisler, tanimlar, showToast,
     setStok, setCariler, setUretim, aktifKullanici,
-    stokRezervasyonlari, setSiparisler, setStokRezervasyonlari,
+    stokRezervasyonlari, setSiparisler, setStokRezervasyonlari, setFisDefteri,
   } = d;
+  const teslimSuruyorRef = useRef(new Set());
+
+// ÜRETİM TESLİMİ — SUNUCU YOLU (v1.733.0, tek fiş defteri). Önce sunucu (`fis_kes`: fiş + stok + cari satırları + atamalar +
+// sipariş kalemleri tek işlemde), sonra ekran. Sunucu yazamazsa HİÇBİR ŞEY değişmez: kullanıcı "kaydedilemedi" görür, iş ustada
+// açık kalır, yeniden teslim alınabilir. Üretimin ana satırı (aşama, adım tamamlandı, bölüm tahakkuku) ve stok rezervasyonları
+// sonra bugünkü yoldan (fiş satırı değiller; düşerse bekleyen defter yeniden gönderir).
+const uretimTeslimSunucuyaKes = useCallback(async ({ hazirlik, siparis, atamaId, nextUretim, stokRezervasyonuYaz, bolumMesaji, mesaj }) => {
+  const { yuk, etkStok, etkCari, etkUretim, etkSiparis, stokHareketleri, cariHareketleri } = hazirlik;
+  teslimSuruyorRef.current.add(atamaId);
+  let r;
+  try {
+    r = await fisKesGonder(yuk);
+  } catch (e) {
+    showToast(`Teslim kaydedilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+    gunlukYaz(`Üretim teslimi kaydedilemedi (${siparis.siparisNo}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId: siparis.id, atamaId });
+    return false;
+  } finally {
+    teslimSuruyorRef.current.delete(atamaId);
+  }
+  const no = r.fisNo;
+  const doldur = (x) => fisYerTutucuDoldur(x, no);
+  // Taban ve durum: eski hâller bekleme ÖNCESİ alınmış (hazırlık); yeni hâllerde yer tutucu numarayla değişir.
+  const stokYeniler = doldur(etkStok.yeniler);
+  // Ana satırı değişen ürün (mamulün reçete gerçekleşmesi) — ana satır fiş satırı değil, bugünkü yoldan yazılır.
+  const urunSatiri = TABLO_SEMA.urunler.satir;
+  const anaDegisen = new Set(stokYeniler.filter((u) => {
+    const e = etkStok.eskiler.find((x) => x.id === u.id);
+    return !e || JSON.stringify(urunSatiri(e)) !== JSON.stringify(urunSatiri(u));
+  }).map((u) => u.id));
+  const hesapli = stokMiktarlariniHesapla(stokYeniler);
+  fisKesTabaniKur("urunler", etkStok.eskiler.filter((u) => !anaDegisen.has(u.id)), hesapli.filter((u) => !anaDegisen.has(u.id)));
+  fisKesTabaniKur("urunler", etkStok.eskiler.filter((u) => anaDegisen.has(u.id)), hesapli.filter((u) => anaDegisen.has(u.id)), { anaDahil: false });
+  setStok((onceki) => {
+    const n = degisenKayitlariBirlestir(onceki, etkStok.eskiler, stokYeniler);
+    fisKesYerelYaz("stok:items", n);
+    if (anaDegisen.size) yazimiIzle(tabloYaz("stok:items", "urunler", stokMiktarlariniHesapla(n)), "Stok kartları", n);
+    return n;
+  }, { buluttan: true });
+  if (etkCari.yeniler.length) {
+    const cariYeniler = doldur(etkCari.yeniler);
+    fisKesTabaniKur("cariler", etkCari.eskiler, cariYeniler);
+    setCariler((onceki) => { const n = degisenKayitlariBirlestir(onceki, etkCari.eskiler, cariYeniler); fisKesYerelYaz("cari:data", n); return n; });
+  }
+  // Üretim: atamalar sunucuda yazıldı (taban); ana satır bugünkü yoldan.
+  const uretimYeni = (nextUretim || []).filter((u) => u.id === siparis.id);
+  fisKesTabaniKur("uretim", etkUretim.eskiler, uretimYeni, { anaDahil: false });
+  setUretim((onceki) => {
+    const n = degisenKayitlariBirlestir(onceki, etkUretim.eskiler, uretimYeni);
+    yazimiIzle(tabloYaz("uretim:siparisler", "uretim", n), "Üretim", n);
+    return n;
+  });
+  if (etkSiparis.yeniler.length) {
+    fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
+    setSiparisler((onceki) => {
+      const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkSiparis.yeniler);
+      yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n);
+      return n;
+    });
+  }
+  stokRezervasyonuYaz();
+  const kayit = {
+    ...doldur(yuk.fis), id: no, fisNo: no, tip: "Üretim", sunucu: true, bagliFis: null, zaman: new Date().toISOString(),
+    stokTarihi: yuk.fis.tarih, stokHareketleri: doldur(stokHareketleri), cariHareketleri: doldur(cariHareketleri), kasaHareketleri: [],
+    iptal: false, iptalZamani: null,
+  };
+  if (setFisDefteri) setFisDefteri((onceki) => [kayit, ...(onceki || [])]);
+  gunlukYaz(`Üretim teslimi: ${siparis.siparisNo} → ${no}`, "uretim", { uretimId: siparis.id, atamaId, fisNo: no });
+  if (bolumMesaji) showToast(bolumMesaji);
+  showToast(`${no} · ${mesaj}`);
+  return true;
+}, [showToast, setStok, setCariler, setUretim, setSiparisler, setFisDefteri]);
 
 const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, sonuc) => {
+  const sunucuYolu = fisKesYolu();
+  // ÇİFT BASIŞ (sunucu yolu): yanıt gelene kadar ekran eski hâlde; aynı atamaya ikinci basış ikinci fiş kesmesin.
+  if (teslimSuruyorRef.current.has(atamaId)) return;
   const siparis = uretim.find((o) => o.id === uretimId);
   if (!siparis || !siparis.prosesIlerleme) return;
   const adimIndex = siparis.prosesIlerleme.findIndex((p) => p.proses === prosesAdi);
@@ -94,6 +218,12 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   // Artık iki ayrı fiş: `1001-Temizleme` (hammadde çıkışı) ve `1001-Temizleme-Giriş`
   // (mamul girişi). Numara ortak kökten türediği için geri alma ikisini de buluyor.
   const girisFisNo = `${fisNo}-Giriş`;
+  // TEK FİŞ DEFTERİ (v1.733.0, 078 — kullanıcı kararı "üretim teslimi = tek fiş"): sunucuda fiş defteri kuruluysa bu teslimin
+  // BÜTÜN satırları (hammadde çıkışı, mamul girişi, iade, ek malzeme, işçilik) tek fişte, numarayı sunucu verir (ÜRT-…). Satırın
+  // eski adı ("10001-Kesim-İade") `uretimFisAdi` alanında kalır: geri alma ailesi (079-fisgerial `uretimFisAdlari`), rezervasyon
+  // dengesi (100 geri alma: "-İade" / "-EkMalzeme") ve atamadaki `fisNo` aynı adı okumaya devam eder — tür bilgisi kaybolmaz.
+  const satirFisNo = (ad) => (sunucuYolu ? FIS_YER : ad);
+  const satirTuru = (ad) => (sunucuYolu ? { uretimFisAdi: ad } : {});
   // Tüketim özeti artık yalnızca sonucu değil HESABI da taşır: hangi reçete satırı, kaç adetle
   // çarpıldı. "Takviye Bezi -0,9 metre" yazısı, 0,9'un nereden geldiğini söylemiyordu; bir eksik
   // tüketim şüphesinde kullanıcının bakabileceği tek yer burasıydı ve orada bilgi yoktu.
@@ -191,7 +321,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
             id: uid("hrk"), tarih: new Date().toISOString(),
             renk: etkinRenk, beden: r.beden, miktar: -tuketilecek,
             kaynak: "Üretim", cariId: null, siparisNo: siparis.siparisNo, uretimId: siparis.id,
-            fisNo,
+            fisNo: satirFisNo(fisNo), ...satirTuru(fisNo),
           });
         });
       if (!pDegisti) return p;
@@ -248,7 +378,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
               // Defter Tanımlar ayarından (v1.543.0; varsayılan Genel).
               defter: iscilikDefteri(tanimlar && tanimlar.firmaBilgileri),
               // İŞÇİLİK AYRI FİŞ — bkz. ara proses tarafındaki gerekçe.
-              siparisNo: siparis.siparisNo, fisNo: `${fisNo}-İşçilik`, uretimId: siparis.id,
+              siparisNo: siparis.siparisNo, fisNo: satirFisNo(`${fisNo}-İşçilik`), ...satirTuru(`${fisNo}-İşçilik`), uretimId: siparis.id,
               // urunAd/renk, bu hareketin ürün resmini gösterebilmek için yapısal olarak da tutulur —
               // açıklama metnindeki ürün adını ayrıca ayrıştırmaya gerek kalmaz.
               urunAd: siparis.model, renk: siparis.renk,
@@ -346,7 +476,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
           id: uid("hrk"), tarih: new Date().toISOString(),
           renk: siparis.renk, beden, miktar,
           kaynak: "Üretim", cariId: null, siparisNo: siparis.siparisNo, uretimId: siparis.id,
-          fisNo: girisFisNo,
+          fisNo: satirFisNo(girisFisNo), ...satirTuru(girisFisNo),
           // Bu üretim bir satış siparişinin Tedarik Planlaması ile oluştuysa, o satışın GERÇEK
           // kimliği (rezervasyonSiparisId) buraya taşınır — kesin kaynak izleme için.
           rezervasyonSiparisId: siparis.rezervasyonSiparisId || null,
@@ -398,7 +528,10 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
           ...(bolumTahakkuku ? { bolumTahakkuklari: [...(o.bolumTahakkuklari || []), bolumTahakkuku] } : {}) }
       : o
   );
-  if (bolumTahakkuku) showToast(`${bolum.ad}: ${bolumTahakkuku.adet} adet × ${ucret} ₺ = ${bolumTahakkuku.tutar.toLocaleString("tr-TR")} ₺ bölüm tahakkuku (cariye yazılmadı — maaşlı bölüm)`);
+  // Bildirim yazmadan SONRA (sunucu yolunda yanıt gelince): kaydedilemeyen teslim için "tahakkuk yazıldı" denmesin.
+  const bolumMesaji = bolumTahakkuku
+    ? `${bolum.ad}: ${bolumTahakkuku.adet} adet × ${ucret} ₺ = ${bolumTahakkuku.tutar.toLocaleString("tr-TR")} ₺ bölüm tahakkuku (cariye yazılmadı — maaşlı bölüm)`
+    : null;
 
   // ---- REÇETE GERÇEKLEŞMESİ ----
   //
@@ -478,7 +611,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
           // görünmüyordu. Oysa iade ayrı bir olay: farklı yön, farklı an. Artık kendi fişi var
           // (`10001-Kesim-İade`) ve fiş listesinde ayrı satır olarak duruyor.
           // Geri alma da bu numarayı tanıyor (`uretimFisAdlari`).
-          kaynak: "Üretim", fisNo: `${fisNo}-İade`, uretimId: siparis.id, siparisNo: siparis.siparisNo,
+          kaynak: "Üretim", fisNo: satirFisNo(`${fisNo}-İade`), ...satirTuru(`${fisNo}-İade`), uretimId: siparis.id, siparisNo: siparis.siparisNo,
           rezervasyonSiparisId: siparis.rezervasyonSiparisId || null,
           aciklama: `Artan iade (${prosesAdi}): ${siparis.model} · ${siparis.renk}`,
         });
@@ -502,7 +635,7 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
         yeniHareketler.push({
           id: uid("hrk"), tarih: new Date().toISOString(),
           renk: i.renk, beden: i.beden, miktar: -i.miktar,
-          kaynak: "Üretim", fisNo: `${fisNo}-EkMalzeme`, uretimId: siparis.id, siparisNo: siparis.siparisNo,
+          kaynak: "Üretim", fisNo: satirFisNo(`${fisNo}-EkMalzeme`), ...satirTuru(`${fisNo}-EkMalzeme`), uretimId: siparis.id, siparisNo: siparis.siparisNo,
           rezervasyonSiparisId: siparis.rezervasyonSiparisId || null,
           aciklama: `Ek malzeme (${prosesAdi}): ${siparis.model} · ${siparis.renk}`,
         });
@@ -551,12 +684,8 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
   { const ad = damgaKullaniciAdi(); const simdi = new Date().toISOString();
     nextStok = yeniHareketleriDamgala(stok, nextStok, ad, simdi);
     nextCariler = yeniHareketleriDamgala(cariler, nextCariler, ad, simdi); }
-  setStok(nextStok);
-  setCariler(nextCariler);
-  setUretim(nextUretim);
-  // Yazma aşağıda, sipariş rezervasyon iadesi hesaplandıktan sonra TEK ZARFTA (v1.727.0 / v1.728.0).
   // SIRA (v1.537.0 — son denetim): bu blok sipariş listesi YAZILDIKTAN SONRA çalışıyordu; alış rezervasyonundaki
-  // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce.
+  // iade (`tuketilen` düşüşü) bellekte kalıyor, hiç kaydedilmiyordu. Artık yazmadan önce (hesap saf; yazma aşağıda).
   // Artan malzeme rezervasyonu da SERBEST bırakır: geri gelen mal aslında tüketilmemiştir.
   // Bunu atlarsak rezervasyon "kullanıldı" görünür ve o sipariş için stokta duran malzeme
   // ikinci kez talep edilmiş gibi hesaplanır.
@@ -573,28 +702,6 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
         );
         nextSiparislerRez = aSonuc.yeniSiparisler;
       }
-    });
-  }
-
-  // Stok (hammadde çıkışı, mamul girişi), cari (işçilik), üretim (atamanın teslimi) ve — değiştiyse — sipariş (rezervasyon
-  // iadesi) TEK ZARFTA (v1.728.0): v2'de satırları tek sunucu işlemiyle gider, biri düşüp öteki kalamaz.
-  const teslimYazmalari = [
-    { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
-    { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
-    { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" },
-  ];
-  if (nextSiparislerRez !== siparisler) {
-    setSiparisler(nextSiparislerRez);
-    teslimYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
-  }
-  birlikteYaz(teslimYazmalari);
-  if (nextStokRez !== stokRezervasyonlari) {
-    // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
-    // üretimin satırları) bütün listeyi yazmak o satırları buluta geri getiriyordu.
-    setStokRezervasyonlari((onceki) => {
-      const guncel = rezervasyonFarkiniUygula(onceki, stokRezervasyonlari, nextStokRez);
-      if (guncel !== onceki) yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", guncel), "Stok rezervasyonları", guncel);
-      return guncel;
     });
   }
 
@@ -639,15 +746,59 @@ const uretimProsesAtamaTeslimAl = useCallback((uretimId, prosesAdi, atamaId, son
     }
   }
 
-  showToast(
-    (tumuTamam
+  const mesaj = (tumuTamam
       ? `${siparis.siparisNo} tüm prosesler tamamlandı — mamul stoğa eklendi`
       : buAdimTamamlandiMi
       ? `${prosesAdi} adımı tamamen bitti${hareketOzet.length ? ` (${hareketOzet.join(", ")})` : ""}${buAdimSonProsesMi ? " — bu kısım mamul stoğa eklendi" : ""}`
       : `${atama.miktar} adetlik atama teslim alındı${hareketOzet.length ? ` (${hareketOzet.join(", ")})` : ""}${buAdimSonProsesMi ? " — bu kısım mamul stoğa eklendi" : ""}`)
-    + rezervasyonUyarisi
-  );
-}, [stok, cariler, uretim, siparisler, tanimlar, showToast, stokRezervasyonlari]);
+    + rezervasyonUyarisi;
+
+  // ---- YAZMA (eski yol) ----
+  // Stok (hammadde çıkışı, mamul girişi), cari (işçilik), üretim (atamanın teslimi) ve — değiştiyse — sipariş (rezervasyon
+  // iadesi) TEK ZARFTA (v1.728.0): v2'de satırları tek sunucu işlemiyle gider, biri düşüp öteki kalamaz.
+  const eskiYoldanYaz = () => {
+    setStok(nextStok);
+    setCariler(nextCariler);
+    setUretim(nextUretim);
+    const teslimYazmalari = [
+      { anahtar: "stok:items", tablo: "urunler", kayitlar: nextStok, etiket: "Stok kartları" },
+      { anahtar: "cari:data", tablo: "cariler", kayitlar: nextCariler, etiket: "Cari kartları" },
+      { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: nextUretim, etiket: "Üretim" },
+    ];
+    if (nextSiparislerRez !== siparisler) {
+      setSiparisler(nextSiparislerRez);
+      teslimYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
+    }
+    birlikteYaz(teslimYazmalari);
+    stokRezervasyonuYaz();
+  };
+  // GÜNCEL LİSTEYE FARK OLARAK (v1.713.1, 020 rezervasyonFarkiniUygula): kapanış listesi bayatsa (az önce silinen
+  // üretimin satırları) bütün listeyi yazmak o satırları buluta geri getiriyordu.
+  const stokRezervasyonuYaz = () => {
+    if (nextStokRez === stokRezervasyonlari) return;
+    setStokRezervasyonlari((onceki) => {
+      const guncel = rezervasyonFarkiniUygula(onceki, stokRezervasyonlari, nextStokRez);
+      if (guncel !== onceki) yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", guncel), "Stok rezervasyonları", guncel);
+      return guncel;
+    });
+  };
+
+  // ---- SUNUCU YOLU (tek fiş) ----
+  // Satırı olmayan teslim (reçetesiz ara adım, ücretsiz iş) fiş doğurmaz: yalnız üretim kaydı değişir, eski yoldan gider.
+  if (sunucuYolu) {
+    const hazirlik = uretimTeslimSunucuYuku({
+      siparis, prosesAdi, atamaFisAdi: fisNo, eskiStok: stok, yeniStok: nextStok, eskiCariler: cariler, yeniCariler: nextCariler,
+      eskiUretim: uretim, yeniUretim: nextUretim, eskiSiparisler: siparisler, yeniSiparisler: nextSiparislerRez,
+      kullaniciAd: damgaKullaniciAdi() || null, istek: uid("fis"),
+    });
+    if (!hazirlik.bos) {
+      return uretimTeslimSunucuyaKes({ hazirlik, siparis, atamaId, nextUretim, stokRezervasyonuYaz, bolumMesaji, mesaj });
+    }
+  }
+  if (bolumMesaji) showToast(bolumMesaji);
+  eskiYoldanYaz();
+  showToast(mesaj);
+}, [stok, cariler, uretim, siparisler, tanimlar, showToast, stokRezervasyonlari, uretimTeslimSunucuyaKes]);
 
   return uretimProsesAtamaTeslimAl;
 }

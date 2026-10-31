@@ -1568,7 +1568,7 @@ function AtolyeUygulamasi() {
   // ÜRETİM TESLİM ALMA AYRI DOSYADA (19 Eylül, 2. madde, 11. tur): `079-uretim-teslim.jsx`.
   const uretimProsesAtamaTeslimAl = useUretimTeslim({
     stok, cariler, uretim, siparisler, tanimlar, showToast, setStok, setCariler, setUretim, aktifKullanici,
-    stokRezervasyonlari, setSiparisler, setStokRezervasyonlari,
+    stokRezervasyonlari, setSiparisler, setStokRezervasyonlari, setFisDefteri,
   });
 
   // FİŞ DEFTERİ KANCASI BURADA (22 Eylül, v1.407.0): aşağıdaki geri alma bağımlılık dizisinde
@@ -1583,7 +1583,7 @@ function AtolyeUygulamasi() {
   // stoğa geri ekler, personele işlenmiş işçilik cari kaydını kaldırır, ve (son proses ise) stoğa
   // eklenmiş mamulü de geri düşer. Yalnızca bu adımdan SONRAKİ hiçbir adım başlamamışsa (verilmemişse)
   // izin verilir — aksi halde sıralı ilerleme bozulur.
-  const uretimProsesAtamaTeslimGeriAl = useCallback((uretimId, prosesAdi, atamaId) => {
+  const uretimProsesAtamaTeslimGeriAl = useCallback(async (uretimId, prosesAdi, atamaId) => {
     const siparis = uretim.find((o) => o.id === uretimId);
     if (!siparis || !siparis.prosesIlerleme) return;
     const adimIndex = siparis.prosesIlerleme.findIndex((p) => p.proses === prosesAdi);
@@ -1619,7 +1619,6 @@ function AtolyeUygulamasi() {
       uretimeIzinVer: true,
     });
     if (sonuc.engel) { showToast("Geri alınamadı — ilgili üretim kaydı bulunamadı"); return; }
-    (sonuc.silinenFisNolar || []).forEach(fisDefterindeIptal);   // defterde iptal işareti (Adım 1)
 
     // ---- REZERVASYON İADESİ ----
     // Geri alınan ÇIKIŞLAR serbest bırakılmalı: rezervasyondan düşülmüş paylar iade edilmezse
@@ -1634,7 +1633,8 @@ function AtolyeUygulamasi() {
     let iadeEdilenRez = 0;
     if (siparis.rezervasyonSiparisId) {
       sonuc.silinenStokKayitlari.forEach(({ urun, hareket: h }) => {
-        const fisNoH = String(h.fisNo || "");
+        // Sunucu fişinde (v1.733.0) numara ÜRT-…; satırın türü (`-İade`, `-EkMalzeme`) eski adında (`uretimFisAdi`).
+        const fisNoH = String(h.uretimFisAdi || h.fisNo || "");
         // DENGE (v1.569.0, denetim): "-EkMalzeme" çıkışı teslimde rezervasyondan DÜŞÜLMEDİ — geri almada iade edilirse
         // rezervasyon fazladan açılır. "-İade" girişi teslimde rezervasyonu SERBEST bıraktı — geri almada yeniden
         // tutulmalı (teslimdeki gibi önce stok rezervasyonu, sonra alış rezervasyonu).
@@ -1668,6 +1668,35 @@ function AtolyeUygulamasi() {
       });
     }
 
+    const siparisDegisti = nextSiparislerRez !== siparisler;
+    const stokRezDegisti = nextStokRezGeri !== stokRezervasyonlari;
+
+    // ---- TEK FİŞ DEFTERİ (v1.733.0, 078) ----
+    // Teslim sunucu fişiyle (ÜRT-…) kesildiyse geri alma o fişin İPTALİDİR: satırlar silinmez, fiş ve bütün satırları sunucuda
+    // iptal işaretlenir; atamanın geri dönüşü (teslim alınmadı, tamir işi kalktı) AYNI işlemde. Sunucu iptal edemezse hiçbir şey
+    // değişmez. İptal edilen satırlar fark tabanından çıkar (eski yoldan bir daha "silinmesin"); kalan iş (üretimin ana satırı,
+    // sipariş rezervasyonu, eski usul satırlar) bugünkü yoldan.
+    const sunucuSatirlari = fisKesYolu() ? uretimSunucuFisSatirlari(sonuc.silinenStokKayitlari, sonuc.silinenCariKayitlari) : null;
+    if (sunucuSatirlari && sunucuSatirlari.fisler.length) {
+      const etkU = fisKesEtkilenen(uretim, sonuc.uretim, [uretimId]);
+      const atamaFarki = fisKesAltFarki("uretim", "uretim_atamalari", etkU.eskiler[0], etkU.yeniler[0]);
+      const alt = atamaFarki.satirlar.length || atamaFarki.sil.length ? { uretim_atamalari: atamaFarki } : null;
+      try {
+        for (let i = 0; i < sunucuSatirlari.fisler.length; i++) {
+          await fisIptalGonder(sunucuSatirlari.fisler[i], `Üretim teslimi geri alındı (${siparis.siparisNo} · ${prosesAdi})`, i === 0 ? alt : null);
+        }
+      } catch (e) {
+        showToast(`Geri alınamadı — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
+        gunlukYaz(`Üretim teslimi geri alınamadı (${siparis.siparisNo} · ${prosesAdi}): ${String((e && e.message) || e).slice(0, 200)}`, "uretim", { uretimId, atamaId });
+        return;
+      }
+      fisKesTabandanCikar("urunler", "stok_hareketleri", sunucuSatirlari.stokIdler);
+      fisKesTabandanCikar("cariler", "cari_hareketleri", sunucuSatirlari.cariIdler);
+      fisKesTabaniKur("uretim", etkU.eskiler, etkU.yeniler, { anaDahil: false });
+      gunlukYaz(`Üretim fişi iptal edildi: ${sunucuSatirlari.fisler.join(", ")} (${siparis.siparisNo} · ${prosesAdi})`, "uretim", { uretimId, atamaId });
+    }
+    (sonuc.silinenFisNolar || []).forEach(fisDefterindeIptal);   // defterde iptal işareti (Adım 1)
+
     setStok(sonuc.stok);
     setCariler(sonuc.cariler);
     setUretim(sonuc.uretim);
@@ -1677,12 +1706,12 @@ function AtolyeUygulamasi() {
       { anahtar: "cari:data", tablo: "cariler", kayitlar: sonuc.cariler, etiket: "Cari kartları" },
       { anahtar: "uretim:siparisler", tablo: "uretim", kayitlar: sonuc.uretim, etiket: "Üretim" },
     ];
-    if (nextSiparislerRez !== siparisler) {
+    if (siparisDegisti) {
       setSiparisler(nextSiparislerRez);
       geriAlYazmalari.push({ anahtar: "siparis:data", tablo: "siparisler", kayitlar: nextSiparislerRez, etiket: "Siparişler" });
     }
     birlikteYaz(geriAlYazmalari);
-    if (nextStokRezGeri !== stokRezervasyonlari) {
+    if (stokRezDegisti) {
       setStokRezervasyonlari(nextStokRezGeri);
       yazimiIzle(tabloYaz("stokrez:data", "stok_rezervasyonlari", nextStokRezGeri), "Stok rezervasyonları", nextStokRezGeri);
     }
