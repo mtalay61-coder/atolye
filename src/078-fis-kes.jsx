@@ -166,26 +166,32 @@ function sunucuFisKaydi(yuk, no, stokHareketleri, cariHareketleri, kasaHareketle
 // PARA FİŞİ (saf, v1.735.0 — tahsilat / ödeme makbuzu, ürünsüz alış / satış, ileride kasa hareketi, gider): bir carinin satırları
 // ve (para hareketiyse) bir kasa / banka satırı TEK fişte. Satırların `fisNo`'su yer tutucu; kullanıcının yazdığı belge numarası
 // (tedarikçinin makbuzu) `fis.ek.belgeNo`da. Önek işlem tipinden (`paraFisOneki`). Kasa ayağı yoksa yalnız cari satırı.
-const PARA_FIS_ONEKLERI = { "Tahsilat": "TH", "Ödeme": "ÖD", "Alış": "AF", "Satış": "SF", "Mesai": "MS", "Maaş": "MAŞ", "İşçilik": "İŞ" };
+const PARA_FIS_ONEKLERI = { "Tahsilat": "TH", "Ödeme": "ÖD", "Alış": "AF", "Satış": "SF", "Mesai": "MS", "Maaş": "MAŞ", "İşçilik": "İŞ",
+  "Virman": "VRM", "Gider": "GD", "Gelir": "GL" };
 function paraFisOneki(tip) { return PARA_FIS_ONEKLERI[tip] || "CH"; }
+// `kasa`: tek kasa / banka ayağı ya da DİZİ (virman: kaynaktan çıkış + hedefe giriş — iki ayak tek fişte). Cari yoksa yalnız kasa
+// satırları (gider / gelir kartı, virman). Döner: `kasaHareketleri` (dizi) ve geriye uyum için `kasaHareketi` (ilki).
 function paraFisiYuku({ fis, cariId, hareketler, kasa, istek, zaman, kullaniciAd }) {
   const cariHareketleri = (hareketler || []).map((h) => ({
     ...h, id: h.id || uid("hrk"), fisNo: FIS_YER, zaman: h.zaman || zaman, kullanici: h.kullanici || kullaniciAd || null,
   }));
-  const kasaHareketi = kasa && kasa.hesapId ? { ...kasa.hareket, fisNo: FIS_YER } : null;
+  const ayaklar = (Array.isArray(kasa) ? kasa : [kasa]).filter((k) => k && k.hesapId && k.hareket)
+    .map((k) => ({ ...k, hareket: { ...k.hareket, fisNo: FIS_YER } }));
+  const kasaHareketleri = ayaklar.map((k) => k.hareket);
+  const kasaHareketi = kasaHareketleri[0] || null;
   const ilk = cariHareketleri[0] || {};
   const yuk = {
     istek,
     fis: {
-      aile: "para", tarih: ilk.tarih || (kasaHareketi && kasaHareketi.tarih) || null, defter: ilk.defter || "Genel",
-      cariId: cariId || null, kasaHesapId: kasaHareketi ? kasa.hesapId : null, paraBirimi: ilk.paraBirimi || null,
+      aile: "para", tarih: ilk.tarih || (kasaHareketi && kasaHareketi.tarih) || null, defter: ilk.defter || (kasaHareketi && kasaHareketi.defter) || "Genel",
+      cariId: cariId || null, kasaHesapId: ayaklar.length ? ayaklar[0].hesapId : null, paraBirimi: ilk.paraBirimi || null,
       tutar: ilk.tutar != null ? ilk.tutar : (kasaHareketi ? kasaHareketi.tutar : null), aciklama: ilk.aciklama || (kasaHareketi && kasaHareketi.aciklama) || null,
       kullanici: kullaniciAd || null, kalemler: [], ...fis,
     },
     cari: { satirlar: cariId ? cariHareketleri.map((h) => fisKesCariSatiri(cariId, h)) : [] },
-    ...(kasaHareketi ? { kasa: { hareketler: [fisKesKasaHareketi(kasa.hesapId, kasaHareketi)] } } : {}),
+    ...(ayaklar.length ? { kasa: { hareketler: ayaklar.map((k) => fisKesKasaHareketi(k.hesapId, k.hareket)) } } : {}),
   };
-  return { yuk, cariHareketleri, kasaHareketi };
+  return { yuk, cariHareketleri, kasaHareketi, kasaHareketleri, ayaklar };
 }
 
 // Kasa & Banka tabanı (tek parça belge, 030 `tekilTabanOku`): eklenen hareketler hesabına, iptal edilenler çıkar.

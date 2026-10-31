@@ -1,0 +1,37 @@
+{
+ "hatalar": [],
+ "ikinci": {
+  "banka": [
+   "TH-261031001:Giriş:1500",
+   "GD-261031001:Çıkış:12.5"
+  ],
+  "cari": [
+   "TH-261031001:Alacak:1500"
+  ],
+  "ozet": [
+   "1 satır aktarıldı — 1 cariye, 0 gelir/gider kartına işlendi"
+  ],
+  "seciliSatirlar": [
+   false,
+   false
+  ]
+ },
+ "ilk": {
+  "banka": [
+   "GD-261031001:Çıkış:12.5"
+  ],
+  "cari": [],
+  "ozet": [
+   "1 satır aktarıldı — 0 cariye, 1 gelir/gider kartına işlendi · ⚠ 1 satır YAZILAMADI (seçili bırakıldı, yeniden aktarabilirsiniz)"
+  ],
+  "seciliSatirlar": [
+   true,
+   false
+  ]
+ },
+ "istekler": [
+  "fis_kes:Tahsilat",
+  "fis_kes:Gider",
+  "fis_kes:Tahsilat"
+ ]
+}

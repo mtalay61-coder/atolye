@@ -450,7 +450,18 @@ function CariModule({ onParaFisi, tanimlar, onTanimlarKaydet, onMuhasebeKaydet, 
             : <KartOdemeSatiri key={`${odemeKartId}|${odemeTip}|${odemeSekliSecim}`} tip={odemeTip} kart={giderKartlari.find((k) => k.id === odemeKartId)}
                 fisNumaralari={() => [...tumFisNumaralari(cariler), ...[...((muhasebe && muhasebe.kasalar) || []), ...((muhasebe && muhasebe.bankalar) || [])].flatMap((hs) => (hs.hareketler || []).map((x) => x.fisNo).filter(Boolean))]}
                 hesap={seciliHesap} showToast={showToast} kurlar={kurlar}
-                onKaydet={(p) => { onMuhasebeHareketi(p); showToast(`${odemeTip === "Tahsilat" ? "Gelir" : "Gider"} kaydedildi — ${p.hareket.giderKartAd}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`); }} />
+                onKaydet={async (p) => {
+                  // TEK FİŞ DEFTERİ (v1.736.0): sunucu yolunda gider / gelir fişi (GD / GL) — kasa satırı tek fişte; yazılamazsa satır dolu kalır.
+                  const tur = odemeTip === "Tahsilat" ? "Gelir" : "Gider";
+                  if (onParaFisi && fisKesYolu()) {
+                    const r = await onParaFisi({ fis: { tur, onek: paraFisOneki(tur), kaynak: "Gelir/Gider kartı", ek: { giderKartId: p.hareket.giderKartId || null } },
+                      cariId: null, hareketler: [], kasa: p, anahtar: `kart-odeme|${p.hareket.giderKartId || ""}`, hataEtiketi: tur });
+                    return !!r;
+                  }
+                  onMuhasebeHareketi(p);
+                  showToast(`${tur} kaydedildi — ${p.hareket.giderKartAd}${seciliHesap ? ` · ${seciliHesap.kisaAd}` : ""}`);
+                  return true;
+                }} />
         ) : odemeCari && !odemeKartGoster && KISA_FORM_SEKILLERI.includes(odemeSekliSecim) && onOdemeKaydet ? (
           // KASA & BANKA İŞLEMİ GİBİ (v1.645.10 — kullanıcı: "ödeme için kasa banka işlemleri gibi açabilir"): nakit /
           // havale / kredi kartında cari kartının tamamı açılmaz; tek satırlık kısa form (tarih, tutar, kasa/banka,
@@ -1423,15 +1434,20 @@ function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar, fisNum
   // kendi biriminde değişir (tutar); gider Genel'de başka birimde tutulabilir (`karsiPB`/`karsiTutar`), defter Muhasebe
   // iken Resmi için ayrıca (`resmiPB`/`resmiTutar`, 207 ResmiTutarAlani). Gelir/Gider raporu (247) bunları okur.
   const [f, setF] = useState({ tarih: bugunYerel(), tutar: "", defter: "Genel", aciklama: "", karsi: null, resmi: null });
+  // Sonuç beklenir (v1.736.0): false → satır dolu kalır; beklerken ikinci basış yok sayılır. (Hook, erken dönüşten ÖNCE.)
+  const kaydediliyorRef = useRef(false);
   if (!kart) return null;
-  const kaydet = () => {
+  const kaydet = async () => {
+    if (kaydediliyorRef.current) return;
     if (!hesap) { showToast("Kasa / banka seçin"); return; }
     const t = parseFloat(String(f.tutar).replace(",", "."));
     if (!(t > 0)) { showToast("Tutar girin"); return; }
     const [hesapTur, hesapId] = hesap.deger.split(":");
     const genelEk = (() => { const o = resmiAlanlari("Muhasebe", hesap.pb, t, f.karsi, kurlar); return o.resmiPB ? { karsiPB: o.resmiPB, karsiTutar: o.resmiTutar } : {}; })();
     const resmiEk = resmiAlanlari(f.defter, hesap.pb, t, f.resmi, kurlar);
-    onKaydet({ hesapTur, hesapId, hareket: { ...genelEk, ...resmiEk,
+    kaydediliyorRef.current = true;
+    let ok;
+    try { ok = await onKaydet({ hesapTur, hesapId, hareket: { ...genelEk, ...resmiEk,
       id: uid("mhrk"), tarih: f.tarih, yon: tip === "Tahsilat" ? "Giriş" : "Çıkış", tutar: stokYuvarla(t), defter: f.defter,
       zaman: new Date().toISOString(),   // Son İşlemler sırası ve saati (v1.688.10)
       // FİŞ NO (v1.688.0 — kullanıcı: "fiş no olsun, ona göre sıralansın"): cari tahsilat/ödemeyle AYNI sıra (THS-/ODM-
@@ -1439,7 +1455,8 @@ function KartOdemeSatiri({ tip, kart, hesap, onKaydet, showToast, kurlar, fisNum
       fisNo: fisNoSiradaki(fisOnEki(tip), typeof fisNumaralari === "function" ? fisNumaralari() : (fisNumaralari || [])),
       giderKartId: kart.id, giderKartAd: kart.ad, giderGrubu: kart.grup || null,
       aciklama: `${kart.ad}${f.aciklama.trim() ? ` · ${f.aciklama.trim()}` : ""}`, kullanici: islemKullanicisiAd(),
-    } });
+    } }); } finally { kaydediliyorRef.current = false; }
+    if (ok === false) return;
     setF((o) => ({ ...o, tutar: "", aciklama: "" }));
   };
   const kutu = { ...inputStyle, padding: "7px 9px" };

@@ -89,6 +89,7 @@ const IZINLI_YAZICILAR = new Set(process.env.SAYIM ? [] : [
   "paraFisiYuku",               // tek fiş defteri: para fişi yükü (cari + kasa satırı tek fişte, 078 — v1.735.0)
   "paraFisiKes",                // tek fiş defteri: para fişi ortak kapısı (100 — cari kartı, Ödeme & Tahsilat, sipariş ödemesi)
   "siparisOdemesiKaydet",       // sipariş / Ödeme & Tahsilat formu: sunucu yolunda paraFisiKes, eski yolda cari huni + kasa
+  "BankaExcelEkrani",           // Banka Excel aktarımı: satır başına paraFisiKes yükü (v1.736.0); eski yolda siparisOdemesiKaydet
 ]);
 
 // Geri alan yollar ayrı sayılır: bunlar hareket YAZMAZ, siler. Yazıcı listesiyle karıştırmak,

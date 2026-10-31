@@ -1,4 +1,4 @@
-function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
+function MuhasebeModule({ onParaFisiKes, kapsam = "genel", tanimlar, stok, uretim, giderKartlari, onCekIslem, onCekEkleIsle, onCekHareketiyleSil, onCekCariHareketSil, onCekYazdir, cekGorselleri, onCekGorselKaydet, muhasebe, onSave, showToast, cariler, onCarilerGuncelle, onCopaAt, kullaniciYetkisiVar, onayIste, onayliIslem, onOnayliIslemBitti }) {
   const [altSekmeSecimi, setAltSekme] = useState("kasa"); // "kasa" | "banka" | "cek" | "karzarar"
   // KAPSAM (v1.458.0): menüde "Kasa & Banka" ve "Çek & Senet" ayrı öğe; ikisi de bu tek örneği
   // gösteriyor. Çek & Senet'te sekme şeridi yok, hep çek; Kasa & Banka'da Çek sekmesi yok — orada
@@ -146,7 +146,9 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
   async function virmanYap({ kaynak, hedef, aciklama, sebep }) {
     const bagId = uid("mhbag");
     const zaman = bugunYerel();
-    const fisNo = fisNoUret("VRM");
+    // TEK FİŞ DEFTERİ (v1.736.0, 100 paraFisiKes): sunucu yolunda iki ayak TEK virman fişinde (VRM-…), numarayı sunucu verir.
+    const sunucuYolu = !!onParaFisiKes && fisKesYolu();
+    const fisNo = sunucuYolu ? FIS_YER : fisNoUret("VRM");
     // Sebep ALAN olarak taşınıyor (yalnız açıklama metninde değil): raporda "döviz bozdurmalar"
     // diye süzmek için metin ayrıştırmak kırılgan olurdu.
     // "MUHASEBE" (iki defter) — v1.538.0, kullanıcı kararı: para fiziksel olarak yer değiştiriyor; yalnız Genel'e
@@ -162,6 +164,18 @@ function MuhasebeModule({ kapsam = "genel", tanimlar, stok, uretim, giderKartlar
       ...ortak, id: uid("mhrk"), yon: "Giriş", tutar: hedef.tutar,
       aciklama: `Virman ← ${kaynak.ad}${sebepMetni}${aciklama ? ` · ${aciklama}` : ""}`,
     };
+    if (sunucuYolu) {
+      const sonuc = await onParaFisiKes({
+        fis: { tur: "Virman", onek: "VRM", kaynak: "Virman", aciklama: `Virman: ${kaynak.ad} → ${hedef.ad}${sebepMetni}${aciklama ? ` · ${aciklama}` : ""}`,
+          defter: "Muhasebe", ek: { sebep: sebep || null } },
+        cariId: null, hareketler: [],
+        kasa: [{ hesapTur: kaynak.tur, hesapId: kaynak.id, hareket: cikis }, { hesapTur: hedef.tur, hesapId: hedef.id, hareket: giris }],
+        anahtar: `virman|${kaynak.id}`, hataEtiketi: "Virman",
+      });
+      if (!sonuc) return false;
+      showToast(`Virman: ${kaynak.ad} → ${hedef.ad} · ${sonuc.no}`);
+      return true;
+    }
     const kaynakKey = kaynak.tur === "kasa" ? "kasalar" : "bankalar";
     const hedefKey = hedef.tur === "kasa" ? "kasalar" : "bankalar";
     // TEK YAZMA: iki hesap aynı `muhasebe` nesnesinde; ayrı ayrı yazmak yarım kalma riski demekti.
