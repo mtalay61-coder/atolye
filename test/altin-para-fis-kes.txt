@@ -1,0 +1,56 @@
+{
+ "defter": [
+  "TH-261031001|para|Tahsilat|1/1"
+ ],
+ "geriAl": {
+  "iptal": [
+   "TH-261031001"
+  ],
+  "yerel": {
+   "cari": [],
+   "kasa": []
+  }
+ },
+ "hatalar": [],
+ "istekler": [
+  "fis_kes",
+  "fis_kes",
+  "fis_iptal"
+ ],
+ "kabul": {
+  "toast": "Tahsilat kaydedildi — TH-NNN Geri al",
+  "tutarKutusu": "",
+  "yerel": {
+   "cari": [
+    "TH-261031001:Alacak:750"
+   ],
+   "kasa": [
+    "TH-261031001:Giriş:750"
+   ]
+  }
+ },
+ "red": {
+  "kaydedildiDemedi": true,
+  "tutarKutusu": "750",
+  "uyari": true,
+  "yerel": {
+   "cari": [],
+   "kasa": []
+  }
+ },
+ "yuk": {
+  "cari": [
+   "Alacak|750|«FIS»"
+  ],
+  "fis": {
+   "aile": "para",
+   "kasaHesapId": "k1",
+   "onek": "TH",
+   "tur": "Tahsilat",
+   "tutar": 750
+  },
+  "kasa": [
+   "k1|Giriş|750|«FIS»"
+  ]
+ }
+}

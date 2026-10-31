@@ -412,6 +412,53 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   bekle("10: eşitleme satır göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
   bekle("10: bulut stok = ekran", stokOzet(stokOku()), stokOzet(stok));
 
+  console.log("11) Tahsilat makbuzu (cari kartı / Ödeme & Tahsilat / sipariş ödemesi): cari + kasa satırı TEK TH fişi; geri al = iptal");
+  cariler = carilerOku();
+  muhasebe = muhasebeOku();
+  E.tabloBaslangicTam("cariler", derin(cariler));
+  E.tekilTabanAyarla("muhasebe", derin(muhasebe));
+  const k11 = E.kasaCariHareketiKur({ islemTipi: "Tahsilat", tarih: "2026-10-31", cariId: "c-yeni", cariUnvan: "Yeni Cari", cariTutar: 250, cariPB: "TRY",
+    hesapTur: "kasa", hesapId: "K1", hesapAd: "Merkez Kasa", hesapPB: "TRY", hesapTutar: 250, defter: "Genel", aciklama: "", odemeSekli: "Nakit" });
+  const h11 = E.paraFisiYuku({ fis: { tur: "Tahsilat", onek: E.paraFisOneki("Tahsilat"), kaynak: "Cari kartı", ek: { belgeNo: "MKB-5" } }, cariId: "c-yeni",
+    hareketler: [{ ...k11.cariHareketi, islemTipi: undefined }], kasa: { hesapTur: "kasa", hesapId: "K1", hareket: k11.muhasebeHareketi },
+    istek: "uu-tahsilat", zaman: zamanU, kullaniciAd: "Ali" });
+  const no11 = (await E.fisKesGonder(h11.yuk)).fisNo;
+  bekle("11: TH fişi, 1 cari + 1 kasa satırı, belge no", [/^TH-\d{9}$/.test(no11),
+    psql(`select (select count(*) from public.car_hareket where fis_id = '${no11}') || '/' || (select count(*) from public.kas_hareket where fis_id = '${no11}') || '/' || (select ek ->> 'belgeNo' from public.stk_fis where id = '${no11}') || '/' || (select kasa_hesap_id from public.stk_fis where id = '${no11}');`)],
+    [true, "1/1/MKB-5/K1"]);
+  const d11 = (x) => E.fisYerTutucuDoldur(x, no11);
+  const ch11 = d11(h11.cariHareketleri);
+  const cEski11 = cariler.find((c) => c.id === "c-yeni");
+  const cYeni11 = { ...cEski11, hareketler: [...ch11, ...(cEski11.hareketler || [])] };
+  cariler = cariler.map((c) => (c.id === "c-yeni" ? cYeni11 : c));
+  E.fisKesTabaniKur("cariler", [cEski11], [cYeni11]);
+  const kh11 = d11(h11.kasaHareketi);
+  muhasebe = E.hesabaHareketEkle(muhasebe, "kasa", "K1", kh11);
+  E.fisKesKasaTabaniKur([{ hesapTur: "kasa", hesapId: "K1", hareket: kh11 }]);
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("cariler", cariler);
+  await E.tekilYaz("muhasebe:data", "muhasebe", muhasebe);
+  bekle("11: eşitleme satır göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("11: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
+  bekle("11: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
+  bekle("11: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
+  const g11 = E.fisGeriAl({ stok, cariler, siparisler: [], uretim: [], muhasebe, koliler: [], faturalar: [] }, { hareketIdler: ch11.map((h) => h.id), kullanici: "Ali" });
+  const etkC11 = E.fisKesEtkilenen(cariler, g11.cariler, E.fisKesDegisenIdler(cariler, g11.cariler));
+  await E.fisIptalGonder(no11, "Geri alındı", null);
+  cariler = g11.cariler;
+  E.fisKesTabaniKur("cariler", etkC11.eskiler, etkC11.yeniler);
+  const kc11 = E.kasadanBaglariCikar(g11.muhasebe, g11.muhasebeBagIdler);
+  muhasebe = kc11.muhasebe;
+  E.fisKesKasaTabaniKur([], kc11.silinen);
+  bekle("11: geri al kasa bağını buldu", kc11.silinen.length, 1);
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("cariler", cariler);
+  await E.tekilYaz("muhasebe:data", "muhasebe", muhasebe);
+  bekle("11: iptalden sonra satır gönderilmedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|iptal|hareketIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("11: sunucuda fiş + iki satır iptal", psql(`select bool_and(iptal)::text from (select iptal from public.stk_fis where id = '${no11}' union all select iptal from public.car_hareket where fis_id = '${no11}' union all select iptal from public.kas_hareket where fis_id = '${no11}') x;`), "true");
+  bekle("11: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
+  bekle("11: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
+
   console.log(hata ? "── UÇTAN UCA (FİŞ) HATALI ──" : "── uçtan uca (fiş defteri) temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

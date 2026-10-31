@@ -21,7 +21,7 @@ const DISA_AKTAR = [
   "FIS_YER", "ANA_FIS_YER", "fisDefteriKuruluAyarla", "fisKesYolu", "defterSunucuFisleriyleBirlestir", "stokFisiSunucuYuku", "stokFisiSunucuSonucu",
   "fisKesEtkilenen", "fisKesDegisenIdler", "kasadanBaglariCikar", "fisSiparisleriGuncelle", "sunucuFisleriniOku", "stokMiktarlariniHesapla", "fisDefterKaydiKur", "siparisTeslimSunucuYuku",   // tek fiş defteri (v1.732.0)
   "uretimTeslimSunucuYuku", "fisKesAltFarki", "uretimSunucuFisSatirlari", "fisKesTabandanCikar",   // üretim teslimi tek fiş (v1.733.0)
-  "stokFisiYuku", "sunucuFisKaydi", "fisKesStokUygula", "fisYerTutucuAileyeDoldur",   // ara proses + numune (v1.733.1)
+  "paraFisiYuku", "paraFisOneki", "kasaCariHareketiKur", "stokFisiYuku", "sunucuFisKaydi", "fisKesStokUygula", "fisYerTutucuAileyeDoldur",   // ara proses + numune (v1.733.1)
   "v2AyarDurumuAyarla", "v2AyarBilinmiyorMu", "arsivV2Yolu", "listeV2Yuku", "listeV2TablolariAyarla", "listeV2Aktif", "sayimKimlikFarki", "kasaV2Yuku", "kasaV2Parcala", "kasaV2YukBosMu", "kasaV2AktifAyarla", "kasaV2Aktif", "kasaZarfiAc", "v2KopruGonder", "bekleyenYazmalariOku",   // kasa v2 köprüsü (v1.729.0)
   "altV2Yuku", "altV2AktifAyarla", "yazmaZarfi", "birlikteYaz", "cariV2Yuku", "cariV2AktifAyarla", "cariV2Aktif", "v2KopruYuku", "stokV2Yuku", "stokV2Parcala", "stokV2Cozucu", "stokV2Nrm", "stokV2AktifAyarla", "stokV2TanimlarAyarla", "stokV2Aktif",   // stok v2 köprüsü (v1.726.0)
   "sonrakiTeklifNo", "teklifDurumu", "teklifToplami", "teklifiSipariseCevir", "teklifKalemHatasi", "teklifKalemGruplari", "teklifYazdirHtml", "teklifMetinOzeti", "teklifSiparisGorunumu",   // teklif (v1.715.0, v1.722.0)

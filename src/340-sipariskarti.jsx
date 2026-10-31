@@ -2046,7 +2046,14 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
                         siparis={siparis} cari={cari} tip={oz.beklenenTip} tutar={hedef.tutar} paraBirimi={hedef.paraBirimi}
                         muhasebe={muhasebe} kurlar={kurlar} showToast={showToast}
                         onVazgec={() => setShowOdeme(false)}
-                        onKaydet={(k) => { onOdemeKaydet(k); setShowOdeme(false); if (showToast) showToast(`${oz.beklenenTip} kaydedildi — ${cari.unvan}`); }}
+                        onKaydet={async (k) => {
+                          // Sonuç beklenir (v1.735.0): sunucu fişi kesemezse form açık kalır; kesince kapı numarayla bildirdi.
+                          const r = await onOdemeKaydet(k);
+                          if (r === false) return false;
+                          setShowOdeme(false);
+                          if (!r && showToast) showToast(`${oz.beklenenTip} kaydedildi — ${cari.unvan}`);
+                          return true;
+                        }}
                       />
                     )}
                   </>
