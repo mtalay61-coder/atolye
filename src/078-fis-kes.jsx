@@ -167,11 +167,13 @@ function sunucuFisKaydi(yuk, no, stokHareketleri, cariHareketleri, kasaHareketle
 // ve (para hareketiyse) bir kasa / banka satırı TEK fişte. Satırların `fisNo`'su yer tutucu; kullanıcının yazdığı belge numarası
 // (tedarikçinin makbuzu) `fis.ek.belgeNo`da. Önek işlem tipinden (`paraFisOneki`). Kasa ayağı yoksa yalnız cari satırı.
 const PARA_FIS_ONEKLERI = { "Tahsilat": "TH", "Ödeme": "ÖD", "Alış": "AF", "Satış": "SF", "Mesai": "MS", "Maaş": "MAŞ", "İşçilik": "İŞ",
-  "Virman": "VRM", "Gider": "GD", "Gelir": "GL" };
+  "Virman": "VRM", "Gider": "GD", "Gelir": "GL", "Çek cirosu": "ÇC", "Çek iadesi": "Çİ", "Çek tahsili": "ÇT" };
 function paraFisOneki(tip) { return PARA_FIS_ONEKLERI[tip] || "CH"; }
 // `kasa`: tek kasa / banka ayağı ya da DİZİ (virman: kaynaktan çıkış + hedefe giriş — iki ayak tek fişte). Cari yoksa yalnız kasa
 // satırları (gider / gelir kartı, virman). Döner: `kasaHareketleri` (dizi) ve geriye uyum için `kasaHareketi` (ilki).
-function paraFisiYuku({ fis, cariId, hareketler, kasa, istek, zaman, kullaniciAd }) {
+// `cekler` (v1.738.0): fişin doğurduğu / değiştirdiği çek kayıtları (çek alma / verme, ciro, iade, tahsil) — kas_yaz'ın çek satırı,
+// fişle AYNI işlemde.
+function paraFisiYuku({ fis, cariId, hareketler, kasa, cekler, istek, zaman, kullaniciAd }) {
   const cariHareketleri = (hareketler || []).map((h) => ({
     ...h, id: h.id || uid("hrk"), fisNo: FIS_YER, zaman: h.zaman || zaman, kullanici: h.kullanici || kullaniciAd || null,
   }));
@@ -189,13 +191,17 @@ function paraFisiYuku({ fis, cariId, hareketler, kasa, istek, zaman, kullaniciAd
       kullanici: kullaniciAd || null, kalemler: [], ...fis,
     },
     cari: { satirlar: cariId ? cariHareketleri.map((h) => fisKesCariSatiri(cariId, h)) : [] },
-    ...(ayaklar.length ? { kasa: { hareketler: ayaklar.map((k) => fisKesKasaHareketi(k.hesapId, k.hareket)) } } : {}),
+    ...(ayaklar.length || (cekler || []).length ? { kasa: {
+      hareketler: ayaklar.map((k) => fisKesKasaHareketi(k.hesapId, k.hareket)),
+      ...((cekler || []).length ? { cekler: cekler.map((c) => ({ id: String(c.id), veri: c })) } : {}),
+    } } : {}),
   };
   return { yuk, cariHareketleri, kasaHareketi, kasaHareketleri, ayaklar };
 }
 
 // Kasa & Banka tabanı (tek parça belge, 030 `tekilTabanOku`): eklenen hareketler hesabına, iptal edilenler çıkar.
-function fisKesKasaTabaniKur(ekle, silIdler) {
+// `cekler` (v1.738.0): sunucuya fişle yazılmış çek kayıtları tabana (kimliğe göre eklenir / değiştirilir).
+function fisKesKasaTabaniKur(ekle, silIdler, cekler) {
   const taban = tekilTabanOku("muhasebe");
   if (!taban || typeof taban !== "object") return;
   let yeni = taban;
@@ -204,6 +210,11 @@ function fisKesKasaTabaniKur(ekle, silIdler) {
   if (sil.size) {
     const temizle = (liste) => (liste || []).map((h) => ({ ...h, hareketler: (h.hareketler || []).filter((x) => !sil.has(String(x.id))) }));
     yeni = { ...yeni, kasalar: temizle(yeni.kasalar), bankalar: temizle(yeni.bankalar) };
+  }
+  if ((cekler || []).length) {
+    const yeniCekler = new Map((cekler || []).map((c) => [String(c.id), c]));
+    const kalan = (yeni.cekler || []).filter((c) => !yeniCekler.has(String(c.id)));
+    yeni = { ...yeni, cekler: [...yeniCekler.values(), ...kalan] };
   }
   tekilTabanAyarla("muhasebe", yeni);
 }

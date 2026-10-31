@@ -14,8 +14,12 @@
 function useCekler(d) {
   const {
     addCariHareketFromStok, aktifKullanici, cariler, cekGorselleri, kaydetmeHatasiBildir,
-    muhasebe, saveMuhasebe, setCekGorselleri, showToast,
+    muhasebe, saveMuhasebe, setCekGorselleri, showToast, paraFisiKesRef,
   } = d;
+  // TEK FİŞ DEFTERİ (v1.738.0, 100 paraFisiKes — geç bağlı ref): sunucu yolunda cari / kasa satırı doğuran çek işlemi (çek alma /
+  // verme, ciro, iade, tahsil) bir para fişidir; satır VE çek kaydının yeni hâli aynı işlemde yazılır. Yazılamazsa false — form
+  // açık kalır, ekranda hiçbir şey değişmez. Satır doğurmayan işlem (tahsile verme, karşılıksız) yalnız çek kaydı: bugünkü yoldan.
+  // (Kapı ref'ten çağrı anında okunur: `paraFisiKesRef.current && fisKesYolu()`.)
 
 const cekGorselKaydet = useCallback(async (cekId, gorseller) => {
   if (!cekId) return;
@@ -48,7 +52,7 @@ const cekGorselKaydet = useCallback(async (cekId, gorseller) => {
 // yalnız `hareketId` YOKSA (yani Muhasebe ekranından girildiyse) hareket doğuyor.
 //
 // KASA HAREKETİ YOK — çek nakit değil, para vadesinde el değiştirir (7z-8'deki gerekçenin aynısı).
-const cekEkleVeIsle = useCallback((veri) => {
+const cekEkleVeIsle = useCallback(async (veri) => {
   const cek = { id: uid("cek"), durum: "Portföyde", ...veri, defter: veri.defter || "Genel" };
   const cari = veri.cariId ? cariler.find((c) => c.id === veri.cariId) : null;
   const hareketGerekli = !!cari && !veri.hareketId && (veri.tutar || 0) > 0;
@@ -79,6 +83,17 @@ const cekEkleVeIsle = useCallback((veri) => {
       hesapTutar: cek.tutar,
       cekId: cek.id,
     };
+    const kes = paraFisiKesRef && paraFisiKesRef.current && fisKesYolu() ? paraFisiKesRef.current : null;
+    if (kes) {
+      const r = await kes({
+        fis: { tur: islemTipi, onek: paraFisOneki(islemTipi), kaynak: "Çek", ek: { cekId: cek.id, cekNo: cek.cekNo || null } },
+        cariId: veri.cariId, hareketler: [{ ...hareket, islemTipi: undefined }], cekler: [{ ...cek, hareketId: hareket.id }],
+        anahtar: `cek-ekle|${cek.cekNo || cek.id}`, hataEtiketi: "Çek",
+      });
+      if (!r) return false;
+      showToast(`Çek eklendi — ${r.no} · ${cari.unvan} carisine ${islemTipi} işlendi`);
+      return true;
+    }
     addCariHareketFromStok(veri.cariId, [hareket]);
     cek.hareketId = hareket.id;
   }
@@ -89,7 +104,7 @@ const cekEkleVeIsle = useCallback((veri) => {
     : "Çek eklendi");
 }, [muhasebe, cariler, addCariHareketFromStok, saveMuhasebe, showToast, aktifKullanici]);
 
-const cekIslemYap = useCallback((cekId, islem, secim = {}) => {
+const cekIslemYap = useCallback(async (cekId, islem, secim = {}) => {
   const cek = (muhasebe.cekler || []).find((c) => c.id === cekId);
   if (!cek) return showToast("Çek bulunamadı");
   const tanim = CEK_ISLEMLERI[islem];
@@ -183,6 +198,23 @@ const cekIslemYap = useCallback((cekId, islem, secim = {}) => {
   });
   if (!yeniCek) return showToast("İşlem uygulanamadı");
 
+  // Sunucu yolu: satır doğuran işlem (ciro / iade cari satırı, tahsil kasa satırı) çekin yeni hâliyle TEK fişte.
+  const kes = paraFisiKesRef && paraFisiKesRef.current && fisKesYolu() ? paraFisiKesRef.current : null;
+  if (kes && ((hareket && karsiCari) || hesapHareketi)) {
+    const tur = islem === "ciro" ? "Çek cirosu" : islem === "iade" ? "Çek iadesi" : "Çek tahsili";
+    const r = await kes({
+      fis: { tur, onek: paraFisOneki(tur), kaynak: "Çek", ek: { cekId, cekNo: cek.cekNo || null, islem } },
+      cariId: hareket && karsiCari ? hedefCariId : null, hareketler: hareket && karsiCari ? [hareket] : [],
+      kasa: hesapHareketi ? { hesapTur: tahsilHesabi.tur, hesapId: tahsilHesabi.hesap.id, hareket: hesapHareketi } : null,
+      cekler: [yeniCek], anahtar: `cek-islem|${cekId}`, hataEtiketi: tanim.ad,
+    });
+    if (!r) return false;
+    gunlukYaz(`Çek ${tanim.ad}: ${cek.cekNo || "no yok"} → ${r.no}`, "muhasebe", { cekId, islem, fisNo: r.no });
+    showToast(`${tanim.ad} — çek "${yeniCek.durum}" oldu · ${r.no}` +
+      (hareket && karsiCari ? ` · ${karsiCari.unvan} carisine işlendi` : "") +
+      (hesapHareketi ? ` · ${tahsilHesabi.hesap.ad} hesabına ${hesapHareketi.yon === "Giriş" ? "girdi" : "çıktı"}` : ""));
+    return true;
+  }
   // Yazmalar ancak geçiş KESİNLEŞTİKTEN sonra: önce hareket yazılıp sonra geçiş reddedilseydi
   // karşılığı olmayan bir cari hareketi kalırdı.
   if (hareket && karsiCari) addCariHareketFromStok(hedefCariId, [hareket]);

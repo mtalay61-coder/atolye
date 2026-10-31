@@ -190,6 +190,7 @@ ekstresi, stok hareketleri, kasa hareketleri, fatura taslağı ve veri denetimi 
    Para fişleri 1 (v1.735.0 — cari kartı tahsilat/ödeme, Ödeme & Tahsilat kısa formu, sipariş ödemesi: TH / ÖD, cari + kasa tek fiş).
    Para fişleri 2 (v1.736.0 — virman VRM, gelir/gider kartı GL/GD, Banka Excel satır başına fiş).
    Silme = fiş iptali (v1.737.0 — kasa / gelir-gider / cari hareketi silme fişi bütün iptal eder; sunucu fişi düzenlenmez).
-   Sırada: mesai, çek.
+   Çek işlemleri + mesai (v1.738.0 — çek alma/verme, ciro ÇC, iade Çİ, tahsil ÇT; mesai MS).
+   Sırada: kendiliğinden yazanların kaldırılması, gece denetimi, kuralların açılması (19. adım).
 3. Gece denetimi (gün sonu raporuna).
 4. Siz: Supabase'de tek SQL adımı → kontrol listesi → 1–2 hafta paralel kullanım.

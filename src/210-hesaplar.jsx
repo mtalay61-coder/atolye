@@ -1092,7 +1092,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
   // Şube önerileri mevcut çek kayıtlarından öğreniliyor (bkz. `bilinenSubeler`).
   const subeOnerileri = bilinenSubeler(cekler, form.banka);
 
-  function kaydet() {
+  async function kaydet() {
     const tutar = parseFloat(form.tutar);
     if (!tutar || tutar <= 0 || !form.vadeTarihi) return;
     // TL karşılığı ve kur SAYI olarak saklanıyor; boşsa hiç yazılmıyor (TRY çeklerde anlamsız).
@@ -1114,12 +1114,14 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
     // TL cariye döviz çek: cariye işlenen TL, çekin TL karşılığıdır — ikinci kez sorulmadı.
     const tlDeger = tl > 0 ? tl : (cariPB === "TRY" && cekPB !== "TRY" ? cariTutar : 0);
     const { cariKur, ...kalanForm } = form;
-    onEkle({
+    // Sonuç beklenir (v1.738.0): sunucu fişi kesemezse (false) form açık ve dolu kalır.
+    const ok = await onEkle({
       ...kalanForm, tutar,
       cariPB, cariTutar,
       tlKarsiligi: tlDeger > 0 ? tlDeger : undefined,
       kur: kurSayi > 0 ? kurSayi : (tlDeger > 0 && tutar > 0 ? Math.round((tlDeger / tutar) * 10000) / 10000 : undefined),
     });
+    if (ok === false) return;
     setForm(BOS_CEK);
     setShowYeni(false);
   }
@@ -1897,9 +1899,10 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                       className="btn-primary"
                       disabled={eksik}
                       style={{ padding: "6px 14px", fontSize: 12, opacity: eksik ? 0.5 : 1 }}
-                      onClick={() => {
+                      onClick={async () => {
                         const banka = (bankalar || []).find((b) => b.id === islemForm.bankaId);
-                        onIslem(c.id, secilenIslem, {
+                        // Sonuç beklenir (v1.738.0): sunucu fişi kesemezse (false) pencere açık kalır.
+                        const ok = await onIslem(c.id, secilenIslem, {
                           cariId: islemForm.cariId,
                           bankaId: islemForm.bankaId,
                           bankaAd: banka ? banka.ad : null,
@@ -1909,6 +1912,7 @@ function CekListesi({ cekler, cariler, bankalar, kasalar, kurlar, gorseller, onE
                           paraBirimi: hedefPB,
                           not: islemForm.not,
                         });
+                        if (ok === false) return;
                         setIslemCek(null);
                       }}
                     >

@@ -490,6 +490,54 @@ const kasaOzet = (m) => (m.kasalar || []).map((k) => `${k.id}:${(k.hareketler ||
   bekle("12: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
   bekle("12: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
 
+  console.log("13) Çek: müşteri çeki alınır (cari satırı + çek kaydı TEK fiş), sonra tahsil (kasa satırı + çekin yeni hâli TEK fiş)");
+  cariler = carilerOku();
+  muhasebe = muhasebeOku();
+  E.tabloBaslangicTam("cariler", derin(cariler));
+  E.tekilTabanAyarla("muhasebe", derin(muhasebe));
+  const cek13 = { id: "cek-13", durum: "Portföyde", tip: "Alınan", cariId: "c-yeni", tutar: 900, paraBirimi: "TRY", vadeTarihi: "2026-12-01", cekNo: "A-13", defter: "Genel", fisNo: E.FIS_YER };
+  const ch13 = { id: "h-cek13", tarih: "2026-10-31", yon: E.hareketYonu("Tahsilat"), tutar: 900, paraBirimi: "TRY", odemeSekli: "Çek", defter: "Genel",
+    aciklama: "Müşteri çeki · No A-13", cekId: "cek-13" };
+  const h13 = E.paraFisiYuku({ fis: { tur: "Tahsilat", onek: "TH", kaynak: "Çek", ek: { cekId: "cek-13" } }, cariId: "c-yeni", hareketler: [ch13],
+    cekler: [{ ...cek13, hareketId: "h-cek13" }], istek: "uu-cek-al", zaman: zamanU, kullaniciAd: "Ali" });
+  const no13 = (await E.fisKesGonder(h13.yuk)).fisNo;
+  bekle("13: TH fişi, cari satırı, çek bulutta (fiş numarasıyla)", [/^TH-\d{9}$/.test(no13),
+    psql(`select (select count(*) from public.car_hareket where fis_id = '${no13}') || '/' || (select veri ->> 'durum' from public.kas_cek where id = 'cek-13') || '/' || (select veri ->> 'fisNo' from public.kas_cek where id = 'cek-13');`)],
+    [true, `1/Portföyde/${no13}`]);
+  const d13 = (x) => E.fisYerTutucuDoldur(x, no13);
+  const cEski13 = cariler.find((c) => c.id === "c-yeni");
+  const cYeni13 = { ...cEski13, hareketler: [...d13(h13.cariHareketleri), ...(cEski13.hareketler || [])] };
+  cariler = cariler.map((c) => (c.id === "c-yeni" ? cYeni13 : c));
+  E.fisKesTabaniKur("cariler", [cEski13], [cYeni13]);
+  const cekYerel = d13({ ...cek13, hareketId: "h-cek13" });
+  muhasebe = { ...muhasebe, cekler: [cekYerel, ...(muhasebe.cekler || [])] };
+  E.fisKesKasaTabaniKur([], [], [cekYerel]);
+  cagrilar.length = 0;
+  await E.supabaseTabloEsitle("cariler", cariler);
+  await E.tekilYaz("muhasebe:data", "muhasebe", muhasebe);
+  bekle("13: eşitleme satır / çek göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|cekler|iptal|hareketIptal|cekIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  // Tahsil (kasaya)
+  const kasaId13 = jsonSorgu("select id from public.kas_hesap order by id").map((x) => x.id)[0];
+  const tahsilH = E.cekTahsilHesapHareketi(cekYerel, { tutar: 900, tarih: "2026-12-01", kullanici: "Ali", cariAd: "Yeni Cari" });
+  const cekTahsil = E.cekIslemUygula(cekYerel, "tahsil", { tarih: "2026-12-01", kullanici: "Ali", hesapHareketId: tahsilH.id, hesapTur: "kasa", hesapId: kasaId13, hesapAd: "Kasa", tutar: 900, paraBirimi: "TRY" });
+  bekle("13: tahsil geçişi uygulanabilir", !!cekTahsil && cekTahsil.durum, "Tahsil Edildi");
+  const ht = E.paraFisiYuku({ fis: { tur: "Çek tahsili", onek: E.paraFisOneki("Çek tahsili"), kaynak: "Çek", ek: { cekId: "cek-13", islem: "tahsil" } }, cariId: null, hareketler: [],
+    kasa: { hesapTur: "kasa", hesapId: kasaId13, hareket: tahsilH }, cekler: [cekTahsil], istek: "uu-cek-tahsil", zaman: zamanU, kullaniciAd: "Ali" });
+  const not = (await E.fisKesGonder(ht.yuk)).fisNo;
+  bekle("13: ÇT fişi, kasa satırı, çek tahsil edildi", [/^ÇT-\d{9}$/.test(not),
+    psql(`select (select count(*) from public.kas_hareket where fis_id = '${not}') || '/' || (select veri ->> 'durum' from public.kas_cek where id = 'cek-13');`)], [true, "1/Tahsil Edildi"]);
+  const dt = (x) => E.fisYerTutucuDoldur(x, not);
+  const kt = { hesapTur: "kasa", hesapId: kasaId13, hareket: dt(ht.ayaklar[0].hareket) };
+  muhasebe = E.hesabaHareketEkle(muhasebe, "kasa", kasaId13, kt.hareket);
+  muhasebe = { ...muhasebe, cekler: muhasebe.cekler.map((c) => (c.id === "cek-13" ? dt(cekTahsil) : c)) };
+  E.fisKesKasaTabaniKur([kt], [], [dt(cekTahsil)]);
+  cagrilar.length = 0;
+  await E.tekilYaz("muhasebe:data", "muhasebe", muhasebe);
+  bekle("13: tahsilden sonra eşitleme satır / çek göndermedi", cagrilar.filter((c) => JSON.stringify(c.p).match(/"(satirlar|hareketler|cekler|iptal|hareketIptal|cekIptal|sil)":\[("|\{)/)).map((c) => c.rpcAdi), []);
+  bekle("13: bekleyen yazma yok", Object.keys(E.bekleyenYazmalariOku()), []);
+  bekle("13: bulut kasa = ekran", kasaOzet(muhasebeOku()), kasaOzet(muhasebe));
+  bekle("13: bulut cari = ekran", cariOzet(carilerOku()), cariOzet(cariler));
+
   console.log(hata ? "── UÇTAN UCA (FİŞ) HATALI ──" : "── uçtan uca (fiş defteri) temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -365,7 +365,7 @@ function MuhasebeModule({ onParaFisiKes, onFisIptal, sunucuFisiMi, kapsam = "gen
   // TEK KAPI: çek kaydı ve cari hareketi birlikte, uygulamanın `cekEkleVeIsle`sinde. Burada
   // ikinci bir yazma yolu bırakmak, birinin cariye işleyip diğerinin işlememesi demekti.
   function cekEkle(veri) {
-    onCekEkleIsle(veri);
+    return onCekEkleIsle(veri);   // v1.738.0: sunucu yolunda Promise<bool> — form sonucu bekler
   }
   // DURUM ARTIK ELLE SEÇİLMİYOR — işlemler penceresinden geçiyor (bkz. `cekIslemYap`). Serbest
   // durum değiştirme, "ciro edildi" yazıp karşı tarafta hiçbir kayıt doğurmamak demekti.
