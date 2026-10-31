@@ -1,0 +1,19 @@
+{
+ "cipler": [
+  "Virman (1)",
+  "Gider (1)"
+ ],
+ "giderSuzgeci": [
+  "GD-261031002"
+ ],
+ "hatalar": [],
+ "kartlar": [
+  "VRM-261031001",
+  "GD-261031002"
+ ],
+ "kasaSatirlari": [
+  "↑ Çıkış TL Kasa 300 ₺ · Şubeye nakit",
+  "↓ Giriş Şube Kasa 300 ₺ · Şubeye nakit"
+ ],
+ "virmanBasligi": "Virman VRM-261031001 · Dahili işlem · T 300 ₺"
+}
