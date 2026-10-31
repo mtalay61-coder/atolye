@@ -206,9 +206,17 @@ function SiparisCard({ mobilBolumAyari, showToast, siparis, cariler, stok, stokR
     setTeslimOnayGoster(true);
   }
 
-  function teslimOnayla() {
+  // YALNIZ KAYIT OLUNCA TEMİZLENİR (v1.732.1): teslim kaydedilemezse (sunucu reddi, stok yetmez, sipariş aşılıyor) girilen
+  // miktarlar yerinde kalır. Önce koşulsuz siliniyordu. Sunucu yanıtı beklenirken ikinci basış yok sayılır (çift fiş olmasın).
+  const teslimSuruyorRef = useRef(false);
+  async function teslimOnayla() {
+    if (teslimSuruyorRef.current) return;
     const teslimler = tumTeslimKalemleri.map(teslimSatiri).filter((t) => t.miktar > 0);
-    onGerceklestir(siparis.id, teslimler, teslimDefter, okutulanKoliler);
+    teslimSuruyorRef.current = true;
+    let oldu = false;
+    try { oldu = await onGerceklestir(siparis.id, teslimler, teslimDefter, okutulanKoliler); }
+    finally { teslimSuruyorRef.current = false; }
+    if (!oldu) { setTeslimOnayGoster(false); return; }
     setTeslimMiktarlar({});
     setTeslimFiyatlar({}); setTeslimPBler({});
     setEkKalemler([]); setEkKalemSiparisi({}); setSiparistenSecAcik(false);

@@ -3729,7 +3729,7 @@ function AtolyeUygulamasi() {
   // SİPARİŞ TESLİM ALMA AYRI DOSYADA (19 Eylül, 2. madde, 10. tur): `081-siparis-teslim.jsx`.
   const siparisGerceklestir = useSiparisTeslim({
     siparisler, stok, cariler, muhasebe, koliler, showToast, aktifKullanici, saveKoliler, fisDefterineKayitYaz, setSiparisler, setStok, setCariler,
-    tanimlar,
+    tanimlar, setFisDefteri, fisGeriAlRef,
   });
 
   // Her modülün atölye paletinden kendine özgü vurgu rengi — gezinme ve başlıkta kullanılır.
