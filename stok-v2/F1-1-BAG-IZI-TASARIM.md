@@ -1,4 +1,4 @@
-# F1.1 — Sipariş iptalinde teslim bağının izi ve kilit sırası (TASARIM — uygulanmadı)
+# F1.1 — Sipariş iptalinde teslim bağının izi ve kilit sırası (TASARIM — 2 Kasım onayıyla geliştirme dalında UYGULANDI; sonuç: VERI-TUTARLILIGI-F1-1.md)
 
 **Durum:** 2 Kasım 2026, dal `claude/f1-1-bag-izi` (1.743.0, c2be715 üzerine). **Üretim kodu ve SQL değişmedi.** Bu dalda yalnız tasarım, başarısızlık testleri, kilit analizi araçları, 1.742.1'e geri dönüş SQL'i ve prosedürü var. Uygulama izni ayrıca verilecek.
 
