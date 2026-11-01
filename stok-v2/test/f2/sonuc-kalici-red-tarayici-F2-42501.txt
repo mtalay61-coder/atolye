@@ -1,0 +1,14 @@
+F2 kalıcı ret — tarayıcı (saat 10 dk ileri) · ilk yazma POST: 6
+  • [BRT.seyir] (gözlem) dakika başına toplam POST: [8,9,10,11,12,13,14,15,16,17]
+  ✓ [BRT.serit] şerit ve hata metni görünür (ret kullanıcıya gösterilir)
+      sonra:    {"once":{"post":7,"deneme":6,"hata":"Buluta yazma yetkisi yok — kimlik koruması açık ama giriş yapılmamış. Sağ üstten","serit":{"sayi":2,"metin":"Buluta gönderilemeyen kayıt var: Tanımlar (7×) Fiş defteri Bu cihazdaki veri güncel; diğer cihazlar eksik görür, kapatmadan önce gönderin. Yeniden dene Hata"}},"sonra":{"post":17,"deneme":17,"hata":"Buluta yazma yetkisi yok — kimlik koruması açık ama giriş yapılmamış. Sağ üstten","serit":{"sayi":4,"metin":"Buluta gönderilemeyen kayıt var: Tanımlar (17×) Fiş defteri (11×) Cari kartları (3×) Stok kartları (3×) Bu cihazdaki veri güncel; diğer cihazlar eksik görür, ka"}}}
+  ✓ [BRT.yerel-korunur] yerel kayıt silinmez
+      sonra:    {"yerelde":true}
+  ✗ [BRT.otomatik-tekrar-yok] kalıcı ret 10 dakikada otomatik yeniden gönderilmez
+      sonra:    {"onceki":7,"sonraki":17,"deneme":17}
+      beklenen: 0
+      çıkan:    10
+  ✗ [BRT.inceleme] şerit kaydı 'inceleme gerekiyor' olarak ayırır (geçici ağ hatasından farklı)
+      sonra:    {"serit":{"sayi":4,"metin":"Buluta gönderilemeyen kayıt var: Tanımlar (17×) Fiş defteri (11×) Cari kartları (3×) Stok kartları (3×) Bu cihazdaki veri güncel; diğer cihazlar eksik görür, ka"}}
+      beklenen: true
+      çıkan:    false

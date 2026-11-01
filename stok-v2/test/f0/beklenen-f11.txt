@@ -1,7 +1,7 @@
 # F1.1 BEKLENEN DURUM (kos-f11.sh bununla karşılaştırır). Satır: kimlik DURUM — F1.1 SQL (bu dal) gerçek sonucu.
 # Kaynak koşu: sonuc-f11-F1.1.txt (2 Kasım, yerel PG, kurallar açık, F11_N=100, F11_ZORLA=3). 1.743.0 durumu: sonuc-f11-1.743.0.txt.
+# F2 (1.744.0) ile E11.birlestirme KIRMIZI → YESIL (teslimli kalem birleştirilmez; sunucu KR002, istemci önler). Kaynak: sonuc-f11-F2.txt.
 # BİLEREK KIRMIZI (açık risk, kullanıcı kuralı 7 — bu aşamada değiştirilmedi):
-#   E11.birlestirme          → F2 (teslimli kalem birleştirme: B silinir, teslimi sahipsiz kalır)
 #   E11.geri-yukleme-kapali  → F5 (yedekten geri yükleme, kurallar kapalı: satırsız fiş + hayalet)
 # Gözlem satırları (puanlanmaz): F11.A-stk_renk_tasi-hareket, F11.A-stk_yaz-fis, F11.C-P8, F11.C-P9 (F1.1 kapsamı dışı açık riskler).
 # Doğal zorlama (F11.C-*-kilit) olasılıklı; F1.1 ile statik sıra (A yoklaması) da tamam olduğundan 0 beklenir.
@@ -76,7 +76,7 @@ E11.siparis-iptali YESIL
 E11.S1-fis-iptali YESIL
 E11.S2a-eszamanli YESIL
 E11.S2a-ters-sira YESIL
-E11.birlestirme KIRMIZI
+E11.birlestirme YESIL
 E11.bayat-satir YESIL
 E11.geri-yukleme-kapali KIRMIZI
 E11.geri-yukleme-acik YESIL

@@ -1,0 +1,14 @@
+══ 1) F1 kurulu
+── F0 durumu beklenenle AYNI ──
+══ 2) geri dönüş
+── /home/user/atolye/stok-v2/geri-donus-F1.sql (Editor gibi, parça parça)
+   25 parça
+   fis_kalem_kilitle var mı: 0
+── F0 durumu beklenenle AYNI ──
+══ 3) F1 yeniden
+── /home/user/atolye/stok-v2/editor/18-fis-defteri.sql (Editor gibi, parça parça)
+   66 parça
+── /home/user/atolye/stok-v2/editor/20-gece-denetimi.sql (Editor gibi, parça parça)
+   4 parça
+── F0 durumu beklenenle AYNI ──
+── GERİ DÖNÜŞ SINAMASI TEMİZ ──

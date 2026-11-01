@@ -1,13 +1,14 @@
 ══ 1) kurulum
    REF_DB atolye_f11_ref1741: 1.742.1 kurulumu tamam (100 TAMAM)
    GERI_DB atolye_f11_geri: bugünkü SQL (R1b tetikleyicisi: 1, F1: 1, iz sütunları: 3)
-   bugünkü istemciyle veri — F0/F1: ── F0 durumu beklenenle AYNI ──
+   bugünkü istemciyle veri — F0/F1: ── F0 SAPMA VAR ──
    F1.1 testleri (veri): ── t-f11.js: 14 yeşil, 0 kırmızı ──
    fiş: 116 · iz kaydı: 2
 ══ 2) geri dönüş SQL'i (Editor gibi: her ifade ayrı istek)
-   61 parça çalıştı
+   69 parça çalıştı
 ══ 3) doğrulama
    a) dosyadaki bölümler 20834ea ile birebir:
+      15-duzeltme alt_yaz: aynı
       18-fis-defteri: aynı
       20-gece-denetimi: aynı
    b) işlev / tetikleyici / kısıt farkı (REF ↔ GERI):
@@ -45,18 +46,18 @@
        ✗ [E11.geri-yukleme-acik] AÇIK RİSK (F5) — kurallar açık: geri yüklemeden sonra karşılanan = hesap, D1 / D2 / D6 temiz
    e) denetim (bütün veri; bilgi):
       D1a_karsilanan_hareketten_farkli 4
-      D1b_hayalet_karsilanan 6
+      D1b_hayalet_karsilanan 7
       D1c_ters_yonlu_net_hareket 1
-      D2a_sahipsiz_hareket_kalem_yok 18
-      D2b_sahipsiz_hareket_siparis_yok 14
+      D2a_sahipsiz_hareket_kalem_yok 2
+      D2b_sahipsiz_hareket_siparis_yok 1
       D2c_hareket_kalem_siparis_uyusmaz 1
-      D2d_fis_siparis_yok 14
+      D2d_fis_siparis_yok 1
       D3_hareket_urunu_kalemden_farkli 1
-      D3b_hareket_renk_beden_kalemden_farkli 2
-      D4a_onaysiz_fazla_teslim 3
+      D3b_hareket_renk_beden_kalemden_farkli 1
+      D4a_onaysiz_fazla_teslim 5
       D4b_isaretli_fazla_teslim 3
       D5a_bagi_cozulmus_teslim 2
-      D5b_durum_teslimle_celisiyor 28
+      D5b_durum_teslimle_celisiyor 34
       D5c_bagi_cozulmus_izsiz 1
       D6a_satirsiz_stok_fisi 3
       D6b_iptal_fisin_gecerli_satiri 1

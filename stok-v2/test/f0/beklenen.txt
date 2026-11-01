@@ -1,5 +1,8 @@
 # F0 BEKLENEN DURUM — F1 (1.743.0) üzerinde; F1 öncesi (1.742.3, 2a81e1f) durumu sonuc-1.742.3.txt'te.
 # F1 ile KIRMIZI → YESIL: D1.eski-eszamanli, D1.eski-tekrar-iptal, D1.karisik-yeni-once, D1.alis-eski-eszamanli; F1.* eklendi.
+# F2 (1.744.0) ile KIRMIZI → YESIL: D2.birlestirme, D2.teslimli-sil, D3.renk-degisir, D3.miktar-teslim-alti, Y.kart-referans (sunucu KR002/KR003/KR004 reddi).
+# F2 ile t-denetim / t-kalem-bag / t-yedek enjeksiyonları eski veriyi session_replication_role = replica ile taklit eder (tetikleyiciler artık o bozuk hâli üretmeye izin vermiyor);
+# D2/Y.denetim-yakalar artık D2a = 0 bekler (sahipsiz kalem bağı üretilemiyor).
 # Her satır: kontrol-kimliği DURUM  (KIRMIZI = hata bugün yeniden üretiliyor;
 # YESIL = bugün doğru olan ve korunması gereken davranış / denetimin kendi doğrulaması).
 # F1–F8 her aşamada ilgili satırlar KIRMIZI → YESIL çevrilir; başka hiçbir satır değişmemeli (koşucu farkı gösterir).
@@ -13,11 +16,11 @@ D1.yeni-iptal-tekrar YESIL
 D1.alis-eski-eszamanli YESIL
 D1.denetim-yakalar YESIL
 # D2–D3 — teslimli kalemin bütünlüğü (t-kalem-bag.js)
-D2.birlestirme KIRMIZI
-D2.teslimli-sil KIRMIZI
+D2.birlestirme YESIL
+D2.teslimli-sil YESIL
 D2.teslimsiz-sil YESIL
-D3.renk-degisir KIRMIZI
-D3.miktar-teslim-alti KIRMIZI
+D3.renk-degisir YESIL
+D3.miktar-teslim-alti YESIL
 D3.miktar-teslim-ustu YESIL
 D2.denetim-yakalar YESIL
 # D4 — miktarı aşan teslim (t-fazla.js; alış satırları gözlem)
@@ -33,7 +36,7 @@ D5.denetim-yakalar YESIL
 # Yedekten geri yükleme (t-yedek.js)
 Y.tam-kurallar-kapali KIRMIZI
 Y.tam-kurallar-acik KIRMIZI
-Y.kart-referans KIRMIZI
+Y.kart-referans YESIL
 Y.denetim-yakalar YESIL
 # Sürüm kontrolü (t-surum.js)
 S.mekanizma-var KIRMIZI
