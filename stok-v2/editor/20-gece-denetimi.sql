@@ -72,8 +72,10 @@ begin
            trim_scale(round(greatest(0, case when s.tip = 'Alış' then coalesce(t.toplam, 0) else -coalesce(t.toplam, 0) end), 3)) as hesap
       from public.siparis_kalemleri k
       left join public.siparisler s on s.id::text = k.siparis_id::text
-      left join (select h.kalem_id, sum(h.miktar) as toplam, count(*) as sayi from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
-                  where not h.iptal and not f.iptal and h.kalem_id is not null group by h.kalem_id) t on t.kalem_id = k.id::text)
+      left join (select coalesce(h.kalem_id, h.gecmis_kalem_id) as kalem_id, sum(h.miktar) as toplam, count(*) as sayi
+                   from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
+                  where not h.iptal and not f.iptal and coalesce(h.kalem_id, h.gecmis_kalem_id) is not null
+                  group by coalesce(h.kalem_id, h.gecmis_kalem_id)) t on t.kalem_id = k.id::text)
   select jsonb_build_object(
       'hayalet', jsonb_build_object('sayi', (select count(*) from kd where coalesce(sayi, 0) = 0 and karsilanan > 0),
         'ornek', coalesce((select jsonb_agg(x) from (select jsonb_build_object('kalem', id, 'siparisNo', siparis_no, 'karsilanan', karsilanan) x

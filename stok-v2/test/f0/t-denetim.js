@@ -80,10 +80,19 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
       const s = sip("h10", [T.kalemObj(`${ON}-h10k`, 20, 0)]);
       T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h10k`, adet: 25, ekran: 0, istek: `${ON}-h10a` })); durumYaz(s, "Tamamlandı");
     }],
-    ["DN.bag-cozulmus", "teslimli sipariş iptal edilir (fis_bag_coz) — bağ kopar, karşılanan hayalet kalır", { D5a_bagi_cozulmus_teslim: 1, D1b_hayalet_karsilanan: 1 }, () => {
+    // F1.1 (2 Kasım, bilerek değişti): bağ geçmiş sütunlara taşınır → teslim geçmişi kalemde kalır; artık hayalet DEĞİL, D5a bilgi.
+    // 1.743.0'da beklenen { D5a: 1, D1b: 1 } idi (bağ kopuyor, karşılanan hayalet kalıyordu).
+    ["DN.bag-cozulmus", "teslimli sipariş iptal edilir (fis_bag_coz) — bağ geçmişe taşınır (izli), hayalet yok", { D5a_bagi_cozulmus_teslim: 1 }, () => {
       const s = sip("h11", [T.kalemObj(`${ON}-h11k`, 10, 0)]);
       T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h11k`, adet: 3, ekran: 0, istek: `${ON}-h11a` }));
       T.rpc("fis_bag_coz", { siparisId: s.id, siparisNo: s.siparisNo }); durumYaz(s, "İptal");
+    }],
+    // F1.1 öncesi (ya da 1.742.1 sunucusunda) çözülmüş bağ: iz yok → D5c + hayalet (tahminle bağ kurulmaz). Tetikleyicisiz kurulur.
+    ["DN.bag-cozulmus-izsiz", "izsiz bağı çözülmüş teslim (eski kayıt)", { D5c_bagi_cozulmus_izsiz: 1, D1b_hayalet_karsilanan: 1 }, () => {
+      const s = sip("h11z", [T.kalemObj(`${ON}-h11zk`, 10, 0)]);
+      const r = T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h11zk`, adet: 3, ekran: 0, istek: `${ON}-h11za` }));
+      T.psql(`set session_replication_role = replica; update public.stk_hareket set siparis_id = null, kalem_id = null, siparis_no = '${s.siparisNo} (iptal)'
+        where fis_id = '${r.sonuc.fisNo}'; set session_replication_role = origin;`); durumYaz(s, "İptal");
     }],
     ["DN.durum-celiskisi", "10 / 10 teslimli sipariş 'Bekliyor'", { D5b_durum_teslimle_celisiyor: 1 }, () => {
       const s = sip("h12", [T.kalemObj(`${ON}-h12k`, 10, 0)]);
