@@ -569,19 +569,25 @@ declare
   v_idler text[];
   v_once jsonb;
   v_kalem jsonb;
+  v_bagli text;
 begin
   perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
   -- KİLİT SIRASI 2 — fişin (ve bağlı fişin) hareketlerindeki + alt satırlarındaki kalemler, kimlik sırasıyla, FİŞ SATIRINDAN ve
-  -- İLK YAZMADAN ÖNCE (v1.743.0, F1). Kimlikler kilitsiz okunur: hareketin kalem_id'si yalnız fis_bag_coz'un dar kipinde boşalır
-  -- (o zaman kilit fazladan bir kalem tutar, eksik değil); bağlı fiş başlıktan okunur.
+  -- İLK YAZMADAN ÖNCE (v1.743.0, F1). Kimlikler kilitsiz okunur: fis_bag_coz geçerli bağı geçmişe taşırken iki sütundan biri dolu
+  -- kalır (coalesce) — eşzamanlı sipariş iptalinin önünde ya da arkasında aynı kalem bulunur; bağlı fiş başlıktan okunur.
   select coalesce(array_agg(distinct x order by x), '{}'::text[]) into v_idler from (
-    select hh.kalem_id as x from public.stk_hareket hh
+    -- F1.1: geçmiş bağ da (sipariş iptalinden sonra iptal edilen fişin kalemi — S1; uygulama o anda alt göndermez)
+    select coalesce(hh.kalem_id, hh.gecmis_kalem_id) as x from public.stk_hareket hh
      where hh.fis_id in (select ff.id from public.stk_fis ff where ff.id = no union select ff.bagli_fis from public.stk_fis ff where ff.id = no)
-       and hh.kalem_id is not null
+       and coalesce(hh.kalem_id, hh.gecmis_kalem_id) is not null
     union all select unnest(public.fis_kalem_idleri(jsonb_build_object('alt', p -> 'alt')))) y;
   v_once := public.fis_kalem_kilitle(v_idler);
-  -- KİLİT SIRASI 3 — iptal edilen fiş satırı (yazma değil)
-  select * into f from public.stk_fis where id = no for update;
+  -- KİLİT SIRASI 3 — iptal edilen fiş VE bağlı fişi, KİMLİK SIRASIYLA, ilk yazmadan önce (F1.1). Önceden yalnız X kilitlenip bağlı
+  -- fiş yazma sırasında kilitleniyordu: aynı anda ana fişi ve makbuzu iptal eden iki cihaz ters sırayla kilitleniyordu
+  -- (t-f11-kilit P6b: siparişsiz peşin satışta kalem kilidi ikisini sıralamıyor). Bağlı fiş kimliği kesilirken yazılır, değişmez.
+  select ff.bagli_fis into v_bagli from public.stk_fis ff where ff.id = no;
+  perform 1 from public.stk_fis ff where ff.id = no or ff.id = v_bagli order by ff.id for update;
+  select * into f from public.stk_fis where id = no;
   if not found then
     raise exception 'Fiş bulunamadı: %', coalesce(no, '(yok)') using errcode = 'P0002';
   end if;

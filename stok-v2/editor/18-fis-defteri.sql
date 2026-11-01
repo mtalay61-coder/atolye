@@ -447,15 +447,18 @@ declare
   v_idler text[];
   v_once jsonb;
   v_kalem jsonb;
+  v_bagli text;
 begin
   perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
   select coalesce(array_agg(distinct x order by x), '{}'::text[]) into v_idler from (
-    select hh.kalem_id as x from public.stk_hareket hh
+    select coalesce(hh.kalem_id, hh.gecmis_kalem_id) as x from public.stk_hareket hh
      where hh.fis_id in (select ff.id from public.stk_fis ff where ff.id = no union select ff.bagli_fis from public.stk_fis ff where ff.id = no)
-       and hh.kalem_id is not null
+       and coalesce(hh.kalem_id, hh.gecmis_kalem_id) is not null
     union all select unnest(public.fis_kalem_idleri(jsonb_build_object('alt', p -> 'alt')))) y;
   v_once := public.fis_kalem_kilitle(v_idler);
-  select * into f from public.stk_fis where id = no for update;
+  select ff.bagli_fis into v_bagli from public.stk_fis ff where ff.id = no;
+  perform 1 from public.stk_fis ff where ff.id = no or ff.id = v_bagli order by ff.id for update;
+  select * into f from public.stk_fis where id = no;
   if not found then
     raise exception 'Fiş bulunamadı: %', coalesce(no, '(yok)') using errcode = 'P0002';
   end if;
