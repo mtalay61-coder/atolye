@@ -388,14 +388,21 @@ begin
   return new;
 end $$;
 
--- KARŞILANAN HESABI (v1.743.0, F1 — D1): kaleme bağlı GEÇERLİ hareketlerin (satır ve fişi iptal değil) toplamı; satışta çıkış
+-- KARŞILANAN HESABI (v1.743.0, F1 — D1; F1.1: geçerli VE geçmiş bağ): kaleme bağlı GEÇERLİ hareketlerin (satır ve fişi iptal değil) toplamı; satışta çıkış
 -- (−), alışta giriş (+); pozitif (013 siparisKarsilananlariHesapla ile aynı kural). Kalem / sipariş yoksa 0.
 create or replace function public.fis_kalem_hesap(p_kalem text) returns numeric
 language sql stable security definer set search_path = public as $$
   select trim_scale(round(greatest(0, case when coalesce((select s.tip from public.siparisler s join public.siparis_kalemleri k on k.siparis_id::text = s.id::text
                                                 where k.id::text = p_kalem), '') = 'Alış' then t.toplam else -t.toplam end), 3))
-    from (select coalesce(sum(h.miktar), 0) as toplam from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
-           where h.kalem_id = p_kalem and not h.iptal and not f.iptal) t
+    from (select coalesce(sum(x.miktar), 0) as toplam from (
+            -- GEÇERLİ bağ
+            select h.miktar from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
+             where h.kalem_id = p_kalem and not h.iptal and not f.iptal
+            union all
+            -- GEÇMİŞ bağ (F1.1): siparişi iptal edilmiş teslim kalemde kalır (karar A); hareket ya da fişi iptalse SAYILMAZ (kural 2).
+            -- `kalem_id is null` kısıtla zaten doğru; açık yazıldı: bir satır iki bağdan birden sayılamaz.
+            select h.miktar from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
+             where h.gecmis_kalem_id = p_kalem and h.kalem_id is null and not h.iptal and not f.iptal) x) t
 $$;
 
 -- Yükte geçen sipariş kalemleri: stok satırlarının `kalemId`si (bağlı fiş dahil) + alt.siparis_kalemleri satırları
@@ -421,7 +428,7 @@ language sql immutable as $$
 $$;
 
 -- ÖN KİLİT (KİLİT SIRASI 3): kalemler KİMLİK SIRASIYLA kilitlenir; işlem öncesi fotoğraf döner:
--- { kalemId: { karsilanan, hesap (önceki geçerli hareketlerden), hareketVar (iptal edilmiş dahil herhangi bir hareket) } }
+-- { kalemId: { karsilanan, hesap (önceki geçerli hareketlerden), hareketVar (iptal edilmiş dahil herhangi bir hareket; F1.1: geçmiş bağ dahil) } }
 -- YAZMA YAPMAZ (degisiklik.tekil'e dokunmaz) — ilk yazmadan önce çağrılır.
 create or replace function public.fis_kalem_kilitle(p_idler text[]) returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -433,7 +440,7 @@ begin
   for r in select k.id::text as id, coalesce(k.karsilanan, 0) as karsilanan
              from public.siparis_kalemleri k where k.id::text = any(p_idler) order by k.id for update of k loop
     sonuc := sonuc || jsonb_build_object(r.id, jsonb_build_object('karsilanan', r.karsilanan, 'hesap', public.fis_kalem_hesap(r.id),
-      'hareketVar', exists (select 1 from public.stk_hareket h where h.kalem_id = r.id)));
+      'hareketVar', exists (select 1 from public.stk_hareket h where h.kalem_id = r.id or h.gecmis_kalem_id = r.id)));
   end loop;
   return sonuc;
 end $$;

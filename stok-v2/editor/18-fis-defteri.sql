@@ -296,8 +296,12 @@ create or replace function public.fis_kalem_hesap(p_kalem text) returns numeric
 language sql stable security definer set search_path = public as $$
   select trim_scale(round(greatest(0, case when coalesce((select s.tip from public.siparisler s join public.siparis_kalemleri k on k.siparis_id::text = s.id::text
                                                 where k.id::text = p_kalem), '') = 'Alış' then t.toplam else -t.toplam end), 3))
-    from (select coalesce(sum(h.miktar), 0) as toplam from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
-           where h.kalem_id = p_kalem and not h.iptal and not f.iptal) t
+    from (select coalesce(sum(x.miktar), 0) as toplam from (
+            select h.miktar from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
+             where h.kalem_id = p_kalem and not h.iptal and not f.iptal
+            union all
+            select h.miktar from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
+             where h.gecmis_kalem_id = p_kalem and h.kalem_id is null and not h.iptal and not f.iptal) x) t
 $$;
 
 create or replace function public.fis_kalem_idleri(p jsonb) returns text[]
@@ -328,7 +332,7 @@ begin
   for r in select k.id::text as id, coalesce(k.karsilanan, 0) as karsilanan
              from public.siparis_kalemleri k where k.id::text = any(p_idler) order by k.id for update of k loop
     sonuc := sonuc || jsonb_build_object(r.id, jsonb_build_object('karsilanan', r.karsilanan, 'hesap', public.fis_kalem_hesap(r.id),
-      'hareketVar', exists (select 1 from public.stk_hareket h where h.kalem_id = r.id)));
+      'hareketVar', exists (select 1 from public.stk_hareket h where h.kalem_id = r.id or h.gecmis_kalem_id = r.id)));
   end loop;
   return sonuc;
 end $$;
