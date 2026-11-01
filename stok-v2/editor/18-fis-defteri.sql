@@ -378,6 +378,9 @@ declare
   sonuc jsonb := '{}'::jsonb;
 begin
   if coalesce(array_length(p_idler, 1), 0) = 0 then return sonuc; end if;
+  perform 1 from public.siparisler s
+   where s.id::text in (select k.siparis_id::text from public.siparis_kalemleri k where k.id::text = any(p_idler))
+   order by s.id for key share;
   for r in select k.id::text as id, coalesce(k.karsilanan, 0) as karsilanan
              from public.siparis_kalemleri k where k.id::text = any(p_idler) order by k.id for update of k loop
     sonuc := sonuc || jsonb_build_object(r.id, jsonb_build_object('karsilanan', r.karsilanan, 'hesap', public.fis_kalem_hesap(r.id),
@@ -475,6 +478,17 @@ begin
   if v_eksik is not null then
     raise exception 'Var olmayan sipariş kalemine teslim yazılamaz (kalem %) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin', v_eksik
       using errcode = 'KR005';
+  end if;
+  select string_agg(distinct x.kalem || ' (' || coalesce(x.urun, '') || ' ' || coalesce(x.renk, '') || ' ≠ kalem ' || coalesce(k.urun_id::text, '') || ' ' || coalesce(k.renk, '') || ')', ', ')
+    into v_eksik
+    from (select s ->> 'kalemId' as kalem, s ->> 'urunId' as urun, s ->> 'renk' as renk from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
+          union all select s ->> 'kalemId', s ->> 'urunId', s ->> 'renk' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s) x
+    join public.siparis_kalemleri k on k.id::text = x.kalem
+   where (x.urun is not null and k.urun_id is not null and x.urun <> k.urun_id::text)
+      or (x.renk is not null and k.renk is not null and lower(btrim(x.renk)) <> lower(btrim(k.renk)));
+  if v_eksik is not null then
+    raise exception 'Teslim edilen ürün / renk sipariş kalemiyle uyuşmuyor: % — sipariş başka cihazda değişmiş olabilir; yenileyip yeniden deneyin', v_eksik
+      using errcode = 'KR003';
   end if;
 
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
@@ -649,6 +663,78 @@ begin
   perform set_config('fis.duzen', '', true);
   perform set_config('fis.kapi', '', true);
   return jsonb_build_object('varyant', n_varyant, 'tasinanHareket', n_tasinan);
+end $$;
+
+create or replace function public.alt_yaz(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  t text;
+  d jsonb;
+  satirlar jsonb;
+  sutunlar text;
+  atamalar text;
+  silinecek text[];
+  n_yaz int;
+  n_sil int;
+  sonuc jsonb := '{}'::jsonb;
+begin
+  foreach t in array array['siparis_kalemleri', 'uretim_atamalari'] loop
+    d := case when jsonb_typeof(p) = 'object' then p -> t end;
+    continue when jsonb_typeof(d) <> 'object';
+    satirlar := public.stk_dizi(d -> 'satirlar');
+    if t = 'siparis_kalemleri' then
+      perform 1 from public.siparisler s where s.id::text in (
+          select x ->> 'siparis_id' from jsonb_array_elements(satirlar) x
+          union select k.siparis_id::text from public.siparis_kalemleri k
+           where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil'))))
+        order by s.id for key share;
+      perform 1 from public.siparis_kalemleri k
+       where k.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')))
+       order by k.id for update;
+    else
+      perform 1 from public.uretim u where u.id::text in (
+          select x ->> 'uretim_id' from jsonb_array_elements(satirlar) x
+          union select a.uretim_id::text from public.uretim_atamalari a
+           where a.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil'))))
+        order by u.id for key share;
+      perform 1 from public.uretim_atamalari a
+       where a.id::text in (select x ->> 'id' from jsonb_array_elements(satirlar) x union select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')))
+       order by a.id for update;
+    end if;
+  end loop;
+  for t, d in select key, value from jsonb_each(case when jsonb_typeof(p) = 'object' then p else '{}'::jsonb end) loop
+    if t not in ('siparis_kalemleri', 'uretim_atamalari') then
+      raise exception 'Bu tablo alt_yaz ile yazılamaz: %', t using errcode = '42501';
+    end if;
+    perform public.stk_yetki(array[case t when 'siparis_kalemleri' then 'siparis' else 'uretim' end, 'fisler', 'stok', 'cari'], 'kaydetme');
+    satirlar := public.stk_dizi(d -> 'satirlar');
+    n_yaz := 0;
+    n_sil := 0;
+    if jsonb_array_length(satirlar) > 0 then
+      if exists (select 1 from jsonb_array_elements(satirlar) x where coalesce(x ->> 'id', '') = '') then
+        raise exception '% satırında kimlik yok', t using errcode = '22023';
+      end if;
+      select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
+             string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
+        into sutunlar, atamalar
+      from information_schema.columns c
+      where c.table_schema = 'public' and c.table_name = t
+        and c.column_name in (select distinct jsonb_object_keys(x) from jsonb_array_elements(satirlar) x where jsonb_typeof(x) = 'object');
+      execute format(
+        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_array_elements(%L::jsonb) with ordinality as e(x, n), '
+        || 'jsonb_populate_record(null::public.%I, e.x) r order by r.id, e.n desc) s '
+        || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
+        t, sutunlar, sutunlar, satirlar::text, t);
+      get diagnostics n_yaz = row_count;
+    end if;
+    silinecek := array(select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')));
+    if array_length(silinecek, 1) > 0 then
+      execute format('delete from public.%I where id::text = any(%L::text[])', t, silinecek);
+      get diagnostics n_sil = row_count;
+    end if;
+    sonuc := sonuc || jsonb_build_object(t, jsonb_build_object('yazilan', n_yaz, 'silinen', n_sil));
+  end loop;
+  return sonuc;
 end $$;
 
 create or replace view public.fis_listesi with (security_invoker = true) as
