@@ -3799,11 +3799,12 @@ function AtolyeUygulamasi() {
     }
     const cekDegisti = sonuc.cekDegisti || kasaCekiDegisti;
     const kasaSilinen = [...new Set([...k.silinen, ...kasaNoIdleri])];
+    let iptalYaniti = null;
     try {
-      // Karşılanan DEĞİŞİMİ de gider (v1.742.2, R1): fişin düşürdüğü adet (`kalemDusumu`, kırpmasız) — sunucu güncel değerden düşer;
-      // aynı anda yapılan başka teslim ezilmez.
+      // Karşılanan DEĞİŞİMİ de gider (v1.742.2, R1): fişin düşürdüğü adet (`kalemDusumu`, kırpmasız). v1.743.0 (F1) sunucusu artışı
+      // yok sayar ve karşılananı hareketlerden hesaplar; alan 1.742.2 / 1.742.3 sunucusu için duruyor.
       const kalemArtisi = fisKesKalemArtisi(Object.entries(sonuc.kalemDusumu || {}).map(([a, d]) => ({ id: a.split("|")[1], miktar: -d })));
-      await fisIptalGonder(sunucuFisi.fisNo, (fis && fis.sebep) || "Geri alındı", altSatirlar.length ? { siparis_kalemleri: { satirlar: altSatirlar, artis: kalemArtisi } } : null);
+      iptalYaniti = await fisIptalGonder(sunucuFisi.fisNo, (fis && fis.sebep) || "Geri alındı", altSatirlar.length ? { siparis_kalemleri: { satirlar: altSatirlar, artis: kalemArtisi } } : null);
     } catch (e) {
       showToast(`"${sunucuFisi.fisNo}" iptal edilemedi — hiçbir değişiklik yapılmadı (${String((e && e.message) || e).slice(0, 160)})`);
       return false;
@@ -3826,9 +3827,12 @@ function AtolyeUygulamasi() {
       if (cekDegisti) yazimiIzle(tekilYaz("muhasebe:data", "muhasebe", yeniMuhasebe), "Muhasebe", yeniMuhasebe);
     }
     if (etkSip.yeniler.length > 0) {
-      fisKesTabaniKur("siparisler", etkSip.eskiler, etkSip.yeniler, { anaDahil: false });
-      setSiparisler(sonuc.siparisler);
-      yazimiIzle(tabloYaz("siparis:data", "siparisler", sonuc.siparisler), "Siparişler", sonuc.siparisler);
+      // Karşılanan SUNUCUNUN değeri (v1.743.0, F1): fis_iptal yanıtındaki `kalemler` (eski sunucuda yok → fisGeriAl hesabı aynen).
+      const kalemlerS = iptalYaniti && iptalYaniti.kalemler;
+      const siparislerS = fisKesKalemleriUygula(sonuc.siparisler, kalemlerS);
+      fisKesTabaniKur("siparisler", etkSip.eskiler, fisKesKalemleriUygula(etkSip.yeniler, kalemlerS), { anaDahil: false });
+      setSiparisler(siparislerS);
+      yazimiIzle(tabloYaz("siparis:data", "siparisler", siparislerS), "Siparişler", siparislerS);
     }
     const iptalZamani = new Date().toISOString();
     setFisDefteri((onceki) => (onceki || []).map((f) => (f && nolar.has(f.fisNo) && !f.iptal ? { ...f, iptal: true, iptalZamani } : f)));

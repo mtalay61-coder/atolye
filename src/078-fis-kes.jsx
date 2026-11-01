@@ -85,13 +85,53 @@ function fisKesAltFarki(tablo, cocukTablo, eski, yeni) {
 }
 
 // Gönderici. Aynı `istek` ile tekrar çağrılabilir (ağ yeniden denemesi): sunucu ikinci kez yazmaz, ilk numarayı döner.
+// İSTEMCİ KİMLİĞİ (v1.743.0, F1 — VERI-TUTARLILIGI-F0.md § 1 / F7): her fiş isteği sürümünü taşır. Sunucu bugün yalnız kabul
+// eder (zorlama F7'de, `stk_ayar.min_istemci_surum`); eski sunucu bilinmeyen alanı yok sayar — iki yönde de geriye uyumlu.
+const fisIstemciBilgisi = () => ({ surum: SURUM });
 async function fisKesGonder(yuk) {
-  const r = await supabaseIstek("rpc/fis_kes", { method: "POST", body: JSON.stringify({ p: yuk }) });
+  const r = await supabaseIstek("rpc/fis_kes", { method: "POST", body: JSON.stringify({ p: { ...yuk, istemci: fisIstemciBilgisi() } }) });
   if (!r || !r.fisNo) throw new Error("Sunucu fiş numarası döndürmedi");
+  fisKarsilananDuzeltmeBildir(r, "fis_kes");
   return r;
 }
 async function fisIptalGonder(no, sebep, alt) {
-  return supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}) } }) });
+  const r = await supabaseIstek("rpc/fis_iptal", { method: "POST", body: JSON.stringify({ p: { no, sebep: sebep || null, ...(alt ? { alt } : {}), istemci: fisIstemciBilgisi() } }) });
+  fisKarsilananDuzeltmeBildir(r, "fis_iptal");
+  return r;
+}
+
+// SUNUCUNUN KARŞILANANI (v1.743.0, F1 — karşılananın tek yazarı sunucu): fis_kes / fis_iptal yanıtındaki `kalemler`
+// ([{ id, karsilanan }]) yerel siparişlere işlenir. Yerel hesap (081 `Math.min(miktar, …)`, 079 fisGeriAl) yalnız ESKİ sunucuda
+// (yanıtta `kalemler` yok) geçerli kalır: o zaman liste aynen döner. Miktarı aşan teslimde sunucu kırpmaz (24 / 20) — teslimi
+// yapan cihaz da yenilemeden 24'ü görür. Saf; değişiklik yoksa aynı dizi döner.
+function fisKesKalemleriUygula(siparisler, kalemler) {
+  if (!Array.isArray(siparisler) || !Array.isArray(kalemler) || kalemler.length === 0) return siparisler;
+  const deger = new Map(kalemler.filter((k) => k && k.id != null).map((k) => [String(k.id), Number(k.karsilanan) || 0]));
+  let degisti = false;
+  const sonuc = siparisler.map((s) => {
+    if (!s || !Array.isArray(s.kalemler)) return s;
+    let d = false;
+    const kalemler2 = s.kalemler.map((k) => {
+      if (!k || !deger.has(String(k.id))) return k;
+      const v = deger.get(String(k.id));
+      if ((k.karsilanan || 0) === v) return k;
+      d = true;
+      return { ...k, karsilanan: v };
+    });
+    if (!d) return s;
+    degisti = true;
+    return { ...s, kalemler: kalemler2 };
+  });
+  return degisti ? sonuc : siparisler;
+}
+// ÖNCEDEN VAR OLAN FARKIN DEĞİŞMESİ (kullanıcı kararı 1 Kasım, 2): sunucu bir kalemin hareketlerle uyuşmayan karşılananını bu
+// işlemde düzelttiyse (ya da hayaleti koruyup değişimi eklediyse) yanıtta `karsilananDuzeltme` gelir — günlüğe düşer (sunucuda da
+// fis_karsilanan_iz + gece denetimi). Kullanıcıyı işlem anında durdurmaz.
+function fisKarsilananDuzeltmeBildir(r, islem) {
+  const liste = (r && Array.isArray(r.karsilananDuzeltme)) ? r.karsilananDuzeltme : [];
+  if (!liste.length || typeof gunlukYaz !== "function") return;
+  gunlukYaz(`Karşılanan düzeltildi (${r.fisNo || "?"}): ${liste.map((x) => `${x.id} ${x.onceki} → ${x.yeni}${x.tur === "hayalet_korundu" ? " (hareketsiz önceki değer korundu)" : ""}`).join(" · ")}`,
+    "siparis", { fisNo: r.fisNo || null, islem, duzeltme: liste });
 }
 
 // ---- Fark tabanı (025 `_sonHal`) — sunucuya yazılmış kayıtlar "buluttaki hâl" olarak işaretlenir ----

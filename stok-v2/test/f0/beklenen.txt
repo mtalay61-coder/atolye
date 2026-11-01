@@ -1,14 +1,16 @@
-# F0 BEKLENEN DURUM — 1.742.3 (commit 2a81e1f) üzerinde. Her satır: kontrol-kimliği DURUM  (KIRMIZI = hata bugün yeniden üretiliyor;
+# F0 BEKLENEN DURUM — F1 (1.743.0) üzerinde; F1 öncesi (1.742.3, 2a81e1f) durumu sonuc-1.742.3.txt'te.
+# F1 ile KIRMIZI → YESIL: D1.eski-eszamanli, D1.eski-tekrar-iptal, D1.karisik-yeni-once, D1.alis-eski-eszamanli; F1.* eklendi.
+# Her satır: kontrol-kimliği DURUM  (KIRMIZI = hata bugün yeniden üretiliyor;
 # YESIL = bugün doğru olan ve korunması gereken davranış / denetimin kendi doğrulaması).
 # F1–F8 her aşamada ilgili satırlar KIRMIZI → YESIL çevrilir; başka hiçbir satır değişmemeli (koşucu farkı gösterir).
 #
 # D1 — karşılanan = geçerli hareket toplamı (t-karsilanan.js)
-D1.eski-eszamanli KIRMIZI
-D1.eski-tekrar-iptal KIRMIZI
-D1.karisik-yeni-once KIRMIZI
+D1.eski-eszamanli YESIL
+D1.eski-tekrar-iptal YESIL
+D1.karisik-yeni-once YESIL
 D1.yeni-eszamanli YESIL
 D1.yeni-iptal-tekrar YESIL
-D1.alis-eski-eszamanli KIRMIZI
+D1.alis-eski-eszamanli YESIL
 D1.denetim-yakalar YESIL
 # D2–D3 — teslimli kalemin bütünlüğü (t-kalem-bag.js)
 D2.birlestirme KIRMIZI
@@ -41,6 +43,20 @@ S.eski-yuk-red KIRMIZI
 K.ters-sira-kilitlenmez YESIL
 K.fis-ile-duzenleme YESIL
 K.kilitlenmede-veri-tutarli YESIL
+# F1 — karşılananın tek yazarı (t-f1.js). F1 öncesi kırmızıydı: yanit-kalemler, iptal-yanit-kalemler, onceden-fark-raporlanir,
+# hayalet-korunur, gece-raporu, iz-erisimi, G1-yeni-kodla (deadlock). Öncesi de yeşildi: istemci-alani-kabul, hayalet-dokunulmaz,
+# tekil-tutucu, iptal-kes-eszamanli.
+F1.istemci-alani-kabul YESIL
+F1.yanit-kalemler YESIL
+F1.iptal-yanit-kalemler YESIL
+F1.onceden-fark-raporlanir YESIL
+F1.hayalet-korunur YESIL
+F1.hayalet-dokunulmaz YESIL
+F1.gece-raporu YESIL
+F1.iz-erisimi YESIL
+F1.G1-yeni-kodla YESIL
+F1.tekil-tutucu YESIL
+F1.iptal-kes-eszamanli YESIL
 # Denetimin kendi doğrulaması (t-denetim.js) — hepsi YESIL
 DN.iyi-veri-temiz YESIL
 DN.hayalet YESIL

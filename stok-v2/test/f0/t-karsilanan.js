@@ -77,7 +77,12 @@ const { ON } = T;
     T.kontrol("D1.alis-eski-eszamanli", "alışta iki eski istemci → 10 / 10", { once, sonra, gercek: [sonra.karsilanan, sonra.teslim], beklenen: [10, 10] });
   }
 
+  // Denetim bu koşunun D1 sonucunu doğru yansıtıyor: D1a sayısı = bu koşuda karşılananı teslimden farklı kalan kalem sayısı.
+  // (F1'den önce "sayı > 0" diye yazılmıştı — hatanın varlığına bağlıydı; F1'de fark kalmayınca anlamsızlaştı. 1 Kasım, raporda.)
   const d = T.denetim();
-  T.kontrol("D1.denetim-yakalar", "denetim D1a bu koşudaki kopmaları görüyor (sayı > 0)", { sonra: { D1a: d.D1a_karsilanan_hareketten_farkli }, gercek: d.D1a_karsilanan_hareketten_farkli > 0, beklenen: true });
+  const kalemler = ["k1", "k2", "k3", "k4", "k5"].map((x) => `${ON}-${x}`);
+  const farkli = kalemler.filter((id) => { const k = T.kalemDb(id); return k.var && Math.abs(k.karsilanan - T.teslimDb(id, id.endsWith("k4") ? "Alış" : "Satış")) > 0.005; }).length;
+  T.kontrol("D1.denetim-yakalar", "denetim D1a = bu koşuda karşılananı teslimden farklı kalem sayısı", { sonra: { D1a: d.D1a_karsilanan_hareketten_farkli, farkliKalem: farkli },
+    gercek: d.D1a_karsilanan_hareketten_farkli, beklenen: farkli });
   T.bitir();
 })().catch((e) => { console.error(e); process.exit(2); });

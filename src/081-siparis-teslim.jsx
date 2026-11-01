@@ -80,9 +80,11 @@ const siparisTeslimSunucuyaKes = useCallback(async ({ hesap, defterKaydi, koliId
   });
   if (cariEski) fisKesTabaniKur("cariler", [cariEski], [{ ...cariEski, hareketler: [...yeniCari, ...(cariEski.hareketler || [])] }]);
   // Siparişler: kalemler (karşılanan) sunucuda yazıldı (taban); ana satır (durum, teslim sayacı, defter tercihi) bugünkü yoldan.
-  fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
+  // Karşılanan SUNUCUNUN değeri (v1.743.0, F1): yanıttaki `kalemler` — eşzamanlı başka teslim ve miktarı aşan teslim dahil.
+  const etkYeniler = fisKesKalemleriUygula(etkSiparis.yeniler, r.kalemler);
+  fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkYeniler, { anaDahil: false });
   setSiparisler((onceki) => {
-    const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkSiparis.yeniler);
+    const n = degisenKayitlariBirlestir(onceki, etkSiparis.eskiler, etkYeniler);
     yazimiIzle(tabloYaz("siparis:data", "siparisler", n), "Siparişler", n);
     return n;
   });

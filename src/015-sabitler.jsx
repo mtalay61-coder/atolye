@@ -492,9 +492,9 @@ const VIRMAN_SEBEPLERI = [
   "Hesaplar arası aktarım",
   "Kasa devri",
 ];
-const SURUM = "1.742.3";
-const SURUM_TARIHI = "2026-10-31";
-const SURUM_NOTU = "Fiş sistemi açıkken sipariş kaleminin karşılananını yalnız sunucu değiştirir";
+const SURUM = "1.743.0";
+const SURUM_TARIHI = "2026-11-01";
+const SURUM_NOTU = "Sipariş kaleminin karşılananı sunucuda stok hareketlerinden hesaplanır; eski sürümlerle eşzamanlı teslim de tutarlı";
 
 // ================= SÜRÜM GEÇMİŞİ (23 Eylül, v1.421.0) =================
 // Kullanıcı: "Bundan sonra sürümlerde yaptığımız değişiklikleri sürüm geçmişine not edelim;
@@ -525,6 +525,7 @@ function donemKilidiEngel(tarihler, showToast, islem = "Kayıt") {
 const SAYFA_SEKMESI_ALANI = { muhasebe: "odemetahsilat", cekler: "odemetahsilat", odemerapor: "odemetahsilat", bankaexcel: "odemetahsilat", teklif: "siparis" };   // teklif: v1.723.0, Sipariş'in alt sekmesi
 
 const SURUM_GECMISI = [
+  { surum: "1.743.0", tarih: "01.11.2026", eklenen: ["Gün sonu raporunda karşılanan bölümü: hareketi olmayan karşılanan (hayalet — sıfırlanmaz, yalnız raporlanır), stok hareketleriyle uyuşmayan karşılanan ve gün içinde bir fiş işleminin düzelttiği önceden var olan farklar."], degisen: ["Sipariş kaleminin karşılananı artık sunucuda, o kaleme bağlı geçerli stok hareketlerinden hesaplanır (teslim ve teslim iptalinde). Ekrandaki değer sunucunun döndürdüğü değerle güncellenir: miktarı aşan teslim (ör. 20'lik kaleme 24) teslimi yapan cihazda da hemen görünür."], duzeltilen: ["Eski sürümle açık kalmış bir cihazdan aynı anda yapılan teslimler karşılananı eksik gösterebiliyordu (stoktan 10 çıkıp karşılanan 5); yanıtı kaybolmuş bir iptalin tekrarı karşılananı eski değere çekebiliyordu."] },
   { surum: "1.742.3", tarih: "31.10.2026", eklenen: [], degisen: ["Fiş sistemi açıkken sipariş kaleminin karşılanan miktarını uygulama artık kendisi yeniden hesaplayıp yazmaz; yalnız teslim ve teslim iptali (sunucuda) değiştirir.", "Miktarı aşan teslimde fazla adet sipariş kaydında da görünür (20'lik kaleme 24 teslim → karşılanan 24)."], duzeltilen: ["Başka cihazda yapılan teslim, bu cihazda siparişi düzenleyince ya da eski veriyle açık kalan ekran yüzünden geri alınmış gibi görünebiliyordu (karşılanan eski değere dönüyordu)."] },
   { surum: "1.742.2", tarih: "31.10.2026", eklenen: [], degisen: [], duzeltilen: ["İki kullanıcı aynı sipariş kalemine aynı anda teslim yapınca karşılanan miktar birinin teslimini kaybediyordu (stoktan 10 çıkıyor, karşılanan 5 görünüyordu). Karşılanan artık sunucuda güncel değere eklenir; teslim iptali de aynı şekilde düşer.", "Aynı kayıt iki kez aynı anda gönderilince ikincisi \"kaydedilemedi\" hatası alıyordu (kayıt doğruydu); artık ilk numarayı alır."] },
   { surum: "1.742.1", tarih: "31.10.2026", eklenen: [], degisen: ["İlk açılıştaki kurulum sihirbazı artık proses adımı içermiyor (dört adım: firma, ölçüler, renkler, bitir); hazır proses şablonu eklenmez, prosesleri Tanımlar › Üretim'den kendi sıranızla girersiniz."], duzeltilen: [] },

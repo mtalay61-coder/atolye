@@ -20,6 +20,17 @@
 --     car_yaz, kas_yaz ile doğrudan hareket) yazan istek REDDEDİLİR — yanlış kayıt yerine hata.
 --  Okuma: `fis_listesi` (fiş defteri ekranı, eski defter kaydı biçiminde). Stok, cari ve kasa bakiyesi bugünkü
 --  görünümlerden (iptal edilmemiş satırların toplamı).
+--  KİLİT SIRASI (v1.743.0, F1 — VERI-TUTARLILIGI-F0.md § 4): her izlenen tablonun AFTER STATEMENT `degisiklik_izle` tetikleyicisi
+--  TEK satırı günceller (degisiklik.id = 'tekil'); yazan her işlem bu satırı İLK YAZMA deyiminin sonunda kilitler ve işlem bitene
+--  kadar tutar. 'tekil'den SONRA yeni bir satır kilidi alan işlem, o satırı önceden tutup 'tekil'i bekleyen işlemle kilitlenir
+--  (t-kilit.js G1/G2 ölçüldü). KURAL: birden çok deyim yazan sunucu işlemi ihtiyaç duyacağı satır kilitlerini İLK YAZMADAN ÖNCE alır:
+--    (1) istek kilidi (pg_advisory_xact_lock)  (2) sipariş kalemleri, KİMLİK SIRASIYLA (fis_kalem_kilitle)  (3) iptal edilen fiş
+--    satırı (stk_fis … for update)  → sonra yazmalar (fis_sayac, stk_fis, satırlar, alt_yaz; ilk yazmayla 'tekil').
+--    Kalem fişten ÖNCE: fis_iptal kalem kilidini beklerken fiş satırını TUTMAZ — aynı siparişin fis_bag_coz'u (önce hareketler →
+--    sonra fiş başlığı) o arada bitebilir (t-f1.js G4: fiş önce kilitlendiğinde deadlock ölçüldü). fis_bag_coz ile fis_iptal arasındaki
+--    ters sıra (hareket ↔ fiş) 1.742.3'te de vardı; dar pencere olarak kalır — F4 (siparis_iptal) kapatır.
+--  'tekil' alındıktan sonra yeni satır kilidi ALINMAZ: karşılanan hesabı (fis_kalem_karsilanan_yenile) yalnız önceden kilitlenmiş
+--  (ya da bu işlemin eklediği) kalemlere yazar. alt_yaz kalemleri zaten kimlik sırasıyla yazar (distinct on … order by id).
 --  Supabase SQL Editor kuralı (editor-icin.py): yalnız düz çift-dolar gövde, iç içe yok, başka yerde dolar işareti yok.
 --  Önce stok-v2.sql, cari-v2.sql, alt-v2.sql, kasa-v2.sql kurulmuş olmalı.
 -- =====================================================================================================================
@@ -60,6 +71,24 @@ create table if not exists public.fis_sayac (
   son   int  not null default 0,
   primary key (onek, gun)
 );
+
+-- KARŞILANAN İZİ (v1.743.0, F1 — kullanıcı kararı 1 Kasım: "önceden var olan farkların işlem sırasında sessizce değişmesi
+-- ayrıca raporlanmalı"; "hayalet karşılanan otomatik sıfırlanmayacak"). Bir fiş işlemi, kalemin ÖNCEDEN hareketlerle uyuşmayan
+-- karşılananını değiştirdiğinde (`onceden_fark`) ya da hareketsiz (hayalet) karşılananı korunarak bu işlemin değişimi eklendiğinde
+-- (`hayalet_korundu`) bir satır düşer. Yalnız sunucu işlemleri yazar; gece denetimi okur (fis_gece_denetimi `karsilanan`).
+create table if not exists public.fis_karsilanan_iz (
+  id                 bigserial primary key,
+  zaman              timestamptz not null default now(),
+  eposta             text,
+  islem              text not null,     -- fis_kes / fis_iptal
+  fis_no             text,
+  kalem_id           text not null,
+  tur                text not null,     -- onceden_fark / hayalet_korundu
+  onceki_karsilanan  numeric,
+  onceki_hesap       numeric,           -- işlemden ÖNCE geçerli hareketlerden hesaplanan
+  yeni_karsilanan    numeric
+);
+create index if not exists fis_karsilanan_iz_zaman on public.fis_karsilanan_iz (zaman);
 
 create or replace function public.fis_no_al(p_onek text) returns text
 language plpgsql security definer set search_path = public as $$
@@ -316,6 +345,120 @@ begin
   return new;
 end $$;
 
+-- KARŞILANAN HESABI (v1.743.0, F1 — D1): kaleme bağlı GEÇERLİ hareketlerin (satır ve fişi iptal değil) toplamı; satışta çıkış
+-- (−), alışta giriş (+); pozitif (013 siparisKarsilananlariHesapla ile aynı kural). Kalem / sipariş yoksa 0.
+create or replace function public.fis_kalem_hesap(p_kalem text) returns numeric
+language sql stable security definer set search_path = public as $$
+  select trim_scale(round(greatest(0, case when coalesce((select s.tip from public.siparisler s join public.siparis_kalemleri k on k.siparis_id::text = s.id::text
+                                                where k.id::text = p_kalem), '') = 'Alış' then t.toplam else -t.toplam end), 3))
+    from (select coalesce(sum(h.miktar), 0) as toplam from public.stk_hareket h join public.stk_fis f on f.id = h.fis_id
+           where h.kalem_id = p_kalem and not h.iptal and not f.iptal) t
+$$;
+
+-- Yükte geçen sipariş kalemleri: stok satırlarının `kalemId`si (bağlı fiş dahil) + alt.siparis_kalemleri satırları
+create or replace function public.fis_kalem_idleri(p jsonb) returns text[]
+language sql immutable as $$
+  select coalesce(array_agg(distinct x order by x), '{}'::text[]) from (
+    select s ->> 'kalemId' as x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
+    union all select s ->> 'kalemId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s
+    union all select s ->> 'id' from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) s
+  ) y where coalesce(x, '') <> ''
+$$;
+
+-- Fiş işleminde kalem satırından karşılanan HER ZAMAN çıkar (tek yazar fis_kalem_karsilanan_yenile); `artis` yok sayılır.
+create or replace function public.fis_alt_karsilanansiz(p_alt jsonb) returns jsonb
+language sql immutable as $$
+  select case
+    -- coalesce ŞART: anahtar yoksa jsonb_typeof NULL döner, `<>` NULL olur ve case else'e düşüp (jsonb_set NULL) bütün alt'ı
+    -- (üretim atamaları dahil) NULL yapardı — uctan-uca-fis 6 / 8 bunu yakaladı.
+    when coalesce(jsonb_typeof(p_alt), '') <> 'object' or coalesce(jsonb_typeof(p_alt -> 'siparis_kalemleri'), '') <> 'object' then p_alt
+    else jsonb_set(p_alt, '{siparis_kalemleri}', ((p_alt -> 'siparis_kalemleri') - 'artis') || jsonb_build_object('satirlar', coalesce((
+      select jsonb_agg(x - 'karsilanan') from jsonb_array_elements(public.stk_dizi(p_alt -> 'siparis_kalemleri' -> 'satirlar')) x), '[]'::jsonb)))
+  end
+$$;
+
+-- ÖN KİLİT (KİLİT SIRASI 3): kalemler KİMLİK SIRASIYLA kilitlenir; işlem öncesi fotoğraf döner:
+-- { kalemId: { karsilanan, hesap (önceki geçerli hareketlerden), hareketVar (iptal edilmiş dahil herhangi bir hareket) } }
+-- YAZMA YAPMAZ (degisiklik.tekil'e dokunmaz) — ilk yazmadan önce çağrılır.
+create or replace function public.fis_kalem_kilitle(p_idler text[]) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  r record;
+  sonuc jsonb := '{}'::jsonb;
+begin
+  if coalesce(array_length(p_idler, 1), 0) = 0 then return sonuc; end if;
+  for r in select k.id::text as id, coalesce(k.karsilanan, 0) as karsilanan
+             from public.siparis_kalemleri k where k.id::text = any(p_idler) order by k.id for update of k loop
+    sonuc := sonuc || jsonb_build_object(r.id, jsonb_build_object('karsilanan', r.karsilanan, 'hesap', public.fis_kalem_hesap(r.id),
+      'hareketVar', exists (select 1 from public.stk_hareket h where h.kalem_id = r.id)));
+  end loop;
+  return sonuc;
+end $$;
+
+-- KARŞILANANIN TEK YAZARI (v1.743.0, F1): işlem yazmalarından SONRA, ön kilitli (ya da bu işlemde eklenen) kalemler için.
+--  * Hareketi olan / karşılananı 0 olan kalem: karşılanan := hesap. Önceden fark varsa (önceki karşılanan ≠ önceki hesap) ve değer
+--    değişiyorsa iz: `onceden_fark` (kullanıcı kararı 2).
+--  * HAYALET (işlemden önce hiç hareketi yok, karşılanan > 0): SIFIRLANMAZ (karar 4) — bu işlemin değişimi eklenir
+--    (önceki + (yeni hesap − önceki hesap)); iz: `hayalet_korundu`.
+--  * İşlemden önce olmayan (bu işlemde eklenen) kalem: karşılanan := hesap, iz yok.
+-- Yeni satır kilidi ALMAZ (KİLİT SIRASI): yalnız p_once'deki (kilitli) ya da bu işlemin eklediği kalemleri günceller.
+-- Döner: { kalemler: [{id, karsilanan}], duzeltme: [{id, tur, onceki, hesap, yeni}] }
+create or replace function public.fis_kalem_karsilanan_yenile(p_idler text[], p_once jsonb, p_islem text, p_fis text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  kid text;
+  o jsonb;
+  eski numeric;
+  hesap_once numeric;
+  hesap numeric;
+  simdiki numeric;
+  yeni numeric;
+  tur text;
+  kalemler jsonb := '[]'::jsonb;
+  duzeltme jsonb := '[]'::jsonb;
+  eposta text := lower(auth.jwt() ->> 'email');
+begin
+  perform set_config('fis.kalem', 'acik', true);
+  foreach kid in array coalesce(p_idler, '{}'::text[]) loop
+    select coalesce(k.karsilanan, 0) into simdiki from public.siparis_kalemleri k where k.id::text = kid;
+    if not found then continue; end if;                     -- kalem yok (sahipsiz hareket) — denetim D2a raporlar
+    hesap := public.fis_kalem_hesap(kid);
+    o := p_once -> kid;
+    tur := null;
+    if o is null then
+      yeni := hesap;                                         -- bu işlemde eklenen kalem
+    else
+      eski := (o ->> 'karsilanan')::numeric;
+      hesap_once := (o ->> 'hesap')::numeric;
+      if not (o ->> 'hareketVar')::boolean and eski > 0 then
+        yeni := greatest(0, eski + (hesap - hesap_once));
+        tur := 'hayalet_korundu';
+      else
+        yeni := hesap;
+        if abs(eski - hesap_once) > 0.0005 then tur := 'onceden_fark'; end if;
+      end if;
+    end if;
+    if yeni is distinct from simdiki then
+      update public.siparis_kalemleri set karsilanan = yeni where id::text = kid;
+    end if;
+    if tur is not null and yeni is distinct from eski then
+      insert into public.fis_karsilanan_iz (eposta, islem, fis_no, kalem_id, tur, onceki_karsilanan, onceki_hesap, yeni_karsilanan)
+      values (eposta, p_islem, p_fis, kid, tur, eski, hesap_once, yeni);
+      duzeltme := duzeltme || jsonb_build_array(jsonb_build_object('id', kid, 'tur', tur, 'onceki', eski, 'hesap', hesap_once, 'yeni', yeni));
+    end if;
+    kalemler := kalemler || jsonb_build_array(jsonb_build_object('id', kid, 'karsilanan', yeni));
+  end loop;
+  perform set_config('fis.kalem', '', true);
+  return jsonb_build_object('kalemler', kalemler, 'duzeltme', duzeltme);
+end $$;
+
+-- Yanıt için okunan güncel değerler (kilitsiz; zatenVar / zatenIptal tekrarında)
+create or replace function public.fis_kalem_durumlari(p_idler text[]) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(jsonb_build_object('id', k.id::text, 'karsilanan', coalesce(k.karsilanan, 0)) order by k.id::text), '[]'::jsonb)
+    from public.siparis_kalemleri k where k.id::text = any(coalesce(p_idler, '{}'::text[]))
+$$;
+
 create or replace function public.fis_kes(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -323,6 +466,9 @@ declare
   mevcut public.stk_fis;
   fid text;
   bid text;
+  v_idler text[];
+  v_once jsonb;
+  v_kalem jsonb;
 begin
   if v_istek is null then
     raise exception 'İstek kimliği yok (yeniden gönderimde çift fiş olmasın diye zorunlu)' using errcode = '22023';
@@ -330,13 +476,16 @@ begin
   if jsonb_typeof(p -> 'fis') <> 'object' then
     raise exception 'Fiş bilgisi yok' using errcode = '22023';
   end if;
-  -- AYNI İSTEK EŞZAMANLI (v1.742.2): iki kopya aynı anda gelince ikincisi benzersizlik hatası (23505) alıyordu — kayıt doğru ama
-  -- kullanıcı "kaydedilemedi" görürdü. İsteğe işlem kilidi: ikincisi birincinin bitmesini bekler, sonra ilk numarayı alır.
+  -- KİLİT SIRASI 1 — AYNI İSTEK EŞZAMANLI (v1.742.2): ikincisi birincinin bitmesini bekler, sonra ilk numarayı alır.
   perform pg_advisory_xact_lock(hashtext('fis_kes:' || v_istek));
+  v_idler := public.fis_kalem_idleri(p);
   select * into mevcut from public.stk_fis f where f.istek = v_istek;
   if found then
-    return jsonb_build_object('fisNo', mevcut.id, 'bagliFisNo', mevcut.bagli_fis, 'zatenVar', true);
+    return jsonb_build_object('fisNo', mevcut.id, 'bagliFisNo', mevcut.bagli_fis, 'zatenVar', true,
+      'kalemler', public.fis_kalem_durumlari(v_idler), 'karsilananDuzeltme', '[]'::jsonb);
   end if;
+  -- KİLİT SIRASI 3 — kalemler kimlik sırasıyla, İLK YAZMADAN ÖNCE (v1.743.0, F1)
+  v_once := public.fis_kalem_kilitle(v_idler);
 
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
@@ -345,13 +494,15 @@ begin
     update public.stk_fis set bagli_fis = fid where id = bid;
   end if;
   if jsonb_typeof(p -> 'alt') = 'object' then
-    perform set_config('fis.kalem', 'acik', true);   -- karşılanan yalnız fiş işleminde değişir (fis_kalem_karsilanan_koru)
-    perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
-    perform public.fis_kalem_artis(p -> 'alt');
+    -- Kalem satırının öteki alanları (planlama, rezervasyon…) yazılır; karşılanan ÇIKAR (v1.743.0: tek yazar aşağıda), artis yok sayılır.
+    perform set_config('fis.kalem', 'acik', true);
+    perform public.alt_yaz(public.fis_alt_karsilanansiz(p -> 'alt'));
     perform set_config('fis.kalem', '', true);
   end if;
+  v_kalem := public.fis_kalem_karsilanan_yenile(v_idler, v_once, 'fis_kes', fid);
   perform set_config('fis.kapi', '', true);
-  return jsonb_build_object('fisNo', fid, 'bagliFisNo', bid, 'zatenVar', false);
+  return jsonb_build_object('fisNo', fid, 'bagliFisNo', bid, 'zatenVar', false,
+    'kalemler', v_kalem -> 'kalemler', 'karsilananDuzeltme', v_kalem -> 'duzeltme');
 end $$;
 
 -- FİŞ İPTAL — fiş ve bütün satırları (bağlı makbuzla birlikte) iptal; silme yok. Tekrar çağrı zararsız.
@@ -365,13 +516,27 @@ declare
   hedefler text[];
   h text;
   n int := 0;
+  v_idler text[];
+  v_once jsonb;
+  v_kalem jsonb;
 begin
   perform public.stk_yetki(array['stok', 'fisler', 'siparis', 'uretim', 'cari', 'muhasebe'], 'silme');
+  -- KİLİT SIRASI 2 — fişin (ve bağlı fişin) hareketlerindeki + alt satırlarındaki kalemler, kimlik sırasıyla, FİŞ SATIRINDAN ve
+  -- İLK YAZMADAN ÖNCE (v1.743.0, F1). Kimlikler kilitsiz okunur: hareketin kalem_id'si yalnız fis_bag_coz'un dar kipinde boşalır
+  -- (o zaman kilit fazladan bir kalem tutar, eksik değil); bağlı fiş başlıktan okunur.
+  select coalesce(array_agg(distinct x order by x), '{}'::text[]) into v_idler from (
+    select hh.kalem_id as x from public.stk_hareket hh
+     where hh.fis_id in (select ff.id from public.stk_fis ff where ff.id = no union select ff.bagli_fis from public.stk_fis ff where ff.id = no)
+       and hh.kalem_id is not null
+    union all select unnest(public.fis_kalem_idleri(jsonb_build_object('alt', p -> 'alt')))) y;
+  v_once := public.fis_kalem_kilitle(v_idler);
+  -- KİLİT SIRASI 3 — iptal edilen fiş satırı (yazma değil)
   select * into f from public.stk_fis where id = no for update;
   if not found then
     raise exception 'Fiş bulunamadı: %', coalesce(no, '(yok)') using errcode = 'P0002';
   end if;
   hedefler := array[f.id] || case when f.bagli_fis is not null then array[f.bagli_fis] else '{}'::text[] end;
+
   perform set_config('fis.kapi', 'acik', true);
   foreach h in array hedefler loop
     update public.stk_fis set iptal = true, iptal_zamani = now(), iptal_eden = eposta, iptal_sebebi = p ->> 'sebep'
@@ -381,16 +546,17 @@ begin
     update public.car_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta, guncelleme = now() where fis_id = h and not iptal;
     update public.kas_hareket set iptal = true, iptal_zamani = now(), iptal_eden = eposta, guncelleme = now() where fis_id = h and not iptal;
   end loop;
-  -- Karşılanan değişimi (v1.742.2) yalnız fiş bu çağrıda iptal edildiyse: zaten iptal edilmiş fişe gelen tekrar (yanıtı kaybolmuş
-  -- istek) karşılananı ikinci kez düşürmesin.
+  -- Kalem satırının öteki alanları yazılır; karşılanan ÇIKAR, artis yok sayılır (v1.743.0): değer hareketlerden hesaplanır —
+  -- zaten iptal edilmiş fişe gelen tekrar (yanıtı kaybolmuş istek, eski istemcinin mutlak değeri) karşılananı DEĞİŞTİREMEZ.
   if jsonb_typeof(p -> 'alt') = 'object' then
     perform set_config('fis.kalem', 'acik', true);
-    perform public.alt_yaz(public.fis_alt_artissiz(p -> 'alt'));
-    if not f.iptal then perform public.fis_kalem_artis(p -> 'alt'); end if;
+    perform public.alt_yaz(public.fis_alt_karsilanansiz(p -> 'alt'));
     perform set_config('fis.kalem', '', true);
   end if;
+  v_kalem := public.fis_kalem_karsilanan_yenile(v_idler, v_once, 'fis_iptal', f.id);
   perform set_config('fis.kapi', '', true);
-  return jsonb_build_object('fisNo', f.id, 'bagliFisNo', f.bagli_fis, 'zatenIptal', f.iptal);
+  return jsonb_build_object('fisNo', f.id, 'bagliFisNo', f.bagli_fis, 'zatenIptal', f.iptal,
+    'kalemler', v_kalem -> 'kalemler', 'karsilananDuzeltme', v_kalem -> 'duzeltme');
 end $$;
 
 -- FİŞ BİLGİSİ — kesilmiş fişe yalnız açıklama ve ek bilgi (irsaliye no gibi); tutar ve satırlar değişmez.
@@ -550,6 +716,14 @@ begin
   revoke all on function public.fis_tek_kes(jsonb, jsonb, jsonb, jsonb, text, text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_artis(jsonb) from public, anon, authenticated;
   revoke all on function public.fis_alt_artissiz(jsonb) from public, anon, authenticated;
+  -- Karşılanan izi ve iç işlevler (v1.743.0, F1): yalnız sunucu işlemleri yazar; gece denetimi (security definer) okur
+  alter table public.fis_karsilanan_iz enable row level security;
+  revoke all on public.fis_karsilanan_iz from anon, authenticated;
+  revoke all on sequence public.fis_karsilanan_iz_id_seq from anon, authenticated;
+  revoke all on function public.fis_kalem_kilitle(text[]) from public, anon, authenticated;
+  revoke all on function public.fis_kalem_karsilanan_yenile(text[], jsonb, text, text) from public, anon, authenticated;
+  revoke all on function public.fis_kalem_hesap(text) from public, anon, authenticated;
+  revoke all on function public.fis_kalem_durumlari(text[]) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';
     execute 'grant execute on function public.' || t || ' to authenticated';

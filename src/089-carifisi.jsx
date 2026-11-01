@@ -146,9 +146,11 @@ const stokFisiSunucuyaKes = useCallback(async ({ cariId, tip, fis, fisGovdesi, s
 
   // Sipariş: kalemler sunucuda yazıldı (taban); durum (ana satır) bugünkü yoldan
   if (etkSiparis.yeniler.length > 0) {
-    fisKesTabaniKur("siparisler", etkSiparis.eskiler, etkSiparis.yeniler, { anaDahil: false });
+    // Karşılanan SUNUCUNUN değeri (v1.743.0, F1): yanıttaki `kalemler` (eski sunucuda yok → yerel hesap aynen).
+    fisKesTabaniKur("siparisler", etkSiparis.eskiler, fisKesKalemleriUygula(etkSiparis.yeniler, r.kalemler), { anaDahil: false });
+    const yeniSiparislerS = fisKesKalemleriUygula(yeniSiparisler, r.kalemler);
     setSiparisler((onceki) => {
-      const next = degisenKayitlariBirlestir(onceki, siparisler, yeniSiparisler);   // bayat-muaf: farkın tabanı fişi hesaplayan fotoğraf
+      const next = degisenKayitlariBirlestir(onceki, siparisler, yeniSiparislerS);   // bayat-muaf: farkın tabanı fişi hesaplayan fotoğraf
       yazimiIzle(tabloYaz("siparis:data", "siparisler", next), "Siparişler", next);
       return next;
     });

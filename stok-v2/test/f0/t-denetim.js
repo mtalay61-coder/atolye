@@ -55,7 +55,9 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
     ["DN.sahipsiz-siparis", "fiş ve hareket var olmayan siparişe bağlı", { D2b_sahipsiz_hareket_siparis_yok: 1, D2d_fis_siparis_yok: 1 }, () => {
       serbestFis(`${ON}-h5a`, -1, { siparisId: `${ON}-h5-yoksip` });
     }],
-    ["DN.kalem-baska-sipariste", "hareketin kalemi başka siparişin", { D2c_hareket_kalem_siparis_uyusmaz: 1, D1a_karsilanan_hareketten_farkli: 1, D5b_durum_teslimle_celisiyor: 1 }, () => {
+    // F1 (v1.743.0) ile sunucu, hareketteki kalemin karşılananını hareketten hesaplıyor: eskiden yan etki olarak doğan D1a artık yok
+    // (kalem ↔ sipariş uyuşmazlığının reddi F2 kapsamı — D2c hâlâ görünür). Beklenen fark 1 Kasım'da bu yüzden güncellendi (raporda).
+    ["DN.kalem-baska-sipariste", "hareketin kalemi başka siparişin", { D2c_hareket_kalem_siparis_uyusmaz: 1, D5b_durum_teslimle_celisiyor: 1 }, () => {
       sip("h6x", [T.kalemObj(`${ON}-h6xk`, 10, 0)]); const y = sip("h6y", [T.kalemObj(`${ON}-h6yk`, 10, 0)]);
       serbestFis(`${ON}-h6a`, -1, { siparisId: y.id, kalemId: `${ON}-h6xk` });
     }],

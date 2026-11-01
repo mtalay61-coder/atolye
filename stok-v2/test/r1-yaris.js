@@ -199,11 +199,16 @@ function teslimYuku({ adet, ekrandaKarsilanan, istek, stok, cariler }) {
   console.log(`    SONUÇ → teslim edilen: ${d7.teslimEdilen} · karşılanan: ${d7.karsilanan} (miktar ${d7.miktar})`);
   bekle("7: iki fiş, teslim 24, karşılanan 24 (fazla 4 kayıtta)", [rG.ok, rH.ok, d7.teslimEdilen, d7.karsilanan, d7.tutarli], [true, true, 24, 24, true]);
 
-  console.log("8) GERİYE UYUM: eski uygulama (yalnız mutlak karşılanan, `artis` yok) yeni sunucuda bugünkü gibi işlenir");
+  // BİLİNÇLİ DAVRANIŞ DEĞİŞİKLİĞİ (v1.743.0, F1 — kullanıcı onayı 1 Kasım, VERI-TUTARLILIGI-F0.md § 8): 1.742.2 / 1.742.3'te
+  // bu senaryo "eski yükün mutlak değeri yazılır (1)" bekliyordu — kalemde 24 teslim varken karşılananın 1 olması R1 hatasının
+  // KENDİSİ (stok 25 / karşılanan 1). F1'de karşılananın tek yazarı sunucu: eski yük yine KABUL edilir, karşılanan hareketlerden
+  // hesaplanır (24 + 1 = 25) ve değişmez tutar.
+  console.log("8) GERİYE UYUM: eski uygulama (yalnız mutlak karşılanan, `artis` yok) kabul edilir; karşılanan hareketlerden (v1.743.0)");
   const yEski = teslimYuku({ adet: 1, ekrandaKarsilanan: 0, istek: IST("ESKI"), stok, cariler });
   delete yEski.alt.siparis_kalemleri.artis;
   const rEski = await rpcAyri("fis_kes", yEski);
-  bekle("8: eski yük kabul edildi, karşılanan mutlak değerle yazıldı (1) — bugünkü davranış", [rEski.ok, durum().karsilanan], [true, 1]);
+  const d8 = durum();
+  bekle("8: eski yük kabul edildi, karşılanan = teslim edilen (25) — eski ekranın mutlak 1'i yazılmadı", [rEski.ok, d8.karsilanan, d8.teslimEdilen, d8.tutarli], [true, 25, 25, true]);
 
   // Temizlik: test siparişinin fişleri iptal (kurallar açık — silinmez), sipariş satırları kaldırılır.
   psql(`delete from public.siparis_kalemleri where siparis_id = '${SIP}'; delete from public.siparisler where id = '${SIP}';`);

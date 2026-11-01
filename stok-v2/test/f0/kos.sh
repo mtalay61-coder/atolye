@@ -13,14 +13,15 @@ if [ "${F0_YENIDEN:-0}" = "1" ]; then bash "$KOK/stok-v2/test/kos.sh" > /tmp/f0-
 [ "$(psql -X -At -d "${STOK_V2_DB:-atolye_stok_v2_sinama}" -c 'select public.fis_kural_aktif();' 2>/dev/null)" = "t" ] || { echo "kurallar açık değil / veritabanı yok — önce stok-v2/test/kos.sh"; exit 2; }
 
 CIKTI=$(mktemp)
-for t in t-karsilanan t-kalem-bag t-fazla t-iptal t-yedek t-surum t-kilit t-denetim; do
+for t in t-karsilanan t-kalem-bag t-fazla t-iptal t-yedek t-surum t-kilit t-f1 t-denetim; do
   echo "── $t"
   node "$t.js" 2>&1 | tee -a "$CIKTI"
   [ "${PIPESTATUS[0]}" -le 1 ] || echo "  ! $t çöktü" | tee -a "$CIKTI"
 done
 
 echo
-echo "══ F0 ÖZET (beklenen.txt ile) ══"
+BEKLENEN="${BEKLENEN:-beklenen.txt}"
+echo "══ F0 ÖZET ($BEKLENEN ile) ══"
 SAPMA=0
 while read -r kimlik durum; do
   case "$kimlik" in ''|\#*) continue;; esac
@@ -30,7 +31,7 @@ while read -r kimlik durum; do
   else gercek="KIRMIZI"; fi
   if [ "$gercek" = "$durum" ]; then printf '  %-28s %-8s (beklenen)\n' "$kimlik" "$gercek"
   else printf '  %-28s %-8s ≠ beklenen %s\n' "$kimlik" "$gercek" "$durum"; SAPMA=1; fi
-done < beklenen.txt
+done < "$BEKLENEN"
 grep -q '! .* çöktü' "$CIKTI" && SAPMA=1
 echo "  kurallar sonda açık: $(psql -X -At -d "${STOK_V2_DB:-atolye_stok_v2_sinama}" -c 'select public.fis_kural_aktif();')"
 rm -f "$CIKTI"
