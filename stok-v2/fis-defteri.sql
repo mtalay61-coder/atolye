@@ -967,6 +967,18 @@ begin
   if not exists (select 1 from pg_constraint where conname = 'stk_hareket_tek_bag' and conrelid = 'public.stk_hareket'::regclass) then
     alter table public.stk_hareket add constraint stk_hareket_tek_bag check (gecmis_kalem_id is null or kalem_id is null);
   end if;
+  -- YABANCI ANAHTARLAR (F2 aşama 2): hareket var olmayan kaleme bağlanamaz; kalemi gösteren hareketi olan kalem silinemez.
+  -- NOT VALID: mevcut (sahipsiz) satırlar DOĞRULANMAZ, kurulum veriye dokunmaz; yeni ve değişen satırda ve kalem silmede hemen
+  -- zorlanır. DEFERRABLE INITIALLY DEFERRED: aynı fis_kes yükünde stok satırı alt satırdan önce yazılıyor — denetim işlem sonunda.
+  -- Doğrulama (VALIDATE CONSTRAINT) canlıdaki sahipsiz kayıtlar tek tek incelendikten sonra, AYRI ONAYLA (karar K5).
+  if not exists (select 1 from pg_constraint where conname = 'stk_hareket_kalem_fk' and conrelid = 'public.stk_hareket'::regclass) then
+    alter table public.stk_hareket add constraint stk_hareket_kalem_fk foreign key (kalem_id) references public.siparis_kalemleri(id)
+      deferrable initially deferred not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'stk_hareket_gecmis_kalem_fk' and conrelid = 'public.stk_hareket'::regclass) then
+    alter table public.stk_hareket add constraint stk_hareket_gecmis_kalem_fk foreign key (gecmis_kalem_id) references public.siparis_kalemleri(id)
+      deferrable initially deferred not valid;
+  end if;
   -- Teslim geçmişi koruması (F2): kalem silme / kimlik / miktar ve sipariş silme
   drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
   create trigger fis_kalem_teslim_koru before update or delete on public.siparis_kalemleri for each row execute function public.fis_kalem_teslim_koru();

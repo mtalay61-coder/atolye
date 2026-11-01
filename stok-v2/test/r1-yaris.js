@@ -166,7 +166,8 @@ function teslimYuku({ adet, ekrandaKarsilanan, istek, stok, cariler }) {
   const sayacOnceE = psql("select coalesce(sum(son), 0) from public.fis_sayac;");
   const rE = await rpcAyri("fis_kes", yE);
   const d5 = durum();
-  bekle("5: reddedildi, hiçbir şey değişmedi", [rE.ok, /Ürün bulunamadı/.test(rE.hata), d5.karsilanan, d5.gecerliFis, psql("select coalesce(sum(son), 0) from public.fis_sayac;")], [false, true, 15, 4, sayacOnceE]);
+  // F2 (2 Kasım): kaleme bağlı satırın ürünü kalemden farklı → ilk yazmadan önce KR003 ("uyuşmuyor"); F2 öncesi "Ürün bulunamadı".
+  bekle("5: reddedildi, hiçbir şey değişmedi", [rE.ok, /Ürün bulunamadı|kalemiyle uyuşmuyor/.test(rE.hata), d5.karsilanan, d5.gecerliFis, psql("select coalesce(sum(son), 0) from public.fis_sayac;")], [false, true, 15, 4, sayacOnceE]);
 
   console.log("6) Teslim İPTALİ (A'nın fişi geri alınır) ile yeni teslim (F, 4 adet) aynı anda — ikisinin ekranında karşılanan 15");
   // İptalin kalem bilgisi uygulamanın yaptığı gibi: 100 sunucuFisiniIptalEt → fisGeriAl hesabı + fisKesKalemArtisi (varsa) / fisKesSiparisKalemleri

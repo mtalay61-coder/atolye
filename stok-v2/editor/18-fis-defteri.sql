@@ -778,6 +778,14 @@ begin
   if not exists (select 1 from pg_constraint where conname = 'stk_hareket_tek_bag' and conrelid = 'public.stk_hareket'::regclass) then
     alter table public.stk_hareket add constraint stk_hareket_tek_bag check (gecmis_kalem_id is null or kalem_id is null);
   end if;
+  if not exists (select 1 from pg_constraint where conname = 'stk_hareket_kalem_fk' and conrelid = 'public.stk_hareket'::regclass) then
+    alter table public.stk_hareket add constraint stk_hareket_kalem_fk foreign key (kalem_id) references public.siparis_kalemleri(id)
+      deferrable initially deferred not valid;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'stk_hareket_gecmis_kalem_fk' and conrelid = 'public.stk_hareket'::regclass) then
+    alter table public.stk_hareket add constraint stk_hareket_gecmis_kalem_fk foreign key (gecmis_kalem_id) references public.siparis_kalemleri(id)
+      deferrable initially deferred not valid;
+  end if;
   drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
   create trigger fis_kalem_teslim_koru before update or delete on public.siparis_kalemleri for each row execute function public.fis_kalem_teslim_koru();
   drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
