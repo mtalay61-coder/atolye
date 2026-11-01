@@ -30,7 +30,8 @@ HATA=0
 bash "$F0/eski-istemci.sh" > /dev/null || { echo "eski ağaç kurulamadı"; exit 2; }
 ESKI="$F0/.eski-istemci"
 nesneler() { psql -X -At -d "$1" -c "select 'F:'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'
-  union all select 'T:'||c.relname||'.'||t.tgname from pg_trigger t join pg_class c on c.oid=t.tgrelid where not t.tgisinternal order by 1"; }
+  union all select 'T:'||c.relname||'.'||t.tgname from pg_trigger t join pg_class c on c.oid=t.tgrelid where not t.tgisinternal
+  union all select 'K:'||c.relname||'.'||k.conname from pg_constraint k join pg_class c on c.oid=k.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' order by 1"; }
 ozetler() { psql -X -At -d "$1" -c "select p.proname||'('||pg_get_function_identity_arguments(p.oid)||') '||md5(p.prosrc) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' order by 1"; }
 tablolar() { psql -X -At -d "$1" -c "select table_name from information_schema.tables where table_schema='public' order by 1"; }
 
@@ -59,7 +60,7 @@ for ad in 18-fis-defteri 20-gece-denetimi; do
   if diff <(awk "/^-- ---- 20834ea:stok-v2\/editor\/$ad.sql \(BIREBIR\)/{f=1;next} /^-- ---- 20834ea:stok-v2\/editor\/$ad.sql — SON/{f=0} f" "$SQL") \
           <(git -C "$KOK" show "20834ea:stok-v2/editor/$ad.sql") > /dev/null; then echo "      $ad: aynı"; else echo "      $ad: FARKLI"; HATA=1; fi
 done
-echo "   b) işlev / tetikleyici farkı (REF ↔ GERI):"
+echo "   b) işlev / tetikleyici / kısıt farkı (REF ↔ GERI):"
 F1=$(diff <(nesneler "$REF_DB") <(nesneler "$GERI_DB")); [ -z "$F1" ] && echo "      yok" || { echo "$F1" | sed 's/^/      /'; HATA=1; }
 echo "      işlev gövdesi özet farkı (REF ↔ GERI):"
 F2=$(diff <(ozetler "$REF_DB") <(ozetler "$GERI_DB")); [ -z "$F2" ] && echo "      yok — bütün işlevler 1.742.1 ile birebir" || { echo "$F2" | sed 's/^/      /'; HATA=1; }

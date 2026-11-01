@@ -2,13 +2,15 @@
 --  geri-donus-1.742.1.sql - CANLIDAKI 1.742.1 SUNUCU DAVRANISINA TAM GERI DONUS (1.743.0 ya da F1.1 kurulu veritabanindan)
 -- =====================================================================================================================
 --  NE YAPAR (F1-1-BAG-IZI-TASARIM.md bolum 7):
---   1) R1b tetikleyicisi ve islevi kaldirilir (fis_kalem_karsilanan_koru; 1.742.1 de yoktu).
+--   1) R1b tetikleyicisi ve islevi kaldirilir (fis_kalem_karsilanan_koru; 1.742.1 de yoktu). F1.1 gecmis bag korumasi
+--      (fis_bag_iz_koru) ve tek bag kisiti (stk_hareket_tek_bag) kaldirilir.
 --   2) 1.742.1 metinleri BIREBIR calisir: commit 20834ea, stok-v2/editor/18-fis-defteri.sql ve editor/20-gece-denetimi.sql
 --      (asagidaki iki bolum o dosyalarin aynisidir; test/f0/geri-donus-1741.sh bunu git show ile karsilastirir).
 --   3) R1 / F1 / F1.1 islevleri kaldirilir.
 --  VERI SILINMEZ: fis_karsilanan_iz tablosu ve (F1.1 kurulduysa) stk_hareket.gecmis_siparis_id / gecmis_kalem_id /
---  bag_cozum_zamani sutunlari ve kisiti kalir. 1.742.1 bunlari okumaz, yazmaz; kisit 1.742.1 yazmalarini engellemez
---  (1.742.1 gecmis sutunu hic doldurmaz). Fisler, hareketler, karsilananlar oldugu gibi kalir.
+--  bag_cozum_zamani sutunlari (ve indeksi) kalir; 1.742.1 bunlari okumaz, yazmaz. Fisler, hareketler, karsilananlar oldugu gibi
+--  kalir. DIKKAT: geri donusten sonra 1.742.1 karsilanani gecmis bagi bilmez — F1.1 doneminde siparisi iptal edilmis teslimli
+--  kalemler 1.742.1 hesabinda (ve 1.742.1 denetiminde) yine hayalet gorunur; deger degismez, yalniz yorum degisir.
 --  SIRA (bolum 7.2): once surum.json 1.742.1 (uygulama), cihazlar baslaticidan yeniden acilir, SONRA bu dosya, sonra
 --  canli-salt-okur-kontrol.sql. Kurallar (fis_kural_ac / kapat) DEGISMEZ.
 --  Supabase SQL Editor: yalniz duz cift-dolar govde; bu basliktaki yorumlarda kesme isareti ve dolar isareti yoktur.
@@ -17,6 +19,12 @@
 
 drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;
 drop function if exists public.fis_kalem_karsilanan_koru();
+
+-- F1.1 korumasi ve kisiti (1.742.1 de yok). Sutunlar ve indeks KALIR (veri: gecmis bag izi); 1.742.1 bunlari okumaz, yazmaz.
+-- Kisit kalkar: 1.742.1 davranisi birebir olsun (eski stk_yaz yolu kurallar kapaliyken satiri yeniden yazabilir).
+drop trigger if exists fis_bag_iz_koru on public.stk_hareket;
+drop function if exists public.fis_bag_iz_koru();
+alter table public.stk_hareket drop constraint if exists stk_hareket_tek_bag;
 
 -- ---- 20834ea:stok-v2/editor/18-fis-defteri.sql (BIREBIR) — BASLANGIC ----
 alter table public.stk_fis add column if not exists aile text not null default 'stok';
