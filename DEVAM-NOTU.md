@@ -4,11 +4,13 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-**Son sürüm:** v1.744.1 (yalnız codex/f5-guvenli-geri-yukleme dalı; kaynak değişikliği, yayınlanmadı; surum.json 1.742.1)
+**Son sürüm:** v1.744.2 (yalnız codex/f4-siparis-iptal; SQL + kaynak geliştirmesi, yayınlanmadı; surum.json 1.742.1)
 
 ---
 
 ## YENİ OTURUM — BURADAN BAŞLA
+
+**Codex F4 ilk işlem koruması (2 Kasım 2026):** F5 ecf50b9 üzerine codex/f4-siparis-iptal dalı. fis_bag_coz sipariş satırını ilk yazmadan önce FOR UPDATE kilitler, gerçek sipariş numarasını sunucudan alır, bağ çözme ve İptal durumunu aynı işlemde yazar. fis_kes önce ilgili siparişleri SHARE kilitler ve İptal durumunda KR006 verir; tekrar istek ilk fişi döndürür. fis_siparis_iptal_koru bayat başlık yazmasıyla iptalin açılmasını önler. İstemci yerelde bağ görünmese de iptal RPC kullanır. Gömülü PostgreSQL testleri kurallar açık/kapalı geçti; kasıtlı son adım hatasında bağlar geri alındı. Gerçek çok bağlantılı t-yaris.js henüz ÇALIŞTIRILMADI; F4 bütünü tamamlandı sayılmaz. Üretim/koli/rezervasyon temizlikleri hâlâ istemcide; sipariş Tamamlandı durumunun tek yazarı ayrıca çözülmeli. Canlı/main/deploy/surum.json yok. Rapor: stok-v2/CODEX-F4-ILK-KORUMA.md.
 
 **Codex F5 ilk koruma (1 Kasım 2026):** F2 1a42e48 üzerine ayrı geliştirme dalında çalışılıyor. `yedegiUygula`, fiş defteri kuruluysa (kurallar kapalı veya bağlantı kopuk olsa da) tam geri yüklemeyi ilk yerel/bulut yazmasından önce reddeder. Sunucu ayarı bilinmiyorsa da durur. JSON ve tarihli yedek aynı callback üzerinden korunur. Fişsiz eski yol korunur; yedek indirme değişmedi. Testler: `birim-yedek-fis-kilidi.js` gerçek callback'i çalıştırır (önce kırmızı, düzeltmeyle 4 yeşil); `senaryo-yedek-fis-kilidi.js` onaylı JSON yüklemesini fis_aktif=false/true ile sınar. Bu, F5'in istemci tarafındaki ilk korumasıdır: eski istemci/doğrudan RPC geri yüklemesi sunucu tarafında henüz kapanmadı; F0 Y.tam-* beklentileri yeşile çevrilmedi. F4/F8 ve sistem geneli güvenlik işi sürüyor. Canlı Supabase/main/deploy/surum.json değişmedi. Ayrıntılı sonuç: `stok-v2/CODEX-F5-ILK-KORUMA.md`.
 

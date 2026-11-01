@@ -27,6 +27,8 @@ drop function if exists public.fis_kalem_karsilanan_koru();
 -- F2 korumalari, kisitlari ve yabanci anahtarlari (1.742.1 de yok). Indeksler ve veri kalir.
 drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
 drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
+drop trigger if exists fis_siparis_iptal_koru on public.siparisler;
+drop function if exists public.fis_siparis_iptal_koru();
 alter table public.stk_hareket drop constraint if exists stk_hareket_kalem_fk;
 alter table public.stk_hareket drop constraint if exists stk_hareket_gecmis_kalem_fk;
 drop trigger if exists fis_bag_iz_koru on public.stk_hareket;

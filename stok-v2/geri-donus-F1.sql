@@ -256,6 +256,8 @@ end $$;
 -- değişmedi; editor/15 Editor kopyası BİREBİR).
 drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
 drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
+drop trigger if exists fis_siparis_iptal_koru on public.siparisler;
+drop function if exists public.fis_siparis_iptal_koru();
 drop function if exists public.fis_kalem_teslim_koru();
 drop function if exists public.fis_siparis_teslim_koru();
 drop function if exists public.fis_kalem_hareket_var(text);

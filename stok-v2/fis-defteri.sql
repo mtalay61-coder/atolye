@@ -278,6 +278,16 @@ begin
 end $$;
 
 -- Fiş başlığı: silinmez; yalnız fis_kes / fis_iptal / fis_bilgi yazar; tutar ve satır bilgisi kesildikten sonra değişmez.
+-- F4: iptal edilmiş siparişi bayat bir başlık POST'u yeniden açamaz. Kurallar kapalıyken de geçerli.
+create or replace function public.fis_siparis_iptal_koru() returns trigger
+language plpgsql as $$
+begin
+  if old.durum = 'İptal' and new.durum is distinct from old.durum then
+    raise exception 'İptal edilmiş sipariş yeniden açılamaz (sipariş %) — yeni sipariş oluşturun', old.id using errcode = 'KR006';
+  end if;
+  return new;
+end $$;
+
 create or replace function public.fis_baslik_koru() returns trigger
 language plpgsql as $$
 begin
@@ -592,6 +602,7 @@ declare
   v_once jsonb;
   v_kalem jsonb;
   v_eksik text;
+  v_siparisler text[];
 begin
   if v_istek is null then
     raise exception 'İstek kimliği yok (yeniden gönderimde çift fiş olmasın diye zorunlu)' using errcode = '22023';
@@ -608,6 +619,22 @@ begin
       'kalemler', public.fis_kalem_durumlari(v_idler), 'karsilananDuzeltme', '[]'::jsonb);
   end if;
   -- KİLİT SIRASI 3 — kalemler kimlik sırasıyla, İLK YAZMADAN ÖNCE (v1.743.0, F1)
+  -- F4: teslimin bütün siparişleri önce SHARE ile kilitlenir. KEY SHARE durum UPDATE'ini engellemez.
+  -- İptal FOR UPDATE alır: teslim önceyse iptal onu da kapsar; iptal önceyse aşağıdaki durum kontrolü teslimi reddeder.
+  select coalesce(array_agg(distinct sid order by sid), '{}'::text[]) into v_siparisler from (
+    select p -> 'fis' ->> 'siparisId' as sid
+    union all select p -> 'bagli' -> 'fis' ->> 'siparisId'
+    union all select x ->> 'siparisId' from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) x
+    union all select x ->> 'siparisId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) x
+    union all select x ->> 'siparis_id' from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) x
+    union all select k.siparis_id::text from public.siparis_kalemleri k where k.id::text = any(v_idler)
+  ) q where coalesce(sid, '') <> '';
+  perform 1 from public.siparisler s where s.id::text = any(v_siparisler) order by s.id for share;
+  select string_agg(s.id::text, ', ' order by s.id) into v_eksik
+    from public.siparisler s where s.id::text = any(v_siparisler) and s.durum = 'İptal';
+  if v_eksik is not null then
+    raise exception 'İptal edilmiş siparişe yeni fiş yazılamaz (sipariş %) — siparişi yenileyin', v_eksik using errcode = 'KR006';
+  end if;
   v_once := public.fis_kalem_kilitle(v_idler);
   -- F2: stok satırının kalemi var olmalı (aynı yükte yeni yazılan kalem hariç — yabancı anahtar işlem sonunda denetler) → KR005
   select string_agg(distinct x, ', ') into v_eksik from (
@@ -753,6 +780,10 @@ declare
 begin
   perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
   if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
+  -- F4: iptal durumu ve bağ çözme tek işlemde. Kilit kalemlerden ve ilk yazmadan önce alınır.
+  -- Numarayı istemciden alma: bayat/yanlış numara başka siparişin numarayla eşleşen bağlarını çözmemeli.
+  select s.siparis_no into sno from public.siparisler s where s.id::text = sid for update;
+  if not found then raise exception 'Sipariş bulunamadı (sipariş %)', sid using errcode = 'KR005'; end if;
   ino := case when sno is null then null else sno || ' (iptal)' end;
   -- KİLİT SIRASI 2 (F1.1) — siparişin kalemleri ve bağlı hareketlerin kalemleri, kimlik sırasıyla, İLK YAZMADAN ÖNCE. Önceden hiç
   -- kalem kilidi yoktu ve hareketler yazıldıktan ('tekil' alındıktan) SONRA fiş başlığı güncelleniyordu: aynı siparişin fiş
@@ -797,7 +828,8 @@ begin
    where (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno)) and not (coalesce(ek, '{}'::jsonb) ? 'siparisIptal');
   perform set_config('fis.duzen', '', true);
   perform set_config('fis.kapi', '', true);
-  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'kalemler', public.fis_kalem_durumlari(v_idler));
+  update public.siparisler set durum = 'İptal' where id::text = sid and durum is distinct from 'İptal';
+  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'durum', 'İptal', 'kalemler', public.fis_kalem_durumlari(v_idler));
 end $$;
 
 -- RENK TAŞI (v1.742.0, kullanıcı kararı 31 Ekim: "Varyant düzeyinde"). Tanımlar › Bakım › Kodsuz Mamul Renkleri ("Siyah" →
@@ -984,6 +1016,8 @@ begin
   create trigger fis_kalem_teslim_koru before update or delete on public.siparis_kalemleri for each row execute function public.fis_kalem_teslim_koru();
   drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
   create trigger fis_siparis_teslim_koru before delete on public.siparisler for each row execute function public.fis_siparis_teslim_koru();
+  drop trigger if exists fis_siparis_iptal_koru on public.siparisler;
+  create trigger fis_siparis_iptal_koru before update on public.siparisler for each row execute function public.fis_siparis_iptal_koru();
   drop trigger if exists fis_baslik_koru on public.stk_fis;
   create trigger fis_baslik_koru before insert or update or delete on public.stk_fis for each row execute function public.fis_baslik_koru();
   drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;

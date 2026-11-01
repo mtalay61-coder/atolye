@@ -76,7 +76,17 @@ const bot = { id: "m", ad: "Bot", kategori: "Mamul", alisFiyati: 0, variants: []
 const alinanMamul = { id: "a", ad: "Terlik", kategori: "Mamul", alisFiyati: 60, variants: [] };
 const satis = (id) => ({ id, tarih: new Date().toISOString(), renk: "Siyah", beden: "40", miktar: -2, kaynak: "Satış" });
 bot.hareketler = [satis("s1")]; alinanMamul.hareketler = [satis("s2")];
-const kz = karZararHesapla({ stok: [bot, alinanMamul, deri], cariler, muhasebe: { kurlar, kurGecmisi }, giderKartlari: [], donem: "tumu" });
+// Bu fixture Eylül sonundaki üç aylık ortalamayı sınar. Gerçek saat Kasım'a ilerleyince
+// eski alış kapsam dışına çıkıyordu; üretim davranışını değiştirmeden test tarihini sabitle.
+const GercekDate = global.Date;
+let kz;
+try {
+  global.Date = class extends GercekDate {
+    constructor(...args) { super(...(args.length ? args : [bugun + "T12:00:00Z"])); }
+    static now() { return new GercekDate(bugun + "T12:00:00Z").getTime(); }
+  };
+  kz = karZararHesapla({ stok: [bot, alinanMamul, deri], cariler, muhasebe: { kurlar, kurGecmisi }, giderKartlari: [], donem: "tumu" });
+} finally { global.Date = GercekDate; }
 bekle("reçeteli mamul: 2 × 0,5 × 85 = 85 (işçilik hariç); reçetesiz: 2 × 60 = 120",
   kz.satisKalemleri.map((k) => [k.urun, yuv(k.maliyet)]), [["Bot", 85], ["Terlik", 120]]);
 

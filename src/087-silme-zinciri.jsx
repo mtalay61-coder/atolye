@@ -158,7 +158,8 @@ const siparisKapat = useCallback(async (siparisId) => {
   // açılınca köprüden satır güncellemesi reddedilir). Bağ sunucuda çözülür (`fis_bag_coz`: siparis_id / kalem_id / zincir boşalır,
   // numara "(iptal)" eki alır — 088 siparisBaglariniCoz ile aynı kural, değerleri sunucu hesaplar); yerel kopya aynı değişikliği
   // alır ve fark tabanı ilerler (aynı satır eski yoldan bir daha gönderilmez). Sunucu çözemezse iptal durur, hiçbir şey değişmez.
-  const fisYolu = fisKesYolu() && !sil && (onizleme.ozet.stokHareketi > 0 || onizleme.ozet.cariHareketi > 0 || onizleme.ozet.zincir > 0);
+  // F4: yerel görüntüde bağ görünmese de iptal sunucuda yapılır; başka cihaz teslim etmiş olabilir.
+  const fisYolu = fisKesYolu() && !sil;
   if (fisYolu) {
     try {
       await supabaseIstek("rpc/fis_bag_coz", { method: "POST", body: JSON.stringify({ p: { siparisId, siparisNo: no || null } }) });

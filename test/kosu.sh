@@ -16,6 +16,7 @@ node birim-yazma-zarfi.js || HATA=1
 node birim-karsilanan-sunucu.js || HATA=1
 node birim-kalici-ret.js || HATA=1
 node birim-yedek-fis-kilidi.js || HATA=1
+node birim-siparis-iptal-sunucu.js || HATA=1
 node senaryo-yedek-fis-kilidi.js || HATA=1
 node birim-kasa-v2.js || HATA=1
 node birim-liste-v2.js || HATA=1
