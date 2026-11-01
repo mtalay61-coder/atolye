@@ -638,6 +638,8 @@ end $$;
 -- 088 siparisBaglariniCoz) fişler silinmez, bağımsız kalır: satırın sipariş bağı çözülür — miktar / tutar / ürün DEĞİŞMEZ. Satır
 -- eşleşmesi uygulamayla aynı (088 siparisHareketiMi): kimlikli satırda kimlik, kimliksiz eskide numara. Değerleri istemci
 -- VERMEZ, sunucu hesaplar ("(iptal)" eki, düşen anahtarlar) — bu işlemle başka alan değiştirilemez. Fiş başlığına not düşer.
+-- F1.1 (2 Kasım): geçerli bağ geçmiş sütunlara taşınır (bir kez); kalem ve fiş satırları önden, kimlik sırasıyla kilitlenir;
+-- tekrar çağrı güvenli (izi ve fiş notunun zamanını değiştirmez). Dönüş: { stok, cari, zincir, kalemler: [{id, karsilanan}] }.
 -- p = { siparisId, siparisNo }
 create or replace function public.fis_bag_coz(p jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
@@ -649,14 +651,41 @@ declare
   n_cari int := 0;
   n_zincir int := 0;
   n int;
+  v_idler text[];
 begin
   perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
   if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
   ino := case when sno is null then null else sno || ' (iptal)' end;
+  -- KİLİT SIRASI 2 (F1.1) — siparişin kalemleri ve bağlı hareketlerin kalemleri, kimlik sırasıyla, İLK YAZMADAN ÖNCE. Önceden hiç
+  -- kalem kilidi yoktu ve hareketler yazıldıktan ('tekil' alındıktan) SONRA fiş başlığı güncelleniyordu: aynı siparişin fiş
+  -- iptaliyle (kalem → fiş → hareket) ters sıra — %30–70 kilitlenme (1 Kasım matrisi, t-f11-kilit P1). Yazma yapmaz.
+  select coalesce(array_agg(distinct x order by x), '{}'::text[]) into v_idler from (
+    select k.id::text as x from public.siparis_kalemleri k where k.siparis_id::text = sid
+    union all select h.kalem_id from public.stk_hareket h
+     where h.kalem_id is not null and (h.siparis_id = sid or (h.siparis_id is null and sno is not null and h.siparis_no = sno))) y;
+  perform public.fis_kalem_kilitle(v_idler);
+  -- KİLİT SIRASI 3 (F1.1) — bu işlemin dokunacağı BÜTÜN fiş başlıkları (başlıktan ve bağı çözülecek stok / cari satırlarından),
+  -- kimlik sırasıyla. fis_iptal de kalem → fiş (kimlik sırasıyla) → yazma sırasını izler.
+  perform 1 from public.stk_fis ff where ff.id in (
+      select f.id from public.stk_fis f where f.siparis_id = sid or (f.siparis_id is null and sno is not null and f.siparis_no = sno)
+      union select h.fis_id from public.stk_hareket h
+       where h.siparis_id = sid or (h.siparis_id is null and sno is not null and h.siparis_no = sno) or h.rezervasyon_siparis_id = sid
+      union select c.fis_id from public.car_hareket c
+       where c.fis_id is not null and not c.iptal
+         and ((c.ek ->> 'siparisId') = sid or ((c.ek ->> 'siparisId') is null and sno is not null and c.siparis_no = sno)
+              or (c.ek ->> 'rezervasyonSiparisId') = sid))
+    order by ff.id for update;
+
   perform set_config('fis.kapi', 'acik', true);
   perform set_config('fis.duzen', 'bag', true);
-  update public.stk_hareket set siparis_id = null, kalem_id = null, siparis_no = ino
-   where not iptal and (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno));
+  -- GEÇERLİ bağ → GEÇMİŞ bağ (F1.1, kural 1): eski sipariş / kalem kimliği AYRI sütunlara, BİR KEZ (çözülmüş satır eşleşmez:
+  -- kimliği boş, numarası "(iptal)" ekli — tekrar çağrı izi bozmaz, kural 3). İptal edilmiş satır DAHİL (geçerli bağ hiçbir
+  -- satırda kalmaz); iptal satır karşılanana yine girmez (fis_kalem_hesap, kural 2). Karşılanan DEĞİŞMEZ: aynı hareketler bu kez
+  -- geçmiş bağdan sayılır (karar A: teslim geçmişi kalemde kalır).
+  update public.stk_hareket
+     set gecmis_siparis_id = siparis_id, gecmis_kalem_id = kalem_id, bag_cozum_zamani = now(),
+         siparis_id = null, kalem_id = null, siparis_no = ino
+   where bag_cozum_zamani is null and (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno));
   get diagnostics n_stok = row_count;
   update public.stk_hareket set rezervasyon_siparis_id = null where not iptal and rezervasyon_siparis_id = sid;
   get diagnostics n_zincir = row_count;
@@ -667,10 +696,10 @@ begin
    where not iptal and (ek ->> 'rezervasyonSiparisId') = sid;
   get diagnostics n = row_count; n_zincir := n_zincir + n;
   update public.stk_fis set ek = ek || jsonb_build_object('siparisIptal', jsonb_build_object('no', sno, 'zaman', now()))
-   where siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno);
+   where (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno)) and not (coalesce(ek, '{}'::jsonb) ? 'siparisIptal');
   perform set_config('fis.duzen', '', true);
   perform set_config('fis.kapi', '', true);
-  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir);
+  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir, 'kalemler', public.fis_kalem_durumlari(v_idler));
 end $$;
 
 -- RENK TAŞI (v1.742.0, kullanıcı kararı 31 Ekim: "Varyant düzeyinde"). Tanımlar › Bakım › Kodsuz Mamul Renkleri ("Siyah" →
