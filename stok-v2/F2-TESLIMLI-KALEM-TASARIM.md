@@ -1,7 +1,7 @@
-# F2 — Teslim geçmişi olan sipariş kalemi (TASARIM — uygulanmadı)
+# F2 — Teslim geçmişi olan sipariş kalemi (TASARIM — uygulandı, yalnız geliştirme dalında; sonuç: VERI-TUTARLILIGI-F2.md)
 
-**Durum:** 2 Kasım 2026, dal `claude/f2-teslimli-kalem` (F1.1 üzerine, `cb33912`). **Üretim kodu ve SQL değişmedi.** Bu dalda
-tasarım, başarısızlık testleri ve ölçümler var. Uygulama izni ayrıca verilecek.
+**Durum:** 2 Kasım 2026, dal `claude/f2-teslimli-kalem` (F1.1 üzerine, `cb33912`). Kodlama izni verildi ve uygulandı
+(K1–K6 önerileriyle); sonuçlar `VERI-TUTARLILIGI-F2.md`. Aşağıdaki "bugünkü" ölçümler F2 ÖNCESİ (F1.1 SQL) durumdur. Canlıya geçiş onayı YOK.
 
 **Kullanıcı hedefi (2 Kasım):** "Teslim geçmişi bulunan sipariş kalemlerinin silinmesi, başka kalemle birleştirilmesi veya
 ürün/renk/beden kimliğinin değiştirilmesi sonucunda hiçbir fiş ya da stok hareketi sahipsiz kalmamalı."
