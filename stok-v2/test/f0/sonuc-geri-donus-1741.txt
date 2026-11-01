@@ -1,0 +1,57 @@
+══ 1) kurulum
+   REF_DB atolye_f11_ref1741: 1.742.1 kurulumu tamam (100 TAMAM)
+   GERI_DB atolye_f11_geri: bugünkü SQL (R1b tetikleyicisi: 1, F1: 1, iz sütunları: 0)
+   bugünkü istemciyle veri — F0/F1: ── F0 durumu beklenenle AYNI ──
+   F1.1 testleri (veri): ── t-f11.js: 1 yeşil, 13 kırmızı ──
+   fiş: 115 · iz kaydı: 3
+══ 2) geri dönüş SQL'i (Editor gibi: her ifade ayrı istek)
+   58 parça çalıştı
+══ 3) doğrulama
+   a) dosyadaki bölümler 20834ea ile birebir:
+      18-fis-defteri: aynı
+      20-gece-denetimi: aynı
+   b) işlev / tetikleyici farkı (REF ↔ GERI):
+      yok
+      işlev gövdesi özet farkı (REF ↔ GERI):
+      yok — bütün işlevler 1.742.1 ile birebir
+      tablo farkı (bilgi; veri tabloları bilerek kalır):
+      7a8
+      > fis_karsilanan_iz
+      stk_hareket sütun farkı (bilgi):
+   c) 1.742.1'in kendi testleri, geçiş taklidi + geri dönüşten sonra (atolye_f11_geri_sinama):
+      1.742.1 kos.sh (araya geçiş + geri dönüş eklenmiş): çıkış 0 · 100 TAMAM · ✗ 0
+        ══ GEÇİŞ TAKLİDİ: bugünkü editor/18 + editor/20
+           R1b tetikleyicisi: 1 · F1: 1
+           veri (bugünkü istemci, t-f11.js): ── t-f11.js: 1 yeşil, 13 kırmızı ──
+        ══ TAM GERİ DÖNÜŞ: geri-donus-1.742.1.sql
+        ══ 1.742.1 TESTLERİ
+        ── uçtan uca (fiş defteri) temiz ──
+        psql:stok-v2/test/sinama-gece.sql:18: NOTICE:  TAMAM: taban temiz (gerçek yazma yollarının fişlerinde yanlış alarm yok)
+      işlev özeti farkı (REF ↔ SINAMA):
+      yok
+   d) eski istemci (1.742.1) + geri dönülmüş SQL — taban çizgisi (puanlanmaz):
+       ✗ [E11.siparis-iptali] eski istemci sipariş iptali: fis_bag_coz + başlık yazması kabul, geçmiş bağ yazılır, karşılanan 3 = hesap 3
+       ✗ [E11.S1-fis-iptali] eski istemci S1 fiş iptali: karşılanan 0 = hesap 0, hayalet yok
+       ✗ [E11.S2a-eszamanli] eski istemci S2a (fiş iptali önce) ×3: ikisi tamam, karşılanan 0 = hesap 0
+       ✗ [E11.S2a-ters-sira] eski istemci S2a (sipariş iptali önce) ×3: ikisi tamam, karşılanan 0 = hesap 0
+       ✗ [E11.birlestirme] AÇIK RİSK (F2) — birleştirmede teslim kaybolmaz: kalan kalemlerin karşılananı 7, sahipsiz hareket yok
+       ✗ [E11.geri-yukleme-kapali] AÇIK RİSK (F5) — kurallar kapalı: geri yüklemeden sonra karşılanan = hesap, D1 / D2 / D6 temiz
+       ✗ [E11.geri-yukleme-acik] AÇIK RİSK (F5) — kurallar açık: geri yüklemeden sonra karşılanan = hesap, D1 / D2 / D6 temiz
+   e) denetim (bütün veri; bilgi):
+      D1a_karsilanan_hareketten_farkli 5
+      D1b_hayalet_karsilanan 15
+      D1c_ters_yonlu_net_hareket 1
+      D2a_sahipsiz_hareket_kalem_yok 18
+      D2b_sahipsiz_hareket_siparis_yok 14
+      D2c_hareket_kalem_siparis_uyusmaz 1
+      D2d_fis_siparis_yok 14
+      D3_hareket_urunu_kalemden_farkli 1
+      D3b_hareket_renk_beden_kalemden_farkli 2
+      D4a_onaysiz_fazla_teslim 3
+      D4b_isaretli_fazla_teslim 3
+      D5a_bagi_cozulmus_teslim 3
+      D5b_durum_teslimle_celisiyor 28
+      D6a_satirsiz_stok_fisi 3
+      D6b_iptal_fisin_gecerli_satiri 1
+   kurallar sonda: t
+── GERİ DÖNÜŞ TEMİZ (a, b, c) ──

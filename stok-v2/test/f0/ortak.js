@@ -67,7 +67,8 @@ global.fetch = async (url, sec = {}) => {
   } else if (sec.method && sec.method !== "GET") giden.push({ ad: `REST ${sec.method} ${yol.split("?")[0]}`, ok: true });
   return { ok: true, status: 200, json: async () => (sec.method === "PATCH" ? [{ id: "x" }] : []), text: async () => "" };
 };
-const E = require(path.join(__dirname, "../../../test/erp.cjs"));
+// F0_ERP: başka bir istemci derlemesi (ör. eski-istemci.sh → .eski-istemci/erp.cjs, 1.742.1). Verilmezse bugünkü test/erp.cjs.
+const E = require(process.env.F0_ERP || path.join(__dirname, "../../../test/erp.cjs"));
 E.stokV2AktifAyarla(true); E.cariV2AktifAyarla(true); E.altV2AktifAyarla(true); E.kasaV2AktifAyarla(true); E.fisDefteriKuruluAyarla(true);
 E.stokV2TanimlarAyarla(JSON.parse(psql("select veri from public.tanimlar where id = 'tekil';")));
 

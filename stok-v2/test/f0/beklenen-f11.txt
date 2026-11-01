@@ -1,0 +1,82 @@
+# F1.1 BEKLENEN DURUM (kos-f11.sh bununla karşılaştırır). Satır: kimlik DURUM — bugünkü (1.743.0 SQL) gerçek sonuç.
+# Kaynak koşu: sonuc-f11-1.743.0.txt (2 Kasım, yerel PG, kurallar açık, F11_N=100, F11_ZORLA=3).
+# F1.1 UYGULANINCA (ayrı onayla) YESIL olması gerekenler: aşağıdaki bütün KIRMIZI satırlar, ŞUNLAR HARİÇ (açık risk, kural 6):
+#   E11.birlestirme          → F2 (teslimli kalem birleştirme) — KIRMIZI kalır
+#   E11.geri-yukleme-kapali  → F5 (yedekten geri yükleme, kurallar kapalı) — KIRMIZI kalır
+# Ayrıca F1.1 ile denetim.sql (ve canli-salt-okur-kontrol.sql, gece denetimi) geçmiş bağı sayacak şekilde güncellenir: C-P2/P3/P4/P7
+# "-veri" satırlarının bugünkü kırmızılığı kilitten değil, sipariş iptalinden sonra kalemin hayalet görünmesinden (D1b; S1 ile aynı kök).
+# Doğal zorlama satırları (F11.C-*-kilit) olasılıklı: 1.743.0'da P1 ve P6b %3–8 kilitleniyor; N=100'de 0 çıkma olasılığı ~%1'in altında.
+F11.iz-sutunlari KIRMIZI
+F11.bag-coz-iz-yazar KIRMIZI
+F11.S1-iptal-sonrasi KIRMIZI
+F11.iz-bir-kez KIRMIZI
+F11.S1-fis-iptali KIRMIZI
+F11.S1-yanit-kalemler KIRMIZI
+F11.S1k-kontrol YESIL
+F11.S1k-iptal-satiri-izi KIRMIZI
+F11.S2a-eszamanli KIRMIZI
+F11.S2a-ters-sira KIRMIZI
+F11.S2-dogal KIRMIZI
+F11.izsiz-eski-kayit KIRMIZI
+F11.izsiz-fis-iptali KIRMIZI
+F11.satir-korumasi KIRMIZI
+F11.A-fis_kes-kalem YESIL
+F11.A-fis_iptal-kalem YESIL
+F11.A-fis_iptal-fis YESIL
+F11.A-fis_iptal-makbuz KIRMIZI
+F11.A-fis_iptal-makbuz-kalemsiz KIRMIZI
+F11.A-fis_iptal-gecmis-kalem KIRMIZI
+F11.A-fis_bag_coz-kalem KIRMIZI
+F11.A-fis_bag_coz-fis KIRMIZI
+F11.A-alt_yaz-kalem YESIL
+F11.B-P1-kalem-kilit YESIL
+F11.B-P1-kalem-veri KIRMIZI
+F11.B-P1-fis-kilit KIRMIZI
+F11.B-P1-fis-veri YESIL
+F11.B-P1-hareket-kilit KIRMIZI
+F11.B-P1-hareket-veri KIRMIZI
+F11.B-P1-tekil-kilit KIRMIZI
+F11.B-P1-tekil-veri KIRMIZI
+F11.B-P6-kalem-kilit YESIL
+F11.B-P6-kalem-veri YESIL
+F11.B-P6-fis-kilit YESIL
+F11.B-P6-fis-veri YESIL
+F11.B-P6-hareket-kilit YESIL
+F11.B-P6-hareket-veri YESIL
+F11.B-P6-tekil-kilit YESIL
+F11.B-P6-tekil-veri YESIL
+F11.B-P6-makbuz-kilit YESIL
+F11.B-P6-makbuz-veri YESIL
+F11.B-P6b-kalem-kilit YESIL
+F11.B-P6b-kalem-veri YESIL
+F11.B-P6b-fis-kilit KIRMIZI
+F11.B-P6b-fis-veri YESIL
+F11.B-P6b-hareket-kilit KIRMIZI
+F11.B-P6b-hareket-veri YESIL
+F11.B-P6b-tekil-kilit KIRMIZI
+F11.B-P6b-tekil-veri YESIL
+F11.B-P6b-makbuz-kilit KIRMIZI
+F11.B-P6b-makbuz-veri YESIL
+F11.C-P1-kilit KIRMIZI
+F11.C-P1-veri KIRMIZI
+F11.C-P2-kilit YESIL
+F11.C-P2-veri KIRMIZI
+F11.C-P3-kilit YESIL
+F11.C-P3-veri KIRMIZI
+F11.C-P4-kilit YESIL
+F11.C-P4-veri KIRMIZI
+F11.C-P5-kilit YESIL
+F11.C-P5-veri YESIL
+F11.C-P6-kilit YESIL
+F11.C-P6-veri YESIL
+F11.C-P6b-kilit KIRMIZI
+F11.C-P6b-veri YESIL
+F11.C-P7-kilit YESIL
+F11.C-P7-veri KIRMIZI
+E11.siparis-iptali KIRMIZI
+E11.S1-fis-iptali KIRMIZI
+E11.S2a-eszamanli KIRMIZI
+E11.S2a-ters-sira KIRMIZI
+E11.birlestirme KIRMIZI
+E11.geri-yukleme-kapali KIRMIZI
+E11.geri-yukleme-acik YESIL

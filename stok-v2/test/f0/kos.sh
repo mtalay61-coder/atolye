@@ -13,7 +13,8 @@ if [ "${F0_YENIDEN:-0}" = "1" ]; then bash "$KOK/stok-v2/test/kos.sh" > /tmp/f0-
 [ "$(psql -X -At -d "${STOK_V2_DB:-atolye_stok_v2_sinama}" -c 'select public.fis_kural_aktif();' 2>/dev/null)" = "t" ] || { echo "kurallar açık değil / veritabanı yok — önce stok-v2/test/kos.sh"; exit 2; }
 
 CIKTI=$(mktemp)
-for t in t-karsilanan t-kalem-bag t-fazla t-iptal t-yedek t-surum t-kilit t-f1 t-denetim; do
+# F0_TESTLER: başka bir küme (F1.1: F0_TESTLER="t-f11 t-f11-kilit t-f11-eski" BEKLENEN=beklenen-f11.txt — kos-f11.sh)
+for t in ${F0_TESTLER:-t-karsilanan t-kalem-bag t-fazla t-iptal t-yedek t-surum t-kilit t-f1 t-denetim}; do
   echo "── $t"
   node "$t.js" 2>&1 | tee -a "$CIKTI"
   [ "${PIPESTATUS[0]}" -le 1 ] || echo "  ! $t çöktü" | tee -a "$CIKTI"
