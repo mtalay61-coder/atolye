@@ -123,7 +123,7 @@ language plpgsql as $$
 begin
   if tg_op = 'INSERT' then
     if new.gecmis_siparis_id is not null or new.gecmis_kalem_id is not null or new.bag_cozum_zamani is not null then
-      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde yazılır (stk_hareket %)', new.id using errcode = '42501';
+      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde yazılır (stk_hareket %)', new.id using errcode = 'KR001';
     end if;
     return new;
   end if;
@@ -132,16 +132,16 @@ begin
        or new.gecmis_siparis_id is distinct from old.siparis_id or new.gecmis_kalem_id is distinct from old.kalem_id
        or old.gecmis_siparis_id is not null or old.gecmis_kalem_id is not null
        or new.siparis_id is not null or new.kalem_id is not null then
-      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde, eski geçerli bağdan yazılır (stk_hareket %)', new.id using errcode = '42501';
+      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde, eski geçerli bağdan yazılır (stk_hareket %)', new.id using errcode = 'KR001';
     end if;
     return new;
   end if;
   if new.gecmis_siparis_id is distinct from old.gecmis_siparis_id or new.gecmis_kalem_id is distinct from old.gecmis_kalem_id
      or new.bag_cozum_zamani is distinct from old.bag_cozum_zamani then
-    raise exception 'Geçmiş sipariş bağı değiştirilemez (stk_hareket %)', new.id using errcode = '42501';
+    raise exception 'Geçmiş sipariş bağı değiştirilemez (stk_hareket %)', new.id using errcode = 'KR001';
   end if;
   if old.bag_cozum_zamani is not null and (new.siparis_id is not null or new.kalem_id is not null) then
-    raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = '42501';
+    raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = 'KR001';
   end if;
   return new;
 end $$;

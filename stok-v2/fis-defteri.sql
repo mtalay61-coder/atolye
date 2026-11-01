@@ -181,6 +181,12 @@ begin
   return new;
 end $$;
 
+-- KURAL REDDİ KODLARI (F2, kullanıcı kararı 2 Kasım): sunucunun veri kuralı redleri `KRnnn` SQLSTATE'iyle döner — 42501 ("yetki yok")
+-- DEĞİL: istemci 42501'i "giriş yapılmamış" diye çeviriyordu ve kalıcı reddi bekleyen defterde dakikada bir yeniden gönderiyordu.
+-- 1.744.0 istemcisi KR kodunu KALICI RET sayar (otomatik tekrar yok, "inceleme gerekiyor"); eski istemci ham Türkçe metni gösterir.
+--   KR001 bağı çözülmüş hareket yeniden bağlanamaz / geçmiş bağ değiştirilemez (F1.1)
+--   KR002 teslim geçmişi olan kalem / sipariş silinemez (birleştirme dahil)      KR003 teslimli kalemin ürün / renk / beden / siparişi değişmez
+--   KR004 miktar teslim edilenin altına inemez                                   KR005 var olmayan kaleme hareket bağlanamaz
 -- GEÇMİŞ BAĞ KORUMASI (F1.1) — kurallardan BAĞIMSIZ (canlıda kurallar kapalıyken eski stk_yaz yolu da açık): geçmiş sütunları
 -- yalnız fis_bag_coz (`fis.duzen` = bag) ve yalnız tek geçişle yazar: hiç çözülmemiş satır → geçerli bağ boşalır, eski değerler
 -- geçmişe, çözüm zamanı dolar. Çözülmüş satır geçerli bağa yeniden bağlanamaz (eski bir cihazın bayat satırı bağı diriltmesin).
@@ -189,7 +195,7 @@ language plpgsql as $$
 begin
   if tg_op = 'INSERT' then
     if new.gecmis_siparis_id is not null or new.gecmis_kalem_id is not null or new.bag_cozum_zamani is not null then
-      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde yazılır (stk_hareket %)', new.id using errcode = '42501';
+      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde yazılır (stk_hareket %)', new.id using errcode = 'KR001';
     end if;
     return new;
   end if;
@@ -198,16 +204,16 @@ begin
        or new.gecmis_siparis_id is distinct from old.siparis_id or new.gecmis_kalem_id is distinct from old.kalem_id
        or old.gecmis_siparis_id is not null or old.gecmis_kalem_id is not null
        or new.siparis_id is not null or new.kalem_id is not null then
-      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde, eski geçerli bağdan yazılır (stk_hareket %)', new.id using errcode = '42501';
+      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde, eski geçerli bağdan yazılır (stk_hareket %)', new.id using errcode = 'KR001';
     end if;
     return new;
   end if;
   if new.gecmis_siparis_id is distinct from old.gecmis_siparis_id or new.gecmis_kalem_id is distinct from old.gecmis_kalem_id
      or new.bag_cozum_zamani is distinct from old.bag_cozum_zamani then
-    raise exception 'Geçmiş sipariş bağı değiştirilemez (stk_hareket %)', new.id using errcode = '42501';
+    raise exception 'Geçmiş sipariş bağı değiştirilemez (stk_hareket %)', new.id using errcode = 'KR001';
   end if;
   if old.bag_cozum_zamani is not null and (new.siparis_id is not null or new.kalem_id is not null) then
-    raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = '42501';
+    raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = 'KR001';
   end if;
   return new;
 end $$;
