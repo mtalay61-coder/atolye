@@ -31,7 +31,7 @@ bash "$F0/eski-istemci.sh" > /dev/null || { echo "eski ağaç kurulamadı"; exit
 ESKI="$F0/.eski-istemci"
 nesneler() { psql -X -At -d "$1" -c "select 'F:'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'
   union all select 'T:'||c.relname||'.'||t.tgname from pg_trigger t join pg_class c on c.oid=t.tgrelid where not t.tgisinternal
-  union all select 'K:'||c.relname||'.'||k.conname from pg_constraint k join pg_class c on c.oid=k.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' order by 1"; }
+  union all select 'K:'||c.relname||'.'||k.conname from pg_constraint k join pg_class c on c.oid=k.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname <> 'fis_karsilanan_iz' order by 1"; }   # iz tablosu bilerek kalır (veri)
 ozetler() { psql -X -At -d "$1" -c "select p.proname||'('||pg_get_function_identity_arguments(p.oid)||') '||md5(p.prosrc) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' order by 1"; }
 tablolar() { psql -X -At -d "$1" -c "select table_name from information_schema.tables where table_schema='public' order by 1"; }
 
@@ -39,7 +39,7 @@ echo "══ 1) kurulum"
 (cd "$ESKI" && STOK_V2_DB="$REF_DB" bash stok-v2/test/kos.sh > "$CIK/ref-kur.txt" 2>&1) || { echo "   REF (1.742.1) kurulumu düştü — $CIK/ref-kur.txt"; tail -5 "$CIK/ref-kur.txt"; exit 2; }
 echo "   REF_DB $REF_DB: 1.742.1 kurulumu tamam ($(grep -c 'TAMAM' "$CIK/ref-kur.txt") TAMAM)"
 (cd "$KOK" && STOK_V2_DB="$GERI_DB" bash stok-v2/test/kos.sh > "$CIK/geri-kur.txt" 2>&1) || { echo "   GERI kurulumu düştü — $CIK/geri-kur.txt"; tail -5 "$CIK/geri-kur.txt"; exit 2; }
-echo "   GERI_DB $GERI_DB: bugünkü SQL (R1b tetikleyicisi: $(psql -X -At -d "$GERI_DB" -c "select count(*) from pg_trigger where tgname = 'fis_kalem_karsilanan_koru';"), F1: $(psql -X -At -d "$GERI_DB" -c "select count(*) from pg_proc where proname = 'fis_kalem_kilitle';"), iz sütunları: $(psql -X -At -d "$GERI_DB" -c "select count(*) from information_schema.columns where table_name = 'stk_hareket' and column_name like 'gecmis%';"))"
+echo "   GERI_DB $GERI_DB: bugünkü SQL (R1b tetikleyicisi: $(psql -X -At -d "$GERI_DB" -c "select count(*) from pg_trigger where tgname = 'fis_kalem_karsilanan_koru';"), F1: $(psql -X -At -d "$GERI_DB" -c "select count(*) from pg_proc where proname = 'fis_kalem_kilitle';"), iz sütunları: $(psql -X -At -d "$GERI_DB" -c "select count(*) from information_schema.columns where table_name = 'stk_hareket' and column_name in ('gecmis_siparis_id', 'gecmis_kalem_id', 'bag_cozum_zamani');"))"
 if [ "${GERI_VERI:-1}" = "1" ]; then
   (cd "$F0" && STOK_V2_DB="$GERI_DB" bash kos.sh > "$CIK/geri-f0.txt" 2>&1); echo "   bugünkü istemciyle veri — F0/F1: $(tail -1 "$CIK/geri-f0.txt")"
   (cd "$F0" && STOK_V2_DB="$GERI_DB" F11_DOGAL=3 node t-f11.js > "$CIK/geri-f11.txt" 2>&1); echo "   F1.1 testleri (veri): $(tail -1 "$CIK/geri-f11.txt")"

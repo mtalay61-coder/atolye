@@ -82,6 +82,27 @@ const sutunYok = "sütun yok";
       gercek: [kalanK, sonra.D2a], beklenen: [7, 0] });
   }
 
+  // E11.bayat-satir — kurallar KAPALI (canlının bugünkü hâli, eski stk_yaz yolu açık): A cihazının yerel verisi sipariş iptalinden
+  // ÖNCE; B siparişi iptal eder; A aynı hareketi (kalemId'si dolu) köprüden yeniden yazar. Bağ dirilmemeli, iz bozulmamalı,
+  // karşılanan değişmemeli (yazma reddedilir — uygulama bekleyen deftere alır).
+  {
+    const kural1 = F.kurallarAcik();
+    F.kurallariAyarla(false);
+    const k = `${ON}-yk`, s = F.siparisKur(F.sipObj(`${ON}-y`, [F.kalemObj(k, 20, 0)]));
+    const fis = teslim(s, k, 3, 0, `${ON}-yi`).sonuc.fisNo;
+    const yerelA = F.stokOku();
+    await F.siparisIptal(s, F.yerelOku(s));
+    const once = F.durum(k, fis);
+    const yeni = JSON.parse(JSON.stringify(yerelA));
+    yeni.forEach((u) => (u.hareketler || []).forEach((h) => { if (h.fisNo === fis) h.aciklama = "A cihazında düzenlendi"; }));
+    const y = await F.kaydet("urunler", yerelA, yeni);
+    const sonra = F.durum(k, fis); const sat = (sonra.satirlar || [])[0] || {};
+    F.kurallariAyarla(kural1);
+    F.kontrol("E11.bayat-satir", "kurallar kapalı, bayat yerel veri: bağı çözülmüş hareket yeniden siparişe bağlanmaz, iz ve karşılanan aynı", {
+      once: { karsilanan: once.karsilanan, satirlar: once.satirlar }, sonra: { yazma: y, karsilanan: sonra.karsilanan, hesap: sonra.hesap, satirlar: sonra.satirlar },
+      gercek: [sat.kalem, sat.siparis, F.izVar() ? sat.gecmisKalem : sutunYok, sonra.karsilanan, sonra.hesap], beklenen: [null, null, k, 3, 3] });
+  }
+
   // E11.geri-yukleme — AÇIK RİSK (F5): yedek T0 → 3 teslim + fiyat 150 → yedekten geri (stok + sipariş, köprü), kurallar kapalı / açık
   const kural0 = F.kurallarAcik();
   for (const acik of [false, true]) {
