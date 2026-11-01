@@ -13,7 +13,9 @@ const { ON } = T;
 
 const sip = (ad, kalemler, ek) => T.siparisKur(T.sipObj(`${ON}-${ad}`, kalemler, ek));
 const durumYaz = (s, d) => T.psql(`update public.siparisler set durum = '${d}' where id = '${s.id}';`);
-const korumasiz = (sql) => T.psql(`select set_config('fis.kapi', 'acik', false); select set_config('fis.kalem', 'acik', false);\n${sql}`);
+// ESKİ BOZUK VERİ TAKLİDİ: kuralların (fiş kapısı, F2 teslim koruması, yabancı anahtar) olmadığı dönemde yazılmış veri — tetikleyicisiz
+// (session_replication_role = replica). Denetim canlıdaki F2 öncesi veriyi yakalamalı; F2 sonrası bu bozukluk yeniden ÜRETİLEMEZ.
+const korumasiz = (sql) => T.psql(`set session_replication_role = replica; select set_config('fis.kapi', 'acik', false); select set_config('fis.kalem', 'acik', false);\n${sql}\nset session_replication_role = origin;`);
 const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { aile: "stok", tur: ek.tur || "Satış", onek: ek.onek || "SF", kaynak: ek.kaynak || "Satış", cariId: ek.cari === undefined ? "c-yeni" : ek.cari,
   ...(ek.siparisId ? { siparisId: ek.siparisId, siparisNo: "YOK" } : {}) },
   stok: { satirlar: [{ id: `${istek}-h`, urunId: "u-yeni", renk: "Siyah", miktar, kaynak: ek.kaynak || "Satış", ...(ek.siparisId ? { siparisId: ek.siparisId } : {}), ...(ek.kalemId ? { kalemId: ek.kalemId } : {}) }] } });
@@ -48,9 +50,11 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
       const s = sip("h3", [T.kalemObj(`${ON}-h3k`, 10, 0)]);
       serbestFis(`${ON}-h3a`, 2, { siparisId: s.id, kalemId: `${ON}-h3k` });
     }],
-    ["DN.sahipsiz-kalem", "hareket var olmayan kaleme bağlı", { D2a_sahipsiz_hareket_kalem_yok: 1 }, () => {
-      const s = sip("h4", [T.kalemObj(`${ON}-h4k`, 10, 0)]);
-      serbestFis(`${ON}-h4a`, -1, { siparisId: s.id, kalemId: `${ON}-h4-yok` });
+    // F2: var olmayan kaleme teslim reddedilir (KR005) — eski veri taklidi: kaleme teslim, sonra kalem tetikleyicisiz silinir
+    ["DN.sahipsiz-kalem", "hareket var olmayan kaleme bağlı (F2 öncesi veri)", { D2a_sahipsiz_hareket_kalem_yok: 1 }, () => {
+      const s = sip("h4", [T.kalemObj(`${ON}-h4k`, 10, 0), T.kalemObj(`${ON}-h4z`, 10, 0)]);
+      serbestFis(`${ON}-h4a`, -1, { siparisId: s.id, kalemId: `${ON}-h4z` });
+      korumasiz(`delete from public.siparis_kalemleri where id = '${ON}-h4z';`);
     }],
     ["DN.sahipsiz-siparis", "fiş ve hareket var olmayan siparişe bağlı", { D2b_sahipsiz_hareket_siparis_yok: 1, D2d_fis_siparis_yok: 1 }, () => {
       serbestFis(`${ON}-h5a`, -1, { siparisId: `${ON}-h5-yoksip` });

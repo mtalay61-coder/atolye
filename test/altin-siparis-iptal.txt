@@ -24,7 +24,7 @@
  "hatalar": [],
  "ikinciOnayKipi": "sil",
  "ikinciSilmedenSonraFisVar": true,
- "ikinciSilmedenSonraSiparisVar": false,
+ "ikinciSilmedenSonraSiparisVar": true,
  "iptalOnayi": {
   "alisGorunuyor": true,
   "fisGorunuyor": true,

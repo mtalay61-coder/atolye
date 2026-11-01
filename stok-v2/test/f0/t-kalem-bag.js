@@ -75,7 +75,9 @@ const bekleyenKalemleriBirlestir = new Function(`${k075.slice(b, s)}; return bek
   }
 
   const d = T.denetim();
-  T.kontrol("D2.denetim-yakalar", "denetim sahipsiz hareketi (D2a) ve ürün farkını görüyor", { sonra: { D2a: d.D2a_sahipsiz_hareket_kalem_yok, D4a: d.D4a_onaysiz_fazla_teslim },
-    gercek: d.D2a_sahipsiz_hareket_kalem_yok > 0, beklenen: true });
+  // F2 (2 Kasım, bilerek değişti): yukarıdaki senaryolar artık sahipsiz hareket ÜRETEMEZ (sunucu reddeder) — denetimin sahipsiz
+  // hareketi yakalama yeteneği t-denetim DN.sahipsiz-kalem'de (eski veri taklidiyle) ölçülür. Önce: D2a > 0 bekleniyordu.
+  T.kontrol("D2.denetim-yakalar", "senaryolardan sonra denetimde sahipsiz hareket yok (D2a 0)", { sonra: { D2a: d.D2a_sahipsiz_hareket_kalem_yok, D4a: d.D4a_onaysiz_fazla_teslim },
+    gercek: d.D2a_sahipsiz_hareket_kalem_yok, beklenen: 0 });
   T.bitir();
 })().catch((e) => { console.error(e); process.exit(2); });

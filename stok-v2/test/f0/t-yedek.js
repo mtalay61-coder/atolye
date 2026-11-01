@@ -66,8 +66,9 @@ async function tamGeriYukleme(etiket, kurallarAcik) {
     T.kurallariAyarla(true);
   }
   const d = T.denetim();
-  T.kontrol("Y.denetim-yakalar", "denetim satırsız fişi (D6a) ve sahipsiz hareketi (D2a) görüyor", { sonra: { D6a: d.D6a_satirsiz_stok_fisi, D2a: d.D2a_sahipsiz_hareket_kalem_yok },
-    gercek: [d.D6a_satirsiz_stok_fisi > 0, d.D2a_sahipsiz_hareket_kalem_yok > 0], beklenen: [true, true] });
+  T.kontrol("Y.denetim-yakalar", "denetim satırsız fişi (D6a) görüyor; sahipsiz hareket oluşmadı (D2a 0, F2)", { sonra: { D6a: d.D6a_satirsiz_stok_fisi, D2a: d.D2a_sahipsiz_hareket_kalem_yok },
+    // F2 (2 Kasım): geri yükleme artık sahipsiz hareket üretemez (D2a 0); satırsız fiş (F5 kapsamı) hâlâ görülür. Önce: [true, true].
+    gercek: [d.D6a_satirsiz_stok_fisi > 0, d.D2a_sahipsiz_hareket_kalem_yok || 0], beklenen: [true, 0] });
   console.log(`  kurallar test sonunda açık: ${T.kurallarAcik()}`);
   T.bitir();
 })().catch((e) => { try { T.kurallariAyarla(true); } catch (x) { /* */ } console.error(e); process.exit(2); });
