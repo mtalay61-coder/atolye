@@ -210,8 +210,8 @@ function teslimYuku({ adet, ekrandaKarsilanan, istek, stok, cariler }) {
   const d8 = durum();
   bekle("8: eski yük kabul edildi, karşılanan = teslim edilen (25) — eski ekranın mutlak 1'i yazılmadı", [rEski.ok, d8.karsilanan, d8.teslimEdilen, d8.tutarli], [true, 25, 25, true]);
 
-  // Temizlik: test siparişinin fişleri iptal (kurallar açık — silinmez), sipariş satırları kaldırılır.
-  psql(`delete from public.siparis_kalemleri where siparis_id = '${SIP}'; delete from public.siparisler where id = '${SIP}';`);
+  // Temizlik YOK (F2, 2 Kasım): teslim geçmişi olan kalem / sipariş silinemez (KR002) — eskiden burada siliniyordu ve fişlerin
+  // hareketleri sahipsiz kalıyordu. Her koşu kendi kimlikleriyle çalışır (yukarıda), artakalan kayıt sonraki koşuyu etkilemez.
   console.log(hata ? "── R1 HATALI ──" : "── R1 temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

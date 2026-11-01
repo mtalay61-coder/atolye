@@ -26,6 +26,8 @@ alter table public.stk_hareket add column if not exists gecmis_siparis_id text;
 alter table public.stk_hareket add column if not exists gecmis_kalem_id text;
 alter table public.stk_hareket add column if not exists bag_cozum_zamani timestamptz;
 create index if not exists stk_hareket_gecmis_kalem on public.stk_hareket (gecmis_kalem_id) where gecmis_kalem_id is not null;
+create index if not exists stk_hareket_gecmis_siparis on public.stk_hareket (gecmis_siparis_id) where gecmis_siparis_id is not null;
+create index if not exists stk_hareket_kalem on public.stk_hareket (kalem_id) where kalem_id is not null;
 
 create table if not exists public.fis_sayac (
   onek  text not null,
@@ -144,6 +146,53 @@ begin
     raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = 'KR001';
   end if;
   return new;
+end $$;
+
+create or replace function public.fis_kalem_hareket_var(p_kalem text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.stk_hareket h where h.kalem_id = p_kalem)
+      or exists (select 1 from public.stk_hareket h where h.gecmis_kalem_id = p_kalem)
+$$;
+
+create or replace function public.fis_kalem_teslim_koru() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  teslim numeric;
+begin
+  if tg_op = 'DELETE' then
+    if public.fis_kalem_hareket_var(old.id::text) then
+      raise exception 'Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem %: % %, teslim edilen %) — kalem kalmalı; gerekirse siparişi iptal edin',
+        old.id, coalesce(old.urun_ad, old.urun_id, ''), coalesce(old.renk, ''), public.fis_kalem_hesap(old.id::text) using errcode = 'KR002';
+    end if;
+    return old;
+  end if;
+  if (new.urun_id is distinct from old.urun_id
+      or lower(btrim(coalesce(new.renk, ''))) <> lower(btrim(coalesce(old.renk, '')))
+      or lower(btrim(coalesce(new.beden, ''))) <> lower(btrim(coalesce(old.beden, '')))
+      or new.siparis_id is distinct from old.siparis_id)
+     and public.fis_kalem_hareket_var(old.id::text) then
+    raise exception 'Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem %: % % → % %) — yeni kalem ekleyin',
+      old.id, coalesce(old.renk, ''), coalesce(old.beden, ''), coalesce(new.renk, ''), coalesce(new.beden, '') using errcode = 'KR003';
+  end if;
+  if coalesce(new.miktar, 0) < coalesce(old.miktar, 0) then
+    teslim := public.fis_kalem_hesap(old.id::text);
+    if coalesce(new.miktar, 0) < teslim then
+      raise exception 'Sipariş miktarı teslim edilenin altına indirilemez (kalem %: istenen %, teslim edilen %)', old.id, new.miktar, teslim
+        using errcode = 'KR004';
+    end if;
+  end if;
+  return new;
+end $$;
+
+create or replace function public.fis_siparis_teslim_koru() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if exists (select 1 from public.stk_hareket h where h.siparis_id = old.id::text)
+     or exists (select 1 from public.stk_hareket h where h.gecmis_siparis_id = old.id::text) then
+    raise exception 'Teslim geçmişi olan sipariş silinemez (sipariş % %) — iptal edilmiş olarak kalır', old.id, coalesce(old.siparis_no, '')
+      using errcode = 'KR002';
+  end if;
+  return old;
 end $$;
 
 create or replace function public.fis_baslik_koru() returns trigger
@@ -402,6 +451,7 @@ declare
   v_idler text[];
   v_once jsonb;
   v_kalem jsonb;
+  v_eksik text;
 begin
   if v_istek is null then
     raise exception 'İstek kimliği yok (yeniden gönderimde çift fiş olmasın diye zorunlu)' using errcode = '22023';
@@ -417,6 +467,15 @@ begin
       'kalemler', public.fis_kalem_durumlari(v_idler), 'karsilananDuzeltme', '[]'::jsonb);
   end if;
   v_once := public.fis_kalem_kilitle(v_idler);
+  select string_agg(distinct x, ', ') into v_eksik from (
+    select s ->> 'kalemId' as x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
+    union all select s ->> 'kalemId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s) y
+   where coalesce(x, '') <> '' and not (v_once ? x)
+     and not exists (select 1 from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) a where a ->> 'id' = x);
+  if v_eksik is not null then
+    raise exception 'Var olmayan sipariş kalemine teslim yazılamaz (kalem %) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin', v_eksik
+      using errcode = 'KR005';
+  end if;
 
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
@@ -633,6 +692,10 @@ begin
   if not exists (select 1 from pg_constraint where conname = 'stk_hareket_tek_bag' and conrelid = 'public.stk_hareket'::regclass) then
     alter table public.stk_hareket add constraint stk_hareket_tek_bag check (gecmis_kalem_id is null or kalem_id is null);
   end if;
+  drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
+  create trigger fis_kalem_teslim_koru before update or delete on public.siparis_kalemleri for each row execute function public.fis_kalem_teslim_koru();
+  drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
+  create trigger fis_siparis_teslim_koru before delete on public.siparisler for each row execute function public.fis_siparis_teslim_koru();
   drop trigger if exists fis_baslik_koru on public.stk_fis;
   create trigger fis_baslik_koru before insert or update or delete on public.stk_fis for each row execute function public.fis_baslik_koru();
   drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;
@@ -653,6 +716,7 @@ begin
   revoke all on function public.fis_kalem_kilitle(text[]) from public, anon, authenticated;
   revoke all on function public.fis_kalem_karsilanan_yenile(text[], jsonb, text, text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_hesap(text) from public, anon, authenticated;
+  revoke all on function public.fis_kalem_hareket_var(text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_durumlari(text[]) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';

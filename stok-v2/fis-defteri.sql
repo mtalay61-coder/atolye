@@ -73,6 +73,8 @@ alter table public.stk_hareket add column if not exists gecmis_siparis_id text;
 alter table public.stk_hareket add column if not exists gecmis_kalem_id text;
 alter table public.stk_hareket add column if not exists bag_cozum_zamani timestamptz;
 create index if not exists stk_hareket_gecmis_kalem on public.stk_hareket (gecmis_kalem_id) where gecmis_kalem_id is not null;
+create index if not exists stk_hareket_gecmis_siparis on public.stk_hareket (gecmis_siparis_id) where gecmis_siparis_id is not null;   -- F2: sipariş silme koruması
+create index if not exists stk_hareket_kalem on public.stk_hareket (kalem_id) where kalem_id is not null;   -- F2: kalem koruması (siparis_id'siz eşleşme)
 
 -- 3) FİŞ NUMARASI — önek + yıl-ay-gün (İstanbul saati) + günün sırası: AF-261030001. Aynı gün aynı önekle iki cihaz aynı
 --    numarayı alamaz (sayaç satırı kilitlenir). 999'dan sonra hane büyür (kesilmez).
@@ -216,6 +218,63 @@ begin
     raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = 'KR001';
   end if;
   return new;
+end $$;
+
+-- TESLİM GEÇMİŞİ OLAN SİPARİŞ KALEMİ (F2, kullanıcı hedefi 2 Kasım: "hiçbir fiş ya da stok hareketi sahipsiz kalmamalı").
+-- Teslim geçmişi = kalemi gösteren herhangi bir stok hareketi: geçerli bağ (kalem_id) ya da geçmiş bağ (gecmis_kalem_id, F1.1);
+-- iptal edilmiş satırlar DAHİL (karar K1: yalnız iptal edilmiş hareketi olan kalem de silinemez — satır var olmayan kalemi
+-- göstermesin). Kurallardan BAĞIMSIZ (canlıda kurallar kapalı; köprü, REST ve sipariş silmede cascade aynı korumaya takılır).
+create or replace function public.fis_kalem_hareket_var(p_kalem text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.stk_hareket h where h.kalem_id = p_kalem)
+      or exists (select 1 from public.stk_hareket h where h.gecmis_kalem_id = p_kalem)
+$$;
+
+--  DELETE (kalem silme, birleştirmede silinen kalem, sipariş silmenin cascade'i) → KR002
+--  UPDATE: ürün / renk / beden / sipariş değişimi (renk ve beden büyük-küçük harf ve boşluk duyarsız, karar K4) → KR003;
+--          miktar AZALIRKEN teslim edilenin (fis_kalem_hesap: geçerli + geçmiş bağ, iptal sayılmaz) altına inerse → KR004.
+--          Miktar değişmiyorsa serbest (fazla teslimli kalemin fiyatı düzenlenebilir). Teslimsiz kalem bütün düzenlemelere açık.
+create or replace function public.fis_kalem_teslim_koru() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  teslim numeric;
+begin
+  if tg_op = 'DELETE' then
+    if public.fis_kalem_hareket_var(old.id::text) then
+      raise exception 'Teslim geçmişi olan sipariş kalemi silinemez ya da başka kalemle birleştirilemez (kalem %: % %, teslim edilen %) — kalem kalmalı; gerekirse siparişi iptal edin',
+        old.id, coalesce(old.urun_ad, old.urun_id, ''), coalesce(old.renk, ''), public.fis_kalem_hesap(old.id::text) using errcode = 'KR002';
+    end if;
+    return old;
+  end if;
+  if (new.urun_id is distinct from old.urun_id
+      or lower(btrim(coalesce(new.renk, ''))) <> lower(btrim(coalesce(old.renk, '')))
+      or lower(btrim(coalesce(new.beden, ''))) <> lower(btrim(coalesce(old.beden, '')))
+      or new.siparis_id is distinct from old.siparis_id)
+     and public.fis_kalem_hareket_var(old.id::text) then
+    raise exception 'Teslim geçmişi olan kalemin ürünü, rengi, bedeni ya da siparişi değiştirilemez (kalem %: % % → % %) — yeni kalem ekleyin',
+      old.id, coalesce(old.renk, ''), coalesce(old.beden, ''), coalesce(new.renk, ''), coalesce(new.beden, '') using errcode = 'KR003';
+  end if;
+  if coalesce(new.miktar, 0) < coalesce(old.miktar, 0) then
+    teslim := public.fis_kalem_hesap(old.id::text);
+    if coalesce(new.miktar, 0) < teslim then
+      raise exception 'Sipariş miktarı teslim edilenin altına indirilemez (kalem %: istenen %, teslim edilen %)', old.id, new.miktar, teslim
+        using errcode = 'KR004';
+    end if;
+  end if;
+  return new;
+end $$;
+
+-- Sipariş silme: kalemsiz bağlı hareket (yalnız siparis_id) ya da geçmiş sipariş bağı da korunur; kalemli olanı cascade'deki
+-- fis_kalem_teslim_koru yakalar. İptal edilmiş sipariş (F1.1: teslimi geçmiş bağda) silinemez, "İptal" durumunda kalır.
+create or replace function public.fis_siparis_teslim_koru() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if exists (select 1 from public.stk_hareket h where h.siparis_id = old.id::text)
+     or exists (select 1 from public.stk_hareket h where h.gecmis_siparis_id = old.id::text) then
+    raise exception 'Teslim geçmişi olan sipariş silinemez (sipariş % %) — iptal edilmiş olarak kalır', old.id, coalesce(old.siparis_no, '')
+      using errcode = 'KR002';
+  end if;
+  return old;
 end $$;
 
 -- Fiş başlığı: silinmez; yalnız fis_kes / fis_iptal / fis_bilgi yazar; tutar ve satır bilgisi kesildikten sonra değişmez.
@@ -525,6 +584,7 @@ declare
   v_idler text[];
   v_once jsonb;
   v_kalem jsonb;
+  v_eksik text;
 begin
   if v_istek is null then
     raise exception 'İstek kimliği yok (yeniden gönderimde çift fiş olmasın diye zorunlu)' using errcode = '22023';
@@ -542,6 +602,16 @@ begin
   end if;
   -- KİLİT SIRASI 3 — kalemler kimlik sırasıyla, İLK YAZMADAN ÖNCE (v1.743.0, F1)
   v_once := public.fis_kalem_kilitle(v_idler);
+  -- F2: stok satırının kalemi var olmalı (aynı yükte yeni yazılan kalem hariç — yabancı anahtar işlem sonunda denetler) → KR005
+  select string_agg(distinct x, ', ') into v_eksik from (
+    select s ->> 'kalemId' as x from jsonb_array_elements(public.stk_dizi(p -> 'stok' -> 'satirlar')) s
+    union all select s ->> 'kalemId' from jsonb_array_elements(public.stk_dizi(p -> 'bagli' -> 'stok' -> 'satirlar')) s) y
+   where coalesce(x, '') <> '' and not (v_once ? x)
+     and not exists (select 1 from jsonb_array_elements(public.stk_dizi(p -> 'alt' -> 'siparis_kalemleri' -> 'satirlar')) a where a ->> 'id' = x);
+  if v_eksik is not null then
+    raise exception 'Var olmayan sipariş kalemine teslim yazılamaz (kalem %) — sipariş silinmiş ya da değişmiş olabilir; siparişi yenileyip yeniden deneyin', v_eksik
+      using errcode = 'KR005';
+  end if;
 
   fid := public.fis_tek_kes(p -> 'fis', p -> 'stok', p -> 'cari', p -> 'kasa', v_istek);
   if jsonb_typeof(p -> 'bagli') = 'object' then
@@ -796,6 +866,11 @@ begin
   if not exists (select 1 from pg_constraint where conname = 'stk_hareket_tek_bag' and conrelid = 'public.stk_hareket'::regclass) then
     alter table public.stk_hareket add constraint stk_hareket_tek_bag check (gecmis_kalem_id is null or kalem_id is null);
   end if;
+  -- Teslim geçmişi koruması (F2): kalem silme / kimlik / miktar ve sipariş silme
+  drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
+  create trigger fis_kalem_teslim_koru before update or delete on public.siparis_kalemleri for each row execute function public.fis_kalem_teslim_koru();
+  drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
+  create trigger fis_siparis_teslim_koru before delete on public.siparisler for each row execute function public.fis_siparis_teslim_koru();
   drop trigger if exists fis_baslik_koru on public.stk_fis;
   create trigger fis_baslik_koru before insert or update or delete on public.stk_fis for each row execute function public.fis_baslik_koru();
   drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;
@@ -820,6 +895,7 @@ begin
   revoke all on function public.fis_kalem_kilitle(text[]) from public, anon, authenticated;
   revoke all on function public.fis_kalem_karsilanan_yenile(text[], jsonb, text, text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_hesap(text) from public, anon, authenticated;
+  revoke all on function public.fis_kalem_hareket_var(text) from public, anon, authenticated;
   revoke all on function public.fis_kalem_durumlari(text[]) from public, anon, authenticated;
   foreach t in array array['fis_kes(jsonb)', 'fis_iptal(jsonb)', 'fis_bilgi(jsonb)', 'fis_bag_coz(jsonb)', 'stk_renk_tasi(jsonb)'] loop
     execute 'revoke all on function public.' || t || ' from public, anon';

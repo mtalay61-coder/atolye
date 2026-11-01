@@ -108,7 +108,7 @@ const kalemSatiri = ({ sip, kal }, alanlar) => ({ siparis_kalemleri: { satirlar:
     rollback;`).split("\n").pop();
   bekle("6: karşılanan 7 yazıldı (koruma devrede değil)", Number(r6), 7);
 
-  psql(`delete from public.siparis_kalemleri where siparis_id like 'sip-b-${K}-%'; delete from public.siparisler where id like 'sip-b-${K}-%';`);
+  // Temizlik YOK (F2, 2 Kasım): teslim geçmişi olan kalem / sipariş silinemez (KR002); kimlikler koşuya özgü (K).
   console.log(hata ? "── R1b HATALI ──" : "── R1b temiz ──");
   process.exit(hata);
 })().catch((e) => { console.error(e); process.exit(1); });

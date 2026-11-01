@@ -18,7 +18,7 @@ const path = require("path");
 
 const DB = process.env.STOK_V2_DB || "atolye_stok_v2_sinama";
 const KIM = `select set_config('request.jwt.claims', '{"email":"ali@atolye.local","role":"authenticated"}', false); set role authenticated;`;
-const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-d", DB], { input: sql, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }).trim();
+const psql = (sql) => execFileSync("psql", ["-X", "-q", "-At", "-v", "ON_ERROR_STOP=1", "-d", DB], { input: sql, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], maxBuffer: 512 * 1024 * 1024 }).trim();
 const jsonSorgu = (sql) => JSON.parse(psql(`select coalesce(json_agg(x), '[]'::json) from (${sql}) x;`) || "[]");
 const hataMetni = (e) => String((e && (e.stderr || e.message)) || e).split("\n").filter((x) => /ERROR|HATA/.test(x)).join(" | ").slice(0, 240) || String(e).slice(0, 240);
 
