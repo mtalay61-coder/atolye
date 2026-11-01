@@ -4,11 +4,14 @@ Yeni sohbete **`src/` klasörünü ve bu dosyayı** ekle. Denetleyicileri, `birl
 `konum.js`, `paketle.js` ve `yap.sh`'ı da eklersen Claude yeniden yazmak zorunda kalmaz.
 `atolye-erp.jsx` ÜRETİLEN dosya; göndermeye gerek yok.
 
-**Son sürüm:** v1.744.0 (2 Kasım 2026 — YALNIZ GELİŞTİRME DALI claude/f2-teslimli-kalem: F1.1 + F2 SQL'i + 1.744.0 istemcisi; ana dala BİRLEŞMEDİ, canlıya gönderilmedi, surum.json 1.742.1; canlı 1.742.1)
+**Son sürüm:** v1.744.1 (yalnız codex/f5-guvenli-geri-yukleme dalı; kaynak değişikliği, yayınlanmadı; surum.json 1.742.1)
 
 ---
 
 ## YENİ OTURUM — BURADAN BAŞLA
+
+**Codex F5 ilk koruma (1 Kasım 2026):** F2 1a42e48 üzerine ayrı geliştirme dalında çalışılıyor. `yedegiUygula`, fiş defteri kuruluysa (kurallar kapalı veya bağlantı kopuk olsa da) tam geri yüklemeyi ilk yerel/bulut yazmasından önce reddeder. Sunucu ayarı bilinmiyorsa da durur. JSON ve tarihli yedek aynı callback üzerinden korunur. Fişsiz eski yol korunur; yedek indirme değişmedi. Testler: `birim-yedek-fis-kilidi.js` gerçek callback'i çalıştırır (önce kırmızı, düzeltmeyle 4 yeşil); `senaryo-yedek-fis-kilidi.js` onaylı JSON yüklemesini fis_aktif=false/true ile sınar. Bu, F5'in istemci tarafındaki ilk korumasıdır: eski istemci/doğrudan RPC geri yüklemesi sunucu tarafında henüz kapanmadı; F0 Y.tam-* beklentileri yeşile çevrilmedi. F4/F8 ve sistem geneli güvenlik işi sürüyor. Canlı Supabase/main/deploy/surum.json değişmedi. Ayrıntılı sonuç: `stok-v2/CODEX-F5-ILK-KORUMA.md`.
+
 
 **Barkod şeması (6a) TAMAMLANDI, v1.136.0.** Bölüm 6b'yi oku — ne yapıldığı, hangi üç hata çıktığı
 ve neyin AÇIK kaldığı orada.
