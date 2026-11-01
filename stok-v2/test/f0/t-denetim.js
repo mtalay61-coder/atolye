@@ -82,10 +82,13 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
     }],
     // F1.1 (2 Kasım, bilerek değişti): bağ geçmiş sütunlara taşınır → teslim geçmişi kalemde kalır; artık hayalet DEĞİL, D5a bilgi.
     // 1.743.0'da beklenen { D5a: 1, D1b: 1 } idi (bağ kopuyor, karşılanan hayalet kalıyordu).
-    ["DN.bag-cozulmus", "teslimli sipariş iptal edilir (fis_bag_coz) — bağ geçmişe taşınır (izli), hayalet yok", { D5a_bagi_cozulmus_teslim: 1 }, () => {
+    // Sunucu izi yazdıysa (F1.1) izli + hayalet yok; yazmadıysa (1.742.x — f0/geri-donus.sh 2. adım) izsiz + hayalet.
+    ["DN.bag-cozulmus", "teslimli sipariş iptal edilir (fis_bag_coz) — F1.1: bağ geçmişe taşınır (izli), hayalet yok; 1.742.x: izsiz + hayalet",
+      (izli) => (izli ? { D5a_bagi_cozulmus_teslim: 1 } : { D5c_bagi_cozulmus_izsiz: 1, D1b_hayalet_karsilanan: 1 }), () => {
       const s = sip("h11", [T.kalemObj(`${ON}-h11k`, 10, 0)]);
-      T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h11k`, adet: 3, ekran: 0, istek: `${ON}-h11a` }));
+      const r = T.rpc("fis_kes", T.teslimYuku({ s, kalemId: `${ON}-h11k`, adet: 3, ekran: 0, istek: `${ON}-h11a` }));
       T.rpc("fis_bag_coz", { siparisId: s.id, siparisNo: s.siparisNo }); durumYaz(s, "İptal");
+      return T.psql(`select (to_jsonb(h) ->> 'bag_cozum_zamani') is not null from public.stk_hareket h where fis_id = '${r.sonuc.fisNo}' limit 1;`) === "t";
     }],
     // F1.1 öncesi (ya da 1.742.1 sunucusunda) çözülmüş bağ: iz yok → D5c + hayalet (tahminle bağ kurulmaz). Tetikleyicisiz kurulur.
     ["DN.bag-cozulmus-izsiz", "izsiz bağı çözülmüş teslim (eski kayıt)", { D5c_bagi_cozulmus_izsiz: 1, D1b_hayalet_karsilanan: 1 }, () => {
@@ -108,8 +111,10 @@ const serbestFis = (istek, miktar, ek = {}) => T.rpc("fis_kes", { istek, fis: { 
     }],
   ];
   let onceki = temel;
-  for (const [kimlik, ad, beklenenFark, yap] of enjeksiyonlar) {
-    yap();
+  for (const [kimlik, ad, beklenenFark0, yap] of enjeksiyonlar) {
+    const iz = yap();
+    // Beklenen sunucuya göre değişebilir (DN.bag-cozulmus: F1.1 sunucusu iz yazar, 1.742.x yazmaz) — enjeksiyon işlev döndürebilir
+    const beklenenFark = typeof beklenenFark0 === "function" ? beklenenFark0(iz) : beklenenFark0;
     const simdi = T.denetim();
     const fark = Object.fromEntries(Object.keys(simdi).map((k) => [k, simdi[k] - (onceki[k] || 0)]).filter(([, n]) => n !== 0));
     T.kontrol(kimlik, ad, { sonra: fark, gercek: fark, beklenen: Object.fromEntries(Object.entries(beklenenFark).sort()) });

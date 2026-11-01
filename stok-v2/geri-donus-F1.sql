@@ -1,7 +1,7 @@
 -- =====================================================================================================================
 --  geri-donus-F1.sql — F1'İ (v1.743.0, karşılananın tek yazarı) GERİ ALIR: 1.742.3 sunucu davranışına döner.
 -- =====================================================================================================================
---  NE YAPAR: fis_kes, fis_iptal ve fis_gece_denetimi 1.742.3 (commit 2a81e1f) hâline döner (metinler o commit'ten BİREBİR
+--  NE YAPAR: fis_kes, fis_iptal, fis_gece_denetimi (ve F1.1 kuruluysa fis_bag_coz, fis_satir_koru) 1.742.3 (commit 2a81e1f) hâline döner (metinler o commit'ten BİREBİR
 --  alındı); F1'in eklediği işlevler kaldırılır. fis_karsilanan_iz tablosu SİLİNMEZ (iz kaydı veri; boş kalır, zararsız) —
 --  istenirse ayrıca elle düşürülür. Veriye dokunmaz: F1 döneminde kesilen fişler ve hesaplanmış karşılananlar olduğu gibi kalır
 --  (1.742.3 bunları okur). Tetikleyici / kural değişmez (fis_kalem_karsilanan_koru 1.742.3'te de vardı).
@@ -162,6 +162,99 @@ begin
     'temiz', (fissiz_cari ->> 'kuraldanSonra')::int = 0 and (fissiz_kasa ->> 'kuraldanSonra')::int = 0
              and jsonb_array_length(satirsiz) = 0 and jsonb_array_length(iptal_tutarsiz) = 0 and jsonb_array_length(tutar_farki) = 0);
 end $$;
+
+-- F1.1 (2 Kasım) DA GERİ ALINIR: fis_bag_coz ve fis_satir_koru 1.742.3 hâline (2a81e1f'den BİREBİR), geçmiş bağ koruması ve tek
+-- bağ kısıtı kalkar. Bu yapılmazsa F1.1'in fis_bag_coz'u aşağıda düşürülen fis_kalem_kilitle'yi çağırır ve SİPARİŞ İPTALİ BOZULUR
+-- (f0/geri-donus.sh F1.1 ile ölçtü). Geçmiş bağ sütunları (veri) kalır; 1.742.3 bunları okumaz, yazmaz.
+create or replace function public.fis_satir_koru() returns trigger
+language plpgsql as $$
+declare
+  duzen text := coalesce(current_setting('fis.duzen', true), '');
+  yeni_j jsonb;
+  eski_j jsonb;
+begin
+  if not public.fis_kural_aktif() then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+  if tg_op = 'DELETE' then
+    raise exception 'Hareket silinmez — fişi iptal edin (% %)', tg_table_name, old.id using errcode = '42501';
+  end if;
+  if not public.fis_kapi_acik() then
+    raise exception 'Hareket yalnız fiş kesilerek yazılır (% %) — eski yazma yolu kapalı', tg_table_name, new.id using errcode = '42501';
+  end if;
+  if tg_op = 'INSERT' then
+    if new.fis_id is null then
+      raise exception 'Fişsiz hareket yazılamaz (% %)', tg_table_name, new.id using errcode = '23502';
+    end if;
+    return new;
+  end if;
+  -- Güncelleme: yalnız iptal alanları değişebilir (ve kayıt zamanı).
+  -- DAR DÜZEN KİPLERİ (v1.742.0, kullanıcı kararı 31 Ekim): iki sunucu işlemi satırın YALNIZ belirli alanlarına dokunur; kip
+  -- (`fis.duzen`) yalnız o işlemlerin içinde açılır, işlem sonunda kapanır. Miktar, tutar, ürün, tarih hiçbir kipte değişmez.
+  -- (Fiş defterinden önceki eski fişler için ayrı yol YOK — kullanıcı: veriler kurallar açılmadan sıfırlanır.)
+  --   bag     (fis_bag_coz): sipariş iptalinde sipariş bağı çözülür — siparis_id / kalem_id / rezervasyon_siparis_id boşalır,
+  --           siparis_no "(iptal)" eki alır; cari satırında `ek`ten yalnız siparisId / kalemId / rezervasyonSiparisId düşer.
+  --   varyant (stk_renk_tasi): renk kodlamada hedef varyant zaten varsa hareket o varyanta taşınır (renk adı değişir, stok aynı).
+  yeni_j := to_jsonb(new) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
+  eski_j := to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
+  if yeni_j is distinct from eski_j then
+    if duzen = 'bag'
+       and (yeni_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
+         = (eski_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
+       and ((yeni_j -> 'ek') is not distinct from (eski_j -> 'ek')
+         or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'siparisId' - 'kalemId' - 'rezervasyonSiparisId')
+         or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'siparisId' - 'kalemId')
+         or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'rezervasyonSiparisId')) then
+      return new;
+    end if;
+    if duzen = 'varyant' and tg_table_name = 'stk_hareket' and (yeni_j - 'varyant_id') = (eski_j - 'varyant_id') then
+      return new;
+    end if;
+    raise exception 'Hareket değiştirilemez — fişi iptal edip yeniden kesin (% %)', tg_table_name, new.id using errcode = '42501';
+  end if;
+  if old.iptal and not new.iptal then
+    raise exception 'İptal edilmiş hareket geri açılamaz — yeni fiş kesin (% %)', tg_table_name, new.id using errcode = '42501';
+  end if;
+  return new;
+end $$;
+
+create or replace function public.fis_bag_coz(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  sid text := nullif(btrim(coalesce(p ->> 'siparisId', '')), '');
+  sno text := nullif(btrim(coalesce(p ->> 'siparisNo', '')), '');
+  ino text;
+  n_stok int := 0;
+  n_cari int := 0;
+  n_zincir int := 0;
+  n int;
+begin
+  perform public.stk_yetki(array['siparis', 'stok', 'cari'], 'kaydetme');
+  if sid is null then raise exception 'Sipariş kimliği yok' using errcode = '22023'; end if;
+  ino := case when sno is null then null else sno || ' (iptal)' end;
+  perform set_config('fis.kapi', 'acik', true);
+  perform set_config('fis.duzen', 'bag', true);
+  update public.stk_hareket set siparis_id = null, kalem_id = null, siparis_no = ino
+   where not iptal and (siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno));
+  get diagnostics n_stok = row_count;
+  update public.stk_hareket set rezervasyon_siparis_id = null where not iptal and rezervasyon_siparis_id = sid;
+  get diagnostics n_zincir = row_count;
+  update public.car_hareket set siparis_no = ino, ek = ek - 'siparisId' - 'kalemId', guncelleme = now()
+   where not iptal and ((ek ->> 'siparisId') = sid or ((ek ->> 'siparisId') is null and sno is not null and siparis_no = sno));
+  get diagnostics n_cari = row_count;
+  update public.car_hareket set ek = ek - 'rezervasyonSiparisId', guncelleme = now()
+   where not iptal and (ek ->> 'rezervasyonSiparisId') = sid;
+  get diagnostics n = row_count; n_zincir := n_zincir + n;
+  update public.stk_fis set ek = ek || jsonb_build_object('siparisIptal', jsonb_build_object('no', sno, 'zaman', now()))
+   where siparis_id = sid or (siparis_id is null and sno is not null and siparis_no = sno);
+  perform set_config('fis.duzen', '', true);
+  perform set_config('fis.kapi', '', true);
+  return jsonb_build_object('stok', n_stok, 'cari', n_cari, 'zincir', n_zincir);
+end $$;
+
+drop trigger if exists fis_bag_iz_koru on public.stk_hareket;
+drop function if exists public.fis_bag_iz_koru();
+alter table public.stk_hareket drop constraint if exists stk_hareket_tek_bag;
 
 drop function if exists public.fis_kalem_kilitle(text[]);
 drop function if exists public.fis_kalem_karsilanan_yenile(text[], jsonb, text, text);

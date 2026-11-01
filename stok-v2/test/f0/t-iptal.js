@@ -45,7 +45,9 @@ const { ON, E } = T;
   }
 
   const d = T.denetim();
-  T.kontrol("D5.denetim-yakalar", "denetim bağı çözülmüş teslimi (D5a) ve durum çelişkisini (D5b) görüyor", { sonra: { D5a: d.D5a_bagi_cozulmus_teslim, D5b: d.D5b_durum_teslimle_celisiyor },
-    gercek: [d.D5a_bagi_cozulmus_teslim > 0, d.D5b_durum_teslimle_celisiyor > 0], beklenen: [true, true] });
+  // F1.1: bağı çözülmüş teslim iki kategoride — izli (D5a, F1.1 sunucusu) ya da izsiz (D5c, 1.742.x sunucusu / eski kayıt)
+  const d5 = (d.D5a_bagi_cozulmus_teslim || 0) + (d.D5c_bagi_cozulmus_izsiz || 0);
+  T.kontrol("D5.denetim-yakalar", "denetim bağı çözülmüş teslimi (D5a izli / D5c izsiz) ve durum çelişkisini (D5b) görüyor", { sonra: { D5a: d.D5a_bagi_cozulmus_teslim, D5c: d.D5c_bagi_cozulmus_izsiz, D5b: d.D5b_durum_teslimle_celisiyor },
+    gercek: [d5 > 0, d.D5b_durum_teslimle_celisiyor > 0], beklenen: [true, true] });
   T.bitir();
 })().catch((e) => { console.error(e); process.exit(2); });
