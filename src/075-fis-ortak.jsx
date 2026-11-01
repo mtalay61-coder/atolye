@@ -121,10 +121,13 @@ function paraCevirGenel(tutar, kaynakPB, hedefPB, kurlarMap) {
 //    zaten aynı üretim/satınalma fişine ait, sadece gereksiz yere iki satıra bölünmüşler.
 // FARKLI planlama referanslarına bağlı kalemler ASLA birleştirilmez — bunlar GERÇEKTEN ayrı tedarik
 // kayıtlarını temsil eder, birleştirmek izlenebilirliği bozar.
+// TESLİMLİ KALEM BİRLEŞMEZ (v1.744.0, F2): teslim geçmişi olan (karşılananı > 0) kalem olduğu gibi kalır; ne başkasına katılır ne
+// başkasını alır. Birleştirme bir kalemi siler — teslimli kalem silinirse hareketleri sahipsiz kalıyordu; sunucu da reddeder (KR002).
 function bekleyenKalemleriBirlestir(kalemler) {
   const sonuc = [];
   const index = {}; // birleştirme anahtarı -> sonuc dizisindeki indeks
   kalemler.forEach((k) => {
+    if ((k.karsilanan || 0) > 0) { sonuc.push(k); return; }
     const planlamaAnahtari = k.planlama ? `planli:${k.planlama.tip}:${k.planlama.referansNo}` : "bekleyen";
     const anahtar = `${k.urunId}|${k.renk}|${k.beden}|${k.birimFiyat}|${k.paraBirimi || "TRY"}|${planlamaAnahtari}`;
     if (anahtar in index) {

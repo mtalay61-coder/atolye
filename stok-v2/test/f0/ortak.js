@@ -23,9 +23,14 @@ const jsonSorgu = (sql) => JSON.parse(psql(`select coalesce(json_agg(x), '[]'::j
 const hataMetni = (e) => String((e && (e.stderr || e.message)) || e).split("\n").filter((x) => /ERROR|HATA/.test(x)).join(" | ").slice(0, 240) || String(e).slice(0, 240);
 
 // Tek bağlantıda, giriş yapmış kullanıcı olarak (zaman uyumlu)
+// Hatanın SQLSTATE'i (PostgREST gövdesindeki `code`): psql VERBOSITY verbose "ERROR:  KR002: …" yazar (v1.744.0, F2 kural kodları).
 function rpc(ad, p) {
-  try { return { ok: true, sonuc: JSON.parse(psql(`${KIM} select public.${ad}($j$${JSON.stringify(p)}$j$::jsonb);`).split("\n").pop()) }; }
-  catch (e) { return { ok: false, hata: hataMetni(e) }; }
+  try { return { ok: true, sonuc: JSON.parse(psql(`\\set VERBOSITY verbose\n${KIM} select public.${ad}($j$${JSON.stringify(p)}$j$::jsonb);`).split("\n").pop()) }; }
+  catch (e) {
+    const satir = String((e && e.stderr) || "").split("\n").find((x) => /ERROR:/.test(x)) || "";
+    const m = satir.match(/ERROR:\s+([0-9A-Z]{5}):\s*(.*)$/);
+    return { ok: false, hata: hataMetni(e).replace(/ERROR:\s+[0-9A-Z]{5}:\s*/, "ERROR:  "), kod: m ? m[1] : null, mesaj: m ? m[2] : null };
+  }
 }
 // Ayrı bağlantıda (eşzamanlılık): işlem sonunda `bekleSn` uyur (kilit tutulur), sonra commit
 function rpcAyri(ad, p, { bekleSn = 0 } = {}) {
@@ -56,8 +61,10 @@ global.fetch = async (url, sec = {}) => {
   if (ad) {
     const r = rpc(ad, JSON.parse(sec.body).p);
     giden.push({ ad, ok: r.ok, hata: r.hata });
+    // Gerçek PostgREST gövdesi gibi: { code, message } (kod yoksa yalnız mesaj — eski davranış)
+    const govde = r.kod ? JSON.stringify({ code: r.kod, message: r.mesaj, details: null, hint: null }) : r.hata;
     return r.ok ? { ok: true, status: 200, json: async () => r.sonuc, text: async () => JSON.stringify(r.sonuc) }
-      : { ok: false, status: 400, json: async () => ({ message: r.hata }), text: async () => r.hata };
+      : { ok: false, status: 400, json: async () => (r.kod ? JSON.parse(govde) : { message: r.hata }), text: async () => govde };
   }
   // Başlık satırları REST ile gider (038: yalnız kalemler alt_yaz'a). Yerel sınama şeması canlıdan farklı (sipariş sütunları
   // `ek`te) — yalnız `durum` uygulanır. TAKLİT olduğu raporda belirtilir.

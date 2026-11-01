@@ -1,5 +1,5 @@
 // F2 / BEKLEYEN DEFTER — TARAYICIDA ZAMANLAYICI (gerçek uygulama, test/test.html; sahte sunucu). Sunucu bir yazmayı KALICI olarak
-// reddeder (400, 42501 — F1.1'in "Bağı çözülmüş hareket yeniden siparişe bağlanamaz" reddiyle aynı sınıf). Saat (Playwright clock)
+// reddeder (400, KR003 — sunucunun kural reddi kodu; RED_KODU=42501 ile 1.744.0 öncesi sunucunun kodu). Saat (Playwright clock)
 // 10 dakika ileri sarılır: 100-app bekleyenleriYenidenGonder her 60 sn aynı yazmayı yeniden gönderir mi, sayaç büyür mü, şerit ve
 // hata metni görünür mü, yerel kayıt kalır mı. Tablodan bağımsız mekanizma; burada Tanımlar (tekilYaz) kullanılır — arayüzden en
 // kısa yazma yolu. Kullanım: cd test && node derle.js && node paket-test.js && node ../stok-v2/test/f2/senaryo-kalici-red.js
@@ -15,7 +15,7 @@ const { TOHUM } = require(path.join(__dirname, "../../../test/tohum.js"));
     await sayfa.route("**/rest/v1/tanimlar**", (r) => {
       if (r.request().method() === "GET") return r.fulfill({ status: 200, contentType: "application/json", body: "[]" });
       post += 1; zamanlar.push(Date.now());
-      return r.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: "42501", message: "kalıcı ret (test): bu kayıt sunucu kuralına aykırı" }) });
+      return r.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: process.env.RED_KODU || "KR003", message: "kalıcı ret (test): bu kayıt sunucu kuralına aykırı" }) });
     });
   };
   const { tarayici, sayfa } = await uygulamaAc({ ...TOHUM }, { hataYaz: false, onceRota });

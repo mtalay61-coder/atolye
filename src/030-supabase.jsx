@@ -472,6 +472,16 @@ async function supabaseIstek(yol, secenekler = {}, tekrarMi = false) {
     // metin yerine ne olduğu ve ne yapılacağı yazılıyor; ham hata sonda, küçük.
     // MODÜL YETKİSİ / YÖNETİCİ KURALI (v1.642.0): rls-yazma.sql, rls-rol.sql ve kurulum_betigi() da 42501 döndürüyor ama
     // sebep "giriş yapılmamış" DEĞİL — kullanıcının o işe yetkisi yok. Sunucunun Türkçe mesajı olduğu gibi gösterilir.
+    // KURAL REDDİ (v1.744.0, F2 — kullanıcı kararı 2 Kasım): sunucunun veri kuralları `KRnnn` koduyla reddeder (teslimli kalem
+    // silinemez, bağı çözülmüş hareket yeniden bağlanamaz…). Bu KALICI bir rettir: aynı yazma tekrar gönderilse aynı cevabı alır.
+    // Hata `kaliciRet` taşır — 040 tabloYaz reddedilen satırı paketten ayırıp "inceleme gerekiyor"a alır, kalanları gönderir; 100
+    // bekleyen deneme döngüsü bu kaydı kendiliğinden yeniden göndermez. Mesaj sunucunun Türkçe metni (42501 çevirisine düşmez).
+    const kural = kuralReddiOku(metin);
+    if (kural) {
+      const e = new Error(`${kural.mesaj} [${kural.kod}]`);
+      e.kaliciRet = true; e.kod = kural.kod; e.satirId = kural.satirId;
+      throw e;
+    }
     const kuralMesaji = (metin.match(/"message"\s*:\s*"((?:Bu işlem için yetkiniz yok|[^"]*yalnız Yönetici)[^"]*)"/) || [])[1];
     if (kuralMesaji) throw new Error(kuralMesaji);
     if (/42501|permission denied/i.test(metin)) {
@@ -510,10 +520,12 @@ const BEKLEYEN_ANAHTAR = "bekleyen:yazma";
 function bekleyenYazmalariOku() {
   try { return JSON.parse(window.localStorage.getItem(BEKLEYEN_ANAHTAR) || "{}") || {}; } catch (e) { return {}; }
 }
-function bekleyenYazmaEkle(anahtar, tablo, hata) {
+// `ek` (v1.744.0): { inceleme: true, kod } — KALICI sunucu reddi (KRnnn): kendiliğinden yeniden denenmez (100), şeritte ayrı.
+function bekleyenYazmaEkle(anahtar, tablo, hata, ek) {
   try {
     const d = bekleyenYazmalariOku();
-    d[anahtar] = { tablo, hata: String(hata || "").slice(0, 300), zaman: new Date().toISOString(), deneme: ((d[anahtar] && d[anahtar].deneme) || 0) + 1 };
+    d[anahtar] = { tablo, hata: String(hata || "").slice(0, 300), zaman: new Date().toISOString(), deneme: ((d[anahtar] && d[anahtar].deneme) || 0) + 1,
+      ...(ek && ek.inceleme ? { inceleme: true, kod: ek.kod || null } : {}) };
     window.localStorage.setItem(BEKLEYEN_ANAHTAR, JSON.stringify(d));
     if (window.__bekleyenYazmaDegisti) window.__bekleyenYazmaDegisti(d);
   } catch (e) { /* depo yoksa defter de yok */ }
@@ -527,6 +539,54 @@ function bekleyenYazmaSil(anahtar) {
     if (window.__bekleyenYazmaDegisti) window.__bekleyenYazmaDegisti(d);
   } catch (e) { /* */ }
 }
+
+// KURAL REDDİ OKUMA (v1.744.0): PostgREST gövdesi {"code":"KR002","message":"…(kalem k-1: …)…"}. Satır kimliği mesajdaki
+// "(stk_hareket <id>", "(kalem <id>" ya da "(sipariş <id>" kalıbından — 040 o satırı paketten ayırır. Saf (birim testi).
+function kuralReddiOku(metin) {
+  let j = null;
+  try { j = JSON.parse(metin); } catch (e) { j = null; }
+  const kod = j && typeof j.code === "string" && /^KR\d{3}$/.test(j.code) ? j.code : null;
+  if (!kod) return null;
+  const mesaj = String(j.message || `Sunucu kuralı reddetti (${kod})`);
+  const m = mesaj.match(/\((?:stk_hareket|kalem|sipariş)\s+([^\s:),]+)/);
+  return { kod, mesaj, satirId: m ? m[1] : null };
+}
+
+// İNCELEME GEREKEN SATIRLAR (v1.744.0, kullanıcı kararı 2 Kasım: "reddedilen bu tür işlemler bekleyen kayıt defterinde sonsuz
+// otomatik tekrar döngüsüne girmemeli; yerel kayıt silinmeden kullanıcıya açık hata gösterilmeli ve inceleme gerektiren duruma
+// alınmalı"). Sunucunun kalıcı olarak reddettiği satır burada durur: { [tablo]: { [satirId]: { kod, sebep, anahtar, zaman,
+// kayit } } }. 040 yazma hazırlığı bu satırları paketten AYIRIR (aynı tablonun öteki değişiklikleri gider), fark belleğinde
+// "gönderilmedi" kalırlar; `kayit` reddedilen yerel hâlin yedeğidir (kullanıcı bırakmadan silinmez). Şerit (100) gösterir.
+const INCELEME_ANAHTAR = "bekleyen:inceleme";
+function incelemeOku() {
+  try { return JSON.parse(window.localStorage.getItem(INCELEME_ANAHTAR) || "{}") || {}; } catch (e) { return {}; }
+}
+function incelemeYaz(d) {
+  try {
+    window.localStorage.setItem(INCELEME_ANAHTAR, JSON.stringify(d));
+    if (window.__incelemeDegisti) window.__incelemeDegisti(d);
+  } catch (e) { /* depo yoksa yalnız bellekte */ }
+}
+function incelemeEkle(tablo, satirId, bilgi) {
+  const d = incelemeOku();
+  d[tablo] = d[tablo] || {};
+  d[tablo][satirId] = { ...(d[tablo][satirId] || {}), ...bilgi, zaman: new Date().toISOString() };
+  incelemeYaz(d);
+}
+function incelemeKayitYedekle(tablo, satirId, kayit) {
+  const d = incelemeOku();
+  if (!d[tablo] || !d[tablo][satirId] || d[tablo][satirId].kayit) return;
+  d[tablo][satirId].kayit = kayit;
+  incelemeYaz(d);
+}
+function incelemeSil(tablo, satirId) {
+  const d = incelemeOku();
+  if (!d[tablo]) return;
+  if (satirId === undefined) delete d[tablo]; else delete d[tablo][satirId];
+  if (d[tablo] && Object.keys(d[tablo]).length === 0) delete d[tablo];
+  incelemeYaz(d);
+}
+function incelemedekiSatirlar(tablo) { return new Set(Object.keys(incelemeOku()[tablo] || {})); }
 
 // Anahtar başına yazma sayacı (v1.569.0): kuyrukta bekleyen ESKİ bir yazmanın birleşik hâli, arada yapılmış daha yeni
 // yerel kaydın üstüne yazılmasın.
@@ -646,7 +706,8 @@ function tekilYaz(anahtar, tablo, veri, secenek = {}) {
     gidecek.then(() => { bekleyenYazmaSil(anahtar); if (typeof window !== "undefined" && window.__supabaseBasariBildir) window.__supabaseBasariBildir(tablo); }).catch((e) => {
       console.error("Supabase yazma hatası:", tablo, e);
       // Toplu silme engeli (Kasa & Banka / liste v2, 038) bekleyen yazma DEĞİLDİR — 040 tabloYaz ile aynı kural.
-      if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, e && e.message);
+      // Kalıcı ret (v1.744.0, KRnnn): tek parça belgede satır ayrılamaz — kayıt "inceleme" işaretlenir, kendiliğinden denenmez.
+      if (!(e && e.topluSilmeEngeli) || bekleyenYazmalariOku()[anahtar]) bekleyenYazmaEkle(anahtar, tablo, e && e.message, e && e.kaliciRet ? { inceleme: true, kod: e.kod } : undefined);
       if (typeof window !== "undefined" && window.__supabaseHataBildir) {
         window.__supabaseHataBildir(tablo, String(e && e.message || e));
       }

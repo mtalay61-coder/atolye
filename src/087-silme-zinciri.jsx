@@ -117,6 +117,12 @@ const siparisKapat = useCallback(async (siparisId) => {
   if (!siparis) return;
   const no = siparis.siparisNo;
   const zatenIptal = siparis.durum === "İptal";
+  // TESLİM GEÇMİŞİ OLAN SİPARİŞ SİLİNMEZ (v1.744.0, F2): iptal edilmiş siparişin teslimi geçmiş bağda kalemde durur (F1.1);
+  // silinirse hareketler sahipsiz kalıyordu. Sunucu da reddeder (KR002); burada hiç denenmez, sipariş "İptal" olarak kalır.
+  if (zatenIptal && (siparis.kalemler || []).some((k) => (k.karsilanan || 0) > 0)) {
+    showToast(`${no}: teslim geçmişi olan sipariş silinemez — iptal edilmiş olarak kalır`);
+    return;
+  }
   const veri = { stok, cariler, siparisler, uretim, koliler, stokRezervasyonlari };
   const onizleme = siparisBaglariniCoz(veri, siparisId);
   const sil = zatenIptal || !siparisIslemGormusMu(onizleme.ozet, siparis);

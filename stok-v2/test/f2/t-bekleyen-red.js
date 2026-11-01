@@ -63,14 +63,21 @@ const TEKRAR = Number(process.env.F2_TEKRAR || 5);
     sonra: { satir: sat, karsilanan: sunucu.karsilanan }, gercek: [sat.kalem, sat.gecmisKalem, sunucu.karsilanan], beklenen: [null, k, 3] });
   F.kontrol("BR.yerel-korunur", "yerel kayıt silinmez (A cihazının düzenlemesi yerelde duruyor)", {
     sonra: { aciklama: yerelSatir.aciklama }, gercek: yerelSatir.aciklama, beklenen: "A cihazında düzenlendi" });
-  F.kontrol("BR.bekleyen-kayit", "gönderilemeyen fark kalıcı deftere yazıldı (uygulama kapanınca kaybolmaz)", {
-    sonra: { kayitVar: !!kayit }, gercek: !!kayit, beklenen: true });
+  // 1.744.0: reddedilen satır bekleyen kayıt defterinde DEĞİL, kalıcı inceleme deposunda yerel hâliyle (yedek) durur; ikisi de
+  // localStorage — uygulama kapanınca kaybolmaz. 1.743.0 / 1.742.1: bekleyen kayıt defteri.
+  const incY = typeof E.incelemeOku === "function" ? Object.values(E.incelemeOku().urunler || {}).some((x) => x && x.kayit) : false;
+  F.kontrol("BR.bekleyen-kayit", "gönderilemeyen değişiklik kalıcı olarak saklandı (bekleyen kayıt defteri ya da inceleme yedeği)", {
+    sonra: { bekleyenKayit: !!kayit, incelemeYedegi: incY }, gercek: !!kayit || incY, beklenen: true });
   // HEDEF (bugün kırmızı): kalıcı ret otomatik tekrar EDİLMEZ — ilk retten sonra sunucuya yeniden gitmez, deneme sayacı büyümez
   const otomatikTekrar = denemeler.slice(1).reduce((t, x) => t + x.stkYaz, 0);
   F.kontrol("BR.otomatik-tekrar-yok", `kalıcı ret ${TEKRAR - 1} otomatik denemede yeniden gönderilmez`, {
     sonra: { ilkTurdanSonraStkYaz: otomatikTekrar, deneme: d.deneme }, gercek: otomatikTekrar, beklenen: 0 });
-  F.kontrol("BR.inceleme-durumu", "kayıt 'inceleme gerekiyor' olarak işaretli (geçici ağ hatasından ayrı)", {
-    sonra: { kayit: d }, gercek: !!(d.inceleme || d.kalici || d.durum === "inceleme"), beklenen: true });
+  // 1.744.0: reddedilen SATIR "bekleyen:inceleme"de (030 incelemeOku); satır bilinmiyorsa bekleyen yazma kaydı `inceleme: true`
+  const inc = typeof E.incelemeOku === "function" ? (E.incelemeOku().urunler || {}) : {};
+  const hid = F.psql(`select id from public.stk_hareket where fis_id = '${fis}' limit 1;`);
+  F.kontrol("BR.inceleme-durumu", "kayıt 'inceleme gerekiyor' olarak işaretli (geçici ağ hatasından ayrı), reddedilen yerel hâl yedekte", {
+    sonra: { bekleyenKaydi: d, inceleme: inc[hid] ? { ...inc[hid], kayit: inc[hid].kayit ? "var" : null } : null },
+    gercek: !!(d.inceleme || (inc[hid] && inc[hid].kayit)), beklenen: true });
   F.kontrol("BR.ilgisiz-degisiklik", "aynı tablodaki ilgisiz meşru değişiklik reddedilen satır yüzünden takılmaz", {
     sonra: { tabaMinStok: minStok }, gercek: /(^|,)7(,|$)/.test(minStok || ""), beklenen: true });
   F.bitir();

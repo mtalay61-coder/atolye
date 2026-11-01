@@ -155,6 +155,12 @@ function AtolyeUygulamasi() {
     window.__bekleyenYazmaDegisti = (d) => setBekleyenYazmalar({ ...d });
     return () => { window.__bekleyenYazmaDegisti = null; };
   }, []);
+  // İNCELEME GEREKEN SATIRLAR (v1.744.0, F2 — 030 incelemeOku): sunucunun kalıcı olarak reddettiği satırlar; ayrı şerit.
+  const [incelemeKayitlari, setIncelemeKayitlari] = useState(() => (typeof incelemeOku === "function" ? incelemeOku() : {}));
+  useEffect(() => {
+    window.__incelemeDegisti = (d) => setIncelemeKayitlari({ ...d });
+    return () => { window.__incelemeDegisti = null; };
+  }, []);
   const [surumSeridiKapali, setSurumSeridiKapali] = useState(false);
   const [storageOk, setStorageOk] = useState(true);
   const [aktifKullanici, setAktifKullanici] = useState(null);
@@ -885,7 +891,10 @@ function AtolyeUygulamasi() {
       if (!sessiz) showToast("Sunucu ayarı okunuyor — bekleyen kayıtlar birazdan gönderilecek");
       return;
     }
-    const d = bekleyenYazmalariOku();
+    // KALICI RET KENDİLİĞİNDEN DENENMEZ (v1.744.0, kullanıcı kararı 2 Kasım): sunucu kuralının reddettiği kayıt (030 `inceleme`)
+    // dakikalık / "online" denemede ATLANIR — eskiden sınırsız yeniden gönderiliyordu (t-bekleyen-red, senaryo-kalici-red).
+    // "Yeniden dene" (sessiz değil) elle bir kez dener.
+    const d = Object.fromEntries(Object.entries(bekleyenYazmalariOku()).filter(([, v]) => !(sessiz && v && v.inceleme)));
     const isler = [];
     if (d["stok:items"]) isler.push(tabloYaz("stok:items", "urunler", stok));
     if (d["siparis:data"]) isler.push(tabloYaz("siparis:data", "siparisler", siparisler));
@@ -909,6 +918,7 @@ function AtolyeUygulamasi() {
     if (d["cekgorsel:data"]) isler.push(tabloYaz("cekgorsel:data", "cek_gorselleri", cekGorselleri, []));
     await Promise.all(isler.map((p2) => Promise.resolve(p2).catch(() => {})));
     const kalan = Object.keys(bekleyenYazmalariOku()).length;
+    if (sessiz && Object.keys(d).length === 0) return;
     if (!sessiz || kalan === 0) showToast(kalan === 0 ? "Bekleyen kayıtların hepsi buluta gönderildi" : `${kalan} tablo hâlâ gönderilemedi — "Hata" düğmesinden sebebini okuyun`);
   }, [stok, siparisler, uretim, cariler, tanimlar, muhasebe, koliler, gorevler, mesajlar, faturalar, teklifler, fisDefteri, cop, onaylar, stokRezervasyonlari, modeller, cekGorselleri, showToast]);
   // Bağlantı gelince ve açılıştan kısa süre sonra kendiliğinden dene.
@@ -5013,6 +5023,42 @@ function AtolyeUygulamasi() {
             <button type="button" className="btn-ghost" data-maas-sonra="1" onClick={() => setMaasErtelendi(true)} style={{ padding: "6px 12px", fontSize: 12 }}>Sonra</button>
           </div>
         )}
+        {/* İNCELEME GEREKİYOR (v1.744.0, F2 — kullanıcı kararı 2 Kasım): sunucunun KURAL gereği reddettiği değişiklikler. Kendiliğinden
+            yeniden gönderilmez; aynı tablonun öteki değişiklikleri gönderilmiştir. Reddedilen yerel hâl yedekte durur (silinmez);
+            Yönetici "Yerel hâli bırak" ile sunucudaki hâli kabul eder (yedek günlüğe yazılır), "Yeniden dene" bir kez daha gönderir. */}
+        {Object.keys(incelemeKayitlari).length > 0 && (
+          <div data-inceleme-gerekiyor={Object.values(incelemeKayitlari).reduce((t, x) => t + Object.keys(x || {}).length, 0)}
+            style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 8, background: "var(--erp-void-tint)",
+              border: "1.5px solid var(--erp-void)", borderRadius: "var(--erp-r-md)", padding: "8px 12px", fontSize: 12, color: "var(--erp-void)" }}>
+            <b>İnceleme gerekiyor — sunucu bu değişiklikleri kural gereği reddetti (kendiliğinden yeniden gönderilmez):</b>
+            {Object.entries(incelemeKayitlari).flatMap(([tablo, satirlar]) => Object.entries(satirlar || {}).map(([sid, v]) => (
+              <div key={`${tablo}:${sid}`} data-inceleme-satir={sid} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", color: "var(--erp-text)" }}>
+                <span style={{ flex: "1 1 320px" }}><b>{tabloAciklamasi(tablo).ad}</b> · {String(v.sebep || "").replace(/^Supabase \d+:\s*/, "")}</span>
+                <span className="mono" style={{ fontSize: 10, color: "var(--erp-text-2)" }}>{v.zaman ? tarihYaz(v.zaman) : ""}</span>
+                <button type="button" className="btn-ghost" data-inceleme-yeniden={sid} style={{ padding: "3px 8px", fontSize: 11 }}
+                  onClick={() => {
+                    incelemeSil(tablo, sid);
+                    if (v.anahtar) bekleyenYazmaEkle(v.anahtar, tablo, "inceleme: elle yeniden deneme");
+                    bekleyenleriYenidenGonder(false);
+                  }}>Yeniden dene</button>
+                {(!aktifKullanici || aktifKullanici.rol === "Yönetici") && (
+                  <button type="button" className="btn-ghost" data-inceleme-birak={sid}
+                    style={{ padding: "3px 8px", fontSize: 11, color: "var(--erp-danger, #B3261E)", borderColor: "var(--erp-danger, #B3261E)" }}
+                    onClick={() => {
+                      if (!window.confirm(`${tabloAciklamasi(tablo).ad}: sunucunun reddettiği bu değişiklik BIRAKILACAK; sunucudaki hâl geçerli kalır.\n\n`
+                        + "Bu cihazdaki reddedilen hâlin kopyası günlüğe (güvenlik) yazılır. Sayfa buluttan yeniden açılır. Devam?")) return;
+                      gunlukYaz(`İnceleme bırakıldı: ${tabloAciklamasi(tablo).ad} ${sid}`, "guvenlik", { tablo, satir: sid, kod: v.kod, sebep: v.sebep, yerelYedek: v.kayit || null });
+                      try { window.localStorage.setItem(`inceleme-yedek:${tablo}:${sid}:${Date.now()}`, JSON.stringify(v)); } catch (e) { /* */ }
+                      incelemeSil(tablo, sid);
+                      if (v.anahtar) { bekleyenKayitTemizle(tablo); bekleyenYazmaSil(v.anahtar); }
+                      showToast("Bırakıldı — sayfa buluttan yeniden açılıyor");
+                      setTimeout(() => window.location.reload(), 1200);
+                    }}>Yerel hâli bırak, sunucudakini al</button>
+                )}
+              </div>
+            )))}
+          </div>
+        )}
         {Object.keys(bekleyenYazmalar).length > 0 && (
           <div data-bekleyen-yazma={Object.keys(bekleyenYazmalar).length}
             style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8, background: "var(--erp-orange-bg)",
@@ -5033,7 +5079,7 @@ function AtolyeUygulamasi() {
                     style={{ padding: "3px 10px", borderRadius: "var(--erp-r-pill)", fontSize: 11, fontWeight: 700, cursor: "pointer",
                       border: `1px solid ${acik ? "#8A3F1A" : "var(--erp-orange)"}`,
                       background: acik ? "#8A3F1A14" : "#fff", color: "#8A3F1A" }}>
-                    {bilgi.ad}{v.deneme > 1 ? ` (${v.deneme}×)` : ""}
+                    {bilgi.ad}{v.inceleme ? " — inceleme gerekiyor (kendiliğinden denenmez)" : (v.deneme > 1 ? ` (${v.deneme}×)` : "")}
                   </button>
                 );
               })}
