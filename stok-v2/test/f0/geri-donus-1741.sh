@@ -32,7 +32,8 @@ ESKI="$F0/.eski-istemci"
 nesneler() { psql -X -At -d "$1" -c "select 'F:'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')' from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'
   union all select 'T:'||c.relname||'.'||t.tgname from pg_trigger t join pg_class c on c.oid=t.tgrelid where not t.tgisinternal
   union all select 'K:'||c.relname||'.'||k.conname from pg_constraint k join pg_class c on c.oid=k.conrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname <> 'fis_karsilanan_iz' order by 1"; }   # iz tablosu bilerek kalır (veri)
-ozetler() { psql -X -At -d "$1" -c "select p.proname||'('||pg_get_function_identity_arguments(p.oid)||') '||md5(p.prosrc) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' order by 1"; }
+# Gövde özeti yorum satırları ve boşluk farkı olmadan (Editor kopyası yorumsuz, psql ile kurulan kaynak yorumlu — aynı işlev)
+ozetler() { psql -X -At -d "$1" -c "select p.proname||'('||pg_get_function_identity_arguments(p.oid)||') '||md5(regexp_replace(regexp_replace(p.prosrc, '^\\s*--[^\\n]*', '', 'gn'), '\\s+', ' ', 'g')) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' order by 1"; }
 tablolar() { psql -X -At -d "$1" -c "select table_name from information_schema.tables where table_schema='public' order by 1"; }
 
 echo "══ 1) kurulum"
@@ -56,6 +57,8 @@ python3 "$KOK/stok-v2/editor-icin.py" --bol "$SQL" | node -e '
 
 echo "══ 3) doğrulama"
 echo "   a) dosyadaki bölümler 20834ea ile birebir:"
+if diff <(awk '/^-- ---- 20834ea:stok-v2\/editor\/15-duzeltme.sql alt_yaz \(BIREBIR\)/{f=1;next} /^-- ---- 20834ea:stok-v2\/editor\/15-duzeltme.sql alt_yaz — SON/{f=0} f' "$SQL") \
+        <(git -C "$KOK" show "20834ea:stok-v2/editor/15-duzeltme.sql" | awk '/^create or replace function public.alt_yaz\(p jsonb\)/{f=1} f{print} f&&/^end \$\$;/{exit}') > /dev/null; then echo "      15-duzeltme alt_yaz: aynı"; else echo "      15-duzeltme alt_yaz: FARKLI"; HATA=1; fi
 for ad in 18-fis-defteri 20-gece-denetimi; do
   if diff <(awk "/^-- ---- 20834ea:stok-v2\/editor\/$ad.sql \(BIREBIR\)/{f=1;next} /^-- ---- 20834ea:stok-v2\/editor\/$ad.sql — SON/{f=0} f" "$SQL") \
           <(git -C "$KOK" show "20834ea:stok-v2/editor/$ad.sql") > /dev/null; then echo "      $ad: aynı"; else echo "      $ad: FARKLI"; HATA=1; fi

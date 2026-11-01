@@ -3,7 +3,9 @@
 -- =====================================================================================================================
 --  NE YAPAR (F1-1-BAG-IZI-TASARIM.md bolum 7):
 --   1) R1b tetikleyicisi ve islevi kaldirilir (fis_kalem_karsilanan_koru; 1.742.1 de yoktu). F1.1 gecmis bag korumasi
---      (fis_bag_iz_koru) ve tek bag kisiti (stk_hareket_tek_bag) kaldirilir.
+--      (fis_bag_iz_koru) ve tek bag kisiti (stk_hareket_tek_bag) kaldirilir. F2 korumalari (fis_kalem_teslim_koru,
+--      fis_siparis_teslim_koru) ve yabanci anahtarlar (stk_hareket_kalem_fk, stk_hareket_gecmis_kalem_fk) kaldirilir; alt_yaz
+--      1.742.1 metnine doner (20834ea editor/15, asagida BIREBIR).
 --   2) 1.742.1 metinleri BIREBIR calisir: commit 20834ea, stok-v2/editor/18-fis-defteri.sql ve editor/20-gece-denetimi.sql
 --      (asagidaki iki bolum o dosyalarin aynisidir; test/f0/geri-donus-1741.sh bunu git show ile karsilastirir).
 --   3) R1 / F1 / F1.1 islevleri kaldirilir.
@@ -22,6 +24,11 @@ drop function if exists public.fis_kalem_karsilanan_koru();
 
 -- F1.1 korumasi ve kisiti (1.742.1 de yok). Sutunlar ve indeks KALIR (veri: gecmis bag izi); 1.742.1 bunlari okumaz, yazmaz.
 -- Kisit kalkar: 1.742.1 davranisi birebir olsun (eski stk_yaz yolu kurallar kapaliyken satiri yeniden yazabilir).
+-- F2 korumalari, kisitlari ve yabanci anahtarlari (1.742.1 de yok). Indeksler ve veri kalir.
+drop trigger if exists fis_kalem_teslim_koru on public.siparis_kalemleri;
+drop trigger if exists fis_siparis_teslim_koru on public.siparisler;
+alter table public.stk_hareket drop constraint if exists stk_hareket_kalem_fk;
+alter table public.stk_hareket drop constraint if exists stk_hareket_gecmis_kalem_fk;
 drop trigger if exists fis_bag_iz_koru on public.stk_hareket;
 drop function if exists public.fis_bag_iz_koru();
 alter table public.stk_hareket drop constraint if exists stk_hareket_tek_bag;
@@ -553,7 +560,60 @@ grant execute on function public.fis_gece_denetimi(text) to authenticated;
 grant execute on function public.fis_gece_denetimi(text) to service_role;
 -- ---- 20834ea:stok-v2/editor/20-gece-denetimi.sql — SON ----
 
--- R1 / F1 / F1.1 islevleri (1.742.1 de yok). 1.742.1 metinleri yukarida bunlari artik cagirmiyor.
+-- ---- 20834ea:stok-v2/editor/15-duzeltme.sql alt_yaz (BIREBIR) — BASLANGIC ----
+create or replace function public.alt_yaz(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  t text;
+  d jsonb;
+  satirlar jsonb;
+  sutunlar text;
+  atamalar text;
+  silinecek text[];
+  n_yaz int;
+  n_sil int;
+  sonuc jsonb := '{}'::jsonb;
+begin
+  for t, d in select key, value from jsonb_each(case when jsonb_typeof(p) = 'object' then p else '{}'::jsonb end) loop
+    if t not in ('siparis_kalemleri', 'uretim_atamalari') then
+      raise exception 'Bu tablo alt_yaz ile yazılamaz: %', t using errcode = '42501';
+    end if;
+    perform public.stk_yetki(array[case t when 'siparis_kalemleri' then 'siparis' else 'uretim' end, 'fisler', 'stok', 'cari'], 'kaydetme');
+    satirlar := public.stk_dizi(d -> 'satirlar');
+    n_yaz := 0;
+    n_sil := 0;
+    if jsonb_array_length(satirlar) > 0 then
+      if exists (select 1 from jsonb_array_elements(satirlar) x where coalesce(x ->> 'id', '') = '') then
+        raise exception '% satırında kimlik yok', t using errcode = '22023';
+      end if;
+      select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position),
+             string_agg(case when c.column_name <> 'id' then quote_ident(c.column_name) || ' = excluded.' || quote_ident(c.column_name) end, ', ')
+        into sutunlar, atamalar
+      from information_schema.columns c
+      where c.table_schema = 'public' and c.table_name = t
+        and c.column_name in (select distinct jsonb_object_keys(x) from jsonb_array_elements(satirlar) x where jsonb_typeof(x) = 'object');
+      execute format(
+        'insert into public.%I as h (%s) select %s from (select distinct on (r.id) r.* from jsonb_array_elements(%L::jsonb) with ordinality as e(x, n), '
+        || 'jsonb_populate_record(null::public.%I, e.x) r order by r.id, e.n desc) s '
+        || 'on conflict (id) do ' || case when atamalar is null then 'nothing' else 'update set ' || atamalar end,
+        t, sutunlar, sutunlar, satirlar::text, t);
+      get diagnostics n_yaz = row_count;
+    end if;
+    silinecek := array(select jsonb_array_elements_text(public.stk_dizi(d -> 'sil')));
+    if array_length(silinecek, 1) > 0 then
+      execute format('delete from public.%I where id::text = any(%L::text[])', t, silinecek);
+      get diagnostics n_sil = row_count;
+    end if;
+    sonuc := sonuc || jsonb_build_object(t, jsonb_build_object('yazilan', n_yaz, 'silinen', n_sil));
+  end loop;
+  return sonuc;
+end $$;
+-- ---- 20834ea:stok-v2/editor/15-duzeltme.sql alt_yaz — SON ----
+
+-- R1 / F1 / F1.1 / F2 islevleri (1.742.1 de yok). 1.742.1 metinleri yukarida bunlari artik cagirmiyor.
+drop function if exists public.fis_kalem_teslim_koru();
+drop function if exists public.fis_siparis_teslim_koru();
+drop function if exists public.fis_kalem_hareket_var(text);
 drop function if exists public.fis_kalem_kilitle(text[]);
 drop function if exists public.fis_kalem_karsilanan_yenile(text[], jsonb, text, text);
 drop function if exists public.fis_kalem_durumlari(text[]);
