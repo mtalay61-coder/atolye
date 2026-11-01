@@ -22,6 +22,11 @@ alter table public.kas_hareket add column if not exists fis_id text references p
 alter table public.kas_hareket alter column fis_id set default nullif(current_setting('fis.aktif', true), '');
 create index if not exists kas_hareket_fis_id on public.kas_hareket (fis_id);
 
+alter table public.stk_hareket add column if not exists gecmis_siparis_id text;
+alter table public.stk_hareket add column if not exists gecmis_kalem_id text;
+alter table public.stk_hareket add column if not exists bag_cozum_zamani timestamptz;
+create index if not exists stk_hareket_gecmis_kalem on public.stk_hareket (gecmis_kalem_id) where gecmis_kalem_id is not null;
+
 create table if not exists public.fis_sayac (
   onek  text not null,
   gun   text not null,
@@ -94,8 +99,8 @@ begin
   eski_j := to_jsonb(old) - 'iptal' - 'iptal_zamani' - 'iptal_eden' - 'guncelleme';
   if yeni_j is distinct from eski_j then
     if duzen = 'bag'
-       and (yeni_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
-         = (eski_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek')
+       and (yeni_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek' - 'gecmis_siparis_id' - 'gecmis_kalem_id' - 'bag_cozum_zamani')
+         = (eski_j - 'siparis_id' - 'siparis_no' - 'kalem_id' - 'rezervasyon_siparis_id' - 'ek' - 'gecmis_siparis_id' - 'gecmis_kalem_id' - 'bag_cozum_zamani')
        and ((yeni_j -> 'ek') is not distinct from (eski_j -> 'ek')
          or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'siparisId' - 'kalemId' - 'rezervasyonSiparisId')
          or (yeni_j -> 'ek') is not distinct from ((eski_j -> 'ek') - 'siparisId' - 'kalemId')
@@ -109,6 +114,34 @@ begin
   end if;
   if old.iptal and not new.iptal then
     raise exception 'İptal edilmiş hareket geri açılamaz — yeni fiş kesin (% %)', tg_table_name, new.id using errcode = '42501';
+  end if;
+  return new;
+end $$;
+
+create or replace function public.fis_bag_iz_koru() returns trigger
+language plpgsql as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.gecmis_siparis_id is not null or new.gecmis_kalem_id is not null or new.bag_cozum_zamani is not null then
+      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde yazılır (stk_hareket %)', new.id using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  if old.bag_cozum_zamani is null and new.bag_cozum_zamani is not null then
+    if coalesce(current_setting('fis.duzen', true), '') <> 'bag'
+       or new.gecmis_siparis_id is distinct from old.siparis_id or new.gecmis_kalem_id is distinct from old.kalem_id
+       or old.gecmis_siparis_id is not null or old.gecmis_kalem_id is not null
+       or new.siparis_id is not null or new.kalem_id is not null then
+      raise exception 'Geçmiş sipariş bağı yalnız sipariş iptalinde, eski geçerli bağdan yazılır (stk_hareket %)', new.id using errcode = '42501';
+    end if;
+    return new;
+  end if;
+  if new.gecmis_siparis_id is distinct from old.gecmis_siparis_id or new.gecmis_kalem_id is distinct from old.gecmis_kalem_id
+     or new.bag_cozum_zamani is distinct from old.bag_cozum_zamani then
+    raise exception 'Geçmiş sipariş bağı değiştirilemez (stk_hareket %)', new.id using errcode = '42501';
+  end if;
+  if old.bag_cozum_zamani is not null and (new.siparis_id is not null or new.kalem_id is not null) then
+    raise exception 'Bağı çözülmüş (iptal edilmiş siparişin) hareketi yeniden siparişe bağlanamaz (stk_hareket %)', new.id using errcode = '42501';
   end if;
   return new;
 end $$;
@@ -570,6 +603,11 @@ begin
   create trigger fis_satir_koru before insert or update or delete on public.car_hareket for each row execute function public.fis_satir_koru();
   drop trigger if exists fis_satir_koru on public.kas_hareket;
   create trigger fis_satir_koru before insert or update or delete on public.kas_hareket for each row execute function public.fis_satir_koru();
+  drop trigger if exists fis_bag_iz_koru on public.stk_hareket;
+  create trigger fis_bag_iz_koru before insert or update on public.stk_hareket for each row execute function public.fis_bag_iz_koru();
+  if not exists (select 1 from pg_constraint where conname = 'stk_hareket_tek_bag' and conrelid = 'public.stk_hareket'::regclass) then
+    alter table public.stk_hareket add constraint stk_hareket_tek_bag check (gecmis_kalem_id is null or kalem_id is null);
+  end if;
   drop trigger if exists fis_baslik_koru on public.stk_fis;
   create trigger fis_baslik_koru before insert or update or delete on public.stk_fis for each row execute function public.fis_baslik_koru();
   drop trigger if exists fis_kalem_karsilanan_koru on public.siparis_kalemleri;
